@@ -20,4 +20,18 @@ describe('project names refuse the names Windows reserves [SPEC 4.2 notes]', () 
       expect(valid(name), name).toBe(true)
     }
   })
+
+  it.each(['CON', 'con.backup', 'Aux.2026.final', 'NUL .x', 'lpt3.adman'])(
+    'refuses %j: the part before the first dot, spaces dropped from its end, is reserved [1.7]',
+    (name) => {
+      expect(valid(name)).toBe(false)
+    },
+  )
+
+  it.each(['CONTACT', 'Icon', 'My.CON', 'COM10', 'CONSOLE.backup'])(
+    'allows %j, which only contains a reserved word [1.7]',
+    (name) => {
+      expect(valid(name)).toBe(true)
+    },
+  )
 })
