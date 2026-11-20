@@ -3,6 +3,8 @@ import { PROJECT_EXTENSION } from '../project'
 
 // A project name becomes a file name, so it must be safe on macOS and Windows.
 const FORBIDDEN = /[/\\:*?"<>|]/
+// Device names Windows reserves, in any letter case (SPEC 4.2 notes).
+const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i
 const hasControlChar = (n: string) => [...n].some((c) => c.charCodeAt(0) < 0x20)
 
 export const projectName = z
@@ -13,6 +15,7 @@ export const projectName = z
   .refine((n) => !FORBIDDEN.test(n), 'Names cannot contain / \\ : * ? " < > |')
   .refine((n) => !hasControlChar(n), 'Names cannot contain control characters.')
   .refine((n) => !n.startsWith('.') && !n.endsWith('.'), 'Names cannot start or end with a dot.')
+  .refine((n) => !WINDOWS_RESERVED.test(n), 'Windows reserves that name. Choose another.')
 
 export const projectCreateInput = z.object({ name: projectName, location: z.string().min(1) })
 
