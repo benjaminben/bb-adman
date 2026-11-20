@@ -3,9 +3,12 @@ import type { ProjectRegistry } from '../db/project-registry'
 import type { SettingsStore } from '../settings/settings-store'
 import type { SecretStore } from '../secrets/secret-store'
 import type { UndoLists } from '../history/undo-lists'
+import type { ActivityLog } from '../log/activity-log'
+import { errorContext } from '../log/error-context'
 import { historyInput } from '../../shared/schemas/commands/history'
 import type { AppState, HistoryState, ProviderInfo } from '../../shared/schemas/queries'
-import { AppError, fail, ok, type Result } from '../../shared/schemas/result'
+import { ulid } from 'ulid'
+import { AppError, fail, internalError, ok, type Result } from '../../shared/schemas/result'
 import type { Actor } from '../../shared/schemas/events'
 
 export type QueryDeps = {
@@ -14,6 +17,7 @@ export type QueryDeps = {
   secrets: SecretStore
   undo: UndoLists
   providers: ProviderInfo[]
+  log: ActivityLog
 }
 
 // Queries carry an actor set like a command's (SPEC 4.1). No Phase 1 query checks it;
@@ -56,7 +60,20 @@ export function createQueries(deps: QueryDeps) {
       return ok(fn(input, opts))
     } catch (e) {
       if (e instanceof AppError) return fail(e.toBody())
-      throw e
+      // Like the bus, the runner never throws (SPEC 4.3). A query has no command, so the
+      // reply and the log line share an ID made here.
+      const body = internalError(ulid())
+      deps.log.write({
+        level: 'error',
+        event: 'app',
+        name,
+        actor: opts.actor,
+        ok: false,
+        errorKind: 'INTERNAL',
+        message: body.message,
+        context: { commandId: body.details?.commandId, error: errorContext(e) },
+      })
+      return fail(body)
     }
   }
 }

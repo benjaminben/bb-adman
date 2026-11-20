@@ -9,6 +9,7 @@ export const ERROR_CODES = [
   'PROJECT_LOCKED',
   'AGENT_DENIED',
   'AGENT_REFUSED',
+  'INTERNAL',
 ] as const
 
 export type ErrorCode = (typeof ERROR_CODES)[number]
@@ -45,4 +46,12 @@ export function ok<T>(data: T): Result<T> {
 
 export function fail<T = never>(error: ErrorBody): Result<T> {
   return { ok: false, error }
+}
+
+// SPEC 4.1: the fixed reply for anything unforeseen. The thrown error's own text never
+// reaches the caller, because it can hold file paths [FR-198].
+export const INTERNAL_MESSAGE = 'Something went wrong. The details are in the activity log.'
+
+export function internalError(commandId: string): ErrorBody {
+  return { code: 'INTERNAL', message: INTERNAL_MESSAGE, details: { commandId } }
 }

@@ -8,7 +8,8 @@ import type { CommandHandler, HandlerResult } from './types'
 import type { ProjectRegistry } from '../db/project-registry'
 import type { UndoLists, UndoScope } from '../history/undo-lists'
 import type { ActivityLog } from '../log/activity-log'
-import { AppError, fail, ok, type Result } from '../../shared/schemas/result'
+import { errorContext } from '../log/error-context'
+import { AppError, fail, internalError, ok, type Result } from '../../shared/schemas/result'
 import type { Actor, EventMap, EventName } from '../../shared/schemas/events'
 
 export type BusEvent = { [K in EventName]: { name: K; payload: EventMap[K] } }[EventName]
@@ -124,11 +125,11 @@ export function createCommandBus(deps: BusDeps): CommandBus {
       if (handler.changesAppState) deps.emit({ name: 'app.stateChanged', payload: {} })
       return finish(ok(run.result.data))
     } catch (e) {
-      if (!(e instanceof AppError)) {
-        writeLog(false, 'error', String(e instanceof Error ? e.message : e), null)
-        throw e
-      }
-      return finish(fail(e.toBody()))
+      if (e instanceof AppError) return finish(fail(e.toBody()))
+      // The bus never throws: anything unforeseen is logged in full and returned as INTERNAL.
+      const body = internalError(commandId)
+      writeLog(false, 'error', body.message, 'INTERNAL', { error: errorContext(e) })
+      return fail(body)
     }
 
     function finish(result: Result<unknown>): Result<unknown> {
@@ -142,6 +143,7 @@ export function createCommandBus(deps: BusDeps): CommandBus {
       level: 'info' | 'warn' | 'error',
       message: string,
       errorKind: string | null,
+      extra: Record<string, unknown> = {},
     ) {
       deps.log.write({
         level,
@@ -155,7 +157,11 @@ export function createCommandBus(deps: BusDeps): CommandBus {
         ok: okay,
         errorKind,
         message,
-        context: { commandId, ...(opts.replay ? { replay: opts.replay.direction } : {}) },
+        context: {
+          commandId,
+          ...(opts.replay ? { replay: opts.replay.direction } : {}),
+          ...extra,
+        },
       })
     }
   }

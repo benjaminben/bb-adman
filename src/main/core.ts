@@ -71,7 +71,7 @@ export function createCore(opts: CoreOptions) {
 
   return {
     bus,
-    query: createQueries({ projects, settings, secrets, undo, providers }),
+    query: createQueries({ projects, settings, secrets, undo, providers, log }),
     projects,
     undo,
     secrets,

@@ -1,0 +1,57 @@
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import { describe, it, expect, afterEach } from 'vitest'
+import { createQueries } from '../../../../src/main/queries/queries'
+import { createProjectRegistry } from '../../../../src/main/db/project-registry'
+import { createUndoLists } from '../../../../src/main/history/undo-lists'
+import { createActivityLog } from '../../../../src/main/log/activity-log'
+import type { SettingsStore } from '../../../../src/main/settings/settings-store'
+import type { SecretStore } from '../../../../src/main/secrets/secret-store'
+
+let dir: string | undefined
+afterEach(() => {
+  if (dir) fs.rmSync(dir, { recursive: true, force: true })
+})
+
+function readLog(logDir: string): Array<Record<string, unknown>> {
+  return fs
+    .readdirSync(logDir)
+    .flatMap((n) => fs.readFileSync(path.join(logDir, n), 'utf8').trim().split('\n'))
+    .map((l) => JSON.parse(l) as Record<string, unknown>)
+}
+
+describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
+  it('turns an unknown error into INTERNAL with the fixed message and logs it, without rejecting', async () => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-query-'))
+    const logDir = path.join(dir, 'logs')
+    const throwing = {
+      get: () => {
+        throw new Error('disk failed at /Users/someone/settings.json')
+      },
+    } as unknown as SettingsStore
+    const query = createQueries({
+      projects: createProjectRegistry(),
+      settings: throwing,
+      secrets: { summaries: () => [] } as unknown as SecretStore,
+      undo: createUndoLists(),
+      providers: [],
+      log: createActivityLog({ dir: logDir, minLevel: 'debug', now: () => new Date() }),
+    })
+
+    const result = await query('app.getState', {}, { actor: 'user' })
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: {
+        code: 'INTERNAL',
+        message: 'Something went wrong. The details are in the activity log.',
+        details: { commandId: expect.stringMatching(/^[0-9A-Z]{26}$/) },
+      },
+    })
+    expect(JSON.stringify(result)).not.toContain('/Users/someone')
+    const line = readLog(logDir).at(-1)
+    expect(line).toMatchObject({ level: 'error', errorKind: 'INTERNAL', name: 'app.getState' })
+    expect((line?.context as { error: { message: string } }).error.message).toContain('disk failed')
+  })
+})
