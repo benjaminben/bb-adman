@@ -92,7 +92,6 @@ export function createProjectFile(opts: {
   const migrations = opts.migrations ?? bundledMigrations
   if (fs.existsSync(opts.filePath)) {
     throw new AppError('RULE_VIOLATION', 'A file with this name already exists in that folder.', {
-      filePath: opts.filePath,
       reason: 'file_exists',
     })
   }
@@ -123,9 +122,7 @@ export function openProjectFile(opts: {
 }): ProjectHandle {
   const migrations = opts.migrations ?? bundledMigrations
   if (!fs.existsSync(opts.filePath)) {
-    throw new AppError('NOT_FOUND', 'The project file could not be found.', {
-      filePath: opts.filePath,
-    })
+    throw new AppError('NOT_FOUND', 'The project file could not be found.')
   }
   const db = connect(opts.filePath, false)
   try {
