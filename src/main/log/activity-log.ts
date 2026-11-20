@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
-export type LogEvent = 'command' | 'job' | 'provider' | 'mcp' | 'asset' | 'app'
+export type LogEvent = 'command' | 'query' | 'job' | 'provider' | 'mcp' | 'asset' | 'app'
 export type LogActor = 'user' | 'agent' | 'system'
 
 export type LogEntry = {

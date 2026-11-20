@@ -33,7 +33,7 @@ export function createQueryRunner(table: Record<string, QueryFn>, log: ActivityL
       const body = internalError(ulid())
       log.write({
         level: 'error',
-        event: 'app',
+        event: 'query',
         name,
         actor: opts.actor,
         ok: false,

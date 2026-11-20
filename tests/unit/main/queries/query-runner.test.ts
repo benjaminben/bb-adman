@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
-import { createQueries } from '../../../../src/main/queries/queries'
+import { createQueries, createQueryRunner } from '../../../../src/main/queries/queries'
 import { createProjectRegistry } from '../../../../src/main/db/project-registry'
 import { createUndoLists } from '../../../../src/main/history/undo-lists'
 import { createActivityLog } from '../../../../src/main/log/activity-log'
@@ -56,5 +56,28 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
     const line = readLog(logDir).at(-1)
     expect(line).toMatchObject({ level: 'error', errorKind: 'INTERNAL', name: 'app.getState' })
     expect((line?.context as { error: { message: string } }).error.message).toContain('disk failed')
+  })
+
+  it("logs a failed query with event 'query' and the reply's ULID as context.commandId [SPEC 9.1, 1.7]", async () => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-query-'))
+    const logDir = path.join(dir, 'logs')
+    const log = createActivityLog({ dir: logDir, minLevel: 'debug', now: () => new Date() })
+    const query = createQueryRunner(
+      {
+        'test.broken': () => {
+          throw new Error('broken')
+        },
+      },
+      log,
+    )
+    const result = await query('test.broken', {}, { actor: 'user' })
+    const commandId = result.ok ? undefined : result.error.details?.commandId
+    expect(commandId).toEqual(expect.stringMatching(/^[0-9A-Z]{26}$/))
+    expect(readLog(logDir).at(-1)).toMatchObject({
+      event: 'query',
+      name: 'test.broken',
+      errorKind: 'INTERNAL',
+      context: { commandId },
+    })
   })
 })
