@@ -24,7 +24,7 @@ export type QueryDeps = {
 // mcp.getConnectInfo (Phase 10) refuses the agent.
 export type QueryOptions = { actor: Actor }
 
-type QueryFn = (input: unknown, opts: QueryOptions) => unknown
+export type QueryFn = (input: unknown, opts: QueryOptions) => unknown | Promise<unknown>
 
 export function createQueries(deps: QueryDeps) {
   const table: Record<string, QueryFn> = {
@@ -47,6 +47,12 @@ export function createQueries(deps: QueryDeps) {
     },
   }
 
+  return createQueryRunner(table, deps.log)
+}
+
+// The runner (SPEC 4.3): finds the query, never throws, returns INTERNAL for anything
+// unforeseen.
+export function createQueryRunner(table: Record<string, QueryFn>, log: ActivityLog) {
   return async function query(
     name: string,
     input: unknown,
@@ -55,13 +61,13 @@ export function createQueries(deps: QueryDeps) {
     const fn = table[name]
     if (!fn) return fail({ code: 'INVALID_INPUT', message: `Unknown query: ${name}` })
     try {
-      return ok(fn(input, opts))
+      return ok(await fn(input, opts))
     } catch (e) {
       if (e instanceof AppError) return fail(e.toBody())
       // Like the bus, the runner never throws (SPEC 4.3). A query has no command, so the
       // reply and the log line share an ID made here.
       const body = internalError(ulid())
-      deps.log.write({
+      log.write({
         level: 'error',
         event: 'app',
         name,
