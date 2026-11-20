@@ -13,17 +13,13 @@ test('Phase 1: create, reopen from the command line, tabs, keys', async () => {
   const app = await launch(box)
   const page = await app.firstWindow()
 
-  // Window security: no Node in the page, strict CSP in place [SPEC 8.2].
+  // Window security: no Node in the page [SPEC 8.2]. The policy is checked by csp.spec.ts.
   expect(await page.evaluate(() => typeof (globalThis as { require?: unknown }).require)).toBe(
     'undefined',
   )
   expect(await page.evaluate(() => typeof (globalThis as { process?: unknown }).process)).toBe(
     'undefined',
   )
-  const csp = await page
-    .locator('meta[http-equiv="Content-Security-Policy"]')
-    .getAttribute('content')
-  expect(csp).toContain("script-src 'self'")
 
   // Create two projects: two tabs [FR-003].
   for (const name of ['Alpha', 'Beta']) {
