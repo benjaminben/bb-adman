@@ -1,0 +1,22 @@
+/* Design tokens. Placeholder values chosen for 4.5:1 text contrast (SPEC 11);
+   replace with the designer's tokens when SPEC-Design.md lands. */
+:root {
+  --color-bg: #ffffff;
+  --color-surface: #f4f5f7;
+  --color-border: #c9ccd3;
+  --color-text: #1b1d22;
+  --color-text-muted: #545a66;
+  --color-accent: #1f5bd8;
+  --color-accent-text: #ffffff;
+  --color-danger-bg: #fdecea;
+  --color-danger-text: #8a1c12;
+  --color-focus: #1f5bd8;
+  --radius: 6px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --font-body: -apple-system, 'Segoe UI', system-ui, sans-serif;
+  --font-size: 14px;
+}
