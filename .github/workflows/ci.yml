@@ -33,6 +33,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # SPEC 7.5: reports advisories at high severity and does not fail the run. Phase 11
+  # makes it fail the tag pipeline.
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm audit --audit-level=high
+        continue-on-error: true
+
   test:
     name: Unit and integration tests (${{ matrix.os }})
     strategy:
