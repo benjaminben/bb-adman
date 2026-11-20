@@ -1,4 +1,5 @@
-// Creates the app window with the SPEC 8.2 settings and the SPEC 8.1 navigation rules.
+// Creates the app window with the SPEC 8.2 settings, the SPEC 8.1 navigation rules and the
+// SPEC 1.3 opening state.
 import { app, BrowserWindow, shell } from 'electron'
 import { fileURLToPath } from 'node:url'
 import { appWindowOptions } from './app-window-options'
@@ -35,7 +36,11 @@ export function createAppWindow(): BrowserWindow {
   win.webContents.on('will-navigate', (event, url) => {
     if (!isAllowedNavigation(url, pageUrl)) event.preventDefault()
   })
-  win.once('ready-to-show', () => win.show())
+  // SPEC 1.3 [D-031]: maximized before it is first shown, on every launch. Never full screen.
+  win.once('ready-to-show', () => {
+    win.maximize()
+    win.show()
+  })
   void win.loadURL(pageUrl)
   return win
 }

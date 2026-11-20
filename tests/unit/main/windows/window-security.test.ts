@@ -101,3 +101,11 @@ describe('navigation and new windows [SPEC 8.1]', () => {
     expect(isAllowedNavigation('http://localhost:5174/', 'http://localhost:5173/')).toBe(false)
   })
 })
+
+describe('app window size [SPEC 1.3, D-031]', () => {
+  it('keeps 1280 x 820 to return to, 900 x 600 as the smallest, and never sets fullscreen', () => {
+    const opts = appWindowOptions('/app/preload.cjs')
+    expect(opts).toMatchObject({ width: 1280, height: 820, minWidth: 900, minHeight: 600 })
+    expect(opts).not.toHaveProperty('fullscreen')
+  })
+})
