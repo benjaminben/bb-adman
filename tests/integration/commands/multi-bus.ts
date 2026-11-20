@@ -95,7 +95,7 @@ export function makeMultiBus(opts: {
     undo,
     registry,
     projects: handles.map((h) => ({
-      projectId: h.meta.projectId,
+      projectId: h.projectId,
       db: h.db,
       value: () => readValue(h.db),
     })),

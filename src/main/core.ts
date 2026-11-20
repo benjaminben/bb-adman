@@ -86,9 +86,9 @@ export function createCore(opts: CoreOptions) {
     log,
     closeAll(): void {
       for (const handle of projects.all()) {
-        projects.remove(handle.meta.projectId)
+        projects.remove(handle.projectId)
         closeProjectFile(handle)
-        undo.dropProject(handle.meta.projectId)
+        undo.dropProject(handle.projectId)
       }
     },
   }

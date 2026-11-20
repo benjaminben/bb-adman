@@ -26,8 +26,9 @@ export function projectCreate(deps: ProjectCommandDeps) {
         now,
       })
       deps.projects.add(handle)
-      deps.settings.touchRecent({ path: handle.filePath, name: handle.meta.name }, now)
-      return { data: summary(handle), log: { projectId: handle.meta.projectId } }
+      const data = summary(handle)
+      deps.settings.touchRecent({ path: handle.filePath, name: data.name }, now)
+      return { data, log: { projectId: handle.projectId } }
     },
   })
 }

@@ -8,13 +8,14 @@ import * as schema from './schema'
 import { bundledMigrations, type Migration } from './bundled-migrations'
 import { readMeta, readSchemaVersion, writeMeta, notAProject } from './meta'
 import { AppError } from '../../shared/schemas/result'
-import type { ProjectMeta } from '../../shared/schemas/project'
 
+// Only the project ID is kept in memory; project_meta is the owner of every other value
+// and readers call readMeta (SPEC 3.3).
 export type ProjectHandle = {
   db: Database.Database
   orm: BetterSQLite3Database<typeof schema>
   filePath: string
-  meta: ProjectMeta
+  projectId: string
 }
 
 export const NEWER_VERSION_MESSAGE =
@@ -77,7 +78,8 @@ function runMigrations(db: Database.Database, migrations: Migration[], from: num
 }
 
 function handle(db: Database.Database, filePath: string): ProjectHandle {
-  return { db, orm: drizzle({ client: db, schema }), filePath, meta: readMeta(db) }
+  const { projectId } = readMeta(db)
+  return { db, orm: drizzle({ client: db, schema }), filePath, projectId }
 }
 
 export function createProjectFile(opts: {

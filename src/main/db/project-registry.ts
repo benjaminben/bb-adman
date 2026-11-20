@@ -2,6 +2,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { ProjectHandle } from './project-file'
+import { readMeta } from './meta'
 import { AppError } from '../../shared/schemas/result'
 import type { OpenProjectSummary } from '../../shared/schemas/project'
 
@@ -24,7 +25,7 @@ export function createProjectRegistry() {
 
   return {
     add(handle: ProjectHandle) {
-      open.set(handle.meta.projectId, handle)
+      open.set(handle.projectId, handle)
     },
     get(projectId: string): ProjectHandle | undefined {
       return open.get(projectId)
@@ -51,8 +52,8 @@ export function createProjectRegistry() {
     },
     summaries(): OpenProjectSummary[] {
       return [...open.values()].map((h) => ({
-        projectId: h.meta.projectId,
-        name: h.meta.name,
+        projectId: h.projectId,
+        name: readMeta(h.db).name,
         filePath: h.filePath,
       }))
     },

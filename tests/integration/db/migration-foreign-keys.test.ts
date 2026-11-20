@@ -8,6 +8,7 @@ import {
   openProjectFile,
   closeProjectFile,
 } from '../../../src/main/db/project-file'
+import { readMeta } from '../../../src/main/db/meta'
 import { bundledMigrations, type Migration } from '../../../src/main/db/bundled-migrations'
 import { AppError } from '../../../src/shared/schemas/result'
 
@@ -73,7 +74,7 @@ describe('migration runner and foreign keys [SPEC 3.8]', () => {
       appVersion: '0.2.0',
       migrations: [...v1, rebuildParent],
     })
-    expect(h.meta.schemaVersion).toBe(v1.length + 1)
+    expect(readMeta(h.db).schemaVersion).toBe(v1.length + 1)
     expect(h.db.prepare('SELECT id FROM child_test ORDER BY id').all()).toEqual([
       { id: 'c1' },
       { id: 'c2' },

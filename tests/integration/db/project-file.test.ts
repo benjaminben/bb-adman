@@ -8,6 +8,7 @@ import {
   openProjectFile,
   closeProjectFile,
 } from '../../../src/main/db/project-file'
+import { readMeta } from '../../../src/main/db/meta'
 import { bundledMigrations } from '../../../src/main/db/bundled-migrations'
 import { AppError } from '../../../src/shared/schemas/result'
 
@@ -61,7 +62,7 @@ describe('project file schema [SPEC 3.3]', () => {
   it('writes the project_meta keys', () => {
     const file = path.join(dir, 'Summer.adman')
     const h = createProjectFile({ filePath: file, name: 'Summer', appVersion: '0.1.0', now: NOW })
-    expect(h.meta).toMatchObject({
+    expect(readMeta(h.db)).toMatchObject({
       name: 'Summer',
       schemaVersion: bundledMigrations.length,
       createdAppVersion: '0.1.0',
@@ -69,7 +70,7 @@ describe('project file schema [SPEC 3.3]', () => {
       assetsDirAbs: path.join(dir, 'Summer Assets'),
       createdAt: NOW,
     })
-    expect(h.meta.projectId).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/)
+    expect(h.projectId).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/)
     closeProjectFile(h)
   })
 
@@ -127,11 +128,11 @@ describe('project file open settings [SPEC 3.1]', () => {
   it('leaves exactly one file when closed, and it reopens', () => {
     const file = path.join(dir, 'A.adman')
     const h = createProjectFile({ filePath: file, name: 'A', appVersion: '0.1.0', now: NOW })
-    const projectId = h.meta.projectId
+    const projectId = h.projectId
     closeProjectFile(h)
     expect(fs.readdirSync(dir)).toEqual(['A.adman'])
     const again = openProjectFile({ filePath: file, appVersion: '0.1.0' })
-    expect(again.meta.projectId).toBe(projectId)
+    expect(again.projectId).toBe(projectId)
     closeProjectFile(again)
   })
 
@@ -198,7 +199,7 @@ describe('project file versions [SPEC 3.8]', () => {
       { tag: '9999_test', statements: ['CREATE TABLE extra_test (id TEXT PRIMARY KEY)'] },
     ]
     const h = openProjectFile({ filePath: file, appVersion: '0.2.0', migrations: v2 })
-    expect(h.meta.schemaVersion).toBe(v2.length)
+    expect(readMeta(h.db).schemaVersion).toBe(v2.length)
     expect(
       h.db.prepare("SELECT name FROM sqlite_master WHERE name = 'extra_test'").get(),
     ).toBeTruthy()
@@ -231,7 +232,7 @@ describe('project file versions [SPEC 3.8]', () => {
       openProjectFile({ filePath: file, appVersion: '0.2.0', migrations: bad }),
     ).toThrow()
     const h = openProjectFile({ filePath: file, appVersion: '0.1.0', migrations: v1 })
-    expect(h.meta.schemaVersion).toBe(v1.length)
+    expect(readMeta(h.db).schemaVersion).toBe(v1.length)
     expect(
       h.db.prepare("SELECT name FROM sqlite_master WHERE name = 'ok_test'").get(),
     ).toBeUndefined()

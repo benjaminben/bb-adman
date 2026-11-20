@@ -17,7 +17,7 @@ export function projectOpen(deps: ProjectCommandDeps) {
       filePath: path.resolve(filePath),
       appVersion: deps.appVersion,
     })
-    if (deps.projects.get(handle.meta.projectId)) {
+    if (deps.projects.get(handle.projectId)) {
       closeProjectFile(handle)
       throw new AppError('RULE_VIOLATION', DUPLICATE_MESSAGE, { reason: 'duplicate_project' })
     }
@@ -36,8 +36,9 @@ export function projectOpen(deps: ProjectCommandDeps) {
       const now = deps.now().toISOString()
       // Opening a project that is already open shows its tab instead of failing on the lock.
       const handle = deps.projects.findByPath(input.filePath) ?? openNew(input.filePath)
-      deps.settings.touchRecent({ path: handle.filePath, name: handle.meta.name }, now)
-      return { data: summary(handle), log: { projectId: handle.meta.projectId } }
+      const data = summary(handle)
+      deps.settings.touchRecent({ path: handle.filePath, name: data.name }, now)
+      return { data, log: { projectId: handle.projectId } }
     },
   })
 }

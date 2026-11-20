@@ -88,7 +88,7 @@ export function makeBusFixture(
     events,
     undo,
     projects,
-    projectId: project.meta.projectId,
+    projectId: project.projectId,
     value: () => readValue(project.db),
     logLines: (): Array<Record<string, unknown>> => {
       const file = path.join(logDir, 'activity-2026-11-20.jsonl')
