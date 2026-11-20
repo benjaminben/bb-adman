@@ -15,7 +15,7 @@ export function projectClose(deps: ProjectCommandDeps) {
       if (!handle) throw new AppError('NOT_FOUND', 'That project is not open.')
       closeProjectFile(handle)
       deps.undo.dropProject(input.projectId)
-      return { data: { projectId: input.projectId } }
+      return { data: { projectId: input.projectId }, log: { projectId: input.projectId } }
     },
   })
 }

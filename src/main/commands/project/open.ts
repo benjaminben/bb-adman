@@ -22,7 +22,7 @@ export function projectOpen(deps: ProjectCommandDeps) {
         openProjectFile({ filePath: path.resolve(input.filePath), appVersion: deps.appVersion })
       deps.projects.add(handle)
       deps.settings.touchRecent({ path: handle.filePath, name: handle.meta.name }, now)
-      return { data: summary(handle) }
+      return { data: summary(handle), log: { projectId: handle.meta.projectId } }
     },
   })
 }

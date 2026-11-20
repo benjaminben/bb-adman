@@ -65,17 +65,7 @@
     "esbuild@0.18.20": true,
     "esbuild@0.25.12": true,
     "esbuild@0.28.2": true,
-    "better-sqlite3@13.2.0": true,
-    "electron-winstaller@5.4.0": true,
-    "electron@45": [
-      null,
-      null,
-      null,
-      null,
-      [
-        null,
-        true
-      ]
-    ]
+    "better-sqlite3@13.2.0": false,
+    "electron-winstaller@5.4.0": true
   }
 }

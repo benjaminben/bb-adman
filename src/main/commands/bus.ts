@@ -112,7 +112,7 @@ export function createCommandBus(deps: BusDeps): CommandBus {
       if (!parsed.ok)
         throw new AppError('INVALID_INPUT', 'Some values are not valid.', { issues: parsed.issues })
       const run = await runHandler(handler, parsed.input, opts, commandId)
-      projectId = run.projectId
+      projectId = run.projectId ?? run.result.log?.projectId ?? null
       logIds = run.result.log
       recordUndo(projectId, run.result, opts)
       if (projectId && !run.changes.empty) {

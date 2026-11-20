@@ -21,7 +21,8 @@ export type ProjectContext = BaseContext & { project: ProjectHandle }
 export type HandlerResult<O> = {
   data: O
   inverse?: { scope: UndoScope; call: CommandCall }
-  log?: { campaignId?: string; variantId?: string }
+  // IDs for the log line when the bus cannot know them from the input (SPEC 9.1).
+  log?: { projectId?: string; campaignId?: string; variantId?: string }
 }
 
 type Parsed = { ok: true; input: unknown } | { ok: false; issues: string[] }

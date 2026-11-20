@@ -81,3 +81,23 @@ describe('project.create [FR-002, FR-004, R-06]', () => {
     expect(fs.readdirSync(f.projectsDir)).toEqual([])
   })
 })
+
+describe('project commands in the activity log [SPEC 9.1]', () => {
+  it('logs project.create, project.open and project.close with the project ID', async () => {
+    f = makeFixture()
+    const p = data<Opened>(await f.user('project.create', { name: 'A', location: f.projectsDir }))
+    await f.user('project.close', { projectId: p.projectId })
+    await f.user('project.open', { filePath: p.filePath })
+    const lines = f
+      .readLogs()
+      .trim()
+      .split('\n')
+      .map((l) => JSON.parse(l) as { name: string; projectId: string | null })
+      .filter((l) => l.name.startsWith('project.'))
+    expect(lines.map((l) => [l.name, l.projectId])).toEqual([
+      ['project.create', p.projectId],
+      ['project.close', p.projectId],
+      ['project.open', p.projectId],
+    ])
+  })
+})
