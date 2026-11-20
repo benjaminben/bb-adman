@@ -42,6 +42,7 @@ type LogIds = HandlerResult<unknown>['log']
 type Line = { projectId: string | null; ids: LogIds }
 
 const INVALID = 'Some values are not valid.'
+const UNDO_PREPARE_FAILED = 'Clean-up after a failed command did not finish.'
 
 export function createCommandBus(deps: BusDeps): CommandBus {
   const handlers = new Map(deps.handlers.map((h) => [h.name, h]))
@@ -69,7 +70,23 @@ export function createCommandBus(deps: BusDeps): CommandBus {
     projectId: string | null,
   ): Promise<ProjectRun> {
     const base = { actor: opts.actor, commandId }
-    if (projectId) return runInProject(deps.projects, handler, input, base, projectId)
+    if (projectId) {
+      const logCleanup = (e: unknown) => {
+        deps.log.write({
+          level: 'warn',
+          event: 'command',
+          name: handler.name,
+          actor: opts.actor,
+          agentClient: opts.agentClient ?? null,
+          projectId,
+          ok: false,
+          errorKind: null,
+          message: UNDO_PREPARE_FAILED,
+          context: { commandId, step: 'undoPrepare', error: errorContext(e) },
+        })
+      }
+      return runInProject(deps.projects, handler, input, base, projectId, logCleanup)
+    }
     return { result: await handler.run(base, input), changes: null }
   }
 

@@ -13,6 +13,7 @@ export async function runInProject(
   input: unknown,
   base: BaseContext,
   projectId: string,
+  onUndoPrepareError: (e: unknown) => void,
 ): Promise<ProjectRun> {
   const prepareCtx = {
     actor: base.actor,
@@ -29,18 +30,22 @@ export async function runInProject(
       return { result, changes: changes.read(project.db) }
     })()
   } catch (e) {
-    await undoPrepare(handler, prepared)
+    await undoPrepare(handler, prepared, onUndoPrepareError)
     throw e
   }
 }
 
 // A file left over by a failed undoPrepare is harmless (SPEC 3.6), so its own failure
-// does not replace the error that stopped the command.
-async function undoPrepare(handler: CommandHandler, prepared: unknown): Promise<void> {
+// does not replace the error that stopped the command. It is reported for the log.
+async function undoPrepare(
+  handler: CommandHandler,
+  prepared: unknown,
+  onError: (e: unknown) => void,
+): Promise<void> {
   if (!handler.undoPrepare) return
   try {
     await handler.undoPrepare(prepared)
-  } catch {
-    return
+  } catch (e) {
+    onError(e)
   }
 }
