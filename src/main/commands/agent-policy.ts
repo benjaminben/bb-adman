@@ -34,7 +34,7 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'variant.add': allow('add variants'),
   'variant.update': allow('change variants'),
   'variant.delete': ask('delete variants'),
-  'variant.setFormat': deny('change a variant format'),
+  'variant.setFormat': allow('change a variant format'),
   'layer.create': allow('create layers'),
   'layer.update': allow('change layers'),
   'layer.delete': allow('delete layers'),
