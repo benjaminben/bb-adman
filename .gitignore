@@ -1,0 +1,17 @@
+# SPEC 7.7 repository secrets
+.env*
+*.adman
+*.adman.bak
+* Assets/
+!examples/**
+resources/ffmpeg/
+out/
+dist/
+test-results/
+
+# tooling
+node_modules/
+coverage/
+playwright-report/
+.DS_Store
+*.log
