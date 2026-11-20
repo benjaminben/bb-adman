@@ -90,6 +90,27 @@ describe('details.reason on Phase 1 errors [SPEC 4.1]', () => {
     }
   })
 
+  it('newer_version: project.open of a file made by a newer version of the app [DEV-05]', async () => {
+    f = makeFixture()
+    const a = data<{ projectId: string; filePath: string }>(
+      await f.user('project.create', { name: 'A', location: f.projectsDir }),
+    )
+    data(await f.user('project.close', { projectId: a.projectId }))
+    const raw = new Database(a.filePath)
+    raw.prepare("UPDATE project_meta SET value = '999' WHERE key = 'schema_version'").run()
+    raw.close()
+    expect(await f.user('project.open', { filePath: a.filePath })).toEqual({
+      ok: false,
+      error: {
+        code: 'RULE_VIOLATION',
+        message:
+          'This project was made with a newer version of the app. Download the latest version to open it.',
+        details: { reason: 'newer_version' },
+      },
+    })
+    expect(f.core.projects.all()).toEqual([])
+  })
+
   it('secure_storage_unavailable: secret.set when the computer cannot store keys securely', async () => {
     f = makeFixture({ crypto: fakeCrypto(false) })
     expect(await f.user('secret.set', { name: 'gemini.apiKey', value: 'abcdefgh' })).toMatchObject({
