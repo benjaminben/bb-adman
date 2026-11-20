@@ -7,3 +7,5 @@ export const undoScopeSchema = z
 
 export const historyInput = z.object({ scope: undoScopeSchema })
 export type HistoryInput = z.infer<typeof historyInput>
+
+export type UndoStateResult = { canUndo: boolean; canRedo: boolean }
