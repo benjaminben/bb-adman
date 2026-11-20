@@ -91,7 +91,7 @@ const cases: Case[] = [
   },
   {
     title: 'project.open PROJECT_LOCKED',
-    arrange: async (f) => {
+    arrange: async () => {
       const other = makeFixture()
       fixtures.push(other)
       const a = await create(other, 'A')
