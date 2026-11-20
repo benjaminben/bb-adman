@@ -12,6 +12,7 @@ export default defineConfig({
             'tests/unit/main/**/*.test.ts',
             'tests/unit/shared/**/*.test.ts',
             'tests/unit/config/**/*.test.ts',
+            'tests/unit/preload/**/*.test.ts',
             'tests/integration/**/*.test.ts',
           ],
         },
