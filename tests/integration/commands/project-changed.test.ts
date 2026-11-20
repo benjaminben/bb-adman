@@ -50,6 +50,28 @@ const handlers = () => [
     },
   }),
   defineCommand({
+    name: 'campaign.delete',
+    input,
+    projectId: (i) => i.projectId,
+    run(ctx, i) {
+      const db = ctx.project.db
+      const links = db
+        .prepare(
+          'SELECT campaign_id AS campaignId, subject_id AS subjectId FROM campaign_subject WHERE campaign_id = ?',
+        )
+        .all(i.id) as Array<Record<string, unknown>>
+      const directions = db
+        .prepare('SELECT id FROM direction WHERE campaign_id = ?')
+        .all(i.id) as Array<Record<string, unknown>>
+      db.prepare('DELETE FROM campaign WHERE id = ?').run(i.id)
+      for (const l of links) ctx.changes.touch('campaign_subject', l)
+      for (const d of directions) ctx.changes.touch('direction', d)
+      ctx.changes.touch('rule_set', { campaignId: i.id })
+      ctx.changes.touch('campaign', { id: i.id })
+      return { data: null }
+    },
+  }),
+  defineCommand({
     name: 'campaign.rename',
     input,
     projectId: (i) => i.projectId,
@@ -95,6 +117,32 @@ describe('project.changed rows: touch, then the bus reads them back [SPEC 4.4]',
     expect(event?.name === 'project.changed' && event.payload.changed.asset?.[0]).toMatchObject({
       id: 'a1',
       subjectId: null,
+    })
+  })
+
+  it('names every child removed by a cascade, and a join-table row by its two-part key', async () => {
+    const { f, p, target } = setup()
+    insertCampaign(p.db, 'c1')
+    p.db.prepare("INSERT INTO subject (id, name, created_at) VALUES ('s1', 'Shoe', 'x')").run()
+    p.db.prepare("INSERT INTO campaign_subject (campaign_id, subject_id) VALUES ('c1', 's1')").run()
+    p.db.prepare("INSERT INTO rule_set (campaign_id) VALUES ('c1')").run()
+    p.db
+      .prepare(
+        "INSERT INTO direction (id, campaign_id, name, master_variant_id, sort) VALUES ('d1', 'c1', 'A', 'v1', 0)",
+      )
+      .run()
+    await expectChanges(target, () =>
+      f.bus.execute('campaign.delete', { projectId: p.projectId, id: 'c1' }, { actor: 'user' }),
+    )
+    const event = f.events[0]
+    expect(event?.name === 'project.changed' && event.payload).toMatchObject({
+      changed: {},
+      removed: {
+        campaign: ['c1'],
+        campaign_subject: ['c1/s1'],
+        rule_set: ['c1'],
+        direction: ['d1'],
+      },
     })
   })
 
