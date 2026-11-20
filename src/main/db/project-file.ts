@@ -55,13 +55,25 @@ function connect(filePath: string, create: boolean): Database.Database {
   }
 }
 
+// SPEC 3.8: SQLite ignores PRAGMA foreign_keys inside a transaction, and a drizzle-kit
+// table rebuild with foreign keys on can fail or delete child rows. So foreign keys are
+// off for the migration and checked by hand before commit. On failure nothing changes.
 function runMigrations(db: Database.Database, migrations: Migration[], from: number): void {
-  db.transaction(() => {
-    for (const migration of migrations.slice(from)) {
-      for (const statement of migration.statements) db.exec(statement)
-    }
-    writeMeta(db, { schemaVersion: migrations.length })
-  })()
+  db.pragma('foreign_keys = OFF')
+  try {
+    db.transaction(() => {
+      for (const migration of migrations.slice(from)) {
+        for (const statement of migration.statements) db.exec(statement)
+      }
+      const broken = db.pragma('foreign_key_check') as unknown[]
+      if (broken.length > 0) {
+        throw new Error(`Migration left ${broken.length} rows that break a foreign key.`)
+      }
+      writeMeta(db, { schemaVersion: migrations.length })
+    })()
+  } finally {
+    db.pragma('foreign_keys = ON')
+  }
 }
 
 function handle(db: Database.Database, filePath: string): ProjectHandle {
