@@ -1,6 +1,7 @@
 // The project files open in this app, by project ID.
 import path from 'node:path'
 import type { ProjectHandle } from './project-file'
+import { AppError } from '../../shared/schemas/result'
 import type { OpenProjectSummary } from '../../shared/schemas/project'
 
 export type ProjectRegistry = ReturnType<typeof createProjectRegistry>
@@ -14,6 +15,12 @@ export function createProjectRegistry() {
     },
     get(projectId: string): ProjectHandle | undefined {
       return open.get(projectId)
+    },
+    // The open project, or NOT_FOUND (SPEC 4.1). Nothing searches other projects.
+    requireOpen(projectId: string): ProjectHandle {
+      const handle = open.get(projectId)
+      if (!handle) throw new AppError('NOT_FOUND', 'That project is not open.', { projectId })
+      return handle
     },
     remove(projectId: string): ProjectHandle | undefined {
       const handle = open.get(projectId)

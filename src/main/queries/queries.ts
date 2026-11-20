@@ -42,9 +42,7 @@ export function createQueries(deps: QueryDeps) {
       const parsed = historyInput.safeParse(raw)
       if (!parsed.success) throw new AppError('INVALID_INPUT', 'Some values are not valid.')
       const { projectId, scope } = parsed.data
-      if (!deps.projects.get(projectId)) {
-        throw new AppError('NOT_FOUND', 'That project is not open.', { projectId })
-      }
+      deps.projects.requireOpen(projectId)
       return deps.undo.state(projectId, scope)
     },
   }

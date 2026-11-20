@@ -1,5 +1,6 @@
-// The command bus (SPEC 1.3, 3.6, 5.2): validates, applies the agent policy, runs one
-// transaction, records undo, emits events and writes the log.
+// The command bus (SPEC 3.6, 4.1, 5.2). Fixed order: deny check, find the handler and
+// validate, find the project, ask, run. Records undo, emits events, writes the log and
+// never throws.
 import { ulid } from 'ulid'
 import { agentPolicyFor, denialMessage } from './agent-policy'
 import { createChangeRecorder } from './change-recorder'
@@ -9,6 +10,7 @@ import type { ProjectRegistry } from '../db/project-registry'
 import type { UndoLists, UndoScope } from '../history/undo-lists'
 import type { ActivityLog } from '../log/activity-log'
 import { errorContext } from '../log/error-context'
+import { historyInput } from '../../shared/schemas/commands/history'
 import { AppError, fail, internalError, ok, type Result } from '../../shared/schemas/result'
 import type { Actor, EventMap, EventName } from '../../shared/schemas/events'
 
@@ -36,20 +38,27 @@ export type BusDeps = {
   askPermission: (request: PermissionRequest) => Promise<boolean>
 }
 
+type LogIds = HandlerResult<unknown>['log']
+type Line = { projectId: string | null; ids: LogIds }
+
+const INVALID = 'Some values are not valid.'
+
 export function createCommandBus(deps: BusDeps): CommandBus {
   const handlers = new Map(deps.handlers.map((h) => [h.name, h]))
 
-  async function guardAgent(name: string, opts: ExecuteOptions): Promise<void> {
-    if (opts.actor !== 'agent') return
-    const policy = agentPolicyFor(name)
-    if (policy === 'deny') throw new AppError('AGENT_DENIED', denialMessage(name))
-    if (policy === 'ask') {
-      const allowed = await deps.askPermission({
-        command: name,
-        agentClient: opts.agentClient ?? null,
-      })
-      if (!allowed) throw new AppError('AGENT_REFUSED', 'The user did not allow this action.')
+  function denyCheck(name: string, opts: ExecuteOptions): void {
+    if (opts.actor === 'agent' && agentPolicyFor(name) === 'deny') {
+      throw new AppError('AGENT_DENIED', denialMessage(name))
     }
+  }
+
+  async function askCheck(name: string, opts: ExecuteOptions): Promise<void> {
+    if (opts.actor !== 'agent' || agentPolicyFor(name) !== 'ask') return
+    const allowed = await deps.askPermission({
+      command: name,
+      agentClient: opts.agentClient ?? null,
+    })
+    if (!allowed) throw new AppError('AGENT_REFUSED', 'The user did not allow this action.')
   }
 
   async function runHandler(
@@ -57,15 +66,13 @@ export function createCommandBus(deps: BusDeps): CommandBus {
     input: unknown,
     opts: ExecuteOptions,
     commandId: string,
+    projectId: string | null,
   ) {
     const recorder = createChangeRecorder()
     const base = { actor: opts.actor, commandId, changes: recorder }
-    let projectId: string | null = null
     let result: HandlerResult<unknown>
-    if (handler.projectIdOf) {
-      projectId = handler.projectIdOf(input)
-      const project = deps.projects.get(projectId)
-      if (!project) throw new AppError('NOT_FOUND', 'That project is not open.', { projectId })
+    if (projectId) {
+      const project = deps.projects.requireOpen(projectId)
       result = project.db.transaction(() => {
         const out = handler.run({ ...base, project }, input)
         if (out instanceof Promise) throw new Error(`${handler.name} must run synchronously`)
@@ -74,7 +81,7 @@ export function createCommandBus(deps: BusDeps): CommandBus {
     } else {
       result = await handler.run(base, input)
     }
-    return { result, projectId, changes: recorder.collect() }
+    return { result, changes: recorder.collect() }
   }
 
   function recordUndo(
@@ -88,58 +95,69 @@ export function createCommandBus(deps: BusDeps): CommandBus {
     else deps.undo.record(projectId, scope, call, { fromRedo: opts.replay?.direction === 'redo' })
   }
 
+  async function dispatch(
+    name: string,
+    raw: unknown,
+    opts: ExecuteOptions,
+    commandId: string,
+    line: Line,
+  ) {
+    denyCheck(name, opts)
+    if (name === 'history.undo' || name === 'history.redo') {
+      const parsed = historyInput.safeParse(raw)
+      if (!parsed.success) throw new AppError('INVALID_INPUT', INVALID)
+      deps.projects.requireOpen(parsed.data.projectId)
+      line.projectId = parsed.data.projectId
+      await askCheck(name, opts)
+      return runHistory(name, parsed.data, opts, { undo: deps.undo, execute })
+    }
+    const handler = handlers.get(name)
+    if (!handler) throw new AppError('INVALID_INPUT', `Unknown command: ${name}`)
+    const parsed = handler.parse(raw)
+    if (!parsed.ok) throw new AppError('INVALID_INPUT', INVALID, { issues: parsed.issues })
+    const projectId = handler.projectIdOf?.(parsed.input) ?? null
+    if (projectId) {
+      deps.projects.requireOpen(projectId)
+      line.projectId = projectId
+    }
+    await askCheck(name, opts)
+    const run = await runHandler(handler, parsed.input, opts, commandId, projectId)
+    line.projectId = projectId ?? run.result.log?.projectId ?? null
+    line.ids = run.result.log
+    recordUndo(line.projectId, run.result, opts)
+    if (line.projectId && !run.changes.empty) {
+      deps.emit({
+        name: 'project.changed',
+        payload: { projectId: line.projectId, ...run.changes.rows, actor: opts.actor },
+      })
+    }
+    if (handler.changesAppState) deps.emit({ name: 'app.stateChanged', payload: {} })
+    return run.result.data
+  }
+
   async function execute(
     name: string,
     raw: unknown,
     opts: ExecuteOptions,
   ): Promise<Result<unknown>> {
     const commandId = ulid()
-    let projectId: string | null = null
-    let logIds: HandlerResult<unknown>['log'] = undefined
+    const line: Line = { projectId: null, ids: undefined }
     try {
-      await guardAgent(name, opts)
-      if (name === 'history.undo' || name === 'history.redo') {
-        const out = await runHistory(name, raw, opts, {
-          undo: deps.undo,
-          projects: deps.projects,
-          execute,
-        })
-        projectId = out.projectId
-        return finish(ok(out.data))
-      }
-      const handler = handlers.get(name)
-      if (!handler) throw new AppError('INVALID_INPUT', `Unknown command: ${name}`)
-      const parsed = handler.parse(raw)
-      if (!parsed.ok)
-        throw new AppError('INVALID_INPUT', 'Some values are not valid.', { issues: parsed.issues })
-      const run = await runHandler(handler, parsed.input, opts, commandId)
-      projectId = run.projectId ?? run.result.log?.projectId ?? null
-      logIds = run.result.log
-      recordUndo(projectId, run.result, opts)
-      if (projectId && !run.changes.empty) {
-        deps.emit({
-          name: 'project.changed',
-          payload: { projectId, ...run.changes.rows, actor: opts.actor },
-        })
-      }
-      if (handler.changesAppState) deps.emit({ name: 'app.stateChanged', payload: {} })
-      return finish(ok(run.result.data))
+      const data = await dispatch(name, raw, opts, commandId, line)
+      writeLog('info', 'ok', null)
+      return ok(data)
     } catch (e) {
-      if (e instanceof AppError) return finish(fail(e.toBody()))
+      if (e instanceof AppError) {
+        writeLog('warn', e.message, e.code)
+        return fail(e.toBody())
+      }
       // The bus never throws: anything unforeseen is logged in full and returned as INTERNAL.
       const body = internalError(commandId)
-      writeLog(false, 'error', body.message, 'INTERNAL', { error: errorContext(e) })
+      writeLog('error', body.message, 'INTERNAL', { error: errorContext(e) })
       return fail(body)
     }
 
-    function finish(result: Result<unknown>): Result<unknown> {
-      if (result.ok) writeLog(true, 'info', 'ok', null)
-      else writeLog(false, 'warn', result.error.message, result.error.code)
-      return result
-    }
-
     function writeLog(
-      okay: boolean,
       level: 'info' | 'warn' | 'error',
       message: string,
       errorKind: string | null,
@@ -151,10 +169,10 @@ export function createCommandBus(deps: BusDeps): CommandBus {
         name,
         actor: opts.actor,
         agentClient: opts.agentClient ?? null,
-        projectId,
-        campaignId: logIds?.campaignId ?? null,
-        variantId: logIds?.variantId ?? null,
-        ok: okay,
+        projectId: line.projectId,
+        campaignId: line.ids?.campaignId ?? null,
+        variantId: line.ids?.variantId ?? null,
+        ok: errorKind === null,
         errorKind,
         message,
         context: {

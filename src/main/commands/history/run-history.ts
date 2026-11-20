@@ -1,33 +1,26 @@
-// history.undo and history.redo (SPEC 4.2). Replays the stored inverse command
-// through the bus, so it gets the same transaction, events and log as any edit.
-import { historyInput } from '../../../shared/schemas/commands/history'
+// history.undo and history.redo (SPEC 4.2). The bus has already validated the input and
+// found the project. Replays the stored inverse through the bus, so it gets the same
+// validation, transaction, events and log as any edit.
+import type { HistoryInput } from '../../../shared/schemas/commands/history'
 import { AppError, type Result } from '../../../shared/schemas/result'
-import type { ProjectRegistry } from '../../db/project-registry'
 import type { UndoLists } from '../../history/undo-lists'
 import type { ExecuteOptions } from '../bus'
 
 type Deps = {
   undo: UndoLists
-  projects: ProjectRegistry
   execute: (name: string, input: unknown, opts: ExecuteOptions) => Promise<Result<unknown>>
 }
 
 export async function runHistory(
   name: 'history.undo' | 'history.redo',
-  raw: unknown,
+  input: HistoryInput,
   opts: ExecuteOptions,
   deps: Deps,
-): Promise<{ projectId: string; data: unknown }> {
-  const parsed = historyInput.safeParse(raw)
-  if (!parsed.success) throw new AppError('INVALID_INPUT', 'Some values are not valid.')
-  const { projectId, scope } = parsed.data
+): Promise<unknown> {
+  const { projectId, scope } = input
   const direction = name === 'history.undo' ? 'undo' : 'redo'
   const nothing = direction === 'undo' ? 'Nothing to undo.' : 'Nothing to redo.'
 
-  // The input names the project; nothing searches other projects (SPEC 4.2).
-  if (!deps.projects.get(projectId)) {
-    throw new AppError('NOT_FOUND', 'That project is not open.', { projectId })
-  }
   const take = direction === 'undo' ? deps.undo.takeUndo : deps.undo.takeRedo
   const call = take(projectId, scope)
   if (!call) throw new AppError('RULE_VIOLATION', nothing)
@@ -38,10 +31,10 @@ export async function runHistory(
     replay: { direction, projectId, scope },
   })
   if (!result.ok) {
-    // Put the entry back so the user can try again after fixing the cause.
+    // Put the entry back in the same place; the other list is not touched (SPEC 4.2).
     if (direction === 'undo') deps.undo.record(projectId, scope, call, { fromRedo: true })
     else deps.undo.recordRedo(projectId, scope, call)
     throw new AppError(result.error.code, result.error.message, result.error.details)
   }
-  return { projectId, data: result.data }
+  return result.data
 }
