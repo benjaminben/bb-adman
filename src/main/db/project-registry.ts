@@ -4,6 +4,8 @@ import type { ProjectHandle } from './project-file'
 import { AppError } from '../../shared/schemas/result'
 import type { OpenProjectSummary } from '../../shared/schemas/project'
 
+export const NOT_OPEN_MESSAGE = 'That project is not open.'
+
 export type ProjectRegistry = ReturnType<typeof createProjectRegistry>
 
 export function createProjectRegistry() {
@@ -19,7 +21,8 @@ export function createProjectRegistry() {
     // The open project, or NOT_FOUND (SPEC 4.1). Nothing searches other projects.
     requireOpen(projectId: string): ProjectHandle {
       const handle = open.get(projectId)
-      if (!handle) throw new AppError('NOT_FOUND', 'That project is not open.', { projectId })
+      if (!handle)
+        throw new AppError('NOT_FOUND', NOT_OPEN_MESSAGE, { projectId, reason: 'project_not_open' })
       return handle
     },
     remove(projectId: string): ProjectHandle | undefined {

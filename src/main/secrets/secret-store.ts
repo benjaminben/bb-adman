@@ -45,7 +45,11 @@ export function createSecretStore(opts: { file: string; crypto: SecretCrypto }) 
       return read()[name]
     },
     set(name: SecretName, value: string): void {
-      if (!opts.crypto.isAvailable()) throw new AppError('RULE_VIOLATION', INSECURE_MESSAGE)
+      if (!opts.crypto.isAvailable()) {
+        throw new AppError('RULE_VIOLATION', INSECURE_MESSAGE, {
+          reason: 'secure_storage_unavailable',
+        })
+      }
       write({ ...read(), [name]: value })
     },
     delete(name: SecretName): void {

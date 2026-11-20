@@ -12,7 +12,11 @@ const KEYS: Record<keyof ProjectMeta, string> = {
   createdAt: 'created_at',
 }
 
-export const NOT_A_PROJECT = 'This file is not an Adman project.'
+export const NOT_A_PROJECT = 'This file is not an Adman project, or it is damaged.'
+
+export function notAProject(): AppError {
+  return new AppError('INVALID_INPUT', NOT_A_PROJECT, { reason: 'not_a_project' })
+}
 
 export function hasMetaTable(db: Database.Database): boolean {
   return (
@@ -23,11 +27,11 @@ export function hasMetaTable(db: Database.Database): boolean {
 }
 
 export function readSchemaVersion(db: Database.Database): number {
-  if (!hasMetaTable(db)) throw new AppError('INVALID_INPUT', NOT_A_PROJECT)
+  if (!hasMetaTable(db)) throw notAProject()
   const row = db.prepare("SELECT value FROM project_meta WHERE key = 'schema_version'").get() as
     { value: string } | undefined
   const version = Number(row?.value)
-  if (!Number.isInteger(version)) throw new AppError('INVALID_INPUT', NOT_A_PROJECT)
+  if (!Number.isInteger(version)) throw notAProject()
   return version
 }
 
@@ -50,6 +54,6 @@ export function readMeta(db: Database.Database): ProjectMeta {
     Object.entries(KEYS).map(([field, key]) => [field, byKey.get(key)]),
   )
   const parsed = projectMetaSchema.safeParse({ ...raw, schemaVersion: Number(raw.schemaVersion) })
-  if (!parsed.success) throw new AppError('INVALID_INPUT', NOT_A_PROJECT)
+  if (!parsed.success) throw notAProject()
   return parsed.data
 }

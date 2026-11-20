@@ -6,7 +6,7 @@ import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
 import { ulid } from 'ulid'
 import * as schema from './schema'
 import { bundledMigrations, type Migration } from './bundled-migrations'
-import { readMeta, readSchemaVersion, writeMeta, NOT_A_PROJECT } from './meta'
+import { readMeta, readSchemaVersion, writeMeta, notAProject } from './meta'
 import { AppError } from '../../shared/schemas/result'
 import type { ProjectMeta } from '../../shared/schemas/project'
 
@@ -32,7 +32,7 @@ function mapOpenError(e: unknown): unknown {
     return new AppError('PROJECT_LOCKED', LOCKED_MESSAGE)
   }
   if (code.startsWith('SQLITE_NOTADB') || code.startsWith('SQLITE_CORRUPT')) {
-    return new AppError('INVALID_INPUT', NOT_A_PROJECT)
+    return notAProject()
   }
   return e
 }
@@ -79,6 +79,7 @@ export function createProjectFile(opts: {
   if (fs.existsSync(opts.filePath)) {
     throw new AppError('RULE_VIOLATION', 'A file with this name already exists in that folder.', {
       filePath: opts.filePath,
+      reason: 'file_exists',
     })
   }
   const db = connect(opts.filePath, true)

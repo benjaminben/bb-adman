@@ -19,11 +19,14 @@ export async function runHistory(
 ): Promise<unknown> {
   const { projectId, scope } = input
   const direction = name === 'history.undo' ? 'undo' : 'redo'
-  const nothing = direction === 'undo' ? 'Nothing to undo.' : 'Nothing to redo.'
 
   const take = direction === 'undo' ? deps.undo.takeUndo : deps.undo.takeRedo
   const call = take(projectId, scope)
-  if (!call) throw new AppError('RULE_VIOLATION', nothing)
+  if (!call) {
+    throw new AppError('RULE_VIOLATION', `Nothing to ${direction}.`, {
+      reason: `nothing_to_${direction}`,
+    })
+  }
 
   const result = await deps.execute(call.name, call.input, {
     actor: opts.actor,

@@ -2,6 +2,7 @@
 import { defineCommand } from '../types'
 import { closeProjectFile } from '../../db/project-file'
 import type { ProjectCommandDeps } from './deps'
+import { NOT_OPEN_MESSAGE } from '../../db/project-registry'
 import { projectCloseInput } from '../../../shared/schemas/commands/project'
 import { AppError } from '../../../shared/schemas/result'
 
@@ -12,7 +13,12 @@ export function projectClose(deps: ProjectCommandDeps) {
     changesAppState: true,
     run(_ctx, input) {
       const handle = deps.projects.remove(input.projectId)
-      if (!handle) throw new AppError('NOT_FOUND', 'That project is not open.')
+      if (!handle) {
+        throw new AppError('NOT_FOUND', NOT_OPEN_MESSAGE, {
+          projectId: input.projectId,
+          reason: 'project_not_open',
+        })
+      }
       closeProjectFile(handle)
       deps.undo.dropProject(input.projectId)
       return { data: { projectId: input.projectId }, log: { projectId: input.projectId } }
