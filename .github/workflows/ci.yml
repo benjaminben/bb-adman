@@ -68,4 +68,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # SPEC 8.2: right after the build, check the built page carries exactly the strict
+      # policy and no localhost.
       - run: npm run build
+      - run: npm run test:build
