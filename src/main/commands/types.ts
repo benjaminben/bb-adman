@@ -5,19 +5,20 @@ import type { z } from 'zod'
 import type { ProjectHandle } from '../db/project-file'
 import type { CommandCall, UndoScope } from '../history/undo-lists'
 import type { Actor } from '../../shared/schemas/events'
+import type { TableName } from '../../shared/schemas/rows/keys'
 
+// A handler names each row it added, updated or removed; the bus reads them back (SPEC 4.4).
+// `key` holds the table's key fields; a whole row is accepted.
 export type ChangeRecorder = {
-  changed(table: string, row: unknown): void
-  removed(table: string, id: string): void
+  touch(table: TableName, key: Record<string, unknown>): void
 }
 
 export type BaseContext = {
   actor: Actor
   commandId: string
-  changes: ChangeRecorder
 }
 
-export type ProjectContext = BaseContext & { project: ProjectHandle }
+export type ProjectContext = BaseContext & { project: ProjectHandle; changes: ChangeRecorder }
 
 export type PrepareContext = { actor: Actor; commandId: string; project: ProjectHandle }
 

@@ -1,11 +1,16 @@
 // SPEC 4.4 events from the main process to the window. Phase 1 emits
 // project.changed and app.stateChanged; the others arrive with later phases.
+import type { TableName } from './rows/keys'
+
 export type Actor = 'user' | 'agent'
+
+// A row as it leaves the main process (SPEC 4.4): camelCase fields, parsed JSON, booleans.
+export type WireRow = Record<string, unknown>
 
 export type ProjectChangedPayload = {
   projectId: string
-  changed: Record<string, unknown[]>
-  removed: Record<string, string[]>
+  changed: { [table in TableName]?: WireRow[] }
+  removed: { [table in TableName]?: string[] }
   actor: Actor
 }
 

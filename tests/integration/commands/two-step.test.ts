@@ -39,7 +39,7 @@ function twoStep(calls: Calls, gate: () => Promise<void> = async () => {}) {
       ctx.project.db
         .prepare("INSERT INTO project_meta (key, value) VALUES ('test_value', ?)")
         .run(path.basename(prepared.file))
-      ctx.changes.changed('project_meta', { key: 'test_value' })
+      ctx.changes.touch('project_meta', { key: 'test_value' })
       if (i.fail === 'rule') throw new AppError('RULE_VIOLATION', 'No.')
       if (i.fail === 'unknown') throw new Error('broken')
       return { data: { file: path.basename(prepared.file) } }

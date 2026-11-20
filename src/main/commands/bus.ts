@@ -3,9 +3,8 @@
 // never throws.
 import { ulid } from 'ulid'
 import { agentPolicyFor, denialMessage } from './agent-policy'
-import { createChangeRecorder } from './change-recorder'
 import { runHistory } from './history/run-history'
-import { runInProject } from './run-in-project'
+import { runInProject, type ProjectRun } from './run-in-project'
 import type { CommandHandler, HandlerResult } from './types'
 import type { ProjectRegistry } from '../db/project-registry'
 import type { UndoLists, UndoScope } from '../history/undo-lists'
@@ -68,16 +67,10 @@ export function createCommandBus(deps: BusDeps): CommandBus {
     opts: ExecuteOptions,
     commandId: string,
     projectId: string | null,
-  ) {
-    const recorder = createChangeRecorder()
-    const base = { actor: opts.actor, commandId, changes: recorder }
-    let result: HandlerResult<unknown>
-    if (projectId) {
-      result = await runInProject(deps.projects, handler, input, base, projectId)
-    } else {
-      result = await handler.run(base, input)
-    }
-    return { result, changes: recorder.collect() }
+  ): Promise<ProjectRun> {
+    const base = { actor: opts.actor, commandId }
+    if (projectId) return runInProject(deps.projects, handler, input, base, projectId)
+    return { result: await handler.run(base, input), changes: null }
   }
 
   function recordUndo(
@@ -121,10 +114,10 @@ export function createCommandBus(deps: BusDeps): CommandBus {
     line.projectId = projectId ?? run.result.log?.projectId ?? null
     line.ids = run.result.log
     recordUndo(line.projectId, run.result, opts)
-    if (line.projectId && !run.changes.empty) {
+    if (projectId && run.changes) {
       deps.emit({
         name: 'project.changed',
-        payload: { projectId: line.projectId, ...run.changes.rows, actor: opts.actor },
+        payload: { projectId, ...run.changes, actor: opts.actor },
       })
     }
     if (handler.changesAppState) deps.emit({ name: 'app.stateChanged', payload: {} })

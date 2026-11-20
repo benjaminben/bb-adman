@@ -2,21 +2,15 @@
 // and is updated only from project.changed events; nothing is applied optimistically.
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { AdmanApi } from '../../shared/schemas/api'
-import type { Actor, ProjectChangedPayload } from '../../shared/schemas/events'
-
-type Row = Record<string, unknown>
+import type { Actor, ProjectChangedPayload, WireRow } from '../../shared/schemas/events'
+import { rowKey, type TableName } from '../../shared/schemas/rows/keys'
 
 export type ProjectStoreState = {
   projectId: string
-  tables: Record<string, Record<string, Row>>
+  tables: { [table in TableName]?: Record<string, WireRow> }
   lastActor: Actor | null
   apply(payload: ProjectChangedPayload): void
   subscribe(): () => void
-}
-
-function rowId(row: Row): string {
-  const id = row.id ?? row.key ?? row.variant_id ?? row.campaign_id
-  return String(id)
 }
 
 export function createProjectStore(api: AdmanApi, projectId: string): StoreApi<ProjectStoreState> {
@@ -28,14 +22,16 @@ export function createProjectStore(api: AdmanApi, projectId: string): StoreApi<P
     apply(payload) {
       if (payload.projectId !== projectId) return
       const tables = { ...get().tables }
-      for (const [table, rows] of Object.entries(payload.changed)) {
+      for (const [name, rows] of Object.entries(payload.changed)) {
+        const table = name as TableName
         const next = { ...tables[table] }
-        for (const row of rows as Row[]) next[rowId(row)] = row
+        for (const row of rows ?? []) next[rowKey(table, row)] = row
         tables[table] = next
       }
-      for (const [table, ids] of Object.entries(payload.removed)) {
+      for (const [name, keys] of Object.entries(payload.removed)) {
+        const table = name as TableName
         const next = { ...tables[table] }
-        for (const id of ids) delete next[id]
+        for (const key of keys ?? []) delete next[key]
         tables[table] = next
       }
       set({ tables, lastActor: payload.actor })

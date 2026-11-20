@@ -41,7 +41,7 @@ export function setValueHandler(name = 'layer.update'): CommandHandler {
       db.prepare(
         "INSERT INTO project_meta (key, value) VALUES ('test_value', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
       ).run(input.value)
-      ctx.changes.changed('project_meta', { key: 'test_value', value: input.value })
+      ctx.changes.touch('project_meta', { key: 'test_value' })
       if (input.failAfterWrite) throw new AppError('RULE_VIOLATION', 'Stopped after writing.')
       return {
         data: { value: input.value },

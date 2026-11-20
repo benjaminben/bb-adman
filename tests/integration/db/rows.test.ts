@@ -1,0 +1,87 @@
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import { describe, it, expect, afterEach } from 'vitest'
+import {
+  createProjectFile,
+  closeProjectFile,
+  type ProjectHandle,
+} from '../../../src/main/db/project-file'
+import { readWireRow, readWireRows } from '../../../src/main/db/rows'
+import { insertAsset, insertCampaign } from '../row-fixtures'
+
+let dir: string
+let project: ProjectHandle
+afterEach(() => {
+  closeProjectFile(project)
+  fs.rmSync(dir, { recursive: true, force: true })
+})
+
+function setup() {
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-rows-'))
+  project = createProjectFile({
+    filePath: path.join(dir, 'P.adman'),
+    name: 'P',
+    appVersion: '0.1.0',
+    now: 'x',
+  })
+  return project.db
+}
+
+describe('stored row to wire row [SPEC 4.4]', () => {
+  it('names fields in camelCase, gives flags as booleans and empty columns as null', () => {
+    const db = setup()
+    insertAsset(db, { id: 'a1', fontPublishAllowed: 1 })
+    const row = readWireRow(db, 'asset', { id: 'a1' })
+    expect(row).toMatchObject({
+      id: 'a1',
+      subjectId: null,
+      displayName: 'a1.png',
+      byteSize: 10,
+      fontPublishAllowed: true,
+      width: null,
+    })
+    expect(Object.keys(row ?? {}).some((k) => k.includes('_'))).toBe(false)
+  })
+
+  it('parses JSON columns into values', () => {
+    const db = setup()
+    insertCampaign(db, 'c1')
+    expect(readWireRow(db, 'campaign', { id: 'c1' })).toMatchObject({
+      languages: ['en-US'],
+      sizes: [],
+      brief: {},
+    })
+  })
+
+  it('keeps project_meta rows as key and value text', () => {
+    const db = setup()
+    expect(readWireRow(db, 'project_meta', { key: 'name' })).toEqual({ key: 'name', value: 'P' })
+  })
+
+  it('reads a row by a key of two fields, and returns null for a row that is not there', () => {
+    const db = setup()
+    insertCampaign(db, 'c1')
+    db.prepare("INSERT INTO subject (id, name, created_at) VALUES ('s1', 'Shoe', 'x')").run()
+    db.prepare("INSERT INTO campaign_subject (campaign_id, subject_id) VALUES ('c1', 's1')").run()
+    expect(readWireRow(db, 'campaign_subject', { campaignId: 'c1', subjectId: 's1' })).toEqual({
+      campaignId: 'c1',
+      subjectId: 's1',
+    })
+    expect(readWireRow(db, 'campaign_subject', { campaignId: 'c1', subjectId: 's2' })).toBeNull()
+  })
+
+  it('throws when a JSON column holds text that is not JSON', () => {
+    const db = setup()
+    insertCampaign(db, 'c1', { languages: 'not json' })
+    expect(() => readWireRow(db, 'campaign', { id: 'c1' })).toThrow()
+  })
+
+  it('reads every row of a table in wire form', () => {
+    const db = setup()
+    db.prepare("INSERT INTO subject (id, name, created_at) VALUES ('s1', 'Shoe', 'x')").run()
+    expect(readWireRows(db, 'subject')).toEqual([
+      { id: 's1', name: 'Shoe', description: '', createdAt: 'x' },
+    ])
+  })
+})

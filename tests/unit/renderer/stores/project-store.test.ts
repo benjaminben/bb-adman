@@ -47,4 +47,27 @@ describe('project store, one per tab [ADR-003, SPEC 3.6]', () => {
     })
     expect(store.getState().tables.project_meta).toEqual({ name: { key: 'name', value: 'A' } })
   })
+
+  it('keys rows with rowKey, including keys of two fields [SPEC 4.4]', () => {
+    const fake = makeFakeApi()
+    const store = createProjectStore(fake.api, 'P1')
+    store.getState().subscribe()
+    const link = { campaignId: 'c1', subjectId: 's1' }
+    const rules = { campaignId: 'c1', palette: [] }
+    fake.emit('project.changed', {
+      projectId: 'P1',
+      changed: { campaign_subject: [link], rule_set: [rules] },
+      removed: {},
+      actor: 'user',
+    })
+    expect(store.getState().tables.campaign_subject).toEqual({ 'c1/s1': link })
+    expect(store.getState().tables.rule_set).toEqual({ c1: rules })
+    fake.emit('project.changed', {
+      projectId: 'P1',
+      changed: {},
+      removed: { campaign_subject: ['c1/s1'] },
+      actor: 'user',
+    })
+    expect(store.getState().tables.campaign_subject).toEqual({})
+  })
 })

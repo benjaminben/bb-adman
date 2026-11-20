@@ -1,7 +1,11 @@
 // Runs a project-scope handler (SPEC 3.6): prepare outside the transaction, check the
-// project is still open, run inside one transaction, and undo the prepare step if run throws.
+// project is still open, run inside one transaction, read back the rows the handler named
+// (SPEC 4.4), and undo the prepare step if run throws.
 import type { BaseContext, CommandHandler, HandlerResult } from './types'
+import { createChangeRecorder, type ProjectChanges } from './change-recorder'
 import type { ProjectRegistry } from '../db/project-registry'
+
+export type ProjectRun = { result: HandlerResult<unknown>; changes: ProjectChanges | null }
 
 export async function runInProject(
   projects: ProjectRegistry,
@@ -9,7 +13,7 @@ export async function runInProject(
   input: unknown,
   base: BaseContext,
   projectId: string,
-): Promise<HandlerResult<unknown>> {
+): Promise<ProjectRun> {
   const prepareCtx = {
     actor: base.actor,
     commandId: base.commandId,
@@ -18,10 +22,11 @@ export async function runInProject(
   const prepared = handler.prepare ? await handler.prepare(prepareCtx, input) : undefined
   try {
     const project = projects.requireOpen(projectId)
+    const changes = createChangeRecorder()
     return project.db.transaction(() => {
-      const out = handler.run({ ...base, project }, input, prepared)
-      if (out instanceof Promise) throw new Error(`${handler.name} must run synchronously`)
-      return out
+      const result = handler.run({ ...base, project, changes }, input, prepared)
+      if (result instanceof Promise) throw new Error(`${handler.name} must run synchronously`)
+      return { result, changes: changes.read(project.db) }
     })()
   } catch (e) {
     await undoPrepare(handler, prepared)

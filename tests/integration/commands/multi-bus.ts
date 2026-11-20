@@ -41,7 +41,7 @@ export function refusableSet(ctl: Control, name = 'layer.update'): CommandHandle
       db.prepare(
         "INSERT INTO project_meta (key, value) VALUES ('test_value', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
       ).run(input.value)
-      ctx.changes.changed('project_meta', { key: 'test_value', value: input.value })
+      ctx.changes.touch('project_meta', { key: 'test_value' })
       if (ctl.refuse) throw new AppError('RULE_VIOLATION', 'Refused by the test.')
       if (ctl.throwUnknown) throw new Error('boom at /Users/someone/secret/path.adman')
       return {
