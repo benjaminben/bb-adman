@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.adman.app",
+  "productName": "Adman",
+  "directories": {
+    "output": "dist",
+    "buildResources": "resources"
+  },
+  "files": ["out/**", "package.json"],
+  "asarUnpack": ["**/*.node"],
+  "fileAssociations": [
+    {
+      "ext": "adman",
+      "name": "Adman Project",
+      "description": "Adman project",
+      "role": "Editor",
+      "mimeType": "application/x-adman"
+    }
+  ],
+  "mac": {
+    "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }],
+    "category": "public.app-category.graphics-design",
+    "identity": null,
+    "extendInfo": {
+      "UTExportedTypeDeclarations": [
+        {
+          "UTTypeIdentifier": "com.adman.project",
+          "UTTypeDescription": "Adman Project",
+          "UTTypeConformsTo": ["public.data"],
+          "UTTypeTagSpecification": { "public.filename-extension": ["adman"] }
+        }
+      ]
+    }
+  },
+  "win": {
+    "target": [{ "target": "nsis", "arch": ["x64"] }]
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true
+  }
+}
