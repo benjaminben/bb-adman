@@ -38,7 +38,7 @@ describe('project.open [FR-002, FR-003, R-06]', () => {
     const b = await createAndClose(f, 'B')
     await f.user('project.open', { filePath: a.filePath })
     await f.user('project.open', { filePath: b.filePath })
-    const state = data<AppState>(await f.core.query('app.getState', {}))
+    const state = data<AppState>(await f.core.query('app.getState', {}, { actor: 'user' }))
     expect(state.openProjects.map((p) => p.name)).toEqual(['A', 'B'])
   })
 
@@ -48,7 +48,7 @@ describe('project.open [FR-002, FR-003, R-06]', () => {
     const first = data<Opened>(await f.user('project.open', { filePath: a.filePath }))
     const second = data<Opened>(await f.user('project.open', { filePath: a.filePath }))
     expect(second).toEqual(first)
-    const state = data<AppState>(await f.core.query('app.getState', {}))
+    const state = data<AppState>(await f.core.query('app.getState', {}, { actor: 'user' }))
     expect(state.openProjects).toHaveLength(1)
   })
 
@@ -57,14 +57,14 @@ describe('project.open [FR-002, FR-003, R-06]', () => {
     const a = await createAndClose(f, 'A')
     await createAndClose(f, 'B')
     await f.user('project.open', { filePath: a.filePath })
-    const state = data<AppState>(await f.core.query('app.getState', {}))
+    const state = data<AppState>(await f.core.query('app.getState', {}, { actor: 'user' }))
     expect(state.recentProjects.map((r) => r.name)).toEqual(['A', 'B'])
   })
 
   it('keeps at most 20 recent projects', async () => {
     const f = fixture()
     for (let i = 0; i < 22; i++) await createAndClose(f, `P${i}`)
-    const state = data<AppState>(await f.core.query('app.getState', {}))
+    const state = data<AppState>(await f.core.query('app.getState', {}, { actor: 'user' }))
     expect(state.recentProjects).toHaveLength(20)
     expect(state.recentProjects[0]?.name).toBe('P21')
   })

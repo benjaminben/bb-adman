@@ -41,6 +41,20 @@ describe('IPC bridge to the bus [SPEC 4.1]', () => {
     expect(await query?.({}, 'app.getState', {})).toEqual(ok({ name: 'app.getState', input: {} }))
   })
 
+  it('always runs window queries as the user too [SPEC 4.1]', async () => {
+    const seen: unknown[] = []
+    const ipc = fakeIpcMain()
+    registerIpc(ipc, {
+      execute: async () => ok(null),
+      query: async (name, input, opts) => {
+        seen.push({ name, opts })
+        return ok(null)
+      },
+    })
+    await ipc.handlers.get(IPC.query)?.({}, 'app.getState', {}, { actor: 'agent' })
+    expect(seen).toEqual([{ name: 'app.getState', opts: { actor: 'user' } }])
+  })
+
   it('rejects a non-string command name with INVALID_INPUT', async () => {
     const ipc = fakeIpcMain()
     registerIpc(ipc, { execute: async () => ok(null), query: async () => ok(null) })

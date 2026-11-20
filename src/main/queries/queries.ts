@@ -6,6 +6,7 @@ import type { UndoLists } from '../history/undo-lists'
 import { historyInput } from '../../shared/schemas/commands/history'
 import type { AppState, HistoryState, ProviderInfo } from '../../shared/schemas/queries'
 import { AppError, fail, ok, type Result } from '../../shared/schemas/result'
+import type { Actor } from '../../shared/schemas/events'
 
 export type QueryDeps = {
   projects: ProjectRegistry
@@ -15,7 +16,11 @@ export type QueryDeps = {
   providers: ProviderInfo[]
 }
 
-type QueryFn = (input: unknown) => unknown
+// Queries carry an actor set like a command's (SPEC 4.1). No Phase 1 query checks it;
+// mcp.getConnectInfo (Phase 10) refuses the agent.
+export type QueryOptions = { actor: Actor }
+
+type QueryFn = (input: unknown, opts: QueryOptions) => unknown
 
 export function createQueries(deps: QueryDeps) {
   const table: Record<string, QueryFn> = {
@@ -42,11 +47,15 @@ export function createQueries(deps: QueryDeps) {
     },
   }
 
-  return async function query(name: string, input: unknown): Promise<Result<unknown>> {
+  return async function query(
+    name: string,
+    input: unknown,
+    opts: QueryOptions,
+  ): Promise<Result<unknown>> {
     const fn = table[name]
     if (!fn) return fail({ code: 'INVALID_INPUT', message: `Unknown query: ${name}` })
     try {
-      return ok(fn(input))
+      return ok(fn(input, opts))
     } catch (e) {
       if (e instanceof AppError) return fail(e.toBody())
       throw e

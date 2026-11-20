@@ -19,7 +19,7 @@ describe('project.close [FR-006]', () => {
     const f = fixture()
     const p = data<Opened>(await f.user('project.create', { name: 'A', location: f.projectsDir }))
     expect((await f.user('project.close', { projectId: p.projectId })).ok).toBe(true)
-    const state = data<AppState>(await f.core.query('app.getState', {}))
+    const state = data<AppState>(await f.core.query('app.getState', {}, { actor: 'user' }))
     expect(state.openProjects).toEqual([])
   })
 

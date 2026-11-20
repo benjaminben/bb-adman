@@ -8,7 +8,7 @@ let f: Fixture
 afterEach(() => f.cleanup())
 
 const KEY = 'AIzaSyD-secret-key-value-9xQ7'
-const state = async () => data<AppState>(await f.core.query('app.getState', {}))
+const state = async () => data<AppState>(await f.core.query('app.getState', {}, { actor: 'user' }))
 
 function filesUnder(dir: string): string[] {
   return fs
@@ -114,5 +114,20 @@ describe('secret.delete [R-10]', () => {
       ok: false,
       error: { code: 'AGENT_DENIED' },
     })
+  })
+})
+
+describe('app.getState and the MCP access token [SPEC 4.3, 7.7, D-014]', () => {
+  it('lists mcp.token by its last four characters only, like every other secret', async () => {
+    f = makeFixture()
+    const token = 'mcp-token-value-abcdefghijklmn-Zz9Q'
+    f.core.secrets.set('mcp.token', token)
+    await f.user('secret.set', { name: 'gemini.apiKey', value: KEY })
+    const s = await state()
+    expect(s.secrets).toEqual([
+      { name: 'gemini.apiKey', lastFour: '9xQ7' },
+      { name: 'mcp.token', lastFour: 'Zz9Q' },
+    ])
+    expect(JSON.stringify(s)).not.toContain(token)
   })
 })

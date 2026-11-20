@@ -61,10 +61,10 @@ function start(): void {
   })
   registerIpc(ipcMain, {
     execute: (name, input, opts) => ready.bus.execute(name, input, opts),
-    query: (name, input) =>
+    query: (name, input, opts) =>
       (DIALOG_QUERIES as readonly string[]).includes(name)
         ? runDialogQuery(name, input)
-        : ready.query(name, input),
+        : ready.query(name, input, opts),
   })
   createAppWindow()
   for (const filePath of pendingOpens.splice(0)) void openFromSystem(filePath)

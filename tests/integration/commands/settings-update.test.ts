@@ -7,7 +7,7 @@ import type { AppState } from '../../../src/shared/schemas/queries'
 let f: Fixture
 afterEach(() => f.cleanup())
 
-const state = async () => data<AppState>(await f.core.query('app.getState', {}))
+const state = async () => data<AppState>(await f.core.query('app.getState', {}, { actor: 'user' }))
 
 describe('settings defaults [SPEC 13.1]', () => {
   it('starts from the SPEC 13.1 defaults on first run', async () => {

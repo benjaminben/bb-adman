@@ -32,6 +32,7 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny'> = {
   'variant.add': 'allow',
   'variant.update': 'allow',
   'variant.delete': 'ask',
+  'variant.setFormat': 'deny',
   'layer.create': 'allow',
   'layer.update': 'allow',
   'layer.delete': 'allow',

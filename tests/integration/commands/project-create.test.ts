@@ -17,7 +17,7 @@ describe('project.create [FR-002, FR-004, R-06]', () => {
     )
     expect(result.filePath).toBe(path.join(f.projectsDir, 'Summer.adman'))
     expect(fs.existsSync(result.filePath)).toBe(true)
-    const state = data<AppState>(await f.core.query('app.getState', {}))
+    const state = data<AppState>(await f.core.query('app.getState', {}, { actor: 'user' }))
     expect(state.openProjects).toEqual([result])
   })
 
@@ -29,7 +29,7 @@ describe('project.create [FR-002, FR-004, R-06]', () => {
 
   it('creates the default project location when it does not exist yet', async () => {
     f = makeFixture()
-    const state = data<AppState>(await f.core.query('app.getState', {}))
+    const state = data<AppState>(await f.core.query('app.getState', {}, { actor: 'user' }))
     const location = state.settings.defaultProjectDir
     expect(location).toBe(path.join(f.documents, 'Adman Projects'))
     expect(fs.existsSync(location)).toBe(false)
@@ -41,7 +41,7 @@ describe('project.create [FR-002, FR-004, R-06]', () => {
     f = makeFixture()
     await f.user('project.create', { name: 'A', location: f.projectsDir })
     await f.user('project.create', { name: 'B', location: f.projectsDir })
-    const state = data<AppState>(await f.core.query('app.getState', {}))
+    const state = data<AppState>(await f.core.query('app.getState', {}, { actor: 'user' }))
     expect(state.recentProjects.map((r) => r.name)).toEqual(['B', 'A'])
     expect(state.recentProjects[0]?.path).toBe(path.join(f.projectsDir, 'B.adman'))
   })

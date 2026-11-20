@@ -1,5 +1,5 @@
 // Keys live only here, in {userData}/secrets.bin: one JSON map encrypted as a whole
-// (SPEC 7.7). No query returns a value; summaries carry the last four characters.
+// (SPEC 7.7). Summaries carry the last four characters; values stay in the main process.
 import fs from 'node:fs'
 import path from 'node:path'
 import { AppError } from '../../shared/schemas/result'
@@ -57,7 +57,8 @@ export function createSecretStore(opts: { file: string; crypto: SecretCrypto }) 
     },
     summaries(): SecretSummary[] {
       const map = read()
-      return SECRET_NAMES.filter((n) => n !== 'mcp.token' && map[n] !== undefined).map((name) => ({
+      // Every secret, mcp.token included, is listed by its last four characters only.
+      return SECRET_NAMES.filter((n) => map[n] !== undefined).map((name) => ({
         name,
         lastFour: lastFour(map[name] ?? ''),
       }))
