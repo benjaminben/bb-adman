@@ -5,6 +5,7 @@ import { ulid } from 'ulid'
 import { agentPolicyFor, denialMessage } from './agent-policy'
 import { createChangeRecorder } from './change-recorder'
 import { runHistory } from './history/run-history'
+import { runInProject } from './run-in-project'
 import type { CommandHandler, HandlerResult } from './types'
 import type { ProjectRegistry } from '../db/project-registry'
 import type { UndoLists, UndoScope } from '../history/undo-lists'
@@ -72,12 +73,7 @@ export function createCommandBus(deps: BusDeps): CommandBus {
     const base = { actor: opts.actor, commandId, changes: recorder }
     let result: HandlerResult<unknown>
     if (projectId) {
-      const project = deps.projects.requireOpen(projectId)
-      result = project.db.transaction(() => {
-        const out = handler.run({ ...base, project }, input)
-        if (out instanceof Promise) throw new Error(`${handler.name} must run synchronously`)
-        return out
-      })()
+      result = await runInProject(deps.projects, handler, input, base, projectId)
     } else {
       result = await handler.run(base, input)
     }
