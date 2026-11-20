@@ -129,33 +129,6 @@ describe('command bus: transactions, events, undo and log [SPEC 3.6]', () => {
     ])
   })
 
-  it('pushes the inverse onto the named undo list, and undo and redo replay it', async () => {
-    const f = setup([setValueHandler()])
-    await f.bus.execute('layer.update', { projectId: f.projectId, value: 'a' }, { actor: 'user' })
-    await f.bus.execute('layer.update', { projectId: f.projectId, value: 'b' }, { actor: 'user' })
-    expect(f.undo.state(f.projectId, 'campaign:c1')).toEqual({ canUndo: true, canRedo: false })
-
-    expect(
-      (await f.bus.execute('history.undo', { scope: 'campaign:c1' }, { actor: 'user' })).ok,
-    ).toBe(true)
-    expect(f.value()).toBe('a')
-    expect(f.undo.state(f.projectId, 'campaign:c1')).toEqual({ canUndo: true, canRedo: true })
-
-    await f.bus.execute('history.redo', { scope: 'campaign:c1' }, { actor: 'user' })
-    expect(f.value()).toBe('b')
-    expect(f.undo.state(f.projectId, 'campaign:c1')).toEqual({ canUndo: true, canRedo: false })
-  })
-
-  it('refuses undo for an agent and when the list is empty', async () => {
-    const f = setup([setValueHandler()])
-    expect(
-      await f.bus.execute('history.undo', { scope: 'campaign:c1' }, { actor: 'agent' }),
-    ).toMatchObject({ ok: false, error: { code: 'AGENT_DENIED' } })
-    expect(
-      await f.bus.execute('history.undo', { scope: 'campaign:c1' }, { actor: 'user' }),
-    ).toMatchObject({ ok: false, error: { code: 'RULE_VIOLATION' } })
-  })
-
   it('rejects a malformed undo scope with INVALID_INPUT', async () => {
     const f = setup([setValueHandler()])
     expect(

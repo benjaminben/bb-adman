@@ -20,18 +20,14 @@ export async function runHistory(
 ): Promise<{ projectId: string; data: unknown }> {
   const parsed = historyInput.safeParse(raw)
   if (!parsed.success) throw new AppError('INVALID_INPUT', 'Some values are not valid.')
-  const { scope } = parsed.data
+  const { projectId, scope } = parsed.data
   const direction = name === 'history.undo' ? 'undo' : 'redo'
   const nothing = direction === 'undo' ? 'Nothing to undo.' : 'Nothing to redo.'
 
-  // The input names only the scope, so find the open project that holds its list.
-  const owners = deps.undo.projectsWithScope(scope).filter((id) => deps.projects.get(id))
-  const projectId = owners.find((id) => {
-    const state = deps.undo.state(id, scope)
-    return direction === 'undo' ? state.canUndo : state.canRedo
-  })
-  if (!projectId) throw new AppError('RULE_VIOLATION', nothing)
-
+  // The input names the project; nothing searches other projects (SPEC 4.2).
+  if (!deps.projects.get(projectId)) {
+    throw new AppError('NOT_FOUND', 'That project is not open.', { projectId })
+  }
   const take = direction === 'undo' ? deps.undo.takeUndo : deps.undo.takeRedo
   const call = take(projectId, scope)
   if (!call) throw new AppError('RULE_VIOLATION', nothing)

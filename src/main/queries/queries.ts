@@ -37,13 +37,11 @@ export function createQueries(deps: QueryDeps) {
     'history.state': (raw): HistoryState => {
       const parsed = historyInput.safeParse(raw)
       if (!parsed.success) throw new AppError('INVALID_INPUT', 'Some values are not valid.')
-      const { scope } = parsed.data
-      const owners = deps.undo.projectsWithScope(scope).filter((id) => deps.projects.get(id))
-      const states = owners.map((id) => deps.undo.state(id, scope))
-      return {
-        canUndo: states.some((s) => s.canUndo),
-        canRedo: states.some((s) => s.canRedo),
+      const { projectId, scope } = parsed.data
+      if (!deps.projects.get(projectId)) {
+        throw new AppError('NOT_FOUND', 'That project is not open.', { projectId })
       }
+      return deps.undo.state(projectId, scope)
     },
   }
 

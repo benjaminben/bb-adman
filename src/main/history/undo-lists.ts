@@ -59,13 +59,5 @@ export function createUndoLists() {
     dropProject(projectId: string) {
       projects.delete(projectId)
     },
-    projectsWithScope(scope: UndoScope): string[] {
-      return [...projects.entries()]
-        .filter(([, byScope]) => {
-          const l = byScope.get(scope)
-          return l !== undefined && (l.undo.length > 0 || l.redo.length > 0)
-        })
-        .map(([projectId]) => projectId)
-    },
   }
 }

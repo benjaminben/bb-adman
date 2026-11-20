@@ -75,12 +75,4 @@ describe('undo lists [SPEC 4.2, R-17]', () => {
     expect(lists.state('p', 'campaign:c').canUndo).toBe(false)
     expect(lists.state('q', 'variant:a').canUndo).toBe(true)
   })
-
-  it('finds the open projects that hold a list for a scope', () => {
-    const lists = createUndoLists()
-    lists.record('p', 'variant:a', call(1))
-    lists.recordRedo('q', 'variant:a', call(2))
-    lists.record('r', 'variant:b', call(3))
-    expect(lists.projectsWithScope('variant:a').sort()).toEqual(['p', 'q'])
-  })
 })

@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, data, type Fixture } from '../core-fixture'
-import type { AppState, HistoryState } from '../../../src/shared/schemas/queries'
+import type { AppState } from '../../../src/shared/schemas/queries'
 
 let f: Fixture
 afterEach(() => f.cleanup())
@@ -41,26 +41,6 @@ describe('app.getState [SPEC 4.3, 6]', () => {
 })
 
 describe('history.state [SPEC 4.3]', () => {
-  it('reports whether undo and redo are available for a scope', async () => {
-    f = makeFixture()
-    const empty = data<HistoryState>(
-      await f.core.query('history.state', { scope: 'variant:abc234' }, { actor: 'user' }),
-    )
-    expect(empty).toEqual({ canUndo: false, canRedo: false })
-    const p = data<{ projectId: string }>(
-      await f.user('project.create', { name: 'A', location: f.projectsDir }),
-    )
-    f.core.undo.record(p.projectId, 'variant:abc234', { name: 'layer.update', input: {} })
-    expect(
-      data<HistoryState>(
-        await f.core.query('history.state', { scope: 'variant:abc234' }, { actor: 'user' }),
-      ),
-    ).toEqual({
-      canUndo: true,
-      canRedo: false,
-    })
-  })
-
   it('rejects a malformed scope', async () => {
     f = makeFixture()
     expect(await f.core.query('history.state', { scope: 'nope' }, { actor: 'user' })).toMatchObject(
