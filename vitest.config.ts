@@ -3,6 +3,16 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   test: {
+    // SPEC 10.1: the two thresholds live here and nowhere else.
+    coverage: {
+      provider: 'v8',
+      include: ['src/shared/**', 'src/main/**'],
+      exclude: ['src/main/providers/**'],
+      thresholds: {
+        'src/shared/**': { lines: 90 },
+        'src/main/**': { lines: 80 },
+      },
+    },
     projects: [
       {
         test: {
