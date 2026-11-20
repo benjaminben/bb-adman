@@ -158,3 +158,27 @@ describe('command bus: transactions, events, undo and log [SPEC 3.6]', () => {
     expect(f.logText()).not.toContain('sekret-value-123')
   })
 })
+
+describe('command bus: history refusals [SPEC 4.1, 10.1, correction 15]', () => {
+  it('returns RULE_VIOLATION with nothing_to_redo for history.redo on an empty list, and changes nothing', async () => {
+    const f = setup([setValueHandler()])
+    await f.bus.execute('layer.update', { projectId: f.projectId, value: 'a' }, { actor: 'user' })
+    const events = f.events.length
+    const result = await f.bus.execute(
+      'history.redo',
+      { projectId: f.projectId, scope: 'campaign:c1' },
+      { actor: 'user' },
+    )
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        code: 'RULE_VIOLATION',
+        message: expect.any(String),
+        details: { reason: 'nothing_to_redo' },
+      },
+    })
+    expect(f.value()).toBe('a')
+    expect(f.events.slice(events)).toEqual([])
+    expect(f.undo.state(f.projectId, 'campaign:c1')).toEqual({ canUndo: true, canRedo: false })
+  })
+})

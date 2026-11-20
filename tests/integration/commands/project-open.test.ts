@@ -87,20 +87,28 @@ describe('project.open [FR-002, FR-003, R-06]', () => {
     expect(result).toMatchObject({ ok: false, error: { code: 'NOT_FOUND' } })
   })
 
-  it('refuses a file made by a newer version with the SPEC 3.8 message', async () => {
+  it('refuses a file made by a newer version with RULE_VIOLATION, newer_version and the SPEC 3.8 message, and opens nothing', async () => {
     const f = fixture()
     const a = await createAndClose(f, 'A')
     const raw = new Database(a.filePath)
     raw.prepare("UPDATE project_meta SET value = '999' WHERE key = 'schema_version'").run()
     raw.close()
+    const bytes = fs.readFileSync(a.filePath)
+    const events = f.events.length
     const result = await f.user('project.open', { filePath: a.filePath })
-    expect(result).toMatchObject({
+    expect(result).toEqual({
       ok: false,
       error: {
+        code: 'RULE_VIOLATION',
         message:
           'This project was made with a newer version of the app. Download the latest version to open it.',
+        details: { reason: 'newer_version' },
       },
     })
+    expect(fs.readFileSync(a.filePath).equals(bytes)).toBe(true)
+    expect(fs.existsSync(`${a.filePath}.bak`)).toBe(false)
+    expect(f.core.projects.all()).toEqual([])
+    expect(f.events.slice(events)).toEqual([])
   })
 
   it('rejects a file without the .adman extension with INVALID_INPUT', async () => {
