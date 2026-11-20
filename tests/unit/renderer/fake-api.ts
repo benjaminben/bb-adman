@@ -2,7 +2,7 @@
 // and answers can be scripted per name.
 import { vi } from 'vitest'
 import type { AdmanApi } from '../../../src/shared/schemas/api'
-import type { AppState } from '../../../src/shared/schemas/queries'
+import type { AppState } from '../../../src/shared/schemas/queries/app'
 import type { EventMap, EventName } from '../../../src/shared/schemas/events'
 import type { Result } from '../../../src/shared/schemas/result'
 

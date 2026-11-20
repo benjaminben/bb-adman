@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import Database from 'better-sqlite3'
 import { makeFixture, data, type Fixture } from '../core-fixture'
-import type { AppState } from '../../../src/shared/schemas/queries'
+import type { AppState } from '../../../src/shared/schemas/queries/app'
 
 type Opened = { projectId: string; name: string; filePath: string }
 

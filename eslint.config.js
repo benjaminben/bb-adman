@@ -12,6 +12,35 @@ const assetPathJoin = {
   message: 'Only src/main/assets/path-resolver.ts may build asset file paths.',
 }
 
+// SPEC 12 "Electron stays at the edge": only these files import electron. Nothing core.ts
+// can reach may import electron or one of these files, so the rule bans both.
+const electronEdge = [
+  'src/main/index.ts',
+  'src/main/windows/**',
+  'src/main/secrets/safe-storage.ts',
+  'src/main/render/**',
+]
+const edgeMessage =
+  'Only index.ts, windows/, secrets/safe-storage.ts and render/ may use Electron (SPEC 12).'
+const edgeFiles = ['**/windows', '**/windows/**', '**/render', '**/render/**', '**/safe-storage']
+
+// One block per folder depth, because the relative path to src/main/index.ts differs.
+function electronBoundary(files, mainIndex) {
+  return {
+    files,
+    ignores: electronEdge,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [{ name: 'electron', message: edgeMessage }],
+          patterns: [{ group: [...edgeFiles, ...mainIndex], message: edgeMessage }],
+        },
+      ],
+    },
+  }
+}
+
 export default tseslint.config(
   {
     ignores: [
@@ -43,6 +72,9 @@ export default tseslint.config(
     files: ['src/main/assets/path-resolver.ts'],
     rules: { 'no-restricted-syntax': 'off' },
   },
+  electronBoundary(['src/main/*.ts'], ['./index']),
+  electronBoundary(['src/main/*/*.ts'], ['../index']),
+  electronBoundary(['src/main/*/*/**/*.ts'], ['../../index', '../../../index']),
   {
     files: ['src/shared/**'],
     rules: {

@@ -1,6 +1,6 @@
 // Default provider per AI job (FR-067). Providers not yet available are listed, disabled.
 import { useApp, EMPTY } from '../../app/app-context'
-import type { ProviderJob } from '../../../shared/schemas/queries'
+import type { ProviderJob } from '../../../shared/schemas/queries/app'
 import styles from '../screens.module.css'
 
 const JOBS: Array<{

@@ -2,7 +2,7 @@
 // error, and the key dialog request for the NEEDS_KEY flow (FR-171).
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { AdmanApi } from '../../shared/schemas/api'
-import type { AppState, ProviderInfo } from '../../shared/schemas/queries'
+import type { AppState, ProviderInfo } from '../../shared/schemas/queries/app'
 import type { Result } from '../../shared/schemas/result'
 
 export type View = { kind: 'start' } | { kind: 'settings' } | { kind: 'project'; projectId: string }

@@ -1,53 +1,17 @@
-// Read-only queries (SPEC 4.3). Phase 1: app.getState and history.state.
-import type { ProjectRegistry } from '../db/project-registry'
-import type { SettingsStore } from '../settings/settings-store'
-import type { SecretStore } from '../secrets/secret-store'
-import type { UndoLists } from '../history/undo-lists'
+// The query runner (SPEC 4.3, 12). It merges the domain maps, one line per domain.
+import { ulid } from 'ulid'
+import type { CoreDeps } from '../core-deps'
 import type { ActivityLog } from '../log/activity-log'
 import { errorContext } from '../log/error-context'
-import { historyInput } from '../../shared/schemas/commands/history'
-import type { AppState, HistoryState, ProviderInfo } from '../../shared/schemas/queries'
-import { ulid } from 'ulid'
+import { appQueries } from './app'
+import { historyQueries } from './history'
+import type { QueryFn, QueryOptions } from './types'
 import { AppError, fail, internalError, ok, type Result } from '../../shared/schemas/result'
-import type { Actor } from '../../shared/schemas/events'
 
-export type QueryDeps = {
-  projects: ProjectRegistry
-  settings: SettingsStore
-  secrets: SecretStore
-  undo: UndoLists
-  providers: ProviderInfo[]
-  log: ActivityLog
-}
+export type { QueryFn, QueryOptions }
 
-// Queries carry an actor set like a command's (SPEC 4.1). No Phase 1 query checks it;
-// mcp.getConnectInfo (Phase 10) refuses the agent.
-export type QueryOptions = { actor: Actor }
-
-export type QueryFn = (input: unknown, opts: QueryOptions) => unknown | Promise<unknown>
-
-export function createQueries(deps: QueryDeps) {
-  const table: Record<string, QueryFn> = {
-    'app.getState': (): AppState => {
-      const settings = deps.settings.get()
-      return {
-        settings,
-        recentProjects: settings.recentProjects,
-        openProjects: deps.projects.summaries(),
-        providers: deps.providers,
-        secrets: deps.secrets.summaries(),
-      }
-    },
-    'history.state': (raw): HistoryState => {
-      const parsed = historyInput.safeParse(raw)
-      if (!parsed.success) throw new AppError('INVALID_INPUT', 'Some values are not valid.')
-      const { projectId, scope } = parsed.data
-      deps.projects.requireOpen(projectId)
-      return deps.undo.state(projectId, scope)
-    },
-  }
-
-  return createQueryRunner(table, deps.log)
+export function createQueries(deps: CoreDeps) {
+  return createQueryRunner({ ...appQueries(deps), ...historyQueries(deps) }, deps.log)
 }
 
 // The runner (SPEC 4.3): finds the query, never throws, returns INTERNAL for anything

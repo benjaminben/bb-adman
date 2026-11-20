@@ -1,7 +1,6 @@
-import type { Settings, RecentProject } from './settings'
-import type { SecretName, SecretSummary } from './secrets'
-import type { OpenProjectSummary } from './project'
-import type { UndoStateResult } from './commands/history'
+import type { Settings, RecentProject } from '../settings'
+import type { SecretName, SecretSummary } from '../secrets'
+import type { OpenProjectSummary } from '../project'
 
 // SPEC 6 ProviderInfo, as the window receives it.
 export type ProviderJob = 'image' | 'layout' | 'text' | 'video' | 'storage' | 'verification'
@@ -22,5 +21,3 @@ export type AppState = {
   providers: ProviderInfo[]
   secrets: SecretSummary[]
 }
-
-export type HistoryState = UndoStateResult

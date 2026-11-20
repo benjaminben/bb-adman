@@ -37,6 +37,9 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
       undo: createUndoLists(),
       providers: [],
       log: createActivityLog({ dir: logDir, minLevel: 'debug', now: () => new Date() }),
+      appVersion: '0.1.0',
+      now: () => new Date(),
+      userDataDir: dir,
     })
 
     const result = await query('app.getState', {}, { actor: 'user' })

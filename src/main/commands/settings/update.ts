@@ -1,9 +1,9 @@
 // settings.update (SPEC 4.2, 13.1; FR-004, FR-067, FR-170).
 import path from 'node:path'
 import { defineCommand } from '../types'
-import type { SettingsStore } from '../../settings/settings-store'
+import type { CoreDeps } from '../../core-deps'
 import { settingsPatchSchema, type SettingsPatch } from '../../../shared/schemas/settings'
-import type { ProviderInfo } from '../../../shared/schemas/queries'
+import type { ProviderInfo } from '../../../shared/schemas/queries/app'
 import { AppError } from '../../../shared/schemas/result'
 
 function checkProviders(patch: SettingsPatch, providers: ProviderInfo[]): void {
@@ -19,7 +19,7 @@ function checkProviders(patch: SettingsPatch, providers: ProviderInfo[]): void {
   }
 }
 
-export function settingsUpdate(deps: { settings: SettingsStore; providers: ProviderInfo[] }) {
+export function settingsUpdate(deps: Pick<CoreDeps, 'settings' | 'providers'>) {
   return defineCommand({
     name: 'settings.update',
     input: settingsPatchSchema,

@@ -10,12 +10,11 @@ import { closeProjectFile } from './db/project-file'
 import { createUndoLists } from './history/undo-lists'
 import { listProviders } from './providers/registry'
 import { createCommandBus, type BusEvent, type PermissionRequest } from './commands/bus'
-import { projectCreate } from './commands/project/create'
-import { projectOpen } from './commands/project/open'
-import { projectClose } from './commands/project/close'
-import { settingsUpdate } from './commands/settings/update'
-import { secretSet, secretDelete } from './commands/secret/secret'
+import { projectCommands } from './commands/project'
+import { secretCommands } from './commands/secret'
+import { settingsCommands } from './commands/settings'
 import { createQueries } from './queries/queries'
+import type { CoreDeps } from './core-deps'
 
 export type { SecretCrypto }
 
@@ -51,17 +50,23 @@ export function createCore(opts: CoreOptions) {
   const projects = createProjectRegistry()
   const undo = createUndoLists()
   const providers = listProviders(opts.env)
-  const projectDeps = { projects, settings, undo, appVersion: opts.appVersion, now }
+  const deps: CoreDeps = {
+    projects,
+    settings,
+    secrets,
+    undo,
+    providers,
+    log,
+    appVersion: opts.appVersion,
+    now,
+    userDataDir: opts.userDataDir,
+  }
+
+  // One spread line per domain, in alphabetical order (SPEC 12).
+  const handlers = [...projectCommands(deps), ...secretCommands(deps), ...settingsCommands(deps)]
 
   const bus = createCommandBus({
-    handlers: [
-      projectCreate(projectDeps),
-      projectOpen(projectDeps),
-      projectClose(projectDeps),
-      settingsUpdate({ settings, providers }),
-      secretSet({ secrets }),
-      secretDelete({ secrets }),
-    ],
+    handlers,
     projects,
     undo,
     log,
@@ -71,7 +76,9 @@ export function createCore(opts: CoreOptions) {
 
   return {
     bus,
-    query: createQueries({ projects, settings, secrets, undo, providers, log }),
+    query: createQueries(deps),
+    deps,
+    commandNames: handlers.map((h) => h.name),
     projects,
     undo,
     secrets,

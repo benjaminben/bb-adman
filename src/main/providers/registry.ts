@@ -1,6 +1,6 @@
 // Single owner of provider IDs and default model IDs (SPEC 3.1, 6).
 // Phase 1 holds the provider list only; adapters arrive with their phases.
-import type { ProviderInfo } from '../../shared/schemas/queries'
+import type { ProviderInfo } from '../../shared/schemas/queries/app'
 
 const PROVIDERS: ProviderInfo[] = [
   {

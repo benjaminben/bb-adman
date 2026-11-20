@@ -2,7 +2,7 @@
 import { useState, type FormEvent } from 'react'
 import { useApp } from '../../app/app-context'
 import { secretLabel } from '../../ui/secret-labels'
-import type { ProviderInfo } from '../../../shared/schemas/queries'
+import type { ProviderInfo } from '../../../shared/schemas/queries/app'
 import type { SecretName } from '../../../shared/schemas/secrets'
 import styles from '../screens.module.css'
 
