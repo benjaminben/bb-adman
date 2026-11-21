@@ -31,7 +31,7 @@ import { jobKindHandlers } from './jobs/kinds'
 import { agentCaller } from './mcp/agent-caller'
 import { createMcpHttp } from './mcp/server'
 import { createMcpService } from './mcp/service'
-import { toolSetup } from './mcp/tools'
+import { MCP_TOOLS, toolSetup } from './mcp/tools'
 import type { CoreDeps } from './core-deps'
 
 export type { SecretCrypto }
@@ -114,7 +114,11 @@ export function createCore(opts: CoreOptions) {
     query: (name, input, o) => query(name, input, o),
   })
   const mcp = createMcpService({
-    http: createMcpHttp({ caller, appVersion: opts.appVersion, tools: toolSetup() }),
+    http: createMcpHttp({
+      caller,
+      appVersion: opts.appVersion,
+      tools: toolSetup(MCP_TOOLS, providers),
+    }),
     settings,
     secrets,
     log,

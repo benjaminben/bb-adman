@@ -95,7 +95,9 @@ export function agentJobView(row: JobRow, providers: Labels): AgentJobView {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     ...(isString(result.stage) && { stage: result.stage }),
-    ...(Number.isInteger(result.queuePosition) && { queuePosition: result.queuePosition as number }),
+    ...(Number.isInteger(result.queuePosition) && {
+      queuePosition: result.queuePosition as number,
+    }),
     assetIds: assetIdsOf(row, result),
     ...(row.kind === 'image_generation' && { failures: failuresOf(result) }),
     message: messageOf(row, providers),

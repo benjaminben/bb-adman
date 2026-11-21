@@ -8,6 +8,7 @@ import { data } from '../core-fixture'
 import { makeMcpFixture, stopAndClean, type McpFixture } from './mcp-fixture'
 import { toolSession, replyJson } from './tool-client'
 import { createInput } from '../campaigns/campaign-fixture'
+import { HIDDEN_RESULT, insertJob, readSetUp } from './read-tools-fixture'
 
 let f: McpFixture | undefined
 afterEach(async () => {
@@ -99,6 +100,33 @@ describe('get_project and get_campaign give no key named like a path or secret [
       const json = replyJson(reply)
       expect(JSON.stringify(json).includes(ids.campaignId), name).toBe(true)
       expect(riskyKeys(json), name).toEqual([])
+    }
+  })
+})
+
+// MCP-D: the read tools pass the same key check over a job row with every column filled, a
+// model, a remote ID and a result with a made-up missing-items list.
+describe('get_slots, get_job and list_jobs give no key named like a path or secret [MCP-D; FR-198]', () => {
+  it('holds over a filled campaign and a job row with every column filled', async () => {
+    const r = await readSetUp()
+    f = r.fx
+    insertJob(r, { id: 'j1' })
+    insertJob(r, {
+      id: 'j2',
+      kind: 'video_generation',
+      result: { assetId: 'v1', ...HIDDEN_RESULT },
+    })
+    const p = r.projectId
+    const calls: Array<[string, Record<string, unknown>]> = [
+      ['get_slots', { project_id: p, campaign_id: r.campaignId }],
+      ['get_job', { project_id: p, job_id: 'j1' }],
+      ['get_job', { project_id: p, job_id: 'j2' }],
+      ['list_jobs', { project_id: p }],
+    ]
+    for (const [name, args] of calls) {
+      const reply = await r.s.call(name, args)
+      expect(reply.isError, name).toBeFalsy()
+      expect(riskyKeys(replyJson(reply)), name).toEqual([])
     }
   })
 })

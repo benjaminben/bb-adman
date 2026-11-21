@@ -9,8 +9,7 @@ async function made(name: string): Promise<string> {
   return data<{ projectId: string }>(r).projectId
 }
 
-const listOpen = (actor: 'user' | 'agent') =>
-  f.core.query('project.listOpen', {}, { actor })
+const listOpen = (actor: 'user' | 'agent') => f.core.query('project.listOpen', {}, { actor })
 
 describe('project.listOpen [SPEC api-queries-events; MCP-D; FR-201] (security class)', () => {
   it('gives id and name of each open project and nothing else, to both actors', async () => {
