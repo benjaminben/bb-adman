@@ -21,7 +21,8 @@ type Props = {
 function signedLine(variants: ApprovalsVariant[]): string {
   const shown = variants.filter((v) => v.publishedRev !== null)
   const signed = shown.filter((v) => v.signoffs.some((s) => s.current))
-  return `Signed off: ${signed.length} of ${shown.length} variants`
+  const noun = shown.length === 1 ? 'variant' : 'variants'
+  return `Signed off: ${signed.length} of ${shown.length} ${noun}`
 }
 
 export function ApprovalBar(props: Props) {

@@ -1,3 +1,4 @@
+/* app-style */
 /* The same look as the "Picture" section and its "Opacity" (picture-fields.module.css). */
 .section {
   display: flex;
@@ -11,7 +12,10 @@
 .legend {
   padding: 0;
   margin-bottom: var(--space-2);
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
 }
 .field {
   display: flex;
@@ -20,8 +24,9 @@
   min-width: 0;
 }
 .label {
-  color: var(--color-text-muted);
   font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
 }
 .percent {
   display: flex;

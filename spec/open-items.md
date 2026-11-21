@@ -25,7 +25,7 @@ These need the stakeholder. A wrong guess would be costly to undo, would spend r
 
 - **Question:** The app ships an FFmpeg program for macOS and Windows. It must be an LGPL build, not GPL, so the app's own licence is not affected. Which source supplies it?
 - **Meanwhile:** ready-made LGPL builds from a public builder for Windows, and an LGPL FFmpeg built by a CI job for macOS, each pinned by address and SHA-256 checksum in `ffmpeg-sources.json`. Work starts at the beginning of Phase 7 (writing details into an MP4). Nothing is released (D-086), so no binary leaves the machine.
-- **Stakeholder:** confirm the sources, or name others, before the first release. A swap is a one-line change while nothing is released.
+- **Answered:** the stakeholder agreed to this plan ("Good with ffmpeg source plan"). A swap stays a one-line change while nothing is released.
 
 ### Approvals by link (D-095)
 

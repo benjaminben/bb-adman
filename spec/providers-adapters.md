@@ -104,9 +104,9 @@ Built (Phase 4, slice P4-4); each of layout, extract brief and copy options pass
 
 ## fal.ai Seedance (image-to-video)
 
-Not built. `src/main/providers/fal-seedance/index.ts` exports `{}`; the registry row is `available: false`; `@fal-ai/client` is not in `package.json`. It is built only if OI-30 (whether the fal adapter is built before Phase 7) is answered yes; otherwise in Phase 7.
+The adapter is built (P7-14) and tested on recorded answers only; the registry row stays `available: false` until P7-15 switches it on, and its one paid run is P7-24's. It uses no client package (A-170): direct HTTPS calls through one pinned fetch. Where this section and `spec/phases/phase-07.md`, "fal.ai Seedance" differ, the phase file is right until P7-15 folds it in here.
 
-**Direction:** outbound. **Protocol:** HTTPS queue API through `@fal-ai/client`. **Authentication:** API key, secret `fal.apiKey`. [REQ: FR-123, FR-124, OI-04]
+**Direction:** outbound. **Protocol:** HTTPS queue API, direct calls (no client package). **Authentication:** API key, secret `fal.apiKey`. [REQ: FR-123, FR-124, OI-04]
 
 **Trigger:** the user starts it for one variant [REQ: FR-123], or an agent under the tick (below).
 

@@ -33,6 +33,8 @@ const RUN_COMMANDS = new Set([
   'generation.proposeLayout',
   'generation.copyOptions',
   'generation.cutOut',
+  // P5-8 (spec/links-and-sync.md "Generative fill"): the fill takes the same three steps.
+  'generation.runFill',
 ])
 // Every run input requires provider, so an agent never runs on the user's default provider.
 const runInput = z.object({ provider: z.string() })
@@ -119,6 +121,6 @@ export function agentRunGate(deps: AgentRunGateDeps, name: string, input: unknow
     gateCancel(deps, input)
     return NOTHING_HELD
   }
-  // Any other tick command is refused, generation.runFill included.
+  // Any other tick command is refused.
   throw denied(denialMessage(name))
 }

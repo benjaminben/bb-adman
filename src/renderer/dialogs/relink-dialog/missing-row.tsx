@@ -1,5 +1,6 @@
 // One missing asset: its name, its kind and library as words, and its "Find…" button.
 import type { MissingAsset } from './use-missing-assets'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './relink-dialog.module.css'
 
 const KIND_WORDS: Record<MissingAsset['kind'], string> = {
@@ -31,6 +32,7 @@ export function MissingRow(props: MissingRowProps) {
       </span>{' '}
       <button
         type="button"
+        className={layout.small}
         data-asset-id={asset.id}
         aria-label={`Find ${asset.displayName}`}
         disabled={props.disabled}

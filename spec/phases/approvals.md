@@ -44,7 +44,7 @@
 | 3 | AP-14 Service: move to Next.js and libSQL (built, reviewed; review fixes in build) | AP-2, AP-3 and the AP-3 review fixes merged | Every desktop, Phase 4 and look-pack slice | Every other service slice |
 | 4 | AP-15 Service: visitor replies for the page app (built) | AP-14 and its review fixes | The same | Every other service slice |
 | 5 | AP-4 Service: sign-offs and pictures (built) | AP-15 | The same | Every other service slice |
-| 6 | AP-16 Gallery pages | AP-4 | The same | Every other service slice |
+| 6 | AP-16 Gallery pages (built) | AP-4 | The same | Every other service slice |
 | 3 | AP-6 Service client, service settings, kept passwords (built) | AP-5 | AP-4, AP-7 | Nothing |
 | 3 | AP-7 Pictures: signed addresses and the picture store (built) | AP-5 | AP-4, AP-6 | Any slice that edits `package.json`, `src/main/providers/types.ts` or `src/main/providers/s3/` (AP-10b waits for AP-7) |
 | 4 | AP-8 Link commands and the queries (built) | AP-6, AP-7 | AP-10 | Nothing |

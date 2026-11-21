@@ -4,6 +4,8 @@
 // when it closes, the package is sent again to the same folder.
 import { useEffect, useRef, useState } from 'react'
 import { RelinkDialog } from '@/renderer/dialogs/relink-dialog'
+import { BusySpinner, DialogFoot } from '@/renderer/ui/dialog-frame'
+import layout from '@/renderer/ui/layout.module.css'
 import { fileSize } from './file-size'
 import { usePackage, type PackageView } from './use-package'
 import styles from './package-dialog.module.css'
@@ -45,7 +47,7 @@ export function PackageBody(props: PackageBodyProps) {
     <button
       type="button"
       ref={primary}
-      className={styles.primary}
+      className={layout.primary}
       disabled={packaging}
       onClick={onClick}
     >
@@ -56,16 +58,17 @@ export function PackageBody(props: PackageBodyProps) {
   return (
     <>
       {packaging && (
-        <p role="status" className={styles.line}>
+        <p role="status" className={styles.busy}>
+          <BusySpinner />
           Packaging… Large projects take a while.
         </p>
       )}
       {view.kind === 'done' && (
         <>
-          <p role="status" className={styles.line}>
+          <p role="status" className={`${layout.notice} ${layout.ok}`}>
             {doneLine(view)}
           </p>
-          <div className={styles.actions}>{button('Close', props.onClose)}</div>
+          <DialogFoot>{button('Close', props.onClose)}</DialogFoot>
         </>
       )}
       {view.kind === 'missing' && (
@@ -79,13 +82,13 @@ export function PackageBody(props: PackageBodyProps) {
               <li key={i}>{name}</li>
             ))}
           </ul>
-          <div className={styles.choices}>
+          <DialogFoot className={styles.choices}>
             {button('Find missing files…', () => setRelinkOpen(true))}
             <button type="button" disabled={packaging} onClick={() => void send(true)}>
               Package without them
             </button>
             {cancel}
-          </div>
+          </DialogFoot>
           <RelinkDialog
             projectId={props.projectId}
             open={relinkOpen}
@@ -97,17 +100,17 @@ export function PackageBody(props: PackageBodyProps) {
       {(view.kind === 'ready' || view.kind === 'refused') && (
         <>
           {view.kind === 'refused' && (
-            <p role="alert" className={styles.alert}>
+            <p role="alert" className={`${layout.notice} ${layout.danger}`}>
               {view.message}
             </p>
           )}
-          <div className={styles.actions}>
+          <DialogFoot>
             {cancel}
             {button(
               view.kind === 'ready' ? 'Choose a folder and package…' : 'Choose another folder…',
               () => void choose(),
             )}
-          </div>
+          </DialogFoot>
         </>
       )}
     </>

@@ -42,6 +42,8 @@ const promptsSent = () => stand.seen.filter((r) => r.method === 'POST' && r.path
 
 test('Address dialog: Generate with ComfyUI and no address asks for it, and the run starts after saving', async () => {
   await openCampaign()
+  // SP-5: this run is about the address, so the subject's photo is not sent.
+  await screens.untickReferences(page)
   await screens.chooseProvider(page, 'ComfyUI')
   await screens.chooseSlot(page)
   await screens.setPrompt(page, screens.E2E_PROMPT)

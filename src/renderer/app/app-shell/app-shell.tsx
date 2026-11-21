@@ -19,6 +19,7 @@ import { KeyDialog } from '@/renderer/dialogs/key-dialog'
 import { AddressDialog } from '@/renderer/dialogs/address-dialog'
 import { LicenceDialog } from '@/renderer/dialogs/licence-dialog'
 import { HandTestScreen } from '@/renderer/dev/hand-test-screen'
+import { Icon } from '@/renderer/ui/icon'
 import { PROJECT_TAB } from '@/renderer/stores/nav-store'
 import { generateDrafts } from '@/renderer/stores/generate-drafts'
 import type { OpenProjectSummary } from '@/shared/schemas/project'
@@ -39,6 +40,7 @@ function TopRow(props: { tabs?: ReactNode }) {
         aria-pressed={view.kind === 'settings'}
         onClick={() => show({ kind: 'settings' })}
       >
+        <Icon name="gear" />
         Settings
       </button>
       {devTools && (

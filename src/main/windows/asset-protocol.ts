@@ -29,5 +29,10 @@ export function registerAssetScheme(protocol: Protocol): void {
 }
 
 export function registerAssetProtocol(protocol: Protocol, projects: ProjectRegistry): void {
-  protocol.handle(SCHEME, (request) => answerAssetRequest(request, projects))
+  protocol.handle(SCHEME, (request) =>
+    answerAssetRequest(
+      { method: request.method, url: request.url, headers: request.headers },
+      projects,
+    ),
+  )
 }

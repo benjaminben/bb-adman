@@ -30,9 +30,9 @@ function variantRender(deps: Pick<CoreDeps, 'projects' | 'render'>): QueryFn {
     if (opts.actor !== 'user') throw new AppError('AGENT_DENIED', THUMBNAIL_DENIED)
     const parsed = variantRenderInput.safeParse(raw)
     if (!parsed.success) throw invalid()
-    const { projectId, variantId, maxDimension } = parsed.data
+    const { projectId, variantId, maxDimension, timeMs } = parsed.data
     const project = deps.projects.requireOpen(projectId)
-    return deps.render.render(project, variantId, maxDimension)
+    return deps.render.render(project, variantId, maxDimension, timeMs)
   }
 }
 

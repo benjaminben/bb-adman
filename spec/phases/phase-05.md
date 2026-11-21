@@ -12,7 +12,7 @@
 1. Workflow 5.3 passes end to end with the fake provider (`tests/e2e/workflow-5-3.spec.ts`): a master edit marks linked variants "Out of date"; the sync review lists each, flags an overridden layer; "Accept selected" leaves the unticked ones out of date; "Accept all" clears the rest.
 2. Workflow 5.4 passes end to end (`tests/e2e/workflow-5-4.spec.ts`): "New direction from this master…" makes a second grid; its background is changed; fan-out with one "Generate fill" size makes the variants and places the fill on that size.
 3. The named test "editing a master changes no other variant's layer rows" passes.
-4. On the campaign page, a variant deleted with "Delete {title}" comes back with the campaign's "Undo" (component test and in the 5.4 run).
+4. On the campaign page, "Delete {title}" opens a warning dialog; "Delete variant" removes the tile, and the campaign's "Undo" does not bring it back (component test and in the 5.4 run) [D-099].
 5. Every Phase 5 command has a success test and its refusal tests; `generation.runFill` passes the agent-run gate tests (refused unticked, passes ticked, held at the limit).
 6. Cmd-click (Ctrl-click on Windows) on a tile still opens the tab behind (built in P3-10; the 5.4 run clicks it once); quick look moves through the variants with Next and Previous.
 7. At most one real Gemini `extend` run and at most one real ComfyUI extend run, both in P5-19, reported. Windows is the stakeholder's check (D-087).
@@ -43,10 +43,10 @@
 | 1 | P5-5 The fan-out plan (pure) (built) | small | Phase 4 | P5-1, P5-2, P5-6, P5-7 | — |
 | 1 | P5-6 Gemini picture extend (built) | small | Phase 4 | every wave 1 slice | — |
 | 1 | P5-7 ComfyUI extend in the adapter (built) | small | Phase 4 | every wave 1 slice | — |
-| 2 | P5-3 Overrides on edit, `layer.revert`, `layer.clearOverride` | medium | P5-1, P5-2 | P5-4, P5-8, P5-12 | — |
-| 2 | P5-4 Snapshots, `variant.delete`, `remove`, `restore`, `restoreLayers` | medium | P5-1 | P5-3, P5-8, P5-12 | — |
-| 2 | P5-8 `generation.runFill`, the fill job, the gate | medium | P5-1; SP-9 merged | P5-3, P5-4, P5-12 | SP-9 (`prompt.ts`) |
-| 2 | P5-12 The sync plan and `sync.preview` | medium | P5-1, P5-2 | P5-3, P5-4, P5-8 | — |
+| 2 | P5-3 Overrides on edit, `layer.revert`, `layer.clearOverride` (built) | medium | P5-1, P5-2 | P5-4, P5-8, P5-12 | — |
+| 2 | P5-4 Snapshots, `variant.delete`, `remove`, `restore`, `restoreLayers` (built) | medium | P5-1 | P5-3, P5-8, P5-12 | — |
+| 2 | P5-8 `generation.runFill`, the fill job, the gate (built) | medium | P5-1; SP-9 merged | P5-3, P5-4, P5-12 | SP-9 (`prompt.ts`) |
+| 2 | P5-12 The sync plan and `sync.preview` (built) | medium | P5-1, P5-2 | P5-3, P5-4, P5-8 | — |
 | 3 | P5-9 `generation.applyFill` | small | P5-4, P5-8 | P5-10, P5-11, P5-13 | — |
 | 3 | P5-10 `variant.fanOut` and `variant.add` | medium | P5-4, P5-5 | P5-9, P5-11, P5-13 | — |
 | 3 | P5-11 Directions | small | P5-4 | P5-9, P5-10, P5-13 | — |
@@ -116,7 +116,7 @@ Kept here because `spec/assumptions.md` is near its size limit; it points here. 
 - **A-137. Sync works from the database.** `sync.apply` takes choices only, works out the values itself, and refuses with `master_changed` when the master moved on. *P5-13. Change later: easy.*
 - **A-138. The sync review is a list of changes,** with the new text, not a drawn "after" picture. Changes start unticked. *P5-17. Change later: some rework.*
 - **A-139. Directions:** names 1 to 100 characters, unique in the campaign ignoring case; the new master keeps the layer keys and is not linked. *P5-11. Change later: easy.*
-- **A-140. Deleting** a variant or direction is refused while its work runs; a tile's delete has no confirmation because Undo is beside it; a direction's delete asks. *P5-4, P5-11, P5-15. Change later: easy.*
+- **A-140. Deleting** a variant or direction is refused while its work runs; both warn in a dialog first and neither can be undone [D-099]. *P5-4, P5-11, P5-15.*
 - **A-141. Campaign entries hold snapshots in memory,** and a campaign command that changes a variant clears that variant's own list (`clearScopes`). *P5-1, P5-4. Change later: some rework.*
 - **A-142. Quick look** draws with `variant.render` at 1,024 px and moves through the whole campaign in grid order. *P5-15. Change later: easy.*
 - **A-143. `variant.add`** takes `fit` `scale` (default) or `crop`, never fill. *P5-10. Change later: easy.*

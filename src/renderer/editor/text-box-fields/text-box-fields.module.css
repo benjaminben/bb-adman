@@ -1,3 +1,4 @@
+/* app-style */
 /* The same look as the "Text settings" section (text-fields.module.css). */
 .section {
   display: flex;
@@ -11,7 +12,10 @@
 .legend {
   padding: 0;
   margin-bottom: var(--space-2);
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
 }
 .field {
   display: flex;
@@ -20,18 +24,18 @@
   min-width: 0;
 }
 .label {
-  color: var(--color-text-muted);
   font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
 }
+/* The shared segmented group, stretched to the panel width. */
 .align {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-1);
+  display: flex;
+  width: 100%;
 }
-.align button[aria-pressed='true'] {
-  background: var(--color-accent);
-  color: var(--color-accent-text);
-  border-color: var(--color-accent);
+.align > button {
+  flex: 1;
+  min-width: 0;
 }
 .check {
   display: flex;

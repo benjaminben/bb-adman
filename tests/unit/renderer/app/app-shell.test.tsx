@@ -118,3 +118,31 @@ describe('the shell: campaign tabs [FR-211, FR-242]', () => {
     expect(screen.getByRole('tab', { name: 'Project' })).toHaveAttribute('aria-selected', 'true')
   })
 })
+
+// ST-3 (spec/app-style.md, "App shell and tabs"): the icons are drawn beside the words and
+// hidden from assistive tech, so every name stays what it was.
+const icons = (el: HTMLElement) => [...el.querySelectorAll('svg')]
+
+describe('the shell: icons beside the words [ST-3]', () => {
+  it.each(['Settings', 'Activity'])('"%s" shows a hidden icon and keeps its name', async (name) => {
+    await renderApp(<AppShell />)
+    const button = screen.getByRole('button', { name })
+    expect(icons(button)).toHaveLength(1)
+    expect(icons(button)[0]).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('the error alert shows a hidden icon and still reads the message', async () => {
+    const fake = twoProjects()
+    fake.onCommand('project.close', () => ({
+      ok: false,
+      error: { code: 'NOT_FOUND', message: 'That project is not open.' },
+    }))
+    await renderApp(<AppShell />, fake)
+    await userEvent.click(screen.getByRole('button', { name: 'Close Winter' }))
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('That project is not open.')
+    expect(icons(alert)[0]).toHaveAttribute('aria-hidden', 'true')
+    expect(within(alert).getByRole('button', { name: 'Dismiss' })).toBeInTheDocument()
+    expect(await axeViolations()).toEqual([])
+  })
+})

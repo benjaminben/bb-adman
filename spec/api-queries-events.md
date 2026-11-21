@@ -18,7 +18,7 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 | `variant.render` | `VariantRender = { png, width, height, rev }`: the variant drawn now. User only until Phase 10 writes a rule for linked private pictures; an agent gets `AGENT_DENIED` (`spec/editor-commands.md`). | Built |
 | `template.list` | `TemplateList = Template[]` | Built |
 | `template.slots` | `TemplateSlots = SlotState[]`, `SlotState = { slot, state: 'filled' \| 'empty', candidates: string[] }` (asset IDs), for the slots of the campaign's master [REQ: FR-042]. A picture slot is one whose `slot.type` is not `copy`. | Built |
-| `sync.preview` | `SyncPreviewReply = { directionId, masterVariantId, masterRev, variants: SyncPreview[] }` for a direction; both actors (`spec/links-and-sync.md`, "Sync") | Not built (Phase 5) |
+| `sync.preview` | `SyncPreviewReply = { directionId, masterVariantId, masterRev, variants: SyncPreview[] }` for a direction; both actors (`spec/links-and-sync.md`, "Sync") | Built |
 | `job.list` | `JobRow[]` for the activity panel, as wire rows, newest first [REQ: FR-152, FR-217] | Built |
 | `job.get` | One `JobRow`, or `NOT_FOUND` "That job was not found." | Built |
 | `job.getServerMessage` | `{ text: string \| null }`: the cleaned server text for a failed ComfyUI job, or null (`spec/comfyui.md`) [REQ: FR-267]. User only. | Built |

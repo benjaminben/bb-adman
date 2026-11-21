@@ -10,9 +10,11 @@ subjects:
   - id: glass-bottle
     name: Glass bottle
     description: A tall clear glass bottle with a pale blue mountain label
+    pictures: photos/glass-bottle.png
   - id: sport-flask
     name: Sport flask
     description: A matt steel flask with a carry loop and a blue cap
+    pictures: photos/sport-flask.png
 languages:
   - en
   - de

@@ -1,3 +1,4 @@
+/* app-style */
 .field {
   display: flex;
   flex-direction: column;
@@ -5,20 +6,27 @@
   min-width: 0;
 }
 .label {
-  color: var(--color-text-muted);
   font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
 }
 .row {
   display: flex;
   align-items: center;
   gap: var(--space-1);
 }
+/* The input takes the row less its unit, whatever the value, so neither moves as it is typed;
+   digits share one width. */
 .input {
   flex: 1;
   width: 100%;
   min-width: 0;
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-control);
+  font-variant-numeric: tabular-nums;
 }
 .unit {
+  flex: none;
   color: var(--color-text-muted);
   font-size: var(--font-size-small);
 }

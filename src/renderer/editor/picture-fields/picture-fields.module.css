@@ -1,3 +1,4 @@
+/* app-style */
 .section {
   display: flex;
   flex-direction: column;
@@ -10,7 +11,10 @@
 .legend {
   padding: 0;
   margin-bottom: var(--space-2);
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
 }
 .preview {
   display: flex;

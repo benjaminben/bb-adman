@@ -2,7 +2,7 @@
 
 Rules, exit criteria, the wave table and the design additions: `spec/phases/phase-07.md`. Slices P7-1 to P7-13: `spec/phases/phase-07-slices.md`.
 
-### P7-14 — The fal.ai Seedance adapter
+### P7-14 — The fal.ai Seedance adapter (built)
 
 - **Exists when done:** `src/main/providers/fal-seedance/` implements `VideoProvider` (`start`, `check`, `fetchResult`, `cancel`) as `phase-07.md`, "fal.ai Seedance", says, tested on recorded answers. The registry row stays `available: false` (P7-15 turns it on).
 - **New files:** in `src/main/providers/fal-seedance/`: `index.ts` (`adapters.video`), `video.ts`, `fal-fetch.ts` (the pinned wrapper: two origins, the key only to the queue origin, no redirect, `http:` refused, limits), `origins.ts` (the two constants), `endpoints.ts` (the start to endpoint table, the body builder, the nearest ratio, the duration string, the `@Image{n}` names), `status.ts` (the status and cancel tables), `failure.ts` (the error table of `spec/providers-adapters.md`); `src/main/providers/read-limited.ts` (`readLimited`, moved from the Gemini wrapper, unchanged).

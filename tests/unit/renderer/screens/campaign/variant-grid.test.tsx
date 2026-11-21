@@ -41,4 +41,20 @@ describe('VariantGrid [S2-16]', () => {
     draw(VARIANTS)
     expect(await axeViolations()).toEqual([])
   })
+
+  it('draws tileFooter(variant) under each tile, outside its button [AP-12]', () => {
+    render(
+      <VariantGrid
+        variants={VARIANTS}
+        chosenId={null}
+        onChoose={() => {}}
+        tileFooter={(v) => <p>Footer for {v.title}</p>}
+      />,
+    )
+    const items = within(screen.getByRole('list', { name: 'Variants' })).getAllByRole('listitem')
+    items.forEach((item, i) => {
+      const footer = within(item).getByText(`Footer for ${VARIANTS[i]!.title}`)
+      expect(within(item).getByRole('button').contains(footer)).toBe(false)
+    })
+  })
 })

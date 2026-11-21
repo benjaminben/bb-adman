@@ -15,7 +15,13 @@ export type DrawScene = (
 
 export type RenderService = {
   thumbnail(project: ProjectHandle, variantId: string): Promise<ThumbnailGet>
-  render(project: ProjectHandle, variantId: string, maxDimension: number): Promise<VariantRender>
+  // timeMs: the time a video variant is drawn at (P7-7); left out, 0.
+  render(
+    project: ProjectHandle,
+    variantId: string,
+    maxDimension: number,
+    timeMs?: number,
+  ): Promise<VariantRender>
   // The variant with its text layers left out, for the layout job (spec/ai-jobs.md). It
   // reports no overflow and keeps no file.
   renderPictures(

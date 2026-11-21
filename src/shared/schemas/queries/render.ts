@@ -14,6 +14,8 @@ export type ThumbnailGet =
 export const variantRenderInput = projectScoped.extend({
   variantId: z.string().min(1),
   maxDimension: z.number().int().min(64).max(RENDER_LIMITS.maxDimension).default(1024),
+  // P7-7: the time to draw a video variant at; an image variant ignores it.
+  timeMs: z.number().int().min(0).default(0),
 })
 export type VariantRenderInput = z.infer<typeof variantRenderInput>
 

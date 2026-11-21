@@ -60,6 +60,7 @@ export const REGION_LANGUAGES: readonly RegionLanguage[] = [
   { code: 'CN', names: ['China'], language: 'zh' },
   { code: 'TW', names: ['Taiwan'], language: 'zh' },
   { code: 'HK', names: ['Hong Kong'], language: 'zh' },
+  { code: 'MO', names: ['Macao', 'Macau'], language: 'zh' },
   { code: 'TH', names: ['Thailand'], language: 'th' },
   { code: 'VN', names: ['Vietnam', 'Viet Nam'], language: 'vi' },
   { code: 'ID', names: ['Indonesia'], language: 'id' },

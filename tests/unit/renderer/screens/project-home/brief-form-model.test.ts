@@ -18,7 +18,6 @@ function plan(draft: BriefDraft, primaryLanguage: string | null = 'en', held: st
   const values = formFromDraft(parsed(draft, primaryLanguage), held, photosFor(draft))
   return planFromForm('P1', values, held, IMAGES)
 }
-
 const filled = (): BriefFormValues => formFromDraft(parsed(DRAFT), [], photosFor(DRAFT))
 
 describe('formFromDraft: the form filled from a brief [screens-campaign "The brief form"]', () => {
@@ -126,6 +125,7 @@ describe('planFromForm: what "Create campaign" sends [FR-023, FR-024, FR-026]', 
         { label: '9x16', width: 1080, height: 1920 },
       ],
       templateId: 'starter',
+      placeSubjectPhoto: false,
     })
   })
 

@@ -4,6 +4,7 @@
 import { useId, useState, type ReactNode } from 'react'
 import { useDraft } from '@/renderer/editor/number-field'
 import { useEditorKey } from '@/renderer/editor/use-editor-key'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './text-fields.module.css'
 
 type Props = {
@@ -29,7 +30,7 @@ export function CopyField(props: Props) {
       </div>
       <textarea
         id={id}
-        className={styles.copy}
+        className={`${layout.reading} ${styles.copy}`}
         rows={3}
         aria-describedby={draft.error ? `${id}-error` : undefined}
         disabled={props.disabled}

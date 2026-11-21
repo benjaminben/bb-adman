@@ -14,6 +14,12 @@ export const KEEP_PRINTING_ENDING =
 
 const ENDINGS = [NO_TEXT_ENDING, KEEP_PRINTING_ENDING]
 
+// P5-8 [A-146]: the one fixed sentence of generation.runFill. It holds no ending: it is sent
+// with one picture, so promptToSend adds the "keep printing" ending.
+export const FILL_PROMPT =
+  'Extend this picture outward so it fills the whole frame. Keep everything already in the ' +
+  'picture as it is, and continue the scene naturally at the edges.'
+
 export type PromptFacts = {
   subjects: Array<{ name: string; description: string | null }>
   audience: string

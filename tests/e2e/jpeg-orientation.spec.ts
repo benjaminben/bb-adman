@@ -82,7 +82,7 @@ async function videoFrom(start: string): Promise<Buffer> {
   const file = path.join(box.root, 'phone-photo.jpg')
   const bytes = await sidewaysJpeg()
   fs.writeFileSync(file, bytes)
-  await video.choosePictureStart(app, page, start, [file])
+  await screens.startFromAddedPicture(app, page, start, file)
   await screens.startVideo(page, 2)
   await screens.confirmLicence(page)
   await nthSentId(stand, 1)

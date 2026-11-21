@@ -24,7 +24,7 @@ These are choices made without a design sign-off; the UI pass may change any of 
 
 `VariantGrid` gains `onQuickLook?(variantId)` and `onDelete?(variantId)`. With them, the tile's `actions` hold, after the built "+": "Quick look at {title}" and, for a variant that is not the master, "Delete {title}".
 
-- Delete sends `variant.delete` at once, with no confirmation: the campaign's Undo is beside the grid (A-140). Focus then goes to the next tile's main button, else the previous one, else the direction's heading. A refusal (`jobs_running`, `master_variant`) shows in the banner.
+- Delete opens a warning dialog (`src/renderer/dialogs/delete-variant/`) [D-099]: "Delete {title}?" with "This cannot be undone." and "Keep" (focused) / "Delete variant". "Delete variant" sends `variant.delete`; the campaign's Undo does not bring the variant back (A-140). Focus then goes to the next tile's main button, else the previous one, else the direction's heading. A refusal (`jobs_running`, `master_variant`) shows in the banner.
 - An agent's `variant.delete` still asks the user first (policy ask; Phase 10).
 
 ## Quick look
@@ -70,5 +70,5 @@ These are choices made without a design sign-off; the UI pass may change any of 
 
 - "New direction from this master…": a dialog "New direction" with the field "Name" (default "Direction {n}", the next free number) and "Make direction". Sends `direction.createFromMaster`. The new section appears below.
 - "Rename…": a dialog "Rename {name}" with "Name", "Rename". Sends `direction.rename`.
-- "Delete direction…": a dialog "Delete {name}?" with "Its {n} variant(s) go with it. You can undo this with the campaign's Undo." and "Keep" (focused) / "Delete direction". Disabled with the hint "A campaign keeps at least one direction." when it is the only one. Sends `direction.delete`.
+- "Delete direction…": a dialog "Delete {name}?" with "Its {n} variant(s) go with it. This cannot be undone." [D-099] and "Keep" (focused) / "Delete direction". Disabled with the hint "A campaign keeps at least one direction." when it is the only one. Sends `direction.delete`.
 - The name rules and refusals are the command's; a refusal shows in the dialog.

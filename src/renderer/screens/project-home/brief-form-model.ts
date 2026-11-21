@@ -191,6 +191,7 @@ export function planFromForm(
     languages,
     sizes,
     copyRuleSetFrom: rules.mode === 'copy' ? (rules.copyFrom ?? undefined) : undefined,
+    placeSubjectPhoto: values.placeSubjectPhoto,
   })
   if (!checked.ok) return checked
   const subjects = ids

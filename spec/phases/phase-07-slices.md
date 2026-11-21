@@ -57,7 +57,7 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, `npm test`.
 - **Class:** A + B. **Security:** full (reads files the app did not make). **Size:** medium.
 
-### P7-6 — Asset protocol: byte ranges and audio
+### P7-6 — Asset protocol: byte ranges and audio (built; the audio row test waits for the slice that adds audio types)
 
 - **Exists when done:** `adman-asset://` answers one byte range with `206`, serves kind `audio`, and keeps every confinement rule (`phase-07.md` notes; `spec/assets.md`, "The asset protocol").
 - **New files:** `src/main/assets/byte-range.ts` (pure: `parseRange(header, size)` gives `{ start, end }`, `'whole'` or `'unsatisfiable'`; accepts only `bytes=a-b`, `bytes=a-` and `bytes=-n`, digits only, at most 16 digits each; several ranges or anything else gives `'whole'`).

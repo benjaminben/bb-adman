@@ -24,6 +24,9 @@ test('the brief form', async () => {
   await page.getByRole('button', { name: 'Load a brief' }).click()
   const brief = page.getByRole('region', { name: 'Brief' })
   await expect(brief.getByRole('list', { name: 'Subjects' })).toBeVisible()
+  // SP-5: the brief names a photo for each subject; the picture waits for both.
+  await screens.expectPhoto(brief, 1, path.resolve('tests/fixtures/briefs/photos/citrus-can.png'))
+  await screens.expectPhoto(brief, 2, path.resolve('tests/fixtures/briefs/photos/berry-bottle.png'))
   await shot(page, '01-brief-form-loaded')
 
   await brief.getByRole('button', { name: 'Create campaign' }).click()

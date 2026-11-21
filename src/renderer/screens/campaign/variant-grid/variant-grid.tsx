@@ -4,6 +4,7 @@
 // button that opens the variant's tab behind the overview (spec/editor.md, "Variant tabs").
 // With projectId, each tile shows its thumbnail (spec/editor.md, "Thumbnails on the screens");
 // its alt is empty, since the tile's own text names the variant.
+import type { ReactNode } from 'react'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import { VariantTile } from '@/renderer/screens/campaign/variant-tile'
 import { VariantThumbnail } from '@/renderer/ui/variant-thumbnail'
@@ -16,10 +17,12 @@ export type VariantGridProps = {
   chosenId: string | null
   onChoose: (variantId: string) => void
   onOpenBehind?: (variantId: string) => void
+  // AP-12: drawn under each tile, outside its button (the approval marks).
+  tileFooter?: (variant: VariantSummary) => ReactNode
 }
 
 export function VariantGrid(props: VariantGridProps) {
-  const { onOpenBehind, projectId } = props
+  const { onOpenBehind, projectId, tileFooter } = props
   if (props.variants.length === 0) {
     return <p className={layout.muted}>This campaign has no variants.</p>
   }
@@ -48,6 +51,7 @@ export function VariantGrid(props: VariantGridProps) {
                 </button>
               )
             }
+            footer={tileFooter?.(v)}
           />
         </li>
       ))}

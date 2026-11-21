@@ -142,9 +142,10 @@ export function createRenderService(opts: RenderServiceOptions): RenderService {
     variantId: string,
     maxDimension: number,
     withoutText: boolean,
+    timeMs = 0,
   ): Promise<VariantRender> {
     const open = opts.deps().projects.requireOpen(project.projectId)
-    const scene = await sceneInput(opts.deps(), open, variantId, { withoutText })
+    const scene = await sceneInput(opts.deps(), open, variantId, { withoutText, timeMs })
     if (!scene) throw new AppError('NOT_FOUND', NOT_FOUND)
     const v = scene.input.variant
     const size = fitSize(v, Math.min(maxDimension, Math.max(v.width, v.height)))
@@ -168,8 +169,8 @@ export function createRenderService(opts: RenderServiceOptions): RenderService {
       return { state: 'pending', rev }
     },
 
-    render(project, variantId, maxDimension) {
-      return queue.render(() => drawVariant(project, variantId, maxDimension, false))
+    render(project, variantId, maxDimension, timeMs) {
+      return queue.render(() => drawVariant(project, variantId, maxDimension, false, timeMs))
     },
 
     renderPictures(project, variantId, maxDimension) {

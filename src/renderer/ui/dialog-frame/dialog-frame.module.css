@@ -1,3 +1,5 @@
+/* app-style */
+/* The dialog frame (spec/app-style.md, "Dialogs"): head, body and foot bands. */
 .overlay {
   position: fixed;
   inset: 0;
@@ -8,12 +10,88 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(var(--width-dialog), 90vw);
-  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--space-12));
+  overflow: hidden;
   background: var(--color-bg);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
 }
-/* The title is the first child: no browser heading margin above it. */
-.content > :first-child {
-  margin: 0 0 var(--space-3);
+.content:focus-visible {
+  outline: none;
+}
+.normal {
+  width: min(var(--width-dialog), calc(100vw - var(--space-8)));
+}
+.wide {
+  width: min(var(--width-dialog-wide), calc(100vw - var(--space-8)));
+}
+.large {
+  width: min(var(--width-dialog-large), calc(100vw - var(--space-8)));
+}
+.head {
+  flex: none;
+  padding: var(--space-4) var(--space-6) var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-line);
+}
+.title {
+  margin: 0;
+}
+.description {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-control);
+  color: var(--color-text-muted);
+}
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-6);
+}
+.body > :first-child {
+  margin-top: 0;
+}
+.body > :last-child:not(.inBody) {
+  margin-bottom: 0;
+}
+.foot {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border-top: var(--border-width) solid var(--color-line);
+  background: var(--color-surface-soft);
+}
+/* A DialogFoot row: the last thing in the body, pulled out to the body's edges and held at
+   the bottom while the body scrolls, so it draws as the foot band. */
+.inBody {
+  position: sticky;
+  /* Chrome measures a sticky offset from inside the scroller's padding: the body's own
+     padding is taken back so the row meets the dialog's bottom edge. */
+  bottom: calc(-1 * var(--space-6));
+  margin: var(--space-6) calc(-1 * var(--space-6)) calc(-1 * var(--space-6));
+}
+/* A body that holds only the button row: the row sits right under the head. */
+.body > .inBody:first-child {
+  margin-top: calc(-1 * var(--space-6));
+}
+/* The turning spinner of a busy or waiting block, in the spot colour. */
+.spin {
+  display: inline-flex;
+  color: var(--color-accent);
+  animation: turn var(--motion-spin) linear infinite;
+}
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
 }

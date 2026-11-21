@@ -14,6 +14,8 @@ export type VariantTileProps = {
   onChoose: (variantId: string) => void
   preview?: ReactNode
   actions?: ReactNode
+  // AP-12: drawn after the main button, never inside it (the approval marks).
+  footer?: ReactNode
 }
 
 export function sizeLine(v: VariantSummary): string {
@@ -59,6 +61,7 @@ export function VariantTile(props: VariantTileProps) {
         )}
       </button>
       {props.actions}
+      {props.footer}
     </div>
   )
 }

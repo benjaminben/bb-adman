@@ -33,25 +33,25 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `campaign.delete` | projectId, campaignId | — | ask | Built | FR-197 |
 | `ruleSet.update` | projectId, campaignId, any of the four lists | C | deny | Built | FR-033 |
 | `ruleSet.copyFrom` | projectId, campaignId, sourceCampaignId (both in this project) | C | deny | Built | FR-034 |
-| `direction.createFromMaster` | projectId, masterVariantId, name | C | deny | Not built (Phase 5) | FR-074 |
+| `direction.createFromMaster` | projectId, masterVariantId, name | — | deny | Not built (Phase 5) | FR-074 |
 | `direction.rename` | projectId, directionId, name | C | deny | Not built (Phase 5) | FR-072 |
-| `direction.delete` | projectId, directionId (refused if it is the campaign's last) | C | deny | Not built (Phase 5) | A-06 |
-| `direction.restore` | projectId, direction, variants[] of VariantSnapshot (system; the inverse of `direction.delete`) | C | deny (system) | Not built (Phase 5) | R-17 |
+| `direction.delete` | projectId, directionId (refused if it is the campaign's last) | — | deny | Not built (Phase 5) | A-06 |
+| `direction.restore` | projectId, direction, variants[] of VariantSnapshot (system; not used and to be removed, D-099) | C | deny (system) | Not built | R-17 |
 | `variant.fanOut` | projectId, directionId, sizes[], languages[], formats[] (`image` only until Phase 7), fits{} | C | deny | Not built (Phase 5) | FR-075, FR-076 |
 | `variant.add` | projectId, directionId, sizeLabel, language, format, fit? (`scale` or `crop`) | C | allow | Not built (Phase 5) | FR-195 |
-| `variant.remove` | projectId, variantIds[] (system; the inverse of fan-out, `variant.add`, `variant.restore`) | C | deny (system) | Not built (Phase 5) | R-17 |
-| `variant.restore` | projectId, snapshots[] (system; the inverse of `variant.delete`, `variant.remove`) | C | deny (system) | Not built (Phase 5) | R-17 |
-| `variant.restoreLayers` | projectId, variants[] of { variantId, layers } (system; the inverse of `sync.apply`, `generation.applyFill`) | C | deny (system) | Not built (Phase 5) | R-17 |
+| `variant.remove` | projectId, variantIds[] (system; the inverse of fan-out, `variant.add`, `variant.restore`) | C | deny (system) | Built | R-17 |
+| `variant.restore` | projectId, snapshots[] (system; the inverse of `variant.remove`) | C | deny (system) | Built | R-17 |
+| `variant.restoreLayers` | projectId, variants[] of { variantId, layers } (system; the inverse of `sync.apply`, `generation.applyFill`) | C | deny (system) | Built | R-17 |
 | `variant.update` | projectId, variantId, title (Phase 3); durationMs (Phase 7) | V | allow | Built (title; durationMs Phase 7) | FR-070, FR-120 |
 | `variant.setFormat` | projectId, variantId, format (`spec/data-rules.md`, "Changing a variant's format") | V | allow | Not built (Phase 7) | FR-070, FR-120, R-20, D-025 |
-| `variant.delete` | projectId, variantId (refused for a master) | C | ask | Not built (Phase 5) | FR-073, FR-197 |
+| `variant.delete` | projectId, variantId (refused for a master) | — | ask | Built | FR-073, FR-197 |
 | `layer.create` | projectId, variantId, type (image or text), values? | V | allow | Built | FR-090, FR-194 |
 | `layer.update` | projectId, layerId, patch of copy, style, geometry, source, timing, animation, name, visible, locked | V | allow | Built | FR-092–FR-094, FR-194, FR-249 |
 | `layer.delete` | projectId, layerId (refused for a background) | V | allow | Built | FR-092, FR-197 |
 | `layer.restore` | projectId, layer (whole row), order (system; only the inverse of `layer.delete`) | V | deny (system) | Built | FR-095 |
 | `layer.reorder` | projectId, variantId, layerIds (every non-background layer, lowest first) | V | allow | Built | FR-092 |
-| `layer.clearOverride` | projectId, layerId, paths[] | V | deny | Not built (Phase 5) | FR-080 |
-| `layer.revert` | projectId, variantId, layers[] of { layerId, patch, overrides } (system; the inverse of an edit that changed an override list) | V | deny (system) | Not built (Phase 5) | FR-080, FR-095 |
+| `layer.clearOverride` | projectId, layerId, paths[] | V | deny | Built | FR-080 |
+| `layer.revert` | projectId, variantId, layers[] of { layerId, patch, overrides } (system; the inverse of an edit that changed an override list) | V | deny (system) | Built | FR-080, FR-095 |
 | `layer.reportOverflow` | projectId, layerId, overflow, variantRev | — | deny | Built | FR-098 |
 | `clip.add` | projectId, variantId, assetId, startMs | V | deny | Not built (Phase 7) | FR-121 |
 | `clip.update` | projectId, clipId, startMs?, inMs?, outMs?, placement? | V | deny | Not built (Phase 7) | FR-122 |
@@ -63,7 +63,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `sync.apply` | projectId, directionId, masterRev, decisions[] | C | deny | Not built (Phase 5) | FR-082, FR-083 |
 | `check.run` | projectId, campaignId or variantIds[] | — | allow | Not built (Phase 6) | FR-114, FR-116, FR-196 |
 | `generation.runImages` | projectId, variantId, slot or layerId (exactly one), prompt, referenceAssetIds[], count (1 to 8), provider, licenceConfirmed? (S2-4) | — | tick | Built | FR-062–FR-065, FR-199 |
-| `generation.runFill` | projectId, variantId, provider, licenceConfirmed? (agents may start it: a gate run command) | — | tick | Not built (Phase 5) | FR-076, D-080 |
+| `generation.runFill` | projectId, variantId, provider, licenceConfirmed? (agents may start it: a gate run command) | — | tick | Built | FR-076, D-080 |
 | `generation.applyFill` | projectId, jobId (the window sends it when its fill succeeds) | C | deny | Not built (Phase 5) | FR-076 |
 | `generation.proposeLayout` | projectId, variantId, provider (`spec/ai-jobs.md`) | — (applied by `layer.updateMany`, V) | tick | Built | FR-061 |
 | `generation.copyOptions` | projectId, variantId, layerId, count (1 to 8), provider | — | tick | Built | FR-045 |
@@ -135,7 +135,7 @@ Built. `src/main/commands/brief/`, `src/main/commands/campaign/`, `src/main/comm
   - The command changes the two lists on the campaign row and nothing else. It adds, removes and changes no variant, and does not rewrite the stored `brief`. Making variants from the lists is fan-out (Phase 5). What happens to a non-master variant whose language or size leaves the list is OI-71 (open: whether it is removed, kept or marked); until it is answered the variant stays as it is.
   - Undo goes through the same list checks and puts back both lists with the text fields.
 - **`campaign.delete`** by an agent asks for every campaign, including one the agent created (`campaign.created_by = 'agent'`) [D-023]. It is not undoable for anyone. It refuses with `jobs_running` while a job is `queued` or `running` whose `campaign_id` is the campaign or whose `variant_id` is one of its variants; the refusal runs before any write. It stops no job itself and has no "stop them first" input. Provisional until OI-69 (whether a campaign delete may stop its running work) is answered.
-- **Deletes and undo.** `variant.delete` is undoable by the user from the campaign's list [REQ: R-17] and still asks before an agent runs it, because FR-197 names it as destructive and an agent cannot undo.
+- **Deletes and undo.** `variant.delete`, `direction.delete` and `campaign.delete` are not undoable for anyone [D-099, which replaces the delete part of R-17]: the screen shows a warning dialog first, and an agent's `variant.delete` or `campaign.delete` asks the user, because FR-197 names them as destructive.
 
 ## Editing commands
 

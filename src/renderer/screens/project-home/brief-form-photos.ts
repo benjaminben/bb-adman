@@ -38,7 +38,8 @@ export function rowPhotos(row: SubjectChoice, images: AssetList): RowPhoto[] {
 }
 
 // The five photo lines, each kind over every row before the next kind. While the pictures
-// are not read, only line 1 shows.
+// are not read, only line 1 shows. Line 4 covers a reused photo and also one this form added
+// that has since been attached to another subject.
 export function photoProblems(
   subjects: SubjectChoice[],
   images: ProjectImages,
@@ -62,7 +63,7 @@ export function photoProblems(
       .map(({ n }) => `Subject ${n}: add at least one photo.`),
     ...rows.flatMap(({ n, photos }) =>
       photos
-        .filter((p) => !p.attached && !p.added && p.asset.subjectId !== null)
+        .filter((p) => !p.attached && p.asset.subjectId !== null)
         .map(
           ({ asset }) =>
             `Subject ${n}: the photo "${asset.displayName}" belongs to the subject "${asset.subjectId}". ${ONE}`,

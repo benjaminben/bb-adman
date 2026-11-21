@@ -10,6 +10,7 @@
 // SP-7 (A-120): the reference ticks start as the chosen variant's subject photos.
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type MouseEvent } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
+import { useStore } from 'zustand'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { NavScope, useNav } from '@/renderer/app/nav-context'
 import { platform } from '@/renderer/editor/use-editor-key'
@@ -19,6 +20,8 @@ import { OVERVIEW_TAB, campaignNav } from '@/renderer/stores/nav-store'
 import type { CampaignGet, VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { AssetList } from '@/shared/schemas/queries/asset'
 import { ApprovalBar } from '@/renderer/screens/campaign/approval-bar'
+import { approvalFooter } from '@/renderer/screens/campaign/approval-mark'
+import { CampaignSections } from '@/renderer/screens/campaign/campaign-sections'
 import { GeneratePanel } from '@/renderer/screens/campaign/generate-panel'
 import { RunList } from '@/renderer/screens/campaign/run-list'
 import { SlotView } from '@/renderer/screens/campaign/slot-view'
@@ -114,6 +117,7 @@ function CampaignPage(props: Props) {
   // AP-11: the approvals store, one per page; its timer stops when the page closes.
   const [approvals] = useState(() => createApprovalsStore(api, projectId, campaignId))
   useEffect(() => approvals.getState().start(), [approvals])
+  const approvalsData = useStore(approvals, (s) => s.data)
   useEffect(() => store.getState().subscribe(), [store])
   useEffect(() => {
     if (variantId !== null) void store.getState().load(variantId)
@@ -144,6 +148,7 @@ function CampaignPage(props: Props) {
           chosenId={variantId}
           onChoose={choose}
           onOpenBehind={(id) => openVariant(projectId, campaignId, id, true)}
+          tileFooter={approvalFooter(approvalsData)}
         />
       </div>
       {variant && (
@@ -176,6 +181,7 @@ function CampaignPage(props: Props) {
         />
       )}
       <RunList projectId={projectId} store={store} />
+      <CampaignSections projectId={projectId} campaignId={campaignId} data={data} />
     </>
   )
 

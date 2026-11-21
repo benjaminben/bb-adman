@@ -11,8 +11,12 @@ subjects:
   - id: citrus-can
     name: Citrus can
     description: A slim aluminium can with a lime and lemon label
+    pictures:
+      - photos/citrus-can.png
   - name: Berry bottle
     description: A tall glass bottle of wild berry soda
+    pictures:
+      - photos/berry-bottle.png
 languages:
   - en
   - fr-CA

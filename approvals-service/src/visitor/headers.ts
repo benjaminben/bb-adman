@@ -16,7 +16,9 @@ function common(request: Request): Headers {
   const headers = new Headers({
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
-    'Referrer-Policy': 'no-referrer',
+    // Not no-referrer: under that a browser posts forms with `Origin: null`, which the form
+    // check refuses. same-origin still sends no referrer to any other site.
+    'Referrer-Policy': 'same-origin',
     'Cross-Origin-Opener-Policy': 'same-origin',
     'Cache-Control': 'no-store',
     'X-Robots-Tag': 'noindex, nofollow',

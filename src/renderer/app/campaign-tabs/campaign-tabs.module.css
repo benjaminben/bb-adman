@@ -1,12 +1,23 @@
+/* app-style */
+/* The campaign tabs stand on the bar's bottom edge; "+" is a quiet square beside them. */
 .row {
   display: flex;
   flex: 1;
   align-items: flex-end;
+  align-self: stretch;
   gap: var(--space-1);
   min-width: 0;
 }
 .add {
-  padding: 0 var(--space-2);
+  align-self: center;
+  width: var(--control-height-small);
+  min-height: var(--control-height-small);
+  padding: 0;
   border-color: transparent;
   background: transparent;
+  font-size: var(--font-size-body);
+}
+.add:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--color-surface-soft);
 }
