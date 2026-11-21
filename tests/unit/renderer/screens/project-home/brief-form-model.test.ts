@@ -126,7 +126,15 @@ describe('planFromForm: what "Create campaign" sends [FR-023, FR-024, FR-026]', 
         { label: '9x16', width: 1080, height: 1920 },
       ],
       templateId: 'starter',
+      placeSubjectPhoto: false,
     })
+  })
+
+  it('sends "Start the ad with a subject photo placed" as placeSubjectPhoto [SP-4, A-119]', () => {
+    const values = { ...filled(), placeSubjectPhoto: true }
+    const result = planFromForm('P1', values, [], IMAGES)
+    if (!result.ok) throw new Error(result.problems.join())
+    expect(result.campaign.placeSubjectPhoto).toBe(true)
   })
 
   it('sends no subject.create for a subject the project holds, and its typed name', () => {
