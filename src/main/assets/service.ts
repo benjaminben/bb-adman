@@ -28,18 +28,29 @@ export function assetsDirOf(project: ProjectHandle): string {
   return assetsDirFor(project.filePath, readMeta(project.db))
 }
 
+const isMissing = (e: unknown) => {
+  const code = (e as NodeJS.ErrnoException).code
+  return code === 'ENOENT' || code === 'ENOTDIR'
+}
+
 // SPEC 14 [1.34] V1: the real path of the nearest parent of `dir` that exists. A path that
-// is not there (ENOENT, ENOTDIR) moves one step up; any other error refuses.
+// is not there (ENOENT, ENOTDIR) moves one step up; any other error refuses. [1.37] X1: a
+// path whose realpath fails but whose lstat succeeds is a link that does not resolve.
 async function nearestRealParent(dir: string): Promise<string> {
   let p = path.dirname(dir)
   for (;;) {
     try {
       return await fs.promises.realpath(p)
     } catch (e) {
-      const code = (e as NodeJS.ErrnoException).code
-      if ((code !== 'ENOENT' && code !== 'ENOTDIR') || path.dirname(p) === p) {
-        throw assetsFolderMissing()
-      }
+      if (!isMissing(e) || path.dirname(p) === p) throw assetsFolderMissing()
+      const linkFound = await fs.promises.lstat(p).then(
+        () => true,
+        (le: unknown) => {
+          if (!isMissing(le)) throw assetsFolderMissing()
+          return false
+        },
+      )
+      if (linkFound) throw assetsFolderMissing()
       p = path.dirname(p)
     }
   }
@@ -55,6 +66,12 @@ export async function ensureAssetsDir(project: ProjectHandle): Promise<string> {
   if (stat?.isDirectory()) return dir
   const projectDir = path.dirname(project.filePath)
   if (pathInside(projectDir, dir) === null) throw assetsFolderMissing()
+  // [1.37] X1: something that is not a folder is in the way (a file, a link to nowhere).
+  const inTheWay = await fs.promises.lstat(dir).then(
+    () => true,
+    () => false,
+  )
+  if (inTheWay) throw assetsFolderMissing()
   const [realProjectDir, realParent] = await Promise.all([
     fs.promises.realpath(projectDir).catch(() => {
       throw assetsFolderMissing()

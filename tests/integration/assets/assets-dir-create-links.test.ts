@@ -125,3 +125,27 @@ describe('a project opened through a link to its folder [SPEC 14 1.34 V1]', () =
     }
   })
 })
+
+describe('a link that leads nowhere, on the way to the assets folder [SPEC 14 1.37 X1]', () => {
+  const refusesUnderDeadLink = async (rel: string) => {
+    const target = path.join(outside, 'gone')
+    const link = path.join(dir, 'L')
+    fs.symlinkSync(target, link, 'dir')
+    storeAssetsDir(rel)
+    await expect(write()).rejects.toMatchObject(REFUSED)
+    const error = await expectRefused(bus, importCopy, 'RULE_VIOLATION', 'assets_folder_missing')
+    expect(error.message).toBe(REFUSED.message)
+    expect(fs.existsSync(target)).toBe(false)
+    expect(fs.lstatSync(link).isSymbolicLink()).toBe(true)
+  }
+
+  it('refuses L/a/b where L is a link to a place that does not exist', async (ctx) => {
+    if (!canLink()) ctx.skip()
+    await refusesUnderDeadLink(path.join('L', 'a', 'b'))
+  })
+
+  it('refuses L/a where L is a link to a place that does not exist', async (ctx) => {
+    if (!canLink()) ctx.skip()
+    await refusesUnderDeadLink(path.join('L', 'a'))
+  })
+})
