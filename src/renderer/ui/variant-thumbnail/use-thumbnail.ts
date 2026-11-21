@@ -26,7 +26,8 @@ export function useThumbnail(projectId: string, variantId: string, rev: number):
       const reply = await api.query('thumbnail.get', { projectId, variantId })
       if (turn !== latest) return
       if (!reply.ok) return show({ kind: 'failed' })
-      const answer = reply.data as ThumbnailGet
+      const answer = reply.data as ThumbnailGet | null
+      if (!answer) return
       if (answer.state === 'failed') return show({ kind: 'failed' })
       if (answer.state === 'ready') {
         const blob = new Blob([answer.png as Uint8Array<ArrayBuffer>], { type: 'image/png' })
