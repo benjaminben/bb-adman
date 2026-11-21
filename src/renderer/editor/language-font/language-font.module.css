@@ -1,0 +1,16 @@
+/* app-style */
+/* "Use this font for every {language} post", under the font field. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.button {
+  align-self: flex-start;
+}
+.error {
+  margin: 0;
+  color: var(--color-danger-text);
+  font-size: var(--font-size-small);
+}
