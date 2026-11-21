@@ -19,7 +19,7 @@ describe('settings defaults [SPEC 13.1]', () => {
         image: 'gemini',
         layout: 'gemini',
         text: 'gemini',
-        video: 'fal-seedance',
+        video: 'comfyui',
       },
       generation: { optionsPerRun: 4 },
       export: { imageFormat: 'png', jpgQuality: 90, fps: 30 },
@@ -53,7 +53,7 @@ describe('settings.update [FR-004, FR-067, FR-170]', () => {
     await f.user('settings.update', { export: { fps: 60 }, defaultProviders: { text: 'gemini' } })
     const s = (await state()).settings
     expect(s.export).toEqual({ imageFormat: 'png', jpgQuality: 90, fps: 60 })
-    expect(s.defaultProviders.video).toBe('fal-seedance')
+    expect(s.defaultProviders.video).toBe('comfyui')
   })
 
   it('emits app.stateChanged', async () => {

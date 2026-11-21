@@ -10,9 +10,10 @@ import { comfyOwnPorts } from '../../providers/comfyui/own-ports'
 import { serverChecks, type ServerChecks } from '../../providers/comfyui/needs'
 import { NON_DRAFT_WORKFLOWS } from '../../providers/comfyui/workflows'
 import type { WorkflowSpec } from '../../providers/comfyui/workflows/types'
+import { reasonMessage } from '../../../shared/providers/messages'
 
-// The sentence of SPEC 6.10.9 for "no address saved".
-export const COMFY_ADDRESS_NEEDED_MESSAGE = "Enter your ComfyUI server's address to use it."
+// The sentence of SPEC 6.10.9 for "no address saved"; the one copy is in messages.ts.
+export const COMFY_ADDRESS_NEEDED_MESSAGE = reasonMessage('address_needed')
 
 // [1.45] B-3: the check compares no draft workflow.
 export function comfyCheck(

@@ -8,6 +8,7 @@ import type { CoreDeps } from '../../core-deps'
 import type { ProjectHandle } from '../../db/project-file'
 import { readWireRow } from '../../db/rows'
 import { requireProviderKeys } from '../../providers/require-keys'
+import { checkComfyRun } from './comfy-checks'
 import { starterTemplate } from '../../../shared/templates/starter'
 import { promptToSend } from '../../../shared/generation/prompt'
 import {
@@ -18,7 +19,7 @@ import type { ImageJobRequest } from '../../../shared/schemas/jobs/image-generat
 import type { ProviderInfo } from '../../../shared/schemas/queries/app'
 import { AppError } from '../../../shared/schemas/result'
 
-type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'assets'>
+type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'assets' | 'settings' | 'devTools'>
 type Target = { campaignId: string; width: number; height: number }
 
 const TEMPLATES = [starterTemplate]
@@ -102,6 +103,8 @@ export function generationRunImages(deps: Deps) {
       const provider = pictureProvider(deps, input.provider)
       target(ctx.project, input)
       requireProviderKeys(deps, provider.id, 'generate pictures')
+      // CU-4: the ComfyUI checks, before any picture is read or any job row is made.
+      if (provider.id === 'comfyui') checkComfyRun(deps, ctx, input.referenceAssetIds.length)
       for (const id of input.referenceAssetIds) await deps.assets.read(ctx.project, id)
     },
     run(ctx, input) {

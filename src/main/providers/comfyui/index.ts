@@ -1,4 +1,9 @@
-// This provider's adapters (SPEC 6, 6.10). Slices CU-4 and CU-6 fill this object.
+// This provider's adapters (SPEC 6, 6.10). CU-4 adds the picture job; CU-6a adds video.
 import type { ProviderAdapters } from '../types'
+import { comfyImage } from './image'
+import { comfyVideo } from './video'
 
-export const adapters: ProviderAdapters = {}
+export const adapters: ProviderAdapters = {
+  image: (ctx) => comfyImage(ctx),
+  video: (ctx) => comfyVideo(ctx),
+}

@@ -11,8 +11,8 @@ describe('app.getState [SPEC 4.3, 6]', () => {
     const s = data<AppState>(await f.core.query('app.getState', {}, { actor: 'user' }))
     expect(s.providers.map((p) => [p.id, p.available])).toEqual([
       ['gemini', true],
-      ['fal-seedance', true],
-      ['comfyui', false],
+      ['fal-seedance', false],
+      ['comfyui', true],
       ['firefly', false],
       ['s3', true],
       ['dropbox', true],

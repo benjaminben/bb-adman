@@ -18,8 +18,9 @@ import { pictureSize } from '../../src/main/providers/picture-size'
 import { pictureType } from '../../src/main/providers/picture-type'
 import { fitSize } from '../../src/shared/comfy/fit-size'
 import type { Print } from './print'
+import { pictureToSend } from './given-picture'
 import { fieldNames, runGraph, type RunResult, type Timing } from './run-graph'
-import { makeTestPicture } from './test-picture'
+import { checkClip } from './video-facts'
 
 export type CaseKit = {
   client: ComfyClient
@@ -97,29 +98,48 @@ const checkPicture = (kit: CaseKit) => (bytes: Uint8Array) => {
   return type === 'image/png' ? '.png' : '.jpg'
 }
 
-// A clip passes when it starts with an ftyp box; viewFile has already held it under the limit.
-function checkVideo(bytes: Uint8Array): string {
+// A clip passes when it starts with an ftyp box and checkMp4 accepts it (1.58 J-1); viewFile
+// has already held it under the limit.
+const checkVideo = (kit: CaseKit) => (bytes: Uint8Array) => {
   const box = Buffer.from(bytes.subarray(4, 8)).toString('latin1')
   if (box !== 'ftyp') throw new Error('The result does not start with an ftyp box')
+  checkClip(bytes, kit.print)
   return '.mp4'
 }
 
-// Case 5 (1.46): one picture from the test's own reference picture.
+// Case 5 (1.46, 1.54 P-3): one picture from a reference picture: the given one when
+// ADMAN_COMFY_PICTURE is set, else the test-made one. Only with ADMAN_COMFY_FLUX=1 set in the
+// terminal (1.53 G-12). The given picture is checked before any call; only its bytes are sent,
+// under uploadName, and no line names its path or file.
 export async function referenceCase(kit: CaseKit): Promise<CaseOutcome> {
+  if (kit.env.ADMAN_COMFY_FLUX !== '1') {
+    return { skip: 'ADMAN_COMFY_FLUX is not 1, so the Flux reference case does not run.' }
+  }
+  const picture = pictureToSend(kit.env)
   const spec = flux3KleinEditReferences
   const { skip, version } = await missingFor(kit, spec)
   if (skip) return { skip }
-  const picture = makeTestPicture()
-  const kept = await kit.client.uploadImage(uploadName(picture), picture)
+  const kept = await kit.client.uploadImage(uploadName(picture.bytes), picture.bytes)
+  const which = picture.kind === 'given' ? 'the given picture' : 'the test-made picture'
+  const type = picture.type === 'image/png' ? 'PNG' : 'JPEG'
+  kit.print(`Picture sent: ${which}, ${type}, ${picture.width} x ${picture.height}`)
   const name = kept.subfolder === '' ? kept.name : `${kept.subfolder}/${kept.name}`
   const values = { prompt: REFERENCE_PROMPT, references: [name] }
   await runAndReport(kit, spec, version, values, MAX_PICTURE_BYTES, checkPicture(kit))
-  kit.print('No small JPEG fixture is in tests/, so no JPEG run is made.')
+  if (picture.type !== 'image/jpeg') {
+    kit.print(
+      'No JPEG run is made; the only JPEG in tests/ is a 1×1 picture inside a Gemini fixture.',
+    )
+  }
   return { done: true }
 }
 
-// Case 3: one MOSS picture at the smallest first-run size.
+// Case 3: one MOSS picture at the smallest first-run size, only with ADMAN_COMFY_MOSS=1 set
+// in the terminal (1.53 G-12).
 export async function pictureCase(kit: CaseKit): Promise<CaseOutcome> {
+  if (kit.env.ADMAN_COMFY_MOSS !== '1') {
+    return { skip: 'ADMAN_COMFY_MOSS is not 1, so the MOSS picture case does not run.' }
+  }
   const spec = mossTextToImage
   const { skip, version } = await missingFor(kit, spec)
   if (skip) return { skip }
@@ -137,6 +157,6 @@ export async function videoCase(kit: CaseKit): Promise<CaseOutcome> {
   const { skip, version } = await missingFor(kit, spec)
   if (skip) return { skip }
   const values = { prompt: VIDEO_PROMPT, ...smallest(spec), frames: FRAMES }
-  await runAndReport(kit, spec, version, values, MAX_VIDEO_BYTES, checkVideo)
+  await runAndReport(kit, spec, version, values, MAX_VIDEO_BYTES, checkVideo(kit))
   return { done: true }
 }

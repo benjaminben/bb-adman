@@ -9,6 +9,7 @@ import { campaignQueries } from './campaign'
 import { comfyQueries } from './comfy'
 import { historyQueries } from './history'
 import { jobQueries } from './job'
+import { jobServerMessageQueries } from './job-server-message'
 import { mcpQueries, type McpState } from './mcp'
 import { projectQueries } from './project'
 import { templateQueries } from './template'
@@ -27,6 +28,7 @@ export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, Query
     ...comfyQueries(deps),
     ...historyQueries(deps),
     ...jobQueries(deps),
+    ...jobServerMessageQueries(deps),
     ...(mcp ? mcpQueries(deps, mcp) : {}),
     ...projectQueries(deps),
     ...templateQueries(deps),

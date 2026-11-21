@@ -21,7 +21,14 @@ export type LayoutBox = {
 }
 
 // PNG or JPEG, as the provider sent it; the app turns a JPEG into a PNG (SPEC 6.2 [1.18]).
-export type ImageResult = { bytes: Uint8Array; mime: 'image/png' | 'image/jpeg'; model: string }
+export type ImageResult = {
+  bytes: Uint8Array
+  mime: 'image/png' | 'image/jpeg'
+  model: string
+  // [1.53] G-1: more SPEC 6.6 details, from the app's own data (ComfyUI's workflow file).
+  details?: ImageDetails
+}
+export type ImageDetails = { models: string[]; workflow: { id: string; version: number } }
 
 // [1.24] SPEC 6.11.1: how far along a run is, and the options every run takes.
 export type RunProgress = {

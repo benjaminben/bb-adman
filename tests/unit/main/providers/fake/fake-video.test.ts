@@ -5,6 +5,7 @@ import {
   setFakeBehaviour,
 } from '../../../../../src/main/providers/fake/behaviour'
 import type { AdapterContext } from '../../../../../src/main/providers/types'
+import { checkMp4 } from '../../../../../src/main/providers/video-check'
 
 const ctx = {} as AdapterContext
 const input = {
@@ -60,5 +61,14 @@ describe('fake provider, video [SPEC 14 slice D, 6.11.1]', () => {
 
   it('does not know an ID it did not give', async () => {
     await expect(video().check('someone-else')).rejects.toThrow()
+  })
+})
+
+describe('fake provider, video file [SPEC 14 CU-6a, 6.10.7]', () => {
+  it('gives an MP4 that checkMp4 accepts, so the video job kind can store it', async () => {
+    const v = video()
+    const { remoteJobId } = await v.start(input)
+    const { bytes } = await v.fetchResult(remoteJobId)
+    expect(checkMp4(bytes)).toMatchObject({ hasSound: false })
   })
 })

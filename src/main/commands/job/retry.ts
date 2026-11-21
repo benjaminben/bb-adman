@@ -1,12 +1,24 @@
 // job.retry (SPEC 4.2 notes; FR-069, FR-152): a new job from the old row's request, with the
 // same campaign, variant, layer and slot. The old row stays. The key guard runs again.
-import { defineCommand } from '../types'
+import { defineCommand, type ProjectContext } from '../types'
+import { checkComfyVideoRetry } from '../generation/comfy-video-checks'
+import type { JobRow } from '../../../shared/schemas/rows/job'
 import type { CoreDeps } from '../../core-deps'
 import { requireProviderKeys } from '../../providers/require-keys'
 import { requireJob, wrongState } from './find-job'
 import { jobRetryInput, type JobStarted } from '../../../shared/schemas/commands/job'
+import { imageJobRequest } from '../../../shared/schemas/jobs/image-generation'
+import { checkComfyRun } from '../generation/comfy-checks'
 
-export function jobRetry(deps: Pick<CoreDeps, 'jobs' | 'providers' | 'secrets'>) {
+type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools'>
+
+// [CU-6a, 14 1.53] A ComfyUI video job is checked as generation.startVideo checks it.
+function checkVideoRetry(deps: Deps, ctx: Pick<ProjectContext, 'actor'>, old: JobRow): void {
+  if (old.provider !== 'comfyui' || old.kind !== 'video_generation') return
+  checkComfyVideoRetry(deps, ctx, old.request)
+}
+
+export function jobRetry(deps: Deps) {
   return defineCommand({
     name: 'job.retry',
     input: jobRetryInput,
@@ -18,6 +30,12 @@ export function jobRetry(deps: Pick<CoreDeps, 'jobs' | 'providers' | 'secrets'>)
         throw wrongState('Only a job that failed or was cancelled can be tried again.')
       }
       requireProviderKeys(deps, old.provider, 'try this again')
+      // [1.53] G-2: a ComfyUI picture row passes the same checks as generation.runImages.
+      if (old.provider === 'comfyui' && old.kind === 'image_generation') {
+        const { referenceAssetIds } = imageJobRequest.parse(old.request)
+        checkComfyRun(deps, ctx, referenceAssetIds.length)
+      }
+      checkVideoRetry(deps, ctx, old)
       const jobId = deps.jobs.enqueue(ctx, {
         kind: old.kind,
         campaignId: old.campaignId,

@@ -14,3 +14,7 @@ export const jobListInput = projectScoped.extend({
 export type JobListInput = z.infer<typeof jobListInput>
 
 export type JobList = JobRow[]
+
+// [1.24] SPEC 4.3 job.getServerMessage: user-only; the cleaned server text or null.
+export const jobServerMessageInput = projectScoped.extend({ jobId: z.string().min(1) })
+export type JobServerMessage = { text: string | null }
