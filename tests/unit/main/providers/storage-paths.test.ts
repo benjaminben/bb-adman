@@ -62,3 +62,40 @@ describe('the refused-path error holds no path [SPEC 6.5 1.13 Errors, 1.14 H10]'
     expect(messageOf(run)).toBe('Storage path refused')
   })
 })
+
+describe('Windows name forms are refused on every platform [SPEC 14 H14, 1.17]', () => {
+  it.each(['a./b.txt', 'a/b.txt.'])('refuses a part that ends in a dot: %s', (path) => {
+    expect(() => storageFilePath(path)).toThrow('Storage path refused')
+  })
+
+  it.each(['a /b.txt', 'a/b.txt '])('refuses a part that ends in a space: %s', (path) => {
+    expect(() => storageFilePath(path)).toThrow('Storage path refused')
+  })
+
+  it.each(['a/b.txt:stream', 'a:b/c.txt'])('refuses a part that holds a colon: %s', (path) => {
+    expect(() => storageFilePath(path)).toThrow('Storage path refused')
+  })
+
+  it('refuses a part that holds a backslash', () => {
+    expect(() => storageFilePath('a/b\\c.txt')).toThrow('Storage path refused')
+  })
+
+  it.each(['CON', 'a/con.txt', 'Aux.2026.final/b.txt', 'a/NUL .x', 'lpt1/b.txt'])(
+    'refuses a reserved device name: %s',
+    (path) => {
+      expect(() => storageFilePath(path)).toThrow('Storage path refused')
+    },
+  )
+
+  it.each(['CONTACT/b.txt', 'a/Icon', 'My.CON/x.txt', 'COM10.txt'])(
+    'accepts a name that is not reserved: %s',
+    (path) => {
+      expect(storageFilePath(path)).toBe(path)
+    },
+  )
+
+  it('applies the same rules to a list prefix', () => {
+    expect(() => storageListPrefix('con')).toThrow('Storage path refused')
+    expect(() => storageListPrefix('a./')).toThrow('Storage path refused')
+  })
+})
