@@ -10,12 +10,13 @@ import { renderQueries } from '@/main/queries/render'
 let f: Fixture
 afterEach(() => f.cleanup())
 
-describe('Phase 3 domains are registered empty [spec/structure.md, P3-0]', () => {
-  it('gives an empty handler list for layer and variant, variant.get alone for variant, and an empty map for render', () => {
+describe('Phase 3 domains are registered [spec/structure.md]', () => {
+  it('registers the layer and variant commands and the variant and render queries built so far', () => {
     f = makeFixture()
     const deps = f.core.deps
-    expect(layerCommands(deps)).toEqual([])
-    expect(variantCommands(deps)).toEqual([])
+    // P3-1 fills the two command lists; later slices add to the layer list.
+    expect(layerCommands(deps).map((h) => h.name)).toContain('layer.update')
+    expect(variantCommands(deps).map((h) => h.name)).toEqual(['variant.update'])
     expect(Object.keys(variantQueries(deps))).toEqual(['variant.get'])
     expect(renderQueries(deps)).toEqual({})
   })
