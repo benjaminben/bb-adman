@@ -3,24 +3,35 @@
 // The ticks belong to the campaign page, so they last while it is open. The screen draws no
 // path and reads no file; a path goes only from the system picker to asset.import. The list
 // and "Add pictures" are in reference-list.ts, shared with the video card (1.60 N-9).
+// P4-13: moved to ui/ for the reference dialog, which shows two pickers over one ordered list
+// of ticks: `library: 'asset'` lists the pictures made in the project (A-68), and `shared`
+// leaves the other list's ticks alone and lets the dialog draw the one limit line.
 import { useCallback, useEffect, useId } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { assetUrl } from '@/renderer/ui/asset-url'
 import { MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
 import { tooManyReferencesLine } from '@/shared/schemas/reference-ids'
-import {
-  type Reference,
-  useAddPictures,
-  useReferences,
-  whyNot,
-} from '@/renderer/screens/campaign/reference-list'
+import { type Reference, useAddPictures, whyNot } from '@/renderer/screens/campaign/reference-list'
 import layout from '@/renderer/ui/layout.module.css'
+import { type PictureLibrary, usePictureList } from './use-picture-list'
 
 const LOCAL_LINE =
   "ComfyUI takes one reference picture for now and makes the result in that picture's shape, at about 1 megapixel."
 
-function tickable(list: Reference[]): Set<string> {
-  return new Set(list.filter((a) => whyNot(a) === null).map((a) => a.id))
+const WORDS: Record<PictureLibrary, { heading: string; empty: string }> = {
+  reference: {
+    heading: 'Reference pictures',
+    empty: 'No reference pictures in this project yet.',
+  },
+  asset: { heading: 'Made in this project', empty: 'No pictures made in this project yet.' },
+}
+
+// The IDs a tick may stay on after a read. A shared picker drops only its own rows that
+// cannot be sent; the other list's ticks are not its to drop.
+function keeper(rows: Reference[], shared: boolean): (id: string) => boolean {
+  const ok = new Set(rows.filter((a) => whyNot(a) === null).map((a) => a.id))
+  const own = new Set(rows.map((a) => a.id))
+  return shared ? (id) => ok.has(id) || !own.has(id) : (id) => ok.has(id)
 }
 
 export function ReferencePicker(props: {
@@ -29,22 +40,27 @@ export function ReferencePicker(props: {
   local: boolean
   ticks: string[]
   setTicks: Dispatch<SetStateAction<string[]>>
+  library?: PictureLibrary
+  // Ticks shared with another list; the owner draws the limit line under `fullNoteId`.
+  shared?: { fullNoteId: string }
 }) {
   const { projectId, subjectId, ticks, setTicks } = props
-  const { list, read } = useReferences(projectId)
+  const library = props.library ?? 'reference'
+  const shared = props.shared !== undefined
+  const { list, read } = usePictureList(projectId, library)
   const addPictures = useAddPictures(projectId, subjectId, read)
   const baseId = useId()
-  const fullId = `${baseId}-full`
+  const fullId = props.shared?.fullNoteId ?? `${baseId}-full`
   // F-8 [A-56]: at the limit, an unticked picture cannot be ticked.
   const full = ticks.length >= MAX_REFERENCES_PER_RUN
 
   // A tick is kept only for an asset that is still in the list and can be sent.
   const keepKnown = useCallback(
     (rows: Reference[], added: string[] = []) => {
-      const ok = tickable(rows)
-      setTicks((t) => [...t, ...added.filter((id) => !t.includes(id))].filter((id) => ok.has(id)))
+      const keep = keeper(rows, shared)
+      setTicks((t) => [...t, ...added.filter((id) => !t.includes(id))].filter(keep))
     },
-    [setTicks],
+    [setTicks, shared],
   )
 
   useEffect(() => {
@@ -67,10 +83,10 @@ export function ReferencePicker(props: {
   }
 
   return (
-    <section aria-label="Reference pictures" className={layout.field}>
-      <h3 className={layout.label}>Reference pictures</h3>
+    <section aria-label={WORDS[library].heading} className={layout.field}>
+      <h3 className={layout.label}>{WORDS[library].heading}</h3>
       {list !== null && list.length === 0 && (
-        <p className={layout.muted}>No reference pictures in this project yet.</p>
+        <p className={layout.muted}>{WORDS[library].empty}</p>
       )}
       {list !== null && list.length > 0 && (
         <ul className={layout.list}>
@@ -104,17 +120,19 @@ export function ReferencePicker(props: {
           })}
         </ul>
       )}
-      {full && (
+      {full && !shared && (
         <p id={fullId} className={layout.muted}>
           {tooManyReferencesLine}
         </p>
       )}
       {props.local && ticks.length > 0 && <p className={layout.muted}>{LOCAL_LINE}</p>}
-      <div className={layout.row}>
-        <button type="button" onClick={() => void add()}>
-          Add pictures
-        </button>
-      </div>
+      {library === 'reference' && (
+        <div className={layout.row}>
+          <button type="button" onClick={() => void add()}>
+            Add pictures
+          </button>
+        </div>
+      )}
     </section>
   )
 }
