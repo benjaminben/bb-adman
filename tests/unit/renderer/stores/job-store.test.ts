@@ -51,17 +51,26 @@ describe('job store [SPEC 14 1.41 TP-2]', () => {
     const { fake, store } = setup()
     store.getState().subscribe()
     await store.getState().load('V1')
-    store.getState().track('J2')
+    store.getState().track({ jobId: 'J2' })
     fake.emit('job.updated', jobRow('J2', { createdAt: '2026-11-21T01:00:00.000Z' }))
     expect(store.getState().rows.map((r) => r.id)).toEqual(['J2', 'J1'])
     expect(listCalls(fake)).toHaveLength(1)
+  })
+
+  it('ignores a command reply that holds no job ID', async () => {
+    const { fake, store } = setup()
+    store.getState().subscribe()
+    await store.getState().load('V1')
+    store.getState().track(null)
+    fake.emit('job.updated', jobRow('J2'))
+    await vi.waitFor(() => expect(listCalls(fake)).toHaveLength(2))
   })
 
   it('does not draw a returned run of another variant under the chosen one', async () => {
     const { fake, store } = setup()
     store.getState().subscribe()
     await store.getState().load('V1')
-    store.getState().track('J2')
+    store.getState().track({ jobId: 'J2' })
     fake.emit('job.updated', jobRow('J2', { variantId: 'V2' }))
     expect(store.getState().rows.map((r) => r.id)).toEqual(['J1'])
   })

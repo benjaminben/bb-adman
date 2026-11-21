@@ -5,6 +5,7 @@
 // project from a row.
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { AdmanApi } from '../../shared/schemas/api'
+import type { JobStarted } from '../../shared/schemas/commands/job'
 import type { JobRow } from '../../shared/schemas/rows/job'
 import type { Result } from '../../shared/schemas/result'
 import { imageJobRequest, imageJobResult } from '../../shared/schemas/jobs/image-generation'
@@ -14,7 +15,8 @@ export type JobStoreState = {
   variantId: string | null
   load(variantId: string): Promise<void>
   apply(row: JobRow): void
-  track(jobId: string): void
+  // Takes a command's reply ({ jobId }, SPEC 4.2); a reply without one is ignored.
+  track(reply: unknown): void
   markSeen(jobId: string): Promise<void>
   subscribe(): () => void
 }
@@ -73,8 +75,9 @@ export function createJobStore(deps: JobStoreDeps, projectId: string): JobStore 
       set({ rows: newestFirst(row.variantId === get().variantId ? [...others, row] : others) })
     },
 
-    track(jobId) {
-      tracked.add(jobId)
+    track(reply) {
+      const jobId = (reply as Partial<JobStarted> | null)?.jobId
+      if (typeof jobId === 'string') tracked.add(jobId)
     },
 
     async markSeen(jobId) {
