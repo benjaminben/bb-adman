@@ -2,7 +2,7 @@
 // detail is the error code only (`ENOSPC`, `EACCES`), never a path. The one exception is a
 // refused path: the caller's mistake, which stays the plain Error "Storage path refused".
 import { ProviderFailure } from '../types'
-import { REFUSED_PATH } from './paths'
+import { REFUSED_PATH } from '../storage-paths'
 
 function isRefusedPath(error: unknown): boolean {
   return error instanceof Error && error.constructor === Error && error.message === REFUSED_PATH

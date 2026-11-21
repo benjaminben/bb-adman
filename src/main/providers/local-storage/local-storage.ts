@@ -10,7 +10,7 @@ import { createWriteStream } from 'node:fs'
 import type { ReadableStream as WebReadableStream } from 'node:stream/web'
 import type { StorageProvider } from '../types'
 import { notThere, onDisk } from './failure'
-import { refusePath, storageFilePath, storageListPrefix } from './paths'
+import { refusePath, storageFilePath, storageListPrefix } from '../storage-paths'
 
 function isMissing(error: unknown): boolean {
   return (error as NodeJS.ErrnoException).code === 'ENOENT'

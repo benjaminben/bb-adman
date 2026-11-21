@@ -11,7 +11,7 @@ import {
   S3ServiceException,
 } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
-import { storageFilePath, storageListPrefix } from '../local-storage/paths'
+import { storageFilePath, storageListPrefix } from '../storage-paths'
 import type { AdapterContext, StorageProvider } from '../types'
 import { buildS3Client } from './client'
 import { failureFromS3Error, kindForCode, s3Failure } from './failure'
