@@ -48,15 +48,22 @@ export function safeFailure(
   return { lines: [`${label} error: ${message}`], error: new Error(`${label} error: ${message}`) }
 }
 
-// Runs one live call. A failure prints its safe lines and throws the safe error instead.
+// Runs one live call. A failure prints its safe lines, then throws a short error in its place:
+// the error kind only, as the printed lines already hold the detail ([1.18] K6).
 export async function safely<T>(label: string, call: () => Promise<T>): Promise<T> {
   try {
     return await call()
   } catch (failure) {
-    const { lines, error } = safeFailure(label, failure)
-    livePrint(lines)
-    throw error
+    const values = liveValues()
+    livePrint(safeFailure(label, failure, values).lines, values)
+    throw shortFailure(label, failure, values)
   }
+}
+
+// A new error with no cause and no fields: the label and, for a ProviderFailure, its kind.
+function shortFailure(label: string, failure: unknown, values: string[]): Error {
+  if (!(failure instanceof ProviderFailure)) return new Error(`${label} error`)
+  return new Error(`${label} error ${safeText(failure.error.kind, values)}`)
 }
 
 // [1.16] H20: runs one live call and prints nothing. A failure throws the safe error, so a

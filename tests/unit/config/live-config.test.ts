@@ -51,3 +51,9 @@ describe('nothing imports the live config, and the app never names .env.local [S
     expect(namers).toEqual([])
   })
 })
+
+describe('the live config imports env-file with its file extension [SPEC 14 1.18 K6]', () => {
+  it('names the extension, so Vite loads the config without a warning', () => {
+    expect(liveConfigText).toContain("from './tests/live/env-file.js'")
+  })
+})
