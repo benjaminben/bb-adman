@@ -29,7 +29,7 @@ import { safeStorageCrypto } from './secrets/safe-storage'
 import { createDraw } from './render/draw'
 import { endRenderWindow } from './render/render-window'
 import { endWebpDecoder, webpToPng } from './windows/webp-window'
-import { QUIT_BUTTON, quitQuestion } from './quit-question'
+import { afterQuitAnswer, quitQuestion } from './quit-question'
 
 if (process.env.ADMAN_USER_DATA_DIR) app.setPath('userData', process.env.ADMAN_USER_DATA_DIR)
 registerAssetScheme(protocol)
@@ -97,7 +97,9 @@ async function askToQuit(): Promise<void> {
     const { response } = win
       ? await dialog.showMessageBox(win, options)
       : await dialog.showMessageBox(options)
-    if (response !== QUIT_BUTTON) return
+    const next = afterQuitAnswer(response, liveAppWindow() !== null)
+    if (next === 'showWindow') mainWindow()
+    if (next !== 'quit') return
     await core?.closeAllStopping()
     quitConfirmed = true
     app.quit()

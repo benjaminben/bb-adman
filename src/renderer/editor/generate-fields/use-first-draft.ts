@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react'
 import { useStore } from 'zustand'
 import { useApi } from '@/renderer/app/app-context'
-import { whyNot } from '@/renderer/screens/campaign/reference-list'
+import { whyNot } from '@/renderer/ui/reference-picker/reference-list'
 import { draftKey, generateDrafts, type GenerateDraft } from '@/renderer/stores/generate-drafts'
 import { MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
 import { prefilledPrompt } from '@/shared/generation/prompt'

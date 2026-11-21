@@ -20,6 +20,7 @@ import { AddressDialog } from '@/renderer/dialogs/address-dialog'
 import { LicenceDialog } from '@/renderer/dialogs/licence-dialog'
 import { HandTestScreen } from '@/renderer/dev/hand-test-screen'
 import { PROJECT_TAB } from '@/renderer/stores/nav-store'
+import { generateDrafts } from '@/renderer/stores/generate-drafts'
 import type { OpenProjectSummary } from '@/shared/schemas/project'
 import styles from './app-shell.module.css'
 
@@ -81,7 +82,9 @@ function Shell() {
   const keepProjects = useNav((s) => s.keepProjects)
   const shownId = view.kind === 'project' ? view.projectId : null
   const project = projects.find((p) => p.projectId === shownId)
-  useTabKeys(project ? project.projectId : null)
+  const openId = project ? project.projectId : null
+  useTabKeys(openId)
+  useEffect(() => generateDrafts.getState().follow(openId), [openId])
   useEffect(() => keepProjects(projects.map((p) => p.projectId)), [keepProjects, projects])
 
   if (project) return <ProjectFrame key={project.projectId} project={project} />

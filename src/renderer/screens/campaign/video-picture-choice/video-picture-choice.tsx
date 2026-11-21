@@ -9,7 +9,7 @@ import {
   useAddPictures,
   useReferences,
   whyNot,
-} from '@/renderer/screens/campaign/reference-list'
+} from '@/renderer/ui/reference-picker/reference-list'
 import { PICTURE_HINT } from '@/renderer/screens/campaign/video-start'
 import layout from '@/renderer/ui/layout.module.css'
 

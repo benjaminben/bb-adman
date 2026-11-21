@@ -10,7 +10,7 @@ describe('textCss [FR-093, FR-249]', () => {
       fontWeight: 700,
       fontStyle: 'normal',
       fontSynthesis: 'none',
-      color: '#112233',
+      color: 'rgb(17 34 51)',
       textAlign: 'center',
       lineHeight: 1.2,
       letterSpacing: '0.05em',
@@ -44,6 +44,14 @@ describe('textCss [FR-093, FR-249]', () => {
   ])('draws letter spacing $letterSpacing in em', ({ letterSpacing, want }) => {
     expect(textCss({ ...textStyle, letterSpacing }).letterSpacing).toBe(want)
   })
+
+  it.each([{ color: 'red; background: url(x)' }, { color: '#11223' }, { color: 42 }])(
+    'leaves out a colour $color that fails the check [LK-1]',
+    ({ color }) => {
+      const style = { ...textStyle, color } as unknown as typeof textStyle
+      expect('color' in textCss(style)).toBe(false)
+    },
+  )
 
   it('names the uploaded font first and the bundled font as the fallback', () => {
     expect(textCss({ ...textStyle, fontAssetId: 'F1' }).fontFamily).toBe(

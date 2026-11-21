@@ -27,3 +27,13 @@ export function quitQuestion(running: number): QuitQuestion | null {
     cancelId: 1,
   }
 }
+
+// "Quit" quits. "Cancel" keeps the app; with no live app window it opens one, so a run left
+// going is never left with no window to see it in.
+export function afterQuitAnswer(
+  response: number,
+  windowLive: boolean,
+): 'quit' | 'stay' | 'showWindow' {
+  if (response === QUIT_BUTTON) return 'quit'
+  return windowLive ? 'stay' : 'showWindow'
+}
