@@ -29,6 +29,10 @@ describe('comfyEnvFrom [SPEC 6.10.12, 13 1.24]', () => {
     expect(comfyEnvFrom(text, {})).toEqual({})
   })
 
+  it('never takes the first-frame switch from the file [1.54 P-4]', () => {
+    expect(comfyEnvFrom('ADMAN_COMFY_FRAME=1\n', {})).toEqual({})
+  })
+
   it('a value set in the terminal wins', () => {
     const picked = comfyEnvFrom('COMFY_BASE_URL=http://file.test\n', {
       COMFY_BASE_URL: 'http://terminal.test',

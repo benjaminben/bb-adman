@@ -22,7 +22,6 @@ describe('offeredWorkflow: which workflow a run gets [SPEC 6.10.11, 14 1.41]', (
     expect(drafts.map((w) => w.id)).toEqual([
       'moss-edit-references',
       'moss-extend',
-      'h3-image-to-video',
       'h3-reference-to-video',
     ])
     for (const draft of drafts) {

@@ -1,4 +1,4 @@
-// SPEC 14 1.41 CU-5a cases 2 to 5, 1.46: the run cases, at client level. Each first runs the
+// SPEC 14 1.41 CU-5a cases 2 to 5, 1.46, and 1.54 P-4 case 6: the run cases, at client level. Each first runs the
 // check for its own workflow (systemStats first, N-03) and skips with one line when anything
 // is missing. Runs are the smallest that prove the point: the first-run size, 56 frames.
 // Each result is written to the system's temporary folder and its path printed.
@@ -10,7 +10,7 @@ import { fillWorkflow, type FillValues } from '../../src/main/providers/comfyui/
 import { checkServer } from '../../src/main/providers/comfyui/needs'
 import { uploadName } from '../../src/main/providers/comfyui/values'
 import { flux3KleinEditReferences } from '../../src/main/providers/comfyui/workflows/flux3'
-import { h3TextToVideo } from '../../src/main/providers/comfyui/workflows/h3'
+import { h3ImageToVideo, h3TextToVideo } from '../../src/main/providers/comfyui/workflows/h3'
 import { mossTextToImage } from '../../src/main/providers/comfyui/workflows/moss'
 import type { WorkflowSpec } from '../../src/main/providers/comfyui/workflows/types'
 import { MAX_PICTURE_BYTES, MAX_VIDEO_BYTES } from '../../src/main/providers/picture-limits'
@@ -18,7 +18,7 @@ import { pictureSize } from '../../src/main/providers/picture-size'
 import { pictureType } from '../../src/main/providers/picture-type'
 import { fitSize } from '../../src/shared/comfy/fit-size'
 import type { Print } from './print'
-import { pictureToSend } from './given-picture'
+import { pictureToSend, type SentPicture } from './given-picture'
 import { fieldNames, runGraph, type RunResult, type Timing } from './run-graph'
 import { checkClip } from './video-facts'
 
@@ -38,6 +38,8 @@ export type CaseOutcome = { done: true } | { skip: string }
 const PICTURE_PROMPT = 'A red cube and a blue sphere on a plain light table, studio light'
 const REFERENCE_PROMPT = 'The same shapes and colours, drawn as a watercolour painting'
 const VIDEO_PROMPT = 'A red cube slowly turning on a plain light table, studio light'
+const FRAME_PROMPT =
+  'The object in the picture stays in place while the camera slowly pushes in, soft studio light'
 const FRAMES = 56
 
 // The smallest square size a workflow's size rule allows.
@@ -107,6 +109,16 @@ const checkVideo = (kit: CaseKit) => (bytes: Uint8Array) => {
   return '.mp4'
 }
 
+// Uploads the picture's bytes alone under uploadName and says which picture went, never its
+// path or file. Returns the name the server keeps it under.
+async function sendPicture(kit: CaseKit, picture: SentPicture): Promise<string> {
+  const kept = await kit.client.uploadImage(uploadName(picture.bytes), picture.bytes)
+  const which = picture.kind === 'given' ? 'the given picture' : 'the test-made picture'
+  const type = picture.type === 'image/png' ? 'PNG' : 'JPEG'
+  kit.print(`Picture sent: ${which}, ${type}, ${picture.width} x ${picture.height}`)
+  return kept.subfolder === '' ? kept.name : `${kept.subfolder}/${kept.name}`
+}
+
 // Case 5 (1.46, 1.54 P-3): one picture from a reference picture: the given one when
 // ADMAN_COMFY_PICTURE is set, else the test-made one. Only with ADMAN_COMFY_FLUX=1 set in the
 // terminal (1.53 G-12). The given picture is checked before any call; only its bytes are sent,
@@ -119,11 +131,7 @@ export async function referenceCase(kit: CaseKit): Promise<CaseOutcome> {
   const spec = flux3KleinEditReferences
   const { skip, version } = await missingFor(kit, spec)
   if (skip) return { skip }
-  const kept = await kit.client.uploadImage(uploadName(picture.bytes), picture.bytes)
-  const which = picture.kind === 'given' ? 'the given picture' : 'the test-made picture'
-  const type = picture.type === 'image/png' ? 'PNG' : 'JPEG'
-  kit.print(`Picture sent: ${which}, ${type}, ${picture.width} x ${picture.height}`)
-  const name = kept.subfolder === '' ? kept.name : `${kept.subfolder}/${kept.name}`
+  const name = await sendPicture(kit, picture)
   const values = { prompt: REFERENCE_PROMPT, references: [name] }
   await runAndReport(kit, spec, version, values, MAX_PICTURE_BYTES, checkPicture(kit))
   if (picture.type !== 'image/jpeg') {
@@ -157,6 +165,23 @@ export async function videoCase(kit: CaseKit): Promise<CaseOutcome> {
   const { skip, version } = await missingFor(kit, spec)
   if (skip) return { skip }
   const values = { prompt: VIDEO_PROMPT, ...smallest(spec), frames: FRAMES }
+  await runAndReport(kit, spec, version, values, MAX_VIDEO_BYTES, checkVideo(kit))
+  return { done: true }
+}
+
+// Case 6 (1.54 P-4): one H3 clip from a first frame, only with ADMAN_COMFY_FRAME=1 set in the
+// terminal. The picture follows case 5's rules (P-1): the given one or the test-made one,
+// checked before any call, its bytes alone sent under uploadName.
+export async function firstFrameCase(kit: CaseKit): Promise<CaseOutcome> {
+  if (kit.env.ADMAN_COMFY_FRAME !== '1') {
+    return { skip: 'ADMAN_COMFY_FRAME is not 1, so the first-frame video case does not run.' }
+  }
+  const picture = pictureToSend(kit.env)
+  const spec = h3ImageToVideo
+  const { skip, version } = await missingFor(kit, spec)
+  if (skip) return { skip }
+  const firstFrame = await sendPicture(kit, picture)
+  const values = { prompt: FRAME_PROMPT, ...smallest(spec), frames: FRAMES, firstFrame }
   await runAndReport(kit, spec, version, values, MAX_VIDEO_BYTES, checkVideo(kit))
   return { done: true }
 }
