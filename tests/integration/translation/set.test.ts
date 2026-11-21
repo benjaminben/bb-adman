@@ -176,4 +176,19 @@ describe('translation.set [P6-4, FR-200]', () => {
     expect(bus.undoState('variant:D1')).toEqual({ canUndo: true, canRedo: false })
     expect(bus.undoState(bus.campaignScope)).toEqual({ canUndo: false, canRedo: false })
   })
+  it('a set that writes only a twin keeps undo and redo on the named variant list', async () => {
+    const [named, twin] = [bus.id('D1', key), bus.id('D2', key)]
+    bus.db.prepare("UPDATE layer SET overrides = '[]'").run()
+    expect(await set(named, 'Hallo')).toEqual({ ok: true, data: { layerIds: [named] } })
+    const before = bus.text(twin)
+    expect(await set(named, 'Hallo', true)).toEqual({ ok: true, data: { layerIds: [twin] } })
+    const none = { canUndo: false, canRedo: false }
+    expect(await bus.history('undo', 'variant:D1')).toMatchObject({ ok: true })
+    expect({ ...bus.text(twin), copyRev: 0 }).toEqual({ ...before, copyRev: 0 })
+    expect(bus.undoState('variant:D1')).toEqual({ canUndo: true, canRedo: true })
+    expect(bus.undoState('variant:D2')).toEqual(none)
+    expect(await bus.history('redo', 'variant:D1')).toMatchObject({ ok: true })
+    expect(bus.text(twin).copy).toBe('Hallo')
+    expect(bus.undoState('variant:D1')).toEqual({ canUndo: true, canRedo: false })
+  })
 })
