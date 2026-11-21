@@ -4,15 +4,19 @@ import type { TextStyle } from '@/shared/schemas/layer'
 import type { SceneAsset, SceneMode, SceneProps } from '@/shared/scene/types'
 import { registerDefaultFont, useSceneFonts, type SceneFont } from '@/shared/scene/font-faces'
 import { measureOverflow } from '@/shared/scene/measure-overflow'
+import { measuredText } from '@/shared/scene/measure-text'
 import { PictureLayer } from '@/shared/scene/picture-layer'
 import { TextLayer } from '@/shared/scene/text-layer'
+import { textLookOf } from '@/shared/config/look'
 
 // spec/scene.md "The Scene component": draws one variant in variant pixels. The editor, the
 // render window and export all draw with it [FR-130]. Inline styles only: every value comes
 // from the layer data, never from the app's tokens.
 registerDefaultFont()
 
-type TextBoxes = Map<string, HTMLDivElement>
+// Each text layer's two elements: the box and the text inside it ("Text boxes").
+type TextParts = { box?: HTMLDivElement; text?: HTMLDivElement }
+type TextBoxes = Map<string, TextParts>
 
 const isTextStyle = (style: LayerRow['style']): style is TextStyle => 'fontSize' in style
 
@@ -53,6 +57,13 @@ function boxCss(layer: LayerRow): CSSProperties {
   }
 }
 
+// "Settling and the overflow measurement": the text element against the box's inner area.
+function overflows(layer: LayerRow, textBoxes: TextBoxes): boolean {
+  const { box, text } = textBoxes.get(layer.id) ?? {}
+  if (!box || !text || !isTextStyle(layer.style)) return false
+  return measureOverflow(measuredText(box, text, textLookOf(layer.style).boxPadding))
+}
+
 const twoFrames = () =>
   new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())))
 
@@ -80,8 +91,7 @@ function useSettle(
         const overflow: Record<string, boolean> = {}
         for (const layer of layers) {
           if (layer.type !== 'text') continue
-          const box = textBoxes.current.get(layer.id)
-          overflow[layer.id] = box !== undefined && Boolean(layer.copy) && measureOverflow(box)
+          overflow[layer.id] = Boolean(layer.copy) && overflows(layer, textBoxes.current)
         }
         report.current?.({ overflow })
       })
@@ -98,8 +108,9 @@ export function Scene({ variant, layers, assets, mode, onSettled }: SceneProps) 
   const fontsReady = useSceneFonts(fonts)
   useSettle(root, textBoxes, { layers, assets, onSettled }, fontsReady)
 
-  const keepBox = (id: string) => (box: HTMLDivElement | null) => {
-    if (box) textBoxes.current.set(id, box)
+  const keep = (id: string, part: keyof TextParts) => (element: HTMLDivElement | null) => {
+    const parts = { ...textBoxes.current.get(id), [part]: element ?? undefined }
+    if (parts.box || parts.text) textBoxes.current.set(id, parts)
     else textBoxes.current.delete(id)
   }
   const style: CSSProperties = {
@@ -118,8 +129,8 @@ export function Scene({ variant, layers, assets, mode, onSettled }: SceneProps) 
           return <PictureLayer key={layer.id} layer={layer} box={box} asset={asset} />
         }
         if (!isTextStyle(layer.style)) return null
-        const ref = keepBox(layer.id)
-        return <TextLayer key={layer.id} layer={layer} style={layer.style} box={box} boxRef={ref} />
+        const refs = { boxRef: keep(layer.id, 'box'), textRef: keep(layer.id, 'text') }
+        return <TextLayer key={layer.id} layer={layer} style={layer.style} box={box} {...refs} />
       })}
     </div>
   )

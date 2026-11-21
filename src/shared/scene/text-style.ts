@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { TextStyle } from '@/shared/schemas/layer'
+import { textLookOf } from '@/shared/config/look'
 import { fontFamilyOf } from '@/shared/scene/font-faces'
 
 // spec/scene.md "Text layers": exactly these properties and no others, so the editor and the
@@ -24,5 +25,7 @@ export function textCss(style: TextStyle): CSSProperties {
     padding: 0,
     margin: 0,
     boxSizing: 'border-box',
+    // "Text boxes" (LK-2): capitals are drawn only; the copy is stored as typed.
+    textTransform: textLookOf(style).allCaps === true ? 'uppercase' : 'none',
   }
 }

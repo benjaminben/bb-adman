@@ -23,7 +23,18 @@ describe('textCss [FR-093, FR-249]', () => {
       padding: 0,
       margin: 0,
       boxSizing: 'border-box',
+      textTransform: 'none',
     })
+  })
+
+  it.each([
+    { allCaps: true, want: 'uppercase' },
+    { allCaps: false, want: 'none' },
+    { allCaps: undefined, want: 'none' },
+    { allCaps: 'yes', want: 'none' },
+  ])('draws all capitals $allCaps as text-transform $want [LK-2]', ({ allCaps, want }) => {
+    const style = { ...textStyle, allCaps } as typeof textStyle
+    expect(textCss(style).textTransform).toBe(want)
   })
 
   it.each([

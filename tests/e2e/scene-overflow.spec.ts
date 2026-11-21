@@ -56,3 +56,30 @@ test('a text layer overflows by size and by letter spacing, and stops when made 
   await drawAndExpect(page, ids, layerId as string, false)
   await app.close()
 })
+
+// LK-2: the text-box-overflow-bottom case. Bottom-aligned text drawn past the top of its box is
+// flagged (the text element is measured, not the box); the same text in a box tall enough is not.
+test('bottom-aligned text past the top of its box is flagged, and not when the box is tall enough', async () => {
+  const font = path.join(box.root, 'brand.woff2')
+  fs.copyFileSync(FONT_FILE, font)
+  const app = await launch(box)
+  const page = await app.firstWindow()
+  const { projectId, variantId } = await projectWithFont(page, box.projects, font)
+  const ids = { projectId, variantId }
+  const geometry = (height: number) => ({ x: 50, y: 50, width: 200, height, rotation: 0 })
+  const { layerId } = await command(page, 'layer.create', {
+    projectId,
+    variantId,
+    type: 'text',
+    values: {
+      copy: 'This headline is far too long for its box',
+      geometry: geometry(60),
+      style: { fontAssetId: null, fontSize: 32, verticalAlign: 'bottom', boxColor: '#2850DC' },
+    },
+  })
+
+  await drawAndExpect(page, ids, layerId as string, true)
+  await command(page, 'layer.update', { projectId, layerId, patch: { geometry: geometry(240) } })
+  await drawAndExpect(page, ids, layerId as string, false)
+  await app.close()
+})
