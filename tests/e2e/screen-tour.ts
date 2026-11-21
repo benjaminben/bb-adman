@@ -125,3 +125,29 @@ export async function agentRunsTour(page: Page, box: Sandbox) {
   await tick('ComfyUI').uncheck()
   await expect.poll(() => saved().agentRuns).toEqual({ comfyui: { allowed: false } })
 }
+
+// P4-20: the picture section of a picture layer (spec/screens-ai.md, "The picture section of the
+// properties panel") and the Activity button and panel ("The activity panel"). Clicks only: the
+// run dialog is cancelled, so no run starts.
+export async function aiTour(app: ElectronApplication, page: Page) {
+  await screens.createProject(page, 'Delta')
+  await screens.loadBriefAndCreate(app, page)
+  await screens.openCampaign(page)
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
+  await page.getByRole('button', { name: 'Add picture layer' }).click()
+  const section = page.getByRole('group', { name: 'Make pictures with AI' })
+  await expect(section.getByRole('button', { name: 'Choose reference pictures…' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Earlier options' })).toBeVisible()
+  await section.getByRole('button', { name: 'Generate…' }).click()
+  const run = page.getByRole('dialog', { name: 'Make pictures' })
+  await expect(run.getByRole('radio', { name: 'Fake provider' })).toBeVisible()
+  await run.getByRole('button', { name: 'Cancel' }).click()
+  await expect(run).toBeHidden()
+
+  await page.getByRole('button', { name: /^Activity/ }).click()
+  const panel = page.getByRole('region', { name: 'Activity' })
+  await expect(panel).toBeVisible()
+  await panel.getByRole('button', { name: 'Close activity' }).click()
+  await expect(panel).toBeHidden()
+}
