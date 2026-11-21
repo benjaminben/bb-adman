@@ -14,7 +14,7 @@ test.afterEach(async () => {
 test('Start, Settings, project home, brief and campaign', async () => {
   session = await openApp()
   const { app, page } = session
-  await expect(page.getByRole('tab', { name: 'Start' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Adman' })).toBeVisible()
   await shot(page, '01-start')
 
   await screens.openSettings(page)

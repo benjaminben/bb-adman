@@ -27,6 +27,6 @@ test('The campaign grid', async () => {
   const brief = page.getByRole('region', { name: 'Brief' })
   await brief.getByRole('button', { name: 'Create campaign' }).click()
   await expect(page.getByRole('heading', { name: CAMPAIGN, level: 2 })).toBeVisible()
-  await expect(page.getByRole('list', { name: 'Variants' }).getByRole('button')).toHaveCount(1)
+  await expect(page.getByRole('list', { name: 'Variants' }).getByRole('listitem')).toHaveCount(1)
   await shot(page, '16-campaign-grid')
 })

@@ -23,16 +23,20 @@ test('Phase 1: create, reopen from the command line, tabs, keys', async () => {
 
   // Create two projects: two tabs [FR-003].
   for (const name of ['Alpha', 'Beta']) {
-    await page.getByRole('tab', { name: 'Start' }).click()
+    await page.locator('header button[aria-haspopup="menu"]').click()
+    await page.getByRole('menuitem', { name: 'Start' }).click()
     await page.getByLabel('Project name').fill(name)
     await page.getByRole('button', { name: 'Create project' }).click()
     await expect(page.getByRole('heading', { name })).toBeVisible()
   }
-  await expect(page.getByRole('tablist', { name: 'Open projects' }).getByRole('tab')).toHaveText([
-    'Start',
+  await page.locator('header button[aria-haspopup="menu"]').click()
+  await expect(page.getByRole('menu').getByRole('menuitem')).toHaveText([
     'Alpha',
     'Beta',
+    'Start',
+    'Close project',
   ])
+  await page.keyboard.press('Escape')
   expect(fs.existsSync(path.join(box.projects, 'Alpha.adman'))).toBe(true)
 
   // A saved key shows only its last four characters [R-10].
@@ -50,8 +54,12 @@ test('Phase 1: create, reopen from the command line, tabs, keys', async () => {
   const again = await launch(box, [path.join(box.projects, 'Alpha.adman')])
   const page2 = await again.firstWindow()
   await expect(page2.getByRole('heading', { name: 'Alpha' })).toBeVisible()
-  await expect(page2.getByRole('tab', { name: 'Alpha' })).toHaveAttribute('aria-selected', 'true')
-  await page2.getByRole('tab', { name: 'Start' }).click()
+  await expect(page2.getByRole('button', { name: 'Alpha' })).toHaveAttribute(
+    'aria-haspopup',
+    'menu',
+  )
+  await page2.locator('header button[aria-haspopup="menu"]').click()
+  await page2.getByRole('menuitem', { name: 'Start' }).click()
   await expect(page2.getByRole('button', { name: /^Open Beta/ })).toBeVisible()
   await again.close()
 

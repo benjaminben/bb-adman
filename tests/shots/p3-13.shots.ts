@@ -54,7 +54,7 @@ test('The properties panel', async () => {
     .getByRole('region', { name: 'Brief' })
     .getByRole('button', { name: 'Create campaign' })
     .click()
-  await expect(page.getByRole('list', { name: 'Variants' }).getByRole('button')).toHaveCount(1)
+  await expect(page.getByRole('list', { name: 'Variants' }).getByRole('listitem')).toHaveCount(1)
 
   const { projectId, campaignId, layers } = await ids(page)
   await command(page, 'ruleSet.update', { projectId, campaignId, palette: PALETTE })

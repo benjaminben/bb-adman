@@ -1,36 +1,68 @@
+// spec/editor.md, "The shell" [FR-003, FR-211, FR-242]: the project switcher, the campaign tabs
+// of the shown project, Settings, and the error alert.
 import { describe, it, expect } from 'vitest'
-import { screen, within, waitFor } from '@testing-library/react'
+import { act, fireEvent, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AppShell } from '@/renderer/app/app-shell'
 import { renderApp, axeViolations } from '../render'
 import { makeFakeApi, baseState } from '../fake-api'
+import { campaign, projectGet } from '../screens/project-home/project-fixture'
 
 const two = [
   { projectId: 'P1', name: 'Summer', filePath: '/w/Summer.adman' },
   { projectId: 'P2', name: 'Winter', filePath: '/w/Winter.adman' },
 ]
 
-describe('project tabs [FR-003]', () => {
-  it('shows one tab per open project beside the start tab', async () => {
-    await renderApp(<AppShell />, makeFakeApi(baseState({ openProjects: two })))
-    const tabs = within(screen.getByRole('tablist', { name: 'Open projects' })).getAllByRole('tab')
-    expect(tabs.map((t) => t.textContent)).toEqual(['Start', 'Summer', 'Winter'])
-  })
+function twoProjects() {
+  const fake = makeFakeApi(baseState({ openProjects: two }))
+  const campaigns = [campaign('C1', 'Summer Splash'), campaign('C2', 'Fall Harvest')]
+  fake.onQuery('project.get', () => ({ ok: true, data: projectGet(campaigns) }))
+  fake.onQuery('campaign.get', () => new Promise(() => {}))
+  return fake
+}
 
-  it('switches to a project tab by click and by keyboard', async () => {
-    const { store } = await renderApp(<AppShell />, makeFakeApi(baseState({ openProjects: two })))
-    await userEvent.click(screen.getByRole('tab', { name: 'Summer' }))
+async function choose(menuButton: string, item: string) {
+  await userEvent.click(screen.getByRole('button', { name: menuButton }))
+  await userEvent.click(screen.getByRole('menuitem', { name: item }))
+}
+
+const campaignTabs = () =>
+  within(screen.getByRole('tablist', { name: 'Open campaigns' }))
+    .getAllByRole('tab')
+    .map((t) => t.textContent)
+
+describe('the shell [FR-003]', () => {
+  it('reaches every open project and the start screen from the switcher', async () => {
+    const { store } = await renderApp(<AppShell />, twoProjects())
+    await choose('Winter', 'Summer')
     expect(store.getState().view).toEqual({ kind: 'project', projectId: 'P1' })
     expect(screen.getByRole('heading', { name: 'Summer' })).toBeInTheDocument()
-    await userEvent.keyboard('{ArrowRight}')
-    expect(store.getState().view).toEqual({ kind: 'project', projectId: 'P2' })
+    await choose('Summer', 'Winter')
+    expect(screen.getByRole('heading', { name: 'Winter' })).toBeInTheDocument()
+    await choose('Winter', 'Start')
+    expect(store.getState().view).toEqual({ kind: 'start' })
+    expect(screen.getByRole('button', { name: 'Adman' })).toBeInTheDocument()
+    expect(screen.queryByRole('tablist', { name: 'Open campaigns' })).toBeNull()
   })
 
-  it('closes a project from its tab with project.close', async () => {
-    const fake = makeFakeApi(baseState({ openProjects: two }))
+  it('switches project by keyboard', async () => {
+    const { store } = await renderApp(<AppShell />, twoProjects())
+    screen.getByRole('button', { name: 'Winter' }).focus()
+    await userEvent.keyboard('{Enter}')
+    await userEvent.keyboard('{Enter}')
+    expect(store.getState().view).toEqual({ kind: 'project', projectId: 'P1' })
+  })
+
+  it.each([
+    ['the switcher', () => choose('Winter', 'Close project')],
+    [
+      'the project page',
+      () => userEvent.click(screen.getByRole('button', { name: 'Close Winter' })),
+    ],
+  ])('closes the shown project with project.close from %s', async (_, close) => {
+    const fake = twoProjects()
     await renderApp(<AppShell />, fake)
-    await userEvent.click(screen.getByRole('tab', { name: 'Winter' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Close Winter' }))
+    await close()
     expect(fake.commands).toContainEqual({ name: 'project.close', input: { projectId: 'P2' } })
   })
 
@@ -42,21 +74,47 @@ describe('project tabs [FR-003]', () => {
   })
 
   it('shows a failed command message in an alert that can be dismissed', async () => {
-    const fake = makeFakeApi(baseState({ openProjects: two }))
+    const fake = twoProjects()
     fake.onCommand('project.close', () => ({
       ok: false,
       error: { code: 'NOT_FOUND', message: 'That project is not open.' },
     }))
     await renderApp(<AppShell />, fake)
-    await userEvent.click(screen.getByRole('tab', { name: 'Summer' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Close Summer' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Close Winter' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('That project is not open.')
     await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
     await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
   })
 
   it('has no axe violations', async () => {
-    await renderApp(<AppShell />, makeFakeApi(baseState({ openProjects: two })))
+    await renderApp(<AppShell />, twoProjects())
+    await screen.findByRole('button', { name: 'Open Summer Splash' })
     expect(await axeViolations()).toEqual([])
+  })
+})
+
+describe('the shell: campaign tabs [FR-211, FR-242]', () => {
+  it('opens a campaign tab from the project page and keeps it per project', async () => {
+    const { store } = await renderApp(<AppShell />, twoProjects())
+    await userEvent.click(await screen.findByRole('button', { name: 'Open Fall Harvest' }))
+    expect(await screen.findByRole('tab', { name: 'Fall Harvest' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(screen.getByRole('region', { name: 'Campaign' })).toBeInTheDocument()
+    await choose('Winter', 'Summer')
+    expect(campaignTabs()).toEqual(['Project'])
+    act(() => store.getState().show({ kind: 'project', projectId: 'P2' }))
+    await waitFor(() => expect(campaignTabs()).toEqual(['Project', 'Fall Harvest']))
+    await userEvent.click(screen.getByRole('tab', { name: 'Project' }))
+    expect(screen.getByRole('heading', { name: 'Winter' })).toBeInTheDocument()
+  })
+
+  it('steps through the campaign tabs with Mod+Shift+] and wraps', async () => {
+    await renderApp(<AppShell />, twoProjects())
+    await userEvent.click(await screen.findByRole('button', { name: 'Open Fall Harvest' }))
+    await screen.findByRole('tab', { name: 'Fall Harvest' })
+    fireEvent.keyDown(document.body, { code: 'BracketRight', ctrlKey: true, shiftKey: true })
+    expect(screen.getByRole('tab', { name: 'Project' })).toHaveAttribute('aria-selected', 'true')
   })
 })

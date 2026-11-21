@@ -58,7 +58,7 @@ export async function settingsTour(app: ElectronApplication, page: Page, box: Sa
 export async function startTour(app: ElectronApplication, page: Page, box: Sandbox) {
   const other = path.join(box.root, 'other')
   fs.mkdirSync(other)
-  await page.getByRole('tab', { name: 'Start' }).click()
+  await screens.showStart(page)
   await screens.answerOpenDialog(app, [other])
   await page.getByRole('button', { name: 'Change location' }).click()
   await expect(page.getByText(other, { exact: true })).toBeVisible()
@@ -68,7 +68,7 @@ export async function startTour(app: ElectronApplication, page: Page, box: Sandb
 
   const close = () => page.getByRole('button', { name: 'Close Gamma' }).click()
   await close()
-  await expect(page.getByRole('tab', { name: 'Gamma' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Gamma' })).toHaveCount(0)
   await screens.answerOpenDialog(app, [file])
   await page.getByRole('button', { name: 'Open project…' }).click()
   await expect(page.getByRole('heading', { name: 'Gamma', level: 1 })).toBeVisible()
@@ -88,7 +88,9 @@ export async function projectHomeTour(app: ElectronApplication, page: Page) {
   // campaign.create makes the master variant only, and no screen adds another yet, so the
   // choice is between one: it is chosen at the start, opens in the editor when clicked (P3-9),
   // and stays chosen back on the overview.
-  const variants = page.getByRole('list', { name: 'Variants' }).getByRole('button')
+  const variants = page
+    .getByRole('list', { name: 'Variants' })
+    .getByRole('button', { name: /^(?!Open )/ })
   await expect(variants).toHaveCount(1)
   await expect(variants.first()).toHaveAttribute('aria-pressed', 'true')
   await variants.first().click()

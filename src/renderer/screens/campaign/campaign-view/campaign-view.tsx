@@ -2,10 +2,10 @@
 // (S2-16), the picture panel for the chosen one, and its runs. The master is chosen at the start. One job store per
 // open page. SPEC 14 1.57 TP-6: the video card sits under the picture panel.
 // P3-10 (spec/editor.md, "Variant tabs"): the page is the overview tab and one tab per open
-// variant, holding the editor. A plain click on a tile shows the variant's tab; Cmd-click
-// (Ctrl-click on Windows) opens it behind. The variant shown last is the one the overview's
-// panels work on (A-47). campaign.get is read again on project.changed and on job.updated, so
-// a deleted variant loses its tab and the marks follow the jobs.
+// variant, holding the editor. A plain click on a tile shows the variant's tab; the tile's
+// "+" and Cmd-click (Ctrl-click on Windows) open it behind. The variant shown last is the one
+// the overview's panels work on (A-47). campaign.get is read again on project.changed and on
+// job.updated, so a deleted variant loses its tab and the marks follow the jobs.
 import { lazy, Suspense, useEffect, useRef, useState, type MouseEvent } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { NavScope, useNav } from '@/renderer/app/nav-context'
@@ -98,7 +98,12 @@ function CampaignPage(props: Props) {
           behind.current = opensBehind(event)
         }}
       >
-        <VariantGrid variants={data.variants} chosenId={variantId} onChoose={choose} />
+        <VariantGrid
+          variants={data.variants}
+          chosenId={variantId}
+          onChoose={choose}
+          onOpenBehind={(id) => openVariant(projectId, campaignId, id, true)}
+        />
       </div>
       {variant && (
         <p>

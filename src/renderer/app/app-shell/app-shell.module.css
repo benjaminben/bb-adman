@@ -3,7 +3,7 @@
   flex-direction: column;
   height: 100%;
 }
-.tabs {
+.frame {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -12,33 +12,35 @@
 .bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3) 0;
   background: var(--color-surface);
   border-bottom: var(--border-width) solid var(--color-border);
 }
-.list {
+/* The tabs sit on the bar's bottom border; everything else keeps a margin below. */
+.bar > :not(.tabs) {
+  margin-bottom: var(--space-2);
+}
+/* The campaign tabs take the room between the switcher and the settings buttons. */
+.tabs {
   display: flex;
-  gap: var(--space-1);
-  overflow-x: auto;
-}
-.tab {
-  border: var(--border-width) solid transparent;
-  background: transparent;
-}
-.tab[data-state='active'] {
-  background: var(--color-bg);
-  border-color: var(--color-border);
-  font-weight: 600;
+  flex: 1;
+  align-self: flex-end;
+  min-width: 0;
 }
 .settings[aria-pressed='true'] {
   font-weight: 600;
 }
 .main {
   flex: 1;
+  min-height: 0;
   overflow: auto;
 }
 .panel {
   padding: var(--space-6);
+}
+/* A campaign fills the window's height so the editor gets the room left over. */
+.fullPanel {
+  height: 100%;
+  padding: var(--space-4) var(--space-6);
 }
