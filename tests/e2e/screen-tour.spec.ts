@@ -6,6 +6,7 @@ import fs from 'node:fs'
 import { makeSandbox, launch, type Sandbox } from './launch'
 import {
   agentRunsTour,
+  aiTour,
   handTestStorage,
   projectHomeTour,
   settingsTour,
@@ -38,4 +39,8 @@ test('The other screens of the reach table: hand-test storage, Settings, Start, 
 
 test('Settings · Agent runs: one tick per provider, the limit', async () => {
   await agentRunsTour(page, box)
+})
+
+test('The picture section of a picture layer, and the Activity button and panel', async () => {
+  await aiTour(app, page)
 })
