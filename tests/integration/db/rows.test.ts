@@ -7,7 +7,7 @@ import {
   closeProjectFile,
   type ProjectHandle,
 } from '../../../src/main/db/project-file'
-import { readWireRow, readWireRows } from '../../../src/main/db/rows'
+import { readJobErrorDetail, readWireRow, readWireRows } from '../../../src/main/db/rows'
 import { insertAsset, insertCampaign, VALID_BRIEF } from '../row-fixtures'
 
 let dir: string
@@ -84,6 +84,31 @@ describe('stored row to wire row [SPEC 4.4]', () => {
     db.prepare("UPDATE campaign SET brief = '{}' WHERE id = 'c2'").run()
     expect(readWireRows(db, 'campaign').map((r) => r.id)).toEqual(['c1'])
     expect(() => readWireRow(db, 'campaign', { id: 'c2' })).toThrow(/campaign row/)
+  })
+
+  it('leaves the main-only job.error_detail out of the wire row [SPEC 4.4]', () => {
+    const db = setup()
+    db.prepare(
+      `INSERT INTO job (id, kind, status, request, error_kind, error_detail, created_at, updated_at)
+       VALUES ('j1', 'image_generation', 'failed', '{}', 'quota', 'raw provider text', 'x', 'y')`,
+    ).run()
+    const row = readWireRow(db, 'job', { id: 'j1' })
+    expect(row).toMatchObject({ id: 'j1', errorKind: 'quota' })
+    expect(row).not.toHaveProperty('errorDetail')
+    expect(readWireRows(db, 'job')[0]).not.toHaveProperty('errorDetail')
+    expect(JSON.stringify(row)).not.toContain('raw provider text')
+  })
+
+  it('reads job.error_detail only through readJobErrorDetail [SPEC 4.4]', () => {
+    const db = setup()
+    db.prepare(
+      `INSERT INTO job (id, kind, status, request, error_detail, created_at, updated_at)
+       VALUES ('j1', 'image_generation', 'failed', '{}', 'raw provider text', 'x', 'y'),
+              ('j2', 'image_generation', 'queued', '{}', NULL, 'x', 'y')`,
+    ).run()
+    expect(readJobErrorDetail(db, 'j1')).toBe('raw provider text')
+    expect(readJobErrorDetail(db, 'j2')).toBeNull()
+    expect(readJobErrorDetail(db, 'missing')).toBeNull()
   })
 
   it('reads every row of a table in wire form', () => {

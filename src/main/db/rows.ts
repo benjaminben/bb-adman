@@ -46,14 +46,24 @@ const JSON_COLUMNS: Partial<Record<TableName, readonly string[]>> = {
   variant_check: ['results'],
 }
 
+// SPEC 4.4: stored columns that never leave the main process, by table (SQL names).
+const MAIN_ONLY_COLUMNS: Partial<Record<TableName, readonly string[]>> = {
+  job: ['error_detail'],
+}
+
 function columnsOf(table: TableName): Array<[field: string, sqlName: string]> {
   return Object.entries(getTableColumns(TABLES[table])).map(([field, c]) => [field, c.name])
+}
+
+function wireColumnsOf(table: TableName): Array<[field: string, sqlName: string]> {
+  const mainOnly = new Set(MAIN_ONLY_COLUMNS[table] ?? [])
+  return columnsOf(table).filter(([, sqlName]) => !mainOnly.has(sqlName))
 }
 
 function toWire(table: TableName, stored: Record<string, unknown>): WireRow {
   const json = new Set(JSON_COLUMNS[table] ?? [])
   const row: WireRow = {}
-  for (const [field, sqlName] of columnsOf(table)) {
+  for (const [field, sqlName] of wireColumnsOf(table)) {
     const value = stored[sqlName] ?? null
     if (value === null) row[field] = null
     else if (FLAGS.has(field)) row[field] = value === 1
@@ -82,7 +92,7 @@ function keyOf(table: TableName, stored: Record<string, unknown>): string {
 }
 
 function selectList(table: TableName): string {
-  return columnsOf(table)
+  return wireColumnsOf(table)
     .map(([, sqlName]) => `"${sqlName}"`)
     .join(', ')
 }
@@ -129,4 +139,12 @@ export function readWireRows(
     }
   }
   return rows
+}
+
+// SPEC 3.3, 4.4: the raw provider text of a failed job, for main-process code only (the log
+// and the Phase 8 report). Null when the job is not there or has no detail.
+export function readJobErrorDetail(db: Database.Database, jobId: string): string | null {
+  const stored = db.prepare('SELECT "error_detail" FROM "job" WHERE "id" = ?').get(jobId) as
+    { error_detail: string | null } | undefined
+  return stored?.error_detail ?? null
 }
