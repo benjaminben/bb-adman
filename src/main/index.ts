@@ -1,9 +1,19 @@
 // Start-up and the single-instance lock (SPEC 12). A double-clicked project file
 // arrives as 'open-file' on macOS and as a command-line argument on Windows.
-import { app, BrowserWindow, dialog, ipcMain, nativeImage, protocol, shell } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  nativeImage,
+  protocol,
+  session,
+  shell,
+} from 'electron'
 import { createCore, type Core } from './core'
 import { createAppWindow } from './windows/app-window'
 import { httpsOnly } from './windows/open-external'
+import { denyPermissions } from './windows/permissions'
 import { devToolsEnabled } from './dev-tools-flag'
 import { pngConverter } from './png-converter'
 import { pictureFitter } from './picture-fitter'
@@ -76,6 +86,8 @@ async function openFromSystem(filePath: string): Promise<void> {
 }
 
 function start(): void {
+  // Both windows use the default session, so this covers the render window too.
+  denyPermissions(session.defaultSession)
   core = createCore({
     userDataDir: app.getPath('userData'),
     documentsDir: app.getPath('documents'),
