@@ -27,6 +27,15 @@ These need the stakeholder. A wrong guess would be costly to undo, would spend r
 - **Meanwhile:** ready-made LGPL builds from a public builder for Windows, and an LGPL FFmpeg built by a CI job for macOS, each pinned by address and SHA-256 checksum in `ffmpeg-sources.json`. Work starts at the beginning of Phase 7 (writing details into an MP4). Nothing is released (D-086), so no binary leaves the machine.
 - **Stakeholder:** confirm the sources, or name others, before the first release. A swap is a one-line change while nothing is released.
 
+### Approvals by link (D-095)
+
+Designed in `spec/approvals.md` and `spec/approvals-service.md`; none of these blocks the first slices.
+
+- **OI-94. Cloudflare plan.** A password check uses 100,000 rounds of hashing, the most Workers allows. The Free plan allows 10 ms of CPU per request, which that check may pass. **Recommended:** the Workers Paid plan. **Meanwhile:** built with 100,000; the number is kept per link, so it can be lowered for new links if he stays on Free.
+- **OI-95. Should visitors see each other's email addresses?** D-095 lets anyone with the link remove any sign-off, so each visitor sees who signed off. **Recommended:** yes, as built (A-99). The other choice shows only "Signed off (2)" to visitors and keeps the emails for the app.
+- **OI-96. Pictures in his S3 bucket, or in the service's own Cloudflare storage (R2)?** S3, as he described, needs the app to renew each picture's signed address at least weekly (a gallery left unrefreshed for 7 days shows "This picture has expired"). R2 needs no renewal and no bucket setup, at the cost of a second storage place. **Recommended:** S3 now, as asked; R2 later if expiry gets in the way. The service keeps the picture source behind one small interface either way.
+- **OI-97. The S3 part of Settings' "Cloud storage" is built now** instead of in Phase 9, because a user cannot set a bucket without it today. **Recommended:** yes (A-95).
+
 ### Before anything leaves this machine
 
 - **Question:** Nothing is pushed, tagged or released for now (D-086). Before the first push, what may the public repository hold?
@@ -103,3 +112,4 @@ The video card and the agent settings block were built with these choices. Each 
 - **Review of the requirements wording (Q-011).** Needed for the requirements to return to Approved status.
 - **Answers to the client reviewers (Q-050).** Whether to send the "already covered" answers back to them.
 - **Old history backup.** He may delete the scratchpad copy of the old git history (see Large items).
+- **Approvals service: deploying (D-095).** He deploys the service with the steps in `approvals-service/README.md` (from AP-13) and supplies the Cloudflare account, the D1 database ID, the service key and the address. Then one "Update gallery" to his real S3 bucket and one sign-off through the deployed service, by hand.
