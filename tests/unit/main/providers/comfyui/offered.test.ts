@@ -62,6 +62,8 @@ describe('offeredWorkflow: which workflow a run gets [SPEC 6.10.11, 14 1.41]', (
   it('offers the shipped trial picture workflow to the user with dev tools on [14 1.46]', () => {
     expect(offeredWorkflow(IMAGE, USER_DEV)?.id).toBe('moss-text-to-image')
     expect(offeredWorkflow(IMAGE, { devTools: false, actor: 'user' })).toBeNull()
+    const none = { job: 'video', videoStart: { firstFrame: false, references: false } } as const
+    expect(offeredWorkflow(none, USER_DEV)?.id).toBe('h3-text-to-video')
   })
 
   it('does not give a picture workflow for another job', () => {

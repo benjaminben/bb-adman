@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { NON_DRAFT_WORKFLOWS } from '../../../../../src/main/providers/comfyui/workflows'
 import { mossTextToImage } from '../../../../../src/main/providers/comfyui/workflows/moss'
+import { h3TextToVideo } from '../../../../../src/main/providers/comfyui/workflows/h3'
 import {
+  H3_FIRST_RUN_SIZE,
+  H3_MAIN_FILE,
+  H3_VIDEO,
   MOSS_FIRST_RUN_SIZE,
   MOSS_MODEL,
 } from '../../../../../src/main/providers/comfyui/workflows/common'
@@ -82,5 +86,53 @@ describe('moss-text-to-image as trial [comfy-workflows/moss-image-plain.json]', 
 
   it('bumps the version, since the graph file changed', () => {
     expect(mossTextToImage.version).toBe(2)
+  })
+})
+
+describe('h3-text-to-video as trial [comfy-workflows/h3-video-text.json]', () => {
+  it('is a trial with the slots of the notes: node 5, node 6 noise_seed, node 14', () => {
+    expect(h3TextToVideo.status).toBe('trial')
+    expect(h3TextToVideo.slots).toEqual({
+      prompt: { node: '5', input: 'prompt' },
+      seed: [{ node: '6', input: 'noise_seed' }],
+      width: { node: '5', input: 'width' },
+      height: { node: '5', input: 'height' },
+      frames: { node: '5', input: 'length' },
+      outputPrefix: { node: '14', input: 'filename_prefix' },
+      outputNode: '14',
+    })
+  })
+
+  it('uses the official template graph: MiniMaxH3ImageToVideo with no first frame', () => {
+    expect(h3TextToVideo.needs.nodeClasses).toEqual([
+      'UNETLoader',
+      'CLIPLoader',
+      'VAELoader',
+      'MiniMaxH3ImageToVideo',
+      'RandomNoise',
+      'KSamplerSelect',
+      'BasicScheduler',
+      'BasicGuider',
+      'SamplerCustomAdvanced',
+      'VAEDecode',
+      'VAEDecodeAudio',
+      'CreateVideo',
+      'SaveVideo',
+    ])
+    expect(h3TextToVideo.graph['5']?.inputs).not.toHaveProperty('first_frame')
+    expect(h3TextToVideo.model).toEqual({ label: 'MiniMax H3', mainFile: H3_MAIN_FILE })
+  })
+
+  it('runs at the first-run size with the H3 timing, and records the full size', () => {
+    expect(h3TextToVideo.size).toBe(H3_FIRST_RUN_SIZE)
+    expect(h3TextToVideo.video).toBe(H3_VIDEO)
+    expect(h3TextToVideo.source.changes).toContain(
+      'first-run size; full size is { multiple: 32, minPixels: 589824, maxPixels: 1048576 }',
+    )
+    expect(h3TextToVideo.source.template).toMatch(/official.*text-to-video template/i)
+  })
+
+  it('bumps the version, since the graph file changed', () => {
+    expect(h3TextToVideo.version).toBe(2)
   })
 })
