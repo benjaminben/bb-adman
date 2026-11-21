@@ -51,6 +51,15 @@ export const PROVIDER_ERROR_REASONS = [
   'address_changed',
   'bad_result',
   'clip_has_sound',
+  // P4-1 (spec/ai-jobs.md, OI-68): a job that failed after it was queued, for a local cause.
+  'key_missing',
+  'picture_missing',
+  'picture_too_large',
+  'picture_changed',
+  'assets_folder_missing',
+  'assets_not_writable',
+  'results_not_added',
+  'target_gone',
 ] as const
 export type ProviderErrorReason = (typeof PROVIDER_ERROR_REASONS)[number]
 
