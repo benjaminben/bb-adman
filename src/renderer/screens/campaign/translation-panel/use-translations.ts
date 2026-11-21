@@ -6,6 +6,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import type { TranslationForCampaign } from '@/shared/schemas/queries/translation'
 
+// An empty reply reads as no rows.
+const EMPTY: TranslationForCampaign = { primaryLanguage: '', rows: [], jobs: [] }
+
 export type TranslationsRead =
   | { kind: 'loading' }
   | { kind: 'refused'; message: string }
@@ -24,7 +27,7 @@ export function useTranslations(
     void api.query('translation.forCampaign', { projectId, campaignId }).then((reply) => {
       if (turn !== latest.current) return
       if (!reply.ok) return setRead({ kind: 'refused', message: reply.error.message })
-      setRead({ kind: 'done', data: reply.data as TranslationForCampaign })
+      setRead({ kind: 'done', data: (reply.data as TranslationForCampaign | null) ?? EMPTY })
     })
   }, [api, projectId, campaignId])
 

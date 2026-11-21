@@ -208,6 +208,16 @@ describe('TranslationPanel [P6-12]', () => {
     await waitFor(() => expect(reads(fake).length).toBe(3))
   })
 
+  it('treats an empty reply as no rows', async () => {
+    const fake = makeFakeApi()
+    await renderApp(
+      <TranslationPanel projectId={P} campaignId="C1" data={campaignGet([MASTER])} />,
+      fake,
+    )
+    const region = within(await screen.findByRole('region', { name: 'Translations' }))
+    expect(await region.findByText('No texts to translate yet.')).toBeTruthy()
+  })
+
   it('shows a refused read with "Retry", which reads again', async () => {
     const fake = makeFakeApi()
     fake.onQuery('translation.forCampaign', () => ({
