@@ -48,6 +48,15 @@
   padding-top: var(--space-3);
   border-top: var(--border-width) solid var(--color-line);
 }
+/* A group's legend is floated, so it sits inside the group below the edge instead of across it;
+   it still names the group. */
+.body > fieldset > legend {
+  float: left;
+  width: 100%;
+}
+.body > fieldset > legend + * {
+  clear: both;
+}
 .empty {
   margin: 0;
   padding: var(--space-3);
