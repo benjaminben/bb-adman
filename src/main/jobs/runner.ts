@@ -3,7 +3,8 @@
 // of job rows. The row is inserted inside the calling command's transaction; the runner looks
 // at it only after that transaction has ended, so a command that fails starts nothing.
 import { ulid } from 'ulid'
-import { activeJobs, insertQueued, markSeenRow, readJob } from './job-store'
+import { activeJobs, insertQueued, markSeenRow, readJob, type ActiveJob } from './job-store'
+import type { ProjectHandle } from '../db/project-file'
 import { emitJob, nowText, type JobRunnerOptions, type RunnerState } from './live'
 import { startJob } from './run-job'
 import { projectOpened } from './start-up'
@@ -14,6 +15,11 @@ import { JOBS_AT_ONCE_PER_PROVIDER } from '../../shared/config/job-kinds'
 
 export { runOptions } from './progress'
 export type { JobRunnerOptions }
+
+function oldestFirst(a: ActiveJob, b: ActiveJob): number {
+  if (a.createdAt !== b.createdAt) return a.createdAt < b.createdAt ? -1 : 1
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+}
 
 export function createJobRunner(opts: JobRunnerOptions): JobService {
   const state: RunnerState = {
@@ -30,15 +36,20 @@ export function createJobRunner(opts: JobRunnerOptions): JobService {
     return n
   }
 
-  // SPEC 3.6 "Jobs" item 2 [1.38]: only a queued row this process enqueued is ever started.
+  // SPEC 3.6 "Jobs" item 2 [1.38]: only a queued row this process enqueued is ever started,
+  // and the queued rows of all open projects are taken in one order, oldest first.
   function pump(): void {
+    const queued: Array<{ handle: ProjectHandle; job: ActiveJob }> = []
     for (const handle of opts.deps().projects.all()) {
       for (const job of activeJobs(handle)) {
-        if (job.status !== 'queued' || !state.enqueued.has(job.id)) continue
-        if (runningFor(job.provider ?? '') >= JOBS_AT_ONCE_PER_PROVIDER) continue
-        const row = readJob(handle, job.id)
-        if (row) startJob(state, handle.projectId, row)
+        if (job.status === 'queued' && state.enqueued.has(job.id)) queued.push({ handle, job })
       }
+    }
+    queued.sort((a, b) => oldestFirst(a.job, b.job))
+    for (const { handle, job } of queued) {
+      if (runningFor(job.provider ?? '') >= JOBS_AT_ONCE_PER_PROVIDER) continue
+      const row = readJob(handle, job.id)
+      if (row) startJob(state, handle.projectId, row)
     }
   }
 

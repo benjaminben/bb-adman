@@ -130,6 +130,7 @@ export function makeRunnerFixture(opts: { cancelWaitMs?: number; closeWaitMs?: n
     jobs,
     events,
     project,
+    projects,
     projectId: project.projectId,
     user: (name: string, input: unknown) => bus.execute(name, input, { actor: 'user' }),
     agent: (name: string, input: unknown) => bus.execute(name, input, { actor: 'agent' }),

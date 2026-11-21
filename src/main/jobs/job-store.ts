@@ -83,14 +83,19 @@ export function readJob(h: ProjectHandle, id: string): JobRow | null {
   return readWireRow(h.db, 'job', { id }) as JobRow | null
 }
 
-export type ActiveJob = { id: string; status: 'queued' | 'running'; provider: string | null }
+export type ActiveJob = {
+  id: string
+  status: 'queued' | 'running'
+  provider: string | null
+  createdAt: string
+}
 
 // Queued and running jobs, oldest first.
 export function activeJobs(h: ProjectHandle): ActiveJob[] {
   return h.db
     .prepare(
-      `SELECT "id", "status", "provider" FROM "job" WHERE "status" IN ('queued', 'running')
-       ORDER BY "created_at", "id"`,
+      `SELECT "id", "status", "provider", "created_at" AS "createdAt" FROM "job"
+       WHERE "status" IN ('queued', 'running') ORDER BY "created_at", "id"`,
     )
     .all() as ActiveJob[]
 }
