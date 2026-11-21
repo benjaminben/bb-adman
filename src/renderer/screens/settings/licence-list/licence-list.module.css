@@ -1,0 +1,13 @@
+/* One row per model: the name on the left, "Forget" lined up on the right. */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.name {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
