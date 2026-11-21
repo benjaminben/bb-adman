@@ -6,6 +6,7 @@ import { layoutProposalKind } from './layout-proposal'
 import { copyOptionsKind } from './copy-options'
 import { briefExtractionKind } from './brief-extraction'
 import { cutoutKind } from './cutout'
+import { generativeFillKind } from './generative-fill'
 
 export const jobKindHandlers: JobKindHandler[] = [
   imageGenerationKind(),
@@ -14,4 +15,5 @@ export const jobKindHandlers: JobKindHandler[] = [
   copyOptionsKind(),
   briefExtractionKind(),
   cutoutKind(),
+  generativeFillKind(),
 ]

@@ -157,6 +157,9 @@ export function createCommandBus(deps: BusDeps): CommandBus {
     }
     line.projectId = projectId ?? run.result.log?.projectId ?? null
     line.ids = run.result.log
+    // A-141: only the project the handler ran in, never one a log line names; before the
+    // inverse is recorded, so the command's own entry stays.
+    if (projectId) for (const s of run.result.clearScopes ?? []) deps.undo.clear(projectId, s)
     recordUndo(line.projectId, run.result, opts)
     if (projectId && run.changes) {
       deps.emit({

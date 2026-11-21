@@ -79,6 +79,8 @@ describe('the generation domain is registered [SPEC 14 slice H]', () => {
       'generation.proposeLayout',
       'generation.copyOptions',
       'generation.cutOut',
+      'generation.runFill',
+      'generation.applyFill',
     ])
   })
 })

@@ -106,3 +106,30 @@ export type LayerReply = { layerId: string }
 export type LayerUpdateManyReply = { layerIds: string[] }
 export type LayerReorderReply = { variantId: string }
 export type LayerOverflowReply = { applied: boolean }
+
+// P5-1: the Phase 5 layer commands (spec/links-and-sync.md, "Overrides").
+export const layerClearOverrideInput = projectScoped
+  .extend({ layerId: z.string().min(1), paths: z.array(z.string().min(1)).min(1) })
+  .strict()
+export type LayerClearOverrideInput = z.infer<typeof layerClearOverrideInput>
+
+// System command: the inverse of an edit that changed an override list. A patch may be empty
+// when only the list changes; overrides is the list to set exactly.
+export const layerRevertInput = projectScoped
+  .extend({
+    variantId: z.string().min(1),
+    layers: z
+      .array(
+        z
+          .object({
+            layerId: z.string().min(1),
+            patch: z.object(fields).partial().strict(),
+            overrides: z.array(z.string().min(1)),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(MAX_LAYER_UPDATES),
+  })
+  .strict()
+export type LayerRevertInput = z.infer<typeof layerRevertInput>
