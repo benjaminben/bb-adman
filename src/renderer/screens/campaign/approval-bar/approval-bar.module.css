@@ -1,0 +1,14 @@
+/* Sits at the end of the page's header row. */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin-left: auto;
+}
+.muted {
+  color: var(--color-text-muted);
+}
+.failure {
+  color: var(--color-danger-text);
+}
