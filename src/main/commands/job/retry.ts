@@ -7,7 +7,7 @@ import { requireProviderKeys } from '@/main/providers/require-keys'
 import { requireJob, wrongState } from './find-job'
 import { jobRetryInput, type JobRetryInput, type JobStarted } from '@/shared/schemas/commands/job'
 import { imageJobRequest } from '@/shared/schemas/jobs/image-generation'
-import { checkComfyRun } from '@/main/commands/generation/comfy-checks'
+import { checkComfyCutout, checkComfyRun } from '@/main/commands/generation/comfy-checks'
 import { checkLicence } from '@/main/commands/generation/licence-check'
 import { keptPictureCount, picturesLeft } from '@/shared/generation/pictures-left'
 import type { JobRow } from '@/shared/schemas/rows/job'
@@ -53,6 +53,10 @@ export function jobRetry(deps: Deps) {
         const { referenceAssetIds } = imageJobRequest.parse(old.request)
         const spec = checkComfyRun(deps, ctx, referenceAssetIds.length)
         checkLicence(deps, ctx, spec, input.licenceConfirmed)
+      }
+      // P4-11 (spec/ai-jobs.md "Cut-out" step 4): a ComfyUI cut-out passes its checks again.
+      if (old.provider === 'comfyui' && old.kind === 'cutout') {
+        checkComfyCutout(deps, ctx, input.licenceConfirmed)
       }
       const jobId = deps.jobs.enqueue(ctx, {
         kind: old.kind,
