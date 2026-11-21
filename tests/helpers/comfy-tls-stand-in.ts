@@ -34,7 +34,7 @@ function makeCertificate(dir: string): { key: Buffer; cert: Buffer } {
 }
 
 // The folder is removed as soon as the key and certificate are read into memory.
-function certificateOnce(): { key: Buffer; cert: Buffer; dir: string } {
+export function certificateOnce(): { key: Buffer; cert: Buffer; dir: string } {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-tls-'))
   try {
     return { ...makeCertificate(dir), dir }

@@ -17,7 +17,7 @@ const cleared = ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'NO_PROXY']
   .concat(['NODE_TLS_REJECT_UNAUTHORIZED', 'NODE_USE_ENV_PROXY', 'NODE_OPTIONS'])
 
 export function runChild(
-  mode: 'client' | 'global',
+  mode: 'client' | 'global' | 'live',
   target: string,
   env: Record<string, string>,
 ): Promise<unknown> {

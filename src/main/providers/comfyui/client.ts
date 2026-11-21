@@ -17,8 +17,9 @@ import {
   type HistoryEntry,
 } from './answers'
 import { DOWNLOAD_MS, MAX_COMFY_JSON_BYTES, SHORT_CALL_MS, UPLOAD_MS } from './limits'
+import type { LiveLink } from './live'
 import { ComfyRefused, readRefusal } from './refusal'
-import { failure, openConnection, send, type Answer, type Call } from './request'
+import { failure, liveTarget, openConnection, send, type Answer, type Call } from './request'
 import { ServerErrorAnswer } from './server-error'
 import { uploadForm } from './upload-form'
 import {
@@ -92,9 +93,12 @@ const ok = (answer: Answer) => answer.status >= 200 && answer.status < 300
 export function createComfyClient(options: {
   origin: string
   ownPorts: () => readonly number[]
+  // CU-9: given, the run's live connection goes to this client's origin under its client ID.
+  live?: LiveLink
 }): ComfyClient {
   const conn = openConnection(options.origin, options.ownPorts)
   const clientId = randomUUID()
+  options.live?.attach(() => liveTarget(conn, clientId))
   const ownIds = new Set<string>()
 
   const call = (method: Call['method'], path: string, more: Partial<Call> = {}) =>

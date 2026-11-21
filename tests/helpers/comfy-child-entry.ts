@@ -3,6 +3,7 @@
 // extensionless imports the way the bundler does. Prints one JSON line on stdout.
 //   node comfy-child-entry.ts <src folder> client <origin>  every client call, once
 //   node comfy-child-entry.ts <src folder> global <url>     one GET with Node's global agent
+//   node comfy-child-entry.ts <src folder> live <origin>    CU-9: what one live watch hears
 import http from 'node:http'
 import https from 'node:https'
 import fs from 'node:fs'
@@ -11,6 +12,8 @@ import { registerHooks } from 'node:module'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const [src = '', mode = '', target = ''] = process.argv.slice(2)
+// The prompt ID the live mode watches; the live proxy test greets with this ID.
+const LIVE_PROMPT_ID = '6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b'
 
 function sourceFile(base: string): string | undefined {
   const tries = [`${base}.ts`, path.join(base, 'index.ts'), base]
@@ -62,5 +65,25 @@ function globalGet(url: string): Promise<number | string> {
   })
 }
 
-const result = mode === 'client' ? await clientCalls(target) : await globalGet(target)
+// CU-9: one live watch on the client's origin, for up to 5 s or until it hears something.
+async function liveHeard(origin: string): Promise<unknown[]> {
+  const load = (file: string) => import(pathToFileURL(path.join(src, file)).href)
+  const { createComfyClient } = await load('main/providers/comfyui/client.ts')
+  const { LiveLink } = await load('main/providers/comfyui/live.ts')
+  const live = new LiveLink()
+  createComfyClient({ origin, ownPorts: () => [], live })
+  const heard: unknown[] = []
+  await new Promise<void>((done) => {
+    const stop = live.watch(LIVE_PROMPT_ID, (seen: unknown) => {
+      heard.push(seen)
+      stop()
+      done()
+    })
+    setTimeout(done, 5_000).unref()
+  })
+  return heard
+}
+
+const run = { client: clientCalls, global: globalGet, live: liveHeard }[mode] ?? globalGet
+const result = await run(target)
 process.stdout.write(`${JSON.stringify(result)}\n`)
