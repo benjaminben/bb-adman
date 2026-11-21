@@ -4,7 +4,8 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { makeDevFixture, sourceFile, type DevFixture } from './dev-fixture'
 import { devCommands } from '../../../src/main/commands/dev'
 import { devStorage } from '../../../src/main/commands/dev/storage'
-import type { StorageProvider } from '../../../src/main/providers/types'
+import { ProviderFailure, type StorageProvider } from '../../../src/main/providers/types'
+import type { AppError } from '../../../src/shared/schemas/result'
 
 let f: DevFixture
 afterEach(() => f.cleanup())
@@ -52,7 +53,7 @@ describe('dev.storage calls the key guard first [SPEC 4.1, 4.2 dev.storage]', ()
     })
   })
 
-  it('with the S3 keys saved and no S3 settings, gives PROVIDER_ERROR and no key', async () => {
+  it('with the S3 keys saved and no S3 settings, gives RULE_VIOLATION and no key', async () => {
     f = makeDevFixture(true)
     await f.user('secret.set', { name: 's3.accessKeyId', value: ACCESS_ID })
     await f.user('secret.set', { name: 's3.secretAccessKey', value: SECRET })
@@ -60,20 +61,18 @@ describe('dev.storage calls the key guard first [SPEC 4.1, 4.2 dev.storage]', ()
     expect(result).toEqual({
       ok: false,
       error: {
-        code: 'PROVIDER_ERROR',
-        message: 'Amazon S3 could not finish this request. Try again.',
-        details: { provider: 's3', kind: 'other' },
+        code: 'RULE_VIOLATION',
+        message: 'Amazon S3 is not set up yet. Enter a bucket and a region, then try again.',
+        details: { reason: 'storage_not_set_up', provider: 's3' },
       },
     })
     const logs = f.readLogs()
-    expect(logs).toContain('S3 storage is not set up')
     for (const text of [JSON.stringify(result), logs]) {
       expect(text).not.toContain(ACCESS_ID)
       expect(text).not.toContain(SECRET)
     }
   })
 })
-
 // A cloud stand-in that records the paths it is sent and answers list with rogue paths too.
 function cloudStandIn() {
   const sent: string[] = []
@@ -114,5 +113,61 @@ describe('dev.storage with a cloud storage stays in adman-hand-test/ [SPEC 4.2 d
       'remove adman-hand-test/a.txt',
     ])
     expect(fs.existsSync(path.join(f.userData, 'adman-hand-test'))).toBe(false)
+  })
+})
+
+describe('dev.storage S3 settings and failures [SPEC 4.1 1.21, 4.2 notes F-02, 14 M3]', () => {
+  const saveKeys = async () => {
+    await f.user('secret.set', { name: 's3.accessKeyId', value: ACCESS_ID })
+    await f.user('secret.set', { name: 's3.secretAccessKey', value: SECRET })
+  }
+
+  it('gives RULE_VIOLATION storage_not_set_up for an empty bucket, after the key guard', async () => {
+    f = makeDevFixture(true)
+    const s3 = { bucket: '', region: 'eu-west-1', prefix: '' }
+    await f.user('settings.update', { storage: { s3 } })
+    const noKey = await f.user('dev.storage', { storage: 's3', action: 'list' })
+    expect(noKey.ok ? null : noKey.error.code).toBe('NEEDS_KEY')
+    await saveKeys()
+    const result = await f.user('dev.storage', { storage: 's3', action: 'list' })
+    expect(result.ok ? null : result.error.details).toEqual({
+      reason: 'storage_not_set_up',
+      provider: 's3',
+    })
+  })
+
+  it('with keys and settings saved, a storage failure gives PROVIDER_ERROR; the detail is in the log only, no key', async () => {
+    f = makeDevFixture(true)
+    await saveKeys()
+    const s3 = { bucket: 'made-up-bucket', region: 'eu-west-1', prefix: '' }
+    await f.user('settings.update', { storage: { s3 } })
+    const failing: StorageProvider = {
+      ...cloudStandIn().storage,
+      list: async () => {
+        throw new ProviderFailure({ kind: 'other', detail: 'made-up raw detail' })
+      },
+    }
+    const command = devStorage(f.core.deps, () => failing)
+    const parsed = command.parse({ storage: 's3', action: 'list' })
+    if (!parsed.ok) throw new Error('input refused')
+    const ctx = { actor: 'user' as const, commandId: 'c1' }
+    const reply = await Promise.resolve()
+      .then(() => command.run(ctx, parsed.input))
+      .then(
+        () => null,
+        (error: AppError) => error.toBody(),
+      )
+    expect(reply).toEqual({
+      code: 'PROVIDER_ERROR',
+      message: 'Amazon S3 could not finish this request. Try again.',
+      details: { provider: 's3', kind: 'other' },
+    })
+    const logs = f.readLogs()
+    expect(logs).toContain('made-up raw detail')
+    expect(JSON.stringify(reply)).not.toContain('made-up raw detail')
+    for (const text of [JSON.stringify(reply), logs]) {
+      expect(text).not.toContain(ACCESS_ID)
+      expect(text).not.toContain(SECRET)
+    }
   })
 })
