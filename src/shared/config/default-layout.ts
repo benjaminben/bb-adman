@@ -7,6 +7,16 @@ import type { Animation, ImageStyle, Revs, Timing } from '@/shared/schemas/layer
 export const MARGIN_OF_SMALLER = 0.06 // m
 export const SIDE_OF_SMALLER = 0.46 // side, for centred image boxes
 
+// The starting font size's estimate (spec/starter-layouts.md "The starting font size"): a
+// letter's width as a share of the font size, how full a line is filled, the smallest size.
+export const FONT_ESTIMATE = {
+  letter: 0.6,
+  capital: 0.7,
+  wide: 1, // a letter of the Han, Hiragana, Katakana or Hangul scripts
+  lineFill: 0.9,
+  smallestOfSmaller: 0.02,
+} as const
+
 // Where a box starts on one axis: 0, the margin, centred, or a share of H.
 export type Place = 'zero' | 'margin' | 'centre' | { ofHeight: number }
 // How long a box is on one axis: the whole side, the side less two margins, `side`, or a
