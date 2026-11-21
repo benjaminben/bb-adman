@@ -60,7 +60,7 @@ async function finishedRuns(page: Page, place: Place): Promise<number> {
   const reply = (await query(page, 'job.earlierOptions', {
     projectId: place.projectId,
     layerId: place.layerId,
-  })) as { job: { status: string } }[]
+  })) as unknown as { job: { status: string } }[]
   return reply.filter((r) => r.job.status === 'succeeded').length
 }
 

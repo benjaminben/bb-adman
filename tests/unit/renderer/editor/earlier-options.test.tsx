@@ -68,7 +68,7 @@ describe('EarlierOptions [spec/screens-ai.md "Earlier options"; FR-248, FR-216]'
       layerId: LAYER.id,
     })
     expect(blocks().map((b) => b.dataset.run)).toEqual(['J2', 'J1'])
-    expect(screen.getByRole('heading', { name: 'Earlier options' })).toBeVisible()
+    expect(screen.getByRole('region', { name: 'Earlier options' })).toBeVisible()
   })
 
   it.each([

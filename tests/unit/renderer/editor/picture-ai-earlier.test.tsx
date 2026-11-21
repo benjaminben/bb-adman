@@ -19,7 +19,7 @@ describe('PictureAi with the earlier options [spec/screens-ai.md]', () => {
       campaignApi(),
     )
     const section = screen.getByRole('group', { name: 'Make pictures with AI' })
-    const heading = await within(section).findByRole('heading', { name: 'Earlier options' })
+    const heading = await within(section).findByRole('region', { name: 'Earlier options' })
     const prompt = await within(section).findByRole('textbox', { name: 'Prompt' })
     expect(prompt.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(await within(section).findByText('No earlier options for this layer.')).toBeVisible()

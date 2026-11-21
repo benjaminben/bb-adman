@@ -2,7 +2,8 @@
 // picture and cut-out run of the layer, newest first, ten at first and ten more per "Show
 // more". Choosing an option sends one layer.update that sets the source and clears the crop:
 // one undo entry, no provider call. A succeeded run not yet looked at is marked seen once,
-// when it is drawn. A locked layer's buttons are disabled.
+// when it is drawn. A locked layer's buttons are disabled. The title names the region but is
+// not an h element: the properties panel keeps one heading, the layer's name.
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
@@ -50,9 +51,9 @@ export function EarlierOptions(props: EarlierOptionsProps) {
 
   return (
     <section className={styles.section} aria-labelledby={`${layer.id}-earlier`}>
-      <h3 id={`${layer.id}-earlier`} className={styles.heading}>
+      <p id={`${layer.id}-earlier`} className={styles.heading}>
         Earlier options
-      </h3>
+      </p>
       {reply !== null && reply.length === 0 && (
         <p className={styles.muted}>No earlier options for this layer.</p>
       )}
