@@ -12,7 +12,7 @@ describe('newLayerValues [spec/editor-commands.md, layer.create]', () => {
       slot: null,
       name: 'Picture 1',
       copy: null,
-      style: { opacity: 1 },
+      style: { opacity: 1, shade: null },
       geometry: { x: 292, y: 292, width: 497, height: 497, rotation: 0, crop: null },
       source: null,
       visible: true,
@@ -51,6 +51,13 @@ describe('newLayerValues [spec/editor-commands.md, layer.create]', () => {
       align: 'center',
       lineHeight: 1.1,
       letterSpacing: 0,
+      verticalAlign: 'top',
+      allCaps: false,
+      boxColor: null,
+      boxOutlineColor: null,
+      boxOutlineWidth: 0,
+      boxRadius: 0,
+      boxPadding: 0,
     })
   })
 
