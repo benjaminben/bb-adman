@@ -18,11 +18,8 @@ function isMissing(error: unknown): boolean {
 export function localStorageAt(root: string): StorageProvider {
   const absoluteRoot = nodePath.resolve(root)
 
-  // The real folder at `relative` (parts joined by '/'), checked to be inside the real root.
-  // Folders are made first when `make` is true; otherwise null when one is missing.
-  async function folderFor(relative: string, make: boolean): Promise<string | null> {
-    const folder = nodePath.join(absoluteRoot, ...relative.split('/'))
-    if (make) await fs.mkdir(folder, { recursive: true })
+  // The real path of `folder`, refused unless it is inside the real root. Null when missing.
+  async function realInside(folder: string, relative: string): Promise<string | null> {
     let realRoot: string
     let realFolder: string
     try {
@@ -36,6 +33,29 @@ export function localStorageAt(root: string): StorageProvider {
       refusePath(relative)
     }
     return realFolder
+  }
+
+  // SPEC 14 H9: before any folder is made, the deepest folder that already exists must be
+  // inside the real root. The root itself is the caller's own folder and may be made.
+  async function checkBeforeMaking(parts: string[], relative: string): Promise<void> {
+    await fs.mkdir(absoluteRoot, { recursive: true })
+    for (let depth = parts.length; depth >= 0; depth -= 1) {
+      const folder = nodePath.join(absoluteRoot, ...parts.slice(0, depth))
+      if ((await realInside(folder, relative)) !== null) return
+    }
+  }
+
+  // The real folder at `relative` (parts joined by '/'), checked to be inside the real root.
+  // When `make` is true the missing folders are made after the check, then checked again;
+  // otherwise null when one is missing.
+  async function folderFor(relative: string, make: boolean): Promise<string | null> {
+    const parts = relative === '' ? [] : relative.split('/')
+    const folder = nodePath.join(absoluteRoot, ...parts)
+    if (make) {
+      await checkBeforeMaking(parts, relative)
+      await fs.mkdir(folder, { recursive: true })
+    }
+    return realInside(folder, relative)
   }
 
   async function fileFor(path: string, make: boolean): Promise<string | null> {

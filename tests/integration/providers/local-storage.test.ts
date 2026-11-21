@@ -82,3 +82,31 @@ describe('local storage on disk [SPEC 6, 6.5]', () => {
     expect(await localStorageAt(path.join(outer, 'not-made')).list('')).toEqual([])
   })
 })
+
+// Whether this platform lets a test make a folder link (SPEC 14 H9: skipped where it cannot).
+function canMakeLinks(): boolean {
+  const { outer } = tempRoot()
+  try {
+    fs.symlinkSync(path.join(outer, 'root'), path.join(outer, 'probe'), 'dir')
+    return true
+  } catch {
+    return false
+  }
+}
+
+describe('local storage makes no folder outside its root [SPEC 6.5 1.14 F-01, H9]', () => {
+  it.skipIf(!canMakeLinks())(
+    'refuses a write into a new folder behind a link that points outside, and makes nothing there',
+    async () => {
+      const { outer, root } = tempRoot()
+      fs.mkdirSync(path.join(outer, 'elsewhere'))
+      fs.symlinkSync(path.join(outer, 'elsewhere'), path.join(root, 'link'), 'dir')
+      const storage = localStorageAt(root)
+      await expect(
+        storage.write('link/new/x.txt', new Uint8Array([1]), 'text/plain'),
+      ).rejects.toThrow(/refused/)
+      expect(fs.existsSync(path.join(outer, 'elsewhere', 'new'))).toBe(false)
+      expect(fs.readdirSync(path.join(outer, 'elsewhere'))).toEqual([])
+    },
+  )
+})
