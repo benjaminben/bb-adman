@@ -119,8 +119,10 @@ async function rewriteCopy(dbFile: string, finalDir: string, assetsName: string,
   }
 }
 
-async function build(project: ProjectHandle, partial: string, finalDir: string, found: Found[]) {
-  const { name } = readMeta(project.db)
+// SPEC 14 [1.34] V5: the name is read once, in packageProject, and handed in.
+type BuildPlan = { name: string; partial: string; finalDir: string; found: Found[] }
+
+async function build(project: ProjectHandle, { name, partial, finalDir, found }: BuildPlan) {
   const assetsName = `${name} Assets`
   await fs.promises.mkdir(path.join(partial, assetsName), { recursive: true })
   const dbFile = path.join(partial, `${name}.adman`)
@@ -153,7 +155,7 @@ export async function packageProject(
     throw new AppError('RULE_VIOLATION', `A folder named ${name}.partial is in the way.`)
   })
   try {
-    await build(project, partial, finalDir, found)
+    await build(project, { name, partial, finalDir, found })
     // checkTarget found {Name} absent or empty; rmdir removes only an empty folder.
     await fs.promises.rmdir(finalDir).catch(() => undefined)
     await fs.promises.rename(partial, finalDir)
