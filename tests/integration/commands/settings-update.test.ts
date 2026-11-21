@@ -30,6 +30,7 @@ describe('settings defaults [SPEC 13.1]', () => {
       agentRunLimit: 4,
       licenceConfirmed: [],
       approvals: { baseUrl: null },
+      reports: { exporterName: '' },
     })
   })
 

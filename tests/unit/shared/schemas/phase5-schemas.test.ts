@@ -6,7 +6,6 @@ import {
   directionCreateFromMasterInput,
   directionDeleteInput,
   directionRenameInput,
-  directionRestoreInput,
 } from '@/shared/schemas/commands/direction'
 import {
   variantAddInput,
@@ -23,7 +22,7 @@ import {
   generationRunFillInput,
 } from '@/shared/schemas/commands/generation'
 import { syncPreviewInput } from '@/shared/schemas/queries/sync'
-import { DIRECTION as direction, LAYER as layer, SNAPSHOT as snapshot } from './phase5-rows'
+import { LAYER as layer, SNAPSHOT as snapshot } from './phase5-rows'
 
 const p = { projectId: 'P1' }
 const decision = {
@@ -79,15 +78,6 @@ const CASES: Case[] = [
     schema: directionDeleteInput,
     good: { ...p, directionId: 'D1' },
     required: 'directionId',
-  },
-  {
-    name: 'direction.restore',
-    schema: directionRestoreInput,
-    good: { ...p, direction, variants: [snapshot] },
-    required: 'direction',
-    bad: [
-      ['a snapshot with an unknown key', { ...p, direction, variants: [{ ...snapshot, x: 1 }] }],
-    ],
   },
   {
     name: 'variant.fanOut',

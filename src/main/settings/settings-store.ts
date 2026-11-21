@@ -4,6 +4,7 @@ import path from 'node:path'
 import {
   agentRunLimit,
   licenceConfirmed,
+  reportsSettings,
   settingsSchema,
   type Settings,
   type SettingsPatch,
@@ -72,6 +73,13 @@ function readLicenceConfirmed(merged: unknown): unknown {
   return { ...merged, licenceConfirmed: [] }
 }
 
+// P8-1 [A-201]: a reports value in the file that fails its schema (too long, a control
+// character, not a string) loads as an empty name, so the rest of the file is still read.
+function readReportsName(merged: unknown): unknown {
+  if (!isObject(merged) || reportsSettings.safeParse(merged.reports).success) return merged
+  return { ...merged, reports: { exporterName: '' } }
+}
+
 export function createSettingsStore(opts: { file: string; defaults: Settings }) {
   let current = load()
 
@@ -79,8 +87,10 @@ export function createSettingsStore(opts: { file: string; defaults: Settings }) 
     try {
       const raw: unknown = JSON.parse(fs.readFileSync(opts.file, 'utf8'))
       const parsed = settingsSchema.safeParse(
-        readApprovalsAddress(
-          readLicenceConfirmed(readAgentRunLimit(readComfyAddress(merge(opts.defaults, raw)))),
+        readReportsName(
+          readApprovalsAddress(
+            readLicenceConfirmed(readAgentRunLimit(readComfyAddress(merge(opts.defaults, raw)))),
+          ),
         ),
       )
       return parsed.success ? parsed.data : opts.defaults

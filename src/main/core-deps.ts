@@ -9,6 +9,7 @@ import type { AssetService } from './assets/types'
 import type { JobService } from './jobs/types'
 import type { RenderService } from './thumbnails/types'
 import type { ApprovalsDeps } from './approvals/types'
+import type { ExportDeps, ExportPictures } from './export/types'
 
 export type CoreDeps = {
   projects: ProjectRegistry
@@ -36,6 +37,10 @@ export type CoreDeps = {
   webpToPng: (bytes: Uint8Array) => Promise<Uint8Array>
   // The kept passwords and the picture store of approval links (spec/approvals.md).
   approvals: ApprovalsDeps
+  // The export plans in memory and the export ports (spec/phases/phase-08.md).
+  export: ExportDeps
+  // JPG, stitching and shrinking over nativeImage (P8-4); index.ts fills it.
+  exportPictures: ExportPictures
   appVersion: string
   now: () => Date
   userDataDir: string

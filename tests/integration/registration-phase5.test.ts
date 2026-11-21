@@ -20,7 +20,6 @@ describe('Phase 5 registration [P5-1]', () => {
       'direction.createFromMaster',
       'direction.rename',
       'direction.delete',
-      'direction.restore',
     ])
     expect(syncCommands(deps).map((h) => h.name)).toEqual(['sync.apply'])
     expect(Object.keys(syncQueries(deps))).toEqual(['sync.preview'])
@@ -36,7 +35,6 @@ describe('Phase 5 registration [P5-1]', () => {
         'direction.createFromMaster',
         'direction.rename',
         'direction.delete',
-        'direction.restore',
         'variant.fanOut',
         'variant.add',
         'variant.delete',

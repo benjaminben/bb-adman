@@ -12,6 +12,7 @@ import type { RenderService } from '@/main/thumbnails/types'
 import type { SettingsStore } from '@/main/settings/settings-store'
 import type { SecretStore } from '@/main/secrets/secret-store'
 import type { ApprovalsDeps } from '@/main/approvals/types'
+import type { ExportDeps, ExportPictures } from '@/main/export/types'
 
 let dir: string | undefined
 afterEach(() => {
@@ -58,6 +59,8 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
         throw new Error('webpToPng is not available')
       },
       approvals: {} as unknown as ApprovalsDeps,
+      export: {} as unknown as ExportDeps,
+      exportPictures: {} as unknown as ExportPictures,
       appVersion: '0.1.0',
       now: () => new Date(),
       userDataDir: dir,

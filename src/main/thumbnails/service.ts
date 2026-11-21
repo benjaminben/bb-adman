@@ -177,6 +177,9 @@ export function createRenderService(opts: RenderServiceOptions): RenderService {
       return queue.render(() => drawVariant(project, variantId, maxDimension, true))
     },
 
+    // Stub (P8-1) until P8-4 draws in tiles.
+    drawFull: () => Promise.reject(new Error('drawFull is not built yet.')),
+
     onEvent(event) {
       eager.onEvent(event)
     },

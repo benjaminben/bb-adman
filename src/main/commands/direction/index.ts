@@ -5,13 +5,7 @@ import type { CommandHandler } from '@/main/commands/types'
 import { directionCreateFromMaster } from './create-from-master'
 import { directionDelete } from './delete'
 import { directionRename } from './rename'
-import { directionRestore } from './restore'
 
 export function directionCommands(deps: CoreDeps): CommandHandler[] {
-  return [
-    directionCreateFromMaster(deps),
-    directionRename(deps),
-    directionDelete(deps),
-    directionRestore(deps),
-  ]
+  return [directionCreateFromMaster(deps), directionRename(deps), directionDelete(deps)]
 }

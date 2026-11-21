@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { AGENT_RUN_LIMIT_MAX, AGENT_RUN_LIMIT_MIN } from '@/shared/config/agent-runs'
+import { noControlCharacters } from '@/shared/schemas/commands/export'
 
 // SPEC 13.1 settings.json. Defaults live in src/main/settings/defaults.ts.
 const recentProject = z.object({ path: z.string(), name: z.string(), openedAt: z.string() })
@@ -34,6 +35,11 @@ const agentRuns = z.record(z.string(), z.object({ allowed: z.boolean() }))
 export const agentRunLimit = z.number().int().min(AGENT_RUN_LIMIT_MIN).max(AGENT_RUN_LIMIT_MAX)
 // S2-4 [D-088]: the model labels the user confirmed a commercial licence for.
 export const licenceConfirmed = z.array(z.string().min(1).max(100)).max(50)
+// P8-1 [A-201]: the name shown in reports as the person who exported. Written by
+// settings.update; a bad value in the file loads as '' (settings-store.ts). Never logged.
+export const reportsSettings = z.object({
+  exporterName: z.string().trim().max(100).refine(noControlCharacters),
+})
 
 export const settingsSchema = z.object({
   defaultProjectDir: z.string().min(1),
@@ -48,6 +54,7 @@ export const settingsSchema = z.object({
   agentRunLimit,
   licenceConfirmed,
   approvals,
+  reports: reportsSettings,
 })
 export type Settings = z.infer<typeof settingsSchema>
 export type RecentProject = z.infer<typeof recentProject>
@@ -63,6 +70,7 @@ export const settingsPatchSchema = z
     mcp: mcp.omit({ enabled: true }).partial().strict(),
     storage: storage.partial().strict(),
     licenceConfirmed,
+    reports: reportsSettings.partial().strict(),
   })
   .partial()
   .strict()

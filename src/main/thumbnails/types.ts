@@ -8,9 +8,12 @@ import type { ThumbnailGet, VariantRender } from '@/shared/schemas/queries/rende
 export type DrawResult = { png: Uint8Array; overflow: Record<string, boolean> }
 
 // The Electron side of one draw (src/main/render/draw.ts); index.ts passes it to createCore.
+// view (P8-3): one tile of a big variant, drawn at scale 1 shifted by (-x, -y); size is the
+// tile's.
 export type DrawScene = (
   input: SceneInput,
   size: { width: number; height: number },
+  view?: { x: number; y: number },
 ) => Promise<DrawResult>
 
 export type RenderService = {
@@ -29,6 +32,9 @@ export type RenderService = {
     variantId: string,
     maxDimension: number,
   ): Promise<VariantRender>
+  // P8-4: a PNG of exactly the variant's pixel size, drawn in tiles of at most 2,048 a side.
+  // One queue item at render priority; no layer.reportOverflow and no file kept.
+  drawFull(input: SceneInput): Promise<Uint8Array>
   // Sees every event the main process sends.
   onEvent(event: BusEvent): void
   // Called by project.close after the file closes.
