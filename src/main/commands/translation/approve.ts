@@ -48,8 +48,8 @@ export function translationApprove(deps: CoreDeps) {
       if (writes.length === 0 || !campaignId) return { data, log }
       writeTexts(ctx, writes, deps.now().toISOString())
       const items = writes.map((w) => textValuesOf(w.row))
-      const scope = `campaign:${campaignId}`
-      return { data, log, inverse: restoreInverse(input.projectId, items, scope) }
+      const list = `campaign:${campaignId}`
+      return { data, log, inverse: restoreInverse(input.projectId, items, 'campaign', list) }
     },
   })
 }

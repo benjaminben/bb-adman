@@ -1,7 +1,8 @@
 // translation.restore (spec/phases/phase-06.md, design additions 1 and 2; A-160). System
 // command, deny and internal: the inverse of translation.set and translation.approve, and its
 // own. Writes exactly the given values (synced_revs.copy from syncedCopyRev) and bumps
-// variant.rev of each variant touched. Its inverse holds the values read before the write.
+// variant.rev of each variant touched. Its inverse holds the values read before the write,
+// on the list its input's scope names.
 import { defineCommand } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import type { UndoScope } from '@/main/history/undo-lists'
@@ -16,25 +17,20 @@ import {
 import {
   translationRestoreInput,
   type TranslationLayersReply,
+  type TranslationRestoreInput,
 } from '@/shared/schemas/commands/translation'
 import { AppError } from '@/shared/schemas/result'
 
-export function restoreInverse(projectId: string, items: TextValues[], scope: UndoScope) {
-  return { scope, call: { name: 'translation.restore', input: { projectId, items } } }
-}
+export type RestoreScope = TranslationRestoreInput['scope']
 
-const REVIEW = new Set(['proposed', 'approved'])
-
-// A change of status between proposed and approved only: an approval or its undo.
-function isApproval({ row, next }: TextWrite): boolean {
-  const was = textValuesOf(row)
-  return (
-    was.copy === next.copy &&
-    was.translationSource === next.translationSource &&
-    was.syncedCopyRev === next.syncedCopyRev &&
-    REVIEW.has(was.translationStatus ?? '') &&
-    REVIEW.has(next.translationStatus ?? '')
-  )
+// The inverse on `list`, the undo list that `scope` names.
+export function restoreInverse(
+  projectId: string,
+  items: TextValues[],
+  scope: RestoreScope,
+  list: UndoScope,
+) {
+  return { scope: list, call: { name: 'translation.restore', input: { projectId, scope, items } } }
 }
 
 export function translationRestore(deps: CoreDeps) {
@@ -57,14 +53,14 @@ export function translationRestore(deps: CoreDeps) {
       const first = placed.find((p) => p.layer.id === writes[0]?.row.id)
       if (!first) return { data }
       writeTexts(ctx, writes, deps.now().toISOString())
-      // The list the caller used: approve's is the campaign's, set's the named layer's
-      // variant, which set lists first (spec/phases/phase-06.md, design addition 1).
-      const scope = writes.every(isApproval)
-        ? `campaign:${first.direction.campaignId}`
-        : `variant:${first.variant.id}`
+      // The list the input names, its ID read from the first layer written's rows.
+      const list =
+        input.scope === 'campaign'
+          ? `campaign:${first.direction.campaignId}`
+          : `variant:${first.variant.id}`
       const items = writes.map((w) => textValuesOf(w.row))
       const log = { campaignId: first.direction.campaignId }
-      return { data, log, inverse: restoreInverse(input.projectId, items, scope) }
+      return { data, log, inverse: restoreInverse(input.projectId, items, input.scope, list) }
     },
   })
 }

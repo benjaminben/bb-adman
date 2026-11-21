@@ -69,11 +69,18 @@ export type TranslationWriteInput = z.infer<typeof translationWriteInput>
 export type TranslationWriteReply = { written: number }
 
 // translation.restore (A-160): system command, the inverse of set and approve and its own.
-// It writes exactly these values; syncedCopyRev is synced_revs.copy.
+// It writes exactly these values; syncedCopyRev is synced_revs.copy; scope names the undo list.
 export const TranslationRestoreItem = z
   .object({
     layerId: id,
-    copy: z.string().nullable(),
+    // Counted in code points, as the answer cleaning counts an AI text (A-168), so undo of a
+    // long AI text still parses.
+    copy: z
+      .string()
+      .refine((text) => [...text].length <= MAX_TRANSLATION_CHARS, {
+        message: `At most ${MAX_TRANSLATION_CHARS} characters.`,
+      })
+      .nullable(),
     translationStatus: TranslationStatus.nullable(),
     translationSource: TranslationSource.nullable(),
     syncedCopyRev: z.number().int().min(0),
@@ -82,6 +89,11 @@ export const TranslationRestoreItem = z
 export type TranslationRestoreItem = z.infer<typeof TranslationRestoreItem>
 
 export const translationRestoreInput = projectScoped
-  .extend({ items: z.array(TranslationRestoreItem).min(1).max(2000) })
+  .extend({
+    // The caller's undo list: set's is the named layer's variant, approve's the campaign's.
+    // The list's ID is read from the rows, never from the input.
+    scope: z.enum(['campaign', 'variant']),
+    items: z.array(TranslationRestoreItem).min(1).max(2000),
+  })
   .strict()
 export type TranslationRestoreInput = z.infer<typeof translationRestoreInput>

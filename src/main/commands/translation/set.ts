@@ -48,8 +48,8 @@ export function translationSet(deps: CoreDeps) {
       if (writes.length === 0) return { data, log }
       writeTexts(ctx, writes, deps.now().toISOString())
       const items = writes.map((w) => textValuesOf(w.row))
-      const scope = `variant:${placed.variant.id}`
-      return { data, log, inverse: restoreInverse(input.projectId, items, scope) }
+      const list = `variant:${placed.variant.id}`
+      return { data, log, inverse: restoreInverse(input.projectId, items, 'variant', list) }
     },
   })
 }

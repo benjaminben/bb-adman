@@ -35,7 +35,7 @@ describe('translation.restore is a system command [P6-4]', () => {
     const { fx, projectId } = await open()
     expect(fx.core.isInternal('translation.restore')).toBe(true)
     expect(AGENT_POLICY['translation.restore']?.policy).toBe('deny')
-    const input = { projectId, items: [item('L1')] }
+    const input = { projectId, scope: 'variant', items: [item('L1')] }
     expect(await fx.agent('translation.restore', input)).toEqual({
       ok: false,
       error: { code: 'AGENT_DENIED', message: denialMessage('translation.restore') },
@@ -60,7 +60,7 @@ describe('translation.restore is a system command [P6-4]', () => {
       },
     )
     const command = handlers.get(IPC.command)
-    const input = { projectId, items: [item('L1')] }
+    const input = { projectId, scope: 'variant', items: [item('L1')] }
     expect(await command?.({}, 'translation.restore', input)).toEqual({
       ok: false,
       error: { code: 'INVALID_INPUT', message: 'Unknown command: translation.restore' },
@@ -87,7 +87,9 @@ describe('translation.restore writes the given values [P6-4]', () => {
     const id = bus.id('D1', key)
     const before = bus.text(id)
     const rev = bus.variant('D1').rev
-    const reply = await bus.changed(() => bus.user('translation.restore', { items: [item(id)] }))
+    const reply = await bus.changed(() =>
+      bus.user('translation.restore', { scope: 'variant', items: [item(id)] }),
+    )
     expect(reply).toEqual({ ok: true, data: { layerIds: [id] } })
     expect(bus.text(id)).toEqual({
       copy: 'Hallo',
@@ -102,13 +104,58 @@ describe('translation.restore writes the given values [P6-4]', () => {
   it('refuses a layer named twice and a layer not in the project, writing nothing', async () => {
     const id = bus.id('D1', key)
     const before = bus.text(id)
-    expect(await bus.user('translation.restore', { items: [item(id), item(id)] })).toMatchObject({
+    expect(
+      await bus.user('translation.restore', { scope: 'variant', items: [item(id), item(id)] }),
+    ).toMatchObject({
       ok: false,
       error: { code: 'INVALID_INPUT' },
     })
     expect(
-      await bus.user('translation.restore', { items: [item(id), item('L-none')] }),
+      await bus.user('translation.restore', {
+        scope: 'variant',
+        items: [item(id), item('L-none')],
+      }),
     ).toMatchObject({ ok: false, error: { code: 'NOT_FOUND' } })
     expect(bus.text(id)).toEqual(before)
+  })
+
+  it.each(['campaign', 'variant'] as const)(
+    'puts its own inverse on the %s list its input names, with the same scope',
+    async (scope) => {
+      const id = bus.id('D1', key)
+      await bus.user('translation.restore', { scope, items: [item(id)] })
+      const list = scope === 'campaign' ? bus.campaignScope : 'variant:D1'
+      const other = scope === 'campaign' ? 'variant:D1' : bus.campaignScope
+      expect(bus.undoState(list)).toEqual({ canUndo: true, canRedo: false })
+      expect(bus.undoState(other)).toEqual({ canUndo: false, canRedo: false })
+      await bus.history('undo', list)
+      expect(bus.undoState(list)).toEqual({ canUndo: false, canRedo: true })
+      expect(bus.undoState(other)).toEqual({ canUndo: false, canRedo: false })
+    },
+  )
+
+  it('refuses an input with no scope', async () => {
+    const id = bus.id('D1', key)
+    expect(await bus.user('translation.restore', { items: [item(id)] })).toMatchObject({
+      ok: false,
+      error: { code: 'INVALID_INPUT' },
+    })
+  })
+
+  it('takes a 5000-code-point text of two-unit characters through undo, and refuses 5001', async () => {
+    const id = bus.id('D1', key)
+    const long = '\u{1F600}'.repeat(5000)
+    bus.setRow(id, { copy: long, translation_status: 'proposed', translation_source: 'ai' })
+    const set = { layerId: id, text: 'Hallo', applyToSameLanguage: false }
+    expect(await bus.user('translation.set', set)).toMatchObject({ ok: true })
+    expect(await bus.history('undo', 'variant:D1')).toMatchObject({ ok: true })
+    expect(bus.text(id).copy).toBe(long)
+    expect(await bus.history('redo', 'variant:D1')).toMatchObject({ ok: true })
+    expect(bus.text(id).copy).toBe('Hallo')
+    const tooLong = { ...item(id), copy: long + '\u{1F600}' }
+    expect(
+      await bus.user('translation.restore', { scope: 'variant', items: [tooLong] }),
+    ).toMatchObject({ ok: false, error: { code: 'INVALID_INPUT' } })
+    expect(bus.text(id).copy).toBe('Hallo')
   })
 })
