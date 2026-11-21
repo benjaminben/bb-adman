@@ -8,6 +8,7 @@ resources/ffmpeg/
 out/
 dist/
 test-results/
+/shots/
 design/prototype/photos/
 
 # tooling
