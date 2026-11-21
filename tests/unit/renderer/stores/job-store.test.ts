@@ -75,6 +75,24 @@ describe('job store [SPEC 14 1.41 TP-2]', () => {
     expect(store.getState().rows.map((r) => r.id)).toEqual(['J1'])
   })
 
+  it('drops a job.list reply that arrives after a later one [review test gap]', async () => {
+    const fake = makeFakeApi()
+    const answers: Array<(rows: ReturnType<typeof jobRow>[]) => void> = []
+    fake.onQuery(
+      'job.list',
+      () => new Promise((resolve) => answers.push((rows) => resolve({ ok: true, data: rows }))),
+    )
+    const command = vi.fn(async () => ({ ok: true as const, data: null }))
+    const store = createJobStore({ api: fake.api, command }, 'P1')
+    const first = store.getState().load('V1')
+    const second = store.getState().load('V1')
+    answers[1]?.([jobRow('J2', { status: 'running' })])
+    await second
+    answers[0]?.([jobRow('J1')])
+    await first
+    expect(store.getState().rows.map((r) => r.id)).toEqual(['J2'])
+  })
+
   it('drops the rows of the last variant when another is loaded', async () => {
     const { fake, store } = setup()
     await store.getState().load('V1')
