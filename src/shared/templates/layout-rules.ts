@@ -67,28 +67,36 @@ function lookOf(rule: TextBoxRule | undefined, f: Frame): Look {
   }
 }
 
-// A text layer's whole style: the rule's values, every look field, and the starting font size
-// for this copy in this box.
-export function textStyleOf(
-  slot: { text: TextStyleRule; textBox?: TextBoxRule },
+type TextSlot = { text: TextStyleRule; textBox?: TextBoxRule }
+type Box = { width: number; height: number }
+
+// A text layer's style but its font: the rule's values, every look field, and the starting
+// font size for this copy in this box. A layout sends this, so the user's font stays.
+export function textLayoutStyleOf(
+  slot: TextSlot,
   copy: string | null,
-  box: { width: number; height: number },
+  box: Box,
   f: Frame,
-): TextStyle {
-  const { fontSizeOfSmaller, ...rest } = slot.text
+): Omit<TextStyle, 'fontAssetId'> {
+  const { fontSizeOfSmaller, fontWeight, color, align, lineHeight, letterSpacing } = slot.text
   const look = lookOf(slot.textBox, f)
   const fontSize = startingFontSize(
     copy,
     box,
     {
       fontSizeOfSmaller,
-      lineHeight: rest.lineHeight,
-      letterSpacing: rest.letterSpacing,
+      lineHeight,
+      letterSpacing,
       allCaps: look.allCaps,
       padding: look.boxPadding,
       outline: look.boxOutlineWidth,
     },
     f,
   )
-  return { ...rest, fontSize, ...look }
+  return { fontSize, fontWeight, color, align, lineHeight, letterSpacing, ...look }
+}
+
+// A new text layer's whole style.
+export function textStyleOf(slot: TextSlot, copy: string | null, box: Box, f: Frame): TextStyle {
+  return { fontAssetId: slot.text.fontAssetId, ...textLayoutStyleOf(slot, copy, box, f) }
 }
