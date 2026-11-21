@@ -7,25 +7,33 @@ import fs from 'node:fs'
 import * as screens from './screens'
 import { makeSandbox, launch, type Sandbox } from './launch'
 import { answerQuit } from './quit-answer'
-import { query } from './render-helpers'
-import { releaseHeld } from './gemini-answers'
+import { command, query } from './render-helpers'
+import { MADE_UP_KEY } from './gemini-stand-in'
+import { installGemini, releaseHeld } from './gemini-answers'
+import { startComfyStandIn, type StandIn } from '../helpers/comfy-stand-in'
+import { serveNeedsFromApp } from './stand-in-runs'
 import * as w from './workflow-5-1-steps'
+import * as f from './workflow-5-1-failures'
 import { activityButton, campaignTab, runLeftGoing } from './workflow-5-8-steps'
 
 let box: Sandbox
 let app: ElectronApplication
 let page: Page
+let stand: StandIn | undefined
 
+// The hand-test tools are on so the stand-in's `trial` ComfyUI workflow is offered.
 test.beforeEach(async () => {
   box = makeSandbox()
-  app = await launch(box)
+  app = await launch(box, [], { ADMAN_DEV_TOOLS: '1' })
   page = await app.firstWindow()
 })
 test.afterEach(async () => {
   try {
     await answerQuit(app)
     await app?.close()
+    await stand?.close()
   } finally {
+    stand = undefined
     fs.rmSync(box.root, { recursive: true, force: true })
   }
 })
@@ -128,5 +136,43 @@ test('Workflow 5.8: a run left going while the user works in another campaign', 
 test.fixme('Workflow 5.8 step 3: the running campaign\'s tab shows "Running"', async () => {
   await runLeftGoing(app, page)
   await expect(campaignTab(page, w.CAMPAIGN)).toContainText('Running')
+})
+
+test('A failed run of each kind shows its sentence and Retry, in earlier options and Activity', async () => {
+  test.setTimeout(120_000)
+  stand = await startComfyStandIn()
+  await serveNeedsFromApp(page, stand)
+  await screens.saveAddress(await screens.openSettings(page), stand.origin)
+  await installGemini(app)
+  await command(page, 'secret.set', { name: 'gemini.apiKey', value: MADE_UP_KEY })
+  await screens.createProject(page, 'Harbour')
+  await w.readBriefAndCreate(app, page)
+  const place = await w.placeOf(page, w.CAMPAIGN)
+  const background = await layer(place, (l) => l.type === 'background')
+  await f.failEachGeminiKind(app, page, place, background.id)
+  await f.failOnComfy(page, stand, place, background.id)
+  const sentences = [...f.GEMINI_KINDS.map(f.geminiSentence), f.COMFY_SENTENCE]
+
+  // The layer's earlier options; Retry of a paid run asks first, and the layer keeps no picture.
+  await w.openMaster(page)
+  await w.selectLayer(page, background.name)
+  const earlier = w.earlierOptions(page)
+  for (const sentence of sentences) await f.expectFailure(earlier, sentence)
+  const quota = await f.expectFailure(earlier, f.geminiSentence('quota'))
+  await quota.getByRole('button', { name: 'Retry' }).click()
+  const again = page.getByRole('dialog', { name: 'Retry the run' })
+  await expect(again).toContainText('Google Gemini')
+  await again.getByRole('button', { name: 'Cancel' }).click()
+  expect((await layer(place, (l) => l.id === background.id)).source).toBeNull()
+
+  // The activity panel; Retry of a paid row asks first too.
+  await activityButton(page).click()
+  const panel = page.getByRole('region', { name: 'Activity' })
+  for (const sentence of sentences) await f.expectFailure(panel, sentence)
+  const offline = await f.expectFailure(panel, f.geminiSentence('offline'))
+  await offline.getByRole('button', { name: 'Retry' }).click()
+  const retry = page.getByRole('dialog', { name: 'Try again' })
+  await expect(retry.getByText('Provider: Google Gemini')).toBeVisible()
+  await retry.getByRole('button', { name: 'Cancel' }).click()
 })
 
