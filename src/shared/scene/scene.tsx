@@ -7,6 +7,7 @@ import { measureOverflow } from '@/shared/scene/measure-overflow'
 import { measuredText } from '@/shared/scene/measure-text'
 import { PictureLayer } from '@/shared/scene/picture-layer'
 import { TextLayer } from '@/shared/scene/text-layer'
+import { drawnTime, visibleAt } from '@/shared/scene/timing'
 import { textLookOf } from '@/shared/config/look'
 
 // spec/scene.md "The Scene component": draws one variant in variant pixels. The editor, the
@@ -43,7 +44,9 @@ function fontsOf(layers: LayerRow[], assets: SceneProps['assets']): SceneFont[] 
   })
 }
 
-function boxCss(layer: LayerRow): CSSProperties {
+// A layer outside its time (phase-07.md "Presets") is hidden like an invisible one: it keeps its
+// place and its text can still be measured.
+function boxCss(layer: LayerRow, outsideTime: boolean): CSSProperties {
   const { x, y, width, height, rotation } = layer.geometry
   return {
     position: 'absolute',
@@ -53,7 +56,7 @@ function boxCss(layer: LayerRow): CSSProperties {
     height,
     transform: `rotate(${rotation}deg)`,
     transformOrigin: '50% 50%',
-    visibility: layer.visible ? undefined : 'hidden',
+    visibility: layer.visible && !outsideTime ? undefined : 'hidden',
   }
 }
 
@@ -101,7 +104,7 @@ function useSettle(
   }, [root, textBoxes, layers, assets, fontsReady])
 }
 
-export function Scene({ variant, layers, assets, mode, onSettled }: SceneProps) {
+export function Scene({ variant, layers, assets, timeMs, mode, onSettled }: SceneProps) {
   const root = useRef<HTMLDivElement>(null)
   const textBoxes = useRef<TextBoxes>(new Map())
   const fonts = useMemo(() => fontsOf(layers, assets), [layers, assets])
@@ -120,17 +123,30 @@ export function Scene({ variant, layers, assets, mode, onSettled }: SceneProps) 
     height: variant.height,
     backgroundColor: mode === 'full' ? '#000000' : 'transparent',
   }
+  // Timing and presets apply to a video variant only [A-188].
+  const t = drawnTime(variant, timeMs)
+  const size = { width: variant.width, height: variant.height }
   return (
     <div ref={root} lang={variant.language} style={style}>
       {drawOrder(layers, mode).map((layer) => {
-        const box = boxCss(layer)
+        const box = boxCss(layer, t !== null && !visibleAt(layer, t, variant.durationMs))
         if (layer.type !== 'text') {
           const asset = usableAsset(assets, layer.source?.assetId, 'image')
           return <PictureLayer key={layer.id} layer={layer} box={box} asset={asset} />
         }
         if (!isTextStyle(layer.style)) return null
         const refs = { boxRef: keep(layer.id, 'box'), textRef: keep(layer.id, 'text') }
-        return <TextLayer key={layer.id} layer={layer} style={layer.style} box={box} {...refs} />
+        const time = { timeMs: t, variantSize: size }
+        return (
+          <TextLayer
+            key={layer.id}
+            layer={layer}
+            style={layer.style}
+            box={box}
+            {...refs}
+            {...time}
+          />
+        )
       })}
     </div>
   )
