@@ -5,7 +5,7 @@ import * as clientModule from '../../../../../src/main/providers/comfyui/client'
 
 const folder = join(__dirname, '../../../../../src/main/providers/comfyui')
 // The client's source: the call list, how a request is sent, and the upload form.
-const files = ['client.ts', 'request.ts', 'upload-form.ts']
+const files = ['client.ts', 'request.ts', 'upload-form.ts', 'refusal.ts']
 const source = (file: string) => readFileSync(join(folder, file), 'utf8')
 
 describe('calls the client cannot make [SPEC 6.10.2, REQ FR-271, FR-289, 14 CU-2]', () => {
