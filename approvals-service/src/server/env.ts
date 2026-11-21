@@ -36,6 +36,11 @@ function databaseOf(url: string, authToken: string | undefined): Db | null {
   return kept.db
 }
 
+// True only under `next dev`; the page policy then takes its two development additions.
+export function isDev(source: Source = process.env): boolean {
+  return source.NODE_ENV === 'development'
+}
+
 export function loadEnv(source: Source = process.env): Env {
   // Vercel sets VERCEL on every deployment, so the test origin never takes effect there.
   const testOrigin = source.VERCEL === undefined ? source.TEST_PICTURE_ORIGIN : undefined

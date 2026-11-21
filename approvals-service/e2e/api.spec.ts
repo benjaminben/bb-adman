@@ -139,10 +139,10 @@ REFUSED.forEach(([name, headers], i) => {
 test('an rsc: 1 header reaches no data', async ({ request }) => {
   const slug = await seed(request, 'rsc-header-abc234')
   const page = await request.get(`/l/${slug}`, { headers: { rsc: '1' } })
-  expect(page.status()).toBe(200)
-  expect(page.headers()['content-type']).toBe('text/html; charset=utf-8')
+  // Until AP-16 builds the gallery page, the slug's page is the plain 404.
+  expect(page.status()).toBe(404)
   const text = await page.text()
-  expect(text).toContain('<h1>Review campaign</h1>')
+  expect(text).toBe('Not found.')
   expect(text).not.toContain(NAME)
   const api = await request.get(`/api/v1/links/${PROJECT}/rsc-header-abc234`, {
     headers: { rsc: '1' },

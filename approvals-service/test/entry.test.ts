@@ -5,7 +5,7 @@ import { createClient } from '@libsql/client'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { migrate, MIGRATIONS } from '../scripts/migrate'
 import * as route from '../app/[[...path]]/route'
-import { loadEnv } from '../src/server/env'
+import { isDev, loadEnv } from '../src/server/env'
 import { serve } from '../src/server/serve'
 
 // spec/approvals-service.md "How Next.js and the service code fit" and "Environment": one
@@ -48,19 +48,38 @@ describe('the catch-all route [AP-14]', () => {
     expect(await reply.json()).toEqual({ service: 'adman-approvals', contract: 1 })
   })
 
-  it('answers robots.txt and a slug of the right shape with their pages', async () => {
+  it('answers robots.txt with its text', async () => {
     const robots = await route.GET(get('/robots.txt'))
     expect(await robots.text()).toBe('User-agent: *\nDisallow: /\n')
-    const page = await route.GET(get('/l/aZ09aZ09aZ09'))
-    expect(page.status).toBe(200)
-    expect(await page.text()).toContain('<h1>Review campaign</h1>')
   })
 
-  it.each(['/nothing', '/l/short'])('answers %s with the plain 404 page', async (path) => {
+  // Until AP-16 the gallery page is not built, so a slug of the right shape is not found either.
+  const MISSING = ['/nothing', '/l/short', '/l/aZ09aZ09aZ09', '/gallery.css']
+  it.each(MISSING)('answers %s with the plain 404 page', async (path) => {
     const reply = await route.GET(get(path))
     expect(reply.status).toBe(404)
     expect(reply.headers.get('Content-Type')).toBe('text/plain; charset=utf-8')
     expect(await reply.text()).toBe('Not found.')
+  })
+})
+
+describe('isDev [approvals-gallery.md "The page policy and nonce"]', () => {
+  it.each([
+    ['development', true],
+    ['production', false],
+    ['test', false],
+    ['Development', false],
+    ['', false],
+    [undefined, false],
+  ])('with NODE_ENV=%j is %j', (mode, expected) => {
+    expect(isDev({ NODE_ENV: mode })).toBe(expected)
+  })
+
+  it('reads the process environment by default', () => {
+    vi.stubEnv('NODE_ENV', 'development')
+    expect(isDev()).toBe(true)
+    vi.stubEnv('NODE_ENV', 'production')
+    expect(isDev()).toBe(false)
   })
 })
 
@@ -93,8 +112,13 @@ describe('loadEnv [AP-14 "Environment"]', () => {
   it('with no database address a visitor route gives the fixed 500 and logs no value', async () => {
     vi.stubEnv('TURSO_DATABASE_URL', undefined)
     const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const cookie = `__Host-adman-aZ09aZ09aZ09=${'a'.repeat(43)}`
-    const reply = await serve(get('/l/aZ09aZ09aZ09', { Cookie: cookie }))
+    const reply = await serve(
+      new Request(`${ORIGIN}/l/aZ09aZ09aZ09/enter`, {
+        method: 'POST',
+        headers: { Origin: ORIGIN, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'password=x',
+      }),
+    )
     expect(reply.status).toBe(500)
     expect(await reply.text()).toBe('Something went wrong. Try again later.')
     expect(JSON.stringify(logged.mock.calls)).not.toContain(KEY)

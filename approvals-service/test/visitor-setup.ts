@@ -77,7 +77,9 @@ export function cookieOf(reply: Response): string {
 // Signs in to the link and gives the cookie to send back.
 export async function enter(app: ReturnType<typeof makeApp>, slug: string) {
   const reply = await app.fetch(form(`/l/${slug}/enter`, { password: PASSWORD }))
-  if (reply.status !== 303) throw new Error(`enter answered ${reply.status}`)
+  // A failure is a 303 too, so only the plain way back with a cookie counts as entered.
+  const entered = reply.headers.get('Location') === `/l/${slug}` && reply.headers.has('Set-Cookie')
+  if (reply.status !== 303 || !entered) throw new Error(`enter answered ${reply.status}`)
   return cookieOf(reply)
 }
 

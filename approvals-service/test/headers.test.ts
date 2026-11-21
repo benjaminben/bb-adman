@@ -1,6 +1,25 @@
 import { afterEach, describe, it, expect, vi } from 'vitest'
-import { notFound, pageHeaders, pagePolicy, textHeaders } from '../src/visitor/headers'
-import { clock, makeApp, ORIGIN } from './visitor-setup'
+import { createApp } from '../src/app'
+import { cryptoBytes } from '../src/crypto/random'
+import {
+  notFound,
+  pageHeaders,
+  pagePolicy,
+  redirect,
+  refused,
+  textHeaders,
+} from '../src/visitor/headers'
+import type { VisitorRoute } from '../src/visitor/routes'
+import {
+  addLink,
+  clearTables,
+  clock,
+  db,
+  form,
+  makeApp,
+  ORIGIN,
+  PASSWORD,
+} from './visitor-setup'
 
 // spec/approvals-service.md "Headers on replies from the catch-all" and spec/approvals-gallery.md
 // "The page policy and nonce": each header set compared whole.
@@ -54,6 +73,33 @@ describe('the plain text set', () => {
     expect(whole(reply.headers)).toEqual({ ...TEXT, ...HSTS })
     expect(await reply.text()).toBe('Not found.')
   })
+
+  it('is on the 403, with the refusal sentence', async () => {
+    const reply = refused(http)
+    expect(reply.status).toBe(403)
+    expect(whole(reply.headers)).toEqual(TEXT)
+    expect(await reply.text()).toBe(
+      'This form could not be sent. Open the link again and try once more.',
+    )
+  })
+
+  it.each([
+    ['nothing else', {}, '/l/aZ09aZ09aZ09', {}],
+    ['a cookie', { cookie: 'a=b; Path=/' }, '/l/aZ09aZ09aZ09', { 'set-cookie': 'a=b; Path=/' }],
+    ['a notice', { m: 'wrong-password' as const }, '/l/aZ09aZ09aZ09?m=wrong-password', {}],
+  ])('is on every 303, with %s, Location and an empty body', async (_, options, at, extra) => {
+    const reply = redirect(https, 'aZ09aZ09aZ09', options)
+    expect(reply.status).toBe(303)
+    expect(whole(reply.headers)).toEqual({ ...TEXT, ...HSTS, location: at, ...extra })
+    expect(await reply.text()).toBe('')
+  })
+
+  it.each(['', 'aZ09aZ09aZ0', 'aZ09aZ09aZ09a', '../x/aZ09aZ0', 'aZ09aZ09aZ0/', 'https://e.x'])(
+    'never builds a 303 from %j, which is not a checked slug',
+    (slug) => {
+      expect(() => redirect(https, slug)).toThrow(TypeError)
+    },
+  )
 })
 
 describe('the plain text set through the router', () => {
@@ -62,6 +108,42 @@ describe('the plain text set through the router', () => {
     const missing = await app.fetch(new Request(`${ORIGIN}/nothing`))
     expect(missing.status).toBe(404)
     expect(whole(missing.headers)).toEqual({ ...TEXT, ...HSTS })
+  })
+
+  it('is on the 403 for a refused form and the 303 after a right password', async () => {
+    await clearTables()
+    const app = makeApp(clock().now)
+    const link = await addLink(1)
+    const cross = form(
+      `/l/${link.slug}/enter`,
+      { password: PASSWORD },
+      { headers: { Origin: 'https://evil.example' } },
+    )
+    const refusedReply = await app.fetch(cross)
+    expect(refusedReply.status).toBe(403)
+    expect(whole(refusedReply.headers)).toEqual({ ...TEXT, ...HSTS })
+    const reply = await app.fetch(form(`/l/${link.slug}/enter`, { password: PASSWORD }))
+    expect(reply.status).toBe(303)
+    const { 'set-cookie': cookie, ...rest } = whole(reply.headers)
+    expect(rest).toEqual({ ...TEXT, ...HSTS, location: `/l/${link.slug}` })
+    expect(cookie).toMatch(new RegExp(`^__Host-adman-${link.slug}=`))
+  })
+
+  it('is on the fixed 500 over http, without HSTS', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const failing: VisitorRoute = {
+      name: 'x',
+      method: 'GET',
+      path: /^\/x$/,
+      handler: async () => {
+        throw new Error('no')
+      },
+    }
+    const app = createApp({ DB: db }, { now: () => 0, random: cryptoBytes }, { visitor: [failing] })
+    const reply = await app.fetch(new Request('http://localhost:3000/x'))
+    expect(reply.status).toBe(500)
+    expect(whole(reply.headers)).toEqual(TEXT)
+    vi.restoreAllMocks()
   })
 })
 

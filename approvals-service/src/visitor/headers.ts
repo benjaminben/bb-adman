@@ -1,13 +1,12 @@
 // spec/approvals-service.md "Headers on replies from the catch-all" and spec/approvals-gallery.md
 // "The page policy and nonce". Each header set is fixed here, so one test can compare each whole.
-import type { Html } from './html'
-
-const HTML_CSP =
-  "default-src 'none'; style-src 'self'; img-src 'self'; form-action 'self'; " +
-  "frame-ancestors 'none'; base-uri 'none'"
+import { Slug } from '../contract'
+import type { NoticeKey } from './notices'
 
 // A plain text reply loads nothing at all.
 const TEXT_CSP = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+
+const REFUSED = 'This form could not be sent. Open the link again and try once more.'
 
 // The headers every visitor reply shares, without Content-Type or the policy.
 function common(request: Request): Headers {
@@ -25,15 +24,11 @@ function common(request: Request): Headers {
   return headers
 }
 
-function withType(request: Request, type: string, csp: string): Headers {
-  const headers = common(request)
-  headers.set('Content-Type', type)
-  headers.set('Content-Security-Policy', csp)
-  return headers
-}
-
 export function textHeaders(request: Request): Headers {
-  return withType(request, 'text/plain; charset=utf-8', TEXT_CSP)
+  const headers = common(request)
+  headers.set('Content-Type', 'text/plain; charset=utf-8')
+  headers.set('Content-Security-Policy', TEXT_CSP)
+  return headers
 }
 
 // The page policy: our own address and the nonce only. `dev` (true only under `next dev`) adds
@@ -50,9 +45,9 @@ export function pagePolicy(nonce: string, dev = false): string {
 }
 
 // The page header set; Next.js sets the page's own Content-Type.
-export function pageHeaders(request: Request, nonce: string): Headers {
+export function pageHeaders(request: Request, nonce: string, dev = false): Headers {
   const headers = common(request)
-  headers.set('Content-Security-Policy', pagePolicy(nonce))
+  headers.set('Content-Security-Policy', pagePolicy(nonce, dev))
   return headers
 }
 
@@ -62,26 +57,17 @@ export function textReply(request: Request, text: string, status = 200): Respons
 
 export const notFound = (request: Request) => textReply(request, 'Not found.', 404)
 
-export function stylesheetHeaders(): Headers {
-  return new Headers({
-    'Content-Type': 'text/css; charset=utf-8',
-    'X-Content-Type-Options': 'nosniff',
-    'Cache-Control': 'public, max-age=3600',
-  })
-}
+// The 403 of "Forms that write".
+export const refused = (request: Request) => textReply(request, REFUSED, 403)
 
-export function htmlReply(request: Request, page: Html, status = 200): Response {
-  return new Response(page.text, { status, headers: htmlHeaders(request) })
-}
+export type RedirectOptions = { m?: NoticeKey; cookie?: string }
 
-function htmlHeaders(request: Request): Headers {
-  return withType(request, 'text/html; charset=utf-8', HTML_CSP)
-}
-
-// Every redirect is a 303 back to a page of the same link, built from the checked slug.
-export function redirect(request: Request, location: string, cookie?: string): Response {
-  const headers = htmlHeaders(request)
-  headers.set('Location', location)
-  if (cookie !== undefined) headers.set('Set-Cookie', cookie)
+// Every redirect is a 303 back to the page of the same link. The address is built here from the
+// slug, which must have the checked shape, and a notice key; never from request text.
+export function redirect(request: Request, slug: string, options: RedirectOptions = {}): Response {
+  if (!Slug.safeParse(slug).success) throw new TypeError('unchecked slug')
+  const headers = textHeaders(request)
+  headers.set('Location', `/l/${slug}${options.m === undefined ? '' : `?m=${options.m}`}`)
+  if (options.cookie !== undefined) headers.set('Set-Cookie', options.cookie)
   return new Response(null, { status: 303, headers })
 }

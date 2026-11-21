@@ -1,12 +1,10 @@
-// The visitor's routes (spec/approvals-service.md "Visitor pages"). The sign-off, remove and
-// picture routes are stubs answering "Not found." until AP-4 gives them bodies.
+// The visitor's routes (spec/approvals-service.md "Visitor routes and logic"). Every reply is
+// plain text or a 303. The sign-off, remove and picture routes are stubs answering "Not found."
+// until AP-4 gives them bodies; the gallery page itself comes in AP-16.
 import type { Parts } from '../app'
 import type { Env } from '../env'
-import { enterLink, leaveLink, openGallery } from './actions'
-import { galleryPage } from './gallery-page'
-import { htmlReply, notFound, redirect, stylesheetHeaders, textReply } from './headers'
-import { passwordPage, refusedPage } from './password-page'
-import { STYLES } from './styles'
+import { enterLink, leaveLink } from './actions'
+import { notFound, redirect, refused, textReply } from './headers'
 
 export type VisitorContext = {
   request: Request
@@ -31,31 +29,23 @@ const failed = (request: Request) =>
 
 const stub: VisitorHandler = async ({ request }) => notFound(request)
 
-// The logic is in actions.ts; these handlers only render its results.
-const gallery: VisitorHandler = async ({ request, env, parts, params }) => {
-  const slug = params[0] ?? ''
-  const result = await openGallery(env.DB, request, slug, parts.now())
-  if (result.kind === 'password') return htmlReply(request, passwordPage(slug, false))
-  return htmlReply(request, galleryPage(result))
-}
-
+// The logic is in actions.ts; these handlers only turn its results into replies. The slug is
+// the path's, already of the SLUG shape, and redirect checks it again.
 // Wrong password, unknown slug and too many tries all get this one reply.
 const enter: VisitorHandler = async ({ request, env, parts, params }) => {
   const slug = params[0] ?? ''
   const result = await enterLink(env.DB, request, slug, parts)
-  if (result.kind === 'refused') return htmlReply(request, refusedPage(), 403)
-  if (result.kind === 'failed') return htmlReply(request, passwordPage(slug, true))
-  return redirect(request, result.location, result.cookie)
+  if (result.kind === 'refused') return refused(request)
+  if (result.kind === 'failed') return redirect(request, slug, { m: 'wrong-password' })
+  return redirect(request, slug, { cookie: result.cookie })
 }
 
 const leave: VisitorHandler = async ({ request, env, parts, params }) => {
-  const result = await leaveLink(env.DB, request, params[0] ?? '', parts.now())
-  if (result.kind === 'refused') return htmlReply(request, refusedPage(), 403)
-  return redirect(request, result.location, result.cookie)
+  const slug = params[0] ?? ''
+  const result = await leaveLink(env.DB, request, slug, parts.now())
+  if (result.kind === 'refused') return refused(request)
+  return redirect(request, slug, { cookie: result.cookie })
 }
-
-const stylesheet: VisitorHandler = async () =>
-  new Response(STYLES, { headers: stylesheetHeaders() })
 
 const robots: VisitorHandler = async ({ request }) =>
   textReply(request, 'User-agent: *\nDisallow: /\n')
@@ -64,7 +54,6 @@ const SLUG = '([0-9A-Za-z]{12})'
 const VARIANT = '([23456789abcdefghjkmnpqrstuvwxyz]{6})'
 
 export const VISITOR_ROUTES: VisitorRoute[] = [
-  { name: 'gallery', method: 'GET', path: new RegExp(`^/l/${SLUG}$`), handler: gallery },
   { name: 'enter', method: 'POST', path: new RegExp(`^/l/${SLUG}/enter$`), handler: enter },
   { name: 'sign-off', method: 'POST', path: new RegExp(`^/l/${SLUG}/signoffs$`), handler: stub },
   {
@@ -80,7 +69,6 @@ export const VISITOR_ROUTES: VisitorRoute[] = [
     path: new RegExp(`^/l/${SLUG}/p/${VARIANT}/([0-9]{1,16})$`),
     handler: stub,
   },
-  { name: 'stylesheet', method: 'GET', path: /^\/gallery\.css$/, handler: stylesheet },
   { name: 'robots', method: 'GET', path: /^\/robots\.txt$/, handler: robots },
 ]
 
