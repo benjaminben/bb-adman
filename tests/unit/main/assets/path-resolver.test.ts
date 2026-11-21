@@ -123,6 +123,11 @@ describe('a path at or inside a folder [SPEC 14 1.34 pathAtOrInside]', () => {
     expect(pathAtOrInside(dir, path.join(path.dirname(dir), '..x'))).toBe(false)
   })
 
+  it('is false for a sibling whose name starts with the folder name [SP-1 review Note 5]', () => {
+    expect(pathAtOrInside(dir, path.join(path.dirname(dir), 'P Assets2'))).toBe(false)
+    expect(pathAtOrInside(dir, path.join(path.dirname(dir), 'P Assets2', 'x.png'))).toBe(false)
+  })
+
   it('is true for a child named ..x', () => {
     expect(pathAtOrInside(dir, path.join(dir, '..x'))).toBe(true)
   })

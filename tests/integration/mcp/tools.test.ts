@@ -110,3 +110,27 @@ describe('the MCP tools [SPEC 4.5; 14 1.56 MCP-B]', () => {
     expect(campaigns.map((c) => c.createdBy)).toEqual(['agent'])
   })
 })
+
+// SP-1 review Note 5 [D-098]: a pictures field an agent sends is dropped and never stored.
+describe('create_campaign drops subject pictures [D-098]', () => {
+  it('stores and replies a brief whose subjects have no pictures key', async () => {
+    const { fx, projectId, s } = await setUp()
+    const input = createInput()
+    const subjects = input.brief.subjects.map((x) => ({ ...x, pictures: ['/private/secret.png'] }))
+    const reply = await s.call('create_campaign', {
+      project_id: projectId,
+      ...toSnake({ ...input, brief: { ...input.brief, subjects } }),
+    })
+    expect(reply.isError).toBeFalsy()
+    const made = replyJson<{ campaignId: string }>(reply)
+    const got = await s.call('get_campaign', {
+      project_id: projectId,
+      campaign_id: made.campaignId,
+    })
+    const { campaign } = replyJson<{ campaign: { brief: { subjects: object[] } } }>(got)
+    expect(campaign.brief.subjects).toHaveLength(2)
+    for (const subject of campaign.brief.subjects) expect(subject).not.toHaveProperty('pictures')
+    expect(JSON.stringify(replyJson(got))).not.toContain('secret')
+    expect(JSON.stringify(await projectOf(fx, projectId))).not.toContain('secret')
+  })
+})
