@@ -15,8 +15,16 @@ type RenewalBody = z.output<typeof PictureRenewals>
 
 // One bad address refuses the whole request.
 function checkAll(urls: string[], env: Env): Refusal | null {
-  const allowed = urls.every((url) => checkPictureUrl(url, env))
+  const allowed = urls.every((url) => checkPictureUrl(url, env) !== null)
   return allowed ? null : { status: 400, code: 'invalid_input' }
+}
+
+// The cleaned address to write. The route's check has already refused any bad one, so a null
+// here means the check was skipped: fail rather than store the raw text.
+function cleaned(url: string, env: Env): string {
+  const clean = checkPictureUrl(url, env)
+  if (clean === null) throw new Error('unchecked picture address')
+  return clean
 }
 
 export const checkGalleryPictures = (body: GalleryBody, env: Env) =>
@@ -44,7 +52,7 @@ export const replaceGallery: ApiHandler<GalleryBody> = async (ctx) => {
       title: v.title,
       sizeLine: v.sizeLine,
       version: v.version,
-      pictureUrl: v.pictureUrl,
+      pictureUrl: cleaned(v.pictureUrl, ctx.env),
       pictureExpiresAt: Date.parse(v.pictureExpiresAt),
     }),
   )
@@ -68,7 +76,7 @@ export const renewPictures: ApiHandler<RenewalBody> = async (ctx) => {
       renewPicture(db, link.id, {
         variantKey: p.variantKey,
         version: p.version,
-        pictureUrl: p.pictureUrl,
+        pictureUrl: cleaned(p.pictureUrl, ctx.env),
         pictureExpiresAt: Date.parse(p.pictureExpiresAt),
       }),
     ),

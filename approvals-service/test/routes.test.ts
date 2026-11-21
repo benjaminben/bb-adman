@@ -65,12 +65,40 @@ describe('API route entries', () => {
     expect(seen).toEqual([])
   })
 
+  const time = '2026-12-01T00:00:00.000Z'
+  const bodies: Record<string, (pictureUrl: string) => unknown> = {
+    'replace-gallery': (pictureUrl) => ({
+      campaignName: 'Spring',
+      variants: [
+        {
+          variantKey: 'abc234',
+          title: 'T',
+          sizeLine: 'S',
+          version: 1,
+          pictureUrl,
+          pictureExpiresAt: time,
+        },
+      ],
+    }),
+    'renew-pictures': (pictureUrl) => ({
+      pictures: [{ variantKey: 'abc234', version: 1, pictureUrl, pictureExpiresAt: time }],
+    }),
+  }
+
   it.each(['replace-gallery', 'renew-pictures'])(
-    '%s checks its picture addresses once it is no longer a stub (AP-2: checkPictureUrl)',
-    (name) => {
+    '%s refuses a bad picture address and lets a good one through (AP-2: checkPictureUrl)',
+    async (name) => {
       const route = API_ROUTES.find((r) => r.name === name)
-      expect(route).toBeDefined()
-      expect(route?.isStub === true || route?.hasCheck === true).toBe(true)
+      const body = bodies[name]
+      expect(route?.hasCheck).toBe(true)
+      if (route?.checkBody === undefined || body === undefined) throw new Error('no check')
+      const checkEnv = { DB: env.DB, API_KEY: KEY }
+      expect(await route.checkBody(body('https://evil.example/a.png'), checkEnv)).toEqual({
+        status: 400,
+        code: 'invalid_input',
+      })
+      const good = 'https://my-bucket.s3.us-east-1.amazonaws.com/a.png'
+      expect(await route.checkBody(body(good), checkEnv)).toBeNull()
     },
   )
 })

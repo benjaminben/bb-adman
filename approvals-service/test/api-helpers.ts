@@ -2,6 +2,7 @@
 import { env } from 'cloudflare:workers'
 import { createApp, type Parts } from '../src/app'
 import { cryptoBytes } from '../src/crypto/random'
+import { addSignoff } from '../src/db/signoffs'
 
 export const KEY = 'k'.repeat(40)
 export const NOW = 1_700_000_000_000
@@ -44,6 +45,35 @@ export async function linkIdOf(campaignId: string): Promise<string> {
   if (id === null) throw new Error('no link')
   return id
 }
+
+export const PASSWORD = 'correct horse battery'
+
+export async function create(campaignId: string, over: Partial<Parts> = {}) {
+  const body = { projectId: PROJECT, campaignId, campaignName: 'Spring', password: PASSWORD }
+  return app(over).fetch(call('POST', '/links', body))
+}
+
+export function variant(variantKey: string, version = 1) {
+  return {
+    variantKey,
+    title: `Title ${variantKey}`,
+    sizeLine: '1080 × 1080',
+    version,
+    pictureUrl: picture(variantKey),
+    pictureExpiresAt: '2026-12-01T00:00:00.000Z',
+  }
+}
+
+export const putGallery = (campaignId: string, variants: unknown[], campaignName = 'Spring') =>
+  app().fetch(call('PUT', `${linkPath(campaignId)}/gallery`, { campaignName, variants }))
+
+export async function signoff(linkId: string, n: number, variantKey: string, version: number) {
+  const row = { id: `s${n}`.padEnd(24, 'x'), variantKey, version, email: `p${n}@a.co` }
+  await addSignoff(db, linkId, { ...row, createdAt: NOW + n }).run()
+}
+
+export const errorCode = async (reply: Response) =>
+  (await reply.json<{ error: { code: string } }>()).error.code
 
 export async function clearAll() {
   await db.batch(

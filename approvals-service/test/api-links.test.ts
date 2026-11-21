@@ -1,40 +1,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { addSession } from '../src/db/sessions'
-import { addSignoff } from '../src/db/signoffs'
 import { LinkState } from '../src/contract'
 import * as h from './api-helpers'
 
-const { app, call, linkPath, picture } = h
-const PASSWORD = 'correct horse battery'
-const TIME = '2026-12-08T00:00:00.000Z'
-const BAD = 'invalid_input'
-
-async function create(campaignId: string, over = {}) {
-  const body = { projectId: h.PROJECT, campaignId, campaignName: 'Spring', password: PASSWORD }
-  return app(over).fetch(call('POST', '/links', body))
-}
-
-function variant(variantKey: string, version = 1) {
-  return {
-    variantKey,
-    title: `Title ${variantKey}`,
-    sizeLine: '1080 × 1080',
-    version,
-    pictureUrl: picture(variantKey),
-    pictureExpiresAt: '2026-12-01T00:00:00.000Z',
-  }
-}
-
-const putGallery = (campaignId: string, variants: unknown[], campaignName = 'Spring') =>
-  app().fetch(call('PUT', `${linkPath(campaignId)}/gallery`, { campaignName, variants }))
-
-async function signoff(linkId: string, n: number, variantKey: string, version: number) {
-  const row = { id: `s${n}`.padEnd(24, 'x'), variantKey, version, email: `p${n}@a.co` }
-  await addSignoff(h.db, linkId, { ...row, createdAt: h.NOW + n }).run()
-}
-
-const errorCode = async (reply: Response) =>
-  (await reply.json<{ error: { code: string } }>()).error.code
+const { app, call, linkPath, picture, create, variant, putGallery, signoff, errorCode } = h
+const { PASSWORD } = h
 
 beforeEach(h.clearAll)
 afterEach(() => vi.restoreAllMocks())
@@ -233,41 +203,5 @@ describe('DELETE /api/v1/links/{projectId}/{campaignId}', () => {
     const tables = ['link', 'gallery_variant', 'signoff', 'session']
     for (const t of tables) expect(await h.countFor(t, id), t).toBe(0)
     for (const t of tables) expect(await h.countFor(t, other), t).toBe(1)
-  })
-})
-
-describe('a link route naming another campaign, or a bad picture address', () => {
-  const renewal = (pictureUrl: string) => ({
-    pictures: [{ variantKey: 'aaa234', version: 1, pictureUrl, pictureExpiresAt: TIME }],
-  })
-  const gallery = (pictureUrl: string) => ({
-    campaignName: 'Hacked',
-    variants: [{ ...variant('aaa234'), pictureUrl }],
-  })
-  const other = linkPath('winter-abc234')
-  const own = linkPath('spring-abc234')
-  const good = picture('new')
-  const bad = 'https://evil.example/a.png'
-
-  const rows: [string, () => Request, number, string][] = [
-    ['read', () => call('GET', other), 404, 'not_found'],
-    ['password', () => call('PUT', `${other}/password`, { password: PASSWORD }), 404, 'not_found'],
-    ['gallery', () => call('PUT', `${other}/gallery`, gallery(good)), 404, 'not_found'],
-    ['pictures', () => call('PUT', `${other}/pictures`, renewal(good)), 404, 'not_found'],
-    ['delete', () => call('DELETE', other), 404, 'not_found'],
-    ['a bad gallery address', () => call('PUT', `${own}/gallery`, gallery(bad)), 400, BAD],
-    ['a bad renewal address', () => call('PUT', `${own}/pictures`, renewal(bad)), 400, BAD],
-  ]
-
-  it.each(rows)('%s is refused and changes nothing', async (_name, request, status, code) => {
-    await create('spring-abc234')
-    await putGallery('spring-abc234', [variant('aaa234')])
-    const all = async (t: string) => (await h.db.prepare(`SELECT * FROM ${t}`).all()).results
-    const snapshot = () => Promise.all(['link', 'gallery_variant'].map(all))
-    const before = await snapshot()
-    const reply = await app().fetch(request())
-    expect(reply.status).toBe(status)
-    expect(await errorCode(reply)).toBe(code)
-    expect(await snapshot()).toEqual(before)
   })
 })
