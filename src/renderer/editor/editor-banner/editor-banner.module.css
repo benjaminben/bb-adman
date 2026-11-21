@@ -1,7 +1,19 @@
-.banner {
+.banner,
+.working {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
   margin: 0;
   padding: var(--space-2) var(--space-4);
   background: var(--color-danger-bg);
   color: var(--color-danger-text);
   border-bottom: var(--border-width) solid var(--color-border);
+}
+.working {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.words {
+  margin: 0;
 }
