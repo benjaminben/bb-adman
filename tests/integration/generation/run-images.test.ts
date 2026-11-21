@@ -11,7 +11,7 @@ import {
   type GenerationFixture,
 } from './generation-fixture'
 import { data } from '../core-fixture'
-import { promptToSend } from '@/shared/generation/prompt'
+import { KEEP_PRINTING_ENDING, NO_TEXT_ENDING, promptToSend } from '@/shared/generation/prompt'
 import { greyPng } from '@/main/providers/fake/png'
 import { vp8x, webp } from '../../fixtures/webp-bytes'
 
@@ -66,7 +66,7 @@ describe('generation.runImages [SPEC 4.2, 3.6 "Jobs" item 1; FR-062 to FR-065]',
       model: '',
       startedBy: 'user',
       request: {
-        prompt: promptToSend('A bottle on a rock'),
+        prompt: promptToSend('A bottle on a rock', { pictures: 1 }),
         referenceAssetIds: [ref],
         count: 3,
         width: 1080,
@@ -197,5 +197,26 @@ describe('generation.runImages with reference pictures [SPEC 14 1.46 RF-0 item 3
       'RULE_VIOLATION',
       'asset_not_a_picture',
     )
+  })
+})
+
+describe('generation.runImages stores the ending the pictures sent call for [SP-9; A-127]', () => {
+  const storedPrompt = async (input: Record<string, unknown>) => {
+    const { jobId } = data<{ jobId: string }>(await run(input))
+    return (f.job(jobId)?.request as { prompt: string }).prompt
+  }
+
+  it('ends the prompt with "keep printing" once, and no "no text", with one reference', async () => {
+    f = await makeGenerationFixture()
+    const prompt = await storedPrompt({ referenceAssetIds: [await f.importPicture()] })
+    expect(prompt.endsWith(` ${KEEP_PRINTING_ENDING}`)).toBe(true)
+    expect(prompt.split(KEEP_PRINTING_ENDING)).toHaveLength(2)
+    expect(prompt).not.toContain(NO_TEXT_ENDING)
+  })
+
+  it('ends the prompt with "no text" with no reference', async () => {
+    f = await makeGenerationFixture()
+    const prompt = await storedPrompt({ referenceAssetIds: [] })
+    expect(prompt).toBe(`A bottle on a rock ${NO_TEXT_ENDING}`)
   })
 })

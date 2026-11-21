@@ -77,7 +77,7 @@ describe('generation.runImages with comfyui against the stand-in [SPEC 14 CU-4]'
       app: 'Adman',
       provider: 'comfyui',
       model: moss.model.mainFile,
-      prompt: promptToSend('A bottle on a rock'),
+      prompt: promptToSend('A bottle on a rock', { pictures: 0 }),
       kind: 'image_generation',
     })
     // [1.53] G-1: every model file the shipped workflow names, and its id and version.
@@ -122,6 +122,14 @@ describe('generation.runImages with comfyui against the stand-in [SPEC 14 CU-4]'
     expect(f.asset(assetId)?.displayName).toContain('MARKERNAMEZ3')
     const job = await finishedJob({ referenceAssetIds: [assetId] }, flux.slots.outputNode)
     expect(job?.status).toBe('succeeded')
+    // [SP-9] The run sends a picture, so the prompt slot holds the "keep printing" ending.
+    const graph = JSON.parse(
+      stand.seen.find((r) => r.path === '/prompt')?.body.toString('utf8') ?? '{}',
+    ) as { prompt: Record<string, { inputs: Record<string, unknown> }> }
+    const slot = flux.slots.prompt ?? { node: 'missing', input: 'missing' }
+    expect(graph.prompt[slot.node]?.inputs[slot.input]).toBe(
+      promptToSend('A bottle on a rock', { pictures: 1 }),
+    )
     const uploads = stand.seen.filter((r) => r.path === '/upload/image')
     expect(uploads).toHaveLength(1)
     expect(uploads[0]?.body.includes(Buffer.from(bytes))).toBe(true)

@@ -1,10 +1,13 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeRunnerFixture, type RunnerFixture } from '../jobs/runner-fixture'
+import { NO_TEXT_ENDING } from '@/shared/generation/prompt'
 
 let x: RunnerFixture
 afterEach(() => x.cleanup())
 
 const REQUEST = { prompt: 'A bottle', referenceAssetIds: [], count: 4, width: 1080, height: 1350 }
+// [SP-9] A retry stores the prompt with the ending its pictures call for (none here: "no text").
+const RETRIED = { ...REQUEST, prompt: `A bottle ${NO_TEXT_ENDING}` }
 
 // An ended picture row, as a run that kept some pictures would leave it.
 function endedRow(status: 'cancelled' | 'failed', result: unknown): void {
@@ -28,21 +31,21 @@ async function retriedRequest(): Promise<unknown> {
 describe('job.retry asks only for the pictures not yet made [FN-4; SPEC 4.2, FR-069]', () => {
   it('a cancelled job with count 4 and two kept pictures makes a new job with count 2', async () => {
     endedRow('cancelled', { assetIds: ['a1', 'a2'], failures: {}, cancelAsked: true })
-    expect(await retriedRequest()).toEqual({ ...REQUEST, count: 2 })
+    expect(await retriedRequest()).toEqual({ ...RETRIED, count: 2 })
   })
 
   it('asks for at least one picture when every picture was kept', async () => {
     endedRow('cancelled', { assetIds: ['a1', 'a2', 'a3', 'a4'], failures: {} })
-    expect(await retriedRequest()).toEqual({ ...REQUEST, count: 1 })
+    expect(await retriedRequest()).toEqual({ ...RETRIED, count: 1 })
   })
 
   it('a failed row with no kept pictures is retried unchanged', async () => {
     endedRow('failed', null)
-    expect(await retriedRequest()).toEqual(REQUEST)
+    expect(await retriedRequest()).toEqual(RETRIED)
   })
 
   it('a row whose result lists no pictures is retried unchanged', async () => {
     endedRow('cancelled', { assetIds: [], failures: {}, cancelAsked: true })
-    expect(await retriedRequest()).toEqual(REQUEST)
+    expect(await retriedRequest()).toEqual(RETRIED)
   })
 })

@@ -21,6 +21,7 @@ import type { AdapterContext, ImageResult } from '@/main/providers/types'
 import { pictureType } from '@/main/providers/picture-type'
 import { pictureSize } from '@/main/providers/picture-size'
 import type { Settings } from '@/shared/schemas/settings'
+import { promptToSend } from '@/shared/generation/prompt'
 import { livePrint, missingNames, safely } from './live-output'
 import { circlePng } from './shape-picture'
 import { referenceFiles } from './reference-files'
@@ -29,14 +30,14 @@ import type { ReferenceFile } from './reference-files'
 const key = process.env.GEMINI_API_KEY
 const EXTENSION = { 'image/png': 'png', 'image/jpeg': 'jpg' } as const
 const PROJECT_ROOT = fileURLToPath(new URL('../../', import.meta.url))
-const NO_TEXT = 'Do not include any text, letters, numbers, logos or watermarks in the image.'
+// The ending is added by promptToSend, as the app adds it, so a live run checks its wording.
 const CIRCLE_PROMPT =
   'Place the shape from the reference picture on a wooden table, photographed from above. ' +
-  `Keep its exact colour and shape. ${NO_TEXT}`
+  'Keep its exact colour and shape.'
 const PRODUCT_PROMPT =
   'Make a product photograph of the item from the reference picture standing on a wooden ' +
   "table in soft daylight, seen from the front. Keep the item's exact shape, colours and " +
-  `materials. ${NO_TEXT}`
+  'materials.'
 
 const missingVariables = missingNames(['GEMINI_API_KEY'])
 if (missingVariables.length > 0) {
@@ -57,7 +58,9 @@ function planTheCall(): Promise<Plan> {
       return `Reference picture ${index + 1}: ${file.mime}, ${size.width} x ${size.height}`
     })
     const facts = [`Reference pictures sent: ${references.length}`, ...sizes]
-    return { prompt: files ? PRODUCT_PROMPT : CIRCLE_PROMPT, references, facts }
+    const text = files ? PRODUCT_PROMPT : CIRCLE_PROMPT
+    const prompt = promptToSend(text, { pictures: references.length })
+    return { prompt, references, facts }
   })
 }
 

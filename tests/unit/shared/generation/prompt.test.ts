@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { NO_TEXT_ENDING, prefilledPrompt, promptToSend } from '@/shared/generation/prompt'
+import {
+  KEEP_PRINTING_ENDING,
+  NO_TEXT_ENDING,
+  prefilledPrompt,
+  promptEnding,
+  promptToSend,
+} from '@/shared/generation/prompt'
+
+// The runs in this block send no picture.
+const none = { pictures: 0 }
 
 const facts = {
   subjects: [{ name: 'Bottle', description: 'A green glass bottle' }],
@@ -16,21 +25,23 @@ describe('the fixed "no text" ending [SPEC 6.2; FR-061]', () => {
   })
 
   it('ends every prompt sent, after the prompt the user wrote', () => {
-    expect(promptToSend('A bottle on a rock')).toBe(`A bottle on a rock ${NO_TEXT_ENDING}`)
+    expect(promptToSend('A bottle on a rock', none)).toBe(`A bottle on a rock ${NO_TEXT_ENDING}`)
   })
 
   it('trims the prompt before the ending is added', () => {
-    expect(promptToSend('  A bottle on a rock \n')).toBe(`A bottle on a rock ${NO_TEXT_ENDING}`)
+    expect(promptToSend('  A bottle on a rock \n', none)).toBe(
+      `A bottle on a rock ${NO_TEXT_ENDING}`,
+    )
   })
 
   it('adds the ending once when the prompt already ends with it, so a retry does not repeat it', () => {
-    const once = promptToSend('A bottle')
-    expect(promptToSend(once)).toBe(once)
+    const once = promptToSend('A bottle', none)
+    expect(promptToSend(once, none)).toBe(once)
   })
 
   it('still adds the ending when the user removed part of it', () => {
     const cut = 'A bottle. Do not include any text'
-    expect(promptToSend(cut)).toBe(`${cut} ${NO_TEXT_ENDING}`)
+    expect(promptToSend(cut, none)).toBe(`${cut} ${NO_TEXT_ENDING}`)
   })
 })
 
@@ -76,5 +87,99 @@ describe('the pre-filled prompt [SPEC 6.2; FR-062]', () => {
     const text = prefilledPrompt({ ...facts, subjects: [] })
     expect(text).toContain('Hikers')
     expect(text.trim().length).toBeGreaterThan(0)
+  })
+})
+
+const KEEP =
+  'Keep any printing on the things in the given pictures exactly as it appears in them. ' +
+  'Add no other text, letters, numbers, logos or watermarks anywhere in the image.'
+const NO_TEXT = 'Do not include any text, letters, numbers, logos or watermarks in the image.'
+
+const endingFor = [
+  { pictures: 0, ending: NO_TEXT },
+  { pictures: 2, ending: KEEP },
+]
+
+describe('the two prompt endings [SP-9; A-127; FR-061]', () => {
+  it('"keep printing" is the sentence the spec gives, word for word', () => {
+    expect(KEEP_PRINTING_ENDING).toBe(KEEP)
+  })
+
+  it('"no text" is unchanged', () => {
+    expect(NO_TEXT_ENDING).toBe(NO_TEXT)
+  })
+
+  it.each([
+    { pictures: 0, ending: NO_TEXT },
+    { pictures: 1, ending: KEEP },
+    { pictures: 8, ending: KEEP },
+  ])('promptEnding($pictures) picks the right ending', ({ pictures, ending }) => {
+    expect(promptEnding(pictures)).toBe(ending)
+  })
+
+  it.each([NO_TEXT, KEEP])('does not say "product": %s', (ending) => {
+    expect(ending.toLowerCase()).not.toContain('product')
+  })
+
+  it('the pre-filled prompt holds neither ending', () => {
+    const text = prefilledPrompt({
+      subjects: [{ name: 'Bottle', description: 'A green glass bottle' }],
+      audience: 'Hikers',
+      region: 'US',
+      message: 'Stay cool on the trail',
+    })
+    expect(text).not.toContain(NO_TEXT)
+    expect(text).not.toContain(KEEP)
+  })
+})
+
+describe('promptToSend picks the ending from the pictures sent [SP-9]', () => {
+  it.each(endingFor)('with $pictures pictures adds the right ending after one space', (c) => {
+    expect(promptToSend('A bottle', { pictures: c.pictures })).toBe(`A bottle ${c.ending}`)
+  })
+
+  it.each(endingFor)('with $pictures pictures trims the prompt first', (c) => {
+    expect(promptToSend('  A bottle \n', { pictures: c.pictures })).toBe(`A bottle ${c.ending}`)
+  })
+
+  it.each(endingFor)('with $pictures pictures gives the same text when called twice', (c) => {
+    const once = promptToSend('A bottle', { pictures: c.pictures })
+    expect(promptToSend(once, { pictures: c.pictures })).toBe(once)
+  })
+
+  it.each([
+    { from: NO_TEXT, pictures: 1, ending: KEEP },
+    { from: KEEP, pictures: 0, ending: NO_TEXT },
+  ])('swaps an old ending for the one $pictures pictures needs', ({ from, pictures, ending }) => {
+    const text = promptToSend(`A bottle ${from}`, { pictures })
+    expect(text).toBe(`A bottle ${ending}`)
+  })
+
+  it.each([
+    { pasted: `${NO_TEXT} ${KEEP}`, pictures: 1 },
+    { pasted: `${KEEP}\n\n${NO_TEXT}`, pictures: 1 },
+    { pasted: `${NO_TEXT}  \n ${KEEP}   ${NO_TEXT}`, pictures: 0 },
+    { pasted: `${KEEP}\n${NO_TEXT}\n`, pictures: 0 },
+  ])('leaves one ending when both are pasted (%#)', ({ pasted, pictures }) => {
+    const text = promptToSend(`A bottle. ${pasted}`, { pictures })
+    expect(text).toBe(`A bottle. ${promptEnding(pictures)}`)
+  })
+
+  it.each([
+    { prompt: NO_TEXT, pictures: 1 },
+    { prompt: KEEP, pictures: 0 },
+    { prompt: ` ${KEEP} ${NO_TEXT} `, pictures: 3 },
+  ])('turns a prompt that is only endings into the chosen ending alone (%#)', (c) => {
+    expect(promptToSend(c.prompt, { pictures: c.pictures })).toBe(promptEnding(c.pictures))
+  })
+
+  it.each(endingFor)('with $pictures pictures leaves an ending in the middle alone', (c) => {
+    const prompt = `A bottle. ${NO_TEXT} ${KEEP} On a rock.`
+    expect(promptToSend(prompt, { pictures: c.pictures })).toBe(`${prompt} ${c.ending}`)
+  })
+
+  it.each(endingFor)('with $pictures pictures still adds the full ending to a cut one', (c) => {
+    const cut = 'A bottle. Keep any printing on the things'
+    expect(promptToSend(cut, { pictures: c.pictures })).toBe(`${cut} ${c.ending}`)
   })
 })

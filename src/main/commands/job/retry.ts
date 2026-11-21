@@ -10,6 +10,7 @@ import { imageJobRequest } from '@/shared/schemas/jobs/image-generation'
 import { checkComfyCutout, checkComfyRun } from '@/main/commands/generation/comfy-checks'
 import { checkLicence } from '@/main/commands/generation/licence-check'
 import { keptPictureCount, picturesLeft } from '@/shared/generation/pictures-left'
+import { promptToSend } from '@/shared/generation/prompt'
 import type { JobRow } from '@/shared/schemas/rows/job'
 
 type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets'>
@@ -25,11 +26,25 @@ async function checkVideoRetry(deps: Deps, ctx: PrepareContext, input: JobRetryI
   await checkComfyVideoRetry(deps, ctx, old.request, input.licenceConfirmed)
 }
 
+// The two fields the prompt's ending depends on, shared by picture and video requests.
+const promptPart = imageJobRequest.pick({ prompt: true, referenceAssetIds: true })
+
+// [SP-9] A picture or video row is stored with the ending its pictures call for, so a row
+// made before the two-ending rule holds the ending it is sent with. Only the prompt changes.
+function withEnding(old: JobRow): unknown {
+  if (old.kind !== 'image_generation' && old.kind !== 'video_generation') return old.request
+  const part = promptPart.safeParse(old.request)
+  if (!part.success) return old.request
+  const pictures = part.data.referenceAssetIds.length
+  return { ...(old.request as object), prompt: promptToSend(part.data.prompt, { pictures }) }
+}
+
 // [FN-4] A picture job that kept pictures asks only for the ones not yet made.
 function retryRequest(old: JobRow): unknown {
-  if (old.kind !== 'image_generation' || keptPictureCount(old.result) === 0) return old.request
-  const request = imageJobRequest.parse(old.request)
-  return { ...request, count: picturesLeft(request.count, old.result) }
+  const request = withEnding(old)
+  if (old.kind !== 'image_generation' || keptPictureCount(old.result) === 0) return request
+  const { count } = imageJobRequest.parse(old.request)
+  return { ...(request as object), count: picturesLeft(count, old.result) }
 }
 
 export function jobRetry(deps: Deps) {

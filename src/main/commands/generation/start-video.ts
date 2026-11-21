@@ -47,7 +47,7 @@ function enqueue(deps: Deps, ctx: ProjectContext, input: GenerationStartVideoInp
   const place = target(ctx.project, input.variantId)
   // [1.60] The stored request keeps the start and the picture IDs prepare checked.
   const request: VideoJobRequest = {
-    prompt: promptToSend(input.prompt),
+    prompt: promptToSend(input.prompt, { pictures: input.referenceAssetIds.length }),
     durationMs: input.durationMs,
     width: place.width,
     height: place.height,
