@@ -67,7 +67,7 @@ describe('generation.startVideo picture start refusals [SPEC 14 1.60 CU-6b N-4] 
     const b = await f.importPicture('pics', 'b.png')
     await refused(refAsk(a, b), {
       code: 'RULE_VIOLATION',
-      message: 'ComfyUI takes at most 1 reference picture(s) for this run.',
+      message: 'ComfyUI takes one reference picture for this run.',
       details: { reason: 'too_many_references', max: 1 },
     })
   })

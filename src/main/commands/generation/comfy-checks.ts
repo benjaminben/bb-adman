@@ -5,14 +5,12 @@
 import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectContext } from '@/main/commands/types'
 import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'
-import { reasonMessage } from '@/shared/providers/messages'
+import {
+  COMFY_JOB_NOT_OFFERED_MESSAGE,
+  reasonMessage,
+  tooManyReferencesMessage,
+} from '@/shared/providers/messages'
 import { AppError } from '@/shared/schemas/result'
-
-export const COMFY_JOB_NOT_OFFERED_MESSAGE = 'ComfyUI cannot make this kind of picture yet.'
-
-export function tooManyReferencesMessage(max: number): string {
-  return `ComfyUI takes at most ${max} reference picture(s) for this run.`
-}
 
 // Also given by generation.startVideo for too many references (SPEC 14 1.60 N-4).
 export const tooManyReferences = (max: number) =>

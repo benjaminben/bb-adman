@@ -50,3 +50,11 @@ const REASONS: Record<ProviderErrorReason, string> = {
 export function reasonMessage(reason: ProviderErrorReason): string {
   return REASONS[reason]
 }
+
+// SPEC 4.2 "Not offered" and 1.46 part B: the refusals of a ComfyUI run made before a job row.
+export const COMFY_JOB_NOT_OFFERED_MESSAGE = 'ComfyUI cannot make this kind of picture yet.'
+
+export function tooManyReferencesMessage(max: number): string {
+  if (max === 1) return 'ComfyUI takes one reference picture for this run.'
+  return `ComfyUI takes at most ${max} reference pictures for this run.`
+}
