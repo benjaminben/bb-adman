@@ -13,20 +13,18 @@ export function comfySetAddress(deps: Pick<CoreDeps, 'settings'>) {
     input: comfySetAddressInput,
     changesAppState: true,
     run(_ctx, input) {
-      if (input.address === null) {
-        deps.settings.setComfyAddress(null)
-        return { data: { baseUrl: null } }
-      }
-      const ownPorts = comfyOwnPorts(deps.settings.get().mcp.port)
-      const result = parseComfyAddress(input.address, ownPorts)
-      if ('reason' in result) {
-        // The typed text goes into no message, detail or log line.
-        throw new AppError('INVALID_INPUT', COMFY_ADDRESS_MESSAGES[result.reason], {
-          reason: result.reason,
-        })
-      }
-      deps.settings.setComfyAddress(result.origin)
-      return { data: { baseUrl: result.origin } }
+      const baseUrl = input.address === null ? null : originOf(input.address, deps)
+      deps.settings.setComfyAddress(baseUrl)
+      return { data: { baseUrl } }
     },
+  })
+}
+
+function originOf(address: string, deps: Pick<CoreDeps, 'settings'>): string {
+  const result = parseComfyAddress(address, comfyOwnPorts(deps.settings.get().mcp.port))
+  if ('origin' in result) return result.origin
+  // The typed text goes into no message or detail.
+  throw new AppError('INVALID_INPUT', COMFY_ADDRESS_MESSAGES[result.reason], {
+    reason: result.reason,
   })
 }
