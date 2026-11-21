@@ -2,6 +2,9 @@
 // function that picks them. vitest.live.config.ts imports both. Never prints a value.
 import { parseEnv } from 'node:util'
 
+// [1.10] The one owner of the live test file list; vitest.live.config.ts uses it.
+export const LIVE_INCLUDE = ['tests/live/**/*.test.ts']
+
 export const LIVE_ENV_NAMES = [
   'GEMINI_API_KEY',
   'FAL_KEY',
