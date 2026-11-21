@@ -17,6 +17,8 @@ import {
   startWorking,
 } from './stand-in-runs'
 import * as screens from './screens'
+import { geminiAsked, MADE_UP_KEY, standInForGemini } from './gemini-stand-in'
+import { GEMINI_ORIGIN } from '../../src/main/providers/gemini/pinned-origin'
 import { handTestStorage, projectHomeTour, settingsTour, startTour } from './screen-tour'
 
 const MOSS_OUTPUT = '9'
@@ -142,6 +144,41 @@ test("References and the paid confirm: an added picture goes to Flux; Gemini's c
   await panel.getByRole('button', { name: 'Cancel' }).click()
   await expect(panel.getByRole('button', { name: 'Generate' })).toBeVisible()
   await expect(screens.runRows(page)).toHaveCount(1)
+})
+
+test('Key dialog and paid Retry: Cancel, then a made-up key saved; the refused run is retried', async () => {
+  await campaignOnStandIn()
+  await standInForGemini(app)
+  await screens.chooseProvider(page, 'Google Gemini')
+  const panel = screens.picturePanel(page)
+  const dialog = page.getByRole('dialog', { name: 'Add your Google Gemini key' })
+
+  await generate()
+  await expect(panel.getByText(/^This sends 1 paid request\(s\)/)).toBeVisible()
+  await panel.getByRole('button', { name: 'Confirm' }).click()
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole('button', { name: 'Cancel' }).click()
+  await expect(dialog).toBeHidden()
+  await expect(screens.runRows(page)).toHaveCount(0)
+  expect(await geminiAsked(app)).toEqual([])
+
+  await generate()
+  await panel.getByRole('button', { name: 'Confirm' }).click()
+  await dialog.getByLabel('API key').fill(MADE_UP_KEY)
+  await dialog.getByRole('button', { name: 'Save and continue' }).click()
+  await expect(dialog).toBeHidden()
+  await expect(screens.runRow(page)).toContainText('Failed', { timeout: 15_000 })
+  expect(await geminiAsked(app)).toEqual([GEMINI_ORIGIN])
+
+  const row = screens.runRow(page)
+  await row.getByRole('button', { name: 'Retry' }).click()
+  await expect(row.getByText(/^This sends 1 paid request\(s\)/)).toBeVisible()
+  await row.getByRole('button', { name: 'Cancel' }).click()
+  expect(await geminiAsked(app)).toEqual([GEMINI_ORIGIN])
+  await row.getByRole('button', { name: 'Retry' }).click()
+  await row.getByRole('button', { name: 'Confirm' }).click()
+  await expect.poll(() => geminiAsked(app)).toEqual([GEMINI_ORIGIN, GEMINI_ORIGIN])
+  await expect(screens.runRow(page)).toContainText('Failed', { timeout: 15_000 })
 })
 
 test('The other screens of the reach table: hand-test storage, Settings, Start, project home', async () => {
