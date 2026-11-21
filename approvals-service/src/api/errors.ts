@@ -3,7 +3,7 @@
 import type { z } from 'zod'
 import type { ErrorCode } from '../contract'
 
-type Code = z.infer<typeof ErrorCode>
+export type Code = z.infer<typeof ErrorCode>
 
 const MESSAGES: Record<Code, string> = {
   bad_request: 'The request was refused.',
@@ -31,3 +31,7 @@ export function apiJson(body: unknown, status = 200): Response {
 export function apiError(status: number, code: Code): Response {
   return apiJson({ error: { code, message: MESSAGES[code] } }, status)
 }
+
+// The one stub handler: a route that answers this has no body yet (AP-1). Taking no argument,
+// it fits a handler of any body type.
+export const notBuilt = async (): Promise<Response> => apiError(404, 'not_found')

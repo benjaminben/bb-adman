@@ -1,9 +1,8 @@
 // Stubs until AP-2: POST /links, PUT .../password and DELETE of a link.
-import type { ApiHandler } from '../app'
-import { apiError } from './errors'
+import { notBuilt } from './errors'
 
-export const createLink: ApiHandler = async () => apiError(404, 'not_found')
+export const createLink = notBuilt
 
-export const setPassword: ApiHandler = async () => apiError(404, 'not_found')
+export const setPassword = notBuilt
 
-export const removeLink: ApiHandler = async () => apiError(404, 'not_found')
+export const removeLink = notBuilt
