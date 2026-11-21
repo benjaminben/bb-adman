@@ -1,5 +1,8 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { MCP_TOOLS } from '../../../../../src/main/mcp/tools'
+import { z } from 'zod'
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { MCP_TOOLS, toolSetup, type ToolDef } from '../../../../../src/main/mcp/tools'
+import type { AgentCaller } from '../../../../../src/main/mcp/agent-caller'
 import { AGENT_POLICY, agentPolicyFor } from '../../../../../src/main/commands/agent-policy'
 import { makeFixture, type Fixture } from '../../../../integration/core-fixture'
 
@@ -28,4 +31,40 @@ describe('the fixed MCP tool table [SPEC 4.5; 14 1.56 MCP-B]', () => {
     const banned = /^(secret|settings|mcp|dev|generation|comfy|storage|app|dialog)\./
     for (const t of MCP_TOOLS) expect(banned.test(t.target), t.target).toBe(false)
   })
+
+  // B-2: a new query target must be added here on purpose, after a review.
+  it('reads only the allowed queries [B-2]', () => {
+    const allowed = ['project.get', 'asset.list', 'campaign.get']
+    for (const t of MCP_TOOLS.filter((x) => x.kind === 'query')) {
+      expect(allowed, t.name).toContain(t.target)
+    }
+  })
+
+  it('the snake_case check finds two input keys that turn into one name [B-2]', () => {
+    const clash: ToolDef = {
+      name: 'made_up_tool',
+      description: 'Made up.',
+      kind: 'query',
+      target: 'project.get',
+      input: z.object({ projectId: z.string(), project_id: z.string() }),
+    }
+    expect(lostKeys(clash)).toEqual(['projectId'])
+  })
+
+  it('no two input keys of one tool turn into the same snake_case name [B-2]', () => {
+    for (const t of MCP_TOOLS) expect(lostKeys(t), t.name).toEqual([])
+  })
 })
+
+// The input keys of one tool that have no snake_case key of their own once registered.
+function lostKeys(def: ToolDef): string[] {
+  let shape: Record<string, unknown> = {}
+  const server = {
+    registerTool: (_name: string, cfg: { inputSchema: z.ZodObject }) => {
+      shape = cfg.inputSchema.shape
+    },
+  }
+  toolSetup([def])(server as unknown as McpServer, {} as AgentCaller)
+  const kept = Object.values(shape)
+  return Object.keys(def.input.shape).filter((k) => !kept.includes(def.input.shape[k]))
+}
