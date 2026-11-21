@@ -193,3 +193,22 @@ describe('every row of 6.10.9 from a stand-in answer [SPEC 6.10.9, 14 CU-4]', ()
     expect(text).not.toContain(String(s.port))
   })
 })
+
+describe('a picture run interrupted on the server [SPEC 6.10.9, 14 F-17]', () => {
+  it('a history entry that holds execution_interrupted gives server_stopped, and no fetch', async () => {
+    const s = await standIn()
+    finishRun(s, PROMPT_ID, {
+      status: {
+        status_str: 'success',
+        completed: false,
+        messages: [['execution_interrupted', { prompt_id: PROMPT_ID }]],
+      },
+      outputs: {},
+    })
+    expect(await failureOf(s, fakeTiming().timing)).toMatchObject({
+      kind: 'other',
+      reason: 'server_stopped',
+    })
+    expect(requestLines(s).some((l) => l.startsWith('GET /view'))).toBe(false)
+  })
+})

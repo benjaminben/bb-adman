@@ -100,26 +100,27 @@ export async function runPicture(
   const graph = fillWorkflow(spec, fillValuesFor(spec, ask, sentId))
   if (opts.signal?.aborted) throw new ProviderCancelled()
   const promptId = await submitted(env, graph, sentId)
+  // F-15: only a confirmed stop ends the run cancelled. On `finished` or `unknown` polling
+  // goes on under the run's own limits, so an arrived picture is returned.
+  const onStop = async () =>
+    (await cancelOwnRun(env.client, promptId, env.serverVersion)) !== 'stopped'
+  let entry: HistoryEntry
   try {
-    const entry = await pollRun(env.client, promptId, env.timing, opts)
-    endedEntry(entry)
-    const ref = resultRef(spec, entry)
-    const bytes = await throughBreaks(
-      env.timing,
-      () => env.client.viewFile(ref, MAX_PICTURE_BYTES),
-      opts.signal,
-    )
-    const mime = pictureType(bytes)
-    if (!mime) throw comfyFailure('bad_result', 'The result is not a PNG or JPEG')
-    // [1.53] G-1: the details come from the shipped workflow file, never from the server.
-    const details = {
-      models: spec.needs.models.map((m) => m.file),
-      workflow: { id: spec.id, version: spec.version },
-    }
-    return { bytes, mime, model: spec.model.mainFile, details }
+    entry = await pollRun(env.client, promptId, env.timing, { ...opts, onStop })
   } catch (e) {
-    if (!(e instanceof PollStopped)) throw e
-    await cancelOwnRun(env.client, promptId, env.serverVersion)
-    throw new ProviderCancelled()
+    if (e instanceof PollStopped) throw new ProviderCancelled()
+    throw e
   }
+  endedEntry(entry)
+  const ref = resultRef(spec, entry)
+  // The run has ended: its picture is fetched whether or not a stop was asked.
+  const bytes = await throughBreaks(env.timing, () => env.client.viewFile(ref, MAX_PICTURE_BYTES))
+  const mime = pictureType(bytes)
+  if (!mime) throw comfyFailure('bad_result', 'The result is not a PNG or JPEG')
+  // [1.53] G-1: the details come from the shipped workflow file, never from the server.
+  const details = {
+    models: spec.needs.models.map((m) => m.file),
+    workflow: { id: spec.id, version: spec.version },
+  }
+  return { bytes, mime, model: spec.model.mainFile, details }
 }

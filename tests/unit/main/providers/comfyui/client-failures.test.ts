@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, it, expect } from 'vitest'
 import { createComfyClient, type ComfyClient } from '@/main/providers/comfyui/client'
 import { MAX_COMFY_JSON_BYTES } from '@/main/providers/comfyui/limits'
 import { uploadName } from '@/main/providers/comfyui/values'
+import { everyCall } from '../../../../helpers/comfy-every-call'
 import { startComfyStandIn, type StandIn } from '../../../../helpers/comfy-stand-in'
 import { failureOf } from '../../../../helpers/failure-of'
 
@@ -20,11 +21,14 @@ const ref = { filename: 'a.png', subfolder: '', type: 'temp' as const }
 describe('a redirect is refused and never followed [SPEC 6.10.1, 6.10.2, 14 CU-2]', () => {
   it.each([301, 302, 303, 307, 308])('HTTP %i is redirect_refused, Location unread', async (s) => {
     const elsewhere = 'http://made-up-elsewhere.invalid/steal'
-    standIn.reply('GET /system_stats', { status: s, headers: { location: elsewhere } })
-    const error = await failureOf(client.systemStats())
-    expect(error).toMatchObject({ kind: 'other', reason: 'redirect_refused' })
-    expect(JSON.stringify(error)).not.toContain('elsewhere')
-    expect(standIn.seen).toHaveLength(1)
+    standIn.reply('*', { status: s, headers: { location: elsewhere } })
+    for (const [name, run] of everyCall(client)) {
+      standIn.seen.length = 0
+      const error = await failureOf(run())
+      expect(error, name).toMatchObject({ kind: 'other', reason: 'redirect_refused' })
+      expect(JSON.stringify(error)).not.toContain('elsewhere')
+      expect(standIn.seen).toHaveLength(1)
+    }
   })
 })
 
