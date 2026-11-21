@@ -18,3 +18,8 @@
 .missing {
   color: var(--color-danger-text);
 }
+.candidates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}

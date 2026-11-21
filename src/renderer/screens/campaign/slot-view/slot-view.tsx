@@ -23,7 +23,7 @@ function Candidates(props: { projectId: string; list: Candidate[] }) {
   return (
     <div className={layout.field}>
       <p className={styles.line}>Pictures that could go here:</p>
-      <ul className={layout.list}>
+      <ul className={`${layout.list} ${styles.candidates}`}>
         {props.list.map((asset) => (
           <li key={asset.id} className={layout.row}>
             {asset.missing ? (
