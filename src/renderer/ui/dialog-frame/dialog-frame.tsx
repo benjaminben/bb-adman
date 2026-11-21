@@ -54,7 +54,7 @@ export function DialogFrame(props: DialogFrameProps) {
           onEscapeKeyDown={stay}
           onInteractOutside={stay}
         >
-          <Dialog.Title>{props.title}</Dialog.Title>
+          <Dialog.Title className={styles.title}>{props.title}</Dialog.Title>
           {props.description !== undefined && (
             <Dialog.Description>{props.description}</Dialog.Description>
           )}
