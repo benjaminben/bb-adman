@@ -11,6 +11,9 @@ export const job = sqliteTable(
     status: text('status').notNull(),
     campaignId: text('campaign_id'),
     variantId: text('variant_id'),
+    // [1.8] migration 0001: the layer or template slot the job is for (SPEC 3.3).
+    layerId: text('layer_id'),
+    slot: text('slot'),
     provider: text('provider'),
     model: text('model'),
     request: text('request').notNull(),
@@ -19,6 +22,9 @@ export const job = sqliteTable(
     errorKind: text('error_kind'),
     errorDetail: text('error_detail'),
     progress: real('progress'),
+    // [1.8] migration 0001: provider calls sent that may be charged, and when the result was seen.
+    paidCalls: integer('paid_calls').notNull().default(0),
+    seenAt: text('seen_at'),
     createdAt: text('created_at').notNull(),
     updatedAt: text('updated_at').notNull(),
   },
@@ -33,6 +39,7 @@ export const job = sqliteTable(
       sql`${t.errorKind} IN ('bad_key','quota','refused','timeout','offline','other')`,
     ),
     index('job_status').on(t.status, t.updatedAt),
+    index('job_target').on(t.campaignId, t.variantId),
   ],
 )
 

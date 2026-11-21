@@ -29,6 +29,8 @@ export const variant = sqliteTable(
     rev: integer('rev').notNull().default(0),
     createdBy: text('created_by').notNull(),
     createdAt: text('created_at').notNull(),
+    // [1.8] migration 0001: last time an agent changed the variant; null = never (FR-239).
+    agentChangedAt: text('agent_changed_at'),
   },
   (t) => [
     check('variant_format', sql`${t.format} IN ('image','video')`),
