@@ -1,3 +1,7 @@
+/* app-style */
+/* The window ground, headings and base controls (spec/app-style.md "Shared pieces"). Element
+   rules stay at element weight, and their hover and size rules use :where(), so any class in a
+   component's module wins over them. */
 * {
   box-sizing: border-box;
 }
@@ -10,33 +14,93 @@ body,
 body {
   font-family: var(--font-body);
   font-size: var(--font-size-body);
+  line-height: var(--leading-body);
   color: var(--color-text);
-  background: var(--color-bg);
+  background: var(--color-page);
+  -webkit-font-smoothing: antialiased;
+}
+/* Headings: the serif title face. A screen with a smaller h1 sets it in its own module. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-title);
+  font-weight: var(--weight-title);
+  letter-spacing: var(--tracking-title);
+  line-height: var(--leading-tight);
+}
+h1 {
+  font-size: var(--font-size-page);
+}
+h2 {
+  font-size: var(--font-size-title);
+}
+h3 {
+  font-size: var(--font-size-heading);
+}
+b,
+strong {
+  font-weight: var(--weight-bold);
 }
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
   color: inherit;
 }
+/* Every button is the shared button. Edges reach 3:1 on every ground (Contrast). */
 button {
-  padding: var(--space-1) var(--space-3);
-  border: var(--border-width) solid var(--color-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  border: var(--border-width) solid var(--color-control-border);
   border-radius: var(--radius);
   background: var(--color-bg);
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-medium);
   cursor: pointer;
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast);
 }
+button:where(:hover:not(:disabled)) {
+  background: var(--color-surface-soft);
+  border-color: var(--color-text-muted);
+}
+/* Every field is the shared field. */
 input,
-select {
-  padding: var(--space-1) var(--space-2);
-  border: var(--border-width) solid var(--color-border);
+select,
+textarea {
+  border: var(--border-width) solid var(--color-control-border);
   border-radius: var(--radius);
   background: var(--color-bg);
+}
+:where(input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']), select) {
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+}
+textarea {
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
+}
+:where(input, select, textarea):where(:hover:not(:disabled)) {
+  border-color: var(--color-text-muted);
+}
+/* Checkboxes and radios stay native, in the spot colour. */
+:where(input[type='checkbox'], input[type='radio']) {
+  width: var(--check-size);
+  height: var(--check-size);
+  margin: 0;
+  accent-color: var(--color-accent);
 }
 /* A disabled control looks disabled. */
 button:disabled,
 input:disabled,
-select:disabled {
+select:disabled,
+textarea:disabled {
   opacity: var(--opacity-disabled);
   cursor: default;
 }
