@@ -1,0 +1,16 @@
+.check {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+.result {
+  margin: 0;
+}
+.result:empty {
+  display: none;
+}

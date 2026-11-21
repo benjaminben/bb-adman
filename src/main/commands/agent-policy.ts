@@ -76,6 +76,7 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'secret.delete': deny('change keys'),
   'storage.dropboxSignIn': deny('sign in to Dropbox'),
   'storage.dropboxSignOut': deny('sign out of Dropbox'),
+  'storage.checkS3': deny('test the cloud storage connection'),
   'dev.storage': deny('use the hand-test tools'),
   'mcp.setEnabled': deny('change agent access'),
   'mcp.regenerateToken': deny('change agent access'),

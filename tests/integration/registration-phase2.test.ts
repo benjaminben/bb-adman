@@ -7,7 +7,6 @@ import { devCommands } from '@/main/commands/dev'
 import { generationCommands } from '@/main/commands/generation'
 import { jobCommands } from '@/main/commands/job'
 import { ruleSetCommands } from '@/main/commands/rule-set'
-import { storageCommands } from '@/main/commands/storage'
 import { subjectCommands } from '@/main/commands/subject'
 import { assetQueries } from '@/main/queries/asset'
 import { campaignQueries } from '@/main/queries/campaign'
@@ -22,7 +21,7 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
   it('gives an empty handler list for each new command domain', () => {
     f = makeFixture()
     const deps = f.core.deps
-    for (const list of [devCommands, storageCommands]) {
+    for (const list of [devCommands]) {
       expect(list(deps)).toEqual([])
     }
   })
