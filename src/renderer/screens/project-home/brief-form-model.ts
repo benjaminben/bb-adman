@@ -11,12 +11,7 @@ import type { SubjectCreateInput } from '@/shared/schemas/commands/subject'
 import { wordsByLanguage } from '@/shared/brief/words'
 import { briefSubjectIds } from '@/renderer/screens/project-home/campaign-input'
 import { formProblems, schemaCheck, subjectIds } from './brief-form-problems'
-import {
-  attachPlan,
-  DEFAULT_PHOTO_USE,
-  type PhotoUse,
-  type ProjectImages,
-} from './brief-form-photos'
+import { attachPlan, type ProjectImages } from './brief-form-photos'
 import { chosenSizes, sizesFromDraft, type SizeChoice } from './brief-form-sizes'
 
 export type FormPhoto = {
@@ -30,7 +25,6 @@ export type SubjectChoice = {
   mode: 'new' | 'existing'
   newId: string
   existingId: string | null
-  use: PhotoUse // "Use the photos", for the photos this form adds (brief-form-photos.ts)
   photos: FormPhoto[] // in the order added
   adding: boolean // an "Add photos" import is running for this row
   notes: string[] // lines about this row's photos
@@ -57,6 +51,7 @@ export type BriefFormValues = {
     prohibitedWords: Record<string, string>
   }
   copy: BriefDraft['copy']
+  placeSubjectPhoto: boolean // a new ad starts with a subject photo placed
 }
 
 export type CampaignPlan =
@@ -74,7 +69,6 @@ export const emptySubject = (): SubjectChoice => ({
   mode: 'new',
   newId: '',
   existingId: null,
-  use: DEFAULT_PHOTO_USE,
   photos: [],
   adding: false,
   notes: [],
@@ -129,6 +123,7 @@ export function formFromDraft(
       prohibitedWords: wordText(draft.prohibitedWords, primary),
     },
     copy: draft.copy,
+    placeSubjectPhoto: false,
   }
 }
 

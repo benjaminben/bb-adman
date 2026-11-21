@@ -5,14 +5,6 @@ import type { AssetUpdateInput } from '@/shared/schemas/commands/asset'
 import type { AssetList } from '@/shared/schemas/queries/asset'
 import type { SubjectChoice } from './brief-form-model'
 
-// The row's "Use the photos" choice (A-110): its type, its default and what it sends for each
-// photo this form adds. Everything about the choice lives in these three.
-export type PhotoUse = 'asset' | 'reference'
-export const DEFAULT_PHOTO_USE: PhotoUse = 'asset'
-export function photoUseUpdate(use: PhotoUse): Pick<AssetUpdateInput, 'library'> {
-  return { library: use }
-}
-
 // asset.list { projectId, kind: 'image' }; null while not read.
 export type ProjectImages = AssetList | null
 
@@ -88,8 +80,8 @@ export function photoProblems(
 }
 
 // The asset.update list "Create campaign" sends after subject.create, row by row, then photo
-// by photo. ids: each row's subject ID (subjectIds). An added photo gets the row's choice
-// (photoUseUpdate); a reused one keeps its own library (A-115); an attached one needs nothing.
+// by photo. ids: each row's subject ID (subjectIds). Each photo not yet attached to any
+// subject, added or reused, is attached to the row's subject; its library is left as it is.
 export function attachPlan(
   projectId: string,
   subjects: SubjectChoice[],
@@ -98,10 +90,8 @@ export function attachPlan(
 ): AssetUpdateInput[] {
   return subjects.flatMap((row, i) => {
     const subjectId = ids[i] ?? ''
-    return rowPhotos(row, images).flatMap(({ asset, attached, added }): AssetUpdateInput[] => {
-      if (attached) return []
-      if (added) return [{ projectId, assetId: asset.id, subjectId, ...photoUseUpdate(row.use) }]
-      return asset.subjectId === null ? [{ projectId, assetId: asset.id, subjectId }] : []
-    })
+    return rowPhotos(row, images)
+      .filter(({ asset }) => asset.subjectId === null)
+      .map(({ asset }) => ({ projectId, assetId: asset.id, subjectId }))
   })
 }
