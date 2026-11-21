@@ -7,7 +7,6 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/shared/**', 'src/main/**'],
-      exclude: ['src/main/providers/**'],
       thresholds: {
         'src/shared/**': { lines: 90 },
         'src/main/**': { lines: 80 },

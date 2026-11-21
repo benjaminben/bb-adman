@@ -24,10 +24,10 @@ describe('coverage is measured [SPEC 10.1]', () => {
     expect(pkg.scripts['test:coverage']).toBe('vitest run --coverage')
   })
 
-  it('sets the two line thresholds in the Vitest configuration: 90% src/shared, 80% src/main outside providers', () => {
+  it('sets the two line thresholds in the Vitest configuration: 90% src/shared, 80% src/main, providers included', () => {
     expect(coverage?.provider).toBe('v8')
     expect(coverage?.include).toEqual(['src/shared/**', 'src/main/**'])
-    expect(coverage?.exclude).toContain('src/main/providers/**')
+    expect(coverage?.exclude ?? []).not.toContain('src/main/providers/**')
     expect(coverage?.thresholds).toEqual({
       'src/shared/**': { lines: 90 },
       'src/main/**': { lines: 80 },
