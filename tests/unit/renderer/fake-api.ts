@@ -27,6 +27,7 @@ export function baseState(overrides: Partial<AppState> = {}): AppState {
       agentRuns: {},
       agentRunLimit: 4,
       licenceConfirmed: [],
+      approvals: { baseUrl: null },
     },
     recentProjects: [],
     openProjects: [],
