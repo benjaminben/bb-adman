@@ -60,7 +60,12 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/screens.md` | What each built screen offers, wording rules, choices made without a design sign-off |
 | `spec/screens-campaign.md` | The Phase 2 campaign screens and dialogs (built; S2-17 left): ComfyUI failures, the address and licence dialogs, import and drop, relink, package, the brief form, the slot view, the campaign grid and its tile |
 | `spec/screens-ai.md` | Phase 4 screens: the run dialog, the paid count, the picture section (generate, references, earlier options, cut-out), copy options, place text, brief reading, the activity panel, close warnings |
-| `spec/approvals.md`, `spec/approvals-service.md`, `spec/approvals-gallery.md` | Approvals by link (D-095, D-097): the desktop side, its security rules and assumptions A-82 to A-109; the service (Next.js on Vercel with a Turso database: API, database, visitor logic, deploying); the visitor's pages (Next.js settings, page policy, components, words) |
+| `spec/approvals.md`, `spec/approvals-service.md`, `spec/approvals-gallery.md` | Approvals by link (D-095, D-097): the desktop overview, Settings, screens, its security rules, open items and assumptions A-82 to A-109; the service (Next.js on Vercel with a Turso database: how it fits, tooling, environment, deploying); the visitor's pages (Next.js settings, page policy, components, words) |
+| `spec/approvals-client.md` | Approvals, desktop: the service client, the local tables, kept passwords, the picture store and signed addresses |
+| `spec/approvals-commands.md` | Approvals, desktop: the commands and their refusals, half-done states, the queries and the `approvals.changed` event |
+| `spec/approvals-service-data.md` | Approvals service: the shared contract, the database and migrate script, random values and passwords, the keyed API |
+| `spec/approvals-service-visitor.md` | Approvals service: visitor routes, sessions, the gallery view, the try limit, forms that write, notices, header sets, pictures |
+| `spec/approvals-service-tests.md` | Approvals service: the test files, the AP-14 port of the tests, the Playwright set-up |
 | `spec/subject-photos.md` | Subject photos (D-098, R-21): the brief's `pictures` field and its path checks, the "Photos" part of the brief form, the Create order, assumptions A-110 to A-118 |
 | `spec/open-items.md` | Open questions, the improvised choices listed for review, what waits on the stakeholder |
 | `spec/assumptions.md` | The assumptions made meanwhile (OI, Q and A numbers), with how hard each is to undo |
@@ -77,5 +82,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/phases/review-leftovers.md` | Review findings not yet handled, sorted: fix now, fix with a later phase, test gaps |
 | `spec/phases/phase-03.md` to `phase-11.md` | One file per phase: goal, scope, exit criteria, work carried in, what is not designed yet |
 | `spec/phases/look-pack.md` | The look pack (D-094): background colour, text boxes, shades, starter layouts; slices LK-1 to LK-7 and their order beside Phase 4 |
-| `spec/phases/approvals.md` | Approvals by link (D-095): slices AP-1 to AP-16 and their order beside Phase 4 and the look pack |
+| `spec/phases/approvals.md` | Approvals by link (D-095): exit criteria, the rules for its slices, and the order of AP-1 to AP-16 beside Phase 4 and the look pack |
+| `spec/phases/approvals-service-slices.md` | Approvals by link: the service slices AP-1, AP-2, AP-3, AP-14, AP-15, AP-4, AP-16 |
+| `spec/phases/approvals-desktop-slices.md` | Approvals by link: the desktop slices AP-5 to AP-13 and AP-10b, with the follow-ups ruled after AP-8 |
 | `spec/phases/subject-photos.md` | Subject photos (D-098): slices SP-1 to SP-5 and their order |

@@ -1,6 +1,6 @@
 # Approvals gallery (the visitor's pages)
 
-The pages a visitor sees when they open an approval link: the password page and the gallery with its sign-off forms [D-095, D-097]. Built with Next.js `16.4.6` (App Router) and React `19.3.1`, inside the approvals service (`spec/approvals-service.md`), hosted on Vercel. Everything in this file is **Not built** (AP-16, after AP-15 and AP-4; `spec/phases/approvals.md`).
+The pages a visitor sees when they open an approval link: the password page and the gallery with its sign-off forms [D-095, D-097]. Built with Next.js `16.4.6` (App Router) and React `19.3.1`, inside the approvals service (`spec/approvals-service.md`), hosted on Vercel. Everything in this file is **Not built** (AP-16, after AP-15 and AP-4; `spec/phases/approvals-service-slices.md`), except the `next.config.ts` settings AP-14 made.
 
 What a page may and may not do is set by the service: the session, the try limit, the form checks, the gallery view and every write live in `src/visitor/` and are reached through the catch-all route. A page only reads a `GalleryView` and draws it. Every form posts to the catch-all, never to a page.
 
@@ -20,6 +20,7 @@ The pages look and behave as before: plain forms, a redirect after each one, not
 | `skipTrailingSlashRedirect` | `true` | The router, not Next.js, answers a trailing slash |
 | `productionBrowserSourceMaps` | `false` | No source code sent to browsers |
 | `serverExternalPackages` | `['@libsql/client', 'libsql']` | The database client is loaded by Node, not bundled |
+| The project root (the root settings Next.js names when it finds more than one lockfile) | The `approvals-service/` folder | The repository has a second lockfile at its root; without this the build guesses the root from it |
 | Not set | `cacheComponents`, `headers()`, `rewrites()`, `redirects()`, `output`, `experimental.*` | Nothing cached, no second place that sets headers or routes |
 
 **Nothing about a link is built ahead or cached:**
@@ -66,7 +67,7 @@ Page header set (with the policy above): `X-Content-Type-Options: nosniff`, `X-F
 | Path | File | Kind | Calls | Returns |
 |---|---|---|---|---|
 | `GET /l/{slug}` | `app/l/[slug]/page.tsx` | Server component | `openGallery(db, { slug, cookie, m }, Date.now())` | `PasswordScreen` (with the `wrong-password` notice when `m` says so) or `GalleryScreen` with the view. Status 200 in both cases, for a real slug and an unknown one alike |
-| `POST /l/{slug}/enter`, `/leave`, `/signoffs`, `/signoffs/{id}/remove` | `app/[[...path]]/route.ts` | Route handler (catch-all) | `createApp` → `visitor/routes.ts` | `303`, or the `403` plain text reply (`spec/approvals-service.md`, "Visitor routes and logic") |
+| `POST /l/{slug}/enter`, `/leave`, `/signoffs`, `/signoffs/{id}/remove` | `app/[[...path]]/route.ts` | Route handler (catch-all) | `createApp` → `visitor/routes.ts` | `303`, or the `403` plain text reply (`spec/approvals-service-visitor.md`, "Visitor routes and logic") |
 | `GET /l/{slug}/p/{variantKey}/{version}` | the same | Route handler | `picture-route.ts` | The picture as a stream, or `404` with an empty body |
 | `GET /robots.txt` | the same | Route handler | `visitor/routes.ts` | `User-agent: *` and `Disallow: /` |
 | A wrong-shape slug at `/l/{x}` | `proxy.ts`; `page.tsx` as a second guard | Proxy; `notFound()` | — | Plain 404. If the proxy were skipped, the page calls `notFound()` and `app/not-found.tsx` draws "Not found." |
@@ -147,7 +148,7 @@ The text colours meet a contrast of at least 4.5 to 1 on their backgrounds. `--c
 
 **Password page.** Title "Review campaign". Heading "Review campaign". Text "Enter the password you were given." Field label "Password" (`type="password"`, `name="password"`, `autocomplete="current-password"`, `required`). Button "Open". After a failed try, above the form (error tone): "That password did not work. If you have tried many times, wait 15 minutes and try again." No campaign name, since the visitor has not proven anything yet.
 
-**Gallery page.** Title: the campaign name. Heading: the campaign name. Under it: "Sign off on a variant by entering your email address. Anyone with this link can see who signed off, and can remove a sign-off." and the button "Leave" (quiet). Then the notice for `m`, if any (info tone; `bad-email` in error tone), with the words in `spec/approvals-service.md`, "Notices". Then one card per variant in gallery order:
+**Gallery page.** Title: the campaign name. Heading: the campaign name. Under it: "Sign off on a variant by entering your email address. Anyone with this link can see who signed off, and can remove a sign-off." and the button "Leave" (quiet). Then the notice for `m`, if any (info tone; `bad-email` in error tone), with the words in `spec/approvals-service-visitor.md`, "Notices". Then one card per variant in gallery order:
 
 - The picture, or the grey box: "This picture has expired. Ask the person who sent the link to update the gallery."
 - The title (as a level-2 heading) and the size line (muted).
@@ -165,7 +166,7 @@ The text colours meet a contrast of at least 4.5 to 1 on their backgrounds. `--c
 |---|---|
 | `test/ui.test.tsx` (Vitest, `react-dom/server` `renderToStaticMarkup`) | One table over the components: a campaign name, title, size line and email holding `<script>`, `"`, `'`, `&` and `</style>` appear only escaped; current and earlier groups; the earlier heading left out when empty; the expired box; the date format; every field has a label; the error components show only the fixed sentence |
 | `e2e/build.spec.ts` | No prerendered route under `/l` |
-| `e2e/gallery.spec.ts` (Chromium, against `next start`) | (1) An unknown slug and a real slug without a session give the same status and the same body once nonces are set aside; the header list equals the page set; no `Set-Cookie`. (2) A wrong password, then the right one: the notice, then the gallery in order with its pictures loaded from the test picture server; the cookie's attribute text exact. (3) With JavaScript switched off in the browser: sign off, see the notice and the email; remove it; leave and land on the password page. (4) With JavaScript on, the same flow reports no policy refusal. (5) `/l/short` and `/l/%41aaaaaaaaaaa` give the plain 404. (6) Every reply in the flow is `no-store`, none `public` or `s-maxage`; every page reply carries the page policy with a new nonce each time |
+| `e2e/gallery.spec.ts` (Chromium, against `next start`, every address `http://localhost:{port}`, never `127.0.0.1`: the form Origin check is not loosened for it, `spec/approvals-service-visitor.md` "Forms that write") | (1) An unknown slug and a real slug without a session give the same status and the same body once nonces are set aside; the header list equals the page set plus the allow-list in `spec/approvals-service.md` (`vary` and `content-encoding` included); no `Set-Cookie`. (2) A wrong password, then the right one: the notice, then the gallery in order with its pictures loaded from the test picture server; the cookie's attribute text exact. (3) With JavaScript switched off in the browser: sign off, see the notice and the email; remove it; leave and land on the password page. (4) With JavaScript on, the same flow reports no policy refusal. (5) `/l/short` and `/l/%41aaaaaaaaaaa` give the plain 404. (6) Every reply in the flow is `no-store`, none `public` or `s-maxage`; every page reply carries the page policy with a new nonce each time |
 | `e2e/shots.spec.ts` | The screenshots below |
 
 **Screenshots for the user** (D-084 range 90 to 99), by `npm run test:e2e -- e2e/shots.spec.ts` against `next start`, written to the root `shots/` folder (not in git) and named in the developer's report: `98-gallery-password` (phone, 390 × 844), `98-gallery-password-wrong` (phone, after a wrong try), `99-gallery` (desktop, 1280 × 900, three variants: one with a current sign-off, one with an earlier-version sign-off, one expired), `99-gallery-phone` (phone, the same gallery).
