@@ -15,7 +15,17 @@ describe('Phase 3 domains are registered [spec/structure.md]', () => {
     f = makeFixture()
     const deps = f.core.deps
     // P3-1 fills the two command lists; later slices add to the layer list.
-    expect(layerCommands(deps).map((h) => h.name)).toContain('layer.update')
+    const layers = layerCommands(deps).map((h) => h.name)
+    for (const name of [
+      'layer.update',
+      'layer.create',
+      'layer.delete',
+      'layer.restore',
+      'layer.reorder',
+      'layer.reportOverflow',
+    ]) {
+      expect(layers).toContain(name)
+    }
     expect(variantCommands(deps).map((h) => h.name)).toEqual(['variant.update'])
     expect(Object.keys(variantQueries(deps))).toEqual(['variant.get'])
     expect(Object.keys(renderQueries(deps))).toEqual(['thumbnail.get', 'variant.render'])
