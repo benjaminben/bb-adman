@@ -12,3 +12,16 @@ export const assetAddGeneratedInput = projectScoped.extend({
     .min(1),
 })
 export type AssetAddGeneratedInput = z.infer<typeof assetAddGeneratedInput>
+
+const library = z.enum(['reference', 'asset'])
+const assetId = z.string().min(1)
+
+// asset.update (FR-054, R-12). subjectId null detaches the asset from its subject.
+export const assetUpdateInput = projectScoped.extend({
+  assetId,
+  library: library.optional(),
+  subjectId: z.string().min(1).nullable().optional(),
+  displayName: z.string().trim().min(1, 'Enter a name.').max(200).optional(),
+  fontPublishAllowed: z.boolean().optional(),
+})
+export type AssetUpdateInput = z.infer<typeof assetUpdateInput>
