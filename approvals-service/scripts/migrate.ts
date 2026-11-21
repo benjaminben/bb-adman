@@ -21,7 +21,11 @@ type Source = Record<string, string | undefined>
 export function chooseAddress(source: Source, args: string[]) {
   const url = source.TURSO_DATABASE_URL || LOCAL_DEFAULT
   if (!isLocalAddress(url) && !args.includes('--hosted')) {
-    throw new Error('refused: the database address is not a local file (pass --hosted to allow)')
+    const refused = new Error(
+      'refused: the database address is not a local file (pass --hosted to allow)',
+    )
+    refused.name = 'Refused'
+    throw refused
   }
   return { url, authToken: source.TURSO_AUTH_TOKEN || undefined }
 }
@@ -70,9 +74,19 @@ async function main() {
   process.stdout.write(ran.length === 0 ? 'Nothing to apply.\n' : `Applied: ${ran.join(', ')}\n`)
 }
 
+// A fixed line. A failure's own message may quote the address or its token, so only its code or
+// name is shown, and only when it is a plain word.
+function failureLine(error: unknown): string {
+  if (error instanceof Error && error.name === 'Refused') return error.message
+  const code = error instanceof Error && 'code' in error ? error.code : undefined
+  const name = error instanceof Error ? error.name : undefined
+  const label = [code, name].find((v) => typeof v === 'string' && /^[A-Za-z_]{1,40}$/.test(v))
+  return `Migration failed (${label ?? 'unknown'}).`
+}
+
 if (import.meta.main) {
   main().catch((error: unknown) => {
-    process.stderr.write(`${error instanceof Error ? error.message : 'Migration failed.'}\n`)
+    process.stderr.write(`${failureLine(error)}\n`)
     process.exitCode = 1
   })
 }
