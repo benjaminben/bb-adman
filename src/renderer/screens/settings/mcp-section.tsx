@@ -15,10 +15,13 @@ async function connectInfo(api: AdmanApi): Promise<ConnectInfo | null> {
   return result.ok && result.data ? (result.data as ConnectInfo) : null
 }
 
-// The state lines of SPEC 6.8 and 14 1.58 J-8, J-11.
+// The state lines of SPEC 6.8 and 14 1.58 J-8, J-11, 1.59 L-10.
 function problemLine(info: ConnectInfo): string | null {
   if (info.problem === 'port_in_use') return `Port ${info.port} is in use. Choose another.`
   if (info.problem === 'token_missing') return 'There is no access token. Make a new token.'
+  if (info.problem === 'start_failed') {
+    return 'The MCP server could not start. Turn it off and on to try again.'
+  }
   return null
 }
 
