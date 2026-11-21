@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { slotStates, starterTemplate } from '../../../../src/shared/templates/starter'
+import { buildMasterLayers } from '../../../../src/shared/templates/master-layers'
 import { LayerRow } from '../../../../src/shared/schemas/rows/layer'
 import type { Template } from '../../../../src/shared/templates/types'
 
@@ -112,6 +113,37 @@ describe('slotStates [SPEC 14 1.9 slice B shapes, FR-042]', () => {
     const template: Template = { id: 't', name: 'T', slots: [{ id: 'only', type: 'image' }] }
     expect(slotStates(template, [layer('only')], { only: ['asset-a'] })).toEqual([
       { slot: { id: 'only', type: 'image' }, state: 'filled', candidates: ['asset-a'] },
+    ])
+  })
+})
+
+describe('slotStates: an image or background layer needs a source [SPEC 3.3 1.23, 14 N5]', () => {
+  it('leaves background empty when its layer has source null', () => {
+    const empty = { ...layer('background', 'background'), source: null }
+    const states = slotStates(starterTemplate, [empty], {})
+    expect(states.find((s) => s.slot.id === 'background')?.state).toBe('empty')
+  })
+
+  it('fills background when the same layer has a source', () => {
+    const states = slotStates(starterTemplate, [layer('background', 'background')], {})
+    expect(states.find((s) => s.slot.id === 'background')?.state).toBe('filled')
+  })
+
+  it('leaves an image slot empty when its layer has source null', () => {
+    const states = slotStates(starterTemplate, [{ ...layer('logo'), source: null }], {})
+    expect(states.find((s) => s.slot.id === 'logo')?.state).toBe('empty')
+  })
+
+  it('gives headline filled and the other four empty for a master with only a headline', () => {
+    const square = { label: '1x1', width: 1080, height: 1080 }
+    const built = buildMasterLayers(starterTemplate, square, { headline: { text: 'Hi' } })
+    const layers = built.map((l, i) => ({ ...l, id: `layer-${i}`, variantId: 'variant-1' }))
+    expect(slotStates(starterTemplate, layers, {}).map((s) => [s.slot.id, s.state])).toEqual([
+      ['background', 'empty'],
+      ['subject-image', 'empty'],
+      ['logo', 'empty'],
+      ['headline', 'filled'],
+      ['call-to-action', 'empty'],
     ])
   })
 })
