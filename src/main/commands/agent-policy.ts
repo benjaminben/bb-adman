@@ -1,12 +1,14 @@
 // Single owner of the agent policy (SPEC 3.1, 4.2, ADR-009).
 // Allowing a deferred ability later (FR-199) is a change to this table only.
-export type AgentPolicy = 'allow' | 'ask' | 'deny'
+// [1.24] tick: allowed only while the user's tick for the provider is on (SPEC 6.11.3).
+export type AgentPolicy = 'allow' | 'ask' | 'deny' | 'tick'
 
 type Entry = { policy: AgentPolicy; action: string }
 
 const allow = (action: string): Entry => ({ policy: 'allow', action })
 const ask = (action: string): Entry => ({ policy: 'ask', action })
 const deny = (action: string): Entry => ({ policy: 'deny', action })
+const tick = (action: string): Entry => ({ policy: 'tick', action })
 
 export const AGENT_POLICY: Record<string, Entry> = {
   'project.create': deny('create projects'),
@@ -52,13 +54,13 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'translation.exportSheet': deny('export translation sheets'),
   'sync.apply': deny('sync variants'),
   'check.run': allow('run checks'),
-  'generation.runImages': deny('start image generation'),
-  'generation.runFill': deny('start generative fill'),
+  'generation.runImages': tick('start image generation'),
+  'generation.runFill': tick('start generative fill'),
   'generation.proposeLayout': deny('start AI layout'),
   'generation.copyOptions': deny('start AI copy suggestions'),
-  'generation.startVideo': deny('start video generation'),
+  'generation.startVideo': tick('start video generation'),
   'job.retry': deny('retry jobs'),
-  'job.cancel': deny('cancel jobs'),
+  'job.cancel': tick('cancel jobs'),
   'job.markSeen': deny('mark jobs as seen'),
   'export.run': deny('export'),
   'publish.run': deny('publish'),
@@ -73,10 +75,17 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'mcp.setEnabled': deny('change agent access'),
   'mcp.regenerateToken': deny('change agent access'),
   'agent.answerPermission': deny('answer permission requests'),
+  'comfy.setAddress': deny('change the ComfyUI address'),
+  'comfy.check': deny('check the ComfyUI server'),
+  'agentRuns.setAllowed': deny('change which runs agents may start'),
+  'dev.comfyExtend': deny('use the hand-test tools'),
 }
 
+// The policy the bus applies. Until the tick gate is built (SPEC 14 CU-7) a tick row is
+// applied exactly as deny, so no ability is opened.
 export function agentPolicyFor(command: string): AgentPolicy {
-  return AGENT_POLICY[command]?.policy ?? 'deny'
+  const policy = AGENT_POLICY[command]?.policy ?? 'deny'
+  return policy === 'tick' ? 'deny' : policy
 }
 
 export function denialMessage(command: string): string {

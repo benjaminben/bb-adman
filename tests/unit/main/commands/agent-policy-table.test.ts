@@ -3,7 +3,7 @@ import { AGENT_POLICY, agentPolicyFor } from '../../../../src/main/commands/agen
 
 // SPEC 1.9 Section 4.2, copied row by row. variant.setFormat is allow [D-025].
 // A change here must follow a change in SPEC.md.
-const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny'> = {
+const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny' | 'tick'> = {
   'project.create': 'deny',
   'project.open': 'deny',
   'project.close': 'deny',
@@ -47,13 +47,13 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny'> = {
   'translation.exportSheet': 'deny',
   'sync.apply': 'deny',
   'check.run': 'allow',
-  'generation.runImages': 'deny',
-  'generation.runFill': 'deny',
+  'generation.runImages': 'tick',
+  'generation.runFill': 'tick',
   'generation.proposeLayout': 'deny',
   'generation.copyOptions': 'deny',
-  'generation.startVideo': 'deny',
+  'generation.startVideo': 'tick',
   'job.retry': 'deny',
-  'job.cancel': 'deny',
+  'job.cancel': 'tick',
   'job.markSeen': 'deny',
   'export.run': 'deny',
   'publish.run': 'deny',
@@ -68,6 +68,10 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny'> = {
   'mcp.setEnabled': 'deny',
   'mcp.regenerateToken': 'deny',
   'agent.answerPermission': 'deny',
+  'comfy.setAddress': 'deny',
+  'comfy.check': 'deny',
+  'agentRuns.setAllowed': 'deny',
+  'dev.comfyExtend': 'deny',
 }
 
 describe('agent policy table, SPEC 1.9 [SPEC 4.2, ADR-009, D-025]', () => {
