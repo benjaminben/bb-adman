@@ -25,6 +25,7 @@ import { projectPathFromArgv } from './open-file'
 import { safeStorageCrypto } from './secrets/safe-storage'
 import { createDraw } from './render/draw'
 import { endRenderWindow } from './render/render-window'
+import { endWebpDecoder, webpToPng } from './windows/webp-window'
 
 if (process.env.ADMAN_USER_DATA_DIR) app.setPath('userData', process.env.ADMAN_USER_DATA_DIR)
 registerAssetScheme(protocol)
@@ -46,6 +47,7 @@ function openAppWindow(): BrowserWindow {
   win.on('closed', () => {
     if (appWindow === win) appWindow = null
     endRenderWindow()
+    endWebpDecoder()
   })
   return win
 }
@@ -101,6 +103,7 @@ function start(): void {
     devTools: devToolsEnabled(app.isPackaged, process.env),
     toPng: pngConverter((buffer) => nativeImage.createFromBuffer(buffer)),
     fitPicture: pictureFitter((buffer) => nativeImage.createFromBuffer(buffer)),
+    webpToPng,
     drawScene: createDraw(),
   })
   const ready = core
@@ -156,6 +159,7 @@ if (!app.requestSingleInstanceLock()) {
     // Quitting closes the MCP listener and drops its sessions (SPEC 5.3).
     void core?.mcp.stop()
     endRenderWindow()
+    endWebpDecoder()
     core?.closeAll()
   })
   void app.whenReady().then(start)
