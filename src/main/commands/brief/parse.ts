@@ -5,7 +5,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { defineCommand } from '@/main/commands/types'
 import { parseBriefFile } from '@/shared/brief/parse'
-import { primaryLanguageFor } from '@/shared/brief/languages'
+import { primaryLanguageOf } from '@/shared/brief/primary-language'
 import { briefParseInput, type BriefParsed } from '@/shared/schemas/commands/brief'
 import type { BriefDraft } from '@/shared/schemas/brief'
 import { AppError, type ErrorBody, type Result } from '@/shared/schemas/result'
@@ -70,10 +70,7 @@ function parseText(text: string): Result<BriefDraft> {
 
 function answer(result: Result<BriefDraft>): BriefParsed {
   if (!result.ok) throw new BriefError(result.error)
-  const draft = result.data
-  const primaryLanguage =
-    draft.languages?.[0] ?? (draft.region ? primaryLanguageFor(draft.region) : null)
-  return { draft, primaryLanguage }
+  return { draft: result.data, primaryLanguage: primaryLanguageOf(result.data) }
 }
 
 export function briefParse() {
