@@ -1,7 +1,8 @@
 // The read-only summary of a parsed brief (SPEC 14 1.41 TP-1): the confirm step FR-023 asks
 // for, in its plainest form. Every value is the brief's own text, drawn as text.
 import type { BriefParsed } from '../../../shared/schemas/commands/brief'
-import type { CampaignPlan } from './campaign-input'
+import type { BriefDraft } from '../../../shared/schemas/brief'
+import { briefSubjectIds, type CampaignPlan } from './campaign-input'
 import styles from '../screens.module.css'
 
 function Row(props: { label: string; value: string }) {
@@ -13,9 +14,39 @@ function Row(props: { label: string; value: string }) {
   )
 }
 
+// SPEC 14 1.43 P1-2: each subject's ID, with a note when it was made from the name (T-1)
+// and when the project already holds it (T-2).
+function SubjectRows(props: { subjects: NonNullable<BriefDraft['subjects']>; held: string[] }) {
+  const ids = briefSubjectIds(props.subjects)
+  return (
+    <div className={styles.field}>
+      <dt className={styles.label}>Subjects</dt>
+      <dd>
+        <ul aria-label="Subjects">
+          {props.subjects.map((s, i) => {
+            const entry = ids[i]
+            const notes = [
+              entry?.made ? '(made from the name)' : '',
+              entry && props.held.includes(entry.id)
+                ? 'already in this project, used as it is'
+                : '',
+            ].filter((note) => note !== '')
+            return (
+              <li key={i}>
+                {s.name ?? ''}: {entry?.id ?? ''} {notes.join(', ')}
+              </li>
+            )
+          })}
+        </ul>
+      </dd>
+    </div>
+  )
+}
+
 export function BriefSummary(props: {
   reply: BriefParsed
   plan: CampaignPlan
+  heldSubjectIds: string[]
   creating: boolean
   onCreate: () => void
   onCancel: () => void
@@ -32,7 +63,7 @@ export function BriefSummary(props: {
         <Row label="Message" value={draft.message ?? ''} />
         <Row label="Audience" value={draft.audience ?? ''} />
         <Row label="Region" value={draft.region ?? ''} />
-        <Row label="Subjects" value={(draft.subjects ?? []).map((s) => s.name ?? '').join(', ')} />
+        <SubjectRows subjects={draft.subjects ?? []} held={props.heldSubjectIds} />
         <Row label="Sizes" value={sizes.join(', ')} />
         <Row label="Languages" value={languages.join(', ')} />
       </dl>

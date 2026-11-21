@@ -140,12 +140,12 @@ describe('Load a brief [SPEC 14 1.41 TP-1, FR-023]', () => {
     expect(screen.getByRole('region', { name: 'Brief' })).toBeInTheDocument()
   })
 
-  it('names what the brief lacks and sends nothing more', async () => {
+  it('shows the ID made from the name for a subject with no ID', async () => {
     const fake = projectApi(projectGet(), { ...DRAFT, subjects: [{ name: 'Citrus can' }] })
     await openPage(fake)
     const summary = await loadBrief()
-    expect(summary).toHaveTextContent('The subject "Citrus can" has no ID in the brief.')
-    expect(screen.getByRole('button', { name: 'Create campaign' })).toBeDisabled()
+    expect(summary).toHaveTextContent('Citrus-can')
+    expect(screen.getByRole('button', { name: 'Create campaign' })).toBeEnabled()
     expect(names(fake)).toEqual(['brief.parse'])
   })
 

@@ -32,11 +32,8 @@ export function BriefLoad(props: { projectId: string; subjects: SubjectRow[] }) 
     )
   }
 
-  const plan = campaignPlan(
-    projectId,
-    reply,
-    props.subjects.map((s) => s.id),
-  )
+  const heldSubjectIds = props.subjects.map((s) => s.id)
+  const plan = campaignPlan(projectId, reply, heldSubjectIds)
 
   async function create() {
     if (!plan.ok) return
@@ -53,6 +50,7 @@ export function BriefLoad(props: { projectId: string; subjects: SubjectRow[] }) 
     <BriefSummary
       reply={reply}
       plan={plan}
+      heldSubjectIds={heldSubjectIds}
       creating={creating}
       onCreate={() => void create()}
       onCancel={() => setReply(null)}
