@@ -1,5 +1,5 @@
 # A small brief for the end-to-end runs (SPEC 14 1.56 E2E-R): one subject, one language and
-# one size, so the campaign has one variant to make pictures for.
+# two sizes. campaign.create makes one master variant at the first size.
 campaignName: Harness Check
 region: US
 audience: Adults who spend weekends outdoors
@@ -14,5 +14,6 @@ languages:
   - en
 sizes:
   - '1:1'
+  - '9:16'
 requiredWords:
   - Harness Check

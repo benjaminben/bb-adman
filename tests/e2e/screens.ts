@@ -74,7 +74,7 @@ export const runRows = (page: Page): Locator =>
 export const runRow = (page: Page, nth = 0): Locator => runRows(page).nth(nth)
 
 export async function openSettings(page: Page): Promise<Locator> {
-  await page.getByRole('button', { name: 'Settings' }).click()
+  await page.getByRole('button', { name: 'Settings', exact: true }).click()
   return page.getByRole('region', { name: 'ComfyUI server' })
 }
 

@@ -1,7 +1,7 @@
 // SPEC 14 1.56 E2E-R, the offline spec: the built app driven through its screens against the
 // stand-in ComfyUI on 127.0.0.1, with the hand-test tools on so trial workflows are offered.
 // No real server, no paid provider and no network beyond 127.0.0.1 is reached: Gemini's paid
-// confirm is only ever cancelled. The place for TP-6's video start is a fourth test here,
+// confirm is only ever cancelled. The place for TP-6's video start is a further test here,
 // once the video panel is built.
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
 import fs from 'node:fs'
@@ -17,6 +17,7 @@ import {
   startWorking,
 } from './stand-in-runs'
 import * as screens from './screens'
+import { handTestStorage, projectHomeTour, settingsTour, startTour } from './screen-tour'
 
 const MOSS_OUTPUT = '9'
 const FLUX_OUTPUT = '15'
@@ -128,4 +129,11 @@ test("References and the paid confirm: an added picture goes to Flux; Gemini's c
   await panel.getByRole('button', { name: 'Cancel' }).click()
   await expect(panel.getByRole('button', { name: 'Generate' })).toBeVisible()
   await expect(screens.runRows(page)).toHaveCount(1)
+})
+
+test('The other screens of the reach table: hand-test storage, Settings, Start, project home', async () => {
+  await handTestStorage(page, box)
+  await settingsTour(app, page, box)
+  await startTour(app, page, box)
+  await projectHomeTour(app, page)
 })
