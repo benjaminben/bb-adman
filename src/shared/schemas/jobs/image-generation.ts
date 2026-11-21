@@ -3,10 +3,11 @@
 // window can read them; this file imports nothing from the main process.
 import { z } from 'zod'
 import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'
+import { referenceIds } from '@/shared/schemas/reference-ids'
 
 export const imageJobRequest = z.object({
   prompt: z.string().min(1),
-  referenceAssetIds: z.array(z.string().min(1)),
+  referenceAssetIds: referenceIds,
   count: z.number().int().min(1).max(MAX_IMAGES_PER_RUN),
   width: z.number().int().positive(),
   height: z.number().int().positive(),
