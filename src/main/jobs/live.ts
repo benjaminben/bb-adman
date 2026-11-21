@@ -5,6 +5,7 @@ import type { BusEvent, CommandBus } from '../commands/bus'
 import { readJob, updateJob, type JobChange } from './job-store'
 import type { JobKindHandler } from './types'
 import type { JobEnd } from './job-end'
+import type { JobKind } from '../../shared/config/job-kinds'
 import type { ProviderInfo } from '../../shared/schemas/queries/app'
 
 export type JobRunnerOptions = {
@@ -22,7 +23,7 @@ export type JobRunnerOptions = {
 export type LiveJob = {
   id: string
   projectId: string
-  kind: string
+  kind: JobKind
   providerId: string
   provider: ProviderInfo | undefined
   controller: AbortController
@@ -43,6 +44,8 @@ export type RunnerState = {
   opts: JobRunnerOptions
   active: Map<string, LiveJob>
   pump: () => void
+  // Called after every end of a job; the close wait listens here (close-jobs.ts).
+  onEnd: Set<() => void>
 }
 
 export function nowText(state: RunnerState): string {

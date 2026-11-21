@@ -130,6 +130,7 @@ export function startJob(state: RunnerState, projectId: string, row: JobRow): vo
       writeJob(state, projectId, live.id, change)
       logEnd(state, live, change)
       state.pump()
+      for (const listener of [...state.onEnd]) listener()
     },
   }
   state.active.set(row.id, live)

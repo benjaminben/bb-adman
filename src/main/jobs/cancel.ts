@@ -1,5 +1,5 @@
-// Cancel (SPEC 6.11.2 [REQ: FR-281, FR-270], 3.6 "Jobs" items 4 and 6). Both functions start
-// after the calling command's transaction has ended, like every other runner write.
+// Cancel (SPEC 6.11.2 [REQ: FR-281, FR-270], 3.6 "Jobs" item 4). cancelJob starts after the
+// calling command's transaction has ended, like every other runner write. Close: close-jobs.ts.
 //   queued                                 cancelled at once, every provider
 //   running, attached kind                 cancelled at once; the app stops waiting
 //   running, background, cancel 'none'     refused: cancel_not_supported
@@ -9,7 +9,7 @@
 //     nothing within the provider's wait   cancelled, outcomeUnknown
 // The runner calls no adapter: a video job's cancel(remoteJobId) call is made by the video job
 // kind handler when the signal fires (SPEC 6.11.2, "How the runner learns the outcome").
-import { activeJobs, readJob } from './job-store'
+import { readJob } from './job-store'
 import { writeJob, type LiveJob, type RunnerState } from './live'
 import { cancelWaitFor } from './cancel-wait'
 import { runningResult } from './job-end'
@@ -20,7 +20,7 @@ import { AppError } from '../../shared/schemas/result'
 
 export const JOB_ENDED_MESSAGE = 'This job has already ended.'
 
-const afterTransaction = () => Promise.resolve()
+export const afterTransaction = () => Promise.resolve()
 
 // The refusal for job.cancel on this row, or null when it may be cancelled.
 export function cancelRefusal(row: JobRow, provider: ProviderInfo | undefined): AppError | null {
@@ -37,7 +37,8 @@ export function cancelRefusal(row: JobRow, provider: ProviderInfo | undefined): 
   return null
 }
 
-function askToStop(state: RunnerState, live: LiveJob): void {
+// Asks the provider to stop, as job.cancel does, and starts the provider's wait.
+export function askToStop(state: RunnerState, live: LiveJob): void {
   live.cancelAsked = true
   writeJob(state, live.projectId, live.id, { result: runningResult(live) })
   live.controller.abort()
@@ -63,22 +64,4 @@ export async function cancelJob(state: RunnerState, projectId: string, jobId: st
   if (!live) return writeJob(state, projectId, jobId, { status: 'cancelled' })
   if (JOB_KIND_CLASSES[row.kind] === 'attached') return live.finish({ status: 'cancelled' })
   if (!live.cancelAsked) askToStop(state, live)
-}
-
-// Closing the project: nothing can wait, so every running job ends now. Its signal is fired
-// and, as no provider confirmed, its outcome is unknown.
-export async function cancelAll(state: RunnerState, projectId: string) {
-  await afterTransaction()
-  const handle = state.opts.deps().projects.get(projectId)
-  if (!handle) return
-  for (const job of activeJobs(handle)) {
-    const live = state.active.get(job.id)
-    if (!live) {
-      writeJob(state, projectId, job.id, { status: 'cancelled' })
-      continue
-    }
-    live.cancelAsked = true
-    live.controller.abort()
-    live.finish({ status: 'cancelled', outcomeUnknown: true })
-  }
 }

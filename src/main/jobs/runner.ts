@@ -7,7 +7,8 @@ import { activeJobs, insertQueued, markSeenRow, readJob } from './job-store'
 import { emitJob, nowText, type JobRunnerOptions, type RunnerState } from './live'
 import { startJob } from './run-job'
 import { projectOpened } from './start-up'
-import { cancelAll, cancelJob } from './cancel'
+import { cancelJob } from './cancel'
+import { cancelAll } from './close-jobs'
 import type { JobService } from './types'
 import { JOBS_AT_ONCE_PER_PROVIDER } from '../../shared/config/job-kinds'
 
@@ -15,7 +16,7 @@ export { runOptions } from './progress'
 export type { JobRunnerOptions }
 
 export function createJobRunner(opts: JobRunnerOptions): JobService {
-  const state: RunnerState = { opts, active: new Map(), pump }
+  const state: RunnerState = { opts, active: new Map(), pump, onEnd: new Set() }
 
   function runningFor(providerId: string): number {
     let n = 0
