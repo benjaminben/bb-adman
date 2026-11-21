@@ -16,3 +16,11 @@ export type BriefParseInput = z.infer<typeof briefParseInput>
 
 // The brief.parse reply (SPEC 14 1.42 C4-2), here so the window can import it.
 export type BriefParsed = { draft: BriefDraft; primaryLanguage: string | null }
+
+// spec/ai-jobs.md "Brief reading": brief.extract reads a Markdown or text brief with AI. The
+// handler checks that the path is absolute and names a text brief.
+export const briefExtractInput = projectScoped.extend({
+  filePath: z.string().min(1),
+  provider: z.string().min(1),
+})
+export type BriefExtractInput = z.infer<typeof briefExtractInput>

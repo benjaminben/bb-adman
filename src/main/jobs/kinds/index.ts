@@ -2,5 +2,16 @@
 import type { JobKindHandler } from '@/main/jobs/types'
 import { imageGenerationKind } from './image-generation'
 import { videoGenerationKind } from './video-generation'
+import { layoutProposalKind } from './layout-proposal'
+import { copyOptionsKind } from './copy-options'
+import { briefExtractionKind } from './brief-extraction'
+import { cutoutKind } from './cutout'
 
-export const jobKindHandlers: JobKindHandler[] = [imageGenerationKind(), videoGenerationKind()]
+export const jobKindHandlers: JobKindHandler[] = [
+  imageGenerationKind(),
+  videoGenerationKind(),
+  layoutProposalKind(),
+  copyOptionsKind(),
+  briefExtractionKind(),
+  cutoutKind(),
+]

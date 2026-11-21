@@ -44,6 +44,14 @@ describe('ProviderError reason and missing [SPEC 6.10.9, 6.11.1]', () => {
       'address_changed',
       'bad_result',
       'clip_has_sound',
+      'key_missing',
+      'picture_missing',
+      'picture_too_large',
+      'picture_changed',
+      'assets_folder_missing',
+      'assets_not_writable',
+      'results_not_added',
+      'target_gone',
     ])
   })
 

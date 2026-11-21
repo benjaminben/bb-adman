@@ -77,6 +77,9 @@ describe('the generation domain is registered [SPEC 14 slice H]', () => {
     expect(generationCommands(f.core.deps).map((h) => h.name)).toEqual([
       'generation.runImages',
       'generation.startVideo',
+      'generation.proposeLayout',
+      'generation.copyOptions',
+      'generation.cutOut',
     ])
   })
 })
@@ -95,7 +98,7 @@ describe('the subject domain is registered [SPEC 14, slice C]', () => {
 describe('the brief domain is registered [SPEC 14, slice C]', () => {
   it('gives brief.parse', () => {
     f = makeFixture()
-    expect(briefCommands(f.core.deps).map((h) => h.name)).toEqual(['brief.parse'])
+    expect(briefCommands(f.core.deps).map((h) => h.name)).toEqual(['brief.parse', 'brief.extract'])
   })
 })
 

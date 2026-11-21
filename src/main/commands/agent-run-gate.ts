@@ -26,8 +26,15 @@ export type AgentRunGateDeps = {
 export type GateRelease = () => void
 const NOTHING_HELD: GateRelease = () => undefined
 
-const RUN_COMMANDS = new Set(['generation.runImages', 'generation.startVideo'])
-// Both run inputs require provider, so an agent never runs on the user's default provider.
+// P4-1 (spec/ai-jobs.md): the three Phase 4 runs take the same three steps.
+const RUN_COMMANDS = new Set([
+  'generation.runImages',
+  'generation.startVideo',
+  'generation.proposeLayout',
+  'generation.copyOptions',
+  'generation.cutOut',
+])
+// Every run input requires provider, so an agent never runs on the user's default provider.
 const runInput = z.object({ provider: z.string() })
 
 const denied = (message: string) => new AppError('AGENT_DENIED', message)

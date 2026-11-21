@@ -3,7 +3,8 @@ import type { SecretName, SecretSummary } from '@/shared/schemas/secrets'
 import type { OpenProjectSummary } from '@/shared/schemas/project'
 
 // SPEC 6 ProviderInfo, as the window receives it.
-export type ProviderJob = 'image' | 'layout' | 'text' | 'video' | 'storage' | 'verification'
+export type ProviderJob =
+  'image' | 'layout' | 'text' | 'video' | 'cutout' | 'storage' | 'verification'
 export type ProviderInfo = {
   id: string
   label: string
@@ -50,6 +51,15 @@ export const PROVIDER_ERROR_REASONS = [
   'address_changed',
   'bad_result',
   'clip_has_sound',
+  // P4-1 (spec/ai-jobs.md, OI-68): a job that failed after it was queued, for a local cause.
+  'key_missing',
+  'picture_missing',
+  'picture_too_large',
+  'picture_changed',
+  'assets_folder_missing',
+  'assets_not_writable',
+  'results_not_added',
+  'target_gone',
 ] as const
 export type ProviderErrorReason = (typeof PROVIDER_ERROR_REASONS)[number]
 

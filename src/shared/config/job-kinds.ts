@@ -7,6 +7,7 @@ export const JOB_KIND_CLASSES = {
   video_generation: 'background',
   export: 'background',
   publish: 'background',
+  cutout: 'background',
   generative_fill: 'attached',
   layout_proposal: 'attached',
   copy_options: 'attached',

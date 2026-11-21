@@ -8,6 +8,7 @@ import { layerDelete } from './delete'
 import { layerRestore } from './restore'
 import { layerReorder } from './reorder'
 import { layerReportOverflow } from './report-overflow'
+import { layerUpdateMany } from './update-many'
 
 export function layerCommands(deps: CoreDeps): CommandHandler[] {
   return [
@@ -17,5 +18,6 @@ export function layerCommands(deps: CoreDeps): CommandHandler[] {
     layerRestore(deps),
     layerReorder(deps),
     layerReportOverflow(),
+    layerUpdateMany(deps),
   ]
 }

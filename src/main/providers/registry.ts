@@ -37,7 +37,8 @@ const PROVIDERS: ProviderInfo[] = [
   {
     id: 'comfyui',
     label: 'ComfyUI',
-    jobs: ['image', 'video'],
+    // P4-1: 'cutout' (spec/ai-jobs.md). No default provider is kept for cut-outs (OI-55).
+    jobs: ['image', 'video', 'cutout'],
     // [1.35] CU-4: this build has the picture adapter.
     available: true,
     secrets: [],
@@ -96,7 +97,7 @@ const PROVIDERS: ProviderInfo[] = [
 const FAKE: ProviderInfo = {
   id: 'fake',
   label: 'Fake provider',
-  jobs: ['image', 'layout', 'text', 'video', 'storage', 'verification'],
+  jobs: ['image', 'layout', 'text', 'video', 'cutout', 'storage', 'verification'],
   available: true,
   secrets: [],
   defaultModels: {},

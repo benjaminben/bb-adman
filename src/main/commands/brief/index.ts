@@ -2,7 +2,8 @@
 import type { CoreDeps } from '@/main/core-deps'
 import type { CommandHandler } from '@/main/commands/types'
 import { briefParse } from './parse'
+import { briefExtract } from './extract'
 
-export function briefCommands(_deps: CoreDeps): CommandHandler[] {
-  return [briefParse()]
+export function briefCommands(deps: CoreDeps): CommandHandler[] {
+  return [briefParse(), briefExtract(deps)]
 }
