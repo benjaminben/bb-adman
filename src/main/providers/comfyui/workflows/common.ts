@@ -1,14 +1,19 @@
 // The parts the shipped workflows share (SPEC 6.10.4, 6.10.5, 6.10.10): sizes, model files
 // (analyst's V-17 and V-21), licences (V-24, V-25) and the "left on the server" sentences.
 // Each value has this one owner.
-import type { WorkflowLicence, WorkflowNeeds } from '../../../../shared/schemas/queries/comfy'
+import type {
+  WorkflowLicence,
+  WorkflowNeeds,
+  WorkflowVideo,
+} from '../../../../shared/schemas/queries/comfy'
 import type { SizeRule } from '../../../../shared/comfy/fit-size'
 
 export const MOSS_SIZE: SizeRule = { multiple: 16, minPixels: 1_000_000, maxPixels: 2_000_000 }
 export const H3_SIZE: SizeRule = { multiple: 32, minPixels: 589_824, maxPixels: 1_048_576 }
 
-// Provisional until the trial (6.10.7, U): fps and the frame step are read from the template.
-export const H3_VIDEO = { fps: 24, maxMs: 15_000, frameStep: 8 }
+// [1.45] B-6, from comfy-workflows/REFERENCE-NOTES.md: 24 fps, and the frame count is
+// 17k + 5 (5, 22, 39, 56 …). maxMs stays 15 s (V-19) until a trial shows more (U-19).
+export const H3_VIDEO: WorkflowVideo = { fps: 24, frameStep: 17, frameOffset: 5, maxMs: 15_000 }
 
 export const LEAVES = {
   uploads:

@@ -30,7 +30,8 @@ export type WorkflowNeeds = {
   addOns: Array<{ name: string; url: string }>
 }
 
-export type WorkflowVideo = { fps: number; maxMs: number; frameStep: number }
+// [1.45] B-6: the frame counts a model takes are frameStep × k + frameOffset, k from 0.
+export type WorkflowVideo = { fps: number; maxMs: number; frameStep: number; frameOffset: number }
 
 export type WorkflowLicence = { name: string; url: string; commercialNote: string | null }
 
