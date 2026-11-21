@@ -154,6 +154,12 @@ export async function selectedBox(page: Page) {
   }
 }
 
+// Every text layer fits its box: no "does not fit" line in the banner (spec/editor.md, "Banner").
+export async function expectTextFits(page: Page): Promise<void> {
+  await page.waitForTimeout(500)
+  await expect(page.getByText(/do(es)? not fit their box|does not fit its box/)).toHaveCount(0)
+}
+
 // Clear the selection by clicking the backdrop beside the ad, so no handles are drawn.
 export async function clearSelection(page: Page): Promise<void> {
   await page.locator('[data-backdrop]').click({ position: { x: 4, y: 4 } })

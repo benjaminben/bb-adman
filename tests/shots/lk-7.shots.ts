@@ -14,6 +14,7 @@ import {
   addPicture,
   choosePicture,
   clearSelection,
+  expectTextFits,
   moveSelected,
   panel,
   resizeCorner,
@@ -70,7 +71,7 @@ test('02: a light flat colour, a dark centred headline, a picture off the right 
     .toBe(true)
 
   await clearSelection(page)
-  await page.waitForTimeout(500)
+  await expectTextFits(page)
   await shot(page, '120-lk7-02-flat-colour-editor')
   await adPicture(page, '121-lk7-02-flat-colour-ad')
 })
@@ -112,7 +113,7 @@ test('03: a photo with a dark shade from the bottom and white text at the bottom
   await setBox(page, { x: 65, y: 1625, width: 950, height: 80 })
 
   await clearSelection(page)
-  await page.waitForTimeout(500)
+  await expectTextFits(page)
   await shot(page, '122-lk7-03-photo-shade-editor')
   await adPicture(page, '123-lk7-03-photo-shade-ad')
   await adPicture(page, '124-lk7-03-shade-close', { x: 0, y: 1000, width: 1080, height: 920 })
@@ -144,7 +145,7 @@ test('04: a photo, white text at the bottom left and an outlined button', async 
   const button = await selectedBox(page)
 
   await clearSelection(page)
-  await page.waitForTimeout(500)
+  await expectTextFits(page)
   await shot(page, '125-lk7-04-photo-button-editor')
   await adPicture(page, '126-lk7-04-photo-button-ad')
   const pad = 60
