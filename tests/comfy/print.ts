@@ -5,7 +5,14 @@
 
 export const SAFE_LINE_CHARS = 500
 const HIDDEN = '[test server]'
-const CONTROL = /[\u0000-\u001f\u007f-\u009f]/g
+
+// C0 controls, DEL and C1 controls, each as one space.
+function withoutControls(text: string): string {
+  return Array.from(text, (ch) => {
+    const code = ch.codePointAt(0) ?? 0
+    return code < 0x20 || (code >= 0x7f && code <= 0x9f) ? ' ' : ch
+  }).join('')
+}
 
 function escaped(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -26,7 +33,7 @@ export function hideAddress(text: string, origin: string): string {
 }
 
 export function safeLine(text: string, origin: string): string {
-  return hideAddress(text.replace(CONTROL, ' '), origin).slice(0, SAFE_LINE_CHARS)
+  return hideAddress(withoutControls(text), origin).slice(0, SAFE_LINE_CHARS)
 }
 
 // Prints each line through safeLine, so no case can print the address by mistake.

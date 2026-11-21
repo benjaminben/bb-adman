@@ -24,7 +24,9 @@ async function setUp() {
 // The address in every form a line could hold it.
 function holdsAddress(lines: string[], s: StandIn): boolean {
   const text = lines.join('\n')
-  return text.includes(s.origin) || text.includes(`127.0.0.1:${s.port}`) || text.includes('127.0.0.1')
+  return (
+    text.includes(s.origin) || text.includes(`127.0.0.1:${s.port}`) || text.includes('127.0.0.1')
+  )
 }
 
 describe('test:comfy case 1, the check [SPEC 14 1.41 CU-5a, 1.45 B-1, 1.46]', () => {
@@ -36,14 +38,16 @@ describe('test:comfy case 1, the check [SPEC 14 1.41 CU-5a, 1.45 B-1, 1.46]', ()
     ])
   })
 
-  it('prints the version and, per workflow, the missing items by the app\'s own names', async () => {
+  it("prints the version and, per workflow, the missing items by the app's own names", async () => {
     const { s, printed, print, recorded } = await setUp()
     s.reply('GET /object_info/ReferenceMultiLatent', { status: 404, json: {} })
     const result = await runCheckCase(recorded.client, recorded.failures, print)
     expect(result.outcome).toBe('ok')
     expect(printed[0]).toBe('ComfyUI version: 0.3.40')
     const flux = printed.slice(printed.indexOf('flux3-klein-edit-references: missing'))
-    expect(flux).toContain('  model file: diffusion_models/flux3-image-klein-base-int8-convrot.safetensors')
+    expect(flux).toContain(
+      '  model file: diffusion_models/flux3-image-klein-base-int8-convrot.safetensors',
+    )
     expect(flux).toContain('  node class: ReferenceMultiLatent')
     expect(printed).toContain('moss-text-to-image: missing')
     expect(printed).toContain('  version: 0.42.0 or later')
@@ -63,7 +67,7 @@ describe('test:comfy case 1, the check [SPEC 14 1.41 CU-5a, 1.45 B-1, 1.46]', ()
     expect(printed).toContain('moss-text-to-image: missing')
   })
 
-  it('makes only the check\'s calls: systemStats, modelFiles and nodeInfo [6.10.12]', async () => {
+  it("makes only the check's calls: systemStats, modelFiles and nodeInfo [6.10.12]", async () => {
     const { print, recorded } = await setUp()
     await runCheckCase(recorded.client, recorded.failures, print)
     expect(recorded.calls[0]?.name).toBe('systemStats')
@@ -72,7 +76,7 @@ describe('test:comfy case 1, the check [SPEC 14 1.41 CU-5a, 1.45 B-1, 1.46]', ()
     expect(folders).toContain(mossTextToImage.needs.models[0]?.folder)
   })
 
-  it('when a later call fails, prints which call and the failure\'s kind, reason and detail [B-1]', async () => {
+  it("when a later call fails, prints which call and the failure's kind, reason and detail [B-1]", async () => {
     const { s, printed, print, recorded } = await setUp()
     s.reply('GET /object_info/KSampler', { status: 500, json: {} })
     const result = await runCheckCase(recorded.client, recorded.failures, print)

@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { hideAddress, makePrinter, safeLine, SAFE_LINE_CHARS } from '../../comfy/print'
 import { comfyTarget } from '../../comfy/target'
+import { guarded } from '../../comfy/guard'
+import { ProviderFailure } from '../../../src/main/providers/types'
 
 const ORIGIN = 'http://marker-host.test:8188'
 
@@ -62,6 +64,31 @@ describe('makePrinter [SPEC 6.10.12]', () => {
     const print = makePrinter(ORIGIN, (line) => written.push(line))
     print(`one ${ORIGIN}`, 'two\nlines')
     expect(written).toEqual(['one [test server]', 'two lines'])
+  })
+})
+
+describe('guarded: no error Vitest prints holds the address [SPEC 6.10.12]', () => {
+  it('passes a result through', async () => {
+    expect(await guarded(ORIGIN, async () => 7)).toBe(7)
+  })
+
+  it('throws a new error with the safe text only, no cause and no fields', async () => {
+    const inner = Object.assign(new Error(`refused at ${ORIGIN}`), { origin: ORIGIN })
+    const thrown = await guarded(ORIGIN, () => Promise.reject(inner)).catch((e: unknown) => e)
+    expect(thrown).toBeInstanceOf(Error)
+    const error = thrown as Error
+    expect(error.message).toBe('refused at [test server]')
+    expect(error.cause).toBeUndefined()
+    expect(JSON.stringify(Object.entries(error))).not.toContain('marker-host')
+    expect(error.stack ?? '').not.toContain('marker-host')
+  })
+
+  it('names a provider failure by its kind, reason and detail', async () => {
+    const failure = new ProviderFailure({ kind: 'offline', reason: 'no_answer', detail: 'x' })
+    const thrown = await guarded(ORIGIN, () => Promise.reject(failure)).catch((e: unknown) => e)
+    expect((thrown as Error).message).toBe(
+      'ProviderFailure kind: offline, reason: no_answer, detail: x',
+    )
   })
 })
 
