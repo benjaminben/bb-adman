@@ -198,6 +198,19 @@ describe('createServerChecks: 60 seconds per origin [SPEC 6.10.3, 14 1.43 N-03]'
     expect(s.seen.length).toBe(count * 2)
   })
 
+  it('keeps only an ok: a failed check is asked again at once [1.45 N3-2, B-5]', async () => {
+    const s = await server()
+    const checks = createServerChecks({ now: () => 0 })
+    const client = clientFor(s)
+    s.reply('GET /system_stats', { vanish: true })
+    expect((await checks.run(s.origin, client, [VIDEO])).outcome).toBe('no_answer')
+    s.reply('GET /system_stats', { json: { system: { comfyui_version: '0.42.1' }, devices: [] } })
+    expect((await checks.run(s.origin, client, [VIDEO])).outcome).toBe('ok')
+    const count = s.seen.length
+    expect((await checks.run(s.origin, client, [VIDEO])).outcome).toBe('ok')
+    expect(s.seen.length).toBe(count)
+  })
+
   it('asks again when told to, and keeps origins apart', async () => {
     const s = await server()
     const checks = createServerChecks({ now: () => 0 })

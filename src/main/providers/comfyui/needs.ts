@@ -110,7 +110,8 @@ export async function checkServer(
 }
 
 // The result kept in memory for 60 seconds per origin, so the options of one run do not
-// repeat the check (SPEC 6.10.3). `fresh` asks again whatever is kept.
+// repeat the check (SPEC 6.10.3). `fresh` asks again whatever is kept. [1.45] B-5: only a
+// kept `ok` is read; any other outcome is asked again.
 export function createServerChecks(opts: { now?: () => number } = {}) {
   const now = opts.now ?? Date.now
   const kept = new Map<string, { at: number; result: ComfyCheck }>()
@@ -122,7 +123,8 @@ export function createServerChecks(opts: { now?: () => number } = {}) {
       run: { fresh?: boolean } = {},
     ): Promise<ComfyCheck> {
       const hit = kept.get(origin)
-      if (!run.fresh && hit && now() - hit.at < CHECK_MS) return hit.result
+      const usable = hit && hit.result.outcome === 'ok' && now() - hit.at < CHECK_MS
+      if (!run.fresh && usable) return hit.result
       const result = await checkServer(client, workflows)
       kept.set(origin, { at: now(), result })
       return result
