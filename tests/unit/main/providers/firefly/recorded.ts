@@ -41,7 +41,7 @@ export function jsonResponse(body: unknown, status = 200): Response {
   })
 }
 
-export function pngResponse(bytes: Uint8Array = PNG_1X1): Response {
+export function pngResponse(bytes: Uint8Array<ArrayBuffer> = PNG_1X1): Response {
   return new Response(bytes, { status: 200, headers: { 'content-type': 'image/png' } })
 }
 

@@ -26,7 +26,9 @@ describe('Firefly pinned hosts [P4-6, spec/providers.md "Rules for every adapter
   it('pins the documented hosts', () => {
     expect(FIREFLY_TOKEN_ORIGIN).toBe('https://ims-na1.adobelogin.com')
     expect(FIREFLY_API_ORIGIN).toBe('https://firefly-api.adobe.io')
-    expect(FIREFLY_PICTURE_ORIGIN).toBe('https://pre-signed-firefly-prod.s3-accelerate.amazonaws.com')
+    expect(FIREFLY_PICTURE_ORIGIN).toBe(
+      'https://pre-signed-firefly-prod.s3-accelerate.amazonaws.com',
+    )
   })
 
   it.each(HOSTS)('the %s wrapper passes a request to its own host through', async (host) => {
@@ -39,14 +41,17 @@ describe('Firefly pinned hosts [P4-6, spec/providers.md "Rules for every adapter
   const crossed = HOSTS.flatMap((host) =>
     HOSTS.filter((other) => other !== host).map((other) => [host, other] as const),
   )
-  it.each(crossed)('the %s wrapper refuses the %s host before anything is sent', async (host, other) => {
-    const { fetchFn, seen } = recordingFetch(() => jsonResponse({ ok: true }))
-    const error = await failureOf(pinnedFetch(host, fetchFn)(`${ORIGINS[other]}/path`))
-    expect(error).toBeInstanceOf(ProviderFailure)
-    expect(error).toMatchObject({ error: { kind: 'other' } })
-    expect((error as ProviderFailure).error.detail).toContain(ORIGINS[other])
-    expect(seen).toHaveLength(0)
-  })
+  it.each(crossed)(
+    'the %s wrapper refuses the %s host before anything is sent',
+    async (host, other) => {
+      const { fetchFn, seen } = recordingFetch(() => jsonResponse({ ok: true }))
+      const error = await failureOf(pinnedFetch(host, fetchFn)(`${ORIGINS[other]}/path`))
+      expect(error).toBeInstanceOf(ProviderFailure)
+      expect(error).toMatchObject({ error: { kind: 'other' } })
+      expect((error as ProviderFailure).error.detail).toContain(ORIGINS[other])
+      expect(seen).toHaveLength(0)
+    },
+  )
 
   it.each([
     'https://firefly-environment.example/v3/images/generate-async',

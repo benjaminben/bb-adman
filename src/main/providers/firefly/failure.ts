@@ -50,13 +50,21 @@ function kindForAnswer(status: number, code: string | undefined): Kind {
 }
 
 // A finished answer whose status is not a success.
-export function failureFromAnswer(status: number, text: string, secrets: string[]): ProviderFailure {
+export function failureFromAnswer(
+  status: number,
+  text: string,
+  secrets: string[],
+): ProviderFailure {
   const detail = `HTTP ${status}: ${text.slice(0, DETAIL_CHARS)}`
   return fail(kindForAnswer(status, codeIn(text)), detail, secrets)
 }
 
 // A thrown error. `timedOut` is true when our own timer fired.
-export function failureFromError(error: unknown, timedOut: boolean, secrets: string[]): ProviderFailure {
+export function failureFromError(
+  error: unknown,
+  timedOut: boolean,
+  secrets: string[],
+): ProviderFailure {
   if (error instanceof ProviderFailure) {
     return fail(error.error.kind, error.error.detail, secrets)
   }

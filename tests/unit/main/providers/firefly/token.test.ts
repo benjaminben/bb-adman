@@ -15,7 +15,11 @@ const signal = new AbortController().signal
 
 function tokenWith(answer: () => Response) {
   const { fetchFn, seen } = recordingFetch(answer)
-  const call = requestToken(fetchFn, { clientId: TEST_CLIENT_ID, clientSecret: TEST_CLIENT_SECRET }, signal)
+  const call = requestToken(
+    fetchFn,
+    { clientId: TEST_CLIENT_ID, clientSecret: TEST_CLIENT_SECRET },
+    signal,
+  )
   return { call, seen }
 }
 
@@ -53,7 +57,12 @@ describe('Firefly token request [P4-6, spec/providers-adapters.md "Adobe Firefly
   })
 
   it.each([
-    ['a refused client (400 invalid_client)', 400, recorded('token-error-invalid-client.json'), 'bad_key'],
+    [
+      'a refused client (400 invalid_client)',
+      400,
+      recorded('token-error-invalid-client.json'),
+      'bad_key',
+    ],
     ['HTTP 401', 401, { error: 'unauthorized' }, 'bad_key'],
     ['HTTP 429', 429, { error: 'too_many_requests' }, 'quota'],
     ['HTTP 500', 500, { error: 'server_error' }, 'other'],
@@ -65,7 +74,10 @@ describe('Firefly token request [P4-6, spec/providers-adapters.md "Adobe Firefly
   })
 
   it('removes both credentials from a detail that echoes them', async () => {
-    const echo = { error: 'invalid_client', error_description: `${TEST_CLIENT_ID} ${TEST_CLIENT_SECRET}` }
+    const echo = {
+      error: 'invalid_client',
+      error_description: `${TEST_CLIENT_ID} ${TEST_CLIENT_SECRET}`,
+    }
     const { call } = tokenWith(() => jsonResponse(echo, 400))
     const failure = await failureOf(call)
     expect(failure.error.detail).toContain('invalid_client')
