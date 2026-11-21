@@ -22,6 +22,7 @@ import { ROW_SCHEMAS } from '@/shared/schemas/rows'
 
 const P = { projectId: 'P1' }
 const ids = (n: number) => Array.from({ length: n }, (_, i) => `L${i}`)
+const approved = (n: number) => ids(n).map((layerId) => ({ layerId, copyRev: 0 }))
 const restoreItem = {
   layerId: 'L1',
   copy: 'Hallo',
@@ -67,8 +68,8 @@ const GOOD: Row[] = [
     translationSetInput,
     { ...P, layerId: 'L1', text: 'a'.repeat(5000), applyToSameLanguage: true },
   ],
-  ['approve', translationApproveInput, { ...P, layerIds: ['L1'] }],
-  ['approve 2000', translationApproveInput, { ...P, layerIds: ids(2000) }],
+  ['approve', translationApproveInput, { ...P, layers: [{ layerId: 'L1', copyRev: 0 }] }],
+  ['approve 2000', translationApproveInput, { ...P, layers: approved(2000) }],
   ['export', translationExportSheetInput, { ...P, campaignId: 'C1', filePath: '/a/b.csv' }],
   ['write', translationWriteInput, { ...P, jobId: 'J1', items: [{ key: 'k', text: 'Hallo' }] }],
   ['restore', translationRestoreInput, { ...P, scope: 'variant', items: [restoreItem] }],
@@ -149,8 +150,24 @@ const BAD: Row[] = [
     translationSetInput,
     { ...P, layerId: 'L1', text: 'a', applyToSameLanguage: false, status: 'approved' },
   ],
-  ['approve with no layer', translationApproveInput, { ...P, layerIds: [] }],
-  ['approve over 2000', translationApproveInput, { ...P, layerIds: ids(2001) }],
+  ['approve with no layer', translationApproveInput, { ...P, layers: [] }],
+  ['approve over 2000', translationApproveInput, { ...P, layers: approved(2001) }],
+  ['approve with the old layerIds', translationApproveInput, { ...P, layerIds: ['L1'] }],
+  [
+    'approve with a negative counter',
+    translationApproveInput,
+    { ...P, layers: [{ layerId: 'L1', copyRev: -1 }] },
+  ],
+  [
+    'approve with a fractional counter',
+    translationApproveInput,
+    { ...P, layers: [{ layerId: 'L1', copyRev: 1.5 }] },
+  ],
+  [
+    'approve with an unknown key',
+    translationApproveInput,
+    { ...P, layers: [{ layerId: 'L1', copyRev: 0, status: 'approved' }] },
+  ],
   ['export with no path', translationExportSheetInput, { ...P, campaignId: 'C1', filePath: '' }],
   [
     'write with an empty text',

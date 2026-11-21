@@ -74,6 +74,7 @@ describe('translation.forCampaign [P6-7]', () => {
       status: layer.translationStatus,
       source: layer.translationSource,
       fontAssetId: 'fontAssetId' in layer.style ? layer.style.fontAssetId : null,
+      copyRev: layer.revs.copy,
     })
   })
 
