@@ -25,14 +25,15 @@ export function nameTable(records: NameRecord[], count = records.length): Buffer
   head.writeUInt16BE(head.length, 4)
   let offset = 0
   records.forEach((r, i) => {
+    const text = strings[i] ?? Buffer.alloc(0)
     const at = 6 + i * 12
     head.writeUInt16BE(r.platform, at)
     head.writeUInt16BE(r.encoding, at + 2)
     head.writeUInt16BE(r.language, at + 4)
     head.writeUInt16BE(r.nameId, at + 6)
-    head.writeUInt16BE(strings[i].length, at + 8)
+    head.writeUInt16BE(text.length, at + 8)
     head.writeUInt16BE(offset, at + 10)
-    offset += strings[i].length
+    offset += text.length
   })
   return Buffer.concat([head, ...strings])
 }
@@ -115,9 +116,9 @@ export function woff2(tables: Table[], opts: Woff2Options = {}): Buffer {
 }
 
 // A short stream that decompresses to `start` followed by zeros, `bytes` in all.
-export function oversizedStream(bytes: number, start = Buffer.alloc(0)): Buffer {
+export function oversizedStream(bytes: number, start: Uint8Array = new Uint8Array(0)): Buffer {
   const data = Buffer.alloc(bytes)
-  start.copy(data)
+  data.set(start)
   return zlib.brotliCompressSync(data, {
     params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 1 },
   })

@@ -25,8 +25,11 @@ const fits = (b: Uint8Array, at: number, length: number) =>
 
 const viewOf = (b: Uint8Array) => new DataView(b.buffer, b.byteOffset, b.byteLength)
 
+// Called only after `fits`; the 0 is never used.
+const byteAt = (b: Uint8Array, at: number) => b[at] ?? 0
+
 const tagAt = (b: Uint8Array, at: number) =>
-  String.fromCharCode(b[at], b[at + 1], b[at + 2], b[at + 3])
+  String.fromCharCode(byteAt(b, at), byteAt(b, at + 1), byteAt(b, at + 2), byteAt(b, at + 3))
 
 // The `name` table of a TTF or OTF file.
 function sfntNameTable(b: Uint8Array): Uint8Array | null {
@@ -49,7 +52,7 @@ function base128(b: Uint8Array, at: number): { value: number; next: number } | n
   let value = 0
   for (let i = 0; i < 5; i++) {
     if (!fits(b, at + i, 1)) return null
-    const byte = b[at + i]
+    const byte = byteAt(b, at + i)
     if (i === 0 && byte === 0x80) return null
     if (value >= 2 ** 25) return null
     value = value * 128 + (byte & 0x7f)
@@ -67,8 +70,8 @@ function woff2Directory(b: Uint8Array, count: number): { name: Span; end: number
   let name: Span | null = null
   for (let i = 0; i < count; i++) {
     if (!fits(b, at, 1)) return null
-    const index = b[at] & 0x3f
-    const version = b[at] >> 6
+    const index = byteAt(b, at) & 0x3f
+    const version = byteAt(b, at) >> 6
     at += 1
     let tag = ''
     if (index === OWN_TAG) {
@@ -156,13 +159,14 @@ function decode(bytes: Uint8Array, platform: number): string {
   let text = ''
   if (platform === 3) {
     for (let i = 0; i + 1 < bytes.length; i += 2)
-      text += String.fromCharCode((bytes[i] << 8) | bytes[i + 1])
+      text += String.fromCharCode((byteAt(bytes, i) << 8) | byteAt(bytes, i + 1))
     return text.replace(
       /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g,
-      '�',
+      '\uFFFD',
     )
   }
-  for (const byte of bytes) text += byte < 0x80 ? String.fromCharCode(byte) : MAC_ROMAN[byte - 0x80]
+  for (const byte of bytes)
+    text += byte < 0x80 ? String.fromCharCode(byte) : MAC_ROMAN.charAt(byte - 0x80)
   return text
 }
 

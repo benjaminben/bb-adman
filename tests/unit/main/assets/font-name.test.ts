@@ -65,7 +65,7 @@ describe('readFontFamily, the name a font file gives itself [SPEC scene.md, FR-0
       [win(1, `${'x'.repeat(99)}\u{1F600}y`)],
       `${'x'.repeat(99)}\u{1F600}`,
     ],
-    ['a lone surrogate as a replacement character', [win(1, 'A\uD800B')], 'A�B'],
+    ['a lone surrogate as a replacement character', [win(1, 'A\uD800B')], 'A\uFFFDB'],
   ])('takes %s', (_, records, family) => {
     expect(readFontFamily(ttf(records))).toBe(family)
   })
