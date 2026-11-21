@@ -8,6 +8,7 @@ import { makeSandbox, launch, type Sandbox } from './launch'
 import { command, drawInRenderWindow, FONT_FILE, makePng, query, renderPng } from './render-helpers'
 import { checkReference, decodePng, differingShare, type Bitmap } from './reference-compare'
 import { CASES, PICTURES, SIDE, type CaseAssets, type SceneCase } from './scene-cases'
+import './scene-cases-time'
 
 type Layer = { id: string; type: string }
 type Asset = { id: string; kind: 'image' | 'font'; missing: boolean } & Record<string, unknown>
