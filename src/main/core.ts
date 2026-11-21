@@ -13,6 +13,7 @@ import { createCommandBus, type BusEvent, type PermissionRequest } from './comma
 import { assetCommands } from './commands/asset'
 import { briefCommands } from './commands/brief'
 import { campaignCommands } from './commands/campaign'
+import { comfyCommands } from './commands/comfy'
 import { devCommands } from './commands/dev'
 import { generationCommands } from './commands/generation'
 import { jobCommands } from './commands/job'
@@ -106,6 +107,7 @@ export function createCore(opts: CoreOptions) {
     ...assetCommands(deps),
     ...briefCommands(deps),
     ...campaignCommands(deps),
+    ...comfyCommands(deps),
     ...devCommands(deps),
     ...generationCommands(deps),
     ...jobCommands(deps),

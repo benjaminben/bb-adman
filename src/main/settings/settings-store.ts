@@ -2,6 +2,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { settingsSchema, type Settings, type SettingsPatch } from '../../shared/schemas/settings'
+import { parseComfyAddress } from '../../shared/comfy/address'
+import { comfyOwnPorts } from '../providers/comfyui/own-ports'
+import { DEFAULT_MCP_PORT } from './defaults'
 
 export const RECENT_LIMIT = 20
 
@@ -11,19 +14,28 @@ function isObject(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v)
 }
 
+// [1.37] SPEC 13.1 item 4: the key __proto__ is skipped at every level, so a file cannot
+// set an object's prototype. An object under a key the base lacks is copied the same way.
 function merge<T>(base: T, patch: unknown): T {
-  if (!isObject(base) || !isObject(patch)) return (patch === undefined ? base : patch) as T
-  const out: Record<string, unknown> = { ...base }
-  for (const [k, v] of Object.entries(patch)) out[k] = merge(out[k], v)
+  if (!isObject(patch)) return (patch === undefined ? base : patch) as T
+  const out: Record<string, unknown> = isObject(base) ? { ...base } : {}
+  for (const [k, v] of Object.entries(patch)) {
+    if (k !== '__proto__') out[k] = merge(out[k], v)
+  }
   return out as T
 }
 
-// [1.35] SPEC 13.1 "Until CU-1": no check of a ComfyUI address exists yet, so an address
-// found in the file is read as none, whatever it is. The file itself is left as it is.
-// CU-1 replaces this with parseComfyAddress.
-function readComfyAddress(raw: unknown): unknown {
-  if (!isObject(raw) || !isObject(raw.comfyui)) return raw
-  return { ...raw, comfyui: { ...raw.comfyui, baseUrl: null } }
+// [1.37] SPEC 13.1 "After CU-1" (security class): an address found in the file is held as
+// its origin when parseComfyAddress passes it, and as null otherwise. The refused text is
+// kept nowhere, so the next save writes null over it.
+function readComfyAddress(merged: unknown): unknown {
+  if (!isObject(merged) || !isObject(merged.comfyui)) return merged
+  const text = merged.comfyui.baseUrl
+  const port = isObject(merged.mcp) ? merged.mcp.port : undefined
+  const ownPorts = comfyOwnPorts(typeof port === 'number' ? port : DEFAULT_MCP_PORT)
+  const result = typeof text === 'string' ? parseComfyAddress(text, ownPorts) : null
+  const baseUrl = result && 'origin' in result ? result.origin : null
+  return { ...merged, comfyui: { ...merged.comfyui, baseUrl } }
 }
 
 export function createSettingsStore(opts: { file: string; defaults: Settings }) {
@@ -32,7 +44,7 @@ export function createSettingsStore(opts: { file: string; defaults: Settings }) 
   function load(): Settings {
     try {
       const raw: unknown = JSON.parse(fs.readFileSync(opts.file, 'utf8'))
-      const parsed = settingsSchema.safeParse(merge(opts.defaults, readComfyAddress(raw)))
+      const parsed = settingsSchema.safeParse(readComfyAddress(merge(opts.defaults, raw)))
       return parsed.success ? parsed.data : opts.defaults
     } catch {
       return opts.defaults
@@ -53,6 +65,10 @@ export function createSettingsStore(opts: { file: string; defaults: Settings }) 
     update(patch: SettingsPatch): Settings {
       save(settingsSchema.parse(merge(current, patch)))
       return current
+    },
+    // Called only by comfy.setAddress, with an origin parseComfyAddress gave, or null.
+    setComfyAddress(origin: string | null): void {
+      save({ ...current, comfyui: { baseUrl: origin } })
     },
     touchRecent(entry: { path: string; name: string }, openedAt: string): void {
       const others = current.recentProjects.filter((r) => r.path !== entry.path)
