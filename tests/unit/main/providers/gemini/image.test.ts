@@ -142,21 +142,6 @@ describe('Gemini ImageProvider.generate [SPEC 6.2, slice E]', () => {
   })
 })
 
-describe('Gemini ImageProvider.extend [SPEC 6.2, built in Phase 5]', () => {
-  it('throws ProviderFailure of kind other until Phase 5 builds it', async () => {
-    const provider = geminiImage(testContext())
-    const run = provider.extend({
-      image: { bytes: new Uint8Array(), mime: 'image/png' },
-      placement: { x: 0, y: 0, width: 1, height: 1, rotation: 0, crop: null },
-      width: 1,
-      height: 1,
-      prompt: 'p',
-    })
-    await expect(run).rejects.toThrow(ProviderFailure)
-    await expect(run).rejects.toMatchObject({ error: { kind: 'other' } })
-  })
-})
-
 describe('gemini/index.ts [SPEC 6.2]', () => {
   it('exports the image, layout and text adapters', () => {
     expect(Object.keys(adapters)).toEqual(['image', 'layout', 'text'])
