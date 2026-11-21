@@ -10,9 +10,11 @@ const USER_DEV = { devTools: true, actor: 'user' } as const
 
 describe('flux3-klein-edit-references, the seventh workflow [SPEC 14 1.46 part B]', () => {
   it('joins the fixed list and the shipped workflows at the end', () => {
-    expect(WORKFLOW_IDS.at(-1)).toBe('flux3-klein-edit-references')
-    expect(WORKFLOW_IDS).toHaveLength(7)
-    expect(WORKFLOWS.at(-1)).toBe(flux)
+    // P4-9: birefnet-cutout now follows it, as the eighth.
+    expect(WORKFLOW_IDS.indexOf('flux3-klein-edit-references')).toBe(6)
+    expect(WORKFLOW_IDS).toHaveLength(8)
+    expect(WORKFLOWS.find((w) => w.id === 'flux3-klein-edit-references')).toBe(flux)
+    expect(WORKFLOWS.indexOf(flux)).toBe(6)
   })
 
   it('is a trial picture-from-references workflow on FLUX 3 klein', () => {

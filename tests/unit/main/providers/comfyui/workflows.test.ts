@@ -6,7 +6,7 @@ import { WORKFLOW_IDS } from '@/shared/schemas/queries/comfy'
 function pointersOf(spec: WorkflowSpec): Pointer[] {
   const s = spec.slots
   return [
-    s.prompt,
+    ...(s.prompt ? [s.prompt] : []),
     ...s.seed,
     ...[s.width, s.height, s.firstFrame, s.frames, s.outputPrefix].filter(
       (p): p is Pointer => p !== undefined,
@@ -32,6 +32,7 @@ describe('the shipped workflows [SPEC 6.10.4, FR-258, FR-278]', () => {
       'h3-image-to-video',
       'h3-reference-to-video',
       'flux3-klein-edit-references',
+      'birefnet-cutout',
     ])
     expect(WORKFLOWS.every((w) => w.status === 'draft' || w.status === 'trial')).toBe(true)
   })
@@ -92,6 +93,7 @@ describe('the shipped workflows [SPEC 6.10.4, FR-258, FR-278]', () => {
       'h3-image-to-video': '0.33.0',
       'h3-reference-to-video': '0.33.0',
       'flux3-klein-edit-references': '0.0.0',
+      'birefnet-cutout': '0.0.0',
     })
   })
 
@@ -115,6 +117,10 @@ describe('the shipped workflows [SPEC 6.10.4, FR-258, FR-278]', () => {
       else if (w.model.label === 'FLUX 3 klein') {
         expect(w.licence.name).toBe('Not verified')
         expect(w.licence.commercialNote).toMatch(/not been checked/)
+      } else if (w.model.label === 'BiRefNet') {
+        // P4-9: MIT, so no licence dialog.
+        expect(w.licence.name).toBe('MIT')
+        expect(w.licence.commercialNote).toBeNull()
       } else expect.fail(`${w.id}: no licence rule for the model ${w.model.label}`)
     }
   })
@@ -125,5 +131,71 @@ describe('the shipped workflows [SPEC 6.10.4, FR-258, FR-278]', () => {
       const video = w.leavesOnServer.some((s) => /output folder/.test(s))
       expect(video).toBe(w.job === 'video')
     }
+  })
+})
+
+describe('birefnet-cutout, the cut-out workflow [P4-9, spec/ai-jobs.md "Cut-out"]', () => {
+  const spec = WORKFLOWS.find((w) => w.id === 'birefnet-cutout')
+  if (!spec) throw new Error('birefnet-cutout is not shipped')
+
+  it('is the six-node graph of the spec, its output at node 6', () => {
+    expect(spec.graph).toEqual({
+      '1': { class_type: 'LoadImage', inputs: { image: expect.any(String) } },
+      '2': {
+        class_type: 'LoadBackgroundRemovalModel',
+        inputs: { bg_removal_name: 'birefnet.safetensors' },
+      },
+      '3': {
+        class_type: 'RemoveBackground',
+        inputs: { bg_removal_model: ['2', 0], image: ['1', 0] },
+      },
+      '4': { class_type: 'InvertMask', inputs: { mask: ['3', 0] } },
+      '5': { class_type: 'JoinImageWithAlpha', inputs: { image: ['1', 0], alpha: ['4', 0] } },
+      '6': { class_type: 'PreviewImage', inputs: { images: ['5', 0] } },
+    })
+    expect(spec.slots).toEqual({
+      seed: [],
+      references: [
+        { image: { node: '1', input: 'image' }, dropWhenUnused: { nodes: [], inputs: [] } },
+      ],
+      minReferences: 1,
+      outputNode: '6',
+    })
+  })
+
+  it('every link points at a node that exists', () => {
+    for (const node of Object.values(spec.graph)) {
+      for (const value of Object.values(node.inputs)) {
+        if (Array.isArray(value) && typeof value[0] === 'string') {
+          expect(spec.graph[value[0]], value[0]).toBeDefined()
+        }
+      }
+    }
+  })
+
+  it('states the job, status, model, needs, licence and what it leaves', () => {
+    expect(spec).toMatchObject({
+      job: 'cutout',
+      status: 'trial',
+      model: { label: 'BiRefNet', mainFile: 'birefnet.safetensors' },
+      size: { multiple: 1, minPixels: 1 },
+      licence: { name: 'MIT', commercialNote: null },
+    })
+    expect(spec.needs).toEqual({
+      minComfyVersion: '0.0.0',
+      checkedWith: '',
+      models: [{ folder: 'background_removal', file: 'birefnet.safetensors' }],
+      nodeClasses: [
+        'LoadImage',
+        'LoadBackgroundRemovalModel',
+        'RemoveBackground',
+        'InvertMask',
+        'JoinImageWithAlpha',
+        'PreviewImage',
+      ],
+      addOns: [],
+    })
+    expect(spec.leavesOnServer).toHaveLength(3)
+    expect(spec.videoStart).toBeUndefined()
   })
 })

@@ -7,6 +7,7 @@ import os from 'node:os'
 import { describe, it, expect, type TestContext } from 'vitest'
 import { createComfyClient } from '@/main/providers/comfyui/client'
 import {
+  cutoutCase,
   firstFrameCase,
   pictureCase,
   referenceCase,
@@ -119,6 +120,13 @@ describe.skipIf(origin === '')('test:comfy on the test server', () => {
   it(
     '3. MOSS-Image: a picture from a prompt (only with ADMAN_COMFY_MOSS=1)',
     runCase(pictureCase, PICTURE_LIMIT_MS),
+    PICTURE_LIMIT_MS + SPARE_MS,
+  )
+
+  // P4-9: run once (D-092); a second time only after a data fix to the workflow (A-57).
+  it(
+    '8. BiRefNet: a cut-out of the test-made picture (only with ADMAN_COMFY_CUTOUT=1)',
+    runCase(cutoutCase, PICTURE_LIMIT_MS, ['uploadImage']),
     PICTURE_LIMIT_MS + SPARE_MS,
   )
 })

@@ -20,7 +20,8 @@ export type ReferenceSlot = {
 }
 
 export type WorkflowSlots = {
-  prompt: Pointer
+  // P4-9: optional; a cut-out takes no prompt.
+  prompt?: Pointer
   seed: Pointer[]
   width?: Pointer
   height?: Pointer

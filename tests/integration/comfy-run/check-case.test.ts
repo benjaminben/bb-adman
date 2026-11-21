@@ -37,6 +37,7 @@ describe('test:comfy case 1, the check [SPEC 14 1.41 CU-5a, 1.45 B-1, 1.46]', ()
       'h3-image-to-video',
       'h3-reference-to-video',
       'flux3-klein-edit-references',
+      'birefnet-cutout',
     ])
   })
 

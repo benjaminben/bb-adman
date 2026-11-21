@@ -9,7 +9,8 @@ const PROMPT_ID = '6f1c2d3e-4b5a-4c6d-8e7f-90a1b2c3d4e5'
 function valuesFor(spec: WorkflowSpec, count: number): FillValues {
   const s = spec.slots
   return {
-    prompt: 'a test prompt',
+    // P4-9: only a workflow with a prompt slot takes one.
+    ...(s.prompt && { prompt: 'a test prompt' }),
     ...(s.width && { width: 1024, height: 1024 }),
     ...(s.references && { references: Array.from({ length: count }, (_, i) => `ref-${i}.png`) }),
     ...(s.firstFrame && { firstFrame: 'first.png' }),
@@ -22,7 +23,7 @@ function valuesFor(spec: WorkflowSpec, count: number): FillValues {
 function pointed(spec: WorkflowSpec): Pointer[] {
   const s = spec.slots
   return [
-    s.prompt,
+    ...(s.prompt ? [s.prompt] : []),
     ...s.seed,
     ...[s.width, s.height, s.firstFrame, s.frames, s.outputPrefix].filter(
       (p): p is Pointer => p !== undefined,
@@ -119,7 +120,8 @@ describe('fillWorkflow on the shipped files [SPEC 6.10.4, 14 1.39]', () => {
     },
   )
 
-  it.each(WORKFLOWS.map((w) => [w.id, w] as const))(
+  // P4-9: a workflow with no seed slot (the cut-out) has no seed to compare.
+  it.each(WORKFLOWS.filter((w) => w.slots.seed.length > 0).map((w) => [w.id, w] as const))(
     '%s: two fills give different seeds',
     (_, w) => {
       const all = w.slots.references?.length ?? 0

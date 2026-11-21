@@ -45,6 +45,7 @@ describe('comfy.check [SPEC 4.2, 6.10.3; FR-252]', () => {
       'h3-image-to-video',
       'h3-reference-to-video',
       'flux3-klein-edit-references',
+      'birefnet-cutout',
     ])
     // The stand-in is 0.3.40, lists one model file per folder and knows every node class.
     const model = (folder: string, name: string) => ({ what: 'model', name, folder })
@@ -98,6 +99,10 @@ describe('comfy.check [SPEC 4.2, 6.10.3; FR-252]', () => {
             model('text_encoders', 'qwen3vl_4b_int8_convrot.safetensors'),
             model('vae', 'flux2-vae.safetensors'),
           ],
+        },
+        {
+          id: 'birefnet-cutout',
+          missing: [model('background_removal', 'birefnet.safetensors')],
         },
       ],
     })

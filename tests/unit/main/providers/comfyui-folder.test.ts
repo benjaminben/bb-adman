@@ -25,7 +25,7 @@ const deps = {
 
 describe('the comfyui provider folder [SPEC 6, 14 CU-0]', () => {
   it('exports an adapters object that holds the image and video adapters', () => {
-    expect(Object.keys(adapters)).toEqual(['image', 'video'])
+    expect(Object.keys(adapters)).toEqual(['image', 'video', 'cutout'])
   })
 
   it.each(['video'] as const)(
