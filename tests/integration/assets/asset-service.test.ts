@@ -74,12 +74,16 @@ describe('AssetService.writeManaged [SPEC 14 contracts A and H, 3.1]', () => {
 
 describe('AssetService.resolve, read and missingAssetIds [SPEC 3.3 asset, FR-009]', () => {
   it('resolves a found file and reads its bytes and stored type', async () => {
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+      'base64',
+    )
     const file = path.join(root, 'pic.png')
-    fs.writeFileSync(file, Buffer.from([9, 8, 7]))
+    fs.writeFileSync(file, png)
     insertTestAsset(project.db, { id: ID, relPath: 'pic.png', absPath: '/nowhere/pic.png' })
     expect(await assets.resolve(project, ID)).toBe(file)
     const read = await assets.read(project, ID)
-    expect(read).toEqual({ bytes: new Uint8Array([9, 8, 7]), mime: 'image/png' })
+    expect(read).toEqual({ bytes: new Uint8Array(png), mime: 'image/png' })
     expect(await assets.missingAssetIds(project)).toEqual([])
   })
 

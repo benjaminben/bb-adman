@@ -7,6 +7,8 @@ import { readMeta } from '../db/meta'
 import { readWireRow, readWireRows } from '../db/rows'
 import { assetsDirFor, managedPath, resolveAssetFile } from './path-resolver'
 import { assetNotFound, missingFile } from './errors'
+import { notAPicture, readPicture } from './read-picture'
+import { MAX_PICTURE_BYTES } from '../providers/picture-limits'
 import type { AssetRow } from '../../shared/schemas/rows/asset'
 
 // SPEC 3.2: asset IDs are ULIDs. Extensions as in the asset.addGenerated schema. Both are
@@ -28,7 +30,10 @@ export function resolveRow(project: ProjectHandle, row: AssetRow): Promise<strin
   return resolveAssetFile(project.filePath, row)
 }
 
-export function createAssetService(): AssetService {
+// Only a test hands in another picture limit; core.ts calls this with no argument (SPEC 14
+// [1.27] R2).
+export function createAssetService(options: { maxPictureBytes?: number } = {}): AssetService {
+  const maxPictureBytes = options.maxPictureBytes ?? MAX_PICTURE_BYTES
   return {
     async missingAssetIds(project) {
       const rows = readWireRows(project.db, 'asset') as AssetRow[]
@@ -51,9 +56,10 @@ export function createAssetService(): AssetService {
     },
     async read(project, assetId) {
       const row = assetRow(project, assetId)
+      if (row.kind !== 'image') throw notAPicture(row.displayName)
       const file = await resolveRow(project, row)
       if (file === 'missing') throw missingFile([assetId])
-      return { bytes: new Uint8Array(await fs.promises.readFile(file)), mime: row.mime }
+      return readPicture(file, row.displayName, maxPictureBytes)
     },
   }
 }
