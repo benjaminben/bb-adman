@@ -191,9 +191,6 @@ export const CASES: SceneCase[] = [
     name: 'overlay-only',
     title: 'overlay-only mode is transparent where only the background was',
     mode: 'overlay-only',
-    fixme:
-      'The render window is not made transparent, so an overlay-only draw comes out on an ' +
-      'opaque white page instead of see-through (render-window.ts, renderWindowOptions).',
     background: (a) => ({ source: { assetId: a.bands } }),
     layers: () => [
       text('Over video', box(20, 160, 360, 80), {

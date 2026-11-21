@@ -14,6 +14,7 @@ describe('render window settings [P3-6]', () => {
         frame: false,
         useContentSize: true,
         paintWhenInitiallyHidden: true,
+        transparent: true,
         webPreferences: {
           preload: '/app/out/preload/render.cjs',
           contextIsolation: true,
