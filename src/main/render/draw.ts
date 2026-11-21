@@ -3,7 +3,6 @@
 import { ipcMain, type IpcMainEvent } from 'electron'
 import { ulid } from 'ulid'
 import type { DrawScene, DrawResult } from '@/main/thumbnails/types'
-import type { SceneInput } from '@/shared/scene/types'
 import { RENDER_LIMITS } from '@/shared/config/render'
 import { RENDER_CHANNELS, RenderRequest } from '@/shared/schemas/render'
 import { acceptDone, type DoneExpectation } from './done-message'
@@ -74,8 +73,10 @@ export function createDraw(): DrawScene {
   }
 
   let queue: Promise<unknown> = Promise.resolve()
-  return (input: SceneInput, size: { width: number; height: number }) => {
-    const parsed = RenderRequest.safeParse({ requestId: ulid(), input, ...size })
+  return (input, size, view) => {
+    // view (P8-3) is sent only when given, so a draw without it is the request it always was.
+    const request = { requestId: ulid(), input, ...size, ...(view ? { view } : {}) }
+    const parsed = RenderRequest.safeParse(request)
     if (!parsed.success) return Promise.reject(new DrawFailure('error'))
     // One draw at a time: the window has one size and one page.
     const run = queue.then(() => limited(parsed.data))
