@@ -23,6 +23,7 @@ export default defineConfig({
             'tests/unit/shared/**/*.test.ts',
             'tests/unit/config/**/*.test.ts',
             'tests/unit/preload/**/*.test.ts',
+            'tests/unit/live/**/*.test.ts',
             'tests/integration/**/*.test.ts',
           ],
         },
