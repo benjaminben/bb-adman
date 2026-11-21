@@ -66,6 +66,10 @@ describe('versionAtLeast and MIN_TARGETED_INTERRUPT [SPEC 6.10.14]', () => {
     expect(versionAtLeast('', MIN_TARGETED_INTERRUPT)).toBe(false)
     expect(versionAtLeast('unknown', MIN_TARGETED_INTERRUPT)).toBe(false)
   })
+
+  it('counts 0.3.68, the real ComfyUI form, as below 0.30.0 [review CU-5a item 4]', () => {
+    expect(versionAtLeast('0.3.68', MIN_TARGETED_INTERRUPT)).toBe(false)
+  })
 })
 
 describe('a run that runs out of time [SPEC 6.10.12, 6.10.14; review CU-5a item 1]', () => {

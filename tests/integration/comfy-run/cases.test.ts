@@ -167,6 +167,27 @@ describe("a case hands its own check's version to the time-out rule [review CU-5
       { name: 'interrupt', arg: ID },
     ])
   })
+
+  // Case 5 here: Flux has no minimum version, so the check at 0.3.68 finds nothing missing.
+  it('sends no interrupt on time-out when its own check read 0.3.68 [review CU-5a item 4]', async () => {
+    const { s, kit } = await setUp()
+    complete(s, flux3KleinEditReferences, { body: Buffer.from(makeTestPicture()) })
+    s.reply('GET /system_stats', { json: { system: { comfyui_version: '0.3.68' }, devices: [] } })
+    s.reply(`GET /history/${ID}`, { json: {} })
+    s.reply(`GET /api/jobs/${ID}`, { json: { status: 'in_progress' } })
+    let at = 0
+    kit.timing = {
+      pollMs: 2_000,
+      limitMs: 10_000,
+      now: () => at,
+      sleep: async (ms) => {
+        at += ms
+      },
+    }
+    await expect(referenceCase(kit)).rejects.toThrow('not interrupted')
+    const posts = s.seen.filter((r) => r.method === 'POST').map((r) => r.path)
+    expect(posts).toEqual(['/upload/image', '/prompt', '/queue'])
+  })
 })
 
 describe('case 2, the H3 video [SPEC 14 1.41]', () => {
