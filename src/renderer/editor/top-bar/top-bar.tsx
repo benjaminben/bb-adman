@@ -1,8 +1,9 @@
 // spec/editor.md, "Top bar": the title with Rename, the Master mark, the size line, and Undo
 // and Redo for the variant's own list [FR-095]. Mod+Z and Mod+Shift+Z press the same buttons.
 // P4-16 (spec/screens-ai.md, "Place text with AI"): "Place text with AI…", disabled with its
-// hint when no visible text layer has copy.
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+// hint when no visible text layer has copy, and disabled while its run for the variant is going.
+// LK-6 ("Layout…"): a slot after it for the layout button.
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import { NO_TEXT_HINT } from '@/renderer/editor/layout-run'
 import { useEditorKey } from '@/renderer/editor/use-editor-key'
@@ -18,6 +19,8 @@ export type TopBarProps = {
   onRename: (title: string) => Promise<boolean>
   canPlaceText: boolean
   onPlaceText: () => void
+  placing?: boolean
+  layout?: ReactNode
 }
 
 export function sizeLine(v: VariantSummary): string {
@@ -83,7 +86,7 @@ export function TopBar(props: TopBarProps) {
       <div className={styles.actions}>
         <button
           type="button"
-          disabled={!props.canPlaceText}
+          disabled={!props.canPlaceText || props.placing}
           aria-describedby={props.canPlaceText ? undefined : hintId}
           onClick={props.onPlaceText}
         >
@@ -94,6 +97,7 @@ export function TopBar(props: TopBarProps) {
             {NO_TEXT_HINT}
           </span>
         )}
+        {props.layout}
         <button type="button" disabled={!props.canUndo} onClick={props.onUndo}>
           Undo
         </button>

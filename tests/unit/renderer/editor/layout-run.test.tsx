@@ -86,6 +86,14 @@ describe('Place text with AI [spec/screens-ai.md "Place text with AI", P4-16]', 
     expect(await axeViolations()).toEqual([])
   })
 
+  it('is disabled while the run it started is going, and enabled again when it ends', async () => {
+    const { fake } = await open()
+    await start(fake)
+    expect(screen.getByRole('button', { name: BUTTON })).toBeDisabled()
+    fake.emit('job.updated', row('succeeded'))
+    await waitFor(() => expect(screen.getByRole('button', { name: BUTTON })).toBeEnabled())
+  })
+
   it('Cancel in the dialog sends nothing', async () => {
     const { fake } = await open()
     await userEvent.click(screen.getByRole('button', { name: BUTTON }))

@@ -162,6 +162,7 @@ export function useLayoutRun(projectId: string, variantId: string, layers: Layer
 
   return {
     canPlace: canPlaceText(layers),
+    running: jobId !== null,
     onPlace: () => setOpen(true),
     dialog: { open, onConfirm: confirm, onCancel: () => setOpen(false) },
     line,
