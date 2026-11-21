@@ -165,6 +165,23 @@ describe('Crop mode: the crop [FR-077, FR-094]', () => {
     expect(updates(fake)).toEqual([])
   })
 
+  it('"Done" with the crop the layer already has sends nothing', async () => {
+    const crop = { x: 0, y: 0, width: 2000, height: 1000 }
+    const { fake, canvas, stage } = await open(reply({ geometry: { ...PHOTO.geometry, crop } }))
+    await enter(canvas, stage)
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }))
+    expect(canvas.querySelector('[data-crop-picture]')).toBeNull()
+    expect(updates(fake)).toEqual([])
+  })
+
+  it('selecting another layer leaves crop mode and sends nothing', async () => {
+    const { fake, canvas, stage } = await open()
+    await enter(canvas, stage)
+    await userEvent.click(screen.getByRole('button', { name: /^Headline/ }))
+    await waitFor(() => expect(canvas.querySelector('[data-crop-picture]')).toBeNull())
+    expect(updates(fake)).toEqual([])
+  })
+
   it('a turned layer is cropped in its own turned frame', async () => {
     const { fake, canvas, stage } = await open(
       reply({ geometry: { ...PHOTO.geometry, rotation: 90 } }),
