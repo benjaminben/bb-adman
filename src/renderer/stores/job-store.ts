@@ -46,6 +46,13 @@ function newestFirst(rows: JobRow[]): JobRow[] {
   )
 }
 
+// F-10: a late job.list reply cannot turn a finished run back to "Working". The store's own row
+// is kept when it is as late as the reply's or later.
+function laterOf(held: JobRow[], row: JobRow): JobRow {
+  const mine = held.find((r) => r.id === row.id)
+  return mine && mine.updatedAt >= row.updatedAt ? mine : row
+}
+
 export function createJobStore(deps: JobStoreDeps, projectId: string): JobStore {
   const tracked = new Set<string>()
   const seenSent = new Set<string>()
@@ -60,7 +67,7 @@ export function createJobStore(deps: JobStoreDeps, projectId: string): JobStore 
       if (variantId !== get().variantId) set({ rows: [], variantId })
       const result = await deps.api.query('job.list', { projectId, variantId })
       if (read !== reads || !result.ok) return
-      set({ rows: newestFirst(result.data as JobRow[]) })
+      set({ rows: newestFirst((result.data as JobRow[]).map((row) => laterOf(get().rows, row))) })
     },
 
     apply(row) {

@@ -85,9 +85,7 @@ function pngOf(run: Run, result: ImageResult): Uint8Array {
 async function store(run: Run, png: Uint8Array, model: string): Promise<Outcome> {
   const { jc, job, project } = run
   const assetId = ulid()
-  if (jc.cancelled()) return 'stopped'
   await jc.deps.assets.writeManaged(project, { assetId, ext: 'png', bytes: png })
-  if (jc.cancelled()) return 'stopped'
   const files = [{ assetId, ext: 'png' }]
   // [1.58] J-13, J-14: the asset row keeps the model the result names, as the PNG does.
   const added = await jc.system('asset.addGenerated', {
@@ -102,6 +100,8 @@ async function store(run: Run, png: Uint8Array, model: string): Promise<Outcome>
   return 'stored'
 }
 
+// FN-3, SPEC 6.11.2: a call not yet sent is skipped after a stop. Once an answer is in hand it
+// was paid for, so it is converted and stored whatever the stop state.
 async function onePicture(run: Run): Promise<Outcome> {
   if (run.jc.cancelled()) return 'stopped'
   let result: ImageResult
@@ -112,7 +112,6 @@ async function onePicture(run: Run): Promise<Outcome> {
     if (e instanceof ProviderCancelled) return 'stopped'
     throw e
   }
-  if (run.jc.cancelled()) return 'stopped'
   let png: Uint8Array
   try {
     png = pngOf(run, result)
@@ -179,7 +178,10 @@ async function runImageJob(
     firstFailure: null,
   }
   const outcomes = await allPictures(run, request.count)
-  // SPEC 6.11.1 handler rule: after a stop, keep what arrived and end with ProviderCancelled.
+  // SPEC 6.11.1 handler rule, FN-3 ruling for the mixed case: when some pictures were never
+  // sent (or the provider confirmed the stop), the job ends cancelled and keeps the pictures
+  // that arrived. When every asked picture arrived after a stop, the handler returns and the
+  // job ends succeeded with finishedAfterCancel (job-end.ts).
   if (outcomes.includes('stopped')) {
     jc.keep(soFar(run))
     throw new ProviderCancelled()

@@ -199,3 +199,17 @@ describe('brief.parse input [SPEC 4.2]', () => {
     expect(result).toMatchObject({ ok: false, error: { code: 'AGENT_DENIED' } })
   })
 })
+
+describe('brief.parse refuses a relative path [F-2]', () => {
+  it('gives INVALID_INPUT for a relative path to a brief that exists, and parses the absolute one', async () => {
+    const filePath = write('b.json', JSON_BRIEF)
+    const relative = path.relative(process.cwd(), filePath)
+    expect(fs.existsSync(relative)).toBe(true)
+    const error = await expectRefused(bus, () => parse({ filePath: relative }), 'INVALID_INPUT')
+    expect(error).toMatchObject({ message: 'The file path must be absolute.' })
+    expect(await parse({ filePath })).toEqual({
+      ok: true,
+      data: { draft: DRAFT, primaryLanguage: 'de' },
+    })
+  })
+})
