@@ -74,7 +74,7 @@ Wire fields `startedBy` and `errorReason` on `JobRow`. A failed job's missing it
 
 - **Local providers are never counted** [REQ: FR-257; D-051 answer 14]. The runner counts a call unless the provider's `local` is exactly `true`. A job whose provider is not in the registry is counted: when in doubt the count goes up, never down.
 - The count is added just before the call is handed to the adapter. A call that fails stays counted, and so does a call the adapter refuses before anything leaves the computer. `paid_calls` is "calls the job tried to send": it can be higher than what the provider charged and is never lower than what was sent.
-- No call is counted once a cancel was asked for, because none is sent: `jc.call` throws `ProviderCancelled` and does not run its function after a stop was asked or when the job's project is not open.
+- No call is counted once a cancel was asked for, because none is sent: `jc.call` throws `ProviderCancelled` and does not run its function after a stop was asked or when the job's project is not open. Calls already sent stay counted, including those of a running Gemini picture job that was cancelled and still finish.
 
 ### Runner context for cancel
 
@@ -133,11 +133,14 @@ The provider is asked to stop, and the job says what really happened. Refusals a
 | Ended (any status other than `queued` or `running`) | Refused: `RULE_VIOLATION`, reason `job_wrong_state`, "This job has already ended." |
 | `queued`, nothing sent | `cancelled` at once. Every provider. |
 | `running`, provider `cancel` is `stops` or `may_finish` | The runner writes `result.cancelAsked = true` (the window shows "Stopping…"), fires the job's signal and starts the provider's wait. For a video job the handler then calls `cancel(remoteJobId)`. Then the outcome table below. |
-| `running`, a background job, provider `cancel` is `none` | Refused: `RULE_VIOLATION`, reason `cancel_not_supported`, "{Provider} cannot stop a request once it is sent." The window shows no cancel action for such a job [REQ: FR-281]. |
+| `running`, an `image_generation` job, provider `cancel` is `none` (Gemini) | Accepted. The runner writes `result.cancelAsked = true` and fires the signal, with no wait: no further call is sent, the calls in flight finish under the adapter's own time limit and stay counted, and the pictures they bring are kept. The end follows "Pictures" below. |
+| `running`, any other background job, provider `cancel` is `none` | Refused: `RULE_VIOLATION`, reason `cancel_not_supported`, "{Provider} cannot stop a request once it is sent." [REQ: FR-281] |
 | `running`, an attached job (`spec/jobs.md`) | The app stops waiting and applies nothing [D-036]. This is not a provider cancel. Calls already sent stay counted. |
 | Not in the project, or a row that cannot be read | `NOT_FOUND` "That job is not in this project." (an unreadable row may give `INTERNAL`) |
 
 A job already asked to stop is not asked again.
+
+The window offers Cancel exactly when `cancelRefusal` accepts: `cancelShown(row, provider)` in `src/renderer/screens/campaign/run-row/cancel-shown.ts`, held to the same answer for every kind, status and provider by `tests/unit/main/jobs/cancel-shown.test.ts`.
 
 | Outcome | Job ends as | Shown |
 |---------|-------------|-------|
@@ -151,7 +154,7 @@ A job already asked to stop is not asked again.
 
 ### How the runner learns the outcome
 
-One way, for pictures and video. The runner fires the job's signal and starts one timer. It never calls an adapter.
+One way, for pictures and video. The runner fires the job's signal and starts one timer (none for a provider whose `cancel` is `none`). It never calls an adapter.
 
 | What the job kind handler does after the signal | Outcome |
 |--------------------------------------------------|---------|
@@ -168,6 +171,7 @@ One way, for pictures and video. The runner fires the job's signal and starts on
   | `comfyui` | 60 s | |
   | `fal-seedance` | 10 minutes | |
   | `fake` | 5 s | It answers at once. A short wait lets the hand-test screen show "did not confirm" without a long pause |
+  | A provider whose `cancel` is `none` (`gemini`) | None | `askToStop` starts no timer: the picture job ends when its calls in flight end |
   | Any other | 60 s | Reached only by a provider added later whose `cancel` is not `none` |
 
   The runner options `cancelWaitMs` and `closeWaitMs` let tests hand in short waits; when left out, the runner uses this table and `CLOSE_WAIT_MS`. `core.ts` leaves them out. The runner fixture (`tests/integration/jobs/runner-fixture.ts`) defaults `cancelWaitMs` to 2,000 and `closeWaitMs` to 50.
@@ -201,14 +205,14 @@ Not built (slice J). The registry row exists with `available: false`.
   - `queued`, nothing sent: cancelled at once.
   - A request still in the provider's queue: the queue cancel.
   - A request the provider has started (`result.stage` is `working`) is not asked to stop. `job.cancel` is refused: `RULE_VIOLATION`, reason `cancel_would_still_charge`, "{Provider} has started this and will charge for it. The app lets it finish and keeps the result."
-  - The rule lives in `cancelRefusal`. A cancel crossing with the start is `finished`, kept.
+  - Not built: `cancelRefusal` has no `cancel_would_still_charge` rule yet; slice J adds it there (and to `cancelShown`). A cancel crossing with the start is `finished`, kept.
 - Slice J checks U-25 (does fal charge for a cancelled started request). What closing a project does with such a job is ruled when slice J is designed (OI-60 part 2: whether fal charges for a started request that is cancelled; OI-51: closing a project while a paid request that cannot be stopped is out).
 
 ### Gemini
 
 Built (no cancel). `cancel: 'none'`.
 
-- A running Gemini job cannot be cancelled: `cancel_not_supported`. A queued one can.
+- A queued Gemini job can be cancelled. A running picture job can too: no further call is sent, the calls in flight finish and their pictures are kept, and the job ends as "Pictures" says (`cancelled` with the pictures that arrived, or `succeeded` with `finishedAfterCancel` when all arrived). There is no cancel wait. Any other running background Gemini job is refused with `cancel_not_supported`.
 - The adapter does not honour `opts.signal`; it has its own time limit only. If a way to cancel is verified later (L-4), `cancel` in `registry.ts` changes and the adapter honours `opts.signal`; nothing else changes.
 
 ### The fake provider

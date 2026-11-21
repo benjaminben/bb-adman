@@ -14,11 +14,14 @@ import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'
 import { LENGTH_PROBLEM, START_SECONDS, typedSeconds, useComfyInfo } from './video-length'
 import { VideoPictureChoice } from '@/renderer/screens/campaign/video-picture-choice'
 import {
+  STARTS,
   maxMsFor,
   offeredStarts,
   startFields,
   type StartId,
 } from '@/renderer/screens/campaign/video-start'
+import { ProviderSelect } from '@/renderer/screens/campaign/provider-select'
+import { offeredFor } from '@/renderer/screens/campaign/offered-workflow'
 import layout from '@/renderer/ui/layout.module.css'
 
 export function VideoPanel(props: {
@@ -49,6 +52,8 @@ export function VideoPanel(props: {
   // A start no longer offered (another provider, another list) falls back to the prompt.
   const startId = starts.some((s) => s.id === chosenStart) ? chosenStart : 'prompt'
   const fromPicture = startId !== 'prompt'
+  const pair = STARTS.find((s) => s.id === startId)?.pair
+  const trial = providerId === 'comfyui' && offeredFor(info, 'video', pair)?.status === 'trial'
   const maxMs = providerId === 'comfyui' ? maxMsFor(info, startId) : null
   const maxSeconds = maxMs === null ? null : Math.floor(maxMs / 1000)
   const seconds = typedSeconds(length)
@@ -88,16 +93,13 @@ export function VideoPanel(props: {
       {providers.length === 0 ? (
         <p className={layout.muted}>No video provider is available.</p>
       ) : (
-        <label className={layout.field}>
-          Provider
-          <select value={providerId} onChange={(e) => setProviderId(e.target.value)}>
-            {providers.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <ProviderSelect
+          label="Provider"
+          providers={providers}
+          value={providerId}
+          onChange={setProviderId}
+          trial={trial}
+        />
       )}
       {/* The label does not wrap the select, so its name is not "Start from A prompt …". */}
       <div className={layout.field}>

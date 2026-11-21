@@ -128,7 +128,7 @@ Built unless marked.
 | `job.cancel`: the job is not queued or running | `RULE_VIOLATION` | `job_wrong_state` | "This job has already ended." |
 | `job.retry`: the job did not fail and was not cancelled, or its row has no provider | `RULE_VIOLATION` | `job_wrong_state` | "Only a job that failed or was cancelled can be tried again." |
 | `job.markSeen`: a named job has not succeeded | `RULE_VIOLATION` | `job_wrong_state` | "Only a job that succeeded can be marked as seen." |
-| `job.cancel`: a running background job whose provider cannot cancel (`spec/cancel.md`) | `RULE_VIOLATION` | `cancel_not_supported` | "{Provider} cannot stop a request once it is sent." |
+| `job.cancel`: a running background job other than `image_generation` whose provider cannot cancel (`spec/cancel.md`) | `RULE_VIOLATION` | `cancel_not_supported` | "{Provider} cannot stop a request once it is sent." |
 | `job.cancel`: a paid request the provider has started and will charge for. Not built (slice J). | `RULE_VIOLATION` | `cancel_would_still_charge` | "{Provider} has started this and will charge for it. The app lets it finish and keeps the result." |
 | `settings.update`: an S3 region in China | `INVALID_INPUT` | `storage_not_supported` | "Amazon S3 regions in China are not supported in this build." |
 | `settings.update`: a value that is not an Amazon region name | `INVALID_INPUT` | `storage_not_supported` | "That is not an Amazon S3 region. Storage services that copy S3 are not supported in this build." |
@@ -146,7 +146,7 @@ Built unless marked.
 | A ComfyUI picture run with no offered workflow [REQ: FR-254] | `RULE_VIOLATION` | `comfy_job_not_offered` | "ComfyUI cannot make this kind of picture yet." |
 | A ComfyUI video run with no offered workflow for its start pair, or `first_frame` with `useReferences` true | `RULE_VIOLATION` | `comfy_job_not_offered` | "ComfyUI cannot make this kind of video yet." |
 | More references than the chosen workflow takes. `details.max`. | `RULE_VIOLATION` | `too_many_references` | "ComfyUI takes one reference picture for this run." when `max` is 1, else "ComfyUI takes at most {max} reference pictures for this run." (`src/shared/providers/messages.ts`) |
-| A ComfyUI run, or a retry of one, whose workflow's model needs a commercial licence, with no `licenceConfirmed: true` from the user and the model not in `settings.licenceConfirmed`. `details.workflow`. Not built (S2-4). | `INVALID_INPUT` | `licence_not_confirmed` | "{model} requires a commercial license. Confirm that you have one first." (`src/shared/providers/messages.ts`) |
+| A ComfyUI run, or a retry of one, whose workflow's model needs a commercial licence, with no `licenceConfirmed: true` from the user and the model not in `settings.licenceConfirmed`. `details.workflow`. Checked in `src/main/commands/generation/licence-check.ts`, after the workflow is chosen and before any job row. | `INVALID_INPUT` | `licence_not_confirmed` | "{model} requires a commercial license. Confirm that you have one first." (`src/shared/providers/messages.ts`) |
 | A clip longer than the workflow makes. `details.maxMs`. | `RULE_VIOLATION` | `video_too_long` | "ComfyUI makes clips of at most {maxMs / 1000} seconds with this workflow." |
 | `generation.startVideo`, `job.retry` of a video: the start picture is not an image asset of type PNG or JPEG | `RULE_VIOLATION` | `picture_not_usable` | "This picture cannot be used for a video yet. Use a PNG or JPEG." |
 | `agentRuns.setAllowed`: a provider `agentRunsOffered` refuses. | `RULE_VIOLATION` | `agent_runs_not_offered` | "Agents cannot start runs with {Provider}." |
@@ -212,7 +212,7 @@ Built. `src/main/providers/require-keys.ts`; window half in the key dialog. [REQ
 - **Window half.** On `NEEDS_KEY` the window opens the key dialog for `details.provider`, saves what the user types with `secret.set`, and sends the same command again. It learns which secret names the provider needs from `app.getState`.
 - **Test.** An integration test with the real registry and secrets store: `gemini` with nothing saved gives `NEEDS_KEY` with `details.provider = 'gemini'`; after `secret.set` of `gemini.apiKey` it passes; `s3` with one of its two secrets saved gives `NEEDS_KEY`; `fake` passes. Through the bus, a test-only command whose handler calls the guard returns an ordinary `{ ok: false }` with code `NEEDS_KEY` (not `INTERNAL`), writes a log line with `errorKind: 'NEEDS_KEY'`, and succeeds when sent again after `secret.set`.
 
-The same retry pattern serves `comfy_address_needed`: the window opens the address dialog, saves with `comfy.setAddress` and sends the command again. An agent just gets the refusal.
+The same retry pattern serves `comfy_address_needed` (the address dialog saves with `comfy.setAddress`, then the command is sent again) and `licence_not_confirmed` (the licence dialog; the command is sent again with `licenceConfirmed: true`), for the three run commands only. Each kind of dialog is asked at most once per call (`src/renderer/stores/app-store.ts`, `run-asks.ts`; `spec/screens-campaign.md`). An agent just gets the refusal.
 
 ## Undo and redo
 

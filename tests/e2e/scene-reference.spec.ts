@@ -106,6 +106,12 @@ test.describe('Phase 3 cases, one app for all', () => {
       timeMs: 0,
       mode: 'overlay-only',
     }
+    // The app draws a thumbnail of each variant about a second after its last change, in the
+    // same window. Let those draws finish first: this one goes round the app's own queue.
+    await page.waitForTimeout(1200)
+    await expect
+      .poll(async () => (await query(page, 'thumbnail.get', { projectId, variantId })).state)
+      .toBe('ready')
     return drawInRenderWindow(app, {
       requestId: `overlay-${variantId}`,
       input,

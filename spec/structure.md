@@ -217,10 +217,10 @@ Built. Every renderer component sits in its own folder.
 
 ### One styling source
 
-Built [D-084]. `src/renderer/ui/tokens.css` is the one source of every colour, space, radius, line width, type size and layout width in the renderer, so one edit there restyles every component.
+Built [D-084]. `src/renderer/ui/tokens.css` is the one source of every colour, space, radius, line width, type size, opacity and layout width in the renderer, so one edit there restyles every component.
 
-- **Tokens.** Colours `--color-bg`, `--color-surface`, `--color-border`, `--color-text`, `--color-text-muted`, `--color-accent`, `--color-accent-text`, `--color-danger-bg`, `--color-danger-text`, `--color-focus`, `--color-overlay`; `--radius`; `--border-width`, `--focus-ring-width`, `--focus-ring-offset`; spaces `--space-1` to `--space-4` and `--space-6`; fonts `--font-body`, `--font-mono`; type sizes `--font-size-body`, `--font-size-heading`; widths `--width-page`, `--width-column-min`, `--width-dialog`. Text colours keep 4.5:1 contrast.
-- `base.css` gives `pre` and `code` the font `var(--font-mono)`, and draws every focus ring from the focus tokens.
+- **Tokens.** Colours `--color-bg`, `--color-surface`, `--color-border`, `--color-text`, `--color-text-muted`, `--color-accent`, `--color-accent-text`, `--color-danger-bg`, `--color-danger-text`, `--color-focus`, `--color-overlay`; `--opacity-disabled`; `--radius`; `--border-width`, `--focus-ring-width`, `--focus-ring-offset`; spaces `--space-1` to `--space-4` and `--space-6`; fonts `--font-body`, `--font-mono`; type sizes `--font-size-small`, `--font-size-body`, `--font-size-heading`; widths `--width-page`, `--width-column-min`, `--width-dialog`; and the Phase 3 tokens listed in `spec/screens.md`. Text colours keep 4.5:1 contrast; a disabled control is exempt.
+- `base.css` gives `pre` and `code` the font `var(--font-mono)`, draws every focus ring from the focus tokens, and draws a disabled button, input or select at `var(--opacity-disabled)`, so a disabled control looks disabled.
 - **Test:** `tests/unit/renderer/ui/styling-source.test.ts` reads every `.css` file under `src/renderer/` other than `tokens.css`. It fails on a hex, `rgb` or `hsl` colour, on a `px` length other than 0, on a `var(--x)` that `tokens.css` does not define, and when a required token above (the type sizes, mono font, overlay colour, line widths, layout widths) is missing. A rule that truly needs a literal names it in the test's allow-list with a reason. The one entry: `1px` in `screens/settings/key-row/key-row.module.css`, for the visually hidden label.
 - The Scene draws the ad, not the app, and takes no token (`spec/scene.md`).
 
@@ -237,31 +237,42 @@ src/renderer/
 │   ├── start/          start-screen/, new-project-form/, recent-projects/
 │   ├── settings/       settings-screen/, location-setting/, provider-defaults/, keys-section/, key-row/,
 │   │                   comfy-section/, comfy-check-result/, mcp-section/, connect-panel/,
-│   │                   agent-runs-section/
-│   ├── project-home/   project-home/ [use-project.ts], brief-load/, brief-summary/, campaign-list/,
-│   │                   import-files/, missing-files/, package-project/, drop-import/,
-│   │                   campaign-input.ts
-│   └── campaign/       campaign-view/, variant-list/, generate-panel/, reference-picker/, paid-confirm/,
-│                       video-panel/ [video-length.ts], video-picture-choice/, video-result/,
-│                       run-list/, run-row/ [video-status.ts], run-result/, slot-view/,
-│                       reference-list.ts, video-start.ts, use-comfy-info.ts
-├── dialogs/        key-dialog/
+│   │                   agent-runs-section/, licence-list/
+│   ├── project-home/   project-home/ [use-project.ts], brief-load/, campaign-list/,
+│   │                   brief-form/ [campaign-fields.tsx, language-field.tsx], subject-rows/,
+│   │                   size-fields/, rule-fields/ [word-lists.tsx], import-files/, missing-files/,
+│   │                   package-project/, drop-import/ [use-file-drop.ts], campaign-input.ts,
+│   │                   brief-form-model.ts, brief-form-problems.ts, brief-form-sizes.ts
+│   └── campaign/       campaign-view/, variant-grid/, variant-tile/ [badge-words.ts], slot-view/ [use-slots.ts],
+│                       generate-panel/, provider-select/, reference-picker/, paid-confirm/,
+│                       video-panel/ [video-length.ts], video-picture-choice/, video-result/, run-list/,
+│                       run-row/ [video-status.ts, cancel-shown.ts], run-failure/ [missing-items.ts,
+│                       server-message.tsx], run-result/, reference-list.ts, video-start.ts,
+│                       use-comfy-info.ts, offered-workflow.ts
+├── dialogs/        key-dialog/, address-dialog/, licence-dialog/ [licence-choices.tsx],
+│                   import-dialog/ [import-choices.tsx, import-text.ts], relink-dialog/ [relink-body.tsx,
+│                   missing-row.tsx, use-missing-assets.ts], package-dialog/ [package-body.tsx,
+│                   use-package.ts, file-size.ts]
 ├── dev/            hand-test-screen/, s3-settings-form/, storage-actions/, dropbox-sign-in/, result-text.ts
-├── stores/         app-store.ts, project-store.ts, job-store.ts
+├── stores/         app-store.ts, project-store.ts, job-store.ts, run-asks.ts
 └── ui/             tokens.css, base.css, layout.module.css, asset-url.ts, secret-labels.ts, shortcuts.ts,
                     comfy-privacy.ts, missing-item-text.ts, dropped-paths.ts, dialog-frame/
 ```
 
-`import-files/`, `missing-files/`, `package-project/`, `drop-import/` and `slot-view/` are mounted and draw nothing yet; their slices fill them (`spec/phases/phase-02-screens.md`).
+The Phase 2 campaign screens and dialogs are described in `spec/screens-campaign.md`.
 
-Components with their own CSS module: `app-shell`, `error-banner`, `key-dialog`, `start-screen`, `recent-projects`, `project-home`, `video-result`, `connect-panel`, `key-row`, `dialog-frame`, `render-root`.
+Components with their own CSS module (outside `editor/`): `app-shell`, `error-banner`, `key-dialog`, `address-dialog`, `licence-dialog`, `import-dialog`, `relink-dialog`, `package-dialog`, `start-screen`, `recent-projects`, `project-home`, `brief-form`, `subject-rows`, `size-fields`, `rule-fields`, `missing-files`, `drop-import`, `campaign-view`, `variant-grid`, `variant-tile`, `slot-view`, `provider-select`, `run-failure`, `video-result`, `connect-panel`, `key-row`, `licence-list`, `dialog-frame`, `render-root`.
 
 Why each helper sits where it does (who imports it):
 
 | Helper | Imported by | Place |
 |--------|-------------|-------|
 | `use-project.ts` | `project-home.tsx` | inside `project-home/` |
-| `campaign-input.ts` | `brief-load.tsx`, `brief-summary.tsx` | plain file in `screens/project-home/` |
+| `campaign-input.ts` | `brief-form-model.ts`, `brief-form-problems.ts` (`briefSubjectIds`) | plain file in `screens/project-home/` |
+| `brief-form-model.ts`, `brief-form-problems.ts`, `brief-form-sizes.ts` | `brief-load/`, `brief-form/`, `subject-rows/`, `size-fields/`, `rule-fields/` | plain files in `screens/project-home/` |
+| `offered-workflow.ts` | the two panels' trial mark | plain file in `screens/campaign/` |
+| `cancel-shown.ts` | `run-row.tsx` | inside `run-row/` |
+| `run-asks.ts` | `app-store.ts` | `stores/` |
 | `reference-list.ts` | `reference-picker.tsx`, `video-picture-choice.tsx` | plain file in `screens/campaign/` |
 | `video-start.ts` | `video-panel.tsx`, `video-picture-choice.tsx` | plain file in `screens/campaign/` |
 | `video-length.ts` | `video-panel.tsx` | inside `video-panel/` |
@@ -269,9 +280,9 @@ Why each helper sits where it does (who imports it):
 | `result-text.ts` | three `dev/` components | plain file in `dev/` |
 | `asset-url.ts` | four campaign components | `ui/` (shared by several components) |
 | `secret-labels.ts` | `key-row.tsx` (settings), `key-dialog.tsx` (dialogs) | `ui/` |
-| `use-comfy-info.ts` | `video-length.ts`; later the panels' trial mark and the run row | plain file in `screens/campaign/` |
-| `comfy-privacy.ts` | `comfy-section.tsx`; later the address dialog | `ui/` |
-| `missing-item-text.ts` | `comfy-check-result.tsx`; later the run row | `ui/` |
-| `dropped-paths.ts` | the drop target (S2-10) | `ui/` (the one reader of `window.drop`) |
+| `use-comfy-info.ts` | `video-length.ts`, the panels' trial mark, the run failure | plain file in `screens/campaign/` |
+| `comfy-privacy.ts` | `comfy-section.tsx`, the address dialog | `ui/` |
+| `missing-item-text.ts` | `comfy-check-result.tsx`, the run failure | `ui/` |
+| `dropped-paths.ts` | the drop target | `ui/` (the one reader of `window.drop`) |
 
 `key-row`, `comfy-check-result`, `connect-panel`, `video-picture-choice`, `video-result` and `run-result` are each imported by one other component, but since another file imports them they get their own folders, as the stakeholder's tree does for `key-row` and `comfy-check-result`.

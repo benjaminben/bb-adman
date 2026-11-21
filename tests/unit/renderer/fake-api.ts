@@ -26,6 +26,7 @@ export function baseState(overrides: Partial<AppState> = {}): AppState {
       comfyui: { baseUrl: null },
       agentRuns: {},
       agentRunLimit: 4,
+      licenceConfirmed: [],
     },
     recentProjects: [],
     openProjects: [],

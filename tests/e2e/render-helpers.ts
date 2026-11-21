@@ -137,6 +137,7 @@ export async function drawInRenderWindow(
     await new Promise<void>((resolve, reject) => {
       const stop = (error?: Error) => {
         clearTimeout(timer)
+        clearInterval(again)
         ipcMain.removeListener('adman:render-done', heard)
         win.removeListener('closed', closed)
         if (error) reject(error)
@@ -151,9 +152,13 @@ export async function drawInRenderWindow(
         () => stop(new Error('The draw gave no answer in 20 seconds.')),
         20000,
       )
+      // The page draws only the newest request. A draw of the app's own that arrives just after
+      // this one replaces it, so the request is sent again until it is answered.
+      const send = () => win.webContents.send('adman:render-request', req)
+      const again = setInterval(send, 3000)
       ipcMain.on('adman:render-done', heard)
       win.once('closed', closed)
-      win.webContents.send('adman:render-request', req)
+      send()
     })
     const image = await win.webContents.capturePage()
     return image.toPNG().toString('base64')

@@ -19,5 +19,6 @@ export function defaultSettings(documentsDir: string): Settings {
     comfyui: { baseUrl: null },
     agentRuns: {},
     agentRunLimit: AGENT_MAX_ACTIVE_RUNS,
+    licenceConfirmed: [],
   }
 }

@@ -8,7 +8,7 @@ import type { CampaignCreateInput } from '@/shared/schemas/commands/campaign'
 import type { SubjectCreateInput } from '@/shared/schemas/commands/subject'
 import { wordsByLanguage } from '@/shared/brief/words'
 import { briefSubjectIds } from '@/renderer/screens/project-home/campaign-input'
-import { formProblems, schemaCheck, subjectIdOf } from './brief-form-problems'
+import { formProblems, schemaCheck, subjectIds } from './brief-form-problems'
 import { chosenSizes, sizesFromDraft, type SizeChoice } from './brief-form-sizes'
 
 export type SubjectChoice = {
@@ -104,16 +104,17 @@ export function splitLanguages(text: string): string[] {
 }
 
 // One list per language, a word or phrase per line, blank lines and empty lists left out. A
-// plain list the brief gave with no language goes under the main language.
-function wordLists(texts: Record<string, string>, primary: string): Record<string, string[]> {
+// plain list the brief gave with no language goes under the main language. Only the listed
+// languages are sent: the form shows word lists for those alone.
+function wordLists(texts: Record<string, string>, languages: string[]): Record<string, string[]> {
   const lists: Record<string, string[]> = {}
   for (const [tag, text] of Object.entries(texts)) {
     const words = text
       .split('\n')
       .map((w) => w.trim())
       .filter((w) => w !== '')
-    const key = tag === '' ? primary : tag
-    if (words.length > 0) lists[key] = [...(lists[key] ?? []), ...words]
+    const key = tag === '' ? (languages[0] ?? '') : tag
+    if (words.length > 0 && languages.includes(key)) lists[key] = [...(lists[key] ?? []), ...words]
   }
   return lists
 }
@@ -131,8 +132,9 @@ export function planFromForm(
   const { sizes, unread } = chosenSizes(values.sizes)
   const problems = formProblems(values, { heldSubjectIds, languages, sizes, unread })
   if (problems.length > 0) return { ok: false, problems }
-  const primary = languages[0] ?? ''
   const { rules } = values
+  const made = subjectIds(values.subjects)
+  const ids = values.subjects.map((s, i) => ({ s, id: made[i] ?? '' }))
   const checked = schemaCheck({
     projectId,
     brief: {
@@ -143,25 +145,21 @@ export function planFromForm(
       offer: optional(values.offer),
       callToAction: optional(values.callToAction),
       tone: optional(values.tone),
-      subjects: values.subjects.map((s) => ({
-        id: subjectIdOf(s),
-        name: s.name,
-        description: s.description,
-      })),
+      subjects: ids.map(({ s, id }) => ({ id, name: s.name, description: s.description })),
       languages,
       sizes: sizes.map((s) => `${s.width}x${s.height}`),
-      requiredWords: unlessEmpty(wordLists(rules.requiredWords, primary)),
-      prohibitedWords: unlessEmpty(wordLists(rules.prohibitedWords, primary)),
+      requiredWords: unlessEmpty(wordLists(rules.requiredWords, languages)),
+      prohibitedWords: unlessEmpty(wordLists(rules.prohibitedWords, languages)),
       copy: values.copy,
     },
-    subjectMap: values.subjects.map((s) => ({ subjectId: subjectIdOf(s), create: false })),
+    subjectMap: ids.map(({ id }) => ({ subjectId: id, create: false })),
     languages,
     sizes,
     copyRuleSetFrom: rules.mode === 'copy' ? (rules.copyFrom ?? undefined) : undefined,
   })
   if (!checked.ok) return checked
-  const subjects = values.subjects
-    .filter((s) => s.mode === 'new')
-    .map((s) => ({ projectId, id: s.newId, name: s.name, description: s.description }))
+  const subjects = ids
+    .filter(({ s }) => s.mode === 'new')
+    .map(({ s, id }) => ({ projectId, id, name: s.name, description: s.description }))
   return { ok: true, subjects, campaign: checked.campaign }
 }

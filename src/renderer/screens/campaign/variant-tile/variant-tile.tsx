@@ -1,7 +1,8 @@
 // One variant in the campaign grid (spec/screens-campaign.md, "The campaign grid and the
 // variant tile"): a pressed-or-not button holding the picture area, the title, the size line
-// and the marks. `preview` replaces the shape box (P3-16); `actions` sit beside the button,
-// never inside it (P3-10). Text is drawn as text.
+// and the marks. A plain click opens the variant in the editor; pressed marks the variant the
+// overview's panels work on, the one opened last (P3-9, A-47). `preview` replaces the shape box
+// (P3-16); `actions` sit beside the button, never inside it (P3-10). Text is drawn as text.
 import type { ReactNode } from 'react'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import { badgeWords } from './badge-words'

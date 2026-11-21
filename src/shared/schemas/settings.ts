@@ -30,6 +30,8 @@ const storage = z.object({ s3: s3.nullable(), dropbox: dropbox.nullable() })
 const comfyui = z.object({ baseUrl: z.string().nullable() })
 const agentRuns = z.record(z.string(), z.object({ allowed: z.boolean() }))
 export const agentRunLimit = z.number().int().min(AGENT_RUN_LIMIT_MIN).max(AGENT_RUN_LIMIT_MAX)
+// S2-4 [D-088]: the model labels the user confirmed a commercial licence for.
+export const licenceConfirmed = z.array(z.string().min(1).max(100)).max(50)
 
 export const settingsSchema = z.object({
   defaultProjectDir: z.string().min(1),
@@ -42,6 +44,7 @@ export const settingsSchema = z.object({
   comfyui,
   agentRuns,
   agentRunLimit,
+  licenceConfirmed,
 })
 export type Settings = z.infer<typeof settingsSchema>
 export type RecentProject = z.infer<typeof recentProject>
@@ -56,6 +59,7 @@ export const settingsPatchSchema = z
     export: exportSettings.partial().strict(),
     mcp: mcp.omit({ enabled: true }).partial().strict(),
     storage: storage.partial().strict(),
+    licenceConfirmed,
   })
   .partial()
   .strict()

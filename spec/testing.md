@@ -110,7 +110,7 @@ No CI workflow names `test:e2e:real`, `test:comfy`, `test:live` or `shots`. No a
 | Unit | 90% of lines in `src/shared/`, 80% in `src/main/`, providers included | Vitest | CI |
 | Integration (commands against a temporary project file) | Every command in `spec/api-commands.md` has a success test and its refusal tests (below) | Vitest | CI |
 | Provider adapters | Each adapter tested against recorded responses, including one test per error kind | Vitest | CI |
-| Scene reference pictures | Each layer type, CJK text, overflow, letter spacing, transparency (Phase 3); each preset at 5 points in time (Phase 7) | Playwright (Electron) + the render window, per-system reference files, the rule in "Reference pictures" | Developer on macOS; CI on both systems at the release gate. Not built (Phase 3) |
+| Scene reference pictures | Each layer type, CJK text, overflow, letter spacing, transparency (Phase 3); each preset at 5 points in time (Phase 7) | Playwright (Electron) + the render window, per-system reference files, the rule in "Reference pictures" | Developer on macOS; CI on both systems at the release gate. Phase 3 cases built (macOS references); Phase 7 cases not built |
 | Component and accessibility | Every dialog and panel: keyboard path, labels, axe-core with no violations | Testing Library, axe-core | CI |
 | End-to-end | Workflows 5.1 to 5.7 with fake providers | Playwright (Electron) | CI on tags (Phase 11) |
 | MCP | Every tool, the ask flow, token and header rejection | MCP SDK client in Vitest | CI |
@@ -137,9 +137,9 @@ A threshold is never lowered and no exclusion is added to pass it. `json-summary
 
 ### Reference pictures
 
-Not built (Phase 3, slice P3-8). `tests/e2e/scene-reference.spec.ts`, cases in `tests/e2e/scene-cases.ts`, comparison in `tests/e2e/reference-compare.ts`, pictures in `tests/reference-pictures/{darwin,win32}/{case}.png`.
+Built (slice P3-8). `tests/e2e/scene-reference.spec.ts`, cases in `tests/e2e/scene-cases.ts`, comparison in `tests/e2e/reference-compare.ts`, pictures in `tests/reference-pictures/{darwin,win32}/{case}.png`. The 14 `darwin` pictures are made; `win32` has none yet (D-087).
 
-**How a case runs.** It launches the built app (`launch.ts`), sets its scene up through `window.api` (a project, imports, `campaign.create` at a small custom size such as `400x400`, then layer commands) and draws it with `variant.render` at `maxDimension` equal to the variant's longer side, so nothing is scaled. Test pictures (a solid square, a picture with a transparent hole) are made in the test with Electron's `nativeImage.createFromBitmap(...).toPNG()` from fixed pixel values, so no picture file is committed apart from the references.
+**How a case runs.** One built app (`launch.ts`) serves every case. Each case sets its scene up through `window.api` (a project, imports, `campaign.create` at `400x400`, then layer commands) and draws it with `variant.render` at `maxDimension` 400, so nothing is scaled. Every `full` draw is checked to have no pixel that is not opaque. `variant.render` does not offer `overlay-only`, so that case is drawn by the test helper `drawInRenderWindow` (`tests/e2e/render-helpers.ts`): it builds the same input the render service builds, in `overlay-only` mode, and sends it straight to the render window on the same channel, with the same capture as `draw.ts`. That case also checks alpha 0 at a corner that held only the background, and alpha above 0 inside the text. Test pictures (a solid square, a picture with a transparent hole) are made in the test with Electron's `nativeImage.createFromBitmap(...).toPNG()` from fixed pixel values, so no picture file is committed apart from the references.
 
 **The stability rule.** A reference is stable on one system when all of these hold:
 
@@ -151,7 +151,7 @@ Not built (Phase 3, slice P3-8). `tests/e2e/scene-reference.spec.ts`, cases in `
 
 **Making and changing references.** With `ADMAN_UPDATE_REFERENCES=1` the spec writes the picture of each case to the system's folder instead of comparing. A new or changed reference is committed with the slice that changes the drawing; the developer and the reviewer each look at it and say what it shows. Otherwise a reference is never changed. A missing reference fails the case on `darwin`; on `win32` it skips with "No Windows reference yet." until the stakeholder makes them.
 
-**Phase 3 cases** (each a named test): a background picture with no crop (cover); a background with a crop; an image layer that is not square (contain); an image layer at 50 % opacity; a layer turned 30°; a hidden layer between two visible ones (nothing drawn); an empty picture layer (nothing drawn); a text layer in the default font at weights 400 and 700, aligned left, centre and right; text with letter spacing −0.1, 0 and 0.3 em [REQ: FR-249]; text in an imported font; text that overflows its box (drawn past it); Japanese text with `lang` `ja` (the CJK case); **a picture with a transparent background over a coloured background, whose hole shows the colour** [REQ: FR-245]; `overlay-only` mode (transparent where only the background was).
+**Phase 3 cases** (each a named test, named after its picture: `background-cover`, `background-crop`, `image-contain`, `image-opacity`, `rotated-layer`, `hidden-layer`, `empty-picture-layer`, `text-weights-align`, `letter-spacing`, `imported-font`, `text-overflow`, `cjk-ja`, `transparent-hole`, `overlay-only`; one more test checks the compare rule itself): a background picture with no crop (cover); a background with a crop; an image layer that is not square (contain); an image layer at 50 % opacity; a layer turned 30°; a hidden layer between two visible ones (nothing drawn); an empty picture layer (nothing drawn); a text layer in the default font at weights 400 and 700, aligned left, centre and right; text with letter spacing −0.1, 0 and 0.3 em [REQ: FR-249]; text in an imported font; text that overflows its box (drawn past it); Japanese text with `lang` `ja` (the CJK case); **a picture with a transparent background over a coloured background, whose hole shows the colour** [REQ: FR-245]; `overlay-only` mode (transparent where only the background was).
 
 ### Refusal tests
 
@@ -203,11 +203,11 @@ Each test below must exist and keep passing. A test marked "Not built" is writte
 | Undo then redo of `layer.delete` brings back the same layer ID, key, counters and order | `tests/integration/commands/layer-delete.test.ts`. Built |
 | A `layer.reportOverflow` naming an older `variantRev` writes nothing | `tests/integration/commands/layer-report-overflow.test.ts`. Built |
 | A drag sends exactly one `layer.update` on release, and Escape sends none [REQ: 8.2] | `tests/unit/renderer/editor/canvas-overlay.test.tsx`. Not built (Phase 3) |
-| A picture with a transparent background keeps it in the drawn variant [REQ: FR-245] | `tests/e2e/scene-reference.spec.ts`. Not built (Phase 3) |
-| Overflow is set by the render service when text grows past its box by size and by letter spacing, and cleared when it fits [REQ: FR-098, FR-249] | `tests/e2e/scene-overflow.spec.ts`. Not built (Phase 3) |
+| A picture with a transparent background keeps it in the drawn variant [REQ: FR-245] | `tests/e2e/scene-reference.spec.ts`, case `transparent-hole`. Built |
+| Overflow is set by the render service when text grows past its box by size and by letter spacing, and cleared when it fits [REQ: FR-098, FR-249] | `tests/e2e/scene-overflow.spec.ts`. Built |
 | The tab keys step through variant tabs and campaign tabs and wrap round [REQ: FR-242] | `tests/unit/renderer/app/tab-keys.test.tsx`. Not built (Phase 3) |
 | Security: `window.drop` has only `pathOf`; a page-made `File` gives no path; `window.api` unchanged | `tests/e2e/drop-bridge.spec.ts` |
-| Security: server text holding `<a href>` shows as characters in a run failure | `tests/unit/renderer/screens/campaign/run-failure.test.tsx`. Not built (S2-5) |
+| Security: server text holding `<a href>` shows as characters in a run failure | `tests/unit/renderer/screens/campaign/run-failure.test.tsx` |
 
 **Other pinned tests and fixtures:**
 

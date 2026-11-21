@@ -7,6 +7,10 @@ export const DEFAULT_FPS = 30
 // is one paid call.
 export const MAX_IMAGES_PER_RUN = 8
 
+// F-8 [A-56]: the most reference pictures one run may send, for the user and for an agent.
+// A provider or workflow that takes fewer keeps its own smaller limit.
+export const MAX_REFERENCES_PER_RUN = 8
+
 export type ReadyMadeSize = CampaignSize & { selectedByDefault: boolean }
 
 // SPEC 3.3 ready-made sizes [FR-026, FR-032, FR-247]. The one list; parseSize reads it.

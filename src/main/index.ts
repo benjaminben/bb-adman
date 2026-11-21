@@ -5,6 +5,7 @@ import {
   BrowserWindow,
   dialog,
   ipcMain,
+  Menu,
   nativeImage,
   protocol,
   session,
@@ -14,6 +15,7 @@ import { createCore, type Core } from './core'
 import { createAppWindow } from './windows/app-window'
 import { httpsOnly } from './windows/open-external'
 import { denyPermissions } from './windows/permissions'
+import { setAppMenu } from './windows/app-menu'
 import { devToolsEnabled } from './dev-tools-flag'
 import { pngConverter } from './png-converter'
 import { pictureFitter } from './picture-fitter'
@@ -133,6 +135,8 @@ function start(): void {
   registerAssetProtocol(protocol, ready.projects)
   // Listens only while settings.mcp.enabled is on (SPEC 6.8); off on first run.
   void ready.mcp.startIfEnabled()
+  const devTools = devToolsEnabled(app.isPackaged, process.env)
+  setAppMenu(Menu, { platform: process.platform, appName: app.name, devTools })
   openAppWindow()
   for (const filePath of pendingOpens.splice(0)) void openFromSystem(filePath)
 }

@@ -5,7 +5,7 @@
 // client's own agent and checked lookup (request.ts `liveTarget`), never to an address from a
 // message. No piece of a message reaches a log, an error or the job row (live-messages.ts).
 import type http from 'node:http'
-import type { LookupFunction } from 'node:net'
+import type { LookupFunction, Socket } from 'node:net'
 import WebSocket from 'ws'
 import { CONNECT_MS } from './limits'
 import { readLive, type LiveSeen } from './live-messages'
@@ -22,6 +22,20 @@ const LIVE_SETTINGS = {
 } as const
 
 const nothing = () => undefined
+
+// CU-9b: the handshake goes out only once the socket is connected and the saved address is
+// still the run's origin, checked in the same step, so a change made after the open was
+// decided sends nothing. ws writes nothing before `end()`.
+function sendWhenStill(still: () => boolean) {
+  return (req: http.ClientRequest) => {
+    const go = () => (still() ? req.end() : req.destroy())
+    req.once('socket', (socket: Socket) => {
+      if (!still()) req.destroy()
+      else if (socket.connecting) socket.once('connect', go)
+      else go()
+    })
+  }
+}
 
 // One per client. The client attaches how to reach its own origin; a run watches its prompt.
 export class LiveLink {
@@ -49,6 +63,7 @@ export class LiveLink {
         headers: { ...LIVE_SETTINGS.headers },
         agent: target.agent,
         lookup: target.lookup,
+        finishRequest: sendWhenStill(this.still),
         ...(target.secure && { rejectUnauthorized: true }),
       })
     } catch {
@@ -66,6 +81,8 @@ export class LiveLink {
     socket.on('message', (data, isBinary) => {
       // A binary message is dropped unread.
       if (isBinary) return
+      // CU-9b: once the address changed, the connection is closed and nothing is read.
+      if (!this.still()) return stop()
       const seen = readLive(data.toString('utf8'), promptId)
       if (seen === 'ended') stop()
       else if (seen) onSeen(seen)

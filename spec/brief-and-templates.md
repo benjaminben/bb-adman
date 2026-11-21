@@ -262,26 +262,26 @@ Built. `src/shared/schemas/commands/campaign.ts` owns them (frozen with `brief.t
 
 **The MCP tool `create_campaign`.** `sizes`, `languages` and `rule_set` are optional. The tool fills in what is missing before it calls the command: the brief's own values if it has them, otherwise the default sizes and the region table's language. If no language can be found the tool returns `INVALID_INPUT`. See `spec/mcp-and-agents.md`.
 
-### What the project page sends today
+### What the project page sends
 
-Built. `src/renderer/screens/project-home/brief-load/`, `brief-summary/`, `campaign-input.ts`. Tests: `tests/unit/renderer/screens/project-home/brief-load.test.tsx`, `brief-subject-ids.test.tsx`. Screen wording is in `spec/screens.md`.
+Built. `src/renderer/screens/project-home/brief-load/`, `brief-form/`, `subject-rows/`, `size-fields/`, `rule-fields/`, `brief-form-model.ts` (with `brief-form-problems.ts`, `brief-form-sizes.ts`), `campaign-input.ts` (`briefSubjectIds`). Tests: `tests/unit/renderer/screens/project-home/brief-load.test.tsx`, `brief-type.test.tsx`, `brief-subject-ids.test.tsx`, `brief-form*.test.ts(x)`, `size-fields.test.tsx`, `rule-fields.test.tsx`. The form, its wording and its problem lines are in `spec/screens-campaign.md`, "The brief form".
 
-"Load a brief" opens the picker, calls `brief.parse`, and shows a read-only summary of the draft (every value the brief's own text, drawn as text). "Create campaign" sends `subject.create` for each new subject, then `campaign.create`, and stops at the first refusal. Cancel sends nothing. Nothing is sent unless the whole input passes the shared `campaign.create` schema; otherwise the page lists problem lines.
+"Load a brief" opens the picker, calls `brief.parse`, and opens the brief form filled from the draft (every value the brief's own text, shown as field values). "Type a brief" opens the same form empty. The user edits it [REQ: FR-023]. "Create campaign" sends `subject.create` for each new subject, then `campaign.create`, and stops at the first refusal. Cancel sends nothing. Nothing is sent while the form has a problem line or the input fails the shared `campaign.create` schema.
 
-- **Languages:** the brief's own, else the reply's `primaryLanguage`, else a problem line.
-- **Sizes:** the brief's own through `parseSize` (a problem line for one that cannot be read), else the ready-made sizes with `selectedByDefault`.
-- **`templateId`:** `starterTemplate.id`. **Rule set:** none sent.
+- **Languages:** the form's "Languages" field. It starts as the brief's own, else the reply's `primaryLanguage`, else empty (a problem line).
+- **Sizes:** the ticked ready-made sizes and the typed "Other sizes", each read with `parseSize` (a problem line for one that cannot be read), the chosen master first. They start as the brief's own, else the ready-made sizes with `selectedByDefault`.
+- **`templateId`:** `starterTemplate.id`. **Rule set:** "Use these word lists" sends no rule input, so the rule set holds the brief's word lists as edited on the form (sent in `brief`, only for the listed languages); "Copy the rules from another campaign" sends `copyRuleSetFrom`. Colours and required files are not on the form (A-44).
 - **Subjects:** every `subjectMap` entry has `create: false`, because the subjects are made first with `subject.create`. If `campaign.create` then fails, the made subjects stay.
-- **A brief subject with no `id` gets one made from its name** (provisional, OI-72: made subject IDs and reuse of held subjects await the stakeholder). Each run of spaces becomes `-`; every character outside `A–Z a–z 0–9 - _` is dropped; the result is cut to 64 characters; an empty result becomes `subject`. `Summer Splash 2!` gives `Summer-Splash-2`. When two subjects of one brief would share an ID (or a made ID equals an ID the brief gives), the later gets `-2`, `-3` and so on, cut so the whole fits 64. The made ID must pass the shared `SubjectId` schema, the one owner of the format. An `id` the brief gives that breaks the format is a problem line ("The subject ID "{id}" may hold only A-Z, a-z, 0-9, - and _, up to 64 letters."); it is not replaced.
-- **A subject the project already holds** gets no `subject.create` and is used as it is (provisional, OI-72). A differing name or description updates nothing; the stored subject wins. The campaign's stored `brief` still holds the brief's own words. The same brief loaded twice gives the same subjects.
+- **A brief subject with no `id` gets one made from its name**, and so does a new row on the form whose "Subject ID" is left blank (provisional, OI-72: made subject IDs and reuse of held subjects await the stakeholder). Each run of spaces becomes `-`; every character outside `A–Z a–z 0–9 - _` is dropped; the result is cut to 64 characters; an empty result becomes `subject`. `Summer Splash 2!` gives `Summer-Splash-2`. When two subjects of one brief would share an ID (or a made ID equals an ID the brief gives), the later gets `-2`, `-3` and so on, cut so the whole fits 64. The made ID must pass the shared `SubjectId` schema, the one owner of the format. An `id` the brief gives or the user types that breaks the format is a problem line ("Subject {i}: the ID "{id}" may hold only A-Z, a-z, 0-9, - and _, up to 64 letters."); it is not replaced.
+- **A subject the project already holds** opens as "Use a subject this project has", gets no `subject.create` and is used as it is (provisional, OI-72). A differing name or description updates nothing; the stored subject wins. The campaign's stored `brief` still holds the brief's own words. The same brief loaded twice gives the same subjects.
 
-### Not built: the full intake screens
+### The intake screens
 
-Not built (Phase 2 leftovers, slices S2-13, S2-14, S2-15). Designed in `spec/screens-campaign.md`, "The brief form" and "The slot view":
+Built (slices S2-13, S2-14, S2-15). In `spec/screens-campaign.md`, "The brief form" and "The slot view":
 
 - **Blank brief form.** "Type a brief" opens the same form empty.
-- **Editable confirm form** [REQ: FR-023, FR-024, FR-026, FR-034]. Every field; one row per subject with "New subject" (a "Subject ID" field) or "Use a subject this project has"; sizes, master size and languages; the brief's word lists per language, or "Copy the rules from another campaign" (`copyRuleSetFrom`). Colours and required files are not on the form (A-44). The pure model `brief-form-model.ts` replaces `campaignPlan`; `briefSubjectIds` stays.
-- **Slot view.** Filled and empty slots of the master with candidates from `template.slots` [REQ: FR-042], view only (A-46).
+- **Editable confirm form** [REQ: FR-023, FR-024, FR-026, FR-034]. Every field; one row per subject with "New subject" (a "Subject ID" field) or "Use a subject this project has"; sizes, master size and languages; the brief's word lists per language, or "Copy the rules from another campaign" (`copyRuleSetFrom`). Colours and required files are not on the form (A-44). The pure model `brief-form-model.ts` replaced `campaignPlan`; `briefSubjectIds` stays.
+- **Slot view.** Filled and empty slots of the master with candidates from `template.slots` [REQ: FR-042], view only (A-46), on the campaign page below the grid.
 
 ### Not built: Markdown and plain-text briefs
 

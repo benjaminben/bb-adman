@@ -28,15 +28,31 @@ export function sizesFromDraft(texts: string[]): SizeChoice {
   return { readyMade, other: other.join(', '), master }
 }
 
-// The chosen sizes in order, the master first, and the typed texts that cannot be read.
-export function chosenSizes(sizes: SizeChoice): { sizes: CampaignSize[]; unread: string[] } {
+function readSizes(sizes: SizeChoice) {
   const typed = sizes.other
     .split(',')
     .map((t) => t.trim())
     .filter((t) => t !== '')
   const found = [...sizes.readyMade, ...typed].map((text) => ({ text, size: parseSize(text) }))
-  const read = found.flatMap((f) => (f.size ? [f.size] : []))
+  return {
+    read: found.flatMap((f) => (f.size ? [f.size] : [])),
+    unread: found.filter((f) => f.size === null).map((f) => f.text),
+  }
+}
+
+// The chosen sizes that can be read, in the order chosen: the "Master size" choices.
+export const sizesInOrder = (sizes: SizeChoice): CampaignSize[] => readSizes(sizes).read
+
+// The master's label: the one chosen while it is still a chosen size, else the first size.
+export function masterOf(sizes: SizeChoice): string | null {
+  const read = sizesInOrder(sizes)
+  return (read.find((s) => s.label === sizes.master) ?? read[0])?.label ?? null
+}
+
+// The chosen sizes in order, the master first, and the typed texts that cannot be read.
+export function chosenSizes(sizes: SizeChoice): { sizes: CampaignSize[]; unread: string[] } {
+  const { read, unread } = readSizes(sizes)
   const master = read.findIndex((s) => s.label === sizes.master)
   if (master > 0) read.unshift(...read.splice(master, 1))
-  return { sizes: read, unread: found.filter((f) => f.size === null).map((f) => f.text) }
+  return { sizes: read, unread }
 }

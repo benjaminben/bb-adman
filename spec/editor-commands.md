@@ -157,7 +157,7 @@ type ThumbnailGet =
 
 ### `variant.render`
 
-Built (`src/main/queries/render.ts`). Input `{ projectId, variantId, maxDimension? }`: a whole number from 64 to `RENDER_LIMITS.maxDimension` (2048), default 1024. Reply `VariantRender = { png: Uint8Array; width: number; height: number; rev: number }`, the variant drawn now with its longer side `maxDimension` (never larger than the variant itself). Writes no file and no project data (it may report overflow, as every draw does). Refused with `render_failed` when the draw fails; that does not mark the thumbnail failed. Both actors: the reference-picture tests call it from the window, and Phase 10's `render_variant` tool calls it.
+Built (`src/main/queries/render.ts`). Input `{ projectId, variantId, maxDimension? }`: a whole number from 64 to `RENDER_LIMITS.maxDimension` (2048), default 1024. Reply `VariantRender = { png: Uint8Array; width: number; height: number; rev: number }`, the variant drawn now with its longer side `maxDimension` (never larger than the variant itself). Writes no file and no project data (it may report overflow, as every draw does). Refused with `render_failed` when the draw fails; that does not mark the thumbnail failed. User only, until Phase 10 writes a rule for linked private pictures (a project file can link any picture the user can read, and the drawn PNG would carry its pixels): an agent gets `AGENT_DENIED` with the same sentence as `thumbnail.get`. The reference-picture tests call it from the window; Phase 10's `render_variant` tool will call it.
 
 ## Event `thumbnail.changed`
 

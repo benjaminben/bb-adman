@@ -146,6 +146,8 @@ describe('generation.startVideo with one reference against the stand-in [SPEC 14
     const { jobId } = data<{ jobId: string }>(await f.user('generation.startVideo', input))
     await submittedGraph()
     data(await f.user('comfy.setAddress', { address: 'http://192.0.2.9:8188' }))
+    // A request sent just before the change is recorded on its `end`; let it land first.
+    await new Promise((done) => setTimeout(done, 50))
     const seenAtChange = stand?.seen.length ?? 0
     await waitFor(() => f.job(jobId)?.status === 'failed', RUN_MS)
     expect(f.job(jobId)).toMatchObject({ errorReason: 'address_changed' })

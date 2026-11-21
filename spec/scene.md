@@ -145,7 +145,7 @@ Built (`src/main/assets/font-name.ts`, `inspect.ts`). Security class: the app re
 - WOFF2 is decompressed with Node's built-in Brotli under a 32 MiB output cap (`MAX_FONT_BYTES`). Its table directory is parsed with every length bounded. A `name` table in transformed form gives null.
 - A font collection (`ttcf`) gives null.
 - It takes name ID 16 (typographic family) when present, else name ID 1 (family). Then platform 3 (Windows, UTF-16 big-endian) before platform 1 encoding 0 (Mac Roman). Then English (language 0x0409, or 0 on platform 1) before other languages; else the first record. An empty ID 16 gives null.
-- Control characters (Unicode category Cc) are removed, the result is trimmed and cut to 100 code points. Empty gives null.
+- Control and format characters (Unicode categories Cc and Cf, such as direction marks and zero-width characters) are removed, the result is trimmed and cut to 100 code points. Empty gives null.
 - Any bound check that fails (a table or string past the end of the data, a count too large, a bad WOFF2 header, too much data after decompressing) gives null. No parser text reaches a log or an error.
 - It is called wherever the app reads an asset's file facts for kind `font`: import, relink and the change check (`inspect.ts`). It fills `asset.font_family`. The bytes it reads are those already read for hashing; it opens no other file. A font file over 32 MiB gets null, and only its hash is computed.
 - `font_family` is drawn as text only (the font picker). It is never used to find a file or build a path.
@@ -175,7 +175,7 @@ A hidden Electron window that draws one Scene at a time so the main process can 
 ### Life of the window
 
 - Made on the first draw, never before the app window. One render window at most.
-- `show: false` and never shown. `skipTaskbar: true`, `frame: false`, `useContentSize: true`, `paintWhenInitiallyHidden: true`. `webPreferences`: the app window's settings (`contextIsolation`, `sandbox`, no Node, `webSecurity`), plus `offscreen: true`, `backgroundThrottling: false`, `devTools` only when the hand-test flag is on, and `preload` set to `render.cjs`.
+- `show: false` and never shown. `skipTaskbar: true`, `frame: false`, `useContentSize: true`, `paintWhenInitiallyHidden: true`, `transparent: true`. `webPreferences`: the app window's settings (`contextIsolation`, `sandbox`, no Node, `webSecurity`), plus `offscreen: true`, `backgroundThrottling: false`, `devTools` only when the hand-test flag is on, and `preload` set to `render.cjs`.
 - Its page is `render.html`, chosen by `renderPageAddress`: the development server's `/render.html` only when the app is not packaged and the address passes the `pageAddress` rule; the built page otherwise.
 - The same navigation rules as the app window (`navigation.ts`): no navigation away, every new window denied.
 - **Ended** when its page process crashes (`render-process-gone`), when it stops answering, after a draw that timed out, when the app window closes, and before quit. The next draw makes a new one.
@@ -208,7 +208,7 @@ type SceneInput = {
 
 **Notes.**
 
-- The window is not created transparent, so an `overlay-only` draw may come out with an opaque background. The phase that needs transparent overlays (export or video) checks it.
+- The window is transparent. An `overlay-only` draw has alpha 0 where nothing is drawn; a `full` draw stays opaque because of its black root (`tests/e2e/scene-reference.spec.ts`).
 - `out/preload/render.cjs` carries zod, because it imports the channel names from `src/shared/schemas/render.ts`. It works; moving the names out is a tidy-up, not a fault.
 
 `RENDER_LIMITS = { timeMs: 10_000, maxDimension: 2048, thumbnailSide: 512 }` in `src/shared/config/render.ts`, the one owner. Export (Phase 8) draws at full size, up to 8,192 pixels a side; how it gets past 2,048 is Phase 8's to design.

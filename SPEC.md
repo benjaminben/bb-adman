@@ -56,7 +56,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/editor.md` | Campaign and variant tabs, the editor (canvas, layer list, properties), keyboard shortcuts, undo per variant, several picture layers |
 | `spec/editor-commands.md` | The layer and variant commands, `variant.get`, `thumbnail.get`, `variant.render`, `thumbnail.changed` in full |
 | `spec/screens.md` | What each built screen offers, wording rules, choices made without a design sign-off |
-| `spec/screens-campaign.md` | The Phase 2 screens not yet built: ComfyUI failures, the address and licence dialogs, import and drop, relink, package, the brief form, the slot view, the campaign grid and its tile |
+| `spec/screens-campaign.md` | The Phase 2 campaign screens and dialogs (built; S2-17 left): ComfyUI failures, the address and licence dialogs, import and drop, relink, package, the brief form, the slot view, the campaign grid and its tile |
 | `spec/open-items.md` | Open questions, the improvised choices listed for review, what waits on the stakeholder |
 | `spec/assumptions.md` | The assumptions made meanwhile (OI, Q and A numbers), with how hard each is to undo |
 
@@ -67,7 +67,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/phases/README.md` | The build order, the topic files each phase needs, the rules for every phase |
 | `spec/phases/DEV-RULES.md` | What every developer run reads first: where things are, the rules the same for every slice |
 | `spec/phases/phase-02-leftovers.md` | Phase 2 work not built: small fixes, slice WP, ComfyUI follow-ups, the exit check, what waits on a ruling |
-| `spec/phases/phase-02-screens.md` | The Phase 2 screens not built (groups 4 and 5, slices S2-4 to S2-17): ComfyUI failure screens, dialogs, import, relink, package, brief form, slot view, campaign grid |
+| `spec/phases/phase-02-screens.md` | The Phase 2 screen slices (groups 4 and 5; S2-4 to S2-16 built, S2-17 left): ComfyUI failure screens, dialogs, import, relink, package, brief form, slot view, campaign grid |
 | `spec/phases/phase-02-agent-generation.md` | Agent generation through the MCP server (built, D-080): the one hand run on the real server still owed, and the change if OI-90 is answered "no ticks" |
 | `spec/phases/review-leftovers.md` | Review findings not yet handled, sorted: fix now, fix with a later phase, test gaps |
 | `spec/phases/phase-03.md` to `phase-11.md` | One file per phase: goal, scope, exit criteria, work carried in, what is not designed yet |

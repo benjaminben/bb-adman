@@ -23,7 +23,8 @@ describe('"Type a brief" [screens-campaign "The brief form", S2-13]', () => {
     expect(field(form, 'Campaign name')).toHaveValue('')
     expect(field(form, 'Campaign name')).toHaveFocus()
     expect(within(form).getAllByRole('group', { name: /^Subject \d$/ })).toHaveLength(1)
-    expect(form).toHaveTextContent('Sizes: 1x1, 9x16, 16x9')
+    for (const label of ['1x1 (1080×1080)', '9x16 (1080×1920)', '16x9 (1920×1080)'])
+      expect(field(form, label)).toBeChecked()
     const list = within(form).getByRole('list', { name: 'Before the campaign can be made' })
     expect(list).toHaveTextContent('Enter the campaign name.')
     expect(list).toHaveTextContent('Give at least one language.')
@@ -35,9 +36,9 @@ describe('"Type a brief" [screens-campaign "The brief form", S2-13]', () => {
   it('fills "Languages" from the region when the user leaves "Region"', async () => {
     const form = await typeBrief()
     await userEvent.type(field(form, 'Region'), 'France')
-    expect(form).not.toHaveTextContent('Languages: fr')
+    expect(field(form, 'Languages')).toHaveValue('')
     await userEvent.tab()
-    expect(form).toHaveTextContent('Languages: fr')
+    expect(field(form, 'Languages')).toHaveValue('fr')
   })
 
   it('leaves "Languages" empty for a region not in the table', async () => {

@@ -7,6 +7,7 @@ import { makeComfyFixture, type ComfyFixture } from './comfy-fixture'
 import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
 import { serveNeeds, serveVideo } from '../../helpers/comfy-run'
 import { insertTestAsset } from '../assets/asset-rows'
+import { greyPng } from '@/main/providers/fake/png'
 
 let f: ComfyFixture
 let stand: StandIn | null = null
@@ -64,7 +65,7 @@ describe('generation.startVideo picture start refusals [SPEC 14 1.60 CU-6b N-4] 
   it('refuses two references with too_many_references and max 1 [1.59 L-16]', async () => {
     await ready()
     const a = await f.importPicture('pics', 'a.png')
-    const b = await f.importPicture('pics', 'b.png')
+    const b = await f.importPicture('pics', 'b.png', greyPng(7, 4))
     await refused(refAsk(a, b), {
       code: 'RULE_VIOLATION',
       message: 'ComfyUI takes one reference picture for this run.',

@@ -70,7 +70,7 @@ export function PackageBody(props: PackageBodyProps) {
       )}
       {view.kind === 'missing' && (
         <>
-          <p className={styles.line}>
+          <p className={styles.listLabel}>
             {view.assetIds.length} file(s) cannot be found, so the package would not open with
             nothing missing.
           </p>
