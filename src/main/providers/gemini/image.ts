@@ -43,13 +43,16 @@ function whenAborted(signal: AbortSignal): Promise<never> {
   })
 }
 
+// Reading the secret and the model and building the client happen inside the `try`, so any
+// error they throw also leaves as a ProviderFailure (SPEC 6 [1.12]).
 async function oneCall(ctx: AdapterContext, transport: Transport, call: OneCall) {
-  const key = ctx.secret('gemini.apiKey')
-  const model = ctx.model('image')
-  const client = pinnedClient(key, transport)
+  let key = ''
   const timer = new AbortController()
   const handle = setTimeout(() => timer.abort(), IMAGE_TIMEOUT_MS)
   try {
+    key = ctx.secret('gemini.apiKey')
+    const model = ctx.model('image')
+    const client = pinnedClient(key, transport)
     const request = client.models.generateContent({
       model,
       contents: [{ role: 'user', parts: [{ text: call.prompt }, ...call.references.map(toPart)] }],

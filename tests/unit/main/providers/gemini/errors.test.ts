@@ -135,6 +135,31 @@ describe('Gemini adapter call rules [SPEC 6]', () => {
     expect(failure.message).not.toContain(TEST_KEY)
   })
 
+  it('turns a secret that cannot be read into a ProviderFailure of kind other [1.12, G2]', async () => {
+    const ctx = {
+      ...testContext(),
+      secret: (): string => {
+        throw new Error('Secret not saved: gemini.apiKey')
+      },
+    }
+    const failure = await failureOf(geminiImage(ctx).generate(input))
+    expect(failure.error.kind).toBe('other')
+    expect(failure.error.detail).not.toContain(TEST_KEY)
+    expect(failure.message).not.toContain(TEST_KEY)
+  })
+
+  it('turns a model ID that cannot be read into a ProviderFailure of kind other [1.12, G2]', async () => {
+    const ctx = {
+      ...testContext(),
+      model: (): string => {
+        throw new Error('No model for gemini image')
+      },
+    }
+    const failure = await failureOf(geminiImage(ctx).generate(input))
+    expect(failure.error.kind).toBe('other')
+    expect(failure.error.detail).not.toContain(TEST_KEY)
+  })
+
   it('maps a TypeError thrown outside the network call to other, not offline [1.12, G3]', () => {
     const failure = failureFromError(new TypeError('x is not a function'), false, TEST_KEY)
     expect(failure.error.kind).toBe('other')
