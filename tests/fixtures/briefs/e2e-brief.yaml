@@ -10,6 +10,7 @@ subjects:
   - id: citrus-can
     name: Citrus can
     description: A slim aluminium can with a lime and lemon label
+    pictures: photos/citrus-can.png
 languages:
   - en
 sizes:
