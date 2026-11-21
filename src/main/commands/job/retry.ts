@@ -8,6 +8,8 @@ import { requireJob, wrongState } from './find-job'
 import { jobRetryInput, type JobStarted } from '@/shared/schemas/commands/job'
 import { imageJobRequest } from '@/shared/schemas/jobs/image-generation'
 import { checkComfyRun } from '@/main/commands/generation/comfy-checks'
+import { keptPictureCount, picturesLeft } from '@/shared/generation/pictures-left'
+import type { JobRow } from '@/shared/schemas/rows/job'
 
 type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets'>
 
@@ -19,6 +21,13 @@ async function checkVideoRetry(deps: Deps, ctx: PrepareContext, jobId: string): 
   const old = requireJob(ctx.project, jobId)
   if (old.provider !== 'comfyui' || old.kind !== 'video_generation') return
   await checkComfyVideoRetry(deps, ctx, old.request)
+}
+
+// [FN-4] A picture job that kept pictures asks only for the ones not yet made.
+function retryRequest(old: JobRow): unknown {
+  if (old.kind !== 'image_generation' || keptPictureCount(old.result) === 0) return old.request
+  const request = imageJobRequest.parse(old.request)
+  return { ...request, count: picturesLeft(request.count, old.result) }
 }
 
 export function jobRetry(deps: Deps) {
@@ -49,7 +58,7 @@ export function jobRetry(deps: Deps) {
         slot: old.slot,
         provider: old.provider,
         model: old.model ?? '',
-        request: old.request,
+        request: retryRequest(old),
         startedBy: 'user',
       })
       const data: JobStarted = { jobId }
