@@ -1,73 +1,30 @@
-// SPEC 6.1 "Default layout" [1.23] and SPEC 14 [1.9]: the layers of a new master variant.
-// The background layer always, then one layer per other filled slot in the template's
-// order, z counting up from 0 with no gaps. Every box, style, name and fixed value comes
-// from config/default-layout.ts. Pure; throws a plain Error only for a programming error.
-import type { CampaignSize } from '@/shared/schemas/commands/campaign'
-import type { Geometry, TextStyle } from '@/shared/schemas/layer'
+// SPEC 6.1 "Default layout" [1.23], SPEC 14 [1.9], spec/starter-layouts.md: the layers of a
+// new master variant, built from the default starter layout. The background layer always,
+// then one layer per other filled slot in the template's order, z counting up from 0 with no
+// gaps. Every box, style, name and fixed value comes from config/default-layout.ts through
+// layout-rules.ts. New layers store every look field. Pure; throws a plain Error only for a
+// programming error.
 import type { BuildMasterLayers, NewLayer, Slot, SlotFill, SlotFills, Template } from './types'
+import type { ImageStyle, Shade } from '@/shared/schemas/layer'
+import { frameOf, geometryOf, textStyleOf, type Frame } from './layout-rules'
 import {
   BACKGROUND_LAYOUT,
+  BACKGROUND_LOOK,
   BACKGROUND_SLOT_ID,
-  GEOMETRY_ROTATION,
   IMAGE_STYLE,
   LAYER_DEFAULTS,
-  MARGIN_OF_SMALLER,
   OTHER_COPY_BOX,
   OTHER_COPY_TEXT,
   OTHER_IMAGE_BOX,
-  SIDE_OF_SMALLER,
   SLOT_LAYOUTS,
-  type BoxRule,
-  type Extent,
-  type Place,
-  type TextStyleRule,
 } from '@/shared/config/default-layout'
-
-type Frame = { W: number; H: number; S: number; m: number; side: number }
-
-function frameOf(size: CampaignSize): Frame {
-  const S = Math.min(size.width, size.height)
-  return {
-    W: size.width,
-    H: size.height,
-    S,
-    m: Math.round(MARGIN_OF_SMALLER * S),
-    side: Math.round(SIDE_OF_SMALLER * S),
-  }
-}
-
-function extent(rule: Extent, f: Frame, whole: number): number {
-  if (rule === 'full') return whole
-  if (rule === 'inset') return whole - 2 * f.m
-  if (rule === 'side') return f.side
-  if ('ofSmaller' in rule) return Math.round(rule.ofSmaller * f.S)
-  return Math.round(rule.ofHeight * f.H)
-}
-
-function place(rule: Place, f: Frame, whole: number, length: number): number {
-  if (rule === 'zero') return 0
-  if (rule === 'margin') return f.m
-  if (rule === 'centre') return Math.round((whole - length) / 2)
-  return Math.round(rule.ofHeight * f.H)
-}
-
-function geometryOf(box: BoxRule, f: Frame): Geometry {
-  const width = extent(box.width, f, f.W)
-  const height = extent(box.height, f, f.H)
-  const x = place(box.x, f, f.W, width)
-  const y = place(box.y, f, f.H, height)
-  return { x, y, width, height, rotation: GEOMETRY_ROTATION, crop: null }
-}
-
-function textStyleOf(rule: TextStyleRule, f: Frame): TextStyle {
-  const { fontSizeOfSmaller, ...rest } = rule
-  return { ...rest, fontSize: Math.round(fontSizeOfSmaller * f.S) }
-}
 
 // A fresh copy each time, so a caller that changes a layer changes nothing shared.
 function fixedValues(): typeof LAYER_DEFAULTS {
   return structuredClone(LAYER_DEFAULTS)
 }
+
+const shadeCopy = (shade: Shade | null | undefined): Shade | null => (shade ? { ...shade } : null)
 
 function checkFills(template: Template, fills: SlotFills): void {
   const slots = new Map(template.slots.map((s) => [s.id, s]))
@@ -87,6 +44,11 @@ function checkFills(template: Template, fills: SlotFills): void {
 function backgroundLayer(template: Template, fills: SlotFills, f: Frame): NewLayer {
   const hasSlot = template.slots.some((s) => s.id === BACKGROUND_SLOT_ID)
   const fill = fills[BACKGROUND_SLOT_ID]
+  const style: ImageStyle = {
+    ...IMAGE_STYLE,
+    fillColor: BACKGROUND_LOOK.fillColor,
+    shade: shadeCopy(BACKGROUND_LOOK.shade),
+  }
   return {
     ...fixedValues(),
     key: BACKGROUND_SLOT_ID,
@@ -95,7 +57,7 @@ function backgroundLayer(template: Template, fills: SlotFills, f: Frame): NewLay
     name: BACKGROUND_LAYOUT.name,
     z: 0,
     copy: null,
-    style: { ...IMAGE_STYLE },
+    style,
     geometry: geometryOf(BACKGROUND_LAYOUT.box, f),
     source: fill && 'assetId' in fill ? { assetId: fill.assetId } : null,
   }
@@ -104,7 +66,9 @@ function backgroundLayer(template: Template, fills: SlotFills, f: Frame): NewLay
 function slotLayer(slot: Slot, fill: SlotFill, z: number, f: Frame): NewLayer {
   const named = SLOT_LAYOUTS[slot.id]
   const isCopy = slot.type === 'copy'
-  const box = named?.box ?? (isCopy ? OTHER_COPY_BOX : OTHER_IMAGE_BOX)
+  const geometry = geometryOf(named?.box ?? (isCopy ? OTHER_COPY_BOX : OTHER_IMAGE_BOX), f)
+  const copy = 'text' in fill ? fill.text : null
+  const textRule = named?.text ? { ...named, text: named.text } : { text: OTHER_COPY_TEXT }
   return {
     ...fixedValues(),
     key: slot.id,
@@ -112,9 +76,11 @@ function slotLayer(slot: Slot, fill: SlotFill, z: number, f: Frame): NewLayer {
     slot: slot.id,
     name: named?.name ?? slot.id,
     z,
-    copy: 'text' in fill ? fill.text : null,
-    style: isCopy ? textStyleOf(named?.text ?? OTHER_COPY_TEXT, f) : { ...IMAGE_STYLE },
-    geometry: geometryOf(box, f),
+    copy,
+    style: isCopy
+      ? textStyleOf(textRule, copy, geometry, f)
+      : { ...IMAGE_STYLE, shade: shadeCopy(named?.shade) },
+    geometry,
     source: 'assetId' in fill ? { assetId: fill.assetId } : null,
   }
 }

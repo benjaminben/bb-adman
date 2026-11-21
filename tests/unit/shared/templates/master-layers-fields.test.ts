@@ -15,7 +15,8 @@ const ALL_FILLS: SlotFills = {
 }
 const zero = { copy: 0, style: 0, geometry: 0, source: 0, timing: 0, animation: 0 }
 const still = { preset: 'none', startMs: 0, durationMs: 0 }
-const headlineStyle = {
+// The "any other copy slot" style, with every look field at its default.
+const otherCopyStyle = {
   fontAssetId: null,
   fontSize: 76,
   fontWeight: 700,
@@ -23,7 +24,33 @@ const headlineStyle = {
   align: 'center',
   lineHeight: 1.1,
   letterSpacing: 0,
+  verticalAlign: 'top',
+  allCaps: false,
+  boxColor: null,
+  boxOutlineColor: null,
+  boxOutlineWidth: 0,
+  boxRadius: 0,
+  boxPadding: 0,
 }
+// spec/starter-layouts.md, layout 1 at S = 1080.
+const headlineStyle = {
+  ...otherCopyStyle,
+  fontSize: 81,
+  align: 'left',
+  verticalAlign: 'bottom',
+}
+const buttonStyle = {
+  ...otherCopyStyle,
+  fontSize: 38,
+  fontWeight: 600,
+  lineHeight: 1.2,
+  letterSpacing: 0.02,
+  verticalAlign: 'middle',
+  boxOutlineColor: '#FFFFFF',
+  boxOutlineWidth: 3,
+  boxPadding: 16,
+}
+const backgroundShade = { color: '#000000', from: 'bottom', strength: 0.7, reach: 0.6 }
 
 describe('buildMasterLayers: the fields of each layer [SPEC 6.1, 14 N3]', () => {
   const layers = buildMasterLayers(starterTemplate, square, ALL_FILLS)
@@ -53,13 +80,13 @@ describe('buildMasterLayers: the fields of each layer [SPEC 6.1, 14 N3]', () => 
     ])
   })
 
-  it('gives image layers opacity 1 and text layers their text style', () => {
+  it('gives every layer its style with every look field [LK-4]', () => {
     expect(layers.map((l) => l.style)).toEqual([
-      { opacity: 1 },
-      { opacity: 1 },
-      { opacity: 1 },
+      { opacity: 1, fillColor: null, shade: backgroundShade },
+      { opacity: 1, shade: null },
+      { opacity: 1, shade: null },
       headlineStyle,
-      { ...headlineStyle, fontSize: 38, fontWeight: 600, lineHeight: 1.2 },
+      buttonStyle,
     ])
   })
 
@@ -105,10 +132,10 @@ describe('buildMasterLayers: other templates [SPEC 6.1, 14 N3]', () => {
     const [, sticker, tagline] = buildMasterLayers(template, square, fills)
     expect(sticker).toMatchObject({ key: 'sticker', name: 'sticker', type: 'image' })
     expect(sticker?.geometry).toMatchObject({ x: 292, y: 292, width: 497, height: 497 })
-    expect(sticker?.style).toEqual({ opacity: 1 })
+    expect(sticker?.style).toEqual({ opacity: 1, shade: null })
     expect(tagline).toMatchObject({ key: 'tagline', name: 'tagline', type: 'text', copy: 'Hello' })
     expect(tagline?.geometry).toMatchObject({ x: 65, y: 454, width: 950, height: 173 })
-    expect(tagline?.style).toEqual(headlineStyle)
+    expect(tagline?.style).toEqual(otherCopyStyle)
   })
 })
 
@@ -159,6 +186,16 @@ describe('buildMasterLayers: shares nothing [SPEC 14 N3]', () => {
       expect(l.syncedRevs.copy).toBe(0)
       expect(l.animation.exit).toEqual(still)
     }
+  })
+})
+
+describe('buildMasterLayers: the background shade is its own object [LK-4]', () => {
+  it('changing a returned shade changes neither a second call nor the layout', () => {
+    const [first] = buildMasterLayers(starterTemplate, square, {})
+    if (first && 'shade' in first.style && first.style.shade) first.style.shade.strength = 0
+    const [second] = buildMasterLayers(starterTemplate, square, {})
+    expect(second?.style).toMatchObject({ shade: backgroundShade })
+    expect(layout.BACKGROUND_LOOK.shade).toEqual(backgroundShade)
   })
 })
 

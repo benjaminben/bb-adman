@@ -29,13 +29,14 @@ function fontSize(layer: NewLayer | undefined): number | undefined {
   return layer && 'fontSize' in layer.style ? layer.style.fontSize : undefined
 }
 
-// SPEC 6.1 "Default layout", the worked values table. Each box is x, y, width, height.
-describe('buildMasterLayers: worked boxes for the ready-made sizes [SPEC 6.1, 14 N3]', () => {
+// spec/starter-layouts.md, layout 1 (photo-bottom-left), the default. Each box is x, y,
+// width, height.
+describe('buildMasterLayers: worked boxes for the ready-made sizes [SPEC 6.1, 14 N3, LK-4]', () => {
   it.each([
-    [size(1080, 1080, '1x1'), [292, 238, 497, 497], [65, 756, 950, 173], [65, 950, 950, 65]],
-    [size(1080, 1920, '9x16'), [292, 422, 497, 497], [65, 1344, 950, 307], [65, 1690, 950, 115]],
-    [size(1920, 1080, '16x9'), [712, 238, 497, 497], [65, 756, 1790, 173], [65, 950, 1790, 65]],
-    [size(1080, 1350, '4x5'), [292, 297, 497, 497], [65, 945, 950, 216], [65, 1188, 950, 81]],
+    [size(1080, 1080, '1x1'), [292, 151, 497, 497], [65, 670, 950, 238], [65, 918, 454, 97]],
+    [size(1080, 1920, '9x16'), [292, 269, 497, 497], [65, 1190, 950, 422], [65, 1758, 454, 97]],
+    [size(1920, 1080, '16x9'), [712, 151, 497, 497], [65, 670, 1790, 238], [65, 918, 454, 97]],
+    [size(1080, 1350, '4x5'), [292, 189, 497, 497], [65, 837, 950, 297], [65, 1188, 454, 97]],
   ])('%o', (campaignSize, subject, headline, cta) => {
     const got = boxes(buildMasterLayers(starterTemplate, campaignSize, ALL_FILLS))
     expect(got).toEqual({
@@ -47,10 +48,35 @@ describe('buildMasterLayers: worked boxes for the ready-made sizes [SPEC 6.1, 14
     })
   })
 
-  it('gives text sizes 76 and 38 when the smaller side is 1080', () => {
+  it('gives short copy the largest sizes, 81 and 38, when the smaller side is 1080', () => {
     const layers = buildMasterLayers(starterTemplate, size(1080, 1920, '9x16'), ALL_FILLS)
-    expect(fontSize(layers.find((l) => l.key === 'headline'))).toBe(76)
+    expect(fontSize(layers.find((l) => l.key === 'headline'))).toBe(81)
     expect(fontSize(layers.find((l) => l.key === 'call-to-action'))).toBe(38)
+  })
+
+  // spec/starter-layouts.md "The starting font size", the worked values: plain words of at
+  // most 9 letters (here 8 letters and a space).
+  it.each([
+    [size(1080, 1080, '1x1'), 11, 81],
+    [size(1080, 1080, '1x1'), 60, 71],
+    [size(1080, 1080, '1x1'), 120, 47],
+    [size(1080, 1080, '1x1'), 300, 30],
+    [size(1080, 1080, '1x1'), 1000, 22],
+    [size(1080, 1920, '9x16'), 60, 81],
+    [size(1080, 1920, '9x16'), 120, 63],
+    [size(1080, 1920, '9x16'), 300, 42],
+    [size(1080, 1920, '9x16'), 1000, 22],
+  ])('at %o a headline of %i letters starts at size %i', (campaignSize, n, expected) => {
+    const text = 'abcdefgh '.repeat(Math.ceil(n / 9)).slice(0, n)
+    const layers = buildMasterLayers(starterTemplate, campaignSize, { headline: { text } })
+    expect(fontSize(layers.find((l) => l.key === 'headline'))).toBe(expected)
+  })
+
+  it('gives a 40-letter call to action size 24 at 1080x1080', () => {
+    const text = 'abcdefgh '.repeat(5).slice(0, 40)
+    const fills = { 'call-to-action': { text } }
+    const layers = buildMasterLayers(starterTemplate, size(1080, 1080, '1x1'), fills)
+    expect(fontSize(layers.find((l) => l.key === 'call-to-action'))).toBe(24)
   })
 
   it('sets rotation 0 and crop null on every layer', () => {
@@ -59,22 +85,23 @@ describe('buildMasterLayers: worked boxes for the ready-made sizes [SPEC 6.1, 14
   })
 })
 
-// 1200x628: S = 628, m = round(37.68) = 38, side = round(288.88) = 289.
-describe('buildMasterLayers: a custom size follows the rule [SPEC 6.1, 14 N3]', () => {
+// 1200x628: S = 628, m = round(37.68) = 38, side = round(288.88) = 289. The button is
+// round(263.76) = 264 by round(56.52) = 57 and ends one margin above the bottom.
+describe('buildMasterLayers: a custom size follows the rule [SPEC 6.1, 14 N3, LK-4]', () => {
   const layers = buildMasterLayers(starterTemplate, size(1200, 628), ALL_FILLS)
 
   it('gives each box from W, H and the smaller side', () => {
     expect(boxes(layers)).toEqual({
       background: [0, 0, 1200, 628],
-      'subject-image': [456, 138, 289, 289],
+      'subject-image': [456, 88, 289, 289],
       logo: [38, 38, 88, 88],
-      headline: [38, 440, 1124, 100],
-      'call-to-action': [38, 553, 1124, 38],
+      headline: [38, 389, 1124, 138],
+      'call-to-action': [38, 533, 264, 57],
     })
   })
 
   it('gives text sizes from the smaller side', () => {
-    expect(fontSize(layers.find((l) => l.key === 'headline'))).toBe(44)
+    expect(fontSize(layers.find((l) => l.key === 'headline'))).toBe(47)
     expect(fontSize(layers.find((l) => l.key === 'call-to-action'))).toBe(22)
   })
 })

@@ -31,9 +31,9 @@ describe('layer.update [FR-091 to FR-094, FR-194, FR-249]', () => {
     expect(layer.style).toMatchObject({ fontSize: 40, letterSpacing: 0.1, color: '#FFFFFF' })
     expect(layer.geometry).toEqual({
       x: 5,
-      y: 756,
+      y: 670,
       width: 950,
-      height: 173,
+      height: 238,
       rotation: -170,
       crop: null,
     })
@@ -66,7 +66,7 @@ describe('layer.update [FR-091 to FR-094, FR-194, FR-249]', () => {
 
   it('bumps no counter for a group whose merged value did not change', async () => {
     const id = bus.ids.text
-    await bus.update(id, { style: { fontSize: 76 }, geometry: { x: 1 } })
+    await bus.update(id, { style: { fontSize: 81 }, geometry: { x: 1 } })
     expect(bus.layer(id).revs).toEqual({ ...ZERO, geometry: 1 })
   })
 
@@ -94,7 +94,7 @@ describe('layer.update [FR-091 to FR-094, FR-194, FR-249]', () => {
     const same = {
       name: stored.name,
       copy: stored.copy,
-      style: { fontSize: 76 },
+      style: { fontSize: 81 },
       geometry: { rotation: 360 },
       animation: { entrance: stored.animation.entrance },
     }
@@ -110,7 +110,7 @@ describe('layer.update [FR-091 to FR-094, FR-194, FR-249]', () => {
     await bus.update(id, {
       name: 'Headline',
       style: { fontSize: 50, color: '#FFFFFF' },
-      geometry: { x: 1, y: 756 },
+      geometry: { x: 1, y: 670 },
       animation: { entrance: FADE, exit: { preset: 'none', startMs: 0, durationMs: 0 } },
     })
     const inverse = bus.undo.takeUndo(bus.projectId, `variant:${bus.variantId}`)
@@ -120,7 +120,7 @@ describe('layer.update [FR-091 to FR-094, FR-194, FR-249]', () => {
         projectId: bus.projectId,
         layerId: id,
         patch: {
-          style: { fontSize: 76 },
+          style: { fontSize: 81 },
           geometry: { x: 65 },
           animation: { entrance: { preset: 'none', startMs: 0, durationMs: 0 } },
         },

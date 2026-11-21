@@ -33,12 +33,12 @@ describe('fake provider, layout [spec/ai-jobs.md "The fake provider\'s parts"]',
     expect(boxes).toEqual([
       {
         slot: 'headline',
-        ...{ x: 65, y: 756, width: 950, height: 173 },
-        ...{ fontSize: 76, color: '#112233', align: 'center' },
+        ...{ x: 65, y: 670, width: 950, height: 238 },
+        ...{ fontSize: 81, color: '#112233', align: 'left' },
       },
       {
         slot: 'call-to-action',
-        ...{ x: 65, y: 950, width: 950, height: 65 },
+        ...{ x: 65, y: 918, width: 454, height: 97 },
         ...{ fontSize: 38, color: '#112233', align: 'center' },
       },
     ])
@@ -52,7 +52,7 @@ describe('fake provider, layout [spec/ai-jobs.md "The fake provider\'s parts"]',
     ])
     expect(boxes.map((b) => [b.slot, b.x, b.y, b.width, b.height, b.fontSize])).toEqual([
       ['tagline', 65, 454, 950, 173, 76],
-      ['headline', 65, 756, 950, 173, 76],
+      ['headline', 65, 670, 950, 238, 81],
       ['legal', 65, 627, 950, 173, 76],
     ])
   })
