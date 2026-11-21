@@ -1,0 +1,283 @@
+# Infrastructure and settings
+
+Where the app runs, the CI checks, release and packaging, how keys are stored, every environment variable, and `settings.json`. Read with `spec/security.md` (the rules these serve) and `spec/testing.md` (the test runs these variables switch on).
+
+## Environments (was 7.1 to 7.4, 7.6)
+
+| Environment | Purpose | Infrastructure | Access |
+|-------------|---------|----------------|--------|
+| local | Developer workstation | `npm run dev` (electron-vite). Fake providers when `ADMAN_FAKE_PROVIDERS=1`. | Developer |
+| ci | Lint, type check, tests, secret scan, build | GitHub Actions (`.github/workflows/ci.yml`) | Automatic |
+| release | Installers for users | GitHub Releases | Public download |
+
+There is no dev, staging or production server. The app owns no cloud hosting: the public GitHub repository holds the code and the release files [REQ: 9.2]. No containers, no orchestration, no infrastructure as code.
+
+## Scripts
+
+Built. Owner: `package.json`. The project needs Node 22.12 or newer (`engines`); CI uses Node 24.
+
+| Script | Command | What it is for |
+|--------|---------|----------------|
+| `dev` | `electron-vite dev` | Run the app from the development server |
+| `build` | `electron-vite build` | Build main, preload and renderer into `out/` |
+| `start` | `electron-vite preview` | Run the built app |
+| `lint` | `eslint . && prettier --check .` | Lint and format check |
+| `format` | `prettier --write .` | Format |
+| `typecheck` | `tsc --noEmit -p tsconfig.json` | Type check |
+| `test` | `vitest run` | Unit and integration tests |
+| `test:watch` | `vitest` | Same, watching |
+| `test:coverage` | `vitest run --coverage` | Tests with coverage thresholds |
+| `test:build` | `vitest run --config vitest.build.config.ts` | Built-page check (`tests/build/built-page.test.ts`) |
+| `test:live` | `vitest run --config vitest.live.config.ts` | Paid calls to real services, `tests/live/`. Run by the project owner only. |
+| `test:comfy` | `vitest run --config vitest.comfy.config.ts` | Real ComfyUI server, `tests/comfy/` |
+| `test:e2e` | `npm run build && playwright test` | Offline end-to-end, `tests/e2e/` |
+| `test:e2e:real` | `npm run build && playwright test --config playwright.real.config.ts` | End-to-end against the real ComfyUI server, `tests/e2e-real/` |
+| `db:generate` | `drizzle-kit generate` | Make a migration |
+| `package` | `npm run build && electron-builder` | Installers |
+| `package:dir` | `npm run build && electron-builder --dir` | Unpacked app folder |
+
+`npm test` never includes `tests/live/`, `tests/comfy/` or `tests/e2e-real/`. How each run is used, who may run it and its print rules are in `spec/testing.md`.
+
+## CI pipeline (was 7.5)
+
+Push and pull request: Built (`.github/workflows/ci.yml`). Tag pipeline: Not built (Phase 11).
+
+On every push and pull request, with `permissions: contents: read`:
+
+| Job | Runs on | Steps | Fails the run? |
+|-----|---------|-------|----------------|
+| Lint and type check | `macos-latest` | `npm ci`, `npm run lint` (ESLint and Prettier check), `npm run typecheck` | Yes |
+| Secret scan | `ubuntu-latest` | gitleaks (`gitleaks/gitleaks-action@v2`, full history) | Yes |
+| Dependency audit | `ubuntu-latest` | `npm audit --audit-level=high` with `continue-on-error: true` | No, it reports only |
+| Unit and integration tests | `macos-latest`, `windows-latest` | `npm ci`, `npm test`, then `npm run test:coverage` with `continue-on-error: true` | `npm test` yes; coverage no |
+| Build | `macos-latest`, `windows-latest`, after lint and tests | `npm ci`, `npm run build`, `npm run test:build` | Yes |
+
+- **Coverage.** `@vitest/coverage-v8`. Coverage includes `src/shared/**` and `src/main/**` (providers included). Thresholds: `src/shared/**` 90% lines, `src/main/**` 80% lines, set only in `vitest.config.ts`. Reporters include `json-summary`. A threshold is never lowered and no exclusion is added to pass it. The push step has `continue-on-error: true`; this is accepted only because `npm test` fails on its own, and the tag pipeline runs coverage without the mark.
+- **Dependency audit.** Reports and does not fail a push: a new advisory in a package nobody touched must not block parallel work. Phase 11 makes it fail the tag pipeline.
+- **Lint rules that CI enforces.** No semicolons. `max-lines` 300 per file. No `any`. No `console` except `console.error`. ESLint keeps `electron` out of every file `src/main/core.ts` imports, checked per file. Asset paths are joined only in `src/main/assets/path-resolver.ts` (a `no-restricted-syntax` rule). Code rules in full: `spec/structure.md`.
+- **Merge rule.** Each slice is reviewed and merged to `main` one at a time. After each merge the full checks run on `main`: lint, typecheck, all tests with none left out, build and `test:build`. A security-class slice merges only after its review passes.
+- No CI workflow names `test:live`, `test:comfy` or `test:e2e:real`. Nothing in CI calls a real provider.
+
+Not built yet:
+
+- **Scene reference-picture tests** on macOS and Windows: a push step, Not built (Phase 3, with the Scene).
+- **Licence check**: Not built (Phase 11). Fails on GPL or AGPL packages, on push and on tags from then on. Comes with `LICENSE` and `THIRD-PARTY-NOTICES.md`.
+- **Tag pipeline** on `v*`: Not built (Phase 11).
+
+```
+tag v*
+  └─ every push job above; the dependency audit and the coverage thresholds now fail the run
+  └─ fetch FFmpeg (pinned version, SHA-256 checked)
+  └─ end-to-end smoke test (Playwright, fake providers)
+  └─ package (electron-builder): DMG arm64, DMG x64, NSIS x64
+  └─ create a draft GitHub Release with the installers attached (GITHUB_TOKEN)
+```
+
+## Release and packaging
+
+Packaging config: Built (`electron-builder.json`). Release workflow, signing steps in the README, FFmpeg: Not built (Phase 11, FFmpeg Phase 8).
+
+- `electron-builder.json`: `appId` `com.adman.app`, output `dist/`, files `out/**` and `package.json`, native `.node` files unpacked from the archive. macOS: DMG for arm64 and x64, no signing identity. Windows: NSIS x64, not one-click, per user.
+- **File association** [REQ: R-06]: the installer registers the `.adman` extension (`fileAssociations`, MIME `application/x-adman`; on macOS the exported type `com.adman.project`) so a double-click opens the project.
+- **Branches.** `main` is always releasable. Work happens on short branches merged by pull request.
+- **Rollback.** Users install an earlier release by hand [REQ: 8.7]. A bad release is marked as such and a new one is published.
+- **Unsigned installers** [REQ: R-16]. The README explains the first-launch steps: on macOS, right-click and choose Open, or allow it in System Settings; on Windows, choose "More info" then "Run anyway". The stakeholder accepted that a user needs the README for these standard steps, and only these [D-015]. Nothing else in setup may need the README [REQ: 8.7].
+- **No automatic updates** [REQ: 1.4].
+- **Packaged check, Phase 11 gate.** `better-sqlite3` has no install script and ships ready-made binaries (macOS arm64 and x64, Windows x64 and arm64) on Node's stable native interface, so one file loads in Node (tests) and in Electron (the app). Still needed: one packaged app that opens a project on each system. The first packaged run should check it.
+
+### FFmpeg [REQ: FR-143, 9.3]
+
+Not built (Phase 8 for the source, Phase 11 for the release step).
+
+- Built with `--disable-gpl --disable-nonfree`, plus `--enable-videotoolbox` on macOS and `--enable-mediafoundation` on Windows.
+- Needed parts: decoders for H.264, HEVC, VP8, VP9, ProRes and PNG; demuxers for MP4, MOV, WebM and image pipe; filters `scale`, `crop`, `overlay`, `trim`, `setpts`, `loop`, `color`, `format`, `fps`; the MP4 muxer.
+- `scripts/fetch-ffmpeg` downloads one archive per platform from a URL pinned in `scripts/ffmpeg-sources.json` with its SHA-256. The binaries are not committed.
+- Packaged at `resources/ffmpeg/{platform}-{arch}/ffmpeg[.exe]`.
+- `THIRD-PARTY-NOTICES.md` carries the LGPL text, the exact build flags and a link to the matching source.
+- **Decision required in Phase 8:** the source of the LGPL builds. Ready-made LGPL builds exist for Windows. For macOS the developer may need to build FFmpeg in a CI job and attach the result to a release in this repository. Either way, record the URL and checksum in `ffmpeg-sources.json`.
+
+## Packages: licences and install scripts
+
+Built (`package.json` `allowScripts`; test `tests/unit/config/install-scripts.test.ts`).
+
+- **Licences.** All npm dependencies must be under MIT, ISC, BSD, Apache-2.0 or similar; GPL and AGPL are refused (`spec/security.md`, "Accepted risks and compliance"). Every package named in the technology stack (`spec/overview.md`) is under an allowed licence. A developer who adds a package not named there checks its licence first and reports it.
+- **Install scripts.** Some packages ask to run a script when installed.
+  - The owner is the `allowScripts` list in `package.json`. No other file or setting decides it.
+  - The default is no. A package's install script runs only when its entry is `true`.
+  - Every package that asks gets an entry, `true` or `false`, pinned to its version. `npm install` and `npm ci` on a clean checkout then print no install-script warning. A warning means a package asks and nobody has decided.
+  - A developer may add a `false` entry without asking. A developer never adds a `true` entry alone: they stop, report what the script does and what breaks without it, and the architect rules. The ruling goes in the table below.
+  - A new version of a listed package is a new entry and a new decision.
+
+| Package | Entry | Why |
+|---------|-------|-----|
+| `esbuild@0.18.20`, `@0.25.12`, `@0.28.2` | `true` | The build tools use it. Its script sets up the binary for this platform. Approved before this rule existed; the script has not been read. Stands until the stakeholder answers OI-27. |
+| `electron-winstaller@5.4.0` | `true` | Comes with the installer builder. Same standing as `esbuild` (OI-27). |
+| `better-sqlite3@13.2.0` | `false` | It has no install script. The `false` entry stays so a later version that adds one is denied by default. |
+| `fsevents@2.3.3` | `false` | A macOS file watcher the development tools use if present. Not part of the shipped app; nothing needs its script. |
+| `protobufjs@7.6.6` | `false` | Asks for a script; nothing needs it. |
+
+OI-27 is open: the stakeholder has not answered on the `true` approvals made before the rule.
+
+## Secrets (was 7.7)
+
+User secrets: Built (`src/main/secrets/secret-store.ts`, `src/main/secrets/safe-storage.ts`). The security rules for keys are in `spec/security.md`, "Keys and secrets".
+
+**User secrets** [REQ: FR-170 to FR-173, R-10]
+
+- Entered in the app, in Settings or in the key dialog that appears when an action first needs a key [REQ: FR-171].
+- A key is not tested when entered [REQ: FR-172].
+- Stored in `{userData}/secrets.bin`: a JSON map encrypted as a whole with `safeStorage.encryptString`.
+- If `safeStorage.isEncryptionAvailable()` is false, the app refuses to save keys and says "This computer cannot store keys securely."
+- `app.getState` lists each secret name with its last four characters (`lastFour`). A value of four characters or fewer shows no characters, because the last four would be the whole value.
+
+| Secret name | Used by | Class | Can the user view it? |
+|-------------|---------|-------|-----------------------|
+| `gemini.apiKey` | Gemini | Provider key | Never. Last four characters only. |
+| `fal.apiKey` | fal.ai | Provider key | Never. Last four characters only. |
+| `firefly.clientId`, `firefly.clientSecret` | Firefly (disabled) | Provider key | Never. Last four characters only. |
+| `s3.accessKeyId`, `s3.secretAccessKey` | S3 | Storage key | Never. Last four characters only. |
+| `dropbox.refreshToken` | Dropbox | Storage key | Never. Last four characters only. |
+| `mcp.token` | MCP server | Local access token | Yes, in full, in the Connect panel |
+
+The two classes are [REQ: R-10, D-014].
+
+**Repository secrets** [REQ: FR-181]
+
+- `.gitignore` covers `.env*`, `*.adman`, `*.adman.bak`, `* Assets/`, `resources/ffmpeg/`, `out/`, `dist/`, `test-results/`, and `design/prototype/photos/` (the stakeholder's product photos). `examples/**` is the one exception (`!examples/**`).
+- gitleaks runs on every push and pull request.
+- CI needs only the built-in `GITHUB_TOKEN`.
+
+## Environment variables (was 13)
+
+Built. Users never set any of these. They exist for development, tests and CI. User configuration is in `settings.json` (below).
+
+### The app
+
+| Variable | Read by | What it does | Default |
+|----------|---------|--------------|---------|
+| `ADMAN_FAKE_PROVIDERS` | `src/main/providers/registry.ts` (`listProviders`) | `1` adds the fake provider to the registry. It makes no network call. | Not set. `1` in `test:e2e` and in integration fixtures. |
+| `ADMAN_USER_DATA_DIR` | `src/main/index.ts` | Overrides the app data folder (`app.setPath('userData', …)`) | Not set. A temporary folder in end-to-end tests. |
+| `ADMAN_LOG_LEVEL` | `src/main/core.ts` (`parseLogLevel`) | Lowest level written to the log. An unknown value reads as `info`. | `info` |
+| `ADMAN_DEV_TOOLS` | `src/main/index.ts` (`devToolsEnabled`) | `1` switches on the hand-test tools: the `dev.storage` command, the hand-test screen, and `trial` ComfyUI workflows offered to the user. Ignored by a packaged app: `devTools` is true only when `app.isPackaged` is false and the variable is `1`. | Not set |
+| `ELECTRON_RENDERER_URL` | `src/main/windows/app-window.ts` (`pageAddress`) | Set by electron-vite in `npm run dev`. The window loads it only when the app is not packaged and it is `http://localhost:{port}` with at most one trailing slash (`spec/security.md`, "Renderer and windows"). | Set by the tool |
+
+### `test:live` (paid calls; project owner only)
+
+| Variable | What it does |
+|----------|--------------|
+| `GEMINI_API_KEY` | The owner's own Gemini key for the live Gemini cases. Also read by `test:e2e:real` for its paid case (terminal only). |
+| `FAL_KEY` | The owner's own fal.ai key |
+| `ADMAN_LIVE_S3_BUCKET`, `ADMAN_LIVE_S3_REGION`, `ADMAN_LIVE_S3_PREFIX` | The bucket the live storage test uses. It writes only under `{prefix}/adman-hand-test/`. |
+| `ADMAN_LIVE_KEEP` | `1` leaves `adman-hand-test/hello.txt` in the bucket so a person can look at it; the next run without it removes it. |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | Keys for that bucket. The test hands them to the adapter through `AdapterContext.secret`; the S3 library is not left to read them itself, so the app can never pick them up by accident. |
+| `ADMAN_LIVE_REFERENCE_FILES` | Up to three absolute paths to PNG or JPEG files, used as references by the Gemini live reference case. Terminal only. Picture-by-path rules apply (`spec/security.md`, "Test runs"). |
+
+### `test:comfy` (real ComfyUI server)
+
+| Variable | What it does | Default |
+|----------|--------------|---------|
+| `COMFY_BASE_URL` | The address of the project's ComfyUI test server. Read from the terminal or `.env.local` by `vitest.comfy.config.ts` and nothing else. The app never reads it; the app's address is the one the user saves in Settings. Never printed, committed or put in a report. | — |
+| `ADMAN_COMFY_VIDEO` | `1` lets case 2 (video from a prompt) run. Terminal only. Leaves one file on the server. | Not set |
+| `ADMAN_COMFY_MOSS` | `1` lets case 3 (MOSS picture) run. Terminal only. | Not set |
+| `ADMAN_COMFY_FLUX` | `1` lets case 5 (Flux picture from a reference) run. Terminal only. | Not set |
+| `ADMAN_COMFY_FRAME` | `1` lets case 6 (H3 video from a first frame) run. Terminal only. Leaves one file on the server. | Not set |
+| `ADMAN_COMFY_REFVIDEO` | `1` lets case 7 (H3 video from one reference) run. Terminal only. Leaves one file on the server. | Not set |
+| `ADMAN_COMFY_PICTURE` | Absolute path to a PNG or JPEG used in place of the test-made picture by cases 5, 6 and 7. Terminal only. Picture-by-path rules apply. | Not set |
+
+A plain `npm run test:comfy` runs only case 1, the check. Each switch is checked before any call.
+
+### `test:e2e:real` (real ComfyUI server through the screens)
+
+| Variable | What it does | Default |
+|----------|--------------|---------|
+| `COMFY_BASE_URL` | Same variable. Read by `tests/e2e-real/global-setup.ts` (named by `playwright.real.config.ts`) from the terminal or `.env.local`. Typed into Settings by the test, never printed. | — |
+| `ADMAN_E2E_PICTURES` | Up to three absolute paths to product photos for "Add pictures". Terminal only. Picture-by-path rules apply. | Not set |
+| `ADMAN_E2E_FLUX` | `1`: picture from one product reference | Not set |
+| `ADMAN_E2E_MOSS` | `1`: picture from a prompt | Not set |
+| `ADMAN_E2E_CANCEL` | `1`: start MOSS, cancel from its row | Not set |
+| `ADMAN_E2E_VIDEO` | `1`: clip from a prompt | Not set |
+| `ADMAN_E2E_VIDEO_FRAME` | `1`: clip from a first-frame picture | Not set |
+| `ADMAN_E2E_VIDEO_REF` | `1`: clip from a reference picture | Not set |
+| `ADMAN_E2E_GEMINI` | `1`: a paid Gemini run through the screens. Needs `GEMINI_API_KEY` in the terminal and the stakeholder's yes; no agent sets it. | Not set |
+| `ADMAN_E2E_RUN_CHECKED` | Internal. Set to `1` by the global setup once its checks pass; each worker refuses to run without it. Never set by hand. | Set by the setup |
+| `PLAYWRIGHT_NO_COPY_PROMPT` | Set to `1` by the global setup. | Set by the setup |
+
+All switches are terminal only. With none set, only Settings → Check runs. `launchReal` (`tests/e2e-real/real-env.ts`) does not hand the app `ADMAN_FAKE_PROVIDERS`, `COMFY_BASE_URL`, `GEMINI_API_KEY` or any `ADMAN_E2E_*` name; it sets `ADMAN_DEV_TOOLS=1` and `ADMAN_USER_DATA_DIR` to the sandbox folder.
+
+### CI
+
+| Variable | What it does |
+|----------|--------------|
+| `GITHUB_TOKEN` | Provided by GitHub Actions. Used by the gitleaks action; later creates the draft release (Phase 11). |
+
+### Rules for these variables
+
+- A live test skips itself, with a line naming the missing variable, when its variables are not set. Live tests are never part of `npm test` or CI.
+- No key from the environment is ever written to `secrets.bin`, a log or a project file.
+- A blank picture-path variable counts as unset.
+
+### `.env.local`
+
+Built (`vitest.live.config.ts`, `tests/live/env-file.ts`, `vitest.comfy.config.ts`, `tests/comfy/env-file.ts`, `tests/e2e-real/global-setup.ts`).
+
+A developer may keep some test variables in `.env.local` in the project root instead of typing them. `.gitignore` covers it (`.env*`). An agent never opens, prints or copies `.env.local`.
+
+- **Who reads it.** `test:live`, `test:comfy` and `test:e2e:real` only, each through its own loader. The app (`src/`), `npm test`, the build, `test:e2e` and CI never read it. `vitest.config.ts` and `vitest.build.config.ts` load no variables and read no `.env` file.
+- **Loading a config reads nothing.** `vitest.live.config.ts` and `vitest.comfy.config.ts` each export a function, `defineConfig(() => ({ … }))`. The file is read inside that function and nowhere else. Nothing at the top level touches the disk or `process.env`. Only Vitest, started with `--config`, calls the function. A reviewer checks the top level by reading.
+- **Include lists.** One owner each: `LIVE_INCLUDE = ['tests/live/**/*.test.ts']` in `tests/live/env-file.ts`; `COMFY_INCLUDE = ['tests/comfy/**/*.test.ts']` in `tests/comfy/env-file.ts`.
+- **No imports of the configs.** No `.ts` or `.tsx` file under `tests/unit/`, `tests/integration/`, `tests/e2e/` or `src/` imports `vitest.live.config` or `vitest.comfy.config`, and no file under `src/` holds the text `.env.local`. Checked by reading file text in `tests/unit/config/live-config.test.ts` and `tests/unit/config/comfy-config.test.ts`.
+- **How.** Node's built-in `parseEnv` from `node:util`. No package is added.
+- **Which names.**
+  - `test:live` takes only `LIVE_ENV_NAMES`: `GEMINI_API_KEY`, `FAL_KEY`, `ADMAN_LIVE_S3_BUCKET`, `ADMAN_LIVE_S3_REGION`, `ADMAN_LIVE_S3_PREFIX`, `ADMAN_LIVE_KEEP`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (pure function `liveEnvFrom(fileText, alreadySet)`).
+  - `test:comfy` takes only `COMFY_ENV_NAMES`: `COMFY_BASE_URL` (`comfyEnvFrom`). It is not in the live list and the comfy loader takes nothing from the live list, so the ComfyUI run can never load a paid key.
+  - `test:e2e:real` takes only `COMFY_BASE_URL`.
+  - Any other line in the file is ignored, so the file cannot switch on `ADMAN_DEV_TOOLS`, `ADMAN_FAKE_PROVIDERS`, a case switch or a picture path.
+- **Which value wins.** A variable already set in the terminal wins over the file.
+- **No file.** Not an error and no message.
+- **Nothing is printed.** No value from the file is printed, logged, put in an error message, a test name, a snapshot or a report. Configs and tests may print variable names only. If the file cannot be parsed, the message names the file and nothing from inside it (".env.local could not be parsed").
+- **Prefixes.** Vite and electron-vite read `.env.local` themselves but pass on only names that start with `VITE_`, `MAIN_VITE_`, `PRELOAD_VITE_` or `RENDERER_VITE_`. No variable with one of those prefixes is put in this file, so no key reaches the app that way.
+- The stakeholder spoke of "the .env file". The loaders read `.env.local` only; a line kept in another file is moved by the stakeholder (OI-37: whether that move has been made).
+- **Tests.** `tests/unit/live/env-file.test.ts` on `liveEnvFrom` with made-up text: a listed name is taken, an unlisted name is dropped, a name already set keeps its value. `tests/unit/config/comfy-env-file.test.ts`: no switch name is taken from the file. Neither reads a real file.
+
+## settings.json (was 13.1)
+
+Built (`src/shared/schemas/settings.ts`, `src/main/settings/defaults.ts`, `src/main/settings/settings-store.ts`). The `agentRunLimit` key is Not built (agent runs, `spec/mcp-and-agents.md`; not on `main`). The `agentRuns.setAllowed` command is also not on `main` yet: only its policy row exists.
+
+The file is `{userData}/settings.json`, written by the app only [REQ: FR-170].
+
+```ts
+type Settings = {
+  defaultProjectDir: string            // min length 1; default: {Documents}/Adman Projects  [REQ: FR-004]
+  recentProjects: Array<{ path: string; name: string; openedAt: string }>   // max 20  [REQ: FR-002]
+  defaultProviders: { image: string; layout: string; text: string; video: string }  // default gemini, gemini, gemini, comfyui  [REQ: FR-067]
+  generation: { optionsPerRun: number }          // whole number, at least 1; default 4  [REQ: FR-063]
+  export: { imageFormat: 'png' | 'jpg'; jpgQuality: number; fps: 30 | 60 }   // jpgQuality whole 1 to 100; default png, 90, 30
+  mcp: { enabled: boolean; port: number; autoApproveDestructive: boolean }   // port whole 1024 to 65535; default false, 47821, false  [REQ: FR-191, FR-197]
+  storage: {
+    s3: { bucket: string; region: string; prefix: string } | null
+    dropbox: { accountName: string; rootPath: string } | null
+  }                                              // default { s3: null, dropbox: null }
+  comfyui: { baseUrl: string | null }            // default null. Written only by comfy.setAddress. Stored as an origin  [REQ: FR-250, FR-253]
+  agentRuns: Record<string, { allowed: boolean }>  // provider ID to its tick; default {}. Written only by agentRuns.setAllowed  [REQ: FR-279]
+  agentRunLimit: number                          // Not built. Whole number 1 to 16, default 4. Written only by agentRuns.setLimit
+}
+```
+
+- `DEFAULT_PROVIDERS` lives in `src/main/providers/registry.ts`; `DEFAULT_MCP_PORT = 47821` in `defaults.ts`. `defaultProviders.image` and `.video` may be `comfyui` [REQ: FR-254]. A saved file naming `fal-seedance` for video is not rewritten (`fal-seedance` is unavailable until its adapter is built, `spec/providers.md`).
+- **Who writes what.** `settings.update` (schema `settingsPatchSchema`, strict) can change `defaultProjectDir`, `defaultProviders`, `generation`, `export`, `mcp` except `enabled`, and `storage`. It refuses every other key. The app keeps `recentProjects`. `mcp.enabled` has one writer, `mcp.setEnabled`, which also starts or stops the server. `comfyui` has one writer, `comfy.setAddress`. `agentRuns` has one writer, `agentRuns.setAllowed`. `agentRunLimit` will have one writer, `agentRuns.setLimit`. These three keys are security class (`spec/security.md`).
+- `settings.update` for `storage.s3` checks the region with `regionRefusal` (`spec/storage-and-publish.md`).
+
+### Loading the file
+
+Built (`settings-store.ts`). Security class.
+
+- A file that fails the schema falls back to the defaults whole. A file whose `comfyui` is not an object is such a file.
+- A file without `comfyui` or `agentRuns` gets the defaults for them.
+- `merge` skips the key `__proto__` at every level. Reason: assigning that key sets an object's prototype, so a file with `"agentRuns": { "__proto__": { … } }` could put entries where a lookup finds them.
+- Loading never writes the file. The store holds one copy of the settings in memory, and every save writes all of it.
+- **`comfyui.baseUrl` from the file.**
+  1. An address that passes `parseComfyAddress` (`src/shared/comfy/address.ts`) is held in memory as its origin, and a later save writes it in that form.
+  2. An address that fails is read as null. The refused text is held nowhere: not in memory, not in a log line, an error or anything sent to the window.
+  3. The next save, for any reason (a settings change, opening a project), writes null over it. The store keeps no second copy of the file's text. The user sees that no address is set and types it again. Whether to tell the user an address was refused is OI-50.
+- **`agentRunLimit` from the file** (Not built). Any value that is not a whole number from 1 to 16 is read as 4.
+- **Tests** (`tests/unit/main/settings/settings-store-comfy.test.ts`): a file with a failing address loads with `baseUrl` null, and after one `touchRecent` the file on disk holds `baseUrl: null` with its other keys kept; a file with `http://127.0.0.1:8188` loads with that origin and still holds it after a save; a file with `"comfyui": { "__proto__": { "baseUrl": "http://169.254.169.254" } }` loads with `baseUrl` null; a file with `"agentRuns": { "__proto__": { "comfyui": { "allowed": true } } }` loads with `agentRuns` having no `comfyui` entry, own or inherited, and `Object.prototype` has no new key after either load.

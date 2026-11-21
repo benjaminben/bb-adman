@@ -1,0 +1,201 @@
+# Screens as built
+
+What each built screen offers today, its source files, its wording, and the choices made without a design sign-off. Read with `spec/test-harnesses.md` (which of these functions the end-to-end harness reaches), `spec/structure.md` (renderer layout) and `spec/api-commands.md` / `spec/api-queries-events.md` (the calls each screen sends).
+
+## Status of these screens
+
+Built (Phases 1 and 2). They are plain working screens, made so every function can be used and tested before the real interface exists. They are built with the app's existing controls and tokens (`screens/screens.module.css`, `ui/tokens.css`, `ui/base.css`, the Radix parts already used: Tabs, Dialog). No new visual language and no new package. The UI pass may replace any of them whole. A design prototype exists in `design/prototype/`; the built screens do not follow it.
+
+| Screen | Fate |
+|--------|------|
+| Shell with project tabs | Placeholder. Project tabs are not the planned navigation model: open campaigns are the main tabs [REQ: FR-211]. How projects are shown and switched is designed in the UI pass (OI-31, Q-038). The start screen stays. |
+| Start | Stays in substance; restyled by the UI pass |
+| Project home | Placeholder for the campaign list and brief intake of the UI pass |
+| Campaign page, Make pictures, Make a video, run list | Placeholder. The Phase 3 editor, the Phase 4 generation panel, run confirmation dialog and activity panel, and the Phase 5 grid replace them |
+| Settings | Stays as the Settings screen; sections are added (agent runs, cloud storage in Phase 9, reports name in Phase 8) and restyled |
+| Key dialog | Stays (the `NEEDS_KEY` flow, FR-171) |
+| Hand test (dev) | Throwaway. Removed in Phase 9 with `dev.storage`, `{userData}/hand-test-local` handling and the `src/shared/config/dev-tools.ts` constants, once the publish dialog and storage settings screen exist |
+
+## Rules for every screen
+
+Built. The reviewer checks these on every screen.
+
+- Every command goes through the app store's `command` (`src/renderer/stores/app-store.ts`), so `NEEDS_KEY` opens the key dialog and an error shows in the error banner. Queries go through `useApi().query`. A screen imports nothing from `src/main/`.
+- **A paid run starts only on the user's own confirm.** For a provider whose `local` is false, Generate, Start and Retry show one line in the panel with Confirm and Cancel (`paid-confirm.tsx`). The line names the provider the held request goes to. Nothing is sent before Confirm. Nothing is started on open, on a timer, or again after a failure. A local provider needs no confirm. A run row whose provider is not known is treated as paid: Retry asks first, and Cancel is hidden.
+- **One run per click.** From the moment `generation.runImages`, `generation.startVideo` or `job.retry` is sent until its reply arrives, the button that sent it is disabled, for every provider. Any reply, a refusal included, enables it again. Tests: `generate-panel-click.test.tsx`, `run-row-click.test.tsx`.
+- A provider that is not `available` is not offered for a run.
+- The ComfyUI address is drawn only in the Settings ComfyUI section and inside a failure sentence. It is sent in no input but `comfy.setAddress`. The window writes nothing to the console.
+- Text from a server or a file (server message, brief values, a file name, a display name) is drawn as text content, never as HTML, never as a link.
+- For pictures and other assets, the renderer draws no file path, reads no file, and sends a path in no call except `asset.import`, and only a path the system picker returned. Display names are drawn as text. (The project's own file path, the recent-project paths and the default location are shown on the start, project and Settings screens, and sent only to `project.open`, `project.create` and `settings.update`.)
+- No screen has a field for a key. Keys go through the key dialog or the Settings key rows only.
+- Every control has a label and can be reached and used by keyboard (`spec/testing.md`, accessibility rules). Each screen file stays under 200 lines.
+- `assetUrl` (`src/renderer/ui/asset-url.ts`) builds every `adman-asset://` address and escapes both parts with `encodeURIComponent`.
+
+## Shell
+
+Built. `src/renderer/app/app-shell.tsx`, `app/error-banner.tsx`, `app/app-context.tsx`, `app/app.tsx`, `stores/app-store.ts`, `stores/project-store.ts`.
+
+- A tab bar (Radix Tabs, label "Open projects"): "Start", then one tab per open project named after it [REQ: FR-003].
+- "Settings" button (pressed state while Settings shows). "Hand test" button only when `app.getState` says `devTools`.
+- The error banner (`role="alert"`) shows the last refused command's message with "Dismiss".
+- The key dialog is mounted once here.
+- The window opens maximized, never full screen [D-031].
+
+## Start
+
+Built. `src/renderer/screens/start/start-screen.tsx`, `new-project-form.tsx`, `recent-projects.tsx`.
+
+- Heading "Adman".
+- "New project": "Project name" field, "Location" (the default from Settings, shown as text), "Change location" (folder picker), "Create project" (`project.create`) [REQ: FR-002, FR-004].
+- "Open": "Open project…" (project file picker, then `project.open`), "Recent projects" with an Open button each (`aria-label` "Open {name}, {path}"), or "No recent projects yet."
+
+## Project home
+
+Built. `src/renderer/screens/project-home/project-home.tsx`, `use-project.ts`, `brief-load.tsx`, `brief-summary.tsx`, `campaign-list.tsx`, `campaign-input.ts`.
+
+- Heading (project name), "Close project" button (`project.close`), file path line. "Loading the project…" while loading. Event `project.changed` for this project reads `project.get` again; one for another project does not.
+- **Load a brief.** Opens `dialog.pickFiles` with `purpose: 'brief'`; the picked path goes to `brief.parse`; a cancelled picker sends nothing. A refused `brief.parse` shows in the error banner and creates nothing.
+- **Brief summary,** read-only, the confirm step FR-023 asks for in its plainest form: Campaign name, Message (word for word), Audience, Region, Subjects (each with its ID and the notes "(made from the name)" and "already in this project, used as it is"), Sizes, Languages. When the brief lacks something, a list "What the brief lacks". "Create campaign" (disabled while the brief lacks something) sends `subject.create` for each subject the project does not hold, then `campaign.create`, and stops at the first refusal. "Creating the campaign…" while it runs. "Cancel" creates nothing.
+- **Campaign list:** name, "Variants: n", "Open" (`aria-label` "Open {name}"), or "No campaign yet."
+- The open campaign is state of this page, not of the app store. `CampaignPlace` renders `<CampaignView projectId campaignId onBack />` in the page's place; `CampaignView` owns its "Back to project" button and its `Campaign` region.
+
+## Campaign page
+
+Built. `src/renderer/screens/campaign/campaign-view.tsx`, `variant-list.tsx`, `stores/job-store.ts`.
+
+- "Back to project". "Loading the campaign…" while `campaign.get` is read. Then the campaign name.
+- **Variants** (radio group): each "{title} · {width}×{height} ({sizeLabel}) · {language} · {format}", plus "master". The first variant (the master) is chosen at the start. The picture panel, the video card and the run list work on the chosen variant.
+- **Job store,** one per open campaign page. Reads `job.list { projectId, variantId }` and keeps rows by ID. A `job.updated` row whose ID the store holds, or whose ID a command just returned, replaces the row; for any other row the store reads `job.list` again. It never guesses the project from a row. A `job.list` reply that arrives after a later one is dropped.
+- Known gaps, noted and not built: a refused `campaign.get` leaves the page on "Loading the campaign…" with no message ("Back to project" still works); the page does not read `campaign.get` again on `project.changed`.
+
+### Make pictures
+
+Built. `generate-panel.tsx`, `reference-picker.tsx`, `reference-list.ts`, `paid-confirm.tsx`.
+
+- "Provider": providers from `app.getState` whose `jobs` holds `image` and that are `available`, starting at `settings.defaultProviders.image` when available. None: "No picture provider is available."
+- "Slot": picture slots from `template.slots` (copy slots left out), the first chosen. None: "This campaign has no picture slot."
+- "Prompt": prefilled by `prefilledPrompt` (`src/shared/generation/prompt.ts`) from the subjects, audience, region and message. The UI pass may reword `prefilledPrompt` with no ruling.
+- **Reference pictures,** under the prompt box. Heading "Reference pictures"; one small picture per asset with a tick box and its display name; "Add pictures". Empty: "No reference pictures in this project yet."
+  - Calls: `asset.list { projectId, library: 'reference', kind: 'image' }`; `dialog.pickFiles { purpose: 'import', kind: 'image', multiple: true }`; `asset.import { projectId, paths, library: 'reference', copy: false, subjectId? }`. Thumbnails through `assetUrl`.
+  - Adding: picked paths go to `asset.import` as they came, with `copy: false` (files linked in place, ADR-002). `subjectId` is the chosen variant's first subject ID, omitted when it has none. After the reply the list is read again and the returned IDs are ticked. A cancelled picker sends nothing. A refused `asset.import` shows the command's message and ticks nothing.
+  - Ticks: the run sends ticked IDs in tick order; each ticked picture shows its place ("1", "2"). An asset with `missing: true` or type `image/webp` cannot be ticked and says why: "file not found", "WebP cannot be sent yet". Ticks are kept while the campaign page is open, also across variant changes, and dropped for an asset that left the list.
+  - When the chosen provider's `local` is true and a picture is ticked: "ComfyUI takes one reference picture for now and makes the result in that picture's shape, at about 1 megapixel." This is the screen's only knowledge of the workflow; the limit is the command's, and its `too_many_references` message shows in the error banner. Provisional wording (OI-77).
+- "Pictures": a count from 1 to `MAX_IMAGES_PER_RUN`, starting at `settings.generation.optionsPerRun`.
+- "Generate" sends `generation.runImages`. A value the input schema refuses shows its first issue message under the fields.
+- **Paid confirm line:** "This sends {n} paid request(s) to {Provider}."; with ticks, "This sends {n} paid request(s) and {m} reference picture(s) to {Provider}."; on Retry when the stored request cannot be read, "This sends paid request(s) to {Provider}." with no number. Then "Confirm" and "Cancel".
+
+### Make a video
+
+Built. `video-panel.tsx`, `video-picture-choice.tsx`, `video-start.ts`, `video-length.ts`. A card under "Make pictures", for the chosen variant. Its runs appear in the same run list.
+
+- "Provider": providers from `app.getState` that are available and list `video` in `jobs`. Preselects the saved default only when it is available, else the first available video provider. None: "No video provider is available."
+- "Start from": "A prompt" (default), "A first-frame picture", "A reference picture". A start is offered only if `comfy.getInfo` lists a video workflow for its pair (`videoStart.firstFrame`, `videoStart.references`). "A prompt" is offered for ComfyUI always, even before `comfy.getInfo` answers. Every other provider gets "A prompt" only. A start no longer offered falls back to "A prompt".
+- **Picture start:** region "Picture to start from", the project's reference pictures (the list the reference picker shows), one choice, its own "Add pictures" (chooses the first added picture that can be sent), empty line "No reference pictures in this project yet.", hint "Tip: call the picture <Picture 1> in the prompt." (wording open, OI-89). A picture that cannot be sent shows its reason. The card's choice is separate from the picture panel's ticks. It is kept when switching between the two picture starts, kept but not sent under "A prompt", and dropped when it leaves the list or cannot be sent.
+- "Prompt" (empty at the start). "Length (seconds)": whole seconds, default 2, least 1, most from `comfy.getInfo`'s `maxMs` for the workflow of the chosen start. Above the most, the note "The clip will be shorter: at most {n} s" shows and the most is sent as `durationMs`. With `maxMs` unknown, the typed value is sent and the command's refusal shows.
+- "Start" is disabled until a picture is chosen (picture starts), and with no prompt or no video provider. It sends `generation.startVideo` with `start` (`'first_frame'` or `'none'`), `useReferences` and `referenceAssetIds` (the one chosen picture, or empty) from the start table in `spec/data-model.md`. Refusals show as the command gives them. A paid provider goes through the paid confirm line with a count of 1.
+- No crop preview. No autoplay. The card adds no command, IPC channel, CSP rule or protocol change, puts no clip on a track, and shows no server address or file name.
+
+### Run list and run row
+
+Built. `run-list.tsx`, `run-row.tsx`, `run-result.tsx`, `video-result.tsx`, `video-status.ts`.
+
+- Each row: the provider's label (or "The provider" when unknown), "Video" for a video run, then the status.
+- Status: `queued` "Waiting"; `running` "Working", with `result.stage`, "place in queue {n}" and the percent when present; `succeeded` "Done" and its results; `failed` "Failed", the sentence from `plainMessage` (`src/shared/providers/messages.ts`) with the provider's label, and "Retry"; `cancelled` "Cancelled" and "Retry". A failed run never shows raw error text.
+- A running video run says "Waiting (place {n})" (or "Waiting") while the server holds it in its queue, else "Working, {m} min" counted from the row's `createdAt` (there is no `startedAt` column), read again every 15 seconds. No percentage.
+- "Cancel" shows for `queued` and `running` when the provider's `cancel` is not `none`. A refused cancel shows the command's message.
+- "Retry" sends `job.retry`; for a paid provider it first shows the paid confirm line with the stored request's count.
+- Picture results: one `<img>` per asset ID, 160 px wide, `alt` "Result {i}", address from `assetUrl`. None: "No pictures."
+- Video result: `<video controls preload="metadata">`, `aria-label` "Video result", at the panel's width, `src` from `assetUrl`, no autoplay, sound as the clip has it. None: "No clip."
+- When a succeeded row's results are first drawn, the page sends `job.markSeen` once for that job.
+
+## Settings
+
+Built. `src/renderer/screens/settings/settings-screen.tsx` and one file per section, in this order.
+
+### New projects
+
+`location-setting.tsx`. "Default location" shown as text; "Change default location" opens the folder picker and saves with `settings.update` [REQ: FR-004].
+
+### Default AI providers
+
+`provider-defaults.tsx`. One select per job: "Image generation", "Layout", "Text: briefs, copy and translation", "Video generation". Each lists the providers that do that job; an unavailable one shows as "{label} (not yet available)", disabled. A change saves with `settings.update` [REQ: FR-067].
+
+### Keys
+
+`keys-section.tsx`, `key-row.tsx`, `ui/secret-labels.ts`. Heading "Keys", the line "Keys are stored encrypted on this computer. After saving, only the last four characters are shown." One row per secret of each AI provider (storage providers left out; their sign-in comes with Phase 9). An unavailable provider shows "Not yet available". A row shows "Saved, ends in {last four}" (nothing after "ends in" for a key of four characters or fewer) or "Not set"; "Add" or "Replace" opens a password field with "Save" (`secret.set`, the field cleared before the call) and "Cancel"; "Delete" (`secret.delete`) [REQ: FR-170].
+
+### ComfyUI server
+
+`comfy-section.tsx`, `comfy-check-result.tsx`.
+
+- Heading "ComfyUI server". "Saved address" shown in full, or "No address saved."
+- A fixed privacy paragraph beside the address field, shown whether or not an address is saved, word for word: "When ComfyUI makes a picture or a video, your brief text, prompts and reference pictures are sent to the server at this address. Whoever runs that server can see them." [REQ: REQUIREMENTS-ComfyUI.md 3.3]. A constant in `comfy-section.tsx`, shown in this one place only, not returned by `comfy.getInfo`. A test pins it with and without a saved address.
+- "Server address" field with Save and Remove. Save sends `comfy.setAddress` with the typed text and contacts nothing; a refused address shows the command's own sentence under the field and keeps the old address. Remove sends `null`.
+- "Check" sends `comfy.check`; disabled with no address saved. "Checking…" while it runs.
+- Outcome `ok`: the server version and, per non-draft workflow, its label, status (`trial` shown as "trial"), its licence note as text when it has one, and "complete" or its missing items by name and folder. An `ok` with no workflows shows the version alone. Each other outcome (`no_answer`, `not_comfyui`, `sign_in_needed`, `redirect_refused`, `certificate`, `address_refused`) shows its sentence from `spec/comfyui.md` with the address filled in. Under "What Adman leaves on the server", the "left on the server" sentences.
+- `comfy-check-result.tsx` holds a local copy of the six check sentences, pinned by its tests. Moving it to the shared copy is open (F-11).
+
+### Agent access
+
+`mcp-section.tsx`, `connect-panel.tsx`.
+
+- Heading "Agent access". A switch "Turn on agent access" (`mcp.setEnabled`). "Port" field with "Save port" (`settings.update`; no min or max on the field, so the command's own range sentence shows). "Make a new token" (`mcp.regenerateToken`).
+- Problem lines from `mcp.getConnectInfo`: "Port {port} is in use. Choose another."; "There is no access token. Make a new token."; "The MCP server could not start. Turn it off and on to try again." A refused command's message shows as a line too; a line equal to the state line is drawn once. Any successful agent-access command clears both refusal lines. After every command the section reads `mcp.getConnectInfo` again.
+- **Connect to Claude** panel, shown when the server is on and a token exists: "Address", "Access token" and "Claude Code" (the command line, in a code block) as text, never in an attribute. "Copy" beside the line uses `navigator.clipboard.writeText` on click only (no preload, IPC, CSP or permission-handler change; a permission handler added later must allow `clipboard-sanitized-write`). It reads "Copied" after a click; on failure "Copy did not work. Select the line and copy it." Nothing is logged about the token.
+- The token is kept in this section's own state only: never in a store, a log line or an attribute.
+- A refused `mcp.getConnectInfo` shows the heading and the query's own fixed error message, with no switch.
+
+### Agent runs
+
+Not built (Phase 2, after the agent-run commands). Design: a block below Agent access, shown whether or not the MCP server is on, file `src/renderer/screens/settings/agent-runs-section.tsx`.
+
+1. One checkbox per provider for which `agentRunsOffered` gives null, labelled "Let agents start runs with {label}", calling `agentRuns.setAllowed`, showing the command's refusal as other sections do.
+2. Under a provider whose `local` is false: "Paid. Each run an agent starts is charged to your account, with no click from you."
+3. Number field "Most runs agents may have waiting or running, per provider", 1 to 16, saved by `agentRuns.setLimit` on change, refusal shown.
+4. A run row says "Started by an agent" under the kind when `startedBy` is `agent`.
+
+Whether the per-provider tick stays is open (OI-90; build default: yes, off). The rules for agent runs are in `spec/mcp-and-agents.md`.
+
+## Key dialog
+
+Built. `src/renderer/dialogs/key/key-dialog.tsx`. Opens when a command returns `NEEDS_KEY` [REQ: FR-171]. Title "Add your {provider label} key", one password field per missing secret, "Save and continue" (saves each with `secret.set`, then the action is retried) and "Cancel". Keys are not tested when entered [REQ: FR-172].
+
+## Hand test (dev)
+
+Built, throwaway. `src/renderer/dev/hand-test-screen.tsx`, `s3-settings-form.tsx`, `storage-actions.tsx`, `dropbox-sign-in.tsx`, `result-text.ts`. Not product UI.
+
+- Reachable from the shell only when `app.getState` says `devTools` (an unpackaged app started with `ADMAN_DEV_TOOLS=1`). It goes through the same IPC bridge, bus, key guard, key dialog, job runner and adapters as the real screens.
+- Heading "Hand test", line "Development tools only. Not part of the product."
+- "Amazon S3 settings": Bucket, Region, "Prefix (optional)", "Save S3 settings" (`settings.update` for `storage.s3`). Keys are not entered here.
+- "Storage": a select of "This computer (app data folder)", "Amazon S3", and "Dropbox" only when `HAND_TEST_DROPBOX` is true; "File to upload (full path)"; "Upload", "List", "Remove all", all through `dev.storage`. The line "Every action touches only the folder adman-hand-test/ in the chosen storage." Local files go to `hand-test-local/adman-hand-test/` under the app data folder.
+- "Dropbox" with "Sign in to Dropbox" (`storage.dropboxSignIn`), shown only when `HAND_TEST_DROPBOX` is true. It is false on `main`, so the Dropbox parts are hidden.
+- It uses existing controls, labels and keyboard paths, with no visual design.
+
+## Not built on the campaign page
+
+Not built (on a cut line for Phase 2; otherwise the UI pass). The design for ComfyUI refusals and failures on the campaign page:
+
+- Calls: `job.getServerMessage`, `comfy.getInfo`, and the reason sentences in `src/shared/providers/messages.ts` (`reasonMessage`); all three exist.
+- Refusal `comfy_address_needed` shows the message with an "Open Settings" button that shows Settings. Refusal `comfy_job_not_offered` shows the message. The address dialog of `spec/api-commands.md` is for the UI pass.
+- A failed ComfyUI row shows the sentence for its `errorReason` when it has one, with `{address}` filled from `comfy.getInfo`, else the kind's sentence. `missing_items` lists the items. The first seven reasons in `spec/comfyui.md` also offer "Open Settings". For a provider with `serverText`, "Show the server's message" sends `job.getServerMessage` and draws the reply as text in a plain block under "Message from the ComfyUI server".
+- A provider whose workflow is `trial` says "trial" beside the provider name.
+- Tests: a ComfyUI run asks for no paid confirm; `comfy_address_needed` shows the button and it shows Settings; a `failed` row with reason `out_of_memory` shows that sentence; `missing_items` lists names; the server's message is drawn as text and a reply holding `<a href>` shows the characters, not a link.
+- Cut order inside: "Show the server's message", the licence notes and the "left on the server" sentences go first.
+
+## Choices made without a design sign-off
+
+Each was made to get a working, testable screen. The UI pass may change any of them.
+
+- Navigation by one tab per open project, with Settings and Hand test as buttons beside the tabs (OI-31 is open).
+- Settings is shown in place of the tab panels, not as a tab or a window.
+- Every screen uses one shared stylesheet (`screens/screens.module.css`) of cards, rows and fields.
+- The brief summary is a plain definition list, the plainest form of the confirm step of FR-023.
+- The paid confirm is one line inside the panel, not the run confirmation dialog of Phase 4, and shows no paid-generation count (FR-230 waits for Phase 4).
+- Picture results are 160 px wide images in a row; the video result fills the panel's width.
+- A running video run counts whole minutes from `createdAt`, refreshed every 15 seconds, with no percentage.
+- The variant list is a radio group with a text line per variant, not a grid of tiles.
+- The reference picker and the video card's picture choice are separate lists of the same pictures, with separate choices.
+- The local-provider reference sentence (OI-77) and the "<Picture 1>" hint (OI-89) are provisional wording.
+- The Claude Code line uses the default monospace font; a `--font-mono` token waits for the UI pass.
+- The check-result sentences are a local copy in `comfy-check-result.tsx` (F-11).
+- No crop preview for a first-frame picture.

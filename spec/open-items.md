@@ -1,0 +1,188 @@
+# Open items and assumptions
+
+This file lists every question still open for the stakeholder and the assumption the build makes meanwhile. When an item is decided, the decision goes into `DECISIONS.md` and the topic file it changes, and the item is removed from here; new assumptions are added here as they are made.
+
+`OI-xx` numbers are kept from the old open-items table. `Q-0xx` numbers come from the old question list. `A-xx` marks a question that never had a number. "Change later" says how hard it is to undo the assumption: easy, some rework, or hard.
+
+## 1. Large items
+
+These need the stakeholder. A wrong guess would be costly to undo, would spend real money, touches his own accounts, or is a legal matter.
+
+### OI-91. A spending ceiling for paid runs started by an agent
+
+- **Question:** With a paid provider ticked under "Agent runs" in Settings, an agent spends money with no click from the user. The run limit (default 4 at a time, up to 8 pictures each) bounds how fast money is spent, not how much. Should there be a ceiling?
+- **Meanwhile:** every agent tick is off by default, and a paid provider's tick carries the line "Paid. Each run an agent starts is charged to your account, with no click from you." No ceiling is built. Agents testing features spend only under D-085: one run per new feature, at the smallest size and shortest length the service offers, no retries, no repeat runs of a proven feature.
+- **Stakeholder:** choose (a) no ceiling, as built; (b) a count of paid agent calls per app session, set in Settings, after which agents are refused for that provider (one small piece of work); or (c) a confirm dialog for every paid agent run. Decide before ticking a paid provider for agents.
+
+### OI-18. Dropbox app registration (done, D-090, D-091)
+
+- **Done:** the app is registered as an app-folder app. The app key is the one on record [D-007]. A short-lived access token for a live test is in `.env.local`.
+- **Done in the Dropbox console [D-091]:** the redirect address `http://127.0.0.1:47822/oauth/dropbox` is listed, and the scopes `files.content.write`, `files.content.read` and `files.metadata.read` are switched on.
+- **Meanwhile:** Dropbox is built against stand-ins, then one live upload, list and remove is run with the access token. The browser sign-in is proven only by hand.
+- **Effect of app-folder access:** publishing lands inside `Apps/<app name>/` in the user's Dropbox. A shared team folder outside it cannot be chosen as the target.
+
+### OI-76. Models whose licence forbids commercial use (decided, D-088)
+
+- **Decided:** a workflow that runs such a model shows a dialog when a run starts: "<model> requires a commercial license, please confirm that you have one before production use", with "Cancel", "Confirm" and a checkbox "don't show again for <model>".
+- **Assumptions around it:** the tick is saved per model in settings and can be cleared there. Each workflow's data says whether its model needs the dialog; FLUX 3 klein is the first. A run started by an agent cannot press Confirm, so it is refused with a plain reason until the user has ticked "don't show again" for that model.
+- **Stakeholder:** say which other models need the dialog. Reading each licence stays the user's own duty.
+
+### OI-09. Where the shipped FFmpeg comes from
+
+- **Question:** The app ships an FFmpeg program for macOS and Windows. It must be an LGPL build, not GPL, so the app's own licence is not affected. Which source supplies it?
+- **Meanwhile:** ready-made LGPL builds from a public builder for Windows, and an LGPL FFmpeg built by a CI job for macOS, each pinned by address and SHA-256 checksum in `ffmpeg-sources.json`. Work starts at the beginning of Phase 7 (writing details into an MP4). Nothing is released (D-086), so no binary leaves the machine.
+- **Stakeholder:** confirm the sources, or name others, before the first release. A swap is a one-line change while nothing is released.
+
+### Before anything leaves this machine
+
+- **Question:** Nothing is pushed, tagged or released for now (D-086). Before the first push, what may the public repository hold?
+- **Meanwhile:** all work is committed and merged locally only. Nothing below blocks the build.
+- **Stakeholder:** before the first push, decide or check each of these:
+  - A personal-data check of the whole repository and its history (D-009). Two decision records quote the names of other projects on his computer.
+  - Q-045: whether the `client/` folder goes into the repository.
+  - Q-047: keep or delete the 12 Unsplash photos in the design prototype.
+  - Whether `.claude/rules/security-priorities.md` goes into the repository.
+  - OI-27: four build tools (`esbuild` in three versions and `electron-winstaller`) are allowed to run a script at install. A reviewer read all four and found nothing unexpected. Assumption: keep them allowed.
+  - A backup of the old git history, from before the history rewrite, sits in a session scratchpad folder and still holds the private documents. He may delete it.
+
+## 2. Assumptions made to keep the build moving
+
+### Phase 2 leftovers and providers
+
+- **OI-04. Seedance video on fal.ai.** What is the exact fal.ai model ID, which lengths and sizes does it take, and what does a clip cost? **Assumption:** the adapter is built from fal's public model page and tests with recorded answers. The fal key is in the environment [D-089]. Under D-085 an agent then makes one live paid call per start kind, at the shortest length and smallest size, with no retries. *Phase 2 leftover, Phase 7. Change later: easy.*
+- **A-01. Default video provider.** Once the fal video adapter exists, is ComfyUI still the default video provider, or does fal Seedance become the default? **Assumption:** ComfyUI stays the default; fal is offered when its key is set. *Phase 2 leftover, Phase 7. Change later: easy.*
+- **OI-53. OpenAI picture models and cancel.** The exact model names and whether a started request can be cancelled are not checked. **Assumption:** names and cancel behaviour come from OpenAI's public API docs. Under D-085 an agent makes one live call per job (picture from a prompt, picture with reference photos) at the smallest size. Until cancel is proven, OpenAI gets no agent tick and no cancel action. *Phase 2 leftover. Change later: easy.*
+- **OI-60. Is a cancelled fal request charged once it has started?** **Assumption:** yes, it is treated as charged and left to finish, as the stakeholder said. *Phase 2 leftover. Change later: easy.*
+- **OI-62. What "sent" means when the user unticks a provider.** A run counts as sent once its first call has gone out, so a request in ComfyUI's or fal's own queue goes on, and so do later calls of a run already begun. A waiting run is cancelled when its turn comes; ticking again before then lets it run. **Assumption:** keep all three rules. *Phase 2 leftover. Change later: easy.*
+- **OI-64. Drop the second half of the hand-test screen and CU-8?** The real screens, started with dev tools on, already do what they were for. **Assumption:** both are dropped. *Phase 2 leftover. Change later: easy.*
+- **OI-65. Agent-drafted workflows shipped as `trial` without his own export.** **Assumption:** yes. `trial` workflows are offered only with dev tools on. Setting one to `proven` stays his call after a run from the app. *Phase 2 leftover and later workflows. Change later: easy.*
+- **OI-75. Which ComfyUI model serves reference pictures.** **Assumption:** FLUX 3 klein for pictures from reference photos, MOSS-Image for pictures from a prompt only. `moss-edit-references` stays `draft` with no more work. One source proposed waiting for his hand test; this file takes Flux now, because the Flux runs from his product photos passed and he called Flux "tried and true". *Phase 2 leftover. Change later: easy.*
+- **OI-77. The Flux result takes the reference picture's shape.** With one reference, a 9:16 variant with a square product photo gets a square picture of about 1 megapixel. **Assumption:** accepted for now. One server run tries setting the size to the variant's; if the product stays recognisable, the app sets the size as it does for other workflows. *Phase 2 leftover. Change later: easy.*
+- **OI-59. The video enlarging step.** Unknown: what size the enlarged clip comes out at, and whether it fits the 24 GB card together with the H3 model. **Assumption:** the agent drafts stand in for his own exports; no 8-step speed-up file; the enlarging step is designed after one server run of `h3-video-first-frame-upscaled.json`. *Phase 2 leftover. Change later: easy.*
+- **OI-89. Add `<Picture 1>` to an H3 prompt automatically?** **Assumption:** no. The card keeps its hint "Tip: call the picture <Picture 1> in the prompt." until his hand test shows whether clips follow the picture without it. *Video card. Change later: easy.*
+- **OI-82. Details of the `@/` import alias.** **Assumption:** all five as written: (a) `./` stays allowed inside one folder; (b) a lint rule refuses `../` under `src/`; (c) the alias covers all of `src/`, main process included; (d) tests import `src/` code through `@/` and their own helpers by relative path; (e) a component used by two or more screens lives in `ui/{name}/`. *Phase 2 leftover. Change later: easy.*
+- **A-02. Single check items that could not run.** Should a single check item be marked "could not check" when it cannot run? **Assumption:** yes, ruled and built with the remaining check work after the hand test. *Phase 2 leftover. Change later: easy.*
+- **A-03. Points not yet seen in a real run.** Not checked: which sound format ComfyUI's save node writes and that the window plays it; that ComfyUI runs the smaller graph when unused picture slots are dropped, for each model; whether fal needs a setting to add sound; the raw job-state words and the video history entry after a real video run; that a network agent built without proxy settings ignores the proxy variable in this Electron version. **Assumption:** each is checked in the first real run of the feature it belongs to; free ComfyUI runs first, paid runs under D-085. *Phase 2 leftover, Phase 7. Change later: easy.*
+
+### Screens and navigation
+
+D-084 lets screens be built now, without waiting for a design sign-off. Every component is modular and takes its colours, spaces and type sizes from one shared set of tokens. Each improvised screen choice is listed for review.
+
+- **OI-31. Several projects, and work that runs while the user moves around (Q-038, Q-039, Q-040).** **Assumption:** keep what is built. Several projects may be open in the main process; one is shown at a time, with the switcher. Closing a project is refused while its jobs run, unless the user chooses to stop them. A result nobody looked at is kept for the next opening. Open campaign and variant tabs are not remembered. Export and publish are background tasks and brief extraction is an attached task. When an attached task is stopped, results that already arrived are kept and offered. The warning for a running fan-out translation also applies to closing the campaign tab and the fan-out dialog. *Phase 3 onward, activity panel in Phase 4. Change later: some rework; the stored data already fits every answer.*
+- **Q-041. What a plain click on a variant tile does.** **Assumption:** it goes to the variant, as in the prototype and as the client advised. A separate "+" control opens it in a tab behind the overview, and Cmd-click does the same. FR-214 stays P1. *Phase 3. Change later: easy.*
+- **Q-042. Do tabs show warnings?** **Assumption:** one "needs attention" mark, on variant tabs only (D-043 item 3), shown when a variant is out of date, besides "running" and "finished, not yet looked at". Check warnings are not shown on tabs. *Phase 3. Change later: easy.*
+- **Q-052. Words in the interface.** "Variant" or "post"? "Picture" or "image"? **Assumption:** "variant" and "picture", as the built screens say ("Make pictures"). *All screens. Change later: easy.*
+- **Q-037. A lint rule for design tokens.** **Assumption:** yes. A lint check refuses raw colour, space and type-size values in component styles outside the shared token file, which is what D-084 asks for. *Phase 3 onward. Change later: easy.*
+- **Q-025, Q-026, Q-043, Q-046, Q-051. Prototype details and client design advice.** Open detail points from the prototype rounds. Q-025: grid grouping, editor panel arrangement, Settings as a screen or a dialog, new campaign as a dialog or a page, badge wording, tile density, the "Agent connected" marker. Q-026: which prototype additions not in the spec (G-1 to G-8, G-10, G-17 to G-31 in `design/NOTES.md`) to keep. Q-043: serif pairing and whether status messages use serif, magenta or vermilion, a brand typeface, larger grid thumbnails. Q-046: one page-title size on every screen, "Fan out" or "Fan-out", the standard "selected" look, a display size for the start headline, heading levels in order for screen readers, error and disabled styles for form fields. Q-051: round 3 reactions (headline with the explanatory copy, captions on the drawings, selection outline in dark and light). **Assumption:** the accepted prototype layout and the D-043 recommendations are the base. A G item or client design point is built only where a requirement asks for it. Everything else waits for the deeper UI pass. *Phase 3 onward. Change later: easy, since components are modular.*
+- **OI-69. Deleting a campaign while work runs for it.** **Assumption:** refused, as built. Otherwise an unstoppable paid run would finish with a picture for a campaign that is gone. *Delete dialog. Change later: easy.*
+- **OI-72. Brief subjects on the project page.** A subject with no ID gets one made from its name, and a subject whose ID the project already holds is used as stored. **Assumption:** keep both until the brief confirm form is built; that form adds an ID field and a "new or existing" choice. *Phase 4. Change later: easy.*
+- **OI-51. Closing a project while an unstoppable paid request is out.** Gemini cannot stop a request once sent. **Assumption:** the app warns, then stops waiting; the request may still be charged and its pictures are lost. A close waits at most 5 seconds for providers to confirm a stop; a cancel waits 60 seconds by default (ComfyUI 60 s, fal 10 minutes). Keeping the project open in the background cannot work when the app quits. *Phase 4 (activity panel). Change later: some rework.*
+- **OI-68. Message for a queued picture job that fails for a local reason.** Today the user reads "{Provider} could not finish this request." even when a reference file is gone, the key was removed or the assets folder cannot be written. **Assumption:** one sentence per case, written when the activity panel is built. *Phase 4. Change later: easy.*
+- **A-04. Saved keys in the page.** Should the rule be "once a key is saved, the typed key is nowhere in the page", so the key dialog gets the same fix as the key row? **Assumption:** yes. *Settings screen. Change later: easy.*
+- **A-05. Wording of the ComfyUI privacy note.** The note was written from the requirements and is built. **Assumption:** keep it as written until he reviews it. *Settings screen. Change later: easy.*
+
+### Pictures, layers and briefs
+
+- **OI-55. Which cut-out provider is offered first.** Cut-outs can come from ComfyUI's built-in step or from fal. **Assumption:** the user chooses; ComfyUI is listed first when its address is set, because it is free and keeps pictures on his machine. *Phase 3. Change later: easy.*
+- **OI-29. Lettering on product pictures, and a style note per direction.** **Assumption:** the prompt keeps its "no text or logos" ending; product pictures with lettering are imported. No stored style note per direction, and the campaign's tone is not added to the pre-filled prompt. *Phases 4 and 5. Change later: easy for the prompt; a style note needs one column and one migration.*
+- **OI-70. Picture shape for a layer that is not the background.** **Assumption:** the provider is asked for the layer box's shape, not the variant's, so less of the picture is cropped away. Built with the Phase 4 handler that places a chosen option. *Phase 4. Change later: easy.*
+- **OI-10. Gemini model for layout and text.** Is `gemini-2.5-flash` still current? **Assumption:** at the start of Phase 4 the developer reads Google's public model list and changes the ID if it is retired. Under D-085 one low-cost call confirms each new text feature. *Phases 4 and 6. Change later: easy.*
+- **A-06. Metadata in pictures sent to a provider.** Should the app strip camera metadata (location, device) from pictures before sending them? **Assumption:** yes. Location in a phone photo is sensitive data, so pictures sent to a provider leave without it. Where a path sends file bytes unchanged, the picture is re-encoded first. No source proposed a default; this file chooses stripping. *Phase 4. Change later: some rework.*
+- **A-07. Turned phone photographs.** A phone photo can carry a rotation tag that the crop ignores. **Assumption:** no handling until a real photograph produces a turned clip. If one does, the picture fitter turns it upright from its tag before the crop. *Video from a picture. Change later: easy.*
+- **A-08. Project names and size limits.** **Assumption:** keep as ruled: stricter project names (reserved names such as `LPT0` and `COM0` refused); a 48 MiB limit for answers; pictures at most 32 MiB, 8,192 px a side and 24,000,000 pixels. *All phases. Change later: easy.*
+- **A-09. Eight pictures per run.** **Assumption:** keep the limit of 8 pictures per run. *Phase 4 onward. Change later: easy.*
+- **OI-71. A language or size removed while variants use it.** **Assumption:** the variants stay. The campaign's lists only say what fan-out makes next. *Phase 5. Change later: easy.*
+
+### Video, export and publish
+
+- **OI-20. A video emptied on purpose, then switched to image and back.** The app now adds one clip made from the background picture, which breaks the rule that video settings survive a round trip (D-026). **Assumption:** fix it. A Phase 7 migration adds one column to `variant` that records "the first clip was made", so the clip is made only the first time. *Phase 7. Change later: hard once released, cheap inside Phase 7.*
+- **Q-031. Which video settings survive a format round trip.** The requirements name duration and background clips as examples; the spec also keeps layer timing and animations. **Assumption:** every video setting on the variant is kept while it is an image: clips, length, sound source and audio file. *Phase 7. Change later: some rework.*
+- **OI-54. Is an added audio file published with the campaign?** **Assumption:** yes, as a part, the way fonts and pictures are. A reviewer cannot rebuild the ad without its sound. *Phases 7, 8 and 9. Change later: easy.*
+- **Q-030. When Package project skips files.** Should the success rule "opens on another machine with nothing missing" carry an exception when the user chose to skip missing files? **Assumption:** packaging counts as a success and lists the skipped files with the reason for each. *Phase 8. Change later: easy.*
+
+### Agents and the MCP server
+
+- **OI-90. Does "an agent may generate anything" (D-080) keep the per-provider tick?** **Assumption:** yes. Each provider needs its own tick in Settings, off by default, as FR-279 requires. This keeps paid spending behind its own switch. *Phase 10. Change later: easy.*
+- **OI-21. Agent changes a variant between image and video.** **Assumption:** allowed with no dialog. The change can be undone. *Phase 10. Change later: easy.*
+- **OI-22 (Q-019). Agent reads the MCP access token.** **Assumption:** never. An agent that can read its own token could hand it on; the user sees the token in the Connect panel. *Phase 10. Change later: easy.*
+- **OI-25. Agent creates a campaign with no sizes or languages.** **Assumption:** the app fills them from the brief, then from the three default sizes and the region's language, as a user would get. *Phase 10. Change later: easy.*
+- **OI-56. Picking a run back up after a short loss of contact, and the run-limit range.** **Assumption:** FR-268 stays P1 (not built); the per-provider agent run limit ranges 1 to 16, default 4. Jobs survive in the app; only the agent's view of them is lost. The two sources differ: one recommends P0 once agents run overnight, which he has said he wants. This file keeps P1 for the first round; move it to P0 if overnight agent runs must work in the first draft. *Phase 10. Change later: some rework.*
+- **OI-84. Agent reads a ComfyUI server's raw message text.** **Assumption:** no, user only. The server's text can hold things the app does not control. *Phase 10. Change later: easy.*
+- **OI-92. May an agent see the pictures it made?** **Assumption:** no. No tool returns picture or clip bytes (FR-198). If this ever changes, it must cover generated pictures only, never imported or linked ones. *Phase 10. Change later: easy.*
+- **OI-93. May an agent import reference pictures from disk?** **Assumption:** no; an agent names assets already in the project. Import takes a file path, so allowing it would let an agent send any picture on his computer to a provider. *Phase 10. Change later: easy.*
+- **OI-11. How Claude Desktop reaches the local MCP server.** **Assumption:** bridge mode (a small local launcher) stays in the plan. At the start of Phase 10 the developer reads Claude Desktop's current docs and drops bridge mode only if Desktop can connect straight to `http://127.0.0.1` with a token header. *Phase 10. Change later: easy.*
+- **A-10. Display name in an agent's asset list.** Should an agent's asset list show the file's base name as the name? **Assumption:** yes, the base name only, never a folder path. No source proposed a default. *Phase 10. Change later: easy.*
+- **A-11. Messages about a job an agent started.** Are the app's own messages about such a job sent as if from the user? **Assumption:** no. The job keeps its agent origin everywhere, and the run row says "Started by an agent". *Phase 10. Change later: easy.*
+- **OI-57. Custom ComfyUI workflows the user adds.** The stakeholder said "treat workflows like assets which are external files", which differs from the requirement that the app keeps its own copy per computer. **Assumption:** a custom workflow is a file outside the project, linked by the project the way an asset is, not copied into an app-wide list. Only the user, in the app, loads a workflow (FR-328); an agent may run a listed one under the ComfyUI tick. It gets its own piece of work after the remaining ComfyUI work. *After Phase 10, not yet placed. Change later: some rework.*
+
+### Release behaviour
+
+- **OI-23. Closing the window on macOS.** **Assumption:** closing the window quits the app, on both systems, as built. No project stays open and locked with no window showing. *Phase 11. Change later: easy.*
+- **OI-24. A project file copied in Finder or Explorer.** The copy has the same project ID. **Assumption:** the app refuses to open the copy while the original is open, and the message points to Package project. Giving the file a new ID on open would change it without asking. *Phase 11. Change later: easy.*
+- **OI-26. Window size between launches.** **Assumption:** maximized on every launch, as built. No stored value, and no risk of opening on an unplugged screen. *Phase 11. Change later: easy.*
+
+### Rules and requirement text
+
+- **OI-63. Is spending the user did not ask for a "destructive" attack?** **Assumption:** yes. It cannot be undone. Security findings in every later phase are judged on that reading. *All phases. Change later: easy; if no, nothing built is removed.*
+- **OI-32. Client items and requirements catch-up.** **Assumption:** FR-239, FR-247 (the `4x5` label) and FR-249 stay in, as built. FR-230 to FR-249 and the newer wording of FR-215 go into the new requirement topic files during the rewrite; the spec wins where they differ. *Phases 3 to 10. Change later: easy.*
+- **OI-43. ComfyUI requirement conflicts.** **Assumption:** they are applied in the rewrite, with the ComfyUI requirements winning. The MiniMax H3 time limits and sizes stay as built. *Remaining ComfyUI work. Change later: easy.*
+- **Q-048. Client scope requests S-1 to S-17.** **Assumption:** the analyst's recommendation on each is accepted, which the question itself names as a valid answer. *Phases 3 to 10. Change later: some rework.*
+
+## 3. Improvised choices already built
+
+The video card and the agent settings block were built with these choices. Each is easy to change.
+
+**The "Make a video" card**
+
+1. A card under "Make pictures", not a new screen.
+2. Title "Make a video", button "Start".
+3. Length in whole seconds, default 2, least 1, most the workflow's limit.
+4. Progress as elapsed minutes, no percentage.
+5. No autoplay; controls shown; sound as the clip has it.
+6. The clip shown at the panel's width in the run result.
+7. Label "Length (seconds)"; a prompt box of 3 rows.
+8. The prompt starts empty.
+9. A length above the most is sent as the most, with the note "The clip will be shorter: at most {n} s".
+10. 0 or a decimal is refused before sending.
+11. The most applies only for ComfyUI, and only once the app knows it.
+12. "No video provider is available." when there is none.
+13. The run row shows provider, "Video", then status; "Waiting" with no number when the server gives no place in its queue.
+14. "Working, m min" counts from when the run was made, queue time included, refreshed every 15 s.
+15. A finished clip marks the run as seen.
+16. The clip's accessible name is "Video result"; a bad result shows "No clip.".
+
+**Video from a picture**
+
+17. One "Start from" choice on the same card: "A prompt", "A first-frame picture", "A reference picture".
+18. Default "A prompt".
+19. The picture is chosen from the project's reference pictures, one at a time, with the card's own "Add pictures".
+20. A hint under a picture start: "Tip: call the picture <Picture 1> in the prompt."
+21. The run row is unchanged ("Video").
+22. No preview of the crop.
+23. "A prompt" is offered for ComfyUI always, even before the server info answers.
+24. "Add pictures" chooses the first added picture that can be sent.
+25. The chosen picture is kept when switching between the two picture starts, kept but not sent under "A prompt", and dropped when it leaves the list or cannot be sent.
+26. Heading and region name "Picture to start from"; empty line "No reference pictures in this project yet."
+
+**Agent runs in Settings**
+
+27. An "Agent runs" block below the MCP section: one checkbox per provider, "Let agents start runs with {label}"; under a paid provider, "Paid. Each run an agent starts is charged to your account, with no click from you."; a number field "Most runs agents may have waiting or running, per provider", 1 to 16; the block shows whether or not the MCP server is on; the run row says "Started by an agent".
+
+## 4. Open, not needed for this build
+
+- **OI-01. Jev for image colour checks (FR-112, P2).** Kept in reserve until the stakeholder describes the workflow he has in mind. A disabled slot exists; nothing is built.
+- **OI-06. Agents starting export or publish.** Both stay refused for agents in this build.
+- **OI-14. Signed installers.** This build ships unsigned installers with README steps (D-015). Signing comes later and needs his Apple developer account.
+- **OI-58. Krea 2 workflows.** Not answered: which jobs Krea 2 gets. The analyst suggests a picture from a prompt, as an alternate to MOSS-Image. No phase needs it.
+- **A-12. Qwen image edit as a fourth ComfyUI model.** Raised from a reference workflow file; no answer. Nothing in this build needs it.
+
+## 5. Waiting on the stakeholder's own action
+
+- **Windows test (D-087).** He tests on Windows once the first draft is complete. Until then, anything the spec says must pass "on both systems" is recorded as checked on macOS only.
+- **His paid Gemini run (D-081).** He runs the paid Gemini test case at a time of his choosing.
+- **Dropbox registration (OI-18).** See Large items.
+- **Naming the models that need the commercial-licence dialog (OI-76, D-088).** FLUX 3 klein is assumed; say which others.
+- **Hand test of the app's ComfyUI workflows (OI-59, OI-65, OI-89).** His runs from the app decide which `trial` workflows become `proven`, and whether H3 clips follow a picture without `<Picture 1>` in the prompt. A first run from a phone photograph also shows whether turned photos need handling (A-07).
+- **Review of the requirements wording (Q-011).** Needed for the requirements to return to Approved status.
+- **Answers to the client reviewers (Q-050).** Whether to send the "already covered" answers back to them.
+- **Old history backup.** He may delete the scratchpad copy of the old git history (see Large items).
