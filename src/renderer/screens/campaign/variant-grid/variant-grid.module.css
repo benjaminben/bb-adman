@@ -6,3 +6,10 @@
   padding: 0;
   list-style: none;
 }
+/* The "+" sits on the tile's top right corner, beside the tile button, never inside it. */
+.plus {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  padding: 0 var(--space-2);
+}

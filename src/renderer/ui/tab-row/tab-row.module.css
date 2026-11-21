@@ -1,0 +1,52 @@
+/* The tab list and the close strip share one grid, so a close button sits after its tab. */
+.tabs {
+  display: grid;
+  min-width: 0;
+  overflow-x: auto;
+}
+.list,
+.closers {
+  display: grid;
+  grid-row: 1;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: stretch;
+}
+.closers {
+  pointer-events: none;
+}
+.tab,
+.close {
+  grid-row: 1;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  border: var(--border-width) solid transparent;
+  border-bottom: none;
+  background: transparent;
+}
+.tab {
+  border-radius: var(--radius) var(--radius) 0 0;
+  margin-right: var(--space-1);
+}
+.closable {
+  border-right: none;
+  border-top-right-radius: 0;
+  margin-right: 0;
+}
+.close {
+  pointer-events: auto;
+  padding: 0 var(--space-2);
+  margin-right: var(--space-1);
+  border-left: none;
+  border-radius: 0 var(--radius) 0 0;
+  color: var(--color-text-muted);
+}
+.tab[data-state='active'],
+.close[data-active='true'] {
+  background: var(--color-bg);
+  border-color: var(--color-border);
+}
+.tab[data-state='active'] {
+  font-weight: 600;
+}

@@ -1,0 +1,12 @@
+.row {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.add {
+  padding: 0 var(--space-2);
+  border-color: transparent;
+  background: transparent;
+}

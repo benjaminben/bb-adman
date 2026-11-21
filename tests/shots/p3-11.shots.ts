@@ -77,7 +77,7 @@ test('Canvas editing', async () => {
     .getByRole('region', { name: 'Brief' })
     .getByRole('button', { name: 'Create campaign' })
     .click()
-  await expect(page.getByRole('list', { name: 'Variants' }).getByRole('button')).toHaveCount(1)
+  await expect(page.getByRole('list', { name: 'Variants' }).getByRole('listitem')).toHaveCount(1)
 
   const { projectId, layers } = await ids(page)
   const sky = path.join(box.root, 'alpine-sky.png')

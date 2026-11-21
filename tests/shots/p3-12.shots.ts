@@ -89,7 +89,7 @@ test('The layer list actions', async () => {
     .getByRole('region', { name: 'Brief' })
     .getByRole('button', { name: 'Create campaign' })
     .click()
-  await expect(page.getByRole('list', { name: 'Variants' }).getByRole('button')).toHaveCount(1)
+  await expect(page.getByRole('list', { name: 'Variants' }).getByRole('listitem')).toHaveCount(1)
   await backgroundPicture(session)
   await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()

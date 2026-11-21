@@ -11,6 +11,7 @@ import { PropertiesPanel } from '@/renderer/editor/properties-panel'
 import { TopBar } from '@/renderer/editor/top-bar'
 import { EditorKeyRoot } from '@/renderer/editor/use-editor-key'
 import type { Zoom } from '@/renderer/editor/zoom'
+import type { TabView } from '@/renderer/stores/nav-store'
 import { createVariantStore, type VariantStoreState } from '@/renderer/stores/variant-store'
 import { assetUrl } from '@/renderer/ui/asset-url'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
@@ -19,7 +20,14 @@ import { useHistory } from './use-history'
 import { useOverflowReport } from './use-overflow-report'
 import styles from './editor.module.css'
 
-type Props = { projectId: string; variantId: string }
+// view and onView: the selected layer and zoom its variant tab keeps (spec/editor.md, "What
+// each tab keeps"); the editor starts from view and reports each change.
+type Props = {
+  projectId: string
+  variantId: string
+  view?: TabView
+  onView?: (change: Partial<TabView>) => void
+}
 
 function sceneAssets(
   projectId: string,
@@ -42,7 +50,7 @@ function drawn(layers: Record<string, LayerRow>, draft: VariantStoreState['draft
   )
 }
 
-export function Editor({ projectId, variantId }: Props) {
+export function Editor({ projectId, variantId, view, onView }: Props) {
   const api = useApi()
   const command = useApp((s) => s.command)
   const [store] = useState(() => createVariantStore(api, projectId, variantId))
@@ -50,8 +58,9 @@ export function Editor({ projectId, variantId }: Props) {
   const history = useHistory(projectId, variantId)
   const onSettled = useOverflowReport(projectId, store)
   const root = useRef<HTMLDivElement>(null)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [zoom, setZoom] = useState<Zoom>('fit')
+  const [selectedId, setSelectedId] = useState<string | null>(view?.selectedLayerId ?? null)
+  const [zoom, setZoom] = useState<Zoom>(view?.zoom ?? 'fit')
+  useEffect(() => onView?.({ selectedLayerId: selectedId, zoom }), [onView, selectedId, zoom])
 
   useEffect(() => {
     const stop = store.getState().subscribe()

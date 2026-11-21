@@ -1,0 +1,21 @@
+/* The variant tabs fill the campaign page's height: the overview scrolls inside its panel and
+   the editor gets the room left over. */
+.tabs {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.overview,
+.variant {
+  flex: 1;
+  min-height: 0;
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--color-border);
+}
+.overview {
+  overflow: auto;
+}
+.variant {
+  display: flex;
+}
