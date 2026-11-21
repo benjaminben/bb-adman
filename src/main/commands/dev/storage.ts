@@ -1,7 +1,11 @@
-// dev.storage (SPEC 4.2 [1.8], Section 14 slice I): the hand-test command for storage. It calls
-// the key guard, then the chosen StorageProvider, and touches only adman-hand-test/ there.
-// `local` is the app data folder, set here by main-process code (SPEC 6.5 [1.13]); no input
-// names a root. Denied to agents (agent-policy.ts). Not a product feature.
+// dev.storage (SPEC 4.2 [1.8], [1.21] notes; Section 14 slice I): the hand-test command for
+// storage. Actions: write, list, remove; there is no read action. For s3 and dropbox it calls
+// the key guard, then checks the S3 settings (storage_not_set_up), then the StorageProvider,
+// and touches only adman-hand-test/ there. `local` needs no key and skips the guard; its root
+// is {userData}/hand-test-local, set here by main-process code (no input names a root), and
+// before every local action the root and its hand-test folder are refused when either is a
+// link or not a folder (storage_folder_unsafe). `write` reads the path it is sent, up to
+// HAND_TEST_MAX_UPLOAD_BYTES. Denied to agents (agent-policy.ts). Not a product feature.
 import fs from 'node:fs/promises'
 import nodePath from 'node:path'
 import { defineCommand } from '../types'
