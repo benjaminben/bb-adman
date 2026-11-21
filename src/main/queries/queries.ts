@@ -9,9 +9,11 @@ import { campaignQueries } from './campaign'
 import { comfyQueries } from './comfy'
 import { historyQueries } from './history'
 import { jobQueries } from './job'
+import { jobGetQueries } from './job-get'
 import { jobServerMessageQueries } from './job-server-message'
 import { mcpQueries, type McpState } from './mcp'
 import { projectQueries } from './project'
+import { projectListOpenQueries } from './project-list-open'
 import { templateQueries } from './template'
 import type { QueryFn, QueryOptions } from './types'
 import { AppError, fail, internalError, ok, type Result } from '@/shared/schemas/result'
@@ -28,9 +30,11 @@ export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, Query
     ...comfyQueries(deps),
     ...historyQueries(deps),
     ...jobQueries(deps),
+    ...jobGetQueries(deps),
     ...jobServerMessageQueries(deps),
     ...(mcp ? mcpQueries(deps, mcp) : {}),
     ...projectQueries(deps),
+    ...projectListOpenQueries(deps),
     ...templateQueries(deps),
   }
 }

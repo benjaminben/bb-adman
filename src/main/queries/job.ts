@@ -1,15 +1,9 @@
 // The job query domain (SPEC 12, 4.3; SPEC 14 slice D). job.list: wire rows, newest first.
-// job.get (MCP-D): one wire row, or NOT_FOUND.
 // error_detail is not in a wire row (SPEC 3.3 [1.9]).
 import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
-import { readWireRow, readWireRows } from '@/main/db/rows'
-import {
-  jobGetInput,
-  jobListInput,
-  type JobList,
-  type JobListInput,
-} from '@/shared/schemas/queries/job'
+import { readWireRows } from '@/main/db/rows'
+import { jobListInput, type JobList, type JobListInput } from '@/shared/schemas/queries/job'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import { AppError } from '@/shared/schemas/result'
 
@@ -40,17 +34,6 @@ export function jobList(deps: Pick<CoreDeps, 'projects' | 'log'>): QueryFn {
   }
 }
 
-export function jobGet(deps: Pick<CoreDeps, 'projects'>): QueryFn {
-  return (raw): JobRow => {
-    const parsed = jobGetInput.safeParse(raw)
-    if (!parsed.success) throw new AppError('INVALID_INPUT', 'Some values are not valid.')
-    const project = deps.projects.requireOpen(parsed.data.projectId)
-    const row = readWireRow(project.db, 'job', { id: parsed.data.jobId }) as JobRow | null
-    if (!row) throw new AppError('NOT_FOUND', 'That job was not found.')
-    return row
-  }
-}
-
 export function jobQueries(deps: CoreDeps): Record<string, QueryFn> {
-  return { 'job.get': jobGet(deps), 'job.list': jobList(deps) }
+  return { 'job.list': jobList(deps) }
 }

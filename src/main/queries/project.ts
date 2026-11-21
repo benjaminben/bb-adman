@@ -1,14 +1,12 @@
 // The project query domain (SPEC 12, 4.3; SPEC 14, slice C). project.get: project meta,
 // subjects, campaign summaries with job marks, and the missing asset count. The count comes
 // from AssetService.missingAssetIds, the one call slice C makes on it (SPEC 14 contracts).
-// project.listOpen (MCP-D): the open projects by ID and name.
 import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
 import { readWireRows } from '@/main/db/rows'
 import { readMeta } from '@/main/db/meta'
 import { jobMarks, openFor } from './campaign-reads'
 import { projectGetInput, type ProjectGet } from '@/shared/schemas/queries/campaign'
-import type { ProjectListOpen } from '@/shared/schemas/queries/project'
 import type { CampaignRow } from '@/shared/schemas/rows/campaign'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
 
@@ -48,12 +46,6 @@ export function projectGet(deps: Pick<CoreDeps, 'projects' | 'assets' | 'log'>):
   }
 }
 
-// MCP-D: the open projects by ID and name, named field by field so no file path leaves.
-export function projectListOpen(deps: Pick<CoreDeps, 'projects'>): QueryFn {
-  return (): ProjectListOpen =>
-    deps.projects.all().map((h) => ({ id: h.projectId, name: readMeta(h.db).name }))
-}
-
 export function projectQueries(deps: CoreDeps): Record<string, QueryFn> {
-  return { 'project.get': projectGet(deps), 'project.listOpen': projectListOpen(deps) }
+  return { 'project.get': projectGet(deps) }
 }
