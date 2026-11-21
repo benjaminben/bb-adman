@@ -25,6 +25,7 @@ describe('registering commands and queries [SPEC 12]', () => {
       'project.create',
       'project.open',
       'project.close',
+      'project.package',
     ])
     expect(secretCommands(deps).map((h) => h.name)).toEqual(['secret.set', 'secret.delete'])
     expect(settingsCommands(deps).map((h) => h.name)).toEqual(['settings.update'])

@@ -23,7 +23,6 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
     f = makeFixture()
     const deps = f.core.deps
     for (const list of [
-      assetCommands,
       briefCommands,
       campaignCommands,
       devCommands,
@@ -41,7 +40,6 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
     f = makeFixture()
     const deps = f.core.deps
     for (const map of [
-      assetQueries,
       campaignQueries,
       jobQueries,
       projectQueries,
@@ -49,5 +47,21 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
     ]) {
       expect(map(deps)).toEqual({})
     }
+  })
+})
+
+describe('the asset domain is registered [SPEC 14, Slice A part 2, A2-1]', () => {
+  it('gives asset.import, asset.update and asset.remove, in that order', () => {
+    f = makeFixture()
+    expect(assetCommands(f.core.deps).map((h) => h.name)).toEqual([
+      'asset.import',
+      'asset.update',
+      'asset.remove',
+    ])
+  })
+
+  it('gives the asset.list query', () => {
+    f = makeFixture()
+    expect(Object.keys(assetQueries(f.core.deps))).toEqual(['asset.list'])
   })
 })

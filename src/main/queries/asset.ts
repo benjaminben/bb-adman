@@ -1,4 +1,4 @@
-// The asset query domain (SPEC 12). Empty in Phase 2 step 0; its slice adds the queries.
+// The asset query domain (SPEC 12; SPEC 14, Slice A part 2, A2-1).
 import type { CoreDeps } from '../core-deps'
 import type { QueryFn } from './types'
 import { readWireRow, readWireRows } from '../db/rows'
@@ -29,6 +29,6 @@ export function assetList(deps: Pick<CoreDeps, 'projects'>): QueryFn {
   }
 }
 
-export function assetQueries(_deps: CoreDeps): Record<string, QueryFn> {
-  return {}
+export function assetQueries(deps: CoreDeps): Record<string, QueryFn> {
+  return { 'asset.list': assetList(deps) }
 }
