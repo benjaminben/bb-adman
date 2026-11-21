@@ -9,7 +9,7 @@
 - The reference-picture tests pass on macOS. Windows is the stakeholder's own check (D-087).
 - FR-242: the tab keys work. FR-245: the transparent-picture reference test passes. FR-249: letter spacing is drawn, measured and editable.
 
-**Status.** Every slice is built and merged on `main`: P3-6, P3-6b, and P3-8 to P3-16. The phase security review found no High or Medium finding. What is left of Phase 3 is the check of the exit criteria above. The built slices stay below as the record of what each one owns and tests.
+**Status.** Every slice is built and merged on `main`: P3-6, P3-6b, and P3-8 to P3-16. The phase security review found no High or Medium finding, and the exit criteria were checked and are met. Phase 3 is complete. Campaign-scope undo on a screen belongs to Phase 5. The built slices stay below as the record of what each one owns and tests.
 
 **Dependencies:** Built and used here: the `@/` alias, one folder per component, the token file with its test (`spec/structure.md`), the `variant.rev` helper `bumpVariantRev` in `src/main/commands/variant-rev.ts`, the Phase 3 contracts (schemas, scene types, the shortcut table, the Phase 3 tokens), the layer and variant commands (`spec/editor-commands.md`), the Scene (`src/shared/scene/`), font names at import, the render service with thumbnails (`src/main/thumbnails/`), the hidden render window with the window sender rule and fonts from the asset scheme (`src/main/render/`, `src/main/ipc.ts`), the dialog frame (`src/renderer/ui/dialog-frame/`), and the campaign grid of slice S2-16 (`screens/campaign/variant-grid/` and the tile `screens/campaign/variant-tile/`, `spec/phases/phase-02-screens.md`), used by P3-9, P3-10 and P3-16.
 
@@ -32,7 +32,7 @@
 | 3 | P3-10, P3-11, P3-12, P3-13 (after P3-9) | Built |
 | 4 | P3-14 (after P3-11, P3-13), P3-16 (after P3-10) | Built |
 | 5 | P3-15 (after P3-14) | Built |
-| 6 | Phase security review (done), then the exit check | Exit check left |
+| 6 | Phase security review and the exit check | Done |
 
 ## Slices
 

@@ -48,7 +48,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/integration/db/migration-0003.test.ts` (the cases in `spec/ai-jobs.md`); `tests/unit/shared/schemas/phase4-schemas.test.ts` (each new input and job schema: a good value, each refused field, `count` bounds, `updates` 1 to 100); `tests/integration/commands/agent-run-gate-phase4.test.ts` (for each of `generation.proposeLayout`, `generation.copyOptions`, `generation.cutOut` as the agent: unknown provider, provider not offered, tick off, limit reached each give `AGENT_DENIED` with the gate's sentence and no job row; ticked, the call passes the gate and reaches the stub's refusal); `brief.extract` as the agent gets `AGENT_DENIED`; `layer.updateMany` as the agent passes the deny check. Approved edits: `tests/unit/main/commands/agent-policy-table.test.ts` (the new rows), `tests/unit/shared/schemas/contracts.test.ts` (ten kinds), any test that lists command or query names (the new names), the registry test (the `cutout` jobs), `tests/integration/db/migration-0002.test.ts` (opens with the first three migrations only).
 - **Class:** B (+ A). Security class, short review (policy rows, gate, migration). **After:** nothing.
 
-### P4-2 — Queries: earlier options, activity, paid count
+### P4-2 — Queries: earlier options, activity, paid count (built)
 
 - **Exists when done:** `job.earlierOptions`, `job.activity` and `campaign.paidCount` answer as `spec/ai-jobs.md`, "The three queries" says.
 - **New files:** the bodies of `src/main/queries/earlier-options.ts`, `activity.ts`, `paid-count.ts` (stubs from P4-1).
