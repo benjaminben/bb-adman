@@ -166,7 +166,10 @@ describe('PropertiesPanel, Box and Shade [spec/editor.md "Properties panel"; LK-
 
   async function withPalette(layer: LayerRow) {
     const fake = makeFakeApi()
-    fake.onQuery('campaign.get', () => ({ ok: true, data: { ruleSet: { palette: ['#F4E9D8'] } } }))
+    // A picture layer also mounts the AI section, which reads the campaign's facts.
+    const campaign = { audience: 'All', region: 'US', message: 'Hello' }
+    const data = { ruleSet: { palette: ['#F4E9D8'] }, campaign, variants: [], subjects: [] }
+    fake.onQuery('campaign.get', () => ({ ok: true, data }))
     await renderApp(
       <main>
         <PropertiesPanel projectId={P} campaignId="C1" layer={layer} layers={LAYERS} />
