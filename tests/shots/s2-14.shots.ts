@@ -37,6 +37,13 @@ test('the brief form: sizes, languages and rules', async () => {
   const row = brief.getByRole('group', { name: 'Subject 1' })
   await row.getByLabel('Name').fill('Apple can')
   await row.getByLabel('Description (optional)').fill('A green can with a red apple label')
+  // SP-5: a subject needs a photo before Create; one the first campaign does not use.
+  await screens.addPhoto(
+    app,
+    brief,
+    1,
+    path.resolve('tests/shots/fixtures/photos/glass-bottle.png'),
+  )
 
   const sizes = brief.getByRole('group', { name: 'Sizes' })
   await sizes.getByRole('checkbox', { name: '16x9 (1920×1080)' }).uncheck()

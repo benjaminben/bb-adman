@@ -9,6 +9,7 @@ import { query } from './render-helpers'
 
 // The made-up Markdown brief of P4-15; the fake provider reads its `Label: value` lines.
 export const MD_BRIEF = path.resolve('tests/fixtures/briefs/p4-15-brief.md')
+export const MD_PHOTO = path.resolve('tests/fixtures/briefs/photos/berry-bottle.png')
 export const READ_NAME = 'Harbour Lights'
 export const CAMPAIGN = 'Harbour Lights at Dusk'
 export const MESSAGE = 'Long evenings, bright lanterns'
@@ -49,7 +50,8 @@ export async function layersOf(page: Page, place: Place): Promise<Layer[]> {
   return got.layers
 }
 
-// Steps 1 to 3: load the Markdown brief, read it with AI, correct the name, create the campaign.
+// Steps 1 to 3: load the Markdown brief, read it with AI, correct the name, add a photo, create
+// the campaign.
 export async function readBriefAndCreate(app: ElectronApplication, page: Page): Promise<void> {
   await screens.answerOpenDialog(app, [MD_BRIEF])
   await page.getByRole('button', { name: 'Load a brief' }).click()
@@ -61,6 +63,9 @@ export async function readBriefAndCreate(app: ElectronApplication, page: Page): 
   await expect(name).toHaveValue(READ_NAME, { timeout: 15_000 })
   await expect(form.getByLabel('Message')).toHaveValue(MESSAGE)
   await name.fill(CAMPAIGN)
+  // SP-5: a Markdown brief names no photo; the subject needs one before Create. Not the test
+  // brief's photo: one picture belongs to one subject, and runs load both briefs in one project.
+  await screens.addPhoto(app, form, 1, MD_PHOTO)
   await form.getByRole('button', { name: 'Create campaign' }).click()
   await expect(page.getByRole('heading', { name: CAMPAIGN, level: 2 })).toBeVisible()
 }
