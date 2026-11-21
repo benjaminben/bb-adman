@@ -43,7 +43,8 @@ export const REAL_COMMAND: readonly string[] = ['test', '--config', 'playwright.
 
 export function commandRefusal(argv: readonly string[]): string | null {
   const args = argv.slice(2)
-  const same = args.length === REAL_COMMAND.length && args.every((arg, i) => arg === REAL_COMMAND[i])
+  const same =
+    args.length === REAL_COMMAND.length && args.every((arg, i) => arg === REAL_COMMAND[i])
   return same ? null : RUN_REFUSAL
 }
 

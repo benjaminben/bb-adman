@@ -88,11 +88,19 @@ describe('test:e2e:real refuses a test-server run and checks again in the worker
   })
 
   it('refuses UI mode, the test server, the MCP test server and any extra argument', () => {
-    for (const extra of [['--ui'], ['--ui-port=0'], ['--ui-host', 'localhost'], ['--debug'], ['-g', 'x']]) {
+    for (const extra of [
+      ['--ui'],
+      ['--ui-port=0'],
+      ['--ui-host', 'localhost'],
+      ['--debug'],
+      ['-g', 'x'],
+    ]) {
       expect(commandRefusal([...node, ...REAL_COMMAND, ...extra])).toBe(RUN_REFUSAL)
     }
     for (const command of ['test-server', 'run-test-mcp-server']) {
-      expect(commandRefusal([...node, command, '-c', 'playwright.real.config.ts'])).toBe(RUN_REFUSAL)
+      expect(commandRefusal([...node, command, '-c', 'playwright.real.config.ts'])).toBe(
+        RUN_REFUSAL,
+      )
     }
     expect(commandRefusal(['/electron', '/extension-host.js'])).toBe(RUN_REFUSAL)
     expect(commandRefusal([])).toBe(RUN_REFUSAL)
