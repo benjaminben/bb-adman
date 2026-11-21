@@ -42,7 +42,7 @@ export function createActivityStore(deps: { api: AdmanApi }): ActivityStore {
       if (projectId !== get().projectId) set({ rows: [], projectId })
       if (projectId === null) return
       const result = await deps.api.query('job.activity', { projectId })
-      if (read !== reads || !result.ok) return
+      if (read !== reads || !result.ok || !Array.isArray(result.data)) return
       set({ rows: (result.data as JobActivity).map((entry) => laterOf(get().rows, entry)) })
     },
 
