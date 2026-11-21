@@ -2,8 +2,8 @@
 // One call per picture, two at a time. No automatic retry (SPEC 6 retry rule): the SDK
 // retries only when retryOptions is set, and it is never set here.
 import { GoogleGenAI } from '@google/genai'
-import { ProviderFailure, type AdapterContext, type ImageProvider } from '@/main/providers/types'
-import type { ImageFile, ImageResult } from '@/main/providers/types'
+import { ProviderCancelled, ProviderFailure } from '@/main/providers/types'
+import type { AdapterContext, ImageFile, ImageProvider, ImageResult } from '@/main/providers/types'
 import { nearestAspectRatio } from './aspect-ratio'
 import { failureFromError, pictureFromResponse } from './failure'
 import { GEMINI_ORIGIN, pinnedFetch } from './pinned-origin'
@@ -45,11 +45,21 @@ function whenAborted(signal: AbortSignal): Promise<never> {
 }
 
 // Reading the secret and the model and building the client happen inside the `try`, so any
-// error they throw also leaves as a ProviderFailure (SPEC 6 [1.12]).
-async function oneCall(ctx: AdapterContext, transport: Transport, call: OneCall) {
+// error they throw also leaves as a ProviderFailure (SPEC 6 [1.12]). A run signal (extend
+// only) stops the call with ProviderCancelled; one already aborted sends nothing.
+async function oneCall(
+  ctx: AdapterContext,
+  transport: Transport,
+  call: OneCall,
+  signal?: AbortSignal,
+): Promise<ImageResult> {
+  const cancelled = () => signal?.aborted === true
+  if (cancelled()) throw new ProviderCancelled()
   let key = ''
   const timer = new AbortController()
   const handle = setTimeout(() => timer.abort(), IMAGE_TIMEOUT_MS)
+  const onCancel = () => timer.abort()
+  signal?.addEventListener('abort', onCancel)
   try {
     key = ctx.secret('gemini.apiKey')
     const model = ctx.model('image')
@@ -66,10 +76,12 @@ async function oneCall(ctx: AdapterContext, transport: Transport, call: OneCall)
     const response = await Promise.race([request, whenAborted(timer.signal)])
     return { ...pictureFromResponse(response, key), model }
   } catch (error) {
+    if (cancelled()) throw new ProviderCancelled()
     if (error instanceof ProviderFailure) throw error
     throw failureFromError(error, timer.signal.aborted, key)
   } finally {
     clearTimeout(handle)
+    signal?.removeEventListener('abort', onCancel)
   }
 }
 
@@ -97,9 +109,19 @@ async function runPool(count: number, run: () => Promise<ImageResult>): Promise<
 export function geminiImage(ctx: AdapterContext, transport: Transport = {}): ImageProvider {
   return {
     generate: (input) => runPool(input.count, () => oneCall(ctx, transport, input)),
-    // SPEC 6.2: built in Phase 5.
-    extend: async () => {
-      throw new ProviderFailure({ kind: 'other', detail: 'Image extend is not built yet' })
-    },
+    // spec/providers-adapters.md "Picture extend" (A-128): no canvas. The picture goes as it
+    // is, as the one picture part, with the target's nearest ratio; `placement` is not sent.
+    extend: (input, opts) =>
+      oneCall(
+        ctx,
+        transport,
+        {
+          prompt: input.prompt,
+          references: [input.image],
+          width: input.width,
+          height: input.height,
+        },
+        opts?.signal,
+      ),
   }
 }
