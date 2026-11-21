@@ -24,8 +24,9 @@ export type Resolve = (host: string) => Promise<Resolved[]>
 export const systemResolve: Resolve = (host) => dns.promises.lookup(host, { all: true })
 
 // Addresses the key is never sent to: this computer, private and shared networks, link-local
-// (cloud metadata), multicast and reserved ranges, and NAT64 forms of them. An IPv4 address
-// written as IPv6 (::ffff:a.b.c.d) is checked as the IPv4 address.
+// (cloud metadata), multicast and reserved ranges. An IPv6 address that carries an IPv4 one
+// (::ffff:a.b.c.d, 6to4 2002::/16, NAT64 64:ff9b::/96) is judged by that IPv4 address, so a
+// public address behind NAT64 passes; the other IPv6 forms that can carry one are refused.
 const REFUSED = new net.BlockList()
 for (const [address, prefix] of [
   ['0.0.0.0', 8],
@@ -42,22 +43,52 @@ for (const [address, prefix] of [
   REFUSED.addSubnet(address, prefix, 'ipv4')
 }
 for (const [address, prefix] of [
-  ['::', 128],
-  ['::1', 128],
-  ['64:ff9b::', 96],
-  ['fc00::', 7],
-  ['fe80::', 10],
-  ['ff00::', 8],
+  ['::ffff:0:0:0', 96], // IPv4-translated
+  ['64:ff9b:1::', 48], // local-use NAT64
+  ['2001::', 32], // Teredo
+  ['fc00::', 7], // unique local
+  ['fe80::', 10], // link-local
+  ['fec0::', 10], // old site-local
+  ['ff00::', 8], // multicast
 ] as const) {
   REFUSED.addSubnet(address, prefix, 'ipv6')
 }
 
+// The 16 bytes of an IPv6 address that net.isIP accepted, a dotted IPv4 tail included.
+function ipv6Bytes(address: string): number[] {
+  let text = address.toLowerCase().replace(/%.*$/, '')
+  const dotted = /(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(text)
+  if (dotted) {
+    const [a, b, c, d] = dotted.slice(1).map(Number) as [number, number, number, number]
+    const tail = `${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`
+    text = text.slice(0, dotted.index) + tail
+  }
+  const [head = '', rest] = text.split('::')
+  const groups = (part: string) => (part === '' ? [] : part.split(':'))
+  const left = groups(head)
+  const right = rest === undefined ? [] : groups(rest)
+  const zeros = Array<string>(8 - left.length - right.length).fill('0')
+  return [...left, ...zeros, ...right].flatMap((g) => {
+    const n = parseInt(g, 16)
+    return [n >> 8, n & 0xff]
+  })
+}
+
+const zero = (bytes: number[]) => bytes.every((b) => b === 0)
+const v4At = (bytes: number[], at: number) => bytes.slice(at, at + 4).join('.')
+
 export function isRefusedAddress(address: string): boolean {
   const family = net.isIP(address)
   if (family === 0) return true
-  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address)?.[1]
-  if (mapped !== undefined) return isRefusedAddress(mapped)
-  return REFUSED.check(address, family === 4 ? 'ipv4' : 'ipv6')
+  if (family === 4) return REFUSED.check(address, 'ipv4')
+  const b = ipv6Bytes(address)
+  const mapped = zero(b.slice(0, 10)) && b[10] === 0xff && b[11] === 0xff
+  if (mapped) return isRefusedAddress(v4At(b, 12))
+  if (zero(b.slice(0, 12))) return true // ::/96, with :: and ::1
+  if (b[0] === 0x20 && b[1] === 0x02) return isRefusedAddress(v4At(b, 2))
+  const nat64 = b[0] === 0 && b[1] === 0x64 && b[2] === 0xff && b[3] === 0x9b
+  if (nat64 && zero(b.slice(4, 12))) return isRefusedAddress(v4At(b, 12))
+  return REFUSED.check(address, 'ipv6')
 }
 
 type LookupCallback = (error: Error | null, address: string | Resolved[], family?: number) => void
@@ -95,7 +126,8 @@ const KEY_SHAPE = /^[\x21-\x7e]{1,4096}$/
 export function send(target: Target, call: Call): Promise<Answer> {
   const origin = parseApprovalsAddress(target.origin, { allowLocalHttp: target.allowLocalHttp })
   if (origin === null) return Promise.reject(approvalsRefusal('approvals_not_set_up'))
-  if (!KEY_SHAPE.test(target.key)) return Promise.reject(new ApprovalsFailure('bad_key'))
+  // Nothing is sent, so this is not the service refusing the key: the key needs entering again.
+  if (!KEY_SHAPE.test(target.key)) return Promise.reject(approvalsRefusal('approvals_not_set_up'))
   const url = new URL(origin)
   const secure = url.protocol === 'https:'
   const body = call.body === undefined ? null : Buffer.from(JSON.stringify(call.body), 'utf8')
@@ -126,7 +158,11 @@ export function send(target: Target, call: Call): Promise<Answer> {
         method: call.method,
         headers,
         agent,
-        ...(secure && { rejectUnauthorized: true, lookup: checkedLookup(target.resolve) }),
+        ...(secure && {
+          rejectUnauthorized: true,
+          servername: url.hostname,
+          lookup: checkedLookup(target.resolve),
+        }),
       })
     } catch {
       return settle(new ApprovalsFailure('other'))
