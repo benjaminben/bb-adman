@@ -1,7 +1,12 @@
-// The visitor's routes (spec/approvals-service.md "Visitor pages"). Every handler is a stub
-// answering "Not found." until AP-3 and AP-4 give them bodies.
+// The visitor's routes (spec/approvals-service.md "Visitor pages"). The sign-off, remove and
+// picture routes are stubs answering "Not found." until AP-4 gives them bodies.
 import type { Parts } from '../app'
 import type { Env } from '../env'
+import { enterLink, leaveLink, openGallery } from './actions'
+import { galleryPage } from './gallery-page'
+import { pageReply, redirect, stylesheetHeaders, textHeaders } from './headers'
+import { passwordPage, refusedPage } from './password-page'
+import { STYLES } from './styles'
 
 export type VisitorContext = {
   request: Request
@@ -11,7 +16,7 @@ export type VisitorContext = {
   params: string[]
 }
 
-type VisitorHandler = (ctx: VisitorContext) => Promise<Response>
+export type VisitorHandler = (ctx: VisitorContext) => Promise<Response>
 
 export type VisitorRoute = {
   name: string
@@ -31,32 +36,51 @@ export function notFound(): Response {
   })
 }
 
-// The fixed reply to an unexpected failure. The headers are the fixed set of "Headers on every
-// page" that suits a plain text page; AP-3 moves this onto its header helper (adding HSTS).
-function failed(): Response {
+// The fixed reply to an unexpected failure, with the plain text page headers.
+function failed(request: Request): Response {
   return new Response('Something went wrong. Try again later.', {
     status: 500,
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
-      'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY',
-      'Referrer-Policy': 'no-referrer',
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cache-Control': 'no-store',
-      'X-Robots-Tag': 'noindex, nofollow',
-    },
+    headers: textHeaders(request),
   })
 }
 
 const stub: VisitorHandler = async () => notFound()
 
+// The logic is in actions.ts; these handlers only render its results.
+const gallery: VisitorHandler = async ({ request, env, parts, params }) => {
+  const slug = params[0] ?? ''
+  const result = await openGallery(env.DB, request, slug, parts.now())
+  if (result.kind === 'password') return pageReply(request, passwordPage(slug, false))
+  return pageReply(request, galleryPage(result))
+}
+
+// Wrong password, unknown slug and too many tries all get this one reply.
+const enter: VisitorHandler = async ({ request, env, parts, params }) => {
+  const slug = params[0] ?? ''
+  const result = await enterLink(env.DB, request, slug, parts)
+  if (result.kind === 'refused') return pageReply(request, refusedPage(), 403)
+  if (result.kind === 'failed') return pageReply(request, passwordPage(slug, true))
+  return redirect(request, result.location, result.cookie)
+}
+
+const leave: VisitorHandler = async ({ request, env, parts, params }) => {
+  const result = await leaveLink(env.DB, request, params[0] ?? '', parts.now())
+  if (result.kind === 'refused') return pageReply(request, refusedPage(), 403)
+  return redirect(request, result.location, result.cookie)
+}
+
+const stylesheet: VisitorHandler = async () =>
+  new Response(STYLES, { headers: stylesheetHeaders() })
+
+const robots: VisitorHandler = async ({ request }) =>
+  new Response('User-agent: *\nDisallow: /\n', { headers: textHeaders(request) })
+
 const SLUG = '([0-9A-Za-z]{12})'
 const VARIANT = '([23456789abcdefghjkmnpqrstuvwxyz]{6})'
 
 export const VISITOR_ROUTES: VisitorRoute[] = [
-  { name: 'gallery', method: 'GET', path: new RegExp(`^/l/${SLUG}$`), handler: stub },
-  { name: 'enter', method: 'POST', path: new RegExp(`^/l/${SLUG}/enter$`), handler: stub },
+  { name: 'gallery', method: 'GET', path: new RegExp(`^/l/${SLUG}$`), handler: gallery },
+  { name: 'enter', method: 'POST', path: new RegExp(`^/l/${SLUG}/enter$`), handler: enter },
   { name: 'sign-off', method: 'POST', path: new RegExp(`^/l/${SLUG}/signoffs$`), handler: stub },
   {
     name: 'remove-sign-off',
@@ -64,15 +88,15 @@ export const VISITOR_ROUTES: VisitorRoute[] = [
     path: new RegExp(`^/l/${SLUG}/signoffs/([0-9A-Za-z]{24})/remove$`),
     handler: stub,
   },
-  { name: 'leave', method: 'POST', path: new RegExp(`^/l/${SLUG}/leave$`), handler: stub },
+  { name: 'leave', method: 'POST', path: new RegExp(`^/l/${SLUG}/leave$`), handler: leave },
   {
     name: 'picture',
     method: 'GET',
     path: new RegExp(`^/l/${SLUG}/p/${VARIANT}/([0-9]{1,16})$`),
     handler: stub,
   },
-  { name: 'stylesheet', method: 'GET', path: /^\/gallery\.css$/, handler: stub },
-  { name: 'robots', method: 'GET', path: /^\/robots\.txt$/, handler: stub },
+  { name: 'stylesheet', method: 'GET', path: /^\/gallery\.css$/, handler: stylesheet },
+  { name: 'robots', method: 'GET', path: /^\/robots\.txt$/, handler: robots },
 ]
 
 // Anything else, or a slug of the wrong shape: the plain 404 page.
@@ -91,7 +115,7 @@ export async function visitorRoute(
     } catch (error) {
       // spec "Logs": the route name and the error's name only; never the slug.
       console.error(route.name, error instanceof Error ? error.name : 'unknown')
-      return failed()
+      return failed(request)
     }
   }
   return notFound()

@@ -11,13 +11,18 @@ describe('the Worker entry', () => {
     expect(await reply.json()).toEqual({ service: 'adman-approvals', contract: 1 })
   })
 
-  it.each(['/nothing', '/l/aZ09aZ09aZ09', '/l/short', '/robots.txt'])(
-    'answers %s with the plain 404 page while the visitor routes are stubs',
-    async (path) => {
-      const reply = await exports.default.fetch(`https://approvals.example${path}`)
-      expect(reply.status).toBe(404)
-      expect(reply.headers.get('Content-Type')).toBe('text/plain; charset=utf-8')
-      expect(await reply.text()).toBe('Not found.')
-    },
-  )
+  it('answers robots.txt and a slug of the right shape with their pages', async () => {
+    const robots = await exports.default.fetch('https://approvals.example/robots.txt')
+    expect(await robots.text()).toBe('User-agent: *\nDisallow: /\n')
+    const page = await exports.default.fetch('https://approvals.example/l/aZ09aZ09aZ09')
+    expect(page.status).toBe(200)
+    expect(await page.text()).toContain('<h1>Review campaign</h1>')
+  })
+
+  it.each(['/nothing', '/l/short'])('answers %s with the plain 404 page', async (path) => {
+    const reply = await exports.default.fetch(`https://approvals.example${path}`)
+    expect(reply.status).toBe(404)
+    expect(reply.headers.get('Content-Type')).toBe('text/plain; charset=utf-8')
+    expect(await reply.text()).toBe('Not found.')
+  })
 })
