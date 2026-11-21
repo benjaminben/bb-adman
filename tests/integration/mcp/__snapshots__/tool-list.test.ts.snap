@@ -1,0 +1,347 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descriptions and input schemas 1`] = `
+[
+  {
+    "description": "Read one project that is open in the app: its subjects and a summary of each campaign. Works only on open projects.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+      ],
+      "type": "object",
+    },
+    "name": "get_project",
+  },
+  {
+    "description": "List the assets of an open project, optionally by library, kind or subject. Gives id, display name, kind, library, subject ID, width, height, duration and font family.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "kind": {
+          "enum": [
+            "image",
+            "video",
+            "font",
+            "text",
+          ],
+          "type": "string",
+        },
+        "library": {
+          "enum": [
+            "reference",
+            "asset",
+          ],
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "subject_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+      ],
+      "type": "object",
+    },
+    "name": "list_assets",
+  },
+  {
+    "description": "Read one campaign of an open project: its fields, rule set, directions and a summary of each variant with its badges.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "campaign_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "campaign_id",
+      ],
+      "type": "object",
+    },
+    "name": "get_campaign",
+  },
+  {
+    "description": "Create a campaign in an open project from a confirmed brief, with one subject_map entry per brief subject. Gives the new campaign ID and its master variant ID.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "brief": {
+          "properties": {
+            "audience": {
+              "minLength": 1,
+              "type": "string",
+            },
+            "callToAction": {
+              "type": "string",
+            },
+            "campaignName": {
+              "minLength": 1,
+              "type": "string",
+            },
+            "copy": {
+              "additionalProperties": {
+                "properties": {
+                  "callToAction": {
+                    "type": "string",
+                  },
+                  "headline": {
+                    "type": "string",
+                  },
+                },
+                "type": "object",
+              },
+              "propertyNames": {
+                "type": "string",
+              },
+              "type": "object",
+            },
+            "languages": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
+            "message": {
+              "minLength": 1,
+              "type": "string",
+            },
+            "offer": {
+              "type": "string",
+            },
+            "prohibitedWords": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string",
+                  },
+                  "type": "array",
+                },
+                {
+                  "additionalProperties": {
+                    "items": {
+                      "type": "string",
+                    },
+                    "type": "array",
+                  },
+                  "propertyNames": {
+                    "type": "string",
+                  },
+                  "type": "object",
+                },
+              ],
+            },
+            "region": {
+              "minLength": 1,
+              "type": "string",
+            },
+            "requiredWords": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string",
+                  },
+                  "type": "array",
+                },
+                {
+                  "additionalProperties": {
+                    "items": {
+                      "type": "string",
+                    },
+                    "type": "array",
+                  },
+                  "propertyNames": {
+                    "type": "string",
+                  },
+                  "type": "object",
+                },
+              ],
+            },
+            "sizes": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
+            "subjects": {
+              "items": {
+                "properties": {
+                  "description": {
+                    "type": "string",
+                  },
+                  "id": {
+                    "type": "string",
+                  },
+                  "name": {
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "name",
+                ],
+                "type": "object",
+              },
+              "minItems": 1,
+              "type": "array",
+            },
+            "tone": {
+              "type": "string",
+            },
+          },
+          "required": [
+            "campaignName",
+            "region",
+            "audience",
+            "message",
+            "subjects",
+          ],
+          "type": "object",
+        },
+        "copy_rule_set_from": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "languages": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+          },
+          "minItems": 1,
+          "type": "array",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "rule_set": {
+          "properties": {
+            "palette": {
+              "items": {
+                "pattern": "^#[0-9A-Fa-f]{6}$",
+                "type": "string",
+              },
+              "type": "array",
+            },
+            "prohibitedWords": {
+              "additionalProperties": {
+                "items": {
+                  "type": "string",
+                },
+                "type": "array",
+              },
+              "propertyNames": {
+                "type": "string",
+              },
+              "type": "object",
+            },
+            "requiredAssetIds": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
+            "requiredWords": {
+              "additionalProperties": {
+                "items": {
+                  "type": "string",
+                },
+                "type": "array",
+              },
+              "propertyNames": {
+                "type": "string",
+              },
+              "type": "object",
+            },
+          },
+          "required": [
+            "requiredAssetIds",
+            "palette",
+            "requiredWords",
+            "prohibitedWords",
+          ],
+          "type": "object",
+        },
+        "sizes": {
+          "items": {
+            "properties": {
+              "height": {
+                "maximum": 8192,
+                "minimum": 50,
+                "type": "integer",
+              },
+              "label": {
+                "pattern": "^[1-9]\\d*x[1-9]\\d*$",
+                "type": "string",
+              },
+              "width": {
+                "maximum": 8192,
+                "minimum": 50,
+                "type": "integer",
+              },
+            },
+            "required": [
+              "label",
+              "width",
+              "height",
+            ],
+            "type": "object",
+          },
+          "minItems": 1,
+          "type": "array",
+        },
+        "subject_map": {
+          "items": {
+            "properties": {
+              "create": {
+                "type": "boolean",
+              },
+              "subjectId": {
+                "minLength": 1,
+                "type": "string",
+              },
+            },
+            "required": [
+              "subjectId",
+              "create",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "template_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "brief",
+        "subject_map",
+        "languages",
+        "sizes",
+        "template_id",
+      ],
+      "type": "object",
+    },
+    "name": "create_campaign",
+  },
+]
+`;
