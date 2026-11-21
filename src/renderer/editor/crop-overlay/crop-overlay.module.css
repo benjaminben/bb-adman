@@ -1,0 +1,110 @@
+/* Over the whole canvas box while cropping, so presses do not reach the Scene below. */
+.overlay {
+  position: absolute;
+  inset: 0;
+}
+/* The layer's box, turned with it; the picture may reach outside it. */
+.frame {
+  position: absolute;
+  transform-origin: 50% 50%;
+}
+.picture,
+.dim,
+.hole,
+.crop {
+  position: absolute;
+  box-sizing: border-box;
+}
+.picture {
+  pointer-events: none;
+}
+/* The picture dimmed outside the crop: the hole's shadow fills the rest of the picture. */
+.dim {
+  overflow: hidden;
+  pointer-events: none;
+}
+.hole {
+  box-shadow: 0 0 0 100vmax var(--color-overlay);
+}
+/* A dark line with a light line on each side, as the selection. */
+.crop {
+  cursor: move;
+  border: var(--border-width) solid var(--selection-dark);
+  box-shadow:
+    0 0 0 var(--border-width) var(--selection-light),
+    inset 0 0 0 var(--border-width) var(--selection-light);
+}
+.crop:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+.handle {
+  position: absolute;
+  box-sizing: border-box;
+  width: var(--handle-size);
+  height: var(--handle-size);
+  background: var(--selection-light);
+  border: var(--border-width) solid var(--selection-dark);
+  transform: translate(-50%, -50%);
+}
+.handle[data-crop-handle='nw'] {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+.handle[data-crop-handle='n'] {
+  top: 0;
+  left: 50%;
+  cursor: ns-resize;
+}
+.handle[data-crop-handle='ne'] {
+  top: 0;
+  left: 100%;
+  cursor: nesw-resize;
+}
+.handle[data-crop-handle='e'] {
+  top: 50%;
+  left: 100%;
+  cursor: ew-resize;
+}
+.handle[data-crop-handle='se'] {
+  top: 100%;
+  left: 100%;
+  cursor: nwse-resize;
+}
+.handle[data-crop-handle='s'] {
+  top: 100%;
+  left: 50%;
+  cursor: ns-resize;
+}
+.handle[data-crop-handle='sw'] {
+  top: 100%;
+  left: 0;
+  cursor: nesw-resize;
+}
+.handle[data-crop-handle='w'] {
+  top: 50%;
+  left: 0;
+  cursor: ew-resize;
+}
+/* Pinned to the top of the canvas box, unturned. */
+.bar {
+  position: absolute;
+  top: var(--space-2);
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: calc(100% - var(--space-4));
+  padding: var(--space-2) var(--space-3);
+  transform: translateX(-50%);
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+}
+.hint {
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}

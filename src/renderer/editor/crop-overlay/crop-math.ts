@@ -114,3 +114,15 @@ export function toBoxPixels(rect: Rect, place: Placement, source: Size): Rect {
     height: rect.height * k,
   }
 }
+
+// A screen movement turned back into the layer's own frame (the box turns clockwise by
+// `degrees` on screen, as CSS rotate) and divided by the screen size of one source pixel.
+export function toSourceDelta(screen: Point, degrees: number, unit: number): Point {
+  const rad = (-degrees * Math.PI) / 180
+  const cos = Math.cos(rad)
+  const sin = Math.sin(rad)
+  return {
+    x: (screen.x * cos - screen.y * sin) / unit,
+    y: (screen.x * sin + screen.y * cos) / unit,
+  }
+}

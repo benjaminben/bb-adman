@@ -7,6 +7,7 @@ import {
   resizeCrop,
   startCrop,
   toBoxPixels,
+  toSourceDelta,
 } from '@/renderer/editor/crop-overlay/crop-math'
 
 const PHOTO = { width: 2000, height: 1000 }
@@ -167,5 +168,27 @@ describe('toBoxPixels: a source rectangle drawn where the picture sits in the bo
       width: 200,
       height: 100,
     })
+  })
+})
+
+describe("toSourceDelta: a screen movement in the layer's own frame, in source pixels", () => {
+  it.each([
+    { name: 'unturned', degrees: 0, screen: { x: 10, y: 5 }, want: { x: 100, y: 50 } },
+    {
+      name: 'a quarter turn: down is along the width',
+      degrees: 90,
+      screen: { x: 0, y: 10 },
+      want: { x: 100, y: 0 },
+    },
+    {
+      name: 'a half turn: right is back',
+      degrees: 180,
+      screen: { x: 10, y: 0 },
+      want: { x: -100, y: 0 },
+    },
+  ])('$name', ({ degrees, screen, want }) => {
+    const got = toSourceDelta(screen, degrees, 0.1)
+    expect(got.x).toBeCloseTo(want.x)
+    expect(got.y).toBeCloseTo(want.y)
   })
 })
