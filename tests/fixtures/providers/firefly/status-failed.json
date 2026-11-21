@@ -1,0 +1,5 @@
+{
+  "status": "failed",
+  "jobId": "urn:ff:jobs:made-up:00000000-0000-0000-0000-000000000001",
+  "error_code": "output_media_unsafe"
+}

@@ -1,0 +1,5 @@
+{
+  "jobId": "urn:ff:jobs:made-up:00000000-0000-0000-0000-000000000001",
+  "statusUrl": "https://firefly-api.adobe.io/v3/status/urn:ff:jobs:made-up:00000000-0000-0000-0000-000000000001",
+  "cancelUrl": "https://firefly-api.adobe.io/v3/cancel/urn:ff:jobs:made-up:00000000-0000-0000-0000-000000000001"
+}

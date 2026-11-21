@@ -1,0 +1,16 @@
+{
+  "status": "succeeded",
+  "jobId": "urn:ff:jobs:made-up:00000000-0000-0000-0000-000000000001",
+  "result": {
+    "size": { "width": 2048, "height": 2048 },
+    "outputs": [
+      {
+        "seed": 1,
+        "image": {
+          "url": "https://pre-signed-firefly-prod.s3-accelerate.amazonaws.com/images/made-up-1?made=up"
+        }
+      }
+    ],
+    "contentClass": "art"
+  }
+}
