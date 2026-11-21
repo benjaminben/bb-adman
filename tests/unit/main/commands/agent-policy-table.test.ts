@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { AGENT_POLICY, agentPolicyFor } from '../../../../src/main/commands/agent-policy'
 
-// SPEC 1.5 Section 4.2, copied row by row. variant.setFormat is allow [D-025].
+// SPEC 1.9 Section 4.2, copied row by row. variant.setFormat is allow [D-025].
 // A change here must follow a change in SPEC.md.
 const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny'> = {
   'project.create': 'deny',
@@ -16,6 +16,7 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny'> = {
   'asset.update': 'deny',
   'asset.relink': 'deny',
   'asset.remove': 'deny',
+  'asset.addGenerated': 'deny',
   'brief.parse': 'deny',
   'campaign.create': 'allow',
   'campaign.update': 'deny',
@@ -52,6 +53,7 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny'> = {
   'generation.startVideo': 'deny',
   'job.retry': 'deny',
   'job.cancel': 'deny',
+  'job.markSeen': 'deny',
   'export.run': 'deny',
   'publish.run': 'deny',
   'history.undo': 'deny',
@@ -59,12 +61,15 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny'> = {
   'settings.update': 'deny',
   'secret.set': 'deny',
   'secret.delete': 'deny',
+  'storage.dropboxSignIn': 'deny',
+  'storage.dropboxSignOut': 'deny',
+  'dev.storage': 'deny',
   'mcp.setEnabled': 'deny',
   'mcp.regenerateToken': 'deny',
   'agent.answerPermission': 'deny',
 }
 
-describe('agent policy table, SPEC 1.5 [SPEC 4.2, ADR-009, D-025]', () => {
+describe('agent policy table, SPEC 1.9 [SPEC 4.2, ADR-009, D-025]', () => {
   it('lists every command in Section 4.2 with its policy, and nothing else', () => {
     expect(Object.fromEntries(Object.entries(AGENT_POLICY).map(([k, v]) => [k, v.policy]))).toEqual(
       SPEC_4_2,
