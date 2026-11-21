@@ -1,0 +1,33 @@
+import { describe, it, expect } from 'vitest'
+import { COMFY_ENV_NAMES, comfyEnvFrom } from '../../comfy/env-file'
+
+describe('comfyEnvFrom [SPEC 6.10.12, 13 1.24]', () => {
+  it('takes one name from the file: COMFY_BASE_URL', () => {
+    expect(COMFY_ENV_NAMES).toEqual(['COMFY_BASE_URL'])
+    expect(comfyEnvFrom('COMFY_BASE_URL=http://made-up.test:8188\n', {})).toEqual({
+      COMFY_BASE_URL: 'http://made-up.test:8188',
+    })
+  })
+
+  it('drops every other name, paid keys and the video switch included', () => {
+    const text = [
+      'GEMINI_API_KEY=made-up',
+      'FAL_KEY=made-up',
+      'ADMAN_COMFY_VIDEO=1',
+      'ADMAN_DEV_TOOLS=1',
+      'COMFY_OTHER=x',
+    ].join('\n')
+    expect(comfyEnvFrom(text, {})).toEqual({})
+  })
+
+  it('a value set in the terminal wins', () => {
+    const picked = comfyEnvFrom('COMFY_BASE_URL=http://file.test\n', {
+      COMFY_BASE_URL: 'http://terminal.test',
+    })
+    expect(picked).toEqual({})
+  })
+
+  it('no file text is not an error', () => {
+    expect(comfyEnvFrom('', {})).toEqual({})
+  })
+})
