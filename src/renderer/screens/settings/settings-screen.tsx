@@ -3,6 +3,7 @@
 import { LocationSetting } from './location-setting'
 import { ProviderDefaults } from './provider-defaults'
 import { KeysSection } from './keys-section'
+import { ComfySection } from './comfy-section'
 import styles from '../screens.module.css'
 
 export function SettingsScreen() {
@@ -12,6 +13,7 @@ export function SettingsScreen() {
       <LocationSetting />
       <ProviderDefaults />
       <KeysSection />
+      <ComfySection />
     </section>
   )
 }
