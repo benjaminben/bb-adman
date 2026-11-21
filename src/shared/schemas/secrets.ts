@@ -10,6 +10,7 @@ export const SECRET_NAMES = [
   's3.accessKeyId',
   's3.secretAccessKey',
   'dropbox.refreshToken',
+  'approvals.apiKey',
   'mcp.token',
 ] as const
 export type SecretName = (typeof SECRET_NAMES)[number]

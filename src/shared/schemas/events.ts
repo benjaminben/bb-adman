@@ -28,6 +28,8 @@ export type EventMap = {
   'asset.changedOnDisk': { projectId: string; assetIds: string[] }
   // spec/editor-commands.md: a thumbnail file was written or deleted. No picture, no path.
   'thumbnail.changed': { projectId: string; variantId: string }
+  // spec/approvals.md: the approvals tables changed. App window only; no email, slug or address.
+  'approvals.changed': { projectId: string; campaignId: string }
 }
 
 export type EventName = keyof EventMap
@@ -37,4 +39,5 @@ export const EVENT_NAMES: EventName[] = [
   'job.updated',
   'asset.changedOnDisk',
   'thumbnail.changed',
+  'approvals.changed',
 ]
