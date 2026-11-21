@@ -1,6 +1,13 @@
-/* One muted line of small text, with no paragraph margin of its own. */
-.line {
+/* app-style */
+/* The paid count: the shared info badge (layout.module.css), which may wrap onto a second line
+   in a narrow place, with no paragraph margin of its own. `p` makes it win over the badge. */
+p.line {
+  align-self: flex-start;
+  height: auto;
+  min-height: var(--badge-height);
   margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+  padding-top: var(--space-1);
+  padding-bottom: var(--space-1);
+  white-space: normal;
+  line-height: var(--leading-tight);
 }

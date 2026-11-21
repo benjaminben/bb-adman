@@ -16,6 +16,7 @@ import { type Reference, useAddPictures, whyNot } from './reference-list'
 import layout from '@/renderer/ui/layout.module.css'
 import { photoOfLine } from './reference-rows'
 import { type PictureLibrary, usePictureList } from './use-picture-list'
+import styles from './reference-picker.module.css'
 
 const LOCAL_LINE =
   "ComfyUI takes one reference picture for now and makes the result in that picture's shape, at about 1 megapixel."
@@ -89,15 +90,15 @@ export function ReferencePicker(props: {
       <h3 className={layout.label}>{WORDS[library].heading}</h3>
       {list !== null && list.length === 0 && <p className={layout.muted}>{WORDS[library].empty}</p>}
       {list !== null && list.length > 0 && (
-        <ul className={layout.list}>
+        <ul className={`${layout.list} ${styles.grid}`}>
           {list.map((asset, i) => {
             const reason = whyNot(asset)
             const place = ticks.indexOf(asset.id) + 1
             const reasonId = `${baseId}-why-${i}`
             const photoOf = photoOfLine(asset)
             return (
-              <li key={asset.id} className={layout.row}>
-                <label className={layout.row}>
+              <li key={asset.id} className={styles.tile}>
+                <label className={styles.pick}>
                   <input
                     type="checkbox"
                     checked={place > 0}
@@ -107,13 +108,19 @@ export function ReferencePicker(props: {
                     }
                     onChange={() => toggle(asset.id)}
                   />
-                  <img src={assetUrl(projectId, asset.id)} alt="" width={48} height={48} />
-                  {asset.displayName}
+                  <img
+                    className={styles.thumb}
+                    src={assetUrl(projectId, asset.id)}
+                    alt=""
+                    width={48}
+                    height={48}
+                  />
+                  <span className={styles.name}>{asset.displayName}</span>
                 </label>
-                {photoOf !== null && <span className={layout.muted}>{photoOf}</span>}
-                {place > 0 && <span>{place}</span>}
+                {photoOf !== null && <span className={styles.note}>{photoOf}</span>}
+                {place > 0 && <span className={styles.place}>{place}</span>}
                 {reason !== null && (
-                  <span id={reasonId} className={layout.muted}>
+                  <span id={reasonId} className={styles.note}>
                     {reason}
                   </span>
                 )}

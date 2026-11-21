@@ -12,6 +12,7 @@ import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'
 import type { JobStarted } from '@/shared/schemas/commands/job'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { RunStatus } from './run-status'
+import layout from '@/renderer/ui/layout.module.css'
 import { useFirstDraft } from './use-first-draft'
 import styles from './generate-fields.module.css'
 
@@ -59,14 +60,18 @@ export function GenerateFields(props: GenerateFieldsProps) {
       </label>
       <textarea
         id={promptId}
-        className={styles.prompt}
+        className={`${styles.prompt} ${layout.reading}`}
         rows={5}
         value={draft?.prompt ?? ''}
         disabled={disabled}
         onChange={(e) => change(key, { prompt: e.target.value })}
       />
       <p className={styles.label}>Reference pictures</p>
-      {draft && <p>{chosen.length > 0 ? `${chosen.length} chosen` : 'None chosen'}</p>}
+      {draft && (
+        <p className={styles.count}>
+          {chosen.length > 0 ? `${chosen.length} chosen` : 'None chosen'}
+        </p>
+      )}
       <div className={styles.buttons}>
         <button type="button" disabled={disabled} onClick={() => setDialog('references')}>
           Choose reference pictures…

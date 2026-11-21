@@ -1,0 +1,72 @@
+/* app-style */
+/* A reference picker (spec/app-style.md "AI panels and the run dialog"): the pictures as a grid
+   of --option-thumb squares on the canvas ground, each with its tick box over its corner and
+   its name below; a ticked picture has a spot colour edge and its place as a small mark. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--option-thumb));
+  gap: var(--space-3) var(--space-2);
+}
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  font-size: var(--font-size-small);
+}
+.pick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  cursor: pointer;
+}
+.pick:has(input:disabled) {
+  cursor: default;
+}
+.pick input {
+  position: absolute;
+  top: var(--space-1);
+  left: var(--space-1);
+  margin: 0;
+}
+.thumb {
+  box-sizing: border-box;
+  width: var(--option-thumb);
+  height: var(--option-thumb);
+  object-fit: contain;
+  background: var(--canvas-backdrop);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius);
+}
+.tile:has(input:checked) .thumb {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 var(--border-width) var(--color-accent);
+}
+.tile:has(input:disabled:not(:checked)) .thumb {
+  opacity: var(--opacity-disabled);
+}
+.name {
+  overflow-wrap: anywhere;
+  color: var(--color-text);
+}
+.place {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--icon-size);
+  height: var(--icon-size);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  font-weight: var(--weight-bold);
+}
+.note {
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}

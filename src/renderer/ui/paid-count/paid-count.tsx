@@ -2,6 +2,8 @@
 // dialog and on the campaign overview. A count of calls, not money. Nothing while the query
 // has not answered or was refused.
 import type { PaidCount as Counts } from '@/shared/schemas/queries/paid-count'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import { usePaidCount } from './use-paid-count'
 import styles from './paid-count.module.css'
 
@@ -13,5 +15,10 @@ export function paidCountLine(counts: Counts): string {
 export function PaidCount(props: { projectId: string; campaignId: string }) {
   const counts = usePaidCount(props.projectId, props.campaignId)
   if (counts === null) return null
-  return <p className={styles.line}>{paidCountLine(counts)}</p>
+  return (
+    <p className={`${layout.badge} ${layout.info} ${styles.line}`}>
+      <Icon name="info" size="small" />
+      {paidCountLine(counts)}
+    </p>
+  )
 }

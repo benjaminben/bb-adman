@@ -7,7 +7,9 @@
 import { useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import { useComfyInfoState } from '@/renderer/screens/campaign/use-comfy-info'
-import { DialogFrame } from '@/renderer/ui/dialog-frame'
+import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import { PaidCount } from '@/renderer/ui/paid-count'
 import type { Result } from '@/shared/schemas/result'
 import { ProviderChoice, runChoices, startChoice } from './provider-choice'
@@ -97,26 +99,33 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
         </label>
       )}
       {settled && ready && (
-        <p>{runSummary({ job, provider, count: n ?? count?.value, referenceCount, comfy })}</p>
+        <p className={provider.id === 'comfyui' ? styles.comfy : styles.summary}>
+          {runSummary({ job, provider, count: n ?? count?.value, referenceCount, comfy })}
+        </p>
       )}
       {settled && !ready && <p>No provider can do this yet.</p>}
       {props.campaignId !== undefined && (
         <PaidCount projectId={props.projectId} campaignId={props.campaignId} />
       )}
-      {refusal !== null && <p role="alert">{refusal}</p>}
-      <div className={styles.actions}>
+      {refusal !== null && (
+        <p role="alert" className={`${layout.notice} ${layout.danger}`}>
+          <Icon name="alert" size="small" />
+          {refusal}
+        </p>
+      )}
+      <DialogFoot className={styles.foot}>
         <button type="button" disabled={busy} onClick={props.onCancel}>
           Cancel
         </button>
         <button
           type="button"
-          className={styles.primary}
+          className={layout.primary}
           disabled={locked || !ready || (count !== undefined && n === null)}
           onClick={() => void send()}
         >
           {props.confirmLabel}
         </button>
-      </div>
+      </DialogFoot>
     </div>
   )
 }

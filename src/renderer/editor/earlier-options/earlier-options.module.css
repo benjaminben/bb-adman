@@ -1,3 +1,7 @@
+/* app-style */
+/* "Earlier options" (spec/app-style.md "AI panels and the run dialog"): each run a block under a
+   line, its options a row of --option-thumb pictures on the canvas ground; the one in use is
+   ringed in the spot colour. */
 .section {
   display: flex;
   flex-direction: column;
@@ -9,8 +13,9 @@
 }
 .heading {
   margin: 0;
-  font-size: var(--font-size-body);
-  font-weight: 600;
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
 }
 .muted {
   color: var(--color-text-muted);
@@ -30,17 +35,25 @@
 .run {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
   padding-top: var(--space-2);
-  border-top: var(--border-width) solid var(--color-border);
+  border-top: var(--border-width) solid var(--color-line);
 }
 .head {
   font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
 }
 .status {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  font-size: var(--font-size-control);
+}
+.status > button {
+  margin-left: auto;
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-small);
 }
 .options {
   display: flex;
@@ -54,14 +67,20 @@
   justify-content: center;
   width: var(--option-thumb);
   height: var(--option-thumb);
+  min-height: 0;
   padding: 0;
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
+  background: var(--canvas-backdrop);
+  border: var(--border-width) solid var(--color-line);
   border-radius: var(--radius);
   overflow: hidden;
   cursor: pointer;
 }
-.option[aria-pressed='true'] {
+.option:hover:not(:disabled) {
+  background: var(--canvas-backdrop);
+  border-color: var(--color-border);
+}
+.option[aria-pressed='true'],
+.option[aria-pressed='true']:hover:not(:disabled) {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 var(--border-width) var(--color-accent);
 }
@@ -78,6 +97,7 @@
   padding: var(--space-1);
   color: var(--color-text-muted);
   font-size: var(--font-size-small);
+  font-weight: var(--weight-regular);
   text-align: center;
 }
 .inUse {
@@ -87,5 +107,6 @@
   background: var(--color-accent);
   color: var(--color-accent-text);
   font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
   text-align: center;
 }
