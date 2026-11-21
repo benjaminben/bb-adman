@@ -93,20 +93,18 @@ describe('time limits of a call [SPEC 6.10.2, 14 CU-2]', () => {
 
 // A server that takes no body until it is released, so the upload cannot finish sending.
 // Once released it reads the whole body, then answers like ComfyUI or, when silent, never.
+const KEPT = JSON.stringify({ name: 'kept.png', subfolder: 'adman', type: 'input' })
 async function slowReader(silent = false) {
   let release = () => {}
   let seen = () => {}
-  let taken = () => {}
   const wasSeen = new Promise<void>((done) => (seen = done))
-  const wasTaken = new Promise<void>((done) => (taken = done))
   const server = http.createServer((req, res) => {
     req.pause()
     seen()
     release = () => {
       req.on('data', () => {})
       req.on('end', () => {
-        taken()
-        if (!silent) res.end(JSON.stringify({ name: 'kept.png', subfolder: 'adman', type: 'input' }))
+        if (!silent) res.end(KEPT)
       })
       req.resume()
     }
@@ -117,8 +115,12 @@ async function slowReader(silent = false) {
     server.closeAllConnections()
     return new Promise((done) => server.close(done))
   }
-  return { origin: `http://127.0.0.1:${port}`, wasSeen, wasTaken, release: () => release(), close }
+  return { origin: `http://127.0.0.1:${port}`, wasSeen, release: () => release(), close }
 }
+
+// The request's finish: the whole body handed over, where the first-byte wait starts.
+const sent = (req: ClientRequest) =>
+  req.writableFinished ? Promise.resolve() : new Promise((done) => req.once('finish', done))
 
 // Large enough that the socket's buffers fill while the server takes nothing.
 const BIG = new Uint8Array(32 * 1024 * 1024)
@@ -146,12 +148,14 @@ describe('the 10 s wait in two parts [SPEC 14 1.43 Open Question 6, F-3; 1.46 RF
 
   it('a server that takes the whole body, then stays silent for 10 s, gives no_answer', async () => {
     const server = await slowReader(true)
+    const spy = vi.spyOn(http, 'request')
     const outcome = failureOf(slowUpload(server.origin))
+    const req = spy.mock.results[0]?.value as ClientRequest
     await server.wasSeen
     await vi.advanceTimersByTimeAsync(CONNECT_MS + 1_000)
     expect(await stillWaiting(outcome)).toBe(true)
     server.release()
-    await server.wasTaken
+    await sent(req)
     await vi.advanceTimersByTimeAsync(CONNECT_MS - 1)
     expect(await stillWaiting(outcome)).toBe(true)
     await vi.advanceTimersByTimeAsync(1)
