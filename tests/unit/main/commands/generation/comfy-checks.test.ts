@@ -19,8 +19,9 @@ const reasonOf = (fn: () => void) => {
 describe('the trial rule of generation.runImages for ComfyUI [SPEC 14 1.41] (security class)', () => {
   it.each([
     [false, 'user', 0, 'comfy_job_not_offered'],
-    [true, 'agent', 0, 'comfy_job_not_offered'],
-    [true, 'agent', 1, 'comfy_job_not_offered'],
+    [true, 'agent', 0, 'accepted'],
+    [true, 'agent', 1, 'accepted'],
+    [false, 'agent', 0, 'comfy_job_not_offered'],
     [false, 'user', 1, 'comfy_job_not_offered'],
     [true, 'user', 0, 'accepted'],
     [true, 'user', 1, 'accepted'],

@@ -1,8 +1,8 @@
 // SPEC 4.2 "No address yet" and "Not offered", 14 1.41 "trial workflows are picked by the
 // command" (security class): the ComfyUI checks of generation.startVideo, and of job.retry for
 // a ComfyUI video job (14 1.53), made before a job row. The workflow must match the run's
-// start pair (1.53, 1.60). A trial workflow only for the user with the hand-test tools on; an
-// agent never gets one, and a draft is never sent. video-start-checks.ts calls these.
+// start pair (1.53, 1.60). A trial workflow only while the hand-test tools are on, for the
+// user and an agent alike; a draft is never sent. video-start-checks.ts calls these.
 import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectContext } from '@/main/commands/types'
 import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'
