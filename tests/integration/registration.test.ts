@@ -37,8 +37,12 @@ describe('registering commands and queries [SPEC 12]', () => {
     expect(Object.keys(f.core.deps).sort()).toEqual(
       [
         'appVersion',
+        'assets',
+        'devTools',
+        'jobs',
         'log',
         'now',
+        'openExternal',
         'projects',
         'providers',
         'secrets',

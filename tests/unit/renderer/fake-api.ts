@@ -53,6 +53,7 @@ export function baseState(overrides: Partial<AppState> = {}): AppState {
       },
     ],
     secrets: [],
+    devTools: false,
     ...overrides,
   }
 }

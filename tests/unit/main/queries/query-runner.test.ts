@@ -6,6 +6,8 @@ import { createQueries, createQueryRunner } from '../../../../src/main/queries/q
 import { createProjectRegistry } from '../../../../src/main/db/project-registry'
 import { createUndoLists } from '../../../../src/main/history/undo-lists'
 import { createActivityLog } from '../../../../src/main/log/activity-log'
+import { createAssetServiceStandIn } from '../../../../src/main/assets/stand-in'
+import { createJobServiceStandIn } from '../../../../src/main/jobs/stand-in'
 import type { SettingsStore } from '../../../../src/main/settings/settings-store'
 import type { SecretStore } from '../../../../src/main/secrets/secret-store'
 
@@ -37,6 +39,12 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
       undo: createUndoLists(),
       providers: [],
       log: createActivityLog({ dir: logDir, minLevel: 'debug', now: () => new Date() }),
+      assets: createAssetServiceStandIn(),
+      jobs: createJobServiceStandIn(),
+      openExternal: async () => {
+        throw new Error('openExternal is not available')
+      },
+      devTools: false,
       appVersion: '0.1.0',
       now: () => new Date(),
       userDataDir: dir,

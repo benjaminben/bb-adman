@@ -32,4 +32,5 @@ export type AppState = {
   openProjects: OpenProjectSummary[]
   providers: ProviderInfo[]
   secrets: SecretSummary[]
+  devTools: boolean // hand-test tools on (SPEC 13, ADMAN_DEV_TOOLS)
 }

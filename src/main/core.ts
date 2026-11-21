@@ -23,6 +23,8 @@ import { settingsCommands } from './commands/settings'
 import { storageCommands } from './commands/storage'
 import { subjectCommands } from './commands/subject'
 import { createQueries } from './queries/queries'
+import { createAssetServiceStandIn } from './assets/stand-in'
+import { createJobServiceStandIn } from './jobs/stand-in'
 import type { CoreDeps } from './core-deps'
 
 export type { SecretCrypto }
@@ -36,6 +38,12 @@ export type CoreOptions = {
   emit: (event: BusEvent) => void
   askPermission: (request: PermissionRequest) => Promise<boolean>
   now?: () => Date
+  openExternal?: (url: string) => Promise<void>
+  devTools?: boolean
+}
+
+const noBrowser = async (): Promise<void> => {
+  throw new Error('openExternal is not available')
 }
 
 export type Core = ReturnType<typeof createCore>
@@ -66,6 +74,10 @@ export function createCore(opts: CoreOptions) {
     undo,
     providers,
     log,
+    assets: createAssetServiceStandIn(),
+    jobs: createJobServiceStandIn(),
+    openExternal: opts.openExternal ?? noBrowser,
+    devTools: opts.devTools ?? false,
     appVersion: opts.appVersion,
     now,
     userDataDir: opts.userDataDir,

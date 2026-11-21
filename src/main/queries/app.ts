@@ -14,6 +14,7 @@ export function appQueries(deps: CoreDeps): Record<string, QueryFn> {
         openProjects: deps.projects.summaries(),
         providers: deps.providers,
         secrets: deps.secrets.summaries(),
+        devTools: deps.devTools,
       }
     },
   }
