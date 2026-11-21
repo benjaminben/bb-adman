@@ -4,7 +4,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, data, type Fixture } from '../core-fixture'
 import { AGENT_POLICY, denialMessage } from '@/main/commands/agent-policy'
-import { DIRECTION as direction, SNAPSHOT as snapshot } from '../../unit/shared/schemas/phase5-rows'
 
 let f: Fixture | undefined
 afterEach(() => {
@@ -23,11 +22,10 @@ const NOT_BUILT = {
 
 // A good input for each stub command, without projectId.
 const INPUTS: Record<string, object> = {
-  'direction.restore': { direction, variants: [snapshot] },
   'generation.applyFill': { jobId: 'J1' },
 }
 const NAMES = Object.keys(INPUTS)
-const SYSTEM = ['direction.restore', 'variant.remove', 'variant.restore', 'variant.restoreLayers']
+const SYSTEM = ['variant.remove', 'variant.restore', 'variant.restoreLayers']
 const DENIED = NAMES.filter((n) => AGENT_POLICY[n]?.policy === 'deny')
 
 async function open(): Promise<{ fx: Fixture; projectId: string }> {

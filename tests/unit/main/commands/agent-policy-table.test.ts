@@ -28,7 +28,6 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny' | 'tick'> = {
   'direction.createFromMaster': 'deny',
   'direction.rename': 'deny',
   'direction.delete': 'deny',
-  'direction.restore': 'deny',
   'variant.fanOut': 'deny',
   'variant.add': 'allow',
   'variant.update': 'allow',
