@@ -23,8 +23,11 @@ function thumbnailGet(deps: Pick<CoreDeps, 'projects' | 'render'>): QueryFn {
   }
 }
 
+// User only for now: a project file can link any picture the user can read, and a drawn PNG
+// would carry its pixels to the agent. The agent rule comes with Phase 10.
 function variantRender(deps: Pick<CoreDeps, 'projects' | 'render'>): QueryFn {
-  return async (raw) => {
+  return async (raw, opts) => {
+    if (opts.actor !== 'user') throw new AppError('AGENT_DENIED', THUMBNAIL_DENIED)
     const parsed = variantRenderInput.safeParse(raw)
     if (!parsed.success) throw invalid()
     const { projectId, variantId, maxDimension } = parsed.data
