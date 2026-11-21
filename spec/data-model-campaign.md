@@ -196,8 +196,26 @@ type TextStyle = {
   align: 'left' | 'center' | 'right'
   lineHeight: number            // multiple of font size
   letterSpacing: number         // tracking, as a multiple of font size (em), -0.2 to 1. 0 = the font's own spacing [REQ: FR-249]
+  // Look fields (Not built, LK-1). Optional; absent = the default in brackets.
+  verticalAlign?: 'top' | 'middle' | 'bottom'   // [top]
+  allCaps?: boolean                             // [false]
+  boxColor?: string | null                      // "#RRGGBB" fill behind the text, null = none [null]
+  boxOutlineColor?: string | null               // "#RRGGBB", null = no outline [null]
+  boxOutlineWidth?: number                      // px, 0 to 100; 0 = no outline [0]
+  boxRadius?: number                            // px, 0 to 2000 [0]
+  boxPadding?: number                           // px on all four sides, 0 to 2000 [0]
 }
-type ImageStyle = { opacity: number }                    // 0 to 1
+type ImageStyle = {
+  opacity: number                                        // 0 to 1
+  fillColor?: string | null     // Not built, LK-1. Background layers only: "#RRGGBB" under the picture; null = none [null]
+  shade?: Shade | null          // Not built, LK-1. [null]
+}
+type Shade = {                  // Not built, LK-1. Replaced whole, never merged
+  color: string                 // "#RRGGBB"
+  from: 'bottom' | 'top' | 'left' | 'right' | 'all'
+  strength: number              // 0 to 1: how opaque the shade is where it is strongest
+  reach: number                 // 0.05 to 1: share of the box it fades across; not used for 'all'
+}
 type Timing = { startMs: number; endMs: number | null }  // null = end of the variant
 type AnimationBlock = {
   preset: 'none' | 'fade' | 'fade-up' | 'slide' | 'stagger-words'
@@ -218,6 +236,7 @@ type Revs = { copy: number; style: number; geometry: number; source: number; tim
 - `translation_status` is null on layers in the campaign's primary language and on non-text layers.
 - `overflow` is written by the Scene when it measures a text layer (`spec/data-rules.md`, "Text overflow") [REQ: FR-098].
 - Only text layers may have a preset other than `none` [REQ: FR-128].
+- **Look fields** (Not built, LK-1) [D-094]. A background colour, a box behind text, vertical alignment, all capitals and a shade over a picture (`spec/phases/look-pack.md`). They live in `style`, a JSON column, so no migration: a row stored without them reads with each absent, and absent means the default above, which draws exactly as before (A-71). The schemas hold no `.default()` (Zod 4 would fill defaults inside a patch); `textLookOf` and `pictureLookOf` in `src/shared/config/look.ts` are the one owner of the defaults, used by the Scene, the panel and the patch checks. The bounds are `LOOK_LIMITS` in `layer.ts`. `fillColor` is for the background layer only (A-73): null or absent draws nothing, so the black root shows, as today (A-72). The names differ between the two styles, so the patch union cannot mistake one for the other. They are part of `style`: a change bumps `revs.style` and re-measures overflow. New layers store every look field (`spec/starter-layouts.md`). Drawing: `spec/scene.md`, "Text boxes" and "Background colour and shade".
 - **`letterSpacing`** [REQ: FR-249]. The starter template sets 0. The Scene draws it with the CSS `letter-spacing` property in `em` (not built, Phase 3). It is part of `style`, so it follows the master with the rest of style, and a change bumps `revs.style`. A change re-measures overflow like any style change [REQ: FR-098].
 
 ### background_clip

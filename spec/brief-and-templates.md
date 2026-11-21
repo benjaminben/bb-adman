@@ -341,6 +341,8 @@ slotStates(template: Template, layers: LayerRow[], candidates: Record<string, st
 
 Built. `src/shared/config/default-layout.ts` (every number and name, as data), `src/shared/templates/master-layers.ts`. Tests: `tests/unit/shared/templates/master-layers.test.ts`, `master-layers-fields.test.ts`, `starter.test.ts`, `tests/integration/campaigns/campaign-create-fills.test.ts`.
 
+**Look pack** (Not built, LK-4) [D-094]. The default layout becomes the first of five starter layouts, `photo-bottom-left` (A-77), and its boxes, styles and look fields replace the values in the tables below; the "any other slot" rows stay. Each text layer's starting font size comes from its text's length by an estimate, with no measuring, so a long message no longer runs past its box. New layers store every look field. Full tables, the formula and its worked values: `spec/starter-layouts.md`. Until LK-4 merges, the tables below hold.
+
 **What it is.** The default layout gives each new layer of a master variant a starting box and style for the campaign's first size, so the post is not a pile of layers in one corner [REQ: FR-040, FR-043]. It is a starting point only: the user moves and restyles everything in the editor (Phase 3), and `generation.proposeLayout` can place the text again (Phase 4).
 
 **One owner.** `buildMasterLayers` reads `default-layout.ts` and holds no number of its own. Any later code that needs a starting box for a slot reads the same file. The values are provisional (the stakeholder's standing instruction on UI); the design pass may change any of them by editing that one file. The tests state the expected numbers for the four ready-made sizes, so a change to the file is a visible test change, approved with the design pass.
@@ -379,7 +381,7 @@ Image and background layers: `{ opacity: 1 }`. Text layers:
 | `headline`, and any other copy slot | null | `round(0.07 × S)` (76 when `S` is 1080) | 700 | `#FFFFFF` | `center` | 1.1 | 0 |
 | `call-to-action` | null | `round(0.035 × S)` (38 when `S` is 1080) | 600 | `#FFFFFF` | `center` | 1.2 | 0 |
 
-The headline box holds two lines at that size and the call to action one. Longer text is not shrunk here; the Scene's overflow measurement reports it (`spec/data-model.md`).
+The headline box holds two lines at that size and the call to action one (LK-4 replaces this with the starting font size of `spec/starter-layouts.md`). Longer text is not shrunk here; the Scene's overflow measurement reports it (`spec/data-model.md`).
 
 ### The layers
 
