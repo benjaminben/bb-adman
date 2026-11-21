@@ -13,7 +13,7 @@ import { readLive, type LiveSeen } from './live-messages'
 export type LiveTarget = { url: string; secure: boolean; agent: http.Agent; lookup: LookupFunction }
 
 // Fixed settings (spec/comfyui.md "Live progress"). No `origin`: no Origin header is sent.
-export const LIVE_SETTINGS = {
+const LIVE_SETTINGS = {
   maxPayload: 65_536,
   perMessageDeflate: false,
   followRedirects: false,
