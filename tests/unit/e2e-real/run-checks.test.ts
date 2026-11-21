@@ -51,10 +51,18 @@ describe('test:e2e:real runs only when nothing can record a typed value [SPEC 14
     expect(runRefusal(safe, { DEBUG: undefined })).toBeNull()
   })
 
+  // Re-review R-2: PW_TEST_REPORTER adds a reporter after the config's own, so it is never in
+  // config.reporter and must be refused on its own.
+  it('refuses PW_TEST_REPORTER when it is set [R-2]', () => {
+    for (const value of ['html', './my-reporter.js', '']) {
+      expect(runRefusal(safe, { PW_TEST_REPORTER: value })).toBe(RUN_REFUSAL)
+    }
+  })
+
   it('the refusal is one fixed sentence that names no value', () => {
     expect(RUN_REFUSAL).toBe(
       'test:e2e:real runs only with the list reporter, trace, screenshot and video off, ' +
-        'and no DEBUG or PWDEBUG. Run it with no extra flags.',
+        'and no DEBUG, PWDEBUG or PW_TEST_REPORTER. Run it with no extra flags.',
     )
   })
 })

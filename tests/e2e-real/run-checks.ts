@@ -12,7 +12,7 @@ export type RunConfig = {
 
 export const RUN_REFUSAL =
   'test:e2e:real runs only with the list reporter, trace, screenshot and video off, ' +
-  'and no DEBUG or PWDEBUG. Run it with no extra flags.'
+  'and no DEBUG, PWDEBUG or PW_TEST_REPORTER. Run it with no extra flags.'
 
 const isOff = (mode: Mode): boolean =>
   mode === 'off' || (typeof mode === 'object' && mode.mode === 'off')
@@ -28,5 +28,8 @@ export function runRefusal(
   // Re-review R-1: a glob such as * or pw* turns on pw:api without naming pw:, so any DEBUG
   // that is not empty is refused.
   const debugLogs = (env.DEBUG ?? '') !== '' || env.PWDEBUG !== undefined
-  return listOnly && allOff && !debugLogs ? null : RUN_REFUSAL
+  // Re-review R-2: PW_TEST_REPORTER adds a reporter after the config's own, so it never shows
+  // in config.reporter.
+  const addedReporter = env.PW_TEST_REPORTER !== undefined
+  return listOnly && allOff && !debugLogs && !addedReporter ? null : RUN_REFUSAL
 }
