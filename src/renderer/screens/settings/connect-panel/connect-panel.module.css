@@ -1,0 +1,6 @@
+/* SPEC 6.8: the Claude Code setup line, wrapped so it stays inside the card. */
+.codeLine {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

@@ -1,0 +1,32 @@
+// Start screen (FR-002, FR-004): new project, open a project file, recent projects.
+import { useApi, useApp, pickPath } from '@/renderer/app/app-context'
+import { NewProjectForm } from '@/renderer/screens/start/new-project-form'
+import { RecentProjects } from '@/renderer/screens/start/recent-projects'
+import layout from '@/renderer/ui/layout.module.css'
+import styles from './start-screen.module.css'
+
+export function StartScreen() {
+  const api = useApi()
+  const command = useApp((s) => s.command)
+
+  async function openProject() {
+    const filePath = await pickPath(api, 'dialog.pickProjectFile')
+    if (filePath) await command('project.open', { filePath })
+  }
+
+  return (
+    <section className={layout.screen} aria-labelledby="start-title">
+      <h1 id="start-title">Adman</h1>
+      <div className={styles.columns}>
+        <NewProjectForm />
+        <div className={layout.card}>
+          <h2>Open</h2>
+          <button type="button" onClick={() => void openProject()}>
+            Open project…
+          </button>
+          <RecentProjects />
+        </div>
+      </div>
+    </section>
+  )
+}
