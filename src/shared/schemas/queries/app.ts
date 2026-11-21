@@ -3,7 +3,8 @@ import type { SecretName, SecretSummary } from '@/shared/schemas/secrets'
 import type { OpenProjectSummary } from '@/shared/schemas/project'
 
 // SPEC 6 ProviderInfo, as the window receives it.
-export type ProviderJob = 'image' | 'layout' | 'text' | 'video' | 'storage' | 'verification'
+export type ProviderJob =
+  'image' | 'layout' | 'text' | 'video' | 'cutout' | 'storage' | 'verification'
 export type ProviderInfo = {
   id: string
   label: string

@@ -45,6 +45,12 @@ describe('the comfyui provider folder [SPEC 6, 14 CU-0]', () => {
 describe('the comfyui registry row [SPEC 6.11.1 1.35, 14 CU-6a]', () => {
   it("adds 'video' to its jobs", () => {
     const row = listProviders({}).find((p) => p.id === 'comfyui')
-    expect(row?.jobs).toEqual(['image', 'video'])
+    expect(row?.jobs).toEqual(['image', 'video', 'cutout'])
+  })
+
+  it("lists 'cutout' for ComfyUI and the fake provider only [P4-1]", () => {
+    const rows = listProviders({ ADMAN_FAKE_PROVIDERS: '1' })
+    const cutout = rows.filter((p) => p.jobs.includes('cutout')).map((p) => p.id)
+    expect(cutout).toEqual(['comfyui', 'fake'])
   })
 })

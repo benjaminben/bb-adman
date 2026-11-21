@@ -1,5 +1,5 @@
 // SPEC 6 provider interfaces and the adapter contract. Frozen contract (Phase 2 step 0).
-import type { Brief } from '@/shared/schemas/brief'
+import type { Brief, BriefDraft } from '@/shared/schemas/brief'
 import type { Geometry } from '@/shared/schemas/layer'
 import type { Settings } from '@/shared/schemas/settings'
 import type { ProviderError } from '@/shared/schemas/queries/app'
@@ -71,32 +71,46 @@ export interface ImageProvider {
   ): Promise<ImageResult>
 }
 
+// spec/ai-jobs.md "Provider interfaces" (P4-1). The boxes come back in the variant's pixels.
 export interface LayoutProvider {
-  propose(input: {
-    background: ImageFile
-    width: number
-    height: number
-    items: Array<{ slot: string; text: string }>
-    palette: string[]
-    fonts: string[]
-  }): Promise<LayoutBox[]>
+  propose(
+    input: {
+      background: ImageFile
+      width: number
+      height: number
+      items: Array<{ slot: string; text: string }>
+      palette: string[]
+      fonts: string[]
+    },
+    opts?: RunOptions,
+  ): Promise<LayoutBox[]>
 }
 
+export type CopyRole = 'call_to_action' | 'text'
+
+// extractBrief gives a BriefDraft: the user confirms the form before anything is a brief
+// [REQ: FR-023].
 export interface TextProvider {
-  extractBrief(input: { text: string }): Promise<Brief>
-  copyOptions(input: {
-    slot: string
-    brief: Brief
-    language: string
-    count: number
-  }): Promise<string[]>
-  translate(input: {
-    items: Array<{ key: string; text: string }>
-    from: string
-    to: string
-    region: string
-    audience: string
-  }): Promise<Array<{ key: string; text: string }>>
+  extractBrief(input: { text: string }, opts?: RunOptions): Promise<BriefDraft>
+  copyOptions(
+    input: { role: CopyRole; brief: Brief; language: string; count: number; maxChars: number },
+    opts?: RunOptions,
+  ): Promise<string[]>
+  translate(
+    input: {
+      items: Array<{ key: string; text: string }>
+      from: string
+      to: string
+      region: string
+      audience: string
+    },
+    opts?: RunOptions,
+  ): Promise<Array<{ key: string; text: string }>>
+}
+
+// A picture in, the same picture with a see-through background out (PNG with alpha).
+export interface CutoutProvider {
+  cutOut(input: { image: ImageFile }, opts?: RunOptions): Promise<ImageResult>
 }
 
 // [1.24] SPEC 6.11.1. `image` is the first frame or null. fetchResult replaces videoUrl: the
@@ -161,6 +175,7 @@ export type ProviderAdapters = {
   layout?: (ctx: AdapterContext) => LayoutProvider
   text?: (ctx: AdapterContext) => TextProvider
   video?: (ctx: AdapterContext) => VideoProvider
+  cutout?: (ctx: AdapterContext) => CutoutProvider
   storage?: (ctx: AdapterContext) => StorageProvider
   verification?: (ctx: AdapterContext) => VerificationProvider
 }
