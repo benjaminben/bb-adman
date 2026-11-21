@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto'
 import type { AdapterContext } from '@/main/providers/types'
 import { createComfyClient, type ComfyClient } from './client'
 import { checkFailure, comfyFailure, missingFailure } from './failures'
+import { LiveLink } from './live'
 import type { ServerChecks } from './needs'
 import { comfyOwnPorts } from './own-ports'
 import type { RunTiming } from './run'
@@ -51,11 +52,17 @@ export function runOrigin(ctx: AdapterContext): string {
   return origin
 }
 
-// A client for the run's origin that sends nothing once the saved address changed.
-export function pinnedClient(ctx: AdapterContext, origin: string): ComfyClient {
+// A client for the run's origin that sends nothing once the saved address changed. Given a
+// live link (CU-9), the run's live connection goes to this client's origin and ID.
+export function pinnedClient(ctx: AdapterContext, origin: string, live?: LiveLink): ComfyClient {
   const ownPorts = () => comfyOwnPorts(ctx.settings().mcp.port)
   const still = () => savedOrigin(ctx) === origin
-  return pinnedTo(createComfyClient({ origin, ownPorts }), still)
+  return pinnedTo(createComfyClient({ origin, ownPorts, ...(live && { live }) }), still)
+}
+
+// CU-9: a live link that opens nothing once the saved address is no longer the run's origin.
+export function runLive(ctx: AdapterContext, origin: string): LiveLink {
+  return new LiveLink(() => savedOrigin(ctx) === origin)
 }
 
 // The check of 6.10.3 for the run's workflow. Gives the server's version.

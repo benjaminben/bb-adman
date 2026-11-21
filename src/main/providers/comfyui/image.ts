@@ -14,7 +14,7 @@ import {
 import type { ComfyClient } from './client'
 import { serverChecks, type ServerChecks } from './needs'
 import { runPicture, type RunEnv, type RunTiming } from './run'
-import { checked, pinnedClient, realTiming, runOrigin } from './session'
+import { checked, pinnedClient, realTiming, runLive, runOrigin } from './session'
 import { uploadName } from './values'
 import { NON_DRAFT_WORKFLOWS } from './workflows'
 import type { WorkflowChoice } from './workflows/offered'
@@ -52,14 +52,15 @@ export function comfyImage(ctx: AdapterContext, deps: ComfyImageDeps = {}): Imag
       if (opts.signal?.aborted) throw new ProviderCancelled()
       const origin = runOrigin(ctx)
       const spec = workflowForRun(input.references.length > 0 ? 'image_refs' : 'image')
-      const client = pinnedClient(ctx, origin)
+      const live = runLive(ctx, origin)
+      const client = pinnedClient(ctx, origin, live)
       const serverVersion = await checked(checks, origin, client, spec)
       const references: string[] = []
       for (const file of input.references) {
         if (opts.signal?.aborted) throw new ProviderCancelled()
         references.push(await uploaded(client, file))
       }
-      const env: RunEnv = { client, timing, serverVersion }
+      const env: RunEnv = { client, timing, serverVersion, live }
       const ask = { prompt: input.prompt, width: input.width, height: input.height, references }
       const results: ImageResult[] = []
       for (let i = 0; i < input.count; i++) results.push(await runPicture(env, spec, ask, opts))
