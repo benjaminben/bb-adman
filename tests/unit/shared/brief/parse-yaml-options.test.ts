@@ -40,7 +40,7 @@ describe('parseBrief YAML: the token check runs before compose [SPEC 6.1 item 9,
     ['a file 100 lists deep', `extra: ${'['.repeat(100)}${']'.repeat(100)}\n`],
   ])('does not compose %s', (_, text) => {
     vi.mocked(yaml.parseDocument).mockClear()
-    expect(parseBrief(text, 'yaml')).toMatchObject({ ok: false })
+    expect(parseBrief(text, 'yaml')).toEqual({ ok: false, error: BRIEF_UNREADABLE })
     expect(vi.mocked(yaml.parseDocument)).not.toHaveBeenCalled()
   })
 })

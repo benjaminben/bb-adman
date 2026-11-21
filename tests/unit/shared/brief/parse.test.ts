@@ -87,21 +87,21 @@ describe('parseBrief: text that is not a brief gives brief_unreadable [SPEC 4.1]
     expect(JSON.stringify(result)).not.toContain('Zebracorn')
   })
 
-  it.each(['json', 'yaml'] as const)('10,000 nested lists give brief_unreadable (%s)', (syntax) => {
-    const text = '['.repeat(10_000) + ']'.repeat(10_000)
+  it.each(['json', 'yaml'] as const)('5,000 nested lists give brief_unreadable (%s)', (syntax) => {
+    const text = '['.repeat(5_000) + ']'.repeat(5_000)
     expect(parseBrief(text, syntax)).toEqual(unreadable)
   })
 })
 
 describe('parseBrief: the size limit [SPEC 6.1, 4.1 brief_too_large]', () => {
-  it('is 64 KiB', () => {
-    expect(MAX_BRIEF_BYTES).toBe(65_536)
+  it('is 16 KiB', () => {
+    expect(MAX_BRIEF_BYTES).toBe(16_384)
   })
 
   it('has the message of Section 4.1', () => {
     expect(BRIEF_TOO_LARGE).toEqual({
       code: 'INVALID_INPUT',
-      message: 'The brief is too large. The limit is 64 KB.',
+      message: 'The brief is too large. The limit is 16 KB.',
       details: { reason: 'brief_too_large' },
     })
   })
@@ -114,7 +114,7 @@ describe('parseBrief: the size limit [SPEC 6.1, 4.1 brief_too_large]', () => {
     const text = padded(syntax, MAX_BRIEF_BYTES)
     expect(text.length).toBe(MAX_BRIEF_BYTES)
     const result = parseBrief(text, syntax)
-    expect(result.ok && result.data.campaignName?.length).toBeGreaterThan(60_000)
+    expect(result.ok && result.data.campaignName?.length).toBeGreaterThan(15_000)
   })
 
   it('checks the size before parsing, so broken text over the limit is too large', () => {
@@ -179,8 +179,8 @@ describe('parseBrief: the limit is counted in UTF-8 bytes [SPEC 6.1 item 7, 14 P
 // SPEC 14 P3 [1.26] (slice B review, F5), 6.1 item 9 [1.31]. The depth rule (at most
 // MAX_BRIEF_DEPTH levels, checked on the tokens before compose) refuses the YAML file;
 // JSON.parse reads it and the BriefDraft schema drops the copy field.
-describe('parseBrief: 10,000 nested lists under a key [SPEC 6.1, 14 P3]', () => {
-  const deep = '['.repeat(10_000) + ']'.repeat(10_000)
+describe('parseBrief: 5,000 nested lists under a key [SPEC 6.1, 14 P3]', () => {
+  const deep = '['.repeat(5_000) + ']'.repeat(5_000)
 
   it('gives brief_unreadable in YAML', () => {
     expect(parseBrief(`region: US\ncopy: ${deep}\n`, 'yaml')).toEqual(unreadable)

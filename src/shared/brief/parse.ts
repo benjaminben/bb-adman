@@ -14,7 +14,7 @@ import { passesYamlWalk } from './yaml-walk'
 
 export const BRIEF_TOO_LARGE: ErrorBody = {
   code: 'INVALID_INPUT',
-  message: 'The brief is too large. The limit is 64 KB.',
+  message: `The brief is too large. The limit is ${MAX_BRIEF_BYTES / 1024} KB.`,
   details: { reason: 'brief_too_large' },
 }
 
