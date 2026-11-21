@@ -29,3 +29,13 @@ export type AssetUpdateInput = z.infer<typeof assetUpdateInput>
 // asset.remove (FR-197): refused while a layer, clip or rule set uses the asset.
 export const assetRemoveInput = projectScoped.extend({ assetId })
 export type AssetRemoveInput = z.infer<typeof assetRemoveInput>
+
+// asset.import (FR-050 to FR-054, R-08). Each path comes from the system picker or the user;
+// the agent policy is deny. copy: true saves a copy in the assets folder.
+export const assetImportInput = projectScoped.extend({
+  paths: z.array(z.string().min(1)).min(1),
+  library,
+  subjectId: z.string().min(1).optional(),
+  copy: z.boolean(),
+})
+export type AssetImportInput = z.infer<typeof assetImportInput>

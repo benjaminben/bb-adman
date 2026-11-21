@@ -1,0 +1,68 @@
+// asset.import (SPEC 4.2, 3.6; FR-050 to FR-054, R-08). Not undoable. prepare inspects and
+// copies the files; run inserts one row per new content hash. run checks the hashes again,
+// since another command may have added the same file in between (SPEC 3.6).
+import { defineCommand } from '../types'
+import type { CoreDeps } from '../../core-deps'
+import { asset } from '../../db/schema'
+import { requireSubject } from './update'
+import { assetIdsByHash, prepareImport, removeCopies, type NewAsset } from '../../assets/import'
+import { assetImportInput, type AssetImportInput } from '../../../shared/schemas/commands/asset'
+import { AppError } from '../../../shared/schemas/result'
+
+function rowOf(a: NewAsset, input: AssetImportInput, createdAt: string) {
+  return {
+    id: a.id,
+    library: input.library,
+    kind: a.type.kind,
+    origin: 'imported',
+    storage: a.storage,
+    subjectId: input.subjectId ?? null,
+    displayName: a.fileName,
+    absPath: a.absPath,
+    relPath: a.relPath,
+    mime: a.type.mime,
+    byteSize: a.byteSize,
+    mtimeMs: a.mtimeMs,
+    contentHash: a.contentHash,
+    width: a.width,
+    height: a.height,
+    createdAt,
+  }
+}
+
+// A file prepare found in the project, whose asset was removed before run.
+function idFor(known: Map<string, string>, hash: string): string {
+  const id = known.get(hash)
+  if (!id) {
+    throw new AppError(
+      'RULE_VIOLATION',
+      'The project changed while the files were read. Try again.',
+    )
+  }
+  return id
+}
+
+export function assetImport(deps: Pick<CoreDeps, 'now'>) {
+  return defineCommand({
+    name: 'asset.import',
+    input: assetImportInput,
+    projectId: (input) => input.projectId,
+    prepare: (ctx, input) => prepareImport(ctx.project, input.paths, input.copy),
+    undoPrepare: (prepared) => removeCopies(prepared.copies),
+    run(ctx, input, prepared) {
+      if (input.subjectId) requireSubject(ctx, input.subjectId)
+      const known = assetIdsByHash(ctx.project)
+      const createdAt = deps.now().toISOString()
+      for (const a of prepared.newAssets) {
+        if (known.has(a.contentHash)) continue
+        ctx.project.orm
+          .insert(asset)
+          .values(rowOf(a, input, createdAt))
+          .run()
+        ctx.changes.touch('asset', { id: a.id })
+        known.set(a.contentHash, a.id)
+      }
+      return { data: { assetIds: prepared.hashes.map((h) => idFor(known, h)) } }
+    },
+  })
+}
