@@ -17,6 +17,7 @@ import {
   type HistoryEntry,
 } from './answers'
 import { DOWNLOAD_MS, MAX_COMFY_JSON_BYTES, SHORT_CALL_MS, UPLOAD_MS } from './limits'
+import { ComfyRefused, readRefusal } from './refusal'
 import { failure, openConnection, send, type Answer, type Call } from './request'
 import { uploadForm } from './upload-form'
 import {
@@ -27,6 +28,10 @@ import {
   uploadName,
   type ViewType,
 } from './values'
+
+// SPEC 14 1.43 R2-1. The class's value export from this file is held: the existing test that
+// this module's only runtime export is createComfyClient would fail. Import it from ./refusal.
+export type { ComfyRefused, NodeRefusal, ServerRefusal } from './refusal'
 
 export type ViewRef = { filename: string; subfolder: string; type: ViewType }
 
@@ -137,8 +142,8 @@ export function createComfyClient(options: {
     async submit(promptId, graph) {
       ownIds.add(checkedId(promptId))
       const body = jsonBody({ prompt: graph, prompt_id: promptId, client_id: clientId })
-      const answer = await call('POST', '/prompt', { body })
-      if (answer.status === 400) unexpected(answer, 'server_refused')
+      const answer = await call('POST', '/prompt', { body, refusedStatus: 400 })
+      if (answer.status === 400) throw new ComfyRefused(readRefusal(answer.bytes))
       if (!ok(answer)) unexpected(answer)
       const submitted = read(answer, submitAnswer, 'bad_result')
       // The ID in the server's answer is the one used from then on.

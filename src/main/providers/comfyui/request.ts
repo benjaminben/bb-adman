@@ -28,6 +28,8 @@ export type Call = {
   totalMs: number
   // The reason for an answer the app cannot use: too large, or the wrong shape.
   badAnswer: ProviderErrorReason
+  // A status whose answer is read as a refusal, even when it is over the limit (SPEC 14 1.43 K-1).
+  refusedStatus?: number
 }
 
 export type Answer = { status: number; bytes: Buffer }
@@ -135,13 +137,20 @@ export function send(conn: Connection, call: Call): Promise<Answer> {
       if (status === 401 || status === 403 || status === 407) {
         return stop(failure('other', 'sign_in_needed', `HTTP ${status}`))
       }
-      const tooLarge = () => failure('other', call.badAnswer, 'The answer is over its size limit')
-      if (Number(res.headers['content-length']) > call.maxBytes) return stop(tooLarge())
+      // At the refused status, an answer over the limit is a refusal with no body.
+      const tooLarge = () => {
+        if (status !== call.refusedStatus) {
+          return stop(failure('other', call.badAnswer, 'The answer is over its size limit'))
+        }
+        settle({ status, bytes: Buffer.alloc(0) })
+        req.destroy()
+      }
+      if (Number(res.headers['content-length']) > call.maxBytes) return tooLarge()
       const chunks: Buffer[] = []
       let count = 0
       res.on('data', (chunk: Buffer) => {
         count += chunk.byteLength
-        if (count > call.maxBytes) return stop(tooLarge())
+        if (count > call.maxBytes) return tooLarge()
         chunks.push(chunk)
       })
       res.on('end', () => settle({ status, bytes: Buffer.concat(chunks) }))
