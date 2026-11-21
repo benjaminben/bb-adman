@@ -36,10 +36,10 @@ export function textHeaders(request: Request): Headers {
   return withType(request, 'text/plain; charset=utf-8', TEXT_CSP)
 }
 
-// The page policy: our own address and the nonce only. `next dev` alone gets the two additions
-// its development tools need; `next start` and Vercel never run in development mode.
-export function pagePolicy(nonce: string): string {
-  const dev = process.env.NODE_ENV === 'development'
+// The page policy: our own address and the nonce only. `dev` (true only under `next dev`) adds
+// the two pieces its development tools need. This file reads no environment, so the default is
+// the strict policy that `next start` and Vercel get.
+export function pagePolicy(nonce: string, dev = false): string {
   const script = `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ''}`
   const style = `style-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-inline'" : ''}`
   return (

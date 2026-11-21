@@ -67,13 +67,12 @@ describe('the plain text set through the router', () => {
 
 describe('the page policy and page set [approvals-gallery.md "The page policy and nonce"]', () => {
   it('is the strict one-line policy with the nonce in script-src and style-src', () => {
-    vi.stubEnv('NODE_ENV', 'production')
     expect(pagePolicy(NONCE)).toBe(STRICT)
+    expect(pagePolicy(NONCE, false)).toBe(STRICT)
   })
 
   it('adds only unsafe-eval to scripts and unsafe-inline to styles under next dev', () => {
-    vi.stubEnv('NODE_ENV', 'development')
-    expect(pagePolicy(NONCE)).toBe(
+    expect(pagePolicy(NONCE, true)).toBe(
       STRICT.replace(
         "script-src 'self' 'nonce-AAECAwQFBgcICQoLDA0ODw=='",
         "script-src 'self' 'nonce-AAECAwQFBgcICQoLDA0ODw==' 'unsafe-eval'",
@@ -84,16 +83,16 @@ describe('the page policy and page set [approvals-gallery.md "The page policy an
     )
   })
 
-  it.each(['test', 'production', ''])('keeps the strict policy when NODE_ENV is %j', (mode) => {
-    vi.stubEnv('NODE_ENV', mode)
+  it('stays strict whatever NODE_ENV says, since it reads no environment', () => {
+    vi.stubEnv('NODE_ENV', 'development')
     expect(pagePolicy(NONCE)).toBe(STRICT)
+    expect(whole(pageHeaders(http, NONCE))['content-security-policy']).toBe(STRICT)
   })
 
   it.each([
     ['https', https, { ...PAGE, ...HSTS }],
     ['http', http, PAGE],
   ])('over %s is exactly the page set with that policy', (_, request, expected) => {
-    vi.stubEnv('NODE_ENV', 'production')
     expect(whole(pageHeaders(request, NONCE))).toEqual(expected)
   })
 })
