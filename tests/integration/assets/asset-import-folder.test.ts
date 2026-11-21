@@ -78,12 +78,12 @@ describe('asset.import of a folder [SPEC 14, Slice A rulings point 5, A3-3; FR-0
     ])
   })
 
-  it('enters 8 levels below the named folder and not the 9th', async () => {
+  it('enters 12 levels below the named folder and not the 13th', async () => {
     const levels = (n: number) => Array.from({ length: n }, (_, i) => `l${i + 1}`)
-    put(path.join('pics', ...levels(8), 'eight.png'), png(8))
-    put(path.join('pics', ...levels(9), 'nine.png'), png(9))
+    put(path.join('pics', ...levels(12), 'twelve.png'), png(8))
+    put(path.join('pics', ...levels(13), 'thirteen.png'), png(9))
     const data = dataOf(await importIt([path.join(dir, 'pics')]))
-    expect(namesOf(data.assetIds)).toEqual(['eight.png'])
+    expect(namesOf(data.assetIds)).toEqual(['twelve.png'])
     expect(data.skippedCount).toBe(1)
   })
 

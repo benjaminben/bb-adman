@@ -1,5 +1,5 @@
 // Folder import (SPEC 14, Slice A rulings point 5, A3-3 and [1.29] T1; FR-050). A path that
-// is a folder stands for the regular files in it and in its subfolders, at most 8 levels
+// is a folder stands for the regular files in it and in its subfolders, at most 12 levels
 // below it, sorted by relative path. Inside a folder (security class) a link is never
 // followed: each entry is checked with lstat. Dot entries, links, folders past the depth
 // limit, folders that cannot be listed and anything that is not a regular file are skipped
@@ -9,8 +9,8 @@ import path from 'node:path'
 import { AppError } from '../../shared/schemas/result'
 import { UnreadableFileError } from './unreadable'
 
-// Provisional (OI-44).
-export const FOLDER_LIMITS = { maxDepth: 8, maxFiles: 500 }
+// Decided: D-053 item 19 (SPEC 14, 1.39 Z1).
+export const FOLDER_LIMITS = { maxDepth: 12, maxFiles: 500 }
 
 export type ImportPath = { file: string; inFolder: boolean }
 export type ExpandedPaths = { paths: ImportPath[]; skippedCount: number }
