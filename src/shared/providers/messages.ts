@@ -83,11 +83,19 @@ export function checkMessage(outcome: Exclude<ComfyCheckOutcome, 'ok'>): string 
 }
 
 // S2-1: fills a sentence's {address} and {n} marks. An unknown address reads "the saved
-// address" and an unknown count "some", so the sentence stays readable.
-export function fillMarks(text: string, values: { address?: string; n?: number }): string {
+// address" and an unknown count "some", so the sentence stays readable. P4-5 (OI-68):
+// {provider} is the registry label; without one it reads "provider".
+export function fillMarks(
+  text: string,
+  values: { address?: string; n?: number; provider?: string },
+): string {
   const address = values.address ?? 'the saved address'
   const n = values.n === undefined ? 'some' : String(values.n)
-  return text.replaceAll('{address}', address).replaceAll('{n}', n)
+  const provider = values.provider ?? 'provider'
+  return text
+    .replaceAll('{address}', address)
+    .replaceAll('{n}', n)
+    .replaceAll('{provider}', provider)
 }
 
 // S2-1 [D-088]: the refusal of a run whose workflow needs a licence not yet confirmed (S2-4).
