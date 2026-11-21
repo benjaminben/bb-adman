@@ -89,6 +89,19 @@ describe('generation.startVideo with comfyui against the stand-in [SPEC 14 CU-6a
     expect(projectBytes()).not.toContain('127.0.0.1')
   }, 25_000)
 
+  it("the clip's asset row holds the shipped workflow's main model file name [SPEC 14 1.58 J-4]", async () => {
+    await ready()
+    const { jobId } = data<{ jobId: string }>(await f.user('generation.startVideo', ask))
+    await waitFor(() => stand?.seen.some((r) => r.path === '/prompt') ?? false, RUN_MS)
+    const sent = stand?.seen.find((r) => r.path === '/prompt')?.body.toString('utf8') ?? '{}'
+    const promptId = (JSON.parse(sent) as { prompt_id: string }).prompt_id
+    if (stand) finishRun(stand, promptId, videoHistoryEntry(h3.slots.outputNode, promptId))
+    await waitFor(ended(jobId), RUN_MS)
+    const result = f.job(jobId)?.result as VideoJobResult
+    expect(h3.model.mainFile).not.toBe('')
+    expect(f.asset(result.assetId)).toMatchObject({ genModel: h3.model.mainFile })
+  }, 25_000)
+
   it('no address saved: comfy_address_needed, before a job row', async () => {
     f = await makeComfyFixture({ devTools: true })
     expect(await f.user('generation.startVideo', ask)).toMatchObject({
