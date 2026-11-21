@@ -27,8 +27,15 @@ export type RunTiming = {
   newId(): string
 }
 
-// P4-9: prompt is optional; a cut-out has none.
-export type RunAsk = { prompt?: string; width: number; height: number; references: string[] }
+// P4-9: prompt is optional; a cut-out has none. P5-7: an extend run gives `pad`; its width
+// and height are then the scaled picture size the adapter worked out, filled as given.
+export type RunAsk = {
+  prompt?: string
+  width: number
+  height: number
+  references: string[]
+  pad?: FillValues['pad']
+}
 
 // [1.45] B-4: the fill values come from the workflow's own slots, and a key is set only when
 // the slot is there. [1.46] A workflow with no width slot skips fitSize.
@@ -37,11 +44,13 @@ export function fillValuesFor(spec: WorkflowSpec, ask: RunAsk, promptId: string)
   const values: FillValues = {}
   if (slots.prompt) values.prompt = ask.prompt
   if (slots.width && slots.height) {
-    const size = fitSize({ width: ask.width, height: ask.height }, spec.size)
+    const asked = { width: ask.width, height: ask.height }
+    const size = ask.pad ? asked : fitSize(asked, spec.size)
     values.width = size.width
     values.height = size.height
   }
   if (slots.references) values.references = ask.references
+  if (slots.pad) values.pad = ask.pad
   if (slots.outputPrefix) values.promptId = promptId
   return values
 }
