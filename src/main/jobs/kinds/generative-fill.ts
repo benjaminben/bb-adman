@@ -51,7 +51,9 @@ async function runGenerativeFillJob(
   const [image] = await readPictures(jc, project, [request.sourceAssetId])
   if (!image) throw new ProviderFailure({ kind: 'other', detail: 'No source picture' })
   const provider = adapterFor(jc.deps, providerId, 'image')
-  const { prompt, placement, width, height } = request
+  const { prompt, width, height } = request
+  // generation.runFill takes only a straight, uncropped background (A-132).
+  const placement = { ...request.placement, rotation: 0, crop: null }
   const result = await jc.call(() =>
     provider.extend({ image, placement, width, height, prompt }, runOptions(jc)),
   )

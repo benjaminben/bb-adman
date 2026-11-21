@@ -85,7 +85,7 @@ describe('the generative_fill job [spec/links-and-sync.md "Generative fill"]', (
     const sent = seen.extend[0] as ExtendInput
     expect(sent).toEqual({
       image: clean,
-      placement: BOX,
+      placement: { ...BOX, rotation: 0, crop: null },
       width: 1080,
       height: 1350,
       prompt: promptToSend(FILL_PROMPT, { pictures: 1 }),
