@@ -1,5 +1,5 @@
 // SPEC 6.10.6 step 6 [REQ: FR-268, FR-269]: poll one submitted run until the server's history
-// holds it. A failed poll is not a failure: polls go on until one succeeds or 5 minutes pass
+// holds it. A failed poll (no answer, or a 5xx answer) is not a failure: polls go on until one succeeds or 5 minutes pass
 // (lost_contact). In neither the queue nor the history on two polls in a row: server_stopped.
 // Over the waiting or working limit: too_long. The shapes of a job state are not verified
 // (U-2); the status words are read as in today's server and corrected after the trial.
@@ -9,6 +9,7 @@ import type { HistoryEntry } from './answers'
 import type { ComfyClient } from './client'
 import { comfyFailure } from './failures'
 import { LOST_CONTACT_MS, PICTURE_WORK_MS, POLL_MS, QUEUE_WAIT_MS } from './limits'
+import { ServerErrorAnswer } from './server-error'
 import type { RunTiming } from './run'
 
 export type PollClient = Pick<ComfyClient, 'history' | 'jobState' | 'queueIds'>
@@ -40,19 +41,24 @@ export async function look(client: PollClient, promptId: string): Promise<Seen> 
 
 export const isBreak = (e: unknown) => e instanceof ProviderFailure && e.error.kind === 'offline'
 
-// Runs `attempt` until it gives an answer. A break in contact is tried again every poll
-// interval until LOST_CONTACT_MS have passed since the first break in a row.
+// F-16: a 5xx answer to a poll is a failed poll, like a break in contact.
+export const isFailedPoll = (e: unknown) => isBreak(e) || e instanceof ServerErrorAnswer
+
+// Runs `attempt` until it gives an answer. A break in contact (or what `failed` takes for
+// one) is tried again every poll interval until LOST_CONTACT_MS have passed since the first
+// break in a row.
 export async function throughBreaks<T>(
   timing: RunTiming,
   attempt: () => Promise<T>,
   signal?: AbortSignal,
+  failed: (e: unknown) => boolean = isBreak,
 ): Promise<T> {
   let since: number | null = null
   for (;;) {
     try {
       return await attempt()
     } catch (e) {
-      if (!isBreak(e)) throw e
+      if (!failed(e)) throw e
       since ??= timing.now()
       if (timing.now() - since >= LOST_CONTACT_MS) {
         throw comfyFailure('lost_contact', 'Polls failed for 5 minutes', 'offline')
@@ -84,7 +90,12 @@ export async function pollRun(
   for (;;) {
     await timing.sleep(POLL_MS, opts.signal)
     if (opts.signal?.aborted) throw new PollStopped()
-    const seen = await throughBreaks(timing, () => look(client, promptId), opts.signal)
+    const seen = await throughBreaks(
+      timing,
+      () => look(client, promptId),
+      opts.signal,
+      isFailedPoll,
+    )
     if (seen.at === 'history') return seen.entry
     if (seen.at === 'nowhere') {
       missed += 1

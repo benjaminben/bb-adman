@@ -63,7 +63,7 @@ describe('generation.runImages with provider comfyui [SPEC 4.2, 14 1.41, CU-4]',
     const b = await f.importPicture('in', 'b.png')
     expect(await refused(f.run({ referenceAssetIds: [a, b] }))).toMatchObject({
       code: 'RULE_VIOLATION',
-      message: 'ComfyUI takes at most 1 reference picture(s) for this run.',
+      message: 'ComfyUI takes one reference picture for this run.',
       details: { reason: 'too_many_references', max: 1 },
     })
   })

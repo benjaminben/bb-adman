@@ -21,7 +21,7 @@ import { frameCount } from './frames'
 import { workflowForRun } from './image'
 import { LOST_CONTACT_MS, QUEUE_WAIT_MS, VIDEO_WORK_MS } from './limits'
 import { serverChecks, type ServerChecks } from './needs'
-import { isBreak, look, throughBreaks } from './poll'
+import { isFailedPoll, look, throughBreaks } from './poll'
 import { endedEntry, fillValuesFor, resultRef, submitted, type RunTiming } from './run'
 import { checked, pinnedClient, realTiming, runOrigin } from './session'
 import { checkFrameSize, runSizeOf, uploadPictures } from './video-pictures'
@@ -144,7 +144,7 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
         return await looked(run, remoteJobId)
       } catch (e) {
         if (!(e instanceof ProviderFailure)) throw e
-        if (!isBreak(e)) return failed(e)
+        if (!isFailedPoll(e)) return failed(e)
         // SPEC 6.10.6 "A short break": a failed poll is not a failure, for 5 minutes.
         run.breakSince ??= timing.now()
         if (timing.now() - run.breakSince < LOST_CONTACT_MS) return { ...run.last }

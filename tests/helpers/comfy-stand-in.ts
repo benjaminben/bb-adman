@@ -28,7 +28,8 @@ export type StandIn = {
   origin: string
   port: number
   seen: Seen[]
-  // `route` is "METHOD /path", the path without its query.
+  // `route` is "METHOD /path", the path without its query, or "*" for every route not
+  // named on its own.
   reply(route: string, reply: Reply): void
   close(): Promise<void>
 }
@@ -108,7 +109,11 @@ export async function startComfyStandIn(): Promise<StandIn> {
       const body = Buffer.concat(chunks)
       seen.push({ method, path, headers: req.headers, body })
       const route = `${method} ${path.split('?')[0] ?? ''}`
-      answer(res, req.socket, replies.get(route) ?? playRoute(method, path, body))
+      answer(
+        res,
+        req.socket,
+        replies.get(route) ?? replies.get('*') ?? playRoute(method, path, body),
+      )
     })
   })
   await new Promise<void>((done) => server.listen(0, '127.0.0.1', done))

@@ -19,6 +19,7 @@ import {
 import { DOWNLOAD_MS, MAX_COMFY_JSON_BYTES, SHORT_CALL_MS, UPLOAD_MS } from './limits'
 import { ComfyRefused, readRefusal } from './refusal'
 import { failure, openConnection, send, type Answer, type Call } from './request'
+import { ServerErrorAnswer } from './server-error'
 import { uploadForm } from './upload-form'
 import {
   isFileName,
@@ -81,7 +82,9 @@ function read<S extends z.ZodType>(answer: Answer, schema: S, bad: ProviderError
 }
 
 function unexpected(answer: Answer, reason?: ProviderErrorReason): never {
-  throw failure('other', reason, `HTTP ${answer.status}`)
+  const error = failure('other', reason, `HTTP ${answer.status}`)
+  if (answer.status >= 500 && answer.status < 600) throw new ServerErrorAnswer(error.error)
+  throw error
 }
 
 const ok = (answer: Answer) => answer.status >= 200 && answer.status < 300
