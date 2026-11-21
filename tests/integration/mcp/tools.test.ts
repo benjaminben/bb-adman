@@ -101,6 +101,46 @@ describe('the MCP tools [SPEC 4.5; 14 1.56 MCP-B]', () => {
     expect(text.includes(fx.root)).toBe(false)
   })
 
+  it('create_campaign offers no placeSubjectPhoto in any spelling [SP-6, A-122]', async () => {
+    const { s } = await setUp()
+    const tool = (await s.list()).find((t) => t.name === 'create_campaign')
+    const schema = tool?.inputSchema as { properties?: Record<string, unknown> } | undefined
+    const keys = Object.keys(schema?.properties ?? {})
+    expect(keys).toContain('subject_map')
+    expect(keys).not.toContain('placeSubjectPhoto')
+    expect(keys).not.toContain('place_subject_photo')
+  })
+
+  it.each(['place_subject_photo', 'placeSubjectPhoto'])(
+    'drops %s from an agent call: the subject image is still filled [SP-6, A-122]',
+    async (field) => {
+      const { fx, projectId, s } = await setUp()
+      data(await fx.user('subject.create', { projectId, id: 'can', name: 'Can' }))
+      const project = fx.core.projects.requireOpen(projectId)
+      project.db
+        .prepare(
+          `INSERT INTO asset (id, library, kind, origin, storage, subject_id, display_name,
+            abs_path, rel_path, mime, byte_size, mtime_ms, content_hash, created_at)
+           VALUES ('HERO', 'asset', 'image', 'imported', 'linked', 'can', 'Hero', '/x.png',
+            'x.png', 'image/png', 1, 1, 'h', '2026-01-01T00:00:00Z')`,
+        )
+        .run()
+      const input = createInput()
+      const subject_map = [
+        { subjectId: 'can', create: false },
+        { subjectId: 'bottle', create: true },
+      ]
+      const args = { project_id: projectId, ...toSnake(input), subject_map, [field]: false }
+      const reply = await s.call('create_campaign', args)
+      expect(reply.isError).toBeFalsy()
+      const { variantId } = replyJson<{ variantId: string }>(reply)
+      const layer = project.db
+        .prepare(`SELECT source FROM layer WHERE variant_id = ? AND key = 'subject-image'`)
+        .get(variantId) as { source: string } | undefined
+      expect(layer && JSON.parse(layer.source)).toMatchObject({ assetId: 'HERO' })
+    },
+  )
+
   it('ignores an actor in the arguments or in _meta: the campaign is still the agent’s', async () => {
     const { fx, projectId, s } = await setUp()
     const args = { project_id: projectId, ...toSnake(createInput()), actor: 'user' }

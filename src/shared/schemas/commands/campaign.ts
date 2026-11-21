@@ -29,25 +29,40 @@ export type RuleSetValues = z.infer<typeof RuleSetValues>
 
 export const SubjectMapEntry = z.object({ subjectId: z.string().min(1), create: z.boolean() })
 
-export const campaignCreateInput = projectScoped
-  .extend({
-    brief: Brief,
-    subjectMap: z.array(SubjectMapEntry),
-    languages: z.array(z.string().min(1)).min(1),
-    sizes: z
-      .array(CampaignSize)
-      .min(1)
-      .refine((s) => new Set(s.map((x) => x.label)).size === s.length, 'Size labels must differ.'),
-    ruleSet: RuleSetValues.optional(),
-    copyRuleSetFrom: z.string().min(1).optional(),
-    templateId: z.string().min(1),
-  })
-  .refine((i) => i.subjectMap.length === i.brief.subjects.length, {
-    message: 'Give one subject entry for each subject in the brief.',
-    path: ['subjectMap'],
-  })
-  .refine((i) => !(i.ruleSet && i.copyRuleSetFrom), {
-    message: 'Give a rule set or a campaign to copy it from, not both.',
-    path: ['copyRuleSetFrom'],
-  })
+const campaignCreateFields = projectScoped.extend({
+  brief: Brief,
+  subjectMap: z.array(SubjectMapEntry),
+  languages: z.array(z.string().min(1)).min(1),
+  sizes: z
+    .array(CampaignSize)
+    .min(1)
+    .refine((s) => new Set(s.map((x) => x.label)).size === s.length, 'Size labels must differ.'),
+  ruleSet: RuleSetValues.optional(),
+  copyRuleSetFrom: z.string().min(1).optional(),
+  templateId: z.string().min(1),
+})
+
+type CreateFields = z.infer<typeof campaignCreateFields>
+
+function withCreateRules<T extends z.ZodType<CreateFields>>(schema: T): T {
+  return schema
+    .refine((i) => i.subjectMap.length === i.brief.subjects.length, {
+      message: 'Give one subject entry for each subject in the brief.',
+      path: ['subjectMap'],
+    })
+    .refine((i) => !(i.ruleSet && i.copyRuleSetFrom), {
+      message: 'Give a rule set or a campaign to copy it from, not both.',
+      path: ['copyRuleSetFrom'],
+    })
+}
+
+// spec/subject-photos.md, SP-6: false leaves the subject-image slot empty; left out or true
+// fills it with the hero image as before.
+export const campaignCreateInput = withCreateRules(
+  campaignCreateFields.extend({ placeSubjectPhoto: z.boolean().optional() }),
+)
 export type CampaignCreateInput = z.infer<typeof campaignCreateInput>
+
+// The create_campaign MCP tool's input: the same, without placeSubjectPhoto, so an agent's
+// campaign always fills the subject-image slot (A-122).
+export const campaignCreateToolInput = withCreateRules(campaignCreateFields)

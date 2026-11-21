@@ -7,6 +7,9 @@ import { Brief, type BriefDraft } from '@/shared/schemas/brief'
 import { parseSize } from '@/shared/brief/size'
 import { readWireRows } from '@/main/db/rows'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
+import { testDeps } from './campaign-deps'
+import { templateQueries } from '@/main/queries/template'
+import type { CoreDeps } from '@/main/core-deps'
 
 let bus: CampaignBus
 beforeEach(() => {
@@ -55,6 +58,47 @@ describe('campaign.create slot fills [SPEC 6.1 starter template, R-12]', () => {
     expect(result).toMatchObject({ ok: true })
     expect(layerByKey('logo')).toMatchObject({ source: { assetId: 'LOGO' } })
     expect(bus.rows('rule_set')[0]).toMatchObject({ requiredAssetIds: ['FONT', 'LOGO'] })
+  })
+})
+
+describe('campaign.create placeSubjectPhoto [spec/subject-photos.md, SP-6]', () => {
+  const heroFirst = async () => {
+    await bus.user('subject.create', { id: 'can', name: 'Can' })
+    insertImage(bus, { id: 'HERO', subjectId: 'can' })
+    return [
+      { subjectId: 'can', create: false },
+      { subjectId: 'bottle', create: true },
+    ]
+  }
+  const slotsOf = async (campaignId: string) => {
+    const deps = testDeps({
+      projects: bus.projects,
+      assets: { missingAssetIds: async () => [] } as unknown as CoreDeps['assets'],
+    })
+    const slots = templateQueries(deps)['template.slots']
+    return (await slots?.({ projectId: bus.projectId, campaignId }, { actor: 'user' })) as {
+      slot: { id: string }
+      state: string
+      candidates: string[]
+    }[]
+  }
+
+  it.each([
+    { name: 'false', over: { placeSubjectPhoto: false }, filled: false },
+    { name: 'true', over: { placeSubjectPhoto: true }, filled: true },
+    { name: 'left out', over: {}, filled: true },
+  ])('$name: the subject image is filled: $filled; the hero stays a candidate', async (c) => {
+    const subjectMap = await heroFirst()
+    const made = (await bus.create({ subjectMap, ...c.over })) as {
+      ok: boolean
+      data: { campaignId: string }
+    }
+    expect(made.ok).toBe(true)
+    const layer = layerByKey('subject-image')
+    if (c.filled) expect(layer).toMatchObject({ source: { assetId: 'HERO' } })
+    else expect(layer).toBeNull()
+    const slot = (await slotsOf(made.data.campaignId)).find((s) => s.slot.id === 'subject-image')
+    expect(slot).toMatchObject({ state: c.filled ? 'filled' : 'empty', candidates: ['HERO'] })
   })
 })
 

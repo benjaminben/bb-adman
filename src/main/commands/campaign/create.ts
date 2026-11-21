@@ -141,7 +141,8 @@ function insertMaster(ctx: ProjectContext, m: Master, now: string, values: RuleS
     orm.insert(schema.variantSubject).values({ variantId, subjectId }).run()
     ctx.changes.touch('variant_subject', { variantId, subjectId })
   }
-  const fills = slotFills(db, starterTemplate, m.input.brief, m.subjectIds, values)
+  const { brief, placeSubjectPhoto } = m.input
+  const fills = slotFills(db, starterTemplate, brief, m.subjectIds, values, placeSubjectPhoto)
   for (const layer of buildMasterLayers(starterTemplate, size, fills)) {
     insertLayerRow(ctx, { ...layer, id: ulid(), variantId })
   }
