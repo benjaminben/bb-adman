@@ -10,9 +10,18 @@ import { closeProjectFile } from './db/project-file'
 import { createUndoLists } from './history/undo-lists'
 import { listProviders } from './providers/registry'
 import { createCommandBus, type BusEvent, type PermissionRequest } from './commands/bus'
+import { assetCommands } from './commands/asset'
+import { briefCommands } from './commands/brief'
+import { campaignCommands } from './commands/campaign'
+import { devCommands } from './commands/dev'
+import { generationCommands } from './commands/generation'
+import { jobCommands } from './commands/job'
 import { projectCommands } from './commands/project'
+import { ruleSetCommands } from './commands/rule-set'
 import { secretCommands } from './commands/secret'
 import { settingsCommands } from './commands/settings'
+import { storageCommands } from './commands/storage'
+import { subjectCommands } from './commands/subject'
 import { createQueries } from './queries/queries'
 import type { CoreDeps } from './core-deps'
 
@@ -63,7 +72,20 @@ export function createCore(opts: CoreOptions) {
   }
 
   // One spread line per domain, in alphabetical order (SPEC 12).
-  const handlers = [...projectCommands(deps), ...secretCommands(deps), ...settingsCommands(deps)]
+  const handlers = [
+    ...assetCommands(deps),
+    ...briefCommands(deps),
+    ...campaignCommands(deps),
+    ...devCommands(deps),
+    ...generationCommands(deps),
+    ...jobCommands(deps),
+    ...projectCommands(deps),
+    ...ruleSetCommands(deps),
+    ...secretCommands(deps),
+    ...settingsCommands(deps),
+    ...storageCommands(deps),
+    ...subjectCommands(deps),
+  ]
 
   const bus = createCommandBus({
     handlers,

@@ -3,6 +3,7 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { createCore, type Core } from './core'
 import { createAppWindow } from './windows/app-window'
+import { registerAssetProtocol } from './windows/asset-protocol'
 import { DIALOG_QUERIES, runDialogQuery } from './windows/dialogs'
 import { registerIpc } from './ipc'
 import { projectPathFromArgv } from './open-file'
@@ -69,6 +70,7 @@ function start(): void {
           })
         : ready.query(name, input, opts),
   })
+  registerAssetProtocol()
   createAppWindow()
   for (const filePath of pendingOpens.splice(0)) void openFromSystem(filePath)
 }

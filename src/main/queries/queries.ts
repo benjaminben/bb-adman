@@ -4,14 +4,30 @@ import type { CoreDeps } from '../core-deps'
 import type { ActivityLog } from '../log/activity-log'
 import { errorContext } from '../log/error-context'
 import { appQueries } from './app'
+import { assetQueries } from './asset'
+import { campaignQueries } from './campaign'
 import { historyQueries } from './history'
+import { jobQueries } from './job'
+import { projectQueries } from './project'
+import { templateQueries } from './template'
 import type { QueryFn, QueryOptions } from './types'
 import { AppError, fail, internalError, ok, type Result } from '../../shared/schemas/result'
 
 export type { QueryFn, QueryOptions }
 
 export function createQueries(deps: CoreDeps) {
-  return createQueryRunner({ ...appQueries(deps), ...historyQueries(deps) }, deps.log)
+  return createQueryRunner(
+    {
+      ...appQueries(deps),
+      ...assetQueries(deps),
+      ...campaignQueries(deps),
+      ...historyQueries(deps),
+      ...jobQueries(deps),
+      ...projectQueries(deps),
+      ...templateQueries(deps),
+    },
+    deps.log,
+  )
 }
 
 // The runner (SPEC 4.3): finds the query, never throws, returns INTERNAL for anything
