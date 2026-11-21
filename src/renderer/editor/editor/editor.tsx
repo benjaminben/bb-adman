@@ -109,12 +109,15 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
             <div className={styles.body}>
               <LayerList
                 projectId={projectId}
+                variantId={variantId}
                 layers={scene}
                 assets={forRows}
                 selectedId={selected?.id ?? null}
                 onSelect={setSelectedId}
               />
               <CanvasView
+                projectId={projectId}
+                store={store}
                 variant={variant}
                 layers={scene}
                 assets={forScene}
@@ -124,7 +127,12 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
                 onSelect={setSelectedId}
                 onSettled={onSettled}
               />
-              <PropertiesPanel layer={selected} />
+              <PropertiesPanel
+                projectId={projectId}
+                campaignId={state.campaignId}
+                layer={selected}
+                layers={Object.values(layers)}
+              />
             </div>
           </>
         )}

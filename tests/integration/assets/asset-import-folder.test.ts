@@ -158,6 +158,7 @@ describe('asset.import of a folder reusing content [SPEC 14, Slice A rulings poi
       assetIds: first.assetIds,
       reusedAssetIds: first.assetIds,
       skippedCount: 0,
+      animatedAssetIds: [],
     })
     expect(bus.db.prepare('SELECT library, subject_id FROM asset').all()).toEqual([
       { library: 'reference', subject_id: 'bottle' },

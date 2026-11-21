@@ -1,0 +1,113 @@
+/* Drawn in screen pixels over the scaled Scene. Only the handles take the pointer. */
+.overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.selection,
+.empty,
+.overflow {
+  position: absolute;
+  box-sizing: border-box;
+  transform-origin: 50% 50%;
+}
+/* A dark line with a light line on each side, so it shows on any picture. */
+.selection {
+  border: var(--border-width) solid var(--selection-dark);
+  box-shadow:
+    0 0 0 var(--border-width) var(--selection-light),
+    inset 0 0 0 var(--border-width) var(--selection-light);
+}
+.hidden {
+  border-style: dotted;
+}
+.handle,
+.rotate {
+  position: absolute;
+  box-sizing: border-box;
+  width: var(--handle-size);
+  height: var(--handle-size);
+  background: var(--selection-light);
+  border: var(--border-width) solid var(--selection-dark);
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+.rotate {
+  top: calc(-1 * var(--rotate-handle-offset));
+  left: 50%;
+  border-radius: 50%;
+  cursor: grab;
+}
+.handle[data-handle='nw'] {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+.handle[data-handle='n'] {
+  top: 0;
+  left: 50%;
+  cursor: ns-resize;
+}
+.handle[data-handle='ne'] {
+  top: 0;
+  left: 100%;
+  cursor: nesw-resize;
+}
+.handle[data-handle='e'] {
+  top: 50%;
+  left: 100%;
+  cursor: ew-resize;
+}
+.handle[data-handle='se'] {
+  top: 100%;
+  left: 100%;
+  cursor: nwse-resize;
+}
+.handle[data-handle='s'] {
+  top: 100%;
+  left: 50%;
+  cursor: ns-resize;
+}
+.handle[data-handle='sw'] {
+  top: 100%;
+  left: 0;
+  cursor: nesw-resize;
+}
+.handle[data-handle='w'] {
+  top: 50%;
+  left: 0;
+  cursor: ew-resize;
+}
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--border-width) dashed var(--selection-dark);
+  box-shadow: inset 0 0 0 var(--border-width) var(--selection-light);
+}
+.empty > span {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
+  background: var(--selection-dark);
+  color: var(--selection-light);
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+}
+.overflow {
+  border: var(--focus-ring-width) dashed var(--color-danger-text);
+}
+.guideX,
+.guideY {
+  position: absolute;
+  background: var(--guide-color);
+}
+.guideX {
+  top: 0;
+  bottom: 0;
+  width: var(--border-width);
+}
+.guideY {
+  left: 0;
+  right: 0;
+  height: var(--border-width);
+}

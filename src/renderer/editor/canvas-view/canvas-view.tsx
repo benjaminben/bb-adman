@@ -1,20 +1,25 @@
 // spec/editor.md, "Canvas": the Scene in full mode at variant pixels, scaled by the zoom from
 // its top-left corner inside a box of the scaled size, centred in the backdrop when smaller and
 // scrolled when larger. The bar at the foot shows the size and the zoom. A click picks a layer;
-// a click on the backdrop, or Escape, clears the selection. Until P3-11's overlay, the selected
-// layer is outlined here (no handles), in screen pixels whatever the zoom.
-import { useRef, type CSSProperties, type MouseEvent } from 'react'
+// a click on the backdrop, or Escape, clears the selection. The overlay over the Scene draws the
+// selection and handles the drags; Escape during a drag cancels it instead.
+import { useRef, type MouseEvent } from 'react'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { SceneAsset, SceneSettled } from '@/shared/scene/types'
 import { Scene } from '@/shared/scene/scene'
+import { useApp } from '@/renderer/app/app-context'
+import { CanvasOverlay, useCanvasDrag, useLayerKeys } from '@/renderer/editor/canvas-overlay'
 import { useEditorKey } from '@/renderer/editor/use-editor-key'
 import { fitScale, scaleOf, zoomIn, zoomLabel, zoomOut, type Zoom } from '@/renderer/editor/zoom'
-import { pickLayer } from './pick-layer'
+import { pickLayer } from '@/renderer/editor/geometry-math'
+import type { VariantStore } from '@/renderer/stores/variant-store'
 import { useAreaSize } from './use-area-size'
 import styles from './canvas-view.module.css'
 
 export type CanvasViewProps = {
+  projectId: string
+  store: VariantStore
   variant: VariantSummary
   layers: LayerRow[]
   assets: Readonly<Record<string, SceneAsset>>
@@ -25,31 +30,33 @@ export type CanvasViewProps = {
   onSettled: (result: SceneSettled) => void
 }
 
-function outline(layer: LayerRow, scale: number): CSSProperties {
-  const { x, y, width, height, rotation } = layer.geometry
-  return {
-    left: x * scale,
-    top: y * scale,
-    width: width * scale,
-    height: height * scale,
-    transform: `rotate(${rotation}deg)`,
-  }
-}
-
 export function CanvasView(props: CanvasViewProps) {
   const { variant, layers, zoom, onZoom, onSelect } = props
+  const command = useApp((s) => s.command)
   const area = useRef<HTMLDivElement>(null)
+  const stage = useRef<HTMLDivElement>(null)
   const fit = fitScale(variant, useAreaSize(area))
   const scale = scaleOf(zoom, fit)
-  const selected = layers.find((l) => l.id === props.selectedId)
+  const selected = layers.find((l) => l.id === props.selectedId) ?? null
+  const edits = { projectId: props.projectId, store: props.store, command, onSelect }
+  const keys = useLayerKeys({ ...edits, variantId: variant.id, selected })
+  const drag = useCanvasDrag({
+    ...edits,
+    layers,
+    size: variant,
+    scale,
+    stage,
+    beforeDrag: keys.flush,
+  })
 
   useEditorKey('zoomIn', () => onZoom(zoomIn(zoom, fit)))
   useEditorKey('zoomOut', () => onZoom(zoomOut(zoom, fit)))
   useEditorKey('zoomToFit', () => onZoom('fit'))
-  useEditorKey('escape', () => onSelect(null))
+  useEditorKey('escape', () => (drag.active() ? drag.cancel() : onSelect(null)))
 
   function pick(event: MouseEvent<HTMLDivElement>) {
     event.stopPropagation()
+    if (drag.takeClick()) return
     const rect = event.currentTarget.getBoundingClientRect()
     const point = { x: (event.clientX - rect.left) / scale, y: (event.clientY - rect.top) / scale }
     onSelect(pickLayer(layers, point))
@@ -58,15 +65,22 @@ export function CanvasView(props: CanvasViewProps) {
   return (
     <section className={styles.canvas} aria-label={`Canvas, ${variant.title}`} tabIndex={0}>
       {/* Pointer only: every canvas action has a keyboard path in the list and the panel. */}
-      <div ref={area} className={styles.area} data-backdrop onClick={() => onSelect(null)}>
+      <div
+        ref={area}
+        className={styles.area}
+        data-backdrop
+        onClick={() => drag.takeClick() || onSelect(null)}
+      >
         <div
           className={styles.box}
           style={{ width: variant.width * scale, height: variant.height * scale }}
         >
           <div
+            ref={stage}
             data-stage
             className={styles.stage}
             style={{ transform: `scale(${scale})` }}
+            onPointerDown={drag.pressLayer}
             onClick={pick}
           >
             <Scene
@@ -78,14 +92,13 @@ export function CanvasView(props: CanvasViewProps) {
               onSettled={props.onSettled}
             />
           </div>
-          {selected && (
-            <div
-              className={
-                selected.visible ? styles.selection : `${styles.selection} ${styles.hidden}`
-              }
-              style={outline(selected, scale)}
-            />
-          )}
+          <CanvasOverlay
+            layers={layers}
+            selected={selected}
+            scale={scale}
+            guides={drag.guides}
+            onGrip={drag.pressGrip}
+          />
         </div>
       </div>
       <div className={styles.bar}>

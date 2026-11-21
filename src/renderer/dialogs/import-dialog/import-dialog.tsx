@@ -3,11 +3,18 @@
 // the paths it was given, and nothing is sent before it. Opened by the import buttons and by a
 // drop, each with its own instance. Every close resets it for the next open.
 import { useState } from 'react'
-import { useApp } from '@/renderer/app/app-context'
+import { useApi, useApp } from '@/renderer/app/app-context'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import { ImportChoices, START_CHOICES, type Choices } from './import-choices'
-import { importTitle, resultLines, shownNames, type ImportReply } from './import-text'
+import {
+  animationLines,
+  importTitle,
+  resultLines,
+  shownNames,
+  type ImportReply,
+} from './import-text'
+import { animatedNames } from './animated-names'
 import styles from './import-dialog.module.css'
 
 export type ImportDialogProps = {
@@ -21,6 +28,7 @@ export type ImportDialogProps = {
 
 export function ImportDialog(props: ImportDialogProps) {
   const command = useApp((s) => s.command)
+  const api = useApi()
   const [choices, setChoices] = useState<Choices>(START_CHOICES)
   const [importing, setImporting] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
@@ -45,9 +53,16 @@ export function ImportDialog(props: ImportDialogProps) {
       copy,
       ...(subjectId !== '' && { subjectId }),
     })
+    if (!reply.ok) {
+      setImporting(false)
+      setRefusal(reply.error.message)
+      return
+    }
+    const data = reply.data as ImportReply
+    const animated = data.animatedAssetIds ?? []
+    const names = await animatedNames(api, props.projectId, animated)
     setImporting(false)
-    if (reply.ok) setResult(resultLines(reply.data as ImportReply))
-    else setRefusal(reply.error.message)
+    setResult([...resultLines(data), ...animationLines(animated, names)])
   }
 
   return (
@@ -66,8 +81,8 @@ export function ImportDialog(props: ImportDialogProps) {
       {result !== null ? (
         <>
           <ul className={styles.result} aria-label="Import result">
-            {result.map((line) => (
-              <li key={line}>{line}</li>
+            {result.map((line, i) => (
+              <li key={i}>{line}</li>
             ))}
           </ul>
           <div className={styles.actions}>

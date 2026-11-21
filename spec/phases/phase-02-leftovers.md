@@ -22,10 +22,15 @@ One short run in the main folder, class B, unless an item says otherwise. State 
   - After real ComfyUI runs, correct CU-4's hand-made stand-in fixtures to the shapes the real server showed. The Flux run showed the picture history shape holds. Still to check: the job-state status words and the video history entry, after a real video run.
   - If a real shape breaks a client schema, stop and report: that is a client change, ruled on its own.
 
-### EXIF rotation fix (only if needed)
+### EX-1 — A JPEG's rotation tag is applied (built)
 
-- Whoever runs the real first-frame video case (`ADMAN_E2E_VIDEO_FRAME=1`) reports whether the clip starts upright. The stakeholder checks again in his first app run from a phone photograph.
-- Only if a real photograph comes out turned: a **security-class** fix in `src/main/picture-fitter.ts` turns it upright from its orientation tag before the crop, with one test.
+- **Class:** A, B. **Security class** (it reads bytes of a user's file). Built: `src/main/jpeg-orientation.ts`, `turn-pixels.ts`, `image-turner.ts`.
+- **Why:** every picture sent to a provider now passes through `toPng` (A-55), which drops the file's orientation tag without turning the pixels. A phone photograph would be sent on its side.
+- **Must build:**
+  - A pure reader for the JPEG orientation tag (values 1 to 8). It reads only the first APP1 "Exif" segment, with every offset checked against the segment's length. A missing, broken or out-of-range tag is read as 1 (upright); it never throws.
+  - `toPng` and the picture fitter (`src/main/png-converter.ts`, `src/main/picture-fitter.ts`) turn and mirror the decoded pixels by that tag before they encode or crop. The limits are checked on the header before any decode, as before (turning swaps the sides but keeps the pixel count). PNG and WebP are not touched. Built without a turner (tests only), both refuse a JPEG whose tag asks for a turn rather than send it on its side.
+  - The user's file is never changed.
+- **Tests:** a table over the eight tag values with a small two-colour JPEG each (the marked corner ends where it should, the size swaps for 5 to 8); broken segments (cut off, offsets past the end, a huge count) read as upright; one test through `pngConverter` and one through the fitter; `tests/e2e/jpeg-orientation.spec.ts` checks a reference and a first frame through the built app.
 
 ### Slice WP — WebP converted to PNG
 

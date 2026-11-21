@@ -62,7 +62,7 @@ describe('Reference ticks [SPEC 14 1.46 TP-5]', () => {
     expect(runs(fake).map((r) => r.referenceAssetIds)).toEqual([['A2']])
   })
 
-  it('cannot tick a missing asset or a WebP asset, and says why', async () => {
+  it('cannot tick a missing asset, and says why; a WebP asset is offered like a PNG', async () => {
     const { fake } = referenceApi([
       ref('M1', { missing: true }),
       ref('W1', { mime: 'image/webp', displayName: 'W1.webp' }),
@@ -71,9 +71,9 @@ describe('Reference ticks [SPEC 14 1.46 TP-5]', () => {
     const missing = await screen.findByRole('checkbox', { name: 'M1.png' })
     const webp = screen.getByRole('checkbox', { name: 'W1.webp' })
     expect(missing).toBeDisabled()
-    expect(webp).toBeDisabled()
+    expect(webp).toBeEnabled()
     expect(missing).toHaveAccessibleDescription('file not found')
-    expect(webp).toHaveAccessibleDescription('WebP cannot be sent yet')
+    expect(webp).toHaveAccessibleDescription('')
   })
 
   it('names the number of pictures from the held request, and sends nothing before Confirm', async () => {

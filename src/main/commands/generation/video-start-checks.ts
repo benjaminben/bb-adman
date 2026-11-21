@@ -2,7 +2,7 @@
 // made in prepare before any job row, and the same checks for job.retry of a ComfyUI video
 // row, against the old row's request and picture IDs. The start pair; for ComfyUI the
 // address, the workflow offered for that pair and its length; how many references that
-// workflow takes; each picture, which must be a PNG or JPEG the app can read; last the
+// workflow takes; each picture, which must be a picture the app can read; last the
 // licence check (S2-4), so the user confirms only a run that can start.
 import type { CoreDeps } from '@/main/core-deps'
 import type { PrepareContext } from '@/main/commands/types'
@@ -22,7 +22,8 @@ type Deps = Pick<CoreDeps, 'devTools' | 'assets'> & {
 type Ctx = Pick<PrepareContext, 'actor' | 'project'>
 type Ask = StartFields & { durationMs: number; licenceConfirmed?: boolean }
 
-const SENDABLE = ['image/png', 'image/jpeg']
+// Slice WP: a WebP is accepted too; assets.read turns every picture into a clean PNG.
+const SENDABLE = ['image/png', 'image/jpeg', 'image/webp']
 
 const notUsable = () =>
   new AppError(
@@ -31,9 +32,9 @@ const notUsable = () =>
     { reason: 'picture_not_usable' },
   )
 
-// N-4 step 4. A row that is not a PNG or JPEG picture is refused before its file is read;
-// assets.read then refuses a picture that is not there, is gone, is too large, or whose
-// bytes are not a PNG or JPEG, as generation.runImages does.
+// N-4 step 4. A row that is not a PNG, JPEG or WebP picture is refused before its file is
+// read; assets.read then refuses a picture that is not there, is gone, is too large, or
+// cannot be turned into a PNG, as generation.runImages does.
 async function usablePicture(deps: Deps, project: ProjectHandle, id: string): Promise<void> {
   const row = readWireRow(project.db, 'asset', { id }) as AssetRow | null
   if (row && (row.kind !== 'image' || !SENDABLE.includes(row.mime))) throw notUsable()

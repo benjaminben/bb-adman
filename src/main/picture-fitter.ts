@@ -3,7 +3,8 @@
 // `decode` is Electron's nativeImage.createFromBuffer, passed in so tests need no Electron.
 // It runs pngConverter's checks before decoding, and every refusal is toPng's fixed message:
 // it holds no bytes, no size, no path and no decoder text.
-import { checkBeforeDecode, PICTURE_NOT_DECODED } from './png-converter'
+import { upright, type Turn } from './image-turner'
+import { cannotTurn, checkBeforeDecode, PICTURE_NOT_DECODED } from './png-converter'
 import { MAX_PICTURE_SIDE } from './providers/picture-limits'
 
 type Size = { width: number; height: number }
@@ -56,15 +57,20 @@ function fit(image: Fittable, run: Size): Fittable {
   return cropped.resize({ width: run.width, height: run.height, quality: 'best' })
 }
 
-export function pictureFitter(
-  decode: (buffer: Buffer) => Fittable,
+// EX-1: a JPEG is turned by its orientation tag before it is cropped, so the crop and the
+// scale work on the picture as it is meant to be seen. With no turner it is refused.
+export function pictureFitter<F extends Fittable>(
+  decode: (buffer: Buffer) => F,
+  turn: Turn<F> = cannotTurn,
 ): (bytes: Uint8Array, run: Size) => Uint8Array {
   return (bytes, run) => {
     checkBeforeDecode(bytes)
     if (!sideFits(run.width) || !sideFits(run.height)) refuse()
     let png: Buffer
     try {
-      png = fit(decode(Buffer.from(bytes)), run).toPNG()
+      const image = decode(Buffer.from(bytes))
+      if (image.isEmpty()) refuse()
+      png = fit(upright(bytes, image, turn), run).toPNG()
     } catch {
       return refuse()
     }

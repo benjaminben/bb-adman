@@ -19,6 +19,7 @@ import { setAppMenu } from './windows/app-menu'
 import { devToolsEnabled } from './dev-tools-flag'
 import { pngConverter } from './png-converter'
 import { pictureFitter } from './picture-fitter'
+import { bitmapTurner } from './image-turner'
 import { registerAssetProtocol, registerAssetScheme } from './windows/asset-protocol'
 import { checkChangedFiles, withChangeChecks } from './assets/change-trigger'
 import { DIALOG_QUERIES, runDialogQuery } from './windows/dialogs'
@@ -27,6 +28,7 @@ import { projectPathFromArgv } from './open-file'
 import { safeStorageCrypto } from './secrets/safe-storage'
 import { createDraw } from './render/draw'
 import { endRenderWindow } from './render/render-window'
+import { endWebpDecoder, webpToPng } from './windows/webp-window'
 
 if (process.env.ADMAN_USER_DATA_DIR) app.setPath('userData', process.env.ADMAN_USER_DATA_DIR)
 registerAssetScheme(protocol)
@@ -48,6 +50,7 @@ function openAppWindow(): BrowserWindow {
   win.on('closed', () => {
     if (appWindow === win) appWindow = null
     endRenderWindow()
+    endWebpDecoder()
   })
   return win
 }
@@ -90,6 +93,7 @@ async function openFromSystem(filePath: string): Promise<void> {
 function start(): void {
   // Both windows use the default session, so this covers the render window too.
   denyPermissions(session.defaultSession)
+  const turnImage = bitmapTurner((data, size) => nativeImage.createFromBitmap(data, size))
   core = createCore({
     userDataDir: app.getPath('userData'),
     documentsDir: app.getPath('documents'),
@@ -101,8 +105,9 @@ function start(): void {
     askPermission: async () => false,
     openExternal: httpsOnly((url) => shell.openExternal(url)),
     devTools: devToolsEnabled(app.isPackaged, process.env),
-    toPng: pngConverter((buffer) => nativeImage.createFromBuffer(buffer)),
-    fitPicture: pictureFitter((buffer) => nativeImage.createFromBuffer(buffer)),
+    toPng: pngConverter((buffer) => nativeImage.createFromBuffer(buffer), turnImage),
+    fitPicture: pictureFitter((buffer) => nativeImage.createFromBuffer(buffer), turnImage),
+    webpToPng,
     drawScene: createDraw(),
   })
   const ready = core
@@ -160,6 +165,7 @@ if (!app.requestSingleInstanceLock()) {
     // Quitting closes the MCP listener and drops its sessions (SPEC 5.3).
     void core?.mcp.stop()
     endRenderWindow()
+    endWebpDecoder()
     core?.closeAll()
   })
   void app.whenReady().then(start)

@@ -84,6 +84,7 @@ export function seed(db: Database.Database): void {
 
 export type GenerationFixtureOptions = {
   toPng?: (bytes: Uint8Array) => Uint8Array
+  webpToPng?: (bytes: Uint8Array) => Promise<Uint8Array>
   appVersion?: string
   now?: () => Date
 }
@@ -101,6 +102,7 @@ export async function makeGenerationFixture(opts: GenerationFixtureOptions = {})
     emit: (e) => events.push(e),
     askPermission: async () => false,
     ...(opts.now ? { now: opts.now } : {}),
+    ...(opts.webpToPng ? { webpToPng: opts.webpToPng } : {}),
     toPng: (bytes) => {
       toPngCalls.push(bytes)
       return (opts.toPng ?? ((b) => b))(bytes)

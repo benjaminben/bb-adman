@@ -29,10 +29,13 @@ function isText(head: Uint8Array): boolean {
   }
 }
 
+// The WebP signature: RIFF, four size bytes, WEBP.
+export const hasWebpSignature = (h: Uint8Array) => asciiAt(h, 0, 'RIFF') && asciiAt(h, 8, 'WEBP')
+
 const MATCHES: Record<FileType['id'], (head: Uint8Array) => boolean> = {
   png: (h) => pictureType(h) === 'image/png',
   jpeg: (h) => pictureType(h) === 'image/jpeg',
-  webp: (h) => asciiAt(h, 0, 'RIFF') && asciiAt(h, 8, 'WEBP'),
+  webp: hasWebpSignature,
   mp4: (h) => asciiAt(h, 4, 'ftyp'),
   mov: (h) => asciiAt(h, 4, 'ftyp') || QUICKTIME_BOXES.some((box) => asciiAt(h, 4, box)),
   webm: (h) => startsWith(h, [0x1a, 0x45, 0xdf, 0xa3]),

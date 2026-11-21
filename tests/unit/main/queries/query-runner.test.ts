@@ -53,6 +53,9 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
       fitPicture: () => {
         throw new Error('fitPicture is not available')
       },
+      webpToPng: async () => {
+        throw new Error('webpToPng is not available')
+      },
       appVersion: '0.1.0',
       now: () => new Date(),
       userDataDir: dir,

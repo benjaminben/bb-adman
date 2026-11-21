@@ -2,6 +2,7 @@
 // nativeImage.createFromBuffer; it is passed in so this file needs no Electron to be tested.
 // [1.20] L2: the limits of Section 6.2 are checked here, before the decoder sees the bytes.
 // Every refusal is the one fixed message: it holds no bytes, no size and no path.
+import { upright, type Turn } from './image-turner'
 import { MAX_PICTURE_BYTES, MAX_PICTURE_PIXELS, MAX_PICTURE_SIDE } from './providers/picture-limits'
 import { pictureSize } from './providers/picture-size'
 import { pictureType } from './providers/picture-type'
@@ -36,12 +37,29 @@ export function checkBeforeDecode(bytes: Uint8Array): void {
   if (!sideFits(width) || !sideFits(height) || width * height > MAX_PICTURE_PIXELS) refuse()
 }
 
-export function pngConverter(
-  decode: (buffer: Buffer) => Decoded,
+// EX-1: with no turner, a JPEG whose tag says to turn it is refused, never sent on its side.
+export function cannotTurn(): never {
+  return refuse()
+}
+
+// EX-1: a JPEG is turned by its orientation tag after decoding and before encoding.
+function turned<D extends Decoded>(bytes: Uint8Array, image: D, turn: Turn<D>): D {
+  try {
+    return upright(bytes, image, turn)
+  } catch {
+    return refuse()
+  }
+}
+
+export function pngConverter<D extends Decoded>(
+  decode: (buffer: Buffer) => D,
+  turn: Turn<D> = cannotTurn,
 ): (bytes: Uint8Array) => Uint8Array {
   return (bytes) => {
     checkBeforeDecode(bytes)
-    const image = decode(Buffer.from(bytes))
+    const decoded = decode(Buffer.from(bytes))
+    if (decoded.isEmpty()) refuse()
+    const image = turned(bytes, decoded, turn)
     if (image.isEmpty()) refuse()
     const png = image.toPNG()
     if (png.byteLength === 0) refuse()

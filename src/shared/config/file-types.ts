@@ -45,6 +45,6 @@ export type PickPurpose = 'import' | 'relink' | 'brief'
 
 // SPEC 4.3: the extensions a dialog.pickFiles call offers, by purpose and kind.
 export function pickerExtensions(purpose: PickPurpose, kind?: AssetKind): string[] {
-  const only = purpose === 'brief' ? 'text' : purpose === 'relink' ? kind : undefined
+  const only = purpose === 'brief' ? 'text' : kind
   return FILE_TYPES.filter((t) => !only || t.kind === only).flatMap((t) => t.extensions)
 }
