@@ -3,11 +3,13 @@
 // "Crop…" (crop mode on the canvas), "Reset crop" (crop null, shown when a crop is set),
 // "Opacity", and for the background only "Fill the canvas" and "Fit inside". Each change is one
 // layer.update, so one undo step. A locked layer's fields are shown but disabled.
+// P4-19: "Cut out the subject…" under the buttons, for a layer with a picture (./cut-out.tsx).
 import { useState } from 'react'
 import { PictureChooser } from '@/renderer/dialogs/picture-chooser'
 import type { LayerPatch } from '@/shared/schemas/commands/layer'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { fillCanvas, fitInside, type Size } from './background-fit'
+import { CutOut } from './cut-out'
 import { OpacityField } from './opacity-field'
 import { PicturePreview, type PictureAsset } from './picture-preview'
 import styles from './picture-fields.module.css'
@@ -81,6 +83,7 @@ export function PictureFields(props: PictureFieldsProps) {
           </button>
         )}
       </div>
+      {assetId !== null && <CutOut key={layer.id} projectId={props.projectId} layer={layer} />}
       <OpacityField
         opacity={opacity}
         disabled={disabled}
