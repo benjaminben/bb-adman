@@ -200,7 +200,7 @@ describe('TranslationPanel [P6-12]', () => {
       )
     changed('another project')
     act(() => fake.emit('job.updated', jobRow('J1', { kind: 'translation', campaignId: 'C2' })))
-    act(() => fake.emit('job.updated', jobRow('J2', { kind: 'text', campaignId: 'C1' })))
+    act(() => fake.emit('job.updated', jobRow('J2', { kind: 'copy_options', campaignId: 'C1' })))
     expect(reads(fake).length).toBe(1)
     changed(P)
     await waitFor(() => expect(reads(fake).length).toBe(2))

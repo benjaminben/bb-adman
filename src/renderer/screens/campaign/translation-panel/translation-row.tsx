@@ -45,7 +45,9 @@ export function TranslationRow(props: TranslationRowProps) {
       />
       <div className={`${layout.row} ${styles.controls}`}>
         <span className={`${layout.badge} ${kind}`}>{words.mark}</span>
-        {words.from !== null && <span className={layout.muted}>{words.from}</span>}
+        {words.from !== null && (
+          <span className={`${layout.muted} ${styles.source}`}>{words.from}</span>
+        )}
         <label className={styles.tick}>
           <input type="checkbox" checked={apply} onChange={(e) => setApply(e.target.checked)} />
           {`Use for every ${props.language} post with this text box`}
