@@ -1,5 +1,5 @@
 // P5-1 (spec/phases/phase-05-slices.md, A-149): until its slice fills it, each Phase 5 command
-// and sync.preview refuses with not_built and writes nothing. The agent rows are final now:
+// refuses with not_built and writes nothing. The agent rows are final now:
 // deny and system rows are AGENT_DENIED, variant.add reaches its stub, variant.delete asks,
 // and generation.runFill is refused by the gate until P5-8 opens it.
 import { describe, it, expect, afterEach } from 'vitest'
@@ -86,11 +86,15 @@ describe('the Phase 5 stubs [P5-1, A-149]', () => {
     })
   })
 
-  it('sync.preview refuses not_built for either actor, after checking the input', async () => {
+  it('sync.preview checks the input, then answers for either actor', async () => {
     const { fx, projectId } = await open()
     const input = { projectId, directionId: 'D1' }
-    expect(await fx.core.query('sync.preview', input, { actor: 'user' })).toEqual(NOT_BUILT)
-    expect(await fx.core.query('sync.preview', input, { actor: 'agent' })).toEqual(NOT_BUILT)
+    const notFound = {
+      ok: false,
+      error: { code: 'NOT_FOUND', message: 'That direction was not found.' },
+    }
+    expect(await fx.core.query('sync.preview', input, { actor: 'user' })).toEqual(notFound)
+    expect(await fx.core.query('sync.preview', input, { actor: 'agent' })).toEqual(notFound)
     expect(
       await fx.core.query('sync.preview', { ...input, extra: 1 }, { actor: 'user' }),
     ).toMatchObject({ ok: false, error: { code: 'INVALID_INPUT' } })
