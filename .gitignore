@@ -22,7 +22,10 @@ playwright-report/
 ANALYST-PROMPT.md
 Campaign Creative Generator Plan So Far.md
 
-# approvals service: local Wrangler state, local secrets and generated types
-approvals-service/.wrangler/
-approvals-service/.dev.vars*
-approvals-service/worker-configuration.d.ts
+# approvals service: Next.js output and types, local secrets, local databases, Playwright output
+approvals-service/.next/
+approvals-service/next-env.d.ts
+approvals-service/.env*.local
+approvals-service/*.db
+approvals-service/test-results/
+approvals-service/playwright-report/

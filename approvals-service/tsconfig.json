@@ -3,7 +3,12 @@
     "target": "ES2023",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2023"],
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "jsx": "react-jsx",
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
@@ -11,8 +16,32 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
     "noEmit": true,
-    "types": ["./worker-configuration.d.ts"]
+    "incremental": true,
+    "types": [
+      "node"
+    ],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "allowJs": true,
+    "esModuleInterop": true
   },
-  "include": ["src"]
+  "include": [
+    "next-env.d.ts",
+    "next.config.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "src",
+    "scripts",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
