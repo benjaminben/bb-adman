@@ -9,12 +9,12 @@
 - Full run green.
 
 ## Left
-- Nothing in AP-10b. Architect ruling on the check-first names below.
+- Nothing in AP-10b.
 
 ## Decisions
 - The list call uses the prefix `{folder}/adman-connection-check/` (the brief: every listed key under it), not the whole folder.
 - `RequestTimeout` (S3's own timeout answer) is `s3_cannot_reach`.
-- Check-first: `IllegalLocationConstraintException` (400) and `TemporaryRedirect` (307) are not in the table; they fall to `s3_check_failed`. Reported for the architect.
+- Check-first: `IllegalLocationConstraintException` (400) and `TemporaryRedirect` (307) give `s3_wrong_region` (ruled by the coordinator).
 
 ## Verify
 npx vitest run tests/unit/main/providers/s3/check-access.test.ts tests/integration/commands/storage-check-s3.test.ts tests/unit/main/commands/storage

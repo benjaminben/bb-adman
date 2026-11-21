@@ -74,6 +74,12 @@ describe('checkS3Access: failure kinds from recorded replies at the list step', 
       errorXml('AuthorizationHeaderMalformed', 400),
       's3_wrong_region',
     ],
+    [
+      'IllegalLocationConstraintException',
+      errorXml('IllegalLocationConstraintException', 400),
+      's3_wrong_region',
+    ],
+    ['TemporaryRedirect', errorXml('TemporaryRedirect', 307, region), 's3_wrong_region'],
     ['a 403 with no body', { status: 403, headers: {} }, 's3_permission_missing'],
     ['a refused connection', network('ECONNREFUSED'), 's3_cannot_reach'],
     ['an unknown host', network('ENOTFOUND'), 's3_cannot_reach'],
@@ -97,7 +103,7 @@ describe('checkS3Access: failure kinds from recorded replies at the list step', 
       headers: { 'content-type': 'application/xml', location: 'https://elsewhere.example/' },
     }
     const { outcome, seen } = await run({ list: moved })
-    expect(outcome).toMatchObject({ ok: false, reason: 's3_check_failed' })
+    expect(outcome).toMatchObject({ ok: false, reason: 's3_wrong_region' })
     expect(seen.map((r) => r.hostname)).toEqual([HOST])
   })
 })

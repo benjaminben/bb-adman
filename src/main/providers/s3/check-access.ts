@@ -36,7 +36,14 @@ const WRONG_KEYS = new Set([
   'ExpiredToken',
   'InvalidToken',
 ])
-const WRONG_REGION = new Set(['PermanentRedirect', 'AuthorizationHeaderMalformed'])
+// IllegalLocationConstraintException: a bucket in an opt-in region reached through another
+// region's host. TemporaryRedirect: a new bucket not yet known to every host.
+const WRONG_REGION = new Set([
+  'PermanentRedirect',
+  'AuthorizationHeaderMalformed',
+  'IllegalLocationConstraintException',
+  'TemporaryRedirect',
+])
 
 // The table in "Test connection (S3)": the S3 error name first, then the status.
 function classify(name: string, status: number | undefined, step: S3CheckStep) {
