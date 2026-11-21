@@ -11,8 +11,6 @@ import { checkCommands } from '@/main/commands/check'
 import { translationQueries } from '@/main/queries/translation'
 import { checkQueries } from '@/main/queries/check'
 import { jobKindHandlers } from '@/main/jobs/kinds'
-import { translationKind } from '@/main/jobs/kinds/translation'
-import { ProviderFailure } from '@/main/providers/types'
 import { registerIpc, IPC } from '@/main/ipc'
 import { ok } from '@/shared/schemas/result'
 
@@ -23,16 +21,10 @@ afterEach(() => {
 })
 
 // A good input for each command, without projectId.
-const INPUTS: Record<string, object> = {
-  'translation.propose': { provider: 'fake', variantIds: ['V1'] },
-  'translation.write': { jobId: 'J1', items: [{ key: 'headline', text: 'Hallo' }] },
-}
+const INPUTS: Record<string, object> = {}
 const NAMES = Object.keys(INPUTS)
-const SYSTEM = ['translation.write']
-const POLICY: Record<string, string> = {
-  'translation.propose': 'deny',
-  'translation.write': 'deny',
-}
+const SYSTEM: string[] = []
+const POLICY: Record<string, string> = {}
 const AGENT_REACHES = NAMES.filter((n) => POLICY[n] === 'allow')
 const AGENT_DENIED = NAMES.filter((n) => POLICY[n] === 'deny')
 
@@ -158,16 +150,6 @@ describe('the Phase 6 query stubs [P6-1]', () => {
     expect(await fx.core.query('check.results', both, { actor: 'user' })).toMatchObject({
       ok: false,
       error: { code: 'INVALID_INPUT' },
-    })
-  })
-})
-
-describe('the translation job kind stub [P6-1]', () => {
-  it('fails its job as other, with no provider call', async () => {
-    const run = translationKind().run({} as never, {} as never)
-    await expect(run).rejects.toBeInstanceOf(ProviderFailure)
-    await expect(run).rejects.toMatchObject({
-      error: { kind: 'other', detail: 'Translate is not built yet' },
     })
   })
 })
