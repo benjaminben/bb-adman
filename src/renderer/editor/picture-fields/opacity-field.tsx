@@ -19,6 +19,17 @@ export function OpacityField(props: OpacityFieldProps) {
 
   return (
     <div className={styles.opacity}>
+      <div className={styles.amount}>
+        <NumberField
+          label="Opacity"
+          unit="%"
+          min={0}
+          max={100}
+          value={percent}
+          disabled={props.disabled}
+          onCommit={commit}
+        />
+      </div>
       <input
         type="range"
         className={styles.slider}
@@ -32,15 +43,6 @@ export function OpacityField(props: OpacityFieldProps) {
         onPointerUp={release}
         onKeyUp={release}
         onBlur={release}
-      />
-      <NumberField
-        label="Opacity"
-        unit="%"
-        min={0}
-        max={100}
-        value={percent}
-        disabled={props.disabled}
-        onCommit={commit}
       />
       {slider.error && <p className={styles.error}>{slider.error}</p>}
     </div>
