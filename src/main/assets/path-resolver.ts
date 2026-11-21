@@ -44,8 +44,17 @@ export function assetsDirFor(projectFile: string, meta: AssetsDirMeta): string {
   return fromRel
 }
 
+// SPEC 3.2: asset IDs are ULIDs. Extensions as in the asset.addGenerated schema. Both are
+// checked here, the one owner, so a managed path never leaves the assets folder, whatever a
+// project file holds (SPEC 14 [1.30] U3, 8.1).
+const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/
+const EXT = /^[a-z0-9]{1,10}$/
+
 // A managed file is named {assetId}.{ext} in the assets folder (SPEC 3.3).
 export function managedPath(assetsDir: string, assetId: string, ext: string): string {
+  if (!ULID.test(assetId) || !EXT.test(ext)) {
+    throw new Error('A managed path was asked for with an asset ID or extension it cannot use')
+  }
   return path.join(assetsDir, `${assetId}.${ext}`)
 }
 

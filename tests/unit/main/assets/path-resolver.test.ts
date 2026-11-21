@@ -93,7 +93,9 @@ describe('the assets folder: assets_dir_rel first, then assets_dir_abs [SPEC 3.3
 
 describe('managed files and relative paths [SPEC 3.3 asset rules]', () => {
   it('names a managed file {assetId}.{ext} in the assets folder', () => {
-    expect(managedPath('/a/P Assets', '01ABC', 'png')).toBe(path.join('/a/P Assets', '01ABC.png'))
+    expect(managedPath('/a/P Assets', '01JD0000000000000000000001', 'png')).toBe(
+      path.join('/a/P Assets', '01JD0000000000000000000001.png'),
+    )
   })
 
   it('gives a path relative to the project file folder', () => {

@@ -11,11 +11,6 @@ import { notAPicture, readPicture } from './read-picture'
 import { MAX_PICTURE_BYTES } from '../providers/picture-limits'
 import type { AssetRow } from '../../shared/schemas/rows/asset'
 
-// SPEC 3.2: asset IDs are ULIDs. Extensions as in the asset.addGenerated schema. Both are
-// checked so a managed file can never be written outside the assets folder.
-const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/
-const EXT = /^[a-z0-9]{1,10}$/
-
 function assetRow(project: ProjectHandle, assetId: string): AssetRow {
   const row = readWireRow(project.db, 'asset', { id: assetId }) as AssetRow | null
   if (!row) throw assetNotFound()
@@ -45,12 +40,10 @@ export function createAssetService(options: { maxPictureBytes?: number } = {}): 
     },
     assetsDir: assetsDirOf,
     async writeManaged(project, file) {
-      if (!ULID.test(file.assetId) || !EXT.test(file.ext)) {
-        throw new Error('writeManaged was given an asset ID or extension it cannot use')
-      }
       const dir = assetsDirOf(project)
+      const target = managedPath(dir, file.assetId, file.ext)
       await fs.promises.mkdir(dir, { recursive: true })
-      await fs.promises.writeFile(managedPath(dir, file.assetId, file.ext), file.bytes, {
+      await fs.promises.writeFile(target, file.bytes, {
         flag: 'wx',
       })
     },
