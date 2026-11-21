@@ -7,6 +7,7 @@ import { createJobStore } from '@/renderer/stores/job-store'
 import type { CampaignGet } from '@/shared/schemas/queries/campaign'
 import { GeneratePanel } from '@/renderer/screens/campaign/generate-panel'
 import { RunList } from '@/renderer/screens/campaign/run-list'
+import { SlotView } from '@/renderer/screens/campaign/slot-view'
 import { VariantList } from '@/renderer/screens/campaign/variant-list'
 import { VideoPanel } from '@/renderer/screens/campaign/video-panel'
 import layout from '@/renderer/ui/layout.module.css'
@@ -56,6 +57,7 @@ export function CampaignView(props: { projectId: string; campaignId: string; onB
         <>
           <h2>{data.campaign.name}</h2>
           <VariantList variants={data.variants} chosenId={variantId} onChoose={setChosenId} />
+          <SlotView projectId={projectId} campaignId={campaignId} />
           {variant && (
             <GeneratePanel
               key={variant.id}

@@ -1,15 +1,25 @@
 // "Load a brief" (SPEC 14 1.41 TP-1): the picker, then brief.parse, then the summary. Create
 // campaign sends subject.create for each new subject and then campaign.create; it stops at
 // the first refusal, whose message the app store shows in the alert. Cancel sends nothing.
+// A made campaign opens at once (A-45): onCreated gets campaign.create's campaignId.
 import { useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import type { BriefParsed } from '@/shared/schemas/commands/brief'
+import type { CampaignCreated } from '@/shared/schemas/commands/campaign-edit'
+import type { CampaignSummary } from '@/shared/schemas/queries/campaign'
 import type { PickedPaths } from '@/shared/schemas/queries/dialog'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import { BriefSummary } from '@/renderer/screens/project-home/brief-summary'
 import { campaignPlan } from '@/renderer/screens/project-home/campaign-input'
 
-export function BriefLoad(props: { projectId: string; subjects: SubjectRow[] }) {
+export type BriefLoadProps = {
+  projectId: string
+  subjects: SubjectRow[]
+  campaigns: CampaignSummary[]
+  onCreated: (campaignId: string) => void
+}
+
+export function BriefLoad(props: BriefLoadProps) {
   const api = useApi()
   const command = useApp((s) => s.command)
   const [reply, setReply] = useState<BriefParsed | null>(null)
@@ -43,7 +53,10 @@ export function BriefLoad(props: { projectId: string; subjects: SubjectRow[] }) 
     }
     const result = await command('campaign.create', plan.campaign)
     setCreating(false)
-    if (result.ok) setReply(null)
+    if (!result.ok) return
+    setReply(null)
+    const created = result.data as CampaignCreated | null
+    if (created) props.onCreated(created.campaignId)
   }
 
   return (

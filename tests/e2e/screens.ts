@@ -33,6 +33,7 @@ export async function loadBriefAndCreate(app: ElectronApplication, page: Page): 
   const brief = page.getByRole('region', { name: 'Brief' })
   await expect(brief.getByRole('list', { name: 'Subjects' })).toBeVisible()
   await brief.getByRole('button', { name: 'Create campaign' }).click()
+  await page.getByRole('button', { name: 'Back to project' }).click()
   await expect(page.getByRole('button', { name: `Open ${E2E_CAMPAIGN}` })).toBeVisible()
 }
 
