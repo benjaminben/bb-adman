@@ -69,6 +69,7 @@ function start(): void {
             log: ready.log,
           })
         : ready.query(name, input, opts),
+    isInternal: (name) => ready.isInternal(name),
   })
   registerAssetProtocol()
   createAppWindow()

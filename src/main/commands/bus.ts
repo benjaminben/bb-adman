@@ -44,6 +44,9 @@ type Line = { projectId: string | null; ids: LogIds }
 const INVALID = 'Some values are not valid.'
 const UNDO_PREPARE_FAILED = 'Clean-up after a failed command did not finish.'
 
+// The one answer to a command name that does not exist, or that no window may send.
+export const unknownCommandMessage = (name: string) => `Unknown command: ${name}`
+
 export function createCommandBus(deps: BusDeps): CommandBus {
   const handlers = new Map(deps.handlers.map((h) => [h.name, h]))
 
@@ -118,7 +121,7 @@ export function createCommandBus(deps: BusDeps): CommandBus {
       return runHistory(name, parsed.data, opts, { undo: deps.undo, execute })
     }
     const handler = handlers.get(name)
-    if (!handler) throw new AppError('INVALID_INPUT', `Unknown command: ${name}`)
+    if (!handler) throw new AppError('INVALID_INPUT', unknownCommandMessage(name))
     const parsed = handler.parse(raw)
     if (!parsed.ok) throw new AppError('INVALID_INPUT', INVALID, { issues: parsed.issues })
     const projectId = handler.projectIdOf?.(parsed.input) ?? null

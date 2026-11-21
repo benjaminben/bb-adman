@@ -101,6 +101,7 @@ export function createCore(opts: CoreOptions) {
     query: createQueries(deps),
     deps,
     commandNames: handlers.map((h) => h.name),
+    isInternal: (name: string) => handlers.some((h) => h.name === name && h.internal),
     projects,
     undo,
     secrets,

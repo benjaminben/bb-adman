@@ -35,6 +35,8 @@ type Parsed = { ok: true; input: unknown } | { ok: false; issues: string[] }
 export type CommandHandler = {
   name: string
   changesAppState: boolean
+  // A system command no window may send (SPEC 4.2 notes): ipc.ts answers it as unknown.
+  internal?: boolean
   parse(raw: unknown): Parsed
   projectIdOf?: (input: unknown) => string
   prepare?: (ctx: PrepareContext, input: unknown) => Promise<unknown>
@@ -46,7 +48,12 @@ export type CommandHandler = {
   ): HandlerResult<unknown> | Promise<HandlerResult<unknown>>
 }
 
-type Common<I> = { name: string; input: z.ZodType<I>; changesAppState?: boolean }
+type Common<I> = {
+  name: string
+  input: z.ZodType<I>
+  changesAppState?: boolean
+  internal?: boolean
+}
 
 type ProjectDef<I, O, P> = Common<I> & {
   projectId: (input: I) => string
@@ -77,6 +84,7 @@ export function defineCommand<I, O, P>(def: ProjectDef<I, O, P> | AppDef<I, O>):
     return {
       name: def.name,
       changesAppState: def.changesAppState ?? false,
+      internal: def.internal ?? false,
       parse,
       projectIdOf: (input) => projectId(input as I),
       ...(prepare ? { prepare: (ctx, input) => prepare(ctx, input as I) } : {}),
@@ -88,6 +96,7 @@ export function defineCommand<I, O, P>(def: ProjectDef<I, O, P> | AppDef<I, O>):
   return {
     name: def.name,
     changesAppState: def.changesAppState ?? false,
+    internal: def.internal ?? false,
     parse,
     run: (ctx, input) => run(ctx, input as I),
   }
