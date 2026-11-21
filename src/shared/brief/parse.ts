@@ -1,11 +1,13 @@
 // SPEC 6.1 "Reading a brief file safely" [1.23], security class. A brief may come from
 // anyone, so it is read as hostile: a size limit before parsing, one parser chosen by
 // `syntax`, YAML with the plain core rules only, and errors that hold none of the file.
-// Pure; never throws.
+// Item 9 [1.31]: YAML is read as a plain subset. The library's tokens are checked before
+// compose (passesYamlTokens), the composed document is walked before toJS (passesYamlWalk),
+// and toJS reads no alias. Pure; never throws.
 import { parseDocument, type DocumentOptions, type ParseOptions, type SchemaOptions } from 'yaml'
 import { fail, type ErrorBody } from '../schemas/result'
 import type { ParseBrief } from '../templates/types'
-import { MAX_BRIEF_ALIASES, MAX_BRIEF_BYTES } from '../config/brief-limits'
+import { MAX_BRIEF_BYTES } from '../config/brief-limits'
 import { briefDraftFrom, BRIEF_UNREADABLE } from './draft'
 import { passesYamlTokens } from './yaml-tokens'
 import { passesYamlWalk } from './yaml-walk'
@@ -38,7 +40,7 @@ function readYaml(text: string): unknown {
   if (!passesYamlTokens(text)) throw new Error('unreadable')
   const doc = parseDocument(text, YAML_OPTIONS)
   if (doc.errors.length > 0 || !passesYamlWalk(doc)) throw new Error('unreadable')
-  return doc.toJS({ maxAliasCount: MAX_BRIEF_ALIASES })
+  return doc.toJS({ maxAliasCount: 0 })
 }
 
 // SPEC 6.1 item 7 [1.26]: a text never has fewer bytes than characters, so a text too long

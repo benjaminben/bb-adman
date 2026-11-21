@@ -24,10 +24,10 @@ describe('parseBrief YAML: the settings are given in the call [SPEC 6.1]', () =>
     })
   })
 
-  it('limits aliases to 100 when turning the document into data, with no reviver', () => {
+  it('turns alias reading off when turning the document into data, with no reviver', () => {
     const toJS = vi.spyOn(yaml.Document.prototype, 'toJS')
     parseBrief('region: US\n', 'yaml')
-    expect(toJS).toHaveBeenCalledWith({ maxAliasCount: 100 })
+    expect(toJS).toHaveBeenCalledWith({ maxAliasCount: 0 })
   })
 })
 
