@@ -191,3 +191,18 @@ describe('Gemini: a break while the answer is read [SPEC 6.2 1.14, G8]', () => {
     expect(failure.error.kind).toBe('offline')
   })
 })
+
+describe('Gemini: only the network call and the body read are marked [SPEC 6.5 1.16 A-08, H19]', () => {
+  it('maps an error while the finished answer is built to other, not offline', async () => {
+    // A status no Response may hold, so building the finished answer throws after the read.
+    const odd = {
+      status: 1000,
+      statusText: '',
+      headers: new Headers(),
+      arrayBuffer: async () => new ArrayBuffer(0),
+    }
+    const { fetchFn } = recordingFetch(async () => odd as unknown as Response)
+    const failure = await failureOf(generateWith(fetchFn))
+    expect(failure.error.kind).toBe('other')
+  })
+})

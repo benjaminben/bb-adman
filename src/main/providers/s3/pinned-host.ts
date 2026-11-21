@@ -52,11 +52,17 @@ export function pinnedHandler(inner: PinnableHandler, hosts: string[]): Pinnable
           detail: `Request refused: ${protocol}//${hostname}${port ? `:${port}` : ''} is not the S3 host`,
         })
       }
+      // [1.16] H19: only the network call and the body read are marked; handing back the
+      // finished answer is not, so an error there stays `other`.
+      let answer: unknown
+      let body: Buffer | undefined
       try {
-        return await finished(await inner.handle(request, options))
+        answer = await inner.handle(request, options)
+        body = await readBody(answer)
       } catch (error) {
         throw new NetworkError(error)
       }
+      return finished(answer, body)
     },
   }
 }
@@ -67,12 +73,18 @@ function isStream(body: unknown): body is AsyncIterable<Buffer | string> {
   return typeof body === 'object' && body !== null && Symbol.asyncIterator in body
 }
 
-// The same answer with its body read in full and handed back as a finished stream.
-async function finished(answer: unknown): Promise<unknown> {
-  const response = (answer as Answer | undefined)?.response
-  if (!response || !isStream(response.body)) return answer
+// The whole answer body, or undefined when the answer has no stream to read.
+async function readBody(answer: unknown): Promise<Buffer | undefined> {
+  const body = (answer as Answer | undefined)?.response?.body
+  if (!isStream(body)) return undefined
   const chunks: Buffer[] = []
-  for await (const chunk of response.body) chunks.push(Buffer.from(chunk))
-  response.body = Readable.from([Buffer.concat(chunks)])
+  for await (const chunk of body) chunks.push(Buffer.from(chunk))
+  return Buffer.concat(chunks)
+}
+
+// The same answer with its body handed back as a finished stream.
+function finished(answer: unknown, body: Buffer | undefined): unknown {
+  const response = (answer as Answer | undefined)?.response
+  if (response && body !== undefined) response.body = Readable.from([body])
   return answer
 }

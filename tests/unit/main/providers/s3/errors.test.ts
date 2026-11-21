@@ -104,3 +104,18 @@ describe('S3: a break while the answer is read [SPEC 6.2 1.14, 14 H2, G8]', () =
     expect(failure.error.kind).toBe('offline')
   })
 })
+
+describe('S3: only the network call and the body read are marked [SPEC 6.5 1.16 A-08, H19]', () => {
+  it('maps an error while the finished answer is built to other, not offline', async () => {
+    const requestHandler = {
+      async handle() {
+        // A frozen answer: the body reads in full, then handing back the finished body throws.
+        const headers = { 'content-type': 'text/plain', 'content-length': '4' }
+        const response = Object.freeze({ statusCode: 200, headers, body: Readable.from(['file']) })
+        return Object.freeze({ response })
+      },
+    }
+    const failure = await failureOf(s3Storage(testContext(), { requestHandler }).read('a.txt'))
+    expect(failure.error.kind).toBe('other')
+  })
+})

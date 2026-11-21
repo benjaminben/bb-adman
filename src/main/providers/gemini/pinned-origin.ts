@@ -40,20 +40,20 @@ export function pinnedFetch(inner: typeof fetch): typeof fetch {
         detail: `Request refused: ${origin ?? 'an unreadable address'} is not the Gemini host`,
       })
     }
+    // [1.16] H19: only the network call and the body read are marked; building the
+    // finished answer is not, so an error there stays `other`.
+    let response: Response
+    let body: ArrayBuffer | null
     try {
-      return await finished(await inner(input, init))
+      response = await inner(input, init)
+      body = NO_BODY.has(response.status) ? null : await response.arrayBuffer()
     } catch (error) {
       throw new NetworkError(error)
     }
+    const { status, statusText, headers } = response
+    return new Response(body, { status, statusText, headers })
   }
 }
 
 // Statuses whose Response may not carry a body.
 const NO_BODY = new Set([204, 205, 304])
-
-// The same answer with its body already read in full.
-async function finished(response: Response): Promise<Response> {
-  const body = NO_BODY.has(response.status) ? null : await response.arrayBuffer()
-  const { status, statusText, headers } = response
-  return new Response(body, { status, statusText, headers })
-}
