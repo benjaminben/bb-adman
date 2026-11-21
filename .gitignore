@@ -8,6 +8,7 @@ resources/ffmpeg/
 out/
 dist/
 test-results/
+design/prototype/photos/
 
 # tooling
 node_modules/
