@@ -1,5 +1,5 @@
 // A small MP4 maker for the fake provider and the tests (SPEC 6.10.7): box headers only, the
-// fields checkMp4 reads, and no picture data. Never used on a file from outside the app.
+// fields checkMp4 reads, one sample entry (MP4-1) and no picture data that decodes. Never used on a file from outside the app.
 const ascii = (text: string) => new TextEncoder().encode(text)
 
 function u32(n: number): Uint8Array {
@@ -40,8 +40,12 @@ export function hdlr(handler: string): Uint8Array {
   return box('hdlr', u32(0), u32(0), ascii(handler), new Uint8Array(12))
 }
 
+// A sample size table listing one sample of 16 bytes (version and flags, size 0, count 1).
+export const stsz = () => box('stsz', u32(0), u32(0), u32(1), u32(16))
+
 export function trak(handler: string, width = 0, height = 0): Uint8Array {
-  return box('trak', tkhd(width, height), box('mdia', hdlr(handler)))
+  const media = box('mdia', hdlr(handler), box('minf', box('stbl', stsz())))
+  return box('trak', tkhd(width, height), media)
 }
 
 export type Mp4Facts = { width: number; height: number; durationMs: number; sound: boolean }

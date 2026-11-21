@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { checkMp4, MP4_REFUSED } from '@/main/providers/video-check'
 import { MAX_VIDEO_BYTES, MAX_VIDEO_MS } from '@/main/providers/picture-limits'
 import { box, ftyp, hdlr, mp4File, mvhd, trak } from '@/main/providers/fake/mp4'
+import { greyClip } from '../../../fixtures/video/grey-clip'
 
 const join = (...parts: Uint8Array[]) => Buffer.concat(parts)
 const head = (size: number, type: string) => {
@@ -118,5 +119,80 @@ describe('checkMp4 [SPEC 6.10.7] (security class)', () => {
       expect(e).toBeInstanceOf(Error)
       expect((e as Error).message).not.toContain('MARK')
     }
+  })
+})
+
+// MP4-1: a clip whose video track lists no sample would pass the box checks and then show a
+// dead player.
+describe('checkMp4 finds at least one video sample [MP4-1] (security class)', () => {
+  const u32 = (n: number) => {
+    const bytes = Buffer.alloc(4)
+    bytes.writeUInt32BE(n, 0)
+    return bytes
+  }
+  // Track header version 0 with this track ID at 12 and the size at 76 and 80.
+  const tkhdWithId = (id: number) =>
+    box('tkhd', Buffer.alloc(12), u32(id), Buffer.alloc(60), u32(64 << 16), u32(64 << 16))
+  const stsz = (count: number) => box('stsz', u32(0), u32(0), u32(count), Buffer.alloc(4 * count))
+  const videoTrack = (id: number, ...stbl: Uint8Array[]) =>
+    box('trak', tkhdWithId(id), box('mdia', hdlr('vide'), box('minf', box('stbl', ...stbl))))
+  const tfhd = (id: number) => box('tfhd', u32(0), u32(id))
+  const trun = (count: number) => box('trun', u32(0), u32(count))
+  const moof = (id: number, count: number) => box('moof', box('traf', tfhd(id), trun(count)))
+  const file = (...parts: Uint8Array[]) => join(ftyp(), ...parts, box('mdat', Buffer.alloc(8)))
+
+  it('refuses a header-only clip whose video track has no sample table', () => {
+    const headerOnly = join(ftyp(), moovWith(box('trak', tkhdWithId(1), box('mdia', hdlr('vide')))))
+    expect(() => checkMp4(headerOnly)).toThrow(MP4_REFUSED.noFrames)
+  })
+
+  it('refuses a video track whose stsz lists 0 samples', () => {
+    expect(() => checkMp4(file(moovWith(videoTrack(1, stsz(0)))))).toThrow(MP4_REFUSED.noFrames)
+  })
+
+  it('refuses when only the sound track lists samples', () => {
+    const sound = box(
+      'trak',
+      tkhdWithId(2),
+      box('mdia', hdlr('soun'), box('minf', box('stbl', stsz(3)))),
+    )
+    const moov = moovWith(videoTrack(1, stsz(0)), sound)
+    expect(() => checkMp4(file(moov))).toThrow(MP4_REFUSED.noFrames)
+  })
+
+  it('refuses an stsz too short to hold its sample count', () => {
+    const short = box('stsz', u32(0), u32(0))
+    expect(() => checkMp4(file(moovWith(videoTrack(1, short))))).toThrow(MP4_REFUSED.badBox)
+  })
+
+  it('accepts a video track whose stsz lists one sample', () => {
+    expect(checkMp4(file(moovWith(videoTrack(1, stsz(1))))).width).toBe(64)
+  })
+
+  it('accepts a fragmented clip whose video track has a trun with samples', () => {
+    const moov = moovWith(videoTrack(1, stsz(0)))
+    expect(checkMp4(file(moov, moof(1, 0), moof(1, 4))).height).toBe(64)
+  })
+
+  it('refuses a fragmented clip whose only samples belong to another track', () => {
+    const moov = moovWith(videoTrack(1, stsz(0)))
+    expect(() => checkMp4(file(moov, moof(2, 4), moof(1, 0)))).toThrow(MP4_REFUSED.noFrames)
+  })
+
+  it('accepts the made-up H.264 fixture', () => {
+    expect(checkMp4(greyClip())).toEqual({
+      width: 64,
+      height: 64,
+      durationMs: 2_000,
+      hasSound: false,
+    })
+  })
+
+  it('the fake mp4File carries one sample and at least one byte of mdat', () => {
+    expect(() => checkMp4(mp4File(facts))).not.toThrow()
+  })
+
+  it('the refusal is a fixed sentence', () => {
+    expect(MP4_REFUSED.noFrames).toBe('The MP4 file has no video frames.')
   })
 })

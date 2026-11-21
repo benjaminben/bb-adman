@@ -41,7 +41,15 @@ export function runRefusal(
 // Playwright was started in, therefore accepts only the npm script's own command line.
 export const REAL_COMMAND: readonly string[] = ['test', '--config', 'playwright.real.config.ts']
 
-export function commandRefusal(argv: readonly string[]): string | null {
+// FN-5: Playwright's watch mode (PWTEST_WATCH) runs the paid case again on each file save.
+export const WATCH_REFUSAL =
+  'test:e2e:real does not run in watch mode. Unset PWTEST_WATCH and run it again.'
+
+export function commandRefusal(
+  argv: readonly string[],
+  env: Record<string, string | undefined> = process.env,
+): string | null {
+  if ((env.PWTEST_WATCH ?? '') !== '') return WATCH_REFUSAL
   const args = argv.slice(2)
   const same =
     args.length === REAL_COMMAND.length && args.every((arg, i) => arg === REAL_COMMAND[i])

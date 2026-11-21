@@ -25,7 +25,7 @@ export default function setUp(config: FullConfig): void {
   // re-review's R-3: a test-server run is refused by its command line, and the workers check
   // again, which they do only after this setup has passed and set RUN_CHECKED.
   delete process.env[RUN_CHECKED]
-  const refusal = runRefusal(config, process.env) ?? commandRefusal(process.argv)
+  const refusal = runRefusal(config, process.env) ?? commandRefusal(process.argv, process.env)
   if (refusal !== null) throw new Error(refusal)
   process.env[RUN_CHECKED] = '1'
   Object.assign(process.env, comfyEnvFrom(readEnvLocal(), process.env))

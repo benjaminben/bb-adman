@@ -20,20 +20,39 @@ export function lastFour(value: string): string {
   return value.length > 4 ? value.slice(-4) : ''
 }
 
+// FN-1: set and delete refuse rather than write a new file over saved keys they cannot read.
+export const UNREADABLE_MESSAGE =
+  'Saved keys could not be read, so no key was changed. They are left as they were.'
+
+type SecretMap = Partial<Record<SecretName, string>>
+
 export function createSecretStore(opts: { file: string; crypto: SecretCrypto }) {
-  function read(): Partial<Record<SecretName, string>> {
+  // `null` means the file exists but does not decrypt to a JSON object.
+  function load(): SecretMap | null {
     if (!fs.existsSync(opts.file) || !opts.crypto.isAvailable()) return {}
     try {
       const parsed: unknown = JSON.parse(opts.crypto.decrypt(fs.readFileSync(opts.file)))
-      return typeof parsed === 'object' && parsed !== null
-        ? (parsed as Record<SecretName, string>)
-        : {}
+      const isMap = typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
+      return isMap ? (parsed as SecretMap) : null
     } catch {
-      return {}
+      return null
     }
   }
 
-  function write(map: Partial<Record<SecretName, string>>): void {
+  // Reading for display: an unreadable file shows as nothing saved.
+  function read(): SecretMap {
+    return load() ?? {}
+  }
+
+  function readForChange(): SecretMap {
+    const map = load()
+    if (map === null) {
+      throw new AppError('RULE_VIOLATION', UNREADABLE_MESSAGE, { reason: 'secrets_unreadable' })
+    }
+    return map
+  }
+
+  function write(map: SecretMap): void {
     fs.mkdirSync(path.dirname(opts.file), { recursive: true })
     const tmp = `${opts.file}.tmp`
     fs.writeFileSync(tmp, opts.crypto.encrypt(JSON.stringify(map)))
@@ -50,10 +69,10 @@ export function createSecretStore(opts: { file: string; crypto: SecretCrypto }) 
           reason: 'secure_storage_unavailable',
         })
       }
-      write({ ...read(), [name]: value })
+      write({ ...readForChange(), [name]: value })
     },
     delete(name: SecretName): void {
-      const map = read()
+      const map = readForChange()
       if (map[name] === undefined)
         throw new AppError('NOT_FOUND', 'No key is saved under that name.')
       delete map[name]
