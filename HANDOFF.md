@@ -3,9 +3,9 @@
 ## Done
 - Fix 1: campaign tab marks follow job.updated (use-project.ts); unit test use-project.test.tsx; e2e fixme removed.
 - Fix 2: Place text with AI finish step (layout-run.ts applyLayout) sends job.markSeen once the result is on the layers; tests in layout-run.test.tsx; workflow 5.1 e2e checks seenAt.
+- Fix 3: usePalette (the one source of every swatch) drops entries that are not exact #RRGGBB; test use-palette.test.tsx.
 
 ## In progress / left
-- Fix 3: palette swatches only for exact #RRGGBB
 - Fix 4: Activity panel covering the campaign page
 
 ## Decisions
@@ -16,6 +16,7 @@
 - Fix 2: a layout result whose apply is refused (locked layer, deleted variant) stays unseen for ever; mark it seen anyway?
 
 ## Verify
+npx vitest run tests/unit/renderer/editor/use-palette.test.tsx
 npx vitest run tests/unit/renderer/editor/layout-run.test.tsx
 npx vitest run tests/unit/renderer/screens/project-home/use-project.test.tsx
 npm run build && npx playwright test tests/e2e/workflow-5-1.spec.ts -g "5.8"
