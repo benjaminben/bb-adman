@@ -65,6 +65,7 @@ afterEach(() => vi.restoreAllMocks())
 
 async function one(text: string, brief = briefPath) {
   const [result] = await checkBriefPictures(brief, [{ name: 'Can', pictures: [text] }])
+  if (!result) throw new Error('No entry for the subject')
   return result
 }
 
