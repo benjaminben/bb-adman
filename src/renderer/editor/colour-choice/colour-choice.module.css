@@ -1,0 +1,54 @@
+/* The same look as the text "Colour" field (text-fields.module.css). */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+.row {
+  display: flex;
+  gap: var(--space-2);
+}
+.hex {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+}
+.picker {
+  width: var(--layer-thumb);
+  padding: 0;
+}
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.swatch {
+  width: var(--layer-thumb);
+  height: var(--layer-thumb);
+  padding: 0;
+}
+.none {
+  height: var(--layer-thumb);
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-small);
+}
+.swatch[aria-pressed='true'],
+.none[aria-pressed='true'] {
+  outline: var(--focus-ring-width) solid var(--color-accent);
+  outline-offset: var(--focus-ring-offset);
+}
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+.error {
+  margin: 0;
+  color: var(--color-danger-text);
+  font-size: var(--font-size-small);
+}
