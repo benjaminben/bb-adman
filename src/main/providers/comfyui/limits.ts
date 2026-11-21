@@ -17,3 +17,14 @@ export const CONNECT_MS = 10_000
 export const SHORT_CALL_MS = 15_000
 export const UPLOAD_MS = 120_000
 export const DOWNLOAD_MS = 300_000
+
+// [1.43] K-3: the adapter's limits, added by CU-4 (provisional, set again after the trial).
+// Poll a run this often.
+export const POLL_MS = 2_000
+// Polls failing in a row for this long end the run as lost_contact (FR-268).
+export const LOST_CONTACT_MS = 5 * 60_000
+// The longest a run may wait in the server's queue, and work on one picture.
+export const QUEUE_WAIT_MS = 12 * 60 * 60_000
+export const PICTURE_WORK_MS = 30 * 60_000
+// SPEC 6.10.14: /interrupt is sent with an ID only from this server version.
+export const MIN_TARGETED_INTERRUPT = '0.30.0'
