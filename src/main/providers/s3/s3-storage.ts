@@ -1,47 +1,28 @@
 // SPEC 6, 6.5: StorageProvider on an S3 bucket. Settings give bucket, region and an optional
 // prefix (the root); the keys come only from ctx.secret, never from the environment or a file.
 // Calls: HeadObject (exists), GetObject (read), lib-storage Upload (write, multipart when
-// large), ListObjectsV2 (list), DeleteObjects (remove). The SDK is told to send each call
-// once: the adapter never repeats a call (SPEC 6, retry rule).
+// large), ListObjectsV2 (list), DeleteObjects (remove). The client (client.ts) sends each call
+// once (SPEC 6, retry rule) and only to the pinned host (SPEC 6 [1.12]).
 import {
   DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
   ListObjectsV2Command,
-  S3Client,
   S3ServiceException,
-  type S3ClientConfig,
 } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import { storageFilePath, storageListPrefix } from '../local-storage/paths'
 import type { AdapterContext, StorageProvider } from '../types'
+import { buildS3Client } from './client'
 import { failureFromS3Error, kindForCode, s3Failure } from './failure'
+import type { PinnableHandler } from './pinned-host'
 
 const DELETE_BATCH = 1000 // DeleteObjects takes at most 1000 keys per call
 
-// Socket limits for the real HTTP handler; tests hand in a stand-in instead.
-const DEFAULT_HANDLER = { connectionTimeout: 10_000, requestTimeout: 60_000 }
-
-type Options = { requestHandler?: S3ClientConfig['requestHandler'] }
-
-function rootOf(prefix: string): string {
-  return prefix.replace(/^\/+|\/+$/g, '')
-}
+type Options = { requestHandler?: PinnableHandler }
 
 export function s3Storage(ctx: AdapterContext, options: Options = {}): StorageProvider {
-  const settings = ctx.settings().storage.s3
-  if (!settings || settings.bucket === '') throw new Error('S3 storage is not set up')
-  const accessKeyId = ctx.secret('s3.accessKeyId')
-  const secretAccessKey = ctx.secret('s3.secretAccessKey')
-  const keys = [accessKeyId, secretAccessKey]
-  const client = new S3Client({
-    region: settings.region,
-    credentials: { accessKeyId, secretAccessKey },
-    maxAttempts: 1,
-    requestHandler: options.requestHandler ?? DEFAULT_HANDLER,
-  })
-  const Bucket = settings.bucket
-  const root = rootOf(settings.prefix)
+  const { client, bucket: Bucket, root, keys } = buildS3Client(ctx, options.requestHandler)
   const keyFor = (path: string) => (root === '' ? path : `${root}/${path}`)
   const rootLength = root === '' ? 0 : root.length + 1
 

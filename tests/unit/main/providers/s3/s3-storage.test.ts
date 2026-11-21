@@ -184,10 +184,12 @@ describe('S3 storage: root, keys and settings [SPEC 6, 6.5]', () => {
     expect(seen).toHaveLength(1)
   })
 
-  it('throws when no S3 settings are saved', () => {
+  it('throws a ProviderFailure of kind other when no S3 settings are saved [1.12]', () => {
     const ctx = testContext()
     const unset = { ...ctx, settings: () => ({ storage: { s3: null, dropbox: null } }) }
-    expect(() => s3Storage(unset as typeof ctx)).toThrow('S3 storage is not set up')
+    expect(() => s3Storage(unset as typeof ctx)).toThrow(
+      expect.objectContaining({ error: { kind: 'other', detail: 'S3 storage is not set up' } }),
+    )
   })
 
   it('is the storage adapter of the s3 provider folder', () => {
