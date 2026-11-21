@@ -24,7 +24,6 @@ const NOT_BUILT = {
 // A good input for each stub command, without projectId.
 const INPUTS: Record<string, object> = {
   'direction.restore': { direction, variants: [snapshot] },
-  'generation.applyFill': { jobId: 'J1' },
 }
 const NAMES = Object.keys(INPUTS)
 const SYSTEM = ['direction.restore', 'variant.remove', 'variant.restore', 'variant.restoreLayers']
