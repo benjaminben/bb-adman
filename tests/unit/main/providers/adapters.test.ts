@@ -11,6 +11,9 @@ const gemini: ProviderInfo = {
   available: true,
   secrets: ['gemini.apiKey'],
   defaultModels: { image: 'image-model-x' },
+  local: false,
+  cancel: 'none',
+  serverText: false,
 }
 
 const settings = { defaultProjectDir: '/w' } as unknown as Settings

@@ -1,6 +1,11 @@
 // Single owner of provider IDs and default model IDs (SPEC 3.1, 6).
 // Phase 1 holds the provider list only; adapters arrive with their phases.
+// [1.24] local, cancel and serverText follow the table of SPEC 6.11.1.
 import type { ProviderInfo } from '../../shared/schemas/queries/app'
+
+// Not local, no way to stop a started request, no server text: every provider but the
+// ones that say otherwise.
+const REMOTE = { local: false, cancel: 'none', serverText: false } as const
 
 const PROVIDERS: ProviderInfo[] = [
   {
@@ -14,6 +19,7 @@ const PROVIDERS: ProviderInfo[] = [
       layout: 'gemini-2.5-flash',
       text: 'gemini-2.5-flash',
     },
+    ...REMOTE,
   },
   {
     id: 'fal-seedance',
@@ -22,6 +28,8 @@ const PROVIDERS: ProviderInfo[] = [
     available: true,
     secrets: ['fal.apiKey'],
     defaultModels: { video: 'bytedance/seedance-2.0/image-to-video' },
+    ...REMOTE,
+    cancel: 'may_finish',
   },
   {
     id: 'firefly',
@@ -30,6 +38,7 @@ const PROVIDERS: ProviderInfo[] = [
     available: false,
     secrets: ['firefly.clientId', 'firefly.clientSecret'],
     defaultModels: {},
+    ...REMOTE,
   },
   {
     id: 's3',
@@ -38,6 +47,7 @@ const PROVIDERS: ProviderInfo[] = [
     available: true,
     secrets: ['s3.accessKeyId', 's3.secretAccessKey'],
     defaultModels: {},
+    ...REMOTE,
   },
   {
     id: 'dropbox',
@@ -46,6 +56,7 @@ const PROVIDERS: ProviderInfo[] = [
     available: true,
     secrets: ['dropbox.refreshToken'],
     defaultModels: {},
+    ...REMOTE,
   },
   {
     id: 'azure-blob',
@@ -54,6 +65,7 @@ const PROVIDERS: ProviderInfo[] = [
     available: false,
     secrets: [],
     defaultModels: {},
+    ...REMOTE,
   },
   {
     id: 'jev',
@@ -62,6 +74,7 @@ const PROVIDERS: ProviderInfo[] = [
     available: false,
     secrets: [],
     defaultModels: {},
+    ...REMOTE,
   },
 ]
 
@@ -72,6 +85,9 @@ const FAKE: ProviderInfo = {
   available: true,
   secrets: [],
   defaultModels: {},
+  local: true,
+  cancel: 'stops',
+  serverText: false,
 }
 
 export const DEFAULT_PROVIDERS = {

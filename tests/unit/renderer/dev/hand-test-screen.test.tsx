@@ -15,6 +15,9 @@ const S3: ProviderInfo = {
   available: true,
   secrets: ['s3.accessKeyId', 's3.secretAccessKey'],
   defaultModels: {},
+  local: false,
+  cancel: 'none',
+  serverText: false,
 }
 
 function devState() {
