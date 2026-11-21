@@ -9,7 +9,7 @@ body,
 }
 body {
   font-family: var(--font-body);
-  font-size: var(--font-size);
+  font-size: var(--font-size-body);
   color: var(--color-text);
   background: var(--color-bg);
 }
@@ -21,7 +21,7 @@ select {
 }
 button {
   padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-bg);
   cursor: pointer;
@@ -29,12 +29,17 @@ button {
 input,
 select {
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-bg);
 }
+/* Code text (the Connect line) uses the token mono font, not the browser default. */
+pre,
+code {
+  font-family: var(--font-mono);
+}
 /* Focus rings are never removed (SPEC 11). */
 :focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
 }

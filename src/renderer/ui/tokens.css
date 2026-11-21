@@ -1,5 +1,7 @@
-/* Design tokens. Placeholder values chosen for 4.5:1 text contrast (SPEC 11);
-   replace with the designer's tokens when SPEC-Design.md lands. */
+/* The one styling source (D-084). Every colour, space, radius, line width, type size and
+   layout width in the renderer comes from these custom properties, so one edit here restyles
+   every component. No other CSS file writes a raw colour or px length. Text colours keep
+   4.5:1 contrast (SPEC 11). */
 :root {
   --color-bg: #ffffff;
   --color-surface: #f4f5f7;
@@ -11,12 +13,21 @@
   --color-danger-bg: #fdecea;
   --color-danger-text: #8a1c12;
   --color-focus: #1f5bd8;
+  --color-overlay: rgb(0 0 0 / 40%);
   --radius: 6px;
+  --border-width: 1px;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-6: 24px;
   --font-body: -apple-system, 'Segoe UI', system-ui, sans-serif;
-  --font-size: 14px;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-size-body: 14px;
+  --font-size-heading: 16px;
+  --width-page: 960px;
+  --width-column-min: 320px;
+  --width-dialog: 440px;
 }

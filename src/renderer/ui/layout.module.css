@@ -1,5 +1,5 @@
 .screen {
-  max-width: 960px;
+  max-width: var(--width-page);
 }
 .card {
   display: flex;
@@ -7,12 +7,12 @@
   gap: var(--space-2);
   padding: var(--space-4);
   margin-bottom: var(--space-4);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
 }
 .card h2 {
   margin: 0 0 var(--space-2);
-  font-size: 16px;
+  font-size: var(--font-size-heading);
 }
 .field {
   display: flex;
@@ -51,6 +51,6 @@
   gap: var(--space-2);
   align-items: center;
   justify-content: space-between;
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
 }
