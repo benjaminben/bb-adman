@@ -61,6 +61,7 @@ export function createCommandBus(deps: BusDeps): CommandBus {
   const gateDeps: AgentRunGateDeps = {
     projects: deps.projects,
     ...(deps.agentRuns ?? NO_AGENT_RUNS),
+    passed: new Map(),
   }
 
   // SPEC 14 [1.37] X2: fail closed; an agent runs only on allow, on ask once allowed, or on
@@ -145,11 +146,15 @@ export function createCommandBus(deps: BusDeps): CommandBus {
       deps.projects.requireOpen(projectId)
       line.projectId = projectId
     }
-    if (opts.actor === 'agent' && agentPolicyFor(name) === 'tick') {
-      agentRunGate(gateDeps, name, parsed.input)
+    const gated = opts.actor === 'agent' && agentPolicyFor(name) === 'tick'
+    const release = gated ? agentRunGate(gateDeps, name, parsed.input) : undefined
+    let run: ProjectRun
+    try {
+      await askCheck(name, opts)
+      run = await runHandler(handler, parsed.input, opts, commandId, projectId)
+    } finally {
+      release?.()
     }
-    await askCheck(name, opts)
-    const run = await runHandler(handler, parsed.input, opts, commandId, projectId)
     line.projectId = projectId ?? run.result.log?.projectId ?? null
     line.ids = run.result.log
     recordUndo(line.projectId, run.result, opts)

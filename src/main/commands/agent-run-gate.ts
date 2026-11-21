@@ -17,7 +17,14 @@ export type AgentRunGateDeps = {
   projects: Pick<ProjectRegistry, 'requireOpen' | 'all'>
   providers: readonly ProviderInfo[]
   settings: { get(): Pick<Settings, 'agentRuns' | 'agentRunLimit'> }
+  // Agent runs per provider that passed the gate and have no job row yet. Counted at step 3,
+  // so calls sent together cannot pass the limit.
+  passed: Map<string, number>
 }
+
+// What the bus calls once the command has ended, whatever its outcome.
+export type GateRelease = () => void
+const NOTHING_HELD: GateRelease = () => undefined
 
 const RUN_COMMANDS = new Set(['generation.runImages', 'generation.startVideo'])
 // Both run inputs require provider, so an agent never runs on the user's default provider.
@@ -52,7 +59,16 @@ function agentActiveRuns(deps: AgentRunGateDeps, providerId: string): number {
   return count
 }
 
-function gateRun(deps: AgentRunGateDeps, providerId: string): void {
+function hold(passed: Map<string, number>, providerId: string): GateRelease {
+  passed.set(providerId, (passed.get(providerId) ?? 0) + 1)
+  return () => {
+    const left = (passed.get(providerId) ?? 1) - 1
+    if (left > 0) passed.set(providerId, left)
+    else passed.delete(providerId)
+  }
+}
+
+function gateRun(deps: AgentRunGateDeps, providerId: string): GateRelease {
   const info = deps.providers.find((p) => p.id === providerId)
   if (!info) throw denied('Agents cannot start runs with that provider.')
   if (agentRunsOffered(info) !== null) throw denied(agentRunsNotOfferedMessage(info.label))
@@ -61,12 +77,13 @@ function gateRun(deps: AgentRunGateDeps, providerId: string): void {
       `The user has not allowed agents to start runs with ${info.label}. They can allow it in Adman's Settings.`,
     )
   }
-  const active = agentActiveRuns(deps, info.id)
+  const active = agentActiveRuns(deps, info.id) + (deps.passed.get(info.id) ?? 0)
   if (active >= deps.settings.get().agentRunLimit) {
     throw denied(
       `Agents already have ${active} runs waiting or running with ${info.label}. That is the limit set in Adman's Settings.`,
     )
   }
+  return hold(deps.passed, info.id)
 }
 
 // job.cancel: no tick needed, only a run the agent started. cancelRefusal follows in the
@@ -79,16 +96,17 @@ function gateCancel(deps: AgentRunGateDeps, input: unknown): void {
   if (row.startedBy !== 'agent') throw denied('Agents can cancel only runs they started.')
 }
 
-export function agentRunGate(deps: AgentRunGateDeps, name: string, input: unknown): void {
+// Throws AGENT_DENIED on a refusal. On a pass it gives the release the bus calls once the
+// command has ended.
+export function agentRunGate(deps: AgentRunGateDeps, name: string, input: unknown): GateRelease {
   if (RUN_COMMANDS.has(name)) {
     const parsed = runInput.safeParse(input)
     if (!parsed.success) throw denied(denialMessage(name))
-    gateRun(deps, parsed.data.provider)
-    return
+    return gateRun(deps, parsed.data.provider)
   }
   if (name === 'job.cancel') {
     gateCancel(deps, input)
-    return
+    return NOTHING_HELD
   }
   // Any other tick command is refused, generation.runFill included.
   throw denied(denialMessage(name))
