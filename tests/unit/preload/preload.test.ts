@@ -32,7 +32,7 @@ beforeEach(async () => {
 
 describe('preload bridge [SPEC 1.3, 4.1]', () => {
   it('exposes window.api with command, query and on, and nothing else', () => {
-    expect(Object.keys(exposed)).toEqual(['api'])
+    expect(Object.keys(exposed)).toEqual(['api', 'drop'])
     expect(Object.keys(exposed.api as object).sort()).toEqual(['command', 'on', 'query'])
   })
 
