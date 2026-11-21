@@ -1,7 +1,8 @@
 // "Make pictures with AI" (spec/screens-ai.md, "The picture section of the properties
 // panel"): mounted by the properties panel for image and background layers, between
-// "Picture" and "Position and size". It holds the generate fields; the earlier options join
-// it in P4-18. Disabled parts follow the layer's lock.
+// "Picture" and "Position and size". It holds the generate fields, then the earlier options
+// (P4-18). Disabled parts follow the layer's lock.
+import { EarlierOptions } from '@/renderer/editor/earlier-options'
 import { GenerateFields } from '@/renderer/editor/generate-fields'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import styles from './picture-ai.module.css'
@@ -21,6 +22,7 @@ export function PictureAi(props: PictureAiProps) {
         campaignId={props.campaignId}
         layer={props.layer}
       />
+      <EarlierOptions projectId={props.projectId} layer={props.layer} />
     </fieldset>
   )
 }
