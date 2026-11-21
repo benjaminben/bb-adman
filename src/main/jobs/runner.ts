@@ -3,7 +3,7 @@
 // of job rows. The row is inserted inside the calling command's transaction; the runner looks
 // at it only after that transaction has ended, so a command that fails starts nothing.
 import { ulid } from 'ulid'
-import { activeJobs, insertQueued, readJob } from './job-store'
+import { activeJobs, insertQueued, markSeenRow, readJob } from './job-store'
 import { emitJob, nowText, type JobRunnerOptions, type RunnerState } from './live'
 import { startJob } from './run-job'
 import { projectOpened } from './start-up'
@@ -44,6 +44,16 @@ export function createJobRunner(opts: JobRunnerOptions): JobService {
         pump()
       })
       return id
+    },
+    markSeen(ctx, jobIds) {
+      const now = nowText(state)
+      const marked = jobIds.filter((id) => markSeenRow(ctx.project, id, now))
+      // After the command's transaction: a rolled-back mark leaves seenAt null, and no event.
+      queueMicrotask(() => {
+        for (const id of marked) {
+          if (readJob(ctx.project, id)?.seenAt) emitJob(state, ctx.project.projectId, id)
+        }
+      })
     },
     cancel: (projectId, jobId) => cancelJob(state, projectId, jobId),
     cancelAll: (projectId) => cancelAll(state, projectId),

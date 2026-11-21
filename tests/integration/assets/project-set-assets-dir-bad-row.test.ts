@@ -16,6 +16,7 @@ const jobs: JobService = {
   cancelAll: async () => {},
   activeCount: () => 0,
   projectOpened: async () => {},
+  markSeen: () => {},
 }
 
 beforeEach(() => {

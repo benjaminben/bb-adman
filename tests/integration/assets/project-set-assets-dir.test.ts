@@ -22,6 +22,7 @@ const jobsCounting = (count: number): JobService => ({
   cancelAll: async () => {},
   activeCount: () => count,
   projectOpened: async () => {},
+  markSeen: () => {},
 })
 const make = (count: number) =>
   makeAssetBus([

@@ -12,5 +12,6 @@ export function createJobServiceStandIn(): JobService {
     cancelAll: async () => undefined,
     activeCount: () => 0,
     projectOpened: async () => undefined,
+    markSeen: () => undefined,
   }
 }

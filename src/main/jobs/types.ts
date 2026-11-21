@@ -28,6 +28,10 @@ export type JobService = {
   cancelAll(projectId: string): Promise<void>
   activeCount(projectId: string): number
   projectOpened(projectId: string): Promise<void>
+  // [1.38] Sets seen_at on each named job that succeeded and has none, inside the calling
+  // command's transaction. Emits job.updated for each row it changed, after the command has
+  // ended.
+  markSeen(ctx: ProjectContext, jobIds: string[]): void
 }
 
 export type JobRunContext = {

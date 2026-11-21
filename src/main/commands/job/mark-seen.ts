@@ -1,11 +1,12 @@
 // job.markSeen (SPEC 4.2 notes, 3.3; FR-218): sets seen_at on each named job that succeeded
-// and has none. Marking twice is not an error. Bumps no rev.
+// and has none. Marking twice is not an error. Bumps no rev. The write is the runner's
+// (SPEC 3.6 "Jobs" item 3 [1.38]), which emits job.updated for each row it marked.
 import { defineCommand } from '../types'
 import type { CoreDeps } from '../../core-deps'
 import { requireJob, wrongState } from './find-job'
 import { jobMarkSeenInput } from '../../../shared/schemas/commands/job'
 
-export function jobMarkSeen(deps: Pick<CoreDeps, 'now'>) {
+export function jobMarkSeen(deps: Pick<CoreDeps, 'jobs'>) {
   return defineCommand({
     name: 'job.markSeen',
     input: jobMarkSeenInput,
@@ -15,11 +16,10 @@ export function jobMarkSeen(deps: Pick<CoreDeps, 'now'>) {
       if (rows.some((r) => r.status !== 'succeeded')) {
         throw wrongState('Only a job that succeeded can be marked as seen.')
       }
-      const now = deps.now().toISOString()
-      const mark = ctx.project.db.prepare(
-        'UPDATE "job" SET "seen_at" = ?, "updated_at" = ? WHERE "id" = ? AND "seen_at" IS NULL',
+      deps.jobs.markSeen(
+        ctx,
+        rows.map((r) => r.id),
       )
-      for (const r of rows) mark.run(now, now, r.id)
       return { data: { jobIds: input.jobIds } }
     },
   })

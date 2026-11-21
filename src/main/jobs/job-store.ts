@@ -66,6 +66,17 @@ export function addPaidCall(h: ProjectHandle, id: string, now: string): void {
     .run(now, id)
 }
 
+// SPEC 3.6 "Jobs" item 3 [1.38]: true when the row was marked now.
+export function markSeenRow(h: ProjectHandle, id: string, now: string): boolean {
+  const r = h.db
+    .prepare(
+      `UPDATE "job" SET "seen_at" = ?, "updated_at" = ?
+       WHERE "id" = ? AND "seen_at" IS NULL AND "status" = 'succeeded'`,
+    )
+    .run(now, now, id)
+  return r.changes > 0
+}
+
 export function readJob(h: ProjectHandle, id: string): JobRow | null {
   return readWireRow(h.db, 'job', { id }) as JobRow | null
 }
