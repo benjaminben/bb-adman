@@ -111,7 +111,7 @@ describe('checkS3Access: failure kinds from recorded replies at the list step', 
 describe('checkS3Access: a missing permission is named by its step', () => {
   it.each<[S3CheckStep, S3CheckStep[], boolean]>([
     ['list', ['list'], false],
-    ['write', ['list', 'write'], false],
+    ['write', ['list', 'write', 'delete'], false],
     ['read', ['list', 'write', 'read', 'delete'], false],
     ['delete', ['list', 'write', 'read', 'delete'], true],
   ])('AccessDenied at %s', async (step, sent, leftFile) => {
@@ -152,9 +152,18 @@ describe('checkS3Access: the delete', () => {
     expect(outcome).toMatchObject({ ok: false, reason, leftFile: true })
   })
 
-  it('is not sent when the write failed', async () => {
-    const { steps } = await run({ write: REPLIES.internal() })
-    expect(steps).toEqual(['list', 'write'])
+  it('is still sent after a failed write, naming the key the write tried [review N-2]', async () => {
+    const { outcome, seen, steps } = await run({ write: REPLIES.internal() })
+    expect(outcome).toMatchObject({ ok: false, reason: 's3_check_failed', leftFile: false })
+    expect(steps).toEqual(['list', 'write', 'delete'])
+    expect(deletedKeys(seen[2] as never)).toEqual([keyOf(seen[1] as never)])
+  })
+
+  it('a failed delete after a failed write keeps the write reason and sets no left file', async () => {
+    const write = network('ETIMEDOUT')
+    const { outcome } = await run({ write, delete: REPLIES.accessDenied() })
+    expect(outcome).toMatchObject({ ok: false, reason: 's3_cannot_reach', leftFile: false })
+    expect(outcome).not.toHaveProperty('permission')
   })
 })
 

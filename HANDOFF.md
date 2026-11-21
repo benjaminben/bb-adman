@@ -12,9 +12,11 @@
 - Nothing in AP-10b.
 
 ## Decisions
+- Review L-1: `tests/unit/main/commands/storage/check-s3.test.ts` pins that the check's context reads only the two S3 keys.
+- Review N-2: the delete follows any tried write, also a failed one; after a failed write the delete neither decides the reason nor sets `leftFile`.
 - The list call uses the prefix `{folder}/adman-connection-check/` (the brief: every listed key under it), not the whole folder.
 - `RequestTimeout` (S3's own timeout answer) is `s3_cannot_reach`.
 - Check-first: `IllegalLocationConstraintException` (400) and `TemporaryRedirect` (307) give `s3_wrong_region` (ruled by the coordinator).
 
 ## Verify
-npx vitest run tests/unit/main/providers/s3/check-access.test.ts tests/integration/commands/storage-check-s3.test.ts tests/unit/main/commands/storage
+npx vitest run tests/unit/main/providers/s3/check-access.test.ts tests/unit/main/commands/storage/check-s3.test.ts tests/integration/commands/storage-check-s3.test.ts tests/unit/main/commands/storage

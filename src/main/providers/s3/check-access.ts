@@ -114,7 +114,6 @@ export async function runS3Check(setup: S3Setup): Promise<S3CheckOutcome> {
       const put = { Bucket, Key, Body: CHECK_TEXT, ContentType: 'text/plain' }
       await client.send(new PutObjectCommand(put))
     }))
-  let deleted = true
   if (written) {
     await attempt('read', async () => {
       const answer = await client.send(new GetObjectCommand({ Bucket, Key }))
@@ -123,6 +122,12 @@ export async function runS3Check(setup: S3Setup): Promise<S3CheckOutcome> {
         throw new Error('GetObject gave other bytes than were written')
       }
     })
+  }
+  // Review N-2: a failed write may still have stored the file (a timeout after it landed), so
+  // the delete follows any write that was tried. After a failed write its own failure is logged
+  // but neither decides the reason nor reports a left file.
+  let deleted = true
+  if (listed) {
     deleted = await attempt('delete', async () => {
       const Delete = { Objects: [{ Key }], Quiet: true }
       const answer = await client.send(new DeleteObjectsCommand({ Bucket, Delete }))
@@ -134,7 +139,7 @@ export async function runS3Check(setup: S3Setup): Promise<S3CheckOutcome> {
   const first = failures[0]
   if (!first) return { ok: true }
   const detail = failures.map((failure) => detailOf(failure, keys)).join('; ')
-  return { ok: false, ...reasonOf(first), leftFile: !deleted, detail }
+  return { ok: false, ...reasonOf(first), leftFile: written && !deleted, detail }
 }
 
 // `requestHandler` replaces the real HTTP handler in tests; the pin still wraps it.
