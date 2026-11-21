@@ -18,6 +18,7 @@ function windowCommand(fixture: DevFixture) {
       execute: (name, input, opts) => fixture.core.bus.execute(name, input, opts),
       query: (name, input, opts) => fixture.core.query(name, input, opts),
       isInternal: fixture.core.isInternal,
+      mayCall: () => true,
     },
   )
   const command = handlers.get(IPC.command)
