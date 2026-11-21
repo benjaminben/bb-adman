@@ -30,7 +30,14 @@ async function freePort(): Promise<number> {
 // The parent's environment without any value of ours, so no key reaches migrate or build.
 function baseEnv(): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...process.env, NEXT_TELEMETRY_DISABLED: '1' }
-  for (const name of ['API_KEY', 'TURSO_AUTH_TOKEN', 'VERCEL', 'APPROVALS_LOCAL_KEY']) {
+  const names = [
+    'API_KEY',
+    'TURSO_DATABASE_URL',
+    'TURSO_AUTH_TOKEN',
+    'VERCEL',
+    'APPROVALS_LOCAL_KEY',
+  ]
+  for (const name of names) {
     delete env[name]
   }
   return env
@@ -76,27 +83,28 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
   const picturePort = await freePort()
   const database = `file:${path.join(folder, 'local.db')}`
 
-  run('db:migrate', { ...baseEnv(), TURSO_DATABASE_URL: database })
-  run('build', baseEnv())
-  const closePictures = await servePictures(pictures, picturePort)
-  const server = spawn('npm', ['run', 'start', '--', '-p', String(port)], {
-    cwd: SERVICE,
-    detached: true,
-    stdio: ['ignore', 'ignore', 'inherit'],
-    env: {
-      ...baseEnv(),
-      API_KEY: key,
-      TURSO_DATABASE_URL: database,
-      TEST_PICTURE_ORIGIN: `http://127.0.0.1:${picturePort}`,
-    },
-  })
-
+  let server: ChildProcess | undefined
+  let closePictures: (() => Promise<void>) | undefined
   const teardown = async () => {
-    stop(server)
-    await closePictures()
+    if (server !== undefined) stop(server)
+    await closePictures?.()
     fs.rmSync(folder, { recursive: true, force: true })
   }
   try {
+    run('db:migrate', { ...baseEnv(), TURSO_DATABASE_URL: database })
+    run('build', baseEnv())
+    closePictures = await servePictures(pictures, picturePort)
+    server = spawn('npm', ['run', 'start', '--', '-p', String(port)], {
+      cwd: SERVICE,
+      detached: true,
+      stdio: ['ignore', 'ignore', 'inherit'],
+      env: {
+        ...baseEnv(),
+        API_KEY: key,
+        TURSO_DATABASE_URL: database,
+        TEST_PICTURE_ORIGIN: `http://127.0.0.1:${picturePort}`,
+      },
+    })
     await waitForHealth(`http://127.0.0.1:${port}`, key, server)
   } catch (error) {
     await teardown()

@@ -16,10 +16,17 @@ import * as screens from '../e2e/screens'
 import * as steps from './app-steps'
 
 const EMAIL = 'ann.reviewer@example.com'
-const folder = process.env.APPROVALS_LOCAL_FOLDER ?? ''
-const port = process.env.APPROVALS_LOCAL_PORT ?? ''
+// A value global-setup.ts passes; a plain error when it is missing.
+function passed(name: string): string {
+  const value = process.env[name]
+  if (value === undefined || value === '') throw new Error(`${name} is not set: run global set-up`)
+  return value
+}
+
+const folder = passed('APPROVALS_LOCAL_FOLDER')
+const port = passed('APPROVALS_LOCAL_PORT')
 const SERVICE = `http://127.0.0.1:${port}`
-const PICTURES = `http://127.0.0.1:${process.env.APPROVALS_LOCAL_PICTURE_PORT ?? ''}`
+const PICTURES = `http://127.0.0.1:${passed('APPROVALS_LOCAL_PICTURE_PORT')}`
 
 let app: ElectronApplication | undefined
 let visitor: BrowserContext | undefined
@@ -75,7 +82,7 @@ test('link, password, sign-off, edit, update, turn off: app and visitor agree', 
 }) => {
   app = await launchApp()
   const page = await app.firstWindow()
-  await steps.setUpSettings(page, SERVICE, process.env.APPROVALS_LOCAL_KEY ?? '')
+  await steps.setUpSettings(page, SERVICE, passed('APPROVALS_LOCAL_KEY'))
   await screens.createProject(page, 'Approvals Local')
   await screens.loadBriefAndCreate(app, page)
   await screens.openCampaign(page)

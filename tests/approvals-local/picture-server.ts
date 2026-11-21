@@ -1,6 +1,7 @@
 // The test picture server of the local proof (AP-13): serves the app's test picture folder
 // ({userData}/approvals-test-pictures/) on 127.0.0.1, GET only. Only the service fetches from it
-// (TEST_PICTURE_ORIGIN). A path that leaves the folder, a link or anything but a file gets 404.
+// (TEST_PICTURE_ORIGIN). A path that leaves the folder (by name or by real path), a link or
+// anything but a file gets 404.
 import fs from 'node:fs'
 import http from 'node:http'
 import path from 'node:path'
@@ -14,8 +15,15 @@ function fileOf(root: string, url: string | undefined): string | null {
   }
   const file = path.resolve(root, `.${pathname}`)
   if (!file.startsWith(root + path.sep)) return null
-  const stats = fs.lstatSync(file, { throwIfNoEntry: false })
-  return stats?.isFile() === true ? file : null
+  try {
+    const stats = fs.lstatSync(file, { throwIfNoEntry: false })
+    if (stats?.isFile() !== true) return null
+    // A link to a folder inside the root is not followed out of it.
+    const realRoot = fs.realpathSync(root)
+    return fs.realpathSync(file).startsWith(realRoot + path.sep) ? file : null
+  } catch {
+    return null
+  }
 }
 
 export async function servePictures(root: string, port: number): Promise<() => Promise<void>> {
