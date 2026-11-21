@@ -128,6 +128,12 @@ test.describe('Phase 3 cases, one app for all', () => {
       if (c.mode === 'overlay-only') {
         // The corner held only the background: in overlay-only mode it is see-through.
         expect(alphaAt(drawn, 2, 2), 'alpha of a corner pixel').toBe(0)
+        // The left stroke of the "O" of "Over video" is drawn.
+        expect(alphaAt(drawn, 90, 189), 'alpha inside the text').toBeGreaterThan(0)
+      } else {
+        // A full draw has a black root, so no pixel is see-through.
+        const seeThrough = drawn.pixels.filter((_, i) => i % 4 === 3 && drawn.pixels[i] !== 255)
+        expect(seeThrough.length, 'pixels of a full draw that are not opaque').toBe(0)
       }
       await checkReference(app, c.name, png)
     })
