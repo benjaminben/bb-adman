@@ -1,0 +1,58 @@
+// SPEC 14 1.41 CU-5a case 1, 1.45 B-1, 1.46: the check. It prints the server's version and,
+// for each `trial` workflow, "complete" or the missing items. The names come from the app's
+// own workflow file, never from the server's text. When the check does not end `ok`, it prints
+// which call failed (its folder or class name, from the app's own file) and the failure's
+// kind, reason and detail. Everything goes through the printer, so the address never shows.
+import type { ComfyClient } from '../../src/main/providers/comfyui/client'
+import { checkServer } from '../../src/main/providers/comfyui/needs'
+import { WORKFLOWS } from '../../src/main/providers/comfyui/workflows'
+import type { WorkflowSpec } from '../../src/main/providers/comfyui/workflows/types'
+import { ProviderFailure } from '../../src/main/providers/types'
+import type { MissingItem } from '../../src/shared/schemas/queries/app'
+import type { ComfyCheck } from '../../src/shared/schemas/commands/comfy-check'
+import type { Print } from './print'
+import type { FailedCall } from './recorder'
+
+export const TRIAL_WORKFLOWS: readonly WorkflowSpec[] = WORKFLOWS.filter(
+  (w) => w.status === 'trial',
+)
+
+function itemLine(item: MissingItem): string {
+  if (item.what === 'version') return `  version: ${item.name} or later`
+  if (item.what === 'model') return `  model file: ${item.folder ?? ''}/${item.name}`
+  return `  node class: ${item.name}`
+}
+
+function failureLines(failed: FailedCall | undefined): string[] {
+  if (!failed) return []
+  const lines = [`The call that failed: ${failed.name}(${failed.arg ?? ''})`]
+  const error = failed.error
+  if (error instanceof ProviderFailure) {
+    const { kind, reason, detail } = error.error
+    lines.push(`kind: ${kind}, reason: ${reason ?? 'none'}, detail: ${detail}`)
+  } else {
+    lines.push(`error: ${error instanceof Error ? error.name : 'unknown'}`)
+  }
+  return lines
+}
+
+export async function runCheckCase(
+  client: Pick<ComfyClient, 'systemStats' | 'modelFiles' | 'nodeInfo'>,
+  failures: readonly FailedCall[],
+  print: Print,
+  workflows: readonly WorkflowSpec[] = TRIAL_WORKFLOWS,
+): Promise<ComfyCheck> {
+  const before = failures.length
+  const result = await checkServer(client, workflows)
+  if (result.outcome !== 'ok') {
+    print(`The check ended: ${result.outcome}`, ...failureLines(failures[before]))
+    return result
+  }
+  print(`ComfyUI version: ${result.version ?? ''}`)
+  if (result.note) print(`Note: ${result.note}`)
+  for (const w of result.workflows) {
+    if (w.missing.length === 0) print(`${w.id}: complete`)
+    else print(`${w.id}: missing`, ...w.missing.map(itemLine))
+  }
+  return result
+}
