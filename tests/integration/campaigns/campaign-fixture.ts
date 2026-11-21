@@ -4,6 +4,7 @@
 import { makeAssetBus } from '../assets/asset-bus'
 import { campaignCommands } from '../../../src/main/commands/campaign'
 import { subjectCommands } from '../../../src/main/commands/subject'
+import { ruleSetCommands } from '../../../src/main/commands/rule-set'
 import { readWireRows } from '../../../src/main/db/rows'
 import type { TableName } from '../../../src/shared/schemas/rows/keys'
 import { testDeps } from './campaign-deps'
@@ -12,7 +13,11 @@ export type CampaignBus = ReturnType<typeof makeCampaignBus>
 
 export function makeCampaignBus() {
   const deps = testDeps()
-  const bus = makeAssetBus([...campaignCommands(deps), ...subjectCommands(deps)])
+  const bus = makeAssetBus([
+    ...campaignCommands(deps),
+    ...subjectCommands(deps),
+    ...ruleSetCommands(deps),
+  ])
   return {
     ...bus,
     rows: (table: TableName) => readWireRows(bus.db, table),

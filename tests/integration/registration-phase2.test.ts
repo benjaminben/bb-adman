@@ -22,7 +22,7 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
   it('gives an empty handler list for each new command domain', () => {
     f = makeFixture()
     const deps = f.core.deps
-    for (const list of [devCommands, generationCommands, ruleSetCommands, storageCommands]) {
+    for (const list of [devCommands, generationCommands, storageCommands]) {
       expect(list(deps)).toEqual([])
     }
   })
@@ -97,6 +97,16 @@ describe('the campaign domain is registered [SPEC 14, slice C]', () => {
       'campaign.create',
       'campaign.update',
       'campaign.delete',
+    ])
+  })
+})
+
+describe('the rule-set domain is registered [SPEC 14, slice C]', () => {
+  it('gives ruleSet.update and ruleSet.copyFrom, in that order', () => {
+    f = makeFixture()
+    expect(ruleSetCommands(f.core.deps).map((h) => h.name)).toEqual([
+      'ruleSet.update',
+      'ruleSet.copyFrom',
     ])
   })
 })
