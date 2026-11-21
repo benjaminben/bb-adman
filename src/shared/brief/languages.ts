@@ -6,8 +6,9 @@ import { REGION_LANGUAGES } from '../config/region-languages'
 const RIGHT_TO_LEFT = new Set(['ar', 'he', 'fa', 'ur', 'yi', 'ps', 'sd', 'dv'])
 
 // Reads the language part of a BCP-47 tag (before the first "-"), in any letter case.
+// [1.26] An "_" also ends it, as in "ar_SA", which hand-written briefs use.
 export const isRightToLeft: IsRightToLeft = (tag) => {
-  const language = tag.trim().split('-')[0] ?? ''
+  const language = tag.trim().split(/[-_]/)[0] ?? ''
   return RIGHT_TO_LEFT.has(language.toLowerCase())
 }
 

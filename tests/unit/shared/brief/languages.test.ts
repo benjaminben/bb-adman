@@ -85,3 +85,13 @@ describe('the region table itself [SPEC 3.1]', () => {
     }
   })
 })
+
+describe('isRightToLeft: an underscore also ends the language part [SPEC 6.1 1.26, 14 P6]', () => {
+  it.each(['ar_SA', 'he_IL', 'AR_sa'])('%s is right-to-left', (tag) => {
+    expect(isRightToLeft(tag)).toBe(true)
+  })
+
+  it.each(['en_US', 'x_ar'])('%s is not right-to-left', (tag) => {
+    expect(isRightToLeft(tag)).toBe(false)
+  })
+})
