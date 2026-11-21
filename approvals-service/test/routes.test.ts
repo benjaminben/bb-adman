@@ -101,6 +101,7 @@ describe('the visitor router', () => {
       'cross-origin-opener-policy': 'same-origin',
       'cache-control': 'no-store',
       'x-robots-tag': 'noindex, nofollow',
+      'strict-transport-security': 'max-age=31536000',
     })
     expect(logged).toEqual([['gallery', 'TypeError']])
   })
