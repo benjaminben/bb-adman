@@ -42,17 +42,19 @@ describe('picture path shapes [spec/approvals.md "Pictures"]', () => {
 
 const BAD_IDS = ['', '.', '..', '/', 'a/b', '..\\x', '%2e%2e', '%2F', ' ', 'x\u0000']
 
+type BadParts = [string, string, string, string, number]
+
 describe('picture path parts refused [spec/approvals.md "Pictures"]', () => {
-  it.each([
-    ...BAD_IDS.map((bad) => ['project', bad, C, V, 1] as const),
+  it.each<BadParts>([
+    ...BAD_IDS.map((bad) => ['project', bad, C, V, 1] as BadParts),
     ['project in lower case', P.toLowerCase(), C, V, 1],
     ['project too short', P.slice(1), C, V, 1],
     ['project with U', `U${P.slice(1)}`, C, V, 1],
-    ...BAD_IDS.map((bad) => ['campaign', P, bad, V, 1] as const),
+    ...BAD_IDS.map((bad) => ['campaign', P, bad, V, 1] as BadParts),
     ['campaign in upper case', P, C.toUpperCase(), V, 1],
     ['campaign without code', P, 'spring-sale', V, 1],
     ['campaign with dots', P, 'spring..sale-abc234', V, 1],
-    ...BAD_IDS.map((bad) => ['variant', P, C, bad, 1] as const),
+    ...BAD_IDS.map((bad) => ['variant', P, C, bad, 1] as BadParts),
     ['variant too long', P, C, 'k3f9q2a', 1],
     ['variant with 1', P, C, 'k3f9q1', 1],
     ['variant with a dash', P, C, 'k3f-q2', 1],
