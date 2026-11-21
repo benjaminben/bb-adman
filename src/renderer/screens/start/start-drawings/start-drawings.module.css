@@ -1,0 +1,169 @@
+/* app-style */
+/* The start page drawings (spec/app-style.md "Icons and drawings"), after
+   design/prototype/css/illustrations.css. Every colour, the line width and the timing are
+   tokens. The resting state of every rule is the finished drawing: with reduce motion the
+   animations are removed and that still frame shows. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: var(--drawing-height);
+}
+.scene {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: var(--drawing-stroke);
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.scene * {
+  vector-effect: non-scaling-stroke; /* one line width on screen, whatever the scale */
+}
+.top {
+  fill: var(--color-bg);
+}
+.left {
+  fill: var(--color-surface);
+}
+.right {
+  fill: var(--color-border);
+}
+.acc .top {
+  fill: var(--color-accent);
+}
+.acc .left {
+  fill: var(--color-accent-soft);
+}
+.acc .right {
+  fill: var(--color-accent-hover);
+}
+.acc .glyph {
+  stroke: var(--color-bg);
+}
+.ghost {
+  stroke: var(--color-text-muted);
+  stroke-dasharray: var(--space-1) var(--space-1);
+}
+.scene .line {
+  vector-effect: none; /* so the dash that draws the line is measured along the path */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.glow {
+  fill: var(--color-accent);
+  opacity: 0;
+}
+.linked .glow.d1 {
+  opacity: 1; /* still frame: the change sits on the first tower */
+}
+.pick {
+  transform: translateY(calc(-1 * var(--space-2)));
+}
+
+/* Motion: one shared cycle; d1 to d4 start each part a little later. */
+.line,
+.rise,
+.glow,
+.pick {
+  animation-duration: var(--motion-calm);
+  animation-timing-function: var(--ease-calm);
+  animation-iteration-count: infinite;
+  animation-fill-mode: backwards;
+}
+.line {
+  animation-name: draw;
+}
+.rise {
+  animation-name: rise;
+}
+.glow {
+  animation-name: glow;
+}
+.pick {
+  animation-name: pick;
+}
+.d1 {
+  animation-delay: calc(var(--motion-calm) * 0.02);
+}
+.d2 {
+  animation-delay: calc(var(--motion-calm) * 0.1);
+}
+.d3 {
+  animation-delay: calc(var(--motion-calm) * 0.18);
+}
+.d4 {
+  animation-delay: calc(var(--motion-calm) * 0.26);
+}
+.glow.d1 {
+  animation-delay: calc(var(--motion-calm) * 0);
+}
+.glow.d2 {
+  animation-delay: calc(var(--motion-calm) * 0.25);
+}
+.glow.d3 {
+  animation-delay: calc(var(--motion-calm) * 0.5);
+}
+.glow.d4 {
+  animation-delay: calc(var(--motion-calm) * 0.75);
+}
+@keyframes draw {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  14%,
+  78% {
+    stroke-dashoffset: 0;
+  }
+  92%,
+  100% {
+    stroke-dashoffset: 1;
+  }
+}
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+  }
+  12%,
+  78% {
+    opacity: 1;
+    transform: none;
+  }
+  90%,
+  100% {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+  }
+}
+@keyframes glow {
+  0%,
+  34%,
+  100% {
+    opacity: 0;
+  }
+  10%,
+  24% {
+    opacity: 1;
+  }
+}
+@keyframes pick {
+  0%,
+  46%,
+  92%,
+  100% {
+    transform: none;
+  }
+  56%,
+  80% {
+    transform: translateY(calc(-1 * var(--space-2)));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene * {
+    animation: none;
+  }
+}

@@ -2,6 +2,7 @@
 import { useState, type FormEvent } from 'react'
 import { useApi, useApp, pickPath } from '@/renderer/app/app-context'
 import layout from '@/renderer/ui/layout.module.css'
+import styles from './new-project-form.module.css'
 
 export function NewProjectForm() {
   const api = useApi()
@@ -25,21 +26,25 @@ export function NewProjectForm() {
   return (
     <form className={layout.card} onSubmit={(e) => void submit(e)}>
       <h2>New project</h2>
-      <label htmlFor="new-project-name">Project name</label>
-      <input
-        id="new-project-name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        autoComplete="off"
-        required
-      />
-      <p id="new-project-location-label" className={layout.label}>
-        Location
-      </p>
-      <p className={layout.path} aria-labelledby="new-project-location-label">
-        {where}
-      </p>
-      <div className={layout.row}>
+      <div className={layout.field}>
+        <label htmlFor="new-project-name">Project name</label>
+        <input
+          id="new-project-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          autoComplete="off"
+          required
+        />
+      </div>
+      <div className={layout.field}>
+        <p id="new-project-location-label" className={layout.label}>
+          Location
+        </p>
+        <p className={layout.path} aria-labelledby="new-project-location-label">
+          {where}
+        </p>
+      </div>
+      <div className={`${layout.row} ${styles.actions}`}>
         <button type="button" onClick={() => void changeLocation()}>
           Change location
         </button>

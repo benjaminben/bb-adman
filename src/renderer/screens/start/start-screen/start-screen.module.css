@@ -1,5 +1,51 @@
-.columns {
+/* app-style */
+/* The start screen (spec/app-style.md "Start screen"): two columns centred in the window. The
+   shell's panel already pads by --space-6, so this padding brings the edge to --space-12. */
+.start {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(var(--width-column-min), 1fr));
-  gap: var(--space-4);
+  grid-template-columns:
+    minmax(0, var(--width-start-art))
+    minmax(var(--width-column-min), var(--width-dialog));
+  gap: var(--space-12);
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  min-height: calc(100vh - var(--bar-height) - var(--space-12));
+  padding: var(--space-6);
+}
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--font-condensed);
+  font-style: italic;
+  font-weight: var(--weight-wordmark);
+  font-size: var(--font-size-wordmark);
+  line-height: var(--leading-tight);
+  letter-spacing: normal;
+  text-transform: uppercase;
+}
+/* The small rotated square in the spot colour before the word. */
+.wordmark::before {
+  content: '';
+  width: calc(var(--font-size-wordmark) * 0.8);
+  height: calc(var(--font-size-wordmark) * 0.8);
+  border-radius: var(--radius-inner);
+  background: var(--color-accent);
+  transform: rotate(12deg);
+}
+.cards {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.open {
+  align-self: flex-start;
 }

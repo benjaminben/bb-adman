@@ -1,0 +1,7 @@
+/* app-style */
+/* The new project card (spec/app-style.md "Start screen"): its buttons sit under the fields,
+   with room above them. */
+.actions {
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
