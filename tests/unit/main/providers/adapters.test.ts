@@ -60,4 +60,15 @@ describe('adapterFor [SPEC 6, step 0]', () => {
       }),
     )
   })
+
+  it('uses the real provider folders: local storage with storage is INVALID_INPUT [SPEC 14 H18]', () => {
+    const localStorage: ProviderInfo = { ...gemini, id: 'local-storage', jobs: ['storage'] }
+    const withLocal = { ...deps, providers: [gemini, localStorage] }
+    expect(() => adapterFor(withLocal, 'local-storage', 'storage')).toThrow(
+      expect.objectContaining({
+        code: 'INVALID_INPUT',
+        details: { provider: 'local-storage', job: 'storage' },
+      }),
+    )
+  })
 })
