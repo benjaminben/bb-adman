@@ -41,3 +41,57 @@ describe('the log line of an unforeseen job error [SPEC 9.1 1.38, 14 1.38 Y9]', 
     })
   })
 })
+
+// A message whose second line looks like a call frame.
+const TRICK = 'it broke\n    at http://10.1.2.3:8188/x (MARKER:1:2)'
+const hasFrame = (stack: string | null) => /^\s*at /m.test(stack ?? '')
+
+describe('the header is cut off the stack first [SPEC 9.1 1.40, 14 1.40 AA1]', () => {
+  it('keeps no line of the message as a frame, for a provider whose message is not logged', () => {
+    const c = jobErrorContext(new Error(TRICK), [], true)
+    expect(c.stack).not.toContain('MARKER')
+    expect(c.stack).not.toContain('10.1.2.3')
+    expect(hasFrame(c.stack)).toBe(true)
+  })
+
+  it('does the same after the error was renamed', () => {
+    const e = new Error(TRICK)
+    e.name = 'RenamedError'
+    const c = jobErrorContext(e, [], true)
+    expect(c.name).toBe('RenamedError')
+    expect(c.stack).not.toContain('MARKER')
+    expect(c.stack).not.toContain('10.1.2.3')
+    expect(hasFrame(c.stack)).toBe(true)
+  })
+
+  it('keeps no message line in the stack when the message is logged', () => {
+    const c = jobErrorContext(new Error(TRICK), [], false)
+    expect(c.stack).not.toContain('MARKER')
+    expect(c.message).toContain('MARKER')
+    expect(hasFrame(c.stack)).toBe(true)
+  })
+
+  it('gives no stack when the message was changed and is not logged', () => {
+    const e = new Error('first words')
+    // The engine writes the stack text when it is first read; read it before the change.
+    expect(e.stack).toContain('first words')
+    e.message = TRICK
+    expect(jobErrorContext(e, [], true).stack).toBeNull()
+  })
+
+  it('keeps the redacted frames when the message was changed and is logged', () => {
+    const e = new Error('first words')
+    e.stack = `${e.stack}\n    at run (/app/${SECRET}.js:1:2)`
+    e.message = 'other words'
+    const c = jobErrorContext(e, [SECRET], false)
+    expect(c.stack).toContain('    at run (/app/[key removed].js:1:2)')
+    expect(c.stack).not.toContain(SECRET)
+    expect(c.stack?.split('\n').every((line) => line.trimStart().startsWith('at '))).toBe(true)
+  })
+
+  it('keeps the frames of an error with an empty message', () => {
+    const c = jobErrorContext(new Error(''), [], false)
+    expect(hasFrame(c.stack)).toBe(true)
+    expect(c.stack?.split('\n').every((line) => line.trimStart().startsWith('at '))).toBe(true)
+  })
+})
