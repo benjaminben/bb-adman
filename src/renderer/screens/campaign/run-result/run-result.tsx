@@ -5,6 +5,7 @@ import { assetUrl } from '@/renderer/ui/asset-url'
 import { resultAssetIds, type JobStore } from '@/renderer/stores/job-store'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import layout from '@/renderer/ui/layout.module.css'
+import styles from './run-result.module.css'
 
 export function RunResult(props: { row: JobRow; projectId: string; store: JobStore }) {
   const { row, projectId, store } = props
@@ -17,9 +18,15 @@ export function RunResult(props: { row: JobRow; projectId: string; store: JobSto
 
   if (assetIds.length === 0) return <p className={layout.muted}>No pictures.</p>
   return (
-    <div className={layout.row}>
+    <div className={styles.results}>
       {assetIds.map((assetId, i) => (
-        <img key={assetId} src={assetUrl(projectId, assetId)} alt={`Result ${i + 1}`} width={160} />
+        <img
+          key={assetId}
+          className={styles.picture}
+          src={assetUrl(projectId, assetId)}
+          alt={`Result ${i + 1}`}
+          width={160}
+        />
       ))}
     </div>
   )

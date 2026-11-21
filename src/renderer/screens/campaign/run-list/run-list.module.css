@@ -1,0 +1,6 @@
+/* app-style */
+/* The runs as one table: an edge and corners around the rows. */
+.rows {
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-md);
+}

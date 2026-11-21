@@ -79,7 +79,7 @@ function Body(props: { projectId: string; read: SlotsRead }) {
 export function SlotView(props: SlotViewProps) {
   const read = useSlots(props.projectId, props.campaignId)
   return (
-    <section aria-label="Slots" className={layout.field}>
+    <section aria-label="Slots" className={layout.card}>
       <h3 className={layout.label}>{HEADING}</h3>
       <Body projectId={props.projectId} read={read} />
     </section>

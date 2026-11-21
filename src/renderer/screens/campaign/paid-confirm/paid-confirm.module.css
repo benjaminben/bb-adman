@@ -1,0 +1,12 @@
+/* app-style */
+/* The paid confirm line: an info notice, the sentence first, its two buttons at the right. */
+.line {
+  align-items: center;
+}
+.text {
+  flex: 1;
+  min-width: 0;
+}
+.line > button + button {
+  margin-left: 0;
+}
