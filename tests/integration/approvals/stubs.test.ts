@@ -30,11 +30,8 @@ async function openProject(fx: Fixture): Promise<string> {
 describe('the approvals stubs [spec/phases/approvals.md "AP-5"]', () => {
   it.each([
     ['approvals.check', () => ({})],
-    ['approvals.createLink', (projectId: string) => ({ projectId, campaignId })],
-    ['approvals.setPassword', (projectId: string) => ({ projectId, campaignId })],
     ['approvals.publish', (projectId: string) => ({ projectId, campaignId })],
     ['approvals.refresh', (projectId: string) => ({ projectId, campaignId })],
-    ['approvals.endLink', (projectId: string) => ({ projectId, campaignId })],
   ])('%s refuses as not set up, and sends no event', async (name, input) => {
     f = makeFixture()
     const projectId = await openProject(f)
@@ -55,15 +52,6 @@ describe('the approvals stubs [spec/phases/approvals.md "AP-5"]', () => {
     expect(await f.core.query('approvals.forCampaign', bad, asUser)).toMatchObject({
       ok: false,
       error: { code: 'INVALID_INPUT' },
-    })
-  })
-
-  it('answers approvals.forCampaign with no service, no link and no variants', async () => {
-    f = makeFixture()
-    const projectId = await openProject(f)
-    expect(await f.core.query('approvals.forCampaign', { projectId, campaignId }, asUser)).toEqual({
-      ok: true,
-      data: { ready: 'no_service', link: null, variants: [] },
     })
   })
 

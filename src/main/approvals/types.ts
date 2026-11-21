@@ -8,6 +8,8 @@ export type PasswordStore = {
   // null when none is kept on this computer.
   read(projectId: string, campaignId: string): string | null
   forget(projectId: string, campaignId: string): void
+  // False when encryption is not available, so keep would refuse (AP-8 ruling).
+  canKeep(): boolean
 }
 
 // Paths come only from src/shared/approvals/picture-paths.ts, inside
@@ -24,4 +26,7 @@ export type ApprovalsDeps = {
   // The test store under its condition (dev tools and ADMAN_APPROVALS_TEST_PICTURES), else the
   // S3 store. Nothing else chooses.
   pictures: () => PictureStore
+  // Sends approvals.changed { projectId, campaignId } (AP-8): IDs only, after a command
+  // changed the local tables.
+  changed(projectId: string, campaignId: string): void
 }

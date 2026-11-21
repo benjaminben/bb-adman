@@ -138,3 +138,14 @@ describe('the password store [spec/approvals.md "Kept passwords"]', () => {
     }
   })
 })
+
+describe('the password store says whether it can keep a password [AP-8 ruling]', () => {
+  it.each([
+    [true, true],
+    [false, false],
+  ])('canKeep is %s when encryption available is %s', (expected, available) => {
+    const { store } = setUp(available)
+    expect(store.canKeep()).toBe(expected)
+    expect(files()).toEqual([])
+  })
+})

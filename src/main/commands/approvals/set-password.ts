@@ -1,23 +1,53 @@
-// approvals.setPassword (spec/approvals.md "Commands"). Security class; agent policy deny. No
-// table changes. Stub (AP-5): refuses in prepare until AP-8 replaces the body.
+// approvals.setPassword (spec/approvals.md "approvals.setPassword"). Security class; agent
+// policy deny. prepare checks the password, makes the shared refusals (no bucket needed, a live
+// link needed) and sets it on the service, which ends every visitor session; run keeps it. No
+// table changes; approvals.changed is still sent, since passwordKept may change.
+// A link the service no longer has: approval_link_gone and nothing changes here; the next
+// refresh turns the local link off. Set on the service but not kept (the store failed): the
+// user is shown the failure and sets a password again.
 import { defineCommand, type HandlerResult } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
-import {
-  approvalsSetPasswordInput,
-  type ApprovalsSetPasswordReply,
-} from '@/shared/schemas/commands/approvals'
+import type { ApprovalsSetPasswordReply } from '@/shared/schemas/commands/approvals'
 import { approvalsRefusal } from '@/shared/approvals/messages'
+import { createApprovalsClient } from '@/main/approvals/client'
+import { linkIsLive } from '@/main/approvals/local-store'
+import { requireApprovalsReady } from '@/main/approvals/ready'
+import { afterCommit } from '@/main/approvals/after-commit'
+import { choosePassword, linkPasswordInput, requireCanKeep } from './password-input'
 
-export function approvalsSetPassword(_deps: CoreDeps) {
+export function approvalsSetPassword(deps: CoreDeps) {
   return defineCommand({
     name: 'approvals.setPassword',
-    input: approvalsSetPasswordInput,
+    input: linkPasswordInput,
     projectId: (input) => input.projectId,
-    async prepare(): Promise<never> {
-      throw approvalsRefusal('approvals_not_set_up')
+    async prepare(ctx, input): Promise<{ password: string }> {
+      const password = choosePassword(input.password)
+      const db = ctx.project.db
+      const service = requireApprovalsReady(deps, db, input.campaignId, {
+        bucket: false,
+        link: 'live',
+        linkIsLive: () => linkIsLive(db, input.campaignId, deps.log),
+      })
+      requireCanKeep(deps.approvals.passwords)
+      const client = createApprovalsClient(service, {
+        allowLocalHttp: deps.devTools,
+        log: deps.log,
+      })
+      const pair = { projectId: input.projectId, campaignId: input.campaignId }
+      if (!(await client.setPassword(pair, password))) throw approvalsRefusal('approval_link_gone')
+      return { password }
     },
-    run(): HandlerResult<ApprovalsSetPasswordReply> {
-      throw approvalsRefusal('approvals_not_set_up')
+    run(_ctx, input, prepared): HandlerResult<ApprovalsSetPasswordReply> {
+      const { projectId, campaignId } = input
+      deps.approvals.passwords.keep(projectId, campaignId, prepared.password)
+      // passwordKept may have changed, so the window reads the link again.
+      afterCommit(
+        deps.log,
+        { projectId, campaignId, command: 'approvals.setPassword' },
+        () => true,
+        () => deps.approvals.changed(projectId, campaignId),
+      )
+      return { data: {}, log: { campaignId: input.campaignId } }
     },
   })
 }
