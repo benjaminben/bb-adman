@@ -106,6 +106,8 @@ export function Editor({ projectId, variantId }: Props) {
                 onSelect={setSelectedId}
               />
               <CanvasView
+                projectId={projectId}
+                store={store}
                 variant={variant}
                 layers={scene}
                 assets={forScene}
