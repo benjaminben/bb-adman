@@ -39,10 +39,61 @@ describe('comfy.check [SPEC 4.2, 6.10.3; FR-252]', () => {
     const eventsBefore = f.events.length
     const result = data<ComfyCheck>(await check())
     // [1.46] The trial workflows are compared after the version; no draft is.
-    expect(NON_DRAFT_WORKFLOWS.every((w) => w.status !== 'draft')).toBe(true)
-    expect(result).toMatchObject({ outcome: 'ok', version: '0.3.40' })
-    expect(result.workflows.map((w) => w.id)).toEqual(NON_DRAFT_WORKFLOWS.map((w) => w.id))
-    expect(s.seen.map((r) => `${r.method} ${r.path}`)[0]).toBe('GET /system_stats')
+    expect(NON_DRAFT_WORKFLOWS.map((w) => w.id)).toEqual([
+      'moss-text-to-image',
+      'h3-text-to-video',
+      'flux3-klein-edit-references',
+    ])
+    // The stand-in is 0.3.40, lists one model file per folder and knows every node class.
+    const model = (folder: string, name: string) => ({ what: 'model', name, folder })
+    expect(result).toEqual({
+      outcome: 'ok',
+      version: '0.3.40',
+      workflows: [
+        {
+          id: 'moss-text-to-image',
+          missing: [
+            { what: 'version', name: '0.42.0' },
+            model('diffusion_models', 'moss_image_sft_int8_convrot.safetensors'),
+            model('text_encoders', 'qwen3.5_9b_w4a8_gptq.safetensors'),
+            model('vae', 'flux2-vae_small.safetensors'),
+          ],
+        },
+        {
+          id: 'h3-text-to-video',
+          missing: [
+            { what: 'version', name: '0.33.0' },
+            model('diffusion_models', 'minimax_h3_fl2va_pruned_int8_convrot.safetensors'),
+            model('text_encoders', 'qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors'),
+            model('vae', 'minimax_h3_video_vae_int8_convrot.safetensors'),
+            model('vae', 'minimax_h3_audio_vae_fp32.safetensors'),
+          ],
+        },
+        {
+          id: 'flux3-klein-edit-references',
+          missing: [
+            model('diffusion_models', 'flux3-image-klein-base-int8-convrot.safetensors'),
+            model('text_encoders', 'qwen3vl_4b_int8_convrot.safetensors'),
+            model('vae', 'flux2-vae.safetensors'),
+          ],
+        },
+      ],
+    })
+    const asked = s.seen.map((r) => `${r.method} ${r.path}`)
+    expect(asked[0]).toBe('GET /system_stats')
+    // Classes and folders that only drafts name are never asked for.
+    for (const draftOnly of [
+      'TextEncodeQwenImageEditPlus',
+      'ImagePadForOutpaint',
+      'VAEEncodeForInpaint',
+      'EmptyHunyuanLatentVideo',
+      '/models/loras',
+    ]) {
+      expect(
+        asked.some((p) => p.includes(draftOnly)),
+        draftOnly,
+      ).toBe(false)
+    }
     const text = JSON.stringify(result)
     expect(text).not.toContain(s.origin)
     expect(text).not.toContain(String(s.port))
