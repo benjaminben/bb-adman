@@ -2,15 +2,11 @@
 // picture routes are stubs answering "Not found." until AP-4 gives them bodies.
 import type { Parts } from '../app'
 import type { Env } from '../env'
-import { listSignoffs } from '../db/signoffs'
-import { listVariants } from '../db/variants'
-import { readForm, refused } from './forms'
+import { enterLink, leaveLink, openGallery } from './actions'
 import { galleryPage } from './gallery-page'
 import { pageReply, redirect, stylesheetHeaders, textHeaders } from './headers'
-import { passwordPage } from './password-page'
-import { clearedCookie, endSession, readSession, startSession } from './session'
+import { passwordPage, refusedPage } from './password-page'
 import { STYLES } from './styles'
-import { tryPassword } from './throttle'
 
 export type VisitorContext = {
   request: Request
@@ -50,41 +46,27 @@ function failed(request: Request): Response {
 
 const stub: VisitorHandler = async () => notFound()
 
-// Every page and form takes the link from the path's slug and its session, never from a field.
+// The logic is in actions.ts; these handlers only render its results.
 const gallery: VisitorHandler = async ({ request, env, parts, params }) => {
   const slug = params[0] ?? ''
-  const { session } = await readSession(env.DB, request, slug, parts.now())
-  if (session === null) return pageReply(request, passwordPage(slug, false))
-  const linkId = session.link.id
-  const [variants, signoffs] = await Promise.all([
-    listVariants(env.DB, linkId),
-    listSignoffs(env.DB, linkId),
-  ])
-  const m = new URL(request.url).searchParams.get('m')
-  const page = galleryPage({ link: session.link, variants, signoffs, now: parts.now(), m })
-  return pageReply(request, page)
+  const result = await openGallery(env.DB, request, slug, parts.now())
+  if (result.kind === 'password') return pageReply(request, passwordPage(slug, false))
+  return pageReply(request, galleryPage(result))
 }
 
 // Wrong password, unknown slug and too many tries all get this one reply.
 const enter: VisitorHandler = async ({ request, env, parts, params }) => {
   const slug = params[0] ?? ''
-  const fields = await readForm(request)
-  if (fields === null) return refused(request)
-  const password = fields.get('password') ?? ''
-  const linkId = await tryPassword(env.DB, slug, password, parts.now())
-  if (linkId === null) return pageReply(request, passwordPage(slug, true))
-  const cookie = await startSession(env.DB, linkId, slug, parts)
-  return redirect(request, `/l/${slug}`, cookie)
+  const result = await enterLink(env.DB, request, slug, parts)
+  if (result.kind === 'refused') return pageReply(request, refusedPage(), 403)
+  if (result.kind === 'failed') return pageReply(request, passwordPage(slug, true))
+  return redirect(request, result.location, result.cookie)
 }
 
 const leave: VisitorHandler = async ({ request, env, parts, params }) => {
-  const slug = params[0] ?? ''
-  const fields = await readForm(request)
-  if (fields === null) return refused(request)
-  const { session } = await readSession(env.DB, request, slug, parts.now())
-  if (session === null) return refused(request)
-  await endSession(env.DB, session)
-  return redirect(request, `/l/${slug}`, clearedCookie(slug))
+  const result = await leaveLink(env.DB, request, params[0] ?? '', parts.now())
+  if (result.kind === 'refused') return pageReply(request, refusedPage(), 403)
+  return redirect(request, result.location, result.cookie)
 }
 
 const stylesheet: VisitorHandler = async () =>

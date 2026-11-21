@@ -1,9 +1,5 @@
 // spec/approvals-service.md "Forms that write": the checks every POST under /l/ passes before
-// anything is read or written.
-import { pageReply } from './headers'
-import { documentOf, html } from './html'
-
-const REFUSED = 'This form could not be sent. Open the link again and try once more.'
+// anything is read or written. Logic only: the 403 page is in password-page.ts.
 
 export const FORM_LIMIT = 8 * 1024
 
@@ -49,13 +45,4 @@ export async function readForm(request: Request): Promise<URLSearchParams | null
   if (!sameOrigin(request) || !isForm(request)) return null
   const text = await readCapped(request)
   return text === null ? null : new URLSearchParams(text)
-}
-
-export function refused(request: Request): Response {
-  const page = documentOf(
-    'Review campaign',
-    html`<h1>Review campaign</h1>
-      <p>${REFUSED}</p>`,
-  )
-  return pageReply(request, page, 403)
 }

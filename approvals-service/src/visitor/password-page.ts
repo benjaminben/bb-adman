@@ -25,3 +25,14 @@ export function passwordPage(slug: string, failed: boolean) {
       </form>`,
   )
 }
+
+const REFUSED = 'This form could not be sent. Open the link again and try once more.'
+
+// The 403 page of "Forms that write".
+export function refusedPage() {
+  return documentOf(
+    'Review campaign',
+    html`<h1>Review campaign</h1>
+      <p>${REFUSED}</p>`,
+  )
+}
