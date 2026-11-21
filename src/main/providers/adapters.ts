@@ -4,6 +4,7 @@
 import type { CoreDeps } from '../core-deps'
 import { AppError } from '../../shared/schemas/result'
 import { adapters as azureBlob } from './azure-blob'
+import { adapters as comfyui } from './comfyui'
 import { adapters as dropbox } from './dropbox'
 import { adapters as falSeedance } from './fal-seedance'
 import { adapters as fake } from './fake'
@@ -13,6 +14,7 @@ import type { AdapterContext, AdapterJob, ProviderAdapters } from './types'
 
 const FOLDERS: Record<string, ProviderAdapters> = {
   'azure-blob': azureBlob,
+  comfyui,
   dropbox,
   'fal-seedance': falSeedance,
   fake,
