@@ -57,6 +57,11 @@ export const projectPackageInput = projectScoped.extend({
 })
 export type ProjectPackageInput = z.infer<typeof projectPackageInput>
 
+// project.setAssetsDir (FR-007, R-07; SPEC 14, Slice A rulings point 4). dir comes from the
+// folder picker; the command moves no file and makes no folder.
+export const projectSetAssetsDirInput = projectScoped.extend({ dir: z.string().min(1) })
+export type ProjectSetAssetsDirInput = z.infer<typeof projectSetAssetsDirInput>
+
 export type PackageResult = {
   packagePath: string
   fileCount: number

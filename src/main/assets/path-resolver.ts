@@ -72,3 +72,9 @@ export function siblingCandidate(namedAbsPath: string, newFile: string, absPath:
   const candidate = path.join(newDir, rel)
   return pathInside(newDir, candidate) === null ? null : { candidate, newDir }
 }
+
+// project.setAssetsDir (SPEC 14, Slice A rulings point 4): where a managed file would be in
+// another assets folder, keeping its own {assetId}.{ext} name.
+export function managedPathIn(assetsDir: string, stored: { id: string; absPath: string }): string {
+  return managedPath(assetsDir, stored.id, path.extname(stored.absPath).slice(1))
+}
