@@ -2,6 +2,7 @@
 // (or a text mark), the name, and the marks: "Empty", "Does not fit", "File not found", and
 // "Stays at the bottom" for the background. Clicking the row selects its layer. The hide and
 // lock buttons, rename and drag come with P3-12.
+import { Fragment } from 'react'
 import type { LayerRow as Layer } from '@/shared/schemas/rows/layer'
 import { assetUrl } from '@/renderer/ui/asset-url'
 import styles from './layer-row.module.css'
@@ -57,6 +58,7 @@ function Thumb(props: Pick<LayerRowProps, 'projectId' | 'layer' | 'assets'>) {
 
 export function LayerRow(props: LayerRowProps) {
   const { layer } = props
+  const marks = rowMarks(layer, props.assets)
   return (
     <button
       type="button"
@@ -66,13 +68,19 @@ export function LayerRow(props: LayerRowProps) {
       onClick={() => props.onSelect(layer.id)}
     >
       <Thumb projectId={props.projectId} layer={layer} assets={props.assets} />
-      <span className={styles.name}>{layer.name}</span>
-      {rowMarks(layer, props.assets).map((mark) => (
-        <span key={mark} className={styles.mark}>
-          {' '}
-          {mark}
-        </span>
-      ))}
+      <span className={styles.text}>
+        <span className={styles.name}>{layer.name}</span>
+        {marks.length > 0 && (
+          <span className={styles.marks}>
+            {marks.map((mark) => (
+              <Fragment key={mark}>
+                {' '}
+                <span className={styles.mark}>{mark}</span>
+              </Fragment>
+            ))}
+          </span>
+        )}
+      </span>
     </button>
   )
 }

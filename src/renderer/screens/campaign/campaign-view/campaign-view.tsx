@@ -42,7 +42,7 @@ export function CampaignView(props: { projectId: string; campaignId: string; onB
   const [store] = useState(() => createJobStore({ api, command }, projectId))
   const [chosenId, setChosenId] = useState<string | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
-  const editorHost = useRef<HTMLDivElement>(null)
+  const page = useRef<HTMLElement>(null)
   // SPEC 14 1.46 TP-5: reference ticks last while the page is open, across variants.
   const [ticks, setTicks] = useState<string[]>([])
   const variantId = chosenId ?? data?.variants[0]?.id ?? null
@@ -52,9 +52,9 @@ export function CampaignView(props: { projectId: string; campaignId: string; onB
     if (variantId !== null) void store.getState().load(variantId)
   }, [store, variantId])
 
-  // The editor fills the window's height, so its top is brought into view when it opens.
+  // The editor fills the window's height, so the page's top is brought into view when it opens.
   useEffect(() => {
-    if (openId !== null) editorHost.current?.scrollIntoView?.({ block: 'start' })
+    if (openId !== null) page.current?.scrollIntoView?.({ block: 'start' })
   }, [openId])
 
   function open(id: string) {
@@ -65,28 +65,28 @@ export function CampaignView(props: { projectId: string; campaignId: string; onB
   const variant = data?.variants.find((v) => v.id === variantId)
   const editing = data !== null && openId !== null
   return (
-    <section className={editing ? styles.editing : layout.card} aria-label="Campaign">
+    <section ref={page} className={editing ? styles.editing : layout.card} aria-label="Campaign">
       <div className={layout.row}>
         <button type="button" onClick={props.onBack}>
           Back to project
         </button>
         {editing && (
-          <button type="button" onClick={() => setOpenId(null)}>
-            Back to overview
-          </button>
+          <>
+            <button type="button" onClick={() => setOpenId(null)}>
+              Back to overview
+            </button>
+            <h2>{data.campaign.name}</h2>
+          </>
         )}
       </div>
       {data === null ? (
         <p className={layout.muted}>Loading the campaign…</p>
       ) : editing ? (
-        <>
-          <h2>{data.campaign.name}</h2>
-          <div ref={editorHost} className={styles.editorHost}>
-            <Suspense fallback={loadingVariant}>
-              <Editor key={openId} projectId={projectId} variantId={openId} />
-            </Suspense>
-          </div>
-        </>
+        <div className={styles.editorHost}>
+          <Suspense fallback={loadingVariant}>
+            <Editor key={openId} projectId={projectId} variantId={openId} />
+          </Suspense>
+        </div>
       ) : (
         <>
           <h2>{data.campaign.name}</h2>
