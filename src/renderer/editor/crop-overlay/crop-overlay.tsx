@@ -2,10 +2,10 @@
 // outside the crop, and the crop as a rectangle with eight handles, all in the layer's own
 // turned frame. Dragging inside moves the crop; handles resize it. The crop keeps the box's
 // shape and stays inside the picture. The picture's own size is the loaded picture's natural
-// size. "Done" or Enter hands the crop in source pixels to onDone; "Cancel" calls onCancel.
+// size. Enter hands the crop in source pixels to onDone; "Done" and "Cancel" are in CropBar.
 // The keyboard path, while the crop has focus: the arrows move it by one box pixel; Shift with
 // Right or Up makes it larger and Shift with Left or Down smaller, by ten box pixels of width.
-import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { placePicture, type Placement, type Size } from '@/shared/scene/background-placement'
 import { HANDLES } from '@/renderer/editor/geometry-math'
@@ -20,8 +20,12 @@ export type CropOverlayProps = {
   // The picture's address on the asset scheme.
   url: string
   scale: number
-  onDone: (crop: Rect) => void
-  onCancel: () => void
+  // The crop being made, in source pixels; null until the picture has loaded.
+  crop: Rect | null
+  // The ID of the hint that says how to use the keys.
+  hintId: string
+  onChange: (crop: Rect) => void
+  onDone: () => void
 }
 
 const STEP_PX = 1
@@ -50,12 +54,12 @@ const scaled = (r: Rect, s: number): CSSProperties => ({
   height: r.height * s,
 })
 
-export function CropOverlay({ layer, url, scale, onDone, onCancel }: CropOverlayProps) {
+export function CropOverlay(props: CropOverlayProps) {
+  const { layer, scale, crop, onChange: setCrop, onDone } = props
   const { width, height, rotation } = layer.geometry
   const box = { width, height }
   const aspect = width / height
   const [source, setSource] = useState<Size | null>(null)
-  const [crop, setCrop] = useState<Rect | null>(null)
   const cropRef = useRef<HTMLDivElement>(null)
   const fit = layer.type === 'background' ? 'cover' : 'contain'
   // Where the picture sits now; it stays there while the crop moves over it.
@@ -63,7 +67,6 @@ export function CropOverlay({ layer, url, scale, onDone, onCancel }: CropOverlay
   const unit = place && source ? (place.width / source.width) * scale : 1
   const press = useCropDrag({ crop, source, aspect, rotation, unit, onChange: setCrop })
   const ready = crop !== null
-  const hintId = useId()
 
   useEffect(() => {
     if (ready) cropRef.current?.focus()
@@ -82,7 +85,7 @@ export function CropOverlay({ layer, url, scale, onDone, onCancel }: CropOverlay
     const grow = GROWS.find(([name]) => is(name))
     if (move) setCrop(moveCrop(crop, { x: move[1] / k, y: move[2] / k }, source))
     else if (grow) setCrop(growCrop(crop, grow[1] / k, source, aspect))
-    else if (is('applyCrop')) onDone(crop)
+    else if (is('applyCrop')) onDone()
     else if (!BLOCKED.some(is)) return
     event.preventDefault()
   }
@@ -97,7 +100,7 @@ export function CropOverlay({ layer, url, scale, onDone, onCancel }: CropOverlay
       <div className={styles.frame} style={frame} data-crop-frame>
         <img
           alt=""
-          src={url}
+          src={props.url}
           draggable={false}
           data-crop-picture
           className={styles.picture}
@@ -118,7 +121,7 @@ export function CropOverlay({ layer, url, scale, onDone, onCancel }: CropOverlay
               ref={cropRef}
               role="group"
               aria-label={`Crop, ${layer.name}`}
-              aria-describedby={hintId}
+              aria-describedby={props.hintId}
               tabIndex={0}
               className={styles.crop}
               style={scaled(shown, scale)}
@@ -137,17 +140,6 @@ export function CropOverlay({ layer, url, scale, onDone, onCancel }: CropOverlay
             </div>
           </>
         )}
-      </div>
-      <div className={styles.bar}>
-        <p id={hintId} className={styles.hint}>
-          Drag or use the arrows to move the crop. Shift and the arrows resize it.
-        </p>
-        <button type="button" disabled={!crop} onClick={() => crop && onDone(crop)}>
-          Done
-        </button>
-        <button type="button" onClick={onCancel}>
-          Cancel
-        </button>
       </div>
     </div>
   )

@@ -12,7 +12,7 @@ import type { SceneAsset, SceneSettled } from '@/shared/scene/types'
 import { Scene } from '@/shared/scene/scene'
 import { useApp } from '@/renderer/app/app-context'
 import { CanvasOverlay, useCanvasDrag, useLayerKeys } from '@/renderer/editor/canvas-overlay'
-import { CropOverlay, useCropMode } from '@/renderer/editor/crop-overlay'
+import { CropBar, CropOverlay, useCropMode } from '@/renderer/editor/crop-overlay'
 import { useEditorKey } from '@/renderer/editor/use-editor-key'
 import { fitScale, scaleOf, zoomIn, zoomLabel, zoomOut, type Zoom } from '@/renderer/editor/zoom'
 import { pickLayer } from '@/renderer/editor/geometry-math'
@@ -77,6 +77,15 @@ export function CanvasView(props: CanvasViewProps) {
 
   return (
     <section className={styles.canvas} aria-label={`Canvas, ${variant.title}`} tabIndex={0}>
+      {crop.layer && (
+        <CropBar
+          layerName={crop.layer.name}
+          hintId={crop.hintId}
+          ready={crop.crop !== null}
+          onDone={crop.done}
+          onCancel={crop.cancel}
+        />
+      )}
       {/* Pointer only: every canvas action has a keyboard path in the list and the panel. */}
       <div
         ref={area}
@@ -118,8 +127,10 @@ export function CanvasView(props: CanvasViewProps) {
               layer={crop.layer}
               url={crop.url}
               scale={scale}
+              crop={crop.crop}
+              hintId={crop.hintId}
+              onChange={crop.change}
               onDone={crop.done}
-              onCancel={crop.cancel}
             />
           )}
         </div>

@@ -1,9 +1,10 @@
 // spec/editor.md, "Crop mode" [FR-077, FR-094]: which layer is cropped, how crop mode starts and
 // how it ends. It starts by a double-click on a picture layer that has a picture, or by "Crop…"
-// in the properties panel; never for a locked layer. It ends when the layer goes away, is
+// in the properties panel; never for a locked layer. The crop being made is held here, so the
+// overlay on the canvas and the bar above it share it. It ends when the layer goes away, is
 // locked, loses its picture or is no longer selected. "Done" sends one
 // layer.update { geometry: { crop } } in source pixels (one undo step); "Cancel" sends nothing.
-import { useEffect, type MouseEvent } from 'react'
+import { useEffect, useId, useState, type MouseEvent } from 'react'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { SceneAsset } from '@/shared/scene/types'
 import { pickLayer } from '@/renderer/editor/geometry-math'
@@ -37,14 +38,28 @@ export function useCropMode(args: Args) {
   const { selected, cropId, onCrop } = args
   const picture = selected?.id === cropId ? croppable(selected, args.assets) : null
   const layer = picture ? selected : null
+  // The crop being made, kept with the layer it belongs to.
+  const [draft, setDraft] = useState<{ layerId: string; crop: Rect } | null>(null)
+  const crop = layer && draft?.layerId === layer.id ? draft.crop : null
+  const hintId = useId()
 
   useEffect(() => {
     if (cropId !== null && !layer) onCrop(null)
   }, [cropId, layer, onCrop])
 
+  function leave() {
+    setDraft(null)
+    onCrop(null)
+  }
+
   return {
     layer,
     url: picture?.url ?? null,
+    crop,
+    hintId,
+    change(next: Rect) {
+      if (layer) setDraft({ layerId: layer.id, crop: next })
+    },
     // A double-click on the Scene, in screen pixels from the stage's corner.
     enter(event: MouseEvent<HTMLElement>) {
       const rect = event.currentTarget.getBoundingClientRect()
@@ -58,10 +73,10 @@ export function useCropMode(args: Args) {
       args.onSelect(found.id)
       onCrop(found.id)
     },
-    cancel: () => onCrop(null),
-    done(crop: Rect) {
-      onCrop(null)
-      if (!layer || same(layer.geometry.crop, crop)) return
+    cancel: leave,
+    done() {
+      leave()
+      if (!layer || !crop || same(layer.geometry.crop, crop)) return
       const patch = { geometry: { crop } }
       void args.command('layer.update', { projectId: args.projectId, layerId: layer.id, patch })
     },
