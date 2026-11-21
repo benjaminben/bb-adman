@@ -13,6 +13,8 @@ import { DIALOG_QUERIES, runDialogQuery } from './windows/dialogs'
 import { eventSender, fromMainFrame, registerIpc } from './ipc'
 import { projectPathFromArgv } from './open-file'
 import { safeStorageCrypto } from './secrets/safe-storage'
+import { createDraw } from './render/draw'
+import { endRenderWindow } from './render/render-window'
 
 if (process.env.ADMAN_USER_DATA_DIR) app.setPath('userData', process.env.ADMAN_USER_DATA_DIR)
 registerAssetScheme(protocol)
@@ -30,8 +32,10 @@ const liveAppWindow = () => (appWindow && !appWindow.isDestroyed() ? appWindow :
 function openAppWindow(): BrowserWindow {
   const win = createAppWindow()
   appWindow = win
+  // The render window ends first, so window-all-closed still quits the app (OI-23).
   win.on('closed', () => {
     if (appWindow === win) appWindow = null
+    endRenderWindow()
   })
   return win
 }
@@ -85,6 +89,7 @@ function start(): void {
     devTools: devToolsEnabled(app.isPackaged, process.env),
     toPng: pngConverter((buffer) => nativeImage.createFromBuffer(buffer)),
     fitPicture: pictureFitter((buffer) => nativeImage.createFromBuffer(buffer)),
+    drawScene: createDraw(),
   })
   const ready = core
   ready.log.write({
@@ -138,6 +143,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('before-quit', () => {
     // Quitting closes the MCP listener and drops its sessions (SPEC 5.3).
     void core?.mcp.stop()
+    endRenderWindow()
     core?.closeAll()
   })
   void app.whenReady().then(start)

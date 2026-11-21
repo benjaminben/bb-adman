@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import type { Plugin } from 'vite'
@@ -19,6 +20,8 @@ function contentSecurityPolicy(command: 'build' | 'serve'): Plugin {
   }
 }
 
+const page = (file: string) => fileURLToPath(new URL(file, import.meta.url))
+
 export default defineConfig(({ command }) => ({
   main: { resolve: { alias: srcAlias } },
   preload: {
@@ -26,11 +29,24 @@ export default defineConfig(({ command }) => ({
     build: {
       // A sandboxed preload must be one CommonJS file with nothing left to require.
       externalizeDeps: false,
-      rollupOptions: { output: { format: 'cjs', entryFileNames: '[name].cjs' } },
+      // Two preloads: the app window's and the render window's (spec/scene.md, "Files").
+      rollupOptions: {
+        input: { index: page('src/preload/index.ts'), render: page('src/preload/render.ts') },
+        output: { format: 'cjs', entryFileNames: '[name].cjs' },
+      },
     },
   },
   renderer: {
     resolve: { alias: srcAlias },
     plugins: [react(), contentSecurityPolicy(command)],
+    // Two pages, each given the policy tag: the app window's and the render window's.
+    build: {
+      rollupOptions: {
+        input: {
+          index: page('src/renderer/index.html'),
+          render: page('src/renderer/render.html'),
+        },
+      },
+    },
   },
 }))
