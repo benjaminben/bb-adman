@@ -1,0 +1,94 @@
+// brief.parse (SPEC 4.2, 6.1; FR-020, FR-022). Writes nothing: the file is read in
+// prepare and the draft is returned from run (SPEC 3.6). A brief has no size limit
+// (SPEC 14 1.39 Z7), so the whole file is read. Nothing of the brief reaches the log.
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { defineCommand } from '../types'
+import { parseBriefFile } from '../../../shared/brief/parse'
+import { primaryLanguageFor } from '../../../shared/brief/languages'
+import { briefParseInput, type BriefParsed } from '../../../shared/schemas/commands/brief'
+import type { BriefDraft } from '../../../shared/schemas/brief'
+import { AppError, type ErrorBody, type Result } from '../../../shared/schemas/result'
+import type { BriefSyntax } from '../../../shared/templates/types'
+
+// The bus logs an error's message. The reply names the bad line's text; the log line gets
+// the message without it, so the reason and the line number are logged and no word of the
+// file is (SPEC 14 1.39, "The YAML message").
+class BriefError extends AppError {
+  private readonly body: ErrorBody
+
+  constructor(body: ErrorBody) {
+    const line = body.details?.line
+    super(
+      body.code,
+      typeof line === 'number'
+        ? `The brief is malformed. The first line that could not be read is line ${line}.`
+        : body.message,
+      body.details,
+    )
+    this.body = body
+  }
+
+  override toBody(): ErrorBody {
+    return this.body
+  }
+}
+
+const SYNTAX_BY_ENDING: Record<string, BriefSyntax> = {
+  '.json': 'json',
+  '.yaml': 'yaml',
+  '.yml': 'yaml',
+}
+
+function typeNotSupported(): AppError {
+  return new AppError(
+    'RULE_VIOLATION',
+    'This kind of brief file cannot be read yet. Use a JSON or YAML file.',
+    { reason: 'brief_type_not_supported' },
+  )
+}
+
+async function readBrief(filePath: string): Promise<string> {
+  try {
+    return await fs.readFile(filePath, 'utf8')
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
+      throw new AppError('NOT_FOUND', 'That file was not found.')
+    }
+    throw new AppError('RULE_VIOLATION', 'That file could not be read.', {
+      reason: 'file_not_readable',
+    })
+  }
+}
+
+// SPEC 6.1 item 6: text has no file ending, so JSON is tried first and the YAML try's
+// answer is returned.
+function parseText(text: string): Result<BriefDraft> {
+  const json = parseBriefFile(text, 'json')
+  return json.ok ? json : parseBriefFile(text, 'yaml')
+}
+
+function answer(result: Result<BriefDraft>): BriefParsed {
+  if (!result.ok) throw new BriefError(result.error)
+  const draft = result.data
+  const primaryLanguage =
+    draft.languages?.[0] ?? (draft.region ? primaryLanguageFor(draft.region) : null)
+  return { draft, primaryLanguage }
+}
+
+export function briefParse() {
+  return defineCommand({
+    name: 'brief.parse',
+    input: briefParseInput,
+    projectId: (input) => input.projectId,
+    async prepare(_ctx, input): Promise<BriefParsed> {
+      if (input.filePath === undefined) return answer(parseText(input.text ?? ''))
+      const syntax = SYNTAX_BY_ENDING[path.extname(input.filePath).toLowerCase()]
+      if (!syntax) throw typeNotSupported()
+      return answer(parseBriefFile(await readBrief(input.filePath), syntax))
+    },
+    run(_ctx, _input, prepared) {
+      return { data: prepared }
+    },
+  })
+}
