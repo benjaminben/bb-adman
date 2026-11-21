@@ -1,7 +1,8 @@
 // The line under "Cut out the subject…" (spec/screens-ai.md, "Cut-out"): it follows the
 // started job by job.updated, as the generate fields' line does. "Cutting out…" until it ends,
 // then "Done. The cut-out is under Earlier options.", the failure sentence (ui/run-failure/),
-// or "Cancelled.". It reads job.list for the layer once, so a change it missed is shown.
+// or "Cancelled.". It reads job.list for the layer once, so a change it missed is shown; a
+// listed row that is not newer than the one it holds is dropped, as the job store does (F-10).
 import { useEffect, useState } from 'react'
 import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { RunFailure } from '@/renderer/ui/run-failure'
@@ -19,7 +20,7 @@ function useJobRow(projectId: string, layerId: string, jobId: string): JobRow | 
     void api.query('job.list', { projectId, layerId }).then((result) => {
       const rows = result.ok ? ((result.data as JobRow[] | null) ?? []) : []
       const found = rows.find((r) => r.id === jobId)
-      if (live && found) setRow((held) => (held && held.updatedAt > found.updatedAt ? held : found))
+      if (live && found) setRow((held) => (held && held.updatedAt >= found.updatedAt ? held : found))
     })
     return () => {
       live = false
