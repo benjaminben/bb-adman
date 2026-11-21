@@ -7,7 +7,12 @@ import { checkKey } from './api/auth'
 import { apiError } from './api/errors'
 import { health } from './api/health'
 import { createLink, removeLink, setPassword } from './api/links'
-import { renewPictures, replaceGallery } from './api/gallery'
+import {
+  checkGalleryPictures,
+  checkRenewalPictures,
+  renewPictures,
+  replaceGallery,
+} from './api/gallery'
 import { readLink } from './api/read'
 import { bodyRoute, plainRoute, type ApiRoute } from './api/route'
 import { VISITOR_ROUTES, visitorRoute, type VisitorRoute } from './visitor/routes'
@@ -38,7 +43,7 @@ export const API_ROUTES: ApiRoute[] = [
     method: 'PUT',
     path: new RegExp(`${LINK}/gallery$`),
     body: Gallery,
-    // AP-2 sets `check` to checkPictureUrl over every variant's pictureUrl.
+    check: checkGalleryPictures,
     handler: replaceGallery,
   }),
   bodyRoute({
@@ -46,7 +51,7 @@ export const API_ROUTES: ApiRoute[] = [
     method: 'PUT',
     path: new RegExp(`${LINK}/pictures$`),
     body: PictureRenewals,
-    // AP-2 sets `check` to checkPictureUrl over every renewal's pictureUrl.
+    check: checkRenewalPictures,
     handler: renewPictures,
   }),
   plainRoute({

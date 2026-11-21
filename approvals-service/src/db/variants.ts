@@ -62,6 +62,22 @@ export function deleteVariant(
   ]
 }
 
+// The first and last statements of a gallery replace: every row of the link goes, the listed
+// rows are written again between the two, then the sign-offs of every variant no longer listed
+// go. Sign-offs of a listed variant stay, whatever their version.
+export function clearGallery(db: D1Database, linkId: string): D1PreparedStatement {
+  return db.prepare('DELETE FROM gallery_variant WHERE link_id = ?').bind(linkId)
+}
+
+export function deleteUnlistedSignoffs(db: D1Database, linkId: string): D1PreparedStatement {
+  return db
+    .prepare(
+      `DELETE FROM signoff WHERE link_id = ? AND variant_key NOT IN
+        (SELECT variant_key FROM gallery_variant WHERE link_id = ?)`,
+    )
+    .bind(linkId, linkId)
+}
+
 // Changes the picture only when the version still matches; never changes the version.
 export function renewPicture(
   db: D1Database,
