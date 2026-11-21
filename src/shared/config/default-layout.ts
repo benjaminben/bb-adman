@@ -77,10 +77,8 @@ export const OTHER_COPY_TEXT: TextStyleRule = HEADLINE_TEXT
 export const IMAGE_STYLE: ImageStyle = { opacity: 1 }
 export const GEOMETRY_ROTATION = 0
 
-const ZERO_REVS: Revs = { copy: 0, style: 0, geometry: 0, source: 0, timing: 0, animation: 0 }
-const STILL = { preset: 'none', startMs: 0, durationMs: 0 } as const
-
-// The same values on every layer of a new master.
+// The same values on every layer of a new master. [1.26] revs, syncedRevs, the entrance and
+// the exit are each written out, so no two of them are one object.
 export const LAYER_DEFAULTS: {
   visible: boolean
   locked: boolean
@@ -99,9 +97,12 @@ export const LAYER_DEFAULTS: {
   linked: false,
   overrides: [],
   timing: { startMs: 0, endMs: null },
-  animation: { entrance: STILL, exit: STILL },
-  revs: ZERO_REVS,
-  syncedRevs: ZERO_REVS,
+  animation: {
+    entrance: { preset: 'none', startMs: 0, durationMs: 0 },
+    exit: { preset: 'none', startMs: 0, durationMs: 0 },
+  },
+  revs: { copy: 0, style: 0, geometry: 0, source: 0, timing: 0, animation: 0 },
+  syncedRevs: { copy: 0, style: 0, geometry: 0, source: 0, timing: 0, animation: 0 },
   translationStatus: null,
   translationSource: null,
   overflow: false,

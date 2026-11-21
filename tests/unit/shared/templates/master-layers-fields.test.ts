@@ -147,4 +147,17 @@ describe('buildMasterLayers: shares nothing [SPEC 14 N3]', () => {
     expect(JSON.stringify(layout)).toBe(before)
     expect(ALL_FILLS.logo).toEqual({ assetId: 'asset-logo' })
   })
+
+  // SPEC 6.1 "Default layout" [1.26], 14 P4: four values that were one shared object.
+  it('gives revs, syncedRevs, the entrance and the exit each their own object', () => {
+    for (const l of buildMasterLayers(starterTemplate, square, ALL_FILLS)) {
+      expect(l.revs).not.toBe(l.syncedRevs)
+      expect(l.animation.entrance).not.toBe(l.animation.exit)
+      l.revs.copy = 1
+      l.animation.entrance.preset = 'fade'
+      l.animation.entrance.durationMs = 400
+      expect(l.syncedRevs.copy).toBe(0)
+      expect(l.animation.exit).toEqual(still)
+    }
+  })
 })
