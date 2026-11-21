@@ -33,6 +33,7 @@ describe('the shipped workflows [SPEC 6.10.4, FR-258, FR-278]', () => {
       'moss-text-to-image',
       'h3-text-to-video',
       'h3-image-to-video',
+      'h3-reference-to-video',
       'flux3-klein-edit-references',
     ])
     expect(WORKFLOWS.every((w) => w.status === 'draft' || w.status === 'trial')).toBe(true)

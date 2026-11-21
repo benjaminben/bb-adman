@@ -164,8 +164,8 @@ describe('fillWorkflow: unused reference slots [SPEC 14 1.39]', () => {
       promptId: PROMPT_ID,
       references: ['one.png'],
     })
-    expect(g['14']).toBeUndefined()
-    expect(g['15']?.inputs).not.toHaveProperty('image2')
-    expect(g['15']?.inputs.image1).toEqual(['13', 0])
+    expect(g['16']).toBeUndefined()
+    expect(g['5']?.inputs).not.toHaveProperty('ref_images.ref_image_1')
+    expect(g['5']?.inputs['ref_images.ref_image_0']).toEqual(['15', 0])
   })
 })
