@@ -1,22 +1,33 @@
 // The brief form's subject rows (spec/screens-campaign.md, "The brief form", Subjects): a list
 // "Subjects" of groups "Subject {i}", each with a name, a description, and either a new
 // subject's ID or one of the project's subjects. "Add subject" puts focus on the new row's
-// Name; "Remove" puts it on "Add subject".
-import { useEffect, useId, useRef } from 'react'
+// Name; "Remove" puts it on "Add subject". Each row holds its "Photos" part
+// (spec/subject-photos.md); "Remove" also removes the photos the form added to that row. Rows
+// keep their React key when another row goes, so a running "Add photos" stays with its row.
+import { useEffect, useId, useRef, useState } from 'react'
+import { useApi } from '@/renderer/app/app-context'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
+import type { ProjectImages } from '@/renderer/screens/project-home/brief-form-photos'
+import { removeAddedPhotos, SubjectPhotos } from '@/renderer/screens/project-home/subject-photos'
 import { emptySubject, type SubjectChoice } from '@/renderer/screens/project-home/brief-form-model'
 import { subjectIds } from '@/renderer/screens/project-home/brief-form-problems'
 import styles from './subject-rows.module.css'
 
 type Props = {
+  projectId: string
   subjects: SubjectChoice[]
   held: SubjectRow[]
+  images: ProjectImages
   onChange: (subjects: SubjectChoice[]) => void
+  // A change made from the newest rows, for a reply that comes after other edits.
+  onUpdate: (change: (subjects: SubjectChoice[]) => SubjectChoice[]) => void
 }
 
 export function SubjectRows(props: Props) {
   const { subjects } = props
+  const api = useApi()
   const ids = useId()
+  const keys = useRowKeys(subjects.length)
   // A blank "Subject ID" shows the ID made from the name, the one that is sent.
   const sentIds = subjectIds(subjects)
   const names = useRef<(HTMLInputElement | null)[]>([])
@@ -31,6 +42,8 @@ export function SubjectRows(props: Props) {
     else if (target !== null) names.current[target]?.focus()
   })
 
+  const update = (i: number) => (fn: (row: SubjectChoice) => SubjectChoice) =>
+    props.onUpdate((list) => list.map((s, n) => (n === i ? fn(s) : s)))
   const change = (i: number, patch: Partial<SubjectChoice>) =>
     props.onChange(subjects.map((s, n) => (n === i ? { ...s, ...patch } : s)))
   // Choosing "Use a subject this project has" picks the subject whose ID the row already names.
@@ -47,7 +60,7 @@ export function SubjectRows(props: Props) {
           const n = i + 1
           const key = `${ids}-${n}`
           return (
-            <li key={i}>
+            <li key={keys.keys[i]}>
               <fieldset className={styles.row}>
                 <legend>Subject {n}</legend>
                 <label className={styles.field}>
@@ -67,6 +80,13 @@ export function SubjectRows(props: Props) {
                     onChange={(e) => change(i, { description: e.target.value })}
                   />
                 </label>
+                <SubjectPhotos
+                  projectId={props.projectId}
+                  n={n}
+                  row={s}
+                  images={props.images}
+                  update={update(i)}
+                />
                 <div className={styles.modes}>
                   <label>
                     <input
@@ -119,6 +139,8 @@ export function SubjectRows(props: Props) {
                   aria-label={`Remove subject ${n}`}
                   disabled={subjects.length === 1}
                   onClick={() => {
+                    removeAddedPhotos(api, props.projectId, s.photos)
+                    keys.drop(i)
                     props.onChange(subjects.filter((_, k) => k !== i))
                     focusNext.current = 'add'
                   }}
@@ -143,4 +165,18 @@ export function SubjectRows(props: Props) {
       </button>
     </div>
   )
+}
+
+// One stable key per row: a new row gets a new number, a removed row's number goes with it.
+function useRowKeys(count: number) {
+  const [state, setState] = useState(() => ({ keys: [...Array(count).keys()], next: count }))
+  let { keys } = state
+  if (keys.length !== count) {
+    let { next } = state
+    keys = keys.slice(0, count)
+    while (keys.length < count) keys.push(next++)
+    setState({ keys, next })
+  }
+  const drop = (i: number) => setState((s) => ({ ...s, keys: s.keys.filter((_, k) => k !== i) }))
+  return { keys, drop }
 }
