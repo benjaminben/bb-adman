@@ -153,7 +153,7 @@ describe('CopyOptionsDialog [spec/screens-ai.md "Copy options", FR-045]', () => 
       await screen.findByText('Google Gemini took too long to answer. Try again.'),
     ).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
-    const retry = await screen.findByRole('dialog', { name: 'Retry' })
+    const retry = await screen.findByRole('dialog', { name: 'Retry the run' })
     expect(within(retry).getByText('Options: 3')).toBeInTheDocument()
     await userEvent.click(within(retry).getByRole('button', { name: 'Retry' }))
     expect(sent(fake, 'job.retry')).toEqual([{ projectId: 'P1', jobId: 'J9' }])

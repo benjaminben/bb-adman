@@ -192,7 +192,7 @@ test('A failed run of each kind shows its sentence and Retry, in earlier options
   for (const sentence of sentences) await f.expectFailure(panel, sentence)
   const offline = await f.expectFailure(panel, f.geminiSentence('offline'))
   await offline.getByRole('button', { name: 'Retry' }).click()
-  const retry = page.getByRole('dialog', { name: 'Retry' })
+  const retry = page.getByRole('dialog', { name: 'Retry the run' })
   await expect(retry.getByText('Provider: Google Gemini')).toBeVisible()
   await retry.getByRole('button', { name: 'Cancel' }).click()
 })

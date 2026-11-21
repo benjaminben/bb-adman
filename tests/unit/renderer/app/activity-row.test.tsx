@@ -195,7 +195,7 @@ describe('ActivityRow Cancel and Retry [P4-14, D-036, A-63]', () => {
     fake.onCommand('job.retry', () => ({ ok: true, data: { jobId: 'J2' } }))
     await userEvent.click(within(row).getByRole('button', { name: 'Retry' }))
     expect(sent(fake, 'job.retry')).toHaveLength(0)
-    const dialog = await screen.findByRole('dialog', { name: 'Retry' })
+    const dialog = await screen.findByRole('dialog', { name: 'Retry the run' })
     expect(within(dialog).getByText('Provider: Google Gemini')).toBeInTheDocument()
     expect(within(dialog).getByText('Pictures: 2')).toBeInTheDocument()
     await userEvent.click(within(dialog).getByRole('button', { name: 'Retry' }))

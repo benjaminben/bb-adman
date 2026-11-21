@@ -79,7 +79,7 @@ export function RowRetry(props: {
           open
           projectId={projectId}
           job={dialogJob}
-          title="Retry"
+          title="Retry the run"
           confirmLabel="Retry"
           count={pictureCount(job)}
           campaignId={job.campaignId ?? undefined}

@@ -190,7 +190,7 @@ describe('run dialog [P4-12]', () => {
 
   it('fixes the provider and count in retry mode', async () => {
     const { onConfirm } = await open({
-      title: 'Retry',
+      title: 'Retry the run',
       confirmLabel: 'Retry',
       retry: { provider: 'gemini' },
       count: { label: 'Pictures', value: 2, min: 1, max: 8 },

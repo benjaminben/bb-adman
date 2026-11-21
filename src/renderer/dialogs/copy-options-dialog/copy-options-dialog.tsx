@@ -139,7 +139,7 @@ export function CopyOptionsDialog(props: CopyOptionsDialogProps) {
           open={asking === 'retry'}
           projectId={projectId}
           job="text"
-          title="Retry"
+          title="Retry the run"
           confirmLabel="Retry"
           retry={{ provider: failed.provider ?? '' }}
           count={{ label: 'Options', value: requestCount(failed), min: 1, max: MAX_COPY_OPTIONS }}

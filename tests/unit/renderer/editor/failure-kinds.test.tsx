@@ -59,7 +59,7 @@ describe('Each error kind in the activity panel [P4-20, FR-069, FR-152]', () => 
     expect(within(row).getByText(plainMessage(kind, 'Google Gemini'))).toBeVisible()
     expect(within(row).getByText('Failed')).toBeVisible()
     await userEvent.click(within(row).getByRole('button', { name: 'Retry' }))
-    expect(await screen.findByRole('dialog', { name: 'Retry' })).toBeVisible()
+    expect(await screen.findByRole('dialog', { name: 'Retry the run' })).toBeVisible()
   })
 
   it('gives each kind a sentence of its own', () => {
