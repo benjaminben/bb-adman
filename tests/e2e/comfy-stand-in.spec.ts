@@ -20,7 +20,6 @@ import * as screens from './screens'
 
 const MOSS_OUTPUT = '9'
 const FLUX_OUTPUT = '15'
-const FLUX_LABEL = 'FLUX 3 klein: picture from a prompt and one reference picture'
 
 let box: Sandbox
 let stand: StandIn
@@ -67,7 +66,7 @@ test('Settings: a refused address, then the stand-in saved, checked per workflow
   await screens.saveAddress(comfy, stand.origin)
   await screens.checkServer(comfy)
   await expect(screens.workflowRow(comfy, screens.MOSS_LABEL)).toContainText('Complete')
-  await expect(screens.workflowRow(comfy, FLUX_LABEL)).toContainText('Complete')
+  await expect(screens.workflowRow(comfy, screens.FLUX_LABEL)).toContainText('Complete')
   // The check only asks: GETs and nothing else.
   expect(stand.seen.length).toBeGreaterThan(0)
   expect(stand.seen.filter((r) => r.method !== 'GET')).toEqual([])

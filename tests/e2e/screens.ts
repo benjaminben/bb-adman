@@ -96,3 +96,4 @@ export const workflowRow = (comfy: Locator, label: string): Locator =>
   comfy.getByRole('list', { name: 'Workflows' }).getByRole('listitem', { name: label })
 
 export const MOSS_LABEL = 'MOSS-Image: picture from a prompt'
+export const FLUX_LABEL = 'FLUX 3 klein: picture from a prompt and one reference picture'
