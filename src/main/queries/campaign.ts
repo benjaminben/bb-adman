@@ -82,13 +82,13 @@ export function campaignGet(deps: Pick<CoreDeps, 'projects' | 'assets' | 'log'>)
     // A broken file: the runner answers INTERNAL and logs this line, which holds no data.
     if (!ruleSet) throw new Error('campaign.get: the campaign has no rule_set row')
     const directions = directionsOf(db, campaign.id)
-    const masters = new Set(directions.map((d) => d.masterVariantId))
+    const masters = new Map(directions.map((d) => [d.id, d.masterVariantId]))
     const missing = new Set(await deps.assets.missingAssetIds(project))
     const layers = readWireRows(db, 'layer', deps.log) as LayerRow[]
     const links = readWireRows(db, 'variant_subject', deps.log) as VariantSubjectRow[]
     const variants = orderedVariants(db, directions, deps.log).map((v): VariantSummary => ({
       ...v,
-      isMaster: masters.has(v.id),
+      isMaster: masters.get(v.directionId) === v.id,
       subjectIds: links
         .filter((l) => l.variantId === v.id)
         .map((l) => l.subjectId)
