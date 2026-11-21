@@ -64,11 +64,11 @@ describe('adapterFor [SPEC 6, step 0]', () => {
     expect(adapterFrom(table, deps, 'local-storage', 'storage')).toBe(storage)
   })
 
-  it('throws INVALID_INPUT for every provider today: no adapter is built in step 0', () => {
-    expect(() => adapterFor(deps, 'gemini', 'image')).toThrow(
+  it('uses the real provider folders: a job the provider does not do is INVALID_INPUT', () => {
+    expect(() => adapterFor(deps, 'gemini', 'video')).toThrow(
       expect.objectContaining({
         code: 'INVALID_INPUT',
-        details: { provider: 'gemini', job: 'image' },
+        details: { provider: 'gemini', job: 'video' },
       }),
     )
   })
