@@ -166,3 +166,31 @@ describe('every picture goes through toPng [SPEC 14 1.20 L6; 6.2 F-05]', () => {
     })
   }
 })
+
+describe('the image_generation job kind with reference pictures [SPEC 14 1.46 RF-0]', () => {
+  it('hands two reference pictures in the order of the IDs, with the bytes of each file (item 1)', async () => {
+    f = makeKindFixture()
+    const importOne = async (name: string, bytes: Uint8Array) => {
+      fs.writeFileSync(path.join(f.root, name), bytes)
+      const r = await f.user('asset.import', {
+        paths: [path.join(f.root, name)],
+        library: 'reference',
+        copy: false,
+      })
+      return (r as { data: { assetIds: string[] } }).data.assetIds[0]
+    }
+    const wide = greyPng(6, 2)
+    const tall = greyPng(2, 6)
+    const wideId = await importOne('wide.png', wide)
+    const tallId = await importOne('tall.png', tall)
+    const id = await f.start({ count: 2, referenceAssetIds: [tallId, wideId] })
+    await waitFor(done(id))
+    expect(f.calls).toHaveLength(2)
+    for (const call of f.calls) {
+      expect(call.input.references).toEqual([
+        { bytes: new Uint8Array(tall), mime: 'image/png' },
+        { bytes: new Uint8Array(wide), mime: 'image/png' },
+      ])
+    }
+  })
+})

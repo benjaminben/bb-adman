@@ -91,6 +91,7 @@ export function send(conn: Connection, call: Call): Promise<Answer> {
   }
   return new Promise((resolve, reject) => {
     let settled = false
+    let connected = false
     let answered = false
     const headers: Record<string, string> = { Accept: call.accept, 'User-Agent': 'Adman' }
     if (call.body) {
@@ -118,15 +119,26 @@ export function send(conn: Connection, call: Call): Promise<Answer> {
       settle(outcome)
       req.destroy()
     }
+    // The 10 s wait has two parts (SPEC 14 1.43 Open Question 6): to the connection, and from
+    // the whole body handed over to the first byte of the answer. The time a body takes to
+    // send counts only toward the total. No timer is cancelled: each looks at a flag (K-8).
     setTimeout(() => {
-      if (!answered) stop(noAnswer('No answer within the connect wait'))
+      if (!connected) stop(noAnswer('No connection within the connect wait'))
     }, CONNECT_MS).unref()
+    req.once('finish', () => {
+      setTimeout(() => {
+        if (!answered) stop(noAnswer('No answer within the connect wait'))
+      }, CONNECT_MS).unref()
+    })
     setTimeout(() => stop(noAnswer('The call went over its time limit')), call.totalMs).unref()
     req.on('error', (error) => settle(fromError(error)))
     req.on('close', () => settle(noAnswer('The connection closed before the answer ended')))
     // Nothing is written until the connection is made and, for https, the certificate passed.
     req.once('socket', (socket) => {
-      socket.once(conn.secure ? 'secureConnect' : 'connect', () => req.end(call.body?.bytes))
+      socket.once(conn.secure ? 'secureConnect' : 'connect', () => {
+        connected = true
+        req.end(call.body?.bytes)
+      })
     })
     req.on('response', (res) => {
       answered = true
