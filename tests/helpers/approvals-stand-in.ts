@@ -247,7 +247,7 @@ export async function startApprovalsStandIn(
       if (hasBody && req.headers['content-type'] !== 'application/json') {
         return sendJson(res, error(415, 'bad_request'))
       }
-      let body: unknown = undefined
+      let body: unknown
       try {
         body = hasBody ? JSON.parse(text) : undefined
       } catch {
