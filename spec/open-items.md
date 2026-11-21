@@ -31,7 +31,7 @@ These need the stakeholder. A wrong guess would be costly to undo, would spend r
 
 Designed in `spec/approvals.md` and `spec/approvals-service.md`; none of these blocks the first slices.
 
-- **OI-94. Cloudflare plan.** Answered [D-096]: start on the Workers Free plan. A password check uses 100,000 rounds of hashing; the Free plan allows 10 ms of CPU per request, which that check may pass. If deployed password checks are refused for time, report it with the choices (the paid plan, or other settings); the hash is not weakened without asking.
+- **OI-94. Hosting plan for the approvals service.** Answered [D-097]: Next.js on Vercel with a Turso database (`spec/approvals-service.md`). The password check keeps 100,000 rounds of hashing; it is not weakened without asking.
 - **OI-95. Should visitors see each other's email addresses?** Answered [D-096]: yes (A-99).
 - **OI-96. Pictures in the user's S3 bucket, or in the service's own storage?** Answered [D-096]: the user's bucket (A-89).
 - **OI-97. The S3 part of Settings' "Cloud storage".** Answered [D-096]: built now, and required. The user enters their own bucket credentials in Settings; the app is never given an environment file (A-95).
@@ -112,4 +112,4 @@ The video card and the agent settings block were built with these choices. Each 
 - **Review of the requirements wording (Q-011).** Needed for the requirements to return to Approved status.
 - **Answers to the client reviewers (Q-050).** Whether to send the "already covered" answers back to them.
 - **Old history backup.** He may delete the scratchpad copy of the old git history (see Large items).
-- **Approvals service: deploying (D-095).** He deploys the service with the steps in `approvals-service/README.md` (from AP-13) and supplies the Cloudflare account, the D1 database ID, the service key and the address. Then one "Update gallery" to his real S3 bucket and one sign-off through the deployed service, by hand.
+- **Approvals service: deploying (D-095, D-097).** He sets the service up on Vercel with the steps in `approvals-service/README.md` (from AP-13; listed in `spec/approvals-service.md`): the project, the Turso database, the service key and the address. Then one "Update gallery" to his real S3 bucket and one sign-off through the deployed service, by hand.

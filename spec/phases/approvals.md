@@ -4,25 +4,25 @@
 
 **Exit criteria**
 
-- The service's own checks pass on this machine: in `approvals-service/`, `npm run typecheck` and `npm test`; at the root, `npm run lint`.
+- The service's own checks pass on this machine: in `approvals-service/`, `npm run typecheck`, `npm test`, `npm run build` and `npm run test:e2e`; at the root, `npm run lint`.
 - The app's checks pass: lint, typecheck, `npm test` (with `migration-0004.test.ts` and the contract test), build, `test:build`, `npm run test:e2e` (with `tests/e2e/approvals.spec.ts` against the stand-in service).
-- `npm run test:approvals-local` passes once (AP-13): the real Worker code under `wrangler dev` on `127.0.0.1`, the built app beside it, and a real browser as the visitor. The flow: set up the service in Settings, make a link, update the gallery, open the link, a wrong password, the right one, sign off; the app shows "Signed off by 1"; edit the variant; the app shows "Changed since sign-off"; update the gallery; the sign-off shows "for an earlier version" in the gallery and in the app; turn the link off; the link shows the password page and nothing else.
-- Shots 90 to 99 made and named in the reports.
+- `npm run test:approvals-local` passes once (AP-13): the real service under `next start` on `127.0.0.1` with a local database file, the built app beside it, and a real browser as the visitor. The flow: set up the service in Settings, make a link, update the gallery, open the link, a wrong password, the right one, sign off; the app shows "Signed off by 1"; edit the variant; the app shows "Changed since sign-off"; update the gallery; the sign-off shows "for an earlier version" in the gallery and in the app; turn the link off; the link shows the password page and nothing else.
+- Shots 90 to 99 made and named in the reports (98 and 99, the visitor's pages, by AP-16).
 - `approvals-service/README.md` holds the deploy steps and the list of values the stakeholder supplies, with no value written in.
-- No agent has deployed anything, signed in to Cloudflare, run a `--remote` command, or contacted a deployed service (D-086).
+- No agent has deployed anything, signed in to Vercel or a database host, or contacted a deployed service or a hosted database (D-086).
 
 **Dependencies:** Phase 3 merged; P4-10 merged before AP-5 (it edits `core.ts`); P4-12 merged before AP-11 (it edits `campaign-view/`). The service slices need nothing from the app.
 
-**Design:** `spec/approvals.md` (desktop side, security rules and threats, assumptions A-82 to A-100) and `spec/approvals-service.md` (the service). Questions for the stakeholder: OI-94 to OI-97 in `spec/open-items.md`.
+**Design:** `spec/approvals.md` (desktop side, security rules and threats, assumptions A-82 to A-109), `spec/approvals-service.md` (the service: Next.js on Vercel, the database, the API, the visitor logic) and `spec/approvals-gallery.md` (the visitor's pages) [D-097]. Questions for the stakeholder: OI-95 to OI-97 in `spec/open-items.md` and the questions of D-097.
 
 ## Rules for these slices
 
 - Every slice: write the failing tests first, then the code; run what its class asks. A slice that touches the renderer runs `npm run test:e2e` too. Prefer one table test over many near-identical cases.
-- **Class S (the service):** root `npm run lint`; in `approvals-service/`, `npm run typecheck` and `npm test`. Other classes as in `spec/testing.md`.
+- **Class S (the service):** root `npm run lint`; in `approvals-service/`, `npm run typecheck` and `npm test`. **Class S+W (the service, served):** class S, then in `approvals-service/` `npm run build` and `npm run test:e2e`; for any slice that touches `app/`, `proxy.ts`, `next.config.ts`, `package.json` or `src/server/`. Other classes as in `spec/testing.md`.
 - A slice edits only the files it owns and the existing files it may touch. A change needed elsewhere: stop and report.
-- **Service slices touch only `approvals-service/`.** AP-1 also adds the root ignore lines, the app's copy of the contract and the two root contract tests. So AP-1 to AP-4 may run beside any Phase 4 or look-pack slice.
+- **Service slices touch only `approvals-service/`.** AP-1 also added the root ignore lines, the app's copy of the contract and the two root contract tests; AP-14 changes the ignore lines; AP-16 may widen the root lint's file pattern to `approvals-service/**/*.tsx`. So the service slices may run beside any Phase 4, look-pack or desktop approvals slice. Only one service slice runs at a time (they share `src/visitor/` and `package.json`).
 - **The contract.** Only AP-1 writes `src/shared/approvals/contract.ts` and its copy. A later slice that finds it must change stops and reports; the architect rules, and the change goes into both copies in one commit.
-- **Nothing leaves this machine** (D-086). No `wrangler login`, `wrangler deploy`, `wrangler secret put`, `wrangler d1 create`, and no command with `--remote`. No test contacts a deployed service or a real S3 bucket. Every script that runs `wrangler` sets `WRANGLER_SEND_METRICS=false`. Installing packages with npm is allowed. If `wrangler dev` asks to sign in, stop and report.
+- **Nothing leaves this machine** (D-086). No `vercel` command of any kind (`login`, `link`, `deploy`, `env pull`, `install`), no `npm run db:migrate -- --hosted`, no `libsql://` or other hosted database address, no `npx` tool that signs in. No test contacts a deployed service, a hosted database or a real S3 bucket. Every script that runs `next` sets `NEXT_TELEMETRY_DISABLED=1`. Installing packages with npm is allowed. If any tool asks to sign in, stop and report.
 - **No paid call and no real S3.** S3 code is tested with stand-ins and by signing on this machine (signing sends nothing). The stakeholder's own check with a real bucket comes after deploying.
 - **One migration.** Only AP-5 runs `npm run db:generate` (`0004_approvals`). If a Phase 4 or look-pack slice needs a migration before AP-5 merges, both stop and the orchestrator orders them.
 - **Shared files.** Only AP-5 edits `agent-policy.ts`, `events.ts`, `queries/queries.ts`, the Drizzle schema index, `settings.ts`, `secrets.ts`, `core-deps.ts`, and the `core.ts` spread and deps lines. AP-5 registers every approvals command and query against a stub file; the slice that owns the stub replaces its body and touches no index. After AP-5 merges, AP-10b adds one `agent-policy.ts` row for `storage.checkS3`. `src/main/approvals/deps.ts` (AP-5) imports `createPasswordStore` from `password-store.ts` and `choosePictureStore` from `picture-store.ts`, both stubs from AP-5, so AP-6 and AP-7 never edit the same file.
@@ -35,10 +35,13 @@
 | Wave | Slice | Waits for | May run beside | Must not run beside |
 |------|-------|-----------|----------------|---------------------|
 | 1 | AP-1 Service skeleton, contract, database (built) | Nothing | Every Phase 4 and look-pack slice | Nothing |
-| 2 | AP-2 Service: link API | AP-1 | AP-3, AP-5, every Phase 4 and look-pack slice | Nothing |
-| 2 | AP-3 Service: visitor pages and sessions | AP-1 | AP-2, AP-5, every Phase 4 and look-pack slice | Nothing |
-| 2 | AP-5 Desktop contracts | AP-1; P4-10 merged | AP-2, AP-3, AP-4, the look pack, Phase 4 screen slices | P4-10 (`core.ts`); any slice that adds a migration or edits `agent-policy.ts`, `events.ts`, `queries.ts`, `settings.ts` or `secrets.ts` (none is planned in Phase 4 or the look pack) |
-| 3 | AP-4 Service: sign-offs and pictures | AP-2, AP-3 | Everything | Nothing |
+| 2 | AP-2 Service: link API (built) | AP-1 | AP-3, AP-5, every Phase 4 and look-pack slice | Nothing |
+| 2 | AP-3 Service: visitor logic and sessions (built) | AP-1 | AP-2, AP-5, every Phase 4 and look-pack slice | Nothing |
+| 2 | AP-5 Desktop contracts | AP-1; P4-10 merged | Any service slice, the look pack, Phase 4 screen slices | P4-10 (`core.ts`); any slice that adds a migration or edits `agent-policy.ts`, `events.ts`, `queries.ts`, `settings.ts` or `secrets.ts` (none is planned in Phase 4 or the look pack) |
+| 3 | AP-14 Service: move to Next.js and libSQL | AP-2, AP-3 and the AP-3 review fixes merged | Every desktop, Phase 4 and look-pack slice | Every other service slice |
+| 4 | AP-15 Service: visitor replies for the page app | AP-14 | The same | Every other service slice |
+| 5 | AP-4 Service: sign-offs and pictures | AP-15 | The same | Every other service slice |
+| 6 | AP-16 Gallery pages | AP-4 | The same | Every other service slice |
 | 3 | AP-6 Service client, service settings, kept passwords | AP-5 | AP-4, AP-7 | Nothing |
 | 3 | AP-7 Pictures: signed addresses and the picture store | AP-5 | AP-4, AP-6 | Any slice that edits `package.json`, `src/main/providers/types.ts` or `src/main/providers/s3/` (AP-10b waits for AP-7) |
 | 4 | AP-8 Link commands and the queries | AP-6, AP-7 | AP-10 | Nothing |
@@ -49,11 +52,13 @@
 | 7 | AP-12 Tile marks | AP-11 | Phase 4 and look-pack slices | P4-12 and AP-11 (`campaign-view/`); any slice editing `variant-tile/` or `variant-grid/` (none is planned) |
 | 8 | AP-13 Local end-to-end proof, deploy steps, exit check | Every other AP slice | Phase 4 and look-pack slices | Nothing |
 
-No two slices of one wave edit the same file: wave 2 splits by folder (`approvals-service/src/api/`, `approvals-service/src/visitor/`, and the app); wave 3 by folder (the service's `visitor/` and `pictures/`, the app's client and password store, the app's picture store and S3 adapter); wave 4 by main process against Settings screens, with AP-10b in the storage command folder, the S3 adapter folder and `s3-section/` only.
+The service slices AP-14, AP-15, AP-4 and AP-16 run one after another, each in `approvals-service/` only, so they never share a file with a desktop slice; the desktop waves (AP-6 to AP-12) keep their own order beside them. No two desktop slices of one wave edit the same file: wave 3 by folder (the app's client and password store, the app's picture store and S3 adapter); wave 4 by main process against Settings screens, with AP-10b in the storage command folder, the S3 adapter folder and `s3-section/` only. The move to Next.js and Vercel changes no desktop slice: the app knows only a service address and a key (D-097).
 
 ## Slices
 
 ### AP-1 — Service skeleton, contract, database (built)
+
+Built on the earlier host (a Cloudflare Worker with D1, the Workers Vitest pool). Its Worker files (`wrangler.jsonc`, `src/index.ts`, the Workers test set-up) are removed or replaced by AP-14; its contract, database, crypto and route tables stay.
 
 - **Exists when done:** `approvals-service/` installs, type-checks and tests on this machine; `wrangler.jsonc`, the D1 migration and its data-access functions exist; the router registers every route of `spec/approvals-service.md` against stub handlers (an API stub answers `404 not_found`, a visitor stub `404` "Not found."), and `GET /api/v1/health` works with the full key check; the contract exists in both places with the copy test; the password hash and the random letters work.
 - **New files:** `approvals-service/package.json`, `tsconfig.json`, `wrangler.jsonc`, `vitest.config.ts`, `migrations/0001_init.sql`; `src/index.ts`, `app.ts`, `env.ts`, `contract.ts`; `src/api/auth.ts`, `body.ts`, `errors.ts`, `health.ts`; stubs `src/api/links.ts`, `gallery.ts`, `read.ts`, `src/visitor/routes.ts`; `src/crypto/random.ts`, `password.ts`, `compare.ts`; `src/db/links.ts`, `variants.ts`, `signoffs.ts`, `sessions.ts`; `test/setup.ts` and the tests below. Added as built: `src/api/route.ts`, `test/env.d.ts`, `test/tsconfig.json`, `test/routes.test.ts`. In the app: `src/shared/approvals/contract.ts`; `tests/unit/config/approvals-contract.test.ts`; `tests/unit/shared/approvals/contract-ids.test.ts`.
@@ -62,34 +67,69 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`approval
 - **Tests:** `test/contract.test.ts`, `test/random.test.ts`, `test/password.test.ts`, `test/api-auth.test.ts` (against health), `test/config.test.ts`, `test/worker.test.ts`, `test/db.test.ts` (each access function round trip; a link delete batch removes sessions, sign-offs and gallery rows of that link only). Root: the contract copy test; `contract-ids.test.ts` (200 IDs from the app's campaign and variant ID makers and from `ulid` pass the contract).
 - **Class:** S + A. Security class, full review (the key check, the hash, the tooling). **After:** nothing.
 
-### AP-2 — Service: link API
+### AP-2 — Service: link API (built)
 
 - **Exists when done:** every `/api/v1/links` route answers as `spec/approvals-service.md` says, with `checkPictureUrl` (the test origin included) guarding every picture address.
 - **New files:** the bodies of `src/api/links.ts`, `gallery.ts`, `read.ts`; `src/pictures/check-url.ts`.
 - **May touch:** `src/db/*.ts` (a query a route needs; no table change); `src/env.ts` (the `TEST_PICTURE_ORIGIN` check, written here, not in AP-1); `src/app.ts` (the two `check` lines).
 - **Must not get wrong** (security review): replies are built field by field or through the reply schema, never from a database row (rows hold the hash, salt, internal ID and picture address); a new password is one batch with ending the link's sessions.
-- **Read:** `spec/approvals-service.md` "The keyed API", "Database (D1)", "Pictures" (`checkPictureUrl` only).
+- **Read:** `spec/approvals-service.md` "The keyed API", "Database", "Pictures" (`checkPictureUrl` only).
 - **Tests:** `test/api-links.test.ts`, `test/picture-url.test.ts`.
 - **Class:** S. Security class, full review. **After:** AP-1.
 
-### AP-3 — Service: visitor pages and sessions
+### AP-3 — Service: visitor logic and sessions (built)
 
-- **Exists when done:** the password page, the session, the wrong-password limit, "Leave", the gallery page (with its sign-off forms drawn), `/gallery.css` and `/robots.txt` work, with the escaping template and the exact headers.
-- **New files:** the body of `src/visitor/routes.ts`; `src/visitor/password-page.ts`, `gallery-page.ts`, `html.ts`, `styles.ts`, `headers.ts`, `forms.ts`, `session.ts`, `throttle.ts`.
-- **May touch:** `src/db/*.ts` (a query a route needs; no table change); `test/worker.test.ts` (its `/robots.txt` row). The router's fixed `500` moves onto `headers.ts`, which adds HSTS.
-- **Must not get wrong** (security review): the link always comes from the slug and its session, never from a form field; an unknown slug, which the counting `UPDATE … RETURNING` finds no row for, still runs the dummy hash.
-- **Read:** `spec/approvals-service.md` "Visitor pages" (all of it), "Random values and passwords".
-- **Tests:** `test/session.test.ts`, `test/throttle.test.ts`, `test/forms.test.ts` (rows for `/enter` and `/leave`), `test/pages.test.ts`.
-- **Class:** S. Security class, full review. **After:** AP-1.
+- **As built** (on the earlier host, with its review's fixes): entering (`visitor/actions.ts` `enterLink`), the try limit (`throttle.ts`, `db/enter.ts`), sessions and the cookie (`session.ts`, with the session inserted only while the checked salt and hash are still the link's), the form checks (`forms.ts`), leaving, the narrowed `GalleryView` from `openGallery` (raw rows never leave the logic), the slug shape checked first, and the header sets (`headers.ts`). It also drew hand-written HTML pages (`html.ts`, `password-page.ts`, `gallery-page.ts`, `styles.ts`, `test/pages.test.ts`), which AP-15 removes in favour of the Next.js pages (D-097).
+- **Tests as built:** `test/session.test.ts`, `test/throttle.test.ts`, `test/forms.test.ts`, `test/pages.test.ts`.
+- **Class:** S. Security class, full review (done).
+
+### AP-14 — Service: move to Next.js and libSQL
+
+- **Exists when done:** `approvals-service/` is a Next.js `16.4.6` app; every request goes through `app/[[...path]]/route.ts` to the unchanged `createApp`, so the keyed API, the visitor routes and the hand-written pages still answer exactly as before; the database is reached through `src/db/client.ts` over `@libsql/client`; every test from AP-1 to AP-3 passes in plain Node Vitest with the same assertions; `next build` and `next start` work on `127.0.0.1`; nothing of Wrangler or the Workers runtime is left.
+- **New files:** `next.config.ts`, `playwright.config.ts`, `scripts/migrate.ts`, `app/[[...path]]/route.ts`, `app/layout.tsx` (the bare `<html>` and `<body>`, needed by `next build`; AP-16 fills it), `src/db/client.ts`, `src/server/env.ts`, `src/server/serve.ts`, `test/db.ts`, `test/empty.ts`, `test/db-client.test.ts`, `test/entry.test.ts` (replacing `test/worker.test.ts`), `e2e/api.spec.ts`.
+- **Removes:** `wrangler.jsonc`, `src/index.ts`, `test/setup.ts`, `test/env.d.ts`, `test/worker.test.ts`; the packages `wrangler` and `@cloudflare/vitest-plugin`.
+- **May touch:** `package.json`, `package-lock.json`, `tsconfig.json`, `vitest.config.ts`, `test/tsconfig.json`; `src/env.ts` and `src/db/*.ts`, `src/visitor/actions.ts`, `session.ts`, `throttle.ts` (type names only, "What changes in each file"); `src/crypto/compare.ts` (`node:crypto` `timingSafeEqual`); the `import 'server-only'` line in `src/db/`, `src/crypto/`, `src/pictures/`, `src/server/`; `test/api-helpers.ts`, `test/visitor-setup.ts` and every `test/*.test.ts` (harness lines only, the port table in `spec/approvals-service.md` "Tests"); `test/config.test.ts` (rewritten); root `.gitignore`, `eslint.config.js` (ignore lines), `.prettierignore`.
+- **Must not get wrong** (security review): the key check's order, the 2 MiB and 8 KiB caps, every header set and every reply are byte-for-byte as before (the existing tests prove it, and they change only in harness lines); `timingSafeEqual` keeps the equal-length rule; `TEST_PICTURE_ORIGIN` is dropped whenever `VERCEL` is set; a missing database address means not set up; the migrate script refuses a hosted address without `--hosted`; no statement from the libSQL client leaks a row type past `client.ts`.
+- **Check first:** that `next build` accepts the root optional catch-all (`spec/approvals-service.md`, "How Next.js and the service code fit"; stop and report before using the fallback); that `@libsql/client` runs `:memory:` and `file:` with no network; the packages' licences and install scripts against the table in `spec/approvals-service.md` "Folder and tooling" (report every `allowScripts` entry).
+- **Read:** `spec/approvals-service.md` "How Next.js and the service code fit", "Folder and tooling", "Database" (all), "Environment", "Tests" (the port), "Running it locally".
+- **Tests:** every existing test file, ported; `test/db-client.test.ts`, `test/entry.test.ts`, `test/config.test.ts`; `e2e/api.spec.ts`. The report gives the test count per file before and after.
+- **Shots:** none.
+- **Class:** S+W. Security class, full review (it touches reviewed code, the key check's path and the crypto). **After:** AP-2, AP-3 and its review fixes merged.
+
+### AP-15 — Service: visitor replies for the page app
+
+- **Exists when done:** the catch-all's visitor replies are only plain text, `303`s and (from AP-4) pictures: a failed entry is the one `303` to `/l/{slug}?m=wrong-password`; the `403` and `404` use the plain text headers; the notices table exists; `openGallery` takes `{ slug, cookie, m }` and `readSession` the cookie text; `pagePolicy(nonce)` and the page header set exist in `headers.ts`; the hand-written HTML is gone. Until AP-16, `GET /l/{slug}` answers the plain 404 (nothing is deployed in between).
+- **New files:** `src/visitor/notices.ts`; `test/view.test.ts`, `test/headers.test.ts`.
+- **Removes:** `src/visitor/html.ts`, `password-page.ts`, `gallery-page.ts`, `styles.ts`; `test/pages.test.ts`; the `gallery` and `stylesheet` rows of `VISITOR_ROUTES`.
+- **May touch:** `src/visitor/routes.ts`, `actions.ts`, `session.ts`, `headers.ts`; `test/throttle.test.ts`, `test/session.test.ts`, `test/forms.test.ts`, `test/entry.test.ts`, `test/visitor-setup.ts` (the replies they expect).
+- **Must not get wrong** (security review): the three entry failures stay byte-equal and the unknown slug still runs the dummy hash; the view keeps exactly its fields; `m` only through the table; every redirect a `303` from the checked slug; the cookie set and cleared only here.
+- **Read:** `spec/approvals-service.md` "Visitor routes and logic" (all), "Headers on replies from the catch-all"; `spec/approvals-gallery.md` "The page policy and nonce".
+- **Tests:** as named; the throttle test's byte-equal check now over the three `303`s.
+- **Shots:** none.
+- **Class:** S. Security class, full review. **After:** AP-14.
 
 ### AP-4 — Service: sign-offs and pictures
 
-- **Exists when done:** a visitor can sign off and remove a sign-off; the picture route passes on a picture fetched through `PictureSource` with every check.
-- **New files:** `src/visitor/signoffs.ts`, `picture-route.ts`; `src/pictures/source.ts`, `s3-source.ts`, `sniff.ts`.
-- **May touch:** `src/visitor/routes.ts` (the three routes' lines); `src/app.ts` (the default `PictureSource` in `parts`); `src/db/*.ts`.
-- **Read:** `spec/approvals-service.md` "Forms that write", "Pictures".
-- **Tests:** `test/signoffs.test.ts`, `test/picture-route.test.ts`. Approved addition: `test/forms.test.ts` gains rows for the two sign-off routes.
-- **Class:** S. Security class, full review. **After:** AP-2, AP-3.
+- **Exists when done:** a visitor can sign off and remove a sign-off; the picture route passes on a picture fetched through `PictureSource` with every check, as a stream.
+- **New files:** `src/visitor/signoffs.ts`, `picture-route.ts`; `src/pictures/source.ts`, `s3-source.ts`, `sniff.ts`; `e2e/pictures/` (two small PNG files and one JPEG made by the test, not downloaded).
+- **May touch:** `src/visitor/routes.ts` (the three routes' lines); `src/app.ts` and `src/server/serve.ts` (the default `PictureSource` in `parts`); `src/db/signoffs.ts`, `variants.ts`; `playwright.config.ts` (the picture server in `globalSetup`); `test/forms.test.ts` (rows for the two sign-off routes).
+- **Must not get wrong** (security review): the sign-off is the one conditional `INSERT … SELECT` from `gallery_variant` for this link and version; `checkPictureUrl` runs on the parsed `URL` right before the fetch and that same object is fetched; `redirect: 'manual'`; any non-200 fails; no visitor header passed on; the 16 MiB cap and the sniff before the first byte is sent; every failure a `404` with an empty body; the stored address never in a reply or log.
+- **Read:** `spec/approvals-service.md` "Forms that write", "Pictures", "Environment" (`TEST_PICTURE_ORIGIN`).
+- **Tests:** `test/signoffs.test.ts`, `test/picture-route.test.ts` (with `s3-source` against a local Node server).
+- **Shots:** none.
+- **Class:** S+W. Security class, full review. **After:** AP-15.
+
+### AP-16 — Gallery pages
+
+- **Exists when done:** `GET /l/{slug}` shows the password page or the gallery as `spec/approvals-gallery.md` says, built from the token file and the components, under the nonce policy made in `proxy.ts`, working with JavaScript switched off; the screenshots exist.
+- **New files:** `proxy.ts`; `app/l/[slug]/page.tsx`, `app/l/[slug]/error.tsx`, `app/not-found.tsx`, `app/global-error.tsx`; the body of `app/layout.tsx`; `src/ui/tokens.css`, `src/ui/format-date.ts`, `src/ui/group-signoffs.ts` and the component folders in "Components"; `test/ui.test.tsx`; `e2e/build.spec.ts`, `e2e/gallery.spec.ts`, `e2e/shots.spec.ts`.
+- **May touch:** `next.config.ts` (only the settings in "Next.js settings"); `test/config.test.ts` (the import, `'use client'` and `dangerouslySetInnerHTML` rows); `vitest.config.ts` (`.tsx` tests); `playwright.config.ts`; root `eslint.config.js` (the file pattern for `approvals-service/**/*.tsx`).
+- **Must not get wrong** (security review): `proxy.ts` deletes the visitor's own policy and `x-nonce` headers and does no session or limit work; the page never `notFound()`s or redirects a right-shape slug, never sets a cookie, and passes only the view to components; no client component but the two error boundaries; no third-party origin, font, image optimisation or telemetry; nothing about a link prerendered or cached.
+- **Read:** `spec/approvals-gallery.md` (all); `spec/approvals-service.md` "The gallery view", "Notices", "Visitor routes and logic".
+- **Check first:** in the built output under `next start`, that Next.js puts the nonce on every script and style tag it writes and that the page draws with no policy refusal; a refusal that needs a looser policy: stop and report; the architect rules.
+- **Tests:** as named.
+- **Shots:** `98-gallery-password`, `98-gallery-password-wrong`, `99-gallery`, `99-gallery-phone`, by `e2e/shots.spec.ts`, into the root `shots/` folder; named in the report.
+- **Class:** S+W. Security class, full review (the session read on the page, the policy, the cookie path). **After:** AP-4.
 
 ### AP-5 — Desktop contracts
 
@@ -176,13 +216,13 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`approval
 ### AP-13 — Local end-to-end proof, deploy steps, exit check
 
 - **Exists when done:** the exit criteria above pass; the spec's `Not built` marks for this feature are listed for the orchestrator to turn to `Built`.
-- **New files:** `tests/e2e/approvals.spec.ts` (offline, in `test:e2e`: the stand-in service and the test picture store; Settings, make link, update gallery, a sign-off planted in the stand-in, Refresh, the marks; an edit, "Changed since sign-off", update, the earlier-version line); `playwright.approvals.config.ts` and `tests/approvals-local/` (`global-setup.ts`: applies the migrations with `wrangler d1 migrations apply DB --local --persist-to {temporary folder}`, starts `wrangler dev --ip 127.0.0.1 --port {free port} --persist-to {same} --var API_KEY:{a value made for this run} --var TEST_PICTURE_ORIGIN:http://127.0.0.1:{picture port}` with `WRANGLER_SEND_METRICS=false`, starts a static server on the picture port for the app's test picture folder, waits for the health route; `approvals-local.spec.ts`: the flow in the exit criteria, the visitor in a Playwright Chromium page; it saves `98-gallery-password` and `99-gallery` to `shots/`); `approvals-service/README.md` (the steps and values of `spec/approvals-service.md` "Deploying").
-- **May touch:** root `package.json` (script `test:approvals-local`: `npm run build && playwright test --config playwright.approvals.config.ts`); `approvals-service/package.json` (scripts `dev`, `db:local`).
-- **Read:** this file; `spec/approvals-service.md` "Running it locally", "Deploying"; `spec/test-harnesses.md` "Offline end-to-end harness".
+- **New files:** `tests/e2e/approvals.spec.ts` (offline, in `test:e2e`: the stand-in service and the test picture store; Settings, make link, update gallery, a sign-off planted in the stand-in, Refresh, the marks; an edit, "Changed since sign-off", update, the earlier-version line); `playwright.approvals.config.ts` and `tests/approvals-local/` (`global-setup.ts`: makes a temporary folder; runs `npm run db:migrate` in `approvals-service/` with `TURSO_DATABASE_URL=file:{folder}/local.db`; runs `npm run build` there; starts `npm run start -- -p {free port}` there with `API_KEY` (a value made for this run), the same `TURSO_DATABASE_URL`, `TEST_PICTURE_ORIGIN=http://127.0.0.1:{picture port}` and `NEXT_TELEMETRY_DISABLED=1` in its environment; starts a static server on the picture port for the app's test picture folder; waits for the health route; `approvals-local.spec.ts`: the flow in the exit criteria, the visitor in a Playwright Chromium page); `approvals-service/README.md` (the steps and values of `spec/approvals-service.md` "Deploying", word for word).
+- **May touch:** root `package.json` (script `test:approvals-local`: `npm run build && playwright test --config playwright.approvals.config.ts`).
+- **Read:** this file; `spec/approvals-service.md` "Running it locally", "Deploying", "Environment"; `spec/test-harnesses.md` "Offline end-to-end harness".
 - **Check first:** that Chromium keeps the `__Host-` cookie from `http://127.0.0.1`; if not, the run uses `localhost` for the service and says so. If Playwright's Chromium is not installed, report it rather than download it unasked.
-- **Tests:** the two specs. No CI workflow names `test:approvals-local`. The developer lists the stakeholder's checks: deploy with the README; one "Update gallery" to his real S3 bucket and one visitor sign-off through the deployed service; "Test connection" with his own bucket (AP-10b's hand check); one right and one wrong password on the deployed service (proves the runtime takes 100,000 PBKDF2 iterations, which the local runtime does not check); Windows (D-087). The service's scripts set `WRANGLER_SEND_METRICS=false` inline: fine on macOS and Linux, not in Windows `cmd`.
+- **Tests:** the two specs. No CI workflow names `test:approvals-local`. No shots of its own (AP-16 made 98 and 99). The developer lists the stakeholder's hand checks, after deploying with the README: (1) one "Update gallery" to his real S3 bucket and one visitor sign-off through the deployed service, which also proves the form Origin check passes behind Vercel; (2) "Test connection" with his own bucket (AP-10b's hand check); (3) one right and one wrong password on the deployed service; (4) `curl -sI` on the password page and on a picture: the headers match `spec/approvals-gallery.md` and `spec/approvals-service.md`, with Vercel's own additions listed; (5) a preview address asks for Vercel sign-in while the production domain does not; (6) one picture larger than 4.5 MB loads (the stream); (7) Windows (D-087). The service's scripts set `NEXT_TELEMETRY_DISABLED=1` inline: fine on macOS and Linux, not in Windows `cmd`.
 - **Class:** G + S. Security class, short review (the test doors are only test doors). **After:** every other AP slice.
 
 ## Left for later
 
-In `spec/approvals.md`, "Left for later": video variants as stills, R2 for pictures, a job with progress for big galleries, links of deleted campaigns, MCP tools.
+In `spec/approvals.md`, "Left for later": video variants as stills, a picture store of the service's own, a job with progress for big galleries, links of deleted campaigns, MCP tools.

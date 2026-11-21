@@ -2,12 +2,12 @@
 
 A way to get sign-off on variants from people outside the app [D-095]. The user makes a password-protected link per campaign; a visitor opens it, enters the password, sees the campaign's variants and signs off on one with an email address; the sign-offs show in the app. Opt-in: nothing happens until the user sets up a service and makes a link.
 
-Every part of this file is **Not built**. Slices: `spec/phases/approvals.md` (AP-1 to AP-13). The service itself (routes, database, visitor pages, sessions, passwords, pictures on its side, deploying) is in `spec/approvals-service.md`. Assumptions A-82 to A-100 are at the end of this file.
+Every part of this file is **Not built**. Slices: `spec/phases/approvals.md` (AP-1 to AP-13). The service itself (routes, database, visitor logic, sessions, passwords, pictures on its side, deploying) is in `spec/approvals-service.md`; the visitor's pages are in `spec/approvals-gallery.md` (D-097: Next.js, hosted on Vercel). Assumptions A-82 to A-109 are at the end of this file.
 
 ## How it fits together
 
 ```
-Desktop app (main process)                       Cloudflare Worker + D1            Visitor's browser
+Desktop app (main process)                       Next.js service (Vercel) + db     Visitor's browser
   Settings: service address, key  ── HTTPS + key ──>  /api/v1/...                        
   "Update gallery":                                                                  
     render each variant (render service)                                              
@@ -264,7 +264,7 @@ D-084: one folder per component, CSS from the existing tokens only (no slice of 
 
 ### Settings
 
-- **"Approvals service"** (`src/renderer/screens/settings/approvals-section/`): the line "Share a campaign's variants with a password-protected link and see who signed off. The service runs on your own Cloudflare account." A "Service address" field with "Save" and "Remove" (`approvals.setService`; a refusal's sentence under the field). A "Service key" row (`secret.set` and `secret.delete` with `approvals.apiKey`, last four shown, the field is a password field). "Test connection" (`approvals.check`): "Connected." or the failure's sentence. The line "Pictures for the gallery are kept in your Amazon S3 bucket (Cloud storage, above)."
+- **"Approvals service"** (`src/renderer/screens/settings/approvals-section/`): the line "Share a campaign's variants with a password-protected link and see who signed off. The service runs on your own Vercel account." A "Service address" field with "Save" and "Remove" (`approvals.setService`; a refusal's sentence under the field). A "Service key" row (`secret.set` and `secret.delete` with `approvals.apiKey`, last four shown, the field is a password field). "Test connection" (`approvals.check`): "Connected." or the failure's sentence. The line "Pictures for the gallery are kept in your Amazon S3 bucket (Cloud storage, above)."
 - **"Cloud storage"** (`s3-section/`): see "Cloud storage: the S3 part", above.
 - Mounted in `settings-screen.tsx` after the keys section: Cloud storage, then Approvals service.
 
@@ -302,8 +302,8 @@ Project rule: in scope are attacks that destroy, that reach sensitive data, or t
 | Guessing a slug | 12 letters from 62 (about 3 × 10^21). A slug alone opens only the password page, the same page an unknown slug gets |
 | Guessing a password | PBKDF2-SHA-256, 100,000 iterations, salted per link; 10 tries per link per 15 minutes; the app's made password is about 79 bits; a chosen one has at least 12 characters (A-86) |
 | A copy of the service's database | Passwords only as slow salted hashes; sessions only as hashes; picture addresses run out within 7 days and hold no secret key |
-| The service key stolen | It controls every link on that service: read emails, change or delete galleries, set picture addresses (only S3 hosts are fetched). Kept only in `secrets.bin` and the Worker's secret; never in a project, log, event, reply or the window beyond the last four. Replaced by a new `wrangler secret put` and the new key in Settings |
-| A visitor's text run as script (on the page or in the app) | Every value escaped by one template; pages carry no script and a policy that allows none; emails ASCII only; the app draws every value as text |
+| The service key stolen | It controls every link on that service: read emails, change or delete galleries, set picture addresses (only S3 hosts are fetched). Kept only in `secrets.bin` and the service's `API_KEY` setting (Sensitive, in Vercel); never in a project, log, event, reply or the window beyond the last four. Replaced by a new `API_KEY` in Vercel, a redeploy, and the new key in Settings |
+| A visitor's text run as script (on the page or in the app) | Every value drawn as React text (escaped), no `dangerouslySetInnerHTML`; pages run only our own scripts under a new nonce per request and a policy that allows no other origin; emails ASCII only; the app draws every value as text |
 | Another site sending forms as a visitor | `SameSite=Lax` cookie; `Origin` must equal the service's own; `Sec-Fetch-Site`; form content type; `frame-ancestors 'none'` |
 | The service made to fetch addresses it should not | Addresses come only through the keyed API; `https` and the two S3 host forms only; no redirects followed; size and picture-type checks; the test origin only when a test sets it |
 | Another campaign's data read through a link | The session names its link; every query filters by that link; the picture route checks link, variant and version; API routes are keyed by project and campaign |
@@ -334,7 +334,7 @@ To be added to the table in `spec/security.md`, "Project-file values that reach 
 - `approvals.baseUrl` has one writer; the address rule refuses plain `http` except the dev-tools test case.
 - No redirect is followed by the client or by the service's picture fetch.
 - Picture storage touches only `adman-approvals/{projectId}/{campaignId}/`.
-- Visitor pages carry no script; their policy and headers are compared whole in tests.
+- Visitor pages run only our own scripts under the nonce policy, need no script to sign off, and load nothing from another company; their policy and headers are checked whole in tests (`spec/approvals-gallery.md`).
 - Data at rest: emails and slugs sit in the project file unencrypted, like all project data. Passwords sit in `approval-passwords.bin`, encrypted.
 
 ### Accepted, noted
@@ -363,14 +363,14 @@ To be added to the table in `spec/security.md`, "Project-file values that reach 
 
 Made to keep the build moving under D-082. Each says how hard it is to undo.
 
-- **A-82. One service, the app never touches the database.** A Worker with D1 holds links, hashed passwords, gallery rows, sign-offs and sessions; the app talks to it over HTTPS with one key. *AP-1. Change later: hard.*
+- **A-82. One service, the app never touches the database.** One Next.js service on Vercel with a Turso database holds links, hashed passwords, gallery rows, sign-offs and sessions; the app talks to it over HTTPS with one key. *AP-1. Change later: hard.*
 - **A-83. The contract is shared by a byte-equal copy** checked by a root test, so neither build imports the other's code. *AP-1. Easy.*
 - **A-84. Links are found by project ID and campaign ID,** one per campaign; a copy of a project on another computer with the same service manages the same link. *AP-2, AP-8. Medium.*
 - **A-85. The password is kept** in `{userData}/approval-passwords.bin`, encrypted, never in the project file; the app makes one by default (16 letters in four groups); a chosen one has 12 to 128 characters. *AP-6, AP-8. Easy.*
-- **A-86. Password checks:** PBKDF2-SHA-256 at 100,000 iterations (the Workers limit), 10 tries per link per 15 minutes, one reply for unknown slug, wrong password and too many tries. *AP-2, AP-3. Easy.*
-- **A-87. Sessions** are rows in D1 with a 12-hour `__Host-` cookie per link, `SameSite=Lax`; a new password or turning off ends them. *AP-3. Easy.*
-- **A-88. No script on the visitor pages:** plain forms and redirects, stricter than "a little script". *AP-3. Easy.*
-- **A-89. Pictures:** a 1,600 px PNG per variant in the user's S3 bucket, signed for 7 days, renewed by refresh when under 2 days remain; the service fetches only S3 hosts; R2 may replace this behind `PictureSource` (OI-96). *AP-4, AP-7, AP-9. Medium.*
+- **A-86. Password checks:** PBKDF2-SHA-256 at 100,000 iterations, 10 tries per link per 15 minutes, one reply for unknown slug, wrong password and too many tries. *AP-2, AP-3. Easy.*
+- **A-87. Sessions** are rows in the service's database with a 12-hour `__Host-` cookie per link, `SameSite=Lax`; a new password or turning off ends them. *AP-3. Easy.*
+- **A-88. No script needed on the visitor pages:** plain forms and `303` redirects. Since D-097 the pages load the framework's own scripts under a nonce policy, but signing off works with script switched off. *AP-3, AP-16. Easy.*
+- **A-89. Pictures:** a 1,600 px PNG per variant in the user's S3 bucket, signed for 7 days, renewed by refresh when under 2 days remain; the service fetches only S3 hosts; a picture store of the service's own may replace this behind `PictureSource` (OI-96). *AP-4, AP-7, AP-9. Medium.*
 - **A-90. "Update gallery" is a command, not a job,** all or nothing, and draws only variants that changed. *AP-9. Medium (a job kind needs a migration).*
 - **A-91. A variant's version is its `rev`.** *AP-9. Easy.*
 - **A-92. Reading sign-offs back:** a full replace on each refresh; every 60 s while the campaign page is shown and the window has focus, on focus, and on "Refresh". *AP-9, AP-11. Easy.*
@@ -382,11 +382,21 @@ Made to keep the build moving under D-082. Each says how hard it is to undo.
 - **A-98. The service key shows its last four** characters like every other key, not only "set / not set". *AP-5. Easy.*
 - **A-99. Emails are ASCII only** and shown to every visitor (OI-95). *AP-1. Easy.*
 - **A-100. Deleting a campaign leaves its link** on the service; the dialog says to turn it off first. *AP-11. Easy.*
+- **A-101. One router for everything but the page.** A root catch-all Next.js route handler hands every request except `GET /l/{slug}` to the reviewed `createApp`, so the keyed API, form posts, pictures and the 404 keep one route table and their tests. *AP-14. Easy.*
+- **A-102. Turso (libSQL) is the database,** through a thin `Db` interface shaped like the calls the reviewed code made, so the migration and queries run unchanged. *AP-14. Medium (Postgres would mean rewriting every query).*
+- **A-103. Every form post ends in a `303`,** a failed entry included (to `?m=wrong-password`), so route handlers return only text, redirects and pictures, and only Next.js pages draw HTML. Forms are urlencoded route-handler posts, never Server Actions. *AP-15. Easy.*
+- **A-104. `proxy.ts` makes the page nonce and policy and nothing else;** the try limit, session and form checks live only in the service logic. *AP-16. Easy.*
+- **A-105. Pictures are sent as a stream** after every check on the whole buffered body, since Vercel limits whole replies to 4.5 MB. *AP-4. Easy.*
+- **A-106. The test picture origin is ignored on every Vercel deployment** (`VERCEL` set), on top of the exact `127.0.0.1` rule. *AP-14. Easy.*
+- **A-107. Migrations run from the stakeholder's machine** with `npm run db:migrate -- --hosted`; agents never pass `--hosted`. *AP-14, AP-13. Easy.*
+- **A-108. Only the production domain is public.** Standard Deployment Protection keeps previews and deployment addresses private, and the database is connected for Production only, so a preview has no data. *AP-13. Easy.*
+- **A-109. No client components** except the two error boundaries Next.js requires; script that improves a page is left for later. *AP-16. Easy.*
 
 ## Left for later
 
 - **Video variants** are shown by their still picture (the draw at time 0). A moving preview waits for Phase 7 and export.
-- **R2 instead of S3** for pictures (no 7-day limit, no bucket setup): a new `PictureSource` in the service and a new picture store in the app (OI-96).
+- **A picture store of the service's own instead of S3** (no 7-day limit, no bucket setup): a new `PictureSource` in the service and a new picture store in the app (OI-96).
+- **Script that improves the pages** (for example signing off without a page reload), never needed to sign off (A-109).
 - **A job with progress** for galleries of hundreds of variants, once Phase 5 brings them.
 - **Links of deleted campaigns:** a list in Settings to turn them off.
 - **MCP tools** for approvals, if ever (Phase 10 decides; deny until then).
