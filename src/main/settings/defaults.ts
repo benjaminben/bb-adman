@@ -15,5 +15,7 @@ export function defaultSettings(documentsDir: string): Settings {
     export: { imageFormat: 'png', jpgQuality: 90, fps: DEFAULT_FPS },
     mcp: { enabled: false, port: DEFAULT_MCP_PORT, autoApproveDestructive: false },
     storage: { s3: null, dropbox: null },
+    comfyui: { baseUrl: null },
+    agentRuns: {},
   }
 }

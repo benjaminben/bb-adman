@@ -23,6 +23,8 @@ export function baseState(overrides: Partial<AppState> = {}): AppState {
       export: { imageFormat: 'png', jpgQuality: 90, fps: 30 },
       mcp: { enabled: false, port: 47821, autoApproveDestructive: false },
       storage: { s3: null, dropbox: null },
+      comfyui: { baseUrl: null },
+      agentRuns: {},
     },
     recentProjects: [],
     openProjects: [],

@@ -1,0 +1,45 @@
+import { describe, it, expect, afterEach } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
+import { makeFixture, data, type Fixture } from '../core-fixture'
+import type { AppState } from '../../../src/shared/schemas/queries/app'
+
+let f: Fixture
+afterEach(() => f.cleanup())
+
+const state = async () => data<AppState>(await f.core.query('app.getState', {}, { actor: 'user' }))
+
+describe('settings loader and the two 1.24 keys [SPEC 13.1, 14 CU-0]', () => {
+  it('fills comfyui and agentRuns with their defaults for a file from before 1.24', async () => {
+    f = makeFixture()
+    fs.mkdirSync(f.userData, { recursive: true })
+    const old = { ...(await state()).settings, generation: { optionsPerRun: 2 } } as Record<
+      string,
+      unknown
+    >
+    delete old.comfyui
+    delete old.agentRuns
+    fs.writeFileSync(path.join(f.userData, 'settings.json'), JSON.stringify(old))
+    f.restart()
+    const s = (await state()).settings
+    expect(s.generation.optionsPerRun).toBe(2)
+    expect(s.comfyui).toEqual({ baseUrl: null })
+    expect(s.agentRuns).toEqual({})
+  })
+
+  it('refuses a settings.update patch that names either key, and changes nothing', async () => {
+    f = makeFixture()
+    const before = (await state()).settings
+    const patches = [
+      { comfyui: { baseUrl: 'http://192.0.2.10:8188' } },
+      { agentRuns: { comfyui: { allowed: true } } },
+    ]
+    for (const patch of patches) {
+      expect(await f.user('settings.update', patch)).toMatchObject({
+        ok: false,
+        error: { code: 'INVALID_INPUT' },
+      })
+    }
+    expect((await state()).settings).toEqual(before)
+  })
+})
