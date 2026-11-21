@@ -146,7 +146,7 @@ The side widths are tokens (`--editor-layers-width`, `--editor-props-width`). Ph
 
 ## Keyboard shortcuts
 
-[REQ: FR-097, FR-242]. The key combinations have one owner, `src/renderer/ui/shortcuts.ts`: a table of named shortcuts and `matchShortcut(event, name, platform)`, which compares `event.code` (the key's place, so `BracketRight` whatever the layout) and the modifier keys. "Mod" is Cmd on macOS and Ctrl on Windows. A component registers a handler for a named shortcut with `useEditorKey(name, handler)` (`editor/use-editor-key.ts`); no component reads key codes itself.
+[REQ: FR-097, FR-242]. The key combinations have one owner, `src/renderer/ui/shortcuts.ts`: `SHORTCUTS`, a table of named shortcuts (built), and `matchShortcut(press, name, platform)`, which compares the key press's `code` (from `event.code`: the key's place, so `BracketRight` whatever the layout) and the modifier keys, which must match exactly. Each shortcut has an `inFields` flag: when true it also works inside a text field, number field, select or text area. "Mod" is Cmd on macOS and Ctrl on Windows. A component registers a handler for a named shortcut with `useEditorKey(name, handler)` (`editor/use-editor-key.ts`); no component reads key codes itself.
 
 | Action | Keys | Notes |
 |--------|------|-------|

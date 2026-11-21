@@ -4,83 +4,26 @@ This is group 3 of the Phase 2 leftovers. Groups 2, 4 and 5 are in `spec/phases/
 
 **Goal.** An agent connected through the MCP server can start, follow and cancel its own picture and video runs on every provider the user has allowed for agents in Settings [D-080].
 
-**Rules these slices build.** The agent-run rules are written in full in `spec/mcp-and-agents.md` (the gate, the tick, the limit, unticking, what stays shut) and `spec/cancel.md`. Each entry below repeats every value it must meet, so a brief can quote it.
+**Rules these slices build.** The agent-run rules are written in full in `spec/agent-runs.md` (the gate, the tick, the limit, unticking, what stays shut), `spec/mcp-and-agents.md` and `spec/cancel.md`. Each entry below repeats every value it must meet, so a brief can quote it.
 
-**State on `main`.** The read tools are built: `list_projects`, `get_slots`, `get_job`, `list_jobs`, the queries `project.listOpen` and `job.get`, `agentJobView`, and the pickers for `get_project` and `get_campaign` (`spec/mcp-and-agents.md`). The tool table holds 8 tools. Nothing else here is built. There is no `src/main/commands/agent-run-gate.ts` and no `src/main/commands/agent-runs/`. There is no `agentRunsOffered`, `agentRunLimit`, `agentRuns.setLimit` or `openHandles` in `src/`. `agent-policy.ts` still maps `tick` to `deny`. `offered.ts` still refuses any actor other than the user. No screen says "Started by an agent".
+**State on `main`.** The read tools are built: `list_projects`, `get_slots`, `get_job`, `list_jobs`, the queries `project.listOpen` and `job.get`, `agentJobView`, and the pickers for `get_project` and `get_campaign` (`spec/mcp-and-agents.md`). The tool table holds 8 tools. The gate is built (`spec/agent-runs.md`): `agentRunsOffered` and the limit bounds in `src/shared/config/agent-runs.ts`, the settings key `agentRunLimit`, the user-only commands `agentRuns.setAllowed` and `agentRuns.setLimit` in `src/main/commands/agent-runs/`, the `tick` policy, `src/main/commands/agent-run-gate.ts` and its call in the bus, and `offeredWorkflow` giving a `trial` workflow to both actors with dev tools on. `agentRunsOffered` still refuses a provider whose `local` is false (`agent_runs_not_ready`). The runner has no untick check. Gate step 3's refusal still shows the run count. No screen says "Started by an agent". There is no start or cancel tool.
 
 ## Order
 
-1. AR-1.
-2. After AR-1 merges: AR-2, AR-3 and MCP-G in parallel.
-3. Merge order: AR-1, then AR-3 and MCP-G, then AR-2. With AR-1, AR-3 and MCP-G merged, an agent can make ComfyUI pictures and video. AR-2 adds Gemini.
-4. Then the first agent run on the user's ComfyUI server (last entry).
+1. AR-2, AR-3 and MCP-G in parallel.
+2. Merge order: AR-3 and MCP-G, then AR-2. With AR-3 and MCP-G merged, an agent can make ComfyUI pictures and video. AR-2 adds Gemini.
+3. Then the first agent run on the user's ComfyUI server (last entry).
 
-- **Cut line, first to last:** the run row mark in AR-3; AR-2 (agents then use ComfyUI only, and Gemini cannot be ticked). Never cut: AR-1, AR-3's ticks, MCP-G.
-- **Checks.** AR-1 and AR-2: lint, typecheck, `npm test` (class B with E). MCP-G: class E plus `npm test`. AR-3: class D. The full gate runs before a release, not per slice.
+- **Cut line, first to last:** the run row mark in AR-3; AR-2 (agents then use ComfyUI only, and Gemini cannot be ticked). Never cut: AR-3's ticks, MCP-G.
+- **Checks.** AR-2: lint, typecheck, `npm test` (class B with E). MCP-G: class E plus `npm test`. AR-3: class D. The full gate runs before a release, not per slice.
 - **Paid calls and keys.** Automatic tests never make a paid call. Gemini cases use recorded responses in `tests/fixtures/providers/` or a fake provider row with `local: false`. No slice adds a live case to the suite. No agent reads a key file (D-049). Under D-085 one low-cost paid run may confirm the agent Gemini path once, after AR-2, at the smallest size.
-- **What each brief names.** Only: the agent-run rules in `spec/mcp-and-agents.md`, the agent-run limit (1 to 16, default 4, per provider), the unticking rule, the MCP tool list (was Section 4.5), and for MCP-G the reply rules for MCP tools (allow-list pickers, no path, address or secret).
-
-## AR-1 — The gate
-
-- **Class:** B and E. **Security class.** Full review.
-- **Depends on:** `main` with CU-6b merged (done). It edits three CU-6b test files.
-- **Owns:** `src/shared/config/agent-runs.ts` (`agentRunsOffered`, the limit bounds); `src/shared/schemas/settings.ts`, the settings defaults and loader (`agentRunLimit`); the `settings.update` schema (it refuses `agentRunLimit`; one test); `src/main/commands/agent-run-gate.ts`; `src/main/commands/agent-runs/` (`set-allowed.ts`, `set-limit.ts`, `index.ts`) and their registration; `src/main/commands/agent-policy.ts`; the gate call in `src/main/commands/bus.ts`; `ProjectRegistry.openHandles()` if no read-only way to list open handles exists; `src/main/providers/comfyui/workflows/offered.ts`; the test edits below.
-
-**Must build:**
-
-- **`offeredWorkflow`** (`offered.ts`): a `proven` workflow first, for anyone; else a `trial` one when `who.devTools` is true, whoever asks; else null (`comfy_job_not_offered`). A `draft` is never returned. Remove the `who.actor !== 'user'` test. The parameter keeps its shape. Correct the head comment, and the comments in `comfy-checks.ts` and `comfy-video-checks.ts` that say "an agent never gets one". A packaged app never has dev tools, so an agent there gets nothing on ComfyUI until a workflow is `proven`.
-- **`agentRunsOffered(info: ProviderInfo): null | 'agent_runs_not_offered' | 'agent_runs_not_ready'`**, in `src/shared/config/agent-runs.ts` (shared, so Settings shows the list the gate checks). In order:
-  1. `available` is false, or `jobs` holds neither `image` nor `video`: `agent_runs_not_offered`. This covers `fal-seedance` until slice J, Firefly and the storage providers.
-  2. `local` is false: `agent_runs_not_ready`. AR-2 deletes this step.
-  3. Otherwise null.
-  - It is the only "tick offered" function. The gate, `agentRuns.setAllowed` and the runner's check (AR-2) all call it. There is no second copy and no `tickOffered`.
-  - A `settings.json` entry for a provider it refuses is never read as a set tick. A hand-edited file can hold such an entry (for example `{ "fal-seedance": { "allowed": true } }`); the loader keeps it as written, and the gate and runner refuse it.
-  - `src/main/commands/agent-run-gate.ts` is the only reader of `settings.agentRuns`.
-- **Policy.** `agentPolicyFor` returns `tick` for a `tick` row. `denyCheck` lets `tick` through for the agent. It still refuses `deny` and any unknown value.
-- **Bus order:** deny check, find handler and validate, find project, gate, ask, run. The gate runs only for actor `agent` with policy `tick`: `await agentRunGate(gateDeps, name, parsed.input)`. It runs before `prepare`, so a refused agent causes no file read and no provider call.
-- **Commands the gate knows:** `generation.runImages`, `generation.startVideo`, `job.cancel`. Any other `tick` command is refused with `AGENT_DENIED` and `denialMessage(name)`. So `generation.runFill` and the `test.failClosed` raw-tick case stay refused.
-- **Gate steps for a run.** Each refusal is `AGENT_DENIED` with the sentence given. Nothing is enqueued or sent. `{Provider}` is the registry `label`.
-  1. The registry row for `input.provider` exists and `agentRunsOffered` gives null. Else "Agents cannot start runs with {Provider}." For an unknown ID: "Agents cannot start runs with that provider." `provider` is required for an agent, so the user's default provider is never used.
-  2. The tick is on, read at this moment through the one reader. Else "The user has not allowed agents to start runs with {Provider}. They can allow it in Adman's Settings."
-  3. The count of jobs with `started_by = 'agent'`, status `queued` or `running`, and that provider, over every open project (one SQL count per open project), is below `settings.agentRunLimit`. Else "Agents already have {n} runs waiting or running with {Provider}. That is the limit set in Adman's Settings." A user's runs are never counted or held back. The runner's own limit (4 per provider, anyone) is separate.
-  - No `workflowId` step: neither input schema has the field, and the parse drops unknown keys.
-- **`job.cancel` by an agent:** the job is found in the project (else `NOT_FOUND`). `started_by` must be `agent`, else "Agents can cancel only runs they started." No tick is needed. Then `cancelRefusal` applies as for the user (a Gemini run, `cancel` `none`, is refused).
-- **After the gate** the command runs as for the user: the same checks and job kind, `startedBy: 'agent'`, `seenAt` null, the count limit of 8 pictures, the reference rule, the picture checks. Refusals reach the agent in the app's own words (`comfy_job_not_offered`, `video_too_long` with `maxMs`, `too_many_references`, `picture_not_usable`, `NEEDS_KEY`, and so on). None holds an address, path or key.
-- **`agentRunLimit`:** a whole number 1 to 16, default 4 (`AGENT_MAX_ACTIVE_RUNS`), per provider. Both bounds live in `src/shared/config/agent-runs.ts`. It is not in the `settings.update` schema, which refuses it. A loaded value out of range (for example 99) loads as 4. An agent can neither read nor change it.
-- **`agentRuns.setLimit { limit }`:** app scope, not undoable, returns `{ limit }`, sets `changesAppState`. New `AGENT_POLICY` row: `'agentRuns.setLimit': deny('change agent run limits')`.
-- **`agentRuns.setAllowed { provider, allowed }`** (its policy row exists, `deny`; the handler is missing): app scope, not undoable, returns `{ provider, allowed }`, sets `changesAppState`. Unknown provider: `INVALID_INPUT`. A provider `agentRunsOffered` refuses: `RULE_VIOLATION`, `details.reason` = the value it gave, message = the step 1 sentence. `allowed: false` is always accepted.
-- **No spending cap.** With a paid tick on, the limit bounds how fast an agent spends, not how much. A cap is OI-91.
-- **Decide and write down:** whether `jc.system` may keep sending as `actor: 'user'` for a job an agent started. Today the job contract sends every `jc.system` command as the user, whoever started the job, so an agent job's follow-up commands (storing results, for example) run with user rights. The developer reports what those commands are; the architect rules before AR-1 merges.
-
-**Approved edits to existing tests.** These are the only ones, besides the tool snapshot and any test that lists every settings key or every policy row (each gains one entry). Each edit keeps its file and place.
-
-1. `tests/integration/commands/agent-tick.test.ts`, whole file. Name: "the agent policy value tick goes to the gate". For each of the four `tick` rows: `tick` in the table and from `agentPolicyFor`. Through the fixture's `setValueHandler`, `generation.runFill` is refused with `denialMessage` and the value stays null; the user's call runs. The gate cases for the three commands move to AR-1's new gate test file.
-2. `tests/integration/generation/run-images-comfy.test.ts:47-51` becomes three cases: (a) tools on, ComfyUI ticked through the user's `agentRuns.setAllowed`: accepted, one job row, `startedBy: 'agent'`, `seenAt` null; (b) tools on, no tick: `AGENT_DENIED` with the step 2 sentence, no job row, the stand-in saw nothing; (c) tools off, ticked: `comfy_job_not_offered`.
-3. `tests/integration/generation/start-video-comfy.test.ts:134-142`: cases (a) and (b) for a prompt start.
-4. `tests/integration/generation/start-video-picture-checks.test.ts:113-126`: cases (a) and (b) for each picture start.
-5. `tests/integration/jobs/job-commands.test.ts:188-200`: `job.cancel` leaves the `it.each` list (`job.retry` and `job.markSeen` stay). New case: the agent's `job.cancel` of a user's job gives `AGENT_DENIED` "Agents can cancel only runs they started."
-6. `tests/unit/main/commands/generation/comfy-checks.test.ts:22-23`: rows `[true, 'agent', 0]` and `[true, 'agent', 1]` become `'accepted'`. New row `[false, 'agent', 0, 'comfy_job_not_offered']`.
-7. `tests/unit/main/commands/generation/comfy-video-checks.test.ts`: line 24 `[true, 'agent']` becomes `'accepted'`; line 25 stays; lines 63 and 65 leave the refused list; the "gets the workflow" table (lines 53-59) gains the agent with dev tools on for each pair.
-8. `tests/unit/main/providers/comfyui/offered.test.ts:38-40`: "gives a trial workflow to an agent with dev tools on, as to the user [D-080]". New: an agent with dev tools off gets null; a `draft`-only list gives null to both actors.
-
-- **Not changed:** `bus-fail-closed.test.ts`, `tools-door.test.ts` (`subject.create` stays deny), `agent-caller.test.ts`, `comfy-get-info.test.ts`, `job-server-message.test.ts`, and every other `AGENT_DENIED` test of a deny command. Any other existing test that fails: stop and report.
-
-**New tests** (a new file under `tests/integration/commands/`, real handlers, fake runner, ComfyUI stand-in):
-
-- `agentRunsOffered`: Gemini as registered gives `agent_runs_not_ready`; ComfyUI and the fake provider give null; `fal-seedance`, S3 and Firefly give `agent_runs_not_offered`.
-- Each gate step's refusal, sent as the agent through the bus: no job row, nothing sent.
-- A ticked ComfyUI run as the agent: accepted, `startedBy: 'agent'`, `seenAt` null. (This is also the test owed for the `startedBy: 'agent'` branch of `generation.runImages`.)
-- A hand-edited `settings.json` `{ "fal-seedance": { "allowed": true }, "gemini": { "allowed": true } }` loads with both entries kept, and each is refused at step 1.
-- Limit 2: two agent jobs held `queued`; a third is refused "Agents already have 2 runs…". A user's queued job is not counted. Another provider's jobs are not counted.
-- Untick: the next agent call is refused at step 2.
-- The agent's `job.cancel` on its own queued job: cancelled. On a user's job: refused.
-- `agentRuns.setAllowed` and `agentRuns.setLimit` as the agent: `AGENT_DENIED`. `setLimit(0)` and `setLimit(17)` as the user: `INVALID_INPUT`. `"agentRunLimit": 99` in the file loads as 4.
+- **What each brief names.** Only: the agent-run rules in `spec/agent-runs.md`, the agent-run limit (1 to 16, default 4, per provider), the unticking rule, the MCP tool list in `spec/mcp-and-agents.md`, and for MCP-G the reply rules for MCP tools (allow-list pickers, no path, address or secret).
 
 ## AR-2 — Unticking, and the paid tick
 
 - **Class:** B. **Security class** (cost). Short review.
-- **Depends on:** AR-1 merged.
-- **Owns:** the runner's check in `src/main/jobs/run-job.ts` (`jc.call`) and in the live job (`src/main/jobs/live.ts`); the deletion of step 2 of `agentRunsOffered` and its test row.
+- **Depends on:** `main` (the gate is merged).
+- **Owns:** the runner's check in `src/main/jobs/run-job.ts` (`jc.call`) and in the live job (`src/main/jobs/live.ts`); the deletion of step 2 of `agentRunsOffered` and its test row; the step 3 sentence in `src/main/commands/agent-run-gate.ts`.
 
 **Must build:**
 
@@ -90,6 +33,8 @@ This is group 3 of the Phase 2 leftovers. Groups 2, 4 and 5 are in `spec/phases/
   - "Sent" means the first call to the provider has gone out. A request waiting in the provider's own queue has been sent. A job with a `remote_job_id` counts as sent. A run past its first call goes on and is waited for. The user can still cancel it by hand.
   - A waiting run stays listed `queued` until its turn, then is cancelled. If the tick is set again before that turn, it is sent.
   - If lint refuses the import from `src/main/commands/` into `src/main/jobs/`, stop and report.
+  - *Why it comes first.* ComfyUI is marked local in the registry, but its saved address can point at a remote or rented server. So this check, which cancels a queued agent run at its turn once the provider is no longer ticked, is what protects the user after an untick. It must be in place before any paid provider can be ticked.
+- **The limit sentence.** In `src/main/commands/agent-run-gate.ts`, gate step 3's refusal becomes "Agents already have the most runs allowed with {Provider}. Wait for one to finish." (`{Provider}` is the registry `label`; no number). Approved test edit: the cases that pin the old sentence in `tests/integration/commands/agent-run-gate.test.ts` and `tests/integration/commands/agent-run-gate-together.test.ts`.
 - **Then delete step 2** of `agentRunsOffered`, so Gemini can be ticked. With the Gemini tick on, an agent can start up to `agentRunLimit` Gemini runs at a time, each up to 8 pictures, with no click [D-080].
 
 **Tests** (the runner fixture with a small `jobsAtOnce`):
@@ -107,7 +52,7 @@ This is group 3 of the Phase 2 leftovers. Groups 2, 4 and 5 are in `spec/phases/
 ## AR-3 — Agent runs in Settings
 
 - **Class:** D. Not security class. Short review.
-- **Depends on:** AR-1 merged.
+- **Depends on:** `main` (the gate is merged).
 - **Owns:** a new component for the agent-runs block, the folder `src/renderer/screens/settings/agent-runs-section/`, and its place in the Settings screen, below the MCP section; the run row mark in `run-row`; the `video-panel.test.tsx` edit; the renderer fake API's two commands and `agentRunLimit`.
 
 **Must build:**
@@ -125,7 +70,7 @@ This is group 3 of the Phase 2 leftovers. Groups 2, 4 and 5 are in `spec/phases/
 ## MCP-G — Start and cancel tools
 
 - **Class:** E. **Security class.** Full review.
-- **Depends on:** AR-1 merged.
+- **Depends on:** `main` (the gate is merged).
 - **Owns:** the tools `generate_images`, `generate_video`, `cancel_job`; the serial for the start tools; the tool descriptions; the tool-list snapshot (11 tools); `tests/integration/mcp/every-tool.ts` gains the new tools' arguments.
 
 **Must build:**
@@ -152,12 +97,13 @@ This is group 3 of the Phase 2 leftovers. Groups 2, 4 and 5 are in `spec/phases/
 - Two `generate_images` together with limit 1: one `jobId` and one refusal with the limit sentence (gate step 3).
 - The word test over a recorded reply of each of the 11 tools, success and refusal: none holds `comfyui` (case-sensitive), `baseUrl`, `agentRuns`, or the stand-in's origin.
 - The secret-leak test passes with `every-tool.ts`'s new arguments.
+- When the licence dialog (LD-1 in `spec/phases/phase-02-leftovers.md`) is built, the gate's tests gain the `licence_not_confirmed` refusal for an agent.
 
 **Accepted risk (linked assets).** A linked asset's path comes from the project file, so a picture start uploads whatever PNG or JPEG it points to. A project from someone else, opened by the user, with an agent ticked, could send a picture from the user's computer to a provider the user ticked. The agent gets no bytes back. Any later tool that returns bytes (OI-92) must be judged with this.
 
 ## First agent run on the user's ComfyUI server
 
-- **When:** after AR-1, AR-3 and MCP-G merge.
+- **When:** after AR-3 and MCP-G merge.
 - **Who:** the stakeholder, by hand. He turns the MCP server on, ticks ComfyUI (not Gemini), and pastes the Connect line into the agent's Claude Code.
 - **What:** the agent makes one picture and one video from a first frame through the tools, one attempt each, dev tools on. No Gemini run here. Each run leaves on the server what `spec/comfyui.md` lists as left behind by a run.
 

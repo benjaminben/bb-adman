@@ -122,7 +122,7 @@ System command (`internal: true`), agent deny, not on the window's channel. It e
 
 ### `variant.get`
 
-Input `{ projectId, variantId }`. Unknown variant: `NOT_FOUND` "That variant was not found." Writes nothing. Both actors (the MCP tool `get_variant`, Phase 10, cuts it down).
+Built (`src/main/queries/variant.ts`, `variant-reads.ts`). Input `{ projectId, variantId }`. Unknown variant: `NOT_FOUND` "That variant was not found." Writes nothing. Both actors (the MCP tool `get_variant`, Phase 10, cuts it down). A layer row that fails its schema is logged and left out. An asset ID a layer names that has no asset row is left out of `assets` and does not set `missingFile`.
 
 ```ts
 type VariantGet = {

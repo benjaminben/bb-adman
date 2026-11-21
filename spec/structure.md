@@ -132,6 +132,8 @@ ESLint looks at one file at a time and cannot follow a chain of imports, so the 
 
 The list of edge places has one owner, the `electronEdge` list in `eslint.config.js`. Adding a place to it needs a line in this section first. Test: `tests/unit/config/electron-boundary.test.ts`.
 
+Rule (b) is held by the `edgeFiles` import patterns in the same file. For the render folder they ban `@/main/render` and `**/render/**`, the folder and what is in it, not every path ending in `/render`. So `src/main/queries/render.ts`, `src/shared/schemas/queries/render.ts` and `src/shared/config/render.ts` are ordinary files that any file may import.
+
 ## Registering commands and queries
 
 Built. Several developers work in parallel worktrees, so the files everyone would otherwise edit are kept out of their way.
@@ -141,7 +143,7 @@ Built. Several developers work in parallel worktrees, so the files everyone woul
 | A command handler | `src/main/commands/{domain}/{action}.ts` | One handler per file, made with `defineCommand`. `{domain}` is the part of the command name before the dot (`asset`, `subject`, `campaign`, `ruleSet` as `rule-set/`). |
 | A domain's handler list | `src/main/commands/{domain}/index.ts` | Exports one function, `{domain}Commands(deps: CoreDeps)`, that returns the domain's handlers as a list. Adding a command to a domain changes this file and no shared file. |
 | The full handler list | `src/main/core.ts` | One import and one spread line per domain, in alphabetical order. It names no single command. |
-| Shared services | `src/main/core-deps.ts` | The `CoreDeps` type, fifteen fields, all required: `appVersion`, `assets`, `devTools`, `fitPicture`, `jobs`, `log`, `now`, `openExternal`, `projects`, `providers`, `secrets`, `settings`, `toPng`, `undo`, `userDataDir`. `core.ts` builds it once and hands the same object to every domain. A domain takes what it needs and builds nothing shared. `tests/integration/registration.test.ts` compares the whole list; a new field extends it. |
+| Shared services | `src/main/core-deps.ts` | The `CoreDeps` type, sixteen fields, all required: `appVersion`, `assets`, `devTools`, `fitPicture`, `jobs`, `log`, `now`, `openExternal`, `projects`, `providers`, `render`, `secrets`, `settings`, `toPng`, `undo`, `userDataDir`. `core.ts` builds it once and hands the same object to every domain. A domain takes what it needs and builds nothing shared. `tests/integration/registration.test.ts` compares the whole list; a new field extends it. |
 | A domain's queries | `src/main/queries/{domain}.ts` | Exports `{domain}Queries(deps: CoreDeps)`, which returns a map of query name to function. `src/main/queries/queries.ts` is the runner. It merges the maps, one line per domain. |
 | A command's input schema | `src/shared/schemas/commands/{domain}.ts` | One file per domain. Project-scope schemas extend `project-scoped.ts` (`spec/api-principles.md`). |
 | A query's input schema and result type | `src/shared/schemas/queries/{domain}.ts` | One file per domain. There is no shared `queries.ts`. |

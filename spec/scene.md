@@ -16,7 +16,7 @@ All in `src/shared/scene/`. Shared code: no import from `main`, `renderer`, `pre
 
 | File | Holds |
 |------|-------|
-| `types.ts` | `SceneProps`, `SceneVariant`, `SceneAsset`, `SceneInput` (below). Made in slice P3-0. |
+| `types.ts` | `SceneProps`, `SceneVariant`, `SceneAsset`, `SceneInput` (below). Built. |
 | `scene.tsx` | `Scene`, the root: draws the layers in `z` order |
 | `picture-layer.tsx`, `text-layer.tsx` | One layer each. Not re-exported; only `scene.tsx` imports them. |
 | `background-placement.ts` | `placePicture`, the one owner of where a picture goes inside its box. The name is kept from the data model: it places the pictures of image layers too. Phase 8's FFmpeg filter builder imports it. |
@@ -207,18 +207,18 @@ type SceneInput = {
 
 ## The render service
 
-Not built (Phase 3). Files: `src/main/thumbnails/` (no Electron; core may import it).
+Built: the types, the `render` field and its wiring, and a stand-in service that draws, writes and sends nothing (`thumbnail` gives `failed`, `render` throws, `onEvent` and `projectClosed` do nothing). Not built (Phase 3): the service itself. Files: `src/main/thumbnails/` (no Electron; core may import it).
 
 | File | Holds |
 |------|-------|
-| `types.ts` | `DrawScene`, `DrawResult`, `RenderService` (made in slice P3-0) |
-| `service.ts` | `createRenderService(opts)` |
+| `types.ts` | `DrawScene`, `DrawResult`, `RenderService`. Built. |
+| `service.ts` | `createRenderService(opts)`. Built as the stand-in. |
 | `scene-input.ts` | `sceneInput(project, variantId)`: reads the variant, its layers and the assets they name through `rows.ts`, with `missing` from `AssetService.missingAssetIds` |
 | `queue.ts` | One draw at a time, with priorities |
 | `paths.ts` | `thumbnailDir`, `thumbnailFile`: the one owner of the thumbnail file names |
 | `cache.ts` | Read, write and clean thumbnail files |
 
-`CoreDeps` gains a sixteenth field, `render: RenderService`, built once in `core.ts` as `createRenderService({ deps: () => deps, bus: () => bus, emit, draw: opts.drawScene ?? noDraw })`, the same late binding the job runner uses. `tests/integration/registration.test.ts` extends its list.
+`CoreDeps.render: RenderService` (the sixteenth field) is built once in `core.ts` as `createRenderService({ deps: () => deps, bus: () => bus, emit, draw: opts.drawScene ?? noDraw })`, the same late binding the job runner uses. `tests/integration/registration.test.ts` lists it.
 
 ```ts
 type RenderService = {
@@ -230,12 +230,12 @@ type RenderService = {
 ```
 
 - **Queue.** One draw at a time for the whole app. A `variant.render` query goes first; thumbnails after, oldest request first. Thumbnail requests for the same project and variant are merged: the input is read when the draw starts, so it always draws the latest `rev`.
-- **Eager thumbnails.** `onEvent` sees every event the main process sends (`src/main/index.ts` hands each one to it as well as to the app window). For each `variant` row in a `project.changed` it schedules a thumbnail once that variant has been quiet for 1 second. A `removed.variant` drops it. So the overflow mark is kept current after an agent's edit too.
+- **Eager thumbnails.** `onEvent` sees every event the main process sends: `send` in `src/main/index.ts` hands each one to the app window and calls `core.deps.render.onEvent(event)`. For each `variant` row in a `project.changed` it schedules a thumbnail once that variant has been quiet for 1 second. A `removed.variant` drops it. So the overflow mark is kept current after an agent's edit too.
 - **Changed files.** For `asset.changedOnDisk`, it finds the variants of that project whose layers name one of the assets as `source` or `style.fontAssetId`, deletes their thumbnail file for the current `rev`, schedules them again, and sends `thumbnail.changed` for each.
 - **After a draw.** For a thumbnail, it writes the file (below) and sends `thumbnail.changed { projectId, variantId }`. For any draw, it compares `overflow` with each text layer's stored value and sends `layer.reportOverflow { projectId, layerId, overflow, variantRev }` through the bus for each that differs, with actor `user` (as `asset.checkChanged` does; the command is denied to agents).
 - **A project that is no longer open** when its draw starts is skipped.
 - **Failure** (draw time-out, crash, throw): one `warn` log line, `event: 'app'`, `name: 'render.draw'`, the project and variant IDs, message "A picture of a variant could not be drawn.", `context.reason` one of `timeout`, `crashed`, `error`. No path, no copy text, no error text. The thumbnail for that `rev` is marked failed until the `rev` changes, its files change on disk, or the app restarts. `variant.render` answers `render_failed`.
-- **`projectClosed(projectId)`** is called by `project.close` after the file closes. It drops queued draws of that project and cleans its thumbnail folder (below).
+- **`projectClosed(projectId)`** is awaited by `project.close` after the file closes. It drops queued draws of that project and cleans its thumbnail folder (below). It never throws: a failed clean-up is logged and the close still succeeds.
 
 ## Thumbnails
 

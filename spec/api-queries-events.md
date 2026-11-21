@@ -131,7 +131,7 @@ Built in part. `src/main/queries/campaign.ts`, `src/main/queries/campaign-reads.
 | `translationUnapproved` | Any layer has `translationStatus` `missing` or `proposed` | Built |
 | `checkWarning` | The latest `variant_check` has a `brand-legal` warning and `checked_rev = rev` | False until Phase 6 |
 | `checkStale` | `checked_rev < rev`. A variant with no check row has `checkStale: false`. | False until Phase 6 |
-| `missingFile` | Any layer's `source.assetId` or `style.fontAssetId` is in `AssetService.missingAssetIds(project)`; a null source or font does not count | Built for layer sources. Fonts: Not built (Phase 3, slice P3-3). Background clips in Phase 7. |
+| `missingFile` | Any layer's `source.assetId` or `style.fontAssetId` is in `AssetService.missingAssetIds(project)`; a null source or font does not count | Built for layer sources and fonts (`badgesOf` in `src/main/queries/campaign-reads.ts`, shared by `campaign.get` and `variant.get`). Background clips in Phase 7. |
 | `jobRunning` | A `job` row with the variant's ID is `queued` or `running` | Built |
 | `resultUnseen` | A `job` row with the variant's ID is `succeeded` with `seen_at` null | Built |
 

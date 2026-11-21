@@ -40,8 +40,7 @@ Run `npm run test:e2e` as well when your slice touches the renderer, the preload
 ## Commits
 
 - Commit after each passing unit of work, in your worktree's branch. One line saying what now works, in plain words.
-- End every commit message with:
-  `Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>`
+- End every commit message with the attribution lines your own session gives you (they name the model that did the work).
 - Do not merge into `main`. The orchestrator merges.
 
 ## Budget and handoff

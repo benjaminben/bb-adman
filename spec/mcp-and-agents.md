@@ -4,8 +4,8 @@ How an outside agent (an MCP client such as Claude Code) reaches the app: the MC
 
 ## Status on `main`
 
-- **Built:** the server (`src/main/mcp/`), the token, the request checks, the on and off switch, the port, the Connect panel with one block, the Settings section "Agent access (MCP)", 8 tools (`list_projects`, `get_project`, `list_assets`, `get_campaign`, `create_campaign`, `get_slots`, `get_job`, `list_jobs`), the agent policy table with the `tick` value, and the fail-closed bus.
-- **Not built (Phase 2, agent-run slices):** the agent-run gate, the tick, the limit, the untick check, the Settings block "Agent runs", and the tools `generate_images`, `generate_video`, `cancel_job`. Today `agentPolicyFor` turns every `tick` row into `deny` (`src/main/commands/agent-policy.ts`), and `offeredWorkflow` refuses any actor that is not the user (`src/main/providers/comfyui/workflows/offered.ts`). So no agent can start or cancel a run yet.
+- **Built:** the server (`src/main/mcp/`), the token, the request checks, the on and off switch, the port, the Connect panel with one block, the Settings section "Agent access (MCP)", 8 tools (`list_projects`, `get_project`, `list_assets`, `get_campaign`, `create_campaign`, `get_slots`, `get_job`, `list_jobs`), the agent policy table with the `tick` value, the fail-closed bus, and the agent-run gate with the tick and the limit (`spec/agent-runs.md`).
+- **Not built (Phase 2, agent-run slices):** the untick check, the Settings block "Agent runs", and the tools `generate_images`, `generate_video`, `cancel_job`. So no agent can start or cancel a run through the MCP server yet.
 - **Not built (Phase 10):** bridge mode, the Claude Desktop block, the ask flow, the delete tools, `agent.activity`, and the other 4.5 tools.
 
 ## The MCP server (was 6.8)
@@ -179,7 +179,7 @@ Policy-based, with two actors.
 | Fan-out, sync, undo | ✓ | ✗ |
 | Picture and video generation | ✓ | ✓ through the MCP server, on every provider the app offers for the job (today ComfyUI, and Gemini once its tick can be set), and on `trial` ComfyUI workflows while dev tools are on, only for a provider the user ticked, within the limit [D-080]. Not built. |
 | AI layout and copy suggestions | ✓ | Under the Gemini tick, when Phase 4 builds them |
-| Cancel a run | ✓ where the provider can stop it | Only a run the agent started; no tick needed. Not built. |
+| Cancel a run | ✓ where the provider can stop it | Only a run an agent started (all agent clients are one actor); no tick needed. Not built. |
 | Retry a run; mark a result seen; read the server's own words | ✓ | ✗ |
 | Export, publish | ✓ | ✗ |
 | Import files, add pictures from disk | ✓ | ✗ (OI-93) |
@@ -201,15 +201,13 @@ Built. `src/main/commands/agent-policy.ts` is the single owner [ADR-009]. Allowi
 | `allow` | `campaign.create`, `variant.add`, `variant.update`, `variant.setFormat` [D-025], `layer.create`, `layer.update`, `layer.delete`, `layer.reorder`, `translation.set`, `check.run` |
 | `ask` | `campaign.delete`, `variant.delete` |
 | `tick` | `generation.runImages`, `generation.runFill`, `generation.startVideo`, `job.cancel` |
-| `deny` | `project.create`, `project.open`, `project.close`, `project.setAssetsDir`, `project.package`, `subject.create`, `subject.update`, `subject.delete`, `asset.import`, `asset.update`, `asset.relink`, `asset.remove`, `asset.addGenerated`, `asset.checkChanged`, `brief.parse`, `campaign.update`, `ruleSet.update`, `ruleSet.copyFrom`, `direction.createFromMaster`, `direction.rename`, `direction.delete`, `variant.fanOut`, `layer.clearOverride`, `layer.reportOverflow`, `clip.add`, `clip.update`, `clip.remove`, `translation.propose`, `translation.approve`, `translation.exportSheet`, `sync.apply`, `generation.proposeLayout`, `generation.copyOptions`, `job.retry`, `job.markSeen`, `export.run`, `publish.run`, `history.undo`, `history.redo`, `settings.update`, `secret.set`, `secret.delete`, `storage.dropboxSignIn`, `storage.dropboxSignOut`, `dev.storage`, `mcp.setEnabled`, `mcp.regenerateToken`, `agent.answerPermission`, `comfy.setAddress`, `comfy.check`, `agentRuns.setAllowed`, `dev.comfyExtend` |
+| `deny` | `project.create`, `project.open`, `project.close`, `project.setAssetsDir`, `project.package`, `subject.create`, `subject.update`, `subject.delete`, `asset.import`, `asset.update`, `asset.relink`, `asset.remove`, `asset.addGenerated`, `asset.checkChanged`, `brief.parse`, `campaign.update`, `ruleSet.update`, `ruleSet.copyFrom`, `direction.createFromMaster`, `direction.rename`, `direction.delete`, `variant.fanOut`, `layer.clearOverride`, `layer.reportOverflow`, `clip.add`, `clip.update`, `clip.remove`, `translation.propose`, `translation.approve`, `translation.exportSheet`, `sync.apply`, `generation.proposeLayout`, `generation.copyOptions`, `job.retry`, `job.markSeen`, `export.run`, `publish.run`, `history.undo`, `history.redo`, `settings.update`, `secret.set`, `secret.delete`, `storage.dropboxSignIn`, `storage.dropboxSignOut`, `dev.storage`, `mcp.setEnabled`, `mcp.regenerateToken`, `agent.answerPermission`, `comfy.setAddress`, `comfy.check`, `agentRuns.setAllowed`, `agentRuns.setLimit`, `dev.comfyExtend` |
 
 - A command not in the table is `deny`.
-- Not built (Phase 2): a new row `'agentRuns.setLimit': deny('change agent run limits')`.
 - Not built (Phase 4): `generation.proposeLayout` and `generation.copyOptions` become `tick` under the Gemini tick when Phase 4 builds them.
 - `job.retry` stays `deny` (it re-sends a stored request). `job.markSeen` stays `deny`: picking a result does not mark it looked at.
 - User-only queries refuse an agent: `mcp.getConnectInfo` (named test), `comfy.getInfo`, `job.getServerMessage`. Whether `job.getServerMessage` should ever be open to an agent is what is left of OI-84; it stays user only.
-- **The bus fails closed** (`denyCheck` in `src/main/commands/bus.ts`). Built: for the agent actor, any policy that is not `allow` and not `ask` is refused with `AGENT_DENIED` and `denialMessage(name)`. Test: `tests/integration/commands/bus-fail-closed.test.ts` (raw `tick`, a made-up fifth value, `allow`).
-- **Today** `agentPolicyFor` returns `deny` for a `tick` row; the table keeps `tick`. Not built (Phase 2): `agentPolicyFor` returns `tick` for a `tick` row, and `denyCheck` lets `tick` through for the agent to the gate; it still refuses `deny` and any unknown value.
+- **The bus fails closed** (`denyCheck` in `src/main/commands/bus.ts`). For the agent actor, any policy that is not `allow`, `ask` or `tick` is refused with `AGENT_DENIED` and `denialMessage(name)`. `agentPolicyFor` returns `tick` for a `tick` row, and the bus sends it to the agent-run gate (`spec/agent-runs.md`), which refuses any `tick` command it does not know. Test: `tests/integration/commands/bus-fail-closed.test.ts` (raw `tick`, a made-up fifth value, `allow`).
 - No agent sets a ComfyUI workflow's status to `proven`.
 
 ## Named tests (built)
@@ -230,4 +228,4 @@ In `tests/integration/mcp/`, unless named otherwise. The tests the agent-run sli
 - OI-92: whether a tool may return picture bytes to an agent.
 - OI-93: whether an agent may add pictures from disk.
 - Bridge mode: whether Claude Desktop can reach the HTTP endpoint directly (Phase 10).
-- The open items of agent runs (OI-62, OI-90, OI-91, R-03) are in `spec/agent-runs.md`.
+- The open items of agent runs (OI-62, OI-90, OI-91) are in `spec/agent-runs.md`.

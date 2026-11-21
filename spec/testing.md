@@ -208,7 +208,7 @@ Each test below must exist and keep passing. A test marked "Not built" is writte
 
 **Other pinned tests and fixtures:**
 
-- `tests/integration/registration.test.ts` ("hands every domain the CoreDeps fields of Section 12") compares the whole `CoreDeps` field list: `appVersion`, `assets`, `devTools`, `fitPicture`, `jobs`, `log`, `now`, `openExternal`, `projects`, `providers`, `secrets`, `settings`, `toPng`, `undo`, `userDataDir` (fifteen). A later field extends it.
+- `tests/integration/registration.test.ts` ("hands every domain the CoreDeps fields of Section 12") compares the whole `CoreDeps` field list: `appVersion`, `assets`, `devTools`, `fitPicture`, `jobs`, `log`, `now`, `openExternal`, `projects`, `providers`, `render`, `secrets`, `settings`, `toPng`, `undo`, `userDataDir` (sixteen). A later field extends it.
 - `tests/integration/registration-phase2.test.ts`: `Object.keys(campaignQueries(deps))` equals `['campaign.get']`.
 - A test checks that every command name in `agent-policy.ts` has at most one handler and that every registered handler has a policy row.
 - `tests/integration/core-options.test.ts` ("puts the asset service and the job service on CoreDeps"): `missingAssetIds`, `resolve`, `assetsDir`, `writeManaged` and `read` on `deps.assets` are functions.

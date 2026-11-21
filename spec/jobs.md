@@ -196,7 +196,7 @@ type JobKindHandler = {
 
 - **The runner is the only writer of `job` rows.** Every write to a `job` row is made by a function in `src/main/jobs/`, reached through `JobService` or `JobRunContext`. No command writes a job row with its own SQL; `job.markSeen` calls `JobService.markSeen`.
 - After every write the runner emits `job.updated` with the wire row. `markSeen` emits `job.updated` for each row it marked, after the command has ended; a rolled-back mark sends nothing.
-- A job that changes any other table sends a system command through the bus (`jc.system`, as the user), so the change gets a transaction, `touch` and `project.changed` like every other change. For a picture or video run that command is `asset.addGenerated` (internal, denied to agents).
+- A job that changes any other table sends a system command through the bus (`jc.system`, as the user), so the change gets a transaction, `touch` and `project.changed` like every other change. For a picture or video run that command is `asset.addGenerated` (internal, denied to agents). `jc.system` sends as actor `user` whoever started the job, an agent included; why this is safe, and that a new `jc.system` command is ruled on by itself first, is in `spec/agent-runs.md`, 'After the gate'.
 - `onProgress` writes `progress`, `result.stage` and `result.queuePosition` while running. Each call is one write and one event; an adapter reports only when the stage, the queue position or the whole percent changed.
 - `jc.setRemoteJobId(id)` writes `remote_job_id` and does nothing once the job has ended.
 - `jc.keep(value)` holds the value on the live job and writes it as the running result. Each call replaces the last.

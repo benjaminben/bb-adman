@@ -10,7 +10,7 @@
 - FR-242: the tab keys work. FR-245: the transparent-picture reference test passes. FR-249: letter spacing is drawn, measured and editable.
 - Review item LP-1 is fixed (slice P3-6) and removed from `spec/phases/review-leftovers.md`.
 
-**Dependencies:** Phase 2 and every group of the Phase 2 leftovers, in particular group 5 (the campaign grid). Built and used here: the renderer layout and the token file with its test (`spec/structure.md`), and the `variant.rev` helper `bumpVariantRev` in `src/main/commands/variant-rev.ts`.
+**Dependencies:** Built and used here: the `@/` alias, one folder per component, the token file with its test (`spec/structure.md`), the `variant.rev` helper `bumpVariantRev` in `src/main/commands/variant-rev.ts`, and the Phase 3 contracts (schemas, scene types, the render service stand-in, the shortcut table, the Phase 3 tokens). Still to come: the campaign grid (Phase 2 leftovers, group 5), needed by P3-9, P3-10 and P3-16.
 
 **Design:** `spec/scene.md`, `spec/editor.md`, `spec/editor-commands.md`. Security rules: `spec/security.md`, "Rules: the render window". Tests and the reference rule: `spec/testing.md`. Assumptions A-22 to A-37 in `spec/open-items.md`.
 
@@ -18,7 +18,7 @@
 
 - Every slice: write the failing tests first, then the code; run lint, typecheck and `npm test` in full; plus what its class asks (`spec/testing.md`). Class C slices also run `npm run test:e2e -- tests/e2e/scene-reference.spec.ts` once P3-8 has merged; class G slices run their end-to-end spec.
 - A slice edits only the files it owns and the existing files it is told it may touch. A change needed elsewhere: stop and report.
-- After P3-0 merges, no slice edits `core.ts`, `core-deps.ts`, `queries.ts`, `bus.ts`, `types.ts`, `agent-policy.ts`, `events.ts`, `tokens.css` or `shortcuts.ts`.
+- No slice edits `core.ts`, `core-deps.ts`, `queries.ts`, `bus.ts`, `types.ts`, `agent-policy.ts`, `events.ts`, `tokens.css` or `shortcuts.ts`.
 - Every new renderer component follows the folder rule; every CSS value comes from a token.
 - Budget: one slice per developer run, well under 300k tokens; hand off with `HANDOFF.md` if near it.
 
@@ -26,24 +26,14 @@
 
 | Wave | Slices (side by side in separate worktrees) | Waits for |
 |------|---------------------------------------------|-----------|
-| 0 | P3-0 | Phase 2 leftovers |
-| 1 | P3-1, P3-3, P3-4, P3-5, P3-7 | P3-0 |
+| 1 | P3-1, P3-4, P3-5, P3-7 | |
 | 2 | P3-2 (after P3-1), P3-6 (after P3-5) | |
-| 3 | P3-8 (after P3-2, P3-6, P3-7), P3-9 (after P3-1, P3-3, P3-6: both edit `src/main/index.ts`) | |
+| 3 | P3-8 (after P3-2, P3-6, P3-7), P3-9 (after P3-1, P3-6: both edit `src/main/index.ts`) | |
 | 4 | P3-10, P3-11, P3-12, P3-13 | P3-9 and P3-2 |
 | 5 | P3-14 (after P3-11, P3-13), P3-16 (after P3-7, P3-10) | |
 | 6 | P3-15 (after P3-14) | |
 
 ## Slices
-
-### P3-0 — Contracts and wiring
-
-- **Exists when done:** every shared contract of the phase, so later slices never touch a shared file.
-- **New files:** `src/shared/schemas/commands/layer.ts`, `commands/variant.ts` (all inputs and replies of `spec/editor-commands.md`); `src/shared/schemas/queries/variant.ts` (`VariantGet`), `queries/render.ts` (`ThumbnailGet`, `VariantRender`); `src/shared/schemas/render.ts` (`RENDER_CHANNELS`, `RenderRequest`, `RenderDone`); `src/shared/scene/types.ts`; `src/shared/config/render.ts` (`RENDER_LIMITS`); `src/main/thumbnails/types.ts`; `src/main/thumbnails/service.ts` (a `createRenderService` whose methods answer `failed`, throw "render is not available", or do nothing; P3-7 replaces the body); `src/main/commands/layer/index.ts`, `commands/variant/index.ts` (empty lists); `src/main/queries/variant.ts`, `queries/render.ts` (empty maps); `src/renderer/ui/shortcuts.ts` (the whole table of `spec/editor.md`, "Keyboard shortcuts").
-- **May touch:** `core.ts` (two domain lines; `render` on `CoreDeps` from `createRenderService`; option `drawScene`, default throws "drawScene is not available"), `core-deps.ts` (sixteenth field), `queries.ts` (two lines), `agent-policy.ts` (`'layer.restore'` deny, system), `events.ts` (`thumbnail.changed`), `src/main/index.ts` (`send` also hands each event to `core.render.onEvent`), `src/main/commands/project/close.ts` (calls `deps.render.projectClosed`), `tokens.css` (the Phase 3 tokens of `spec/screens.md`), `vitest.config.ts` (one include line: `tests/unit/shared/**/*.test.tsx` in the `renderer` project). Approved test edits: `tests/integration/registration.test.ts` (sixteen fields), `tests/unit/main/commands/agent-policy-table.test.ts` (the new row), any hand-built `CoreDeps` in tests (make-it-compile: a `render` stand-in that throws).
-- **Read:** `spec/editor-commands.md`; `spec/scene.md` "Props", "One draw", "The render service"; `spec/editor.md` "Keyboard shortcuts"; `spec/structure.md` "Registering commands and queries".
-- **Tests:** `tests/unit/shared/schemas/layer-commands.test.ts` (each input strict; bounds of name, copy, title, `maxDimension`, `variantRev`), `tests/unit/renderer/ui/shortcuts.test.ts` (every row of the table on both platforms; `event.code` matching), `tests/unit/shared/schemas/events-thumbnail.test.ts`.
-- **Class:** B (+ D for tokens and shortcuts). Not security class. Runs alone on `main`.
 
 ### P3-1 — `layer.update` and `variant.update`
 
@@ -62,15 +52,6 @@
 - **Read:** `spec/editor-commands.md`; `spec/editor.md` "Several picture layers per variant"; `spec/brief-and-templates.md` "Default layout".
 - **Tests:** `tests/unit/shared/templates/new-layer.test.ts` (names "Picture n" and "Text n"; boxes at `50x50` and `8192x8192` pass `LayerRow`), `tests/integration/commands/layer-create.test.ts` (key `layer-{ulid}`, `slot` null, top `z`, undo deletes, redo restores the same ID), `layer-delete.test.ts` (z closed up; background refused with `background_layer`; undo restores row, counters and order), `layer-restore.test.ts` (`layer_exists`; internal: refused from a window), `layer-reorder.test.ts` (bad lists refused; undo), `layer-report-overflow.test.ts` (old `variantRev` gives `applied: false` and no write; no `rev` bump; no undo entry; text only).
 - **Class:** B. Not security class. **After:** P3-1 (shares `commands/layer/index.ts` and the asset check helper).
-
-### P3-3 — `variant.get` and fonts in the missing-file badge
-
-- **Exists when done:** the editor's one read, and `missingFile` counting fonts.
-- **New files:** `src/main/queries/variant.ts` body, `src/main/queries/variant-reads.ts`.
-- **May touch:** `src/main/queries/campaign-reads.ts` (the badge).
-- **Read:** `spec/editor-commands.md` "`variant.get`"; `spec/api-queries-events.md` "Computed badges".
-- **Tests:** `tests/integration/queries/variant-get.test.ts` (layers by z; assets once each with `missing`; unknown variant `NOT_FOUND`; two open projects with the same variant ID), `tests/integration/queries/missing-file-fonts.test.ts`.
-- **Class:** B. Not security class.
 
 ### P3-4 — Font names at import
 
@@ -94,6 +75,7 @@
 - **Exists when done:** the hidden render window draws a `SceneInput` and returns a PNG and the overflow map; the app's command and query channels refuse any sender but the app window; events go to the app window only.
 - **New files:** `src/main/render/render-window.ts`, `draw.ts`, `render-page.ts`, `done-message.ts`; `src/preload/render.ts`; `src/renderer/render.html`; `src/renderer/render-worker/main.tsx`, `render-worker/render-root/`.
 - **May touch:** `src/main/ipc.ts` (`mayCall`), `src/main/index.ts` (app window reference, `send` to the app window only, `drawScene: createDraw()`, render window ended when the app window closes), `electron.vite.config.ts` (two pages, two preloads), `src/main/windows/app-window.ts` (export what the render window reuses).
+- **Must:** `send` in `src/main/index.ts` sends events to the app window only. Today it sends to every window, which would reach the render window.
 - **Read:** `spec/scene.md` "The render window"; `spec/security.md` "Rules: the render window", "Rules: renderer and windows"; `spec/phases/review-leftovers.md` LP-1.
 - **Check first:** the four checks of `spec/scene.md`, "One draw". Stop and report if one fails.
 - **Tests:** `tests/unit/main/ipc.test.ts` (new blocks: a call from another frame or window is refused before `execute` or `query` runs; an event goes to the app window only), `tests/unit/main/render/render-page.test.ts`, `tests/unit/main/render/done-message.test.ts` (wrong sender, wrong frame, wrong `requestId`, bad shape, unknown layer IDs dropped), `tests/build/built-page.test.ts` (new block: `out/renderer/render.html` has exactly one policy tag equal to `CONTENT_SECURITY_POLICY`), `tests/e2e/render-window.spec.ts` (the render window is never visible; its page has no `window.api`; `window.renderApi` has exactly `onRequest` and `done`; a draw of a small variant gives a PNG of the asked size; closing the app window quits the app).
@@ -103,6 +85,7 @@
 
 - **Exists when done:** `thumbnail.get`, `variant.render`, `thumbnail.changed`, eager thumbnails, overflow reported after each draw, clean-up on close, redraw on `asset.changedOnDisk`.
 - **New files:** `src/main/thumbnails/service.ts` (body), `queue.ts`, `scene-input.ts`, `paths.ts`, `cache.ts`; `src/main/queries/render.ts` (body).
+- **Must:** `projectClosed` never throws. `project.close` awaits it after the file closes; a failed clean-up is logged and the close still succeeds.
 - **Read:** `spec/scene.md` "The render service", "Thumbnails"; `spec/editor-commands.md` "Queries", "Event"; `spec/security.md` thumbnail rows.
 - **Tests:** with a stand-in `draw`: `tests/unit/main/thumbnails/paths.test.ts` (bad project ID, variant ID and rev throw), `tests/integration/thumbnails/thumbnail-get.test.ts` (pending, then `thumbnail.changed`, then ready; failed draw gives `failed` and one `warn` line with no path), `thumbnail-clean.test.ts` (close deletes old revs only; a link named like a thumbnail, a sub-folder and an unrelated file are left; a linked project folder writes and deletes nothing), `thumbnail-eager.test.ts` (one draw per variant after a burst of changes; `asset.changedOnDisk` redraws only variants using the asset), `render-overflow.test.ts` (a draw that measures overflow sends `layer.reportOverflow` once), `variant-render.test.ts` (`render_failed`; `maxDimension` bounds; no file written).
 - **Class:** B. **Security class, short review** (paths from project values; deletes files). Side by side with P3-6.
@@ -123,7 +106,7 @@
 - **Read:** `spec/editor.md` (layout, variant store, top bar, banner, canvas, selecting, keyboard shortcuts, undo and redo); `spec/screens.md` rules.
 - **Check first:** the app-menu check of `spec/editor.md`.
 - **Tests:** `tests/unit/renderer/stores/variant-store.test.ts` (applies events; drops a stale reply; asset version bump), `tests/unit/renderer/editor/zoom.test.ts`, `tests/unit/renderer/editor/editor.test.tsx` (loads, selects by click and by list, undo and redo send `history.*` with the variant scope and are disabled from `history.state`, rename, banner wording, overflow report sent once with the store's rev, axe), `tests/unit/main/windows/app-menu.test.ts` (no View menu; Edit roles; dev tools item only with the flag), `tests/e2e/editor-open.spec.ts` (Mod+Z reaches the page; Mod+= does not zoom the page).
-- **Class:** D + G (the menu). Not security class. **After:** P3-1, P3-3, P3-6.
+- **Class:** D + G (the menu). Not security class. **After:** P3-1, P3-6.
 
 ### P3-10 — Campaign tabs, variant tabs and the tab keys
 
