@@ -21,9 +21,10 @@ const BAD_PATHS = ['../outside.txt', 'a/../../outside.txt', '/absolute.txt']
 export function describeStorageConformance(
   label: string,
   setup: () => Promise<StorageProvider> | StorageProvider,
-  options: { timeout?: number } = {},
+  options: { timeout?: number; skip?: boolean } = {},
 ): void {
-  describe(`StorageProvider conformance: ${label} [SPEC 6.5]`, { timeout: options.timeout }, () => {
+  const suite = describe.skipIf(options.skip ?? false)
+  suite(`StorageProvider conformance: ${label} [SPEC 6.5]`, { timeout: options.timeout }, () => {
     let storage: StorageProvider
     const base = `conformance-${randomUUID()}`
 
