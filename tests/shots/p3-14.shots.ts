@@ -106,6 +106,10 @@ test('Picture properties and the picture chooser', async () => {
   await expect(page.getByRole('list', { name: 'Variants' }).getByRole('listitem')).toHaveCount(1)
   const { projectId, variantId, layers } = await ids(page)
   const background = layers.find((l) => l.type === 'background')!
+  // SP-5: the brief's photos went to the asset library; they are removed so the chooser starts
+  // empty and shows only the gradients, as these pictures did before.
+  const photos = (await query(page, 'asset.list', { projectId, kind: 'image' })) as { id: string }[]
+  for (const { id } of photos) await command(page, 'asset.remove', { projectId, assetId: id })
 
   await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()

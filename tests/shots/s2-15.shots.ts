@@ -60,6 +60,7 @@ test('The slot view, empty and with candidate pictures', async () => {
   await expect(screens.runRow(page).getByRole('img').first()).toBeVisible({ timeout: 30_000 })
   await tieToSubject(page)
   await expect(slots.getByText('Pictures that could go here:')).toBeVisible()
-  await expect(slots.getByRole('img')).toHaveCount(3)
+  // SP-5: the three made pictures and the subject's photo from the brief.
+  await expect(slots.getByRole('img')).toHaveCount(4)
   await shot(page, '02-slot-view-candidates')
 })

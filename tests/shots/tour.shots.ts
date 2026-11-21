@@ -27,6 +27,7 @@ test('Start, Settings, project home, brief and campaign', async () => {
   await page.getByRole('button', { name: 'Load a brief' }).click()
   const brief = page.getByRole('region', { name: 'Brief' })
   await expect(brief.getByRole('list', { name: 'Subjects' })).toBeVisible()
+  await screens.expectPhoto(brief, 1, screens.E2E_PHOTO)
   await shot(page, '04-brief-form')
 
   await brief.getByRole('button', { name: 'Create campaign' }).click()
