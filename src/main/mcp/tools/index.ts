@@ -9,6 +9,7 @@ import type { AgentCaller } from '@/main/mcp/agent-caller'
 import type { Result } from '@/shared/schemas/result'
 import { MCP_TOOLS, type ToolDef } from './table'
 import type { ReplyContext, ReplyPicker } from './read-replies'
+import { createSerial } from '@/main/mcp/serial'
 
 export { MCP_TOOLS, type ToolDef }
 
@@ -44,6 +45,8 @@ export function toolSetup(
   providers: ReplyContext['providers'] = [],
 ): ToolSetup {
   const ctx: ReplyContext = { providers }
+  // MCP-G: the start tools run one at a time, through this one serial, in every session.
+  const serial = createSerial()
   return (server, caller) => {
     for (const def of table) {
       const { names, schema } = snakeInput(def)
@@ -53,7 +56,9 @@ export function toolSetup(
         async (args: Record<string, unknown>) => {
           const input: Record<string, unknown> = {}
           for (const [s, k] of names) if (Object.hasOwn(args, s)) input[k] = args[s]
-          return toReply(await run(def, caller, input), ctx, def.reply)
+          const call = () => run(def, caller, input)
+          const result = def.oneAtATime ? await serial(call) : await call()
+          return toReply(result, ctx, def.reply)
         },
       )
     }

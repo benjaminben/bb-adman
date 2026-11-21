@@ -435,5 +435,139 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     },
     "name": "list_jobs",
   },
+  {
+    "description": "Start a run that makes pictures for one variant of an open project. Name a slot (from get_slots) or a layer_id, not both. count is 1 to 8. reference_asset_ids are asset IDs from list_assets, or an empty list. provider is "comfyui" (the user's own ComfyUI server, no charge) or "gemini" (pictures only; paid, charged to the user's Google account with no click). Runs are refused unless the user allowed agents for that provider in Adman's Settings. Gives the job ID at once; follow the run with get_job. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "count": {
+          "maximum": 8,
+          "minimum": 1,
+          "type": "integer",
+        },
+        "layer_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "prompt": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "provider": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "reference_asset_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+          },
+          "type": "array",
+        },
+        "slot": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "variant_id",
+        "prompt",
+        "reference_asset_ids",
+        "count",
+        "provider",
+      ],
+      "type": "object",
+    },
+    "name": "generate_images",
+  },
+  {
+    "description": "Start a run that makes a video clip for one variant of an open project. duration_ms is the clip length in milliseconds. Three starts: from the prompt alone (start "none", use_references false, reference_asset_ids empty); from a first-frame picture (start "first_frame", use_references false, one ID in reference_asset_ids); with reference pictures (start "none", use_references true, their IDs in reference_asset_ids). A picture is named by an asset ID from list_assets. provider is "comfyui" (the user's own ComfyUI server, no charge) or "gemini" (pictures only; paid, charged to the user's Google account with no click). Runs are refused unless the user allowed agents for that provider in Adman's Settings. Gives the job ID at once; follow the run with get_job. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "duration_ms": {
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "type": "integer",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "prompt": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "provider": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "reference_asset_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+          },
+          "type": "array",
+        },
+        "start": {
+          "enum": [
+            "none",
+            "first_frame",
+          ],
+          "type": "string",
+        },
+        "use_references": {
+          "type": "boolean",
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "variant_id",
+        "prompt",
+        "duration_ms",
+        "provider",
+        "start",
+        "use_references",
+        "reference_asset_ids",
+      ],
+      "type": "object",
+    },
+    "name": "generate_video",
+  },
+  {
+    "description": "Cancel a run (job) of an open project that an agent started. Runs the user started cannot be cancelled. Some providers cannot stop a run once it is sent; the refusal says so. Gives the job ID; follow the run with get_job.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "job_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "job_id",
+      ],
+      "type": "object",
+    },
+    "name": "cancel_job",
+  },
 ]
 `;

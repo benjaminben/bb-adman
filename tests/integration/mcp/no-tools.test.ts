@@ -34,6 +34,9 @@ const SECTION_4_5_TOOLS = [
   'get_slots',
   'get_job',
   'list_jobs',
+  'generate_images',
+  'generate_video',
+  'cancel_job',
 ]
 
 async function listTools(fx: McpFixture): Promise<string[]> {
