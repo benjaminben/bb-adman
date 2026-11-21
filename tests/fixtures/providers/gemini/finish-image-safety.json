@@ -1,0 +1,6 @@
+{
+  "candidates": [{ "content": { "role": "model" }, "finishReason": "IMAGE_SAFETY", "index": 0 }],
+  "usageMetadata": { "promptTokenCount": 12, "totalTokenCount": 12 },
+  "modelVersion": "made-up-image-model",
+  "responseId": "made-up-response-id"
+}

@@ -1,0 +1,12 @@
+{
+  "candidates": [
+    {
+      "content": { "parts": [{ "text": "I can only describe this picture." }], "role": "model" },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+  "usageMetadata": { "promptTokenCount": 12, "candidatesTokenCount": 8, "totalTokenCount": 20 },
+  "modelVersion": "made-up-image-model",
+  "responseId": "made-up-response-id"
+}
