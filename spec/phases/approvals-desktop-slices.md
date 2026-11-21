@@ -74,7 +74,7 @@ The slices that build approvals in the desktop app: AP-5 to AP-13, with AP-10b. 
 - **Hand check** (the stakeholder, after merge): the three in "Test connection (S3)", with his own bucket.
 - **Class:** E + D. Security class, short review (the keys, the pinned host, writes and deletes only inside the folder). **After:** AP-5 and AP-7 merged (AP-5 owns `agent-policy.ts` until then; AP-7 edits `s3/`).
 
-### AP-11 — Approval dialog, bar and store
+### AP-11 — Approval dialog, bar and store (built)
 
 - **Exists when done:** the campaign page has the approval bar; "Approval link…" opens the dialog in each of its states; the store refreshes on its timer and on focus.
 - **New files:** `src/renderer/stores/approvals-store.ts`; `src/renderer/screens/campaign/approval-bar/`; `src/renderer/dialogs/approval-dialog/` (`approval-dialog.tsx`, `password-choice.tsx`, `live-link.tsx`, `end-link-confirm.tsx`); `src/renderer/ui/signoff-list/`.

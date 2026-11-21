@@ -18,7 +18,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class B + A; `npm run test:e2e` (the campaign page still renders).
 - **Security:** short (policy rows, two system commands, the `writeLayer` rule). **Size:** medium.
 
-## P6-2 — Check engine
+## P6-2 — Check engine (built)
 
 - **Exists when done:** `runAllChecks` gives the six results for any `CheckInput` as `spec/phases/phase-06.md`, section 5, says.
 - **New files:** `src/shared/checks/run-all.ts`, `shown.ts` (the shown rule), `match.ts` (normalising and matching), `word-checks.ts`, `brand-checks.ts` (required assets, colours), `readiness-checks.ts`, `messages.ts`, `types.ts` (`CheckInput`; `CheckResult` is imported from `src/shared/schemas/checks.ts` once P6-1 has merged, until then declared here with the same shape and replaced by an import in P6-3).
@@ -48,7 +48,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class B.
 - **Security:** full (`translation.set` is agent-reachable). **Size:** medium.
 
-## P6-5 — Translate call: Gemini and fake
+## P6-5 — Translate call: Gemini and fake (built)
 
 - **Exists when done:** `gemini/text.ts` `translate` makes one JSON call as section 3 says; the fake `translate` answers `[{to}] {text}`.
 - **New files:** none beyond tests.
@@ -78,7 +78,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class B.
 - **Security:** full (a path from outside, a file written). **Size:** medium.
 
-## P6-8 — Save picker
+## P6-8 — Save picker (built)
 
 - **Exists when done:** `dialog.pickSaveFile { purpose: 'translation-sheet', defaultPath? }` opens the system save dialog with a `.csv` filter and returns `{ path }` or `{ path: null }`.
 - **New files:** none beyond tests.

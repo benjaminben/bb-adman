@@ -39,7 +39,7 @@ For a renderer CSS file whose first line is `/* app-style */`, outside comments:
 
 | Wave | Slice | Waits for | May run beside | Must not run beside |
 |------|-------|-----------|----------------|---------------------|
-| 1 | ST-1 Tokens | nothing | any slice that does not edit `tokens.css` (SP-3 to SP-5, AP-11, AP-12, Phase 5 slices) | a slice that adds tokens (none planned) |
+| 1 | ST-1 Tokens (built) | nothing | any slice that does not edit `tokens.css` (SP-3 to SP-5, AP-11, AP-12, Phase 5 slices) | a slice that adds tokens (none planned) |
 | 2 | ST-2 Base controls, shared layout, icons | ST-1 | SP and AP slices (none edits `base.css`, `layout.module.css` or `ui/icon/`) | nothing planned |
 | 3 | ST-3 App shell and tabs | ST-2 | ST-4 to ST-8 | a slice editing `app/` or `ui/tab-row/` (none planned) |
 | 3 | ST-4 Dialogs | ST-2 | ST-3, ST-5 to ST-8 | AP-11 only if AP-11 edits `ui/dialog-frame/` (it does not; its new `dialogs/approval-dialog/` takes the look through the frame) |
@@ -58,7 +58,7 @@ If Phase 5 starts its campaign page slices before ST-11 and ST-12, those slices 
 
 ## Slices
 
-### ST-1 — Tokens
+### ST-1 — Tokens (built)
 
 - **Exists when done:** `src/renderer/ui/tokens.css` holds every token of `spec/app-style.md`, "The token set", with the values there: existing names with their new values, the new tokens beside them, and `@media (prefers-reduced-motion: reduce) { :root { --motion-fast: 0ms } }`. The header comment says where the values come from. No other source file changes. No font file is added (`spec/app-style.md`, "Where the font files come from"). The whole app shifts at once: spot colour, warm neutrals, softer card edges, larger section headings.
 - **May touch:** `src/renderer/ui/tokens.css`. New test files below.

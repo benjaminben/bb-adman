@@ -2,7 +2,7 @@
 
 The index, the wave table, the shared files and the assumptions are in `spec/phases/phase-05.md`. Every slice reads `spec/phases/DEV-RULES.md` first, then the sections of `spec/links-and-sync.md` it names. Test paths below are new files unless marked "approved edit".
 
-### P5-1 — Contracts and stubs
+### P5-1 — Contracts and stubs (built)
 
 - **Size:** medium. **Needs:** Phase 4 merged.
 - **Exists when done:** every Phase 5 command, query and the `generative_fill` job kind is registered, with its schema, policy row and stub. A stub command refuses in `run` (or `prepare`, for those that will have one) with `RULE_VIOLATION`, `not_built`, "This is not built yet." (A-149). The stub `sync.preview` refuses the same way. The stub job kind fails its job with `ProviderFailure` `other`, "Generative fill is not built yet". `HandlerResult` has `clearScopes?: UndoScope[]` and the bus clears each named scope after a successful run (and after a successful replay).
@@ -18,7 +18,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** B + A. **Security class, short review:** the policy rows (every system command denied and `internal: true`), the bus change clears only scopes in the command's own project.
 - **After:** nothing.
 
-### P5-2 — Follow rules, out of date, the badge
+### P5-2 — Follow rules, out of date, the badge (built)
 
 - **Size:** medium. **Needs:** Phase 4 merged (no Phase 5 slice).
 - **Read:** `spec/links-and-sync.md`, "Follow rules"; `spec/data-rules.md`, "Links, follow rules and sync".
@@ -68,7 +68,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** B. **Security class, short review:** a destructive command (`variant.delete`) keeps the agent's ask; the system commands are internal; a snapshot is taken from and written to the command's own project only.
 - **After:** P5-1.
 
-### P5-5 — The fan-out plan (pure)
+### P5-5 — The fan-out plan (pure) (built)
 
 - **Size:** small. **Needs:** Phase 4 merged.
 - **Read:** `spec/links-and-sync.md`, "Fan-out"; `spec/data-rules.md`, "Fan-out".
@@ -80,7 +80,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** A. No security review.
 - **After:** nothing.
 
-### P5-6 — Gemini picture extend
+### P5-6 — Gemini picture extend (built)
 
 - **Size:** small. **Needs:** Phase 4 merged.
 - **Read:** `spec/providers-adapters.md`, "Picture extend" and "Picture generation".
@@ -93,7 +93,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** E. **Security class, full review:** a new network call (through the pinned client only, key redacted, no redirect).
 - **After:** nothing.
 
-### P5-7 — ComfyUI extend in the adapter
+### P5-7 — ComfyUI extend in the adapter (built)
 
 - **Size:** small. **Needs:** Phase 4 merged.
 - **Read:** `spec/comfyui-workflows.md`, "Extend a background", the slots table; `spec/comfyui.md`, "A picture run".

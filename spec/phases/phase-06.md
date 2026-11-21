@@ -54,9 +54,9 @@ Phase 5 (variants, fan-out, sync) is not built. Only three parts of this phase u
 
 | Wave | Slice | Needs | May run beside | Must not run beside |
 |------|-------|-------|----------------|---------------------|
-| 0 | P6-2 Check engine | Nothing | Everything | Nothing (new files under `src/shared/checks/` only) |
-| 0 | P6-5 Translate call | Nothing | Everything except other edits of `src/main/providers/gemini/text.ts`, `prompts.ts`, `fake/text.ts` | Any slice that edits those three files (none planned in Phase 5; Phase 5's `extend` edits `gemini/image.ts`, not these) |
-| 0 | P6-8 Save picker | Nothing | Everything | Any slice that edits `src/main/windows/dialogs.ts`, `src/shared/schemas/queries/dialog.ts` or `src/renderer/app/app-context.tsx` (none planned) |
+| 0 | P6-2 Check engine (built) | Nothing | Everything | Nothing (new files under `src/shared/checks/` only) |
+| 0 | P6-5 Translate call (built) | Nothing | Everything except other edits of `src/main/providers/gemini/text.ts`, `prompts.ts`, `fake/text.ts` | Any slice that edits those three files (none planned in Phase 5; Phase 5's `extend` edits `gemini/image.ts`, not these) |
+| 0 | P6-8 Save picker (built) | Nothing | Everything | Any slice that edits `src/main/windows/dialogs.ts`, `src/shared/schemas/queries/dialog.ts` or `src/renderer/app/app-context.tsx` (none planned) |
 | 1 | P6-1 Contracts | Nothing unbuilt | P6-2, P6-5, P6-8 | Phase 5's contracts slice and any slice that edits a file in "Shared files" below (`agent-policy.ts`, `core.ts`, `queries.ts`, `kinds/index.ts`, `rows/index.ts`, `campaign-reads.ts`, `write-layer.ts`, `campaign-view.tsx`); AP-11, AP-12 (`campaign-view/`) |
 | 2 | P6-3 Checks command, results, badges | P6-1, P6-2 | P6-4, P6-7, P6-9, P6-10 | Nothing |
 | 2 | P6-4 Set, approve, restore | P6-1 | P6-3, P6-7, P6-9, P6-10 | Nothing |

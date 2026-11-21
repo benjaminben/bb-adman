@@ -38,11 +38,11 @@
 
 | Wave | Slice | Size | Needs | May run beside | Must not run beside |
 |------|-------|------|-------|----------------|---------------------|
-| 1 | P5-1 Contracts and stubs | medium | Phase 4 | P5-2, P5-5, P5-6, P5-7; any AP or SP slice | Any slice editing `core.ts`, `agent-policy.ts`, `bus.ts`, `commands/types.ts`, `queries/queries.ts`, `jobs/kinds/index.ts` (none planned) |
-| 1 | P5-2 Follow rules, out of date, the badge | medium | Phase 4 | P5-1, P5-5, P5-6, P5-7; AP and SP slices | — |
-| 1 | P5-5 The fan-out plan (pure) | small | Phase 4 | P5-1, P5-2, P5-6, P5-7 | — |
-| 1 | P5-6 Gemini picture extend | small | Phase 4 | every wave 1 slice | — |
-| 1 | P5-7 ComfyUI extend in the adapter | small | Phase 4 | every wave 1 slice | — |
+| 1 | P5-1 Contracts and stubs (built) | medium | Phase 4 | P5-2, P5-5, P5-6, P5-7; any AP or SP slice | Any slice editing `core.ts`, `agent-policy.ts`, `bus.ts`, `commands/types.ts`, `queries/queries.ts`, `jobs/kinds/index.ts` (none planned) |
+| 1 | P5-2 Follow rules, out of date, the badge (built) | medium | Phase 4 | P5-1, P5-5, P5-6, P5-7; AP and SP slices | — |
+| 1 | P5-5 The fan-out plan (pure) (built) | small | Phase 4 | P5-1, P5-2, P5-6, P5-7 | — |
+| 1 | P5-6 Gemini picture extend (built) | small | Phase 4 | every wave 1 slice | — |
+| 1 | P5-7 ComfyUI extend in the adapter (built) | small | Phase 4 | every wave 1 slice | — |
 | 2 | P5-3 Overrides on edit, `layer.revert`, `layer.clearOverride` | medium | P5-1, P5-2 | P5-4, P5-8, P5-12 | — |
 | 2 | P5-4 Snapshots, `variant.delete`, `remove`, `restore`, `restoreLayers` | medium | P5-1 | P5-3, P5-8, P5-12 | — |
 | 2 | P5-8 `generation.runFill`, the fill job, the gate | medium | P5-1; SP-9 merged | P5-3, P5-4, P5-12 | SP-9 (`prompt.ts`) |

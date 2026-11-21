@@ -51,7 +51,7 @@
 | 4 | AP-10 Settings: approvals service (built; AP-10a, the S3 part, built) | AP-6 | AP-8, AP-9, AP-10b | Nothing (`settings-screen.tsx` has no other planned editor) |
 | 4 | AP-10b Test connection for S3 (built) | AP-5, AP-7 | AP-8, AP-9, AP-10, AP-11, Phase 4 and look-pack slices | Any slice that edits `src/main/commands/storage/`, `src/main/providers/s3/`, `s3-section/` or `agent-policy.ts` (none is planned) |
 | 5 | AP-9 Update gallery and refresh (built) | AP-8 (built) | AP-10 | Nothing |
-| 6 | AP-11 Approval dialog, bar and store | AP-9; P4-12 merged | AP-10 | P4-12 and AP-12 (`campaign-view/`) |
+| 6 | AP-11 Approval dialog, bar and store (built) | AP-9; P4-12 merged | AP-10 | P4-12 and AP-12 (`campaign-view/`) |
 | 7 | AP-12 Tile marks | AP-11 | Phase 4 and look-pack slices | P4-12 and AP-11 (`campaign-view/`); any slice editing `variant-tile/` or `variant-grid/` (none is planned) |
 | 8 | AP-13 Local end-to-end proof, deploy steps, exit check | Every other AP slice | Phase 4 and look-pack slices | Nothing |
 
