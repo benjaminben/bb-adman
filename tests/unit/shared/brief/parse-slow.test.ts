@@ -2,25 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { parseBrief } from '../../../../src/shared/brief/parse'
 import { BRIEF_UNREADABLE } from '../../../../src/shared/brief/draft'
 import { MAX_BRIEF_BYTES } from '../../../../src/shared/config/brief-limits'
+import { byteLength, fill } from './slow-fill'
+import { namedCases } from './slow-named'
 
 // SPEC 6.1 item 7 [1.26], 14 P3, security class: worst-case files just under the limit
 // return in under 5 seconds, timed around the one call. The bound is wide on purpose; the
 // test's own timeout is 30 seconds so a slow parse fails on the time and does not hang.
 const BOUND_MS = 5_000
 const TIMEOUT_MS = 30_000
-
-// Repeats `unit` between `head` and `tail` while the text stays under the limit.
-function fill(head: string, unit: (i: number) => string, tail: string, sep = ''): string {
-  const parts: string[] = []
-  let length = head.length + tail.length
-  for (let i = 0; ; i += 1) {
-    const part = (i > 0 ? sep : '') + unit(i)
-    if (length + part.length > MAX_BRIEF_BYTES - 16) break
-    parts.push(part)
-    length += part.length
-  }
-  return head + parts.join('') + tail
-}
 
 const key = (i: number): string => `k${i.toString(36)}`
 const read = { ok: true, data: {} }
@@ -69,4 +58,22 @@ describe('parseBrief: worst-case files return quickly [SPEC 6.1 item 7, 14 P3]',
     },
     TIMEOUT_MS,
   )
+})
+
+// SPEC 6.1 item 9 [1.31], 14 Q4, security class: the ten named cases. Each is refused but 7
+// (unknown tags are read as plain data, 1.25) and 8 (observed: the long verbatim tag is read
+// the same way). The time is kept in the test's meta so a run can report it.
+const namedOutcome = (name: string): object => (/^[78]\./.test(name) ? read : unreadable)
+
+describe('parseBrief YAML: the named worst cases return quickly [SPEC 6.1 item 9, 14 Q4]', () => {
+  it.for(namedCases)('%s', { timeout: TIMEOUT_MS }, ([name, text], { task }) => {
+    expect(byteLength(text)).toBeGreaterThan(MAX_BRIEF_BYTES - 64)
+    expect(byteLength(text)).toBeLessThanOrEqual(MAX_BRIEF_BYTES)
+    const start = performance.now()
+    const result = parseBrief(text, 'yaml')
+    const elapsed = performance.now() - start
+    Object.assign(task.meta, { elapsedMs: elapsed })
+    expect(result).toEqual(namedOutcome(name))
+    expect(elapsed).toBeLessThan(BOUND_MS)
+  })
 })
