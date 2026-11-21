@@ -84,13 +84,15 @@ function parsedJson(table: TableName, field: string, value: unknown): unknown {
 }
 
 // SPEC 4.4: a row that fails its table's schema throws. The error names the table and the
-// fields, never a value.
+// fields, never a value. F-7: only the column is named, since a deeper path can hold a key
+// from inside a stored record (a brief's copy is keyed by language).
 function checked(table: TableName, row: WireRow): WireRow {
   const schema = ROW_SCHEMAS[table]
   if (!schema) return row
   const parsed = schema.safeParse(row)
   if (parsed.success) return parsed.data
-  const fields = parsed.error.issues.map((i) => i.path.join('.')).join(', ')
+  const columns = new Set(parsed.error.issues.map((i) => String(i.path[0] ?? 'row')))
+  const fields = [...columns].join(', ')
   throw new Error(`${table} row does not match its schema: ${fields}`)
 }
 
