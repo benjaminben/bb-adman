@@ -31,7 +31,7 @@ These need the stakeholder. A wrong guess would be costly to undo, would spend r
 
 Designed in `spec/approvals.md` and `spec/approvals-service.md`; none of these blocks the first slices.
 
-- **OI-94. Hosting plan for the approvals service.** Answered [D-097]: Next.js on Vercel with a Turso database (`spec/approvals-service.md`). The password check keeps 100,000 rounds of hashing; it is not weakened without asking.
+- **OI-94. Hosting plan for the approvals service.** Answered [D-097]: Next.js on Vercel with a Turso database (`spec/approvals-service.md`). The stakeholder accepted Turso, starting on its free tier ("Fine with your recommendations on database for now"). The password check keeps 100,000 rounds of hashing; it is not weakened without asking.
 - **OI-95. Should visitors see each other's email addresses?** Answered [D-096]: yes (A-99).
 - **OI-96. Pictures in the user's S3 bucket, or in the service's own storage?** Answered [D-096]: the user's bucket (A-89).
 - **OI-97. The S3 part of Settings' "Cloud storage".** Answered [D-096]: built now, and required. The user enters their own bucket credentials in Settings; the app is never given an environment file (A-95).
