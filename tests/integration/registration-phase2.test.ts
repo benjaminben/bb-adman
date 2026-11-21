@@ -46,7 +46,7 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
 })
 
 describe('the asset domain is registered [SPEC 14, Slice A part 2, A2-1]', () => {
-  it('gives asset.import, asset.update and asset.remove, in that order', () => {
+  it('gives asset.import, asset.update, asset.relink, asset.remove and asset.checkChanged, in that order', () => {
     f = makeFixture()
     expect(assetCommands(f.core.deps).map((h) => h.name)).toEqual([
       'asset.import',
