@@ -10,10 +10,11 @@ import type { CoreDeps } from '@/main/core-deps'
 import type { ApprovalsCreateLinkReply } from '@/shared/schemas/commands/approvals'
 import { createApprovalsClient, type ApprovalsClient } from '@/main/approvals/client'
 import { ApprovalsFailure, logFailure } from '@/main/approvals/failure'
-import { linkIsLive, startLocalLink } from '@/main/approvals/local-store'
+import { linkIsLive, readLink, startLocalLink } from '@/main/approvals/local-store'
 import { requireApprovalsReady } from '@/main/approvals/ready'
 import { requireCampaign } from '@/main/queries/campaign-reads'
-import { choosePassword, linkPasswordInput } from './password-input'
+import { afterCommit } from '@/main/approvals/after-commit'
+import { choosePassword, linkPasswordInput, requireCanKeep } from './password-input'
 
 type Pair = { projectId: string; campaignId: string }
 type Prepared = { slug: string; password: string }
@@ -46,6 +47,7 @@ export function approvalsCreateLink(deps: CoreDeps) {
         link: 'none',
         linkIsLive: () => linkIsLive(db, input.campaignId, deps.log),
       })
+      requireCanKeep(deps.approvals.passwords)
       const campaign = requireCampaign(db, input.campaignId)
       const client = createApprovalsClient(service, {
         allowLocalHttp: deps.devTools,
@@ -60,7 +62,13 @@ export function approvalsCreateLink(deps: CoreDeps) {
       startLocalLink(ctx.project.db, input.campaignId, prepared.slug, deps.now().toISOString())
       // Last, so a password store that cannot save rolls the link row back with it.
       deps.approvals.passwords.keep(input.projectId, input.campaignId, prepared.password)
-      deps.approvals.changed(input.projectId, input.campaignId)
+      const { projectId, campaignId } = input
+      afterCommit(
+        deps.log,
+        { projectId, campaignId, command: 'approvals.createLink' },
+        () => readLink(ctx.project.db, campaignId, deps.log)?.slug === prepared.slug,
+        () => deps.approvals.changed(projectId, campaignId),
+      )
       return { data: { slug: prepared.slug }, log: { campaignId: input.campaignId } }
     },
   })

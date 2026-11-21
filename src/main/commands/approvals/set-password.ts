@@ -1,7 +1,7 @@
 // approvals.setPassword (spec/approvals.md "approvals.setPassword"). Security class; agent
 // policy deny. prepare checks the password, makes the shared refusals (no bucket needed, a live
 // link needed) and sets it on the service, which ends every visitor session; run keeps it. No
-// table changes, so no approvals.changed.
+// table changes; approvals.changed is still sent, since passwordKept may change.
 // A link the service no longer has: approval_link_gone and nothing changes here; the next
 // refresh turns the local link off. Set on the service but not kept (the store failed): the
 // user is shown the failure and sets a password again.
@@ -12,7 +12,8 @@ import { approvalsRefusal } from '@/shared/approvals/messages'
 import { createApprovalsClient } from '@/main/approvals/client'
 import { linkIsLive } from '@/main/approvals/local-store'
 import { requireApprovalsReady } from '@/main/approvals/ready'
-import { choosePassword, linkPasswordInput } from './password-input'
+import { afterCommit } from '@/main/approvals/after-commit'
+import { choosePassword, linkPasswordInput, requireCanKeep } from './password-input'
 
 export function approvalsSetPassword(deps: CoreDeps) {
   return defineCommand({
@@ -27,6 +28,7 @@ export function approvalsSetPassword(deps: CoreDeps) {
         link: 'live',
         linkIsLive: () => linkIsLive(db, input.campaignId, deps.log),
       })
+      requireCanKeep(deps.approvals.passwords)
       const client = createApprovalsClient(service, {
         allowLocalHttp: deps.devTools,
         log: deps.log,
@@ -36,7 +38,15 @@ export function approvalsSetPassword(deps: CoreDeps) {
       return { password }
     },
     run(_ctx, input, prepared): HandlerResult<ApprovalsSetPasswordReply> {
-      deps.approvals.passwords.keep(input.projectId, input.campaignId, prepared.password)
+      const { projectId, campaignId } = input
+      deps.approvals.passwords.keep(projectId, campaignId, prepared.password)
+      // passwordKept may have changed, so the window reads the link again.
+      afterCommit(
+        deps.log,
+        { projectId, campaignId, command: 'approvals.setPassword' },
+        () => true,
+        () => deps.approvals.changed(projectId, campaignId),
+      )
       return { data: {}, log: { campaignId: input.campaignId } }
     },
   })

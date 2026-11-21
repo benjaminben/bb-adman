@@ -8,6 +8,8 @@ export type PasswordStore = {
   // null when none is kept on this computer.
   read(projectId: string, campaignId: string): string | null
   forget(projectId: string, campaignId: string): void
+  // False when encryption is not available, so keep would refuse (AP-8 ruling).
+  canKeep(): boolean
 }
 
 // Paths come only from src/shared/approvals/picture-paths.ts, inside

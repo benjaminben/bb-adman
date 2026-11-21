@@ -5,13 +5,19 @@
 // Half-done states: a failed delete on the service fails the command with nothing changed
 // here. A link deleted on the service whose local write then failed (rolled back, still live)
 // is found gone on the next press, which ends it here without the service steps and keeps the
-// sign-offs it already had.
+// sign-offs it already had. Forgetting the password runs after the commit and cannot undo it.
 import { defineCommand, type HandlerResult } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import { approvalsCampaignInput } from '@/shared/schemas/commands/approvals'
 import { pictureFolder } from '@/shared/approvals/picture-paths'
 import { createApprovalsClient } from '@/main/approvals/client'
-import { endLocalLink, linkIsLive, type SignoffRecord } from '@/main/approvals/local-store'
+import { afterCommit } from '@/main/approvals/after-commit'
+import {
+  endLocalLink,
+  linkIsLive,
+  readLink,
+  type SignoffRecord,
+} from '@/main/approvals/local-store'
 import { requireApprovalsReady } from '@/main/approvals/ready'
 import { AppError } from '@/shared/schemas/result'
 import { ProviderFailure } from '@/main/providers/types'
@@ -73,10 +79,18 @@ export function approvalsEndLink(deps: CoreDeps) {
       return { lastRead }
     },
     run(ctx, input, prepared): HandlerResult<Record<string, never>> {
-      endLocalLink(ctx.project.db, input.campaignId, deps.now().toISOString(), prepared.lastRead)
-      // Last, so a password file that cannot be written rolls the local end back with it.
-      deps.approvals.passwords.forget(input.projectId, input.campaignId)
-      deps.approvals.changed(input.projectId, input.campaignId)
+      const { projectId, campaignId } = input
+      const now = deps.now().toISOString()
+      endLocalLink(ctx.project.db, campaignId, now, prepared.lastRead)
+      const ids = { projectId, campaignId, command: 'approvals.endLink' }
+      const ended = () => readLink(ctx.project.db, campaignId, deps.log)?.endedAt === now
+      afterCommit(deps.log, ids, ended, () => deps.approvals.changed(projectId, campaignId))
+      // Best effort, after the commit, so a password file that cannot be written never loses
+      // the sign-offs just read. A kept password of an ended link is harmless; the next
+      // createLink replaces it.
+      afterCommit(deps.log, ids, ended, () =>
+        deps.approvals.passwords.forget(projectId, campaignId),
+      )
       return { data: {}, log: { campaignId: input.campaignId } }
     },
   })

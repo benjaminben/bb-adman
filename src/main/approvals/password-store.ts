@@ -58,6 +58,7 @@ export function createPasswordStore(opts: PasswordStoreOptions): PasswordStore {
   }
 
   return {
+    canKeep: () => opts.crypto.isAvailable(),
     keep(projectId, campaignId, password) {
       write({ ...loadForChange(), [keyOf(projectId, campaignId)]: password })
     },

@@ -1,7 +1,7 @@
 // approvals.setPassword (spec/approvals.md "approvals.setPassword", security class): the given
 // or a made password is sent (the service ends every visitor session) and kept. No table
 // changes. Every request goes to the stand-in.
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { PASSWORD_ALPHABET } from '@/main/approvals/make-password'
 import { readLink } from '@/main/approvals/local-store'
 import {
@@ -48,7 +48,9 @@ describe('approvals.setPassword [spec/approvals.md "approvals.setPassword"]', ()
     expect(reply).toEqual({ ok: true, data: {} })
     expect(standLink()).toMatchObject({ password: NEXT, sessionsEnded: 1 })
     expect(kept()).toBe(NEXT)
-    expect(lf.f.events.slice(before)).toEqual([])
+    expect(lf.f.events.slice(before)).toEqual([
+      { name: 'approvals.changed', payload: { projectId: lf.projectId, campaignId: lf.c1 } },
+    ])
     expect(JSON.stringify(lf.f.events) + lf.f.readLogs()).not.toContain(NEXT)
   })
 
@@ -107,6 +109,55 @@ describe('approvals.setPassword [spec/approvals.md "approvals.setPassword"]', ()
     await withLink()
     lf.stand.links.delete(`${lf.projectId}/${lf.c1}`)
     expect(await setPassword({ password: NEXT })).toEqual(refusal('approval_link_gone'))
+    expect(kept()).toBe(FIRST)
+  })
+})
+
+describe('approvals.setPassword events and secure storage [AP-8 rulings]', () => {
+  const changedEvents = (from: number) =>
+    lf.f.events.slice(from).filter((e) => e.name === 'approvals.changed')
+
+  it.each([
+    ['a bad password', async () => setPassword({ password: 'short' })],
+    [
+      'a service failure',
+      async () => {
+        lf.stand.once('setPassword', {
+          status: 500,
+          json: { error: { code: 'internal', message: 'x' } },
+        })
+        return setPassword({ password: NEXT })
+      },
+    ],
+    [
+      'a password store that fails',
+      async () => {
+        vi.spyOn(lf.f.core.deps.approvals.passwords, 'keep').mockImplementationOnce(() => {
+          throw new Error('disk full')
+        })
+        return setPassword({ password: NEXT })
+      },
+    ],
+  ])('sends no approvals.changed after %s', async (_n, act) => {
+    await withLink()
+    const before = lf.f.events.length
+    expect((await act()).ok).toBe(false)
+    await Promise.resolve()
+    expect(changedEvents(before)).toEqual([])
+  })
+
+  it('refuses with the store sentence and sends no request when passwords cannot be kept', async () => {
+    const sent = await withLink()
+    vi.spyOn(lf.f.core.deps.approvals.passwords, 'canKeep').mockReturnValue(false)
+    expect(await setPassword({ password: NEXT })).toEqual({
+      ok: false,
+      error: {
+        code: 'RULE_VIOLATION',
+        message: 'This computer cannot store keys securely.',
+        details: { reason: 'secure_storage_unavailable' },
+      },
+    })
+    expect(lf.stand.seen).toHaveLength(sent)
     expect(kept()).toBe(FIRST)
   })
 })

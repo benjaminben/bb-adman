@@ -157,17 +157,39 @@ describe('approvals.endLink [spec/approvals.md "approvals.endLink"]', () => {
     expect(lf.stand.links.has(key())).toBe(false)
   })
 
-  it('recovers when the service deleted the link but the local write failed', async () => {
+  it('still ends the link and keeps the last read when the password cannot be forgotten', async () => {
     await withLinks()
     lf.stand.plantSignoff(lf.projectId, lf.c1, SIGNOFF)
     vi.spyOn(lf.f.core.deps.approvals.passwords, 'forget').mockImplementationOnce(() => {
       throw new AppError('RULE_VIOLATION', 'The saved keys could not be read.')
     })
-    expect(await end()).toMatchObject({ ok: false, error: { code: 'RULE_VIOLATION' } })
+    const slug = lf.stand.links.get(key())?.slug ?? ''
+    expect(await end()).toEqual({ ok: true, data: {} })
+    await Promise.resolve()
     expect(lf.stand.links.has(key())).toBe(false)
-    expect(readLink(lf.db(), lf.c1, log())).toMatchObject({ state: 'live' })
-    data(await end())
     expect(readLink(lf.db(), lf.c1, log())).toMatchObject({ state: 'ended' })
+    expect(readSignoffs(lf.db(), lf.c1, log()).map((s) => s.id)).toEqual([SIGNOFF.id])
+    const logs = lf.f.readLogs()
+    expect(logs).toContain('afterCommit')
+    for (const secret of [PASSWORD, slug, SIGNOFF.email]) expect(logs).not.toContain(secret)
+  })
+
+  it('recovers when the service deleted the link but the local write failed', async () => {
+    await withLinks()
+    const db = lf.db()
+    db.exec(
+      "CREATE TRIGGER no_end BEFORE UPDATE ON approval_link BEGIN SELECT RAISE(ABORT, 'no'); END",
+    )
+    const before = lf.f.events.length
+    expect((await end()).ok).toBe(false)
+    await Promise.resolve()
+    expect(lf.f.events.slice(before).filter((e) => e.name === 'approvals.changed')).toEqual([])
+    expect(lf.stand.links.has(key())).toBe(false)
+    expect(readLink(db, lf.c1, log())).toMatchObject({ state: 'live' })
+    expect(kept()).toBe(PASSWORD)
+    db.exec('DROP TRIGGER no_end')
+    data(await end())
+    expect(readLink(db, lf.c1, log())).toMatchObject({ state: 'ended' })
     expect(kept()).toBeNull()
   })
 

@@ -9,6 +9,8 @@ import { APPROVALS_PASSWORD_MESSAGE } from '@/shared/approvals/messages'
 import { approvalsCampaignInput } from '@/shared/schemas/commands/approvals'
 import { AppError } from '@/shared/schemas/result'
 import { makePassword } from '@/main/approvals/make-password'
+import type { PasswordStore } from '@/main/approvals/types'
+import { INSECURE_MESSAGE } from '@/main/secrets/secret-store'
 
 export const linkPasswordInput = approvalsCampaignInput
   .extend({ password: z.string().optional() })
@@ -22,4 +24,13 @@ export function choosePassword(given: string | undefined): string {
     throw new AppError('INVALID_INPUT', APPROVALS_PASSWORD_MESSAGE)
   }
   return given
+}
+
+// AP-8 ruling: asked after the shared refusals and before the first request, so a link is never
+// made or changed on the service with a password this computer cannot keep. The store's own
+// refusal.
+export function requireCanKeep(passwords: PasswordStore): void {
+  if (!passwords.canKeep()) {
+    throw new AppError('RULE_VIOLATION', INSECURE_MESSAGE, { reason: 'secure_storage_unavailable' })
+  }
 }

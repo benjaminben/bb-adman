@@ -87,6 +87,7 @@ describe('approvals.createLink passwords [spec/approvals.md "approvals.createLin
       error: { code: 'INVALID_INPUT', message: APPROVALS_PASSWORD_MESSAGE },
     })
     expect(JSON.stringify(reply)).not.toContain(pw)
+    expect(lf.f.readLogs()).not.toContain(pw.replace(/\s/g, ''))
     expect(apiCalls()).toEqual([])
   })
 
@@ -155,7 +156,12 @@ describe('approvals.createLink writes [spec/approvals.md "approvals.createLink" 
     expect(data(await create({ password: CHOSEN }))).toEqual({ slug: 'Taken0ver0Ab' })
     const link = lf.stand.links.get(`${lf.projectId}/${lf.c1}`)
     expect(link).toMatchObject({ password: CHOSEN, sessionsEnded: 1 })
-    expect(apiCalls().map((s) => s.route)).toEqual(['createLink', 'setPassword', 'getLink'])
+    const linkPath = `/api/v1/links/${lf.projectId}/${lf.c1}`
+    expect(apiCalls().map((s) => [s.route, s.method, s.path])).toEqual([
+      ['createLink', 'POST', '/api/v1/links'],
+      ['setPassword', 'PUT', `${linkPath}/password`],
+      ['getLink', 'GET', linkPath],
+    ])
     expect(readLink(lf.db(), lf.c1, lf.f.core.deps.log)).toMatchObject({
       slug: 'Taken0ver0Ab',
       state: 'live',
@@ -192,7 +198,10 @@ describe('approvals.createLink writes [spec/approvals.md "approvals.createLink" 
     vi.spyOn(passwords, 'keep').mockImplementationOnce(() => {
       throw new AppError('RULE_VIOLATION', 'This computer cannot store keys securely.')
     })
+    const before = lf.f.events.length
     expect(await create()).toMatchObject({ ok: false, error: { code: 'RULE_VIOLATION' } })
+    await Promise.resolve()
+    expect(lf.f.events.slice(before).filter((e) => e.name === 'approvals.changed')).toEqual([])
     expect(readLink(lf.db(), lf.c1, lf.f.core.deps.log)).toBeNull()
     const made = lf.stand.links.get(`${lf.projectId}/${lf.c1}`)?.slug
     expect(data(await create({ password: CHOSEN }))).toEqual({ slug: made })
@@ -209,5 +218,44 @@ describe('approvals.createLink writes [spec/approvals.md "approvals.createLink" 
     expect(await create()).toMatchObject({ ok: false, error: { code: 'PROVIDER_ERROR' } })
     expect(readLink(lf.db(), lf.c1, lf.f.core.deps.log)).toBeNull()
     expect(kept()).toBeNull()
+  })
+
+  it('takes over through 409 when the stored link row cannot be read, leaking nothing', async () => {
+    await setUp(lf)
+    const { slug } = data<{ slug: string }>(await create())
+    const bad = "javascript:alert('x')"
+    lf.db().prepare('UPDATE approval_link SET slug = ? WHERE campaign_id = ?').run(bad, lf.c1)
+    const sent = apiCalls().length
+    const reply = await create({ password: CHOSEN })
+    expect(reply).toEqual({ ok: true, data: { slug } })
+    expect(
+      apiCalls()
+        .slice(sent)
+        .map((s) => s.route),
+    ).toEqual(['createLink', 'setPassword', 'getLink'])
+    expect(readLink(lf.db(), lf.c1, lf.f.core.deps.log)).toMatchObject({ slug, state: 'live' })
+    expect(JSON.stringify([reply, lf.f.events]) + lf.f.readLogs()).not.toContain(bad)
+  })
+})
+
+describe('approvals.createLink secure storage first [AP-8 ruling]', () => {
+  it('refuses with the store sentence and sends no request when passwords cannot be kept', async () => {
+    await setUp(lf)
+    vi.spyOn(lf.f.core.deps.approvals.passwords, 'canKeep').mockReturnValue(false)
+    expect(await create({ password: CHOSEN })).toEqual({
+      ok: false,
+      error: {
+        code: 'RULE_VIOLATION',
+        message: 'This computer cannot store keys securely.',
+        details: { reason: 'secure_storage_unavailable' },
+      },
+    })
+    expect(lf.stand.seen).toEqual([])
+  })
+
+  it('asks after the shared refusals', async () => {
+    await setUp(lf, { service: false })
+    vi.spyOn(lf.f.core.deps.approvals.passwords, 'canKeep').mockReturnValue(false)
+    expect(await create()).toEqual(refusal('approvals_not_set_up'))
   })
 })
