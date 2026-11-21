@@ -144,3 +144,21 @@ describe('GenerateFields [spec/screens-ai.md "Generate fields"; FR-062, FR-063]'
     expect(await axeViolations()).toEqual([])
   })
 })
+
+describe('GenerateFields first draft [SP-7]', () => {
+  it("reads every image and chooses the subject's asset-library photo", async () => {
+    const photo = can('S1', { library: 'asset' })
+    const { fake } = await open({ refs: [photo, ref('R2'), ref('A3', { library: 'asset' })] })
+    expect(await screen.findByText('1 chosen')).toBeVisible()
+    expect(fake.queries.filter((q) => q.name === 'asset.list')[0]?.input).toEqual({
+      projectId: P,
+      kind: 'image',
+    })
+    await generate()
+    expect(
+      sent(fake, 'generation.runImages').map(
+        (c) => (c.input as { referenceAssetIds: string[] }).referenceAssetIds,
+      ),
+    ).toEqual([['S1']])
+  })
+})

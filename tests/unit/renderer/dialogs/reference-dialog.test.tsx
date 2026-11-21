@@ -131,3 +131,24 @@ describe('ReferenceDialog [spec/screens-ai.md "Reference dialog"; A-68]', () => 
     expect(await axeViolations()).toEqual([])
   })
 })
+
+describe('ReferenceDialog subject photos [SP-7]', () => {
+  it('shows a subject photo once, in "Reference pictures", with "Photo of"', async () => {
+    const photo = ref('S1', { library: 'asset', subjectId: 'citrus-can' })
+    const madePhoto = ref('S2', { library: 'asset', origin: 'generated', subjectId: 'citrus-can' })
+    const assets = [made('G1'), photo, madePhoto, ref('I1', { library: 'asset' })]
+    // The call with no library filter gets every image, as asset.list gives it.
+    await open({ refs: [ref('R1'), ...assets], assets })
+    const names = list('Reference pictures')
+      .getAllByRole('checkbox')
+      .map((b) => b.closest('label')?.textContent)
+    expect(names).toEqual(['R1.png', 'S1.png', 'S2.png'])
+    expect(screen.getAllByRole('checkbox', { name: 'S1.png' })).toHaveLength(1)
+    expect(screen.getAllByRole('checkbox', { name: 'S2.png' })).toHaveLength(1)
+    const madeNames = list('Made in this project')
+      .getAllByRole('checkbox')
+      .map((b) => b.closest('label')?.textContent)
+    expect(madeNames).toEqual(['G1.png'])
+    expect(list('Reference pictures').getAllByText('Photo of citrus-can')).toHaveLength(2)
+  })
+})
