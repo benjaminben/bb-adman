@@ -78,9 +78,9 @@ test('Workflow 5.1: a campaign from a Markdown brief, its pictures, text and cut
   // Step 7: copy suggested for the call to action, and one line used.
   const action = await layer(place, (l) => l.slot === 'call-to-action')
   await w.suggestAndUse(page, action.name, 'Find your fit')
-  await expect.poll(async () => (await layer(place, (l) => l.id === action.id)).copy).toBe(
-    'Find your fit',
-  )
+  await expect
+    .poll(async () => (await layer(place, (l) => l.id === action.id)).copy)
+    .toBe('Find your fit')
 
   // Step 7: a subject picture layer, its picture made and used, then cut out and the cut-out used.
   await page.getByRole('button', { name: 'Add picture layer' }).click()
@@ -175,4 +175,3 @@ test('A failed run of each kind shows its sentence and Retry, in earlier options
   await expect(retry.getByText('Provider: Google Gemini')).toBeVisible()
   await retry.getByRole('button', { name: 'Cancel' }).click()
 })
-

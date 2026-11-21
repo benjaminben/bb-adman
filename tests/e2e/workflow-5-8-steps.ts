@@ -29,7 +29,7 @@ export async function runLeftGoing(app: ElectronApplication, page: Page): Promis
   await run.getByRole('spinbutton', { name: 'Pictures' }).fill('1')
   await run.getByRole('radio', { name: 'Google Gemini' }).check()
   await run.getByRole('button', { name: 'Generate' }).click()
-  await expect(run).toBeHidden()
+  await expect(run).toBeHidden(w.CLOSES)
   await expect.poll(() => heldCount(app)).toBe(1)
 
   // Step 3: the other campaign, in its own tab.

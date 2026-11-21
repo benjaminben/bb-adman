@@ -13,6 +13,9 @@ export const READ_NAME = 'Harbour Lights'
 export const CAMPAIGN = 'Harbour Lights at Dusk'
 export const MESSAGE = 'Long evenings, bright lanterns'
 
+// A run dialog closes when its command answers; on a busy machine that can pass 5 s.
+export const CLOSES = { timeout: 15_000 }
+
 export type Layer = {
   id: string
   type: string
@@ -90,7 +93,7 @@ export async function makePictures(page: Page, count: number): Promise<void> {
   await run.getByRole('radio', { name: 'Fake provider' }).check()
   await expect(run).toContainText('This uses the fake provider. Nothing is charged.')
   await run.getByRole('button', { name: 'Generate' }).click()
-  await expect(run).toBeHidden()
+  await expect(run).toBeHidden(CLOSES)
   await expect(
     pictureSection(page).getByText('Done. Choose one under Earlier options.'),
   ).toBeVisible({ timeout: 20_000 })
@@ -112,7 +115,7 @@ export async function placeText(page: Page): Promise<void> {
   const dialog = page.getByRole('dialog', { name: 'Place text with AI' })
   await dialog.getByRole('radio', { name: 'Fake provider' }).check()
   await dialog.getByRole('button', { name: 'Place text' }).click()
-  await expect(dialog).toHaveCount(0)
+  await expect(dialog).toHaveCount(0, CLOSES)
   await expect(page.getByText('Placing text with AI…')).toHaveCount(0, { timeout: 15_000 })
 }
 
@@ -126,7 +129,7 @@ export async function suggestAndUse(page: Page, layer: string, line: string): Pr
   const run = page.getByRole('dialog', { name: 'Suggest copy' })
   await run.getByRole('radio', { name: 'Fake provider' }).check()
   await run.getByRole('button', { name: 'Suggest copy' }).click()
-  await expect(run).toHaveCount(0)
+  await expect(run).toHaveCount(0, CLOSES)
   const option = dialog.getByRole('listitem').filter({ hasText: line })
   await option.getByRole('button', { name: 'Use this text' }).click()
 }
@@ -138,7 +141,7 @@ export async function cutOut(page: Page): Promise<void> {
   const run = page.getByRole('dialog', { name: 'Cut out the subject' })
   await run.getByRole('radio', { name: 'Fake provider' }).check()
   await run.getByRole('button', { name: 'Cut out' }).click()
-  await expect(run).toBeHidden()
+  await expect(run).toBeHidden(CLOSES)
   await expect(fields.getByText('Done. The cut-out is under Earlier options.')).toBeVisible({
     timeout: 20_000,
   })

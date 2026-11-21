@@ -47,7 +47,8 @@ export async function failEachGeminiKind(
     const { jobId } = await runImages(page, place, layerId, 'gemini')
     await expect
       .poll(() => status(page, place.projectId, jobId), { timeout: 20_000 })
-      .toBe(`failed:${kind}`)  }
+      .toBe(`failed:${kind}`)
+  }
 }
 
 // One ComfyUI picture run the stand-in server reports it could not finish.
