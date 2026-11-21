@@ -1,8 +1,19 @@
 // The import dialog's sentences (spec/screens-campaign.md, "The import dialog"). The renderer
 // draws no path: a name is the text after the last `/` or `\`.
+import type { AssetImportReply } from '@/shared/schemas/commands/asset'
 
-// The reply of asset.import (spec/assets.md, "Import").
-export type ImportReply = { assetIds: string[]; reusedAssetIds: string[]; skippedCount: number }
+// The reply of asset.import (spec/assets.md, "Import"). A reply without animatedAssetIds is
+// read as an empty list.
+export type ImportReply = Omit<AssetImportReply, 'animatedAssetIds'> & {
+  animatedAssetIds?: string[]
+}
+
+// One line per animated WebP (S2-17). A name not found in asset.list reads "A file".
+export function animationLines(ids: string[], names: Map<string, string>): string[] {
+  return ids.map(
+    (id) => `${names.get(id) ?? 'A file'} holds an animation. Adman uses its first picture.`,
+  )
+}
 
 const MAX_NAMES = 10
 
