@@ -7,6 +7,9 @@ import {
   setFakeBehaviour,
   type FakeCancel,
 } from '../../../src/main/providers/fake/behaviour'
+import { openProjectFile, closeProjectFile } from '../../../src/main/db/project-file'
+import { readWireRow } from '../../../src/main/db/rows'
+import type { JobRow } from '../../../src/shared/schemas/rows/job'
 
 const fixtures: RunnerFixture[] = []
 function fixture(closeWaitMs = 300): RunnerFixture {
@@ -123,5 +126,36 @@ describe("project.close with runningJobs 'stop' [SPEC 6.11.2 'Closing a project'
     expect(before).toBe(1)
     expect((await close(x)).ok).toBe(true)
     expect(last(x, id)?.paidCalls).toBe(before)
+  })
+})
+
+describe('a closing project starts no job [SPEC 6.11.2 1.40, 14 1.40 AA2]', () => {
+  it('a paid-test job enqueued during the wait is never started', async () => {
+    const x = fixture(200)
+    await runningFake(x, 'no_confirm')
+    const closing = close(x)
+    await new Promise((r) => setTimeout(r, 30))
+    const late = await x.start({ provider: 'paid-test' })
+    expect((await closing).ok).toBe(true)
+    expect(last(x, late)).toMatchObject({ status: 'cancelled', paidCalls: 0 })
+    expect(last(x, late)?.result ?? {}).not.toHaveProperty('outcomeUnknown')
+    expect(last(x, late)?.result ?? {}).not.toHaveProperty('stoppedWaiting')
+    expect(x.f.calls).toBe(1)
+  })
+
+  it('a close that returned leaves the file free to run jobs when opened again', async () => {
+    const x = fixture()
+    expect((await close(x)).ok).toBe(true)
+    const again = openProjectFile({ filePath: x.project.filePath, appVersion: '0.1.0' })
+    x.projects.add(again)
+    try {
+      await x.jobs.projectOpened(again.projectId)
+      const id = await x.start()
+      const stored = () => readWireRow(again.db, 'job', { id }) as JobRow | null
+      await waitFor(() => stored()?.status === 'succeeded')
+    } finally {
+      x.projects.remove(again.projectId)
+      closeProjectFile(again)
+    }
   })
 })

@@ -27,6 +27,7 @@ export function createJobRunner(opts: JobRunnerOptions): JobService {
     opts,
     active: new Map(),
     enqueued: new Set(),
+    closing: new Set(),
     pump,
     onEnd: new Set(),
   }
@@ -57,6 +58,8 @@ export function createJobRunner(opts: JobRunnerOptions): JobService {
     }
     queued.sort((a, b) => oldestFirst(a.job, b.job))
     for (const { handle, job, row } of queued) {
+      // [1.40] SPEC 6.11.2: a project that is closing starts no job.
+      if (state.closing.has(handle.projectId)) continue
       if (runningFor(job.provider ?? '') >= limit) continue
       startJob(state, handle.projectId, row)
     }

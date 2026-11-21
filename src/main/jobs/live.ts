@@ -49,6 +49,8 @@ export type RunnerState = {
   active: Map<string, LiveJob>
   // IDs this process enqueued and has not yet started or ended (SPEC 3.6 "Jobs" item 2).
   enqueued: Set<string>
+  // [1.40] Projects whose close is running; pump starts no row of theirs (SPEC 6.11.2).
+  closing: Set<string>
   pump: () => void
   // Called after every end of a job; the close wait listens here (close-jobs.ts).
   onEnd: Set<() => void>

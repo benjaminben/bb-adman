@@ -55,22 +55,28 @@ function waitForProject(state: RunnerState, projectId: string, ms: number): Prom
 export async function cancelAll(state: RunnerState, projectId: string): Promise<void> {
   await afterTransaction()
   if (!state.opts.deps().projects.get(projectId)) return
-  endQueued(state, projectId)
-  for (const live of liveOf(state, projectId)) {
-    const end = endWithoutWaiting(live)
-    if (!end) {
-      if (!live.cancelAsked) askToStop(state, live)
-      continue
+  // [1.40] SPEC 6.11.2: while the close runs, pump starts no job of this project.
+  state.closing.add(projectId)
+  try {
+    endQueued(state, projectId)
+    for (const live of liveOf(state, projectId)) {
+      const end = endWithoutWaiting(live)
+      if (!end) {
+        if (!live.cancelAsked) askToStop(state, live)
+        continue
+      }
+      live.controller.abort()
+      live.finish(end)
     }
-    live.controller.abort()
-    live.finish(end)
-  }
-  await waitForProject(state, projectId, state.opts.closeWaitMs ?? CLOSE_WAIT_MS)
-  endQueued(state, projectId)
-  for (const live of liveOf(state, projectId)) {
-    const end = endWithoutWaiting(live)
-    if (!end) live.cancelAsked = true
-    live.controller.abort()
-    live.finish(end ?? { status: 'cancelled', outcomeUnknown: true })
+    await waitForProject(state, projectId, state.opts.closeWaitMs ?? CLOSE_WAIT_MS)
+    endQueued(state, projectId)
+    for (const live of liveOf(state, projectId)) {
+      const end = endWithoutWaiting(live)
+      if (!end) live.cancelAsked = true
+      live.controller.abort()
+      live.finish(end ?? { status: 'cancelled', outcomeUnknown: true })
+    }
+  } finally {
+    state.closing.delete(projectId)
   }
 }
