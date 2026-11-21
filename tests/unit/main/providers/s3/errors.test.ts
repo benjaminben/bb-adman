@@ -1,0 +1,71 @@
+import { describe, it, expect } from 'vitest'
+import { s3Storage } from '../../../../../src/main/providers/s3/s3-storage'
+import { failureFromS3Error } from '../../../../../src/main/providers/s3/failure'
+import { ProviderFailure } from '../../../../../src/main/providers/types'
+import { TEST_KEY_ID, TEST_SECRET, handlerAnswering, testContext, xml } from './recorded'
+
+async function failureOf(call: Promise<unknown>): Promise<ProviderFailure> {
+  try {
+    await call
+  } catch (error) {
+    if (error instanceof ProviderFailure) return error
+    throw error
+  }
+  throw new Error('expected the call to fail')
+}
+
+describe('S3 failures become one ProviderFailure with an error kind [SPEC 6]', () => {
+  it.each([
+    ['error-invalid-access-key-id.xml', 403, 'bad_key'],
+    ['error-signature-does-not-match.xml', 403, 'bad_key'],
+    ['error-access-denied.xml', 403, 'bad_key'],
+    ['error-slow-down.xml', 503, 'quota'],
+    ['error-request-timeout.xml', 400, 'timeout'],
+    ['error-no-such-bucket.xml', 404, 'other'],
+    ['error-no-such-key.xml', 404, 'other'],
+    ['error-internal.xml', 500, 'other'],
+  ] as const)('%s (HTTP %i) is %s', async (name, status, kind) => {
+    const { requestHandler } = handlerAnswering(xml(name, status))
+    const failure = await failureOf(s3Storage(testContext(), { requestHandler }).read('a.txt'))
+    expect(failure.error.kind).toBe(kind)
+    expect(failure.error.detail).toContain(`HTTP ${status}`)
+  })
+
+  it('keeps the S3 error code and message in the detail, without the access key ID', async () => {
+    const { requestHandler } = handlerAnswering(xml('error-invalid-access-key-id.xml', 403))
+    const failure = await failureOf(s3Storage(testContext(), { requestHandler }).list(''))
+    expect(failure.error.detail).toContain('InvalidAccessKeyId')
+    expect(failure.error.detail).not.toContain(TEST_KEY_ID)
+  })
+
+  it.each(['ECONNREFUSED', 'ENOTFOUND', 'ECONNRESET', 'EAI_AGAIN'])(
+    'a network failure with code %s is offline',
+    async (code) => {
+      const network = Object.assign(new Error(`connect ${code}`), { code })
+      const { requestHandler } = handlerAnswering(network)
+      const failure = await failureOf(s3Storage(testContext(), { requestHandler }).exists('a'))
+      expect(failure.error.kind).toBe('offline')
+    },
+  )
+
+  it('a request that timed out is timeout', async () => {
+    const timedOut = Object.assign(new Error('Request timed out'), { name: 'TimeoutError' })
+    const { requestHandler } = handlerAnswering(timedOut)
+    const failure = await failureOf(s3Storage(testContext(), { requestHandler }).exists('a'))
+    expect(failure.error.kind).toBe('timeout')
+  })
+
+  it('removes both keys from any detail text', () => {
+    const error = new Error(`bad ${TEST_KEY_ID} and ${TEST_SECRET}`)
+    const failure = failureFromS3Error(error, [TEST_KEY_ID, TEST_SECRET])
+    expect(failure.error).toEqual({
+      kind: 'other',
+      detail: 'Error: bad [key removed] and [key removed]',
+    })
+  })
+
+  it('passes a ProviderFailure through unchanged', () => {
+    const original = new ProviderFailure({ kind: 'quota', detail: 'x' })
+    expect(failureFromS3Error(original, [])).toBe(original)
+  })
+})

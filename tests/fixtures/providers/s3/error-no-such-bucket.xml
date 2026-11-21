@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Error>
+  <Code>NoSuchBucket</Code>
+  <Message>The specified bucket does not exist</Message>
+  <BucketName>made-up-bucket</BucketName>
+  <RequestId>0A49CE4060975EAC</RequestId>
+  <HostId>bWFkZS11cC1ob3N0LWlk</HostId>
+</Error>

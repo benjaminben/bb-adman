@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Error>
+  <Code>SignatureDoesNotMatch</Code>
+  <Message>The request signature we calculated does not match the signature you provided. Check your key and signing method.</Message>
+  <RequestId>0A49CE4060975EAC</RequestId>
+  <HostId>bWFkZS11cC1ob3N0LWlk</HostId>
+</Error>

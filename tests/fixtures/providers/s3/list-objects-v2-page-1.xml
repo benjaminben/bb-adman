@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Name>made-up-bucket</Name>
+  <Prefix>made-up-prefix/folder/</Prefix>
+  <KeyCount>2</KeyCount>
+  <MaxKeys>1000</MaxKeys>
+  <IsTruncated>true</IsTruncated>
+  <ContinuationToken></ContinuationToken>
+  <NextContinuationToken>made-up-token-1</NextContinuationToken>
+  <Contents>
+    <Key>made-up-prefix/folder/a.txt</Key>
+    <LastModified>2026-11-20T10:00:00.000Z</LastModified>
+    <ETag>"0cc175b9c0f1b6a831c399e269772661"</ETag>
+    <Size>1</Size>
+    <StorageClass>STANDARD</StorageClass>
+  </Contents>
+  <Contents>
+    <Key>made-up-prefix/folder/deep/b.png</Key>
+    <LastModified>2026-11-20T10:00:01.000Z</LastModified>
+    <ETag>"92eb5ffee6ae2fec3ad71c777531578f"</ETag>
+    <Size>1</Size>
+    <StorageClass>STANDARD</StorageClass>
+  </Contents>
+</ListBucketResult>
