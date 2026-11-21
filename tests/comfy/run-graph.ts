@@ -9,6 +9,7 @@ import type { Graph, WorkflowSpec } from '../../src/main/providers/comfyui/workf
 import { isViewType } from '../../src/main/providers/comfyui/values'
 import type { Print } from './print'
 import { refusalLines, runErrorLines } from './server-lines'
+import { MIN_TARGETED_INTERRUPT, versionAtLeast } from './version'
 
 export const POLL_MS = 2_000
 // 6.10.12: a picture case waits up to 30 minutes; 1.41: a video case up to 60.
@@ -64,9 +65,28 @@ function outputRef(entry: HistoryEntry, node: string): ViewRef {
   throw new Error('The run gave no file for its output node')
 }
 
-async function cancelOwn(client: ComfyClient, id: string): Promise<void> {
+type Seen = { working: boolean; jobsAnswered: boolean; version: string | undefined }
+
+// SPEC 6.10.14: the own run always leaves the queue. `interrupt` is sent only when all hold:
+// the run was seen working, /api/jobs answered at least once, and the server's version can be
+// read and is MIN_TARGETED_INTERRUPT or later. A server too old to read the ID would stop
+// whatever job is running, which could be someone else's work.
+async function cancelOwn(
+  client: ComfyClient,
+  id: string,
+  seen: Seen,
+  print: Print,
+): Promise<never> {
   await client.removeFromQueue(id)
-  await client.interrupt(id)
+  const targeted = versionAtLeast(seen.version ?? '', MIN_TARGETED_INTERRUPT)
+  if (seen.working && seen.jobsAnswered && targeted) {
+    await client.interrupt(id)
+    throw new Error('The run ran out of time; its own run was cancelled')
+  }
+  print(
+    'The run may still be running on the server: it was taken off the queue but not interrupted.',
+  )
+  throw new Error('The run ran out of time; its own run was taken off the queue, not interrupted')
 }
 
 async function submitted(client: ComfyClient, graph: Graph, id: string, print: Print) {
@@ -92,11 +112,14 @@ export async function runGraph(
   print: Print,
   timing: Timing,
   maxBytes: number,
+  // The version from the case's own check; none means it cannot be read.
+  serverVersion?: string,
 ): Promise<RunResult> {
   const { promptId: id } = await submitted(client, graph, promptId, print)
   const start = timing.now()
   let workingFrom: number | null = null
   let job: { status: string } | null = null
+  let jobsAnswered = false
   for (;;) {
     const entry = await client.history(id)
     if (entry && ended(entry)) {
@@ -111,10 +134,12 @@ export async function runGraph(
       return { entry, job, waitingMs: from - start, workingMs: end - from, ref, bytes }
     }
     if (timing.now() - start >= timing.limitMs) {
-      await cancelOwn(client, id)
-      throw new Error('The run ran out of time; its own run was cancelled')
+      const seen = { working: workingFrom !== null, jobsAnswered, version: serverVersion }
+      return cancelOwn(client, id, seen, print)
     }
-    job = (await client.jobState(id)) ?? job
+    const answered = await client.jobState(id)
+    if (answered) jobsAnswered = true
+    job = answered ?? job
     if (workingFrom === null && !(await waiting(client, id, job))) workingFrom = timing.now()
     await timing.sleep(timing.pollMs)
   }

@@ -4,7 +4,7 @@ import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
 import { createComfyClient } from '../../../src/main/providers/comfyui/client'
 import { fillWorkflow } from '../../../src/main/providers/comfyui/fill'
 import { flux3KleinEditReferences } from '../../../src/main/providers/comfyui/workflows/flux3'
-import { foreignCancels, recordCalls, unexpectedCalls } from '../../comfy/recorder'
+import { recordCalls, unexpectedCalls } from '../../comfy/recorder'
 import { fieldNames, runGraph, type Timing } from '../../comfy/run-graph'
 import { makePrinter } from '../../comfy/print'
 
@@ -136,20 +136,6 @@ describe('runGraph: submit, poll, fetch, at client level [SPEC 14 1.41 CU-5a, 1.
       'Run error: torch.OutOfMemoryError',
       '  Message: CUDA out of memory on [test server]',
     ])
-  })
-
-  it('a run that runs out of time removes and interrupts its own run only, then fails', async () => {
-    const { print, recorded, id } = await setUp()
-    const run = runGraph(recorded.client, spec, graph, id, print, fakeTiming(10_000), 1_000)
-    await expect(run).rejects.toThrow('The run ran out of time; its own run was cancelled')
-    const cancels = recorded.calls.filter(
-      (c) => c.name === 'removeFromQueue' || c.name === 'interrupt',
-    )
-    expect(cancels).toEqual([
-      { name: 'removeFromQueue', arg: id },
-      { name: 'interrupt', arg: id },
-    ])
-    expect(foreignCancels(recorded.calls)).toEqual([])
   })
 
   it('a run with no output file for its output node fails', async () => {

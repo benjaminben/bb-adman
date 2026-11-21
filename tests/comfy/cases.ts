@@ -42,11 +42,17 @@ const FRAMES = 56
 // The smallest square size a workflow's size rule allows.
 const smallest = (spec: WorkflowSpec) => fitSize({ width: 1, height: 1 }, spec.size)
 
-async function missingFor(kit: CaseKit, spec: WorkflowSpec): Promise<string | null> {
+// The case's own check: a skip line when anything is missing, and the server's version, which
+// the time-out rule needs (SPEC 6.10.14).
+async function missingFor(
+  kit: CaseKit,
+  spec: WorkflowSpec,
+): Promise<{ skip: string | null; version: string | undefined }> {
   const result = await checkServer(kit.client, [spec])
   if (result.outcome !== 'ok') throw new Error(`The check ended: ${result.outcome}`)
   const count = result.workflows[0]?.missing.length ?? 0
-  return count === 0 ? null : `${spec.id}: ${count} items missing, so it does not run.`
+  const skip = count === 0 ? null : `${spec.id}: ${count} items missing, so it does not run.`
+  return { skip, version: result.version }
 }
 
 async function showFieldNames(kit: CaseKit, run: RunResult, id: string): Promise<void> {
@@ -62,6 +68,7 @@ async function showFieldNames(kit: CaseKit, run: RunResult, id: string): Promise
 async function runAndReport(
   kit: CaseKit,
   spec: WorkflowSpec,
+  version: string | undefined,
   values: Omit<FillValues, 'promptId'>,
   maxBytes: number,
   checked: (bytes: Uint8Array) => string,
@@ -69,7 +76,8 @@ async function runAndReport(
   const id = kit.newId?.() ?? randomUUID()
   const withId = spec.slots.outputPrefix ? { ...values, promptId: id } : values
   const graph = fillWorkflow(spec, withId)
-  const run = await runGraph(kit.client, spec, graph, id, kit.print, kit.timing, maxBytes)
+  const { client, print, timing } = kit
+  const run = await runGraph(client, spec, graph, id, print, timing, maxBytes, version)
   await showFieldNames(kit, run, id)
   const seconds = (ms: number) => `${Math.round(ms / 1000)} s`
   kit.print(`Time waiting: ${seconds(run.waitingMs)}, time working: ${seconds(run.workingMs)}`)
@@ -99,13 +107,13 @@ function checkVideo(bytes: Uint8Array): string {
 // Case 5 (1.46): one picture from the test's own reference picture.
 export async function referenceCase(kit: CaseKit): Promise<CaseOutcome> {
   const spec = flux3KleinEditReferences
-  const skip = await missingFor(kit, spec)
+  const { skip, version } = await missingFor(kit, spec)
   if (skip) return { skip }
   const picture = makeTestPicture()
   const kept = await kit.client.uploadImage(uploadName(picture), picture)
   const name = kept.subfolder === '' ? kept.name : `${kept.subfolder}/${kept.name}`
   const values = { prompt: REFERENCE_PROMPT, references: [name] }
-  await runAndReport(kit, spec, values, MAX_PICTURE_BYTES, checkPicture(kit))
+  await runAndReport(kit, spec, version, values, MAX_PICTURE_BYTES, checkPicture(kit))
   kit.print('No small JPEG fixture is in tests/, so no JPEG run is made.')
   return { done: true }
 }
@@ -113,10 +121,10 @@ export async function referenceCase(kit: CaseKit): Promise<CaseOutcome> {
 // Case 3: one MOSS picture at the smallest first-run size.
 export async function pictureCase(kit: CaseKit): Promise<CaseOutcome> {
   const spec = mossTextToImage
-  const skip = await missingFor(kit, spec)
+  const { skip, version } = await missingFor(kit, spec)
   if (skip) return { skip }
   const values = { prompt: PICTURE_PROMPT, ...smallest(spec) }
-  await runAndReport(kit, spec, values, MAX_PICTURE_BYTES, checkPicture(kit))
+  await runAndReport(kit, spec, version, values, MAX_PICTURE_BYTES, checkPicture(kit))
   return { done: true }
 }
 
@@ -126,9 +134,9 @@ export async function videoCase(kit: CaseKit): Promise<CaseOutcome> {
     return { skip: 'ADMAN_COMFY_VIDEO is not 1, so the video case does not run.' }
   }
   const spec = h3TextToVideo
-  const skip = await missingFor(kit, spec)
+  const { skip, version } = await missingFor(kit, spec)
   if (skip) return { skip }
   const values = { prompt: VIDEO_PROMPT, ...smallest(spec), frames: FRAMES }
-  await runAndReport(kit, spec, values, MAX_VIDEO_BYTES, checkVideo)
+  await runAndReport(kit, spec, version, values, MAX_VIDEO_BYTES, checkVideo)
   return { done: true }
 }

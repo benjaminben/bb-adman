@@ -124,6 +124,28 @@ describe('case 3, the MOSS picture [SPEC 14 1.41, 1.46 first-run size]', () => {
   })
 })
 
+describe("a case hands its own check's version to the time-out rule [review CU-5a item 1]", () => {
+  it('interrupts its own run on time-out only because the check read 0.45.0', async () => {
+    const { s, recorded, kit } = await setUp()
+    complete(s, mossTextToImage, { body: Buffer.from(makeTestPicture()) })
+    s.reply(`GET /history/${ID}`, { json: {} })
+    s.reply(`GET /api/jobs/${ID}`, { json: { status: 'in_progress' } })
+    let at = 0
+    kit.timing = {
+      pollMs: 2_000,
+      limitMs: 10_000,
+      now: () => at,
+      sleep: async (ms) => {
+        at += ms
+      },
+    }
+    await expect(pictureCase(kit)).rejects.toThrow('its own run was cancelled')
+    expect(recorded.calls.filter((c) => c.name === 'interrupt')).toEqual([
+      { name: 'interrupt', arg: ID },
+    ])
+  })
+})
+
 describe('case 2, the H3 video [SPEC 14 1.41]', () => {
   it('runs only with ADMAN_COMFY_VIDEO=1, and contacts nothing without it', async () => {
     const { s, kit } = await setUp({})
