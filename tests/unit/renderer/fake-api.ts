@@ -79,11 +79,30 @@ export function makeFakeApi(initial: AppState = baseState()) {
   const queryAnswers = new Map<string, Answer>()
   const listeners = new Map<string, Set<(p: unknown) => void>>()
 
+  // agentRuns.setAllowed and agentRuns.setLimit change the state, as the real commands do, so
+  // the next app.getState shows them.
+  function agentRunsCommand(name: string, input: unknown): Result<unknown> | null {
+    const settings = state.settings
+    if (name === 'agentRuns.setAllowed') {
+      const { provider, allowed } = input as { provider: string; allowed: boolean }
+      const agentRuns = { ...settings.agentRuns, [provider]: { allowed } }
+      state = { ...state, settings: { ...settings, agentRuns } }
+      return { ok: true, data: { provider, allowed } }
+    }
+    if (name === 'agentRuns.setLimit') {
+      const { limit } = input as { limit: number }
+      state = { ...state, settings: { ...settings, agentRunLimit: limit } }
+      return { ok: true, data: { limit } }
+    }
+    return null
+  }
+
   const api: AdmanApi = {
     command: vi.fn(async (name: string, input: unknown): Promise<Result<unknown>> => {
       commands.push({ name, input })
       const answer = commandAnswers.get(name)
-      return answer ? answer(input) : { ok: true, data: null }
+      if (answer) return answer(input)
+      return agentRunsCommand(name, input) ?? { ok: true, data: null }
     }),
     query: vi.fn(async (name: string, input?: unknown): Promise<Result<unknown>> => {
       queries.push({ name, input })
