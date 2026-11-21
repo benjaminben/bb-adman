@@ -41,7 +41,6 @@ const INPUTS: Record<string, object> = {
       },
     ],
   },
-  'check.run': { campaignId: 'C1' },
   'layer.setFonts': { items: [{ layerId: 'L1', fontAssetId: null }] },
 }
 const NAMES = Object.keys(INPUTS)
@@ -53,7 +52,6 @@ const POLICY: Record<string, string> = {
   'translation.exportSheet': 'deny',
   'translation.write': 'deny',
   'translation.restore': 'deny',
-  'check.run': 'allow',
   'layer.setFonts': 'allow',
 }
 const AGENT_REACHES = NAMES.filter((n) => POLICY[n] === 'allow')
