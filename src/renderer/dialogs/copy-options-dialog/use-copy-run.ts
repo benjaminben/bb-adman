@@ -41,7 +41,7 @@ export function useCopyRun(projectId: string, layerId: string) {
   useEffect(() => {
     let live = true
     void api.query('job.list', { projectId, layerId }).then((reply) => {
-      if (!live || !reply.ok) return
+      if (!live || !reply.ok || !Array.isArray(reply.data)) return
       const rows = reply.data as JobRow[]
       const done = rows.find((r) => isCopy(r, layerId) && r.status === 'succeeded')
       if (done) setLatest((now) => now ?? done)

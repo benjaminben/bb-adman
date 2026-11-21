@@ -8,6 +8,7 @@ import type { TextStyle } from '@/shared/schemas/layer'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { ColourField } from './colour-field'
 import { CopyField } from './copy-field'
+import { SuggestCopy } from './suggest-copy'
 import styles from './text-fields.module.css'
 
 export type TextFieldsProps = {
@@ -48,6 +49,7 @@ export function TextFields(props: TextFieldsProps) {
       <CopyField
         copy={layer.copy ?? ''}
         disabled={disabled}
+        action={<SuggestCopy layer={layer} />}
         onCommit={(copy) => props.onUpdate({ copy })}
       />
       {props.font}

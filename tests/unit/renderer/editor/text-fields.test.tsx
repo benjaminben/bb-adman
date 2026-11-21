@@ -1,14 +1,15 @@
 // spec/editor.md, "Properties panel", "Text" [REQ: FR-093, FR-249]: Copy, the font slot, Size,
 // Weight, Colour (hex, picker, palette), Align, Line height, Letter spacing, and the overflow line.
 // Every field saves one layer.update on Enter or on leaving it, never per keystroke.
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useRef } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { TextFields } from '@/renderer/editor/text-fields'
 import { EditorKeyRoot } from '@/renderer/editor/use-editor-key'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
-import { axeViolations } from '../render'
+import { axeViolations, renderApp } from '../render'
+import { makeFakeApi } from '../fake-api'
 import { HEADLINE } from './editor-fixture'
 
 const PALETTE = ['#E85D2A', '#1B1D22']
@@ -197,5 +198,44 @@ describe('TextFields [spec/editor.md "Properties panel", Text]', () => {
   it('has no accessibility violations', async () => {
     setup({ ...HEADLINE, overflow: true })
     expect(await axeViolations()).toEqual([])
+  })
+})
+
+// P4-17 (spec/screens-ai.md, "Copy options") [REQ: FR-045]: "Suggest copy…" beside Copy.
+describe('TextFields: Suggest copy [spec/screens-ai.md "Copy options"]', () => {
+  const TAGLINE = { ...HEADLINE, id: 'L3', name: 'Tagline', slot: 'tag' }
+
+  it.each([
+    ['the headline slot', 'hidden', { ...TAGLINE, slot: 'headline' }],
+    ['an unlocked text layer', 'enabled', TAGLINE],
+    ['a locked text layer', 'disabled', { ...TAGLINE, locked: true }],
+  ])('for %s the button is %s', (_, state, layer) => {
+    setup(layer)
+    const button = screen.queryByRole('button', { name: 'Suggest copy…' })
+    if (state === 'hidden') expect(button).toBeNull()
+    else if (state === 'enabled') expect(button).toBeEnabled()
+    else expect(button).toBeDisabled()
+  })
+
+  it('sits beside the Copy field and opens the copy options dialog', async () => {
+    const fake = makeFakeApi()
+    const { store } = await renderApp(
+      <Harness layer={TAGLINE} onUpdate={vi.fn(async () => null)} />,
+      fake,
+    )
+    act(() => store.getState().show({ kind: 'project', projectId: 'P1' }))
+    const button = screen.getByRole('button', { name: 'Suggest copy…' })
+    const copy = screen.getByRole('textbox', { name: 'Copy' })
+    expect(copy.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy()
+    await userEvent.click(button)
+    expect(
+      await screen.findByRole('dialog', { name: 'Copy options for Tagline' }),
+    ).toBeInTheDocument()
+    expect(fake.queries).toContainEqual({
+      name: 'job.list',
+      input: { projectId: 'P1', layerId: 'L3' },
+    })
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 })

@@ -1,6 +1,7 @@
 // spec/editor.md, "Properties panel", "Text": "Copy", a text area that saves on leaving it or with
 // Mod+Enter (the saveCopy shortcut, which works inside fields). Enter adds a line.
-import { useId, useState } from 'react'
+// P4-17: `action` ("Suggest copy…") sits beside the label.
+import { useId, useState, type ReactNode } from 'react'
 import { useDraft } from '@/renderer/editor/number-field'
 import { useEditorKey } from '@/renderer/editor/use-editor-key'
 import styles from './text-fields.module.css'
@@ -8,6 +9,7 @@ import styles from './text-fields.module.css'
 type Props = {
   copy: string
   disabled: boolean
+  action?: ReactNode
   onCommit: (copy: string) => Promise<string | null>
 }
 
@@ -19,9 +21,12 @@ export function CopyField(props: Props) {
 
   return (
     <div className={styles.field}>
-      <label className={styles.label} htmlFor={id}>
-        Copy
-      </label>
+      <div className={styles.labelRow}>
+        <label className={styles.label} htmlFor={id}>
+          Copy
+        </label>
+        {props.action}
+      </div>
       <textarea
         id={id}
         className={styles.copy}
