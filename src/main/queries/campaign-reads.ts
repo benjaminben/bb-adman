@@ -10,6 +10,8 @@ import type { DirectionRow } from '@/shared/schemas/rows/direction'
 import type { JobMarks, VariantBadges } from '@/shared/schemas/queries/campaign'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { VariantRow } from '@/shared/schemas/rows/variant'
+import type { VariantCheckRow } from '@/shared/schemas/rows/variant-check'
+import { checkBadges } from '@/main/checks/badges'
 import type { MasterOf } from '@/main/links/master-of'
 import { variantOutOfDate } from '@/shared/links/out-of-date'
 
@@ -59,8 +61,8 @@ export function namedAssetIds(layer: LayerRow): string[] {
   return ids
 }
 
-// SPEC 4.3 [1.42]: the badges built so far; checks are read from Phase 6. `master` is the
-// variant's direction master (spec/links-and-sync.md, "Follow rules"); null only for a broken
+// SPEC 4.3 [1.42]: every badge; the check marks come from the variant's variant_check row,
+// read once per variant. `master` is the variant's direction master (spec/links-and-sync.md, "Follow rules"); null only for a broken
 // file, which marks nothing out of date.
 export function badgesOf(
   db: Database.Database,
@@ -82,8 +84,10 @@ export function badgesOf(
     translationUnapproved: layers.some(
       (l) => l.translationStatus === 'missing' || l.translationStatus === 'proposed',
     ),
-    checkWarning: false,
-    checkStale: false,
+    ...checkBadges(
+      readWireRow(db, 'variant_check', { variantId: variant.id }) as VariantCheckRow | null,
+      variant.rev,
+    ),
     missingFile: layers.some((l) => namedAssetIds(l).some((id) => missing.has(id))),
   }
 }

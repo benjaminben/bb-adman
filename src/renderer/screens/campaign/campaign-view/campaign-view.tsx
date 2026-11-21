@@ -17,6 +17,7 @@ import { createJobStore } from '@/renderer/stores/job-store'
 import { OVERVIEW_TAB, campaignNav } from '@/renderer/stores/nav-store'
 import type { CampaignGet, VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { AssetList } from '@/shared/schemas/queries/asset'
+import { CampaignSections } from '@/renderer/screens/campaign/campaign-sections'
 import { GeneratePanel } from '@/renderer/screens/campaign/generate-panel'
 import { RunList } from '@/renderer/screens/campaign/run-list'
 import { SlotView } from '@/renderer/screens/campaign/slot-view'
@@ -171,6 +172,7 @@ function CampaignPage(props: Props) {
         />
       )}
       <RunList projectId={projectId} store={store} />
+      <CampaignSections projectId={projectId} campaignId={campaignId} data={data} />
     </>
   )
 

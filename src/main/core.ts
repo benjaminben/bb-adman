@@ -16,11 +16,13 @@ import { createApprovalsDeps } from './approvals/deps'
 import { assetCommands } from './commands/asset'
 import { briefCommands } from './commands/brief'
 import { campaignCommands } from './commands/campaign'
+import { checkCommands } from './commands/check'
 import { comfyCommands } from './commands/comfy'
 import { devCommands } from './commands/dev'
 import { directionCommands } from './commands/direction'
 import { generationCommands } from './commands/generation'
 import { jobCommands } from './commands/job'
+import { languageFontCommands } from './commands/language-font'
 import { layerCommands } from './commands/layer'
 import { mcpCommands } from './commands/mcp'
 import { projectCommands } from './commands/project'
@@ -30,6 +32,7 @@ import { settingsCommands } from './commands/settings'
 import { storageCommands } from './commands/storage'
 import { subjectCommands } from './commands/subject'
 import { syncCommands } from './commands/sync'
+import { translationCommands } from './commands/translation'
 import { variantCommands } from './commands/variant'
 import { createQueryRunner, queryTable } from './queries/queries'
 import { createAssetService } from './assets/service'
@@ -162,11 +165,13 @@ export function createCore(opts: CoreOptions) {
     ...assetCommands(deps),
     ...briefCommands(deps),
     ...campaignCommands(deps),
+    ...checkCommands(deps),
     ...comfyCommands(deps),
     ...devCommands(deps),
     ...directionCommands(deps),
     ...generationCommands(deps),
     ...jobCommands(deps),
+    ...languageFontCommands(deps),
     ...layerCommands(deps),
     ...mcpCommands(mcp),
     ...projectCommands(deps),
@@ -176,6 +181,7 @@ export function createCore(opts: CoreOptions) {
     ...storageCommands(deps),
     ...subjectCommands(deps),
     ...syncCommands(deps),
+    ...translationCommands(deps),
     ...variantCommands(deps),
   ]
 

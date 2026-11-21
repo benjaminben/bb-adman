@@ -1,8 +1,9 @@
 // Writes one layer for layer.update and layer.updateMany (spec/editor-commands.md, "Layer
 // counters"): the changed columns and one counter per changed group. Shared so both commands
-// write the same way.
+// write the same way. A copy edit also leaves a translation proposed (A-161), on this row only.
 import type { ProjectContext } from '@/main/commands/types'
 import { storedJson } from '@/main/db/rows'
+import { translationAfterCopyEdit } from '@/main/translation/copy-edit'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { MergedValues, PatchKey } from './merge-patch'
 
@@ -23,8 +24,15 @@ export function writeLayer(
 ) {
   const revs = { ...row.revs }
   for (const group of GROUPS) if (keys.includes(group)) revs[group] += 1
-  const columns = [...keys.map((key) => `"${key}" = ?`), 'revs = ?'].join(', ')
+  const columns = [...keys.map((key) => `"${key}" = ?`), 'revs = ?']
   const values = [...keys.map((key) => stored(key, merged[key])), storedJson('layer', 'revs', revs)]
-  ctx.project.db.prepare(`UPDATE layer SET ${columns} WHERE id = ?`).run(...values, row.id)
+  const translation = keys.includes('copy') ? translationAfterCopyEdit(row, ctx.actor) : null
+  if (translation) {
+    columns.push('translation_status = ?', 'translation_source = ?')
+    values.push(translation.translationStatus, translation.translationSource)
+  }
+  ctx.project.db
+    .prepare(`UPDATE layer SET ${columns.join(', ')} WHERE id = ?`)
+    .run(...values, row.id)
   ctx.changes.touch('layer', { id: row.id })
 }
