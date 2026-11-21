@@ -6,35 +6,16 @@
 import type { CoreDeps } from '@/main/core-deps'
 import { defineCommand, type ProjectContext } from '@/main/commands/types'
 import { bumpVariantRev } from '@/main/commands/variant-rev'
-import { readWireRow, storedJson } from '@/main/db/rows'
+import { readWireRow } from '@/main/db/rows'
 import { AppError } from '@/shared/schemas/result'
 import { layerUpdateManyInput, type LayerUpdateManyInput } from '@/shared/schemas/commands/layer'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { checkLayerAssets } from './check-layer-assets'
 import { inversePatch } from './inverse-patch'
 import { mergePatch, type MergedValues, type PatchKey } from './merge-patch'
-
-const GROUPS = ['copy', 'style', 'geometry', 'source', 'timing', 'animation'] as const
-const JSON_KEYS = new Set<string>(['style', 'geometry', 'source', 'timing', 'animation'])
+import { writeLayer } from './write-layer'
 
 type Planned = { row: LayerRow; merged: MergedValues; inverse: Record<string, unknown> }
-
-function stored(key: PatchKey, value: unknown): unknown {
-  if (typeof value === 'boolean') return value ? 1 : 0
-  return JSON_KEYS.has(key) ? storedJson('layer', key, value) : value
-}
-
-// As layer.update writes one layer: the changed columns and one counter per changed group.
-// The column names are the patch keys, one word each, from a fixed list.
-function writeLayer(ctx: ProjectContext, { row, merged, inverse }: Planned) {
-  const keys = Object.keys(inverse) as PatchKey[]
-  const revs = { ...row.revs }
-  for (const group of GROUPS) if (keys.includes(group)) revs[group] += 1
-  const columns = [...keys.map((key) => `"${key}" = ?`), 'revs = ?'].join(', ')
-  const values = [...keys.map((key) => stored(key, merged[key])), storedJson('layer', 'revs', revs)]
-  ctx.project.db.prepare(`UPDATE layer SET ${columns} WHERE id = ?`).run(...values, row.id)
-  ctx.changes.touch('layer', { id: row.id })
-}
 
 // Every check of every item, in layer.update's order, before anything is written.
 function plan(ctx: ProjectContext, input: LayerUpdateManyInput): Planned[] {
@@ -63,7 +44,9 @@ export function layerUpdateMany(deps: CoreDeps) {
       const layerIds = changed.map((item) => item.row.id)
       const result = { data: { layerIds }, log: { variantId: input.variantId } }
       if (changed.length === 0) return result
-      for (const item of changed) writeLayer(ctx, item)
+      for (const { row, merged, inverse } of changed) {
+        writeLayer(ctx, row, merged, Object.keys(inverse) as PatchKey[])
+      }
       bumpVariantRev(ctx, input.variantId, deps.now().toISOString())
       const updates = changed.map((item) => ({ layerId: item.row.id, patch: item.inverse }))
       const call = {

@@ -19,8 +19,11 @@ export function foldRotation(degrees: number): number {
 }
 
 // A text layer's style must stay a TextStyle and any other layer's an ImageStyle, so a field
-// of the other kind is refused.
+// of the other kind is refused. A fillColor is for the background layer only (A-73).
 function mergeStyle(row: LayerRow, style: NonNullable<LayerPatch['style']>): LayerRow['style'] {
+  if (row.type === 'image' && 'fillColor' in style && style.fillColor != null) {
+    throw invalid('Those style values do not fit this layer.')
+  }
   const schema = row.type === 'text' ? TextStyle.strict() : ImageStyle.strict()
   const result = schema.safeParse({ ...row.style, ...style })
   if (!result.success) throw invalid('Those style values do not fit this layer.')
