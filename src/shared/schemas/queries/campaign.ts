@@ -3,6 +3,9 @@ import { projectScoped } from '../commands/project-scoped'
 import type { ProjectMeta } from '../project'
 import type { SubjectRow } from '../rows/subject'
 import type { CampaignRow } from '../rows/campaign'
+import type { DirectionRow } from '../rows/direction'
+import type { RuleSetRow } from '../rows/rule-set'
+import type { VariantRow } from '../rows/variant'
 import type { SlotState, Template } from '../../templates/types'
 
 // SPEC 4.3 query inputs for project.get, template.list, template.slots and campaign.get.
@@ -17,7 +20,33 @@ export type CampaignSummary = Pick<
   CampaignRow,
   'id' | 'name' | 'region' | 'primaryLanguage' | 'createdBy' | 'createdAt'
 > &
-  JobMarks
+  JobMarks & { variantCount: number }
+
+// SPEC 4.3 [1.42] the campaign.get reply. Phase 2 builds overflow, translationUnapproved and
+// missingFile; the other three are false until their phases.
+export type VariantBadges = JobMarks & {
+  outOfDate: boolean
+  overflow: boolean
+  translationUnapproved: boolean
+  checkWarning: boolean
+  checkStale: boolean
+  missingFile: boolean
+}
+
+export type VariantSummary = VariantRow & {
+  isMaster: boolean
+  subjectIds: string[]
+  badges: VariantBadges
+}
+
+export type CampaignGet = {
+  campaign: CampaignRow
+  subjects: SubjectRow[]
+  ruleSet: RuleSetRow
+  directions: DirectionRow[]
+  variants: VariantSummary[]
+  marks: JobMarks
+}
 
 // The assets folder is slice A's alone, so its two keys stay out of this reply (SPEC 3.3).
 export type ProjectGet = {

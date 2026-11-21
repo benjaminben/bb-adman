@@ -65,7 +65,7 @@ describe('campaign.update [SPEC 4.2, FR-031]', () => {
     )
   })
 
-  it.each([{ name: '  ' }, { audience: '' }, { languages: ['en'] }, { sizes: [] }])(
+  it.each([{ name: '  ' }, { audience: '' }, { languages: [] }, { sizes: [] }, { region: 'US' }])(
     'refuses %j with INVALID_INPUT',
     async (patch) => {
       await expectRefused(
@@ -83,5 +83,71 @@ describe('campaign.update [SPEC 4.2, FR-031]', () => {
       { actor: 'agent' },
     )
     expect(result).toMatchObject({ ok: false, error: { code: 'AGENT_DENIED' } })
+  })
+})
+
+describe('campaign.update with languages and sizes [SPEC 4.2 1.42, FR-031, FR-032, C4-3]', () => {
+  const update = (patch: Record<string, unknown>) =>
+    bus.user('campaign.update', { campaignId, ...patch })
+  // The two sizes of the fixture's campaign.create input; the master is the first.
+  const SQUARE = { label: '1x1', width: 1080, height: 1080 }
+  const TALL = { label: '9x16', width: 1080, height: 1920 }
+  const WIDE = { label: '16x9', width: 1920, height: 1080 }
+
+  it('stores a languages list that holds the primary language, and keeps the master', async () => {
+    const master = bus.rows('variant')
+    expect(await update({ languages: ['fr', 'en'] })).toMatchObject({ ok: true })
+    expect(stored()).toMatchObject({ languages: ['fr', 'en'], primaryLanguage: 'en' })
+    expect(bus.rows('variant')).toEqual(master)
+  })
+
+  it('refuses a languages list without the primary language with RULE_VIOLATION', async () => {
+    const error = await expectRefused(bus, () => update({ languages: ['de'] }), 'RULE_VIOLATION')
+    expect(error.message).toBe("The campaign's first language cannot be removed.")
+    expect(error.details?.reason).toBeUndefined()
+  })
+
+  it('refuses a languages list with a right-to-left language with RULE_VIOLATION', async () => {
+    await expectRefused(bus, () => update({ languages: ['en', 'ar'] }), 'RULE_VIOLATION')
+  })
+
+  it("stores a sizes list that holds the master's size", async () => {
+    expect(await update({ sizes: [WIDE, SQUARE] })).toMatchObject({ ok: true })
+    expect(stored()).toMatchObject({ sizes: [WIDE, SQUARE] })
+  })
+
+  it("refuses a sizes list without the master's label with RULE_VIOLATION", async () => {
+    const error = await expectRefused(bus, () => update({ sizes: [TALL] }), 'RULE_VIOLATION')
+    expect(error.message).toBe('The size of the master cannot be removed or changed.')
+    expect(error.details?.reason).toBeUndefined()
+  })
+
+  it("refuses the master's label with another width with RULE_VIOLATION", async () => {
+    const changed = { ...SQUARE, width: 1200 }
+    await expectRefused(bus, () => update({ sizes: [changed, TALL] }), 'RULE_VIOLATION')
+  })
+
+  it('puts both lists back on undo', async () => {
+    await update({ languages: ['en'], sizes: [SQUARE] })
+    expect(await undo('undo')).toMatchObject({ ok: true })
+    expect(stored()).toMatchObject({ languages: ['en', 'de'], sizes: [SQUARE, TALL] })
+  })
+
+  it('leaves the stored brief as it was', async () => {
+    const brief = stored()?.brief
+    expect(await update({ languages: ['en', 'fr'], sizes: [SQUARE, WIDE] })).toMatchObject({
+      ok: true,
+    })
+    expect(stored()?.brief).toEqual(brief)
+  })
+
+  it('adds and removes no variant', async () => {
+    const variants = bus.rows('variant')
+    const layers = bus.rows('layer')
+    const grow = await update({ languages: ['en', 'fr', 'it'], sizes: [SQUARE, TALL, WIDE] })
+    const shrink = await update({ languages: ['en'], sizes: [SQUARE] })
+    expect([grow, shrink]).toMatchObject([{ ok: true }, { ok: true }])
+    expect(bus.rows('variant')).toEqual(variants)
+    expect(bus.rows('layer')).toEqual(layers)
   })
 })

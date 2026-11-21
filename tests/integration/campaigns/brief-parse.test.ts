@@ -90,6 +90,20 @@ describe('brief.parse from a file [SPEC 4.2, 6.1, FR-020]', () => {
     expect(bus.logText()).not.toContain(dir)
   })
 
+  it("gives the bad line's text in the reply and only its number in the log [SPEC 14 1.42 C-R6, C4-5]", async () => {
+    // No newline at the end, so the bad line is the one that holds the open bracket.
+    const filePath = write('b.yaml', 'campaignName: Summer\nregion: [secretword')
+    const error = await expectRefused(bus, () => parse({ filePath }), 'INVALID_INPUT')
+    expect(error.message).toBe(
+      'The brief is malformed. The first line that could not be read is line 2: region: [secretword',
+    )
+    const log = bus.logText()
+    expect(log).toContain(`line ${String(error.details?.line)}`)
+    expect(log).not.toContain('secretword')
+    expect(log).not.toContain('Summer')
+    expect(log).not.toContain('region')
+  })
+
   it.each(['b.md', 'b.txt', 'B.TXT'])(
     'refuses %s with brief_type_not_supported until Phase 4',
     async (name) => {

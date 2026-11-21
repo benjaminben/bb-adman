@@ -102,6 +102,7 @@ describe('project.get [SPEC 4.3]', () => {
         createdAt: '2026-11-20T10:00:00.000Z',
         jobRunning: true,
         resultUnseen: false,
+        variantCount: 1,
       },
     ])
     expect(result.missingAssetCount).toBe(2)

@@ -8,6 +8,7 @@ import { defineCommand, type ProjectContext } from '../types'
 import { campaign } from '../../db/schema'
 import { readWireRow } from '../../db/rows'
 import { campaignNotFound } from './rule-set-values'
+import { AppError } from '../../../shared/schemas/result'
 import { campaignDeleteInput } from '../../../shared/schemas/commands/campaign-edit'
 import type { TableName } from '../../../shared/schemas/rows/keys'
 
@@ -38,6 +39,24 @@ const REMOVED: Array<[TableName, string]> = [
 
 const KeyRow = z.record(z.string(), z.string())
 
+// SPEC 4.2 [1.42], C-R4: a queued or running job for the campaign or one of its variants
+// stops the delete, so no paid run ends with a picture for a variant that is gone.
+function refuseWhileJobsRun(ctx: ProjectContext, campaignId: string): void {
+  const { n } = ctx.project.db
+    .prepare<[string, string], { n: number }>(
+      `SELECT COUNT(*) AS n FROM job WHERE status IN ('queued','running')
+       AND (campaign_id = ? OR variant_id IN (${VARIANTS}))`,
+    )
+    .get(campaignId, campaignId) ?? { n: 0 }
+  if (n > 0) {
+    throw new AppError(
+      'RULE_VIOLATION',
+      'Work is still running in this campaign. Stop it, or wait for it to finish.',
+      { reason: 'jobs_running', count: n },
+    )
+  }
+}
+
 function touchRemoved(ctx: ProjectContext, campaignId: string): void {
   for (const [table, sql] of REMOVED) {
     for (const row of ctx.project.db.prepare(sql).all(campaignId)) {
@@ -55,6 +74,7 @@ export function campaignDelete() {
       if (!readWireRow(ctx.project.db, 'campaign', { id: input.campaignId })) {
         throw campaignNotFound()
       }
+      refuseWhileJobsRun(ctx, input.campaignId)
       ctx.changes.touch('campaign', { id: input.campaignId })
       touchRemoved(ctx, input.campaignId)
       ctx.project.orm.delete(campaign).where(eq(campaign.id, input.campaignId)).run()
