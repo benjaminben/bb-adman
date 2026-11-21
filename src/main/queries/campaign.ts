@@ -9,6 +9,7 @@ import { badgesOf, directionsOf, jobMarks, openFor, requireCampaign } from './ca
 import type { ActivityLog } from '@/main/log/activity-log'
 import {
   campaignScopedInput,
+  type CampaignCover,
   type CampaignGet,
   type VariantSummary,
 } from '@/shared/schemas/queries/campaign'
@@ -87,6 +88,17 @@ export function campaignGet(deps: Pick<CoreDeps, 'projects' | 'assets' | 'log'>)
       marks: jobMarks(db, 'campaign_id', campaign.id),
     }
   }
+}
+
+// spec/editor.md, "Thumbnails on the screens": the master of the first direction and its rev,
+// or null when the campaign has no direction or its master row is gone.
+export function campaignCover(db: Database.Database, campaignId: string): CampaignCover | null {
+  const first = directionsOf(db, campaignId)[0]
+  if (!first) return null
+  const row = db
+    .prepare<[string], { rev: number }>('SELECT rev FROM variant WHERE id = ?')
+    .get(first.masterVariantId)
+  return row ? { variantId: first.masterVariantId, rev: row.rev } : null
 }
 
 export function campaignQueries(deps: CoreDeps): Record<string, QueryFn> {
