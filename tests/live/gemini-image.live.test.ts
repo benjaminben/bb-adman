@@ -3,25 +3,26 @@
 // [1.12] O-8, G6: prints a fixed set of facts the stakeholder can pass on. On success: the
 // file path, the pixel size read from the PNG, the size in bytes and the model ID. On failure:
 // the error kind and the detail (with the key removed). No request, header or key is printed.
+// [1.14] H11: every printed line, and the error thrown on a failure, has every live value
+// removed (live-output.ts); the real error is not let out, so Vitest cannot print it.
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect } from 'vitest'
 import { adapters } from '../../src/main/providers/gemini'
-import { redactSecret } from '../../src/main/providers/redact'
 import { listProviders } from '../../src/main/providers/registry'
-import { ProviderFailure, type AdapterContext } from '../../src/main/providers/types'
+import type { AdapterContext } from '../../src/main/providers/types'
 import type { ImageResult } from '../../src/main/providers/types'
 import type { Settings } from '../../src/shared/schemas/settings'
+import { livePrint, missingNames, safely } from './live-output'
 import { pngPixelSize } from './png-size'
 
 const key = process.env.GEMINI_API_KEY
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
 
-if (!key) process.stdout.write('Gemini live test skipped: GEMINI_API_KEY is not set\n')
-
-function print(lines: string[]) {
-  process.stdout.write(lines.map((line) => `${line}\n`).join(''))
+const missingVariables = missingNames(['GEMINI_API_KEY'])
+if (missingVariables.length > 0) {
+  process.stdout.write(`Gemini live test skipped: not set: ${missingVariables.join(', ')}\n`)
 }
 
 function liveContext(apiKey: string): AdapterContext {
@@ -37,12 +38,12 @@ function liveContext(apiKey: string): AdapterContext {
   }
 }
 
-// The one paid call. A ProviderFailure prints its kind and detail, then fails the test.
-async function makeOnePicture(apiKey: string): Promise<ImageResult[]> {
-  const image = adapters.image?.(liveContext(apiKey))
-  if (!image) throw new Error('The Gemini image adapter is not built')
-  try {
-    return await image.generate({
+// The one paid call. A failure prints its kind and detail, made safe, then fails the test.
+function makeOnePicture(apiKey: string): Promise<ImageResult[]> {
+  return safely('Gemini', async () => {
+    const image = adapters.image?.(liveContext(apiKey))
+    if (!image) throw new Error('The Gemini image adapter is not built')
+    return image.generate({
       prompt:
         'A red bicycle leaning on a sunny brick wall. ' +
         'Do not include any text, letters, numbers, logos or watermarks in the image.',
@@ -51,15 +52,7 @@ async function makeOnePicture(apiKey: string): Promise<ImageResult[]> {
       height: 1080,
       count: 1,
     })
-  } catch (error) {
-    if (error instanceof ProviderFailure) {
-      print([
-        `Gemini error kind: ${error.error.kind}`,
-        `Gemini error detail: ${redactSecret(error.error.detail, apiKey)}`,
-      ])
-    }
-    throw error
-  }
+  })
 }
 
 describe.skipIf(!key)('Gemini picture, live [SPEC 6.2, slice E]', () => {
@@ -72,7 +65,7 @@ describe.skipIf(!key)('Gemini picture, live [SPEC 6.2, slice E]', () => {
     const file = path.join(folder, 'gemini-image.png')
     fs.writeFileSync(file, png)
     const size = pngPixelSize(png)
-    print([
+    livePrint([
       `Gemini picture file: ${file}`,
       `Gemini picture pixel size: ${size.width} x ${size.height}`,
       `Gemini picture bytes: ${png.byteLength}`,
