@@ -8,3 +8,8 @@ export const MAX_PROVIDER_ANSWER_BYTES = 48 * 1024 * 1024
 export const MAX_PICTURE_BYTES = 32 * 1024 * 1024
 export const MAX_PICTURE_SIDE = 8_192
 export const MAX_PICTURE_PIXELS = 24_000_000
+
+// [1.24] One video file, shared by ComfyUI and fal video (SPEC 6.10.2, 6.10.7).
+export const MAX_VIDEO_BYTES = 128 * 1024 * 1024
+export const MAX_VIDEO_SIDE = 4_096
+export const MAX_VIDEO_MS = 120_000
