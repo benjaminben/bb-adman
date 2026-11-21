@@ -2,7 +2,7 @@
 // field is named here, so a column added to the job row later does not leave through MCP.
 // Left out: provider, model, remoteJobId, request and the rest of result (FR-198). A failed
 // run is told in the app's own words, with no address and no server text.
-import { plainMessage, reasonMessage } from '@/shared/providers/messages'
+import { fillMarks, plainMessage, reasonMessage } from '@/shared/providers/messages'
 import {
   PROVIDER_ERROR_KINDS,
   type ProviderErrorKind,
@@ -63,16 +63,16 @@ function failuresOf(result: Record<string, unknown>): Partial<Record<ProviderErr
   return counts
 }
 
+// P4-5 (OI-68): a local reason's {provider} is the registry label too.
 function messageOf(row: JobRow, providers: Labels): string | null {
+  const label = providers.find((p) => p.id === row.provider)?.label
   if (row.errorReason) {
-    return reasonMessage(row.errorReason)
-      .replaceAll('{address}', 'the saved ComfyUI address')
-      .replaceAll('{n}', 'some')
+    return fillMarks(reasonMessage(row.errorReason), {
+      address: 'the saved ComfyUI address',
+      ...(label !== undefined && { provider: label }),
+    })
   }
-  if (row.errorKind) {
-    const label = providers.find((p) => p.id === row.provider)?.label ?? UNKNOWN_PROVIDER
-    return plainMessage(row.errorKind, label)
-  }
+  if (row.errorKind) return plainMessage(row.errorKind, label ?? UNKNOWN_PROVIDER)
   return null
 }
 
