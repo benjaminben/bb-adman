@@ -72,3 +72,16 @@ export const generationCutOutInput = projectScoped.extend({
   licenceConfirmed,
 })
 export type GenerationCutOutInput = z.infer<typeof generationCutOutInput>
+
+// P5-1: spec/links-and-sync.md, "Generative fill". runFill is a gate run command for agents.
+export const generationRunFillInput = projectScoped
+  .extend({ variantId: z.string().min(1), provider: z.string().min(1), licenceConfirmed })
+  .strict()
+export type GenerationRunFillInput = z.infer<typeof generationRunFillInput>
+
+// The window sends it when its attached fill succeeds (A-131).
+export const generationApplyFillInput = projectScoped.extend({ jobId: z.string().min(1) }).strict()
+export type GenerationApplyFillInput = z.infer<typeof generationApplyFillInput>
+
+export type GenerationRunFillReply = { jobId: string }
+export type GenerationApplyFillReply = { variantIds: string[] }

@@ -18,6 +18,7 @@ import { briefCommands } from './commands/brief'
 import { campaignCommands } from './commands/campaign'
 import { comfyCommands } from './commands/comfy'
 import { devCommands } from './commands/dev'
+import { directionCommands } from './commands/direction'
 import { generationCommands } from './commands/generation'
 import { jobCommands } from './commands/job'
 import { layerCommands } from './commands/layer'
@@ -28,6 +29,7 @@ import { secretCommands } from './commands/secret'
 import { settingsCommands } from './commands/settings'
 import { storageCommands } from './commands/storage'
 import { subjectCommands } from './commands/subject'
+import { syncCommands } from './commands/sync'
 import { variantCommands } from './commands/variant'
 import { createQueryRunner, queryTable } from './queries/queries'
 import { createAssetService } from './assets/service'
@@ -162,6 +164,7 @@ export function createCore(opts: CoreOptions) {
     ...campaignCommands(deps),
     ...comfyCommands(deps),
     ...devCommands(deps),
+    ...directionCommands(deps),
     ...generationCommands(deps),
     ...jobCommands(deps),
     ...layerCommands(deps),
@@ -172,6 +175,7 @@ export function createCore(opts: CoreOptions) {
     ...settingsCommands(deps, mcp),
     ...storageCommands(deps),
     ...subjectCommands(deps),
+    ...syncCommands(deps),
     ...variantCommands(deps),
   ]
 
