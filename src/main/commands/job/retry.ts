@@ -13,10 +13,10 @@ type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devT
 
 // [CU-6a, 14 1.53; 1.60 N-5] A ComfyUI video job is checked as generation.startVideo checks
 // it, pictures included, in prepare, since reading a picture is not done in the transaction.
+// The checks run whatever the old row's status, so a row that ends between prepare and run
+// is never retried unchecked; run still refuses a row that did not fail and was not cancelled.
 async function checkVideoRetry(deps: Deps, ctx: PrepareContext, jobId: string): Promise<void> {
   const old = requireJob(ctx.project, jobId)
-  // A row that cannot be retried is refused by run, as before.
-  if (old.status !== 'failed' && old.status !== 'cancelled') return
   if (old.provider !== 'comfyui' || old.kind !== 'video_generation') return
   await checkComfyVideoRetry(deps, ctx, old.request)
 }

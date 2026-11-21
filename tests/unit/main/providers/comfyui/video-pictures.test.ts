@@ -135,4 +135,26 @@ describe('ComfyUI video start from a picture [SPEC 14 1.60 N-7] (security class)
     await expect(run).rejects.toBeInstanceOf(ProviderCancelled)
     expect(requestLines(stand).filter((l) => l.startsWith('POST'))).toEqual([])
   })
+
+  // Review CU-6b-M fix 3: the cancel comes once the server check has passed, before the upload.
+  it('a cancel after the server check and before the upload: nothing uploaded or submitted', async () => {
+    await standIn()
+    const stop = new AbortController()
+    const checks = createServerChecks()
+    const realRun = checks.run
+    checks.run = async (...args) => {
+      const result = await realRun(...args)
+      stop.abort()
+      return result
+    }
+    const { timing } = fakeTiming()
+    const ctx = comfyContext(() => stand.origin)
+    const adapter = comfyVideo(ctx, { timing, checks })
+    const image = { bytes: greyPng(runSize.width, runSize.height), mime: 'image/png' }
+    const run = adapter.start({ ...input, image }, { signal: stop.signal })
+    await expect(run).rejects.toBeInstanceOf(ProviderCancelled)
+    expect(requestLines(stand)[0]).toBe('GET /system_stats')
+    expect(uploads()).toEqual([])
+    expect(requestLines(stand).filter((l) => l.startsWith('POST'))).toEqual([])
+  })
 })

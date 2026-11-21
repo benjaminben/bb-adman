@@ -6,6 +6,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { makeComfyFixture, type ComfyFixture } from './comfy-fixture'
 import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
 import { serveNeeds, serveVideo } from '../../helpers/comfy-run'
+import { insertTestAsset } from '../assets/asset-rows'
 
 let f: ComfyFixture
 let stand: StandIn | null = null
@@ -123,4 +124,52 @@ describe('generation.startVideo picture start refusals [SPEC 14 1.60 CU-6b N-4] 
       expect(stand?.seen).toEqual([])
     },
   )
+})
+
+// Review CU-6b-M M-1 (N-8): the other refusals of N-4 on a picture start.
+describe('generation.startVideo picture start refusals, continued [SPEC 14 1.60 CU-6b N-4, N-8] (security class)', () => {
+  it('refuses a picture over the size limit: asset_too_large', async () => {
+    await ready()
+    const id = await f.importPicture('pics', 'shoe.png')
+    fs.truncateSync(path.join(f.root, 'pics', 'shoe.png'), 32 * 1024 * 1024 + 1)
+    await refused(frameAsk(id), { code: 'RULE_VIOLATION', details: { reason: 'asset_too_large' } })
+  })
+
+  it('refuses a picture start with no address saved: comfy_address_needed', async () => {
+    stand = await startComfyStandIn()
+    serveNeeds(stand)
+    serveVideo(stand)
+    f = await makeComfyFixture({ devTools: true })
+    const id = await f.importPicture('pics', 'shoe.png')
+    await refused(frameAsk(id), {
+      code: 'RULE_VIOLATION',
+      details: { reason: 'comfy_address_needed' },
+    })
+  })
+
+  it('refuses a picture start longer than the workflow makes: video_too_long', async () => {
+    await ready()
+    const id = await f.importPicture('pics', 'shoe.png')
+    const long = { ...frameAsk(id), durationMs: 15_001 }
+    await refused(long, {
+      code: 'RULE_VIOLATION',
+      details: { reason: 'video_too_long', maxMs: 15_000 },
+    })
+  })
+
+  it('refuses a video asset given as a picture: picture_not_usable [N-18]', async () => {
+    await ready()
+    insertTestAsset(f.db, {
+      id: 'vid1',
+      relPath: 'clips/ad.mp4',
+      absPath: path.join(f.root, 'clips', 'ad.mp4'),
+      kind: 'video',
+      library: 'reference',
+      mime: 'video/mp4',
+    })
+    await refused(frameAsk('vid1'), {
+      code: 'RULE_VIOLATION',
+      details: { reason: 'picture_not_usable' },
+    })
+  })
 })
