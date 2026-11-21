@@ -6,6 +6,9 @@ import { expect, test, type APIResponse, type Browser, type Page } from '@playwr
 const auth = { Authorization: `Bearer ${process.env.E2E_API_KEY ?? ''}` }
 const ORIGIN = `http://localhost:${process.env.E2E_PORT ?? ''}`
 const PICTURES = `http://127.0.0.1:${process.env.E2E_PICTURE_PORT ?? ''}`
+// Run in the browser: the picture's width once loaded, else 0. This folder's types hold no DOM.
+type Loaded = { complete: boolean; naturalWidth: number }
+const loaded = (img: unknown) => ((img as Loaded).complete ? (img as Loaded).naturalWidth : 0)
 const PROJECT = '01ARZ3NDEKTSV4RRFFQ69G5FAX'
 const PASSWORD = 'gallery password 1'
 const UNKNOWN = 'zzzzZZZZ2222'
@@ -155,9 +158,7 @@ test('a wrong password, then the right one, then the gallery in order [gallery 2
   for (const { title } of VARIANTS) {
     const picture = page.getByRole('img', { name: title })
     await picture.scrollIntoViewIfNeeded()
-    await expect
-      .poll(() => picture.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth))
-      .toBeGreaterThan(0)
+    await expect.poll(() => picture.evaluate(loaded)).toBeGreaterThan(0)
   }
   expect(refusals).toEqual([])
 })

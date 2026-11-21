@@ -6,6 +6,9 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 const auth = { Authorization: `Bearer ${process.env.E2E_API_KEY ?? ''}` }
 const ORIGIN = `http://localhost:${process.env.E2E_PORT ?? ''}`
 const PICTURES = `http://127.0.0.1:${process.env.E2E_PICTURE_PORT ?? ''}`
+// Run in the browser: the picture's width once loaded, else 0. This folder's types hold no DOM.
+type Loaded = { complete: boolean; naturalWidth: number }
+const loaded = (img: unknown) => ((img as Loaded).complete ? (img as Loaded).naturalWidth : 0)
 const SHOTS = fileURLToPath(new URL('../../shots/', import.meta.url))
 const PROJECT = '01ARZ3NDEKTSV4RRFFQ69G5FAY'
 const CAMPAIGN = `spring-shapes-${Date.now()}-k7m2pq`
@@ -79,11 +82,9 @@ async function seed(api: APIRequestContext) {
 async function shoot(page: Page, file: string) {
   for (const picture of await page.getByRole('img').all()) {
     await picture.scrollIntoViewIfNeeded()
-    await expect
-      .poll(() => picture.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth))
-      .toBeGreaterThan(0)
+    await expect.poll(() => picture.evaluate(loaded)).toBeGreaterThan(0)
   }
-  await page.evaluate(() => window.scrollTo(0, 0))
+  await page.evaluate('window.scrollTo(0, 0)')
   await page.screenshot({ path: `${SHOTS}${file}.png`, fullPage: true })
 }
 
