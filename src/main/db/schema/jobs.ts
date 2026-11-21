@@ -34,7 +34,7 @@ export const job = sqliteTable(
   (t) => [
     check(
       'job_kind',
-      sql`${t.kind} IN ('brief_extraction','image_generation','generative_fill','layout_proposal','copy_options','translation','video_generation','export','publish')`,
+      sql`${t.kind} IN ('brief_extraction','image_generation','generative_fill','layout_proposal','copy_options','translation','video_generation','export','publish','cutout')`,
     ),
     check('job_status', sql`${t.status} IN ('queued','running','succeeded','failed','cancelled')`),
     check(

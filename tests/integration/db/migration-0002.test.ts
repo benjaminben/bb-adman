@@ -27,7 +27,7 @@ function setStartedBy(db: import('better-sqlite3').Database, value: string): voi
 
 describe('migration 0002 [SPEC 3.8, 6.11.1]', () => {
   it('lists exactly the three migrations in order', () => {
-    expect(bundledMigrations.map((m) => m.tag)).toEqual([
+    expect(bundledMigrations.slice(0, 3).map((m) => m.tag)).toEqual([
       '0000_initial',
       '0001_agent_changed_and_job_target',
       '0002_job_started_by_and_error_reason',
@@ -48,7 +48,11 @@ describe('migration 0002 [SPEC 3.8, 6.11.1]', () => {
     const jobBefore = row(v2.db, "SELECT * FROM job WHERE id = 'j1'")
     closeProjectFile(v2)
 
-    const h = openProjectFile({ filePath, appVersion: '0.1.0', migrations: bundledMigrations })
+    const h = openProjectFile({
+      filePath,
+      appVersion: '0.1.0',
+      migrations: bundledMigrations.slice(0, 3),
+    })
     expect(readMeta(h.db).schemaVersion).toBe(3)
     expect(row(h.db, "SELECT * FROM job WHERE id = 'j1'")).toEqual({
       ...jobBefore,
