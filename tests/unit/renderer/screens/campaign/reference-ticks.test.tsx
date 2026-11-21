@@ -111,7 +111,7 @@ describe('Reference ticks [SPEC 14 1.46 TP-5]', () => {
     const { fake } = referenceApi([ref('A1'), ref('A2')])
     await renderWith(view, fake)
     await tick('A2.png')
-    await userEvent.click(screen.getByRole('button', { name: /^1:1German post/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^German post/ }))
     await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
     await waitFor(() => expect(screen.getByRole('checkbox', { name: 'A2.png' })).toBeChecked())
     const p = await panel()
@@ -126,7 +126,7 @@ describe('Reference ticks [SPEC 14 1.46 TP-5]', () => {
     await tick('A1.png')
     await tick('A2.png')
     list.rows = [ref('A2')]
-    await userEvent.click(screen.getByRole('button', { name: /^1:1German post/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^German post/ }))
     await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
     await waitFor(() => expect(screen.queryByRole('checkbox', { name: 'A1.png' })).toBeNull())
     const p = await panel()

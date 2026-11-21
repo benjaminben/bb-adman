@@ -99,6 +99,7 @@ function CampaignPage(props: Props) {
         }}
       >
         <VariantGrid
+          projectId={projectId}
           variants={data.variants}
           chosenId={variantId}
           onChoose={choose}
