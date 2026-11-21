@@ -13,4 +13,8 @@ describe('JobRunContext, the 1.38 fields [SPEC 6.11.1 1.38, 14 1.38 Y2]', () => 
   it('takes what a provider reports through onProgress', () => {
     expectTypeOf<JobRunContext['onProgress']>().toEqualTypeOf<(p: RunProgress) => void>()
   })
+
+  it('stores the provider own run ID through setRemoteJobId', () => {
+    expectTypeOf<JobRunContext['setRemoteJobId']>().toEqualTypeOf<(id: string) => void>()
+  })
 })

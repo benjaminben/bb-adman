@@ -49,6 +49,8 @@ export type JobRunContext = {
   // [1.38] What a provider reports while it works. Written into the job: `progress` from
   // `fraction`, and `result.stage`, `result.queuePosition` while the job runs.
   onProgress(p: RunProgress): void
+  // [1.38] Stores the provider's own ID for the run in `remote_job_id`, and emits job.updated.
+  setRemoteJobId(id: string): void
 }
 
 export type JobKindHandler = {

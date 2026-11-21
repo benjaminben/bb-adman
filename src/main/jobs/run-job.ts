@@ -95,6 +95,9 @@ function context(state: RunnerState, live: LiveJob): JobRunContext {
       if (live.ended) throw new Error('The job has ended')
       return state.opts.bus().execute(command, input, { actor: 'user' })
     },
+    setRemoteJobId(id) {
+      if (!live.ended) writeJob(state, live.projectId, live.id, { remoteJobId: id })
+    },
     // A plain function, not a method: runOptions hands it to a provider on its own.
     onProgress: (p) => {
       if (live.ended) return

@@ -7,7 +7,8 @@
 //     the handler ends ProviderCancelled   cancelled                ("stopped")
 //     the handler returns its result       succeeded, finishedAfterCancel
 //     nothing within the provider's wait   cancelled, outcomeUnknown
-// A video job's cancel(remoteJobId) call waits for CU-6, which writes remote_job_id.
+// The runner calls no adapter: a video job's cancel(remoteJobId) call is made by the video job
+// kind handler when the signal fires (SPEC 6.11.2, "How the runner learns the outcome").
 import { activeJobs, readJob } from './job-store'
 import { writeJob, type LiveJob, type RunnerState } from './live'
 import { JOB_KIND_CLASSES } from '../../shared/config/job-kinds'

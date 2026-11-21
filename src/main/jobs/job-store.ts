@@ -17,9 +17,11 @@ export type JobChange = {
   errorKind?: ProviderErrorKind
   errorReason?: ProviderErrorReason | null
   errorDetail?: string
+  remoteJobId?: string
 }
 
 const COLUMNS: Record<keyof JobChange, string> = {
+  remoteJobId: 'remote_job_id',
   status: 'status',
   progress: 'progress',
   result: 'result',
