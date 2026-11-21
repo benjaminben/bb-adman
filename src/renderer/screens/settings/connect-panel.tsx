@@ -4,7 +4,7 @@
 // "Copy" hands the line to the renderer's clipboard on click only; that is the one other
 // place it goes. A failed copy logs nothing.
 import { useState } from 'react'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 // The line a copy was tried for, so a new token's line starts again at "Copy".
 type CopyResult = { line: string; ok: boolean }

@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect, vi } from 'vitest'
-import { ProviderFailure } from '../../../src/main/providers/types'
+import { ProviderFailure } from '@/main/providers/types'
 import { quietly } from '../../live/live-output'
 
 afterEach(() => vi.restoreAllMocks())

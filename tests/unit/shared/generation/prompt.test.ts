@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  NO_TEXT_ENDING,
-  prefilledPrompt,
-  promptToSend,
-} from '../../../../src/shared/generation/prompt'
+import { NO_TEXT_ENDING, prefilledPrompt, promptToSend } from '@/shared/generation/prompt'
 
 const facts = {
   subjects: [{ name: 'Bottle', description: 'A green glass bottle' }],

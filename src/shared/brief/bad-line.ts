@@ -1,8 +1,8 @@
 // SPEC 14 1.39 "The YAML message" (security class; Z3, FR-297): the first line of a malformed
 // YAML brief, numbered and cleaned so it shows nothing that can hide or reorder text. The text
 // goes into the command's error and nowhere else. Pure; never throws.
-import type { ErrorBody } from '../schemas/result'
-import { MAX_BAD_LINE_CHARS } from '../config/brief-limits'
+import type { ErrorBody } from '@/shared/schemas/result'
+import { MAX_BAD_LINE_CHARS } from '@/shared/config/brief-limits'
 
 // Control characters, the invisible marks that can reorder or hide text on screen, the
 // byte-order mark, and lone surrogates (a string's for...of gives one alone as one item).

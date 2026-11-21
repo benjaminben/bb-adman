@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { FILE_TYPES, fileTypeFor, pickerExtensions } from '../../../../src/shared/config/file-types'
+import { FILE_TYPES, fileTypeFor, pickerExtensions } from '@/shared/config/file-types'
 
 describe('accepted file types [SPEC 8.3, FR-051]', () => {
   it('lists the four kinds of Section 8.3 and nothing else', () => {

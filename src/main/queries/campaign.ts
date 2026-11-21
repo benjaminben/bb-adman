@@ -2,23 +2,23 @@
 // its subjects, rule set, directions, every variant with its badges, and the campaign's job
 // marks [1.42]. It carries no layers; they are read here only to work out the badges.
 import type Database from 'better-sqlite3'
-import type { CoreDeps } from '../core-deps'
+import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
-import { readWireRow, readWireRows } from '../db/rows'
+import { readWireRow, readWireRows } from '@/main/db/rows'
 import { directionsOf, jobMarks, openFor, requireCampaign } from './campaign-reads'
-import type { ActivityLog } from '../log/activity-log'
+import type { ActivityLog } from '@/main/log/activity-log'
 import {
   campaignScopedInput,
   type CampaignGet,
   type VariantBadges,
   type VariantSummary,
-} from '../../shared/schemas/queries/campaign'
-import type { CampaignSubjectRow } from '../../shared/schemas/rows/campaign'
-import type { DirectionRow } from '../../shared/schemas/rows/direction'
-import type { LayerRow } from '../../shared/schemas/rows/layer'
-import type { RuleSetRow } from '../../shared/schemas/rows/rule-set'
-import type { SubjectRow } from '../../shared/schemas/rows/subject'
-import type { VariantRow, VariantSubjectRow } from '../../shared/schemas/rows/variant'
+} from '@/shared/schemas/queries/campaign'
+import type { CampaignSubjectRow } from '@/shared/schemas/rows/campaign'
+import type { DirectionRow } from '@/shared/schemas/rows/direction'
+import type { LayerRow } from '@/shared/schemas/rows/layer'
+import type { RuleSetRow } from '@/shared/schemas/rows/rule-set'
+import type { SubjectRow } from '@/shared/schemas/rows/subject'
+import type { VariantRow, VariantSubjectRow } from '@/shared/schemas/rows/variant'
 
 const byId = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 

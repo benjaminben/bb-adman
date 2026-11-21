@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { makeCampaignBus, type CampaignBus } from './campaign-fixture'
 import { testDeps } from './campaign-deps'
-import { campaignQueries } from '../../../src/main/queries/campaign'
-import { createQueryRunner } from '../../../src/main/queries/queries'
-import type { CoreDeps } from '../../../src/main/core-deps'
+import { campaignQueries } from '@/main/queries/campaign'
+import { createQueryRunner } from '@/main/queries/queries'
+import type { CoreDeps } from '@/main/core-deps'
 
 // A made-up marker word as a bare token inside text that is not JSON. V8 words this error as
 // `Unexpected token 'x', "<the text>" is not valid JSON`, quoting the stored value.

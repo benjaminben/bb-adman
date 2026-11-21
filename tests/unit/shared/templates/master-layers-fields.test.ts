@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { buildMasterLayers } from '../../../../src/shared/templates/master-layers'
-import { starterTemplate } from '../../../../src/shared/templates/starter'
-import { LayerRow } from '../../../../src/shared/schemas/rows/layer'
-import type { SlotFills, Template } from '../../../../src/shared/templates/types'
-import * as layout from '../../../../src/shared/config/default-layout'
+import { buildMasterLayers } from '@/shared/templates/master-layers'
+import { starterTemplate } from '@/shared/templates/starter'
+import { LayerRow } from '@/shared/schemas/rows/layer'
+import type { SlotFills, Template } from '@/shared/templates/types'
+import * as layout from '@/shared/config/default-layout'
 
 const square = { label: '1x1', width: 1080, height: 1080 }
 const ALL_FILLS: SlotFills = {

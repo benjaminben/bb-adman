@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { WORKFLOWS, NON_DRAFT_WORKFLOWS } from '../../../../../src/main/providers/comfyui/workflows'
-import { flux3KleinEditReferences as flux } from '../../../../../src/main/providers/comfyui/workflows/flux3'
-import { LEAVES } from '../../../../../src/main/providers/comfyui/workflows/common'
-import { offeredWorkflow } from '../../../../../src/main/providers/comfyui/workflows/offered'
-import { fillWorkflow } from '../../../../../src/main/providers/comfyui/fill'
-import { WORKFLOW_IDS } from '../../../../../src/shared/schemas/queries/comfy'
+import { WORKFLOWS, NON_DRAFT_WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import { flux3KleinEditReferences as flux } from '@/main/providers/comfyui/workflows/flux3'
+import { LEAVES } from '@/main/providers/comfyui/workflows/common'
+import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'
+import { fillWorkflow } from '@/main/providers/comfyui/fill'
+import { WORKFLOW_IDS } from '@/shared/schemas/queries/comfy'
 
 const USER_DEV = { devTools: true, actor: 'user' } as const
 

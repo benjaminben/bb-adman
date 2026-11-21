@@ -9,7 +9,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { makeSandbox, launch, type Sandbox } from './launch'
 import { startComfyStandIn, type StandIn } from '../helpers/comfy-stand-in'
-import { greyPng } from '../../src/main/providers/fake/png'
+import { greyPng } from '@/main/providers/fake/png'
 import {
   finishWithError,
   finishWithPicture,
@@ -21,10 +21,10 @@ import {
 import * as screens from './screens'
 import * as video from './video-screens'
 import { lastGraph, pngSize, runSize, uploads, type Upload } from './stand-in-uploads'
-import { uploadName } from '../../src/main/providers/comfyui/values'
-import { pictureType } from '../../src/main/providers/picture-type'
+import { uploadName } from '@/main/providers/comfyui/values'
+import { pictureType } from '@/main/providers/picture-type'
 import { geminiAsked, MADE_UP_KEY, standInForGemini, standInInstalled } from './gemini-stand-in'
-import { GEMINI_ORIGIN } from '../../src/main/providers/gemini/pinned-origin'
+import { GEMINI_ORIGIN } from '@/main/providers/gemini/pinned-origin'
 
 const MOSS_OUTPUT = '9'
 const FLUX_OUTPUT = '15'

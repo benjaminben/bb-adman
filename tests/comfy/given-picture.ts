@@ -5,9 +5,9 @@
 // reaches the output. Its unit test is tests/unit/config/comfy-given-picture.test.ts.
 import fs from 'node:fs'
 import path from 'node:path'
-import { MAX_PICTURE_BYTES } from '../../src/main/providers/picture-limits'
-import { pictureSize } from '../../src/main/providers/picture-size'
-import { pictureType, type PictureType } from '../../src/main/providers/picture-type'
+import { MAX_PICTURE_BYTES } from '@/main/providers/picture-limits'
+import { pictureSize } from '@/main/providers/picture-size'
+import { pictureType, type PictureType } from '@/main/providers/picture-type'
 import { makeTestPicture, TEST_PICTURE_SIDE } from './test-picture'
 
 // Flux keeps the reference's shape, so a large photo makes a large, slow run.

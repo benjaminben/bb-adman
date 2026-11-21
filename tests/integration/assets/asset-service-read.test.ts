@@ -2,13 +2,9 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { createAssetService } from '../../../src/main/assets/service'
-import {
-  closeProjectFile,
-  createProjectFile,
-  type ProjectHandle,
-} from '../../../src/main/db/project-file'
-import { AppError } from '../../../src/shared/schemas/result'
+import { createAssetService } from '@/main/assets/service'
+import { closeProjectFile, createProjectFile, type ProjectHandle } from '@/main/db/project-file'
+import { AppError } from '@/shared/schemas/result'
 import { insertTestAsset, type TestAsset } from './asset-rows'
 
 let root: string

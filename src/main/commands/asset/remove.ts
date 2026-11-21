@@ -2,11 +2,11 @@
 // font), a background clip or a rule set uses the asset (SPEC 3.10, 14 contracts A and C).
 // The file itself is left where it is: a file no asset row names is not an asset (SPEC 3.9).
 import { eq } from 'drizzle-orm'
-import { defineCommand } from '../types'
-import { asset } from '../../db/schema'
+import { defineCommand } from '@/main/commands/types'
+import { asset } from '@/main/db/schema'
 import { requireAsset } from './update'
-import { assetInUse, assetInUseError } from '../../assets/in-use'
-import { assetRemoveInput } from '../../../shared/schemas/commands/asset'
+import { assetInUse, assetInUseError } from '@/main/assets/in-use'
+import { assetRemoveInput } from '@/shared/schemas/commands/asset'
 
 export function assetRemove() {
   return defineCommand({

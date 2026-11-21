@@ -1,7 +1,7 @@
 // CU-6b-M N-4 step 2: each start of generation.startVideo gives its start pair, and every
 // other shape of the start fields is refused (SPEC 14 1.60).
 import { describe, it, expect } from 'vitest'
-import { startPair } from '../../../../../src/main/commands/generation/start-pair'
+import { startPair } from '@/main/commands/generation/start-pair'
 
 const refusal = (fn: () => unknown) => {
   try {

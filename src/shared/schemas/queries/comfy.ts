@@ -2,7 +2,7 @@
 // app's own shipped workflow data, readable before any run. User-only; contacts nothing.
 // These are also the parts of a WorkflowSpec (src/main/providers/comfyui/workflows/types.ts)
 // that a window may see: the graph, the slots and the source stay in the main process.
-import type { SizeRule } from '../../comfy/fit-size'
+import type { SizeRule } from '@/shared/comfy/fit-size'
 
 // The fixed list of shipped workflows (SPEC 6.10.4, the first set, and the seventh of 1.46).
 export const WORKFLOW_IDS = [

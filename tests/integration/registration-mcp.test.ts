@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, type Fixture } from './core-fixture'
-import { AGENT_POLICY } from '../../src/main/commands/agent-policy'
+import { AGENT_POLICY } from '@/main/commands/agent-policy'
 
 let f: Fixture
 afterEach(() => f.cleanup())

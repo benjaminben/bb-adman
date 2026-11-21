@@ -2,10 +2,10 @@
 // memory and its result is sent to a provider. The size is checked before any byte is read
 // and again on the bytes read; the type comes from the bytes, never from the row.
 import fs from 'node:fs'
-import { MAX_PICTURE_BYTES } from '../providers/picture-limits'
-import { pictureType } from '../providers/picture-type'
-import { AppError } from '../../shared/schemas/result'
-import type { ImageFile } from '../providers/types'
+import { MAX_PICTURE_BYTES } from '@/main/providers/picture-limits'
+import { pictureType } from '@/main/providers/picture-type'
+import { AppError } from '@/shared/schemas/result'
+import type { ImageFile } from '@/main/providers/types'
 
 const MB = 1024 * 1024
 

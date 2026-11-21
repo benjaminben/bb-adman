@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import net from 'node:net'
 import path from 'node:path'
 import { makeFixture, data, type Fixture } from '../core-fixture'
-import type { AppState } from '../../../src/shared/schemas/queries/app'
+import type { AppState } from '@/shared/schemas/queries/app'
 
 let f: Fixture
 afterEach(() => {

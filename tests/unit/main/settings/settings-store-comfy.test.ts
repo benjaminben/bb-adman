@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { createSettingsStore } from '../../../../src/main/settings/settings-store'
-import { defaultSettings } from '../../../../src/main/settings/defaults'
+import { createSettingsStore } from '@/main/settings/settings-store'
+import { defaultSettings } from '@/main/settings/defaults'
 
 let dir: string
 let file: string

@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { makeCampaignBus, insertImage, type CampaignBus } from './campaign-fixture'
 import { testDeps } from './campaign-deps'
-import { templateQueries } from '../../../src/main/queries/template'
-import { projectQueries } from '../../../src/main/queries/project'
-import { starterTemplate } from '../../../src/shared/templates/starter'
-import type { CoreDeps } from '../../../src/main/core-deps'
+import { templateQueries } from '@/main/queries/template'
+import { projectQueries } from '@/main/queries/project'
+import { starterTemplate } from '@/shared/templates/starter'
+import type { CoreDeps } from '@/main/core-deps'
 
 let bus: CampaignBus
 let deps: CoreDeps

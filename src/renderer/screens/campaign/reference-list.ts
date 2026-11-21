@@ -3,9 +3,9 @@
 // picture cannot be sent, and "Add pictures" through the system picker and asset.import. No
 // path is drawn or read here; a path goes only from the system picker to asset.import.
 import { useCallback, useState } from 'react'
-import { useApi, useApp } from '../../app/app-context'
-import type { AssetList } from '../../../shared/schemas/queries/asset'
-import type { PickedPaths } from '../../../shared/schemas/queries/dialog'
+import { useApi, useApp } from '@/renderer/app/app-context'
+import type { AssetList } from '@/shared/schemas/queries/asset'
+import type { PickedPaths } from '@/shared/schemas/queries/dialog'
 
 export type Reference = AssetList[number]
 type ImportReply = { assetIds: string[] }

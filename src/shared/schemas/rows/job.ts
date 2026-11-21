@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { JOB_KINDS, JOB_STATUSES } from '../../config/job-kinds'
-import { PROVIDER_ERROR_KINDS, PROVIDER_ERROR_REASONS } from '../queries/app'
+import { JOB_KINDS, JOB_STATUSES } from '@/shared/config/job-kinds'
+import { PROVIDER_ERROR_KINDS, PROVIDER_ERROR_REASONS } from '@/shared/schemas/queries/app'
 
 // SPEC 3.3 job, in wire form (SPEC 4.4). Frozen contract between slices D and I.
 // error_detail is a main-only column: it is never in the wire row (rows.ts).

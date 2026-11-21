@@ -1,7 +1,7 @@
 // SPEC 8.2 built-page check. Runs after `npm run build`, by `npm run test:build`.
 import fs from 'node:fs'
 import { describe, it, expect } from 'vitest'
-import { CONTENT_SECURITY_POLICY } from '../../src/main/windows/csp'
+import { CONTENT_SECURITY_POLICY } from '@/main/windows/csp'
 
 const PAGE = 'out/renderer/index.html'
 

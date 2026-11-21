@@ -2,10 +2,10 @@
 // layer's font, a background clip, a rule set's required assets. asset.remove and
 // asset.update refuse with the same error.
 import type Database from 'better-sqlite3'
-import { readWireRows } from '../db/rows'
-import { AppError } from '../../shared/schemas/result'
-import type { LayerRow } from '../../shared/schemas/rows/layer'
-import type { RuleSetRow } from '../../shared/schemas/rows/rule-set'
+import { readWireRows } from '@/main/db/rows'
+import { AppError } from '@/shared/schemas/result'
+import type { LayerRow } from '@/shared/schemas/rows/layer'
+import type { RuleSetRow } from '@/shared/schemas/rows/rule-set'
 
 export function assetInUse(db: Database.Database, assetId: string): boolean {
   const layers = readWireRows(db, 'layer') as LayerRow[]

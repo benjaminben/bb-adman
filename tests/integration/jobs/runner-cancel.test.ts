@@ -1,13 +1,13 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { gate, makeRunnerFixture, waitFor, type RunnerFixture } from './runner-fixture'
-import { runOptions } from '../../../src/main/jobs/runner'
-import { fakeImage } from '../../../src/main/providers/fake/image'
+import { runOptions } from '@/main/jobs/runner'
+import { fakeImage } from '@/main/providers/fake/image'
 import {
   resetFakeBehaviour,
   setFakeBehaviour,
   type FakeCancel,
-} from '../../../src/main/providers/fake/behaviour'
-import { AppError } from '../../../src/shared/schemas/result'
+} from '@/main/providers/fake/behaviour'
+import { AppError } from '@/shared/schemas/result'
 
 const fixtures: RunnerFixture[] = []
 function fixture(): RunnerFixture {

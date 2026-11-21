@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createAppStore } from '../../../../src/renderer/stores/app-store'
+import { createAppStore } from '@/renderer/stores/app-store'
 import { makeFakeApi, baseState } from '../fake-api'
 
 const flush = () => new Promise((r) => setTimeout(r, 0))

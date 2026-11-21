@@ -1,7 +1,7 @@
 // SPEC 8.3 [REQ: FR-051]: a file is accepted when its extension is in file-types.ts and its
 // first bytes match that type. Imported files are untrusted, so the bytes decide, not the name.
-import { pictureType } from '../providers/picture-type'
-import { fileTypeFor, type FileType } from '../../shared/config/file-types'
+import { pictureType } from '@/main/providers/picture-type'
+import { fileTypeFor, type FileType } from '@/shared/config/file-types'
 
 // How many first bytes a caller reads before calling sniffType.
 export const SNIFF_BYTES = 4096

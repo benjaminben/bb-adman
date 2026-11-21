@@ -3,9 +3,9 @@
 // class_type from the app's own graph, the input name, type, message and details. For a run
 // that failed: the exception's type and message. Never the traceback, never a received value.
 // The printer removes control characters, hides the address and cuts each line.
-import type { RunMessage } from '../../src/main/providers/comfyui/answers'
-import type { ServerRefusal } from '../../src/main/providers/comfyui/refusal'
-import type { Graph } from '../../src/main/providers/comfyui/workflows/types'
+import type { RunMessage } from '@/main/providers/comfyui/answers'
+import type { ServerRefusal } from '@/main/providers/comfyui/refusal'
+import type { Graph } from '@/main/providers/comfyui/workflows/types'
 
 const present = (pairs: Array<[string, string | undefined]>) =>
   pairs.flatMap(([label, text]) => (text === undefined ? [] : [`${label}${text}`]))

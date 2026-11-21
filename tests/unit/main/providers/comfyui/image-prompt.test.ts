@@ -11,11 +11,11 @@ import {
   serveNeeds,
   servePicture,
 } from '../../../../helpers/comfy-run'
-import { comfyImage } from '../../../../../src/main/providers/comfyui/image'
-import { createServerChecks } from '../../../../../src/main/providers/comfyui/needs'
-import { mossTextToImage as moss } from '../../../../../src/main/providers/comfyui/workflows/moss'
-import { fitSize } from '../../../../../src/shared/comfy/fit-size'
-import type { RunProgress } from '../../../../../src/main/providers/types'
+import { comfyImage } from '@/main/providers/comfyui/image'
+import { createServerChecks } from '@/main/providers/comfyui/needs'
+import { mossTextToImage as moss } from '@/main/providers/comfyui/workflows/moss'
+import { fitSize } from '@/shared/comfy/fit-size'
+import type { RunProgress } from '@/main/providers/types'
 
 let stand: StandIn
 afterEach(async () => {

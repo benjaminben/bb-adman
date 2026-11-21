@@ -1,10 +1,7 @@
 import { afterEach, beforeEach, describe, it, expect } from 'vitest'
-import {
-  createComfyClient,
-  type ComfyClient,
-} from '../../../../../src/main/providers/comfyui/client'
-import { MAX_COMFY_JSON_BYTES } from '../../../../../src/main/providers/comfyui/limits'
-import { uploadName } from '../../../../../src/main/providers/comfyui/values'
+import { createComfyClient, type ComfyClient } from '@/main/providers/comfyui/client'
+import { MAX_COMFY_JSON_BYTES } from '@/main/providers/comfyui/limits'
+import { uploadName } from '@/main/providers/comfyui/values'
 import { startComfyStandIn, type StandIn } from '../../../../helpers/comfy-stand-in'
 import { failureOf } from '../../../../helpers/failure-of'
 

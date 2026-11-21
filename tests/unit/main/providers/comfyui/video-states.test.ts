@@ -10,9 +10,9 @@ import {
   requestLines,
   serveNeeds,
 } from '../../../../helpers/comfy-run'
-import { comfyVideo } from '../../../../../src/main/providers/comfyui/video'
-import { createServerChecks } from '../../../../../src/main/providers/comfyui/needs'
-import { LOST_CONTACT_MS, VIDEO_WORK_MS } from '../../../../../src/main/providers/comfyui/limits'
+import { comfyVideo } from '@/main/providers/comfyui/video'
+import { createServerChecks } from '@/main/providers/comfyui/needs'
+import { LOST_CONTACT_MS, VIDEO_WORK_MS } from '@/main/providers/comfyui/limits'
 
 let stand: StandIn
 afterEach(async () => {

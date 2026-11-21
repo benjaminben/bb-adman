@@ -3,7 +3,7 @@ import { connectError, freePort } from '../../../integration/mcp/http-client'
 
 // Sessions whose close always fails, to show the listener still closes (REVIEW MCP-A
 // Fixes S-1).
-vi.mock('../../../../src/main/mcp/sessions', () => ({
+vi.mock('@/main/mcp/sessions', () => ({
   createSessions: () => ({
     handle: async () => undefined,
     closeAll: async () => {
@@ -12,7 +12,7 @@ vi.mock('../../../../src/main/mcp/sessions', () => ({
   }),
 }))
 
-const { createMcpHttp } = await import('../../../../src/main/mcp/server')
+const { createMcpHttp } = await import('@/main/mcp/server')
 const caller = { execute: vi.fn(), query: vi.fn() }
 const TOKEN = 'made-up-local-token-for-tests-only'
 

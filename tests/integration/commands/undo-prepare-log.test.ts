@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { z } from 'zod'
-import { defineCommand } from '../../../src/main/commands/types'
-import { AppError } from '../../../src/shared/schemas/result'
+import { defineCommand } from '@/main/commands/types'
+import { AppError } from '@/shared/schemas/result'
 import { makeMultiBus } from './multi-bus'
 
 let fixture: ReturnType<typeof makeMultiBus> | undefined

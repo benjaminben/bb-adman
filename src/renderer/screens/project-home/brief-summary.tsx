@@ -1,9 +1,9 @@
 // The read-only summary of a parsed brief (SPEC 14 1.41 TP-1): the confirm step FR-023 asks
 // for, in its plainest form. Every value is the brief's own text, drawn as text.
-import type { BriefParsed } from '../../../shared/schemas/commands/brief'
-import type { BriefDraft } from '../../../shared/schemas/brief'
+import type { BriefParsed } from '@/shared/schemas/commands/brief'
+import type { BriefDraft } from '@/shared/schemas/brief'
 import { briefSubjectIds, type CampaignPlan } from './campaign-input'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 function Row(props: { label: string; value: string }) {
   return (

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { SettingsScreen } from '../../../../src/renderer/screens/settings/settings-screen'
+import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
 import { renderApp, axeViolations } from '../render'
 import { makeFakeApi, baseState } from '../fake-api'
 

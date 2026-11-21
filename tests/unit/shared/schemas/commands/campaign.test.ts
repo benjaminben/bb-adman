@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { CampaignSize } from '../../../../../src/shared/schemas/commands/campaign'
-import { MAX_SIZE_SIDE, MIN_SIZE_SIDE } from '../../../../../src/shared/config/size-limits'
+import { CampaignSize } from '@/shared/schemas/commands/campaign'
+import { MAX_SIZE_SIDE, MIN_SIZE_SIDE } from '@/shared/config/size-limits'
 
 const size = (width: number, height: number) => ({ label: `${width}x${height}`, width, height })
 

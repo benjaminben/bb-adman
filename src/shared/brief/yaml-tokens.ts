@@ -3,7 +3,7 @@
 // trim, then split on spaces and tabs) and a document nested deeper than MAX_BRIEF_DEPTH
 // both fail. CST.visit calls its visitor on entry, so the walk stops before going deeper.
 import { CST, Parser } from 'yaml'
-import { MAX_BRIEF_DEPTH } from '../config/brief-limits'
+import { MAX_BRIEF_DEPTH } from '@/shared/config/brief-limits'
 
 function tooDeep(token: CST.Document): boolean {
   let deep = false

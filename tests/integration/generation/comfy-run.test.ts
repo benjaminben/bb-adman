@@ -9,12 +9,12 @@ import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
 import { finishRun, historyEntry, serveNeeds, servePicture } from '../../helpers/comfy-run'
 import { data } from '../core-fixture'
 import { generationDetailsOf } from '../../fixtures/png-chunks'
-import { assetsDirOf } from '../../../src/main/assets/service'
-import { promptToSend } from '../../../src/shared/generation/prompt'
-import { greyPng } from '../../../src/main/providers/fake/png'
-import { mossTextToImage as moss } from '../../../src/main/providers/comfyui/workflows/moss'
-import { flux3KleinEditReferences as flux } from '../../../src/main/providers/comfyui/workflows/flux3'
-import type { ImageJobResult } from '../../../src/shared/schemas/jobs/image-generation'
+import { assetsDirOf } from '@/main/assets/service'
+import { promptToSend } from '@/shared/generation/prompt'
+import { greyPng } from '@/main/providers/fake/png'
+import { mossTextToImage as moss } from '@/main/providers/comfyui/workflows/moss'
+import { flux3KleinEditReferences as flux } from '@/main/providers/comfyui/workflows/flux3'
+import type { ImageJobResult } from '@/shared/schemas/jobs/image-generation'
 
 let f: ComfyFixture
 let stand: StandIn

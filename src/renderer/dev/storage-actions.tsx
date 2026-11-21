@@ -2,10 +2,10 @@
 // through dev.storage (SPEC 4.2, 14 slice I). A missing key opens the key dialog (FR-171).
 // Dropbox is offered only when HAND_TEST_DROPBOX is true (SPEC 14 M5, slice G).
 import { useState } from 'react'
-import { useApp } from '../app/app-context'
+import { useApp } from '@/renderer/app/app-context'
 import { storageText } from './result-text'
-import { HAND_TEST_DROPBOX } from '../../shared/config/dev-tools'
-import styles from '../screens/screens.module.css'
+import { HAND_TEST_DROPBOX } from '@/shared/config/dev-tools'
+import styles from '@/renderer/screens/screens.module.css'
 
 type Action = 'write' | 'list' | 'remove'
 

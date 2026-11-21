@@ -5,9 +5,9 @@
 // is never followed; the byte and time limits stop the read.
 import http from 'node:http'
 import https from 'node:https'
-import { isRefusedHost } from '../../../shared/comfy/refused-hosts'
-import type { ProviderErrorReason } from '../../../shared/schemas/queries/app'
-import { ProviderFailure } from '../types'
+import { isRefusedHost } from '@/shared/comfy/refused-hosts'
+import type { ProviderErrorReason } from '@/shared/schemas/queries/app'
+import { ProviderFailure } from '@/main/providers/types'
 import { CONNECT_MS } from './limits'
 import { AddressRefused, checkedLookup } from './lookup'
 

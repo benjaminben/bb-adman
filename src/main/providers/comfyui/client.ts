@@ -4,7 +4,7 @@
 // files do not exist here (the source-text test holds this).
 import { randomUUID } from 'node:crypto'
 import type { z } from 'zod'
-import type { ProviderErrorReason } from '../../../shared/schemas/queries/app'
+import type { ProviderErrorReason } from '@/shared/schemas/queries/app'
 import {
   historyAnswer,
   jobStateAnswer,

@@ -3,24 +3,24 @@
 // failure does not lose the others. Every picture goes through toPng (L6), gets the details
 // embedded, is written with writeManaged and added with asset.addGenerated, then kept.
 import { ulid } from 'ulid'
-import type { JobKindHandler, JobRunContext } from '../types'
-import { runOptions } from '../progress'
-import { embedGenerationDetails } from '../png-details'
-import type { CoreDeps } from '../../core-deps'
-import type { ProjectHandle } from '../../db/project-file'
-import { adapterFor } from '../../providers/adapters'
-import { requireProviderKeys } from '../../providers/require-keys'
-import { PICTURE_NOT_DECODED } from '../../png-converter'
+import type { JobKindHandler, JobRunContext } from '@/main/jobs/types'
+import { runOptions } from '@/main/jobs/progress'
+import { embedGenerationDetails } from '@/main/jobs/png-details'
+import type { CoreDeps } from '@/main/core-deps'
+import type { ProjectHandle } from '@/main/db/project-file'
+import { adapterFor } from '@/main/providers/adapters'
+import { requireProviderKeys } from '@/main/providers/require-keys'
+import { PICTURE_NOT_DECODED } from '@/main/png-converter'
 import {
   ProviderCancelled,
   ProviderFailure,
   type ImageFile,
   type ImageProvider,
   type ImageResult,
-} from '../../providers/types'
-import { promptToSend } from '../../../shared/generation/prompt'
-import type { JobRow } from '../../../shared/schemas/rows/job'
-import { imageJobRequest, type ImageJobResult } from '../../../shared/schemas/jobs/image-generation'
+} from '@/main/providers/types'
+import { promptToSend } from '@/shared/generation/prompt'
+import type { JobRow } from '@/shared/schemas/rows/job'
+import { imageJobRequest, type ImageJobResult } from '@/shared/schemas/jobs/image-generation'
 
 // SPEC 6.2: "count images means count calls, run two at a time".
 export const PICTURES_AT_ONCE = 2

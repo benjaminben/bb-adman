@@ -3,9 +3,9 @@
 // it is over MAX_PICTURE_BYTES, not a PNG or a JPEG by its bytes, or over 1,600 px on its
 // long side. The path itself goes only to the file-dialog stub; it is never printed.
 import fs from 'node:fs'
-import { pictureType } from '../../src/main/providers/picture-type'
-import { pictureSize } from '../../src/main/providers/picture-size'
-import { MAX_PICTURE_BYTES } from '../../src/main/providers/picture-limits'
+import { pictureType } from '@/main/providers/picture-type'
+import { pictureSize } from '@/main/providers/picture-size'
+import { MAX_PICTURE_BYTES } from '@/main/providers/picture-limits'
 
 export const MAX_PICTURE_SIDE = 1_600
 

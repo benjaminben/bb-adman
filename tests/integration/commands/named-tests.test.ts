@@ -2,8 +2,8 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { z } from 'zod'
 import type Database from 'better-sqlite3'
-import { defineCommand } from '../../../src/main/commands/types'
-import { AppError } from '../../../src/shared/schemas/result'
+import { defineCommand } from '@/main/commands/types'
+import { AppError } from '@/shared/schemas/result'
 import { makeMultiBus, refusableSet, TEST_SCOPE } from './multi-bus'
 import { VALID_BRIEF } from '../row-fixtures'
 

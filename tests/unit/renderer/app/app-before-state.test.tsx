@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { AppProvider } from '../../../../src/renderer/app/app-context'
-import { AppShell } from '../../../../src/renderer/app/app-shell'
-import { createAppStore } from '../../../../src/renderer/stores/app-store'
+import { AppProvider } from '@/renderer/app/app-context'
+import { AppShell } from '@/renderer/app/app-shell'
+import { createAppStore } from '@/renderer/stores/app-store'
 import { makeFakeApi } from '../fake-api'
 
 describe('app window before app.getState has answered', () => {

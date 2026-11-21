@@ -7,8 +7,8 @@ import {
   managedPath,
   relativeToProject,
   resolveAssetFile,
-} from '../../../../src/main/assets/path-resolver'
-import { pathAtOrInside } from '../../../../src/main/assets/path-resolver'
+} from '@/main/assets/path-resolver'
+import { pathAtOrInside } from '@/main/assets/path-resolver'
 
 let root: string
 let projectFile: string

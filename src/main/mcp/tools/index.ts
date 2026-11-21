@@ -4,9 +4,9 @@
 // error is the app's own code, message and details, as an MCP tool error (SPEC 4.5).
 import { z } from 'zod'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
-import type { ToolSetup } from '../sessions'
-import type { AgentCaller } from '../agent-caller'
-import type { Result } from '../../../shared/schemas/result'
+import type { ToolSetup } from '@/main/mcp/sessions'
+import type { AgentCaller } from '@/main/mcp/agent-caller'
+import type { Result } from '@/shared/schemas/result'
 import { MCP_TOOLS, type ToolDef } from './table'
 
 export { MCP_TOOLS, type ToolDef }

@@ -1,11 +1,11 @@
 // SPEC 14 "Contract between the slices" (D and H): the job service on CoreDeps.jobs and the
 // job kind handler. Frozen contract (Phase 2 step 0). Slice D built the runner (`runner.ts`).
-import type { CoreDeps } from '../core-deps'
-import type { ProjectContext } from '../commands/types'
-import type { RunProgress } from '../providers/types'
-import type { JobKind } from '../../shared/config/job-kinds'
-import type { JobRow } from '../../shared/schemas/rows/job'
-import type { Result } from '../../shared/schemas/result'
+import type { CoreDeps } from '@/main/core-deps'
+import type { ProjectContext } from '@/main/commands/types'
+import type { RunProgress } from '@/main/providers/types'
+import type { JobKind } from '@/shared/config/job-kinds'
+import type { JobRow } from '@/shared/schemas/rows/job'
+import type { Result } from '@/shared/schemas/result'
 
 export type EnqueueRequest = {
   kind: JobKind

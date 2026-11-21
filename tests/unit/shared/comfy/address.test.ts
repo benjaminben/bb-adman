@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseComfyAddress } from '../../../../src/shared/comfy/address'
+import { parseComfyAddress } from '@/shared/comfy/address'
 
 const OWN = [47821, 47822]
 const parse = (text: string, ownPorts: number[] = OWN) => parseComfyAddress(text, ownPorts)

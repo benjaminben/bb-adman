@@ -4,13 +4,13 @@
 // Each removed row is named, so the window hears of all of them (SPEC 4.4).
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
-import { defineCommand, type ProjectContext } from '../types'
-import { campaign } from '../../db/schema'
-import { readWireRow } from '../../db/rows'
+import { defineCommand, type ProjectContext } from '@/main/commands/types'
+import { campaign } from '@/main/db/schema'
+import { readWireRow } from '@/main/db/rows'
 import { campaignNotFound } from './rule-set-values'
-import { AppError } from '../../../shared/schemas/result'
-import { campaignDeleteInput } from '../../../shared/schemas/commands/campaign-edit'
-import type { TableName } from '../../../shared/schemas/rows/keys'
+import { AppError } from '@/shared/schemas/result'
+import { campaignDeleteInput } from '@/shared/schemas/commands/campaign-edit'
+import type { TableName } from '@/shared/schemas/rows/keys'
 
 const VARIANTS = `SELECT v.id FROM variant v JOIN direction d ON d.id = v.direction_id
   WHERE d.campaign_id = ?`

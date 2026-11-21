@@ -1,8 +1,8 @@
 // The video length field (SPEC 14 1.57 TP-6, improvised choice 3): whole seconds, default 2,
 // least 1, most the chosen start's workflow's maxMs from comfy.getInfo (1.60 N-9).
 import { useEffect, useState } from 'react'
-import { useApi } from '../../app/app-context'
-import type { ComfyInfo } from '../../../shared/schemas/queries/comfy'
+import { useApi } from '@/renderer/app/app-context'
+import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
 
 export const START_SECONDS = 2
 export const LENGTH_PROBLEM = 'Enter a whole number of seconds, 1 or more.'

@@ -4,17 +4,17 @@
 // No rule set is sent, so it holds the brief's words. Every subject is made first with
 // subject.create, so each map entry names an existing subject. Nothing is sent unless the
 // whole input passes the shared campaign.create schema.
-import type { BriefDraft } from '../../../shared/schemas/brief'
+import type { BriefDraft } from '@/shared/schemas/brief'
 import {
   campaignCreateInput,
   type CampaignCreateInput,
   type CampaignSize,
-} from '../../../shared/schemas/commands/campaign'
-import { SubjectId, type SubjectCreateInput } from '../../../shared/schemas/commands/subject'
-import { parseSize } from '../../../shared/brief/size'
-import { READY_MADE_SIZES } from '../../../shared/config/defaults'
-import { starterTemplate } from '../../../shared/templates/starter'
-import type { BriefParsed } from '../../../shared/schemas/commands/brief'
+} from '@/shared/schemas/commands/campaign'
+import { SubjectId, type SubjectCreateInput } from '@/shared/schemas/commands/subject'
+import { parseSize } from '@/shared/brief/size'
+import { READY_MADE_SIZES } from '@/shared/config/defaults'
+import { starterTemplate } from '@/shared/templates/starter'
+import type { BriefParsed } from '@/shared/schemas/commands/brief'
 
 export type CampaignPlan =
   | { ok: true; subjects: SubjectCreateInput[]; campaign: CampaignCreateInput }

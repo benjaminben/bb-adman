@@ -1,7 +1,7 @@
 // SPEC 6.10.12: the address is never printed, in an error either. Each case body runs inside
 // `guarded`; whatever it throws is replaced by a new error holding only the safe text, with no
 // cause and no fields, so Vitest has nothing else to print.
-import { ProviderFailure } from '../../src/main/providers/types'
+import { ProviderFailure } from '@/main/providers/types'
 import { safeLine } from './print'
 
 function textOf(error: unknown): string {

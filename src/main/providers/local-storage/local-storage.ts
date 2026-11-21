@@ -8,9 +8,9 @@ import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { createWriteStream } from 'node:fs'
 import type { ReadableStream as WebReadableStream } from 'node:stream/web'
-import type { StorageProvider } from '../types'
+import type { StorageProvider } from '@/main/providers/types'
 import { notThere, onDisk } from './failure'
-import { refusePath, storageFilePath, storageListPrefix } from '../storage-paths'
+import { refusePath, storageFilePath, storageListPrefix } from '@/main/providers/storage-paths'
 
 // [1.14] H13: not there, a path through a file (`ENOTDIR`) included.
 function isMissing(error: unknown): boolean {

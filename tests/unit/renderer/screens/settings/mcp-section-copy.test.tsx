@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { SettingsScreen } from '../../../../../src/renderer/screens/settings/settings-screen'
+import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
 import { renderApp, axeViolations } from '../../render'
 import { TOKEN, connect, line, mcpFake } from './mcp-fixture'
 

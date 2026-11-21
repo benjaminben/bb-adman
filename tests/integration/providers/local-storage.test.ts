@@ -2,8 +2,8 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, afterAll } from 'vitest'
-import { localStorageAt } from '../../../src/main/providers/local-storage'
-import { ProviderFailure } from '../../../src/main/providers/types'
+import { localStorageAt } from '@/main/providers/local-storage'
+import { ProviderFailure } from '@/main/providers/types'
 import { describeStorageConformance } from './storage-conformance'
 
 const folders: string[] = []

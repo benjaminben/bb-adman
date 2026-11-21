@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { checkChangedFiles, withChangeChecks } from '../../../../src/main/assets/change-trigger'
-import type { BusEvent } from '../../../../src/main/commands/bus'
-import type { LogInput } from '../../../../src/main/log/activity-log'
-import type { Result } from '../../../../src/shared/schemas/result'
+import { checkChangedFiles, withChangeChecks } from '@/main/assets/change-trigger'
+import type { BusEvent } from '@/main/commands/bus'
+import type { LogInput } from '@/main/log/activity-log'
+import type { Result } from '@/shared/schemas/result'
 
 type Call = { name: string; input: unknown }
 

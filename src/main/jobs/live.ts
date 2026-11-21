@@ -1,13 +1,13 @@
 // The runner's in-memory state (SPEC 3.6 "Jobs"): the jobs it is running now, and the one
 // write path for a job row, which emits job.updated after the write.
-import type { CoreDeps } from '../core-deps'
-import type { BusEvent, CommandBus } from '../commands/bus'
+import type { CoreDeps } from '@/main/core-deps'
+import type { BusEvent, CommandBus } from '@/main/commands/bus'
 import { readJob, UNREADABLE, updateJob, type JobChange } from './job-store'
-import type { ProjectHandle } from '../db/project-file'
+import type { ProjectHandle } from '@/main/db/project-file'
 import type { JobKindHandler } from './types'
 import type { JobEnd } from './job-end'
-import type { JobKind } from '../../shared/config/job-kinds'
-import type { ProviderInfo } from '../../shared/schemas/queries/app'
+import type { JobKind } from '@/shared/config/job-kinds'
+import type { ProviderInfo } from '@/shared/schemas/queries/app'
 
 export type JobRunnerOptions = {
   // Read when a job runs: core.ts builds CoreDeps and the bus after the runner.

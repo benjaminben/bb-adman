@@ -3,26 +3,26 @@
 // "Direction 1" and one master variant at the first size in the primary language, with a
 // background layer and one layer per filled slot.
 import { ulid } from 'ulid'
-import type { CoreDeps } from '../../core-deps'
-import { defineCommand, type ProjectContext } from '../types'
-import * as schema from '../../db/schema'
-import { readWireRow, storedJson } from '../../db/rows'
-import { insertSubject } from '../subject/subject'
+import type { CoreDeps } from '@/main/core-deps'
+import { defineCommand, type ProjectContext } from '@/main/commands/types'
+import * as schema from '@/main/db/schema'
+import { readWireRow, storedJson } from '@/main/db/rows'
+import { insertSubject } from '@/main/commands/subject/subject'
 import { newCampaignId, newVariantId } from './ids'
 import { slotFills } from './fills'
 import { insertLayerRow } from './layer-row'
 import { startingRuleSet } from './rule-set-values'
-import { isRightToLeft } from '../../../shared/brief/languages'
-import { buildMasterLayers } from '../../../shared/templates/master-layers'
-import { starterTemplate } from '../../../shared/templates/starter'
-import { SubjectId } from '../../../shared/schemas/commands/subject'
+import { isRightToLeft } from '@/shared/brief/languages'
+import { buildMasterLayers } from '@/shared/templates/master-layers'
+import { starterTemplate } from '@/shared/templates/starter'
+import { SubjectId } from '@/shared/schemas/commands/subject'
 import {
   campaignCreateInput,
   type CampaignCreateInput,
   type RuleSetValues,
-} from '../../../shared/schemas/commands/campaign'
-import type { CampaignCreated } from '../../../shared/schemas/commands/campaign-edit'
-import { AppError } from '../../../shared/schemas/result'
+} from '@/shared/schemas/commands/campaign'
+import type { CampaignCreated } from '@/shared/schemas/commands/campaign-edit'
+import { AppError } from '@/shared/schemas/result'
 
 const DEFAULT_DURATION_MS = 6000
 

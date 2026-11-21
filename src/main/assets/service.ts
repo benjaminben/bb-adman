@@ -3,9 +3,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import type { AssetService } from './types'
-import type { ProjectHandle } from '../db/project-file'
-import { readMeta } from '../db/meta'
-import { readWireRow, readWireRows } from '../db/rows'
+import type { ProjectHandle } from '@/main/db/project-file'
+import { readMeta } from '@/main/db/meta'
+import { readWireRow, readWireRows } from '@/main/db/rows'
 import {
   assetsDirFor,
   managedPath,
@@ -15,8 +15,8 @@ import {
 } from './path-resolver'
 import { assetNotFound, assetsFolderMissing, missingFile } from './errors'
 import { notAPicture, readPicture } from './read-picture'
-import { MAX_PICTURE_BYTES } from '../providers/picture-limits'
-import type { AssetRow } from '../../shared/schemas/rows/asset'
+import { MAX_PICTURE_BYTES } from '@/main/providers/picture-limits'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
 
 function assetRow(project: ProjectHandle, assetId: string): AssetRow {
   const row = readWireRow(project.db, 'asset', { id: assetId }) as AssetRow | null

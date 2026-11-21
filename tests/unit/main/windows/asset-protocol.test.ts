@@ -1,10 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { Protocol } from 'electron'
-import {
-  registerAssetProtocol,
-  registerAssetScheme,
-} from '../../../../src/main/windows/asset-protocol'
-import { createProjectRegistry } from '../../../../src/main/db/project-registry'
+import { registerAssetProtocol, registerAssetScheme } from '@/main/windows/asset-protocol'
+import { createProjectRegistry } from '@/main/db/project-registry'
 
 function fakeProtocol() {
   return {

@@ -1,8 +1,8 @@
 import type Database from 'better-sqlite3'
 import type { ChangeRecorder } from './types'
-import { readWireRow } from '../db/rows'
-import { rowKey, type TableName } from '../../shared/schemas/rows/keys'
-import type { ProjectChangedPayload } from '../../shared/schemas/events'
+import { readWireRow } from '@/main/db/rows'
+import { rowKey, type TableName } from '@/shared/schemas/rows/keys'
+import type { ProjectChangedPayload } from '@/shared/schemas/events'
 
 export type ProjectChanges = Pick<ProjectChangedPayload, 'changed' | 'removed'>
 

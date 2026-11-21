@@ -3,8 +3,8 @@
 // @aws-sdk/client-s3 and @aws-sdk/lib-storage code: signing, building and parsing.
 import fs from 'node:fs'
 import { Readable } from 'node:stream'
-import type { AdapterContext } from '../../../../../src/main/providers/types'
-import type { Settings } from '../../../../../src/shared/schemas/settings'
+import type { AdapterContext } from '@/main/providers/types'
+import type { Settings } from '@/shared/schemas/settings'
 
 // Made up; they do not look like real keys.
 export const TEST_KEY_ID = 'test-id-not-a-key'

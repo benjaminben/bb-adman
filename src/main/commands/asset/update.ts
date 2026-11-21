@@ -2,14 +2,14 @@
 // An asset in use cannot move to the reference library, which only feeds generation
 // (SPEC 14, Slice A rulings point 6).
 import { eq } from 'drizzle-orm'
-import { defineCommand, type ProjectContext } from '../types'
-import { asset } from '../../db/schema'
-import { readWireRow } from '../../db/rows'
-import { assetNotFound } from '../../assets/errors'
-import { assetInUse, assetInUseError } from '../../assets/in-use'
-import { assetUpdateInput, type AssetUpdateInput } from '../../../shared/schemas/commands/asset'
-import { AppError } from '../../../shared/schemas/result'
-import type { AssetRow } from '../../../shared/schemas/rows/asset'
+import { defineCommand, type ProjectContext } from '@/main/commands/types'
+import { asset } from '@/main/db/schema'
+import { readWireRow } from '@/main/db/rows'
+import { assetNotFound } from '@/main/assets/errors'
+import { assetInUse, assetInUseError } from '@/main/assets/in-use'
+import { assetUpdateInput, type AssetUpdateInput } from '@/shared/schemas/commands/asset'
+import { AppError } from '@/shared/schemas/result'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
 
 export function requireAsset(ctx: ProjectContext, assetId: string): AssetRow {
   const row = readWireRow(ctx.project.db, 'asset', { id: assetId }) as AssetRow | null

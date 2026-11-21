@@ -4,10 +4,10 @@ import {
   listHandTest,
   removeHandTest,
   writeHandTest,
-} from '../../../../../src/main/commands/dev/hand-test-storage'
-import { HAND_TEST_FOLDER } from '../../../../../src/shared/config/dev-tools'
-import type { StorageProvider } from '../../../../../src/main/providers/types'
-import { AppError } from '../../../../../src/shared/schemas/result'
+} from '@/main/commands/dev/hand-test-storage'
+import { HAND_TEST_FOLDER } from '@/shared/config/dev-tools'
+import type { StorageProvider } from '@/main/providers/types'
+import { AppError } from '@/shared/schemas/result'
 
 type Call = { op: string; arg: unknown }
 

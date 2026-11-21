@@ -1,9 +1,9 @@
 // mcp.getConnectInfo (SPEC 4.3, 5.3, 6.8; FR-191, R-10, D-014). User-only: an agent is
 // refused with AGENT_DENIED and gets nothing. No MCP tool calls it.
-import type { CoreDeps } from '../core-deps'
+import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
-import type { ConnectInfo, McpProblem } from '../../shared/schemas/queries/mcp'
-import { AppError } from '../../shared/schemas/result'
+import type { ConnectInfo, McpProblem } from '@/shared/schemas/queries/mcp'
+import { AppError } from '@/shared/schemas/result'
 
 export const CONNECT_INFO_DENIED =
   'Agents cannot read the agent access settings in this version. Ask the user to do it in the app.'

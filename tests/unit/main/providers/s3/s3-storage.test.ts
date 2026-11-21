@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { s3Storage } from '../../../../../src/main/providers/s3/s3-storage'
-import { adapters } from '../../../../../src/main/providers/s3'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
+import { s3Storage } from '@/main/providers/s3/s3-storage'
+import { adapters } from '@/main/providers/s3'
+import { ProviderFailure } from '@/main/providers/types'
 import {
   TEST_KEY_ID,
   TEST_SECRET,

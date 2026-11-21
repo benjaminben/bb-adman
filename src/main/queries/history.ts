@@ -1,9 +1,9 @@
 // history.state (SPEC 4.2, 4.3): whether undo and redo are available for one scope of the
 // named project. Nothing searches other projects.
-import type { CoreDeps } from '../core-deps'
+import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
-import { historyStateInput, type HistoryState } from '../../shared/schemas/queries/history'
-import { AppError } from '../../shared/schemas/result'
+import { historyStateInput, type HistoryState } from '@/shared/schemas/queries/history'
+import { AppError } from '@/shared/schemas/result'
 
 export function historyQueries(deps: CoreDeps): Record<string, QueryFn> {
   return {

@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { listProviders } from '../../../../src/main/providers/registry'
-import {
-  PROVIDER_ERROR_REASONS,
-  type ProviderError,
-} from '../../../../src/shared/schemas/queries/app'
+import { listProviders } from '@/main/providers/registry'
+import { PROVIDER_ERROR_REASONS, type ProviderError } from '@/shared/schemas/queries/app'
 
 describe('ProviderInfo local, cancel and serverText [SPEC 6.11.1, 14 CU-0]', () => {
   it('gives each registered provider the values of the Section 6.11.1 table', () => {

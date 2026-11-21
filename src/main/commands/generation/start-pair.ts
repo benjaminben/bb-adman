@@ -4,8 +4,8 @@
 // any picture is read or any job row is made. How many references a run takes is checked
 // against its workflow later.
 import { videoNotOffered } from './comfy-video-checks'
-import type { VideoStart } from '../../providers/types'
-import { AppError } from '../../../shared/schemas/result'
+import type { VideoStart } from '@/main/providers/types'
+import { AppError } from '@/shared/schemas/result'
 
 export type StartFields = {
   start: 'none' | 'first_frame'

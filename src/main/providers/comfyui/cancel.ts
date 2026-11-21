@@ -2,7 +2,7 @@
 // submitted. For any other ID nothing is sent and the outcome is `unknown`. A queued run is
 // removed from the queue; a running one is interrupted only when the server's version takes
 // an ID with /interrupt. Nothing else on the server is touched. No wait of its own (1.38).
-import type { CancelOutcome } from '../types'
+import type { CancelOutcome } from '@/main/providers/types'
 import type { ComfyClient } from './client'
 import { MIN_TARGETED_INTERRUPT } from './limits'
 import { isOwnId } from './own-ids'

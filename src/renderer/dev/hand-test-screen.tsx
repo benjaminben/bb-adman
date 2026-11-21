@@ -3,8 +3,8 @@
 import { S3SettingsForm } from './s3-settings-form'
 import { DropboxSignIn } from './dropbox-sign-in'
 import { StorageActions } from './storage-actions'
-import { HAND_TEST_DROPBOX } from '../../shared/config/dev-tools'
-import styles from '../screens/screens.module.css'
+import { HAND_TEST_DROPBOX } from '@/shared/config/dev-tools'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function HandTestScreen() {
   return (

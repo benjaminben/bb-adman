@@ -1,9 +1,9 @@
 // SPEC 6.1 templates and the signatures of slice B's functions (SPEC 14, "Contract between
 // the slices"). Frozen contract (Phase 2 step 0). Types only; slice B writes the bodies.
-import type { Result } from '../schemas/result'
-import type { BriefDraft } from '../schemas/brief'
-import type { CampaignSize } from '../schemas/commands/campaign'
-import type { LayerRow } from '../schemas/rows/layer'
+import type { Result } from '@/shared/schemas/result'
+import type { BriefDraft } from '@/shared/schemas/brief'
+import type { CampaignSize } from '@/shared/schemas/commands/campaign'
+import type { LayerRow } from '@/shared/schemas/rows/layer'
 
 export type SlotType = 'image' | 'copy'
 

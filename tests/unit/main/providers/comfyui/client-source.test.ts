@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { readdirSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
-import * as clientModule from '../../../../../src/main/providers/comfyui/client'
-import * as indexModule from '../../../../../src/main/providers/comfyui/index'
+import * as clientModule from '@/main/providers/comfyui/client'
+import * as indexModule from '@/main/providers/comfyui/index'
 
 const folder = join(__dirname, '../../../../../src/main/providers/comfyui')
 // The client's source: the call list, how a request is sent, and the upload form.

@@ -5,9 +5,9 @@
 // and "Add pictures" are in reference-list.ts, shared with the video card (1.60 N-9).
 import { useCallback, useEffect, useId } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import { assetUrl } from '../../ui/asset-url'
+import { assetUrl } from '@/renderer/ui/asset-url'
 import { type Reference, useAddPictures, useReferences, whyNot } from './reference-list'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 const LOCAL_LINE =
   "ComfyUI takes one reference picture for now and makes the result in that picture's shape, at about 1 megapixel."

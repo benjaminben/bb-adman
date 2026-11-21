@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { briefCommands } from '../../../src/main/commands/brief'
+import { briefCommands } from '@/main/commands/brief'
 import { makeAssetBus, expectRefused } from '../assets/asset-bus'
 import { testDeps } from './campaign-deps'
 

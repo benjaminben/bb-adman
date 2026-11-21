@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { reasonMessage } from '../../../../src/shared/providers/messages'
-import { PROVIDER_ERROR_REASONS } from '../../../../src/shared/schemas/queries/app'
-import { COMFY_ADDRESS_NEEDED_MESSAGE } from '../../../../src/main/commands/comfy/check'
+import { reasonMessage } from '@/shared/providers/messages'
+import { PROVIDER_ERROR_REASONS } from '@/shared/schemas/queries/app'
+import { COMFY_ADDRESS_NEEDED_MESSAGE } from '@/main/commands/comfy/check'
 
 describe('reasonMessage: the sentence of each 6.10.9 reason [SPEC 6.10.9, 14 1.41 CU-4]', () => {
   it.each([

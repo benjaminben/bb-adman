@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { cleanServerText } from '../../../../../src/main/providers/comfyui/server-text'
-import { MAX_SERVER_TEXT_CHARS } from '../../../../../src/main/providers/comfyui/limits'
+import { cleanServerText } from '@/main/providers/comfyui/server-text'
+import { MAX_SERVER_TEXT_CHARS } from '@/main/providers/comfyui/limits'
 
 describe('cleanServerText [SPEC 6.10.9; FR-267, FR-277]', () => {
   it('keeps plain text and line breaks as they are', () => {

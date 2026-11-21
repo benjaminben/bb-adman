@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { spawnSync } from 'node:child_process'
-import { createProjectFile, closeProjectFile } from '../../../src/main/db/project-file'
+import { createProjectFile, closeProjectFile } from '@/main/db/project-file'
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-lock-'))
 afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))

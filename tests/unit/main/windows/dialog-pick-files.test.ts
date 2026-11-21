@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { BrowserWindow } from 'electron'
-import { pickerExtensions } from '../../../../src/shared/config/file-types'
+import { pickerExtensions } from '@/shared/config/file-types'
 
 const showOpenDialog = vi.fn()
 vi.mock('electron', () => ({
@@ -8,7 +8,7 @@ vi.mock('electron', () => ({
   dialog: { showOpenDialog },
 }))
 
-const { DIALOG_QUERIES, runDialogQuery } = await import('../../../../src/main/windows/dialogs')
+const { DIALOG_QUERIES, runDialogQuery } = await import('@/main/windows/dialogs')
 
 beforeEach(() => {
   showOpenDialog.mockReset()

@@ -8,7 +8,7 @@ import {
   type ImageProvider,
   type ImageResult,
   type RunOptions,
-} from '../types'
+} from '@/main/providers/types'
 
 export const FAKE_IMAGE_MODEL = 'fake-image'
 

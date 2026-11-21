@@ -3,11 +3,11 @@
 // only hands requests in (SPEC 14, Slice A rulings point 2, security class).
 import fs from 'node:fs'
 import { Readable } from 'node:stream'
-import type { ProjectRegistry } from '../db/project-registry'
-import { readWireRow } from '../db/rows'
+import type { ProjectRegistry } from '@/main/db/project-registry'
+import { readWireRow } from '@/main/db/rows'
 import { resolveRow } from './service'
-import type { AssetRow } from '../../shared/schemas/rows/asset'
-import { FILE_TYPES } from '../../shared/config/file-types'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
+import { FILE_TYPES } from '@/shared/config/file-types'
 
 // The raw text is matched, not a parsed URL, so nothing is folded away ("/../", "%2F"):
 // both parts are ULIDs (SPEC 3.2) and nothing else may follow. ULIDs ignore letter case, and

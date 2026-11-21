@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { embedGenerationDetails } from '../../../../src/main/jobs/png-details'
-import { greyPng } from '../../../../src/main/providers/fake/png'
-import { pictureSize } from '../../../../src/main/providers/picture-size'
+import { embedGenerationDetails } from '@/main/jobs/png-details'
+import { greyPng } from '@/main/providers/fake/png'
+import { pictureSize } from '@/main/providers/picture-size'
 import { generationDetailsOf, itxtOf, pngChunks } from '../../../fixtures/png-chunks'
 
 const details = {

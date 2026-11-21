@@ -4,9 +4,9 @@ import {
   missingFailure,
   refusedFailure,
   runFailure,
-} from '../../../../../src/main/providers/comfyui/failures'
-import { ComfyRefused } from '../../../../../src/main/providers/comfyui/refusal'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
+} from '@/main/providers/comfyui/failures'
+import { ComfyRefused } from '@/main/providers/comfyui/refusal'
+import { ProviderFailure } from '@/main/providers/types'
 
 describe('a 400 from /prompt [SPEC 6.10.9, 14 1.43 K-1, 1.45 C-1]', () => {
   it('keeps the messages and details, cleaned, as the detail of server_refused', () => {

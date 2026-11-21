@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import {
-  isNetworkError,
-  pinnedHandler,
-  s3Hosts,
-} from '../../../../../src/main/providers/s3/pinned-host'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
+import { isNetworkError, pinnedHandler, s3Hosts } from '@/main/providers/s3/pinned-host'
+import { ProviderFailure } from '@/main/providers/types'
 
 type Req = { protocol: string; hostname: string; port?: number }
 

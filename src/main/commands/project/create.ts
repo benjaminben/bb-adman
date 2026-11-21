@@ -1,12 +1,12 @@
 // project.create (SPEC 4.2; FR-002, FR-004, R-06, R-07).
 import fs from 'node:fs'
 import path from 'node:path'
-import { defineCommand } from '../types'
-import { createProjectFile } from '../../db/project-file'
+import { defineCommand } from '@/main/commands/types'
+import { createProjectFile } from '@/main/db/project-file'
 import { summary, type ProjectCommandDeps } from './deps'
-import { projectCreateInput } from '../../../shared/schemas/commands/project'
-import { PROJECT_EXTENSION } from '../../../shared/schemas/project'
-import { AppError } from '../../../shared/schemas/result'
+import { projectCreateInput } from '@/shared/schemas/commands/project'
+import { PROJECT_EXTENSION } from '@/shared/schemas/project'
+import { AppError } from '@/shared/schemas/result'
 
 export function projectCreate(deps: ProjectCommandDeps) {
   return defineCommand({

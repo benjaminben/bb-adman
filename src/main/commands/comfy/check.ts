@@ -1,16 +1,16 @@
 // comfy.check (SPEC 4.2, 6.10.3; FR-252, FR-263, FR-266): the user's "check the address".
 // Security class. Agent policy deny. Reads the saved address at call time, asks the server
 // afresh on each press, and writes nothing. The reply holds no address.
-import { defineCommand } from '../types'
-import type { CoreDeps } from '../../core-deps'
-import { comfyCheckInput, type ComfyCheck } from '../../../shared/schemas/commands/comfy-check'
-import { AppError } from '../../../shared/schemas/result'
-import { createComfyClient } from '../../providers/comfyui/client'
-import { comfyOwnPorts } from '../../providers/comfyui/own-ports'
-import { serverChecks, type ServerChecks } from '../../providers/comfyui/needs'
-import { NON_DRAFT_WORKFLOWS } from '../../providers/comfyui/workflows'
-import type { WorkflowSpec } from '../../providers/comfyui/workflows/types'
-import { reasonMessage } from '../../../shared/providers/messages'
+import { defineCommand } from '@/main/commands/types'
+import type { CoreDeps } from '@/main/core-deps'
+import { comfyCheckInput, type ComfyCheck } from '@/shared/schemas/commands/comfy-check'
+import { AppError } from '@/shared/schemas/result'
+import { createComfyClient } from '@/main/providers/comfyui/client'
+import { comfyOwnPorts } from '@/main/providers/comfyui/own-ports'
+import { serverChecks, type ServerChecks } from '@/main/providers/comfyui/needs'
+import { NON_DRAFT_WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
+import { reasonMessage } from '@/shared/providers/messages'
 
 // The sentence of SPEC 6.10.9 for "no address saved"; the one copy is in messages.ts.
 export const COMFY_ADDRESS_NEEDED_MESSAGE = reasonMessage('address_needed')

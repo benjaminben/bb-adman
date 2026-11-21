@@ -1,7 +1,7 @@
 // SPEC 14 1.58 J-1: case 2 passes its clip through the app's own checkMp4, as built, and prints
 // what it read, so a surprise in a real clip's layout shows before the hand test. A refusal
 // fails the case with the refusal's name from MP4_REFUSED: fixed text, never the file's.
-import { checkMp4, MP4_REFUSED, type Mp4Details } from '../../src/main/providers/video-check'
+import { checkMp4, MP4_REFUSED, type Mp4Details } from '@/main/providers/video-check'
 import type { Print } from './print'
 
 const NOT_READ = 'not read'

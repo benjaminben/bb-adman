@@ -1,14 +1,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { projectPackage } from '../../../src/main/commands/project/package'
+import { projectPackage } from '@/main/commands/project/package'
 import { makeAssetBus, expectRefused } from './asset-bus'
 
 // A name the open check would refuse, handed to the package step as if that check were
 // bypassed: readMeta passes the stored row through with only the name replaced.
 const bypass = vi.hoisted(() => ({ name: null as string | null }))
-vi.mock('../../../src/main/db/meta', async (importOriginal) => {
-  const real = await importOriginal<typeof import('../../../src/main/db/meta')>()
+vi.mock('@/main/db/meta', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@/main/db/meta')>()
   return {
     ...real,
     readMeta: (db: Parameters<typeof real.readMeta>[0]) => {

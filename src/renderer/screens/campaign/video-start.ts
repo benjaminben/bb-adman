@@ -2,7 +2,7 @@
 // the fields generation.startVideo already takes (the start table of 1.60 CU-6b). A start is
 // offered only when comfy.getInfo lists a video workflow for its pair; every provider other
 // than ComfyUI takes the prompt start only (N-4).
-import type { ComfyInfo, WorkflowInfo } from '../../../shared/schemas/queries/comfy'
+import type { ComfyInfo, WorkflowInfo } from '@/shared/schemas/queries/comfy'
 
 export type StartId = 'prompt' | 'first_frame' | 'reference'
 type VideoStart = { firstFrame: boolean; references: boolean }

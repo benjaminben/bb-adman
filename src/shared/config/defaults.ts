@@ -1,5 +1,5 @@
 // Single owner of default sizes, duration and frame rate (SPEC 3.1, 3.3).
-import type { CampaignSize } from '../schemas/commands/campaign'
+import type { CampaignSize } from '@/shared/schemas/commands/campaign'
 
 export const DEFAULT_FPS = 30
 

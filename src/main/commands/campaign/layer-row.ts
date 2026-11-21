@@ -1,9 +1,9 @@
 // Writes one layer row from its wire values (SPEC 3.3 layer, 4.4): flags as 0 or 1 and the
 // JSON columns through storedJson, so the row reads back as it went in.
-import type { ProjectContext } from '../types'
-import * as schema from '../../db/schema'
-import { storedJson } from '../../db/rows'
-import type { LayerRow } from '../../../shared/schemas/rows/layer'
+import type { ProjectContext } from '@/main/commands/types'
+import * as schema from '@/main/db/schema'
+import { storedJson } from '@/main/db/rows'
+import type { LayerRow } from '@/shared/schemas/rows/layer'
 
 const json = (field: string, value: unknown): string => storedJson('layer', field, value) ?? ''
 

@@ -1,9 +1,9 @@
 // SPEC 14, Slice A rulings point 6 and [1.27] A3-7: a file that is there but cannot be read.
 // The reply names the file only; the operating system's code (EACCES, EBUSY, EIO) goes to
 // one warn log line, with no path and no file name, because each code needs other help.
-import type { ActivityLog } from '../log/activity-log'
-import type { Actor } from '../../shared/schemas/events'
-import { AppError } from '../../shared/schemas/result'
+import type { ActivityLog } from '@/main/log/activity-log'
+import type { Actor } from '@/shared/schemas/events'
+import { AppError } from '@/shared/schemas/result'
 
 // The code is kept on the error itself; toBody() never sends it.
 export class UnreadableFileError extends AppError {

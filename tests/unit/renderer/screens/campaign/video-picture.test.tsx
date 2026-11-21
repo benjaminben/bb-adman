@@ -4,7 +4,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import type { ErrorCode } from '../../../../../src/shared/schemas/result'
+import type { ErrorCode } from '@/shared/schemas/result'
 import { axeViolations } from '../../render'
 import { P, sent } from './campaign-fixture'
 import { ref } from './reference-fixture'

@@ -3,8 +3,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type { ProjectHandle } from './project-file'
 import { readMeta } from './meta'
-import { AppError } from '../../shared/schemas/result'
-import type { OpenProjectSummary } from '../../shared/schemas/project'
+import { AppError } from '@/shared/schemas/result'
+import type { OpenProjectSummary } from '@/shared/schemas/project'
 
 export const NOT_OPEN_MESSAGE = 'That project is not open.'
 

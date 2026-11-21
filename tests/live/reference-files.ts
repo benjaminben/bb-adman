@@ -7,8 +7,8 @@
 // tests/unit/live/reference-files.test.ts.
 import fs from 'node:fs'
 import path from 'node:path'
-import { pictureType } from '../../src/main/providers/picture-type'
-import type { PictureType } from '../../src/main/providers/picture-type'
+import { pictureType } from '@/main/providers/picture-type'
+import type { PictureType } from '@/main/providers/picture-type'
 
 export const MAX_REFERENCE_FILES = 3
 

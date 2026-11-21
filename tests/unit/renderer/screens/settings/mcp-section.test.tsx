@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { screen, within } from '@testing-library/react'
-import { SettingsScreen } from '../../../../../src/renderer/screens/settings/settings-screen'
+import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
 import { renderApp, axeViolations } from '../../render'
 import { OFF, PORT, TOKEN, connect, line, mcpFake } from './mcp-fixture'
 

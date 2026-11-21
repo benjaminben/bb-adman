@@ -1,17 +1,9 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest'
 import http, { type ClientRequest } from 'node:http'
 import net, { type AddressInfo } from 'node:net'
-import {
-  createComfyClient,
-  type ComfyClient,
-} from '../../../../../src/main/providers/comfyui/client'
-import {
-  CONNECT_MS,
-  DOWNLOAD_MS,
-  SHORT_CALL_MS,
-  UPLOAD_MS,
-} from '../../../../../src/main/providers/comfyui/limits'
-import { uploadName } from '../../../../../src/main/providers/comfyui/values'
+import { createComfyClient, type ComfyClient } from '@/main/providers/comfyui/client'
+import { CONNECT_MS, DOWNLOAD_MS, SHORT_CALL_MS, UPLOAD_MS } from '@/main/providers/comfyui/limits'
+import { uploadName } from '@/main/providers/comfyui/values'
 import { startComfyStandIn, type StandIn } from '../../../../helpers/comfy-stand-in'
 import { failureOf } from '../../../../helpers/failure-of'
 

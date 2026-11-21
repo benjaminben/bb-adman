@@ -7,15 +7,12 @@ import {
   requestLines,
   serveNeeds,
 } from '../../../../helpers/comfy-run'
-import { comfyImage } from '../../../../../src/main/providers/comfyui/image'
-import {
-  cancelOwnRun,
-  takesTargetedInterrupt,
-} from '../../../../../src/main/providers/comfyui/cancel'
-import { createComfyClient } from '../../../../../src/main/providers/comfyui/client'
-import { createServerChecks } from '../../../../../src/main/providers/comfyui/needs'
-import { rememberOwnId } from '../../../../../src/main/providers/comfyui/own-ids'
-import { ProviderCancelled } from '../../../../../src/main/providers/types'
+import { comfyImage } from '@/main/providers/comfyui/image'
+import { cancelOwnRun, takesTargetedInterrupt } from '@/main/providers/comfyui/cancel'
+import { createComfyClient } from '@/main/providers/comfyui/client'
+import { createServerChecks } from '@/main/providers/comfyui/needs'
+import { rememberOwnId } from '@/main/providers/comfyui/own-ids'
+import { ProviderCancelled } from '@/main/providers/types'
 
 let stand: StandIn
 afterEach(async () => {

@@ -4,7 +4,7 @@
 // the addresses it checked.
 import dns, { type LookupAddress } from 'node:dns'
 import type { LookupFunction } from 'node:net'
-import { isRefusedHost } from '../../../shared/comfy/refused-hosts'
+import { isRefusedHost } from '@/shared/comfy/refused-hosts'
 
 export class AddressRefused extends Error {
   constructor() {

@@ -2,9 +2,9 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
-import { createQueryRunner } from '../../../../src/main/queries/queries'
-import { createActivityLog } from '../../../../src/main/log/activity-log'
-import { AppError } from '../../../../src/shared/schemas/result'
+import { createQueryRunner } from '@/main/queries/queries'
+import { createActivityLog } from '@/main/log/activity-log'
+import { AppError } from '@/shared/schemas/result'
 
 let dir: string | undefined
 afterEach(() => {

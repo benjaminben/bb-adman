@@ -3,7 +3,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { CampaignView } from '../../../../../src/renderer/screens/campaign/campaign-view'
+import { CampaignView } from '@/renderer/screens/campaign/campaign-view'
 import { baseState } from '../../fake-api'
 import { LOCAL, P, renderWith, sent } from './campaign-fixture'
 import { ref, referenceApi } from './reference-fixture'

@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { bearerMatches, makeToken } from '../../../../src/main/mcp/token'
+import { bearerMatches, makeToken } from '@/main/mcp/token'
 
 afterEach(() => vi.restoreAllMocks())
 

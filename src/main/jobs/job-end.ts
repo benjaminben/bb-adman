@@ -7,7 +7,7 @@
 // The runner's field names win over a kept value that uses one of them.
 import type { JobChange } from './job-store'
 import type { LiveJob } from './live'
-import type { ProviderErrorKind, ProviderErrorReason } from '../../shared/schemas/queries/app'
+import type { ProviderErrorKind, ProviderErrorReason } from '@/shared/schemas/queries/app'
 
 const RUNNER_FIELDS = new Set([
   'stage',

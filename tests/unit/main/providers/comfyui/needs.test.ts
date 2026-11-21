@@ -1,10 +1,10 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { checkServer, createServerChecks } from '../../../../../src/main/providers/comfyui/needs'
-import { createComfyClient } from '../../../../../src/main/providers/comfyui/client'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
-import type { WorkflowSpec } from '../../../../../src/main/providers/comfyui/workflows/types'
-import { mossTextToImage } from '../../../../../src/main/providers/comfyui/workflows/moss'
-import { h3TextToVideo } from '../../../../../src/main/providers/comfyui/workflows/h3'
+import { checkServer, createServerChecks } from '@/main/providers/comfyui/needs'
+import { createComfyClient } from '@/main/providers/comfyui/client'
+import { ProviderFailure } from '@/main/providers/types'
+import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
+import { mossTextToImage } from '@/main/providers/comfyui/workflows/moss'
+import { h3TextToVideo } from '@/main/providers/comfyui/workflows/h3'
 import { startComfyStandIn, type StandIn } from '../../../../helpers/comfy-stand-in'
 
 let stand: StandIn | undefined

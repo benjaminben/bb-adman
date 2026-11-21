@@ -1,7 +1,7 @@
 // New project: a name, and a location that starts as the default from Settings (FR-004).
 import { useState, type FormEvent } from 'react'
-import { useApi, useApp, pickPath } from '../../app/app-context'
-import styles from '../screens.module.css'
+import { useApi, useApp, pickPath } from '@/renderer/app/app-context'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function NewProjectForm() {
   const api = useApi()

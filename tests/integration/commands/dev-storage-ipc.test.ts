@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
-import { registerIpc, IPC } from '../../../src/main/ipc'
+import { registerIpc, IPC } from '@/main/ipc'
 import { makeDevFixture, sourceFile, type DevFixture } from './dev-fixture'
 
 let f: DevFixture

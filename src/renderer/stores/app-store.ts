@@ -1,9 +1,9 @@
 // App-wide window state (ADR-003): a copy of app.getState, the visible tab, the last
 // error, and the key dialog request for the NEEDS_KEY flow (FR-171).
 import { createStore, type StoreApi } from 'zustand/vanilla'
-import type { AdmanApi } from '../../shared/schemas/api'
-import type { AppState, ProviderInfo } from '../../shared/schemas/queries/app'
-import type { Result } from '../../shared/schemas/result'
+import type { AdmanApi } from '@/shared/schemas/api'
+import type { AppState, ProviderInfo } from '@/shared/schemas/queries/app'
+import type { Result } from '@/shared/schemas/result'
 
 // handTest is the hand-test screen (SPEC 14 slice I); the shell shows it only with devTools.
 export type View =

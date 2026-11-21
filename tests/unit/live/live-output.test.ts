@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ProviderFailure } from '../../../src/main/providers/types'
+import { ProviderFailure } from '@/main/providers/types'
 import { liveValues, missingNames, safeFailure, safeText } from '../../live/live-output'
 
 // Made up; none looks like a real bucket, region or key.

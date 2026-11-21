@@ -2,19 +2,19 @@
 // templates of this build; template.slots gives each slot of a campaign's master variant as
 // filled or empty, with the asset IDs that could fill it [FR-042].
 import type Database from 'better-sqlite3'
-import type { CoreDeps } from '../core-deps'
+import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
-import { readWireRow, readWireRows } from '../db/rows'
+import { readWireRow, readWireRows } from '@/main/db/rows'
 import { directionsOf, openFor, requireCampaign } from './campaign-reads'
-import { slotStates, starterTemplate } from '../../shared/templates/starter'
+import { slotStates, starterTemplate } from '@/shared/templates/starter'
 import {
   campaignScopedInput,
   templateListInput,
   type TemplateList,
   type TemplateSlots,
-} from '../../shared/schemas/queries/campaign'
-import type { LayerRow } from '../../shared/schemas/rows/layer'
-import type { RuleSetRow } from '../../shared/schemas/rows/rule-set'
+} from '@/shared/schemas/queries/campaign'
+import type { LayerRow } from '@/shared/schemas/rows/layer'
+import type { RuleSetRow } from '@/shared/schemas/rows/rule-set'
 
 const TEMPLATES = [starterTemplate]
 

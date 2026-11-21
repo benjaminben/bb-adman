@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { storageError } from '../../../../../src/main/commands/dev/storage-error'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
-import { REFUSED_PATH } from '../../../../../src/main/providers/storage-paths'
-import { AppError } from '../../../../../src/shared/schemas/result'
+import { storageError } from '@/main/commands/dev/storage-error'
+import { ProviderFailure } from '@/main/providers/types'
+import { REFUSED_PATH } from '@/main/providers/storage-paths'
+import { AppError } from '@/shared/schemas/result'
 
 const S3 = { id: 's3', label: 'Amazon S3' }
 

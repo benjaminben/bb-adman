@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { sniffType, SNIFF_BYTES } from '../../../../src/main/assets/sniff'
+import { sniffType, SNIFF_BYTES } from '@/main/assets/sniff'
 
 const utf8 = (s: string) => [...new TextEncoder().encode(s)]
 const bytes = (...parts: Array<number[] | string>) =>

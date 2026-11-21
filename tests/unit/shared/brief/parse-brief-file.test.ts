@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { parseBrief, parseBriefFile } from '../../../../src/shared/brief/parse'
-import { BRIEF_UNREADABLE } from '../../../../src/shared/brief/draft'
+import { parseBrief, parseBriefFile } from '@/shared/brief/parse'
+import { BRIEF_UNREADABLE } from '@/shared/brief/draft'
 
 const lineThree = 'region: US\nname: ok\nkey: value: other\n'
 const unreadable = { ok: false, error: BRIEF_UNREADABLE }

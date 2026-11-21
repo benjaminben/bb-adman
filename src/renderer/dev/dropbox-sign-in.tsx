@@ -1,8 +1,8 @@
 // The Dropbox sign-in button (SPEC 14 slice I). It works once slice G adds the command.
 import { useState } from 'react'
-import { useApp } from '../app/app-context'
+import { useApp } from '@/renderer/app/app-context'
 import { failedText } from './result-text'
-import styles from '../screens/screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function DropboxSignIn() {
   const command = useApp((s) => s.command)

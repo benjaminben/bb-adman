@@ -1,7 +1,7 @@
 import zlib from 'node:zlib'
 import { describe, it, expect } from 'vitest'
-import { pictureType } from '../../../src/main/providers/picture-type'
-import { pictureSize } from '../../../src/main/providers/picture-size'
+import { pictureType } from '@/main/providers/picture-type'
+import { pictureSize } from '@/main/providers/picture-size'
 import { pngChunks } from '../../fixtures/png-chunks'
 import { circlePng } from '../../live/shape-picture'
 

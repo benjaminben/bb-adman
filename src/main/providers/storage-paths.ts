@@ -2,7 +2,7 @@
 // '..'. Every storage adapter checks paths here before joining them to its own root, so the
 // local folder and the cloud ones share the path code (SPEC 6, REQ 9.1 preference).
 
-import { isReserved } from '../../shared/config/reserved-names'
+import { isReserved } from '@/shared/config/reserved-names'
 
 // The one error for a path that breaks the rules or would leave the root. It holds no path
 // (SPEC 6.5 [1.13] Errors, [1.14] H10).

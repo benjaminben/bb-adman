@@ -1,10 +1,10 @@
 // job.markSeen (SPEC 4.2 notes, 3.3; FR-218): sets seen_at on each named job that succeeded
 // and has none. Marking twice is not an error. Bumps no rev. The write is the runner's
 // (SPEC 3.6 "Jobs" item 3 [1.38]), which emits job.updated for each row it marked.
-import { defineCommand } from '../types'
-import type { CoreDeps } from '../../core-deps'
+import { defineCommand } from '@/main/commands/types'
+import type { CoreDeps } from '@/main/core-deps'
 import { requireJob, wrongState } from './find-job'
-import { jobMarkSeenInput } from '../../../shared/schemas/commands/job'
+import { jobMarkSeenInput } from '@/shared/schemas/commands/job'
 
 export function jobMarkSeen(deps: Pick<CoreDeps, 'jobs'>) {
   return defineCommand({

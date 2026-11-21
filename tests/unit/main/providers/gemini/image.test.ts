@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { adapters } from '../../../../../src/main/providers/gemini'
-import { geminiImage } from '../../../../../src/main/providers/gemini/image'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
+import { adapters } from '@/main/providers/gemini'
+import { geminiImage } from '@/main/providers/gemini/image'
+import { ProviderFailure } from '@/main/providers/types'
 import {
   TEST_KEY,
   TEST_MODEL,

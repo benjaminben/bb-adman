@@ -5,14 +5,14 @@
 // the run is; fetchResult fetches the SaveVideo file under MAX_VIDEO_BYTES and passes it
 // through checkMp4; cancel goes through the own-ID set (14 1.43 K-7). Each run's origin,
 // workflow and waits are kept here, so only a run this adapter started is ever asked about.
-import { MAX_VIDEO_BYTES } from '../picture-limits'
+import { MAX_VIDEO_BYTES } from '@/main/providers/picture-limits'
 import {
   ProviderCancelled,
   ProviderFailure,
   type AdapterContext,
   type VideoProvider,
-} from '../types'
-import { checkMp4 } from '../video-check'
+} from '@/main/providers/types'
+import { checkMp4 } from '@/main/providers/video-check'
 import type { HistoryEntry } from './answers'
 import { cancelOwnRun } from './cancel'
 import { comfyFailure } from './failures'

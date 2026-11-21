@@ -5,16 +5,16 @@
 // first-frame picture or a reference picture; a picture start needs one chosen picture, and
 // the length's most follows the start's workflow.
 import { useId, useState } from 'react'
-import { EMPTY, useApp } from '../../app/app-context'
+import { EMPTY, useApp } from '@/renderer/app/app-context'
 import {
   generationStartVideoInput,
   type GenerationStartVideoInput,
-} from '../../../shared/schemas/commands/generation'
+} from '@/shared/schemas/commands/generation'
 import { PaidConfirm } from './paid-confirm'
 import { LENGTH_PROBLEM, START_SECONDS, typedSeconds, useComfyInfo } from './video-length'
 import { VideoPictureChoice } from './video-picture-choice'
 import { maxMsFor, offeredStarts, startFields, type StartId } from './video-start'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function VideoPanel(props: {
   projectId: string

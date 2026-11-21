@@ -15,11 +15,11 @@ import {
   servePicture,
   videoHistoryEntry,
 } from '../../../../helpers/comfy-run'
-import { comfyVideo } from '../../../../../src/main/providers/comfyui/video'
-import { createServerChecks } from '../../../../../src/main/providers/comfyui/needs'
-import { h3TextToVideo as h3 } from '../../../../../src/main/providers/comfyui/workflows/h3'
-import { fitSize } from '../../../../../src/shared/comfy/fit-size'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
+import { comfyVideo } from '@/main/providers/comfyui/video'
+import { createServerChecks } from '@/main/providers/comfyui/needs'
+import { h3TextToVideo as h3 } from '@/main/providers/comfyui/workflows/h3'
+import { fitSize } from '@/shared/comfy/fit-size'
+import { ProviderFailure } from '@/main/providers/types'
 
 let stand: StandIn
 afterEach(async () => {

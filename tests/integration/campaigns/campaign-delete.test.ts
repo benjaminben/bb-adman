@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { expectRefused } from '../assets/asset-bus'
 import { makeCampaignBus, createInput, type CampaignBus } from './campaign-fixture'
 import { makeBusFixture } from '../commands/test-bus'
-import { campaignCommands } from '../../../src/main/commands/campaign'
-import { subjectCommands } from '../../../src/main/commands/subject'
+import { campaignCommands } from '@/main/commands/campaign'
+import { subjectCommands } from '@/main/commands/subject'
 import { testDeps } from './campaign-deps'
 
 let bus: CampaignBus

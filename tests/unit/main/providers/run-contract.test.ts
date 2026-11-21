@@ -7,7 +7,7 @@ import {
   type RunProgress,
   type VideoProvider,
   type VideoResult,
-} from '../../../../src/main/providers/types'
+} from '@/main/providers/types'
 
 const result: VideoResult = { bytes: new Uint8Array([1]), mime: 'video/mp4', model: 'video-x' }
 

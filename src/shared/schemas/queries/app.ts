@@ -1,6 +1,6 @@
-import type { Settings, RecentProject } from '../settings'
-import type { SecretName, SecretSummary } from '../secrets'
-import type { OpenProjectSummary } from '../project'
+import type { Settings, RecentProject } from '@/shared/schemas/settings'
+import type { SecretName, SecretSummary } from '@/shared/schemas/secrets'
+import type { OpenProjectSummary } from '@/shared/schemas/project'
 
 // SPEC 6 ProviderInfo, as the window receives it.
 export type ProviderJob = 'image' | 'layout' | 'text' | 'video' | 'storage' | 'verification'

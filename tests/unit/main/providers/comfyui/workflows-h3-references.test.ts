@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest'
-import { fillWorkflow } from '../../../../../src/main/providers/comfyui/fill'
+import { fillWorkflow } from '@/main/providers/comfyui/fill'
 import {
   h3ImageToVideo,
   h3ReferenceToVideo as spec,
   h3TextToVideo,
-} from '../../../../../src/main/providers/comfyui/workflows/h3'
+} from '@/main/providers/comfyui/workflows/h3'
 import {
   AGENT_DRAFT,
   H3_FIRST_RUN_SIZE,
   H3_REF_FILE,
   H3_VIDEO,
-} from '../../../../../src/main/providers/comfyui/workflows/common'
-import { offeredWorkflow } from '../../../../../src/main/providers/comfyui/workflows/offered'
+} from '@/main/providers/comfyui/workflows/common'
+import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'
 
 const PROMPT_ID = '0b7e8f52-5d1c-4c1e-9a3e-2f6f1d9b7c10'
 const REFS = { job: 'video', videoStart: { firstFrame: false, references: true } } as const

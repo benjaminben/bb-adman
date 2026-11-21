@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { adapters } from '../../../../../src/main/providers/azure-blob'
-import { ProviderFailure, type AdapterContext } from '../../../../../src/main/providers/types'
-import type { Settings } from '../../../../../src/shared/schemas/settings'
+import { adapters } from '@/main/providers/azure-blob'
+import { ProviderFailure, type AdapterContext } from '@/main/providers/types'
+import type { Settings } from '@/shared/schemas/settings'
 
 const ctx: AdapterContext = {
   secret: () => {

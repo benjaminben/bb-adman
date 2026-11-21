@@ -1,8 +1,8 @@
 // mcp.setEnabled and mcp.regenerateToken (SPEC 4.2; FR-191, R-04). App scope, agent policy
 // deny. Neither reply holds the token: only mcp.getConnectInfo does (SPEC 4.3).
-import { defineCommand, type CommandHandler } from '../types'
-import type { McpService } from '../../mcp/service'
-import { mcpRegenerateTokenInput, mcpSetEnabledInput } from '../../../shared/schemas/commands/mcp'
+import { defineCommand, type CommandHandler } from '@/main/commands/types'
+import type { McpService } from '@/main/mcp/service'
+import { mcpRegenerateTokenInput, mcpSetEnabledInput } from '@/shared/schemas/commands/mcp'
 
 export function mcpCommands(mcp: McpService): CommandHandler[] {
   return [

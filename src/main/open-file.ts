@@ -1,4 +1,4 @@
-import { PROJECT_EXTENSION } from '../shared/schemas/project'
+import { PROJECT_EXTENSION } from '@/shared/schemas/project'
 
 // On Windows a double-clicked file arrives as a command-line argument (SPEC 7.5, R-06).
 export function projectPathFromArgv(argv: string[]): string | null {

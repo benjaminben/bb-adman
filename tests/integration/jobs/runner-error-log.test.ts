@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeRunnerFixture, waitFor, type RunnerFixture } from './runner-fixture'
-import { readJobErrorDetail } from '../../../src/main/db/rows'
+import { readJobErrorDetail } from '@/main/db/rows'
 
 const fixtures: RunnerFixture[] = []
 afterEach(() => {

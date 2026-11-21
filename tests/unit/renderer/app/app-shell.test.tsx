@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { AppShell } from '../../../../src/renderer/app/app-shell'
+import { AppShell } from '@/renderer/app/app-shell'
 import { renderApp, axeViolations } from '../render'
 import { makeFakeApi, baseState } from '../fake-api'
 

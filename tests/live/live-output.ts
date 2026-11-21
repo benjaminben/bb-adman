@@ -1,9 +1,9 @@
 // SPEC 13, 14 H11 (F-04), [1.18] K5: a live test prints no key, in a failure too. Everything
 // a live test prints, and every error it lets Vitest print, passes through `safeText` for every
 // set value of LIVE_REDACTED_NAMES. A skip line names only the variables that are missing.
-import { redactSecret } from '../../src/main/providers/redact'
-import { REFUSED_PATH } from '../../src/main/providers/storage-paths'
-import { ProviderFailure } from '../../src/main/providers/types'
+import { redactSecret } from '@/main/providers/redact'
+import { REFUSED_PATH } from '@/main/providers/storage-paths'
+import { ProviderFailure } from '@/main/providers/types'
 import { LIVE_REDACTED_NAMES } from './env-file'
 
 type Env = Record<string, string | undefined>

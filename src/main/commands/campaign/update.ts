@@ -4,17 +4,17 @@
 // else: no variant is added, removed or changed.
 import type Database from 'better-sqlite3'
 import { eq } from 'drizzle-orm'
-import { defineCommand } from '../types'
-import { campaign } from '../../db/schema'
-import { readWireRow, storedJson } from '../../db/rows'
+import { defineCommand } from '@/main/commands/types'
+import { campaign } from '@/main/db/schema'
+import { readWireRow, storedJson } from '@/main/db/rows'
 import { campaignNotFound } from './rule-set-values'
 import { refuseRightToLeft } from './create'
-import { AppError } from '../../../shared/schemas/result'
+import { AppError } from '@/shared/schemas/result'
 import {
   campaignUpdateInput,
   type CampaignUpdateInput,
-} from '../../../shared/schemas/commands/campaign-edit'
-import type { CampaignRow } from '../../../shared/schemas/rows/campaign'
+} from '@/shared/schemas/commands/campaign-edit'
+import type { CampaignRow } from '@/shared/schemas/rows/campaign'
 
 const FIELDS = ['name', 'audience', 'tone', 'offer', 'callToAction', 'languages', 'sizes'] as const
 type Patch = Partial<Pick<CampaignRow, (typeof FIELDS)[number]>>

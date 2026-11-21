@@ -1,17 +1,14 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { adapters } from '../../../../../src/main/providers/fake'
-import {
-  resetFakeBehaviour,
-  setFakeBehaviour,
-} from '../../../../../src/main/providers/fake/behaviour'
-import { pngPixelSize } from '../../../../../src/main/providers/png-size'
+import { adapters } from '@/main/providers/fake'
+import { resetFakeBehaviour, setFakeBehaviour } from '@/main/providers/fake/behaviour'
+import { pngPixelSize } from '@/main/providers/png-size'
 import {
   ProviderCancelled,
   ProviderFailure,
   type AdapterContext,
   type RunProgress,
-} from '../../../../../src/main/providers/types'
-import { PROVIDER_ERROR_KINDS } from '../../../../../src/shared/schemas/queries/app'
+} from '@/main/providers/types'
+import { PROVIDER_ERROR_KINDS } from '@/shared/schemas/queries/app'
 
 const ctx = {} as AdapterContext
 const input = { prompt: 'a cat', references: [], width: 64, height: 48, count: 2 }

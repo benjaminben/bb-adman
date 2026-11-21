@@ -1,9 +1,9 @@
 // What comfy.check answered (SPEC 14 1.41 TP-3, 6.10.9). The version, the note, model and
 // licence text are drawn as text only. No row is drawn for a draft workflow ([1.45] B-3).
-import type { ComfyCheck, ComfyCheckOutcome } from '../../../shared/schemas/commands/comfy-check'
-import type { WorkflowInfo } from '../../../shared/schemas/queries/comfy'
-import type { MissingItem } from '../../../shared/schemas/queries/app'
-import styles from '../screens.module.css'
+import type { ComfyCheck, ComfyCheckOutcome } from '@/shared/schemas/commands/comfy-check'
+import type { WorkflowInfo } from '@/shared/schemas/queries/comfy'
+import type { MissingItem } from '@/shared/schemas/queries/app'
+import styles from '@/renderer/screens/screens.module.css'
 
 // The sentences of SPEC 6.10.9 for each outcome other than 'ok'.
 const SENTENCES: Record<Exclude<ComfyCheckOutcome, 'ok'>, (address: string) => string> = {

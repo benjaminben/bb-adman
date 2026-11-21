@@ -1,13 +1,13 @@
 // The project page (SPEC 14 1.41 TP-1): the campaign list and "Load a brief". The open
 // campaign is this page's own state, not the app store's; its place shows the campaign page.
 import { useState } from 'react'
-import { useApp } from '../../app/app-context'
-import type { OpenProjectSummary } from '../../../shared/schemas/project'
-import { CampaignView } from '../campaign/campaign-view'
+import { useApp } from '@/renderer/app/app-context'
+import type { OpenProjectSummary } from '@/shared/schemas/project'
+import { CampaignView } from '@/renderer/screens/campaign/campaign-view'
 import { BriefLoad } from './brief-load'
 import { CampaignList } from './campaign-list'
 import { useProject } from './use-project'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 // The campaign page mounts here (SPEC 14 1.41 TP-2, 1.47): it has its own region and Back.
 function CampaignPlace(props: { projectId: string; campaignId: string; onBack: () => void }) {

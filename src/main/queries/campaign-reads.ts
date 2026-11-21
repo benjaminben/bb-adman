@@ -1,13 +1,13 @@
 // Reads shared by the slice C queries (SPEC 4.3). A query never writes to a project.
 import type Database from 'better-sqlite3'
 import type { z } from 'zod'
-import { readWireRow, readWireRows } from '../db/rows'
-import type { ProjectHandle } from '../db/project-file'
-import type { CoreDeps } from '../core-deps'
-import { AppError } from '../../shared/schemas/result'
-import type { CampaignRow } from '../../shared/schemas/rows/campaign'
-import type { DirectionRow } from '../../shared/schemas/rows/direction'
-import type { JobMarks } from '../../shared/schemas/queries/campaign'
+import { readWireRow, readWireRows } from '@/main/db/rows'
+import type { ProjectHandle } from '@/main/db/project-file'
+import type { CoreDeps } from '@/main/core-deps'
+import { AppError } from '@/shared/schemas/result'
+import type { CampaignRow } from '@/shared/schemas/rows/campaign'
+import type { DirectionRow } from '@/shared/schemas/rows/direction'
+import type { JobMarks } from '@/shared/schemas/queries/campaign'
 
 // Validates the input and finds the open project, as the query runner rules (SPEC 4.3).
 export function openFor<T extends { projectId: string }>(

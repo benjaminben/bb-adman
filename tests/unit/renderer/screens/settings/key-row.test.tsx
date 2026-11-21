@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { SettingsScreen } from '../../../../../src/renderer/screens/settings/settings-screen'
+import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
 import { renderApp } from '../../render'
 import { makeFakeApi, baseState } from '../../fake-api'
-import type { Result } from '../../../../../src/shared/schemas/result'
+import type { Result } from '@/shared/schemas/result'
 
 const TYPED = 'not-a-real-key-WXYZ'
 

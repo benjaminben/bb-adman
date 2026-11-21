@@ -3,7 +3,7 @@
 // pinned to it, so a change stops the run with nothing more sent (address_changed); then the
 // check, and nothing else is sent unless it answered ok with nothing missing.
 import { randomUUID } from 'node:crypto'
-import type { AdapterContext } from '../types'
+import type { AdapterContext } from '@/main/providers/types'
 import { createComfyClient, type ComfyClient } from './client'
 import { checkFailure, comfyFailure, missingFailure } from './failures'
 import type { ServerChecks } from './needs'

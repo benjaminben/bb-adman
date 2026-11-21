@@ -2,8 +2,8 @@
 // shipped workflow a run gets. A proven one first. A trial one only for the user with the
 // hand-test tools on, where no proven one exists. An agent never gets a trial one, and a
 // draft is never sent to any server. Null means the job is not offered.
-import type { Actor } from '../../../../shared/schemas/events'
-import type { WorkflowJob } from '../../../../shared/schemas/queries/comfy'
+import type { Actor } from '@/shared/schemas/events'
+import type { WorkflowJob } from '@/shared/schemas/queries/comfy'
 import type { WorkflowSpec } from './types'
 import { WORKFLOWS } from '.'
 

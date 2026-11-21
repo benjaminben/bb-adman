@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, data, type Fixture } from '../core-fixture'
-import { COMFY_INFO_DENIED } from '../../../src/main/queries/comfy'
+import { COMFY_INFO_DENIED } from '@/main/queries/comfy'
 
 let f: Fixture
 afterEach(() => f.cleanup())

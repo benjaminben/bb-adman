@@ -1,11 +1,11 @@
 // job.cancel (SPEC 4.2, 6.11.2; FR-152, FR-215, FR-281). The refusals are decided here, in
 // the command. The runner then cancels once this command's transaction has ended, and the
 // window follows the job through job.updated.
-import { defineCommand } from '../types'
-import type { CoreDeps } from '../../core-deps'
-import { cancelRefusal } from '../../jobs/cancel'
+import { defineCommand } from '@/main/commands/types'
+import type { CoreDeps } from '@/main/core-deps'
+import { cancelRefusal } from '@/main/jobs/cancel'
 import { requireJob } from './find-job'
-import { jobCancelInput } from '../../../shared/schemas/commands/job'
+import { jobCancelInput } from '@/shared/schemas/commands/job'
 
 export function jobCancel(deps: Pick<CoreDeps, 'jobs' | 'providers' | 'log'>) {
   return defineCommand({

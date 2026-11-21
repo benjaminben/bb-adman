@@ -1,7 +1,7 @@
 import type Database from 'better-sqlite3'
-import { projectMetaSchema, type ProjectMeta } from '../../shared/schemas/project'
-import { storedProjectName } from '../../shared/schemas/project-name'
-import { AppError } from '../../shared/schemas/result'
+import { projectMetaSchema, type ProjectMeta } from '@/shared/schemas/project'
+import { storedProjectName } from '@/shared/schemas/project-name'
+import { AppError } from '@/shared/schemas/result'
 
 const KEYS: Record<keyof ProjectMeta, string> = {
   projectId: 'project_id',

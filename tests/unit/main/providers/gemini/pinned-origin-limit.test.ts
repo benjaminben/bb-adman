@@ -1,11 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import {
-  GEMINI_ORIGIN,
-  isNetworkError,
-  pinnedFetch,
-} from '../../../../../src/main/providers/gemini/pinned-origin'
-import { MAX_PROVIDER_ANSWER_BYTES } from '../../../../../src/main/providers/picture-limits'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
+import { GEMINI_ORIGIN, isNetworkError, pinnedFetch } from '@/main/providers/gemini/pinned-origin'
+import { MAX_PROVIDER_ANSWER_BYTES } from '@/main/providers/picture-limits'
+import { ProviderFailure } from '@/main/providers/types'
 
 const ADDRESS = `${GEMINI_ORIGIN}/v1/models/made-up-image-model:generateContent`
 const LIMIT = 10

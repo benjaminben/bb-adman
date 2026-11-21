@@ -5,7 +5,7 @@
 // client has no such call. Every line printed and every error goes through the address guard.
 import os from 'node:os'
 import { describe, it, expect, type TestContext } from 'vitest'
-import { createComfyClient } from '../../src/main/providers/comfyui/client'
+import { createComfyClient } from '@/main/providers/comfyui/client'
 import {
   firstFrameCase,
   pictureCase,

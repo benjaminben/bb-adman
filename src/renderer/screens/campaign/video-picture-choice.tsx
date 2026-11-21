@@ -3,10 +3,10 @@
 // the card's own "Add pictures". The choice is the card's, apart from the picker's ticks. A
 // picture that cannot be sent shows its reason and cannot be chosen. Names are drawn as text.
 import { useEffect, useId } from 'react'
-import { assetUrl } from '../../ui/asset-url'
+import { assetUrl } from '@/renderer/ui/asset-url'
 import { type Reference, useAddPictures, useReferences, whyNot } from './reference-list'
 import { PICTURE_HINT } from './video-start'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 const usable = (rows: Reference[], id: string | null): boolean =>
   rows.some((a) => a.id === id && whyNot(a) === null)

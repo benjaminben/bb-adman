@@ -2,14 +2,14 @@
 // undoable. Refused while a job is queued or running, because a job writes its file and then
 // adds its row, and both must see the same folder.
 import { eq } from 'drizzle-orm'
-import { defineCommand } from '../types'
-import type { CoreDeps } from '../../core-deps'
-import { asset, projectMeta } from '../../db/schema'
-import { readWireRow } from '../../db/rows'
-import { prepareAssetsDir } from '../../assets/assets-dir'
-import { projectSetAssetsDirInput } from '../../../shared/schemas/commands/asset'
-import { AppError } from '../../../shared/schemas/result'
-import type { AssetRow } from '../../../shared/schemas/rows/asset'
+import { defineCommand } from '@/main/commands/types'
+import type { CoreDeps } from '@/main/core-deps'
+import { asset, projectMeta } from '@/main/db/schema'
+import { readWireRow } from '@/main/db/rows'
+import { prepareAssetsDir } from '@/main/assets/assets-dir'
+import { projectSetAssetsDirInput } from '@/shared/schemas/commands/asset'
+import { AppError } from '@/shared/schemas/result'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
 
 function requireNoJobs(deps: Pick<CoreDeps, 'jobs'>, projectId: string): void {
   if (deps.jobs.activeCount(projectId) > 0) {

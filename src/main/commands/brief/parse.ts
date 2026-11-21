@@ -3,13 +3,13 @@
 // (SPEC 14 1.39 Z7), so the whole file is read. Nothing of the brief reaches the log.
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { defineCommand } from '../types'
-import { parseBriefFile } from '../../../shared/brief/parse'
-import { primaryLanguageFor } from '../../../shared/brief/languages'
-import { briefParseInput, type BriefParsed } from '../../../shared/schemas/commands/brief'
-import type { BriefDraft } from '../../../shared/schemas/brief'
-import { AppError, type ErrorBody, type Result } from '../../../shared/schemas/result'
-import type { BriefSyntax } from '../../../shared/templates/types'
+import { defineCommand } from '@/main/commands/types'
+import { parseBriefFile } from '@/shared/brief/parse'
+import { primaryLanguageFor } from '@/shared/brief/languages'
+import { briefParseInput, type BriefParsed } from '@/shared/schemas/commands/brief'
+import type { BriefDraft } from '@/shared/schemas/brief'
+import { AppError, type ErrorBody, type Result } from '@/shared/schemas/result'
+import type { BriefSyntax } from '@/shared/templates/types'
 
 // The bus logs an error's message. The reply names the bad line's text; the log line gets
 // the message without it, so the reason and the line number are logged and no word of the

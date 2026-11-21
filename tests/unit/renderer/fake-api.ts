@@ -1,10 +1,10 @@
 // An in-memory window.api for component tests. Commands and queries are recorded,
 // and answers can be scripted per name.
 import { vi } from 'vitest'
-import type { AdmanApi } from '../../../src/shared/schemas/api'
-import type { AppState } from '../../../src/shared/schemas/queries/app'
-import type { EventMap, EventName } from '../../../src/shared/schemas/events'
-import type { Result } from '../../../src/shared/schemas/result'
+import type { AdmanApi } from '@/shared/schemas/api'
+import type { AppState } from '@/shared/schemas/queries/app'
+import type { EventMap, EventName } from '@/shared/schemas/events'
+import type { Result } from '@/shared/schemas/result'
 
 type Answer = (input: unknown) => Result<unknown> | Promise<Result<unknown>>
 

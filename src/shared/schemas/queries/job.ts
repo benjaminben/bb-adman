@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { projectScoped } from '../commands/project-scoped'
-import type { JobRow } from '../rows/job'
+import { projectScoped } from '@/shared/schemas/commands/project-scoped'
+import type { JobRow } from '@/shared/schemas/rows/job'
 
 // SPEC 4.3 job.list [1.8]. Built in Phase 2 slice D. Newest first.
 // state: active = queued or running, unseen = succeeded with no seenAt, failed.

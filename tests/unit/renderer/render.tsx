@@ -2,8 +2,8 @@
 import { render } from '@testing-library/react'
 import axe from 'axe-core'
 import type { ReactElement } from 'react'
-import { AppProvider } from '../../../src/renderer/app/app-context'
-import { createAppStore } from '../../../src/renderer/stores/app-store'
+import { AppProvider } from '@/renderer/app/app-context'
+import { createAppStore } from '@/renderer/stores/app-store'
 import { makeFakeApi } from './fake-api'
 
 export async function renderApp(ui: ReactElement, fake = makeFakeApi()) {

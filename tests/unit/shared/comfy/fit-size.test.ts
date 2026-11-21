@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { fitSize } from '../../../../src/shared/comfy/fit-size'
+import { fitSize } from '@/shared/comfy/fit-size'
 
 const MOSS = { multiple: 16, minPixels: 1_000_000, maxPixels: 2_000_000 }
 const H3 = { multiple: 32, minPixels: 589_824, maxPixels: 1_048_576 }

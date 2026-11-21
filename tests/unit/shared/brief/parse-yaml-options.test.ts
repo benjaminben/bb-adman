@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import * as yaml from 'yaml'
-import { parseBrief } from '../../../../src/shared/brief/parse'
-import { BRIEF_UNREADABLE } from '../../../../src/shared/brief/draft'
+import { parseBrief } from '@/shared/brief/parse'
+import { BRIEF_UNREADABLE } from '@/shared/brief/draft'
 import { tenLevelKey } from './slow-named'
 
 // SPEC 6.1 item 3: the settings hold "whatever the library's defaults are", so they are set

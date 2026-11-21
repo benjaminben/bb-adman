@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { fillWorkflow } from '../../../../../src/main/providers/comfyui/fill'
-import type { WorkflowSpec } from '../../../../../src/main/providers/comfyui/workflows/types'
-import { mossTextToImage } from '../../../../../src/main/providers/comfyui/workflows/moss'
+import { fillWorkflow } from '@/main/providers/comfyui/fill'
+import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
+import { mossTextToImage } from '@/main/providers/comfyui/workflows/moss'
 import {
   h3ImageToVideo,
   h3ReferenceToVideo,
   h3TextToVideo,
-} from '../../../../../src/main/providers/comfyui/workflows/h3'
+} from '@/main/providers/comfyui/workflows/h3'
 
 const PROMPT_ID = '0b7e8f52-5d1c-4c1e-9a3e-2f6f1d9b7c10'
 const SIZE = { width: 1024, height: 1024 }

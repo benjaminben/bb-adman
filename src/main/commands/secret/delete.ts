@@ -1,7 +1,7 @@
 // secret.delete (SPEC 4.2, 7.7; FR-170).
-import { defineCommand } from '../types'
-import type { CoreDeps } from '../../core-deps'
-import { secretDeleteInput } from '../../../shared/schemas/secrets'
+import { defineCommand } from '@/main/commands/types'
+import type { CoreDeps } from '@/main/core-deps'
+import { secretDeleteInput } from '@/shared/schemas/secrets'
 
 export function secretDelete(deps: Pick<CoreDeps, 'secrets'>) {
   return defineCommand({

@@ -1,7 +1,7 @@
 // The project's campaigns (SPEC 14 1.41 TP-1): a name and an Open button each, or one line
 // when there is none. Names are drawn as text.
-import type { CampaignSummary } from '../../../shared/schemas/queries/campaign'
-import styles from '../screens.module.css'
+import type { CampaignSummary } from '@/shared/schemas/queries/campaign'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function CampaignList(props: {
   campaigns: CampaignSummary[]

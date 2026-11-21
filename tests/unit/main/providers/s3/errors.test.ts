@@ -1,8 +1,8 @@
 import { Readable } from 'node:stream'
 import { describe, it, expect } from 'vitest'
-import { s3Storage } from '../../../../../src/main/providers/s3/s3-storage'
-import { failureFromS3Error } from '../../../../../src/main/providers/s3/failure'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
+import { s3Storage } from '@/main/providers/s3/s3-storage'
+import { failureFromS3Error } from '@/main/providers/s3/failure'
+import { ProviderFailure } from '@/main/providers/types'
 import { TEST_KEY_ID, TEST_SECRET, handlerAnswering, testContext, xml } from './recorded'
 
 async function failureOf(call: Promise<unknown>): Promise<ProviderFailure> {

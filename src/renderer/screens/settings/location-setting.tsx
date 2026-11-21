@@ -1,5 +1,5 @@
-import { useApi, useApp, pickPath } from '../../app/app-context'
-import styles from '../screens.module.css'
+import { useApi, useApp, pickPath } from '@/renderer/app/app-context'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function LocationSetting() {
   const api = useApi()

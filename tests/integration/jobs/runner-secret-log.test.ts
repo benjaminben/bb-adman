@@ -2,7 +2,7 @@
 // No call leaves the machine: each handler only throws.
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeRunnerFixture, waitFor, type RunnerFixture } from './runner-fixture'
-import { listProviders } from '../../../src/main/providers/registry'
+import { listProviders } from '@/main/providers/registry'
 
 // Made up for the test, not the shape of any real key. Its `/`, `+` and `=` make its plain,
 // URL-encoded and base64 forms differ.

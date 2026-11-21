@@ -3,9 +3,9 @@
 // tested when entered (FR-172).
 import { useState, type FormEvent } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { useApi, useApp } from '../../app/app-context'
-import { secretLabel } from '../../ui/secret-labels'
-import type { SecretName } from '../../../shared/schemas/secrets'
+import { useApi, useApp } from '@/renderer/app/app-context'
+import { secretLabel } from '@/renderer/ui/secret-labels'
+import type { SecretName } from '@/shared/schemas/secrets'
 import styles from './key-dialog.module.css'
 
 export function KeyDialog() {

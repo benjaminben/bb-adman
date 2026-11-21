@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { checkComfyRun } from '../../../../../src/main/commands/generation/comfy-checks'
-import type { Settings } from '../../../../../src/shared/schemas/settings'
+import { checkComfyRun } from '@/main/commands/generation/comfy-checks'
+import type { Settings } from '@/shared/schemas/settings'
 
 const deps = (devTools: boolean) => ({
   devTools,

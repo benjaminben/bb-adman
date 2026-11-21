@@ -5,15 +5,15 @@
 // run never shows raw error text: the wire row holds none (SPEC 3.3 [1.9]). A video run
 // (SPEC 14 1.57 TP-6) says "Video" and, while running, the text from video-status.ts.
 import { useState } from 'react'
-import { EMPTY, useApp } from '../../app/app-context'
-import { plainMessage } from '../../../shared/providers/messages'
-import type { JobRow } from '../../../shared/schemas/rows/job'
-import { requestCount, type JobStore } from '../../stores/job-store'
+import { EMPTY, useApp } from '@/renderer/app/app-context'
+import { plainMessage } from '@/shared/providers/messages'
+import type { JobRow } from '@/shared/schemas/rows/job'
+import { requestCount, type JobStore } from '@/renderer/stores/job-store'
 import { PaidConfirm } from './paid-confirm'
 import { RunResult } from './run-result'
 import { VideoResult } from './video-result'
 import { useNow, videoRunningText } from './video-status'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 // What a provider reports while it works (SPEC 6.11.1 [1.38]): read from `result` only when
 // it is there and of the right type.

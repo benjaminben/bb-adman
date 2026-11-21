@@ -1,8 +1,8 @@
 // SPEC 6: joins the provider folders by provider ID. Frozen contract (Phase 2 step 0).
 // A slice that uses a provider calls adapterFor and imports no adapter folder. Local storage
 // is not here: it is reached with `localStorageAt(root)` (SPEC 6.5 [1.13], H1).
-import type { CoreDeps } from '../core-deps'
-import { AppError } from '../../shared/schemas/result'
+import type { CoreDeps } from '@/main/core-deps'
+import { AppError } from '@/shared/schemas/result'
 import { adapters as azureBlob } from './azure-blob'
 import { adapters as comfyui } from './comfyui'
 import { adapters as dropbox } from './dropbox'

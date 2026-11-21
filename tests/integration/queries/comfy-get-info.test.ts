@@ -1,8 +1,8 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, data, type Fixture } from '../core-fixture'
 import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
-import { WORKFLOWS } from '../../../src/main/providers/comfyui/workflows'
-import { WORKFLOW_IDS, type ComfyInfo } from '../../../src/shared/schemas/queries/comfy'
+import { WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import { WORKFLOW_IDS, type ComfyInfo } from '@/shared/schemas/queries/comfy'
 
 let f: Fixture
 let stand: StandIn | undefined

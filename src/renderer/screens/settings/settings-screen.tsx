@@ -4,7 +4,7 @@ import { ProviderDefaults } from './provider-defaults'
 import { KeysSection } from './keys-section'
 import { ComfySection } from './comfy-section'
 import { McpSection } from './mcp-section'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function SettingsScreen() {
   return (

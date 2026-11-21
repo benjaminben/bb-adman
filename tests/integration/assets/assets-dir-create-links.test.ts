@@ -2,13 +2,9 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { assetImport } from '../../../src/main/commands/asset/import'
-import { createAssetService } from '../../../src/main/assets/service'
-import {
-  closeProjectFile,
-  createProjectFile,
-  openProjectFile,
-} from '../../../src/main/db/project-file'
+import { assetImport } from '@/main/commands/asset/import'
+import { createAssetService } from '@/main/assets/service'
+import { closeProjectFile, createProjectFile, openProjectFile } from '@/main/db/project-file'
 import { makeAssetBus, expectRefused } from './asset-bus'
 import { testLog } from './test-log'
 

@@ -2,8 +2,8 @@
 // given a value. Pure; never throws. Only an object at the top is a brief; anything else is
 // brief_unreadable (SPEC 4.1), and the error holds none of the brief's text. Unknown fields
 // and fields of the wrong type are dropped by the frozen BriefDraft schema.
-import { BriefDraft } from '../schemas/brief'
-import { fail, ok, type ErrorBody, type Result } from '../schemas/result'
+import { BriefDraft } from '@/shared/schemas/brief'
+import { fail, ok, type ErrorBody, type Result } from '@/shared/schemas/result'
 
 export const BRIEF_UNREADABLE: ErrorBody = {
   code: 'INVALID_INPUT',

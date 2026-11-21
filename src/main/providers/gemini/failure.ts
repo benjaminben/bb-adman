@@ -4,9 +4,9 @@
 // (SPEC 6 [1.12]); anything else → other.
 // The key never appears in `detail`.
 import { ApiError, type GenerateContentResponse } from '@google/genai'
-import { pictureType, type PictureType } from '../picture-type'
-import { redactSecret } from '../redact'
-import { ProviderFailure, type ProviderError } from '../types'
+import { pictureType, type PictureType } from '@/main/providers/picture-type'
+import { redactSecret } from '@/main/providers/redact'
+import { ProviderFailure, type ProviderError } from '@/main/providers/types'
 import { isNetworkError } from './pinned-origin'
 
 // Finish reasons that mean the provider's content rules stopped the picture (SPEC 6.2 [1.11]).

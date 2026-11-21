@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { createComfyClient } from '../../../../../src/main/providers/comfyui/client'
-import { MAX_SERVER_TEXT_CHARS } from '../../../../../src/main/providers/comfyui/limits'
-import { ComfyRefused } from '../../../../../src/main/providers/comfyui/refusal'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
+import { createComfyClient } from '@/main/providers/comfyui/client'
+import { MAX_SERVER_TEXT_CHARS } from '@/main/providers/comfyui/limits'
+import { ComfyRefused } from '@/main/providers/comfyui/refusal'
+import { ProviderFailure } from '@/main/providers/types'
 import { startComfyStandIn, type Reply } from '../../../../helpers/comfy-stand-in'
 
 const id = '6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b'

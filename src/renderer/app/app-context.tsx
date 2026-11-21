@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import { useStore } from 'zustand'
-import type { AdmanApi } from '../../shared/schemas/api'
-import type { AppStore, AppStoreState } from '../stores/app-store'
+import type { AdmanApi } from '@/shared/schemas/api'
+import type { AppStore, AppStoreState } from '@/renderer/stores/app-store'
 
 type Ctx = { api: AdmanApi; store: AppStore }
 

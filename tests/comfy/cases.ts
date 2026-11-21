@@ -2,14 +2,14 @@
 // client level. Each first runs the check for its own workflow (systemStats first, N-03) and
 // skips with one line when anything is missing. Runs are the smallest that prove the point:
 // the first-run size, 56 frames. The shared steps are in case-steps.ts.
-import { flux3KleinEditReferences } from '../../src/main/providers/comfyui/workflows/flux3'
+import { flux3KleinEditReferences } from '@/main/providers/comfyui/workflows/flux3'
 import {
   h3ImageToVideo,
   h3ReferenceToVideo,
   h3TextToVideo,
-} from '../../src/main/providers/comfyui/workflows/h3'
-import { mossTextToImage } from '../../src/main/providers/comfyui/workflows/moss'
-import { MAX_PICTURE_BYTES, MAX_VIDEO_BYTES } from '../../src/main/providers/picture-limits'
+} from '@/main/providers/comfyui/workflows/h3'
+import { mossTextToImage } from '@/main/providers/comfyui/workflows/moss'
+import { MAX_PICTURE_BYTES, MAX_VIDEO_BYTES } from '@/main/providers/picture-limits'
 import { pictureToSend } from './given-picture'
 import {
   checkPicture,

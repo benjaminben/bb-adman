@@ -7,7 +7,7 @@ import { ulid } from 'ulid'
 import * as schema from './schema'
 import { bundledMigrations, type Migration } from './bundled-migrations'
 import { readMeta, readSchemaVersion, readStoredName, writeMeta, notAProject } from './meta'
-import { AppError } from '../../shared/schemas/result'
+import { AppError } from '@/shared/schemas/result'
 
 // Only the project ID is kept in memory; project_meta is the owner of every other value
 // and readers call readMeta (SPEC 3.3).

@@ -2,8 +2,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeDevFixture, type DevFixture } from './dev-fixture'
-import { devStorage } from '../../../src/main/commands/dev/storage'
-import type { AppError } from '../../../src/shared/schemas/result'
+import { devStorage } from '@/main/commands/dev/storage'
+import type { AppError } from '@/shared/schemas/result'
 
 let f: DevFixture
 afterEach(() => f.cleanup())

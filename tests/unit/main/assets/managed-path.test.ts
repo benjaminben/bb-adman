@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { describe, it, expect } from 'vitest'
-import { managedPath } from '../../../../src/main/assets/path-resolver'
+import { managedPath } from '@/main/assets/path-resolver'
 
 const ID = '01JD0000000000000000000001'
 const BAD = ['a/b', 'a\\b', '..', 'a.b']

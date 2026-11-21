@@ -8,14 +8,11 @@ import { waitFor } from './generation-fixture'
 import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
 import { finishRun, serveNeeds, serveVideo, videoHistoryEntry } from '../../helpers/comfy-run'
 import { data } from '../core-fixture'
-import { greyPng } from '../../../src/main/providers/fake/png'
-import { uploadName } from '../../../src/main/providers/comfyui/values'
-import {
-  h3ImageToVideo,
-  h3ReferenceToVideo,
-} from '../../../src/main/providers/comfyui/workflows/h3'
-import { fitSize, type Size } from '../../../src/shared/comfy/fit-size'
-import type { VideoJobResult } from '../../../src/shared/schemas/jobs/video-generation'
+import { greyPng } from '@/main/providers/fake/png'
+import { uploadName } from '@/main/providers/comfyui/values'
+import { h3ImageToVideo, h3ReferenceToVideo } from '@/main/providers/comfyui/workflows/h3'
+import { fitSize, type Size } from '@/shared/comfy/fit-size'
+import type { VideoJobResult } from '@/shared/schemas/jobs/video-generation'
 
 let f: ComfyFixture
 let stand: StandIn | null = null

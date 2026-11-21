@@ -2,13 +2,13 @@
 // missing". [1.43] This check is the one holder of "exactly one request before the server has
 // shown it is ComfyUI" (6.10.1, N-03): it sends GET /system_stats first and nothing more
 // unless that answer has the ComfyUI shape. It sends no prompt and no picture.
-import type { MissingItem } from '../../../shared/schemas/queries/app'
+import type { MissingItem } from '@/shared/schemas/queries/app'
 import {
   COMFY_CHECK_OUTCOMES,
   type ComfyCheck,
   type ComfyCheckOutcome,
-} from '../../../shared/schemas/commands/comfy-check'
-import { ProviderFailure } from '../types'
+} from '@/shared/schemas/commands/comfy-check'
+import { ProviderFailure } from '@/main/providers/types'
 import type { ComfyClient } from './client'
 import type { WorkflowSpec } from './workflows/types'
 

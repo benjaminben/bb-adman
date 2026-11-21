@@ -1,6 +1,6 @@
 // SPEC 14 1.41 TP-2: the one owner of an asset's address in the window.
 import { describe, expect, it } from 'vitest'
-import { assetUrl } from '../../../../src/renderer/ui/asset-url'
+import { assetUrl } from '@/renderer/ui/asset-url'
 
 const P = '01JD0000000000000000000001'
 const A = '01JD0000000000000000000002'

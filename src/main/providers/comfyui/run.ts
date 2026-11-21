@@ -2,10 +2,10 @@
 // polled until it ends, and its picture fetched. The result is read only at the workflow's
 // own outputNode key; no node key or list name from the server is stored, logged or sent
 // on (14 1.43 D-05). Every ID sent to or answered by submit joins the own-ID set (K-7).
-import { fitSize } from '../../../shared/comfy/fit-size'
-import { MAX_PICTURE_BYTES } from '../picture-limits'
-import { pictureType } from '../picture-type'
-import { ProviderCancelled, type ImageResult, type RunOptions } from '../types'
+import { fitSize } from '@/shared/comfy/fit-size'
+import { MAX_PICTURE_BYTES } from '@/main/providers/picture-limits'
+import { pictureType } from '@/main/providers/picture-type'
+import { ProviderCancelled, type ImageResult, type RunOptions } from '@/main/providers/types'
 import type { HistoryEntry } from './answers'
 import type { ComfyClient, ViewRef } from './client'
 import { cancelOwnRun } from './cancel'

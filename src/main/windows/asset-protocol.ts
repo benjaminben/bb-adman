@@ -1,8 +1,8 @@
 // The Electron side of adman-asset:// (SPEC 8.2; SPEC 14, Slice A rulings point 2). Only the
 // Electron calls are here; every decision is in assets/asset-url.ts.
 import type { Protocol } from 'electron'
-import type { ProjectRegistry } from '../db/project-registry'
-import { answerAssetRequest } from '../assets/asset-url'
+import type { ProjectRegistry } from '@/main/db/project-registry'
+import { answerAssetRequest } from '@/main/assets/asset-url'
 
 const SCHEME = 'adman-asset'
 

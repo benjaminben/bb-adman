@@ -10,7 +10,7 @@ import {
   type ImageFile,
   type ImageProvider,
   type ImageResult,
-} from '../types'
+} from '@/main/providers/types'
 import type { ComfyClient } from './client'
 import { serverChecks, type ServerChecks } from './needs'
 import { runPicture, type RunEnv, type RunTiming } from './run'

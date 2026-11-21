@@ -1,7 +1,7 @@
 // The NEEDS_KEY guard (SPEC 4.1, FR-171). Every command or job about to call a provider
 // calls it first. No other code decides that a key is missing.
-import type { CoreDeps } from '../core-deps'
-import { AppError } from '../../shared/schemas/result'
+import type { CoreDeps } from '@/main/core-deps'
+import { AppError } from '@/shared/schemas/result'
 
 export function requireProviderKeys(
   deps: Pick<CoreDeps, 'providers' | 'secrets'>,

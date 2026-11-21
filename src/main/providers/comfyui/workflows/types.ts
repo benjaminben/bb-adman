@@ -1,9 +1,9 @@
 // SPEC 6.10.4 [REQ: FR-258, FR-278] (security class), with the 1.39 reference slots: a
 // workflow is a shipped graph plus this typed description. No function in the adapter takes
 // a workflow, a node or a model file name from its caller.
-import type { WorkflowInfo } from '../../../../shared/schemas/queries/comfy'
+import type { WorkflowInfo } from '@/shared/schemas/queries/comfy'
 
-export type { WorkflowId } from '../../../../shared/schemas/queries/comfy'
+export type { WorkflowId } from '@/shared/schemas/queries/comfy'
 
 // One input of one node in the graph.
 export type Pointer = { node: string; input: string }

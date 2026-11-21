@@ -3,9 +3,9 @@
 // tools whose command or query exists are listed. Each input is the command's or query's
 // own Zod schema, with its top-level keys in snake_case (SPEC 4.5: project_id -> projectId).
 import type { z } from 'zod'
-import { campaignCreateInput } from '../../../shared/schemas/commands/campaign'
-import { assetListInput, type AssetList } from '../../../shared/schemas/queries/asset'
-import { campaignScopedInput, projectGetInput } from '../../../shared/schemas/queries/campaign'
+import { campaignCreateInput } from '@/shared/schemas/commands/campaign'
+import { assetListInput, type AssetList } from '@/shared/schemas/queries/asset'
+import { campaignScopedInput, projectGetInput } from '@/shared/schemas/queries/campaign'
 
 export type ToolDef = {
   name: string

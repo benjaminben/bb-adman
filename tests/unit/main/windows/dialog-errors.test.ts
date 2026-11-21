@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { LogInput } from '../../../../src/main/log/activity-log'
-import { INTERNAL_MESSAGE } from '../../../../src/shared/schemas/result'
+import type { LogInput } from '@/main/log/activity-log'
+import { INTERNAL_MESSAGE } from '@/shared/schemas/result'
 
 const showOpenDialog = vi.fn()
 const focused = { id: 'focused' }
@@ -9,7 +9,7 @@ vi.mock('electron', () => ({
   dialog: { showOpenDialog },
 }))
 
-const { runDialogQuery } = await import('../../../../src/main/windows/dialogs')
+const { runDialogQuery } = await import('@/main/windows/dialogs')
 
 function memoryLog() {
   const lines: LogInput[] = []

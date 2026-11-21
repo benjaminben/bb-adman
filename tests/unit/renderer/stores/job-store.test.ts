@@ -1,11 +1,7 @@
 // SPEC 14 1.41 TP-2 "The job store": job.list on load, job.updated, and the one reader of
 // a picture job's asset IDs.
 import { describe, expect, it, vi } from 'vitest'
-import {
-  createJobStore,
-  requestCount,
-  resultAssetIds,
-} from '../../../../src/renderer/stores/job-store'
+import { createJobStore, requestCount, resultAssetIds } from '@/renderer/stores/job-store'
 import { makeFakeApi } from '../fake-api'
 import { jobRow } from './job-fixture'
 

@@ -1,13 +1,13 @@
 // comfy.getInfo (SPEC 4.3, 6.10.1, 6.10.10; FR-253, FR-263, FR-285). User-only: an agent is
 // refused with AGENT_DENIED and gets no address. It contacts nothing. The graph, the slots
 // and the source of a workflow stay in the main process.
-import type { CoreDeps } from '../core-deps'
+import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
-import type { ComfyInfo, WorkflowInfo } from '../../shared/schemas/queries/comfy'
-import { AppError } from '../../shared/schemas/result'
-import { WORKFLOWS } from '../providers/comfyui/workflows'
-import { LEAVES_ORDER } from '../providers/comfyui/workflows/common'
-import type { WorkflowSpec } from '../providers/comfyui/workflows/types'
+import type { ComfyInfo, WorkflowInfo } from '@/shared/schemas/queries/comfy'
+import { AppError } from '@/shared/schemas/result'
+import { WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import { LEAVES_ORDER } from '@/main/providers/comfyui/workflows/common'
+import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
 
 export const COMFY_INFO_DENIED =
   'Agents cannot read the ComfyUI settings in this version. Ask the user to do it in the app.'

@@ -1,13 +1,13 @@
 // job.retry (SPEC 4.2 notes; FR-069, FR-152): a new job from the old row's request, with the
 // same campaign, variant, layer and slot. The old row stays. The key guard runs again.
-import { defineCommand, type PrepareContext } from '../types'
-import { checkComfyVideoRetry } from '../generation/video-start-checks'
-import type { CoreDeps } from '../../core-deps'
-import { requireProviderKeys } from '../../providers/require-keys'
+import { defineCommand, type PrepareContext } from '@/main/commands/types'
+import { checkComfyVideoRetry } from '@/main/commands/generation/video-start-checks'
+import type { CoreDeps } from '@/main/core-deps'
+import { requireProviderKeys } from '@/main/providers/require-keys'
 import { requireJob, wrongState } from './find-job'
-import { jobRetryInput, type JobStarted } from '../../../shared/schemas/commands/job'
-import { imageJobRequest } from '../../../shared/schemas/jobs/image-generation'
-import { checkComfyRun } from '../generation/comfy-checks'
+import { jobRetryInput, type JobStarted } from '@/shared/schemas/commands/job'
+import { imageJobRequest } from '@/shared/schemas/jobs/image-generation'
+import { checkComfyRun } from '@/main/commands/generation/comfy-checks'
 
 type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets'>
 

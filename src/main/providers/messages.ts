@@ -1,1 +1,1 @@
-export { plainMessage } from '../../shared/providers/messages'
+export { plainMessage } from '@/shared/providers/messages'

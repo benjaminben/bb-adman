@@ -1,11 +1,11 @@
 // SPEC 6.1 "The other campaign.create inputs": the rule set a new campaign starts with.
-import type { ProjectContext } from '../types'
-import { readWireRow } from '../../db/rows'
-import { wordsByLanguage } from '../../../shared/brief/words'
-import type { Brief } from '../../../shared/schemas/brief'
-import type { CampaignCreateInput, RuleSetValues } from '../../../shared/schemas/commands/campaign'
-import type { RuleSetRow } from '../../../shared/schemas/rows/rule-set'
-import { AppError } from '../../../shared/schemas/result'
+import type { ProjectContext } from '@/main/commands/types'
+import { readWireRow } from '@/main/db/rows'
+import { wordsByLanguage } from '@/shared/brief/words'
+import type { Brief } from '@/shared/schemas/brief'
+import type { CampaignCreateInput, RuleSetValues } from '@/shared/schemas/commands/campaign'
+import type { RuleSetRow } from '@/shared/schemas/rows/rule-set'
+import { AppError } from '@/shared/schemas/result'
 
 export function campaignNotFound(): AppError {
   return new AppError('NOT_FOUND', 'That campaign is not in this project.')

@@ -1,11 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { fillWorkflow, type FillValues } from '../../../../../src/main/providers/comfyui/fill'
-import { WORKFLOWS } from '../../../../../src/main/providers/comfyui/workflows'
-import type {
-  Graph,
-  Pointer,
-  WorkflowSpec,
-} from '../../../../../src/main/providers/comfyui/workflows/types'
+import { fillWorkflow, type FillValues } from '@/main/providers/comfyui/fill'
+import { WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import type { Graph, Pointer, WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
 
 const PROMPT_ID = '6f1c2d3e-4b5a-4c6d-8e7f-90a1b2c3d4e5'
 

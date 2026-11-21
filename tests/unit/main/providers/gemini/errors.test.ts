@@ -1,7 +1,7 @@
 import { afterEach, describe, it, expect, vi } from 'vitest'
-import { IMAGE_TIMEOUT_MS, geminiImage } from '../../../../../src/main/providers/gemini/image'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
-import { failureFromError } from '../../../../../src/main/providers/gemini/failure'
+import { IMAGE_TIMEOUT_MS, geminiImage } from '@/main/providers/gemini/image'
+import { ProviderFailure } from '@/main/providers/types'
+import { failureFromError } from '@/main/providers/gemini/failure'
 import {
   TEST_KEY,
   fetchAnswering,

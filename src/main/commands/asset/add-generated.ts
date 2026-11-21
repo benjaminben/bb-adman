@@ -2,19 +2,19 @@
 // only by the job runner, after it wrote each file with AssetService.writeManaged. No window
 // may send it (internal) and agents are denied it. Not undoable. The input holds asset IDs
 // and extensions only: prepare reads each file at its managed path, run inserts the rows.
-import { defineCommand } from '../types'
-import type { CoreDeps } from '../../core-deps'
-import { asset } from '../../db/schema'
-import { readWireRow } from '../../db/rows'
-import { assetsDirOf } from '../../assets/service'
-import { inspectFile, type InspectedFile } from '../../assets/inspect'
-import { isManagedName, managedPath, relativeToProject } from '../../assets/path-resolver'
+import { defineCommand } from '@/main/commands/types'
+import type { CoreDeps } from '@/main/core-deps'
+import { asset } from '@/main/db/schema'
+import { readWireRow } from '@/main/db/rows'
+import { assetsDirOf } from '@/main/assets/service'
+import { inspectFile, type InspectedFile } from '@/main/assets/inspect'
+import { isManagedName, managedPath, relativeToProject } from '@/main/assets/path-resolver'
 import {
   assetAddGeneratedInput,
   type AssetAddGeneratedInput,
-} from '../../../shared/schemas/commands/asset'
-import type { JobRow } from '../../../shared/schemas/rows/job'
-import { AppError } from '../../../shared/schemas/result'
+} from '@/shared/schemas/commands/asset'
+import type { JobRow } from '@/shared/schemas/rows/job'
+import { AppError } from '@/shared/schemas/result'
 
 type Prepared = Array<{ assetId: string; file: InspectedFile }>
 

@@ -1,11 +1,11 @@
 // ruleSet.update and ruleSet.copyFrom (SPEC 4.2, 3.3 rule_set; FR-033, FR-034). Both are
 // undoable on the campaign's list: the inverse is ruleSet.update with the lists as they were.
-import type { ProjectContext } from '../types'
-import { defineCommand } from '../types'
-import { storedJson } from '../../db/rows'
-import { requireAssets, ruleSetOf } from '../campaign/rule-set-values'
-import type { RuleSetValues } from '../../../shared/schemas/commands/campaign'
-import { ruleSetCopyFromInput, ruleSetUpdateInput } from '../../../shared/schemas/commands/rule-set'
+import type { ProjectContext } from '@/main/commands/types'
+import { defineCommand } from '@/main/commands/types'
+import { storedJson } from '@/main/db/rows'
+import { requireAssets, ruleSetOf } from '@/main/commands/campaign/rule-set-values'
+import type { RuleSetValues } from '@/shared/schemas/commands/campaign'
+import { ruleSetCopyFromInput, ruleSetUpdateInput } from '@/shared/schemas/commands/rule-set'
 
 const LISTS = ['requiredAssetIds', 'palette', 'requiredWords', 'prohibitedWords'] as const
 

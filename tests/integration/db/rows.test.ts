@@ -2,12 +2,8 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
-import {
-  createProjectFile,
-  closeProjectFile,
-  type ProjectHandle,
-} from '../../../src/main/db/project-file'
-import { readJobErrorDetail, readWireRow, readWireRows } from '../../../src/main/db/rows'
+import { createProjectFile, closeProjectFile, type ProjectHandle } from '@/main/db/project-file'
+import { readJobErrorDetail, readWireRow, readWireRows } from '@/main/db/rows'
 import { insertAsset, insertCampaign, VALID_BRIEF } from '../row-fixtures'
 
 let dir: string

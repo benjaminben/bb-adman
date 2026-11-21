@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { assetRemove } from '../../../src/main/commands/asset/remove'
-import { readWireRows } from '../../../src/main/db/rows'
+import { assetRemove } from '@/main/commands/asset/remove'
+import { readWireRows } from '@/main/db/rows'
 import { insertTestAsset } from './asset-rows'
 import { makeAssetBus, expectRefused } from './asset-bus'
 import { insertClip, insertLayer, insertRuleSet, seedVariant } from './usage-rows'

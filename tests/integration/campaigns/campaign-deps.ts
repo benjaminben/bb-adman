@@ -1,6 +1,6 @@
 // Test helper for slice C: the CoreDeps fields its handlers read, with a fixed clock.
 // Not a test file itself.
-import type { CoreDeps } from '../../../src/main/core-deps'
+import type { CoreDeps } from '@/main/core-deps'
 
 export const TEST_NOW = '2026-11-20T10:00:00.000Z'
 

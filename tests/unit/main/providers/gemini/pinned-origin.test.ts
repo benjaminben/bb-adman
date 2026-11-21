@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import {
-  GEMINI_ORIGIN,
-  isNetworkError,
-  pinnedFetch,
-} from '../../../../../src/main/providers/gemini/pinned-origin'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
+import { GEMINI_ORIGIN, isNetworkError, pinnedFetch } from '@/main/providers/gemini/pinned-origin'
+import { ProviderFailure } from '@/main/providers/types'
 import { jsonResponse, recordingFetch } from './recorded'
 
 const PATH = '/v1/models/made-up-image-model:generateContent'

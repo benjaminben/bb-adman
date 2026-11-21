@@ -1,10 +1,10 @@
 // SPEC 4.2 dev.storage: every storage call the hand-test command makes. Each path it sends is
 // inside the hand-test folder and passes the shared path rules; any other path a provider
 // answers from list is dropped, so remove never names it.
-import { HAND_TEST_FOLDER } from '../../../shared/config/dev-tools'
-import { AppError } from '../../../shared/schemas/result'
-import { storageFilePath } from '../../providers/storage-paths'
-import type { StorageProvider } from '../../providers/types'
+import { HAND_TEST_FOLDER } from '@/shared/config/dev-tools'
+import { AppError } from '@/shared/schemas/result'
+import { storageFilePath } from '@/main/providers/storage-paths'
+import type { StorageProvider } from '@/main/providers/types'
 
 const FOLDER = `${HAND_TEST_FOLDER}/`
 

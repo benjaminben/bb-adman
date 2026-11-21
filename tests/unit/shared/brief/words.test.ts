@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { wordsByLanguage } from '../../../../src/shared/brief/words'
+import { wordsByLanguage } from '@/shared/brief/words'
 
 describe('wordsByLanguage [SPEC 6.1, 14 slice B, R-03]', () => {
   it('stores a plain word list under the primary language', () => {

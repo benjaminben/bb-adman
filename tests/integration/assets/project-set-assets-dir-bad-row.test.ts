@@ -1,8 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { projectSetAssetsDir } from '../../../src/main/commands/project/set-assets-dir'
-import type { JobService } from '../../../src/main/jobs/types'
+import { projectSetAssetsDir } from '@/main/commands/project/set-assets-dir'
+import type { JobService } from '@/main/jobs/types'
 import { makeAssetBus } from './asset-bus'
 import { insertTestAsset } from './asset-rows'
 

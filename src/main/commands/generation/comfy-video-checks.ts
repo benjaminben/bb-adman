@@ -3,13 +3,13 @@
 // a ComfyUI video job (14 1.53), made before a job row. The workflow must match the run's
 // start pair (1.53, 1.60). A trial workflow only for the user with the hand-test tools on; an
 // agent never gets one, and a draft is never sent. video-start-checks.ts calls these.
-import type { CoreDeps } from '../../core-deps'
-import type { ProjectContext } from '../types'
-import { offeredWorkflow } from '../../providers/comfyui/workflows/offered'
-import type { WorkflowSpec } from '../../providers/comfyui/workflows/types'
-import type { VideoStart } from '../../providers/types'
-import { reasonMessage } from '../../../shared/providers/messages'
-import { AppError } from '../../../shared/schemas/result'
+import type { CoreDeps } from '@/main/core-deps'
+import type { ProjectContext } from '@/main/commands/types'
+import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'
+import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
+import type { VideoStart } from '@/main/providers/types'
+import { reasonMessage } from '@/shared/providers/messages'
+import { AppError } from '@/shared/schemas/result'
 
 export const COMFY_VIDEO_NOT_OFFERED_MESSAGE = 'ComfyUI cannot make this kind of video yet.'
 

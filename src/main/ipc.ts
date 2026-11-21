@@ -1,7 +1,7 @@
 // Connects window.api to the bus and the queries. Every window command runs with
 // actor 'user', and so does every window query; the window cannot choose (SPEC 4.1).
-import { IPC_CHANNELS } from '../shared/schemas/api'
-import { fail, type Result } from '../shared/schemas/result'
+import { IPC_CHANNELS } from '@/shared/schemas/api'
+import { fail, type Result } from '@/shared/schemas/result'
 import { unknownCommandMessage, type ExecuteOptions } from './commands/bus'
 import type { QueryOptions } from './queries/queries'
 

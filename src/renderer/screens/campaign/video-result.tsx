@@ -2,11 +2,11 @@
 // preload="metadata"> at the run's width, src from assetUrl, no autoplay, sound as the clip
 // has it. When it is first drawn, job.markSeen is sent once for the job, as for pictures.
 import { useEffect } from 'react'
-import { assetUrl } from '../../ui/asset-url'
-import type { JobStore } from '../../stores/job-store'
-import { videoJobResult } from '../../../shared/schemas/jobs/video-generation'
-import type { JobRow } from '../../../shared/schemas/rows/job'
-import styles from '../screens.module.css'
+import { assetUrl } from '@/renderer/ui/asset-url'
+import type { JobStore } from '@/renderer/stores/job-store'
+import { videoJobResult } from '@/shared/schemas/jobs/video-generation'
+import type { JobRow } from '@/shared/schemas/rows/job'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function VideoResult(props: { row: JobRow; projectId: string; store: JobStore }) {
   const { row, projectId, store } = props

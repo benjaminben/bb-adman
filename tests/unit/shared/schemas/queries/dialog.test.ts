@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  pickFolderInput,
-  pickProjectFileInput,
-} from '../../../../../src/shared/schemas/queries/dialog'
+import { pickFolderInput, pickProjectFileInput } from '@/shared/schemas/queries/dialog'
 
 describe('picker inputs [SPEC 4.3, correction 20]', () => {
   it('dialog.pickFolder takes an optional title and defaultPath', () => {

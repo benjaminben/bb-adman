@@ -4,11 +4,11 @@
 import * as Tabs from '@radix-ui/react-tabs'
 import { useApp, EMPTY } from './app-context'
 import { ErrorBanner } from './error-banner'
-import { StartScreen } from '../screens/start/start-screen'
-import { SettingsScreen } from '../screens/settings/settings-screen'
-import { ProjectHome } from '../screens/project-home/project-home'
-import { KeyDialog } from '../dialogs/key/key-dialog'
-import { HandTestScreen } from '../dev/hand-test-screen'
+import { StartScreen } from '@/renderer/screens/start/start-screen'
+import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
+import { ProjectHome } from '@/renderer/screens/project-home/project-home'
+import { KeyDialog } from '@/renderer/dialogs/key/key-dialog'
+import { HandTestScreen } from '@/renderer/dev/hand-test-screen'
 import styles from './app-shell.module.css'
 
 export function AppShell() {

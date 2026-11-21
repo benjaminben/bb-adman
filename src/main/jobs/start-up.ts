@@ -5,7 +5,7 @@
 import { activeJobs, readJob, type JobChange } from './job-store'
 import { endUnreadable, writeJob, type RunnerState } from './live'
 import { startJob } from './run-job'
-import type { JobRow } from '../../shared/schemas/rows/job'
+import type { JobRow } from '@/shared/schemas/rows/job'
 
 export const INTERRUPTED = 'interrupted'
 

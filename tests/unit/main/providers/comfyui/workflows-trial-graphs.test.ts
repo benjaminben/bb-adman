@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest'
-import { NON_DRAFT_WORKFLOWS } from '../../../../../src/main/providers/comfyui/workflows'
-import { mossTextToImage } from '../../../../../src/main/providers/comfyui/workflows/moss'
-import { h3TextToVideo } from '../../../../../src/main/providers/comfyui/workflows/h3'
+import { NON_DRAFT_WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import { mossTextToImage } from '@/main/providers/comfyui/workflows/moss'
+import { h3TextToVideo } from '@/main/providers/comfyui/workflows/h3'
 import {
   H3_FIRST_RUN_SIZE,
   H3_MAIN_FILE,
   H3_VIDEO,
   MOSS_FIRST_RUN_SIZE,
   MOSS_MODEL,
-} from '../../../../../src/main/providers/comfyui/workflows/common'
-import type { WorkflowSpec } from '../../../../../src/main/providers/comfyui/workflows/types'
+} from '@/main/providers/comfyui/workflows/common'
+import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
 
 // The folder each loader reads (comfy-workflows/REFERENCE-NOTES.md, "Model files").
 const LOADER_FOLDER: Record<string, [string, string]> = {

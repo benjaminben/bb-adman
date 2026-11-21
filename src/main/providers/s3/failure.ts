@@ -5,8 +5,8 @@
 // ProviderFailure the adapter lets out, a passed-on one included, goes through the shared
 // redactSecret (SPEC 6 [1.12], 6.5 [1.14] H4).
 import { S3ServiceException } from '@aws-sdk/client-s3'
-import { redactSecret } from '../redact'
-import { ProviderFailure, type ProviderError } from '../types'
+import { redactSecret } from '@/main/providers/redact'
+import { ProviderFailure, type ProviderError } from '@/main/providers/types'
 import { isNetworkError } from './pinned-host'
 
 const BAD_KEY_CODES = new Set([

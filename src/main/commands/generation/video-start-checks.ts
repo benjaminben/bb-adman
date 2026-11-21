@@ -3,16 +3,16 @@
 // row, against the old row's request and picture IDs. The start pair; for ComfyUI the
 // address, the workflow offered for that pair and its length; how many references that
 // workflow takes; then each picture, which must be a PNG or JPEG the app can read.
-import type { CoreDeps } from '../../core-deps'
-import type { PrepareContext } from '../types'
-import { readWireRow } from '../../db/rows'
-import type { ProjectHandle } from '../../db/project-file'
+import type { CoreDeps } from '@/main/core-deps'
+import type { PrepareContext } from '@/main/commands/types'
+import { readWireRow } from '@/main/db/rows'
+import type { ProjectHandle } from '@/main/db/project-file'
 import { checkComfyVideo, videoNotOffered } from './comfy-video-checks'
 import { tooManyReferences } from './comfy-checks'
 import { startPair, type StartFields } from './start-pair'
-import { videoJobRequest } from '../../../shared/schemas/jobs/video-generation'
-import type { AssetRow } from '../../../shared/schemas/rows/asset'
-import { AppError } from '../../../shared/schemas/result'
+import { videoJobRequest } from '@/shared/schemas/jobs/video-generation'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
+import { AppError } from '@/shared/schemas/result'
 
 type Deps = Pick<CoreDeps, 'devTools' | 'assets'> & {
   settings: Pick<CoreDeps['settings'], 'get'>

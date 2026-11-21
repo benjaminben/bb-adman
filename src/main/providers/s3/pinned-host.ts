@@ -5,7 +5,7 @@
 // [1.14] G8, H2: the handler can see the answer body, so it reads the whole body inside the
 // marked step and hands the library a finished one; a break during the read is marked too.
 import { Readable } from 'node:stream'
-import { ProviderFailure } from '../types'
+import { ProviderFailure } from '@/main/providers/types'
 
 type Request = { protocol: string; hostname: string; port?: number }
 export type PinnableHandler = { handle(request: never, options?: never): Promise<unknown> }

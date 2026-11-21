@@ -6,8 +6,8 @@
 // compose (passesYamlTokens), the composed document is walked before toJS (passesYamlWalk),
 // and toJS reads no alias. Pure; never throws.
 import { parseDocument, type DocumentOptions, type ParseOptions, type SchemaOptions } from 'yaml'
-import { fail } from '../schemas/result'
-import type { ParseBrief } from '../templates/types'
+import { fail } from '@/shared/schemas/result'
+import type { ParseBrief } from '@/shared/templates/types'
 import { briefDraftFrom, BRIEF_UNREADABLE } from './draft'
 import { badLineError } from './bad-line'
 import { passesYamlTokens } from './yaml-tokens'

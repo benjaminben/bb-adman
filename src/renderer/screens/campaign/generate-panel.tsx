@@ -5,15 +5,15 @@
 // the campaign page, go into referenceAssetIds in tick order.
 import { useEffect, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import { EMPTY, useApi, useApp } from '../../app/app-context'
-import { MAX_IMAGES_PER_RUN } from '../../../shared/config/defaults'
-import { prefilledPrompt } from '../../../shared/generation/prompt'
-import { generationRunImagesInput } from '../../../shared/schemas/commands/generation'
-import type { CampaignGet, TemplateSlots } from '../../../shared/schemas/queries/campaign'
-import type { GenerationRunImagesInput } from '../../../shared/schemas/commands/generation'
+import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
+import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'
+import { prefilledPrompt } from '@/shared/generation/prompt'
+import { generationRunImagesInput } from '@/shared/schemas/commands/generation'
+import type { CampaignGet, TemplateSlots } from '@/shared/schemas/queries/campaign'
+import type { GenerationRunImagesInput } from '@/shared/schemas/commands/generation'
 import { PaidConfirm } from './paid-confirm'
 import { ReferencePicker } from './reference-picker'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 function usePictureSlots(projectId: string, campaignId: string): string[] | null {
   const api = useApi()

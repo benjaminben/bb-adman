@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { assetImport } from '../../../src/main/commands/asset/import'
+import { assetImport } from '@/main/commands/asset/import'
 import { makeAssetBus } from './asset-bus'
 import { testLog } from './test-log'
 

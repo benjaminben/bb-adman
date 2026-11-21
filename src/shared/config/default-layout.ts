@@ -1,7 +1,7 @@
 // SPEC 6.1 "Default layout" [1.23], FR-040, FR-043: the one owner of every number and name
 // a new master variant's layers start with. A template holds no position; this file does.
 // Provisional until the UI pass (OI-33). buildMasterLayers reads it and holds no number.
-import type { Animation, ImageStyle, Revs, Timing } from '../schemas/layer'
+import type { Animation, ImageStyle, Revs, Timing } from '@/shared/schemas/layer'
 
 // W and H are the size's sides, S the smaller one. Every result is rounded to a whole pixel.
 export const MARGIN_OF_SMALLER = 0.06 // m

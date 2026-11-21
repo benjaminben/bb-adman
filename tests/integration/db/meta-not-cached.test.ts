@@ -1,9 +1,9 @@
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, data, type Fixture } from '../core-fixture'
-import { readMeta } from '../../../src/main/db/meta'
-import type { AppState } from '../../../src/shared/schemas/queries/app'
-import type { OpenProjectSummary } from '../../../src/shared/schemas/project'
+import { readMeta } from '@/main/db/meta'
+import type { AppState } from '@/shared/schemas/queries/app'
+import type { OpenProjectSummary } from '@/shared/schemas/project'
 
 let f: Fixture
 afterEach(() => f.cleanup())

@@ -1,8 +1,8 @@
 import { z } from 'zod'
-import { Brief } from '../brief'
-import { HEX_COLOUR } from '../layer'
+import { Brief } from '@/shared/schemas/brief'
+import { HEX_COLOUR } from '@/shared/schemas/layer'
 import { projectScoped } from './project-scoped'
-import { MAX_SIZE_SIDE, MIN_SIZE_SIDE } from '../../config/size-limits'
+import { MAX_SIZE_SIDE, MIN_SIZE_SIDE } from '@/shared/config/size-limits'
 
 // SPEC 3.3 CampaignSize and SPEC 6.1 campaign.create inputs. Frozen contract
 // (SPEC 14, Phase 2 step 0). Slice C adds its other campaign schemas beside this file.

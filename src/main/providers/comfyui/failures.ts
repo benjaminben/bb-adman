@@ -3,13 +3,13 @@
 // stores in job.error_detail and never logs, and only after cleanServerText. Every other
 // detail is the app's own fixed text, so none holds the address. [1.43] K-1: the client
 // parsed the 400; this file reads `refusal` and never parses an answer itself.
-import type { ComfyCheckOutcome } from '../../../shared/schemas/commands/comfy-check'
+import type { ComfyCheckOutcome } from '@/shared/schemas/commands/comfy-check'
 import type {
   MissingItem,
   ProviderErrorKind,
   ProviderErrorReason,
-} from '../../../shared/schemas/queries/app'
-import { ProviderFailure } from '../types'
+} from '@/shared/schemas/queries/app'
+import { ProviderFailure } from '@/main/providers/types'
 import type { RunMessage } from './answers'
 import type { ComfyRefused } from './refusal'
 import { cleanServerText } from './server-text'

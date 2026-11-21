@@ -3,10 +3,10 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { expectRefused } from '../assets/asset-bus'
 import { makeCampaignBus, createInput, insertImage, type CampaignBus } from './campaign-fixture'
 import { makeFixture, data, type Fixture } from '../core-fixture'
-import { Brief, type BriefDraft } from '../../../src/shared/schemas/brief'
-import { parseSize } from '../../../src/shared/brief/size'
-import { readWireRows } from '../../../src/main/db/rows'
-import type { LayerRow } from '../../../src/shared/schemas/rows/layer'
+import { Brief, type BriefDraft } from '@/shared/schemas/brief'
+import { parseSize } from '@/shared/brief/size'
+import { readWireRows } from '@/main/db/rows'
+import type { LayerRow } from '@/shared/schemas/rows/layer'
 
 let bus: CampaignBus
 beforeEach(() => {

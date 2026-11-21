@@ -3,13 +3,13 @@
 // content is already in the project is reused, not copied again (FR-053).
 import fs from 'node:fs'
 import { ulid } from 'ulid'
-import type { ProjectHandle } from '../db/project-file'
-import { readWireRows } from '../db/rows'
+import type { ProjectHandle } from '@/main/db/project-file'
+import { readWireRows } from '@/main/db/rows'
 import { inspectFile, inspectFolderFile, type InspectedFile } from './inspect'
 import { expandPaths } from './folder-walk'
 import { ensureAssetsDir } from './service'
 import { managedPath, relativeToProject } from './path-resolver'
-import type { AssetRow } from '../../shared/schemas/rows/asset'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
 
 export type NewAsset = InspectedFile & {
   id: string

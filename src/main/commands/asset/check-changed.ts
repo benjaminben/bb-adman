@@ -2,13 +2,13 @@
 // window may send; agent policy deny; not undoable. Sent by assets/change-trigger.ts after a
 // project opens and when a window gains focus. Reply: the assets whose content changed.
 import { eq } from 'drizzle-orm'
-import { defineCommand } from '../types'
-import type { CoreDeps } from '../../core-deps'
-import { asset } from '../../db/schema'
-import { readWireRow } from '../../db/rows'
-import { changePatch, prepareCheckChanged } from '../../assets/check-changed'
-import { assetCheckChangedInput } from '../../../shared/schemas/commands/asset'
-import type { AssetRow } from '../../../shared/schemas/rows/asset'
+import { defineCommand } from '@/main/commands/types'
+import type { CoreDeps } from '@/main/core-deps'
+import { asset } from '@/main/db/schema'
+import { readWireRow } from '@/main/db/rows'
+import { changePatch, prepareCheckChanged } from '@/main/assets/check-changed'
+import { assetCheckChangedInput } from '@/shared/schemas/commands/asset'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
 
 export function assetCheckChanged(deps: Pick<CoreDeps, 'log'>) {
   const note = (level: 'info' | 'warn', projectId: string, message: string) =>

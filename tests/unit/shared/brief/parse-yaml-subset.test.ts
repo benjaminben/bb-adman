@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { parseBrief } from '../../../../src/shared/brief/parse'
-import { BRIEF_UNREADABLE } from '../../../../src/shared/brief/draft'
-import { MAX_BRIEF_DEPTH } from '../../../../src/shared/config/brief-limits'
+import { parseBrief } from '@/shared/brief/parse'
+import { BRIEF_UNREADABLE } from '@/shared/brief/draft'
+import { MAX_BRIEF_DEPTH } from '@/shared/config/brief-limits'
 
 const unreadable = { ok: false, error: BRIEF_UNREADABLE }
 const usOnly = { ok: true, data: { region: 'US' } }

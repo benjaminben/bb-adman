@@ -3,8 +3,8 @@
 // can be shown, logged and given to an agent safely. The version is the server's own text,
 // cut, and is shown only as text.
 import { z } from 'zod'
-import type { MissingItem } from '../queries/app'
-import type { WorkflowId } from '../queries/comfy'
+import type { MissingItem } from '@/shared/schemas/queries/app'
+import type { WorkflowId } from '@/shared/schemas/queries/comfy'
 
 // comfy.check takes no input.
 export const comfyCheckInput = z.object({}).strict()

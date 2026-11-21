@@ -2,8 +2,8 @@
 // (SPEC 7.7). Summaries carry the last four characters; values stay in the main process.
 import fs from 'node:fs'
 import path from 'node:path'
-import { AppError } from '../../shared/schemas/result'
-import { SECRET_NAMES, type SecretName, type SecretSummary } from '../../shared/schemas/secrets'
+import { AppError } from '@/shared/schemas/result'
+import { SECRET_NAMES, type SecretName, type SecretSummary } from '@/shared/schemas/secrets'
 
 export type SecretCrypto = {
   isAvailable(): boolean

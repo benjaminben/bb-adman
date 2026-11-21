@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { agentCaller } from '../../../../src/main/mcp/agent-caller'
-import { ok } from '../../../../src/shared/schemas/result'
+import { agentCaller } from '@/main/mcp/agent-caller'
+import { ok } from '@/shared/schemas/result'
 import { makeFixture, type Fixture } from '../../../integration/core-fixture'
 
 let f: Fixture | undefined

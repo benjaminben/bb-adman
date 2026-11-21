@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { buildMasterLayers } from '../../../../src/shared/templates/master-layers'
-import { starterTemplate } from '../../../../src/shared/templates/starter'
-import type { NewLayer, SlotFills } from '../../../../src/shared/templates/types'
-import type { CampaignSize } from '../../../../src/shared/schemas/commands/campaign'
-import { LayerRow } from '../../../../src/shared/schemas/rows/layer'
+import { buildMasterLayers } from '@/shared/templates/master-layers'
+import { starterTemplate } from '@/shared/templates/starter'
+import type { NewLayer, SlotFills } from '@/shared/templates/types'
+import type { CampaignSize } from '@/shared/schemas/commands/campaign'
+import { LayerRow } from '@/shared/schemas/rows/layer'
 
 const ALL_FILLS: SlotFills = {
   background: { assetId: 'asset-bg' },

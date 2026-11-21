@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { badLineAt } from '../../../../src/shared/brief/bad-line'
-import { MAX_BAD_LINE_CHARS } from '../../../../src/shared/config/brief-limits'
+import { badLineAt } from '@/shared/brief/bad-line'
+import { MAX_BAD_LINE_CHARS } from '@/shared/config/brief-limits'
 
 // Characters written by number, so no invisible mark sits in this file.
 const ch = (...points: number[]) => String.fromCodePoint(...points)

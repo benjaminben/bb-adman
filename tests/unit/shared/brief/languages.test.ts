@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { isRightToLeft, primaryLanguageFor } from '../../../../src/shared/brief/languages'
-import { REGION_LANGUAGES } from '../../../../src/shared/config/region-languages'
+import { isRightToLeft, primaryLanguageFor } from '@/shared/brief/languages'
+import { REGION_LANGUAGES } from '@/shared/config/region-languages'
 
 describe('isRightToLeft [SPEC 6.1, FR-104]', () => {
   it.each(['ar', 'he', 'fa', 'ur', 'yi', 'ps', 'sd', 'dv'])('is true for %s', (tag) => {

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { hideAddress, makePrinter, safeLine, SAFE_LINE_CHARS } from '../../comfy/print'
 import { comfyTarget } from '../../comfy/target'
 import { guarded } from '../../comfy/guard'
-import { ProviderFailure } from '../../../src/main/providers/types'
+import { ProviderFailure } from '@/main/providers/types'
 
 const ORIGIN = 'http://marker-host.test:8188'
 

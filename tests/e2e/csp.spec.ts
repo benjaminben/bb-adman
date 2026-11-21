@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import fs from 'node:fs'
 import { makeSandbox, launch, type Sandbox } from './launch'
-import { CONTENT_SECURITY_POLICY } from '../../src/main/windows/csp'
+import { CONTENT_SECURITY_POLICY } from '@/main/windows/csp'
 
 let box: Sandbox
 test.beforeEach(() => {

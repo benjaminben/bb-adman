@@ -1,11 +1,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { projectPackage } from '../../../src/main/commands/project/package'
-import { assetImport } from '../../../src/main/commands/asset/import'
-import { createAssetService } from '../../../src/main/assets/service'
-import { closeProjectFile, openProjectFile } from '../../../src/main/db/project-file'
-import { readMeta } from '../../../src/main/db/meta'
+import { projectPackage } from '@/main/commands/project/package'
+import { assetImport } from '@/main/commands/asset/import'
+import { createAssetService } from '@/main/assets/service'
+import { closeProjectFile, openProjectFile } from '@/main/db/project-file'
+import { readMeta } from '@/main/db/meta'
 import { insertTestAsset } from './asset-rows'
 import { makeAssetBus, expectRefused } from './asset-bus'
 import { testLog } from './test-log'
@@ -166,7 +166,7 @@ describe('project.package partial folder [SPEC 3.9 step 3]', () => {
         return typeof value === 'function' ? value.bind(t) : value
       },
     })
-    const { packageProject } = await import('../../../src/main/assets/package')
+    const { packageProject } = await import('@/main/assets/package')
     await expect(packageProject({ ...bus.project, db }, target(), false)).rejects.toThrow(
       'disk full',
     )

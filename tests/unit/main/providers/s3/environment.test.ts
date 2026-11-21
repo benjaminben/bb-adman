@@ -2,9 +2,9 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import { s3Storage } from '../../../../../src/main/providers/s3/s3-storage'
-import { failureFromS3Error } from '../../../../../src/main/providers/s3/failure'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
+import { s3Storage } from '@/main/providers/s3/s3-storage'
+import { failureFromS3Error } from '@/main/providers/s3/failure'
+import { ProviderFailure } from '@/main/providers/types'
 import { TEST_KEY_ID, TEST_SECRET, recordingHandler, testContext, xml } from './recorded'
 
 const ORIGINAL_ENV = process.env

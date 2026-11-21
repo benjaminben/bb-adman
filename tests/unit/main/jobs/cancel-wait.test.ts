@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CLOSE_WAIT_MS, cancelWaitFor } from '../../../../src/main/jobs/cancel-wait'
+import { CLOSE_WAIT_MS, cancelWaitFor } from '@/main/jobs/cancel-wait'
 
 describe('the cancel waits [SPEC 6.11.2 1.38, 14 1.38 Y6]', () => {
   it('waits 60 s for ComfyUI', () => {

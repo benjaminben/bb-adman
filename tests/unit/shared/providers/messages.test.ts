@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { plainMessage } from '../../../../src/shared/providers/messages'
-import { plainMessage as mainPlainMessage } from '../../../../src/main/providers/messages'
-import { PROVIDER_ERROR_KINDS } from '../../../../src/shared/schemas/queries/app'
+import { plainMessage } from '@/shared/providers/messages'
+import { plainMessage as mainPlainMessage } from '@/main/providers/messages'
+import { PROVIDER_ERROR_KINDS } from '@/shared/schemas/queries/app'
 
 describe('plainMessage lives in src/shared so the window can import it [SPEC 14 1.41 TP-0]', () => {
   it('gives the Section 6 sentence from the shared file', () => {

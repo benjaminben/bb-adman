@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { PICTURE_NOT_DECODED } from '../../../src/main/png-converter'
-import { pictureFitter } from '../../../src/main/picture-fitter'
-import { MAX_PICTURE_BYTES, MAX_PICTURE_SIDE } from '../../../src/main/providers/picture-limits'
+import { PICTURE_NOT_DECODED } from '@/main/png-converter'
+import { pictureFitter } from '@/main/picture-fitter'
+import { MAX_PICTURE_BYTES, MAX_PICTURE_SIDE } from '@/main/providers/picture-limits'
 import { bands, fakeImage, gridDecoder, jpegHead, pngHead } from './picture-fitter-fake'
 
 const RUN = { width: 576, height: 576 }

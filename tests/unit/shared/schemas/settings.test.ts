@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { settingsPatchSchema, settingsSchema } from '../../../../src/shared/schemas/settings'
-import { defaultSettings } from '../../../../src/main/settings/defaults'
+import { settingsPatchSchema, settingsSchema } from '@/shared/schemas/settings'
+import { defaultSettings } from '@/main/settings/defaults'
 
 const defaults = defaultSettings('/docs')
 

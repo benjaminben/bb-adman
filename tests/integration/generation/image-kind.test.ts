@@ -3,9 +3,9 @@ import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeKindFixture, pngAnswer, jpegAnswer, PAID, type KindFixture } from './kind-fixture'
 import { waitFor } from './generation-fixture'
-import { greyPng } from '../../../src/main/providers/fake/png'
-import { pictureSize } from '../../../src/main/providers/picture-size'
-import { promptToSend } from '../../../src/shared/generation/prompt'
+import { greyPng } from '@/main/providers/fake/png'
+import { pictureSize } from '@/main/providers/picture-size'
+import { promptToSend } from '@/shared/generation/prompt'
 import { generationDetailsOf, pngChunks } from '../../fixtures/png-chunks'
 
 let f: KindFixture

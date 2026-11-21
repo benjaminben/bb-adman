@@ -3,7 +3,7 @@
 import { expect } from 'vitest'
 import type Database from 'better-sqlite3'
 import { makeBusFixture } from '../commands/test-bus'
-import type { CommandHandler } from '../../../src/main/commands/types'
+import type { CommandHandler } from '@/main/commands/types'
 import { expectChanges } from '../expect-changes'
 
 export function makeAssetBus(handlers: CommandHandler[]) {

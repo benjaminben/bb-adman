@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { HandTestScreen } from '../../../../src/renderer/dev/hand-test-screen'
-import { DropboxSignIn } from '../../../../src/renderer/dev/dropbox-sign-in'
+import { HandTestScreen } from '@/renderer/dev/hand-test-screen'
+import { DropboxSignIn } from '@/renderer/dev/dropbox-sign-in'
 import { renderApp } from '../render'
 import { makeFakeApi, baseState } from '../fake-api'
 
