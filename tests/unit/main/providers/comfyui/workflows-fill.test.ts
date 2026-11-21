@@ -96,6 +96,14 @@ describe('fillWorkflow on the shipped files [SPEC 6.10.4, 14 1.39]', () => {
         if (g[p.node]) expect(g[p.node]?.inputs).not.toHaveProperty(p.input)
       }
       expect(Object.keys(g).every((id) => w.graph[id])).toBe(true)
+      // No input other than the declared ones is gone (CU-3 review DV-1).
+      const declared = new Set(droppedInputs.map((p) => `${p.node}.${p.input}`))
+      for (const [id, node] of Object.entries(g)) {
+        for (const input of Object.keys(w.graph[id]?.inputs ?? {})) {
+          if (!declared.has(`${id}.${input}`))
+            expect(node.inputs, `${id}.${input}`).toHaveProperty(input)
+        }
+      }
     },
   )
 
