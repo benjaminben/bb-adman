@@ -1,8 +1,10 @@
 // brief.parse (SPEC 4.2, 6.1; FR-020, FR-022). Writes nothing: the file is read in
 // prepare and the draft is returned from run (SPEC 3.6). A brief has no size limit
 // (SPEC 14 1.39 Z7), so the whole file is read. Nothing of the brief reaches the log.
+// The pictures a brief names are checked in prepare too (spec/subject-photos.md, D-098).
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { checkBriefPictures, picturesWithoutFolder } from '@/main/assets/brief-pictures'
 import { defineCommand } from '@/main/commands/types'
 import { parseBriefFile } from '@/shared/brief/parse'
 import { primaryLanguageOf } from '@/shared/brief/primary-language'
@@ -68,10 +70,16 @@ function parseText(text: string): Result<BriefDraft> {
   return json.ok ? json : parseBriefFile(text, 'yaml')
 }
 
-function answer(result: Result<BriefDraft>): BriefParsed {
+function draftOf(result: Result<BriefDraft>): BriefDraft {
   if (!result.ok) throw new BriefError(result.error)
-  return { draft: result.data, primaryLanguage: primaryLanguageOf(result.data) }
+  return result.data
 }
+
+const answer = (draft: BriefDraft, subjectPictures: BriefParsed['subjectPictures']) => ({
+  draft,
+  primaryLanguage: primaryLanguageOf(draft),
+  subjectPictures,
+})
 
 export function briefParse() {
   return defineCommand({
@@ -79,14 +87,18 @@ export function briefParse() {
     input: briefParseInput,
     projectId: (input) => input.projectId,
     async prepare(_ctx, input): Promise<BriefParsed> {
-      if (input.filePath === undefined) return answer(parseText(input.text ?? ''))
+      if (input.filePath === undefined) {
+        const draft = draftOf(parseText(input.text ?? ''))
+        return answer(draft, picturesWithoutFolder(draft.subjects))
+      }
       // F-2: a relative path would be read against the app's own folder.
       if (!path.isAbsolute(input.filePath)) {
         throw new AppError('INVALID_INPUT', 'The file path must be absolute.')
       }
       const syntax = SYNTAX_BY_ENDING[path.extname(input.filePath).toLowerCase()]
       if (!syntax) throw typeNotSupported()
-      return answer(parseBriefFile(await readBrief(input.filePath), syntax))
+      const draft = draftOf(parseBriefFile(await readBrief(input.filePath), syntax))
+      return answer(draft, await checkBriefPictures(input.filePath, draft.subjects))
     },
     run(_ctx, _input, prepared) {
       return { data: prepared }

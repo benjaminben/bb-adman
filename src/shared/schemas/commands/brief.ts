@@ -14,8 +14,22 @@ export const briefParseInput = projectScoped
   })
 export type BriefParseInput = z.infer<typeof briefParseInput>
 
-// The brief.parse reply (SPEC 14 1.42 C4-2), here so the window can import it.
-export type BriefParsed = { draft: BriefDraft; primaryLanguage: string | null }
+// spec/subject-photos.md "Schemas" [D-098]: why a picture a brief names was not used.
+// wide_folder: the brief's folder is a root, a Mac volume's top or the home folder (A-123).
+export type PictureNoteReason =
+  'outside_folder' | 'not_found' | 'not_a_picture' | 'not_readable' | 'no_folder' | 'wide_folder'
+// name: pictureName of the text, never a folder.
+export type PictureNote = { name: string; reason: PictureNoteReason }
+// paths: real paths that passed every check, in the brief's order, each once.
+export type SubjectPictures = { paths: string[]; notes: PictureNote[] }
+
+// The brief.parse reply (SPEC 14 1.42 C4-2), here so the window can import it. subjectPictures
+// has one entry per draft subject; brief.parse always sets it, the AI reader never does.
+export type BriefParsed = {
+  draft: BriefDraft
+  primaryLanguage: string | null
+  subjectPictures?: SubjectPictures[]
+}
 
 // spec/ai-jobs.md "Brief reading": brief.extract reads a Markdown or text brief with AI. The
 // handler checks that the path is absolute and names a text brief.

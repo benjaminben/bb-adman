@@ -192,3 +192,17 @@ describe('campaign.create refusals [SPEC 6.1]', () => {
     await expectRefused(bus, () => bus.create({ templateId: 'fancy' }), 'NOT_FOUND')
   })
 })
+
+// SP-1 review Note 5 [D-098]: a picture path given to campaign.create is never stored.
+describe('campaign.create drops subject pictures [D-098]', () => {
+  it('stores a brief whose subjects have no pictures key', async () => {
+    const input = createInput()
+    const subjects = input.brief.subjects.map((s) => ({ ...s, pictures: ['/private/secret.png'] }))
+    const result = (await bus.create({ brief: { ...input.brief, subjects } })) as { ok: boolean }
+    expect(result.ok).toBe(true)
+    const [row] = bus.rows('campaign') as Array<{ brief: { subjects: object[] } }>
+    for (const subject of row?.brief.subjects ?? []) expect(subject).not.toHaveProperty('pictures')
+    expect(row?.brief.subjects).toHaveLength(2)
+    expect(JSON.stringify(bus.rows('campaign'))).not.toContain('secret')
+  })
+})

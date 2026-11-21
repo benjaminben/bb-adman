@@ -160,6 +160,24 @@ describe('the brief_extraction job [FR-022, FR-023]', () => {
     })
   })
 
+  it('removes pictures from every subject, so the stored result has no path [D-098, SP-1]', async () => {
+    f = makeTextFixture()
+    const answer = {
+      campaignName: 'A',
+      subjects: [
+        { name: 'Can', pictures: ['/Users/someone/private.png'] },
+        { name: 'Jar', pictures: 'jar.png' },
+        { pictures: 'only.png' },
+      ],
+    }
+    const job = await finished(answer)
+    expect(job?.result).toEqual({
+      draft: { campaignName: 'A', subjects: [{ name: 'Can' }, { name: 'Jar' }, {}] },
+      primaryLanguage: null,
+    })
+    expect(JSON.stringify(job)).not.toContain('.png')
+  })
+
   it('takes the first listed language before the region', async () => {
     f = makeTextFixture()
     const job = await finished({ region: 'Germany', languages: ['fr', 'de'] })

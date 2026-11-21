@@ -2,6 +2,8 @@
 // guard, one call to the text adapter with the brief's whole text, then the answer goes through
 // briefDraftFrom: unknown and wrong-typed fields are dropped. The draft is untrusted data that
 // the user reviews in the brief form before anything is a brief. No word of it is logged.
+// The AI reader gives no photos: pictures are removed from every subject, so a path an answer
+// made up is never stored or shown (spec/subject-photos.md "The AI brief reader", A-114).
 import type { JobKindHandler, JobRunContext } from '@/main/jobs/types'
 import { runOptions } from '@/main/jobs/progress'
 import { adapterFor } from '@/main/providers/adapters'
@@ -9,12 +11,19 @@ import { requireProviderKeys } from '@/main/providers/require-keys'
 import { ProviderFailure } from '@/main/providers/types'
 import { briefDraftFrom } from '@/shared/brief/draft'
 import { primaryLanguageOf } from '@/shared/brief/primary-language'
+import type { BriefDraft } from '@/shared/schemas/brief'
 import { briefJobRequest, type BriefJobResult } from '@/shared/schemas/jobs/brief-extraction'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import type { TextAdapterFor } from './copy-options'
 
 const noFields = () =>
   new ProviderFailure({ kind: 'other', detail: 'No brief fields in the answer' })
+
+function withoutPictures(draft: BriefDraft): BriefDraft {
+  if (draft.subjects === undefined) return draft
+  const subjects = draft.subjects.map(({ pictures: _pictures, ...subject }) => subject)
+  return { ...draft, subjects }
+}
 
 async function runBriefJob(
   jc: JobRunContext,
@@ -28,7 +37,7 @@ async function runBriefJob(
   const answer = await jc.call(() => provider.extractBrief({ text: request.text }, runOptions(jc)))
   const parsed = briefDraftFrom(answer)
   if (!parsed.ok) throw noFields()
-  const draft = parsed.data
+  const draft = withoutPictures(parsed.data)
   if (Object.values(draft).every((value) => value === undefined)) throw noFields()
   return { draft, primaryLanguage: primaryLanguageOf(draft) }
 }

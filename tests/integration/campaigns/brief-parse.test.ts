@@ -37,6 +37,8 @@ const DRAFT = {
   message: 'Hello',
   subjects: [{ id: 'can', name: 'Can' }],
 }
+// One entry per draft subject; DRAFT's one subject names no pictures [D-098].
+const NO_PICTURES = [{ paths: [], notes: [] }]
 
 function write(name: string, text: string): string {
   const file = path.join(dir, name)
@@ -54,7 +56,10 @@ describe('brief.parse from a file [SPEC 4.2, 6.1, FR-020]', () => {
   ])('reads %s into a draft and the region language, writing nothing', async (name, text) => {
     const filePath = write(name, text)
     const result = await bus.changed(() => parse({ filePath }))
-    expect(result).toEqual({ ok: true, data: { draft: DRAFT, primaryLanguage: 'de' } })
+    expect(result).toEqual({
+      ok: true,
+      data: { draft: DRAFT, primaryLanguage: 'de', subjectPictures: NO_PICTURES },
+    })
   })
 
   it('takes the primary language from the first listed language first', async () => {
@@ -66,7 +71,7 @@ describe('brief.parse from a file [SPEC 4.2, 6.1, FR-020]', () => {
     const filePath = write('b.json', JSON.stringify({ region: 'Atlantis' }))
     expect(await parse({ filePath })).toEqual({
       ok: true,
-      data: { draft: { region: 'Atlantis' }, primaryLanguage: null },
+      data: { draft: { region: 'Atlantis' }, primaryLanguage: null, subjectPictures: [] },
     })
   })
 
@@ -156,14 +161,14 @@ describe('brief.parse from text [SPEC 6.1 item 6]', () => {
   it('reads JSON text', async () => {
     expect(await parse({ text: JSON_BRIEF })).toEqual({
       ok: true,
-      data: { draft: DRAFT, primaryLanguage: 'de' },
+      data: { draft: DRAFT, primaryLanguage: 'de', subjectPictures: NO_PICTURES },
     })
   })
 
   it('reads YAML text after the JSON try fails', async () => {
     expect(await parse({ text: YAML_BRIEF })).toEqual({
       ok: true,
-      data: { draft: DRAFT, primaryLanguage: 'de' },
+      data: { draft: DRAFT, primaryLanguage: 'de', subjectPictures: NO_PICTURES },
     })
   })
 
@@ -209,7 +214,78 @@ describe('brief.parse refuses a relative path [F-2]', () => {
     expect(error).toMatchObject({ message: 'The file path must be absolute.' })
     expect(await parse({ filePath })).toEqual({
       ok: true,
-      data: { draft: DRAFT, primaryLanguage: 'de' },
+      data: { draft: DRAFT, primaryLanguage: 'de', subjectPictures: NO_PICTURES },
     })
+  })
+})
+
+// SP-1 (security class) [D-098]: brief.parse checks the pictures a brief names.
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13])
+const withPictures = (pictures: unknown) =>
+  JSON.stringify({ campaignName: 'Summer', subjects: [{ name: 'Can', pictures }, { name: 'Jar' }] })
+
+describe('brief.parse subject pictures [D-098, SP-1]', () => {
+  it('gives the real paths of good pictures and a note for each bad one', async () => {
+    fs.mkdirSync(path.join(dir, 'photos'))
+    fs.writeFileSync(path.join(dir, 'photos', 'can.png'), PNG)
+    fs.writeFileSync(path.join(dir, 'notes.png'), 'secretword')
+    const filePath = write('b.json', withPictures(['photos/can.png', '../x.png', 'notes.png']))
+    const result = await bus.changed(() => parse({ filePath }))
+    expect(result).toMatchObject({
+      ok: true,
+      data: {
+        subjectPictures: [
+          {
+            paths: [path.join(fs.realpathSync(dir), 'photos', 'can.png')],
+            notes: [
+              { name: 'x.png', reason: 'outside_folder' },
+              { name: 'notes.png', reason: 'not_a_picture' },
+            ],
+          },
+          { paths: [], notes: [] },
+        ],
+      },
+    })
+  })
+
+  it('keeps the raw texts in the draft beside the checked result', async () => {
+    const filePath = write('b.yaml', 'subjects:\n  - name: Can\n    pictures: can.webp\n')
+    expect(await parse({ filePath })).toMatchObject({
+      data: {
+        draft: { subjects: [{ name: 'Can', pictures: 'can.webp' }] },
+        subjectPictures: [{ paths: [], notes: [{ name: 'can.webp', reason: 'not_found' }] }],
+      },
+    })
+  })
+
+  it('gives every picture of a typed brief no_folder', async () => {
+    expect(await parse({ text: withPictures(['photos/can.png', '/etc/passwd']) })).toMatchObject({
+      ok: true,
+      data: {
+        subjectPictures: [
+          {
+            paths: [],
+            notes: [
+              { name: 'can.png', reason: 'no_folder' },
+              { name: 'passwd', reason: 'no_folder' },
+            ],
+          },
+          { paths: [], notes: [] },
+        ],
+      },
+    })
+  })
+
+  it('puts no path in a log line or an error', async () => {
+    const outside = path.join(path.dirname(dir), 'private-photo.png')
+    fs.writeFileSync(outside, PNG)
+    const named = ['../private-photo.png', outside, 'missing-photo.png']
+    const ok = await parse({ filePath: write('b.json', withPictures(named)) })
+    expect(ok).toMatchObject({ ok: true, data: { subjectPictures: [{ paths: [] }, {}] } })
+    const bad = write('c.yaml', `subjects:\n  - pictures: [${outside}\n`)
+    const error = await expectRefused(bus, () => parse({ filePath: bad }), 'INVALID_INPUT')
+    expect(error.details).toMatchObject({ reason: 'brief_unreadable' })
+    const log = bus.logText()
+    for (const text of [dir, 'private-photo', 'missing-photo']) expect(log).not.toContain(text)
   })
 })
