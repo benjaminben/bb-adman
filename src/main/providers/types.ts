@@ -103,7 +103,13 @@ export interface TextProvider {
 // caller never fetches an address a provider returned.
 export type VideoResult = { bytes: Uint8Array; mime: 'video/mp4'; model: string }
 
+// SPEC 6.10.7: the two facts a video run's workflow is picked by.
+export type VideoStart = { firstFrame: boolean; references: boolean }
+
 export interface VideoProvider {
+  // [1.60] N-6: the size the run is made at, which a first frame is fitted to before start.
+  // A provider without it makes the run at the variant's own size.
+  runSize?(width: number, height: number, videoStart: VideoStart): { width: number; height: number }
   start(input: {
     image: ImageFile | null
     references: ImageFile[]
