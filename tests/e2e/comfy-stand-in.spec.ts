@@ -1,8 +1,8 @@
 // SPEC 14 1.56 E2E-R, the offline spec: the built app driven through its screens against the
 // stand-in ComfyUI on 127.0.0.1, with the hand-test tools on so trial workflows are offered.
-// No real server, no paid provider and no network beyond 127.0.0.1 is reached: Gemini's paid
-// confirm is only ever cancelled. The place for TP-6's video start is a further test here,
-// once the video panel is built.
+// No real server, no paid provider and no network beyond 127.0.0.1 is reached: Gemini is
+// answered inside the app's main process by gemini-stand-in.ts. TP-6's video start is here;
+// the rows that need no stand-in are in screen-tour.spec.ts (1.59 L-12).
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -20,7 +20,6 @@ import {
 import * as screens from './screens'
 import { geminiAsked, MADE_UP_KEY, standInForGemini } from './gemini-stand-in'
 import { GEMINI_ORIGIN } from '../../src/main/providers/gemini/pinned-origin'
-import { handTestStorage, projectHomeTour, settingsTour, startTour } from './screen-tour'
 
 const MOSS_OUTPUT = '9'
 const FLUX_OUTPUT = '15'
@@ -199,11 +198,4 @@ test('Make a video: a 2-second clip from a prompt is started, done and has its m
   finishWithVideo(stand, id, H3_TEXT_OUTPUT)
   await expect(screens.runRow(page)).toContainText('Done', { timeout: 15_000 })
   await screens.clipHasMetadata(page, 15_000)
-})
-
-test('The other screens of the reach table: hand-test storage, Settings, Start, project home', async () => {
-  await handTestStorage(page, box)
-  await settingsTour(app, page, box)
-  await startTour(app, page, box)
-  await projectHomeTour(app, page)
 })
