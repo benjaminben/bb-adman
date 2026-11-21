@@ -4,7 +4,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { expectRefused } from '../assets/asset-bus'
 import { makeLayerBus, type LayerBus } from '../commands/layer-fixture'
 import { addLinkedVariant, linkedLayerId } from './linked-fixture'
+import { testDeps } from '../campaigns/campaign-deps'
 import { denialMessage } from '@/main/commands/agent-policy'
+import { layerRevert } from '@/main/commands/layer/revert'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 
 let bus: LayerBus
@@ -119,6 +121,15 @@ describe('layer.revert [A-136]', () => {
       data: { layerIds: [] },
     })
     expect(record).not.toHaveBeenCalled()
+  })
+
+  it('is internal and AGENT_DENIED for the agent', async () => {
+    expect(layerRevert(testDeps()).internal).toBe(true)
+    const layers = [{ layerId: text, patch: {}, overrides: ['copy'] }]
+    expect(await run('layer.revert', { variantId: 'same', layers }, 'agent')).toEqual({
+      ok: false,
+      error: { code: 'AGENT_DENIED', message: denialMessage('layer.revert') },
+    })
   })
 
   it('refuses a layer of another variant with NOT_FOUND', async () => {

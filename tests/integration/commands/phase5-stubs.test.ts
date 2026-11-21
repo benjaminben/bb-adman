@@ -46,20 +46,12 @@ const INPUTS: Record<string, object> = {
   'variant.remove': { variantIds: ['V1'] },
   'variant.restore': { snapshots: [snapshot] },
   'variant.restoreLayers': { variants: [{ variantId: 'V1', layers: [layer] }] },
-  'layer.clearOverride': { layerId: 'L1', paths: ['style.color'] },
-  'layer.revert': { variantId: 'V1', layers: [{ layerId: 'L1', patch: {}, overrides: [] }] },
   'sync.apply': { directionId: 'D1', masterRev: 0, decisions: [] },
   'generation.runFill': { variantId: 'V1', provider: 'fake' },
   'generation.applyFill': { jobId: 'J1' },
 }
 const NAMES = Object.keys(INPUTS)
-const SYSTEM = [
-  'direction.restore',
-  'variant.remove',
-  'variant.restore',
-  'variant.restoreLayers',
-  'layer.revert',
-]
+const SYSTEM = ['direction.restore', 'variant.remove', 'variant.restore', 'variant.restoreLayers']
 const DENIED = NAMES.filter((n) => AGENT_POLICY[n]?.policy === 'deny')
 
 async function open(): Promise<{ fx: Fixture; projectId: string }> {
