@@ -13,6 +13,7 @@ export function CampaignList(props: {
       {props.campaigns.map((c) => (
         <li key={c.id} className={styles.row}>
           <span>{c.name}</span>
+          <span className={styles.muted}>{`Variants: ${c.variantCount}`}</span>
           <button type="button" aria-label={`Open ${c.name}`} onClick={() => props.onOpen(c.id)}>
             Open
           </button>
