@@ -108,6 +108,11 @@ describe('the shipped workflows [SPEC 6.10.4, FR-258, FR-278]', () => {
     for (const w of WORKFLOWS) {
       if (w.model.label === 'MiniMax H3') expect(w.licence.commercialNote).toMatch(/licen/i)
       else if (w.model.label === 'MOSS-Image') expect(w.licence.commercialNote).toBeNull()
+      // [1.46] OI-76: the Flux licence is not verified, and the note says so.
+      else if (w.model.label === 'FLUX 3 klein') {
+        expect(w.licence.name).toBe('Not verified')
+        expect(w.licence.commercialNote).toMatch(/not been checked/)
+      } else expect.fail(`${w.id}: no licence rule for the model ${w.model.label}`)
     }
   })
 
