@@ -1,14 +1,20 @@
 // asset.update (SPEC 4.2; FR-054, R-12). Not undoable. Changes only the fields it is given.
+// An asset in use cannot move to the reference library, which only feeds generation
+// (SPEC 14, Slice A rulings point 6).
 import { eq } from 'drizzle-orm'
 import { defineCommand, type ProjectContext } from '../types'
 import { asset } from '../../db/schema'
 import { readWireRow } from '../../db/rows'
 import { assetNotFound } from '../../assets/errors'
+import { assetInUse, assetInUseError } from '../../assets/in-use'
 import { assetUpdateInput, type AssetUpdateInput } from '../../../shared/schemas/commands/asset'
 import { AppError } from '../../../shared/schemas/result'
+import type { AssetRow } from '../../../shared/schemas/rows/asset'
 
-export function requireAsset(ctx: ProjectContext, assetId: string): void {
-  if (!readWireRow(ctx.project.db, 'asset', { id: assetId })) throw assetNotFound()
+export function requireAsset(ctx: ProjectContext, assetId: string): AssetRow {
+  const row = readWireRow(ctx.project.db, 'asset', { id: assetId }) as AssetRow | null
+  if (!row) throw assetNotFound()
+  return row
 }
 
 export function requireSubject(ctx: ProjectContext, subjectId: string): void {
@@ -34,8 +40,12 @@ export function assetUpdate() {
     input: assetUpdateInput,
     projectId: (input) => input.projectId,
     run(ctx, input) {
-      requireAsset(ctx, input.assetId)
+      const row = requireAsset(ctx, input.assetId)
       if (input.subjectId) requireSubject(ctx, input.subjectId)
+      const toReference = input.library === 'reference' && row.library !== 'reference'
+      if (toReference && assetInUse(ctx.project.db, input.assetId)) {
+        throw assetInUseError()
+      }
       const patch = patchOf(input)
       if (Object.keys(patch).length > 0) {
         ctx.project.orm.update(asset).set(patch).where(eq(asset.id, input.assetId)).run()

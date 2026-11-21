@@ -38,17 +38,32 @@ describe('asset.remove [SPEC 4.2, FR-197]', () => {
 
   it('refuses while an image layer shows it', async () => {
     insertLayer(bus.db, 'l1', { sourceAssetId: ID })
-    await expectRefused(bus, () => bus.user('asset.remove', { assetId: ID }), 'RULE_VIOLATION')
+    await expectRefused(
+      bus,
+      () => bus.user('asset.remove', { assetId: ID }),
+      'RULE_VIOLATION',
+      'asset_in_use',
+    )
   })
 
   it('refuses while a text layer uses it as its font', async () => {
     insertLayer(bus.db, 'l1', { fontAssetId: ID })
-    await expectRefused(bus, () => bus.user('asset.remove', { assetId: ID }), 'RULE_VIOLATION')
+    await expectRefused(
+      bus,
+      () => bus.user('asset.remove', { assetId: ID }),
+      'RULE_VIOLATION',
+      'asset_in_use',
+    )
   })
 
   it('refuses while a background clip uses it', async () => {
     insertClip(bus.db, ID)
-    await expectRefused(bus, () => bus.user('asset.remove', { assetId: ID }), 'RULE_VIOLATION')
+    await expectRefused(
+      bus,
+      () => bus.user('asset.remove', { assetId: ID }),
+      'RULE_VIOLATION',
+      'asset_in_use',
+    )
   })
 
   it('refuses while a rule set requires it', async () => {
@@ -57,6 +72,7 @@ describe('asset.remove [SPEC 4.2, FR-197]', () => {
       bus,
       () => bus.user('asset.remove', { assetId: ID }),
       'RULE_VIOLATION',
+      'asset_in_use',
     )
     expect(error.message).toBe(
       'This file is in use. Take it off every post and out of every rule set first.',

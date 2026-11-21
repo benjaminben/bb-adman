@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { assetUpdate } from '../../../src/main/commands/asset/update'
 import { insertTestAsset } from './asset-rows'
 import { makeAssetBus, expectRefused } from './asset-bus'
+import { insertLayer, seedVariant } from './usage-rows'
 
 let bus: ReturnType<typeof makeAssetBus>
 const ID = '01JD0000000000000000000001'
@@ -83,5 +84,47 @@ describe('asset.update [SPEC 4.2, FR-054, R-12]', () => {
       () => bus.user('asset.update', { assetId: ID, displayName: '  ' }),
       'INVALID_INPUT',
     )
+  })
+})
+
+describe('asset.update and the reference library [SPEC 14, Slice A rulings point 6, A2-5]', () => {
+  const PIC = '01JD0000000000000000000002'
+
+  it('refuses to move an asset a layer shows to the reference library', async () => {
+    seedVariant(bus.db)
+    insertTestAsset(bus.db, { id: PIC, relPath: 'p.png', absPath: '/p.png' })
+    insertLayer(bus.db, 'l1', { sourceAssetId: PIC })
+    const error = await expectRefused(
+      bus,
+      () => bus.user('asset.update', { assetId: PIC, library: 'reference' }),
+      'RULE_VIOLATION',
+      'asset_in_use',
+    )
+    expect(error.message).toBe(
+      'This file is in use. Take it off every post and out of every rule set first.',
+    )
+  })
+
+  it('moves an asset nothing uses to the reference library', async () => {
+    insertTestAsset(bus.db, { id: PIC, relPath: 'p.png', absPath: '/p.png' })
+    const result = await bus.changed(() =>
+      bus.user('asset.update', { assetId: PIC, library: 'reference' }),
+    )
+    expect(result).toEqual({ ok: true, data: { assetId: PIC } })
+    expect(bus.db.prepare('SELECT library FROM asset WHERE id = ?').get(PIC)).toEqual({
+      library: 'reference',
+    })
+  })
+
+  it('still changes an in-use asset that is in the reference library already', async () => {
+    seedVariant(bus.db)
+    insertTestAsset(bus.db, { id: PIC, relPath: 'p.png', absPath: '/p.png', library: 'reference' })
+    insertLayer(bus.db, 'l1', { sourceAssetId: PIC })
+    const result = await bus.user('asset.update', {
+      assetId: PIC,
+      library: 'reference',
+      displayName: 'Hero',
+    })
+    expect(result).toEqual({ ok: true, data: { assetId: PIC } })
   })
 })
