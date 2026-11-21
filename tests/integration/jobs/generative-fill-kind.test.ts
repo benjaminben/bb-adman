@@ -152,6 +152,26 @@ describe('the generative_fill job [spec/links-and-sync.md "Generative fill"]', (
     expect(assetCount()).toBe(count)
   })
 
+  it('ends picture_missing when the source is gone, with no path in the row or the events', async () => {
+    const sourceId = await ready()
+    const file = f.asset(sourceId)?.absPath ?? ''
+    const assets = f.core.deps.assets
+    const real = assets.read.bind(assets)
+    vi.spyOn(assets, 'read').mockImplementationOnce(async (project, id) => {
+      const bytes = await real(project, id)
+      fs.rmSync(file)
+      return bytes
+    })
+    const from = f.events.length
+    const jobId = await run()
+    const job = f.job(jobId)
+    expect(job).toMatchObject({ status: 'failed', errorReason: 'picture_missing' })
+    expect(seen.extend).toEqual([])
+    expect(JSON.stringify(job)).not.toContain(f.root)
+    // The events from the run on: the reply, the job's changes and its end.
+    expect(JSON.stringify(f.events.slice(from))).not.toContain(f.root)
+  })
+
   it('job.retry of a failed fill makes a new fill with the same request, which succeeds', async () => {
     await ready()
     setFakeBehaviour({ fail: 'offline' })
