@@ -39,9 +39,14 @@ describe('storageError: how dev.storage reports a failure [SPEC 4.1, 6 plain mes
     expect(JSON.stringify(body)).not.toContain('s3.eu.example')
   })
 
-  it('gives INVALID_INPUT for a refused storage path, holding no path', () => {
+  it('gives RULE_VIOLATION storage_folder_unsafe for a refused storage path, holding no path [1.21 M2]', () => {
     const body = (storageError(new Error(REFUSED_PATH), S3) as AppError).toBody()
-    expect(body).toEqual({ code: 'INVALID_INPUT', message: 'That path cannot be used in storage.' })
+    expect(body).toEqual({
+      code: 'RULE_VIOLATION',
+      message:
+        'The hand-test folder holds a link and cannot be used. Remove the link and try again.',
+      details: { reason: 'storage_folder_unsafe' },
+    })
   })
 
   it('passes any other error on unchanged', () => {

@@ -69,7 +69,7 @@ describe('dev.storage stays inside adman-hand-test/ [SPEC 4.2 dev.storage, 6.5 [
     fs.mkdirSync(f.handTestDir, { recursive: true })
     fs.symlinkSync(target, path.join(f.handTestDir, 'note.txt'))
     const result = await write(sourceFile(f.root, 'note.txt', 'overwrite'))
-    expect(result.ok ? null : result.error.code).toBe('INVALID_INPUT')
+    expect(result.ok ? null : result.error.code).toBe('RULE_VIOLATION')
     expect(fs.readFileSync(target, 'utf8')).toBe('keep me')
   })
 
