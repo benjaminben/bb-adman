@@ -10,7 +10,8 @@ import { pictureCase, referenceCase, videoCase, type CaseKit, type CaseOutcome }
 import { runCheckCase } from './check-case'
 import { guarded } from './guard'
 import { makePrinter } from './print'
-import { foreignCancels, recordCalls, unexpectedCalls, type CallName } from './recorder'
+import { withCallCheck } from './call-check'
+import { recordCalls, type CallName } from './recorder'
 import { PICTURE_LIMIT_MS, realTiming, VIDEO_LIMIT_MS } from './run-graph'
 import { comfyTarget, TEST_OWN_PORTS } from './target'
 
@@ -29,7 +30,7 @@ const RUN_CALLS: CallName[] = [
   'jobState',
   'queueIds',
   'viewFile',
-  // Only when the case runs out of time, and only for its own ID (foreignCancels).
+  // Only when the case runs out of time, and only for its own ID (callProblems).
   'removeFromQueue',
   'interrupt',
 ]
@@ -48,15 +49,14 @@ function runCase(
 ) {
   return async (ctx: TestContext) => {
     const print = makePrinter(origin)
-    const outcome = await guarded(origin, async () => {
+    const outcome = await guarded(origin, () => {
       const recorded = connect()
       const timing = realTiming(limitMs)
       const kit = { client: recorded.client, print, timing, outDir: os.tmpdir(), env: process.env }
-      const done = await run({ ...kit, fieldNames })
-      expect(unexpectedCalls(recorded.calls, [...RUN_CALLS, ...extra])).toEqual([])
-      expect(foreignCancels(recorded.calls)).toEqual([])
-      expect(recorded.calls.filter((c) => c.name === 'uploadImage').length).toBeLessThanOrEqual(1)
-      return done
+      // The calls are checked and printed whether the case passes or fails.
+      return withCallCheck(recorded.calls, [...RUN_CALLS, ...extra], print, () =>
+        run({ ...kit, fieldNames }),
+      )
     })
     // Outside the guard: Vitest's skip works by throwing.
     if ('skip' in outcome) {
@@ -71,11 +71,13 @@ describe.skipIf(origin === '')('test:comfy on the test server', () => {
   it(
     '1. the check: the version, and per trial workflow what is missing',
     () =>
-      guarded(origin, async () => {
+      guarded(origin, () => {
         const recorded = connect()
-        const result = await runCheckCase(recorded.client, recorded.failures, makePrinter(origin))
-        expect(unexpectedCalls(recorded.calls, CHECK_CALLS)).toEqual([])
-        expect(result.outcome).toBe('ok')
+        const print = makePrinter(origin)
+        return withCallCheck(recorded.calls, CHECK_CALLS, print, async () => {
+          const result = await runCheckCase(recorded.client, recorded.failures, print)
+          expect(result.outcome).toBe('ok')
+        })
       }),
     CHECK_MS,
   )
