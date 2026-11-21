@@ -251,7 +251,7 @@ Built. Files: `src/main/thumbnails/` (no Electron; core may import it). The draw
 |------|-------|
 | `types.ts` | `DrawScene`, `DrawResult`, `RenderService` |
 | `service.ts` | `createRenderService(opts)` |
-| `scene-input.ts` | `sceneInput(project, variantId)`: reads the variant, its layers and the assets they name through `rows.ts`, with `missing` from `AssetService.missingAssetIds` |
+| `scene-input.ts` | `sceneInput(deps, project, variantId, { withoutText? })`: reads the variant, its layers and the assets they name through `rows.ts`, with `missing` from `AssetService.missingAssetIds`. `withoutText` leaves out the text layers and the fonts only they name |
 | `queue.ts` | One draw at a time, with priorities |
 | `eager.ts` | Eager thumbnails, changed files, and the variant revs of each open project |
 | `paths.ts` | `thumbnailDir`, `thumbnailFile`: the one owner of the thumbnail file names |
@@ -263,10 +263,13 @@ Built. Files: `src/main/thumbnails/` (no Electron; core may import it). The draw
 type RenderService = {
   thumbnail(project: ProjectHandle, variantId: string): Promise<ThumbnailGet>
   render(project: ProjectHandle, variantId: string, maxDimension: number): Promise<VariantRender>
+  renderPictures(project: ProjectHandle, variantId: string, maxDimension: number): Promise<VariantRender>
   onEvent(event: BusEvent): void
   projectClosed(projectId: string): Promise<void>
 }
 ```
+
+- **`renderPictures`** draws the variant without its text layers (`sceneInput` with `withoutText`), for the layout job (`spec/ai-jobs.md`). It goes through the same queue as `render`, reports no overflow and keeps no file. A failed draw answers `render_failed`.
 
 - **Queue.** One draw at a time for the whole app. A `variant.render` query goes first; thumbnails after, oldest request first. Thumbnail requests for the same project and variant are merged: the input is read when the draw starts, so it always draws the latest `rev`.
 - **Eager thumbnails.** `onEvent` sees every event the main process sends: `send` in `src/main/index.ts` hands each one to the app window and calls `core.deps.render.onEvent(event)`. For each `variant` row in a `project.changed` it schedules a thumbnail once that variant has been quiet for 1 second. A `removed.variant` drops it. So the overflow mark is kept current after an agent's edit too.

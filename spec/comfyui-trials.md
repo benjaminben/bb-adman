@@ -44,7 +44,7 @@ Built, except where marked. Shared harness rules: `spec/testing.md`; variables: 
 4. Field names of the first ended run's history entry and job state: the names the client keeps, no values.
 5. Picture from a reference on `flux3-klein-edit-references` through `image.generate`: passes like case 3; writes the result to the temporary folder. Looking at it is a hint, not a pass rule.
 6. and 7. H3 from a first frame and from one reference, client level: `uploadImage`, `fillWorkflow`, `submit`, poll, `viewFile` under `MAX_VIDEO_BYTES`, `checkMp4`, a temp file, time and size printed.
-8. Not built (P4-9). Cut-out on `birefnet-cutout`, switch `ADMAN_COMFY_CUTOUT=1` (`spec/ai-jobs.md`, "Cut-out").
+8. Cut-out on `birefnet-cutout` (`tests/comfy/cutout-case.ts`), only with the switch `ADMAN_COMFY_CUTOUT=1`. Client level like 6 and 7, with the graph the adapter sends, on the test-made picture. Skips when the server lacks an item. Details: `spec/ai-jobs.md`, "Cut-out". Its first real run is still owed: the test server lacks the model file.
 
 **Not built: the rest of `test:comfy`.** A cancel case (one cancel of the test's own run, asserting `stopped` or `finished`); a four-at-once case; printing through `cleanServerText` in place of `hideAddress`-only printing. And, after the first real run, a tests-only pass that corrects the stand-in's fixtures to the shapes the real server showed; if a real shape breaks a client schema, stop and report (a client change, ruled on its own).
 

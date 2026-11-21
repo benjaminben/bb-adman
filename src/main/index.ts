@@ -29,6 +29,7 @@ import { safeStorageCrypto } from './secrets/safe-storage'
 import { createDraw } from './render/draw'
 import { endRenderWindow } from './render/render-window'
 import { endWebpDecoder, webpToPng } from './windows/webp-window'
+import { QUIT_BUTTON, quitQuestion } from './quit-question'
 
 if (process.env.ADMAN_USER_DATA_DIR) app.setPath('userData', process.env.ADMAN_USER_DATA_DIR)
 registerAssetScheme(protocol)
@@ -46,6 +47,14 @@ const liveAppWindow = () => (appWindow && !appWindow.isDestroyed() ? appWindow :
 function openAppWindow(): BrowserWindow {
   const win = createAppWindow()
   appWindow = win
+  // Closing the window quits the app (window-all-closed), so it asks first too; otherwise a
+  // "Cancel" would leave the app running with no window.
+  win.on('close', (event) => {
+    if (mustAsk()) {
+      event.preventDefault()
+      void askToQuit()
+    }
+  })
   // The render window ends first, so window-all-closed still quits the app (OI-23).
   win.on('closed', () => {
     if (appWindow === win) appWindow = null
@@ -61,6 +70,41 @@ const send = eventSender(
   () => liveAppWindow()?.webContents ?? null,
   (event) => core?.deps.render.onEvent(event),
 )
+
+// spec/screens-ai.md, "Attached jobs and the close warning": quitting with runs queued or
+// running in any open project asks first; "Quit" closes every project through project.close
+// with 'stop' (closeAllStopping), then quits. With nothing running, no box.
+let quitConfirmed = false
+let asking = false
+
+function runningCount(): number {
+  const ready = core
+  if (!ready) return 0
+  return ready.projects.all().reduce((n, h) => n + ready.deps.jobs.activeCount(h.projectId), 0)
+}
+
+function mustAsk(): boolean {
+  return !quitConfirmed && quitQuestion(runningCount()) !== null
+}
+
+async function askToQuit(): Promise<void> {
+  const question = quitQuestion(runningCount())
+  if (asking || !question) return
+  asking = true
+  try {
+    const options = { type: 'warning' as const, ...question }
+    const win = liveAppWindow()
+    const { response } = win
+      ? await dialog.showMessageBox(win, options)
+      : await dialog.showMessageBox(options)
+    if (response !== QUIT_BUTTON) return
+    await core?.closeAllStopping()
+    quitConfirmed = true
+    app.quit()
+  } finally {
+    asking = false
+  }
+}
 
 function mainWindow(): BrowserWindow {
   const win = liveAppWindow() ?? openAppWindow()
@@ -161,7 +205,12 @@ if (!app.requestSingleInstanceLock()) {
     else mainWindow()
   })
   app.on('window-all-closed', () => app.quit())
-  app.on('before-quit', () => {
+  app.on('before-quit', (event) => {
+    if (mustAsk()) {
+      event.preventDefault()
+      void askToQuit()
+      return
+    }
     // Quitting closes the MCP listener and drops its sessions (SPEC 5.3).
     void core?.mcp.stop()
     endRenderWindow()

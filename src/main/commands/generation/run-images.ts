@@ -34,12 +34,14 @@ function pictureProvider(deps: Deps, id: string): ProviderInfo {
   return info
 }
 
+const side = (n: number) => Math.max(1, Math.round(n))
+
 function row<T>(project: ProjectHandle, table: 'variant' | 'direction' | 'campaign', id: string) {
   return readWireRow(project.db, table, { id }) as T | null
 }
 
 // SPEC 4.2 notes: any image or background layer of the variant, or an image slot of the
-// variant's template.
+// variant's template. A layer gives its box as the size (OI-70); a slot the variant's size.
 function target(project: ProjectHandle, input: GenerationRunImagesInput): Target {
   type Variant = { directionId: string; width: number; height: number }
   const variant = row<Variant>(project, 'variant', input.variantId)
@@ -54,6 +56,7 @@ function target(project: ProjectHandle, input: GenerationRunImagesInput): Target
     const layer = readWireRow(project.db, 'layer', { id: input.layerId }) as {
       variantId: string
       type: string
+      geometry: { width: number; height: number }
     } | null
     if (layer?.variantId !== input.variantId) {
       throw new AppError('NOT_FOUND', 'That layer was not found in this variant.')
@@ -61,6 +64,9 @@ function target(project: ProjectHandle, input: GenerationRunImagesInput): Target
     if (layer.type !== 'image' && layer.type !== 'background') {
       throw new AppError('INVALID_INPUT', 'Pictures can only be made for a picture layer.')
     }
+    // OI-70: a layer run asks for the shape of the layer's box, background included.
+    const { width, height } = layer.geometry
+    return { campaignId: direction.campaignId, width: side(width), height: side(height) }
   } else {
     const template = TEMPLATES.find((t) => t.id === campaign.templateId)
     const slot = template?.slots.find((s) => s.id === input.slot)

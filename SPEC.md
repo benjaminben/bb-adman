@@ -60,6 +60,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/screens.md` | What each built screen offers, wording rules, choices made without a design sign-off |
 | `spec/screens-campaign.md` | The Phase 2 campaign screens and dialogs (built; S2-17 left): ComfyUI failures, the address and licence dialogs, import and drop, relink, package, the brief form, the slot view, the campaign grid and its tile |
 | `spec/screens-ai.md` | Phase 4 screens: the run dialog, the paid count, the picture section (generate, references, earlier options, cut-out), copy options, place text, brief reading, the activity panel, close warnings |
+| `spec/approvals.md`, `spec/approvals-service.md` | Approvals by link (D-095): the desktop side, its security rules and assumptions A-82 to A-100; the Cloudflare service (API, database, visitor pages, deploying) |
 | `spec/open-items.md` | Open questions, the improvised choices listed for review, what waits on the stakeholder |
 | `spec/assumptions.md` | The assumptions made meanwhile (OI, Q and A numbers), with how hard each is to undo |
 
@@ -75,3 +76,4 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/phases/review-leftovers.md` | Review findings not yet handled, sorted: fix now, fix with a later phase, test gaps |
 | `spec/phases/phase-03.md` to `phase-11.md` | One file per phase: goal, scope, exit criteria, work carried in, what is not designed yet |
 | `spec/phases/look-pack.md` | The look pack (D-094): background colour, text boxes, shades, starter layouts; slices LK-1 to LK-7 and their order beside Phase 4 |
+| `spec/phases/approvals.md` | Approvals by link (D-095): slices AP-1 to AP-13 and their order beside Phase 4 and the look pack |

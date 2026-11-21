@@ -207,6 +207,7 @@ On open, the app compares the file's `schema_version` with its own.
 | `0001_agent_changed_and_job_target` | `variant.agent_changed_at`; on `job`: `layer_id`, `slot`, `paid_calls` (default 0), `seen_at`, and index `job_target`. All added columns, no rebuild. | `migration-0001.test.ts`: runs `0000` and `0001` only; a file made at version 1 holding a variant and a job keeps both rows unchanged apart from the new fields |
 | `0002_job_started_by_and_error_reason` | On `job`: `started_by` (default `'user'`, CHECK `job_started_by`), `error_reason`. Two hand-written `ALTER TABLE` statements. | `migration-0002.test.ts`: three tags in order; `schema_version` 3; an old row gains `started_by: 'user'` and `error_reason: null`; `'robot'` is refused and `'agent'` accepted, in old and new files |
 | `0003_job_kind_cutout` | `job_kind` CHECK lists `cutout`. A table rebuild, as drizzle-kit writes it. | `migration-0003.test.ts` (`spec/ai-jobs.md`, "Job kinds") |
+| `0004_approvals` (Not built, AP-5) | New tables `approval_link`, `approval_variant`, `approval_signoff` and index `approval_signoff_campaign` (`spec/approvals.md`, "Local tables"). No rebuild. Gives `schema_version` 5 | `migration-0004.test.ts` (`spec/approvals.md`, "Local tables") |
 
 ## Package project
 

@@ -4,7 +4,7 @@ The workflows Adman can send to a ComfyUI server, how a run fills one, sizes, vi
 
 ## The workflow description (security class) [REQ: FR-258, FR-278]
 
-Built. `src/main/providers/comfyui/workflows/` (`types.ts`, `common.ts`, `moss.ts`, `h3.ts`, `flux3.ts`, `index.ts`, `offered.ts`, one `.json` graph per workflow); the window-visible part in `src/shared/schemas/queries/comfy.ts`.
+Built. `src/main/providers/comfyui/workflows/` (`types.ts`, `common.ts`, `moss.ts`, `h3.ts`, `flux3.ts`, `birefnet.ts`, `index.ts`, `offered.ts`, one `.json` graph per workflow); the window-visible part in `src/shared/schemas/queries/comfy.ts`.
 
 A workflow is a JSON graph file in the repository plus a typed description. Both are bundled by the build and are the only workflows the app can send. No function in the adapter takes a workflow, a node or a model file name from its caller.
 
@@ -13,9 +13,9 @@ A workflow is a JSON graph file in the repository plus a typed description. Both
 export const WORKFLOW_IDS = [
   'moss-text-to-image', 'moss-edit-references', 'moss-extend',
   'h3-text-to-video', 'h3-image-to-video', 'h3-reference-to-video',
-  'flux3-klein-edit-references',
+  'flux3-klein-edit-references', 'birefnet-cutout',
 ] as const
-type WorkflowJob = 'image' | 'image_refs' | 'extend' | 'video'
+type WorkflowJob = 'image' | 'image_refs' | 'extend' | 'video' | 'cutout'
 type WorkflowStatus = 'draft' | 'trial' | 'proven'
 type WorkflowNeeds = {
   minComfyVersion: string           // '0.0.0' means no minimum known
@@ -47,7 +47,7 @@ type ReferenceSlot = {
   dropWhenUnused: { nodes: string[]; inputs: Pointer[] } // removed when this slot gets no picture
 }
 type WorkflowSlots = {
-  prompt: Pointer; seed: Pointer[]; width?: Pointer; height?: Pointer
+  prompt?: Pointer; seed: Pointer[]; width?: Pointer; height?: Pointer   // no prompt for a cut-out
   references?: ReferenceSlot[]      // in order; its length is the most the workflow takes
   minReferences?: number            // fewest pictures it runs with; default 1
   alwaysDrop?: { nodes: string[]; inputs: Pointer[] }  // kept as data, removed on every fill; only with references
@@ -64,11 +64,11 @@ type WorkflowSpec = WorkflowInfo & {
 ```
 
 - **Status.** `draft`: a stand-in graph for the tests, never sent to any server and never compared by the check. `trial`: a real graph, not yet proven; offered only with dev tools on, to the user or an agent (`spec/agent-runs.md`). `proven`: passed the owner check (`spec/comfyui-trials.md`, "Trials and `proven`").
-- `WORKFLOWS` (`workflows/index.ts`) lists all seven; `NON_DRAFT_WORKFLOWS` is the one list the check and every run use.
+- `WORKFLOWS` (`workflows/index.ts`) lists all eight; `NON_DRAFT_WORKFLOWS` is the one list the check and every run use.
 - **Owners.** A graph's owner is its file in `src/main/providers/comfyui/workflows/`. `comfy-workflows/` holds hand-test copies (canvas copies in `ui/`) that no code reads. Where `comfy-workflows/REFERENCE-NOTES.md` and `comfy-workflows/README.md` differ, the notes win. How many pictures a workflow takes has one owner: the length of `slots.references`; the window holds no copy.
 - Stock workflows use ComfyUI core nodes only. `needs.addOns` is empty for every shipped workflow, and one test holds that.
 
-## The seven workflows
+## The eight workflows
 
 | ID | What it does | Job | Status on `main` | Min. ComfyUI | Model | Result node | Size rule in use | Limits |
 |----|--------------|-----|------------------|--------------|-------|-------------|------------------|--------|
@@ -80,7 +80,7 @@ type WorkflowSpec = WorkflowInfo & {
 | `h3-reference-to-video` | Video from reference pictures, no first frame | `video` | `trial` | 0.33.0 | MiniMax H3 (`ref2va`) | node 14 `SaveVideo` | first-run `{32, 330,000, 420,000}` | exactly 1 reference (model takes up to 9); at most 15 s |
 | `flux3-klein-edit-references` | Picture from a prompt and one reference picture; the result takes the reference's shape | `image_refs` | `trial` | none known (`'0.0.0'`) | FLUX 3 klein | node 15 `PreviewImage` | not set by the app: about 1 MP in the graph | exactly 1 reference |
 
-- An eighth, `birefnet-cutout` (job `cutout`, core nodes only, `trial`), is Not built (Phase 4, P4-9): `spec/ai-jobs.md`, "Cut-out".
+- The eighth, `birefnet-cutout` (job `cutout`, core nodes only, `birefnet.ts`), is built and `trial`; its one real-server run is still owed, because the server lacks the model file. Design: `spec/ai-jobs.md`, "Cut-out".
 - No workflow is `proven` on `main`; every `checkedWith` is `''`.
 - For `image_refs` the only non-draft workflow is Flux, so every ComfyUI reference-picture run uses it. Whether Flux or `moss-edit-references` serves references for good is OI-75 (open).
 - **Four kinds of video start** [REQ: FR-286]: three have a workflow. "First frame and references together" has none, because nothing public shows one run taking both (**U-20**). It is not offered and the app says so ("ComfyUI cannot make this kind of video yet."). It becomes its own workflow file if a trial finds a way.
@@ -163,7 +163,7 @@ Built. `fillWorkflow(spec, values)` in `comfyui/fill.ts` (pure); the values are 
 
 ```ts
 type FillValues = {
-  prompt: string
+  prompt?: string                // only for a workflow with a prompt slot
   width?: number; height?: number
   references?: string[]          // uploaded names as the server gave them, in slot order
   firstFrame?: string
@@ -214,7 +214,7 @@ Built for all three start pairs. `src/main/providers/comfyui/video.ts`, `video-p
 
 **The command** (`generation.startVideo`, `spec/api-commands.md`), before any job row. `startPair` turns `start`, `useReferences` and `referenceAssetIds` into one of three pairs: a prompt alone, one first-frame picture, or reference pictures; first frame plus references is not offered. Then `checkComfyVideo`: `comfy_address_needed`; `comfy_job_not_offered` ("ComfyUI cannot make this kind of video yet."); `video_too_long` with `maxMs` ("ComfyUI makes clips of at most {s} seconds with this workflow."); `too_many_references`. `comfy.getInfo` gives each workflow's `maxMs`, so the window can warn and send the most.
 
-**The job kind** reads each picture again with `AssetService.read`. First frame: `image = { bytes: deps.fitPicture(bytes, runSize), mime: 'image/png' }`, `references = []`. Reference: `image = null`, `references = [file as read]`, not fitted. `runSize` is the provider's `runSize(width, height, videoStart)`: for ComfyUI, `fitSize(variant size, workflowForRun('video', videoStart).size)`, the size the fill sends; without it, the variant's own size. `start` takes an optional `{ signal }`.
+**The job kind** reads each picture again with `readPictures` (`AssetService.read`), which gives a clean PNG (a WebP converted, then every picture re-encoded by `toPng`). First frame: `image = { bytes: deps.fitPicture(bytes, runSize), mime: 'image/png' }`, `references = []`. Reference: `image = null`, `references = [that clean PNG]`, not fitted. `runSize` is the provider's `runSize(width, height, videoStart)`: for ComfyUI, `fitSize(variant size, workflowForRun('video', videoStart).size)`, the size the fill sends; without it, the variant's own size. `start` takes an optional `{ signal }`.
 
 **`start`** picks `workflowForRun('video', { firstFrame: image !== null, references: references.length > 0 })`. A first frame whose PNG does not state exactly the run size throws before anything is sent. Then the check; each picture is uploaded as in a picture run (bytes only, under `uploadName(bytes)`), and the server's kept name fills `firstFrame` or `references`. A cancel before submission uploads and submits nothing more. Each run's origin, workflow and waits are kept in memory, so only a run this adapter started is asked about. `check` looks once, with the picture run's short-break, `server_stopped`, `too_long` (`VIDEO_WORK_MS`) and `lost_contact` rules (`spec/comfyui.md`). `fetchResult` fetches the `SaveVideo` result under `MAX_VIDEO_BYTES` and runs `checkMp4`; a refusal is `bad_result`. Cancel: `spec/cancel.md`.
 

@@ -130,3 +130,28 @@ describe('asset.addGenerated [SPEC 4.2 notes; FR-063, FR-068, FR-216]', () => {
     expect(row(A1)).toMatchObject({ width: 2, height: 2 })
   })
 })
+
+describe('asset.addGenerated for a job with no prompt [P4-11; spec/ai-jobs.md "Cut-out"]', () => {
+  it('writes gen_prompt null when the job request has no prompt', async () => {
+    const CUT = '01JD00000000000000000000J2'
+    insertQueued(
+      bus.project,
+      CUT,
+      {
+        kind: 'cutout',
+        campaignId: 'c1',
+        variantId: 'v1',
+        layerId: null,
+        slot: null,
+        provider: 'fake',
+        model: 'fake-cutout',
+        request: { sourceAssetId: 'src' },
+        startedBy: 'user',
+      },
+      'x',
+    )
+    await write(A1, greyPng(2, 2))
+    expect(await add([{ assetId: A1, ext: 'png' }], CUT)).toMatchObject({ ok: true })
+    expect(row(A1)).toMatchObject({ genRunId: CUT, genPrompt: null, genModel: 'fake-cutout' })
+  })
+})

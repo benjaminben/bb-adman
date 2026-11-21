@@ -157,3 +157,7 @@ Designs in `spec/ai-jobs.md` and `spec/screens-ai.md`; slices in `spec/phases/ph
 - **A-79. Starting font size.** **Assumption:** an estimate from letter counts (0.6 em, 0.7 in capitals, 1 em for CJK, lines 90 % full, smallest 0.02 × S); text it misjudges is flagged as overflow. *LK-4. Change later: easy.*
 - **A-80. Handles past the canvas edge.** **Assumption:** drawn over the backdrop; picking still starts on the canvas. *LK-5. Change later: easy.*
 - **A-81. Aligned text that does not fit.** **Assumption:** drawn past the top for bottom, both ways for middle; never moved back to the top. *LK-2. Change later: easy.*
+
+## Approvals by link
+
+- **A-82 to A-100** are kept in `spec/approvals.md`, "Assumptions", because this file is near its size limit.
