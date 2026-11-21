@@ -1,10 +1,10 @@
 // The visitor's routes (spec/approvals-service.md "Visitor routes and logic"). Every reply is
-// plain text or a 303. The sign-off, remove and picture routes are stubs answering "Not found."
-// until AP-4 gives them bodies; the gallery page itself comes in AP-16.
+// plain text, a 303 or a picture; the gallery page itself comes in AP-16.
 import type { Parts } from '../app'
 import type { Env } from '../env'
 import { enterLink, leaveLink } from './actions'
 import { notFound, redirect, refused, textReply } from './headers'
+import { pictureRoute } from './picture-route'
 import { removeSignoff, signOff } from './signoffs'
 
 export type VisitorContext = {
@@ -27,8 +27,6 @@ export type VisitorRoute = {
 // The fixed reply to an unexpected failure, with the plain text headers.
 const failed = (request: Request) =>
   textReply(request, 'Something went wrong. Try again later.', 500)
-
-const stub: VisitorHandler = async ({ request }) => notFound(request)
 
 // The logic is in actions.ts; these handlers only turn its results into replies. The slug is
 // the path's, already of the SLUG shape, and redirect checks it again.
@@ -87,7 +85,7 @@ export const VISITOR_ROUTES: VisitorRoute[] = [
     name: 'picture',
     method: 'GET',
     path: new RegExp(`^/l/${SLUG}/p/${VARIANT}/([0-9]{1,16})$`),
-    handler: stub,
+    handler: pictureRoute,
   },
   { name: 'robots', method: 'GET', path: /^\/robots\.txt$/, handler: robots },
 ]
