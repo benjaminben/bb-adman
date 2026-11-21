@@ -7,6 +7,7 @@ import type { ProjectRegistry } from '../db/project-registry'
 import { readWireRow } from '../db/rows'
 import { resolveRow } from './service'
 import type { AssetRow } from '../../shared/schemas/rows/asset'
+import { FILE_TYPES } from '../../shared/config/file-types'
 
 // The raw text is matched, not a parsed URL, so nothing is folded away ("/../", "%2F"):
 // both parts are ULIDs (SPEC 3.2) and nothing else may follow. ULIDs ignore letter case, and
@@ -19,6 +20,12 @@ const SERVED_KINDS: readonly string[] = ['image', 'video', 'font']
 // Sent with every answer: no type guessing, and a changed linked file is read again.
 const FIXED_HEADERS = { 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-store' }
 
+// SPEC 14 [1.30] U5: the row comes from a project file, so its type is sent only when
+// file-types.ts lists it for the row's kind.
+function knownMime(row: AssetRow): boolean {
+  return FILE_TYPES.some((t) => t.kind === row.kind && t.mime === row.mime)
+}
+
 export async function fileForAssetUrl(
   url: string,
   projects: ProjectRegistry,
@@ -30,7 +37,7 @@ export async function fileForAssetUrl(
   const project = projects.get(projectId)
   if (!project) return null
   const row = readWireRow(project.db, 'asset', { id: assetId }) as AssetRow | null
-  if (!row || !SERVED_KINDS.includes(row.kind)) return null
+  if (!row || !SERVED_KINDS.includes(row.kind) || !knownMime(row)) return null
   const file = await resolveRow(project, row)
   return file === 'missing' ? null : { file, mime: row.mime }
 }
