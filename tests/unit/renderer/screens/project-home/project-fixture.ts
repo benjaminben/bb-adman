@@ -18,6 +18,7 @@ export function campaign(id: string, name: string): CampaignSummary {
     jobRunning: false,
     resultUnseen: false,
     variantCount: 0,
+    cover: null,
   }
 }
 

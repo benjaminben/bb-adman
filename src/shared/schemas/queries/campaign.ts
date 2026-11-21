@@ -16,11 +16,14 @@ export const campaignScopedInput = projectScoped.extend({ campaignId: z.string()
 // SPEC 4.3 job marks [1.8]: counted over every job with the campaign's ID.
 export type JobMarks = { jobRunning: boolean; resultUnseen: boolean }
 
+// spec/editor.md, "Thumbnails on the screens": the master of the campaign's first direction.
+export type CampaignCover = { variantId: string; rev: number }
+
 export type CampaignSummary = Pick<
   CampaignRow,
   'id' | 'name' | 'region' | 'primaryLanguage' | 'createdBy' | 'createdAt'
 > &
-  JobMarks & { variantCount: number }
+  JobMarks & { variantCount: number; cover: CampaignCover | null }
 
 // SPEC 4.3 [1.42] the campaign.get reply. Phase 2 builds overflow, translationUnapproved and
 // missingFile; the other three are false until their phases.

@@ -23,7 +23,7 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
 
   it('lists each variant with its size, language, format, and the master first and chosen', async () => {
     await renderWith(view())
-    const master = await screen.findByRole('button', { name: /^1:1Master post/ })
+    const master = await screen.findByRole('button', { name: /^Master post/ })
     expect(master).toHaveAttribute('aria-pressed', 'true')
     expect(within(master).getByText('1080×1080 · en · image · master')).toBeInTheDocument()
     // Four buttons: each tile's own button, then its "+" ("Open {title} in a tab", P3-10).
@@ -38,7 +38,7 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
 
   it('reads job.list for the chosen variant, and again when another is chosen', async () => {
     const { fake } = await renderWith(view())
-    await userEvent.click(await screen.findByRole('button', { name: /^1:1German post/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /^German post/ }))
     await waitFor(() =>
       expect(fake.queries.filter((q) => q.name === 'job.list').map((q) => q.input)).toEqual([
         { projectId: P, variantId: 'V1' },
@@ -68,7 +68,7 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
 
   it('has no accessibility violations', async () => {
     await renderWith(view())
-    await screen.findByRole('button', { name: /^1:1Master post/ })
+    await screen.findByRole('button', { name: /^Master post/ })
     expect(await axeViolations()).toEqual([])
   })
 
@@ -76,14 +76,14 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
     await renderWith(view())
     const line = 'Runs and panels below are for: '
     expect(await screen.findByText(`${line}Master post · 1:1 · en`)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /^1:1German post/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^German post/ }))
     await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
     expect(await screen.findByText(`${line}German post · 1:1 · de`)).toBeInTheDocument()
   })
 
   it('opens a variant in the editor on a plain click, in place of the overview [P3-9, A-47]', async () => {
     const { fake } = await renderWith(view())
-    await userEvent.click(await screen.findByRole('button', { name: /^1:1German post/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /^German post/ }))
     await waitFor(() =>
       expect(fake.queries.filter((q) => q.name === 'variant.get').map((q) => q.input)).toEqual([
         { projectId: P, variantId: 'V2' },
@@ -93,7 +93,7 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
     expect(screen.queryByRole('list', { name: 'Variants' })).toBeNull()
     expect(screen.queryByRole('region', { name: 'Make pictures' })).toBeNull()
     await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
-    expect(screen.getByRole('button', { name: /^1:1German post/ })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /^German post/ })).toHaveAttribute(
       'aria-pressed',
       'true',
     )

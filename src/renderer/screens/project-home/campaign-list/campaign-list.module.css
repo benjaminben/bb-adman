@@ -1,0 +1,12 @@
+.cover {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--layer-thumb) * 2);
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+}

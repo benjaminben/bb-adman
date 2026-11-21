@@ -56,7 +56,7 @@ test('WebP references are taken and decoded to PNG by the hidden decoder window'
     library: 'reference',
     copy: false,
   })
-  expect(await windows(app)).toHaveLength(1)
+  expect((await windows(app)).filter((w) => w.url.endsWith('/webp.html'))).toEqual([])
 
   // The run is taken: both references were read, decoded and passed through toPng.
   const { jobId } = await command(page, 'generation.runImages', {

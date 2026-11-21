@@ -103,6 +103,7 @@ describe('project.get [SPEC 4.3]', () => {
         jobRunning: true,
         resultUnseen: false,
         variantCount: 1,
+        cover: { variantId: expect.any(String), rev: expect.any(Number) },
       },
     ])
     expect(result.missingAssetCount).toBe(2)

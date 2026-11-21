@@ -6,6 +6,7 @@ import type { QueryFn } from './types'
 import { readWireRows } from '@/main/db/rows'
 import { readMeta } from '@/main/db/meta'
 import { jobMarks, openFor } from './campaign-reads'
+import { campaignCover } from './campaign'
 import { projectGetInput, type ProjectGet } from '@/shared/schemas/queries/campaign'
 import type { CampaignRow } from '@/shared/schemas/rows/campaign'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
@@ -40,6 +41,7 @@ export function projectGet(deps: Pick<CoreDeps, 'projects' | 'assets' | 'log'>):
         createdAt: c.createdAt,
         ...jobMarks(project.db, 'campaign_id', c.id),
         variantCount: countVariants.get(c.id)?.n ?? 0,
+        cover: campaignCover(project.db, c.id),
       }))
     const missingAssetCount = (await deps.assets.missingAssetIds(project)).length
     return { meta, subjects, campaigns, missingAssetCount }

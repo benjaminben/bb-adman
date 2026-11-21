@@ -73,7 +73,7 @@ function ProjectPage(props: Props) {
       ) : (
         <>
           <Section id={`campaigns-${projectId}`} title="Campaigns">
-            <CampaignList campaigns={data.campaigns} onOpen={open} />
+            <CampaignList projectId={projectId} campaigns={data.campaigns} onOpen={open} />
           </Section>
           <Section id={`start-${projectId}`} title="Start a campaign">
             <BriefLoad

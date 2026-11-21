@@ -40,6 +40,7 @@ const summary = (c: CampaignSummary) => ({
   createdAt: c.createdAt,
   ...marks(c),
   variantCount: c.variantCount,
+  cover: c.cover ? { variantId: c.cover.variantId, rev: c.cover.rev } : null,
 })
 
 export const projectFields: ReplyPicker = (data) => {
