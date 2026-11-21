@@ -55,7 +55,7 @@ export const translationExportSheetInput = projectScoped
   .extend({ campaignId: id, filePath: z.string().min(1).max(4096) })
   .strict()
 export type TranslationExportSheetInput = z.infer<typeof translationExportSheetInput>
-export type TranslationExportSheetReply = { path: string; rowCount: number }
+export type TranslationExportSheetReply = { fileName: string; rowCount: number }
 
 // translation.write (A-155): system command, sent by the translation job with its cleaned
 // answer (A-168). The layers come from the job's own request, never from this input.

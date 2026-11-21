@@ -4,6 +4,7 @@ import path from 'node:path'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { BrowserWindow } from 'electron'
 import { pickSaveFileInput } from '@/shared/schemas/queries/dialog'
+import { forgetSheetPath, takeSheetPath } from '@/main/translation/chosen-sheet-path'
 
 const showSaveDialog = vi.fn()
 const showOpenDialog = vi.fn()
@@ -93,5 +94,24 @@ describe('dialog.pickSaveFile reply [Phase 6 section 1, P6-8]', () => {
     } finally {
       fs.rmSync(root, { recursive: true, force: true })
     }
+  })
+})
+
+describe('dialog.pickSaveFile remembers the chosen path [P6-7b]', () => {
+  const PICK = { purpose: 'translation-sheet' }
+
+  it('remembers the path it gave, for one use', async () => {
+    forgetSheetPath()
+    await runDialogQuery('dialog.pickSaveFile', PICK)
+    expect(takeSheetPath('/w/sheet.csv')).toBe(true)
+    expect(takeSheetPath('/w/sheet.csv')).toBe(false)
+  })
+
+  it('remembers nothing when cancelled, and keeps the earlier choice', async () => {
+    forgetSheetPath()
+    await runDialogQuery('dialog.pickSaveFile', PICK)
+    showSaveDialog.mockResolvedValue({ canceled: true, filePath: '' })
+    await runDialogQuery('dialog.pickSaveFile', PICK)
+    expect(takeSheetPath('/w/sheet.csv')).toBe(true)
   })
 })

@@ -1,17 +1,26 @@
 // P6-7 (spec/phases/phase-06.md, design addition 4; A-164): translation.exportSheet writes the
 // sheet to a path from outside. The path is checked before anything is written, the write goes
 // to {path}.partial and is renamed over the target, and nothing is left behind on a failure.
+// P6-7b: only the path the save dialog last gave is written, once.
 import fs from 'node:fs'
 import path from 'node:path'
-import { describe, it, expect, afterEach, vi } from 'vitest'
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest'
+
+const showSaveDialog = vi.fn()
+vi.mock('electron', () => ({ dialog: { showSaveDialog } }))
+
+const { runDialogQuery } = await import('@/main/windows/dialogs')
+const PICK = { purpose: 'translation-sheet' }
 import { data } from '../core-fixture'
 import { makeRowsSetup, type RowsSetup } from './rows-fixture'
 import { assetsDirOf } from '@/main/assets/service'
 import { AGENT_POLICY, denialMessage } from '@/main/commands/agent-policy'
+import { forgetSheetPath } from '@/main/translation/chosen-sheet-path'
 import { sheetCsv } from '@/shared/translation/sheet'
 import type { TranslationForCampaign } from '@/shared/schemas/queries/translation'
 
 let s: RowsSetup | undefined
+beforeEach(() => forgetSheetPath())
 afterEach(() => {
   vi.restoreAllMocks()
   s?.fx.cleanup()
@@ -25,13 +34,25 @@ async function setup() {
   fs.mkdirSync(out)
   const assets = assetsDirOf(t.fx.core.deps.projects.requireOpen(t.projectId))
   fs.mkdirSync(assets, { recursive: true })
-  const exportTo = (filePath: string, actor: 'user' | 'agent' = 'user') =>
+  const send = (filePath: string, actor: 'user' | 'agent' = 'user') =>
     t.fx.core.bus.execute(
       'translation.exportSheet',
       { projectId: t.projectId, campaignId: t.campaignId, filePath },
       { actor },
     )
-  return { ...t, out, assets, exportTo }
+  // The path chosen in the save dialog first, as the window does, then sent.
+  const exportTo = async (filePath: string, actor: 'user' | 'agent' = 'user') => {
+    await choose(filePath)
+    return send(filePath, actor)
+  }
+  return { ...t, out, assets, send, exportTo }
+}
+
+// The save dialog answers filePath, through the real dialog query.
+async function choose(filePath: string) {
+  showSaveDialog.mockResolvedValueOnce({ canceled: false, filePath })
+  const picked = await runDialogQuery('dialog.pickSaveFile', PICK)
+  expect(picked).toEqual({ ok: true, data: { path: filePath } })
 }
 
 // Every file and folder under a folder, so a refusal can show it left nothing behind.
@@ -50,9 +71,9 @@ describe('translation.exportSheet [P6-7]', () => {
     const t = await setup()
     const before = t.fx.events.length
     const file = path.join(t.out, 'Sheet.CSV')
-    const reply = data<{ path: string; rowCount: number }>(await t.exportTo(file))
+    const reply = data<{ fileName: string; rowCount: number }>(await t.exportTo(file))
     expect(fs.readFileSync(file, 'utf8')).toBe(await expectedSheet(t))
-    expect(reply).toEqual({ path: 'Sheet.CSV', rowCount: 3 })
+    expect(reply).toEqual({ fileName: 'Sheet.CSV', rowCount: 3 })
     expect(listing(t.out)).toEqual(['Sheet.CSV'])
     expect(t.fx.events.slice(before)).toEqual([])
     expect(t.fx.readLogs()).not.toContain(t.out)
@@ -185,11 +206,68 @@ describe('translation.exportSheet [P6-7]', () => {
   it('refuses a campaign not in the project before writing', async () => {
     const t = await setup()
     const filePath = path.join(t.out, 'sheet.csv')
+    await choose(filePath)
     const input = { projectId: t.projectId, campaignId: 'C-none', filePath }
     expect(await t.fx.user('translation.exportSheet', input)).toMatchObject({
       ok: false,
       error: { code: 'NOT_FOUND' },
     })
     expect(listing(t.out)).toEqual([])
+  })
+})
+
+describe('translation.exportSheet writes only the chosen path [P6-7b]', () => {
+  const NOT_CHOSEN = {
+    ok: false,
+    error: {
+      code: 'RULE_VIOLATION',
+      message: 'Choose where to save the sheet first.',
+      details: { reason: 'path_not_chosen' },
+    },
+  }
+
+  it('refuses a path never chosen, before any file-system call, and writes nothing', async () => {
+    const t = await setup()
+    const file = path.join(t.out, 'sheet.csv')
+    fs.writeFileSync(file, 'old')
+    const stat = vi.spyOn(fs.promises, 'stat')
+    const lstat = vi.spyOn(fs.promises, 'lstat')
+    expect(await t.send(file)).toEqual(NOT_CHOSEN)
+    expect(stat).not.toHaveBeenCalled()
+    expect(lstat).not.toHaveBeenCalled()
+    expect(fs.readFileSync(file, 'utf8')).toBe('old')
+    expect(listing(t.out)).toEqual(['sheet.csv'])
+  })
+
+  it('writes the chosen path once and refuses it the second time', async () => {
+    const t = await setup()
+    const file = path.join(t.out, 'sheet.csv')
+    expect(await t.exportTo(file)).toMatchObject({ ok: true })
+    fs.writeFileSync(file, 'kept')
+    expect(await t.send(file)).toEqual(NOT_CHOSEN)
+    expect(fs.readFileSync(file, 'utf8')).toBe('kept')
+  })
+
+  it('lets a newer choice replace an older one', async () => {
+    const t = await setup()
+    const older = path.join(t.out, 'older.csv')
+    const newer = path.join(t.out, 'newer.csv')
+    await choose(older)
+    await choose(newer)
+    expect(await t.send(older)).toEqual(NOT_CHOSEN)
+    expect(await t.send(newer)).toMatchObject({ ok: true })
+    expect(listing(t.out)).toEqual(['newer.csv'])
+  })
+
+  it('remembers nothing when the dialog is cancelled', async () => {
+    const t = await setup()
+    const file = path.join(t.out, 'sheet.csv')
+    await choose(file)
+    showSaveDialog.mockResolvedValueOnce({ canceled: true, filePath: '' })
+    expect(await runDialogQuery('dialog.pickSaveFile', PICK)).toEqual({
+      ok: true,
+      data: { path: null },
+    })
+    expect(await t.send(file)).toMatchObject({ ok: true })
   })
 })
