@@ -16,6 +16,7 @@ export function workflow(overrides: Partial<WorkflowInfo> = {}): WorkflowInfo {
     size: { multiple: 16, minPixels: 65536, maxPixels: 4194304 },
     licence: { name: 'Apache-2.0', url: 'https://example.com/licence', commercialNote: null },
     leavesOnServer: [],
+    offered: true,
     ...overrides,
   }
 }

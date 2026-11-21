@@ -13,3 +13,7 @@
   background: var(--color-bg);
   border-radius: var(--radius);
 }
+/* The title is the first child: no browser heading margin above it. */
+.content > :first-child {
+  margin: 0 0 var(--space-3);
+}

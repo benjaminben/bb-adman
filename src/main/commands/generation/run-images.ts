@@ -9,6 +9,7 @@ import type { ProjectHandle } from '@/main/db/project-file'
 import { readWireRow } from '@/main/db/rows'
 import { requireProviderKeys } from '@/main/providers/require-keys'
 import { checkComfyRun } from './comfy-checks'
+import { checkLicence } from './licence-check'
 import { starterTemplate } from '@/shared/templates/starter'
 import { promptToSend } from '@/shared/generation/prompt'
 import {
@@ -103,9 +104,12 @@ export function generationRunImages(deps: Deps) {
       const provider = pictureProvider(deps, input.provider)
       target(ctx.project, input)
       requireProviderKeys(deps, provider.id, 'generate pictures')
-      // CU-4: the ComfyUI checks, before any picture is read or any job row is made.
-      if (provider.id === 'comfyui') checkComfyRun(deps, ctx, input.referenceAssetIds.length)
+      // CU-4: the ComfyUI checks, before any picture is read or any job row is made. S2-4:
+      // the licence check comes last, so the user confirms only a run that can start.
+      const spec =
+        provider.id === 'comfyui' ? checkComfyRun(deps, ctx, input.referenceAssetIds.length) : null
       for (const id of input.referenceAssetIds) await deps.assets.read(ctx.project, id)
+      if (spec) checkLicence(deps, ctx, spec, input.licenceConfirmed)
     },
     run(ctx, input) {
       const { jobId, campaignId } = enqueue(deps, ctx, input)
