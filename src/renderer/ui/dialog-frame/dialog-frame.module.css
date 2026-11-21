@@ -13,7 +13,3 @@
   background: var(--color-bg);
   border-radius: var(--radius);
 }
-/* The title sits at the top of the padding, with no browser heading margin above it. */
-.title {
-  margin: 0 0 var(--space-3);
-}
