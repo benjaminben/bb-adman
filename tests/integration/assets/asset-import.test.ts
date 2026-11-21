@@ -168,3 +168,31 @@ describe('asset.import when the project changes between prepare and run [SPEC 3.
     expect(run).toThrow(expect.objectContaining({ code: 'RULE_VIOLATION' }))
   })
 })
+
+// A file with no read permission. Where the platform cannot take the permission away
+// (Windows, or a test run as root), there is nothing to test.
+const canLockFiles = process.platform !== 'win32' && process.getuid?.() !== 0
+
+describe('asset.import, a file there but not readable [SPEC 14, Slice A rulings point 6, A2-4]', () => {
+  it.runIf(canLockFiles)(
+    'refuses with file_not_readable, naming the file and not its path',
+    async () => {
+      const good = put('good.png', PNG)
+      const locked = put('locked.png', PNG.subarray(0, 20))
+      fs.chmodSync(locked, 0o000)
+      try {
+        const error = await expectRefused(
+          bus,
+          () => importIt({ paths: [good, locked], copy: true }),
+          'RULE_VIOLATION',
+          'file_not_readable',
+        )
+        expect(error.message).toBe('locked.png could not be read.')
+        expect(JSON.stringify(error)).not.toContain(dir)
+        expect(fs.existsSync(assetsDir())).toBe(false)
+      } finally {
+        fs.chmodSync(locked, 0o600)
+      }
+    },
+  )
+})

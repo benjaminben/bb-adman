@@ -51,25 +51,35 @@ function pixelSize(type: FileType, head: Uint8Array): { width: number; height: n
   }
 }
 
-async function statFile(file: string, fileName: string): Promise<fs.Stats> {
-  if (!path.isAbsolute(file)) {
-    throw new AppError('INVALID_INPUT', 'Choose each file by its full path.')
+// SPEC 14, Slice A rulings point 6: a file that is not there is NOT_FOUND; any other error
+// from stat, open, read or hashing is file_not_readable. Neither message holds the path.
+function fileError(e: unknown, fileName: string): unknown {
+  if (e instanceof AppError) return e
+  const code = (e as NodeJS.ErrnoException | null)?.code
+  if (code === 'ENOENT' || code === 'ENOTDIR') {
+    return new AppError('NOT_FOUND', `${fileName} was not found.`)
   }
-  const stat = await fs.promises.stat(file).catch((e: NodeJS.ErrnoException) => {
-    if (e.code === 'ENOENT' || e.code === 'ENOTDIR') {
-      throw new AppError('NOT_FOUND', `${fileName} was not found.`)
-    }
-    throw e
+  return new AppError('RULE_VIOLATION', `${fileName} could not be read.`, {
+    reason: 'file_not_readable',
   })
-  if (!stat.isFile()) throw new AppError('INVALID_INPUT', 'Choose files, not a folder.')
-  return stat
 }
 
 // The file's facts, or a refusal whose message names the file and never its path.
 export async function inspectFile(given: string): Promise<InspectedFile> {
   const fileName = path.basename(given)
-  const stat = await statFile(given, fileName)
-  const file = path.resolve(given)
+  if (!path.isAbsolute(given)) {
+    throw new AppError('INVALID_INPUT', 'Choose each file by its full path.')
+  }
+  try {
+    return await readFacts(path.resolve(given), fileName)
+  } catch (e) {
+    throw fileError(e, fileName)
+  }
+}
+
+async function readFacts(file: string, fileName: string): Promise<InspectedFile> {
+  const stat = await fs.promises.stat(file)
+  if (!stat.isFile()) throw new AppError('INVALID_INPUT', 'Choose files, not a folder.')
   const head = await readHead(file, Math.min(stat.size, HEADER_BYTES))
   const type = sniffType(fileName, head.subarray(0, SNIFF_BYTES))
   if (!type) throw new AppError('INVALID_INPUT', `${fileName} is not a file type the app accepts.`)
