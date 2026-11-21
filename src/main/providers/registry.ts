@@ -37,7 +37,8 @@ const PROVIDERS: ProviderInfo[] = [
     id: 'comfyui',
     label: 'ComfyUI',
     jobs: ['image'],
-    available: false,
+    // [1.35] CU-4: this build has the picture adapter.
+    available: true,
     secrets: [],
     defaultModels: {},
     local: true,

@@ -12,7 +12,7 @@ describe('app.getState [SPEC 4.3, 6]', () => {
     expect(s.providers.map((p) => [p.id, p.available])).toEqual([
       ['gemini', true],
       ['fal-seedance', true],
-      ['comfyui', false],
+      ['comfyui', true],
       ['firefly', false],
       ['s3', true],
       ['dropbox', true],
