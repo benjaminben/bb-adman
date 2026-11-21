@@ -7,6 +7,8 @@ import type { CoreDeps } from '../../core-deps'
 import { requireProviderKeys } from '../../providers/require-keys'
 import { requireJob, wrongState } from './find-job'
 import { jobRetryInput, type JobStarted } from '../../../shared/schemas/commands/job'
+import { imageJobRequest } from '../../../shared/schemas/jobs/image-generation'
+import { checkComfyRun } from '../generation/comfy-checks'
 
 type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools'>
 
@@ -28,6 +30,11 @@ export function jobRetry(deps: Deps) {
         throw wrongState('Only a job that failed or was cancelled can be tried again.')
       }
       requireProviderKeys(deps, old.provider, 'try this again')
+      // [1.53] G-2: a ComfyUI picture row passes the same checks as generation.runImages.
+      if (old.provider === 'comfyui' && old.kind === 'image_generation') {
+        const { referenceAssetIds } = imageJobRequest.parse(old.request)
+        checkComfyRun(deps, ctx, referenceAssetIds.length)
+      }
       checkVideoRetry(deps, ctx, old)
       const jobId = deps.jobs.enqueue(ctx, {
         kind: old.kind,

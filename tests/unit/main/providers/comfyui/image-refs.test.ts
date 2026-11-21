@@ -56,7 +56,15 @@ describe('a picture from a prompt and one reference, Flux 3 klein [SPEC 6.10.6, 
   it('stores the picture the server made, with the workflow model', async () => {
     const s = await fluxStandIn()
     const [result] = await run(s)
-    expect(result).toEqual({ bytes: RESULT_PNG, mime: 'image/png', model: flux.model.mainFile })
+    expect(result).toEqual({
+      bytes: RESULT_PNG,
+      mime: 'image/png',
+      model: flux.model.mainFile,
+      details: {
+        models: flux.needs.models.map((m) => m.file),
+        workflow: { id: flux.id, version: flux.version },
+      },
+    })
   })
 
   it('sends exactly one upload: the reference bytes under adman-{16 hex}.png (security class)', async () => {

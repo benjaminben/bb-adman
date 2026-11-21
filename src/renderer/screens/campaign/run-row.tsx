@@ -39,6 +39,8 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
   const command = useApp((s) => s.command)
   const providers = useApp((s) => s.app?.providers ?? EMPTY)
   const [asking, setAsking] = useState(false)
+  // SPEC 14 1.48 TL-2: true from the send until any reply, so a second click starts nothing.
+  const [sending, setSending] = useState(false)
   const provider = providers.find((p) => p.id === row.provider)
   const label = provider?.label ?? row.provider ?? 'The provider'
   const active = row.status === 'queued' || row.status === 'running'
@@ -47,8 +49,13 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
 
   async function retry() {
     setAsking(false)
-    const result = await command('job.retry', { projectId, jobId: row.id })
-    if (result.ok) store.getState().track(result.data)
+    setSending(true)
+    try {
+      const result = await command('job.retry', { projectId, jobId: row.id })
+      if (result.ok) store.getState().track(result.data)
+    } finally {
+      setSending(false)
+    }
   }
 
   // An unknown provider is treated as paid, so a retry never skips the confirm.
@@ -68,7 +75,11 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
           </button>
         )}
         {ended && !asking && (
-          <button type="button" onClick={() => (paid ? setAsking(true) : void retry())}>
+          <button
+            type="button"
+            disabled={sending}
+            onClick={() => (paid ? setAsking(true) : void retry())}
+          >
             Retry
           </button>
         )}

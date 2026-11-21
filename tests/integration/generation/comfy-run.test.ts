@@ -80,6 +80,21 @@ describe('generation.runImages with comfyui against the stand-in [SPEC 14 CU-4]'
       prompt: promptToSend('A bottle on a rock'),
       kind: 'image_generation',
     })
+    // [1.53] G-1: every model file the shipped workflow names, and its id and version.
+    const details = generationDetailsOf(stored)
+    expect(details.models).toEqual(moss.needs.models.map((m) => m.file))
+    expect(details.workflow).toEqual({ id: moss.id, version: moss.version })
+    expect(Object.keys(details)).toEqual([
+      'app',
+      'appVersion',
+      'provider',
+      'model',
+      'prompt',
+      'kind',
+      'createdAt',
+      'models',
+      'workflow',
+    ])
     // [1.46 B] The real picture's size (RESULT_PNG is 4 by 4), not the variant's 1080 by 1350.
     expect(f.asset(assetId ?? '')).toMatchObject({ width: 4, height: 4 })
   }, 20_000)

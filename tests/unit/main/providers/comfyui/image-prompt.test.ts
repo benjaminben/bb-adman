@@ -56,7 +56,15 @@ describe('a picture from a prompt alone, MOSS-Image [SPEC 6.10.6, 14 1.41]', () 
     const s = await mossStandIn()
     finishRun(s, PROMPT_ID, historyEntry(moss.slots.outputNode))
     const [result] = await generate(s)
-    expect(result).toEqual({ bytes: RESULT_PNG, mime: 'image/png', model: moss.model.mainFile })
+    expect(result).toEqual({
+      bytes: RESULT_PNG,
+      mime: 'image/png',
+      model: moss.model.mainFile,
+      details: {
+        models: moss.needs.models.map((m) => m.file),
+        workflow: { id: moss.id, version: moss.version },
+      },
+    })
     expect(requestLines(s)).not.toContain('POST /upload/image')
   })
 
