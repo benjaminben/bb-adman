@@ -54,9 +54,54 @@ export type LiveStandIn = {
 // `greet`: frames sent on each live socket right after the handshake.
 export type LiveOptions = { secure?: boolean; redirectTo?: string; greet?: LiveFrame[] }
 
-export async function startLiveStandIn(options: LiveOptions = {}): Promise<LiveStandIn> {
+// The live half alone, to hang on any HTTP server's 'upgrade' event (the comfy stand-in too).
+export type LiveSide = Pick<LiveStandIn, 'upgrades' | 'open' | 'send'> & {
+  onUpgrade(req: http.IncomingMessage, socket: Socket): void
+  closeSockets(): void
+}
+
+export function liveSide(options: LiveOptions = {}): LiveSide {
   const upgrades: LiveStandIn['upgrades'] = []
   const sockets = new Set<Socket>()
+  return {
+    upgrades,
+    open: () => sockets.size,
+    send: (...frames) => {
+      for (const socket of sockets) for (const frame of frames) socket.write(encode(frame))
+    },
+    closeSockets: () => {
+      for (const socket of sockets) socket.destroy()
+    },
+    onUpgrade(req, socket) {
+      upgrades.push({ path: req.url ?? '', headers: req.headers })
+      socket.on('error', () => undefined)
+      if (options.redirectTo) {
+        socket.end(
+          `HTTP/1.1 302 Found\r\nLocation: ${options.redirectTo}\r\nContent-Length: 0\r\n\r\n`,
+        )
+        return
+      }
+      const key = String(req.headers['sec-websocket-key'])
+      const accept = crypto
+        .createHash('sha1')
+        .update(key + GUID)
+        .digest('base64')
+      socket.write(
+        'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n' +
+          `Sec-WebSocket-Accept: ${accept}\r\n\r\n`,
+      )
+      sockets.add(socket)
+      // What the client sends is read and dropped, so its end is seen and the socket closes.
+      socket.on('end', () => socket.destroy())
+      socket.on('close', () => sockets.delete(socket))
+      socket.resume()
+      for (const frame of options.greet ?? []) socket.write(encode(frame))
+    },
+  }
+}
+
+export async function startLiveStandIn(options: LiveOptions = {}): Promise<LiveStandIn> {
+  const live = liveSide(options)
   const posted: string[] = []
   let connections = 0
   const onRequest = (req: http.IncomingMessage, res: http.ServerResponse) => {
@@ -72,46 +117,20 @@ export async function startLiveStandIn(options: LiveOptions = {}): Promise<LiveS
     ? https.createServer(certificateOnce(), onRequest)
     : http.createServer(onRequest)
   server.on('connection', () => (connections += 1))
-  server.on('upgrade', (req: http.IncomingMessage, socket: Socket) => {
-    upgrades.push({ path: req.url ?? '', headers: req.headers })
-    socket.on('error', () => undefined)
-    if (options.redirectTo) {
-      socket.end(
-        `HTTP/1.1 302 Found\r\nLocation: ${options.redirectTo}\r\nContent-Length: 0\r\n\r\n`,
-      )
-      return
-    }
-    const key = String(req.headers['sec-websocket-key'])
-    const accept = crypto
-      .createHash('sha1')
-      .update(key + GUID)
-      .digest('base64')
-    socket.write(
-      'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n' +
-        `Sec-WebSocket-Accept: ${accept}\r\n\r\n`,
-    )
-    sockets.add(socket)
-    // What the client sends is read and dropped, so its end is seen and the socket closes.
-    socket.on('end', () => socket.destroy())
-    socket.on('close', () => sockets.delete(socket))
-    socket.resume()
-    for (const frame of options.greet ?? []) socket.write(encode(frame))
-  })
+  server.on('upgrade', (req: http.IncomingMessage, socket: Socket) => live.onUpgrade(req, socket))
   await new Promise<void>((done) => server.listen(0, '127.0.0.1', done))
   const { port } = server.address() as AddressInfo
   return {
     origin: `${options.secure ? 'https' : 'http'}://127.0.0.1:${port}`,
     port,
-    upgrades,
+    upgrades: live.upgrades,
     posted,
     connections: () => connections,
-    open: () => sockets.size,
-    send: (...frames) => {
-      for (const socket of sockets) for (const frame of frames) socket.write(encode(frame))
-    },
+    open: live.open,
+    send: live.send,
     close: () =>
       new Promise<void>((done) => {
-        for (const socket of sockets) socket.destroy()
+        live.closeSockets()
         server.closeAllConnections()
         server.close(() => done())
       }),

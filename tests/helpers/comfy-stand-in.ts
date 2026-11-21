@@ -31,6 +31,9 @@ export type StandIn = {
   // `route` is "METHOD /path", the path without its query, or "*" for every route not
   // named on its own.
   reply(route: string, reply: Reply): void
+  // CU-9: hands every upgrade request (the live connection) to this function from now on.
+  // Until it is called, the server has no upgrade listener, as before.
+  upgrade(handler: (req: http.IncomingMessage, socket: Socket) => void): void
   close(): Promise<void>
 }
 
@@ -123,6 +126,7 @@ export async function startComfyStandIn(): Promise<StandIn> {
     port,
     seen,
     reply: (route, reply) => replies.set(route, reply),
+    upgrade: (handler) => server.on('upgrade', handler),
     close: () =>
       new Promise<void>((done) => {
         server.closeAllConnections()
