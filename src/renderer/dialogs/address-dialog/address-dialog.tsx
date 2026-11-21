@@ -3,8 +3,9 @@
 // and reports back, so the app store sends the run again; Cancel sends nothing more.
 import { useRef, useState, type FormEvent } from 'react'
 import { useApp } from '@/renderer/app/app-context'
-import { DialogFrame } from '@/renderer/ui/dialog-frame'
+import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
 import { COMFY_PRIVACY } from '@/renderer/ui/comfy-privacy'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './address-dialog.module.css'
 
 const HINT_ID = 'address-dialog-hint'
@@ -47,7 +48,7 @@ export function AddressDialog() {
       closable={!saving}
     >
       <form className={styles.form} onSubmit={(e) => void save(e)}>
-        <div className={styles.field}>
+        <div className={layout.field}>
           <label htmlFor="address-dialog-field">Server address</label>
           <input
             id="address-dialog-field"
@@ -63,19 +64,23 @@ export function AddressDialog() {
             For example http://127.0.0.1:8188
           </p>
           {refusal !== null && (
-            <p id={REFUSAL_ID} role="alert" className={styles.alert}>
+            <p
+              id={REFUSAL_ID}
+              role="alert"
+              className={`${layout.notice} ${layout.danger} ${styles.alert}`}
+            >
               {refusal}
             </p>
           )}
         </div>
-        <div className={styles.actions}>
+        <DialogFoot>
           <button type="button" disabled={saving} onClick={() => finish(false)}>
             Cancel
           </button>
-          <button type="submit" className={styles.primary} disabled={saving}>
+          <button type="submit" className={layout.primary} disabled={saving}>
             {saving ? 'Saving…' : 'Save and continue'}
           </button>
-        </div>
+        </DialogFoot>
       </form>
     </DialogFrame>
   )
