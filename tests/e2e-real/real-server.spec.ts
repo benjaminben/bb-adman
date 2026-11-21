@@ -93,7 +93,10 @@ test('ComfyUI Flux: a picture from one product reference [ADMAN_E2E_FLUX=1]', as
   test.setTimeout(RUN_CASE_MS)
   await comfyCampaign(screens.FLUX_LABEL)
   await real.addAndTickReference(app, box, page)
-  await guardedStep('Generate', () => screens.generate(page))
+  await guardedStep('Generate', async () => {
+    await screens.generate(page)
+    await screens.confirmLicence(page)
+  })
   await real.newestRunDone(page, RUN_WAIT_MS)
 })
 
@@ -115,9 +118,10 @@ test('ComfyUI video: a 2-second clip from a prompt [ADMAN_E2E_VIDEO=1]', async (
   test.skip(!videoOn, 'Runs only with ADMAN_E2E_VIDEO=1: it makes a video run on the server.')
   test.setTimeout(VIDEO_CASE_MS)
   await comfyCampaign(screens.H3_TEXT_LABEL)
-  await guardedStep('Start a 2-second video from the test prompt', () =>
-    screens.startVideo(page, 2),
-  )
+  await guardedStep('Start a 2-second video from the test prompt', async () => {
+    await screens.startVideo(page, 2)
+    await screens.confirmLicence(page)
+  })
   await real.newestClipDone(page, VIDEO_WAIT_MS)
 })
 
@@ -130,9 +134,10 @@ test('ComfyUI video: a 2-second clip from a first-frame picture [ADMAN_E2E_VIDEO
   test.setTimeout(VIDEO_CASE_MS)
   await comfyCampaign(video.H3_FRAME_LABEL)
   await real.chooseVideoPicture(app, box, page, video.FIRST_FRAME_START)
-  await guardedStep('Start a 2-second video from the test prompt', () =>
-    screens.startVideo(page, 2),
-  )
+  await guardedStep('Start a 2-second video from the test prompt', async () => {
+    await screens.startVideo(page, 2)
+    await screens.confirmLicence(page)
+  })
   await real.newestClipDone(page, VIDEO_WAIT_MS)
 })
 
@@ -142,9 +147,10 @@ test('ComfyUI video: a 2-second clip from a reference picture [ADMAN_E2E_VIDEO_R
   test.setTimeout(VIDEO_CASE_MS)
   await comfyCampaign(video.H3_REFERENCE_LABEL)
   await real.chooseVideoPicture(app, box, page, video.REFERENCE_START)
-  await guardedStep('Start a 2-second video from the test prompt', () =>
-    screens.startVideo(page, 2),
-  )
+  await guardedStep('Start a 2-second video from the test prompt', async () => {
+    await screens.startVideo(page, 2)
+    await screens.confirmLicence(page)
+  })
   await real.newestClipDone(page, VIDEO_WAIT_MS)
 })
 

@@ -78,7 +78,6 @@ const REFUSALS = [
     'picture_not_usable',
   ],
   ['RULE_VIOLATION', 'ComfyUI makes clips of at most 30 seconds.', 'video_too_long'],
-  ['RULE_VIOLATION', 'Add the ComfyUI server address in Settings.', 'comfy_address_needed'],
 ] as const
 
 async function refusedStart(code: ErrorCode, message: string, why: string | undefined) {
