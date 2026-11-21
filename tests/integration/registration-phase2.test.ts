@@ -26,7 +26,6 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
       briefCommands,
       campaignCommands,
       devCommands,
-      generationCommands,
       ruleSetCommands,
       storageCommands,
       subjectCommands,
@@ -78,5 +77,12 @@ describe('the job domain is registered [SPEC 14, 1.38 Y12]', () => {
     f = makeFixture()
     const deps = f.core.deps
     expect(Object.keys(jobQueries(deps))).toEqual(['job.list'])
+  })
+})
+
+describe('the generation domain is registered [SPEC 14 slice H]', () => {
+  it('gives generation.runImages only', () => {
+    f = makeFixture()
+    expect(generationCommands(f.core.deps).map((h) => h.name)).toEqual(['generation.runImages'])
   })
 })
