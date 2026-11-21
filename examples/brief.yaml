@@ -1,0 +1,28 @@
+# An example brief with two subjects (SPEC 10.2). Open it with "Load a brief".
+campaignName: Summer Splash
+region: US
+audience: Adults 21 to 35 who spend summer weekends outdoors
+message: Cool down with every sip
+callToAction: Find it near you
+tone: Bright and playful
+subjects:
+  - id: citrus-can
+    name: Citrus can
+    description: A slim aluminium can with a lime and lemon label
+  - id: berry-bottle
+    name: Berry bottle
+    description: A glass bottle with a deep red berry label
+languages:
+  - en
+  - de
+sizes:
+  - '1:1'
+  - '9:16'
+  - '16:9'
+requiredWords:
+  - Summer Splash
+prohibitedWords:
+  en:
+    - cheap
+  de:
+    - billig
