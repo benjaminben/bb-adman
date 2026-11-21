@@ -61,9 +61,12 @@ function start(): void {
   })
   registerIpc(ipcMain, {
     execute: (name, input, opts) => ready.bus.execute(name, input, opts),
-    query: (name, input, opts) =>
+    query: (name, input, opts, event) =>
       (DIALOG_QUERIES as readonly string[]).includes(name)
-        ? runDialogQuery(name, input)
+        ? runDialogQuery(name, input, {
+            window: BrowserWindow.fromWebContents(event.sender),
+            log: ready.log,
+          })
         : ready.query(name, input, opts),
   })
   createAppWindow()

@@ -7,24 +7,26 @@ import type { QueryOptions } from './queries/queries'
 
 export const IPC = IPC_CHANNELS
 
-type IpcMainLike = {
-  handle(channel: string, fn: (event: unknown, ...args: unknown[]) => unknown): void
+type IpcMainLike<E> = {
+  handle(channel: string, fn: (event: E, ...args: unknown[]) => unknown): void
 }
 
-export type IpcTargets = {
+// A query also gets the IPC event, so a picker can be modal to the window that asked
+// (SPEC 4.3). The event type stays generic: this file does not import Electron.
+export type IpcTargets<E = unknown> = {
   execute(name: string, input: unknown, opts: ExecuteOptions): Promise<Result<unknown>>
-  query(name: string, input: unknown, opts: QueryOptions): Promise<Result<unknown>>
+  query(name: string, input: unknown, opts: QueryOptions, event: E): Promise<Result<unknown>>
 }
 
 const badName = () => fail({ code: 'INVALID_INPUT', message: 'Unknown request.' })
 
-export function registerIpc(ipcMain: IpcMainLike, targets: IpcTargets): void {
+export function registerIpc<E>(ipcMain: IpcMainLike<E>, targets: IpcTargets<E>): void {
   ipcMain.handle(IPC.command, async (_event, name, input) => {
     if (typeof name !== 'string') return badName()
     return targets.execute(name, input, { actor: 'user' })
   })
-  ipcMain.handle(IPC.query, async (_event, name, input) => {
+  ipcMain.handle(IPC.query, async (event, name, input) => {
     if (typeof name !== 'string') return badName()
-    return targets.query(name, input ?? {}, { actor: 'user' })
+    return targets.query(name, input ?? {}, { actor: 'user' }, event)
   })
 }
