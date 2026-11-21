@@ -115,8 +115,16 @@ describe('readFontFamily, the name a font file gives itself [SPEC scene.md, FR-0
     ['a WOFF2 with a huge table count', () => woffWith((b) => b.writeUInt16BE(0xffff, 12))],
     ['a WOFF2 stream past the end', () => woffWith((b) => b.writeUInt32BE(0xffffff, 20))],
     [
-      'a WOFF2 with a bad length number',
-      () => woffWith((b) => b.fill(0x80, nameEntry(b) + 1, nameEntry(b) + 7)),
+      'a WOFF2 length number past 32 bits',
+      () => woffWith((b) => b.fill(0xff, nameEntry(b) + 1, nameEntry(b) + 7)),
+    ],
+    [
+      'a WOFF2 length number longer than five bytes',
+      () =>
+        woffWith((b) => {
+          b.fill(0x80, nameEntry(b) + 1, nameEntry(b) + 7)
+          b.writeUInt8(0x81, nameEntry(b) + 1)
+        }),
     ],
     [
       'a WOFF2 length with a leading zero',
