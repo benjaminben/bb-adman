@@ -39,9 +39,7 @@ describe('ShadeFields [spec/editor.md "Properties panel", Shade; D-094]', () => 
   it('a layer with no shade shows None and no other field', () => {
     setup()
     expect(select()).toHaveValue('none')
-    expect(
-      Array.from(select().querySelectorAll('option')).map((o) => o.textContent),
-    ).toEqual([
+    expect(Array.from(select().querySelectorAll('option')).map((o) => o.textContent)).toEqual([
       'None',
       'From the bottom',
       'From the top',
@@ -80,7 +78,8 @@ describe('ShadeFields [spec/editor.md "Properties panel", Shade; D-094]', () => 
     ['side', async () => userEvent.selectOptions(select(), 'From the right'), { from: 'right' }],
     [
       'colour',
-      async () => userEvent.click(screen.getByRole('button', { name: 'Palette #E85D2A for colour' })),
+      async () =>
+        userEvent.click(screen.getByRole('button', { name: 'Palette #E85D2A for colour' })),
       { color: '#E85D2A' },
     ],
     [

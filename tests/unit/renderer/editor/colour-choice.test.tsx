@@ -45,14 +45,17 @@ describe('ColourChoice [spec/editor.md "Properties panel", colour-choice]', () =
     expect(onCommit.mock.calls).toEqual([['#2A7DE8']])
   })
 
-  it.each(['red', '#FFF', '#12345G', ''])('a bad hex "%s" sends nothing and goes back', async (typed) => {
-    const { onCommit } = setup()
-    await userEvent.clear(field())
-    if (typed) await userEvent.type(field(), typed)
-    await userEvent.keyboard('{Enter}')
-    expect(onCommit).not.toHaveBeenCalled()
-    expect(field()).toHaveValue('#FFFFFF')
-  })
+  it.each(['red', '#FFF', '#12345G', ''])(
+    'a bad hex "%s" sends nothing and goes back',
+    async (typed) => {
+      const { onCommit } = setup()
+      await userEvent.clear(field())
+      if (typed) await userEvent.type(field(), typed)
+      await userEvent.keyboard('{Enter}')
+      expect(onCommit).not.toHaveBeenCalled()
+      expect(field()).toHaveValue('#FFFFFF')
+    },
+  )
 
   it('the picker saves once, when its choice is made', () => {
     const { onCommit } = setup()

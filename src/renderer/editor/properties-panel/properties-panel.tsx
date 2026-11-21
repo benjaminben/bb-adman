@@ -1,12 +1,14 @@
 // spec/editor.md, "Properties panel": the header (the layer's name and kind), then one section
-// per component: Layer, Text (text layers), Picture and Make pictures with AI (image and
-// background layers), Position and size. Sections are keyed by the layer, so an unsaved edit
+// per component: Layer, Text and Box (text layers), Picture, Shade and Make pictures with AI
+// (image and background layers), Position and size. Sections are keyed by the layer, so an unsaved edit
 // or a refusal message does not carry over to another layer.
 import { FontField } from '@/renderer/editor/font-field'
 import { GeometryFields } from '@/renderer/editor/geometry-fields'
 import { LayerFields } from '@/renderer/editor/layer-fields'
 import { PictureAi } from '@/renderer/editor/picture-ai'
 import { PictureFields, type PictureAsset } from '@/renderer/editor/picture-fields'
+import { ShadeFields } from '@/renderer/editor/shade-fields'
+import { TextBoxFields } from '@/renderer/editor/text-box-fields'
 import { TextFields } from '@/renderer/editor/text-fields'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { useLayerActions } from './use-layer-actions'
@@ -59,6 +61,7 @@ function Sections(props: SectionsProps) {
       {font && (
         <TextFields layer={layer} palette={props.palette} font={font} onUpdate={actions.update} />
       )}
+      {font && <TextBoxFields layer={layer} palette={props.palette} onUpdate={actions.update} />}
       {layer.type !== 'text' && (
         <PictureFields
           projectId={props.projectId}
@@ -67,7 +70,11 @@ function Sections(props: SectionsProps) {
           canvas={props.canvas ?? null}
           onUpdate={actions.update}
           onCrop={props.onCrop && (() => props.onCrop?.(layer.id))}
+          palette={props.palette}
         />
+      )}
+      {layer.type !== 'text' && (
+        <ShadeFields layer={layer} palette={props.palette} onUpdate={actions.update} />
       )}
       {layer.type !== 'text' && (
         <PictureAi projectId={props.projectId} campaignId={props.campaignId} layer={layer} />

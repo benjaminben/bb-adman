@@ -41,11 +41,17 @@ describe('BackgroundColourField [spec/editor.md "Properties panel", Picture]', (
   })
 
   it.each([
-    ['a typed hex', async () => userEvent.type(field(), '{Control>}a{/Control}#2A7DE8{Enter}'), '#2A7DE8'],
+    [
+      'a typed hex',
+      async () => userEvent.type(field(), '{Control>}a{/Control}#2A7DE8{Enter}'),
+      '#2A7DE8',
+    ],
     [
       'a swatch',
       async () =>
-        userEvent.click(screen.getByRole('button', { name: 'Palette #E85D2A for background colour' })),
+        userEvent.click(
+          screen.getByRole('button', { name: 'Palette #E85D2A for background colour' }),
+        ),
       '#E85D2A',
     ],
   ])('%s sends one layer.update of fillColor', async (_name, act, fillColor) => {
