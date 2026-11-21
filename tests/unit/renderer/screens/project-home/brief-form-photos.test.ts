@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import {
   attachPlan,
+  DEFAULT_PHOTO_USE,
   photoProblems,
+  photoUseUpdate,
   rowPhotos,
+  type PhotoUse,
 } from '@/renderer/screens/project-home/brief-form-photos'
 import {
   emptySubject,
@@ -22,6 +25,26 @@ const row = (over: Partial<SubjectChoice> = {}): SubjectChoice => ({
 })
 const existing = (id: string | null, over: Partial<SubjectChoice> = {}) =>
   row({ mode: 'existing', existingId: id, ...over })
+
+// The row's "Use the photos" choice: its default and what it sends, in one table, so a
+// change to the choice is one edit here and one in brief-form-photos.ts.
+describe('the "Use the photos" choice [subject-photos "What a row shows", A-110]', () => {
+  it('starts on "In the ad, as they are"', () => {
+    expect(DEFAULT_PHOTO_USE).toBe('asset')
+    expect(emptySubject().use).toBe(DEFAULT_PHOTO_USE)
+  })
+
+  const cases: [string, PhotoUse, ReturnType<typeof photoUseUpdate>][] = [
+    ['"In the ad, as they are": the asset library', 'asset', { library: 'asset' }],
+    ['"Only to guide AI pictures": the reference library', 'reference', { library: 'reference' }],
+  ]
+  it.each(cases)('%s', (_, use, update) => {
+    expect(photoUseUpdate(use)).toEqual(update)
+  })
+})
+
+// The choice other than the default, for the attach tests below.
+const GUIDE: PhotoUse = 'reference'
 
 const NO_PHOTO = 'Subject 1: add at least one photo.'
 const READING = "The project's pictures are still being read."
@@ -135,10 +158,10 @@ describe('attachPlan: the asset.update list Create sends [subject-photos "The mo
     assetRow('C1', { subjectId: 'can-1' }),
   ]
 
-  it("gives an added photo the row's library and a reused unattached one no library", () => {
-    const subjects = [row({ use: 'reference', photos: [added('A1'), reused('R1')] })]
+  it("gives an added photo the row's choice and a reused unattached one no library", () => {
+    const subjects = [row({ use: GUIDE, photos: [added('A1'), reused('R1')] })]
     expect(attachPlan('P1', subjects, ['can-new'], images)).toEqual([
-      { projectId: 'P1', assetId: 'A1', subjectId: 'can-new', library: 'reference' },
+      { projectId: 'P1', assetId: 'A1', subjectId: 'can-new', ...photoUseUpdate(GUIDE) },
       { projectId: 'P1', assetId: 'R1', subjectId: 'can-new' },
     ])
   })
@@ -162,7 +185,7 @@ describe('attachPlan: the asset.update list Create sends [subject-photos "The mo
       projectId: 'P1',
       assetId: 'R1',
       subjectId: 'can-1',
-      library: 'asset',
+      ...photoUseUpdate(DEFAULT_PHOTO_USE),
     })
   })
 })
@@ -172,15 +195,16 @@ describe('the form model with photos [subject-photos "The model"]', () => {
   const open = (briefPhotos?: Parameters<typeof formFromDraft>[2]) =>
     formFromDraft({ draft, primaryLanguage: 'en' }, [], briefPhotos)
 
-  it('starts a row in the asset library with no photo, no import and no note', () => {
-    expect(emptySubject()).toMatchObject({ use: 'asset', photos: [], adding: false, notes: [] })
+  it('starts a row on the default choice with no photo, no import and no note', () => {
+    const start = { use: DEFAULT_PHOTO_USE, photos: [], adding: false, notes: [] }
+    expect(emptySubject()).toMatchObject(start)
   })
 
   it("copies each subject's brief photos and notes into its row", () => {
     const notes = ['The photo "x.png" was not found.']
     const [first, second] = open([{ photos: [reused('A1')], notes }]).subjects
     expect(first).toMatchObject({ photos: [reused('A1')], notes })
-    expect(second).toMatchObject({ photos: [], notes: [], use: 'asset' })
+    expect(second).toMatchObject({ photos: [], notes: [], use: DEFAULT_PHOTO_USE })
   })
 
   it('puts the photo lines after "choose a subject" and before the size lines', () => {

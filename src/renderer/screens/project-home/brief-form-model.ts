@@ -11,10 +11,13 @@ import type { SubjectCreateInput } from '@/shared/schemas/commands/subject'
 import { wordsByLanguage } from '@/shared/brief/words'
 import { briefSubjectIds } from '@/renderer/screens/project-home/campaign-input'
 import { formProblems, schemaCheck, subjectIds } from './brief-form-problems'
-import { attachPlan, type ProjectImages } from './brief-form-photos'
+import {
+  attachPlan,
+  DEFAULT_PHOTO_USE,
+  type PhotoUse,
+  type ProjectImages,
+} from './brief-form-photos'
 import { chosenSizes, sizesFromDraft, type SizeChoice } from './brief-form-sizes'
-
-export type PhotoUse = 'asset' | 'reference'
 
 export type FormPhoto = {
   assetId: string
@@ -27,7 +30,7 @@ export type SubjectChoice = {
   mode: 'new' | 'existing'
   newId: string
   existingId: string | null
-  use: PhotoUse // the library for the photos this form adds
+  use: PhotoUse // "Use the photos", for the photos this form adds (brief-form-photos.ts)
   photos: FormPhoto[] // in the order added
   adding: boolean // an "Add photos" import is running for this row
   notes: string[] // lines about this row's photos
@@ -71,7 +74,7 @@ export const emptySubject = (): SubjectChoice => ({
   mode: 'new',
   newId: '',
   existingId: null,
-  use: 'asset',
+  use: DEFAULT_PHOTO_USE,
   photos: [],
   adding: false,
   notes: [],
