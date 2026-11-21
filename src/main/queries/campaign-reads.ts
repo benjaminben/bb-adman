@@ -7,7 +7,8 @@ import type { CoreDeps } from '@/main/core-deps'
 import { AppError } from '@/shared/schemas/result'
 import type { CampaignRow } from '@/shared/schemas/rows/campaign'
 import type { DirectionRow } from '@/shared/schemas/rows/direction'
-import type { JobMarks } from '@/shared/schemas/queries/campaign'
+import type { JobMarks, VariantBadges } from '@/shared/schemas/queries/campaign'
+import type { LayerRow } from '@/shared/schemas/rows/layer'
 
 // Validates the input and finds the open project, as the query runner rules (SPEC 4.3).
 export function openFor<T extends { projectId: string }>(
@@ -43,5 +44,35 @@ export function jobMarks(
   return {
     jobRunning: has("status IN ('queued','running')"),
     resultUnseen: has("status = 'succeeded' AND seen_at IS NULL"),
+  }
+}
+
+// The assets a layer names: its source and, for a text layer, its font. A null source or
+// font names nothing (spec/api-queries-events.md, "Computed badges and job marks").
+export function namedAssetIds(layer: LayerRow): string[] {
+  const ids: string[] = []
+  if (layer.source) ids.push(layer.source.assetId)
+  if ('fontAssetId' in layer.style && layer.style.fontAssetId) ids.push(layer.style.fontAssetId)
+  return ids
+}
+
+// SPEC 4.3 [1.42]: the badges built so far. A master is never out of date, and Phase 2 makes
+// only masters; checks are read from Phase 6.
+export function badgesOf(
+  db: Database.Database,
+  variantId: string,
+  layers: LayerRow[],
+  missing: Set<string>,
+): VariantBadges {
+  return {
+    ...jobMarks(db, 'variant_id', variantId),
+    outOfDate: false,
+    overflow: layers.some((l) => l.overflow),
+    translationUnapproved: layers.some(
+      (l) => l.translationStatus === 'missing' || l.translationStatus === 'proposed',
+    ),
+    checkWarning: false,
+    checkStale: false,
+    missingFile: layers.some((l) => namedAssetIds(l).some((id) => missing.has(id))),
   }
 }

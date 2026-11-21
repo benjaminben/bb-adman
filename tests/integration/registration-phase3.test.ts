@@ -11,12 +11,12 @@ let f: Fixture
 afterEach(() => f.cleanup())
 
 describe('Phase 3 domains are registered empty [spec/structure.md, P3-0]', () => {
-  it('gives an empty handler list for layer and variant, and an empty query map for variant and render', () => {
+  it('gives an empty handler list for layer and variant, variant.get alone for variant, and an empty map for render', () => {
     f = makeFixture()
     const deps = f.core.deps
     expect(layerCommands(deps)).toEqual([])
     expect(variantCommands(deps)).toEqual([])
-    expect(variantQueries(deps)).toEqual({})
+    expect(Object.keys(variantQueries(deps))).toEqual(['variant.get'])
     expect(renderQueries(deps)).toEqual({})
   })
 
