@@ -28,7 +28,7 @@ Built.
 
 ## Campaign page: ComfyUI failures in the run row (S2-5)
 
-Built. Component `src/renderer/screens/campaign/run-failure/` (with `missing-items.ts`, `server-message.tsx`), drawn by `run-row/` under the status line of a `failed` row. Props: `row: JobRow`, `projectId`, `provider: ProviderInfo | undefined`, `providerLabel`. [REQ: FR-265, FR-266, FR-267, FR-069]
+Built. Component `src/renderer/ui/run-failure/` (with `missing-items.ts`, `server-message.tsx`), drawn by `run-row/` under the status line of a `failed` row. Props: `row: JobRow`, `projectId`, `provider: ProviderInfo | undefined`, `providerLabel`. [REQ: FR-265, FR-266, FR-267, FR-069]
 
 **What it shows**
 

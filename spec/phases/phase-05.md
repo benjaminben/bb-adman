@@ -12,6 +12,7 @@ Bullets carry `[logic]` (main process, shared code, commands, queries, data) or 
 - [logic] Sync preview and apply.
 - [logic] Directions: create from a master.
 - [logic] Campaign undo list, including variant delete.
+- [screen] The campaign page has Undo and Redo buttons and the usual keys, sent with scope `campaign:{id}` (Phase 3 built the list but no control for it). Test: delete a variant on the campaign page, undo, and the variant is back.
 - [logic] Computed status badges.
 - [UI] Fan-out background fit dialog, sync review dialog.
 - [UI] One grid per direction, status badges on the grid.
