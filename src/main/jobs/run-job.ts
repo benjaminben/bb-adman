@@ -5,7 +5,7 @@ import { emitJob, nowText, writeJob, type LiveJob, type RunnerState } from './li
 import { addPaidCall, readJob, type JobChange } from './job-store'
 import { endChange, runningResult, type JobEnd } from './job-end'
 import type { JobRunContext } from './types'
-import { errorContext } from '../log/error-context'
+import { jobErrorContext } from './job-error-log'
 import { ProviderCancelled, ProviderFailure } from '../providers/types'
 import { AppError } from '../../shared/schemas/result'
 import type { JobRow } from '../../shared/schemas/rows/job'
@@ -23,7 +23,11 @@ function failed(state: RunnerState, live: LiveJob, e: unknown): JobEnd {
     }
   }
   if (!(e instanceof AppError)) {
-    state.opts.deps().log.write({
+    const deps = state.opts.deps()
+    const names = live.provider?.secrets ?? []
+    const secrets = names.flatMap((name) => deps.secrets.get(name) ?? [])
+    const noMessage = live.provider === undefined || live.provider.serverText
+    deps.log.write({
       level: 'error',
       event: 'job',
       name: live.kind,
@@ -33,7 +37,7 @@ function failed(state: RunnerState, live: LiveJob, e: unknown): JobEnd {
       ok: false,
       errorKind: 'other',
       message: 'A job stopped on an unforeseen error.',
-      context: { error: errorContext(e) },
+      context: { error: jobErrorContext(e, secrets, noMessage) },
     })
   }
   const detail = e instanceof AppError ? e.code : 'internal'
