@@ -95,6 +95,22 @@ describe('GeneratePanel [SPEC 14 1.41 TP-2]', () => {
     expect(fake.queries.filter((q) => q.name === 'job.list')).toHaveLength(1)
   })
 
+  it('names the provider the run goes to, even when the select changes after Generate [review DV-1]', async () => {
+    const providers = baseState().providers.map((p) =>
+      p.id === 'firefly' ? { ...p, available: true } : p,
+    )
+    const fake = campaignApi({ state: { providers } })
+    await renderWith(view, fake)
+    const p = await panel()
+    await userEvent.click(p.getByRole('button', { name: 'Generate' }))
+    await userEvent.selectOptions(p.getByLabelText('Provider'), 'firefly')
+    expect(p.getByText('This sends 4 paid request(s) to Google Gemini.')).toBeInTheDocument()
+    await userEvent.click(p.getByRole('button', { name: 'Confirm' }))
+    expect(sent(fake, 'generation.runImages').map((c) => c.input)).toMatchObject([
+      { provider: 'gemini' },
+    ])
+  })
+
   it('sends nothing on Cancel and hides the confirm line', async () => {
     const { fake } = await renderWith(view)
     const p = await panel()

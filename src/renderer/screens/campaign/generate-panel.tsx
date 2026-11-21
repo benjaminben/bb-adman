@@ -149,7 +149,9 @@ export function GeneratePanel(props: {
       ) : (
         <PaidConfirm
           count={pending.count}
-          providerLabel={provider?.label ?? pending.provider}
+          providerLabel={
+            providers.find((p) => p.id === pending.provider)?.label ?? pending.provider
+          }
           onConfirm={() => void send(pending)}
           onCancel={() => setPending(null)}
         />
