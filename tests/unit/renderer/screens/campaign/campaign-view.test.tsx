@@ -3,6 +3,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import '../../../shared/scene/fake-fonts'
 import { CampaignView } from '@/renderer/screens/campaign/campaign-view'
 import { axeViolations } from '../../render'
 import { jobRow } from '../../stores/job-fixture'
@@ -73,6 +74,29 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
     const line = 'Runs and panels below are for: '
     expect(await screen.findByText(`${line}Master post · 1:1 · en`)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /German post/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Back to overview' }))
     expect(await screen.findByText(`${line}German post · 1:1 · de`)).toBeInTheDocument()
+  })
+
+  it('opens a variant in the editor on a plain click, in place of the overview [P3-9, A-47]', async () => {
+    const { fake } = await renderWith(view())
+    await userEvent.click(await screen.findByRole('button', { name: /German post/ }))
+    await waitFor(() =>
+      expect(fake.queries.filter((q) => q.name === 'variant.get').map((q) => q.input)).toEqual([
+        { projectId: P, variantId: 'V2' },
+      ]),
+    )
+    expect(screen.getByText('Loading the variant…')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Variants' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Make pictures' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Back to overview' }))
+    expect(screen.getByRole('button', { name: /German post/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(
+      screen.getByText('Runs and panels below are for: German post · 1:1 · de'),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Back to overview' })).toBeNull()
   })
 })

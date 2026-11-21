@@ -1,0 +1,17 @@
+/* While a variant is open the page gives the editor the window's width and height, wider
+   than the page column, until the variant tabs host it (P3-10). */
+.editing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  scroll-margin-top: var(--space-2);
+}
+.editing h2 {
+  margin: 0 0 0 var(--space-2);
+  font-size: var(--font-size-heading);
+}
+.editorHost {
+  width: calc(100vw - 3 * var(--space-6));
+  height: calc(100vh - 6 * var(--space-6));
+}

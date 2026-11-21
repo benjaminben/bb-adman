@@ -1,0 +1,54 @@
+.canvas {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--canvas-backdrop);
+}
+.area {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-6);
+  overflow: auto;
+}
+/* margin: auto centres the box when it is smaller and lets it scroll when larger. */
+.box {
+  position: relative;
+  flex: none;
+  margin: auto;
+  overflow: hidden;
+}
+.stage {
+  transform-origin: 0 0;
+}
+.selection {
+  position: absolute;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  border: var(--border-width) solid var(--selection-dark);
+  box-shadow:
+    0 0 0 var(--border-width) var(--selection-light),
+    inset 0 0 0 var(--border-width) var(--selection-light);
+}
+.hidden {
+  border-style: dotted;
+}
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface);
+  border-top: var(--border-width) solid var(--color-border);
+}
+.zoom {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.zoom > button:nth-child(2) {
+  min-width: calc(var(--space-6) * 3);
+  font-variant-numeric: tabular-nums;
+}
