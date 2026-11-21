@@ -2,10 +2,11 @@
 // tool table and "Notes on single tools"; spec/agent-runs.md). Each runs one command whose
 // agent policy is tick, so the agent-run gate in the bus decides; nothing here checks a tick,
 // a provider or a limit. The two start tools run one at a time (oneAtATime, toolSetup).
-// Every reply is { jobId } only; a refusal is returned as the command gives it.
+// Every reply is { jobId } only; a refusal is returned as the command gives it. The start
+// tools do not offer licenceConfirmed: an agent cannot confirm a licence (S2-4).
 import {
-  generationRunImagesInput,
-  generationStartVideoInput,
+  generationRunImagesAgentInput,
+  generationStartVideoAgentInput,
 } from '@/shared/schemas/commands/generation'
 import { jobCancelInput, type JobStarted } from '@/shared/schemas/commands/job'
 import type { ReplyPicker } from './read-replies'
@@ -34,7 +35,7 @@ export const RUN_TOOLS: readonly ToolDef[] = [
       `asset IDs from list_assets, or an empty list. ${PROVIDER} ${FOLLOW} ${LEAVE_THE_CHOICE}`,
     kind: 'command',
     target: 'generation.runImages',
-    input: generationRunImagesInput,
+    input: generationRunImagesAgentInput,
     reply: jobIdOnly,
     oneAtATime: true,
   },
@@ -50,7 +51,7 @@ export const RUN_TOOLS: readonly ToolDef[] = [
       `${PROVIDER} ${FOLLOW} ${LEAVE_THE_CHOICE}`,
     kind: 'command',
     target: 'generation.startVideo',
-    input: generationStartVideoInput,
+    input: generationStartVideoAgentInput,
     reply: jobIdOnly,
     oneAtATime: true,
   },

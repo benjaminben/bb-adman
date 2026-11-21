@@ -36,7 +36,8 @@ export type WorkflowVideo = { fps: number; maxMs: number; frameStep: number; fra
 
 export type WorkflowLicence = { name: string; url: string; commercialNote: string | null }
 
-export type WorkflowInfo = {
+// The shipped facts of a workflow, the same in every reply.
+export type WorkflowFacts = {
   id: WorkflowId
   label: string
   job: WorkflowJob
@@ -48,6 +49,11 @@ export type WorkflowInfo = {
   video?: WorkflowVideo
   licence: WorkflowLicence
   leavesOnServer: string[]
+}
+
+export type WorkflowInfo = WorkflowFacts & {
+  // S2-4: the workflow the user's run of this job (and, for video, start pair) gets now.
+  offered: boolean
 }
 
 export type ComfyInfo = {

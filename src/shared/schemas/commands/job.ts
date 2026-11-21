@@ -1,8 +1,10 @@
 import { z } from 'zod'
 import { projectScoped } from './project-scoped'
+import { licenceConfirmed } from './generation'
 
 // SPEC 4.2 job commands [1.8]. Built in Phase 2 slice D.
-export const jobRetryInput = projectScoped.extend({ jobId: z.string().min(1) })
+// S2-4: licenceConfirmed as for the generation commands.
+export const jobRetryInput = projectScoped.extend({ jobId: z.string().min(1), licenceConfirmed })
 export type JobRetryInput = z.infer<typeof jobRetryInput>
 
 export const jobCancelInput = projectScoped.extend({ jobId: z.string().min(1) })
