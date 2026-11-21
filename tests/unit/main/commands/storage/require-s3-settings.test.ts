@@ -3,12 +3,14 @@
 import { describe, it, expect } from 'vitest'
 import { requireS3Settings } from '@/main/commands/storage/require-s3-settings'
 import { AppError } from '@/shared/schemas/result'
+import type { CoreDeps } from '@/main/core-deps'
 import type { Settings } from '@/shared/schemas/settings'
 
 type S3 = Settings['storage']['s3']
 
-function depsWith(s3: S3) {
-  return { settings: { get: () => ({ storage: { s3, dropbox: null } }) as unknown as Settings } }
+function depsWith(s3: S3): Pick<CoreDeps, 'settings'> {
+  const settings = { get: () => ({ storage: { s3, dropbox: null } }) as unknown as Settings }
+  return { settings } as unknown as Pick<CoreDeps, 'settings'>
 }
 
 function refusal(s3: S3): AppError {
