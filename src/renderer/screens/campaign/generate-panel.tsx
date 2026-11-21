@@ -69,13 +69,20 @@ export function GeneratePanel(props: {
   const [count, setCount] = useState(String(startCount))
   const [problem, setProblem] = useState<string | null>(null)
   const [pending, setPending] = useState<GenerationRunImagesInput | null>(null)
+  // SPEC 14 1.48 TL-2: true from the send until any reply, so a second click starts nothing.
+  const [sending, setSending] = useState(false)
   const provider = providers.find((p) => p.id === providerId)
   const chosenSlot = slot ?? slots?.[0]
 
   async function send(input: GenerationRunImagesInput) {
     setPending(null)
-    const result = await command('generation.runImages', input)
-    if (result.ok) props.onStarted(result.data)
+    setSending(true)
+    try {
+      const result = await command('generation.runImages', input)
+      if (result.ok) props.onStarted(result.data)
+    } finally {
+      setSending(false)
+    }
   }
 
   function generate() {
@@ -153,7 +160,7 @@ export function GeneratePanel(props: {
           <button
             type="button"
             className={styles.primary}
-            disabled={provider === undefined || chosenSlot === undefined}
+            disabled={sending || provider === undefined || chosenSlot === undefined}
             onClick={generate}
           >
             Generate
