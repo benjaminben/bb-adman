@@ -68,11 +68,63 @@ describe('planFromForm: problems, each a line [screens-campaign "The brief form"
       'Enter the audience.',
       'Enter the message.',
       'Subject 1: enter a name.',
-      `Subject 1: the ID "" ${BAD_ID}`,
       'Subject 2: choose a subject.',
       'Choose at least one size.',
       'Give at least one language.',
       'Choose a campaign to copy the rules from.',
     ])
+  })
+})
+
+describe('planFromForm: a blank "Subject ID" is made from the name [ruling for S2-14]', () => {
+  const sentIds = (values: BriefFormValues) => {
+    const result = planFromForm('P1', values, [])
+    if (!result.ok) throw new Error(result.problems.join())
+    return {
+      created: result.subjects.map((s) => s.id),
+      mapped: result.campaign.subjectMap.map((m) => m.subjectId),
+      brief: result.campaign.brief.subjects.map((s) => s.id),
+    }
+  }
+
+  it('sends the ID made from the name, as the old summary did', () => {
+    const values = filled()
+    subject(0, { name: 'Summer Splash 2!', newId: '' })(values)
+    const ids = sentIds(values)
+    expect(ids.created).toEqual(['Summer-Splash-2', 'berry-bottle'])
+    expect(ids.mapped).toEqual(['Summer-Splash-2', 'berry-bottle'])
+    expect(ids.brief).toEqual(['Summer-Splash-2', 'berry-bottle'])
+  })
+
+  it('makes two blank IDs with one name differ, and steps around a typed one', () => {
+    const values = filled()
+    subject(0, { name: 'Lime can', newId: '' })(values)
+    subject(1, { name: 'Lime can', newId: '' })(values)
+    values.subjects.push({ ...emptySubject(), name: 'Tall can', newId: 'Lime-can-2' })
+    expect(sentIds(values).created).toEqual(['Lime-can', 'Lime-can-3', 'Lime-can-2'])
+  })
+
+  it.each([
+    ['a blank name and ID: only the name line', ' ', ['Subject 1: enter a name.']],
+    ['a made ID the project holds', 'citrus can', [HELD]],
+  ])('names %s', (_, name, expected) => {
+    const values = filled()
+    subject(0, { name, newId: '' })(values)
+    expect(problemsOf(values, ['citrus-can'])).toEqual(expected)
+  })
+
+  it('never shows a line for an empty ID', () => {
+    const values = formFromDraft(null, [])
+    values.subjects.push(emptySubject())
+    expect(problemsOf(values).join('\n')).not.toContain('the ID ""')
+  })
+})
+
+describe('planFromForm: one project subject chosen in two rows [ruling for S2-14]', () => {
+  it('names the two rows that hold it', () => {
+    const values = filled()
+    subject(0, { mode: 'existing', existingId: 'lime-can' })(values)
+    subject(1, { mode: 'existing', existingId: 'lime-can' })(values)
+    expect(problemsOf(values, ['lime-can'])).toEqual(['Subjects 1 and 2 have the same ID.'])
   })
 })

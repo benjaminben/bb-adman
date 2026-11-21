@@ -5,6 +5,7 @@
 import { useEffect, useId, useRef } from 'react'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import { emptySubject, type SubjectChoice } from '@/renderer/screens/project-home/brief-form-model'
+import { subjectIds } from '@/renderer/screens/project-home/brief-form-problems'
 import styles from './subject-rows.module.css'
 
 type Props = {
@@ -16,6 +17,8 @@ type Props = {
 export function SubjectRows(props: Props) {
   const { subjects } = props
   const ids = useId()
+  // A blank "Subject ID" shows the ID made from the name, the one that is sent.
+  const sentIds = subjectIds(subjects)
   const names = useRef<(HTMLInputElement | null)[]>([])
   const add = useRef<HTMLButtonElement>(null)
   // Where focus goes once the changed rows are drawn.
@@ -88,7 +91,11 @@ export function SubjectRows(props: Props) {
                 {s.mode === 'new' ? (
                   <label className={styles.field}>
                     Subject ID
-                    <input value={s.newId} onChange={(e) => change(i, { newId: e.target.value })} />
+                    <input
+                      value={s.newId}
+                      placeholder={s.newId === '' ? sentIds[i] || undefined : undefined}
+                      onChange={(e) => change(i, { newId: e.target.value })}
+                    />
                   </label>
                 ) : (
                   <label className={styles.field}>

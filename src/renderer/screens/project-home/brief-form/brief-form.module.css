@@ -46,10 +46,28 @@
   font-weight: normal;
   resize: vertical;
 }
-.lines p {
-  margin: 0 0 var(--space-1);
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-width: var(--width-dialog);
+}
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+.copy {
+  margin: 0;
+}
+.end {
+  display: flex;
+  flex-direction: column;
+}
+.end > p {
+  margin: 0 0 var(--space-2);
 }
 .problems {
+  margin-bottom: var(--space-3);
   padding: var(--space-3);
   border-radius: var(--radius);
   background: var(--color-danger-bg);
