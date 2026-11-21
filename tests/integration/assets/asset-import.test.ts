@@ -129,13 +129,12 @@ describe('asset.import refusals [SPEC 4.1, 8.3, 10.1]', () => {
     await expectRefused(bus, () => importIt({ paths: [path.join(dir, 'no.png')] }), 'NOT_FOUND')
   })
 
-  it('refuses a folder with INVALID_INPUT', async () => {
+  it('imports nothing from an empty folder, even one named like a picture', async () => {
     fs.mkdirSync(path.join(dir, 'pics.png'))
-    await expectRefused(
-      bus,
-      () => importIt({ paths: [path.join(dir, 'pics.png')] }),
-      'INVALID_INPUT',
-    )
+    expect(await importIt({ paths: [path.join(dir, 'pics.png')] })).toEqual({
+      ok: true,
+      data: { assetIds: [], reusedAssetIds: [], skippedCount: 0 },
+    })
   })
 
   it('refuses a file whose bytes do not match its type, naming the file and not its path', async () => {

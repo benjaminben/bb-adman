@@ -29,21 +29,29 @@ export type InspectedFile = {
 // The same facts for a file of no accepted type, which a caller may refuse or skip.
 export type FileFacts = Omit<InspectedFile, 'type'> & { type: FileType | undefined }
 
+async function headOf(handle: fs.promises.FileHandle, length: number): Promise<Uint8Array> {
+  const buffer = new Uint8Array(length)
+  const { bytesRead } = await handle.read(buffer, 0, length, 0)
+  return buffer.subarray(0, bytesRead)
+}
+
 async function readHead(file: string, length: number): Promise<Uint8Array> {
   const handle = await fs.promises.open(file, 'r')
   try {
-    const buffer = new Uint8Array(length)
-    const { bytesRead } = await handle.read(buffer, 0, length, 0)
-    return buffer.subarray(0, bytesRead)
+    return await headOf(handle, length)
   } finally {
     await handle.close()
   }
 }
 
-export async function hashFile(file: string): Promise<string> {
+async function hashOf(stream: NodeJS.ReadableStream): Promise<string> {
   const hash = crypto.createHash('sha256')
-  await pipeline(fs.createReadStream(file), hash)
+  await pipeline(stream, hash)
   return hash.digest('hex')
+}
+
+export async function hashFile(file: string): Promise<string> {
+  return hashOf(fs.createReadStream(file))
 }
 
 function pixelSize(
@@ -93,11 +101,44 @@ export async function inspectFile(given: string): Promise<InspectedFile> {
   return { ...facts, type }
 }
 
-async function readFacts(file: string, fileName: string): Promise<FileFacts> {
-  const stat = await fs.promises.stat(file)
-  if (!stat.isFile()) throw new AppError('INVALID_INPUT', 'Choose files, not a folder.')
-  const head = await readHead(file, Math.min(stat.size, HEADER_BYTES))
-  const type = sniffType(fileName, head.subarray(0, SNIFF_BYTES))
+// Not on Windows, which has no such flag; there the entry's lstat is the only check.
+const NO_FOLLOW = fs.constants.O_NOFOLLOW ?? 0
+
+// A file found inside a folder (SPEC 14, [1.29] T1), or null when it is skipped: no
+// accepted type, empty, or not readable. The type is decided from the first bytes before
+// the file is hashed, so a skipped file is never read whole. It is opened without following
+// a link, in case one took its place after the folder was listed.
+export async function inspectFolderFile(file: string): Promise<InspectedFile | null> {
+  const fileName = path.basename(file)
+  let handle: fs.promises.FileHandle
+  try {
+    handle = await fs.promises.open(file, fs.constants.O_RDONLY | NO_FOLLOW)
+  } catch {
+    return null
+  }
+  try {
+    const stat = await handle.stat()
+    if (!stat.isFile()) return null
+    const type = sniffType(fileName, await headOf(handle, Math.min(stat.size, SNIFF_BYTES)))
+    if (!type) return null
+    const head = await headOf(handle, Math.min(stat.size, HEADER_BYTES))
+    const hash = await hashOf(handle.createReadStream({ start: 0, autoClose: false }))
+    return factsOf(file, stat, type, head, hash)
+  } catch {
+    return null
+  } finally {
+    await handle.close()
+  }
+}
+
+function factsOf<T extends FileType | undefined>(
+  file: string,
+  stat: fs.Stats,
+  type: T,
+  head: Uint8Array,
+  contentHash: string,
+) {
+  const fileName = path.basename(file)
   const size = pixelSize(type, head)
   return {
     file,
@@ -106,8 +147,16 @@ async function readFacts(file: string, fileName: string): Promise<FileFacts> {
     type,
     byteSize: stat.size,
     mtimeMs: Math.trunc(stat.mtimeMs),
-    contentHash: await hashFile(file),
+    contentHash,
     width: size?.width ?? null,
     height: size?.height ?? null,
   }
+}
+
+async function readFacts(file: string, fileName: string): Promise<FileFacts> {
+  const stat = await fs.promises.stat(file)
+  if (!stat.isFile()) throw new AppError('INVALID_INPUT', 'Choose files, not a folder.')
+  const head = await readHead(file, Math.min(stat.size, HEADER_BYTES))
+  const type = sniffType(fileName, head.subarray(0, SNIFF_BYTES))
+  return factsOf(file, stat, type, head, await hashFile(file))
 }

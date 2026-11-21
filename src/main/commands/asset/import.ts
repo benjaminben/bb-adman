@@ -68,9 +68,9 @@ export function assetImport(deps: Pick<CoreDeps, 'now' | 'log'>) {
         known.set(a.contentHash, a.id)
       }
       const assetIds = prepared.hashes.map((h) => idFor(known, h))
-      // SPEC 14, Slice A rulings point 5. A folder path is refused, so no entry is skipped.
+      // SPEC 14, Slice A rulings point 5.
       const reusedAssetIds = [...new Set(assetIds.filter((id) => before.has(id)))]
-      return { data: { assetIds, reusedAssetIds, skippedCount: 0 } }
+      return { data: { assetIds, reusedAssetIds, skippedCount: prepared.skippedCount } }
     },
   })
 }

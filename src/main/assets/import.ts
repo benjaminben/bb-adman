@@ -5,7 +5,8 @@ import fs from 'node:fs'
 import { ulid } from 'ulid'
 import type { ProjectHandle } from '../db/project-file'
 import { readWireRows } from '../db/rows'
-import { inspectFile, type InspectedFile } from './inspect'
+import { inspectFile, inspectFolderFile, type InspectedFile } from './inspect'
+import { expandPaths } from './folder-walk'
 import { assetsDirOf } from './service'
 import { managedPath, relativeToProject } from './path-resolver'
 import type { AssetRow } from '../../shared/schemas/rows/asset'
@@ -24,6 +25,8 @@ export type PreparedImport = {
   newAssets: NewAsset[]
   // Files this step copied, for undoPrepare.
   copies: string[]
+  // Folder entries skipped (SPEC 14, Slice A rulings point 5).
+  skippedCount: number
 }
 
 export function assetIdsByHash(project: ProjectHandle): Map<string, string> {
@@ -60,8 +63,14 @@ export async function prepareImport(
   paths: string[],
   copy: boolean,
 ): Promise<PreparedImport> {
+  const expanded = await expandPaths(paths)
+  let skippedCount = expanded.skippedCount
   const files: InspectedFile[] = []
-  for (const p of paths) files.push(await inspectFile(p))
+  for (const p of expanded.paths) {
+    const file = p.inFolder ? await inspectFolderFile(p.file) : await inspectFile(p.file)
+    if (file) files.push(file)
+    else skippedCount += 1
+  }
   const known = assetIdsByHash(project)
   const fresh = new Map<string, InspectedFile>()
   for (const f of files) if (!known.has(f.contentHash)) fresh.set(f.contentHash, f)
@@ -69,7 +78,7 @@ export async function prepareImport(
   try {
     const newAssets: NewAsset[] = []
     for (const f of fresh.values()) newAssets.push(await place(project, f, copy, copies))
-    return { hashes: files.map((f) => f.contentHash), newAssets, copies }
+    return { hashes: files.map((f) => f.contentHash), newAssets, copies, skippedCount }
   } catch (e) {
     await removeCopies(copies)
     throw e
