@@ -93,6 +93,8 @@ function start(): void {
     isInternal: (name) => ready.isInternal(name),
   })
   registerAssetProtocol(protocol, ready.projects)
+  // Listens only while settings.mcp.enabled is on (SPEC 6.8); off on first run.
+  void ready.mcp.startIfEnabled()
   createAppWindow()
   for (const filePath of pendingOpens.splice(0)) void openFromSystem(filePath)
 }
@@ -115,6 +117,10 @@ if (!app.requestSingleInstanceLock()) {
     else mainWindow()
   })
   app.on('window-all-closed', () => app.quit())
-  app.on('before-quit', () => core?.closeAll())
+  app.on('before-quit', () => {
+    // Quitting closes the MCP listener and drops its sessions (SPEC 5.3).
+    void core?.mcp.stop()
+    core?.closeAll()
+  })
   void app.whenReady().then(start)
 }
