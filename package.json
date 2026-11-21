@@ -25,6 +25,7 @@
     "test:comfy": "vitest run --config vitest.comfy.config.ts",
     "test:e2e": "npm run build && playwright test",
     "test:e2e:real": "npm run build && playwright test --config playwright.real.config.ts",
+    "test:approvals-local": "npm run build && playwright test --config playwright.approvals.config.ts",
     "shots": "npm run build && playwright test --config playwright.shots.config.ts",
     "db:generate": "drizzle-kit generate",
     "package": "npm run build && electron-builder",
