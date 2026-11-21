@@ -2,15 +2,17 @@ import { z } from 'zod'
 import { Brief } from '../brief'
 import { HEX_COLOUR } from '../layer'
 import { projectScoped } from './project-scoped'
+import { MAX_SIZE_SIDE, MIN_SIZE_SIDE } from '../../config/size-limits'
 
 // SPEC 3.3 CampaignSize and SPEC 6.1 campaign.create inputs. Frozen contract
 // (SPEC 14, Phase 2 step 0). Slice C adds its other campaign schemas beside this file.
 
-// A file-safe label: "1x1", "9x16", "16x9", "4x5" or "{width}x{height}".
+// A file-safe label: "1x1", "9x16", "16x9", "4x5" or "{width}x{height}". [1.26] Each side is
+// from MIN_SIZE_SIDE (50) to MAX_SIZE_SIDE (8,192) pixels, both included.
 export const CampaignSize = z.object({
   label: z.string().regex(/^[1-9]\d*x[1-9]\d*$/),
-  width: z.number().int().positive(),
-  height: z.number().int().positive(),
+  width: z.number().int().min(MIN_SIZE_SIDE).max(MAX_SIZE_SIDE),
+  height: z.number().int().min(MIN_SIZE_SIDE).max(MAX_SIZE_SIDE),
 })
 export type CampaignSize = z.infer<typeof CampaignSize>
 

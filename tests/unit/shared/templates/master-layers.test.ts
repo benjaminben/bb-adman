@@ -3,6 +3,7 @@ import { buildMasterLayers } from '../../../../src/shared/templates/master-layer
 import { starterTemplate } from '../../../../src/shared/templates/starter'
 import type { NewLayer, SlotFills } from '../../../../src/shared/templates/types'
 import type { CampaignSize } from '../../../../src/shared/schemas/commands/campaign'
+import { LayerRow } from '../../../../src/shared/schemas/rows/layer'
 
 const ALL_FILLS: SlotFills = {
   background: { assetId: 'asset-bg' },
@@ -115,5 +116,19 @@ describe('buildMasterLayers: which layers, in which order [SPEC 6.1, 14 N3]', ()
       ['logo', 1],
       ['call-to-action', 2],
     ])
+  })
+})
+
+describe('buildMasterLayers: the smallest and largest sizes [SPEC 6.1 1.26, 14 P5]', () => {
+  it.each([size(50, 50), size(300, 50), size(8192, 8192)])('$label', (s) => {
+    const layers = buildMasterLayers(starterTemplate, s, ALL_FILLS)
+    expect(layers).toHaveLength(5)
+    for (const [i, l] of layers.entries()) {
+      const row = { ...l, id: `layer-${i}`, variantId: 'variant-1' }
+      expect(LayerRow.safeParse(row).success).toBe(true)
+      expect(l.geometry.width).toBeGreaterThan(0)
+      expect(l.geometry.height).toBeGreaterThan(0)
+      if ('fontSize' in l.style) expect(l.style.fontSize).toBeGreaterThan(0)
+    }
   })
 })

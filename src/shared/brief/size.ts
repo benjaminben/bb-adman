@@ -2,11 +2,12 @@
 // "a:b" is a ratio whose shorter side becomes 1080 pixels; its parts may have decimals
 // [1.23]. "WxH" is a pixel size in whole numbers, unless both are below 100: then it is the
 // ratio "W:H" [1.23]. A size whose pixels equal a ready-made size takes that size's label;
-// a ready-made label typed as is ("4x5") means that size. This file holds no size of its
-// own (SPEC 3.3).
+// a ready-made label typed as is ("4x5") means that size. Each side is from MIN_SIZE_SIDE to
+// MAX_SIZE_SIDE [1.26], or the answer is null. This file holds no size of its own (SPEC 3.3).
 import type { CampaignSize } from '../schemas/commands/campaign'
 import type { ParseSize } from '../templates/types'
 import { READY_MADE_SIZES } from '../config/defaults'
+import { MAX_SIZE_SIDE, MIN_SIZE_SIDE } from '../config/size-limits'
 
 const SHORTER_SIDE = 1080
 const SMALLEST_PIXEL_SIDE = 100
@@ -23,8 +24,12 @@ function part(digits: string): number | null {
   return Number.isFinite(n) && n > 0 ? n : null
 }
 
+function inRange(side: number): boolean {
+  return Number.isSafeInteger(side) && side >= MIN_SIZE_SIDE && side <= MAX_SIZE_SIDE
+}
+
 function sized(width: number, height: number): CampaignSize | null {
-  if (!Number.isSafeInteger(width) || !Number.isSafeInteger(height)) return null
+  if (!inRange(width) || !inRange(height)) return null
   const ready = READY_MADE_SIZES.find((s) => s.width === width && s.height === height)
   return { label: ready ? ready.label : `${width}x${height}`, width, height }
 }

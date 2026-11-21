@@ -115,3 +115,20 @@ describe('parseSize: two numbers below 100 with x are a ratio [SPEC 3.3 1.23, 14
     expect(parseSize('100x100')).toEqual({ label: '100x100', width: 100, height: 100 })
   })
 })
+
+describe('parseSize: each side from 50 to 8,192 pixels [SPEC 3.3 1.26, 14 P5]', () => {
+  it.each([
+    ['8192x8192', { label: '8192x8192', width: 8192, height: 8192 }],
+    ['300x50', { label: '300x50', width: 300, height: 50 }],
+    ['7.5:1', { label: '8100x1080', width: 8100, height: 1080 }],
+  ])('accepts %s', (text, expected) => {
+    expect(parseSize(text)).toEqual(expected)
+  })
+
+  it.each(['8193x1080', '1080x8193', '49x1080', '100x49', '1000x10', '1:8'])(
+    'refuses %s',
+    (text) => {
+      expect(parseSize(text)).toBeNull()
+    },
+  )
+})
