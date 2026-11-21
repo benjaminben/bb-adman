@@ -64,7 +64,7 @@ export function campaignGet(variants: VariantSummary[]): CampaignGet {
     },
     subjects: [{ id: 'citrus-can', name: 'Citrus can', description: 'A slim can', createdAt: '' }],
     ruleSet: {} as CampaignGet['ruleSet'],
-    directions: [],
+    directions: [{ id: 'D1', campaignId: 'C1', name: 'Main', masterVariantId: 'V1', sort: 0 }],
     variants,
     marks: { jobRunning: false, resultUnseen: false },
   }

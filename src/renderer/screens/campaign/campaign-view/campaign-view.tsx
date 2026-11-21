@@ -8,92 +8,37 @@
 // job.updated, so a deleted variant loses its tab and the marks follow the jobs.
 // P4-12 (spec/screens-ai.md, "The paid count"): the overview shows the paid count under the name.
 // SP-7 (A-120): the reference ticks start as the chosen variant's subject photos.
-import { lazy, Suspense, useCallback, useEffect, useRef, useState, type MouseEvent } from 'react'
-import type { Dispatch, SetStateAction } from 'react'
+// P5-14 (spec/screens-variants.md, "The overview"): the overview shows the campaign's Undo and
+// Redo, then one grid per direction in place of the one grid.
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useStore } from 'zustand'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { NavScope, useNav } from '@/renderer/app/nav-context'
-import { platform } from '@/renderer/editor/use-editor-key'
 import { createApprovalsStore } from '@/renderer/stores/approvals-store'
 import { createJobStore } from '@/renderer/stores/job-store'
 import { OVERVIEW_TAB, campaignNav } from '@/renderer/stores/nav-store'
-import type { CampaignGet, VariantSummary } from '@/shared/schemas/queries/campaign'
-import type { AssetList } from '@/shared/schemas/queries/asset'
 import { ApprovalBar } from '@/renderer/screens/campaign/approval-bar'
 import { approvalFooter } from '@/renderer/screens/campaign/approval-mark'
 import { CampaignSections } from '@/renderer/screens/campaign/campaign-sections'
+import { CampaignUndo } from '@/renderer/screens/campaign/campaign-undo'
+import { DirectionGrids } from '@/renderer/screens/campaign/direction-grids'
 import { GeneratePanel } from '@/renderer/screens/campaign/generate-panel'
 import { RunList } from '@/renderer/screens/campaign/run-list'
 import { SlotView } from '@/renderer/screens/campaign/slot-view'
-import { VariantGrid } from '@/renderer/screens/campaign/variant-grid'
 import { VariantTabs } from '@/renderer/screens/campaign/variant-tabs'
 import { VideoPanel } from '@/renderer/screens/campaign/video-panel'
 import { PaidCount } from '@/renderer/ui/paid-count'
-import { subjectPhotoIds } from '@/renderer/ui/reference-picker/reference-rows'
 import { ReferenceRowsContext } from '@/renderer/ui/reference-picker/use-picture-list'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './campaign-view.module.css'
+import { useCampaign } from './use-campaign'
+import { usePreTick } from './use-pre-tick'
 
 // Loaded when a variant first opens, so the Scene and its fonts load only for the editor.
 const Editor = lazy(() => import('@/renderer/editor/editor').then((m) => ({ default: m.Editor })))
 const loadingVariant = <p className={layout.muted}>Loading the variant…</p>
 
 type Props = { projectId: string; campaignId: string; onBack: () => void }
-
-function useCampaign(projectId: string, campaignId: string): CampaignGet | null {
-  const api = useApi()
-  const [data, setData] = useState<CampaignGet | null>(null)
-  useEffect(() => {
-    let live = true
-    const read = () =>
-      void api.query('campaign.get', { projectId, campaignId }).then((result) => {
-        if (live && result.ok && result.data) setData(result.data as CampaignGet)
-      })
-    read()
-    const stops = [
-      api.on('project.changed', (payload) => {
-        if (payload.projectId === projectId) read()
-      }),
-      api.on('job.updated', (job) => {
-        if (job.campaignId === campaignId) read()
-      }),
-    ]
-    return () => {
-      live = false
-      for (const stop of stops) stop()
-    }
-  }, [api, projectId, campaignId])
-  return data
-}
-
-// SP-7 (A-120): when the page opens, and when the chosen variant changes while nothing is
-// ticked, the ticks become the variant's subject photos. Heard from the picker's reads, once
-// per variant shown: a later read (after "Add pictures") or a read of a variant no longer
-// shown changes nothing, and a tick the user set is never replaced.
-function usePreTick(
-  variant: VariantSummary | undefined,
-  setTicks: Dispatch<SetStateAction<string[]>>,
-) {
-  const variantId = variant?.id ?? null
-  const subjectKey = JSON.stringify(variant?.subjectIds ?? [])
-  const shownId = useRef(variantId)
-  const doneFor = useRef<string | null>(null)
-  useEffect(() => {
-    shownId.current = variantId
-  }, [variantId])
-  return useCallback(
-    (rows: AssetList) => {
-      if (variantId === null || shownId.current !== variantId || doneFor.current === variantId)
-        return
-      doneFor.current = variantId
-      const ids = subjectPhotoIds(rows, JSON.parse(subjectKey) as string[])
-      setTicks((t) => (t.length > 0 ? t : ids))
-    },
-    [variantId, subjectKey, setTicks],
-  )
-}
-
-const opensBehind = (event: MouseEvent) => (platform === 'mac' ? event.metaKey : event.ctrlKey)
 
 function CampaignPage(props: Props) {
   const { projectId, campaignId } = props
@@ -106,7 +51,6 @@ function CampaignPage(props: Props) {
   const keepVariants = useNav((s) => s.keepVariants)
   const [chosenId, setChosenId] = useState<string | null>(null)
   if (shown !== OVERVIEW_TAB && shown !== chosenId) setChosenId(shown)
-  const behind = useRef(false)
   // SPEC 14 1.46 TP-5: reference ticks last while the page is open, across variants.
   const [ticks, setTicks] = useState<string[]>([])
   const variants = data?.variants
@@ -131,26 +75,17 @@ function CampaignPage(props: Props) {
       )
   }, [keepVariants, projectId, campaignId, variants])
 
-  function choose(id: string) {
-    openVariant(projectId, campaignId, id, behind.current)
-  }
-
   const overview = data && (
     <>
-      <div
-        onClickCapture={(event) => {
-          behind.current = opensBehind(event)
-        }}
-      >
-        <VariantGrid
-          projectId={projectId}
-          variants={data.variants}
-          chosenId={variantId}
-          onChoose={choose}
-          onOpenBehind={(id) => openVariant(projectId, campaignId, id, true)}
-          tileFooter={approvalFooter(approvalsData)}
-        />
-      </div>
+      <CampaignUndo projectId={projectId} campaignId={campaignId} />
+      <DirectionGrids
+        projectId={projectId}
+        campaign={data}
+        chosenId={variantId}
+        onChoose={(id) => openVariant(projectId, campaignId, id)}
+        onOpenBehind={(id) => openVariant(projectId, campaignId, id, true)}
+        tileFooter={approvalFooter(approvalsData)}
+      />
       {variant && (
         <p>
           Runs and panels below are for: {variant.title} · {variant.sizeLabel} · {variant.language}

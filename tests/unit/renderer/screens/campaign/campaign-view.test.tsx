@@ -27,7 +27,9 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
     expect(master).toHaveAttribute('aria-pressed', 'true')
     expect(within(master).getByText('1080×1080 · en · image · master')).toBeInTheDocument()
     // Four buttons: each tile's own button, then its "+" ("Open {title} in a tab", P3-10).
-    const tiles = within(screen.getByRole('list', { name: 'Variants' })).getAllByRole('button')
+    const tiles = within(screen.getByRole('list', { name: 'Variants in Main' })).getAllByRole(
+      'button',
+    )
     expect(tiles.map((t) => within(t).queryByText(/(Master|German) post/)?.textContent)).toEqual([
       'Master post',
       undefined,
@@ -90,7 +92,7 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
       ]),
     )
     expect(screen.getByText('Loading the variant…')).toBeInTheDocument()
-    expect(screen.queryByRole('list', { name: 'Variants' })).toBeNull()
+    expect(screen.queryByRole('list', { name: 'Variants in Main' })).toBeNull()
     expect(screen.queryByRole('region', { name: 'Make pictures' })).toBeNull()
     await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
     expect(screen.getByRole('button', { name: /^German post/ })).toHaveAttribute(
