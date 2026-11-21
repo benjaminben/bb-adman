@@ -175,3 +175,19 @@ describe('Gemini adapter call rules [SPEC 6]', () => {
     expect(failure.error.detail).toContain('[key removed]')
   })
 })
+
+describe('Gemini: a break while the answer is read [SPEC 6.2 1.14, G8]', () => {
+  it('maps a body that fails part way to offline', async () => {
+    const { fetchFn } = recordingFetch(async () => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"candidates": [{"content"'))
+          controller.error(new TypeError('terminated'))
+        },
+      })
+      return new Response(body, { status: 200, headers: { 'content-type': 'application/json' } })
+    })
+    const failure = await failureOf(generateWith(fetchFn))
+    expect(failure.error.kind).toBe('offline')
+  })
+})

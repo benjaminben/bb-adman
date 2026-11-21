@@ -2,6 +2,9 @@
 // library takes no `fetch`; it takes a request handler, so the pin is a handler wrapper that
 // refuses any other origin before anything is sent. An error thrown by the network call
 // itself is marked, and only a marked error can become `offline` or a network `timeout`.
+// [1.14] G8, H2: the handler can see the answer body, so it reads the whole body inside the
+// marked step and hands the library a finished one; a break during the read is marked too.
+import { Readable } from 'node:stream'
 import { ProviderFailure } from '../types'
 
 type Request = { protocol: string; hostname: string; port?: number }
@@ -50,10 +53,26 @@ export function pinnedHandler(inner: PinnableHandler, hosts: string[]): Pinnable
         })
       }
       try {
-        return await inner.handle(request, options)
+        return await finished(await inner.handle(request, options))
       } catch (error) {
         throw new NetworkError(error)
       }
     },
   }
+}
+
+type Answer = { response?: { body?: unknown } }
+
+function isStream(body: unknown): body is AsyncIterable<Buffer | string> {
+  return typeof body === 'object' && body !== null && Symbol.asyncIterator in body
+}
+
+// The same answer with its body read in full and handed back as a finished stream.
+async function finished(answer: unknown): Promise<unknown> {
+  const response = (answer as Answer | undefined)?.response
+  if (!response || !isStream(response.body)) return answer
+  const chunks: Buffer[] = []
+  for await (const chunk of response.body) chunks.push(Buffer.from(chunk))
+  response.body = Readable.from([Buffer.concat(chunks)])
+  return answer
 }

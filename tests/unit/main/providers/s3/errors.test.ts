@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream'
 import { describe, it, expect } from 'vitest'
 import { s3Storage } from '../../../../../src/main/providers/s3/s3-storage'
 import { failureFromS3Error } from '../../../../../src/main/providers/s3/failure'
@@ -82,5 +83,24 @@ describe('every S3 ProviderFailure goes through redactSecret [SPEC 6 1.12, 6.5 1
       kind: 'other',
       detail: 'Request refused: https://[key removed].example:[key removed] is not the S3 host',
     })
+  })
+})
+
+describe('S3: a break while the answer is read [SPEC 6.2 1.14, 14 H2, G8]', () => {
+  it('maps a body that fails part way to offline', async () => {
+    const requestHandler = {
+      async handle() {
+        const body = new Readable({
+          read() {
+            this.push(Buffer.from('part of the file'))
+            this.destroy(Object.assign(new Error('aborted'), { code: 'ECONNRESET' }))
+          },
+        })
+        const headers = { 'content-type': 'text/plain', 'content-length': '100' }
+        return { response: { statusCode: 200, headers, body } }
+      },
+    }
+    const failure = await failureOf(s3Storage(testContext(), { requestHandler }).read('a.txt'))
+    expect(failure.error.kind).toBe('offline')
   })
 })
