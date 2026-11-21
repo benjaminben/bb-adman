@@ -1,8 +1,17 @@
-.names,
-.result {
+.names {
   margin: 0 0 var(--space-3);
   padding-left: var(--space-4);
   overflow-wrap: anywhere;
+}
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  list-style: none;
+  border-radius: var(--radius);
+  background: var(--color-surface);
 }
 .group {
   display: flex;
