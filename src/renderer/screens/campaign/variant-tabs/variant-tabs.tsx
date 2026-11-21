@@ -58,13 +58,12 @@ export function VariantTabs(props: VariantTabsProps) {
   ]
 
   return (
-    <TabRow
-      label="Open variants"
-      items={items}
+    <Tabs.Root
       value={shown}
       onValueChange={(tab) => showVariant(projectId, campaignId, tab)}
       className={styles.tabs}
     >
+      <TabRow label="Open variants" items={items} value={shown} />
       <Tabs.Content value={OVERVIEW_TAB} className={styles.overview}>
         {props.overview}
       </Tabs.Content>
@@ -73,6 +72,6 @@ export function VariantTabs(props: VariantTabsProps) {
           <VariantContent {...props} variantId={v.id} />
         </Tabs.Content>
       ))}
-    </TabRow>
+    </Tabs.Root>
   )
 }
