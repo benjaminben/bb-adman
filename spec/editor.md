@@ -240,6 +240,8 @@ Built. [REQ: FR-077, FR-094]. `editor/crop-overlay/`, mounted by `editor/canvas-
 
 `dialogs/picture-chooser/`, a Radix dialog. Title "Choose a picture for {layer name}".
 
+Not built (SP-8) [D-098]: a second list, "Subject photos in the reference library"; choosing one moves it to the asset library first. `spec/subject-photos.md`.
+
 - A grid of the asset library's pictures (`asset.list { projectId, library: 'asset', kind: 'image' }`), each a button with the picture and its display name. A missing one is shown disabled with "file not found". Empty: "No pictures in the asset library yet."
 - "Import pictures…": `dialog.pickFiles { purpose: 'import', kind: 'image', multiple: true }`, then `asset.import { projectId, paths, library: 'asset', copy: false }`, then the list is read again. A cancelled picker sends nothing.
 - Choosing a picture sends `layer.update { source: { assetId } }` and closes. A refused choice shows the command's message in the dialog (`role="alert"`) and the dialog stays open. While a choice is being sent, the pictures, "Import pictures…", "Cancel" and the dialog's close are disabled. "Cancel" closes and sends nothing. The list is read again at each opening.

@@ -56,7 +56,7 @@ Props: `open`, `projectId`, `job` (`image`, `cutout`, `layout`, `text`), `title`
 `editor/generate-fields/` [REQ: FR-062, FR-063, workflow 5.1 step 5].
 
 - "Prompt": a text area, first filled by `prefilledPrompt` from the variant's subjects and the campaign's audience, region and message.
-- "Reference pictures": "{n} chosen" or "None chosen", and "Choose reference pictures…" (the reference dialog). The first time a layer is shown, the reference-library pictures of the variant's subjects are chosen, up to `MAX_REFERENCES_PER_RUN`, skipping ones that cannot be sent.
+- "Reference pictures": "{n} chosen" or "None chosen", and "Choose reference pictures…" (the reference dialog). The first time a layer is shown, the reference-library pictures of the variant's subjects are chosen, up to `MAX_REFERENCES_PER_RUN`, skipping ones that cannot be sent. (Not built, SP-7: every picture attached to the subjects, in either library; `spec/subject-photos.md`.)
 - The prompt and the chosen pictures are kept per layer while the project is open (`stores/generate-drafts.ts`), not saved.
 - "Generate…" opens the run dialog (`job: 'image'`, count "Pictures" from `settings.generation.optionsPerRun`, `referenceCount`, `campaignId`). Confirm sends `generation.runImages { projectId, variantId, layerId, prompt, referenceAssetIds, count, provider }`.
 - After the reply, one line follows the started job by `job.updated`: "Making {n} pictures…", "Done. Choose one under Earlier options.", "Cancelled.", or the failure sentence. A visit after the start reads `job.list` for the layer once, so a change it missed shows (`run-status.tsx`).

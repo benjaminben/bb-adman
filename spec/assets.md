@@ -200,7 +200,7 @@ Built for the test path. Main files: `src/main/commands/generation/` (checks), `
 
 - `asset.library` is `reference` (pictures that guide generation) or `asset` (files used in ads). `asset.list` returns rows by `id` ascending (oldest first); the window sorts for display.
 - A hero image is a row with `library = 'asset'`, `kind = 'image'` and a `subject_id`. If a subject has several, the newest fills the slot and the others are offered [REQ: R-12]. One file belongs to at most one subject [REQ: FR-011].
-- **Subject photos** (Not built) [D-098]: the brief form imports each subject's photos as linked assets and attaches them at "Create campaign" with `asset.update`; `src/main/assets/brief-pictures.ts` checks a brief's photo paths. `spec/subject-photos.md`.
+- **Subject photos** (Not built) [D-098]: a picture attached to a subject, in either library, is offered and pre-chosen as a reference picture; the picture chooser moves a reference-library subject photo to the asset library when placed. Files with no subject keep the rules above. `spec/subject-photos.md`.
 - `font_publish_allowed` is set by the user with a checkbox "I am allowed to share this font" [REQ: FR-162].
 
 ### Which pictures a run sends
