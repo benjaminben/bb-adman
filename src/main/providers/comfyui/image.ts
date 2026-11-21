@@ -32,8 +32,7 @@ export function workflowForRun(job: WorkflowChoice['job'], start?: WorkflowChoic
         (w.videoStart?.firstFrame === start.firstFrame &&
           w.videoStart.references === start.references)),
   )
-  const chosen: WorkflowSpec | undefined =
-    fitting.find((w) => w.status === 'proven') ?? fitting[0]
+  const chosen: WorkflowSpec | undefined = fitting.find((w) => w.status === 'proven') ?? fitting[0]
   if (!chosen) throw new Error(`No shipped workflow for ${job}`)
   return chosen
 }

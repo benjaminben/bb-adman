@@ -77,7 +77,7 @@ describe('settings.update and the comfyui row [SPEC 6.11.1, 14 CU-0 W5]', () => 
     const before = await state()
     expect(before.providers.find((p) => p.id === 'comfyui')).toMatchObject({
       available: true,
-      jobs: ['image'],
+      jobs: ['image', 'video'],
     })
     expect(
       await f.user('settings.update', { defaultProviders: { image: 'comfyui' } }),

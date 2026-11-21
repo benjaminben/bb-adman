@@ -32,11 +32,11 @@ const PROVIDERS: ProviderInfo[] = [
     cancel: 'may_finish',
   },
   // [1.35] SPEC 6.11.1: `available` is a build fact. False until CU-4 brings the adapter;
-  // 'video' joins `jobs` in CU-6.
+  // 'video' joins `jobs` in CU-6 (CU-6a: a video from a prompt).
   {
     id: 'comfyui',
     label: 'ComfyUI',
-    jobs: ['image'],
+    jobs: ['image', 'video'],
     // [1.35] CU-4: this build has the picture adapter.
     available: true,
     secrets: [],
