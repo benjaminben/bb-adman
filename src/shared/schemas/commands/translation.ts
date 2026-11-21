@@ -52,7 +52,7 @@ export type TranslationLayersReply = { layerIds: string[] }
 
 // translation.exportSheet: the path's own checks are in the command (P6-7), with their words.
 export const translationExportSheetInput = projectScoped
-  .extend({ campaignId: id, filePath: z.string().min(1) })
+  .extend({ campaignId: id, filePath: z.string().min(1).max(4096) })
   .strict()
 export type TranslationExportSheetInput = z.infer<typeof translationExportSheetInput>
 export type TranslationExportSheetReply = { path: string; rowCount: number }
