@@ -14,12 +14,13 @@ import { sent } from '../screens/campaign/campaign-fixture'
 import { jobRow } from '../stores/job-fixture'
 import { LOGO, P } from './editor-fixture'
 
-const LOCAL = { local: true, cancel: 'stops', serverText: false, secrets: [] } as const
+const LOCAL = { local: true, cancel: 'stops', serverText: false } as const
 const COMFY: ProviderInfo = {
   id: 'comfyui',
   label: 'ComfyUI',
   jobs: ['image', 'video', 'cutout'],
   available: true,
+  secrets: [],
   defaultModels: {},
   ...LOCAL,
 }
@@ -29,7 +30,7 @@ const CUTOUT_FLOW = { job: 'cutout', status: 'proven', offered: true, label: 'Bi
 const WITH_PICTURE: LayerRow = { ...LOGO, source: { assetId: 'A1' } }
 const CUT_OUT = 'Cut out the subject…'
 
-type Options = { providers?: ProviderInfo[]; flows?: object[]; layer?: LayerRow }
+type Options = { providers?: readonly ProviderInfo[]; flows?: readonly object[]; layer?: LayerRow }
 
 async function setup(options: Options = {}) {
   const state = baseState()
