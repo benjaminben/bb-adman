@@ -5,8 +5,9 @@
 import { parseDocument, type DocumentOptions, type ParseOptions, type SchemaOptions } from 'yaml'
 import { fail, type ErrorBody } from '../schemas/result'
 import type { ParseBrief } from '../templates/types'
-import { MAX_BRIEF_BYTES } from '../config/brief-limits'
+import { MAX_BRIEF_ALIASES, MAX_BRIEF_BYTES } from '../config/brief-limits'
 import { briefDraftFrom, BRIEF_UNREADABLE } from './draft'
+import { passesYamlWalk } from './yaml-walk'
 
 export const BRIEF_TOO_LARGE: ErrorBody = {
   code: 'INVALID_INPUT',
@@ -19,22 +20,23 @@ const BYTE_ORDER_MARK = '\uFEFF'
 // SPEC 6.1 item 3, set here whatever the library's defaults are. resolveKnownTags: false
 // keeps !!binary, !!set and !!timestamp from giving anything but plain data. logLevel
 // 'error' prints nothing ('silent' would also drop the "several documents" error).
+// Item 7 [1.26]: uniqueKeys is off because passesYamlWalk does that check in one pass;
+// prettyErrors is off because the errors are never read.
 const YAML_OPTIONS: ParseOptions & DocumentOptions & SchemaOptions = {
   version: '1.2',
   schema: 'core',
   customTags: [],
   resolveKnownTags: false,
   merge: false,
-  uniqueKeys: true,
+  uniqueKeys: false,
+  prettyErrors: false,
   logLevel: 'error',
 }
 
-const MAX_ALIAS_COUNT = 100
-
 function readYaml(text: string): unknown {
   const doc = parseDocument(text, YAML_OPTIONS)
-  if (doc.errors.length > 0) throw new Error('unreadable')
-  return doc.toJS({ maxAliasCount: MAX_ALIAS_COUNT })
+  if (doc.errors.length > 0 || !passesYamlWalk(doc)) throw new Error('unreadable')
+  return doc.toJS({ maxAliasCount: MAX_BRIEF_ALIASES })
 }
 
 // SPEC 6.1 item 7 [1.26]: a text never has fewer bytes than characters, so a text too long

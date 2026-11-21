@@ -10,7 +10,7 @@ vi.mock('yaml', async (importOriginal) => {
 })
 
 describe('parseBrief YAML: the settings are given in the call [SPEC 6.1]', () => {
-  it('passes 1.2 core rules, no custom tags, no merge keys, unique keys, no printing', () => {
+  it('passes 1.2 core rules, no custom tags, no merge keys, no library key check, no pretty errors, no printing', () => {
     parseBrief('region: US\n', 'yaml')
     expect(vi.mocked(yaml.parseDocument)).toHaveBeenCalledWith('region: US\n', {
       version: '1.2',
@@ -18,7 +18,8 @@ describe('parseBrief YAML: the settings are given in the call [SPEC 6.1]', () =>
       customTags: [],
       resolveKnownTags: false,
       merge: false,
-      uniqueKeys: true,
+      uniqueKeys: false,
+      prettyErrors: false,
       logLevel: 'error',
     })
   })
