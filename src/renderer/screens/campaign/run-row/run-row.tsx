@@ -93,6 +93,7 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
           </button>
         )}
       </div>
+      {row.startedBy === 'agent' && <p className={layout.muted}>Started by an agent</p>}
       {row.status === 'failed' && <p>{plainMessage(row.errorKind ?? 'other', label)}</p>}
       {asking && (
         <PaidConfirm

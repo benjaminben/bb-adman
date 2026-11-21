@@ -95,3 +95,28 @@ export async function projectHomeTour(app: ElectronApplication, page: Page) {
   await page.getByRole('button', { name: 'Back to project' }).click()
   await expect(page.getByRole('list', { name: 'Campaigns' })).toBeVisible()
 }
+
+// Settings · Agent runs (spec/agent-runs.md, "Settings block"): one tick per offered provider,
+// and the limit, each saved to settings.json. Clicks only: no agent and no run.
+export async function agentRunsTour(page: Page, box: Sandbox) {
+  const saved = () => JSON.parse(fs.readFileSync(path.join(box.userData, 'settings.json'), 'utf8'))
+  await screens.openSettings(page)
+  const block = page.getByRole('region', { name: 'Agent runs' })
+  const tick = (label: string) =>
+    block.getByRole('checkbox', { name: `Let agents start runs with ${label}` })
+  for (const label of ['ComfyUI', 'Fake provider']) await expect(tick(label)).toHaveCount(1)
+  for (const label of ['Adobe Firefly', 'fal.ai Seedance']) await expect(tick(label)).toHaveCount(0)
+
+  await tick('ComfyUI').check()
+  await expect(tick('ComfyUI')).toBeChecked()
+  await expect(tick('Fake provider')).not.toBeChecked()
+  await expect.poll(() => saved().agentRuns).toEqual({ comfyui: { allowed: true } })
+
+  const limit = block.getByLabel('Most runs agents may have waiting or running, per provider')
+  await expect(limit).toHaveValue('4')
+  await limit.fill('9')
+  await expect.poll(() => saved().agentRunLimit).toBe(9)
+
+  await tick('ComfyUI').uncheck()
+  await expect.poll(() => saved().agentRuns).toEqual({ comfyui: { allowed: false } })
+}

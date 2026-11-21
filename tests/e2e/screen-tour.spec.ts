@@ -4,7 +4,13 @@
 import { test, type ElectronApplication, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import { makeSandbox, launch, type Sandbox } from './launch'
-import { handTestStorage, projectHomeTour, settingsTour, startTour } from './screen-tour'
+import {
+  agentRunsTour,
+  handTestStorage,
+  projectHomeTour,
+  settingsTour,
+  startTour,
+} from './screen-tour'
 
 let box: Sandbox
 let app: ElectronApplication
@@ -28,4 +34,8 @@ test('The other screens of the reach table: hand-test storage, Settings, Start, 
   await settingsTour(app, page, box)
   await startTour(app, page, box)
   await projectHomeTour(app, page)
+})
+
+test('Settings · Agent runs: one tick per provider, the limit', async () => {
+  await agentRunsTour(page, box)
 })

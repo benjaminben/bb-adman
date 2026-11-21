@@ -4,6 +4,7 @@ import { ProviderDefaults } from '@/renderer/screens/settings/provider-defaults'
 import { KeysSection } from '@/renderer/screens/settings/keys-section'
 import { ComfySection } from '@/renderer/screens/settings/comfy-section'
 import { McpSection } from '@/renderer/screens/settings/mcp-section'
+import { AgentRunsSection } from '@/renderer/screens/settings/agent-runs-section'
 import layout from '@/renderer/ui/layout.module.css'
 
 export function SettingsScreen() {
@@ -15,6 +16,7 @@ export function SettingsScreen() {
       <KeysSection />
       <ComfySection />
       <McpSection />
+      <AgentRunsSection />
     </section>
   )
 }

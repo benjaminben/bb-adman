@@ -116,4 +116,15 @@ describe('RunRow [SPEC 14 1.41 TP-2]', () => {
     expect(await list.findByText('Waiting')).toBeInTheDocument()
     expect(fake.queries.filter((q) => q.name === 'job.list')).toHaveLength(1)
   })
+
+  // spec/agent-runs.md "Settings block", item 5: the mark under the kind.
+  it.each([
+    ['agent', 'image_generation', true],
+    ['agent', 'video_generation', true],
+    ['user', 'image_generation', false],
+    ['user', 'video_generation', false],
+  ] as const)('a run started by %s (%s) shows the agent mark: %s', async (by, kind, shown) => {
+    const { list } = await runs([jobRow('J1', { startedBy: by, kind })])
+    expect(list.queryByText('Started by an agent') !== null).toBe(shown)
+  })
 })
