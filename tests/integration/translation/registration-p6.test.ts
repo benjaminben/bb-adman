@@ -40,7 +40,6 @@ const INPUTS: Record<string, object> = {
       },
     ],
   },
-  'check.run': { campaignId: 'C1' },
 }
 const NAMES = Object.keys(INPUTS)
 const SYSTEM = ['translation.write', 'translation.restore']
@@ -51,7 +50,6 @@ const POLICY: Record<string, string> = {
   'translation.exportSheet': 'deny',
   'translation.write': 'deny',
   'translation.restore': 'deny',
-  'check.run': 'allow',
 }
 const AGENT_REACHES = NAMES.filter((n) => POLICY[n] === 'allow')
 const AGENT_DENIED = NAMES.filter((n) => POLICY[n] === 'deny')
