@@ -185,17 +185,27 @@ describe('job.markSeen through the runner [SPEC 3.6 "Jobs" item 3 1.38, 14 1.38 
 })
 
 describe('job commands and agents [SPEC 4.2, 6.11.3]', () => {
-  it.each(['job.retry', 'job.cancel', 'job.markSeen'])(
-    '%s is refused to an agent',
-    async (name) => {
-      const x = fixture()
-      const id = await x.start()
-      await waitFor(done(x, id))
-      const input = name === 'job.markSeen' ? { jobIds: [id] } : { jobId: id }
-      expect(await x.agent(name, { projectId: x.projectId, ...input })).toMatchObject({
-        ok: false,
-        error: { code: 'AGENT_DENIED' },
-      })
-    },
-  )
+  it.each(['job.retry', 'job.markSeen'])('%s is refused to an agent', async (name) => {
+    const x = fixture()
+    const id = await x.start()
+    await waitFor(done(x, id))
+    const input = name === 'job.markSeen' ? { jobIds: [id] } : { jobId: id }
+    expect(await x.agent(name, { projectId: x.projectId, ...input })).toMatchObject({
+      ok: false,
+      error: { code: 'AGENT_DENIED' },
+    })
+  })
+
+  it("refuses the agent's job.cancel of a user's job [AR-1]", async () => {
+    const x = fixture()
+    const g = gate()
+    x.f.body = async () => g.promise
+    const id = await x.start()
+    await waitFor(() => x.row(id)?.status === 'running')
+    expect(await x.agent('job.cancel', { projectId: x.projectId, jobId: id })).toEqual({
+      ok: false,
+      error: { code: 'AGENT_DENIED', message: 'Agents can cancel only runs they started.' },
+    })
+    g.open()
+  })
 })

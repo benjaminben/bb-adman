@@ -111,14 +111,31 @@ describe('generation.startVideo picture start refusals [SPEC 14 1.60 CU-6b N-4] 
   )
 
   it.each([['first frame'], ['reference']])(
-    'the agent is refused a %s start with AGENT_DENIED and nothing is sent [1.57 H-1]',
+    'with ComfyUI ticked by the user, the agent %s start is accepted [AR-1]',
+    async (which) => {
+      await ready()
+      await f.user('agentRuns.setAllowed', { provider: 'comfyui', allowed: true })
+      const id = await f.importPicture('pics', 'shoe.png')
+      const input = which === 'reference' ? refAsk(id) : frameAsk(id)
+      expect(await f.agent('generation.startVideo', input)).toMatchObject({ ok: true })
+      expect(f.jobs()).toHaveLength(1)
+      expect(f.jobs()[0]).toMatchObject({ startedBy: 'agent', seenAt: null })
+    },
+  )
+
+  it.each([['first frame'], ['reference']])(
+    'with no tick, the agent is refused a %s start at gate step 2 and nothing is sent [AR-1]',
     async (which) => {
       await ready()
       const id = await f.importPicture('pics', 'shoe.png')
       const input = which === 'reference' ? refAsk(id) : frameAsk(id)
-      expect(await f.agent('generation.startVideo', input)).toMatchObject({
+      expect(await f.agent('generation.startVideo', input)).toEqual({
         ok: false,
-        error: { code: 'AGENT_DENIED' },
+        error: {
+          code: 'AGENT_DENIED',
+          message:
+            "The user has not allowed agents to start runs with ComfyUI. They can allow it in Adman's Settings.",
+        },
       })
       expect(f.jobs()).toEqual([])
       expect(stand?.seen).toEqual([])

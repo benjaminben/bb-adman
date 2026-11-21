@@ -147,6 +147,7 @@ export function createCore(opts: CoreOptions) {
     log,
     emit: opts.emit,
     askPermission: opts.askPermission,
+    agentRuns: { providers, settings },
   })
   const queries = queryTable(deps, mcp)
   const query = createQueryRunner(queries, log)
