@@ -24,3 +24,10 @@ export const pickFilesInput = z
 export type PickFilesInput = z.infer<typeof pickFilesInput>
 
 export type PickedPaths = { paths: string[] }
+
+// Phase 6 section 1 dialog.pickSaveFile (P6-8). defaultPath is only shown in the dialog; the
+// command that writes the file checks the path the user chose.
+export const pickSaveFileInput = z
+  .object({ purpose: z.enum(['translation-sheet']), defaultPath: z.string().optional() })
+  .strict()
+export type PickSaveFileInput = z.infer<typeof pickSaveFileInput>

@@ -32,13 +32,18 @@ export function useApi(): AdmanApi {
   return useCtx().api
 }
 
-// Asks the main process to show a native picker; returns null when cancelled.
+// Asks the main process to show a native picker; returns null when cancelled. The save
+// picker has one purpose so far, the translation sheet (Phase 6, P6-8).
 export async function pickPath(
   api: AdmanApi,
-  query: 'dialog.pickFolder' | 'dialog.pickProjectFile',
+  query: 'dialog.pickFolder' | 'dialog.pickProjectFile' | 'dialog.pickSaveFile',
   defaultPath?: string,
 ): Promise<string | null> {
-  const result = await api.query(query, { defaultPath })
+  const input =
+    query === 'dialog.pickSaveFile'
+      ? { purpose: 'translation-sheet', defaultPath }
+      : { defaultPath }
+  const result = await api.query(query, input)
   if (!result.ok) return null
   const data = result.data as { path: string | null } | null
   return data?.path ?? null
