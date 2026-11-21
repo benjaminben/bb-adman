@@ -2,7 +2,7 @@
 
 A subject (the product, service or person an ad is about) is defined first by one or more photos of it. Its description stays optional. Generating the subject into new angles and scenes is a core use, so every photo of a subject guides the AI, and any of them can also be placed in an ad as it is. This file covers the brief file's `pictures` field and how `brief.parse` checks it, the "Photos" part of the brief form, what "Create campaign" sends, how subject photos reach the reference pickers and the picture chooser, what agents see, and what is out of scope [D-098, R-21].
 
-Every part of this file is **Not built**. Slices: `spec/phases/subject-photos.md` (SP-1 to SP-8). Assumptions A-110 to A-126 are at the end of this file.
+Every part of this file is **Not built**. Slices: `spec/phases/subject-photos.md` (SP-1 to SP-9). Assumptions A-110 to A-126 are at the end of this file; A-127 (the prompt ending) is in `spec/assumptions.md`.
 
 Read with: `spec/brief-and-templates.md` (the brief's shape, `brief.parse`, "What the project page sends"), `spec/screens-campaign.md` ("The brief form"), `spec/assets.md` (import, reuse, libraries, reference pictures, the asset protocol), `spec/screens-ai.md` (generate fields, reference dialog), `spec/editor.md` ("Picture chooser"), `.claude/rules/security-priorities.md`.
 
@@ -280,9 +280,10 @@ Every list of "reference pictures" reads `asset.list { projectId, kind: 'image' 
 | Editor first draft | `editor/generate-fields/use-first-draft.ts` | reference-library images of the variant's subjects | `subjectPhotoIds` of the variant's subjects, from the wider list |
 | Video card, "Picture to start from" (first frame and "A reference picture") | `ui/reference-picker/reference-list.ts` (`useReferences`), `screens/campaign/video-picture-choice/` | reference library only; nothing pre-chosen | `isReferenceRow`; when nothing is chosen at the first read, the first of `subjectPhotoIds([subjectId])` is chosen (A-120) |
 
+- **The prompt keeps the printing (SP-9).** A run that sends any reference picture ends its prompt with "keep the printing on the things in the given pictures, add no other text" instead of "no text", so a product keeps its label; small print on packaging can still come out garbled, so the user checks it, and placing the real photo in the ad is the exact route (`spec/providers-adapters.md`, "Prompt and text rules"; A-127).
 - "Add pictures" in these pickers is unchanged: it imports into the reference library, attached to the variant's first subject when there is one.
 - Headings and empty lines stay ("Reference pictures", "No reference pictures in this project yet."). A row that is a subject photo in the asset library shows the extra text "Photo of {subject id}" after its name, so a user knows why an ad picture is listed.
-- **No main-side change is needed.** Checked: `generation.runImages` (`run-images.ts`) and `generation.startVideo` (`video-start-checks.ts`, `usablePicture`) take any asset ID the project holds and read it with `AssetService.read`, which checks kind, size and picture type, never the library. Layer commands refuse a reference-library file as a picture source (`check-layer-assets.ts`, reason `reference_library`), which is what keeps R-12 true for placing.
+- **No main-side change is needed for the lists** (the prompt ending above is SP-9's). Checked: `generation.runImages` (`run-images.ts`) and `generation.startVideo` (`video-start-checks.ts`, `usablePicture`) take any asset ID the project holds and read it with `AssetService.read`, which checks kind, size and picture type, never the library. Layer commands refuse a reference-library file as a picture source (`check-layer-assets.ts`, reason `reference_library`), which is what keeps R-12 true for placing.
 
 **Agents.** Agents find a subject's photos with `list_assets` filtered by subject (it gives library and subject ID) and, from Phase 10, `list_subjects` (attached asset IDs). `generate_images` and `generate_video` take any image asset ID from `list_assets`. Nothing changes for agents; agents get no pre-choice.
 

@@ -73,7 +73,7 @@ project-root/
 │       ├── config/                # defaults.ts, file-types.ts, region-languages.ts, job-kinds.ts, dev-tools.ts,
 │       │                          #   default-layout.ts, brief-limits.ts, size-limits.ts, reserved-names.ts, agent-runs.ts;
 │       │                          #   public-ids.ts, format-changes.ts (later phases)
-│       ├── generation/            # prompt.ts: the pre-filled picture prompt and its fixed ending
+│       ├── generation/            # prompt.ts: the pre-filled picture prompt and its two endings
 │       ├── providers/             # messages.ts: plain error sentences, used by window and main process
 │       ├── templates/             # starter.ts, master-layers.ts (buildMasterLayers), new-layer.ts, types.ts
 │       ├── scene/                 # Scene component and helpers, fonts/ (bundled Inter) (files in spec/scene.md);

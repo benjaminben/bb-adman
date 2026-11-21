@@ -9,13 +9,14 @@
 - After "Create campaign", each photo is attached to its subject. With "Start the ad with a subject photo placed" not ticked (the default) the master's subject slot is empty; ticked, it holds the first subject's newest photo.
 - On the new campaign, the subject's photos are pre-ticked in "Make pictures", pre-chosen in the editor's generate fields and on the video card, whichever library they are in.
 - A subject photo in the reference library can be placed from the picture chooser, which moves it to the asset library.
+- A picture or video run that sends any picture ends its prompt with the "keep printing" ending; a run with none keeps "no text" (SP-9).
 - Cancel leaves no new asset in the project.
 - `create_campaign` behaves as before: an agent can still make a campaign whose subjects have no files, and its slot fills as before.
 - Every existing end-to-end and shots run that creates a campaign through the form passes, with the edits named in SP-5.
 
 **Dependencies:** Phase 4 merged (P4-15 `brief.extract`, P4-20 exit check). Not tied to the approvals slices: none of them edits the files below.
 
-**Design:** `spec/subject-photos.md` (everything, assumptions A-110 to A-126). Read also `spec/screens-campaign.md` "The brief form" and `spec/brief-and-templates.md` "What the project page sends".
+**Design:** `spec/subject-photos.md` (everything, assumptions A-110 to A-126). SP-9's design is `spec/providers-adapters.md`, "Prompt and text rules" (A-127 in `spec/assumptions.md`). Read also `spec/screens-campaign.md` "The brief form" and `spec/brief-and-templates.md` "What the project page sends".
 
 ## Rules for these slices
 
@@ -31,16 +32,17 @@
 
 | Wave | Slice | Waits for | May run beside |
 |------|-------|-----------|----------------|
-| 1 | SP-1 Brief photo paths in `brief.parse` (in build) | Phase 4 | SP-2, SP-6, SP-7, SP-8 |
-| 1 | SP-2 Form model: photos, problems, attach plan (in build; see "SP-2 change") | Phase 4 | SP-1, SP-6, SP-7, SP-8 |
-| 1 | SP-6 `campaign.create` gains `placeSubjectPhoto` | Phase 4 | SP-1, SP-2, SP-7, SP-8 |
-| 1 | SP-7 Subject photos in the reference lists and pre-choices | Phase 4 | SP-1, SP-2, SP-6, SP-8 |
-| 1 | SP-8 Placing a reference-library subject photo | Phase 4 | SP-1, SP-2, SP-6, SP-7 |
-| 2 | SP-3 The "Photos" part of a subject row and the place box | SP-2 | SP-1, SP-6, SP-7, SP-8 |
-| 3 | SP-4 Brief photos on load, the Create order, cleanup | SP-1, SP-3, SP-6 | Nothing |
-| 4 | SP-5 Fixtures, end-to-end and shots updates, exit check | Every other SP slice | Nothing |
+| 1 | SP-1 Brief photo paths in `brief.parse` (in build) | Phase 4 | SP-2, SP-6, SP-7, SP-8, SP-9 |
+| 1 | SP-2 Form model: photos, problems, attach plan (in build; see "SP-2 change") | Phase 4 | SP-1, SP-6, SP-7, SP-8, SP-9 |
+| 1 | SP-6 `campaign.create` gains `placeSubjectPhoto` | Phase 4 | SP-1, SP-2, SP-7, SP-8, SP-9 |
+| 1 | SP-7 Subject photos in the reference lists and pre-choices | Phase 4 | SP-1, SP-2, SP-6, SP-8, SP-9 |
+| 1 | SP-8 Placing a reference-library subject photo | Phase 4 | SP-1, SP-2, SP-6, SP-7, SP-9 |
+| 1 | SP-9 The prompt ending keeps printing when pictures are sent | Phase 4 | Every other SP slice |
+| 2 | SP-3 The "Photos" part of a subject row and the place box | SP-2 | SP-1, SP-6, SP-7, SP-8, SP-9 |
+| 3 | SP-4 Brief photos on load, the Create order, cleanup | SP-1, SP-3, SP-6 | SP-9 |
+| 4 | SP-5 Fixtures, end-to-end and shots updates, exit check | Every other SP slice except SP-9 | SP-9 |
 
-No two slices of one wave share a file: SP-1 is in `src/main/assets/`, `src/main/commands/brief/`, `src/main/jobs/` and the brief schemas; SP-2 in the project-home model files; SP-6 in `campaign.ts` and `fills.ts`; SP-7 in `ui/reference-picker/`, `editor/generate-fields/`, `screens/campaign/campaign-view/` and `video-picture-choice/`; SP-8 in `dialogs/picture-chooser/`.
+No two slices of one wave share a file: SP-1 is in `src/main/assets/`, `src/main/commands/brief/`, `src/main/jobs/kinds/brief-extraction.ts` and the brief schemas; SP-2 in the project-home model files; SP-6 in `campaign.ts` and `fills.ts`; SP-7 in `ui/reference-picker/`, `editor/generate-fields/`, `screens/campaign/campaign-view/` and `video-picture-choice/`; SP-8 in `dialogs/picture-chooser/`; SP-9 in `src/shared/generation/prompt.ts`, the picture and video commands and job kinds, `job/retry.ts`, and their tests. SP-9 shares no file with any other SP slice: it touches no renderer file and no end-to-end or shots file (none of them checks a prompt ending), so SP-3, SP-4, SP-5 and SP-7 can be built beside it.
 
 ## SP-2 change (the developer building SP-2 now)
 
@@ -128,6 +130,23 @@ The meaning of the row's choice changed (stakeholder's note on generating subjec
 - **Exit check:** lint, typecheck, the component tests named above.
 - **Class:** D. No security review (an existing command, sent by the user's choice). **After:** nothing.
 
+### SP-9 — The prompt ending keeps printing when pictures are sent (Not built)
+
+- **Exists when done:** `prompt.ts` exports `NO_TEXT_ENDING` (unchanged), `KEEP_PRINTING_ENDING`, `promptEnding(pictures)` and `promptToSend(prompt, { pictures })` as designed in `spec/providers-adapters.md`, "Prompt and text rules". Every caller passes `{ pictures: referenceAssetIds.length }` of its request. A picture or video run with one or more pictures (references or a first frame) stores and sends the "keep printing" ending; a run with none stores and sends "no text". `job.retry` of a picture or video row stores the prompt through `promptToSend` with the old row's picture count, and changes no other request field (the kept-pictures count rule stays). No window change.
+- **New files:** `tests/integration/commands/job-retry-prompt.test.ts`.
+- **May touch:** `src/shared/generation/prompt.ts`; `src/main/commands/generation/run-images.ts`, `start-video.ts` (one call each); `src/main/jobs/kinds/image-generation.ts`, `video-generation.ts` (one call each); `src/main/commands/job/retry.ts` (`retryRequest` only).
+- **Tests first:**
+  - `tests/unit/shared/generation/prompt.test.ts` (approved additions): `KEEP_PRINTING_ENDING` is the exact text; `NO_TEXT_ENDING` is unchanged; `promptEnding(0)` is "no text", `promptEnding(1)` and `promptEnding(8)` are "keep printing"; `promptToSend('A bottle', { pictures: 0 })` and `{ pictures: 2 }` each add the right ending after one space; the prompt is trimmed; calling it twice with the same count gives the same text, for both counts; a prompt ending in "no text" sent with 1 picture ends in "keep printing" only, and the other way round; both endings pasted in either order, with spaces and line breaks between, give one ending, the right one; a prompt that is only an ending gives the chosen ending alone; an ending in the middle of the prompt is left there; a cut ending (existing test) still gets the full ending added; neither ending holds the word "product"; `prefilledPrompt` holds neither ending.
+  - `tests/integration/generation/run-images.test.ts` (approved edits and additions): with one reference, the stored `request.prompt` ends with "keep printing" once and holds no "no text"; with none, it ends with "no text".
+  - `tests/integration/generation/image-kind.test.ts` (approved additions): a job with one reference hands the fake provider the prompt with "keep printing"; a stored prompt that already ends with it is sent unchanged.
+  - `tests/integration/generation/start-video.test.ts` (approved additions): a prompt-only start stores "no text"; a first-frame start and a reference start each store "keep printing".
+  - `tests/integration/jobs/video-generation.test.ts` (approved additions): the fake provider's `start` gets "keep printing" for a first-frame request and "no text" for a prompt-only one.
+  - `tests/integration/generation/comfy-run.test.ts` (approved edits): the run with a reference fills the workflow's prompt slot with the "keep printing" prompt.
+  - `job-retry-prompt.test.ts`: retrying a failed picture row with one reference whose stored prompt ends in "no text" gives a new row whose prompt ends in "keep printing" once; a row with no reference keeps its prompt exactly; a first-frame video row is handled like the picture row; no other request field changes; the old row is unchanged.
+- **Approved edits to existing tests:** every existing `promptToSend('…')` call in a test gains the second argument, with the count of the pictures that test's run sends; an expected prompt changes only where the run sends a picture. Files: `prompt.test.ts`, `run-images.test.ts`, `image-kind.test.ts`, `start-video.test.ts`, `comfy-run.test.ts`, `video-generation.test.ts`; `tests/integration/commands/job-retry-kept.test.ts` and `job-retry-comfy.test.ts` only where an expected retried request now holds the ending. `tests/live/gemini-reference.live.test.ts`: both prompts are built with `promptToSend(text, { pictures: references.length })` instead of its own copy of the ending, so the stakeholder's next live run checks the final wording. The developer does not run it.
+- **Exit check:** lint, typecheck, `tests/unit/shared/generation/`, the integration tests named above, `tests/integration/commands/job-retry*.test.ts`. Fake provider only; no paid run [D-049].
+- **Class:** A + B. No security review: the change is two fixed texts and which one is picked; no new command, path or data reaches a provider. **After:** nothing.
+
 ### SP-5 — Fixtures, end-to-end and shots updates, exit check (Not built)
 
 - **Exists when done:** the brief fixtures name small made-up photos; every e2e and shots run that makes a campaign through the form has a photo; new shots 140 to 146; the "Not built" marks in `spec/subject-photos.md` read "Built (SP-n)".
@@ -138,4 +157,4 @@ The meaning of the row's choice changed (stakeholder's note on generating subjec
 - **What changes for those runs.** With the default (box not ticked) the master's layers are as before. But the subject's photos are now pre-ticked as references, so a run that sends a picture or video job now sends them: a job kind may become `image_refs`, and a ComfyUI workflow that takes fewer references refuses with `too_many_references`. A run whose check is about something else calls `untickReferences` before it generates; a run about references updates its expected request. The developer lists each run and which way it went. Shots whose pictures change are taken again and named in the report.
 - **New shots** (`tests/shots/sp-5.shots.ts`): `140-brief-photos` (a loaded brief, both rows with photos), `141-photo-notes` (a brief naming an outside path, a missing file and a text file: the notes), `142-typed-brief-no-photo` (the problem line), `143-existing-subject-photos` (a row using a project subject with attached pictures plus one added), `144-place-box-ticked` (the master with the subject photo placed), `145-references-pre-ticked` ("Make pictures" with the subject's photos ticked), `146-chooser-subject-references` (the picture chooser's second list).
 - **Exit check:** lint, typecheck, `npm test`, `npm run test:e2e`, the shots runs named above; the exit criteria at the top of this file, checked one by one in the report.
-- **Class:** D + a G-style run (the developer runs the end-to-end tests on a desktop). **After:** every other SP slice.
+- **Class:** D + a G-style run (the developer runs the end-to-end tests on a desktop). **After:** every other SP slice except SP-9, which shares no file with it.

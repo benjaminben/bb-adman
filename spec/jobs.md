@@ -92,7 +92,7 @@ imageJobResult = z.object({
 - It calls `generate` once per picture with `count: 1`, `PICTURES_AT_ONCE = 2` at a time, so each call is counted and one failure does not lose the others.
 - Every picture goes through `deps.toPng` whatever its `mime`. The PNG that comes back gets the generation details embedded (`spec/export-and-checks.md`, "Embedded generation details"), is written with `AssetService.writeManaged`, then added with the system command `asset.addGenerated`. Its asset ID goes into `result` and `jc.keep`.
 - A run where some calls fail ends `succeeded` with the pictures it got and the failures counted in `result.failures`. A run with none ends `failed`. No file is written for a failed picture.
-- The pre-filled prompt and its fixed "no text" ending are one pure function, `src/shared/generation/prompt.ts` (`spec/providers-adapters.md`, "Prompt and text rules").
+- The pre-filled prompt and the choice of its ending ("no text" with no picture sent, "keep printing" with one or more) live in one pure file, `src/shared/generation/prompt.ts`. The handler calls `promptToSend(request.prompt, { pictures: request.referenceAssetIds.length })`; the video handler does the same (`spec/providers-adapters.md`, "Prompt and text rules"; SP-9).
 
 ### `video_generation`
 

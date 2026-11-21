@@ -268,7 +268,7 @@ Drizzle: `src/main/db/schema/jobs.ts`. In migration `0002` the `job_started_by` 
 
 - **Picture job** (`src/shared/schemas/jobs/image-generation.ts`, types `ImageJobRequest`, `ImageJobResult`). `result` is `{ assetIds: string[], failures: Record<string, number> }`, the same shape while it runs; a key of `failures` is a provider error kind. Schema: `imageJobResult = z.object({ assetIds: z.array(z.string()), failures: z.record(z.string(), z.number().int()) })`. The job kind and `run-images.ts` import these from there. The window reads the asset IDs in one function in `src/renderer/stores/job-store.ts`, which parses `row.result` with `imageJobResult` and shows no pictures when it does not fit.
 - The picture size asked for is the variant's width and height, for a slot and for any layer, stored in `request`. It states a shape; the fit to a layer's box happens when a picture is placed. OI-70: whether to ask for the box's shape for a non-background layer is open.
-- `request.prompt` holds the full prompt as sent, including the "no text" ending that `promptToSend` adds once, so a retry does not add it twice.
+- `request.prompt` holds the full prompt as sent, with the one ending `promptToSend` chose ("no text" when `referenceAssetIds` is empty, "keep printing" when it is not). `promptToSend` removes any ending already at the end before adding the chosen one, so a retry never holds two (`spec/providers-adapters.md`, "Prompt and text rules"; SP-9). The same holds for the video request.
 - **Video job** (`src/shared/schemas/jobs/video-generation.ts`, `VideoJobRequest`). `result` holds `hasSound`, and the clip's width and height. The three ways to start store:
 
 | Start | `start` | `useReferences` | `referenceAssetIds` | `videoStart` | Stored `request` |
