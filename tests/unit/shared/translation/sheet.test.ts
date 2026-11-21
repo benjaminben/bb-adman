@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { sheetCsv } from '@/shared/translation/sheet'
 import type { TranslationRow } from '@/shared/schemas/queries/translation'
 
-const BOM = '﻿'
+const BOM = String.fromCharCode(0xfeff)
 const HEADER = '"variant_id","title","size","language","layer","source_text","text","status"'
 
 function row(over: Partial<TranslationRow> = {}): TranslationRow {

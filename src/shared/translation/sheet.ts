@@ -14,6 +14,9 @@ function cell(value: string | null): string {
   return `"${guarded.replaceAll('"', '""')}"`
 }
 
+// Written as a code so the mark stays visible here.
+const BOM = String.fromCharCode(0xfeff)
+
 const line = (cells: Array<string | null>) => `${cells.map(cell).join(',')}\r\n`
 
 export function sheetCsv(rows: TranslationRow[]): string {
@@ -29,5 +32,5 @@ export function sheetCsv(rows: TranslationRow[]): string {
       r.status,
     ]),
   )
-  return `﻿${line(HEADER)}${body.join('')}`
+  return `${BOM}${line(HEADER)}${body.join('')}`
 }
