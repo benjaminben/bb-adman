@@ -2,7 +2,7 @@
 // installed, so only these names are typed; anything else of `ws` does not compile.
 declare module 'ws' {
   import type { EventEmitter } from 'node:events'
-  import type { Agent } from 'node:http'
+  import type { Agent, ClientRequest } from 'node:http'
   import type { LookupFunction } from 'node:net'
 
   export type ClientOptions = {
@@ -14,6 +14,8 @@ declare module 'ws' {
     followRedirects: false
     handshakeTimeout: number
     headers: Record<string, string>
+    // CU-9b: called in place of `req.end()`, so the app decides when the handshake is sent.
+    finishRequest: (req: ClientRequest) => void
   }
 
   export default class WebSocket extends EventEmitter {
