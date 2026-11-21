@@ -21,7 +21,7 @@ const byId = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 
 // The pixel size of each picture the master's layers name, for an added background. Only the
 // width and height leave this function.
-function pictureSizesOf(db: Database.Database, layers: LayerRow[]): Record<string, Size> {
+export function pictureSizesOf(db: Database.Database, layers: LayerRow[]): Record<string, Size> {
   const sizes: Record<string, Size> = {}
   for (const layer of layers) {
     if (!layer.source) continue

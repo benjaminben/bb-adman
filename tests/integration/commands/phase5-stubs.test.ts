@@ -35,7 +35,6 @@ const INPUTS: Record<string, object> = {
     fits: { '9x16': 'scale' },
   },
   'variant.add': { directionId: 'D1', sizeLabel: '9x16', language: 'en', format: 'image' },
-  'sync.apply': { directionId: 'D1', masterRev: 0, decisions: [] },
   'generation.applyFill': { jobId: 'J1' },
 }
 const NAMES = Object.keys(INPUTS)
