@@ -79,6 +79,8 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'job.cancel': tick('cancel jobs'),
   'job.markSeen': deny('mark jobs as seen'),
   'export.run': deny('export'),
+  // P8-1: system command, the export job's report row; deny and internal.
+  'report.add': deny('save reports'),
   'publish.run': deny('publish'),
   'history.undo': deny('undo'),
   'history.redo': deny('redo'),

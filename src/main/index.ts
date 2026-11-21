@@ -19,6 +19,7 @@ import { setAppMenu } from './windows/app-menu'
 import { devToolsEnabled } from './dev-tools-flag'
 import { pngConverter } from './png-converter'
 import { pictureFitter } from './picture-fitter'
+import { createExportPictures } from './export/picture-encoder'
 import { bitmapTurner } from './image-turner'
 import { registerAssetProtocol, registerAssetScheme } from './windows/asset-protocol'
 import { checkChangedFiles, withChangeChecks } from './assets/change-trigger'
@@ -155,6 +156,10 @@ function start(): void {
     fitPicture: pictureFitter((buffer) => nativeImage.createFromBuffer(buffer), turnImage),
     webpToPng,
     drawScene: createDraw(),
+    exportPictures: createExportPictures(
+      (b) => nativeImage.createFromBuffer(b),
+      (d, s) => nativeImage.createFromBitmap(d, s),
+    ),
   })
   const ready = core
   ready.log.write({

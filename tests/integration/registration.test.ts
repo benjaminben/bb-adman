@@ -42,6 +42,8 @@ describe('registering commands and queries [SPEC 12]', () => {
         'approvals',
         'assets',
         'devTools',
+        'export',
+        'exportPictures',
         'fitPicture',
         'jobs',
         'log',

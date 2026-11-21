@@ -20,6 +20,7 @@ import { paidCountQueries } from './paid-count'
 import { projectQueries } from './project'
 import { projectListOpenQueries } from './project-list-open'
 import { renderQueries } from './render'
+import { reportQueries } from './report'
 import { syncQueries } from './sync'
 import { templateQueries } from './template'
 import { translationQueries } from './translation'
@@ -50,6 +51,7 @@ export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, Query
     ...projectQueries(deps),
     ...projectListOpenQueries(deps),
     ...renderQueries(deps),
+    ...reportQueries(deps),
     ...syncQueries(deps),
     ...templateQueries(deps),
     ...translationQueries(deps),

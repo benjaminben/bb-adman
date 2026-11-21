@@ -8,6 +8,7 @@ import { briefExtractionKind } from './brief-extraction'
 import { cutoutKind } from './cutout'
 import { generativeFillKind } from './generative-fill'
 import { translationKind } from './translation'
+import { exportKind } from './export'
 
 export const jobKindHandlers: JobKindHandler[] = [
   imageGenerationKind(),
@@ -18,4 +19,5 @@ export const jobKindHandlers: JobKindHandler[] = [
   cutoutKind(),
   generativeFillKind(),
   translationKind(),
+  exportKind(),
 ]

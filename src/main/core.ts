@@ -20,6 +20,9 @@ import { checkCommands } from './commands/check'
 import { comfyCommands } from './commands/comfy'
 import { devCommands } from './commands/dev'
 import { directionCommands } from './commands/direction'
+import { exportCommands } from './commands/export'
+import { createExportDeps } from './export/deps'
+import type { ExportPictures } from './export/types'
 import { generationCommands } from './commands/generation'
 import { jobCommands } from './commands/job'
 import { languageFontCommands } from './commands/language-font'
@@ -64,6 +67,8 @@ export type CoreOptions = {
   webpToPng?: CoreDeps['webpToPng']
   // The Electron side of one draw (spec/scene.md, "One draw"); index.ts fills it.
   drawScene?: DrawScene
+  // P8-4's picture encoder over nativeImage; index.ts fills it.
+  exportPictures?: ExportPictures
 }
 
 const noBrowser = async (): Promise<void> => {
@@ -85,6 +90,11 @@ const noWebp = async (): Promise<Uint8Array> => {
 const noDraw: DrawScene = async () => {
   throw new Error('drawScene is not available')
 }
+
+const noPicture = (): Uint8Array => {
+  throw new Error('exportPictures is not available')
+}
+const noPictures: ExportPictures = { toJpeg: noPicture, stitch: noPicture, shrink: noPicture }
 
 export type Core = ReturnType<typeof createCore>
 
@@ -136,6 +146,8 @@ export function createCore(opts: CoreOptions) {
     fitPicture: opts.fitPicture ?? noFitter,
     webpToPng: opts.webpToPng ?? noWebp,
     approvals: createApprovalsDeps({ ...opts, deps: () => deps }),
+    export: createExportDeps(() => deps),
+    exportPictures: opts.exportPictures ?? noPictures,
     appVersion: opts.appVersion,
     now,
     userDataDir: opts.userDataDir,
@@ -169,6 +181,7 @@ export function createCore(opts: CoreOptions) {
     ...comfyCommands(deps),
     ...devCommands(deps),
     ...directionCommands(deps),
+    ...exportCommands(deps),
     ...generationCommands(deps),
     ...jobCommands(deps),
     ...languageFontCommands(deps),

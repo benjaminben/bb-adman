@@ -68,6 +68,7 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny' | 'tick'> = {
   'job.cancel': 'tick',
   'job.markSeen': 'deny',
   'export.run': 'deny',
+  'report.add': 'deny',
   'publish.run': 'deny',
   'history.undo': 'deny',
   'history.redo': 'deny',
