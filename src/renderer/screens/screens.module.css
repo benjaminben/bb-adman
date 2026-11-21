@@ -80,6 +80,12 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+/* SPEC 6.8: the Claude Code setup line, wrapped so it stays inside the card. */
+.codeLine {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
 /* SPEC 14 1.57 TP-6: a clip at the width of the run that holds it. */
 .clip {
   display: block;
