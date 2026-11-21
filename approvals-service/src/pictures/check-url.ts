@@ -1,3 +1,4 @@
+import 'server-only'
 // checkPictureUrl (spec/approvals-service.md "Pictures"): the one guard on a picture address,
 // used when the API stores one and again before every fetch. The contract checks only that the
 // text is a URL of at most 2,048 characters.

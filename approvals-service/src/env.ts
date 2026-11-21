@@ -1,9 +1,10 @@
-// The Worker's environment (spec/approvals-service.md "What it is"). API_KEY is a secret set
-// with Wrangler when deploying; it is never written into wrangler.jsonc. TEST_PICTURE_ORIGIN is
-// set only by the tests ("Pictures"), never in wrangler.jsonc and never by a deploy step.
+// The service's environment (spec/approvals-service.md "Environment"), made per request by
+// src/server/env.ts. API_KEY is a secret the stakeholder sets in Vercel; it is never written into
+// a file. TEST_PICTURE_ORIGIN is set only by the tests ("Pictures"), never on a deployment.
+import type { Db } from './db/client'
 
 export type Env = {
-  DB: D1Database
+  DB: Db
   API_KEY?: string
   TEST_PICTURE_ORIGIN?: string
 }

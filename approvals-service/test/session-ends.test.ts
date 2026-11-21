@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { env } from 'cloudflare:workers'
 import { createApp } from '../src/app'
 import { cryptoBytes } from '../src/crypto/random'
 import { hashPassword } from '../src/crypto/password'
 import { deleteLink, setLinkPassword } from '../src/db/links'
+import type { Db, Statement } from '../src/db/client'
 import { deleteLinkSessions } from '../src/db/sessions'
 import { startSession } from '../src/visitor/session'
 import { tryPassword } from '../src/visitor/throttle'
@@ -26,12 +26,12 @@ const CHANGES = {
 
 // A database whose next batch first runs `before`: the change lands after the hash check and
 // before the session insert, the gap a real race would use.
-function racingDb(before: () => Promise<unknown>): D1Database {
+function racingDb(before: () => Promise<unknown>): Db {
   let armed = true
   return new Proxy(db, {
     get(target, prop) {
       if (prop === 'batch') {
-        return async (statements: D1PreparedStatement[]) => {
+        return async (statements: Statement[]) => {
           if (armed) {
             armed = false
             await before()
@@ -75,7 +75,7 @@ describe('a session is never made for a password or link that changed meanwhile'
 })
 
 describe('the API ends sessions [approvals-service.md "Session"]', () => {
-  const app = createApp({ DB: env.DB, API_KEY: KEY }, { now: clock().now, random: cryptoBytes })
+  const app = createApp({ DB: db, API_KEY: KEY }, { now: clock().now, random: cryptoBytes })
   const call = (method: string, path: string, body?: unknown) =>
     new Request(`https://approvals.example/api/v1/links/${PROJECT}/campaign-1-abc234${path}`, {
       method,

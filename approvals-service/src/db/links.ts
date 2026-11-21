@@ -1,6 +1,8 @@
-// The link table (spec/approvals-service.md "Database (D1)"). Every statement binds its values.
+import 'server-only'
+// The link table (spec/approvals-service.md "Database"). Every statement binds its values.
 // Write functions return statements, so a caller can run one or put several in one batch.
 import type { StoredPassword } from '../crypto/password'
+import type { Db, Statement } from './client'
 
 export type LinkRow = {
   id: string
@@ -31,7 +33,7 @@ function toRow(record: LinkRecord | null): LinkRow | null {
   }
 }
 
-export function insertLink(db: D1Database, link: LinkRow): D1PreparedStatement {
+export function insertLink(db: Db, link: LinkRow): Statement {
   return db
     .prepare(
       `INSERT INTO link (id, slug, project_id, campaign_id, campaign_name, password_hash,
@@ -51,7 +53,7 @@ export function insertLink(db: D1Database, link: LinkRow): D1PreparedStatement {
 }
 
 export async function findLinkByPair(
-  db: D1Database,
+  db: Db,
   projectId: string,
   campaignId: string,
 ): Promise<LinkRow | null> {
@@ -59,21 +61,17 @@ export async function findLinkByPair(
   return toRow(await db.prepare(sql).bind(projectId, campaignId).first<LinkRecord>())
 }
 
-export async function findLinkBySlug(db: D1Database, slug: string): Promise<LinkRow | null> {
+export async function findLinkBySlug(db: Db, slug: string): Promise<LinkRow | null> {
   const sql = `SELECT ${COLUMNS} FROM link WHERE slug = ?`
   return toRow(await db.prepare(sql).bind(slug).first<LinkRecord>())
 }
 
-export function setCampaignName(db: D1Database, linkId: string, name: string): D1PreparedStatement {
+export function setCampaignName(db: Db, linkId: string, name: string): Statement {
   return db.prepare('UPDATE link SET campaign_name = ? WHERE id = ?').bind(name, linkId)
 }
 
 // A new password: new hash and salt, and the wrong-password count starts again.
-export function setLinkPassword(
-  db: D1Database,
-  linkId: string,
-  password: StoredPassword,
-): D1PreparedStatement {
+export function setLinkPassword(db: Db, linkId: string, password: StoredPassword): Statement {
   return db
     .prepare(
       `UPDATE link SET password_hash = ?, password_salt = ?, password_iterations = ?,
@@ -83,7 +81,7 @@ export function setLinkPassword(
 }
 
 // Children first, in one batch: a batch is one transaction, so a failure removes nothing.
-export async function deleteLink(db: D1Database, linkId: string): Promise<void> {
+export async function deleteLink(db: Db, linkId: string): Promise<void> {
   await db.batch([
     db.prepare('DELETE FROM session WHERE link_id = ?').bind(linkId),
     db.prepare('DELETE FROM signoff WHERE link_id = ?').bind(linkId),

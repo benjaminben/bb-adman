@@ -38,6 +38,7 @@ function streamed(path: string, cookie: string, size: number) {
       Cookie: cookie,
     },
     body,
+    duplex: 'half',
   })
 }
 

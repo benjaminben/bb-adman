@@ -13,7 +13,7 @@ describe('POST /api/v1/links', () => {
   it('makes a link and answers 201 with its slug only', async () => {
     const reply = await create('spring-abc234')
     expect(reply.status).toBe(201)
-    const body = await reply.json<{ slug: string }>()
+    const body = (await reply.json()) as { slug: string }
     expect(Object.keys(body)).toEqual(['slug'])
     expect(body.slug).toMatch(/^[0-9A-Za-z]{12}$/)
     const row = await h.db
@@ -47,7 +47,7 @@ describe('POST /api/v1/links', () => {
 
 describe('GET /api/v1/links/{projectId}/{campaignId}', () => {
   it('answers the LinkState: gallery order, sign-offs oldest first, no picture address', async () => {
-    const { slug } = await (await create('spring-abc234')).json<{ slug: string }>()
+    const { slug } = (await (await create('spring-abc234')).json()) as { slug: string }
     await putGallery('spring-abc234', [variant('bbb234', 2), variant('aaa234')])
     const id = await h.linkIdOf('spring-abc234')
     await signoff(id, 2, 'aaa234', 1)

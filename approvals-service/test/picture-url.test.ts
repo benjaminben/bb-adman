@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { env } from 'cloudflare:workers'
+import { db } from './db'
 import { checkPictureUrl } from '../src/pictures/check-url'
 import type { Env } from '../src/env'
 
-const plain: Env = { DB: env.DB }
-const testing: Env = { DB: env.DB, TEST_PICTURE_ORIGIN: 'http://127.0.0.1:8787' }
+const plain: Env = { DB: db }
+const testing: Env = { DB: db, TEST_PICTURE_ORIGIN: 'http://127.0.0.1:8787' }
 const BUCKET = 'https://my-bucket.s3.eu-west-1.amazonaws.com/campaigns/a.png?X-Amz-Signature=ab'
 const PATH_STYLE = 'https://s3.us-east-1.amazonaws.com/my-bucket/a.png'
 const HOST = 'bucket.s3.us-east-1.amazonaws.com'
@@ -55,13 +55,13 @@ const rows: Row[] = [
   [
     'a test origin value that is not 127.0.0.1',
     'http://10.0.0.1:8787/a.png',
-    { DB: env.DB, TEST_PICTURE_ORIGIN: 'http://10.0.0.1:8787' },
+    { DB: db, TEST_PICTURE_ORIGIN: 'http://10.0.0.1:8787' },
     null,
   ],
   [
     'a test origin value with a path',
     'http://127.0.0.1:8787/a.png',
-    { DB: env.DB, TEST_PICTURE_ORIGIN: 'http://127.0.0.1:8787/' },
+    { DB: db, TEST_PICTURE_ORIGIN: 'http://127.0.0.1:8787/' },
     null,
   ],
 ]

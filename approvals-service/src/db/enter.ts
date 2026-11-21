@@ -1,6 +1,8 @@
+import 'server-only'
 // The password try count (spec/approvals-service.md "Wrong-password limit"): one atomic
 // statement counts the try and reads the stored hash, before the hash is computed.
 import type { StoredPassword } from '../crypto/password'
+import type { Db, Statement } from './client'
 
 export type CountedTry = { linkId: string; tries: number; password: StoredPassword }
 
@@ -14,7 +16,7 @@ type TryRecord = {
 
 // `windowStart` is now - 15 minutes. Null when the slug has no link.
 export async function countPasswordTry(
-  db: D1Database,
+  db: Db,
   slug: string,
   windowStart: number,
   now: number,
@@ -42,11 +44,7 @@ export async function countPasswordTry(
 }
 
 // A right password starts the count again, only while the link still holds that password.
-export function clearTries(
-  db: D1Database,
-  linkId: string,
-  checked: StoredPassword,
-): D1PreparedStatement {
+export function clearTries(db: Db, linkId: string, checked: StoredPassword): Statement {
   return db
     .prepare(
       `UPDATE link SET tries = 0, tries_since = NULL

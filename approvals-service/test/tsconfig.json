@@ -1,7 +1,18 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "types": ["../worker-configuration.d.ts", "@cloudflare/vitest-plugin/types"]
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "plugins": [],
+    "incremental": false
   },
-  "include": ["./**/*.ts", "../src/**/*.ts", "../vitest.config.ts"]
+  "include": [
+    "./**/*.ts",
+    "../src/**/*.ts",
+    "../app/**/*.ts",
+    "../scripts/**/*.ts",
+    "../e2e/**/*.ts",
+    "../vitest.config.ts",
+    "../playwright.config.ts"
+  ]
 }
