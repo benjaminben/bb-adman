@@ -3,7 +3,7 @@
 // picked up, because the app does not contact the ComfyUI address on open [1.24]; a queued
 // job is cancelled (it sent nothing); any other running job failed as interrupted.
 import { activeJobs, readJob, type JobChange } from './job-store'
-import { writeJob, type RunnerState } from './live'
+import { endUnreadable, writeJob, type RunnerState } from './live'
 import { startJob } from './run-job'
 import type { JobRow } from '../../shared/schemas/rows/job'
 
@@ -36,8 +36,11 @@ export function projectOpened(state: RunnerState, projectId: string): void {
   for (const job of activeJobs(handle)) {
     // [1.38] A row this process enqueued or is running is its own, not a left-over (Y15).
     if (state.active.has(job.id) || state.enqueued.has(job.id)) continue
-    const row = readJob(handle, job.id)
-    if (!row) continue
+    const row = readJob(handle, job.id, state.opts.deps().log)
+    if (!row) {
+      endUnreadable(state, handle, job.id)
+      continue
+    }
     if (row.provider !== 'comfyui' && resumable(state, row)) startJob(state, projectId, row)
     else writeJob(state, projectId, row.id, endOf(row))
   }

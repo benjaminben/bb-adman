@@ -138,7 +138,7 @@ export function startJob(state: RunnerState, projectId: string, row: JobRow): vo
   writeJob(state, projectId, row.id, { status: 'running' })
   const handler = state.opts.handlers.find((h) => h.kind === row.kind)
   const handle = deps.projects.get(projectId)
-  const current = (handle && readJob(handle, row.id)) ?? row
+  const current = (handle && readJob(handle, row.id, deps.log)) ?? row
   const work = handler
     ? Promise.resolve().then(() => handler.run(context(state, live), current))
     : Promise.reject(new Error(`No handler for job kind ${row.kind}`))

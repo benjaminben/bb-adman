@@ -53,7 +53,7 @@ export async function cancelJob(state: RunnerState, projectId: string, jobId: st
   await afterTransaction()
   const deps = state.opts.deps()
   const handle = deps.projects.requireOpen(projectId)
-  const row = readJob(handle, jobId)
+  const row = readJob(handle, jobId, deps.log)
   if (!row) throw new AppError('NOT_FOUND', 'That job is not in this project.', { jobId })
   const refusal = cancelRefusal(
     row,

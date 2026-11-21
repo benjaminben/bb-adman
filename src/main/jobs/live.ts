@@ -2,7 +2,8 @@
 // write path for a job row, which emits job.updated after the write.
 import type { CoreDeps } from '../core-deps'
 import type { BusEvent, CommandBus } from '../commands/bus'
-import { readJob, updateJob, type JobChange } from './job-store'
+import { readJob, UNREADABLE, updateJob, type JobChange } from './job-store'
+import type { ProjectHandle } from '../db/project-file'
 import type { JobKindHandler } from './types'
 import type { JobEnd } from './job-end'
 import type { JobKind } from '../../shared/config/job-kinds'
@@ -69,6 +70,12 @@ export function writeJob(
 
 export function emitJob(state: RunnerState, projectId: string, id: string): void {
   const handle = state.opts.deps().projects.get(projectId)
-  const row = handle ? readJob(handle, id) : null
+  const row = handle ? readJob(handle, id, state.opts.deps().log) : null
   if (row) state.opts.emit({ name: 'job.updated', payload: row })
+}
+
+// SPEC 3.6 "Jobs" item 3 [1.38]: ends a queued or running row that cannot be read. No event.
+export function endUnreadable(state: RunnerState, handle: ProjectHandle, id: string): void {
+  state.enqueued.delete(id)
+  updateJob(handle, id, UNREADABLE, nowText(state))
 }

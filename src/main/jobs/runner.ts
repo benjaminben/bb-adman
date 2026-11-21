@@ -5,7 +5,8 @@
 import { ulid } from 'ulid'
 import { activeJobs, insertQueued, markSeenRow, readJob, type ActiveJob } from './job-store'
 import type { ProjectHandle } from '../db/project-file'
-import { emitJob, nowText, type JobRunnerOptions, type RunnerState } from './live'
+import { emitJob, endUnreadable, nowText, type JobRunnerOptions, type RunnerState } from './live'
+import type { JobRow } from '../../shared/schemas/rows/job'
 import { startJob } from './run-job'
 import { projectOpened } from './start-up'
 import { cancelJob } from './cancel'
@@ -37,19 +38,25 @@ export function createJobRunner(opts: JobRunnerOptions): JobService {
   }
 
   // SPEC 3.6 "Jobs" item 2 [1.38]: only a queued row this process enqueued is ever started,
-  // and the queued rows of all open projects are taken in one order, oldest first.
+  // and the queued rows of all open projects are taken in one order, oldest first. A row that
+  // cannot be read is ended as unreadable (item 3).
   function pump(): void {
-    const queued: Array<{ handle: ProjectHandle; job: ActiveJob }> = []
+    const log = opts.deps().log
+    const queued: Array<{ handle: ProjectHandle; job: ActiveJob; row: JobRow }> = []
     for (const handle of opts.deps().projects.all()) {
       for (const job of activeJobs(handle)) {
-        if (job.status === 'queued' && state.enqueued.has(job.id)) queued.push({ handle, job })
+        if (state.active.has(job.id)) continue
+        const row = readJob(handle, job.id, log)
+        if (!row) endUnreadable(state, handle, job.id)
+        else if (job.status === 'queued' && state.enqueued.has(job.id)) {
+          queued.push({ handle, job, row })
+        }
       }
     }
     queued.sort((a, b) => oldestFirst(a.job, b.job))
-    for (const { handle, job } of queued) {
+    for (const { handle, job, row } of queued) {
       if (runningFor(job.provider ?? '') >= JOBS_AT_ONCE_PER_PROVIDER) continue
-      const row = readJob(handle, job.id)
-      if (row) startJob(state, handle.projectId, row)
+      startJob(state, handle.projectId, row)
     }
   }
 
@@ -60,7 +67,7 @@ export function createJobRunner(opts: JobRunnerOptions): JobService {
       state.enqueued.add(id)
       // Runs once the command's transaction has ended; a rolled-back row is not there.
       queueMicrotask(() => {
-        if (!readJob(ctx.project, id)) state.enqueued.delete(id)
+        if (!readJob(ctx.project, id, opts.deps().log)) state.enqueued.delete(id)
         emitJob(state, ctx.project.projectId, id)
         pump()
       })
@@ -72,7 +79,8 @@ export function createJobRunner(opts: JobRunnerOptions): JobService {
       // After the command's transaction: a rolled-back mark leaves seenAt null, and no event.
       queueMicrotask(() => {
         for (const id of marked) {
-          if (readJob(ctx.project, id)?.seenAt) emitJob(state, ctx.project.projectId, id)
+          const row = readJob(ctx.project, id, opts.deps().log)
+          if (row?.seenAt) emitJob(state, ctx.project.projectId, id)
         }
       })
     },

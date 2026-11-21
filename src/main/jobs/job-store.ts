@@ -5,6 +5,8 @@
 import type { ProjectHandle } from '../db/project-file'
 import { job } from '../db/schema'
 import { readWireRow, storedJson } from '../db/rows'
+import type { ActivityLog } from '../log/activity-log'
+import { rowKey } from '../../shared/schemas/rows/keys'
 import type { EnqueueRequest } from './types'
 import type { JobStatus } from '../../shared/config/job-kinds'
 import type { JobRow } from '../../shared/schemas/rows/job'
@@ -79,8 +81,33 @@ export function markSeenRow(h: ProjectHandle, id: string, now: string): boolean 
   return r.changes > 0
 }
 
-export function readJob(h: ProjectHandle, id: string): JobRow | null {
-  return readWireRow(h.db, 'job', { id }) as JobRow | null
+// The row, or null when it is not there or cannot be read. A row that cannot be read (SPEC 3.6
+// "Jobs" item 3 [1.38]) gets one log line naming the table and its key, and no value.
+export function readJob(h: ProjectHandle, id: string, log: ActivityLog): JobRow | null {
+  try {
+    return readWireRow(h.db, 'job', { id }) as JobRow | null
+  } catch {
+    log.write({
+      level: 'error',
+      event: 'job',
+      name: 'rows.read',
+      actor: 'system',
+      projectId: h.projectId,
+      ok: false,
+      message: 'A stored row could not be read.',
+      context: { table: 'job', key: rowKey('job', { id }) },
+    })
+    return null
+  }
+}
+
+// SPEC 3.6 "Jobs" item 3 [1.38]: how a queued or running row that cannot be read is ended.
+// Written with updateJob alone: no job.updated is sent for it.
+export const UNREADABLE: JobChange = {
+  status: 'failed',
+  errorKind: 'other',
+  errorReason: null,
+  errorDetail: 'unreadable_row',
 }
 
 export type ActiveJob = {
