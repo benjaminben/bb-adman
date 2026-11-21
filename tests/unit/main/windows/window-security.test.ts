@@ -109,3 +109,20 @@ describe('app window size [SPEC 1.3, D-031]', () => {
     expect(opts).not.toHaveProperty('fullscreen')
   })
 })
+
+describe('page address: one trailing slash [SPEC 8.2, S2-02]', () => {
+  const builtPage = 'file:///app/out/renderer/index.html'
+
+  it('accepts the development address with one trailing slash', () => {
+    expect(
+      pageAddress({ isPackaged: false, rendererUrl: 'http://localhost:5173/', builtPage }),
+    ).toBe('http://localhost:5173/')
+  })
+
+  it.each(['http://localhost:5173/x', 'http://localhost:5173//', 'http://localhost:5173/?a=1'])(
+    'loads the built page when anything follows the slash: %j',
+    (rendererUrl) => {
+      expect(pageAddress({ isPackaged: false, rendererUrl, builtPage })).toBe(builtPage)
+    },
+  )
+})

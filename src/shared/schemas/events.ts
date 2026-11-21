@@ -16,8 +16,8 @@ export type ProjectChangedPayload = {
 
 export type EventMap = {
   'project.changed': ProjectChangedPayload
-  // Not in SPEC 4.4: tells every window to re-read app.getState after a project
-  // opens or closes or settings change, including opens started by the OS.
+  // SPEC 4.4: tells every window to re-read app.getState after a project opens or
+  // closes, settings change, a key is saved or deleted, or agent access changes.
   'app.stateChanged': Record<string, never>
 }
 
