@@ -1,0 +1,11 @@
+/* app-style */
+/* "Delete variant" is drawn in the danger colour, so it never reads as the safe choice. */
+.delete {
+  background: var(--color-danger-text);
+  border-color: var(--color-danger-text);
+  color: var(--color-bg);
+}
+.delete:hover:not(:disabled) {
+  background: var(--color-danger-text);
+  border-color: var(--color-danger-text);
+}

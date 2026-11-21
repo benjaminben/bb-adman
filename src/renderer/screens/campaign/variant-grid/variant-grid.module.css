@@ -6,10 +6,15 @@
   padding: 0;
   list-style: none;
 }
-/* The "+" sits on the tile's top right corner, beside the tile button, never inside it. */
-.plus {
+/* The tile's actions ("+", quick look, delete) sit on its top right corner, beside the tile
+   button, never inside it. */
+.actions {
   position: absolute;
   top: var(--space-1);
   right: var(--space-1);
+  display: flex;
+  gap: var(--space-1);
+}
+.plus {
   padding: 0 var(--space-2);
 }
