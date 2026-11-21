@@ -27,14 +27,11 @@ export function readOrder(db: Database.Database, variantId: string): string[] {
   return rows.map((row) => row.id)
 }
 
-// True when `given` names each of `stored` exactly once and nothing else.
+// True when `given` names each of `stored` exactly once and nothing else: as many names as
+// stored layers, and every stored layer among them, leaves no room for a repeat.
 export function sameLayers(given: string[], stored: string[]): boolean {
   const names = new Set(given)
-  return (
-    names.size === given.length &&
-    given.length === stored.length &&
-    stored.every((id) => names.has(id))
-  )
+  return given.length === stored.length && stored.every((id) => names.has(id))
 }
 
 // Sets z to 1, 2, 3 ... in the given order and names each layer whose z changed. Answers
