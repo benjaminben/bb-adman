@@ -118,9 +118,12 @@ describe('generation.startVideo with comfyui against the stand-in [SPEC 14 CU-6a
     expect(f.jobs()).toEqual([])
   })
 
-  it('an agent is refused, and nothing is sent', async () => {
+  it('the agent is refused with AGENT_DENIED and nothing is sent: held as deny until CU-7 [1.57 H-1]', async () => {
     await ready()
-    expect(await f.agent('generation.startVideo', ask)).toMatchObject({ ok: false })
+    expect(await f.agent('generation.startVideo', ask)).toMatchObject({
+      ok: false,
+      error: { code: 'AGENT_DENIED' },
+    })
     expect(f.jobs()).toEqual([])
     expect(stand?.seen).toEqual([])
   })
