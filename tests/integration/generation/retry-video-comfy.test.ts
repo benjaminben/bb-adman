@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeComfyFixture, type ComfyFixture } from './comfy-fixture'
+import { greyPng } from '@/main/providers/fake/png'
 
 let f: ComfyFixture
 afterEach(() => f.cleanup())
@@ -66,7 +67,7 @@ describe('job.retry of a ComfyUI video job from a picture [SPEC 14 1.60 CU-6b N-
   it('a stored reference start is checked against the reference workflow: two IDs are too many', async () => {
     f = await makeComfyFixture({ devTools: true, origin: 'http://192.0.2.5:8188' })
     const a = await f.importPicture('pics', 'a.png')
-    const b = await f.importPicture('pics', 'b.png')
+    const b = await f.importPicture('pics', 'b.png', greyPng(7, 4))
     failedPictureVideo('j-old', { start: 'none', referenceAssetIds: [a, b] })
     expect(await retried()).toMatchObject({
       ok: false,

@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeComfyFixture, type ComfyFixture } from './comfy-fixture'
 import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
+import { greyPng } from '@/main/providers/fake/png'
 
 let f: ComfyFixture
 let stand: StandIn | undefined
@@ -81,7 +82,7 @@ describe('generation.runImages with provider comfyui [SPEC 4.2, 14 1.41, CU-4]',
   it('refuses two references with too_many_references and details.max 1 [1.46 B]', async () => {
     await withAddress(true)
     const a = await f.importPicture('in', 'a.png')
-    const b = await f.importPicture('in', 'b.png')
+    const b = await f.importPicture('in', 'b.png', greyPng(7, 4))
     expect(await refused(f.run({ referenceAssetIds: [a, b] }))).toMatchObject({
       code: 'RULE_VIOLATION',
       message: 'ComfyUI takes one reference picture for this run.',

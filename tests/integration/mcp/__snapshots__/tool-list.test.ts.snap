@@ -466,6 +466,7 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
             "minLength": 1,
             "type": "string",
           },
+          "maxItems": 8,
           "type": "array",
         },
         "slot": {
@@ -516,6 +517,7 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
             "minLength": 1,
             "type": "string",
           },
+          "maxItems": 8,
           "type": "array",
         },
         "start": {
