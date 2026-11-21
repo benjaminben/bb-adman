@@ -51,7 +51,8 @@ describe('the notices table [approvals-service.md "Notices"]', () => {
 const NOW = Date.UTC(2026, 10, 21, 12, 0)
 
 // spec/approvals-service.md "The gallery view": openGallery takes what a page has.
-const WIRING = 'openGallery wires m only through the table [approvals-service.md "The gallery view"]'
+const WIRING =
+  'openGallery wires m only through the table [approvals-service.md "The gallery view"]'
 describe(WIRING, () => {
   beforeEach(clearTables)
 
@@ -110,9 +111,14 @@ describe(WIRING, () => {
     if (result.kind !== 'gallery') throw new Error('no gallery')
     expect(Object.keys(result.view).sort()).toEqual(['link', 'notice', 'signoffs', 'variants'])
     expect(Object.keys(result.view.link).sort()).toEqual(['campaignName', 'slug'])
-    expect(Object.keys(result.view.variants[0] ?? {}).sort()).toEqual(
-      ['expired', 'position', 'sizeLine', 'title', 'variantKey', 'version'],
-    )
+    expect(Object.keys(result.view.variants[0] ?? {}).sort()).toEqual([
+      'expired',
+      'position',
+      'sizeLine',
+      'title',
+      'variantKey',
+      'version',
+    ])
   })
 
   it('gives a real slug with no session the same result as an unknown slug', async () => {

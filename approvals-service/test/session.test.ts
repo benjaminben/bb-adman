@@ -1,16 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import * as sessions from '../src/db/sessions'
 import { openGallery } from '../src/visitor/actions'
-import {
-  addLink,
-  clearTables,
-  clock,
-  cookieOf,
-  db,
-  enter,
-  form,
-  makeApp,
-} from './visitor-setup'
+import { addLink, clearTables, clock, cookieOf, db, enter, form, makeApp } from './visitor-setup'
 
 const HOURS_12 = 12 * 60 * 60 * 1000
 const COOKIE_TEXT =

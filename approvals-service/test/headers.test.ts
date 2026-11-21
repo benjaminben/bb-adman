@@ -189,13 +189,10 @@ describe('the page policy and page set [approvals-gallery.md "The page policy an
     'AAECAwQFBgcICQoLDA0OD_==',
     'AAECAwQFBgcICQoLDA0ODwA',
   ]
-  it.each(BAD_NONCES)(
-    'refuses the nonce %j, which is not 16 bytes as base64',
-    (nonce) => {
-      expect(() => pagePolicy(nonce)).toThrow(TypeError)
-      expect(() => pageHeaders(https, nonce)).toThrow(TypeError)
-    },
-  )
+  it.each(BAD_NONCES)('refuses the nonce %j, which is not 16 bytes as base64', (nonce) => {
+    expect(() => pagePolicy(nonce)).toThrow(TypeError)
+    expect(() => pageHeaders(https, nonce)).toThrow(TypeError)
+  })
 
   it('takes a nonce of 16 random bytes as base64', () => {
     const nonce = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))))
