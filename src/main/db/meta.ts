@@ -31,9 +31,9 @@ export function readSchemaVersion(db: Database.Database): number {
   if (!hasMetaTable(db)) throw notAProject()
   const row = db.prepare("SELECT value FROM project_meta WHERE key = 'schema_version'").get() as
     { value: string } | undefined
-  const version = Number(row?.value)
-  if (!Number.isInteger(version)) throw notAProject()
-  return version
+  // SPEC 14 [1.34] V4: digits only, so '-1', '' or '1e0' cannot pick which migrations run.
+  if (row === undefined || !/^[0-9]{1,9}$/.test(row.value)) throw notAProject()
+  return Number(row.value)
 }
 
 // SPEC 14 [1.32] U11: the stored name alone, checked before an older file is backed up or
