@@ -1,7 +1,9 @@
 // The campaign page (SPEC 14 1.41 TP-2): the variants from campaign.get as a grid of tiles
 // (S2-16), the picture panel for the chosen one, and its runs. The master is chosen at the start. One job store per
 // open page. SPEC 14 1.57 TP-6: the video card sits under the picture panel.
-import { useEffect, useState } from 'react'
+// P3-9 (A-47): a plain click on a tile opens that variant in the editor, in place of the
+// overview, and makes it the variant the overview's panels work on; "Back to overview" returns.
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { createJobStore } from '@/renderer/stores/job-store'
 import type { CampaignGet } from '@/shared/schemas/queries/campaign'
@@ -11,6 +13,11 @@ import { SlotView } from '@/renderer/screens/campaign/slot-view'
 import { VariantGrid } from '@/renderer/screens/campaign/variant-grid'
 import { VideoPanel } from '@/renderer/screens/campaign/video-panel'
 import layout from '@/renderer/ui/layout.module.css'
+import styles from './campaign-view.module.css'
+
+// Loaded when a variant first opens, so the Scene and its fonts load only for the editor.
+const Editor = lazy(() => import('@/renderer/editor/editor').then((m) => ({ default: m.Editor })))
+const loadingVariant = <p className={layout.muted}>Loading the variant…</p>
 
 function useCampaign(projectId: string, campaignId: string): CampaignGet | null {
   const api = useApi()
@@ -34,6 +41,8 @@ export function CampaignView(props: { projectId: string; campaignId: string; onB
   const data = useCampaign(projectId, campaignId)
   const [store] = useState(() => createJobStore({ api, command }, projectId))
   const [chosenId, setChosenId] = useState<string | null>(null)
+  const [openId, setOpenId] = useState<string | null>(null)
+  const editorHost = useRef<HTMLDivElement>(null)
   // SPEC 14 1.46 TP-5: reference ticks last while the page is open, across variants.
   const [ticks, setTicks] = useState<string[]>([])
   const variantId = chosenId ?? data?.variants[0]?.id ?? null
@@ -43,20 +52,45 @@ export function CampaignView(props: { projectId: string; campaignId: string; onB
     if (variantId !== null) void store.getState().load(variantId)
   }, [store, variantId])
 
+  // The editor fills the window's height, so its top is brought into view when it opens.
+  useEffect(() => {
+    if (openId !== null) editorHost.current?.scrollIntoView?.({ block: 'start' })
+  }, [openId])
+
+  function open(id: string) {
+    setChosenId(id)
+    setOpenId(id)
+  }
+
   const variant = data?.variants.find((v) => v.id === variantId)
+  const editing = data !== null && openId !== null
   return (
-    <section className={layout.card} aria-label="Campaign">
+    <section className={editing ? styles.editing : layout.card} aria-label="Campaign">
       <div className={layout.row}>
         <button type="button" onClick={props.onBack}>
           Back to project
         </button>
+        {editing && (
+          <button type="button" onClick={() => setOpenId(null)}>
+            Back to overview
+          </button>
+        )}
       </div>
       {data === null ? (
         <p className={layout.muted}>Loading the campaign…</p>
+      ) : editing ? (
+        <>
+          <h2>{data.campaign.name}</h2>
+          <div ref={editorHost} className={styles.editorHost}>
+            <Suspense fallback={loadingVariant}>
+              <Editor key={openId} projectId={projectId} variantId={openId} />
+            </Suspense>
+          </div>
+        </>
       ) : (
         <>
           <h2>{data.campaign.name}</h2>
-          <VariantGrid variants={data.variants} chosenId={variantId} onChoose={setChosenId} />
+          <VariantGrid variants={data.variants} chosenId={variantId} onChoose={open} />
           {variant && (
             <p>
               Runs and panels below are for: {variant.title} · {variant.sizeLabel} ·{' '}
