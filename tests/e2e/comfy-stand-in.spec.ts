@@ -1,8 +1,9 @@
 // SPEC 14 1.56 E2E-R, the offline spec: the built app driven through its screens against the
 // stand-in ComfyUI on 127.0.0.1, with the hand-test tools on so trial workflows are offered.
 // No real server, no paid provider and no network beyond 127.0.0.1 is reached: Gemini is
-// answered inside the app's main process by gemini-stand-in.ts. TP-6's video start is here;
-// the rows that need no stand-in are in screen-tour.spec.ts (1.59 L-12).
+// answered inside the app's main process by gemini-stand-in.ts. TP-6's video start is here,
+// and CU-6b-R's video from a picture (1.60 N-11); the rows that need no stand-in are in
+// screen-tour.spec.ts (1.59 L-12).
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -18,6 +19,10 @@ import {
   startWorking,
 } from './stand-in-runs'
 import * as screens from './screens'
+import * as video from './video-screens'
+import { lastGraph, pngSize, runSize, uploads, type Upload } from './stand-in-uploads'
+import { uploadName } from '../../src/main/providers/comfyui/values'
+import { pictureType } from '../../src/main/providers/picture-type'
 import { geminiAsked, MADE_UP_KEY, standInForGemini, standInInstalled } from './gemini-stand-in'
 import { GEMINI_ORIGIN } from '../../src/main/providers/gemini/pinned-origin'
 
@@ -197,6 +202,51 @@ test('Make a video: a 2-second clip from a prompt is started, done and has its m
   const id = await nthSentId(stand, 1)
   expect(lastSentPrompt()).toContain(screens.E2E_VIDEO_PROMPT)
   await expect(screens.runRow(page)).toContainText('Video')
+  finishWithVideo(stand, id, H3_TEXT_OUTPUT)
+  await expect(screens.runRow(page)).toContainText('Done', { timeout: 15_000 })
+  await screens.clipHasMetadata(page, 15_000)
+})
+
+// SPEC 14 1.60 CU-6b-R N-11 and CU-6b-F N-3: a 96 x 64 picture made here is the first frame.
+// The built app's fitPicture (Electron's nativeImage) crops and scales it, so the one upload
+// is a PNG at the run's size under the app's own name, and the graph names that upload.
+test('Make a video from a first-frame picture: the upload is a PNG at the run size', async () => {
+  await campaignOnStandIn()
+  const file = path.join(box.root, 'first-frame.png')
+  fs.writeFileSync(file, greyPng(96, 64))
+  await video.choosePictureStart(app, page, video.FIRST_FRAME_START, [file])
+  await screens.startVideo(page, 2)
+  const id = await nthSentId(stand, 1)
+  const sent = uploads(stand)
+  expect(sent).toHaveLength(1)
+  const [frame] = sent as [Upload]
+  expect(frame.name).toBe(uploadName(frame.bytes))
+  expect(pictureType(frame.bytes)).toBe('image/png')
+  const graph = lastGraph(stand)
+  const size = runSize(graph)
+  expect(size.width / size.height).not.toBe(96 / 64)
+  expect(pngSize(frame.bytes)).toEqual(size)
+  expect(JSON.stringify(graph['15'])).toContain(frame.name)
+  finishWithVideo(stand, id, H3_TEXT_OUTPUT)
+  await expect(screens.runRow(page)).toContainText('Done', { timeout: 15_000 })
+  await screens.clipHasMetadata(page, 15_000)
+})
+
+// N-6: a reference is sent as read, not fitted.
+test('Make a video from a reference picture: the picture is uploaded as read', async () => {
+  await campaignOnStandIn()
+  const file = path.join(box.root, 'reference.png')
+  const bytes = greyPng(96, 64)
+  fs.writeFileSync(file, bytes)
+  await video.choosePictureStart(app, page, video.REFERENCE_START, [file])
+  await screens.startVideo(page, 2)
+  const id = await nthSentId(stand, 1)
+  const sent = uploads(stand)
+  expect(sent).toHaveLength(1)
+  const [reference] = sent as [Upload]
+  expect(reference.name).toBe(uploadName(reference.bytes))
+  expect(Buffer.from(reference.bytes).equals(Buffer.from(bytes))).toBe(true)
+  expect(JSON.stringify(lastGraph(stand)['15'])).toContain(reference.name)
   finishWithVideo(stand, id, H3_TEXT_OUTPUT)
   await expect(screens.runRow(page)).toContainText('Done', { timeout: 15_000 })
   await screens.clipHasMetadata(page, 15_000)

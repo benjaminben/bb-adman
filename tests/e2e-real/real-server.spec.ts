@@ -5,15 +5,17 @@
 // they name and clear or delete nothing on the server. A cancel is only of the run the test
 // itself started, by the run row's own Cancel.
 // With no switch: Settings and Check, and the Gemini paid confirm cancelled (no request).
-// TP-6's video case runs with ADMAN_E2E_VIDEO=1 and leaves one clip on the server.
+// TP-6's video case runs with ADMAN_E2E_VIDEO=1 and leaves one clip on the server. CU-6b-R's
+// picture cases run with ADMAN_E2E_VIDEO_FRAME=1 and ADMAN_E2E_VIDEO_REF=1 (1.60 N-11).
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import { makeSandbox, launchReal, type Sandbox } from '../e2e/launch'
 import * as screens from '../e2e/screens'
 import { guardedStep } from './guard'
 import { workerRefusal } from './run-checks'
-import { realSwitches, videoSwitch } from './switches'
+import { realSwitches, videoFrameSwitch, videoRefSwitch, videoSwitch } from './switches'
 import * as real from './real-steps'
+import * as video from '../e2e/video-screens'
 
 const switches = realSwitches(process.env)
 // A real run can wait in the server's queue. Each wait below ends before this limit, so a
@@ -24,6 +26,8 @@ const RUN_WAIT_MS = 25 * 60_000
 const VIDEO_WAIT_MS = 15 * 60_000
 const VIDEO_CASE_MS = 20 * 60_000
 const videoOn = videoSwitch(process.env)
+const videoFrameOn = videoFrameSwitch(process.env)
+const videoRefOn = videoRefSwitch(process.env)
 
 let box: Sandbox
 let app: ElectronApplication
@@ -111,6 +115,33 @@ test('ComfyUI video: a 2-second clip from a prompt [ADMAN_E2E_VIDEO=1]', async (
   test.skip(!videoOn, 'Runs only with ADMAN_E2E_VIDEO=1: it makes a video run on the server.')
   test.setTimeout(VIDEO_CASE_MS)
   await comfyCampaign(screens.H3_TEXT_LABEL)
+  await guardedStep('Start a 2-second video from the test prompt', () =>
+    screens.startVideo(page, 2),
+  )
+  await real.newestClipDone(page, VIDEO_WAIT_MS)
+})
+
+// SPEC 14 1.60 CU-6b-R N-11: one 2-second clip from the first given picture (or the test-made
+// one) as its first frame. It leaves one clip and one input file on the server. The app shows
+// the finished clip only for its readyState check; whether the clip starts upright is the
+// runner's to report from the clip on the server (1.60 N-16).
+test('ComfyUI video: a 2-second clip from a first-frame picture [ADMAN_E2E_VIDEO_FRAME=1]', async () => {
+  test.skip(!videoFrameOn, 'Runs only with ADMAN_E2E_VIDEO_FRAME=1: it makes a video run.')
+  test.setTimeout(VIDEO_CASE_MS)
+  await comfyCampaign(video.H3_FRAME_LABEL)
+  await real.chooseVideoPicture(app, box, page, video.FIRST_FRAME_START)
+  await guardedStep('Start a 2-second video from the test prompt', () =>
+    screens.startVideo(page, 2),
+  )
+  await real.newestClipDone(page, VIDEO_WAIT_MS)
+})
+
+// The same with the picture as the one reference. It leaves one clip and one input file.
+test('ComfyUI video: a 2-second clip from a reference picture [ADMAN_E2E_VIDEO_REF=1]', async () => {
+  test.skip(!videoRefOn, 'Runs only with ADMAN_E2E_VIDEO_REF=1: it makes a video run.')
+  test.setTimeout(VIDEO_CASE_MS)
+  await comfyCampaign(video.H3_REFERENCE_LABEL)
+  await real.chooseVideoPicture(app, box, page, video.REFERENCE_START)
   await guardedStep('Start a 2-second video from the test prompt', () =>
     screens.startVideo(page, 2),
   )
