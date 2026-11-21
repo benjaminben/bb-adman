@@ -11,8 +11,7 @@ import type { Db } from '../db/client'
 
 // `refused`: the form checks or the session failed (403). Otherwise the notice for the 303, and
 // the variant to go back to when it has the checked shape.
-export type SignoffResult =
-  { kind: 'refused' } | { kind: 'done'; m: NoticeKey; variant?: string }
+export type SignoffResult = { kind: 'refused' } | { kind: 'done'; m: NoticeKey; variant?: string }
 
 const VERSION_TEXT = /^[0-9]{1,16}$/
 

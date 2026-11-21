@@ -169,7 +169,7 @@ describe('GET /l/{slug}/p/{variantKey}/{version}: the route [approvals-service-v
     expect(seen).toEqual([])
   })
 
-  it("answers the session of another link with the empty 404, fetching nothing", async () => {
+  it('answers the session of another link with the empty 404, fetching nothing', async () => {
     const { app, cookie } = await setUp()
     const other = await addLink(2)
     await putVariant(db, other.id, {

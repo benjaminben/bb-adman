@@ -97,15 +97,20 @@ describe('POST /l/{slug}/signoffs [approvals-service-visitor.md "Forms that writ
     expect(await rows()).toEqual([])
   })
 
-  it.each(['', 'ann', 'ann@', 'ann@example', 'ann@exämple.com', 'a b@example.com', 'x'.repeat(255)])(
-    'writes nothing for the email %j and answers m=bad-email',
-    async (email) => {
-      const { link, signOff } = await setUp()
-      const reply = await signOff(fields({ email }))
-      expect(reply.headers.get('Location')).toBe(`/l/${link.slug}?m=bad-email#v-${KEY}`)
-      expect(await rows()).toEqual([])
-    },
-  )
+  it.each([
+    '',
+    'ann',
+    'ann@',
+    'ann@example',
+    'ann@exämple.com',
+    'a b@example.com',
+    'x'.repeat(255),
+  ])('writes nothing for the email %j and answers m=bad-email', async (email) => {
+    const { link, signOff } = await setUp()
+    const reply = await signOff(fields({ email }))
+    expect(reply.headers.get('Location')).toBe(`/l/${link.slug}?m=bad-email#v-${KEY}`)
+    expect(await rows()).toEqual([])
+  })
 
   it('writes nothing when the email field is missing', async () => {
     const { link, signOff } = await setUp()
