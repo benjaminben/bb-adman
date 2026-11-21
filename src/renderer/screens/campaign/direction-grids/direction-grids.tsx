@@ -38,7 +38,7 @@ function DirectionSection(props: DirectionGridsProps & { direction: DirectionRow
       <h3 id={headingId} className={styles.heading}>
         {direction.name}
       </h3>
-      <p className={layout.muted}>{variants.length} variant(s)</p>
+      <p className={`${layout.muted} ${styles.count}`}>{variants.length} variant(s)</p>
       <DirectionHeader projectId={props.projectId} campaign={campaign} direction={direction} />
       <div
         onClickCapture={(event) => {
