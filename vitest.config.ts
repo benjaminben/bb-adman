@@ -7,6 +7,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/shared/**', 'src/main/**'],
+      // [1.21] L9: the defaults, plus json-summary so the per-folder totals come from the tool.
+      reporter: ['text', 'html', 'clover', 'json', 'json-summary'],
       thresholds: {
         'src/shared/**': { lines: 90 },
         'src/main/**': { lines: 80 },

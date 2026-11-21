@@ -39,3 +39,10 @@ describe('coverage is measured [SPEC 10.1]', () => {
     expect(ci).toMatch(/- run: npm run test:coverage\n\s+continue-on-error: true/)
   })
 })
+
+describe('coverage writes a summary file [SPEC 10.1 1.21, 14 L9]', () => {
+  it('adds json-summary beside the default reporters', () => {
+    const reporter = (coverage as { reporter?: string[] } | undefined)?.reporter
+    expect(reporter).toEqual(['text', 'html', 'clover', 'json', 'json-summary'])
+  })
+})
