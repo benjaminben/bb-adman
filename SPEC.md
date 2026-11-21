@@ -61,6 +61,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/screens.md` | What each built screen offers, wording rules, choices made without a design sign-off |
 | `spec/screens-campaign.md` | The Phase 2 campaign screens and dialogs (built; S2-17 left): ComfyUI failures, the address and licence dialogs, import and drop, relink, package, the brief form, the slot view, the campaign grid and its tile |
 | `spec/screens-variants.md` | Phase 5 screens: the campaign's Undo and Redo, one grid per direction, the tile's delete and quick look, the fan-out dialog, the sync review, the direction dialogs |
+| `spec/app-style.md` | The app's look from the design prototype: tokens, type and fonts, contrast, shared pieces, per-screen changes, choices taken for now (C-1 to C-14) |
 | `spec/screens-ai.md` | Phase 4 screens: the run dialog, the paid count, the picture section (generate, references, earlier options, cut-out), copy options, place text, brief reading, the activity panel, close warnings |
 | `spec/approvals.md`, `spec/approvals-service.md`, `spec/approvals-gallery.md` | Approvals by link (D-095, D-097): the desktop overview, Settings, screens, its security rules, open items and assumptions A-82 to A-109; the service (Next.js on Vercel with a Turso database: how it fits, tooling, environment, deploying); the visitor's pages (Next.js settings, page policy, components, words) |
 | `spec/approvals-client.md` | Approvals, desktop: the service client, the local tables, kept passwords, the picture store and signed addresses |
