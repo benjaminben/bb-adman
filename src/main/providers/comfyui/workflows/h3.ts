@@ -107,15 +107,11 @@ export const h3ImageToVideo: WorkflowSpec = {
   },
 }
 
-// A reference slot: its LoadImage, and the ref_images key of node 5 it feeds.
-const reference = (node: string, key: string) => ({
-  image: { node, input: 'image' },
-  dropWhenUnused: { nodes: [node], inputs: [{ node: '5', input: `ref_images.${key}` }] },
-})
-
 // [1.54] P-4 part 2: a trial whose graph is the agent's draft comfy-workflows/
 // h3-video-references.json: the ref2va model, MiniMaxH3ReferenceToVideo with audio_vae, and
-// two LoadImage nodes (15, 16) into ref_images. A run with one picture drops node 16 and its key.
+// two LoadImage nodes (15, 16) into ref_images. [1.59] L-16: one reference is declared, at
+// most and at least, so only what ran is offered; node 16 and its key stay as data and every
+// fill drops them. Two references wait for their own real run, with CU-6b.
 export const h3ReferenceToVideo: WorkflowSpec = {
   ...trial,
   id: 'h3-reference-to-video',
@@ -125,8 +121,12 @@ export const h3ReferenceToVideo: WorkflowSpec = {
   graph: referenceGraph as Graph,
   slots: {
     ...TRIAL_SLOTS,
-    references: [reference('15', 'ref_image_0'), reference('16', 'ref_image_1')],
+    // The one reference is never unused.
+    references: [
+      { image: { node: '15', input: 'image' }, dropWhenUnused: { nodes: [], inputs: [] } },
+    ],
     minReferences: 1,
+    alwaysDrop: { nodes: ['16'], inputs: [{ node: '5', input: 'ref_images.ref_image_1' }] },
   },
   needs: h3Needs(H3_REF_FILE, [...LOADERS, 'LoadImage', 'MiniMaxH3ReferenceToVideo', ...MAKING]),
   leavesOnServer: [LEAVES.uploads, LEAVES.video, LEAVES.record],
@@ -137,7 +137,7 @@ export const h3ReferenceToVideo: WorkflowSpec = {
     changes: [
       'Taken from the draft as it is: nodes 15 and 16 LoadImage into ref_images.ref_image_0 and ref_image_1',
       'The references go straight from LoadImage, with ref_image_size "match", as the template does',
-      'Node 16 and its ref_images.ref_image_1 key are dropped when only one picture is given',
+      'One reference is declared (1.59 L-16): node 16 and its ref_images.ref_image_1 key are dropped on every fill',
       'The save prefix is under adman/',
       firstRunLine(H3_FULL_SIZE),
     ],

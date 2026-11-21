@@ -156,6 +156,28 @@ describe('fillWorkflow: unused reference slots [SPEC 14 1.39]', () => {
     expect(g.b).toBeUndefined()
   })
 
+  it('drops what alwaysDrop declares on every fill, with the link check after [1.59 L-16]', () => {
+    const one: WorkflowSpec = {
+      ...twoRefs,
+      slots: {
+        ...twoRefs.slots,
+        references: twoRefs.slots.references?.slice(0, 1),
+        alwaysDrop: { nodes: ['b'], inputs: [{ node: 'c', input: 'second' }] },
+      },
+    }
+    const g = fillWorkflow(one, { prompt: 'p', references: ['1.png'] })
+    expect(g.b).toBeUndefined()
+    expect(g.c?.inputs).not.toHaveProperty('second')
+    expect(g.a?.inputs.image).toBe('1.png')
+    const dangling: WorkflowSpec = {
+      ...one,
+      slots: { ...one.slots, alwaysDrop: { nodes: ['b'], inputs: [] } },
+    }
+    expect(() => fillWorkflow(dangling, { prompt: 'p', references: ['1.png'] })).toThrow(
+      'A link points at a node that was dropped',
+    )
+  })
+
   it('drops for the H3 reference workflow only what its spec declares', () => {
     const g = fillWorkflow(h3ReferenceToVideo, {
       prompt: 'p',

@@ -28,6 +28,9 @@ export type WorkflowSlots = {
   references?: ReferenceSlot[]
   // The fewest pictures the workflow runs with; default 1.
   minReferences?: number
+  // [1.59] L-16: graph parts kept as data but removed on every fill, such as a reference
+  // slot the workflow does not declare yet. Only with references.
+  alwaysDrop?: { nodes: string[]; inputs: Pointer[] }
   firstFrame?: Pointer
   frames?: Pointer
   outputPrefix?: Pointer
