@@ -107,7 +107,12 @@ export async function runPicture(
     )
     const mime = pictureType(bytes)
     if (!mime) throw comfyFailure('bad_result', 'The result is not a PNG or JPEG')
-    return { bytes, mime, model: spec.model.mainFile }
+    // [1.53] G-1: the details come from the shipped workflow file, never from the server.
+    const details = {
+      models: spec.needs.models.map((m) => m.file),
+      workflow: { id: spec.id, version: spec.version },
+    }
+    return { bytes, mime, model: spec.model.mainFile, details }
   } catch (e) {
     if (!(e instanceof PollStopped)) throw e
     await cancelOwnRun(env.client, promptId, env.serverVersion)

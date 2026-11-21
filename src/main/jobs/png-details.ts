@@ -11,6 +11,9 @@ export type GenerationDetails = {
   prompt: string
   kind: 'image_generation'
   createdAt: string
+  // [1.53] G-1: written only when the provider gave them (ComfyUI).
+  models?: string[]
+  workflow?: { id: string; version: number }
 }
 
 const SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
