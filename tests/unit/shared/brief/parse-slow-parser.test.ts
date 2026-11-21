@@ -20,26 +20,31 @@ const blankThenComments = (room: number, blank: number): string =>
 
 const d = Math.floor(L / 4)
 
-const texts: [string, string, object][] = [
-  [
-    '1. deep list, then blank lines',
-    '- '.repeat(d) + 'x\n' + '\n'.repeat(L - 2 * d - 2),
-    unreadable,
-  ],
-  ['2. blank lines, one dash, comments', blankThenComments(L, Math.floor((L - 6) / 2)), unreadable],
-  [
-    '3. the same under a key',
-    'extra:\n' + blankThenComments(L - 7, Math.floor((L - 13) / 2)),
-    read,
-  ],
-  [
-    '4. fewer blank lines, more comments, under a key',
-    'extra:\n' + blankThenComments(L - 7, Math.floor(L / 4)),
-    read,
-  ],
+type Case = [string, string, object]
+
+const text1: Case = [
+  '1. deep list, then blank lines',
+  '- '.repeat(d) + 'x\n' + '\n'.repeat(L - 2 * d - 2),
+  unreadable,
+]
+const text2: Case = [
+  '2. blank lines, one dash, comments',
+  blankThenComments(L, Math.floor((L - 6) / 2)),
+  unreadable,
+]
+const text3: Case = [
+  '3. the same under a key',
+  'extra:\n' + blankThenComments(L - 7, Math.floor((L - 13) / 2)),
+  read,
+]
+const text4: Case = [
+  '4. fewer blank lines, more comments, under a key',
+  'extra:\n' + blankThenComments(L - 7, Math.floor(L / 4)),
+  read,
 ]
 
-const ORDER = [1, 4, 2, 3, 1, 4, 2, 3]
+const texts = [text1, text2, text3, text4]
+const sequence = [text1, text4, text2, text3, text1, text4, text2, text3]
 
 describe("parseBrief YAML: the parser's two slow shapes [SPEC 6.1 item 9, 14 S3]", () => {
   it('each text is at the limit', () => {
@@ -54,8 +59,7 @@ describe("parseBrief YAML: the parser's two slow shapes [SPEC 6.1 item 9, 14 S3]
     { timeout: TIMEOUT_MS },
     ({ task }) => {
       const times: [string, number][] = []
-      for (const n of ORDER) {
-        const [name, text, expected] = texts[n - 1]
+      for (const [name, text, expected] of sequence) {
         const start = performance.now()
         const result = parseBrief(text, 'yaml')
         const elapsed = performance.now() - start
