@@ -14,14 +14,14 @@ const env = {
   NOT_A_LIVE_NAME: 'shown',
 }
 
-describe('live test output holds no live value [SPEC 13, 14 H11, F-04]', () => {
+describe('live test output holds no key [SPEC 13, 14 H11, F-04]', () => {
   it('takes the set values of the redacted live variables only, never the region [1.15 H16]', () => {
     expect(liveValues(env).sort()).toEqual(
       ['made-up-gemini-value', 'made-up-id', 'made-up-secret'].sort(),
     )
   })
 
-  it('removes the bucket name, the prefix and both keys from text, and keeps the region [1.15 H16]', () => {
+  it('removes the keys from text, and keeps the bucket name, the prefix and the region [1.18 K5]', () => {
     const text =
       'getaddrinfo ENOTFOUND made-up-bucket.s3.zz-made-up-9.amazonaws.com ' +
       'made-up-prefix/adman-hand-test made-up-id made-up-secret made-up-gemini-value shown'
@@ -30,6 +30,8 @@ describe('live test output holds no live value [SPEC 13, 14 H11, F-04]', () => {
     expect(safe).toContain('ENOTFOUND')
     expect(safe).toContain('shown')
     expect(safe).toContain('zz-made-up-9')
+    expect(safe).toContain('made-up-bucket')
+    expect(safe).toContain('made-up-prefix')
   })
 
   it('removes a longer value before a shorter one held inside it', () => {
@@ -74,7 +76,7 @@ describe('live test output holds no live value [SPEC 13, 14 H11, F-04]', () => {
   })
 })
 
-describe('live output removes only the LIVE_REDACTED_NAMES values [SPEC 6.5 1.15, 14 H16]', () => {
+describe('live output removes only the LIVE_REDACTED_NAMES values [SPEC 6.5 1.18, 14 K5]', () => {
   // Made up; none looks like a real key or bucket.
   const keepRun = {
     FAL_KEY: 'made-up-fal-value',
