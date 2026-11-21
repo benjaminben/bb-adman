@@ -11,7 +11,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import { assetUrl } from '@/renderer/ui/asset-url'
 import { MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
 import { tooManyReferencesLine } from '@/shared/schemas/reference-ids'
-import { type Reference, useAddPictures, whyNot } from '@/renderer/screens/campaign/reference-list'
+import { type Reference, useAddPictures, whyNot } from './reference-list'
 import layout from '@/renderer/ui/layout.module.css'
 import { type PictureLibrary, usePictureList } from './use-picture-list'
 

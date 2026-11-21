@@ -3,7 +3,7 @@
 // library are kept; an imported ad picture is not offered as a reference.
 import { useCallback, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
-import type { Reference } from '@/renderer/screens/campaign/reference-list'
+import type { Reference } from './reference-list'
 import type { AssetList } from '@/shared/schemas/queries/asset'
 
 export type PictureLibrary = 'reference' | 'asset'
