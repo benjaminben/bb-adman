@@ -27,10 +27,11 @@ type Reply = { ok: boolean; data?: Record<string, unknown>; error?: unknown }
 type Bridge = { api: Record<'command' | 'query', (n: string, i: unknown) => Promise<unknown>> }
 
 async function call(kind: 'command' | 'query', name: string, input: Record<string, unknown>) {
-  const reply = (await page.evaluate(
-    ([k, n, i]) => (window as unknown as Bridge).api[k](n, i),
-    [kind, name, input] as const,
-  )) as Reply
+  const reply = (await page.evaluate(([k, n, i]) => (window as unknown as Bridge).api[k](n, i), [
+    kind,
+    name,
+    input,
+  ] as const)) as Reply
   expect(reply.ok, JSON.stringify(reply.error)).toBe(true)
   return reply.data as Record<string, unknown>
 }

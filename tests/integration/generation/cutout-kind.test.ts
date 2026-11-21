@@ -3,7 +3,13 @@
 // the source sent is the clean PNG AssetService.read gives, not the file on disk.
 import fs from 'node:fs'
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import { makeGenerationFixture, waitFor, ended, BACKGROUND_LAYER, type GenerationFixture } from './generation-fixture'
+import {
+  makeGenerationFixture,
+  waitFor,
+  ended,
+  BACKGROUND_LAYER,
+  type GenerationFixture,
+} from './generation-fixture'
 import { cutOutInput, givePicture } from './cutout-fixture'
 import { data } from '../core-fixture'
 import { generationDetailsOf } from '../../fixtures/png-chunks'

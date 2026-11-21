@@ -3,7 +3,13 @@
 // the stand-in's address only (nothing is sent in prepare); the agent never confirms a licence.
 import fs from 'node:fs'
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import { makeGenerationFixture, BACKGROUND_LAYER, OTHER_LAYER, TEXT_LAYER, VARIANT } from './generation-fixture'
+import {
+  makeGenerationFixture,
+  BACKGROUND_LAYER,
+  OTHER_LAYER,
+  TEXT_LAYER,
+  VARIANT,
+} from './generation-fixture'
 import { makeComfyFixture } from './comfy-fixture'
 import { cutOutInput, givePicture } from './cutout-fixture'
 import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
@@ -203,7 +209,13 @@ describe('generation.cutOut and the licence [S2-4, D-088; spec/ai-jobs.md "Secur
     licence.note = 'Needs a commercial licence'
     const c = await comfyFixture(true)
     data(await c.user('agentRuns.setAllowed', { provider: 'comfyui', allowed: true }))
-    data(await c.core.bus.execute('settings.update', { licenceConfirmed: ['BiRefNet'] }, { actor: 'user' }))
+    data(
+      await c.core.bus.execute(
+        'settings.update',
+        { licenceConfirmed: ['BiRefNet'] },
+        { actor: 'user' },
+      ),
+    )
     expect(await c.agent('generation.cutOut', comfyInput())).toMatchObject({ ok: true })
   })
 })
