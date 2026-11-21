@@ -54,6 +54,8 @@ export function send(opts: {
         path: opts.path ?? '/mcp',
         headers,
         setHost: false,
+        // A fresh connection each time, so no pooled socket outlives a server restart.
+        agent: false,
       },
       (res) => {
         let body = ''
