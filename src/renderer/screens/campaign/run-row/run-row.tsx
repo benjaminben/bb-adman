@@ -1,7 +1,7 @@
 // One run (SPEC 14 1.41 TP-2 "A run's row, by status"). queued: Waiting. running: Working,
 // with the stage, the place in the queue and the percent when the row has them. succeeded:
 // its results. failed: RunFailure (the sentence by reason or kind, S2-5), and Retry. cancelled:
-// Cancelled, and Retry. Cancel shows for a queued or running run when the provider can cancel. A failed
+// Cancelled, and Retry. Cancel shows when job.cancel would accept it (cancel-shown.ts). A failed
 // run never shows raw error text: the wire row holds none (SPEC 3.3 [1.9]). A video run
 // (SPEC 14 1.57 TP-6) says "Video" and, while running, the text from video-status.ts.
 import { useState } from 'react'
@@ -13,6 +13,7 @@ import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'
 import { RunFailure } from '@/renderer/screens/campaign/run-failure'
 import { RunResult } from '@/renderer/screens/campaign/run-result'
 import { VideoResult } from '@/renderer/screens/campaign/video-result'
+import { cancelShown } from './cancel-shown'
 import { useNow, videoRunningText } from './video-status'
 import layout from '@/renderer/ui/layout.module.css'
 
@@ -54,7 +55,6 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
   const [sending, setSending] = useState(false)
   const provider = providers.find((p) => p.id === row.provider)
   const label = provider?.label ?? row.provider ?? 'The provider'
-  const active = row.status === 'queued' || row.status === 'running'
   const ended = row.status === 'failed' || row.status === 'cancelled'
   // SPEC 14 1.57 TP-6: a video run says "Video", and its own text while it runs.
   const video = row.kind === 'video_generation'
@@ -83,7 +83,7 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
         {video && <span>Video</span>}
         <span>{statusText}</span>
         {detail && <span className={layout.muted}>{detail}</span>}
-        {active && provider !== undefined && provider.cancel !== 'none' && (
+        {cancelShown(row, provider) && (
           <button
             type="button"
             onClick={() => void command('job.cancel', { projectId, jobId: row.id })}

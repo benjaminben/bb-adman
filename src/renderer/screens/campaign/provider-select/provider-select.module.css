@@ -1,0 +1,5 @@
+/* The select keeps the field's full width; the trial mark sits after it. */
+.select {
+  flex: 1;
+  min-width: 0;
+}

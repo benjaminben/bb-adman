@@ -33,6 +33,13 @@ select {
   border-radius: var(--radius);
   background: var(--color-bg);
 }
+/* A disabled control looks disabled. */
+button:disabled,
+input:disabled,
+select:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
 /* Code text (the Connect line) uses the token mono font, not the browser default. */
 pre,
 code {
