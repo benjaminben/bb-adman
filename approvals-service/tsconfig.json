@@ -19,7 +19,6 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "noEmit": true,
-    "incremental": true,
     "types": [
       "node"
     ],
