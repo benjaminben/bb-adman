@@ -19,7 +19,7 @@ describe('VideoPanel picture list [SPEC 14 1.60 CU-6b-R N-9]', () => {
     expect(images).toEqual([`adman-asset://${P}/A1`, `adman-asset://${P}/A2`])
     expect(document.body.innerHTML).not.toContain('/Users/me/Pictures')
     const asked = fake.queries.filter((q) => q.name === 'asset.list').map((q) => q.input)
-    expect(asked).toContainEqual({ projectId: P, library: 'reference', kind: 'image' })
+    expect(asked).toContainEqual({ projectId: P, kind: 'image' })
   })
 
   it('shows the reason a picture cannot be sent, and it cannot be chosen; a WebP can', async () => {

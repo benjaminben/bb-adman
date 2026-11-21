@@ -22,7 +22,7 @@ describe('ReferencePicker [SPEC 14 1.46 TP-5]', () => {
     await picker()
     await waitFor(() =>
       expect(fake.queries.filter((q) => q.name === 'asset.list').map((q) => q.input)).toEqual([
-        { projectId: P, library: 'reference', kind: 'image' },
+        { projectId: P, kind: 'image' },
       ]),
     )
   })

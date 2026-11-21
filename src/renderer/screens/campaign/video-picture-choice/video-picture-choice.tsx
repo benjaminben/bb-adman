@@ -2,7 +2,9 @@
 // reference pictures, the list the picture panel's picker shows, with one choice only and
 // the card's own "Add pictures". The choice is the card's, apart from the picker's ticks. A
 // picture that cannot be sent shows its reason and cannot be chosen. Names are drawn as text.
-import { useEffect, useId } from 'react'
+// SP-7 (A-120): when nothing is chosen at the first read, the first photo of the variant's
+// subject that can be sent is chosen; an asset-library subject photo shows "Photo of".
+import { useEffect, useId, useRef } from 'react'
 import { assetUrl } from '@/renderer/ui/asset-url'
 import {
   type Reference,
@@ -10,6 +12,7 @@ import {
   useReferences,
   whyNot,
 } from '@/renderer/ui/reference-picker/reference-list'
+import { photoOfLine, subjectPhotoIds } from '@/renderer/ui/reference-picker/reference-rows'
 import { PICTURE_HINT } from '@/renderer/screens/campaign/video-start'
 import layout from '@/renderer/ui/layout.module.css'
 
@@ -26,10 +29,18 @@ export function VideoPictureChoice(props: {
   const { list, read } = useReferences(projectId)
   const addPictures = useAddPictures(projectId, subjectId, read)
   const baseId = useId()
+  const firstRead = useRef(true)
 
   useEffect(() => {
     void read()
   }, [read])
+
+  useEffect(() => {
+    if (list === null || !firstRead.current) return
+    firstRead.current = false
+    const first = subjectPhotoIds(list, subjectId === undefined ? [] : [subjectId])[0]
+    if (chosen === null && first !== undefined) onChoose(first)
+  }, [list, chosen, subjectId, onChoose])
 
   // A choice is kept only for a picture that is still in the list and can be sent.
   useEffect(() => {
@@ -53,6 +64,7 @@ export function VideoPictureChoice(props: {
           {list.map((asset, i) => {
             const reason = whyNot(asset)
             const reasonId = `${baseId}-why-${i}`
+            const photoOf = photoOfLine(asset)
             return (
               <li key={asset.id} className={layout.row}>
                 <label className={layout.row}>
@@ -67,6 +79,7 @@ export function VideoPictureChoice(props: {
                   <img src={assetUrl(projectId, asset.id)} alt="" width={48} height={48} />
                   {asset.displayName}
                 </label>
+                {photoOf !== null && <span className={layout.muted}>{photoOf}</span>}
                 {reason !== null && (
                   <span id={reasonId} className={layout.muted}>
                     {reason}
