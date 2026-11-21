@@ -1,6 +1,6 @@
 // P5-1 (spec/phases/phase-05-slices.md, A-149): until its slice fills it, each Phase 5 command
 // refuses with not_built and writes nothing. The agent rows are final now:
-// deny and system rows are AGENT_DENIED, variant.add reaches its stub, variant.delete asks,
+// deny and system rows are AGENT_DENIED, variant.delete asks,
 // and generation.runFill is refused by the gate until P5-8 opens it.
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, data, type Fixture } from '../core-fixture'
@@ -30,14 +30,6 @@ const INPUTS: Record<string, object> = {
   'direction.rename': { directionId: 'D1', name: 'Bold' },
   'direction.delete': { directionId: 'D1' },
   'direction.restore': { direction, variants: [snapshot] },
-  'variant.fanOut': {
-    directionId: 'D1',
-    sizes: ['9x16'],
-    languages: ['en'],
-    formats: ['image'],
-    fits: { '9x16': 'scale' },
-  },
-  'variant.add': { directionId: 'D1', sizeLabel: '9x16', language: 'en', format: 'image' },
   'sync.apply': { directionId: 'D1', masterRev: 0, decisions: [] },
   'generation.runFill': { variantId: 'V1', provider: 'fake' },
   'generation.applyFill': { jobId: 'J1' },
@@ -103,13 +95,6 @@ describe('the Phase 5 agent rows [P5-1, spec/mcp-and-agents.md]', () => {
       ok: false,
       error: { code: 'AGENT_DENIED', message: denialMessage(name) },
     })
-  })
-
-  it('lets the agent reach the variant.add stub', async () => {
-    const { fx, projectId } = await open()
-    expect(await fx.agent('variant.add', { projectId, ...INPUTS['variant.add'] })).toEqual(
-      NOT_BUILT,
-    )
   })
 
   it('asks before the agent runs variant.delete', async () => {

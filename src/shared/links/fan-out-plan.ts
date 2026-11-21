@@ -1,12 +1,11 @@
 import type { Geometry, Revs } from '@/shared/schemas/layer'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { Size } from '@/shared/scene/background-placement'
+import type { FanOutFit } from '@/shared/schemas/links'
 
 // spec/links-and-sync.md "Fan-out": the layer values of one new variant. Pure; no IDs are
 // made here, the caller adds `id` and `variantId`.
 
-// Local stand-in for the fit choice until P5-1's shared schema lands; swap it then.
-export type FanOutFit = 'scale' | 'crop' | 'fill'
 export type VariantFacts = Size & { language: string }
 export type PlannedLayer = Omit<LayerRow, 'id' | 'variantId'>
 
