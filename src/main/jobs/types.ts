@@ -31,8 +31,10 @@ export type JobService = {
 export type JobRunContext = {
   deps: CoreDeps
   projectId: string
-  // Runs one provider call: adds one to paid_calls when the provider is not `fake`, and
-  // turns a ProviderFailure into the job's error kind.
+  // [1.24] Fired by job.cancel; handed to the provider as RunOptions.signal (SPEC 6.11.2).
+  signal: AbortSignal
+  // Runs one provider call: adds one to paid_calls when the provider's `local` is false
+  // (SPEC 6.11.1), and turns a ProviderFailure into the job's error kind.
   call<T>(fn: () => Promise<T>): Promise<T>
   progress(fraction: number): void
   cancelled(): boolean
