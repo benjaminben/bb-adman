@@ -45,14 +45,13 @@ describe('textCss [FR-093, FR-249]', () => {
     expect(textCss({ ...textStyle, letterSpacing }).letterSpacing).toBe(want)
   })
 
-  it.each([
-    { color: 'red; background: url(x)' },
-    { color: '#11223' },
-    { color: 42 },
-  ])('leaves out a colour $color that fails the check [LK-1]', ({ color }) => {
-    const style = { ...textStyle, color } as unknown as typeof textStyle
-    expect('color' in textCss(style)).toBe(false)
-  })
+  it.each([{ color: 'red; background: url(x)' }, { color: '#11223' }, { color: 42 }])(
+    'leaves out a colour $color that fails the check [LK-1]',
+    ({ color }) => {
+      const style = { ...textStyle, color } as unknown as typeof textStyle
+      expect('color' in textCss(style)).toBe(false)
+    },
+  )
 
   it('names the uploaded font first and the bundled font as the fallback', () => {
     expect(textCss({ ...textStyle, fontAssetId: 'F1' }).fontFamily).toBe(
