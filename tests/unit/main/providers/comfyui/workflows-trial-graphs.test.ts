@@ -17,6 +17,7 @@ const LOADER_FOLDER: Record<string, [string, string]> = {
   CLIPLoader: ['clip_name', 'text_encoders'],
   VAELoader: ['vae_name', 'vae'],
   LoraLoaderModelOnly: ['lora_name', 'loras'],
+  LoadBackgroundRemovalModel: ['bg_removal_name', 'background_removal'],
 }
 
 function graphModels(spec: WorkflowSpec) {

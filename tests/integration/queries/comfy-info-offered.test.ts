@@ -32,6 +32,7 @@ describe('comfy.getInfo marks the workflow a run gets [S2-4, D-088]', () => {
       'h3-image-to-video',
       'h3-reference-to-video',
       'flux3-klein-edit-references',
+      'birefnet-cutout',
     ])
     expect(new Set(offered.map(group)).size).toBe(offered.length)
     expect(offered.every((w) => w.status !== 'draft')).toBe(true)
