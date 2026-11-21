@@ -1,0 +1,52 @@
+.subjects {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-self: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--width-column-min), 1fr));
+  gap: var(--space-2) var(--space-3);
+  align-items: end;
+  margin: 0;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.row legend {
+  padding: 0 var(--space-1);
+  font-weight: 600;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.modes {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+}
+.modes label {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+.remove {
+  justify-self: end;
+}
+.add {
+  align-self: flex-start;
+}

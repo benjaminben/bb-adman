@@ -1,0 +1,65 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-self: stretch;
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+}
+.form h3 {
+  margin: 0;
+  font-size: var(--font-size-heading);
+}
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--width-column-min), 1fr));
+  gap: var(--space-3);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-weight: 600;
+}
+.field input,
+.field textarea {
+  font-weight: normal;
+}
+.wide {
+  grid-column: 1 / -1;
+}
+.field textarea {
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: normal;
+  resize: vertical;
+}
+.lines p {
+  margin: 0 0 var(--space-1);
+}
+.problems {
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+.problems h4 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-body);
+}
+.problems ul {
+  margin: 0;
+  padding-left: var(--space-4);
+}

@@ -56,9 +56,20 @@ describe('Load a brief [SPEC 14 1.41 TP-1, FR-023]', () => {
   it('shows the name, audience, region, subjects, sizes and languages', async () => {
     await openPage()
     const summary = await loadBrief()
-    for (const text of ['Summer Splash', 'Adults 21 to 35', 'US', 'Citrus can', 'Berry bottle']) {
-      expect(summary).toHaveTextContent(text)
+    const fields: [string, string][] = [
+      ['Campaign name', 'Summer Splash'],
+      ['Audience', 'Adults 21 to 35'],
+      ['Region', 'US'],
+    ]
+    for (const [label, value] of fields) {
+      expect(within(summary).getByLabelText(label)).toHaveValue(value)
     }
+    const subjects = within(summary).getByRole('list', { name: 'Subjects' })
+    expect(
+      within(subjects)
+        .getAllByLabelText('Name')
+        .map((f) => (f as HTMLInputElement).value),
+    ).toEqual(['Citrus can', 'Berry bottle'])
     expect(summary).toHaveTextContent('1x1, 9x16')
     expect(summary).toHaveTextContent('en, de')
   })
@@ -144,7 +155,7 @@ describe('Load a brief [SPEC 14 1.41 TP-1, FR-023]', () => {
     const fake = projectApi(projectGet(), { ...DRAFT, subjects: [{ name: 'Citrus can' }] })
     await openPage(fake)
     const summary = await loadBrief()
-    expect(summary).toHaveTextContent('Citrus-can')
+    expect(within(summary).getByLabelText('Subject ID')).toHaveValue('Citrus-can')
     expect(screen.getByRole('button', { name: 'Create campaign' })).toBeEnabled()
     expect(names(fake)).toEqual(['brief.parse'])
   })

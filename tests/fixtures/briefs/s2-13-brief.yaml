@@ -1,0 +1,29 @@
+# A brief for the S2-13 screenshots: two subjects, one with no ID, two languages and a size
+# that is not ready-made.
+campaignName: Lakeside Summer
+region: CA
+audience: Families planning a weekend at the lake
+message: Pack the cooler. Summer starts at the dock.
+offer: Two cans for the price of one, all of July
+callToAction: Find it at your corner store
+tone: Warm and easygoing
+subjects:
+  - id: citrus-can
+    name: Citrus can
+    description: A slim aluminium can with a lime and lemon label
+  - name: Berry bottle
+    description: A tall glass bottle of wild berry soda
+languages:
+  - en
+  - fr-CA
+sizes:
+  - '1:1'
+  - '9:16'
+  - '1200x628'
+requiredWords:
+  - Lakeside
+copy:
+  en:
+    headline: Summer starts at the dock
+  fr-CA:
+    headline: L'été commence au quai
