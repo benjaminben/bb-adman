@@ -67,7 +67,19 @@ describe('generation.startVideo [SPEC 4.2, 14 CU-6a]', () => {
     ['a first frame', { start: 'first_frame' }],
     ['references', { useReferences: true }],
     ['reference pictures without useReferences', { referenceAssetIds: ['a1'] }],
-  ])('refuses %s with comfy_job_not_offered before a job row (CU-6b)', async (_, input) => {
+  ])('refuses %s, no picture chosen: INVALID_INPUT, no job [1.60 N-4]', async (_, input) => {
+    f = await makeGenerationFixture()
+    expect(await start(input)).toMatchObject({
+      ok: false,
+      error: { code: 'INVALID_INPUT', message: 'Choose one picture for this video.' },
+    })
+    expect(f.jobs()).toEqual([])
+  })
+
+  it.each([
+    ['a first frame', { start: 'first_frame', referenceAssetIds: ['a1'] }],
+    ['a reference', { useReferences: true, referenceAssetIds: ['a1'] }],
+  ])('another provider takes only a prompt: %s is not offered [1.60 N-4]', async (_, input) => {
     f = await makeGenerationFixture()
     expect(await start(input)).toMatchObject({
       ok: false,

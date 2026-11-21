@@ -1,15 +1,14 @@
 // SPEC 4.2 "No address yet" and "Not offered", 14 1.41 "trial workflows are picked by the
 // command" (security class): the ComfyUI checks of generation.startVideo, and of job.retry for
-// a ComfyUI video job (14 1.53), made before a job row. CU-6a: only a video from a prompt
-// alone, whose workflow must match that start pair (1.53). A trial workflow only for the user
-// with the hand-test tools on; an agent never gets one, and a draft is never sent.
+// a ComfyUI video job (14 1.53), made before a job row. The workflow must match the run's
+// start pair (1.53, 1.60). A trial workflow only for the user with the hand-test tools on; an
+// agent never gets one, and a draft is never sent. video-start-checks.ts calls these.
 import type { CoreDeps } from '../../core-deps'
 import type { ProjectContext } from '../types'
 import { offeredWorkflow } from '../../providers/comfyui/workflows/offered'
 import type { WorkflowSpec } from '../../providers/comfyui/workflows/types'
 import type { VideoStart } from '../../providers/types'
 import { reasonMessage } from '../../../shared/providers/messages'
-import { videoJobRequest } from '../../../shared/schemas/jobs/video-generation'
 import { AppError } from '../../../shared/schemas/result'
 
 export const COMFY_VIDEO_NOT_OFFERED_MESSAGE = 'ComfyUI cannot make this kind of video yet.'
@@ -26,19 +25,6 @@ export const videoNotOffered = () =>
 type CheckDeps = Pick<CoreDeps, 'devTools'> & { settings: Pick<CoreDeps['settings'], 'get'> }
 
 const PROMPT_ONLY: VideoStart = { firstFrame: false, references: false }
-
-// 14 1.53: job.retry of a ComfyUI video job, from the old row's request, before enqueue.
-export function checkComfyVideoRetry(
-  deps: CheckDeps,
-  ctx: Pick<ProjectContext, 'actor'>,
-  request: unknown,
-): void {
-  const parsed = videoJobRequest.safeParse(request)
-  if (!parsed.success) throw videoNotOffered()
-  const { start, referenceAssetIds, durationMs } = parsed.data
-  if (start !== 'none' || referenceAssetIds.length > 0) throw videoNotOffered()
-  checkComfyVideo(deps, ctx, durationMs)
-}
 
 // [1.60] N-4 step 3: the workflow offered for the run's start pair, which it gives back.
 export function checkComfyVideo(

@@ -14,6 +14,13 @@ export function tooManyReferencesMessage(max: number): string {
   return `ComfyUI takes at most ${max} reference picture(s) for this run.`
 }
 
+// Also given by generation.startVideo for too many references (SPEC 14 1.60 N-4).
+export const tooManyReferences = (max: number) =>
+  new AppError('RULE_VIOLATION', tooManyReferencesMessage(max), {
+    reason: 'too_many_references',
+    max,
+  })
+
 export function checkComfyRun(
   deps: Pick<CoreDeps, 'devTools'> & { settings: Pick<CoreDeps['settings'], 'get'> },
   ctx: Pick<ProjectContext, 'actor'>,
@@ -32,10 +39,5 @@ export function checkComfyRun(
     })
   }
   const max = spec.slots.references?.length ?? 0
-  if (referenceCount > max) {
-    throw new AppError('RULE_VIOLATION', tooManyReferencesMessage(max), {
-      reason: 'too_many_references',
-      max,
-    })
-  }
+  if (referenceCount > max) throw tooManyReferences(max)
 }

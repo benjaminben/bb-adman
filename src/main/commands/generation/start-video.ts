@@ -1,14 +1,14 @@
-// generation.startVideo, first form (SPEC 4.2, 6.10.7 "Into the project"; 14 1.41 CU-6a,
-// 1.45 A-4). Checks the provider and the variant, calls the key guard, refuses every start
-// pair but "no first frame, no references" (CU-6b brings the rest), makes the ComfyUI checks,
-// then enqueues one video_generation job with the variant's and its campaign's IDs and
-// returns its ID at once. run checks the variant again inside the transaction (SPEC 3.6).
+// generation.startVideo (SPEC 4.2, 6.10.7 "Into the project"; 14 1.41 CU-6a, 1.45 A-4,
+// 1.60 CU-6b). Checks the provider and the variant, calls the key guard, then makes the start
+// checks: the start pair, the ComfyUI checks for that pair, and each picture. Then it enqueues
+// one video_generation job with the variant's and its campaign's IDs and returns its ID at
+// once. run checks the variant again inside the transaction (SPEC 3.6).
 import { defineCommand, type ProjectContext } from '../types'
 import type { CoreDeps } from '../../core-deps'
 import type { ProjectHandle } from '../../db/project-file'
 import { readWireRow } from '../../db/rows'
 import { requireProviderKeys } from '../../providers/require-keys'
-import { checkComfyVideo, videoNotOffered } from './comfy-video-checks'
+import { checkVideoStart } from './video-start-checks'
 import { promptToSend } from '../../../shared/generation/prompt'
 import {
   generationStartVideoInput,
@@ -18,7 +18,7 @@ import type { VideoJobRequest } from '../../../shared/schemas/jobs/video-generat
 import type { ProviderInfo } from '../../../shared/schemas/queries/app'
 import { AppError } from '../../../shared/schemas/result'
 
-type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools'>
+type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets'>
 type Target = { campaignId: string; width: number; height: number }
 
 // SPEC 4.1 "Choosing a code": a provider chosen for a job it does not do is INVALID_INPUT.
@@ -42,22 +42,17 @@ function target(project: ProjectHandle, variantId: string): Target {
   return { campaignId: direction.campaignId, width: variant.width, height: variant.height }
 }
 
-// CU-6a: a video from a prompt alone, for every provider.
-function promptOnly(input: GenerationStartVideoInput): void {
-  const references = input.useReferences || input.referenceAssetIds.length > 0
-  if (input.start !== 'none' || references) throw videoNotOffered()
-}
-
 function enqueue(deps: Deps, ctx: ProjectContext, input: GenerationStartVideoInput) {
   const provider = videoProvider(deps, input.provider)
   const place = target(ctx.project, input.variantId)
+  // [1.60] The stored request keeps the start and the picture IDs prepare checked.
   const request: VideoJobRequest = {
     prompt: promptToSend(input.prompt),
     durationMs: input.durationMs,
     width: place.width,
     height: place.height,
-    start: 'none',
-    referenceAssetIds: [],
+    start: input.start,
+    referenceAssetIds: input.referenceAssetIds,
   }
   const jobId = deps.jobs.enqueue(ctx, {
     kind: 'video_generation',
@@ -82,8 +77,7 @@ export function generationStartVideo(deps: Deps) {
       const provider = videoProvider(deps, input.provider)
       target(ctx.project, input.variantId)
       requireProviderKeys(deps, provider.id, 'make videos')
-      promptOnly(input)
-      if (provider.id === 'comfyui') checkComfyVideo(deps, ctx, input.durationMs)
+      await checkVideoStart(deps, ctx, provider.id, input)
     },
     run(ctx, input) {
       const { jobId, campaignId } = enqueue(deps, ctx, input)

@@ -5,7 +5,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
-import { createCore, type Core } from '../../../src/main/core'
+import { createCore, type Core, type CoreOptions } from '../../../src/main/core'
 import type { BusEvent } from '../../../src/main/commands/bus'
 import { readWireRow, readWireRows } from '../../../src/main/db/rows'
 import { greyPng } from '../../../src/main/providers/fake/png'
@@ -15,7 +15,14 @@ import type { JobRow } from '../../../src/shared/schemas/rows/job'
 import type { AssetRow } from '../../../src/shared/schemas/rows/asset'
 import type { Actor } from '../../../src/shared/schemas/events'
 
-export async function makeComfyFixture(opts: { devTools: boolean; origin?: string }) {
+type FixtureOptions = {
+  devTools: boolean
+  origin?: string
+  // [1.60] CU-6b: a stand-in for the picture fitter of CU-6b-F.
+  fitPicture?: CoreOptions['fitPicture']
+}
+
+export async function makeComfyFixture(opts: FixtureOptions) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-comfy-'))
   const events: BusEvent[] = []
   const core: Core = createCore({
@@ -28,6 +35,7 @@ export async function makeComfyFixture(opts: { devTools: boolean; origin?: strin
     emit: (e) => events.push(e),
     askPermission: async () => false,
     toPng: (bytes) => bytes,
+    ...(opts.fitPicture && { fitPicture: opts.fitPicture }),
   })
   const as = (actor: Actor) => (name: string, input: Record<string, unknown>) =>
     core.bus.execute(name, { projectId, ...input }, { actor })
