@@ -5,9 +5,9 @@ How an outside agent (an MCP client such as Claude Code) reaches the app: the MC
 ## Status on `main`
 
 - **Built:** the server (`src/main/mcp/`), the token, the request checks, the on and off switch, the port, the Connect panel with one block, the Settings section "Agent access (MCP)", 11 tools (`list_projects`, `get_project`, `list_assets`, `get_campaign`, `create_campaign`, `get_slots`, `get_job`, `list_jobs`, `generate_images`, `generate_video`, `cancel_job`), the agent policy table with the `tick` value, the fail-closed bus, and agent runs: the gate, the tick, the limit, the untick check and the Settings block "Agent runs" (`spec/agent-runs.md`).
-- **Not built (Phase 10):** bridge mode, the Claude Desktop block, the ask flow, the delete tools, `agent.activity`, and the other 4.5 tools.
+- **Not built (Phase 10):** bridge mode, the Claude Desktop block, the ask flow, the delete tools, `agent.activity`, and the other tools of "MCP tools" below.
 
-## The MCP server (was 6.8)
+## The MCP server
 
 Built. `src/main/mcp/server.ts`, `service.ts`, `request-guard.ts`, `sessions.ts`, `serial.ts`, `agent-caller.ts`. MCP TypeScript SDK pinned exactly: `@modelcontextprotocol/sdk` `1.32.2`.
 **Direction:** inbound. **Protocol:** MCP, Streamable HTTP. **Authentication:** bearer token. [REQ: FR-190, FR-191, IR-003, R-04]
@@ -52,7 +52,7 @@ Built with one block. `src/renderer/screens/settings/mcp-section/`, `connect-pan
 - The block to copy, for Claude Code: `claude mcp add --transport http adman http://127.0.0.1:{port}/mcp --header "Authorization: Bearer {token}"`. The user copies it into the agent. An agent never reads the token any other way.
 - The Settings section "Agent access (MCP)": the switch, the port, the Connect panel. Its wording is in `spec/screens.md`. The Copy button uses `navigator.clipboard.writeText` in the renderer on click only: no preload, IPC, CSP or permission-handler change. A permission handler added later must allow `clipboard-sanitized-write`. On failure: "Copy did not work. Select the line and copy it." Nothing about the token is logged.
 
-## Token and sessions (was 5.1, 5.3)
+## Token and sessions
 
 Built. `src/main/mcp/token.ts`, `service.ts`, `sessions.ts`.
 
@@ -64,7 +64,7 @@ Built. `src/main/mcp/token.ts`, `service.ts`, `sessions.ts`.
 - After "Make a new token" the panel calls `mcp.getConnectInfo` again to show the new one.
 - Sessions: MCP session IDs are held in memory and dropped when the server is turned off, the token is replaced, the port changes, or the app quits.
 
-## MCP tools (was 4.5)
+## MCP tools
 
 ### Rules for every tool
 
@@ -89,7 +89,7 @@ Built for the 11 tools that exist; every future tool follows them.
 | `list_assets` | query `asset.list` | project_id, library?, kind?, subject_id? | id, display name, kind, library, subject ID, width, height, duration, font family | allow | Built | R-11 |
 | `get_campaign` | query `campaign.get` | project_id, campaign_id | Campaign fields, rule set, directions, variant summaries with badges | allow | Built | FR-192 |
 | `get_variant` | query `variant.get` | project_id, variant_id | Variant, layers (all values), clips, out-of-date detail | allow | Not built (Phase 10) | FR-192 |
-| `render_variant` | the render service (no command) | project_id, variant_id, time_ms? (default 0), max_dimension? (default 1024, max 2048), hide_text? | One PNG image | allow | Not built (Phase 10; needs the Scene, Phase 3) | FR-193 |
+| `render_variant` | the render service (no command) | project_id, variant_id, time_ms? (default 0), max_dimension? (default 1024, max 2048), hide_text? | One PNG image | allow | Not built (Phase 10; calls the built `variant.render`) | FR-193 |
 | `create_campaign` | command `campaign.create` | The command's input as built: project_id, brief (`spec/brief-and-templates.md`), subject_map, sizes, languages, template_id, rule_set?, copy_rule_set_from? | campaign_id, master variant_id (and direction_id) | allow | Built | FR-195, R-01 |
 | `add_variant` | command `variant.add` | project_id, direction_id, size_label, language, format | variant_id | allow | Not built (Phase 10) | FR-195 |
 | `set_variant_format` | command `variant.setFormat` | project_id, variant_id, format (`image` or `video`) | variant_id, format | allow | Not built (Phase 10) | R-20, D-025 |
@@ -155,7 +155,7 @@ Not built (Phase 10). No `ask` tool exists until the delete tools land. [REQ: FR
 
 A request for something not offered returns `AGENT_DENIED` with `denialMessage(name)`: "Agents cannot {action} in this version. Ask the user to do it in the app.", for example "Agents cannot export in this version. Ask the user to do it in the app." [REQ: workflow 5.7]. `{action}` is the action text of the command's row in the policy table. A command not in the table gets "do this".
 
-## Permissions (was 5.2)
+## Permissions
 
 Policy-based, with two actors.
 
@@ -205,7 +205,7 @@ Built. `src/main/commands/agent-policy.ts` is the single owner [ADR-009]. Allowi
 - A command not in the table is `deny`.
 - Not built (Phase 4): `generation.proposeLayout` and `generation.copyOptions` become `tick` under the Gemini tick when Phase 4 builds them.
 - `job.retry` stays `deny` (it re-sends a stored request). `job.markSeen` stays `deny`: picking a result does not mark it looked at.
-- User-only queries refuse an agent: `mcp.getConnectInfo` (named test), `comfy.getInfo`, `job.getServerMessage`. Whether `job.getServerMessage` should ever be open to an agent is what is left of OI-84; it stays user only.
+- User-only queries refuse an agent: `mcp.getConnectInfo` (named test), `comfy.getInfo`, `job.getServerMessage`, and the built `thumbnail.get` ("Agents cannot read thumbnails in this version. Ask the user to do it in the app.", `src/main/queries/render.ts`). The built `variant.render` answers both actors. Whether `job.getServerMessage` should ever be open to an agent is what is left of OI-84; it stays user only.
 - **The bus fails closed** (`denyCheck` in `src/main/commands/bus.ts`). For the agent actor, any policy that is not `allow`, `ask` or `tick` is refused with `AGENT_DENIED` and `denialMessage(name)`. `agentPolicyFor` returns `tick` for a `tick` row, and the bus sends it to the agent-run gate (`spec/agent-runs.md`), which refuses any `tick` command it does not know. Test: `tests/integration/commands/bus-fail-closed.test.ts` (raw `tick`, a made-up fifth value, `allow`).
 - No agent sets a ComfyUI workflow's status to `proven`.
 

@@ -1,6 +1,6 @@
 # Agent runs
 
-Picture and video runs an agent starts through the MCP server: what is open and shut, the per-provider tick, the gate, the limit, unticking, and paid runs. Read with `spec/mcp-and-agents.md` (the server, the tools, the permissions and the agent policy table), `spec/cancel.md` and `spec/jobs.md`. Old section 6.11.3 onward.
+Picture and video runs an agent starts through the MCP server: what is open and shut, the per-provider tick, the gate, the limit, unticking, and paid runs. Read with `spec/mcp-and-agents.md` (the server, the tools, the permissions and the agent policy table), `spec/cancel.md` and `spec/jobs.md`.
 
 Built: `agentRunsOffered` and the limit bounds, the settings key `agentRunLimit`, the commands `agentRuns.setAllowed` and `agentRuns.setLimit`, the `tick` policy, the gate, the `trial` workflow rule, the runner's untick check, the paid tick, the Settings block, and the tools `generate_images`, `generate_video` and `cancel_job`. Security class. [REQ: FR-272, FR-279, FR-280, FR-281, FR-292; D-053 item 8; D-059 items 1 and 5; D-080]
 

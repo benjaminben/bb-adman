@@ -10,20 +10,20 @@ The Phase 2 leftovers keep their group numbers. Group 1 (the `@/` alias, one fol
 
 | # | Work | Goal | Depends on | Topic files the developers need |
 |---|------|------|------------|------------------------------|
-| 1 | Phase 2 leftovers, group 2 (`phase-02-leftovers.md`) | Small fixes and helpers later phases lean on; ComfyUI follow-ups; slice WP; CU-9 | Phase 2 as built | `jobs.md`, `assets.md`, `comfyui.md`, `comfyui-workflows.md`, `providers.md`, `security.md`, `testing.md`, `data-rules.md` |
+| 1 | Phase 2 leftovers, group 2 (`phase-02-leftovers.md`) | Small fixes and helpers later phases lean on; ComfyUI follow-ups; slice WP; CU-9 | Phase 2 as built | `jobs.md`, `assets.md`, `comfyui.md`, `comfyui-workflows.md`, `comfyui-trials.md`, `providers.md`, `security.md`, `testing.md`, `data-rules.md` |
 | 2 | Phase 2 leftovers, group 3 (`phase-02-agent-generation.md`) | Agents generate through the MCP server: built. Left: the first agent run on the user's ComfyUI server (by hand, once); the OI-90 change if the answer is "no ticks" | Phase 2 as built | `agent-runs.md`, `mcp-and-agents.md`, `comfyui.md` |
-| 3 | Phase 2 leftovers, groups 4 and 5 (slices S2-1 to S2-17) | ComfyUI failures, the address and licence dialogs, the Settings check sentences; drop import, brief form, slot view, import, relink and package dialogs, the campaign grid | Phase 2 as built; slice WP before S2-17 | `screens-campaign.md`, `screens.md`, `comfyui.md`, `comfyui-workflows.md`, `brief-and-templates.md`, `assets.md`, `api-commands.md`, `api-queries-events.md`, `security.md`, `testing.md` |
+| 3 | Phase 2 leftovers, groups 4 and 5 (`phase-02-screens.md`, slices S2-4 to S2-17; S2-1 to S2-3 built) | ComfyUI failures, the address and licence dialogs; drop import, brief form, slot view, import, relink and package dialogs, the campaign grid | Phase 2 as built; slice WP before S2-17 | `screens-campaign.md`, `screens.md`, `comfyui.md`, `comfyui-workflows.md`, `brief-and-templates.md`, `assets.md`, `api-commands.md`, `api-queries-events.md`, `security.md`, `testing.md` |
 | 4 | Phase 3 (`phase-03.md`) | The user lays out a post by hand | Phase 2 leftovers | `scene.md`, `editor.md`, `editor-commands.md`, `data-model.md`, `data-rules.md`, `assets.md`, `screens.md`, `structure.md`, `security.md`, `testing.md` |
-| 5 | Phase 4 (`phase-04.md`) | Empty slots can be filled with AI | Phase 3 | `providers.md`, `jobs.md`, `brief-and-templates.md`, `mcp-and-agents.md`, `api-commands.md`, `screens.md`, `testing.md` |
+| 5 | Phase 4 (`phase-04.md`) | Empty slots can be filled with AI | Phase 3 | `providers.md`, `providers-adapters.md`, `jobs.md`, `brief-and-templates.md`, `mcp-and-agents.md`, `api-commands.md`, `screens.md`, `testing.md` |
 | 6 | Phase 5 (`phase-05.md`) | One master drives a grid of variants | Phase 4 | `data-model.md`, `data-rules.md`, `api-commands.md`, `comfyui-workflows.md`, `screens.md`, `testing.md` |
-| 7 | Phase 6 (`phase-06.md`) | Translations with approval, brand and legal checks | Phase 5 | `data-rules.md`, `export-and-checks.md`, `providers.md`, `screens.md`, `testing.md` |
-| 8 | Phase 7 (`phase-07.md`) | Video variants preview as they will export | Phase 6, OI-09, OI-30 | `providers.md`, `jobs.md`, `cancel.md`, `assets.md`, `data-rules.md`, `infra-and-settings.md`, `security.md`, `screens.md`, `testing.md` |
+| 7 | Phase 6 (`phase-06.md`) | Translations with approval, brand and legal checks | Phase 5 | `data-rules.md`, `export-and-checks.md`, `providers.md`, `providers-adapters.md`, `screens.md`, `testing.md` |
+| 8 | Phase 7 (`phase-07.md`) | Video variants preview as they will export | Phase 6, OI-09, OI-30 | `providers.md`, `providers-adapters.md`, `jobs.md`, `cancel.md`, `assets.md`, `data-rules.md`, `infra-and-settings.md`, `security.md`, `screens.md`, `testing.md` |
 | 9 | Phase 8 (`phase-08.md`) | Deliverables and a report on disk | Phase 7 | `export-and-checks.md`, `infra-and-settings.md`, `screens.md`, `testing.md` |
 | 10 | Phase 9 (`phase-09.md`) | A campaign's deliverables in S3 or Dropbox | Phase 8, OI-18 for the hand proof | `storage-and-publish.md`, `security.md`, `infra-and-settings.md`, `screens.md`, `testing.md` |
 | 11 | Phase 10 (`phase-10.md`) | Claude can read and edit open projects | Phases 3, 6, 7; group 3 | `mcp-and-agents.md`, `api-principles.md`, `api-commands.md`, `api-queries-events.md`, `security.md`, `screens.md`, `testing.md` |
 | 12 | Phase 11 (`phase-11.md`) | A repository ready to publish; nothing published (D-086) | Phases 1 to 10 | `overview.md`, `infra-and-settings.md`, `testing.md` |
 
-Every developer also reads `overview.md`. Open questions are in `open-items.md`.
+Every developer also reads `overview.md`. Open questions are in `open-items.md`; the assumptions made meanwhile are in `assumptions.md`.
 
 ## Rules for every phase
 

@@ -2,7 +2,7 @@
 
 How stored data behaves: links between a master and its variants, follow rules and sync, fan-out, the path of an edit through the command bus, caching, project file migration, packaging a project, and changing a variant's format. Read with `spec/data-model.md` and `spec/data-model-campaign.md` (the tables). Jobs are in `spec/jobs.md`; asset import and the assets folder in `spec/assets.md`.
 
-## Links, follow rules and sync (was 3.4)
+## Links, follow rules and sync
 
 Not built (Phase 5). The follow rules live in `src/shared/links/follow-rules.ts`. The `revs`, `synced_revs`, `overrides` and `linked` columns already exist on `layer`.
 
@@ -77,7 +77,7 @@ type SyncDecision = {
 
 Named test (Phase 5 exit): "editing a master changes no other variant's layer rows".
 
-## Fan-out (was 3.5)
+## Fan-out
 
 Not built (Phase 5; the video format part in Phase 7).
 
@@ -99,7 +99,7 @@ For every combination of size, language and format that does not already exist i
 
 Fan-out is one entry on the campaign undo list. Generative fill is the only image generation it can start, and only when the user chose `fill` [REQ: FR-076].
 
-## Data flow (was 3.6)
+## Data flow
 
 ### An edit
 
@@ -161,7 +161,7 @@ Built for pictures and video jobs (Phase 2); placing a chosen picture in a layer
 
 Jobs (starting, the runner, the two classes of kind, marks, closing a project with jobs running, resume on open) are in `spec/jobs.md`. Export: `spec/export-and-checks.md`. Publish: `spec/storage-and-publish.md`.
 
-## Caching (was 3.7)
+## Caching
 
 Not built (Phase 3, with the render service).
 
@@ -171,7 +171,7 @@ Not built (Phase 3, with the render service).
 
 No asset thumbnails are made: the window draws asset pictures straight from the asset protocol (A-30). Nothing else is cached. A variant's thumbnail is drawn again when `asset.changedOnDisk` names an asset it uses (`spec/scene.md`).
 
-## Data migration (was 3.8)
+## Data migration
 
 Built. Main files: `src/main/db/project-file.ts`, `src/main/db/bundled-migrations.ts`, `src/main/db/migrations/`. The newest migration is `0002_job_started_by_and_error_reason`; a file with every migration has `schema_version` 3.
 
@@ -207,7 +207,7 @@ On open, the app compares the file's `schema_version` with its own.
 | `0001_agent_changed_and_job_target` | `variant.agent_changed_at`; on `job`: `layer_id`, `slot`, `paid_calls` (default 0), `seen_at`, and index `job_target`. All added columns, no rebuild. | `migration-0001.test.ts`: runs `0000` and `0001` only; a file made at version 1 holding a variant and a job keeps both rows unchanged apart from the new fields |
 | `0002_job_started_by_and_error_reason` | On `job`: `started_by` (default `'user'`, CHECK `job_started_by`), `error_reason`. Two hand-written `ALTER TABLE` statements. | `migration-0002.test.ts`: three tags in order; `schema_version` 3; an old row gains `started_by: 'user'` and `error_reason: null`; `'robot'` is refused and `'agent'` accepted, in old and new files |
 
-## Package project (was 3.9)
+## Package project
 
 Built. Main files: `src/main/assets/package.ts` (owns the layout), `src/main/commands/project/package.ts`. Security class. [REQ: FR-008, R-09, D-011, D-022, D-027]
 
@@ -255,7 +255,7 @@ Built. Main files: `src/main/assets/package.ts` (owns the layout), `src/main/com
 
 The command is not undoable and does not change any `rev`. It never opens the copy, so it does not tell the job runner anything; the copy's rows are settled when someone opens it (`spec/jobs.md`).
 
-## Changing a variant's format (was 3.10)
+## Changing a variant's format
 
 Not built. Phase 7 for the command; Phase 10 for the MCP tool. [REQ: FR-070, FR-120, workflow 5.5 step 1, R-20, D-012, D-020, D-025, D-026]
 

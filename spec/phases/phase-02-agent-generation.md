@@ -1,6 +1,6 @@
 # Phase 2 leftovers, group 3: agents generate through the MCP server
 
-This is group 3 of the Phase 2 leftovers. Groups 2, 4 and 5 are in `spec/phases/phase-02-leftovers.md`.
+This is group 3 of the Phase 2 leftovers. Group 2 is in `spec/phases/phase-02-leftovers.md`; groups 4 and 5 are in `spec/phases/phase-02-screens.md`.
 
 **Goal.** An agent connected through the MCP server can start, follow and cancel its own picture and video runs on every provider the user has allowed for agents in Settings [D-080].
 

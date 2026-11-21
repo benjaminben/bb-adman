@@ -33,7 +33,7 @@ Bullets carry `[logic]` (main process, shared code, commands, queries, the MCP s
 
 ## Carried in from earlier work
 
-- **Tool wording for runs and picks.** On every tool that starts a run and every tool that puts an asset on a layer: "A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose." MCP-G sets this for its tools; this phase owns the final words for every tool. It is wording only: an agent may pick a result, and `layer.update` and `layer.create` by an agent check neither `started_by` nor `seen_at`.
+- **Tool wording for runs and picks.** On every tool that starts a run and every tool that puts an asset on a layer: "A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose." The built run tools (`generate_images`, `generate_video`) carry it; this phase owns the final words for every tool. It is wording only: an agent may pick a result, and `layer.update` and `layer.create` by an agent check neither `started_by` nor `seen_at`.
 - **OI-25's fallback** for `create_campaign` when sizes or languages are missing.
 - **Claude Desktop block.** Today the Connect panel shows only the Claude Code line, and `ConnectInfo` has no Claude Desktop field. Bridge mode adds the field and the second block.
 - **Every new reply** passes `riskyKeys` (`tests/integration/mcp/reply-keys.test.ts`), and the word test (no `comfyui`, case-sensitive; no `baseUrl`, no `agentRuns`, no server origin) covers each new tool's recorded success and refusal replies.

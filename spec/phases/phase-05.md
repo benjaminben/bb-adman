@@ -29,7 +29,7 @@ Bullets carry `[logic]` (main process, shared code, commands, queries, data) or 
 
 ## Carried in from earlier work
 
-- **`generation.runFill` and the ComfyUI extend job.** Generative fill also runs on ComfyUI (the extend job, was Section 6.10.8). The picture to extend goes in a one-slot `references` with `minReferences: 1`, and there is no source-picture slot. `comfy-workflows/moss-extend.json` exists as a draft. If the real graph of the extend trial needs another shape, it is ruled then. No extend job kind exists yet: `src/main/jobs/kinds/` holds only `image-generation.ts` and `video-generation.ts`.
+- **`generation.runFill` and the ComfyUI extend job.** Generative fill also runs on ComfyUI (the extend job, `spec/comfyui-workflows.md`, "Extend a background"). The picture to extend goes in a one-slot `references` with `minReferences: 1`, and there is no source-picture slot. `comfy-workflows/moss-extend.json` exists as a draft. If the real graph of the extend trial needs another shape, it is ruled then. No extend job kind exists yet: `src/main/jobs/kinds/` holds only `image-generation.ts` and `video-generation.ts`.
   - The extend source picture goes through the WebP-to-PNG rule of slice WP: the provider always gets a PNG.
   - `generation.runFill` is a `tick` row in the agent policy, but the agent-run gate knows only `generation.runImages`, `generation.startVideo` and `job.cancel`, so today it is refused for an agent. Opening it to agents is a ruling of this phase (D-080 points to yes); if yes, add it to the gate with gate tests.
 - **CU-8, the ComfyUI part of the hand-test screen** (only if OI-64 keeps it) [REQ: FR-290]. Class D and B. Not security class. Depends on CU-6 and slice I part 2.

@@ -2,7 +2,7 @@
 
 Where the app runs, the CI checks, release and packaging, how keys are stored, every environment variable, and `settings.json`. Read with `spec/security.md` (the rules these serve) and `spec/testing.md` (the test runs these variables switch on).
 
-## Environments (was 7.1 to 7.4, 7.6)
+## Environments
 
 | Environment | Purpose | Infrastructure | Access |
 |-------------|---------|----------------|--------|
@@ -32,13 +32,14 @@ Built. Owner: `package.json`. The project needs Node 22.12 or newer (`engines`);
 | `test:comfy` | `vitest run --config vitest.comfy.config.ts` | Real ComfyUI server, `tests/comfy/` |
 | `test:e2e` | `npm run build && playwright test` | Offline end-to-end, `tests/e2e/` |
 | `test:e2e:real` | `npm run build && playwright test --config playwright.real.config.ts` | End-to-end against the real ComfyUI server, `tests/e2e-real/` |
+| `shots` | `npm run build && playwright test --config playwright.shots.config.ts` | Screenshots of the built app's screens into `shots/` (not in git), `tests/shots/`. Never a routine check |
 | `db:generate` | `drizzle-kit generate` | Make a migration |
 | `package` | `npm run build && electron-builder` | Installers |
 | `package:dir` | `npm run build && electron-builder --dir` | Unpacked app folder |
 
 `npm test` never includes `tests/live/`, `tests/comfy/` or `tests/e2e-real/`. How each run is used, who may run it and its print rules are in `spec/testing.md`.
 
-## CI pipeline (was 7.5)
+## CI pipeline
 
 Push and pull request: Built (`.github/workflows/ci.yml`). Tag pipeline: Not built (Phase 11).
 
@@ -118,7 +119,7 @@ Built (`package.json` `allowScripts`; test `tests/unit/config/install-scripts.te
 
 OI-27 is open: the stakeholder has not answered on the `true` approvals made before the rule.
 
-## Secrets (was 7.7)
+## Secrets
 
 User secrets: Built (`src/main/secrets/secret-store.ts`, `src/main/secrets/safe-storage.ts`). The security rules for keys are in `spec/security.md`, "Keys and secrets".
 
@@ -147,7 +148,7 @@ The two classes are [REQ: R-10, D-014].
 - gitleaks runs on every push and pull request.
 - CI needs only the built-in `GITHUB_TOKEN`.
 
-## Environment variables (was 13)
+## Environment variables
 
 Built. Users never set any of these. They exist for development, tests and CI. User configuration is in `settings.json` (below).
 
@@ -239,9 +240,9 @@ A developer may keep some test variables in `.env.local` in the project root ins
 - The stakeholder spoke of "the .env file". The loaders read `.env.local` only; a line kept in another file is moved by the stakeholder (OI-37: whether that move has been made).
 - **Tests.** `tests/unit/live/env-file.test.ts` on `liveEnvFrom` with made-up text: a listed name is taken, an unlisted name is dropped, a name already set keeps its value. `tests/unit/config/comfy-env-file.test.ts`: no switch name is taken from the file. Neither reads a real file.
 
-## settings.json (was 13.1)
+## settings.json
 
-Built (`src/shared/schemas/settings.ts`, `src/main/settings/defaults.ts`, `src/main/settings/settings-store.ts`). The `agentRunLimit` key is Not built (agent runs, `spec/mcp-and-agents.md`; not on `main`). The `agentRuns.setAllowed` command is also not on `main` yet: only its policy row exists.
+Built (`src/shared/schemas/settings.ts`, `src/main/settings/defaults.ts`, `src/main/settings/settings-store.ts`). The `agentRuns` and `agentRunLimit` keys and their writers `agentRuns.setAllowed` and `agentRuns.setLimit` are built (`spec/agent-runs.md`).
 
 The file is `{userData}/settings.json`, written by the app only [REQ: FR-170].
 

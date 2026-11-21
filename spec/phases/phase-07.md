@@ -12,7 +12,7 @@ Already built in Phase 2 and not repeated here: `generation.startVideo` with Com
 - [logic] The FFmpeg fetch script (`spec/infra-and-settings.md`), built first in this phase, because the MP4 embed needs it. Packaging stays in Phase 8.
 - [logic] Animation presets as pure functions; Scene support for time, timing and presets.
 - [logic] Background track: clip commands (add, move, reorder, trim), black gaps, Scene preview with `<video>`.
-- [logic] fal.ai Seedance adapter (slice J, below), job resume, generation details embedded in MP4. The background render, resume, the embed and the clip are built here (`spec/providers.md`).
+- [logic] fal.ai Seedance adapter (slice J, below), job resume, generation details embedded in MP4. The background render, resume, the embed and the clip are built here (`spec/providers-adapters.md`).
 - [logic] Video format in fan-out.
 - [logic] `variant.setFormat`, image to video and video to image, with the allowed-changes table, the grid test in both directions and the round-trip guarantee (`spec/data-rules.md`). Settle OI-20 first.
 - [UI] Timeline: one track per layer, timing bars, entrance and exit blocks, playhead, play, pause, scrub.
@@ -28,7 +28,7 @@ Already built in Phase 2 and not repeated here: `generation.startVideo` with Com
 ## Dependencies
 
 - Phase 6.
-- The Seedance route checked (`spec/providers.md`).
+- The Seedance route checked (`spec/providers-adapters.md`).
 - The FFmpeg build source chosen (OI-09), because the MP4 embed needs it.
 
 ## Carried in from earlier work
@@ -48,7 +48,7 @@ Already built in Phase 2 and not repeated here: `generation.startVideo` with Com
 - **Sound.** The clip is stored as returned, after `checkMp4`. Check whether fal needs a setting to make sound (see sound below).
 - **Cancel and charges.** `cancel_would_still_charge` applies to fal (`spec/cancel.md`): a request fal has started (`result.stage` is `working`) is not asked to stop; `job.cancel` is refused `RULE_VIOLATION`, reason `cancel_would_still_charge`, "{Provider} has started this and will charge for it. The app lets it finish and keeps the result." Check U-25: does fal charge for a cancelled started request. What closing a project does with such a job is ruled when J is designed (OI-60, OI-51).
 - **Left-over rows.** Check whether fal charges for a status call or a fetch. If it does, or that cannot be shown, fal rows are not resumed and end as interrupted. Say whether a resumed status call counts in `paid_calls`.
-- **Agent tick.** Once J sets `available: true`, `agentRunsOffered` gives null for fal (after AR-2 a provider that is not local is no longer refused), so the user can tick it, and Settings shows the paid note under it. Update the MCP start-tool descriptions, which today name only `comfyui` and `gemini`. AR-1's test that `fal-seedance` gives `agent_runs_not_offered` changes with this slice.
+- **Agent tick.** Once J sets `available: true`, `agentRunsOffered` gives null for fal, so the user can tick it, and Settings shows the paid note under it. Update the MCP start-tool descriptions, which today name only `comfyui` and `gemini`. The cases that expect `fal-seedance` to be refused change with this slice (`tests/integration/commands/agent-runs-settings.test.ts`, "gives agent_runs_not_offered for fal-seedance, S3 and Firefly", and the `fal-seedance` rows in `tests/integration/commands/agent-run-gate.test.ts`).
 - Nothing is written into a project by the adapter alone; the clip path is this phase's `generation.startVideo` work.
 
 ### Video facts and the clip file

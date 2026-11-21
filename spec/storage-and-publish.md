@@ -4,7 +4,7 @@ The storage interface and its implementations (local folder, Amazon S3, Dropbox,
 
 [REQ: FR-160 to FR-164, R-15]
 
-## Storage interface (was 6.5)
+## Storage interface
 
 Built. `src/main/providers/types.ts`.
 

@@ -1,6 +1,6 @@
 # Phase 2 leftovers
 
-Every piece of Phase 2 work that is not on `main`, in a proposed build order. Group 1 (renderer layout and the styling source) is built. Group 3 (agents generate through the MCP server) is in `spec/phases/phase-02-agent-generation.md`. Groups 4 and 5 (the Phase 2 screens) are in `spec/phases/phase-02-screens.md`.
+Every piece of Phase 2 work that is not on `main`, in a proposed build order. Group 1 (renderer layout and the styling source) is built. Group 3 (agents generate through the MCP server) is built; its one hand run on the real server, and one change that waits on OI-90, are in `spec/phases/phase-02-agent-generation.md`. Groups 4 and 5 (the Phase 2 screens) are in `spec/phases/phase-02-screens.md`.
 
 `[UI]` work is built now, with its logic (D-084). Every screen follows the renderer layout rule in `spec/structure.md` and takes all styling from the shared tokens.
 
@@ -10,19 +10,14 @@ Work that belongs with a later phase is in that phase's file: Dropbox (slice G) 
 
 ### "After the test" list
 
-One short run in the main folder, class B, unless an item says otherwise. State is as checked on `main`. F-1 to F-6, F-10 and F-14 to F-17 are built.
+One short run in the main folder, class B, unless an item says otherwise. State is as checked on `main`. F-1 to F-7, F-10 to F-12 and F-14 to F-17 are built.
 
-- **F-7. Parser reading pass.** **Security class** (low). Not built.
-  - A reading pass over `src/main/`: every call that parses text from a project file, a settings file, a brief or a server (`JSON.parse`, the YAML reader, any other parser). For each, say whether its error can reach `errorContext` with a piece of that text in its message.
-  - Each one that can is wrapped the way `parsedJson` is: its own error, naming the place only, no cause, with one test. `errorContext` itself keeps logging `message` and `stack`.
-  - A file the main folder does not own: list it and report, do not edit.
 - **F-8. A limit on reference pictures per run.** Not built.
   - One constant `MAX_REFERENCES_PER_RUN` in `src/shared/config/defaults.ts`, used by the `generation.runImages` schema, the job request schema and the picker. A duplicate ID in the list is refused. One test each.
   - The number is ruled from what Gemini accepted in the stakeholder's test. **Needs that number before it is briefed.**
 - **F-9. `toPng` on a reference before a ComfyUI upload.** Waits for a ruling.
   - Whether a reference picture passes through `toPng` before upload, so the bytes match the `.png` name and nothing the user's file carries beside the picture is sent. It needs `toPng` reachable from `AdapterContext`, which it is not today.
   - Also covers a JPEG named `.png` that `LoadImage` fails on. The JPEG pass of the ComfyUI harness waits for it.
-- **F-11 and F-12** (the Settings check sentences from one owner, and the Settings form of `redirect_refused`): slice S2-1 in `spec/phases/phase-02-screens.md`.
 - **F-18. Stand-in fixtures from the real server.** Tests only. Partly done.
   - After real ComfyUI runs, correct CU-4's hand-made stand-in fixtures to the shapes the real server showed. The Flux run showed the picture history shape holds. Still to check: the job-state status words and the video history entry, after a real video run.
   - If a real shape breaks a client schema, stop and report: that is a client change, ruled on its own.
@@ -77,15 +72,15 @@ One short run in the main folder, class B, unless an item says otherwise. State 
   - Ruled (A-54): built with the `ws` package, 8.23.0, pinned, as a direct dependency, because Electron's built-in `WebSocket` failed three conditions (no message size limit, follows an environment proxy, no forced certificate check). The settings and the tests to write are in `spec/comfyui.md`, "Live progress".
   - The host is resolved and checked against the address rules (`spec/comfyui.md`) just before the connection opens. The gap between check and connect is accepted.
   - `onProgress` is called only when the stage, the queue position or the whole percent changed. Each call is one database write and one `job.updated` event.
-  - Note: AR-2 also edits a file named `live.ts` in `src/main/jobs/`. They are different files.
+  - Note: `src/main/jobs/live.ts` is a different file.
 - **The two real video runs.** The real end-to-end cases for video from a first-frame picture (`ADMAN_E2E_VIDEO_FRAME=1`) and from a reference picture (`ADMAN_E2E_VIDEO_REF=1`) each run once, one attempt each, no Retry. Each leaves one clip and one input file on the ComfyUI server. They prove the "Campaign · Make a video, from a picture" reach-table row. Not yet recorded as run.
 - **After the first good real run of each workflow.** Fill `needs.checkedWith` with that run's server version (Flux: `flux3.ts` has `checkedWith: ''`; `common.ts` `needs()` writes `''`). G-16: if the printed version is below a `moss-*` or `h3-*` minimum while that workflow's nodes and models are all found, lower that minimum to the printed version (one line; today `0.42.0` and `0.43.0`).
-- **Workflows to `proven`.** After the stakeholder accepts a `trial` workflow in the app, a one-line change sets `status: 'proven'` and records `needs.checkedWith`. No agent does this on its own. The four other workflows stay `draft` until their own data step. MOSS-Image is not installed on the test server yet; its trial waits, and `SFT` or `Base` is chosen with it (OI-34). The trials (`spec/comfyui-workflows.md`), including four runs at once and the smallest and largest reference count per workflow, set `proven`.
+- **Workflows to `proven`.** After the stakeholder accepts a `trial` workflow in the app, a one-line change sets `status: 'proven'` and records `needs.checkedWith`. No agent does this on its own. The four other workflows stay `draft` until their own data step. MOSS-Image is not installed on the test server yet; its trial waits, and `SFT` or `Base` is chosen with it (OI-34). The trials (`spec/comfyui-trials.md`), including four runs at once and the smallest and largest reference count per workflow, set `proven`.
 - **ComfyUI time limits.** The waiting and working limits in `limits.ts` are provisional. If the measured video work time is over the video working limit (`VIDEO_WORK_MS`, 120 min today), set it to twice the measured time, rounded up to ten minutes. Not a protection.
 - **Two-reference video.** `h3-reference-to-video` declares one reference. Two references need one real two-reference run first, then a ruling.
 - **Splitting `comfy-stand-in.spec.ts`.** The next slice that adds a case to `tests/e2e/comfy-stand-in.spec.ts` splits it, for example into `comfy-stand-in-video.spec.ts`.
 
-## Groups 4 and 5 — Phase 2 screens (slices S2-1 to S2-17)
+## Groups 4 and 5 — Phase 2 screens (slices S2-4 to S2-17)
 
 In `spec/phases/phase-02-screens.md`.
 

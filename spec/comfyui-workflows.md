@@ -1,8 +1,8 @@
-# ComfyUI: workflows, sizes, video and trials
+# ComfyUI: workflows, sizes and video
 
-The workflows Adman can send to a ComfyUI server, how a run fills one, sizes, video runs, extend, what is left on the server, and the trials that move a workflow from `trial` to `proven`. The adapter itself (address, client, check, picture run, failures) is in `spec/comfyui.md`; read it first. Cancel is in `spec/cancel.md`; runs started by an agent are in `spec/mcp-and-agents.md`.
+The workflows Adman can send to a ComfyUI server, how a run fills one, sizes, video runs, extend and what is left on the server. The trials that move a workflow from `trial` to `proven`, the real-server tests and the hand-test screen are in `spec/comfyui-trials.md`. The adapter itself (address, client, check, picture run, failures) is in `spec/comfyui.md`; read it first. Cancel is in `spec/cancel.md`; runs started by an agent are in `spec/mcp-and-agents.md`.
 
-## The workflow description (was 6.10.4; security class) [REQ: FR-258, FR-278]
+## The workflow description (security class) [REQ: FR-258, FR-278]
 
 Built. `src/main/providers/comfyui/workflows/` (`types.ts`, `common.ts`, `moss.ts`, `h3.ts`, `flux3.ts`, `index.ts`, `offered.ts`, one `.json` graph per workflow); the window-visible part in `src/shared/schemas/queries/comfy.ts`.
 
@@ -63,7 +63,7 @@ type WorkflowSpec = WorkflowInfo & {
 }
 ```
 
-- **Status.** `draft`: a stand-in graph for the tests, never sent to any server and never compared by the check. `trial`: a real graph, not yet proven; offered only to the user with dev tools on. `proven`: passed the owner check ("Trials and `proven`").
+- **Status.** `draft`: a stand-in graph for the tests, never sent to any server and never compared by the check. `trial`: a real graph, not yet proven; offered only with dev tools on, to the user or an agent (`spec/agent-runs.md`). `proven`: passed the owner check (`spec/comfyui-trials.md`, "Trials and `proven`").
 - `WORKFLOWS` (`workflows/index.ts`) lists all seven; `NON_DRAFT_WORKFLOWS` is the one list the check and every run use.
 - **Owners.** A graph's owner is its file in `src/main/providers/comfyui/workflows/`. `comfy-workflows/` holds hand-test copies (canvas copies in `ui/`) that no code reads. Where `comfy-workflows/REFERENCE-NOTES.md` and `comfy-workflows/README.md` differ, the notes win. How many pictures a workflow takes has one owner: the length of `slots.references`; the window holds no copy.
 - Stock workflows use ComfyUI core nodes only. `needs.addOns` is empty for every shipped workflow, and one test holds that.
@@ -181,7 +181,7 @@ type FillValues = {
 
 **Tests on the shipped files** (`tests/unit/main/providers/comfyui/workflows*.test.ts`, normal run): every pointer names a node and input that exist; every `class_type` is in `needs.nodeClasses`; no input value is text starting with `http://` or `https://`; a picture graph has exactly one `PreviewImage`, it is the `outputNode`, and there is no `SaveImage`; each video graph has exactly one `SaveVideo`; for every reference count from `minReferences` to the slot count, every link points at a node that exists, `outputNode` exists, the removed nodes and inputs are exactly the declared ones, and with every slot used the filled graph differs from the shipped one only at the pointed inputs; two fills give different seeds; `needs.addOns` is empty.
 
-## Sizes (was 6.10.5) [REQ: FR-259, FR-262, A-C3]
+## Sizes [REQ: FR-259, FR-262, A-C3]
 
 Built. `fitSize(asked, rule)` in `src/shared/comfy/fit-size.ts`; constants in `workflows/common.ts`.
 
@@ -205,7 +205,7 @@ H3 at 768 × 1344 for 9:16 is accepted; the H3 numbers stay provisional until a 
 
 **First-run sizes ("start small").** The `trial` specs use `MOSS_FIRST_RUN_SIZE = { 16, 840000, 1050000 }` and `H3_FIRST_RUN_SIZE = { 32, 330000, 420000 }` (1080 × 1080 gives 576 × 576 on H3); `draft` specs use the full sizes. Each first-run spec has one `source.changes` line: "first-run size; full size is { multiple: …, minPixels: …, maxPixels: … }". Moving to full size is one line per spec, by a ruling, after the stakeholder has seen a small run work. Video frames stay 56 on first runs.
 
-## A video run (was 6.10.7) [REQ: FR-262, FR-283, FR-286]
+## A video run [REQ: FR-262, FR-283, FR-286]
 
 Built for all three start pairs. `src/main/providers/comfyui/video.ts`, `video-pictures.ts`, `frames.ts`; `src/main/jobs/kinds/video-generation.ts`; `src/main/commands/generation/start-video.ts`, `start-pair.ts`, `comfy-video-checks.ts`; `src/main/picture-fitter.ts`; `src/main/providers/video-check.ts`.
 
@@ -221,7 +221,7 @@ Built for all three start pairs. `src/main/providers/comfyui/video.ts`, `video-p
 
 - Before decoding, the same checks as `toPng`, in the same order: `MAX_PICTURE_BYTES`, `pictureType` PNG or JPEG, stated size within `MAX_PICTURE_SIDE` and `MAX_PICTURE_PIXELS`, not empty after decoding; plus a run width or height that is not a whole number from 1 to `MAX_PICTURE_SIDE`. Each refusal throws `toPng`'s fixed error.
 - Crop the largest centred rectangle with the run's ratio, then `resize({ width, height, quality: 'best' })`; never stretch. An exact-size picture is only re-encoded; a smaller one is scaled up.
-- Until Phase 7 the first frame is the picture asset the user chose. Phase 7 swaps in the rendered background layer (`spec/providers.md`, fal step 1).
+- Until Phase 7 the first frame is the picture asset the user chose. Phase 7 swaps in the rendered background layer (`spec/providers-adapters.md`, "What stays in Phase 7").
 - **Not built (conditional):** if a real photo comes out turned, `fitPicture` turns it upright from its orientation tag before the crop.
 
 **Length.** Frames are the allowed count (`frameStep × k + frameOffset`, k a whole number from 0) nearest to `round(durationMs / 1000 × fps)`, never above the largest allowed count that fits `maxMs` (`frameCount` in `frames.ts`). For H3: 5, 22, 39, 56 …; two seconds gives 56. `maxMs` stays 15 s (V-19) until a trial shows what the server can make (U-19).
@@ -251,17 +251,17 @@ Built for all three start pairs. `src/main/providers/comfyui/video.ts`, `video-p
 
 **Not built: an optional enlarging step** [REQ: FR-293]. Off unless the user turns it on. Waits for the stakeholder's hand test of `comfy-workflows/h3-video-first-frame-upscaled.json` (OI-59). Known from the draft: core nodes only (SeedVR2 3B, `diffusion_models/seedvr2_3b_int8_convrot.safetensors` and `vae/seedvr2_ema_vae_fp16.safetensors`); 1.5× gives 1152 × 2016, within `MAX_VIDEO_SIDE`; sound goes round the step. Not designed further.
 
-## Extend a background (was 6.10.8) [REQ: FR-261]
+## Extend a background [REQ: FR-261]
 
-Not built (Phase 5; the hand-test path earlier, see below). `ImageProvider.extend` exists in the adapter and throws "Extending a picture with ComfyUI is not built yet". There is no extend job kind.
+Not built (Phase 5; the hand-test path earlier, `spec/comfyui-trials.md`). `ImageProvider.extend` exists in the adapter and throws "Extending a picture with ComfyUI is not built yet". There is no extend job kind.
 
 - `ImageProvider.extend({ image, placement, width, height, prompt }, opts)`. The adapter uploads the picture, works out the run size with `fitSize`, scales `placement` by the same factor, and fills the four `pad` slots and the scaled picture size, so the server does the canvas work. The rest is a picture run.
 - The picture to extend goes in a one-slot `references` with `minReferences: 1`; there is no source-picture slot (`moss-extend` is declared this way). If the real graph of the extend trial needs another shape, it is ruled then.
 - No documented way to extend a picture with MOSS-Image was found (**U-13**). The adapter, `fillWorkflow` and the slots are tested against the stand-in; the real graph is made in the trial. The hand-test draft `comfy-workflows/moss-image-extend.json` pads with a grey border (`ImagePadForOutpaint`; each pad a multiple of 8) and repaints only the border. Until the trial passes, ComfyUI is not offered for "generate fill" [REQ: FR-254].
-- `generation.runFill` is Phase 5. Before then the trial runs from the hand-test screen with `dev.comfyExtend` (below).
+- `generation.runFill` is Phase 5. Before then the trial runs from the hand-test screen with `dev.comfyExtend` (`spec/comfyui-trials.md`).
 - If the extend trial fails, Krea 2 may become the fallback for extend (CQ-27).
 
-## What the app leaves on the server (was 6.10.10) [REQ: FR-271, FR-282]
+## What the app leaves on the server [REQ: FR-271, FR-282]
 
 Built. `comfy.getInfo` returns these sentences (each workflow's `leavesOnServer`, in the fixed order of `LEAVES` in `workflows/common.ts`), and Settings shows them where the address is entered, with the privacy note of `REQUIREMENTS-ComfyUI.md` 3.3:
 
@@ -272,68 +272,8 @@ Built. `comfy.getInfo` returns these sentences (each workflow's `leavesOnServer`
 
 The app removes none of them and has no call that could.
 
-## Trials and `proven` (was 6.10.11) [REQ: FR-284]
+## Trials, `test:comfy` and the hand-test screen
 
-Everything in the adapter is built and tested against the stand-in. A trial on a real server decides: that the graphs run; the real shape of a history entry and of `/api/jobs/{id}` (fixtures are hand-made until then); whether each model fits the server's card and how long a run takes (U-11), and so the time limits; whether references keep a product recognisable (U-17); whether extend works (U-13); the frame rule.
-
-- **Ready for a test:** the check shows nothing missing, and its `test:comfy` and adapter cases passed. It stays `trial`.
-- **The owner check, to `proven`** [REQ: 3.3 Maintainability], per workflow: (1) `comfy.check` shows nothing missing; (2) `npm run test:comfy` passes its case; (3) the stakeholder runs it from the test-path screens with dev tools on, at the three default sizes, and accepts what he sees: for a reference workflow with a real product's pictures, and with the smallest and largest reference count; for video with the clip played; and four runs at once. Then a one-line change sets `status: 'proven'` and records `needs.checkedWith`. **No agent sets `proven`.** Not done for any workflow yet.
-- **Order of trials.** MiniMax H3 first; MOSS-Image once installed, and nothing waits for it. A failed reference trial sends the choice of model back to the stakeholder [L-2]; a failed extend trial, CQ-27.
-- **Not built: time limits after the trial.** See `spec/comfyui.md`, "Limits on every answer".
-
-### Trials on a real server: `test:comfy` (was 6.10.12)
-
-Built, except where marked. Shared harness rules: `spec/testing.md`; variables: `spec/infra-and-settings.md`. The ComfyUI run is separate from the paid one, so it can never spend money or load a paid key.
-
-| | |
-|---|---|
-| Script | `"test:comfy": "vitest run --config vitest.comfy.config.ts"` |
-| Config | `vitest.comfy.config.ts` exports a function and reads `.env.local` only inside it, nothing at the top level, as the live config does |
-| Files | `COMFY_INCLUDE = ['tests/comfy/**/*.test.ts']`, in `tests/comfy/env-file.ts` |
-| Names taken from the file | One: `COMFY_BASE_URL` (`COMFY_ENV_NAMES`). Not in `LIVE_ENV_NAMES`; the comfy config takes no name from that list. A value set in the terminal wins. |
-| No address | Each test skips itself with one line naming the variable |
-| Switches, terminal only, never from the file | `ADMAN_COMFY_VIDEO=1` (case 2), `ADMAN_COMFY_MOSS=1` (case 3), `ADMAN_COMFY_FLUX=1` (case 5), `ADMAN_COMFY_FRAME=1` (case 6), `ADMAN_COMFY_REFVIDEO=1` (case 7), `ADMAN_COMFY_PICTURE` (absolute path of a given picture). Each is checked before any call; with a switch unset the stand-in sees nothing for that case. |
-
-- The address goes through `parseComfyAddress`; a refused one is a skip that prints the reason code only. No agent opens `.env.local`.
-- **The address is never printed**: not in output, test names, snapshots, errors or reports. Everything printed goes through `hideAddress(text, origin)` (`tests/comfy/print.ts`), which replaces the origin, the host and `host:port` with `[test server]` (one unit test; rare forms, which can only arrive inside the server's own text, are not handled).
-
-**Rules every ComfyUI test follows** [REQ: FR-289]. The test server is someone's working machine and may hold real work.
-
-- A test talks to the server only through `createComfyClient` (and the adapter where a case says so), which has no clearing call. Each test wraps the client in a recorder and ends by asserting the calls made were only the ones it meant.
-- A test cancels only an ID it submitted. It never asks for a clean queue. It waits behind other work, with a 30-minute limit per case.
-- **Interrupt gate** (security class). On a time-out a case always sends `removeFromQueue` for its own ID. It sends `interrupt` only when all three hold: the run was seen working; `/api/jobs` answered at least once; the version from the case's own check is readable and at least `0.30.0` (a constant in `tests/comfy/`). Otherwise it prints that its own run may still be running, and fails.
-- A test removes nothing from the server. Runs are the smallest that prove the point: one option, the smallest size the workflow allows, 56 frames. Each picture run leaves one file in the temporary folder and at most one in `input/adman/`; each video case leaves a file in the output folder that nothing can remove, so one video attempt per graph change. A case runs once per change to its graph, and at most six times in all without asking the stakeholder. A failed run may be re-run once after a fix to its data.
-- **What it may print from the server:** a refusal's `type`, `message`, `details`, and per node error the node ID, the app's own `class_type`, `inputName`, `type`, `message`, `details`; a failed run's exception type and message. Control characters removed, cut to 500 characters (`SAFE_LINE_CHARS`), through `hideAddress`. Never the traceback, a received value, or the address.
-- **The picture sent.** `ADMAN_COMFY_PICTURE` (rules for pictures given by path: `spec/testing.md`): only its bytes are sent, under `uploadName(bytes)`; its path and file name are never sent or printed. Without it the test makes its own ~768 × 768 PNG of plain shapes with `node:zlib`, never a file from the user's disk, a project or an asset. No JPEG run is made.
-
-**Cases** (`tests/comfy/cases.ts`, `comfy.test.ts`):
-
-1. The check, always. Prints the server version and, per `trial` workflow, "complete" or the missing items by the app's names; if not `ok` although `systemStats` answered, which call failed with its kind, reason and detail; per `draft` workflow, its model files present or missing (GETs only).
-2. Video on `h3-text-to-video`, only when nothing is missing: passes when the server accepted the graph, the run ended without error, and the bytes pass `checkMp4` under `MAX_VIDEO_BYTES` (else `checkMp4 refused the clip: <reason>`, a fixed `MP4_REFUSED` name). Prints times, byte size, width, height, duration and sound (a fact, not a pass rule); writes the clip to the system temporary folder and prints the path.
-3. Picture on `moss-text-to-image`: passes when `pictureType` says PNG or JPEG; prints time, pixel size, byte size.
-4. Field names of the first ended run's history entry and job state: the names the client keeps, no values.
-5. Picture from a reference on `flux3-klein-edit-references` through `image.generate`: passes like case 3; writes the result to the temporary folder. Looking at it is a hint, not a pass rule.
-6. and 7. H3 from a first frame and from one reference, client level: `uploadImage`, `fillWorkflow`, `submit`, poll, `viewFile` under `MAX_VIDEO_BYTES`, `checkMp4`, a temp file, time and size printed.
-
-**Not built: the rest of `test:comfy`.** A cancel case (one cancel of the test's own run, asserting `stopped` or `finished`); a four-at-once case; printing through `cleanServerText` in place of `hideAddress`-only printing. And, after the first real run, a tests-only pass that corrects the stand-in's fixtures to the shapes the real server showed; if a real shape breaks a client schema, stop and report (a client change, ruled on its own).
-
-**Who may run what.** Project agents may run `npm run test:comfy` without asking each time [D-052 answer 22]; that covers this script only. `npm run test:live` runs only when the stakeholder asks [D-049], and no agent makes a paid call. An agent sets a video switch only when its task is the video path. The real-app run `test:e2e:real` is in `spec/testing.md`.
+How a workflow becomes `proven`, the real-server tests `test:comfy`, the hand-test screen's ComfyUI part, Krea 2 and custom workflows, and what a server needs: `spec/comfyui-trials.md`.
 
 
-## The hand-test screen's ComfyUI part (was 6.10.13) [REQ: FR-290]
-
-Not built (Phase 2; whether still wanted is OI-64). Dev-only, like `dev.storage`: shown only when `app.getState` says `devTools`, never in a packaged app. Owns the ComfyUI section of `src/renderer/dev/` and `src/main/commands/dev/comfy-extend.ts`. It uses the product commands. The test-path screens with dev tools on stand in for it.
-
-- The address field (`comfy.setAddress`), "Check" (`comfy.check`), the missing items and licence notes per workflow, the "left on the server" sentences.
-- A workflow picker that includes `trial` ones: `generation.runImages` and `generation.startVideo` take an optional `workflowId` from `WORKFLOW_IDS`, accepted only when `deps.devTools` is true and the actor is the user; otherwise `INVALID_INPUT`.
-- Prompt, size, count, reference pictures from the project's library; for video the start choice and length. Generate. Waiting or working, with the place in the queue. Cancel. The result through `adman-asset://`, a video played muted. "Show the server's message" on a failure.
-- Extend: the dev command `dev.comfyExtend { projectId, assetId, width, height, prompt }`, registered only with `devTools`, agent policy deny (the row exists). It enqueues an `image_generation` job whose request has `mode: 'extend'`, with the picture centred on the new canvas. Phase 5's `generation.runFill` replaces it.
-
-## Not built: Krea 2 and custom workflows
-
-- **Krea 2** (OI-58, CQ-27). Nothing is built until MOSS-Image and MiniMax H3 pass their trials. It may provide alternate workflows, including the extend fallback; which jobs it gets is not decided. `job` plus `model` already allow a second model for one job; the run input then gains a model choice. `comfy-workflows/krea2-*.json` are for hand tests only. Its licence limits commercial use.
-- **Custom (user-added) workflows** (OI-57, D-058). Not designed. Answered so far: a value the app fills is marked by the step's title set in ComfyUI; an agent may run a listed custom workflow under the ComfyUI tick; pictures and video first, after the stock workflows pass on the test machine; workflows are treated like assets, as external files (CQ-38, differing from FR-309 and FR-326). It needs its own ruling on "the only workflows the app can send" (this file, "The workflow description") and FR-278, and waits for the analyst's revision 2 of `REQUIREMENTS-ComfyUI-Draft5.md`.
-
-## What a server needs (operator facts)
-
-Update ComfyUI (0.45.0 or later advised); install no add-on. Put the model files of the table above in `ComfyUI/models/{folder}` (from the Hugging Face repos `Comfy-Org/MiniMax-H3`, `Comfy-Org/MOSS-Image`), then restart. Flux reference pictures need only the three Flux files; MOSS-Image is needed only for pictures from a prompt alone. Reference pictures as PNG or JPEG, not WebP.

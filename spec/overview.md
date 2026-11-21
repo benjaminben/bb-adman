@@ -2,7 +2,7 @@
 
 What Adman is built from: where the spec departs from the requirements, how the app is split into parts, which libraries it uses, the architecture decisions and the terms used across the spec. Read it first. A developer then usually needs `spec/structure.md` (where code goes) and `spec/data-model.md` (what is stored).
 
-## How the spec relates to the requirements (was 0)
+## How the spec relates to the requirements
 
 - Where the spec and REQUIREMENTS.md differ, the spec wins.
 - `[REQ: FR-xxx]` points at a requirement. Most are in `REQUIREMENTS.md` (version 1.4). Some live in other files:
@@ -11,7 +11,7 @@ What Adman is built from: where the spec departs from the requirements, how the 
   - FR-294 to FR-308: `REQUIREMENTS-D053.md`.
 - `[REQ: R-xx]` points at a row of the table below.
 - `[D-0xx]` points at a stakeholder decision in `DECISIONS.md`, which holds the stakeholder's own words.
-- `OI-xx` is an open item, listed in `spec/open-items.md`.
+- `OI-xx` is an open item, listed in `spec/open-items.md`, or in `spec/assumptions.md` with the assumption the build makes meanwhile.
 
 ### Requirement changes agreed in architecture
 
@@ -40,7 +40,7 @@ The stakeholder approved each of these. REQUIREMENTS.md was updated to match (it
 | R-19 | The licence is PolyForm Noncommercial 1.0.0. | Closes OI-02 |
 | R-20 | A variant's format can be changed after it is created, both ways: image to video [D-012] and video back to image [D-020]. Every video setting is kept while the variant is an image and is back unchanged when it becomes a video again [D-026]. An agent can change a variant's format [D-025]. | Refines FR-070, FR-075 notes, FR-120, 4.18. Gives workflow 5.5 step 1 its command. |
 
-### Stakeholder decisions that shape the design (was 0.1)
+### Stakeholder decisions that shape the design
 
 Each is in `DECISIONS.md` and REQUIREMENTS.md. The last column says where the spec designs it.
 
@@ -58,14 +58,14 @@ Each is in `DECISIONS.md` and REQUIREMENTS.md. The last column says where the sp
 | D-031 | The app window opens maximized, not full screen [REQ: FR-220]. | "App window at launch" below |
 | D-036 | Job record fields, background and attached job kinds, `job.markSeen`, `project.close` refuses while jobs run. | `spec/jobs.md` |
 
-### Build order and client items (was 0.2)
+### Build order and client items
 
 - Real image generation and real cloud storage were moved forward and built in Phase 2, ahead of the editor. No phase was renumbered. `spec/phases/` holds the plan for each phase from 3 on.
 - The client items FR-230 to FR-249 each sit in the phase that builds them. Some are designed in depth there, the rest only as scope. Already in the data model: `variant.agent_changed_at` (FR-239), the ready-made size 4:5 with the label `4x5` (FR-247, one pixel size has one label), and `TextStyle.letterSpacing` (FR-249).
 - The items S-1 to S-17 of `REQUIREMENTS-Client-Input.md` are not decided and are not in the spec.
 - Navigation follows REQUIREMENTS.md 1.4 (FR-211 to FR-213): open campaigns are the main tabs, with variant tabs inside a campaign. There are no project tabs. How projects are shown and switched, and whether tabs are remembered, wait for the UI pass (Q-038, Q-039, Q-040; OI-31).
 
-## Architecture (was 1)
+## Architecture
 
 ### Pattern
 
@@ -131,7 +131,7 @@ External actors:
 | Amazon S3, Dropbox | Publishing, on the user's account |
 | Teammates | Browse published files in cloud storage. Never use the app. |
 
-### Component map (was 1.3)
+### Component map
 
 | Component | Responsibility | Technology | Status |
 |-----------|----------------|------------|--------|
@@ -221,7 +221,7 @@ No screen holds a copy of any of these.
 
 The plain screens built so far (project page, campaign page, picture and video panels, Settings ComfyUI section) use the app's existing controls and tokens (`tokens.css`, `layout.module.css`, the Radix parts already used). No new visual language, no new package. The UI pass may replace any of them whole.
 
-## Technology stack (was 2)
+## Technology stack
 
 Versions are the exact pins in `package.json`. `npm ci` installs them from the lockfile. Node `>=22.12.0` (`engines`).
 

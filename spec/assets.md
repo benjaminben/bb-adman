@@ -6,7 +6,7 @@ Read with: `spec/data-model.md` (the `asset` and `project_meta` tables, ID forma
 
 [REQ: FR-007, FR-009, FR-050 to FR-056, FR-068, FR-294 to FR-299, R-06, R-07, R-08, R-12]
 
-## Where asset files live (was 3.1)
+## Where asset files live
 
 Built. Main files: `src/main/assets/path-resolver.ts`, `src/main/assets/service.ts`.
 
@@ -197,7 +197,7 @@ Decisions in `src/main/assets/asset-url.ts` (no Electron import, unit tested). E
 - **Served only when:** the method is GET; the whole raw address matches `^adman-asset://{ULID}/{ULID}$` (case ignored, read in upper case) with nothing after, no query, fragment or extra path (the raw text is matched, so `/../` and `%2F` are never folded); the project is open; the row exists; `kind` is `image`, `video` or `font` (`text` is never served); the row's `mime` is one `file-types.ts` lists for its kind; the resolver finds the file, opened read only.
 - Anything else, including a file gone after the check: 404 with an empty body, never saying which check failed.
 - **Headers:** `Content-Type` is the row's `mime`, never from the file name. `X-Content-Type-Options: nosniff` and `Cache-Control: no-store` on every answer, 404 included, so a changed linked file is read again. No path, file name or error text in any answer or header.
-- **Scheme privileges** (Electron 45.4.1): `standard`, `secure`, `stream`, `corsEnabled` true; `bypassCSP`, `allowServiceWorkers`, `supportFetchAPI`, `codeCache`, `allowExtensions` false. `corsEnabled: true` is Not built (P3-6): fonts load only with it. The ruling and its limits: `spec/security.md`, "Rules: the asset protocol" (A-53).
+- **Scheme privileges** (Electron 45.4.1): `standard`, `secure`, `stream`, `corsEnabled` true; `bypassCSP`, `allowServiceWorkers`, `supportFetchAPI`, `codeCache`, `allowExtensions` false. Fonts load only with `corsEnabled` true; no `Access-Control-Allow-Origin` header is sent. The ruling and its limits: `spec/security.md`, "Rules: the asset protocol" (A-53).
 - The page policy (`src/main/windows/csp.ts`) has `img-src 'self' adman-asset: data: blob:`, `media-src adman-asset:`, `font-src 'self' adman-asset:`.
 - No byte ranges: a clip plays from the start but seeking may not work. Accepted for now; byte ranges are Phase 7's.
 - The protocol does not check first bytes (accepted, OI-49).
@@ -222,7 +222,7 @@ Built for the test path. Main files: `src/main/commands/generation/` (checks), `
 
 - `generation.runImages` reads every ID in `referenceAssetIds` in `prepare` with `AssetService.read`. A picture that is gone, too large, not a picture, or WebP is refused before a job row is made. The job kind reads the bytes again. An ID the project does not hold is refused.
 - `job.retry` sends the stored request again, references included, after the same checks.
-- Gemini gets the prompt text first, then each reference picture in order as an `inlineData` part with the file's own type and bytes (`spec/providers.md`). ComfyUI gets each picture uploaded under `uploadName(bytes)`, only after its server check answered `ok`; the display name, path, asset ID and subject never enter a request (`spec/comfyui.md`).
+- Gemini gets the prompt text first, then each reference picture in order as an `inlineData` part with the file's own type and bytes (`spec/providers-adapters.md`). ComfyUI gets each picture uploaded under `uploadName(bytes)`, only after its server check answered `ok`; the display name, path, asset ID and subject never enter a request (`spec/comfyui.md`).
 - A video run's first-frame picture is fitted to the run size and sent as PNG; a reference picture is sent as read (`spec/jobs.md`, `video_generation`).
 - **The reference picker** (under the prompt box): heading "Reference pictures", one small picture per asset with a tick box and its display name, button "Add pictures"; empty: "No reference pictures in this project yet." It calls `asset.list { projectId, library: 'reference', kind: 'image' }`, `dialog.pickFiles { purpose: 'import', kind: 'image', multiple: true }`, and `asset.import { projectId, paths, library: 'reference', copy: false, subjectId? }` (`subjectId` is the chosen variant's first subject when it has one). After the reply the list is read again and the returned IDs are ticked. A cancelled picker sends nothing; a refused import shows the command's message and ticks nothing. Ticked IDs are sent in tick order, each showing its place ("1", "2"). An asset with `missing: true` or type `image/webp` cannot be ticked and says why: "file not found", "WebP cannot be sent yet". Ticks are kept while the campaign page is open, across variant changes, and dropped for an asset that left the list. Full screen wording: `spec/screens.md`.
 - A full reference library dialog is UI-pass work.

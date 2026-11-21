@@ -1,4 +1,4 @@
-# API principles (was 4.1)
+# API principles
 
 How commands, queries and events work between the window and the main process; the result shape, every error code and refusal reason with its message, and undo. Read with `spec/api-commands.md` (every command) and `spec/api-queries-events.md` (every query and event). MCP tools and the agent policy rules are in `spec/mcp-and-agents.md`.
 
@@ -24,10 +24,10 @@ Built. `src/main/commands/bus.ts`, `src/main/commands/types.ts`, `src/main/comma
 
 Order:
 
-1. **Deny check** (`denyCheck`). For actor `agent`, any policy that is not `allow` and not `ask` is refused with `AGENT_DENIED` and `denialMessage(name)`. The bus fails closed: an unknown policy value is refused too. Test: `tests/integration/commands/bus-fail-closed.test.ts`.
+1. **Deny check** (`denyCheck`). For actor `agent`, any policy that is not `allow`, `ask` or `tick` is refused with `AGENT_DENIED` and `denialMessage(name)`. The bus fails closed: an unknown policy value is refused too. Test: `tests/integration/commands/bus-fail-closed.test.ts`.
 2. **Find the handler and validate the input.** A name that does not exist is `INVALID_INPUT` "Unknown command: {name}". A failed schema check is `INVALID_INPUT` "Some values are not valid." with `details.issues`.
 3. **Find the project** (project-scope commands only).
-4. **Gate** (agent runs; Not built, AR-1). Runs only for actor `agent` with policy `tick`, before `prepare`. The rules are in `spec/mcp-and-agents.md`.
+4. **Gate** (agent runs; Built, `src/main/commands/agent-run-gate.ts`). Runs only for actor `agent` with policy `tick`, before `prepare`. The rules are in `spec/agent-runs.md` and `spec/mcp-and-agents.md`.
 5. **Ask** (`askCheck`) for actor `agent` with policy `ask`. A refusal is `AGENT_REFUSED`. Until the permission dialog is built (Phase 10), `src/main/index.ts` passes `askPermission: async () => false`, so every `ask` row is refused for an agent.
 6. **Run.**
 
@@ -149,7 +149,7 @@ Built unless marked.
 | A ComfyUI run, or a retry of one, whose workflow's model needs a commercial licence, with no `licenceConfirmed: true` from the user and the model not in `settings.licenceConfirmed`. `details.workflow`. Not built (S2-4). | `INVALID_INPUT` | `licence_not_confirmed` | "{model} requires a commercial license. Confirm that you have one first." (`src/shared/providers/messages.ts`) |
 | A clip longer than the workflow makes. `details.maxMs`. | `RULE_VIOLATION` | `video_too_long` | "ComfyUI makes clips of at most {maxMs / 1000} seconds with this workflow." |
 | `generation.startVideo`, `job.retry` of a video: the start picture is not an image asset of type PNG or JPEG | `RULE_VIOLATION` | `picture_not_usable` | "This picture cannot be used for a video yet. Use a PNG or JPEG." |
-| `agentRuns.setAllowed`: a provider `agentRunsOffered` refuses. Not built (AR-1). | `RULE_VIOLATION` | `agent_runs_not_offered` / `agent_runs_not_ready` | "Agents cannot start runs with {Provider}." |
+| `agentRuns.setAllowed`: a provider `agentRunsOffered` refuses. | `RULE_VIOLATION` | `agent_runs_not_offered` | "Agents cannot start runs with {Provider}." |
 | `layer.delete`, `layer.reorder` naming the background layer | `RULE_VIOLATION` | `background_layer` | "The background layer stays at the bottom and cannot be deleted." |
 | A layer command naming an asset in the reference library (`spec/editor-commands.md`) | `RULE_VIOLATION` | `reference_library` | "This file is in the reference library. Move it to the asset library to use it on a post." |
 | `layer.restore`: a layer with that ID is anywhere in the project file, or the variant has a layer with that key | `RULE_VIOLATION` | `layer_exists` | "That layer is already there." |

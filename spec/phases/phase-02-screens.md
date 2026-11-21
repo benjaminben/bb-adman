@@ -1,10 +1,10 @@
-# Groups 4 and 5 — Phase 2 screens (slices S2-1 to S2-17)
+# Groups 4 and 5 — Phase 2 screens (slices S2-4 to S2-17)
 
 Part of the Phase 2 leftovers; the rest is in `spec/phases/phase-02-leftovers.md`.
 
-Group 4 is the ComfyUI failures and refusals on the campaign page (TP-4a), the commercial-licence dialog (LD-1, D-088), the Settings check sentences (F-11, F-12) and the confirm count on Retry (review item FN-4). Group 5 is the Phase 2 screens never built: import by button and by drop, relink, package, the brief form, the slot view and the campaign grid. Every screen, its controls, states, sentences and focus are in `spec/screens-campaign.md`. The slices below say who builds what, in which files, with which tests.
+Group 4 is the ComfyUI failures and refusals on the campaign page (TP-4a), the commercial-licence dialog (LD-1, D-088) and the confirm count on Retry (review item FN-4). Group 5 is the Phase 2 screens never built: import by button and by drop, relink, package, the brief form, the slot view and the campaign grid. Every screen, its controls, states, sentences and focus are in `spec/screens-campaign.md`. The slices below say who builds what, in which files, with which tests.
 
-**What these slices do not build**, by decision (`spec/open-items.md`):
+**What these slices do not build**, by decision (`spec/assumptions.md`):
 
 - The run dialog of FR-256 (the address and the workflow before a ComfyUI run) is Phase 4's run confirmation dialog (A-49). The Settings parts the hand-test screen once stood in for are built: the check lists each workflow with its missing items and licence note, and the section lists what Adman leaves on the server.
 - No extra line for a queued agent run that will be cancelled at its turn (A-49).
@@ -13,7 +13,6 @@ Group 4 is the ComfyUI failures and refusals on the campaign page (TP-4a), the c
 **Main-process work these screens need.** Every command and query the screens call exists, except:
 
 - the licence check in `generation.runImages`, `generation.startVideo` and `job.retry`, the settings key `licenceConfirmed`, and the `offered` mark on `comfy.getInfo` (S2-4);
-- the drop bridge in the preload (S2-3);
 - the animated-WebP list in the `asset.import` reply (S2-17, after slice WP).
 
 Each comes first in its own slice, before the screen that needs it.
@@ -29,45 +28,18 @@ Each comes first in its own slice, before the screen that needs it.
 
 ## Order and side-by-side work
 
-Slices in one wave may run side by side in separate git worktrees: no two of them edit the same file. A slice starts only when every slice it comes after has merged. Every slice from wave 1 on comes after S2-2.
+Slices in one wave may run side by side in separate git worktrees: no two of them edit the same file. A slice starts only when every slice it comes after has merged.
 
 | Wave | Slices (side by side) | Each comes after |
 |------|-----------------------|------------------|
-| 0 | S2-1, S2-2, S2-3 | nothing (AR-3 may run beside them: no shared file) |
-| 1 | S2-4, S2-5, S2-9, S2-11, S2-13, S2-15, S2-16 | S2-4: S2-1 and AR-3 (both edit `tests/unit/renderer/fake-api.ts`). S2-5: S2-1 and AR-3 (both edit `run-row/`). The rest: S2-2 only |
-| 2 | S2-6, S2-7, S2-8, S2-10, S2-12, S2-14 | S2-6: S2-4. S2-7: S2-4. S2-8: S2-4. S2-10: S2-3 and S2-9. S2-12: S2-11. S2-14: S2-13 |
+| 0 | S2-1, S2-2, S2-3 | Built |
+| 1 | S2-4, S2-5, S2-9, S2-11, S2-13, S2-15, S2-16 | nothing left: all may start |
+| 2 | S2-6, S2-7, S2-8, S2-10, S2-12, S2-14 | S2-6: S2-4. S2-7: S2-4. S2-8: S2-4. S2-10: S2-9. S2-12: S2-11. S2-14: S2-13 |
 | 3 | S2-17 | S2-9 and slice WP |
 
-- **Shared files and who goes first.** The run row (`run-row/`): AR-3, then S2-5. The Settings screen: AR-3 mounts its block in `settings-screen.tsx`; S2-8 mounts its list inside `comfy-section/`, so they share no file. `src/main/settings/settings-store.ts`: S2-4 does not run beside F-7 (the parser reading pass may wrap the settings parse). The app store and the app shell: S2-6 only.
-- **Phase 3** starts after these slices. It builds on S2-16's `variant-tile/` and `variant-grid/`, and on S2-2's `dialog-frame/`.
-
-## S2-1 — Check sentences from one owner (F-11, F-12)
-
-- **Exists when done:** `src/shared/providers/messages.ts` owns `checkMessage(outcome)` (the six Settings check sentences; `redirect_refused` in its Settings form "The server tried to send Adman to another address. Adman did not follow."), `fillMarks(text, { address?, n? })` and `licenceNotConfirmedMessage(model)`. `comfy-check-result.tsx` holds no sentence of its own for an outcome and no missing-item text; it uses `checkMessage`, `fillMarks` and `missingItemText`.
-- **New files:** `src/renderer/ui/missing-item-text.ts`.
-- **May touch:** `src/shared/providers/messages.ts`, `src/renderer/screens/settings/comfy-check-result/comfy-check-result.tsx`. Approved test edit: in `tests/unit/renderer/screens/settings/comfy-check-result.test.tsx`, only the `redirect_refused` case, which now expects the Settings form. Every other pinned text stays as it is.
-- **Read:** `spec/screens-campaign.md` "Shared pieces"; `spec/comfyui.md` "Failures, and the server's own words".
-- **Tests:** `tests/unit/shared/providers/check-messages.test.ts` (each of the six outcomes; the Settings form of `redirect_refused` holds no "run", while `reasonMessage('redirect_refused')` still ends "and the run was stopped."; `fillMarks` fills `{address}` and `{n}`, and an unknown address reads "the saved address"; the licence sentence names the model), `tests/unit/renderer/ui/missing-item-text.test.ts` (the four kinds, with and without a folder), `tests/unit/renderer/screens/settings/check-sentence-owner.test.ts` (the source of `comfy-check-result.tsx` holds none of the six sentences).
-- **Class:** D (+ B for the shared file). Not security class.
-
-## S2-2 — Screen wiring and shared pieces
-
-- **Exists when done:** the dialog frame; the privacy paragraph and the `useComfyInfo` hook in their shared places; the project home in its sections with four empty components mounted; the slot view's empty component mounted on the campaign page; a made campaign opens at once. Nothing new is visible yet but the section headings and the opening of a new campaign.
-- **New files:** `src/renderer/ui/dialog-frame/` (component, CSS module with the overlay and box styles `key-dialog.module.css` uses, `index.ts`); `src/renderer/ui/comfy-privacy.ts`; `src/renderer/screens/campaign/use-comfy-info.ts`; component folders that draw nothing yet, each exporting its final props type from `index.ts`: `screens/project-home/import-files/`, `missing-files/`, `package-project/`, `drop-import/`, `screens/campaign/slot-view/`.
-- **May touch:** `screens/project-home/project-home/project-home.tsx` and its CSS module (the sections and mounts of `spec/screens-campaign.md`, "Project home"; `onCreated` opens the campaign); `screens/project-home/brief-load/brief-load.tsx` (props `onCreated(campaignId)` and `campaigns: CampaignSummary[]`; calls `onCreated` with `campaign.create`'s `campaignId`); `screens/campaign/campaign-view/campaign-view.tsx` (mounts `SlotView` above the picture panel, nothing else); `screens/campaign/video-panel/video-length.ts` (the hook moves out; imports it); `screens/settings/comfy-section/comfy-section.tsx` (imports the privacy paragraph).
-- **Read:** `spec/screens-campaign.md` "Rules for these screens", "Shared pieces", "Project home"; `spec/structure.md` "One folder per component", "One styling source".
-- **Tests:** `tests/unit/renderer/ui/dialog-frame.test.tsx` (title and description; Escape and a click outside call `onClose`; with `closable` false neither does; focus goes back to the opener; axe), `tests/unit/renderer/screens/project-home/project-sections.test.tsx` (headings "Start a campaign", "Files", "Package" after the campaign list; after "Create campaign" succeeds, `campaign.get` is read for the returned campaign ID and "Back to project" shows). Every existing test passes unchanged.
-- **Class:** D. Not security class.
-
-## S2-3 — The drop bridge
-
-- **Exists when done:** `window.drop.pathOf(file)` gives a dropped file's full path, and `droppedPaths(files)` in the renderer uses it.
-- **New files:** `src/shared/schemas/drop-api.ts` (`DropApi`), `src/renderer/ui/dropped-paths.ts`.
-- **May touch:** `src/preload/index.ts` (one more `exposeInMainWorld('drop', …)`, using `webUtils.getPathForFile`), `src/renderer/env.d.ts`.
-- **Check first:** in Electron 45 a sandboxed preload can import `webUtils`, and `webUtils.getPathForFile` gives the full path of a file put on an `<input type="file">` by Playwright's `setInputFiles`. If either fails, stop and report.
-- **Read:** `spec/screens-campaign.md` "Importing by dropping files"; `spec/security.md` "Rules: renderer and windows".
-- **Tests:** `tests/unit/renderer/ui/dropped-paths.test.ts` (with a stand-in `window.drop`: paths in order; empty answers left out; no `window.drop` gives an empty list), `tests/e2e/drop-bridge.spec.ts` (`window.drop` has exactly the key `pathOf`; `window.api` still has exactly `command`, `query`, `on`; `pathOf` of a `File` the page made gives `''`; `pathOf` of a file put on a hidden input with `setInputFiles` gives that file's full path; a drop event holding a page-made file leaves the page address unchanged).
-- **Class:** G + D. **Security class, full review** (a new source of paths the window may send).
+- **Shared files and who goes first.** S2-8 mounts its list inside `comfy-section/`, not in `settings-screen.tsx`. The app store and the app shell: S2-6 only.
+- **Built pieces the slices use** (S2-1 to S2-3): `checkMessage`, `fillMarks` and `licenceNotConfirmedMessage` in `src/shared/providers/messages.ts`; `src/renderer/ui/missing-item-text.ts`; the dialog frame `src/renderer/ui/dialog-frame/`; `src/renderer/ui/comfy-privacy.ts`; `src/renderer/screens/campaign/use-comfy-info.ts`; the empty, mounted components `screens/project-home/import-files/`, `missing-files/`, `package-project/`, `drop-import/` and `screens/campaign/slot-view/`; the drop bridge `window.drop.pathOf` and `droppedPaths(files)` in `src/renderer/ui/dropped-paths.ts`.
+- **Phase 3** starts after these slices. It builds on S2-16's `variant-tile/` and `variant-grid/`, and on the built `dialog-frame/`.
 
 ## S2-4 — Licence check and offered workflows (main process)
 

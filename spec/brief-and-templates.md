@@ -4,7 +4,7 @@ How a campaign brief is read, checked and turned into a campaign, and what a tem
 
 **Requirements traced:** [REQ: FR-020–FR-027, FR-040–FR-043, FR-055, FR-104, FR-171, FR-297, R-03, R-12]
 
-## The brief's shape (was 6.1)
+## The brief's shape
 
 Built. `src/shared/schemas/brief.ts`, the single owner of the brief schema.
 
@@ -55,7 +55,7 @@ The file exports two Zod schemas with these field names:
 | `50x1080`, `100x100` | stay pixel sizes |
 | `1,91:1`, `.5:1`, `1.:1`, `0.0:1`, `1.5x2`, `1.9.1:1`, `1080.5x1350` | null |
 
-## Reading a brief: `parseBrief` (was 6.1)
+## Reading a brief: `parseBrief`
 
 Built. `src/shared/brief/parse.ts`, `draft.ts`, `yaml-tokens.ts`, `yaml-walk.ts`, `bad-line.ts`; limits in `src/shared/config/brief-limits.ts`. Security class.
 
@@ -196,7 +196,7 @@ In `tests/unit/shared/brief/`: `parse.test.ts`, `parse-yaml.test.ts`, `parse-yam
 
 **Known slow paths, accepted.** The `yaml` 2.9.1 parser has two inputs whose time grows with the square of the size, and a file full of syntax mistakes makes about one error object per byte. A large built file can freeze the app. That is a nuisance and is not worked on. If it ever must be, the ideas on record are a worker with a time limit, parsing once through `Composer`, and `Error.stackTraceLimit = 0` around compose.
 
-## Region, language and direction (was 6.1)
+## Region, language and direction
 
 Built. `src/shared/config/region-languages.ts` (the table, its one owner), `src/shared/brief/languages.ts`.
 
@@ -212,7 +212,7 @@ type IsRightToLeft = (tag: string) => boolean
 - Right-to-left languages (`ar`, `he`, `fa`, `ur`, `yi`, `ps`, `sd`, `dv`) are refused by `campaign.create` with `RULE_VIOLATION` and "Right-to-left languages are not supported yet." [REQ: FR-104]
 - `isRightToLeft` trims the tag, splits on the first `-` or `_`, and compares the language part in any letter case. So `ar_SA`, `he_IL` and `AR_sa` are right-to-left; `en_US` and `x_ar` are not. An underscore is not BCP-47, but hand-written briefs use it and the `languages` input accepts any non-empty text. The tag is stored as typed; nothing rewrites it. Tests: `tests/unit/shared/brief/languages.test.ts`.
 
-## The `brief.parse` command (was 6.1, 4.2)
+## The `brief.parse` command
 
 Built. `src/main/commands/brief/parse.ts`; input schema and reply type in `src/shared/schemas/commands/brief.ts`. Tests: `tests/integration/campaigns/brief-parse.test.ts`.
 
@@ -244,7 +244,7 @@ type BriefParsed = { draft: BriefDraft; primaryLanguage: string | null }
 
 **Who may call it.** The window, through the file picker (`dialog.pickFiles` with purpose `brief`). Agents may not: the agent policy table denies `brief.parse` ("read brief files"); see `spec/mcp-and-agents.md`.
 
-## From a brief to a campaign (was 6.1)
+## From a brief to a campaign
 
 ### The other `campaign.create` inputs
 
@@ -287,7 +287,7 @@ Not built (Phase 2 leftovers, slices S2-13, S2-14, S2-15). Designed in `spec/scr
 
 Not built (Phase 4). `.md` and `.txt` briefs go to `TextProvider.extractBrief(input: { text: string }): Promise<Brief>` (declared in `src/main/providers/types.ts`; no provider implements it) [REQ: FR-022]. With no key, the app shows the key dialog. The user can cancel and fill the form by hand [REQ: FR-171]. Until then such a file is refused with `brief_type_not_supported`.
 
-## Templates (was 6.1)
+## Templates
 
 Built. `src/shared/templates/types.ts` (frozen), `starter.ts`, `master-layers.ts`; layout values in `src/shared/config/default-layout.ts`; queries `template.list` and `template.slots` in `src/main/queries/template.ts`; fills in `src/main/commands/campaign/fills.ts`.
 
@@ -337,7 +337,7 @@ slotStates(template: Template, layers: LayerRow[], candidates: Record<string, st
 - `slotStates` gives one entry per template slot, in template order. A layer fills its slot when it has that slot ID and, for an `image` or `background` layer, its `source` is not null (the background layer exists before any picture is chosen); a `text` layer with the slot ID fills it. A slot ID missing from `candidates` has an empty list; a copy slot always has an empty list; asset IDs pass through as given; no row is read.
 - `template.list` gives the templates of this build (copies). `template.slots` gives `slotStates` for the campaign's master variant, with candidates: `subject-image` gets the hero images of the campaign's subjects, newest first; `logo` gets the images among the rule set's required assets. See `spec/api-queries-events.md`.
 
-## The default layout and `buildMasterLayers` (was 6.1)
+## The default layout and `buildMasterLayers`
 
 Built. `src/shared/config/default-layout.ts` (every number and name, as data), `src/shared/templates/master-layers.ts`. Tests: `tests/unit/shared/templates/master-layers.test.ts`, `master-layers-fields.test.ts`, `starter.test.ts`, `tests/integration/campaigns/campaign-create-fills.test.ts`.
 

@@ -10,7 +10,7 @@ The spec is split into small files so that a reader loads only what a task needs
 - Start with `spec/overview.md`. Then read the two or three topic files your task touches. `spec/phases/README.md` names them for each phase.
 - `[REQ: FR-001]` points at the requirements files (`REQUIREMENTS.md`, `REQUIREMENTS-Client-Input.md`, `REQUIREMENTS-ComfyUI.md`, `REQUIREMENTS-D053.md`, `REQUIREMENTS-D054.md`; `spec/overview.md` says which numbers are where).
 - `[D-012]` points at a stakeholder decision in `DECISIONS.md`.
-- `OI-18`, `Q-030` and `A-01` point at an open question or an assumption in `spec/open-items.md`.
+- `OI-18`, `Q-030` and `A-01` point at an open question in `spec/open-items.md` or an assumption in `spec/assumptions.md`.
 - Where the spec and the requirements differ, the spec wins. `spec/overview.md` lists every difference.
 - Each main part of a topic file is marked `Built` or `Not built (Phase N)`. For built parts the code and its tests are the record of detail; the spec keeps the contracts, limits, codes, messages and security rules.
 
@@ -18,7 +18,7 @@ The spec is split into small files so that a reader loads only what a task needs
 
 - A ruling or a change is edited into the topic file it changes. One statement of each rule, the current one. No dated log of rulings, no version marks, no history.
 - A stakeholder decision is added to `DECISIONS.md` with the stakeholder's words, then the topic file is edited.
-- An assumption made to keep the build moving is added to `spec/open-items.md`.
+- An assumption made to keep the build moving is added to `spec/assumptions.md`.
 - When work in `spec/phases/` is built and merged, it is removed from the phase file and the topic file's `Not built` mark is changed to `Built`.
 - Keep each file under about 40 KB. Split a file that grows past it.
 
@@ -41,9 +41,11 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/agent-runs.md` | Generation started by an agent: the tick, the gate, limits, unticking |
 | `spec/cancel.md` | Cancel for every provider, closing a project with runs out |
 | `spec/brief-and-templates.md` | Brief intake, the brief reader's rules, templates, the default layout |
-| `spec/providers.md` | The provider registry, interfaces, error kinds; Gemini; fal.ai Seedance; Firefly stub |
+| `spec/providers.md` | The provider registry, interfaces, error kinds and messages, the rules every adapter follows, size limits |
+| `spec/providers-adapters.md` | The Gemini adapter, the fal.ai Seedance adapter, the Adobe Firefly stub |
 | `spec/comfyui.md` | The ComfyUI adapter: address, client, checks, a picture run, failures |
-| `spec/comfyui-workflows.md` | The workflows, sizes, video runs, extend, trials, the server tests |
+| `spec/comfyui-workflows.md` | The workflows, which one a run gets, filling a run, sizes, video runs, extend, what is left on the server |
+| `spec/comfyui-trials.md` | Trials and `proven`, the real-server tests `test:comfy`, the hand-test screen's ComfyUI part, Krea 2 and custom workflows, what a server needs |
 | `spec/storage-and-publish.md` | Storage interface, local, S3, Dropbox, the publish flow |
 | `spec/export-and-checks.md` | Embedded generation details, export, reports, the six checks |
 | `spec/infra-and-settings.md` | Environments, scripts, CI, release, secrets, environment variables, `settings.json` |
@@ -55,7 +57,8 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/editor-commands.md` | The layer and variant commands, `variant.get`, `thumbnail.get`, `variant.render`, `thumbnail.changed` in full |
 | `spec/screens.md` | What each built screen offers, wording rules, choices made without a design sign-off |
 | `spec/screens-campaign.md` | The Phase 2 screens not yet built: ComfyUI failures, the address and licence dialogs, import and drop, relink, package, the brief form, the slot view, the campaign grid and its tile |
-| `spec/open-items.md` | Open questions, the assumptions made meanwhile, what waits on the stakeholder |
+| `spec/open-items.md` | Open questions, the improvised choices listed for review, what waits on the stakeholder |
+| `spec/assumptions.md` | The assumptions made meanwhile (OI, Q and A numbers), with how hard each is to undo |
 
 ## Build plan
 
@@ -64,7 +67,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/phases/README.md` | The build order, the topic files each phase needs, the rules for every phase |
 | `spec/phases/DEV-RULES.md` | What every developer run reads first: where things are, the rules the same for every slice |
 | `spec/phases/phase-02-leftovers.md` | Phase 2 work not built: small fixes, slice WP, ComfyUI follow-ups, the exit check, what waits on a ruling |
-| `spec/phases/phase-02-screens.md` | The Phase 2 screens not built (groups 4 and 5, slices S2-1 to S2-17): ComfyUI failure screens, dialogs, import, relink, package, brief form, slot view, campaign grid |
-| `spec/phases/phase-02-agent-generation.md` | Agents generate through the MCP server [D-080] |
+| `spec/phases/phase-02-screens.md` | The Phase 2 screens not built (groups 4 and 5, slices S2-4 to S2-17): ComfyUI failure screens, dialogs, import, relink, package, brief form, slot view, campaign grid |
+| `spec/phases/phase-02-agent-generation.md` | Agent generation through the MCP server (built, D-080): the one hand run on the real server still owed, and the change if OI-90 is answered "no ticks" |
 | `spec/phases/review-leftovers.md` | Review findings not yet handled, sorted: fix now, fix with a later phase, test gaps |
 | `spec/phases/phase-03.md` to `phase-11.md` | One file per phase: goal, scope, exit criteria, work carried in, what is not designed yet |

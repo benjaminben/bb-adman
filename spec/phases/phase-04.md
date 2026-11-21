@@ -28,7 +28,7 @@ Already built in Phase 2 and not repeated here: the provider registry, error kin
 ## Dependencies
 
 - Phase 3.
-- Gemini model IDs checked for layout, extract brief and copy options (`spec/providers.md`).
+- Gemini model IDs checked for layout, extract brief and copy options (`spec/providers-adapters.md`).
 - Q-032 decided (OI-29): answered yes.
 
 ## Carried in from earlier work

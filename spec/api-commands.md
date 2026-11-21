@@ -1,10 +1,10 @@
-# Commands (was 4.2)
+# Commands
 
 Every command: its input, undo scope, agent policy, whether it is built, and the rules of each. Read with `spec/api-principles.md` (bus, errors, reasons, undo). The rules of how the agent policy is applied (ask, tick, gate) are in `spec/mcp-and-agents.md`. Job behaviour is in `spec/jobs.md`.
 
 ## The table
 
-Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = not undoable. Agent policy: **allow**, **ask**, **deny**, **tick**. The one owner of the policy is `AGENT_POLICY` in `src/main/commands/agent-policy.ts`; `tests/unit/main/commands/agent-policy-table.test.ts` compares the whole table ("and nothing else"). A `tick` row is applied as `deny` until the agent-run gate is built (AR-1): `agentPolicyFor` turns `tick` into `deny`. "system" marks an `internal: true` command no window may send.
+Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = not undoable. Agent policy: **allow**, **ask**, **deny**, **tick**. The one owner of the policy is `AGENT_POLICY` in `src/main/commands/agent-policy.ts`; `tests/unit/main/commands/agent-policy-table.test.ts` compares the whole table ("and nothing else"). A `tick` row goes to the agent-run gate (`src/main/commands/agent-run-gate.ts`; rules in `spec/agent-runs.md`). "system" marks an `internal: true` command no window may send.
 
 **Scope.** A command is project-scope or app-scope (`spec/api-principles.md`, "Channels, actor and scope").
 
@@ -38,16 +38,16 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `direction.delete` | projectId, directionId (refused if it is the campaign's last) | C | deny | Not built (Phase 5) | A-06 |
 | `variant.fanOut` | projectId, directionId, sizes[], languages[], formats[], fits{} | C | deny | Not built (Phase 5) | FR-075, FR-076 |
 | `variant.add` | projectId, directionId, sizeLabel, language, format | C | allow | Not built (Phase 5) | FR-195 |
-| `variant.update` | projectId, variantId, title (Phase 3); durationMs (Phase 7) | V | allow | Not built (Phase 3; durationMs Phase 7) | FR-070, FR-120 |
+| `variant.update` | projectId, variantId, title (Phase 3); durationMs (Phase 7) | V | allow | Built (title; durationMs Phase 7) | FR-070, FR-120 |
 | `variant.setFormat` | projectId, variantId, format (`spec/data-rules.md`, "Changing a variant's format") | V | allow | Not built (Phase 7) | FR-070, FR-120, R-20, D-025 |
 | `variant.delete` | projectId, variantId (refused for a master) | C | ask | Not built (Phase 5) | FR-073, FR-197 |
-| `layer.create` | projectId, variantId, type (image or text), values? | V | allow | Not built (Phase 3) | FR-090, FR-194 |
-| `layer.update` | projectId, layerId, patch of copy, style, geometry, source, timing, animation, name, visible, locked | V | allow | Not built (Phase 3) | FR-092–FR-094, FR-194, FR-249 |
-| `layer.delete` | projectId, layerId (refused for a background) | V | allow | Not built (Phase 3) | FR-092, FR-197 |
-| `layer.restore` | projectId, layer (whole row), order (system; only the inverse of `layer.delete`) | V | deny (system) | Not built (Phase 3) | FR-095 |
-| `layer.reorder` | projectId, variantId, layerIds (every non-background layer, lowest first) | V | allow | Not built (Phase 3) | FR-092 |
+| `layer.create` | projectId, variantId, type (image or text), values? | V | allow | Built | FR-090, FR-194 |
+| `layer.update` | projectId, layerId, patch of copy, style, geometry, source, timing, animation, name, visible, locked | V | allow | Built | FR-092–FR-094, FR-194, FR-249 |
+| `layer.delete` | projectId, layerId (refused for a background) | V | allow | Built | FR-092, FR-197 |
+| `layer.restore` | projectId, layer (whole row), order (system; only the inverse of `layer.delete`) | V | deny (system) | Built | FR-095 |
+| `layer.reorder` | projectId, variantId, layerIds (every non-background layer, lowest first) | V | allow | Built | FR-092 |
 | `layer.clearOverride` | projectId, layerId, paths[] | V | deny | Not built (Phase 5) | FR-080 |
-| `layer.reportOverflow` | projectId, layerId, overflow, variantRev | — | deny | Not built (Phase 3) | FR-098 |
+| `layer.reportOverflow` | projectId, layerId, overflow, variantRev | — | deny | Built | FR-098 |
 | `clip.add` | projectId, variantId, assetId, startMs | V | deny | Not built (Phase 7) | FR-121 |
 | `clip.update` | projectId, clipId, startMs?, inMs?, outMs?, placement? | V | deny | Not built (Phase 7) | FR-122 |
 | `clip.remove` | projectId, clipId | V | deny | Not built (Phase 7) | FR-122 |
@@ -63,7 +63,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `generation.copyOptions` | projectId, campaignId, slot, count, provider | — | deny (tick when built) | Not built (Phase 4) | FR-045 |
 | `generation.startVideo` | projectId, variantId, prompt, durationMs, provider, start (`none` or `first_frame`), useReferences: boolean, referenceAssetIds[], licenceConfirmed? (S2-4) | — | tick | Built (ComfyUI; fal.ai Seedance with slice J) | FR-123, FR-199, FR-286 |
 | `job.retry` | projectId, jobId, licenceConfirmed? (S2-4) | — | deny | Built | FR-069, FR-152 |
-| `job.cancel` | projectId, jobId | — | tick | Built (agent gate with AR-1) | FR-152, FR-215 |
+| `job.cancel` | projectId, jobId | — | tick | Built | FR-152, FR-215 |
 | `job.markSeen` | projectId, jobIds[] (at least one) | — | deny | Built | FR-218 |
 | `storage.dropboxSignIn` | — | — | deny | Not built (slice G, postponed) | FR-160, R-15 |
 | `storage.dropboxSignOut` | — | — | deny | Not built (slice G, postponed) | FR-160 |
@@ -78,8 +78,8 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `agent.answerPermission` | requestId, allow, rememberAuto | — | deny | Not built (Phase 10) | FR-197 |
 | `comfy.setAddress` | address (text or null) | — | deny | Built | FR-251 |
 | `comfy.check` | — | — | deny | Built | — |
-| `agentRuns.setAllowed` | provider, allowed | — | deny | Not built (AR-1; policy row exists) | FR-279, FR-280 |
-| `agentRuns.setLimit` | limit | — | deny | Not built (AR-1; adds its policy row) | — |
+| `agentRuns.setAllowed` | provider, allowed | — | deny | Built | FR-279, FR-280 |
+| `agentRuns.setLimit` | limit | — | deny | Built | — |
 | `dev.storage` | storage (`s3`, `dropbox` or `local`), action (`write`, `list` or `remove`), filePath? (for `write`) | — | deny | Built (dev tools only) | — |
 | `dev.comfyExtend` | projectId, assetId, width, height, prompt | — | deny | Not built (CU-8; wanted or not is OI-64) | — |
 
@@ -129,9 +129,9 @@ Built. `src/main/commands/brief/`, `src/main/commands/campaign/`, `src/main/comm
 
 ## Editing commands
 
-Not built (Phases 3 to 7, per row). Formats in `spec/data-rules.md`.
+Built: `layer.create`, `layer.update`, `layer.delete`, `layer.restore`, `layer.reorder`, `layer.reportOverflow` and `variant.update` (title) (`src/main/commands/layer/`, `src/main/commands/variant/`). The rest Not built (Phases 5 to 7, per row). Formats in `spec/data-rules.md`.
 
-- **Layer commands and `variant.update`** (Phase 3): inputs, counters, the no-op rule, undo inverses, the asset checks, refusals and replies are in `spec/editor-commands.md`. Every one of them except `layer.reportOverflow` bumps `variant.rev` through `src/main/commands/variant-rev.ts`.
+- **Layer commands and `variant.update`**: inputs, counters, the no-op rule, undo inverses, the asset checks, refusals and replies are in `spec/editor-commands.md`. Every one of them except `layer.reportOverflow` bumps `variant.rev` through `src/main/commands/variant-rev.ts`.
 - `variant.setFormat` works in both directions and an agent may run it without the permission dialog [D-020, D-025]. Defined in `spec/data-rules.md`, "Changing a variant's format".
 - `translation.set` on a language variant writes the text with `translation_status = 'proposed'`. `translation_source` is `user` or `agent` by actor. An agent can never approve [REQ: FR-200]. With `applyToSameLanguage` the same text is written to the matching layer of every variant in the direction with that language and no `copy` override.
 - `translation.approve` is the only way a status becomes `approved`. Editing an approved translation sets it back to `proposed` [REQ: FR-101].
@@ -155,7 +155,7 @@ Built: `generation.runImages`, `generation.startVideo`, `job.retry`, `job.cancel
 - Refusals: an unknown provider, one that cannot make pictures, or one not in this build: `INVALID_INPUT`. A text layer, a copy slot or an unknown slot: `INVALID_INPUT`. A missing variant, or a layer not in the variant: `NOT_FOUND`.
 - `prepare` reads every ID in `referenceAssetIds`: a picture that is gone, too large or not a picture (WebP included, until slice WP) is refused before a job row is made. The job kind reads the bytes again with `AssetService.read`.
 - Nothing limits how many references one Gemini run sends. A limit is pending F-8: one constant `MAX_REFERENCES_PER_RUN` in `src/shared/config/defaults.ts`, used by this schema, the job request schema and the picker, with duplicate IDs refused.
-- For `comfyui`, before any job row: `comfy_address_needed`, then `comfy_job_not_offered`, then `too_many_references` (`checkComfyRun`, `src/main/commands/generation/comfy-checks.ts`). The command picks the workflow itself through `offeredWorkflow` (`spec/comfyui.md`): a `proven` one, else a `trial` one only when `deps.devTools` is true and the actor is the user. An agent never gets a `trial` workflow until AR-1, after which the same rule holds for both actors. No agent sets a workflow's status to `proven`.
+- For `comfyui`, before any job row: `comfy_address_needed`, then `comfy_job_not_offered`, then `too_many_references` (`checkComfyRun`, `src/main/commands/generation/comfy-checks.ts`). The command picks the workflow itself through `offeredWorkflow` (`spec/comfyui.md`): a `proven` one, else a `trial` one only when `deps.devTools` is true. The same rule holds for both actors. No agent sets a workflow's status to `proven`.
 
 ### `generation.startVideo`
 
@@ -187,7 +187,7 @@ Checks in `prepare`, before any job row:
 
 - Applies to a `queued` or `running` job. A call already sent may still be charged; `paid_calls` keeps its count. Refusals are decided in the command and again in the runner, both through `cancelRefusal` (`src/main/jobs/cancel.ts`). The runner cancels after the command's transaction ends; the window follows the job through `job.updated`. Reply `{ jobId }`.
 - If the job ends between the command and the cancel, one `warn` line is logged: "The job ended before it could be cancelled."
-- An agent may cancel only a run it started (gate rules in `spec/mcp-and-agents.md`; Not built, AR-1).
+- An agent may cancel only a run it started (gate rules in `spec/agent-runs.md` and `spec/mcp-and-agents.md`).
 
 ### `job.markSeen`
 
@@ -198,7 +198,7 @@ Checks in `prepare`, before any job row:
 
 Built unless marked. `src/main/commands/settings/`, `secret/`, `mcp/`, `comfy/`.
 
-- **`settings.update`** takes a partial `Settings` (`spec/infra-and-settings.md`, "settings.json") and refuses unknown keys with `INVALID_INPUT`. Keys not in its schema, each with its own writer: `recentProjects` (`project.create`, `project.open`), `mcp.enabled` (`mcp.setEnabled`, which also starts or stops the server), `comfyui` (`comfy.setAddress`), `agentRuns` (`agentRuns.setAllowed`), and `agentRunLimit` (`agentRuns.setLimit`, with AR-1).
+- **`settings.update`** takes a partial `Settings` (`spec/infra-and-settings.md`, "settings.json") and refuses unknown keys with `INVALID_INPUT`. Keys not in its schema, each with its own writer: `recentProjects` (`project.create`, `project.open`), `mcp.enabled` (`mcp.setEnabled`, which also starts or stops the server), `comfyui` (`comfy.setAddress`), `agentRuns` (`agentRuns.setAllowed`), and `agentRunLimit` (`agentRuns.setLimit`).
   - `defaultProviders.image` set to a provider whose registry row is not available is `INVALID_INPUT`.
   - An S3 region is checked when saved (`storage_not_supported`).
   - A change of `mcp.port` while the server runs closes the listener, drops open sessions and listens on the new port. The port is saved either way; the command is not refused and never throws for it.
@@ -206,8 +206,8 @@ Built unless marked. `src/main/commands/settings/`, `secret/`, `mcp/`, `comfy/`.
 - **`mcp.setEnabled`** and **`mcp.regenerateToken`** set `changesAppState`. Neither reply holds the token. `mcp.setEnabled(true)` on a taken port leaves the setting as it was and refuses with `port_in_use`. `mcp.regenerateToken` makes a token and, if the setting is on, starts the server; with the port taken it saves the token and refuses with `port_in_use`. Full server rules: `spec/mcp-and-agents.md`.
 - **`comfy.setAddress`** is the one writer of `settings.comfyui.baseUrl`. Refuses with `INVALID_INPUT` and one of the `address_*` reasons [REQ: FR-251]. Contacts nothing. Sets `changesAppState`. Reply `{ baseUrl }`, the clean origin; `http://@host:8188` (empty user part) is accepted and stored as the clean origin.
 - **`comfy.check`** (`spec/comfyui.md`, "The check"). Returns `ComfyCheck = { outcome, version?, note?, workflows: [{ id, missing }] }`. No address saved is `comfy_address_needed`. Writes nothing.
-- **`agentRuns.setAllowed { provider, allowed }`** (Not built, AR-1). The one writer of `settings.agentRuns`. App scope, not undoable, sets `changesAppState`, returns `{ provider, allowed }`. Unknown provider: `INVALID_INPUT`. A provider `agentRunsOffered` refuses: `RULE_VIOLATION`, `details.reason` the value it gave, message "Agents cannot start runs with {Provider}." `allowed: false` is always accepted.
-- **`agentRuns.setLimit { limit }`** (Not built, AR-1). The one writer of `settings.agentRunLimit`: a whole number 1 to 16, default 4 (`AGENT_MAX_ACTIVE_RUNS`, bounds in `src/shared/config/agent-runs.ts`). App scope, not undoable, sets `changesAppState`, returns `{ limit }`. Out of range is `INVALID_INPUT`. New policy row `'agentRuns.setLimit': deny('change agent run limits')`.
+- **`agentRuns.setAllowed { provider, allowed }`**. The one writer of `settings.agentRuns`. App scope, not undoable, sets `changesAppState`, returns `{ provider, allowed }`. Unknown provider: `INVALID_INPUT`. A provider `agentRunsOffered` refuses: `RULE_VIOLATION`, `details.reason` the value it gave, message "Agents cannot start runs with {Provider}." `allowed: false` is always accepted.
+- **`agentRuns.setLimit { limit }`**. The one writer of `settings.agentRunLimit`: a whole number 1 to 16, default 4 (`AGENT_MAX_ACTIVE_RUNS`, bounds in `src/shared/config/agent-runs.ts`). App scope, not undoable, sets `changesAppState`, returns `{ limit }`. Out of range is `INVALID_INPUT`. Policy row `'agentRuns.setLimit': deny('change agent run limits')`.
 - **`agent.answerPermission`** (Not built, Phase 10): answers an `agent.permissionRequested` event (`spec/mcp-and-agents.md`).
 
 ## Storage commands

@@ -1,6 +1,6 @@
 # ComfyUI: the adapter
 
-How Adman talks to a ComfyUI server the user runs: the address, the client, the check, a picture run, failures and the offline tests. Workflows, sizes, video runs, extend, what is left on the server and the real-server trials are in `spec/comfyui-workflows.md`. Readers usually also need `spec/providers.md` (registry, error kinds), `spec/cancel.md` (cancel) and `spec/security.md`.
+How Adman talks to a ComfyUI server the user runs: the address, the client, the check, a picture run, failures and the offline tests. Workflows, sizes, video runs, extend and what is left on the server are in `spec/comfyui-workflows.md`; the real-server trials and tests are in `spec/comfyui-trials.md`. Readers usually also need `spec/providers.md` (registry, error kinds), `spec/cancel.md` (cancel) and `spec/security.md`.
 
 **Direction:** outbound. **Protocol:** HTTP or HTTPS to one address the user typed, through Node's built-in `node:http` and `node:https`. **Authentication:** none. **Requirements:** [REQ: FR-250–FR-278, FR-282–FR-286, FR-288–FR-291, D-050, D-051, D-052] (`REQUIREMENTS-ComfyUI.md`).
 
@@ -14,7 +14,7 @@ How Adman talks to a ComfyUI server the user runs: the address, the client, the 
 
 Built. `src/main/providers/registry.ts`, after `fal-seedance`, before `firefly`: `id 'comfyui'`, `label 'ComfyUI'`, `jobs: ['image', 'video']`, `available: true`, `secrets: []`, `defaultModels: {}`, `local: true`, `cancel: 'stops'`, `serverText: true`. In `DEFAULT_PROVIDERS` it is the video provider (the only one with an adapter), not the picture one. A ComfyUI call adds nothing to `paid_calls` and asks for no paid confirmation. ComfyUI gets four jobs at once like every provider (`JOBS_AT_ONCE_PER_PROVIDER`, `spec/jobs.md`); the app shows each job's place in the server's queue.
 
-## The address (was 6.10.1; security class)
+## The address (security class)
 
 Built. `src/shared/comfy/address.ts`, `src/shared/comfy/refused-hosts.ts`, `src/main/commands/comfy/`, `src/main/settings/`.
 
@@ -24,7 +24,7 @@ Every other adapter talks to a host fixed in the code (`spec/providers.md`). Thi
 
 - One command writes it: `comfy.setAddress { address: string | null }` (`spec/api-commands.md`). App scope, agent policy deny, returns `{ baseUrl }`; `null` removes it. Saving contacts nothing [REQ: FR-275].
 - `settings.update` cannot write it: its patch schema refuses the keys `comfyui` and `agentRuns`, the same way `mcp.enabled` is kept out.
-- Nothing else writes or supplies it: no project file, package, brief, imported file, job row, other command input, environment variable or answer from the server. The app reads no `COMFY_*` variable; `COMFY_BASE_URL` is for `test:comfy` only (`spec/comfyui-workflows.md`, "Trials on a real server"). Opening a project or package made elsewhere leaves the address unchanged and sends nothing [FR-273].
+- Nothing else writes or supplies it: no project file, package, brief, imported file, job row, other command input, environment variable or answer from the server. The app reads no `COMFY_*` variable; `COMFY_BASE_URL` is for `test:comfy` only (`spec/comfyui-trials.md`, "Trials on a real server"). Opening a project or package made elsewhere leaves the address unchanged and sends nothing [FR-273].
 - No MCP tool, event to an agent or error sent to an agent holds it. The window reads it with the user-only query `comfy.getInfo` (`spec/api-queries-events.md`), so the user sees it in full [REQ: FR-253].
 - It may appear in the app's own log in the app data folder [D-047]. It never goes into a project's tables, `job.request`, `job.result`, `job.error_detail`, an asset's embedded details, a report or anything published.
 - An address that fails `parseComfyAddress` is refused wherever it comes from. Typed in the app: the command's validation message, and the old address is kept. Found in `settings.json`: read as none, and written as `null` at the next save, with no message. A `comfyui` value that is not an object makes the whole settings file fall back to defaults, as any bad file does.
@@ -88,7 +88,7 @@ Recorded here and in `spec/security.md`.
 | A user talked into typing an address sends their prompt and pictures to that machine once it answers like ComfyUI. The confirmation dialog shows the address before each run the user starts [REQ: FR-256]. | Follows from D-050 (A-C1) |
 | A name may later resolve to a different machine on the local network. The app checks the refused ranges at each connection, not that the machine is the same one. | Architect's note; follows from D-050 |
 
-## The client: one origin, a fixed list of calls (was 6.10.2; security class)
+## The client: one origin, a fixed list of calls (security class)
 
 Built. `src/main/providers/comfyui/client.ts`, `request.ts`, `lookup.ts`, `answers.ts`, `refusal.ts`, `upload-form.ts`, `values.ts`, `limits.ts`.
 
@@ -204,7 +204,7 @@ type NodeRefusal = { type?: string; message?: string; details?: string; inputNam
 | Any other status | `other`, no reason, detail `HTTP n` |
 | A failed or dropped connection, or any time limit | `offline`, `no_answer` (during a run, failed polls become `lost_contact`) |
 
-## The check, and "what is missing" (was 6.10.3)
+## The check, and "what is missing"
 
 Built. `createServerChecks` in `src/main/providers/comfyui/needs.ts`; `comfy.check` in `src/main/commands/comfy/`.
 
@@ -227,7 +227,7 @@ Rules:
 
 How Settings shows the result: `spec/screens.md`.
 
-## A picture run (was 6.10.6)
+## A picture run
 
 Built. `src/main/providers/comfyui/image.ts`, `session.ts`, `run.ts`, `poll.ts`, `fill.ts`, `failures.ts`.
 
@@ -272,7 +272,7 @@ Not built (Phase 2, after the test; security class). Owner `src/main/providers/c
 - The host is resolved and checked against the refused list just before the connection opens; the gap between check and connect is accepted.
 - `onProgress` fires only when the stage, queue position or whole percent changed.
 
-## Failures, and the server's own words (was 6.10.9)
+## Failures, and the server's own words
 
 Built in the main process (`failures.ts`, `src/shared/providers/messages.ts`); the window half is partly built (see below). [REQ: FR-265, FR-266, FR-267, FR-069]
 
@@ -301,7 +301,7 @@ Built in the main process (`failures.ts`, `src/shared/providers/messages.ts`); t
 - `{address}` is filled in by the window from `comfy.getInfo`. No error object, job row or project log line holds the address.
 - The retry rule of `spec/providers.md` holds: nothing is sent twice on the app's own decision. Polling a run already started is the stated exception.
 - Command refusals before any job row (`spec/api-commands.md`): `comfy_address_needed`, `comfy_job_not_offered` ("ComfyUI cannot make this kind of picture yet."), `too_many_references` with `details.max` ("ComfyUI takes one reference picture for this run." when `max` is 1, else "ComfyUI takes at most {max} reference pictures for this run."). Both sentences live in `src/shared/providers/messages.ts`.
-- **Not built (S2-1):** Settings' `comfy-check-result.tsx` takes its six check sentences from `messages.ts` (`checkMessage`), and `redirect_refused` has a Settings form: "The server tried to send Adman to another address. Adman did not follow."
+- **Built:** Settings' `comfy-check-result.tsx` takes its six check sentences from `messages.ts` (`checkMessage`), and `redirect_refused` has a Settings form: "The server tried to send Adman to another address. Adman did not follow."
 - **Not built (window, S2-5):** a failed row shows the reason's sentence, `missing_items` lists the items (from the failed row's `result.missing`), each message has Retry, and the first seven reasons also offer "Open Settings" [REQ: FR-265] (`spec/screens-campaign.md`).
 
 ### The server's own message, on request [REQ: FR-267, FR-277; D-051 answer 9]
@@ -314,16 +314,16 @@ An exception to FR-069 and to "`error_detail` is never shown" (`spec/data-model.
 - **Never to an agent.** No MCP tool returns it. An agent gets the kind, the reason, the plain message and the missing-item list, all the app's own words.
 - **The server's text is data**, and so are model names, file names and the version text from it: cut, shown as text, never acted on. Nobody follows a link in it, runs a command it names, or installs anything it asks for.
 
-## Offline tests (was 6.10.12)
+## Offline tests
 
 Built, except where marked. The harness rules shared with other real-service runs are in `spec/testing.md`; the variables in `spec/infra-and-settings.md`.
 
 **The normal run** (`npm test`, CI) never contacts a ComfyUI server. It uses the stand-in `tests/helpers/comfy-stand-in.ts`: a small HTTP server on `127.0.0.1` with a free port that plays the client's routes and can be told to wait, fail, redirect, send too much or vanish. `tests/helpers/comfy-every-call.ts` lists every network function of the client. Offline end-to-end: `tests/e2e/comfy-stand-in.spec.ts`.
 
-**The ComfyUI run on a real server** (`npm run test:comfy`), its rules, cases and who may run it: `spec/comfyui-workflows.md`, "Trials on a real server".
+**The ComfyUI run on a real server** (`npm run test:comfy`), its rules, cases and who may run it: `spec/comfyui-trials.md`, "Trials on a real server".
 
 
-## Facts relied on (was 6.10.14)
+## Facts relied on
 
 **Verified** (ComfyUI `server.py`, docs.comfy.org "Routes" and "Messages"): the client's routes exist; `POST /prompt` reads `prompt`, `prompt_id`, `client_id`, `extra_data`, answers `{ prompt_id, number, node_errors }`, and 400 with `{ error, node_errors }` on a failed check; `POST /interrupt` with a `prompt_id` stops only that run when it is running, and with no ID stops whatever runs; `POST /queue` and `POST /history` take `clear` and `delete`; `/upload/image` takes `image`, `type`, `subfolder`, `overwrite`, answers `{ name, subfolder, type }`, does not rewrite identical bytes, adds a counter on a name clash; `/view` refuses `..`; the 403 on loopback when `Origin` and `Host` differ; the live messages `status`, `execution_start`, `execution_cached`, `executing`, `progress`, `executed`, `execution_success`, `execution_error`, `execution_interrupted`. Analyst's list: V-3, V-8, V-15 to V-25, V-38, V-39.
 

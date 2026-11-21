@@ -23,7 +23,7 @@ Bullets carry `[logic]` (main process, shared code, commands, queries, data, pro
 ## Dependencies
 
 - Phase 5.
-- The Gemini model for `translate` checked (`spec/providers.md`).
+- The Gemini model for `translate` checked (`spec/providers-adapters.md`).
 
 ## Carried in from earlier work
 

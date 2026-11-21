@@ -2,7 +2,7 @@
 
 The threat model, the standing security rules a developer must not break, the risks accepted on purpose, and the named security tests. Read with the topic file of the code you touch; the detailed rules for ComfyUI, briefs and MCP live in `spec/comfyui.md`, `spec/brief-and-templates.md` and `spec/mcp-and-agents.md`. Key storage and environment variables: `spec/infra-and-settings.md`.
 
-## Scope: what counts as an attack (was 8.1.2)
+## Scope: what counts as an attack
 
 Security work covers three kinds of attack: **destructive** ones, ones that give access to **sensitive data**, and ones that give **unexpected privileged access**. Nuisance attacks (a slow or frozen app, a refused file) are out of scope: noted at most, never blocking, no fixes built unprompted.
 
@@ -22,7 +22,7 @@ The stakeholder's words: "In general we don't care about nuisance attacks like t
 - This rule loosens no in-scope protection. The scope rule of D-053 item 23 ("one customer we care about") reads the same way.
 - Spending the user did not ask for is in scope by the architect's reading; the stakeholder has not confirmed it (OI-63: confirm that unasked spending is in scope). Rules built on it stand either way.
 
-## Threat model (was 8.1)
+## Threat model
 
 | Threat | Mitigation |
 |--------|------------|
@@ -32,7 +32,7 @@ The stakeholder's words: "In general we don't care about nuisance attacks like t
 | The MCP access token leaking | Shown only to the user, in the Connect panel, through one user-only query. No tool, event, log line or file holds it. "Make a new token" replaces it [REQ: FR-191, D-014] |
 | Another program or person on the network reaching the MCP server | Off by default, bound to `127.0.0.1`, bearer token [REQ: FR-191, R-04] |
 | A web page in the user's browser calling the MCP server | Any `Origin` header refused; `Host` checked (stops DNS rebinding) |
-| The agent spending money, exporting, publishing or destroying work | The agent policy table: deny for generation, export, publish; ask for deletes [REQ: FR-197, FR-199]. Agent-started runs only for a provider the user ticked (Not built) |
+| The agent spending money, exporting, publishing or destroying work | The agent policy table: deny for export and publish; ask for deletes [REQ: FR-197, FR-199]. Generation by an agent only for a provider the user ticked (`tick`) |
 | Text from an agent, a brief, a file or a server carrying HTML or script | Set as text content only; strict content security policy |
 | A project file from someone else naming private files | A linked file reaches a provider or a package only when its first bytes fit its kind; every path check in "Project-file values", below [REQ: R-06] |
 | A corrupt or hostile project file | Every value read from it is untrusted (below). Every JSON column is parsed with Zod on read; a row that fails is reported and skipped |
@@ -46,30 +46,31 @@ The stakeholder's words: "In general we don't care about nuisance attacks like t
 | A workflow of someone else's choosing run on the user's server | Workflows are files in the app; the adapter fills a fixed list of inputs and takes no workflow, node or model name from any caller [REQ: FR-278] |
 | The app or its tests disturbing other work on a shared ComfyUI server | The client has no clearing call and names only its own run IDs [REQ: FR-271, FR-289] |
 
-## Rules: renderer and windows (was 8.2)
+## Rules: renderer and windows
 
 Built (`src/main/windows/app-window.ts`, `app-window-options.ts`, `navigation.ts`, `open-external.ts`).
 
-- **Window settings** (app window, and the hidden render window, Not built, Phase 3): `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`, `webSecurity: true`.
-- **Who may call.** Not built (Phase 3, slice P3-6; review item LP-1). `registerIpc` takes a `mayCall(event)` check: a command or query is run only when it comes from the app window's own `webContents` and its main frame. Any other sender (the render window, a frame inside a page) gets the fixed `INVALID_INPUT` "Unknown request." before `execute` or `query` runs, and nothing is logged with its input. Events go to the app window only.
+- **Window settings** (app window and the hidden render window): `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`, `webSecurity: true`.
+- **Who may call.** Built (`fromMainFrame` in `src/main/ipc.ts`). `registerIpc` requires a `mayCall(event)` check: a command or query is run only when it comes from the app window's own `webContents` and its main frame. Any other sender (the render window, a frame inside a page) gets the fixed reply `INVALID_INPUT` "Unknown request." before `execute` or `query` runs, and no log line is written. Events go to the app window only.
 - **Navigation.** `will-navigate` is cancelled unless the target has the page's own origin (for a `file:` page, the same file). Every new window is denied; an `https:` link opens in the system browser, anything else does nothing. `openExternal` given to the core is wrapped `httpsOnly`.
 - **What the window may draw.** Text from a server, a file, an agent or an AI answer (server messages, brief values, file names, display names) is set as text content, never as HTML, never as a link. No `dangerouslySetInnerHTML`.
 - **Paths in the renderer.** The renderer draws no file path (a base name is drawn as text) and reads no file. It sends a path only where a command takes one, and only a path the user gave: `asset.import` (from the system picker, or from a file the user dropped on the window), `asset.relink` (relink picker), `project.package` (folder picker), `brief.parse` (brief picker). Every such command checks the path as if the user had typed it.
-- **The drop bridge.** Not built (slice S2-3, full review). The preload adds `window.drop = { pathOf(file) }` beside `window.api`, and nothing else: it returns `webUtils.getPathForFile(file)`, which is `''` for a `File` the page made. A drop never starts an import: the import dialog opens and the user presses "Import". The main process is not changed and gains no new trust (A-43). Tests: `tests/e2e/drop-bridge.spec.ts`.
+- **The drop bridge.** Built (`src/preload/index.ts`, `src/shared/schemas/drop-api.ts`, `src/renderer/ui/dropped-paths.ts`). The preload adds `window.drop = { pathOf(file) }` beside `window.api`, and nothing else: it returns `webUtils.getPathForFile(file)`, which is `''` for a `File` the page made. A drop never starts an import: the import dialog opens and the user presses "Import". The main process is not changed and gains no new trust (A-43). Tests: `tests/e2e/drop-bridge.spec.ts`.
 - **Clipboard.** The Connect panel's Copy button uses `navigator.clipboard.writeText` in the renderer, on click only. No preload, IPC, CSP or permission-handler change. A permission handler added later must allow `clipboard-sanitized-write`.
 - **Page address.** One pure function, `pageAddress` in `app-window.ts`, picks it. It returns `ELECTRON_RENDERER_URL` only when `app.isPackaged` is false **and** the address matches `http://localhost:{port}` with at most one trailing slash. Nothing else may follow the port: no path, no query, no user name. In every other case it returns the built page. An installed app ignores the variable. The hidden render window follows the same rule.
 
 ## Rules: the render window
 
-Not built (Phase 3, slice P3-6). Full review. How it works: `spec/scene.md`, "The render window".
+Built (`src/main/render/`, `src/preload/render.ts`). How it works: `spec/scene.md`, "The render window".
 
-- **Same walls as the app window**: the window settings above, `offscreen: true`, never shown, the same navigation and new-window rules, its page chosen by the `pageAddress` rule (`renderPageAddress`), and the same content security policy written into `render.html` by the build (`connect-src 'none'`, so the page can send nothing out).
+- **Same walls as the app window**: the window settings above, `offscreen: true`, never shown, the same navigation rule. Every new window is denied, with no hand-off to the system browser. Its page chosen by the `pageAddress` rule (`renderPageAddress`), and the same content security policy written into `render.html` by the build (`connect-src 'none'`, so the page can send nothing out).
 - **A bridge with two functions only.** Its preload (`src/preload/render.ts`) gives `window.renderApi = { onRequest, done }` and nothing else: no `window.api`, no `ipcRenderer`. It listens on `adman:render-request` and sends on `adman:render-done`, and on no other channel.
 - **The main process trusts nothing it sends back.** A `render-done` message is taken only from the render window's own `webContents` and main frame, only for the request it waits for, and only when it passes the `RenderDone` schema; overflow entries are kept only for text layers of that request. The result can change one thing: a layer's `overflow`, through `layer.reportOverflow`, which bumps no `rev` and cannot change a value a user typed.
 - **What a request holds.** Variant and layer values (copy text included), asset IDs with kind, size and `missing`, and the project ID. Never a file path, a display name, a key, a token, the ComfyUI address or settings. The page builds `adman-asset://` addresses itself with `assetUrl`.
 - **No calls from it.** The app's command and query channels refuse it ("Who may call", above), and it gets no event.
 - **Picture bytes stay in the main process.** The captured PNG goes to the thumbnail file or to the asking query's reply, nowhere else.
-- **Its life is short.** It is ended on a crash, a hang, a time-out and when the app window closes; it has developer tools only with the hand-test flag.
+- **Its life is short.** It is ended on a crash, a hang, a time-out and when the app window closes; a window that stops answering is ended and the draw fails as `crashed`. It has developer tools only with the hand-test flag.
+- **Not checked yet:** the window is not created transparent, so an `overlay-only` draw may come out with an opaque background. The phase that needs transparent overlays (export or video) checks it.
 
 ## Rules: the asset protocol and the content security policy
 
@@ -103,7 +104,7 @@ Policy tests compare whole texts, never "contains": the looser policy contains t
 
 **`adman-asset://` protocol.** Handled in the main process; all decisions in `asset-url.ts` with no Electron in it.
 
-- Scheme privileges: `standard`, `secure`, `stream` and `corsEnabled`. `bypassCSP`, service workers, fetch API, code cache and extensions are off. **Not built (P3-6, A-53):** `corsEnabled: true`; the code still has it off, and fonts load only with it on. Safe because `connect-src 'none'` stays, so page script cannot fetch an asset address, and the checks below do not change. `Access-Control-Allow-Origin` is sent only if a font does not load without it, and only for kind `font`. Accepted risk below.
+- Scheme privileges: `standard`, `secure`, `stream` and `corsEnabled` (on, A-53; fonts load only with it on). `bypassCSP`, service workers, fetch API, code cache and extensions are off. No `Access-Control-Allow-Origin` header is sent: fonts load without it. Safe because `connect-src 'none'` stays, so a page `fetch()` of an asset address is refused in both windows (`tests/e2e/asset-font.spec.ts`, `tests/e2e/render-window.spec.ts`), and the checks below do not change. Accepted risk below.
 - Address `adman-asset://{projectId}/{assetId}`: the raw text is matched, not a parsed URL, so nothing is folded away (`/../`, `%2F`). Both parts are ULIDs, read in upper case; nothing may follow.
 - `GET` only. A file is served only when the project is open and the asset ID exists in it, and the file is a regular file, opened before answering.
 - `Content-Type` is the row's `mime`, sent only when `file-types.ts` lists it for the row's kind; never read from the file name. Text assets are never served.
@@ -127,7 +128,7 @@ Built (`src/main/assets/`, `src/main/db/`).
 
 - What always holds: the app never creates a folder outside the project file's own folder; a file is never written over an existing one; bytes handed to the window never leave it and page script cannot read them; a linked file goes to a provider or into a package only when its first bytes fit the row's kind; the checks in the table below. There is no confirm step for projects from elsewhere.
 
-### Project-file values that reach a path, a header or a request (was 8.1.1)
+### Project-file values that reach a path, a header or a request
 
 This table has one owner: this file. A change that makes a project-file value reach a file path, a header, a command line or a request adds or changes a row here in the same change; the developer reports the row's text and the architect writes it in. The reviewer checks each row against the code on every review of a slice that touches the named file.
 
@@ -164,7 +165,7 @@ Built, removed in Phase 9 (`src/main/commands/dev/`, `src/shared/config/dev-tool
 Built (`src/main/secrets/`, `src/main/providers/require-keys.ts`). Storage details: `spec/infra-and-settings.md`, "Secrets".
 
 - Secrets are encrypted at rest in `{userData}/secrets.bin` with `safeStorage`. If encryption is not available the app refuses to save keys.
-- **A key file that cannot be read is never written over.** When `secrets.bin` exists but does not decrypt to a JSON object (decryption fails, bad JSON, a list, text, a number, `null`), `secret.set` and `secret.delete` refuse with `RULE_VIOLATION`, reason `secrets_unreadable`, message "Saved keys could not be read, so no key was changed. They are left as they were." The file's bytes stay as they were and no `.tmp` file is left. `get` and the summaries still show nothing saved. Test: `tests/unit/main/secrets/secret-store.test.ts`. Open: the screen offers no way out (for example removing the unreadable file); see `spec/open-items.md`.
+- **A key file that cannot be read is never written over.** When `secrets.bin` exists but does not decrypt to a JSON object (decryption fails, bad JSON, a list, text, a number, `null`), `secret.set` and `secret.delete` refuse with `RULE_VIOLATION`, reason `secrets_unreadable`, message "Saved keys could not be read, so no key was changed. They are left as they were." The file's bytes stay as they were and no `.tmp` file is left. `get` and the summaries still show nothing saved. Test: `tests/unit/main/secrets/secret-store.test.ts`. Open: the screen offers no way out (for example removing the unreadable file); see A-20 in `spec/assumptions.md`.
 - **Provider and storage keys** are held only in the main process. No command, query, event or tool returns one. The window sees only the last four characters, and nothing for a value of four characters or fewer.
 - **The MCP token** leaves the main process one way only: the reply to `mcp.getConnectInfo`, to the app window, actor `user`. An agent asking gets `AGENT_DENIED` and a reply with no token. The bridge mode (Not built) reads it from `secrets.bin` itself.
 - No secret of either class is ever written to a project file, a packaged project, the log, a report or an MCP reply.
@@ -204,11 +205,11 @@ Built (`src/main/mcp/`). Full rules: `spec/mcp-and-agents.md`. Every point here 
 
 ## Rules: agents and cost
 
-Policy table: Built (`src/main/commands/agent-policy.ts`). Agent-started runs: Not built. Full rules: `spec/mcp-and-agents.md`.
+Built (`src/main/commands/agent-policy.ts`, agent-started runs). Full rules: `spec/mcp-and-agents.md`, `spec/agent-runs.md`.
 
-- Every command has a row in `AGENT_POLICY` (`allow`, `ask`, `deny`, `tick`). Generation, export and publish are `deny`; deletes are `ask` [REQ: FR-197, FR-199]. A new command adds its row; the table test checks it exactly.
+- Every command has a row in `AGENT_POLICY` (`allow`, `ask`, `deny`, `tick`). Generation and `job.cancel` are `tick`; export and publish are `deny`; deletes are `ask` [REQ: FR-197, FR-199]. A new command adds its row; the table test checks it exactly.
 - No agent reads or changes Settings, keys, storage, the ComfyUI address, a tick or the run limit.
-- **Agent-started runs** (Not built): only for a provider the user ticked in Settings; off by default; only the user can tick; the tick is read on every call and again before the first send; at most `agentRunLimit` agent runs waiting or running per provider; the result waits for the user and the agent cannot place it; every such job has `started_by = 'agent'`. Paid providers get no tick until a spending limit is set (CQ-20). The limit bounds rate, not total (OI-91: a total cap).
+- **Agent-started runs**: only for a provider the user ticked in Settings; off by default; only the user can tick; the tick is read on every call and again before the first send; at most `agentRunLimit` agent runs waiting or running per provider; the result waits for the user and the agent cannot place it; every such job has `started_by = 'agent'`. Paid providers get no tick until a spending limit is set (CQ-20). The limit bounds rate, not total (OI-91: a total cap).
 - A paid call is made only when a person presses a button or the project owner runs a live test. Nothing in CI calls a real provider. No agent runs `npm run test:live`, sets `ADMAN_E2E_GEMINI=1`, makes any paid call or reads a key [D-049, D-081].
 
 ## Rules: logs, errors and messages
@@ -217,7 +218,7 @@ Built. Logging in full: `spec/testing.md`.
 
 - The log never holds a secret value. Prompts and brief text may appear and stay on the machine [REQ: FR-153]. `brief.parse` logs reason and line number, never the line's text. Campaign commands log IDs only. A raw provider detail stays in the job's column, not in the log.
 - **No code under `src/main/providers/` or `src/main/jobs/` assigns to an error's `message`.** Checked in review.
-- **Parsers never leak text into errors.** Code that parses text from a project file, a settings file, a brief or a server catches the parser's error and throws its own, naming the place and never the text (as `checked`, `BriefError`, `parsedJson` do). `errorContext` still logs `message` and `stack` of unforeseen errors.
+- **Parsers never leak text into errors.** Built; the reading pass over every parser is done (F-7). Code that parses text from a project file, a settings file, a brief or a server catches the parser's error and throws its own, naming the place and never the text (as `checked`, `BriefError`, `parsedJson` do). A zod error never holds a value, but its issue path and a strict object's key list can hold a key from the data, so an error built from a stored row names the column only (`checked` in `src/main/db/rows.ts`). `errorContext` still logs `message` and `stack` of unforeseen errors.
 - **Brief reader rules**, one line: size limit before parsing, YAML core rules only, no anchors, aliases, tags or deep nesting, `BriefDraft` keeps known fields. Full rules: `spec/brief-and-templates.md`.
 
 ## Rules: test runs
@@ -241,7 +242,7 @@ Do not "fix" these without a ruling.
 - **A linked path is whatever the disk holds now.** A swapped file is sent under the old picture type with `nosniff`; the window shows a broken picture and runs nothing; the window can make no network request.
 - **A linked path may name any file the user's account can read.** A hostile project can list a private picture; it shows in the library, reaches a provider only if the user picks it as a reference, and Package carries it only if it really is a file of its kind. Any real text file with a listed extension can be named by a `text` row in Package.
 - **The asset protocol has no first-bytes check.** Offered, not built.
-- **Asset scheme with CORS on** (A-53, Not built, P3-6): the app's own page could read a project picture's pixels through a canvas. The page is the app's bundled code in a sandbox with no network, so nothing new can leave the machine.
+- **Asset scheme with CORS on** (A-53, Built): the app's own page could read a project picture's pixels through a canvas. The page is the app's bundled code in a sandbox with no network, so nothing new can leave the machine.
 - **Link swaps between check and use.** A link swapped in after an `lstat` check (in `setAssetsDir`, `hashFile` opens normally; folder import with `copy: true` uses `copyFile`, which follows links), or between the `ensureAssetsDir` check and `mkdir`. No `O_NOFOLLOW` is required: the swap needs write access to the user's folders during the command; `O_NOFOLLOW` guards only the last path part and does not exist on Windows.
 - **A file opened three times on import** (head, hash, copy) can be swapped between; the change check later finds a mismatching hash.
 - **An existing folder outside the project** named by `assets_dir_*` still receives new managed files `{ULID}.{ext}`, never over an existing file.
@@ -254,7 +255,7 @@ Do not "fix" these without a ruling.
 - Secrets: encrypted (above).
 - Project files and assets: not encrypted. They are ordinary user documents.
 
-**Compliance** (was 8.4). No compliance standard is named [REQ: 6.3].
+**Compliance.** No compliance standard is named [REQ: 6.3].
 
 | Requirement | Control |
 |-------------|---------|
@@ -276,7 +277,7 @@ These must keep passing. A change that weakens one needs a ruling.
 | `tests/build/built-page.test.ts` (`npm run test:build`, every push) | `out/renderer/index.html` has exactly one policy tag, equal to `CONTENT_SECURITY_POLICY`, and no word `localhost`. Needs no window; the only check for `localhost` |
 | `tests/e2e/csp.spec.ts` | The running window has exactly one policy tag equal to `CONTENT_SECURITY_POLICY` (imported, not copied) |
 | `tests/unit/main/windows/asset-protocol.test.ts`, `tests/e2e/asset-protocol.spec.ts` | An imported picture loads by its `adman-asset://` address; an unknown asset ID does not; a project not open does not |
-| `tests/e2e/asset-protocol.spec.ts`, `tests/e2e/render-window.spec.ts` (Not built, P3-6) | A page `fetch()` of an `adman-asset://` address is refused in the app window and in the render window; an imported font loads in the Scene |
+| `tests/e2e/asset-font.spec.ts`, `tests/e2e/render-window.spec.ts` | A page `fetch()` of an `adman-asset://` address is refused in the app window and in the render window; an imported font loads in the Scene |
 | `tests/unit/main/windows/open-external.test.ts` | Only `https:` opens in the system browser |
 | `tests/unit/config/electron-boundary.test.ts` | No `electron` import in files `core.ts` imports |
 | `tests/unit/config/live-config.test.ts`, `tests/unit/config/comfy-config.test.ts` | No test or source file imports the live or comfy config; no `src/` file holds `.env.local` |
@@ -293,7 +294,7 @@ These must keep passing. A change that weakens one needs a ruling.
 | `tests/integration/generation/run-images-comfy.test.ts` | One reference sends one upload of the asset's bytes as `adman-{16 hex}.png`; no request holds the display name or any part of the path; two references refused with `too_many_references`; a non-ComfyUI stand-in gets one `GET /system_stats` and no upload |
 | `tests/integration/generation/image-kind-errors.test.ts` | A reference gone after enqueue ends `failed`, kind `other`, with no path in the row or the log |
 | `tests/integration/campaigns/brief-parse.test.ts` | A malformed YAML gives a reply with the bad line and a log line with the line number and no word of the file |
-| `tests/unit/main/ipc.test.ts` (Phase 3 blocks) | A call from any sender but the app window's main frame is refused before `execute` or `query`; events go to the app window only (LP-1) |
+| `tests/unit/main/ipc.test.ts` | A call from any sender but the app window's main frame is refused before `execute` or `query`; events go to the app window only |
 | `tests/unit/main/render/done-message.test.ts`, `tests/e2e/render-window.spec.ts` | A render reply from the wrong sender, frame or request, or of the wrong shape, is ignored; the render window is never shown, has no `window.api`, and its bridge has only `onRequest` and `done` |
 | `tests/build/built-page.test.ts` (Phase 3 block) | `render.html` carries exactly the strict policy |
 | `tests/unit/main/thumbnails/paths.test.ts`, `tests/unit/main/thumbnails/cache.test.ts`, `tests/integration/thumbnails/thumbnail-clean.test.ts` | Bad IDs touch no file; clean-up deletes only old thumbnails directly in the project's folder, never a link, a sub-folder or another file |

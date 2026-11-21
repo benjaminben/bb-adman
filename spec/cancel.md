@@ -4,7 +4,7 @@ What cancel does for each provider (Gemini, ComfyUI, fal.ai Seedance, the fake p
 
 [REQ: FR-257, FR-270, FR-272, FR-281; D-051 answers 5, 10, 14; D-052 answer 20]
 
-## Provider contract (was 6.11.1)
+## Provider contract
 
 Built. `src/main/providers/types.ts`, `src/shared/schemas/queries/app.ts`, `src/main/providers/registry.ts`.
 
@@ -122,7 +122,7 @@ type JobRunContext = {
 
 With nothing kept and no end field the result is null.
 
-## `job.cancel` (was 6.11.2)
+## `job.cancel`
 
 Built. `src/main/commands/job/cancel.ts`, `src/main/jobs/cancel.ts`, `src/main/jobs/cancel-wait.ts`. [REQ: FR-281, FR-270]
 

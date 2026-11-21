@@ -16,19 +16,9 @@ Heaviest first.
 - What is wrong: `job.retry` on a picture job that kept pictures asks only for the rest (`spec/jobs.md`, "Retry"), but the run row's paid confirm line still shows the stored request's `count`.
 - Done when: for an `image_generation` row the confirm line shows `picturesLeft(requestCount(row), row.result)` (`src/shared/generation/pictures-left.ts`). Other rows are unchanged. A renderer test: a cancelled row with `count: 4` and two kept asset IDs shows 2.
 - Class D. Security class: no.
-- Built in slice S2-5 of `spec/phases/phase-02-leftovers.md`, which owns the run row after AR-3. Removed from this file when S2-5 merges.
+- Built in slice S2-5 of `spec/phases/phase-02-screens.md`, which owns the run row. Removed from this file when S2-5 merges.
 
 ## Fix with a later phase
-
-### Phase 3 (Scene and editor: the hidden render window)
-
-#### LP-1. Any window can send calls, and every window gets every event
-
-- Source: Phase 1 review, first pass, unverified observation 4.
-- Files: `src/main/ipc.ts:25-36` (no check of `event.senderFrame` or the sending window); `src/main/index.ts:28` (`for (const win of BrowserWindow.getAllWindows()) win.webContents.send(...)`).
-- What is wrong: today there is one window, so this is safe. From Phase 3 the hidden render window shares the main process. It would receive every job and project event, and could send any command or query as the user.
-- Done when: `registerIpc` takes a "may call" check and refuses a call from any frame that is not the main window's top frame. Events go only to the main window. The render window gets its own narrow channel. Tests in `tests/unit/main/ipc.test.ts`: a call from another sender is refused before `execute` or `query` runs; an event is sent to the main window only.
-- Security class: yes (unexpected privileged access).
 
 ### Phase 7 (Video and timeline)
 
@@ -36,7 +26,7 @@ Heaviest first.
 
 - Source: CU6a D3, and CU6a missing test.
 - Files: `src/main/jobs/kinds/video-generation.ts:78-99` (`untilDone`, line 90-91).
-- What is wrong: after a cancel, the video kind ends itself with `ProviderCancelled` once `cancelWaitFor(provider)` passes. The runner reads that as `stopped`, so the job ends `cancelled` without `outcomeUnknown`. SPEC 6.11.2 makes the runner's timer the one owner (outcome `unknown`, `outcomeUnknown: true`). Which timer wins depends on timing. The kind also ignores the runner's `cancelWaitMs` test option.
+- What is wrong: after a cancel, the video kind ends itself with `ProviderCancelled` once `cancelWaitFor(provider)` passes. The runner reads that as `stopped`, so the job ends `cancelled` without `outcomeUnknown`. `spec/cancel.md`, "`job.cancel`", makes the runner's timer the one owner (outcome `unknown`, `outcomeUnknown: true`). Which timer wins depends on timing. The kind also ignores the runner's `cancelWaitMs` test option.
 - Done when: the kind does not time the wait itself; the runner's timer ends it. Test: a video job with the fake set to `onCancel: 'no_confirm'` ends `cancelled` with `result.outcomeUnknown === true` and no asset. (Today `no_confirm` is used only with `generative_fill` and fake jobs.)
 - Security class: no.
 
@@ -62,7 +52,7 @@ Heaviest first.
 
 - Source: CU4-Fixes observation.
 - Files: `src/shared/schemas/rows/asset.ts:23-26` (only `genRunId`, `genProvider`, `genModel`, `genPrompt`); `src/main/jobs/kinds/image-generation.ts:78-81` (writes `models` and `workflow` into the PNG only).
-- What is wrong: SPEC 6.6 says the PNG's details are also stored on the asset row. `models` and `workflow` are in the PNG only. The report (FR-150) may need them.
+- What is wrong: `spec/export-and-checks.md`, "Embedded generation details", says the PNG's details are also stored on the asset row. `models` and `workflow` are in the PNG only. The report (FR-150) may need them.
 - Done when: the report phase decides whether the report reads them from the row (add columns) or from the PNG, and the spec says which. A test checks the report shows the workflow ID and version for a ComfyUI picture.
 - Security class: no.
 

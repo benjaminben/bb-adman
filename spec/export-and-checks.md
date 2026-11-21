@@ -2,7 +2,7 @@
 
 The generation details written into generated files, the export of variants to disk (pictures and video), the report, the translation sheet, and the six checks run before export. Read with `spec/data-model.md` (the `report`, `variant_check`, `asset`, `variant` and `layer` tables), `spec/api-commands.md` (`export.run`, `check.run`, `translation.exportSheet`), `spec/storage-and-publish.md` (publish runs a fresh export) and `spec/infra-and-settings.md` (FFmpeg packaging, `settings.export`).
 
-## Embedded generation details (was 6.6)
+## Embedded generation details
 
 [REQ: FR-068, OI-05]
 
@@ -56,7 +56,7 @@ Not built (Phase 7, with FFmpeg). Today a generated clip is stored as the provid
 - FFmpeg writes the same JSON into the `comment` tag with stream copy (`-c:v copy -metadata comment=...`), with `kind: "video_generation"`. For ComfyUI it adds `models` and `workflow` as for PNG (OI-36: what a ComfyUI clip carries before Phase 7).
 - The sound stream is kept (copied as it is). No `-an` on a generated clip.
 
-## Export (was 6.7)
+## Export
 
 Not built (Phase 8). Needs Phase 7 (FFmpeg fetch script, video data). [REQ: FR-126, FR-130 to FR-132, FR-140 to FR-143, FR-150, FR-151]
 
@@ -164,7 +164,7 @@ Not built. [REQ: FR-103]
 
 `translation.exportSheet` writes a CSV in UTF-8 with a byte-order mark, so Excel opens it correctly. Columns: `variant_id, title, size, language, layer, source_text, text, status`. One row per text layer of every variant not in the primary language. Publishing includes it as `translations.csv`.
 
-## Checks (was 6.9)
+## Checks
 
 Not built (Phase 8 for export; `check.run` with the editor data it reads). The `variant_check` table is built. [REQ: FR-110 to FR-116, R-03, R-13, R-18]
 

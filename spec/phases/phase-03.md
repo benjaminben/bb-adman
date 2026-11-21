@@ -8,11 +8,10 @@
 - Overflowing text shows a badge (on the layer, the banner and the variant's `overflow` badge).
 - The reference-picture tests pass on macOS. Windows is the stakeholder's own check (D-087).
 - FR-242: the tab keys work. FR-245: the transparent-picture reference test passes. FR-249: letter spacing is drawn, measured and editable.
-- Review item LP-1 is fixed (slice P3-6) and removed from `spec/phases/review-leftovers.md`.
 
-**Dependencies:** Built and used here: the `@/` alias, one folder per component, the token file with its test (`spec/structure.md`), the `variant.rev` helper `bumpVariantRev` in `src/main/commands/variant-rev.ts`, the Phase 3 contracts (schemas, scene types, the shortcut table, the Phase 3 tokens), the layer and variant commands (`spec/editor-commands.md`), the Scene (`src/shared/scene/`), font names at import, and the render service with thumbnails (`src/main/thumbnails/`). Still to come from the Phase 2 leftovers (`spec/phases/phase-02-screens.md`): the campaign grid, slice S2-16 (`screens/campaign/variant-grid/` and the tile `screens/campaign/variant-tile/`), needed by P3-9, P3-10 and P3-16; and the dialog frame, slice S2-2 (`ui/dialog-frame/`).
+**Dependencies:** Built and used here: the `@/` alias, one folder per component, the token file with its test (`spec/structure.md`), the `variant.rev` helper `bumpVariantRev` in `src/main/commands/variant-rev.ts`, the Phase 3 contracts (schemas, scene types, the shortcut table, the Phase 3 tokens), the layer and variant commands (`spec/editor-commands.md`), the Scene (`src/shared/scene/`), font names at import, the render service with thumbnails (`src/main/thumbnails/`), the hidden render window with the window sender rule and fonts from the asset scheme (`src/main/render/`, `src/main/ipc.ts`), and the dialog frame (`src/renderer/ui/dialog-frame/`). Still to come from the Phase 2 leftovers (`spec/phases/phase-02-screens.md`): the campaign grid, slice S2-16 (`screens/campaign/variant-grid/` and the tile `screens/campaign/variant-tile/`), needed by P3-9, P3-10 and P3-16.
 
-**Design:** `spec/scene.md`, `spec/editor.md`, `spec/editor-commands.md`. Security rules: `spec/security.md`, "Rules: the render window" and "Rules: the asset protocol". Tests and the reference rule: `spec/testing.md`. Assumptions A-22 to A-37 and A-53 in `spec/open-items.md`.
+**Design:** `spec/scene.md`, `spec/editor.md`, `spec/editor-commands.md`. Security rules: `spec/security.md`, "Rules: the render window" and "Rules: the asset protocol". Tests and the reference rule: `spec/testing.md`. Assumptions A-22 to A-37 and A-53 in `spec/assumptions.md`.
 
 ## Rules for these slices
 
@@ -26,25 +25,13 @@
 
 | Wave | Slices (side by side in separate worktrees) | Waits for |
 |------|---------------------------------------------|-----------|
-| 1 | P3-6 | |
-| 2 | P3-8 (after P3-6), P3-9 (after P3-6: both edit `src/main/index.ts`) | |
+| 1 | P3-6 | Built |
+| 2 | P3-8 (may start), P3-9 (after S2-16: it edits `variant-tile/`, which S2-16 makes, and `campaign-view/`, which S2-16 changes) | |
 | 3 | P3-10, P3-11, P3-12, P3-13 | P3-9 |
 | 4 | P3-14 (after P3-11, P3-13), P3-16 (after P3-10) | |
 | 5 | P3-15 (after P3-14) | |
 
 ## Slices
-
-### P3-6 — The render window, the window sender rule (LP-1) and fonts from the asset scheme
-
-- **Exists when done:** the hidden render window draws a `SceneInput` and returns a PNG and the overflow map; the app's command and query channels refuse any sender but the app window; events go to the app window only; an imported font loads from `adman-asset://`.
-- **New files:** `src/main/render/render-window.ts`, `draw.ts`, `render-page.ts`, `done-message.ts`; `src/preload/render.ts`; `src/renderer/render.html`; `src/renderer/render-worker/main.tsx`, `render-worker/render-root/`.
-- **May touch:** `src/main/ipc.ts` (`mayCall`), `src/main/index.ts` (app window reference, `send` to the app window only, `drawScene: createDraw()`, render window ended when the app window closes), `electron.vite.config.ts` (two pages, two preloads), `src/main/windows/app-window.ts` (export what the render window reuses), `src/main/windows/asset-protocol.ts` (`corsEnabled: true`), `src/main/assets/asset-url.ts` (the font header, only if needed).
-- **Must:** `send` in `src/main/index.ts` sends events to the app window only. Today it sends to every window, which would reach the render window.
-- **Must (A-53, for the stakeholder's review):** register the `adman-asset` scheme with `corsEnabled: true`; a font does not load with it off. Keep `connect-src 'none'` and every check of the protocol handler. Send `Access-Control-Allow-Origin` only if a font does not load without it, and then only for assets of kind `font`. Rules: `spec/security.md`, "Rules: the asset protocol".
-- **Read:** `spec/scene.md` "Fonts", "The render window"; `spec/security.md` "Rules: the render window", "Rules: renderer and windows", "Rules: the asset protocol"; `spec/phases/review-leftovers.md` LP-1.
-- **Checks already run** (macOS, Electron 45): an offscreen hidden window captures exactly the asked size on a Retina screen, up to 2048 × 2048; fonts, `img.decode()` and animation frames run in it with `backgroundThrottling: false`; a font from `adman-asset://` does not load while the scheme has CORS off. No other check is needed first.
-- **Tests:** `tests/unit/main/ipc.test.ts` (new blocks: a call from another frame or window is refused before `execute` or `query` runs; an event goes to the app window only), `tests/unit/main/render/render-page.test.ts`, `tests/unit/main/render/done-message.test.ts` (wrong sender, wrong frame, wrong `requestId`, bad shape, unknown layer IDs dropped), `tests/build/built-page.test.ts` (new blocks: `out/renderer/render.html` has exactly one policy tag equal to `CONTENT_SECURITY_POLICY`; the built render page holds the bundled font as its own file), `tests/e2e/render-window.spec.ts` (the render window is never visible; its page has no `window.api`; `window.renderApi` has exactly `onRequest` and `done`; a draw of a small variant gives a PNG of the asked size; page `fetch()` of an asset address is refused; an imported font loads in the Scene; closing the app window quits the app), `tests/e2e/asset-protocol.spec.ts` (new block: page `fetch()` of an asset address is refused in the app window).
-- **Class:** G + C. **Security class, full review.**
 
 ### P3-8 — Reference-picture tests
 
@@ -62,14 +49,14 @@
 - **Read:** `spec/editor.md` (layout, variant store, top bar, banner, canvas, selecting, keyboard shortcuts, undo and redo); `spec/screens.md` rules.
 - **Check first:** the app-menu check of `spec/editor.md`.
 - **Tests:** `tests/unit/renderer/stores/variant-store.test.ts` (applies events; drops a stale reply; asset version bump), `tests/unit/renderer/editor/zoom.test.ts`, `tests/unit/renderer/editor/editor.test.tsx` (loads, selects by click and by list, undo and redo send `history.*` with the variant scope and are disabled from `history.state`, rename, banner wording, overflow report sent once with the store's rev, axe), `tests/unit/main/windows/app-menu.test.ts` (no View menu; Edit roles; dev tools item only with the flag), `tests/e2e/editor-open.spec.ts` (Mod+Z reaches the page; Mod+= does not zoom the page).
-- **Class:** D + G (the menu). Not security class. **After:** P3-6.
+- **Class:** D + G (the menu). Not security class. **After:** S2-16.
 
 ### P3-10 — Campaign tabs, variant tabs and the tab keys
 
 - **Exists when done:** project switcher, campaign tabs, variant tabs, opening behind, marks, what each tab keeps, FR-242.
 - **New files:** `stores/nav-store.ts`; `app/project-switcher/`, `app/campaign-tabs/`; `screens/campaign/variant-tabs/`.
 - **May touch:** `app/app-shell/`, `screens/campaign/campaign-view/`, `screens/project-home/campaign-list/` (opens a tab), `screens/campaign/variant-grid/` (passes the "+" through the tile's `actions` prop), `tests/e2e/screen-tour.ts` and `screens.ts` (approved edits for the new navigation).
-- **Read:** `spec/editor.md` "Navigation"; `spec/open-items.md` OI-31, Q-041, Q-042, A-23, A-24.
+- **Read:** `spec/editor.md` "Navigation"; `spec/assumptions.md` OI-31, Q-041, Q-042, A-23, A-24.
 - **Tests:** `tests/unit/renderer/stores/nav-store.test.ts` (per-project, per-campaign and per-tab state; a removed variant loses its tab; close drops the project), `tests/unit/renderer/app/campaign-tabs.test.tsx`, `tests/unit/renderer/screens/campaign/variant-tabs.test.tsx` (plain click shows; "+" and Cmd-click open behind; selected layer and zoom kept per tab; marks; axe), `tests/unit/renderer/app/tab-keys.test.tsx` (both key pairs, wrap round, from inside a text field).
 - **Class:** D (+ the screen-tour end-to-end run). Not security class.
 

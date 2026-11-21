@@ -2,7 +2,7 @@
 
 The thirteen architecture decisions with their reasons, and the words the spec uses. Read with `spec/overview.md`.
 
-## Architecture decision records (was 16)
+## Architecture decision records
 
 All accepted, 2026-11-20.
 
@@ -123,7 +123,7 @@ Not built (Phase 7).
 - **Alternatives considered:** Adding `format` to `variant.update`, which would hide the grid test and the clip step inside a title-and-duration edit. Deleting the variant and adding a new one in the other format, which loses the variant's ID, overrides, translations and video settings. Deleting clips when a variant becomes an image, which D-026 rules out.
 - **Consequences:** One more command, one more MCP tool (`set_variant_format`) and one more single-owner file. An image variant can hold clip rows it does not draw. The unique index and the schema do not change. One round-trip case, a video variant with an empty track, is not covered without a new column (OI-20: open whether to add one).
 
-## Glossary (was 17)
+## Glossary
 
 Terms from REQUIREMENTS.md Section 12 keep their meaning. Added or changed here:
 

@@ -2,7 +2,7 @@
 
 The activity log, how changes are verified, the test rules, the named tests, the test commands and the non-functional targets. The harnesses (offline and real end-to-end, ComfyUI server tests, live tests) and the no-paid-call rule are in `spec/test-harnesses.md`. Read with `spec/structure.md` (where tests and code live) and `spec/infra-and-settings.md` (CI, environment variables).
 
-## Logging (was 9.1)
+## Logging
 
 Built. `src/main/log/activity-log.ts`, `src/main/log/error-context.ts`, `src/main/jobs/job-error-log.ts`.
 
@@ -57,13 +57,13 @@ Built. Security class. An unforeseen error is one that is not a `ProviderFailure
 
 Test: `tests/integration/jobs/runner-secret-log.test.ts` (a stored key holding `/`, `+`, `=` never reaches a job's log line in plain, URL-encoded or base64 form, in the message or a hand-set stack).
 
-### Metrics, tracing, alerting (was 9.2 to 9.4)
+### Metrics, tracing, alerting
 
 - Metrics: none. The stakeholder set no targets [REQ: 8.1]. Job durations are recorded in the log `context`.
 - Tracing: none. A command's ULID is carried in `context.commandId` on every log line it causes.
 - Alerting: none. There is no operator. The user sees failures in the activity panel and in plain-language dialogs [REQ: FR-152, FR-069].
 
-## Verification classes (was 10.4)
+## Verification classes
 
 Every change has a class. The developer runs the checks for that class. The full gate runs before a release, not for each change.
 
@@ -97,12 +97,13 @@ Built. `package.json`.
 | `npm run test:e2e:real` | `npm run build && playwright test --config playwright.real.config.ts` (`tests/e2e-real/` only). Uses the real ComfyUI server | By hand, on a desktop. The paid Gemini case is the stakeholder's only |
 | `npm run test:comfy` | `vitest.comfy.config.ts`, `tests/comfy/`, one case at a time. Uses the real ComfyUI server | Project agents, within the limits in `spec/test-harnesses.md` |
 | `npm run test:live` | `vitest.live.config.ts`, `tests/live/**/*.test.ts`. Real paid calls | The stakeholder only |
+| `npm run shots` | `npm run build && playwright test --config playwright.shots.config.ts` (`tests/shots/*.shots.ts`, helper `tests/shots/shot.ts`, one worker). Offline. Writes screenshots of the built app's screens to `shots/` (not in git) for review by eye | By hand, when a screen slice wants pictures. Never part of a routine check or a verification class |
 | `npm run lint` | `eslint . && prettier --check .` | Every class |
 | `npm run typecheck` | `tsc --noEmit -p tsconfig.json` | Every class |
 
-No CI workflow names `test:e2e:real`, `test:comfy` or `test:live`. No agent runs `test:live` or makes any paid call [D-081] (`spec/test-harnesses.md`). What CI runs and when is in `spec/infra-and-settings.md`.
+No CI workflow names `test:e2e:real`, `test:comfy`, `test:live` or `shots`. No agent runs `test:live` or makes any paid call [D-081] (`spec/test-harnesses.md`). What CI runs and when is in `spec/infra-and-settings.md`.
 
-## Coverage and test types (was 10.1)
+## Coverage and test types
 
 | Test type | Coverage target | Tooling | Runs in |
 |-----------|-----------------|---------|---------|
@@ -205,7 +206,7 @@ Each test below must exist and keep passing. A test marked "Not built" is writte
 | A picture with a transparent background keeps it in the drawn variant [REQ: FR-245] | `tests/e2e/scene-reference.spec.ts`. Not built (Phase 3) |
 | Overflow is set by the render service when text grows past its box by size and by letter spacing, and cleared when it fits [REQ: FR-098, FR-249] | `tests/e2e/scene-overflow.spec.ts`. Not built (Phase 3) |
 | The tab keys step through variant tabs and campaign tabs and wrap round [REQ: FR-242] | `tests/unit/renderer/app/tab-keys.test.tsx`. Not built (Phase 3) |
-| Security: `window.drop` has only `pathOf`; a page-made `File` gives no path; `window.api` unchanged | `tests/e2e/drop-bridge.spec.ts`. Not built (S2-3) |
+| Security: `window.drop` has only `pathOf`; a page-made `File` gives no path; `window.api` unchanged | `tests/e2e/drop-bridge.spec.ts` |
 | Security: server text holding `<a href>` shows as characters in a run failure | `tests/unit/renderer/screens/campaign/run-failure.test.tsx`. Not built (S2-5) |
 
 **Other pinned tests and fixtures:**
@@ -267,18 +268,18 @@ The base rule: an existing test is not edited without the architect's ruling. Th
 
 **Still needs a ruling:** changing or removing an assertion or expected value; changing what a fixture stores when a test reads it back; loosening a type, schema or lint rule so a test passes; any `as any`, `@ts-expect-error` or similar. If a test fails after a make-it-compile edit, stop and report. Markup kept only for a test is not added (for example, the campaign page carries no `data-project-id`; the project-home test proves the IDs by `campaign.get` being sent once with `{ projectId, campaignId }`).
 
-## Test data (was 10.2)
+## Test data
 
 - Tests create project files in a temporary folder and set `ADMAN_USER_DATA_DIR` to another temporary folder.
 - `ADMAN_FAKE_PROVIDERS=1` registers the `fake` provider for every job (`spec/jobs.md`, the fake provider). It returns fixed pictures, a fixed 2-second video, layout boxes from a fixed rule and "translations" made by adding a language tag to the source text. It can be told to fail with each error kind.
 - `examples/` holds `brief.yaml`. Built so far: `brief.yaml` only. Not built (Phase 11): two subjects, four small source images and the six exported PNGs (three sizes, two languages) that the README shows [REQ: FR-180].
 - No real provider is called in CI.
 
-## Contract tests (was 10.3)
+## Contract tests
 
-Built for Gemini and S3. Provider adapters are tested against recorded responses in `tests/fixtures/providers/` (`gemini/`, `s3/`, each with a `README.md`). The MCP tool list is snapshot-tested (`tests/integration/mcp/tool-list.test.ts`), so a change to a tool's name or input is a visible diff. The snapshot holds the tools built so far: 8 on `main` (`list_projects`, `get_project`, `list_assets`, `get_campaign`, `create_campaign`, `get_slots`, `get_job`, `list_jobs`); each slice that adds a tool updates it (11 after MCP-G, all 25 of `spec/mcp-and-agents.md` by Phase 10).
+Built for Gemini and S3. Provider adapters are tested against recorded responses in `tests/fixtures/providers/` (`gemini/`, `s3/`, each with a `README.md`). The MCP tool list is snapshot-tested (`tests/integration/mcp/tool-list.test.ts`), so a change to a tool's name or input is a visible diff. The snapshot holds the tools built so far: 11 on `main` (`list_projects`, `get_project`, `list_assets`, `get_campaign`, `create_campaign`, `get_slots`, `get_job`, `list_jobs`, `generate_images`, `generate_video`, `cancel_job`); each slice that adds a tool updates it (all 25 of `spec/mcp-and-agents.md` by Phase 10).
 
-## Non-functional targets (was 11)
+## Non-functional targets
 
 The stakeholder set no numeric targets [REQ: 8.1]. These are the testable targets this design commits to.
 

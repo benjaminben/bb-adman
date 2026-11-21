@@ -2,7 +2,7 @@
 
 Where code and tests live, the module rules, how commands and queries are registered, the code and naming rules, and the layout rule for renderer components. Read with `spec/testing.md` (what each test folder runs) and `spec/overview.md` (the component map).
 
-## Folder tree (was 12)
+## Folder tree
 
 Built through Phase 2. One repository, one package. The tree shows what is on `main`; a line marked `(Phase N)` is a folder or file a later phase adds.
 
@@ -43,14 +43,14 @@ project-root/
 │   │   ├── secrets/               # secret-store.ts, safe-storage.ts
 │   │   ├── settings/              # settings-store.ts, defaults.ts
 │   │   ├── log/                   # activity-log.ts, error-context.ts
-│   │   ├── render/                # the render window, draw, render-page, done-message (Phase 3; Electron edge)
+│   │   ├── render/                # the render window, draw, render-page, done-message (Electron edge)
 │   │   ├── thumbnails/            # render service, queue, scene input, thumbnail paths and cache, eager (no Electron)
 │   │   ├── export/                # image, video (FFmpeg filter builder), report, sheet (Phase 8)
 │   │   └── publish/               # publish flow (Phase 9)
-│   ├── preload/                   # index.ts: the window.api bridge; render.ts: the render window's renderApi (Phase 3)
+│   ├── preload/                   # index.ts: the window.api and window.drop bridges; render.ts: the render window's renderApi
 │   ├── renderer/                  # app window (React). Files: "Renderer files on main" below
-│   │   ├── main.tsx, index.html, env.d.ts; render.html (Phase 3)
-│   │   ├── render-worker/         # the render window's page: main.tsx, render-root/ (Phase 3)
+│   │   ├── main.tsx, index.html, env.d.ts; render.html
+│   │   ├── render-worker/         # the render window's page: main.tsx, render-root/
 │   │   ├── app/                   # app.tsx, app-context.tsx, app-shell/, error-banner/
 │   │   ├── stores/                # app-store.ts, project-store.ts (one per open project), job-store.ts (one per campaign page);
 │   │   │                          #   nav-store.ts, variant-store.ts (one per open variant tab) (Phase 3)
@@ -92,6 +92,7 @@ project-root/
 │   ├── e2e-real/                  # Playwright against the real ComfyUI server; never run by npm test or CI
 │   ├── comfy/                     # hand-run tests against the real ComfyUI server (npm run test:comfy)
 │   ├── live/                      # hand-run tests against paid providers (npm run test:live); never run by npm test or CI
+│   ├── shots/                     # screenshot files (*.shots.ts, shot.ts) for npm run shots; never a routine check
 │   ├── helpers/                   # shared test helpers (ComfyUI stand-in, call list, failure-of)
 │   ├── fixtures/                  # briefs/, providers/ (recorded responses), video/, png-chunks.ts
 │   └── reference-pictures/{darwin,win32}/   # (Phase 3)
@@ -104,7 +105,7 @@ project-root/
 ├── REQUIREMENTS.md, DECISIONS.md, SPEC.md, spec/
 └── config files                   # package.json, tsconfig.json, eslint.config.js, electron.vite.config.ts,
                                    #   electron-builder.json, drizzle.config.ts, playwright.config.ts,
-                                   #   playwright.real.config.ts, vitest.config.ts, vitest.build.config.ts,
+                                   #   playwright.real.config.ts, playwright.shots.config.ts, vitest.config.ts, vitest.build.config.ts,
                                    #   vitest.comfy.config.ts, vitest.live.config.ts; path-alias.config.ts
 ```
 
@@ -200,7 +201,7 @@ Built.
 
 ### One folder per component
 
-Built. All 34 renderer components sit in their own folder.
+Built. Every renderer component sits in its own folder.
 
 - Each component has a kebab-case folder named after it, holding the component (`generate-panel.tsx`), its own CSS module (`generate-panel.module.css`), and `index.ts`. A component with no styles of its own leaves out the module.
 - **`index.ts` only re-exports:** `export { GeneratePanel } from './generate-panel'`, plus any props type another file imports. No logic. Exports stay named and PascalCase.
@@ -229,25 +230,31 @@ Each name ending in `/` inside a screen, `app/`, `dialogs/` or `dev/` is a compo
 
 ```
 src/renderer/
-├── main.tsx, index.html, env.d.ts
+├── main.tsx, index.html, env.d.ts, render.html
+├── render-worker/  main.tsx, render-root/
 ├── app/            app.tsx, app-context.tsx, app-shell/, error-banner/
 ├── screens/
 │   ├── start/          start-screen/, new-project-form/, recent-projects/
 │   ├── settings/       settings-screen/, location-setting/, provider-defaults/, keys-section/, key-row/,
-│   │                   comfy-section/, comfy-check-result/, mcp-section/, connect-panel/
+│   │                   comfy-section/, comfy-check-result/, mcp-section/, connect-panel/,
+│   │                   agent-runs-section/
 │   ├── project-home/   project-home/ [use-project.ts], brief-load/, brief-summary/, campaign-list/,
+│   │                   import-files/, missing-files/, package-project/, drop-import/,
 │   │                   campaign-input.ts
 │   └── campaign/       campaign-view/, variant-list/, generate-panel/, reference-picker/, paid-confirm/,
 │                       video-panel/ [video-length.ts], video-picture-choice/, video-result/,
-│                       run-list/, run-row/ [video-status.ts], run-result/,
-│                       reference-list.ts, video-start.ts
+│                       run-list/, run-row/ [video-status.ts], run-result/, slot-view/,
+│                       reference-list.ts, video-start.ts, use-comfy-info.ts
 ├── dialogs/        key-dialog/
 ├── dev/            hand-test-screen/, s3-settings-form/, storage-actions/, dropbox-sign-in/, result-text.ts
 ├── stores/         app-store.ts, project-store.ts, job-store.ts
-└── ui/             tokens.css, base.css, layout.module.css, asset-url.ts, secret-labels.ts
+└── ui/             tokens.css, base.css, layout.module.css, asset-url.ts, secret-labels.ts, shortcuts.ts,
+                    comfy-privacy.ts, missing-item-text.ts, dropped-paths.ts, dialog-frame/
 ```
 
-Components with their own CSS module: `app-shell`, `error-banner`, `key-dialog`, `start-screen`, `recent-projects`, `project-home`, `video-result`, `connect-panel`, `key-row`.
+`import-files/`, `missing-files/`, `package-project/`, `drop-import/` and `slot-view/` are mounted and draw nothing yet; their slices fill them (`spec/phases/phase-02-screens.md`).
+
+Components with their own CSS module: `app-shell`, `error-banner`, `key-dialog`, `start-screen`, `recent-projects`, `project-home`, `video-result`, `connect-panel`, `key-row`, `dialog-frame`, `render-root`.
 
 Why each helper sits where it does (who imports it):
 
@@ -262,5 +269,9 @@ Why each helper sits where it does (who imports it):
 | `result-text.ts` | three `dev/` components | plain file in `dev/` |
 | `asset-url.ts` | four campaign components | `ui/` (shared by several components) |
 | `secret-labels.ts` | `key-row.tsx` (settings), `key-dialog.tsx` (dialogs) | `ui/` |
+| `use-comfy-info.ts` | `video-length.ts`; later the panels' trial mark and the run row | plain file in `screens/campaign/` |
+| `comfy-privacy.ts` | `comfy-section.tsx`; later the address dialog | `ui/` |
+| `missing-item-text.ts` | `comfy-check-result.tsx`; later the run row | `ui/` |
+| `dropped-paths.ts` | the drop target (S2-10) | `ui/` (the one reader of `window.drop`) |
 
 `key-row`, `comfy-check-result`, `connect-panel`, `video-picture-choice`, `video-result` and `run-result` are each imported by one other component, but since another file imports them they get their own folders, as the stakeholder's tree does for `key-row` and `comfy-check-result`.

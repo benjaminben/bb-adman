@@ -2,7 +2,7 @@
 
 Where Adman keeps its data, the ID formats, and the project-level tables: `project_meta`, `subject`, `asset`, `job`, `report` and `variant_check`. The campaign, variant and layer tables are in `spec/data-model-campaign.md`. Read with `spec/data-rules.md` (links, sync, fan-out, data flow, migration, package, format change). The behaviour of `job` and `asset` rows is in `spec/jobs.md` and `spec/assets.md`.
 
-## Where data lives (was 3.1)
+## Where data lives
 
 Built (Phase 1 and 2). Main files: `src/main/db/project-file.ts`, `src/main/db/project-registry.ts`, `src/main/db/meta.ts`.
 
@@ -86,7 +86,7 @@ Each provider has its own folder under `src/main/providers/` with an `index.ts` 
 - The stored name is checked before any backup or migration (`project_meta` below).
 - The main process can hold any number of projects open at once. Two open projects may hold rows with the same ID (named test: two open projects with the same variant ID).
 
-## ID formats (was 3.2)
+## ID formats
 
 Built. Campaign IDs: `src/main/commands/campaign/ids.ts`.
 
@@ -99,7 +99,7 @@ Built. Campaign IDs: `src/main/commands/campaign/ids.ts`.
 
 **An ID never picks the project.** Subject, variant and campaign IDs are unique only inside one project file, so two open projects can hold the same ID. A copy of a project file made outside the app holds the same ULIDs too. Every command and query that works on a project therefore names the project with `projectId` (`spec/api-principles.md`). No code searches the open projects for an ID.
 
-## Tables (was 3.3)
+## Tables
 
 Built: every table below exists in the project file. The newest migration is `0002_job_started_by_and_error_reason` (`schema_version` 3). Drizzle schema: `src/main/db/schema/project.ts` (project_meta, subject, asset, campaign, campaign_subject, rule_set, direction), `variant.ts` (variant, variant_subject, layer, background_clip), `jobs.ts` (job, report, variant_check). Migrations: `src/main/db/migrations/`. This file defines the project-level tables; `campaign`, `campaign_subject`, `rule_set`, `direction`, `variant`, `variant_subject`, `layer` and `background_clip` are in `spec/data-model-campaign.md`.
 

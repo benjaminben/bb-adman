@@ -2,7 +2,7 @@
 
 How one variant is drawn: the Scene component, fonts, letter spacing, transparent pictures and the text overflow measurement; the hidden render window and the render service that draw a variant without showing it; and the thumbnails made from it. Read with `spec/data-model-campaign.md` (the layer values the Scene draws), `spec/editor.md` (the editor that shows the Scene), `spec/editor-commands.md` (the commands, queries and events named here) and `spec/security.md` (the render window rules). The reference-picture rule is in `spec/testing.md`.
 
-Everything in this file is Not built (Phase 3) unless marked. Phase 7 adds time and presets; Phase 8 uses the same Scene for export.
+Everything in this file is Built unless marked. Phase 7 adds time and presets; Phase 8 uses the same Scene for export.
 
 ## The Scene component
 
@@ -115,9 +115,9 @@ The box holds the copy as text content, never as HTML. A text layer whose style 
 
 - **Family names.** A font asset is registered as the family `adman-font-{assetId}`. The bundled font is `adman-default` (`DEFAULT_FONT_FAMILY`). These names have one owner, `font-faces.ts`.
 - **Registering.** `useSceneFonts(fonts)` takes the font assets the layers name that are present (in `assets`, not `missing`, of kind `font`) and registers one `FontFace` per asset and `version`, through the Font Loading API: `new FontFace('adman-font-{id}', 'url("{url}")', { weight: '1 1000', style: 'normal' })`, added to `document.fonts`, then `load()`ed. A newer `version` replaces the older face. The page policy already allows `font-src 'self' adman-asset:`.
-- **The asset scheme and fonts.** Not built (P3-6). The browser loads fonts under cross-origin rules, so a font loads from `adman-asset://` only when the scheme is registered with `corsEnabled: true`. Pictures are not affected. The rules that keep this safe and the accepted risk are in `spec/security.md`, "Rules: the asset protocol" (assumption A-53). Until P3-6 lands, an imported font does not load and its text falls back to the default font.
+- **The asset scheme and fonts.** Built. The browser loads fonts under cross-origin rules, so a font loads from `adman-asset://` only when the scheme is registered with `corsEnabled: true`, as it is. Pictures are not affected. The rules that keep this safe and the accepted risk are in `spec/security.md`, "Rules: the asset protocol" (assumption A-53).
 - **One file, every weight.** An uploaded font file is registered for every weight, and `font-synthesis: none` stops the browser from making a false bold. So a variable font follows the weight field, and a font file with one weight draws that weight whatever the field says. The properties panel says so (`spec/editor.md`).
-- **The bundled default font** is Inter 4.1, variable (weights 100 to 900), SIL Open Font Licence 1.1: `src/shared/scene/fonts/InterVariable.woff2` (352,240 bytes, SHA-256 `693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3`, from the font's official v4.1 release) with its licence text `OFL.txt` beside it. It is imported with Vite's `?url`, so it is built into the page and loaded from `'self'`. `registerDefaultFont()` registers it once, when the Scene module loads, with weight `100 900`. It is listed in `THIRD-PARTY-NOTICES.md` (Phase 11). It lives in `src/shared/scene/fonts/`, not in `resources/`. Still to prove (P3-6): the built render page holds the font as its own file.
+- **The bundled default font** is Inter 4.1, variable (weights 100 to 900), SIL Open Font Licence 1.1: `src/shared/scene/fonts/InterVariable.woff2` (352,240 bytes, SHA-256 `693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3`, from the font's official v4.1 release) with its licence text `OFL.txt` beside it. It is imported with Vite's `?url`, so it is built into the page and loaded from `'self'`. `registerDefaultFont()` registers it once, when the Scene module loads, with weight `100 900`. It is listed in `THIRD-PARTY-NOTICES.md` (Phase 11). It lives in `src/shared/scene/fonts/`, not in `resources/`. The built page holds the font as its own file (`tests/build/built-page.test.ts`).
 - **A font that fails** (file missing, not a font) still counts as settled; its text falls back to `adman-default`. The variant's `missingFile` badge counts fonts (`spec/api-queries-events.md`).
 
 ### Settling and the overflow measurement
@@ -153,7 +153,7 @@ Built (`src/main/assets/font-name.ts`, `inspect.ts`). Security class: the app re
 
 ## The render window
 
-Not built (Phase 3). Security class, full review. [Review item LP-1]
+Built. Security class.
 
 A hidden Electron window that draws one Scene at a time so the main process can take a picture of it. It is new attack surface: it shares the main process with the app window. Its rules are in `spec/security.md`, "Rules: the render window"; this section says how it works.
 
@@ -164,7 +164,7 @@ A hidden Electron window that draws one Scene at a time so the main process can 
 | `src/main/render/render-window.ts` | Makes the window, loads the page, applies the navigation rules, closes it | Yes |
 | `src/main/render/draw.ts` | `createDraw(): DrawScene`, the Electron side of a draw | Yes |
 | `src/main/render/render-page.ts` | `renderPageAddress(opts)`, pure: the page address, by the same rule as `pageAddress` | No (pure, but lives at the edge) |
-| `src/main/render/done-message.ts` | `acceptDone(event, expected)`, pure: checks a reply's sender and shape | No |
+| `src/main/render/done-message.ts` | `acceptDone(event, message, expected)`, pure: checks a reply's sender and shape | No |
 | `src/preload/render.ts` | The render window's bridge, `window.renderApi` | — |
 | `src/renderer/render.html` | The page. Built with the app page, so it carries the same content security policy | — |
 | `src/renderer/render-worker/` | `main.tsx` and `render-root/`: mounts the Scene and answers requests | — |
@@ -200,17 +200,22 @@ type SceneInput = {
 1. Make the window if there is none. Set its content size to `size` (whole numbers, 1 to `RENDER_LIMITS.maxDimension`).
 2. Send `RenderRequest = { requestId, input, width, height }` on `adman:render-request`. `requestId` is a new ULID.
 3. The page (`render-root`) builds each asset's address with `assetUrl(projectId, id)`, sets `version` to 0, draws `<Scene mode={input.mode}>` scaled by `width / input.variant.width` from its top-left corner, waits for `onSettled`, and sends `RenderDone = { requestId, overflow }` on `adman:render-done`.
-4. The main process takes the reply only through `acceptDone`: the sender must be the render window's own `webContents` and its main frame, the `requestId` must be the one it waits for, and the payload must pass the `RenderDone` schema. Overflow entries for IDs that are not text layers of the input are dropped. A reply that fails is ignored; the draw then times out.
+4. The main process takes the reply only through `acceptDone(event, message, expected)`: the sender must be the render window's own `webContents` and its main frame, the `requestId` must be the one it waits for, and the payload must pass the `RenderDone` schema. Overflow entries for IDs that are not text layers of the input are dropped. A reply that fails is ignored; the draw then times out.
 5. `capturePage()`. If the picture is not exactly `width` × `height`, it is resized to that size (`quality: 'best'`). Then `toPNG()`.
-6. Time limit `RENDER_LIMITS.timeMs` (10 seconds) from step 2 to step 5. On time-out the window is ended and the draw fails.
+6. Time limit `RENDER_LIMITS.timeMs` (10 seconds) from making or loading the window to the PNG. On time-out the window is ended and the draw fails. A window that stops answering is ended and the draw fails as `crashed`.
 
-**Checks.** On macOS with Electron 45: an offscreen hidden window captures exactly the asked size on a Retina screen, up to 2048 × 2048; `document.fonts`, `img.decode()` and `requestAnimationFrame` run in it with `backgroundThrottling: false`; `adman-asset://` pictures load. A font from `adman-asset://` does not load while the scheme has `corsEnabled: false`; the ruling is in "Fonts" above. Not built (P3-6): the scheme registered with `corsEnabled: true`, and the tests that a page `fetch()` of an asset address is refused in both windows and that an imported font loads in the Scene.
+**Checks.** On macOS with Electron 45: an offscreen hidden window captures exactly the asked size on a Retina screen, up to 2048 × 2048; `document.fonts`, `img.decode()` and `requestAnimationFrame` run in it with `backgroundThrottling: false`; `adman-asset://` pictures load; with `corsEnabled: true` an imported font loads in the Scene, and a page `fetch()` of an asset address is refused in both windows (`tests/e2e/asset-font.spec.ts`, `tests/e2e/render-window.spec.ts`).
+
+**Notes.**
+
+- The window is not created transparent, so an `overlay-only` draw may come out with an opaque background. The phase that needs transparent overlays (export or video) checks it.
+- `out/preload/render.cjs` carries zod, because it imports the channel names from `src/shared/schemas/render.ts`. It works; moving the names out is a tidy-up, not a fault.
 
 `RENDER_LIMITS = { timeMs: 10_000, maxDimension: 2048, thumbnailSide: 512 }` in `src/shared/config/render.ts`, the one owner. Export (Phase 8) draws at full size, up to 8,192 pixels a side; how it gets past 2,048 is Phase 8's to design.
 
 ## The render service
 
-Built. Files: `src/main/thumbnails/` (no Electron; core may import it). The real draw comes with the render window (P3-6); until then `drawScene` throws, so every thumbnail is `failed` and `variant.render` answers `render_failed`.
+Built. Files: `src/main/thumbnails/` (no Electron; core may import it). The draw is the render window's `createDraw()`.
 
 | File | Holds |
 |------|-------|

@@ -1,28 +1,30 @@
 # Screens: Phase 2 leftovers
 
-The screens, dialogs and components that Phase 2 still owes: ComfyUI failures and refusals on the campaign page, the commercial-licence dialog, import (by button and by dropping files), relink, package, the brief form, the slot view and the campaign grid. Read with `spec/screens.md` (rules for every screen, built screens, choices made without a design sign-off), `spec/structure.md` (one folder per component, one styling source) and `spec/api-commands.md` / `spec/api-queries-events.md` (the calls). The slices that build them are in `spec/phases/phase-02-screens.md` (S2-1 to S2-17).
+The screens, dialogs and components that Phase 2 still owes: ComfyUI failures and refusals on the campaign page, the commercial-licence dialog, import (by button and by dropping files), relink, package, the brief form, the slot view and the campaign grid. Read with `spec/screens.md` (rules for every screen, built screens, choices made without a design sign-off), `spec/structure.md` (one folder per component, one styling source) and `spec/api-commands.md` / `spec/api-queries-events.md` (the calls). The slices that build them are in `spec/phases/phase-02-screens.md` (S2-4 to S2-17).
 
-Everything here is Not built (Phase 2 leftovers). Each part names its slice.
+Everything here is Not built (Phase 2 leftovers) except where a part is marked Built (slices S2-1 to S2-3). Each part names its slice.
 
 ## Rules for these screens
 
 Every rule in `spec/screens.md`, "Rules for every screen", holds. In addition:
 
 - **Folders and styling.** Each component has its own folder with an `index.ts` and, when it has styles, its own CSS module. Every colour, space, radius, line width and type size comes from `src/renderer/ui/tokens.css`. No slice adds a token; if one is needed, the developer stops and reports. Components get their data through props or a store and do not reach into each other.
-- **Dialogs** use `src/renderer/ui/dialog-frame/` (S2-2): a Radix dialog with an overlay, a title, an optional description, and the content. Escape and a click outside close it, except while a command it sent is waiting (`closable` false). On close, focus goes back to the control that opened it; when that control is gone (a drop), focus goes to the page's heading.
+- **Dialogs** use `src/renderer/ui/dialog-frame/` (Built, S2-2): a Radix dialog with an overlay, a title, an optional description, and the content. Escape and a click outside close it, except while a command it sent is waiting (`closable` false). On close, focus goes back to the control that opened it; when that control is gone (a drop), focus goes to the page's heading.
 - **Refusals.** Every command goes through the app store's `command`, so a refusal also shows in the error banner. A dialog that sent the command shows the same message inside itself as well (role `alert`), because the banner is behind the dialog's overlay (A-50).
 - **Paths.** The renderer draws no path. It shows a file's base name (the text after the last `/` or `\`) as text. A path is sent only to: `asset.import` (from `dialog.pickFiles`, `dialog.pickFolder`, or a dropped file through the drop bridge), `asset.relink` (from `dialog.pickFiles` with `purpose: 'relink'`), `project.package` (from `dialog.pickFolder`) and `brief.parse` (from `dialog.pickFiles` with `purpose: 'brief'`).
 - **Counts in sentences** use the "(s)" form the built screens use ("{n} file(s)"), so no sentence needs a plural rule.
 
 ## Shared pieces (S2-1, S2-2)
 
-- **`src/shared/providers/messages.ts`** (S2-1) owns every sentence below that the main process or two screens use:
+Built.
+
+- **`src/shared/providers/messages.ts`** owns every sentence below that the main process or two screens use:
   - `checkMessage(outcome)`: the six Settings check sentences, with `{address}` left as a mark. `redirect_refused` has its Settings form: "The server tried to send Adman to another address. Adman did not follow." The run form in `reasonMessage` keeps "…, and the run was stopped." [F-12]
   - `fillMarks(text, { address?, n? })`: puts the address and the count into a sentence's `{address}` and `{n}` marks. A missing value leaves the mark's sentence readable: an unknown address becomes "the saved address".
   - `licenceNotConfirmedMessage(model)`: "{model} requires a commercial license. Confirm that you have one first." (the command's refusal, S2-4).
-- **`src/renderer/ui/missing-item-text.ts`** (S2-1): `missingItemText(item)` gives "Model {name}, in the folder {folder}" and the like (the text `comfy-check-result.tsx` builds today), for Settings and the run row.
-- **`src/renderer/ui/comfy-privacy.ts`** (S2-2): the ComfyUI privacy paragraph, moved out of `comfy-section.tsx` word for word. Shown in the Settings ComfyUI section and in the address dialog, nowhere else (A-42).
-- **`src/renderer/screens/campaign/use-comfy-info.ts`** (S2-2): the `useComfyInfo()` hook, moved out of `video-panel/video-length.ts` unchanged, for the video card, the panels' trial mark and the run row.
+- **`src/renderer/ui/missing-item-text.ts`**: `missingItemText(item)` gives "Model {name}, in the folder {folder}" and the like, for Settings and the run row.
+- **`src/renderer/ui/comfy-privacy.ts`**: the ComfyUI privacy paragraph, moved out of `comfy-section.tsx` word for word. Shown in the Settings ComfyUI section and in the address dialog, nowhere else (A-42).
+- **`src/renderer/screens/campaign/use-comfy-info.ts`**: the `useComfyInfo()` hook, for the video card, the panels' trial mark and the run row.
 
 ## Campaign page: ComfyUI failures in the run row (S2-5)
 
@@ -112,7 +114,9 @@ Component `src/renderer/screens/settings/licence-list/`, mounted inside `comfy-s
 
 ## Project home
 
-The layout after S2-2, top to bottom, inside today's page (heading, "Close project", file path):
+Built (S2-2): the sections, the mounts and the opening of a made campaign. The components in 3 to 5 draw nothing until their slices fill them.
+
+The layout, top to bottom, inside the page (heading, "Close project", file path):
 
 1. "Campaigns": the campaign list, as built.
 2. "Start a campaign": `brief-load/` ("Load a brief" and, from S2-13, "Type a brief"), and the brief form when one is open.
@@ -120,11 +124,11 @@ The layout after S2-2, top to bottom, inside today's page (heading, "Close proje
 4. "Package": `package-project/` ("Package project…").
 5. `drop-import/`: draws nothing until files are dragged over the window.
 
-Each of 3 to 5 is its own component in `src/renderer/screens/project-home/`, mounted by `project-home.tsx` with its final props in S2-2 and drawing nothing until its slice fills it. Props: `ImportFiles { projectId, subjects: SubjectRow[] }`, `MissingFiles { projectId, missingCount: number }`, `PackageProject { projectId }`, `DropImport { projectId, projectName, subjects: SubjectRow[] }`. `missingCount` is `project.get`'s `missingAssetCount`; it is current because the page reads `project.get` again on `project.changed`.
+Each of 3 to 5 is its own component in `src/renderer/screens/project-home/`, mounted by `project-home.tsx` with its final props and drawing nothing until its slice fills it. Props: `ImportFiles { projectId, subjects: SubjectRow[] }`, `MissingFiles { projectId, missingCount: number }`, `PackageProject { projectId }`, `DropImport { projectId, projectName, subjects: SubjectRow[] }`. `missingCount` is `project.get`'s `missingAssetCount`; it is current because the page reads `project.get` again on `project.changed`.
 
 While a campaign is open, the campaign page takes the place of sections 1 to 4, as today. `drop-import/` stays mounted.
 
-**After "Create campaign"** the new campaign opens (A-45): `BriefLoad` gets `onCreated(campaignId)` from the page, which opens that campaign. S2-2 adds the prop and the call.
+**After "Create campaign"** the new campaign opens (A-45): `BriefLoad` gets `onCreated(campaignId)` from the page, which opens that campaign.
 
 ## The import dialog (S2-9) [REQ: FR-050, FR-052, FR-053, FR-054, FR-246]
 
@@ -169,7 +173,7 @@ Component `src/renderer/dialogs/import-dialog/`. Props: `projectId`, `open`, `pa
 
 ## Importing by dropping files (S2-3, S2-10) [REQ: FR-246]
 
-**The drop bridge (S2-3, security class).** The sandboxed window cannot read a dropped file's path. The preload adds one more object beside `window.api`: `window.drop = { pathOf(file: File): string }`, which calls Electron's `webUtils.getPathForFile(file)` and returns its answer: the full path for a file or folder from the system, and `''` for a `File` the page made itself. Type `DropApi` in `src/shared/schemas/drop-api.ts`; `src/renderer/env.d.ts` declares it. The renderer reads it only through `src/renderer/ui/dropped-paths.ts`: `droppedPaths(files: FileList): string[]`, which leaves out empty answers. Nothing else changes in the preload or the main process; `asset.import` checks a dropped path exactly as a picked one (A-43).
+**The drop bridge (Built, S2-3, security class).** The sandboxed window cannot read a dropped file's path. The preload adds one more object beside `window.api`: `window.drop = { pathOf(file: File): string }`, which calls Electron's `webUtils.getPathForFile(file)` and returns its answer: the full path for a file or folder from the system, and `''` for a `File` the page made itself. Type `DropApi` in `src/shared/schemas/drop-api.ts`; `src/renderer/env.d.ts` declares it. The renderer reads it only through `src/renderer/ui/dropped-paths.ts`: `droppedPaths(files: FileList): string[]`, which leaves out empty answers. Nothing else changes in the preload or the main process; `asset.import` checks a dropped path exactly as a picked one (A-43).
 
 **The drop target (S2-10).** `src/renderer/screens/project-home/drop-import/`, mounted by the project page of the shown project.
 

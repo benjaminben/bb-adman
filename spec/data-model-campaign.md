@@ -2,7 +2,7 @@
 
 The tables a campaign is made of: `campaign`, `campaign_subject`, `rule_set`, `direction`, `variant`, `variant_subject`, `layer` and `background_clip`, with their stored JSON types and campaign sizes. Read with `spec/data-model.md` (where data lives, IDs, project-level tables, JSON column rules) and `spec/data-rules.md` (follow rules, sync, fan-out, format change).
 
-## Campaign tables (was 3.3)
+## Campaign tables
 
 Built: every table below exists in the project file, from migration `0000` (plus `variant.agent_changed_at` from `0001`). Drizzle schema: `src/main/db/schema/project.ts` (campaign, campaign_subject, rule_set, direction) and `src/main/db/schema/variant.ts` (variant, variant_subject, layer, background_clip). Timestamps, booleans and JSON columns follow the rules in `spec/data-model.md`, "Tables".
 

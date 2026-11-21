@@ -6,7 +6,7 @@ Read with: `spec/data-model.md` (the `job` table and its columns), `spec/cancel.
 
 [REQ: FR-124, FR-152, FR-210, FR-215 to FR-218, D-036]
 
-## The job record in use (was 3.3 `job`, 3.6 "Jobs")
+## The job record in use
 
 Built. Row schema: `src/shared/schemas/rows/job.ts`. Store: `src/main/jobs/job-store.ts`. Column definitions are in `spec/data-model.md`; this section says what each value means while the app runs.
 
@@ -92,7 +92,7 @@ imageJobResult = z.object({
 - It calls `generate` once per picture with `count: 1`, `PICTURES_AT_ONCE = 2` at a time, so each call is counted and one failure does not lose the others.
 - Every picture goes through `deps.toPng` whatever its `mime`. The PNG that comes back gets the generation details embedded (`spec/export-and-checks.md`, "Embedded generation details"), is written with `AssetService.writeManaged`, then added with the system command `asset.addGenerated`. Its asset ID goes into `result` and `jc.keep`.
 - A run where some calls fail ends `succeeded` with the pictures it got and the failures counted in `result.failures`. A run with none ends `failed`. No file is written for a failed picture.
-- The pre-filled prompt and its fixed "no text" ending are one pure function, `src/shared/generation/prompt.ts` (`spec/providers.md`).
+- The pre-filled prompt and its fixed "no text" ending are one pure function, `src/shared/generation/prompt.ts` (`spec/providers-adapters.md`, "Prompt and text rules").
 
 ### `video_generation`
 
@@ -125,7 +125,7 @@ videoJobResult = z.object({
 - **A row that already has a `remote_job_id` is only checked and fetched** (security class, cost). The handler never calls `start` for it: it calls `check`, fetches the result if there is one, and stores it. A remote ID the provider does not know ends the job `failed` with nothing kept. This covers any project file, packaged copies included, so a row the app did not make cannot start paid work.
 - A clip's asset row has `width` and `height` empty until Phase 7's FFmpeg step fills them; the job result holds them.
 
-## The runner (was 3.6 "Jobs" items 1 to 3)
+## The runner
 
 Built. `src/main/jobs/runner.ts` (`createJobRunner`), with `run-job.ts`, `live.ts`, `job-store.ts`, `progress.ts`, `start-up.ts`, `cancel.ts`, `close-jobs.ts`, `cancel-wait.ts`, `job-end.ts`, `job-error-log.ts`.
 
@@ -225,7 +225,7 @@ Built (`src/main/jobs/run-job.ts`). `paid_calls` gains one each time `jc.call` s
 
 A paid call is made only when a person presses a button (with the paid confirm, `spec/screens.md`), an agent with its tick on starts a run, or the project owner runs the live tests. Nothing in CI calls a real provider. Spending the user did not ask for is treated as in the threat scope (OI-63: not yet confirmed by the stakeholder); the rules on left-over video runs, own rows only, and closing projects stand either way.
 
-## Left-over runs on project open (was 3.6 "Jobs" item 6)
+## Left-over runs on project open
 
 Built. `src/main/jobs/start-up.ts`.
 

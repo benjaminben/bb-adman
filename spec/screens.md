@@ -12,7 +12,7 @@ Built (Phases 1 and 2). They are plain working screens, made so every function c
 | Start | Stays in substance; restyled by the UI pass |
 | Project home | Placeholder for the campaign list and brief intake of the UI pass |
 | Campaign page, Make pictures, Make a video, run list | Placeholder. The Phase 3 editor, the Phase 4 generation panel, run confirmation dialog and activity panel, and the Phase 5 grid replace them |
-| Settings | Stays as the Settings screen; sections are added (agent runs, cloud storage in Phase 9, reports name in Phase 8) and restyled |
+| Settings | Stays as the Settings screen (the agent runs block is built); sections are added (cloud storage in Phase 9, reports name in Phase 8) and restyled |
 | Key dialog | Stays (the `NEEDS_KEY` flow, FR-171) |
 | Hand test (dev) | Throwaway. Removed in Phase 9 with `dev.storage`, `{userData}/hand-test-local` handling and the `src/shared/config/dev-tools.ts` constants, once the publish dialog and storage settings screen exist |
 
@@ -26,7 +26,7 @@ Built. The reviewer checks these on every screen.
 - A provider that is not `available` is not offered for a run.
 - The ComfyUI address is drawn only in the Settings ComfyUI section and inside a failure sentence. It is sent in no input but `comfy.setAddress`. The window writes nothing to the console.
 - Text from a server or a file (server message, brief values, a file name, a display name) is drawn as text content, never as HTML, never as a link.
-- For pictures and other assets, the renderer draws no file path and reads no file. It sends a path only to `asset.import` (a path from the system picker, or from a file dropped on the window through the drop bridge, S2-3), `asset.relink` (from the relink picker) and `project.package` (from the folder picker); and a brief's path only to `brief.parse` (from the brief picker). Display names and a file's base name are drawn as text. (The project's own file path, the recent-project paths and the default location are shown on the start, project and Settings screens, and sent only to `project.open`, `project.create` and `settings.update`.)
+- For pictures and other assets, the renderer draws no file path and reads no file. It sends a path only to `asset.import` (a path from the system picker, or from a file dropped on the window through the drop bridge), `asset.relink` (from the relink picker) and `project.package` (from the folder picker); and a brief's path only to `brief.parse` (from the brief picker). Display names and a file's base name are drawn as text. (The project's own file path, the recent-project paths and the default location are shown on the start, project and Settings screens, and sent only to `project.open`, `project.create` and `settings.update`.)
 - No screen has a field for a key. Keys go through the key dialog or the Settings key rows only.
 - Every control has a label and can be reached and used by keyboard (`spec/testing.md`, accessibility rules). Each screen file stays under 200 lines.
 - `assetUrl` (`src/renderer/ui/asset-url.ts`) builds every `adman-asset://` address and escapes both parts with `encodeURIComponent`.
@@ -130,11 +130,11 @@ Built. `src/renderer/screens/settings/settings-screen/` and one component folder
 `comfy-section/`, `comfy-check-result/`.
 
 - Heading "ComfyUI server". "Saved address" shown in full, or "No address saved."
-- A fixed privacy paragraph beside the address field, shown whether or not an address is saved, word for word: "When ComfyUI makes a picture or a video, your brief text, prompts and reference pictures are sent to the server at this address. Whoever runs that server can see them." [REQ: REQUIREMENTS-ComfyUI.md 3.3]. A constant in `comfy-section.tsx`, not returned by `comfy.getInfo`. A test pins it with and without a saved address. Slice S2-2 moves the constant to `src/renderer/ui/comfy-privacy.ts`, its one owner, and S2-6 shows it in the address dialog too (A-42); nowhere else.
+- A fixed privacy paragraph beside the address field, shown whether or not an address is saved, word for word: "When ComfyUI makes a picture or a video, your brief text, prompts and reference pictures are sent to the server at this address. Whoever runs that server can see them." [REQ: REQUIREMENTS-ComfyUI.md 3.3]. A constant in `src/renderer/ui/comfy-privacy.ts`, its one owner, not returned by `comfy.getInfo`. A test pins it with and without a saved address. S2-6 shows it in the address dialog too (A-42); nowhere else.
 - "Server address" field with Save and Remove. Save sends `comfy.setAddress` with the typed text and contacts nothing; a refused address shows the command's own sentence under the field and keeps the old address. Remove sends `null`.
 - "Check" sends `comfy.check`; disabled with no address saved. "Checking…" while it runs.
 - Outcome `ok`: the server version and, per non-draft workflow, its label, status (`trial` shown as "trial"), its licence note as text when it has one, and "complete" or its missing items by name and folder. An `ok` with no workflows shows the version alone. Each other outcome (`no_answer`, `not_comfyui`, `sign_in_needed`, `redirect_refused`, `certificate`, `address_refused`) shows its sentence from `spec/comfyui.md` with the address filled in. Under "What Adman leaves on the server", the "left on the server" sentences.
-- `comfy-check-result.tsx` holds a local copy of the six check sentences, pinned by its tests. Slice S2-1 moves them to `src/shared/providers/messages.ts` (`checkMessage`), with the Settings form of `redirect_refused`: "The server tried to send Adman to another address. Adman did not follow."
+- `comfy-check-result.tsx` takes the six check sentences from `src/shared/providers/messages.ts` (`checkMessage`, `fillMarks`) and the missing-item text from `missingItemText`, with the Settings form of `redirect_refused`: "The server tried to send Adman to another address. Adman did not follow."
 - Not built (S2-8): the list "Licences you confirmed" with "Forget" (`spec/screens-campaign.md`).
 
 ### Agent access
@@ -220,6 +220,5 @@ Phases 1 and 2:
 - The reference picker and the video card's picture choice are separate lists of the same pictures, with separate choices.
 - The local-provider reference sentence (OI-77) and the "<Picture 1>" hint (OI-89) are provisional wording.
 - The Claude Code line uses the `--font-mono` token (a system monospace font list).
-- The check-result sentences are a local copy in `comfy-check-result.tsx` until S2-1.
 - The choices for the Phase 2 leftover screens are listed in `spec/screens-campaign.md`.
 - No crop preview for a first-frame picture.

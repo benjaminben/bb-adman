@@ -1,8 +1,8 @@
-# Queries and events (was 4.3, 4.4)
+# Queries and events
 
 Every query, the native pickers, the computed badges, every event, and the wire row form in which rows leave the main process. Read with `spec/api-principles.md` (actor, scope, errors). Table and column definitions are in `spec/data-model.md`. MCP tools that wrap queries are in `spec/mcp-and-agents.md`.
 
-## Queries (was 4.3)
+## Queries
 
 Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges one map per domain); query functions in `src/main/queries/`; input schemas and reply types in `src/shared/schemas/queries/`.
 
@@ -15,7 +15,7 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 | `campaign.get` | `CampaignGet` (below) | Built |
 | `variant.get` | `VariantGet = { variant, campaignId, layers, assets }` (`spec/editor-commands.md`). Phase 5 adds the out-of-date detail, Phase 6 the latest check result, Phase 7 the clips. | Built |
 | `thumbnail.get` | `ThumbnailGet`: `ready` with the PNG, `pending` or `failed`, for the variant's current `rev` (`spec/editor-commands.md`). User only. | Built |
-| `variant.render` | `VariantRender = { png, width, height, rev }`: the variant drawn now. Both actors (Phase 10's `render_variant`). | Built (draws from P3-6; until then answers `render_failed`) |
+| `variant.render` | `VariantRender = { png, width, height, rev }`: the variant drawn now. Both actors (Phase 10's `render_variant`). | Built |
 | `template.list` | `TemplateList = Template[]` | Built |
 | `template.slots` | `TemplateSlots = SlotState[]`, `SlotState = { slot, state: 'filled' \| 'empty', candidates: string[] }` (asset IDs), for the slots of the campaign's master [REQ: FR-042]. A picture slot is one whose `slot.type` is not `copy`. | Built |
 | `sync.preview` | `SyncPreview[]` for a direction (`spec/data-rules.md`, "Links, follow rules and sync") | Not built (Phase 5) |
@@ -187,7 +187,7 @@ export type CampaignSummary = Pick<
 - `variantCount` in `CampaignSummary` is the number of variants in all the campaign's directions.
 - **Contracts the window imports** (the window imports nothing from `src/main/`): `ProjectGet`, `CampaignSummary`, `CampaignGet`, `VariantSummary`, `VariantBadges` from `src/shared/schemas/queries/campaign.ts`; `BriefParsed` from `src/shared/schemas/commands/brief.ts`; `SubjectCreated` from `src/shared/schemas/commands/subject.ts`; `CampaignCreated` from `src/shared/schemas/commands/campaign-edit.ts`; `BriefDraft`, `Brief` from `src/shared/schemas/brief.ts`; `TemplateSlots` and `SlotState` from `src/shared/templates/types.ts`. The variant list reads `title`, `width`, `height`, `sizeLabel`, `language`, `format`, `isMaster`.
 
-## Events (was 4.4)
+## Events
 
 Built: `project.changed`, `app.stateChanged`, `job.updated`, `asset.changedOnDisk`. `EventMap` and `EVENT_NAMES` in `src/shared/schemas/events.ts`.
 
@@ -206,7 +206,7 @@ Built: `project.changed`, `app.stateChanged`, `job.updated`, `asset.changedOnDis
 - The event carries no data on purpose. `app.getState` stays the one source of that state, and no secret detail can leak through an event.
 - A command handler says it changes app state with one flag (`changesAppState`), and the bus emits the event after the command succeeds. Handlers do not emit it themselves. Built handlers with the flag: `project.create`, `project.open`, `project.close`, `settings.update`, `secret.set`, `secret.delete`, `mcp.setEnabled`, `mcp.regenerateToken`, `comfy.setAddress`.
 - An MCP port taken at start sets `ConnectInfo.problem`; it sends no new event.
-- Every event goes to the app window only, never to the render window (Not built, Phase 3, slice P3-6; until then it goes to every window, and there is only one). `src/main/index.ts` also hands each event to the render service (`spec/scene.md`). A window ignores a `project.changed` for a project it does not show.
+- Every event goes to the app window only, never to the render window. `src/main/index.ts` also hands each event to the render service (`spec/scene.md`). A window ignores a `project.changed` for a project it does not show.
 - Events go to windows only. No event is passed on to an agent. MCP replies are built from queries.
 - `job` rows are the one exception to "rows reach the window through `project.changed`": the job runner writes them and emits `job.updated` after every write to a job row (`spec/jobs.md`). An event for a project the window does not know yet may be dropped; the window reads `job.list` after an open.
 
