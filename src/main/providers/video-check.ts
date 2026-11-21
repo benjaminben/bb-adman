@@ -13,6 +13,7 @@ export const MP4_REFUSED = {
   noVideo: 'The MP4 file has no video track.',
   tooBig: 'The video is wider or taller than the app accepts.',
   tooLong: 'The video is longer than the app accepts.',
+  noFrames: 'The MP4 file has no video frames.',
 } as const
 
 export type Mp4Details = { width: number; height: number; durationMs: number; hasSound: boolean }
@@ -20,7 +21,18 @@ export type Mp4Details = { width: number; height: number; durationMs: number; ha
 const MAX_BOXES = 10_000
 const MAX_DEPTH = 8
 // The boxes whose contents are boxes, and so are walked into.
-const CONTAINERS = new Set(['moov', 'trak', 'mdia', 'minf', 'stbl', 'dinf', 'edts', 'udta'])
+const CONTAINERS = new Set([
+  'moov',
+  'trak',
+  'mdia',
+  'minf',
+  'stbl',
+  'dinf',
+  'edts',
+  'udta',
+  'moof',
+  'traf',
+])
 
 type Box = { type: string; start: number; end: number; children: Box[] }
 
@@ -96,6 +108,32 @@ function durationOf(view: DataView, moov: Box): number {
   return Math.round((duration * 1000) / timescale)
 }
 
+// MP4-1: the sample count of a video track's stsz (at 8), or for a fragmented file of a trun
+// (at 4) whose traf's tfhd names a video track's ID (tkhd at 12, or 20 for version 1).
+function trackId(view: DataView, track: Box): number {
+  const header = child(track, 'tkhd') ?? refuse(MP4_REFUSED.badBox)
+  return field(view, header, view.getUint8(header.start) === 1 ? 20 : 12, 4)
+}
+
+function stszCount(view: DataView, track: Box): number {
+  const media = child(track, 'mdia')
+  const info = media && child(media, 'minf')
+  const table = info && child(info, 'stbl')
+  const sizes = table && child(table, 'stsz')
+  return sizes ? field(view, sizes, 8, 4) : 0
+}
+
+function hasFrames(view: DataView, top: Box[], videos: Box[]): boolean {
+  if (videos.some((t) => stszCount(view, t) > 0)) return true
+  const ids = new Set(videos.map((t) => trackId(view, t)))
+  const fragments = top.filter((b) => b.type === 'moof').flatMap((m) => m.children)
+  return fragments.some((traf) => {
+    const header = child(traf, 'tfhd')
+    if (traf.type !== 'traf' || !header || !ids.has(field(view, header, 4, 4))) return false
+    return traf.children.some((b) => b.type === 'trun' && field(view, b, 4, 4) > 0)
+  })
+}
+
 export function checkMp4(bytes: Uint8Array): Mp4Details {
   if (bytes.byteLength > MAX_VIDEO_BYTES) refuse(MP4_REFUSED.tooLarge)
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
@@ -113,5 +151,6 @@ export function checkMp4(bytes: Uint8Array): Mp4Details {
   }
   const durationMs = durationOf(view, moov)
   if (durationMs > MAX_VIDEO_MS) refuse(MP4_REFUSED.tooLong)
+  if (!hasFrames(view, top, videos)) refuse(MP4_REFUSED.noFrames)
   return { ...first, durationMs, hasSound: handlers.includes('soun') }
 }

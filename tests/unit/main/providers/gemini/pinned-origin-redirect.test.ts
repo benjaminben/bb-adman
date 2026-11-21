@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  GEMINI_ORIGIN,
-  pinnedFetch,
-  REDIRECT_REFUSED,
-} from '@/main/providers/gemini/pinned-origin'
+import { GEMINI_ORIGIN, pinnedFetch, REDIRECT_REFUSED } from '@/main/providers/gemini/pinned-origin'
 import { ProviderFailure } from '@/main/providers/types'
 import { jsonResponse } from './recorded'
 
