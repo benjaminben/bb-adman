@@ -65,7 +65,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** in `tests/unit/main/providers/fake/`: `layout.test.ts` (headline and call-to-action boxes from the default layout; other items stacked inside the canvas; palette colour), `text.test.ts` (a Markdown brief with every label gives the expected draft; unknown lines ignored; copy options count and length), `cutout.test.ts` (output size equals input; colour type 6; a corner pixel alpha 0 and the centre 255, read with `node:zlib`), and the behaviour switches (`fail`, `waitMs`, `onCancel`) once per part.
 - **Class:** E. Not security class. **After:** P4-1.
 
-### P4-4 — Gemini: layout, extract brief, copy options
+### P4-4 — Gemini: layout, extract brief, copy options (built)
 
 - **Exists when done:** `adapterFor(deps, 'gemini', 'layout' | 'text')` returns working adapters; model IDs checked (OI-10); one live run of each feature made and reported.
 - **New files:** `src/main/providers/gemini/layout.ts`, `text.ts`, `json-call.ts`, `prompts.ts`; `tests/live/gemini-layout.live.test.ts`, `gemini-brief.live.test.ts`, `gemini-copy.live.test.ts`.
@@ -84,7 +84,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/integration/jobs/local-failure.test.ts`, one case per cause, each queued then broken before its turn (key removed; reference file deleted; replaced by a file over 32 MiB; replaced by a text file; assets folder removed; assets folder made read-only; `asset.addGenerated` refused through a stand-in bus): the row ends `failed`, kind `other`, the reason; `error_detail` is the reason name; no path, code or message of the error in the row, and in **every** log line the test's log holds (this closes the H4 O-3 gap in `review-leftovers.md`); another `AppError` gives no reason and `error_detail` `app_error`. `tests/unit/shared/providers/messages-local.test.ts` (each sentence with `{provider}` filled). `tests/unit/main/mcp/tools/agent-job-view.test.ts` gains the filled sentence. Approved edits: `tests/integration/generation/image-kind-errors.test.ts` (`error_detail` is now the reason name), the run-failure and run-row tests (import path only).
 - **Class:** B + E + D. Security class, short review. **After:** P4-1.
 
-### P4-6 — Firefly stub
+### P4-6 — Firefly stub (built)
 
 - **Exists when done:** `src/main/providers/firefly/` implements `ImageProvider` from Adobe's public documentation, tested on recorded examples, never called at run time; `adapterFor` refuses an unavailable provider.
 - **New files:** `src/main/providers/firefly/index.ts`, `image.ts`, `token.ts`, `pinned-origin.ts`.
@@ -93,7 +93,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/main/providers/firefly/` (`token.test.ts`: the token request's form and host; `image.test.ts`: the generate request and a recorded answer; `pinned-origin.test.ts`: each host refuses the other; `environment.test.ts`); `tests/unit/main/providers/adapters-available.test.ts` (`adapterFor` on `firefly` and on `fal-seedance` gives `INVALID_INPUT`; Gemini and the fake still resolve).
 - **Class:** E. Security class, short review. **After:** P4-1.
 
-### P4-7 — Layout job, the picture without text, `layer.updateMany`
+### P4-7 — Layout job, the picture without text, `layer.updateMany` (built)
 
 - **Exists when done:** `generation.proposeLayout` enqueues an attached job that sends the variant drawn without text and keeps clamped boxes; `layer.updateMany` applies many layer patches as one undo entry; `layoutPatches` turns a result into that command's input.
 - **New files:** the bodies of `src/main/commands/generation/propose-layout.ts`, `src/main/jobs/kinds/layout-proposal.ts`, `src/main/commands/layer/update-many.ts`; `src/shared/generation/layout-clamp.ts`, `layout-patches.ts`.
@@ -138,7 +138,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/integration/generation/cut-out.test.ts` (each refusal in order; a layer with no picture; ComfyUI with no address, no offered workflow (dev tools off) and with one (dev tools on); the source read in `prepare`; enqueued with the layer; the agent ticked is accepted; `licenceConfirmed: true` from the agent is ignored, so an unconfirmed licence still refuses); `cutout-kind.test.ts` (fake provider: one new asset, `gen_prompt` null, `gen_run_id` the job, details embedded with kind `cutout`, the source asset unchanged; a source deleted after enqueue gives `picture_missing`); `tests/integration/commands/job-retry-cutout.test.ts`; `tests/e2e/cutout-alpha.spec.ts` (in Electron, a fake cut-out run ends with a PNG of colour type 6, a corner pixel alpha 0 and the centre 255, read with `nativeImage`). `asset-add-generated.test.ts` gains the no-prompt case.
 - **Class:** B + G (the e2e file). Security class, short review. **After:** P4-3, P4-5, P4-9.
 
-### P4-12 — Run confirmation dialog and the paid count
+### P4-12 — Run confirmation dialog and the paid count (built)
 
 - **Exists when done:** one dialog confirms every Phase 4 run, with provider choice, count, what the run does and the campaign's paid count; the campaign overview shows the paid count.
 - **New files:** `src/renderer/dialogs/run-dialog/` (`run-dialog.tsx`, `provider-choice.tsx`, `run-summary.ts`); `src/renderer/ui/paid-count/`.
