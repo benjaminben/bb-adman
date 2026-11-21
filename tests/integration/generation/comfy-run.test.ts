@@ -99,6 +99,14 @@ describe('generation.runImages with comfyui against the stand-in [SPEC 14 CU-4]'
     expect(f.asset(assetId ?? '')).toMatchObject({ width: 4, height: 4 })
   }, 20_000)
 
+  it("the picture's asset row holds the shipped workflow's main model file name [SPEC 14 1.58 J-14]", async () => {
+    await ready()
+    const job = await finishedJob({}, moss.slots.outputNode)
+    const [assetId] = (job?.result as ImageJobResult).assetIds
+    expect(moss.model.mainFile).not.toBe('')
+    expect(f.asset(assetId ?? '')).toMatchObject({ genModel: moss.model.mainFile })
+  }, 20_000)
+
   it('holds the address in no row of the project file (the whole file is searched)', async () => {
     await ready()
     await finishedJob({}, moss.slots.outputNode)
