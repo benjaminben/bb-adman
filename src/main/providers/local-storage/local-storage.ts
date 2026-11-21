@@ -6,7 +6,6 @@ import fs from 'node:fs/promises'
 import nodePath from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
-import { createWriteStream } from 'node:fs'
 import type { ReadableStream as WebReadableStream } from 'node:stream/web'
 import type { StorageProvider } from '@/main/providers/types'
 import { notThere, onDisk } from './failure'
@@ -16,6 +15,39 @@ import { refusePath, storageFilePath, storageListPrefix } from '@/main/providers
 function isMissing(error: unknown): boolean {
   const code = (error as NodeJS.ErrnoException).code
   return code === 'ENOENT' || code === 'ENOTDIR'
+}
+
+// spec/phases/phase-08.md "The output folder" [A-194]: every write goes to {name}.partial and
+// is renamed to {name}, so a reader never sees half a file.
+const PARTIAL = '.partial'
+
+// A leftover .partial that is a regular file is removed; a link there is refused, so nothing
+// is written through it. Anything else stays and makes the `wx` open fail.
+async function clearLeftover(partial: string): Promise<void> {
+  const stats = await fs.lstat(partial).catch((error: unknown) => {
+    if (isMissing(error)) return null
+    throw error
+  })
+  if (stats?.isSymbolicLink()) refusePath()
+  if (stats?.isFile()) await fs.rm(partial)
+}
+
+// `file` was checked by fileFor: inside the real root and not a link. A failed write removes
+// the .partial it made and leaves any older file of the name whole.
+async function writeThroughPartial(file: string, data: ReadableStream | Uint8Array) {
+  const partial = `${file}${PARTIAL}`
+  await clearLeftover(partial)
+  const handle = await fs.open(partial, 'wx')
+  try {
+    if (data instanceof Uint8Array) await handle.writeFile(data)
+    else await pipeline(Readable.fromWeb(data as WebReadableStream), handle.createWriteStream())
+    await handle.close()
+    await fs.rename(partial, file)
+  } catch (error) {
+    await handle.close().catch(() => undefined)
+    await fs.rm(partial, { force: true })
+    throw error
+  }
 }
 
 export function localStorageAt(root: string): StorageProvider {
@@ -113,7 +145,7 @@ export function localStorageAt(root: string): StorageProvider {
     for (const entry of entries) {
       const child = `${relative}${entry.name}`
       if (entry.isDirectory()) await walk(nodePath.join(folder, entry.name), `${child}/`, found)
-      else if (entry.isFile()) found.push(child)
+      else if (entry.isFile() && !entry.name.endsWith(PARTIAL)) found.push(child)
     }
   }
 
@@ -141,11 +173,7 @@ export function localStorageAt(root: string): StorageProvider {
       onDisk(async () => {
         const file = await fileFor(path, true)
         if (file === null) throw notThere()
-        if (data instanceof Uint8Array) {
-          await fs.writeFile(file, data)
-          return
-        }
-        await pipeline(Readable.fromWeb(data as WebReadableStream), createWriteStream(file))
+        await writeThroughPartial(file, data)
       }),
 
     list: (prefix) =>
