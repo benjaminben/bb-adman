@@ -26,6 +26,8 @@ describe('runAsk: which refusal of which command opens which dialog [S2-6]', () 
     ['generation.runImages', LICENCE, { kind: 'licence', workflow: 'h3-text-to-video' }],
     ['generation.startVideo', LICENCE, { kind: 'licence', workflow: 'h3-text-to-video' }],
     ['job.retry', LICENCE, { kind: 'licence', workflow: 'h3-text-to-video' }],
+    ['generation.cutOut', ADDRESS, { kind: 'address' }],
+    ['generation.cutOut', LICENCE, { kind: 'licence', workflow: 'h3-text-to-video' }],
     ['comfy.check', ADDRESS, null],
     ['asset.import', LICENCE, null],
     ['generation.runImages', { ...ADDRESS, code: 'INVALID_INPUT' }, null],
@@ -95,6 +97,18 @@ describe('the app store asks and sends again [S2-6, FR-255, D-088]', () => {
     expect(fake.commands).toEqual([
       { name: 'generation.startVideo', input: VIDEO },
       { name: 'generation.startVideo', input: { ...VIDEO, licenceConfirmed: true } },
+    ])
+  })
+
+  it('sends the cut-out again with the flag after the licence is confirmed', async () => {
+    const CUT = { projectId: 'P1', variantId: 'V1', layerId: 'L1', provider: 'comfyui' }
+    const { fake, store } = await storeWith([{ ok: false, error: LICENCE }], 'generation.cutOut')
+    const done = store.getState().command('generation.cutOut', CUT)
+    ;(await whenAsked(store, 'licenceRequest')).resolve({ confirmed: true, remember: null })
+    expect((await done).ok).toBe(true)
+    expect(fake.commands).toEqual([
+      { name: 'generation.cutOut', input: CUT },
+      { name: 'generation.cutOut', input: { ...CUT, licenceConfirmed: true } },
     ])
   })
 

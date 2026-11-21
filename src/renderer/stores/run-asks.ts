@@ -1,5 +1,5 @@
 // S2-6 (spec/screens-campaign.md, "The address dialog" and "The commercial-licence dialog"):
-// which refusal of which command opens which dialog. Only the three run commands ask; every
+// which refusal of which command opens which dialog. Only the four run commands ask; every
 // other refusal, `comfy.check` included, goes to the error banner as before. Pure.
 import type { ErrorBody } from '@/shared/schemas/result'
 
@@ -7,6 +7,7 @@ const RUN_COMMANDS: readonly string[] = [
   'generation.runImages',
   'generation.startVideo',
   'job.retry',
+  'generation.cutOut',
 ]
 
 export type RunAsk = { kind: 'address' } | { kind: 'licence'; workflow: string }
