@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { projectScoped } from './project-scoped'
+import { MAX_COPY_OPTIONS } from '@/shared/config/copy-options'
 import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'
 import { referenceIds } from '@/shared/schemas/reference-ids'
 
@@ -47,3 +48,27 @@ export type GenerationStartVideoInput = z.infer<typeof generationStartVideoInput
 
 // The generate_video tool's input: the same, without licenceConfirmed.
 export const generationStartVideoAgentInput = startVideoFields
+
+// spec/ai-jobs.md "Commands, queries and agent rows" (Phase 4). Each requires provider, so an
+// agent never runs on the user's default. Unknown keys are dropped, so no workflow is named.
+export const generationProposeLayoutInput = projectScoped.extend({
+  variantId: z.string().min(1),
+  provider: z.string().min(1),
+})
+export type GenerationProposeLayoutInput = z.infer<typeof generationProposeLayoutInput>
+
+export const generationCopyOptionsInput = projectScoped.extend({
+  variantId: z.string().min(1),
+  layerId: z.string().min(1),
+  count: z.number().int().min(1).max(MAX_COPY_OPTIONS),
+  provider: z.string().min(1),
+})
+export type GenerationCopyOptionsInput = z.infer<typeof generationCopyOptionsInput>
+
+export const generationCutOutInput = projectScoped.extend({
+  variantId: z.string().min(1),
+  layerId: z.string().min(1),
+  provider: z.string().min(1),
+  licenceConfirmed,
+})
+export type GenerationCutOutInput = z.infer<typeof generationCutOutInput>

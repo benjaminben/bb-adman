@@ -86,7 +86,23 @@ export const layerReportOverflowInput = projectScoped
   .strict()
 export type LayerReportOverflowInput = z.infer<typeof layerReportOverflowInput>
 
+// spec/ai-jobs.md "Layout proposal": many layer.update patches of one variant as one undo
+// entry. Each item follows layer.update; the handler checks the layers.
+export const MAX_LAYER_UPDATES = 100
+export const layerUpdateManyInput = projectScoped
+  .extend({
+    variantId: z.string().min(1),
+    updates: z
+      .array(z.object({ layerId: z.string().min(1), patch: layerPatch }).strict())
+      .min(1)
+      .max(MAX_LAYER_UPDATES),
+  })
+  .strict()
+export type LayerUpdateManyInput = z.infer<typeof layerUpdateManyInput>
+
 // Replies.
 export type LayerReply = { layerId: string }
+// The layers that changed.
+export type LayerUpdateManyReply = { layerIds: string[] }
 export type LayerReorderReply = { variantId: string }
 export type LayerOverflowReply = { applied: boolean }
