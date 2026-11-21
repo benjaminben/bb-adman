@@ -77,6 +77,13 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny' | 'tick'> = {
   'agentRuns.setAllowed': 'deny',
   'agentRuns.setLimit': 'deny',
   'dev.comfyExtend': 'deny',
+  'approvals.setService': 'deny',
+  'approvals.check': 'deny',
+  'approvals.createLink': 'deny',
+  'approvals.setPassword': 'deny',
+  'approvals.publish': 'deny',
+  'approvals.refresh': 'deny',
+  'approvals.endLink': 'deny',
 }
 
 describe('agent policy table, SPEC 1.9 [SPEC 4.2, ADR-009, D-025]', () => {

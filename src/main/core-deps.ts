@@ -8,6 +8,7 @@ import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { AssetService } from './assets/types'
 import type { JobService } from './jobs/types'
 import type { RenderService } from './thumbnails/types'
+import type { ApprovalsDeps } from './approvals/types'
 
 export type CoreDeps = {
   projects: ProjectRegistry
@@ -33,6 +34,8 @@ export type CoreDeps = {
   // Slice WP: decodes a WebP in the hidden decoder window, PNG out; rejects when it cannot.
   // index.ts fills it.
   webpToPng: (bytes: Uint8Array) => Promise<Uint8Array>
+  // The kept passwords and the picture store of approval links (spec/approvals.md).
+  approvals: ApprovalsDeps
   appVersion: string
   now: () => Date
   userDataDir: string

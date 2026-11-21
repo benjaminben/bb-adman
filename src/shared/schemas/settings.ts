@@ -28,6 +28,8 @@ const storage = z.object({ s3: s3.nullable(), dropbox: dropbox.nullable() })
 // command: comfy.setAddress for the address (an origin, SPEC 6.10.1), agentRuns.setAllowed for
 // a provider's tick and agentRuns.setLimit for agentRunLimit (spec/agent-runs.md).
 const comfyui = z.object({ baseUrl: z.string().nullable() })
+// AP-5: written only by approvals.setService; an origin parseApprovalsAddress gave.
+const approvals = z.object({ baseUrl: z.string().nullable() })
 const agentRuns = z.record(z.string(), z.object({ allowed: z.boolean() }))
 export const agentRunLimit = z.number().int().min(AGENT_RUN_LIMIT_MIN).max(AGENT_RUN_LIMIT_MAX)
 // S2-4 [D-088]: the model labels the user confirmed a commercial licence for.
@@ -45,6 +47,7 @@ export const settingsSchema = z.object({
   agentRuns,
   agentRunLimit,
   licenceConfirmed,
+  approvals,
 })
 export type Settings = z.infer<typeof settingsSchema>
 export type RecentProject = z.infer<typeof recentProject>

@@ -9,6 +9,9 @@ import { bundledMigrations } from '@/main/db/bundled-migrations'
 import { AppError } from '@/shared/schemas/result'
 
 const SPEC_TABLES = [
+  'approval_link',
+  'approval_signoff',
+  'approval_variant',
   'asset',
   'background_clip',
   'campaign',

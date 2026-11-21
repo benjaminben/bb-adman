@@ -10,6 +10,7 @@ import {
 } from '@/shared/schemas/settings'
 import { AGENT_MAX_ACTIVE_RUNS } from '@/shared/config/agent-runs'
 import { parseComfyAddress } from '@/shared/comfy/address'
+import { parseApprovalsAddress } from '@/shared/approvals/address'
 import { comfyOwnPorts } from '@/main/providers/comfyui/own-ports'
 import { DEFAULT_MCP_PORT } from './defaults'
 
@@ -45,6 +46,16 @@ function readComfyAddress(merged: unknown): unknown {
   return { ...merged, comfyui: { ...merged.comfyui, baseUrl } }
 }
 
+// AP-5 (spec/approvals.md "Settings", security class): the same rule for approvals.baseUrl,
+// without the dev-tools exception, since the store does not know about dev tools.
+function readApprovalsAddress(merged: unknown): unknown {
+  if (!isObject(merged) || !isObject(merged.approvals)) return merged
+  const text = merged.approvals.baseUrl
+  const origin =
+    typeof text === 'string' ? parseApprovalsAddress(text, { allowLocalHttp: false }) : null
+  return { ...merged, approvals: { ...merged.approvals, baseUrl: origin } }
+}
+
 // AR-1: a limit in the file that is not a whole number in range loads as the default, so the
 // rest of the file is still read.
 function readAgentRunLimit(merged: unknown): unknown {
@@ -68,7 +79,9 @@ export function createSettingsStore(opts: { file: string; defaults: Settings }) 
     try {
       const raw: unknown = JSON.parse(fs.readFileSync(opts.file, 'utf8'))
       const parsed = settingsSchema.safeParse(
-        readLicenceConfirmed(readAgentRunLimit(readComfyAddress(merge(opts.defaults, raw)))),
+        readApprovalsAddress(
+          readLicenceConfirmed(readAgentRunLimit(readComfyAddress(merge(opts.defaults, raw)))),
+        ),
       )
       return parsed.success ? parsed.data : opts.defaults
     } catch {
@@ -94,6 +107,10 @@ export function createSettingsStore(opts: { file: string; defaults: Settings }) 
     // Called only by comfy.setAddress, with an origin parseComfyAddress gave, or null.
     setComfyAddress(origin: string | null): void {
       save({ ...current, comfyui: { baseUrl: origin } })
+    },
+    // Called only by approvals.setService, with an origin parseApprovalsAddress gave, or null.
+    setApprovalsAddress(origin: string | null): void {
+      save({ ...current, approvals: { baseUrl: origin } })
     },
     // Called only by agentRuns.setAllowed, with a provider ID from the registry.
     setAgentRunAllowed(provider: string, allowed: boolean): void {

@@ -20,5 +20,6 @@ export function defaultSettings(documentsDir: string): Settings {
     agentRuns: {},
     agentRunLimit: AGENT_MAX_ACTIVE_RUNS,
     licenceConfirmed: [],
+    approvals: { baseUrl: null },
   }
 }

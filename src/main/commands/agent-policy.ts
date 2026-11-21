@@ -85,6 +85,15 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'agentRuns.setAllowed': deny('change which runs agents may start'),
   'agentRuns.setLimit': deny('change agent run limits'),
   'dev.comfyExtend': deny('use the hand-test tools'),
+  // spec/approvals.md: approvals publish work outside the machine and hold other people's
+  // email addresses, so every command is deny.
+  'approvals.setService': deny('change the approvals service'),
+  'approvals.check': deny('check the approvals service'),
+  'approvals.createLink': deny('make approval links'),
+  'approvals.setPassword': deny('change approval link passwords'),
+  'approvals.publish': deny('update approval galleries'),
+  'approvals.refresh': deny('refresh approvals'),
+  'approvals.endLink': deny('turn off approval links'),
 }
 
 // The policy the bus applies. A tick row goes to the agent run gate (agent-run-gate.ts).
