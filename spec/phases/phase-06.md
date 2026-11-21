@@ -295,7 +295,7 @@ Each to be added to `spec/assumptions.md` under a "Phase 6" heading. All "Change
 - **A-161. Any copy edit un-approves.** `layer.update` on an approved translation sets it to `proposed`; undoing that edit restores the text but not the approval.
 - **A-162. The editor's Copy field on a translation sends `translation.set`.**
 - **A-163. Brief copy maps by slot** (headline, call to action), counts as `proposed`, source `brief`, and a job still runs for the language's other text layers.
-- **A-164. The sheet's format and its formula guard,** and that an existing file at the chosen path is replaced.
+- **A-164 (CSV agreed by the stakeholder). The sheet's format and its formula guard,** and that an existing file at the chosen path is replaced.
 - **A-165. `check.results` instead of a check field on `variant.get`.**
 - **A-166. `layer.setFonts`,** a new command for "this font for every post in this language", on the campaign's undo list, allowed for agents like `layer.update`. *Change later: easy (drop the command and the button).*
 - **A-167. The fake translation is `[{to}] {text}`.**

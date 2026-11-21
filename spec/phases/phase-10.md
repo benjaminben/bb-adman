@@ -16,7 +16,7 @@ The outline's 14, plus four for the Phase 4 commands (A-66, A-231): 18 new tools
 |------|-------|---------------|--------|----------|-----------|
 | `list_subjects` | query `subject.list` (new, A-235) | No; P10-1 registers it, P10-2 builds it | both actors | P10-2 | P10-1 |
 | `get_variant` | query `variant.get` | Yes | both actors | P10-2 | P10-1 |
-| `render_variant` | query `variant.render` | Yes, user only today | agent under A-234 | P10-3 | P10-1 |
+| `render_variant` | query `variant.render` | Yes, user only today | agent, complete picture (A-234) | P10-3 | P10-1 |
 | `create_layer` | `layer.create` | Yes | allow | P10-4 | P10-1 |
 | `update_layer` | `layer.update` | Yes | allow | P10-4 | P10-1 |
 | `update_layers` | `layer.updateMany` | Yes | allow | P10-4 | P10-1 |
@@ -132,7 +132,7 @@ Where the design is silent. The orchestrator folds these into `spec/mcp-and-agen
 
 **`get_check_results` (A-236).** Query `check.results { projectId, campaignId }`, both actors: per variant of the campaign, its latest stored check row and whether it is stale (`checkedRev < rev`). Fields picked from Phase 6's `VariantCheckRow`.
 
-**`render_variant` and linked pictures (A-234).** For the agent actor, `variant.render` draws a picture or clip asset only when it is `managed`, or `linked` with a real path (after following links) inside the folder that holds the project file. Any other picture layer is drawn as an empty picture layer. Fonts are always drawn. The user's own `variant.render` is unchanged. See Open questions.
+**`render_variant` and linked pictures (A-234).** Ruled by the stakeholder: the agent's picture is the complete ad, every layer drawn wherever its source file lives, the same picture the user sees. `variant.render` for the agent actor draws managed and linked assets alike and leaves nothing out. The limits that stay: the reply is the drawn PNG only (no path, file name or hash of any source), the size cap of `max_dimension`, and the asset rules already in force for linked files (a linked path is one the user chose through a picker or relink; a project file cannot make the app read a new path by itself, `spec/assets.md`). P10-3 tests that a linked picture outside the project folder is drawn for the agent and that no path reaches the reply or a log.
 
 **AI tool results (A-232).** `agentJobView` adds: `assetIds` for a `cutout` job (from `result.assetIds`, strings only); `layout: { boxes }` for a succeeded `layout_proposal` (each box's `slot, x, y, width, height, fontSize, align, color`, numbers and strings only); `copyOptions: string[]` for a succeeded `copy_options`. Nothing else of `result`.
 
@@ -150,7 +150,7 @@ Where the design is silent. The orchestrator folds these into `spec/mcp-and-agen
 | A-231 | Four tools beyond the 14: `propose_layout`, `copy_options`, `cut_out`, `update_layers`; 29 in all | Easy |
 | A-232 | An agent reads a layout's boxes, copy options and a cut-out's asset ID through `get_job` | Easy |
 | A-233 | Tool inputs and replies follow the built command schemas; `hide_text` dropped | Easy |
-| A-234 | `render_variant` leaves out linked pictures outside the project's folder | Medium |
+| A-234 | `render_variant` draws the complete ad for an agent, linked pictures outside the project's folder included (stakeholder ruling) | Settled |
 | A-235 | `list_subjects` wraps a new query `subject.list` | Easy |
 | A-236 | `get_check_results` wraps a query `check.results`, P10-12's unless Phase 6 builds it | Easy |
 | A-237 | One ask at a time; a second is refused `busy` | Easy |
@@ -169,7 +169,7 @@ Where the design is silent. The orchestrator folds these into `spec/mcp-and-agen
 
 ## Open questions
 
-1. **May an agent see pictures a project links from outside its folder?** (OI-92, U-2.) A project from someone else can link any picture the user can read; `render_variant` would send its pixels to the agent's AI service. *Recommendation:* leave them out (A-234). Undo is one condition in `agent-pictures.ts`.
+1. **May an agent see pictures a project links from outside its folder?** (OI-92, U-2.) Settled by the stakeholder: yes. The agent's rendered preview is the complete picture with every layer, wherever its source comes from (A-234).
 2. **Who builds `check.results`?** Phase 6 stores the checks and shows results on its screen. *Recommendation:* the Phase 6 architect builds `check.results { projectId, campaignId }` with the shape in A-236; P10-12 then only adds the tool. If Phase 6 does not, P10-12 builds it.
 3. **OI-25:** fall back, or require sizes and languages? *Recommendation:* fall back (A-246), as `spec/mcp-and-agents.md` already plans.
 4. **Translation by an agent** (`translation.propose`, Phase 6's open item) has no tool in this plan. If Phase 6 opens it, it is one more row in `translation-check-tools.ts`.

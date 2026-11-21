@@ -42,11 +42,11 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 
 ### P10-3 — `render_variant`
 
-- **Exists when done:** the agent gets one PNG of a variant drawn in memory, with linked pictures outside the project's folder left out (A-234); the user's `variant.render` is unchanged.
+- **Exists when done:** the agent gets one PNG of a variant drawn in memory, the complete ad with every layer, linked pictures outside the project's folder included (A-234, stakeholder ruling); the user's `variant.render` is unchanged.
 - **New files:** `src/main/thumbnails/agent-pictures.ts` (`agentMayDraw(project, asset): Promise<boolean>`); the row of `render-tool.ts` (`content: 'png'`, picker `pngOnly` taking `png` from `VariantRender`).
 - **May touch:** `src/main/queries/render.ts` (`variant.render` for the agent calls `deps.render.renderForAgent`); `src/main/thumbnails/types.ts` (`renderForAgent(project, variantId, maxDimension): Promise<VariantRender>`); `src/main/thumbnails/service.ts` and `scene-input.ts` (an option that drops the sources `agentMayDraw` refuses); `src/main/assets/path-resolver.ts` (one function `isInsideFolder(realPath, folder)`, the only place the path check is done); `BUILT_TOOLS`, the snapshot, `tool-plan.test.ts`.
 - **Needs:** P10-1.
-- **Agent reads:** the pixels of a variant whose pictures are managed or inside the project's folder. **Never:** a path, an `adman-asset://` address, a file outside the project's folder as pixels. **Agent changes:** nothing; no file written, no row, no event.
+- **Agent reads:** the pixels of the complete variant, every layer drawn, linked pictures included wherever they live (A-234, stakeholder ruling). **Never:** a path, a file name, a hash or an `adman-asset://` address of any source. **Agent changes:** nothing; no file written, no row, no event.
 - **Tests first:** the named test `tests/integration/mcp/render-variant-no-file.test.ts` (`spec/testing.md`, with a stand-in `drawScene` returning a fixed PNG; lists the four folders before and after; one `image/png` item; no path); `tests/unit/main/thumbnails/agent-pictures.test.ts` (table: managed yes; linked inside yes; linked outside no; a link inside that points outside no; a missing file no); `tests/integration/queries/variant-render-agent.test.ts` (the scene input given to the stand-in has no source for the outside picture, keeps the inside one and the font); `tests/e2e/render-variant-agent.spec.ts` (built app: the outside picture's area shows the background).
 - **Exit check:** class E + C (the reference-picture spec must still pass) + `npm run test:e2e -- tests/e2e/render-variant-agent.spec.ts`.
 - **Security:** full. **Size:** medium.
