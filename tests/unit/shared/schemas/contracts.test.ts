@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { Brief, BriefDraft } from '@/shared/schemas/brief'
-import { CampaignSize, campaignCreateInput } from '@/shared/schemas/commands/campaign'
+import {
+  CampaignSize,
+  campaignCreateInput,
+  campaignCreateToolInput,
+} from '@/shared/schemas/commands/campaign'
 import { TextStyle } from '@/shared/schemas/layer'
 import { READY_MADE_SIZES } from '@/shared/config/defaults'
 import { JOB_KIND_CLASSES, JOBS_AT_ONCE_PER_PROVIDER } from '@/shared/config/job-kinds'
@@ -72,6 +76,32 @@ describe('campaign.create input [SPEC 6.1]', () => {
     const ruleSet = { requiredAssetIds: [], palette: [], requiredWords: {}, prohibitedWords: {} }
     expect(
       campaignCreateInput.safeParse({ ...input, ruleSet, copyRuleSetFrom: 'c2' }).success,
+    ).toBe(false)
+  })
+
+  it.each([
+    { value: true, ok: true },
+    { value: false, ok: true },
+    { value: undefined, ok: true },
+    { value: 'false', ok: false },
+    { value: 0, ok: false },
+    { value: null, ok: false },
+  ])('placeSubjectPhoto $value is accepted: $ok [SP-6]', ({ value, ok }) => {
+    const parsed = campaignCreateInput.safeParse({ ...input, placeSubjectPhoto: value })
+    expect(parsed.success).toBe(ok)
+    if (parsed.success) expect(parsed.data.placeSubjectPhoto).toBe(value)
+  })
+
+  it('gives the MCP tool schema no placeSubjectPhoto, with the same refinements [SP-6, A-122]', () => {
+    expect(Object.keys(campaignCreateToolInput.shape)).not.toContain('placeSubjectPhoto')
+    expect(Object.keys(campaignCreateToolInput.shape)).toEqual(
+      Object.keys(campaignCreateInput.shape).filter((k) => k !== 'placeSubjectPhoto'),
+    )
+    expect(campaignCreateToolInput.safeParse(input).success).toBe(true)
+    expect(campaignCreateToolInput.safeParse({ ...input, subjectMap: [] }).success).toBe(false)
+    const ruleSet = { requiredAssetIds: [], palette: [], requiredWords: {}, prohibitedWords: {} }
+    expect(
+      campaignCreateToolInput.safeParse({ ...input, ruleSet, copyRuleSetFrom: 'c2' }).success,
     ).toBe(false)
   })
 })

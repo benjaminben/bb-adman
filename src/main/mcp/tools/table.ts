@@ -4,7 +4,7 @@
 // own Zod schema, with its top-level keys in snake_case (SPEC 4.5: project_id -> projectId).
 // Every reply goes through an allow-list picker (spec/mcp-and-agents.md, rules for every tool).
 import type { z } from 'zod'
-import { campaignCreateInput } from '@/shared/schemas/commands/campaign'
+import { campaignCreateToolInput } from '@/shared/schemas/commands/campaign'
 import { assetListInput } from '@/shared/schemas/queries/asset'
 import { campaignScopedInput, projectGetInput } from '@/shared/schemas/queries/campaign'
 import { jobGetInput, jobListInput } from '@/shared/schemas/queries/job'
@@ -80,7 +80,7 @@ export const MCP_TOOLS: readonly ToolDef[] = [
       'entry per brief subject. Gives the new campaign ID and its master variant ID.',
     kind: 'command',
     target: 'campaign.create',
-    input: campaignCreateInput,
+    input: campaignCreateToolInput,
   },
   {
     name: 'get_slots',

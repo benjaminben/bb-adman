@@ -31,15 +31,17 @@ function logoImage(db: Database.Database, requiredAssetIds: string[]): string | 
 
 // Fills are built from the template's own slots, so buildMasterLayers never meets a slot it
 // does not have (SPEC 14 [1.9]). The background stays empty until generated or chosen.
+// placeSubjectPhoto false leaves subject-image empty (spec/subject-photos.md, SP-6).
 export function slotFills(
   db: Database.Database,
   template: Template,
   brief: Brief,
   subjectIds: string[],
   ruleSet: RuleSetValues,
+  placeSubjectPhoto = true,
 ): SlotFills {
   const values: Record<string, SlotFills[string]> = {}
-  const hero = heroImage(db, subjectIds)
+  const hero = placeSubjectPhoto ? heroImage(db, subjectIds) : null
   const logo = logoImage(db, ruleSet.requiredAssetIds)
   if (hero) values['subject-image'] = { assetId: hero }
   if (logo) values.logo = { assetId: logo }
