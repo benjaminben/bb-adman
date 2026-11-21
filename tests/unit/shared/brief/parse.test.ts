@@ -176,9 +176,9 @@ describe('parseBrief: the limit is counted in UTF-8 bytes [SPEC 6.1 item 7, 14 P
   })
 })
 
-// SPEC 14 P3 [1.26] (slice B review, F5). Observed: yaml 2.9.1 stops at its own nesting
-// limit with an error, so YAML is unreadable; JSON.parse reads it and the BriefDraft schema
-// drops the copy field.
+// SPEC 14 P3 [1.26] (slice B review, F5), 6.1 item 9 [1.31]. The depth rule (at most
+// MAX_BRIEF_DEPTH levels, checked on the tokens before compose) refuses the YAML file;
+// JSON.parse reads it and the BriefDraft schema drops the copy field.
 describe('parseBrief: 10,000 nested lists under a key [SPEC 6.1, 14 P3]', () => {
   const deep = '['.repeat(10_000) + ']'.repeat(10_000)
 
