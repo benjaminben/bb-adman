@@ -1,5 +1,7 @@
 // A core with the hand-test tools on (createCore devTools: true), over temporary folders.
 // The app data folder is `userData`; `outside` is a folder beside it that no command may touch.
+// [1.21] M1: `localRoot` is the local hand-test root, {userData}/hand-test-local, made here so a
+// test can put a link in place of the hand-test folder inside it.
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -11,6 +13,7 @@ export type DevFixture = {
   root: string
   userData: string
   outside: string
+  localRoot: string
   handTestDir: string
   user: (name: string, input: unknown) => ReturnType<Core['bus']['execute']>
   agent: (name: string, input: unknown) => ReturnType<Core['bus']['execute']>
@@ -34,12 +37,15 @@ export function makeDevFixture(devTools = true): DevFixture {
     askPermission: async () => false,
     devTools,
   })
+  const localRoot = path.join(userData, 'hand-test-local')
+  fs.mkdirSync(localRoot, { recursive: true })
   return {
     core,
     root,
     userData,
     outside,
-    handTestDir: path.join(userData, 'adman-hand-test'),
+    localRoot,
+    handTestDir: path.join(localRoot, 'adman-hand-test'),
     user: (name, input) => core.bus.execute(name, input, { actor: 'user' }),
     agent: (name, input) => core.bus.execute(name, input, { actor: 'agent' }),
     readLogs: () => {

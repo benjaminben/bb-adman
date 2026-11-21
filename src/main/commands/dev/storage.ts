@@ -13,6 +13,7 @@ import { localStorageAt } from '../../providers/local-storage'
 import { requireProviderKeys } from '../../providers/require-keys'
 import { ProviderFailure, type StorageProvider } from '../../providers/types'
 import { listHandTest, removeHandTest, writeHandTest } from './hand-test-storage'
+import { checkLocalRoot, handTestLocalRoot } from './local-root'
 import { storageError, type StorageLabel } from './storage-error'
 
 type Target = DevStorageInput['storage']
@@ -26,10 +27,12 @@ function labelOf(deps: Deps, target: Target): StorageLabel {
   return { id: target, label: deps.providers.find((p) => p.id === target)?.label ?? target }
 }
 
-// The real storages: the app data folder for `local`, the provider's adapter otherwise.
+// The real storages: {userData}/hand-test-local for `local`, the provider's adapter otherwise.
 export function openHandTestStorage(deps: Deps): OpenStorage {
   return (target) =>
-    target === 'local' ? localStorageAt(deps.userDataDir) : adapterFor(deps, target, 'storage')
+    target === 'local'
+      ? localStorageAt(handTestLocalRoot(deps.userDataDir))
+      : adapterFor(deps, target, 'storage')
 }
 
 // The picked file's name and bytes. The path must be absolute and name a file.
@@ -65,6 +68,7 @@ export function devStorage(deps: Deps, open: OpenStorage = openHandTestStorage(d
         requireProviderKeys(deps, input.storage, 'use the hand-test tools')
       }
       try {
+        if (input.storage === 'local') await checkLocalRoot(handTestLocalRoot(deps.userDataDir))
         return { data: await act(() => open(input.storage), input) }
       } catch (error) {
         if (error instanceof ProviderFailure) {
