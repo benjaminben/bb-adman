@@ -2,8 +2,10 @@ import { afterEach, describe, it, expect, vi } from 'vitest'
 import { createApp } from '../src/app'
 import { cryptoBytes } from '../src/crypto/random'
 import {
+  emptyNotFound,
   notFound,
   pageHeaders,
+  pictureHeaders,
   pagePolicy,
   redirect,
   refused,
@@ -222,5 +224,43 @@ describe('the page policy and page set [approvals-gallery.md "The page policy an
     ['http', http, PAGE],
   ])('over %s is exactly the page set with that policy', (_, request, expected) => {
     expect(whole(pageHeaders(request, NONCE))).toEqual(expected)
+  })
+})
+
+describe('the 303 back to a variant [approvals-service-visitor.md "Visitor routes and logic"]', () => {
+  it.each([
+    ['a notice', { m: 'signed' as const, variant: 'abc234' }, '/l/aZ09aZ09aZ09?m=signed#v-abc234'],
+    ['no notice', { variant: 'zzzzzz' }, '/l/aZ09aZ09aZ09#v-zzzzzz'],
+  ])('ends the address with #v-{variant}, with %s', async (_, options, at) => {
+    const reply = redirect(https, 'aZ09aZ09aZ09', options)
+    expect(reply.status).toBe(303)
+    expect(whole(reply.headers)).toEqual({ ...TEXT, ...HSTS, location: at })
+  })
+
+  it.each(['', 'abc23', 'abc2345', 'ABC234', 'abc01i', 'abc23/', 'abc23#', 'a"c234'])(
+    'never builds a 303 with the variant %j, which is not a variant key',
+    (variant) => {
+      expect(() => redirect(https, 'aZ09aZ09aZ09', { m: 'signed', variant })).toThrow(TypeError)
+    },
+  )
+})
+
+describe('the picture set and its 404 [approvals-service-visitor.md "Pictures"]', () => {
+  it.each(['image/png', 'image/jpeg'] as const)('is exactly the spec set for %s', (type) => {
+    expect(whole(pictureHeaders(type))).toEqual({
+      'content-type': type,
+      'x-content-type-options': 'nosniff',
+      'cache-control': 'private, max-age=300',
+      'content-security-policy': "default-src 'none'; sandbox",
+      'cross-origin-resource-policy': 'same-origin',
+      'referrer-policy': 'no-referrer',
+    })
+  })
+
+  it('fails with a 404, an empty body and the plain text headers', async () => {
+    const reply = emptyNotFound(https)
+    expect(reply.status).toBe(404)
+    expect(whole(reply.headers)).toEqual({ ...TEXT, ...HSTS })
+    expect(await reply.text()).toBe('')
   })
 })

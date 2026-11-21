@@ -1,6 +1,6 @@
 // spec/approvals-service.md "Headers on replies from the catch-all" and spec/approvals-gallery.md
 // "The page policy and nonce". Each header set is fixed here, so one test can compare each whole.
-import { Slug } from '../contract'
+import { Slug, VariantKey } from '../contract'
 import { NOTICES, type NoticeKey } from './notices'
 
 // A plain text reply loads nothing at all.
@@ -64,16 +64,38 @@ export const notFound = (request: Request) => textReply(request, 'Not found.', 4
 // The 403 of "Forms that write".
 export const refused = (request: Request) => textReply(request, REFUSED, 403)
 
-export type RedirectOptions = { m?: NoticeKey; cookie?: string }
+// A picture reply (spec/approvals-service-visitor.md "Pictures"): the type comes from the sniff.
+export function pictureHeaders(type: 'image/png' | 'image/jpeg'): Headers {
+  return new Headers({
+    'Content-Type': type,
+    'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': 'private, max-age=300',
+    'Content-Security-Policy': "default-src 'none'; sandbox",
+    'Cross-Origin-Resource-Policy': 'same-origin',
+    'Referrer-Policy': 'no-referrer',
+  })
+}
+
+// Every failure of the picture route: nothing in the body to tell one cause from another.
+export const emptyNotFound = (request: Request) =>
+  new Response(null, { status: 404, headers: textHeaders(request) })
+
+export type RedirectOptions = { m?: NoticeKey; cookie?: string; variant?: string }
 
 // Every redirect is a 303 back to the page of the same link. The address is built here from the
-// slug, which must have the checked shape, and a notice key; never from request text.
+// slug, which must have the checked shape, a notice key and a variant key of the checked shape;
+// never from request text.
 export function redirect(request: Request, slug: string, options: RedirectOptions = {}): Response {
   if (!Slug.safeParse(slug).success) throw new TypeError('unchecked slug')
-  const { m } = options
+  const { m, variant } = options
   if (m !== undefined && !Object.hasOwn(NOTICES, m)) throw new TypeError('unknown notice')
+  if (variant !== undefined && !VariantKey.safeParse(variant).success) {
+    throw new TypeError('unchecked variant')
+  }
+  const query = m === undefined ? '' : `?m=${m}`
+  const anchor = variant === undefined ? '' : `#v-${variant}`
   const headers = textHeaders(request)
-  headers.set('Location', `/l/${slug}${m === undefined ? '' : `?m=${m}`}`)
+  headers.set('Location', `/l/${slug}${query}${anchor}`)
   if (options.cookie !== undefined) headers.set('Set-Cookie', options.cookie)
   return new Response(null, { status: 303, headers })
 }
