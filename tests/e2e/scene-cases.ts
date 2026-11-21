@@ -1,5 +1,7 @@
 // spec/testing.md "Reference pictures", Phase 3 cases: the test pictures, made from fixed
 // pixel values, and one row per case. Every case is a 400 by 400 variant drawn at 400.
+import { LOOK_CASES } from './scene-cases-look'
+
 export const SIDE = 400
 
 type Rgba = [number, number, number, number]
@@ -234,6 +236,8 @@ export const CASES: SceneCase[] = [
       }),
     ],
   },
+  // LK-3, spec/scene.md "Background colour and shade".
+  ...LOOK_CASES,
   {
     name: 'overlay-only',
     title: 'overlay-only mode is transparent where only the background was',
