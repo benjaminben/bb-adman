@@ -7,6 +7,7 @@ import { defineCommand, type ProjectContext } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { readWireRow } from '@/main/db/rows'
+import { masterOf } from '@/main/links/master-of'
 import { requireProviderKeys } from '@/main/providers/require-keys'
 import { checkComfyExtend } from './comfy-checks'
 import { FILL_PROMPT, promptToSend } from '@/shared/generation/prompt'
@@ -62,7 +63,8 @@ function covers(box: Geometry, variant: Variant): boolean {
   )
 }
 
-// Step 1: the variant, its background layer and the four refusals of A-132, in order.
+// Step 1: the variant (not its direction's master: a fill is placed only on the sizes made
+// from it), its background layer and the four refusals of A-132, in order.
 function target(project: ProjectHandle, input: GenerationRunFillInput): Target {
   const variant = readWireRow(project.db, 'variant', { id: input.variantId }) as Variant | null
   const direction =
@@ -71,6 +73,12 @@ function target(project: ProjectHandle, input: GenerationRunFillInput): Target {
       campaignId: string
     } | null)
   if (!variant || !direction) throw new AppError('NOT_FOUND', 'That variant was not found.')
+  if (masterOf(project.db, variant.directionId)?.variant.id === variant.id) {
+    throw refuse(
+      'master_variant',
+      'A fill is made for a size made from the master, not for the master itself.',
+    )
+  }
   const layer = background(project, variant.id)
   const box = layer.geometry
   if (!layer.source) {
