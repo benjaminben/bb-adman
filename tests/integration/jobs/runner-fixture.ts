@@ -57,7 +57,12 @@ const enqueueInput = z.object({
 })
 
 export function makeRunnerFixture(
-  opts: { cancelWaitMs?: number; closeWaitMs?: number; jobsAtOnce?: number } = {},
+  opts: {
+    cancelWaitMs?: number
+    closeWaitMs?: number
+    jobsAtOnce?: number
+    secrets?: Record<string, string>
+  } = {},
 ) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-jobs-'))
   const logDir = path.join(dir, 'logs')
@@ -77,7 +82,7 @@ export function makeRunnerFixture(
     calls: 0,
   }
   const undo = createUndoLists()
-  const secrets = { get: (_name: string): string | undefined => undefined }
+  const secrets = { get: (name: string): string | undefined => opts.secrets?.[name] }
   const now = () => new Date()
   const deps = { projects, providers, log, now, undo, secrets } as unknown as CoreDeps
   const run = (jc: JobRunContext, job: JobRow) => {
