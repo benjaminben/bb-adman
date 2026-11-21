@@ -67,10 +67,20 @@ function toWire(table: TableName, stored: Record<string, unknown>): WireRow {
     const value = stored[sqlName] ?? null
     if (value === null) row[field] = null
     else if (FLAGS.has(field)) row[field] = value === 1
-    else if (json.has(field)) row[field] = JSON.parse(String(value)) as unknown
+    else if (json.has(field)) row[field] = parsedJson(table, field, value)
     else row[field] = value
   }
   return checked(table, row)
+}
+
+// SPEC 4.4, C4-7: a parse error can quote the stored text, so it is replaced by one that
+// names the table and field only, with no cause.
+function parsedJson(table: TableName, field: string, value: unknown): unknown {
+  try {
+    return JSON.parse(String(value)) as unknown
+  } catch {
+    throw new Error(`${table}.${field} is not valid JSON`)
+  }
 }
 
 // SPEC 4.4: a row that fails its table's schema throws. The error names the table and the
