@@ -2,9 +2,13 @@
 // picture routes are stubs answering "Not found." until AP-4 gives them bodies.
 import type { Parts } from '../app'
 import type { Env } from '../env'
-import { pageReply, stylesheetHeaders, textHeaders } from './headers'
+import { readForm, refused } from './forms'
+import { galleryPage } from './gallery-page'
+import { pageReply, redirect, stylesheetHeaders, textHeaders } from './headers'
 import { passwordPage } from './password-page'
+import { clearedCookie, endSession, readSession, startSession } from './session'
 import { STYLES } from './styles'
+import { tryPassword } from './throttle'
 
 export type VisitorContext = {
   request: Request
@@ -14,7 +18,7 @@ export type VisitorContext = {
   params: string[]
 }
 
-type VisitorHandler = (ctx: VisitorContext) => Promise<Response>
+export type VisitorHandler = (ctx: VisitorContext) => Promise<Response>
 
 export type VisitorRoute = {
   name: string
@@ -44,8 +48,35 @@ function failed(request: Request): Response {
 
 const stub: VisitorHandler = async () => notFound()
 
-const gallery: VisitorHandler = async ({ request, params }) =>
-  pageReply(request, passwordPage(params[0] ?? '', false))
+// Every page and form takes the link from the path's slug and its session, never from a field.
+const gallery: VisitorHandler = async ({ request, env, parts, params }) => {
+  const slug = params[0] ?? ''
+  const { session } = await readSession(env.DB, request, slug, parts.now())
+  if (session === null) return pageReply(request, passwordPage(slug, false))
+  return pageReply(request, galleryPage(session.link))
+}
+
+// Wrong password, unknown slug and too many tries all get this one reply.
+const enter: VisitorHandler = async ({ request, env, parts, params }) => {
+  const slug = params[0] ?? ''
+  const fields = await readForm(request)
+  if (fields === null) return refused(request)
+  const password = fields.get('password') ?? ''
+  const linkId = await tryPassword(env.DB, slug, password, parts.now())
+  if (linkId === null) return pageReply(request, passwordPage(slug, true))
+  const cookie = await startSession(env.DB, linkId, slug, parts)
+  return redirect(request, `/l/${slug}`, cookie)
+}
+
+const leave: VisitorHandler = async ({ request, env, parts, params }) => {
+  const slug = params[0] ?? ''
+  const fields = await readForm(request)
+  if (fields === null) return refused(request)
+  const { session } = await readSession(env.DB, request, slug, parts.now())
+  if (session === null) return refused(request)
+  await endSession(env.DB, session)
+  return redirect(request, `/l/${slug}`, clearedCookie(slug))
+}
 
 const stylesheet: VisitorHandler = async () =>
   new Response(STYLES, { headers: stylesheetHeaders() })
@@ -58,7 +89,7 @@ const VARIANT = '([23456789abcdefghjkmnpqrstuvwxyz]{6})'
 
 export const VISITOR_ROUTES: VisitorRoute[] = [
   { name: 'gallery', method: 'GET', path: new RegExp(`^/l/${SLUG}$`), handler: gallery },
-  { name: 'enter', method: 'POST', path: new RegExp(`^/l/${SLUG}/enter$`), handler: stub },
+  { name: 'enter', method: 'POST', path: new RegExp(`^/l/${SLUG}/enter$`), handler: enter },
   { name: 'sign-off', method: 'POST', path: new RegExp(`^/l/${SLUG}/signoffs$`), handler: stub },
   {
     name: 'remove-sign-off',
@@ -66,7 +97,7 @@ export const VISITOR_ROUTES: VisitorRoute[] = [
     path: new RegExp(`^/l/${SLUG}/signoffs/([0-9A-Za-z]{24})/remove$`),
     handler: stub,
   },
-  { name: 'leave', method: 'POST', path: new RegExp(`^/l/${SLUG}/leave$`), handler: stub },
+  { name: 'leave', method: 'POST', path: new RegExp(`^/l/${SLUG}/leave$`), handler: leave },
   {
     name: 'picture',
     method: 'GET',
