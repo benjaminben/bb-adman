@@ -1,5 +1,6 @@
 // spec/editor.md, "Properties panel", Picture [REQ: FR-094], for image and background layers:
 // the picture, "Choose picture…" (the picture chooser), "Remove picture" (source null),
+// "Crop…" (crop mode on the canvas), "Reset crop" (crop null, shown when a crop is set),
 // "Opacity", and for the background only "Fill the canvas" and "Fit inside". Each change is one
 // layer.update, so one undo step. A locked layer's fields are shown but disabled.
 import { useState } from 'react'
@@ -20,6 +21,8 @@ export type PictureFieldsProps = {
   canvas: Size | null
   // Resolves to the refusal message, or null when the change was saved.
   onUpdate: (patch: LayerPatch) => Promise<string | null>
+  // Starts crop mode; without it "Crop…" is disabled.
+  onCrop?: () => void
 }
 
 const known = (w: number | null | undefined, h: number | null | undefined): Size | null =>
@@ -61,7 +64,22 @@ export function PictureFields(props: PictureFieldsProps) {
         >
           Remove picture
         </button>
-        {/* "Crop…" and, when a crop is set, "Reset crop" go here (P3-15, spec/editor.md "Crop mode"). */}
+        <button
+          type="button"
+          disabled={disabled || assetId === null || !props.onCrop || asset?.missing === true}
+          onClick={props.onCrop}
+        >
+          Crop…
+        </button>
+        {layer.geometry.crop && (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => void send({ geometry: { crop: null } })}
+          >
+            Reset crop
+          </button>
+        )}
       </div>
       <OpacityField
         opacity={opacity}

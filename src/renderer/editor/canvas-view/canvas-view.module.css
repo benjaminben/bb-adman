@@ -19,6 +19,10 @@
   margin: auto;
   overflow: hidden;
 }
+/* Crop mode shows the whole picture, which may reach past the canvas. */
+.cropping {
+  overflow: visible;
+}
 .stage {
   transform-origin: 0 0;
 }

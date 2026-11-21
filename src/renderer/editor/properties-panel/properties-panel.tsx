@@ -26,6 +26,8 @@ export type PropertiesPanelProps = {
   // The variant's assets by ID and its size, for the Picture section. The editor passes both.
   assets?: Readonly<Record<string, PictureAsset>>
   canvas?: { width: number; height: number }
+  // Starts crop mode on the canvas for the layer; the editor passes it.
+  onCrop?: (layerId: string) => void
 }
 
 type SectionsProps = PropertiesPanelProps & { layer: LayerRow; palette: string[] }
@@ -63,6 +65,7 @@ function Sections(props: SectionsProps) {
           asset={(layer.source && props.assets?.[layer.source.assetId]) ?? null}
           canvas={props.canvas ?? null}
           onUpdate={actions.update}
+          onCrop={props.onCrop && (() => props.onCrop?.(layer.id))}
         />
       )}
       <GeometryFields geometry={layer.geometry} disabled={layer.locked} onUpdate={actions.update} />

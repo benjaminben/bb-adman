@@ -60,6 +60,7 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
   const root = useRef<HTMLDivElement>(null)
   const [selectedId, setSelectedId] = useState<string | null>(view?.selectedLayerId ?? null)
   const [zoom, setZoom] = useState<Zoom>(view?.zoom ?? 'fit')
+  const [cropId, setCropId] = useState<string | null>(null)
   useEffect(() => onView?.({ selectedLayerId: selectedId, zoom }), [onView, selectedId, zoom])
 
   useEffect(() => {
@@ -126,6 +127,8 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
                 selectedId={selected?.id ?? null}
                 onSelect={setSelectedId}
                 onSettled={onSettled}
+                cropId={cropId}
+                onCrop={setCropId}
               />
               <PropertiesPanel
                 projectId={projectId}
@@ -134,6 +137,7 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
                 layers={Object.values(layers)}
                 assets={forRows}
                 canvas={variant}
+                onCrop={setCropId}
               />
             </div>
           </>
