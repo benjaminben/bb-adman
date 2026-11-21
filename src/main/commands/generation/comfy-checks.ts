@@ -62,3 +62,16 @@ export function checkComfyCutout(
   checkLicence(deps, ctx, spec, licenceConfirmed)
   return spec
 }
+
+// spec/links-and-sync.md "Generative fill" step 2: the fill's ComfyUI checks (the extend
+// workflow; none while moss-extend is a draft), the licence check last. Used by
+// generation.runFill and by job.retry of a ComfyUI fill. Nothing is sent to the server here.
+export function checkComfyExtend(
+  deps: Deps,
+  ctx: Pick<ProjectContext, 'actor'>,
+  licenceConfirmed: boolean | undefined,
+): WorkflowSpec {
+  const spec = offeredFor(deps, ctx, 'extend')
+  checkLicence(deps, ctx, spec, licenceConfirmed)
+  return spec
+}

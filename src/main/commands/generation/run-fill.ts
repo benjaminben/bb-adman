@@ -7,11 +7,9 @@ import { defineCommand, type ProjectContext } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { readWireRow } from '@/main/db/rows'
-import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'
 import { requireProviderKeys } from '@/main/providers/require-keys'
-import { checkLicence } from './licence-check'
+import { checkComfyExtend } from './comfy-checks'
 import { FILL_PROMPT, promptToSend } from '@/shared/generation/prompt'
-import { COMFY_JOB_NOT_OFFERED_MESSAGE, reasonMessage } from '@/shared/providers/messages'
 import {
   generationRunFillInput,
   type GenerationRunFillInput,
@@ -97,21 +95,6 @@ function target(project: ProjectHandle, input: GenerationRunFillInput): Target {
   return { campaignId: direction.campaignId, layerId: layer.id, request }
 }
 
-// Step 2 for ComfyUI: the address, the offered extend workflow (none while moss-extend is a
-// draft), then the licence. Nothing is sent to the server here.
-function checkComfyFill(
-  deps: Deps,
-  ctx: Pick<ProjectContext, 'actor'>,
-  input: GenerationRunFillInput,
-): void {
-  if (deps.settings.get().comfyui.baseUrl === null) {
-    throw refuse('comfy_address_needed', reasonMessage('address_needed'))
-  }
-  const spec = offeredWorkflow({ job: 'extend' }, { devTools: deps.devTools, actor: ctx.actor })
-  if (!spec) throw refuse('comfy_job_not_offered', COMFY_JOB_NOT_OFFERED_MESSAGE)
-  checkLicence(deps, ctx, spec, input.licenceConfirmed)
-}
-
 function enqueue(deps: Deps, ctx: ProjectContext, input: GenerationRunFillInput) {
   const place = target(ctx.project, input)
   const provider = pictureProvider(deps, input.provider)
@@ -138,7 +121,7 @@ export function generationRunFill(deps: Deps) {
       const place = target(ctx.project, input)
       const provider = pictureProvider(deps, input.provider)
       requireProviderKeys(deps, provider.id, PURPOSE)
-      if (provider.id === 'comfyui') checkComfyFill(deps, ctx, input)
+      if (provider.id === 'comfyui') checkComfyExtend(deps, ctx, input.licenceConfirmed)
       await deps.assets.read(ctx.project, place.request.sourceAssetId)
     },
     run(ctx, input) {
