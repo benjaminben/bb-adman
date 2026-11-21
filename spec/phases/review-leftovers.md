@@ -39,6 +39,7 @@ Heaviest first.
 - Files: `src/main/commands/job/retry.ts:44-54` (sends `old.request` as is); `src/renderer/screens/campaign/run-row.tsx` (the paid confirm line).
 - What is wrong: a cancelled picture job may already have kept some pictures (its result lists their asset IDs). `job.retry` copies the stored request, so the full `count` is asked and paid for again.
 - Done when: for an `image_generation` row that kept pictures, retry asks only for the pictures not yet made (`count` minus kept, at least 1), and the confirm line shows that number. A failed row with no kept pictures is unchanged. Integration test: a cancelled job with `count: 4` and two kept asset IDs; retry makes a new queued job whose request has `count: 2`. A renderer test checks the confirm line shows 2.
+- Built in two parts: the command and its integration test first (main process), then the confirm line in the run row with its renderer test, after the move to one folder per component (it edits `run-row`).
 - Security class: no. Wastes paid calls.
 
 ### FN-5. Playwright watch mode can re-run a paid case on each file save

@@ -101,7 +101,7 @@ project-root/
 └── config files                   # package.json, tsconfig.json, eslint.config.js, electron.vite.config.ts,
                                    #   electron-builder.json, drizzle.config.ts, playwright.config.ts,
                                    #   playwright.real.config.ts, vitest.config.ts, vitest.build.config.ts,
-                                   #   vitest.comfy.config.ts, vitest.live.config.ts; path-alias.config.ts (not built)
+                                   #   vitest.comfy.config.ts, vitest.live.config.ts; path-alias.config.ts
 ```
 
 ## Module rules
@@ -172,9 +172,11 @@ Not built (Phase 11). [REQ: FR-180]: what the app is; download and first-launch 
 
 ## Renderer component layout
 
-Not built. This is the target, decided by the stakeholder [D-069, D-072, D-073]. **`src/renderer/` does not follow it yet.** On `main` the renderer is flat (`screens/campaign/generate-panel.tsx`), uses relative imports (`../../app/app-context`), shares `screens/screens.module.css`, and keeps the key dialog in `dialogs/key/`. There is no `@/` alias, no `path-alias.config.ts`, no `paths` in `tsconfig.json`, and no `ui/layout.module.css`. Two pieces of work apply it: first the alias, then the move into folders. Until the alias lands, code keeps relative imports. Until the move lands, the flat files and `screens/screens.module.css` stay. The rule changes no behaviour.
+The target, decided by the stakeholder [D-069, D-072, D-073]. The `@/` alias is built. The move into one folder per component is not built: on `main` the renderer is still flat (`screens/campaign/generate-panel.tsx`), shares `screens/screens.module.css`, keeps the key dialog in `dialogs/key/`, and has no `ui/layout.module.css`. Until the move lands, the flat files and `screens/screens.module.css` stay. The rule changes no behaviour.
 
 ### The `@/` alias
+
+Built.
 
 - One alias, `@/`, means `src/`, for all of `src/` (`main`, `preload`, `renderer`, `shared`, `render-worker`). Examples: `import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'`, `import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'`.
 - `./` only for a file in the same folder (an `index.ts` re-export, a component's own CSS module, its private helpers). `../` is not used in `src/`.
@@ -182,11 +184,11 @@ Not built. This is the target, decided by the stakeholder [D-069, D-072, D-073].
 - The area rules hold: the renderer may not import `@/main/**` or `@/preload/**`; `src/shared/` imports nothing from main, renderer or preload; the Electron edge holds.
 - **Where the alias is set.** One owner: `path-alias.config.ts` at the repo root, exporting `srcAlias = { '@': resolve(<root>, 'src') }`.
   - `electron.vite.config.ts`: `resolve: { alias: srcAlias }` in each of `main`, `preload`, `renderer`.
-  - `vitest.config.ts`: the alias in both projects, `node` and `renderer` (an inline project does not take the root's `resolve`). The same in `vitest.live.config.ts`, and in `vitest.build.config.ts` if its tests import from `src`.
+  - `vitest.config.ts`: the alias in both projects, `node` and `renderer` (an inline project does not take the root's `resolve`). The same in `vitest.live.config.ts`, `vitest.comfy.config.ts` and `vitest.build.config.ts`. Playwright takes the alias from the `paths` entry in `tsconfig.json`.
   - `tsconfig.json`: `"paths": { "@/*": ["./src/*"] }`. A test in `tests/unit/config/` reads `tsconfig.json` and checks that its `paths` entry and `srcAlias` name the same folder.
   - ESLint needs no resolver: its import rules match the import text.
-- **Lint keeps the guards working.** The boundary patterns (`'**/main/**'`, `'**/windows/**'` and the rest) already match `@/` paths. The `src/main/index.ts` entries (`./index`, `../index`) gain `@/main/index`. A `no-restricted-imports` pattern refusing any import starting with `../` is added **inside each existing block** under `src/`, plus one new block for files no block covers (`src/preload/**`). Not one new block over `src/**`: in flat config a later block's `no-restricted-imports` replaces an earlier one for the same file, which would silently switch off the Electron edge and the renderer's main-process ban. The developer shows, with one bad import per lint block, that lint still reports it, then removes the bad imports.
-- Applying it rewrites every `../` import under `src/` and every import of `src/` code in `tests/` to `@/`. No file moves. Checks: lint, typecheck, `npm test` in full, `npm run build` then `npm run test:build`, and the class G end-to-end run (it edits `src/main/index.ts` and `windows/`).
+- **Lint keeps the guards working.** The boundary patterns (`'**/main/**'`, `'**/windows/**'` and the rest) already match `@/` paths. The `src/main/index.ts` entries (`./index`, `../index`) gain `@/main/index`. A `no-restricted-imports` pattern refusing any import starting with `../` (a `regex` pattern; a glob is unreliable with `../`) sits **inside each existing block** under `src/`, plus one block for files no other block covers: `src/preload/**` and the Electron edge files (`src/main/index.ts`, `windows/**`, `secrets/safe-storage.ts`, `render/**`). Not one block over `src/**`: in flat config a later block's `no-restricted-imports` replaces an earlier one for the same file, which would silently switch off the Electron edge and the renderer's main-process ban. `tests/unit/config/import-alias-lint.test.ts` holds this.
+- An import into a subfolder of the same folder (`./sub/x`) stays relative. Config files at the repo root import `./path-alias.config.js` with the `.js` ending.
 
 ### One folder per component
 

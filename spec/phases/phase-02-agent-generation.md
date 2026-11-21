@@ -15,7 +15,6 @@ This is group 3 of the Phase 2 leftovers. Groups 1, 2, 4 and 5 are in `spec/phas
 3. Merge order: AR-1 and MCP-D (either first), then AR-3 and MCP-G, then AR-2. With AR-1, AR-3 and MCP-G merged, an agent can make ComfyUI pictures and video. AR-2 adds Gemini.
 4. Then the first agent run on the user's ComfyUI server (last entry).
 
-- **Target date.** MCP generation working by the end of 2026-11-22. LO-1a (group 1) rewrites every import in `src/`, so it collides with every slice here. If the date holds, run this group before LO-1a, or start LO-1a only once this group has merged.
 - **Cut line, first to last:** the run row mark in AR-3; AR-2 (agents then use ComfyUI only, and Gemini cannot be ticked); MCP-D's pickers for `get_project` and `get_campaign` (the reply-keys test still guards them). Never cut: AR-1, AR-3's ticks, `list_projects`, `get_slots`, `get_job`, MCP-G.
 - **Checks.** AR-1 and AR-2: lint, typecheck, `npm test` (class B with E). MCP-D and MCP-G: class E plus `npm test`. AR-3: class D. The full gate runs before a release, not per slice.
 - **Paid calls and keys.** Automatic tests never make a paid call. Gemini cases use recorded responses in `tests/fixtures/providers/` or a fake provider row with `local: false`. No slice adds a live case to the suite. No agent reads a key file (D-049). Under D-085 one low-cost paid run may confirm the agent Gemini path once, after AR-2, at the smallest size.

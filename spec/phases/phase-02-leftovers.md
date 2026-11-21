@@ -10,25 +10,10 @@ Work that belongs with a later phase is in that phase's file: Dropbox (slice G) 
 
 Run first, because it touches every renderer file and D-084 makes modular components the base for all later screen work. Exception: see the target date in `phase-02-agent-generation.md`.
 
-### LO-1a — The `@/` import alias
-
-- **Class:** not a test-path slice; checks below. Not security class.
-- **When:** one run, its own worktree from `main`, after every open slice has merged (it touches every area).
-- **Done when:**
-  - `path-alias.config.ts` at the repo root exports `srcAlias = { '@': resolve(<root>, 'src') }`. It is the one owner of the alias.
-  - `electron.vite.config.ts`: `resolve: { alias: srcAlias }` in each of `main`, `preload` and `renderer`.
-  - `vitest.config.ts`: the alias in both projects, `node` and `renderer` (an inline project does not take the root's `resolve`). The same in `vitest.live.config.ts`, and in `vitest.build.config.ts` if its tests import from `src`.
-  - `tsconfig.json`: `"paths": { "@/*": ["./src/*"] }`. One test in `tests/unit/config/` reads `tsconfig.json` and checks that its `paths` entry and `srcAlias` name the same folder.
-  - Lint: the boundary patterns (`'**/main/**'`, `'**/windows/**'` and the rest) already match `@/` paths. The `src/main/index.ts` entries (`./index`, `../index`) gain `@/main/index`. A `no-restricted-imports` pattern refusing any import starting with `../` is added **inside each existing block** under `src/`, plus one new block for `src/preload/**`. Not one block over `src/**`: in flat config a later block's `no-restricted-imports` replaces an earlier one for the same file, which would silently switch off the Electron-edge ban and the renderer's main-process ban.
-  - Every `../` import under `src/` is rewritten to `@/`. Every import of `src/` code in `tests/` is rewritten to `@/`. Test helpers inside `tests/` (`render.tsx`, `fake-api.ts`, fixtures) stay relative. `./` stays only for a file in the same folder. No file moves, no other edit.
-  - The developer shows, with one bad import per lint block, that lint still reports it, then removes the bad imports before the commit. The proof goes in the report.
-- **Checks:** lint, typecheck, `npm test` in full, `npm run build` then `npm run test:build`, and class G's end-to-end run, because `src/main/index.ts` and `windows/` are edited.
-- **State on `main`:** no `path-alias.config.ts`; `tsconfig.json` has no `paths`; `eslint.config.js` lists `'../index'` and `'../../index'` and no `@/` entries.
-
 ### LO-1b — One folder per component
 
 - **Class:** D. Not security class.
-- **Depends on:** LO-1a merged. Its own worktree from `main`, with no other renderer slice open.
+- **Depends on:** the `@/` alias (built). Its own worktree from `main`, with no other renderer slice open.
 - **Done when:**
   - Each component file is moved with `git mv` into its folder per the renderer layout rule (`spec/structure.md`), with an `index.ts` that only re-exports, and imports point at the folder. No component, export or test file is renamed. No test file moves.
   - `screens/screens.module.css`, `app/app-shell.module.css` and `dialogs/key/key-dialog.module.css` are split: each class goes to the module of the one component that uses it, or to `ui/layout.module.css` if two or more use it. Class names and rules do not change. `screens/screens.module.css` and `app/app-shell.module.css` are deleted.
@@ -132,7 +117,6 @@ One short run in the main folder, class B, unless an item says otherwise. State 
   - `src/renderer/screens/settings/comfy-check-result.tsx` imports the six check sentences from `src/shared/providers/messages.ts` and holds no copy. The existing tests pin the text and do not change. If `messages.ts` lacks one of the six, stop and report.
 - **F-12. `redirect_refused` in the Settings check.** Waits for a ruling.
   - The sentence "The server tried to send Adman to another address. Adman did not follow, and the run was stopped." reads oddly in the Settings check, where there is no run. Reword it, or give it a Settings form, together with F-11, so the wording has one owner.
-- **F-13.** This is LO-1 (group 1).
 - **F-14. The two refusal sentences into shared messages.** Not built.
   - Move "ComfyUI cannot make this kind of picture yet." and the reference-limit sentence from `src/main/commands/generation/comfy-checks.ts` into `src/shared/providers/messages.ts`. `comfy-checks.ts` imports them.
   - The second gets a real plural: "ComfyUI takes one reference picture for this run." when the most is 1, else "ComfyUI takes at most {max} reference pictures for this run." Tests pin both.
