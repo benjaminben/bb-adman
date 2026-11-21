@@ -10,7 +10,7 @@ import { briefDraftFrom, BRIEF_UNREADABLE } from './draft'
 
 export const BRIEF_TOO_LARGE: ErrorBody = {
   code: 'INVALID_INPUT',
-  message: 'The brief is too large. The limit is 1 MB.',
+  message: 'The brief is too large. The limit is 64 KB.',
   details: { reason: 'brief_too_large' },
 }
 
@@ -37,8 +37,14 @@ function readYaml(text: string): unknown {
   return doc.toJS({ maxAliasCount: MAX_ALIAS_COUNT })
 }
 
+// SPEC 6.1 item 7 [1.26]: a text never has fewer bytes than characters, so a text too long
+// in characters needs no counting.
+function tooLarge(text: string): boolean {
+  return text.length > MAX_BRIEF_BYTES || new TextEncoder().encode(text).length > MAX_BRIEF_BYTES
+}
+
 export const parseBrief: ParseBrief = (text, syntax) => {
-  if (text.length > MAX_BRIEF_BYTES) return fail(BRIEF_TOO_LARGE)
+  if (tooLarge(text)) return fail(BRIEF_TOO_LARGE)
   try {
     const body = text.startsWith(BYTE_ORDER_MARK) ? text.slice(1) : text
     return briefDraftFrom(syntax === 'json' ? JSON.parse(body) : readYaml(body))
