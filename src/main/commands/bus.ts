@@ -50,8 +50,10 @@ export const unknownCommandMessage = (name: string) => `Unknown command: ${name}
 export function createCommandBus(deps: BusDeps): CommandBus {
   const handlers = new Map(deps.handlers.map((h) => [h.name, h]))
 
+  // SPEC 14 [1.37] X2: fail closed; an agent runs only on allow, or on ask once allowed.
   function denyCheck(name: string, opts: ExecuteOptions): void {
-    if (opts.actor === 'agent' && agentPolicyFor(name) === 'deny') {
+    const policy = agentPolicyFor(name)
+    if (opts.actor === 'agent' && policy !== 'allow' && policy !== 'ask') {
       throw new AppError('AGENT_DENIED', denialMessage(name))
     }
   }
