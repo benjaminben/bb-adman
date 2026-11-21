@@ -100,6 +100,7 @@ export function Editor({ projectId, variantId }: Props) {
             <div className={styles.body}>
               <LayerList
                 projectId={projectId}
+                variantId={variantId}
                 layers={scene}
                 assets={forRows}
                 selectedId={selected?.id ?? null}
