@@ -30,10 +30,12 @@ function holdsAddress(lines: string[], s: StandIn): boolean {
 }
 
 describe('test:comfy case 1, the check [SPEC 14 1.41 CU-5a, 1.45 B-1, 1.46]', () => {
-  it('checks the trial workflows only: MOSS picture, H3 video and Flux 3 reference', () => {
+  it('checks the trial workflows only: MOSS picture, the three H3 videos and Flux 3 reference', () => {
     expect(TRIAL_WORKFLOWS.map((w) => w.id)).toEqual([
       'moss-text-to-image',
       'h3-text-to-video',
+      'h3-image-to-video',
+      'h3-reference-to-video',
       'flux3-klein-edit-references',
     ])
   })

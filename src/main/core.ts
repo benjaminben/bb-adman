@@ -31,6 +31,7 @@ import { jobKindHandlers } from './jobs/kinds'
 import { agentCaller } from './mcp/agent-caller'
 import { createMcpHttp } from './mcp/server'
 import { createMcpService } from './mcp/service'
+import { toolSetup } from './mcp/tools'
 import type { CoreDeps } from './core-deps'
 
 export type { SecretCrypto }
@@ -107,13 +108,13 @@ export function createCore(opts: CoreOptions) {
   }
 
   // The MCP server reaches core only through the agent caller, as actor agent (SPEC 4.1).
-  // MCP-A adds no tools (SPEC 14, 1.56).
+  // The tools are the fixed table of SPEC 4.5 built so far (SPEC 14, 1.56 MCP-B).
   const caller = agentCaller({
     execute: (name, input, o) => bus.execute(name, input, o),
     query: (name, input, o) => query(name, input, o),
   })
   const mcp = createMcpService({
-    http: createMcpHttp({ caller, appVersion: opts.appVersion }),
+    http: createMcpHttp({ caller, appVersion: opts.appVersion, tools: toolSetup() }),
     settings,
     secrets,
     log,

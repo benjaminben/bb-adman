@@ -84,9 +84,11 @@ describe('fillWorkflow on the shipped files [SPEC 6.10.4, 14 1.39]', () => {
     '%s with %i picture(s): removes exactly the declared nodes and inputs',
     (_, n, w) => {
       const g = fillWorkflow(w, valuesFor(w, n))
-      const unused = (w.slots.references ?? []).slice(n)
-      const droppedNodes = unused.flatMap((r) => r.dropWhenUnused.nodes).sort()
-      const droppedInputs = unused.flatMap((r) => r.dropWhenUnused.inputs)
+      const unused = (w.slots.references ?? []).slice(n).map((r) => r.dropWhenUnused)
+      // [1.59] L-16: alwaysDrop is declared too, and goes on every fill.
+      const declaredDrops = [...unused, ...(w.slots.alwaysDrop ? [w.slots.alwaysDrop] : [])]
+      const droppedNodes = declaredDrops.flatMap((d) => d.nodes).sort()
+      const droppedInputs = declaredDrops.flatMap((d) => d.inputs)
       expect(
         Object.keys(w.graph)
           .filter((id) => !g[id])
@@ -113,8 +115,10 @@ describe('fillWorkflow on the shipped files [SPEC 6.10.4, 14 1.39]', () => {
       const all = w.slots.references?.length ?? 0
       const g = fillWorkflow(w, valuesFor(w, all))
       const diff = differences(w.graph, g)
-      expect(diff.nodes).toEqual([])
-      const allowed = new Set(pointed(w).map((p) => `${p.node}.${p.input}`))
+      // [1.59] L-16: only the alwaysDrop parts may be gone.
+      const always = w.slots.alwaysDrop ?? { nodes: [], inputs: [] }
+      expect(diff.nodes).toEqual([...always.nodes].sort())
+      const allowed = new Set([...pointed(w), ...always.inputs].map((p) => `${p.node}.${p.input}`))
       for (const d of diff.inputs) expect(allowed.has(d), d).toBe(true)
     },
   )

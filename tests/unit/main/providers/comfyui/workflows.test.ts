@@ -29,7 +29,13 @@ describe('the shipped workflows [SPEC 6.10.4, FR-258, FR-278]', () => {
 
   it('keeps every workflow as draft but the trial ones of the data step [SPEC 14 1.46]', () => {
     const trial = WORKFLOWS.filter((w) => w.status !== 'draft').map((w) => w.id)
-    expect(trial).toEqual(['moss-text-to-image', 'h3-text-to-video', 'flux3-klein-edit-references'])
+    expect(trial).toEqual([
+      'moss-text-to-image',
+      'h3-text-to-video',
+      'h3-image-to-video',
+      'h3-reference-to-video',
+      'flux3-klein-edit-references',
+    ])
     expect(WORKFLOWS.every((w) => w.status === 'draft' || w.status === 'trial')).toBe(true)
   })
 

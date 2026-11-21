@@ -19,12 +19,7 @@ const USER_DEV = { devTools: true, actor: 'user' } as const
 describe('offeredWorkflow: which workflow a run gets [SPEC 6.10.11, 14 1.41]', () => {
   it('never offers a draft, hand-test tools or not', () => {
     const drafts = WORKFLOWS.filter((w) => w.status === 'draft')
-    expect(drafts.map((w) => w.id)).toEqual([
-      'moss-edit-references',
-      'moss-extend',
-      'h3-image-to-video',
-      'h3-reference-to-video',
-    ])
+    expect(drafts.map((w) => w.id)).toEqual(['moss-edit-references', 'moss-extend'])
     for (const draft of drafts) {
       const choice = { job: draft.job, ...(draft.videoStart && { videoStart: draft.videoStart }) }
       // The choice fits this workflow: as a trial it would be offered.

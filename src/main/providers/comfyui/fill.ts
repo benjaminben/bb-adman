@@ -1,7 +1,8 @@
 // SPEC 6.10.4 [REQ: FR-257, FR-258] (security class), with the 1.39 drop rule: one pure
 // function fills a shipped workflow for one submission. It copies the graph and sets exactly
-// the inputs the slots name. It adds no node and changes no class_type and no link. The one
-// removal is what a shipped spec declares for an unused reference slot. A missing value for a
+// the inputs the slots name. It adds no node and changes no class_type and no link. The only
+// removals are what a shipped spec declares: for an unused reference slot, and its alwaysDrop
+// parts (1.59 L-16), both checked for links left dangling. A missing value for a
 // slot the workflow has, or a value for one it has not, is a plain Error.
 import type { Graph, Pointer, WorkflowSlots, WorkflowSpec } from './workflows/types'
 import { isPromptId, isSubfolder } from './values'
@@ -53,6 +54,11 @@ function set(graph: Graph, p: Pointer, value: unknown): void {
   node.inputs[p.input] = value
 }
 
+function drop(graph: Graph, parts: { nodes: string[]; inputs: Pointer[] }): void {
+  for (const node of parts.nodes) delete graph[node]
+  for (const p of parts.inputs) delete graph[p.node]?.inputs[p.input]
+}
+
 function fillReferences(graph: Graph, slots: WorkflowSlots, names: string[]): void {
   const refs = slots.references ?? []
   const min = slots.minReferences ?? 1
@@ -60,9 +66,9 @@ function fillReferences(graph: Graph, slots: WorkflowSlots, names: string[]): vo
   refs.forEach((slot, i) => {
     const name = names[i]
     if (name !== undefined) return set(graph, slot.image, fileName(name))
-    for (const node of slot.dropWhenUnused.nodes) delete graph[node]
-    for (const p of slot.dropWhenUnused.inputs) delete graph[p.node]?.inputs[p.input]
+    drop(graph, slot.dropWhenUnused)
   })
+  if (slots.alwaysDrop) drop(graph, slots.alwaysDrop)
   // No input left may link to a node that is not there.
   for (const node of Object.values(graph)) {
     for (const value of Object.values(node.inputs)) {

@@ -42,6 +42,8 @@ describe('comfy.check [SPEC 4.2, 6.10.3; FR-252]', () => {
     expect(NON_DRAFT_WORKFLOWS.map((w) => w.id)).toEqual([
       'moss-text-to-image',
       'h3-text-to-video',
+      'h3-image-to-video',
+      'h3-reference-to-video',
       'flux3-klein-edit-references',
     ])
     // The stand-in is 0.3.40, lists one model file per folder and knows every node class.
@@ -64,6 +66,26 @@ describe('comfy.check [SPEC 4.2, 6.10.3; FR-252]', () => {
           missing: [
             { what: 'version', name: '0.33.0' },
             model('diffusion_models', 'minimax_h3_fl2va_pruned_int8_convrot.safetensors'),
+            model('text_encoders', 'qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors'),
+            model('vae', 'minimax_h3_video_vae_int8_convrot.safetensors'),
+            model('vae', 'minimax_h3_audio_vae_fp32.safetensors'),
+          ],
+        },
+        {
+          id: 'h3-image-to-video',
+          missing: [
+            { what: 'version', name: '0.33.0' },
+            model('diffusion_models', 'minimax_h3_fl2va_pruned_int8_convrot.safetensors'),
+            model('text_encoders', 'qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors'),
+            model('vae', 'minimax_h3_video_vae_int8_convrot.safetensors'),
+            model('vae', 'minimax_h3_audio_vae_fp32.safetensors'),
+          ],
+        },
+        {
+          id: 'h3-reference-to-video',
+          missing: [
+            { what: 'version', name: '0.33.0' },
+            model('diffusion_models', 'minimax_h3_ref2va_pruned_int8_convrot.safetensors'),
             model('text_encoders', 'qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors'),
             model('vae', 'minimax_h3_video_vae_int8_convrot.safetensors'),
             model('vae', 'minimax_h3_audio_vae_fp32.safetensors'),

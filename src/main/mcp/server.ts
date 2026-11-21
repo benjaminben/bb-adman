@@ -60,9 +60,14 @@ export function createMcpHttp(opts: SessionOptions) {
     const was = running
     running = null
     if (!was) return
-    await was.sessions.closeAll()
-    was.server.closeAllConnections()
-    await new Promise<void>((resolve) => was.server.close(() => resolve()))
+    // The connections and the listener close even if closing a session fails, so the old
+    // token never stays bound (REVIEW MCP-A Fixes S-1). The failure is still passed on.
+    try {
+      await was.sessions.closeAll()
+    } finally {
+      was.server.closeAllConnections()
+      await new Promise<void>((resolve) => was.server.close(() => resolve()))
+    }
   }
 
   return {
