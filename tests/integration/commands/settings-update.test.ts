@@ -28,6 +28,7 @@ describe('settings defaults [SPEC 13.1]', () => {
       comfyui: { baseUrl: null },
       agentRuns: {},
       agentRunLimit: 4,
+      licenceConfirmed: [],
     })
   })
 
