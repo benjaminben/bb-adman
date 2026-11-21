@@ -1,12 +1,15 @@
 // variant.delete (spec/links-and-sync.md, "Adding back and removing variants"; FR-073, FR-197,
-// R-17): deletes one variant that is not a master. Agent policy ask. The inverse is
-// variant.restore with the whole variant, on the campaign's list; the variant's own list is
-// cleared (A-141). Refused while a job for it is queued or running (A-140).
+// R-17): deletes one variant that is not a master. Agent policy ask. Stakeholder change: no
+// undo (the screen warns first). It clears the campaign's list, whose older entries may name
+// the variant, and the variant's own list (A-141). Refused while a job for it is queued or
+// running (A-140).
 import type Database from 'better-sqlite3'
 import { defineCommand, type HandlerResult } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
-import { deleteVariants, readSnapshot } from '@/main/links/snapshot'
+import { readWireRow } from '@/main/db/rows'
+import { deleteVariants } from '@/main/links/snapshot'
 import { variantDeleteInput, type VariantReply } from '@/shared/schemas/commands/variant'
+import type { VariantRow } from '@/shared/schemas/rows/variant'
 import { AppError } from '@/shared/schemas/result'
 
 // The campaign of a variant that may be removed. Refuses an unknown variant, a master and a
@@ -45,19 +48,14 @@ export function variantDelete(_deps: CoreDeps) {
     run(ctx, input): HandlerResult<VariantReply> {
       const db = ctx.project.db
       const campaignId = removableCampaign(db, input.variantId)
-      const snapshot = readSnapshot(db, input.variantId)
-      if (!snapshot) throw new AppError('NOT_FOUND', 'That variant was not found.')
-      const variantId = snapshot.variant.id
+      const variant = readWireRow(db, 'variant', { id: input.variantId }) as VariantRow | null
+      if (!variant) throw new AppError('NOT_FOUND', 'That variant was not found.')
+      const variantId = variant.id
       deleteVariants(ctx, [variantId])
-      const call = {
-        name: 'variant.restore',
-        input: { projectId: input.projectId, snapshots: [snapshot] },
-      }
       return {
         data: { variantId },
         log: { campaignId, variantId },
-        inverse: { scope: `campaign:${campaignId}`, call },
-        clearScopes: [`variant:${variantId}`],
+        clearScopes: [`campaign:${campaignId}`, `variant:${variantId}`],
       }
     },
   })

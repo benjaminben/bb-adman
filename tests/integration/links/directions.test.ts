@@ -57,10 +57,8 @@ describe('direction.createFromMaster [FR-074, A-139]', () => {
     })
     expect(made?.subjectIds).toEqual(from?.subjectIds)
     expect(made?.subjectIds.length).toBeGreaterThan(0)
-    const strip = (l: Record<string, unknown>) => {
-      const { id: _id, variantId: _v, linked: _l, overrides: _o, ...rest } = l
-      return rest
-    }
+    const drop = ['id', 'variantId', 'linked', 'overrides']
+    const strip = (l: object) => Object.entries(l).filter(([k]) => !drop.includes(k))
     expect(made?.layers.map(strip)).toEqual(from?.layers.map(strip))
     for (const layer of made?.layers ?? []) {
       expect(layer).toMatchObject({ variantId, linked: false, overrides: [] })

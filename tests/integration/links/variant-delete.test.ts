@@ -30,15 +30,12 @@ describe('variant.delete [FR-073, FR-197, R-17]', () => {
     expect(bus.db.prepare('SELECT 1 FROM layer WHERE variant_id = ?').get(V2)).toBeUndefined()
   })
 
-  it('undo brings the variant back with its layers and rev; redo deletes it again', async () => {
-    const before = readSnapshot(bus.db, V2)
-    expect(await remove(V2)).toMatchObject({ ok: true })
-    expect(await bus.changed(() => bus.history('undo'))).toMatchObject({ ok: true })
-    expect(readSnapshot(bus.db, V2)).toEqual(before)
-    expect(bus.variant(V2)?.rev).toBe(7)
-    expect(await bus.changed(() => bus.history('redo'))).toMatchObject({ ok: true })
-    expect(bus.variant(V2)).toBeNull()
+  it('leaves nothing to undo on the campaign list, earlier entries included', async () => {
+    addVariant(bus.db, bus.masterId, 'V3', '16x9')
+    expect(await bus.user('variant.remove', { variantIds: ['V3'] })).toMatchObject({ ok: true })
     expect(bus.undoState()).toEqual({ canUndo: true, canRedo: false })
+    expect(await remove(V2)).toMatchObject({ ok: true })
+    expect(bus.undoState()).toEqual({ canUndo: false, canRedo: false })
   })
 
   it("clears the variant's own list on delete", async () => {
