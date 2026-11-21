@@ -25,6 +25,9 @@ export type PrepareContext = { actor: Actor; commandId: string; project: Project
 export type HandlerResult<O> = {
   data: O
   inverse?: { scope: UndoScope; call: CommandCall }
+  // A-141: undo scopes of this project the bus clears after a successful run, before it
+  // records the inverse, so a variant's own list never holds an entry a campaign entry undid.
+  clearScopes?: UndoScope[]
   // IDs for the log line when the bus cannot know them from the input (SPEC 9.1).
   log?: { projectId?: string; campaignId?: string; variantId?: string }
 }
