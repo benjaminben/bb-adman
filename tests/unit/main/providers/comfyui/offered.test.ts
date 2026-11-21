@@ -19,7 +19,19 @@ const USER_DEV = { devTools: true, actor: 'user' } as const
 describe('offeredWorkflow: which workflow a run gets [SPEC 6.10.11, 14 1.41]', () => {
   it('never offers a draft, hand-test tools or not', () => {
     const drafts = WORKFLOWS.filter((w) => w.status === 'draft')
-    expect(offeredWorkflow(IMAGE, USER_DEV, drafts)).toBeNull()
+    expect(drafts.map((w) => w.id)).toEqual([
+      'moss-edit-references',
+      'moss-extend',
+      'h3-image-to-video',
+      'h3-reference-to-video',
+    ])
+    for (const draft of drafts) {
+      const choice = { job: draft.job, ...(draft.videoStart && { videoStart: draft.videoStart }) }
+      // The choice fits this workflow: as a trial it would be offered.
+      expect(offeredWorkflow(choice, USER_DEV, [as(draft, 'trial')])?.id, draft.id).toBe(draft.id)
+      expect(offeredWorkflow(choice, USER_DEV, WORKFLOWS)?.id, draft.id).not.toBe(draft.id)
+      expect(offeredWorkflow(choice, USER_DEV, drafts), draft.id).toBeNull()
+    }
     expect(offeredWorkflow(IMAGE, USER_DEV, [as(mossTextToImage, 'draft')])).toBeNull()
   })
 
