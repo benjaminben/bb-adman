@@ -22,18 +22,6 @@
 .stage {
   transform-origin: 0 0;
 }
-.selection {
-  position: absolute;
-  pointer-events: none;
-  transform-origin: 50% 50%;
-  border: var(--border-width) solid var(--selection-dark);
-  box-shadow:
-    0 0 0 var(--border-width) var(--selection-light),
-    inset 0 0 0 var(--border-width) var(--selection-light);
-}
-.hidden {
-  border-style: dotted;
-}
 .bar {
   display: flex;
   align-items: center;
