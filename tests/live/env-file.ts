@@ -16,22 +16,15 @@ export const LIVE_ENV_NAMES = [
   'AWS_SECRET_ACCESS_KEY',
 ] as const
 
-// SPEC 6.5 [1.15], 14 H16: the one owner of the live values a live test removes from what it
-// prints. Never ADMAN_LIVE_KEEP or ADMAN_LIVE_S3_REGION: neither is a secret, and removing
-// them spoils numbers and words in the output.
+// SPEC 6.5 [1.18], 14 K5: the one owner of the live values a live test removes from what it
+// prints: the four keys only. Bucket, region, prefix and ADMAN_LIVE_KEEP are not secrets, and
+// removing them spoils other words and numbers in the output.
 export const LIVE_REDACTED_NAMES = [
   'GEMINI_API_KEY',
   'FAL_KEY',
   'AWS_ACCESS_KEY_ID',
   'AWS_SECRET_ACCESS_KEY',
-  'ADMAN_LIVE_S3_BUCKET',
-  'ADMAN_LIVE_S3_PREFIX',
 ] as const
-
-// The prefix is removed only when it is this long or longer; a shorter one would spoil words.
-export const LIVE_REDACTED_MIN_LENGTH: Partial<Record<string, number>> = {
-  ADMAN_LIVE_S3_PREFIX: 4,
-}
 
 // The listed names found in the file text, except those already set (the terminal wins).
 // Any other name in the text is dropped. A parse failure names the file and nothing in it.

@@ -1,19 +1,18 @@
-// SPEC 13, 14 H11 (F-04), [1.15] H16: a live test prints no key and no bucket name, in a
-// failure too. Everything a live test prints, and every error it lets Vitest print, passes
-// through `safeText` for every set value of LIVE_REDACTED_NAMES (the prefix only when it is
-// long enough). A skip line names only the variables that are missing.
+// SPEC 13, 14 H11 (F-04), [1.18] K5: a live test prints no key, in a failure too. Everything
+// a live test prints, and every error it lets Vitest print, passes through `safeText` for every
+// set value of LIVE_REDACTED_NAMES. A skip line names only the variables that are missing.
 import { redactSecret } from '../../src/main/providers/redact'
 import { REFUSED_PATH } from '../../src/main/providers/storage-paths'
 import { ProviderFailure } from '../../src/main/providers/types'
-import { LIVE_REDACTED_MIN_LENGTH, LIVE_REDACTED_NAMES } from './env-file'
+import { LIVE_REDACTED_NAMES } from './env-file'
 
 type Env = Record<string, string | undefined>
 
-// The set values of the redacted live variables, each at least its minimum length.
+// The set values of the redacted live variables.
 export function liveValues(env: Env = process.env): string[] {
   return LIVE_REDACTED_NAMES.flatMap((name) => {
     const value = env[name] ?? ''
-    return value.length >= (LIVE_REDACTED_MIN_LENGTH[name] ?? 1) ? [value] : []
+    return value === '' ? [] : [value]
   })
 }
 

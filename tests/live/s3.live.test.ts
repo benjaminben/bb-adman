@@ -3,7 +3,7 @@
 // of `npm test` or CI. Everything is written under {prefix}/adman-hand-test/ and nowhere else.
 // ADMAN_LIVE_KEEP=1 leaves adman-hand-test/hello.txt in the bucket; the next run removes it.
 // The keys reach the adapter only through AdapterContext.secret.
-// [1.14] H11, [1.15] H16: nothing printed holds a key or the bucket name, in a failure too.
+// [1.14] H11, [1.18] K5: nothing printed holds a key, in a failure too.
 // [1.16] H20: every call goes through `quietly`, which prints nothing and throws a safe error
 // (kind and detail, live values removed) in place of the real one. A case that expects the
 // failure prints nothing; Vitest shows the safe error only for a case that did not expect it.

@@ -17,13 +17,7 @@ const env = {
 describe('live test output holds no live value [SPEC 13, 14 H11, F-04]', () => {
   it('takes the set values of the redacted live variables only, never the region [1.15 H16]', () => {
     expect(liveValues(env).sort()).toEqual(
-      [
-        'made-up-gemini-value',
-        'made-up-bucket',
-        'made-up-prefix',
-        'made-up-id',
-        'made-up-secret',
-      ].sort(),
+      ['made-up-gemini-value', 'made-up-id', 'made-up-secret'].sort(),
     )
   })
 
@@ -55,22 +49,28 @@ describe('live test output holds no live value [SPEC 13, 14 H11, F-04]', () => {
   it('turns a failure into safe lines and an error with no cause and no live value', () => {
     const failure = new ProviderFailure({
       kind: 'offline',
-      detail: 'ENOTFOUND made-up-bucket.s3.zz-made-up-9',
+      detail: 'ENOTFOUND made-up-bucket.s3.zz-made-up-9 made-up-secret',
     })
     const { lines, error } = safeFailure('S3', failure, liveValues(env))
     expect(lines).toEqual([
       'S3 error kind: offline',
-      'S3 error detail: ENOTFOUND [key removed].s3.zz-made-up-9',
+      'S3 error detail: ENOTFOUND made-up-bucket.s3.zz-made-up-9 [key removed]',
     ])
-    expect(error.message).toBe('S3 error offline: ENOTFOUND [key removed].s3.zz-made-up-9')
+    expect(error.message).toBe(
+      'S3 error offline: ENOTFOUND made-up-bucket.s3.zz-made-up-9 [key removed]',
+    )
     expect(error.cause).toBeUndefined()
     expect(Object.keys(error)).toEqual([])
   })
 
   it('gives a failure that is not a ProviderFailure its message, made safe', () => {
-    const { lines, error } = safeFailure('S3', new Error('bad made-up-prefix'), liveValues(env))
-    expect(lines).toEqual(['S3 error: bad [key removed]'])
-    expect(error.message).toBe('S3 error: bad [key removed]')
+    const { lines, error } = safeFailure(
+      'S3',
+      new Error('bad made-up-prefix made-up-id'),
+      liveValues(env),
+    )
+    expect(lines).toEqual(['S3 error: bad made-up-prefix [key removed]'])
+    expect(error.message).toBe('S3 error: bad made-up-prefix [key removed]')
   })
 })
 
@@ -84,21 +84,14 @@ describe('live output removes only the LIVE_REDACTED_NAMES values [SPEC 6.5 1.15
     ADMAN_LIVE_KEEP: '1',
   }
 
-  it('removes a key and a bucket name', () => {
-    const safe = safeText('key made-up-fal-value in made-up-bucket', liveValues(keepRun))
-    expect(safe).toBe('key [key removed] in [key removed]')
+  it('removes a key, and keeps a bucket name and a prefix [1.18 K5]', () => {
+    const values = liveValues({ ...keepRun, ADMAN_LIVE_S3_PREFIX: 'made-up-prefix' })
+    const safe = safeText('key made-up-fal-value in made-up-bucket/made-up-prefix', values)
+    expect(safe).toBe('key [key removed] in made-up-bucket/made-up-prefix')
   })
 
   it('keeps 1024 x 1024 and a byte count with ADMAN_LIVE_KEEP=1 and a one-letter prefix', () => {
     const text = 'picture 1024 x 1024, 31415 bytes, kept in zz-made-up-9'
     expect(safeText(text, liveValues(keepRun))).toBe(text)
-  })
-
-  it('removes a prefix of four characters or more', () => {
-    const values = liveValues({ ...keepRun, ADMAN_LIVE_S3_PREFIX: 'abcd' })
-    expect(safeText('under abcd/adman-hand-test', values)).toBe(
-      'under [key removed]/adman-hand-test',
-    )
-    expect(liveValues({ ...keepRun, ADMAN_LIVE_S3_PREFIX: 'abc' })).not.toContain('abc')
   })
 })
