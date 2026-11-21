@@ -8,7 +8,8 @@ import type { Graph, Pointer, WorkflowSlots, WorkflowSpec } from './workflows/ty
 import { isPromptId, isSubfolder } from './values'
 
 export type FillValues = {
-  prompt: string
+  // Only for a workflow with a prompt slot (P4-9: a cut-out has none).
+  prompt?: string
   width?: number
   height?: number
   // The uploaded file names as the server gave them, in slot order.
@@ -21,10 +22,11 @@ export type FillValues = {
 }
 
 type SlotName = Exclude<keyof WorkflowSlots, 'seed' | 'outputNode' | 'minReferences'>
-type ValueName = Exclude<keyof FillValues, 'prompt'>
+type ValueName = keyof FillValues
 
 // Which value feeds which slot.
 const PAIRS: Array<[ValueName, SlotName]> = [
+  ['prompt', 'prompt'],
   ['width', 'width'],
   ['height', 'height'],
   ['references', 'references'],
@@ -86,10 +88,11 @@ export function fillWorkflow(spec: WorkflowSpec, values: FillValues): Graph {
     const given = values[value] !== undefined
     if (has !== given) fail(has ? `No value for ${slot}` : `This workflow has no ${slot}`)
   }
-  if (typeof values.prompt !== 'string') fail('No prompt')
 
   const graph = structuredClone(spec.graph)
-  set(graph, slots.prompt, values.prompt)
+  if (slots.prompt) {
+    set(graph, slots.prompt, typeof values.prompt === 'string' ? values.prompt : fail('No prompt'))
+  }
   for (const p of slots.seed) set(graph, p, freshSeed())
   if (slots.width && slots.height) {
     set(graph, slots.width, whole(values.width ?? 0, 1))

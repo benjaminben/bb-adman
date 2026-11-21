@@ -6,7 +6,7 @@ import { WORKFLOW_IDS } from '@/shared/schemas/queries/comfy'
 function pointersOf(spec: WorkflowSpec): Pointer[] {
   const s = spec.slots
   return [
-    s.prompt,
+    ...(s.prompt ? [s.prompt] : []),
     ...s.seed,
     ...[s.width, s.height, s.firstFrame, s.frames, s.outputPrefix].filter(
       (p): p is Pointer => p !== undefined,

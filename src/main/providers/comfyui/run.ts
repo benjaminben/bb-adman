@@ -27,13 +27,15 @@ export type RunTiming = {
   newId(): string
 }
 
-export type RunAsk = { prompt: string; width: number; height: number; references: string[] }
+// P4-9: prompt is optional; a cut-out has none.
+export type RunAsk = { prompt?: string; width: number; height: number; references: string[] }
 
 // [1.45] B-4: the fill values come from the workflow's own slots, and a key is set only when
 // the slot is there. [1.46] A workflow with no width slot skips fitSize.
 export function fillValuesFor(spec: WorkflowSpec, ask: RunAsk, promptId: string): FillValues {
   const { slots } = spec
-  const values: FillValues = { prompt: ask.prompt }
+  const values: FillValues = {}
+  if (slots.prompt) values.prompt = ask.prompt
   if (slots.width && slots.height) {
     const size = fitSize({ width: ask.width, height: ask.height }, spec.size)
     values.width = size.width
