@@ -72,7 +72,7 @@ describe('the job domain is registered [SPEC 14, 1.38 Y12]', () => {
 })
 
 describe('the generation domain is registered [SPEC 14 slice H]', () => {
-  it('gives generation.runImages only', () => {
+  it('gives generation.runImages and generation.startVideo', () => {
     f = makeFixture()
     expect(generationCommands(f.core.deps).map((h) => h.name)).toEqual([
       'generation.runImages',

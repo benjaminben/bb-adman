@@ -24,12 +24,12 @@ const deps = {
 }
 
 describe('the comfyui provider folder [SPEC 6, 14 CU-0]', () => {
-  it('exports an adapters object that holds the image adapter', () => {
+  it('exports an adapters object that holds the image and video adapters', () => {
     expect(Object.keys(adapters)).toEqual(['image', 'video'])
   })
 
   it.each(['video'] as const)(
-    'is joined in adapterFor: %s is INVALID_INPUT while not built',
+    'is joined in adapterFor: %s builds the four VideoProvider functions',
     (job) => {
       expect(Object.keys(adapterFor(deps, 'comfyui', job))).toEqual([
         'start',
