@@ -105,7 +105,7 @@ describe('TextFields [spec/editor.md "Properties panel", Text]', () => {
     await userEvent.clear(field)
     await userEvent.type(field, 'orange{Enter}')
     expect(onUpdate).not.toHaveBeenCalled()
-    expect(field).toHaveValue(HEADLINE.style.color)
+    expect(field).toHaveValue((HEADLINE.style as { color: string }).color)
   })
 
   it('the colour picker saves once, when its choice is made', async () => {

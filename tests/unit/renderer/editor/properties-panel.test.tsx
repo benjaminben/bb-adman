@@ -10,7 +10,7 @@ import { PropertiesPanel } from '@/renderer/editor/properties-panel'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { makeFakeApi } from '../fake-api'
 import { renderApp } from '../render'
-import { BACKGROUND, HEADLINE, LOGO, P, V } from './editor-fixture'
+import { BACKGROUND, HEADLINE, LOGO, P, V, assetRow } from './editor-fixture'
 
 const SECOND = { ...LOGO, id: 'L3', name: 'Badge', z: 3 }
 const LAYERS = [BACKGROUND, HEADLINE, LOGO, SECOND]
@@ -100,6 +100,52 @@ describe('PropertiesPanel [spec/editor.md "Properties panel"]', () => {
     expect(input.type).toBe('image')
     expect(input.values.source).toEqual({ assetId: 'A1' })
     expect(input.values.copy).toBeUndefined()
+  })
+
+  it('a text layer shows the text fields with the campaign palette from campaign.get', async () => {
+    const fake = makeFakeApi()
+    fake.onQuery('campaign.get', () => ({
+      ok: true,
+      data: { ruleSet: { palette: ['#E85D2A', '#F4E9D8'] } },
+    }))
+    await renderApp(
+      <main>
+        <PropertiesPanel projectId={P} campaignId="C1" layer={HEADLINE} layers={LAYERS} />
+      </main>,
+      fake,
+    )
+    expect(
+      await screen.findByRole('button', { name: 'Palette colour #F4E9D8' }),
+    ).toBeInTheDocument()
+    expect(fake.queries.find((q) => q.name === 'campaign.get')?.input).toEqual({
+      projectId: P,
+      campaignId: 'C1',
+    })
+    expect(screen.getByRole('textbox', { name: 'Copy' })).toHaveValue(HEADLINE.copy)
+  })
+
+  it('the font select sends layer.update with the font in the style', async () => {
+    const fake = makeFakeApi()
+    fake.onQuery('asset.list', () => ({ ok: true, data: [assetRow('F1', { kind: 'font' })] }))
+    await renderApp(
+      <main>
+        <PropertiesPanel projectId={P} campaignId="C1" layer={HEADLINE} layers={LAYERS} />
+      </main>,
+      fake,
+    )
+    const select = screen.getByRole('combobox', { name: 'Font' })
+    await screen.findByRole('option', { name: 'F1.png' })
+    await userEvent.selectOptions(select, 'F1.png')
+    expect(sent(fake)).toEqual([
+      ['layer.update', { projectId: P, layerId: 'L1', patch: { style: { fontAssetId: 'F1' } } }],
+    ])
+  })
+
+  it('a picture layer and the background show no text fields', async () => {
+    await open(LOGO)
+    expect(screen.queryByRole('textbox', { name: 'Copy' })).toBeNull()
+    expect(screen.queryByRole('combobox', { name: 'Font' })).toBeNull()
+    expect(screen.getByRole('spinbutton', { name: 'X' })).toBeInTheDocument()
   })
 
   it('Delete layer sends layer.delete', async () => {
