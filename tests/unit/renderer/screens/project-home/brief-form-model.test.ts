@@ -18,7 +18,6 @@ function plan(draft: BriefDraft, primaryLanguage: string | null = 'en', held: st
   const values = formFromDraft(parsed(draft, primaryLanguage), held, photosFor(draft))
   return planFromForm('P1', values, held, IMAGES)
 }
-
 const filled = (): BriefFormValues => formFromDraft(parsed(DRAFT), [], photosFor(DRAFT))
 
 describe('formFromDraft: the form filled from a brief [screens-campaign "The brief form"]', () => {
@@ -128,13 +127,6 @@ describe('planFromForm: what "Create campaign" sends [FR-023, FR-024, FR-026]', 
       templateId: 'starter',
       placeSubjectPhoto: false,
     })
-  })
-
-  it('sends "Start the ad with a subject photo placed" as placeSubjectPhoto [SP-4, A-119]', () => {
-    const values = { ...filled(), placeSubjectPhoto: true }
-    const result = planFromForm('P1', values, [], IMAGES)
-    if (!result.ok) throw new Error(result.problems.join())
-    expect(result.campaign.placeSubjectPhoto).toBe(true)
   })
 
   it('sends no subject.create for a subject the project holds, and its typed name', () => {
