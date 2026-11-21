@@ -1,10 +1,11 @@
 // spec/editor.md, "Properties panel": the header (the layer's name and kind), then one section
-// per component: Layer, Text (text layers), Position and size. The Picture section (P3-14) goes
-// between Layer and Position and size. Sections are keyed by the layer, so an unsaved edit or a
-// refusal message does not carry over to another layer.
+// per component: Layer, Text (text layers), Picture (image and background layers), Position and
+// size. Sections are keyed by the layer, so an unsaved edit or a refusal message does not carry
+// over to another layer.
 import { FontField } from '@/renderer/editor/font-field'
 import { GeometryFields } from '@/renderer/editor/geometry-fields'
 import { LayerFields } from '@/renderer/editor/layer-fields'
+import { PictureFields, type PictureAsset } from '@/renderer/editor/picture-fields'
 import { TextFields } from '@/renderer/editor/text-fields'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { useLayerActions } from './use-layer-actions'
@@ -22,6 +23,9 @@ export type PropertiesPanelProps = {
   campaignId: string | null
   layer: LayerRow | null
   layers: LayerRow[]
+  // The variant's assets by ID and its size, for the Picture section. The editor passes both.
+  assets?: Readonly<Record<string, PictureAsset>>
+  canvas?: { width: number; height: number }
 }
 
 type SectionsProps = PropertiesPanelProps & { layer: LayerRow; palette: string[] }
@@ -51,6 +55,15 @@ function Sections(props: SectionsProps) {
       />
       {font && (
         <TextFields layer={layer} palette={props.palette} font={font} onUpdate={actions.update} />
+      )}
+      {layer.type !== 'text' && (
+        <PictureFields
+          projectId={props.projectId}
+          layer={layer}
+          asset={(layer.source && props.assets?.[layer.source.assetId]) ?? null}
+          canvas={props.canvas ?? null}
+          onUpdate={actions.update}
+        />
       )}
       <GeometryFields geometry={layer.geometry} disabled={layer.locked} onUpdate={actions.update} />
     </>

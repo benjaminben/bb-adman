@@ -123,6 +123,8 @@ export function Editor({ projectId, variantId }: Props) {
                 campaignId={state.campaignId}
                 layer={selected}
                 layers={Object.values(layers)}
+                assets={forRows}
+                canvas={variant}
               />
             </div>
           </>
