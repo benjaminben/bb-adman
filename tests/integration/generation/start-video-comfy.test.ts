@@ -131,11 +131,24 @@ describe('generation.startVideo with comfyui against the stand-in [SPEC 14 CU-6a
     expect(f.jobs()).toEqual([])
   })
 
-  it('the agent is refused with AGENT_DENIED and nothing is sent: held as deny until CU-7 [1.57 H-1]', async () => {
+  it('with ComfyUI ticked by the user, the agent prompt start is accepted [AR-1]', async () => {
     await ready()
-    expect(await f.agent('generation.startVideo', ask)).toMatchObject({
+    await f.user('agentRuns.setAllowed', { provider: 'comfyui', allowed: true })
+    const reply = await f.agent('generation.startVideo', ask)
+    const { jobId } = data<{ jobId: string }>(reply)
+    expect(f.jobs()).toHaveLength(1)
+    expect(f.job(jobId)).toMatchObject({ startedBy: 'agent', seenAt: null })
+  })
+
+  it('with no tick, the agent is refused at gate step 2 and nothing is sent [AR-1]', async () => {
+    await ready()
+    expect(await f.agent('generation.startVideo', ask)).toEqual({
       ok: false,
-      error: { code: 'AGENT_DENIED' },
+      error: {
+        code: 'AGENT_DENIED',
+        message:
+          "The user has not allowed agents to start runs with ComfyUI. They can allow it in Adman's Settings.",
+      },
     })
     expect(f.jobs()).toEqual([])
     expect(stand?.seen).toEqual([])

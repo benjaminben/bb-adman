@@ -121,7 +121,11 @@ describe('the videoStart filter with three trial video workflows [SPEC 14 1.54 P
   it('offers h3-reference-to-video for references only, to the user with dev tools on', () => {
     expect(offeredWorkflow(REFS, who)?.id).toBe('h3-reference-to-video')
     expect(offeredWorkflow(REFS, { devTools: false, actor: 'user' })).toBeNull()
-    expect(offeredWorkflow(REFS, { devTools: true, actor: 'agent' })).toBeNull()
+    // [D-080] an agent gets a trial workflow as the user does, only with dev tools on.
+    expect(offeredWorkflow(REFS, { devTools: true, actor: 'agent' })?.id).toBe(
+      'h3-reference-to-video',
+    )
+    expect(offeredWorkflow(REFS, { devTools: false, actor: 'agent' })).toBeNull()
   })
 
   it('never picks it for no start or a first frame', () => {

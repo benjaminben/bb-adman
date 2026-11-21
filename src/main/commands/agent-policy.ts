@@ -78,14 +78,13 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'comfy.setAddress': deny('change the ComfyUI address'),
   'comfy.check': deny('check the ComfyUI server'),
   'agentRuns.setAllowed': deny('change which runs agents may start'),
+  'agentRuns.setLimit': deny('change agent run limits'),
   'dev.comfyExtend': deny('use the hand-test tools'),
 }
 
-// The policy the bus applies. Until the tick gate is built (SPEC 14 CU-7) a tick row is
-// applied exactly as deny, so no ability is opened.
+// The policy the bus applies. A tick row goes to the agent run gate (agent-run-gate.ts).
 export function agentPolicyFor(command: string): AgentPolicy {
-  const policy = AGENT_POLICY[command]?.policy ?? 'deny'
-  return policy === 'tick' ? 'deny' : policy
+  return AGENT_POLICY[command]?.policy ?? 'deny'
 }
 
 export function denialMessage(command: string): string {

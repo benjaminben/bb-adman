@@ -44,10 +44,31 @@ describe('generation.runImages with provider comfyui [SPEC 4.2, 14 1.41, CU-4]',
     })
   })
 
-  it('with the tools on, the agent is refused with AGENT_DENIED: held as deny until CU-7 [1.57 H-1]', async () => {
+  it('with the tools on and ComfyUI ticked by the user, the agent is accepted [AR-1]', async () => {
     await withAddress(true)
-    const error = await refused(f.run({}, 'agent'))
-    expect(error.code).toBe('AGENT_DENIED')
+    await f.user('agentRuns.setAllowed', { provider: 'comfyui', allowed: true })
+    const r = (await f.run({}, 'agent')) as { ok: boolean }
+    expect(r.ok).toBe(true)
+    expect(f.jobs()).toHaveLength(1)
+    expect(f.jobs()[0]).toMatchObject({ startedBy: 'agent', seenAt: null })
+  })
+
+  it('with the tools on and no tick, the agent is refused at gate step 2 [AR-1]', async () => {
+    await withAddress(true)
+    expect(await refused(f.run({}, 'agent'))).toEqual({
+      code: 'AGENT_DENIED',
+      message:
+        "The user has not allowed agents to start runs with ComfyUI. They can allow it in Adman's Settings.",
+    })
+  })
+
+  it('with the tools off and ComfyUI ticked, the agent gets comfy_job_not_offered [AR-1]', async () => {
+    await withAddress(false)
+    await f.user('agentRuns.setAllowed', { provider: 'comfyui', allowed: true })
+    expect(await refused(f.run({}, 'agent'))).toMatchObject({
+      code: 'RULE_VIOLATION',
+      details: { reason: 'comfy_job_not_offered' },
+    })
   })
 
   it('with the tools on and the user, a trial workflow is accepted and a job is made', async () => {

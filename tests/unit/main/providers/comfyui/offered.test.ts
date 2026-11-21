@@ -32,9 +32,23 @@ describe('offeredWorkflow: which workflow a run gets [SPEC 6.10.11, 14 1.41]', (
     expect(offeredWorkflow(IMAGE, { devTools: false, actor: 'user' }, list)).toBeNull()
   })
 
-  it('refuses a trial workflow to an agent, even with dev tools on', () => {
+  it('gives a trial workflow to an agent with dev tools on, as to the user [D-080]', () => {
     const list = [as(mossTextToImage, 'trial')]
-    expect(offeredWorkflow(IMAGE, { devTools: true, actor: 'agent' }, list)).toBeNull()
+    expect(offeredWorkflow(IMAGE, { devTools: true, actor: 'agent' }, list)?.id).toBe(
+      'moss-text-to-image',
+    )
+  })
+
+  it('gives an agent with dev tools off no trial workflow', () => {
+    const list = [as(mossTextToImage, 'trial')]
+    expect(offeredWorkflow(IMAGE, { devTools: false, actor: 'agent' }, list)).toBeNull()
+  })
+
+  it('gives null to both actors from a draft-only list', () => {
+    const list = [as(mossTextToImage, 'draft')]
+    for (const actor of ['user', 'agent'] as const) {
+      expect(offeredWorkflow(IMAGE, { devTools: true, actor }, list), actor).toBeNull()
+    }
   })
 
   it('offers a trial workflow to the user with dev tools on', () => {

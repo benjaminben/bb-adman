@@ -77,6 +77,8 @@ describe('the videoStart filter with two trial video workflows [SPEC 14 1.54 P-4
     const frame = { job: 'video', videoStart: { firstFrame: true, references: false } } as const
     expect(offeredWorkflow(frame, who)?.id).toBe('h3-image-to-video')
     expect(offeredWorkflow(frame, { devTools: false, actor: 'user' })).toBeNull()
-    expect(offeredWorkflow(frame, { devTools: true, actor: 'agent' })).toBeNull()
+    // [D-080] an agent gets a trial workflow as the user does, only with dev tools on.
+    expect(offeredWorkflow(frame, { devTools: true, actor: 'agent' })?.id).toBe('h3-image-to-video')
+    expect(offeredWorkflow(frame, { devTools: false, actor: 'agent' })).toBeNull()
   })
 })

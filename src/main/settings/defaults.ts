@@ -1,6 +1,7 @@
 import path from 'node:path'
 import { DEFAULT_PROVIDERS } from '@/main/providers/registry'
 import { DEFAULT_FPS } from '@/shared/config/defaults'
+import { AGENT_MAX_ACTIVE_RUNS } from '@/shared/config/agent-runs'
 import type { Settings } from '@/shared/schemas/settings'
 
 export const DEFAULT_MCP_PORT = 47821
@@ -17,5 +18,6 @@ export function defaultSettings(documentsDir: string): Settings {
     storage: { s3: null, dropbox: null },
     comfyui: { baseUrl: null },
     agentRuns: {},
+    agentRunLimit: AGENT_MAX_ACTIVE_RUNS,
   }
 }

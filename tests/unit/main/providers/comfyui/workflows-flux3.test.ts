@@ -108,7 +108,9 @@ describe('flux3-klein-edit-references, the seventh workflow [SPEC 14 1.46 part B
   it('is the workflow a reference run gets, with dev tools on, for the user [1.46 part B]', () => {
     expect(NON_DRAFT_WORKFLOWS).toContain(flux)
     expect(offeredWorkflow({ job: 'image_refs' }, USER_DEV)).toBe(flux)
-    expect(offeredWorkflow({ job: 'image_refs' }, { devTools: true, actor: 'agent' })).toBeNull()
+    // [D-080] an agent gets a trial workflow as the user does, only with dev tools on.
+    expect(offeredWorkflow({ job: 'image_refs' }, { devTools: true, actor: 'agent' })).toBe(flux)
+    expect(offeredWorkflow({ job: 'image_refs' }, { devTools: false, actor: 'agent' })).toBeNull()
   })
 
   it('takes one picture: a fill sets it, and a width or a second picture throws', () => {

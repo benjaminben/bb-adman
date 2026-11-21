@@ -1,8 +1,9 @@
 // The command bus (SPEC 3.6, 4.1, 5.2). Fixed order: deny check, find the handler and
-// validate, find the project, ask, run. Records undo, emits events, writes the log and
-// never throws.
+// validate, find the project, agent run gate, ask, run. Records undo, emits events, writes the
+// log and never throws.
 import { ulid } from 'ulid'
 import { agentPolicyFor, denialMessage } from './agent-policy'
+import { agentRunGate, type AgentRunGateDeps } from './agent-run-gate'
 import { runHistory } from './history/run-history'
 import { runInProject, type ProjectRun } from './run-in-project'
 import type { CommandHandler, HandlerResult } from './types'
@@ -36,6 +37,14 @@ export type BusDeps = {
   log: ActivityLog
   emit: (event: BusEvent) => void
   askPermission: (request: PermissionRequest) => Promise<boolean>
+  // What the agent run gate reads. A bus built without it refuses every agent run at gate
+  // step 1, since it knows no provider.
+  agentRuns?: Pick<AgentRunGateDeps, 'providers' | 'settings'>
+}
+
+const NO_AGENT_RUNS: Pick<AgentRunGateDeps, 'providers' | 'settings'> = {
+  providers: [],
+  settings: { get: () => ({ agentRuns: {}, agentRunLimit: 0 }) },
 }
 
 type LogIds = HandlerResult<unknown>['log']
@@ -49,11 +58,17 @@ export const unknownCommandMessage = (name: string) => `Unknown command: ${name}
 
 export function createCommandBus(deps: BusDeps): CommandBus {
   const handlers = new Map(deps.handlers.map((h) => [h.name, h]))
+  const gateDeps: AgentRunGateDeps = {
+    projects: deps.projects,
+    ...(deps.agentRuns ?? NO_AGENT_RUNS),
+    passed: new Map(),
+  }
 
-  // SPEC 14 [1.37] X2: fail closed; an agent runs only on allow, or on ask once allowed.
+  // SPEC 14 [1.37] X2: fail closed; an agent runs only on allow, on ask once allowed, or on
+  // tick once the agent run gate passes it.
   function denyCheck(name: string, opts: ExecuteOptions): void {
     const policy = agentPolicyFor(name)
-    if (opts.actor === 'agent' && policy !== 'allow' && policy !== 'ask') {
+    if (opts.actor === 'agent' && policy !== 'allow' && policy !== 'ask' && policy !== 'tick') {
       throw new AppError('AGENT_DENIED', denialMessage(name))
     }
   }
@@ -131,8 +146,15 @@ export function createCommandBus(deps: BusDeps): CommandBus {
       deps.projects.requireOpen(projectId)
       line.projectId = projectId
     }
-    await askCheck(name, opts)
-    const run = await runHandler(handler, parsed.input, opts, commandId, projectId)
+    const gated = opts.actor === 'agent' && agentPolicyFor(name) === 'tick'
+    const release = gated ? agentRunGate(gateDeps, name, parsed.input) : undefined
+    let run: ProjectRun
+    try {
+      await askCheck(name, opts)
+      run = await runHandler(handler, parsed.input, opts, commandId, projectId)
+    } finally {
+      release?.()
+    }
     line.projectId = projectId ?? run.result.log?.projectId ?? null
     line.ids = run.result.log
     recordUndo(line.projectId, run.result, opts)
