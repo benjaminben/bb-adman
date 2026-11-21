@@ -24,7 +24,8 @@ import { storageCommands } from './commands/storage'
 import { subjectCommands } from './commands/subject'
 import { createQueries } from './queries/queries'
 import { createAssetService } from './assets/service'
-import { createJobServiceStandIn } from './jobs/stand-in'
+import { createJobRunner } from './jobs/runner'
+import { jobKindHandlers } from './jobs/kinds'
 import type { CoreDeps } from './core-deps'
 
 export type { SecretCrypto }
@@ -85,7 +86,12 @@ export function createCore(opts: CoreOptions) {
     providers,
     log,
     assets: createAssetService(),
-    jobs: createJobServiceStandIn(),
+    jobs: createJobRunner({
+      deps: () => deps,
+      bus: () => bus,
+      emit: opts.emit,
+      handlers: jobKindHandlers,
+    }),
     openExternal: opts.openExternal ?? noBrowser,
     devTools: opts.devTools ?? false,
     toPng: opts.toPng ?? noConverter,

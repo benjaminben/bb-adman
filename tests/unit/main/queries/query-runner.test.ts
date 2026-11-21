@@ -7,7 +7,7 @@ import { createProjectRegistry } from '../../../../src/main/db/project-registry'
 import { createUndoLists } from '../../../../src/main/history/undo-lists'
 import { createActivityLog } from '../../../../src/main/log/activity-log'
 import { createAssetService } from '../../../../src/main/assets/service'
-import { createJobServiceStandIn } from '../../../../src/main/jobs/stand-in'
+import type { JobService } from '../../../../src/main/jobs/types'
 import type { SettingsStore } from '../../../../src/main/settings/settings-store'
 import type { SecretStore } from '../../../../src/main/secrets/secret-store'
 
@@ -40,7 +40,7 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
       providers: [],
       log: createActivityLog({ dir: logDir, minLevel: 'debug', now: () => new Date() }),
       assets: createAssetService(),
-      jobs: createJobServiceStandIn(),
+      jobs: {} as unknown as JobService,
       openExternal: async () => {
         throw new Error('openExternal is not available')
       },
