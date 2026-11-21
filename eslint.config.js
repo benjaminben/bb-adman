@@ -22,7 +22,9 @@ const electronEdge = [
 ]
 const edgeMessage =
   'Only index.ts, windows/, secrets/safe-storage.ts and render/ may use Electron (SPEC 12).'
-const edgeFiles = ['**/windows', '**/windows/**', '**/render', '**/render/**', '**/safe-storage']
+// The render folder is banned by its files only (render/<file>): queries/render.ts and
+// config/render.ts share the name and are not at the edge (spec/editor-commands.md).
+const edgeFiles = ['**/windows', '**/windows/**', '**/render/**', '**/safe-storage']
 
 // spec/structure.md: code in src/ reaches another folder through @/, never ../. This pattern
 // goes inside every block under src/: a later block's no-restricted-imports replaces an

@@ -9,7 +9,7 @@ import { NOT_OPEN_MESSAGE } from '@/main/db/project-registry'
 import { projectCloseInput } from '@/shared/schemas/commands/project'
 import { AppError } from '@/shared/schemas/result'
 
-export function projectClose(deps: ProjectCommandDeps & Pick<CoreDeps, 'jobs'>) {
+export function projectClose(deps: ProjectCommandDeps & Pick<CoreDeps, 'jobs' | 'render'>) {
   return defineCommand({
     name: 'project.close',
     input: projectCloseInput,
@@ -33,6 +33,7 @@ export function projectClose(deps: ProjectCommandDeps & Pick<CoreDeps, 'jobs'>) 
       }
       closeProjectFile(handle)
       deps.undo.dropProject(input.projectId)
+      await deps.render.projectClosed(input.projectId)
       return { data: { projectId: input.projectId }, log: { projectId: input.projectId } }
     },
   })

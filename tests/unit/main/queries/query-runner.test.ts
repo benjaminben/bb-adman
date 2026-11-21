@@ -8,6 +8,7 @@ import { createUndoLists } from '@/main/history/undo-lists'
 import { createActivityLog } from '@/main/log/activity-log'
 import { createAssetService } from '@/main/assets/service'
 import type { JobService } from '@/main/jobs/types'
+import type { RenderService } from '@/main/thumbnails/types'
 import type { SettingsStore } from '@/main/settings/settings-store'
 import type { SecretStore } from '@/main/secrets/secret-store'
 
@@ -41,6 +42,7 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
       log: createActivityLog({ dir: logDir, minLevel: 'debug', now: () => new Date() }),
       assets: createAssetService(),
       jobs: {} as unknown as JobService,
+      render: {} as unknown as RenderService,
       openExternal: async () => {
         throw new Error('openExternal is not available')
       },

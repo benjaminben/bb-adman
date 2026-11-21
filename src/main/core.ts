@@ -17,6 +17,7 @@ import { comfyCommands } from './commands/comfy'
 import { devCommands } from './commands/dev'
 import { generationCommands } from './commands/generation'
 import { jobCommands } from './commands/job'
+import { layerCommands } from './commands/layer'
 import { mcpCommands } from './commands/mcp'
 import { projectCommands } from './commands/project'
 import { ruleSetCommands } from './commands/rule-set'
@@ -24,10 +25,13 @@ import { secretCommands } from './commands/secret'
 import { settingsCommands } from './commands/settings'
 import { storageCommands } from './commands/storage'
 import { subjectCommands } from './commands/subject'
+import { variantCommands } from './commands/variant'
 import { createQueryRunner, queryTable } from './queries/queries'
 import { createAssetService } from './assets/service'
 import { createJobRunner } from './jobs/runner'
 import { jobKindHandlers } from './jobs/kinds'
+import { createRenderService } from './thumbnails/service'
+import type { DrawScene } from './thumbnails/types'
 import { agentCaller } from './mcp/agent-caller'
 import { createMcpHttp } from './mcp/server'
 import { createMcpService } from './mcp/service'
@@ -49,6 +53,8 @@ export type CoreOptions = {
   devTools?: boolean
   toPng?: (bytes: Uint8Array) => Uint8Array
   fitPicture?: CoreDeps['fitPicture']
+  // The Electron side of one draw (spec/scene.md, "One draw"); index.ts fills it.
+  drawScene?: DrawScene
 }
 
 const noBrowser = async (): Promise<void> => {
@@ -61,6 +67,10 @@ const noConverter = (): Uint8Array => {
 
 const noFitter = (): Uint8Array => {
   throw new Error('fitPicture is not available')
+}
+
+const noDraw: DrawScene = async () => {
+  throw new Error('drawScene is not available')
 }
 
 export type Core = ReturnType<typeof createCore>
@@ -98,6 +108,12 @@ export function createCore(opts: CoreOptions) {
       emit: opts.emit,
       handlers: jobKindHandlers,
     }),
+    render: createRenderService({
+      deps: () => deps,
+      bus: () => bus,
+      emit: opts.emit,
+      draw: opts.drawScene ?? noDraw,
+    }),
     openExternal: opts.openExternal ?? noBrowser,
     devTools: opts.devTools ?? false,
     toPng: opts.toPng ?? noConverter,
@@ -133,6 +149,7 @@ export function createCore(opts: CoreOptions) {
     ...devCommands(deps),
     ...generationCommands(deps),
     ...jobCommands(deps),
+    ...layerCommands(deps),
     ...mcpCommands(mcp),
     ...projectCommands(deps),
     ...ruleSetCommands(deps),
@@ -140,6 +157,7 @@ export function createCore(opts: CoreOptions) {
     ...settingsCommands(deps, mcp),
     ...storageCommands(deps),
     ...subjectCommands(deps),
+    ...variantCommands(deps),
   ]
 
   const bus = createCommandBus({

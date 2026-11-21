@@ -30,4 +30,17 @@
   --width-page: 960px;
   --width-column-min: 320px;
   --width-dialog: 440px;
+  /* Phase 3 editor (spec/screens.md). The canvas backdrop is a mid grey, neither ad black nor
+     page white; the selection line is drawn dark with a light edge on each side, so it shows
+     on any picture; guides are magenta for the same reason. */
+  --editor-layers-width: 260px;
+  --editor-props-width: 312px;
+  --canvas-backdrop: #8a8d93;
+  --selection-dark: #1b1d22;
+  --selection-light: #ffffff;
+  --guide-color: #e0149a;
+  --handle-size: 8px;
+  --rotate-handle-offset: 24px;
+  --thumbnail-tile: 160px;
+  --layer-thumb: 32px;
 }

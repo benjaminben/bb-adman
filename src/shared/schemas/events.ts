@@ -26,6 +26,8 @@ export type EventMap = {
   // SPEC 4.4; SPEC 14, Slice A rulings point 2b: linked files whose content changed outside
   // the app, sent after asset.checkChanged finds any. The window draws them again.
   'asset.changedOnDisk': { projectId: string; assetIds: string[] }
+  // spec/editor-commands.md: a thumbnail file was written or deleted. No picture, no path.
+  'thumbnail.changed': { projectId: string; variantId: string }
 }
 
 export type EventName = keyof EventMap
@@ -34,4 +36,5 @@ export const EVENT_NAMES: EventName[] = [
   'app.stateChanged',
   'job.updated',
   'asset.changedOnDisk',
+  'thumbnail.changed',
 ]

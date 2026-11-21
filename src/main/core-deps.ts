@@ -7,6 +7,7 @@ import type { ActivityLog } from './log/activity-log'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { AssetService } from './assets/types'
 import type { JobService } from './jobs/types'
+import type { RenderService } from './thumbnails/types'
 
 export type CoreDeps = {
   projects: ProjectRegistry
@@ -17,6 +18,8 @@ export type CoreDeps = {
   log: ActivityLog
   assets: AssetService
   jobs: JobService
+  // Draws variants in the hidden render window and keeps the thumbnails (spec/scene.md).
+  render: RenderService
   // Opens an https: address in the system browser (index.ts fills it from Electron).
   openExternal: (url: string) => Promise<void>
   // True only in an unpackaged app started with ADMAN_DEV_TOOLS=1 (SPEC 13).
