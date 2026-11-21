@@ -95,3 +95,15 @@ describe('parseBrief YAML: nothing is printed [SPEC 6.1]', () => {
     expect(emit).not.toHaveBeenCalled()
   })
 })
+
+// SPEC 14 P3 [1.26] (slice B review, F5): the options given in the call win over the
+// directive, so the 1.2 core rules still hold.
+describe('parseBrief YAML: a %YAML 1.1 line [SPEC 6.1, 14 P3]', () => {
+  it('still reads NO and no as text', () => {
+    const text = '%YAML 1.1\n---\nregion: NO\nlanguages: [no]\n'
+    expect(parseBrief(text, 'yaml')).toEqual({
+      ok: true,
+      data: { region: 'NO', languages: ['no'] },
+    })
+  })
+})

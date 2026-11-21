@@ -175,3 +175,21 @@ describe('parseBrief: the limit is counted in UTF-8 bytes [SPEC 6.1 item 7, 14 P
     expect(parseBrief(text, 'json')).toEqual(tooLarge)
   })
 })
+
+// SPEC 14 P3 [1.26] (slice B review, F5). Observed: yaml 2.9.1 stops at its own nesting
+// limit with an error, so YAML is unreadable; JSON.parse reads it and the BriefDraft schema
+// drops the copy field.
+describe('parseBrief: 10,000 nested lists under a key [SPEC 6.1, 14 P3]', () => {
+  const deep = '['.repeat(10_000) + ']'.repeat(10_000)
+
+  it('gives brief_unreadable in YAML', () => {
+    expect(parseBrief(`region: US\ncopy: ${deep}\n`, 'yaml')).toEqual(unreadable)
+  })
+
+  it('gives a draft with no copy in JSON', () => {
+    expect(parseBrief(`{"region":"US","copy":${deep}}`, 'json')).toEqual({
+      ok: true,
+      data: { region: 'US' },
+    })
+  })
+})
