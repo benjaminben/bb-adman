@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { env } from 'cloudflare:workers'
+import { db } from './db'
 import * as links from '../src/db/links'
 import * as variants from '../src/db/variants'
 import * as signoffs from '../src/db/signoffs'
 import * as sessions from '../src/db/sessions'
 
-const db = env.DB
 const password = { hash: 'aGFzaA==', salt: 'c2FsdA==', iterations: 1000 }
 
 function link(n: number): links.LinkRow {

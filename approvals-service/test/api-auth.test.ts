@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { env } from 'cloudflare:workers'
+import { db } from './db'
 import { createApp } from '../src/app'
 
 const KEY = 'k'.repeat(40)
 const parts = { now: () => 1_700_000_000_000, random: (n: number) => new Uint8Array(n) }
-const app = (apiKey: string | undefined) => createApp({ DB: env.DB, API_KEY: apiKey }, parts)
+const app = (apiKey: string | undefined) => createApp({ DB: db, API_KEY: apiKey }, parts)
 
 const ORIGIN = 'https://approvals.example'
 const HEALTH = `${ORIGIN}/api/v1/health`
@@ -119,6 +119,7 @@ const rows: Row[] = [
         method: 'POST',
         headers: { ...bearer(KEY), ...json },
         body: bigStream(),
+        duplex: 'half',
       }),
     413,
     'too_large',
@@ -156,7 +157,7 @@ async function tableCounts(): Promise<number[]> {
   const tables = ['link', 'gallery_variant', 'signoff', 'session']
   return Promise.all(
     tables.map(
-      async (t) => (await env.DB.prepare(`SELECT COUNT(*) AS n FROM ${t}`).first<number>('n')) ?? 0,
+      async (t) => (await db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).first<number>('n')) ?? 0,
     ),
   )
 }
@@ -166,7 +167,7 @@ describe('the keyed API order of checks [approvals-service.md "The keyed API"]',
     const before = await tableCounts()
     const reply = await app(apiKey).fetch(request())
     expect(reply.status).toBe(status)
-    const body = await reply.json<{ error: { code: string; message: string } }>()
+    const body = (await reply.json()) as { error: { code: string; message: string } }
     expect(body.error.code).toBe(code)
     expect(JSON.stringify(body)).not.toContain('<script>')
     expect(JSON.stringify(body)).not.toContain('nope')
@@ -196,16 +197,16 @@ describe('the keyed API order of checks [approvals-service.md "The keyed API"]',
     ]) {
       const reply = await app(KEY).fetch(new Request(url, { headers: bearer(KEY) }))
       expect(reply.status).toBe(404)
-      expect((await reply.json<{ error: { code: string } }>()).error.code).toBe('not_found')
+      expect(((await reply.json()) as { error: { code: string } }).error.code).toBe('not_found')
     }
   })
 
   it('gives each code its one fixed sentence', async () => {
     const messages = new Map<string, Set<string>>()
     for (const [, apiKey, request] of rows) {
-      const { error } = await (
+      const { error } = (await (
         await app(apiKey).fetch(request())
-      ).json<{ error: { code: string; message: string } }>()
+      ).json()) as { error: { code: string; message: string } }
       messages.set(error.code, (messages.get(error.code) ?? new Set()).add(error.message))
     }
     for (const [code, set] of messages) expect(set.size, code).toBe(1)

@@ -2,7 +2,9 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
-import { openDb, type Db } from '../src/db/client'
+import { createClient } from '@libsql/client'
+import { createDb, openDb, type Db } from '../src/db/client'
+import { chooseAddress, isLocalAddress, migrate, MIGRATIONS } from '../scripts/migrate'
 
 // spec/approvals-service.md "The Db interface": the thin layer over @libsql/client.
 
@@ -105,5 +107,48 @@ describe('Db over libSQL [AP-14]', () => {
     await first.prepare('CREATE TABLE t (v TEXT)').run()
     await first.prepare('INSERT INTO t (v) VALUES (?)').bind('kept').run()
     expect(await openDb(url).prepare('SELECT v FROM t').first('v')).toBe('kept')
+  })
+})
+
+describe('scripts/migrate.ts [AP-14]', () => {
+  it.each([
+    ['file:local.db', true],
+    [':memory:', true],
+    ['file:/tmp/x/e2e.db', true],
+    ['libsql://db-name.example', false],
+    ['https://db-name.example', false],
+    ['http://127.0.0.1:8080', false],
+    ['ws://db.example', false],
+    ['', false],
+  ])('treats %j as local: %s', (url, local) => {
+    expect(isLocalAddress(url)).toBe(local)
+  })
+
+  it('refuses a hosted address without --hosted, and allows it only with', () => {
+    const hosted = { TURSO_DATABASE_URL: 'libsql://x.example' }
+    expect(() => chooseAddress(hosted, [])).toThrow('refused')
+    expect(chooseAddress(hosted, ['--hosted']).url).toBe('libsql://x.example')
+  })
+
+  it('uses the local file when no address is set', () => {
+    expect(chooseAddress({}, [])).toEqual({ url: 'file:local.db', authToken: undefined })
+  })
+
+  it('applies each migration once, in name order, and records it', async () => {
+    const client = createClient({ url: ':memory:', intMode: 'number' })
+    expect(await migrate(client, MIGRATIONS)).toEqual(['0001_init.sql'])
+    expect(await migrate(client, MIGRATIONS)).toEqual([])
+    const local = createDb(client)
+    const done = await local.prepare('SELECT name FROM schema_migrations').all()
+    expect(done.results).toEqual([{ name: '0001_init.sql' }])
+    const sql = "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"
+    const tables = await local.prepare(sql).all<{ name: string }>()
+    expect(tables.results.map((t) => t.name)).toEqual([
+      'gallery_variant',
+      'link',
+      'schema_migrations',
+      'session',
+      'signoff',
+    ])
   })
 })

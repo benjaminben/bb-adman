@@ -1,6 +1,6 @@
 // Shared set-up for the visitor tests: a link with a real password hash, a movable clock and
 // form requests that pass the form checks unless a test changes them.
-import { env } from 'cloudflare:workers'
+import { db } from './db'
 import { createApp } from '../src/app'
 import { cryptoBytes } from '../src/crypto/random'
 import { hashPassword, type StoredPassword } from '../src/crypto/password'
@@ -8,7 +8,7 @@ import * as links from '../src/db/links'
 
 export const ORIGIN = 'https://approvals.example'
 export const PASSWORD = 'correct horse battery'
-export const db = env.DB
+export { db }
 
 export function clock(start = Date.UTC(2026, 10, 21, 12, 0)) {
   let time = start
@@ -21,7 +21,7 @@ export function clock(start = Date.UTC(2026, 10, 21, 12, 0)) {
 }
 
 export function makeApp(now: () => number) {
-  return createApp({ DB: env.DB }, { now, random: cryptoBytes })
+  return createApp({ DB: db }, { now, random: cryptoBytes })
 }
 
 // One real hash at the full iteration count, made once per test file.

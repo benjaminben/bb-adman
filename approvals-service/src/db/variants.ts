@@ -1,4 +1,6 @@
+import 'server-only'
 // The gallery_variant table. Every query names the link it belongs to.
+import type { Db, Statement } from './client'
 
 export type VariantRow = {
   variantKey: string
@@ -13,7 +15,7 @@ export type VariantRow = {
 const COLUMNS = `variant_key AS variantKey, position, title, size_line AS sizeLine, version,
   picture_url AS pictureUrl, picture_expires_at AS pictureExpiresAt`
 
-export function putVariant(db: D1Database, linkId: string, row: VariantRow): D1PreparedStatement {
+export function putVariant(db: Db, linkId: string, row: VariantRow): Statement {
   return db
     .prepare(
       `INSERT OR REPLACE INTO gallery_variant (link_id, variant_key, position, title, size_line,
@@ -31,14 +33,14 @@ export function putVariant(db: D1Database, linkId: string, row: VariantRow): D1P
     )
 }
 
-export async function listVariants(db: D1Database, linkId: string): Promise<VariantRow[]> {
+export async function listVariants(db: Db, linkId: string): Promise<VariantRow[]> {
   const sql = `SELECT ${COLUMNS} FROM gallery_variant WHERE link_id = ? ORDER BY position`
   const { results } = await db.prepare(sql).bind(linkId).all<VariantRow>()
   return results
 }
 
 export async function findVariant(
-  db: D1Database,
+  db: Db,
   linkId: string,
   variantKey: string,
 ): Promise<VariantRow | null> {
@@ -48,10 +50,10 @@ export async function findVariant(
 
 // Removes a variant from the gallery together with its sign-offs.
 export function deleteVariant(
-  db: D1Database,
+  db: Db,
   linkId: string,
   variantKey: string,
-): D1PreparedStatement[] {
+): Statement[] {
   return [
     db
       .prepare('DELETE FROM signoff WHERE link_id = ? AND variant_key = ?')
@@ -65,11 +67,11 @@ export function deleteVariant(
 // The first and last statements of a gallery replace: every row of the link goes, the listed
 // rows are written again between the two, then the sign-offs of every variant no longer listed
 // go. Sign-offs of a listed variant stay, whatever their version.
-export function clearGallery(db: D1Database, linkId: string): D1PreparedStatement {
+export function clearGallery(db: Db, linkId: string): Statement {
   return db.prepare('DELETE FROM gallery_variant WHERE link_id = ?').bind(linkId)
 }
 
-export function deleteUnlistedSignoffs(db: D1Database, linkId: string): D1PreparedStatement {
+export function deleteUnlistedSignoffs(db: Db, linkId: string): Statement {
   return db
     .prepare(
       `DELETE FROM signoff WHERE link_id = ? AND variant_key NOT IN
@@ -80,10 +82,10 @@ export function deleteUnlistedSignoffs(db: D1Database, linkId: string): D1Prepar
 
 // Changes the picture only when the version still matches; never changes the version.
 export function renewPicture(
-  db: D1Database,
+  db: Db,
   linkId: string,
   renewal: { variantKey: string; version: number; pictureUrl: string; pictureExpiresAt: number },
-): D1PreparedStatement {
+): Statement {
   return db
     .prepare(
       `UPDATE gallery_variant SET picture_url = ?, picture_expires_at = ?

@@ -1,3 +1,4 @@
+import 'server-only'
 // spec/approvals-service.md "Random values and passwords": letters without bias.
 
 export const LETTERS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'

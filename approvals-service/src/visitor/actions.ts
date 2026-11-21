@@ -8,6 +8,7 @@ import { listVariants } from '../db/variants'
 import { readForm } from './forms'
 import { clearedCookie, endSession, readSession, startSession } from './session'
 import { tryPassword } from './throttle'
+import type { Db } from '../db/client'
 
 // Only what the gallery shows: no password, no link, project or campaign ID, no picture address.
 export type GalleryView = {
@@ -37,7 +38,7 @@ export type LeaveResult = { kind: 'refused' } | { kind: 'left'; cookie: string; 
 const goodSlug = (slug: string) => Slug.safeParse(slug).success
 
 export async function openGallery(
-  db: D1Database,
+  db: Db,
   request: Request,
   slug: string,
   now: number,
@@ -73,7 +74,7 @@ export async function openGallery(
 }
 
 export async function enterLink(
-  db: D1Database,
+  db: Db,
   request: Request,
   slug: string,
   parts: Parts,
@@ -94,7 +95,7 @@ export async function enterLink(
 }
 
 export async function leaveLink(
-  db: D1Database,
+  db: Db,
   request: Request,
   slug: string,
   now: number,

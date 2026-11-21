@@ -1,3 +1,4 @@
+import 'server-only'
 // spec/approvals-service.md "Random values and passwords": PBKDF2 with HMAC-SHA-256, a 16-byte
 // random salt per link, 32 bytes out. The iteration count is stored per link.
 import { sameBytes } from './compare'

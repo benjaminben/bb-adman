@@ -8,10 +8,14 @@ import { createClient, type Client, type ResultSet } from '@libsql/client'
 export type Value = string | number | null
 export type RunResult = { meta: { changes: number } }
 
+type Plain = Record<string, unknown>
+
+// The type defaults are D1's: a whole row is an object, one column's value is unknown.
 export interface Statement {
   bind(...values: Value[]): Statement
-  first<T>(column?: string): Promise<T | null>
-  all<T>(): Promise<{ results: T[] }>
+  first<T = Plain>(): Promise<T | null>
+  first<T = unknown>(column: string): Promise<T | null>
+  all<T = Plain>(): Promise<{ results: T[] }>
   run(): Promise<RunResult>
 }
 
@@ -19,8 +23,6 @@ export interface Db {
   prepare(sql: string): Statement
   batch(statements: Statement[]): Promise<RunResult[]>
 }
-
-type Plain = Record<string, unknown>
 
 function plainRows(result: ResultSet): Plain[] {
   return result.rows.map((row) => {
@@ -51,13 +53,15 @@ class LibsqlStatement implements Statement {
     return this.owner.execute({ sql: this.sql, args: [...this.args] })
   }
 
+  first<T = Plain>(): Promise<T | null>
+  first<T = unknown>(column: string): Promise<T | null>
   async first<T>(column?: string): Promise<T | null> {
     const row = plainRows(await this.execute())[0]
     if (row === undefined) return null
     return (column === undefined ? row : (row[column] ?? null)) as T
   }
 
-  async all<T>(): Promise<{ results: T[] }> {
+  async all<T = Plain>(): Promise<{ results: T[] }> {
     return { results: plainRows(await this.execute()) as T[] }
   }
 

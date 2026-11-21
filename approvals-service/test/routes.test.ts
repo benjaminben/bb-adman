@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { env } from 'cloudflare:workers'
+import { db } from './db'
 import { z } from 'zod'
 import { API_ROUTES, createApp } from '../src/app'
 import { bodyRoute, plainRoute } from '../src/api/route'
@@ -43,7 +43,7 @@ const plain = plainRoute({
 })
 
 const app = (tables: Parameters<typeof createApp>[2]) =>
-  createApp({ DB: env.DB, API_KEY: KEY }, parts, tables)
+  createApp({ DB: db, API_KEY: KEY }, parts, tables)
 
 describe('API route entries', () => {
   it('hand the handler its body as its own schema parsed it', async () => {
@@ -92,7 +92,7 @@ describe('API route entries', () => {
       const body = bodies[name]
       expect(route?.hasCheck).toBe(true)
       if (route?.checkBody === undefined || body === undefined) throw new Error('no check')
-      const checkEnv = { DB: env.DB, API_KEY: KEY }
+      const checkEnv = { DB: db, API_KEY: KEY }
       expect(await route.checkBody(body('https://evil.example/a.png'), checkEnv)).toEqual({
         status: 400,
         code: 'invalid_input',

@@ -11,6 +11,7 @@ import {
   hasSession,
 } from '../db/sessions'
 import type { CheckedPassword } from './throttle'
+import type { Db } from '../db/client'
 
 export const SESSION_AGE = 12 * 60 * 60 * 1000
 
@@ -53,7 +54,7 @@ function tokenOf(request: Request, slug: string): string | null {
 
 // The link of the slug, with the session when the request holds a live one for that link.
 export async function readSession(
-  db: D1Database,
+  db: Db,
   request: Request,
   slug: string,
   now: number,
@@ -72,7 +73,7 @@ export async function readSession(
 // the checked password. Gives the Set-Cookie text, or null when the password changed or the
 // link went away meanwhile (the caller answers as for a wrong password).
 export async function startSession(
-  db: D1Database,
+  db: Db,
   checked: CheckedPassword,
   slug: string,
   parts: Parts,
@@ -89,6 +90,6 @@ export async function startSession(
   return added?.meta.changes === 1 ? sessionCookie(slug, token) : null
 }
 
-export async function endSession(db: D1Database, session: Session): Promise<void> {
+export async function endSession(db: Db, session: Session): Promise<void> {
   await deleteSession(db, session.tokenHash, session.link.id).run()
 }

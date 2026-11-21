@@ -2,6 +2,7 @@
 // counted before the hash is computed.
 import { checkPassword, type StoredPassword } from '../crypto/password'
 import { countPasswordTry } from '../db/enter'
+import type { Db } from '../db/client'
 
 export const MAX_TRIES = 10
 export const TRY_WINDOW = 15 * 60 * 1000
@@ -13,7 +14,7 @@ export type CheckedPassword = { linkId: string; password: StoredPassword }
 // The checked link when the password is right and the try is within the limit; otherwise null.
 // The caller gives one reply to every null, so the three failures cannot be told apart.
 export async function tryPassword(
-  db: D1Database,
+  db: Db,
   slug: string,
   password: string,
   now: number,

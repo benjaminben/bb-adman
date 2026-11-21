@@ -1,5 +1,5 @@
 // Shared by the link API tests: an app with a known key, requests, and table counts.
-import { env } from 'cloudflare:workers'
+import { db } from './db'
 import { createApp, type Parts } from '../src/app'
 import { cryptoBytes } from '../src/crypto/random'
 import { addSignoff } from '../src/db/signoffs'
@@ -8,12 +8,12 @@ export const KEY = 'k'.repeat(40)
 export const NOW = 1_700_000_000_000
 export const ORIGIN = 'https://approvals.example'
 export const PROJECT = '01ARZ3NDEKTSV4RRFFQ69G5FAV'
-export const db = env.DB
+export { db }
 
 export const parts: Parts = { now: () => NOW, random: cryptoBytes }
 
 export function app(over: Partial<Parts> = {}, testOrigin?: string) {
-  const appEnv = { DB: env.DB, API_KEY: KEY, TEST_PICTURE_ORIGIN: testOrigin }
+  const appEnv = { DB: db, API_KEY: KEY, TEST_PICTURE_ORIGIN: testOrigin }
   return createApp(appEnv, { ...parts, ...over })
 }
 
@@ -73,7 +73,7 @@ export async function signoff(linkId: string, n: number, variantKey: string, ver
 }
 
 export const errorCode = async (reply: Response) =>
-  (await reply.json<{ error: { code: string } }>()).error.code
+  ((await reply.json()) as { error: { code: string } }).error.code
 
 export async function clearAll() {
   await db.batch(
