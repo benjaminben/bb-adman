@@ -164,3 +164,19 @@ describe('generation.runImages [SPEC 4.2, 3.6 "Jobs" item 1; FR-062 to FR-065]',
     await expectRefused(() => run({ count: 9 }), 'INVALID_INPUT')
   })
 })
+
+describe('generation.runImages with reference pictures [SPEC 14 1.46 RF-0 item 3]', () => {
+  const WEBP = new Uint8Array([...Buffer.from('RIFF'), 1, 2, 3, 4, ...Buffer.from('WEBPVP8 ')])
+
+  it('refuses a WebP reference before any job row: asset_not_a_picture, with its name', async () => {
+    f = await makeGenerationFixture()
+    const ref = await f.importPicture('photo.webp', WEBP)
+    expect(f.asset(ref)?.mime).toBe('image/webp')
+    const error = await expectRefused(
+      () => run({ referenceAssetIds: [ref] }),
+      'RULE_VIOLATION',
+      'asset_not_a_picture',
+    )
+    expect(error.message).toBe('photo.webp is not a picture the app can send.')
+  })
+})
