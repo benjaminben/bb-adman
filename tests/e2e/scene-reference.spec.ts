@@ -68,13 +68,18 @@ test.describe('Phase 3 cases, one app for all', () => {
     })
     const { layers } = await query(page, 'variant.get', { projectId, variantId })
     for (const layer of layers as Layer[]) {
-      if (layer.type === 'background' && c.background) {
-        await command(page, 'layer.update', {
-          projectId,
-          layerId: layer.id,
-          patch: c.background(assets),
-        })
-      } else if (layer.type !== 'background') {
+      if (layer.type === 'background') {
+        // The starter layout gives a new background a shade; a case starts from a plain one.
+        const plain = { projectId, layerId: layer.id, patch: { style: { shade: null } } }
+        await command(page, 'layer.update', plain)
+        if (c.background) {
+          await command(page, 'layer.update', {
+            projectId,
+            layerId: layer.id,
+            patch: c.background(assets),
+          })
+        }
+      } else {
         await command(page, 'layer.delete', { projectId, layerId: layer.id })
       }
     }
