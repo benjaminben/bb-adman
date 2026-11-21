@@ -15,8 +15,13 @@ describe('project names refuse the names Windows reserves [SPEC 4.2 notes]', () 
     expect(valid('  nul  ')).toBe(false)
   })
 
+  it('refuses LPT0, added to the list [SPEC 6.5 1.20 B-01, 14 L8]', () => {
+    expect(valid('LPT0')).toBe(false)
+    expect(valid('lpt0')).toBe(false)
+  })
+
   it('accepts names that only contain a reserved name', () => {
-    for (const name of ['CONSOLE', 'COM10', 'LPT0', 'Auxiliary', 'Null']) {
+    for (const name of ['CONSOLE', 'COM10', 'Auxiliary', 'Null']) {
       expect(valid(name), name).toBe(true)
     }
   })
