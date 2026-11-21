@@ -3,6 +3,7 @@ import { appWindowOptions } from '@/main/windows/app-window-options'
 import { pageAddress } from '@/main/windows/app-window'
 import { CONTENT_SECURITY_POLICY, devContentSecurityPolicy } from '@/main/windows/csp'
 import { decideWindowOpen, isAllowedNavigation } from '@/main/windows/navigation'
+import { webpWindowOptions } from '@/main/windows/webp-window'
 
 describe('app window settings [SPEC 8.2]', () => {
   it('turns on context isolation, sandbox and web security and turns off node integration', () => {
@@ -133,4 +134,17 @@ describe('page address: one trailing slash [SPEC 8.2, S2-02]', () => {
       expect(pageAddress({ isPackaged: false, rendererUrl, builtPage })).toBe(builtPage)
     },
   )
+})
+
+describe('WebP decoder window settings [Slice WP; SPEC 8.2]', () => {
+  it('turns on context isolation, sandbox and web security, turns off node integration, and has no preload', () => {
+    const opts = webpWindowOptions({} as Electron.Session)
+    expect(opts.webPreferences).toMatchObject({
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+      webSecurity: true,
+    })
+    expect(opts.webPreferences?.preload).toBeUndefined()
+  })
 })
