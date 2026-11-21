@@ -3,8 +3,9 @@
 // [1.12] O-8, G6: prints a fixed set of facts the stakeholder can pass on. On success: the
 // file path, the pixel size read from the PNG, the size in bytes and the model ID. On failure:
 // the error kind and the detail (with the key removed). No request, header or key is printed.
-// [1.14] H11: every printed line, and the error thrown on a failure, has every live value
-// removed (live-output.ts); the real error is not let out, so Vitest cannot print it.
+// [1.14] H11, [1.15] H16: every printed line, and the error thrown on a failure, has the
+// LIVE_REDACTED_NAMES values removed (live-output.ts); the real error is not let out, so
+// Vitest cannot print it.
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'

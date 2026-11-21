@@ -1,16 +1,19 @@
-// SPEC 13, 14 H11 (F-04): a live test prints no value of a live variable, bucket name and
-// region included, in a failure too. Everything a live test prints, and every error it lets
-// Vitest print, passes through `safeText` for every set value of LIVE_ENV_NAMES. A skip line
-// names only the variables that are missing.
+// SPEC 13, 14 H11 (F-04), [1.15] H16: a live test prints no key and no bucket name, in a
+// failure too. Everything a live test prints, and every error it lets Vitest print, passes
+// through `safeText` for every set value of LIVE_REDACTED_NAMES (the prefix only when it is
+// long enough). A skip line names only the variables that are missing.
 import { redactSecret } from '../../src/main/providers/redact'
 import { ProviderFailure } from '../../src/main/providers/types'
-import { LIVE_ENV_NAMES } from './env-file'
+import { LIVE_REDACTED_MIN_LENGTH, LIVE_REDACTED_NAMES } from './env-file'
 
 type Env = Record<string, string | undefined>
 
-// The set, non-empty values of the live variables.
+// The set values of the redacted live variables, each at least its minimum length.
 export function liveValues(env: Env = process.env): string[] {
-  return LIVE_ENV_NAMES.map((name) => env[name] ?? '').filter((value) => value !== '')
+  return LIVE_REDACTED_NAMES.flatMap((name) => {
+    const value = env[name] ?? ''
+    return value.length >= (LIVE_REDACTED_MIN_LENGTH[name] ?? 1) ? [value] : []
+  })
 }
 
 // Longest first, so a value held inside a longer one cannot leave part of the longer behind.
@@ -52,5 +55,19 @@ export async function safely<T>(label: string, call: () => Promise<T>): Promise<
     const { lines, error } = safeFailure(label, failure)
     livePrint(lines)
     throw error
+  }
+}
+
+// [1.16] H20: runs one live call and prints nothing. A failure throws the safe error, so a
+// case that expects it prints nothing, and Vitest shows it only when a case did not expect it.
+export async function quietly<T>(
+  label: string,
+  call: () => Promise<T>,
+  values: string[] = liveValues(),
+): Promise<T> {
+  try {
+    return await call()
+  } catch (failure) {
+    throw safeFailure(label, failure, values).error
   }
 }

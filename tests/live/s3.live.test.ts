@@ -3,15 +3,16 @@
 // of `npm test` or CI. Everything is written under {prefix}/adman-hand-test/ and nowhere else.
 // ADMAN_LIVE_KEEP=1 leaves adman-hand-test/hello.txt in the bucket; the next run removes it.
 // The keys reach the adapter only through AdapterContext.secret.
-// [1.14] H11: nothing printed holds a live value (no key, bucket, region or prefix), in a
-// failure too: every call goes through `safely`, which prints the error kind and detail with
-// the live values removed and throws a safe error in place of the real one.
+// [1.14] H11, [1.15] H16: nothing printed holds a key or the bucket name, in a failure too.
+// [1.16] H20: every call goes through `quietly`, which prints nothing and throws a safe error
+// (kind and detail, live values removed) in place of the real one. A case that expects the
+// failure prints nothing; Vitest shows the safe error only for a case that did not expect it.
 import { describe, it, expect } from 'vitest'
 import { s3Storage } from '../../src/main/providers/s3/s3-storage'
 import type { AdapterContext, StorageProvider } from '../../src/main/providers/types'
 import type { Settings } from '../../src/shared/schemas/settings'
 import { describeStorageConformance } from '../integration/providers/storage-conformance'
-import { livePrint, missingNames, safely } from './live-output'
+import { livePrint, missingNames, quietly } from './live-output'
 
 const env = process.env
 const bucket = env.ADMAN_LIVE_S3_BUCKET
@@ -56,15 +57,15 @@ function liveContext(): AdapterContext {
   }
 }
 
-// The S3 adapter with every call passed through `safely`.
+// The S3 adapter with every call passed through `quietly`.
 async function liveStorage(): Promise<StorageProvider> {
-  const storage = await safely('S3', async () => s3Storage(liveContext()))
+  const storage = await quietly('S3', async () => s3Storage(liveContext()))
   return {
-    exists: (path) => safely('S3', () => storage.exists(path)),
-    read: (path) => safely('S3', () => storage.read(path)),
-    write: (path, data, type) => safely('S3', () => storage.write(path, data, type)),
-    list: (folder) => safely('S3', () => storage.list(folder)),
-    remove: (paths) => safely('S3', () => storage.remove(paths)),
+    exists: (path) => quietly('S3', () => storage.exists(path)),
+    read: (path) => quietly('S3', () => storage.read(path)),
+    write: (path, data, type) => quietly('S3', () => storage.write(path, data, type)),
+    list: (folder) => quietly('S3', () => storage.list(folder)),
+    remove: (paths) => quietly('S3', () => storage.remove(paths)),
   }
 }
 
