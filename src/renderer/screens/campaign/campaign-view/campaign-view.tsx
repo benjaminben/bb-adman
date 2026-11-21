@@ -1,5 +1,5 @@
-// The campaign page (SPEC 14 1.41 TP-2): the variants from campaign.get, the picture panel
-// for the chosen one, and its runs. The master is chosen at the start. One job store per
+// The campaign page (SPEC 14 1.41 TP-2): the variants from campaign.get as a grid of tiles
+// (S2-16), the picture panel for the chosen one, and its runs. The master is chosen at the start. One job store per
 // open page. SPEC 14 1.57 TP-6: the video card sits under the picture panel.
 import { useEffect, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
@@ -8,7 +8,7 @@ import type { CampaignGet } from '@/shared/schemas/queries/campaign'
 import { GeneratePanel } from '@/renderer/screens/campaign/generate-panel'
 import { RunList } from '@/renderer/screens/campaign/run-list'
 import { SlotView } from '@/renderer/screens/campaign/slot-view'
-import { VariantList } from '@/renderer/screens/campaign/variant-list'
+import { VariantGrid } from '@/renderer/screens/campaign/variant-grid'
 import { VideoPanel } from '@/renderer/screens/campaign/video-panel'
 import layout from '@/renderer/ui/layout.module.css'
 
@@ -56,7 +56,13 @@ export function CampaignView(props: { projectId: string; campaignId: string; onB
       ) : (
         <>
           <h2>{data.campaign.name}</h2>
-          <VariantList variants={data.variants} chosenId={variantId} onChoose={setChosenId} />
+          <VariantGrid variants={data.variants} chosenId={variantId} onChoose={setChosenId} />
+          {variant && (
+            <p>
+              Runs and panels below are for: {variant.title} · {variant.sizeLabel} ·{' '}
+              {variant.language}
+            </p>
+          )}
           <SlotView projectId={projectId} campaignId={campaignId} />
           {variant && (
             <GeneratePanel

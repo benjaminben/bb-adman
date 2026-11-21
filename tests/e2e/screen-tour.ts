@@ -87,11 +87,11 @@ export async function projectHomeTour(app: ElectronApplication, page: Page) {
   await screens.openCampaign(page)
   // campaign.create makes the master variant only, and no screen adds another yet, so the
   // choice is between one: it is chosen at the start and stays chosen when clicked.
-  const variants = page.getByRole('group', { name: 'Variants' }).getByRole('radio')
+  const variants = page.getByRole('list', { name: 'Variants' }).getByRole('button')
   await expect(variants).toHaveCount(1)
-  await expect(variants.first()).toBeChecked()
-  await variants.first().check()
-  await expect(variants.first()).toBeChecked()
+  await expect(variants.first()).toHaveAttribute('aria-pressed', 'true')
+  await variants.first().click()
+  await expect(variants.first()).toHaveAttribute('aria-pressed', 'true')
   await page.getByRole('button', { name: 'Back to project' }).click()
   await expect(page.getByRole('list', { name: 'Campaigns' })).toBeVisible()
 }

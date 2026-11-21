@@ -1,0 +1,58 @@
+.tile {
+  position: relative;
+  height: 100%;
+}
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  height: 100%;
+  padding: var(--space-2);
+  text-align: left;
+}
+.chosen {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 calc(var(--focus-ring-width) - var(--border-width)) var(--color-accent);
+}
+.picture {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+.shape {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text-muted);
+}
+.wide {
+  width: 100%;
+}
+.tall {
+  height: 100%;
+}
+.title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.line {
+  color: var(--color-text-muted);
+}
+.marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.mark {
+  padding: 0 var(--space-1);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
