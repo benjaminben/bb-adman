@@ -9,6 +9,7 @@ import { sniffType, SNIFF_BYTES } from './sniff'
 import { pictureSize } from '../providers/picture-size'
 import { extensionOf, type FileType } from '../../shared/config/file-types'
 import { AppError } from '../../shared/schemas/result'
+import { UnreadableFileError } from './unreadable'
 
 // A JPEG's frame header can sit after a large EXIF block, so more than SNIFF_BYTES is read.
 const HEADER_BYTES = 256 * 1024
@@ -59,9 +60,7 @@ function fileError(e: unknown, fileName: string): unknown {
   if (code === 'ENOENT' || code === 'ENOTDIR') {
     return new AppError('NOT_FOUND', `${fileName} was not found.`)
   }
-  return new AppError('RULE_VIOLATION', `${fileName} could not be read.`, {
-    reason: 'file_not_readable',
-  })
+  return new UnreadableFileError(fileName, code)
 }
 
 // The file's facts, or a refusal whose message names the file and never its path.

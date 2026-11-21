@@ -5,6 +5,7 @@ import { assetImport } from '../../../src/main/commands/asset/import'
 import { assetList } from '../../../src/main/queries/asset'
 import { makeAssetBus } from './asset-bus'
 import { insertTestAsset } from './asset-rows'
+import { testLog } from './test-log'
 
 let bus: ReturnType<typeof makeAssetBus>
 const user = { actor: 'user' as const }
@@ -16,7 +17,9 @@ const PNG = Buffer.from([
 ])
 
 beforeEach(() => {
-  bus = makeAssetBus([assetImport({ now: () => new Date('2026-11-20T10:00:00.000Z') })])
+  bus = makeAssetBus([
+    assetImport({ now: () => new Date('2026-11-20T10:00:00.000Z'), log: testLog() }),
+  ])
 })
 afterEach(() => bus.cleanup())
 

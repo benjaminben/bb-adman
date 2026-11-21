@@ -4,6 +4,7 @@ import path from 'node:path'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { assetImport } from '../../../src/main/commands/asset/import'
 import { makeAssetBus, expectRefused } from './asset-bus'
+import { testLog } from './test-log'
 
 let bus: ReturnType<typeof makeAssetBus>
 let dir: string
@@ -16,7 +17,7 @@ const PNG = Buffer.from([
 ])
 
 beforeEach(() => {
-  bus = makeAssetBus([assetImport({ now: () => NOW })])
+  bus = makeAssetBus([assetImport({ now: () => NOW, log: testLog() })])
   dir = path.dirname(bus.project.filePath)
   bus.db
     .prepare("INSERT INTO subject (id, name, created_at) VALUES ('bottle', 'Bottle', 'x')")
@@ -159,7 +160,7 @@ describe('asset.import when the project changes between prepare and run [SPEC 3.
   it('refuses when an asset prepare reused was removed in between', async () => {
     const file = put('a.png', PNG)
     const [id] = idsOf(await importIt({ paths: [file] }))
-    const handler = assetImport({ now: () => NOW })
+    const handler = assetImport({ now: () => NOW, log: testLog() })
     const input = { projectId: bus.projectId, paths: [file], library: 'asset', copy: false }
     const base = { actor: 'user' as const, commandId: 'c1', project: bus.project }
     const prepared = await handler.prepare?.(base, input)

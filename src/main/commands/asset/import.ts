@@ -7,6 +7,7 @@ import { asset } from '../../db/schema'
 import { requireSubject } from './update'
 import { assetIdsByHash, prepareImport, removeCopies, type NewAsset } from '../../assets/import'
 import { assetImportInput, type AssetImportInput } from '../../../shared/schemas/commands/asset'
+import { logUnreadable } from '../../assets/unreadable'
 import { AppError } from '../../../shared/schemas/result'
 
 function rowOf(a: NewAsset, input: AssetImportInput, createdAt: string) {
@@ -42,12 +43,15 @@ function idFor(known: Map<string, string>, hash: string): string {
   return id
 }
 
-export function assetImport(deps: Pick<CoreDeps, 'now'>) {
+export function assetImport(deps: Pick<CoreDeps, 'now' | 'log'>) {
   return defineCommand({
     name: 'asset.import',
     input: assetImportInput,
     projectId: (input) => input.projectId,
-    prepare: (ctx, input) => prepareImport(ctx.project, input.paths, input.copy),
+    prepare: (ctx, input) =>
+      logUnreadable(deps.log, { command: 'asset.import', actor: ctx.actor }, () =>
+        prepareImport(ctx.project, input.paths, input.copy),
+      ),
     undoPrepare: (prepared) => removeCopies(prepared.copies),
     run(ctx, input, prepared) {
       if (input.subjectId) requireSubject(ctx, input.subjectId)

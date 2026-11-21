@@ -8,6 +8,7 @@ import { closeProjectFile, openProjectFile } from '../../../src/main/db/project-
 import { readMeta } from '../../../src/main/db/meta'
 import { insertTestAsset } from './asset-rows'
 import { makeAssetBus, expectRefused } from './asset-bus'
+import { testLog } from './test-log'
 
 let bus: ReturnType<typeof makeAssetBus>
 let dir: string
@@ -16,7 +17,7 @@ const GEN = '01JD0000000000000000000007'
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3])
 
 beforeEach(() => {
-  bus = makeAssetBus([projectPackage(), assetImport({ now: () => new Date() })])
+  bus = makeAssetBus([projectPackage(), assetImport({ now: () => new Date(), log: testLog() })])
   dir = path.dirname(bus.project.filePath)
 })
 afterEach(() => bus.cleanup())
