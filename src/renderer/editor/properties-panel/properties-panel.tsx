@@ -1,10 +1,11 @@
 // spec/editor.md, "Properties panel": the header (the layer's name and kind), then one section
-// per component: Layer, Text (text layers), Picture (image and background layers), Position and
-// size. Sections are keyed by the layer, so an unsaved edit or a refusal message does not carry
-// over to another layer.
+// per component: Layer, Text (text layers), Picture and Make pictures with AI (image and
+// background layers), Position and size. Sections are keyed by the layer, so an unsaved edit
+// or a refusal message does not carry over to another layer.
 import { FontField } from '@/renderer/editor/font-field'
 import { GeometryFields } from '@/renderer/editor/geometry-fields'
 import { LayerFields } from '@/renderer/editor/layer-fields'
+import { PictureAi } from '@/renderer/editor/picture-ai'
 import { PictureFields, type PictureAsset } from '@/renderer/editor/picture-fields'
 import { TextFields } from '@/renderer/editor/text-fields'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
@@ -67,6 +68,9 @@ function Sections(props: SectionsProps) {
           onUpdate={actions.update}
           onCrop={props.onCrop && (() => props.onCrop?.(layer.id))}
         />
+      )}
+      {layer.type !== 'text' && (
+        <PictureAi projectId={props.projectId} campaignId={props.campaignId} layer={layer} />
       )}
       <GeometryFields geometry={layer.geometry} disabled={layer.locked} onUpdate={actions.update} />
     </>

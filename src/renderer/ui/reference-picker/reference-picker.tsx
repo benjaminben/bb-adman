@@ -85,9 +85,7 @@ export function ReferencePicker(props: {
   return (
     <section aria-label={WORDS[library].heading} className={layout.field}>
       <h3 className={layout.label}>{WORDS[library].heading}</h3>
-      {list !== null && list.length === 0 && (
-        <p className={layout.muted}>{WORDS[library].empty}</p>
-      )}
+      {list !== null && list.length === 0 && <p className={layout.muted}>{WORDS[library].empty}</p>}
       {list !== null && list.length > 0 && (
         <ul className={layout.list}>
           {list.map((asset, i) => {

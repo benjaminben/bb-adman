@@ -1,0 +1,26 @@
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.fields p {
+  margin: 0;
+}
+.label {
+  font-weight: 600;
+}
+.prompt {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font: inherit;
+}
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.status {
+  color: var(--color-text-muted);
+}

@@ -39,7 +39,13 @@ async function requestSize(input: Record<string, unknown>) {
 
 describe('generation.runImages asks for the layer box [OI-70]', () => {
   it.each([
-    ['an image layer 400 × 200 gives that size', IMAGE_LAYER, 400, 200, { width: 400, height: 200 }],
+    [
+      'an image layer 400 × 200 gives that size',
+      IMAGE_LAYER,
+      400,
+      200,
+      { width: 400, height: 200 },
+    ],
     ['a background its own box', BACKGROUND_LAYER, 1000, 800, { width: 1000, height: 800 }],
     ['a box with fractions is rounded', IMAGE_LAYER, 399.6, 200.4, { width: 400, height: 200 }],
     ['a box under one pixel asks for at least 1', IMAGE_LAYER, 0.2, 0, { width: 1, height: 1 }],
