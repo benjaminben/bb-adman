@@ -1,0 +1,17 @@
+/* app-style */
+/* Settings: one column at page width. The shell's panel already gives --space-6 on every side,
+   so the page adds what reaches the spec's padding (spec/app-style.md "Settings"). */
+.screen {
+  max-width: calc(var(--width-page) + 2 * (var(--space-8) - var(--space-6)));
+  padding: calc(var(--space-8) - var(--space-6)) calc(var(--space-8) - var(--space-6))
+    calc(var(--space-12) - var(--space-6));
+}
+.screen h1 {
+  margin: 0 0 var(--space-6);
+  font-size: var(--font-size-title);
+}
+/* A sub-heading inside a card stays under the card's h2. */
+.screen h3 {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-body);
+}

@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import { KeyRow } from '@/renderer/screens/settings/key-row'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
+import { NoticeIcon, noticeClass, type NoticeKind } from '@/renderer/screens/settings/notice-line'
 import layout from '@/renderer/ui/layout.module.css'
 import { AddressForm } from './address-form'
 import styles from './approvals-section.module.css'
@@ -23,6 +24,8 @@ const SERVICE: ProviderInfo = {
   serverText: false,
 }
 
+const CONNECTED = 'Connected.'
+
 type Check = { state: 'testing' } | { state: 'done'; line: string } | null
 
 export function ApprovalsSection() {
@@ -33,8 +36,11 @@ export function ApprovalsSection() {
   async function testConnection() {
     setCheck({ state: 'testing' })
     const reply = await command('approvals.check', {})
-    setCheck({ state: 'done', line: reply.ok ? 'Connected.' : reply.error.message })
+    setCheck({ state: 'done', line: reply.ok ? CONNECTED : reply.error.message })
   }
+
+  const kind: NoticeKind | null =
+    check?.state === 'done' ? (check.line === CONNECTED ? 'ok' : 'danger') : null
 
   return (
     <section className={layout.card} aria-labelledby="approvals-title">
@@ -57,7 +63,11 @@ export function ApprovalsSection() {
           </button>
         </div>
         {check !== null && (
-          <p role="status">{check.state === 'testing' ? 'Testing…' : check.line}</p>
+          // One status line for both states, so the reader hears the change in place.
+          <p role="status" className={kind === null ? undefined : noticeClass(kind)}>
+            {kind !== null && <NoticeIcon kind={kind} />}
+            {check.state === 'testing' ? 'Testing…' : check.line}
+          </p>
         )}
       </div>
       <p className={layout.muted}>

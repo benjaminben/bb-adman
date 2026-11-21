@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { screen, within } from '@testing-library/react'
 import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
+import layout from '@/renderer/ui/layout.module.css'
 import { renderApp, axeViolations } from '../../render'
 import { OFF, PORT, TOKEN, connect, line, mcpFake } from './mcp-fixture'
 
@@ -112,5 +113,15 @@ describe('settings: agent access states [SPEC 6.8; 14 1.56 MCP-C, 1.58 J-8, J-9,
     await renderApp(<SettingsScreen />, mcpFake(connect({ problem: 'port_in_use' })).fake)
     await within(await section()).findByText(PORT_LINE)
     expect(await axeViolations()).toEqual([])
+  })
+
+  it('draws the toggle as a switch and keeps its role, name and checked state [ST-5]', async () => {
+    await renderApp(<SettingsScreen />, mcpFake(connect()).fake)
+    const box = await section()
+    const toggle = await within(box).findByRole('switch', { name: 'Turn on agent access' })
+    expect(toggle).toBeChecked()
+    expect(toggle).toHaveAttribute('type', 'checkbox')
+    expect(layout.switch).toBeTruthy()
+    expect(toggle).toHaveClass(layout.switch as string)
   })
 })

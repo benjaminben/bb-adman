@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import type { Settings } from '@/shared/schemas/settings'
+import { NoticeLine } from '@/renderer/screens/settings/notice-line'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './s3-section.module.css'
 
@@ -67,7 +68,11 @@ export function S3Form(props: { saved: S3 | null }) {
           Leave empty to use the whole bucket.
         </p>
       </div>
-      {refusal !== null && <p id="s3-refusal">{refusal}</p>}
+      {refusal !== null && (
+        <NoticeLine kind="danger" id="s3-refusal">
+          {refusal}
+        </NoticeLine>
+      )}
       <div className={layout.row}>
         <button type="submit" className={layout.primary}>
           Save

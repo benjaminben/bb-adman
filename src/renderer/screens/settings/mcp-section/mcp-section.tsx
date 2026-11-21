@@ -9,6 +9,7 @@ import { useApi, useApp } from '@/renderer/app/app-context'
 import type { AdmanApi } from '@/shared/schemas/api'
 import type { ConnectInfo } from '@/shared/schemas/queries/mcp'
 import { ConnectPanel } from '@/renderer/screens/settings/connect-panel'
+import { NoticeLine } from '@/renderer/screens/settings/notice-line'
 import layout from '@/renderer/ui/layout.module.css'
 
 // A refused query gives its own fixed message (SPEC 4.3; 14 1.59 L-21), never reply data.
@@ -82,7 +83,9 @@ export function McpSection() {
     return (
       <section className={layout.card} aria-labelledby="mcp-title">
         <h2 id="mcp-title">Agent access</h2>
-        {read !== null && 'refused' in read && <p>{read.refused}</p>}
+        {read !== null && 'refused' in read && (
+          <NoticeLine kind="danger">{read.refused}</NoticeLine>
+        )}
       </section>
     )
   }
@@ -100,6 +103,7 @@ export function McpSection() {
         <input
           type="checkbox"
           role="switch"
+          className={layout.switch}
           checked={info.enabled}
           disabled={sending}
           onChange={() => void run('mcp.setEnabled', { enabled: !info.enabled })}
@@ -121,10 +125,16 @@ export function McpSection() {
             Save port
           </button>
         </div>
-        {portRefusal !== null && <p id="mcp-port-refusal">{portRefusal}</p>}
+        {portRefusal !== null && (
+          <NoticeLine kind="danger" id="mcp-port-refusal">
+            {portRefusal}
+          </NoticeLine>
+        )}
       </form>
       {lines.map((text) => (
-        <p key={text}>{text}</p>
+        <NoticeLine key={text} kind={text === state ? 'warn' : 'danger'}>
+          {text}
+        </NoticeLine>
       ))}
       <div className={layout.row}>
         <button

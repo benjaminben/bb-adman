@@ -3,6 +3,7 @@
 // keeps the typed text; the main process judges the address, not this form.
 import { useState, type FormEvent } from 'react'
 import { useApp } from '@/renderer/app/app-context'
+import { NoticeLine } from '@/renderer/screens/settings/notice-line'
 import layout from '@/renderer/ui/layout.module.css'
 
 const REFUSAL_ID = 'approvals-address-refusal'
@@ -46,7 +47,11 @@ export function AddressForm(props: { saved: string | null; onSaved: () => void }
           </button>
         )}
       </div>
-      {refusal !== null && <p id={REFUSAL_ID}>{refusal}</p>}
+      {refusal !== null && (
+        <NoticeLine kind="danger" id={REFUSAL_ID}>
+          {refusal}
+        </NoticeLine>
+      )}
     </form>
   )
 }

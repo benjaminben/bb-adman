@@ -9,6 +9,7 @@ import {
   AGENT_RUN_LIMIT_MIN,
   agentRunsOffered,
 } from '@/shared/config/agent-runs'
+import { NoticeLine } from '@/renderer/screens/settings/notice-line'
 import layout from '@/renderer/ui/layout.module.css'
 
 const PAID = 'Paid. Each run an agent starts is charged to your account, with no click from you.'
@@ -68,7 +69,11 @@ export function AgentRunsSection() {
                 {PAID}
               </p>
             )}
-            {refusal !== null && <p id={refusalId}>{refusal}</p>}
+            {refusal !== null && (
+              <NoticeLine kind="danger" id={refusalId}>
+                {refusal}
+              </NoticeLine>
+            )}
           </div>
         )
       })}
@@ -84,7 +89,11 @@ export function AgentRunsSection() {
           onChange={(e) => changeLimit(e.target.value)}
           aria-describedby={describedBy(limitRefusal !== null && `${LIMIT_ID}-refusal`)}
         />
-        {limitRefusal !== null && <p id={`${LIMIT_ID}-refusal`}>{limitRefusal}</p>}
+        {limitRefusal !== null && (
+          <NoticeLine kind="danger" id={`${LIMIT_ID}-refusal`}>
+            {limitRefusal}
+          </NoticeLine>
+        )}
       </div>
     </section>
   )

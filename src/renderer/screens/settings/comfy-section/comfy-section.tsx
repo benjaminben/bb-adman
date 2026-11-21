@@ -9,6 +9,7 @@ import type { AdmanApi } from '@/shared/schemas/api'
 import { ComfyCheckResult } from '@/renderer/screens/settings/comfy-check-result'
 import { LicenceList } from '@/renderer/screens/settings/licence-list'
 import { COMFY_PRIVACY } from '@/renderer/ui/comfy-privacy'
+import { NoticeLine } from '@/renderer/screens/settings/notice-line'
 import layout from '@/renderer/ui/layout.module.css'
 
 async function comfyInfo(api: AdmanApi): Promise<ComfyInfo | null> {
@@ -95,7 +96,11 @@ export function ComfySection() {
             </button>
           )}
         </div>
-        {refusal !== null && <p id="comfy-address-refusal">{refusal}</p>}
+        {refusal !== null && (
+          <NoticeLine kind="danger" id="comfy-address-refusal">
+            {refusal}
+          </NoticeLine>
+        )}
         <p className={layout.muted}>{COMFY_PRIVACY}</p>
       </form>
       <div className={layout.row}>

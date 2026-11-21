@@ -1,6 +1,14 @@
-/* SPEC 6.8: the Claude Code setup line, wrapped so it stays inside the card. */
+/* app-style */
+/* SPEC 6.8: the Claude Code setup line, wrapped so it stays inside the card, on a code ground
+   as the prototype's agent access code line. */
 .codeLine {
   margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius);
+  background: var(--color-surface-soft);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
   white-space: pre-wrap;
   word-break: break-all;
 }

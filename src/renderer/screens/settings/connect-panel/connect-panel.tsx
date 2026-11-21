@@ -4,6 +4,7 @@
 // "Copy" hands the line to the renderer's clipboard on click only; that is the one other
 // place it goes. A failed copy logs nothing.
 import { useState } from 'react'
+import { NoticeLine } from '@/renderer/screens/settings/notice-line'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './connect-panel.module.css'
 
@@ -40,7 +41,9 @@ export function ConnectPanel(props: { address: string; token: string; claudeCode
           {result?.ok ? 'Copied' : 'Copy'}
         </button>
       </div>
-      {result?.ok === false && <p>Copy did not work. Select the line and copy it.</p>}
+      {result?.ok === false && (
+        <NoticeLine kind="warn">Copy did not work. Select the line and copy it.</NoticeLine>
+      )}
     </section>
   )
 }

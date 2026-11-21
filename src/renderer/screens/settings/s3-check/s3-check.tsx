@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import { useApp, EMPTY } from '@/renderer/app/app-context'
 import { S3_CONNECTED_MESSAGE } from '@/shared/schemas/commands/storage-check'
+import { NoticeIcon, noticeClass, type NoticeKind } from '@/renderer/screens/settings/notice-line'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './s3-check.module.css'
 
@@ -33,6 +34,10 @@ function CheckButton(props: { setUp: boolean }) {
     setTesting(false)
   }
 
+  // An empty line stays an empty, hidden status; a result is a notice of its kind.
+  const kind: NoticeKind | null =
+    line === '' ? null : line === S3_CONNECTED_MESSAGE ? 'ok' : 'danger'
+
   return (
     <div className={styles.check}>
       <div className={layout.row}>
@@ -48,7 +53,8 @@ function CheckButton(props: { setUp: boolean }) {
       <p id="s3-check-hint" className={styles.hint}>
         Tests the saved bucket, region and keys.
       </p>
-      <p role="status" className={styles.result}>
+      <p role="status" className={kind === null ? styles.result : noticeClass(kind)}>
+        {kind !== null && <NoticeIcon kind={kind} />}
         {line}
       </p>
     </div>
