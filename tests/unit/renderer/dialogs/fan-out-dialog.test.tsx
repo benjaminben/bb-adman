@@ -33,13 +33,17 @@ function data(): CampaignGet {
 
 const background = (source: LayerRow['source']) => ({ id: 'L1', type: 'background', source })
 
+// The master's picture as variant.get returns it, with its paths.
+const PATH = '/Users/me/Pictures/private/beach.png'
+const ASSET = { id: 'A1', displayName: 'beach.png', absPath: PATH, relPath: 'assets/beach.png' }
+
 function api(opts: { picture?: boolean } = {}) {
   const base = baseState()
   const fake = makeFakeApi(baseState({ providers: [...base.providers, LOCAL] }))
   const source = opts.picture === false ? null : { assetId: 'A1' }
   fake.onQuery('variant.get', () => ({
     ok: true,
-    data: { variant: MASTER, campaignId: 'C1', layers: [background(source)], assets: [] },
+    data: { variant: MASTER, campaignId: 'C1', layers: [background(source)], assets: [ASSET] },
   }))
   return fake
 }
@@ -225,5 +229,21 @@ describe('Fan-out dialog [P5-16]', () => {
     expect(sent(fake, 'generation.runFill')[0]?.input).toMatchObject({ provider: 'gemini' })
     expect(attachedStoreFor(fake.api).getState().jobs).toEqual([])
     expect(fake.commands.map((c) => c.name)).toEqual(['variant.fanOut', 'generation.runFill'])
+  })
+
+  it('draws no path and sends none, from open to the started fill', async () => {
+    const { dialog, fake } = await open()
+    fake.onCommand('variant.fanOut', () => ({
+      ok: true,
+      data: { variantIds: ['V2'], fill: [{ sizeLabel: '9x16', variantId: 'V2' }] },
+    }))
+    fake.onCommand('generation.runFill', () => ({ ok: true, data: { jobId: 'J7' } }))
+    await tick('9x16 (1080×1920)')
+    await userEvent.click(fillOf('9x16 (1080×1920)'))
+    expect(dialog.textContent).not.toMatch(/[\\/]|beach|Users/)
+    await userEvent.click(make())
+    await waitFor(() => expect(sent(fake, 'generation.runFill')).toHaveLength(1))
+    expect(document.body.textContent).not.toMatch(/beach|Users|assets\//)
+    expect(JSON.stringify(fake.commands)).not.toMatch(/beach|Users|assets\//)
   })
 })
