@@ -20,6 +20,7 @@ export function campaign(id: string, name: string): CampaignSummary {
     createdAt: '2026-11-20T00:00:00.000Z',
     jobRunning: false,
     resultUnseen: false,
+    variantCount: 0,
   }
 }
 
