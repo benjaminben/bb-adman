@@ -6,6 +6,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { makeComfyFixture, type ComfyFixture } from '../generation/comfy-fixture'
 import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
 import { data } from '../core-fixture'
+import { agentRunLimitMessage } from '@/main/commands/agent-run-gate'
 
 let f: ComfyFixture
 let stand: StandIn | undefined
@@ -15,8 +16,7 @@ afterEach(async () => {
   stand = undefined
 })
 
-const LIMIT_1 =
-  "Agents already have 1 runs waiting or running with ComfyUI. That is the limit set in Adman's Settings."
+const LIMIT_1 = agentRunLimitMessage('ComfyUI')
 
 async function ready(limit: number): Promise<void> {
   stand = await startComfyStandIn()
