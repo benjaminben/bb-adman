@@ -1,15 +1,17 @@
 // Reads what an asset row stores about a file (SPEC 3.3 asset): type from the bytes, size,
-// time, SHA-256 and, for PNG and JPEG, the pixel size from the header. Imported files are
-// untrusted: the hash is streamed, and only the first bytes are held in memory.
+// time, SHA-256, for PNG and JPEG the pixel size from the header, and for a font its family
+// name (SPEC scene.md, "Font names at import"). Imported files are untrusted: the hash is
+// streamed, and only the first bytes are held in memory, except a font of at most
+// MAX_FONT_BYTES, whose bytes are kept as they are hashed for the name reader.
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { pipeline } from 'node:stream/promises'
 import { sniffType, SNIFF_BYTES } from './sniff'
 import { pictureSize } from '@/main/providers/picture-size'
 import { extensionOf, type FileType } from '@/shared/config/file-types'
 import { AppError } from '@/shared/schemas/result'
 import { UnreadableFileError } from './unreadable'
+import { MAX_FONT_BYTES, readFontFamily } from './font-name'
 
 // A JPEG's frame header can sit after a large EXIF block, so more than SNIFF_BYTES is read.
 const HEADER_BYTES = 256 * 1024
@@ -24,6 +26,7 @@ export type InspectedFile = {
   contentHash: string
   width: number | null
   height: number | null
+  fontFamily: string | null
 }
 
 // The same facts for a file of no accepted type, which a caller may refuse or skip.
@@ -54,14 +57,25 @@ export async function sniffFile(file: string): Promise<FileType | undefined> {
   }
 }
 
-async function hashOf(stream: NodeJS.ReadableStream): Promise<string> {
+type Hashed = { contentHash: string; kept: Buffer | null }
+
+// The SHA-256 of a stream and, when the stream holds at most keepUpTo bytes, the bytes.
+async function hashOf(stream: AsyncIterable<Buffer>, keepUpTo: number): Promise<Hashed> {
   const hash = crypto.createHash('sha256')
-  await pipeline(stream, hash)
-  return hash.digest('hex')
+  const chunks: Buffer[] = []
+  let total = 0
+  for await (const chunk of stream) {
+    hash.update(chunk)
+    total += chunk.length
+    if (total <= keepUpTo) chunks.push(chunk)
+  }
+  return { contentHash: hash.digest('hex'), kept: total <= keepUpTo ? Buffer.concat(chunks) : null }
 }
 
+const keepFor = (type: FileType | undefined) => (type?.kind === 'font' ? MAX_FONT_BYTES : -1)
+
 export async function hashFile(file: string): Promise<string> {
-  return hashOf(fs.createReadStream(file))
+  return (await hashOf(fs.createReadStream(file), -1)).contentHash
 }
 
 function pixelSize(
@@ -132,8 +146,8 @@ export async function inspectFolderFile(file: string): Promise<InspectedFile | n
     const type = sniffType(fileName, await headOf(handle, Math.min(stat.size, SNIFF_BYTES)))
     if (!type) return null
     const head = await headOf(handle, Math.min(stat.size, HEADER_BYTES))
-    const hash = await hashOf(handle.createReadStream({ start: 0, autoClose: false }))
-    return factsOf(file, stat, type, head, hash)
+    const stream = handle.createReadStream({ start: 0, autoClose: false })
+    return factsOf(file, stat, type, head, await hashOf(stream, keepFor(type)))
   } catch {
     return null
   } finally {
@@ -146,10 +160,11 @@ function factsOf<T extends FileType | undefined>(
   stat: fs.Stats,
   type: T,
   head: Uint8Array,
-  contentHash: string,
+  { contentHash, kept }: Hashed,
 ) {
   const fileName = path.basename(file)
   const size = pixelSize(type, head)
+  const fontFamily = type?.kind === 'font' && kept ? readFontFamily(kept) : null
   return {
     file,
     fileName,
@@ -160,6 +175,7 @@ function factsOf<T extends FileType | undefined>(
     contentHash,
     width: size?.width ?? null,
     height: size?.height ?? null,
+    fontFamily,
   }
 }
 
@@ -168,5 +184,5 @@ async function readFacts(file: string, fileName: string): Promise<FileFacts> {
   if (!stat.isFile()) throw new AppError('INVALID_INPUT', 'Choose files, not a folder.')
   const head = await readHead(file, Math.min(stat.size, HEADER_BYTES))
   const type = sniffType(fileName, head.subarray(0, SNIFF_BYTES))
-  return factsOf(file, stat, type, head, await hashFile(file))
+  return factsOf(file, stat, type, head, await hashOf(fs.createReadStream(file), keepFor(type)))
 }

@@ -27,6 +27,7 @@ function rowOf(a: NewAsset, input: AssetImportInput, createdAt: string) {
     contentHash: a.contentHash,
     width: a.width,
     height: a.height,
+    fontFamily: a.fontFamily,
     createdAt,
   }
 }
