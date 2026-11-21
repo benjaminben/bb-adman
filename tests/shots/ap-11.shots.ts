@@ -83,7 +83,7 @@ test('Approval link: new, live, turn off, and the bar', async () => {
 
   const bar = page.getByRole('group', { name: 'Approval link' })
   await bar.getByRole('button', { name: 'Refresh' }).click()
-  await expect(bar.getByText(/^Signed off: 1 of \d+ variants$/)).toBeVisible()
+  await expect(bar.getByText(/^Signed off: 1 of \d+ variants?$/)).toBeVisible()
   await expect(bar.getByText(/^Checked /)).toBeVisible()
   await shot(page, '95-campaign-approval-bar')
 
