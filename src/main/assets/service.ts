@@ -67,11 +67,10 @@ export async function ensureAssetsDir(project: ProjectHandle): Promise<string> {
   const projectDir = path.dirname(project.filePath)
   if (pathInside(projectDir, dir) === null) throw assetsFolderMissing()
   // [1.37] X1: something that is not a folder is in the way (a file, a link to nowhere).
-  const inTheWay = await fs.promises.lstat(dir).then(
-    () => true,
-    () => false,
-  )
-  if (inTheWay) throw assetsFolderMissing()
+  // A real folder here was made by another writer since the stat (two pictures of one job).
+  const found = await fs.promises.lstat(dir).catch(() => null)
+  if (found?.isDirectory()) return dir
+  if (found) throw assetsFolderMissing()
   const [realProjectDir, realParent] = await Promise.all([
     fs.promises.realpath(projectDir).catch(() => {
       throw assetsFolderMissing()
