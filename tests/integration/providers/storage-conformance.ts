@@ -108,5 +108,10 @@ export function describeStorageConformance(
       await expect(storage.list(bad)).rejects.toThrow(REFUSED)
       await expect(storage.remove([`${base}/fine.txt`, bad])).rejects.toThrow(REFUSED)
     })
+
+    // [1.20] B-01, L3: a character Windows cannot hold is refused by every implementation.
+    it('refuses a?.txt with exactly the fixed text', async () => {
+      await expect(storage.write('a?.txt', text('x'), 'text/plain')).rejects.toThrow(REFUSED)
+    })
   })
 }

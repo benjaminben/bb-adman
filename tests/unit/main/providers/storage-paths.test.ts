@@ -99,3 +99,22 @@ describe('Windows name forms are refused on every platform [SPEC 14 H14, 1.17]',
     expect(() => storageListPrefix('a./')).toThrow('Storage path refused')
   })
 })
+
+describe('characters Windows cannot hold are refused on every platform [SPEC 6.5 1.20 B-01, 14 L3]', () => {
+  it.each(['<', '>', '"', '|', '?', '*'])('refuses a part that holds %s', (character) => {
+    expect(() => storageFilePath(`a/b${character}c.txt`)).toThrow('Storage path refused')
+    expect(() => storageListPrefix(`a${character}b/c`)).toThrow('Storage path refused')
+  })
+
+  it('refuses a part that holds a tab', () => {
+    expect(() => storageFilePath('a/b\tc.txt')).toThrow('Storage path refused')
+  })
+
+  it('refuses a part that holds the control character with code 31', () => {
+    expect(() => storageFilePath('a/b\u001fc.txt')).toThrow('Storage path refused')
+  })
+
+  it('still accepts the character with code 32, a space, inside a part', () => {
+    expect(storageFilePath('a/b c.txt')).toBe('a/b c.txt')
+  })
+})

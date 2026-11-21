@@ -15,8 +15,17 @@ export function refusePath(): never {
 // [1.14] H14, [1.17]: Windows name forms are refused on every platform, so one export gives
 // the same paths everywhere: a part that ends in a dot or a space, holds ':' (a drive letter
 // or a stream) or '\\', or is a reserved device name.
+// [1.20] B-01: also a part that holds a character Windows cannot hold in a name, or a control
+// character (code 1 to 31; code 0 is refused for the whole path below).
+const NOT_IN_NAMES = new Set(['<', '>', '"', '|', '?', '*'])
+
+function holdsBadCharacter(part: string): boolean {
+  return [...part].some((c) => NOT_IN_NAMES.has(c) || c.charCodeAt(0) < 32)
+}
+
 function isWindowsForm(part: string): boolean {
-  return part.endsWith('.') || part.endsWith(' ') || part.includes(':') || isReserved(part)
+  if (part.endsWith('.') || part.endsWith(' ') || part.includes(':')) return true
+  return holdsBadCharacter(part) || isReserved(part)
 }
 
 function checkParts(path: string): void {
