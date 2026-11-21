@@ -38,10 +38,11 @@ describe('comfy.check [SPEC 4.2, 6.10.3; FR-252]', () => {
     const before = settingsText()
     const eventsBefore = f.events.length
     const result = data<ComfyCheck>(await check())
-    // Every shipped workflow is still a draft, so only the version is asked for.
-    expect(NON_DRAFT_WORKFLOWS).toEqual([])
-    expect(result).toEqual({ outcome: 'ok', version: '0.3.40', workflows: [] })
-    expect(s.seen.map((r) => `${r.method} ${r.path}`)).toEqual(['GET /system_stats'])
+    // [1.46] The trial workflows are compared after the version; no draft is.
+    expect(NON_DRAFT_WORKFLOWS.every((w) => w.status !== 'draft')).toBe(true)
+    expect(result).toMatchObject({ outcome: 'ok', version: '0.3.40' })
+    expect(result.workflows.map((w) => w.id)).toEqual(NON_DRAFT_WORKFLOWS.map((w) => w.id))
+    expect(s.seen.map((r) => `${r.method} ${r.path}`)[0]).toBe('GET /system_stats')
     const text = JSON.stringify(result)
     expect(text).not.toContain(s.origin)
     expect(text).not.toContain(String(s.port))
@@ -56,6 +57,7 @@ describe('comfy.check [SPEC 4.2, 6.10.3; FR-252]', () => {
     const s = await withStandIn()
     const draft: WorkflowSpec = {
       ...mossTextToImage,
+      status: 'draft',
       needs: {
         ...mossTextToImage.needs,
         models: [{ folder: 'draft_folder', file: 'd.safetensors' }],

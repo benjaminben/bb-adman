@@ -23,12 +23,14 @@ const classes = (spec: WorkflowSpec) => Object.values(spec.graph).map((n) => n.c
 const each = WORKFLOWS.map((w) => [w.id, w] as const)
 
 describe('the shipped workflows [SPEC 6.10.4, FR-258, FR-278]', () => {
-  it('ships the six workflows of the first set, once each, in the fixed list order', () => {
+  it('ships the seven workflows, once each, in the fixed list order', () => {
     expect(WORKFLOWS.map((w) => w.id)).toEqual([...WORKFLOW_IDS])
   })
 
-  it('keeps all six as draft until a real graph arrives as data [SPEC 14 CU-3]', () => {
-    expect(WORKFLOWS.every((w) => w.status === 'draft')).toBe(true)
+  it('keeps every workflow as draft but the trial ones of the data step [SPEC 14 1.46]', () => {
+    const trial = WORKFLOWS.filter((w) => w.status !== 'draft').map((w) => w.id)
+    expect(trial).toEqual(['moss-text-to-image', 'h3-text-to-video', 'flux3-klein-edit-references'])
+    expect(WORKFLOWS.every((w) => w.status === 'draft' || w.status === 'trial')).toBe(true)
   })
 
   it.each(each)('%s: every pointer names a node and an input that exist', (_id, spec) => {
@@ -86,6 +88,7 @@ describe('the shipped workflows [SPEC 6.10.4, FR-258, FR-278]', () => {
       'h3-text-to-video': '0.33.0',
       'h3-image-to-video': '0.33.0',
       'h3-reference-to-video': '0.33.0',
+      'flux3-klein-edit-references': '0.0.0',
     })
   })
 
@@ -104,7 +107,7 @@ describe('the shipped workflows [SPEC 6.10.4, FR-258, FR-278]', () => {
   it('sets a commercial note for MiniMax H3 and none for MOSS-Image [FR-285]', () => {
     for (const w of WORKFLOWS) {
       if (w.model.label === 'MiniMax H3') expect(w.licence.commercialNote).toMatch(/licen/i)
-      else expect(w.licence.commercialNote).toBeNull()
+      else if (w.model.label === 'MOSS-Image') expect(w.licence.commercialNote).toBeNull()
     }
   })
 
