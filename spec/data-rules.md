@@ -4,7 +4,7 @@ How stored data behaves: links between a master and its variants, follow rules a
 
 ## Links, follow rules and sync
 
-Not built (Phase 5). The follow rules live in `src/shared/links/follow-rules.ts`. The `revs`, `synced_revs`, `overrides` and `linked` columns already exist on `layer`.
+Not built (Phase 5). The follow rules live in `src/shared/links/follow-rules.ts`. The `revs`, `synced_revs`, `overrides` and `linked` columns already exist on `layer`. The rules below are the base; how Phase 5 builds them (files, the full `sync.preview` reply, override undo, refusals, fan-out inputs, fill, directions, the campaign undo list) is in `spec/links-and-sync.md`.
 
 Layer properties are grouped. Each group has a counter in `layer.revs` that goes up by one whenever a property in the group changes.
 
@@ -40,7 +40,7 @@ Format never changes a follow rule. Image variants store timing and animation an
 
 **Overrides** [REQ: FR-080, FR-083]. Editing an inherited property on a linked layer adds its property path to `layer.overrides`. Paths are `copy`, `source`, `timing`, `geometry` (whole group), and `style.<field>`, `animation.entrance`, `animation.exit`. A language variant that needs its own font overrides `style.fontAssetId` only, so the rest of the style still follows [REQ: FR-056].
 
-**Sync preview** (`sync.preview` query) returns, for each out-of-date variant:
+**Sync preview** (`sync.preview` query) returns, for each out-of-date variant, the shape below (the full reply, with `masterRev` and the Phase 5 stand-in for translations, is in `spec/links-and-sync.md`, "Sync"):
 
 ```ts
 type SyncPreview = {
@@ -79,7 +79,7 @@ Named test (Phase 5 exit): "editing a master changes no other variant's layer ro
 
 ## Fan-out
 
-Not built (Phase 5; the video format part in Phase 7).
+Not built (Phase 5; the video format part in Phase 7; the translation in step 6 in Phase 6). Phase 5's rules (exact inputs, the fit maths, the reply, and the fill started by the window after fan-out rather than by the command) are in `spec/links-and-sync.md`, "Fan-out" and "Generative fill".
 
 `variant.fanOut` input: direction ID, the sizes, languages and formats to cover, and one background fit choice per new size [REQ: FR-075, FR-076].
 
@@ -91,13 +91,13 @@ For every combination of size, language and format that does not already exist i
 4. **Background for a new size**, by the user's fit choice:
    - `scale`: place the whole image inside the canvas, centred. Empty area shows black.
    - `crop`: fill the canvas with the image, centred. The parts outside are hidden, not removed.
-   - `fill`: place as `scale`, then start a `generative_fill` job that extends the image to the new size. On success the new asset becomes the variant's background with `source` added to `overrides`. On failure the background stays as `scale` and retry is offered [REQ: FR-076, workflow 5.2].
+   - `fill`: place as `scale`; then the window starts one `generative_fill` job per such size (`generation.runFill`) that extends the image to the new size. On success (`generation.applyFill`) the new asset becomes the variant's background with `source` added to `overrides`. On failure the background stays as `scale` and retry is offered [REQ: FR-076, workflow 5.2].
 5. **Geometry for a new size and a new language.** Copy geometry from the variant with the same size and format in the master's language, created in step 3 [REQ: R-02].
 6. **Copy for a new language.** Start one translation job per language for the direction, covering every text layer in the master. The result is written to every new variant in that language with `translation_status = 'proposed'`. If the brief supplied copy for the language, that text is used with `translation_source = 'brief'` and no job runs [REQ: FR-027]. If there is no key or the job fails, the layers keep the master's text with `translation_status = 'missing'` and the variant offers retry [REQ: workflow 5.2].
 7. **Video format.** Create one background clip from the variant's background image, from 0 to the variant's duration.
 8. Ask the render service to measure text overflow on each new variant.
 
-Fan-out is one entry on the campaign undo list. Generative fill is the only image generation it can start, and only when the user chose `fill` [REQ: FR-076].
+Fan-out is one entry on the campaign undo list. Generative fill is the only image generation the fan-out dialog can start, and only when the user chose `fill` [REQ: FR-076].
 
 ## Data flow
 

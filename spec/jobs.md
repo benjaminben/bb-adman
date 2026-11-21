@@ -65,7 +65,7 @@ Built as a table: `src/shared/config/job-kinds.ts` (frozen contract). It owns th
 
 ## Job kinds on `main`
 
-Built: `image_generation`, `video_generation`, and from Phase 4 `layout_proposal`, `copy_options`, `brief_extraction` and `cutout` (`spec/ai-jobs.md`). Handlers are listed in `src/main/jobs/kinds/index.ts`; request and result shapes in `src/shared/schemas/jobs/`. `export`, `publish`, `generative_fill` and `translation` exist in the table and the `kind` check only; no handler exists for them.
+Built: `image_generation`, `video_generation`, and from Phase 4 `layout_proposal`, `copy_options`, `brief_extraction` and `cutout` (`spec/ai-jobs.md`). Handlers are listed in `src/main/jobs/kinds/index.ts`; request and result shapes in `src/shared/schemas/jobs/`. `export`, `publish`, `generative_fill` and `translation` exist in the table and the `kind` check only; no handler exists for them. `generative_fill` (Phase 5, attached): request, run and the window's last command `generation.applyFill` are in `spec/links-and-sync.md`, "Generative fill"; its owner in the window is the fill's variant.
 
 ### `image_generation`
 

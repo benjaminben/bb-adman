@@ -155,6 +155,8 @@ Built unless marked.
 | `layer.restore`: a layer with that ID is anywhere in the project file, or the variant has a layer with that key | `RULE_VIOLATION` | `layer_exists` | "That layer is already there." |
 | `variant.render`: the draw failed or timed out | `RULE_VIOLATION` | `render_failed` | "The picture could not be drawn. Try again." |
 
+Not built (Phase 5): the reasons of the variant, direction, sync and fill commands (`not_linked`, `master_changed`, `not_in_campaign`, `too_many_variants`, `variant_exists`, `no_background_picture`, `background_turned`, `background_cropped`, `background_covers`, `fill_outdated`, `not_a_master`, `direction_name_taken`, `last_direction`, `direction_exists`, `master_variant`, and `jobs_running` for a variant or direction) are listed with their messages in `spec/links-and-sync.md`, beside each command, to keep this file within its size. `not_built` is the Phase 5 stub refusal, "This is not built yet.", gone when the last stub is filled.
+
 `brief_too_large` does not exist: a brief has no size limit.
 
 A job's own failure reasons (`job.error_reason`, for example `server_refused`, `missing_items`, `bad_result`) are not command refusals. They are in `spec/providers.md` and `spec/comfyui.md`.
@@ -225,6 +227,6 @@ Undo scope of each command is in `spec/api-commands.md`: **V** = the variant's l
 - **A replayed command can be refused.** If it returns any error (`RULE_VIOLATION` from a rule such as the grid test of `spec/data-rules.md`, "Changing a variant's format"; `NOT_FOUND`; `INTERNAL`), nothing in the project changes, the entry goes back to the same place on the list it was taken from, the other list is not touched, and `history.undo` or `history.redo` returns that error. The user can try again once the cause is gone.
 - An empty list returns `RULE_VIOLATION` with `details.reason` `nothing_to_undo` or `nothing_to_redo`.
 - A new edit in a scope empties that scope's redo list. A replay does not.
-- A campaign-scope command that changes a variant clears that variant's undo list. Undoing the campaign entry restores the variant from a snapshot held in the entry (Not built, Phase 5: no built command changes a variant from campaign scope).
+- A campaign-scope command that changes a variant clears that variant's undo list. Undoing the campaign entry restores the variant from a snapshot held in the entry (Not built, Phase 5: the handler names the lists in `HandlerResult.clearScopes` and the bus clears them; `spec/links-and-sync.md`, "The campaign undo list").
 - Each undo list holds at most 200 entries (`UNDO_LIMIT`). All lists of a project are dropped when it closes [REQ: FR-006].
 - Agents are denied `history.undo` and `history.redo`.

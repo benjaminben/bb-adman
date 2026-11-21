@@ -13,12 +13,12 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 | `project.get` | `ProjectGet = { meta, subjects, campaigns: CampaignSummary[], missingAssetCount }`. `meta` leaves out `assetsDirRel` and `assetsDirAbs`. | Built |
 | `asset.list` | `AssetList = Array<AssetRow & { missing: boolean }>`, filtered by library, kind, subject; ordered by `id` ascending (ULIDs: oldest first, stable). The window sorts for display. | Built |
 | `campaign.get` | `CampaignGet` (below) | Built |
-| `variant.get` | `VariantGet = { variant, campaignId, layers, assets }` (`spec/editor-commands.md`). Phase 5 adds the out-of-date detail, Phase 6 the latest check result, Phase 7 the clips. | Built |
+| `variant.get` | `VariantGet = { variant, campaignId, layers, assets }` (`spec/editor-commands.md`). Phase 5 sets the `outOfDate` badge (the detail of what is out of date comes from `sync.preview`), Phase 6 adds the latest check result, Phase 7 the clips. | Built |
 | `thumbnail.get` | `ThumbnailGet`: `ready` with the PNG, `pending` or `failed`, for the variant's current `rev` (`spec/editor-commands.md`). User only. | Built |
 | `variant.render` | `VariantRender = { png, width, height, rev }`: the variant drawn now. User only until Phase 10 writes a rule for linked private pictures; an agent gets `AGENT_DENIED` (`spec/editor-commands.md`). | Built |
 | `template.list` | `TemplateList = Template[]` | Built |
 | `template.slots` | `TemplateSlots = SlotState[]`, `SlotState = { slot, state: 'filled' \| 'empty', candidates: string[] }` (asset IDs), for the slots of the campaign's master [REQ: FR-042]. A picture slot is one whose `slot.type` is not `copy`. | Built |
-| `sync.preview` | `SyncPreview[]` for a direction (`spec/data-rules.md`, "Links, follow rules and sync") | Not built (Phase 5) |
+| `sync.preview` | `SyncPreviewReply = { directionId, masterVariantId, masterRev, variants: SyncPreview[] }` for a direction; both actors (`spec/links-and-sync.md`, "Sync") | Not built (Phase 5) |
 | `job.list` | `JobRow[]` for the activity panel, as wire rows, newest first [REQ: FR-152, FR-217] | Built |
 | `job.get` | One `JobRow`, or `NOT_FOUND` "That job was not found." | Built |
 | `job.getServerMessage` | `{ text: string \| null }`: the cleaned server text for a failed ComfyUI job, or null (`spec/comfyui.md`) [REQ: FR-267]. User only. | Built |
@@ -128,7 +128,7 @@ Built in part. `src/main/queries/campaign.ts`, `src/main/queries/campaign-reads.
 
 | Badge | True when | Built |
 |-------|-----------|-------|
-| `outOfDate` | The rule of `spec/data-rules.md`, "Links, follow rules and sync": not a plain compare of `syncedRevs` and `revs`; it depends on the follow rule of each group and on layer keys the two variants do not share. A master is never out of date. | Always false until Phase 5 puts in the link engine's function |
+| `outOfDate` | The rule of `spec/data-rules.md`, "Links, follow rules and sync": not a plain compare of `syncedRevs` and `revs`; it depends on the follow rule of each group and on layer keys the two variants do not share. A master is never out of date. | Always false until Phase 5 (P5-2: `variantOutOfDate` in `src/shared/links/out-of-date.ts`; `badgesOf` takes the direction's master) |
 | `overflow` | Any layer of the variant has `overflow` true | Built |
 | `translationUnapproved` | Any layer has `translationStatus` `missing` or `proposed` | Built |
 | `checkWarning` | The latest `variant_check` has a `brand-legal` warning and `checked_rev = rev` | False until Phase 6 |
