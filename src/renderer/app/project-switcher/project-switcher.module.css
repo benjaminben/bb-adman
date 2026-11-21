@@ -1,0 +1,43 @@
+.switcher {
+  position: relative;
+}
+.button {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.menu {
+  position: absolute;
+  z-index: 1;
+  top: 100%;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: var(--width-column-min);
+  margin: var(--space-1) 0 0;
+  padding: var(--space-1);
+  list-style: none;
+  background: var(--color-bg);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+}
+.item,
+.after {
+  width: 100%;
+  text-align: left;
+  border-color: transparent;
+}
+.item[aria-current='true'] {
+  font-weight: 600;
+}
+/* "Start" opens the group after the project list. */
+.after {
+  margin-top: var(--space-1);
+  border-top-color: var(--color-border);
+  border-radius: 0;
+}
+.item:hover,
+.after:hover,
+.item:focus-visible,
+.after:focus-visible {
+  background: var(--color-surface);
+}

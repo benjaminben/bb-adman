@@ -27,7 +27,11 @@ export function CampaignTabs(props: { projectId: string }) {
   const campaigns = data?.campaigns
 
   useEffect(() => {
-    if (campaigns) keepCampaigns(projectId, campaigns.map((c) => c.id))
+    if (campaigns)
+      keepCampaigns(
+        projectId,
+        campaigns.map((c) => c.id),
+      )
   }, [keepCampaigns, projectId, campaigns])
 
   const items: TabItem[] = [{ value: PROJECT_TAB, label: 'Project' }]
