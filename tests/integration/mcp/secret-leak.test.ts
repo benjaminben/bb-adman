@@ -115,12 +115,15 @@ describe('No MCP tool reply, log line or project file contains a secret value [S
 
 // MCP-B: every tool is called, with good and bad arguments (SPEC 4.5, 14 1.56 point 8).
 const COMFY = 'http://made-up-comfy-host.example:8188'
+// AP-6 (spec/approvals.md "Named tests"): the approvals address; its key is approvals.apiKey above.
+const APPROVALS = 'https://made-up-approvals-host.example.com'
 
 async function plantedProject(fx: McpFixture) {
   for (const name of USER_SECRET_NAMES) {
     data(await fx.user('secret.set', { name, value: valueFor(name) }))
   }
   data(await fx.user('comfy.setAddress', { address: COMFY }))
+  data(await fx.user('approvals.setService', { address: APPROVALS }))
   const { projectId } = data<{ projectId: string }>(
     await fx.user('project.create', { name: 'Leak tools', location: fx.projectsDir }),
   )
@@ -155,6 +158,8 @@ describe('No MCP tool reply holds a secret, the token, the ComfyUI address or a 
       ['mcp.token', token],
       ['the ComfyUI address', COMFY],
       ['the ComfyUI host', 'made-up-comfy-host.example'],
+      ['the approvals address', APPROVALS],
+      ['the approvals host', 'made-up-approvals-host.example.com'],
     ]
     const places: Array<[string, string]> = [
       ['tool reply', text],

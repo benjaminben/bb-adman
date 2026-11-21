@@ -1,8 +1,6 @@
 // AP-5 (spec/phases/approvals.md "AP-5"): until its slice replaces it, each approvals command
 // refuses as not set up, the two queries give their empty answers, and deps.approvals holds
 // stub stores that keep nothing.
-import fs from 'node:fs'
-import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, data, type Fixture } from '../core-fixture'
 import { APPROVALS_REASON_MESSAGES } from '@/shared/approvals/messages'
@@ -31,7 +29,6 @@ async function openProject(fx: Fixture): Promise<string> {
 
 describe('the approvals stubs [spec/phases/approvals.md "AP-5"]', () => {
   it.each([
-    ['approvals.setService', () => ({ address: 'https://approvals.example.com' })],
     ['approvals.check', () => ({})],
     ['approvals.createLink', (projectId: string) => ({ projectId, campaignId })],
     ['approvals.setPassword', (projectId: string) => ({ projectId, campaignId })],
@@ -79,18 +76,15 @@ describe('the approvals stubs [spec/phases/approvals.md "AP-5"]', () => {
     })
   })
 
-  it('wires deps.approvals with stores that keep nothing', async () => {
+  it('wires deps.approvals with no password kept and a picture store that keeps nothing', async () => {
     f = makeFixture()
     const { passwords, pictures } = f.core.deps.approvals
     const projectId = '01JD5Z8Q4N3V6W7X8Y9Z0ABCDE'
     expect(passwords.read(projectId, campaignId)).toBeNull()
-    expect(() => passwords.keep(projectId, campaignId, 'correct-horse-12')).toThrow()
-    expect(() => passwords.forget(projectId, campaignId)).toThrow()
     const store = pictures()
     await expect(store.put('a.png', new Uint8Array([1]))).rejects.toThrow()
     await expect(store.signedUrl('a.png', 60)).rejects.toThrow()
     await expect(store.list('adman-approvals/')).rejects.toThrow()
     await expect(store.remove(['a.png'])).rejects.toThrow()
-    expect(fs.existsSync(path.join(f.userData, 'approval-passwords.bin'))).toBe(false)
   })
 })
