@@ -1,7 +1,7 @@
 import { MAX_BRIEF_BYTES } from '../../../../src/shared/config/brief-limits'
-import { fill } from './slow-fill'
+import { byteLength, fill } from './slow-fill'
 
-// SPEC 14 Q4 [1.31]: the texts of the ten named timed cases, each just under 64 KiB.
+// SPEC 14 Q4 [1.31], R2 [1.33]: the texts of the named timed cases, each just under 64 KiB.
 
 // Three letters, a different one for each i below 26^3.
 const tag = (i: number): string =>
@@ -11,6 +11,16 @@ const aliases = (name: string): string => Array<string>(50).fill(name).join(', '
 const n1Head = `extra: [&e [], &c [${aliases('*e')}], ${aliases('*c')}, `
 const half = (MAX_BRIEF_BYTES - 16) / 2
 const deepKeys = `extra: ${'['.repeat(6_000)}k]${': 1]'.repeat(5_999)}\n`
+
+// R2 case 11: n levels are 'extra: k]\n', n times '[' and n - 1 times ': 1]', so the text has
+// fixed + n * perLevel bytes. n is the largest that keeps it at or under the limit less 16.
+const keysInKeys = (n: number): string => `extra: ${'['.repeat(n)}k]${': 1]'.repeat(n - 1)}\n`
+const perLevel = byteLength('[: 1]')
+const fixed = byteLength('extra: k]\n') - byteLength(': 1]')
+const deepestKeys = keysInKeys(Math.floor((MAX_BRIEF_BYTES - 16 - fixed) / perLevel))
+
+// R2 case 12: one unit is a key 10 lists deep.
+export const tenLevelKey = `${'['.repeat(10)}k]${': 1]'.repeat(9)}`
 
 export const namedCases: [string, string][] = [
   ['1. N1: aliases of a list of aliases', fill(n1Head, () => '1,', '1]\n')],
@@ -35,4 +45,6 @@ export const namedCases: [string, string][] = [
     fill(`extra: ${'['.repeat(20)}`, () => 'k', `]${': 1]'.repeat(19)}\n`, ','),
   ],
   ['10. keys inside keys, 6,000 levels', fill(`${deepKeys}#`, () => 'a', '\n')],
+  ['11. keys inside keys, as deep as fits', deepestKeys],
+  ['12. many short keys inside keys, 10 levels', fill('extra: [', () => tenLevelKey, ']\n', ',')],
 ]

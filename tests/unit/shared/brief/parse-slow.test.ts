@@ -60,7 +60,7 @@ describe('parseBrief: worst-case files return quickly [SPEC 6.1 item 7, 14 P3]',
   )
 })
 
-// SPEC 6.1 item 9 [1.31], 14 Q4, security class: the ten named cases. Each is refused but 7
+// SPEC 6.1 item 9, 14 Q4 and R2, security class: the named cases. Each is refused but 7
 // (unknown tags are read as plain data, 1.25) and 8 (observed: the long verbatim tag is read
 // the same way). The time is kept in the test's meta so a run can report it.
 const namedOutcome = (name: string): object => (/^[78]\./.test(name) ? read : unreadable)
