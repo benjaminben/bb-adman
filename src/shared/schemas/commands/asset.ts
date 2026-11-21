@@ -25,3 +25,7 @@ export const assetUpdateInput = projectScoped.extend({
   fontPublishAllowed: z.boolean().optional(),
 })
 export type AssetUpdateInput = z.infer<typeof assetUpdateInput>
+
+// asset.remove (FR-197): refused while a layer, clip or rule set uses the asset.
+export const assetRemoveInput = projectScoped.extend({ assetId })
+export type AssetRemoveInput = z.infer<typeof assetRemoveInput>
