@@ -1,6 +1,7 @@
 // deps.approvals (spec/approvals.md "Kept passwords", "Pictures"). core.ts builds it once. The
 // two stores come from their own files, so AP-6 and AP-7 never edit this one.
 import path from 'node:path'
+import type { BusEvent } from '@/main/commands/bus'
 import type { CoreDeps } from '@/main/core-deps'
 import type { SecretCrypto } from '@/main/secrets/secret-store'
 import { createPasswordStore } from './password-store'
@@ -14,6 +15,8 @@ export type ApprovalsDepsOptions = {
   env: Record<string, string | undefined>
   // The finished CoreDeps, read when a store is chosen.
   deps: () => CoreDeps
+  // The core's emit (core.ts passes its options through), for approvals.changed.
+  emit: (event: BusEvent) => void
 }
 
 export function createApprovalsDeps(opts: ApprovalsDepsOptions): ApprovalsDeps {
@@ -23,5 +26,7 @@ export function createApprovalsDeps(opts: ApprovalsDepsOptions): ApprovalsDeps {
       crypto: opts.crypto,
     }),
     pictures: () => choosePictureStore({ deps: opts.deps(), env: opts.env }),
+    changed: (projectId, campaignId) =>
+      opts.emit({ name: 'approvals.changed', payload: { projectId, campaignId } }),
   }
 }

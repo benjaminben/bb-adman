@@ -24,4 +24,7 @@ export type ApprovalsDeps = {
   // The test store under its condition (dev tools and ADMAN_APPROVALS_TEST_PICTURES), else the
   // S3 store. Nothing else chooses.
   pictures: () => PictureStore
+  // Sends approvals.changed { projectId, campaignId } (AP-8): IDs only, after a command
+  // changed the local tables.
+  changed(projectId: string, campaignId: string): void
 }
