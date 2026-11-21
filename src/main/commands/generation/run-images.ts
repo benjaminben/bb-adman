@@ -14,6 +14,7 @@ import {
   generationRunImagesInput,
   type GenerationRunImagesInput,
 } from '../../../shared/schemas/commands/generation'
+import type { ImageJobRequest } from '../../../shared/schemas/jobs/image-generation'
 import type { ProviderInfo } from '../../../shared/schemas/queries/app'
 import { AppError } from '../../../shared/schemas/result'
 
@@ -71,6 +72,13 @@ function target(project: ProjectHandle, input: GenerationRunImagesInput): Target
 function enqueue(deps: Deps, ctx: ProjectContext, input: GenerationRunImagesInput) {
   const provider = pictureProvider(deps, input.provider)
   const place = target(ctx.project, input)
+  const request: ImageJobRequest = {
+    prompt: promptToSend(input.prompt),
+    referenceAssetIds: input.referenceAssetIds,
+    count: input.count,
+    width: place.width,
+    height: place.height,
+  }
   const jobId = deps.jobs.enqueue(ctx, {
     kind: 'image_generation',
     campaignId: place.campaignId,
@@ -79,13 +87,7 @@ function enqueue(deps: Deps, ctx: ProjectContext, input: GenerationRunImagesInpu
     slot: input.layerId === undefined ? (input.slot ?? null) : null,
     provider: provider.id,
     model: provider.defaultModels.image ?? '',
-    request: {
-      prompt: promptToSend(input.prompt),
-      referenceAssetIds: input.referenceAssetIds,
-      count: input.count,
-      width: place.width,
-      height: place.height,
-    },
+    request,
     startedBy: ctx.actor === 'agent' ? 'agent' : 'user',
   })
   return { jobId, campaignId: place.campaignId }

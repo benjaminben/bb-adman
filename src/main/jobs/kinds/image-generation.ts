@@ -3,7 +3,6 @@
 // failure does not lose the others. Every picture goes through toPng (L6), gets the details
 // embedded, is written with writeManaged and added with asset.addGenerated, then kept.
 import { ulid } from 'ulid'
-import { z } from 'zod'
 import type { JobKindHandler, JobRunContext } from '../types'
 import { runOptions } from '../progress'
 import { embedGenerationDetails } from '../png-details'
@@ -20,20 +19,11 @@ import {
   type ImageResult,
 } from '../../providers/types'
 import { promptToSend } from '../../../shared/generation/prompt'
-import { MAX_IMAGES_PER_RUN } from '../../../shared/config/defaults'
 import type { JobRow } from '../../../shared/schemas/rows/job'
+import { imageJobRequest, type ImageJobResult } from '../../../shared/schemas/jobs/image-generation'
 
 // SPEC 6.2: "count images means count calls, run two at a time".
 export const PICTURES_AT_ONCE = 2
-
-// What generation.runImages stores in job.request.
-export const imageJobRequest = z.object({
-  prompt: z.string().min(1),
-  referenceAssetIds: z.array(z.string().min(1)),
-  count: z.number().int().min(1).max(MAX_IMAGES_PER_RUN),
-  width: z.number().int().positive(),
-  height: z.number().int().positive(),
-})
 
 export type ImageAdapterFor = (deps: CoreDeps, providerId: string) => ImageProvider
 
@@ -56,6 +46,12 @@ function fail(run: Run, failure: ProviderFailure): Outcome {
   run.firstFailure ??= failure
   return 'failed'
 }
+
+// A copy of what has arrived, for jc.keep and for job.result (H-R1).
+const soFar = (run: Run): ImageJobResult => ({
+  assetIds: [...run.assetIds],
+  failures: { ...run.failures },
+})
 
 const otherFailure = (detail: string) => new ProviderFailure({ kind: 'other', detail })
 
@@ -95,7 +91,7 @@ async function store(run: Run, png: Uint8Array): Promise<Outcome> {
   })
   if (!added.ok) throw new Error(`asset.addGenerated refused: ${added.error.code}`)
   run.assetIds.push(assetId)
-  jc.keep({ assetIds: [...run.assetIds], failures: { ...run.failures } })
+  jc.keep(soFar(run))
   return 'stored'
 }
 
@@ -149,7 +145,11 @@ async function readReferences(deps: CoreDeps, project: ProjectHandle, ids: strin
   return references
 }
 
-async function runImageJob(jc: JobRunContext, job: JobRow, imageFor: ImageAdapterFor) {
+async function runImageJob(
+  jc: JobRunContext,
+  job: JobRow,
+  imageFor: ImageAdapterFor,
+): Promise<ImageJobResult> {
   const request = imageJobRequest.parse(job.request)
   const providerId = job.provider ?? ''
   const project = jc.deps.projects.get(jc.projectId)
@@ -174,11 +174,11 @@ async function runImageJob(jc: JobRunContext, job: JobRow, imageFor: ImageAdapte
   const outcomes = await allPictures(run, request.count)
   // SPEC 6.11.1 handler rule: after a stop, keep what arrived and end with ProviderCancelled.
   if (outcomes.includes('stopped')) {
-    jc.keep({ assetIds: [...run.assetIds], failures: { ...run.failures } })
+    jc.keep(soFar(run))
     throw new ProviderCancelled()
   }
   if (run.assetIds.length === 0 && run.firstFailure) throw run.firstFailure
-  return { assetIds: run.assetIds, failures: run.failures }
+  return soFar(run)
 }
 
 const defaultImageFor: ImageAdapterFor = (deps, providerId) => adapterFor(deps, providerId, 'image')
