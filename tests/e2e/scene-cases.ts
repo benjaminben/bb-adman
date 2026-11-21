@@ -170,7 +170,8 @@ export const CASES: SceneCase[] = [
     name: 'text-overflow',
     title: 'text that overflows its box is drawn past it',
     layers: (a) => [
-      image(a.blue, box(50, 50, 200, 60)),
+      // A crop makes the blue square cover the text's box, so the box can be seen.
+      image(a.blue, { ...box(50, 50, 200, 60), crop: { x: 0, y: 0, width: 8, height: 8 } }),
       text('This headline is far too long for its box', box(50, 50, 200, 60), { fontSize: 32 }),
     ],
   },
