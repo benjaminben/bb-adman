@@ -1,0 +1,58 @@
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.box legend {
+  padding: 0 var(--space-1);
+  font-weight: 600;
+}
+.modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+}
+.modes label {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+.muted {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+.lists {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.language {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--width-column-min), 1fr));
+  gap: var(--space-2) var(--space-3);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.field textarea {
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  font: inherit;
+  resize: vertical;
+}
+.copy {
+  max-width: var(--width-dialog);
+}

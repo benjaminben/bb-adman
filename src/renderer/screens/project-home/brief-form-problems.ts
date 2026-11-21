@@ -8,10 +8,22 @@ import {
 import { SubjectId } from '@/shared/schemas/commands/subject'
 import { isRightToLeft } from '@/shared/brief/languages'
 import { starterTemplate } from '@/shared/templates/starter'
+import { briefSubjectIds } from '@/renderer/screens/project-home/campaign-input'
 import type { BriefFormValues, SubjectChoice } from './brief-form-model'
 
-export const subjectIdOf = (s: SubjectChoice): string =>
-  s.mode === 'new' ? s.newId : (s.existingId ?? '')
+// Each row's ID: the chosen subject's, the typed one, or (a new row with a blank ID and a
+// name) one made from the name with briefSubjectIds, stepping around the other rows' IDs.
+// A blank ID with a blank name stays empty, so only the name line shows for it.
+export function subjectIds(subjects: SubjectChoice[]): string[] {
+  const made = briefSubjectIds(
+    subjects.map((s) => {
+      const typed = s.mode === 'new' ? s.newId : (s.existingId ?? '')
+      const blank = s.mode === 'new' && typed === '' && s.name.trim() !== ''
+      return { name: s.name, id: blank ? undefined : typed }
+    }),
+  )
+  return made.map((m) => m.id)
+}
 
 type Read = {
   heldSubjectIds: string[]
@@ -29,8 +41,9 @@ const REQUIRED: [keyof BriefFormValues, string][] = [
 
 // Each kind of subject problem over every row in turn, then the next kind.
 function subjectProblems(subjects: SubjectChoice[], held: string[]): string[] {
-  const rows = subjects.map((s, i) => ({ s, n: i + 1, id: subjectIdOf(s) }))
-  const fresh = rows.filter(({ s }) => s.mode === 'new')
+  const ids = subjectIds(subjects)
+  const rows = subjects.map((s, i) => ({ s, n: i + 1, id: ids[i] ?? '' }))
+  const fresh = rows.filter(({ s, id }) => s.mode === 'new' && id !== '')
   const goodId = (id: string) => SubjectId.safeParse(id).success
   return [
     ...(subjects.length === 0 ? ['Add at least one subject.'] : []),
