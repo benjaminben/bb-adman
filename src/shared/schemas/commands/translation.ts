@@ -62,12 +62,30 @@ export const translationExportSheetInput = projectScoped
 export type TranslationExportSheetInput = z.infer<typeof translationExportSheetInput>
 export type TranslationExportSheetReply = { fileName: string; rowCount: number }
 
+// The most texts one translation job sends: the first ones of its master (P6-6).
+export const MAX_TRANSLATION_ITEMS = 200
+
 // translation.write (A-155): system command, sent by the translation job with its cleaned
-// answer (A-168). The layers come from the job's own request, never from this input.
+// answer (A-168). The layers come from the job's own request, never from this input. A text is
+// counted in code points, as the cleaning counts it.
 export const translationWriteInput = projectScoped
   .extend({
     jobId: id,
-    items: z.array(z.object({ key: id, text: z.string().min(1) }).strict()),
+    items: z
+      .array(
+        z
+          .object({
+            key: id,
+            text: z
+              .string()
+              .min(1)
+              .refine((text) => [...text].length <= MAX_TRANSLATION_CHARS, {
+                message: `At most ${MAX_TRANSLATION_CHARS} characters.`,
+              }),
+          })
+          .strict(),
+      )
+      .max(MAX_TRANSLATION_ITEMS),
   })
   .strict()
 export type TranslationWriteInput = z.infer<typeof translationWriteInput>

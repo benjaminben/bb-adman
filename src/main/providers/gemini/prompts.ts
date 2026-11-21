@@ -1,7 +1,7 @@
 // spec/providers-adapters.md "Layout and text": the fixed instruction texts. Values from the
 // project are written as JSON so each one is plainly quoted. Nothing else about the project
 // is sent (spec/ai-jobs.md "Security notes").
-import { REGION_LANGUAGES } from '@/shared/config/region-languages'
+import { chineseScript } from '@/shared/translation/script'
 import type { Brief } from '@/shared/schemas/brief'
 import type { CopyRole } from '@/main/providers/types'
 
@@ -83,19 +83,10 @@ function languageName(tag: string): string {
   }
 }
 
-// A-158: Traditional Chinese for Taiwan, Hong Kong and Macao, Simplified otherwise. The region
-// is found by code or English name in the region table; a bare code outside it counts too.
-const TRADITIONAL = new Set(['TW', 'HK', 'MO'])
-const REGION_CODES = new Map(
-  REGION_LANGUAGES.flatMap((row) =>
-    [row.code, ...row.names].map((key) => [key.toLowerCase(), row.code] as const),
-  ),
-)
-
+// A-158: the script by region, from the one shared rule.
 function scriptLine(region: string): string {
-  const key = region.trim().toLowerCase()
-  const code = REGION_CODES.get(key) ?? key.toUpperCase()
-  const script = TRADITIONAL.has(code) ? 'Traditional Chinese' : 'Simplified Chinese'
+  const script =
+    chineseScript(region) === 'traditional' ? 'Traditional Chinese' : 'Simplified Chinese'
   return `Write the Chinese in ${script}.`
 }
 

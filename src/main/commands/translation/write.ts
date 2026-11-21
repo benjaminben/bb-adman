@@ -1,29 +1,96 @@
-// translation.write (spec/phases/phase-06.md). System command: writes a translation job's cleaned
-// answer (A-155). Deny and internal. Stub (P6-1): refuses in prepare, before it reads or writes
-// anything, until P6-6 replaces the body.
-import { defineCommand, type HandlerResult } from '@/main/commands/types'
+// translation.write (spec/phases/phase-06.md, design addition 2; A-155). System command: the
+// translation job sends its cleaned answer (A-168). Deny and internal. The layers come from the
+// job's own request, read from this project's file, never from the input; a layer is written
+// only when it is a text layer of the job's campaign, direction and language. A layer changed
+// or approved since the job was queued is left alone. Writes `proposed`, source `ai`, never
+// `approved`. Not undoable, as asset.addGenerated is not.
+import type Database from 'better-sqlite3'
+import { defineCommand } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
+import { readWireRow } from '@/main/db/rows'
+import { sameText, textValuesOf, writeTexts, type TextWrite } from '@/main/translation/write-text'
 import {
   translationWriteInput,
   type TranslationWriteReply,
 } from '@/shared/schemas/commands/translation'
+import {
+  translationJobRequest,
+  type TranslationJobRequest,
+} from '@/shared/schemas/jobs/translation'
+import type { DirectionRow } from '@/shared/schemas/rows/direction'
+import type { JobRow } from '@/shared/schemas/rows/job'
+import type { LayerRow } from '@/shared/schemas/rows/layer'
+import type { VariantRow } from '@/shared/schemas/rows/variant'
 import { AppError } from '@/shared/schemas/result'
 
-const NAME = 'translation.write'
-const notBuilt = () =>
-  new AppError('RULE_VIOLATION', `${NAME} is not built yet.`, { reason: 'not_built' })
+type Job = { row: JobRow; request: TranslationJobRequest }
 
-export function translationWrite(_deps: CoreDeps) {
+const noRun = () => new AppError('NOT_FOUND', 'That translation run was not found.')
+
+// The running write-mode translation job of this project, or a refusal.
+function runningJob(db: Database.Database, jobId: string): Job {
+  const row = readWireRow(db, 'job', { id: jobId }) as JobRow | null
+  if (row?.kind !== 'translation' || row.status !== 'running') throw noRun()
+  const request = translationJobRequest.safeParse(row.request)
+  if (!request.success || request.data.mode !== 'write') throw noRun()
+  return { row, request: request.data }
+}
+
+// A text layer of the job's campaign, direction and language that is still a translation the
+// AI may replace (A-155, A-156).
+function mayReplace(db: Database.Database, layer: LayerRow, job: Job): boolean {
+  const variant = readWireRow(db, 'variant', { id: layer.variantId }) as VariantRow | null
+  const direction = variant
+    ? (readWireRow(db, 'direction', { id: variant.directionId }) as DirectionRow | null)
+    : null
+  return (
+    layer.type === 'text' &&
+    variant?.directionId === job.request.directionId &&
+    variant.language === job.request.to &&
+    direction?.campaignId === job.row.campaignId &&
+    (layer.translationStatus === 'missing' || layer.translationStatus === 'proposed') &&
+    !layer.overrides.includes('copy')
+  )
+}
+
+function writesFor(db: Database.Database, job: Job, items: Map<string, string>): TextWrite[] {
+  const masterRevs = new Map(job.request.items.map((i) => [i.key, i.masterCopyRev]))
+  const seen = new Set<string>()
+  const writes: TextWrite[] = []
+  for (const target of job.request.targets) {
+    const text = items.get(target.key)
+    const masterRev = masterRevs.get(target.key)
+    if (text === undefined || masterRev === undefined || seen.has(target.layerId)) continue
+    seen.add(target.layerId)
+    const row = readWireRow(db, 'layer', { id: target.layerId }) as LayerRow | null
+    if (!row || row.key !== target.key || row.revs.copy !== target.copyRev) continue
+    if (!mayReplace(db, row, job)) continue
+    const next = {
+      layerId: row.id,
+      copy: text,
+      translationStatus: 'proposed' as const,
+      translationSource: 'ai' as const,
+      syncedCopyRev: row.linked ? masterRev : row.syncedRevs.copy,
+    }
+    if (!sameText(textValuesOf(row), next)) writes.push({ row, next })
+  }
+  return writes
+}
+
+export function translationWrite(deps: CoreDeps) {
   return defineCommand({
-    name: NAME,
+    name: 'translation.write',
     internal: true,
     input: translationWriteInput,
     projectId: (input) => input.projectId,
-    prepare(): Promise<undefined> {
-      return Promise.reject(notBuilt())
-    },
-    run(): HandlerResult<TranslationWriteReply> {
-      throw notBuilt()
+    run(ctx, input) {
+      const db = ctx.project.db
+      const job = runningJob(db, input.jobId)
+      const items = new Map(input.items.map((i) => [i.key, i.text]))
+      const writes = writesFor(db, job, items)
+      if (writes.length > 0) writeTexts(ctx, writes, deps.now().toISOString())
+      const data: TranslationWriteReply = { written: writes.length }
+      return { data, log: { campaignId: job.row.campaignId ?? undefined } }
     },
   })
 }
