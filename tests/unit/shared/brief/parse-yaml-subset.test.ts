@@ -67,6 +67,15 @@ describe('parseBrief YAML: at most 32 levels of nesting [SPEC 6.1 item 9, 14 Q1]
     expect(parseBrief(lists(32), 'yaml')).toEqual(usOnly)
     expect(parseBrief(lists(33), 'yaml')).toEqual(unreadable)
   })
+
+  // SPEC 6.1 item 9 [1.36] correction, 14 S4: a value inside the innermost list adds one
+  // step to the path, so the edge moves down by one.
+  it('reads 31 nested lists with a value inside and refuses 32', () => {
+    const withValue = (n: number): string =>
+      `region: US\nextra: ${'['.repeat(n)}x${']'.repeat(n)}\n`
+    expect(parseBrief(withValue(31), 'yaml')).toEqual(usOnly)
+    expect(parseBrief(withValue(32), 'yaml')).toEqual(unreadable)
+  })
 })
 
 // SPEC 6.1 item 9 rule 2 [1.31], 14 Q2, security class: after compose, the walk refuses any
