@@ -25,12 +25,17 @@ async function freePort(): Promise<number> {
 process.env.E2E_FOLDER ??= mkdtempSync(join(tmpdir(), 'adman-e2e-'))
 process.env.E2E_API_KEY ??= randomBytes(24).toString('hex')
 process.env.E2E_PORT ??= String(await freePort())
+process.env.E2E_PICTURE_PORT ??= String(await freePort())
 
 const port = process.env.E2E_PORT
 const database = `file:${join(process.env.E2E_FOLDER, 'e2e.db')}`
+// The test picture server (AP-4), started by globalSetup on 127.0.0.1: only the service fetches
+// from it, so no form Origin check meets it.
+const pictureOrigin = `http://127.0.0.1:${process.env.E2E_PICTURE_PORT}`
 
 export default defineConfig({
   testDir: 'e2e',
+  globalSetup: './e2e/pictures/serve.ts',
   workers: 1,
   reporter: 'list',
   timeout: 60_000,
@@ -49,6 +54,7 @@ export default defineConfig({
     env: {
       API_KEY: process.env.E2E_API_KEY,
       TURSO_DATABASE_URL: database,
+      TEST_PICTURE_ORIGIN: pictureOrigin,
       NEXT_TELEMETRY_DISABLED: '1',
     },
   },

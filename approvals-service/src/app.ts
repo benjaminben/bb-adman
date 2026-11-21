@@ -15,9 +15,12 @@ import {
 } from './api/gallery'
 import { readLink } from './api/read'
 import { bodyRoute, plainRoute, type ApiRoute } from './api/route'
+import { s3Source } from './pictures/s3-source'
+import type { PictureSource } from './pictures/source'
 import { VISITOR_ROUTES, visitorRoute, type VisitorRoute } from './visitor/routes'
 
-export type Parts = { now: () => number; random: RandomBytes }
+// `pictures` is left out by most tests; createApp then puts in the default, s3-source.
+export type Parts = { now: () => number; random: RandomBytes; pictures?: PictureSource }
 
 const LINK = '^/api/v1/links/([^/]+)/([^/]+)'
 
@@ -82,7 +85,8 @@ async function apiRoute(request: Request, env: Env, parts: Parts, routes: ApiRou
 }
 
 // `tables` lets a test run the router over its own routes.
-export function createApp(env: Env, parts: Parts, tables: RouteTables = {}) {
+export function createApp(env: Env, given: Parts, tables: RouteTables = {}) {
+  const parts: Parts = { ...given, pictures: given.pictures ?? s3Source(env) }
   const api = tables.api ?? API_ROUTES
   const visitor = tables.visitor ?? VISITOR_ROUTES
   return {
