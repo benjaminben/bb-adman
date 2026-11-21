@@ -1,3 +1,31 @@
-// Registers the adman-asset:// protocol (SPEC 3.6, 8.2). Empty in Phase 2 step 0;
-// slice A fills it.
-export function registerAssetProtocol(): void {}
+// The Electron side of adman-asset:// (SPEC 8.2; SPEC 14, Slice A rulings point 2). Only the
+// Electron calls are here; every decision is in assets/asset-url.ts.
+import type { Protocol } from 'electron'
+import type { ProjectRegistry } from '../db/project-registry'
+import { answerAssetRequest } from '../assets/asset-url'
+
+const SCHEME = 'adman-asset'
+
+// Before the app is ready. Every privilege but these three is off.
+export function registerAssetScheme(protocol: Protocol): void {
+  protocol.registerSchemesAsPrivileged([
+    {
+      scheme: SCHEME,
+      privileges: {
+        standard: true,
+        secure: true,
+        stream: true,
+        bypassCSP: false,
+        allowServiceWorkers: false,
+        supportFetchAPI: false,
+        corsEnabled: false,
+        codeCache: false,
+        allowExtensions: false,
+      },
+    },
+  ])
+}
+
+export function registerAssetProtocol(protocol: Protocol, projects: ProjectRegistry): void {
+  protocol.handle(SCHEME, (request) => answerAssetRequest(request, projects))
+}

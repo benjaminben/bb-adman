@@ -79,3 +79,18 @@ describe('adman-asset:// letter case [SPEC 3.2 ULIDs]', () => {
     expect(await fileForAssetUrl(url, projects)).toMatchObject({ mime: 'image/png' })
   })
 })
+
+describe('adman-asset:// serves no text asset [SPEC 14, Slice A rulings point 2, A2-2]', () => {
+  it('gives null for a text asset whose file is found', async () => {
+    const TEXT = '01JD0000000000000000000003'
+    fs.writeFileSync(path.join(root, 'notes.txt'), 'hello')
+    insertTestAsset(project.db, {
+      id: TEXT,
+      relPath: 'notes.txt',
+      absPath: '/none/notes.txt',
+      kind: 'text',
+      mime: 'text/plain',
+    })
+    expect(await fileForAssetUrl(`adman-asset://${project.projectId}/${TEXT}`, projects)).toBe(null)
+  })
+})

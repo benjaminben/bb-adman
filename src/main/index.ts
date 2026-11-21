@@ -1,12 +1,12 @@
 // Start-up and the single-instance lock (SPEC 12). A double-clicked project file
 // arrives as 'open-file' on macOS and as a command-line argument on Windows.
-import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, protocol, shell } from 'electron'
 import { createCore, type Core } from './core'
 import { createAppWindow } from './windows/app-window'
 import { httpsOnly } from './windows/open-external'
 import { devToolsEnabled } from './dev-tools-flag'
 import { pngConverter } from './png-converter'
-import { registerAssetProtocol } from './windows/asset-protocol'
+import { registerAssetProtocol, registerAssetScheme } from './windows/asset-protocol'
 import { DIALOG_QUERIES, runDialogQuery } from './windows/dialogs'
 import { registerIpc } from './ipc'
 import { projectPathFromArgv } from './open-file'
@@ -15,6 +15,7 @@ import { IPC_CHANNELS } from '../shared/schemas/api'
 import type { BusEvent } from './commands/bus'
 
 if (process.env.ADMAN_USER_DATA_DIR) app.setPath('userData', process.env.ADMAN_USER_DATA_DIR)
+registerAssetScheme(protocol)
 
 let core: Core | null = null
 const pendingOpens: string[] = []
@@ -77,7 +78,7 @@ function start(): void {
         : ready.query(name, input, opts),
     isInternal: (name) => ready.isInternal(name),
   })
-  registerAssetProtocol()
+  registerAssetProtocol(protocol, ready.projects)
   createAppWindow()
   for (const filePath of pendingOpens.splice(0)) void openFromSystem(filePath)
 }
