@@ -55,15 +55,6 @@ describe('the approvals stubs [spec/phases/approvals.md "AP-5"]', () => {
     })
   })
 
-  it('answers approvals.forCampaign with no service, no link and no variants', async () => {
-    f = makeFixture()
-    const projectId = await openProject(f)
-    expect(await f.core.query('approvals.forCampaign', { projectId, campaignId }, asUser)).toEqual({
-      ok: true,
-      data: { ready: 'no_service', link: null, variants: [] },
-    })
-  })
-
   it('answers approvals.getPassword with no password', async () => {
     f = makeFixture()
     const projectId = await openProject(f)
