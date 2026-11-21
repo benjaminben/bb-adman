@@ -1,16 +1,37 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { s3Storage } from '../../../../../src/main/providers/s3/s3-storage'
 import { failureFromS3Error } from '../../../../../src/main/providers/s3/failure'
 import { ProviderFailure } from '../../../../../src/main/providers/types'
 import { TEST_KEY_ID, TEST_SECRET, recordingHandler, testContext, xml } from './recorded'
 
-const savedEnv = { ...process.env }
+const ORIGINAL_ENV = process.env
+const STUBBED = [
+  'AWS_ACCESS_KEY_ID',
+  'AWS_SECRET_ACCESS_KEY',
+  'AWS_SESSION_TOKEN',
+  'AWS_REGION',
+  'AWS_DEFAULT_REGION',
+  'AWS_ENDPOINT_URL',
+  'AWS_ENDPOINT_URL_S3',
+  'AWS_USE_FIPS_ENDPOINT',
+  'AWS_USE_DUALSTACK_ENDPOINT',
+  'AWS_MAX_ATTEMPTS',
+  'AWS_RETRY_MODE',
+  'AWS_DEFAULTS_MODE',
+  'AWS_S3_USE_ARN_REGION',
+  'AWS_PROFILE',
+  'AWS_CONFIG_FILE',
+  'AWS_SHARED_CREDENTIALS_FILE',
+]
+const BEFORE: Record<string, string | undefined> = Object.fromEntries(
+  STUBBED.map((name) => [name, process.env[name]]),
+)
 const folders: string[] = []
 afterEach(() => {
-  process.env = { ...savedEnv }
+  vi.unstubAllEnvs()
   for (const folder of folders.splice(0)) fs.rmSync(folder, { recursive: true, force: true })
 })
 
@@ -38,7 +59,7 @@ function hostileConfigFile(): string {
 describe('S3 takes nothing from the environment [SPEC 6 1.12]', () => {
   it('goes to the pinned host, once, signed with the given keys, whatever AWS_* says', async () => {
     const config = hostileConfigFile()
-    Object.assign(process.env, {
+    const hostile = {
       AWS_ACCESS_KEY_ID: 'environment-id-must-not-be-used',
       AWS_SECRET_ACCESS_KEY: 'environment-secret-must-not-be-used',
       AWS_SESSION_TOKEN: 'environment-token-must-not-be-used',
@@ -55,7 +76,8 @@ describe('S3 takes nothing from the environment [SPEC 6 1.12]', () => {
       AWS_PROFILE: 'default',
       AWS_CONFIG_FILE: config,
       AWS_SHARED_CREDENTIALS_FILE: config,
-    })
+    }
+    for (const [name, value] of Object.entries(hostile)) vi.stubEnv(name, value)
     const { seen, requestHandler } = recordingHandler(() => xml('error-internal.xml', 500))
     const call = s3Storage(testContext(), { requestHandler }).read('a.txt')
     await expect(call).rejects.toBeInstanceOf(ProviderFailure)
@@ -65,6 +87,11 @@ describe('S3 takes nothing from the environment [SPEC 6 1.12]', () => {
     expect(request?.headers.authorization).toContain(`Credential=${TEST_KEY_ID}/`)
     expect(request?.headers.authorization).toContain('/eu-west-1/s3/aws4_request')
     expect(request?.headers['x-amz-security-token']).toBeUndefined()
+  })
+
+  it('puts back every variable the test above set [SPEC 14 H15]', () => {
+    expect(process.env).toBe(ORIGINAL_ENV)
+    for (const name of STUBBED) expect(process.env[name]).toBe(BEFORE[name])
   })
 })
 
