@@ -190,5 +190,6 @@ describe('translation.set [P6-4, FR-200]', () => {
     expect(await bus.history('redo', 'variant:D1')).toMatchObject({ ok: true })
     expect(bus.text(twin).copy).toBe('Hallo')
     expect(bus.undoState('variant:D1')).toEqual({ canUndo: true, canRedo: false })
+    expect(bus.undoState('variant:D2')).toEqual(none)
   })
 })

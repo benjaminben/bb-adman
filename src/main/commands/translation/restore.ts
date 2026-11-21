@@ -59,7 +59,8 @@ export function translationRestore(deps: CoreDeps) {
         input.scope === 'campaign'
           ? `campaign:${first.direction.campaignId}`
           : `variant:${first.variant.id}`
-      const items = writes.map((w) => textValuesOf(w.row))
+      const rest = writes.map((w) => w.row).filter((row) => row.id !== first.layer.id)
+      const items = [first.layer, ...rest].map(textValuesOf)
       const log = { campaignId: first.direction.campaignId }
       return { data, log, inverse: restoreInverse(input.projectId, items, input.scope, list) }
     },
