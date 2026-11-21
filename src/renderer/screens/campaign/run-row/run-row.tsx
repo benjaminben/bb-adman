@@ -1,15 +1,16 @@
 // One run (SPEC 14 1.41 TP-2 "A run's row, by status"). queued: Waiting. running: Working,
 // with the stage, the place in the queue and the percent when the row has them. succeeded:
-// its results. failed: the shared sentence for its kind, and Retry. cancelled: Cancelled,
-// and Retry. Cancel shows for a queued or running run when the provider can cancel. A failed
+// its results. failed: RunFailure (the sentence by reason or kind, S2-5), and Retry. cancelled:
+// Cancelled, and Retry. Cancel shows for a queued or running run when the provider can cancel. A failed
 // run never shows raw error text: the wire row holds none (SPEC 3.3 [1.9]). A video run
 // (SPEC 14 1.57 TP-6) says "Video" and, while running, the text from video-status.ts.
 import { useState } from 'react'
 import { EMPTY, useApp } from '@/renderer/app/app-context'
-import { plainMessage } from '@/shared/providers/messages'
+import { picturesLeft } from '@/shared/generation/pictures-left'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import { requestCount, type JobStore } from '@/renderer/stores/job-store'
 import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'
+import { RunFailure } from '@/renderer/screens/campaign/run-failure'
 import { RunResult } from '@/renderer/screens/campaign/run-result'
 import { VideoResult } from '@/renderer/screens/campaign/video-result'
 import { useNow, videoRunningText } from './video-status'
@@ -27,6 +28,13 @@ export function workingDetail(row: JobRow): string {
   if (typeof shown.queuePosition === 'number') parts.push(`place in queue ${shown.queuePosition}`)
   if (row.progress !== null) parts.push(`${Math.round(row.progress * 100)}%`)
   return parts.join(' · ')
+}
+
+// FN-4: a picture run's Retry asks only for the pictures not yet kept, as job.retry does.
+function retryCount(row: JobRow): number | null {
+  const count = requestCount(row)
+  if (row.kind !== 'image_generation' || count === null) return count
+  return picturesLeft(count, row.result)
 }
 
 const STATUS_TEXT = {
@@ -94,10 +102,12 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
         )}
       </div>
       {row.startedBy === 'agent' && <p className={layout.muted}>Started by an agent</p>}
-      {row.status === 'failed' && <p>{plainMessage(row.errorKind ?? 'other', label)}</p>}
+      {row.status === 'failed' && (
+        <RunFailure row={row} projectId={projectId} provider={provider} providerLabel={label} />
+      )}
       {asking && (
         <PaidConfirm
-          count={requestCount(row)}
+          count={retryCount(row)}
           providerLabel={label}
           onConfirm={() => void retry()}
           onCancel={() => setAsking(false)}
