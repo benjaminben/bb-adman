@@ -89,6 +89,13 @@ export function h3Needs(mainFile: string, nodeClasses: string[]) {
   return needs('0.33.0', files, nodeClasses)
 }
 
+// A trial graph is an agent's draft from comfy-workflows/, shipped as data (14 1.41, OI-65).
+export const AGENT_DRAFT = 'agent draft, never opened in ComfyUI'
+
+// [1.46] The one source.changes line of a spec that runs at a first-run size.
+export const firstRunLine = (full: SizeRule) =>
+  `first-run size; full size is { multiple: ${full.multiple}, minPixels: ${full.minPixels}, maxPixels: ${full.maxPixels} }`
+
 export const DRAFT_SOURCE = (template: string) => ({
   template,
   exportedFrom: 'draft stand-in for the tests, not an export',

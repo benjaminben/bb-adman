@@ -1,7 +1,19 @@
-// The three MOSS-Image workflows (SPEC 6.10.4), as draft: their graphs are stand-ins that
-// only the tests use, never sent to a server, until real graphs arrive as data.
+// The three MOSS-Image workflows (SPEC 6.10.4). moss-text-to-image is a trial: its graph is
+// the agent's draft comfy-workflows/moss-image-plain.json (14 1.41, 1.46 "Workflow data").
+// The other two are drafts: their graphs are stand-ins that only the tests use, never sent to
+// a server, until real graphs arrive as data.
 import type { Graph, WorkflowSpec } from './types'
-import { DRAFT_SOURCE, LEAVES, MOSS_FULL_SIZE, MOSS_LICENCE, MOSS_MODEL, mossNeeds } from './common'
+import {
+  AGENT_DRAFT,
+  DRAFT_SOURCE,
+  LEAVES,
+  MOSS_FIRST_RUN_SIZE,
+  MOSS_FULL_SIZE,
+  MOSS_LICENCE,
+  MOSS_MODEL,
+  firstRunLine,
+  mossNeeds,
+} from './common'
 import textGraph from './moss-text-to-image.json'
 import editGraph from './moss-edit-references.json'
 import extendGraph from './moss-extend.json'
@@ -19,10 +31,14 @@ const common = {
 
 export const mossTextToImage: WorkflowSpec = {
   ...common,
+  version: 2,
+  status: 'trial',
+  size: MOSS_FIRST_RUN_SIZE,
   id: 'moss-text-to-image',
   label: 'MOSS-Image: picture from a prompt',
   job: 'image',
   graph: textGraph as Graph,
+  // The "App fills" list of REFERENCE-NOTES.md: node 4 text; node 6 size; node 7 seed.
   slots: {
     prompt: { node: '4', input: 'text' },
     seed: [{ node: '7', input: 'seed' }],
@@ -30,9 +46,25 @@ export const mossTextToImage: WorkflowSpec = {
     height: { node: '6', input: 'height' },
     outputNode: '9',
   },
-  needs: mossNeeds('0.42.0', false, [...LOADERS, 'EmptyLatentImage', ...SAMPLING]),
+  needs: mossNeeds('0.42.0', false, [
+    ...LOADERS,
+    'CLIPTextEncode',
+    'EmptyFlux2LatentImage',
+    'KSampler',
+    'VAEDecode',
+    'PreviewImage',
+  ]),
   leavesOnServer: [LEAVES.preview, LEAVES.record],
-  source: DRAFT_SOURCE('MOSS-Image text to image'),
+  source: {
+    template: 'MOSS-Image text to image, official ComfyUI template image_moss_image_t2i.json',
+    exportedFrom: AGENT_DRAFT,
+    changes: [
+      'Flattened into plain nodes on the default path: the prompt-rewriting step is off',
+      'The optional skip-layer boost (SkipLayerGuidanceDiTSimple) is off, as the template has it by default',
+      'The result node is PreviewImage, so nothing goes in the output folder',
+      firstRunLine(MOSS_FULL_SIZE),
+    ],
+  },
 }
 
 export const mossEditReferences: WorkflowSpec = {

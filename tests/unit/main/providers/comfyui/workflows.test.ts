@@ -27,8 +27,10 @@ describe('the shipped workflows [SPEC 6.10.4, FR-258, FR-278]', () => {
     expect(WORKFLOWS.map((w) => w.id)).toEqual([...WORKFLOW_IDS])
   })
 
-  it('keeps all six as draft until a real graph arrives as data [SPEC 14 CU-3]', () => {
-    expect(WORKFLOWS.every((w) => w.status === 'draft')).toBe(true)
+  it('keeps every workflow as draft but the trial ones of the data step [SPEC 14 1.46]', () => {
+    const trial = WORKFLOWS.filter((w) => w.status !== 'draft').map((w) => w.id)
+    expect(trial).toEqual(['moss-text-to-image'])
+    expect(WORKFLOWS.every((w) => w.status === 'draft' || w.status === 'trial')).toBe(true)
   })
 
   it.each(each)('%s: every pointer names a node and an input that exist', (_id, spec) => {

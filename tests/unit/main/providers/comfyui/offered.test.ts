@@ -18,7 +18,8 @@ const USER_DEV = { devTools: true, actor: 'user' } as const
 
 describe('offeredWorkflow: which workflow a run gets [SPEC 6.10.11, 14 1.41]', () => {
   it('never offers a draft, hand-test tools or not', () => {
-    expect(offeredWorkflow(IMAGE, USER_DEV, WORKFLOWS)).toBeNull()
+    const drafts = WORKFLOWS.filter((w) => w.status === 'draft')
+    expect(offeredWorkflow(IMAGE, USER_DEV, drafts)).toBeNull()
     expect(offeredWorkflow(IMAGE, USER_DEV, [as(mossTextToImage, 'draft')])).toBeNull()
   })
 
@@ -56,6 +57,11 @@ describe('offeredWorkflow: which workflow a run gets [SPEC 6.10.11, 14 1.41]', (
     expect(offeredWorkflow(firstFrame, who, list)?.id).toBe('h3-image-to-video')
     expect(offeredWorkflow(none, who, list)?.id).toBe('h3-text-to-video')
     expect(offeredWorkflow(both, who, list)).toBeNull()
+  })
+
+  it('offers the shipped trial picture workflow to the user with dev tools on [14 1.46]', () => {
+    expect(offeredWorkflow(IMAGE, USER_DEV)?.id).toBe('moss-text-to-image')
+    expect(offeredWorkflow(IMAGE, { devTools: false, actor: 'user' })).toBeNull()
   })
 
   it('does not give a picture workflow for another job', () => {
