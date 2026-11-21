@@ -6,6 +6,7 @@ import { assetUpdate } from './update'
 import { assetRemove } from './remove'
 import { assetRelink } from './relink'
 import { assetCheckChanged } from './check-changed'
+import { assetAddGenerated } from './add-generated'
 
 export function assetCommands(deps: CoreDeps): CommandHandler[] {
   return [
@@ -14,5 +15,6 @@ export function assetCommands(deps: CoreDeps): CommandHandler[] {
     assetRelink(deps),
     assetRemove(),
     assetCheckChanged(deps),
+    assetAddGenerated(deps),
   ]
 }

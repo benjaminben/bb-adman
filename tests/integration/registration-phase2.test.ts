@@ -26,7 +26,6 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
       briefCommands,
       campaignCommands,
       devCommands,
-      generationCommands,
       ruleSetCommands,
       storageCommands,
       subjectCommands,
@@ -45,7 +44,7 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
 })
 
 describe('the asset domain is registered [SPEC 14, Slice A part 2, A2-1]', () => {
-  it('gives asset.import, asset.update, asset.relink, asset.remove and asset.checkChanged, in that order', () => {
+  it('gives asset.import, asset.update, asset.relink, asset.remove, asset.checkChanged and asset.addGenerated, in that order', () => {
     f = makeFixture()
     expect(assetCommands(f.core.deps).map((h) => h.name)).toEqual([
       'asset.import',
@@ -53,6 +52,7 @@ describe('the asset domain is registered [SPEC 14, Slice A part 2, A2-1]', () =>
       'asset.relink',
       'asset.remove',
       'asset.checkChanged',
+      'asset.addGenerated',
     ])
   })
 
@@ -77,5 +77,12 @@ describe('the job domain is registered [SPEC 14, 1.38 Y12]', () => {
     f = makeFixture()
     const deps = f.core.deps
     expect(Object.keys(jobQueries(deps))).toEqual(['job.list'])
+  })
+})
+
+describe('the generation domain is registered [SPEC 14 slice H]', () => {
+  it('gives generation.runImages only', () => {
+    f = makeFixture()
+    expect(generationCommands(f.core.deps).map((h) => h.name)).toEqual(['generation.runImages'])
   })
 })
