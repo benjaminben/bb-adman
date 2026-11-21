@@ -16,6 +16,7 @@ import type { AdapterContext, StorageProvider } from '@/main/providers/types'
 import { buildS3Client } from './client'
 import { failureFromS3Error, kindForCode, s3Failure } from './failure'
 import type { PinnableHandler } from './pinned-host'
+import { signReadUrl } from './signed-url'
 
 const DELETE_BATCH = 1000 // DeleteObjects takes at most 1000 keys per call
 
@@ -99,6 +100,11 @@ export function s3Storage(ctx: AdapterContext, options: Options = {}): StoragePr
           throw s3Failure(kindForCode(code), detail, keys)
         }
       }
+    },
+
+    // spec/approvals.md "Pictures": signed on this machine; nothing is sent.
+    async signedReadUrl(path, seconds) {
+      return signReadUrl({ client, bucket: Bucket, keys }, keyFor(storageFilePath(path)), seconds)
     },
   }
 }

@@ -154,6 +154,9 @@ export interface StorageProvider {
   write(path: string, data: ReadableStream | Uint8Array, contentType: string): Promise<void>
   list(prefix: string): Promise<string[]>
   remove(paths: string[]): Promise<void>
+  // spec/approvals.md "Pictures": a read address for one file, signed on this machine, valid
+  // for `seconds` (at most 604,800). Only the S3 adapter has it.
+  signedReadUrl?(path: string, seconds: number): Promise<string>
 }
 
 export interface VerificationProvider {
