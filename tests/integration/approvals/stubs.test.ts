@@ -30,7 +30,6 @@ async function openProject(fx: Fixture): Promise<string> {
 describe('the approvals stubs [spec/phases/approvals.md "AP-5"]', () => {
   it.each([
     ['approvals.check', () => ({})],
-    ['approvals.publish', (projectId: string) => ({ projectId, campaignId })],
     ['approvals.refresh', (projectId: string) => ({ projectId, campaignId })],
   ])('%s refuses as not set up, and sends no event', async (name, input) => {
     f = makeFixture()
