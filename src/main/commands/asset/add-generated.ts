@@ -25,7 +25,9 @@ function promptOf(request: unknown): string | null {
   return typeof prompt === 'string' ? prompt : null
 }
 
-function rowOf(item: Prepared[number], job: JobRow, projectFile: string, createdAt: string) {
+type RowContext = { job: JobRow; model: string | null; projectFile: string; createdAt: string }
+
+function rowOf(item: Prepared[number], { job, model, projectFile, createdAt }: RowContext) {
   const { assetId, file } = item
   return {
     id: assetId,
@@ -45,7 +47,7 @@ function rowOf(item: Prepared[number], job: JobRow, projectFile: string, created
     height: file.height,
     genRunId: job.id,
     genProvider: job.provider,
-    genModel: job.model,
+    genModel: model ?? job.model,
     genPrompt: promptOf(job.request),
     createdAt,
   }
@@ -79,12 +81,14 @@ export function assetAddGenerated(deps: Pick<CoreDeps, 'now'>) {
     run(ctx, input, prepared) {
       const job = readWireRow(ctx.project.db, 'job', { id: input.jobId }) as JobRow | null
       if (!job) throw new AppError('NOT_FOUND', 'That job was not found.')
-      const createdAt = deps.now().toISOString()
+      const row: RowContext = {
+        job,
+        model: input.model ?? null,
+        projectFile: ctx.project.filePath,
+        createdAt: deps.now().toISOString(),
+      }
       for (const item of prepared) {
-        ctx.project.orm
-          .insert(asset)
-          .values(rowOf(item, job, ctx.project.filePath, createdAt))
-          .run()
+        ctx.project.orm.insert(asset).values(rowOf(item, row)).run()
         ctx.changes.touch('asset', { id: item.assetId })
       }
       const assetIds = prepared.map((p) => p.assetId)

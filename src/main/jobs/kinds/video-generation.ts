@@ -114,10 +114,12 @@ async function stored(
   const assetId = ulid()
   await jc.deps.assets.writeManaged(project, { assetId, ext: 'mp4', bytes: result.bytes })
   const files = [{ assetId, ext: 'mp4' }]
+  // [1.58] J-4: the asset row keeps the model the result names (SPEC 6.6).
   const added = await jc.system('asset.addGenerated', {
     projectId: jc.projectId,
     jobId: job.id,
     files,
+    ...(result.model && { model: result.model }),
   })
   if (!added.ok) throw new Error(`asset.addGenerated refused: ${added.error.code}`)
   return { assetId, ...facts, details: 'pending' }

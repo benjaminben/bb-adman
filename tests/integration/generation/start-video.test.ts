@@ -85,6 +85,15 @@ describe('generation.startVideo [SPEC 4.2, 14 CU-6a]', () => {
     expect(f.jobs()).toEqual([])
   })
 
+  it('refuses fal-seedance, which has no adapter yet, before a job row [SPEC 14 1.58 J-2]', async () => {
+    f = await makeGenerationFixture()
+    expect(await start({ provider: 'fal-seedance' })).toMatchObject({
+      ok: false,
+      error: { code: 'INVALID_INPUT', details: { provider: 'fal-seedance' } },
+    })
+    expect(f.jobs()).toEqual([])
+  })
+
   it('refuses a variant that is not there', async () => {
     f = await makeGenerationFixture()
     expect(await start({ variantId: 'nope' })).toMatchObject({
