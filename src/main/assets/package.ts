@@ -17,12 +17,23 @@ import { extensionOf } from '../../shared/config/file-types'
 import type { AssetRow } from '../../shared/schemas/rows/asset'
 import type { PackageResult } from '../../shared/schemas/commands/asset'
 import { AppError } from '../../shared/schemas/result'
+import { notAProject } from '../db/meta'
 
 type Found = { id: string; file: string; ext: string }
 
 function isInside(parent: string, child: string): boolean {
   const rel = path.relative(parent, child)
   return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))
+}
+
+// SPEC 14 [1.30] U2: {Name} and {Name}.partial must be direct children of targetDir, whatever
+// the project file holds, so nothing is ever made outside it.
+function checkChildren(targetDir: string, name: string) {
+  const dir = path.resolve(targetDir)
+  for (const child of [name, `${name}.partial`]) {
+    const p = path.resolve(dir, child)
+    if (path.dirname(p) !== dir || path.basename(p) !== child) throw notAProject()
+  }
 }
 
 async function checkTarget(project: ProjectHandle, targetDir: string, name: string) {
@@ -109,6 +120,7 @@ export async function packageProject(
   skipMissing: boolean,
 ): Promise<PackageResult> {
   const { name } = readMeta(project.db)
+  checkChildren(targetDir, name)
   await checkTarget(project, targetDir, name)
   const { found, missing } = await findFiles(project, skipMissing)
   const finalDir = path.join(targetDir, name)
