@@ -19,7 +19,7 @@ import type { ImageResult } from '../../src/main/providers/types'
 import { pictureType } from '../../src/main/providers/picture-type'
 import type { Settings } from '../../src/shared/schemas/settings'
 import { livePrint, missingNames, safely } from './live-output'
-import { pictureSize } from './picture-size'
+import { pictureSize } from '../../src/main/providers/picture-size'
 
 const key = process.env.GEMINI_API_KEY
 const EXTENSION = { 'image/png': 'png', 'image/jpeg': 'jpg' } as const

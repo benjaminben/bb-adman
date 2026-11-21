@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import { describe, it, expect } from 'vitest'
-import { pictureSize } from '../../live/picture-size'
+import { pictureSize } from '../../../../src/main/providers/picture-size'
 
 // A PNG head: signature, IHDR length and type, width and height (big-endian).
 function pngHead(width: number, height: number): Uint8Array {
@@ -35,7 +35,10 @@ describe('pictureSize, for the live test output [SPEC 6.2 1.18, K4]', () => {
   })
 
   it('reads the 1x1 size of the hand-made JPEG fixture', () => {
-    const url = new URL('../../fixtures/providers/gemini/image-success-jpeg.json', import.meta.url)
+    const url = new URL(
+      '../../../fixtures/providers/gemini/image-success-jpeg.json',
+      import.meta.url,
+    )
     const body = JSON.parse(fs.readFileSync(url, 'utf8')) as {
       candidates: Array<{ content: { parts: Array<{ inlineData?: { data: string } }> } }>
     }

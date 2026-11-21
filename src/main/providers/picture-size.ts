@@ -1,5 +1,5 @@
-// SPEC 6.2 [1.18], K4: the live test prints the picture's pixel size, read from the file itself:
-// a PNG's IHDR chunk, or a JPEG's frame header.
+// SPEC 6.2 [1.18], K4; [1.21] L7: a picture's pixel size, read from the file itself (a PNG's IHDR
+// chunk, or a JPEG's frame header), without decoding. Used by toPng and by the live test.
 // A JPEG is a list of segments: FF, a marker byte, then (for most markers) a 2-byte length that
 // counts itself. The frame header (FFC0 to FFCF, but not FFC4, FFC8 or FFCC) holds the
 // precision byte, then the height and the width as 2-byte big-endian numbers.
