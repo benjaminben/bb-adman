@@ -163,6 +163,20 @@ describe('approval dialog, a live link [spec/approvals.md "The approval link dia
     expect(sent(fake)).toEqual([['approvals.setPassword', ids]])
   })
 
+  it('forgets a typed password on Cancel and sends nothing', async () => {
+    const { user, fake } = await openDialog()
+    const field = () => screen.getByLabelText('Password', { selector: 'input' })
+    await user.click(button('Set a new password…'))
+    await user.click(screen.getByRole('radio', { name: 'Choose a password' }))
+    await user.type(field(), 'a-typed-password-1')
+    await user.click(button('Cancel'))
+    await user.click(button('Set a new password…'))
+    expect(screen.getByRole('radio', { name: 'Make a password for me' })).toBeChecked()
+    await user.click(screen.getByRole('radio', { name: 'Choose a password' }))
+    expect(field()).toHaveValue('')
+    expect(fake.commands).toEqual([])
+  })
+
   it('updates the gallery, with its waiting line and the buttons disabled', async () => {
     const { user, fake } = await openDialog()
     let finish: (r: Result<unknown>) => void = () => undefined
