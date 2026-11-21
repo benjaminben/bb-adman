@@ -20,8 +20,9 @@ export function createMcpService(deps: Deps) {
   // Every operation waits for the one before, so a start, a stop and a new token never
   // overlap (REVIEW MCP-A R-1). A stop has finished closing before the next one begins.
   const serial = createSerial()
-  // Set when the last start found its port taken (SPEC 14 1.58 J-8).
-  let portTaken = false
+  // Why the last start failed: its port was taken (SPEC 14 1.58 J-8), or anything else
+  // (SPEC 14 1.59 L-10).
+  let failure: 'port_in_use' | 'start_failed' | null = null
 
   async function listen(): Promise<void> {
     const port = settings.get().mcp.port
@@ -29,16 +30,16 @@ export function createMcpService(deps: Deps) {
     if (!token) throw new AppError('RULE_VIOLATION', 'No access token has been made.')
     try {
       await http.start({ port, token })
-      portTaken = false
+      failure = null
     } catch (e) {
+      failure = e instanceof McpPortInUse ? 'port_in_use' : 'start_failed'
       if (!(e instanceof McpPortInUse)) throw e
-      portTaken = true
       throw new AppError('RULE_VIOLATION', portInUseMessage(port), { reason: 'port_in_use' })
     }
   }
 
   async function stop(): Promise<void> {
-    portTaken = false
+    failure = null
     await http.stop()
   }
 
@@ -50,6 +51,8 @@ export function createMcpService(deps: Deps) {
       if (restart) await http.stop()
       await listen()
     } catch (e) {
+      // A failed stop before the restart also leaves the server not started (L-10, S-2).
+      if (!(e instanceof AppError)) failure = 'start_failed'
       deps.log.write({
         level: 'warn',
         event: 'mcp',
@@ -106,7 +109,7 @@ export function createMcpService(deps: Deps) {
     problem(): McpProblem {
       if (http.running() || !settings.get().mcp.enabled) return null
       if (!secrets.get('mcp.token')) return 'token_missing'
-      return portTaken ? 'port_in_use' : null
+      return failure
     },
     address: () => http.address(),
   }
