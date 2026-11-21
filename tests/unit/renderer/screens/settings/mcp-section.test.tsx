@@ -10,6 +10,7 @@ async function section() {
 
 const PORT_LINE = `Port ${PORT} is in use. Choose another.`
 const TOKEN_LINE = 'There is no access token. Make a new token.'
+const START_LINE = 'The MCP server could not start. Turn it off and on to try again.'
 
 describe('settings: agent access states [SPEC 6.8; 14 1.56 MCP-C, 1.58 J-8, J-9, J-11]', () => {
   it('off: the switch is off, the port is shown, and no token or connect line is drawn', async () => {
@@ -96,6 +97,15 @@ describe('settings: agent access states [SPEC 6.8; 14 1.56 MCP-C, 1.58 J-8, J-9,
     await renderApp(<SettingsScreen />, mcpFake(connect()).fake)
     await within(await section()).findByRole('region', { name: 'Connect to Claude' })
     expect(await axeViolations()).toEqual([])
+  })
+
+  it('on but the start failed: says to turn it off and on [SPEC 14 1.59 L-10]', async () => {
+    const { fake } = mcpFake(connect({ running: false, problem: 'start_failed' }))
+    await renderApp(<SettingsScreen />, fake)
+    const box = await section()
+    expect(await within(box).findByText(START_LINE)).toBeInTheDocument()
+    expect(within(box).getByRole('switch', { name: 'Turn on agent access' })).toBeChecked()
+    expect(within(box).queryByText(PORT_LINE)).toBeNull()
   })
 
   it('has no axe violations with a state line', async () => {

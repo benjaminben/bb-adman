@@ -17,7 +17,7 @@ export function baseState(overrides: Partial<AppState> = {}): AppState {
         image: 'gemini',
         layout: 'gemini',
         text: 'gemini',
-        video: 'fal-seedance',
+        video: 'comfyui',
       },
       generation: { optionsPerRun: 4 },
       export: { imageFormat: 'png', jpgQuality: 90, fps: 30 },
@@ -44,7 +44,8 @@ export function baseState(overrides: Partial<AppState> = {}): AppState {
         id: 'fal-seedance',
         label: 'fal.ai Seedance',
         jobs: ['video'],
-        available: true,
+        // SPEC 14 1.59 L-7: as the real registry (1.58 J-2), not available in this build.
+        available: false,
         secrets: ['fal.apiKey'],
         defaultModels: {},
         local: false,

@@ -23,7 +23,11 @@ export const COMFY: ProviderInfo = {
 }
 
 const base = baseState().providers
-const SEEDANCE = base.find((p) => p.id === 'fal-seedance') as ProviderInfo
+// SPEC 14 1.59 L-7 made baseState's fal-seedance not available; the paid list needs it on.
+const SEEDANCE: ProviderInfo = {
+  ...(base.find((p) => p.id === 'fal-seedance') as ProviderInfo),
+  available: true,
+}
 
 // The list once RV-1 is in: fal-seedance is not available.
 export const AFTER_RV1: ProviderInfo[] = [
@@ -57,7 +61,15 @@ export const INFO: ComfyInfo = {
 }
 
 export function videoApi(opts: { providers?: ProviderInfo[]; jobs?: JobRow[] } = {}) {
-  const state: Partial<AppState> = { providers: opts.providers ?? AFTER_RV1 }
+  // A saved fal-seedance video default (1.59 L-8), kept from before L-7 changed baseState's.
+  const settings = baseState().settings
+  const state: Partial<AppState> = {
+    providers: opts.providers ?? AFTER_RV1,
+    settings: {
+      ...settings,
+      defaultProviders: { ...settings.defaultProviders, video: 'fal-seedance' },
+    },
+  }
   const fake = campaignApi({ jobs: opts.jobs, state })
   fake.onQuery('comfy.getInfo', () => ({ ok: true, data: INFO }))
   return fake
