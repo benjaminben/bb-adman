@@ -81,7 +81,7 @@ function enqueue(deps: Deps, ctx: ProjectContext, input: GenerationRunImagesInpu
   const provider = pictureProvider(deps, input.provider)
   const place = target(ctx.project, input)
   const request: ImageJobRequest = {
-    prompt: promptToSend(input.prompt),
+    prompt: promptToSend(input.prompt, { pictures: input.referenceAssetIds.length }),
     referenceAssetIds: input.referenceAssetIds,
     count: input.count,
     width: place.width,

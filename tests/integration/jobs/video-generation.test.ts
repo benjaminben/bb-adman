@@ -15,6 +15,8 @@ import { resetFakeBehaviour, setFakeBehaviour } from '@/main/providers/fake/beha
 import type { VideoProvider } from '@/main/providers/types'
 import type { VideoJobRequest, VideoJobResult } from '@/shared/schemas/jobs/video-generation'
 import { checkMp4 } from '@/main/providers/video-check'
+import type { ProjectContext } from '@/main/commands/types'
+import { KEEP_PRINTING_ENDING, NO_TEXT_ENDING } from '@/shared/generation/prompt'
 
 let f: GenerationFixture
 afterEach(() => {
@@ -101,5 +103,58 @@ describe('the video_generation job kind [SPEC 6.10.7, 6.11.2, 14 CU-6a]', () => 
     await f.core.deps.jobs.projectOpened(f.projectId)
     await waitFor(ended(f, 'j-fail'), RUN_MS)
     expect(f.job('j-fail')).toMatchObject({ status: 'failed', errorKind: 'quota' })
+  }, 15_000)
+})
+
+describe('the video_generation job kind sends the ending its pictures call for [SP-9; A-127]', () => {
+  // The prompt each call to the fake's start is given.
+  function promptsSent(): string[] {
+    const prompts: string[] = []
+    vi.spyOn(fakeAdapters, 'video').mockImplementation(() => {
+      const real = fakeVideo()
+      return {
+        ...real,
+        start: (input) => {
+          prompts.push(input.prompt)
+          return real.start(input)
+        },
+      }
+    })
+    return prompts
+  }
+
+  // Straight onto the queue: generation.startVideo does not offer the fake a first frame.
+  function enqueue(job: VideoJobRequest): string {
+    const ctx = { project: f.project } as unknown as ProjectContext
+    return f.core.deps.jobs.enqueue(ctx, {
+      kind: 'video_generation',
+      campaignId: 'c1',
+      variantId: 'v1',
+      layerId: null,
+      slot: null,
+      provider: 'fake',
+      model: '',
+      request: job,
+      startedBy: 'user',
+    })
+  }
+
+  it('gives start "keep printing" for a first-frame request', async () => {
+    f = await makeGenerationFixture()
+    // The fixture has no picture fitter; the fake takes the frame as it is.
+    f.core.deps.fitPicture = (bytes) => bytes
+    const prompts = promptsSent()
+    const id = await f.importPicture()
+    const jobId = enqueue({ ...request, start: 'first_frame', referenceAssetIds: [id] })
+    await waitFor(ended(f, jobId), RUN_MS)
+    expect(prompts).toEqual([`Waves ${KEEP_PRINTING_ENDING}`])
+  }, 15_000)
+
+  it('gives start "no text" for a prompt-only request', async () => {
+    f = await makeGenerationFixture()
+    const prompts = promptsSent()
+    const jobId = enqueue(request)
+    await waitFor(ended(f, jobId), RUN_MS)
+    expect(prompts).toEqual([`Waves ${NO_TEXT_ENDING}`])
   }, 15_000)
 })

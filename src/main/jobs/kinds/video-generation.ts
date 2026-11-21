@@ -61,7 +61,7 @@ async function started(run: Run, project: ProjectHandle, request: VideoJobReques
   const { jc, provider } = run
   const input = {
     ...(await pictures(run, project, request)),
-    prompt: promptToSend(request.prompt),
+    prompt: promptToSend(request.prompt, { pictures: request.referenceAssetIds.length }),
     durationMs: request.durationMs,
     width: request.width,
     height: request.height,

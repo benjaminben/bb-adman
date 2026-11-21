@@ -5,7 +5,7 @@ import { makeKindFixture, pngAnswer, jpegAnswer, PAID, type KindFixture } from '
 import { waitFor } from './generation-fixture'
 import { greyPng } from '@/main/providers/fake/png'
 import { pictureSize } from '@/main/providers/picture-size'
-import { promptToSend } from '@/shared/generation/prompt'
+import { KEEP_PRINTING_ENDING, promptToSend } from '@/shared/generation/prompt'
 import { generationDetailsOf, pngChunks } from '../../fixtures/png-chunks'
 
 let f: KindFixture
@@ -34,14 +34,14 @@ describe('the image_generation job kind [SPEC 14 slice H; 6.2, 6.6]', () => {
         genRunId: id,
         genProvider: PAID.id,
         genModel: 'test-model-1',
-        genPrompt: promptToSend('A bottle on a rock'),
+        genPrompt: promptToSend('A bottle on a rock', { pictures: 0 }),
       })
       expect(generationDetailsOf(fileOf(assetId))).toEqual({
         app: 'Adman',
         appVersion: '0.1.0',
         provider: PAID.id,
         model: 'test-model-1',
-        prompt: promptToSend('A bottle on a rock'),
+        prompt: promptToSend('A bottle on a rock', { pictures: 0 }),
         kind: 'image_generation',
         createdAt: '2026-11-20T14:30:00.000Z',
       })
@@ -55,7 +55,7 @@ describe('the image_generation job kind [SPEC 14 slice H; 6.2, 6.6]', () => {
     expect(f.calls).toHaveLength(2)
     for (const call of f.calls) {
       expect(call.input).toMatchObject({
-        prompt: promptToSend('A bottle on a rock'),
+        prompt: promptToSend('A bottle on a rock', { pictures: 0 }),
         references: [],
         width: 1080,
         height: 1350,
@@ -192,5 +192,33 @@ describe('the image_generation job kind with reference pictures [SPEC 14 1.46 RF
         { bytes: new Uint8Array(wide), mime: 'image/png' },
       ])
     }
+  })
+})
+
+describe('the image_generation job kind sends the "keep printing" ending with pictures [SP-9]', () => {
+  const reference = async () => {
+    fs.writeFileSync(path.join(f.root, 'ref.png'), greyPng(5, 4))
+    const r = await f.user('asset.import', {
+      paths: [path.join(f.root, 'ref.png')],
+      library: 'reference',
+      copy: false,
+    })
+    return (r as { data: { assetIds: string[] } }).data.assetIds[0]
+  }
+
+  it('hands the provider the prompt with "keep printing" for a job with one reference', async () => {
+    f = makeKindFixture()
+    const id = await f.start({ count: 1, referenceAssetIds: [await reference()] })
+    await waitFor(done(id))
+    expect(f.calls[0]?.input.prompt).toBe(`A bottle on a rock ${KEEP_PRINTING_ENDING}`)
+  })
+
+  it('sends a stored prompt that already ends with "keep printing" unchanged', async () => {
+    f = makeKindFixture()
+    const prompt = `A bottle on a rock ${KEEP_PRINTING_ENDING}`
+    const id = await f.start({ count: 1, prompt, referenceAssetIds: [await reference()] })
+    await waitFor(done(id))
+    expect((f.job(id)?.request as { prompt: string }).prompt).toBe(prompt)
+    expect(f.calls[0]?.input.prompt).toBe(prompt)
   })
 })

@@ -154,7 +154,7 @@ async function runImageJob(
     project,
     provider: imageFor(jc.deps, providerId),
     input: {
-      prompt: promptToSend(request.prompt),
+      prompt: promptToSend(request.prompt, { pictures: request.referenceAssetIds.length }),
       references,
       width: request.width,
       height: request.height,
