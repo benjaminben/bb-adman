@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, it, expect } from 'vitest'
 import { createComfyClient, type ComfyClient } from '@/main/providers/comfyui/client'
 import { uploadName } from '@/main/providers/comfyui/values'
+import { everyCall } from '../../../../helpers/comfy-every-call'
 import { startComfyStandIn, type StandIn } from '../../../../helpers/comfy-stand-in'
 
 let standIn: StandIn
@@ -73,6 +74,11 @@ describe('one function per call, against the stand-in [SPEC 6.10.2, 14 CU-2]', (
     expect(await client.history(id)).toEqual({ outputs: {} })
   })
 
+  it('history: null on a 404', async () => {
+    standIn.reply(`GET /history/${id}`, { status: 404, json: {} })
+    expect(await client.history(id)).toBeNull()
+  })
+
   it('jobState: GET /api/jobs/{promptId}; null on 404', async () => {
     expect(await client.jobState(id)).toEqual({ status: 'pending' })
     expect(last()).toMatchObject({ method: 'GET', path: `/api/jobs/${id}` })
@@ -121,9 +127,9 @@ describe('fixed headers, no cookie kept [SPEC 6.10.2, 14 CU-2]', () => {
       headers: { 'set-cookie': 'session=made-up-cookie' },
     })
     await client.systemStats()
-    await client.submit(id, {})
-    await client.uploadImage(uploadName(new Uint8Array([1])), new Uint8Array([1]))
-    await client.systemStats()
+    const calls = everyCall(client)
+    for (const [, run] of calls) await run()
+    expect(standIn.seen).toHaveLength(calls.length + 1)
     for (const seen of standIn.seen) {
       expect(Object.keys(seen.headers).every((h) => allowed.includes(h))).toBe(true)
       expect(seen.headers['user-agent']).toBe('Adman')
