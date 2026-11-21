@@ -11,21 +11,33 @@ import {
   type ImageProvider,
   type ImageResult,
 } from '@/main/providers/types'
+import { fitSize, type Size, type SizeRule } from '@/shared/comfy/fit-size'
+import type { Geometry } from '@/shared/schemas/layer'
 import type { ComfyClient } from './client'
 import { serverChecks, type ServerChecks } from './needs'
 import { runPicture, type RunEnv, type RunTiming } from './run'
 import { checked, pinnedClient, realTiming, runLive, runOrigin } from './session'
 import { uploadName } from './values'
-import { NON_DRAFT_WORKFLOWS } from './workflows'
+import { NON_DRAFT_WORKFLOWS, withoutDrafts } from './workflows'
 import type { WorkflowChoice } from './workflows/offered'
 import type { WorkflowSpec } from './workflows/types'
 
-export type ComfyImageDeps = { timing?: RunTiming; checks?: ServerChecks }
+// `workflows` lets a test hand in a trial copy of a draft (P5-7); a draft in it is still
+// never chosen.
+export type ComfyImageDeps = {
+  timing?: RunTiming
+  checks?: ServerChecks
+  workflows?: readonly WorkflowSpec[]
+}
 
 // The command has already refused a job with no workflow it may use (SPEC 14 1.41): a proven
 // one, else the trial one the user with the hand-test tools was allowed. Never a draft.
-export function workflowForRun(job: WorkflowChoice['job'], start?: WorkflowChoice['videoStart']) {
-  const fitting = NON_DRAFT_WORKFLOWS.filter(
+export function workflowForRun(
+  job: WorkflowChoice['job'],
+  start?: WorkflowChoice['videoStart'],
+  workflows: readonly WorkflowSpec[] = NON_DRAFT_WORKFLOWS,
+) {
+  const fitting = withoutDrafts(workflows).filter(
     (w) =>
       w.job === job &&
       (start === undefined ||
@@ -42,6 +54,37 @@ export function workflowForRun(job: WorkflowChoice['job'], start?: WorkflowChoic
 export async function uploaded(client: ComfyClient, file: ImageFile): Promise<string> {
   const kept = await client.uploadImage(uploadName(file.bytes), file.bytes)
   return kept.subfolder === '' ? kept.name : `${kept.subfolder}/${kept.name}`
+}
+
+type Pad = { left: number; top: number; right: number; bottom: number }
+
+const toEight = (n: number) => Math.round(n / 8) * 8
+
+// SPEC comfyui-workflows "Extend a background": the run size from fitSize, the placement
+// scaled by the same factor, each pad rounded to a multiple of 8, and the picture size what
+// the pads leave. A picture that does not sit inside the canvas is a plain Error.
+export function extendLayout(
+  canvas: Size,
+  placement: Pick<Geometry, 'x' | 'y' | 'width' | 'height'>,
+  rule: SizeRule,
+): { picture: Size; pad: Pad } {
+  const run = fitSize(canvas, rule)
+  const across = run.width / canvas.width
+  const down = run.height / canvas.height
+  const pad = {
+    left: toEight(placement.x * across),
+    top: toEight(placement.y * down),
+    right: toEight((canvas.width - placement.x - placement.width) * across),
+    bottom: toEight((canvas.height - placement.y - placement.height) * down),
+  }
+  const picture = {
+    width: run.width - pad.left - pad.right,
+    height: run.height - pad.top - pad.bottom,
+  }
+  if (Object.values(pad).some((n) => n < 0) || picture.width < 8 || picture.height < 8) {
+    throw new Error('The picture does not sit inside the canvas')
+  }
+  return { picture, pad }
 }
 
 export function comfyImage(ctx: AdapterContext, deps: ComfyImageDeps = {}): ImageProvider {
@@ -66,9 +109,20 @@ export function comfyImage(ctx: AdapterContext, deps: ComfyImageDeps = {}): Imag
       for (let i = 0; i < input.count; i++) results.push(await runPicture(env, spec, ask, opts))
       return results
     },
-    // SPEC 6.10.8: extend is left out of CU-4, as 1.41 allows; it is built with CU-6b.
-    async extend() {
-      throw new Error('Extending a picture with ComfyUI is not built yet')
+    // P5-7: the picture goes up as the one reference; the server does the canvas work.
+    async extend(input, opts = {}) {
+      if (opts.signal?.aborted) throw new ProviderCancelled()
+      const spec = workflowForRun('extend', undefined, deps.workflows)
+      const canvas = { width: input.width, height: input.height }
+      const { picture, pad } = extendLayout(canvas, input.placement, spec.size)
+      const origin = runOrigin(ctx)
+      const live = runLive(ctx, origin)
+      const client = pinnedClient(ctx, origin, live)
+      const serverVersion = await checked(checks, origin, client, spec)
+      if (opts.signal?.aborted) throw new ProviderCancelled()
+      const reference = await uploaded(client, input.image)
+      const ask = { prompt: input.prompt, ...picture, references: [reference], pad }
+      return runPicture({ client, timing, serverVersion, live }, spec, ask, opts)
     },
   }
 }
