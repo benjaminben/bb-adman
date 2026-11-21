@@ -18,7 +18,8 @@ describe('Phase 3 domains are registered [spec/structure.md]', () => {
     expect(layerCommands(deps).map((h) => h.name)).toContain('layer.update')
     expect(variantCommands(deps).map((h) => h.name)).toEqual(['variant.update'])
     expect(Object.keys(variantQueries(deps))).toEqual(['variant.get'])
-    expect(renderQueries(deps)).toEqual({})
+    expect(Object.keys(renderQueries(deps))).toEqual(['thumbnail.get', 'variant.render'])
+    expect(f.core.queryNames).toEqual(expect.arrayContaining(['thumbnail.get', 'variant.render']))
   })
 
   it('puts the render service on CoreDeps', () => {
