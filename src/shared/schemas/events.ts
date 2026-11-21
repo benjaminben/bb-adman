@@ -1,6 +1,8 @@
-// SPEC 4.4 events from the main process to the window. Phase 1 emits
-// project.changed and app.stateChanged; the others arrive with later phases.
+// SPEC 4.4 events from the main process to the window. Phase 1 emits project.changed and
+// app.stateChanged. job.updated is declared here by step 0 (SPEC 12, F4); slice D emits it.
+// The others arrive with later phases.
 import type { TableName } from './rows/keys'
+import type { JobRow } from './rows/job'
 
 export type Actor = 'user' | 'agent'
 
@@ -19,7 +21,9 @@ export type EventMap = {
   // SPEC 4.4: tells every window to re-read app.getState after a project opens or
   // closes, settings change, a key is saved or deleted, or agent access changes.
   'app.stateChanged': Record<string, never>
+  // SPEC 3.6, 4.4: sent after every write to a job row.
+  'job.updated': JobRow
 }
 
 export type EventName = keyof EventMap
-export const EVENT_NAMES: EventName[] = ['project.changed', 'app.stateChanged']
+export const EVENT_NAMES: EventName[] = ['project.changed', 'app.stateChanged', 'job.updated']
