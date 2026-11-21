@@ -20,7 +20,8 @@ function useJobRow(projectId: string, layerId: string, jobId: string): JobRow | 
     void api.query('job.list', { projectId, layerId }).then((result) => {
       const rows = result.ok ? ((result.data as JobRow[] | null) ?? []) : []
       const found = rows.find((r) => r.id === jobId)
-      if (live && found) setRow((held) => (held && held.updatedAt >= found.updatedAt ? held : found))
+      if (live && found)
+        setRow((held) => (held && held.updatedAt >= found.updatedAt ? held : found))
     })
     return () => {
       live = false
