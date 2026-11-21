@@ -16,6 +16,7 @@ describe('IPC bridge passes the asking window to queries [SPEC 4.3, S2-04]', () 
           seen.push({ name, opts, event })
           return ok(null)
         },
+        isInternal: () => false,
       },
     )
     await handlers.get(IPC.query)?.({ sender: 'window-2' }, 'dialog.pickFolder', {})

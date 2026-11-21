@@ -17,7 +17,7 @@ export type IpcTargets<E = unknown> = {
   execute(name: string, input: unknown, opts: ExecuteOptions): Promise<Result<unknown>>
   query(name: string, input: unknown, opts: QueryOptions, event: E): Promise<Result<unknown>>
   // Internal commands are sent by the job runner only (SPEC 4.2 notes).
-  isInternal?: (name: string) => boolean
+  isInternal: (name: string) => boolean
 }
 
 const badName = () => fail({ code: 'INVALID_INPUT', message: 'Unknown request.' })
@@ -25,7 +25,7 @@ const badName = () => fail({ code: 'INVALID_INPUT', message: 'Unknown request.' 
 export function registerIpc<E>(ipcMain: IpcMainLike<E>, targets: IpcTargets<E>): void {
   ipcMain.handle(IPC.command, async (_event, name, input) => {
     if (typeof name !== 'string') return badName()
-    if (targets.isInternal?.(name)) {
+    if (targets.isInternal(name)) {
       return fail({ code: 'INVALID_INPUT', message: unknownCommandMessage(name) })
     }
     return targets.execute(name, input, { actor: 'user' })

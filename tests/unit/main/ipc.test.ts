@@ -25,6 +25,7 @@ describe('IPC bridge to the bus [SPEC 4.1]', () => {
         return ok(null)
       },
       query: async () => ok(null),
+      isInternal: () => false,
     })
     const command = ipc.handlers.get(IPC.command)
     await command?.({}, 'layer.update', { a: 1 }, { actor: 'agent' })
@@ -36,6 +37,7 @@ describe('IPC bridge to the bus [SPEC 4.1]', () => {
     registerIpc(ipc, {
       execute: async () => ok(null),
       query: async (name, input) => ok({ name, input }),
+      isInternal: () => false,
     })
     const query = ipc.handlers.get(IPC.query)
     expect(await query?.({}, 'app.getState', {})).toEqual(ok({ name: 'app.getState', input: {} }))
@@ -50,6 +52,7 @@ describe('IPC bridge to the bus [SPEC 4.1]', () => {
         seen.push({ name, opts })
         return ok(null)
       },
+      isInternal: () => false,
     })
     await ipc.handlers.get(IPC.query)?.({}, 'app.getState', {}, { actor: 'agent' })
     expect(seen).toEqual([{ name: 'app.getState', opts: { actor: 'user' } }])
@@ -57,7 +60,11 @@ describe('IPC bridge to the bus [SPEC 4.1]', () => {
 
   it('rejects a non-string command name with INVALID_INPUT', async () => {
     const ipc = fakeIpcMain()
-    registerIpc(ipc, { execute: async () => ok(null), query: async () => ok(null) })
+    registerIpc(ipc, {
+      execute: async () => ok(null),
+      query: async () => ok(null),
+      isInternal: () => false,
+    })
     expect(await ipc.handlers.get(IPC.command)?.({}, 42, {})).toMatchObject({
       ok: false,
       error: { code: 'INVALID_INPUT' },
