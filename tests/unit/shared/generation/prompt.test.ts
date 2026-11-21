@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  FILL_PROMPT,
   KEEP_PRINTING_ENDING,
   NO_TEXT_ENDING,
   prefilledPrompt,
@@ -181,5 +182,18 @@ describe('promptToSend picks the ending from the pictures sent [SP-9]', () => {
   it.each(endingFor)('with $pictures pictures still adds the full ending to a cut one', (c) => {
     const cut = 'A bottle. Keep any printing on the things'
     expect(promptToSend(cut, { pictures: c.pictures })).toBe(`${cut} ${c.ending}`)
+  })
+})
+
+// P5-8 [A-146] (spec/links-and-sync.md "Generative fill"): the one fixed fill sentence.
+describe('FILL_PROMPT [A-146]', () => {
+  it('is the fixed sentence and is sent with the "keep printing" ending once', () => {
+    expect(FILL_PROMPT).toBe(
+      'Extend this picture outward so it fills the whole frame. Keep everything already in ' +
+        'the picture as it is, and continue the scene naturally at the edges.',
+    )
+    const sent = promptToSend(FILL_PROMPT, { pictures: 1 })
+    expect(sent).toBe(`${FILL_PROMPT} ${KEEP_PRINTING_ENDING}`)
+    expect(promptToSend(sent, { pictures: 1 })).toBe(sent)
   })
 })

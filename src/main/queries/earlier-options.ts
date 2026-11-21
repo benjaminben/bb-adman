@@ -1,5 +1,5 @@
 // job.earlierOptions (spec/ai-jobs.md "The three queries") [REQ: FR-248, FR-216]: the picture
-// and cut-out runs of a layer, with the pictures they kept. It calls no provider.
+// cut-out and fill runs of a layer, with the pictures they kept. It calls no provider.
 import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
 import { newestFirst } from './activity'
@@ -16,7 +16,12 @@ import type { JobRow } from '@/shared/schemas/rows/job'
 import { AppError } from '@/shared/schemas/result'
 
 const MAX_RUNS = 50
-const RUN_KINDS: ReadonlySet<JobRow['kind']> = new Set(['image_generation', 'cutout'])
+// P5-8: a fill is listed with the background layer's other runs.
+const RUN_KINDS: ReadonlySet<JobRow['kind']> = new Set([
+  'image_generation',
+  'cutout',
+  'generative_fill',
+])
 
 type LayerPlace = { variant_id: string; slot: string | null }
 

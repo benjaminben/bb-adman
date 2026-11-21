@@ -1,12 +1,9 @@
 // P5-1 (spec/phases/phase-05-slices.md, A-149): until its slice fills it, each Phase 5 command
 // refuses with not_built and writes nothing. The agent rows are final now:
-// deny and system rows are AGENT_DENIED, variant.add reaches its stub, variant.delete asks,
-// and generation.runFill is refused by the gate until P5-8 opens it.
+// deny and system rows are AGENT_DENIED, and variant.add reaches its stub.
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, data, type Fixture } from '../core-fixture'
 import { AGENT_POLICY, denialMessage } from '@/main/commands/agent-policy'
-import { generativeFillKind } from '@/main/jobs/kinds/generative-fill'
-import { ProviderFailure } from '@/main/providers/types'
 import { DIRECTION as direction, SNAPSHOT as snapshot } from '../../unit/shared/schemas/phase5-rows'
 
 let f: Fixture | undefined
@@ -39,7 +36,6 @@ const INPUTS: Record<string, object> = {
   },
   'variant.add': { directionId: 'D1', sizeLabel: '9x16', language: 'en', format: 'image' },
   'sync.apply': { directionId: 'D1', masterRev: 0, decisions: [] },
-  'generation.runFill': { variantId: 'V1', provider: 'fake' },
   'generation.applyFill': { jobId: 'J1' },
 }
 const NAMES = Object.keys(INPUTS)
@@ -117,26 +113,6 @@ describe('the Phase 5 agent rows [P5-1, spec/mcp-and-agents.md]', () => {
     expect(await fx.agent('variant.delete', { projectId, variantId: 'V1' })).toMatchObject({
       ok: false,
       error: { code: 'AGENT_REFUSED' },
-    })
-  })
-
-  it('refuses generation.runFill from the agent at the gate', async () => {
-    const { fx, projectId } = await open()
-    expect(
-      await fx.agent('generation.runFill', { projectId, ...INPUTS['generation.runFill'] }),
-    ).toEqual({
-      ok: false,
-      error: { code: 'AGENT_DENIED', message: denialMessage('generation.runFill') },
-    })
-  })
-})
-
-describe('the generative_fill job kind stub [P5-1]', () => {
-  it('fails its job as other, with no provider call', async () => {
-    const run = generativeFillKind().run({} as never, {} as never)
-    await expect(run).rejects.toBeInstanceOf(ProviderFailure)
-    await expect(run).rejects.toMatchObject({
-      error: { kind: 'other', detail: 'Generative fill is not built yet' },
     })
   })
 })
