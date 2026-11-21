@@ -11,7 +11,6 @@ import { reportQueries } from '@/main/queries/report'
 import { jobKindHandlers } from '@/main/jobs/kinds'
 import { exportKind } from '@/main/jobs/kinds/export'
 import { createExportDeps } from '@/main/export/deps'
-import { createExportPictures } from '@/main/export/picture-encoder'
 import { ProviderFailure } from '@/main/providers/types'
 import { registerIpc, IPC } from '@/main/ipc'
 import { REPORT_QUERY_DENIED } from '@/shared/export/messages'
@@ -220,7 +219,6 @@ describe('the Phase 8 job kind and port stubs [P8-1]', () => {
     await expect(
       ports.report.write({} as never, {} as never, {} as never, [], new Map()),
     ).resolves.toBeNull()
-    await expect(fx.core.deps.render.drawFull({} as never)).rejects.toThrow()
   })
 
   it('keeps a plan once: take gives it and removes it, drop removes it', async () => {
@@ -233,17 +231,6 @@ describe('the Phase 8 job kind and port stubs [P8-1]', () => {
     expect(plans.take('J1')).toBeNull()
     plans.drop('J2')
     expect(plans.take('J2')).toBeNull()
-  })
-
-  it('has picture encoder members that each throw until P8-4', () => {
-    const pictures = createExportPictures(
-      () => ({ isEmpty: () => true, toPNG: () => Buffer.alloc(0) }) as never,
-      () => ({}) as never,
-    )
-    const png = new Uint8Array(1)
-    expect(() => pictures.toJpeg(png, 80)).toThrow('not built')
-    expect(() => pictures.stitch([], { width: 1, height: 1 })).toThrow('not built')
-    expect(() => pictures.shrink(png, 240)).toThrow('not built')
   })
 })
 
