@@ -1,41 +1,19 @@
 // Reference pictures in the picture panel (SPEC 14 1.46 TP-5): the project's reference
 // pictures with tick boxes, and "Add pictures" through the system picker and asset.import.
 // The ticks belong to the campaign page, so they last while it is open. The screen draws no
-// path and reads no file; a path goes only from the system picker to asset.import.
-import { useCallback, useEffect, useId, useState } from 'react'
+// path and reads no file; a path goes only from the system picker to asset.import. The list
+// and "Add pictures" are in reference-list.ts, shared with the video card (1.60 N-9).
+import { useCallback, useEffect, useId } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import { useApi, useApp } from '../../app/app-context'
-import type { AssetList } from '../../../shared/schemas/queries/asset'
-import type { PickedPaths } from '../../../shared/schemas/queries/dialog'
 import { assetUrl } from '../../ui/asset-url'
+import { type Reference, useAddPictures, useReferences, whyNot } from './reference-list'
 import styles from '../screens.module.css'
-
-type Reference = AssetList[number]
-type ImportReply = { assetIds: string[] }
 
 const LOCAL_LINE =
   "ComfyUI takes one reference picture for now and makes the result in that picture's shape, at about 1 megapixel."
 
-function whyNot(asset: Reference): string | null {
-  if (asset.missing) return 'file not found'
-  if (asset.mime === 'image/webp') return 'WebP cannot be sent yet'
-  return null
-}
-
 function tickable(list: Reference[]): Set<string> {
   return new Set(list.filter((a) => whyNot(a) === null).map((a) => a.id))
-}
-
-function useReferences(projectId: string) {
-  const api = useApi()
-  const [list, setList] = useState<Reference[] | null>(null)
-  const read = useCallback(async () => {
-    const result = await api.query('asset.list', { projectId, library: 'reference', kind: 'image' })
-    const rows = result.ok ? ((result.data as AssetList | null) ?? []) : []
-    setList(rows)
-    return rows
-  }, [api, projectId])
-  return { list, read }
 }
 
 export function ReferencePicker(props: {
@@ -46,9 +24,8 @@ export function ReferencePicker(props: {
   setTicks: Dispatch<SetStateAction<string[]>>
 }) {
   const { projectId, subjectId, ticks, setTicks } = props
-  const api = useApi()
-  const command = useApp((s) => s.command)
   const { list, read } = useReferences(projectId)
+  const addPictures = useAddPictures(projectId, subjectId, read)
   const baseId = useId()
 
   // A tick is kept only for an asset that is still in the list and can be sent.
@@ -71,23 +48,8 @@ export function ReferencePicker(props: {
   }, [read, keepKnown])
 
   async function add() {
-    const picked = await api.query('dialog.pickFiles', {
-      purpose: 'import',
-      kind: 'image',
-      multiple: true,
-    })
-    const paths = picked.ok ? ((picked.data as PickedPaths | null)?.paths ?? []) : []
-    if (paths.length === 0) return
-    const result = await command('asset.import', {
-      projectId,
-      paths,
-      library: 'reference',
-      copy: false,
-      ...(subjectId === undefined ? {} : { subjectId }),
-    })
-    if (!result.ok) return
-    const rows = await read()
-    keepKnown(rows, [...new Set((result.data as ImportReply | null)?.assetIds ?? [])])
+    const done = await addPictures()
+    if (done !== null) keepKnown(done.rows, done.added)
   }
 
   function toggle(id: string) {

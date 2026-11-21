@@ -1,7 +1,9 @@
-// The video card (SPEC 14 1.57 TP-6 "Where it lives", "Commands"): provider, prompt and
-// length for the chosen variant, then generation.startVideo, prompt only. The run shows in
-// the run list. J-2: the saved default is chosen only when it is available. A paid provider
-// gets the confirm line first, as pictures do.
+// The video card (SPEC 14 1.57 TP-6 "Where it lives", "Commands"): provider, start, prompt
+// and length for the chosen variant, then generation.startVideo. The run shows in the run
+// list. J-2: the saved default is chosen only when it is available. A paid provider gets the
+// confirm line first, as pictures do. SPEC 14 1.60 CU-6b-R N-9: "Start from" a prompt, a
+// first-frame picture or a reference picture; a picture start needs one chosen picture, and
+// the length's most follows the start's workflow.
 import { useState } from 'react'
 import { EMPTY, useApp } from '../../app/app-context'
 import {
@@ -9,12 +11,15 @@ import {
   type GenerationStartVideoInput,
 } from '../../../shared/schemas/commands/generation'
 import { PaidConfirm } from './paid-confirm'
-import { LENGTH_PROBLEM, START_SECONDS, typedSeconds, useComfyMaxMs } from './video-length'
+import { LENGTH_PROBLEM, START_SECONDS, typedSeconds, useComfyInfo } from './video-length'
+import { VideoPictureChoice } from './video-picture-choice'
+import { maxMsFor, offeredStarts, startFields, type StartId } from './video-start'
 import styles from '../screens.module.css'
 
 export function VideoPanel(props: {
   projectId: string
   variantId: string
+  subjectId?: string
   onStarted: (reply: unknown) => void
 }) {
   const command = useApp((s) => s.command)
@@ -24,18 +29,25 @@ export function VideoPanel(props: {
   const [providerId, setProviderId] = useState(
     providers.some((p) => p.id === startProvider) ? startProvider : providers[0]?.id,
   )
+  const [chosenStart, setChosenStart] = useState<StartId>('prompt')
+  const [picture, setPicture] = useState<string | null>(null)
   const [prompt, setPrompt] = useState('')
   const [length, setLength] = useState(String(START_SECONDS))
   const [problem, setProblem] = useState<string | null>(null)
   const [pending, setPending] = useState<GenerationStartVideoInput | null>(null)
   // SPEC 14 1.48 TL-2: true from the send until any reply, so a second click starts nothing.
   const [sending, setSending] = useState(false)
-  const comfyMaxMs = useComfyMaxMs()
+  const info = useComfyInfo()
   const provider = providers.find((p) => p.id === providerId)
-  const maxSeconds =
-    providerId === 'comfyui' && comfyMaxMs !== null ? Math.floor(comfyMaxMs / 1000) : null
+  const starts = offeredStarts(info, providerId)
+  // A start no longer offered (another provider, another list) falls back to the prompt.
+  const startId = starts.some((s) => s.id === chosenStart) ? chosenStart : 'prompt'
+  const fromPicture = startId !== 'prompt'
+  const maxMs = providerId === 'comfyui' ? maxMsFor(info, startId) : null
+  const maxSeconds = maxMs === null ? null : Math.floor(maxMs / 1000)
   const seconds = typedSeconds(length)
   const shorter = seconds !== null && maxSeconds !== null && seconds > maxSeconds
+  const ready = provider !== undefined && prompt.trim() !== '' && (!fromPicture || picture !== null)
 
   async function send(input: GenerationStartVideoInput) {
     setPending(null)
@@ -56,9 +68,7 @@ export function VideoPanel(props: {
       prompt,
       durationMs: Math.min(seconds, maxSeconds ?? seconds) * 1000,
       provider: providerId,
-      start: 'none',
-      useReferences: false,
-      referenceAssetIds: [],
+      ...startFields(startId, picture),
     })
     if (!parsed.success) return setProblem(parsed.error.issues[0]?.message ?? 'Check the values.')
     setProblem(null)
@@ -84,6 +94,24 @@ export function VideoPanel(props: {
         </label>
       )}
       <label className={styles.field}>
+        Start from
+        <select value={startId} onChange={(e) => setChosenStart(e.target.value as StartId)}>
+          {starts.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      {fromPicture && (
+        <VideoPictureChoice
+          projectId={props.projectId}
+          subjectId={props.subjectId}
+          chosen={picture}
+          onChoose={setPicture}
+        />
+      )}
+      <label className={styles.field}>
         Prompt
         <textarea rows={3} value={prompt} onChange={(e) => setPrompt(e.target.value)} />
       </label>
@@ -107,7 +135,7 @@ export function VideoPanel(props: {
           <button
             type="button"
             className={styles.primary}
-            disabled={sending || provider === undefined || prompt.trim() === ''}
+            disabled={sending || !ready}
             onClick={startVideo}
           >
             Start

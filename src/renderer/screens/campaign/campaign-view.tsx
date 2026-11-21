@@ -73,6 +73,7 @@ export function CampaignView(props: { projectId: string; campaignId: string; onB
               key={`video-${variant.id}`}
               projectId={projectId}
               variantId={variant.id}
+              subjectId={variant.subjectIds[0]}
               onStarted={(reply) => store.getState().track(reply)}
             />
           )}
