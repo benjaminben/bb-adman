@@ -17,8 +17,10 @@ export function KeyRow(props: { provider: ProviderInfo; name: SecretName }) {
 
   async function save(event: FormEvent) {
     event.preventDefault()
-    const result = await command('secret.set', { name, value })
+    // Clear the field before the call: the row may say "Saved" before the reply arrives.
+    const typed = value
     setValue('')
+    const result = await command('secret.set', { name, value: typed })
     if (result.ok) setEditing(false)
   }
 
