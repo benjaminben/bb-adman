@@ -18,12 +18,12 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 ### P5-15 — Tile actions: delete and quick look
 
 - **Size:** medium. **Needs:** P5-4, P5-14.
-- **Exists when done:** each tile shows "Quick look at {title}" and, except on the master, "Delete {title}"; delete sends `variant.delete` and moves focus as designed; quick look opens its dialog with Next, Previous and the arrow keys.
-- **New files:** `src/renderer/dialogs/quick-look/` (`quick-look.tsx`, `use-variant-picture.ts`, CSS).
+- **Exists when done:** each tile shows "Quick look at {title}" and, except on the master, "Delete {title}"; delete opens the warning dialog, "Delete variant" sends `variant.delete` and focus moves as designed [D-099]; quick look opens its dialog with Next, Previous and the arrow keys.
+- **New files:** `src/renderer/dialogs/quick-look/` (`quick-look.tsx`, `use-variant-picture.ts`, CSS); `src/renderer/dialogs/delete-variant/` (`delete-variant.tsx`, CSS).
 - **May touch:** `src/renderer/screens/campaign/variant-grid/variant-grid.tsx` (props `onQuickLook`, `onDelete`; the two buttons beside "+"); `src/renderer/screens/campaign/direction-grids/direction-grids.tsx` (passes them, holds the quick look state).
-- **Tests first:** `quick-look.test.tsx`: the title; the picture from `variant.render` with `maxDimension: 1024`; "Drawing the variant…"; the refusal line; Next and Previous and the arrow keys wrap through the campaign order; "{i} of {n}"; a late reply for the earlier variant is dropped; Escape returns focus to the button. Additions to `variant-grid.test.tsx` (approved): the two buttons, none for delete on the master, focus after delete. `campaign-delete-undo.test.tsx`: delete a variant on the campaign page, press the campaign's Undo, the variant's tile is back (exit criterion 4, with stubbed replies).
+- **Tests first:** `quick-look.test.tsx`: the title; the picture from `variant.render` with `maxDimension: 1024`; "Drawing the variant…"; the refusal line; Next and Previous and the arrow keys wrap through the campaign order; "{i} of {n}"; a late reply for the earlier variant is dropped; Escape returns focus to the button. Additions to `variant-grid.test.tsx` (approved): the two buttons, none for delete on the master, focus after delete. `delete-variant.test.tsx`: the title and "This cannot be undone."; "Keep" has focus and sends nothing; "Delete variant" sends `variant.delete`; a refusal shows in the banner; after the delete the tile is gone and the campaign's Undo is not offered for it (exit criterion 4, with stubbed replies).
 - **Approved edits to existing tests:** `variant-grid.test.tsx` (additions; the existing cases unchanged).
-- **Shots:** `tests/shots/p5-15.shots.ts`: `152-tile-actions`, `153-quick-look`, `154-quick-look-next`, `155-after-delete`.
+- **Shots:** `tests/shots/p5-15.shots.ts`: `152-tile-actions`, `153-quick-look`, `154-quick-look-next`, `155-delete-variant-confirm`.
 - **Exit check:** lint, typecheck, the component tests named.
 - **Class:** D. No security review (`variant.render` is user-only as built).
 - **After:** P5-4, P5-14.
