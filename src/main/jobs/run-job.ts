@@ -71,10 +71,11 @@ function context(state: RunnerState, live: LiveJob): JobRunContext {
     signal: live.controller.signal,
     async call(fn) {
       // Nothing new is sent once cancel was asked for (SPEC 6.11.2).
-      if (live.ended || live.cancelAsked) throw new ProviderCancelled()
+      // [1.38] Nor once the project is closed: the call would go out and not be counted.
       const handle = deps.projects.get(live.projectId)
+      if (live.ended || live.cancelAsked || !handle) throw new ProviderCancelled()
       // SPEC 6.11.1: counted at the moment of sending, unless the provider is local.
-      if (handle && live.provider?.local !== true) {
+      if (live.provider?.local !== true) {
         addPaidCall(handle, live.id, nowText(state))
         emitJob(state, live.projectId, live.id)
       }
