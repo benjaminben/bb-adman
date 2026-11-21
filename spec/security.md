@@ -148,6 +148,7 @@ Built, removed in Phase 9 (`src/main/commands/dev/`, `src/shared/config/dev-tool
 Built (`src/main/secrets/`, `src/main/providers/require-keys.ts`). Storage details: `spec/infra-and-settings.md`, "Secrets".
 
 - Secrets are encrypted at rest in `{userData}/secrets.bin` with `safeStorage`. If encryption is not available the app refuses to save keys.
+- **A key file that cannot be read is never written over.** When `secrets.bin` exists but does not decrypt to a JSON object (decryption fails, bad JSON, a list, text, a number, `null`), `secret.set` and `secret.delete` refuse with `RULE_VIOLATION`, reason `secrets_unreadable`, message "Saved keys could not be read, so no key was changed. They are left as they were." The file's bytes stay as they were and no `.tmp` file is left. `get` and the summaries still show nothing saved. Test: `tests/unit/main/secrets/secret-store.test.ts`. Open: the screen offers no way out (for example removing the unreadable file); see `spec/open-items.md`.
 - **Provider and storage keys** are held only in the main process. No command, query, event or tool returns one. The window sees only the last four characters, and nothing for a value of four characters or fewer.
 - **The MCP token** leaves the main process one way only: the reply to `mcp.getConnectInfo`, to the app window, actor `user`. An agent asking gets `AGENT_DENIED` and a reply with no token. The bridge mode (Not built) reads it from `secrets.bin` itself.
 - No secret of either class is ever written to a project file, a packaged project, the log, a report or an MCP reply.

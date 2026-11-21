@@ -235,10 +235,10 @@ Built for all three start pairs. `src/main/providers/comfyui/video.ts`, `video-p
 3. Walk the boxes with bounds checks: a box size that is 0, below 8 or past the end of the file is refused; at most 10,000 boxes; at most 8 levels deep (separate from folder import depth).
 4. There must be a `moov` box with at least one track whose handler is `vide`.
 5. A width or height over `MAX_VIDEO_SIDE`, or a length over `MAX_VIDEO_MS`: refused.
-6. It reports `{ width, height, durationMs, hasSound }`; `hasSound` means a track whose handler is `soun`.
+6. A video track must list at least one sample: its `stsz` sample count is above 0, or, for a fragmented file, a `trun` inside a `traf` whose `tfhd` names a video track has a count above 0. Otherwise refused with `noFrames` ("The MP4 file has no video frames."). Only `stsz` is read, not the compact `stz2` table. This is checked last.
+7. It reports `{ width, height, durationMs, hasSound }`; `hasSound` means a track whose handler is `soun`.
 
-- **Not built: at least one video sample** (security class). A file passes only if its video track has a sample: `stsz` count above 0, or for a fragmented file a video `trun` with count above 0, read under the existing box and size limits. New refusal `noFrames` in `MP4_REFUSED`. Fake `mp4File` clips then carry one sample entry and at least one byte of `mdat`. Tests: a header-only file is refused with `noFrames`; the made-up H.264 fixture passes.
-- Fake `mp4File` clips (`src/main/providers/fake/mp4`) pass `checkMp4` but do not play: never use one in a test that plays a clip.
+- Fake `mp4File` clips (`src/main/providers/fake/mp4`) carry one sample entry, so they pass `checkMp4`, but do not play: never use one in a test that plays a clip.
 - The main process never decodes video; the sandboxed window plays it through `adman-asset://`.
 
 **Sound** [REQ: FR-300, FR-283; D-053 item 12]. Generated video keeps its sound. Shipped video graphs keep the link that feeds sound into the video-building node (`VAEDecodeAudio` into `CreateVideo`). The clip is stored as returned, after `checkMp4`; sound or none is not a fault, and `clip_has_sound` is never raised. The window plays it with sound (format and playback not verified).

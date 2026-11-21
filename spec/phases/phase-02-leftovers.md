@@ -135,15 +135,6 @@ One short run in the main folder, class B, unless an item says otherwise. State 
   - After real ComfyUI runs, correct CU-4's hand-made stand-in fixtures to the shapes the real server showed. The Flux run showed the picture history shape holds. Still to check: the job-state status words and the video history entry, after a real video run.
   - If a real shape breaks a client schema, stop and report: that is a client change, ruled on its own.
 
-### MP4-1 — `checkMp4` must find at least one video sample
-
-- **Security class.** Short review. Not built (no `noFrames` in `src/main/providers/video-check.ts`).
-- Today `checkMp4` proves only the box structure, so a header-only clip passes and then shows a dead player.
-- A file passes only if its video track lists one or more samples: the `stsz` sample count is above 0, or, for a fragmented file, a `trun` of the video track has a sample count above 0. New refusal reason `noFrames` in `MP4_REFUSED`.
-- If `checkMp4` does not read `stsz` or `trun` yet, add that read under the existing box and size limits.
-- Fake `mp4File` clips must then carry one sample entry and at least one byte of `mdat` (it need not decode). The made-up H.264 fixture must pass.
-- **Tests:** a header-only file is refused with `noFrames`; the H.264 fixture passes. No real run needed.
-
 ### FL-1 — The flaky `generate-panel.test.tsx` case
 
 - **Class:** G, tests only. Not built. Which case is flaky is not recorded; the developer finds it.

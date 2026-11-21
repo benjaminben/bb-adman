@@ -197,12 +197,4 @@ The checks read values the app already stores, so they add no second source for 
 
 ## MP4 file check
 
-Built, except the sample rule below. `checkMp4` in `src/main/providers/video-check.ts` checks every clip before it is stored; its refusal texts are `MP4_REFUSED`. Full rules live with video assets (`spec/assets.md`). It is security class: any change is ruled on its own. Fake `mp4File` clips (`src/main/providers/fake/mp4`) pass `checkMp4` but cannot be decoded by the window: fit for `checkMp4` and adapter tests, never for a test that plays a clip.
-
-**At least one video sample.** Not built (security class, short review, after the hand test).
-
-- A file passes only if its video track lists one or more samples: `stsz` sample count above 0, or, for a fragmented file, a `trun` of the video track with sample count above 0.
-- New refusal reason `noFrames` in `MP4_REFUSED`.
-- If `checkMp4` does not read `stsz` or `trun`, that read is added under the existing box and size limits.
-- Fake `mp4File` clips then carry one sample entry and at least one byte of `mdat` (need not decode). The made-up H.264 fixture must pass.
-- Tests: a header-only file is refused with `noFrames`; the H.264 fixture passes. No real run needed.
+Built. `checkMp4` in `src/main/providers/video-check.ts` checks every clip before it is stored; its refusal texts are `MP4_REFUSED`. The full rules are in `spec/comfyui-workflows.md` (`checkMp4(bytes)`), including the rule that a video track must list at least one sample (`noFrames`). It is security class: any change is ruled on its own. Fake `mp4File` clips (`src/main/providers/fake/mp4`) pass `checkMp4` but cannot be decoded by the window: fit for `checkMp4` and adapter tests, never for a test that plays a clip.

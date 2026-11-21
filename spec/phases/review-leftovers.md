@@ -9,22 +9,6 @@ Source names: "CU4-Fixes OQ 2" means the report `REVIEW-Phase2-CU4-Fixes.md`, it
 
 Heaviest first.
 
-### FN-1. An unreadable key file wipes every other saved key
-
-- Source: Phase 1 review, first pass, unverified observation 5.
-- Files: `src/main/secrets/secret-store.ts:24-34` (`read`), `:47-54` (`set`), `:55-61` (`delete`).
-- What is wrong: when `secrets.bin` exists but cannot be decrypted or parsed (for example the Keychain entry changed), `read` catches the error and returns an empty map. The next `secret.set` writes a new file holding only the new key. Every other saved key (Gemini, S3, fal, the MCP token) is gone, with no message. A parsed value that is not an object is also read as empty.
-- Done when: a file that exists but cannot be read is never written over. `set` and `delete` refuse with a fixed message when the file exists and does not decrypt to an object; the file's bytes stay as they were. `summaries` and `get` may still report "nothing saved", but say why if the design allows it. A unit test makes `crypto.decrypt` throw on an existing file, calls `set`, and checks that the call is refused and the file's bytes are unchanged. A second test does the same with a file that decrypts to `[]` or `"x"`.
-- Security class: yes (destructive: user data removed without asking).
-
-### FN-2. The Gemini request can follow a redirect to another host, key header included
-
-- Source: SliceF-RunA, unverified.
-- Files: `src/main/providers/gemini/pinned-origin.ts:75-100` (`pinnedFetch`), used by `src/main/providers/gemini/image.ts:29` with Node's own `fetch`.
-- What is wrong: `pinnedFetch` checks only the first address. It passes `init` on unchanged, so `fetch` uses its default `redirect: 'follow'`. On a redirect to another origin, Node's `fetch` drops `Authorization` but keeps custom headers such as `x-goog-api-key`. If the Google host ever answered with a redirect, the key would go to the new host.
-- Done when: `pinnedFetch` sends every request with `redirect: 'manual'` (or `'error'`), whatever the caller passed, and a 3xx answer ends as a `ProviderFailure` of kind `other` with a fixed detail. Tests: a stand-in `inner` that records `init` shows `redirect` is not `'follow'`, even when the caller asked for it; a stand-in that answers 302 gives the fixed failure and no second call.
-- Security class: yes (sensitive data: the API key).
-
 ### FN-3. A paid picture that arrives after a stop is thrown away
 
 - Source: SliceH Q3.
@@ -40,14 +24,6 @@ Heaviest first.
 - What is wrong: a cancelled picture job may already have kept some pictures (its result lists their asset IDs). `job.retry` copies the stored request, so the full `count` is asked and paid for again.
 - Done when: for an `image_generation` row that kept pictures, retry asks only for the pictures not yet made (`count` minus kept, at least 1), and the confirm line shows that number. A failed row with no kept pictures is unchanged. Integration test: a cancelled job with `count: 4` and two kept asset IDs; retry makes a new queued job whose request has `count: 2`. A renderer test checks the confirm line shows 2.
 - Built in two parts: the command and its integration test first (main process), then the confirm line in the run row with its renderer test, after the move to one folder per component (it edits `run-row`).
-- Security class: no. Wastes paid calls.
-
-### FN-5. Playwright watch mode can re-run a paid case on each file save
-
-- Source: E2E-R-Fixes-2 S-D.
-- Files: `tests/e2e-real/run-checks.ts` (the command refusals; no `PWTEST_WATCH` check).
-- What is wrong: the real-server run refuses recording settings and test-server mode, but not watch mode. With `PWTEST_WATCH` set, every file edit re-runs the paid Gemini case.
-- Done when: `commandRefusal` refuses when `PWTEST_WATCH` is set (any non-empty value), with a fixed sentence. A case in `tests/unit/config/e2e-real-config.test.ts` sets it and checks the refusal.
 - Security class: no. Wastes paid calls.
 
 ## Fix with a later phase
