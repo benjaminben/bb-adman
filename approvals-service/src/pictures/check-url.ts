@@ -15,13 +15,19 @@ function parse(text: string): URL | null {
   }
 }
 
-export function checkPictureUrl(text: string, env: Env): boolean {
-  const url = parse(text)
-  if (url === null || url.username !== '' || url.password !== '') return false
+function allowed(url: URL, env: Env): boolean {
+  if (url.username !== '' || url.password !== '') return false
   const testOrigin = testPictureOriginOf(env)
   if (testOrigin !== null && url.origin === testOrigin) return true
   // The parser lower-cases the host and drops port 443 for https, so an empty port means
   // "no port, or 443".
   if (url.protocol !== 'https:' || url.port !== '') return false
   return BUCKET_HOST.test(url.hostname) || PATH_HOST.test(url.hostname)
+}
+
+// The cleaned address (the parser's own form, the one a fetch uses) to store, or null when the
+// address is refused. Only the cleaned form is ever written.
+export function checkPictureUrl(text: string, env: Env): string | null {
+  const url = parse(text)
+  return url !== null && allowed(url, env) ? url.href : null
 }

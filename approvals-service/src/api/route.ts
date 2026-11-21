@@ -31,6 +31,8 @@ type Head = { name: string; method: Method; path: RegExp }
 export type ApiRoute = Head & {
   hasCheck: boolean
   isStub: boolean
+  // The route's check over a raw body (schema first), so a test can prove the check works.
+  checkBody?: (body: unknown, env: Env) => Promise<Refusal | null>
   run: (request: Request, base: Base, ids: string[]) => Promise<Response>
 }
 
@@ -68,6 +70,14 @@ export function bodyRoute<S extends z.ZodType>(
     ...head,
     hasCheck: check !== undefined,
     isStub: handler === notBuilt,
+    checkBody:
+      check === undefined
+        ? undefined
+        : async (body, env) => {
+            const parsed = schema.safeParse(body)
+            if (!parsed.success) return { status: 400, code: 'invalid_input' }
+            return check(parsed.data, env)
+          },
     async run(request, base, ids) {
       // Steps 4 and 5: the body's type and size, then the contract, then the route's check.
       const read = await readJsonBody(request)
