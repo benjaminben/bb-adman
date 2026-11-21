@@ -32,6 +32,8 @@ export function CampaignView(props: { projectId: string; campaignId: string; onB
   const data = useCampaign(projectId, campaignId)
   const [store] = useState(() => createJobStore({ api, command }, projectId))
   const [chosenId, setChosenId] = useState<string | null>(null)
+  // SPEC 14 1.46 TP-5: reference ticks last while the page is open, across variants.
+  const [ticks, setTicks] = useState<string[]>([])
   const variantId = chosenId ?? data?.variants[0]?.id ?? null
 
   useEffect(() => store.getState().subscribe(), [store])
@@ -60,6 +62,8 @@ export function CampaignView(props: { projectId: string; campaignId: string; onB
               campaignId={campaignId}
               variantId={variant.id}
               data={data}
+              ticks={ticks}
+              setTicks={setTicks}
               onStarted={(reply) => store.getState().track(reply)}
             />
           )}

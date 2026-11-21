@@ -1,7 +1,10 @@
 // The picture panel (SPEC 14 1.41 TP-2 "The panel"): provider, slot, prompt and count, then
 // generation.runImages. A provider whose `local` is false gets the confirm line first. The
 // providers come from app.getState, so a second picture provider shows here with no change.
+// SPEC 14 1.46 TP-5: the reference picker sits under the prompt box; the ticked IDs, held by
+// the campaign page, go into referenceAssetIds in tick order.
 import { useEffect, useState } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import { EMPTY, useApi, useApp } from '../../app/app-context'
 import { MAX_IMAGES_PER_RUN } from '../../../shared/config/defaults'
 import { prefilledPrompt } from '../../../shared/generation/prompt'
@@ -9,6 +12,7 @@ import { generationRunImagesInput } from '../../../shared/schemas/commands/gener
 import type { CampaignGet, TemplateSlots } from '../../../shared/schemas/queries/campaign'
 import type { GenerationRunImagesInput } from '../../../shared/schemas/commands/generation'
 import { PaidConfirm } from './paid-confirm'
+import { ReferencePicker } from './reference-picker'
 import styles from '../screens.module.css'
 
 function usePictureSlots(projectId: string, campaignId: string): string[] | null {
@@ -43,6 +47,8 @@ export function GeneratePanel(props: {
   campaignId: string
   variantId: string
   data: CampaignGet
+  ticks: string[]
+  setTicks: Dispatch<SetStateAction<string[]>>
   onStarted: (reply: unknown) => void
 }) {
   const command = useApp((s) => s.command)
@@ -78,7 +84,7 @@ export function GeneratePanel(props: {
       variantId: props.variantId,
       slot: chosenSlot,
       prompt,
-      referenceAssetIds: [],
+      referenceAssetIds: props.ticks,
       count: Number(count),
       provider: providerId,
     })
@@ -124,6 +130,13 @@ export function GeneratePanel(props: {
         Prompt
         <textarea rows={4} value={prompt} onChange={(e) => setPrompt(e.target.value)} />
       </label>
+      <ReferencePicker
+        projectId={props.projectId}
+        subjectId={props.data.variants.find((v) => v.id === props.variantId)?.subjectIds[0]}
+        local={provider?.local === true}
+        ticks={props.ticks}
+        setTicks={props.setTicks}
+      />
       <label className={styles.field}>
         Pictures
         <input
@@ -149,6 +162,7 @@ export function GeneratePanel(props: {
       ) : (
         <PaidConfirm
           count={pending.count}
+          references={pending.referenceAssetIds.length}
           providerLabel={
             providers.find((p) => p.id === pending.provider)?.label ?? pending.provider
           }
