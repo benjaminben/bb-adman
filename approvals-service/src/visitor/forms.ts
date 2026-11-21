@@ -1,5 +1,5 @@
 // spec/approvals-service.md "Forms that write": the checks every POST under /l/ passes before
-// anything is read or written. Logic only: the 403 page is in password-page.ts.
+// anything is read or written. Logic only: the 403 reply is `refused` in headers.ts.
 
 export const FORM_LIMIT = 8 * 1024
 

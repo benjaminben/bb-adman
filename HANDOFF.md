@@ -1,6 +1,6 @@
 # AP-15 handoff
 
-Status: **done**, waiting on the security review.
+Status: **done**. The security review found no High, Medium or Low items; its four hardening items are in.
 
 ## Done (committed)
 - `src/visitor/notices.ts`: the fixed table, `NoticeKey`, `noticeOn(page, m)`.
@@ -10,6 +10,8 @@ Status: **done**, waiting on the security review.
 - `src/visitor/routes.ts`: replies are only plain text and `303`s. A failed entry is the `303` to `/l/{slug}?m=wrong-password`. The `gallery` and `stylesheet` rows are gone.
 - `src/server/env.ts`: `isDev(source = process.env)`.
 - Removed: `html.ts`, `password-page.ts`, `gallery-page.ts`, `styles.ts`, `test/pages.test.ts`.
+
+- Review hardening: `redirect` throws unless `Object.hasOwn(NOTICES, m)`; `pagePolicy` throws unless the nonce matches `^[A-Za-z0-9+/]{22}==$`; whole-reply test for `POST /l/{slug}/leave`; the `forms.ts` comment points at `refused` in `headers.ts`.
 
 ## Left
 - Nothing in AP-15. AP-16's `proxy.ts` imports `isDev` from `src/server/env.ts` and passes it to `pageHeaders` / `pagePolicy`.

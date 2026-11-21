@@ -9,12 +9,14 @@ import {
   refused,
   textHeaders,
 } from '../src/visitor/headers'
+import type { NoticeKey } from '../src/visitor/notices'
 import type { VisitorRoute } from '../src/visitor/routes'
 import {
   addLink,
   clearTables,
   clock,
   db,
+  enter,
   form,
   makeApp,
   ORIGIN,
@@ -100,6 +102,13 @@ describe('the plain text set', () => {
       expect(() => redirect(https, slug)).toThrow(TypeError)
     },
   )
+
+  it.each(['wrong-passwordx', '__proto__', 'toString', 'signed&x=1', ''])(
+    'never builds a 303 with the notice %j, which is not a key of the table',
+    (m) => {
+      expect(() => redirect(https, 'aZ09aZ09aZ09', { m: m as NoticeKey })).toThrow(TypeError)
+    },
+  )
 })
 
 describe('the plain text set through the router', () => {
@@ -129,6 +138,22 @@ describe('the plain text set through the router', () => {
     expect(cookie).toMatch(new RegExp(`^__Host-adman-${link.slug}=`))
   })
 
+  it('is on the 303 after Leave, whole: the cleared cookie and an empty body', async () => {
+    await clearTables()
+    const app = makeApp(clock().now)
+    const link = await addLink(1)
+    const cookie = await enter(app, link.slug)
+    const reply = await app.fetch(form(`/l/${link.slug}/leave`, {}, { cookie }))
+    expect(reply.status).toBe(303)
+    expect(whole(reply.headers)).toEqual({
+      ...TEXT,
+      ...HSTS,
+      location: `/l/${link.slug}`,
+      'set-cookie': `__Host-adman-${link.slug}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+    })
+    expect(await reply.text()).toBe('')
+  })
+
   it('is on the fixed 500 over http, without HSTS', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const failing: VisitorRoute = {
@@ -151,6 +176,30 @@ describe('the page policy and page set [approvals-gallery.md "The page policy an
   it('is the strict one-line policy with the nonce in script-src and style-src', () => {
     expect(pagePolicy(NONCE)).toBe(STRICT)
     expect(pagePolicy(NONCE, false)).toBe(STRICT)
+  })
+
+  const BAD_NONCES = [
+    '',
+    'AAECAwQFBgcICQoLDA0ODw=',
+    'AAECAwQFBgcICQoLDA0ODw===',
+    'AAECAwQFBgcICQoLDA0OD;==',
+    "AAECAwQFBgcICQoLDA0OD'==",
+    'AAECAwQFBgcICQoLDA0OD ==',
+    'AAECAwQFBgcICQoLDA0OD-==',
+    'AAECAwQFBgcICQoLDA0OD_==',
+    'AAECAwQFBgcICQoLDA0ODwA',
+  ]
+  it.each(BAD_NONCES)(
+    'refuses the nonce %j, which is not 16 bytes as base64',
+    (nonce) => {
+      expect(() => pagePolicy(nonce)).toThrow(TypeError)
+      expect(() => pageHeaders(https, nonce)).toThrow(TypeError)
+    },
+  )
+
+  it('takes a nonce of 16 random bytes as base64', () => {
+    const nonce = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))))
+    expect(pagePolicy(nonce)).toContain(`'nonce-${nonce}'`)
   })
 
   it('adds only unsafe-eval to scripts and unsafe-inline to styles under next dev', () => {

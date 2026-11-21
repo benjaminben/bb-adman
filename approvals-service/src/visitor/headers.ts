@@ -1,10 +1,13 @@
 // spec/approvals-service.md "Headers on replies from the catch-all" and spec/approvals-gallery.md
 // "The page policy and nonce". Each header set is fixed here, so one test can compare each whole.
 import { Slug } from '../contract'
-import type { NoticeKey } from './notices'
+import { NOTICES, type NoticeKey } from './notices'
 
 // A plain text reply loads nothing at all.
 const TEXT_CSP = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+
+// 16 random bytes as base64: nothing that could end the policy's quoted part.
+const NONCE = /^[A-Za-z0-9+/]{22}==$/
 
 const REFUSED = 'This form could not be sent. Open the link again and try once more.'
 
@@ -35,6 +38,7 @@ export function textHeaders(request: Request): Headers {
 // the two pieces its development tools need. This file reads no environment, so the default is
 // the strict policy that `next start` and Vercel get.
 export function pagePolicy(nonce: string, dev = false): string {
+  if (!NONCE.test(nonce)) throw new TypeError('bad nonce')
   const script = `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ''}`
   const style = `style-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-inline'" : ''}`
   return (
@@ -66,8 +70,10 @@ export type RedirectOptions = { m?: NoticeKey; cookie?: string }
 // slug, which must have the checked shape, and a notice key; never from request text.
 export function redirect(request: Request, slug: string, options: RedirectOptions = {}): Response {
   if (!Slug.safeParse(slug).success) throw new TypeError('unchecked slug')
+  const { m } = options
+  if (m !== undefined && !Object.hasOwn(NOTICES, m)) throw new TypeError('unknown notice')
   const headers = textHeaders(request)
-  headers.set('Location', `/l/${slug}${options.m === undefined ? '' : `?m=${options.m}`}`)
+  headers.set('Location', `/l/${slug}${m === undefined ? '' : `?m=${m}`}`)
   if (options.cookie !== undefined) headers.set('Set-Cookie', options.cookie)
   return new Response(null, { status: 303, headers })
 }
