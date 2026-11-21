@@ -6,7 +6,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import {
   endLocalLink,
   linkIsLive,
+  publishLocalGallery,
   readLink,
+  refreshLocalLink,
   readSignoffs,
   readVariants,
   startLocalLink,
@@ -182,4 +184,54 @@ describe('the approvals local store [spec/approvals.md "Local tables"]', () => {
     expect(readVariants(db, c1, log())).toEqual([])
     expect(f.readLogs()).toContain('approval_variant')
   })
+
+  it('replaces the gallery rows with what was published and sets published_at', () => {
+    startLocalLink(db, c1, SLUG, T0)
+    startLocalLink(db, c2, SLUG, T0)
+    plantVariant(c1)
+    plantVariant(c2)
+    const rows = [{ variantId: v1, publishedRev: 5, expiresAt: T1 }]
+    publishLocalGallery(db, c1, rows, T1)
+    expect(readVariants(db, c1, log())).toEqual(rows)
+    expect(readLink(db, c1, log())).toMatchObject({ publishedAt: T1, state: 'live' })
+    expect(readVariants(db, c2, log())).toEqual([{ variantId: v1, publishedRev: 2, expiresAt: T1 }])
+    expect(readLink(db, c2, log())?.publishedAt).toBeNull()
+  })
+
+  it.each([
+    ['nothing new', [signoff()], [], false],
+    ['a new sign-off', [signoff(), signoff({ id: 'G'.repeat(24) })], [], true],
+    ['a sign-off taken back', [], [], true],
+    ['a renewed expiry', [signoff()], [{ variantId: v1, version: 2, expiresAt: T0 }], true],
+    [
+      'a renewal for another version',
+      [signoff()],
+      [{ variantId: v1, version: 9, expiresAt: T0 }],
+      false,
+    ],
+  ] as Array<
+    [
+      string,
+      SignoffRecord[],
+      Array<{ variantId: string; version: number; expiresAt: string }>,
+      boolean,
+    ]
+  >)(
+    'refreshes with %s: sign-offs replaced, checked_at set, and says whether it changed',
+    (_n, table, renewed, changed) => {
+      startLocalLink(db, c1, SLUG, T0)
+      plantVariant(c1)
+      plantSignoff(c1, signoff())
+      // v1 is read when the table runs, after beforeEach.
+      const list = table.map((s) => ({ ...s, variantId: v1 }))
+      const fixed = renewed.map((r) => ({ ...r, variantId: v1 }))
+      expect(refreshLocalLink(db, c1, list, fixed, T1)).toBe(changed)
+      expect(readSignoffs(db, c1, log())).toEqual(list)
+      expect(readLink(db, c1, log())).toMatchObject({ checkedAt: T1 })
+      const expiry = fixed.some((r) => r.version === 2) ? T0 : T1
+      expect(readVariants(db, c1, log())).toEqual([
+        { variantId: v1, publishedRev: 2, expiresAt: expiry },
+      ])
+    },
+  )
 })
