@@ -226,13 +226,14 @@ Built [D-084]. `src/renderer/ui/tokens.css` is the one source of every colour, s
 
 ### Renderer files on main
 
-Each name ending in `/` inside a screen, `app/`, `dialogs/` or `dev/` is a component folder: the component, its CSS module when it has styles of its own, and `index.ts`. Files in brackets sit inside that folder, not re-exported.
+Each name ending in `/` inside a screen, `app/`, `dialogs/`, `ui/` or `dev/` is a component folder: the component, its CSS module when it has styles of its own, and `index.ts`. Files in brackets sit inside that folder, not re-exported.
 
 ```
 src/renderer/
 ├── main.tsx, index.html, env.d.ts, render.html
 ├── render-worker/  main.tsx, render-root/
-├── app/            app.tsx, app-context.tsx, app-shell/, error-banner/
+├── app/            app.tsx, app-context.tsx, nav-context.tsx, app-shell/, error-banner/,
+│                   project-switcher/, campaign-tabs/ [use-tab-keys.ts]
 ├── screens/
 │   ├── start/          start-screen/, new-project-form/, recent-projects/
 │   ├── settings/       settings-screen/, location-setting/, provider-defaults/, keys-section/, key-row/,
@@ -243,7 +244,8 @@ src/renderer/
 │   │                   size-fields/, rule-fields/ [word-lists.tsx], import-files/, missing-files/,
 │   │                   package-project/, drop-import/ [use-file-drop.ts], campaign-input.ts,
 │   │                   brief-form-model.ts, brief-form-problems.ts, brief-form-sizes.ts
-│   └── campaign/       campaign-view/, variant-grid/, variant-tile/ [badge-words.ts], slot-view/ [use-slots.ts],
+│   └── campaign/       campaign-view/, variant-tabs/, variant-grid/, variant-tile/ [badge-words.ts],
+│                       slot-view/ [use-slots.ts],
 │                       generate-panel/, provider-select/, reference-picker/, paid-confirm/,
 │                       video-panel/ [video-length.ts], video-picture-choice/, video-result/, run-list/,
 │                       run-row/ [video-status.ts, cancel-shown.ts], run-failure/ [missing-items.ts,
@@ -252,11 +254,14 @@ src/renderer/
 ├── dialogs/        key-dialog/, address-dialog/, licence-dialog/ [licence-choices.tsx],
 │                   import-dialog/ [import-choices.tsx, import-text.ts], relink-dialog/ [relink-body.tsx,
 │                   missing-row.tsx, use-missing-assets.ts], package-dialog/ [package-body.tsx,
-│                   use-package.ts, file-size.ts]
+│                   use-package.ts, file-size.ts], picture-chooser/ [picture-grid.tsx, use-pictures.ts]
+├── editor/         the Phase 3 editor: one folder per component plus shared helpers
+│                   (tree in `spec/editor.md`, "Where the code lives")
 ├── dev/            hand-test-screen/, s3-settings-form/, storage-actions/, dropbox-sign-in/, result-text.ts
-├── stores/         app-store.ts, project-store.ts, job-store.ts, run-asks.ts
+├── stores/         app-store.ts, project-store.ts, job-store.ts, run-asks.ts, nav-store.ts, variant-store.ts
 └── ui/             tokens.css, base.css, layout.module.css, asset-url.ts, secret-labels.ts, shortcuts.ts,
-                    comfy-privacy.ts, missing-item-text.ts, dropped-paths.ts, dialog-frame/
+                    comfy-privacy.ts, missing-item-text.ts, dropped-paths.ts, dialog-frame/, tab-row/,
+                    tab-marks/, variant-thumbnail/ [use-thumbnail.ts]
 ```
 
 The Phase 2 campaign screens and dialogs are described in `spec/screens-campaign.md`.

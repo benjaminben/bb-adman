@@ -173,7 +173,7 @@ No asset thumbnails are made: the window draws asset pictures straight from the 
 
 ## Data migration
 
-Built. Main files: `src/main/db/project-file.ts`, `src/main/db/bundled-migrations.ts`, `src/main/db/migrations/`. The newest migration is `0002_job_started_by_and_error_reason`; a file with every migration has `schema_version` 3.
+Built. Main files: `src/main/db/project-file.ts`, `src/main/db/bundled-migrations.ts`, `src/main/db/migrations/`. The newest migration is `0003_job_kind_cutout`; a file with every migration has `schema_version` 4. Each migration test opens its file with the migrations up to its own only.
 
 No legacy data [REQ: 6.4].
 
@@ -206,7 +206,7 @@ On open, the app compares the file's `schema_version` with its own.
 | `0000_initial` | Every table of `spec/data-model.md` and `spec/data-model-campaign.md` without the columns below | `tests/integration/db/project-file.test.ts` |
 | `0001_agent_changed_and_job_target` | `variant.agent_changed_at`; on `job`: `layer_id`, `slot`, `paid_calls` (default 0), `seen_at`, and index `job_target`. All added columns, no rebuild. | `migration-0001.test.ts`: runs `0000` and `0001` only; a file made at version 1 holding a variant and a job keeps both rows unchanged apart from the new fields |
 | `0002_job_started_by_and_error_reason` | On `job`: `started_by` (default `'user'`, CHECK `job_started_by`), `error_reason`. Two hand-written `ALTER TABLE` statements. | `migration-0002.test.ts`: three tags in order; `schema_version` 3; an old row gains `started_by: 'user'` and `error_reason: null`; `'robot'` is refused and `'agent'` accepted, in old and new files |
-| `0003_job_kind_cutout` (Not built, P4-1) | `job_kind` CHECK lists `cutout`. A table rebuild, as drizzle-kit writes it. | `migration-0003.test.ts` (`spec/ai-jobs.md`, "Job kinds") |
+| `0003_job_kind_cutout` | `job_kind` CHECK lists `cutout`. A table rebuild, as drizzle-kit writes it. | `migration-0003.test.ts` (`spec/ai-jobs.md`, "Job kinds") |
 
 ## Package project
 

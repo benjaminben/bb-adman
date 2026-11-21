@@ -110,7 +110,7 @@ The window is sandboxed and cannot open a file or folder picker, so it asks the 
 |-------|-------|---------|----------|-------|
 | `dialog.pickFolder` | title?, defaultPath? | `{ path: string \| null }` | New project location, default project folder, assets folder (`project.setAssetsDir`), package target (`project.package`), export folder | Built |
 | `dialog.pickProjectFile` | defaultPath? | `{ path: string \| null }` | Open project | Built |
-| `dialog.pickFiles` | purpose (`import`, `relink` or `brief`), kind? (for `relink`: the asset's kind; for `import`, not built (Phase 3): offers only that kind's extensions, as the font upload and picture chooser need), multiple? (default true for `import`, false otherwise), defaultPath? | `{ paths: string[] }` | Asset import, relink, brief file | Built |
+| `dialog.pickFiles` | purpose (`import`, `relink` or `brief`), kind? (offers only that kind's extensions, `pickerExtensions(purpose, kind)` in `src/shared/config/file-types.ts`; for `relink`: the asset's kind; for `import`: used by the picture chooser and the reference picker with `image`, and the font field with `font`; left out, every extension), multiple? (default true for `import`, false otherwise), defaultPath? | `{ paths: string[] }` | Asset import, relink, brief file | Built |
 | `dialog.pickSaveFile` | purpose (`translation-sheet`), defaultPath? | `{ path: string \| null }` | Translation sheet | Not built (Phase 6) |
 
 - A picker only returns paths. It never reads, creates or changes a file. The window passes the path to a command, and the command checks the path as if the user had typed it.
