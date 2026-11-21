@@ -4,6 +4,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { makeDevFixture, sourceFile, type DevFixture } from './dev-fixture'
 import { devCommands } from '../../../src/main/commands/dev'
 import { devStorage } from '../../../src/main/commands/dev/storage'
+import { openHandTestStorage } from '../../../src/main/commands/dev/storage'
 import { ProviderFailure, type StorageProvider } from '../../../src/main/providers/types'
 import type { AppError } from '../../../src/shared/schemas/result'
 
@@ -170,5 +171,33 @@ describe('dev.storage S3 settings and failures [SPEC 4.1 1.21, 4.2 notes F-02, 1
       expect(text).not.toContain(ACCESS_ID)
       expect(text).not.toContain(SECRET)
     }
+  })
+})
+
+describe('dev.storage with an empty S3 region [SPEC 14 1.40 AA6]', () => {
+  it('gives RULE_VIOLATION storage_not_set_up and never reaches the storage', async () => {
+    f = makeDevFixture(true)
+    await f.user('secret.set', { name: 's3.accessKeyId', value: ACCESS_ID })
+    await f.user('secret.set', { name: 's3.secretAccessKey', value: SECRET })
+    const s3 = { bucket: 'made-up-bucket', region: '', prefix: '' }
+    expect((await f.user('settings.update', { storage: { s3 } })).ok).toBe(true)
+    const { storage, sent } = cloudStandIn()
+    const realOpen = openHandTestStorage(f.core.deps)
+    const command = devStorage(f.core.deps, (target) => (realOpen(target), storage))
+    const parsed = command.parse({ storage: 's3', action: 'list' })
+    if (!parsed.ok) throw new Error('input refused')
+    const ctx = { actor: 'user' as const, commandId: 'c1' }
+    const reply = await Promise.resolve()
+      .then(() => command.run(ctx, parsed.input))
+      .then(
+        () => null,
+        (error: AppError) => error.toBody(),
+      )
+    expect(reply).toEqual({
+      code: 'RULE_VIOLATION',
+      message: 'Amazon S3 is not set up yet. Enter a bucket and a region, then try again.',
+      details: { reason: 'storage_not_set_up', provider: 's3' },
+    })
+    expect(sent).toEqual([])
   })
 })

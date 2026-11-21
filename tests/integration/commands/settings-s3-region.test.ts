@@ -40,3 +40,12 @@ describe('settings.update refuses S3 storage the app does not support [SPEC 14 1
     expect((await state()).settings.storage.s3).toEqual(s3(region))
   })
 })
+
+describe('settings.update saves an empty S3 region [SPEC 14 1.40 AA6]', () => {
+  it('saves a bucket with the region left empty', async () => {
+    f = makeFixture()
+    const result = await f.user('settings.update', { storage: { s3: s3('') } })
+    expect(result.ok).toBe(true)
+    expect((await state()).settings.storage.s3).toEqual(s3(''))
+  })
+})

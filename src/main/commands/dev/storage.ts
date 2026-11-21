@@ -34,10 +34,11 @@ function labelOf(deps: Deps, target: Target): StorageLabel {
   return { id: target, label: deps.providers.find((p) => p.id === target)?.label ?? target }
 }
 
-// [1.21] F-02: S3 with no settings saved or an empty bucket, before the adapter is reached.
+// [1.21] F-02: S3 with no settings saved, an empty bucket or ([1.40] AA6) an empty region,
+// before the adapter is reached.
 function requireS3Settings(deps: Deps): void {
   const s3 = deps.settings.get().storage.s3
-  if (s3 === null || s3.bucket === '') {
+  if (s3 === null || s3.bucket === '' || s3.region === '') {
     throw new AppError(
       'RULE_VIOLATION',
       'Amazon S3 is not set up yet. Enter a bucket and a region, then try again.',

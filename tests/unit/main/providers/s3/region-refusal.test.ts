@@ -18,3 +18,13 @@ describe('regionRefusal: standard Amazon regions only [SPEC 14 1.39 S3, Z4; FR-3
     expect(regionRefusal(region)).toBeNull()
   })
 })
+
+describe('regionRefusal: an empty region is not set up yet [SPEC 14 1.40 AA6]', () => {
+  it('gives null for the empty region', () => {
+    expect(regionRefusal('')).toBeNull()
+  })
+
+  it('refuses a region made of a space as not a region', () => {
+    expect(regionRefusal(' ')).toBe(NOT_A_REGION)
+  })
+})
