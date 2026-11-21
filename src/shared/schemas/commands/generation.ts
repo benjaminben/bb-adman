@@ -73,6 +73,9 @@ export const generationCutOutInput = projectScoped.extend({
 })
 export type GenerationCutOutInput = z.infer<typeof generationCutOutInput>
 
+// The cut_out tool's input (P10-5): the same, without licenceConfirmed.
+export const generationCutOutAgentInput = generationCutOutInput.omit({ licenceConfirmed: true })
+
 // P5-1: spec/links-and-sync.md, "Generative fill". runFill is a gate run command for agents.
 export const generationRunFillInput = projectScoped
   .extend({ variantId: z.string().min(1), provider: z.string().min(1), licenceConfirmed })

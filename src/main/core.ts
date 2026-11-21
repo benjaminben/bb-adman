@@ -9,7 +9,8 @@ import { createProjectRegistry } from './db/project-registry'
 import { closeProjectFile } from './db/project-file'
 import { createUndoLists } from './history/undo-lists'
 import { listProviders } from './providers/registry'
-import { createCommandBus, type BusEvent, type PermissionRequest } from './commands/bus'
+import { createCommandBus, type BusDeps, type BusEvent } from './commands/bus'
+import { agentCommands } from './commands/agent'
 import { agentRunsCommands } from './commands/agent-runs'
 import { approvalsCommands } from './commands/approvals'
 import { createApprovalsDeps } from './approvals/deps'
@@ -47,6 +48,8 @@ import { agentCaller } from './mcp/agent-caller'
 import { createMcpHttp } from './mcp/server'
 import { createMcpService } from './mcp/service'
 import { MCP_TOOLS, toolSetup } from './mcp/tools'
+import { createPermissionBroker } from './mcp/permissions'
+import { createAgentActivity } from './mcp/activity'
 import type { CoreDeps } from './core-deps'
 
 export type { SecretCrypto }
@@ -58,7 +61,8 @@ export type CoreOptions = {
   crypto: SecretCrypto
   env: Record<string, string | undefined>
   emit: (event: BusEvent) => void
-  askPermission: (request: PermissionRequest) => Promise<boolean>
+  // Tests may answer the ask themselves; otherwise the permission broker does (Phase 10).
+  askPermission?: BusDeps['askPermission']
   now?: () => Date
   openExternal?: (url: string) => Promise<void>
   devTools?: boolean
@@ -153,6 +157,10 @@ export function createCore(opts: CoreOptions) {
     userDataDir: opts.userDataDir,
   }
 
+  // Phase 10: the ask flow and agent activity (spec/phases/phase-10.md, A-237 to A-241).
+  const broker = createPermissionBroker({ emit: opts.emit, settings, log, now, projects })
+  const activity = createAgentActivity({ emit: opts.emit, log, now })
+
   // The MCP server reaches core only through the agent caller, as actor agent (SPEC 4.1).
   // The tools are the fixed table of SPEC 4.5 built so far (SPEC 14, 1.56 MCP-B).
   const caller = agentCaller({
@@ -163,7 +171,7 @@ export function createCore(opts: CoreOptions) {
     http: createMcpHttp({
       caller,
       appVersion: opts.appVersion,
-      tools: toolSetup(MCP_TOOLS, providers),
+      tools: toolSetup(MCP_TOOLS, providers, { onCall: activity.record }),
     }),
     settings,
     secrets,
@@ -172,6 +180,7 @@ export function createCore(opts: CoreOptions) {
 
   // One spread line per domain, in alphabetical order (SPEC 12).
   const handlers = [
+    ...agentCommands(broker),
     ...agentRunsCommands(deps),
     ...approvalsCommands(deps),
     ...assetCommands(deps),
@@ -204,7 +213,7 @@ export function createCore(opts: CoreOptions) {
     undo,
     log,
     emit: opts.emit,
-    askPermission: opts.askPermission,
+    askPermission: opts.askPermission ?? broker.ask,
     agentRuns: { providers, settings },
   })
   const queries = queryTable(deps, mcp)

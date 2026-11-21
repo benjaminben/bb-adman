@@ -3,8 +3,9 @@
 // 4.5 tools whose command or query exists are listed. Each input is the command's or query's
 // own Zod schema, with its top-level keys in snake_case (SPEC 4.5: project_id -> projectId).
 // Every reply goes through an allow-list picker (spec/mcp-and-agents.md, rules for every tool).
+// ALL_TOOLS is the Phase 10 plan (A-230): the built tools, then one group file per slice. A
+// notBuilt row is left out of MCP_TOOLS, so it is never listed to an agent.
 import type { z } from 'zod'
-import { campaignCreateToolInput } from '@/shared/schemas/commands/campaign'
 import { assetListInput } from '@/shared/schemas/queries/asset'
 import { campaignScopedInput, projectGetInput } from '@/shared/schemas/queries/campaign'
 import { jobGetInput, jobListInput } from '@/shared/schemas/queries/job'
@@ -19,6 +20,15 @@ import {
 } from './read-replies'
 import { campaignFields, projectFields } from './project-replies'
 import { RUN_TOOLS } from './run-tools'
+import { CAMPAIGN_TOOLS } from './campaign-tool'
+import { READ_MORE_TOOLS } from './read-more-tools'
+import { RENDER_TOOLS } from './render-tool'
+import { LAYER_TOOLS } from './layer-tools'
+import { AI_TOOLS } from './ai-tools'
+import { DELETE_TOOLS } from './delete-tools'
+import { VARIANT_EDIT_TOOLS } from './variant-edit-tools'
+import { TRANSLATION_CHECK_TOOLS } from './translation-check-tools'
+import { FORMAT_TOOLS } from './format-tool'
 
 export type ToolDef = {
   name: string
@@ -30,9 +40,15 @@ export type ToolDef = {
   reply?: ReplyPicker
   // MCP-G: runs through the one serial toolSetup shares with every session.
   oneAtATime?: boolean
+  // A-230: in the plan, not registered with the MCP server until its slice fills the row.
+  notBuilt?: true
+  // 'png': the reply is one MCP image item of data.png and nothing else (A-234). Default json.
+  content?: 'json' | 'png'
+  // Runs on the camelCase input, after the snake_case mapping, before the call (A-246).
+  prepareInput?: (input: Record<string, unknown>) => Record<string, unknown>
 }
 
-export const MCP_TOOLS: readonly ToolDef[] = [
+export const ALL_TOOLS: readonly ToolDef[] = [
   {
     name: 'list_projects',
     description:
@@ -73,15 +89,7 @@ export const MCP_TOOLS: readonly ToolDef[] = [
     input: campaignScopedInput,
     reply: campaignFields,
   },
-  {
-    name: 'create_campaign',
-    description:
-      'Create a campaign in an open project from a confirmed brief, with one subject_map ' +
-      'entry per brief subject. Gives the new campaign ID and its master variant ID.',
-    kind: 'command',
-    target: 'campaign.create',
-    input: campaignCreateToolInput,
-  },
+  ...CAMPAIGN_TOOLS,
   {
     name: 'get_slots',
     description:
@@ -113,4 +121,15 @@ export const MCP_TOOLS: readonly ToolDef[] = [
     reply: jobListFields,
   },
   ...RUN_TOOLS,
+  ...READ_MORE_TOOLS,
+  ...RENDER_TOOLS,
+  ...LAYER_TOOLS,
+  ...AI_TOOLS,
+  ...DELETE_TOOLS,
+  ...VARIANT_EDIT_TOOLS,
+  ...TRANSLATION_CHECK_TOOLS,
+  ...FORMAT_TOOLS,
 ]
+
+// What core registers: every built row, in the same order.
+export const MCP_TOOLS: readonly ToolDef[] = ALL_TOOLS.filter((t) => !t.notBuilt)

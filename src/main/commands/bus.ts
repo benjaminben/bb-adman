@@ -17,7 +17,16 @@ import type { Actor, EventMap, EventName } from '@/shared/schemas/events'
 
 export type BusEvent = { [K in EventName]: { name: K; payload: EventMap[K] } }[EventName]
 
-export type PermissionRequest = { command: string; agentClient: string | null }
+// spec/phases/phase-10.md, ask flow: what the ask is given, the input as the handler parsed it.
+export type PermissionRequest = {
+  command: string
+  agentClient: string | null
+  projectId: string | null
+  input: unknown
+}
+
+// true is 'allowed' and false is 'refused'. Anything else the bus refuses too (fail closed).
+export type AskAnswer = 'allowed' | 'refused' | 'timed_out' | 'busy'
 
 export type ExecuteOptions = {
   actor: Actor
@@ -36,7 +45,7 @@ export type BusDeps = {
   undo: UndoLists
   log: ActivityLog
   emit: (event: BusEvent) => void
-  askPermission: (request: PermissionRequest) => Promise<boolean>
+  askPermission: (request: PermissionRequest) => Promise<boolean | AskAnswer>
   // What the agent run gate reads. A bus built without it refuses every agent run at gate
   // step 1, since it knows no provider.
   agentRuns?: Pick<AgentRunGateDeps, 'providers' | 'settings'>
@@ -51,6 +60,19 @@ type LogIds = HandlerResult<unknown>['log']
 type Line = { projectId: string | null; ids: LogIds }
 
 const INVALID = 'Some values are not valid.'
+
+// The refusals of an ask that did not allow (A-237), all AGENT_REFUSED, each with its reason.
+const ASK_REFUSALS = {
+  refused: 'The user did not allow this action.',
+  timed_out: 'The user did not answer in time.',
+  busy: "Another request is waiting for the user's answer. Try again after it.",
+} as const
+
+function askRefusal(answer: unknown): AppError | null {
+  if (answer === true || answer === 'allowed') return null
+  const reason = answer === 'timed_out' || answer === 'busy' ? answer : 'refused'
+  return new AppError('AGENT_REFUSED', ASK_REFUSALS[reason], { reason })
+}
 const UNDO_PREPARE_FAILED = 'Clean-up after a failed command did not finish.'
 
 // The one answer to a command name that does not exist, or that no window may send.
@@ -73,13 +95,21 @@ export function createCommandBus(deps: BusDeps): CommandBus {
     }
   }
 
-  async function askCheck(name: string, opts: ExecuteOptions): Promise<void> {
+  async function askCheck(
+    name: string,
+    opts: ExecuteOptions,
+    projectId: string | null,
+    input: unknown,
+  ): Promise<void> {
     if (opts.actor !== 'agent' || agentPolicyFor(name) !== 'ask') return
-    const allowed = await deps.askPermission({
+    const answer = await deps.askPermission({
       command: name,
       agentClient: opts.agentClient ?? null,
+      projectId,
+      input,
     })
-    if (!allowed) throw new AppError('AGENT_REFUSED', 'The user did not allow this action.')
+    const refusal = askRefusal(answer)
+    if (refusal) throw refusal
   }
 
   async function runHandler(
@@ -134,7 +164,7 @@ export function createCommandBus(deps: BusDeps): CommandBus {
       if (!parsed.success) throw new AppError('INVALID_INPUT', INVALID)
       deps.projects.requireOpen(parsed.data.projectId)
       line.projectId = parsed.data.projectId
-      await askCheck(name, opts)
+      await askCheck(name, opts, parsed.data.projectId, parsed.data)
       return runHistory(name, parsed.data, opts, { undo: deps.undo, execute })
     }
     const handler = handlers.get(name)
@@ -150,7 +180,7 @@ export function createCommandBus(deps: BusDeps): CommandBus {
     const release = gated ? agentRunGate(gateDeps, name, parsed.input) : undefined
     let run: ProjectRun
     try {
-      await askCheck(name, opts)
+      await askCheck(name, opts, projectId, parsed.input)
       run = await runHandler(handler, parsed.input, opts, commandId, projectId)
     } finally {
       release?.()
