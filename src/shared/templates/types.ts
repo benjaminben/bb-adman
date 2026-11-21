@@ -27,8 +27,7 @@ export type SlotState = {
 export type BriefSyntax = 'json' | 'yaml'
 export type WordList = string[] | Record<string, string[]>
 
-// The error is INVALID_INPUT with details.reason 'brief_unreadable' or, for text over the
-// limit, 'brief_too_large' (SPEC 4.1, 6.1).
+// The error is INVALID_INPUT with details.reason 'brief_unreadable' (SPEC 4.1, 6.1).
 export type ParseBrief = (text: string, syntax: BriefSyntax) => Result<BriefDraft>
 export type PrimaryLanguageFor = (region: string) => string | null
 export type IsRightToLeft = (tag: string) => boolean

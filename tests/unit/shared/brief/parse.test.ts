@@ -1,11 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { parseBrief, BRIEF_TOO_LARGE } from '../../../../src/shared/brief/parse'
+import { parseBrief } from '../../../../src/shared/brief/parse'
 import { BRIEF_UNREADABLE } from '../../../../src/shared/brief/draft'
-import { MAX_BRIEF_BYTES } from '../../../../src/shared/config/brief-limits'
 import type { BriefSyntax } from '../../../../src/shared/templates/types'
 
 const unreadable = { ok: false, error: BRIEF_UNREADABLE }
-const tooLarge = { ok: false, error: BRIEF_TOO_LARGE }
 
 const JSON_BRIEF = JSON.stringify({
   campaignName: 'Summer',
@@ -93,32 +91,13 @@ describe('parseBrief: text that is not a brief gives brief_unreadable [SPEC 4.1]
   })
 })
 
-describe('parseBrief: the size limit [SPEC 6.1, 4.1 brief_too_large]', () => {
-  it('is 16 KiB', () => {
-    expect(MAX_BRIEF_BYTES).toBe(16_384)
-  })
-
-  it('has the message of Section 4.1', () => {
-    expect(BRIEF_TOO_LARGE).toEqual({
-      code: 'INVALID_INPUT',
-      message: 'The brief is too large. The limit is 16 KB.',
-      details: { reason: 'brief_too_large' },
-    })
-  })
-
-  it.each(['json', 'yaml'] as const)('refuses one character over the limit (%s)', (syntax) => {
-    expect(parseBrief(padded(syntax, MAX_BRIEF_BYTES + 1), syntax)).toEqual(tooLarge)
-  })
-
-  it.each(['json', 'yaml'] as const)('parses text exactly at the limit (%s)', (syntax) => {
-    const text = padded(syntax, MAX_BRIEF_BYTES)
-    expect(text.length).toBe(MAX_BRIEF_BYTES)
+// SPEC 14 1.39 Z7: a brief has no size limit.
+describe('parseBrief: a brief has no size limit [SPEC 14 1.39 Z7]', () => {
+  it.each(['json', 'yaml'] as const)('reads a valid brief of 100,000 bytes (%s)', (syntax) => {
+    const text = padded(syntax, 100_000)
+    expect(new TextEncoder().encode(text).length).toBe(100_000)
     const result = parseBrief(text, syntax)
-    expect(result.ok && result.data.campaignName?.length).toBeGreaterThan(15_000)
-  })
-
-  it('checks the size before parsing, so broken text over the limit is too large', () => {
-    expect(parseBrief('{'.repeat(MAX_BRIEF_BYTES + 1), 'json')).toEqual(tooLarge)
+    expect(result.ok && result.data.campaignName?.length).toBeGreaterThan(99_000)
   })
 })
 
@@ -135,44 +114,6 @@ describe('parseBrief: __proto__ keys change no prototype [SPEC 6.1, 8.1]', () =>
     expect(Object.prototype).not.toHaveProperty('polluted')
     expect(({} as Record<string, unknown>)['polluted']).toBeUndefined()
     expect(Object.keys(Object.prototype)).toEqual([])
-  })
-})
-
-// A brief of exactly `bytes` UTF-8 bytes, filled with the three-byte character "€".
-function paddedBytes(syntax: BriefSyntax, bytes: number): string {
-  const head = syntax === 'json' ? '{"campaignName":"' : 'campaignName: '
-  const tail = syntax === 'json' ? '"}' : ''
-  const room = bytes - head.length - tail.length
-  return head + '€'.repeat(Math.floor(room / 3)) + 'a'.repeat(room % 3) + tail
-}
-
-const byteCount = (text: string): number => new TextEncoder().encode(text).length
-
-describe('parseBrief: the limit is counted in UTF-8 bytes [SPEC 6.1 item 7, 14 P1]', () => {
-  it.each(['json', 'yaml'] as const)(
-    'refuses text under the limit in characters but over it in bytes (%s)',
-    (syntax) => {
-      const text = paddedBytes(syntax, MAX_BRIEF_BYTES + 1)
-      expect(text.length).toBeLessThan(MAX_BRIEF_BYTES)
-      expect(byteCount(text)).toBe(MAX_BRIEF_BYTES + 1)
-      expect(parseBrief(text, syntax)).toEqual(tooLarge)
-    },
-  )
-
-  it.each(['json', 'yaml'] as const)(
-    'parses three-byte text exactly at the limit in bytes (%s)',
-    (syntax) => {
-      const text = paddedBytes(syntax, MAX_BRIEF_BYTES)
-      expect(byteCount(text)).toBe(MAX_BRIEF_BYTES)
-      const result = parseBrief(text, syntax)
-      expect(result.ok && result.data.campaignName?.startsWith('€€€')).toBe(true)
-    },
-  )
-
-  it('counts a byte-order mark as three bytes', () => {
-    const text = '﻿' + paddedBytes('json', MAX_BRIEF_BYTES - 2)
-    expect(byteCount(text)).toBe(MAX_BRIEF_BYTES + 1)
-    expect(parseBrief(text, 'json')).toEqual(tooLarge)
   })
 })
 

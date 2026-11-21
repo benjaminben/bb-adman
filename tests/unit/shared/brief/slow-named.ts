@@ -1,4 +1,4 @@
-import { MAX_BRIEF_BYTES } from '../../../../src/shared/config/brief-limits'
+import { BRIEF_TEST_BYTES as MAX_BRIEF_BYTES } from './test-size'
 import { byteLength, fill } from './slow-fill'
 
 // SPEC 14 Q4 [1.31], R2 [1.33], S2 [1.36]: the texts of the named timed cases, each just under the limit.

@@ -1,9 +1,6 @@
-// SPEC 6.1 "Reading a brief file safely" [1.23, 1.26 item 7, 1.31 item 9, 1.36]: the one owner
-// of the brief limits. MAX_BRIEF_BYTES is 16 KiB counted in UTF-8 bytes: parseBrief counts the
-// text's bytes, slice C's brief.parse reads the file's size. MAX_BRIEF_DEPTH is the deepest
-// nesting a YAML brief may have, checked on the library's tokens before compose.
-// MAX_BAD_LINE_CHARS [1.39 Z3] is the longest first bad line, in code points, a malformed
-// YAML brief's error shows.
-export const MAX_BRIEF_BYTES = 16_384
+// SPEC 6.1 "Reading a brief file safely" [1.23, 1.31 item 9, 1.39]: the one owner of the brief
+// limits. A brief has no size limit [1.39 Z7]. MAX_BRIEF_DEPTH is the deepest nesting a YAML
+// brief may have, checked on the library's tokens before compose. MAX_BAD_LINE_CHARS [1.39 Z3]
+// is the longest first bad line, in code points, a malformed YAML brief's error shows.
 export const MAX_BRIEF_DEPTH = 32
 export const MAX_BAD_LINE_CHARS = 120

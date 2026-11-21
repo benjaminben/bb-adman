@@ -1,4 +1,4 @@
-import { MAX_BRIEF_BYTES } from '../../../../src/shared/config/brief-limits'
+import { BRIEF_TEST_BYTES as MAX_BRIEF_BYTES } from './test-size'
 
 // SPEC 14 P3, Q4: the helper the timed tests share. Counts UTF-8 bytes.
 const encoder = new TextEncoder()
