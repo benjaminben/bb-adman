@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { makeCampaignBus, type CampaignBus } from './campaign-fixture'
 import { testDeps } from './campaign-deps'
 import { campaignQueries } from '../../../src/main/queries/campaign'
+import { createQueryRunner } from '../../../src/main/queries/queries'
 import type { CoreDeps } from '../../../src/main/core-deps'
 import type { CampaignGet } from '../../../src/shared/schemas/queries/campaign'
 
@@ -11,6 +12,7 @@ let campaignId: string
 let variantId: string
 const opts = { actor: 'user' as const }
 const missing: string[] = []
+const logLines: unknown[] = []
 
 const NO_BADGES = {
   jobRunning: false,
@@ -26,9 +28,11 @@ const NO_BADGES = {
 beforeEach(async () => {
   bus = makeCampaignBus()
   missing.length = 0
+  logLines.length = 0
   deps = testDeps({
     projects: bus.projects,
     assets: { missingAssetIds: async () => [...missing] } as unknown as CoreDeps['assets'],
+    log: { write: (line: unknown) => logLines.push(line) } as unknown as CoreDeps['log'],
   })
   const made = (await bus.create()) as { data: { campaignId: string; variantId: string } }
   campaignId = made.data.campaignId
@@ -127,5 +131,20 @@ describe('campaign.get [SPEC 4.3 1.42, C4-1]', () => {
     await get()
     expect(counts()).toEqual(before)
     expect(bus.rows('job')).toEqual(jobs)
+  })
+
+  it('answers INTERNAL for a campaign with no rule set, a broken file', async () => {
+    bus.db.prepare('DELETE FROM rule_set WHERE campaign_id = ?').run(campaignId)
+    const run = createQueryRunner(campaignQueries(deps), deps.log)
+    const result = await run('campaign.get', { projectId: bus.projectId, campaignId }, opts)
+    expect(result).toMatchObject({ ok: false, error: { code: 'INTERNAL' } })
+  })
+
+  it('leaves out a layer row that cannot be read, and logs its table and key only', async () => {
+    setLayer('headline', "overflow = 1, style = 'not json'")
+    expect((await firstVariant())?.badges.overflow).toBe(false)
+    expect(logLines).toHaveLength(1)
+    expect(logLines[0]).toMatchObject({ context: { table: 'layer' } })
+    expect(JSON.stringify(logLines[0])).not.toContain('not json')
   })
 })

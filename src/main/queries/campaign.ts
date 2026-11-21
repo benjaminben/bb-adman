@@ -6,7 +6,7 @@ import type { CoreDeps } from '../core-deps'
 import type { QueryFn } from './types'
 import { readWireRow, readWireRows } from '../db/rows'
 import { directionsOf, jobMarks, openFor, requireCampaign } from './campaign-reads'
-import { AppError } from '../../shared/schemas/result'
+import type { ActivityLog } from '../log/activity-log'
 import {
   campaignScopedInput,
   type CampaignGet,
@@ -44,8 +44,12 @@ function badgesOf(
 }
 
 // By the direction's order, the master first inside a direction, then createdAt, then ID.
-function orderedVariants(db: Database.Database, directions: DirectionRow[]): VariantRow[] {
-  const all = readWireRows(db, 'variant') as VariantRow[]
+function orderedVariants(
+  db: Database.Database,
+  directions: DirectionRow[],
+  log: ActivityLog,
+): VariantRow[] {
+  const all = readWireRows(db, 'variant', log) as VariantRow[]
   return directions.flatMap((d) =>
     all
       .filter((v) => v.directionId === d.id)
@@ -58,30 +62,31 @@ function orderedVariants(db: Database.Database, directions: DirectionRow[]): Var
   )
 }
 
-function subjectsOf(db: Database.Database, campaignId: string): SubjectRow[] {
+function subjectsOf(db: Database.Database, campaignId: string, log: ActivityLog): SubjectRow[] {
   const ids = new Set(
-    (readWireRows(db, 'campaign_subject') as CampaignSubjectRow[])
+    (readWireRows(db, 'campaign_subject', log) as CampaignSubjectRow[])
       .filter((cs) => cs.campaignId === campaignId)
       .map((cs) => cs.subjectId),
   )
-  return (readWireRows(db, 'subject') as SubjectRow[])
+  return (readWireRows(db, 'subject', log) as SubjectRow[])
     .filter((s) => ids.has(s.id))
     .sort((a, b) => byId(a.id, b.id))
 }
 
-export function campaignGet(deps: Pick<CoreDeps, 'projects' | 'assets'>): QueryFn {
+export function campaignGet(deps: Pick<CoreDeps, 'projects' | 'assets' | 'log'>): QueryFn {
   return async (raw): Promise<CampaignGet> => {
     const { input, project } = openFor(deps, campaignScopedInput, raw)
     const db = project.db
     const campaign = requireCampaign(db, input.campaignId)
     const ruleSet = readWireRow(db, 'rule_set', { campaignId: campaign.id }) as RuleSetRow | null
-    if (!ruleSet) throw new AppError('INTERNAL', 'This campaign has no rule set.')
+    // A broken file: the runner answers INTERNAL and logs this line, which holds no data.
+    if (!ruleSet) throw new Error('campaign.get: the campaign has no rule_set row')
     const directions = directionsOf(db, campaign.id)
     const masters = new Set(directions.map((d) => d.masterVariantId))
     const missing = new Set(await deps.assets.missingAssetIds(project))
-    const layers = readWireRows(db, 'layer') as LayerRow[]
-    const links = readWireRows(db, 'variant_subject') as VariantSubjectRow[]
-    const variants = orderedVariants(db, directions).map((v): VariantSummary => ({
+    const layers = readWireRows(db, 'layer', deps.log) as LayerRow[]
+    const links = readWireRows(db, 'variant_subject', deps.log) as VariantSubjectRow[]
+    const variants = orderedVariants(db, directions, deps.log).map((v): VariantSummary => ({
       ...v,
       isMaster: masters.has(v.id),
       subjectIds: links
@@ -97,7 +102,7 @@ export function campaignGet(deps: Pick<CoreDeps, 'projects' | 'assets'>): QueryF
     }))
     return {
       campaign,
-      subjects: subjectsOf(db, campaign.id),
+      subjects: subjectsOf(db, campaign.id, deps.log),
       ruleSet,
       directions,
       variants,
