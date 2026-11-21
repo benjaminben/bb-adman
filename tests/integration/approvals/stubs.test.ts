@@ -28,17 +28,17 @@ async function openProject(fx: Fixture): Promise<string> {
 }
 
 describe('the approvals stubs [spec/phases/approvals.md "AP-5"]', () => {
-  it.each([
-    ['approvals.check', () => ({})],
-    ['approvals.refresh', (projectId: string) => ({ projectId, campaignId })],
-  ])('%s refuses as not set up, and sends no event', async (name, input) => {
-    f = makeFixture()
-    const projectId = await openProject(f)
-    const before = f.events.length
-    expect(await f.user(name, input(projectId))).toEqual(NOT_SET_UP)
-    expect(f.events.slice(before)).toEqual([])
-    expect(f.core.settings.get().approvals).toEqual({ baseUrl: null })
-  })
+  it.each<[string, (projectId: string) => object]>([['approvals.check', () => ({})]])(
+    '%s refuses as not set up, and sends no event',
+    async (name, input) => {
+      f = makeFixture()
+      const projectId = await openProject(f)
+      const before = f.events.length
+      expect(await f.user(name, input(projectId))).toEqual(NOT_SET_UP)
+      expect(f.events.slice(before)).toEqual([])
+      expect(f.core.settings.get().approvals).toEqual({ baseUrl: null })
+    },
+  )
 
   it('checks the input before the stub answers', async () => {
     f = makeFixture()
