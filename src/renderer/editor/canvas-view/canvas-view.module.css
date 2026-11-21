@@ -1,3 +1,5 @@
+/* app-style */
+/* The canvas on the warm light backdrop (choice C-9); the ad box lifts off it with --shadow-2. */
 .canvas {
   display: flex;
   flex-direction: column;
@@ -14,12 +16,14 @@
 }
 /* margin: auto centres the box when it is smaller and lets it scroll when larger. The box does
    not cut what it holds, so the handles of a layer past the edge are drawn over the backdrop;
-   the Scene's root cuts the ad at its edge (spec/editor.md "Canvas", "Past the edge"). */
+   the Scene's root cuts the ad at its edge (spec/editor.md "Canvas", "Past the edge"). The
+   shadow takes no room, so the box keeps its size and place. */
 .box {
   position: relative;
   flex: none;
   margin: auto;
   overflow: visible;
+  box-shadow: var(--shadow-2);
 }
 /* Crop mode shows the whole picture, which may reach past the canvas. */
 .cropping {
@@ -34,13 +38,18 @@
   justify-content: space-between;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
-  background: var(--color-surface);
-  border-top: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  border-top: var(--border-width) solid var(--color-line);
+}
+.size {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-variant-numeric: tabular-nums;
 }
 .zoom {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 .zoom > button:nth-child(2) {
   min-width: calc(var(--space-6) * 3);

@@ -1,3 +1,4 @@
+/* app-style */
 /* Over the whole canvas box while cropping, so presses do not reach the Scene below. */
 .overlay {
   position: absolute;
@@ -18,13 +19,14 @@
 .picture {
   pointer-events: none;
 }
-/* The picture dimmed outside the crop: the hole's shadow fills the rest of the picture. */
+/* The picture dimmed outside the crop: the hole's shadow fills the rest of the picture. The
+   spread only has to pass the picture's edge, which .dim cuts it to. */
 .dim {
   overflow: hidden;
   pointer-events: none;
 }
 .hole {
-  box-shadow: 0 0 0 100vmax var(--color-overlay);
+  box-shadow: 0 0 0 calc(var(--space-12) * 100) var(--color-overlay);
 }
 /* A dark line with a light line on each side, as the selection. */
 .crop {
@@ -94,12 +96,13 @@
   align-items: center;
   gap: var(--space-2) var(--space-4);
   padding: var(--space-2) var(--space-4);
-  background: var(--color-surface);
-  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-bg);
+  border-bottom: var(--border-width) solid var(--color-line);
 }
 .title {
   margin: 0;
-  font-weight: 600;
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-bold);
 }
 .hint {
   flex: 1;
