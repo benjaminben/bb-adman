@@ -47,7 +47,7 @@
 | 2 | P5-4 Snapshots, `variant.delete`, `remove`, `restore`, `restoreLayers` (built) | medium | P5-1 | P5-3, P5-8, P5-12 | — |
 | 2 | P5-8 `generation.runFill`, the fill job, the gate (built) | medium | P5-1; SP-9 merged | P5-3, P5-4, P5-12 | SP-9 (`prompt.ts`) |
 | 2 | P5-12 The sync plan and `sync.preview` (built) | medium | P5-1, P5-2 | P5-3, P5-4, P5-8 | — |
-| 3 | P5-9 `generation.applyFill` | small | P5-4, P5-8 | P5-10, P5-11, P5-13 | — |
+| 3 | P5-9 `generation.applyFill` (built) | small | P5-4, P5-8 | P5-10, P5-11, P5-13 | — |
 | 3 | P5-10 `variant.fanOut` and `variant.add` (built) | medium | P5-4, P5-5 | P5-9, P5-11, P5-13 | — |
 | 3 | P5-11 Directions (built) | small | P5-4 | P5-9, P5-10, P5-13 | — |
 | 3 | P5-13 `sync.apply` (built) | medium | P5-3, P5-4, P5-12 | P5-9, P5-10, P5-11 | — |

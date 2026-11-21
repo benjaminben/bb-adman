@@ -64,7 +64,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `check.run` | projectId, campaignId or variantIds[] | — | allow | Not built (Phase 6) | FR-114, FR-116, FR-196 |
 | `generation.runImages` | projectId, variantId, slot or layerId (exactly one), prompt, referenceAssetIds[], count (1 to 8), provider, licenceConfirmed? (S2-4) | — | tick | Built | FR-062–FR-065, FR-199 |
 | `generation.runFill` | projectId, variantId, provider, licenceConfirmed? (agents may start it: a gate run command) | — | tick | Built | FR-076, D-080 |
-| `generation.applyFill` | projectId, jobId (the window sends it when its fill succeeds) | C | deny | Not built (Phase 5) | FR-076 |
+| `generation.applyFill` | projectId, jobId (the window sends it when its fill succeeds) | C | deny | Built | FR-076 |
 | `generation.proposeLayout` | projectId, variantId, provider (`spec/ai-jobs.md`) | — (applied by `layer.updateMany`, V) | tick | Built | FR-061 |
 | `generation.copyOptions` | projectId, variantId, layerId, count (1 to 8), provider | — | tick | Built | FR-045 |
 | `generation.cutOut` | projectId, variantId, layerId, provider, licenceConfirmed? | — | tick | Built | FR-307 |

@@ -124,7 +124,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** B + A. **Security class, full review:** an agent-reachable command that sends a picture to a provider (the gate, the picture read through `AssetService.read`, metadata stripped, no path in any reply).
 - **After:** P5-1; SP-9 merged.
 
-### P5-9 — `generation.applyFill`
+### P5-9 — `generation.applyFill` (built)
 
 - **Size:** small. **Needs:** P5-4, P5-8.
 - **Exists when done:** the command places a finished fill on its targets as designed, as one campaign entry with `variant.restoreLayers` as its inverse and the targets' own lists cleared.
