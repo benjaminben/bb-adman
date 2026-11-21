@@ -105,7 +105,11 @@ function checkVideo(bytes: Uint8Array): string {
 }
 
 // Case 5 (1.46): one picture from the test's own reference picture.
+// Only with ADMAN_COMFY_FLUX=1 set in the terminal (1.53 G-12).
 export async function referenceCase(kit: CaseKit): Promise<CaseOutcome> {
+  if (kit.env.ADMAN_COMFY_FLUX !== '1') {
+    return { skip: 'ADMAN_COMFY_FLUX is not 1, so the Flux reference case does not run.' }
+  }
   const spec = flux3KleinEditReferences
   const { skip, version } = await missingFor(kit, spec)
   if (skip) return { skip }
@@ -118,8 +122,12 @@ export async function referenceCase(kit: CaseKit): Promise<CaseOutcome> {
   return { done: true }
 }
 
-// Case 3: one MOSS picture at the smallest first-run size.
+// Case 3: one MOSS picture at the smallest first-run size, only with ADMAN_COMFY_MOSS=1 set
+// in the terminal (1.53 G-12).
 export async function pictureCase(kit: CaseKit): Promise<CaseOutcome> {
+  if (kit.env.ADMAN_COMFY_MOSS !== '1') {
+    return { skip: 'ADMAN_COMFY_MOSS is not 1, so the MOSS picture case does not run.' }
+  }
   const spec = mossTextToImage
   const { skip, version } = await missingFor(kit, spec)
   if (skip) return { skip }

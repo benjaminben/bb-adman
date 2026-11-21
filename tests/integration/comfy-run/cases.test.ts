@@ -27,7 +27,10 @@ const FTYP = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypisom'),
 
 const ID = '0b6f2c1e-7a3d-4c5b-9e8f-1a2b3c4d5e6f'
 
-async function setUp(env: Record<string, string> = {}) {
+// Both picture switches are on unless a test passes its own (1.53 G-12).
+const SWITCHES_ON = { ADMAN_COMFY_FLUX: '1', ADMAN_COMFY_MOSS: '1' }
+
+async function setUp(env: Record<string, string> = SWITCHES_ON) {
   stand = await startComfyStandIn()
   outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-comfy-case-'))
   const printed: string[] = []
@@ -66,6 +69,24 @@ function complete(s: StandIn, spec: WorkflowSpec, file: Reply): void {
 
 const holdsAddress = (lines: string[], s: StandIn) =>
   lines.join('\n').includes('127.0.0.1') || lines.join('\n').includes(String(s.port))
+
+describe('one switch per picture case [SPEC 14 1.53 G-12]', () => {
+  it('case 5 runs only with ADMAN_COMFY_FLUX=1, and contacts nothing without it', async () => {
+    const { s, kit } = await setUp({ ADMAN_COMFY_MOSS: '1', ADMAN_COMFY_FLUX: 'yes' })
+    expect(await referenceCase(kit)).toEqual({
+      skip: 'ADMAN_COMFY_FLUX is not 1, so the Flux reference case does not run.',
+    })
+    expect(s.seen).toEqual([])
+  })
+
+  it('case 3 runs only with ADMAN_COMFY_MOSS=1, and contacts nothing without it', async () => {
+    const { s, kit } = await setUp({ ADMAN_COMFY_FLUX: '1' })
+    expect(await pictureCase(kit)).toEqual({
+      skip: 'ADMAN_COMFY_MOSS is not 1, so the MOSS picture case does not run.',
+    })
+    expect(s.seen).toEqual([])
+  })
+})
 
 describe('case 5, a picture from a reference [SPEC 14 1.46]', () => {
   it('skips with one line when the check finds items missing, and uploads nothing', async () => {

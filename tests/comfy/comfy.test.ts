@@ -83,7 +83,7 @@ describe.skipIf(origin === '')('test:comfy on the test server', () => {
   )
 
   it(
-    "5. Flux 3 klein: a picture from the test's own reference picture",
+    '5. Flux 3 klein: a picture from a reference picture (only with ADMAN_COMFY_FLUX=1)',
     runCase(referenceCase, PICTURE_LIMIT_MS, ['uploadImage']),
     PICTURE_LIMIT_MS + SPARE_MS,
   )
@@ -95,7 +95,7 @@ describe.skipIf(origin === '')('test:comfy on the test server', () => {
   )
 
   it(
-    '3. MOSS-Image: a picture from a prompt',
+    '3. MOSS-Image: a picture from a prompt (only with ADMAN_COMFY_MOSS=1)',
     runCase(pictureCase, PICTURE_LIMIT_MS),
     PICTURE_LIMIT_MS + SPARE_MS,
   )
