@@ -7,11 +7,14 @@ import { appQueries } from './app'
 import { assetQueries } from './asset'
 import { campaignQueries } from './campaign'
 import { comfyQueries } from './comfy'
+import { activityQueries } from './activity'
+import { earlierOptionsQueries } from './earlier-options'
 import { historyQueries } from './history'
 import { jobQueries } from './job'
 import { jobGetQueries } from './job-get'
 import { jobServerMessageQueries } from './job-server-message'
 import { mcpQueries, type McpState } from './mcp'
+import { paidCountQueries } from './paid-count'
 import { projectQueries } from './project'
 import { projectListOpenQueries } from './project-list-open'
 import { renderQueries } from './render'
@@ -34,6 +37,9 @@ export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, Query
     ...jobQueries(deps),
     ...jobGetQueries(deps),
     ...jobServerMessageQueries(deps),
+    ...earlierOptionsQueries(deps),
+    ...activityQueries(deps),
+    ...paidCountQueries(deps),
     ...(mcp ? mcpQueries(deps, mcp) : {}),
     ...projectQueries(deps),
     ...projectListOpenQueries(deps),
