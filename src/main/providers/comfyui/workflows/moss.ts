@@ -1,7 +1,7 @@
 // The three MOSS-Image workflows (SPEC 6.10.4), as draft: their graphs are stand-ins that
 // only the tests use, never sent to a server, until real graphs arrive as data.
 import type { Graph, WorkflowSpec } from './types'
-import { DRAFT_SOURCE, LEAVES, MOSS_LICENCE, MOSS_MODEL, MOSS_SIZE, mossNeeds } from './common'
+import { DRAFT_SOURCE, LEAVES, MOSS_FULL_SIZE, MOSS_LICENCE, MOSS_MODEL, mossNeeds } from './common'
 import textGraph from './moss-text-to-image.json'
 import editGraph from './moss-edit-references.json'
 import extendGraph from './moss-extend.json'
@@ -13,7 +13,7 @@ const common = {
   version: 1,
   status: 'draft',
   model: MOSS_MODEL,
-  size: MOSS_SIZE,
+  size: MOSS_FULL_SIZE,
   licence: MOSS_LICENCE,
 } as const
 

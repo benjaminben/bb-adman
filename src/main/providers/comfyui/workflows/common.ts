@@ -8,8 +8,18 @@ import type {
 } from '../../../../shared/schemas/queries/comfy'
 import type { SizeRule } from '../../../../shared/comfy/fit-size'
 
-export const MOSS_SIZE: SizeRule = { multiple: 16, minPixels: 1_000_000, maxPixels: 2_000_000 }
-export const H3_SIZE: SizeRule = { multiple: 32, minPixels: 589_824, maxPixels: 1_048_576 }
+// The full sizes of SPEC 6.10.5, for later runs; the drafts use them.
+export const MOSS_FULL_SIZE: SizeRule = { multiple: 16, minPixels: 1_000_000, maxPixels: 2_000_000 }
+export const H3_FULL_SIZE: SizeRule = { multiple: 32, minPixels: 589_824, maxPixels: 1_048_576 }
+
+// [1.46] Start small: the first runs use the reference templates' figures, about 1 MP for
+// MOSS-Image and 0.4 MP for MiniMax H3. The trial specs use these.
+export const MOSS_FIRST_RUN_SIZE: SizeRule = {
+  multiple: 16,
+  minPixels: 840_000,
+  maxPixels: 1_050_000,
+}
+export const H3_FIRST_RUN_SIZE: SizeRule = { multiple: 32, minPixels: 330_000, maxPixels: 420_000 }
 
 // [1.45] B-6, from comfy-workflows/REFERENCE-NOTES.md: 24 fps, and the frame count is
 // 17k + 5 (5, 22, 39, 56 …). maxMs stays 15 s (V-19) until a trial shows more (U-19).

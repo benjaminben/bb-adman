@@ -7,7 +7,7 @@ import {
   H3_LICENCE,
   H3_MAIN_FILE,
   H3_REF_FILE,
-  H3_SIZE,
+  H3_FULL_SIZE,
   H3_VIDEO,
   LEAVES,
   h3Needs,
@@ -30,7 +30,7 @@ const common = {
   version: 1,
   status: 'draft',
   job: 'video',
-  size: H3_SIZE,
+  size: H3_FULL_SIZE,
   video: H3_VIDEO,
   licence: H3_LICENCE,
 } as const
