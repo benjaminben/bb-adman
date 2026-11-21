@@ -8,6 +8,7 @@ import { adapters as comfyui } from './comfyui'
 import { adapters as dropbox } from './dropbox'
 import { adapters as falSeedance } from './fal-seedance'
 import { adapters as fake } from './fake'
+import { adapters as firefly } from './firefly'
 import { adapters as gemini } from './gemini'
 import { adapters as s3 } from './s3'
 import type { AdapterContext, AdapterJob, ProviderAdapters } from './types'
@@ -18,6 +19,7 @@ const FOLDERS: Record<string, ProviderAdapters> = {
   dropbox,
   'fal-seedance': falSeedance,
   fake,
+  firefly,
   gemini,
   s3,
 }
@@ -47,9 +49,11 @@ function context(deps: AdapterDeps, providerId: string): AdapterContext {
   }
 }
 
+// spec/providers.md "How an adapter is reached": a provider that is not `available` is refused
+// (from Phase 4), so a stub such as Firefly is never reached at run time.
 function doesJob(deps: AdapterDeps, providerId: string, job: AdapterJob): boolean {
   const info = deps.providers.find((p) => p.id === providerId)
-  return info?.jobs.includes(job) ?? false
+  return info !== undefined && info.available && info.jobs.includes(job)
 }
 
 // The same as adapterFor over a given table of folders, so tests can supply adapters.

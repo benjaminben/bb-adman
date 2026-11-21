@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
 import { greyPng } from '@/main/providers/fake/png'
+import { readJobErrorDetail } from '@/main/db/rows'
 import { makeKindFixture, pngAnswer, type KindFixture } from './kind-fixture'
 import { waitFor } from './generation-fixture'
 
@@ -36,6 +37,8 @@ describe('an unforeseen error in an image job sends no further call [SPEC 6.11.1
     expect(f.job(id)).toMatchObject({ status: 'failed', errorKind: 'other' })
     expect(f.calls.length).toBeLessThanOrEqual(2)
     expect(f.assets()).toEqual([])
+    // P4-5 (OI-68): error_detail is now the reason name.
+    expect(readJobErrorDetail(f.project.db, id)).toBe('assets_folder_missing')
   })
 })
 
@@ -61,6 +64,8 @@ describe('an AppError after enqueue puts no file path in the job row or the log 
     open()
     for (const h of [...holders, id]) await waitFor(done(h))
     expect(f.job(id)).toMatchObject({ status: 'failed', errorKind: 'other', paidCalls: 0 })
+    // P4-5 (OI-68): error_detail is now the reason name.
+    expect(readJobErrorDetail(f.project.db, id)).toBe('picture_missing')
     expect(JSON.stringify(f.job(id))).not.toContain(file)
     const logDir = path.join(f.root, 'logs')
     const logText = fs.readdirSync(logDir).map((n) => fs.readFileSync(path.join(logDir, n), 'utf8'))

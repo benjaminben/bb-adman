@@ -1,0 +1,20 @@
+{
+  "400": { "error_code": "bad_request" },
+  "403": { "error_code": "access_error" },
+  "408": { "error_code": "timeout_error" },
+  "422-prompt": { "error_code": "prompt_unsafe" },
+  "422-input": { "error_code": "input_media_unsafe" },
+  "422-output": { "error_code": "output_media_unsafe" },
+  "422-validation": {
+    "error_code": "validation_error",
+    "validation_errors": [
+      {
+        "loc": ["body", "contentClass"],
+        "msg": "value is not a valid enumeration member; permitted: 'photo', 'art'",
+        "type": "type_error.enum"
+      }
+    ]
+  },
+  "500": { "error_code": "runtime_error" },
+  "503": { "error_code": "model_not_loaded" }
+}

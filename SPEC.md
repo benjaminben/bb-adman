@@ -41,6 +41,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/agent-runs.md` | Generation started by an agent: the tick, the gate, limits, unticking |
 | `spec/cancel.md` | Cancel for every provider, closing a project with runs out |
 | `spec/brief-and-templates.md` | Brief intake, the brief reader's rules, templates, the default layout |
+| `spec/starter-layouts.md` | The five starter layouts, applying one to a variant, the starting font size estimate (look pack, D-094) |
 | `spec/ai-jobs.md` | Phase 4 jobs: layout, copy options, brief reading, cut-out; their commands and queries; the failure sentences; the fake provider's parts |
 | `spec/providers.md` | The provider registry, interfaces, error kinds and messages, the rules every adapter follows, size limits |
 | `spec/providers-adapters.md` | The Gemini adapter, the fal.ai Seedance adapter, the Adobe Firefly stub |
@@ -73,3 +74,4 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/phases/phase-02-agent-generation.md` | Agent generation through the MCP server (built, D-080): the one hand run on the real server still owed, and the change if OI-90 is answered "no ticks" |
 | `spec/phases/review-leftovers.md` | Review findings not yet handled, sorted: fix now, fix with a later phase, test gaps |
 | `spec/phases/phase-03.md` to `phase-11.md` | One file per phase: goal, scope, exit criteria, work carried in, what is not designed yet |
+| `spec/phases/look-pack.md` | The look pack (D-094): background colour, text boxes, shades, starter layouts; slices LK-1 to LK-7 and their order beside Phase 4 |

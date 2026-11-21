@@ -146,3 +146,14 @@ Designs in `spec/ai-jobs.md` and `spec/screens-ai.md`; slices in `spec/phases/ph
 - **A-68. Generated pictures as references.** **Assumption:** the reference dialog lists pictures made in the project too, sent by ID with no change of library. Removing a reference waits for the asset library screen. *P4-13. Change later: easy.*
 - **A-69. The Firefly stub.** **Assumption:** `firefly/` joins `adapters.ts`, and `adapterFor` refuses any provider whose `available` is false. *P4-6. Change later: easy.*
 - **A-70. Generate fields' memory.** **Assumption:** prompt and chosen pictures kept per layer while the project is open, not saved. *P4-13. Change later: easy.*
+- **A-71. Look fields and old rows.** **Assumption:** optional in the stored `style` JSON, absent means the default, no migration; defaults filled in code, never by Zod. *LK-1. Change later: medium.*
+- **A-72. No background colour.** **Assumption:** null or absent draws nothing, so the black root shows; the field shows `#000000` and has no "None". *LK-1, LK-5. Change later: easy.*
+- **A-73. Fill colour on the background only.** **Assumption:** refused on image layers, so no picture layer becomes a shape. *LK-1. Change later: easy.*
+- **A-74. Text box padding.** **Assumption:** one value for all four sides; outline and padding inside the geometry box. *LK-1. Change later: medium.*
+- **A-75. Shade extent.** **Assumption:** the whole layer box, with or without a picture; a patch replaces it whole. *LK-1, LK-3. Change later: easy.*
+- **A-76. Shade fade.** **Assumption:** three fixed stops (full, 45 % at half the reach, none at the reach). *LK-3. Change later: easy.*
+- **A-77. The default starter layout.** **Assumption:** `photo-bottom-left`; campaign creation offers no choice, "Layout…" changes it after. *LK-4. Change later: easy.*
+- **A-78. Applying a layout.** **Assumption:** locked layers and layers it does not name are left; boxes, rotation 0 and the look are set; font file, copy, crop, picture and opacity are kept. *LK-4, LK-6. Change later: easy.*
+- **A-79. Starting font size.** **Assumption:** an estimate from letter counts (0.6 em, 0.7 in capitals, 1 em for CJK, lines 90 % full, smallest 0.02 × S); text it misjudges is flagged as overflow. *LK-4. Change later: easy.*
+- **A-80. Handles past the canvas edge.** **Assumption:** drawn over the backdrop; picking still starts on the canvas. *LK-5. Change later: easy.*
+- **A-81. Aligned text that does not fit.** **Assumption:** drawn past the top for bottom, both ways for middle; never moved back to the top. *LK-2. Change later: easy.*

@@ -96,7 +96,7 @@ Built. In `src/renderer/screens/campaign/`: `video-panel/` (with `video-length.t
 
 ### Run list and run row
 
-Built. In `src/renderer/screens/campaign/`: `run-list/`, `run-row/` (with `video-status.ts`, `cancel-shown.ts`), `run-failure/`, `run-result/`, `video-result/`.
+Built. In `src/renderer/screens/campaign/`: `run-list/`, `run-row/` (with `video-status.ts`, `cancel-shown.ts`), `run-result/`, `video-result/`. `run-failure/` is in `src/renderer/ui/` (the editor shows failures too).
 
 - Each row: the provider's label (or "The provider" when unknown), "Video" for a video run, then the status.
 - Under that first line, "Started by an agent" when `startedBy` is `agent`.

@@ -1,11 +1,13 @@
 // The image_generation job kind (SPEC 14 slice H; SPEC 6.2, 6.6, 6.11.1; FR-063 to FR-068).
 // One generate call per picture with count 1, two at a time, so each call is counted and one
 // failure does not lose the others. Every picture goes through toPng (L6), gets the details
-// embedded, is written with writeManaged and added with asset.addGenerated, then kept.
-import { ulid } from 'ulid'
+// embedded, is stored through storeResult, then kept. P4-5: the references are read through
+// readPictures, so a local cause ends the job with its own reason (OI-68).
 import type { JobKindHandler, JobRunContext } from '@/main/jobs/types'
 import { runOptions } from '@/main/jobs/progress'
 import { embedGenerationDetails } from '@/main/jobs/png-details'
+import { readPictures } from '@/main/jobs/read-pictures'
+import { storeResult } from '@/main/jobs/store-result'
 import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { adapterFor } from '@/main/providers/adapters'
@@ -84,18 +86,8 @@ function pngOf(run: Run, result: ImageResult): Uint8Array {
 
 async function store(run: Run, png: Uint8Array, model: string): Promise<Outcome> {
   const { jc, job, project } = run
-  const assetId = ulid()
-  await jc.deps.assets.writeManaged(project, { assetId, ext: 'png', bytes: png })
-  const files = [{ assetId, ext: 'png' }]
-  // [1.58] J-13, J-14: the asset row keeps the model the result names, as the PNG does.
-  const added = await jc.system('asset.addGenerated', {
-    projectId: jc.projectId,
-    jobId: job.id,
-    files,
-    ...(model && { model }),
-  })
-  if (!added.ok) throw new Error(`asset.addGenerated refused: ${added.error.code}`)
-  run.assetIds.push(assetId)
+  const file = { jobId: job.id, bytes: png, ext: 'png', model }
+  run.assetIds.push(await storeResult(jc, project, file))
   jc.keep(soFar(run))
   return 'stored'
 }
@@ -145,12 +137,6 @@ async function allPictures(run: Run, count: number): Promise<Outcome[]> {
   return outcomes
 }
 
-async function readReferences(deps: CoreDeps, project: ProjectHandle, ids: string[]) {
-  const references: ImageFile[] = []
-  for (const id of ids) references.push(await deps.assets.read(project, id))
-  return references
-}
-
 async function runImageJob(
   jc: JobRunContext,
   job: JobRow,
@@ -161,7 +147,7 @@ async function runImageJob(
   const project = jc.deps.projects.get(jc.projectId)
   if (!project) throw new ProviderCancelled()
   requireProviderKeys(jc.deps, providerId, 'generate pictures')
-  const references = await readReferences(jc.deps, project, request.referenceAssetIds)
+  const references = await readPictures(jc, project, request.referenceAssetIds)
   const run: Run = {
     jc,
     job,

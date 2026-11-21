@@ -56,7 +56,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/integration/queries/earlier-options.test.ts` (runs by layer and by the layer's slot in its own variant only; a slot run of another variant left out; newest first; removed asset rows dropped; `missing` set; running and failed runs listed; unknown layer `NOT_FOUND`); `activity.test.ts` (names filled; a deleted layer, variant or campaign gives null; a brief job has all three null; an unreadable row left out; `limit`); `paid-count.test.ts` (the three sums by kind; another campaign's jobs left out; local providers add nothing because their `paid_calls` is 0; unknown campaign `NOT_FOUND`).
 - **Class:** B. Not security class. **After:** P4-1.
 
-### P4-3 — Fake provider: layout, text and cut-out parts
+### P4-3 — Fake provider: layout, text and cut-out parts (built)
 
 - **Exists when done:** the fake provider answers `layout`, `text` (extract brief, copy options; translate refuses) and `cutout` as `spec/ai-jobs.md`, "The fake provider's parts" says.
 - **New files:** `src/main/providers/fake/layout.ts`, `text.ts`, `cutout.ts`.
@@ -75,7 +75,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** in `tests/unit/main/providers/gemini/`: `layout.test.ts`, `text.test.ts`, `text-errors.test.ts` (cases in `spec/providers-adapters.md`), `environment.test.ts` extended to a text call; a key planted in an error answer is redacted from every detail. Live: the three files, run once each by the developer (D-085).
 - **Class:** E. Security class, full review (new outbound calls; every adapter rule). **After:** P4-1.
 
-### P4-5 — A plain sentence per failure cause (OI-68)
+### P4-5 — A plain sentence per failure cause (OI-68) (built)
 
 - **Exists when done:** a picture or video job that fails for a local cause ends with its own reason and sentence; nothing from the error reaches the row, the sentence or the log; the shared helpers `readPictures` and `storeResult` exist; the run failure component lives in `ui/`.
 - **New files:** `src/main/jobs/local-failure.ts`, `read-pictures.ts`, `store-result.ts`; `src/renderer/ui/run-failure/` (moved from `screens/campaign/run-failure/`).
@@ -102,7 +102,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/shared/generation/layout-clamp.test.ts` (each clamp, rounding, unknown key, repeated key, bad colour, palette snap, align fallback), `layout-patches.test.ts`; `tests/integration/generation/propose-layout.test.ts` (each refusal in order; no text layer; enqueued attached with campaign and variant); `layout-kind.test.ts` (with a stand-in adapter: the scene handed to the draw has no text layers; the picture's longest side is 1024; items, palette and fonts as specified; boxes clamped; no box gives `other`; a deleted variant gives `target_gone`; a cancelled job keeps no result); `tests/integration/commands/layer-update-many.test.ts` (one undo entry and one `rev` bump; undo restores every layer; all or nothing on one bad item; a layer of another variant `NOT_FOUND`; a repeated layer refused; asset checks per item; the agent stamps `agent_changed_at`). Plus the scene reference run of class C.
 - **Class:** B + A + C. Security class, short review (a new command open to agents). **After:** P4-1.
 
-### P4-8 — Copy options job and brief reading job
+### P4-8 — Copy options job and brief reading job (built)
 
 - **Exists when done:** `generation.copyOptions` and `brief.extract` enqueue their attached jobs; the jobs call the text adapter and keep clean results.
 - **New files:** the bodies of `src/main/commands/generation/copy-options.ts`, `src/main/jobs/kinds/copy-options.ts`, `src/main/commands/brief/extract.ts`, `src/main/jobs/kinds/brief-extraction.ts`; `src/shared/brief/brief-file-kind.ts`, `primary-language.ts`.

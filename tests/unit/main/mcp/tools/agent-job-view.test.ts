@@ -193,4 +193,11 @@ describe('agentJobView message [MCP-D] (security class)', () => {
     const row = fullRow({ errorKind: null, errorReason: null })
     expect(agentJobView(row, PROVIDERS).message).toBeNull()
   })
+
+  it('fills {provider} of a local reason with the registry label [P4-5, OI-68]', () => {
+    const row = fullRow({ provider: 'gemini', errorKind: 'other', errorReason: 'key_missing' })
+    expect(agentJobView(row, PROVIDERS).message).toBe(
+      'Your Google Gemini key was removed after this run was queued. Add it in Settings, then try again.',
+    )
+  })
 })
