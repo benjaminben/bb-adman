@@ -7,6 +7,7 @@ import type { ProjectHandle } from '@/main/db/project-file'
 import { assetsDirOf } from '@/main/assets/service'
 import { pathAtOrInside } from '@/main/assets/path-resolver'
 import { AppError } from '@/shared/schemas/result'
+import { checkSheetPathShape } from './sheet-path-shape'
 
 const notAFile = () =>
   new AppError('RULE_VIOLATION', 'Something that is not a file is already there.')
@@ -22,13 +23,7 @@ const lstatOrNull = (p: string) => fs.promises.lstat(p).catch(() => null)
 // asked); anything else there, a link included, is refused, so the write never goes elsewhere.
 // The project file ends in .adman, so a .csv target is never the project file itself.
 export async function checkSheetPath(project: ProjectHandle, filePath: string): Promise<string> {
-  if (!path.isAbsolute(filePath)) {
-    throw new AppError('INVALID_INPUT', 'The file path must be absolute.')
-  }
-  const target = path.resolve(filePath)
-  if (!path.basename(target).toLowerCase().endsWith('.csv')) {
-    throw new AppError('INVALID_INPUT', 'The sheet must be a .csv file.')
-  }
+  const target = checkSheetPathShape(filePath)
   const folder = path.dirname(target)
   const stat = await fs.promises.stat(folder).catch(() => null)
   if (!stat?.isDirectory()) throw new AppError('NOT_FOUND', 'That folder was not found.')

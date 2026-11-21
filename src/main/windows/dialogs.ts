@@ -14,6 +14,7 @@ import {
   type PickedPaths,
 } from '@/shared/schemas/queries/dialog'
 import { pickerExtensions } from '@/shared/config/file-types'
+import { rememberSheetPath } from '@/main/translation/chosen-sheet-path'
 
 export const DIALOG_QUERIES = [
   'dialog.pickFolder',
@@ -97,7 +98,10 @@ async function runSaveDialog(input: unknown, opts: DialogRunOptions): Promise<Re
     const result = opts.window
       ? await dialog.showSaveDialog(opts.window, options)
       : await dialog.showSaveDialog(options)
-    return ok({ path: result.canceled || !result.filePath ? null : result.filePath })
+    const chosen = result.canceled || !result.filePath ? null : result.filePath
+    // P6-7b: translation.exportSheet writes only the path chosen here.
+    if (chosen !== null) rememberSheetPath(chosen)
+    return ok({ path: chosen })
   } catch (e) {
     return failInternal('dialog.pickSaveFile', e, opts)
   }
