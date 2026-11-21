@@ -103,7 +103,7 @@ Policy tests compare whole texts, never "contains": the looser policy contains t
 
 **`adman-asset://` protocol.** Handled in the main process; all decisions in `asset-url.ts` with no Electron in it.
 
-- Scheme privileges: `standard`, `secure` and `stream` only. `bypassCSP`, service workers, fetch API, CORS, code cache and extensions are off.
+- Scheme privileges: `standard`, `secure`, `stream` and `corsEnabled`. `bypassCSP`, service workers, fetch API, code cache and extensions are off. **Not built (P3-6, A-53):** `corsEnabled: true`; the code still has it off, and fonts load only with it on. Safe because `connect-src 'none'` stays, so page script cannot fetch an asset address, and the checks below do not change. `Access-Control-Allow-Origin` is sent only if a font does not load without it, and only for kind `font`. Accepted risk below.
 - Address `adman-asset://{projectId}/{assetId}`: the raw text is matched, not a parsed URL, so nothing is folded away (`/../`, `%2F`). Both parts are ULIDs, read in upper case; nothing may follow.
 - `GET` only. A file is served only when the project is open and the asset ID exists in it, and the file is a regular file, opened before answering.
 - `Content-Type` is the row's `mime`, sent only when `file-types.ts` lists it for the row's kind; never read from the file name. Text assets are never served.
@@ -146,8 +146,8 @@ This table has one owner: this file. A change that makes a project-file value re
 | `rel_path`, `abs_path` | Which file the change check reads | `src/main/assets/check-changed.ts` | Linked rows only. Read and hash only. `mime`, `width`, `height` written from the bytes, and only when the first bytes fit the row's kind; otherwise `mime` is left and the sizes set to null | Size, time and hash of any readable file are stored; for a fitting file also type, width, height (accepted) |
 | `abs_path` of the named row (gives the old folder) and of sibling rows | Candidate files on relink | `src/main/assets/relink.ts` | `pathInside` the user's new folder, `realpath`, `lstat`, regular file; a sibling taken only when the file has the row's own hash; read only | None |
 | Asset `id`, `abs_path` | Files looked for in a new assets folder | `src/main/assets/assets-dir.ts` (`repoint`) | `managedPath`; a bad row is left alone; `lstat`, regular files only; read only | None |
-| `project_id`, variant `id`, variant `rev` | Thumbnail file names; which files the clean-up deletes (Not built, Phase 3) | `src/main/thumbnails/paths.ts`, `cache.ts` | ULID, the variant ID pattern, a whole number; else no file is touched. Writes and deletes only directly inside `{userData}/thumbnails/{projectId}/`, regular files by `lstat`, names matching the thumbnail pattern; a link at the folder refuses; real path inside `{userData}/thumbnails/` (`spec/scene.md`, "Thumbnails") | A copy of a project made outside the app may show the other copy's thumbnail (accepted, nuisance) |
-| A font file's bytes (asset of kind `font`) | `asset.font_family`, shown as text (Not built, Phase 3) | `src/main/assets/font-name.ts` | Every offset and count bound-checked; WOFF2 decompressed with a 32 MiB output cap; any failure gives null, never an error with file text; the result trimmed, control characters removed, at most 100 characters, drawn as text only | None |
+| `project_id`, variant `id`, variant `rev` | Thumbnail file names; which files the clean-up deletes | `src/main/thumbnails/paths.ts`, `cache.ts` | ULID, the variant ID pattern, a whole number; else no file is touched. Both folders real and not links by `lstat`; the project folder's real path equals the thumbnails folder's real path plus the ID. Writes never replace a name and go through `.partial`; reads take a regular file of at most 8 MiB; deletes only `{variant}-{n}.png` and `.png.partial` regular files directly in the folder | A copy of a project made outside the app may show the other copy's thumbnail (accepted, nuisance) |
+| A font file's bytes (asset of kind `font`) | `asset.font_family`, shown as text | `src/main/assets/font-name.ts`, `inspect.ts` | Files over 32 MiB not parsed; WOFF2 Brotli output capped at 32 MiB; every offset, count and length bounded; never throws, any failure gives null; Cc removed, trimmed, at most 100 code points, drawn as text only | None |
 
 ### Hand-test tools
 
@@ -241,6 +241,7 @@ Do not "fix" these without a ruling.
 - **A linked path is whatever the disk holds now.** A swapped file is sent under the old picture type with `nosniff`; the window shows a broken picture and runs nothing; the window can make no network request.
 - **A linked path may name any file the user's account can read.** A hostile project can list a private picture; it shows in the library, reaches a provider only if the user picks it as a reference, and Package carries it only if it really is a file of its kind. Any real text file with a listed extension can be named by a `text` row in Package.
 - **The asset protocol has no first-bytes check.** Offered, not built.
+- **Asset scheme with CORS on** (A-53, Not built, P3-6): the app's own page could read a project picture's pixels through a canvas. The page is the app's bundled code in a sandbox with no network, so nothing new can leave the machine.
 - **Link swaps between check and use.** A link swapped in after an `lstat` check (in `setAssetsDir`, `hashFile` opens normally; folder import with `copy: true` uses `copyFile`, which follows links), or between the `ensureAssetsDir` check and `mkdir`. No `O_NOFOLLOW` is required: the swap needs write access to the user's folders during the command; `O_NOFOLLOW` guards only the last path part and does not exist on Windows.
 - **A file opened three times on import** (head, hash, copy) can be swapped between; the change check later finds a mismatching hash.
 - **An existing folder outside the project** named by `assets_dir_*` still receives new managed files `{ULID}.{ext}`, never over an existing file.
@@ -275,6 +276,7 @@ These must keep passing. A change that weakens one needs a ruling.
 | `tests/build/built-page.test.ts` (`npm run test:build`, every push) | `out/renderer/index.html` has exactly one policy tag, equal to `CONTENT_SECURITY_POLICY`, and no word `localhost`. Needs no window; the only check for `localhost` |
 | `tests/e2e/csp.spec.ts` | The running window has exactly one policy tag equal to `CONTENT_SECURITY_POLICY` (imported, not copied) |
 | `tests/unit/main/windows/asset-protocol.test.ts`, `tests/e2e/asset-protocol.spec.ts` | An imported picture loads by its `adman-asset://` address; an unknown asset ID does not; a project not open does not |
+| `tests/e2e/asset-protocol.spec.ts`, `tests/e2e/render-window.spec.ts` (Not built, P3-6) | A page `fetch()` of an `adman-asset://` address is refused in the app window and in the render window; an imported font loads in the Scene |
 | `tests/unit/main/windows/open-external.test.ts` | Only `https:` opens in the system browser |
 | `tests/unit/config/electron-boundary.test.ts` | No `electron` import in files `core.ts` imports |
 | `tests/unit/config/live-config.test.ts`, `tests/unit/config/comfy-config.test.ts` | No test or source file imports the live or comfy config; no `src/` file holds `.env.local` |
@@ -294,6 +296,6 @@ These must keep passing. A change that weakens one needs a ruling.
 | `tests/unit/main/ipc.test.ts` (Phase 3 blocks) | A call from any sender but the app window's main frame is refused before `execute` or `query`; events go to the app window only (LP-1) |
 | `tests/unit/main/render/done-message.test.ts`, `tests/e2e/render-window.spec.ts` | A render reply from the wrong sender, frame or request, or of the wrong shape, is ignored; the render window is never shown, has no `window.api`, and its bridge has only `onRequest` and `done` |
 | `tests/build/built-page.test.ts` (Phase 3 block) | `render.html` carries exactly the strict policy |
-| `tests/unit/main/thumbnails/paths.test.ts`, `tests/integration/thumbnails/thumbnail-clean.test.ts` | Bad IDs touch no file; clean-up deletes only old thumbnails directly in the project's folder, never a link, a sub-folder or another file |
+| `tests/unit/main/thumbnails/paths.test.ts`, `tests/unit/main/thumbnails/cache.test.ts`, `tests/integration/thumbnails/thumbnail-clean.test.ts` | Bad IDs touch no file; clean-up deletes only old thumbnails directly in the project's folder, never a link, a sub-folder or another file |
 | `tests/unit/main/assets/font-name.test.ts` | A damaged or hostile font gives null and never throws |
 | `tests/integration/commands/dev-storage-confinement.test.ts` | Hand-test storage changes nothing outside its folder: the app data tree, `secrets.bin`, `settings.json`, `logs/app.log` compared byte for byte |

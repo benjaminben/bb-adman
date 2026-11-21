@@ -79,7 +79,7 @@ A handler throws `AppError(code, message, details?)`; the bus and the query runn
 | `PROVIDER_ERROR` | Provider failed. `details.kind` is one of `bad_key`, `quota`, `refused`, `timeout`, `offline`, `other`. [REQ: FR-069] |
 | `MISSING_FILE` | A linked file cannot be found. Message "A file this project uses cannot be found.", `details.assetIds`. [REQ: FR-009, R-06] |
 | `PROJECT_LOCKED` | The project file is open elsewhere. Message "This project is open in another copy of the app." |
-| `AGENT_DENIED` | The agent policy is deny. `message` says why: "Agents cannot {action} in this version. Ask the user to do it in the app." (`denialMessage`, `src/main/commands/agent-policy.ts`). [REQ: workflow 5.7] |
+| `AGENT_DENIED` | The agent policy is deny. `message` says why: "Agents cannot {action} in this version. Ask the user to do it in the app." (`denialMessage`, `src/main/commands/agent-policy.ts`). The query `thumbnail.get` refuses an agent itself with "Agents cannot read thumbnails in this version. Ask the user to do it in the app." (`src/main/queries/render.ts`). [REQ: workflow 5.7] |
 | `AGENT_REFUSED` | The user refused, or did not answer in 120 seconds. Message "The user did not allow this action." [REQ: FR-197] |
 | `INTERNAL` | The app failed in a way no other code covers: a bug, a full disk, a failed migration. |
 
@@ -150,10 +150,10 @@ Built unless marked.
 | A clip longer than the workflow makes. `details.maxMs`. | `RULE_VIOLATION` | `video_too_long` | "ComfyUI makes clips of at most {maxMs / 1000} seconds with this workflow." |
 | `generation.startVideo`, `job.retry` of a video: the start picture is not an image asset of type PNG or JPEG | `RULE_VIOLATION` | `picture_not_usable` | "This picture cannot be used for a video yet. Use a PNG or JPEG." |
 | `agentRuns.setAllowed`: a provider `agentRunsOffered` refuses. Not built (AR-1). | `RULE_VIOLATION` | `agent_runs_not_offered` / `agent_runs_not_ready` | "Agents cannot start runs with {Provider}." |
-| `layer.delete`, `layer.reorder` naming the background layer. Not built (Phase 3). | `RULE_VIOLATION` | `background_layer` | "The background layer stays at the bottom and cannot be deleted." |
-| A layer command naming an asset in the reference library (`spec/editor-commands.md`). Not built (Phase 3). | `RULE_VIOLATION` | `reference_library` | "This file is in the reference library. Move it to the asset library to use it on a post." |
-| `layer.restore`: a layer with that ID or key is already in the variant. Not built (Phase 3). | `RULE_VIOLATION` | `layer_exists` | "That layer is already there." |
-| `variant.render`: the draw failed or timed out. Not built (Phase 3). | `RULE_VIOLATION` | `render_failed` | "The picture could not be drawn. Try again." |
+| `layer.delete`, `layer.reorder` naming the background layer | `RULE_VIOLATION` | `background_layer` | "The background layer stays at the bottom and cannot be deleted." |
+| A layer command naming an asset in the reference library (`spec/editor-commands.md`) | `RULE_VIOLATION` | `reference_library` | "This file is in the reference library. Move it to the asset library to use it on a post." |
+| `layer.restore`: a layer with that ID is anywhere in the project file, or the variant has a layer with that key | `RULE_VIOLATION` | `layer_exists` | "That layer is already there." |
+| `variant.render`: the draw failed or timed out | `RULE_VIOLATION` | `render_failed` | "The picture could not be drawn. Try again." |
 
 `brief_too_large` does not exist: a brief has no size limit.
 

@@ -44,7 +44,7 @@ project-root/
 │   │   ├── settings/              # settings-store.ts, defaults.ts
 │   │   ├── log/                   # activity-log.ts, error-context.ts
 │   │   ├── render/                # the render window, draw, render-page, done-message (Phase 3; Electron edge)
-│   │   ├── thumbnails/            # render service, queue, scene input, thumbnail paths and cache (Phase 3; no Electron)
+│   │   ├── thumbnails/            # render service, queue, scene input, thumbnail paths and cache, eager (no Electron)
 │   │   ├── export/                # image, video (FFmpeg filter builder), report, sheet (Phase 8)
 │   │   └── publish/               # publish flow (Phase 9)
 │   ├── preload/                   # index.ts: the window.api bridge; render.ts: the render window's renderApi (Phase 3)
@@ -75,8 +75,8 @@ project-root/
 │       │                          #   public-ids.ts, format-changes.ts (later phases)
 │       ├── generation/            # prompt.ts: the pre-filled picture prompt and its fixed ending
 │       ├── providers/             # messages.ts: plain error sentences, used by window and main process
-│       ├── templates/             # starter.ts, master-layers.ts (buildMasterLayers), types.ts
-│       ├── scene/                 # Scene component and helpers, fonts/ (bundled Inter) (Phase 3; files in spec/scene.md);
+│       ├── templates/             # starter.ts, master-layers.ts (buildMasterLayers), new-layer.ts, types.ts
+│       ├── scene/                 # Scene component and helpers, fonts/ (bundled Inter) (files in spec/scene.md);
 │       │                          #   presets.ts (Phase 7)
 │       ├── links/                 # follow-rules.ts, out-of-date, sync preview (Phase 5)
 │       ├── checks/                # the six checks (Phase 6)
@@ -115,7 +115,7 @@ Built. Enforced by ESLint (`eslint.config.js`) where a rule says so.
 - `src/shared/` imports nothing from `main`, `renderer`, `preload` or Electron.
 - `src/renderer/` reaches the main process only through `window.api`. A screen imports nothing from `src/main/`.
 - Only `src/main/assets/path-resolver.ts` builds asset paths. An ESLint rule bans `path.join` with asset fields elsewhere.
-- The Scene is a pure component: props are the variant, its layers (clips from Phase 7), a map of asset IDs to their `adman-asset://` address and facts, the time in milliseconds, a mode (`full` or `overlay-only`) and an `onSettled` callback. It uses inline styles only and no app token. Full props: `spec/scene.md`. Not built (Phase 3).
+- The Scene is a pure component: props are the variant, its layers (clips from Phase 7), a map of asset IDs to their `adman-asset://` address and facts, the time in milliseconds, a mode (`full` or `overlay-only`) and an `onSettled` callback. It uses inline styles only and no app token. Full props: `spec/scene.md`. Built.
 - `src/main/thumbnails/` is not an Electron edge place: it may not import `electron` or anything in `src/main/render/`. The Electron half of a draw is passed into `createCore` as `drawScene`.
 - The render window's page (`src/renderer/render.html`, `src/renderer/render-worker/`) imports only `@/shared/` code and `@/renderer/ui/asset-url`. It has no `window.api`.
 - A domain folder may hold helper files beside its handlers and its `index.ts`. A helper file exports no handler and is used only inside its own domain folder.

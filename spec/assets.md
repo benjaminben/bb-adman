@@ -117,7 +117,7 @@ A file is accepted when its extension is listed **and** its first bytes match th
 
 - The extension is the lower-case text after the last dot; a name that is only a dot and an extension (`.png`) has none. An empty file matches no type.
 - `pickerExtensions(purpose, kind?)`: `import` offers every extension; `relink` only those of the asset's kind; `brief` only the text ones.
-- **File facts as built.** Width and height come from PNG and JPEG headers only. `font_family` and `duration_ms` are null: Phase 3 reads fonts and Phase 7 reads video, each filling the existing columns. `readFileFacts` hashes before checking type (direct files, relink and the change check; folder import checks type first). MP4 and MOV are recognised by `ftyp` alone, so a HEIC, AVIF or M4A named `.mp4` is taken as video; Phase 7 may tighten this.
+- **File facts as built.** Width and height come from PNG and JPEG headers only. `font_family` is filled from the font's `name` table at import, relink and the change check (`readFontFamily`, `spec/scene.md`, "Font names at import"); the change check sets it to null when a font file becomes another kind. `duration_ms` is null: Phase 7 reads video. `readFileFacts` hashes before checking type (direct files, relink and the change check; folder import checks type first). MP4 and MOV are recognised by `ftyp` alone, so a HEIC, AVIF or M4A named `.mp4` is taken as video; Phase 7 may tighten this.
 - Size limits for pictures sent to a provider (`src/main/providers/picture-limits.ts`): `MAX_PICTURE_BYTES` 32 MiB, `MAX_PICTURE_SIDE` 8,192, `MAX_PICTURE_PIXELS` 24,000,000. Import itself has no size limit.
 
 ## WebP
@@ -197,7 +197,7 @@ Decisions in `src/main/assets/asset-url.ts` (no Electron import, unit tested). E
 - **Served only when:** the method is GET; the whole raw address matches `^adman-asset://{ULID}/{ULID}$` (case ignored, read in upper case) with nothing after, no query, fragment or extra path (the raw text is matched, so `/../` and `%2F` are never folded); the project is open; the row exists; `kind` is `image`, `video` or `font` (`text` is never served); the row's `mime` is one `file-types.ts` lists for its kind; the resolver finds the file, opened read only.
 - Anything else, including a file gone after the check: 404 with an empty body, never saying which check failed.
 - **Headers:** `Content-Type` is the row's `mime`, never from the file name. `X-Content-Type-Options: nosniff` and `Cache-Control: no-store` on every answer, 404 included, so a changed linked file is read again. No path, file name or error text in any answer or header.
-- **Scheme privileges** (Electron 45.4.1): `standard`, `secure`, `stream` true; `bypassCSP`, `allowServiceWorkers`, `supportFetchAPI`, `corsEnabled`, `codeCache`, `allowExtensions` false.
+- **Scheme privileges** (Electron 45.4.1): `standard`, `secure`, `stream`, `corsEnabled` true; `bypassCSP`, `allowServiceWorkers`, `supportFetchAPI`, `codeCache`, `allowExtensions` false. `corsEnabled: true` is Not built (P3-6): fonts load only with it. The ruling and its limits: `spec/security.md`, "Rules: the asset protocol" (A-53).
 - The page policy (`src/main/windows/csp.ts`) has `img-src 'self' adman-asset: data: blob:`, `media-src adman-asset:`, `font-src 'self' adman-asset:`.
 - No byte ranges: a clip plays from the start but seeking may not work. Accepted for now; byte ranges are Phase 7's.
 - The protocol does not check first bytes (accepted, OI-49).
@@ -261,8 +261,7 @@ Do not "fix" these without a ruling. Every value read from a project file is unt
 
 ## Not built
 
-- Thumbnails in `{userData}/thumbnails/` and redrawing them on `asset.changedOnDisk` (Phase 3).
-- Reading `font_family` (Phase 3) and `duration_ms`, clip `width` and `height` (Phase 7).
+- Reading `duration_ms`, clip `width` and `height` (Phase 7).
 - WebP to PNG conversion (slice WP, above).
 - Byte ranges in the asset protocol (Phase 7).
 - The query for earlier options of a layer (Phase 4, `spec/jobs.md`).

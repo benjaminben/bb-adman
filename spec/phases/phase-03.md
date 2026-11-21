@@ -10,9 +10,9 @@
 - FR-242: the tab keys work. FR-245: the transparent-picture reference test passes. FR-249: letter spacing is drawn, measured and editable.
 - Review item LP-1 is fixed (slice P3-6) and removed from `spec/phases/review-leftovers.md`.
 
-**Dependencies:** Built and used here: the `@/` alias, one folder per component, the token file with its test (`spec/structure.md`), the `variant.rev` helper `bumpVariantRev` in `src/main/commands/variant-rev.ts`, and the Phase 3 contracts (schemas, scene types, the render service stand-in, the shortcut table, the Phase 3 tokens). Still to come: the campaign grid (Phase 2 leftovers, group 5), needed by P3-9, P3-10 and P3-16.
+**Dependencies:** Built and used here: the `@/` alias, one folder per component, the token file with its test (`spec/structure.md`), the `variant.rev` helper `bumpVariantRev` in `src/main/commands/variant-rev.ts`, the Phase 3 contracts (schemas, scene types, the shortcut table, the Phase 3 tokens), the layer and variant commands (`spec/editor-commands.md`), the Scene (`src/shared/scene/`), font names at import, and the render service with thumbnails (`src/main/thumbnails/`). Still to come from the Phase 2 leftovers (`spec/phases/phase-02-screens.md`): the campaign grid, slice S2-16 (`screens/campaign/variant-grid/` and the tile `screens/campaign/variant-tile/`), needed by P3-9, P3-10 and P3-16; and the dialog frame, slice S2-2 (`ui/dialog-frame/`).
 
-**Design:** `spec/scene.md`, `spec/editor.md`, `spec/editor-commands.md`. Security rules: `spec/security.md`, "Rules: the render window". Tests and the reference rule: `spec/testing.md`. Assumptions A-22 to A-37 in `spec/open-items.md`.
+**Design:** `spec/scene.md`, `spec/editor.md`, `spec/editor-commands.md`. Security rules: `spec/security.md`, "Rules: the render window" and "Rules: the asset protocol". Tests and the reference rule: `spec/testing.md`. Assumptions A-22 to A-37 and A-53 in `spec/open-items.md`.
 
 ## Rules for these slices
 
@@ -26,69 +26,25 @@
 
 | Wave | Slices (side by side in separate worktrees) | Waits for |
 |------|---------------------------------------------|-----------|
-| 1 | P3-1, P3-4, P3-5, P3-7 | |
-| 2 | P3-2 (after P3-1), P3-6 (after P3-5) | |
-| 3 | P3-8 (after P3-2, P3-6, P3-7), P3-9 (after P3-1, P3-6: both edit `src/main/index.ts`) | |
-| 4 | P3-10, P3-11, P3-12, P3-13 | P3-9 and P3-2 |
-| 5 | P3-14 (after P3-11, P3-13), P3-16 (after P3-7, P3-10) | |
-| 6 | P3-15 (after P3-14) | |
+| 1 | P3-6 | |
+| 2 | P3-8 (after P3-6), P3-9 (after P3-6: both edit `src/main/index.ts`) | |
+| 3 | P3-10, P3-11, P3-12, P3-13 | P3-9 |
+| 4 | P3-14 (after P3-11, P3-13), P3-16 (after P3-10) | |
+| 5 | P3-15 (after P3-14) | |
 
 ## Slices
 
-### P3-1 — `layer.update` and `variant.update`
+### P3-6 — The render window, the window sender rule (LP-1) and fonts from the asset scheme
 
-- **Exists when done:** both commands, with undo, counters, the no-op rule and the asset checks.
-- **New files:** `src/main/commands/layer/update.ts`, `layer/check-layer-assets.ts`, `layer/merge-patch.ts`, `layer/inverse-patch.ts`; `src/main/commands/variant/update.ts`.
-- **May touch:** `commands/layer/index.ts`, `commands/variant/index.ts`.
-- **Read:** `spec/editor-commands.md` (rules for every command, `layer.update`, `variant.update`); `spec/api-principles.md` "Undo and redo"; `spec/data-rules.md` "Links" (the groups).
-- **Tests:** `tests/integration/commands/layer-update.test.ts` (success with `expect-changes`; only changed groups bumped; `variant.rev` once; no-op writes nothing; undo then redo restores each field), `layer-update-refusals.test.ts` (every refusal of the command, each asserting nothing written, no event, no undo entry), `layer-update-agent.test.ts` (sent as user, `agent_changed_at` stays null; as agent, set to the command's time) [REQ: FR-239], `variant-update.test.ts`.
-- **Class:** B. Not security class.
-
-### P3-2 — `layer.create`, `layer.delete`, `layer.restore`, `layer.reorder`, `layer.reportOverflow`
-
-- **Exists when done:** layers can be added, removed (and brought back by undo), reordered, and their overflow written.
-- **New files:** `src/shared/templates/new-layer.ts`; `src/main/commands/layer/create.ts`, `delete.ts`, `restore.ts`, `reorder.ts`, `report-overflow.ts`.
-- **May touch:** `commands/layer/index.ts`.
-- **Read:** `spec/editor-commands.md`; `spec/editor.md` "Several picture layers per variant"; `spec/brief-and-templates.md` "Default layout".
-- **Tests:** `tests/unit/shared/templates/new-layer.test.ts` (names "Picture n" and "Text n"; boxes at `50x50` and `8192x8192` pass `LayerRow`), `tests/integration/commands/layer-create.test.ts` (key `layer-{ulid}`, `slot` null, top `z`, undo deletes, redo restores the same ID), `layer-delete.test.ts` (z closed up; background refused with `background_layer`; undo restores row, counters and order), `layer-restore.test.ts` (`layer_exists`; internal: refused from a window), `layer-reorder.test.ts` (bad lists refused; undo), `layer-report-overflow.test.ts` (old `variantRev` gives `applied: false` and no write; no `rev` bump; no undo entry; text only).
-- **Class:** B. Not security class. **After:** P3-1 (shares `commands/layer/index.ts` and the asset check helper).
-
-### P3-4 — Font names at import
-
-- **Exists when done:** imported, relinked and changed fonts get `font_family`.
-- **New files:** `src/main/assets/font-name.ts`.
-- **May touch:** the file in `src/main/assets/` that reads file facts (`readFileFacts`).
-- **Read:** `spec/scene.md` "Font names at import"; `spec/assets.md` "File types".
-- **Tests:** `tests/unit/main/assets/font-name.test.ts` (TTF, OTF and WOFF2 fixtures made in the test from bytes; ID 16 before ID 1; platform 3 before 1; control characters removed; 100-character cut; a string or table past the end, a huge count, a bad WOFF2 header and an over-large WOFF2 each give null and never throw), `tests/integration/assets/font-family-import.test.ts`.
-- **Class:** B. **Security class, short review** (reads untrusted bytes).
-
-### P3-5 — The Scene component
-
-- **Exists when done:** `src/shared/scene/` as `spec/scene.md` lists it, with the bundled font.
-- **New files:** every file of `spec/scene.md`, "Files", except `types.ts`.
-- **Read:** `spec/scene.md` "The Scene component"; `spec/data-model-campaign.md` "layer".
-- **Tests:** `tests/unit/shared/scene/background-placement.test.ts` (cover and contain, a crop, a crop past the picture, an empty crop, no stretch), `text-style.test.ts` (the exact property list; letter spacing in `em`), `scene.test.tsx` (jsdom: drawing order by z; hidden layer has `visibility: hidden`; empty and missing pictures draw no `<img>`; copy holding `<b>` shows the characters; `overlay-only` leaves out the background; root `lang`), `font-faces.test.tsx` (one `FontFace` per asset and version; family names). Layout cannot be measured in jsdom: overflow is proven in P3-8.
-- **Class:** C (its reference tests land with P3-8). Not security class. The developer takes Inter from its official release and reports the file's SHA-256.
-
-### P3-6 — The render window and the window sender rule (LP-1)
-
-- **Exists when done:** the hidden render window draws a `SceneInput` and returns a PNG and the overflow map; the app's command and query channels refuse any sender but the app window; events go to the app window only.
+- **Exists when done:** the hidden render window draws a `SceneInput` and returns a PNG and the overflow map; the app's command and query channels refuse any sender but the app window; events go to the app window only; an imported font loads from `adman-asset://`.
 - **New files:** `src/main/render/render-window.ts`, `draw.ts`, `render-page.ts`, `done-message.ts`; `src/preload/render.ts`; `src/renderer/render.html`; `src/renderer/render-worker/main.tsx`, `render-worker/render-root/`.
-- **May touch:** `src/main/ipc.ts` (`mayCall`), `src/main/index.ts` (app window reference, `send` to the app window only, `drawScene: createDraw()`, render window ended when the app window closes), `electron.vite.config.ts` (two pages, two preloads), `src/main/windows/app-window.ts` (export what the render window reuses).
+- **May touch:** `src/main/ipc.ts` (`mayCall`), `src/main/index.ts` (app window reference, `send` to the app window only, `drawScene: createDraw()`, render window ended when the app window closes), `electron.vite.config.ts` (two pages, two preloads), `src/main/windows/app-window.ts` (export what the render window reuses), `src/main/windows/asset-protocol.ts` (`corsEnabled: true`), `src/main/assets/asset-url.ts` (the font header, only if needed).
 - **Must:** `send` in `src/main/index.ts` sends events to the app window only. Today it sends to every window, which would reach the render window.
-- **Read:** `spec/scene.md` "The render window"; `spec/security.md` "Rules: the render window", "Rules: renderer and windows"; `spec/phases/review-leftovers.md` LP-1.
-- **Check first:** the four checks of `spec/scene.md`, "One draw". Stop and report if one fails.
-- **Tests:** `tests/unit/main/ipc.test.ts` (new blocks: a call from another frame or window is refused before `execute` or `query` runs; an event goes to the app window only), `tests/unit/main/render/render-page.test.ts`, `tests/unit/main/render/done-message.test.ts` (wrong sender, wrong frame, wrong `requestId`, bad shape, unknown layer IDs dropped), `tests/build/built-page.test.ts` (new block: `out/renderer/render.html` has exactly one policy tag equal to `CONTENT_SECURITY_POLICY`), `tests/e2e/render-window.spec.ts` (the render window is never visible; its page has no `window.api`; `window.renderApi` has exactly `onRequest` and `done`; a draw of a small variant gives a PNG of the asked size; closing the app window quits the app).
-- **Class:** G + C. **Security class, full review.** **After:** P3-5.
-
-### P3-7 — The render service and thumbnails
-
-- **Exists when done:** `thumbnail.get`, `variant.render`, `thumbnail.changed`, eager thumbnails, overflow reported after each draw, clean-up on close, redraw on `asset.changedOnDisk`.
-- **New files:** `src/main/thumbnails/service.ts` (body), `queue.ts`, `scene-input.ts`, `paths.ts`, `cache.ts`; `src/main/queries/render.ts` (body).
-- **Must:** `projectClosed` never throws. `project.close` awaits it after the file closes; a failed clean-up is logged and the close still succeeds.
-- **Read:** `spec/scene.md` "The render service", "Thumbnails"; `spec/editor-commands.md` "Queries", "Event"; `spec/security.md` thumbnail rows.
-- **Tests:** with a stand-in `draw`: `tests/unit/main/thumbnails/paths.test.ts` (bad project ID, variant ID and rev throw), `tests/integration/thumbnails/thumbnail-get.test.ts` (pending, then `thumbnail.changed`, then ready; failed draw gives `failed` and one `warn` line with no path), `thumbnail-clean.test.ts` (close deletes old revs only; a link named like a thumbnail, a sub-folder and an unrelated file are left; a linked project folder writes and deletes nothing), `thumbnail-eager.test.ts` (one draw per variant after a burst of changes; `asset.changedOnDisk` redraws only variants using the asset), `render-overflow.test.ts` (a draw that measures overflow sends `layer.reportOverflow` once), `variant-render.test.ts` (`render_failed`; `maxDimension` bounds; no file written).
-- **Class:** B. **Security class, short review** (paths from project values; deletes files). Side by side with P3-6.
+- **Must (A-53, for the stakeholder's review):** register the `adman-asset` scheme with `corsEnabled: true`; a font does not load with it off. Keep `connect-src 'none'` and every check of the protocol handler. Send `Access-Control-Allow-Origin` only if a font does not load without it, and then only for assets of kind `font`. Rules: `spec/security.md`, "Rules: the asset protocol".
+- **Read:** `spec/scene.md` "Fonts", "The render window"; `spec/security.md` "Rules: the render window", "Rules: renderer and windows", "Rules: the asset protocol"; `spec/phases/review-leftovers.md` LP-1.
+- **Checks already run** (macOS, Electron 45): an offscreen hidden window captures exactly the asked size on a Retina screen, up to 2048 × 2048; fonts, `img.decode()` and animation frames run in it with `backgroundThrottling: false`; a font from `adman-asset://` does not load while the scheme has CORS off. No other check is needed first.
+- **Tests:** `tests/unit/main/ipc.test.ts` (new blocks: a call from another frame or window is refused before `execute` or `query` runs; an event goes to the app window only), `tests/unit/main/render/render-page.test.ts`, `tests/unit/main/render/done-message.test.ts` (wrong sender, wrong frame, wrong `requestId`, bad shape, unknown layer IDs dropped), `tests/build/built-page.test.ts` (new blocks: `out/renderer/render.html` has exactly one policy tag equal to `CONTENT_SECURITY_POLICY`; the built render page holds the bundled font as its own file), `tests/e2e/render-window.spec.ts` (the render window is never visible; its page has no `window.api`; `window.renderApi` has exactly `onRequest` and `done`; a draw of a small variant gives a PNG of the asked size; page `fetch()` of an asset address is refused; an imported font loads in the Scene; closing the app window quits the app), `tests/e2e/asset-protocol.spec.ts` (new block: page `fetch()` of an asset address is refused in the app window).
+- **Class:** G + C. **Security class, full review.**
 
 ### P3-8 — Reference-picture tests
 
@@ -96,23 +52,23 @@
 - **New files:** `tests/e2e/scene-reference.spec.ts`, `tests/e2e/scene-cases.ts`, `tests/e2e/reference-compare.ts`, `tests/reference-pictures/darwin/*.png`.
 - **Read:** `spec/testing.md` "Reference pictures"; `spec/scene.md`.
 - **Tests:** the cases of `spec/testing.md`, "Reference pictures", each set up through `window.api` (project, import, `campaign.create`, layer commands) and drawn with `variant.render`; and `tests/e2e/scene-overflow.spec.ts` (a text layer made to overflow by size and then by letter spacing gets `overflow` true from the render service; shrinking it gives false).
-- **Class:** C. Not security class. **After:** P3-2, P3-6, P3-7. The developer views every new reference picture and says in the report what each shows.
+- **Class:** C. Not security class. **After:** P3-6. The developer views every new reference picture and says in the report what each shows.
 
 ### P3-9 — The editor frame
 
 - **Exists when done:** opening a variant from the grid shows the editor: top bar (rename, undo, redo), banner, canvas with zoom and selection by click, a layer list that shows and selects rows, and a properties panel with its header and empty state. Overflow reported from the editor. The app menu.
 - **New files:** `src/renderer/stores/variant-store.ts`; `editor/editor/`, `top-bar/`, `editor-banner/`, `canvas-view/`, `layer-list/` (rows, selection, arrow keys only), `layer-row/` (picture or text mark, name, marks), `properties-panel/` (header and empty state only), `use-editor-key.ts`, `zoom.ts`; `src/main/windows/app-menu.ts`.
-- **May touch:** `screens/campaign/campaign-view/` (shows the editor in place of the overview for the opened variant, with "Back to overview"), group 5's tile component (calls the open action), `src/main/index.ts` (sets the menu).
+- **May touch:** `screens/campaign/campaign-view/` (shows the editor in place of the overview for the opened variant, with "Back to overview"), `screens/campaign/variant-tile/` (a plain click opens the variant; also settle how the overview's panels choose their variant once a click opens a tab, A-47), `src/main/index.ts` (sets the menu).
 - **Read:** `spec/editor.md` (layout, variant store, top bar, banner, canvas, selecting, keyboard shortcuts, undo and redo); `spec/screens.md` rules.
 - **Check first:** the app-menu check of `spec/editor.md`.
 - **Tests:** `tests/unit/renderer/stores/variant-store.test.ts` (applies events; drops a stale reply; asset version bump), `tests/unit/renderer/editor/zoom.test.ts`, `tests/unit/renderer/editor/editor.test.tsx` (loads, selects by click and by list, undo and redo send `history.*` with the variant scope and are disabled from `history.state`, rename, banner wording, overflow report sent once with the store's rev, axe), `tests/unit/main/windows/app-menu.test.ts` (no View menu; Edit roles; dev tools item only with the flag), `tests/e2e/editor-open.spec.ts` (Mod+Z reaches the page; Mod+= does not zoom the page).
-- **Class:** D + G (the menu). Not security class. **After:** P3-1, P3-6.
+- **Class:** D + G (the menu). Not security class. **After:** P3-6.
 
 ### P3-10 — Campaign tabs, variant tabs and the tab keys
 
 - **Exists when done:** project switcher, campaign tabs, variant tabs, opening behind, marks, what each tab keeps, FR-242.
 - **New files:** `stores/nav-store.ts`; `app/project-switcher/`, `app/campaign-tabs/`; `screens/campaign/variant-tabs/`.
-- **May touch:** `app/app-shell/`, `screens/campaign/campaign-view/`, `screens/project-home/campaign-list/` (opens a tab), group 5's tile (the "+" button), `tests/e2e/screen-tour.ts` and `screens.ts` (approved edits for the new navigation).
+- **May touch:** `app/app-shell/`, `screens/campaign/campaign-view/`, `screens/project-home/campaign-list/` (opens a tab), `screens/campaign/variant-grid/` (passes the "+" through the tile's `actions` prop), `tests/e2e/screen-tour.ts` and `screens.ts` (approved edits for the new navigation).
 - **Read:** `spec/editor.md` "Navigation"; `spec/open-items.md` OI-31, Q-041, Q-042, A-23, A-24.
 - **Tests:** `tests/unit/renderer/stores/nav-store.test.ts` (per-project, per-campaign and per-tab state; a removed variant loses its tab; close drops the project), `tests/unit/renderer/app/campaign-tabs.test.tsx`, `tests/unit/renderer/screens/campaign/variant-tabs.test.tsx` (plain click shows; "+" and Cmd-click open behind; selected layer and zoom kept per tab; marks; axe), `tests/unit/renderer/app/tab-keys.test.tsx` (both key pairs, wrap round, from inside a text field).
 - **Class:** D (+ the screen-tour end-to-end run). Not security class.
@@ -143,7 +99,7 @@
 ### P3-14 — Picture properties and the picture chooser
 
 - **New files:** `editor/picture-fields/`, `dialogs/picture-chooser/`.
-- **May touch:** `editor/properties-panel/` (mounts the picture fields).
+- **May touch:** `editor/properties-panel/` (mounts the picture fields). May reuse `ui/dialog-frame/` (S2-2) for the picture chooser.
 - **Read:** `spec/editor.md` "Properties panel" (Picture), "Picture chooser"; `spec/scene.md` "Pictures".
 - **Tests:** `tests/unit/renderer/editor/picture-fields.test.tsx` (choose, remove, opacity, Fill the canvas and Fit inside geometry), `tests/unit/renderer/dialogs/picture-chooser.test.tsx` (list, missing disabled, import flow, choose sends `layer.update` with `source`, cancel sends nothing, axe).
 - **Class:** D. Not security class. **After:** P3-11, P3-13.
@@ -159,7 +115,7 @@
 ### P3-16 — Thumbnails on the screens
 
 - **New files:** `src/renderer/ui/variant-thumbnail/`.
-- **May touch:** group 5's tile component, `screens/project-home/campaign-list/`, `src/main/queries/campaign.ts` and `src/shared/schemas/queries/campaign.ts` (`cover` on `CampaignSummary`).
+- **May touch:** `screens/campaign/variant-grid/` (passes `<VariantThumbnail>` through the tile's `preview` prop), `screens/project-home/campaign-list/`, `src/main/queries/campaign.ts` and `src/shared/schemas/queries/campaign.ts` (`cover` on `CampaignSummary`).
 - **Read:** `spec/editor.md` "Thumbnails on the screens"; `spec/editor-commands.md` `thumbnail.get`.
 - **Tests:** `tests/unit/renderer/ui/variant-thumbnail.test.tsx` (pending then event then ready; a new `rev` asks again; object URL freed; failed shows "No preview"), `tests/integration/queries/campaign-cover.test.ts`.
-- **Class:** D + B. Not security class. **After:** P3-7, P3-10.
+- **Class:** D + B. Not security class. **After:** P3-10.

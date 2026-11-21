@@ -1,6 +1,6 @@
 # Screens: Phase 2 leftovers
 
-The screens, dialogs and components that Phase 2 still owes: ComfyUI failures and refusals on the campaign page, the commercial-licence dialog, import (by button and by dropping files), relink, package, the brief form, the slot view and the campaign grid. Read with `spec/screens.md` (rules for every screen, built screens, choices made without a design sign-off), `spec/structure.md` (one folder per component, one styling source) and `spec/api-commands.md` / `spec/api-queries-events.md` (the calls). The slices that build them are in `spec/phases/phase-02-leftovers.md` (S2-1 to S2-17).
+The screens, dialogs and components that Phase 2 still owes: ComfyUI failures and refusals on the campaign page, the commercial-licence dialog, import (by button and by dropping files), relink, package, the brief form, the slot view and the campaign grid. Read with `spec/screens.md` (rules for every screen, built screens, choices made without a design sign-off), `spec/structure.md` (one folder per component, one styling source) and `spec/api-commands.md` / `spec/api-queries-events.md` (the calls). The slices that build them are in `spec/phases/phase-02-screens.md` (S2-1 to S2-17).
 
 Everything here is Not built (Phase 2 leftovers). Each part names its slice.
 

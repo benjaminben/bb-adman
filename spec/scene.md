@@ -6,7 +6,7 @@ Everything in this file is Not built (Phase 3) unless marked. Phase 7 adds time 
 
 ## The Scene component
 
-Not built (Phase 3). [REQ: FR-090, FR-093, FR-094, FR-098, FR-130, FR-245, FR-249]
+Built (`src/shared/scene/`), except where marked. [REQ: FR-090, FR-093, FR-094, FR-098, FR-130, FR-245, FR-249]
 
 One React component draws one variant at one time. The editor, the render window (thumbnails, `variant.render`, later export and the MCP `render_variant` tool) all draw with it, so what the user sees is what is exported [REQ: FR-130].
 
@@ -16,12 +16,12 @@ All in `src/shared/scene/`. Shared code: no import from `main`, `renderer`, `pre
 
 | File | Holds |
 |------|-------|
-| `types.ts` | `SceneProps`, `SceneVariant`, `SceneAsset`, `SceneInput` (below). Built. |
+| `types.ts` | `SceneProps`, `SceneVariant`, `SceneAsset`, `SceneInput` (below) |
 | `scene.tsx` | `Scene`, the root: draws the layers in `z` order |
 | `picture-layer.tsx`, `text-layer.tsx` | One layer each. Not re-exported; only `scene.tsx` imports them. |
 | `background-placement.ts` | `placePicture`, the one owner of where a picture goes inside its box. The name is kept from the data model: it places the pictures of image layers too. Phase 8's FFmpeg filter builder imports it. |
-| `text-style.ts` | `textCss(style, box)`: the exact CSS of a text layer (below) |
-| `font-faces.ts` | `useSceneFonts(fonts)`, `DEFAULT_FONT_FAMILY`, `fontFamilyOf(fontAssetId)` |
+| `text-style.ts` | `textCss(style)`: the exact CSS of a text layer (below); the box is set separately |
+| `font-faces.ts` | `useSceneFonts(fonts)`, `registerDefaultFont()`, `DEFAULT_FONT_FAMILY`, `fontFamilyOf(fontAssetId)` |
 | `measure-overflow.ts` | `measureOverflow(element)`: the one overflow test |
 | `fonts/InterVariable.woff2`, `fonts/OFL.txt` | The bundled default font and its licence |
 
@@ -88,7 +88,7 @@ The editor's crop mode keeps a crop at the box's shape (`spec/editor.md`), so st
 
 ### Text layers
 
-The box holds the copy as text content, never as HTML. `textCss(style, box)` gives exactly these properties and no others, so the editor and the render window lay text out alike:
+The box holds the copy as text content, never as HTML. A text layer whose style is not a text style draws nothing. `textCss(style)` gives exactly these properties and no others, so the editor and the render window lay text out alike:
 
 | Property | Value |
 |----------|-------|
@@ -114,16 +114,17 @@ The box holds the copy as text content, never as HTML. `textCss(style, box)` giv
 [REQ: FR-056, FR-093]
 
 - **Family names.** A font asset is registered as the family `adman-font-{assetId}`. The bundled font is `adman-default` (`DEFAULT_FONT_FAMILY`). These names have one owner, `font-faces.ts`.
-- **Registering.** `useSceneFonts` adds one `FontFace` per font asset the layers name, through the Font Loading API: `new FontFace('adman-font-{id}', 'url("{url}")', { weight: '1 1000', style: 'normal' })`, added to `document.fonts` once per asset ID and `version`, then `load()`ed. The page policy already allows `font-src 'self' adman-asset:`.
+- **Registering.** `useSceneFonts(fonts)` takes the font assets the layers name that are present (in `assets`, not `missing`, of kind `font`) and registers one `FontFace` per asset and `version`, through the Font Loading API: `new FontFace('adman-font-{id}', 'url("{url}")', { weight: '1 1000', style: 'normal' })`, added to `document.fonts`, then `load()`ed. A newer `version` replaces the older face. The page policy already allows `font-src 'self' adman-asset:`.
+- **The asset scheme and fonts.** Not built (P3-6). The browser loads fonts under cross-origin rules, so a font loads from `adman-asset://` only when the scheme is registered with `corsEnabled: true`. Pictures are not affected. The rules that keep this safe and the accepted risk are in `spec/security.md`, "Rules: the asset protocol" (assumption A-53). Until P3-6 lands, an imported font does not load and its text falls back to the default font.
 - **One file, every weight.** An uploaded font file is registered for every weight, and `font-synthesis: none` stops the browser from making a false bold. So a variable font follows the weight field, and a font file with one weight draws that weight whatever the field says. The properties panel says so (`spec/editor.md`).
-- **The bundled default font** is Inter, variable (weights 100 to 900), SIL Open Font Licence 1.1: `src/shared/scene/fonts/InterVariable.woff2` with `OFL.txt` beside it. The developer takes the file from the font's official release, and the slice report gives its SHA-256. It is imported with Vite's `?url`, so it is built into the page and loaded from `'self'`. It is registered once, when the Scene module loads, with weight `100 900`. It is listed in `THIRD-PARTY-NOTICES.md` (Phase 11). It lives in `src/shared/scene/fonts/`, not in `resources/`.
-- **A font that fails** (file missing, not a font, still loading) leaves the text in `adman-default`. The variant's `missingFile` badge counts fonts (`spec/api-queries-events.md`).
+- **The bundled default font** is Inter 4.1, variable (weights 100 to 900), SIL Open Font Licence 1.1: `src/shared/scene/fonts/InterVariable.woff2` (352,240 bytes, SHA-256 `693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3`, from the font's official v4.1 release) with its licence text `OFL.txt` beside it. It is imported with Vite's `?url`, so it is built into the page and loaded from `'self'`. `registerDefaultFont()` registers it once, when the Scene module loads, with weight `100 900`. It is listed in `THIRD-PARTY-NOTICES.md` (Phase 11). It lives in `src/shared/scene/fonts/`, not in `resources/`. Still to prove (P3-6): the built render page holds the font as its own file.
+- **A font that fails** (file missing, not a font) still counts as settled; its text falls back to `adman-default`. The variant's `missingFile` badge counts fonts (`spec/api-queries-events.md`).
 
 ### Settling and the overflow measurement
 
 [REQ: FR-098, FR-249]
 
-- After each change of `layers` or `assets` the Scene waits until it is settled: every font face it uses has loaded or failed, and every `<img>` it shows has decoded or failed (`img.decode()`). Then it waits two animation frames and measures. A settle that a newer change overtook is dropped.
+- After each change of `layers` or `assets` the Scene waits until it is settled: the default font and every font face it uses have loaded or failed, and every `<img>` it shows has decoded or failed (`img.decode()`). Then it waits two animation frames and measures. A settle that a newer change overtook is dropped.
 - **`measureOverflow(box)`** is the one test: the text box overflows when `box.scrollHeight − box.clientHeight > 1` or `box.scrollWidth − box.clientWidth > 1`, in variant pixels. The 1 pixel allows for rounding between systems.
 - Every text layer is measured, hidden ones included (they keep their place). An empty copy never overflows.
 - The Scene then calls `onSettled({ overflow })` with one entry per text layer ID. It writes nothing itself.
@@ -138,13 +139,15 @@ The box holds the copy as text content, never as HTML. `textCss(style, box)` giv
 
 ## Font names at import
 
-Not built (Phase 3). Security class: the app reads bytes of a file it did not make. [REQ: FR-056]
+Built (`src/main/assets/font-name.ts`, `inspect.ts`). Security class: the app reads bytes of a file it did not make. [REQ: FR-056]
 
-- `readFontFamily(bytes): string | null` in `src/main/assets/font-name.ts`, pure, no Electron. It reads the `name` table of a TTF or OTF file, and of a WOFF2 file after decompressing it with Node's `zlib.brotliDecompressSync` with `maxOutputLength` 32 MiB.
-- It takes name ID 16 (typographic family) when present, else name ID 1 (family). Platform 3 (Windows, UTF-16 big-endian) is preferred; else platform 1 encoding 0 (Mac Roman). English (language 0x0409, or 0 on platform 1) is preferred, else the first record.
-- The result is trimmed, control characters are removed, and it is cut to 100 characters. Empty gives null.
-- It never throws to its caller: any bound check that fails (a table or string past the end of the data, a count too large, a bad WOFF2 header, too much data after decompressing) gives null. No parser text reaches a log or an error.
-- It is called wherever the app reads an asset's file facts for kind `font`: import, relink and the change check (`readFileFacts`). It fills `asset.font_family`. The bytes it reads are those already read for hashing; it opens no other file.
+- `readFontFamily(bytes): string | null` in `src/main/assets/font-name.ts`, pure, no Electron. It reads the `name` table of a TTF, OTF or WOFF2 file by hand. It never throws and gives null on any failure.
+- WOFF2 is decompressed with Node's built-in Brotli under a 32 MiB output cap (`MAX_FONT_BYTES`). Its table directory is parsed with every length bounded. A `name` table in transformed form gives null.
+- A font collection (`ttcf`) gives null.
+- It takes name ID 16 (typographic family) when present, else name ID 1 (family). Then platform 3 (Windows, UTF-16 big-endian) before platform 1 encoding 0 (Mac Roman). Then English (language 0x0409, or 0 on platform 1) before other languages; else the first record. An empty ID 16 gives null.
+- Control characters (Unicode category Cc) are removed, the result is trimmed and cut to 100 code points. Empty gives null.
+- Any bound check that fails (a table or string past the end of the data, a count too large, a bad WOFF2 header, too much data after decompressing) gives null. No parser text reaches a log or an error.
+- It is called wherever the app reads an asset's file facts for kind `font`: import, relink and the change check (`inspect.ts`). It fills `asset.font_family`. The bytes it reads are those already read for hashing; it opens no other file. A font file over 32 MiB gets null, and only its hash is computed.
 - `font_family` is drawn as text only (the font picker). It is never used to find a file or build a path.
 - Tests: `tests/unit/main/assets/font-name.test.ts` (below in `spec/testing.md`).
 
@@ -201,20 +204,21 @@ type SceneInput = {
 5. `capturePage()`. If the picture is not exactly `width` × `height`, it is resized to that size (`quality: 'best'`). Then `toPNG()`.
 6. Time limit `RENDER_LIMITS.timeMs` (10 seconds) from step 2 to step 5. On time-out the window is ended and the draw fails.
 
-**Check first.** Before building on it, the developer checks on macOS, with a short throwaway script, that: (a) `capturePage()` of an offscreen window gives exactly `width` × `height` pixels on a Retina screen; (b) a 2048 × 2048 window can be made and captured; (c) `adman-asset://` pictures and fonts load in the render window; (d) `document.fonts`, `img.decode()` and `requestAnimationFrame` all run in the hidden offscreen window. If one fails, stop and report: the architect rules (for (a), the likely change is to take the `paint` event's picture instead).
+**Checks.** On macOS with Electron 45: an offscreen hidden window captures exactly the asked size on a Retina screen, up to 2048 × 2048; `document.fonts`, `img.decode()` and `requestAnimationFrame` run in it with `backgroundThrottling: false`; `adman-asset://` pictures load. A font from `adman-asset://` does not load while the scheme has `corsEnabled: false`; the ruling is in "Fonts" above. Not built (P3-6): the scheme registered with `corsEnabled: true`, and the tests that a page `fetch()` of an asset address is refused in both windows and that an imported font loads in the Scene.
 
 `RENDER_LIMITS = { timeMs: 10_000, maxDimension: 2048, thumbnailSide: 512 }` in `src/shared/config/render.ts`, the one owner. Export (Phase 8) draws at full size, up to 8,192 pixels a side; how it gets past 2,048 is Phase 8's to design.
 
 ## The render service
 
-Built: the types, the `render` field and its wiring, and a stand-in service that draws, writes and sends nothing (`thumbnail` gives `failed`, `render` throws, `onEvent` and `projectClosed` do nothing). Not built (Phase 3): the service itself. Files: `src/main/thumbnails/` (no Electron; core may import it).
+Built. Files: `src/main/thumbnails/` (no Electron; core may import it). The real draw comes with the render window (P3-6); until then `drawScene` throws, so every thumbnail is `failed` and `variant.render` answers `render_failed`.
 
 | File | Holds |
 |------|-------|
-| `types.ts` | `DrawScene`, `DrawResult`, `RenderService`. Built. |
-| `service.ts` | `createRenderService(opts)`. Built as the stand-in. |
+| `types.ts` | `DrawScene`, `DrawResult`, `RenderService` |
+| `service.ts` | `createRenderService(opts)` |
 | `scene-input.ts` | `sceneInput(project, variantId)`: reads the variant, its layers and the assets they name through `rows.ts`, with `missing` from `AssetService.missingAssetIds` |
 | `queue.ts` | One draw at a time, with priorities |
+| `eager.ts` | Eager thumbnails, changed files, and the variant revs of each open project |
 | `paths.ts` | `thumbnailDir`, `thumbnailFile`: the one owner of the thumbnail file names |
 | `cache.ts` | Read, write and clean thumbnail files |
 
@@ -232,20 +236,23 @@ type RenderService = {
 - **Queue.** One draw at a time for the whole app. A `variant.render` query goes first; thumbnails after, oldest request first. Thumbnail requests for the same project and variant are merged: the input is read when the draw starts, so it always draws the latest `rev`.
 - **Eager thumbnails.** `onEvent` sees every event the main process sends: `send` in `src/main/index.ts` hands each one to the app window and calls `core.deps.render.onEvent(event)`. For each `variant` row in a `project.changed` it schedules a thumbnail once that variant has been quiet for 1 second. A `removed.variant` drops it. So the overflow mark is kept current after an agent's edit too.
 - **Changed files.** For `asset.changedOnDisk`, it finds the variants of that project whose layers name one of the assets as `source` or `style.fontAssetId`, deletes their thumbnail file for the current `rev`, schedules them again, and sends `thumbnail.changed` for each.
-- **After a draw.** For a thumbnail, it writes the file (below) and sends `thumbnail.changed { projectId, variantId }`. For any draw, it compares `overflow` with each text layer's stored value and sends `layer.reportOverflow { projectId, layerId, overflow, variantRev }` through the bus for each that differs, with actor `user` (as `asset.checkChanged` does; the command is denied to agents).
+- **After a draw.** For a thumbnail, it writes the file (below) and sends `thumbnail.changed { projectId, variantId }`. `thumbnail.changed` is sent after a write, a delete, a failed draw or a failed save. For any draw, it compares `overflow` with each text layer's stored value and sends `layer.reportOverflow { projectId, layerId, overflow, variantRev }` through the bus for each that differs, with actor `user` (as `asset.checkChanged` does; the command is denied to agents).
 - **A project that is no longer open** when its draw starts is skipped.
-- **Failure** (draw time-out, crash, throw): one `warn` log line, `event: 'app'`, `name: 'render.draw'`, the project and variant IDs, message "A picture of a variant could not be drawn.", `context.reason` one of `timeout`, `crashed`, `error`. No path, no copy text, no error text. The thumbnail for that `rev` is marked failed until the `rev` changes, its files change on disk, or the app restarts. `variant.render` answers `render_failed`.
-- **`projectClosed(projectId)`** is awaited by `project.close` after the file closes. It drops queued draws of that project and cleans its thumbnail folder (below). It never throws: a failed clean-up is logged and the close still succeeds.
+- **Failure** (draw time-out, crash, throw): one `warn` log line, `event: 'app'`, `name: 'render.draw'`, the project and variant IDs, message "A picture of a variant could not be drawn.", `context.reason` one of `timeout`, `crashed`, `error`. No path, no copy text, no error text. The draw says why it failed by throwing an error with `reason: 'timeout' | 'crashed'`; anything else is logged as `error`. For a thumbnail, that `rev` is marked failed until the `rev` changes, its files change on disk, or the app restarts, and `thumbnail.changed` is sent. A failed `variant.render` answers `render_failed` and does not mark the thumbnail failed.
+- **A thumbnail that cannot be saved** marks that `rev` failed and logs one `warn` line (`name: 'render.thumbnail'`, "A thumbnail could not be saved.", the IDs, `context.reason`), then sends `thumbnail.changed`.
+- **Revs kept in memory.** `projectClosed` runs after the file closes, so the service keeps each open project's variant revs in memory: taken when it first sees the project, refreshed on events. A project it never saw is not cleaned.
+- **`projectClosed(projectId)`** is awaited by `project.close` after the file closes. It drops queued draws and timers of that project and cleans its thumbnail folder (below). It never throws: a failed clean-up is logged (`render.clean`) and the close still succeeds.
 
 ## Thumbnails
 
-Not built (Phase 3). Security class, short review: file names come from project-file values, and the service deletes files. [REQ: FR-074 grid thumbnails]
+Built (`paths.ts`, `cache.ts`). Security class, short review: file names come from project-file values, and the service deletes files. [REQ: FR-074 grid thumbnails]
 
 - **Where.** `{userData}/thumbnails/{projectId}/{variantId}-{rev}.png` (`spec/data-rules.md`, "Caching"). PNG, longest side `RENDER_LIMITS.thumbnailSide` (512), the other side `round(512 × short / long)`, at least 1.
 - **Names are checked before use.** `thumbnailFile` throws, and nothing is read or written, unless `projectId` is a ULID, `variantId` matches `^[23456789abcdefghjkmnpqrstuvwxyz]{6}$` and `rev` is a whole number from 0 to `Number.MAX_SAFE_INTEGER`. These values come from the project file.
-- **Writing.** The project folder is made with `mkdir` only under `{userData}/thumbnails/`, after an `lstat` shows that `thumbnails/` and `thumbnails/{projectId}` are real folders or absent; a link refuses and nothing is written. The file is written to `{name}.partial` with the `wx` flag and renamed over the name. A file that is already there for that `rev` is left as it is.
+- **Folder checks before any write, read or delete.** `thumbnails/` and `thumbnails/{projectId}` must both be real folders and not links, by `lstat`; for a write, an absent one is made with `mkdir` first. The real path of the project folder must equal the real path of `thumbnails/` plus the project ID. Any failure: nothing is touched.
+- **Writing.** A write never replaces an existing name: a file already there for that `rev` is left as it is. The file is written to `{name}.partial` with the `wx` flag and renamed to the name.
 - **Reading** (`thumbnail.get`, `spec/editor-commands.md`): a regular file by `lstat`, at most 8 MiB, else treated as absent.
-- **Cleaning** on project close: in `{userData}/thumbnails/{projectId}/` only, not in sub-folders, delete each regular file (by `lstat`; links are left alone) whose name matches `^{variant pattern}-\d+\.png$` or `\.partial$` and that is not the current `rev` of a variant still in the project. Nothing else is ever deleted. The folder's real path must be inside the real path of `{userData}/thumbnails/`, else nothing is deleted.
+- **Cleaning** on project close: directly inside `{userData}/thumbnails/{projectId}/` only, not in sub-folders, delete each regular file (by `lstat`; links are left alone) named `{variant}-{n}.png` or `{variant}-{n}.png.partial` that is not the current `rev` of a variant the service knew in that project. Nothing else is ever deleted.
 - **Asset thumbnails are not made.** The window draws asset pictures straight from `adman-asset://` (the reference picker already does). The "asset thumbnail" row of `spec/data-rules.md`, "Caching", is not built until a library view proves slow (A-30).
 - **Accepted:** two copies of one project file made outside the app share a project ID and variant IDs, so one may show the other's thumbnail for the same `rev`. A wrong preview only; the next change redraws it.
 

@@ -166,6 +166,7 @@ D-084 lets screens be built now, without waiting for a design sign-off. Every co
 - **A-35. Limits on typed values.** **Assumption:** a layer name is 1 to 100 characters, a variant title 1 to 200, copy at most 5,000. *Phase 3. Change later: easy.*
 - **A-36. Who reports overflow found by the render service.** **Assumption:** the render service sends `layer.reportOverflow` with actor `user`, as `asset.checkChanged` does; the command is denied to agents. *Phase 3. Change later: easy.*
 - **A-37. The app menu.** Phase 3 needs Mod+=, Mod+- and Mod+0 for the canvas, which Electron's default View menu takes for page zoom. **Assumption:** the app sets its own menu with the Edit and Window menus only (no View menu, no reload). *Phase 3. Change later: easy.*
+- **A-53. The asset scheme with CORS on. For the stakeholder's review: it changes a security rule.** A font cannot load from `adman-asset://` while the scheme has CORS off (checked on Electron 45). **Assumption:** the scheme is registered with `corsEnabled: true`; `connect-src 'none'` and the handler's checks stay; `Access-Control-Allow-Origin` is sent only if needed, and only for fonts. Accepted risk: the app's own sandboxed page, with no network, could read a project picture's pixels. Rules: `spec/security.md`. *P3-6. Change later: easy, but with CORS off imported fonts never show.*
 
 ## 3. Improvised choices already built
 
@@ -222,6 +223,7 @@ The video card and the agent settings block were built with these choices. Each 
 - **Dropbox registration (OI-18).** See Large items.
 - **Naming the models that need the commercial-licence dialog (OI-76, D-088).** FLUX 3 klein is assumed; say which others.
 - **Hand test of the app's ComfyUI workflows (OI-59, OI-65, OI-89).** His runs from the app decide which `trial` workflows become `proven`, and whether H3 clips follow a picture without `<Picture 1>` in the prompt. A first run from a phone photograph also shows whether turned photos need handling (A-07).
+- **Review of A-53** (the asset scheme with CORS on, a security rule).
 - **Review of the requirements wording (Q-011).** Needed for the requirements to return to Approved status.
 - **Answers to the client reviewers (Q-050).** Whether to send the "already covered" answers back to them.
 - **Old history backup.** He may delete the scratchpad copy of the old git history (see Large items).

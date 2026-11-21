@@ -13,9 +13,9 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 | `project.get` | `ProjectGet = { meta, subjects, campaigns: CampaignSummary[], missingAssetCount }`. `meta` leaves out `assetsDirRel` and `assetsDirAbs`. | Built |
 | `asset.list` | `AssetList = Array<AssetRow & { missing: boolean }>`, filtered by library, kind, subject; ordered by `id` ascending (ULIDs: oldest first, stable). The window sorts for display. | Built |
 | `campaign.get` | `CampaignGet` (below) | Built |
-| `variant.get` | `VariantGet = { variant, campaignId, layers, assets }` (`spec/editor-commands.md`). Phase 5 adds the out-of-date detail, Phase 6 the latest check result, Phase 7 the clips. | Not built (Phase 3) |
-| `thumbnail.get` | `ThumbnailGet`: `ready` with the PNG, `pending` or `failed`, for the variant's current `rev` (`spec/editor-commands.md`). User only. | Not built (Phase 3) |
-| `variant.render` | `VariantRender = { png, width, height, rev }`: the variant drawn now. Both actors (Phase 10's `render_variant`). | Not built (Phase 3) |
+| `variant.get` | `VariantGet = { variant, campaignId, layers, assets }` (`spec/editor-commands.md`). Phase 5 adds the out-of-date detail, Phase 6 the latest check result, Phase 7 the clips. | Built |
+| `thumbnail.get` | `ThumbnailGet`: `ready` with the PNG, `pending` or `failed`, for the variant's current `rev` (`spec/editor-commands.md`). User only. | Built |
+| `variant.render` | `VariantRender = { png, width, height, rev }`: the variant drawn now. Both actors (Phase 10's `render_variant`). | Built (draws from P3-6; until then answers `render_failed`) |
 | `template.list` | `TemplateList = Template[]` | Built |
 | `template.slots` | `TemplateSlots = SlotState[]`, `SlotState = { slot, state: 'filled' \| 'empty', candidates: string[] }` (asset IDs), for the slots of the campaign's master [REQ: FR-042]. A picture slot is one whose `slot.type` is not `copy`. | Built |
 | `sync.preview` | `SyncPreview[]` for a direction (`spec/data-rules.md`, "Links, follow rules and sync") | Not built (Phase 5) |
@@ -183,7 +183,7 @@ export type CampaignSummary = Pick<
 - `campaign` is the whole wire row, the stored `brief` included. `subjects` are the rows named by `campaign_subject`, by ID. `ruleSet` is the campaign's row; a campaign without one is a broken file and the query answers `INTERNAL`. `directions` are in `sort` order, then by ID.
 - `variants` holds every variant of every direction: by the direction's order, the master first inside a direction, then by `createdAt`, then by ID. Each is the whole `VariantRow` (`id`, `directionId`, `title`, `width`, `height`, `sizeLabel`, `language`, `format`, `durationMs`, `durationOverridden`, `rev`, `createdBy`, `createdAt`, `agentChangedAt`). `subjectIds` come from `variant_subject`, by ID.
 - `isMaster` is true only when the variant's own direction's `masterVariantId` names it.
-- **No layers.** A variant's layers come from `variant.get` (Phase 3). `template.slots` gives the slots of the master.
+- **No layers.** A variant's layers come from `variant.get`. `template.slots` gives the slots of the master.
 - `variantCount` in `CampaignSummary` is the number of variants in all the campaign's directions.
 - **Contracts the window imports** (the window imports nothing from `src/main/`): `ProjectGet`, `CampaignSummary`, `CampaignGet`, `VariantSummary`, `VariantBadges` from `src/shared/schemas/queries/campaign.ts`; `BriefParsed` from `src/shared/schemas/commands/brief.ts`; `SubjectCreated` from `src/shared/schemas/commands/subject.ts`; `CampaignCreated` from `src/shared/schemas/commands/campaign-edit.ts`; `BriefDraft`, `Brief` from `src/shared/schemas/brief.ts`; `TemplateSlots` and `SlotState` from `src/shared/templates/types.ts`. The variant list reads `title`, `width`, `height`, `sizeLabel`, `language`, `format`, `isMaster`.
 
@@ -195,8 +195,8 @@ Built: `project.changed`, `app.stateChanged`, `job.updated`, `asset.changedOnDis
 |-------|---------|-------|
 | `project.changed` | `ProjectChangedPayload` (below) | Built |
 | `job.updated` | The job row, as a `JobRow` wire row. Carries no separate project ID. | Built |
-| `asset.changedOnDisk` | `{ projectId, assetIds }`: the linked assets whose content changed outside the app. Sent after `asset.checkChanged` succeeds with a non-empty list. The signal to draw those pictures again; thumbnails are Phase 3. | Built |
-| `thumbnail.changed` | `{ projectId, variantId }`: a thumbnail file was written or deleted; a window showing it sends `thumbnail.get` again (`spec/editor-commands.md`) | Not built (Phase 3) |
+| `asset.changedOnDisk` | `{ projectId, assetIds }`: the linked assets whose content changed outside the app. Sent after `asset.checkChanged` succeeds with a non-empty list. The signal to draw those pictures again; the render service redraws the thumbnails of variants that use them (`spec/scene.md`). | Built |
+| `thumbnail.changed` | `{ projectId, variantId }`: sent after a thumbnail write, a delete, a failed draw or a failed save; a window showing it sends `thumbnail.get` again (`spec/editor-commands.md`) | Built |
 | `app.stateChanged` | Empty (`Record<string, never>`). Something `app.getState` returns has changed: a project was opened or closed, settings changed, a key was saved or deleted, or agent access changed. Each window reads `app.getState` again. | Built |
 | `agent.permissionRequested` | requestId, tool, target summary, expiresAt | Not built (Phase 10) |
 | `agent.activity` | Tool name and target, for a "the agent is working" indicator | Not built (Phase 10) |

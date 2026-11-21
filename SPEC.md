@@ -63,7 +63,8 @@ The spec is split into small files so that a reader loads only what a task needs
 |------|-------|
 | `spec/phases/README.md` | The build order, the topic files each phase needs, the rules for every phase |
 | `spec/phases/DEV-RULES.md` | What every developer run reads first: where things are, the rules the same for every slice |
-| `spec/phases/phase-02-leftovers.md` | Phase 2 work not built: small fixes, ComfyUI follow-ups, ComfyUI failure screens, Phase 2 screens |
+| `spec/phases/phase-02-leftovers.md` | Phase 2 work not built: small fixes, slice WP, ComfyUI follow-ups, the exit check, what waits on a ruling |
+| `spec/phases/phase-02-screens.md` | The Phase 2 screens not built (groups 4 and 5, slices S2-1 to S2-17): ComfyUI failure screens, dialogs, import, relink, package, brief form, slot view, campaign grid |
 | `spec/phases/phase-02-agent-generation.md` | Agents generate through the MCP server [D-080] |
 | `spec/phases/review-leftovers.md` | Review findings not yet handled, sorted: fix now, fix with a later phase, test gaps |
 | `spec/phases/phase-03.md` to `phase-11.md` | One file per phase: goal, scope, exit criteria, work carried in, what is not designed yet |

@@ -2,7 +2,7 @@
 
 How the user lays out a post by hand: the campaign and variant tabs, the editor screen (canvas, layer list, properties panel), moving, resizing, rotating, cropping, snapping, keyboard shortcuts, fonts, undo and redo, and several picture layers per variant. Read with `spec/scene.md` (the drawing), `spec/editor-commands.md` (the commands it sends), `spec/screens.md` (rules for every screen and the list of choices made without a sign-off) and `spec/structure.md` (the renderer layout rule).
 
-Everything here is Not built (Phase 3). Screens are built without a design sign-off [D-084]: each component has its own folder and CSS module, takes every colour, space, radius and type size from `src/renderer/ui/tokens.css`, and gets its data through props or a store. Each look-and-feel choice is listed in `spec/screens.md`.
+Everything here is Not built (Phase 3). The commands, queries and events it uses are built (`spec/editor-commands.md`), and so is the Scene it draws with (`spec/scene.md`). Screens are built without a design sign-off [D-084]: each component has its own folder and CSS module, takes every colour, space, radius and type size from `src/renderer/ui/tokens.css`, and gets its data through props or a store. Each look-and-feel choice is listed in `spec/screens.md`.
 
 ## Where the code lives
 
