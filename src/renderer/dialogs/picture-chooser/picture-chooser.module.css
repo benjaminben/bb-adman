@@ -1,20 +1,23 @@
-.status {
+/* app-style */
+/* The picture chooser's body (spec/app-style.md, "Dialogs"): a large dialog, the pictures
+   as a grid of tiles; its buttons are the foot band. */
+.line {
   margin: 0 0 var(--space-3);
 }
-.alert {
-  margin: 0 0 var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius);
-  background: var(--color-danger-bg);
-  color: var(--color-danger-text);
+/* The waiting line: centred, with the turning spinner. */
+.busy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-6) 0;
+  color: var(--color-text-secondary);
 }
-/* The grid scrolls inside the dialog, so a large library never pushes the buttons away. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-2);
-  max-height: 60vh;
-  overflow-y: auto;
+  grid-template-columns: repeat(auto-fill, minmax(var(--thumbnail-tile), 1fr));
+  gap: var(--space-3);
   list-style: none;
   margin: 0 0 var(--space-4);
   padding: var(--focus-ring-width);
@@ -25,16 +28,24 @@
 .tile {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   gap: var(--space-1);
   width: 100%;
-  padding: var(--space-1);
+  height: auto;
+  padding: var(--space-2);
   font: inherit;
   text-align: left;
   color: var(--color-text);
   background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-md);
   cursor: pointer;
+}
+.tile:hover:not(:disabled) {
+  border-color: var(--color-border);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-1);
 }
 .tile:disabled {
   cursor: default;
@@ -51,13 +62,9 @@
 .name {
   overflow-wrap: anywhere;
   font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
 }
 .missing {
   color: var(--color-text-muted);
   font-size: var(--font-size-small);
-}
-.actions {
-  display: flex;
-  gap: var(--space-2);
-  justify-content: flex-end;
 }

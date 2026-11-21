@@ -6,7 +6,8 @@
 // SP-8: a reference-library subject photo is first moved to the asset library (asset.update);
 // a refused move shows its message and places nothing.
 import { useState } from 'react'
-import { DialogFrame } from '@/renderer/ui/dialog-frame'
+import { BusySpinner, DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
+import layout from '@/renderer/ui/layout.module.css'
 import { PictureGrid } from './picture-grid'
 import { SubjectReferenceList } from './subject-reference-list'
 import { usePictures } from './use-pictures'
@@ -45,14 +46,17 @@ function ChooserBody(props: BodyProps) {
   return (
     <>
       {error && (
-        <p role="alert" className={styles.alert}>
+        <p role="alert" className={`${layout.notice} ${layout.danger} ${styles.line}`}>
           {error}
         </p>
       )}
       {pictures === null ? (
-        <p className={styles.status}>Reading the asset library…</p>
+        <p className={styles.busy}>
+          <BusySpinner />
+          Reading the asset library…
+        </p>
       ) : pictures.length === 0 ? (
-        <p className={styles.status}>No pictures in the asset library yet.</p>
+        <p className={`${layout.empty} ${styles.line}`}>No pictures in the asset library yet.</p>
       ) : (
         <PictureGrid
           projectId={props.projectId}
@@ -67,14 +71,14 @@ function ChooserBody(props: BodyProps) {
         disabled={busy}
         onChoose={(assetId) => void choose(assetId, true)}
       />
-      <div className={styles.actions}>
+      <DialogFoot>
         <button type="button" disabled={busy} onClick={() => void importPictures()}>
           Import pictures…
         </button>
         <button type="button" disabled={busy} onClick={props.onClose}>
           Cancel
         </button>
-      </div>
+      </DialogFoot>
     </>
   )
 }
@@ -87,6 +91,7 @@ export function PictureChooser(props: PictureChooserProps) {
       onClose={props.onClose}
       title={`Choose a picture for ${props.layerName}`}
       closable={!busy}
+      size="large"
     >
       {props.open && (
         <ChooserBody

@@ -4,6 +4,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import type { PickedPaths } from '@/shared/schemas/queries/dialog'
+import { BusySpinner, DialogFoot } from '@/renderer/ui/dialog-frame'
+import layout from '@/renderer/ui/layout.module.css'
 import { MissingRow } from './missing-row'
 import { useMissingAssets, type MissingAsset } from './use-missing-assets'
 import styles from './relink-dialog.module.css'
@@ -90,17 +92,20 @@ export function RelinkBody(props: RelinkBodyProps) {
         Also look for other missing files in the same folder
       </label>
       {message !== null && (
-        <p role="alert" className={styles.alert}>
+        <p role="alert" className={`${layout.notice} ${layout.danger} ${styles.line}`}>
           {message}
         </p>
       )}
       {status !== null && !status.refused && (
-        <p role="status" className={styles.status}>
+        <p role="status" className={`${layout.notice} ${layout.ok} ${styles.line}`}>
           {status.text}
         </p>
       )}
       {assets === null ? (
-        <p className={styles.muted}>Looking for missing files…</p>
+        <p className={styles.busy}>
+          <BusySpinner />
+          Looking for missing files…
+        </p>
       ) : assets.length === 0 ? (
         <p className={styles.status}>No file is missing.</p>
       ) : (
@@ -116,11 +121,11 @@ export function RelinkBody(props: RelinkBodyProps) {
           ))}
         </ul>
       )}
-      <div className={styles.actions}>
+      <DialogFoot>
         <button type="button" ref={closeButton} disabled={busy} onClick={props.onClose}>
           Close
         </button>
-      </div>
+      </DialogFoot>
     </>
   )
 }
