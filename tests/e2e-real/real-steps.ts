@@ -5,6 +5,7 @@ import path from 'node:path'
 import { expect, type ElectronApplication, type Page } from '@playwright/test'
 import type { Sandbox } from '../e2e/launch'
 import * as screens from '../e2e/screens'
+import { choosePictureStart } from '../e2e/video-screens'
 import { makeTestPicture } from '../comfy/test-picture'
 import { guardedStep } from './guard'
 import { checkPicture } from './pictures'
@@ -80,6 +81,21 @@ export async function addAndTickReference(app: ElectronApplication, box: Sandbox
     await expect(ticks).toHaveCount(files.length)
     await ticks.first().check()
   })
+}
+
+// SPEC 14 1.60 N-11: the video card's start, then the first given picture (or the test-made
+// one) added through its own "Add pictures" and chosen.
+export async function chooseVideoPicture(
+  app: ElectronApplication,
+  box: Sandbox,
+  page: Page,
+  start: string,
+): Promise<void> {
+  // Outside the guard, so a P-1 refusal shows its own fixed line; it names no path.
+  const first = referencePictures(box).slice(0, 1)
+  await guardedStep('Choose the start and add and choose the picture', () =>
+    choosePictureStart(app, page, start, first),
+  )
 }
 
 // Waits for the newest run to be done and its picture to load.
