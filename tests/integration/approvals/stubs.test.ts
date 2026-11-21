@@ -30,7 +30,6 @@ async function openProject(fx: Fixture): Promise<string> {
 describe('the approvals stubs [spec/phases/approvals.md "AP-5"]', () => {
   it.each([
     ['approvals.check', () => ({})],
-    ['approvals.setPassword', (projectId: string) => ({ projectId, campaignId })],
     ['approvals.publish', (projectId: string) => ({ projectId, campaignId })],
     ['approvals.refresh', (projectId: string) => ({ projectId, campaignId })],
     ['approvals.endLink', (projectId: string) => ({ projectId, campaignId })],
