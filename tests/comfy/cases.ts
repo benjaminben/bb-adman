@@ -20,6 +20,7 @@ import { fitSize } from '../../src/shared/comfy/fit-size'
 import type { Print } from './print'
 import { pictureToSend } from './given-picture'
 import { fieldNames, runGraph, type RunResult, type Timing } from './run-graph'
+import { checkClip } from './video-facts'
 
 export type CaseKit = {
   client: ComfyClient
@@ -97,10 +98,12 @@ const checkPicture = (kit: CaseKit) => (bytes: Uint8Array) => {
   return type === 'image/png' ? '.png' : '.jpg'
 }
 
-// A clip passes when it starts with an ftyp box; viewFile has already held it under the limit.
-function checkVideo(bytes: Uint8Array): string {
+// A clip passes when it starts with an ftyp box and checkMp4 accepts it (1.58 J-1); viewFile
+// has already held it under the limit.
+const checkVideo = (kit: CaseKit) => (bytes: Uint8Array) => {
   const box = Buffer.from(bytes.subarray(4, 8)).toString('latin1')
   if (box !== 'ftyp') throw new Error('The result does not start with an ftyp box')
+  checkClip(bytes, kit.print)
   return '.mp4'
 }
 
@@ -154,6 +157,6 @@ export async function videoCase(kit: CaseKit): Promise<CaseOutcome> {
   const { skip, version } = await missingFor(kit, spec)
   if (skip) return { skip }
   const values = { prompt: VIDEO_PROMPT, ...smallest(spec), frames: FRAMES }
-  await runAndReport(kit, spec, version, values, MAX_VIDEO_BYTES, checkVideo)
+  await runAndReport(kit, spec, version, values, MAX_VIDEO_BYTES, checkVideo(kit))
   return { done: true }
 }
