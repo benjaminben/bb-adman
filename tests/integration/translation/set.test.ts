@@ -36,13 +36,18 @@ describe('translation.set [P6-4, FR-200]', () => {
   })
 
   it("an agent's set on an approved translation leaves it proposed from the agent, never approved", async () => {
-    const layerId = bus.id('D1', key)
-    bus.setRow(layerId, { copy: 'Alt', translation_status: 'approved', translation_source: 'user' })
-    expect(await set(layerId, 'Neu', false, 'agent')).toMatchObject({ ok: true })
-    expect(bus.text(layerId)).toMatchObject({
-      translationStatus: 'proposed',
-      translationSource: 'agent',
-    })
+    const ids = [bus.id('D1', key), bus.id('D2', key)]
+    for (const id of ids) {
+      bus.setRow(id, { copy: 'Alt', translation_status: 'approved', translation_source: 'user' })
+    }
+    expect(await set(ids[0] as string, 'Neu', true, 'agent')).toMatchObject({ ok: true })
+    for (const id of ids) {
+      expect(bus.text(id)).toMatchObject({
+        copy: 'Neu',
+        translationStatus: 'proposed',
+        translationSource: 'agent',
+      })
+    }
     expect(bus.variant('D1').agentChangedAt).not.toBeNull()
   })
 
@@ -72,6 +77,21 @@ describe('translation.set [P6-4, FR-200]', () => {
       ok: false,
       error: { code: 'NOT_FOUND', message: 'That layer was not found.' },
     })
+  })
+
+  it.each([
+    ['a text over 5000 characters', { text: 'a'.repeat(5001) }],
+    ['a status', { translationStatus: 'approved' }],
+    ['a source', { translationSource: 'user' }],
+  ])('refuses %s in the input, as the agent, and writes nothing', async (_name, extra) => {
+    const layerId = bus.id('D1', key)
+    const before = bus.text(layerId)
+    const input = { layerId, text: 'Hallo', applyToSameLanguage: false, ...extra }
+    expect(await bus.agent('translation.set', input)).toMatchObject({
+      ok: false,
+      error: { code: 'INVALID_INPUT' },
+    })
+    expect(bus.text(layerId)).toEqual(before)
   })
 
   it('sets synced_revs.copy to the master copy counter on a linked layer only', async () => {

@@ -26,33 +26,17 @@ afterEach(() => {
 // A good input for each command, without projectId.
 const INPUTS: Record<string, object> = {
   'translation.propose': { provider: 'fake', variantIds: ['V1'] },
-  'translation.set': { layerId: 'L1', text: 'Hallo', applyToSameLanguage: false },
-  'translation.approve': { layerIds: ['L1'] },
   'translation.exportSheet': { campaignId: 'C1', filePath: '/nowhere/sheet.csv' },
   'translation.write': { jobId: 'J1', items: [{ key: 'headline', text: 'Hallo' }] },
-  'translation.restore': {
-    items: [
-      {
-        layerId: 'L1',
-        copy: 'Hallo',
-        translationStatus: 'approved',
-        translationSource: 'user',
-        syncedCopyRev: 0,
-      },
-    ],
-  },
   'check.run': { campaignId: 'C1' },
   'layer.setFonts': { items: [{ layerId: 'L1', fontAssetId: null }] },
 }
 const NAMES = Object.keys(INPUTS)
-const SYSTEM = ['translation.write', 'translation.restore']
+const SYSTEM = ['translation.write']
 const POLICY: Record<string, string> = {
   'translation.propose': 'deny',
-  'translation.set': 'allow',
-  'translation.approve': 'deny',
   'translation.exportSheet': 'deny',
   'translation.write': 'deny',
-  'translation.restore': 'deny',
   'check.run': 'allow',
   'layer.setFonts': 'allow',
 }
@@ -124,15 +108,6 @@ describe('the Phase 6 command stubs [P6-1]', () => {
     expect(await fx.agent(name, { projectId, ...INPUTS[name] })).toEqual({
       ok: false,
       error: { code: 'AGENT_DENIED', message: denialMessage(name) },
-    })
-  })
-
-  it('checks the input before the stub answers', async () => {
-    const { fx, projectId } = await open()
-    const bad = { projectId, layerId: 'L1', text: 'a'.repeat(5001), applyToSameLanguage: false }
-    expect(await fx.user('translation.set', bad)).toMatchObject({
-      ok: false,
-      error: { code: 'INVALID_INPUT' },
     })
   })
 
