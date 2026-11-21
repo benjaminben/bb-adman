@@ -94,7 +94,7 @@ describe('job.cancel [SPEC 4.2, 6.11.2]', () => {
     const x = fixture()
     const g = gate()
     x.f.body = async () => g.promise
-    const id = await x.start({ provider: 'no-cancel' })
+    const id = await x.start({ provider: 'no-cancel', kind: 'video_generation' })
     await waitFor(() => x.row(id)?.status === 'running')
     expect(await x.user('job.cancel', { projectId: x.projectId, jobId: id })).toMatchObject({
       ok: false,

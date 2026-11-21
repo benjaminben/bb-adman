@@ -95,7 +95,7 @@ describe('job.cancel in the runner [SPEC 6.11.2, FR-281]', () => {
     const x = fixture()
     const g = gate()
     x.f.body = async () => g.promise
-    const id = await x.start({ provider: 'no-cancel' })
+    const id = await x.start({ provider: 'no-cancel', kind: 'video_generation' })
     await waitFor(() => x.row(id)?.status === 'running')
     const error = await x.jobs.cancel(x.projectId, id).catch((e: unknown) => e)
     expect(error).toBeInstanceOf(AppError)

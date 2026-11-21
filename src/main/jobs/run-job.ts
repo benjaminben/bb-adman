@@ -76,8 +76,15 @@ function context(state: RunnerState, live: LiveJob): JobRunContext {
       const handle = deps.projects.get(live.projectId)
       if (live.ended || live.cancelAsked || !handle) throw new ProviderCancelled()
       // AR-2: an agent's run not yet sent goes out only while its tick is on. Off, it ends
-      // cancelled with no flag and nothing is sent.
-      if (live.startedBy === 'agent' && !live.sent && !agentRunAllowed(deps, live.providerId)) {
+      // cancelled with no flag and nothing is sent. FIX-E: a picture job is checked before
+      // every call; off after a send, no new call goes out and the calls in flight finish.
+      const checked = !live.sent || live.kind === 'image_generation'
+      if (live.startedBy === 'agent' && checked && !agentRunAllowed(deps, live.providerId)) {
+        if (live.sent) {
+          live.cancelAsked = true
+          writeRunning(state, live)
+          throw new ProviderCancelled()
+        }
         live.finish({ status: 'cancelled' })
         live.controller.abort()
         throw new ProviderCancelled()
