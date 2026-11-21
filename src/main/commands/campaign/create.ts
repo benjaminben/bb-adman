@@ -21,6 +21,7 @@ import {
   type CampaignCreateInput,
   type RuleSetValues,
 } from '../../../shared/schemas/commands/campaign'
+import type { CampaignCreated } from '../../../shared/schemas/commands/campaign-edit'
 import { AppError } from '../../../shared/schemas/result'
 
 const DEFAULT_DURATION_MS = 6000
@@ -167,8 +168,9 @@ export function campaignCreate(deps: Pick<CoreDeps, 'now'>) {
       }
       insertRuleSet(ctx, campaignId, values)
       const master = insertMaster(ctx, { campaignId, subjectIds, input }, now, values)
+      const data: CampaignCreated = { campaignId, ...master }
       return {
-        data: { campaignId, ...master },
+        data,
         log: { campaignId, variantId: master.variantId },
       }
     },

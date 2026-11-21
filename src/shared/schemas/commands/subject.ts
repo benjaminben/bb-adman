@@ -15,6 +15,9 @@ export const subjectCreateInput = projectScoped.extend({
 })
 export type SubjectCreateInput = z.infer<typeof subjectCreateInput>
 
+// The subject.create reply (SPEC 14 1.42 C4-2).
+export type SubjectCreated = { subjectId: string }
+
 export const subjectUpdateInput = projectScoped.extend({
   subjectId: z.string().min(1),
   name: name.optional(),

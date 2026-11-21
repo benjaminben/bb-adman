@@ -24,3 +24,6 @@ export type CampaignUpdateInput = z.infer<typeof campaignUpdateInput>
 
 export const campaignDeleteInput = projectScoped.extend({ campaignId: z.string().min(1) })
 export type CampaignDeleteInput = z.infer<typeof campaignDeleteInput>
+
+// The campaign.create reply (SPEC 14 1.42 C4-2).
+export type CampaignCreated = { campaignId: string; directionId: string; variantId: string }
