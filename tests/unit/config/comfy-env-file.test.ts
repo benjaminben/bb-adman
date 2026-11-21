@@ -20,6 +20,15 @@ describe('comfyEnvFrom [SPEC 6.10.12, 13 1.24]', () => {
     expect(comfyEnvFrom(text, {})).toEqual({})
   })
 
+  it('never takes the Flux or MOSS switch or the picture path from the file [1.53 G-12, 1.54 P-1]', () => {
+    const text = [
+      'ADMAN_COMFY_FLUX=1',
+      'ADMAN_COMFY_MOSS=1',
+      'ADMAN_COMFY_PICTURE=/made/up/picture.png',
+    ].join('\n')
+    expect(comfyEnvFrom(text, {})).toEqual({})
+  })
+
   it('a value set in the terminal wins', () => {
     const picked = comfyEnvFrom('COMFY_BASE_URL=http://file.test\n', {
       COMFY_BASE_URL: 'http://terminal.test',
