@@ -5,6 +5,7 @@ import type Database from 'better-sqlite3'
 import { defineCommand } from '../../../src/main/commands/types'
 import { AppError } from '../../../src/shared/schemas/result'
 import { makeMultiBus, refusableSet, TEST_SCOPE } from './multi-bus'
+import { VALID_BRIEF } from '../row-fixtures'
 
 let fixture: ReturnType<typeof makeMultiBus> | undefined
 afterEach(() => fixture?.cleanup())
@@ -93,7 +94,7 @@ const setTitle = defineCommand({
 function seedVariant(db: Database.Database): void {
   db.exec(`
     INSERT INTO campaign (id, name, region, audience, message, primary_language, languages, sizes, template_id, brief, created_by, created_at)
-      VALUES ('c1', 'C', 'US', 'all', 'Hello', 'en', '["en"]', '[]', 't', '{}', 'user', 'x');
+      VALUES ('c1', 'C', 'US', 'all', 'Hello', 'en', '["en"]', '[]', 't', '${JSON.stringify(VALID_BRIEF)}', 'user', 'x');
     INSERT INTO direction (id, campaign_id, name, master_variant_id, sort) VALUES ('d1', 'c1', 'D', '${VARIANT_ID}', 0);
     INSERT INTO variant (id, direction_id, title, width, height, size_label, language, format, duration_ms, created_by, created_at)
       VALUES ('${VARIANT_ID}', 'd1', 'Original', 1080, 1080, '1:1', 'en', 'image', 0, 'user', 'x');

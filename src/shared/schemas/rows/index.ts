@@ -3,7 +3,7 @@
 import type { z } from 'zod'
 import type { TableName } from './keys'
 import { AssetRow } from './asset'
-import { CampaignSubjectRow } from './campaign'
+import { CampaignRow, CampaignSubjectRow } from './campaign'
 import { DirectionRow } from './direction'
 import { JobRow } from './job'
 import { LayerRow } from './layer'
@@ -12,12 +12,11 @@ import { RuleSetRow } from './rule-set'
 import { SubjectRow } from './subject'
 import { VariantRow, VariantSubjectRow } from './variant'
 
-// `campaign` (CampaignRow) is not checked yet: existing test rows store `brief` as `{}`,
-// which Brief refuses. Waiting for an architect ruling.
 export const ROW_SCHEMAS: Partial<Record<TableName, z.ZodType<Record<string, unknown>>>> = {
   project_meta: ProjectMetaRow,
   subject: SubjectRow,
   asset: AssetRow,
+  campaign: CampaignRow,
   campaign_subject: CampaignSubjectRow,
   rule_set: RuleSetRow,
   direction: DirectionRow,

@@ -8,7 +8,7 @@ import {
   type ProjectHandle,
 } from '../../../src/main/db/project-file'
 import { readWireRow, readWireRows } from '../../../src/main/db/rows'
-import { insertAsset, insertCampaign } from '../row-fixtures'
+import { insertAsset, insertCampaign, VALID_BRIEF } from '../row-fixtures'
 
 let dir: string
 let project: ProjectHandle
@@ -50,7 +50,7 @@ describe('stored row to wire row [SPEC 4.4]', () => {
     expect(readWireRow(db, 'campaign', { id: 'c1' })).toMatchObject({
       languages: ['en-US'],
       sizes: [],
-      brief: {},
+      brief: VALID_BRIEF,
     })
   })
 
@@ -75,6 +75,15 @@ describe('stored row to wire row [SPEC 4.4]', () => {
     const db = setup()
     insertCampaign(db, 'c1', { languages: 'not json' })
     expect(() => readWireRow(db, 'campaign', { id: 'c1' })).toThrow()
+  })
+
+  it('refuses a campaign row whose brief is not a Brief [SPEC 6.1, 14 step 0 R3]', () => {
+    const db = setup()
+    insertCampaign(db, 'c1')
+    insertCampaign(db, 'c2')
+    db.prepare("UPDATE campaign SET brief = '{}' WHERE id = 'c2'").run()
+    expect(readWireRows(db, 'campaign').map((r) => r.id)).toEqual(['c1'])
+    expect(() => readWireRow(db, 'campaign', { id: 'c2' })).toThrow(/campaign row/)
   })
 
   it('reads every row of a table in wire form', () => {

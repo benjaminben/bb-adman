@@ -1,6 +1,15 @@
 // Inserts whole rows into a project file for tests. Not a test file itself.
 import type Database from 'better-sqlite3'
 
+// SPEC 6.1: the stored brief is a Brief (SPEC 14 step 0 remainder R3).
+export const VALID_BRIEF = {
+  campaignName: 'Summer',
+  region: 'US',
+  audience: 'All',
+  message: 'Hello',
+  subjects: [{ name: 'Bottle' }],
+}
+
 export function insertCampaign(
   db: Database.Database,
   id: string,
@@ -9,8 +18,8 @@ export function insertCampaign(
   db.prepare(
     `INSERT INTO campaign (id, name, region, audience, message, primary_language, languages,
       sizes, template_id, brief, created_by, created_at)
-     VALUES (?, 'Summer', 'US', 'All', 'Hello', 'en-US', ?, '[]', 't1', '{}', 'user', 'x')`,
-  ).run(id, over.languages ?? '["en-US"]')
+     VALUES (?, 'Summer', 'US', 'All', 'Hello', 'en-US', ?, '[]', 't1', ?, 'user', 'x')`,
+  ).run(id, over.languages ?? '["en-US"]', JSON.stringify(VALID_BRIEF))
 }
 
 export function insertAsset(
