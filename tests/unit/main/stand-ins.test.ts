@@ -15,6 +15,7 @@ describe('JobService stand-in [SPEC 14, step 0]', () => {
         provider: 'fake',
         model: 'm',
         request: {},
+        startedBy: 'user',
       }),
     ).toThrow()
     expect(jobs.activeCount('p1')).toBe(0)

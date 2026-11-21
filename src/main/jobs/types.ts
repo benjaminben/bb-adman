@@ -16,6 +16,8 @@ export type EnqueueRequest = {
   provider: string
   model: string
   request: unknown // JSON, enough to retry
+  // [1.35] SPEC 6.11.1: who started the run. Required: every caller says.
+  startedBy: 'user' | 'agent'
 }
 
 export type JobService = {
