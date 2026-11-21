@@ -141,6 +141,17 @@ export function readWireRows(
   return rows
 }
 
+// SPEC 4.4 [1.38]: the text to store for a JSON column, or null for null. Writes nothing.
+export function storedJson(table: TableName, field: string, value: unknown): string | null {
+  if (!(JSON_COLUMNS[table] ?? []).includes(field)) {
+    throw new Error(`${table}.${field} is not a JSON column`)
+  }
+  if (value === null || value === undefined) return null
+  const text: unknown = JSON.stringify(value)
+  if (typeof text !== 'string') throw new Error(`${table}.${field} has no JSON text`)
+  return text
+}
+
 // SPEC 3.3, 4.4: the raw provider text of a failed job, for main-process code only (the log
 // and the Phase 8 report). Null when the job is not there or has no detail.
 export function readJobErrorDetail(db: Database.Database, jobId: string): string | null {
