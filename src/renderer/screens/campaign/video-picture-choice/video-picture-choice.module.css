@@ -1,0 +1,22 @@
+/* app-style */
+/* The pictures to start a video from: one row each, the chosen one with a spot colour edge. */
+.pictures {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.picture {
+  flex-wrap: wrap;
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+.picture:has(input:checked) {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.thumb {
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--canvas-backdrop);
+}

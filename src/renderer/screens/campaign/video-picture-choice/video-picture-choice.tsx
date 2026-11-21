@@ -15,6 +15,7 @@ import {
 import { photoOfLine, subjectPhotoIds } from '@/renderer/ui/reference-picker/reference-rows'
 import { PICTURE_HINT } from '@/renderer/screens/campaign/video-start'
 import layout from '@/renderer/ui/layout.module.css'
+import styles from './video-picture-choice.module.css'
 
 const usable = (rows: Reference[], id: string | null): boolean =>
   rows.some((a) => a.id === id && whyNot(a) === null)
@@ -60,13 +61,13 @@ export function VideoPictureChoice(props: {
         <p className={layout.muted}>No reference pictures in this project yet.</p>
       )}
       {list !== null && list.length > 0 && (
-        <ul className={layout.list}>
+        <ul className={`${layout.list} ${styles.pictures}`}>
           {list.map((asset, i) => {
             const reason = whyNot(asset)
             const reasonId = `${baseId}-why-${i}`
             const photoOf = photoOfLine(asset)
             return (
-              <li key={asset.id} className={layout.row}>
+              <li key={asset.id} className={`${layout.row} ${styles.picture}`}>
                 <label className={layout.row}>
                   <input
                     type="radio"
@@ -76,7 +77,13 @@ export function VideoPictureChoice(props: {
                     aria-describedby={reason === null ? undefined : reasonId}
                     onChange={() => onChoose(asset.id)}
                   />
-                  <img src={assetUrl(projectId, asset.id)} alt="" width={48} height={48} />
+                  <img
+                    className={styles.thumb}
+                    src={assetUrl(projectId, asset.id)}
+                    alt=""
+                    width={48}
+                    height={48}
+                  />
                   {asset.displayName}
                 </label>
                 {photoOf !== null && <span className={layout.muted}>{photoOf}</span>}

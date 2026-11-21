@@ -16,6 +16,7 @@ import { VideoResult } from '@/renderer/screens/campaign/video-result'
 import { cancelShown } from '@/renderer/ui/cancel-shown'
 import { useNow, videoRunningText } from './video-status'
 import layout from '@/renderer/ui/layout.module.css'
+import styles from './run-row.module.css'
 
 // What a provider reports while it works (SPEC 6.11.1 [1.38]): read from `result` only when
 // it is there and of the right type.
@@ -77,15 +78,16 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
   // An unknown provider is treated as paid, so a retry never skips the confirm.
   const paid = provider?.local !== true
   return (
-    <li className={layout.card}>
-      <div className={layout.row}>
-        <span>{label}</span>
+    <li className={styles.row}>
+      <div className={`${layout.row} ${styles.head}`}>
+        <span className={styles.provider}>{label}</span>
         {video && <span>Video</span>}
         <span>{statusText}</span>
         {detail && <span className={layout.muted}>{detail}</span>}
         {cancelShown(row, provider) && (
           <button
             type="button"
+            className={layout.small}
             onClick={() => void command('job.cancel', { projectId, jobId: row.id })}
           >
             Cancel
@@ -94,6 +96,7 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
         {ended && !asking && (
           <button
             type="button"
+            className={layout.small}
             disabled={sending}
             onClick={() => (paid ? setAsking(true) : void retry())}
           >
@@ -101,7 +104,9 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
           </button>
         )}
       </div>
-      {row.startedBy === 'agent' && <p className={layout.muted}>Started by an agent</p>}
+      {row.startedBy === 'agent' && (
+        <p className={`${layout.muted} ${styles.agent}`}>Started by an agent</p>
+      )}
       {row.status === 'failed' && (
         <RunFailure row={row} projectId={projectId} provider={provider} providerLabel={label} />
       )}

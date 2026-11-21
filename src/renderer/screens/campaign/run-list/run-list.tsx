@@ -3,6 +3,7 @@ import { useStore } from 'zustand'
 import type { JobStore } from '@/renderer/stores/job-store'
 import { RunRow } from '@/renderer/screens/campaign/run-row'
 import layout from '@/renderer/ui/layout.module.css'
+import styles from './run-list.module.css'
 
 export function RunList(props: { projectId: string; store: JobStore }) {
   const rows = useStore(props.store, (s) => s.rows)
@@ -12,7 +13,7 @@ export function RunList(props: { projectId: string; store: JobStore }) {
       {rows.length === 0 ? (
         <p className={layout.muted}>No runs yet.</p>
       ) : (
-        <ul className={layout.list} aria-label="Runs">
+        <ul className={`${layout.list} ${styles.rows}`} aria-label="Runs">
           {rows.map((row) => (
             <RunRow key={row.id} row={row} projectId={props.projectId} store={props.store} />
           ))}

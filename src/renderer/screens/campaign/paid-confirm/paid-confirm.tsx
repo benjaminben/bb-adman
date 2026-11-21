@@ -1,6 +1,8 @@
 // The confirm step for a paid provider (SPEC 14 1.41, "A paid run starts only on the user's
 // own confirm"): one line with Confirm and Cancel. Nothing is sent before Confirm.
+import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
+import styles from './paid-confirm.module.css'
 
 export function paidLine(count: number | null, providerLabel: string, references = 0): string {
   // A run whose stored request cannot be read gives no number rather than a guessed one.
@@ -18,8 +20,11 @@ export function PaidConfirm(props: {
   onCancel: () => void
 }) {
   return (
-    <div className={layout.row}>
-      <span>{paidLine(props.count, props.providerLabel, props.references)}</span>
+    <div className={`${layout.notice} ${layout.info} ${styles.line}`}>
+      <Icon name="info" />
+      <span className={styles.text}>
+        {paidLine(props.count, props.providerLabel, props.references)}
+      </span>
       <button type="button" className={layout.primary} onClick={props.onConfirm}>
         Confirm
       </button>
