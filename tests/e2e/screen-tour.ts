@@ -68,7 +68,7 @@ export async function startTour(app: ElectronApplication, page: Page, box: Sandb
 
   const close = () => page.getByRole('button', { name: 'Close Gamma' }).click()
   await close()
-  await expect(page.getByRole('button', { name: 'Gamma' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Gamma', exact: true })).toHaveCount(0)
   await screens.answerOpenDialog(app, [file])
   await page.getByRole('button', { name: 'Open project…' }).click()
   await expect(page.getByRole('heading', { name: 'Gamma', level: 1 })).toBeVisible()

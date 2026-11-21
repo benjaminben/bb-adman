@@ -54,7 +54,7 @@ test('Phase 1: create, reopen from the command line, tabs, keys', async () => {
   const again = await launch(box, [path.join(box.projects, 'Alpha.adman')])
   const page2 = await again.firstWindow()
   await expect(page2.getByRole('heading', { name: 'Alpha' })).toBeVisible()
-  await expect(page2.getByRole('button', { name: 'Alpha' })).toHaveAttribute(
+  await expect(page2.getByRole('button', { name: 'Alpha', exact: true })).toHaveAttribute(
     'aria-haspopup',
     'menu',
   )
