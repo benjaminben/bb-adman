@@ -1,9 +1,6 @@
 // The translation panel's words and lists (spec/phases/phase-06.md, design addition 8), worked
 // out from translation.forCampaign's rows alone. Pure. Every text here is drawn as React text.
-import type {
-  TranslationForCampaign,
-  TranslationRow,
-} from '@/shared/schemas/queries/translation'
+import type { TranslationForCampaign, TranslationRow } from '@/shared/schemas/queries/translation'
 
 export type LanguageGroup = { language: string; rows: TranslationRow[] }
 export type ApproveLayer = { layerId: string; copyRev: number }

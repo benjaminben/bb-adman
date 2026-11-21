@@ -31,9 +31,9 @@ describe('translation words [P6-12]', () => {
   })
 
   it('names a row by title, size and layer', () => {
-    expect(rowLine(row('L1', { title: 'Morning', sizeLabel: 'Story', layerName: 'Headline' }))).toBe(
-      'Morning · Story · Headline',
-    )
+    expect(
+      rowLine(row('L1', { title: 'Morning', sizeLabel: 'Story', layerName: 'Headline' })),
+    ).toBe('Morning · Story · Headline')
   })
 
   it('names a language in words, and falls back to its code', () => {

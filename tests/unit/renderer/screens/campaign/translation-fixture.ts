@@ -1,10 +1,10 @@
 // Rows of translation.forCampaign for the translation panel's tests. Made-up words only.
-import type {
-  TranslationForCampaign,
-  TranslationRow,
-} from '@/shared/schemas/queries/translation'
+import type { TranslationForCampaign, TranslationRow } from '@/shared/schemas/queries/translation'
 
-export function translationRow(layerId: string, over: Partial<TranslationRow> = {}): TranslationRow {
+export function translationRow(
+  layerId: string,
+  over: Partial<TranslationRow> = {},
+): TranslationRow {
   return {
     directionId: 'D1',
     variantId: `V-${layerId}`,
