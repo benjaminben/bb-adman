@@ -145,7 +145,12 @@ describe('a closing project starts no job [SPEC 6.11.2 1.40, 14 1.40 AA2]', () =
 
   it('a close that returned leaves the file free to run jobs when opened again', async () => {
     const x = fixture()
+    const g = gate()
+    x.f.body = async () => g.promise
+    await running(x, { provider: 'no-cancel' })
     expect((await close(x)).ok).toBe(true)
+    g.open()
+    x.f.body = async () => ({ done: true })
     const again = openProjectFile({ filePath: x.project.filePath, appVersion: '0.1.0' })
     x.projects.add(again)
     try {
