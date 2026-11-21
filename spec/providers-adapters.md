@@ -4,7 +4,7 @@ The adapters for the outside services other than ComfyUI and storage. Read with 
 
 ## Gemini (image, layout, text)
 
-Built: picture generation with reference pictures (`ImageProvider.generate`), layout, extract brief and copy options. Not built: `extend` (Phase 5), translate (Phase 6). Files: `src/main/providers/gemini/` (`index.ts`, `image.ts`, `layout.ts`, `text.ts`, `json-call.ts`, `prompts.ts`, `failure.ts`, `pinned-origin.ts`, `aspect-ratio.ts`).
+Built: picture generation with reference pictures (`ImageProvider.generate`), layout, extract brief, copy options, `extend` (P5-6; its one live run is P5-19's) and translate (P6-5; its one live run is P6-17's). Files: `src/main/providers/gemini/` (`index.ts`, `image.ts`, `layout.ts`, `text.ts`, `json-call.ts`, `prompts.ts`, `failure.ts`, `pinned-origin.ts`, `aspect-ratio.ts`).
 
 **Direction:** outbound. **Protocol:** HTTPS through `@google/genai` (exact version 3.6.1). **Authentication:** API key, secret `gemini.apiKey`. [REQ: FR-060–FR-069, FR-022, FR-045, FR-101, IR-002]
 
@@ -19,7 +19,7 @@ Built: picture generation with reference pictures (`ImageProvider.generate`), la
 
 - The image model ID and API version `v1` are proven: live runs succeeded with them, one from a prompt and one with a product photo as reference (a 1024 × 1024 JPEG came back). The path through the app's screens is not yet proven by a live run.
 - The layout and text model ID `gemini-3.5-flash-lite` is proven: layout, extract brief and copy options each passed one live run with it.
-- `gemini/index.ts` exports `image`, `layout` and `text`. The unbuilt `extend` throws `ProviderFailure` `{ kind: 'other', detail: 'Image extend is not built yet' }`. Gemini never does video: `adapterFor(deps, 'gemini', 'video')` throws `INVALID_INPUT` with `details = { provider: 'gemini', job: 'video' }`.
+- `gemini/index.ts` exports `image`, `layout` and `text`. Gemini never does video: `adapterFor(deps, 'gemini', 'video')` throws `INVALID_INPUT` with `details = { provider: 'gemini', job: 'video' }`.
 
 ### The pinned client (built)
 
@@ -65,7 +65,7 @@ Built: picture generation with reference pictures (`ImageProvider.generate`), la
 
 ### Picture extend
 
-Not built (Phase 5, P5-6). Used by the `generative_fill` job (`spec/links-and-sync.md`, "Generative fill"). [REQ: FR-076]
+Built (P5-6), tested on recorded answers; the live test `tests/live/gemini-extend.live.test.ts` has not been run (P5-19 runs it once). Used by the `generative_fill` job (`spec/links-and-sync.md`, "Generative fill"). [REQ: FR-076]
 
 - **No canvas** (A-128). The app draws no canvas and moves no pixels. `extend({ image, placement, width, height, prompt })` sends one `generateContent` call through the pinned client: `parts` = the prompt text, then the picture as one `inlineData` PNG part; `config.responseModalities = ['IMAGE']`; `config.imageConfig.aspectRatio = nearestAspectRatio(width, height)`. `placement` is not sent: the fill dialog always places the picture centred (`scale`), and the prompt asks for the scene to continue outward.
 - The prompt is the job's stored prompt (`FILL_PROMPT` with the "keep printing" ending, since one picture is sent).
@@ -90,13 +90,13 @@ Built for pictures; the rest not built (Phases 4 to 6). The two-ending rule belo
 
 ### Layout and text (built)
 
-Built (Phase 4, slice P4-4); each of layout, extract brief and copy options passed one live run. Not built: translate (Phase 6), extend (Phase 5). Interfaces in `spec/ai-jobs.md`, "Provider interfaces"; every adapter rule holds. Files: `gemini/layout.ts`, `gemini/text.ts`, `gemini/json-call.ts` (one `generateContent` call with a JSON answer, shared by both), `gemini/prompts.ts` (the fixed instruction texts). `gemini/index.ts` exports `layout` and `text`.
+Built (Phase 4, slice P4-4); each of layout, extract brief and copy options passed one live run. Translate is built (P6-5) and not yet run live. Interfaces in `spec/ai-jobs.md`, "Provider interfaces"; every adapter rule holds. Files: `gemini/layout.ts`, `gemini/text.ts`, `gemini/json-call.ts` (one `generateContent` call with a JSON answer, shared by both), `gemini/prompts.ts` (the fixed instruction texts). `gemini/index.ts` exports `layout` and `text`.
 
 - **One JSON call.** Through the same pinned client. `config.responseMimeType = 'application/json'` and `config.responseSchema` for the answer's shape. `TEXT_TIMEOUT_MS = 60_000` per call, raced by the adapter's own abort timer, and the run's `signal` aborts it too (`ProviderCancelled`). The first text part of the first candidate is parsed with `JSON.parse` and checked with the answer's Zod schema; anything else is `other`, "Answer is not the asked JSON". Error mapping as in the table above, with `timeout` at 60 s.
 - **Layout** (`propose`). `parts` = the instruction text, then the background as one `inlineData` PNG part. The instruction states the canvas size in pixels, lists each item as `{ slot, text }` and the palette and fonts, and asks for one box per item in the canvas's pixels: `slot`, `x`, `y`, `width`, `height`, `fontSize`, `color` (`#RRGGBB`), `align`; text kept clear of faces and products, inside the canvas, large enough to read. Answer schema `{ boxes: LayoutBox[] }`. The adapter returns the boxes as parsed; the job clamps them (`spec/ai-jobs.md`). Text is always drawn by the app, never by the provider [REQ: FR-061].
 - **Extract brief** (`extractBrief`). `parts` = the instruction, then the brief text after a fixed line "Brief:". The instruction asks to fill only the listed fields, only from what the brief says, without translating, and to leave a field out when the brief does not give it. Answer schema: the `BriefDraft` fields, every one optional. The adapter returns `briefDraftFrom(parsed)`'s draft.
 - **Copy options** (`copyOptions`). The instruction names the role ("a call to action" or "a line of ad copy"), the language, `count`, `maxChars`, and the brief's message, audience, region, tone, offer and call to action. Answer schema `{ options: string[] }`.
-- **Translate** stays a stub: `ProviderFailure` `other`, "Translate is not built yet" (Phase 6). The translation prompt will include the region and audience as context [REQ: FR-101].
+- **Translate** (built, P6-5): one `jsonCall` with `translateInstruction` from `prompts.ts`; the prompt includes the region and audience as context [REQ: FR-101]. The details are in `spec/phases/phase-06-slices.md`, "P6-5".
 - **Extend:** see "Picture extend" above (Phase 5).
 - **Tests.** Recorded answers, as for pictures: `layout.test.ts` (parts and order, the PNG part, the JSON config, a good answer, a non-JSON answer, a JSON answer of the wrong shape), `text.test.ts` (extract brief, copy options, the same three answers), `text-errors.test.ts` (401, 400 `API_KEY_INVALID`, 429, a safety block, no answer in 60 s, a marked network error), and `environment.test.ts` extended to a text call. Live, one each: `tests/live/gemini-layout.live.test.ts`, `gemini-brief.live.test.ts`, `gemini-copy.live.test.ts`; under D-085 the developer runs each once with the smallest input and reports the model ID, time and answer size, never the answer text.
 - **Model IDs** (OI-10). `defaultModels.layout` and `defaultModels.text` in `registry.ts` are `gemini-3.5-flash-lite`, a current model that takes a picture and gives JSON. The live runs proved it.

@@ -228,7 +228,7 @@ The request is `{ sourceAssetId }`, the layer's picture at that moment. Enqueued
 - **Layout** (`fake/layout.ts`): for each item, the box and text style of the default layout (`SLOT_LAYOUTS` in `src/shared/config/default-layout.ts`) for the slot named like the item's key, placed by the shared box rules (`frameOf`, `geometryOf` in `src/shared/templates/layout-rules.ts`); else `OTHER_COPY_BOX`, placed one box-height lower for each earlier such item and kept inside the canvas. The font size is the style's largest, `fontSizeOfSmaller × S`, rounded. Colour the first palette colour, else `#FFFFFF`; `align` from the style.
 - **Extract brief:** reads lines of the form `Label: value`, labels in any letter case: "Campaign name", "Region", "Audience", "Message", "Offer", "Call to action", "Tone", "Languages" and "Sizes" (comma lists), and "Subject" (repeatable; `Name - description`). Other lines are ignored. So a test's Markdown brief gives a known draft.
 - **Copy options:** the first `count` of a fixed list of eight short English lines per role (for `call_to_action`: "Shop the collection", "Find your fit", …), each within `maxChars`.
-- **Translate:** `ProviderFailure` `other`, "Translate is not built yet" (Phase 6).
+- **Translate** (built, P6-5): each text comes back as `[{to}] {text}`, so a test knows the answer.
 - **Cut-out:** a PNG of the input's pixel size (from `pictureSize`), colour type 6: grey and solid in the middle half, see-through elsewhere. `png.ts` gains the alpha form.
 
 ## Security notes
