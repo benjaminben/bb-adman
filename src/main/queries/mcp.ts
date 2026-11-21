@@ -23,7 +23,8 @@ export function mcpGetConnectInfo(deps: Deps, mcp: McpState): QueryFn {
       ? `claude mcp add --transport http adman ${address} --header "Authorization: Bearer ${token}"`
       : null
     const running = mcp.running()
-    return { enabled, running, problem: mcp.problem(), address, port, token, claudeCode }
+    const problem = mcp.problem()
+    return { enabled, running, problem, address, port, token, claudeCode, claudeDesktop: null }
   }
 }
 

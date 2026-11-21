@@ -10,7 +10,14 @@ let f: Fixture | undefined
 afterEach(() => f?.cleanup())
 
 // MCP-G: the commands of the start and cancel tools, tick under the agent-run gate.
-const TICK_TARGETS = ['generation.runImages', 'generation.startVideo', 'job.cancel']
+const TICK_TARGETS = [
+  'generation.runImages',
+  'generation.startVideo',
+  'job.cancel',
+  'generation.proposeLayout',
+  'generation.copyOptions',
+  'generation.cutOut',
+]
 
 describe('the fixed MCP tool table [SPEC 4.5; 14 1.56 MCP-B]', () => {
   it('maps each tool to one command or query that exists in core', () => {
@@ -49,6 +56,10 @@ describe('the fixed MCP tool table [SPEC 4.5; 14 1.56 MCP-B]', () => {
       'template.slots',
       'job.get',
       'job.list',
+      'subject.list',
+      'variant.get',
+      'variant.render',
+      'check.results',
     ]
     for (const t of MCP_TOOLS.filter((x) => x.kind === 'query')) {
       expect(allowed, t.name).toContain(t.target)

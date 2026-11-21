@@ -16,4 +16,7 @@ export type ConnectInfo = {
   token: string | null
   // The Claude Code setup line of 6.8, or null while there is no token.
   claudeCode: string | null
+  // The Claude Desktop config text through the bridge (A-245); no token. Null while the setting
+  // is off, and until P10-9 builds the bridge.
+  claudeDesktop: string | null
 }

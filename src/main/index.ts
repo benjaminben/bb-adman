@@ -148,8 +148,6 @@ function start(): void {
     crypto: safeStorageCrypto,
     env: process.env,
     emit: send,
-    // The ask flow arrives with the MCP server (Phase 10). Until then nothing asks.
-    askPermission: async () => false,
     openExternal: httpsOnly((url) => shell.openExternal(url)),
     devTools: devToolsEnabled(app.isPackaged, process.env),
     toPng: pngConverter((buffer) => nativeImage.createFromBuffer(buffer), turnImage),

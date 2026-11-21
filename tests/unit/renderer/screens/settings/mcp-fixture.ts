@@ -20,6 +20,7 @@ export function connect(overrides: Partial<ConnectInfo> = {}): ConnectInfo {
     port: PORT,
     token: TOKEN,
     claudeCode: line(),
+    claudeDesktop: null,
     ...overrides,
   }
 }

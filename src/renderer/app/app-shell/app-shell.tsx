@@ -7,10 +7,12 @@ import * as Tabs from '@radix-ui/react-tabs'
 import { useEffect, type ReactNode } from 'react'
 import { useApp, EMPTY } from '@/renderer/app/app-context'
 import { ActivityButton } from '@/renderer/app/activity-button'
+import { AgentActivity } from '@/renderer/app/agent-activity'
 import { ActivityPanel, ShownActivityScope } from '@/renderer/app/activity-panel'
 import { CampaignTabs, useCampaignTab, useTabKeys } from '@/renderer/app/campaign-tabs'
 import { ErrorBanner } from '@/renderer/app/error-banner'
 import { NavScope, useNav } from '@/renderer/app/nav-context'
+import { PermissionDialog } from '@/renderer/app/permission-dialog'
 import { ProjectSwitcher } from '@/renderer/app/project-switcher'
 import { StartScreen } from '@/renderer/screens/start/start-screen'
 import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
@@ -117,6 +119,8 @@ export function AppShell() {
       <KeyDialog />
       <AddressDialog />
       <LicenceDialog />
+      <PermissionDialog />
+      <AgentActivity />
     </div>
   )
 }

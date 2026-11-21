@@ -21,6 +21,7 @@ import { projectQueries } from './project'
 import { projectListOpenQueries } from './project-list-open'
 import { renderQueries } from './render'
 import { reportQueries } from './report'
+import { subjectListQueries } from './subject-list'
 import { syncQueries } from './sync'
 import { templateQueries } from './template'
 import { translationQueries } from './translation'
@@ -52,6 +53,7 @@ export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, Query
     ...projectListOpenQueries(deps),
     ...renderQueries(deps),
     ...reportQueries(deps),
+    ...subjectListQueries(deps),
     ...syncQueries(deps),
     ...templateQueries(deps),
     ...translationQueries(deps),

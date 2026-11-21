@@ -24,6 +24,7 @@ describe('mcp.getConnectInfo [SPEC 4.3, 6.8; FR-191, D-014]', () => {
       port: f.port,
       token: null,
       claudeCode: null,
+      claudeDesktop: null,
     })
   })
 

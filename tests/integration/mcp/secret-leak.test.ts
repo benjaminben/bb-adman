@@ -117,6 +117,9 @@ describe('No MCP tool reply, log line or project file contains a secret value [S
 const COMFY = 'http://made-up-comfy-host.example:8188'
 // AP-6 (spec/approvals.md "Named tests"): the approvals address; its key is approvals.apiKey above.
 const APPROVALS = 'https://made-up-approvals-host.example.com'
+// P10-1: a stored approvals link, its gallery slug and a reviewer's sign-off.
+const SLUG = 'made-up-gallery-slug'
+const REVIEWER = 'made-up-reviewer@example.com'
 
 async function plantedProject(fx: McpFixture) {
   for (const name of USER_SECRET_NAMES) {
@@ -140,7 +143,25 @@ async function plantedProject(fx: McpFixture) {
         'made-up-folder/made-up-leak-picture.png', 'image/png', 1, 1, 'h', '2026-01-01T00:00:00Z')`,
     )
     .run(abs)
+  plantApprovals(fx, projectId, campaignId)
   return { projectId, campaignId }
+}
+
+function plantApprovals(fx: McpFixture, projectId: string, campaignId: string) {
+  const db = fx.core.projects.requireOpen(projectId).db
+  const { id } = db
+    .prepare(
+      'SELECT v.id FROM variant v JOIN direction d ON d.id = v.direction_id WHERE d.campaign_id = ?',
+    )
+    .get(campaignId) as { id: string }
+  db.prepare(
+    `INSERT INTO approval_link (campaign_id, slug, state, created_at, published_at)
+     VALUES (?, ?, 'live', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')`,
+  ).run(campaignId, SLUG)
+  db.prepare(
+    `INSERT INTO approval_signoff (id, campaign_id, variant_id, version, email, signed_at)
+     VALUES ('s1', ?, ?, 1, ?, '2026-01-02T00:00:00Z')`,
+  ).run(campaignId, id, REVIEWER)
 }
 
 describe('No MCP tool reply holds a secret, the token, the ComfyUI address or a path [SPEC 10.1; 4.5; FR-198]', () => {
@@ -160,6 +181,8 @@ describe('No MCP tool reply holds a secret, the token, the ComfyUI address or a 
       ['the ComfyUI host', 'made-up-comfy-host.example'],
       ['the approvals address', APPROVALS],
       ['the approvals host', 'made-up-approvals-host.example.com'],
+      ['the approvals gallery slug', SLUG],
+      ['a reviewer email', REVIEWER],
     ]
     const places: Array<[string, string]> = [
       ['tool reply', text],

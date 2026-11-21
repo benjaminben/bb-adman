@@ -30,6 +30,18 @@ export type EventMap = {
   'thumbnail.changed': { projectId: string; variantId: string }
   // spec/approvals.md: the approvals tables changed. App window only; no email, slug or address.
   'approvals.changed': { projectId: string; campaignId: string }
+  // spec/phases/phase-10.md, ask flow (A-238): an agent waits for the user's answer. The action
+  // and target are lines for the dialog; no ID of the target, no input, no path. agentClient is
+  // untrusted text from the MCP client, drawn as text only. expiresAt is an ISO time.
+  'agent.permissionRequested': {
+    requestId: string
+    agentClient: string | null
+    action: string
+    target: string
+    expiresAt: string
+  }
+  // spec/phases/phase-10.md, activity (A-241): one per tool call. No input, no reply.
+  'agent.activity': { tool: string; projectId: string | null; ok: boolean; at: string }
 }
 
 export type EventName = keyof EventMap
@@ -40,4 +52,6 @@ export const EVENT_NAMES: EventName[] = [
   'asset.changedOnDisk',
   'thumbnail.changed',
   'approvals.changed',
+  'agent.permissionRequested',
+  'agent.activity',
 ]

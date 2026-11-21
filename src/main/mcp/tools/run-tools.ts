@@ -11,18 +11,10 @@ import {
 import { jobCancelInput, type JobStarted } from '@/shared/schemas/commands/job'
 import type { ReplyPicker } from './read-replies'
 import type { ToolDef } from './table'
+import { LEAVE_THE_CHOICE, PROVIDER_WORDS } from './tool-words'
 
 // The one field a start or cancel reply gives, whatever else the command returns (FR-198).
 export const jobIdOnly: ReplyPicker = (data) => ({ jobId: (data as JobStarted).jobId })
-
-const LEAVE_THE_CHOICE =
-  'A run you start makes options for the user to choose from. Leave the choice to the user ' +
-  'unless they asked you to choose.'
-
-const PROVIDER =
-  'provider is "comfyui" (the user\'s own ComfyUI server, no charge) or "gemini" (pictures ' +
-  "only; paid, charged to the user's Google account with no click). Runs are refused unless " +
-  "the user allowed agents for that provider in Adman's Settings."
 
 const FOLLOW = 'Gives the job ID at once; follow the run with get_job.'
 
@@ -32,7 +24,7 @@ export const RUN_TOOLS: readonly ToolDef[] = [
     description:
       'Start a run that makes pictures for one variant of an open project. Name a slot ' +
       '(from get_slots) or a layer_id, not both. count is 1 to 8. reference_asset_ids are ' +
-      `asset IDs from list_assets, or an empty list. ${PROVIDER} ${FOLLOW} ${LEAVE_THE_CHOICE}`,
+      `asset IDs from list_assets, or an empty list. ${PROVIDER_WORDS} ${FOLLOW} ${LEAVE_THE_CHOICE}`,
     kind: 'command',
     target: 'generation.runImages',
     input: generationRunImagesAgentInput,
@@ -48,7 +40,7 @@ export const RUN_TOOLS: readonly ToolDef[] = [
       '(start "first_frame", use_references false, one ID in reference_asset_ids); with ' +
       'reference pictures (start "none", use_references true, their IDs in ' +
       'reference_asset_ids). A picture is named by an asset ID from list_assets. ' +
-      `${PROVIDER} ${FOLLOW} ${LEAVE_THE_CHOICE}`,
+      `${PROVIDER_WORDS} ${FOLLOW} ${LEAVE_THE_CHOICE}`,
     kind: 'command',
     target: 'generation.startVideo',
     input: generationStartVideoAgentInput,

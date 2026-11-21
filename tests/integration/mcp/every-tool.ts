@@ -31,6 +31,22 @@ export async function callEveryTool(
     start: 'none',
     use_references: true,
     job_id: 'made-up-job',
+    // Phase 10 (P10-1): the keys the new tools take.
+    layer_id: 'made-up-layer',
+    layer_ids: ['made-up-layer'],
+    values: { name: 'Made-up layer' },
+    patch: { name: 'Made-up layer' },
+    updates: [{ layerId: 'made-up-layer', patch: { name: 'Made-up layer' } }],
+    type: 'text',
+    max_dimension: 256,
+    direction_id: 'made-up-direction',
+    size_label: '1x1',
+    language: 'en',
+    format: 'image',
+    text: 'Made-up words',
+    apply_to_same_language: false,
+    variant_ids: ['made-up-variant'],
+    request_id: 'made-up-request',
   }
   const replies: string[] = []
   for (const name of names) {
