@@ -1,8 +1,11 @@
-// Stub (AP-5); AP-7 replaces the body with choosePictureStore of spec/approvals.md "Pictures":
-// the test store only with dev tools and ADMAN_APPROVALS_TEST_PICTURES, else the S3 store.
-// Until then every call refuses and nothing is sent or written.
+// spec/approvals.md "Pictures": which picture store deps.approvals.pictures() gives. The test
+// store only when dev tools are on (an unpackaged app started with ADMAN_DEV_TOOLS=1) and the
+// core's environment has ADMAN_APPROVALS_TEST_PICTURES set to exactly http://127.0.0.1:{port};
+// in every other case the S3 store. Nothing else chooses (A-97).
+import path from 'node:path'
 import type { CoreDeps } from '@/main/core-deps'
-import { approvalsRefusal } from '@/shared/approvals/messages'
+import { s3PictureStore } from './s3-picture-store'
+import { TEST_PICTURES_FOLDER, testPictureStore, testPicturesOrigin } from './test-picture-store'
 import type { PictureStore } from './types'
 
 export type PictureStoreOptions = {
@@ -10,10 +13,9 @@ export type PictureStoreOptions = {
   env: Record<string, string | undefined>
 }
 
-const refuse = async (): Promise<never> => {
-  throw approvalsRefusal('approvals_not_set_up')
-}
-
-export function choosePictureStore(_opts: PictureStoreOptions): PictureStore {
-  return { put: refuse, signedUrl: refuse, list: refuse, remove: refuse }
+export function choosePictureStore({ deps, env }: PictureStoreOptions): PictureStore {
+  const origin = deps.devTools ? testPicturesOrigin(env.ADMAN_APPROVALS_TEST_PICTURES) : null
+  if (deps.devTools !== true || origin === null) return s3PictureStore(deps)
+  const root = path.join(deps.userDataDir, TEST_PICTURES_FOLDER)
+  return testPictureStore({ root, origin, now: deps.now })
 }
