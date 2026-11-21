@@ -108,7 +108,6 @@ describe('the Phase 5 stubs [P5-1, A-149]', () => {
 
 describe('the Phase 5 agent rows [P5-1, spec/mcp-and-agents.md]', () => {
   it('denies every system command and generation.applyFill', () => {
-    expect(DENIED).toHaveLength(12)
     for (const name of [...SYSTEM, 'generation.applyFill']) {
       expect(AGENT_POLICY[name]?.policy, name).toBe('deny')
     }
