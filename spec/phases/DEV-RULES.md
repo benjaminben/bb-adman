@@ -20,6 +20,7 @@ Every developer agent reads this file first. It holds what is the same for every
 - **Screens** (when your slice has any): one folder per component with its own CSS module, as `spec/structure.md` says. Every colour, space, radius and type size comes from the shared tokens in `src/renderer/ui/`. No raw colour or pixel value in a component's CSS. Components take data through props or a store and do not reach into each other, so one can be moved or restyled alone. Follow the wording rules in `spec/screens.md`.
 - **Security scope.** Destructive actions, access to sensitive data and unexpected privileged access matter. A nuisance (a slow or frozen app, a refused file) is noted at most and never fixed unprompted. Follow `spec/security.md` for anything touching files, keys, network requests, the asset protocol or agents.
 - **Paid calls.** Automatic tests never make a paid call. If your brief asks for one real-service proof, make exactly one run at the lowest-cost settings and report it. Do not repeat it.
+- **The real ComfyUI server.** Never run `npm run test:comfy` or `npm run test:e2e:real` as a routine check; a real run takes minutes. Test ComfyUI behaviour against the stand-in. Run on the real server only if your brief asks for one proof of a new feature, once, at the smallest size and shortest clip.
 - **Nothing leaves the machine.** No `git push`, no tag, no publish.
 
 ## Verify before you say done

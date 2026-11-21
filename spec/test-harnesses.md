@@ -12,6 +12,15 @@ The harnesses that run the app or real services: the offline end-to-end harness,
 - Each paid run an agent makes is listed in its report: what was called, the settings, and the result.
 - Proof on real services outranks screens: picture and video from realistic product references are proved on real services even before their screens exist (D-075).
 
+## Runs on the real ComfyUI server [D-092]
+
+A real ComfyUI run takes minutes, so it is not routine testing.
+
+- **Routine checks never touch the real server.** A slice's checks are lint, typecheck, `npm test`, the build and the offline end-to-end run. ComfyUI behaviour is tested there against the stand-in (`tests/helpers/comfy-stand-in.ts`).
+- **A new ComfyUI feature is proven once** on the real server, with the smallest size and the shortest clip, by the slice that builds it. After that it is not run again by later slices.
+- **Before a large chapter is declared complete** (a phase, or the whole first build), one full real run is made: `npm run test:comfy` and `npm run test:e2e:real` with every ComfyUI switch on, once.
+- Proven on the real server so far: a FLUX 3 klein picture. Not yet proven: video from a prompt, from a first-frame picture and from a reference picture, extend, cancel, four runs at once, and an agent's run.
+
 ## Offline end-to-end harness
 
 Built. `tests/e2e/`, `npm run test:e2e`.
