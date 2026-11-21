@@ -3,7 +3,8 @@
 // campaign; one per direction comes with Phase 5. With onOpenBehind, each tile gets the "+"
 // button that opens the variant's tab behind the overview (spec/editor.md, "Variant tabs").
 // With projectId, each tile shows its thumbnail (spec/editor.md, "Thumbnails on the screens");
-// its alt is empty, since the tile's own text names the variant.
+// its alt is empty, since the tile's own text names the variant. P5-14: label names the list
+// ("Variants in {direction name}"); without it the list is "Variants".
 import type { ReactNode } from 'react'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import { VariantTile } from '@/renderer/screens/campaign/variant-tile'
@@ -13,6 +14,7 @@ import styles from './variant-grid.module.css'
 
 export type VariantGridProps = {
   projectId?: string
+  label?: string
   variants: VariantSummary[]
   chosenId: string | null
   onChoose: (variantId: string) => void
@@ -27,7 +29,7 @@ export function VariantGrid(props: VariantGridProps) {
     return <p className={layout.muted}>This campaign has no variants.</p>
   }
   return (
-    <ul aria-label="Variants" className={styles.grid}>
+    <ul aria-label={props.label ?? 'Variants'} className={styles.grid}>
       {props.variants.map((v) => (
         <li key={v.id}>
           <VariantTile

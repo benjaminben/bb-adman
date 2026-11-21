@@ -57,7 +57,7 @@ describe('variant tabs [FR-212, FR-214, Q-041]', () => {
     await draw()
     expect(tabs()).toEqual(['Overview'])
     expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('list', { name: 'Variants' })).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Variants in Main' })).toBeInTheDocument()
   })
 
   it('shows the variant tab on a plain click, with the editor; a second click adds no tab', async () => {
@@ -65,7 +65,7 @@ describe('variant tabs [FR-212, FR-214, Q-041]', () => {
     await userEvent.click(tile('German post'))
     expect(screen.getByRole('tab', { name: SECOND_TAB })).toHaveAttribute('aria-selected', 'true')
     expect(await screen.findByRole('region', { name: 'Canvas, German post' })).toBeInTheDocument()
-    expect(screen.queryByRole('list', { name: 'Variants' })).toBeNull()
+    expect(screen.queryByRole('list', { name: 'Variants in Main' })).toBeNull()
     await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
     await userEvent.click(tile('German post'))
     expect(tabs()).toEqual(['Overview', SECOND_TAB])
@@ -77,7 +77,7 @@ describe('variant tabs [FR-212, FR-214, Q-041]', () => {
     fireEvent.click(tile('Master post'), { ctrlKey: true })
     expect(tabs()).toEqual(['Overview', SECOND_TAB, MASTER_TAB])
     expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('list', { name: 'Variants' })).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Variants in Main' })).toBeInTheDocument()
   })
 
   it('closes a variant tab without a command, and shows the overview again', async () => {
@@ -89,7 +89,7 @@ describe('variant tabs [FR-212, FR-214, Q-041]', () => {
     expect(close).toHaveAccessibleDescription(SECOND_TAB)
     await userEvent.click(close)
     expect(tabs()).toEqual(['Overview'])
-    expect(screen.getByRole('list', { name: 'Variants' })).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Variants in Main' })).toBeInTheDocument()
     expect(fake.commands).toHaveLength(before)
   })
 
