@@ -3,9 +3,12 @@
 // layer.update with the source) and closes; a refusal shows its message and the dialog stays.
 // "Cancel" closes and sends nothing. The body mounts afresh at each open, so the list is read
 // again every time. Focus goes back to the control that opened it (the dialog frame).
+// SP-8: a reference-library subject photo is first moved to the asset library (asset.update);
+// a refused move shows its message and places nothing.
 import { useState } from 'react'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
 import { PictureGrid } from './picture-grid'
+import { SubjectReferenceList } from './subject-reference-list'
 import { usePictures } from './use-pictures'
 import styles from './picture-chooser.module.css'
 
@@ -23,13 +26,16 @@ type BodyProps = Omit<PictureChooserProps, 'open' | 'layerName'> & {
 }
 
 function ChooserBody(props: BodyProps) {
-  const { pictures, error, setError, importPictures } = usePictures(props.projectId)
+  const { pictures, subjectPhotos, error, setError, importPictures, moveToAssetLibrary } =
+    usePictures(props.projectId)
   const [busy, setBusy] = useState(false)
 
-  async function choose(assetId: string) {
+  // moveFirst: a reference-library subject photo goes to the asset library before it is placed.
+  async function choose(assetId: string, moveFirst = false) {
     setBusy(true)
     props.onBusy(true)
-    const refused = await props.onChoose(assetId)
+    const moveRefused = moveFirst ? await moveToAssetLibrary(assetId) : null
+    const refused = moveRefused ?? (await props.onChoose(assetId))
     setBusy(false)
     props.onBusy(false)
     if (refused === null) props.onClose()
@@ -55,6 +61,12 @@ function ChooserBody(props: BodyProps) {
           onChoose={(assetId) => void choose(assetId)}
         />
       )}
+      <SubjectReferenceList
+        projectId={props.projectId}
+        photos={subjectPhotos}
+        disabled={busy}
+        onChoose={(assetId) => void choose(assetId, true)}
+      />
       <div className={styles.actions}>
         <button type="button" disabled={busy} onClick={() => void importPictures()}>
           Import pictures…

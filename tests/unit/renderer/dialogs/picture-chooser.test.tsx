@@ -46,7 +46,10 @@ const listCalls = (fake: ReturnType<typeof makeFakeApi>) =>
 describe('PictureChooser [spec/editor.md "Picture chooser"]', () => {
   it('lists the asset library pictures by display name, a missing one disabled', async () => {
     const { fake, dialog } = await openChooser()
-    expect(listCalls(fake)).toEqual([{ projectId: P, library: 'asset', kind: 'image' }])
+    expect(listCalls(fake)).toEqual([
+      { projectId: P, library: 'asset', kind: 'image' },
+      { projectId: P, library: 'reference', kind: 'image' },
+    ])
     const grid = within(dialog).getByRole('list', { name: 'Pictures' })
     expect(
       within(grid)
@@ -121,7 +124,7 @@ describe('PictureChooser [spec/editor.md "Picture chooser"]', () => {
         },
       },
     ])
-    expect(listCalls(fake)).toHaveLength(2)
+    expect(listCalls(fake)).toHaveLength(3)
   })
 
   it('a cancelled picker sends nothing', async () => {
@@ -132,7 +135,7 @@ describe('PictureChooser [spec/editor.md "Picture chooser"]', () => {
       expect(fake.queries.some((q) => q.name === 'dialog.pickFiles')).toBe(true),
     )
     expect(fake.commands).toEqual([])
-    expect(listCalls(fake)).toHaveLength(1)
+    expect(listCalls(fake)).toHaveLength(2)
   })
 
   it('a refused import shows its message', async () => {
@@ -148,6 +151,100 @@ describe('PictureChooser [spec/editor.md "Picture chooser"]', () => {
 
   it.each([[PICTURES], [[]]])('has no accessibility violations (%#)', async (list) => {
     await openChooser(list)
+    expect(await axeViolations()).toEqual([])
+  })
+})
+
+// spec/subject-photos.md, "Placing a subject photo later" (SP-8): under the asset library's
+// pictures, the reference-library images that have a subject; choosing one moves it to the asset
+// library with asset.update, then hands it back. Reference files with no subject are not listed.
+const SECOND = 'Subject photos in the reference library'
+const HINT =
+  'Choosing one moves it to the asset library, so it can go on a post. It still guides AI pictures.'
+const REFERENCES = [
+  asset('r1', 'can-shot.png', { library: 'reference', subjectId: 'citrus-can', missing: false }),
+  asset('r2', 'mood-board.png', { library: 'reference', missing: false }),
+  asset('r3', 'bottle.png', { library: 'reference', subjectId: 'berry-bottle', missing: false }),
+]
+
+async function openWithReferences(references: ListedAsset[] = REFERENCES) {
+  const fake = makeFakeApi()
+  fake.onQuery('asset.list', (input) => ({
+    ok: true,
+    data: (input as { library: string }).library === 'reference' ? references : PICTURES,
+  }))
+  const order: string[] = []
+  fake.onCommand('asset.update', () => {
+    order.push('asset.update')
+    return { ok: true, data: null }
+  })
+  const onChoose = vi.fn(async (assetId: string): Promise<string | null> => {
+    order.push(`onChoose ${assetId}`)
+    return null
+  })
+  const onClose = vi.fn()
+  await renderApp(
+    <PictureChooser projectId={P} layerName="Hero" open onChoose={onChoose} onClose={onClose} />,
+    fake,
+  )
+  const dialog = screen.getByRole('dialog', { name: 'Choose a picture for Hero' })
+  await within(dialog).findByText('summer-hero.jpg')
+  return { fake, order, onChoose, onClose, dialog }
+}
+
+describe('PictureChooser subject photos in the reference library [SP-8]', () => {
+  it('the second list holds only reference-library images with a subject', async () => {
+    const { dialog } = await openWithReferences()
+    const list = await within(dialog).findByRole('list', { name: SECOND })
+    expect(within(dialog).getByRole('heading', { name: SECOND })).toBeInTheDocument()
+    expect(within(dialog).getByText(HINT)).toBeInTheDocument()
+    expect(
+      within(list)
+        .getAllByRole('button')
+        .map((b) => b.textContent),
+    ).toEqual(['can-shot.png Photo of citrus-can', 'bottle.png Photo of berry-bottle'])
+    const grid = within(dialog).getByRole('list', { name: 'Pictures' })
+    expect(within(grid).queryByText('can-shot.png')).toBeNull()
+  })
+
+  it('choosing one sends asset.update, then onChoose, in that order', async () => {
+    const { fake, order, onClose, dialog } = await openWithReferences()
+    const list = await within(dialog).findByRole('list', { name: SECOND })
+    await userEvent.click(within(list).getByRole('button', { name: /bottle\.png/ }))
+    await vi.waitFor(() => expect(onClose).toHaveBeenCalledTimes(1))
+    expect(order).toEqual(['asset.update', 'onChoose r3'])
+    expect(fake.commands).toEqual([
+      { name: 'asset.update', input: { projectId: P, assetId: 'r3', library: 'asset' } },
+    ])
+  })
+
+  it('a refused update sends no onChoose and shows the message', async () => {
+    const { fake, onChoose, onClose, dialog } = await openWithReferences()
+    fake.onCommand('asset.update', () => ({
+      ok: false,
+      error: { code: 'NOT_FOUND', message: 'That picture is no longer in the project.' },
+    }))
+    const list = await within(dialog).findByRole('list', { name: SECOND })
+    await userEvent.click(within(list).getByRole('button', { name: /can-shot\.png/ }))
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+      'That picture is no longer in the project.',
+    )
+    expect(onChoose).not.toHaveBeenCalled()
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('with no such image the second list is not drawn', async () => {
+    const { fake, dialog } = await openWithReferences([REFERENCES[1] as ListedAsset])
+    await vi.waitFor(() =>
+      expect(fake.queries.filter((q) => q.name === 'asset.list')).toHaveLength(2),
+    )
+    expect(within(dialog).queryByRole('list', { name: SECOND })).toBeNull()
+    expect(within(dialog).queryByText(HINT)).toBeNull()
+  })
+
+  it('has no accessibility violations with the second list', async () => {
+    const { dialog } = await openWithReferences()
+    await within(dialog).findByRole('list', { name: SECOND })
     expect(await axeViolations()).toEqual([])
   })
 })
