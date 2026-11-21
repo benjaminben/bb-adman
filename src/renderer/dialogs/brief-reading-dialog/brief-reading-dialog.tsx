@@ -1,0 +1,112 @@
+// The reading dialog (spec/screens-ai.md, "Reading a brief with AI"; FR-022, FR-171): it follows
+// one brief_extraction job, which is attached to it. While the job runs it says who is reading
+// and offers Stop (job.cancel, then close). Closing it another way while the job runs asks first
+// ("Attached jobs and the close warning"). On success it sends job.markSeen and hands the
+// draft over; on failure it shows the sentence, "Try again" and "Fill the form by hand".
+import { useEffect, useRef } from 'react'
+import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
+import { attachedStoreFor, dialogJobs } from '@/renderer/stores/attached-store'
+import { useCloseWarning } from '@/renderer/ui/close-warning'
+import { DialogFrame } from '@/renderer/ui/dialog-frame'
+import { RunFailure } from '@/renderer/ui/run-failure'
+import { briefJobResult, type BriefJobResult } from '@/shared/schemas/jobs/brief-extraction'
+import type { JobRow } from '@/shared/schemas/rows/job'
+import { jobEnded, useJobRow } from './use-job-row'
+import styles from './brief-reading-dialog.module.css'
+
+export type BriefReadingDialogProps = {
+  projectId: string
+  jobId: string
+  provider: string
+  onRead: (result: BriefJobResult) => void
+  onTryAgain: () => void
+  onByHand: () => void
+  onClosed: () => void
+}
+
+// A succeeded row whose result is not a brief draft is shown as the kind `other`.
+function failedRow(row: JobRow | null): JobRow | null {
+  if (row === null || !jobEnded(row) || row.status === 'cancelled') return null
+  if (row.status === 'failed') return row
+  return briefJobResult.safeParse(row.result).success ? null : { ...row, errorKind: 'other' }
+}
+
+export function BriefReadingDialog(props: BriefReadingDialogProps) {
+  const { projectId, jobId, onRead, onClosed } = props
+  const api = useApi()
+  const providers = useApp((s) => s.app?.providers ?? EMPTY)
+  const provider = providers.find((p) => p.id === props.provider)
+  const label = provider?.label ?? props.provider
+  const row = useJobRow(projectId, jobId)
+  const owner = `brief-reading-${jobId}`
+  const { ask, warning } = useCloseWarning('dialog')
+  // The ended row is acted on once, though the callbacks change on each draw.
+  const settled = useRef(false)
+
+  useEffect(() => {
+    attachedStoreFor(api).getState().register(jobId, { projectId, dialog: owner })
+  }, [api, projectId, jobId, owner])
+
+  useEffect(() => {
+    if (row === null || !jobEnded(row) || settled.current) return
+    if (row.status === 'cancelled') {
+      settled.current = true
+      return onClosed()
+    }
+    const read = row.status === 'succeeded' ? briefJobResult.safeParse(row.result) : null
+    if (!read?.success) return
+    settled.current = true
+    void api.command('job.markSeen', { projectId, jobIds: [jobId] })
+    onRead(read.data)
+  }, [api, row, projectId, jobId, onRead, onClosed])
+
+  const failed = failedRow(row)
+
+  function stop() {
+    void api.command('job.cancel', { projectId, jobId })
+    attachedStoreFor(api).getState().end(jobId)
+    props.onClosed()
+  }
+
+  function close() {
+    if (failed) return props.onClosed()
+    ask((s) => dialogJobs(s, owner), props.onClosed)
+  }
+
+  return (
+    <>
+      <DialogFrame open onClose={close} title="Reading the brief">
+        <div className={styles.body}>
+          {failed ? (
+            <>
+              <RunFailure
+                row={failed}
+                projectId={projectId}
+                provider={provider}
+                providerLabel={label}
+              />
+              <div className={styles.actions}>
+                <button type="button" onClick={props.onByHand}>
+                  Fill the form by hand
+                </button>
+                <button type="button" className={styles.primary} onClick={props.onTryAgain}>
+                  Try again
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p>{`${label} is reading the brief…`}</p>
+              <div className={styles.actions}>
+                <button type="button" onClick={stop}>
+                  Stop
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </DialogFrame>
+      {warning}
+    </>
+  )
+}
