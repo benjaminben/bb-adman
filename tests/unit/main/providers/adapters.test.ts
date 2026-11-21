@@ -30,7 +30,7 @@ describe('adapterFor [SPEC 6, step 0]', () => {
           seen.push(ctx.secret('gemini.apiKey'), ctx.settings(), ctx.model('image'))
           return {
             generate: async () => [],
-            extend: async () => ({ png: new Uint8Array(), model: 'm' }),
+            extend: async () => ({ bytes: new Uint8Array(), mime: 'image/png', model: 'm' }),
           }
         },
       },

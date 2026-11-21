@@ -60,7 +60,7 @@ describe.skipIf(!key)('Gemini picture, live [SPEC 6.2, slice E]', () => {
   it('makes one PNG and writes it to a temporary folder', { timeout: 150_000 }, async () => {
     const results = await makeOnePicture(key ?? '')
     expect(results).toHaveLength(1)
-    const png = results[0]?.png ?? new Uint8Array()
+    const png = results[0]?.bytes ?? new Uint8Array()
     expect([...png.slice(0, 8)]).toEqual(PNG_SIGNATURE)
     const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-gemini-live-'))
     const file = path.join(folder, 'gemini-image.png')

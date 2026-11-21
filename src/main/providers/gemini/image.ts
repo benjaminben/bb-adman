@@ -63,7 +63,7 @@ async function oneCall(ctx: AdapterContext, transport: Transport, call: OneCall)
       },
     })
     const response = await Promise.race([request, whenAborted(timer.signal)])
-    return { png: pngFromResponse(response, key), model }
+    return { bytes: pngFromResponse(response, key), mime: 'image/png' as const, model }
   } catch (error) {
     if (error instanceof ProviderFailure) throw error
     throw failureFromError(error, timer.signal.aborted, key)

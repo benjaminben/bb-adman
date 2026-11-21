@@ -20,7 +20,8 @@ export type LayoutBox = {
   align: 'left' | 'center' | 'right'
 }
 
-export type ImageResult = { png: Uint8Array; model: string }
+// PNG or JPEG, as the provider sent it; the app turns a JPEG into a PNG (SPEC 6.2 [1.18]).
+export type ImageResult = { bytes: Uint8Array; mime: 'image/png' | 'image/jpeg'; model: string }
 
 export interface ImageProvider {
   generate(input: {

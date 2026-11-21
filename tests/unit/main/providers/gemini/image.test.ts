@@ -22,7 +22,13 @@ describe('Gemini ImageProvider.generate [SPEC 6.2, slice E]', () => {
     const results = await geminiImage(testContext(), { fetch: fetchFn }).generate(input)
     expect(results).toHaveLength(1)
     expect(first(results).model).toBe(TEST_MODEL)
-    expect([...first(results).png.slice(0, 8)]).toEqual(PNG_SIGNATURE)
+    expect([...first(results).bytes.slice(0, 8)]).toEqual(PNG_SIGNATURE)
+  })
+
+  it('names a PNG picture image/png [SPEC 6.2 1.18, K1]', async () => {
+    const { fetchFn } = fetchAnswering('image-success.json')
+    const results = await geminiImage(testContext(), { fetch: fetchFn }).generate(input)
+    expect(first(results).mime).toBe('image/png')
   })
 
   it('sends one generateContent request to the registry model with the key in a header', async () => {
