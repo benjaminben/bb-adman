@@ -24,7 +24,9 @@ test('the hidden render window draws a variant and ends with the app window', as
   const app = await launch(box)
   const page = await app.firstWindow()
   const ids = await projectWithFont(page, box.projects, font)
-  expect(await windows(app)).toHaveLength(1)
+  // Only the app window is shown. The hidden render window may already be opening here: the
+  // app draws a thumbnail about a second after the variant is made, so its count is not fixed.
+  expect((await windows(app)).filter((w) => w.visible)).toHaveLength(1)
 
   // A draw gives a PNG of the asked size: 1200 by 800 at a longer side of 300.
   const drawn = await renderVariant(page, { ...ids, maxDimension: 300 })
