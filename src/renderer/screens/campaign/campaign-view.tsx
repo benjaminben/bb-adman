@@ -1,6 +1,6 @@
 // The campaign page (SPEC 14 1.41 TP-2): the variants from campaign.get, the picture panel
 // for the chosen one, and its runs. The master is chosen at the start. One job store per
-// open page.
+// open page. SPEC 14 1.57 TP-6: the video card sits under the picture panel.
 import { useEffect, useState } from 'react'
 import { useApi, useApp } from '../../app/app-context'
 import { createJobStore } from '../../stores/job-store'
@@ -8,6 +8,7 @@ import type { CampaignGet } from '../../../shared/schemas/queries/campaign'
 import { GeneratePanel } from './generate-panel'
 import { RunList } from './run-list'
 import { VariantList } from './variant-list'
+import { VideoPanel } from './video-panel'
 import styles from '../screens.module.css'
 
 function useCampaign(projectId: string, campaignId: string): CampaignGet | null {
@@ -64,6 +65,14 @@ export function CampaignView(props: { projectId: string; campaignId: string; onB
               data={data}
               ticks={ticks}
               setTicks={setTicks}
+              onStarted={(reply) => store.getState().track(reply)}
+            />
+          )}
+          {variant && (
+            <VideoPanel
+              key={`video-${variant.id}`}
+              projectId={projectId}
+              variantId={variant.id}
               onStarted={(reply) => store.getState().track(reply)}
             />
           )}

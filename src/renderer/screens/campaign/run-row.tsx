@@ -2,7 +2,8 @@
 // with the stage, the place in the queue and the percent when the row has them. succeeded:
 // its results. failed: the shared sentence for its kind, and Retry. cancelled: Cancelled,
 // and Retry. Cancel shows for a queued or running run when the provider can cancel. A failed
-// run never shows raw error text: the wire row holds none (SPEC 3.3 [1.9]).
+// run never shows raw error text: the wire row holds none (SPEC 3.3 [1.9]). A video run
+// (SPEC 14 1.57 TP-6) says "Video" and, while running, the text from video-status.ts.
 import { useState } from 'react'
 import { EMPTY, useApp } from '../../app/app-context'
 import { plainMessage } from '../../../shared/providers/messages'
@@ -10,6 +11,8 @@ import type { JobRow } from '../../../shared/schemas/rows/job'
 import { requestCount, type JobStore } from '../../stores/job-store'
 import { PaidConfirm } from './paid-confirm'
 import { RunResult } from './run-result'
+import { VideoResult } from './video-result'
+import { useNow, videoRunningText } from './video-status'
 import styles from '../screens.module.css'
 
 // What a provider reports while it works (SPEC 6.11.1 [1.38]): read from `result` only when
@@ -45,7 +48,12 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
   const label = provider?.label ?? row.provider ?? 'The provider'
   const active = row.status === 'queued' || row.status === 'running'
   const ended = row.status === 'failed' || row.status === 'cancelled'
-  const detail = row.status === 'running' ? workingDetail(row) : ''
+  // SPEC 14 1.57 TP-6: a video run says "Video", and its own text while it runs.
+  const video = row.kind === 'video_generation'
+  const now = useNow(video && row.status === 'running')
+  const statusText =
+    video && row.status === 'running' ? videoRunningText(row, now) : STATUS_TEXT[row.status]
+  const detail = row.status === 'running' && !video ? workingDetail(row) : ''
 
   async function retry() {
     setAsking(false)
@@ -64,7 +72,8 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
     <li className={styles.card}>
       <div className={styles.row}>
         <span>{label}</span>
-        <span>{STATUS_TEXT[row.status]}</span>
+        {video && <span>Video</span>}
+        <span>{statusText}</span>
         {detail && <span className={styles.muted}>{detail}</span>}
         {active && provider !== undefined && provider.cancel !== 'none' && (
           <button
@@ -93,7 +102,12 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
           onCancel={() => setAsking(false)}
         />
       )}
-      {row.status === 'succeeded' && <RunResult row={row} projectId={projectId} store={store} />}
+      {row.status === 'succeeded' && !video && (
+        <RunResult row={row} projectId={projectId} store={store} />
+      )}
+      {row.status === 'succeeded' && video && (
+        <VideoResult row={row} projectId={projectId} store={store} />
+      )}
     </li>
   )
 }
