@@ -40,10 +40,15 @@ export type CoreOptions = {
   now?: () => Date
   openExternal?: (url: string) => Promise<void>
   devTools?: boolean
+  toPng?: (bytes: Uint8Array) => Uint8Array
 }
 
 const noBrowser = async (): Promise<void> => {
   throw new Error('openExternal is not available')
+}
+
+const noConverter = (): Uint8Array => {
+  throw new Error('toPng is not available')
 }
 
 export type Core = ReturnType<typeof createCore>
@@ -78,6 +83,7 @@ export function createCore(opts: CoreOptions) {
     jobs: createJobServiceStandIn(),
     openExternal: opts.openExternal ?? noBrowser,
     devTools: opts.devTools ?? false,
+    toPng: opts.toPng ?? noConverter,
     appVersion: opts.appVersion,
     now,
     userDataDir: opts.userDataDir,

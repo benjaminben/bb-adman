@@ -45,6 +45,9 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
         throw new Error('openExternal is not available')
       },
       devTools: false,
+      toPng: () => {
+        throw new Error('toPng is not available')
+      },
       appVersion: '0.1.0',
       now: () => new Date(),
       userDataDir: dir,

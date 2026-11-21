@@ -1,10 +1,11 @@
 // Start-up and the single-instance lock (SPEC 12). A double-clicked project file
 // arrives as 'open-file' on macOS and as a command-line argument on Windows.
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } from 'electron'
 import { createCore, type Core } from './core'
 import { createAppWindow } from './windows/app-window'
 import { httpsOnly } from './windows/open-external'
 import { devToolsEnabled } from './dev-tools-flag'
+import { pngConverter } from './png-converter'
 import { registerAssetProtocol } from './windows/asset-protocol'
 import { DIALOG_QUERIES, runDialogQuery } from './windows/dialogs'
 import { registerIpc } from './ipc'
@@ -54,6 +55,7 @@ function start(): void {
     askPermission: async () => false,
     openExternal: httpsOnly((url) => shell.openExternal(url)),
     devTools: devToolsEnabled(app.isPackaged, process.env),
+    toPng: pngConverter((buffer) => nativeImage.createFromBuffer(buffer)),
   })
   const ready = core
   ready.log.write({

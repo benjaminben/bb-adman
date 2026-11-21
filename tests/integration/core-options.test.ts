@@ -61,3 +61,18 @@ describe('createCore options openExternal and devTools [SPEC 12, 14 step 0 R1]',
     expect(core?.commandNames.filter((n) => n.startsWith('dev.'))).toEqual([])
   })
 })
+
+describe('createCore option toPng [SPEC 6.2 1.18, 14 K3]', () => {
+  it('hands the toPng option to every domain through CoreDeps', () => {
+    const png = new Uint8Array([9, 9])
+    const toPng = vi.fn(() => png)
+    const deps = build({ toPng }).deps
+    expect(deps.toPng(new Uint8Array([1]))).toBe(png)
+    expect(toPng).toHaveBeenCalledWith(new Uint8Array([1]))
+  })
+
+  it('throws when no toPng option is given', () => {
+    const deps = build().deps
+    expect(() => deps.toPng(new Uint8Array([0xff, 0xd8, 0xff]))).toThrow(/not available/)
+  })
+})

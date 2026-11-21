@@ -47,6 +47,7 @@ describe('registering commands and queries [SPEC 12]', () => {
         'providers',
         'secrets',
         'settings',
+        'toPng',
         'undo',
         'userDataDir',
       ].sort(),

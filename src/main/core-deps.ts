@@ -21,6 +21,9 @@ export type CoreDeps = {
   openExternal: (url: string) => Promise<void>
   // True only in an unpackaged app started with ADMAN_DEV_TOOLS=1 (SPEC 13).
   devTools: boolean
+  // Turns a JPEG (or PNG) into PNG bytes; throws when it cannot (SPEC 6.2 [1.18]).
+  // index.ts fills it from Electron's nativeImage.
+  toPng: (bytes: Uint8Array) => Uint8Array
   appVersion: string
   now: () => Date
   userDataDir: string
