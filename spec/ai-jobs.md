@@ -234,3 +234,5 @@ The request is `{ sourceAssetId }`, the layer's picture at that moment. Enqueued
 - **What leaves the machine.** Layout: a picture of the variant without its text, the text of its text layers, the palette and font names. Copy options: the campaign's stored brief. Brief reading: the brief file's text. Cut-out on ComfyUI: one picture's bytes under `uploadName`, nothing else about it. Each only after the user's confirm, or an agent run under its tick.
 - `brief.extract` reads a path, so agents are denied it, as `brief.parse`.
 - `layer.updateMany` makes every check `layer.update` makes, for every item.
+- **An agent never confirms a licence.** `generation.cutOut` ignores `licenceConfirmed` when the actor is the agent, as `generation.runImages` and `generation.startVideo` do.
+- **Job rows for agents.** `job.earlierOptions`, `job.activity` and `campaign.paidCount` have no MCP tool. When Phase 10 adds one, each job row passes through `agentJobView` first; the raw row (prompts, result, error detail) is never returned to an agent.
