@@ -4,6 +4,7 @@ import { _electron as electron, type ElectronApplication } from '@playwright/tes
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
+import { realAppEnv } from '../e2e-real/real-env'
 
 export type Sandbox = { root: string; userData: string; projects: string }
 
@@ -19,9 +20,28 @@ export function makeSandbox(): Sandbox {
   return { root, userData, projects }
 }
 
-export async function launch(box: Sandbox, extraArgs: string[] = []): Promise<ElectronApplication> {
+export async function launch(
+  box: Sandbox,
+  extraArgs: string[] = [],
+  extraEnv: Record<string, string> = {},
+): Promise<ElectronApplication> {
   return electron.launch({
     args: ['.', '--use-mock-keychain', ...extraArgs],
-    env: { ...process.env, ADMAN_USER_DATA_DIR: box.userData, ADMAN_FAKE_PROVIDERS: '1' },
+    env: {
+      ...process.env,
+      ADMAN_USER_DATA_DIR: box.userData,
+      ADMAN_FAKE_PROVIDERS: '1',
+      ...extraEnv,
+    },
+  })
+}
+
+// SPEC 14 1.56 E2E-R: the app for test:e2e:real. No fake providers, the hand-test tools on;
+// the same sandbox folders and mock keychain, so nothing touches the real settings or
+// Keychain. The address, key, photo paths and switches stay with the test (real-env.ts).
+export async function launchReal(box: Sandbox): Promise<ElectronApplication> {
+  return electron.launch({
+    args: ['.', '--use-mock-keychain'],
+    env: realAppEnv(process.env, box.userData),
   })
 }

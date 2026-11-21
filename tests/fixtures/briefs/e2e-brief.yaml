@@ -1,0 +1,19 @@
+# A small brief for the end-to-end runs (SPEC 14 1.56 E2E-R): one subject, one language and
+# two sizes. campaign.create makes one master variant at the first size.
+campaignName: Harness Check
+region: US
+audience: Adults who spend weekends outdoors
+message: Cool down with every sip
+callToAction: Find it near you
+tone: Bright and playful
+subjects:
+  - id: citrus-can
+    name: Citrus can
+    description: A slim aluminium can with a lime and lemon label
+languages:
+  - en
+sizes:
+  - '1:1'
+  - '9:16'
+requiredWords:
+  - Harness Check
