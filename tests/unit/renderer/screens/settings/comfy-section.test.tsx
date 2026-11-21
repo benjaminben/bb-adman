@@ -83,3 +83,30 @@ describe('settings: the ComfyUI address [SPEC 14 1.41 TP-3]', () => {
     expect(await axeViolations()).toEqual([])
   })
 })
+
+describe('settings: the ComfyUI privacy note [SPEC 14 1.48 TL-1; 6.10.10]', () => {
+  const NOTE =
+    'When ComfyUI makes a picture or a video, your brief text, prompts and reference pictures are sent to the server at this address. Whoever runs that server can see them.'
+
+  it('shows the note word for word when no address is saved', async () => {
+    await renderApp(<SettingsScreen />, comfyFake(info({ address: null })).fake)
+    const box = await section()
+    await within(box).findByText('No address saved.')
+    expect(within(box).getByText(NOTE)).toBeInTheDocument()
+  })
+
+  it('shows the same note, without the address, when one is saved', async () => {
+    await renderApp(<SettingsScreen />, comfyFake().fake)
+    const box = await section()
+    await within(box).findByText(ADDRESS)
+    const note = within(box).getByText(NOTE)
+    expect(note.textContent).toBe(NOTE)
+    expect(note.textContent).not.toContain(ADDRESS)
+  })
+
+  it('has no axe violations with the note and no saved address', async () => {
+    await renderApp(<SettingsScreen />, comfyFake(info({ address: null })).fake)
+    await within(await section()).findByText(NOTE)
+    expect(await axeViolations()).toEqual([])
+  })
+})
