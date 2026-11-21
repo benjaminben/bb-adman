@@ -53,7 +53,7 @@ Each name ending in `/` is a component folder (OI-80): the component, its CSS mo
 - **The grid and its tiles** come from the Phase 2 leftovers: `screens/campaign/variant-grid/` and `screens/campaign/variant-tile/` (slice S2-16, `spec/screens-campaign.md`). The tile takes `preview` (P3-16 passes the thumbnail) and `actions` (P3-10 passes the "+" button, drawn beside the tile's main button, never inside it).
 - **Opening a variant** from a grid tile: a plain click opens its tab (or shows it if open) and shows it. A small "+" button beside the tile ("Open {title} in a tab") and Cmd-click (Ctrl-click on Windows) open the tab behind the current one and keep the overview showing [REQ: FR-214, Q-041].
 - **Which variant the overview's panels work on** (A-47): the variant shown last in its own tab. Opening a tab behind does not change it. Before any variant tab has been shown, it is the first variant of the grid. That tile is drawn pressed (`aria-pressed`), and a line above the panels reads "Runs and panels below are for: {title} · {sizeLabel} · {language}".
-- A variant tab shows that variant's job marks, and a "needs attention" mark when it is out of date (always false until Phase 5) [Q-042].
+- A variant tab shows that variant's job marks, and a "needs attention" mark when it is out of date (from the `outOfDate` badge; false until P5-2) [Q-042].
 - Closing a variant tab removes the tab only; the variant and its undo list stay [REQ: FR-212]. A variant deleted from elsewhere loses its tab.
 
 ### What each tab keeps
@@ -261,7 +261,8 @@ Built (SP-8) [D-098]: a second list, "Subject photos in the reference library"; 
 - The editor's undo and redo act on the shown variant's list only (`history.undo` and `history.redo` with scope `variant:{id}`). Every layer command and `variant.update` puts its inverse there. A drag, a nudge burst, a crop or a field change is one entry.
 - A refused undo or redo shows its message in the error banner (`spec/api-principles.md`).
 - After an undo that removes the selected layer, nothing is selected.
-- Campaign-scope undo (Phase 5) is not in the editor.
+- Campaign-scope undo (Phase 5) is not in the editor: the overview has its own Undo and Redo (`spec/screens-variants.md`, "The overview").
+- An undo of an edit that added an override uses `layer.revert`, so the override goes too (`spec/links-and-sync.md`, "Overrides").
 
 ## Several picture layers per variant
 

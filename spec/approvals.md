@@ -127,7 +127,7 @@ Project rule: in scope are attacks that destroy, that reach sensitive data, or t
 | The service made to fetch addresses it should not | Addresses come only through the keyed API; `https` and the two S3 host forms only; no redirects followed; size and picture-type checks; the test origin only when a test sets it |
 | The app made to send the key to a machine on the user's own network | The resolved address is checked before connecting (loopback and private ranges refused, IPv6 forms judged by their IPv4 inside); the socket is pinned to the checked address (`spec/approvals-client.md`, "The service client") |
 | Another campaign's data read through a link | The session names its link; every query filters by that link; the picture route checks link, variant and version; API routes are keyed by project and campaign |
-| The slug leaking through `Referer` | `Referrer-Policy: no-referrer`; the pages load nothing from elsewhere |
+| The slug leaking through `Referer` | `Referrer-Policy: same-origin` (no referrer to any other site); the pages load nothing from elsewhere |
 | A visitor's session stolen | `__Host-` cookie, `HttpOnly`, `Secure`, 12 hours; ended by "Leave", a new password, or turning the link off |
 | The bucket address or keys reaching a visitor | The service fetches the picture and passes on only its bytes; the signed address stays in its database |
 | A shared project file carrying a link | It carries the slug, the publish state and sign-off emails; never the password, the key or the service address. Another person needs the service key to act on the link |

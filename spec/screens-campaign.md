@@ -300,7 +300,7 @@ Built. They replace the old radio list (`variant-list/` is gone). These are the 
 
 **`src/renderer/screens/campaign/variant-grid/`**, component `VariantGrid`. Props: `projectId?: string`, `variants: VariantSummary[]`, `chosenId: string | null`, `onChoose(variantId: string)`, `onOpenBehind?(variantId: string)`.
 
-- A list `<ul aria-label="Variants">` laid out as a CSS grid: columns at least `--thumbnail-tile` wide, filling the row; gaps `--space-3`. One `<li>` per variant, holding a `VariantTile`, in `campaign.get` order (master first in its direction). One grid for the whole campaign; one grid per direction comes with Phase 5.
+- A list `<ul aria-label="Variants">` laid out as a CSS grid: columns at least `--thumbnail-tile` wide, filling the row; gaps `--space-3`. One `<li>` per variant, holding a `VariantTile`, in `campaign.get` order (master first in its direction). One grid for the whole campaign; one grid per direction comes with Phase 5 (`spec/screens-variants.md`: `direction-grids/` mounts one `VariantGrid` per direction, labelled "Variants in {direction name}", and the grid gains the "Quick look" and "Delete" actions).
 - With `projectId`, each tile's `preview` is the variant's drawn thumbnail (`VariantThumbnail`, alt empty, since the tile's text names the variant).
 - With `onOpenBehind`, each tile's `actions` is a small "+" button, label "Open {title} in a tab", that opens the variant's tab behind the overview.
 - No variants (a broken file): "This campaign has no variants."

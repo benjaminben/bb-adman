@@ -36,8 +36,12 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `direction.createFromMaster` | projectId, masterVariantId, name | C | deny | Not built (Phase 5) | FR-074 |
 | `direction.rename` | projectId, directionId, name | C | deny | Not built (Phase 5) | FR-072 |
 | `direction.delete` | projectId, directionId (refused if it is the campaign's last) | C | deny | Not built (Phase 5) | A-06 |
-| `variant.fanOut` | projectId, directionId, sizes[], languages[], formats[], fits{} | C | deny | Not built (Phase 5) | FR-075, FR-076 |
-| `variant.add` | projectId, directionId, sizeLabel, language, format | C | allow | Not built (Phase 5) | FR-195 |
+| `direction.restore` | projectId, direction, variants[] of VariantSnapshot (system; the inverse of `direction.delete`) | C | deny (system) | Not built (Phase 5) | R-17 |
+| `variant.fanOut` | projectId, directionId, sizes[], languages[], formats[] (`image` only until Phase 7), fits{} | C | deny | Not built (Phase 5) | FR-075, FR-076 |
+| `variant.add` | projectId, directionId, sizeLabel, language, format, fit? (`scale` or `crop`) | C | allow | Not built (Phase 5) | FR-195 |
+| `variant.remove` | projectId, variantIds[] (system; the inverse of fan-out, `variant.add`, `variant.restore`) | C | deny (system) | Not built (Phase 5) | R-17 |
+| `variant.restore` | projectId, snapshots[] (system; the inverse of `variant.delete`, `variant.remove`) | C | deny (system) | Not built (Phase 5) | R-17 |
+| `variant.restoreLayers` | projectId, variants[] of { variantId, layers } (system; the inverse of `sync.apply`, `generation.applyFill`) | C | deny (system) | Not built (Phase 5) | R-17 |
 | `variant.update` | projectId, variantId, title (Phase 3); durationMs (Phase 7) | V | allow | Built (title; durationMs Phase 7) | FR-070, FR-120 |
 | `variant.setFormat` | projectId, variantId, format (`spec/data-rules.md`, "Changing a variant's format") | V | allow | Not built (Phase 7) | FR-070, FR-120, R-20, D-025 |
 | `variant.delete` | projectId, variantId (refused for a master) | C | ask | Not built (Phase 5) | FR-073, FR-197 |
@@ -47,6 +51,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `layer.restore` | projectId, layer (whole row), order (system; only the inverse of `layer.delete`) | V | deny (system) | Built | FR-095 |
 | `layer.reorder` | projectId, variantId, layerIds (every non-background layer, lowest first) | V | allow | Built | FR-092 |
 | `layer.clearOverride` | projectId, layerId, paths[] | V | deny | Not built (Phase 5) | FR-080 |
+| `layer.revert` | projectId, variantId, layers[] of { layerId, patch, overrides } (system; the inverse of an edit that changed an override list) | V | deny (system) | Not built (Phase 5) | FR-080, FR-095 |
 | `layer.reportOverflow` | projectId, layerId, overflow, variantRev | — | deny | Built | FR-098 |
 | `clip.add` | projectId, variantId, assetId, startMs | V | deny | Not built (Phase 7) | FR-121 |
 | `clip.update` | projectId, clipId, startMs?, inMs?, outMs?, placement? | V | deny | Not built (Phase 7) | FR-122 |
@@ -55,10 +60,11 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `translation.set` | projectId, layerId, text, applyToSameLanguage: boolean | V | allow | Not built (Phase 6) | FR-102, FR-194 |
 | `translation.approve` | projectId, layerIds[] | C | deny | Not built (Phase 6) | FR-101 |
 | `translation.exportSheet` | projectId, campaignId, filePath | — | deny | Not built (Phase 6) | FR-103 |
-| `sync.apply` | projectId, directionId, decisions[] | C | deny | Not built (Phase 5) | FR-082, FR-083 |
+| `sync.apply` | projectId, directionId, masterRev, decisions[] | C | deny | Not built (Phase 5) | FR-082, FR-083 |
 | `check.run` | projectId, campaignId or variantIds[] | — | allow | Not built (Phase 6) | FR-114, FR-116, FR-196 |
 | `generation.runImages` | projectId, variantId, slot or layerId (exactly one), prompt, referenceAssetIds[], count (1 to 8), provider, licenceConfirmed? (S2-4) | — | tick | Built | FR-062–FR-065, FR-199 |
-| `generation.runFill` | projectId, variantId, provider | — | tick | Not built (Phase 5) | FR-076 |
+| `generation.runFill` | projectId, variantId, provider, licenceConfirmed? (agents may start it: a gate run command) | — | tick | Not built (Phase 5) | FR-076, D-080 |
+| `generation.applyFill` | projectId, jobId (the window sends it when its fill succeeds) | C | deny | Not built (Phase 5) | FR-076 |
 | `generation.proposeLayout` | projectId, variantId, provider (`spec/ai-jobs.md`) | — (applied by `layer.updateMany`, V) | tick | Built | FR-061 |
 | `generation.copyOptions` | projectId, variantId, layerId, count (1 to 8), provider | — | tick | Built | FR-045 |
 | `generation.cutOut` | projectId, variantId, layerId, provider, licenceConfirmed? | — | tick | Built | FR-307 |
@@ -85,7 +91,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `agentRuns.setAllowed` | provider, allowed | — | deny | Built | FR-279, FR-280 |
 | `agentRuns.setLimit` | limit | — | deny | Built | — |
 | `dev.storage` | storage (`s3`, `dropbox` or `local`), action (`write`, `list` or `remove`), filePath? (for `write`) | — | deny | Built (dev tools only) | — |
-| `dev.comfyExtend` | projectId, assetId, width, height, prompt | — | deny | Not built (CU-8; wanted or not is OI-64) | — |
+| `dev.comfyExtend` | projectId, assetId, width, height, prompt | — | deny | Not built, and not to be built: `generation.runFill` replaces it (CU-8 is dropped under OI-64's assumption) | — |
 
 The registry on `main` is `src/main/core.ts` (one spread line per domain). `src/main/commands/storage/index.ts` is empty; the Dropbox schemas exist in `src/shared/schemas/commands/storage.ts`. `history.undo` and `history.redo` are dispatched by the bus itself (`src/main/commands/history/run-history.ts`).
 
@@ -135,6 +141,7 @@ Built. `src/main/commands/brief/`, `src/main/commands/campaign/`, `src/main/comm
 
 Built: `layer.create`, `layer.update`, `layer.updateMany`, `layer.delete`, `layer.restore`, `layer.reorder`, `layer.reportOverflow` and `variant.update` (title) (`src/main/commands/layer/`, `src/main/commands/variant/`). The rest Not built (Phases 5 to 7, per row). Formats in `spec/data-rules.md`.
 
+- **Phase 5 commands** (`direction.*`, `variant.fanOut`, `add`, `delete`, `remove`, `restore`, `restoreLayers`, `layer.clearOverride`, `layer.revert`, `sync.apply`, `generation.runFill`, `generation.applyFill`): inputs, rules, refusals, replies and inverses are in `spec/links-and-sync.md`. From Phase 5 an edit on a linked layer also adds override paths there.
 - **Layer commands and `variant.update`**: inputs, counters, the no-op rule, undo inverses, the asset checks, refusals and replies are in `spec/editor-commands.md`. Every one of them except `layer.reportOverflow` bumps `variant.rev` through `src/main/commands/variant-rev.ts`.
 - `variant.setFormat` works in both directions and an agent may run it without the permission dialog [D-020, D-025]. Defined in `spec/data-rules.md`, "Changing a variant's format".
 - `translation.set` on a language variant writes the text with `translation_status = 'proposed'`. `translation_source` is `user` or `agent` by actor. An agent can never approve [REQ: FR-200]. With `applyToSameLanguage` the same text is written to the matching layer of every variant in the direction with that language and no `copy` override.
@@ -241,4 +248,4 @@ Built. `src/main/commands/dev/storage.ts`, `local-root.ts`, `hand-test-storage.t
 
 ### `dev.comfyExtend`
 
-Not built (CU-8; whether it is still wanted is OI-64). Input `{ projectId, assetId, width, height, prompt }`, project scope. Enqueues an `image_generation` job with `mode: 'extend'`, the picture centred on the new canvas (`spec/comfyui.md`). Phase 5's `generation.runFill` replaces it.
+Not built, and not to be built: Phase 5's `generation.runFill` replaces it, and CU-8 is dropped under OI-64's assumption. Its policy row stays until Phase 9 removes the `dev` commands. Kept for the record: input `{ projectId, assetId, width, height, prompt }`, project scope. Enqueues an `image_generation` job with `mode: 'extend'`, the picture centred on the new canvas (`spec/comfyui.md`).

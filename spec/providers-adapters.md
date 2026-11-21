@@ -13,7 +13,7 @@ Built: picture generation with reference pictures (`ImageProvider.generate`), la
 | Job | Call | Model (as `registry.ts` has it) | Built |
 |-----|------|------|------|
 | Image generate | `generateContent` with the prompt and reference pictures, picture output | `gemini-nano-banana-2.1` | Yes |
-| Image extend | Same, with the placed picture on a canvas of the target size and an instruction to extend the scene to the edges | the image model | No (Phase 5) |
+| Image extend | Same call, with the picture as it is, the target's nearest aspect ratio and an instruction to extend the scene outward ("Picture extend", below) | the image model | No (Phase 5, P5-6) |
 | Layout | `generateContent` with the background picture and a JSON response schema matching `LayoutBox[]` | `gemini-3.5-flash-lite` | Yes |
 | Extract brief, copy options, translate | `generateContent` with a JSON response schema | `gemini-3.5-flash-lite` | Yes (translate Phase 6) |
 
@@ -63,9 +63,18 @@ Built: picture generation with reference pictures (`ImageProvider.generate`), la
 - Live: `tests/live/gemini-image.live.test.ts` and `tests/live/gemini-reference.live.test.ts`. On success they print the file path, the file type, the pixel size (from the PNG or JPEG header), the size in bytes and the model ID, and write the file with the extension of its real type. On failure they print the error kind and the redacted `detail`. They print no request, no header and no key. A test that skips prints one line naming the missing variable, names only.
 - No agent makes a paid call [D-049]. Live runs are the stakeholder's.
 
+### Picture extend
+
+Not built (Phase 5, P5-6). Used by the `generative_fill` job (`spec/links-and-sync.md`, "Generative fill"). [REQ: FR-076]
+
+- **No canvas** (A-128). The app draws no canvas and moves no pixels. `extend({ image, placement, width, height, prompt })` sends one `generateContent` call through the pinned client: `parts` = the prompt text, then the picture as one `inlineData` PNG part; `config.responseModalities = ['IMAGE']`; `config.imageConfig.aspectRatio = nearestAspectRatio(width, height)`. `placement` is not sent: the fill dialog always places the picture centred (`scale`), and the prompt asks for the scene to continue outward.
+- The prompt is the job's stored prompt (`FILL_PROMPT` with the "keep printing" ending, since one picture is sent).
+- One picture per call; the answer, type, `toPng`, size and error rules are those of picture generation above, with `IMAGE_TIMEOUT_MS`. The result is placed over the whole variant with `crop` null; a ratio that is not exact is cut by the Scene's fit, as for any picture.
+- Tests: `tests/unit/main/providers/gemini/extend.test.ts` (recorded transport). Live: `tests/live/gemini-extend.live.test.ts`, one run at the smallest size (D-085), in P5-19.
+
 ### Prompt and text rules
 
-Built for pictures; the rest not built (Phases 4 to 6). The two-ending rule below is Not built (SP-9, `spec/phases/subject-photos.md`); until it is, every prompt gets the "no text" ending.
+Built for pictures; the rest not built (Phases 4 to 6). The two-ending rule below is built (SP-9) and passed one live run.
 - **Every picture and video prompt ends with exactly one of two fixed endings** [REQ: FR-061; D-098, R-21; A-127]:
   - The run sends no picture: `NO_TEXT_ENDING`, "Do not include any text, letters, numbers, logos or watermarks in the image." (unchanged).
   - The run sends at least one picture: `KEEP_PRINTING_ENDING`, "Keep any printing on the things in the given pictures exactly as it appears in them. Add no other text, letters, numbers, logos or watermarks anywhere in the image."
@@ -88,7 +97,7 @@ Built (Phase 4, slice P4-4); each of layout, extract brief and copy options pass
 - **Extract brief** (`extractBrief`). `parts` = the instruction, then the brief text after a fixed line "Brief:". The instruction asks to fill only the listed fields, only from what the brief says, without translating, and to leave a field out when the brief does not give it. Answer schema: the `BriefDraft` fields, every one optional. The adapter returns `briefDraftFrom(parsed)`'s draft.
 - **Copy options** (`copyOptions`). The instruction names the role ("a call to action" or "a line of ad copy"), the language, `count`, `maxChars`, and the brief's message, audience, region, tone, offer and call to action. Answer schema `{ options: string[] }`.
 - **Translate** stays a stub: `ProviderFailure` `other`, "Translate is not built yet" (Phase 6). The translation prompt will include the region and audience as context [REQ: FR-101].
-- **Extend:** the placed picture on a canvas of the target size, with an instruction to extend the scene to the edges; same answer rules as picture generation (Phase 5).
+- **Extend:** see "Picture extend" above (Phase 5).
 - **Tests.** Recorded answers, as for pictures: `layout.test.ts` (parts and order, the PNG part, the JSON config, a good answer, a non-JSON answer, a JSON answer of the wrong shape), `text.test.ts` (extract brief, copy options, the same three answers), `text-errors.test.ts` (401, 400 `API_KEY_INVALID`, 429, a safety block, no answer in 60 s, a marked network error), and `environment.test.ts` extended to a text call. Live, one each: `tests/live/gemini-layout.live.test.ts`, `gemini-brief.live.test.ts`, `gemini-copy.live.test.ts`; under D-085 the developer runs each once with the smallest input and reports the model ID, time and answer size, never the answer text.
 - **Model IDs** (OI-10). `defaultModels.layout` and `defaultModels.text` in `registry.ts` are `gemini-3.5-flash-lite`, a current model that takes a picture and gives JSON. The live runs proved it.
 - `generation.proposeLayout` and `generation.copyOptions` are `tick` for an agent under the Gemini tick (`spec/ai-jobs.md`).

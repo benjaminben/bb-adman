@@ -13,10 +13,12 @@ import type { Dispatch, SetStateAction } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { NavScope, useNav } from '@/renderer/app/nav-context'
 import { platform } from '@/renderer/editor/use-editor-key'
+import { createApprovalsStore } from '@/renderer/stores/approvals-store'
 import { createJobStore } from '@/renderer/stores/job-store'
 import { OVERVIEW_TAB, campaignNav } from '@/renderer/stores/nav-store'
 import type { CampaignGet, VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { AssetList } from '@/shared/schemas/queries/asset'
+import { ApprovalBar } from '@/renderer/screens/campaign/approval-bar'
 import { GeneratePanel } from '@/renderer/screens/campaign/generate-panel'
 import { RunList } from '@/renderer/screens/campaign/run-list'
 import { SlotView } from '@/renderer/screens/campaign/slot-view'
@@ -109,6 +111,9 @@ function CampaignPage(props: Props) {
   const variantId = variant?.id ?? null
   const preTick = usePreTick(variant, setTicks)
 
+  // AP-11: the approvals store, one per page; its timer stops when the page closes.
+  const [approvals] = useState(() => createApprovalsStore(api, projectId, campaignId))
+  useEffect(() => approvals.getState().start(), [approvals])
   useEffect(() => store.getState().subscribe(), [store])
   useEffect(() => {
     if (variantId !== null) void store.getState().load(variantId)
@@ -181,6 +186,14 @@ function CampaignPage(props: Props) {
           Back to project
         </button>
         {data && <h2 className={styles.name}>{data.campaign.name}</h2>}
+        {data && (
+          <ApprovalBar
+            projectId={projectId}
+            campaignId={campaignId}
+            store={approvals}
+            titles={Object.fromEntries(data.variants.map((v) => [v.id, v.title]))}
+          />
+        )}
       </div>
       {shown === OVERVIEW_TAB && <PaidCount projectId={projectId} campaignId={campaignId} />}
       {data === null ? (

@@ -9,6 +9,9 @@ import type { CampaignRow } from '@/shared/schemas/rows/campaign'
 import type { DirectionRow } from '@/shared/schemas/rows/direction'
 import type { JobMarks, VariantBadges } from '@/shared/schemas/queries/campaign'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
+import type { VariantRow } from '@/shared/schemas/rows/variant'
+import type { MasterOf } from '@/main/links/master-of'
+import { variantOutOfDate } from '@/shared/links/out-of-date'
 
 // Validates the input and finds the open project, as the query runner rules (SPEC 4.3).
 export function openFor<T extends { projectId: string }>(
@@ -56,17 +59,25 @@ export function namedAssetIds(layer: LayerRow): string[] {
   return ids
 }
 
-// SPEC 4.3 [1.42]: the badges built so far. A master is never out of date, and Phase 2 makes
-// only masters; checks are read from Phase 6.
+// SPEC 4.3 [1.42]: the badges built so far; checks are read from Phase 6. `master` is the
+// variant's direction master (spec/links-and-sync.md, "Follow rules"); null only for a broken
+// file, which marks nothing out of date.
 export function badgesOf(
   db: Database.Database,
-  variantId: string,
+  variant: VariantRow,
   layers: LayerRow[],
   missing: Set<string>,
+  master: MasterOf | null,
 ): VariantBadges {
+  const outOfDate =
+    master !== null &&
+    variantOutOfDate({
+      master: { row: master.variant, layers: master.layers },
+      variant: { row: variant, layers },
+    })
   return {
-    ...jobMarks(db, 'variant_id', variantId),
-    outOfDate: false,
+    ...jobMarks(db, 'variant_id', variant.id),
+    outOfDate,
     overflow: layers.some((l) => l.overflow),
     translationUnapproved: layers.some(
       (l) => l.translationStatus === 'missing' || l.translationStatus === 'proposed',

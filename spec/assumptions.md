@@ -150,3 +150,7 @@ Designs in `spec/ai-jobs.md` and `spec/screens-ai.md`; slices in `spec/phases/ph
 ## Approvals by link
 
 - **A-82 to A-100** are kept in `spec/approvals.md`, "Assumptions", because this file is near its size limit.
+
+## Variants, fan-out and sync (Phase 5)
+
+- **A-128 to A-149** are kept in `spec/phases/phase-05.md`, "Assumptions made for Phase 5", for the same reason.

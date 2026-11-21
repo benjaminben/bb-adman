@@ -9,6 +9,8 @@ import { layerRestore } from './restore'
 import { layerReorder } from './reorder'
 import { layerReportOverflow } from './report-overflow'
 import { layerUpdateMany } from './update-many'
+import { layerClearOverride } from './clear-override'
+import { layerRevert } from './revert'
 
 export function layerCommands(deps: CoreDeps): CommandHandler[] {
   return [
@@ -19,5 +21,7 @@ export function layerCommands(deps: CoreDeps): CommandHandler[] {
     layerReorder(deps),
     layerReportOverflow(),
     layerUpdateMany(deps),
+    layerClearOverride(deps),
+    layerRevert(deps),
   ]
 }

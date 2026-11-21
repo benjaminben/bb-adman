@@ -7,6 +7,8 @@ import { generationStartVideo } from './start-video'
 import { generationProposeLayout } from './propose-layout'
 import { generationCopyOptions } from './copy-options'
 import { generationCutOut } from './cut-out'
+import { generationRunFill } from './run-fill'
+import { generationApplyFill } from './apply-fill'
 
 export function generationCommands(deps: CoreDeps): CommandHandler[] {
   return [
@@ -15,5 +17,7 @@ export function generationCommands(deps: CoreDeps): CommandHandler[] {
     generationProposeLayout(deps),
     generationCopyOptions(deps),
     generationCutOut(deps),
+    generationRunFill(deps),
+    generationApplyFill(deps),
   ]
 }

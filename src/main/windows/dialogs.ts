@@ -9,6 +9,7 @@ import {
   pickFilesInput,
   pickFolderInput,
   pickProjectFileInput,
+  pickSaveFileInput,
   type PickedPath,
   type PickedPaths,
 } from '@/shared/schemas/queries/dialog'
@@ -18,7 +19,10 @@ export const DIALOG_QUERIES = [
   'dialog.pickFolder',
   'dialog.pickProjectFile',
   'dialog.pickFiles',
+  'dialog.pickSaveFile',
 ] as const
+
+const INVALID = { code: 'INVALID_INPUT', message: 'Some values are not valid.' } as const
 
 // dialog.pickFiles (SPEC 4.3): the types come from file-types.ts by purpose and kind.
 function pickFilesOptions(input: unknown): Electron.OpenDialogOptions | null {
@@ -30,6 +34,18 @@ function pickFilesOptions(input: unknown): Electron.OpenDialogOptions | null {
     properties: many ? ['openFile', 'multiSelections'] : ['openFile'],
     ...(defaultPath !== undefined ? { defaultPath } : {}),
     filters: [{ name: 'Accepted files', extensions: pickerExtensions(purpose, kind) }],
+  }
+}
+
+// dialog.pickSaveFile (Phase 6 section 1, P6-8): a save dialog offering .csv. defaultPath is
+// passed to the dialog as a suggestion only; this code never reads, writes or creates it.
+export function saveFileOptions(input: unknown): Electron.SaveDialogOptions | null {
+  const parsed = pickSaveFileInput.safeParse(input)
+  if (!parsed.success) return null
+  const { defaultPath } = parsed.data
+  return {
+    ...(defaultPath !== undefined ? { defaultPath } : {}),
+    filters: [{ name: 'Translation sheet', extensions: ['csv'] }],
   }
 }
 
@@ -59,8 +75,9 @@ export async function runDialogQuery(
   input: unknown,
   opts: DialogRunOptions = {},
 ): Promise<Result<PickedPath | PickedPaths>> {
+  if (name === 'dialog.pickSaveFile') return runSaveDialog(input, opts)
   const options = dialogOptions(name, input)
-  if (!options) return fail({ code: 'INVALID_INPUT', message: 'Some values are not valid.' })
+  if (!options) return fail(INVALID)
   try {
     const result = opts.window
       ? await dialog.showOpenDialog(opts.window, options)
@@ -68,17 +85,35 @@ export async function runDialogQuery(
     if (name === 'dialog.pickFiles') return ok({ paths: result.canceled ? [] : result.filePaths })
     return ok({ path: result.canceled ? null : (result.filePaths[0] ?? null) })
   } catch (e) {
-    const body = internalError(ulid())
-    opts.log?.write({
-      level: 'error',
-      event: 'query',
-      name,
-      actor: 'user',
-      ok: false,
-      errorKind: 'INTERNAL',
-      message: body.message,
-      context: { commandId: body.details?.commandId, error: errorContext(e) },
-    })
-    return fail(body)
+    return failInternal(name, e, opts)
   }
+}
+
+// The reply is the chosen path or null; nothing else from the dialog's answer is passed on.
+async function runSaveDialog(input: unknown, opts: DialogRunOptions): Promise<Result<PickedPath>> {
+  const options = saveFileOptions(input)
+  if (!options) return fail(INVALID)
+  try {
+    const result = opts.window
+      ? await dialog.showSaveDialog(opts.window, options)
+      : await dialog.showSaveDialog(options)
+    return ok({ path: result.canceled || !result.filePath ? null : result.filePath })
+  } catch (e) {
+    return failInternal('dialog.pickSaveFile', e, opts)
+  }
+}
+
+function failInternal(name: string, e: unknown, opts: DialogRunOptions): Result<never> {
+  const body = internalError(ulid())
+  opts.log?.write({
+    level: 'error',
+    event: 'query',
+    name,
+    actor: 'user',
+    ok: false,
+    errorKind: 'INTERNAL',
+    message: body.message,
+    context: { commandId: body.details?.commandId, error: errorContext(e) },
+  })
+  return fail(body)
 }

@@ -57,7 +57,7 @@ Built on the earlier host (a Cloudflare Worker with D1, the Workers Vitest pool)
 - **Shots:** none.
 - **Class:** S. Security class, full review. **After:** AP-14 and its review fixes.
 
-### AP-4 — Service: sign-offs and pictures
+### AP-4 — Service: sign-offs and pictures (built)
 
 - **Exists when done:** a visitor can sign off and remove a sign-off; the picture route passes on a picture fetched through `PictureSource` with every check, as a stream.
 - **New files:** `src/visitor/signoffs.ts`, `picture-route.ts`; `src/pictures/source.ts`, `s3-source.ts`, `sniff.ts`; `e2e/pictures/` (two small PNG files and one JPEG made by the test, not downloaded).

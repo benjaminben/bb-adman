@@ -108,6 +108,7 @@ The video card and the agent settings block were built with these choices. Each 
 - **Naming the models that need the commercial-licence dialog (OI-76, D-088).** FLUX 3 klein is assumed; say which others.
 - **Hand test of the app's ComfyUI workflows (OI-59, OI-65, OI-89).** His runs from the app decide which `trial` workflows become `proven`, and whether H3 clips follow a picture without `<Picture 1>` in the prompt. A first run from a phone photograph also shows whether turned photos need handling (A-07).
 - **Review of A-53** (the asset scheme with CORS on, a security rule; `spec/assumptions.md`).
+- **The extend trial on his ComfyUI server (U-13).** `moss-extend` is a `draft` stand-in, so Phase 5's "Generate fill" runs on Gemini and the fake provider only. A real extend graph, arriving as data and marked `trial`, makes ComfyUI fill available with dev tools on; until then P5-19's one real ComfyUI extend run is owed. If the trial fails, CQ-27 (Krea 2 as the fallback).
 - **Cut-out on his ComfyUI server (A-57).** Before P4-9's one real run: a ComfyUI release that has the background-removal nodes, and `birefnet.safetensors` in `models/background_removal/`. Until then the run reports the missing items and cut-outs work through the fake provider only. Later, his own check decides whether `birefnet-cutout` becomes `proven`.
 - **Review of the requirements wording (Q-011).** Needed for the requirements to return to Approved status.
 - **Answers to the client reviewers (Q-050).** Whether to send the "already covered" answers back to them.

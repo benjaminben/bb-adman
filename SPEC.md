@@ -1,7 +1,7 @@
 # SPEC.md — Technical Specification (index)
 
 **Project:** Adman, a desktop app (Electron) for making ad campaigns: one brief becomes a grid of image and video ads in many sizes and languages, with AI generation, checks, export and cloud publishing.
-**Status:** Phases 1 and 2 are built on `main`, except the leftovers listed in `spec/phases/`. Phase 3's slices are built. Phase 4 and the look pack are built as far as agents can take them; the stakeholder's hand checks are listed in `spec/phases/phase-04.md`, "Status". Approvals and subject photos are in build. Phases 5 to 11 are ahead.
+**Status:** Phases 1 and 2 are built on `main`, except the leftovers listed in `spec/phases/`. Phase 3's slices are built. Phase 4 and the look pack are built as far as agents can take them; the stakeholder's hand checks are listed in `spec/phases/phase-04.md`, "Status". Approvals and subject photos are in build. Phase 5 is sliced (P5-1 to P5-19) and ready to build. Phases 6 to 11 are ahead.
 
 The spec is split into small files so that a reader loads only what a task needs. This file is the map.
 
@@ -32,6 +32,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/data-model.md` | Where data lives, ID formats, the project-level tables (project, subject, asset, job, report, checks) |
 | `spec/data-model-campaign.md` | Campaign, sizes, rule set, direction, variant, layer and background clip |
 | `spec/data-rules.md` | Links, follow rules and sync, fan-out, data flow, caching, migrations, package project, format change |
+| `spec/links-and-sync.md` | Phase 5 in full: follow rules and out-of-date in code, overrides and their undo, sync preview and apply, fan-out, generative fill, directions, adding and deleting variants, the campaign undo list |
 | `spec/jobs.md` | The job record in use, job kinds, the runner and its limits, left-over runs, the fake provider |
 | `spec/assets.md` | Import, linking, the assets folder, file types, relink, change detection, the asset protocol, reference pictures |
 | `spec/api-principles.md` | How commands, queries and events work; error codes, reasons and messages; undo |
@@ -59,6 +60,8 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/editor-commands.md` | The layer and variant commands, `variant.get`, `thumbnail.get`, `variant.render`, `thumbnail.changed` in full |
 | `spec/screens.md` | What each built screen offers, wording rules, choices made without a design sign-off |
 | `spec/screens-campaign.md` | The Phase 2 campaign screens and dialogs (built; S2-17 left): ComfyUI failures, the address and licence dialogs, import and drop, relink, package, the brief form, the slot view, the campaign grid and its tile |
+| `spec/screens-variants.md` | Phase 5 screens: the campaign's Undo and Redo, one grid per direction, the tile's delete and quick look, the fan-out dialog, the sync review, the direction dialogs |
+| `spec/app-style.md` | The app's look from the design prototype: tokens, type and fonts, contrast, shared pieces, per-screen changes, choices taken for now (C-1 to C-14) |
 | `spec/screens-ai.md` | Phase 4 screens: the run dialog, the paid count, the picture section (generate, references, earlier options, cut-out), copy options, place text, brief reading, the activity panel, close warnings |
 | `spec/approvals.md`, `spec/approvals-service.md`, `spec/approvals-gallery.md` | Approvals by link (D-095, D-097): the desktop overview, Settings, screens, its security rules, open items and assumptions A-82 to A-109; the service (Next.js on Vercel with a Turso database: how it fits, tooling, environment, deploying); the visitor's pages (Next.js settings, page policy, components, words) |
 | `spec/approvals-client.md` | Approvals, desktop: the service client, the local tables, kept passwords, the picture store and signed addresses |
@@ -81,6 +84,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/phases/phase-02-screens.md` | The Phase 2 screen slices (groups 4 and 5; S2-4 to S2-16 built, S2-17 left): ComfyUI failure screens, dialogs, import, relink, package, brief form, slot view, campaign grid |
 | `spec/phases/phase-02-agent-generation.md` | Agent generation through the MCP server (built, D-080): the one hand run on the real server still owed, and the change if OI-90 is answered "no ticks" |
 | `spec/phases/review-leftovers.md` | Review findings not yet handled, sorted: fix now, fix with a later phase, test gaps |
+| `spec/phases/phase-05-slices.md`, `phase-05-screens.md` | Phase 5's slices: logic P5-1 to P5-13; screens P5-14 to P5-18 and the exit slice P5-19 |
 | `spec/phases/phase-03.md` to `phase-11.md` | One file per phase: goal, scope, exit criteria, work carried in, what is not designed yet |
 | `spec/phases/look-pack.md` | The look pack (D-094): background colour, text boxes, shades, starter layouts; slices LK-1 to LK-7 and their order beside Phase 4 |
 | `spec/phases/approvals.md` | Approvals by link (D-095): exit criteria, the rules for its slices, and the order of AP-1 to AP-16 beside Phase 4 and the look pack |
