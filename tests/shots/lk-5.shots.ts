@@ -122,14 +122,14 @@ test('The Box, Shade and Background colour fields', async () => {
     'true',
   )
   await page.waitForTimeout(300)
-  await shot(page, '110-text-box-fields')
+  await shot(page, '116-text-box-fields')
 
   await select(page, background)
   const shade = panel(page).getByRole('group', { name: 'Shade' })
   await expect(shade.getByRole('combobox', { name: 'Shade' })).toHaveValue('bottom')
   await expect(shade.getByRole('spinbutton', { name: 'Strength' })).toHaveValue('70')
   await page.waitForTimeout(300)
-  await shot(page, '111-shade-fields-over-photo')
+  await shot(page, '117-shade-fields-over-photo')
 
   const picture = panel(page).getByRole('group', { name: 'Picture' })
   await picture.getByRole('button', { name: 'Remove picture' }).click()
@@ -138,10 +138,10 @@ test('The Box, Shade and Background colour fields', async () => {
     picture.getByRole('textbox', { name: 'Background colour', exact: true }),
   ).toHaveValue(PALETTE[2]!)
   await page.waitForTimeout(500)
-  await shot(page, '112-background-colour')
+  await shot(page, '118-background-colour')
 
   await update(headline.id, { geometry: { y: -Math.round(headline.geometry.height / 2) } })
   await select(page, headline)
   await page.waitForTimeout(500)
-  await shot(page, '113-layer-past-the-edge')
+  await shot(page, '119-layer-past-the-edge')
 })
