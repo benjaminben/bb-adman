@@ -66,3 +66,22 @@ describe('pictureSize, for the live test output [SPEC 6.2 1.18, K4]', () => {
     expect(() => pictureSize(jpegHead(1, 1), 'image/png')).toThrow('not a PNG')
   })
 })
+
+describe('pictureSize on odd JPEG segments [SPEC 6.2 1.21, 14 L7 F-08]', () => {
+  const odd: Array<[string, number[]]> = [
+    ['a segment of length zero', [0xff, 0xd8, 0xff, 0xe0, 0x00, 0x00, 0x4a, 0x46, 0x49, 0x46]],
+    ['nothing but fill bytes after the start', [0xff, 0xd8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]],
+    ['a frame header cut short', [0xff, 0xd8, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00]],
+  ]
+  for (const [what, bytes] of odd) {
+    it(`throws "not a JPEG" for ${what}, without reading past the end`, () => {
+      expect(() => pictureSize(new Uint8Array(bytes), 'image/jpeg')).toThrow('not a JPEG')
+    })
+  }
+
+  it('reads a frame header after fill bytes', () => {
+    const head = jpegHead(640, 480)
+    const filled = new Uint8Array([0xff, 0xd8, 0xff, 0xff, ...head.slice(2)])
+    expect(pictureSize(filled, 'image/jpeg')).toEqual({ width: 640, height: 480 })
+  })
+})
