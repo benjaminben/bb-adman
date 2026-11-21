@@ -5,11 +5,11 @@
 - `checkS3Access` / `runS3Check` in `src/main/providers/s3/check-access.ts`; tests in `tests/unit/main/providers/s3/check-access.test.ts` (stand-in: `check-stand-in.ts`).
 - `storage.checkS3` in `src/main/commands/storage/check-s3.ts`, returned by `storage/index.ts`; `deny` row; tests in `tests/integration/commands/storage-check-s3.test.ts`.
 
-## In progress
-- Screen part `src/renderer/screens/settings/s3-check/`, mounted in `s3-section.tsx`.
+- Screen part `src/renderer/screens/settings/s3-check/`, mounted in `s3-section.tsx`; test `tests/unit/renderer/screens/settings/s3-check.test.tsx`; shot 90 retaken.
+- Full run green.
 
 ## Left
-- Shot 90 retaken; full run.
+- Nothing in AP-10b. Architect ruling on the check-first names below.
 
 ## Decisions
 - The list call uses the prefix `{folder}/adman-connection-check/` (the brief: every listed key under it), not the whole folder.
