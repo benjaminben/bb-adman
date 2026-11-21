@@ -11,7 +11,7 @@ import { readMeta, writeMeta } from '../db/meta'
 import { readWireRows } from '../db/rows'
 import { assetsDirOf, resolveRow } from './service'
 import { hashFile } from './inspect'
-import { managedPath } from './path-resolver'
+import { managedPath, pathInside } from './path-resolver'
 import { missingFile } from './errors'
 import { extensionOf } from '../../shared/config/file-types'
 import type { AssetRow } from '../../shared/schemas/rows/asset'
@@ -21,9 +21,9 @@ import { notAProject } from '../db/meta'
 
 type Found = { id: string; file: string; ext: string }
 
-function isInside(parent: string, child: string): boolean {
-  const rel = path.relative(parent, child)
-  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))
+// The real path, so a link cannot hide where a folder is; the path itself when it is not there.
+function realOrSelf(p: string): Promise<string> {
+  return fs.promises.realpath(p).catch(() => path.resolve(p))
 }
 
 // SPEC 14 [1.30] U2: {Name} and {Name}.partial must be direct children of targetDir, whatever
@@ -40,8 +40,16 @@ async function checkTarget(project: ProjectHandle, targetDir: string, name: stri
   if (!path.isAbsolute(targetDir)) throw new AppError('INVALID_INPUT', 'Choose a folder.')
   const stat = await fs.promises.stat(targetDir).catch(() => null)
   if (!stat?.isDirectory()) throw new AppError('NOT_FOUND', 'That folder was not found.')
-  if (isInside(assetsDirOf(project), targetDir)) {
+  const [assetsDir, realTarget] = await Promise.all([
+    realOrSelf(assetsDirOf(project)),
+    realOrSelf(targetDir),
+  ])
+  if (pathInside(assetsDir, realTarget) !== null) {
     throw new AppError('RULE_VIOLATION', "Choose a folder outside the project's assets folder.")
+  }
+  const named = await fs.promises.lstat(path.join(targetDir, name)).catch(() => null)
+  if (named && !named.isDirectory()) {
+    throw new AppError('RULE_VIOLATION', `Something named ${name} is already there.`)
   }
   const entries = await fs.promises.readdir(path.join(targetDir, name)).catch(() => [])
   if (entries.length > 0) {
