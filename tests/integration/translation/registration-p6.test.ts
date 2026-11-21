@@ -8,7 +8,6 @@ import { createInput } from '../campaigns/campaign-fixture'
 import { AGENT_POLICY, denialMessage } from '@/main/commands/agent-policy'
 import { translationCommands } from '@/main/commands/translation'
 import { checkCommands } from '@/main/commands/check'
-import { languageFontCommands } from '@/main/commands/language-font'
 import { translationQueries } from '@/main/queries/translation'
 import { checkQueries } from '@/main/queries/check'
 import { jobKindHandlers } from '@/main/jobs/kinds'
@@ -42,7 +41,6 @@ const INPUTS: Record<string, object> = {
     ],
   },
   'check.run': { campaignId: 'C1' },
-  'layer.setFonts': { items: [{ layerId: 'L1', fontAssetId: null }] },
 }
 const NAMES = Object.keys(INPUTS)
 const SYSTEM = ['translation.write', 'translation.restore']
@@ -54,7 +52,6 @@ const POLICY: Record<string, string> = {
   'translation.write': 'deny',
   'translation.restore': 'deny',
   'check.run': 'allow',
-  'layer.setFonts': 'allow',
 }
 const AGENT_REACHES = NAMES.filter((n) => POLICY[n] === 'allow')
 const AGENT_DENIED = NAMES.filter((n) => POLICY[n] === 'deny')
@@ -88,7 +85,6 @@ describe('Phase 6 registration [P6-1]', () => {
       'translation.restore',
     ])
     expect(checkCommands(deps).map((h) => h.name)).toEqual(['check.run'])
-    expect(languageFontCommands(deps).map((h) => h.name)).toEqual(['layer.setFonts'])
     expect(Object.keys(translationQueries(deps))).toEqual(['translation.forCampaign'])
     expect(Object.keys(checkQueries(deps))).toEqual(['check.results'])
     expect(fx.core.commandNames).toEqual(expect.arrayContaining(NAMES))
