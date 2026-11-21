@@ -231,7 +231,7 @@ How Settings shows the result: `spec/screens.md`.
 
 Built. `src/main/providers/comfyui/image.ts`, `session.ts`, `run.ts`, `poll.ts`, `fill.ts`, `failures.ts`.
 
-`comfyui/index.ts` exports `image` and `video`. `ImageProvider.generate(input, opts)` is called with `count: 1` by the job kind, as for every provider. Video runs are in `spec/comfyui-workflows.md`, "A video run".
+`comfyui/index.ts` exports `image`, `video` and `cutout`. The job kind calls `ImageProvider.generate(input, opts)` with `count: 1`, as for every provider. Video runs: `spec/comfyui-workflows.md`, "A video run".
 
 1. Read the address from `ctx.settings()`. None saved: reason `address_needed`. The command normally catches this first.
 2. Pick the workflow with `workflowForRun`: no references gives the `image` workflow, otherwise `image_refs`. Too many references is refused by the command before any call, with the number the workflow takes; none is dropped silently [REQ: FR-260].

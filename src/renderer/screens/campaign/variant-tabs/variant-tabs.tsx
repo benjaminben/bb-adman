@@ -1,11 +1,14 @@
 // spec/editor.md, "Variant tabs" and "What each tab keeps" [FR-212, FR-213, Q-042]: inside a
 // campaign tab, "Overview" and then one tab per open variant, named "{title} · {sizeLabel} ·
 // {language}", each with its marks and a close button. Only the shown tab's content is drawn;
-// a variant tab's content comes from renderVariant, given the tab's kept view.
+// a variant tab's content comes from renderVariant, given the tab's kept view. Closing a tab
+// whose attached jobs still run asks first (spec/screens-ai.md, "Where it shows").
 import * as Tabs from '@radix-ui/react-tabs'
 import { useCallback, type ReactNode } from 'react'
 import { useNav } from '@/renderer/app/nav-context'
 import { OVERVIEW_TAB, campaignNav, tabView, type TabView } from '@/renderer/stores/nav-store'
+import { variantJobs } from '@/renderer/stores/attached-store'
+import { useCloseWarning } from '@/renderer/ui/close-warning'
 import { TabMarks, anyMark } from '@/renderer/ui/tab-marks'
 import { TabRow, type TabItem } from '@/renderer/ui/tab-row'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
@@ -39,6 +42,12 @@ export function VariantTabs(props: VariantTabsProps) {
   const nav = useNav((s) => campaignNav(s, projectId, campaignId))
   const showVariant = useNav((s) => s.showVariant)
   const closeVariant = useNav((s) => s.closeVariant)
+  const { ask, warning } = useCloseWarning('tab')
+  const close = (variantId: string) =>
+    ask(
+      (s) => variantJobs(s, projectId, [variantId]),
+      () => closeVariant(projectId, campaignId, variantId),
+    )
   const open = nav.variantTabs
     .map((id) => props.variants.find((v) => v.id === id))
     .filter((v) => v !== undefined)
@@ -52,7 +61,7 @@ export function VariantTabs(props: VariantTabsProps) {
         value: v.id,
         label: tabName(v),
         marks: anyMark(marks) && <TabMarks {...marks} />,
-        close: { label: 'Close tab', onClose: () => closeVariant(projectId, campaignId, v.id) },
+        close: { label: 'Close tab', onClose: () => close(v.id) },
       }
     }),
   ]
@@ -72,6 +81,7 @@ export function VariantTabs(props: VariantTabsProps) {
           <VariantContent {...props} variantId={v.id} />
         </Tabs.Content>
       ))}
+      {warning}
     </Tabs.Root>
   )
 }

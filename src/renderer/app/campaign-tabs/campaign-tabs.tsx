@@ -2,11 +2,14 @@
 // campaigns": a fixed "Project" tab (the project home), one tab per open campaign named after
 // it with its job marks and a close button ("Close {name}"), then a "+" button ("Open or start
 // a campaign") that shows the Project tab. Names and marks come from project.get; a campaign
-// that is gone loses its tab. It goes inside a Tabs.Root driven by useCampaignTab.
+// that is gone loses its tab. It goes inside a Tabs.Root driven by useCampaignTab. Closing a
+// campaign tab while an attached job of its variant tabs runs asks first (spec/screens-ai.md).
 import { useEffect } from 'react'
-import { useNav } from '@/renderer/app/nav-context'
+import { useNav, useNavStore } from '@/renderer/app/nav-context'
 import { useProject } from '@/renderer/screens/project-home/project-home/use-project'
-import { PROJECT_TAB, projectNav } from '@/renderer/stores/nav-store'
+import { PROJECT_TAB, campaignNav, projectNav } from '@/renderer/stores/nav-store'
+import { variantJobs } from '@/renderer/stores/attached-store'
+import { useCloseWarning } from '@/renderer/ui/close-warning'
 import { TabMarks, anyMark } from '@/renderer/ui/tab-marks'
 import { TabRow, type TabItem } from '@/renderer/ui/tab-row'
 import styles from './campaign-tabs.module.css'
@@ -24,7 +27,16 @@ export function CampaignTabs(props: { projectId: string }) {
   const showCampaign = useNav((s) => s.showCampaign)
   const closeCampaign = useNav((s) => s.closeCampaign)
   const keepCampaigns = useNav((s) => s.keepCampaigns)
+  const navStore = useNavStore()
+  const { ask, warning } = useCloseWarning('tab')
   const campaigns = data?.campaigns
+  const close = (campaignId: string) => {
+    const variantTabs = campaignNav(navStore.getState(), projectId, campaignId).variantTabs
+    ask(
+      (s) => variantJobs(s, projectId, variantTabs),
+      () => closeCampaign(projectId, campaignId),
+    )
+  }
 
   useEffect(() => {
     if (campaigns)
@@ -43,7 +55,7 @@ export function CampaignTabs(props: { projectId: string }) {
       value: id,
       label: c.name,
       marks: anyMark(marks) && <TabMarks {...marks} />,
-      close: { label: `Close ${c.name}`, onClose: () => closeCampaign(projectId, id) },
+      close: { label: `Close ${c.name}`, onClose: () => close(id) },
     })
   }
   const shown = items.some((item) => item.value === nav.shown) ? nav.shown : PROJECT_TAB
@@ -59,6 +71,7 @@ export function CampaignTabs(props: { projectId: string }) {
       >
         +
       </button>
+      {warning}
     </div>
   )
 }

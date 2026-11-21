@@ -5,7 +5,7 @@
 // full width. Opening a campaign opens its tab in the nav store. The drop target stays
 // mounted while a campaign is shown.
 import type { ReactNode } from 'react'
-import { useApp } from '@/renderer/app/app-context'
+import { useCloseProject } from '@/renderer/app/project-switcher'
 import { NavScope, useNav } from '@/renderer/app/nav-context'
 import { PROJECT_TAB, projectNav } from '@/renderer/stores/nav-store'
 import type { OpenProjectSummary } from '@/shared/schemas/project'
@@ -32,7 +32,7 @@ function Section(props: { id: string; title: string; children: ReactNode }) {
 }
 
 function ProjectPage(props: Props) {
-  const command = useApp((s) => s.command)
+  const { closeProject, dialog } = useCloseProject()
   const { project } = props
   const { projectId } = project
   const data = useProject(projectId)
@@ -62,7 +62,7 @@ function ProjectPage(props: Props) {
         <button
           type="button"
           aria-label={`Close ${project.name}`}
-          onClick={() => void command('project.close', { projectId })}
+          onClick={() => void closeProject(projectId, project.name)}
         >
           Close project
         </button>
@@ -93,6 +93,7 @@ function ProjectPage(props: Props) {
         </>
       )}
       {drop}
+      {dialog}
     </section>
   )
 }

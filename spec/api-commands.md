@@ -59,11 +59,11 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `check.run` | projectId, campaignId or variantIds[] | — | allow | Not built (Phase 6) | FR-114, FR-116, FR-196 |
 | `generation.runImages` | projectId, variantId, slot or layerId (exactly one), prompt, referenceAssetIds[], count (1 to 8), provider, licenceConfirmed? (S2-4) | — | tick | Built | FR-062–FR-065, FR-199 |
 | `generation.runFill` | projectId, variantId, provider | — | tick | Not built (Phase 5) | FR-076 |
-| `generation.proposeLayout` | projectId, variantId, provider (`spec/ai-jobs.md`) | — (applied by `layer.updateMany`, V) | tick | Not built (Phase 4) | FR-061 |
-| `generation.copyOptions` | projectId, variantId, layerId, count (1 to 8), provider | — | tick | Not built (Phase 4) | FR-045 |
-| `generation.cutOut` | projectId, variantId, layerId, provider, licenceConfirmed? | — | tick | Not built (Phase 4) | FR-307 |
-| `brief.extract` | projectId, filePath (`.md`, `.markdown`, `.txt`), provider | — | deny | Not built (Phase 4) | FR-022 |
-| `layer.updateMany` | projectId, variantId, updates[] of { layerId, patch } (1 to 100) | V | allow | Not built (Phase 4) | FR-061, FR-092 |
+| `generation.proposeLayout` | projectId, variantId, provider (`spec/ai-jobs.md`) | — (applied by `layer.updateMany`, V) | tick | Built | FR-061 |
+| `generation.copyOptions` | projectId, variantId, layerId, count (1 to 8), provider | — | tick | Built | FR-045 |
+| `generation.cutOut` | projectId, variantId, layerId, provider, licenceConfirmed? | — | tick | Built | FR-307 |
+| `brief.extract` | projectId, filePath (`.md`, `.markdown`, `.txt`), provider | — | deny | Built | FR-022 |
+| `layer.updateMany` | projectId, variantId, updates[] of { layerId, patch } (1 to 100) | V | allow | Built | FR-061, FR-092 |
 | `generation.startVideo` | projectId, variantId, prompt, durationMs, provider, start (`none` or `first_frame`), useReferences: boolean, referenceAssetIds[], licenceConfirmed? (S2-4) | — | tick | Built (ComfyUI; fal.ai Seedance with slice J) | FR-123, FR-199, FR-286 |
 | `job.retry` | projectId, jobId, licenceConfirmed? (S2-4) | — | deny | Built | FR-069, FR-152 |
 | `job.cancel` | projectId, jobId | — | tick | Built | FR-152, FR-215 |
@@ -169,7 +169,7 @@ Checks in `prepare`, before any job row:
 1. Provider, variant, keys. A provider whose `available` is false or that lacks `video` in `jobs` is `INVALID_INPUT` "That provider cannot make videos." A missing variant is `NOT_FOUND` "That variant was not found."
 2. `startPair(input)` (`src/main/commands/generation/start-pair.ts`) gives the start its `videoStart`. `INVALID_INPUT` "Choose one picture for this video." for `first_frame` with no ID, `useReferences` true with no ID, IDs with `none` and `useReferences` false, or more than one ID on `first_frame`. `RULE_VIOLATION` `comfy_job_not_offered` for `first_frame` with `useReferences` true.
 3. For ComfyUI, `checkComfyVideo(deps, ctx, durationMs, videoStart)`: the address (`comfy_address_needed` first), then `offeredWorkflow({ job: 'video', videoStart }, { devTools, actor })` else `comfy_job_not_offered`, then that workflow's `maxMs` (`video_too_long`). The `too_many_references` refusal comes after this step, because the most comes from the workflow.
-4. The picture. `picture_not_usable` is checked from the asset row first (a video asset included): kind `image`, type PNG or JPEG. Then `deps.assets.read(ctx.project, id)` refuses a picture that is gone, too large or unreadable, as `generation.runImages` does.
+4. The picture. `picture_not_usable` is checked from the asset row first (a video asset included): kind `image`, type PNG, JPEG or WebP. Then `deps.assets.read(ctx.project, id)` refuses a picture that is gone, too large, unreadable or not convertible to PNG, as `generation.runImages` does.
 
 | Start | `start` | `useReferences` | `referenceAssetIds` | `videoStart` |
 |---|---|---|---|---|
