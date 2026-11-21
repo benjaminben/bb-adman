@@ -95,7 +95,9 @@ describe('migration 0003 [spec/ai-jobs.md "Job kinds"]', () => {
     expect(() => set('error_kind', 'nope')).toThrow(/CHECK constraint failed/)
     expect(() => set('started_by', 'robot')).toThrow(/CHECK constraint failed/)
     const indexes = h.db
-      .prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'job' AND sql IS NOT NULL")
+      .prepare(
+        "SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'job' AND sql IS NOT NULL",
+      )
       .all()
       .map((r) => (r as { name: string }).name)
       .sort()
