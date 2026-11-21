@@ -30,7 +30,7 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
   it('gives an empty query map for each new query domain', () => {
     f = makeFixture()
     const deps = f.core.deps
-    for (const map of [campaignQueries, projectQueries, templateQueries]) {
+    for (const map of [campaignQueries]) {
       expect(map(deps)).toEqual({})
     }
   })
@@ -108,5 +108,17 @@ describe('the rule-set domain is registered [SPEC 14, slice C]', () => {
       'ruleSet.update',
       'ruleSet.copyFrom',
     ])
+  })
+})
+
+describe('the project and template queries are registered [SPEC 14, slice C]', () => {
+  it('gives the project.get query', () => {
+    f = makeFixture()
+    expect(Object.keys(projectQueries(f.core.deps))).toEqual(['project.get'])
+  })
+
+  it('gives the template.list and template.slots queries', () => {
+    f = makeFixture()
+    expect(Object.keys(templateQueries(f.core.deps))).toEqual(['template.list', 'template.slots'])
   })
 })
