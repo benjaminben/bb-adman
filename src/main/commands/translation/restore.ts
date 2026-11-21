@@ -1,29 +1,66 @@
-// translation.restore (spec/phases/phase-06.md). System command: the inverse of set and approve,
-// and its own (A-160). Deny and internal. Stub (P6-1): refuses in prepare, before it reads or
-// writes anything, until P6-4 replaces the body.
-import { defineCommand, type HandlerResult } from '@/main/commands/types'
+// translation.restore (spec/phases/phase-06.md, design additions 1 and 2; A-160). System
+// command, deny and internal: the inverse of translation.set and translation.approve, and its
+// own. Writes exactly the given values (synced_revs.copy from syncedCopyRev) and bumps
+// variant.rev of each variant touched. Its inverse holds the values read before the write,
+// on the list its input's scope names.
+import { defineCommand } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
+import type { UndoScope } from '@/main/history/undo-lists'
+import { placeLayer } from '@/main/translation/layers'
+import {
+  sameText,
+  textValuesOf,
+  writeTexts,
+  type TextValues,
+  type TextWrite,
+} from '@/main/translation/write-text'
 import {
   translationRestoreInput,
   type TranslationLayersReply,
+  type TranslationRestoreInput,
 } from '@/shared/schemas/commands/translation'
 import { AppError } from '@/shared/schemas/result'
 
-const NAME = 'translation.restore'
-const notBuilt = () =>
-  new AppError('RULE_VIOLATION', `${NAME} is not built yet.`, { reason: 'not_built' })
+export type RestoreScope = TranslationRestoreInput['scope']
 
-export function translationRestore(_deps: CoreDeps) {
+// The inverse on `list`, the undo list that `scope` names.
+export function restoreInverse(
+  projectId: string,
+  items: TextValues[],
+  scope: RestoreScope,
+  list: UndoScope,
+) {
+  return { scope: list, call: { name: 'translation.restore', input: { projectId, scope, items } } }
+}
+
+export function translationRestore(deps: CoreDeps) {
   return defineCommand({
-    name: NAME,
+    name: 'translation.restore',
     internal: true,
     input: translationRestoreInput,
     projectId: (input) => input.projectId,
-    prepare(): Promise<undefined> {
-      return Promise.reject(notBuilt())
-    },
-    run(): HandlerResult<TranslationLayersReply> {
-      throw notBuilt()
+    run(ctx, input) {
+      const db = ctx.project.db
+      const ids = input.items.map((i) => i.layerId)
+      if (new Set(ids).size !== ids.length) {
+        throw new AppError('INVALID_INPUT', 'A layer is named twice.')
+      }
+      const placed = input.items.map((next) => ({ next, ...placeLayer(db, next.layerId) }))
+      const writes: TextWrite[] = placed
+        .map(({ next, layer }) => ({ row: layer, next }))
+        .filter(({ row, next }) => !sameText(textValuesOf(row), next))
+      const data: TranslationLayersReply = { layerIds: writes.map((w) => w.row.id) }
+      const first = placed.find((p) => p.layer.id === writes[0]?.row.id)
+      if (!first) return { data }
+      writeTexts(ctx, writes, deps.now().toISOString())
+      // The list the input names, its ID read from the first layer written's rows.
+      const list =
+        input.scope === 'campaign'
+          ? `campaign:${first.direction.campaignId}`
+          : `variant:${first.variant.id}`
+      const items = writes.map((w) => textValuesOf(w.row))
+      const log = { campaignId: first.direction.campaignId }
+      return { data, log, inverse: restoreInverse(input.projectId, items, input.scope, list) }
     },
   })
 }
