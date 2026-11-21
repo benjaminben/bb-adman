@@ -165,11 +165,12 @@ describe('VideoPanel [SPEC 14 1.57 TP-6]', () => {
     expect(sent(fake, 'generation.startVideo')).toHaveLength(1)
   })
 
-  it('shows no server address, reads no first frame or references, and has no axe problems', async () => {
+  it('shows no server address and no picture choice under the default start', async () => {
     const { p } = await panel()
     await waitFor(() => expect(p.getByLabelText('Length (seconds)')).toHaveAttribute('max', '15'))
     expect(screen.queryByText(/192\.168/)).toBeNull()
-    expect(p.queryByText(/first frame|reference/i)).toBeNull()
+    expect(p.queryByRole('region', { name: 'Picture to start from' })).toBeNull()
+    expect(p.queryByText('Tip: call the picture <Picture 1> in the prompt.')).toBeNull()
     expect(await axeViolations()).toEqual([])
   })
 })
