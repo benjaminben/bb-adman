@@ -64,6 +64,8 @@ export type ApprovalsStandIn = {
   origin: string
   port: number
   seen: Seen[]
+  // TCP connections the server took, with or without a request in them.
+  connections: () => number
   links: Map<string, StandInLink>
   // null plays a service with no key of its own (503 not_set_up).
   setKey(key: string | null): void
@@ -219,6 +221,7 @@ export async function startApprovalsStandIn(
   const seen: Seen[] = []
   const links = new Map<string, StandInLink>()
   const onces = new Map<StandInRoute, Once>()
+  let connections = 0
   const server = http.createServer((req, res) => {
     const chunks: Buffer[] = []
     req.on('data', (c: Buffer) => chunks.push(c))
@@ -253,12 +256,14 @@ export async function startApprovalsStandIn(
       sendJson(res, play(links, found.route, found.pair, body))
     })
   })
+  server.on('connection', () => (connections += 1))
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
   const port = (server.address() as AddressInfo).port
   return {
     origin: `http://127.0.0.1:${port}`,
     port,
     seen,
+    connections: () => connections,
     links,
     setKey: (k) => {
       key = k

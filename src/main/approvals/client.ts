@@ -32,7 +32,7 @@ import {
   logFailure,
   type ApprovalsRoute,
 } from './failure'
-import { send, type Call } from './request'
+import { send, systemResolve, type Call, type Resolve } from './request'
 
 export const TOTAL_MS = 20_000
 export const MAX_REPLY_BYTES = 4 * 1024 * 1024
@@ -44,6 +44,8 @@ export type ClientOptions = {
   allowLocalHttp: boolean
   log: ActivityLog
   totalMs?: number
+  // Tests only: a stand-in for the name lookup of an https origin.
+  resolve?: Resolve
 }
 
 export type LinkStateReply = z.infer<typeof LinkState>
@@ -84,6 +86,7 @@ export function createApprovalsClient(service: ApprovalsService, opts: ClientOpt
     allowLocalHttp: opts.allowLocalHttp,
     totalMs: opts.totalMs ?? TOTAL_MS,
     maxBytes: MAX_REPLY_BYTES,
+    resolve: opts.resolve ?? systemResolve,
   }
 
   async function ask<T>(route: ApprovalsRoute, call: () => Call, expect: Expect<T>) {

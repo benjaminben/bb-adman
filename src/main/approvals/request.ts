@@ -7,12 +7,74 @@
 //   from the environment applies.
 // - The key goes only into the Authorization header. No Origin, Referer or Cookie is sent.
 // - Nothing is written until the socket is connected (for https, the certificate passed).
+// - For https, the name is resolved here and refused when any address is loopback, private,
+//   link-local or otherwise not public; the socket gets only the address that was checked.
 // - A 3xx is never followed. The whole request has a time limit; the reply is read with a cap.
+import dns from 'node:dns'
 import http from 'node:http'
 import https from 'node:https'
+import net from 'node:net'
 import { parseApprovalsAddress } from '@/shared/approvals/address'
 import { approvalsRefusal } from '@/shared/approvals/messages'
 import { ApprovalsFailure } from './failure'
+
+export type Resolved = { address: string; family: number }
+export type Resolve = (host: string) => Promise<Resolved[]>
+
+export const systemResolve: Resolve = (host) => dns.promises.lookup(host, { all: true })
+
+// Addresses the key is never sent to: this computer, private and shared networks, link-local
+// (cloud metadata), multicast and reserved ranges, and NAT64 forms of them. An IPv4 address
+// written as IPv6 (::ffff:a.b.c.d) is checked as the IPv4 address.
+const REFUSED = new net.BlockList()
+for (const [address, prefix] of [
+  ['0.0.0.0', 8],
+  ['10.0.0.0', 8],
+  ['100.64.0.0', 10],
+  ['127.0.0.0', 8],
+  ['169.254.0.0', 16],
+  ['172.16.0.0', 12],
+  ['192.0.0.0', 24],
+  ['192.168.0.0', 16],
+  ['198.18.0.0', 15],
+  ['224.0.0.0', 3],
+] as const) {
+  REFUSED.addSubnet(address, prefix, 'ipv4')
+}
+for (const [address, prefix] of [
+  ['::', 128],
+  ['::1', 128],
+  ['64:ff9b::', 96],
+  ['fc00::', 7],
+  ['fe80::', 10],
+  ['ff00::', 8],
+] as const) {
+  REFUSED.addSubnet(address, prefix, 'ipv6')
+}
+
+export function isRefusedAddress(address: string): boolean {
+  const family = net.isIP(address)
+  if (family === 0) return true
+  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address)?.[1]
+  if (mapped !== undefined) return isRefusedAddress(mapped)
+  return REFUSED.check(address, family === 4 ? 'ipv4' : 'ipv6')
+}
+
+type LookupCallback = (error: Error | null, address: string | Resolved[], family?: number) => void
+
+// The lookup handed to https.request: every address the name gives must pass.
+function checkedLookup(resolve: Resolve) {
+  return (hostname: string, options: { all?: boolean }, callback: LookupCallback) => {
+    const refuse = () =>
+      callback(Object.assign(new Error('Address refused'), { code: 'EREFUSED' }), '')
+    resolve(hostname).then((list) => {
+      const first = list[0]
+      if (!first || list.some((a) => isRefusedAddress(a.address))) return refuse()
+      if (options.all) callback(null, list)
+      else callback(null, first.address, first.family)
+    }, refuse)
+  }
+}
 
 export type Target = {
   origin: string
@@ -20,6 +82,7 @@ export type Target = {
   allowLocalHttp: boolean
   totalMs: number
   maxBytes: number
+  resolve: Resolve
 }
 
 export type Call = { method: 'GET' | 'POST' | 'PUT' | 'DELETE'; path: string; body?: unknown }
@@ -63,7 +126,7 @@ export function send(target: Target, call: Call): Promise<Answer> {
         method: call.method,
         headers,
         agent,
-        ...(secure && { rejectUnauthorized: true }),
+        ...(secure && { rejectUnauthorized: true, lookup: checkedLookup(target.resolve) }),
       })
     } catch {
       return settle(new ApprovalsFailure('other'))

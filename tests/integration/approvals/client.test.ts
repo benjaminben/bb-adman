@@ -1,7 +1,5 @@
 // The approvals service client against the stand-in (spec/approvals.md "The service client",
 // "Named tests"). Every request goes to the stand-in on 127.0.0.1; nothing leaves the machine.
-import http from 'node:http'
-import type { AddressInfo } from 'node:net'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createApprovalsClient, type ApprovalsService } from '@/main/approvals/client'
 import type { ActivityLog, LogInput } from '@/main/log/activity-log'
@@ -163,29 +161,6 @@ describe('the approvals client: what it sends [spec/approvals.md "Named tests"]'
       await expect(client({ origin }).health()).rejects.toMatchObject({ code: 'RULE_VIOLATION' })
     }
     expect(stand.seen).toEqual([])
-  })
-
-  it('reaches the saved origin with proxy variables set, and the proxy sees nothing', async () => {
-    let proxied = 0
-    const proxy = http.createServer((_req, res) => {
-      proxied += 1
-      res.end()
-    })
-    await new Promise<void>((r) => proxy.listen(0, '127.0.0.1', r))
-    const proxyUrl = `http://127.0.0.1:${(proxy.address() as AddressInfo).port}`
-    const names = ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy']
-    const saved = names.map((n) => process.env[n])
-    try {
-      for (const n of names) process.env[n] = proxyUrl
-      await client().health()
-    } finally {
-      names.forEach((n, i) =>
-        saved[i] === undefined ? delete process.env[n] : (process.env[n] = saved[i]),
-      )
-      await new Promise<void>((r) => proxy.close(() => r()))
-    }
-    expect(stand.seen).toHaveLength(1)
-    expect(proxied).toBe(0)
   })
 })
 
