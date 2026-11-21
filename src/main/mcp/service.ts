@@ -44,8 +44,10 @@ export function createMcpService(deps: Deps) {
 
   // A start the user did not ask for just now (app start, port change): a failure is
   // logged and shown through getConnectInfo, never thrown (SPEC 14 1.58 J-7, J-8, J-11).
-  async function tryListen(name: string): Promise<void> {
+  // A restart stops first inside the same try, so a failed stop is logged too (S-2).
+  async function tryListen(name: string, restart = false): Promise<void> {
     try {
+      if (restart) await http.stop()
       await listen()
     } catch (e) {
       deps.log.write({
@@ -95,8 +97,7 @@ export function createMcpService(deps: Deps) {
     portChanged: (): Promise<void> =>
       serial(async () => {
         if (!settings.get().mcp.enabled) return
-        await http.stop()
-        await tryListen('mcp.restart')
+        await tryListen('mcp.restart', true)
       }),
 
     stop: (): Promise<void> => serial(stop),
