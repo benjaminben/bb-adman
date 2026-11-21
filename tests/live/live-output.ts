@@ -3,6 +3,7 @@
 // through `safeText` for every set value of LIVE_REDACTED_NAMES (the prefix only when it is
 // long enough). A skip line names only the variables that are missing.
 import { redactSecret } from '../../src/main/providers/redact'
+import { REFUSED_PATH } from '../../src/main/providers/storage-paths'
 import { ProviderFailure } from '../../src/main/providers/types'
 import { LIVE_REDACTED_MIN_LENGTH, LIVE_REDACTED_NAMES } from './env-file'
 
@@ -68,6 +69,22 @@ export async function quietly<T>(
   try {
     return await call()
   } catch (failure) {
+    // [1.17] H21: the refused-path error is a fixed text with no path or live value; it is
+    // let through as that text so a case can expect it exactly.
+    if (isRefusedPath(failure)) throw refusedPath()
     throw safeFailure(label, failure, values).error
   }
+}
+
+function isRefusedPath(failure: unknown): boolean {
+  return (
+    failure instanceof Error &&
+    !(failure instanceof ProviderFailure) &&
+    failure.message === REFUSED_PATH
+  )
+}
+
+// A new error with only the fixed text: no cause, no fields.
+function refusedPath(): Error {
+  return new Error(REFUSED_PATH)
 }

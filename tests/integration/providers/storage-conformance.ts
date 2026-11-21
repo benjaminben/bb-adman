@@ -16,6 +16,7 @@ function streamOf(...chunks: string[]): ReadableStream<Uint8Array> {
   })
 }
 
+const REFUSED = /^Storage path refused$/
 const BAD_PATHS = ['../outside.txt', 'a/../../outside.txt', '/absolute.txt']
 
 export function describeStorageConformance(
@@ -99,12 +100,13 @@ export function describeStorageConformance(
       expect(await storage.exists(kept)).toBe(true)
     })
 
+    // [1.17] H21: exactly the fixed text, so a host error such as "Request refused" fails it.
     it.each(BAD_PATHS)('refuses the path %s in every call', async (bad) => {
-      await expect(storage.write(bad, text('x'), 'text/plain')).rejects.toThrow(/refused/)
-      await expect(storage.read(bad)).rejects.toThrow(/refused/)
-      await expect(storage.exists(bad)).rejects.toThrow(/refused/)
-      await expect(storage.list(bad)).rejects.toThrow(/refused/)
-      await expect(storage.remove([`${base}/fine.txt`, bad])).rejects.toThrow(/refused/)
+      await expect(storage.write(bad, text('x'), 'text/plain')).rejects.toThrow(REFUSED)
+      await expect(storage.read(bad)).rejects.toThrow(REFUSED)
+      await expect(storage.exists(bad)).rejects.toThrow(REFUSED)
+      await expect(storage.list(bad)).rejects.toThrow(REFUSED)
+      await expect(storage.remove([`${base}/fine.txt`, bad])).rejects.toThrow(REFUSED)
     })
   })
 }
