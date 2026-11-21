@@ -10,6 +10,7 @@ import {
   storageDropboxSignOutInput,
 } from '../../../../src/shared/schemas/commands/storage'
 import { devStorageInput } from '../../../../src/shared/schemas/commands/dev'
+import { MAX_IMAGES_PER_RUN } from '../../../../src/shared/config/defaults'
 import { assetAddGeneratedInput } from '../../../../src/shared/schemas/commands/asset'
 import { projectCloseInput } from '../../../../src/shared/schemas/commands/project'
 import { jobListInput } from '../../../../src/shared/schemas/queries/job'
@@ -47,6 +48,14 @@ describe('generation.runImages input [SPEC 4.2]', () => {
     expect(generationRunImagesInput.safeParse({ ...images, slot: 'x', count: 0 }).success).toBe(
       false,
     )
+  })
+
+  it('takes a count of MAX_IMAGES_PER_RUN (8) and refuses 9 [SPEC 4.2, 1.9]', () => {
+    expect(MAX_IMAGES_PER_RUN).toBe(8)
+    const run = (count: number) =>
+      generationRunImagesInput.safeParse({ ...images, slot: 'x', count }).success
+    expect(run(8)).toBe(true)
+    expect(run(9)).toBe(false)
   })
 })
 

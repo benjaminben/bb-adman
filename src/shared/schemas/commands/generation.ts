@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { projectScoped } from './project-scoped'
+import { MAX_IMAGES_PER_RUN } from '../../config/defaults'
 
 // SPEC 4.2 generation.runImages [1.8]. Built in Phase 2 slice H. A slot or a layer, not both.
 export const generationRunImagesInput = projectScoped
@@ -9,7 +10,7 @@ export const generationRunImagesInput = projectScoped
     layerId: z.string().min(1).optional(),
     prompt: z.string().trim().min(1, 'Enter a prompt.'),
     referenceAssetIds: z.array(z.string().min(1)),
-    count: z.number().int().min(1),
+    count: z.number().int().min(1).max(MAX_IMAGES_PER_RUN),
     provider: z.string().min(1),
   })
   .refine((i) => (i.slot === undefined) !== (i.layerId === undefined), {

@@ -3,6 +3,10 @@ import type { CampaignSize } from '../schemas/commands/campaign'
 
 export const DEFAULT_FPS = 30
 
+// SPEC 4.2 [1.9]: the most pictures one generation.runImages run may ask for. Each picture
+// is one paid call.
+export const MAX_IMAGES_PER_RUN = 8
+
 export type ReadyMadeSize = CampaignSize & { selectedByDefault: boolean }
 
 // SPEC 3.3 ready-made sizes [FR-026, FR-032, FR-247]. The one list; parseSize reads it.
