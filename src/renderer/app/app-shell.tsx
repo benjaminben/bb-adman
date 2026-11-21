@@ -1,5 +1,6 @@
 // The window frame: a tab per open project beside the start tab (FR-003), a settings
-// button, the error alert and the key dialog.
+// button, the hand-test button when devTools is on (SPEC 14 slice I), the error alert and
+// the key dialog.
 import * as Tabs from '@radix-ui/react-tabs'
 import { useApp, EMPTY } from './app-context'
 import { ErrorBanner } from './error-banner'
@@ -7,11 +8,13 @@ import { StartScreen } from '../screens/start/start-screen'
 import { SettingsScreen } from '../screens/settings/settings-screen'
 import { ProjectHome } from '../screens/project-home/project-home'
 import { KeyDialog } from '../dialogs/key/key-dialog'
+import { HandTestScreen } from '../dev/hand-test-screen'
 import styles from './app-shell.module.css'
 
 export function AppShell() {
   const projects = useApp((s) => s.app?.openProjects ?? EMPTY)
   const view = useApp((s) => s.view)
+  const devTools = useApp((s) => s.app?.devTools ?? false)
   const show = useApp((s) => s.show)
   const tab = view.kind === 'project' ? view.projectId : view.kind
 
@@ -41,6 +44,16 @@ export function AppShell() {
           >
             Settings
           </button>
+          {devTools && (
+            <button
+              type="button"
+              className={styles.settings}
+              aria-pressed={view.kind === 'handTest'}
+              onClick={() => show({ kind: 'handTest' })}
+            >
+              Hand test
+            </button>
+          )}
         </header>
         <main className={styles.main}>
           <ErrorBanner />
@@ -55,6 +68,11 @@ export function AppShell() {
           {view.kind === 'settings' && (
             <div className={styles.panel}>
               <SettingsScreen />
+            </div>
+          )}
+          {devTools && view.kind === 'handTest' && (
+            <div className={styles.panel}>
+              <HandTestScreen />
             </div>
           )}
         </main>

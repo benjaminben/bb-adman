@@ -5,7 +5,12 @@ import type { AdmanApi } from '../../shared/schemas/api'
 import type { AppState, ProviderInfo } from '../../shared/schemas/queries/app'
 import type { Result } from '../../shared/schemas/result'
 
-export type View = { kind: 'start' } | { kind: 'settings' } | { kind: 'project'; projectId: string }
+// handTest is the hand-test screen (SPEC 14 slice I); the shell shows it only with devTools.
+export type View =
+  | { kind: 'start' }
+  | { kind: 'settings' }
+  | { kind: 'handTest' }
+  | { kind: 'project'; projectId: string }
 
 export type KeyRequest = { provider: ProviderInfo; resolve: (saved: boolean) => void }
 
