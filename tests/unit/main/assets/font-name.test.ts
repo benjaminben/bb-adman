@@ -151,3 +151,13 @@ describe('readFontFamily, the name a font file gives itself [SPEC scene.md, FR-0
     expect(readFontFamily(make())).toBeNull()
   })
 })
+
+describe('readFontFamily removes format characters [FIX-D]', () => {
+  it.each([
+    ['a right-to-left override', 'Brand‮ Sans', 'Brand Sans'],
+    ['a zero-width joiner', 'Brand‍ Sans', 'Brand Sans'],
+    ['nothing from a name with an accent', 'Café Serif', 'Café Serif'],
+  ])('removes %s', (_, name, expected) => {
+    expect(readFontFamily(sfnt('ttf', [filler('head'), named([win(1, name)])]))).toBe(expected)
+  })
+})
