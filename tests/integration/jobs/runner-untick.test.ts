@@ -107,6 +107,16 @@ describe("the runner's untick check, for a job waiting its turn [AR-2]", () => {
 })
 
 describe('the untick check skips a job already sent, and the user [AR-2]', () => {
+  it('sends a ticked Gemini agent job to the recorded answer, counted as paid (test 6)', async () => {
+    const x = fixture()
+    const h = holding(x)
+    x.tick('gemini', true)
+    const job = await x.start({ provider: 'gemini', startedBy: 'agent' })
+    await waitFor(ended(x, job))
+    expect(x.row(job)).toMatchObject({ status: 'succeeded', paidCalls: 1 })
+    expect(h.gemini.seen).toHaveLength(1)
+  })
+
   it('lets an agent job whose first call is out make its second call (test 2)', async () => {
     const x = fixture()
     x.tick('fake', true)

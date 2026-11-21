@@ -108,7 +108,6 @@ describe('gate step 1: the provider is offered for agent runs', () => {
   })
 
   it.each([
-    ['gemini', 'Google Gemini'],
     ['fal-seedance', 'fal.ai Seedance'],
     ['firefly', 'Adobe Firefly'],
     ['s3', 'Amazon S3'],
