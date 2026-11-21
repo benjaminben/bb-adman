@@ -37,8 +37,10 @@ async function openProjectId(page: Page): Promise<string> {
       'app.getState',
     ),
   )
-  return (state as { data: { openProjects: Array<{ projectId: string }> } }).data.openProjects[0]
-    .projectId
+  const open = (state as { data: { openProjects: Array<{ projectId: string }> } }).data
+  const projectId = open.openProjects[0]?.projectId
+  if (projectId === undefined) throw new Error('No project is open.')
+  return projectId
 }
 
 async function importFiles(page: Page, projectId: string, paths: string[], library: string) {
