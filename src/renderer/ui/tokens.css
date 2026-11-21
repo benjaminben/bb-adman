@@ -14,6 +14,9 @@
   --color-danger-text: #8a1c12;
   --color-focus: #1f5bd8;
   --color-overlay: rgb(0 0 0 / 40%);
+  /* A disabled control is drawn faded. Disabled controls are exempt from the contrast rule;
+     enabled ones are untouched. */
+  --opacity-disabled: 0.5;
   --radius: 6px;
   --border-width: 1px;
   --focus-ring-width: 2px;
@@ -25,6 +28,7 @@
   --space-6: 24px;
   --font-body: -apple-system, 'Segoe UI', system-ui, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-size-small: 12px;
   --font-size-body: 14px;
   --font-size-heading: 16px;
   --width-page: 960px;

@@ -1,6 +1,11 @@
 .line {
   margin: var(--space-3) 0;
 }
+/* The line above the missing files list: the form label weight (layout.module.css .label). */
+.listLabel {
+  margin: var(--space-3) 0 var(--space-1);
+  font-weight: 600;
+}
 .alert {
   margin: var(--space-3) 0;
   padding: var(--space-2) var(--space-3);
