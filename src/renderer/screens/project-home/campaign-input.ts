@@ -20,12 +20,46 @@ export type CampaignPlan =
   | { ok: true; subjects: SubjectCreateInput[]; campaign: CampaignCreateInput }
   | { ok: false; problems: string[] }
 
-function subjectProblems(draft: BriefDraft): string[] {
-  return (draft.subjects ?? []).flatMap((s) => {
-    if (s.id === undefined) return [`The subject "${s.name ?? ''}" has no ID in the brief.`]
-    if (SubjectId.safeParse(s.id).success) return []
-    return [`The subject ID "${s.id}" may hold only A-Z, a-z, 0-9, - and _, up to 64 letters.`]
+type DraftSubject = NonNullable<BriefDraft['subjects']>[number]
+export type BriefSubjectId = { id: string; made: boolean }
+
+const MAX_ID = 64
+
+// SPEC 14 1.43 T-1: spaces become "-", other characters outside the SubjectId set go, the
+// rest is cut to 64; an empty result is "subject".
+function idFromName(name: string): string {
+  const id = name
+    .replace(/ +/g, '-')
+    .replace(/[^A-Za-z0-9_-]/g, '')
+    .slice(0, MAX_ID)
+  return id === '' ? 'subject' : id
+}
+
+// Each brief subject's ID: its own when the brief gives one (kept as it is, even if bad), or
+// one made from its name. A made ID that an earlier subject or a brief's own ID already uses
+// gets "-2", "-3" and so on, cut so the whole fits 64.
+export function briefSubjectIds(subjects: DraftSubject[]): BriefSubjectId[] {
+  const given = new Set(subjects.flatMap((s) => (s.id === undefined ? [] : [s.id])))
+  const taken = new Set<string>()
+  return subjects.map((s) => {
+    if (s.id !== undefined) return { id: s.id, made: false }
+    const base = idFromName(s.name ?? '')
+    let id = base
+    for (let n = 2; given.has(id) || taken.has(id); n++) {
+      const end = `-${n}`
+      id = base.slice(0, MAX_ID - end.length) + end
+    }
+    taken.add(id)
+    return { id, made: true }
   })
+}
+
+function subjectProblems(ids: BriefSubjectId[]): string[] {
+  return ids.flatMap(({ id, made }) =>
+    made || SubjectId.safeParse(id).success
+      ? []
+      : [`The subject ID "${id}" may hold only A-Z, a-z, 0-9, - and _, up to 64 letters.`],
+  )
 }
 
 function languagesOf(reply: BriefParsed): string[] {
@@ -70,17 +104,18 @@ export function campaignPlan(
   const { draft } = reply
   const languages = languagesOf(reply)
   const { sizes, unread } = sizesOf(draft)
+  const briefSubjects = draft.subjects ?? []
+  const ids = briefSubjectIds(briefSubjects)
   const problems = [
-    ...subjectProblems(draft),
+    ...subjectProblems(ids),
     ...(languages.length === 0 ? ['The brief gives no language.'] : []),
     ...unread.map((text) => `The size "${text}" cannot be read.`),
   ]
   if (problems.length > 0) return { ok: false, problems }
-  const briefSubjects = draft.subjects ?? []
   const parsed = campaignCreateInput.safeParse({
     projectId,
     brief: draft,
-    subjectMap: briefSubjects.map((s) => ({ subjectId: s.id ?? '', create: false })),
+    subjectMap: ids.map(({ id }) => ({ subjectId: id, create: false })),
     languages,
     sizes,
     templateId: starterTemplate.id,
@@ -88,10 +123,11 @@ export function campaignPlan(
   if (!parsed.success) return { ok: false, problems: problemsOf(parsed.error.issues) }
   const seen = new Set(existingSubjectIds)
   const subjects: SubjectCreateInput[] = []
-  for (const s of briefSubjects) {
-    if (s.id === undefined || seen.has(s.id)) continue
-    seen.add(s.id)
-    subjects.push({ projectId, id: s.id, name: s.name ?? '', description: s.description ?? '' })
-  }
+  briefSubjects.forEach((s, i) => {
+    const id = ids[i]?.id
+    if (id === undefined || seen.has(id)) return
+    seen.add(id)
+    subjects.push({ projectId, id, name: s.name ?? '', description: s.description ?? '' })
+  })
   return { ok: true, subjects, campaign: parsed.data }
 }

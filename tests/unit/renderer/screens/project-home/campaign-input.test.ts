@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { campaignPlan } from '../../../../../src/renderer/screens/project-home/campaign-input'
+import {
+  briefSubjectIds,
+  campaignPlan,
+} from '../../../../../src/renderer/screens/project-home/campaign-input'
 import type { BriefDraft } from '../../../../../src/shared/schemas/brief'
+import { SubjectId } from '../../../../../src/shared/schemas/commands/subject'
 import { DRAFT } from './project-fixture'
 
 const parsed = (draft: BriefDraft, primaryLanguage: string | null = 'en') => ({
@@ -66,12 +70,10 @@ describe('campaignPlan: the defaults for campaign.create [SPEC 14 1.41 TP-1, 6.1
     expect(result.campaign.subjectMap).toHaveLength(2)
   })
 
-  it('refuses a subject with no ID, naming it', () => {
+  it('makes an ID from the name for a subject with no ID [SPEC 14 1.43 T-1]', () => {
     const result = plan({ ...DRAFT, subjects: [{ name: 'Citrus can' }] })
-    expect(result).toEqual({
-      ok: false,
-      problems: ['The subject "Citrus can" has no ID in the brief.'],
-    })
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.subjects.map((s) => s.id)).toEqual(['Citrus-can'])
   })
 
   it('refuses a subject ID the project could not store', () => {
@@ -103,5 +105,61 @@ describe('campaignPlan: the defaults for campaign.create [SPEC 14 1.41 TP-1, 6.1
     expect(result.ok).toBe(false)
     if (!result.ok)
       expect(result.problems).toEqual(['The brief\'s "subjects" is missing or empty.'])
+  })
+})
+
+describe('briefSubjectIds: an ID made from the name [SPEC 14 1.43 T-1, P1-4]', () => {
+  const made = (...names: string[]) => briefSubjectIds(names.map((name) => ({ name })))
+
+  it('turns spaces into - and drops other characters', () => {
+    expect(made('Summer Splash 2!')).toEqual([{ id: 'Summer-Splash-2', made: true }])
+  })
+
+  it('turns a run of spaces into one -', () => {
+    expect(made('a   b')[0]?.id).toBe('a-b')
+  })
+
+  it('gives subject for a name of only other characters', () => {
+    expect(made('!!!¿?')[0]?.id).toBe('subject')
+  })
+
+  it('gives x and x-2 for two subjects named alike', () => {
+    expect(made('x', 'x!', 'x').map((s) => s.id)).toEqual(['x', 'x-2', 'x-3'])
+  })
+
+  it('cuts a 70-character name to 64 characters that pass SubjectId', () => {
+    const [first, second] = made('a'.repeat(70), 'a'.repeat(70))
+    expect(first?.id).toHaveLength(64)
+    expect(SubjectId.safeParse(first?.id).success).toBe(true)
+    expect(second?.id).toBe(`${'a'.repeat(62)}-2`)
+  })
+
+  it("keeps the brief's own ID and marks it as not made", () => {
+    expect(briefSubjectIds([{ id: 'can', name: 'Can' }])).toEqual([{ id: 'can', made: false }])
+  })
+
+  it('does not reuse an ID the brief gives another subject', () => {
+    const ids = briefSubjectIds([{ name: 'can' }, { id: 'can', name: 'Can' }])
+    expect(ids).toEqual([
+      { id: 'can-2', made: true },
+      { id: 'can', made: false },
+    ])
+  })
+
+  it('still names a brief ID with a space in it as a problem, and leaves it as it is', () => {
+    const result = plan({ ...DRAFT, subjects: [{ id: 'citrus can', name: 'Citrus can' }] })
+    expect(result.ok).toBe(false)
+    expect(briefSubjectIds([{ id: 'citrus can' }])).toEqual([{ id: 'citrus can', made: false }])
+  })
+
+  it('maps the made IDs in subjectMap and skips one the project holds', () => {
+    const subjects = [{ name: 'Citrus can' }, { name: 'Berry bottle' }]
+    const result = plan({ ...DRAFT, subjects }, 'en', ['Citrus-can'])
+    if (!result.ok) throw new Error(result.problems.join())
+    expect(result.subjects.map((s) => s.id)).toEqual(['Berry-bottle'])
+    expect(result.campaign.subjectMap).toEqual([
+      { subjectId: 'Citrus-can', create: false },
+      { subjectId: 'Berry-bottle', create: false },
+    ])
   })
 })
