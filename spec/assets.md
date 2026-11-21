@@ -200,6 +200,7 @@ Built for the test path. Main files: `src/main/commands/generation/` (checks), `
 
 - `asset.library` is `reference` (pictures that guide generation) or `asset` (files used in ads). `asset.list` returns rows by `id` ascending (oldest first); the window sorts for display.
 - A hero image is a row with `library = 'asset'`, `kind = 'image'` and a `subject_id`. If a subject has several, the newest fills the slot and the others are offered [REQ: R-12]. One file belongs to at most one subject [REQ: FR-011].
+- **Subject photos** (Not built) [D-098]: the brief form imports each subject's photos as linked assets and attaches them at "Create campaign" with `asset.update`; `src/main/assets/brief-pictures.ts` checks a brief's photo paths. `spec/subject-photos.md`.
 - `font_publish_allowed` is set by the user with a checkbox "I am allowed to share this font" [REQ: FR-162].
 
 ### Which pictures a run sends
@@ -248,7 +249,7 @@ Do not "fix" these without a ruling. Every value read from a project file is unt
 - An existing folder outside the project named by `assets_dir_*` still receives new managed files `{ULID}.{ext}`, never over an existing file.
 - The change check stores size, time and SHA-256 of any readable file a linked row names, and, when the first bytes fit the row's kind, its `mime`, width and height. Any real text file with a listed extension can be named by a `text` row and carried by Package.
 - Projects from elsewhere get no confirm step (OI-47 and OI-49 closed). What holds instead: the app never creates a folder outside the project's own folder; a file is never written over an existing one; bytes the window is handed never leave it and page script cannot read them; a linked file goes to a provider or into a package only when its first bytes fit the row's kind; the path checks of `spec/security.md`.
-- The renderer draws no file path, reads no file, and sends an asset file path in no call except `asset.import`, and only a path the system picker returned. (The brief picker's path goes to `brief.parse`, `spec/brief-and-templates.md`.) Display names are drawn as text.
+- The renderer draws no file path, reads no file, and sends an asset file path in no call except `asset.import`, and only a path the system picker or a drop returned, or (Not built, SP-4) one a `brief.parse` reply listed in `subjectPictures` after its checks (`spec/subject-photos.md`). (The brief picker's path goes to `brief.parse`, `spec/brief-and-templates.md`.) Display names are drawn as text.
 
 ## Not built
 

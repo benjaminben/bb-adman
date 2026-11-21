@@ -228,6 +228,8 @@ Built.
 
 Built. Component `src/renderer/screens/project-home/brief-form/` (with `campaign-fields.tsx`, `language-field.tsx`), using `subject-rows/`, `size-fields/` and `rule-fields/` (with `word-lists.tsx`). The pure model is `src/renderer/screens/project-home/brief-form-model.ts`, with `brief-form-problems.ts` (the problem lines, the row IDs, the schema check) and `brief-form-sizes.ts`. Agents never see this form [REQ: R-01].
 
+**Photos per subject** (Not built, SP-2 to SP-4) [D-098]: each subject row gains a "Photos" part, new problem lines, and "Create campaign" attaches the photos before `campaign.create`. Wording, model and order: `spec/subject-photos.md`.
+
 **How it opens** (`brief-load/`):
 
 - "Load a brief": `dialog.pickFiles { purpose: 'brief' }`, then `brief.parse`. The form opens filled from the reply. A refused `brief.parse` shows in the banner and opens nothing.

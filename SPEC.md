@@ -61,6 +61,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/screens-campaign.md` | The Phase 2 campaign screens and dialogs (built; S2-17 left): ComfyUI failures, the address and licence dialogs, import and drop, relink, package, the brief form, the slot view, the campaign grid and its tile |
 | `spec/screens-ai.md` | Phase 4 screens: the run dialog, the paid count, the picture section (generate, references, earlier options, cut-out), copy options, place text, brief reading, the activity panel, close warnings |
 | `spec/approvals.md`, `spec/approvals-service.md`, `spec/approvals-gallery.md` | Approvals by link (D-095, D-097): the desktop side, its security rules and assumptions A-82 to A-109; the service (Next.js on Vercel with a Turso database: API, database, visitor logic, deploying); the visitor's pages (Next.js settings, page policy, components, words) |
+| `spec/subject-photos.md` | Subject photos (D-098, R-21): the brief's `pictures` field and its path checks, the "Photos" part of the brief form, the Create order, assumptions A-110 to A-118 |
 | `spec/open-items.md` | Open questions, the improvised choices listed for review, what waits on the stakeholder |
 | `spec/assumptions.md` | The assumptions made meanwhile (OI, Q and A numbers), with how hard each is to undo |
 
@@ -77,3 +78,4 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/phases/phase-03.md` to `phase-11.md` | One file per phase: goal, scope, exit criteria, work carried in, what is not designed yet |
 | `spec/phases/look-pack.md` | The look pack (D-094): background colour, text boxes, shades, starter layouts; slices LK-1 to LK-7 and their order beside Phase 4 |
 | `spec/phases/approvals.md` | Approvals by link (D-095): slices AP-1 to AP-16 and their order beside Phase 4 and the look pack |
+| `spec/phases/subject-photos.md` | Subject photos (D-098): slices SP-1 to SP-5 and their order |

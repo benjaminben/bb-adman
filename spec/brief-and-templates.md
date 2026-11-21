@@ -39,6 +39,8 @@ The file exports two Zod schemas with these field names:
 
 **Subjects.** `subjects` needs at least one entry and has no upper limit [REQ: FR-021]. A brief with one subject is valid, and briefs with two or more work the same way. FR-021's "at least two must be supported" is what the app must be able to handle, not the smallest brief allowed [D-024].
 
+**Subject photos** (Not built, SP-1 to SP-5) [D-098]: a draft subject gains `pictures` (paths inside the brief's folder), `brief.parse` checks them, and the form needs a photo per subject before "Create campaign", which then also sends `asset.update`. `Brief` gains nothing. Design: `spec/subject-photos.md`.
+
 **Word lists.** A plain word list for `requiredWords` or `prohibitedWords` is stored under the primary language [REQ: R-03]. `wordsByLanguage(words, primaryLanguage)` (`src/shared/brief/words.ts`) turns either form into `{ [language]: string[] }`: a plain list goes under the primary language, a per-language list is kept as given. The result shares no list with its input. `wordsByLanguage([], 'en')` gives `{ en: [] }`.
 
 **Sizes in a brief.** `parseSize(text)` (`src/shared/brief/size.ts`; the `CampaignSize` shape is in `spec/data-model.md`) turns a ratio or a pixel size into a `CampaignSize`, or null when it cannot be read. Ratios may be decimal. Two numbers both below 100 joined by `x` are read as a ratio. Cases pinned by `tests/unit/shared/brief/size.test.ts`:
@@ -331,6 +333,8 @@ slotStates(template: Template, layers: LayerRow[], candidates: Record<string, st
 | A hero image (asset library) | Filled | Not needed |
 | Only reference-library files | Empty | Prompt pre-filled, the subject's reference files attached |
 | No files | Empty | Prompt pre-filled from the subject description and the campaign message |
+
+The form requires a photo per subject (`spec/subject-photos.md`); "No files" stays for agents and for subjects whose files were removed.
 
 ### `slotStates` and the template queries
 
