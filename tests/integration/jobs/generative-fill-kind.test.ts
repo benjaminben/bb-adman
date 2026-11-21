@@ -9,6 +9,7 @@ import {
   waitFor,
   ended,
   BACKGROUND_LAYER,
+  OTHER_VARIANT,
   VARIANT,
   type GenerationFixture,
 } from '../generation/generation-fixture'
@@ -55,6 +56,7 @@ async function ready() {
     .prepare('UPDATE layer SET geometry = ? WHERE id = ?')
     .run(JSON.stringify({ ...BOX, rotation: 0, crop: null }), BACKGROUND_LAYER)
   const sourceId = await f.importPicture('source.png', greyPng(6, 7))
+  f.db.prepare('UPDATE direction SET master_variant_id = ?').run(OTHER_VARIANT)
   givePicture(f.db, BACKGROUND_LAYER, sourceId)
   return sourceId
 }
