@@ -26,6 +26,8 @@ if (fromArgv) pendingOpens.push(fromArgv)
 
 function send(event: BusEvent): void {
   for (const win of BrowserWindow.getAllWindows()) win.webContents.send(IPC_CHANNELS.event, event)
+  // spec/scene.md, "The render service": it sees every event, for the eager thumbnails.
+  core?.deps.render.onEvent(event)
 }
 
 function mainWindow(): BrowserWindow {

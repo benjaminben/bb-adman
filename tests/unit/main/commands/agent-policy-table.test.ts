@@ -36,6 +36,7 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny' | 'tick'> = {
   'layer.update': 'allow',
   'layer.delete': 'allow',
   'layer.reorder': 'allow',
+  'layer.restore': 'deny',
   'layer.clearOverride': 'deny',
   'layer.reportOverflow': 'deny',
   'clip.add': 'deny',

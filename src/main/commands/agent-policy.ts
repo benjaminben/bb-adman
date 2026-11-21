@@ -43,6 +43,7 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'layer.update': allow('change layers'),
   'layer.delete': allow('delete layers'),
   'layer.reorder': allow('reorder layers'),
+  'layer.restore': deny('restore layers'),
   'layer.clearOverride': deny('clear overrides'),
   'layer.reportOverflow': deny('report text overflow'),
   'clip.add': deny('add background clips'),

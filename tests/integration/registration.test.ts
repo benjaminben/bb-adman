@@ -48,6 +48,7 @@ describe('registering commands and queries [SPEC 12]', () => {
         'openExternal',
         'projects',
         'providers',
+        'render',
         'secrets',
         'settings',
         'toPng',

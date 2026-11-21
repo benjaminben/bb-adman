@@ -14,7 +14,9 @@ import { jobServerMessageQueries } from './job-server-message'
 import { mcpQueries, type McpState } from './mcp'
 import { projectQueries } from './project'
 import { projectListOpenQueries } from './project-list-open'
+import { renderQueries } from './render'
 import { templateQueries } from './template'
+import { variantQueries } from './variant'
 import type { QueryFn, QueryOptions } from './types'
 import { AppError, fail, internalError, ok, type Result } from '@/shared/schemas/result'
 
@@ -35,7 +37,9 @@ export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, Query
     ...(mcp ? mcpQueries(deps, mcp) : {}),
     ...projectQueries(deps),
     ...projectListOpenQueries(deps),
+    ...renderQueries(deps),
     ...templateQueries(deps),
+    ...variantQueries(deps),
   }
 }
 

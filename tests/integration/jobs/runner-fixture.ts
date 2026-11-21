@@ -103,6 +103,13 @@ export function makeRunnerFixture(
     jobsAtOnce: opts.jobsAtOnce ?? 3,
   })
   deps.jobs = jobs
+  // spec/scene.md: project.close tells the render service. This stand-in draws nothing.
+  deps.render = {
+    thumbnail: () => Promise.reject(new Error('render is not available')),
+    render: () => Promise.reject(new Error('render is not available')),
+    onEvent: () => undefined,
+    projectClosed: async () => undefined,
+  }
   const enqueue: CommandHandler = defineCommand({
     name: 'test.enqueue',
     input: enqueueInput,
