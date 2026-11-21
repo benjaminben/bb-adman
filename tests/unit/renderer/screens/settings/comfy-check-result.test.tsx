@@ -117,7 +117,7 @@ describe('settings: the ComfyUI check [SPEC 14 1.41 TP-3, 6.10.9]', () => {
     ],
     [
       'redirect_refused',
-      'The server tried to send Adman to another address. Adman did not follow, and the run was stopped.',
+      'The server tried to send Adman to another address. Adman did not follow.',
     ],
     ['certificate', "Adman could not check the server's security certificate."],
     ['address_refused', 'Adman cannot use that address.'],

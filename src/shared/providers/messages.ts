@@ -3,6 +3,7 @@
 // SPEC 14 1.41 TP-0: kept in src/shared so the window can show a failed job's sentence.
 // Sentences only: nothing here may read keys, addresses or main-process modules.
 import type { ProviderErrorKind, ProviderErrorReason } from '@/shared/schemas/queries/app'
+import type { ComfyCheckOutcome } from '@/shared/schemas/commands/comfy-check'
 
 const MESSAGES: Record<ProviderErrorKind, (p: string) => string> = {
   bad_key: (p) => `${p} did not accept your key. Check it in Settings and try again.`,
@@ -49,6 +50,34 @@ const REASONS: Record<ProviderErrorReason, string> = {
 
 export function reasonMessage(reason: ProviderErrorReason): string {
   return REASONS[reason]
+}
+
+// S2-1 [F-12]: the six Settings check sentences. No run is going during a check, so the
+// Settings form of redirect_refused stops after "did not follow".
+const CHECK_SENTENCES: Record<Exclude<ComfyCheckOutcome, 'ok'>, string> = {
+  no_answer: REASONS.no_answer,
+  not_comfyui: REASONS.not_comfyui,
+  sign_in_needed: REASONS.sign_in_needed,
+  redirect_refused: 'The server tried to send Adman to another address. Adman did not follow.',
+  certificate: REASONS.certificate,
+  address_refused: REASONS.address_refused,
+}
+
+export function checkMessage(outcome: Exclude<ComfyCheckOutcome, 'ok'>): string {
+  return CHECK_SENTENCES[outcome]
+}
+
+// S2-1: fills a sentence's {address} and {n} marks. An unknown address reads "the saved
+// address" and an unknown count "some", so the sentence stays readable.
+export function fillMarks(text: string, values: { address?: string; n?: number }): string {
+  const address = values.address ?? 'the saved address'
+  const n = values.n === undefined ? 'some' : String(values.n)
+  return text.replaceAll('{address}', address).replaceAll('{n}', n)
+}
+
+// S2-1 [D-088]: the refusal of a run whose workflow needs a licence not yet confirmed (S2-4).
+export function licenceNotConfirmedMessage(model: string): string {
+  return `${model} requires a commercial license. Confirm that you have one first.`
 }
 
 // SPEC 4.2 "Not offered" and 1.46 part B: the refusals of a ComfyUI run made before a job row.
