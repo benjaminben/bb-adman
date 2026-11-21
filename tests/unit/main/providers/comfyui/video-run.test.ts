@@ -87,11 +87,10 @@ describe('ComfyUI video start [SPEC 6.10.7, 14 CU-6a]', () => {
     expect(width * height).toBeLessThanOrEqual(420_000)
   })
 
-  it('refuses a first frame or references as a fault, with nothing sent (CU-6b)', async () => {
+  it('refuses a first frame not at the run size as a fault, with nothing sent [1.60 N-7]', async () => {
     await standIn()
     const frame = { bytes: RESULT_PNG, mime: 'image/png' }
     await expect(video().start({ ...input, image: frame })).rejects.toThrow(Error)
-    await expect(video().start({ ...input, references: [frame] })).rejects.toThrow(Error)
     expect(stand.seen).toEqual([])
   })
 

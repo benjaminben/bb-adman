@@ -1,11 +1,17 @@
-// SPEC 6.10.7 [REQ: FR-262, FR-283, FR-286] (security class): VideoProvider for ComfyUI, in
-// CU-6a's form: a video from a prompt alone, on the workflow for "no first frame, no
-// references". start checks the server (6.10.3), fills and submits; check looks once where
+// SPEC 6.10.7 [REQ: FR-262, FR-283, FR-286] (security class): VideoProvider for ComfyUI. A
+// video from a prompt, a first frame or one reference picture (14 1.60 CU-6b), on the
+// workflow for that start pair. start checks the server (6.10.3), uploads the pictures, fills
+// and submits; check looks once where
 // the run is; fetchResult fetches the SaveVideo file under MAX_VIDEO_BYTES and passes it
 // through checkMp4; cancel goes through the own-ID set (14 1.43 K-7). Each run's origin,
 // workflow and waits are kept here, so only a run this adapter started is ever asked about.
 import { MAX_VIDEO_BYTES } from '../picture-limits'
-import { ProviderFailure, type AdapterContext, type VideoProvider } from '../types'
+import {
+  ProviderCancelled,
+  ProviderFailure,
+  type AdapterContext,
+  type VideoProvider,
+} from '../types'
 import { checkMp4 } from '../video-check'
 import type { HistoryEntry } from './answers'
 import { cancelOwnRun } from './cancel'
@@ -18,6 +24,7 @@ import { serverChecks, type ServerChecks } from './needs'
 import { isBreak, look, throughBreaks } from './poll'
 import { endedEntry, fillValuesFor, resultRef, submitted, type RunTiming } from './run'
 import { checked, pinnedClient, realTiming, runOrigin } from './session'
+import { checkFrameSize, runSizeOf, uploadPictures } from './video-pictures'
 import type { WorkflowSpec } from './workflows/types'
 
 export type ComfyVideoDeps = { timing?: RunTiming; checks?: ServerChecks }
@@ -93,21 +100,26 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
   }
 
   return {
-    async start(input) {
-      // CU-6b brings the first frame and references; the command refuses them before a job.
-      if (input.image !== null || input.references.length > 0) {
-        throw new Error('A ComfyUI video from a first frame or references is not built yet')
-      }
+    async start(input, opts = {}) {
       const origin = runOrigin(ctx)
-      const spec = workflowForRun('video', { firstFrame: false, references: false })
+      const references = input.references.length > 0
+      const videoStart = { firstFrame: input.image !== null, references }
+      const spec = workflowForRun('video', videoStart)
       if (!spec.video) throw new Error(`${spec.id} has no video values`)
+      const size = runSizeOf(spec, { width: input.width, height: input.height })
+      // [1.60] N-7: before anything is sent, the first frame must state the run size.
+      if (input.image) checkFrameSize(input.image, size)
+      if (opts.signal?.aborted) throw new ProviderCancelled()
       const client = pinnedClient(ctx, origin)
       const serverVersion = await checked(checks, origin, client, spec)
+      const pictures = await uploadPictures(client, input, opts.signal)
       const sentId = timing.newId()
-      const ask = { prompt: input.prompt, width: input.width, height: input.height, references: [] }
+      const { prompt, width, height } = input
+      const ask = { prompt, width, height, references: pictures.references }
       const values = {
         ...fillValuesFor(spec, ask, sentId),
         frames: frameCount(input.durationMs, spec.video),
+        ...(pictures.firstFrame !== undefined && { firstFrame: pictures.firstFrame }),
       }
       const promptId = await submitted({ client }, fillWorkflow(spec, values), sentId)
       runs.set(promptId, {
@@ -163,6 +175,11 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
       if (!run) return 'unknown'
       run.cancelAsked = true
       return cancelOwnRun(pinnedClient(ctx, run.origin), remoteJobId, run.serverVersion)
+    },
+
+    // [1.60] N-6: the size fillValuesFor will send for this start pair.
+    runSize(width, height, videoStart) {
+      return runSizeOf(workflowForRun('video', videoStart), { width, height })
     },
   }
 }

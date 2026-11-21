@@ -46,6 +46,30 @@ describe('the trial rule of generation.startVideo for ComfyUI [SPEC 14 1.41] (se
   })
 })
 
+describe('checkComfyVideo takes the start pair [SPEC 14 1.60 CU-6b N-4 step 3] (security class)', () => {
+  const frame = { firstFrame: true, references: false }
+  const refs = { firstFrame: false, references: true }
+
+  it.each([
+    [frame, 'h3-image-to-video'],
+    [refs, 'h3-reference-to-video'],
+    [{ firstFrame: false, references: false }, 'h3-text-to-video'],
+  ])('the user with dev tools on gets the workflow for %o: %s', (pair, id) => {
+    expect(checkComfyVideo(deps(true), { actor: 'user' }, 2_000, pair).id).toBe(id)
+  })
+
+  it.each([
+    [false, 'user', frame],
+    [true, 'agent', frame],
+    [false, 'user', refs],
+    [true, 'agent', refs],
+  ] as const)('dev tools %s, actor %s, picture start: comfy_job_not_offered', (dt, actor, pair) => {
+    expect(reasonOf(() => checkComfyVideo(deps(dt), { actor }, 2_000, pair))).toBe(
+      'comfy_job_not_offered',
+    )
+  })
+})
+
 describe('the video workflow matches the start pair [SPEC 14 1.53]', () => {
   it('a prompt-only run picks h3-text-to-video even when another video workflow is trial', () => {
     const list = WORKFLOWS.map((w) => (w.job === 'video' ? { ...w, status: 'trial' as const } : w))

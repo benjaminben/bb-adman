@@ -14,6 +14,7 @@ import { requireProviderKeys } from '../../providers/require-keys'
 import {
   ProviderCancelled,
   ProviderFailure,
+  type ImageFile,
   type VideoProvider,
   type VideoResult,
 } from '../../providers/types'
@@ -42,21 +43,31 @@ const pause = (ms: number, signal?: AbortSignal) =>
 
 const projectGone = (jc: JobRunContext) => !jc.deps.projects.get(jc.projectId)
 
-async function started(run: Run, request: VideoJobRequest): Promise<string> {
+// [1.60] N-6: the pictures, read again. A first frame is fitted to the run size, PNG out; a
+// reference is sent as read.
+async function pictures(run: Run, project: ProjectHandle, request: VideoJobRequest) {
   const { jc, provider } = run
-  // CU-6a: the command accepts only a video from a prompt alone (CU-6b adds the rest).
-  if (request.start !== 'none' || request.referenceAssetIds.length > 0) {
-    throw new Error('A video from a first frame or references is not built yet')
-  }
+  const files: ImageFile[] = []
+  for (const id of request.referenceAssetIds) files.push(await jc.deps.assets.read(project, id))
+  const [frame] = files
+  if (request.start !== 'first_frame' || !frame) return { image: null, references: files }
+  const { width, height } = request
+  const videoStart = { firstFrame: true, references: false }
+  const size = provider.runSize?.(width, height, videoStart) ?? { width, height }
+  const image = { bytes: jc.deps.fitPicture(frame.bytes, size), mime: 'image/png' }
+  return { image, references: [] }
+}
+
+async function started(run: Run, project: ProjectHandle, request: VideoJobRequest) {
+  const { jc, provider } = run
   const input = {
-    image: null,
-    references: [],
+    ...(await pictures(run, project, request)),
     prompt: promptToSend(request.prompt),
     durationMs: request.durationMs,
     width: request.width,
     height: request.height,
   }
-  const { remoteJobId } = await jc.call(() => provider.start(input))
+  const { remoteJobId } = await jc.call(() => provider.start(input, { signal: jc.signal }))
   jc.setRemoteJobId(remoteJobId)
   return remoteJobId
 }
@@ -137,7 +148,7 @@ async function runVideoJob(
   requireProviderKeys(jc.deps, providerId, 'make videos')
   const run: Run = { jc, provider: opts.videoFor(jc.deps, providerId), providerId, ...opts }
   if (job.remoteJobId === null && jc.cancelled()) throw new ProviderCancelled()
-  const remoteJobId = job.remoteJobId ?? (await started(run, request))
+  const remoteJobId = job.remoteJobId ?? (await started(run, project, request))
   await untilDone(run, remoteJobId)
   return stored(jc, job, project, await run.provider.fetchResult(remoteJobId))
 }

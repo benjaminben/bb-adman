@@ -29,13 +29,14 @@ describe('the comfyui provider folder [SPEC 6, 14 CU-0]', () => {
   })
 
   it.each(['video'] as const)(
-    'is joined in adapterFor: %s builds the four VideoProvider functions',
+    'is joined in adapterFor: %s builds the five VideoProvider functions',
     (job) => {
       expect(Object.keys(adapterFor(deps, 'comfyui', job))).toEqual([
         'start',
         'check',
         'fetchResult',
         'cancel',
+        'runSize',
       ])
     },
   )
