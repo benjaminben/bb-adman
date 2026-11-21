@@ -34,7 +34,9 @@ export default defineConfig({
   workers: 1,
   reporter: 'list',
   timeout: 60_000,
-  use: { baseURL: `http://127.0.0.1:${port}` },
+  // `next start` builds `request.url` on http://localhost:{port} whatever the Host header says,
+  // so the tests use that name: a form's Origin then matches the server's own origin.
+  use: { baseURL: `http://localhost:${port}` },
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
   webServer: {
     // The migrations run first, through the same script the stakeholder uses.

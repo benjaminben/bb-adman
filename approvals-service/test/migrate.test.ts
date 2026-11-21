@@ -16,7 +16,7 @@ afterAll(() => rmSync(folder, { recursive: true, force: true }))
 
 function run(env: Record<string, string>, args: string[] = []) {
   const result = spawnSync(process.execPath, [SCRIPT, ...args], {
-    env: { PATH: process.env.PATH ?? '', ...env },
+    env: { PATH: process.env.PATH ?? '', NODE_ENV: 'test', ...env },
     encoding: 'utf8',
   })
   return { status: result.status, out: `${result.stdout}${result.stderr}` }
