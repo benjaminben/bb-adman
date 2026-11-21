@@ -68,6 +68,21 @@ export function describeStorageConformance(
       expect(await storage.list(`${base}/list/nothing-here`)).toEqual([])
     })
 
+    it('list returns files only, an empty prefix lists everything, and each path can be read [SPEC 6.5 1.13, H6]', async () => {
+      const written = [
+        `${base}/whole/a.txt`,
+        `${base}/whole/sub/deeper/b.txt`,
+        `${base}/whole/ab.txt`,
+      ]
+      for (const path of written) await storage.write(path, text(path), 'text/plain')
+      expect(await storage.list('')).toEqual(expect.arrayContaining(written))
+      const listed = await storage.list(`${base}/whole`)
+      expect(listed.sort()).toEqual([...written].sort())
+      expect(listed.filter((path) => path.endsWith('/'))).toEqual([])
+      for (const path of listed) expect(await storage.read(path)).toEqual(text(path))
+      expect(await storage.list(`${base}/whole/a`)).toEqual([])
+    })
+
     it('remove removes only the named paths, and a missing path is not an error', async () => {
       const kept = `${base}/remove/kept.txt`
       const gone = [`${base}/remove/a.txt`, `${base}/remove/sub/b.txt`]
