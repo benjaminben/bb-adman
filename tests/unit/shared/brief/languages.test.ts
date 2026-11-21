@@ -95,3 +95,9 @@ describe('isRightToLeft: an underscore also ends the language part [SPEC 6.1 1.2
     expect(isRightToLeft(tag)).toBe(false)
   })
 })
+
+describe('Macao is in the region table [P6-1, A-158]', () => {
+  it.each(['MO', 'Macao', 'Macau'])('%s gives Chinese', (region) => {
+    expect(primaryLanguageFor(region)).toBe('zh')
+  })
+})

@@ -7,6 +7,7 @@ import { copyOptionsKind } from './copy-options'
 import { briefExtractionKind } from './brief-extraction'
 import { cutoutKind } from './cutout'
 import { generativeFillKind } from './generative-fill'
+import { translationKind } from './translation'
 
 export const jobKindHandlers: JobKindHandler[] = [
   imageGenerationKind(),
@@ -16,4 +17,5 @@ export const jobKindHandlers: JobKindHandler[] = [
   briefExtractionKind(),
   cutoutKind(),
   generativeFillKind(),
+  translationKind(),
 ]

@@ -21,6 +21,7 @@ import type { CampaignGet, VariantSummary } from '@/shared/schemas/queries/campa
 import type { AssetList } from '@/shared/schemas/queries/asset'
 import { ApprovalBar } from '@/renderer/screens/campaign/approval-bar'
 import { approvalFooter } from '@/renderer/screens/campaign/approval-mark'
+import { CampaignSections } from '@/renderer/screens/campaign/campaign-sections'
 import { GeneratePanel } from '@/renderer/screens/campaign/generate-panel'
 import { RunList } from '@/renderer/screens/campaign/run-list'
 import { SlotView } from '@/renderer/screens/campaign/slot-view'
@@ -180,6 +181,7 @@ function CampaignPage(props: Props) {
         />
       )}
       <RunList projectId={projectId} store={store} />
+      <CampaignSections projectId={projectId} campaignId={campaignId} data={data} />
     </>
   )
 

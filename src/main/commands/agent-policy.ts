@@ -55,6 +55,8 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'layer.clearOverride': deny('clear overrides'),
   'layer.revert': deny('revert layers'),
   'layer.reportOverflow': deny('report text overflow'),
+  // P6-1 (A-166): a font per language, as layer.update.
+  'layer.setFonts': allow('set fonts per language'),
   'clip.add': deny('add background clips'),
   'clip.update': deny('change background clips'),
   'clip.remove': deny('remove background clips'),
@@ -62,6 +64,9 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'translation.set': allow('set translations'),
   'translation.approve': deny('approve translations'),
   'translation.exportSheet': deny('export translation sheets'),
+  // P6-1: system commands (the job's write, the inverse of set and approve); deny and internal.
+  'translation.write': deny('write AI translations'),
+  'translation.restore': deny('restore translations'),
   'sync.apply': deny('sync variants'),
   'check.run': allow('run checks'),
   'generation.runImages': tick('start image generation'),

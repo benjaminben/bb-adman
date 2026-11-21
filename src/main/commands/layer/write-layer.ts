@@ -1,11 +1,13 @@
 // Writes one layer for layer.update, layer.updateMany, layer.revert and layer.clearOverride
 // (spec/editor-commands.md, "Layer counters"): the changed columns, one counter per changed
 // group and, when given, the override list. Shared so every command writes the same way. Also
-// the override rule of an edit (spec/links-and-sync.md, "Overrides"; A-135, A-136).
+// the override rule of an edit (spec/links-and-sync.md, "Overrides"; A-135, A-136). A copy edit
+// also leaves a translation proposed (A-161), on this row only.
 import type Database from 'better-sqlite3'
 import type { ProjectContext } from '@/main/commands/types'
 import { readWireRow, storedJson } from '@/main/db/rows'
 import { masterOf, type MasterOf } from '@/main/links/master-of'
+import { translationAfterCopyEdit } from '@/main/translation/copy-edit'
 import { addPaths, inheritedPaths, pathsOfPatch } from '@/shared/links/override-paths'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { VariantRow } from '@/shared/schemas/rows/variant'
@@ -29,18 +31,22 @@ export function writeLayer(
 ) {
   const revs = { ...row.revs }
   for (const group of GROUPS) if (keys.includes(group)) revs[group] += 1
-  const list = overrides ? [storedJson('layer', 'overrides', overrides)] : []
-  const columns = [
-    ...keys.map((key) => `"${key}" = ?`),
-    ...(overrides ? ['overrides = ?'] : []),
-    'revs = ?',
-  ].join(', ')
-  const values = [
-    ...keys.map((key) => stored(key, merged[key])),
-    ...list,
-    storedJson('layer', 'revs', revs),
-  ]
-  ctx.project.db.prepare(`UPDATE layer SET ${columns} WHERE id = ?`).run(...values, row.id)
+  const columns = [...keys.map((key) => `"${key}" = ?`)]
+  const values = [...keys.map((key) => stored(key, merged[key]))]
+  if (overrides) {
+    columns.push('overrides = ?')
+    values.push(storedJson('layer', 'overrides', overrides))
+  }
+  columns.push('revs = ?')
+  values.push(storedJson('layer', 'revs', revs))
+  const translation = keys.includes('copy') ? translationAfterCopyEdit(row, ctx.actor) : null
+  if (translation) {
+    columns.push('translation_status = ?', 'translation_source = ?')
+    values.push(translation.translationStatus, translation.translationSource)
+  }
+  ctx.project.db
+    .prepare(`UPDATE layer SET ${columns.join(', ')} WHERE id = ?`)
+    .run(...values, row.id)
   ctx.changes.touch('layer', { id: row.id })
 }
 

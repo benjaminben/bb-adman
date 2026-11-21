@@ -7,6 +7,7 @@ import { appQueries } from './app'
 import { approvalsQueries } from './approvals'
 import { assetQueries } from './asset'
 import { campaignQueries } from './campaign'
+import { checkQueries } from './check'
 import { comfyQueries } from './comfy'
 import { activityQueries } from './activity'
 import { earlierOptionsQueries } from './earlier-options'
@@ -21,6 +22,7 @@ import { projectListOpenQueries } from './project-list-open'
 import { renderQueries } from './render'
 import { syncQueries } from './sync'
 import { templateQueries } from './template'
+import { translationQueries } from './translation'
 import { variantQueries } from './variant'
 import type { QueryFn, QueryOptions } from './types'
 import { AppError, fail, internalError, ok, type Result } from '@/shared/schemas/result'
@@ -35,6 +37,7 @@ export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, Query
     ...approvalsQueries(deps),
     ...assetQueries(deps),
     ...campaignQueries(deps),
+    ...checkQueries(deps),
     ...comfyQueries(deps),
     ...historyQueries(deps),
     ...jobQueries(deps),
@@ -49,6 +52,7 @@ export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, Query
     ...renderQueries(deps),
     ...syncQueries(deps),
     ...templateQueries(deps),
+    ...translationQueries(deps),
     ...variantQueries(deps),
   }
 }
