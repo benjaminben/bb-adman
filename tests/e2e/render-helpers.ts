@@ -134,13 +134,25 @@ export async function drawInRenderWindow(
     )
     if (!win) throw new Error('There is no render window.')
     win.setContentSize(req.width, req.height)
-    await new Promise<void>((resolve) => {
-      const heard = (_event: unknown, message: { requestId?: string } | null) => {
-        if (message?.requestId !== req.requestId) return
+    await new Promise<void>((resolve, reject) => {
+      const stop = (error?: Error) => {
+        clearTimeout(timer)
         ipcMain.removeListener('adman:render-done', heard)
-        resolve()
+        win.removeListener('closed', closed)
+        if (error) reject(error)
+        else resolve()
       }
+      const heard = (_event: unknown, message: { requestId?: string } | null) => {
+        if (message?.requestId === req.requestId) stop()
+      }
+      // A window that closed, or a draw with no answer, fails here and not at the test's limit.
+      const closed = () => stop(new Error('The render window closed before the draw was done.'))
+      const timer = setTimeout(
+        () => stop(new Error('The draw gave no answer in 20 seconds.')),
+        20000,
+      )
       ipcMain.on('adman:render-done', heard)
+      win.once('closed', closed)
       win.webContents.send('adman:render-request', req)
     })
     const image = await win.webContents.capturePage()
