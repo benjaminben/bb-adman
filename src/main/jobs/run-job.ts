@@ -125,9 +125,11 @@ export function startJob(state: RunnerState, projectId: string, row: JobRow): vo
     ended: false,
     cancelAsked: false,
     running: {},
+    clearWait: () => undefined,
     finish(change) {
       if (live.ended) return
       live.ended = true
+      live.clearWait()
       state.active.delete(live.id)
       writeJob(state, projectId, live.id, change)
       logEnd(state, live, change)

@@ -30,6 +30,8 @@ export type LiveJob = {
   running: Record<string, unknown>
   // Ends the job at once with the given change, when cancel cannot wait for the handler.
   finish: (change: JobChange) => void
+  // Clears the cancel wait, when one is set (SPEC 6.11.2).
+  clearWait: () => void
 }
 
 export type RunnerState = {
