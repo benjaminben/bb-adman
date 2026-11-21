@@ -30,6 +30,9 @@ export type CoreDeps = {
   // [1.24] Crops a picture to the exact size, centred and filled, then scales it; PNG out,
   // behind the same limits as toPng (SPEC 6.10.7). index.ts fills it from CU-6.
   fitPicture: (bytes: Uint8Array, size: { width: number; height: number }) => Uint8Array
+  // Slice WP: decodes a WebP in the hidden decoder window, PNG out; rejects when it cannot.
+  // index.ts fills it.
+  webpToPng: (bytes: Uint8Array) => Promise<Uint8Array>
   appVersion: string
   now: () => Date
   userDataDir: string

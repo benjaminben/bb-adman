@@ -54,6 +54,7 @@ export type CoreOptions = {
   devTools?: boolean
   toPng?: (bytes: Uint8Array) => Uint8Array
   fitPicture?: CoreDeps['fitPicture']
+  webpToPng?: CoreDeps['webpToPng']
   // The Electron side of one draw (spec/scene.md, "One draw"); index.ts fills it.
   drawScene?: DrawScene
 }
@@ -68,6 +69,10 @@ const noConverter = (): Uint8Array => {
 
 const noFitter = (): Uint8Array => {
   throw new Error('fitPicture is not available')
+}
+
+const noWebp = async (): Promise<Uint8Array> => {
+  throw new Error('webpToPng is not available')
 }
 
 const noDraw: DrawScene = async () => {
@@ -102,7 +107,10 @@ export function createCore(opts: CoreOptions) {
     undo,
     providers,
     log,
-    assets: createAssetService(),
+    // Slice WP, ruling F-9: every picture read for a provider is a clean PNG.
+    assets: createAssetService({
+      pictures: { toPng: (b) => deps.toPng(b), webpToPng: (b) => deps.webpToPng(b) },
+    }),
     jobs: createJobRunner({
       deps: () => deps,
       bus: () => bus,
@@ -119,6 +127,7 @@ export function createCore(opts: CoreOptions) {
     devTools: opts.devTools ?? false,
     toPng: opts.toPng ?? noConverter,
     fitPicture: opts.fitPicture ?? noFitter,
+    webpToPng: opts.webpToPng ?? noWebp,
     appVersion: opts.appVersion,
     now,
     userDataDir: opts.userDataDir,

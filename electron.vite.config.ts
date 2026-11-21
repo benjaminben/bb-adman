@@ -39,12 +39,14 @@ export default defineConfig(({ command }) => ({
   renderer: {
     resolve: { alias: srcAlias },
     plugins: [react(), contentSecurityPolicy(command)],
-    // Two pages, each given the policy tag: the app window's and the render window's.
+    // Three pages, each given the policy tag: the app window's, the render window's and the
+    // WebP decoder window's (slice WP).
     build: {
       rollupOptions: {
         input: {
           index: page('src/renderer/index.html'),
           render: page('src/renderer/render.html'),
+          webp: page('src/renderer/webp.html'),
         },
       },
     },

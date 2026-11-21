@@ -236,8 +236,8 @@ test('Make a video from a first-frame picture: the upload is a PNG at the run si
   await screens.clipHasMetadata(page, 15_000)
 })
 
-// N-6: a reference is sent as read, not fitted.
-test('Make a video from a reference picture: the picture is uploaded as read', async () => {
+// N-6: a reference is not fitted. Ruling F-9: it is sent as a clean PNG of the same size.
+test('Make a video from a reference picture: the picture is uploaded as a PNG of its own size', async () => {
   await campaignOnStandIn()
   const file = path.join(box.root, 'reference.png')
   const bytes = greyPng(96, 64)
@@ -250,7 +250,8 @@ test('Make a video from a reference picture: the picture is uploaded as read', a
   expect(sent).toHaveLength(1)
   const [reference] = sent as [Upload]
   expect(reference.name).toBe(uploadName(reference.bytes))
-  expect(Buffer.from(reference.bytes).equals(Buffer.from(bytes))).toBe(true)
+  expect(pictureType(reference.bytes)).toBe('image/png')
+  expect(pngSize(reference.bytes)).toEqual({ width: 96, height: 64 })
   expect(JSON.stringify(lastGraph(stand)['15'])).toContain(reference.name)
   finishWithVideo(stand, id, H3_TEXT_OUTPUT)
   await expect(screens.runRow(page)).toContainText('Done', { timeout: 15_000 })

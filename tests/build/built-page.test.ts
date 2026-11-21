@@ -42,3 +42,20 @@ describe('the built render page [P3-6]', () => {
     expect(code).not.toMatch(/require\(["']\.\.?\//)
   })
 })
+
+// Slice WP: the WebP decoder window's page, with the same policy and no preload of its own.
+describe('the built WebP decoder page [Slice WP]', () => {
+  const html = fs.readFileSync('out/renderer/webp.html', 'utf8')
+
+  it('has exactly one policy tag, and its content equals CONTENT_SECURITY_POLICY exactly', () => {
+    const tags = [...html.matchAll(/<meta\b[^>]*http-equiv="Content-Security-Policy"[^>]*>/gi)]
+    expect(tags).toHaveLength(1)
+    const content = /\bcontent="([^"]*)"/.exec(tags[0]?.[0] ?? '')?.[1]
+    expect(content).toBe(CONTENT_SECURITY_POLICY)
+    expect(html).not.toMatch(/localhost/i)
+  })
+
+  it('builds no preload for it', () => {
+    expect(fs.readdirSync('out/preload').sort()).toEqual(['index.cjs', 'render.cjs'])
+  })
+})

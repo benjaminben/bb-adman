@@ -8,6 +8,7 @@ import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
 import { serveNeeds, serveVideo } from '../../helpers/comfy-run'
 import { insertTestAsset } from '../assets/asset-rows'
 import { greyPng } from '@/main/providers/fake/png'
+import { vp8x, webp } from '../../fixtures/webp-bytes'
 
 let f: ComfyFixture
 let stand: StandIn | null = null
@@ -73,19 +74,14 @@ describe('generation.startVideo picture start refusals [SPEC 14 1.60 CU-6b N-4] 
     })
   })
 
-  it.each([['first frame'], ['reference']])(
-    'refuses a WebP %s: picture_not_usable',
-    async (which) => {
-      await ready()
-      const webp = new Uint8Array(Buffer.from('RIFF\u0010\u0000\u0000\u0000WEBPVP8 ', 'latin1'))
-      const id = await f.importPicture('pics', 'shoe.webp', webp)
-      await refused(which === 'reference' ? refAsk(id) : frameAsk(id), {
-        code: 'RULE_VIOLATION',
-        message: 'This picture cannot be used for a video yet. Use a PNG or JPEG.',
-        details: { reason: 'picture_not_usable' },
-      })
-    },
-  )
+  // Slice WP: the approved change. A WebP is turned into a PNG, so the start is taken.
+  it.each([['first frame'], ['reference']])('accepts a WebP %s', async (which) => {
+    await ready()
+    const id = await f.importPicture('pics', 'shoe.webp', webp(vp8x(6, 4, false)))
+    const input = which === 'reference' ? refAsk(id) : frameAsk(id)
+    expect(await f.user('generation.startVideo', input)).toMatchObject({ ok: true })
+    expect(f.jobs()).toHaveLength(1)
+  })
 
   it('refuses a picture whose file is gone: MISSING_FILE', async () => {
     await ready()
