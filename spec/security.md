@@ -209,7 +209,7 @@ Built (`src/main/commands/agent-policy.ts`, agent-started runs). Full rules: `sp
 
 - Every command has a row in `AGENT_POLICY` (`allow`, `ask`, `deny`, `tick`). Generation and `job.cancel` are `tick`; export and publish are `deny`; deletes are `ask` [REQ: FR-197, FR-199]. A new command adds its row; the table test checks it exactly.
 - No agent reads or changes Settings, keys, storage, the ComfyUI address, a tick or the run limit.
-- **Agent-started runs**: only for a provider the user ticked in Settings; off by default; only the user can tick; the tick is read on every call and again before the first send; at most `agentRunLimit` agent runs waiting or running per provider; the result waits for the user and the agent cannot place it; every such job has `started_by = 'agent'`. Paid providers get no tick until a spending limit is set (CQ-20). The limit bounds rate, not total (OI-91: a total cap).
+- **Agent-started runs**: only for a provider the user ticked in Settings; off by default; only the user can tick; the tick is read on every call and again before the first send; at most `agentRunLimit` agent runs waiting or running per provider; the result waits for the user and the agent cannot place it; every such job has `started_by = 'agent'`. A paid provider can be ticked too (Gemini today); its tick carries a "Paid" line. The limit bounds rate, not total. The app has no spending ceiling: the cap is set on the provider's own account [D-093].
 - A paid call is made only when a person presses a button or the project owner runs a live test. Nothing in CI calls a real provider. No agent runs `npm run test:live`, sets `ADMAN_E2E_GEMINI=1`, makes any paid call or reads a key [D-049, D-081].
 
 ## Rules: logs, errors and messages

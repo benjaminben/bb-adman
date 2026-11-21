@@ -99,7 +99,7 @@ Each is built only after its own ruling.
 - Full sizes for H3 and MOSS: one line per workflow, by a ruling, after a small run worked.
 - A generated result used as a reference; removing a reference from the project; a reference library screen.
 - Asset questions with no design yet: OI-44 (a managed file to the system bin on `asset.remove`), OI-47 (remember outside assets folders the user chose; ask again for a foreign project), OI-49 (a first-bytes check in the asset protocol; what the change check stores).
-- Stakeholder answers still open, no code until answered: the stricter project names (`LPT0` and similar), Q-032 sub-question 5 (a style note per direction), Q-039, Q-040, OI-64, OI-90, OI-91.
+- Stakeholder answers still open, no code until answered: the stricter project names (`LPT0` and similar), Q-032 sub-question 5 (a style note per direction), Q-039, Q-040, OI-64, OI-90.
 
 ## Not planned for this build
 

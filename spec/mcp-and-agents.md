@@ -227,4 +227,4 @@ In `tests/integration/mcp/`, unless named otherwise. The tests the agent-run sli
 - OI-92: whether a tool may return picture bytes to an agent.
 - OI-93: whether an agent may add pictures from disk.
 - Bridge mode: whether Claude Desktop can reach the HTTP endpoint directly (Phase 10).
-- The open items of agent runs (OI-62, OI-90, OI-91) are in `spec/agent-runs.md`.
+- The open items of agent runs (OI-62, OI-90) are in `spec/agent-runs.md`.
