@@ -26,7 +26,7 @@ describe('pngConverter, the toPng index.ts hands createCore [SPEC 6.2 1.18, K3]'
 
   it('throws a plain Error with the fixed message when the picture cannot be decoded', () => {
     const { decode } = decoder(true, [])
-    const run = () => pngConverter(decode)(new Uint8Array([1, 2, 3]))
+    const run = () => pngConverter(decode)(new Uint8Array(SMALL_JPEG))
     expect(run).toThrow(Error)
     expect(run).toThrow(new Error(PICTURE_NOT_DECODED))
   })

@@ -113,6 +113,7 @@ describe('dev.storage with a cloud storage stays in adman-hand-test/ [SPEC 4.2 d
       'remove adman-hand-test/a.txt',
     ])
     expect(fs.existsSync(path.join(f.userData, 'adman-hand-test'))).toBe(false)
+    expect(fs.existsSync(f.handTestDir)).toBe(false)
   })
 })
 

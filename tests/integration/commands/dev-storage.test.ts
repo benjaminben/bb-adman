@@ -16,7 +16,7 @@ const list = () => f.user('dev.storage', { storage: 'local', action: 'list' })
 const remove = () => f.user('dev.storage', { storage: 'local', action: 'remove' })
 
 describe('dev.storage with local storage [SPEC 4.2 dev.storage, 6.5 [1.13]]', () => {
-  it('uploads the picked file into adman-hand-test/ under the app data folder', async () => {
+  it('uploads the picked file into hand-test-local/adman-hand-test/ under the app data folder', async () => {
     f = makeDevFixture()
     const result = await write(sourceFile(f.outside, 'note.txt', 'hand test'))
     expect(result).toEqual({ ok: true, data: { name: 'note.txt', size: 9 } })
@@ -39,10 +39,11 @@ describe('dev.storage with local storage [SPEC 4.2 dev.storage, 6.5 [1.13]]', ()
     f = makeDevFixture()
     await write(sourceFile(f.outside, 'a.txt'))
     await write(sourceFile(f.outside, 'b.txt'))
-    const before = fs.readdirSync(f.userData).filter((n) => n !== 'adman-hand-test')
+    const before = fs.readdirSync(f.userData)
     expect(await remove()).toEqual({ ok: true, data: { removed: 2 } })
     expect(fs.readdirSync(f.handTestDir)).toEqual([])
-    expect(fs.readdirSync(f.userData).filter((n) => n !== 'adman-hand-test')).toEqual(before)
+    expect(fs.readdirSync(f.userData)).toEqual(before)
+    expect(fs.readdirSync(f.localRoot)).toEqual(['adman-hand-test'])
     expect(fs.readdirSync(f.outside).sort()).toEqual(['a.txt', 'b.txt'])
     expect(await list()).toEqual({ ok: true, data: { names: [] } })
   })
