@@ -13,6 +13,7 @@ import { insertQueued, updateJob } from '@/main/jobs/job-store'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { createSettingsStore } from '@/main/settings/settings-store'
 import { defaultSettings } from '@/main/settings/defaults'
+import { agentRunLimitMessage } from '@/main/commands/agent-run-gate'
 
 let f: ComfyFixture
 let stand: StandIn | undefined
@@ -107,7 +108,6 @@ describe('gate step 1: the provider is offered for agent runs', () => {
   })
 
   it.each([
-    ['gemini', 'Google Gemini'],
     ['fal-seedance', 'fal.ai Seedance'],
     ['firefly', 'Adobe Firefly'],
     ['s3', 'Amazon S3'],
@@ -175,8 +175,13 @@ describe('gate step 2: the tick is on, read at each call', () => {
 })
 
 describe('gate step 3: the agent run limit per provider, over every open project', () => {
-  const limitSentence = (n: number) =>
-    `Agents already have ${n} runs waiting or running with ComfyUI. That is the limit set in Adman's Settings.`
+  // AR-2: the sentence holds no number, so an agent learns neither the limit nor the count.
+  const limitSentence = (_n: number) =>
+    'Agents already have the most runs allowed with ComfyUI. Wait for one to finish.'
+
+  it('exports the limit sentence for other tests to use', () => {
+    expect(agentRunLimitMessage('ComfyUI')).toBe(limitSentence(2))
+  })
 
   it('with limit 2, two agent jobs queued or running refuse a third', async () => {
     await ready({ limit: 2 })

@@ -84,7 +84,14 @@ export function makeRunnerFixture(
   const undo = createUndoLists()
   const secrets = { get: (name: string): string | undefined => opts.secrets?.[name] }
   const now = () => new Date()
-  const deps = { projects, providers, log, now, undo, secrets } as unknown as CoreDeps
+  // The agent-run settings the runner's untick check reads (spec/agent-runs.md "Unticking").
+  const settings = {
+    current: { agentRuns: {} as Record<string, { allowed: boolean }>, agentRunLimit: 4 },
+    get() {
+      return settings.current
+    },
+  }
+  const deps = { projects, providers, log, now, undo, secrets, settings } as unknown as CoreDeps
   const run = (jc: JobRunContext, job: JobRow) => {
     f.calls++
     return f.body(jc, job)
@@ -147,6 +154,15 @@ export function makeRunnerFixture(
     project,
     projects,
     projectId: project.projectId,
+    providers,
+    settings,
+    // Sets or clears an agent tick, as a hand-edit of settings.json would.
+    tick(provider: string, allowed: boolean) {
+      settings.current = {
+        ...settings.current,
+        agentRuns: { ...settings.current.agentRuns, [provider]: { allowed } },
+      }
+    },
     user: (name: string, input: unknown) => bus.execute(name, input, { actor: 'user' }),
     agent: (name: string, input: unknown) => bus.execute(name, input, { actor: 'agent' }),
     list: async (input: Record<string, unknown> = {}) =>

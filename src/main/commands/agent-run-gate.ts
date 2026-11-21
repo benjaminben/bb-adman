@@ -44,6 +44,12 @@ export function agentRunAllowed(
   return Object.hasOwn(ticks, info.id) && ticks[info.id]?.allowed === true
 }
 
+// The sentence of gate step 3. It holds no number, so an agent learns neither the limit nor
+// how many runs other projects hold.
+export function agentRunLimitMessage(label: string): string {
+  return `Agents already have the most runs allowed with ${label}. Wait for one to finish.`
+}
+
 // Jobs an agent started that are queued or running with this provider, in every open project.
 function agentActiveRuns(deps: AgentRunGateDeps, providerId: string): number {
   let count = 0
@@ -79,9 +85,7 @@ function gateRun(deps: AgentRunGateDeps, providerId: string): GateRelease {
   }
   const active = agentActiveRuns(deps, info.id) + (deps.passed.get(info.id) ?? 0)
   if (active >= deps.settings.get().agentRunLimit) {
-    throw denied(
-      `Agents already have ${active} runs waiting or running with ${info.label}. That is the limit set in Adman's Settings.`,
-    )
+    throw denied(agentRunLimitMessage(info.label))
   }
   return hold(deps.passed, info.id)
 }

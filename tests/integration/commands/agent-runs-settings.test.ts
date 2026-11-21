@@ -42,8 +42,8 @@ async function writeSettings(extra: Record<string, unknown>): Promise<string> {
 }
 
 describe('agentRunsOffered, the one "tick offered" rule [SPEC agent-runs.md, AR-1]', () => {
-  it('gives agent_runs_not_ready for Gemini as registered: not local', () => {
-    expect(agentRunsOffered(row('gemini'))).toBe('agent_runs_not_ready')
+  it('gives null for Gemini as registered: paid, offered once the untick check is built (AR-2)', () => {
+    expect(agentRunsOffered(row('gemini'))).toBeNull()
   })
 
   it('gives null for ComfyUI and the fake provider', () => {
@@ -135,14 +135,6 @@ describe('agentRuns.setAllowed [SPEC api-commands.md, AR-1]', () => {
 
   it('refuses a provider agentRunsOffered refuses: RULE_VIOLATION with its reason', async () => {
     f = fixture()
-    expect(await f.user('agentRuns.setAllowed', { provider: 'gemini', allowed: true })).toEqual({
-      ok: false,
-      error: {
-        code: 'RULE_VIOLATION',
-        message: 'Agents cannot start runs with Google Gemini.',
-        details: { reason: 'agent_runs_not_ready' },
-      },
-    })
     expect(
       await f.user('agentRuns.setAllowed', { provider: 'fal-seedance', allowed: true }),
     ).toMatchObject({
@@ -153,6 +145,13 @@ describe('agentRuns.setAllowed [SPEC api-commands.md, AR-1]', () => {
       },
     })
     expect((await state()).settings.agentRuns).toEqual({})
+  })
+
+  it('ticks Gemini, the paid provider (AR-2)', async () => {
+    f = fixture()
+    const input = { provider: 'gemini', allowed: true }
+    expect(await f.user('agentRuns.setAllowed', input)).toEqual({ ok: true, data: input })
+    expect((await state()).settings.agentRuns).toEqual({ gemini: { allowed: true } })
   })
 
   it('always accepts allowed: false, for a refused provider too', async () => {

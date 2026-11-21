@@ -9,15 +9,13 @@ export const AGENT_MAX_ACTIVE_RUNS = 4
 export const AGENT_RUN_LIMIT_MIN = 1
 export const AGENT_RUN_LIMIT_MAX = 16
 
-export type AgentRunsRefusal = 'agent_runs_not_offered' | 'agent_runs_not_ready'
+export type AgentRunsRefusal = 'agent_runs_not_offered'
 
 // The only "tick offered" function. Its callers: the gate, agentRuns.setAllowed and the
 // runner's check before a job's first call.
 export function agentRunsOffered(info: ProviderInfo): AgentRunsRefusal | null {
   const makesRuns = info.jobs.includes('image') || info.jobs.includes('video')
   if (!info.available || !makesRuns) return 'agent_runs_not_offered'
-  // Until the runner checks the tick before a job's first call, only a local provider.
-  if (!info.local) return 'agent_runs_not_ready'
   return null
 }
 

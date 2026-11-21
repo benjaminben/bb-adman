@@ -6,6 +6,7 @@ import { addPaidCall, readJob, type JobChange } from './job-store'
 import { endChange, runningResult, type JobEnd } from './job-end'
 import type { JobRunContext } from './types'
 import { jobErrorContext } from './job-error-log'
+import { agentRunAllowed } from '@/main/commands/agent-run-gate'
 import { ProviderCancelled, ProviderFailure } from '@/main/providers/types'
 import { AppError } from '@/shared/schemas/result'
 import type { JobRow } from '@/shared/schemas/rows/job'
@@ -74,6 +75,14 @@ function context(state: RunnerState, live: LiveJob): JobRunContext {
       // [1.38] Nor once the project is closed: the call would go out and not be counted.
       const handle = deps.projects.get(live.projectId)
       if (live.ended || live.cancelAsked || !handle) throw new ProviderCancelled()
+      // AR-2: an agent's run not yet sent goes out only while its tick is on. Off, it ends
+      // cancelled with no flag and nothing is sent.
+      if (live.startedBy === 'agent' && !live.sent && !agentRunAllowed(deps, live.providerId)) {
+        live.finish({ status: 'cancelled' })
+        live.controller.abort()
+        throw new ProviderCancelled()
+      }
+      live.sent = true
       // SPEC 6.11.1: counted at the moment of sending, unless the provider is local.
       if (live.provider?.local !== true) {
         addPaidCall(handle, live.id, nowText(state))
@@ -91,6 +100,7 @@ function context(state: RunnerState, live: LiveJob): JobRunContext {
       return state.opts.bus().execute(command, input, { actor: 'user' })
     },
     setRemoteJobId(id) {
+      live.sent = true
       if (!live.ended) writeJob(state, live.projectId, live.id, { remoteJobId: id })
     },
     keep(value) {
@@ -121,6 +131,9 @@ export function startJob(state: RunnerState, projectId: string, row: JobRow): vo
     providerId,
     provider: deps.providers.find((p) => p.id === providerId),
     controller: new AbortController(),
+    startedBy: row.startedBy,
+    // A job with a remote run ID was sent before (resumed at project open).
+    sent: row.remoteJobId !== null,
     ended: false,
     cancelAsked: false,
     kept: {},
