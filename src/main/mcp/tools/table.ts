@@ -1,11 +1,23 @@
-// The fixed table of MCP tools (SPEC 4.5; SPEC 14 1.56 MCP-B). Each tool runs one command
-// or query named here; a tool name is never used as a command or query name. Only the 4.5
-// tools whose command or query exists are listed. Each input is the command's or query's
+// The fixed table of MCP tools (SPEC 4.5; SPEC 14 1.56 MCP-B; MCP-D). Each tool runs one
+// command or query named here; a tool name is never used as a command or query name. Only the
+// 4.5 tools whose command or query exists are listed. Each input is the command's or query's
 // own Zod schema, with its top-level keys in snake_case (SPEC 4.5: project_id -> projectId).
+// Every reply goes through an allow-list picker (spec/mcp-and-agents.md, rules for every tool).
 import type { z } from 'zod'
 import { campaignCreateInput } from '@/shared/schemas/commands/campaign'
-import { assetListInput, type AssetList } from '@/shared/schemas/queries/asset'
+import { assetListInput } from '@/shared/schemas/queries/asset'
 import { campaignScopedInput, projectGetInput } from '@/shared/schemas/queries/campaign'
+import { jobGetInput, jobListInput } from '@/shared/schemas/queries/job'
+import { projectListOpenInput } from '@/shared/schemas/queries/project'
+import {
+  assetFields,
+  jobFields,
+  jobListFields,
+  openProjectFields,
+  slotFields,
+  type ReplyPicker,
+} from './read-replies'
+import { campaignFields, projectFields } from './project-replies'
 
 export type ToolDef = {
   name: string
@@ -14,25 +26,20 @@ export type ToolDef = {
   target: string
   input: z.ZodObject
   // Picks what the tool returns from the reply, where 4.5 gives fewer fields.
-  reply?: (data: unknown) => unknown
-}
-
-// SPEC 4.5 list_assets and FR-198: the listed fields only, so no file path is returned.
-function assetFields(data: unknown): unknown {
-  return (data as AssetList).map((a) => ({
-    id: a.id,
-    displayName: a.displayName,
-    kind: a.kind,
-    library: a.library,
-    subjectId: a.subjectId,
-    width: a.width,
-    height: a.height,
-    durationMs: a.durationMs,
-    fontFamily: a.fontFamily,
-  }))
+  reply?: ReplyPicker
 }
 
 export const MCP_TOOLS: readonly ToolDef[] = [
+  {
+    name: 'list_projects',
+    description:
+      'List the projects open in the app, with the ID and name of each. Use an ID as ' +
+      'project_id in the other tools.',
+    kind: 'query',
+    target: 'project.listOpen',
+    input: projectListOpenInput,
+    reply: openProjectFields,
+  },
   {
     name: 'get_project',
     description:
@@ -41,6 +48,7 @@ export const MCP_TOOLS: readonly ToolDef[] = [
     kind: 'query',
     target: 'project.get',
     input: projectGetInput,
+    reply: projectFields,
   },
   {
     name: 'list_assets',
@@ -60,6 +68,7 @@ export const MCP_TOOLS: readonly ToolDef[] = [
     kind: 'query',
     target: 'campaign.get',
     input: campaignScopedInput,
+    reply: campaignFields,
   },
   {
     name: 'create_campaign',
@@ -69,5 +78,35 @@ export const MCP_TOOLS: readonly ToolDef[] = [
     kind: 'command',
     target: 'campaign.create',
     input: campaignCreateInput,
+  },
+  {
+    name: 'get_slots',
+    description:
+      "Read the slots of a campaign's master variant: for each, its slot ID, type, whether " +
+      'it is filled or empty, and the IDs of the assets that could fill it.',
+    kind: 'query',
+    target: 'template.slots',
+    input: campaignScopedInput,
+    reply: slotFields,
+  },
+  {
+    name: 'get_job',
+    description:
+      'Read one run (job) of an open project: its status, progress, the asset IDs it made ' +
+      'and, when it failed, a plain message. Poll no more than once every 5 seconds.',
+    kind: 'query',
+    target: 'job.get',
+    input: jobGetInput,
+    reply: jobFields,
+  },
+  {
+    name: 'list_jobs',
+    description:
+      'List the runs (jobs) of an open project, newest first, optionally by campaign, ' +
+      'variant or state (active, unseen or failed), up to limit (default 200).',
+    kind: 'query',
+    target: 'job.list',
+    input: jobListInput.omit({ layerId: true }),
+    reply: jobListFields,
   },
 ]

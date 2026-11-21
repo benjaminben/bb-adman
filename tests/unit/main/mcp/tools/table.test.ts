@@ -34,7 +34,15 @@ describe('the fixed MCP tool table [SPEC 4.5; 14 1.56 MCP-B]', () => {
 
   // B-2: a new query target must be added here on purpose, after a review.
   it('reads only the allowed queries [B-2]', () => {
-    const allowed = ['project.get', 'asset.list', 'campaign.get']
+    const allowed = [
+      'project.get',
+      'asset.list',
+      'campaign.get',
+      'project.listOpen',
+      'template.slots',
+      'job.get',
+      'job.list',
+    ]
     for (const t of MCP_TOOLS.filter((x) => x.kind === 'query')) {
       expect(allowed, t.name).toContain(t.target)
     }

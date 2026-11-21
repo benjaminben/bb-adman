@@ -31,6 +31,9 @@ const SECTION_4_5_TOOLS = [
   'get_check_results',
   'delete_variant',
   'delete_campaign',
+  'get_slots',
+  'get_job',
+  'list_jobs',
 ]
 
 async function listTools(fx: McpFixture): Promise<string[]> {

@@ -8,6 +8,7 @@ import type { ToolSetup } from '@/main/mcp/sessions'
 import type { AgentCaller } from '@/main/mcp/agent-caller'
 import type { Result } from '@/shared/schemas/result'
 import { MCP_TOOLS, type ToolDef } from './table'
+import type { ReplyContext, ReplyPicker } from './read-replies'
 
 export { MCP_TOOLS, type ToolDef }
 
@@ -18,9 +19,9 @@ const text = (value: unknown, isError: boolean): CallToolResult => ({
   ...(isError ? { isError: true } : {}),
 })
 
-function toReply(result: Result<unknown>, pick?: (data: unknown) => unknown): CallToolResult {
+function toReply(result: Result<unknown>, ctx: ReplyContext, pick?: ReplyPicker): CallToolResult {
   if (!result.ok) return text(result.error, true)
-  return text(pick ? pick(result.data) : result.data, false)
+  return text(pick ? pick(result.data, ctx) : result.data, false)
 }
 
 // The tool's input: the same field schemas, with snake_case top-level keys. Unknown keys,
@@ -37,7 +38,12 @@ function run(def: ToolDef, caller: AgentCaller, input: unknown): Promise<Result<
     : caller.query(def.target, input)
 }
 
-export function toolSetup(table: readonly ToolDef[] = MCP_TOOLS): ToolSetup {
+// providers: the labels a job's message names (MCP-D agentJobView).
+export function toolSetup(
+  table: readonly ToolDef[] = MCP_TOOLS,
+  providers: ReplyContext['providers'] = [],
+): ToolSetup {
+  const ctx: ReplyContext = { providers }
   return (server, caller) => {
     for (const def of table) {
       const { names, schema } = snakeInput(def)
@@ -47,7 +53,7 @@ export function toolSetup(table: readonly ToolDef[] = MCP_TOOLS): ToolSetup {
         async (args: Record<string, unknown>) => {
           const input: Record<string, unknown> = {}
           for (const [s, k] of names) if (Object.hasOwn(args, s)) input[k] = args[s]
-          return toReply(await run(def, caller, input), def.reply)
+          return toReply(await run(def, caller, input), ctx, def.reply)
         },
       )
     }

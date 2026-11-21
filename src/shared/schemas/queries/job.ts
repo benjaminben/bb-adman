@@ -18,3 +18,7 @@ export type JobList = JobRow[]
 // [1.24] SPEC 4.3 job.getServerMessage: user-only; the cleaned server text or null.
 export const jobServerMessageInput = projectScoped.extend({ jobId: z.string().min(1) })
 export type JobServerMessage = { text: string | null }
+
+// MCP-D job.get: one wire row of the project, or NOT_FOUND. Open to both actors; the MCP tool
+// cuts the row down with agentJobView.
+export const jobGetInput = projectScoped.extend({ jobId: z.string().min(1) })

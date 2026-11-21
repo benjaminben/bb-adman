@@ -3,6 +3,15 @@
 exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descriptions and input schemas 1`] = `
 [
   {
+    "description": "List the projects open in the app, with the ID and name of each. Use an ID as project_id in the other tools.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {},
+      "type": "object",
+    },
+    "name": "list_projects",
+  },
+  {
     "description": "Read one project that is open in the app: its subjects and a summary of each campaign. Works only on open projects.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -342,6 +351,89 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
       "type": "object",
     },
     "name": "create_campaign",
+  },
+  {
+    "description": "Read the slots of a campaign's master variant: for each, its slot ID, type, whether it is filled or empty, and the IDs of the assets that could fill it.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "campaign_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "campaign_id",
+      ],
+      "type": "object",
+    },
+    "name": "get_slots",
+  },
+  {
+    "description": "Read one run (job) of an open project: its status, progress, the asset IDs it made and, when it failed, a plain message. Poll no more than once every 5 seconds.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "job_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "job_id",
+      ],
+      "type": "object",
+    },
+    "name": "get_job",
+  },
+  {
+    "description": "List the runs (jobs) of an open project, newest first, optionally by campaign, variant or state (active, unseen or failed), up to limit (default 200).",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "campaign_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "limit": {
+          "default": 200,
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "type": "integer",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "state": {
+          "enum": [
+            "active",
+            "unseen",
+            "failed",
+          ],
+          "type": "string",
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+      ],
+      "type": "object",
+    },
+    "name": "list_jobs",
   },
 ]
 `;
