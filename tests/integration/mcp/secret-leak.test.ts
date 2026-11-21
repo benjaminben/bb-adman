@@ -7,6 +7,9 @@ import { data } from '../core-fixture'
 import { makeMcpFixture, stopAndClean, type McpFixture } from './mcp-fixture'
 import { USER_SECRET_NAMES } from '../../../src/shared/schemas/secrets'
 import * as c from './http-client'
+import { callEveryTool } from './every-tool'
+import { BUILT_TOOLS } from './tool-client'
+import { createInput } from '../campaigns/campaign-fixture'
 
 let f: McpFixture | undefined
 afterEach(async () => {
@@ -106,6 +109,69 @@ describe('No MCP tool reply, log line or project file contains a secret value [S
       for (const [name, value] of secrets) {
         expect(text.includes(value), `${name} found in ${where}`).toBe(false)
       }
+    }
+  })
+})
+
+// MCP-B: every tool is called, with good and bad arguments (SPEC 4.5, 14 1.56 point 8).
+const COMFY = 'http://made-up-comfy-host.example:8188'
+
+async function plantedProject(fx: McpFixture) {
+  for (const name of USER_SECRET_NAMES) {
+    data(await fx.user('secret.set', { name, value: valueFor(name) }))
+  }
+  data(await fx.user('comfy.setAddress', { address: COMFY }))
+  const { projectId } = data<{ projectId: string }>(
+    await fx.user('project.create', { name: 'Leak tools', location: fx.projectsDir }),
+  )
+  const { campaignId } = data<{ campaignId: string }>(
+    await fx.user('campaign.create', { projectId, ...createInput() }),
+  )
+  const abs = path.join(fx.root, 'made-up-folder', 'made-up-leak-picture.png')
+  fx.core.projects
+    .requireOpen(projectId)
+    .db.prepare(
+      `INSERT INTO asset (id, library, kind, origin, storage, subject_id, display_name,
+        abs_path, rel_path, mime, byte_size, mtime_ms, content_hash, created_at)
+       VALUES ('a1', 'asset', 'image', 'imported', 'linked', NULL, 'Picture', ?,
+        'made-up-folder/made-up-leak-picture.png', 'image/png', 1, 1, 'h', '2026-01-01T00:00:00Z')`,
+    )
+    .run(abs)
+  return { projectId, campaignId }
+}
+
+describe('No MCP tool reply holds a secret, the token, the ComfyUI address or a path [SPEC 10.1; 4.5; FR-198]', () => {
+  it('holds for every listed tool, with good and bad arguments', async () => {
+    f = await makeMcpFixture()
+    const ids = await plantedProject(f)
+    data(await f.user('mcp.setEnabled', { enabled: true }))
+    const token = await f.token()
+    const { names, replies } = await callEveryTool(f.port, token, ids)
+    expect(names).toEqual(BUILT_TOOLS)
+    const text = replies.join('\n')
+    expect(text.includes(ids.campaignId)).toBe(true)
+    const secrets: Array<[string, string]> = [
+      ...USER_SECRET_NAMES.map((n): [string, string] => [n, valueFor(n)]),
+      ['mcp.token', token],
+      ['the ComfyUI address', COMFY],
+      ['the ComfyUI host', 'made-up-comfy-host.example'],
+    ]
+    const places: Array<[string, string]> = [
+      ['tool reply', text],
+      ['log', f.readLogs()],
+      ['events', JSON.stringify(f.events)],
+    ]
+    for (const [where, value] of places) {
+      for (const [name, secret] of secrets) {
+        expect(value.includes(secret), `${name} found in ${where}`).toBe(false)
+      }
+    }
+    for (const [name, p] of [
+      ['the asset file name', 'made-up-leak-picture.png'],
+      ['the temporary folder', f.root],
+      ['the projects folder', f.projectsDir],
+    ]) {
+      expect(text.includes(p), `${name} found in a tool reply`).toBe(false)
     }
   })
 })
