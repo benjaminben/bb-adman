@@ -21,6 +21,8 @@ export type NewAsset = InspectedFile & {
 export type PreparedImport = {
   // The content hash of each given path, in the order given.
   hashes: string[]
+  // The content hashes of the given files that are animated WebP files (S2-17).
+  animatedHashes: string[]
   // One entry per content hash the project did not hold when prepare ran.
   newAssets: NewAsset[]
   // Files this step copied, for undoPrepare.
@@ -76,7 +78,9 @@ export async function prepareImport(
   try {
     const newAssets: NewAsset[] = []
     for (const f of fresh.values()) newAssets.push(await place(project, f, copy, copies))
-    return { hashes: files.map((f) => f.contentHash), newAssets, copies, skippedCount }
+    const hashes = files.map((f) => f.contentHash)
+    const animatedHashes = files.filter((f) => f.animated).map((f) => f.contentHash)
+    return { hashes, animatedHashes, newAssets, copies, skippedCount }
   } catch (e) {
     await removeCopies(copies)
     throw e

@@ -6,7 +6,11 @@ import type { CoreDeps } from '@/main/core-deps'
 import { asset } from '@/main/db/schema'
 import { requireSubject } from './update'
 import { assetIdsByHash, prepareImport, removeCopies, type NewAsset } from '@/main/assets/import'
-import { assetImportInput, type AssetImportInput } from '@/shared/schemas/commands/asset'
+import {
+  assetImportInput,
+  type AssetImportInput,
+  type AssetImportReply,
+} from '@/shared/schemas/commands/asset'
 import { logUnreadable } from '@/main/assets/unreadable'
 import { AppError } from '@/shared/schemas/result'
 
@@ -71,7 +75,14 @@ export function assetImport(deps: Pick<CoreDeps, 'now' | 'log'>) {
       const assetIds = prepared.hashes.map((h) => idFor(known, h))
       // SPEC 14, Slice A rulings point 5.
       const reusedAssetIds = [...new Set(assetIds.filter((id) => before.has(id)))]
-      return { data: { assetIds, reusedAssetIds, skippedCount: prepared.skippedCount } }
+      const animatedAssetIds = [...new Set(prepared.animatedHashes.map((h) => idFor(known, h)))]
+      const data: AssetImportReply = {
+        assetIds,
+        reusedAssetIds,
+        skippedCount: prepared.skippedCount,
+        animatedAssetIds,
+      }
+      return { data }
     },
   })
 }
