@@ -23,7 +23,8 @@ const TEXT = {
 const PICTURE = { opacity: 1 }
 const SHADE = { color: '#000000', from: 'bottom', strength: 0.7, reach: 0.6 }
 
-const text = (fields: Record<string, unknown>) => TextStyle.safeParse({ ...TEXT, ...fields }).success
+const text = (fields: Record<string, unknown>) =>
+  TextStyle.safeParse({ ...TEXT, ...fields }).success
 const picture = (fields: Record<string, unknown>) =>
   ImageStyle.safeParse({ ...PICTURE, ...fields }).success
 const shade = (fields: Record<string, unknown>) => picture({ shade: { ...SHADE, ...fields } })
@@ -91,7 +92,11 @@ describe('ImageStyle look fields [LK-1]', () => {
   })
 
   it.each<[string, Record<string, unknown>, boolean]>([
-    ...SHADE_SIDES.map((from): [string, Record<string, unknown>, boolean] => [from, { from }, true]),
+    ...SHADE_SIDES.map((from): [string, Record<string, unknown>, boolean] => [
+      from,
+      { from },
+      true,
+    ]),
     ['unknown side', { from: 'middle' }, false],
     ['bad colour', { color: '#FFF' }, false],
     ['null colour', { color: null }, false],
