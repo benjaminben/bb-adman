@@ -46,3 +46,22 @@ describe('storageListPrefix: the folder a list call reads [SPEC 6]', () => {
     expect(() => storageListPrefix(prefix)).toThrow(/Storage path refused/)
   })
 })
+
+// Calls `run` and gives back the message of the error it throws.
+function messageOf(run: () => unknown): string {
+  try {
+    run()
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error)
+  }
+  throw new Error('nothing was thrown')
+}
+
+describe('the refused-path error holds no path [SPEC 6.5 1.13 Errors, 1.14 H10]', () => {
+  it.each([
+    ['a file path', () => storageFilePath('private-folder/../x.txt')],
+    ['a list prefix', () => storageListPrefix('/private-folder')],
+  ])('gives exactly "Storage path refused" for %s', (_case, run) => {
+    expect(messageOf(run)).toBe('Storage path refused')
+  })
+})

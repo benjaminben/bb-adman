@@ -110,3 +110,22 @@ describe('local storage makes no folder outside its root [SPEC 6.5 1.14 F-01, H9
     },
   )
 })
+
+describe('local storage messages hold no path [SPEC 6.5 1.14 H10]', () => {
+  it('a read of a file in a folder that is not there names no path', async () => {
+    const storage = localStorageAt(tempRoot().root)
+    const failure = await storage.read('private-folder/x.txt').catch((error: unknown) => error)
+    expect(failure).toBeInstanceOf(Error)
+    expect(String((failure as Error).message)).not.toContain('private-folder')
+  })
+
+  it('a refused folder link gives exactly "Storage path refused"', async () => {
+    const { outer, root } = tempRoot()
+    fs.mkdirSync(path.join(outer, 'elsewhere'))
+    fs.symlinkSync(path.join(outer, 'elsewhere'), path.join(root, 'private-link'), 'dir')
+    const failure = await localStorageAt(root)
+      .read('private-link/x.txt')
+      .catch((error: unknown) => error)
+    expect((failure as Error).message).toBe('Storage path refused')
+  })
+})

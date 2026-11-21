@@ -2,16 +2,17 @@
 // '..'. Every storage adapter checks paths here before joining them to its own root, so the
 // local folder and the cloud ones share the path code (SPEC 6, REQ 9.1 preference).
 
-// The one error for a path that breaks the rules or would leave the root.
-export function refusePath(path: string): never {
-  throw new Error(`Storage path refused: ${JSON.stringify(path)}`)
+// The one error for a path that breaks the rules or would leave the root. It holds no path
+// (SPEC 6.5 [1.13] Errors, [1.14] H10).
+export function refusePath(): never {
+  throw new Error('Storage path refused')
 }
 
 function checkParts(path: string): void {
-  if (path.includes('\\') || path.includes('\u0000')) refusePath(path)
-  if (/^[A-Za-z]:/.test(path)) refusePath(path)
+  if (path.includes('\\') || path.includes('\u0000')) refusePath()
+  if (/^[A-Za-z]:/.test(path)) refusePath()
   for (const part of path.split('/')) {
-    if (part === '' || part === '.' || part === '..') refusePath(path)
+    if (part === '' || part === '.' || part === '..') refusePath()
   }
 }
 

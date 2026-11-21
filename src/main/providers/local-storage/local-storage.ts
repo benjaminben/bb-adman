@@ -19,7 +19,7 @@ export function localStorageAt(root: string): StorageProvider {
   const absoluteRoot = nodePath.resolve(root)
 
   // The real path of `folder`, refused unless it is inside the real root. Null when missing.
-  async function realInside(folder: string, relative: string): Promise<string | null> {
+  async function realInside(folder: string): Promise<string | null> {
     let realRoot: string
     let realFolder: string
     try {
@@ -30,18 +30,18 @@ export function localStorageAt(root: string): StorageProvider {
       throw error
     }
     if (realFolder !== realRoot && !realFolder.startsWith(realRoot + nodePath.sep)) {
-      refusePath(relative)
+      refusePath()
     }
     return realFolder
   }
 
   // SPEC 14 H9: before any folder is made, the deepest folder that already exists must be
   // inside the real root. The root itself is the caller's own folder and may be made.
-  async function checkBeforeMaking(parts: string[], relative: string): Promise<void> {
+  async function checkBeforeMaking(parts: string[]): Promise<void> {
     await fs.mkdir(absoluteRoot, { recursive: true })
     for (let depth = parts.length; depth >= 0; depth -= 1) {
       const folder = nodePath.join(absoluteRoot, ...parts.slice(0, depth))
-      if ((await realInside(folder, relative)) !== null) return
+      if ((await realInside(folder)) !== null) return
     }
   }
 
@@ -52,10 +52,10 @@ export function localStorageAt(root: string): StorageProvider {
     const parts = relative === '' ? [] : relative.split('/')
     const folder = nodePath.join(absoluteRoot, ...parts)
     if (make) {
-      await checkBeforeMaking(parts, relative)
+      await checkBeforeMaking(parts)
       await fs.mkdir(folder, { recursive: true })
     }
-    return realInside(folder, relative)
+    return realInside(folder)
   }
 
   async function fileFor(path: string, make: boolean): Promise<string | null> {
@@ -73,7 +73,7 @@ export function localStorageAt(root: string): StorageProvider {
         throw error
       },
     )
-    if (link) refusePath(relative)
+    if (link) refusePath()
     return file
   }
 
@@ -106,14 +106,13 @@ export function localStorageAt(root: string): StorageProvider {
 
     async read(path) {
       const file = await fileFor(path, false)
-      if (file === null) throw new Error(`Storage file not found: ${JSON.stringify(path)}`)
+      if (file === null) throw new Error('Storage file not found')
       return new Uint8Array(await fs.readFile(file))
     },
 
     async write(path, data) {
       const file = await fileFor(path, true)
-      if (file === null)
-        throw new Error(`Storage folder could not be made: ${JSON.stringify(path)}`)
+      if (file === null) throw new Error('Storage folder could not be made')
       if (data instanceof Uint8Array) {
         await fs.writeFile(file, data)
         return
