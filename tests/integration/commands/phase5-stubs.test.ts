@@ -23,9 +23,6 @@ const NOT_BUILT = {
 
 // A good input for each stub command, without projectId.
 const INPUTS: Record<string, object> = {
-  'direction.createFromMaster': { masterVariantId: 'V1', name: 'Bold' },
-  'direction.rename': { directionId: 'D1', name: 'Bold' },
-  'direction.delete': { directionId: 'D1' },
   'direction.restore': { direction, variants: [snapshot] },
   'generation.applyFill': { jobId: 'J1' },
 }
