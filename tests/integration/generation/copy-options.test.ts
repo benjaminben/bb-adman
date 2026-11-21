@@ -1,14 +1,7 @@
 // P4-8: generation.copyOptions and the copy_options job (spec/ai-jobs.md "Copy options";
 // FR-043, FR-045), through the real bus and runner with a stand-in text adapter.
 import { describe, it, expect, afterEach } from 'vitest'
-import {
-  ended,
-  waitFor,
-  BACKGROUND_LAYER,
-  OTHER_LAYER,
-  TEXT_LAYER,
-  VARIANT,
-} from './generation-fixture'
+import { waitFor, BACKGROUND_LAYER, OTHER_LAYER, TEXT_LAYER, VARIANT } from './generation-fixture'
 import { VALID_BRIEF } from '../row-fixtures'
 import {
   makeTextFixture,
@@ -52,7 +45,7 @@ async function start(input: Record<string, unknown> = {}): Promise<string> {
 
 async function finished(input: Record<string, unknown> = {}) {
   const id = await start(input)
-  await waitFor(ended(f, id))
+  await waitFor(() => f.ended(id))
   return f.job(id)
 }
 
@@ -98,7 +91,7 @@ describe('generation.copyOptions request [FR-045]', () => {
       startedBy: 'user',
       request: { role, language: 'en', count: 5, maxChars },
     })
-    await waitFor(ended(f, jobId))
+    await waitFor(() => f.ended(jobId))
     expect(f.t.copyCalls).toEqual([
       { role, brief: VALID_BRIEF, language: 'en', count: 5, maxChars },
     ])
@@ -141,13 +134,13 @@ describe('the copy_options job [FR-045]', () => {
       await gate
       return ['Shop now']
     }
-    const busy = []
+    const busy: string[] = []
     for (let i = 0; i < JOBS_AT_ONCE_PER_PROVIDER; i += 1) busy.push(await start())
     const last = await start()
     expect(f.job(last)?.status).toBe('queued')
     f.db.prepare("DELETE FROM campaign WHERE id = 'c1'").run()
     release()
-    await waitFor(() => [...busy, last].every((id) => ended(f, id)()))
+    await waitFor(() => [...busy, last].every((id) => f.ended(id)))
     expect(f.job(last)).toMatchObject({
       status: 'failed',
       errorKind: 'other',

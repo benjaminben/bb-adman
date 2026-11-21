@@ -36,7 +36,12 @@ export const TEXT: ProviderInfo = {
 }
 export const PICTURES_ONLY: ProviderInfo = { ...TEXT, id: 'pictures-only', jobs: ['image'] }
 export const NOT_AVAILABLE: ProviderInfo = { ...TEXT, id: 'not-available', available: false }
-export const KEYED: ProviderInfo = { ...TEXT, id: 'keyed', label: 'Keyed', secrets: ['KEYED_KEY'] }
+export const KEYED: ProviderInfo = {
+  ...TEXT,
+  id: 'keyed',
+  label: 'Keyed',
+  secrets: ['gemini.apiKey'],
+}
 
 export const CTA_LAYER = 'l-cta'
 export const BODY_LAYER = 'l-body'
@@ -145,6 +150,10 @@ export function makeTextFixture() {
     agent: send('agent'),
     job: (id: string) => readWireRow(project.db, 'job', { id }) as JobRow | null,
     jobs: () => readWireRows(project.db, 'job') as JobRow[],
+    ended(id: string): boolean {
+      const status = (readWireRow(project.db, 'job', { id }) as JobRow | null)?.status
+      return status === 'succeeded' || status === 'failed' || status === 'cancelled'
+    },
     errorDetail: (id: string) =>
       (
         project.db.prepare('SELECT error_detail FROM job WHERE id = ?').get(id) as {

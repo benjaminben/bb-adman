@@ -5,7 +5,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
-import { ended, waitFor } from '../generation/generation-fixture'
+import { waitFor } from '../generation/generation-fixture'
 import {
   makeTextFixture,
   KEYED,
@@ -53,7 +53,7 @@ async function finished(draft: unknown, text = BRIEF_TEXT) {
   const r = await extract(write('brief.md', text))
   if (!r.ok) throw new Error(`brief.extract failed: ${JSON.stringify(r.error)}`)
   const { jobId } = r.data as { jobId: string }
-  await waitFor(ended(f, jobId))
+  await waitFor(() => f.ended(jobId))
   return f.job(jobId)
 }
 
