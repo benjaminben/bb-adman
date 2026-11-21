@@ -141,7 +141,7 @@ CREATE UNIQUE INDEX variant_grid ON variant(direction_id, size_label, language, 
 - The master is the variant named by `direction.master_variant_id`.
 - Default duration is 6000 ms. Default export frame rate is 30 (`DEFAULT_FPS`) [REQ: A-07]. Frame rate is an export choice and is not stored on a variant.
 
-**`agent_changed_at`** (wire `agentChangedAt`) [REQ: FR-239]. Built: the column and its writer. No command bumps `variant.rev` yet, so the column is null for every variant.
+**`agent_changed_at`** (wire `agentChangedAt`) [REQ: FR-239]. Built: the column and its writer. The layer commands and `variant.update` bump `variant.rev` through it.
 
 - It has one writer. `bumpVariantRev(ctx, variantId, now)` in `src/main/commands/variant-rev.ts` is the one way a command bumps `rev`: it adds one to `rev` inside the command's transaction and, only when the actor is the agent, sets `agent_changed_at` to `now`. A command by the user never changes it, and undoing an agent's edit does not clear it. Unit test: `tests/unit/main/commands/variant-rev.test.ts`, both actors.
 - Creating a variant does not set it; `created_by` records that. A variant made by an agent has `agentChangedAt: null`.
