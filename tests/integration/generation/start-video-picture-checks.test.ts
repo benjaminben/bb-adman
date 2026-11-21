@@ -186,4 +186,20 @@ describe('generation.startVideo picture start refusals, continued [SPEC 14 1.60 
       details: { reason: 'picture_not_usable' },
     })
   })
+
+  it('names every picture type it takes when it refuses one: picture_not_usable', async () => {
+    await ready()
+    insertTestAsset(f.db, {
+      id: 'vid2',
+      relPath: 'clips/ad2.mp4',
+      absPath: path.join(f.root, 'clips', 'ad2.mp4'),
+      kind: 'video',
+      library: 'reference',
+      mime: 'video/mp4',
+    })
+    await refused(frameAsk('vid2'), {
+      code: 'RULE_VIOLATION',
+      message: 'This picture cannot be used for a video yet. Use a PNG, JPEG or WebP.',
+    })
+  })
 })
