@@ -14,6 +14,11 @@ import { createUndoLists } from '../../../src/main/history/undo-lists'
 import { createActivityLog } from '../../../src/main/log/activity-log'
 import { listProviders } from '../../../src/main/providers/registry'
 import { createJobRunner } from '../../../src/main/jobs/runner'
+import { jobCancel } from '../../../src/main/commands/job/cancel'
+import { jobMarkSeen } from '../../../src/main/commands/job/mark-seen'
+import { jobRetry } from '../../../src/main/commands/job/retry'
+import { projectClose } from '../../../src/main/commands/project/close'
+import { jobList } from '../../../src/main/queries/job'
 import type { CoreDeps } from '../../../src/main/core-deps'
 import type { JobRunContext } from '../../../src/main/jobs/types'
 import type { JobRow } from '../../../src/shared/schemas/rows/job'
@@ -69,7 +74,10 @@ export function makeRunnerFixture(opts: { cancelWaitMs?: number } = {}) {
     body: (async () => ({ done: true })) as Body,
     calls: 0,
   }
-  const deps = { projects, providers, log, now: () => new Date() } as unknown as CoreDeps
+  const undo = createUndoLists()
+  const secrets = { get: (_name: string): string | undefined => undefined }
+  const now = () => new Date()
+  const deps = { projects, providers, log, now, undo, secrets } as unknown as CoreDeps
   const run = (jc: JobRunContext, job: JobRow) => {
     f.calls++
     return f.body(jc, job)
@@ -107,9 +115,9 @@ export function makeRunnerFixture(opts: { cancelWaitMs?: number } = {}) {
     },
   })
   const bus = createCommandBus({
-    handlers: [enqueue],
+    handlers: [enqueue, jobRetry(deps), jobCancel(deps), jobMarkSeen(deps), projectClose(deps)],
     projects,
-    undo: createUndoLists(),
+    undo,
     log,
     emit: (e) => events.push(e),
     askPermission: async () => false,
@@ -122,6 +130,10 @@ export function makeRunnerFixture(opts: { cancelWaitMs?: number } = {}) {
     events,
     project,
     projectId: project.projectId,
+    user: (name: string, input: unknown) => bus.execute(name, input, { actor: 'user' }),
+    agent: (name: string, input: unknown) => bus.execute(name, input, { actor: 'agent' }),
+    list: async (input: Record<string, unknown> = {}) =>
+      jobList(deps)({ projectId: project.projectId, ...input }, { actor: 'user' }),
     async start(input: Partial<z.input<typeof enqueueInput>> = {}): Promise<string> {
       const r = await bus.execute(
         'test.enqueue',
@@ -144,8 +156,7 @@ export function makeRunnerFixture(opts: { cancelWaitMs?: number } = {}) {
             .join('')
         : '',
     cleanup() {
-      projects.remove(project.projectId)
-      closeProjectFile(project)
+      if (projects.remove(project.projectId)) closeProjectFile(project)
       fs.rmSync(dir, { recursive: true, force: true })
     },
   }
