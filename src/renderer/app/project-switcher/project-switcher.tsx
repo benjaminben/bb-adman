@@ -6,6 +6,8 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { EMPTY, useApp } from '@/renderer/app/app-context'
 import type { View } from '@/renderer/stores/app-store'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import { useCloseProject } from './close-project'
 import styles from './project-switcher.module.css'
 
@@ -84,17 +86,26 @@ export function ProjectSwitcher() {
         aria-controls={open ? menuId : undefined}
         onClick={() => setOpen(!open)}
       >
-        {shown?.name ?? 'Adman'}
+        <span className={styles.name}>{shown?.name ?? 'Adman'}</span>
+        <span className={styles.caret}>
+          <Icon name="down" size="small" />
+        </span>
       </button>
       {open && (
-        <ul ref={menu} id={menuId} role="menu" className={styles.menu} onKeyDown={onKeyDown}>
+        <ul
+          ref={menu}
+          id={menuId}
+          role="menu"
+          className={`${layout.menu} ${styles.menu}`}
+          onKeyDown={onKeyDown}
+        >
           {items.map((item) => (
             <li key={item.key} role="none">
               <button
                 type="button"
                 role="menuitem"
                 tabIndex={-1}
-                className={item.key === 'start' ? styles.after : styles.item}
+                className={`${layout.menuItem} ${item.key === 'start' ? styles.after : styles.item}`}
                 aria-current={item.key === shownId || undefined}
                 onClick={() => {
                   close()

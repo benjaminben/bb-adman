@@ -1,6 +1,8 @@
 // The marks on a campaign or variant tab (spec/editor.md, "The shell" and "Variant tabs"
 // [FR-218, Q-042]): "Running" as a word, a dot for a result not looked at yet, and on variant
-// tabs a dot for "Needs attention". Each dot has a text label for screen readers.
+// tabs a dot for "Needs attention". Each dot has a text label for screen readers; the spinner
+// beside "Running" is decorative.
+import { Icon } from '@/renderer/ui/icon'
 import styles from './tab-marks.module.css'
 
 export type TabMarksProps = { running: boolean; unseen: boolean; attention?: boolean }
@@ -11,7 +13,14 @@ export function TabMarks(props: TabMarksProps) {
   if (!anyMark(props)) return null
   return (
     <span className={styles.marks}>
-      {props.running && <span className={styles.running}>Running</span>}
+      {props.running && (
+        <span className={styles.running}>
+          <span className={styles.spin}>
+            <Icon name="spinner" size="small" />
+          </span>
+          Running
+        </span>
+      )}
       {!props.running && props.unseen && (
         <span role="img" aria-label="New result" className={styles.dot} />
       )}{' '}

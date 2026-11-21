@@ -1,42 +1,56 @@
+/* app-style */
+/* The project switcher (spec/app-style.md, "App shell and tabs"): a two-part box, the name
+   then the caret, and the shared menu below it. */
 .switcher {
   position: relative;
+  flex: none;
 }
 .button {
-  font-weight: 600;
+  gap: 0;
+  min-height: var(--control-height-small);
+  padding: 0;
+  border-color: var(--color-border);
+  background: transparent;
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-medium);
   white-space: nowrap;
+}
+.button:hover:not(:disabled),
+.button[aria-expanded='true'] {
+  border-color: var(--color-border);
+  background: var(--color-surface-soft);
+}
+.name {
+  max-width: var(--width-column-min);
+  padding: 0 var(--space-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.caret {
+  display: inline-flex;
+  align-self: stretch;
+  align-items: center;
+  padding: 0 var(--space-1);
+  border-left: var(--border-width) solid var(--color-border);
+  color: var(--color-text-secondary);
 }
 .menu {
   position: absolute;
   z-index: 1;
   top: 100%;
   left: 0;
-  display: flex;
-  flex-direction: column;
-  min-width: var(--width-column-min);
   margin: var(--space-1) 0 0;
-  padding: var(--space-1);
   list-style: none;
-  background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
-}
-.item,
-.after {
-  width: 100%;
-  text-align: left;
-  border-color: transparent;
 }
 .item[aria-current='true'] {
-  font-weight: 600;
+  font-weight: var(--weight-bold);
 }
 /* "Start" opens the group after the project list. */
-.after {
+.menu .after {
   margin-top: var(--space-1);
-  border-top-color: var(--color-border);
+  border-top-color: var(--color-line);
   border-radius: 0;
 }
-.item:hover,
-.after:hover,
 .item:focus-visible,
 .after:focus-visible {
   background: var(--color-surface);

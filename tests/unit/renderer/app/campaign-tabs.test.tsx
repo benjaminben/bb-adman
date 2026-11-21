@@ -1,6 +1,8 @@
 // spec/editor.md, "The shell" [FR-211, FR-218]: a fixed "Project" tab, then one tab per open
 // campaign named after it with a close button and its job marks, then the "+" button.
 import * as Tabs from '@radix-ui/react-tabs'
+import fs from 'node:fs'
+import path from 'node:path'
 import { useEffect } from 'react'
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -102,5 +104,33 @@ describe('campaign tabs [FR-211]', () => {
   it('has no accessibility violations', async () => {
     await draw([{ ...SUMMER, jobRunning: true }, FALL])
     expect(await axeViolations()).toEqual([])
+  })
+})
+
+// ST-3 (spec/app-style.md, "App shell and tabs"): the close icon and the spinner are hidden
+// from assistive tech; the marks' motion stops with reduce motion.
+describe('campaign tabs look [ST-3]', () => {
+  it('draws a hidden "x" in the close button and keeps its name', async () => {
+    await draw()
+    const close = screen.getByRole('button', { name: 'Close Fall Harvest' })
+    const svgs = close.querySelectorAll('svg')
+    expect(svgs).toHaveLength(1)
+    expect(svgs[0]).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('keeps the word "Running" beside a hidden spinner', async () => {
+    await draw([{ ...SUMMER, jobRunning: true }, FALL])
+    const tab = screen.getByRole('tab', { name: 'Summer Splash Running' })
+    expect(within(tab).getByText('Running')).toBeInTheDocument()
+    const svgs = tab.querySelectorAll('svg')
+    expect(svgs).toHaveLength(1)
+    expect(svgs[0]).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('holds a reduce-motion rule beside the marks animation', () => {
+    const file = path.resolve('src/renderer/ui/tab-marks/tab-marks.module.css')
+    const css = fs.readFileSync(file, 'utf8')
+    expect(css).toMatch(/animation:/)
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)/)
   })
 })
