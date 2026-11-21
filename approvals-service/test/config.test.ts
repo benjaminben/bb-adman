@@ -132,8 +132,38 @@ describe('the service code', () => {
     }
   })
 
+  it('imports no row type and nothing from src/db/ or src/crypto/, under app/ and src/ui/', () => {
+    const files = [...sourceFiles('app'), ...sourceFiles('src/ui')]
+    for (const file of files) {
+      const text = read(file)
+      expect(text, file).not.toMatch(/from '[./]*(src\/)?(db|crypto)\//)
+      expect(text, file).not.toMatch(/\b(LinkRow|VariantRow|SignoffRow)\b/)
+    }
+  })
+
+  it('has proxy.ts import only the policy, the slug rule and isDev: no session or limit work', () => {
+    const imports = [...read('proxy.ts').matchAll(/from '([^']+)'/g)].map((m) => m[1])
+    expect(imports).toEqual([
+      'next/server',
+      './src/contract',
+      './src/server/env',
+      './src/visitor/headers',
+    ])
+  })
+
+  it.each([
+    'dangerouslySetInnerHTML',
+    'generateStaticParams',
+    "'use cache'",
+    'unstable_cache',
+    'revalidate',
+    'next/cache',
+  ])('has no %s anywhere', (banned) => {
+    for (const file of shipped) expect(read(file), file).not.toContain(banned)
+  })
+
   it("has no 'use server', and 'use client' only in the two error boundaries", () => {
-    const boundaries = ['app/error.tsx', 'app/global-error.tsx']
+    const boundaries = ['app/l/[slug]/error.tsx', 'app/global-error.tsx']
     for (const file of shipped) {
       const text = read(file)
       expect(text, file).not.toMatch(/['"]use server['"]/)

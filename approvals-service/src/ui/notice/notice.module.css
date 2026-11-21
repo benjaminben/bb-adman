@@ -1,0 +1,15 @@
+.info,
+.error {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+}
+
+.info {
+  background: var(--color-info-bg);
+  color: var(--color-text);
+}
+
+.error {
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+}

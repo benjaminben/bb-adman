@@ -33,7 +33,7 @@ const TEXT_HEADERS = {
   'content-security-policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
   'x-content-type-options': 'nosniff',
   'x-frame-options': 'DENY',
-  'referrer-policy': 'no-referrer',
+  'referrer-policy': 'same-origin',
   'cross-origin-opener-policy': 'same-origin',
   'cache-control': 'no-store',
   'x-robots-tag': 'noindex, nofollow',
@@ -139,10 +139,9 @@ REFUSED.forEach(([name, headers], i) => {
 test('an rsc: 1 header reaches no data', async ({ request }) => {
   const slug = await seed(request, 'rsc-header-abc234')
   const page = await request.get(`/l/${slug}`, { headers: { rsc: '1' } })
-  // Until AP-16 builds the gallery page, the slug's page is the plain 404.
-  expect(page.status()).toBe(404)
+  // The page's own payload for a visitor with no session: the password page, no link data.
+  expect(page.status()).toBe(200)
   const text = await page.text()
-  expect(text).toBe('Not found.')
   expect(text).not.toContain(NAME)
   const api = await request.get(`/api/v1/links/${PROJECT}/rsc-header-abc234`, {
     headers: { rsc: '1' },
