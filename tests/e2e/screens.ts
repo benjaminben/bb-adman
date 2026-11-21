@@ -8,6 +8,8 @@ import path from 'node:path'
 
 export const E2E_BRIEF = path.resolve('tests/fixtures/briefs/e2e-brief.yaml')
 export const E2E_CAMPAIGN = 'Harness Check'
+// The made-up photo the brief names for its one subject (SP-5).
+export const E2E_PHOTO = path.resolve('tests/fixtures/briefs/photos/citrus-can.png')
 
 // The next open dialogs answer with these paths, as if the user had picked them.
 export async function answerOpenDialog(app: ElectronApplication, paths: string[]): Promise<void> {
@@ -38,9 +40,36 @@ export async function loadBriefAndCreate(app: ElectronApplication, page: Page): 
   await page.getByRole('button', { name: 'Load a brief' }).click()
   const brief = page.getByRole('region', { name: 'Brief' })
   await expect(brief.getByRole('list', { name: 'Subjects' })).toBeVisible()
+  // SP-5: the brief names its photo; Create waits until it is in the row.
+  await expectPhoto(brief, 1, E2E_PHOTO)
   await brief.getByRole('button', { name: 'Create campaign' }).click()
   await page.getByRole('button', { name: 'Back to project' }).click()
   await expect(page.getByRole('button', { name: `Open ${E2E_CAMPAIGN}` })).toBeVisible()
+}
+
+// The picture of `file` in the photo list of subject `row` (counted from 1) on the brief form.
+export const photoIn = (form: Locator, row: number, file: string): Locator =>
+  form
+    .getByRole('list', { name: `Photos of subject ${row}` })
+    .getByRole('img', { name: path.basename(file), exact: true })
+
+// Waits until that picture is drawn (its file loaded), so a screenshot shows it.
+export async function expectPhoto(form: Locator, row: number, file: string): Promise<void> {
+  const img = photoIn(form, row, file)
+  await expect(img).toBeVisible()
+  await expect.poll(() => img.evaluate((i: HTMLImageElement) => i.naturalWidth)).toBeGreaterThan(0)
+}
+
+// SP-5: "Add photos" of subject `row` on the brief form, answered with `file`.
+export async function addPhoto(
+  app: ElectronApplication,
+  form: Locator,
+  row: number,
+  file: string,
+): Promise<void> {
+  await answerOpenDialog(app, [file])
+  await form.getByRole('button', { name: `Add photos to subject ${row}` }).click()
+  await expectPhoto(form, row, file)
 }
 
 export async function openCampaign(page: Page): Promise<void> {
@@ -53,6 +82,17 @@ export const picturePanel = (page: Page): Locator =>
 
 export async function chooseProvider(page: Page, label: string): Promise<void> {
   await picturePanel(page).getByLabel('Provider').selectOption({ label })
+}
+
+// SP-5: the subject's photos are pre-ticked as references when the campaign page opens. A run
+// whose check is not about references unticks them first, so it sends what it sent before.
+export async function untickReferences(page: Page): Promise<void> {
+  const ticked = picturePanel(page)
+    .getByRole('region', { name: 'Reference pictures' })
+    .getByRole('checkbox', { checked: true })
+  await expect(ticked.first()).toBeVisible()
+  while ((await ticked.count()) > 0) await ticked.first().uncheck()
+  await expect(ticked).toHaveCount(0)
 }
 
 // A fixed made-up prompt, typed in place of the one the brief fills in.
@@ -88,6 +128,26 @@ export const E2E_VIDEO_PROMPT = 'A slim citrus can turning slowly on a table, ha
 
 export const videoPanel = (page: Page): Locator =>
   page.getByRole('region', { name: 'Make a video' })
+
+// SP-5: the start for a video from `file`. The card lists the subject's photo too and chooses it
+// first (SP-7), so the added picture is chosen by its name (video-screens.ts chooses the first).
+export async function startFromAddedPicture(
+  app: ElectronApplication,
+  page: Page,
+  start: string,
+  file: string,
+): Promise<void> {
+  const panel = videoPanel(page)
+  await panel.getByLabel('Provider').selectOption({ label: 'ComfyUI' })
+  await panel.getByLabel('Start from').selectOption({ label: start })
+  const pictures = panel.getByRole('region', { name: 'Picture to start from' })
+  const radio = (name: string) => pictures.getByRole('radio', { name, exact: true })
+  await expect(radio(path.basename(E2E_PHOTO))).toBeChecked()
+  await answerOpenDialog(app, [file])
+  await pictures.getByRole('button', { name: 'Add pictures' }).click()
+  await radio(path.basename(file)).check()
+  await expect(radio(path.basename(file))).toBeChecked()
+}
 
 export async function startVideo(page: Page, seconds: number): Promise<void> {
   const panel = videoPanel(page)
