@@ -97,7 +97,7 @@ describe('TextStyle.letterSpacing [SPEC 3.3, FR-249]', () => {
 })
 
 describe('job kinds [SPEC 3.6, D-036]', () => {
-  it('places the nine kinds and runs three at once per provider', () => {
+  it('places the nine kinds and runs four at once per provider', () => {
     expect(JOB_KIND_CLASSES).toEqual({
       image_generation: 'background',
       video_generation: 'background',
@@ -109,6 +109,6 @@ describe('job kinds [SPEC 3.6, D-036]', () => {
       translation: 'attached',
       brief_extraction: 'attached',
     })
-    expect(JOBS_AT_ONCE_PER_PROVIDER).toBe(3)
+    expect(JOBS_AT_ONCE_PER_PROVIDER).toBe(4)
   })
 })

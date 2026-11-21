@@ -19,6 +19,9 @@ export type JobRunnerOptions = {
   // waits (SPEC 6.11.2). For tests; left out, the runner uses cancel-wait.ts.
   cancelWaitMs?: (providerId: string) => number
   closeWaitMs?: number
+  // How many jobs run at once for one provider (SPEC 14 1.39 Z6). For tests; left out, the
+  // runner uses JOBS_AT_ONCE_PER_PROVIDER.
+  jobsAtOnce?: number
 }
 
 export type LiveJob = {

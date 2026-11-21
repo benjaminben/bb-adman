@@ -21,4 +21,4 @@ export const JOB_STATUSES = ['queued', 'running', 'succeeded', 'failed', 'cancel
 export type JobStatus = (typeof JOB_STATUSES)[number]
 
 // How many jobs run at once for one provider (SPEC 3.6).
-export const JOBS_AT_ONCE_PER_PROVIDER = 3
+export const JOBS_AT_ONCE_PER_PROVIDER = 4

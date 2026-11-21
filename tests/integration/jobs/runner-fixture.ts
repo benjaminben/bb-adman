@@ -56,7 +56,9 @@ const enqueueInput = z.object({
   failAfter: z.boolean().default(false),
 })
 
-export function makeRunnerFixture(opts: { cancelWaitMs?: number; closeWaitMs?: number } = {}) {
+export function makeRunnerFixture(
+  opts: { cancelWaitMs?: number; closeWaitMs?: number; jobsAtOnce?: number } = {},
+) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-jobs-'))
   const logDir = path.join(dir, 'logs')
   const projects = createProjectRegistry()
@@ -93,6 +95,7 @@ export function makeRunnerFixture(opts: { cancelWaitMs?: number; closeWaitMs?: n
     ],
     cancelWaitMs: () => opts.cancelWaitMs ?? 2_000,
     closeWaitMs: opts.closeWaitMs ?? 50,
+    jobsAtOnce: opts.jobsAtOnce ?? 3,
   })
   deps.jobs = jobs
   const enqueue: CommandHandler = defineCommand({

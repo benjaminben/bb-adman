@@ -31,6 +31,8 @@ export function createJobRunner(opts: JobRunnerOptions): JobService {
     onEnd: new Set(),
   }
 
+  const limit = opts.jobsAtOnce ?? JOBS_AT_ONCE_PER_PROVIDER
+
   function runningFor(providerId: string): number {
     let n = 0
     for (const live of state.active.values()) if (live.providerId === providerId) n++
@@ -55,7 +57,7 @@ export function createJobRunner(opts: JobRunnerOptions): JobService {
     }
     queued.sort((a, b) => oldestFirst(a.job, b.job))
     for (const { handle, job, row } of queued) {
-      if (runningFor(job.provider ?? '') >= JOBS_AT_ONCE_PER_PROVIDER) continue
+      if (runningFor(job.provider ?? '') >= limit) continue
       startJob(state, handle.projectId, row)
     }
   }
