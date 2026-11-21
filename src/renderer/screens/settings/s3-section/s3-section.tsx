@@ -3,6 +3,7 @@
 // Dropbox joins this section in Phase 9.
 import { useApp, EMPTY } from '@/renderer/app/app-context'
 import { KeyRow } from '@/renderer/screens/settings/key-row'
+import { S3Check } from '@/renderer/screens/settings/s3-check'
 import layout from '@/renderer/ui/layout.module.css'
 import { S3Form } from './s3-form'
 import styles from './s3-section.module.css'
@@ -39,6 +40,7 @@ export function S3Section() {
       {provider?.secrets.map((name) => (
         <KeyRow key={name} provider={provider} name={name} />
       ))}
+      <S3Check />
     </section>
   )
 }

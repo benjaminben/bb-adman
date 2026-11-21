@@ -30,6 +30,8 @@ test('Settings, Cloud storage with a bucket and a key', async () => {
   await row.getByLabel('New Amazon S3 Access key ID').fill('MADEUPKEYIDQ7RT')
   await row.getByRole('button', { name: 'Save' }).click()
   await expect(row.getByText('Saved, ends in Q7RT')).toBeVisible()
+  // AP-10b: the button is shown, enabled, and not pressed (pressing would reach for S3).
+  await expect(box.getByRole('button', { name: 'Test connection' })).toBeEnabled()
   await box.scrollIntoViewIfNeeded()
   await shot(page, '90-settings-cloud-storage')
 })
