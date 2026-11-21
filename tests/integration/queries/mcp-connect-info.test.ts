@@ -18,6 +18,8 @@ describe('mcp.getConnectInfo [SPEC 4.3, 6.8; FR-191, D-014]', () => {
     const info = data<ConnectInfo>(await f.core.query('mcp.getConnectInfo', {}, asUser))
     expect(info).toEqual({
       enabled: false,
+      running: false,
+      problem: null,
       address: `http://127.0.0.1:${f.port}/mcp`,
       port: f.port,
       token: null,
@@ -74,5 +76,28 @@ describe('mcp.getConnectInfo is refused for the agent actor, and it is the only 
     }
     const own = JSON.stringify(await f.core.query('mcp.getConnectInfo', {}, asUser))
     expect(own.includes(token)).toBe(true)
+  })
+
+  // REVIEW MCP-A D-4: every query core registers, so a new one cannot be missed.
+  it('no registered query but mcp.getConnectInfo for the user gives the token', async () => {
+    f = await makeMcpFixture()
+    data(await f.user('mcp.setEnabled', { enabled: true }))
+    const token = await f.token()
+    const created = data<{ projectId: string }>(
+      await f.user('project.create', { name: 'Every', location: f.projectsDir }),
+    )
+    const names = f.core.queryNames
+    expect(names).toContain('mcp.getConnectInfo')
+    expect(names.length).toBeGreaterThan(5)
+    const inputs = [{}, { projectId: created.projectId }]
+    for (const name of names) {
+      for (const input of inputs) {
+        for (const opts of [asUser, asAgent]) {
+          const reply = JSON.stringify(await f.core.query(name, input, opts))
+          const mayHold = name === 'mcp.getConnectInfo' && opts.actor === 'user'
+          if (!mayHold) expect(reply.includes(token), `${name} as ${opts.actor}`).toBe(false)
+        }
+      }
+    }
   })
 })

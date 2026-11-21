@@ -50,3 +50,43 @@ describe('mcp.regenerateToken [SPEC 4.2, 5.1 step 4, 1.56 review point 6]', () =
     expect((await f.token()) === before).toBe(true)
   })
 })
+
+describe('mcp operations run one at a time [SPEC 14 1.56 review point 6; REVIEW MCP-A R-1]', () => {
+  it('a new token sent while a start is in progress: the old token gets 401, the new one works', async () => {
+    f = await makeMcpFixture()
+    data(await f.user('mcp.setEnabled', { enabled: true }))
+    data(await f.user('mcp.setEnabled', { enabled: false }))
+    const before = await f.token()
+
+    const on = f.user('mcp.setEnabled', { enabled: true })
+    const regen = f.user('mcp.regenerateToken', {})
+    data(await on)
+    data(await regen)
+
+    const after = await f.token()
+    expect(after === before).toBe(false)
+    const port = f.port
+    const old = await send({ port, headers: mcpHeaders(port, before), body: INIT })
+    expect(old.status).toBe(401)
+    const fresh = await send({ port, headers: mcpHeaders(port, after), body: INIT })
+    expect(fresh.status).toBe(200)
+  })
+})
+
+describe('mcp.regenerateToken with the setting on and no token [SPEC 14 1.58 J-11]', () => {
+  it('makes a token and starts the server', async () => {
+    f = await makeMcpFixture()
+    data(await f.user('mcp.setEnabled', { enabled: true }))
+    await f.core.mcp.stop()
+    f.core.secrets.delete('mcp.token')
+    f.restart()
+    await f.core.mcp.startIfEnabled()
+    expect(f.core.mcp.running()).toBe(false)
+
+    data(await f.user('mcp.regenerateToken', {}))
+    expect(f.core.mcp.running()).toBe(true)
+    const token = await f.token()
+    const reply = await send({ port: f.port, headers: mcpHeaders(f.port, token), body: INIT })
+    expect(reply.status).toBe(200)
+  })
+})

@@ -134,3 +134,45 @@ describe('mcp.setEnabled [SPEC 4.2, 5.1, 6.8]', () => {
     expect(reply.status).toBe(200)
   })
 })
+
+describe('mcp.setEnabled runs one at a time [REVIEW MCP-A R-1]', () => {
+  it('a fast off-then-on listens again, without "port in use"', async () => {
+    f = await makeMcpFixture()
+    data(await f.user('mcp.setEnabled', { enabled: true }))
+    const token = await f.token()
+    const off = f.user('mcp.setEnabled', { enabled: false })
+    const on = f.user('mcp.setEnabled', { enabled: true })
+    data(await off)
+    data(await on)
+    expect(f.core.mcp.running()).toBe(true)
+    expect(f.core.settings.get().mcp.enabled).toBe(true)
+    const reply = await send({ port: f.port, headers: mcpHeaders(f.port, token), body: INIT })
+    expect(reply.status).toBe(200)
+  })
+
+  it('two overlapping "on" both succeed and leave one listener', async () => {
+    f = await makeMcpFixture()
+    const first = f.user('mcp.setEnabled', { enabled: true })
+    const second = f.user('mcp.setEnabled', { enabled: true })
+    data(await first)
+    data(await second)
+    expect(f.core.mcp.running()).toBe(true)
+    const token = await f.token()
+    const reply = await send({ port: f.port, headers: mcpHeaders(f.port, token), body: INIT })
+    expect(reply.status).toBe(200)
+  })
+})
+
+describe('start-up with the port taken keeps the setting on [SPEC 14 1.58 J-8]', () => {
+  it('leaves settings.mcp.enabled true and the server off', async () => {
+    f = await makeMcpFixture()
+    data(await f.user('mcp.setEnabled', { enabled: true }))
+    await f.core.mcp.stop()
+    blocker = net.createServer()
+    await new Promise<void>((r) => blocker?.listen(f?.port, '127.0.0.1', r))
+    f.restart()
+    await f.core.mcp.startIfEnabled()
+    expect(f.core.mcp.running()).toBe(false)
+    expect(f.core.settings.get().mcp.enabled).toBe(true)
+  })
+})

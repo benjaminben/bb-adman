@@ -9,7 +9,7 @@ import { campaignQueries } from './campaign'
 import { comfyQueries } from './comfy'
 import { historyQueries } from './history'
 import { jobQueries } from './job'
-import { mcpQueries } from './mcp'
+import { mcpQueries, type McpState } from './mcp'
 import { projectQueries } from './project'
 import { templateQueries } from './template'
 import type { QueryFn, QueryOptions } from './types'
@@ -17,21 +17,24 @@ import { AppError, fail, internalError, ok, type Result } from '../../shared/sch
 
 export type { QueryFn, QueryOptions }
 
-export function createQueries(deps: CoreDeps) {
-  return createQueryRunner(
-    {
-      ...appQueries(deps),
-      ...assetQueries(deps),
-      ...campaignQueries(deps),
-      ...comfyQueries(deps),
-      ...historyQueries(deps),
-      ...jobQueries(deps),
-      ...mcpQueries(deps),
-      ...projectQueries(deps),
-      ...templateQueries(deps),
-    },
-    deps.log,
-  )
+// Every registered query by name. mcp.getConnectInfo needs the MCP service, so it is
+// registered only when core passes one (a unit test builds the table without it).
+export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, QueryFn> {
+  return {
+    ...appQueries(deps),
+    ...assetQueries(deps),
+    ...campaignQueries(deps),
+    ...comfyQueries(deps),
+    ...historyQueries(deps),
+    ...jobQueries(deps),
+    ...(mcp ? mcpQueries(deps, mcp) : {}),
+    ...projectQueries(deps),
+    ...templateQueries(deps),
+  }
+}
+
+export function createQueries(deps: CoreDeps, mcp?: McpState) {
+  return createQueryRunner(queryTable(deps, mcp), deps.log)
 }
 
 // The runner (SPEC 4.3): finds the query, never throws, returns INTERNAL for anything

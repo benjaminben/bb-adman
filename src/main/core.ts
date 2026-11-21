@@ -24,7 +24,7 @@ import { secretCommands } from './commands/secret'
 import { settingsCommands } from './commands/settings'
 import { storageCommands } from './commands/storage'
 import { subjectCommands } from './commands/subject'
-import { createQueries } from './queries/queries'
+import { createQueryRunner, queryTable } from './queries/queries'
 import { createAssetService } from './assets/service'
 import { createJobRunner } from './jobs/runner'
 import { jobKindHandlers } from './jobs/kinds'
@@ -132,7 +132,7 @@ export function createCore(opts: CoreOptions) {
     ...projectCommands(deps),
     ...ruleSetCommands(deps),
     ...secretCommands(deps),
-    ...settingsCommands(deps),
+    ...settingsCommands(deps, mcp),
     ...storageCommands(deps),
     ...subjectCommands(deps),
   ]
@@ -145,7 +145,8 @@ export function createCore(opts: CoreOptions) {
     emit: opts.emit,
     askPermission: opts.askPermission,
   })
-  const query = createQueries(deps)
+  const queries = queryTable(deps, mcp)
+  const query = createQueryRunner(queries, log)
 
   return {
     bus,
@@ -153,6 +154,7 @@ export function createCore(opts: CoreOptions) {
     mcp,
     deps,
     commandNames: handlers.map((h) => h.name),
+    queryNames: Object.keys(queries),
     isInternal: (name: string) => handlers.some((h) => h.name === name && h.internal),
     projects,
     undo,
