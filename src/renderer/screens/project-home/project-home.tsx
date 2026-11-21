@@ -3,27 +3,16 @@
 import { useState } from 'react'
 import { useApp } from '../../app/app-context'
 import type { OpenProjectSummary } from '../../../shared/schemas/project'
+import { CampaignView } from '../campaign/campaign-view'
 import { BriefLoad } from './brief-load'
 import { CampaignList } from './campaign-list'
 import { useProject } from './use-project'
 import styles from '../screens.module.css'
 
-// The campaign page mounts here with these props (SPEC 14 1.41 TP-2).
+// The campaign page mounts here (SPEC 14 1.41 TP-2, 1.47): it has its own region and Back.
 function CampaignPlace(props: { projectId: string; campaignId: string; onBack: () => void }) {
   return (
-    <section
-      className={styles.card}
-      aria-label="Campaign"
-      data-project-id={props.projectId}
-      data-campaign-id={props.campaignId}
-    >
-      <div className={styles.row}>
-        <button type="button" onClick={props.onBack}>
-          Back to project
-        </button>
-      </div>
-      <p className={styles.muted}>Campaign page: not built yet</p>
-    </section>
+    <CampaignView projectId={props.projectId} campaignId={props.campaignId} onBack={props.onBack} />
   )
 }
 

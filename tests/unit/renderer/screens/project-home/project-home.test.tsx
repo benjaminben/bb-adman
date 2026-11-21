@@ -84,11 +84,13 @@ describe('project page [SPEC 14 1.41 TP-1]', () => {
   it('shows the campaign place on Open and returns on Back to project', async () => {
     await renderApp(<ProjectHome project={PROJECT} />, projectApi(twoCampaigns))
     await userEvent.click(await screen.findByRole('button', { name: 'Open Summer' }))
-    expect(screen.getByText('Campaign page: not built yet')).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Campaign' })).toHaveTextContent(
+      'Loading the campaign…',
+    )
     expect(screen.queryByRole('list', { name: 'Campaigns' })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Back to project' }))
     expect(await screen.findByRole('list', { name: 'Campaigns' })).toBeInTheDocument()
-    expect(screen.queryByText('Campaign page: not built yet')).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Campaign' })).toBeNull()
   })
 
   it('opens a campaign by keyboard', async () => {
@@ -96,15 +98,20 @@ describe('project page [SPEC 14 1.41 TP-1]', () => {
     const open = await screen.findByRole('button', { name: 'Open Summer' })
     open.focus()
     await userEvent.keyboard('{Enter}')
-    expect(screen.getByText('Campaign page: not built yet')).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Campaign' })).toHaveTextContent(
+      'Loading the campaign…',
+    )
   })
 
   it('gives the campaign place the project ID and the opened campaign ID [TP-1 review F6]', async () => {
-    await renderApp(<ProjectHome project={PROJECT} />, projectApi(twoCampaigns))
+    const fake = projectApi(twoCampaigns)
+    await renderApp(<ProjectHome project={PROJECT} />, fake)
     await userEvent.click(await screen.findByRole('button', { name: 'Open Fall' }))
-    const place = screen.getByRole('region', { name: 'Campaign' })
-    expect(place).toHaveAttribute('data-project-id', 'P1')
-    expect(place).toHaveAttribute('data-campaign-id', 'fall-a2b3c4')
+    await waitFor(() =>
+      expect(fake.queries.filter((q) => q.name === 'campaign.get')).toEqual([
+        { name: 'campaign.get', input: { projectId: 'P1', campaignId: 'fall-a2b3c4' } },
+      ]),
+    )
   })
 
   it('draws a campaign name as text, not as HTML', async () => {
