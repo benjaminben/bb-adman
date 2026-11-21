@@ -44,6 +44,7 @@
 }
 .line {
   color: var(--color-text-muted);
+  font-size: var(--font-size-small);
 }
 .marks {
   display: flex;
@@ -55,4 +56,5 @@
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
+  font-size: var(--font-size-small);
 }
