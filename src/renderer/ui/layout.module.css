@@ -1,3 +1,6 @@
+/* app-style */
+/* The shared pieces of spec/app-style.md "Shared pieces". Button kinds go on a button; badge
+   and notice kinds go beside .badge or .notice. */
 .screen {
   max-width: var(--width-page);
 }
@@ -7,26 +10,47 @@
   gap: var(--space-2);
   padding: var(--space-4);
   margin-bottom: var(--space-4);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-1);
 }
 .card h2 {
   margin: 0 0 var(--space-2);
   font-size: var(--font-size-heading);
+}
+button.card:hover {
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-2);
 }
 .field {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
+.field > label,
+.label {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  letter-spacing: normal;
+  color: var(--color-text-secondary);
+}
+.reading {
+  font-family: var(--font-reading);
+  font-size: var(--font-size-reading);
+  line-height: var(--leading-body);
+}
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
+}
 .row {
   display: flex;
   gap: var(--space-2);
   align-items: center;
-}
-.label {
-  margin: 0;
-  font-weight: 600;
 }
 .path {
   margin: 0;
@@ -34,11 +58,6 @@
 }
 .muted {
   color: var(--color-text-muted);
-}
-.primary {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-accent-text);
 }
 .list {
   list-style: none;
@@ -53,4 +72,228 @@
   justify-content: space-between;
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
+}
+.primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-text);
+}
+.primary:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+.quiet,
+.menuItem {
+  border-color: transparent;
+  background: transparent;
+}
+.quiet:hover:not(:disabled),
+.menuItem:hover:not(:disabled) {
+  background: var(--color-surface);
+}
+.danger {
+  color: var(--color-danger-text);
+}
+.small {
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-small);
+}
+.large {
+  min-height: var(--control-height-large);
+  padding: 0 var(--space-4);
+  font-size: var(--font-size-body);
+}
+.iconOnly {
+  width: var(--control-height);
+  padding: 0;
+}
+.iconOnly.small {
+  width: var(--control-height-small);
+}
+.link {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent-ink);
+  text-decoration: underline;
+  text-underline-offset: calc(var(--border-width) * 2);
+}
+/* Segmented group: a row of aria-pressed buttons. */
+.seg {
+  display: inline-flex;
+  gap: calc(var(--border-width) * 2);
+  padding: calc(var(--border-width) * 2);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.seg > button {
+  min-height: var(--control-height-small);
+  border-color: transparent;
+  border-radius: var(--radius-inner);
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+.seg > button[aria-pressed='true'] {
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+}
+/* Switch: a checkbox with role="switch", drawn as a track and knob. */
+.switch {
+  position: relative;
+  flex: none;
+  width: var(--switch-width);
+  height: var(--switch-height);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-control-border);
+  appearance: none;
+  cursor: pointer;
+  transition: background-color var(--motion-fast);
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: calc((var(--switch-height) - var(--switch-knob)) / 2);
+  left: calc((var(--switch-height) - var(--switch-knob)) / 2);
+  width: var(--switch-knob);
+  height: var(--switch-knob);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-1);
+  transition: transform var(--motion-fast);
+}
+.switch:checked {
+  background: var(--color-accent);
+}
+.switch:checked::after {
+  transform: translateX(calc(var(--switch-width) - var(--switch-height)));
+}
+/* Badge and notice: icon plus words, never colour alone. */
+.badge,
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+.badge {
+  height: var(--badge-height);
+  padding: 0 var(--space-2) 0 var(--space-1);
+  border-radius: var(--radius);
+}
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  font-size: var(--font-size-control);
+}
+.notice > button {
+  flex: none;
+  margin-left: auto;
+}
+.warn {
+  background: var(--color-warn-bg);
+  color: var(--color-warn-text);
+}
+.badge.danger,
+.notice.danger {
+  background: var(--color-danger-bg);
+}
+.info {
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
+}
+.ok {
+  background: var(--color-ok-bg);
+  color: var(--color-ok-text);
+}
+.neutral {
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+.accent {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-ink);
+}
+.chip {
+  height: var(--chip-height);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+.menu {
+  display: flex;
+  flex-direction: column;
+  width: var(--width-menu);
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-3);
+}
+.menuItem {
+  justify-content: flex-start;
+  width: 100%;
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-2);
+  text-align: left;
+}
+.menuLabel {
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-control);
+}
+.table th,
+.table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-line);
+  text-align: left;
+  vertical-align: top;
+}
+.table th {
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+}
+/* Progress bar: a track with one filled child. */
+.progress {
+  height: var(--progress-height);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+.progress > * {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent);
+}
+.empty {
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  border: var(--border-width) dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+button.empty:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-ink);
 }
