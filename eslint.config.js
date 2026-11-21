@@ -52,6 +52,7 @@ export default tseslint.config(
       'src/main/db/migrations/',
       'design/',
       'playwright-report/',
+      '.claude/',
     ],
   },
   js.configs.recommended,

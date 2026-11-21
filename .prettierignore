@@ -9,3 +9,4 @@ src/main/db/migrations/
 *.md
 design/
 comfy-workflows/
+.claude/
