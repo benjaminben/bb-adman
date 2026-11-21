@@ -28,6 +28,10 @@ describe('content security policy [SPEC 8.2]', () => {
         "style-src 'self' 'unsafe-inline'",
         "script-src 'self'",
         "connect-src 'none'",
+        "frame-src 'none'",
+        "object-src 'none'",
+        "base-uri 'none'",
+        "form-action 'none'",
       ].join('; '),
     )
   })
@@ -42,6 +46,10 @@ describe('content security policy [SPEC 8.2]', () => {
         "style-src 'self' 'unsafe-inline'",
         "script-src 'self' 'unsafe-inline'",
         'connect-src http://localhost:* ws://localhost:*',
+        "frame-src 'none'",
+        "object-src 'none'",
+        "base-uri 'none'",
+        "form-action 'none'",
       ].join('; '),
     )
   })
