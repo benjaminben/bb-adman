@@ -69,7 +69,7 @@ export function pictureHeaders(type: 'image/png' | 'image/jpeg'): Headers {
   return new Headers({
     'Content-Type': type,
     'X-Content-Type-Options': 'nosniff',
-    'Cache-Control': 'private, max-age=300',
+    'Cache-Control': 'no-store',
     'Content-Security-Policy': "default-src 'none'; sandbox",
     'Cross-Origin-Resource-Policy': 'same-origin',
     'Referrer-Policy': 'no-referrer',

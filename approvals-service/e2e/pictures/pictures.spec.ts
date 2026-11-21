@@ -72,7 +72,7 @@ test('pictures pass only for a session, typed by the sniff; a sign-off goes back
     const reply = await request.get(path, { headers: { Cookie: cookie } })
     expect(reply.status()).toBe(200)
     expect(reply.headers()['content-type']).toBe(type)
-    expect(reply.headers()['cache-control']).toBe('private, max-age=300')
+    expect(reply.headers()['cache-control']).toBe('no-store')
     expect(reply.headers()['content-security-policy']).toBe("default-src 'none'; sandbox")
     expect(Buffer.from(await reply.body())).toEqual(readFileSync(new URL(file, import.meta.url)))
     const without = await stranger.get(path)

@@ -57,7 +57,7 @@ export const OPTIONS = serve
 | `OPTIONS`, `HEAD` | Next.js answers them itself when a route does not export them | The catch-all exports every method |
 | Compression | Next.js compresses replies (`Content-Encoding: gzip`) and adds `Vary` | Compression stays on: no reply body holds a secret beside text an attacker chooses, so compression gives nothing away |
 | Headers added | Vercel adds `server`, `date`, `x-vercel-id`, `x-vercel-cache` and, on its domains, `strict-transport-security: max-age=63072000`; Next.js adds `x-powered-by` unless switched off, `vary` and `content-encoding` | `poweredByHeader: false`. Vercel's headers carry no link data. `e2e/api.spec.ts` lists the full header set of `next start` replies; any header outside the expected set and the named allow-list (`date`, `connection`, `keep-alive`, `transfer-encoding`, `content-length`, `vary`, `content-encoding`) fails it. AP-13's hand check lists the deployed headers |
-| Caching | Vercel's CDN caches a function reply only when told to (`s-maxage` or similar) | Every reply sets `Cache-Control: no-store`, except the picture (`private, max-age=300`) |
+| Caching | Vercel's CDN caches a function reply only when told to (`s-maxage` or similar) | Every reply sets `Cache-Control: no-store`, the picture too |
 
 ## Folder and tooling
 

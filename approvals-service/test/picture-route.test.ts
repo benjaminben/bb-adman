@@ -136,7 +136,7 @@ describe('GET /l/{slug}/p/{variantKey}/{version}: the route [approvals-service-v
     expect(Object.fromEntries(reply.headers)).toEqual({
       'content-type': 'image/png',
       'x-content-type-options': 'nosniff',
-      'cache-control': 'private, max-age=300',
+      'cache-control': 'no-store',
       'content-security-policy': "default-src 'none'; sandbox",
       'cross-origin-resource-policy': 'same-origin',
       'referrer-policy': 'no-referrer',

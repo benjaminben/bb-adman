@@ -250,7 +250,7 @@ describe('the picture set and its 404 [approvals-service-visitor.md "Pictures"]'
     expect(whole(pictureHeaders(type))).toEqual({
       'content-type': type,
       'x-content-type-options': 'nosniff',
-      'cache-control': 'private, max-age=300',
+      'cache-control': 'no-store',
       'content-security-policy': "default-src 'none'; sandbox",
       'cross-origin-resource-policy': 'same-origin',
       'referrer-policy': 'no-referrer',
