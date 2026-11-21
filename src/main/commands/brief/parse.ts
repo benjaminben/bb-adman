@@ -83,6 +83,10 @@ export function briefParse() {
     projectId: (input) => input.projectId,
     async prepare(_ctx, input): Promise<BriefParsed> {
       if (input.filePath === undefined) return answer(parseText(input.text ?? ''))
+      // F-2: a relative path would be read against the app's own folder.
+      if (!path.isAbsolute(input.filePath)) {
+        throw new AppError('INVALID_INPUT', 'The file path must be absolute.')
+      }
       const syntax = SYNTAX_BY_ENDING[path.extname(input.filePath).toLowerCase()]
       if (!syntax) throw typeNotSupported()
       return answer(parseBriefFile(await readBrief(input.filePath), syntax))
