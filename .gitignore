@@ -21,3 +21,8 @@ playwright-report/
 # D-009, D-019: working documents stay out of the repository
 ANALYST-PROMPT.md
 Campaign Creative Generator Plan So Far.md
+
+# approvals service: local Wrangler state, local secrets and generated types
+approvals-service/.wrangler/
+approvals-service/.dev.vars*
+approvals-service/worker-configuration.d.ts

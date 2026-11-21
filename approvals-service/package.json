@@ -1,0 +1,24 @@
+{
+  "name": "adman-approvals-service",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "types": "WRANGLER_SEND_METRICS=false wrangler types",
+    "typecheck": "npm run types && tsc --noEmit -p tsconfig.json && tsc --noEmit -p test/tsconfig.json",
+    "test": "WRANGLER_SEND_METRICS=false vitest run"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.9.0",
+    "typescript": "6.0.3",
+    "vitest": "5.1.1",
+    "wrangler": "4.166.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": false,
+    "fsevents@2.3.3": false,
+    "workerd@1.20261119.1": false
+  }
+}
