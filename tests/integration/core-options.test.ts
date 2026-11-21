@@ -30,9 +30,17 @@ function build(extra: Partial<CoreOptions> = {}): Core {
 }
 
 describe('createCore options openExternal and devTools [SPEC 12, 14 step 0 R1]', () => {
-  it('puts the asset and job stand-ins on CoreDeps', async () => {
+  it('puts the asset service and the job service on CoreDeps', async () => {
     const deps = build().deps
-    expect(await deps.assets.missingAssetIds({} as never)).toEqual([])
+    for (const name of [
+      'missingAssetIds',
+      'resolve',
+      'assetsDir',
+      'writeManaged',
+      'read',
+    ] as const) {
+      expect(typeof deps.assets[name]).toBe('function')
+    }
     expect(deps.jobs.activeCount('p1')).toBe(0)
   })
 

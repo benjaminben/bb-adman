@@ -32,3 +32,12 @@ describe('the app core runs the asset domain [SPEC 14, Slice A part 2, A2-1]', (
     expect(list.map((r) => r.id)).toEqual(assetIds)
   })
 })
+
+describe('core.ts hooks up the AssetService [SPEC 14, 1.27 R1]', () => {
+  it('hands CoreDeps the real AssetService, not the stand-in', async () => {
+    f = makeFixture()
+    const projectId = await openProject()
+    const project = f.core.projects.requireOpen(projectId)
+    expect(f.core.deps.assets.assetsDir(project)).toBe(path.join(f.projectsDir, 'P Assets'))
+  })
+})

@@ -23,7 +23,7 @@ import { settingsCommands } from './commands/settings'
 import { storageCommands } from './commands/storage'
 import { subjectCommands } from './commands/subject'
 import { createQueries } from './queries/queries'
-import { createAssetServiceStandIn } from './assets/stand-in'
+import { createAssetService } from './assets/service'
 import { createJobServiceStandIn } from './jobs/stand-in'
 import type { CoreDeps } from './core-deps'
 
@@ -79,7 +79,7 @@ export function createCore(opts: CoreOptions) {
     undo,
     providers,
     log,
-    assets: createAssetServiceStandIn(),
+    assets: createAssetService(),
     jobs: createJobServiceStandIn(),
     openExternal: opts.openExternal ?? noBrowser,
     devTools: opts.devTools ?? false,
