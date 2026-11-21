@@ -11,7 +11,7 @@ import { readMeta, writeMeta } from '../db/meta'
 import { readWireRows } from '../db/rows'
 import { assetsDirOf, resolveRow } from './service'
 import { hashFile, sniffFile } from './inspect'
-import { isManagedName, managedPath, pathInside } from './path-resolver'
+import { isManagedName, managedPath, pathAtOrInside } from './path-resolver'
 import { missingFile } from './errors'
 import { extensionOf, fileTypeFor, type AssetKind } from '../../shared/config/file-types'
 import type { AssetRow } from '../../shared/schemas/rows/asset'
@@ -44,7 +44,8 @@ async function checkTarget(project: ProjectHandle, targetDir: string, name: stri
     realOrSelf(assetsDirOf(project)),
     realOrSelf(targetDir),
   ])
-  if (pathInside(assetsDir, realTarget) !== null) {
+  // SPEC 14 [1.34] V3: the assets folder itself is refused too.
+  if (pathAtOrInside(assetsDir, realTarget)) {
     throw new AppError('RULE_VIOLATION', "Choose a folder outside the project's assets folder.")
   }
   const named = await fs.promises.lstat(path.join(targetDir, name)).catch(() => null)

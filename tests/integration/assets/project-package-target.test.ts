@@ -64,3 +64,23 @@ describe('project.package step 1 [SPEC 14 1.30 U6, 3.9]', () => {
     expect(fs.readdirSync(target)).toEqual(['P'])
   })
 })
+
+describe('project.package and the assets folder itself [SPEC 14 1.34 V3, 3.9]', () => {
+  it('refuses a target that is the assets folder itself', async () => {
+    const assets = path.join(dir, 'P Assets')
+    const before = fs.readdirSync(assets)
+    const error = await expectRefused(bus, () => pack(assets), 'RULE_VIOLATION')
+    expect(error.message).toBe("Choose a folder outside the project's assets folder.")
+    expect(fs.readdirSync(assets)).toEqual(before)
+  })
+
+  it('refuses a target that is a link to the assets folder', async (ctx) => {
+    if (!canLink()) ctx.skip()
+    const assets = path.join(dir, 'P Assets')
+    fs.symlinkSync(assets, path.join(dir, 'via'), 'dir')
+    const before = fs.readdirSync(assets)
+    const error = await expectRefused(bus, () => pack(path.join(dir, 'via')), 'RULE_VIOLATION')
+    expect(error.message).toBe("Choose a folder outside the project's assets folder.")
+    expect(fs.readdirSync(assets)).toEqual(before)
+  })
+})
