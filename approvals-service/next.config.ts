@@ -8,6 +8,7 @@ const config: NextConfig = {
   images: { unoptimized: true },
   skipTrailingSlashRedirect: true,
   productionBrowserSourceMaps: false,
-  serverExternalPackages: ['@libsql/client', 'libsql'],}
+  serverExternalPackages: ['@libsql/client', 'libsql'],
+}
 
 export default config

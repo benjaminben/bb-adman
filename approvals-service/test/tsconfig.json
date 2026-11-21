@@ -3,7 +3,8 @@
   "compilerOptions": {
     "lib": ["ES2023"],
     "types": ["node"],
-    "plugins": []
+    "plugins": [],
+    "incremental": false
   },
   "include": [
     "./**/*.ts",

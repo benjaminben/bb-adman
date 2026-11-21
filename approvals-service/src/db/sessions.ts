@@ -48,10 +48,6 @@ export function deleteLinkSessions(db: Db, linkId: string): Statement {
   return db.prepare('DELETE FROM session WHERE link_id = ?').bind(linkId)
 }
 
-export function deleteExpiredSessions(
-  db: Db,
-  linkId: string,
-  now: number,
-): Statement {
+export function deleteExpiredSessions(db: Db, linkId: string, now: number): Statement {
   return db.prepare('DELETE FROM session WHERE link_id = ? AND expires_at <= ?').bind(linkId, now)
 }

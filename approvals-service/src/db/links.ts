@@ -71,11 +71,7 @@ export function setCampaignName(db: Db, linkId: string, name: string): Statement
 }
 
 // A new password: new hash and salt, and the wrong-password count starts again.
-export function setLinkPassword(
-  db: Db,
-  linkId: string,
-  password: StoredPassword,
-): Statement {
+export function setLinkPassword(db: Db, linkId: string, password: StoredPassword): Statement {
   return db
     .prepare(
       `UPDATE link SET password_hash = ?, password_salt = ?, password_iterations = ?,

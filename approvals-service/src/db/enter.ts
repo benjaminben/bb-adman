@@ -44,11 +44,7 @@ export async function countPasswordTry(
 }
 
 // A right password starts the count again, only while the link still holds that password.
-export function clearTries(
-  db: Db,
-  linkId: string,
-  checked: StoredPassword,
-): Statement {
+export function clearTries(db: Db, linkId: string, checked: StoredPassword): Statement {
   return db
     .prepare(
       `UPDATE link SET tries = 0, tries_since = NULL

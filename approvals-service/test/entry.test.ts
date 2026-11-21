@@ -79,13 +79,16 @@ describe('loadEnv [AP-14 "Environment"]', () => {
     expect(loadEnv().DB).toBe(loadEnv().DB)
   })
 
-  it.each([undefined, '', 'not an address'])('with database address %j the API is not set up', async (url) => {
-    vi.stubEnv('TURSO_DATABASE_URL', url)
-    expect(loadEnv().API_KEY).toBeUndefined()
-    const reply = await serve(get('/api/v1/health', { Authorization: `Bearer ${KEY}` }))
-    expect(reply.status).toBe(503)
-    expect(((await reply.json()) as { error: { code: string } }).error.code).toBe('not_set_up')
-  })
+  it.each([undefined, '', 'not an address'])(
+    'with database address %j the API is not set up',
+    async (url) => {
+      vi.stubEnv('TURSO_DATABASE_URL', url)
+      expect(loadEnv().API_KEY).toBeUndefined()
+      const reply = await serve(get('/api/v1/health', { Authorization: `Bearer ${KEY}` }))
+      expect(reply.status).toBe(503)
+      expect(((await reply.json()) as { error: { code: string } }).error.code).toBe('not_set_up')
+    },
+  )
 
   it('with no database address a visitor route gives the fixed 500 and logs no value', async () => {
     vi.stubEnv('TURSO_DATABASE_URL', undefined)

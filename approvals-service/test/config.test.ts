@@ -59,7 +59,8 @@ describe('package.json', () => {
   })
 
   it('installs no banned package and no GPL or AGPL licence', () => {
-    const banned = /(^|\/)(wrangler|vercel|miniflare|workerd)$|^@vercel\/|^@cloudflare\/|analytics|speed-insights|telemetry/
+    const banned =
+      /(^|\/)(wrangler|vercel|miniflare|workerd)$|^@vercel\/|^@cloudflare\/|analytics|speed-insights|telemetry/
     for (const [path, entry] of Object.entries(lock.packages)) {
       if (path === '') continue
       const name = path.replace(/^.*node_modules\//, '')

@@ -49,11 +49,7 @@ export async function findVariant(
 }
 
 // Removes a variant from the gallery together with its sign-offs.
-export function deleteVariant(
-  db: Db,
-  linkId: string,
-  variantKey: string,
-): Statement[] {
+export function deleteVariant(db: Db, linkId: string, variantKey: string): Statement[] {
   return [
     db
       .prepare('DELETE FROM signoff WHERE link_id = ? AND variant_key = ?')

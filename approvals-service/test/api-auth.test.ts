@@ -204,9 +204,9 @@ describe('the keyed API order of checks [approvals-service.md "The keyed API"]',
   it('gives each code its one fixed sentence', async () => {
     const messages = new Map<string, Set<string>>()
     for (const [, apiKey, request] of rows) {
-      const { error } = (await (
-        await app(apiKey).fetch(request())
-      ).json()) as { error: { code: string; message: string } }
+      const { error } = (await (await app(apiKey).fetch(request())).json()) as {
+        error: { code: string; message: string }
+      }
       messages.set(error.code, (messages.get(error.code) ?? new Set()).add(error.message))
     }
     for (const [code, set] of messages) expect(set.size, code).toBe(1)
