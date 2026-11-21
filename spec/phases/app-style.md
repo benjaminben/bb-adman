@@ -43,11 +43,11 @@ For a renderer CSS file whose first line is `/* app-style */`, outside comments:
 | 2 | ST-2 Base controls, shared layout, icons (built) | ST-1 | SP and AP slices (none edits `base.css`, `layout.module.css` or `ui/icon/`) | nothing planned |
 | 3 | ST-3 App shell and tabs (built) | ST-2 | ST-4 to ST-8 | a slice editing `app/` or `ui/tab-row/` (none planned) |
 | 3 | ST-4 Dialogs (built) | ST-2 | ST-3, ST-5 to ST-8 | AP-11 only if AP-11 edits `ui/dialog-frame/` (it does not; its new `dialogs/approval-dialog/` takes the look through the frame) |
-| 3 | ST-5 Settings | ST-2 | ST-3, ST-4, ST-6 to ST-8 | a slice editing `screens/settings/` (Phase 8 and 9 add sections later) |
-| 3 | ST-6 Start screen and its drawings | ST-2 | ST-3 to ST-5, ST-7, ST-8 | nothing planned |
-| 3 | ST-7 Editor frame, canvas and layer list | ST-2 | ST-3 to ST-6, ST-8 | a Phase 5 slice editing those `editor/` folders |
+| 3 | ST-5 Settings (built) | ST-2 | ST-3, ST-4, ST-6 to ST-8 | a slice editing `screens/settings/` (Phase 8 and 9 add sections later) |
+| 3 | ST-6 Start screen and its drawings (built) | ST-2 | ST-3 to ST-5, ST-7, ST-8 | nothing planned |
+| 3 | ST-7 Editor frame, canvas and layer list (built) | ST-2 | ST-3 to ST-6, ST-8 | a Phase 5 slice editing those `editor/` folders |
 | 3 | ST-8 Editor properties panel and fields (built) | ST-2 | ST-3 to ST-7 | a Phase 5 or 6 slice editing those `editor/` folders |
-| 4 | ST-9 AI in the editor and the run dialog | ST-4 | ST-10, and wave 3 slices other than ST-4 | nothing planned |
+| 4 | ST-9 AI in the editor and the run dialog (built) | ST-4 | ST-10, and wave 3 slices other than ST-4 | nothing planned |
 | 4 | ST-10 AI dialogs and the activity panel | ST-4 | ST-9, and wave 3 slices other than ST-4 | nothing planned |
 | 5 | ST-11 Campaign page: view, tabs, grid, tiles | ST-3 (uses `ui/tab-row`), AP-12 merged | ST-12, ST-13 | AP-11, AP-12, any Phase 5 slice editing `screens/campaign/` |
 | 5 | ST-12 Campaign page: run panels and slot view | ST-4, AP-11 merged | ST-11, ST-13 | any Phase 5 slice editing `screens/campaign/` |
@@ -102,7 +102,7 @@ If Phase 5 starts its campaign page slices before ST-11 and ST-12, those slices 
 - **Exit check:** lint, typecheck, the dialog component tests under `tests/unit/renderer/dialogs/` and `ui/dialog-frame`, `styling-rules.test.ts`, `npm run test:e2e -- tests/e2e/drop-import.spec.ts tests/e2e/screen-tour.spec.ts` on a desktop.
 - **Class:** D, with one end-to-end run. **After:** ST-2.
 
-### ST-5 — Settings
+### ST-5 — Settings (built)
 
 - **Exists when done:** the Settings screen and its sections as in "Component by component", "Settings": one column, each section a card, the 21px title, problem lines as notices, the agent access toggle drawn as a switch (its role, name and pressed state unchanged).
 - **May touch:** every folder under `src/renderer/screens/settings/`.
@@ -112,7 +112,7 @@ If Phase 5 starts its campaign page slices before ST-11 and ST-12, those slices 
 - **Exit check:** lint, typecheck, `tests/unit/renderer/screens/settings/`, `settings-screen.test.tsx`, `styling-rules.test.ts`, `npm run test:e2e -- tests/e2e/phase1.spec.ts` on a desktop.
 - **Class:** D, with one end-to-end run. **After:** ST-2.
 
-### ST-6 — Start screen and its drawings
+### ST-6 — Start screen and its drawings (built)
 
 - **Exists when done:** the start screen in two columns: the "Adman" wordmark (the existing `h1`, its text unchanged) and the three drawings on the left, the existing "New project" and "Open" cards and recent projects on the right. The drawings are the prototype's branch, generate and linked scenes as inline SVG, colours, line and timing from tokens, still with reduce motion.
 - **New files:** `src/renderer/screens/start/start-drawings/` (`index.ts`, `start-drawings.tsx`, `iso.ts` (the grid-to-page maths and box, top, line and stairs helpers, pure), one file per scene if the drawing file would pass 200 lines, `start-drawings.module.css`).
@@ -123,9 +123,9 @@ If Phase 5 starts its campaign page slices before ST-11 and ST-12, those slices 
 - **Exit check:** lint, typecheck, the tests above, `styling-rules.test.ts`, `npm run test:e2e -- tests/e2e/phase1.spec.ts tests/e2e/window.spec.ts` on a desktop.
 - **Class:** D, with one end-to-end run. **After:** ST-2.
 
-### ST-7 — Editor frame, canvas and layer list
+### ST-7 — Editor frame, canvas and layer list (built)
 
-- **Exists when done:** the editor frame, top bar, banner, canvas ground and canvas bar, panel heads, layer list and layer rows as in "Component by component", "Editor". The ad box has `--shadow-2`. Layer rows show their type icon; "Hide", "Lock", "Delete" keep their words. Selection, handles, guides and crop box keep their geometry.
+- **Exists when done:** the editor frame, top bar, banner, canvas ground and canvas bar, panel heads, layer list and layer rows as in "Component by component", "Editor". The ad box has `--shadow-2`. Layer rows show their type icon. The row's "Hide", "Lock" and "Delete" buttons are small icon buttons (eye, lock, trash) laid over the right end of the row, with their accessible names unchanged and a tooltip. A row is one line at `--row-height` and never changes height. A hidden or locked layer keeps its pressed button visible. Selection, handles, guides and crop box keep their geometry.
 - **May touch:** `src/renderer/editor/editor/`, `top-bar/`, `editor-banner/`, `canvas-view/`, `canvas-overlay/` (CSS only), `crop-overlay/` (CSS only), `layer-list/`, `layer-row/`, `layout-button/`.
 - **Tests first:** the existing editor tests stay green unchanged, in particular `canvas-overlay.test.tsx` and `crop-overlay.test.tsx` (their inline `left`, `top`, `width`, `transform` values prove the geometry did not move) and `layer-list.test.tsx` (names "Hide {name}", "Lock {name}", "Delete {name}"). Approved addition in `layer-list.test.tsx`: the type icon is `aria-hidden` and the row's name is unchanged.
 - **Approved edits to existing tests:** that addition.
@@ -143,7 +143,7 @@ If Phase 5 starts its campaign page slices before ST-11 and ST-12, those slices 
 - **Exit check:** lint, typecheck, `tests/unit/renderer/editor/`, `styling-rules.test.ts`, `npm run test:e2e -- tests/e2e/editor-open.spec.ts` on a desktop.
 - **Class:** D, with one end-to-end run. **After:** ST-2.
 
-### ST-9 — AI in the editor and the run dialog
+### ST-9 — AI in the editor and the run dialog (built)
 
 - **Exists when done:** the generate fields (prompt in the reading face), the picture AI part, earlier options, the reference picker grid, the run dialog with its provider rows and paid count, the run failure and close warning notices, as in "AI panels and the run dialog".
 - **May touch:** `src/renderer/editor/generate-fields/`, `picture-ai/`, `earlier-options/`; `src/renderer/dialogs/run-dialog/`; `src/renderer/ui/paid-count/`, `ui/run-failure/`, `ui/reference-picker/` (CSS and class names only), `ui/close-warning/`.

@@ -136,7 +136,7 @@ Strict-Transport-Security: max-age=31536000        (only when the request is htt
 
 ## Pictures
 
-**Not built (AP-4)** except `checkPictureUrl` (Built). `src/pictures/`. The service never stores picture bytes.
+**Built (AP-4).** `src/pictures/`. The service never stores picture bytes.
 
 - **`PictureSource`** (`source.ts`) is the one interface the picture route uses: `get(ref: { url: string }): Promise<{ bytes: Uint8Array; type: 'image/png' | 'image/jpeg' } | null>`. `s3-source.ts` is today's only implementation.
 - **`checkPictureUrl(text, env)`** (`check-url.ts`), used when the API stores an address and again right before every fetch:

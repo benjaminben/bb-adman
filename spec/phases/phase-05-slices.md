@@ -151,7 +151,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 
 - **Size:** small. **Needs:** P5-4.
 - **Read:** `spec/links-and-sync.md`, "Directions".
-- **Exists when done:** `direction.createFromMaster`, `direction.rename` and `direction.delete` work with their refusals; only rename records an inverse [D-099]. `direction.restore` stays an unused stub. `variant.delete` records no inverse and clears the campaign's list.
+- **Exists when done:** `direction.createFromMaster`, `direction.rename` and `direction.delete` work with their refusals; only rename records an inverse [D-099]. `variant.delete` records no inverse and clears the campaign's list.
 - **May touch:** the stubs in `src/main/commands/direction/` (not `restore.ts`); `src/main/commands/variant/delete.ts`.
 - **Tests first:** `tests/integration/links/directions.test.ts`: create from the master copies layers with keys, values and subjects, `linked = 0`, and `sort` one higher; `not_a_master`; `direction_name_taken` ignoring case and outer spaces; rename keeps its own name free; delete removes its variants; `last_direction`; `jobs_running`; a delete leaves nothing to undo on the campaign list and clears the removed variants' own lists; create records no undo entry; each command as the agent is denied. `tests/integration/commands/internal-deny.test.ts`: every internal command has the policy `deny`.
 - **Approved edits to existing tests:** `tests/integration/links/variant-delete.test.ts` (the undo-of-delete cases become "nothing to undo" cases).

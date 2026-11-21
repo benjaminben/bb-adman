@@ -58,10 +58,10 @@ Phase 5 (variants, fan-out, sync) is not built. Only three parts of this phase u
 | 0 | P6-5 Translate call (built) | Nothing | Everything except other edits of `src/main/providers/gemini/text.ts`, `prompts.ts`, `fake/text.ts` | Any slice that edits those three files (none planned in Phase 5; Phase 5's `extend` edits `gemini/image.ts`, not these) |
 | 0 | P6-8 Save picker (built) | Nothing | Everything | Any slice that edits `src/main/windows/dialogs.ts`, `src/shared/schemas/queries/dialog.ts` or `src/renderer/app/app-context.tsx` (none planned) |
 | 1 | P6-1 Contracts (built) | Nothing unbuilt | P6-2, P6-5, P6-8 | Phase 5's contracts slice and any slice that edits a file in "Shared files" below (`agent-policy.ts`, `core.ts`, `queries.ts`, `kinds/index.ts`, `rows/index.ts`, `campaign-reads.ts`, `write-layer.ts`, `campaign-view.tsx`); AP-11, AP-12 (`campaign-view/`) |
-| 2 | P6-3 Checks command, results, badges | P6-1, P6-2 | P6-4, P6-7, P6-9, P6-10 | Nothing |
-| 2 | P6-4 Set, approve, restore | P6-1 | P6-3, P6-7, P6-9, P6-10 | Nothing |
-| 2 | P6-7 Translations query, sheet | P6-1 | P6-3, P6-4, P6-9, P6-10 | Nothing |
-| 2 | P6-9 `layer.setFonts` | P6-1 | P6-3, P6-4, P6-7, P6-10 | Nothing |
+| 2 | P6-3 Checks command, results, badges (built) | P6-1, P6-2 | P6-4, P6-7, P6-9, P6-10 | Nothing |
+| 2 | P6-4 Set, approve, restore (built) | P6-1 | P6-3, P6-7, P6-9, P6-10 | Nothing |
+| 2 | P6-7 Translations query, sheet (built) | P6-1 | P6-3, P6-4, P6-9, P6-10 | Nothing |
+| 2 | P6-9 `layer.setFonts` (built) | P6-1 | P6-3, P6-4, P6-7, P6-10 | Nothing |
 | 2 | P6-10 Rule set panel | P6-1 | Any logic slice | Nothing |
 | 3 | P6-6 Translation job, propose, write | P6-4, P6-5 | P6-11, P6-12, P6-14 | Nothing |
 | 3 | P6-11 Check panel | P6-3 | P6-6, P6-12, P6-14 | Nothing |
@@ -112,8 +112,8 @@ Where the topic files are silent or need a rule for this phase. The orchestrator
 |---------|-------|------|-------|-------|
 | `translation.propose` | projectId, provider, and either `variantIds[]` (1 to 500) or `directionId` + `language` | — | deny (A-169) | `{ jobIds: string[] }` |
 | `translation.set` | projectId, layerId, text (0 to 5000), applyToSameLanguage | V (the named layer's variant) | allow | `{ layerIds: string[] }` written |
-| `translation.approve` | projectId, layerIds[] (1 to 2000) | C | deny | `{ layerIds: string[] }` changed |
-| `translation.exportSheet` | projectId, campaignId, filePath | — | deny | `{ path, rowCount }` |
+| `translation.approve` | projectId, layers[] of { layerId, copyRev } (1 to 2000; P6-4b, until then layerIds[]) | C | deny | `{ layerIds: string[] }` changed |
+| `translation.exportSheet` | projectId, campaignId, filePath | — | deny | `{ fileName, rowCount }` |
 | `translation.write` (system) | projectId, jobId, items[] of { key, text } | — | deny (system) | `{ written: number }` |
 | `translation.restore` (system) | projectId, items[] of { layerId, copy, translationStatus, translationSource, syncedCopyRev } (1 to 2000) | the caller's list | deny (system) | `{ layerIds }` |
 | `check.run` | projectId, and either campaignId or `variantIds[]` (1 to 1000) | — | allow | `{ variants: Array<{ variantId, checkedRev, results: CheckResult[] }> }` |
@@ -121,8 +121,9 @@ Where the topic files are silent or need a rule for this phase. The orchestrator
 
 - `translation.propose` gains `provider` beside the inputs the table had, as `generation.copyOptions` has (A-157). Its reply is a list because one call can start one job per direction and language.
 - `translation.restore` is the inverse of `translation.set` and `translation.approve`, and its own inverse. It writes exactly the given values and bumps `variant.rev` of each variant touched. `syncedCopyRev` writes `synced_revs.copy`.
+- `translation.restore` input (built, P6-4): a required `scope`, `campaign` or `variant`, says which undo list its own inverse goes on. `translation.set` sends `variant`; `translation.approve` sends `campaign`. Each item's `copy` is at most 5000 code points.
 - `translation.write` and `translation.restore` are `internal: true`: no window may send them.
-- `layer.setFonts` is new (A-166). It is its own inverse (the items with the fonts they had).
+- `layer.setFonts` is new (A-166). It is its own inverse (the items with the fonts they had). Undo puts the fonts back, but a font override mark the command added stays (known gap, on the stakeholder's review list).
 
 | Query | Input | Reply | Agent |
 |-------|-------|-------|-------|
@@ -139,6 +140,7 @@ type TranslationRow = {
   status: 'missing' | 'proposed' | 'approved' | null
   source: 'ai' | 'agent' | 'user' | 'brief' | null
   fontAssetId: string | null
+  copyRev: number                // the layer's revs.copy; sent back by translation.approve (P6-4b)
 }
 type TranslationJobState = {     // the newest translation job per direction and language
   directionId: string; language: string; jobId: string
@@ -192,6 +194,7 @@ type TranslationJobResult = { items: Array<{ key: string; text: string }>; writt
 **`translation.approve`** (A-159):
 
 - Every layer must be a text layer of a variant not in the primary language, with status `proposed` or `approved`. A `missing` one refuses the whole command: `RULE_VIOLATION`, reason `translation_missing`, "Some of these have no translation yet.", `details.layerIds`. A layer in the primary language: `not_a_translation` as above. Nothing is written on a refusal.
+- **The text read** (designed, building in P6-4b). The input is `{ projectId, layers: Array<{ layerId, copyRev }> }`, where `copyRev` is the layer's copy counter (`revs.copy`) the caller read; `translation.forCampaign` gives each row its `copyRev`. If any layer's stored copy counter differs, the whole command is refused before any write: `RULE_VIOLATION`, reason `translation_changed`, "A text changed after you read it. Read it again, then approve.", `details.layerIds` naming them. Reason: an approval is for the text the user read.
 - Sets `approved` on each `proposed` one; `approved` ones are left. No layer counter changes; `variant.rev` goes up once per variant changed, so the last check becomes stale.
 - Inverse: `translation.restore` on the campaign's list.
 
@@ -216,6 +219,7 @@ type TranslationJobResult = { items: Array<{ key: string; text: string }>; writt
 - CSV: UTF-8 with a byte-order mark, CRLF line ends, every cell quoted with `"` and inner quotes doubled (A-164).
 - **Formula guard** (A-164). A cell that starts with `=`, `+`, `-`, `@`, a tab or a carriage return gets a `'` in front, so a spreadsheet does not run text from an AI answer or an agent as a formula.
 - **The path** (security class): `filePath` must be absolute (`INVALID_INPUT` "The file path must be absolute.") and end in `.csv`, any letter case (`INVALID_INPUT` "The sheet must be a .csv file."). Its folder must exist (`NOT_FOUND` "That folder was not found."). The real path of the folder must not be at or inside the real path of the project's assets folder (`RULE_VIOLATION` "Choose a folder outside the project's assets folder.", `pathAtOrInside` as `project.package` uses it). An existing folder at the path: `RULE_VIOLATION` "Something that is not a file is already there.". An existing file is replaced (the save dialog asked).
+- **Only the chosen path** (built, P6-7b). The command writes only to the path the main process's save dialog last returned. The main process remembers that path in memory for one use, and forgets it after 10 minutes or when a newer choice replaces it. Any other path: `RULE_VIOLATION`, reason `path_not_chosen`, "Choose where to save the sheet first." On Windows a path that starts with `\\`, or a file name that holds `:`, is refused: `RULE_VIOLATION`, reason `unsupported_path`, "The sheet cannot be saved in that place." The reply is `{ fileName, rowCount }` and never holds the folder.
 - Written in `prepare`: to `{path}.partial` in the same folder, then renamed over the target; the partial file is removed on any failure. Nothing is written to the project. Not undoable.
 
 ## 5. Checks (fold into `spec/export-and-checks.md`)

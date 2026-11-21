@@ -119,7 +119,7 @@ Every function the built screens offer, and whether end-to-end tests reach it. "
 | Settings | Agent access (MCP): switch, port, Connect panel, Copy, refusal lines | No | Component tests only: `tests/unit/renderer/screens/settings/mcp-section*.test.tsx` |
 | Settings | Agent runs: one tick per provider, the limit | Not built | Planned: offline, by clicks; no agent and no run needed |
 | Settings | Cloud storage, S3 part (`s3-section/`) and "Test connection" (`s3-check/`) | No | Component tests (`tests/unit/renderer/screens/settings/s3-section.test.tsx`, `s3-check.test.tsx`); `checkS3Access` against a stand-in request handler. A real bucket by hand only |
-| Settings | Approvals service (`approvals-section/`): address, key, Test connection | No | Component tests (`approvals-section.test.tsx`); the offline approvals spec is AP-13 |
+| Settings | Approvals service (`approvals-section/`): address, key, Test connection | Yes, offline | `tests/e2e/approvals.spec.ts` offline, plus component tests (`approvals-section.test.tsx`); `npm run test:approvals-local` is the local proof with the real service |
 | Key dialog | Save and continue, Cancel | Yes, offline | Opened by Generate with no key |
 | Project home | Close project | Yes, offline | Click |
 | Project home | Load a brief, brief summary, Create campaign, Cancel | Yes, offline | Dialog stub with a brief from `tests/fixtures/briefs/` |

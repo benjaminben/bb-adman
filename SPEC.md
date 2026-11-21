@@ -37,6 +37,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/assets.md` | Import, linking, the assets folder, file types, relink, change detection, the asset protocol, reference pictures |
 | `spec/api-principles.md` | How commands, queries and events work; error codes, reasons and messages; undo |
 | `spec/api-commands.md` | Every command, built or not, with its agent policy |
+| `spec/api-dev-commands.md` | The hand-test commands (`dev.*`), dev tools only |
 | `spec/api-queries-events.md` | Every query and event |
 | `spec/mcp-and-agents.md` | The MCP server, token, tools, the ask flow, the permissions matrix, the agent policy table |
 | `spec/agent-runs.md` | Generation started by an agent: the tick, the gate, limits, unticking |

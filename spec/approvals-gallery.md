@@ -1,6 +1,6 @@
 # Approvals gallery (the visitor's pages)
 
-The pages a visitor sees when they open an approval link: the password page and the gallery with its sign-off forms [D-095, D-097]. Built with Next.js `16.4.6` (App Router) and React `19.3.1`, inside the approvals service (`spec/approvals-service.md`), hosted on Vercel. Everything in this file is **Not built** (AP-16, after AP-15 and AP-4; `spec/phases/approvals-service-slices.md`), except the `next.config.ts` settings AP-14 made.
+The pages a visitor sees when they open an approval link: the password page and the gallery with its sign-off forms [D-095, D-097]. Built with Next.js `16.4.6` (App Router) and React `19.3.1`, inside the approvals service (`spec/approvals-service.md`), hosted on Vercel. Everything in this file is **Built** (AP-16; `spec/phases/approvals-service-slices.md`).
 
 What a page may and may not do is set by the service: the session, the try limit, the form checks, the gallery view and every write live in `src/visitor/` and are reached through the catch-all route. A page only reads a `GalleryView` and draws it. Every form posts to the catch-all, never to a page.
 

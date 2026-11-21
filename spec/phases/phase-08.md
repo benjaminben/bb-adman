@@ -43,7 +43,7 @@
 
 | Wave | Slice | Needs | May run beside | Must not run beside |
 |------|-------|-------|----------------|---------------------|
-| 1 | P8-1 Contracts | Phases 1 to 4 (built) | Any Phase 8 slice that has not started; Phase 5 to 7 slices that edit none of its files | Any other phase's contracts slice (`core.ts`, `core-deps.ts`, `index.ts`, `agent-policy.ts`, `queries.ts`, `jobs/kinds/index.ts`, `settings.ts`, `settings-store.ts`); Phase 7 slice US if it adds a settings key |
+| 1 | P8-1 Contracts (built) | Phases 1 to 4 (built) | Any Phase 8 slice that has not started; Phase 5 to 7 slices that edit none of its files | Any other phase's contracts slice (`core.ts`, `core-deps.ts`, `index.ts`, `agent-policy.ts`, `queries.ts`, `jobs/kinds/index.ts`, `settings.ts`, `settings-store.ts`); Phase 7 slice US if it adds a settings key |
 | 2 | P8-2 Output folder, paths, safe writes | P8-1 | Every wave 2 slice | Any Phase 9 slice editing `src/main/providers/local-storage/` (slice G does not) |
 | 2 | P8-3 Render window tiles | P8-1 | Every wave 2 slice but none that edits the render window | Phase 7 slices editing `render-root.tsx`, `src/shared/schemas/render.ts` or `draw.ts` |
 | 2 | P8-4 Full-size draw, picture encoder | P8-1 | Every wave 2 slice | Any slice editing `src/main/thumbnails/service.ts` (Phase 7 may, for time) |

@@ -36,7 +36,6 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `direction.createFromMaster` | projectId, masterVariantId, name | — | deny | Built | FR-074 |
 | `direction.rename` | projectId, directionId, name | C | deny | Built | FR-072 |
 | `direction.delete` | projectId, directionId (refused if it is the campaign's last) | — | deny | Built | A-06 |
-| `direction.restore` | projectId, direction, variants[] of VariantSnapshot (system; not used and to be removed, D-099) | C | deny (system) | Not built | R-17 |
 | `variant.fanOut` | projectId, directionId, sizes[], languages[], formats[] (`image` only until Phase 7), fits{} | C | deny | Built | FR-075, FR-076 |
 | `variant.add` | projectId, directionId, sizeLabel, language, format, fit? (`scale` or `crop`) | C | allow | Built | FR-195 |
 | `variant.remove` | projectId, variantIds[] (system; the inverse of fan-out, `variant.add`, `variant.restore`) | C | deny (system) | Built | R-17 |
@@ -57,11 +56,11 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `clip.update` | projectId, clipId, startMs?, inMs?, outMs?, placement? | V | deny | Not built (Phase 7) | FR-122 |
 | `clip.remove` | projectId, clipId | V | deny | Not built (Phase 7) | FR-122 |
 | `translation.propose` | projectId, variantIds[] or directionId + language | — | deny | Not built (Phase 6) | FR-101 |
-| `translation.set` | projectId, layerId, text, applyToSameLanguage: boolean | V | allow | Not built (Phase 6) | FR-102, FR-194 |
-| `translation.approve` | projectId, layerIds[] | C | deny | Not built (Phase 6) | FR-101 |
-| `translation.exportSheet` | projectId, campaignId, filePath | — | deny | Not built (Phase 6) | FR-103 |
+| `translation.set` | projectId, layerId, text, applyToSameLanguage: boolean | V | allow | Built | FR-102, FR-194 |
+| `translation.approve` | projectId, layerIds[] (becomes layers[] of { layerId, copyRev } in P6-4b) | C | deny | Built | FR-101 |
+| `translation.exportSheet` | projectId, campaignId, filePath | — | deny | Built | FR-103 |
 | `sync.apply` | projectId, directionId, masterRev, decisions[] | C | deny | Built | FR-082, FR-083 |
-| `check.run` | projectId, campaignId or variantIds[] | — | allow | Not built (Phase 6) | FR-114, FR-116, FR-196 |
+| `check.run` | projectId, campaignId or variantIds[] | — | allow | Built | FR-114, FR-116, FR-196 |
 | `generation.runImages` | projectId, variantId, slot or layerId (exactly one), prompt, referenceAssetIds[], count (1 to 8), provider, licenceConfirmed? (S2-4) | — | tick | Built | FR-062–FR-065, FR-199 |
 | `generation.runFill` | projectId, variantId, provider, licenceConfirmed? (agents may start it: a gate run command) | — | tick | Built | FR-076, D-080 |
 | `generation.applyFill` | projectId, jobId (the window sends it when its fill succeeds) | C | deny | Built | FR-076 |
@@ -232,20 +231,4 @@ Not built (slice G, postponed). Schemas in `src/shared/schemas/commands/storage.
 
 ## Hand-test commands (`dev.*`)
 
-Registered only when `createCore` gets `devTools: true` (`src/main/commands/dev/index.ts`); never in a packaged app. Not product features; no requirement is traced to them. Denied to agents.
-
-### `dev.storage`
-
-Built. `src/main/commands/dev/storage.ts`, `local-root.ts`, `hand-test-storage.ts`. Removed in Phase 9 with the hand-test screen, once the publish dialog and storage settings screen exist.
-
-- Calls the key guard (for `s3` and `dropbox`; `local` is not in the provider list and skips it), then the chosen `StorageProvider`. It can only touch the one folder named in `src/shared/config/dev-tools.ts`: `adman-hand-test/`, under the S3 prefix or the Dropbox root folder; for `local`, under `{userData}/hand-test-local` (`HAND_TEST_LOCAL_ROOT`), so files land in `{userData}/hand-test-local/adman-hand-test/`.
-- `write` uploads the picked file there and returns its name and size. `list` returns the names in that folder. `remove` deletes everything in that folder. No `read` action.
-- **Local root (security class).** Before every `local` action the command checks the root and the hand-test folder inside it with `lstat`: if either is there and is a link, or is there and is not a folder, the action is refused with `storage_folder_unsafe` and nothing is listed, written or removed. A "Storage path refused" from an adapter gets the same refusal. The narrow root means the adapter's own real-path check refuses anything that leads out of it; the link check covers the root itself. The gap between check and use is accepted. An `lstat` error other than `ENOENT` is a `ProviderFailure` of kind `other` whose detail is the error code only: code to the log, `PROVIDER_ERROR` to the window, never `INTERNAL`.
-- **No settings.** After the key guard and before the adapter, `s3` with no S3 settings or an empty bucket or region is `storage_not_set_up`, `details = { reason, provider }`. `dropbox` with no root folder gets the same refusal when slice G is built. For `write` a file error is reported first.
-- **`write` reads the path it is sent.** Accepted for this tool: it is dev-only, denied to agents, and the window's policy blocks outside pages (`spec/security.md`). A file over `HAND_TEST_MAX_UPLOAD_BYTES` (100 MiB, in `dev-tools.ts`) is refused with `INVALID_INPUT` "Choose a file smaller than 100 MB.", from its `stat` size, before it is read. A file that cannot be read is `file_not_readable` "That file could not be read."; the error code goes to a `warn` log line, no path to the reply. No foreseeable file error ends as `INTERNAL`.
-- **Wording:** "Choose a file by its full path.", "That file was not found.", "Choose a file, not a folder.", "That file name cannot be used in storage.", "Choose a file to upload." (schema), the key guard purpose "use the hand-test tools", the label "Local storage". A file name the name check refuses is `INVALID_INPUT`.
-- **Known and accepted:** a file put into the folder by other means under a name the path rules refuse is neither listed nor removed.
-
-### `dev.comfyExtend`
-
-Not built, and not to be built: Phase 5's `generation.runFill` replaces it, and CU-8 is dropped under OI-64's assumption. Its policy row stays until Phase 9 removes the `dev` commands. Kept for the record: input `{ projectId, assetId, width, height, prompt }`, project scope. Enqueues an `image_generation` job with `mode: 'extend'`, the picture centred on the new canvas (`spec/comfyui.md`).
+Moved to `spec/api-dev-commands.md`.

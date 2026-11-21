@@ -41,7 +41,7 @@
 | 2 | AP-2 Service: link API (built) | AP-1 | AP-3, AP-5, every Phase 4 and look-pack slice | Nothing |
 | 2 | AP-3 Service: visitor logic and sessions (built) | AP-1 | AP-2, AP-5, every Phase 4 and look-pack slice | Nothing |
 | 2 | AP-5 Desktop contracts (built) | AP-1; P4-10 merged | Any service slice, the look pack, Phase 4 screen slices | P4-10 (`core.ts`); any slice that adds a migration or edits `agent-policy.ts`, `events.ts`, `queries.ts`, `settings.ts` or `secrets.ts` (none is planned in Phase 4 or the look pack) |
-| 3 | AP-14 Service: move to Next.js and libSQL (built, reviewed; review fixes in build) | AP-2, AP-3 and the AP-3 review fixes merged | Every desktop, Phase 4 and look-pack slice | Every other service slice |
+| 3 | AP-14 Service: move to Next.js and libSQL (built) | AP-2, AP-3 and the AP-3 review fixes merged | Every desktop, Phase 4 and look-pack slice | Every other service slice |
 | 4 | AP-15 Service: visitor replies for the page app (built) | AP-14 and its review fixes | The same | Every other service slice |
 | 5 | AP-4 Service: sign-offs and pictures (built) | AP-15 | The same | Every other service slice |
 | 6 | AP-16 Gallery pages (built) | AP-4 | The same | Every other service slice |
@@ -53,7 +53,7 @@
 | 5 | AP-9 Update gallery and refresh (built) | AP-8 (built) | AP-10 | Nothing |
 | 6 | AP-11 Approval dialog, bar and store (built) | AP-9; P4-12 merged | AP-10 | P4-12 and AP-12 (`campaign-view/`) |
 | 7 | AP-12 Tile marks (built) | AP-11 | Phase 4 and look-pack slices | P4-12 and AP-11 (`campaign-view/`); any slice editing `variant-tile/` or `variant-grid/` (none is planned) |
-| 8 | AP-13 Local end-to-end proof, deploy steps, exit check | Every other AP slice | Phase 4 and look-pack slices | Nothing |
+| 8 | AP-13 Local end-to-end proof, deploy steps, exit check (built) | Every other AP slice | Phase 4 and look-pack slices | Nothing |
 
 The service slices AP-14, AP-15, AP-4 and AP-16 run one after another, each in `approvals-service/` only, so they never share a file with a desktop slice; the desktop waves (AP-6 to AP-12) keep their own order beside them. No two desktop slices of one wave edit the same file: wave 3 by folder (the app's client and password store, the app's picture store and S3 adapter); wave 4 by main process against Settings screens, with AP-10b in the storage command folder, the S3 adapter folder and `s3-section/` only. The move to Next.js and Vercel changes no desktop slice: the app knows only a service address and a key (D-097).
 

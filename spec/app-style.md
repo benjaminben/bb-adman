@@ -295,7 +295,7 @@ Beyond the tokens, what changes in layout and structure. "Folder" names are unde
 - Banner: a full-width notice of its kind, no radius, padding `var(--space-2) var(--space-4)`.
 - Canvas: ground `--canvas-backdrop`; the ad box gets `--shadow-2`; the canvas bar (zoom) on `--color-bg` with a top edge `--color-line`. The selection line, handles, guides and crop box keep their tokens and their geometry (choice C-9 changes only the ground colour).
 - Panel heads (layer list, properties): sticky, min height `--bar-height`, bottom edge `--color-line`, title `h2` or `h3` as built, at `--font-size-control` `--weight-bold` sans (a panel head is an operating label, not a page title).
-- Layer rows: `--row-height`, `--radius`; hover `--color-surface`; selected ground `--color-accent-soft`, name `--color-accent-ink` `--weight-bold`; hidden rows muted and struck through; the type icon (image, text, layers) beside the name; "Hide", "Lock", "Delete" keep their words as small quiet buttons (C-13). Thumbnails `--layer-thumb` on `--canvas-backdrop`.
+- Layer rows: `--row-height`, `--radius`; hover `--color-surface`; selected ground `--color-accent-soft`, name `--color-accent-ink` `--weight-bold`; hidden rows muted and struck through; the type icon (image, text, layers) beside the name; "Hide", "Lock" and "Delete" are small icon buttons (eye, lock, trash) laid over the right end of the row, with their accessible names unchanged and a tooltip (C-13). A row is one line at `--row-height` and never changes height; a hidden or locked layer keeps its pressed button visible. Thumbnails `--layer-thumb` on `--canvas-backdrop`.
 - Properties panel: body padding `--space-3`, groups separated by a top edge `--color-line` and `--space-3`; geometry fields in a four-column grid of number fields; text, headline and body copy fields in the reading face; colour swatches with `--color-control-border` edges, pressed swatch shows the focus-style ring; segmented groups for alignment.
 
 **AI panels and the run dialog** (folders listed in ST-9 and ST-10)
@@ -338,5 +338,5 @@ Each is the prototype's current default, or the closest token to it, taken so th
 - **C-10. Dialog spacing.** Head, body and foot paddings on the scale (12, 16, 24) in place of the prototype's 14, 18 and 20.
 - **C-11. App sizes kept where the prototype differs a little.** Activity panel 360px (prototype 384), grid thumbnail 160px (164), handle 8px (10), unseen dot 8px (9), checkbox 16px everywhere (17 on tiles).
 - **C-12. Tab indicators.** 3px bar for campaign and variant tabs, 2px line for tabs inside a page.
-- **C-13. Layer row actions.** "Hide", "Lock", "Delete" keep their words (the prototype shows icons).
+- **C-13. Layer row actions.** "Hide", "Lock", "Delete" are icon buttons (eye, lock, trash) as in the prototype, keeping their accessible names, with a tooltip.
 - **C-14. Editor arrangement.** Layers left, properties right (the prototype's default of its two arrangements, and what the app has).

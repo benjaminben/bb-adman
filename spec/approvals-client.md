@@ -78,7 +78,7 @@ CREATE INDEX approval_signoff_campaign ON approval_signoff (campaign_id);
 
 - File `{userData}/approval-passwords.bin`: one JSON map from `{projectId}/{campaignId}` to the password, encrypted as a whole with the same `SecretCrypto` as `secrets.bin` (`safeStorage`).
 - The same rules as the secret store: no saving when encryption is not available ("This computer cannot store keys securely."); a file that does not decrypt to a JSON object is never written over (`RULE_VIOLATION`, reason `secrets_unreadable`, its sentence); written through a `.tmp` file and a rename.
-- **Asked before sending** (ruled, not built): the store can say whether encryption is available without writing anything. `approvals.createLink` and `approvals.setPassword` ask it before their first request and refuse with the store's own refusal and sentence above (`spec/approvals-commands.md`, "Refusals").
+- **Asked before sending** (built: `canKeep()` in `src/main/commands/approvals/password-input.ts`): the store can say whether encryption is available without writing anything. `approvals.createLink` and `approvals.setPassword` ask it before their first request and refuse with the store's own refusal and sentence above (`spec/approvals-commands.md`, "Refusals").
 - Kept so the user can copy the password again. Never in the project file, so a shared project carries no password: the other computer shows "The password is kept on the computer that made the link." and offers "Set a new password".
 - The value leaves the main process only in `approvals.getPassword`'s reply to the window (user only) and in requests to the service.
 - Removed when the link is turned off or replaced.

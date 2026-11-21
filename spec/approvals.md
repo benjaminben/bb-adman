@@ -2,7 +2,7 @@
 
 A way to get sign-off on variants from people outside the app [D-095]. The user makes a password-protected link per campaign; a visitor opens it, enters the password, sees the campaign's variants and signs off on one with an email address; the sign-offs show in the app. Opt-in: nothing happens until the user sets up a service and makes a link.
 
-**State.** Built: the desktop contracts (AP-5), the service client, service settings and kept passwords (AP-6), the picture store (AP-7), the Settings section (AP-10, with AP-10a). Built: the link commands and queries (AP-8, with its review fixes), S3 "Test connection" (AP-10b). Not built: "Update gallery" and refresh (AP-9), the campaign page parts (AP-11, AP-12), the local proof (AP-13). Each section says its own state.
+**State.** Built, slices AP-1 to AP-16: the service and its gallery pages, the desktop contracts, the service client, service settings and kept passwords, the picture store, the Settings section, the link commands and queries, "Update gallery" and refresh, the campaign page parts and the local proof. Two accepted gaps are noted where they apply.
 
 **Where things are.**
 
@@ -87,7 +87,7 @@ D-084: one folder per component, CSS from the existing tokens only (no slice of 
 
 ### The campaign page
 
-**Not built** (AP-11, AP-12).
+**Built** (AP-11, AP-12).
 
 - **Approval bar** (`src/renderer/screens/campaign/approval-bar/`), in the page's header row: the button "Approval link…". With a live link: "Signed off: {a} of {b} variants" (variants with at least one current sign-off, of those in the gallery), "Checked {time}" and a "Refresh" button. After a failed refresh: the failure's sentence in place of "Checked". With an ended link: "Link turned off".
 - **Store** (`src/renderer/stores/approvals-store.ts`, one per campaign page): holds the `approvals.forCampaign` reply; reads it again on `approvals.changed` for its campaign and on `project.changed` for its project (revs change the marks). While the link is live and `ready` is `ready`, it sends `approvals.refresh`: once when the page opens, every 60 seconds while the window has focus, when the window gains focus, and on "Refresh" (A-92). One refresh at a time; a refresh asked for while one runs is dropped. The background refresh goes through `api.command` directly and shows its failure only in the bar, never in the error banner. A reply with `gone: true` shows the `approval_link_gone` sentence in the bar; the `approvals.changed` event that came with it reads the query again. The timer stops when the page closes.
@@ -96,7 +96,7 @@ D-084: one folder per component, CSS from the existing tokens only (no slice of 
 
 ### The approval link dialog
 
-**Not built** (AP-11). `src/renderer/dialogs/approval-dialog/`, on the dialog frame. Title "Approval link". All buttons that send are disabled while a command runs, with "Working…" beside them.
+**Built** (AP-11). `src/renderer/dialogs/approval-dialog/`, on the dialog frame. Title "Approval link". All buttons that send are disabled while a command runs, with "Working…" beside them.
 
 - **Not ready.** `no_service`: "Set up the approvals service in Settings to make links." `no_bucket`: the `approvals_needs_bucket` sentence. Button "Open Settings".
 - **No link.** "Make a link that shows this campaign's variants to reviewers. They need the link and the password. Anyone who has both can sign off on a variant with their email address, or remove a sign-off." Two choices: "Make a password for me" (default) and "Choose a password" (a password field, "At least 12 characters."). Button "Make link": `approvals.createLink`, then `approvals.publish`.

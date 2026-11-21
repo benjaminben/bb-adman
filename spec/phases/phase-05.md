@@ -89,7 +89,7 @@ Existing files that more than one slice, or another phase, will edit.
 ## What later phases need from Phase 5
 
 - **Phase 6** (translations, checks): `followRule` and `variantOutOfDate` (`src/shared/links/`); `sync.preview`'s `proposedTranslation` and the "translated copy" stand-in in `syncWritesOf`, to be replaced by the translation job; fan-out step 6 in `planVariant` (text kept, `translation_status = 'missing'`); `badgesOf` taking the master; `variant.restoreLayers` as an undo inverse for `translation.approve`; `HandlerResult.clearScopes`; the per-direction grid (`direction-grids/`, `direction-header/`) for check actions.
-- **Phase 7** (video): `variant.fanOut`'s `formats` schema to widen to `'video'`; `planVariant` gains step 7 (one clip); `VariantSnapshot.clips` already carried by `variant.restore`, `direction.restore`; the quick look dialog to play a video variant.
+- **Phase 7** (video): `variant.fanOut`'s `formats` schema to widen to `'video'`; `planVariant` gains step 7 (one clip); `VariantSnapshot.clips` already carried by `variant.restore`; the quick look dialog to play a video variant.
 - **Phase 8** (export): `direction` rows and `direction-order.ts` for the order of deliverables; `generative_fill` job rows (paid count, report).
 - **Phase 10** (MCP): tools for `variant.add` (allow), `variant.delete` (ask), `generation.runFill` (tick, gate built), `sync.preview` (read); `direction.*` and `sync.apply` stay denied.
 

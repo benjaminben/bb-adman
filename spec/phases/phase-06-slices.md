@@ -28,7 +28,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class A.
 - **Security:** none. **Size:** medium.
 
-## P6-3 — Checks command, results, badges
+## P6-3 — Checks command, results, badges (built)
 
 - **Exists when done:** `check.run` stores and returns results; `check.results` reads them; the tile marks "Check warning" and "Not checked" are live.
 - **New files:** `src/main/checks/run-checks.ts` (`runChecksFor`), `src/main/checks/read-input.ts` (one variant's `CheckInput` from the project file); the bodies of `commands/check/run.ts`, `queries/check.ts`, `checks/badges.ts`.
@@ -38,7 +38,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class B.
 - **Security:** full (an agent-reachable command that writes). **Size:** small.
 
-## P6-4 — Set, approve, restore
+## P6-4 — Set, approve, restore (built)
 
 - **Exists when done:** `translation.set`, `translation.approve` and `translation.restore` work as section 2 says, with undo and redo.
 - **New files:** `src/main/translation/layers.ts` (find a layer's variant, direction, campaign, primary language, the master's layer by key, same-language matches), `src/main/translation/write-text.ts` (the one function that writes copy, status, source, counters and `synced_revs.copy`, used here and by P6-6); the bodies of `commands/translation/set.ts`, `approve.ts`, `restore.ts`.
@@ -68,7 +68,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class B + E.
 - **Security:** full (untrusted answer written into the project). **Size:** medium.
 
-## P6-7 — Translations query and sheet export
+## P6-7 — Translations query and sheet export (built)
 
 - **Exists when done:** `translation.forCampaign` answers as section 1 says; `translation.exportSheet` writes the CSV as section 4 says.
 - **New files:** `src/main/translation/rows.ts` (the rows and job states from the project file), `src/shared/translation/sheet.ts` (`sheetCsv`), `src/main/translation/sheet-path.ts` (the path checks); the bodies of `queries/translation.ts`, `commands/translation/export-sheet.ts`.
@@ -88,7 +88,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class G.
 - **Security:** short (a picker only returns a path; the command checks it). **Size:** small.
 
-## P6-9 — `layer.setFonts`
+## P6-9 — `layer.setFonts` (built)
 
 - **Exists when done:** `layer.setFonts` works as section 6 says, with undo on the campaign list.
 - **New files:** the body of `commands/language-font/set-fonts.ts`.
@@ -120,7 +120,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 
 ## P6-12 — Translation panel: rows, edit, approve
 
-- **Exists when done:** "Translations" lists the groups and rows, edits with `translation.set`, approves one and all, as section 8 says.
+- **Exists when done:** "Translations" lists the groups and rows, edits with `translation.set`, approves one and all, as section 8 says. "Approve" and "Approve all" send each row's `copyRev` (from `translation.forCampaign`); a `translation_changed` refusal shows its own sentence ("A text changed after you read it. Read it again, then approve.") and the panel reads the rows again (P6-4b).
 - **New files:** the body of `screens/campaign/translation-panel/`; `language-group.tsx`, `translation-row.tsx`, `translation-words.ts` (pure), `use-translations.ts` (reads `translation.forCampaign`, again on `project.changed` and `job.updated`) in that folder.
 - **May touch:** nothing.
 - **Needs:** P6-4, P6-7.

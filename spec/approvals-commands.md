@@ -12,8 +12,8 @@ All are deny for agents (A-96) and not undoable. Undo, agent and built columns a
 | `approvals.check` | — | — | deny | Built (AP-6) |
 | `approvals.createLink` | projectId, campaignId, password? (12 to 128) | — | deny | Built (AP-8) |
 | `approvals.setPassword` | projectId, campaignId, password? | — | deny | Built (AP-8) |
-| `approvals.publish` | projectId, campaignId | — | deny | Not built (AP-9) |
-| `approvals.refresh` | projectId, campaignId | — | deny | Not built (AP-9) |
+| `approvals.publish` | projectId, campaignId | — | deny | Built (AP-9) |
+| `approvals.refresh` | projectId, campaignId | — | deny | Built (AP-9) |
 | `approvals.endLink` | projectId, campaignId | — | deny | Built (AP-8) |
 
 `approvals.setService` and `approvals.check` are app-scope (no project transaction). The others are project-scope; their network work is in `prepare` (outside the transaction) and their table writes in `run`. A throw inside `run` rolls the whole transaction back, so a command that must keep its writes and still report a problem returns a value instead of throwing (`approvals.refresh`, below).

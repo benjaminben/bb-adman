@@ -2,7 +2,7 @@
 
 The small web service behind approval links [D-095, D-097]: one Next.js app hosted on Vercel, with a Turso (libSQL, SQLite-compatible) database from the Vercel Marketplace. It serves the visitor's pages (password, gallery, sign-off) and a keyed API for the desktop app.
 
-**State.** The logic of AP-1 to AP-3 is **Built** and reviewed: the contract, the database queries, the hash and random letters, the keyed API, `checkPictureUrl`, and the visitor logic (entering, the try limit, sessions, the cookie, the form checks, the narrowed gallery view). It was built on the earlier host (a Cloudflare Worker with D1, tested in the Workers Vitest pool). The move onto Next.js, the libSQL client and plain Node tests (AP-14) is **Built** and reviewed; its review fixes are being built. Everything else here is **Not built** unless marked (slices in `spec/phases/approvals-service-slices.md`).
+**State.** **Built**: a Next.js app with a libSQL database, tested with plain Node tests (slices in `spec/phases/approvals-service-slices.md`). Its deploy steps are in `approvals-service/README.md`.
 
 **Where things are.** This file: what the service is, how Next.js and the service code fit, folder and tooling, environment, logs, running it locally, deploying. The rest of the service:
 
