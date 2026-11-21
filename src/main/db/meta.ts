@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import { projectMetaSchema, type ProjectMeta } from '../../shared/schemas/project'
+import { storedProjectName } from '../../shared/schemas/project-name'
 import { AppError } from '../../shared/schemas/result'
 
 const KEYS: Record<keyof ProjectMeta, string> = {
@@ -33,6 +34,17 @@ export function readSchemaVersion(db: Database.Database): number {
   const version = Number(row?.value)
   if (!Number.isInteger(version)) throw notAProject()
   return version
+}
+
+// SPEC 14 [1.32] U11: the stored name alone, checked before an older file is backed up or
+// migrated. project_meta is a key and value table in every schema version.
+export function readStoredName(db: Database.Database): string {
+  if (!hasMetaTable(db)) throw notAProject()
+  const row = db.prepare("SELECT value FROM project_meta WHERE key = 'name'").get() as
+    { value: string } | undefined
+  const parsed = storedProjectName.safeParse(row?.value)
+  if (!parsed.success) throw notAProject()
+  return parsed.data
 }
 
 export function writeMeta(db: Database.Database, meta: Partial<ProjectMeta>): void {

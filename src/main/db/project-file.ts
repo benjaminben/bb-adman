@@ -6,7 +6,7 @@ import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
 import { ulid } from 'ulid'
 import * as schema from './schema'
 import { bundledMigrations, type Migration } from './bundled-migrations'
-import { readMeta, readSchemaVersion, writeMeta, notAProject } from './meta'
+import { readMeta, readSchemaVersion, readStoredName, writeMeta, notAProject } from './meta'
 import { AppError } from '../../shared/schemas/result'
 
 // Only the project ID is kept in memory; project_meta is the owner of every other value
@@ -131,6 +131,7 @@ export function openProjectFile(opts: {
       throw new AppError('RULE_VIOLATION', NEWER_VERSION_MESSAGE, { reason: 'newer_version' })
     }
     if (version < migrations.length) {
+      readStoredName(db)
       fs.copyFileSync(opts.filePath, `${opts.filePath}.bak`)
       runMigrations(db, migrations, version)
     }
