@@ -7,7 +7,10 @@ import { workingDetail } from '@/renderer/screens/campaign/run-row/run-row'
 import { useNow, videoRunningText } from '@/renderer/screens/campaign/run-row/video-status'
 import type { ActivityEntry } from '@/renderer/stores/activity-store'
 import { cancelShown } from '@/renderer/ui/cancel-shown'
+import { BusySpinner } from '@/renderer/ui/dialog-frame'
 import { goTarget, type GoTarget } from '@/renderer/ui/go-there'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import { RunFailure } from '@/renderer/ui/run-failure'
 import { RowRetry, retryShown } from './row-retry'
 import { startedText, whatText, whereText } from './row-text'
@@ -19,6 +22,15 @@ const STATUS_TEXT = {
   succeeded: 'Done',
   failed: 'Failed',
   cancelled: 'Cancelled',
+} as const
+
+// The status badge's kind and icon (spec/app-style.md, "Badge": icon plus word).
+const STATUS_LOOK = {
+  queued: ['neutral', 'clock'],
+  running: ['accent', null],
+  succeeded: ['ok', 'check'],
+  failed: ['danger', 'alert'],
+  cancelled: ['neutral', 'x'],
 } as const
 
 export function ActivityRow(props: {
@@ -40,16 +52,20 @@ export function ActivityRow(props: {
   const where = whereText(job, place)
   const target = goTarget(job, place)
   const unseen = job.status === 'succeeded' && job.seenAt === null
+  const [kind, icon] = STATUS_LOOK[job.status]
 
   return (
-    <li className={styles.row}>
+    <li className={unseen ? `${styles.row} ${styles.fresh}` : styles.row}>
       <p className={styles.what}>{whatText(job, label)}</p>
       <p className={styles.muted}>{where}</p>
       <p className={styles.line}>
-        <span>{status}</span>
+        <span className={`${layout.badge} ${layout[kind]}`}>
+          {icon === null ? <BusySpinner /> : <Icon name={icon} size="small" />}
+          {status}
+        </span>
         {detail && <span className={styles.muted}>{detail}</span>}
         <span className={styles.muted}>{startedText(job.createdAt)}</span>
-        {unseen && <span className={styles.new}>New</span>}
+        {unseen && <span className={`${layout.badge} ${layout.accent} ${styles.new}`}>New</span>}
       </p>
       {job.startedBy === 'agent' && <p className={styles.muted}>Started by an agent</p>}
       {job.status === 'failed' && (
@@ -62,13 +78,19 @@ export function ActivityRow(props: {
       )}
       <div className={styles.buttons}>
         {target && (
-          <button type="button" aria-label={`Go to ${where}`} onClick={() => props.onGo(target)}>
+          <button
+            type="button"
+            className={layout.small}
+            aria-label={`Go to ${where}`}
+            onClick={() => props.onGo(target)}
+          >
             Go there
           </button>
         )}
         {cancelShown(job, provider) && (
           <button
             type="button"
+            className={layout.small}
             onClick={() => void command('job.cancel', { projectId, jobId: job.id })}
           >
             Cancel

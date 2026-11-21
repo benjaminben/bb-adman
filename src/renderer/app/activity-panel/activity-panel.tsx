@@ -7,6 +7,8 @@ import { useNavStore } from '@/renderer/app/nav-context'
 import { ActivityRow } from '@/renderer/app/activity-row'
 import type { ActivityEntry } from '@/renderer/stores/activity-store'
 import { goThere, type GoTarget } from '@/renderer/ui/go-there'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import { useActivity } from './activity-scope'
 import styles from './activity-panel.module.css'
 
@@ -91,7 +93,12 @@ export function ActivityPanel() {
     >
       <div className={styles.top}>
         <h2 className={styles.title}>Activity</h2>
-        <button type="button" onClick={close}>
+        <button
+          type="button"
+          className={`${layout.quiet} ${layout.small} ${styles.close}`}
+          onClick={close}
+        >
+          <Icon name="x" size="small" />
           Close activity
         </button>
       </div>
