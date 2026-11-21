@@ -6,6 +6,8 @@ import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectContext } from '@/main/commands/types'
 import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'
 import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
+import type { WorkflowJob } from '@/shared/schemas/queries/comfy'
+import { checkLicence } from './licence-check'
 import {
   COMFY_JOB_NOT_OFFERED_MESSAGE,
   reasonMessage,
@@ -20,24 +22,43 @@ export const tooManyReferences = (max: number) =>
     max,
   })
 
-export function checkComfyRun(
-  deps: Pick<CoreDeps, 'devTools'> & { settings: Pick<CoreDeps['settings'], 'get'> },
-  ctx: Pick<ProjectContext, 'actor'>,
-  referenceCount: number,
-): WorkflowSpec {
+type Deps = Pick<CoreDeps, 'devTools'> & { settings: Pick<CoreDeps['settings'], 'get'> }
+
+// The address, then the offered workflow for the job (a trial one only with dev tools on).
+function offeredFor(deps: Deps, ctx: Pick<ProjectContext, 'actor'>, job: WorkflowJob) {
   if (deps.settings.get().comfyui.baseUrl === null) {
     throw new AppError('RULE_VIOLATION', reasonMessage('address_needed'), {
       reason: 'comfy_address_needed',
     })
   }
-  const job = referenceCount > 0 ? 'image_refs' : 'image'
   const spec = offeredWorkflow({ job }, { devTools: deps.devTools, actor: ctx.actor })
   if (!spec) {
     throw new AppError('RULE_VIOLATION', COMFY_JOB_NOT_OFFERED_MESSAGE, {
       reason: 'comfy_job_not_offered',
     })
   }
+  return spec
+}
+
+export function checkComfyRun(
+  deps: Deps,
+  ctx: Pick<ProjectContext, 'actor'>,
+  referenceCount: number,
+): WorkflowSpec {
+  const spec = offeredFor(deps, ctx, referenceCount > 0 ? 'image_refs' : 'image')
   const max = spec.slots.references?.length ?? 0
   if (referenceCount > max) throw tooManyReferences(max)
+  return spec
+}
+
+// P4-11 (spec/ai-jobs.md "Cut-out" step 4): the cut-out's ComfyUI checks, the licence check
+// last. An agent's licenceConfirmed is ignored there (checkLicence).
+export function checkComfyCutout(
+  deps: Deps,
+  ctx: Pick<ProjectContext, 'actor'>,
+  licenceConfirmed: boolean | undefined,
+): WorkflowSpec {
+  const spec = offeredFor(deps, ctx, 'cutout')
+  checkLicence(deps, ctx, spec, licenceConfirmed)
   return spec
 }
