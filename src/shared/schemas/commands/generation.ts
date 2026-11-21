@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { projectScoped } from './project-scoped'
 import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'
+import { referenceIds } from '@/shared/schemas/reference-ids'
 
 // S2-4 [D-088]: the user confirmed the commercial licence of the run's model. The command
 // ignores it for an agent, and the agent tools below do not offer it.
@@ -11,7 +12,7 @@ const runImagesFields = projectScoped.extend({
   slot: z.string().min(1).optional(),
   layerId: z.string().min(1).optional(),
   prompt: z.string().trim().min(1, 'Enter a prompt.'),
-  referenceAssetIds: z.array(z.string().min(1)),
+  referenceAssetIds: referenceIds,
   count: z.number().int().min(1).max(MAX_IMAGES_PER_RUN),
   provider: z.string().min(1),
 })
@@ -38,7 +39,7 @@ const startVideoFields = projectScoped.extend({
   provider: z.string().min(1),
   start: z.enum(['none', 'first_frame']),
   useReferences: z.boolean(),
-  referenceAssetIds: z.array(z.string().min(1)),
+  referenceAssetIds: referenceIds,
 })
 
 export const generationStartVideoInput = startVideoFields.extend({ licenceConfirmed })
