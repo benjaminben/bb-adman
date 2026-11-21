@@ -96,6 +96,18 @@ describe('a ticked ComfyUI run as the agent [spec/agent-runs.md "After the gate"
     const { jobId } = data<{ jobId: string }>(await f.agent('generation.startVideo', video))
     expect(f.job(jobId)).toMatchObject({ startedBy: 'agent', seenAt: null })
   })
+
+  it('generation.startVideo of a model with no saved licence is refused, the flag ignored [S2-4]', async () => {
+    await ready()
+    data(await f.core.bus.execute('settings.update', { licenceConfirmed: [] }, { actor: 'user' }))
+    const r = await f.agent('generation.startVideo', { ...video, licenceConfirmed: true })
+    expect(r).toMatchObject({
+      ok: false,
+      error: { code: 'INVALID_INPUT', details: { reason: 'licence_not_confirmed' } },
+    })
+    expect(f.jobs()).toHaveLength(0)
+    expect(stand?.seen).toEqual([])
+  })
 })
 
 describe('gate step 1: the provider is offered for agent runs', () => {

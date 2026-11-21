@@ -28,7 +28,7 @@ const VIDEO = {
 
 async function ready(): Promise<void> {
   stand = await startComfyStandIn()
-  f = await makeComfyFixture({ devTools: true, origin: stand.origin })
+  f = await makeComfyFixture({ devTools: true, origin: stand.origin, licenceConfirmed: [] })
 }
 
 const app = (name: string, input: Record<string, unknown>) =>
@@ -57,11 +57,12 @@ const RUNS: Array<[string, string, string, () => Promise<Run>]> = [
     'an H3 video',
     'MiniMax H3',
     'h3-text-to-video',
-    async () => (extra, actor) => f.core.bus.execute(
-      'generation.startVideo',
-      { projectId: f.projectId, ...VIDEO, ...extra },
-      { actor },
-    ),
+    async () => (extra, actor) =>
+      f.core.bus.execute(
+        'generation.startVideo',
+        { projectId: f.projectId, ...VIDEO, ...extra },
+        { actor },
+      ),
   ],
   [
     'a FLUX 3 klein picture',
@@ -79,9 +80,13 @@ const RUNS: Array<[string, string, string, () => Promise<Run>]> = [
     async () => {
       failedVideo('j-old')
       return (extra, actor) =>
-        f.core.bus.execute('job.retry', { projectId: f.projectId, jobId: 'j-old', ...extra }, {
-          actor,
-        })
+        f.core.bus.execute(
+          'job.retry',
+          { projectId: f.projectId, jobId: 'j-old', ...extra },
+          {
+            actor,
+          },
+        )
     },
   ],
 ]
