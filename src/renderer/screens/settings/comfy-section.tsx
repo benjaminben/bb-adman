@@ -4,7 +4,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useApi, useApp } from '../../app/app-context'
 import type { ComfyInfo } from '../../../shared/schemas/queries/comfy'
+import type { ComfyCheck } from '../../../shared/schemas/commands/comfy-check'
 import type { AdmanApi } from '../../../shared/schemas/api'
+import { ComfyCheckResult } from './comfy-check-result'
 import styles from '../screens.module.css'
 
 async function comfyInfo(api: AdmanApi): Promise<ComfyInfo | null> {
@@ -18,6 +20,8 @@ export function ComfySection() {
   const [info, setInfo] = useState<ComfyInfo | null>(null)
   const [typed, setTyped] = useState('')
   const [refusal, setRefusal] = useState<string | null>(null)
+  const [checking, setChecking] = useState(false)
+  const [result, setResult] = useState<ComfyCheck | null>(null)
 
   async function readInfo() {
     const next = await comfyInfo(api)
@@ -40,7 +44,16 @@ export function ComfySection() {
     if (!result.ok) return setRefusal(result.error.message)
     setRefusal(null)
     setTyped('')
+    // An earlier result described the server at the old address.
+    setResult(null)
     await readInfo()
+  }
+
+  async function check() {
+    setChecking(true)
+    const reply = await command('comfy.check', {})
+    setResult(reply.ok ? (reply.data as ComfyCheck) : null)
+    setChecking(false)
   }
 
   function save(event: FormEvent) {
@@ -83,10 +96,24 @@ export function ComfySection() {
         {refusal !== null && <p id="comfy-address-refusal">{refusal}</p>}
       </form>
       <div className={styles.row}>
-        <button type="button" disabled={address === null}>
+        <button type="button" disabled={address === null || checking} onClick={() => void check()}>
           Check
         </button>
       </div>
+      {checking && <p role="status">Checking…</p>}
+      {!checking && result !== null && address !== null && (
+        <ComfyCheckResult check={result} address={address} workflows={info?.workflows ?? []} />
+      )}
+      {(info?.leavesOnServer.length ?? 0) > 0 && (
+        <>
+          <h3>What Adman leaves on the server</h3>
+          <ul>
+            {info?.leavesOnServer.map((sentence) => (
+              <li key={sentence}>{sentence}</li>
+            ))}
+          </ul>
+        </>
+      )}
     </section>
   )
 }
