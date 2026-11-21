@@ -40,6 +40,15 @@ export const assetImportInput = projectScoped.extend({
 })
 export type AssetImportInput = z.infer<typeof assetImportInput>
 
+// asset.relink (FR-009; SPEC 14, Slice A rulings point 3). newPath comes from the system
+// picker; relinkSiblings also looks for the other missing files of the same old folder.
+export const assetRelinkInput = projectScoped.extend({
+  assetId,
+  newPath: z.string().min(1),
+  relinkSiblings: z.boolean(),
+})
+export type AssetRelinkInput = z.infer<typeof assetRelinkInput>
+
 // project.package (SPEC 3.9; FR-008, R-09). Kept in slice A's schema file, beside the other
 // asset-folder commands, because commands/project.ts belongs to Phase 1.
 export const projectPackageInput = projectScoped.extend({

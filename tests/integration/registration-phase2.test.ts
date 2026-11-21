@@ -51,6 +51,7 @@ describe('the asset domain is registered [SPEC 14, Slice A part 2, A2-1]', () =>
     expect(assetCommands(f.core.deps).map((h) => h.name)).toEqual([
       'asset.import',
       'asset.update',
+      'asset.relink',
       'asset.remove',
     ])
   })

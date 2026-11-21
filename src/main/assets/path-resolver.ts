@@ -53,3 +53,22 @@ export function managedPath(assetsDir: string, assetId: string, ext: string): st
 export function relativeToProject(projectFile: string, file: string): string {
   return path.relative(path.dirname(projectFile), file)
 }
+
+// The path of `file` below `dir` at any depth, or null when it is not inside `dir`.
+export function pathInside(dir: string, file: string): string | null {
+  const rel = path.relative(path.resolve(dir), path.resolve(file))
+  const out = rel === '' || rel === '..' || rel.startsWith(`..${path.sep}`)
+  return out || path.isAbsolute(rel) ? null : rel
+}
+
+// asset.relink siblings (SPEC 14, Slice A rulings point 3): a stored file inside the old
+// folder of the named asset is looked for at the same relative path under the new folder.
+// Null when the stored file is not inside the old folder or the candidate leaves the new one.
+export function siblingCandidate(namedAbsPath: string, newFile: string, absPath: string) {
+  const oldDir = path.dirname(path.resolve(namedAbsPath))
+  const newDir = path.dirname(path.resolve(newFile))
+  const rel = pathInside(oldDir, absPath)
+  if (rel === null) return null
+  const candidate = path.join(newDir, rel)
+  return pathInside(newDir, candidate) === null ? null : { candidate, newDir }
+}

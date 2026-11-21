@@ -26,6 +26,9 @@ export type InspectedFile = {
   height: number | null
 }
 
+// The same facts for a file of no accepted type, which a caller may refuse or skip.
+export type FileFacts = Omit<InspectedFile, 'type'> & { type: FileType | undefined }
+
 async function readHead(file: string, length: number): Promise<Uint8Array> {
   const handle = await fs.promises.open(file, 'r')
   try {
@@ -43,7 +46,11 @@ export async function hashFile(file: string): Promise<string> {
   return hash.digest('hex')
 }
 
-function pixelSize(type: FileType, head: Uint8Array): { width: number; height: number } | null {
+function pixelSize(
+  type: FileType | undefined,
+  head: Uint8Array,
+): { width: number; height: number } | null {
+  if (!type) return null
   if (type.mime !== 'image/png' && type.mime !== 'image/jpeg') return null
   try {
     return pictureSize(head, type.mime)
@@ -64,7 +71,7 @@ function fileError(e: unknown, fileName: string): unknown {
 }
 
 // The file's facts, or a refusal whose message names the file and never its path.
-export async function inspectFile(given: string): Promise<InspectedFile> {
+export async function readFileFacts(given: string): Promise<FileFacts> {
   const fileName = path.basename(given)
   if (!path.isAbsolute(given)) {
     throw new AppError('INVALID_INPUT', 'Choose each file by its full path.')
@@ -76,12 +83,21 @@ export async function inspectFile(given: string): Promise<InspectedFile> {
   }
 }
 
-async function readFacts(file: string, fileName: string): Promise<InspectedFile> {
+// As readFileFacts, and a file of no accepted type is refused.
+export async function inspectFile(given: string): Promise<InspectedFile> {
+  const facts = await readFileFacts(given)
+  const { type } = facts
+  if (!type) {
+    throw new AppError('INVALID_INPUT', `${facts.fileName} is not a file type the app accepts.`)
+  }
+  return { ...facts, type }
+}
+
+async function readFacts(file: string, fileName: string): Promise<FileFacts> {
   const stat = await fs.promises.stat(file)
   if (!stat.isFile()) throw new AppError('INVALID_INPUT', 'Choose files, not a folder.')
   const head = await readHead(file, Math.min(stat.size, HEADER_BYTES))
   const type = sniffType(fileName, head.subarray(0, SNIFF_BYTES))
-  if (!type) throw new AppError('INVALID_INPUT', `${fileName} is not a file type the app accepts.`)
   const size = pixelSize(type, head)
   return {
     file,

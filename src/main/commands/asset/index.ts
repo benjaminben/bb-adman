@@ -4,7 +4,8 @@ import type { CommandHandler } from '../types'
 import { assetImport } from './import'
 import { assetUpdate } from './update'
 import { assetRemove } from './remove'
+import { assetRelink } from './relink'
 
 export function assetCommands(deps: CoreDeps): CommandHandler[] {
-  return [assetImport(deps), assetUpdate(), assetRemove()]
+  return [assetImport(deps), assetUpdate(), assetRelink(deps), assetRemove()]
 }
