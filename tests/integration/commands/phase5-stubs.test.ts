@@ -7,11 +7,7 @@ import { makeFixture, data, type Fixture } from '../core-fixture'
 import { AGENT_POLICY, denialMessage } from '@/main/commands/agent-policy'
 import { generativeFillKind } from '@/main/jobs/kinds/generative-fill'
 import { ProviderFailure } from '@/main/providers/types'
-import {
-  DIRECTION as direction,
-  LAYER as layer,
-  SNAPSHOT as snapshot,
-} from '../../unit/shared/schemas/phase5-rows'
+import { DIRECTION as direction, SNAPSHOT as snapshot } from '../../unit/shared/schemas/phase5-rows'
 
 let f: Fixture | undefined
 afterEach(() => {
@@ -42,10 +38,6 @@ const INPUTS: Record<string, object> = {
     fits: { '9x16': 'scale' },
   },
   'variant.add': { directionId: 'D1', sizeLabel: '9x16', language: 'en', format: 'image' },
-  'variant.delete': { variantId: 'V1' },
-  'variant.remove': { variantIds: ['V1'] },
-  'variant.restore': { snapshots: [snapshot] },
-  'variant.restoreLayers': { variants: [{ variantId: 'V1', layers: [layer] }] },
   'layer.clearOverride': { layerId: 'L1', paths: ['style.color'] },
   'layer.revert': { variantId: 'V1', layers: [{ layerId: 'L1', patch: {}, overrides: [] }] },
   'sync.apply': { directionId: 'D1', masterRev: 0, decisions: [] },

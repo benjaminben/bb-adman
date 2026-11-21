@@ -119,4 +119,11 @@ describe('variant.remove [system]', () => {
       'NOT_FOUND',
     )
   })
+
+  it('is denied to the agent without an ask', async () => {
+    const result = await bus.agent('variant.remove', { variantIds: [V2] })
+    expect(result).toMatchObject({ ok: false, error: { code: 'AGENT_DENIED' } })
+    expect(bus.asked).toEqual([])
+    expect(bus.variant(V2)).not.toBeNull()
+  })
 })

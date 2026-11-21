@@ -35,7 +35,8 @@ export async function makeVariantBus() {
       return false
     },
   )
-  const db = f.projects.requireOpen(f.projectId).db
+  const project = f.projects.requireOpen(f.projectId)
+  const db = project.db
   const exec = (actor: Actor) => (name: string, input: Record<string, unknown>) =>
     f.bus.execute(name, { projectId: f.projectId, ...input }, { actor })
   await exec('user')('campaign.create', createInput())
@@ -50,6 +51,7 @@ export async function makeVariantBus() {
   const campaignScope = `campaign:${direction.campaign_id}`
   return {
     ...f,
+    project,
     db,
     asked,
     masterId: direction.master_variant_id,

@@ -27,7 +27,7 @@ describe('variant.restoreLayers [system]', () => {
   it('deletes an extra layer, inserts a missing one and rewrites a changed one', async () => {
     addVariant(bus.db, bus.masterId, 'V3', '16x9')
     const before = { V2: readLayers(bus.db, V2), V3: readLayers(bus.db, 'V3') }
-    const revs = [bus.variant(V2)?.rev ?? 0, bus.variant('V3')?.rev ?? 0]
+    const revs = { V2: bus.variant(V2)?.rev ?? 0, V3: bus.variant('V3')?.rev ?? 0 }
     const input = [
       { variantId: V2, layers: wanted(V2) },
       { variantId: 'V3', layers: wanted('V3') },
@@ -37,7 +37,7 @@ describe('variant.restoreLayers [system]', () => {
     const byId = (rows: LayerRow[]) => [...rows].sort((a, b) => a.id.localeCompare(b.id))
     expect(byId(readLayers(bus.db, V2))).toEqual(byId(input[0]?.layers ?? []))
     expect(byId(readLayers(bus.db, 'V3'))).toEqual(byId(input[1]?.layers ?? []))
-    expect([bus.variant(V2)?.rev, bus.variant('V3')?.rev]).toEqual([revs[0] + 1, revs[1] + 1])
+    expect([bus.variant(V2)?.rev, bus.variant('V3')?.rev]).toEqual([revs.V2 + 1, revs.V3 + 1])
     expect(await bus.history('undo')).toMatchObject({ ok: true })
     expect(readLayers(bus.db, V2)).toEqual(before.V2)
     expect(readLayers(bus.db, 'V3')).toEqual(before.V3)
