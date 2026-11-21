@@ -40,7 +40,7 @@ The slices that build approvals in the desktop app: AP-5 to AP-13, with AP-10b. 
 - **Review fixes, built:** `createLink` and `setPassword` check secure storage first (`PasswordStore.canKeep(): boolean`) and refuse with "This computer cannot store keys securely." before any request; `setPassword` sends `approvals.changed` after a successful `PUT`; `src/main/approvals/after-commit.ts` sends `approvals.changed` and forgets a password only once the command's transaction is confirmed committed, so a rolled-back command sends no event; in `endLink` the forget is best effort and logged by kind only. Tests added: a refused chosen password is in no log line; two projects with the same campaign ID do not touch each other; the `409` test checks the request paths; an unreadable stored link row; a failed command sends no `approvals.changed`.
 - **Class:** B. Security class, full review (deletes in the bucket and on the service, the password). **After:** AP-6, AP-7.
 
-### AP-9 — Update gallery and refresh
+### AP-9 — Update gallery and refresh (built)
 
 - **Exists when done:** `approvals.publish` and `approvals.refresh` work as `spec/approvals-commands.md` says, with renewal of picture addresses.
 - **New files:** `src/main/approvals/publish.ts`, `refresh.ts`, `renew.ts`; the bodies of `commands/approvals/publish.ts`, `refresh.ts`.

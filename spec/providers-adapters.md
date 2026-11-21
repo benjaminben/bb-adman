@@ -74,7 +74,7 @@ Not built (Phase 5, P5-6). Used by the `generative_fill` job (`spec/links-and-sy
 
 ### Prompt and text rules
 
-Built for pictures; the rest not built (Phases 4 to 6). The two-ending rule below is Not built (SP-9, `spec/phases/subject-photos.md`); until it is, every prompt gets the "no text" ending.
+Built for pictures; the rest not built (Phases 4 to 6). The two-ending rule below is built (SP-9) and passed one live run.
 - **Every picture and video prompt ends with exactly one of two fixed endings** [REQ: FR-061; D-098, R-21; A-127]:
   - The run sends no picture: `NO_TEXT_ENDING`, "Do not include any text, letters, numbers, logos or watermarks in the image." (unchanged).
   - The run sends at least one picture: `KEEP_PRINTING_ENDING`, "Keep any printing on the things in the given pictures exactly as it appears in them. Add no other text, letters, numbers, logos or watermarks anywhere in the image."

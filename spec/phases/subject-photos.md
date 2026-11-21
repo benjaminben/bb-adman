@@ -37,7 +37,7 @@
 | 1 | SP-6 `campaign.create` gains `placeSubjectPhoto` (built) | Phase 4 | SP-1, SP-2, SP-7, SP-8, SP-9 |
 | 1 | SP-7 Subject photos in the reference lists and pre-choices (built) | Phase 4 | SP-1, SP-2, SP-6, SP-8, SP-9 |
 | 1 | SP-8 Placing a reference-library subject photo (built) | Phase 4 | SP-1, SP-2, SP-6, SP-7, SP-9 |
-| 1 | SP-9 The prompt ending keeps printing when pictures are sent (in build) | Phase 4 | Every other SP slice |
+| 1 | SP-9 The prompt ending keeps printing when pictures are sent (built) | Phase 4 | Every other SP slice |
 | 2 | SP-3 The "Photos" part of a subject row and the place box (built, not yet merged) | SP-2 | SP-1, SP-6, SP-7, SP-8, SP-9 |
 | 3 | SP-4 Brief photos on load, the Create order, cleanup (in build) | SP-1, SP-3, SP-6 | SP-9 |
 | 4 | SP-5 Fixtures, end-to-end and shots updates, exit check (not started) | Every other SP slice except SP-9 | SP-9 |
@@ -131,7 +131,7 @@ No two slices of one wave share a file: SP-1 is in `src/main/assets/`, `src/main
 - **Exit check:** lint, typecheck, the component tests named above.
 - **Class:** D. No security review (an existing command, sent by the user's choice). **After:** nothing.
 
-### SP-9 — The prompt ending keeps printing when pictures are sent (in build)
+### SP-9 — The prompt ending keeps printing when pictures are sent (built)
 
 - **Exists when done:** `prompt.ts` exports `NO_TEXT_ENDING` (unchanged), `KEEP_PRINTING_ENDING`, `promptEnding(pictures)` and `promptToSend(prompt, { pictures })` as designed in `spec/providers-adapters.md`, "Prompt and text rules". Every caller passes `{ pictures: referenceAssetIds.length }` of its request. A picture or video run with one or more pictures (references or a first frame) stores and sends the "keep printing" ending; a run with none stores and sends "no text". `job.retry` of a picture or video row stores the prompt through `promptToSend` with the old row's picture count, and changes no other request field (the kept-pictures count rule stays). No window change.
 - **New files:** `tests/integration/commands/job-retry-prompt.test.ts`.
