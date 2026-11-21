@@ -7,13 +7,16 @@
 // the overview's panels work on (A-47). campaign.get is read again on project.changed and on
 // job.updated, so a deleted variant loses its tab and the marks follow the jobs.
 // P4-12 (spec/screens-ai.md, "The paid count"): the overview shows the paid count under the name.
-import { lazy, Suspense, useEffect, useRef, useState, type MouseEvent } from 'react'
+// SP-7 (A-120): the reference ticks start as the chosen variant's subject photos.
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type MouseEvent } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { NavScope, useNav } from '@/renderer/app/nav-context'
 import { platform } from '@/renderer/editor/use-editor-key'
 import { createJobStore } from '@/renderer/stores/job-store'
 import { OVERVIEW_TAB, campaignNav } from '@/renderer/stores/nav-store'
-import type { CampaignGet } from '@/shared/schemas/queries/campaign'
+import type { CampaignGet, VariantSummary } from '@/shared/schemas/queries/campaign'
+import type { AssetList } from '@/shared/schemas/queries/asset'
 import { GeneratePanel } from '@/renderer/screens/campaign/generate-panel'
 import { RunList } from '@/renderer/screens/campaign/run-list'
 import { SlotView } from '@/renderer/screens/campaign/slot-view'
@@ -21,6 +24,8 @@ import { VariantGrid } from '@/renderer/screens/campaign/variant-grid'
 import { VariantTabs } from '@/renderer/screens/campaign/variant-tabs'
 import { VideoPanel } from '@/renderer/screens/campaign/video-panel'
 import { PaidCount } from '@/renderer/ui/paid-count'
+import { subjectPhotoIds } from '@/renderer/ui/reference-picker/reference-rows'
+import { ReferenceRowsContext } from '@/renderer/ui/reference-picker/use-picture-list'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './campaign-view.module.css'
 
@@ -56,6 +61,33 @@ function useCampaign(projectId: string, campaignId: string): CampaignGet | null 
   return data
 }
 
+// SP-7 (A-120): when the page opens, and when the chosen variant changes while nothing is
+// ticked, the ticks become the variant's subject photos. Heard from the picker's reads, once
+// per variant shown: a later read (after "Add pictures") or a read of a variant no longer
+// shown changes nothing, and a tick the user set is never replaced.
+function usePreTick(
+  variant: VariantSummary | undefined,
+  setTicks: Dispatch<SetStateAction<string[]>>,
+) {
+  const variantId = variant?.id ?? null
+  const subjectKey = JSON.stringify(variant?.subjectIds ?? [])
+  const shownId = useRef(variantId)
+  const doneFor = useRef<string | null>(null)
+  useEffect(() => {
+    shownId.current = variantId
+  }, [variantId])
+  return useCallback(
+    (rows: AssetList) => {
+      if (variantId === null || shownId.current !== variantId || doneFor.current === variantId)
+        return
+      doneFor.current = variantId
+      const ids = subjectPhotoIds(rows, JSON.parse(subjectKey) as string[])
+      setTicks((t) => (t.length > 0 ? t : ids))
+    },
+    [variantId, subjectKey, setTicks],
+  )
+}
+
 const opensBehind = (event: MouseEvent) => (platform === 'mac' ? event.metaKey : event.ctrlKey)
 
 function CampaignPage(props: Props) {
@@ -75,6 +107,7 @@ function CampaignPage(props: Props) {
   const variants = data?.variants
   const variant = variants?.find((v) => v.id === chosenId) ?? variants?.[0]
   const variantId = variant?.id ?? null
+  const preTick = usePreTick(variant, setTicks)
 
   useEffect(() => store.getState().subscribe(), [store])
   useEffect(() => {
@@ -115,16 +148,18 @@ function CampaignPage(props: Props) {
       )}
       <SlotView projectId={projectId} campaignId={campaignId} />
       {variant && (
-        <GeneratePanel
-          key={variant.id}
-          projectId={projectId}
-          campaignId={campaignId}
-          variantId={variant.id}
-          data={data}
-          ticks={ticks}
-          setTicks={setTicks}
-          onStarted={(reply) => store.getState().track(reply)}
-        />
+        <ReferenceRowsContext.Provider value={preTick}>
+          <GeneratePanel
+            key={variant.id}
+            projectId={projectId}
+            campaignId={campaignId}
+            variantId={variant.id}
+            data={data}
+            ticks={ticks}
+            setTicks={setTicks}
+            onStarted={(reply) => store.getState().track(reply)}
+          />
+        </ReferenceRowsContext.Provider>
       )}
       {variant && (
         <VideoPanel

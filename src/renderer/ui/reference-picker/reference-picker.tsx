@@ -6,6 +6,7 @@
 // P4-13: moved to ui/ for the reference dialog, which shows two pickers over one ordered list
 // of ticks: `library: 'asset'` lists the pictures made in the project (A-68), and `shared`
 // leaves the other list's ticks alone and lets the dialog draw the one limit line.
+// SP-7: an asset-library subject photo shows "Photo of {subject id}" after its name.
 import { useCallback, useEffect, useId } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { assetUrl } from '@/renderer/ui/asset-url'
@@ -13,6 +14,7 @@ import { MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
 import { tooManyReferencesLine } from '@/shared/schemas/reference-ids'
 import { type Reference, useAddPictures, whyNot } from './reference-list'
 import layout from '@/renderer/ui/layout.module.css'
+import { photoOfLine } from './reference-rows'
 import { type PictureLibrary, usePictureList } from './use-picture-list'
 
 const LOCAL_LINE =
@@ -92,6 +94,7 @@ export function ReferencePicker(props: {
             const reason = whyNot(asset)
             const place = ticks.indexOf(asset.id) + 1
             const reasonId = `${baseId}-why-${i}`
+            const photoOf = photoOfLine(asset)
             return (
               <li key={asset.id} className={layout.row}>
                 <label className={layout.row}>
@@ -107,6 +110,7 @@ export function ReferencePicker(props: {
                   <img src={assetUrl(projectId, asset.id)} alt="" width={48} height={48} />
                   {asset.displayName}
                 </label>
+                {photoOf !== null && <span className={layout.muted}>{photoOf}</span>}
                 {place > 0 && <span>{place}</span>}
                 {reason !== null && (
                   <span id={reasonId} className={layout.muted}>

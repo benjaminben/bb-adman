@@ -18,7 +18,7 @@ function api(refs: AssetList, assets: AssetList) {
   const fake = makeFakeApi()
   fake.onQuery('asset.list', (input) => ({
     ok: true,
-    data: (input as { library: string }).library === 'reference' ? refs : assets,
+    data: (input as { library?: string }).library === 'asset' ? assets : refs,
   }))
   return fake
 }
@@ -77,7 +77,7 @@ describe('ReferenceDialog [spec/screens-ai.md "Reference dialog"; A-68]', () => 
     const { fake } = await open()
     const asked = fake.queries.filter((q) => q.name === 'asset.list').map((q) => q.input)
     expect(asked).toEqual([
-      { projectId: P, library: 'reference', kind: 'image' },
+      { projectId: P, kind: 'image' },
       { projectId: P, library: 'asset', kind: 'image' },
     ])
     const names = list('Reference pictures')
