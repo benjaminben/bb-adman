@@ -73,10 +73,14 @@ describe('settings: default providers [FR-067]', () => {
       ['Google Gemini', false],
       ['Adobe Firefly (not yet available)', true],
     ])
-    await userEvent.selectOptions(screen.getByLabelText('Video generation'), 'fal-seedance')
+    const video = within(screen.getByLabelText('Video generation'))
+    expect(
+      video.getByRole('option', { name: 'fal.ai Seedance (not yet available)' }),
+    ).toBeDisabled()
+    await userEvent.selectOptions(screen.getByLabelText('Layout'), 'gemini')
     expect(fake.commands).toContainEqual({
       name: 'settings.update',
-      input: { defaultProviders: { video: 'fal-seedance' } },
+      input: { defaultProviders: { layout: 'gemini' } },
     })
   })
 })
