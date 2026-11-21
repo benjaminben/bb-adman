@@ -30,8 +30,13 @@ export type BriefFormProps = {
   // The project's campaigns, for "Copy the rules from another campaign" (S2-14).
   campaigns: CampaignSummary[]
   creating: boolean
-  onCreate: (plan: Extract<CampaignPlan, { ok: true }>) => void
+  // May give a change for the form, applied once it resolves (SP-4: rows after a refused step).
+  onCreate: (
+    plan: Extract<CampaignPlan, { ok: true }>,
+  ) => Promise<((v: BriefFormValues) => BriefFormValues) | void>
   onCancel: () => void
+  // Told the values after every change (SP-4: brief-load removes added photos on Cancel).
+  onValues?: (values: BriefFormValues) => void
 }
 
 export function BriefForm(props: BriefFormProps) {
@@ -47,6 +52,10 @@ export function BriefForm(props: BriefFormProps) {
   )
 
   useEffect(() => firstField.current?.focus(), [])
+  const { onValues } = props
+  useEffect(() => {
+    onValues?.(values)
+  }, [onValues, values])
 
   const setText = (key: CampaignText, text: string) => setValues((v) => ({ ...v, [key]: text }))
   function fillLanguages() {
@@ -121,7 +130,12 @@ export function BriefForm(props: BriefFormProps) {
               type="button"
               className={layout.primary}
               disabled={!plan.ok}
-              onClick={() => plan.ok && props.onCreate(plan)}
+              onClick={() => {
+                if (!plan.ok) return
+                void Promise.resolve(props.onCreate(plan)).then((change) => {
+                  if (change) setValues(change)
+                })
+              }}
             >
               Create campaign
             </button>
