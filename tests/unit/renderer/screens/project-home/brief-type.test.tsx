@@ -4,12 +4,13 @@ import userEvent from '@testing-library/user-event'
 import { ProjectHome } from '@/renderer/screens/project-home/project-home'
 import { renderApp, axeViolations } from '../../render'
 import { PROJECT, projectApi } from './project-fixture'
+import { addPhotos, photoStubs } from './brief-form-fixture'
 
 type Fake = ReturnType<typeof projectApi>
 const names = (fake: Fake) => fake.commands.map((c) => c.name)
 
 async function typeBrief(fake: Fake = projectApi()) {
-  await renderApp(<ProjectHome project={PROJECT} />, fake)
+  await renderApp(<ProjectHome project={PROJECT} />, photoStubs(fake))
   await userEvent.click(await screen.findByRole('button', { name: 'Type a brief' }))
   return screen.findByRole('region', { name: 'Brief' })
 }
@@ -53,6 +54,7 @@ describe('"Type a brief" [screens-campaign "The brief form", S2-13]', () => {
   it('sends subject.create and then campaign.create for a filled form', async () => {
     const fake = projectApi()
     const form = await typeBrief(fake)
+    await addPhotos(form)
     await userEvent.type(field(form, 'Campaign name'), 'Autumn Fizz')
     await userEvent.type(field(form, 'Region'), 'Canada')
     await userEvent.type(field(form, 'Audience'), 'Students heading back to class')
@@ -61,14 +63,21 @@ describe('"Type a brief" [screens-campaign "The brief form", S2-13]', () => {
     await userEvent.type(within(subject).getByLabelText('Name'), 'Apple can')
     await userEvent.type(within(subject).getByLabelText('Subject ID'), 'apple-can')
     await userEvent.click(screen.getByRole('button', { name: 'Create campaign' }))
-    await waitFor(() => expect(names(fake)).toEqual(['subject.create', 'campaign.create']))
-    expect(fake.commands[0]?.input).toEqual({
+    await waitFor(() =>
+      expect(names(fake)).toEqual([
+        'asset.import',
+        'subject.create',
+        'asset.update',
+        'campaign.create',
+      ]),
+    )
+    expect(fake.commands[1]?.input).toEqual({
       projectId: 'P1',
       id: 'apple-can',
       name: 'Apple can',
       description: '',
     })
-    expect(fake.commands[1]?.input).toMatchObject({
+    expect(fake.commands[3]?.input).toMatchObject({
       brief: { campaignName: 'Autumn Fizz', region: 'Canada', languages: ['en'] },
       subjectMap: [{ subjectId: 'apple-can', create: false }],
       languages: ['en'],

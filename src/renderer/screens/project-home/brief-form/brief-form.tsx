@@ -16,8 +16,10 @@ import {
 import { RuleFields } from '@/renderer/screens/project-home/rule-fields'
 import { SizeFields } from '@/renderer/screens/project-home/size-fields'
 import { SubjectRows } from '@/renderer/screens/project-home/subject-rows'
+import { PlacePhotoField } from '@/renderer/screens/project-home/subject-photos'
 import { CampaignFields, type CampaignText } from './campaign-fields'
 import { LanguageField } from './language-field'
+import { useProjectImages } from './use-project-images'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './brief-form.module.css'
 
@@ -28,8 +30,13 @@ export type BriefFormProps = {
   // The project's campaigns, for "Copy the rules from another campaign" (S2-14).
   campaigns: CampaignSummary[]
   creating: boolean
-  onCreate: (plan: Extract<CampaignPlan, { ok: true }>) => void
+  // May give a change for the form, applied once it resolves (SP-4: rows after a refused step).
+  onCreate: (
+    plan: Extract<CampaignPlan, { ok: true }>,
+  ) => Promise<((v: BriefFormValues) => BriefFormValues) | void>
   onCancel: () => void
+  // Told the values after every change (SP-4: brief-load removes added photos on Cancel).
+  onValues?: (values: BriefFormValues) => void
 }
 
 export function BriefForm(props: BriefFormProps) {
@@ -37,9 +44,18 @@ export function BriefForm(props: BriefFormProps) {
   const firstField = useRef<HTMLInputElement>(null)
   const ids = useId()
   const held = props.subjects.map((s) => s.id)
-  const plan = planFromForm(props.projectId, values, held)
+  const { images, refusal } = useProjectImages(props.projectId)
+  const plan = planFromForm(props.projectId, values, held, images, refusal !== null)
+  // The photos the form opened with: only a loaded brief's import puts any there (A-125).
+  const [briefPhotoCount] = useState(() =>
+    props.initial.subjects.reduce((sum, s) => sum + s.photos.length, 0),
+  )
 
   useEffect(() => firstField.current?.focus(), [])
+  const { onValues } = props
+  useEffect(() => {
+    onValues?.(values)
+  }, [onValues, values])
 
   const setText = (key: CampaignText, text: string) => setValues((v) => ({ ...v, [key]: text }))
   function fillLanguages() {
@@ -59,10 +75,24 @@ export function BriefForm(props: BriefFormProps) {
           onChange={setText}
           onRegionLeave={fillLanguages}
         />
+        {refusal !== null && <p role="alert">{refusal}</p>}
+        {briefPhotoCount > 0 && (
+          <p className={styles.copy}>
+            This brief added {briefPhotoCount} photo(s) from its folder. Check them before you
+            create the campaign.
+          </p>
+        )}
         <SubjectRows
+          projectId={props.projectId}
           subjects={values.subjects}
           held={props.subjects}
+          images={images}
           onChange={(subjects) => setValues((v) => ({ ...v, subjects }))}
+          onUpdate={(change) => setValues((v) => ({ ...v, subjects: change(v.subjects) }))}
+        />
+        <PlacePhotoField
+          checked={values.placeSubjectPhoto}
+          onChange={(placeSubjectPhoto) => setValues((v) => ({ ...v, placeSubjectPhoto }))}
         />
         <SizeFields
           sizes={values.sizes}
@@ -100,7 +130,12 @@ export function BriefForm(props: BriefFormProps) {
               type="button"
               className={layout.primary}
               disabled={!plan.ok}
-              onClick={() => plan.ok && props.onCreate(plan)}
+              onClick={() => {
+                if (!plan.ok) return
+                void Promise.resolve(props.onCreate(plan)).then((change) => {
+                  if (change) setValues(change)
+                })
+              }}
             >
               Create campaign
             </button>

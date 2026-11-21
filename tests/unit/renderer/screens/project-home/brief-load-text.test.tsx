@@ -112,6 +112,23 @@ describe('Load a brief: Markdown and text [P4-15]', () => {
     expect(sent(fake, 'job.markSeen')).toEqual([{ projectId: 'P1', jobIds: ['J1'] }])
   })
 
+  it('imports no photo from a read result, even one that names paths [SP-4 security]', async () => {
+    const fake = textApi()
+    await startReading(fake)
+    const subjectPictures = [{ paths: ['/Users/me/private.png'], notes: [] }]
+    const result = { ...RESULT, draft: { ...RESULT.draft, subjects: [{ name: 'Can' }] } }
+    act(() =>
+      fake.emit(
+        'job.updated',
+        row({ status: 'succeeded', result: { ...result, subjectPictures } }),
+      ),
+    )
+    const form = await screen.findByRole('region', { name: 'Brief' })
+    expect(within(form).getByText('No photos yet.')).toBeVisible()
+    expect(names(fake)).not.toContain('asset.import')
+    expect(document.body.innerHTML).not.toContain('private.png')
+  })
+
   it('on failure offers Try again, which sends the same path again', async () => {
     const fake = textApi()
     await startReading(fake)

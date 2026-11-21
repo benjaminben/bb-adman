@@ -84,6 +84,15 @@ describe('photoProblems: the photo lines [subject-photos "Problem lines", D-098]
     expect(photoProblems(subjects, null, refused)).toEqual([line])
   })
 
+  it.each([
+    ['a new row', row({ photos: [added('O1')] })],
+    ['an existing row with another subject', existing('can-1', { photos: [added('O1')] })],
+  ])('gives line 4 for an added photo since attached to another subject (%s)', (_, subject) => {
+    expect(photoProblems([subject], images, false)).toEqual([
+      'Subject 1: the photo "other.png" belongs to the subject "other-can". One photo belongs to one subject.',
+    ])
+  })
+
   it('lists each kind over every row before the next kind', () => {
     const subjects = [
       row({ adding: true }),
@@ -191,13 +200,6 @@ describe('the form model with photos [subject-photos "The model"]', () => {
     const [first, second] = open([{ photos: [reused('A1')], notes }]).subjects
     expect(first).toMatchObject({ photos: [reused('A1')], notes })
     expect(second).toMatchObject({ photos: [], notes: [] })
-  })
-
-  it('does not put placeSubjectPhoto in the campaign.create input yet', () => {
-    const values = { ...open([{ photos: [added('A1')], notes: [] }]), placeSubjectPhoto: true }
-    values.subjects = values.subjects.slice(0, 1)
-    const result = planFromForm('P1', values, [], [assetRow('A1')])
-    expect(result.ok && result.campaign).not.toHaveProperty('placeSubjectPhoto')
   })
 
   it('puts the photo lines after "choose a subject" and before the size lines', () => {
