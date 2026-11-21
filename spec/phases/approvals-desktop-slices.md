@@ -83,7 +83,7 @@ The slices that build approvals in the desktop app: AP-5 to AP-13, with AP-10b. 
 - **Tests:** `tests/unit/renderer/stores/approvals-store.test.ts` (fake timers: refresh on open, every 60 s with focus, none without, on focus; one at a time; stops on unmount; a failure kept for the bar and not sent to the banner; a `gone: true` reply shows the gone sentence in the bar; reads again on `approvals.changed` and `project.changed`; not ready sends no refresh); `tests/unit/renderer/dialogs/approval-dialog.test.tsx` (each state; "Make link" sends `createLink` then `publish`; a chosen password under 12 characters keeps the button disabled; copy link; copy password reads `getPassword` on click and never draws it; not kept shows its line; set password; update gallery with its waiting line; turn off opens the confirmation with "Keep link" focused; Escape and Cancel send nothing; axe); `approval-bar.test.tsx`; `tests/unit/renderer/ui/signoff-list.test.tsx` (newest first; earlier-version line; an email holding `<b>` drawn as text). Shots: `tests/shots/ap-11.shots.ts`: `92-approval-dialog-new`, `93-approval-dialog-live`, `94-approval-dialog-turn-off`, `95-campaign-approval-bar`.
 - **Class:** D. Security class, short review (the password in the window). **After:** AP-9; P4-12 merged.
 
-### AP-12 — Tile marks
+### AP-12 — Tile marks (built)
 
 - **Exists when done:** each tile shows its approval marks and a "Sign-offs ({n})" list, for one variant or many.
 - **New files:** `src/shared/approvals/marks.ts`; `src/renderer/screens/campaign/approval-mark/`.

@@ -2,7 +2,7 @@
 
 A subject (the product, service or person an ad is about) is defined first by one or more photos of it. Its description stays optional. Generating the subject into new angles and scenes is a core use, so every photo of a subject guides the AI, and any of them can also be placed in an ad as it is. This file covers the brief file's `pictures` field and how `brief.parse` checks it, the "Photos" part of the brief form, what "Create campaign" sends, how subject photos reach the reference pickers and the picture chooser, what agents see, and what is out of scope [D-098, R-21].
 
-**State.** Built and merged: SP-1, SP-2, SP-6, SP-7, SP-8. Built, not yet merged: SP-3 (it merges with SP-4 and SP-5). In build: SP-4, SP-9. Not started: SP-5. Each section says its own state. Slices: `spec/phases/subject-photos.md` (SP-1 to SP-9). Assumptions A-110 to A-126 are at the end of this file; A-127 (the prompt ending) is in `spec/assumptions.md`.
+**State.** Built and merged: SP-1 to SP-9. Slices: `spec/phases/subject-photos.md` (SP-1 to SP-9). Assumptions A-110 to A-126 are at the end of this file; A-127 (the prompt ending) is in `spec/assumptions.md`.
 
 Read with: `spec/brief-and-templates.md` (the brief's shape, `brief.parse`, "What the project page sends"), `spec/screens-campaign.md` ("The brief form"), `spec/assets.md` (import, reuse, libraries, reference pictures, the asset protocol), `spec/screens-ai.md` (generate fields, reference dialog), `spec/editor.md` ("Picture chooser"), `.claude/rules/security-priorities.md`.
 
@@ -108,7 +108,7 @@ The accepted value is the real path. The same file may be accepted for two subje
 
 `brief.extract` (Markdown and plain-text briefs) gives no photos. In `src/main/jobs/kinds/brief-extraction.ts`, the draft has `pictures` removed from every subject before it is returned, so a path an AI answer made up is never stored in the job row or shown. Its reply has no `subjectPictures`. The user adds photos on the form. Markdown image links (`![](can.png)`) are not read (A-114): they would be paths steered by the AI's reading, and the form's "Add photos" already does the job.
 
-## The brief form (model built, SP-2; rows built, SP-3, not yet merged)
+## The brief form (Built: model SP-2, rows SP-3)
 
 ### The model
 
@@ -203,7 +203,7 @@ One checkbox for the whole form, under the subject list and its "Add subject" bu
 - "Remove subject {i}", "Cancel", and the form going away without a campaign made (the project closes) do the same for every `added: true` photo still in the form.
 - Focus after "Remove": the next photo's "Remove" in that row, else the previous one's, else "Add photos".
 
-### Photos from a loaded brief (Not built, SP-4)
+### Photos from a loaded brief (Built, SP-4)
 
 After `brief.parse` succeeds and before the form opens, `brief-load/` imports each subject's `subjectPictures[i].paths` with one `asset.import { projectId, paths, library: 'asset', copy: true }` per subject that has paths (one bad file then spoils only that subject's batch). The line "Adding the brief's photos…" (role `status`) shows meanwhile. The results become `briefPhotos[i]` as in "Add photos" step 3; a refused import adds the note "The brief's photos could not be added: {message}" for that subject. Then the form opens through `formFromDraft(reply, held, briefPhotos)`.
 
@@ -228,7 +228,7 @@ Importing on open, before the user confirms, is chosen because it lets the windo
 
 `brief-form/` reads `asset.list { projectId, kind: 'image' }` when the form opens and again on `project.changed` for this project; a reply older than the newest read is dropped. The result is `images` for `planFromForm` and the rows. A refused read shows its message (role `alert`) above the subject list.
 
-## "Create campaign" (Not built, SP-4)
+## "Create campaign" (Built, SP-4)
 
 In `brief-load/brief-load.tsx`, with `plan.ok`:
 

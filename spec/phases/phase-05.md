@@ -48,9 +48,9 @@
 | 2 | P5-8 `generation.runFill`, the fill job, the gate (built) | medium | P5-1; SP-9 merged | P5-3, P5-4, P5-12 | SP-9 (`prompt.ts`) |
 | 2 | P5-12 The sync plan and `sync.preview` (built) | medium | P5-1, P5-2 | P5-3, P5-4, P5-8 | — |
 | 3 | P5-9 `generation.applyFill` | small | P5-4, P5-8 | P5-10, P5-11, P5-13 | — |
-| 3 | P5-10 `variant.fanOut` and `variant.add` | medium | P5-4, P5-5 | P5-9, P5-11, P5-13 | — |
-| 3 | P5-11 Directions | small | P5-4 | P5-9, P5-10, P5-13 | — |
-| 3 | P5-13 `sync.apply` | medium | P5-3, P5-4, P5-12 | P5-9, P5-10, P5-11 | — |
+| 3 | P5-10 `variant.fanOut` and `variant.add` (built) | medium | P5-4, P5-5 | P5-9, P5-11, P5-13 | — |
+| 3 | P5-11 Directions (built) | small | P5-4 | P5-9, P5-10, P5-13 | — |
+| 3 | P5-13 `sync.apply` (built) | medium | P5-3, P5-4, P5-12 | P5-9, P5-10, P5-11 | — |
 | 4 | P5-14 Campaign page: Undo, Redo, one grid per direction | medium | P5-1; AP-12 merged | wave 3 slices | AP-11, AP-12 (`campaign-view/`, `variant-grid/`) |
 | 5 | P5-15 Tile actions: delete and quick look | medium | P5-4, P5-14 | P5-16, P5-17, P5-18 | — |
 | 5 | P5-16 Fan-out dialog | medium | P5-9, P5-10, P5-14 | P5-15, P5-17, P5-18 | — |

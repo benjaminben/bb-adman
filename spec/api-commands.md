@@ -33,12 +33,12 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `campaign.delete` | projectId, campaignId | — | ask | Built | FR-197 |
 | `ruleSet.update` | projectId, campaignId, any of the four lists | C | deny | Built | FR-033 |
 | `ruleSet.copyFrom` | projectId, campaignId, sourceCampaignId (both in this project) | C | deny | Built | FR-034 |
-| `direction.createFromMaster` | projectId, masterVariantId, name | — | deny | Not built (Phase 5) | FR-074 |
-| `direction.rename` | projectId, directionId, name | C | deny | Not built (Phase 5) | FR-072 |
-| `direction.delete` | projectId, directionId (refused if it is the campaign's last) | — | deny | Not built (Phase 5) | A-06 |
+| `direction.createFromMaster` | projectId, masterVariantId, name | — | deny | Built | FR-074 |
+| `direction.rename` | projectId, directionId, name | C | deny | Built | FR-072 |
+| `direction.delete` | projectId, directionId (refused if it is the campaign's last) | — | deny | Built | A-06 |
 | `direction.restore` | projectId, direction, variants[] of VariantSnapshot (system; not used and to be removed, D-099) | C | deny (system) | Not built | R-17 |
-| `variant.fanOut` | projectId, directionId, sizes[], languages[], formats[] (`image` only until Phase 7), fits{} | C | deny | Not built (Phase 5) | FR-075, FR-076 |
-| `variant.add` | projectId, directionId, sizeLabel, language, format, fit? (`scale` or `crop`) | C | allow | Not built (Phase 5) | FR-195 |
+| `variant.fanOut` | projectId, directionId, sizes[], languages[], formats[] (`image` only until Phase 7), fits{} | C | deny | Built | FR-075, FR-076 |
+| `variant.add` | projectId, directionId, sizeLabel, language, format, fit? (`scale` or `crop`) | C | allow | Built | FR-195 |
 | `variant.remove` | projectId, variantIds[] (system; the inverse of fan-out, `variant.add`, `variant.restore`) | C | deny (system) | Built | R-17 |
 | `variant.restore` | projectId, snapshots[] (system; the inverse of `variant.remove`) | C | deny (system) | Built | R-17 |
 | `variant.restoreLayers` | projectId, variants[] of { variantId, layers } (system; the inverse of `sync.apply`, `generation.applyFill`) | C | deny (system) | Built | R-17 |
@@ -60,7 +60,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `translation.set` | projectId, layerId, text, applyToSameLanguage: boolean | V | allow | Not built (Phase 6) | FR-102, FR-194 |
 | `translation.approve` | projectId, layerIds[] | C | deny | Not built (Phase 6) | FR-101 |
 | `translation.exportSheet` | projectId, campaignId, filePath | — | deny | Not built (Phase 6) | FR-103 |
-| `sync.apply` | projectId, directionId, masterRev, decisions[] | C | deny | Not built (Phase 5) | FR-082, FR-083 |
+| `sync.apply` | projectId, directionId, masterRev, decisions[] | C | deny | Built | FR-082, FR-083 |
 | `check.run` | projectId, campaignId or variantIds[] | — | allow | Not built (Phase 6) | FR-114, FR-116, FR-196 |
 | `generation.runImages` | projectId, variantId, slot or layerId (exactly one), prompt, referenceAssetIds[], count (1 to 8), provider, licenceConfirmed? (S2-4) | — | tick | Built | FR-062–FR-065, FR-199 |
 | `generation.runFill` | projectId, variantId, provider, licenceConfirmed? (agents may start it: a gate run command) | — | tick | Built | FR-076, D-080 |

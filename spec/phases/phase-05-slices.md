@@ -135,7 +135,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** B. No security review (internal data, a deny command).
 - **After:** P5-4, P5-8.
 
-### P5-10 — `variant.fanOut` and `variant.add`
+### P5-10 — `variant.fanOut` and `variant.add` (built)
 
 - **Size:** medium. **Needs:** P5-4, P5-5.
 - **Read:** `spec/links-and-sync.md`, "Fan-out".
@@ -147,7 +147,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** B. No security review (no path, no provider, agent reach only through `variant.add`, allowed by policy).
 - **After:** P5-4, P5-5.
 
-### P5-11 — Directions
+### P5-11 — Directions (built)
 
 - **Size:** small. **Needs:** P5-4.
 - **Read:** `spec/links-and-sync.md`, "Directions".
@@ -172,7 +172,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** A + B. No security review (a read).
 - **After:** P5-1, P5-2.
 
-### P5-13 — `sync.apply`
+### P5-13 — `sync.apply` (built)
 
 - **Size:** medium. **Needs:** P5-3, P5-4, P5-12.
 - **Exists when done:** `sync.apply` writes the accepted changes as designed, as one campaign entry, with the changed variants' own lists cleared.

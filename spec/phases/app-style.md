@@ -40,13 +40,13 @@ For a renderer CSS file whose first line is `/* app-style */`, outside comments:
 | Wave | Slice | Waits for | May run beside | Must not run beside |
 |------|-------|-----------|----------------|---------------------|
 | 1 | ST-1 Tokens (built) | nothing | any slice that does not edit `tokens.css` (SP-3 to SP-5, AP-11, AP-12, Phase 5 slices) | a slice that adds tokens (none planned) |
-| 2 | ST-2 Base controls, shared layout, icons | ST-1 | SP and AP slices (none edits `base.css`, `layout.module.css` or `ui/icon/`) | nothing planned |
-| 3 | ST-3 App shell and tabs | ST-2 | ST-4 to ST-8 | a slice editing `app/` or `ui/tab-row/` (none planned) |
-| 3 | ST-4 Dialogs | ST-2 | ST-3, ST-5 to ST-8 | AP-11 only if AP-11 edits `ui/dialog-frame/` (it does not; its new `dialogs/approval-dialog/` takes the look through the frame) |
+| 2 | ST-2 Base controls, shared layout, icons (built) | ST-1 | SP and AP slices (none edits `base.css`, `layout.module.css` or `ui/icon/`) | nothing planned |
+| 3 | ST-3 App shell and tabs (built) | ST-2 | ST-4 to ST-8 | a slice editing `app/` or `ui/tab-row/` (none planned) |
+| 3 | ST-4 Dialogs (built) | ST-2 | ST-3, ST-5 to ST-8 | AP-11 only if AP-11 edits `ui/dialog-frame/` (it does not; its new `dialogs/approval-dialog/` takes the look through the frame) |
 | 3 | ST-5 Settings | ST-2 | ST-3, ST-4, ST-6 to ST-8 | a slice editing `screens/settings/` (Phase 8 and 9 add sections later) |
 | 3 | ST-6 Start screen and its drawings | ST-2 | ST-3 to ST-5, ST-7, ST-8 | nothing planned |
 | 3 | ST-7 Editor frame, canvas and layer list | ST-2 | ST-3 to ST-6, ST-8 | a Phase 5 slice editing those `editor/` folders |
-| 3 | ST-8 Editor properties panel and fields | ST-2 | ST-3 to ST-7 | a Phase 5 or 6 slice editing those `editor/` folders |
+| 3 | ST-8 Editor properties panel and fields (built) | ST-2 | ST-3 to ST-7 | a Phase 5 or 6 slice editing those `editor/` folders |
 | 4 | ST-9 AI in the editor and the run dialog | ST-4 | ST-10, and wave 3 slices other than ST-4 | nothing planned |
 | 4 | ST-10 AI dialogs and the activity panel | ST-4 | ST-9, and wave 3 slices other than ST-4 | nothing planned |
 | 5 | ST-11 Campaign page: view, tabs, grid, tiles | ST-3 (uses `ui/tab-row`), AP-12 merged | ST-12, ST-13 | AP-11, AP-12, any Phase 5 slice editing `screens/campaign/` |
@@ -71,7 +71,7 @@ If Phase 5 starts its campaign page slices before ST-11 and ST-12, those slices 
 - **Exit check:** lint, typecheck, the three new tests, `tests/unit/renderer/ui/`, the component tests under `tests/unit/renderer/` (axe stays clean), and `npm run test:e2e -- tests/e2e/screen-tour.spec.ts` on a desktop.
 - **Class:** D, with one end-to-end run. Not security class. **After:** nothing.
 
-### ST-2 — Base controls, shared layout, icons
+### ST-2 — Base controls, shared layout, icons (built)
 
 - **Exists when done:** `base.css` draws the body on `--color-page` with `--leading-body`; headings in the title face and sizes; every `button`, `input`, `select`, `textarea` as the shared button and field (edges `--color-control-border`, `min-height: var(--control-height)`; a control that must be smaller, such as a tab's close button or a layer row action, is set in its own module by its slice); `b`, `strong` at `--weight-bold`. `layout.module.css` holds the shared pieces of `spec/app-style.md`, "Shared pieces": `card`, `field`, `label` (now `--weight-medium`, no raw `600`), `row`, `muted`, `primary`, and new `quiet`, `danger`, `small`, `large`, `iconOnly`, `link`, `seg`, `switch`, `badge` (with `warn`, `danger`, `info`, `ok`, `neutral`, `accent`), `chip`, `notice` (same kinds), `menu`, `menuItem`, `menuLabel`, `table`, `progress`, `empty`, `reading` (the reading face for a long-text field), `formGrid`. The new `ui/icon/` draws an icon by name from the prototype path set. No component uses the new classes yet except where `base.css` styles elements directly.
 - **New files:** `src/renderer/ui/icon/` (`index.ts`, `icon.tsx`, `icon-paths.ts` (the path data, may pass 200 lines only if the set does; split into two files instead), `icon.module.css`).
@@ -82,7 +82,7 @@ If Phase 5 starts its campaign page slices before ST-11 and ST-12, those slices 
 - **Exit check:** lint, typecheck, `tests/unit/renderer/ui/`, every component test under `tests/unit/renderer/` (the base rules reach every screen), `npm run test:e2e -- tests/e2e/screen-tour.spec.ts tests/e2e/phase1.spec.ts` on a desktop.
 - **Class:** D, with one end-to-end run. **After:** ST-1.
 
-### ST-3 — App shell and tabs
+### ST-3 — App shell and tabs (built)
 
 - **Exists when done:** the top bar, project switcher and its menu, campaign tabs, the variant tab row's shared look (`ui/tab-row`), tab marks with the spinner and pulsing dot, and the error banner as in "Component by component", "App shell and tabs". "Activity" and "Settings" show their icon beside the word.
 - **May touch:** `src/renderer/app/app-shell/`, `app/campaign-tabs/`, `app/project-switcher/`, `app/error-banner/`, `app/activity-button/` (only the icon and the count pill), `src/renderer/ui/tab-row/`, `ui/tab-marks/`.
@@ -92,7 +92,7 @@ If Phase 5 starts its campaign page slices before ST-11 and ST-12, those slices 
 - **Exit check:** lint, typecheck, the component tests above, `styling-rules.test.ts`, `npm run test:e2e -- tests/e2e/screen-tour.spec.ts tests/e2e/editor-open.spec.ts tests/e2e/quit-warning.spec.ts` on a desktop.
 - **Class:** D, with one end-to-end run. **After:** ST-2.
 
-### ST-4 — Dialogs
+### ST-4 — Dialogs (built)
 
 - **Exists when done:** `DialogFrame` draws the head, body and foot bands; it has the optional `footer` and `size` props. The non-AI dialogs (key, address, licence, import, relink, package, picture chooser) use the frame's bands, move their button row into `footer` where that row is already last, and use the shared pieces. Dialogs not in this slice look right through the frame alone.
 - **May touch:** `src/renderer/ui/dialog-frame/`, `src/renderer/dialogs/key-dialog/`, `address-dialog/`, `licence-dialog/`, `import-dialog/`, `relink-dialog/`, `package-dialog/`, `picture-chooser/`.
@@ -133,7 +133,7 @@ If Phase 5 starts its campaign page slices before ST-11 and ST-12, those slices 
 - **Exit check:** lint, typecheck, `tests/unit/renderer/editor/`, `styling-rules.test.ts`, `npm run test:e2e -- tests/e2e/editor-open.spec.ts tests/e2e/scene-overflow.spec.ts` on a desktop.
 - **Class:** D, with one end-to-end run. **After:** ST-2.
 
-### ST-8 — Editor properties panel and fields
+### ST-8 — Editor properties panel and fields (built)
 
 - **Exists when done:** the properties panel body, groups, geometry grid, number fields, font field, text and text-box fields (copy in the reading face), picture fields, shade fields, colour choice (swatch edges `--color-control-border`, segmented groups), background colour field.
 - **May touch:** `src/renderer/editor/properties-panel/`, `layer-fields/`, `geometry-fields/`, `number-field/`, `font-field/`, `text-fields/`, `text-box-fields/`, `picture-fields/`, `shade-fields/`, `colour-choice/`, `background-colour-field/`.

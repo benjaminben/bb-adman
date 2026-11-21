@@ -55,7 +55,7 @@
 | P7-4 Media runner | P7-1; P7-3 for its exit check (the real binary and test clips) | Everything but P7-1 | Any slice editing `src/main/index.ts` |
 | P7-5 Video facts, audio types | P7-2 | P7-4, P7-6, P7-7, P7-13, P7-14 | Any slice editing `inspect.ts`, `sniff.ts`, `file-types.ts` |
 | P7-6 Asset protocol ranges (built) | Nothing | Everything | Any slice editing `asset-url.ts`, `asset-protocol.ts` |
-| P7-7 Presets and time | Nothing | Everything but P7-8 | P7-8 (`scene.tsx`, `scene-input.ts`) |
+| P7-7 Presets and time (built) | Nothing | Everything but P7-8 | P7-8 (`scene.tsx`, `scene-input.ts`) |
 | P7-8 Background track drawn | P7-1, P7-2, P7-3 (test clips), P7-7 | P7-9 to P7-15 | P7-7; P7-16 (`thumbnails/service.ts`) |
 | P7-9 Clip commands | P7-1, P7-2, P7-5 | P7-8, P7-11, P7-13, P7-14 | Phase 5 or 6 slices editing `queries/variant.ts` or `campaign-reads.ts` |
 | P7-10 Format and duration | P7-9 | P7-11 to P7-15 | Phase 5 slices editing `commands/variant/index.ts` |

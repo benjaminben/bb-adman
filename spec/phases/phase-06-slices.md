@@ -4,7 +4,7 @@ The slices of Phase 6, P6-1 to P6-17. Goal, exit criteria, rules, order, shared 
 
 Test classes as in `spec/testing.md`. Security class: none, short or full (`spec/phases/phase-06.md`, rules).
 
-## P6-1 — Contracts
+## P6-1 — Contracts (built)
 
 - **Exists when done:** every Phase 6 command, query and the `translation` job kind registered against a stub; the schemas; the `variant_check` wire row; the policy rows; the check-badge and copy-edit hooks in place; the campaign page's mount for the three sections.
 - **New files:**

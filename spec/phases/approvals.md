@@ -52,7 +52,7 @@
 | 4 | AP-10b Test connection for S3 (built) | AP-5, AP-7 | AP-8, AP-9, AP-10, AP-11, Phase 4 and look-pack slices | Any slice that edits `src/main/commands/storage/`, `src/main/providers/s3/`, `s3-section/` or `agent-policy.ts` (none is planned) |
 | 5 | AP-9 Update gallery and refresh (built) | AP-8 (built) | AP-10 | Nothing |
 | 6 | AP-11 Approval dialog, bar and store (built) | AP-9; P4-12 merged | AP-10 | P4-12 and AP-12 (`campaign-view/`) |
-| 7 | AP-12 Tile marks | AP-11 | Phase 4 and look-pack slices | P4-12 and AP-11 (`campaign-view/`); any slice editing `variant-tile/` or `variant-grid/` (none is planned) |
+| 7 | AP-12 Tile marks (built) | AP-11 | Phase 4 and look-pack slices | P4-12 and AP-11 (`campaign-view/`); any slice editing `variant-tile/` or `variant-grid/` (none is planned) |
 | 8 | AP-13 Local end-to-end proof, deploy steps, exit check | Every other AP slice | Phase 4 and look-pack slices | Nothing |
 
 The service slices AP-14, AP-15, AP-4 and AP-16 run one after another, each in `approvals-service/` only, so they never share a file with a desktop slice; the desktop waves (AP-6 to AP-12) keep their own order beside them. No two desktop slices of one wave edit the same file: wave 3 by folder (the app's client and password store, the app's picture store and S3 adapter); wave 4 by main process against Settings screens, with AP-10b in the storage command folder, the S3 adapter folder and `s3-section/` only. The move to Next.js and Vercel changes no desktop slice: the app knows only a service address and a key (D-097).

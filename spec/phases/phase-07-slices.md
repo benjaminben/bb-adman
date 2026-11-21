@@ -67,7 +67,7 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, `npm test`, `npm run test:e2e`.
 - **Class:** G + A. **Security:** full (the protocol). **Size:** small.
 
-### P7-7 — Presets and time in the Scene
+### P7-7 — Presets and time in the Scene (built)
 
 - **Exists when done:** a video variant's layers follow their timing and presets at `timeMs`; `variant.render` takes a time; the preset reference pictures are made and pass on macOS.
 - **New files:** `src/shared/scene/presets.ts` (`presetState(preset, phase, progress, wordIndex, wordCount, variantSize)` gives `{ opacity, dx, dy }`, the table of `phase-07.md`, "Presets"); `src/shared/scene/timing.ts` (`visibleAt(layer, t, durationMs)`, `blockProgress(block, t)`, `posterTimeMs(layers, durationMs)`); `src/shared/scene/word-spans.tsx` (the words of a text as `<span>`s, white space kept as text, used only for `stagger-words`); `tests/e2e/scene-cases-time.ts`.

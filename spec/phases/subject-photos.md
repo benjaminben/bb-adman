@@ -38,9 +38,9 @@
 | 1 | SP-7 Subject photos in the reference lists and pre-choices (built) | Phase 4 | SP-1, SP-2, SP-6, SP-8, SP-9 |
 | 1 | SP-8 Placing a reference-library subject photo (built) | Phase 4 | SP-1, SP-2, SP-6, SP-7, SP-9 |
 | 1 | SP-9 The prompt ending keeps printing when pictures are sent (built) | Phase 4 | Every other SP slice |
-| 2 | SP-3 The "Photos" part of a subject row and the place box (built, not yet merged) | SP-2 | SP-1, SP-6, SP-7, SP-8, SP-9 |
-| 3 | SP-4 Brief photos on load, the Create order, cleanup (in build) | SP-1, SP-3, SP-6 | SP-9 |
-| 4 | SP-5 Fixtures, end-to-end and shots updates, exit check (not started) | Every other SP slice except SP-9 | SP-9 |
+| 2 | SP-3 The "Photos" part of a subject row and the place box (built) | SP-2 | SP-1, SP-6, SP-7, SP-8, SP-9 |
+| 3 | SP-4 Brief photos on load, the Create order, cleanup (built) | SP-1, SP-3, SP-6 | SP-9 |
+| 4 | SP-5 Fixtures, end-to-end and shots updates, exit check (built) | Every other SP slice except SP-9 | SP-9 |
 
 **SP-3, SP-4 and SP-5 merge into `main` together**, because the form's photo requirement breaks the end-to-end runs until SP-5.
 
@@ -77,7 +77,7 @@ No two slices of one wave share a file: SP-1 is in `src/main/assets/`, `src/main
 - **Exit check:** lint, typecheck, the pure unit tests `tests/unit/renderer/screens/project-home/brief-form-*.test.ts`.
 - **Class:** A. **After:** nothing.
 
-### SP-3 — The "Photos" part of a subject row and the place box (built, not yet merged)
+### SP-3 — The "Photos" part of a subject row and the place box (built)
 
 - **Exists when done:** each subject row shows the "Photos" fieldset of `spec/subject-photos.md`: the list, "Add photos", "Remove", the notes, "Adding photos…". "Add photos" picks and imports into the asset library; "Remove" and "Remove subject {i}" remove new assets. Under the subject list, the checkbox "Start the ad with a subject photo placed" with its hint. Above the subject list, "This brief added {n} photo(s) from its folder. Check them before you create the campaign." when the form opened with `n` > 0 photos (A-125). `brief-form/` reads `asset.list { kind: 'image' }` on open and on `project.changed` and passes `images` to the rows and to `planFromForm`.
 - **New files:** `src/renderer/screens/project-home/subject-photos/` (`index.ts`, `subject-photos.tsx`, `photo-tile.tsx`, `use-add-photos.ts`, `place-photo-field.tsx`, `subject-photos.module.css`); `src/renderer/screens/project-home/brief-form/use-project-images.ts`.
@@ -88,7 +88,7 @@ No two slices of one wave share a file: SP-1 is in `src/main/assets/`, `src/main
 - **Exit check:** lint, typecheck, the component tests named above.
 - **Class:** D. **After:** SP-2.
 
-### SP-4 — Brief photos on load, the Create order, cleanup (in build)
+### SP-4 — Brief photos on load, the Create order, cleanup (built)
 
 - **Starts from SP-3's branch**, and turns six red tests in `brief-load.test.tsx` and `project-sections.test.tsx` green.
 
@@ -148,7 +148,7 @@ No two slices of one wave share a file: SP-1 is in `src/main/assets/`, `src/main
 - **Exit check:** lint, typecheck, `tests/unit/shared/generation/`, the integration tests named above, `tests/integration/commands/job-retry*.test.ts`. Fake provider only; no paid run [D-049].
 - **Class:** A + B. No security review: the change is two fixed texts and which one is picked; no new command, path or data reaches a provider. **After:** nothing.
 
-### SP-5 — Fixtures, end-to-end and shots updates, exit check (not started)
+### SP-5 — Fixtures, end-to-end and shots updates, exit check (built)
 
 - **Exists when done:** the brief fixtures name small made-up photos; every e2e and shots run that makes a campaign through the form has a photo; new shots 140 to 146; the "Not built" marks in `spec/subject-photos.md` read "Built (SP-n)".
 - **New files:** made-up pictures, drawn shapes only, no brand, no text, no person: `tests/fixtures/briefs/photos/citrus-can.png` and `berry-bottle.png` (each a 256×256 PNG, a coloured can or bottle shape on a plain ground), `tests/shots/fixtures/photos/` with the pictures `s2-16-brief.yaml` names; `tests/shots/sp-5.shots.ts`.
