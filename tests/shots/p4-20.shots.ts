@@ -54,7 +54,7 @@ test('The master once workflow 5.1 is done', async () => {
   await w.cutOut(page)
   await w.useOption(page, 1)
   await page.waitForTimeout(800)
-  await shot(page, '103-workflow-5-1-master')
+  await shot(page, '130-workflow-5-1-master')
 })
 
 test('A run finished in another campaign', async () => {
@@ -69,7 +69,7 @@ test('A run finished in another campaign', async () => {
   await activityButton(page).click()
   await expect(page.getByRole('region', { name: 'Activity' }).getByText('New')).toBeVisible()
   await page.waitForTimeout(300)
-  await shot(page, '104-workflow-5-8-new-result')
+  await shot(page, '131-workflow-5-8-new-result')
 })
 
 test('Failed runs of each kind', async () => {
@@ -92,10 +92,10 @@ test('Failed runs of each kind', async () => {
   await w.selectLayer(page, background.name)
   await f.expectFailure(w.earlierOptions(page), f.COMFY_SENTENCE)
   await page.waitForTimeout(500)
-  await shot(page, '105-earlier-options-each-failure')
+  await shot(page, '132-earlier-options-each-failure')
 
   await activityButton(page).click()
   await f.expectFailure(page.getByRole('region', { name: 'Activity' }), f.COMFY_SENTENCE)
   await page.waitForTimeout(300)
-  await shot(page, '106-activity-each-failure')
+  await shot(page, '133-activity-each-failure')
 })
