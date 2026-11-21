@@ -4,7 +4,7 @@
 // confirm line first, as pictures do. SPEC 14 1.60 CU-6b-R N-9: "Start from" a prompt, a
 // first-frame picture or a reference picture; a picture start needs one chosen picture, and
 // the length's most follows the start's workflow.
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { EMPTY, useApp } from '../../app/app-context'
 import {
   generationStartVideoInput,
@@ -38,6 +38,7 @@ export function VideoPanel(props: {
   // SPEC 14 1.48 TL-2: true from the send until any reply, so a second click starts nothing.
   const [sending, setSending] = useState(false)
   const info = useComfyInfo()
+  const startSelectId = useId()
   const provider = providers.find((p) => p.id === providerId)
   const starts = offeredStarts(info, providerId)
   // A start no longer offered (another provider, another list) falls back to the prompt.
@@ -93,16 +94,21 @@ export function VideoPanel(props: {
           </select>
         </label>
       )}
-      <label className={styles.field}>
-        Start from
-        <select value={startId} onChange={(e) => setChosenStart(e.target.value as StartId)}>
+      {/* The label does not wrap the select, so its name is not "Start from A prompt …". */}
+      <div className={styles.field}>
+        <label htmlFor={startSelectId}>Start from</label>
+        <select
+          id={startSelectId}
+          value={startId}
+          onChange={(e) => setChosenStart(e.target.value as StartId)}
+        >
           {starts.map((s) => (
             <option key={s.id} value={s.id}>
               {s.label}
             </option>
           ))}
         </select>
-      </label>
+      </div>
       {fromPicture && (
         <VideoPictureChoice
           projectId={props.projectId}
