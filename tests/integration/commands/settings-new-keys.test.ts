@@ -72,16 +72,16 @@ describe('a hand-edited comfyui address is read as none until CU-1 [SPEC 13.1, 1
 })
 
 describe('settings.update and the comfyui row [SPEC 6.11.1, 14 CU-0 W5]', () => {
-  it('refuses comfyui as the default image provider while its row is not available', async () => {
+  it('lets comfyui be the default image provider now that its row is available', async () => {
     f = makeFixture()
     const before = await state()
     expect(before.providers.find((p) => p.id === 'comfyui')).toMatchObject({
-      available: false,
+      available: true,
       jobs: ['image'],
     })
     expect(
       await f.user('settings.update', { defaultProviders: { image: 'comfyui' } }),
-    ).toMatchObject({ ok: false, error: { code: 'INVALID_INPUT' } })
-    expect((await state()).settings).toEqual(before.settings)
+    ).toMatchObject({ ok: true })
+    expect((await state()).settings.defaultProviders.image).toBe('comfyui')
   })
 })

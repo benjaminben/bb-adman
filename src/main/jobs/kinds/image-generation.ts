@@ -74,6 +74,11 @@ function pngOf(run: Run, result: ImageResult): Uint8Array {
     prompt: run.input.prompt,
     kind: 'image_generation',
     createdAt: jc.deps.now().toISOString(),
+    // [1.53] G-1: no key is added when the provider gave no details.
+    ...(result.details && {
+      models: [...result.details.models],
+      workflow: { ...result.details.workflow },
+    }),
   })
 }
 
