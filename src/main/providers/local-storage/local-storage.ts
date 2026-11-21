@@ -46,12 +46,34 @@ export function localStorageAt(root: string): StorageProvider {
     }
   }
 
+  // SPEC 6.5 [1.16] A-02, H17: on the way down, any part that is a link whose target does not
+  // exist is refused. The walk stops at the first part that is not there.
+  async function refuseLinksToNowhere(parts: string[]): Promise<void> {
+    for (let depth = 1; depth <= parts.length; depth += 1) {
+      const part = nodePath.join(absoluteRoot, ...parts.slice(0, depth))
+      let stats
+      try {
+        stats = await fs.lstat(part)
+      } catch (error) {
+        if (isMissing(error)) return
+        throw error
+      }
+      if (stats.isSymbolicLink()) {
+        await fs.stat(part).catch((error: unknown) => {
+          if (isMissing(error)) refusePath()
+          throw error
+        })
+      }
+    }
+  }
+
   // The real folder at `relative` (parts joined by '/'), checked to be inside the real root.
   // When `make` is true the missing folders are made after the check, then checked again;
   // otherwise null when one is missing.
   async function folderFor(relative: string, make: boolean): Promise<string | null> {
     const parts = relative === '' ? [] : relative.split('/')
     const folder = nodePath.join(absoluteRoot, ...parts)
+    await refuseLinksToNowhere(parts)
     if (make) {
       await checkBeforeMaking(parts)
       await fs.mkdir(folder, { recursive: true })
