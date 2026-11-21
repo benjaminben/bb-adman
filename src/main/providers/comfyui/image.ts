@@ -37,8 +37,9 @@ export function workflowForRun(job: WorkflowChoice['job'], start?: WorkflowChoic
   return chosen
 }
 
-// The file name to put in the graph: the server's answer, after the client's checks.
-async function uploaded(client: ComfyClient, file: ImageFile): Promise<string> {
+// The file name to put in the graph: the server's answer, after the client's checks. Also
+// used by the video adapter (SPEC 14 1.60 N-7).
+export async function uploaded(client: ComfyClient, file: ImageFile): Promise<string> {
   const kept = await client.uploadImage(uploadName(file.bytes), file.bytes)
   return kept.subfolder === '' ? kept.name : `${kept.subfolder}/${kept.name}`
 }
