@@ -15,9 +15,9 @@ export function CampaignList(props: {
   const { projectId } = props
   if (props.campaigns.length === 0) return <p className={layout.muted}>No campaign yet.</p>
   return (
-    <ul className={layout.list} aria-label="Campaigns">
+    <ul className={`${layout.list} ${styles.grid}`} aria-label="Campaigns">
       {props.campaigns.map((c) => (
-        <li key={c.id} className={layout.row}>
+        <li key={c.id} className={`${layout.card} ${styles.card}`}>
           {projectId && (
             <span className={styles.cover}>
               {c.cover && (
@@ -30,11 +30,13 @@ export function CampaignList(props: {
               )}
             </span>
           )}
-          <span>{c.name}</span>
-          <span className={layout.muted}>{`Variants: ${c.variantCount}`}</span>
-          <button type="button" aria-label={`Open ${c.name}`} onClick={() => props.onOpen(c.id)}>
-            Open
-          </button>
+          <div className={styles.text}>
+            <span className={styles.name}>{c.name}</span>
+            <span className={styles.count}>{`Variants: ${c.variantCount}`}</span>
+            <button type="button" aria-label={`Open ${c.name}`} onClick={() => props.onOpen(c.id)}>
+              Open
+            </button>
+          </div>
         </li>
       ))}
     </ul>

@@ -6,6 +6,7 @@ import { useApi } from '@/renderer/app/app-context'
 import { ImportDialog } from '@/renderer/dialogs/import-dialog'
 import type { PickedPath, PickedPaths } from '@/shared/schemas/queries/dialog'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
+import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 
 export type ImportFilesProps = { projectId: string; subjects: SubjectRow[] }
@@ -31,9 +32,11 @@ export function ImportFiles(props: ImportFilesProps) {
   return (
     <div className={layout.row}>
       <button type="button" onClick={() => void pickFiles()}>
+        <Icon name="upload" />
         Import files…
       </button>
       <button type="button" onClick={() => void pickFolder()}>
+        <Icon name="folder" />
         Import a folder…
       </button>
       <ImportDialog

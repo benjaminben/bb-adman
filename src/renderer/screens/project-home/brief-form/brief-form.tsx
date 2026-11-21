@@ -20,6 +20,8 @@ import { PlacePhotoField } from '@/renderer/screens/project-home/subject-photos'
 import { CampaignFields, type CampaignText } from './campaign-fields'
 import { LanguageField } from './language-field'
 import { useProjectImages } from './use-project-images'
+import { BusySpinner } from '@/renderer/ui/dialog-frame'
+import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './brief-form.module.css'
 
@@ -75,7 +77,12 @@ export function BriefForm(props: BriefFormProps) {
           onChange={setText}
           onRegionLeave={fillLanguages}
         />
-        {refusal !== null && <p role="alert">{refusal}</p>}
+        {refusal !== null && (
+          <p role="alert" className={`${layout.notice} ${layout.danger} ${styles.notice}`}>
+            <Icon name="alert" />
+            {refusal}
+          </p>
+        )}
         {briefPhotoCount > 0 && (
           <p className={styles.copy}>
             This brief added {briefPhotoCount} photo(s) from its folder. Check them before you
@@ -114,17 +121,25 @@ export function BriefForm(props: BriefFormProps) {
         <div className={styles.end}>
           <div aria-live="polite">
             {!plan.ok && (
-              <div className={styles.problems}>
-                <h4 id={`${ids}-problems`}>Before the campaign can be made</h4>
-                <ul aria-labelledby={`${ids}-problems`}>
-                  {plan.problems.map((line) => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ul>
+              <div className={`${layout.notice} ${layout.warn} ${styles.problems}`}>
+                <Icon name="alert" />
+                <div>
+                  <h4 id={`${ids}-problems`}>Before the campaign can be made</h4>
+                  <ul aria-labelledby={`${ids}-problems`}>
+                    {plan.problems.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
           </div>
-          {props.creating && <p className={layout.muted}>Creating the campaign…</p>}
+          {props.creating && (
+            <p className={styles.busy}>
+              <BusySpinner />
+              Creating the campaign…
+            </p>
+          )}
           <div className={layout.row}>
             <button
               type="button"

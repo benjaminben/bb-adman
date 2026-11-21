@@ -1,17 +1,25 @@
+/* app-style */
+/* The drop target (spec/app-style.md "Project home and brief form"): it shows only while files
+   are dragged over the window, so it is the empty-place style in its drag-over accent. */
 .layer {
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: var(--space-12);
   background: var(--color-overlay);
   pointer-events: none;
 }
 .text {
   margin: 0;
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-8) var(--space-12);
+  border: calc(var(--border-width) * 2) dashed var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+  box-shadow: var(--shadow-3);
+  color: var(--color-accent-ink);
   font-size: var(--font-size-heading);
-  color: var(--color-text);
-  background: var(--color-bg);
-  border-radius: var(--radius);
+  font-weight: var(--weight-bold);
+  text-align: center;
 }

@@ -1,27 +1,31 @@
+/* app-style */
+/* The brief form's sizes: a row of checkboxes as today, then two short fields side by side. */
 .sizes {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--width-column-min), 1fr));
-  gap: var(--space-2) var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
   align-items: start;
+  min-width: 0;
   margin: 0;
-  padding: var(--space-3);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
 }
 .sizes legend {
   padding: 0 var(--space-1);
-  font-weight: 600;
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-bold);
 }
 .ticks {
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1) var(--space-4);
+  gap: var(--space-2) var(--space-4);
 }
 .ticks label {
   display: flex;
-  gap: var(--space-1);
+  gap: var(--space-2);
   align-items: center;
 }
 .field {
@@ -29,7 +33,20 @@
   flex-direction: column;
   gap: var(--space-1);
 }
+.field > label,
+label.field {
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+.field input,
+.field select {
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-regular);
+  color: var(--color-text);
+}
 .hint {
   margin: 0;
+  font-size: var(--font-size-small);
   color: var(--color-text-muted);
 }

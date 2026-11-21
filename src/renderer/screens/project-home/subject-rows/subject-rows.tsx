@@ -11,6 +11,7 @@ import type { ProjectImages } from '@/renderer/screens/project-home/brief-form-p
 import { removeAddedPhotos, SubjectPhotos } from '@/renderer/screens/project-home/subject-photos'
 import { emptySubject, type SubjectChoice } from '@/renderer/screens/project-home/brief-form-model'
 import { subjectIds } from '@/renderer/screens/project-home/brief-form-problems'
+import { Icon } from '@/renderer/ui/icon'
 import styles from './subject-rows.module.css'
 
 type Props = {
@@ -76,6 +77,7 @@ export function SubjectRows(props: Props) {
                 <label className={styles.field}>
                   Description (optional)
                   <input
+                    className={styles.reading}
                     value={s.description}
                     onChange={(e) => change(i, { description: e.target.value })}
                   />
@@ -161,6 +163,7 @@ export function SubjectRows(props: Props) {
           focusNext.current = subjects.length
         }}
       >
+        <Icon name="plus" />
         Add subject
       </button>
     </div>

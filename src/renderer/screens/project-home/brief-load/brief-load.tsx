@@ -24,7 +24,10 @@ import {
   type BriefFormValues,
   type CampaignPlan,
 } from '@/renderer/screens/project-home/brief-form-model'
+import { BusySpinner } from '@/renderer/ui/dialog-frame'
+import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
+import styles from './brief-load.module.css'
 import { useBriefPhotos } from './use-brief-photos'
 import { useTextBrief } from './use-text-brief'
 
@@ -122,13 +125,20 @@ export function BriefLoad(props: BriefLoadProps) {
   if (opened === null) {
     return (
       <div className={layout.row}>
-        <button type="button" onClick={() => void load()}>
+        <button type="button" className={layout.primary} onClick={() => void load()}>
+          <Icon name="file" />
           Load a brief
         </button>
         <button type="button" onClick={() => setOpened(formFromDraft(null, heldSubjectIds))}>
+          <Icon name="text" />
           Type a brief
         </button>
-        {briefPhotos.adding && <p role="status">Adding the brief's photos…</p>}
+        {briefPhotos.adding && (
+          <p role="status" className={styles.busy}>
+            <BusySpinner />
+            Adding the brief's photos…
+          </p>
+        )}
         {textBrief.dialogs}
       </div>
     )
