@@ -11,7 +11,7 @@ import { readMeta, writeMeta } from '../db/meta'
 import { readWireRows } from '../db/rows'
 import { assetsDirOf, resolveRow } from './service'
 import { hashFile, sniffFile } from './inspect'
-import { managedPath, pathInside } from './path-resolver'
+import { isManagedName, managedPath, pathInside } from './path-resolver'
 import { missingFile } from './errors'
 import { extensionOf, fileTypeFor, type AssetKind } from '../../shared/config/file-types'
 import type { AssetRow } from '../../shared/schemas/rows/asset'
@@ -77,7 +77,8 @@ async function findFiles(project: ProjectHandle, skipMissing: boolean) {
   const missing: string[] = []
   rows.forEach((r, i) => {
     const hit = resolved[i]
-    if (!hit?.ext) missing.push(r.id)
+    // SPEC 14 [1.34] V2: a row whose id cannot form a file name is treated as missing.
+    if (!hit?.ext || !isManagedName(r.id, hit.ext)) missing.push(r.id)
     else found.push({ id: r.id, file: hit.file, ext: hit.ext })
   })
   if (missing.length > 0 && !skipMissing) throw missingFile(missing)

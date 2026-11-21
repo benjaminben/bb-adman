@@ -50,9 +50,14 @@ export function assetsDirFor(projectFile: string, meta: AssetsDirMeta): string {
 const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/
 const EXT = /^[a-z0-9]{1,10}$/
 
+// True when {assetId}.{ext} is a name managedPath accepts (SPEC 14 [1.34] V2).
+export function isManagedName(assetId: string, ext: string): boolean {
+  return ULID.test(assetId) && EXT.test(ext)
+}
+
 // A managed file is named {assetId}.{ext} in the assets folder (SPEC 3.3).
 export function managedPath(assetsDir: string, assetId: string, ext: string): string {
-  if (!ULID.test(assetId) || !EXT.test(ext)) {
+  if (!isManagedName(assetId, ext)) {
     throw new Error('A managed path was asked for with an asset ID or extension it cannot use')
   }
   return path.join(assetsDir, `${assetId}.${ext}`)
