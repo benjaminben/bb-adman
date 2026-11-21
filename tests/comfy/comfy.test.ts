@@ -10,6 +10,7 @@ import {
   firstFrameCase,
   pictureCase,
   referenceCase,
+  referenceVideoCase,
   videoCase,
   type CaseKit,
   type CaseOutcome,
@@ -74,7 +75,8 @@ function runCase(
 }
 
 // The order of 1.46: the check, the reference picture, the video, the MOSS picture; case 6, the
-// video from a first frame, comes after case 2 (1.54 P-4).
+// video from a first frame, comes after case 2, and case 7, the video from a reference picture,
+// after case 6 (1.54 P-4).
 describe.skipIf(origin === '')('test:comfy on the test server', () => {
   it(
     '1. the check: the version, and per trial workflow what is missing',
@@ -105,6 +107,12 @@ describe.skipIf(origin === '')('test:comfy on the test server', () => {
   it(
     '6. MiniMax H3: a video from a first frame (only with ADMAN_COMFY_FRAME=1)',
     runCase(firstFrameCase, VIDEO_LIMIT_MS, ['uploadImage']),
+    VIDEO_LIMIT_MS + SPARE_MS,
+  )
+
+  it(
+    '7. MiniMax H3: a video from a reference picture (only with ADMAN_COMFY_REFVIDEO=1)',
+    runCase(referenceVideoCase, VIDEO_LIMIT_MS, ['uploadImage']),
     VIDEO_LIMIT_MS + SPARE_MS,
   )
 
