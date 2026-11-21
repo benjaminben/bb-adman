@@ -5,14 +5,16 @@ import {
   planFromForm,
   type BriefFormValues,
 } from '@/renderer/screens/project-home/brief-form-model'
+import { IMAGES, photosFor } from './brief-photo-fixture'
 import { DRAFT } from './project-fixture'
 
 function problemsOf(values: BriefFormValues, held: string[] = []): string[] {
-  const result = planFromForm('P1', values, held)
+  const result = planFromForm('P1', values, held, IMAGES)
   return result.ok ? [] : result.problems
 }
 
-const filled = (): BriefFormValues => formFromDraft({ draft: DRAFT, primaryLanguage: 'en' }, [])
+const filled = (): BriefFormValues =>
+  formFromDraft({ draft: DRAFT, primaryLanguage: 'en' }, [], photosFor(DRAFT))
 
 type Change = (v: BriefFormValues) => void
 const subject =
@@ -69,6 +71,7 @@ describe('planFromForm: problems, each a line [screens-campaign "The brief form"
       'Enter the message.',
       'Subject 1: enter a name.',
       'Subject 2: choose a subject.',
+      'Subject 1: add at least one photo.',
       'Choose at least one size.',
       'Give at least one language.',
       'Choose a campaign to copy the rules from.',
@@ -78,7 +81,7 @@ describe('planFromForm: problems, each a line [screens-campaign "The brief form"
 
 describe('planFromForm: a blank "Subject ID" is made from the name [ruling for S2-14]', () => {
   const sentIds = (values: BriefFormValues) => {
-    const result = planFromForm('P1', values, [])
+    const result = planFromForm('P1', values, [], IMAGES)
     if (!result.ok) throw new Error(result.problems.join())
     return {
       created: result.subjects.map((s) => s.id),
@@ -100,7 +103,8 @@ describe('planFromForm: a blank "Subject ID" is made from the name [ruling for S
     const values = filled()
     subject(0, { name: 'Lime can', newId: '' })(values)
     subject(1, { name: 'Lime can', newId: '' })(values)
-    values.subjects.push({ ...emptySubject(), name: 'Tall can', newId: 'Lime-can-2' })
+    const photos = [{ assetId: 'A3', added: true }]
+    values.subjects.push({ ...emptySubject(), name: 'Tall can', newId: 'Lime-can-2', photos })
     expect(sentIds(values).created).toEqual(['Lime-can', 'Lime-can-3', 'Lime-can-2'])
   })
 
