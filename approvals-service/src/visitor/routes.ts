@@ -2,6 +2,8 @@
 // picture routes are stubs answering "Not found." until AP-4 gives them bodies.
 import type { Parts } from '../app'
 import type { Env } from '../env'
+import { listSignoffs } from '../db/signoffs'
+import { listVariants } from '../db/variants'
 import { readForm, refused } from './forms'
 import { galleryPage } from './gallery-page'
 import { pageReply, redirect, stylesheetHeaders, textHeaders } from './headers'
@@ -53,7 +55,14 @@ const gallery: VisitorHandler = async ({ request, env, parts, params }) => {
   const slug = params[0] ?? ''
   const { session } = await readSession(env.DB, request, slug, parts.now())
   if (session === null) return pageReply(request, passwordPage(slug, false))
-  return pageReply(request, galleryPage(session.link))
+  const linkId = session.link.id
+  const [variants, signoffs] = await Promise.all([
+    listVariants(env.DB, linkId),
+    listSignoffs(env.DB, linkId),
+  ])
+  const m = new URL(request.url).searchParams.get('m')
+  const page = galleryPage({ link: session.link, variants, signoffs, now: parts.now(), m })
+  return pageReply(request, page)
 }
 
 // Wrong password, unknown slug and too many tries all get this one reply.
