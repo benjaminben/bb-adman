@@ -1,7 +1,10 @@
 // spec/editor.md, "Top bar": the title with Rename, the Master mark, the size line, and Undo
 // and Redo for the variant's own list [FR-095]. Mod+Z and Mod+Shift+Z press the same buttons.
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+// P4-16 (spec/screens-ai.md, "Place text with AI"): "Place text with AI…", disabled with its
+// hint when no visible text layer has copy.
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
+import { NO_TEXT_HINT } from '@/renderer/editor/layout-run'
 import { useEditorKey } from '@/renderer/editor/use-editor-key'
 import styles from './top-bar.module.css'
 
@@ -13,6 +16,8 @@ export type TopBarProps = {
   onRedo: () => void
   // Resolves true when the new title was saved.
   onRename: (title: string) => Promise<boolean>
+  canPlaceText: boolean
+  onPlaceText: () => void
 }
 
 export function sizeLine(v: VariantSummary): string {
@@ -49,6 +54,7 @@ export function TopBar(props: TopBarProps) {
   const { variant } = props
   const [renaming, setRenaming] = useState(false)
   const renameButton = useRef<HTMLButtonElement>(null)
+  const hintId = useId()
   useEditorKey('undo', props.onUndo, props.canUndo)
   useEditorKey('redo', props.onRedo, props.canRedo)
 
@@ -74,7 +80,20 @@ export function TopBar(props: TopBarProps) {
         {variant.isMaster && <span className={styles.mark}>Master</span>}
       </div>
       <p className={styles.line}>{sizeLine(variant)}</p>
-      <div className={styles.history}>
+      <div className={styles.actions}>
+        <button
+          type="button"
+          disabled={!props.canPlaceText}
+          aria-describedby={props.canPlaceText ? undefined : hintId}
+          onClick={props.onPlaceText}
+        >
+          Place text with AI…
+        </button>
+        {!props.canPlaceText && (
+          <span id={hintId} className={styles.hint}>
+            {NO_TEXT_HINT}
+          </span>
+        )}
         <button type="button" disabled={!props.canUndo} onClick={props.onUndo}>
           Undo
         </button>

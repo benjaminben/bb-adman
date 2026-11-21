@@ -7,9 +7,11 @@ import { useApi, useApp } from '@/renderer/app/app-context'
 import { CanvasView } from '@/renderer/editor/canvas-view'
 import { EditorBanner } from '@/renderer/editor/editor-banner'
 import { LayerList } from '@/renderer/editor/layer-list'
+import { useLayoutRun } from '@/renderer/editor/layout-run'
 import { PropertiesPanel } from '@/renderer/editor/properties-panel'
 import { TopBar } from '@/renderer/editor/top-bar'
 import { EditorKeyRoot } from '@/renderer/editor/use-editor-key'
+import { RunDialog } from '@/renderer/dialogs/run-dialog'
 import type { Zoom } from '@/renderer/editor/zoom'
 import type { TabView } from '@/renderer/stores/nav-store'
 import { createVariantStore, type VariantStoreState } from '@/renderer/stores/variant-store'
@@ -85,6 +87,7 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
   const selected = selectedId ? (layers[selectedId] ?? null) : null
   const overflowCount = Object.values(layers).filter((l) => l.type === 'text' && l.overflow).length
   const missingFile = Object.values(assets).some((a) => a.missing)
+  const layoutRun = useLayoutRun(projectId, variantId, scene)
 
   async function rename(title: string): Promise<boolean> {
     const result = await command('variant.update', { projectId, variantId, title })
@@ -105,8 +108,14 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
               onUndo={history.undo}
               onRedo={history.redo}
               onRename={rename}
+              canPlaceText={layoutRun.canPlace}
+              onPlaceText={layoutRun.onPlace}
             />
-            <EditorBanner missingFile={missingFile} overflowCount={overflowCount} />
+            <EditorBanner
+              missingFile={missingFile}
+              overflowCount={overflowCount}
+              layout={layoutRun.line}
+            />
             <div className={styles.body}>
               <LayerList
                 projectId={projectId}
@@ -140,6 +149,14 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
                 onCrop={setCropId}
               />
             </div>
+            <RunDialog
+              {...layoutRun.dialog}
+              projectId={projectId}
+              job="layout"
+              title="Place text with AI"
+              confirmLabel="Place text"
+              campaignId={state.campaignId ?? undefined}
+            />
           </>
         )}
       </div>
