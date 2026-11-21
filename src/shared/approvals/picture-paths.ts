@@ -74,3 +74,23 @@ export function picturesIn(folder: string, found: string[]): string[] {
   checkPictureFolder(folder)
   return found.filter((path) => isPictureIn(folder, path))
 }
+
+// The longest a picture address may last: 7 days, the most S3 allows. Both picture stores
+// refuse a longer or a broken lifetime before anything is called.
+export const PICTURE_URL_MAX_SECONDS = 604_800
+export const REFUSED_LIFETIME = 'Signed address lifetime refused'
+
+export function checkPictureLifetime(seconds: number): number {
+  if (Number.isInteger(seconds) && seconds >= 1 && seconds <= PICTURE_URL_MAX_SECONDS) {
+    return seconds
+  }
+  throw new Error(REFUSED_LIFETIME)
+}
+
+// The one campaign folder a removal stays in; refused when the paths span two folders or one
+// is not a picture file. An empty list gives null.
+export function removalFolder(paths: string[]): string | null {
+  const folders = new Set(paths.map(pictureFolderOf))
+  if (folders.size > 1) refuse()
+  return [...folders][0] ?? null
+}

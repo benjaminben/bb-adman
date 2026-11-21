@@ -7,8 +7,13 @@ import {
   pictureFolderOf,
   checkPictureFolder,
   picturesIn,
+  checkPictureLifetime,
+  removalFolder,
+  PICTURE_URL_MAX_SECONDS,
+  REFUSED_LIFETIME,
 } from '@/shared/approvals/picture-paths'
 import { REFUSED_PATH } from '@/main/providers/storage-paths'
+import * as signing from '@/main/providers/s3/signed-url'
 
 const P = '01JD5Z8Q4N3V6W7X8Y9Z0ABCDE'
 const C = 'spring-sale-abc234'
@@ -124,5 +129,37 @@ describe('picturesIn: what a listing may give back [spec/approvals.md "Pictures"
 
   it('refuses a folder that is not a campaign folder', () => {
     expect(() => picturesIn('adman-approvals/', [])).toThrow(new Error(REFUSED_PATH))
+  })
+})
+
+describe('removalFolder: one campaign folder per removal [spec/approvals.md "Pictures"]', () => {
+  it('gives the folder of picture files in one folder, and null for none', () => {
+    expect(removalFolder([`${FOLDER}${V}-1.png`, `${FOLDER}aaaaaa-2.png`])).toBe(FOLDER)
+    expect(removalFolder([])).toBeNull()
+  })
+
+  it.each([
+    [[`${FOLDER}${V}-1.png`, `adman-approvals/${P}/other-abc234/${V}-1.png`]],
+    [[`${FOLDER}${V}-1.png`, `adman-approvals/01JD5Z8Q4N3V6W7X8Y9Z0ABCDF/${C}/${V}-1.png`]],
+    [[`${FOLDER}${V}-1.png`, FOLDER]],
+    [[`${FOLDER}${V}-1.png`, `${FOLDER}notes.txt`]],
+  ])('refuses %j', (paths) => {
+    expect(() => removalFolder(paths)).toThrow(new Error(REFUSED_PATH))
+  })
+})
+
+describe('checkPictureLifetime: at most 7 days [spec/approvals.md "Pictures"]', () => {
+  it('takes 1 to 604,800 whole seconds', () => {
+    expect(checkPictureLifetime(1)).toBe(1)
+    expect(checkPictureLifetime(604_800)).toBe(604_800)
+  })
+
+  it.each([604_801, 0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])('refuses %s', (s) => {
+    expect(() => checkPictureLifetime(s)).toThrow(new Error(REFUSED_LIFETIME))
+  })
+
+  it('has the same limit and words as the S3 adapter', () => {
+    expect(PICTURE_URL_MAX_SECONDS).toBe(signing.SIGNED_URL_MAX_SECONDS)
+    expect(REFUSED_LIFETIME).toBe(signing.REFUSED_LIFETIME)
   })
 })
