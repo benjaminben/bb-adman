@@ -103,7 +103,7 @@ test('Picture properties and the picture chooser', async () => {
     .getByRole('region', { name: 'Brief' })
     .getByRole('button', { name: 'Create campaign' })
     .click()
-  await expect(page.getByRole('list', { name: 'Variants' }).getByRole('button')).toHaveCount(1)
+  await expect(page.getByRole('list', { name: 'Variants' }).getByRole('listitem')).toHaveCount(1)
   const { projectId, variantId, layers } = await ids(page)
   const background = layers.find((l) => l.type === 'background')!
 
