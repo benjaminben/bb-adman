@@ -8,14 +8,16 @@ import { readWireRow } from '@/main/db/rows'
 import { resolveRow } from './service'
 import type { AssetRow } from '@/shared/schemas/rows/asset'
 import { FILE_TYPES } from '@/shared/config/file-types'
+import { parseRange } from './byte-range'
 
 // The raw text is matched, not a parsed URL, so nothing is folded away ("/../", "%2F"):
 // both parts are ULIDs (SPEC 3.2) and nothing else may follow. ULIDs ignore letter case, and
 // a browser may lower-case the host, so both parts are read in upper case.
 const ADDRESS = /^adman-asset:\/\/([0-9A-HJKMNP-TV-Z]{26})\/([0-9A-HJKMNP-TV-Z]{26})$/i
 
-// The window has no use for a text asset, and its page policy allows no such load.
-const SERVED_KINDS: readonly string[] = ['image', 'video', 'font']
+// The window has no use for a text asset, and its page policy allows no such load. An audio
+// row is served once file-types.ts lists its types (knownMime below).
+const SERVED_KINDS: readonly string[] = ['image', 'video', 'font', 'audio']
 
 // Sent with every answer: no type guessing, and a changed linked file is read again.
 const FIXED_HEADERS = { 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-store' }
@@ -47,23 +49,59 @@ function notFound(): Response {
   return new Response(null, { status: 404, headers: FIXED_HEADERS })
 }
 
-// GET only. The type is the row's, never one read from the file's name. The file is opened
-// before answering, so a file that went after the check is a 404 too.
+// Only the Range header is read from a request's headers.
+export type AssetRequest = {
+  method: string
+  url: string
+  headers?: { get(name: string): string | null }
+}
+
+function unsatisfiable(size: number): Response {
+  const headers = { ...FIXED_HEADERS, 'Content-Range': `bytes */${size}` }
+  return new Response(null, { status: 416, headers })
+}
+
+// Bytes start..end of the open file, end included; an empty file gets no stream.
+function bodyOf(handle: fs.promises.FileHandle, start: number, end: number) {
+  if (end < start) {
+    void handle.close()
+    return null
+  }
+  return Readable.toWeb(handle.createReadStream({ start, end })) as ReadableStream<Uint8Array>
+}
+
+// GET only. The type is the row's, never one read from the file's name or the request. The
+// file is opened before answering, so a file that went after the check is a 404 too, and its
+// size is read from the open handle, so a file swapped after the open is never measured.
+// P7-6: one byte range gets 206 with exactly those bytes; a range past the file gets 416.
 export async function answerAssetRequest(
-  request: { method: string; url: string },
+  request: AssetRequest,
   projects: ProjectRegistry,
 ): Promise<Response> {
   if (request.method !== 'GET') return notFound()
+  let handle: fs.promises.FileHandle | null = null
   try {
     const found = await fileForAssetUrl(request.url, projects)
     if (!found) return notFound()
-    const handle = await fs.promises.open(found.file, 'r')
-    const body = Readable.toWeb(handle.createReadStream()) as ReadableStream<Uint8Array>
-    return new Response(body, {
-      status: 200,
-      headers: { ...FIXED_HEADERS, 'Content-Type': found.mime },
-    })
+    handle = await fs.promises.open(found.file, 'r')
+    const { size } = await handle.stat()
+    const range = parseRange(request.headers?.get('range'), size)
+    if (range === 'unsatisfiable') {
+      await handle.close()
+      return unsatisfiable(size)
+    }
+    const { start, end } = range === 'whole' ? { start: 0, end: size - 1 } : range
+    const headers: Record<string, string> = {
+      ...FIXED_HEADERS,
+      'Content-Type': found.mime,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': String(end - start + 1),
+    }
+    if (range !== 'whole') headers['Content-Range'] = `bytes ${start}-${end}/${size}`
+    const status = range === 'whole' ? 200 : 206
+    return new Response(bodyOf(handle, start, end), { status, headers })
   } catch {
+    await handle?.close().catch(() => undefined)
     return notFound()
   }
 }
