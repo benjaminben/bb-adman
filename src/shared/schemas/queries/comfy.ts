@@ -4,7 +4,8 @@
 // that a window may see: the graph, the slots and the source stay in the main process.
 import type { SizeRule } from '@/shared/comfy/fit-size'
 
-// The fixed list of shipped workflows (SPEC 6.10.4, the first set, and the seventh of 1.46).
+// The fixed list of shipped workflows (SPEC 6.10.4, the first set, the seventh of 1.46, and
+// P4-9's cut-out).
 export const WORKFLOW_IDS = [
   'moss-text-to-image',
   'moss-edit-references',
@@ -13,10 +14,11 @@ export const WORKFLOW_IDS = [
   'h3-image-to-video',
   'h3-reference-to-video',
   'flux3-klein-edit-references',
+  'birefnet-cutout',
 ] as const
 export type WorkflowId = (typeof WORKFLOW_IDS)[number]
 
-export type WorkflowJob = 'image' | 'image_refs' | 'extend' | 'video'
+export type WorkflowJob = 'image' | 'image_refs' | 'extend' | 'video' | 'cutout'
 
 // 'draft': the graph is a stand-in for the tests and is never sent to any server.
 // 'trial': a real graph, not yet proven; offered only with the hand-test tools on (6.10.11).
