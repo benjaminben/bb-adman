@@ -1,4 +1,4 @@
-// P5-1 (spec/phases/phase-05-slices.md): the Phase 5 inputs, query and job shapes, each strict
+// P5-1 (spec/phases/phase-05-slices.md): the Phase 5 command and query inputs, each strict
 // and as spec/links-and-sync.md gives them. One good value per schema, then each refusal.
 import { describe, it, expect } from 'vitest'
 import type { z } from 'zod'
@@ -23,62 +23,9 @@ import {
   generationRunFillInput,
 } from '@/shared/schemas/commands/generation'
 import { syncPreviewInput } from '@/shared/schemas/queries/sync'
-import {
-  generativeFillJobRequest,
-  generativeFillJobResult,
-} from '@/shared/schemas/jobs/generative-fill'
+import { DIRECTION as direction, LAYER as layer, SNAPSHOT as snapshot } from './phase5-rows'
 
 const p = { projectId: 'P1' }
-const block = { preset: 'none', startMs: 0, durationMs: 0 }
-const revs = { copy: 0, style: 0, geometry: 0, source: 0, timing: 0, animation: 0 }
-const layer = {
-  id: 'L1',
-  variantId: 'V1',
-  key: 'k1',
-  type: 'background',
-  slot: null,
-  name: 'Background',
-  z: 0,
-  visible: true,
-  locked: false,
-  linked: true,
-  overrides: [],
-  copy: null,
-  style: { opacity: 1 },
-  geometry: { x: 0, y: 0, width: 1080, height: 1080, rotation: 0, crop: null },
-  source: null,
-  timing: { startMs: 0, endMs: null },
-  animation: { entrance: block, exit: block },
-  revs,
-  syncedRevs: revs,
-  translationStatus: null,
-  translationSource: null,
-  overflow: false,
-}
-const variant = {
-  id: 'V1',
-  directionId: 'D1',
-  title: 'Spring',
-  width: 1080,
-  height: 1080,
-  sizeLabel: '1x1',
-  language: 'en',
-  format: 'image',
-  durationMs: 0,
-  durationOverridden: false,
-  rev: 0,
-  createdBy: 'user',
-  createdAt: '2026-11-21T10:00:00.000Z',
-  agentChangedAt: null,
-}
-const clip = { id: 'K1', variantId: 'V1', assetId: 'A1', startMs: 0, inMs: 0, outMs: 1000 }
-const snapshot = {
-  variant,
-  subjectIds: ['S1'],
-  layers: [layer],
-  clips: [{ ...clip, placement: null }],
-}
-const direction = { id: 'D1', campaignId: 'C1', name: 'Main', masterVariantId: 'V1', sort: 0 }
 const decision = {
   variantId: 'V2',
   layerKey: 'k1',
@@ -304,14 +251,6 @@ const CASES: Case[] = [
   },
 ]
 
-const JOB_REQUEST = {
-  prompt: 'Extend this picture.',
-  sourceAssetId: 'A1',
-  placement: { x: 10, y: 20, width: 500, height: 400 },
-  width: 1080,
-  height: 1920,
-}
-
 describe('Phase 5 input schemas [P5-1, spec/links-and-sync.md]', () => {
   it.each(CASES)('$name accepts a good value', ({ schema, good }) => {
     expect(schema.safeParse(good).success).toBe(true)
@@ -340,21 +279,5 @@ describe('Phase 5 input schemas [P5-1, spec/links-and-sync.md]', () => {
 
   it('trims a direction name', () => {
     expect(directionRenameInput.parse({ ...rename, name: '  Bold  ' }).name).toBe('Bold')
-  })
-})
-
-describe('the generative_fill job shapes [P5-1, spec/links-and-sync.md "Generative fill"]', () => {
-  it('reads a request and a result', () => {
-    expect(generativeFillJobRequest.parse(JOB_REQUEST)).toEqual(JOB_REQUEST)
-    expect(generativeFillJobResult.parse({ assetIds: ['A2'] })).toEqual({ assetIds: ['A2'] })
-  })
-
-  it.each<[string, Record<string, unknown>]>([
-    ['no prompt', { ...JOB_REQUEST, prompt: '' }],
-    ['no source', { ...JOB_REQUEST, sourceAssetId: '' }],
-    ['a placement of no width', { ...JOB_REQUEST, placement: { x: 0, y: 0, width: 0, height: 1 } }],
-    ['a canvas of no height', { ...JOB_REQUEST, height: 0 }],
-  ])('refuses a request with %s', (_label, value) => {
-    expect(generativeFillJobRequest.safeParse(value).success).toBe(false)
   })
 })

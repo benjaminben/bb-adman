@@ -7,6 +7,11 @@ import { makeFixture, data, type Fixture } from '../core-fixture'
 import { AGENT_POLICY, denialMessage } from '@/main/commands/agent-policy'
 import { generativeFillKind } from '@/main/jobs/kinds/generative-fill'
 import { ProviderFailure } from '@/main/providers/types'
+import {
+  DIRECTION as direction,
+  LAYER as layer,
+  SNAPSHOT as snapshot,
+} from '../../unit/shared/schemas/phase5-rows'
 
 let f: Fixture | undefined
 afterEach(() => {
@@ -22,51 +27,6 @@ const NOT_BUILT = {
     details: { reason: 'not_built' },
   },
 }
-
-const block = { preset: 'none', startMs: 0, durationMs: 0 }
-const revs = { copy: 0, style: 0, geometry: 0, source: 0, timing: 0, animation: 0 }
-const layer = {
-  id: 'L1',
-  variantId: 'V1',
-  key: 'k1',
-  type: 'background',
-  slot: null,
-  name: 'Background',
-  z: 0,
-  visible: true,
-  locked: false,
-  linked: true,
-  overrides: [],
-  copy: null,
-  style: { opacity: 1 },
-  geometry: { x: 0, y: 0, width: 1080, height: 1080, rotation: 0, crop: null },
-  source: null,
-  timing: { startMs: 0, endMs: null },
-  animation: { entrance: block, exit: block },
-  revs,
-  syncedRevs: revs,
-  translationStatus: null,
-  translationSource: null,
-  overflow: false,
-}
-const variant = {
-  id: 'V1',
-  directionId: 'D1',
-  title: 'Spring',
-  width: 1080,
-  height: 1080,
-  sizeLabel: '1x1',
-  language: 'en',
-  format: 'image',
-  durationMs: 0,
-  durationOverridden: false,
-  rev: 0,
-  createdBy: 'user',
-  createdAt: '2026-11-21T10:00:00.000Z',
-  agentChangedAt: null,
-}
-const snapshot = { variant, subjectIds: [], layers: [layer], clips: [] }
-const direction = { id: 'D1', campaignId: 'C1', name: 'Main', masterVariantId: 'V1', sort: 0 }
 
 // A good input for each stub command, without projectId.
 const INPUTS: Record<string, object> = {
