@@ -4,7 +4,9 @@ import type Database from 'better-sqlite3'
 import { getTableColumns } from 'drizzle-orm'
 import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
 import * as schema from './schema'
-import { ROW_KEYS, type TableName } from '../../shared/schemas/rows/keys'
+import type { ActivityLog } from '../log/activity-log'
+import { ROW_KEYS, rowKey, type TableName } from '../../shared/schemas/rows/keys'
+import { ROW_SCHEMAS } from '../../shared/schemas/rows'
 import type { WireRow } from '../../shared/schemas/events'
 
 const TABLES: Record<TableName, SQLiteTable> = {
@@ -33,8 +35,7 @@ const FLAGS = new Set([
   'overflow',
 ])
 
-// SPEC 3.3 JSON columns, by table. The Zod check of each value arrives with the wire row
-// schemas (Phase 2 step 0 and later phases).
+// SPEC 3.3 JSON columns, by table. Each value is checked with its table's wire row schema.
 const JSON_COLUMNS: Partial<Record<TableName, readonly string[]>> = {
   campaign: ['languages', 'sizes', 'brief'],
   rule_set: ['requiredAssetIds', 'palette', 'requiredWords', 'prohibitedWords'],
@@ -59,7 +60,25 @@ function toWire(table: TableName, stored: Record<string, unknown>): WireRow {
     else if (json.has(field)) row[field] = JSON.parse(String(value)) as unknown
     else row[field] = value
   }
-  return row
+  return checked(table, row)
+}
+
+// SPEC 4.4: a row that fails its table's schema throws. The error names the table and the
+// fields, never a value.
+function checked(table: TableName, row: WireRow): WireRow {
+  const schema = ROW_SCHEMAS[table]
+  if (!schema) return row
+  const parsed = schema.safeParse(row)
+  if (parsed.success) return parsed.data
+  const fields = parsed.error.issues.map((i) => i.path.join('.')).join(', ')
+  throw new Error(`${table} row does not match its schema: ${fields}`)
+}
+
+function keyOf(table: TableName, stored: Record<string, unknown>): string {
+  const names = new Map(columnsOf(table))
+  const key: Record<string, unknown> = {}
+  for (const field of ROW_KEYS[table]) key[field] = stored[names.get(field) ?? field]
+  return rowKey(table, key)
 }
 
 function selectList(table: TableName): string {
@@ -83,9 +102,31 @@ export function readWireRow(
   return stored ? toWire(table, stored) : null
 }
 
-export function readWireRows(db: Database.Database, table: TableName): WireRow[] {
+// Every row of a table. A row that cannot be read is left out and logged by table and key,
+// with no values: it means the file was damaged or made by hand (SPEC 4.4, 8.1).
+export function readWireRows(
+  db: Database.Database,
+  table: TableName,
+  log?: ActivityLog,
+): WireRow[] {
   const stored = db.prepare(`SELECT ${selectList(table)} FROM "${table}"`).all() as Array<
     Record<string, unknown>
   >
-  return stored.map((r) => toWire(table, r))
+  const rows: WireRow[] = []
+  for (const r of stored) {
+    try {
+      rows.push(toWire(table, r))
+    } catch {
+      log?.write({
+        level: 'error',
+        event: 'query',
+        name: 'rows.read',
+        actor: 'system',
+        ok: false,
+        message: 'A stored row could not be read and was left out.',
+        context: { table, key: keyOf(table, r) },
+      })
+    }
+  }
+  return rows
 }
