@@ -2,7 +2,9 @@
 // for each `trial` workflow, "complete" or the missing items. The names come from the app's
 // own workflow file, never from the server's text. When the check does not end `ok`, it prints
 // which call failed (its folder or class name, from the app's own file) and the failure's
-// kind, reason and detail. Everything goes through the printer, so the address never shows.
+// kind, reason and detail. [1.57] H-3: then one line per draft workflow, its model files
+// present or missing (draft-files.ts). Everything goes through the printer, so the address
+// never shows.
 import type { ComfyClient } from '../../src/main/providers/comfyui/client'
 import { checkServer } from '../../src/main/providers/comfyui/needs'
 import { WORKFLOWS } from '../../src/main/providers/comfyui/workflows'
@@ -10,6 +12,7 @@ import type { WorkflowSpec } from '../../src/main/providers/comfyui/workflows/ty
 import { ProviderFailure } from '../../src/main/providers/types'
 import type { MissingItem } from '../../src/shared/schemas/queries/app'
 import type { ComfyCheck } from '../../src/shared/schemas/commands/comfy-check'
+import { draftFileLines, keepFolderLists } from './draft-files'
 import type { Print } from './print'
 import type { FailedCall } from './recorder'
 
@@ -43,7 +46,8 @@ export async function runCheckCase(
   workflows: readonly WorkflowSpec[] = TRIAL_WORKFLOWS,
 ): Promise<ComfyCheck> {
   const before = failures.length
-  const result = await checkServer(client, workflows)
+  const kept = keepFolderLists(client)
+  const result = await checkServer(kept.client, workflows)
   if (result.outcome !== 'ok') {
     print(`The check ended: ${result.outcome}`, ...failureLines(failures[before]))
     return result
@@ -54,5 +58,7 @@ export async function runCheckCase(
     if (w.missing.length === 0) print(`${w.id}: complete`)
     else print(`${w.id}: missing`, ...w.missing.map(itemLine))
   }
+  // [1.57] H-3: the drafts' model files, from the lists just fetched.
+  print(...draftFileLines(kept.lists))
   return result
 }
