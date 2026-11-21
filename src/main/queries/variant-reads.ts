@@ -23,8 +23,9 @@ export function requireVariant(
   return { variant, direction }
 }
 
-// The variant's layers, z ascending, then ID. A row that cannot be read is logged and left out.
-export function layersOf(db: Database.Database, variantId: string, log: ActivityLog): LayerRow[] {
+// The variant's layers, z ascending, then ID. A row that cannot be read is left out, and logged
+// when a log is given.
+export function layersOf(db: Database.Database, variantId: string, log?: ActivityLog): LayerRow[] {
   return (readWireRows(db, 'layer', log) as LayerRow[])
     .filter((l) => l.variantId === variantId)
     .sort((a, b) => a.z - b.z || byId(a.id, b.id))
