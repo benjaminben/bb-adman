@@ -8,6 +8,8 @@ import { defineCommand } from '../types'
 import type { CoreDeps } from '../../core-deps'
 import { devStorageInput, type DevStorageInput } from '../../../shared/schemas/commands/dev'
 import { AppError } from '../../../shared/schemas/result'
+import { HAND_TEST_MAX_UPLOAD_BYTES } from '../../../shared/config/dev-tools'
+import type { LogActor } from '../../log/activity-log'
 import { adapterFor } from '../../providers/adapters'
 import { localStorageAt } from '../../providers/local-storage'
 import { requireProviderKeys } from '../../providers/require-keys'
@@ -18,6 +20,7 @@ import { storageError, type StorageLabel } from './storage-error'
 
 type Target = DevStorageInput['storage']
 type Deps = Pick<CoreDeps, 'providers' | 'secrets' | 'settings' | 'userDataDir' | 'log'>
+type Ctx = { actor: LogActor; commandId: string }
 export type OpenStorage = (target: Target) => StorageProvider
 
 const LOCAL: StorageLabel = { id: 'local', label: 'Local storage' }
@@ -49,30 +52,58 @@ export function openHandTestStorage(deps: Deps): OpenStorage {
   }
 }
 
-// The picked file's name and bytes. The path must be absolute and name a file.
-async function pickedFile(filePath: string): Promise<{ name: string; bytes: Uint8Array }> {
+// [1.21] F-04: a file error other than "not there" is the state of the computer, not the
+// input. Its code goes to the log as a warn line; no path goes anywhere.
+function fileError(deps: Deps, ctx: Ctx, error: NodeJS.ErrnoException): AppError {
+  if (error.code === 'ENOENT' || error.code === 'ENOTDIR') {
+    return new AppError('NOT_FOUND', 'That file was not found.')
+  }
+  deps.log.write({
+    level: 'warn',
+    event: 'command',
+    name: 'dev.storage',
+    actor: ctx.actor,
+    ok: false,
+    errorKind: error.code ?? 'unknown',
+    message: 'The picked file could not be read',
+    context: { commandId: ctx.commandId },
+  })
+  return new AppError('RULE_VIOLATION', 'That file could not be read.', {
+    reason: 'file_not_readable',
+  })
+}
+
+// The picked file's name and bytes. The path must be absolute, name a file and be no larger
+// than `limit` bytes, checked from its stat size before it is read.
+async function pickedFile(deps: Deps, ctx: Ctx, filePath: string, limit: number) {
   if (!nodePath.isAbsolute(filePath)) {
     throw new AppError('INVALID_INPUT', 'Choose a file by its full path.')
   }
-  const stats = await fs.stat(filePath).catch((error: NodeJS.ErrnoException) => {
-    if (error.code === 'ENOENT' || error.code === 'ENOTDIR') {
-      throw new AppError('NOT_FOUND', 'That file was not found.')
-    }
-    throw error
-  })
+  const failed = (error: NodeJS.ErrnoException): never => {
+    throw fileError(deps, ctx, error)
+  }
+  const stats = await fs.stat(filePath).catch(failed)
   if (!stats.isFile()) throw new AppError('INVALID_INPUT', 'Choose a file, not a folder.')
-  return { name: nodePath.basename(filePath), bytes: new Uint8Array(await fs.readFile(filePath)) }
+  if (stats.size > limit) throw new AppError('INVALID_INPUT', 'Choose a file smaller than 100 MB.')
+  const bytes = new Uint8Array(await fs.readFile(filePath).catch(failed))
+  return { name: nodePath.basename(filePath), bytes }
 }
 
-async function act(storage: () => StorageProvider, input: DevStorageInput) {
+type Picked = (filePath: string) => Promise<{ name: string; bytes: Uint8Array }>
+
+async function act(storage: () => StorageProvider, input: DevStorageInput, picked: Picked) {
   if (input.action === 'list') return { names: await listHandTest(storage()) }
   if (input.action === 'remove') return { removed: await removeHandTest(storage()) }
-  const { name, bytes } = await pickedFile(input.filePath ?? '')
+  const { name, bytes } = await picked(input.filePath ?? '')
   await writeHandTest(storage(), name, bytes)
   return { name, size: bytes.length }
 }
 
-export function devStorage(deps: Deps, open: OpenStorage = openHandTestStorage(deps)) {
+export function devStorage(
+  deps: Deps,
+  open: OpenStorage = openHandTestStorage(deps),
+  limit = HAND_TEST_MAX_UPLOAD_BYTES,
+) {
   return defineCommand({
     name: 'dev.storage',
     input: devStorageInput,
@@ -83,7 +114,8 @@ export function devStorage(deps: Deps, open: OpenStorage = openHandTestStorage(d
       }
       try {
         if (input.storage === 'local') await checkLocalRoot(handTestLocalRoot(deps.userDataDir))
-        return { data: await act(() => open(input.storage), input) }
+        const picked: Picked = (filePath) => pickedFile(deps, ctx, filePath, limit)
+        return { data: await act(() => open(input.storage), input, picked) }
       } catch (error) {
         if (error instanceof ProviderFailure) {
           // The raw detail is for the local log only (SPEC 6.5 [1.14] F-04).
