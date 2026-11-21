@@ -1,7 +1,7 @@
 // SPEC 14 1.56 E2E-R, "On his server": one switch per case that makes a run, terminal only.
 // With none set, only Settings and Check run. ADMAN_E2E_GEMINI lets the paid confirm be
 // accepted; it still needs the stakeholder's yes for that run (1.54 P-2).
-// The place for TP-6's ADMAN_E2E_VIDEO switch is here, once the video panel is built.
+// TP-6's ADMAN_E2E_VIDEO is read by videoSwitch below.
 import path from 'node:path'
 
 export type RealSwitches = { flux: boolean; moss: boolean; cancel: boolean; gemini: boolean }
@@ -15,6 +15,11 @@ export function realSwitches(env: Env): RealSwitches {
     cancel: env.ADMAN_E2E_CANCEL === '1',
     gemini: env.ADMAN_E2E_GEMINI === '1',
   }
+}
+
+// SPEC 14 1.57 TP-6: the video case, which leaves one clip on the server.
+export function videoSwitch(env: Env): boolean {
+  return env.ADMAN_E2E_VIDEO === '1'
 }
 
 export const MAX_E2E_PICTURES = 3

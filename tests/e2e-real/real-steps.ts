@@ -30,17 +30,24 @@ export function referencePictures(box: Sandbox): string[] {
   return [made]
 }
 
-// Settings: type the address, save it, Check, and see the run workflows complete.
-export async function saveAndCheck(page: Page): Promise<void> {
+// Settings: type the address, save it, Check; the version line and a result on every
+// workflow row (1.59 L-13). A run case also names its own workflow, which must be "Complete",
+// so a missing model fails that case before any run is made.
+export async function saveAndCheck(page: Page, needed?: string): Promise<void> {
   // Outside the guard, so its fixed line is shown; it names no value.
   const address = serverAddress()
   await guardedStep('Save the server address and check the server', async () => {
     const comfy = await screens.openSettings(page)
     await screens.saveAddress(comfy, address)
     await screens.checkServer(comfy, 120_000)
-    for (const label of [screens.MOSS_LABEL, screens.FLUX_LABEL]) {
-      await expect(screens.workflowRow(comfy, label)).toContainText('Complete')
-    }
+    const rows = screens.workflowRows(comfy)
+    await expect(rows.first()).toBeVisible()
+    for (const row of await rows.all()) await expect(row).toContainText(screens.CHECK_RESULT)
+  })
+  if (needed === undefined) return
+  await guardedStep('See that the workflow this case runs is complete', async () => {
+    const comfy = page.getByRole('region', { name: 'ComfyUI server' })
+    await expect(screens.workflowRow(comfy, needed)).toContainText('Complete')
   })
 }
 
@@ -86,6 +93,16 @@ export async function newestRunDone(page: Page, timeout: number): Promise<void> 
     await expect
       .poll(() => picture.evaluate((img: HTMLImageElement) => img.naturalWidth))
       .toBeGreaterThan(0)
+  })
+}
+
+// SPEC 14 1.57 TP-6: waits for the newest run, a video, to be done and its clip to load.
+export async function newestClipDone(page: Page, timeout: number): Promise<void> {
+  await guardedStep('Wait for the video to be done with its clip loaded', async () => {
+    const row = screens.runRow(page)
+    await expect(row).toContainText(/Done|Failed|Cancelled/, { timeout })
+    await expect(row).toContainText('Done')
+    await screens.clipHasMetadata(page, 60_000)
   })
 }
 

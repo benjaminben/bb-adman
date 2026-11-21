@@ -84,6 +84,11 @@ test('Settings: a refused address, then the stand-in saved, checked per workflow
   await screens.checkServer(comfy)
   await expect(screens.workflowRow(comfy, screens.MOSS_LABEL)).toContainText('Complete')
   await expect(screens.workflowRow(comfy, screens.FLUX_LABEL)).toContainText('Complete')
+  await expect(screens.workflowRow(comfy, screens.H3_TEXT_LABEL)).toContainText('Complete')
+  // The real Settings case's check (1.59 L-13): every row shows a result.
+  const rows = await screens.workflowRows(comfy).all()
+  expect(rows.length).toBeGreaterThan(2)
+  for (const row of rows) await expect(row).toContainText(screens.CHECK_RESULT)
   // The check only asks: GETs and nothing else.
   expect(stand.seen.length).toBeGreaterThan(0)
   expect(stand.seen.filter((r) => r.method !== 'GET')).toEqual([])

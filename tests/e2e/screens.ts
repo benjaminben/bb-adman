@@ -132,5 +132,13 @@ export async function checkServer(comfy: Locator, timeout = 60_000): Promise<voi
 export const workflowRow = (comfy: Locator, label: string): Locator =>
   comfy.getByRole('list', { name: 'Workflows' }).getByRole('listitem', { name: label })
 
+// Every top-level workflow row; a row's missing items are its own nested list.
+export const workflowRows = (comfy: Locator): Locator =>
+  comfy.getByRole('list', { name: 'Workflows' }).locator(':scope > li')
+
+// What a checked workflow row shows (comfy-check-result.tsx).
+export const CHECK_RESULT = /Complete|Missing \d+ items?/
+
 export const MOSS_LABEL = 'MOSS-Image: picture from a prompt'
+export const H3_TEXT_LABEL = 'MiniMax H3: video from a prompt'
 export const FLUX_LABEL = 'FLUX 3 klein: picture from a prompt and one reference picture'

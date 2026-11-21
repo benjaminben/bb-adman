@@ -5,14 +5,13 @@
 // they name and clear or delete nothing on the server. A cancel is only of the run the test
 // itself started, by the run row's own Cancel.
 // With no switch: Settings and Check, and the Gemini paid confirm cancelled (no request).
-// The place for TP-6's video case (ADMAN_E2E_VIDEO=1) is a further test here, once the video
-// panel is built.
+// TP-6's video case runs with ADMAN_E2E_VIDEO=1 and leaves one clip on the server.
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import { makeSandbox, launchReal, type Sandbox } from '../e2e/launch'
 import * as screens from '../e2e/screens'
 import { guardedStep } from './guard'
-import { realSwitches } from './switches'
+import { realSwitches, videoSwitch } from './switches'
 import * as real from './real-steps'
 
 const switches = realSwitches(process.env)
@@ -20,6 +19,10 @@ const switches = realSwitches(process.env)
 // slow run fails inside its guard and not on Playwright's own timeout.
 const RUN_CASE_MS = 35 * 60_000
 const RUN_WAIT_MS = 25 * 60_000
+// The video run is allowed 15 minutes to finish; the case's limit leaves room for setup.
+const VIDEO_WAIT_MS = 15 * 60_000
+const VIDEO_CASE_MS = 20 * 60_000
+const videoOn = videoSwitch(process.env)
 
 let box: Sandbox
 let app: ElectronApplication
@@ -39,8 +42,9 @@ test.afterEach(async () => {
   }
 })
 
-async function comfyCampaign(): Promise<void> {
-  await real.saveAndCheck(page)
+// 1.59 L-13: the case's own workflow must be "Complete" before anything is run.
+async function comfyCampaign(workflow: string): Promise<void> {
+  await real.saveAndCheck(page, workflow)
   await real.openTestCampaign(app, page)
   await guardedStep('Choose ComfyUI', () => screens.chooseProvider(page, 'ComfyUI'))
 }
@@ -66,7 +70,7 @@ test('Gemini: the paid confirm is cancelled and nothing is sent', async () => {
 test('ComfyUI MOSS: a picture from a prompt [ADMAN_E2E_MOSS=1]', async () => {
   test.skip(!switches.moss, 'Runs only with ADMAN_E2E_MOSS=1: it makes a run on the server.')
   test.setTimeout(RUN_CASE_MS)
-  await comfyCampaign()
+  await comfyCampaign(screens.MOSS_LABEL)
   await guardedStep('Choose a slot and type the test prompt', async () => {
     await screens.chooseSlot(page)
     await screens.setPrompt(page, screens.E2E_PROMPT)
@@ -78,7 +82,7 @@ test('ComfyUI MOSS: a picture from a prompt [ADMAN_E2E_MOSS=1]', async () => {
 test('ComfyUI Flux: a picture from one product reference [ADMAN_E2E_FLUX=1]', async () => {
   test.skip(!switches.flux, 'Runs only with ADMAN_E2E_FLUX=1: it makes a run on the server.')
   test.setTimeout(RUN_CASE_MS)
-  await comfyCampaign()
+  await comfyCampaign(screens.FLUX_LABEL)
   await real.addAndTickReference(app, box, page)
   await guardedStep('Generate', () => screens.generate(page))
   await real.newestRunDone(page, RUN_WAIT_MS)
@@ -87,7 +91,7 @@ test('ComfyUI Flux: a picture from one product reference [ADMAN_E2E_FLUX=1]', as
 test('ComfyUI cancel: the test cancels its own MOSS run from the run row [ADMAN_E2E_CANCEL=1]', async () => {
   test.skip(!switches.cancel, 'Runs only with ADMAN_E2E_CANCEL=1: it starts a run on the server.')
   test.setTimeout(RUN_CASE_MS)
-  await comfyCampaign()
+  await comfyCampaign(screens.MOSS_LABEL)
   await guardedStep('Generate, then Cancel the run once it is on the server', async () => {
     await screens.generate(page)
     const row = screens.runRow(page)
@@ -95,6 +99,17 @@ test('ComfyUI cancel: the test cancels its own MOSS run from the run row [ADMAN_
     await row.getByRole('button', { name: 'Cancel' }).click()
     await expect(row).toContainText('Cancelled', { timeout: 5 * 60_000 })
   })
+})
+
+// SPEC 14 1.57 TP-6: one 2-second clip from a fixed prompt, which is left on the server.
+test('ComfyUI video: a 2-second clip from a prompt [ADMAN_E2E_VIDEO=1]', async () => {
+  test.skip(!videoOn, 'Runs only with ADMAN_E2E_VIDEO=1: it makes a video run on the server.')
+  test.setTimeout(VIDEO_CASE_MS)
+  await comfyCampaign(screens.H3_TEXT_LABEL)
+  await guardedStep('Start a 2-second video from the test prompt', () =>
+    screens.startVideo(page, 2),
+  )
+  await real.newestClipDone(page, VIDEO_WAIT_MS)
 })
 
 // A paid call: the orchestrator sets the switch only after the stakeholder's yes (1.54 P-2).
