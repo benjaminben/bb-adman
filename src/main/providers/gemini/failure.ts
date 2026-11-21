@@ -3,6 +3,7 @@
 // refused; no answer in time → timeout; network failure → offline; anything else → other.
 // The key never appears in `detail`.
 import { ApiError, type GenerateContentResponse } from '@google/genai'
+import { redactSecret } from '../redact'
 import { ProviderFailure, type ProviderError } from '../types'
 
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
@@ -19,8 +20,7 @@ const REFUSED_FINISH = new Set([
 ])
 
 function fail(kind: ProviderError['kind'], detail: string, key: string): ProviderFailure {
-  const safe = key === '' ? detail : detail.split(key).join('[key removed]')
-  return new ProviderFailure({ kind, detail: safe })
+  return new ProviderFailure({ kind, detail: redactSecret(detail, key) })
 }
 
 // The SDK puts the JSON error body in the message. A wrong key is HTTP 400 with an

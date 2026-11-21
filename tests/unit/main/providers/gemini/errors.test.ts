@@ -133,4 +133,13 @@ describe('Gemini adapter call rules [SPEC 6]', () => {
     expect(failure.error.detail).not.toContain(TEST_KEY)
     expect(failure.message).not.toContain(TEST_KEY)
   })
+
+  it('removes the key in base64 form from a failure too [1.12, G4]', async () => {
+    const base64 = Buffer.from(TEST_KEY).toString('base64')
+    const echo = { error: { code: 400, message: `bad key ${base64}`, status: 'X' } }
+    const { fetchFn } = recordingFetch(async () => jsonResponse(echo, 400))
+    const failure = await failureOf(generateWith(fetchFn))
+    expect(failure.error.detail).not.toContain(base64)
+    expect(failure.error.detail).toContain('[key removed]')
+  })
 })
