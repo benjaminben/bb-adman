@@ -44,6 +44,30 @@ describe('settings loader and the two 1.24 keys [SPEC 13.1, 14 CU-0]', () => {
   })
 })
 
+describe('a hand-edited comfyui address is read as none until CU-1 [SPEC 13.1, 14 CU-0 W6]', () => {
+  it.each(['http://169.254.169.254', 'http://127.0.0.1:8188'])(
+    'loads a settings.json holding %s with baseUrl null and the other keys as written',
+    async (baseUrl) => {
+      f = makeFixture()
+      fs.mkdirSync(f.userData, { recursive: true })
+      const written = {
+        ...(await state()).settings,
+        generation: { optionsPerRun: 2 },
+        export: { imageFormat: 'jpg', jpgQuality: 80, fps: 60 },
+        comfyui: { baseUrl },
+      }
+      const file = path.join(f.userData, 'settings.json')
+      const text = JSON.stringify(written)
+      fs.writeFileSync(file, text)
+      f.restart()
+      const s = (await state()).settings
+      expect(s.comfyui).toEqual({ baseUrl: null })
+      expect(s).toEqual({ ...written, comfyui: { baseUrl: null } })
+      expect(fs.readFileSync(file, 'utf8')).toBe(text)
+    },
+  )
+})
+
 describe('settings.update and the comfyui row [SPEC 6.11.1, 14 CU-0 W5]', () => {
   it('refuses comfyui as the default image provider while its row is not available', async () => {
     f = makeFixture()

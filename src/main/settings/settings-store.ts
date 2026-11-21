@@ -18,13 +18,21 @@ function merge<T>(base: T, patch: unknown): T {
   return out as T
 }
 
+// [1.35] SPEC 13.1 "Until CU-1": no check of a ComfyUI address exists yet, so an address
+// found in the file is read as none, whatever it is. The file itself is left as it is.
+// CU-1 replaces this with parseComfyAddress.
+function readComfyAddress(raw: unknown): unknown {
+  if (!isObject(raw) || !isObject(raw.comfyui)) return raw
+  return { ...raw, comfyui: { ...raw.comfyui, baseUrl: null } }
+}
+
 export function createSettingsStore(opts: { file: string; defaults: Settings }) {
   let current = load()
 
   function load(): Settings {
     try {
       const raw: unknown = JSON.parse(fs.readFileSync(opts.file, 'utf8'))
-      const parsed = settingsSchema.safeParse(merge(opts.defaults, raw))
+      const parsed = settingsSchema.safeParse(merge(opts.defaults, readComfyAddress(raw)))
       return parsed.success ? parsed.data : opts.defaults
     } catch {
       return opts.defaults
