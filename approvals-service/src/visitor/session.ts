@@ -4,7 +4,13 @@ import type { Parts } from '../app'
 import type { RandomBytes } from '../crypto/random'
 import { clearTries } from '../db/enter'
 import { findLinkBySlug, type LinkRow } from '../db/links'
-import { addSession, deleteExpiredSessions, deleteSession, hasSession } from '../db/sessions'
+import {
+  addSessionIfPassword,
+  deleteExpiredSessions,
+  deleteSession,
+  hasSession,
+} from '../db/sessions'
+import type { CheckedPassword } from './throttle'
 
 export const SESSION_AGE = 12 * 60 * 60 * 1000
 
@@ -62,21 +68,25 @@ export async function readSession(
 }
 
 // After a right password: the link's expired rows go, the new row is added and the try count
-// starts again, in one batch. Gives the Set-Cookie text.
+// starts again, in one batch. The row and the reset happen only while the link still holds
+// the checked password. Gives the Set-Cookie text, or null when the password changed or the
+// link went away meanwhile (the caller answers as for a wrong password).
 export async function startSession(
   db: D1Database,
-  linkId: string,
+  checked: CheckedPassword,
   slug: string,
   parts: Parts,
-): Promise<string> {
+): Promise<string | null> {
+  const { linkId, password } = checked
   const token = newToken(parts.random)
   const now = parts.now()
-  await db.batch([
+  const row = { tokenHash: await hashToken(token), linkId, expiresAt: now + SESSION_AGE }
+  const [, added] = await db.batch([
     deleteExpiredSessions(db, linkId, now),
-    addSession(db, { tokenHash: await hashToken(token), linkId, expiresAt: now + SESSION_AGE }),
-    clearTries(db, linkId),
+    addSessionIfPassword(db, row, password),
+    clearTries(db, linkId, password),
   ])
-  return sessionCookie(slug, token)
+  return added?.meta.changes === 1 ? sessionCookie(slug, token) : null
 }
 
 export async function endSession(db: D1Database, session: Session): Promise<void> {

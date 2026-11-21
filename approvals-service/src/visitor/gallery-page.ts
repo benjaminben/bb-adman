@@ -1,19 +1,12 @@
 // spec/approvals-service.md "The pages": the gallery page. Every outside value goes through
 // the html template; the picture src and form actions are built only from checked parts.
+// The address's `m` is looked up in the fixed table; its own text is never shown.
 import { SignoffId, Slug, VariantKey } from '../contract'
-import type { LinkRow } from '../db/links'
-import type { SignoffRow } from '../db/signoffs'
-import type { VariantRow } from '../db/variants'
+import type { GalleryView } from './actions'
 import { documentOf, html } from './html'
 
-export type GalleryData = {
-  link: LinkRow
-  variants: VariantRow[]
-  signoffs: SignoffRow[]
-  now: number
-  // The address's `m`, looked up in the fixed table; its own text is never shown.
-  m: string | null
-}
+type VariantView = GalleryView['variants'][number]
+type SignoffView = GalleryView['signoffs'][number]
 
 const INTRO =
   'Sign off on a variant by entering your email address. Anyone with this link can see who ' +
@@ -45,7 +38,7 @@ function wholeNumber(n: number): number {
 // YYYY-MM-DD HH:MM UTC
 const dateOf = (ms: number) => `${new Date(ms).toISOString().slice(0, 16).replace('T', ' ')} UTC`
 
-function signoffList(slug: string, rows: SignoffRow[], earlier: boolean) {
+function signoffList(slug: string, rows: SignoffView[], earlier: boolean) {
   const items = rows.map(
     (row) =>
       html`<li>
@@ -60,15 +53,14 @@ function signoffList(slug: string, rows: SignoffRow[], earlier: boolean) {
   </ul>`
 }
 
-function card(slug: string, row: VariantRow, signoffs: SignoffRow[], now: number) {
+function card(slug: string, row: VariantView, signoffs: SignoffView[]) {
   const key = checked(row.variantKey, VariantKey)
   const version = wholeNumber(row.version)
   const current = signoffs.filter((s) => s.variantKey === key && s.version === version)
   const older = signoffs.filter((s) => s.variantKey === key && s.version !== version)
-  const picture =
-    row.pictureExpiresAt > now
-      ? html`<img loading="lazy" alt="${row.title}" src="/l/${slug}/p/${key}/${version}" />`
-      : html`<p class="expired">${EXPIRED}</p>`
+  const picture = row.expired
+    ? html`<p class="expired">${EXPIRED}</p>`
+    : html`<img loading="lazy" alt="${row.title}" src="/l/${slug}/p/${key}/${version}" />`
   const signed =
     current.length > 0 ? signoffList(slug, current, false) : html`<p>No sign-offs yet.</p>`
   const earlier =
@@ -91,10 +83,10 @@ function card(slug: string, row: VariantRow, signoffs: SignoffRow[], now: number
   </article>`
 }
 
-export function galleryPage(data: GalleryData) {
+export function galleryPage(data: GalleryView) {
   const slug = checked(data.link.slug, Slug)
   const notice = NOTICES.get(data.m ?? '')
-  const cards = data.variants.map((row) => card(slug, row, data.signoffs, data.now))
+  const cards = data.variants.map((row) => card(slug, row, data.signoffs))
   return documentOf(
     data.link.campaignName,
     html`<h1>${data.link.campaignName}</h1>

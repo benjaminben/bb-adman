@@ -41,7 +41,16 @@ export async function countPasswordTry(
   }
 }
 
-// A right password starts the count again.
-export function clearTries(db: D1Database, linkId: string): D1PreparedStatement {
-  return db.prepare('UPDATE link SET tries = 0, tries_since = NULL WHERE id = ?').bind(linkId)
+// A right password starts the count again, only while the link still holds that password.
+export function clearTries(
+  db: D1Database,
+  linkId: string,
+  checked: StoredPassword,
+): D1PreparedStatement {
+  return db
+    .prepare(
+      `UPDATE link SET tries = 0, tries_since = NULL
+        WHERE id = ? AND password_salt = ? AND password_hash = ?`,
+    )
+    .bind(linkId, checked.salt, checked.hash)
 }
