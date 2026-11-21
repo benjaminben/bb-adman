@@ -72,6 +72,57 @@ describe('campaign.delete [SPEC 4.2, FR-197]', () => {
   })
 })
 
+describe('campaign.delete refuses while work runs [SPEC 4.2 1.42, C-R4, C4-4]', () => {
+  const addJob = (
+    id: string,
+    status: string,
+    column: 'campaign_id' | 'variant_id',
+    value: string,
+  ) =>
+    bus.db
+      .prepare(
+        `INSERT INTO job (id, kind, status, ${column}, request, created_at, updated_at)
+         VALUES (?, 'image_generation', ?, ?, '{}', 'x', 'x')`,
+      )
+      .run(id, status, value)
+  const del = () => bus.user('campaign.delete', { campaignId })
+
+  it("refuses with jobs_running and count 1 for a queued job with the campaign's ID", async () => {
+    addJob('J1', 'queued', 'campaign_id', campaignId)
+    const error = await expectRefused(bus, del, 'RULE_VIOLATION', 'jobs_running')
+    expect(error.details).toEqual({ reason: 'jobs_running', count: 1 })
+    expect(error.message).toBe(
+      'Work is still running in this campaign. Stop it, or wait for it to finish.',
+    )
+    expect(count('campaign')).toBe(1)
+    expect(count('variant')).toBe(1)
+  })
+
+  it("refuses the same way for a running job with only the variant's ID", async () => {
+    addJob('J1', 'running', 'variant_id', variantId)
+    const error = await expectRefused(bus, del, 'RULE_VIOLATION', 'jobs_running')
+    expect(error.details).toEqual({ reason: 'jobs_running', count: 1 })
+  })
+
+  it('does not refuse for a succeeded job or a failed job', async () => {
+    addJob('J1', 'succeeded', 'campaign_id', campaignId)
+    addJob('J2', 'failed', 'variant_id', variantId)
+    expect(await del()).toEqual({ ok: true, data: { campaignId } })
+  })
+
+  it('does not refuse for a running job of another campaign', async () => {
+    const other = (await bus.create({
+      subjectMap: [
+        { subjectId: 'can', create: false },
+        { subjectId: 'bottle', create: false },
+      ],
+    })) as { data: { campaignId: string; variantId: string } }
+    addJob('J1', 'running', 'campaign_id', other.data.campaignId)
+    addJob('J2', 'running', 'variant_id', other.data.variantId)
+    expect(await del()).toEqual({ ok: true, data: { campaignId } })
+  })
+})
+
 describe('campaign.delete by an agent asks first [D-023]', () => {
   it('runs only when the user allows it, even for a campaign the agent created', async () => {
     let asked = 0
