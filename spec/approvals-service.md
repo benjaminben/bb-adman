@@ -1,6 +1,6 @@
 # Approvals service
 
-The small web service behind approval links [D-095]: a Cloudflare Worker with a D1 database. It serves the visitor pages (password, gallery, sign-off) and a keyed API for the desktop app. Every part of this file is **Not built** (slices AP-1 to AP-4 and AP-13 in `spec/phases/approvals.md`).
+The small web service behind approval links [D-095]: a Cloudflare Worker with a D1 database. It serves the visitor pages (password, gallery, sign-off) and a keyed API for the desktop app. AP-1's parts are **built** (folder and tooling, contract, database, the route tables with stubs, health with the key check, the hash and random letters); the rest is **Not built** (AP-2 to AP-4 and AP-13 in `spec/phases/approvals.md`).
 
 Read with `spec/approvals.md`: the desktop side, the security rules and threats, and the assumptions (A-82 on). This file says what the service does; that file says why some choices were made.
 
@@ -17,30 +17,34 @@ Read with `spec/approvals.md`: the desktop side, the security rules and threats,
 ```
 approvals-service/
   package.json          own dependencies; "type": "module"; private
-  tsconfig.json         strict, like the app's; Workers types; no DOM lib
+  tsconfig.json         strict, like the app's; types from worker-configuration.d.ts; no DOM lib
   wrangler.jsonc        name, main, compatibility_date, the D1 binding "DB", send_metrics false
-  vitest.config.ts      the Cloudflare Vitest plugin; reads the D1 migrations for the tests
+  vitest.config.ts      the Cloudflare Vitest plugin; the migrations as the TEST_MIGRATIONS
+                        binding; a random API_KEY made per run
   migrations/0001_init.sql
   src/
     index.ts            export default { fetch }: builds the app from env and hands over the request
-    app.ts              createApp(env, parts): the router; parts = { pictures, now, random } so tests swap them
+    app.ts              createApp(env, parts, tables?): the router; parts = { now, random } (AP-4 adds
+                        pictures) so tests swap them; tables lets a test supply its own routes
     contract.ts         byte-equal copy of the app's src/shared/approvals/contract.ts
-    env.ts              Env type; the API_KEY and TEST_PICTURE_ORIGIN checks
-    api/                auth.ts, body.ts, links.ts, gallery.ts, read.ts, errors.ts
+    env.ts              Env type; the API_KEY check; AP-2 adds the TEST_PICTURE_ORIGIN check
+    api/                auth.ts, body.ts, route.ts, health.ts, links.ts, gallery.ts, read.ts, errors.ts
     visitor/            routes.ts, password-page.ts, gallery-page.ts, html.ts, styles.ts,
                         headers.ts, forms.ts, session.ts, throttle.ts, signoffs.ts, picture-route.ts
     crypto/             random.ts, password.ts, compare.ts
     db/                 links.ts, variants.ts, signoffs.ts, sessions.ts
     pictures/           source.ts (the PictureSource interface), s3-source.ts, check-url.ts, sniff.ts
-  test/                 setup file applying migrations; one test file per area
+  test/                 setup.ts (applies the migrations); env.d.ts (the test-only bindings);
+                        tsconfig.json (test types); one test file per area
   README.md             the deploy steps (written by AP-13)
 ```
 
 - **Code rules.** TypeScript, no semicolons, files aimed at 200 lines and never past 300, the same Prettier settings as the app. Root `npm run lint` covers this folder too (one style). The app's `npm run typecheck` and `npm test` do not include it; the folder has its own `npm run typecheck` and `npm test`.
-- **Packages.** `wrangler`, `@cloudflare/vitest-plugin` (it replaced `@cloudflare/vitest-pool-workers`; it needs Vitest 4.1 or later), `vitest` at the version the plugin supports, `typescript`, the Workers types the current Cloudflare docs name, and `zod` at exactly the app's version (`4.6.7` today). Every version is pinned exactly. The developer of AP-1 checks each licence (allowed: MIT, ISC, BSD, Apache-2.0 and similar) and reports it.
+- **Packages.** `wrangler`, `@cloudflare/vitest-plugin` (it replaced `@cloudflare/vitest-pool-workers`), `vitest` 5 (the plugin accepts it), `typescript`, and `zod` at exactly the app's version (`4.6.7` today). Every version is pinned exactly. `zod` is the only runtime package. Allowed licences: MIT, ISC, BSD, Apache-2.0 and similar; the project bans GPL and AGPL only. `@img/sharp-libvips-*` (LGPL-3.0-or-later) arrive through the local test runtime only and are never shipped; the security review agreed.
+- **Worker types** are made by `wrangler types` into `worker-configuration.d.ts`, not taken from a types package. Git, eslint and Prettier ignore that file; `npm run typecheck` runs `npm run types` first. The tests' types (`cloudflare:test`, the plugin's types) sit in `test/tsconfig.json`.
 - **Install scripts.** The service's `package.json` has its own `allowScripts` list under the app's rule (`spec/infra-and-settings.md`, "Packages"): every package that asks gets a pinned `false` entry. If `workerd` or `esbuild` will not run without its script, the developer stops and reports; the architect rules.
-- **No telemetry.** `wrangler.jsonc` sets `"send_metrics": false`, and every script that runs `wrangler` sets `WRANGLER_SEND_METRICS=false`.
-- **Root files the service needs** (AP-1): `.gitignore` gains `approvals-service/.wrangler/` and `approvals-service/.dev.vars*`; `eslint.config.js` and `.prettierignore` ignore `approvals-service/.wrangler/`, `approvals-service/node_modules/` and `approvals-service/worker-configuration.d.ts` if the types are generated.
+- **No telemetry.** `wrangler.jsonc` sets `"send_metrics": false`, and every script that runs `wrangler` sets `WRANGLER_SEND_METRICS=false`. The scripts set it inline, which works on macOS and Linux, not in Windows `cmd`.
+- **Root files the service needs** (AP-1): `.gitignore` gains `approvals-service/.wrangler/`, `approvals-service/.dev.vars*` and `approvals-service/worker-configuration.d.ts`; `eslint.config.js` and `.prettierignore` ignore `approvals-service/.wrangler/`, `approvals-service/node_modules/` and `approvals-service/worker-configuration.d.ts`.
 - **`wrangler.jsonc`** holds no key, no address and no account value. The D1 binding has `"binding": "DB"`, `"database_name": "adman-approvals"`, `"migrations_dir": "migrations"`, and a `database_id` of all zeros (`00000000-0000-0000-0000-000000000000`) that the stakeholder replaces when deploying. `vars` is empty: `API_KEY` is a secret and `TEST_PICTURE_ORIGIN` is never set here (a test reads the file and checks both).
 
 ## The shared contract
@@ -61,12 +65,14 @@ The request and reply shapes are one Zod file, `src/shared/approvals/contract.ts
 | `VARIANT_KEY` | The app's variant ID: `^[23456789abcdefghjkmnpqrstuvwxyz]{6}$` |
 | `SLUG` | `^[0-9A-Za-z]{12}$` |
 | `SIGNOFF_ID` | `^[0-9A-Za-z]{24}$` |
-| `SHOWN_TEXT` | 1 to the field's length, trimmed, no character of Unicode class Cc or Cf (no control and no direction-changing marks). `campaignName` and `title` 200, `sizeLine` 100 |
-| `PASSWORD` | 12 to 128 characters, no character of class Cc |
-| `EMAIL` | At most 254 characters, matched after trimming and lower-casing: `^[a-z0-9.!#$%&'*+/=?^_{}~-]{1,64}@[a-z0-9-]{1,63}(\.[a-z0-9-]{1,63})+$` (the backtick and the vertical bar, legal but rare, are left out). ASCII only, so no look-alike letters or direction marks reach a page (A-99) |
+| `SHOWN_TEXT` | 1 to the field's length after the schema trims outer spaces (they are trimmed, not refused), no character of Unicode class Cc or Cf (no control and no direction-changing marks). `campaignName` and `title` 200, `sizeLine` 100 |
+| `PASSWORD` | 12 to 128 characters as JavaScript counts string length, no character of class Cc |
+| `EMAIL` | The schema trims and lower-cases it; then at most 254 characters, matching: `^[a-z0-9.!#$%&'*+/=?^_{}~-]{1,64}@[a-z0-9-]{1,63}(\.[a-z0-9-]{1,63})+$` (the backtick and the vertical bar, legal but rare, are left out). ASCII only, so no look-alike letters or direction marks reach a page (A-99) |
 | `VERSION` | Whole number, 0 to 2^53 − 1 (the variant's `rev`) |
-| `PICTURE_URL` | At most 2,048 characters and a valid URL; the host rule is checked in the service by `checkPictureUrl` (below), not in the contract |
+| `PICTURE_URL` | At most 2,048 characters and a valid URL of any scheme. `checkPictureUrl` (below) is the only guard on scheme and host |
 | `TIME` | ISO 8601 UTC text with milliseconds and `Z` |
+
+Request bodies are strict objects (an unknown key refuses the body). Reply schemas accept unknown keys and drop them.
 
 ## Database (D1)
 
@@ -121,7 +127,7 @@ CREATE INDEX session_link ON session (link_id);
 
 - **Every query that reads a gallery, a sign-off, a session or a picture names the `link_id`** it got from the slug (visitor side) or from the project and campaign IDs (API side). No query takes a link, variant or sign-off from a form without that filter.
 - D1 limits that matter (Cloudflare docs, checked 2026-11): 100 bound values per statement, 100 KB per statement, 2 MB per row, a `batch()` counts as one query. A gallery of 500 variants is one batch of about 1,000 statements, each well inside the limits.
-- Migrations are applied with `wrangler d1 migrations apply`, which records them in the `d1_migrations` table. In tests, `readD1Migrations` (from the plugin, in `vitest.config.ts`) and `applyD1Migrations` (from `cloudflare:test`, in the setup file) apply them. Storage is kept apart per test file.
+- Migrations are applied with `wrangler d1 migrations apply`, which records them in the `d1_migrations` table. In tests, `readD1Migrations` (from the plugin, in `vitest.config.ts`) reads them into the `TEST_MIGRATIONS` binding, and `applyD1Migrations` (from `cloudflare:test`, in the setup file) applies them. Storage is kept apart per test file.
 
 ## Random values and passwords
 
@@ -130,7 +136,7 @@ CREATE INDEX session_link ON session (link_id);
 - **Letters without bias.** `randomLetters(n)`: the 62-letter alphabet `0-9A-Za-z`. Draw random bytes; drop any byte of 248 or more (248 = 4 × 62); take `byte % 62` for each kept byte; draw again until there are `n`. Used for the slug (12), link IDs and sign-off IDs (24).
 - **Slug clash.** The `UNIQUE` rule refuses a repeat; the service makes a new slug and tries again, at most 3 times, then answers 500. (62^12 is about 3 × 10^21, so a clash is not expected.)
 - **Session token.** 32 random bytes, base64url without padding (43 characters).
-- **Password hash.** PBKDF2 with HMAC-SHA-256, 100,000 iterations (the most Workers allows), a 16-byte random salt per link, 32 bytes out. The iteration count is stored per link so it can be raised later without breaking old links. A new password gets a new salt.
+- **Password hash.** PBKDF2 with HMAC-SHA-256, 100,000 iterations (the most Workers allows), a 16-byte random salt per link, 32 bytes out. The iteration count is stored per link so it can be raised later without breaking old links. A new password gets a new salt. The local runtime does not enforce the 100,000 cap, so local tests cannot prove it; AP-13's hand checks prove it after deploying. If the deployed runtime refuses the hash, the code fails closed: an error reply, never a weaker hash or a skipped check.
 - **Comparing.** Hashes and keys are compared with `crypto.subtle.timingSafeEqual` on equal-length buffers: for the key, the SHA-256 of each side; for the password, the two 32-byte hashes. Never `===` on a secret.
 - **Unknown slug.** A password try for a slug that has no link runs the same PBKDF2 once against a fixed dummy salt, so the time taken does not tell a real slug from an unknown one.
 
@@ -144,8 +150,10 @@ Base path `/api/v1`. JSON in and out. Every reply carries `Cache-Control: no-sto
 2. `API_KEY` missing or shorter than 32 characters in the Worker's environment: `503 not_set_up`.
 3. `Authorization` must be exactly `Bearer {key}` and the key must match (timing-safe): else `401 bad_key`.
 4. A body (POST, PUT) must have `Content-Type: application/json` and at most 2 MiB, read with a cap (a missing or false `Content-Length` does not get past it): else `415 bad_request` or `413 too_large`.
-5. The path's IDs and the body pass the contract: else `400 invalid_input`, with no part of the input in the reply.
-6. The handler. Unknown path: `404 not_found`.
+5. The path's IDs and the body pass the contract: else `400 invalid_input`, with no part of the input in the reply. Then the route's own `check`, if it has one (a rule the schema cannot make, such as `checkPictureUrl`), with its own refusal.
+6. The handler. Unknown path: `404 not_found`, but only with the right key: steps 1 to 3 come first, so an unknown path under `/api/v1` without a key gets `401`.
+
+**The route table** (`api/route.ts`, `app.ts`, built in AP-1). Each route is `plainRoute({ name, method, path, handler })` or `bodyRoute({ name, method, path, body, check?, handler })`. A handler is an `ApiHandler<B>`; it gets `{ env, parts, link, body }` (`link` is the path's checked pair or null; `body` as its schema parsed it) and never the raw request. Every stub handler is `notBuilt` (`404 not_found`). A thrown error is logged as the route name and the error's name, and answers `500 internal`. `test/routes.test.ts` fails if `replace-gallery` or `renew-pictures` has a real handler and no `check`.
 
 **Error body:** `{ "error": { "code": "...", "message": "..." } }`. `code` is one of `bad_request`, `not_set_up`, `bad_key`, `too_large`, `invalid_input`, `not_found`, `link_exists`, `internal`. The message is a fixed sentence per code; it never holds input, a stack or SQL text.
 
@@ -195,6 +203,8 @@ All pages are built on the server as plain HTML with one stylesheet served by th
 | `GET /gallery.css` | The one stylesheet, a fixed text in `visitor/styles.ts` |
 | `GET /robots.txt` | `User-agent: *` and `Disallow: /` |
 | Anything else, or a slug of the wrong shape | `404`, `text/plain`, "Not found." |
+
+**The visitor router** (`visitor/routes.ts`, built in AP-1). `VISITOR_ROUTES` is the exported table of `{ name, method, path, handler }`; a handler gets `{ request, env, parts, params }`. Each handler call is wrapped: a throw logs the route name and the error's name only, and answers a fixed plain-text `500` ("Something went wrong. Try again later.") with the page headers. AP-3 moves that reply onto its header helper, which adds HSTS.
 
 ### Session
 
@@ -302,7 +312,7 @@ The service writes no log line of its own except one `console.error` per unexpec
 
 ## Tests
 
-Everything runs on this machine with `npm test` in `approvals-service/` (the Cloudflare Vitest plugin, local Miniflare, D1 kept apart per test file). Route tests call `createApp(env, parts)` with a stand-in `PictureSource`, a fixed clock and, where a test needs it, a fixed random source; `env` comes from `cloudflare:workers`. One request through `exports.default.fetch` proves `index.ts` wires the same app. Prefer one table test over many near-identical cases.
+Everything runs on this machine with `npm test` in `approvals-service/` (the Cloudflare Vitest plugin, local Miniflare, D1 kept apart per test file). Route tests call `createApp(env, parts, tables?)` with a stand-in `PictureSource`, a fixed clock and, where a test needs it, a fixed random source; `env` comes from `cloudflare:workers`. One request through `exports.default.fetch` proves `index.ts` wires the same app. Prefer one table test over many near-identical cases.
 
 | File | What it proves |
 |------|----------------|
@@ -319,7 +329,9 @@ Everything runs on this machine with `npm test` in `approvals-service/` (the Clo
 | `test/signoffs.test.ts` | Sign off, repeat adds nothing, old version gives `m=changed`, bad email gives `m=bad-email`, removing another link's sign-off removes nothing |
 | `test/pages.test.ts` | A campaign name, title and size line holding `<script>`, `"`, `'`, `&` and `</style>` appear only escaped; every page's headers equal their full expected text; an unknown `m` shows no notice |
 | `test/config.test.ts` | `wrangler.jsonc` has `send_metrics: false`, no `vars` entry named `API_KEY` or `TEST_PICTURE_ORIGIN`, and the all-zero `database_id` |
-| `test/worker.test.ts` | `exports.default.fetch` answers `/robots.txt` and an unknown path |
+| `test/routes.test.ts` | A handler gets its body as its schema parsed it; `check` runs after the schema and before the handler; the gallery and picture-renewal routes are stubs or have a `check`; a throwing visitor handler gives the fixed `500` and logs names only |
+| `test/db.test.ts` | Each data-access function round trip; a link delete removes its sessions, sign-offs and gallery rows only |
+| `test/worker.test.ts` | `exports.default.fetch` answers health with the key and an unknown path. Its `/robots.txt` row expects the stub's `404` today; AP-3 changes it to the real reply |
 
 ## Running it locally
 

@@ -25,7 +25,7 @@
 - **Nothing leaves this machine** (D-086). No `wrangler login`, `wrangler deploy`, `wrangler secret put`, `wrangler d1 create`, and no command with `--remote`. No test contacts a deployed service or a real S3 bucket. Every script that runs `wrangler` sets `WRANGLER_SEND_METRICS=false`. Installing packages with npm is allowed. If `wrangler dev` asks to sign in, stop and report.
 - **No paid call and no real S3.** S3 code is tested with stand-ins and by signing on this machine (signing sends nothing). The stakeholder's own check with a real bucket comes after deploying.
 - **One migration.** Only AP-5 runs `npm run db:generate` (`0004_approvals`). If a Phase 4 or look-pack slice needs a migration before AP-5 merges, both stop and the orchestrator orders them.
-- **Shared files.** Only AP-5 edits `agent-policy.ts`, `events.ts`, `queries/queries.ts`, the Drizzle schema index, `settings.ts`, `secrets.ts`, `core-deps.ts`, and the `core.ts` spread and deps lines. AP-5 registers every approvals command and query against a stub file; the slice that owns the stub replaces its body and touches no index. `src/main/approvals/deps.ts` (AP-5) imports `createPasswordStore` from `password-store.ts` and `choosePictureStore` from `picture-store.ts`, both stubs from AP-5, so AP-6 and AP-7 never edit the same file.
+- **Shared files.** Only AP-5 edits `agent-policy.ts`, `events.ts`, `queries/queries.ts`, the Drizzle schema index, `settings.ts`, `secrets.ts`, `core-deps.ts`, and the `core.ts` spread and deps lines. AP-5 registers every approvals command and query against a stub file; the slice that owns the stub replaces its body and touches no index. After AP-5 merges, AP-10b adds one `agent-policy.ts` row for `storage.checkS3`. `src/main/approvals/deps.ts` (AP-5) imports `createPasswordStore` from `password-store.ts` and `choosePictureStore` from `picture-store.ts`, both stubs from AP-5, so AP-6 and AP-7 never edit the same file.
 - **Screens** (D-084): one folder per component, CSS from the existing tokens only. No slice here adds a token, so none edits `tokens.css`. A screen slice's edit to an existing component is a mount point of a few lines, named in the slice. Each screen slice adds `tests/shots/ap-{n}.shots.ts` (for example `tests/shots/ap-10.shots.ts`); picture names start with the numbers given in the slice, from the range 90 to 99 kept for this feature.
 - **Security class.** Slices marked "full" merge only after a full security review; "short" after a short one.
 - Budget: one slice per developer run, well under 300k tokens; hand off with `HANDOFF.md` if near it.
@@ -34,29 +34,30 @@
 
 | Wave | Slice | Waits for | May run beside | Must not run beside |
 |------|-------|-----------|----------------|---------------------|
-| 1 | AP-1 Service skeleton, contract, database | Nothing (startable now) | Every Phase 4 and look-pack slice | Nothing |
+| 1 | AP-1 Service skeleton, contract, database (built) | Nothing | Every Phase 4 and look-pack slice | Nothing |
 | 2 | AP-2 Service: link API | AP-1 | AP-3, AP-5, every Phase 4 and look-pack slice | Nothing |
 | 2 | AP-3 Service: visitor pages and sessions | AP-1 | AP-2, AP-5, every Phase 4 and look-pack slice | Nothing |
 | 2 | AP-5 Desktop contracts | AP-1; P4-10 merged | AP-2, AP-3, AP-4, the look pack, Phase 4 screen slices | P4-10 (`core.ts`); any slice that adds a migration or edits `agent-policy.ts`, `events.ts`, `queries.ts`, `settings.ts` or `secrets.ts` (none is planned in Phase 4 or the look pack) |
 | 3 | AP-4 Service: sign-offs and pictures | AP-2, AP-3 | Everything | Nothing |
 | 3 | AP-6 Service client, service settings, kept passwords | AP-5 | AP-4, AP-7 | Nothing |
-| 3 | AP-7 Pictures: signed addresses and the picture store | AP-5 | AP-4, AP-6 | Any slice that edits `package.json`, `src/main/providers/types.ts` or `src/main/providers/s3/` (none is planned) |
+| 3 | AP-7 Pictures: signed addresses and the picture store | AP-5 | AP-4, AP-6 | Any slice that edits `package.json`, `src/main/providers/types.ts` or `src/main/providers/s3/` (AP-10b waits for AP-7) |
 | 4 | AP-8 Link commands and the queries | AP-6, AP-7 | AP-10 | Nothing |
-| 4 | AP-10 Settings: approvals service and S3 | AP-6 | AP-8, AP-9 | Nothing (`settings-screen.tsx` has no other planned editor) |
+| 4 | AP-10 Settings: approvals service (AP-10a, the S3 part, built) | AP-6 | AP-8, AP-9, AP-10b | Nothing (`settings-screen.tsx` has no other planned editor) |
+| 4 | AP-10b Test connection for S3 | AP-5, AP-7 | AP-8, AP-9, AP-10, AP-11, Phase 4 and look-pack slices | Any slice that edits `src/main/commands/storage/`, `src/main/providers/s3/`, `s3-section/` or `agent-policy.ts` (none is planned) |
 | 5 | AP-9 Update gallery and refresh | AP-8 | AP-10 | Nothing |
 | 6 | AP-11 Approval dialog, bar and store | AP-9; P4-12 merged | AP-10 | P4-12 and AP-12 (`campaign-view/`) |
 | 7 | AP-12 Tile marks | AP-11 | Phase 4 and look-pack slices | P4-12 and AP-11 (`campaign-view/`); any slice editing `variant-tile/` or `variant-grid/` (none is planned) |
 | 8 | AP-13 Local end-to-end proof, deploy steps, exit check | Every other AP slice | Phase 4 and look-pack slices | Nothing |
 
-No two slices of one wave edit the same file: wave 2 splits by folder (`approvals-service/src/api/`, `approvals-service/src/visitor/`, and the app); wave 3 by folder (the service's `visitor/` and `pictures/`, the app's client and password store, the app's picture store and S3 adapter); wave 4 by main process against Settings screens.
+No two slices of one wave edit the same file: wave 2 splits by folder (`approvals-service/src/api/`, `approvals-service/src/visitor/`, and the app); wave 3 by folder (the service's `visitor/` and `pictures/`, the app's client and password store, the app's picture store and S3 adapter); wave 4 by main process against Settings screens, with AP-10b in the storage command folder, the S3 adapter folder and `s3-section/` only.
 
 ## Slices
 
-### AP-1 — Service skeleton, contract, database
+### AP-1 — Service skeleton, contract, database (built)
 
 - **Exists when done:** `approvals-service/` installs, type-checks and tests on this machine; `wrangler.jsonc`, the D1 migration and its data-access functions exist; the router registers every route of `spec/approvals-service.md` against stub handlers (an API stub answers `404 not_found`, a visitor stub `404` "Not found."), and `GET /api/v1/health` works with the full key check; the contract exists in both places with the copy test; the password hash and the random letters work.
-- **New files:** `approvals-service/package.json`, `tsconfig.json`, `wrangler.jsonc`, `vitest.config.ts`, `migrations/0001_init.sql`; `src/index.ts`, `app.ts`, `env.ts`, `contract.ts`; `src/api/auth.ts`, `body.ts`, `errors.ts`, `health.ts`; stubs `src/api/links.ts`, `gallery.ts`, `read.ts`, `src/visitor/routes.ts`; `src/crypto/random.ts`, `password.ts`, `compare.ts`; `src/db/links.ts`, `variants.ts`, `signoffs.ts`, `sessions.ts`; `test/setup.ts` and the tests below. In the app: `src/shared/approvals/contract.ts`; `tests/unit/config/approvals-contract.test.ts`; `tests/unit/shared/approvals/contract-ids.test.ts`.
-- **May touch:** `.gitignore`, `eslint.config.js` (ignore lines only), `.prettierignore`.
+- **New files:** `approvals-service/package.json`, `tsconfig.json`, `wrangler.jsonc`, `vitest.config.ts`, `migrations/0001_init.sql`; `src/index.ts`, `app.ts`, `env.ts`, `contract.ts`; `src/api/auth.ts`, `body.ts`, `errors.ts`, `health.ts`; stubs `src/api/links.ts`, `gallery.ts`, `read.ts`, `src/visitor/routes.ts`; `src/crypto/random.ts`, `password.ts`, `compare.ts`; `src/db/links.ts`, `variants.ts`, `signoffs.ts`, `sessions.ts`; `test/setup.ts` and the tests below. Added as built: `src/api/route.ts`, `test/env.d.ts`, `test/tsconfig.json`, `test/routes.test.ts`. In the app: `src/shared/approvals/contract.ts`; `tests/unit/config/approvals-contract.test.ts`; `tests/unit/shared/approvals/contract-ids.test.ts`.
+- **May touch:** `.gitignore` (it also ignores `approvals-service/worker-configuration.d.ts`), `eslint.config.js` (ignore lines only), `.prettierignore`.
 - **Read:** `spec/approvals-service.md` "What it is", "Folder and tooling", "The shared contract", "Database (D1)", "Random values and passwords", "The keyed API" (order of checks, error body); `spec/infra-and-settings.md` "Packages: licences and install scripts". **Check first** in Cloudflare's current docs: the Vitest plugin's setup (`cloudflareTest`, `readD1Migrations`, `applyD1Migrations`), the supported Vitest version, and the Workers types to use. Report each package's licence and every `allowScripts` entry.
 - **Tests:** `test/contract.test.ts`, `test/random.test.ts`, `test/password.test.ts`, `test/api-auth.test.ts` (against health), `test/config.test.ts`, `test/worker.test.ts`, `test/db.test.ts` (each access function round trip; a link delete batch removes sessions, sign-offs and gallery rows of that link only). Root: the contract copy test; `contract-ids.test.ts` (200 IDs from the app's campaign and variant ID makers and from `ulid` pass the contract).
 - **Class:** S + A. Security class, full review (the key check, the hash, the tooling). **After:** nothing.
@@ -65,7 +66,8 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`approval
 
 - **Exists when done:** every `/api/v1/links` route answers as `spec/approvals-service.md` says, with `checkPictureUrl` (the test origin included) guarding every picture address.
 - **New files:** the bodies of `src/api/links.ts`, `gallery.ts`, `read.ts`; `src/pictures/check-url.ts`.
-- **May touch:** `src/db/*.ts` (a query a route needs; no table change).
+- **May touch:** `src/db/*.ts` (a query a route needs; no table change); `src/env.ts` (the `TEST_PICTURE_ORIGIN` check, written here, not in AP-1); `src/app.ts` (the two `check` lines).
+- **Must not get wrong** (security review): replies are built field by field or through the reply schema, never from a database row (rows hold the hash, salt, internal ID and picture address); a new password is one batch with ending the link's sessions.
 - **Read:** `spec/approvals-service.md` "The keyed API", "Database (D1)", "Pictures" (`checkPictureUrl` only).
 - **Tests:** `test/api-links.test.ts`, `test/picture-url.test.ts`.
 - **Class:** S. Security class, full review. **After:** AP-1.
@@ -74,7 +76,8 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`approval
 
 - **Exists when done:** the password page, the session, the wrong-password limit, "Leave", the gallery page (with its sign-off forms drawn), `/gallery.css` and `/robots.txt` work, with the escaping template and the exact headers.
 - **New files:** the body of `src/visitor/routes.ts`; `src/visitor/password-page.ts`, `gallery-page.ts`, `html.ts`, `styles.ts`, `headers.ts`, `forms.ts`, `session.ts`, `throttle.ts`.
-- **May touch:** `src/db/*.ts` (a query a route needs; no table change).
+- **May touch:** `src/db/*.ts` (a query a route needs; no table change); `test/worker.test.ts` (its `/robots.txt` row). The router's fixed `500` moves onto `headers.ts`, which adds HSTS.
+- **Must not get wrong** (security review): the link always comes from the slug and its session, never from a form field; an unknown slug, which the counting `UPDATE … RETURNING` finds no row for, still runs the dummy hash.
 - **Read:** `spec/approvals-service.md` "Visitor pages" (all of it), "Random values and passwords".
 - **Tests:** `test/session.test.ts`, `test/throttle.test.ts`, `test/forms.test.ts` (rows for `/enter` and `/leave`), `test/pages.test.ts`.
 - **Class:** S. Security class, full review. **After:** AP-1.
@@ -132,14 +135,25 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`approval
 
 ### AP-10 — Settings: approvals service and S3
 
-- **Split [D-096].** The S3 part ("Cloud storage": `s3-section/`, its test, shot `90-settings-cloud-storage`) is built first as **AP-10a**, which waits for nothing: the settings values and the two S3 secrets exist today. The approvals part (`approvals-section/`, its test, shot `91`) stays here as AP-10 and waits for AP-6. Both mount in `settings-screen.tsx`, one after the other.
+- **Split [D-096].** The S3 part is **AP-10a (built)**: `s3-section/`, mounted in `settings-screen.tsx`, `tests/unit/renderer/screens/settings/s3-section.test.tsx`, shot `90-settings-cloud-storage` in `tests/shots/ap-10a.shots.ts`. As built: `spec/storage-and-publish.md` "Storage settings screen". The approvals part (`approvals-section/`, its test, shot `91`) stays here as AP-10 and waits for AP-6. "Test connection" for S3 is AP-10b.
 
-- **Exists when done:** Settings has "Cloud storage" (Amazon S3) and "Approvals service" as `spec/approvals.md` "Screens" says.
-- **New files:** `src/renderer/screens/settings/approvals-section/`, `src/renderer/screens/settings/s3-section/`.
-- **May touch:** `src/renderer/screens/settings/settings-screen/settings-screen.tsx` (mount both, a few lines).
+- **Exists when done:** Settings has "Approvals service" as `spec/approvals.md` "Screens" says, mounted after "Cloud storage".
+- **New files:** `src/renderer/screens/settings/approvals-section/`.
+- **May touch:** `src/renderer/screens/settings/settings-screen/settings-screen.tsx` (the mount, a few lines).
 - **Read:** `spec/approvals.md` "Settings", "Screens" (Settings); `spec/screens.md` "Rules for every screen"; `spec/storage-and-publish.md` "Amazon S3", "Storage settings screen".
-- **Tests:** `tests/unit/renderer/screens/settings/approvals-section.test.tsx` (save sends `approvals.setService`; a refusal's sentence shown; Remove sends null; key saved with `secret.set` and shown by last four; Test connection shows "Connected." or the sentence; axe); `s3-section.test.tsx` (bucket, region, folder saved in one `settings.update`; a region refusal shown; both keys; the permissions line; axe). Shots: `tests/shots/ap-10.shots.ts`: `90-settings-cloud-storage`, `91-settings-approvals-service` (with the stand-in, dev tools on).
+- **Tests:** `tests/unit/renderer/screens/settings/approvals-section.test.tsx` (save sends `approvals.setService`; a refusal's sentence shown; Remove sends null; key saved with `secret.set` and shown by last four; Test connection shows "Connected." or the sentence; axe). Shots: `tests/shots/ap-10.shots.ts`: `91-settings-approvals-service` (with the stand-in, dev tools on).
 - **Class:** D. Not security class. **After:** AP-6.
+
+### AP-10b — Test connection for S3
+
+- **Exists when done:** "Test connection" in Settings' Cloud storage proves the saved bucket, region and keys can list, write, read and delete inside the configured folder, as `spec/storage-and-publish.md` "Test connection (S3)" says.
+- **New files:** `src/main/providers/s3/check-access.ts` (`checkS3Access`); `src/main/commands/storage/check-s3.ts`; `src/main/commands/storage/require-s3-settings.ts` (moved, not rewritten); `src/shared/schemas/commands/storage-check.ts` (input, reply, reasons and sentences); `src/renderer/screens/settings/s3-check/`.
+- **May touch** (one line each unless named): `src/main/commands/storage/index.ts` (returns the command); `src/main/commands/agent-policy.ts` (the `deny` row); `src/main/commands/dev/storage.ts` (imports the moved guard); `src/renderer/screens/settings/s3-section/s3-section.tsx` (mounts `s3-check`, a few lines); the file that lists refusal reasons, if one does; `tests/unit/main/commands/agent-policy-table.test.ts` (the row); any test that lists command names; `tests/shots/ap-10a.shots.ts` (shot 90 retaken, now with the button).
+- **Read:** `spec/storage-and-publish.md` "Storage interface", "Path rules", "Amazon S3" (all of it), "Storage settings screen"; `src/main/commands/comfy/check.ts` (the model for a check command).
+- **Check first:** with recorded S3 replies, the error names the SDK gives for a wrong region (`PermanentRedirect`, `AuthorizationHeaderMalformed`, a 301) while `followRegionRedirects` is false. A name the table does not hold: report it; the architect rules.
+- **Tests:** `tests/unit/main/providers/s3/check-access.test.ts` (a stand-in request handler under the real pin; one table: the four calls in order, every key under the folder's `adman-connection-check/`, the delete naming the written key only; each failure kind from a recorded reply; `AccessDenied` at each step names that permission; delete still sent after a failed read; a delete error in `Errors` and a thrown one; a host off the pin refused; neither key in any result or log detail); `tests/integration/commands/storage-check-s3.test.ts` (not set up; no keys `NEEDS_KEY`; the agent `AGENT_DENIED`; each kind's sentence; the reply holds no key, address or provider message); `tests/unit/renderer/screens/settings/s3-check.test.tsx` (disabled when not set up; "Testing…" while working; "Connected." line; a refusal's sentence; line cleared after a save; axe). No real bucket in any automatic test.
+- **Hand check** (the stakeholder, after merge): the three in "Test connection (S3)", with his own bucket.
+- **Class:** E + D. Security class, short review (the keys, the pinned host, writes and deletes only inside the folder). **After:** AP-5 and AP-7 merged (AP-5 owns `agent-policy.ts` until then; AP-7 edits `s3/`).
 
 ### AP-11 — Approval dialog, bar and store
 
@@ -166,7 +180,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`approval
 - **May touch:** root `package.json` (script `test:approvals-local`: `npm run build && playwright test --config playwright.approvals.config.ts`); `approvals-service/package.json` (scripts `dev`, `db:local`).
 - **Read:** this file; `spec/approvals-service.md` "Running it locally", "Deploying"; `spec/test-harnesses.md` "Offline end-to-end harness".
 - **Check first:** that Chromium keeps the `__Host-` cookie from `http://127.0.0.1`; if not, the run uses `localhost` for the service and says so. If Playwright's Chromium is not installed, report it rather than download it unasked.
-- **Tests:** the two specs. No CI workflow names `test:approvals-local`. The developer lists the stakeholder's checks: deploy with the README; one "Update gallery" to his real S3 bucket and one visitor sign-off through the deployed service; Windows (D-087).
+- **Tests:** the two specs. No CI workflow names `test:approvals-local`. The developer lists the stakeholder's checks: deploy with the README; one "Update gallery" to his real S3 bucket and one visitor sign-off through the deployed service; "Test connection" with his own bucket (AP-10b's hand check); one right and one wrong password on the deployed service (proves the runtime takes 100,000 PBKDF2 iterations, which the local runtime does not check); Windows (D-087). The service's scripts set `WRANGLER_SEND_METRICS=false` inline: fine on macOS and Linux, not in Windows `cmd`.
 - **Class:** G + S. Security class, short review (the test doors are only test doors). **After:** every other AP slice.
 
 ## Left for later

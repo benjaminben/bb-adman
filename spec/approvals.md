@@ -41,11 +41,7 @@ Desktop app (main process)                       Cloudflare Worker + D1         
 
 ### Cloud storage: the S3 part
 
-The gallery needs a bucket, and today no screen sets one (the storage settings screen is Phase 9). This feature builds the **S3 part** of it now (A-95):
-
-- A "Cloud storage" section in Settings with "Amazon S3": Bucket, Region, "Folder in the bucket" (the prefix), saved with `settings.update { storage: { s3 } }` (its `regionRefusal` sentences shown on save), and the two keys `s3.accessKeyId`, `s3.secretAccessKey` with the existing key rows (set, replace, delete; last four shown).
-- The line "The keys need permission to list the bucket and to read, write and delete files in it." (`spec/storage-and-publish.md`, "Amazon S3").
-- Phase 9 adds Dropbox and publishing words to the same section.
+The gallery needs a bucket. This feature builds the **S3 part** of Settings' "Cloud storage" ahead of Phase 9 (A-95). Built (AP-10a); "Test connection" is AP-10b. Both are written in `spec/storage-and-publish.md`, "Storage settings screen". Phase 9 adds Dropbox to the same section.
 
 ## The service client
 
@@ -269,7 +265,7 @@ D-084: one folder per component, CSS from the existing tokens only (no slice of 
 ### Settings
 
 - **"Approvals service"** (`src/renderer/screens/settings/approvals-section/`): the line "Share a campaign's variants with a password-protected link and see who signed off. The service runs on your own Cloudflare account." A "Service address" field with "Save" and "Remove" (`approvals.setService`; a refusal's sentence under the field). A "Service key" row (`secret.set` and `secret.delete` with `approvals.apiKey`, last four shown, the field is a password field). "Test connection" (`approvals.check`): "Connected." or the failure's sentence. The line "Pictures for the gallery are kept in your Amazon S3 bucket (Cloud storage, above)."
-- **"Cloud storage"** (`src/renderer/screens/settings/s3-section/`): as in "Cloud storage: the S3 part", above.
+- **"Cloud storage"** (`s3-section/`): see "Cloud storage: the S3 part", above.
 - Mounted in `settings-screen.tsx` after the keys section: Cloud storage, then Approvals service.
 
 ### The campaign page
@@ -380,7 +376,7 @@ Made to keep the build moving under D-082. Each says how hard it is to undo.
 - **A-92. Reading sign-offs back:** a full replace on each refresh; every 60 s while the campaign page is shown and the window has focus, on focus, and on "Refresh". *AP-9, AP-11. Easy.*
 - **A-93. Approval tables are main-only side tables,** not wire rows, with their own event; emails travel in the project file. *AP-5. Medium.*
 - **A-94. Turning a link off** deletes it, its gallery, sign-offs and sessions on the service and its pictures in the bucket; the app keeps its last read of sign-offs until a new link is made. *AP-8. Easy.*
-- **A-95. The S3 part of Settings' "Cloud storage"** is built now, ahead of Phase 9 (OI-97). *AP-10. Easy.*
+- **A-95. The S3 part of Settings' "Cloud storage"** is built ahead of Phase 9 (OI-97). *AP-10a (built); AP-10b.*
 - **A-96. Agents:** every approvals command deny, both queries user only. *AP-5. Easy.*
 - **A-97. Local test doors:** plain `http` to `127.0.0.1` and a folder picture store only in an unpackaged app with dev tools on; the service's `TEST_PICTURE_ORIGIN` only in tests. *AP-6, AP-7, AP-4. Easy.*
 - **A-98. The service key shows its last four** characters like every other key, not only "set / not set". *AP-5. Easy.*
