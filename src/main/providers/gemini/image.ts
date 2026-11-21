@@ -10,8 +10,8 @@ import { GEMINI_ORIGIN, pinnedFetch } from './pinned-origin'
 
 export const IMAGE_TIMEOUT_MS = 120_000
 // The library's own default for the Gemini API in @google/genai 3.6.1, pinned so the
-// environment cannot change it.
-const GEMINI_API_VERSION = 'v1'
+// environment cannot change it. Shared with json-call.ts.
+export const GEMINI_API_VERSION = 'v1'
 const AT_ONCE = 2
 
 // Tests hand in a fetch that answers with recorded responses. It is wrapped like the real one.
@@ -20,8 +20,9 @@ export type Transport = { fetch?: typeof fetch }
 // The library is given every setting it would otherwise fill from the environment (SPEC 6
 // [1.12], 6.2 O-1): the key, the mode, the address and the API version (GOOGLE_GENAI_API_VERSION
 // would change the path). GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION are still read by the
-// library and cannot be switched off, but the Gemini API mode does not use them.
-function pinnedClient(key: string, transport: Transport): GoogleGenAI {
+// library and cannot be switched off, but the Gemini API mode does not use them. Shared with
+// json-call.ts.
+export function pinnedClient(key: string, transport: Transport): GoogleGenAI {
   return new GoogleGenAI({
     apiKey: key,
     vertexai: false,
