@@ -6,6 +6,7 @@ import {
   type BriefFormValues,
 } from '@/renderer/screens/project-home/brief-form-model'
 import type { BriefDraft } from '@/shared/schemas/brief'
+import { IMAGES, photosFor } from './brief-photo-fixture'
 import { DRAFT } from './project-fixture'
 
 const parsed = (draft: BriefDraft, primaryLanguage: string | null = 'en') => ({
@@ -14,10 +15,11 @@ const parsed = (draft: BriefDraft, primaryLanguage: string | null = 'en') => ({
 })
 
 function plan(draft: BriefDraft, primaryLanguage: string | null = 'en', held: string[] = []) {
-  return planFromForm('P1', formFromDraft(parsed(draft, primaryLanguage), held), held)
+  const values = formFromDraft(parsed(draft, primaryLanguage), held, photosFor(draft))
+  return planFromForm('P1', values, held, IMAGES)
 }
 
-const filled = (): BriefFormValues => formFromDraft(parsed(DRAFT), [])
+const filled = (): BriefFormValues => formFromDraft(parsed(DRAFT), [], photosFor(DRAFT))
 
 describe('formFromDraft: the form filled from a brief [screens-campaign "The brief form"]', () => {
   it('fills every text as the brief has it, nothing trimmed', () => {
@@ -97,6 +99,7 @@ describe('planFromForm: what "Create campaign" sends [FR-023, FR-024, FR-026]', 
       { projectId: 'P1', id: 'citrus-can', name: 'Citrus can', description: 'A slim can' },
       { projectId: 'P1', id: 'berry-bottle', name: 'Berry bottle', description: '' },
     ])
+    expect(result.attach.map((u) => u.subjectId)).toEqual(['citrus-can', 'berry-bottle'])
     expect(result.campaign).toEqual({
       projectId: 'P1',
       brief: {
@@ -133,8 +136,9 @@ describe('planFromForm: what "Create campaign" sends [FR-023, FR-024, FR-026]', 
       name: 'My can',
       mode: 'existing',
       existingId: 'can-1',
+      photos: [{ assetId: 'A1', added: true }],
     }
-    const result = planFromForm('P1', values, ['can-1'])
+    const result = planFromForm('P1', values, ['can-1'], IMAGES)
     if (!result.ok) throw new Error(result.problems.join())
     expect(result.subjects.map((s) => s.id)).toEqual(['berry-bottle'])
     expect(result.campaign.brief.subjects[0]).toEqual({
@@ -148,7 +152,7 @@ describe('planFromForm: what "Create campaign" sends [FR-023, FR-024, FR-026]', 
   it('puts the master size first and adds other sizes', () => {
     const values = filled()
     values.sizes = { readyMade: ['1x1', '4x5'], other: '1200x628, 2:1', master: '1200x628' }
-    const result = planFromForm('P1', values, [])
+    const result = planFromForm('P1', values, [], IMAGES)
     if (!result.ok) throw new Error(result.problems.join())
     const labels = ['1200x628', '1x1', '4x5', '2160x1080']
     expect(result.campaign.sizes.map((s) => s.label)).toEqual(labels)
@@ -157,7 +161,7 @@ describe('planFromForm: what "Create campaign" sends [FR-023, FR-024, FR-026]', 
 
   it('splits languages on commas and spaces, in order', () => {
     const values = { ...filled(), languages: ' fr-CA,en  de,' }
-    const result = planFromForm('P1', values, [])
+    const result = planFromForm('P1', values, [], IMAGES)
     if (!result.ok) throw new Error(result.problems.join())
     expect(result.campaign.languages).toEqual(['fr-CA', 'en', 'de'])
   })
@@ -166,7 +170,7 @@ describe('planFromForm: what "Create campaign" sends [FR-023, FR-024, FR-026]', 
     const values = filled()
     values.rules.requiredWords = { en: 'sip\n\n cool \n', de: '' }
     values.rules.prohibitedWords = { en: '\n' }
-    const result = planFromForm('P1', values, [])
+    const result = planFromForm('P1', values, [], IMAGES)
     if (!result.ok) throw new Error(result.problems.join())
     expect(result.campaign.brief.requiredWords).toEqual({ en: ['sip', 'cool'] })
     expect(result.campaign.brief.prohibitedWords).toBeUndefined()
@@ -175,12 +179,10 @@ describe('planFromForm: what "Create campaign" sends [FR-023, FR-024, FR-026]', 
   })
 
   it('puts a plain word list under the main language when the brief gave none', () => {
-    const values = formFromDraft(
-      parsed({ ...DRAFT, languages: [], requiredWords: ['sip'] }, null),
-      [],
-    )
+    const draft = { ...DRAFT, languages: [], requiredWords: ['sip'] }
+    const values = formFromDraft(parsed(draft, null), [], photosFor(draft))
     values.languages = 'fr'
-    const result = planFromForm('P1', values, [])
+    const result = planFromForm('P1', values, [], IMAGES)
     if (!result.ok) throw new Error(result.problems.join())
     expect(result.campaign.brief.requiredWords).toEqual({ fr: ['sip'] })
   })
@@ -188,7 +190,7 @@ describe('planFromForm: what "Create campaign" sends [FR-023, FR-024, FR-026]', 
   it('sends copyRuleSetFrom when the rules are copied', () => {
     const values = filled()
     values.rules = { ...values.rules, mode: 'copy', copyFrom: 'C9' }
-    const result = planFromForm('P1', values, [])
+    const result = planFromForm('P1', values, [], IMAGES)
     if (!result.ok) throw new Error(result.problems.join())
     expect(result.campaign.copyRuleSetFrom).toBe('C9')
   })

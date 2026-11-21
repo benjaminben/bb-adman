@@ -10,6 +10,7 @@ import { isRightToLeft } from '@/shared/brief/languages'
 import { starterTemplate } from '@/shared/templates/starter'
 import { briefSubjectIds } from '@/renderer/screens/project-home/campaign-input'
 import type { BriefFormValues, SubjectChoice } from './brief-form-model'
+import { photoProblems, type ProjectImages } from './brief-form-photos'
 
 // Each row's ID: the chosen subject's, the typed one, or (a new row with a blank ID and a
 // name) one made from the name with briefSubjectIds, stepping around the other rows' IDs.
@@ -30,6 +31,7 @@ type Read = {
   languages: string[]
   sizes: CampaignSize[]
   unread: string[]
+  photos?: { images: ProjectImages; refused: boolean } // left out: no photo rule applies
 }
 
 const REQUIRED: [keyof BriefFormValues, string][] = [
@@ -74,6 +76,7 @@ export function formProblems(values: BriefFormValues, read: Read): string[] {
   return [
     ...REQUIRED.filter(([key]) => String(values[key]).trim() === '').map(([, line]) => line),
     ...subjectProblems(values.subjects, read.heldSubjectIds),
+    ...(read.photos ? photoProblems(values.subjects, read.photos.images, read.photos.refused) : []),
     ...(read.sizes.length === 0 && read.unread.length === 0 ? ['Choose at least one size.'] : []),
     ...read.unread.map((text) => `The size "${text}" cannot be read.`),
     ...(read.languages.length === 0 ? ['Give at least one language.'] : []),

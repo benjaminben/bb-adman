@@ -1,15 +1,23 @@
 // The brief form's values and what "Create campaign" sends (spec/screens-campaign.md, "The
-// brief form"; spec/brief-and-templates.md, "From a brief to a campaign"). Pure, no React.
-// formFromDraft fills the form from a parsed brief (or opens it empty); planFromForm turns the
-// form into subject.create inputs and one campaign.create input, or into problem lines.
+// brief form"; spec/brief-and-templates.md, "From a brief to a campaign"; spec/subject-photos.md,
+// "The model"). Pure, no React. formFromDraft fills the form from a parsed brief (or opens it
+// empty); planFromForm turns the form into subject.create inputs, the asset.update list that
+// attaches the photos, and one campaign.create input, or into problem lines.
 import type { BriefDraft } from '@/shared/schemas/brief'
 import type { BriefParsed } from '@/shared/schemas/commands/brief'
+import type { AssetUpdateInput } from '@/shared/schemas/commands/asset'
 import type { CampaignCreateInput } from '@/shared/schemas/commands/campaign'
 import type { SubjectCreateInput } from '@/shared/schemas/commands/subject'
 import { wordsByLanguage } from '@/shared/brief/words'
 import { briefSubjectIds } from '@/renderer/screens/project-home/campaign-input'
 import { formProblems, schemaCheck, subjectIds } from './brief-form-problems'
+import { attachPlan, type ProjectImages } from './brief-form-photos'
 import { chosenSizes, sizesFromDraft, type SizeChoice } from './brief-form-sizes'
+
+export type FormPhoto = {
+  assetId: string
+  added: boolean // this form imported it as a new asset; removed again if not used
+}
 
 export type SubjectChoice = {
   name: string
@@ -17,7 +25,13 @@ export type SubjectChoice = {
   mode: 'new' | 'existing'
   newId: string
   existingId: string | null
+  photos: FormPhoto[] // in the order added
+  adding: boolean // an "Add photos" import is running for this row
+  notes: string[] // lines about this row's photos
 }
+
+// One entry per draft subject, made by brief-load/ from the brief's checked photo paths.
+export type BriefPhotos = { photos: FormPhoto[]; notes: string[] }[]
 
 export type BriefFormValues = {
   campaignName: string
@@ -37,10 +51,16 @@ export type BriefFormValues = {
     prohibitedWords: Record<string, string>
   }
   copy: BriefDraft['copy']
+  placeSubjectPhoto: boolean // a new ad starts with a subject photo placed
 }
 
 export type CampaignPlan =
-  | { ok: true; subjects: SubjectCreateInput[]; campaign: CampaignCreateInput }
+  | {
+      ok: true
+      subjects: SubjectCreateInput[]
+      attach: AssetUpdateInput[]
+      campaign: CampaignCreateInput
+    }
   | { ok: false; problems: string[] }
 
 export const emptySubject = (): SubjectChoice => ({
@@ -49,6 +69,9 @@ export const emptySubject = (): SubjectChoice => ({
   mode: 'new',
   newId: '',
   existingId: null,
+  photos: [],
+  adding: false,
+  notes: [],
 })
 
 function wordText(words: BriefDraft['requiredWords'], primary: string): Record<string, string> {
@@ -60,6 +83,7 @@ function wordText(words: BriefDraft['requiredWords'], primary: string): Record<s
 export function formFromDraft(
   reply: BriefParsed | null,
   heldSubjectIds: string[],
+  briefPhotos: BriefPhotos = [],
 ): BriefFormValues {
   const draft: BriefDraft = reply?.draft ?? {}
   const own = draft.languages ?? []
@@ -71,11 +95,14 @@ export function formFromDraft(
     const id = ids[i]?.id ?? ''
     const held = heldSubjectIds.includes(id)
     return {
+      ...emptySubject(),
       name: s.name ?? '',
       description: s.description ?? '',
       mode: held ? 'existing' : 'new',
       newId: id,
       existingId: held ? id : null,
+      photos: briefPhotos[i]?.photos ?? [],
+      notes: briefPhotos[i]?.notes ?? [],
     }
   })
   return {
@@ -96,6 +123,7 @@ export function formFromDraft(
       prohibitedWords: wordText(draft.prohibitedWords, primary),
     },
     copy: draft.copy,
+    placeSubjectPhoto: false,
   }
 }
 
@@ -123,14 +151,21 @@ const optional = (text: string) => (text.trim() === '' ? undefined : text)
 const unlessEmpty = (lists: Record<string, string[]>) =>
   Object.keys(lists).length === 0 ? undefined : lists
 
+// images: the project's pictures (asset.list kind 'image'), null while not read; imagesRefused
+// when that read was refused. Left out (undefined), no photo rule applies and attach is empty:
+// the form's caller does not read the project's pictures yet.
 export function planFromForm(
   projectId: string,
   values: BriefFormValues,
   heldSubjectIds: string[],
+  images?: ProjectImages,
+  imagesRefused = false,
 ): CampaignPlan {
   const languages = splitLanguages(values.languages)
   const { sizes, unread } = chosenSizes(values.sizes)
-  const problems = formProblems(values, { heldSubjectIds, languages, sizes, unread })
+  const photos = images === undefined ? undefined : { images, refused: imagesRefused }
+  const read = { heldSubjectIds, languages, sizes, unread, photos }
+  const problems = formProblems(values, read)
   if (problems.length > 0) return { ok: false, problems }
   const { rules } = values
   const made = subjectIds(values.subjects)
@@ -161,5 +196,6 @@ export function planFromForm(
   const subjects = ids
     .filter(({ s }) => s.mode === 'new')
     .map(({ s, id }) => ({ projectId, id, name: s.name, description: s.description }))
-  return { ok: true, subjects, campaign: checked.campaign }
+  const attach = images ? attachPlan(projectId, values.subjects, made, images) : []
+  return { ok: true, subjects, attach, campaign: checked.campaign }
 }
