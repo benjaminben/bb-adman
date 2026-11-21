@@ -15,7 +15,7 @@ One short run in the main folder, class B, unless an item says otherwise. State 
 - **F-8. A limit on reference pictures per run.** Not built.
   - One constant `MAX_REFERENCES_PER_RUN` in `src/shared/config/defaults.ts`, used by the `generation.runImages` schema, the job request schema and the picker. A duplicate ID in the list is refused. One test each.
   - The number is ruled from what Gemini accepted in the stakeholder's test. **Needs that number before it is briefed.**
-- **F-9. `toPng` on a reference before a ComfyUI upload.** Waits for a ruling.
+- **F-9. `toPng` on a reference before a ComfyUI upload.** Ruled yes (A-55): built with slice WP, in `readPicture`, for every provider.
   - Whether a reference picture passes through `toPng` before upload, so the bytes match the `.png` name and nothing the user's file carries beside the picture is sent. It needs `toPng` reachable from `AdapterContext`, which it is not today.
   - Also covers a JPEG named `.png` that `LoadImage` fails on. The JPEG pass of the ComfyUI harness waits for it.
 - **F-18. Stand-in fixtures from the real server.** Tests only. Partly done.
