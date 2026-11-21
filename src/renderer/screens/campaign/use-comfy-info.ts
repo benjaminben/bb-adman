@@ -5,17 +5,27 @@ import { useEffect, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
 
-export function useComfyInfo(): ComfyInfo | null {
+export type ComfyInfoState = { info: ComfyInfo | null; loaded: boolean }
+
+const WAITING: ComfyInfoState = { info: null, loaded: false }
+
+// `loaded` turns true once the query has answered, also when it was refused.
+export function useComfyInfoState(): ComfyInfoState {
   const api = useApi()
-  const [info, setInfo] = useState<ComfyInfo | null>(null)
+  const [state, setState] = useState(WAITING)
   useEffect(() => {
     let live = true
     void api.query('comfy.getInfo', {}).then((result) => {
-      if (live && result.ok) setInfo(result.data as ComfyInfo | null)
+      if (live)
+        setState({ info: result.ok ? (result.data as ComfyInfo | null) : null, loaded: true })
     })
     return () => {
       live = false
     }
   }, [api])
-  return info
+  return state
+}
+
+export function useComfyInfo(): ComfyInfo | null {
+  return useComfyInfoState().info
 }

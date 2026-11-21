@@ -2,10 +2,11 @@
 // FR-067, FR-230, FR-256): every AI run the user starts in Phase 4 goes through it. It chooses
 // the provider and the count; the caller sends the command from `onConfirm` and returns the
 // reply. From the click until that reply, Confirm and Cancel are disabled and the dialog
-// cannot close; a refusal shows inside it (A-50). Nothing is sent before the click.
+// cannot close; a refusal shows inside it (A-50). Nothing is sent before the click. The
+// starting choice depends on comfy.getInfo, so until it answers nothing can be chosen or sent.
 import { useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
-import { useComfyInfo } from '@/renderer/screens/campaign/use-comfy-info'
+import { useComfyInfoState } from '@/renderer/screens/campaign/use-comfy-info'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
 import { PaidCount } from '@/renderer/ui/paid-count'
 import type { Result } from '@/shared/schemas/result'
@@ -40,7 +41,8 @@ function countIn(text: string, count: RunCount): number | null {
 function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolean) => void }) {
   const { job, count, retry, busy } = props
   const app = useApp((s) => s.app)
-  const info = useComfyInfo()
+  const { info, loaded } = useComfyInfoState()
+  const settled = retry !== undefined || loaded
   const referenceCount = props.referenceCount ?? 0
   const choices = runChoices(job, app?.providers ?? NONE, info, referenceCount)
   const preferred = job === 'cutout' ? undefined : app?.settings.defaultProviders[job]
@@ -54,6 +56,7 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
   const provider = chosen?.provider ?? { id: chosenId ?? '', label: chosenId ?? '', local: false }
   const n = count === undefined ? null : retry ? count.value : countIn(typed, count)
   const ready = chosenId !== null && (retry !== undefined || chosen?.enabled === true)
+  const locked = busy || !settled
   const workflow = chosen?.workflow
   const comfy = workflow && { address: info?.address ?? null, label: workflow.label }
 
@@ -71,7 +74,12 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
       {retry ? (
         <p>Provider: {provider.label}</p>
       ) : (
-        <ProviderChoice choices={choices} value={chosenId} onChange={setPicked} disabled={busy} />
+        <ProviderChoice
+          choices={choices}
+          value={settled ? chosenId : null}
+          onChange={setPicked}
+          disabled={locked}
+        />
       )}
       {count && retry && <p>{`${count.label}: ${count.value}`}</p>}
       {count && !retry && (
@@ -88,11 +96,10 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
           />
         </label>
       )}
-      {ready ? (
+      {settled && ready && (
         <p>{runSummary({ job, provider, count: n ?? count?.value, referenceCount, comfy })}</p>
-      ) : (
-        <p>No provider can do this yet.</p>
       )}
+      {settled && !ready && <p>No provider can do this yet.</p>}
       {props.campaignId !== undefined && (
         <PaidCount projectId={props.projectId} campaignId={props.campaignId} />
       )}
@@ -104,7 +111,7 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
         <button
           type="button"
           className={styles.primary}
-          disabled={busy || !ready || (count !== undefined && n === null)}
+          disabled={locked || !ready || (count !== undefined && n === null)}
           onClick={() => void send()}
         >
           {props.confirmLabel}

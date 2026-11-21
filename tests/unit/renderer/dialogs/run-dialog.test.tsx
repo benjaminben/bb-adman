@@ -229,6 +229,33 @@ describe('run dialog [P4-12]', () => {
     expect(confirm()).toBeDisabled()
   })
 
+  // The starting choice depends on comfy.getInfo, so nothing can be chosen or sent before it
+  // answers: a choice made early would be swapped for ComfyUI under the user.
+  it('lets nothing be chosen or confirmed until comfy.getInfo has answered', async () => {
+    const fake = setup()
+    let answer: (reply: Result<unknown>) => void = () => {}
+    fake.onQuery('comfy.getInfo', () => new Promise<Result<unknown>>((r) => (answer = r)))
+    await open({ job: 'cutout', confirmLabel: 'Cut out' }, fake)
+    expect(screen.getByRole('group', { name: 'Provider' })).toBeDisabled()
+    expect(confirm('Cut out')).toBeDisabled()
+    expect(screen.getAllByRole('radio').filter((r) => (r as HTMLInputElement).checked)).toEqual([])
+    expect(screen.queryByText('No provider can do this yet.')).toBeNull()
+    const data = { address: ADDRESS, workflows: [CUTOUT_FLOW], leavesOnServer: [] }
+    await act(async () => answer({ ok: true, data }))
+    expect(screen.getByRole('radio', { name: 'ComfyUI' })).toBeChecked()
+    expect(screen.getByRole('group', { name: 'Provider' })).toBeEnabled()
+    expect(confirm('Cut out')).toBeEnabled()
+  })
+
+  it('still offers the other providers when comfy.getInfo is refused', async () => {
+    const fake = setup()
+    const error = { code: 'INTERNAL' as const, message: 'No.' }
+    fake.onQuery('comfy.getInfo', () => ({ ok: false, error }))
+    await open({ job: 'cutout', confirmLabel: 'Cut out' }, fake)
+    expect(screen.getByRole('radio', { name: 'Fake provider' })).toBeChecked()
+    expect(confirm('Cut out')).toBeEnabled()
+  })
+
   it('cancels', async () => {
     const { onCancel, onConfirm } = await open()
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
