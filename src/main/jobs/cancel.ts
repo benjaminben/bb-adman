@@ -11,6 +11,7 @@
 // kind handler when the signal fires (SPEC 6.11.2, "How the runner learns the outcome").
 import { activeJobs, readJob } from './job-store'
 import { writeJob, type LiveJob, type RunnerState } from './live'
+import { cancelWaitFor } from './cancel-wait'
 import { JOB_KIND_CLASSES } from '../../shared/config/job-kinds'
 import type { ProviderInfo } from '../../shared/schemas/queries/app'
 import type { JobRow } from '../../shared/schemas/rows/job'
@@ -40,9 +41,10 @@ function askToStop(state: RunnerState, live: LiveJob): void {
   live.running = { ...live.running, cancelAsked: true }
   writeJob(state, live.projectId, live.id, { result: live.running })
   live.controller.abort()
+  const waitMs = (state.opts.cancelWaitMs ?? cancelWaitFor)(live.providerId)
   const timer = setTimeout(() => {
     live.finish({ status: 'cancelled', result: { ...live.running, outcomeUnknown: true } })
-  }, state.opts.cancelWaitMs(live.providerId))
+  }, waitMs)
   live.clearWait = () => clearTimeout(timer)
 }
 

@@ -12,8 +12,10 @@ export type JobRunnerOptions = {
   bus: () => CommandBus
   emit: (event: BusEvent) => void
   handlers: JobKindHandler[]
-  // How long a cancel waits for the provider to confirm (SPEC 6.11.2), by provider ID.
-  cancelWaitMs: (providerId: string) => number
+  // How long a cancel waits for the provider to confirm, by provider ID, and how long a close
+  // waits (SPEC 6.11.2). For tests; left out, the runner uses cancel-wait.ts.
+  cancelWaitMs?: (providerId: string) => number
+  closeWaitMs?: number
 }
 
 export type LiveJob = {
