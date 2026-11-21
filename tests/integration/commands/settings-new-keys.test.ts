@@ -43,3 +43,18 @@ describe('settings loader and the two 1.24 keys [SPEC 13.1, 14 CU-0]', () => {
     expect((await state()).settings).toEqual(before)
   })
 })
+
+describe('settings.update and the comfyui row [SPEC 6.11.1, 14 CU-0 W5]', () => {
+  it('refuses comfyui as the default image provider while its row is not available', async () => {
+    f = makeFixture()
+    const before = await state()
+    expect(before.providers.find((p) => p.id === 'comfyui')).toMatchObject({
+      available: false,
+      jobs: ['image'],
+    })
+    expect(
+      await f.user('settings.update', { defaultProviders: { image: 'comfyui' } }),
+    ).toMatchObject({ ok: false, error: { code: 'INVALID_INPUT' } })
+    expect((await state()).settings).toEqual(before.settings)
+  })
+})

@@ -31,6 +31,19 @@ const PROVIDERS: ProviderInfo[] = [
     ...REMOTE,
     cancel: 'may_finish',
   },
+  // [1.35] SPEC 6.11.1: `available` is a build fact. False until CU-4 brings the adapter;
+  // 'video' joins `jobs` in CU-6.
+  {
+    id: 'comfyui',
+    label: 'ComfyUI',
+    jobs: ['image'],
+    available: false,
+    secrets: [],
+    defaultModels: {},
+    local: true,
+    cancel: 'stops',
+    serverText: true,
+  },
   {
     id: 'firefly',
     label: 'Adobe Firefly',

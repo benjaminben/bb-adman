@@ -16,6 +16,7 @@ describe('ProviderInfo local, cancel and serverText [SPEC 6.11.1, 14 CU-0]', () 
     expect(rows).toEqual([
       ['gemini', false, 'none', false],
       ['fal-seedance', false, 'may_finish', false],
+      ['comfyui', true, 'stops', true],
       ['firefly', false, 'none', false],
       ['s3', false, 'none', false],
       ['dropbox', false, 'none', false],
