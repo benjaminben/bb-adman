@@ -19,6 +19,7 @@ import { paidCountQueries } from './paid-count'
 import { projectQueries } from './project'
 import { projectListOpenQueries } from './project-list-open'
 import { renderQueries } from './render'
+import { syncQueries } from './sync'
 import { templateQueries } from './template'
 import { variantQueries } from './variant'
 import type { QueryFn, QueryOptions } from './types'
@@ -46,6 +47,7 @@ export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, Query
     ...projectQueries(deps),
     ...projectListOpenQueries(deps),
     ...renderQueries(deps),
+    ...syncQueries(deps),
     ...templateQueries(deps),
     ...variantQueries(deps),
   }
