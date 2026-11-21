@@ -152,4 +152,18 @@ describe('generation.runImages with comfyui against the stand-in [SPEC 14 CU-4]'
     const reply = await f.core.query('job.getServerMessage', input, { actor: 'user' })
     expect(reply).toEqual({ ok: true, data: { text: 'Prompt has no outputs' } })
   }, 20_000)
+
+  it('a reference run puts no display name, path or asset ID in any request header either (security class) [F-17]', async () => {
+    await ready()
+    const assetId = await f.importPicture('MARKERFOLDERH5', 'MARKERNAMEH8.png', greyPng(9, 3))
+    const job = await finishedJob({ referenceAssetIds: [assetId] }, flux.slots.outputNode)
+    expect(job?.status).toBe('succeeded')
+    expect(stand.seen.some((r) => r.path === '/upload/image')).toBe(true)
+    for (const r of stand.seen) {
+      const sent = `${r.path}\n${JSON.stringify(r.headers)}\n${r.body.toString('latin1')}`
+      for (const marker of ['MARKERNAMEH8', 'MARKERFOLDERH5', f.root, assetId]) {
+        expect(sent).not.toContain(marker)
+      }
+    }
+  }, 20_000)
 })
