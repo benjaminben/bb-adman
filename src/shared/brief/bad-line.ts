@@ -21,9 +21,11 @@ function removed(char: string): boolean {
   return REMOVED.some(([low, high]) => point >= low && point <= high)
 }
 
-function cleaned(raw: string): string {
+// Tabs to spaces, hidden and reordering characters removed, end trimmed, cut to
+// MAX_BAD_LINE_CHARS code points with "…". Also used for the names photo notes show.
+export function cleanLineText(raw: string): string {
   const kept: string[] = []
-  for (const char of raw.replace(/\r$/, '').replace(/\t/g, ' ')) {
+  for (const char of raw.replace(/\t/g, ' ')) {
     if (!removed(char)) kept.push(char)
   }
   const points = Array.from(kept.join('').trimEnd())
@@ -39,7 +41,10 @@ export function badLineAt(body: string, offset: number): { line: number; text: s
   const start = before.lastIndexOf('\n') + 1
   const end = body.indexOf('\n', at)
   const line = before.split('\n').length
-  return { line, text: cleaned(body.slice(start, end === -1 ? body.length : end)) }
+  return {
+    line,
+    text: cleanLineText(body.slice(start, end === -1 ? body.length : end).replace(/\r$/, '')),
+  }
 }
 
 export function badLineError(body: string, offset: number): ErrorBody {

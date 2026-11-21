@@ -18,6 +18,8 @@ const draftSubject = z.object({
   id: loose(z.string()),
   name: loose(z.string()),
   description: loose(z.string()),
+  // spec/subject-photos.md [D-098]: raw paths from the file, checked by brief.parse only.
+  pictures: loose(z.union([z.string(), z.array(z.string())])),
 })
 
 export const BriefDraft = z.object({
@@ -39,6 +41,7 @@ export type BriefDraft = z.infer<typeof BriefDraft>
 
 const filled = z.string().trim().min(1)
 
+// No pictures: Zod drops the key, so no photo path reaches a stored brief [D-098].
 export const BriefSubject = z.object({
   id: z.string().optional(),
   name: filled,

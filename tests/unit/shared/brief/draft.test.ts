@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { briefDraftFrom, BRIEF_UNREADABLE } from '@/shared/brief/draft'
+import { Brief } from '@/shared/schemas/brief'
 
 // The step parseBrief takes after either syntax has given a value (SPEC 14 1.9 slice B).
 describe('briefDraftFrom: a parsed value to a BriefDraft [SPEC 6.1, 14 1.9]', () => {
@@ -57,5 +58,44 @@ describe('briefDraftFrom: a parsed value to a BriefDraft [SPEC 6.1, 14 1.9]', ()
     })
     const result = briefDraftFrom('Secret launch plan')
     expect(JSON.stringify(result)).not.toContain('Secret')
+  })
+})
+
+// spec/subject-photos.md "Schemas" [D-098]: a draft subject reads pictures; a Brief drops them.
+describe('briefDraftFrom: subject pictures [D-098]', () => {
+  const subjectOf = (pictures: unknown) => briefDraftFrom({ subjects: [{ name: 'Can', pictures }] })
+
+  it('keeps pictures given as a text', () => {
+    expect(subjectOf('can.png')).toEqual({
+      ok: true,
+      data: { subjects: [{ name: 'Can', pictures: 'can.png' }] },
+    })
+  })
+
+  it('keeps pictures given as a list, unchanged', () => {
+    expect(subjectOf(['photos/a.png', 'photos\\b.jpg'])).toEqual({
+      ok: true,
+      data: { subjects: [{ name: 'Can', pictures: ['photos/a.png', 'photos\\b.jpg'] }] },
+    })
+  })
+
+  it.each([
+    ['a number', 7],
+    ['a list with a number', ['a.png', 7]],
+    ['an object', { path: 'a.png' }],
+  ])('drops pictures given as %s and keeps the subject', (_name, pictures) => {
+    expect(subjectOf(pictures)).toEqual({ ok: true, data: { subjects: [{ name: 'Can' }] } })
+  })
+
+  it("drops a subject's pictures from a confirmed Brief", () => {
+    const brief = Brief.parse({
+      campaignName: 'Summer',
+      region: 'US',
+      audience: 'All',
+      message: 'Hello',
+      subjects: [{ id: 'can', name: 'Can', pictures: ['/Users/x/private.png'] }],
+    })
+    expect(brief.subjects).toEqual([{ id: 'can', name: 'Can' }])
+    expect(JSON.stringify(brief)).not.toContain('private')
   })
 })
