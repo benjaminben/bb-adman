@@ -196,3 +196,24 @@ describe('asset.import, a file there but not readable [SPEC 14, Slice A rulings 
     },
   )
 })
+
+describe('asset.import reply [SPEC 14, Slice A rulings point 5, A2-6]', () => {
+  it('names the reused assets and counts no skipped entry', async () => {
+    const [first] = idsOf(await importIt({ paths: [put('a.png', PNG)] }))
+    const fresh = put('c.png', Buffer.concat([PNG, Buffer.from([1])]))
+    const result = await importIt({ paths: [put('b.png', PNG), fresh, put('d.png', PNG)] })
+    const [, freshId] = idsOf(result)
+    expect(result).toEqual({
+      ok: true,
+      data: { assetIds: [first, freshId, first], reusedAssetIds: [first], skippedCount: 0 },
+    })
+  })
+
+  it('gives empty reused list for files all new to the project', async () => {
+    const result = await importIt({ paths: [put('a.png', PNG)] })
+    expect(result).toEqual({
+      ok: true,
+      data: { assetIds: idsOf(result), reusedAssetIds: [], skippedCount: 0 },
+    })
+  })
+})

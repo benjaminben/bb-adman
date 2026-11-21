@@ -52,6 +52,7 @@ export function assetImport(deps: Pick<CoreDeps, 'now'>) {
     run(ctx, input, prepared) {
       if (input.subjectId) requireSubject(ctx, input.subjectId)
       const known = assetIdsByHash(ctx.project)
+      const before = new Set(known.values())
       const createdAt = deps.now().toISOString()
       for (const a of prepared.newAssets) {
         if (known.has(a.contentHash)) continue
@@ -62,7 +63,10 @@ export function assetImport(deps: Pick<CoreDeps, 'now'>) {
         ctx.changes.touch('asset', { id: a.id })
         known.set(a.contentHash, a.id)
       }
-      return { data: { assetIds: prepared.hashes.map((h) => idFor(known, h)) } }
+      const assetIds = prepared.hashes.map((h) => idFor(known, h))
+      // SPEC 14, Slice A rulings point 5. A folder path is refused, so no entry is skipped.
+      const reusedAssetIds = [...new Set(assetIds.filter((id) => before.has(id)))]
+      return { data: { assetIds, reusedAssetIds, skippedCount: 0 } }
     },
   })
 }

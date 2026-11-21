@@ -8,7 +8,8 @@ import type { AssetRow } from '../../shared/schemas/rows/asset'
 import { AppError } from '../../shared/schemas/result'
 
 // SPEC 4.3 asset.list. Unknown filter values are INVALID_INPUT, a subject the project does
-// not hold is NOT_FOUND (SPEC 4.1).
+// not hold is NOT_FOUND (SPEC 4.1). Rows come by id, ascending: IDs are ULIDs, so oldest
+// first and the same on every call (SPEC 14, Slice A rulings point 7).
 export function assetList(deps: Pick<CoreDeps, 'projects'>): QueryFn {
   return async (raw): Promise<AssetList> => {
     const parsed = assetListInput.safeParse(raw)
@@ -24,6 +25,7 @@ export function assetList(deps: Pick<CoreDeps, 'projects'>): QueryFn {
         (!kind || r.kind === kind) &&
         (!subjectId || r.subjectId === subjectId),
     )
+    rows.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
     const found = await Promise.all(rows.map((r) => resolveRow(project, r)))
     return rows.map((r, i) => ({ ...r, missing: found[i] === 'missing' }))
   }
