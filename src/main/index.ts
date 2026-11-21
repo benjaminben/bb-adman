@@ -6,6 +6,7 @@ import { createAppWindow } from './windows/app-window'
 import { httpsOnly } from './windows/open-external'
 import { devToolsEnabled } from './dev-tools-flag'
 import { pngConverter } from './png-converter'
+import { pictureFitter } from './picture-fitter'
 import { registerAssetProtocol, registerAssetScheme } from './windows/asset-protocol'
 import { checkChangedFiles, withChangeChecks } from './assets/change-trigger'
 import { DIALOG_QUERIES, runDialogQuery } from './windows/dialogs'
@@ -68,6 +69,7 @@ function start(): void {
     openExternal: httpsOnly((url) => shell.openExternal(url)),
     devTools: devToolsEnabled(app.isPackaged, process.env),
     toPng: pngConverter((buffer) => nativeImage.createFromBuffer(buffer)),
+    fitPicture: pictureFitter((buffer) => nativeImage.createFromBuffer(buffer)),
   })
   const ready = core
   ready.log.write({
