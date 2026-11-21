@@ -39,3 +39,18 @@ export const assetImportInput = projectScoped.extend({
   copy: z.boolean(),
 })
 export type AssetImportInput = z.infer<typeof assetImportInput>
+
+// project.package (SPEC 3.9; FR-008, R-09). Kept in slice A's schema file, beside the other
+// asset-folder commands, because commands/project.ts belongs to Phase 1.
+export const projectPackageInput = projectScoped.extend({
+  targetDir: z.string().min(1),
+  skipMissing: z.boolean().default(false),
+})
+export type ProjectPackageInput = z.infer<typeof projectPackageInput>
+
+export type PackageResult = {
+  packagePath: string
+  fileCount: number
+  totalBytes: number
+  skippedAssetIds: string[]
+}
