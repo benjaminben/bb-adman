@@ -2,26 +2,36 @@ import { z } from 'zod'
 import { projectScoped } from './project-scoped'
 import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'
 
+// S2-4 [D-088]: the user confirmed the commercial licence of the run's model. The command
+// ignores it for an agent, and the agent tools below do not offer it.
+export const licenceConfirmed = z.literal(true).optional()
+
+const runImagesFields = projectScoped.extend({
+  variantId: z.string().min(1),
+  slot: z.string().min(1).optional(),
+  layerId: z.string().min(1).optional(),
+  prompt: z.string().trim().min(1, 'Enter a prompt.'),
+  referenceAssetIds: z.array(z.string().min(1)),
+  count: z.number().int().min(1).max(MAX_IMAGES_PER_RUN),
+  provider: z.string().min(1),
+})
+
+const oneTarget = (i: { slot?: string; layerId?: string }) =>
+  (i.slot === undefined) !== (i.layerId === undefined)
+const ONE_TARGET = { message: 'Name a slot or a layer.', path: ['slot'] }
+
 // SPEC 4.2 generation.runImages [1.8]. Built in Phase 2 slice H. A slot or a layer, not both.
-export const generationRunImagesInput = projectScoped
-  .extend({
-    variantId: z.string().min(1),
-    slot: z.string().min(1).optional(),
-    layerId: z.string().min(1).optional(),
-    prompt: z.string().trim().min(1, 'Enter a prompt.'),
-    referenceAssetIds: z.array(z.string().min(1)),
-    count: z.number().int().min(1).max(MAX_IMAGES_PER_RUN),
-    provider: z.string().min(1),
-  })
-  .refine((i) => (i.slot === undefined) !== (i.layerId === undefined), {
-    message: 'Name a slot or a layer.',
-    path: ['slot'],
-  })
+export const generationRunImagesInput = runImagesFields
+  .extend({ licenceConfirmed })
+  .refine(oneTarget, ONE_TARGET)
 export type GenerationRunImagesInput = z.infer<typeof generationRunImagesInput>
+
+// The generate_images tool's input: the same, without licenceConfirmed.
+export const generationRunImagesAgentInput = runImagesFields.refine(oneTarget, ONE_TARGET)
 
 // SPEC 4.2 generation.startVideo, with the 1.24 start and references [REQ: FR-286]. Built in
 // CU-6a, which accepts only start 'none' with useReferences false and no references.
-export const generationStartVideoInput = projectScoped.extend({
+const startVideoFields = projectScoped.extend({
   variantId: z.string().min(1),
   prompt: z.string().trim().min(1, 'Enter a prompt.'),
   durationMs: z.number().int().positive(),
@@ -30,4 +40,9 @@ export const generationStartVideoInput = projectScoped.extend({
   useReferences: z.boolean(),
   referenceAssetIds: z.array(z.string().min(1)),
 })
+
+export const generationStartVideoInput = startVideoFields.extend({ licenceConfirmed })
 export type GenerationStartVideoInput = z.infer<typeof generationStartVideoInput>
+
+// The generate_video tool's input: the same, without licenceConfirmed.
+export const generationStartVideoAgentInput = startVideoFields
