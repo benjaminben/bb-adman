@@ -50,7 +50,11 @@ export function McpSection() {
     try {
       const result = await command(name, input)
       setInfo(await connectInfo(api))
-      return result.ok ? null : result.error.message
+      if (!result.ok) return result.error.message
+      // REVIEW MCP-C 6e: any success clears both lines, so no old refusal outlives its fix.
+      setRefusal(null)
+      setPortRefusal(null)
+      return null
     } finally {
       setSending(false)
     }
