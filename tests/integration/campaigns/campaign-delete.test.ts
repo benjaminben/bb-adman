@@ -5,6 +5,7 @@ import { makeBusFixture } from '../commands/test-bus'
 import { campaignCommands } from '@/main/commands/campaign'
 import { subjectCommands } from '@/main/commands/subject'
 import { testDeps } from './campaign-deps'
+import { tableCounts } from './table-counts'
 
 let bus: CampaignBus
 let campaignId: string
@@ -89,13 +90,13 @@ describe('campaign.delete refuses while work runs [SPEC 4.2 1.42, C-R4, C4-4]', 
 
   it("refuses with jobs_running and count 1 for a queued job with the campaign's ID", async () => {
     addJob('J1', 'queued', 'campaign_id', campaignId)
+    const before = tableCounts(bus.db)
     const error = await expectRefused(bus, del, 'RULE_VIOLATION', 'jobs_running')
     expect(error.details).toEqual({ reason: 'jobs_running', count: 1 })
     expect(error.message).toBe(
       'Work is still running in this campaign. Stop it, or wait for it to finish.',
     )
-    expect(count('campaign')).toBe(1)
-    expect(count('variant')).toBe(1)
+    expect(tableCounts(bus.db)).toEqual(before)
   })
 
   it("refuses the same way for a running job with only the variant's ID", async () => {

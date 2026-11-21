@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { makeCampaignBus, type CampaignBus } from './campaign-fixture'
 import { testDeps } from './campaign-deps'
+import { tableCounts } from './table-counts'
 import { campaignQueries } from '@/main/queries/campaign'
 import { createQueryRunner } from '@/main/queries/queries'
 import type { CoreDeps } from '@/main/core-deps'
@@ -95,9 +96,15 @@ describe('campaign.get [SPEC 4.3 1.42, C4-1]', () => {
     expect((await firstVariant())?.badges).toEqual({ ...NO_BADGES, missingFile: true })
   })
 
-  it("sets the variant's jobRunning and the campaign's mark for a running job of the variant", async () => {
+  it("sets the variant's jobRunning and the campaign's mark; a job with only variant_id does not set the campaign's mark", async () => {
     addJob('J1', 'running', 'variant_id', variantId)
     addJob('J2', 'running', 'campaign_id', campaignId)
+    bus.db
+      .prepare(
+        `INSERT INTO job (id, kind, status, campaign_id, variant_id, request, created_at, updated_at)
+         VALUES ('J3', 'image_generation', 'running', ?, ?, '{}', 'x', 'x')`,
+      )
+      .run(campaignId, variantId)
     const result = await get()
     expect(result?.variants[0]?.badges).toEqual({ ...NO_BADGES, jobRunning: true })
     expect(result?.marks).toEqual({ jobRunning: true, resultUnseen: false })
@@ -124,12 +131,10 @@ describe('campaign.get [SPEC 4.3 1.42, C4-1]', () => {
 
   it('writes nothing to the project file', async () => {
     addJob('J1', 'succeeded', 'variant_id', variantId)
-    const tables = ['campaign', 'direction', 'variant', 'layer', 'job', 'subject'] as const
-    const counts = () => tables.map((t) => bus.rows(t).length)
-    const before = counts()
+    const before = tableCounts(bus.db)
     const jobs = bus.rows('job')
     await get()
-    expect(counts()).toEqual(before)
+    expect(tableCounts(bus.db)).toEqual(before)
     expect(bus.rows('job')).toEqual(jobs)
   })
 
