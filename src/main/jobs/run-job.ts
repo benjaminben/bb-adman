@@ -3,24 +3,15 @@
 // into job.updated, a log line or a reply (SPEC 3.3 [1.9]).
 import { emitJob, nowText, writeJob, type LiveJob, type RunnerState } from './live'
 import { addPaidCall, readJob, type JobChange } from './job-store'
+import { endChange, runningResult, type JobEnd } from './job-end'
 import type { JobRunContext } from './types'
 import { errorContext } from '../log/error-context'
 import { ProviderCancelled, ProviderFailure } from '../providers/types'
 import { AppError } from '../../shared/schemas/result'
 import type { JobRow } from '../../shared/schemas/rows/job'
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function succeeded(live: LiveJob, value: unknown): JobChange {
-  if (!live.cancelAsked) return { status: 'succeeded', result: value ?? null }
-  const result = isRecord(value) ? { ...value } : { value: value ?? null }
-  return { status: 'succeeded', result: { ...result, finishedAfterCancel: true } }
-}
-
-function failed(state: RunnerState, live: LiveJob, e: unknown): JobChange {
-  if (e instanceof ProviderCancelled) return { status: 'cancelled', result: null }
+function failed(state: RunnerState, live: LiveJob, e: unknown): JobEnd {
+  if (e instanceof ProviderCancelled) return { status: 'cancelled' }
   if (e instanceof ProviderFailure) {
     const { kind, reason, detail, missing } = e.error
     return {
@@ -28,7 +19,7 @@ function failed(state: RunnerState, live: LiveJob, e: unknown): JobChange {
       errorKind: kind,
       errorReason: reason ?? null,
       errorDetail: detail,
-      result: missing ? { missing } : null,
+      ...(missing ? { missing } : {}),
     }
   }
   if (!(e instanceof AppError)) {
@@ -46,13 +37,7 @@ function failed(state: RunnerState, live: LiveJob, e: unknown): JobChange {
     })
   }
   const detail = e instanceof AppError ? e.code : 'internal'
-  return {
-    status: 'failed',
-    errorKind: 'other',
-    errorReason: null,
-    errorDetail: detail,
-    result: null,
-  }
+  return { status: 'failed', errorKind: 'other', errorReason: null, errorDetail: detail }
 }
 
 function logEnd(state: RunnerState, live: LiveJob, change: JobChange): void {
@@ -68,6 +53,10 @@ function logEnd(state: RunnerState, live: LiveJob, change: JobChange): void {
     message: `Job ${change.status ?? 'ended'}`,
     context: { provider: live.providerId, reason: change.errorReason ?? null },
   })
+}
+
+function writeRunning(state: RunnerState, live: LiveJob, change: JobChange = {}): void {
+  writeJob(state, live.projectId, live.id, { ...change, result: runningResult(live) })
 }
 
 function context(state: RunnerState, live: LiveJob): JobRunContext {
@@ -90,7 +79,8 @@ function context(state: RunnerState, live: LiveJob): JobRunContext {
     progress(fraction) {
       if (!live.ended) writeJob(state, live.projectId, live.id, { progress: fraction })
     },
-    cancelled: () => live.ended,
+    // SPEC 6.11.1 [1.38]: true once a stop was asked for or the job has ended.
+    cancelled: () => live.ended || live.cancelAsked,
     async system(command, input) {
       if (live.ended) throw new Error('The job has ended')
       return state.opts.bus().execute(command, input, { actor: 'user' })
@@ -98,18 +88,19 @@ function context(state: RunnerState, live: LiveJob): JobRunContext {
     setRemoteJobId(id) {
       if (!live.ended) writeJob(state, live.projectId, live.id, { remoteJobId: id })
     },
+    keep(value) {
+      if (live.ended) return
+      live.kept = { ...value }
+      writeRunning(state, live)
+    },
     // A plain function, not a method: runOptions hands it to a provider on its own.
     onProgress: (p) => {
       if (live.ended) return
-      const { cancelAsked } = live.running
-      live.running = {
+      live.shown = {
         stage: p.stage,
         ...(p.queuePosition === undefined ? {} : { queuePosition: p.queuePosition }),
       }
-      if (cancelAsked) live.running.cancelAsked = cancelAsked
-      const change: JobChange = { result: live.running }
-      if (p.fraction !== undefined) change.progress = p.fraction
-      writeJob(state, live.projectId, live.id, change)
+      writeRunning(state, live, p.fraction === undefined ? {} : { progress: p.fraction })
     },
   }
   return jc
@@ -127,13 +118,15 @@ export function startJob(state: RunnerState, projectId: string, row: JobRow): vo
     controller: new AbortController(),
     ended: false,
     cancelAsked: false,
-    running: {},
+    kept: {},
+    shown: {},
     clearWait: () => undefined,
-    finish(change) {
+    finish(end) {
       if (live.ended) return
       live.ended = true
       live.clearWait()
       state.active.delete(live.id)
+      const change = endChange(live, end)
       writeJob(state, projectId, live.id, change)
       logEnd(state, live, change)
       state.pump()
@@ -148,7 +141,7 @@ export function startJob(state: RunnerState, projectId: string, row: JobRow): vo
     ? Promise.resolve().then(() => handler.run(context(state, live), current))
     : Promise.reject(new Error(`No handler for job kind ${row.kind}`))
   work.then(
-    (value) => live.finish(succeeded(live, value)),
+    (value) => live.finish({ status: 'succeeded', value }),
     (e: unknown) => live.finish(failed(state, live, e)),
   )
 }

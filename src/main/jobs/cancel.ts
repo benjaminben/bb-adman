@@ -12,6 +12,7 @@
 import { activeJobs, readJob } from './job-store'
 import { writeJob, type LiveJob, type RunnerState } from './live'
 import { cancelWaitFor } from './cancel-wait'
+import { runningResult } from './job-end'
 import { JOB_KIND_CLASSES } from '../../shared/config/job-kinds'
 import type { ProviderInfo } from '../../shared/schemas/queries/app'
 import type { JobRow } from '../../shared/schemas/rows/job'
@@ -38,12 +39,11 @@ export function cancelRefusal(row: JobRow, provider: ProviderInfo | undefined): 
 
 function askToStop(state: RunnerState, live: LiveJob): void {
   live.cancelAsked = true
-  live.running = { ...live.running, cancelAsked: true }
-  writeJob(state, live.projectId, live.id, { result: live.running })
+  writeJob(state, live.projectId, live.id, { result: runningResult(live) })
   live.controller.abort()
   const waitMs = (state.opts.cancelWaitMs ?? cancelWaitFor)(live.providerId)
   const timer = setTimeout(() => {
-    live.finish({ status: 'cancelled', result: { ...live.running, outcomeUnknown: true } })
+    live.finish({ status: 'cancelled', outcomeUnknown: true })
   }, waitMs)
   live.clearWait = () => clearTimeout(timer)
 }
@@ -79,7 +79,6 @@ export async function cancelAll(state: RunnerState, projectId: string) {
     }
     live.cancelAsked = true
     live.controller.abort()
-    const result = { ...live.running, cancelAsked: true, outcomeUnknown: true }
-    live.finish({ status: 'cancelled', result })
+    live.finish({ status: 'cancelled', outcomeUnknown: true })
   }
 }

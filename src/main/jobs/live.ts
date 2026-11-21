@@ -4,6 +4,7 @@ import type { CoreDeps } from '../core-deps'
 import type { BusEvent, CommandBus } from '../commands/bus'
 import { readJob, updateJob, type JobChange } from './job-store'
 import type { JobKindHandler } from './types'
+import type { JobEnd } from './job-end'
 import type { ProviderInfo } from '../../shared/schemas/queries/app'
 
 export type JobRunnerOptions = {
@@ -28,10 +29,12 @@ export type LiveJob = {
   // Set once the row has its final status; later writes are dropped.
   ended: boolean
   cancelAsked: boolean
-  // The result while running: stage, queuePosition, cancelAsked (SPEC 6.11.1, 6.11.2).
-  running: Record<string, unknown>
-  // Ends the job at once with the given change, when cancel cannot wait for the handler.
-  finish: (change: JobChange) => void
+  // What the handler kept through jc.keep, and the provider's stage and queue position
+  // (SPEC 6.11.1 [1.38]). job-end.ts builds the result from them.
+  kept: Record<string, unknown>
+  shown: { stage?: string; queuePosition?: number }
+  // Ends the job once, through endChange; later calls do nothing.
+  finish: (end: JobEnd) => void
   // Clears the cancel wait, when one is set (SPEC 6.11.2).
   clearWait: () => void
 }

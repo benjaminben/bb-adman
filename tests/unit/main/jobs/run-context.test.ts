@@ -17,4 +17,8 @@ describe('JobRunContext, the 1.38 fields [SPEC 6.11.1 1.38, 14 1.38 Y2]', () => 
   it('stores the provider own run ID through setRemoteJobId', () => {
     expectTypeOf<JobRunContext['setRemoteJobId']>().toEqualTypeOf<(id: string) => void>()
   })
+
+  it('keeps what has arrived through keep', () => {
+    expectTypeOf<JobRunContext['keep']>().toEqualTypeOf<(value: Record<string, unknown>) => void>()
+  })
 })

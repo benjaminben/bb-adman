@@ -43,6 +43,7 @@ export type JobRunContext = {
   // (SPEC 6.11.1), and turns a ProviderFailure into the job's error kind.
   call<T>(fn: () => Promise<T>): Promise<T>
   progress(fraction: number): void
+  // [1.38] True once a stop was asked for or the job has ended.
   cancelled(): boolean
   // Sends a command through the bus as the user.
   system(command: string, input: unknown): Promise<Result<unknown>>
@@ -51,6 +52,9 @@ export type JobRunContext = {
   onProgress(p: RunProgress): void
   // [1.38] Stores the provider's own ID for the run in `remote_job_id`, and emits job.updated.
   setRemoteJobId(id: string): void
+  // [1.38] What has arrived so far, for example { assetIds: [...] }. Each call replaces the
+  // last. It is in `result` while the job runs and stays there if the job does not succeed.
+  keep(value: Record<string, unknown>): void
 }
 
 export type JobKindHandler = {
