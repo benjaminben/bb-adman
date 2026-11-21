@@ -23,7 +23,6 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
     f = makeFixture()
     const deps = f.core.deps
     for (const list of [
-      briefCommands,
       campaignCommands,
       devCommands,
       generationCommands,
@@ -87,5 +86,12 @@ describe('the subject domain is registered [SPEC 14, slice C]', () => {
       'subject.update',
       'subject.delete',
     ])
+  })
+})
+
+describe('the brief domain is registered [SPEC 14, slice C]', () => {
+  it('gives brief.parse', () => {
+    f = makeFixture()
+    expect(briefCommands(f.core.deps).map((h) => h.name)).toEqual(['brief.parse'])
   })
 })
