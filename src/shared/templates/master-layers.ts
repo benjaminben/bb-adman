@@ -71,6 +71,10 @@ function fixedValues(): typeof LAYER_DEFAULTS {
 
 function checkFills(template: Template, fills: SlotFills): void {
   const slots = new Map(template.slots.map((s) => [s.id, s]))
+  // SPEC 6.1 [1.25]: a background slot that is not an image slot is a programming error.
+  if (slots.get(BACKGROUND_SLOT_ID)?.type === 'copy') {
+    throw new Error('buildMasterLayers: the background slot must be an image slot')
+  }
   for (const [id, fill] of Object.entries(fills)) {
     const slot = slots.get(id)
     if (!slot) throw new Error(`buildMasterLayers: the template has no slot "${id}"`)

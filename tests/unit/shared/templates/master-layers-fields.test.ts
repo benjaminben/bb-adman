@@ -161,3 +161,15 @@ describe('buildMasterLayers: shares nothing [SPEC 14 N3]', () => {
     }
   })
 })
+
+describe('buildMasterLayers: a background slot must be an image slot [SPEC 6.1 1.25, 14 P7]', () => {
+  it('throws a plain Error for a background slot of type copy, whatever the fills', () => {
+    const template: Template = {
+      id: 'odd',
+      name: 'Odd',
+      slots: [{ id: 'background', type: 'copy' }],
+    }
+    expect(() => buildMasterLayers(template, square, {})).toThrow(Error)
+    expect(() => buildMasterLayers(template, square, { background: { text: 'x' } })).toThrow(Error)
+  })
+})
