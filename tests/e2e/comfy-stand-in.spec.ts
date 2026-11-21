@@ -17,6 +17,7 @@ import {
   nthSentId,
   serveNeedsFromApp,
   startWorking,
+  waitingInQueue,
 } from './stand-in-runs'
 import * as screens from './screens'
 import * as video from './video-screens'
@@ -126,7 +127,7 @@ test('Campaign: a run waits, works and is done; a failed run is retried; a waiti
   await expect(screens.runRow(page)).toContainText('Done', { timeout: 15_000 })
 
   await generate()
-  await nthSentId(stand, 4)
+  waitingInQueue(stand, await nthSentId(stand, 4))
   await expect(screens.runRow(page)).toContainText(screens.WAITING_ON_SERVER)
   await screens.runRow(page).getByRole('button', { name: 'Cancel' }).click()
   await expect(screens.runRow(page)).toContainText('Cancelled', { timeout: 15_000 })

@@ -45,6 +45,13 @@ export async function nthSentId(stand: StandIn, count: number): Promise<string> 
   return id
 }
 
+// A run the server still holds in its queue, as a real server lists it. A cancel then finds
+// the run there, removes it and reports it stopped (F-15: only a confirmed stop ends a run
+// cancelled).
+export function waitingInQueue(stand: StandIn, id: string): void {
+  stand.reply('GET /queue', { json: { queue_running: [], queue_pending: [[1, id]] } })
+}
+
 export function startWorking(stand: StandIn, id: string): void {
   stand.reply(`GET /api/jobs/${id}`, { json: { status: 'in_progress' } })
 }
