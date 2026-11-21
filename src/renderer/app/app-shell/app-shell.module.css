@@ -39,6 +39,11 @@
   min-height: 0;
   overflow: auto;
 }
+/* While the activity panel is open it covers the cell's right end, so the page keeps clear of
+   it: the page and its scroll bar end where the panel begins. */
+.frame:has(> section[aria-label='Activity']) > .main {
+  margin-right: min(var(--activity-width), 100%);
+}
 .panel {
   padding: var(--space-6);
 }

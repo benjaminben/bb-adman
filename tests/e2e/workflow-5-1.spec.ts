@@ -38,7 +38,13 @@ test.afterEach(async () => {
   }
 })
 
-type Job = { id: string; kind: string; status: string; result: { assetIds: string[] } | null }
+type Job = {
+  id: string
+  kind: string
+  status: string
+  seenAt: string | null
+  result: { assetIds: string[] } | null
+}
 
 async function jobs(place: w.Place, layerId?: string): Promise<Job[]> {
   const input = { projectId: place.projectId, ...(layerId ? { layerId } : {}) }
@@ -72,6 +78,10 @@ test('Workflow 5.1: a campaign from a Markdown brief, its pictures, text and cut
   await expect
     .poll(async () => (await jobs(place)).find((j) => j.kind === 'layout_proposal')?.status)
     .toBe('succeeded')
+  // Its result is on the layers, so the window marked it seen (spec/jobs.md [FR-218]).
+  await expect
+    .poll(async () => (await jobs(place)).find((j) => j.kind === 'layout_proposal')?.seenAt)
+    .toEqual(expect.any(String))
   const headline = await layer(place, (l) => l.slot === 'headline')
   expect(headline.copy).toBe(w.MESSAGE)
 
@@ -128,14 +138,25 @@ test('Workflow 5.8: a run left going while the user works in another campaign', 
   await expect(page.getByRole('heading', { name: screens.E2E_CAMPAIGN, level: 2 })).toBeVisible()
 })
 
-// Finding (P4-20): the campaign tabs read project.get only on project.changed
-// (use-project.ts). Starting a run sends none, so the running campaign's tab never shows
-// "Running", though project.get gives jobRunning true. (The finished run's results do send one,
-// so "New result" shows; the test above checks it.) Re-enable once the campaign tabs re-read
-// on job.updated.
-test.fixme('Workflow 5.8 step 3: the running campaign\'s tab shows "Running"', async () => {
+// Workflow 5.8 step 3 [FR-218]: the campaign tabs re-read project.get when a job of the project
+// moves between running, not looked at and neither (use-project.ts), so the running campaign's
+// tab shows "Running" while the run goes on, and a dot in its place once it finishes.
+test('Workflow 5.8 step 3: the running campaign\'s tab shows "Running"', async () => {
+  test.setTimeout(120_000)
   await runLeftGoing(app, page)
-  await expect(campaignTab(page, w.CAMPAIGN)).toContainText('Running')
+  const tab = campaignTab(page, w.CAMPAIGN)
+  await expect(tab).toContainText('Running')
+  await expect(campaignTab(page, screens.E2E_CAMPAIGN)).not.toContainText('Running')
+  await releaseHeld(app, 'picture')
+  await expect(tab.getByRole('img', { name: 'New result' })).toBeVisible({ timeout: 15_000 })
+  await expect(tab).not.toContainText('Running')
+
+  // With the Activity panel open, the campaign page's fields end where the panel begins.
+  await activityButton(page).click()
+  const panel = await page.getByRole('region', { name: 'Activity' }).boundingBox()
+  const prompt = page.getByRole('textbox', { name: 'Prompt' }).first()
+  const field = await prompt.boundingBox()
+  expect(field!.x + field!.width).toBeLessThanOrEqual(panel!.x)
 })
 
 test('A failed run of each kind shows its sentence and Retry, in earlier options and Activity', async () => {
