@@ -7,6 +7,7 @@ import {
   subjectPhotoIds,
 } from '@/renderer/ui/reference-picker/reference-rows'
 import { MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
+import type { AssetList } from '@/shared/schemas/queries/asset'
 import { ref } from '../screens/campaign/reference-fixture'
 
 describe('isReferenceRow [SP-7]', () => {
@@ -39,15 +40,27 @@ describe('subjectPhotoIds [SP-7]', () => {
   const can = (id: string, over: Parameters<typeof ref>[1] = {}) =>
     ref(id, { subjectId: 'citrus-can', ...over })
 
-  it.each([
-    ['keeps only the given subjects', [can('01A'), ref('01B', { subjectId: 'berry' })], ['01A']],
-    ['skips a row with no subject', [ref('01A'), can('01B')], ['01B']],
-    ['skips a picture that cannot be sent', [can('01A', { missing: true }), can('01B')], ['01B']],
-    ['skips a video', [can('01A', { kind: 'video' }), can('01B')], ['01B']],
-    ['takes both libraries', [can('01A', { library: 'asset' }), can('01B')], ['01A', '01B']],
-    ['puts the oldest first', [can('01C'), can('01A'), can('01B')], ['01A', '01B', '01C']],
+  const CAN = ['citrus-can']
+  const cases: Array<[string, AssetList, string[], string[]]> = [
+    [
+      'keeps only the given subjects',
+      [can('01A'), ref('01B', { subjectId: 'berry' })],
+      CAN,
+      ['01A'],
+    ],
+    ['skips a row with no subject', [ref('01A'), can('01B')], CAN, ['01B']],
+    [
+      'skips a picture that cannot be sent',
+      [can('01A', { missing: true }), can('01B')],
+      CAN,
+      ['01B'],
+    ],
+    ['skips a video', [can('01A', { kind: 'video' }), can('01B')], CAN, ['01B']],
+    ['takes both libraries', [can('01A', { library: 'asset' }), can('01B')], CAN, ['01A', '01B']],
+    ['puts the oldest first', [can('01C'), can('01A'), can('01B')], CAN, ['01A', '01B', '01C']],
     ['gives none for no subjects', [can('01A')], [], []],
-  ])('%s', (_name, rows, expected, subjects = ['citrus-can']) => {
+  ]
+  it.each(cases)('%s', (_name, rows, subjects, expected) => {
     expect(subjectPhotoIds(rows, subjects)).toEqual(expected)
   })
 
