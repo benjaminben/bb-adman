@@ -2,7 +2,9 @@
 import type { CoreDeps } from '../../core-deps'
 import type { CommandHandler } from '../types'
 import { campaignCreate } from './create'
+import { campaignDelete } from './delete'
+import { campaignUpdate } from './update'
 
 export function campaignCommands(deps: CoreDeps): CommandHandler[] {
-  return [campaignCreate(deps)]
+  return [campaignCreate(deps), campaignUpdate(), campaignDelete()]
 }

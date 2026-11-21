@@ -91,8 +91,12 @@ describe('the brief domain is registered [SPEC 14, slice C]', () => {
 })
 
 describe('the campaign domain is registered [SPEC 14, slice C]', () => {
-  it('gives campaign.create', () => {
+  it('gives campaign.create, campaign.update and campaign.delete, in that order', () => {
     f = makeFixture()
-    expect(campaignCommands(f.core.deps).map((h) => h.name)).toEqual(['campaign.create'])
+    expect(campaignCommands(f.core.deps).map((h) => h.name)).toEqual([
+      'campaign.create',
+      'campaign.update',
+      'campaign.delete',
+    ])
   })
 })
