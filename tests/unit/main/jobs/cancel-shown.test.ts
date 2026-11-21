@@ -2,7 +2,7 @@
 // cancelShown and cancelRefusal agree for every kind, status and provider cancel kind.
 import { describe, expect, it } from 'vitest'
 import { cancelRefusal } from '@/main/jobs/cancel'
-import { cancelShown } from '@/renderer/screens/campaign/run-row/cancel-shown'
+import { cancelShown } from '@/renderer/ui/cancel-shown'
 import { JOB_KINDS, JOB_STATUSES } from '@/shared/config/job-kinds'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { JobRow } from '@/shared/schemas/rows/job'
