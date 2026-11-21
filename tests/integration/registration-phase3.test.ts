@@ -14,8 +14,9 @@ describe('Phase 3 domains are registered empty [spec/structure.md, P3-0]', () =>
   it('gives an empty handler list for layer and variant, and an empty query map for variant and render', () => {
     f = makeFixture()
     const deps = f.core.deps
-    expect(layerCommands(deps)).toEqual([])
-    expect(variantCommands(deps)).toEqual([])
+    // P3-1 fills the two command lists; later slices add to the layer list.
+    expect(layerCommands(deps).map((h) => h.name)).toContain('layer.update')
+    expect(variantCommands(deps).map((h) => h.name)).toEqual(['variant.update'])
     expect(variantQueries(deps)).toEqual({})
     expect(renderQueries(deps)).toEqual({})
   })
