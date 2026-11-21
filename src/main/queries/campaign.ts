@@ -7,6 +7,7 @@ import type { QueryFn } from './types'
 import { readWireRow, readWireRows } from '@/main/db/rows'
 import { badgesOf, directionsOf, jobMarks, openFor, requireCampaign } from './campaign-reads'
 import type { ActivityLog } from '@/main/log/activity-log'
+import { masterOf } from '@/main/links/master-of'
 import {
   campaignScopedInput,
   type CampaignCover,
@@ -62,6 +63,8 @@ export function campaignGet(deps: Pick<CoreDeps, 'projects' | 'assets' | 'log'>)
     if (!ruleSet) throw new Error('campaign.get: the campaign has no rule_set row')
     const directions = directionsOf(db, campaign.id)
     const masters = new Map(directions.map((d) => [d.id, d.masterVariantId]))
+    // Each direction's master is read once per call [spec/links-and-sync.md, "Follow rules"].
+    const masterRows = new Map(directions.map((d) => [d.id, masterOf(db, d.id)]))
     const missing = new Set(await deps.assets.missingAssetIds(project))
     const layers = readWireRows(db, 'layer', deps.log) as LayerRow[]
     const links = readWireRows(db, 'variant_subject', deps.log) as VariantSubjectRow[]
@@ -74,9 +77,10 @@ export function campaignGet(deps: Pick<CoreDeps, 'projects' | 'assets' | 'log'>)
         .sort(byId),
       badges: badgesOf(
         db,
-        v.id,
+        v,
         layers.filter((l) => l.variantId === v.id),
         missing,
+        masterRows.get(v.directionId) ?? null,
       ),
     }))
     return {

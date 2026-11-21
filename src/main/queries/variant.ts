@@ -3,6 +3,7 @@
 import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
 import { badgesOf, openFor } from './campaign-reads'
+import { masterOf } from '@/main/links/master-of'
 import { assetsOf, layersOf, requireVariant, subjectIdsOf } from './variant-reads'
 import { variantGetInput, type VariantGet } from '@/shared/schemas/queries/variant'
 
@@ -18,7 +19,7 @@ export function variantGet(deps: Pick<CoreDeps, 'projects' | 'assets' | 'log'>):
         ...variant,
         isMaster: direction.masterVariantId === variant.id,
         subjectIds: subjectIdsOf(db, variant.id, deps.log),
-        badges: badgesOf(db, variant.id, layers, missing),
+        badges: badgesOf(db, variant, layers, missing, masterOf(db, direction.id)),
       },
       campaignId: direction.campaignId,
       layers,
