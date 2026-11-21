@@ -132,6 +132,8 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`approval
 
 ### AP-10 — Settings: approvals service and S3
 
+- **Split [D-096].** The S3 part ("Cloud storage": `s3-section/`, its test, shot `90-settings-cloud-storage`) is built first as **AP-10a**, which waits for nothing: the settings values and the two S3 secrets exist today. The approvals part (`approvals-section/`, its test, shot `91`) stays here as AP-10 and waits for AP-6. Both mount in `settings-screen.tsx`, one after the other.
+
 - **Exists when done:** Settings has "Cloud storage" (Amazon S3) and "Approvals service" as `spec/approvals.md` "Screens" says.
 - **New files:** `src/renderer/screens/settings/approvals-section/`, `src/renderer/screens/settings/s3-section/`.
 - **May touch:** `src/renderer/screens/settings/settings-screen/settings-screen.tsx` (mount both, a few lines).

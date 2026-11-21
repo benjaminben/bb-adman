@@ -31,10 +31,10 @@ These need the stakeholder. A wrong guess would be costly to undo, would spend r
 
 Designed in `spec/approvals.md` and `spec/approvals-service.md`; none of these blocks the first slices.
 
-- **OI-94. Cloudflare plan.** A password check uses 100,000 rounds of hashing, the most Workers allows. The Free plan allows 10 ms of CPU per request, which that check may pass. **Recommended:** the Workers Paid plan. **Meanwhile:** built with 100,000; the number is kept per link, so it can be lowered for new links if he stays on Free.
-- **OI-95. Should visitors see each other's email addresses?** D-095 lets anyone with the link remove any sign-off, so each visitor sees who signed off. **Recommended:** yes, as built (A-99). The other choice shows only "Signed off (2)" to visitors and keeps the emails for the app.
-- **OI-96. Pictures in his S3 bucket, or in the service's own Cloudflare storage (R2)?** S3, as he described, needs the app to renew each picture's signed address at least weekly (a gallery left unrefreshed for 7 days shows "This picture has expired"). R2 needs no renewal and no bucket setup, at the cost of a second storage place. **Recommended:** S3 now, as asked; R2 later if expiry gets in the way. The service keeps the picture source behind one small interface either way.
-- **OI-97. The S3 part of Settings' "Cloud storage" is built now** instead of in Phase 9, because a user cannot set a bucket without it today. **Recommended:** yes (A-95).
+- **OI-94. Cloudflare plan.** Answered [D-096]: start on the Workers Free plan. A password check uses 100,000 rounds of hashing; the Free plan allows 10 ms of CPU per request, which that check may pass. If deployed password checks are refused for time, report it with the choices (the paid plan, or other settings); the hash is not weakened without asking.
+- **OI-95. Should visitors see each other's email addresses?** Answered [D-096]: yes (A-99).
+- **OI-96. Pictures in the user's S3 bucket, or in the service's own storage?** Answered [D-096]: the user's bucket (A-89).
+- **OI-97. The S3 part of Settings' "Cloud storage".** Answered [D-096]: built now, and required. The user enters their own bucket credentials in Settings; the app is never given an environment file (A-95).
 
 ### Before anything leaves this machine
 
