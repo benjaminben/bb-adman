@@ -89,6 +89,32 @@ describe('job store [SPEC 14 1.41 TP-2]', () => {
     expect(store.getState().rows.map((r) => r.id)).toEqual(['J2'])
   })
 
+  it('keeps a job.updated row that is later than the job.list reply read meanwhile [F-10]', async () => {
+    const { fake, store } = setup()
+    const stop = store.getState().subscribe()
+    await store.getState().load('V1')
+    let answer: (rows: ReturnType<typeof jobRow>[]) => void = () => undefined
+    fake.onQuery(
+      'job.list',
+      () =>
+        new Promise((resolve) => {
+          answer = (rows) => resolve({ ok: true, data: rows })
+        }),
+    )
+    const reading = store.getState().load('V1')
+    fake.emit(
+      'job.updated',
+      jobRow('J1', {
+        status: 'succeeded',
+        updatedAt: '2026-11-21T00:00:02.000Z',
+      }),
+    )
+    answer([jobRow('J1', { status: 'running', updatedAt: '2026-11-21T00:00:01.000Z' })])
+    await reading
+    expect(store.getState().rows.map((r) => r.status)).toEqual(['succeeded'])
+    stop()
+  })
+
   it('drops the rows of the last variant when another is loaded', async () => {
     const { fake, store } = setup()
     await store.getState().load('V1')
