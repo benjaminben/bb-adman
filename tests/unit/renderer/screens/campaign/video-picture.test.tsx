@@ -22,14 +22,14 @@ describe('VideoPanel picture list [SPEC 14 1.60 CU-6b-R N-9]', () => {
     expect(asked).toContainEqual({ projectId: P, library: 'reference', kind: 'image' })
   })
 
-  it('shows the reason a picture cannot be sent, and it cannot be chosen', async () => {
+  it('shows the reason a picture cannot be sent, and it cannot be chosen; a WebP can', async () => {
     const rows = [ref('A1', { missing: true }), ref('A2', { mime: 'image/webp' })]
     const { p } = await panel(pictureApi(rows).fake)
     const pictures = await pictureStart(p, 'A first-frame picture')
     expect(await pictures.findByRole('radio', { name: 'A1.png' })).toBeDisabled()
-    expect(pictures.getByRole('radio', { name: 'A2.png' })).toBeDisabled()
+    expect(pictures.getByRole('radio', { name: 'A2.png' })).toBeEnabled()
     expect(pictures.getByText('file not found')).toBeInTheDocument()
-    expect(pictures.getByText('WebP cannot be sent yet')).toBeInTheDocument()
+    expect(pictures.queryByText('WebP cannot be sent yet')).toBeNull()
   })
 
   it('says so for an empty list, and keeps "Add pictures"', async () => {

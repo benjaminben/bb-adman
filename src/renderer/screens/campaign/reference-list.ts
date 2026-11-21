@@ -12,7 +12,6 @@ type ImportReply = { assetIds: string[] }
 
 export function whyNot(asset: Reference): string | null {
   if (asset.missing) return 'file not found'
-  if (asset.mime === 'image/webp') return 'WebP cannot be sent yet'
   return null
 }
 
