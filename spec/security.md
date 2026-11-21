@@ -50,12 +50,25 @@ The stakeholder's words: "In general we don't care about nuisance attacks like t
 
 Built (`src/main/windows/app-window.ts`, `app-window-options.ts`, `navigation.ts`, `open-external.ts`).
 
-- **Window settings** (app window, and the hidden render window when built in Phase 3): `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`, `webSecurity: true`.
+- **Window settings** (app window, and the hidden render window, Not built, Phase 3): `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`, `webSecurity: true`.
+- **Who may call.** Not built (Phase 3, slice P3-6; review item LP-1). `registerIpc` takes a `mayCall(event)` check: a command or query is run only when it comes from the app window's own `webContents` and its main frame. Any other sender (the render window, a frame inside a page) gets the fixed `INVALID_INPUT` "Unknown request." before `execute` or `query` runs, and nothing is logged with its input. Events go to the app window only.
 - **Navigation.** `will-navigate` is cancelled unless the target has the page's own origin (for a `file:` page, the same file). Every new window is denied; an `https:` link opens in the system browser, anything else does nothing. `openExternal` given to the core is wrapped `httpsOnly`.
 - **What the window may draw.** Text from a server, a file, an agent or an AI answer (server messages, brief values, file names, display names) is set as text content, never as HTML, never as a link. No `dangerouslySetInnerHTML`.
 - **Paths in the renderer.** The renderer draws no file path, reads no file, and sends a path in no call except `asset.import`, and only a path the system picker returned.
 - **Clipboard.** The Connect panel's Copy button uses `navigator.clipboard.writeText` in the renderer, on click only. No preload, IPC, CSP or permission-handler change. A permission handler added later must allow `clipboard-sanitized-write`.
 - **Page address.** One pure function, `pageAddress` in `app-window.ts`, picks it. It returns `ELECTRON_RENDERER_URL` only when `app.isPackaged` is false **and** the address matches `http://localhost:{port}` with at most one trailing slash. Nothing else may follow the port: no path, no query, no user name. In every other case it returns the built page. An installed app ignores the variable. The hidden render window follows the same rule.
+
+## Rules: the render window
+
+Not built (Phase 3, slice P3-6). Full review. How it works: `spec/scene.md`, "The render window".
+
+- **Same walls as the app window**: the window settings above, `offscreen: true`, never shown, the same navigation and new-window rules, its page chosen by the `pageAddress` rule (`renderPageAddress`), and the same content security policy written into `render.html` by the build (`connect-src 'none'`, so the page can send nothing out).
+- **A bridge with two functions only.** Its preload (`src/preload/render.ts`) gives `window.renderApi = { onRequest, done }` and nothing else: no `window.api`, no `ipcRenderer`. It listens on `adman:render-request` and sends on `adman:render-done`, and on no other channel.
+- **The main process trusts nothing it sends back.** A `render-done` message is taken only from the render window's own `webContents` and main frame, only for the request it waits for, and only when it passes the `RenderDone` schema; overflow entries are kept only for text layers of that request. The result can change one thing: a layer's `overflow`, through `layer.reportOverflow`, which bumps no `rev` and cannot change a value a user typed.
+- **What a request holds.** Variant and layer values (copy text included), asset IDs with kind, size and `missing`, and the project ID. Never a file path, a display name, a key, a token, the ComfyUI address or settings. The page builds `adman-asset://` addresses itself with `assetUrl`.
+- **No calls from it.** The app's command and query channels refuse it ("Who may call", above), and it gets no event.
+- **Picture bytes stay in the main process.** The captured PNG goes to the thumbnail file or to the asking query's reply, nowhere else.
+- **Its life is short.** It is ended on a crash, a hang, a time-out and when the app window closes; it has developer tools only with the hand-test flag.
 
 ## Rules: the asset protocol and the content security policy
 
@@ -132,6 +145,8 @@ This table has one owner: this file. A change that makes a project-file value re
 | `rel_path`, `abs_path` | Which file the change check reads | `src/main/assets/check-changed.ts` | Linked rows only. Read and hash only. `mime`, `width`, `height` written from the bytes, and only when the first bytes fit the row's kind; otherwise `mime` is left and the sizes set to null | Size, time and hash of any readable file are stored; for a fitting file also type, width, height (accepted) |
 | `abs_path` of the named row (gives the old folder) and of sibling rows | Candidate files on relink | `src/main/assets/relink.ts` | `pathInside` the user's new folder, `realpath`, `lstat`, regular file; a sibling taken only when the file has the row's own hash; read only | None |
 | Asset `id`, `abs_path` | Files looked for in a new assets folder | `src/main/assets/assets-dir.ts` (`repoint`) | `managedPath`; a bad row is left alone; `lstat`, regular files only; read only | None |
+| `project_id`, variant `id`, variant `rev` | Thumbnail file names; which files the clean-up deletes (Not built, Phase 3) | `src/main/thumbnails/paths.ts`, `cache.ts` | ULID, the variant ID pattern, a whole number; else no file is touched. Writes and deletes only directly inside `{userData}/thumbnails/{projectId}/`, regular files by `lstat`, names matching the thumbnail pattern; a link at the folder refuses; real path inside `{userData}/thumbnails/` (`spec/scene.md`, "Thumbnails") | A copy of a project made outside the app may show the other copy's thumbnail (accepted, nuisance) |
+| A font file's bytes (asset of kind `font`) | `asset.font_family`, shown as text (Not built, Phase 3) | `src/main/assets/font-name.ts` | Every offset and count bound-checked; WOFF2 decompressed with a 32 MiB output cap; any failure gives null, never an error with file text; the result trimmed, control characters removed, at most 100 characters, drawn as text only | None |
 
 ### Hand-test tools
 
@@ -275,4 +290,9 @@ These must keep passing. A change that weakens one needs a ruling.
 | `tests/integration/generation/run-images-comfy.test.ts` | One reference sends one upload of the asset's bytes as `adman-{16 hex}.png`; no request holds the display name or any part of the path; two references refused with `too_many_references`; a non-ComfyUI stand-in gets one `GET /system_stats` and no upload |
 | `tests/integration/generation/image-kind-errors.test.ts` | A reference gone after enqueue ends `failed`, kind `other`, with no path in the row or the log |
 | `tests/integration/campaigns/brief-parse.test.ts` | A malformed YAML gives a reply with the bad line and a log line with the line number and no word of the file |
+| `tests/unit/main/ipc.test.ts` (Phase 3 blocks) | A call from any sender but the app window's main frame is refused before `execute` or `query`; events go to the app window only (LP-1) |
+| `tests/unit/main/render/done-message.test.ts`, `tests/e2e/render-window.spec.ts` | A render reply from the wrong sender, frame or request, or of the wrong shape, is ignored; the render window is never shown, has no `window.api`, and its bridge has only `onRequest` and `done` |
+| `tests/build/built-page.test.ts` (Phase 3 block) | `render.html` carries exactly the strict policy |
+| `tests/unit/main/thumbnails/paths.test.ts`, `tests/integration/thumbnails/thumbnail-clean.test.ts` | Bad IDs touch no file; clean-up deletes only old thumbnails directly in the project's folder, never a link, a sub-folder or another file |
+| `tests/unit/main/assets/font-name.test.ts` | A damaged or hostile font gives null and never throws |
 | `tests/integration/commands/dev-storage-confinement.test.ts` | Hand-test storage changes nothing outside its folder: the app data tree, `secrets.bin`, `settings.json`, `logs/app.log` compared byte for byte |

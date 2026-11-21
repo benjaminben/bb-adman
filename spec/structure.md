@@ -43,22 +43,25 @@ project-root/
 │   │   ├── secrets/               # secret-store.ts, safe-storage.ts
 │   │   ├── settings/              # settings-store.ts, defaults.ts
 │   │   ├── log/                   # activity-log.ts, error-context.ts
-│   │   ├── render/                # render service (Phase 3)
+│   │   ├── render/                # the render window, draw, render-page, done-message (Phase 3; Electron edge)
+│   │   ├── thumbnails/            # render service, queue, scene input, thumbnail paths and cache (Phase 3; no Electron)
 │   │   ├── export/                # image, video (FFmpeg filter builder), report, sheet (Phase 8)
 │   │   └── publish/               # publish flow (Phase 9)
-│   ├── preload/                   # index.ts: the window.api bridge
+│   ├── preload/                   # index.ts: the window.api bridge; render.ts: the render window's renderApi (Phase 3)
 │   ├── renderer/                  # app window (React). Files: "Renderer files on main" below
-│   │   ├── main.tsx, index.html, env.d.ts
+│   │   ├── main.tsx, index.html, env.d.ts; render.html (Phase 3)
+│   │   ├── render-worker/         # the render window's page: main.tsx, render-root/ (Phase 3)
 │   │   ├── app/                   # app.tsx, app-context.tsx, app shell, error banner
-│   │   ├── stores/                # app-store.ts, project-store.ts (one per open project), job-store.ts (one per campaign page)
+│   │   ├── stores/                # app-store.ts, project-store.ts (one per open project), job-store.ts (one per campaign page);
+│   │   │                          #   nav-store.ts, variant-store.ts (one per open variant tab) (Phase 3)
 │   │   ├── dev/                   # the hand-test screen. Not product UI; removed in Phase 9
 │   │   ├── screens/               # start, project-home, campaign, settings; editor screens (Phase 3)
 │   │   ├── dialogs/               # key; brief-confirm, slots, generation, run-confirm, fan-out, sync-review, export,
 │   │   │                          #   publish, report, agent-permission, relink (later phases)
-│   │   ├── ui/                    # tokens.css, base.css, asset-url.ts, secret-labels.ts; shared controls
-│   │   ├── editor/                # canvas, handles, snapping, layer list, properties, timeline (Phase 3, Phase 7)
+│   │   ├── ui/                    # tokens.css, base.css, asset-url.ts, secret-labels.ts; shared controls;
+│   │   │                          #   shortcuts.ts, variant-thumbnail/ (Phase 3)
+│   │   ├── editor/                # the editor's components and helpers (Phase 3; tree in spec/editor.md); timeline (Phase 7)
 │   │   └── panels/                # activity (Phase 4)
-│   ├── render-worker/             # hidden window entry: mounts Scene, answers render requests (Phase 3)
 │   └── shared/                    # no Electron or Node imports
 │       ├── schemas/               # Zod: api.ts (window.api type, IPC channel names), result.ts, events.ts, settings.ts,
 │       │                          #   secrets.ts, brief.ts, layer.ts (JSON columns), project.ts, project-name.ts,
@@ -73,7 +76,8 @@ project-root/
 │       ├── generation/            # prompt.ts: the pre-filled picture prompt and its fixed ending
 │       ├── providers/             # messages.ts: plain error sentences, used by window and main process
 │       ├── templates/             # starter.ts, master-layers.ts (buildMasterLayers), types.ts
-│       ├── scene/                 # Scene component, presets.ts, background-placement.ts, overflow (Phase 3, Phase 7)
+│       ├── scene/                 # Scene component and helpers, fonts/ (bundled Inter) (Phase 3; files in spec/scene.md);
+│       │                          #   presets.ts (Phase 7)
 │       ├── links/                 # follow-rules.ts, out-of-date, sync preview (Phase 5)
 │       ├── checks/                # the six checks (Phase 6)
 │       └── paths/                 # output-paths.ts (Phase 8)
@@ -92,7 +96,7 @@ project-root/
 │   ├── fixtures/                  # briefs/, providers/ (recorded responses), video/, png-chunks.ts
 │   └── reference-pictures/{darwin,win32}/   # (Phase 3)
 ├── examples/                      # brief.yaml; source images and six exported PNGs (Phase 11)
-├── resources/                     # app icon, bundled default font; ffmpeg/ is fetched, not committed (Phase 7, Phase 8)
+├── resources/                     # app icon; ffmpeg/ is fetched, not committed (Phase 7, Phase 8). The default font is in src/shared/scene/fonts/
 ├── scripts/                       # fetch-ffmpeg, ffmpeg-sources.json (Phase 7)
 ├── comfy-workflows/               # the stakeholder's hand-test copies of the ComfyUI graphs; no code reads them; not in git
 ├── .github/workflows/             # ci.yml
@@ -111,7 +115,9 @@ Built. Enforced by ESLint (`eslint.config.js`) where a rule says so.
 - `src/shared/` imports nothing from `main`, `renderer`, `preload` or Electron.
 - `src/renderer/` reaches the main process only through `window.api`. A screen imports nothing from `src/main/`.
 - Only `src/main/assets/path-resolver.ts` builds asset paths. An ESLint rule bans `path.join` with asset fields elsewhere.
-- The Scene is a pure component: props are the variant, its layers and clips, a map of asset IDs to `adman-asset://` addresses, the time in milliseconds, and a mode (`full` or `overlay-only`). Not built (Phase 3).
+- The Scene is a pure component: props are the variant, its layers (clips from Phase 7), a map of asset IDs to their `adman-asset://` address and facts, the time in milliseconds, a mode (`full` or `overlay-only`) and an `onSettled` callback. It uses inline styles only and no app token. Full props: `spec/scene.md`. Not built (Phase 3).
+- `src/main/thumbnails/` is not an Electron edge place: it may not import `electron` or anything in `src/main/render/`. The Electron half of a draw is passed into `createCore` as `drawScene`.
+- The render window's page (`src/renderer/render.html`, `src/renderer/render-worker/`) imports only `@/shared/` code and `@/renderer/ui/asset-url`. It has no `window.api`.
 - A domain folder may hold helper files beside its handlers and its `index.ts`. A helper file exports no handler and is used only inside its own domain folder.
 - The layout names folders and the files with a fixed role. A file it does not name is allowed inside a folder it names when the file follows the module rules. A new folder directly under `src/main/`, `src/shared/`, `src/renderer/` or `tests/`, or a new file directly in `src/main/`, needs a line in this file first.
 
@@ -197,7 +203,7 @@ Built.
 - **Import from the folder.** Other files import the folder (`@/renderer/screens/campaign/generate-panel`), never the inner file (`.../generate-panel/generate-panel`). Only files inside the folder import its inner files.
 - **Where folders live.** Under their screen's folder: `screens/campaign/generate-panel/`. Names stay as today, with no screen prefix.
   - A dialog lives in `dialogs/`, one folder each (`dialogs/key-dialog/`; the `key/` level goes).
-  - The app shell and error banner stay in `app/`. Hand-test parts stay in `dev/`. The Phase 3 editor gets `src/renderer/editor/`.
+  - The app shell and error banner stay in `app/`. Hand-test parts stay in `dev/`. The Phase 3 editor gets `src/renderer/editor/` (its tree is in `spec/editor.md`, "Where the code lives").
   - A component used by two or more screens lives in `src/renderer/ui/{name}/`. A screen's part that a second screen starts to use moves there in the same change.
 - **What needs a folder.** Every `.tsx` file that exports a component another file imports. A small helper component used by one component only, and not imported by any other file, is a second `.tsx` inside that folder, not re-exported, using the parent's module; once a second component imports it, it gets its own folder.
 - **What does not get a folder.** Hooks, pure helpers, stores, context providers (`app-context.tsx`). The entry files stay: `src/renderer/main.tsx`, `src/renderer/app/app.tsx`. A hook or helper used by one component goes inside that component's folder, not re-exported. One used by several components of one screen stays a plain file in the screen folder. One used by several screens lives in `ui/`.

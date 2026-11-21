@@ -8,7 +8,7 @@ Built (Phases 1 and 2). They are plain working screens, made so every function c
 
 | Screen | Fate |
 |--------|------|
-| Shell with project tabs | Placeholder. Project tabs are not the planned navigation model: open campaigns are the main tabs [REQ: FR-211]. How projects are shown and switched is designed in the UI pass (OI-31, Q-038). The start screen stays. |
+| Shell with project tabs | Replaced in Phase 3 by the project switcher and campaign tabs [REQ: FR-211] (`spec/editor.md`, "Navigation"; OI-31 assumption). The start screen stays. |
 | Start | Stays in substance; restyled by the UI pass |
 | Project home | Placeholder for the campaign list and brief intake of the UI pass |
 | Campaign page, Make pictures, Make a video, run list | Placeholder. The Phase 3 editor, the Phase 4 generation panel, run confirmation dialog and activity panel, and the Phase 5 grid replace them |
@@ -182,9 +182,36 @@ Not built (on a cut line for Phase 2; otherwise the UI pass). The design for Com
 - Tests: a ComfyUI run asks for no paid confirm; `comfy_address_needed` shows the button and it shows Settings; a `failed` row with reason `out_of_memory` shows that sentence; `missing_items` lists names; the server's message is drawn as text and a reply holding `<a href>` shows the characters, not a link.
 - Cut order inside: "Show the server's message", the licence notes and the "left on the server" sentences go first.
 
+## Editor, tabs and thumbnails
+
+Not built (Phase 3). Designed in `spec/editor.md`: the project switcher, campaign tabs and variant tabs replace the project tabs; the editor (canvas, layer list, properties panel, picture chooser, font upload) is the content of a variant tab; the campaign grid and project home show thumbnails. Every rule in "Rules for every screen" holds for them.
+
+**Phase 3 tokens**, added to `src/renderer/ui/tokens.css` by slice P3-0 and used by no other file's literal: `--editor-layers-width` (260px), `--editor-props-width` (312px), `--canvas-backdrop` (a mid grey that is neither ad black nor page white), `--selection-dark` and `--selection-light` (the selection line and its two sides), `--guide-color` (a magenta that shows on most pictures), `--handle-size` (8px), `--rotate-handle-offset` (24px), `--thumbnail-tile` (the grid tile's picture width), `--layer-thumb` (32px). Overflow and missing marks use the existing danger tokens.
+
 ## Choices made without a design sign-off
 
 Each was made to get a working, testable screen. The UI pass may change any of them.
+
+Phase 3 (editor and tabs, `spec/editor.md`):
+
+- The editor layout of the accepted prototype: layers on the left, canvas in the centre, properties on the right, a top bar and one banner line above.
+- Selection drawn as a dark line with a light line each side (prototype round 3, R3-3), square resize handles and a round rotation handle above the box.
+- Guides in magenta, 1 screen pixel; snapping within 6 screen pixels.
+- An empty picture layer shown in the editor as a dashed box saying "Empty picture"; overflowing text as a dashed box in the danger colour.
+- The canvas backdrop is a mid grey; the ad itself is black where nothing is drawn.
+- Zoom steps 25 to 400 %, default "Fit", shown at the foot of the canvas with the size in pixels.
+- Text is typed in the properties panel, not on the canvas; double-clicking a text layer does nothing beyond selecting it, and "Add text layer" puts the focus in the Copy field.
+- Fields save on Enter or on leaving the field, never on each keystroke.
+- The weight list uses the nine standard names (Thin 100 to Black 900).
+- Colour is a hex field, the system colour picker, and the campaign palette as buttons.
+- The picture chooser is a dialog with a grid of the asset library's pictures and "Import pictures…".
+- Duplicate places the copy 20 px right and down, on top of every layer.
+- The project switcher is a menu button at the left of the tab row; "Project" is a fixed first campaign tab; "+" shows it.
+- Variant tabs are named "{title} · {sizeLabel} · {language}"; job marks are "Running" or a dot.
+- The thumbnail of a campaign on the project home is the master of its first direction; a failed thumbnail says "No preview".
+- The app menu has no View menu.
+
+Phases 1 and 2:
 
 - Navigation by one tab per open project, with Settings and Hand test as buttons beside the tabs (OI-31 is open).
 - Settings is shown in place of the tab panels, not as a tab or a window.

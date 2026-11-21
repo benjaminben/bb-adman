@@ -71,7 +71,7 @@ Every change has a class. The developer runs the checks for that class. The full
 |-------|----------------|-----------------|
 | A | Pure logic in `src/shared/` (follow rules, checks, presets, paths) | Lint, typecheck, unit tests for the touched module |
 | B | Data and commands (`src/main/db`, `src/main/commands`) | Class A + integration tests for the touched commands + migration test if the schema changed |
-| C | Drawing and export (`src/shared/scene`, render and export services) | Class A + reference-picture tests |
+| C | Drawing and export (`src/shared/scene`, render and export services) | Class A + the reference-picture tests (`npm run test:e2e -- tests/e2e/scene-reference.spec.ts`, on a desktop like class G; "Reference pictures" below) |
 | D | UI (`src/renderer`) | Lint, typecheck, component and accessibility tests for the touched component |
 | E | Providers and MCP | Class A + adapter or MCP tests for the touched adapter or tool |
 | F | Release | Everything in "Coverage and test types" below, on macOS and Windows |
@@ -109,7 +109,7 @@ No CI workflow names `test:e2e:real`, `test:comfy` or `test:live`. No agent runs
 | Unit | 90% of lines in `src/shared/`, 80% in `src/main/`, providers included | Vitest | CI |
 | Integration (commands against a temporary project file) | Every command in `spec/api-commands.md` has a success test and its refusal tests (below) | Vitest | CI |
 | Provider adapters | Each adapter tested against recorded responses, including one test per error kind | Vitest | CI |
-| Scene reference pictures | Each preset at 5 points in time, each layer type, CJK text, overflow | Vitest + hidden window, per-OS reference files, 0.5% pixel tolerance | CI. Not built (Phase 3) |
+| Scene reference pictures | Each layer type, CJK text, overflow, letter spacing, transparency (Phase 3); each preset at 5 points in time (Phase 7) | Playwright (Electron) + the render window, per-system reference files, the rule in "Reference pictures" | Developer on macOS; CI on both systems at the release gate. Not built (Phase 3) |
 | Component and accessibility | Every dialog and panel: keyboard path, labels, axe-core with no violations | Testing Library, axe-core | CI |
 | End-to-end | Workflows 5.1 to 5.7 with fake providers | Playwright (Electron) | CI on tags (Phase 11) |
 | MCP | Every tool, the ask flow, token and header rejection | MCP SDK client in Vitest | CI |
@@ -133,6 +133,24 @@ coverage: {
 A threshold is never lowered and no exclusion is added to pass it. `json-summary` gives per-folder totals from the tool, not by hand. CI runs coverage on every push and prints the figures. Falling below a threshold fails the release gate (class F), not a single change, so a worktree is not blocked by another worktree's gap. In the push workflow the coverage step has `continue-on-error: true`. Two conditions keep that from hiding a real failure: `npm test` is its own step before it and fails the run when a test fails, and the tag pipeline (Phase 11) runs coverage without the mark. `tests/unit/config/coverage-config.test.ts` checks the config.
 
 **No type-only tests.** A test that only uses `expectTypeOf` asserts nothing when `npm test` runs, because Vitest's type checking is off. A rule about a type is proven by `npm run typecheck`, which every class runs. For example, typecheck is the proof that `isInternal` is required on `IpcTargets` (`src/main/ipc.ts`).
+
+### Reference pictures
+
+Not built (Phase 3, slice P3-8). `tests/e2e/scene-reference.spec.ts`, cases in `tests/e2e/scene-cases.ts`, comparison in `tests/e2e/reference-compare.ts`, pictures in `tests/reference-pictures/{darwin,win32}/{case}.png`.
+
+**How a case runs.** It launches the built app (`launch.ts`), sets its scene up through `window.api` (a project, imports, `campaign.create` at a small custom size such as `400x400`, then layer commands) and draws it with `variant.render` at `maxDimension` equal to the variant's longer side, so nothing is scaled. Test pictures (a solid square, a picture with a transparent hole) are made in the test with Electron's `nativeImage.createFromBitmap(...).toPNG()` from fixed pixel values, so no picture file is committed apart from the references.
+
+**The stability rule.** A reference is stable on one system when all of these hold:
+
+1. **One system per folder.** References are kept per operating system (`process.platform`). A reference is made and checked on that system only. Agents make and check `darwin`; the stakeholder makes and checks `win32` (D-087).
+2. **Only fixed fonts.** Every case uses the bundled font or a font file the test imports (a copy of the bundled font imported as an asset), except the one CJK case, which uses the system's fallback font on purpose. When the operating system's major version changes, the CJK reference is made again.
+3. **Settled before capture.** The picture is taken only after the Scene's `onSettled` (fonts loaded, pictures decoded, two frames drawn), never after a fixed wait.
+4. **Device scale 1, no time.** The render window draws at device scale 1 (`spec/scene.md`, check (a)), `timeMs` 0, no animation.
+5. **Tolerance.** Two pictures match when they have the same size and at most 0.5 % of their pixels differ, where a pixel differs when any of its four channels differs by more than 8 (of 255). Decoding uses Electron's `nativeImage` in the main process (`electronApp.evaluate`), so no package is added.
+
+**Making and changing references.** With `ADMAN_UPDATE_REFERENCES=1` the spec writes the picture of each case to the system's folder instead of comparing. A new or changed reference is committed with the slice that changes the drawing; the developer and the reviewer each look at it and say what it shows. Otherwise a reference is never changed. A missing reference fails the case on `darwin`; on `win32` it skips with "No Windows reference yet." until the stakeholder makes them.
+
+**Phase 3 cases** (each a named test): a background picture with no crop (cover); a background with a crop; an image layer that is not square (contain); an image layer at 50 % opacity; a layer turned 30°; a hidden layer between two visible ones (nothing drawn); an empty picture layer (nothing drawn); a text layer in the default font at weights 400 and 700, aligned left, centre and right; text with letter spacing −0.1, 0 and 0.3 em [REQ: FR-249]; text in an imported font; text that overflows its box (drawn past it); Japanese text with `lang` `ja` (the CJK case); **a picture with a transparent background over a coloured background, whose hole shows the colour** [REQ: FR-245]; `overlay-only` mode (transparent where only the background was).
 
 ### Refusal tests
 
@@ -180,6 +198,13 @@ Each test below must exist and keep passing. A test marked "Not built" is writte
 | Format round trip keeps every video setting [D-026]. Builds a video variant with a changed duration and `duration_overridden` set, two clips with trims and a placement, and a layer with its own timing, entrance and exit and overrides on them; changes it to image and back. Every value in the table of `spec/data-rules.md`, format change, is equal to before, clip IDs included, and no clip was added. Runs once on a master and once on a linked variant | Not built (Phase 7) |
 | `variant.setFormat` is refused in each direction when the target cell already has a variant, and nothing is written [REQ: R-20]. Also covers an undo refused because the cell was taken after the change | Not built (Phase 7) |
 | The app starts and completes import, manual layout and image export with no secrets saved and the network disabled [REQ: 8.2] | Not built (Phase 8) |
+| A layer command sent as the user leaves `variant.agent_changed_at` null; the same sent as the agent sets it to the command's time [REQ: FR-239] | `tests/integration/commands/layer-update-agent.test.ts`. Not built (Phase 3) |
+| Undo then redo of `layer.delete` brings back the same layer ID, key, counters and order | `tests/integration/commands/layer-delete.test.ts`. Not built (Phase 3) |
+| A `layer.reportOverflow` naming an older `variantRev` writes nothing | `tests/integration/commands/layer-report-overflow.test.ts`. Not built (Phase 3) |
+| A drag sends exactly one `layer.update` on release, and Escape sends none [REQ: 8.2] | `tests/unit/renderer/editor/canvas-overlay.test.tsx`. Not built (Phase 3) |
+| A picture with a transparent background keeps it in the drawn variant [REQ: FR-245] | `tests/e2e/scene-reference.spec.ts`. Not built (Phase 3) |
+| Overflow is set by the render service when text grows past its box by size and by letter spacing, and cleared when it fits [REQ: FR-098, FR-249] | `tests/e2e/scene-overflow.spec.ts`. Not built (Phase 3) |
+| The tab keys step through variant tabs and campaign tabs and wrap round [REQ: FR-242] | `tests/unit/renderer/app/tab-keys.test.tsx`. Not built (Phase 3) |
 
 **Other pinned tests and fixtures:**
 
@@ -268,4 +293,4 @@ The stakeholder set no numeric targets [REQ: 8.1]. These are the testable target
 
 **Accessibility rules** [REQ: 8.6]: every control is a Radix primitive or a native element with a visible label or `aria-label`; focus rings are never removed; text and controls use design tokens that meet 4.5:1 contrast; every action on the canvas (select, move, resize, reorder) also has a keyboard path through the layer list and the properties panel.
 
-**Keyboard shortcuts** [REQ: FR-097] (Cmd on macOS, Ctrl on Windows): undo `Z`, redo `Shift+Z`, delete `Delete` or `Backspace`, duplicate `D`, nudge with arrows (1 px, 10 px with Shift), zoom in `=`, zoom out `-`, zoom to fit `0`. On the timeline: play or pause `Space`. Not built (Phase 3 and Phase 7).
+**Keyboard shortcuts** [REQ: FR-097, FR-242]: the table is in `spec/editor.md`, "Keyboard shortcuts"; the code owner is `src/renderer/ui/shortcuts.ts`. Not built (Phase 3). On the timeline, play or pause with `Space` (Phase 7).

@@ -38,15 +38,16 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `direction.delete` | projectId, directionId (refused if it is the campaign's last) | C | deny | Not built (Phase 5) | A-06 |
 | `variant.fanOut` | projectId, directionId, sizes[], languages[], formats[], fits{} | C | deny | Not built (Phase 5) | FR-075, FR-076 |
 | `variant.add` | projectId, directionId, sizeLabel, language, format | C | allow | Not built (Phase 5) | FR-195 |
-| `variant.update` | projectId, variantId, title?, durationMs? | V | allow | Not built (Phase 3; durationMs Phase 7) | FR-070, FR-120 |
+| `variant.update` | projectId, variantId, title (Phase 3); durationMs (Phase 7) | V | allow | Not built (Phase 3; durationMs Phase 7) | FR-070, FR-120 |
 | `variant.setFormat` | projectId, variantId, format (`spec/data-rules.md`, "Changing a variant's format") | V | allow | Not built (Phase 7) | FR-070, FR-120, R-20, D-025 |
 | `variant.delete` | projectId, variantId (refused for a master) | C | ask | Not built (Phase 5) | FR-073, FR-197 |
-| `layer.create` | projectId, variantId, type (image or text), values | V | allow | Not built (Phase 3) | FR-090, FR-194 |
-| `layer.update` | projectId, layerId, patch of copy, style, geometry, source, timing, animation, name, visible, locked | V | allow | Not built (Phase 3) | FR-092–FR-094, FR-194 |
+| `layer.create` | projectId, variantId, type (image or text), values? | V | allow | Not built (Phase 3) | FR-090, FR-194 |
+| `layer.update` | projectId, layerId, patch of copy, style, geometry, source, timing, animation, name, visible, locked | V | allow | Not built (Phase 3) | FR-092–FR-094, FR-194, FR-249 |
 | `layer.delete` | projectId, layerId (refused for a background) | V | allow | Not built (Phase 3) | FR-092, FR-197 |
-| `layer.reorder` | projectId, variantId, layerIds in order | V | allow | Not built (Phase 3) | FR-092 |
+| `layer.restore` | projectId, layer (whole row), order (system; only the inverse of `layer.delete`) | V | deny (system) | Not built (Phase 3) | FR-095 |
+| `layer.reorder` | projectId, variantId, layerIds (every non-background layer, lowest first) | V | allow | Not built (Phase 3) | FR-092 |
 | `layer.clearOverride` | projectId, layerId, paths[] | V | deny | Not built (Phase 5) | FR-080 |
-| `layer.reportOverflow` | projectId, layerId, overflow | — | deny | Not built (Phase 3) | FR-098 |
+| `layer.reportOverflow` | projectId, layerId, overflow, variantRev | — | deny | Not built (Phase 3) | FR-098 |
 | `clip.add` | projectId, variantId, assetId, startMs | V | deny | Not built (Phase 7) | FR-121 |
 | `clip.update` | projectId, clipId, startMs?, inMs?, outMs?, placement? | V | deny | Not built (Phase 7) | FR-122 |
 | `clip.remove` | projectId, clipId | V | deny | Not built (Phase 7) | FR-122 |
@@ -130,6 +131,7 @@ Built. `src/main/commands/brief/`, `src/main/commands/campaign/`, `src/main/comm
 
 Not built (Phases 3 to 7, per row). Formats in `spec/data-rules.md`.
 
+- **Layer commands and `variant.update`** (Phase 3): inputs, counters, the no-op rule, undo inverses, the asset checks, refusals and replies are in `spec/editor-commands.md`. Every one of them except `layer.reportOverflow` bumps `variant.rev` through `src/main/commands/variant-rev.ts`.
 - `variant.setFormat` works in both directions and an agent may run it without the permission dialog [D-020, D-025]. Defined in `spec/data-rules.md`, "Changing a variant's format".
 - `translation.set` on a language variant writes the text with `translation_status = 'proposed'`. `translation_source` is `user` or `agent` by actor. An agent can never approve [REQ: FR-200]. With `applyToSameLanguage` the same text is written to the matching layer of every variant in the direction with that language and no `copy` override.
 - `translation.approve` is the only way a status becomes `approved`. Editing an approved translation sets it back to `proposed` [REQ: FR-101].

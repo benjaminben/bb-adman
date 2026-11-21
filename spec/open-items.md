@@ -130,6 +130,25 @@ D-084 lets screens be built now, without waiting for a design sign-off. Every co
 - **OI-43. ComfyUI requirement conflicts.** **Assumption:** they are applied in the rewrite, with the ComfyUI requirements winning. The MiniMax H3 time limits and sizes stay as built. *Remaining ComfyUI work. Change later: easy.*
 - **Q-048. Client scope requests S-1 to S-17.** **Assumption:** the analyst's recommendation on each is accepted, which the question itself names as a valid answer. *Phases 3 to 10. Change later: some rework.*
 
+### Scene and editor (Phase 3)
+
+- **A-22. The bundled default font.** Which font does the app ship for text with no font chosen? **Assumption:** Inter, variable (weights 100 to 900), SIL Open Font Licence 1.1, built into the page. It has no CJK letters; those come from a system font picked by the variant's language. *Phase 3. Change later: easy (one file); thumbnails redraw.*
+- **A-23. The keys for FR-242.** **Assumption:** Ctrl+Tab and Ctrl+Shift+Tab step through variant tabs on both systems; Cmd+Shift+] and Cmd+Shift+[ (Ctrl on Windows) step through campaign tabs. Both wrap round and work from inside text fields. *Phase 3. Change later: easy (one table in `src/renderer/ui/shortcuts.ts`).*
+- **A-24. Campaign tabs are built in Phase 3.** FR-242 needs real tabs. **Assumption:** Phase 3 replaces the project tabs with a project switcher, a fixed "Project" tab and one tab per open campaign, with variant tabs inside a campaign, on the base of OI-31. Tabs are not remembered between launches. *Phase 3. Change later: some rework of the shell only.*
+- **A-25. How a picture sits in its box.** **Assumption:** never stretched. With no crop, a background covers its box and an image layer is contained in it (a logo or cut-out is never cut off). A crop always covers its box, and the editor keeps a crop at the box's shape. *Phase 3, used by export in Phase 8. Change later: some rework (stored geometry would draw differently).*
+- **A-26. Several picture layers per variant, smallest design.** **Assumption:** "Add picture layer" makes an empty image layer with key `layer-{ulid}` and no slot; any number per variant; an empty one is a normal saved state that draws nothing; templates are unchanged; fan-out and sync treat an added master layer by its key like any other; only the background gets a fit choice in fan-out; whether an empty picture layer warns at export is Phase 8's call; making cut-outs in the app stays open (S-12). *Phases 3, 5, 8. Change later: easy.*
+- **A-27. Lock is an editor aid.** **Assumption:** a locked layer cannot be picked, moved or deleted on the canvas, but commands, from the user or an agent, may still change it. *Phase 3, Phase 10. Change later: easy.*
+- **A-28. One layer selected at a time.** **Assumption:** no multi-select in Phase 3; FR-092 does not ask for it. *Phase 3. Change later: some rework of the canvas.*
+- **A-29. Weights of an uploaded font.** **Assumption:** one uploaded file is used for every weight with no false bold, so the weight field changes only variable fonts and the default font; the panel says so. *Phase 3. Change later: easy.*
+- **A-30. Thumbnails.** **Assumption:** a variant's thumbnail is redrawn 1 second after each change, longest side 512 px, so the overflow mark stays current after an agent's edit. Asset thumbnails are not made: the window draws asset pictures straight from the asset protocol. *Phase 3. Change later: easy.*
+- **A-31. Measuring overflow.** **Assumption:** a hidden text layer is still measured (it keeps its place); 1 pixel of tolerance; overflowing text is drawn past its box, never cut off. *Phase 3. Change later: easy.*
+- **A-32. Where nothing is drawn.** **Assumption:** the ad is black there, as fan-out's empty area; transparent only in `overlay-only` mode for video export. *Phase 3, Phase 8. Change later: easy.*
+- **A-33. Typing text.** **Assumption:** copy is typed in the properties panel, not on the canvas. *Phase 3. Change later: some rework of the canvas.*
+- **A-34. Reference pictures on Windows.** **Assumption:** agents make and check the macOS references only; on Windows a missing reference skips until the stakeholder makes them (D-087). *Phase 3 onward. Change later: easy.*
+- **A-35. Limits on typed values.** **Assumption:** a layer name is 1 to 100 characters, a variant title 1 to 200, copy at most 5,000. *Phase 3. Change later: easy.*
+- **A-36. Who reports overflow found by the render service.** **Assumption:** the render service sends `layer.reportOverflow` with actor `user`, as `asset.checkChanged` does; the command is denied to agents. *Phase 3. Change later: easy.*
+- **A-37. The app menu.** Phase 3 needs Mod+=, Mod+- and Mod+0 for the canvas, which Electron's default View menu takes for page zoom. **Assumption:** the app sets its own menu with the Edit and Window menus only (no View menu, no reload). *Phase 3. Change later: easy.*
+
 ## 3. Improvised choices already built
 
 The video card and the agent settings block were built with these choices. Each is easy to change.

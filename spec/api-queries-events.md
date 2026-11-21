@@ -13,7 +13,9 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 | `project.get` | `ProjectGet = { meta, subjects, campaigns: CampaignSummary[], missingAssetCount }`. `meta` leaves out `assetsDirRel` and `assetsDirAbs`. | Built |
 | `asset.list` | `AssetList = Array<AssetRow & { missing: boolean }>`, filtered by library, kind, subject; ordered by `id` ascending (ULIDs: oldest first, stable). The window sorts for display. | Built |
 | `campaign.get` | `CampaignGet` (below) | Built |
-| `variant.get` | Variant, layers, clips, computed out-of-date detail, latest check result | Not built (Phase 3) |
+| `variant.get` | `VariantGet = { variant, campaignId, layers, assets }` (`spec/editor-commands.md`). Phase 5 adds the out-of-date detail, Phase 6 the latest check result, Phase 7 the clips. | Not built (Phase 3) |
+| `thumbnail.get` | `ThumbnailGet`: `ready` with the PNG, `pending` or `failed`, for the variant's current `rev` (`spec/editor-commands.md`). User only. | Not built (Phase 3) |
+| `variant.render` | `VariantRender = { png, width, height, rev }`: the variant drawn now. Both actors (Phase 10's `render_variant`). | Not built (Phase 3) |
 | `template.list` | `TemplateList = Template[]` | Built |
 | `template.slots` | `TemplateSlots = SlotState[]`, `SlotState = { slot, state: 'filled' \| 'empty', candidates: string[] }` (asset IDs), for the slots of the campaign's master [REQ: FR-042]. A picture slot is one whose `slot.type` is not `copy`. | Built |
 | `sync.preview` | `SyncPreview[]` for a direction (`spec/data-rules.md`, "Links, follow rules and sync") | Not built (Phase 5) |
@@ -38,6 +40,8 @@ Phase 4 adds two queries not yet named: paid generations per campaign, split int
 | `asset.list` | library? (`reference`, `asset`), kind? (`image`, `video`, `font`, `text`), subjectId? |
 | `campaign.get` | campaignId |
 | `variant.get` | variantId |
+| `thumbnail.get` | variantId |
+| `variant.render` | variantId, maxDimension? (64 to 2048, default 1024) |
 | `template.list` | — |
 | `template.slots` | campaignId |
 | `sync.preview` | directionId |
@@ -104,7 +108,7 @@ The window is sandboxed and cannot open a file or folder picker, so it asks the 
 |-------|-------|---------|----------|-------|
 | `dialog.pickFolder` | title?, defaultPath? | `{ path: string \| null }` | New project location, default project folder, assets folder (`project.setAssetsDir`), package target (`project.package`), export folder | Built |
 | `dialog.pickProjectFile` | defaultPath? | `{ path: string \| null }` | Open project | Built |
-| `dialog.pickFiles` | purpose (`import`, `relink` or `brief`), kind? (for `relink`: the asset's kind), multiple? (default true for `import`, false otherwise), defaultPath? | `{ paths: string[] }` | Asset import, relink, brief file | Built |
+| `dialog.pickFiles` | purpose (`import`, `relink` or `brief`), kind? (for `relink`: the asset's kind; for `import`, not built (Phase 3): offers only that kind's extensions, as the font upload and picture chooser need), multiple? (default true for `import`, false otherwise), defaultPath? | `{ paths: string[] }` | Asset import, relink, brief file | Built |
 | `dialog.pickSaveFile` | purpose (`translation-sheet`), defaultPath? | `{ path: string \| null }` | Translation sheet | Not built (Phase 6) |
 
 - A picker only returns paths. It never reads, creates or changes a file. The window passes the path to a command, and the command checks the path as if the user had typed it.
@@ -127,7 +131,7 @@ Built in part. `src/main/queries/campaign.ts`, `src/main/queries/campaign-reads.
 | `translationUnapproved` | Any layer has `translationStatus` `missing` or `proposed` | Built |
 | `checkWarning` | The latest `variant_check` has a `brand-legal` warning and `checked_rev = rev` | False until Phase 6 |
 | `checkStale` | `checked_rev < rev`. A variant with no check row has `checkStale: false`. | False until Phase 6 |
-| `missingFile` | Any layer's `source.assetId` is in `AssetService.missingAssetIds(project)`; a null source does not count | Built for layer sources. Fonts join in Phase 3, background clips in Phase 7. |
+| `missingFile` | Any layer's `source.assetId` or `style.fontAssetId` is in `AssetService.missingAssetIds(project)`; a null source or font does not count | Built for layer sources. Fonts: Not built (Phase 3, slice P3-3). Background clips in Phase 7. |
 | `jobRunning` | A `job` row with the variant's ID is `queued` or `running` | Built |
 | `resultUnseen` | A `job` row with the variant's ID is `succeeded` with `seen_at` null | Built |
 
@@ -190,6 +194,7 @@ Built: `project.changed`, `app.stateChanged`, `job.updated`, `asset.changedOnDis
 | `project.changed` | `ProjectChangedPayload` (below) | Built |
 | `job.updated` | The job row, as a `JobRow` wire row. Carries no separate project ID. | Built |
 | `asset.changedOnDisk` | `{ projectId, assetIds }`: the linked assets whose content changed outside the app. Sent after `asset.checkChanged` succeeds with a non-empty list. The signal to draw those pictures again; thumbnails are Phase 3. | Built |
+| `thumbnail.changed` | `{ projectId, variantId }`: a thumbnail file was written or deleted; a window showing it sends `thumbnail.get` again (`spec/editor-commands.md`) | Not built (Phase 3) |
 | `app.stateChanged` | Empty (`Record<string, never>`). Something `app.getState` returns has changed: a project was opened or closed, settings changed, a key was saved or deleted, or agent access changed. Each window reads `app.getState` again. | Built |
 | `agent.permissionRequested` | requestId, tool, target summary, expiresAt | Not built (Phase 10) |
 | `agent.activity` | Tool name and target, for a "the agent is working" indicator | Not built (Phase 10) |
@@ -199,7 +204,7 @@ Built: `project.changed`, `app.stateChanged`, `job.updated`, `asset.changedOnDis
 - The event carries no data on purpose. `app.getState` stays the one source of that state, and no secret detail can leak through an event.
 - A command handler says it changes app state with one flag (`changesAppState`), and the bus emits the event after the command succeeds. Handlers do not emit it themselves. Built handlers with the flag: `project.create`, `project.open`, `project.close`, `settings.update`, `secret.set`, `secret.delete`, `mcp.setEnabled`, `mcp.regenerateToken`, `comfy.setAddress`.
 - An MCP port taken at start sets `ConnectInfo.problem`; it sends no new event.
-- Every event goes to every window. A window ignores a `project.changed` for a project it does not show.
+- Every event goes to the app window only, never to the render window (Not built, Phase 3, slice P3-6; until then it goes to every window, and there is only one). `src/main/index.ts` also hands each event to the render service (`spec/scene.md`). A window ignores a `project.changed` for a project it does not show.
 - Events go to windows only. No event is passed on to an agent. MCP replies are built from queries.
 - `job` rows are the one exception to "rows reach the window through `project.changed`": the job runner writes them and emits `job.updated` after every write to a job row (`spec/jobs.md`). An event for a project the window does not know yet may be dropped; the window reads `job.list` after an open.
 

@@ -50,6 +50,9 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/security.md` | Scope, threat model, standing rules by subject, accepted risks, named security tests |
 | `spec/testing.md` | Logging, verification classes, test commands, coverage, named tests, non-functional targets |
 | `spec/test-harnesses.md` | The end-to-end harnesses, real-service runs, the rule on paid calls, what the harness reaches |
+| `spec/scene.md` | The Scene component, fonts, overflow measurement, font names at import, the render window, the render service, thumbnails |
+| `spec/editor.md` | Campaign and variant tabs, the editor (canvas, layer list, properties), keyboard shortcuts, undo per variant, several picture layers |
+| `spec/editor-commands.md` | The layer and variant commands, `variant.get`, `thumbnail.get`, `variant.render`, `thumbnail.changed` in full |
 | `spec/screens.md` | What each built screen offers, wording rules, choices made without a design sign-off |
 | `spec/open-items.md` | Open questions, the assumptions made meanwhile, what waits on the stakeholder |
 
