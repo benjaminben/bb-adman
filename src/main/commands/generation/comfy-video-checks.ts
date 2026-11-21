@@ -7,6 +7,7 @@ import type { CoreDeps } from '../../core-deps'
 import type { ProjectContext } from '../types'
 import { offeredWorkflow } from '../../providers/comfyui/workflows/offered'
 import { reasonMessage } from '../../../shared/providers/messages'
+import { videoJobRequest } from '../../../shared/schemas/jobs/video-generation'
 import { AppError } from '../../../shared/schemas/result'
 
 export const COMFY_VIDEO_NOT_OFFERED_MESSAGE = 'ComfyUI cannot make this kind of video yet.'
@@ -20,8 +21,23 @@ export const videoNotOffered = () =>
     reason: 'comfy_job_not_offered',
   })
 
+type CheckDeps = Pick<CoreDeps, 'devTools'> & { settings: Pick<CoreDeps['settings'], 'get'> }
+
+// 14 1.53: job.retry of a ComfyUI video job, from the old row's request, before enqueue.
+export function checkComfyVideoRetry(
+  deps: CheckDeps,
+  ctx: Pick<ProjectContext, 'actor'>,
+  request: unknown,
+): void {
+  const parsed = videoJobRequest.safeParse(request)
+  if (!parsed.success) throw videoNotOffered()
+  const { start, referenceAssetIds, durationMs } = parsed.data
+  if (start !== 'none' || referenceAssetIds.length > 0) throw videoNotOffered()
+  checkComfyVideo(deps, ctx, durationMs)
+}
+
 export function checkComfyVideo(
-  deps: Pick<CoreDeps, 'devTools'> & { settings: Pick<CoreDeps['settings'], 'get'> },
+  deps: CheckDeps,
   ctx: Pick<ProjectContext, 'actor'>,
   durationMs: number,
 ): void {
