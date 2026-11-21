@@ -6,6 +6,7 @@ import { addPaidCall, readJob, type JobChange } from './job-store'
 import { endChange, runningResult, type JobEnd } from './job-end'
 import type { JobRunContext } from './types'
 import { jobErrorContext } from './job-error-log'
+import { LocalFailure, appErrorEnd } from './local-failure'
 import { agentRunAllowed } from '@/main/commands/agent-run-gate'
 import { ProviderCancelled, ProviderFailure } from '@/main/providers/types'
 import { AppError } from '@/shared/schemas/result'
@@ -13,6 +14,11 @@ import type { JobRow } from '@/shared/schemas/rows/job'
 
 function failed(state: RunnerState, live: LiveJob, e: unknown): JobEnd {
   if (e instanceof ProviderCancelled) return { status: 'cancelled' }
+  // P4-5 (OI-68): a local cause ends with its reason, and the reason name as the detail.
+  if (e instanceof LocalFailure) {
+    const { reason } = e
+    return { status: 'failed', errorKind: 'other', errorReason: reason, errorDetail: reason }
+  }
   if (e instanceof ProviderFailure) {
     const { kind, reason, detail, missing } = e.error
     return {
@@ -23,26 +29,28 @@ function failed(state: RunnerState, live: LiveJob, e: unknown): JobEnd {
       ...(missing ? { missing } : {}),
     }
   }
-  if (!(e instanceof AppError)) {
-    const deps = state.opts.deps()
-    const names = live.provider?.secrets ?? []
-    const secrets = names.flatMap((name) => deps.secrets.get(name) ?? [])
-    const noMessage = live.provider === undefined || live.provider.serverText
-    deps.log.write({
-      level: 'error',
-      event: 'job',
-      name: live.kind,
-      actor: 'system',
-      projectId: live.projectId,
-      jobId: live.id,
-      ok: false,
-      errorKind: 'other',
-      message: 'A job stopped on an unforeseen error.',
-      context: { error: jobErrorContext(e, secrets, noMessage) },
-    })
+  if (e instanceof AppError) {
+    // P4-5 (OI-68): NEEDS_KEY is key_missing; another AppError leaves only `app_error`.
+    const { reason, detail } = appErrorEnd(e)
+    return { status: 'failed', errorKind: 'other', errorReason: reason, errorDetail: detail }
   }
-  const detail = e instanceof AppError ? e.code : 'internal'
-  return { status: 'failed', errorKind: 'other', errorReason: null, errorDetail: detail }
+  const deps = state.opts.deps()
+  const names = live.provider?.secrets ?? []
+  const secrets = names.flatMap((name) => deps.secrets.get(name) ?? [])
+  const noMessage = live.provider === undefined || live.provider.serverText
+  deps.log.write({
+    level: 'error',
+    event: 'job',
+    name: live.kind,
+    actor: 'system',
+    projectId: live.projectId,
+    jobId: live.id,
+    ok: false,
+    errorKind: 'other',
+    message: 'A job stopped on an unforeseen error.',
+    context: { error: jobErrorContext(e, secrets, noMessage) },
+  })
+  return { status: 'failed', errorKind: 'other', errorReason: null, errorDetail: 'internal' }
 }
 
 function logEnd(state: RunnerState, live: LiveJob, change: JobChange): void {
