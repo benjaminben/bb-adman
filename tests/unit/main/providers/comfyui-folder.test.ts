@@ -23,7 +23,7 @@ const deps = {
 }
 
 describe('the comfyui provider folder [SPEC 6, 14 CU-0]', () => {
-  it('exports an empty adapters object until CU-4 fills it', () => {
+  it('exports an adapters object that holds the image adapter', () => {
     expect(Object.keys(adapters)).toEqual(['image'])
   })
 
