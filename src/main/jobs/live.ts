@@ -31,6 +31,10 @@ export type LiveJob = {
   providerId: string
   provider: ProviderInfo | undefined
   controller: AbortController
+  // Who started the run, and whether its first call to the provider has gone out. An agent's
+  // job is checked against its tick until then (spec/agent-runs.md "Unticking").
+  startedBy: 'user' | 'agent'
+  sent: boolean
   // Set once the row has its final status; later writes are dropped.
   ended: boolean
   cancelAsked: boolean
