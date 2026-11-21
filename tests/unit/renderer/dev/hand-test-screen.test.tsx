@@ -5,6 +5,7 @@ import { HandTestScreen } from '../../../../src/renderer/dev/hand-test-screen'
 import { KeyDialog } from '../../../../src/renderer/dialogs/key/key-dialog'
 import { renderApp, axeViolations } from '../render'
 import { makeFakeApi, baseState } from '../fake-api'
+import { HAND_TEST_DROPBOX } from '../../../../src/shared/config/dev-tools'
 import type { ProviderInfo } from '../../../../src/shared/schemas/queries/app'
 
 const S3: ProviderInfo = {
@@ -63,9 +64,9 @@ describe('hand-test screen: storage [SPEC 14 slice I part 1]', () => {
     const fake = makeFakeApi(devState())
     fake.onCommand('dev.storage', () => ({ ok: true, data: { removed: 2 } }))
     await renderApp(<HandTestScreen />, fake)
-    await pick('dropbox')
+    await pick('s3')
     await userEvent.click(screen.getByRole('button', { name: 'Remove all' }))
-    expect(storageCalls(fake)).toEqual([{ storage: 'dropbox', action: 'remove' }])
+    expect(storageCalls(fake)).toEqual([{ storage: 's3', action: 'remove' }])
     expect(await screen.findByText('Removed 2 files.')).toBeInTheDocument()
   })
 
@@ -117,5 +118,15 @@ describe('hand-test screen: storage [SPEC 14 slice I part 1]', () => {
   it('has no accessibility violations', async () => {
     await renderApp(<HandTestScreen />, makeFakeApi(devState()))
     expect(await axeViolations()).toEqual([])
+  })
+})
+
+describe('hand-test screen: no Dropbox until slice G [SPEC 14 M5, M8]', () => {
+  it('shows no Dropbox sign-in button and no Dropbox storage choice', async () => {
+    expect(HAND_TEST_DROPBOX).toBe(false)
+    await renderApp(<HandTestScreen />, makeFakeApi(devState()))
+    expect(screen.queryByRole('button', { name: 'Sign in to Dropbox' })).toBeNull()
+    const choices = screen.getAllByRole('option').map((o) => (o as HTMLOptionElement).value)
+    expect(choices).toEqual(['local', 's3'])
   })
 })

@@ -8,3 +8,7 @@ export const HAND_TEST_LOCAL_ROOT = 'hand-test-local'
 
 // [1.21] F-03: the largest file the hand-test `write` takes, from its stat size, before reading.
 export const HAND_TEST_MAX_UPLOAD_BYTES = 100 * 1024 * 1024
+
+// SPEC 14 M5, [1.22] M8: Dropbox stays off the hand-test screen (no storage choice, no sign-in
+// button) until slice G sets this to true.
+export const HAND_TEST_DROPBOX = false
