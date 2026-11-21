@@ -23,21 +23,45 @@ export type LayoutBox = {
 // PNG or JPEG, as the provider sent it; the app turns a JPEG into a PNG (SPEC 6.2 [1.18]).
 export type ImageResult = { bytes: Uint8Array; mime: 'image/png' | 'image/jpeg'; model: string }
 
+// [1.24] SPEC 6.11.1: how far along a run is, and the options every run takes.
+export type RunProgress = {
+  stage: 'waiting' | 'working'
+  queuePosition?: number
+  fraction?: number
+}
+export type RunOptions = { signal?: AbortSignal; onProgress?: (p: RunProgress) => void }
+export type CancelOutcome = 'stopped' | 'finished' | 'unknown'
+
+// Thrown by generate or extend: the signal fired and the provider stopped or never started
+// the work.
+export class ProviderCancelled extends Error {
+  constructor(message = 'The run was cancelled.') {
+    super(message)
+    this.name = 'ProviderCancelled'
+  }
+}
+
 export interface ImageProvider {
-  generate(input: {
-    prompt: string
-    references: ImageFile[]
-    width: number
-    height: number
-    count: number
-  }): Promise<ImageResult[]>
-  extend(input: {
-    image: ImageFile
-    placement: Geometry
-    width: number
-    height: number
-    prompt: string
-  }): Promise<ImageResult>
+  generate(
+    input: {
+      prompt: string
+      references: ImageFile[]
+      width: number
+      height: number
+      count: number
+    },
+    opts?: RunOptions,
+  ): Promise<ImageResult[]>
+  extend(
+    input: {
+      image: ImageFile
+      placement: Geometry
+      width: number
+      height: number
+      prompt: string
+    },
+    opts?: RunOptions,
+  ): Promise<ImageResult>
 }
 
 export interface LayoutProvider {
@@ -68,20 +92,27 @@ export interface TextProvider {
   }): Promise<Array<{ key: string; text: string }>>
 }
 
+// [1.24] SPEC 6.11.1. `image` is the first frame or null. fetchResult replaces videoUrl: the
+// caller never fetches an address a provider returned.
+export type VideoResult = { bytes: Uint8Array; mime: 'video/mp4'; model: string }
+
 export interface VideoProvider {
   start(input: {
-    image: ImageFile
+    image: ImageFile | null
+    references: ImageFile[]
     prompt: string
     durationMs: number
     width: number
     height: number
   }): Promise<{ remoteJobId: string }>
   check(remoteJobId: string): Promise<{
-    status: 'running' | 'succeeded' | 'failed'
+    status: 'waiting' | 'running' | 'succeeded' | 'failed' | 'cancelled'
+    queuePosition?: number
     progress?: number
-    videoUrl?: string
     error?: ProviderError
   }>
+  fetchResult(remoteJobId: string): Promise<VideoResult>
+  cancel(remoteJobId: string): Promise<CancelOutcome>
 }
 
 // Paths are relative, use '/', never start with '/' and never hold '..' (SPEC 6).
