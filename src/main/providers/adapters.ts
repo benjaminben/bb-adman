@@ -1,5 +1,6 @@
 // SPEC 6: joins the provider folders by provider ID. Frozen contract (Phase 2 step 0).
-// A slice that uses a provider calls adapterFor and imports no adapter folder.
+// A slice that uses a provider calls adapterFor and imports no adapter folder. Local storage
+// is not here: it is reached with `localStorageAt(root)` (SPEC 6.5 [1.13], H1).
 import type { CoreDeps } from '../core-deps'
 import { AppError } from '../../shared/schemas/result'
 import { adapters as azureBlob } from './azure-blob'
@@ -7,7 +8,6 @@ import { adapters as dropbox } from './dropbox'
 import { adapters as falSeedance } from './fal-seedance'
 import { adapters as fake } from './fake'
 import { adapters as gemini } from './gemini'
-import { adapters as localStorage } from './local-storage'
 import { adapters as s3 } from './s3'
 import type { AdapterContext, AdapterJob, ProviderAdapters } from './types'
 
@@ -17,13 +17,8 @@ const FOLDERS: Record<string, ProviderAdapters> = {
   'fal-seedance': falSeedance,
   fake,
   gemini,
-  'local-storage': localStorage,
   s3,
 }
-
-// The local folder is used by export and by tests; no user picks it, so it is not in the
-// provider list (SPEC 6, 6.5).
-const UNLISTED: Partial<Record<string, AdapterJob[]>> = { 'local-storage': ['storage'] }
 
 type AdapterDeps = {
   providers: CoreDeps['providers']
@@ -52,8 +47,7 @@ function context(deps: AdapterDeps, providerId: string): AdapterContext {
 
 function doesJob(deps: AdapterDeps, providerId: string, job: AdapterJob): boolean {
   const info = deps.providers.find((p) => p.id === providerId)
-  if (info) return info.jobs.includes(job)
-  return UNLISTED[providerId]?.includes(job) ?? false
+  return info?.jobs.includes(job) ?? false
 }
 
 // The same as adapterFor over a given table of folders, so tests can supply adapters.
