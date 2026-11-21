@@ -8,11 +8,18 @@ import { AppError } from '@/shared/schemas/result'
 import { WORKFLOWS } from '@/main/providers/comfyui/workflows'
 import { LEAVES_ORDER } from '@/main/providers/comfyui/workflows/common'
 import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
+import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'
 
 export const COMFY_INFO_DENIED =
   'Agents cannot read the ComfyUI settings in this version. Ask the user to do it in the app.'
 
-function infoOf(w: WorkflowSpec): WorkflowInfo {
+// S2-4: true for the workflow offeredWorkflow gives the user for its job and start pair.
+function offeredToUser(w: WorkflowSpec, devTools: boolean): boolean {
+  const choice = { job: w.job, ...(w.videoStart && { videoStart: w.videoStart }) }
+  return offeredWorkflow(choice, { devTools, actor: 'user' }) === w
+}
+
+function infoOf(w: WorkflowSpec, devTools: boolean): WorkflowInfo {
   return {
     id: w.id,
     label: w.label,
@@ -25,16 +32,17 @@ function infoOf(w: WorkflowSpec): WorkflowInfo {
     ...(w.video && { video: w.video }),
     licence: w.licence,
     leavesOnServer: w.leavesOnServer,
+    offered: offeredToUser(w, devTools),
   }
 }
 
-export function comfyGetInfo(deps: Pick<CoreDeps, 'settings'>): QueryFn {
+export function comfyGetInfo(deps: Pick<CoreDeps, 'settings' | 'devTools'>): QueryFn {
   return (_input, opts): ComfyInfo => {
     if (opts.actor !== 'user') throw new AppError('AGENT_DENIED', COMFY_INFO_DENIED)
     const used = new Set(WORKFLOWS.flatMap((w) => w.leavesOnServer))
     return {
       address: deps.settings.get().comfyui.baseUrl,
-      workflows: WORKFLOWS.map(infoOf),
+      workflows: WORKFLOWS.map((w) => infoOf(w, deps.devTools)),
       leavesOnServer: LEAVES_ORDER.filter((s) => used.has(s)),
     }
   }

@@ -45,6 +45,7 @@ describe('comfy.getInfo [SPEC 4.3, 6.10.10; FR-253, FR-263, FR-285]', () => {
         'size',
         'licence',
         'leavesOnServer',
+        'offered',
       ]
       if (spec.videoStart) keys.push('videoStart')
       if (spec.video) keys.push('video')
