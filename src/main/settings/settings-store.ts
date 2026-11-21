@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import {
   agentRunLimit,
+  licenceConfirmed,
   settingsSchema,
   type Settings,
   type SettingsPatch,
@@ -51,6 +52,15 @@ function readAgentRunLimit(merged: unknown): unknown {
   return { ...merged, agentRunLimit: AGENT_MAX_ACTIVE_RUNS }
 }
 
+// S2-4: a list in the file that fails its schema loads as [], so a bad list never resets
+// the whole file.
+function readLicenceConfirmed(merged: unknown): unknown {
+  if (!isObject(merged) || licenceConfirmed.safeParse(merged.licenceConfirmed).success) {
+    return merged
+  }
+  return { ...merged, licenceConfirmed: [] }
+}
+
 export function createSettingsStore(opts: { file: string; defaults: Settings }) {
   let current = load()
 
@@ -58,7 +68,7 @@ export function createSettingsStore(opts: { file: string; defaults: Settings }) 
     try {
       const raw: unknown = JSON.parse(fs.readFileSync(opts.file, 'utf8'))
       const parsed = settingsSchema.safeParse(
-        readAgentRunLimit(readComfyAddress(merge(opts.defaults, raw))),
+        readLicenceConfirmed(readAgentRunLimit(readComfyAddress(merge(opts.defaults, raw)))),
       )
       return parsed.success ? parsed.data : opts.defaults
     } catch {

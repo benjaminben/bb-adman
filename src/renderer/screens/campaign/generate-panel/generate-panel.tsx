@@ -13,6 +13,9 @@ import type { CampaignGet, TemplateSlots } from '@/shared/schemas/queries/campai
 import type { GenerationRunImagesInput } from '@/shared/schemas/commands/generation'
 import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'
 import { ReferencePicker } from '@/renderer/screens/campaign/reference-picker'
+import { ProviderSelect } from '@/renderer/screens/campaign/provider-select'
+import { offeredFor } from '@/renderer/screens/campaign/offered-workflow'
+import { useComfyInfo } from '@/renderer/screens/campaign/use-comfy-info'
 import layout from '@/renderer/ui/layout.module.css'
 
 function usePictureSlots(projectId: string, campaignId: string): string[] | null {
@@ -73,6 +76,9 @@ export function GeneratePanel(props: {
   const [sending, setSending] = useState(false)
   const provider = providers.find((p) => p.id === providerId)
   const chosenSlot = slot ?? slots?.[0]
+  const info = useComfyInfo()
+  const job = props.ticks.length === 0 ? 'image' : 'image_refs'
+  const trial = providerId === 'comfyui' && offeredFor(info, job)?.status === 'trial'
 
   async function send(input: GenerationRunImagesInput) {
     setPending(null)
@@ -107,16 +113,13 @@ export function GeneratePanel(props: {
       {providers.length === 0 ? (
         <p className={layout.muted}>No picture provider is available.</p>
       ) : (
-        <label className={layout.field}>
-          Provider
-          <select value={providerId} onChange={(e) => setProviderId(e.target.value)}>
-            {providers.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <ProviderSelect
+          label="Provider"
+          providers={providers}
+          value={providerId}
+          onChange={setProviderId}
+          trial={trial}
+        />
       )}
       {slots !== null && slots.length === 0 && (
         <p className={layout.muted}>This campaign has no picture slot.</p>

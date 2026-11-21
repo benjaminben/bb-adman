@@ -109,7 +109,7 @@ An agent connected through the MCP server can start, follow and cancel its own p
 
 ## Paid runs and spending
 
-- With the Gemini tick on, an agent can start up to `agentRunLimit` Gemini runs at a time, each up to 8 pictures, with no click. The limit bounds the rate, not the total. There is no spending ceiling; the only other record is `started_by`. OI-91 is open: whether to add a spending guard.
+- With the Gemini tick on, an agent can start up to `agentRunLimit` Gemini runs at a time, each up to 8 pictures, with no click. The limit bounds the rate, not the total. The app has no spending ceiling and none is planned: the cap is set on the provider's own account [D-093]. The only other record is `started_by`.
 - A paid run charged either way is left to finish (`cancel_would_still_charge`, `spec/cancel.md`, 'fal.ai Seedance').
 - **Linked assets (U-2).** A linked asset's path comes from the project file, so a picture start uploads whatever PNG or JPEG it points to. Accepted: a project from someone else, opened by the user, with an agent ticked, could send a picture from the user's computer to a provider the user ticked. The agent gets no bytes back. Any tool that returns bytes (OI-92) must be judged with this.
 
@@ -148,5 +148,4 @@ The UI pass decides whether the job list should say more about a queued agent ru
 
 - OI-62: whether a request waiting in a provider's queue counts as sent.
 - OI-90: whether the per-provider tick stays.
-- OI-91: a spending guard on paid agent runs.
 - OI-92: whether a tool may return picture bytes to an agent (judged with 'Linked assets').

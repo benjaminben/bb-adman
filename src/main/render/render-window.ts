@@ -20,6 +20,7 @@ export function renderWindowOptions(
     frame: false,
     useContentSize: true,
     paintWhenInitiallyHidden: true,
+    transparent: true,
     webPreferences: {
       ...appWindowOptions(preloadPath).webPreferences,
       offscreen: true,

@@ -80,7 +80,7 @@ describe('RunRow [SPEC 14 1.41 TP-2]', () => {
   })
 
   it('shows no Cancel for a provider that cannot cancel', async () => {
-    const { list } = await runs([jobRow('J1', { status: 'running' })])
+    const { list } = await runs([jobRow('J1', { status: 'running', kind: 'video_generation' })])
     expect(list.queryByRole('button', { name: 'Cancel' })).toBeNull()
   })
 
@@ -115,6 +115,22 @@ describe('RunRow [SPEC 14 1.41 TP-2]', () => {
     fake.emit('job.updated', jobRow('J2', { createdAt: '2026-11-21T02:00:00.000Z' }))
     expect(await list.findByText('Waiting')).toBeInTheDocument()
     expect(fake.queries.filter((q) => q.name === 'job.list')).toHaveLength(1)
+  })
+
+  // spec/cancel.md "job.cancel": Cancel shows exactly when job.cancel would accept it.
+  it.each([
+    ['queued', 'image_generation', 'gemini', true],
+    ['queued', 'video_generation', 'gemini', true],
+    ['queued', 'image_generation', 'fake', true],
+    ['running', 'image_generation', 'gemini', true],
+    ['running', 'video_generation', 'gemini', false],
+    ['running', 'image_generation', 'fake', true],
+    ['running', 'video_generation', 'fake', true],
+    ['succeeded', 'image_generation', 'fake', false],
+  ] as const)('a %s %s run on %s shows Cancel: %s', async (status, kind, provider, shown) => {
+    const row = jobRow('J1', { status, kind, provider })
+    const { list } = await runs([row], campaignApi({ jobs: [row], state: withLocal() }))
+    expect(list.queryByRole('button', { name: 'Cancel' }) !== null).toBe(shown)
   })
 
   // spec/agent-runs.md "Settings block", item 5: the mark under the kind.

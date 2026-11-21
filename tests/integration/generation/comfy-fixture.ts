@@ -20,7 +20,12 @@ type FixtureOptions = {
   origin?: string
   // [1.60] CU-6b: a stand-in for the picture fitter of CU-6b-F.
   fitPicture?: CoreOptions['fitPicture']
+  // S2-4: the model labels saved in settings.licenceConfirmed. By default every model that
+  // needs a commercial licence, so tests of other rules are not refused by that check.
+  licenceConfirmed?: string[]
 }
+
+const EVERY_LICENCE = ['MiniMax H3', 'FLUX 3 klein']
 
 export async function makeComfyFixture(opts: FixtureOptions) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-comfy-'))
@@ -47,6 +52,8 @@ export async function makeComfyFixture(opts: FixtureOptions) {
   const projectId = data<{ projectId: string }>(created).projectId
   const project = core.projects.requireOpen(projectId)
   seed(project.db)
+  const licenceConfirmed = opts.licenceConfirmed ?? EVERY_LICENCE
+  data(await core.bus.execute('settings.update', { licenceConfirmed }, { actor: 'user' }))
   if (opts.origin) {
     data(await core.bus.execute('comfy.setAddress', { address: opts.origin }, { actor: 'user' }))
   }

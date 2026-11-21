@@ -92,3 +92,71 @@ export function windows(app: ElectronApplication) {
     })),
   )
 }
+
+export const query = (page: Page, name: string, input: unknown) => call(page, 'query', name, input)
+
+// variant.render's PNG, brought from the app window to the test.
+export async function renderPng(page: Page, input: Record<string, unknown>): Promise<Buffer> {
+  const bytes = await page.evaluate(async (i) => {
+    const api = (window as unknown as { api: Api }).api
+    const reply = (await api.query('variant.render', i)) as {
+      ok: boolean
+      data: { png: Uint8Array }
+      error?: unknown
+    }
+    if (!reply.ok) throw new Error(JSON.stringify(reply.error))
+    return Array.from(reply.data.png)
+  }, input)
+  return Buffer.from(bytes)
+}
+
+// A PNG made from four bytes a pixel (blue, green, red, alpha), as nativeImage takes them.
+export async function makePng(
+  app: ElectronApplication,
+  picture: { width: number; height: number; bgra: number[] },
+): Promise<Buffer> {
+  const base64 = await app.evaluate(({ nativeImage }, { width, height, bgra }) => {
+    const image = nativeImage.createFromBitmap(Buffer.from(bgra), { width, height })
+    return image.toPNG().toString('base64')
+  }, picture)
+  return Buffer.from(base64, 'base64')
+}
+
+// One draw sent straight to the render window, for a mode variant.render does not offer
+// (overlay-only). The same request, channel and capture as draw.ts; no size change after.
+export async function drawInRenderWindow(
+  app: ElectronApplication,
+  request: { requestId: string; input: unknown; width: number; height: number },
+): Promise<Buffer> {
+  const base64 = await app.evaluate(async ({ BrowserWindow, ipcMain }, req) => {
+    const win = BrowserWindow.getAllWindows().find((w) =>
+      w.webContents.getURL().endsWith('/render.html'),
+    )
+    if (!win) throw new Error('There is no render window.')
+    win.setContentSize(req.width, req.height)
+    await new Promise<void>((resolve, reject) => {
+      const stop = (error?: Error) => {
+        clearTimeout(timer)
+        ipcMain.removeListener('adman:render-done', heard)
+        win.removeListener('closed', closed)
+        if (error) reject(error)
+        else resolve()
+      }
+      const heard = (_event: unknown, message: { requestId?: string } | null) => {
+        if (message?.requestId === req.requestId) stop()
+      }
+      // A window that closed, or a draw with no answer, fails here and not at the test's limit.
+      const closed = () => stop(new Error('The render window closed before the draw was done.'))
+      const timer = setTimeout(
+        () => stop(new Error('The draw gave no answer in 20 seconds.')),
+        20000,
+      )
+      ipcMain.on('adman:render-done', heard)
+      win.once('closed', closed)
+      win.webContents.send('adman:render-request', req)
+    })
+    const image = await win.webContents.capturePage()
+    return image.toPNG().toString('base64')
+  }, request)
+  return Buffer.from(base64, 'base64')
+}

@@ -45,6 +45,7 @@ const H3 = {
   videoStart: { firstFrame: false, references: false },
   status: 'trial',
   video: { fps: 24, maxMs: 15_000, frameStep: 17, frameOffset: 5 },
+  offered: true,
 } as WorkflowInfo
 
 const H3_FIRST_FRAME = {

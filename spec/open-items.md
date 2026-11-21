@@ -8,12 +8,6 @@ This file lists every question still open for the stakeholder, the improvised ch
 
 These need the stakeholder. A wrong guess would be costly to undo, would spend real money, touches his own accounts, or is a legal matter.
 
-### OI-91. A spending ceiling for paid runs started by an agent
-
-- **Question:** With a paid provider ticked under "Agent runs" in Settings, an agent spends money with no click from the user. The run limit (default 4 at a time, up to 8 pictures each) bounds how fast money is spent, not how much. Should there be a ceiling?
-- **Meanwhile:** every agent tick is off by default, and a paid provider's tick carries the line "Paid. Each run an agent starts is charged to your account, with no click from you." No ceiling is built. Agents testing features spend only under D-085: one run per new feature, at the smallest size and shortest length the service offers, no retries, no repeat runs of a proven feature.
-- **Stakeholder:** choose (a) no ceiling, as built; (b) a count of paid agent calls per app session, set in Settings, after which agents are refused for that provider (one small piece of work); or (c) a confirm dialog for every paid agent run. Decide before ticking a paid provider for agents.
-
 ### OI-18. Dropbox app registration (done, D-090, D-091)
 
 - **Done:** the app is registered as an app-folder app. The app key is the one on record [D-007]. A short-lived access token for a live test is in `.env.local`.

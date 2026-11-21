@@ -2,13 +2,15 @@
 // made in prepare before any job row, and the same checks for job.retry of a ComfyUI video
 // row, against the old row's request and picture IDs. The start pair; for ComfyUI the
 // address, the workflow offered for that pair and its length; how many references that
-// workflow takes; then each picture, which must be a PNG or JPEG the app can read.
+// workflow takes; each picture, which must be a PNG or JPEG the app can read; last the
+// licence check (S2-4), so the user confirms only a run that can start.
 import type { CoreDeps } from '@/main/core-deps'
 import type { PrepareContext } from '@/main/commands/types'
 import { readWireRow } from '@/main/db/rows'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { checkComfyVideo, videoNotOffered } from './comfy-video-checks'
 import { tooManyReferences } from './comfy-checks'
+import { checkLicence } from './licence-check'
 import { startPair, type StartFields } from './start-pair'
 import { videoJobRequest } from '@/shared/schemas/jobs/video-generation'
 import type { AssetRow } from '@/shared/schemas/rows/asset'
@@ -18,7 +20,7 @@ type Deps = Pick<CoreDeps, 'devTools' | 'assets'> & {
   settings: Pick<CoreDeps['settings'], 'get'>
 }
 type Ctx = Pick<PrepareContext, 'actor' | 'project'>
-type Ask = StartFields & { durationMs: number }
+type Ask = StartFields & { durationMs: number; licenceConfirmed?: boolean }
 
 const SENDABLE = ['image/png', 'image/jpeg']
 
@@ -55,10 +57,16 @@ export async function checkVideoStart(
   const max = spec.slots.references?.length ?? 0
   if (videoStart.references && ask.referenceAssetIds.length > max) throw tooManyReferences(max)
   for (const id of ask.referenceAssetIds) await usablePicture(deps, ctx.project, id)
+  checkLicence(deps, ctx, spec, ask.licenceConfirmed)
 }
 
 // N-5: the stored request keeps no useReferences; IDs with start 'none' are references.
-export async function checkComfyVideoRetry(deps: Deps, ctx: Ctx, request: unknown) {
+export async function checkComfyVideoRetry(
+  deps: Deps,
+  ctx: Ctx,
+  request: unknown,
+  licenceConfirmed?: boolean,
+) {
   const parsed = videoJobRequest.safeParse(request)
   if (!parsed.success) throw videoNotOffered()
   const { start, referenceAssetIds, durationMs } = parsed.data
@@ -68,5 +76,6 @@ export async function checkComfyVideoRetry(deps: Deps, ctx: Ctx, request: unknow
     useReferences,
     referenceAssetIds,
     durationMs,
+    licenceConfirmed,
   })
 }

@@ -28,7 +28,8 @@ describe('GeneratePanel [SPEC 14 1.41 TP-2]', () => {
 
   it('offers the picture slots, the first one chosen, and no copy slot', async () => {
     await renderWith(view)
-    const select = (await panel()).getByLabelText('Slot')
+    // The slots arrive in their own query, after the panel shows: wait for the field.
+    const select = await (await panel()).findByLabelText('Slot')
     const names = within(select)
       .getAllByRole('option')
       .map((o) => o.textContent)

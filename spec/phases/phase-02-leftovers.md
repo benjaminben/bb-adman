@@ -14,8 +14,8 @@ One short run in the main folder, class B, unless an item says otherwise. State 
 
 - **F-8. A limit on reference pictures per run.** Not built.
   - One constant `MAX_REFERENCES_PER_RUN` in `src/shared/config/defaults.ts`, used by the `generation.runImages` schema, the job request schema and the picker. A duplicate ID in the list is refused. One test each.
-  - The number is ruled from what Gemini accepted in the stakeholder's test. **Needs that number before it is briefed.**
-- **F-9. `toPng` on a reference before a ComfyUI upload.** Waits for a ruling.
+  - The number is 8 (A-56), until a real Gemini test shows a different limit. It also closes the security review's note that `referenceAssetIds` had no upper bound for an agent.
+- **F-9. `toPng` on a reference before a ComfyUI upload.** Ruled yes (A-55): built with slice WP, in `readPicture`, for every provider.
   - Whether a reference picture passes through `toPng` before upload, so the bytes match the `.png` name and nothing the user's file carries beside the picture is sent. It needs `toPng` reachable from `AdapterContext`, which it is not today.
   - Also covers a JPEG named `.png` that `LoadImage` fails on. The JPEG pass of the ComfyUI harness waits for it.
 - **F-18. Stand-in fixtures from the real server.** Tests only. Partly done.
@@ -99,7 +99,7 @@ Each is built only after its own ruling.
 - Full sizes for H3 and MOSS: one line per workflow, by a ruling, after a small run worked.
 - A generated result used as a reference; removing a reference from the project; a reference library screen.
 - Asset questions with no design yet: OI-44 (a managed file to the system bin on `asset.remove`), OI-47 (remember outside assets folders the user chose; ask again for a foreign project), OI-49 (a first-bytes check in the asset protocol; what the change check stores).
-- Stakeholder answers still open, no code until answered: the stricter project names (`LPT0` and similar), Q-032 sub-question 5 (a style note per direction), Q-039, Q-040, OI-64, OI-90, OI-91.
+- Stakeholder answers still open, no code until answered: the stricter project names (`LPT0` and similar), Q-032 sub-question 5 (a style note per direction), Q-039, Q-040, OI-64, OI-90.
 
 ## Not planned for this build
 

@@ -144,3 +144,14 @@ export const CHECK_RESULT = /Complete|Missing \d+ items?/
 export const MOSS_LABEL = 'MOSS-Image: picture from a prompt'
 export const H3_TEXT_LABEL = 'MiniMax H3: video from a prompt'
 export const FLUX_LABEL = 'FLUX 3 klein: picture from a prompt and one reference picture'
+
+// S2-6 (D-088): a run of a model that needs a commercial licence first shows the licence
+// dialog; Confirm, with the box left as it is, sends the run.
+export const licenceDialog = (page: Page): Locator =>
+  page.getByRole('dialog', { name: /requires a commercial license/ })
+
+export async function confirmLicence(page: Page): Promise<void> {
+  const dialog = licenceDialog(page)
+  await dialog.getByRole('button', { name: 'Confirm' }).click()
+  await expect(dialog).toBeHidden()
+}

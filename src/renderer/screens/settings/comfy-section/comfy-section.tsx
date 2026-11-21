@@ -7,6 +7,7 @@ import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
 import type { ComfyCheck } from '@/shared/schemas/commands/comfy-check'
 import type { AdmanApi } from '@/shared/schemas/api'
 import { ComfyCheckResult } from '@/renderer/screens/settings/comfy-check-result'
+import { LicenceList } from '@/renderer/screens/settings/licence-list'
 import { COMFY_PRIVACY } from '@/renderer/ui/comfy-privacy'
 import layout from '@/renderer/ui/layout.module.css'
 
@@ -106,6 +107,7 @@ export function ComfySection() {
       {!checking && result !== null && address !== null && (
         <ComfyCheckResult check={result} address={address} workflows={info?.workflows ?? []} />
       )}
+      <LicenceList />
       {(info?.leavesOnServer.length ?? 0) > 0 && (
         <>
           <h3>What Adman leaves on the server</h3>
