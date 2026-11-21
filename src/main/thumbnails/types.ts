@@ -16,6 +16,13 @@ export type DrawScene = (
 export type RenderService = {
   thumbnail(project: ProjectHandle, variantId: string): Promise<ThumbnailGet>
   render(project: ProjectHandle, variantId: string, maxDimension: number): Promise<VariantRender>
+  // The variant with its text layers left out, for the layout job (spec/ai-jobs.md). It
+  // reports no overflow and keeps no file.
+  renderPictures(
+    project: ProjectHandle,
+    variantId: string,
+    maxDimension: number,
+  ): Promise<VariantRender>
   // Sees every event the main process sends.
   onEvent(event: BusEvent): void
   // Called by project.close after the file closes.

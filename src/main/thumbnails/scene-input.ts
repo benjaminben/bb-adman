@@ -27,15 +27,18 @@ export function variantLayers(project: ProjectHandle, variantId: string): LayerR
 }
 
 // Null when the variant is not in the project. An asset a layer names that has no row, or is
-// not a picture or a font, is left out: the Scene draws nothing for it.
+// not a picture or a font, is left out: the Scene draws nothing for it. `withoutText` leaves
+// out the text layers and the fonts only they name (the layout job's picture).
 export async function sceneInput(
   deps: Pick<CoreDeps, 'assets'>,
   project: ProjectHandle,
   variantId: string,
+  opts: { withoutText?: boolean } = {},
 ): Promise<VariantScene | null> {
   const variant = readWireRow(project.db, 'variant', { id: variantId }) as VariantRow | null
   if (!variant) return null
-  const layers = variantLayers(project, variantId)
+  const all = variantLayers(project, variantId)
+  const layers = opts.withoutText ? all.filter((l) => l.type !== 'text') : all
   const named = new Set(layers.flatMap(layerAssetIds))
   const missing = new Set(named.size > 0 ? await deps.assets.missingAssetIds(project) : [])
   const assets: SceneInput['assets'] = {}
