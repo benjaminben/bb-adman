@@ -4,6 +4,7 @@
 // the overview and never inside a text field. (D-099: deletes are not on this list.)
 import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useEffect } from 'react'
 import { describe, expect, it } from 'vitest'
 import { NavScope, useNavStore } from '@/renderer/app/nav-context'
 import { CampaignUndo } from '@/renderer/screens/campaign/campaign-undo'
@@ -15,7 +16,10 @@ const SCOPE = { projectId: P, scope: 'campaign:C1' }
 
 let nav: NavStore | null = null
 function Grab() {
-  nav = useNavStore()
+  const store = useNavStore()
+  useEffect(() => {
+    nav = store
+  }, [store])
   return null
 }
 
