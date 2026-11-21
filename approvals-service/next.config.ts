@@ -9,6 +9,9 @@ const config: NextConfig = {
   skipTrailingSlashRedirect: true,
   productionBrowserSourceMaps: false,
   serverExternalPackages: ['@libsql/client', 'libsql'],
+  // The service folder is the build's root; the repository's own lockfile above it is not.
+  outputFileTracingRoot: import.meta.dirname,
+  turbopack: { root: import.meta.dirname },
 }
 
 export default config

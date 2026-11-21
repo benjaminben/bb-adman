@@ -5,7 +5,7 @@ import { sameSecret } from '../src/crypto/compare'
 const PASSWORD = 'correct horse battery'
 
 describe('password hash [approvals-service.md "Random values and passwords"]', () => {
-  it('uses PBKDF2 at 100,000 iterations, the most Workers allows', async () => {
+  it('uses PBKDF2 at 100,000 iterations', async () => {
     expect(PASSWORD_ITERATIONS).toBe(100_000)
     const stored = await hashPassword(PASSWORD)
     expect(stored.iterations).toBe(100_000)

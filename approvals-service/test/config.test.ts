@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import nextConfig from '../next.config'
@@ -100,6 +100,9 @@ describe('next.config.ts', () => {
       skipTrailingSlashRedirect: true,
       productionBrowserSourceMaps: false,
       serverExternalPackages: ['@libsql/client', 'libsql'],
+      // AP-14 review ruling: the build's root is the service folder, not a guess from lockfiles.
+      outputFileTracingRoot: resolve(ROOT),
+      turbopack: { root: resolve(ROOT) },
     })
   })
 })

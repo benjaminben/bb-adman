@@ -1,5 +1,5 @@
 import 'server-only'
-// The link table (spec/approvals-service.md "Database (D1)"). Every statement binds its values.
+// The link table (spec/approvals-service.md "Database"). Every statement binds its values.
 // Write functions return statements, so a caller can run one or put several in one batch.
 import type { StoredPassword } from '../crypto/password'
 import type { Db, Statement } from './client'

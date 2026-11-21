@@ -3,7 +3,7 @@ import 'server-only'
 // random salt per link, 32 bytes out. The iteration count is stored per link.
 import { sameBytes } from './compare'
 
-// The most PBKDF2 iterations the Workers runtime allows.
+// The PBKDF2 iteration count for new passwords (spec/approvals-service.md "Password hash").
 export const PASSWORD_ITERATIONS = 100_000
 
 const SALT_BYTES = 16
