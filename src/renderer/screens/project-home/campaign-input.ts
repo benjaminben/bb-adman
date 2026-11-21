@@ -14,10 +14,7 @@ import { SubjectId, type SubjectCreateInput } from '../../../shared/schemas/comm
 import { parseSize } from '../../../shared/brief/size'
 import { READY_MADE_SIZES } from '../../../shared/config/defaults'
 import { starterTemplate } from '../../../shared/templates/starter'
-
-// The brief.parse reply. Slice C declares it as BriefParsed in src/main/commands/brief/
-// parse.ts, which the window may not import; this reads the same two fields.
-export type BriefReply = { draft: BriefDraft; primaryLanguage: string | null }
+import type { BriefParsed } from '../../../shared/schemas/commands/brief'
 
 export type CampaignPlan =
   | { ok: true; subjects: SubjectCreateInput[]; campaign: CampaignCreateInput }
@@ -31,7 +28,7 @@ function subjectProblems(draft: BriefDraft): string[] {
   })
 }
 
-function languagesOf(reply: BriefReply): string[] {
+function languagesOf(reply: BriefParsed): string[] {
   const own = reply.draft.languages ?? []
   if (own.length > 0) return own
   return reply.primaryLanguage ? [reply.primaryLanguage] : []
@@ -67,7 +64,7 @@ function problemsOf(issues: { path: PropertyKey[]; message: string }[]): string[
 
 export function campaignPlan(
   projectId: string,
-  reply: BriefReply,
+  reply: BriefParsed,
   existingSubjectIds: string[],
 ): CampaignPlan {
   const { draft } = reply
