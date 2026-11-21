@@ -166,11 +166,12 @@ describe('No MCP tool reply holds a secret, the token, the ComfyUI address or a 
         expect(value.includes(secret), `${name} found in ${where}`).toBe(false)
       }
     }
-    for (const [name, p] of [
+    const paths: Array<[string, string]> = [
       ['the asset file name', 'made-up-leak-picture.png'],
       ['the temporary folder', f.root],
       ['the projects folder', f.projectsDir],
-    ]) {
+    ]
+    for (const [name, p] of paths) {
       expect(text.includes(p), `${name} found in a tool reply`).toBe(false)
     }
   })
