@@ -13,7 +13,7 @@ import type { RunTiming } from './run'
 
 export type PollClient = Pick<ComfyClient, 'history' | 'jobState' | 'queueIds'>
 
-type Seen =
+export type Seen =
   | { at: 'history'; entry: HistoryEntry }
   | { at: 'waiting'; queuePosition?: number }
   | { at: 'working' }
@@ -22,7 +22,8 @@ type Seen =
 const WAITING = new Set(['pending', 'queued'])
 const WORKING = new Set(['in_progress', 'running', 'executing'])
 
-async function look(client: PollClient, promptId: string): Promise<Seen> {
+// One look at where a run is: the history first, then the job route, then the queue.
+export async function look(client: PollClient, promptId: string): Promise<Seen> {
   const entry = await client.history(promptId)
   if (entry) return { at: 'history', entry }
   const state = await client.jobState(promptId)
@@ -37,7 +38,7 @@ async function look(client: PollClient, promptId: string): Promise<Seen> {
   return place === -1 ? { at: 'nowhere' } : { at: 'waiting', queuePosition: place + 1 }
 }
 
-const isBreak = (e: unknown) => e instanceof ProviderFailure && e.error.kind === 'offline'
+export const isBreak = (e: unknown) => e instanceof ProviderFailure && e.error.kind === 'offline'
 
 // Runs `attempt` until it gives an answer. A break in contact is tried again every poll
 // interval until LOST_CONTACT_MS have passed since the first break in a row.

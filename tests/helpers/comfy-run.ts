@@ -7,6 +7,7 @@ import type { RunTiming } from '../../src/main/providers/comfyui/run'
 import type { AdapterContext } from '../../src/main/providers/types'
 import type { Settings } from '../../src/shared/schemas/settings'
 import { greyPng } from '../../src/main/providers/fake/png'
+import { mp4File } from '../../src/main/providers/fake/mp4'
 
 export const RESULT_PNG = greyPng(4, 4)
 
@@ -76,6 +77,22 @@ export function fakeTiming(onSleep: (step: number) => void | Promise<void> = () 
     },
   }
   return { timing, at: () => clock }
+}
+
+// CU-6a: the clip the stand-in gives, and a finished video run's history entry. SaveVideo
+// lists its file under `images`, in the output folder, under the app's adman/ prefix.
+export const RESULT_MP4 = mp4File({ width: 384, height: 672, durationMs: 2_333, sound: true })
+
+export function videoHistoryEntry(outputNode: string, promptId: string = PROMPT_ID) {
+  const item = { filename: `${promptId}_00001_.mp4`, subfolder: 'adman', type: 'output' }
+  return {
+    status: { status_str: 'success', completed: true, messages: [] },
+    outputs: { [outputNode]: { images: [item], animated: [true] } },
+  }
+}
+
+export function serveVideo(stand: StandIn, bytes: Uint8Array = RESULT_MP4): void {
+  stand.reply('GET /view', { body: bytes, headers: { 'content-type': 'video/mp4' } })
 }
 
 export const requestLines = (stand: StandIn) => stand.seen.map((r) => `${r.method} ${r.path}`)

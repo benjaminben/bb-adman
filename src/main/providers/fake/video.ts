@@ -2,6 +2,7 @@
 // succeeds once its wait is over, or fails with the kind it was told to.
 import { FAKE_FAILURE_DETAIL, fakeBehaviour, type FakeBehaviour } from './behaviour'
 import type { CancelOutcome, VideoProvider } from '../types'
+import { mp4File } from './mp4'
 
 export const FAKE_VIDEO_MODEL = 'fake-video'
 
@@ -10,15 +11,8 @@ type Run = { readyAt: number; behaviour: FakeBehaviour; cancelled: boolean }
 const runs = new Map<string, Run>()
 let nextId = 1
 
-// The smallest file with an MP4 type box: 'isom', minor version 0, one brand.
-function tinyMp4(): Uint8Array {
-  const bytes = new Uint8Array(20)
-  const view = new DataView(bytes.buffer)
-  view.setUint32(0, 20)
-  bytes.set(new TextEncoder().encode('ftypisom'), 4)
-  bytes.set(new TextEncoder().encode('isom'), 16)
-  return bytes
-}
+// [CU-6a] A small MP4 that checkMp4 accepts: one 64 by 64 video track, one second, no sound.
+const tinyMp4 = () => mp4File({ width: 64, height: 64, durationMs: 1_000, sound: false })
 
 function find(remoteJobId: string): Run {
   const run = runs.get(remoteJobId)

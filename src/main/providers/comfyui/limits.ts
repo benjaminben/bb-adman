@@ -26,5 +26,7 @@ export const LOST_CONTACT_MS = 5 * 60_000
 // The longest a run may wait in the server's queue, and work on one picture.
 export const QUEUE_WAIT_MS = 12 * 60 * 60_000
 export const PICTURE_WORK_MS = 30 * 60_000
+// [1.43] K-3, added by CU-6a: the longest a video run may work (provisional, 1.41 "Time limits").
+export const VIDEO_WORK_MS = 120 * 60_000
 // SPEC 6.10.14: /interrupt is sent with an ID only from this server version.
 export const MIN_TARGETED_INTERRUPT = '0.30.0'
