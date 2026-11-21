@@ -7,7 +7,8 @@ import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { RunDialog } from '@/renderer/dialogs/run-dialog'
 import { attachedStoreFor, dialogJobs } from '@/renderer/stores/attached-store'
 import { useCloseWarning } from '@/renderer/ui/close-warning'
-import { DialogFrame } from '@/renderer/ui/dialog-frame'
+import { BusySpinner, DialogFrame } from '@/renderer/ui/dialog-frame'
+import layout from '@/renderer/ui/layout.module.css'
 import { RunFailure } from '@/renderer/ui/run-failure'
 import { MAX_COPY_OPTIONS } from '@/shared/config/copy-options'
 import { copyJobRequest } from '@/shared/schemas/jobs/copy-options'
@@ -56,11 +57,33 @@ export function CopyOptionsDialog(props: CopyOptionsDialogProps) {
   const close = () => ask((s) => dialogJobs(s, dialog), props.onClose)
   const provider = failed && providers.find((p) => p.id === failed.provider)
 
+  const foot = (
+    <>
+      <button type="button" onClick={close}>
+        Close
+      </button>
+      <button
+        type="button"
+        className={layout.primary}
+        disabled={current.state === 'running'}
+        onClick={() => setAsking('new')}
+      >
+        Make new options…
+      </button>
+    </>
+  )
+
   return (
-    <DialogFrame open={props.open} onClose={close} title={`Copy options for ${layer.name}`}>
+    <DialogFrame
+      open={props.open}
+      onClose={close}
+      title={`Copy options for ${layer.name}`}
+      footer={foot}
+    >
       <div className={styles.body}>
         {current.state === 'running' && (
           <div className={styles.running}>
+            <BusySpinner />
             <p role="status">Writing options…</p>
             <button
               type="button"
@@ -92,19 +115,6 @@ export function CopyOptionsDialog(props: CopyOptionsDialogProps) {
           />
         )}
         {current.state === 'none' && <p className={styles.muted}>No options yet.</p>}
-        <div className={styles.actions}>
-          <button type="button" onClick={close}>
-            Close
-          </button>
-          <button
-            type="button"
-            className={styles.primary}
-            disabled={current.state === 'running'}
-            onClick={() => setAsking('new')}
-          >
-            Make new options…
-          </button>
-        </div>
       </div>
       <RunDialog
         open={asking === 'new'}

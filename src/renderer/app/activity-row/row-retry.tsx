@@ -9,6 +9,7 @@ import { useApp } from '@/renderer/app/app-context'
 import { RunDialog, type RunCount, type RunJob } from '@/renderer/dialogs/run-dialog'
 import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'
 import { requestCount } from '@/renderer/stores/job-store'
+import layout from '@/renderer/ui/layout.module.css'
 import { JOB_KIND_CLASSES } from '@/shared/config/job-kinds'
 import { picturesLeft } from '@/shared/generation/pictures-left'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
@@ -66,6 +67,7 @@ export function RowRetry(props: {
       {!(asking && dialogJob === undefined) && (
         <button
           type="button"
+          className={layout.small}
           disabled={sending}
           onClick={() => (paid ? setAsking(true) : void retryNow())}
         >

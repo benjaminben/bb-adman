@@ -1,17 +1,27 @@
+/* app-style */
+/* One activity row as a card (spec/app-style.md, "Activity panel"); a finished, unseen row has
+   a spot colour edge and ring. */
 .row {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3) 0;
-  border-bottom: var(--border-width) solid var(--color-border);
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+.fresh {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 var(--border-width) var(--color-accent);
 }
 .row p {
   margin: 0;
 }
 .what {
-  font-weight: 600;
+  font-weight: var(--weight-bold);
 }
 .muted {
+  font-size: var(--font-size-small);
   color: var(--color-text-muted);
 }
 .line {
@@ -21,15 +31,14 @@
   align-items: center;
 }
 .new {
-  padding: 0 var(--space-1);
-  border-radius: var(--radius);
-  background: var(--color-accent);
-  color: var(--color-accent-text);
-  font-size: var(--font-size-small);
+  padding: 0 var(--space-2);
 }
 .buttons {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
+}
+.buttons:empty {
+  display: none;
 }

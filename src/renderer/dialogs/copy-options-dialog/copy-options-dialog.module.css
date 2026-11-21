@@ -1,7 +1,7 @@
-/* The copy options dialog takes the run dialog's width token, without a change to the frame. */
-:global([role='dialog']):has(> .body) {
-  width: min(var(--run-dialog-width), 90vw);
-}
+/* app-style */
+/* The copy options dialog (spec/app-style.md, "AI panels and the run dialog"): each option a
+   selectable card with its copy in the reading face; the busy line centred with the spinner.
+   Close and "Make new options…" are in the frame's foot band. */
 .body {
   display: flex;
   flex-direction: column;
@@ -23,10 +23,16 @@
   gap: var(--space-3);
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-2) var(--space-3);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-1);
+}
+.option:hover,
+.option:focus-within {
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-2);
 }
 .text {
   min-width: 0;
@@ -38,9 +44,13 @@
 }
 .running {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--space-2);
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  padding: var(--space-2) 0;
+}
+.running button {
+  margin-left: var(--space-2);
 }
 .failed {
   display: flex;
@@ -50,17 +60,4 @@
 }
 .muted {
   color: var(--color-text-muted);
-}
-.refusal {
-  color: var(--color-danger-text);
-}
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-}
-.primary {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-accent-text);
 }

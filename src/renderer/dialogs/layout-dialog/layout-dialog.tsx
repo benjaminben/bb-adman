@@ -6,7 +6,9 @@
 // It sends through window.api, not the app store, so a refusal is shown here only.
 import { useId, useMemo, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
-import { DialogFrame } from '@/renderer/ui/dialog-frame'
+import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import { DEFAULT_STARTER_LAYOUT_ID, STARTER_LAYOUTS } from '@/shared/config/starter-layouts'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
@@ -81,23 +83,24 @@ function LayoutBody(props: BodyProps) {
       <p className={styles.muted}>{LOCKED_LINE}</p>
       {updates.length === 0 && <p>{NO_CHANGE_LINE}</p>}
       {refusal !== null && (
-        <p role="alert" className={styles.alert}>
+        <p role="alert" className={`${layout.notice} ${layout.danger}`}>
+          <Icon name="alert" />
           {refusal}
         </p>
       )}
-      <div className={styles.actions}>
+      <DialogFoot>
         <button type="button" disabled={sending} onClick={props.onClose}>
           Cancel
         </button>
         <button
           type="button"
-          className={styles.primary}
+          className={layout.primary}
           disabled={sending || updates.length === 0}
           onClick={() => void apply()}
         >
           Apply
         </button>
-      </div>
+      </DialogFoot>
     </div>
   )
 }
@@ -109,6 +112,7 @@ export function LayoutDialog(props: LayoutDialogProps) {
       open={props.open}
       onClose={props.onClose}
       title="Choose a layout"
+      size="wide"
       closable={!sending}
     >
       {props.open && <LayoutBody {...props} sending={sending} setSending={setSending} />}

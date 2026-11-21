@@ -3,6 +3,8 @@
 import { useId, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import { copyJobResult } from '@/shared/schemas/jobs/copy-options'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import styles from './copy-options-dialog.module.css'
 
@@ -35,7 +37,7 @@ export function OptionList(props: Props) {
       <ul className={styles.options}>
         {options.map((option, i) => (
           <li key={`${i}:${option}`} className={styles.option}>
-            <p id={`${baseId}-${i}`} className={styles.text}>
+            <p id={`${baseId}-${i}`} className={`${layout.reading} ${styles.text}`}>
               {option}
             </p>
             <button
@@ -50,7 +52,8 @@ export function OptionList(props: Props) {
         ))}
       </ul>
       {refusal !== null && (
-        <p role="alert" className={styles.refusal}>
+        <p role="alert" className={`${layout.notice} ${layout.danger}`}>
+          <Icon name="alert" />
           {refusal}
         </p>
       )}
