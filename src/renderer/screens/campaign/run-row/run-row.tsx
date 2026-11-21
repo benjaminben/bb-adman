@@ -13,7 +13,7 @@ import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'
 import { RunFailure } from '@/renderer/ui/run-failure'
 import { RunResult } from '@/renderer/screens/campaign/run-result'
 import { VideoResult } from '@/renderer/screens/campaign/video-result'
-import { cancelShown } from './cancel-shown'
+import { cancelShown } from '@/renderer/ui/cancel-shown'
 import { useNow, videoRunningText } from './video-status'
 import layout from '@/renderer/ui/layout.module.css'
 

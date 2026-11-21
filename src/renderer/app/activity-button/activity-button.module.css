@@ -1,0 +1,19 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.button[aria-expanded='true'] {
+  font-weight: 600;
+}
+.running {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: normal;
+}
+.dot {
+  width: var(--mark-dot);
+  height: var(--mark-dot);
+  border-radius: 50%;
+  background: var(--color-accent);
+}

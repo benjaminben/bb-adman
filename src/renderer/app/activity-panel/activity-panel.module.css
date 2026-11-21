@@ -1,0 +1,40 @@
+/* Along the right edge under the top row, over the content: the shell's frame is a grid of
+   two rows (top row, content), and the panel shares the content's cell at its right end. */
+.panel {
+  grid-row: 2;
+  grid-column: 1;
+  justify-self: end;
+  /* Positioned and after the content, so it is drawn over it; dialogs are drawn over both. */
+  position: relative;
+  min-height: 0;
+  width: var(--activity-width);
+  max-width: 100%;
+  overflow: auto;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg);
+  border-left: var(--border-width) solid var(--color-border);
+}
+.panel:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: calc(var(--focus-ring-width) * -1);
+}
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.title {
+  margin: 0;
+  font-size: var(--font-size-heading);
+}
+.heading {
+  margin: var(--space-4) 0 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text-muted);
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}

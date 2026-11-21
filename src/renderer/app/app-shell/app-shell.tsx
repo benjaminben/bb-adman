@@ -6,6 +6,8 @@
 import * as Tabs from '@radix-ui/react-tabs'
 import { useEffect, type ReactNode } from 'react'
 import { useApp, EMPTY } from '@/renderer/app/app-context'
+import { ActivityButton } from '@/renderer/app/activity-button'
+import { ActivityPanel, ShownActivityScope } from '@/renderer/app/activity-panel'
 import { CampaignTabs, useCampaignTab, useTabKeys } from '@/renderer/app/campaign-tabs'
 import { ErrorBanner } from '@/renderer/app/error-banner'
 import { NavScope, useNav } from '@/renderer/app/nav-context'
@@ -29,6 +31,7 @@ function TopRow(props: { tabs?: ReactNode }) {
     <header className={styles.bar}>
       <ProjectSwitcher />
       <div className={styles.tabs}>{props.tabs}</div>
+      <ActivityButton />
       <button
         type="button"
         className={styles.settings}
@@ -66,6 +69,7 @@ function ProjectFrame(props: { project: OpenProjectSummary }) {
           <ProjectHome project={props.project} />
         </Tabs.Content>
       </main>
+      <ActivityPanel />
     </Tabs.Root>
   )
 }
@@ -92,6 +96,7 @@ function Shell() {
           {view.kind !== 'settings' && view.kind !== 'handTest' && <StartScreen />}
         </div>
       </main>
+      <ActivityPanel />
     </div>
   )
 }
@@ -100,7 +105,9 @@ export function AppShell() {
   return (
     <div className={styles.shell}>
       <NavScope>
-        <Shell />
+        <ShownActivityScope>
+          <Shell />
+        </ShownActivityScope>
       </NavScope>
       <KeyDialog />
       <AddressDialog />

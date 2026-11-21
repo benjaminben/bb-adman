@@ -4,8 +4,8 @@
   height: 100%;
 }
 .frame {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   flex: 1;
   min-height: 0;
 }
@@ -31,7 +31,10 @@
 .settings[aria-pressed='true'] {
   font-weight: 600;
 }
+/* The content's cell, shared with the activity panel at its right end. */
 .main {
+  grid-row: 2;
+  grid-column: 1;
   flex: 1;
   min-height: 0;
   overflow: auto;
