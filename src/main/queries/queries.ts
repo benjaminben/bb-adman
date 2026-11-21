@@ -6,6 +6,7 @@ import { errorContext } from '../log/error-context'
 import { appQueries } from './app'
 import { assetQueries } from './asset'
 import { campaignQueries } from './campaign'
+import { comfyQueries } from './comfy'
 import { historyQueries } from './history'
 import { jobQueries } from './job'
 import { projectQueries } from './project'
@@ -21,6 +22,7 @@ export function createQueries(deps: CoreDeps) {
       ...appQueries(deps),
       ...assetQueries(deps),
       ...campaignQueries(deps),
+      ...comfyQueries(deps),
       ...historyQueries(deps),
       ...jobQueries(deps),
       ...projectQueries(deps),
