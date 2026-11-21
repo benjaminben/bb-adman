@@ -33,3 +33,34 @@ export function runRefusal(
   const addedReporter = env.PW_TEST_REPORTER !== undefined
   return listOnly && allOff && !debugLogs && !addedReporter ? null : RUN_REFUSAL
 }
+
+// Re-review R-3: UI mode (--ui, --ui-host, --ui-port), the hidden test-server and
+// run-test-mcp-server commands, and the editor extension all run tests through Playwright's
+// test server, which reloads the config for each run (it can turn on a live trace and add its
+// own reporter) after the global setup has passed. The global setup, which runs in the process
+// Playwright was started in, therefore accepts only the npm script's own command line.
+export const REAL_COMMAND: readonly string[] = ['test', '--config', 'playwright.real.config.ts']
+
+export function commandRefusal(argv: readonly string[]): string | null {
+  const args = argv.slice(2)
+  const same = args.length === REAL_COMMAND.length && args.every((arg, i) => arg === REAL_COMMAND[i])
+  return same ? null : RUN_REFUSAL
+}
+
+// Set by the global setup only once both checks above pass; each worker inherits it. A worker
+// without it ran under a setup that refused or never ran.
+export const RUN_CHECKED = 'ADMAN_E2E_RUN_CHECKED'
+
+type WorkerView = {
+  config: { reporter: RunConfig['reporter'] }
+  project: { use: Use }
+}
+
+// The same refusal, run again inside the worker on what the worker was actually given.
+export function workerRefusal(
+  info: WorkerView,
+  env: Record<string, string | undefined>,
+): string | null {
+  if (env[RUN_CHECKED] !== '1') return RUN_REFUSAL
+  return runRefusal({ reporter: info.config.reporter, projects: [{ use: info.project.use }] }, env)
+}

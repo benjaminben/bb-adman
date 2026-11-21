@@ -7,7 +7,7 @@
 import fs from 'node:fs'
 import type { FullConfig } from '@playwright/test'
 import { comfyEnvFrom } from '../comfy/env-file'
-import { runRefusal } from './run-checks'
+import { commandRefusal, runRefusal, RUN_CHECKED } from './run-checks'
 
 function readEnvLocal(): string {
   try {
@@ -21,9 +21,13 @@ function readEnvLocal(): string {
 }
 
 export default function setUp(config: FullConfig): void {
-  // 1.59 L-11: before anything is read, refuse a run that could record a typed value.
-  const refusal = runRefusal(config, process.env)
+  // 1.59 L-11: before anything is read, refuse a run that could record a typed value. The
+  // re-review's R-3: a test-server run is refused by its command line, and the workers check
+  // again, which they do only after this setup has passed and set RUN_CHECKED.
+  delete process.env[RUN_CHECKED]
+  const refusal = runRefusal(config, process.env) ?? commandRefusal(process.argv)
   if (refusal !== null) throw new Error(refusal)
+  process.env[RUN_CHECKED] = '1'
   Object.assign(process.env, comfyEnvFrom(readEnvLocal(), process.env))
   // A failed test would otherwise get an aria snapshot of the window, which on Settings or
   // the campaign screen holds the address or a photo's file name, written to test-results.

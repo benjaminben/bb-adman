@@ -11,6 +11,7 @@ import fs from 'node:fs'
 import { makeSandbox, launchReal, type Sandbox } from '../e2e/launch'
 import * as screens from '../e2e/screens'
 import { guardedStep } from './guard'
+import { workerRefusal } from './run-checks'
 import { realSwitches, videoSwitch } from './switches'
 import * as real from './real-steps'
 
@@ -29,6 +30,10 @@ let app: ElectronApplication
 let page: Page
 
 test.beforeEach(async () => {
+  // Re-review R-3: before the app starts and anything secret is read or typed, refuse again on
+  // what this worker was given. The refusal is a fixed sentence.
+  const refusal = workerRefusal(test.info(), process.env)
+  if (refusal !== null) throw new Error(refusal)
   box = makeSandbox()
   app = await launchReal(box)
   page = await app.firstWindow()
