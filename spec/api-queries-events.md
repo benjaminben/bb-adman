@@ -15,7 +15,7 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 | `campaign.get` | `CampaignGet` (below) | Built |
 | `variant.get` | `VariantGet = { variant, campaignId, layers, assets }` (`spec/editor-commands.md`). Phase 5 adds the out-of-date detail, Phase 6 the latest check result, Phase 7 the clips. | Built |
 | `thumbnail.get` | `ThumbnailGet`: `ready` with the PNG, `pending` or `failed`, for the variant's current `rev` (`spec/editor-commands.md`). User only. | Built |
-| `variant.render` | `VariantRender = { png, width, height, rev }`: the variant drawn now. Both actors (Phase 10's `render_variant`). | Built |
+| `variant.render` | `VariantRender = { png, width, height, rev }`: the variant drawn now. User only until Phase 10 writes a rule for linked private pictures; an agent gets `AGENT_DENIED` (`spec/editor-commands.md`). | Built |
 | `template.list` | `TemplateList = Template[]` | Built |
 | `template.slots` | `TemplateSlots = SlotState[]`, `SlotState = { slot, state: 'filled' \| 'empty', candidates: string[] }` (asset IDs), for the slots of the campaign's master [REQ: FR-042]. A picture slot is one whose `slot.type` is not `copy`. | Built |
 | `sync.preview` | `SyncPreview[]` for a direction (`spec/data-rules.md`, "Links, follow rules and sync") | Not built (Phase 5) |

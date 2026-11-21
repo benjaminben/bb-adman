@@ -22,11 +22,6 @@ One short run in the main folder, class B, unless an item says otherwise. State 
   - After real ComfyUI runs, correct CU-4's hand-made stand-in fixtures to the shapes the real server showed. The Flux run showed the picture history shape holds. Still to check: the job-state status words and the video history entry, after a real video run.
   - If a real shape breaks a client schema, stop and report: that is a client change, ruled on its own.
 
-### FL-1 — The flaky `generate-panel.test.tsx` case
-
-- **Class:** G, tests only. Not built. Which case is flaky is not recorded; the developer finds it.
-- Find the cause: run the file alone many times, then the full suite under load. Look for shared state, timers or a missing wait. Fix the test only. If the cause is in app code, stop and report.
-
 ### EXIF rotation fix (only if needed)
 
 - Whoever runs the real first-frame video case (`ADMAN_E2E_VIDEO_FRAME=1`) reports whether the clip starts upright. The stakeholder checks again in his first app run from a phone photograph.
@@ -68,11 +63,6 @@ One short run in the main folder, class B, unless an item says otherwise. State 
 
 - **F-19. An interrupted run marked `error`.** `endedEntry` in `src/main/providers/comfyui/run.ts` checks `status_str === 'error'` before it looks for an `execution_interrupted` message. If the real server marks an interrupted run `error`, a run stopped on the server ends `run_failed` instead of `server_stopped`. Fix: look for `execution_interrupted` first, with one test whose entry has `status_str: 'error'` and that message, for a picture run and a video run. Built with CU-5b, whose real cancel run shows what the server writes.
 - **CU-5b, the rest of `test:comfy`.** Add the cancel case, the four-runs-at-once case, and anything else the real-server harness list (`spec/testing.md`) names that is not yet in `tests/comfy/`. Change the `hideAddress` printing in `tests/comfy/print.ts` to `cleanServerText`. The ruling on B-1 (single check items marked "could not check" instead of failing the whole check) is made with CU-5b, from what the real server showed. A names-only view of raw server answers (key names, never values) needs a change to the ComfyUI client and is **security class**.
-- **CU-9, live progress.** **Security class.** Class E. Depends on CU-4 (built). Owns `src/main/providers/comfyui/live.ts`. It reports "how far along" from ComfyUI's live connection [REQ: FR-269]. It listens only. A run never depends on it: on failure the run carries on by polling.
-  - Ruled (A-54): built with the `ws` package, 8.23.0, pinned, as a direct dependency, because Electron's built-in `WebSocket` failed three conditions (no message size limit, follows an environment proxy, no forced certificate check). The settings and the tests to write are in `spec/comfyui.md`, "Live progress".
-  - The host is resolved and checked against the address rules (`spec/comfyui.md`) just before the connection opens. The gap between check and connect is accepted.
-  - `onProgress` is called only when the stage, the queue position or the whole percent changed. Each call is one database write and one `job.updated` event.
-  - Note: `src/main/jobs/live.ts` is a different file.
 - **The two real video runs.** The real end-to-end cases for video from a first-frame picture (`ADMAN_E2E_VIDEO_FRAME=1`) and from a reference picture (`ADMAN_E2E_VIDEO_REF=1`) each run once, one attempt each, no Retry. Each leaves one clip and one input file on the ComfyUI server. They prove the "Campaign · Make a video, from a picture" reach-table row. Not yet recorded as run.
 - **After the first good real run of each workflow.** Fill `needs.checkedWith` with that run's server version (Flux: `flux3.ts` has `checkedWith: ''`; `common.ts` `needs()` writes `''`). G-16: if the printed version is below a `moss-*` or `h3-*` minimum while that workflow's nodes and models are all found, lower that minimum to the printed version (one line; today `0.42.0` and `0.43.0`).
 - **Workflows to `proven`.** After the stakeholder accepts a `trial` workflow in the app, a one-line change sets `status: 'proven'` and records `needs.checkedWith`. No agent does this on its own. The four other workflows stay `draft` until their own data step. MOSS-Image is not installed on the test server yet; its trial waits, and `SFT` or `Base` is chosen with it (OI-34). The trials (`spec/comfyui-trials.md`), including four runs at once and the smallest and largest reference count per workflow, set `proven`.

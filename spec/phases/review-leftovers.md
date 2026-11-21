@@ -7,16 +7,7 @@ Source names: "CU4-Fixes OQ 2" means the report `REVIEW-Phase2-CU4-Fixes.md`, it
 
 ## Fix now
 
-Heaviest first.
-
-### FN-4. Retry's confirm line shows the stored count, not what retry asks for
-
-- Source: SliceH Q6.
-- Files: `src/renderer/screens/campaign/run-row/run-row.tsx` (the paid confirm line, `count={requestCount(row)}`).
-- What is wrong: `job.retry` on a picture job that kept pictures asks only for the rest (`spec/jobs.md`, "Retry"), but the run row's paid confirm line still shows the stored request's `count`.
-- Done when: for an `image_generation` row the confirm line shows `picturesLeft(requestCount(row), row.result)` (`src/shared/generation/pictures-left.ts`). Other rows are unchanged. A renderer test: a cancelled row with `count: 4` and two kept asset IDs shows 2.
-- Class D. Security class: no.
-- Built in slice S2-5 of `spec/phases/phase-02-screens.md`, which owns the run row. Removed from this file when S2-5 merges.
+None open.
 
 ## Fix with a later phase
 

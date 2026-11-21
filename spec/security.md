@@ -56,7 +56,7 @@ Built (`src/main/windows/app-window.ts`, `app-window-options.ts`, `navigation.ts
 - **What the window may draw.** Text from a server, a file, an agent or an AI answer (server messages, brief values, file names, display names) is set as text content, never as HTML, never as a link. No `dangerouslySetInnerHTML`.
 - **Paths in the renderer.** The renderer draws no file path (a base name is drawn as text) and reads no file. It sends a path only where a command takes one, and only a path the user gave: `asset.import` (from the system picker, or from a file the user dropped on the window), `asset.relink` (relink picker), `project.package` (folder picker), `brief.parse` (brief picker). Every such command checks the path as if the user had typed it.
 - **The drop bridge.** Built (`src/preload/index.ts`, `src/shared/schemas/drop-api.ts`, `src/renderer/ui/dropped-paths.ts`). The preload adds `window.drop = { pathOf(file) }` beside `window.api`, and nothing else: it returns `webUtils.getPathForFile(file)`, which is `''` for a `File` the page made. A drop never starts an import: the import dialog opens and the user presses "Import". The main process is not changed and gains no new trust (A-43). Tests: `tests/e2e/drop-bridge.spec.ts`.
-- **Clipboard.** The Connect panel's Copy button uses `navigator.clipboard.writeText` in the renderer, on click only. No preload, IPC, CSP or permission-handler change. A permission handler added later must allow `clipboard-sanitized-write`.
+- **Permissions.** Built (`src/main/windows/permissions.ts`). `denyPermissions(session.defaultSession)` is the first line of start-up (`start()` in `src/main/index.ts`); both windows use that session. Every permission request and every permission check is refused (camera, microphone, location, notifications, any other), except `clipboard-sanitized-write`, which the Connect panel's Copy button needs (`navigator.clipboard.writeText`, on click only). Test: `tests/unit/main/windows/permissions.test.ts`.
 - **Page address.** One pure function, `pageAddress` in `app-window.ts`, picks it. It returns `ELECTRON_RENDERER_URL` only when `app.isPackaged` is false **and** the address matches `http://localhost:{port}` with at most one trailing slash. Nothing else may follow the port: no path, no query, no user name. In every other case it returns the built page. An installed app ignores the variable. The hidden render window follows the same rule.
 
 ## Rules: the render window
@@ -70,7 +70,7 @@ Built (`src/main/render/`, `src/preload/render.ts`). How it works: `spec/scene.m
 - **No calls from it.** The app's command and query channels refuse it ("Who may call", above), and it gets no event.
 - **Picture bytes stay in the main process.** The captured PNG goes to the thumbnail file or to the asking query's reply, nowhere else.
 - **Its life is short.** It is ended on a crash, a hang, a time-out and when the app window closes; a window that stops answering is ended and the draw fails as `crashed`. It has developer tools only with the hand-test flag.
-- **Not checked yet:** the window is not created transparent, so an `overlay-only` draw may come out with an opaque background. The phase that needs transparent overlays (export or video) checks it.
+- **Transparent.** It is created `transparent: true`, so an `overlay-only` draw has alpha 0 where nothing is drawn (`tests/e2e/scene-reference.spec.ts`).
 
 ## Rules: the asset protocol and the content security policy
 
@@ -79,16 +79,10 @@ Built (`src/main/windows/csp.ts`, `src/main/windows/asset-protocol.ts`, `src/mai
 **Content security policy.** `CONTENT_SECURITY_POLICY` in `csp.ts`:
 
 ```
-default-src 'self';
-img-src 'self' adman-asset: data: blob:;
-media-src adman-asset:;
-font-src 'self' adman-asset:;
-style-src 'self' 'unsafe-inline';
-script-src 'self';
-connect-src 'none'
+default-src 'self'; img-src 'self' adman-asset: data: blob:; media-src adman-asset:; font-src 'self' adman-asset:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'
 ```
 
-`electron-vite build` always writes this policy into the page (`electron.vite.config.ts`).
+`electron-vite build` always writes it into `index.html` and `render.html` (`electron.vite.config.ts`). Tests: "Named security tests".
 
 **Development server exception.** Hot reload needs an inline script and a web socket. A looser policy is allowed for the development server and nothing else.
 
@@ -96,7 +90,7 @@ connect-src 'none'
 |-------|------|
 | When | Only the page the electron-vite development server serves (`npm run dev`, Vite command `serve`). No setting, flag or environment variable switches the looser policy on in a built page. |
 | What may differ | Exactly two directives: `script-src 'self' 'unsafe-inline'` and `connect-src http://localhost:* ws://localhost:*` (`devContentSecurityPolicy('http://localhost:*')`). |
-| What may not | `'unsafe-eval'`, any host other than `localhost`, any change to the other five directives |
+| What may not | `'unsafe-eval'`, any host other than `localhost`, any change to the other nine directives |
 | Owner | Both policy texts are in `src/main/windows/csp.ts`. No other file holds a directive. |
 | Everything else | Window settings, navigation blocking and the new-window rule are the same under the development server. |
 
@@ -148,7 +142,7 @@ This table has one owner: this file. A change that makes a project-file value re
 | `abs_path` of the named row (gives the old folder) and of sibling rows | Candidate files on relink | `src/main/assets/relink.ts` | `pathInside` the user's new folder, `realpath`, `lstat`, regular file; a sibling taken only when the file has the row's own hash; read only | None |
 | Asset `id`, `abs_path` | Files looked for in a new assets folder | `src/main/assets/assets-dir.ts` (`repoint`) | `managedPath`; a bad row is left alone; `lstat`, regular files only; read only | None |
 | `project_id`, variant `id`, variant `rev` | Thumbnail file names; which files the clean-up deletes | `src/main/thumbnails/paths.ts`, `cache.ts` | ULID, the variant ID pattern, a whole number; else no file is touched. Both folders real and not links by `lstat`; the project folder's real path equals the thumbnails folder's real path plus the ID. Writes never replace a name and go through `.partial`; reads take a regular file of at most 8 MiB; deletes only `{variant}-{n}.png` and `.png.partial` regular files directly in the folder | A copy of a project made outside the app may show the other copy's thumbnail (accepted, nuisance) |
-| A font file's bytes (asset of kind `font`) | `asset.font_family`, shown as text | `src/main/assets/font-name.ts`, `inspect.ts` | Files over 32 MiB not parsed; WOFF2 Brotli output capped at 32 MiB; every offset, count and length bounded; never throws, any failure gives null; Cc removed, trimmed, at most 100 code points, drawn as text only | None |
+| A font file's bytes (asset of kind `font`) | `asset.font_family`, shown as text | `src/main/assets/font-name.ts`, `inspect.ts` | Files over 32 MiB not parsed; WOFF2 Brotli output capped at 32 MiB; every offset, count and length bounded; never throws, any failure gives null; Cc and Cf removed, trimmed, at most 100 code points, drawn as text only | None |
 
 ### Hand-test tools
 
@@ -209,7 +203,7 @@ Built (`src/main/commands/agent-policy.ts`, agent-started runs). Full rules: `sp
 
 - Every command has a row in `AGENT_POLICY` (`allow`, `ask`, `deny`, `tick`). Generation and `job.cancel` are `tick`; export and publish are `deny`; deletes are `ask` [REQ: FR-197, FR-199]. A new command adds its row; the table test checks it exactly.
 - No agent reads or changes Settings, keys, storage, the ComfyUI address, a tick or the run limit.
-- **Agent-started runs**: only for a provider the user ticked in Settings; off by default; only the user can tick; the tick is read on every call and again before the first send; at most `agentRunLimit` agent runs waiting or running per provider; the result waits for the user and the agent cannot place it; every such job has `started_by = 'agent'`. A paid provider can be ticked too (Gemini today); its tick carries a "Paid" line. The limit bounds rate, not total. The app has no spending ceiling: the cap is set on the provider's own account [D-093].
+- **Agent-started runs**: only for a provider the user ticked in Settings; off by default; only the user can tick; the tick is read on every call and again before the first send (before every send for a picture job); at most `agentRunLimit` agent runs waiting or running per provider; the result waits for the user and the agent cannot place it; every such job has `started_by = 'agent'`. A paid provider can be ticked too (Gemini today); its tick carries a "Paid" line. The limit bounds rate, not total. The app has no spending ceiling: the cap is set on the provider's own account [D-093].
 - A paid call is made only when a person presses a button or the project owner runs a live test. Nothing in CI calls a real provider. No agent runs `npm run test:live`, sets `ADMAN_E2E_GEMINI=1`, makes any paid call or reads a key [D-049, D-081].
 
 ## Rules: logs, errors and messages
@@ -274,8 +268,9 @@ These must keep passing. A change that weakens one needs a ruling.
 | Test | What it proves |
 |------|----------------|
 | `tests/unit/main/windows/window-security.test.ts` | The strict policy equals its text character for character; the development policy equals its full expected text; window settings; `pageAddress` returns the built page when packaged with `ELECTRON_RENDERER_URL` set, and when the variable is not `http://localhost`; `http://localhost:{port}/` accepted; `http://localhost:5173/x`, `http://localhost:5173//`, `http://localhost:5173/?a=1` refused |
-| `tests/build/built-page.test.ts` (`npm run test:build`, every push) | `out/renderer/index.html` has exactly one policy tag, equal to `CONTENT_SECURITY_POLICY`, and no word `localhost`. Needs no window; the only check for `localhost` |
-| `tests/e2e/csp.spec.ts` | The running window has exactly one policy tag equal to `CONTENT_SECURITY_POLICY` (imported, not copied) |
+| `tests/build/built-page.test.ts` (`npm run test:build`, every push) | `index.html` and `render.html` each have exactly one policy tag, equal to `CONTENT_SECURITY_POLICY`; `index.html` has no word `localhost` (the only check for it) |
+| `tests/e2e/csp.spec.ts` | The running window has exactly one policy tag equal to `CONTENT_SECURITY_POLICY` (imported, not copied); a frame a script adds loads no `file:` page |
+| `tests/unit/main/windows/permissions.test.ts` | Both permission handlers are set; every permission is refused except `clipboard-sanitized-write` |
 | `tests/unit/main/windows/asset-protocol.test.ts`, `tests/e2e/asset-protocol.spec.ts` | An imported picture loads by its `adman-asset://` address; an unknown asset ID does not; a project not open does not |
 | `tests/e2e/asset-font.spec.ts`, `tests/e2e/render-window.spec.ts` | A page `fetch()` of an `adman-asset://` address is refused in the app window and in the render window; an imported font loads in the Scene |
 | `tests/unit/main/windows/open-external.test.ts` | Only `https:` opens in the system browser |
@@ -296,7 +291,6 @@ These must keep passing. A change that weakens one needs a ruling.
 | `tests/integration/campaigns/brief-parse.test.ts` | A malformed YAML gives a reply with the bad line and a log line with the line number and no word of the file |
 | `tests/unit/main/ipc.test.ts` | A call from any sender but the app window's main frame is refused before `execute` or `query`; events go to the app window only |
 | `tests/unit/main/render/done-message.test.ts`, `tests/e2e/render-window.spec.ts` | A render reply from the wrong sender, frame or request, or of the wrong shape, is ignored; the render window is never shown, has no `window.api`, and its bridge has only `onRequest` and `done` |
-| `tests/build/built-page.test.ts` (Phase 3 block) | `render.html` carries exactly the strict policy |
 | `tests/unit/main/thumbnails/paths.test.ts`, `tests/unit/main/thumbnails/cache.test.ts`, `tests/integration/thumbnails/thumbnail-clean.test.ts` | Bad IDs touch no file; clean-up deletes only old thumbnails directly in the project's folder, never a link, a sub-folder or another file |
 | `tests/unit/main/assets/font-name.test.ts` | A damaged or hostile font gives null and never throws |
 | `tests/integration/commands/dev-storage-confinement.test.ts` | Hand-test storage changes nothing outside its folder: the app data tree, `secrets.bin`, `settings.json`, `logs/app.log` compared byte for byte |
