@@ -1,24 +1,24 @@
 # Phase 2 leftovers, group 3: agents generate through the MCP server
 
-This is group 3 of the Phase 2 leftovers. Groups 1, 2, 4 and 5 are in `spec/phases/phase-02-leftovers.md`.
+This is group 3 of the Phase 2 leftovers. Groups 2, 4 and 5 are in `spec/phases/phase-02-leftovers.md`.
 
 **Goal.** An agent connected through the MCP server can start, follow and cancel its own picture and video runs on every provider the user has allowed for agents in Settings [D-080].
 
 **Rules these slices build.** The agent-run rules are written in full in `spec/mcp-and-agents.md` (the gate, the tick, the limit, unticking, what stays shut) and `spec/cancel.md`. Each entry below repeats every value it must meet, so a brief can quote it.
 
-**State on `main`.** None of this is built. There is no `src/main/commands/agent-run-gate.ts` and no `src/main/commands/agent-runs/`. There is no `agentRunsOffered`, `agentRunLimit`, `agentRuns.setLimit`, `openHandles`, `project.listOpen`, `job.get` or `agentJobView` in `src/`. `agent-policy.ts` still maps `tick` to `deny`. `offered.ts` still refuses any actor other than the user. `src/main/mcp/tools/table.ts` has four tools: `get_project`, `list_assets`, `get_campaign`, `create_campaign`. No screen says "Started by an agent".
+**State on `main`.** The read tools are built: `list_projects`, `get_slots`, `get_job`, `list_jobs`, the queries `project.listOpen` and `job.get`, `agentJobView`, and the pickers for `get_project` and `get_campaign` (`spec/mcp-and-agents.md`). The tool table holds 8 tools. Nothing else here is built. There is no `src/main/commands/agent-run-gate.ts` and no `src/main/commands/agent-runs/`. There is no `agentRunsOffered`, `agentRunLimit`, `agentRuns.setLimit` or `openHandles` in `src/`. `agent-policy.ts` still maps `tick` to `deny`. `offered.ts` still refuses any actor other than the user. No screen says "Started by an agent".
 
 ## Order
 
-1. AR-1 and MCP-D in parallel. Neither touches the other's files.
-2. After AR-1 merges: AR-2, AR-3 and MCP-G in parallel. MCP-G also waits for MCP-D, since both edit `src/main/mcp/tools/table.ts`.
-3. Merge order: AR-1 and MCP-D (either first), then AR-3 and MCP-G, then AR-2. With AR-1, AR-3 and MCP-G merged, an agent can make ComfyUI pictures and video. AR-2 adds Gemini.
+1. AR-1.
+2. After AR-1 merges: AR-2, AR-3 and MCP-G in parallel.
+3. Merge order: AR-1, then AR-3 and MCP-G, then AR-2. With AR-1, AR-3 and MCP-G merged, an agent can make ComfyUI pictures and video. AR-2 adds Gemini.
 4. Then the first agent run on the user's ComfyUI server (last entry).
 
-- **Cut line, first to last:** the run row mark in AR-3; AR-2 (agents then use ComfyUI only, and Gemini cannot be ticked); MCP-D's pickers for `get_project` and `get_campaign` (the reply-keys test still guards them). Never cut: AR-1, AR-3's ticks, `list_projects`, `get_slots`, `get_job`, MCP-G.
-- **Checks.** AR-1 and AR-2: lint, typecheck, `npm test` (class B with E). MCP-D and MCP-G: class E plus `npm test`. AR-3: class D. The full gate runs before a release, not per slice.
+- **Cut line, first to last:** the run row mark in AR-3; AR-2 (agents then use ComfyUI only, and Gemini cannot be ticked). Never cut: AR-1, AR-3's ticks, MCP-G.
+- **Checks.** AR-1 and AR-2: lint, typecheck, `npm test` (class B with E). MCP-G: class E plus `npm test`. AR-3: class D. The full gate runs before a release, not per slice.
 - **Paid calls and keys.** Automatic tests never make a paid call. Gemini cases use recorded responses in `tests/fixtures/providers/` or a fake provider row with `local: false`. No slice adds a live case to the suite. No agent reads a key file (D-049). Under D-085 one low-cost paid run may confirm the agent Gemini path once, after AR-2, at the smallest size.
-- **What each brief names.** Only: the agent-run rules in `spec/mcp-and-agents.md`, the agent-run limit (1 to 16, default 4, per provider), the unticking rule, the MCP tool list (was Section 4.5), and for MCP-D the reply rules for MCP tools (allow-list pickers, no path, address or secret).
+- **What each brief names.** Only: the agent-run rules in `spec/mcp-and-agents.md`, the agent-run limit (1 to 16, default 4, per provider), the unticking rule, the MCP tool list (was Section 4.5), and for MCP-G the reply rules for MCP tools (allow-list pickers, no path, address or secret).
 
 ## AR-1 — The gate
 
@@ -76,36 +76,6 @@ This is group 3 of the Phase 2 leftovers. Groups 1, 2, 4 and 5 are in `spec/phas
 - The agent's `job.cancel` on its own queued job: cancelled. On a user's job: refused.
 - `agentRuns.setAllowed` and `agentRuns.setLimit` as the agent: `AGENT_DENIED`. `setLimit(0)` and `setLimit(17)` as the user: `INVALID_INPUT`. `"agentRunLimit": 99` in the file loads as 4.
 
-## MCP-D — Read tools
-
-- **Class:** E and B. **Security class.** Short review.
-- **Depends on:** `main`. Starts beside AR-1.
-- **Owns:** the query `project.listOpen`, the query `job.get` and their schemas; the tools `list_projects`, `get_slots`, `get_job`, `list_jobs`; the reply pickers for `get_project` and `get_campaign`; `agentJobView`; the tool-list snapshot (8 tools).
-
-**Must build:**
-
-- **Query `project.listOpen`:** `{ id, name }[]` for open projects only, never `filePath`. Its row in the queries table (`spec/api-queries-events.md`) is `allow` for the agent. `list_projects` maps to it one to one. `app.getState.openProjects` must not be wrapped instead, since it carries `filePath`. Without this tool an agent cannot learn a `project_id` and the user must paste it.
-- **`get_project` and `get_campaign`:** allow-list pickers over today's fields, as `list_assets` already has. Today both pass whole wire rows, bounded only by the Zod row schemas, so a path, URL or address field added later to a campaign, variant, subject, rule set or direction row would leave with no MCP code change.
-- **`get_slots`** (input `project_id`, `campaign_id`): over `template.slots` (exists, `src/main/queries/template.ts`). The reply, per slot of the master variant: `{ slotId, type, state, candidates }` from `slot.id`, `slot.type`, `state` (`filled` or `empty`) and `candidates` (asset IDs).
-- **New query `job.get`** for `get_job` (input `project_id`, `job_id`). Add its row to the queries table.
-- **`list_jobs`** (input `project_id`, `campaign_id?`, `variant_id?`, `state?`, `limit?`; newest first) over `job.list` (exists, `src/main/queries/job.ts`).
-- **`agentJobView(row, providers)`**, in its own file in `src/main/mcp/tools/`. It gives exactly:
-  - `id`, `kind`, `status`, `startedBy`, `campaignId`, `variantId`, `layerId`, `slot`, `progress`, `paidCalls`, `seenAt`, `errorKind`, `errorReason`, `createdAt`, `updatedAt`;
-  - `stage` and `queuePosition` from `result`, only when a string and a whole number;
-  - `assetIds`: `result.assetIds` for a picture job, `[result.assetId]` for a video job, else `[]`; strings only;
-  - `failures` for a picture job: error kind to count;
-  - `message`: for an `errorReason`, the `reasonMessage` sentence with `{address}` replaced by "the saved ComfyUI address" and `{n}` by "some"; else for an `errorKind`, `plainMessage(kind, provider label)`; else null.
-  - Left out: `provider`, `model`, `remoteJobId`, `request`, and the rest of `result`.
-- **Inputs:** the command's or query's own Zod schema, with snake_case top-level keys.
-- The `get_job` description says to poll no more than once every 5 seconds.
-
-**Tests:**
-
-- `list_projects` gives only `id` and `name`.
-- The `get_slots`, `get_job` and `list_jobs` replies pass `riskyKeys` (`tests/integration/mcp/reply-keys.test.ts`) and hold no key outside their allow-lists, over a job row with every column filled, `model`, `remoteJobId`, and a `result` with a made-up missing-items list.
-- `job.get` with an unknown ID gives `NOT_FOUND`.
-- A failed job's `message` holds "the saved ComfyUI address" and not the stand-in's origin.
-
 ## AR-2 — Unticking, and the paid tick
 
 - **Class:** B. **Security class** (cost). Short review.
@@ -138,7 +108,7 @@ This is group 3 of the Phase 2 leftovers. Groups 1, 2, 4 and 5 are in `spec/phas
 
 - **Class:** D. Not security class. Short review.
 - **Depends on:** AR-1 merged.
-- **Owns:** a new component for the agent-runs block under `src/renderer/screens/settings/` (`agent-runs-section`, in its own folder if LO-1b has landed) and its place in the Settings screen, below the MCP section; the run row mark in `run-row`; the `video-panel.test.tsx` edit; the renderer fake API's two commands and `agentRunLimit`.
+- **Owns:** a new component for the agent-runs block, the folder `src/renderer/screens/settings/agent-runs-section/`, and its place in the Settings screen, below the MCP section; the run row mark in `run-row`; the `video-panel.test.tsx` edit; the renderer fake API's two commands and `agentRunLimit`.
 
 **Must build:**
 
@@ -155,7 +125,7 @@ This is group 3 of the Phase 2 leftovers. Groups 1, 2, 4 and 5 are in `spec/phas
 ## MCP-G — Start and cancel tools
 
 - **Class:** E. **Security class.** Full review.
-- **Depends on:** AR-1 and MCP-D merged.
+- **Depends on:** AR-1 merged.
 - **Owns:** the tools `generate_images`, `generate_video`, `cancel_job`; the serial for the start tools; the tool descriptions; the tool-list snapshot (11 tools); `tests/integration/mcp/every-tool.ts` gains the new tools' arguments.
 
 **Must build:**

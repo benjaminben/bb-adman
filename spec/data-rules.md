@@ -168,9 +168,8 @@ Not built (Phase 3, with the render service).
 | Cache target | Where | TTL | Invalidation trigger |
 |--------------|-------|-----|----------------------|
 | Variant thumbnail (PNG, longest side 512) | `{userData}/thumbnails/{projectId}/{variantId}-{rev}.png` | None | A new `variant.rev` makes a new file. Files for old revs are deleted when the project closes. |
-| Asset thumbnail | `{userData}/thumbnails/{projectId}/asset-{assetId}-{contentHash8}.png` | None | Content hash change |
 
-Nothing else is cached. Thumbnails are drawn again when `asset.changedOnDisk` names the asset.
+No asset thumbnails are made: the window draws asset pictures straight from the asset protocol (A-30). Nothing else is cached. A variant's thumbnail is drawn again when `asset.changedOnDisk` names an asset it uses (`spec/scene.md`).
 
 ## Data migration (was 3.8)
 

@@ -101,13 +101,13 @@ An agent connected through the MCP server can start, follow and cancel its own p
 
 ## Settings block "Agent runs"
 
-Not built (Phase 2). New `src/renderer/screens/settings/agent-runs-section.tsx`, placed below the MCP section in `settings-screen.tsx`.
+Not built (Phase 2). New component folder `src/renderer/screens/settings/agent-runs-section/`, placed below the MCP section in `settings-screen/`.
 
 1. One checkbox per provider for which `agentRunsOffered` gives null, labelled "Let agents start runs with {label}", calling `agentRuns.setAllowed`, showing the command's refusal as other sections do.
 2. Under a provider whose `local` is false: "Paid. Each run an agent starts is charged to your account, with no click from you." (None shows until Gemini can be ticked.)
 3. Number field "Most runs agents may have waiting or running, per provider", 1 to 16, saved by `agentRuns.setLimit` on change, refusal shown.
 4. The block shows whether or not the MCP server is on.
-5. The run row says "Started by an agent" under the kind when `startedBy` is `agent` (`run-row.tsx`).
+5. The run row says "Started by an agent" under the kind when `startedBy` is `agent` (`screens/campaign/run-row/`).
 
 The UI pass decides whether the job list should say more about a queued agent run that will be cancelled at its turn.
 
@@ -134,7 +134,6 @@ The UI pass decides whether the job list should say more about a queued agent ru
 - `agentRuns.setAllowed` and `agentRuns.setLimit` as the agent: `AGENT_DENIED`. `setLimit(0)` and `setLimit(17)` as the user: `INVALID_INPUT`. `"agentRunLimit": 99` loads as 4. `settings.update` refuses `agentRunLimit`.
 - The untick check (runner fixture, small `jobsAtOnce`): an agent job waits behind a full provider, the tick is unset, the place frees: it ends `cancelled`, `jc.call`'s function never ran, `paid_calls` 0, and the agent's next request is refused at the gate. An agent job whose first call is out, tick unset: its second `jc.call` runs and it ends `succeeded`. A user's job with the tick off runs to the end. Tick unset then set again before the turn: the job runs. A Gemini agent job (recorded responses) queued behind a full provider, then unticked, ends `cancelled` with `paid_calls` 0.
 - Through the tools (a door over the real core, the ComfyUI stand-in, dev tools on, ComfyUI ticked by the user): `generate_images` with a slot from `get_slots` gives a `jobId`, and `get_job` later shows `succeeded` and new asset IDs; `generate_video` from a first frame by asset ID makes the stand-in see one upload named `uploadName(...)`, and `get_job` shows the clip's asset ID; with the tick off, `AGENT_DENIED` with the step 2 sentence, no job row, and the stand-in saw nothing; a reference asset whose linked file is gone, and one over the size limit, give replies that hold the display name or ID and not the test's root folder, the file's folder or its file name on disk.
-- `list_projects` gives only `id` and `name`. `get_slots`, `get_job` and `list_jobs` replies pass `riskyKeys` and hold no key outside their allow-lists, over a job row with every column filled, `model`, `remoteJobId` and a `result` with a made-up missing list. `job.get` with an unknown ID gives `NOT_FOUND`. A failed job's `message` holds "the saved ComfyUI address" and not the stand-in's origin.
 - The secret-leak test passes with the new tools' arguments in `tests/integration/mcp/every-tool.ts`.
 
 ## Open items

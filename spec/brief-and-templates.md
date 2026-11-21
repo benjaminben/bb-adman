@@ -216,7 +216,7 @@ type IsRightToLeft = (tag: string) => boolean
 
 Built. `src/main/commands/brief/parse.ts`; input schema and reply type in `src/shared/schemas/commands/brief.ts`. Tests: `tests/integration/campaigns/brief-parse.test.ts`.
 
-**Input.** `projectId` plus exactly one of `filePath` (non-empty text) or `text`. Both or neither is `INVALID_INPUT` ("Give a file path or text, not both.").
+**Input.** `projectId` plus exactly one of `filePath` (non-empty text) or `text`. Both or neither is `INVALID_INPUT` ("Give a file path or text, not both."). A `filePath` that is not absolute is `INVALID_INPUT` ("The file path must be absolute."), before any read.
 
 **Reply.**
 
@@ -264,7 +264,7 @@ Built. `src/shared/schemas/commands/campaign.ts` owns them (frozen with `brief.t
 
 ### What the project page sends today
 
-Built. `src/renderer/screens/project-home/brief-load.tsx`, `brief-summary.tsx`, `campaign-input.ts`. Tests: `tests/unit/renderer/screens/project-home/brief-load.test.tsx`, `brief-subject-ids.test.tsx`. Screen wording is in `spec/screens.md`.
+Built. `src/renderer/screens/project-home/brief-load/`, `brief-summary/`, `campaign-input.ts`. Tests: `tests/unit/renderer/screens/project-home/brief-load.test.tsx`, `brief-subject-ids.test.tsx`. Screen wording is in `spec/screens.md`.
 
 "Load a brief" opens the picker, calls `brief.parse`, and shows a read-only summary of the draft (every value the brief's own text, drawn as text). "Create campaign" sends `subject.create` for each new subject, then `campaign.create`, and stops at the first refusal. Cancel sends nothing. Nothing is sent unless the whole input passes the shared `campaign.create` schema; otherwise the page lists problem lines.
 

@@ -15,7 +15,7 @@ Bullets carry `[logic]` (main process, shared code, commands, queries, the MCP s
   - Each maps one to one to its command or query. Inputs are that command's own Zod schema with snake_case top-level keys. Each reply goes through an allow-list picker in `src/main/mcp/tools/`; no reply passes a whole row through. No tool returns file contents, paths, settings or secrets [REQ: FR-198]. The snapshot is updated with each.
 - [logic] Ask flow, automatic permission setting (`autoApproveDestructive`). No `ask` tool exists until the delete tools land.
 - [logic] Bridge mode: `"{app executable}" --mcp-bridge` speaks MCP over stdio and forwards to the endpoint. `mcp.getConnectInfo` gains a Claude Desktop field.
-- [logic] `agent.activity` event, agent marking in the log. `variant.agent_changed_at` is written by the `variant.rev` helper since the Phase 2 leftovers; this phase adds one test through an MCP tool [REQ: FR-239].
+- [logic] `agent.activity` event, agent marking in the log. `variant.agent_changed_at` is written by the built `variant.rev` helper (`spec/data-model-campaign.md`); this phase adds one test through an MCP tool [REQ: FR-239].
 - [UI] Permission dialog for the ask flow; agent activity indicator; the Connect panel's second block, for Claude Desktop. (The on and off switch and the Connect panel with the token are built.)
 
 ## Exit criteria

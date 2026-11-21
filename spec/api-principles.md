@@ -145,10 +145,14 @@ Built unless marked.
 | `comfy.check`, or a `generation.*` command or `job.retry` for provider `comfyui`, with no address saved. Before any job row. [REQ: FR-255] | `RULE_VIOLATION` | `comfy_address_needed` | "Enter your ComfyUI server's address to use it." |
 | A ComfyUI picture run with no offered workflow [REQ: FR-254] | `RULE_VIOLATION` | `comfy_job_not_offered` | "ComfyUI cannot make this kind of picture yet." |
 | A ComfyUI video run with no offered workflow for its start pair, or `first_frame` with `useReferences` true | `RULE_VIOLATION` | `comfy_job_not_offered` | "ComfyUI cannot make this kind of video yet." |
-| More references than the chosen workflow takes. `details.max`. | `RULE_VIOLATION` | `too_many_references` | "ComfyUI takes at most {max} reference picture(s) for this run." (Pending F-14: "ComfyUI takes one reference picture for this run." when `max` is 1, else "ComfyUI takes at most {max} reference pictures for this run.", moved to `src/shared/providers/messages.ts`.) |
+| More references than the chosen workflow takes. `details.max`. | `RULE_VIOLATION` | `too_many_references` | "ComfyUI takes one reference picture for this run." when `max` is 1, else "ComfyUI takes at most {max} reference pictures for this run." (`src/shared/providers/messages.ts`) |
 | A clip longer than the workflow makes. `details.maxMs`. | `RULE_VIOLATION` | `video_too_long` | "ComfyUI makes clips of at most {maxMs / 1000} seconds with this workflow." |
 | `generation.startVideo`, `job.retry` of a video: the start picture is not an image asset of type PNG or JPEG | `RULE_VIOLATION` | `picture_not_usable` | "This picture cannot be used for a video yet. Use a PNG or JPEG." |
 | `agentRuns.setAllowed`: a provider `agentRunsOffered` refuses. Not built (AR-1). | `RULE_VIOLATION` | `agent_runs_not_offered` / `agent_runs_not_ready` | "Agents cannot start runs with {Provider}." |
+| `layer.delete`, `layer.reorder` naming the background layer. Not built (Phase 3). | `RULE_VIOLATION` | `background_layer` | "The background layer stays at the bottom and cannot be deleted." |
+| A layer command naming an asset in the reference library (`spec/editor-commands.md`). Not built (Phase 3). | `RULE_VIOLATION` | `reference_library` | "This file is in the reference library. Move it to the asset library to use it on a post." |
+| `layer.restore`: a layer with that ID or key is already in the variant. Not built (Phase 3). | `RULE_VIOLATION` | `layer_exists` | "That layer is already there." |
+| `variant.render`: the draw failed or timed out. Not built (Phase 3). | `RULE_VIOLATION` | `render_failed` | "The picture could not be drawn. Try again." |
 
 `brief_too_large` does not exist: a brief has no size limit.
 

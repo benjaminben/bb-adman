@@ -206,7 +206,7 @@ Decisions in `src/main/assets/asset-url.ts` (no Electron import, unit tested). E
 
 ## Libraries and reference pictures
 
-Built for the test path. Main files: `src/main/commands/generation/` (checks), `src/renderer/screens/campaign/reference-picker.tsx`, `reference-list.ts`.
+Built for the test path. Main files: `src/main/commands/generation/` (checks), `src/renderer/screens/campaign/reference-picker/`, `reference-list.ts`.
 
 - `asset.library` is `reference` (pictures that guide generation) or `asset` (files used in ads). `asset.list` returns rows by `id` ascending (oldest first); the window sorts for display.
 - A hero image is a row with `library = 'asset'`, `kind = 'image'` and a `subject_id`. If a subject has several, the newest fills the slot and the others are offered [REQ: R-12]. One file belongs to at most one subject [REQ: FR-011].

@@ -10,7 +10,7 @@
 - FR-242: the tab keys work. FR-245: the transparent-picture reference test passes. FR-249: letter spacing is drawn, measured and editable.
 - Review item LP-1 is fixed (slice P3-6) and removed from `spec/phases/review-leftovers.md`.
 
-**Dependencies:** Phase 2 and every group of the Phase 2 leftovers, in particular group 1 (the `@/` alias, one folder per component, the token file and its lint test), group 5 (the campaign grid) and the `variant.rev` helper in `src/main/commands/variant-rev.ts`.
+**Dependencies:** Phase 2 and every group of the Phase 2 leftovers, in particular group 5 (the campaign grid). Built and used here: the renderer layout and the token file with its test (`spec/structure.md`), and the `variant.rev` helper `bumpVariantRev` in `src/main/commands/variant-rev.ts`.
 
 **Design:** `spec/scene.md`, `spec/editor.md`, `spec/editor-commands.md`. Security rules: `spec/security.md`, "Rules: the render window". Tests and the reference rule: `spec/testing.md`. Assumptions A-22 to A-37 in `spec/open-items.md`.
 

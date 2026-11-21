@@ -20,10 +20,10 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 | `template.slots` | `TemplateSlots = SlotState[]`, `SlotState = { slot, state: 'filled' \| 'empty', candidates: string[] }` (asset IDs), for the slots of the campaign's master [REQ: FR-042]. A picture slot is one whose `slot.type` is not `copy`. | Built |
 | `sync.preview` | `SyncPreview[]` for a direction (`spec/data-rules.md`, "Links, follow rules and sync") | Not built (Phase 5) |
 | `job.list` | `JobRow[]` for the activity panel, as wire rows, newest first [REQ: FR-152, FR-217] | Built |
-| `job.get` | One `JobRow`, or `NOT_FOUND` "That job was not found." | Not built (MCP-D) |
+| `job.get` | One `JobRow`, or `NOT_FOUND` "That job was not found." | Built |
 | `job.getServerMessage` | `{ text: string \| null }`: the cleaned server text for a failed ComfyUI job, or null (`spec/comfyui.md`) [REQ: FR-267]. User only. | Built |
 | `comfy.getInfo` | Shipped ComfyUI workflow data (below). User only. | Built |
-| `project.listOpen` | `{ id, name }[]` for open projects only, never `filePath` | Not built (MCP-D) |
+| `project.listOpen` | `{ id, name }[]` for open projects only, never `filePath` | Built |
 | `report.list` / `report.get` | Saved reports [REQ: FR-151] | Not built (Phase 8) |
 | `history.state` | `UndoStateResult = { canUndo, canRedo }` for a scope | Built |
 | `publish.inspect` | Whether the campaign's cloud folder already has files [REQ: FR-164], and the component files a publish would upload, each with its full local path [REQ: R-06, 8.4] | Not built (Phase 9) |
@@ -92,11 +92,11 @@ Returns `{ address: string | null, workflows: [{ id, label, job, videoStart?, st
 
 ### `job.get`
 
-Not built (MCP-D). Input `{ projectId, jobId }`. Gives one wire row, or `NOT_FOUND` "That job was not found." Open to both actors; the MCP tool `get_job` passes the row through `agentJobView` (`spec/mcp-and-agents.md`). Test: an unknown ID gives `NOT_FOUND`.
+Built. `src/main/queries/job-get.ts`, input schema in `src/shared/schemas/queries/job.ts`. Input `{ projectId, jobId }`. Gives one wire row, or `NOT_FOUND` "That job was not found." Open to both actors; the MCP tool `get_job` passes the row through `agentJobView` (`spec/mcp-and-agents.md`). Test: an unknown ID gives `NOT_FOUND`.
 
 ### `project.listOpen`
 
-Not built (MCP-D). No input. `{ id, name }[]` for open projects only, never `filePath`. The MCP tool `list_projects` maps to it one to one. Test: the reply holds only `id` and `name`.
+Built. `src/main/queries/project-list-open.ts`, type in `src/shared/schemas/queries/project.ts`. No input. `{ id, name }[]` for open projects only, never `filePath`; the name is read from each project's meta. The MCP tool `list_projects` maps to it one to one. Test: the reply holds only `id` and `name`.
 
 ## Native pickers: the `dialog.*` queries
 
@@ -180,7 +180,7 @@ export type CampaignSummary = Pick<
 
 - `campaign` is the whole wire row, the stored `brief` included. `subjects` are the rows named by `campaign_subject`, by ID. `ruleSet` is the campaign's row; a campaign without one is a broken file and the query answers `INTERNAL`. `directions` are in `sort` order, then by ID.
 - `variants` holds every variant of every direction: by the direction's order, the master first inside a direction, then by `createdAt`, then by ID. Each is the whole `VariantRow` (`id`, `directionId`, `title`, `width`, `height`, `sizeLabel`, `language`, `format`, `durationMs`, `durationOverridden`, `rev`, `createdBy`, `createdAt`, `agentChangedAt`). `subjectIds` come from `variant_subject`, by ID.
-- `isMaster` is true when the variant's own direction's `masterVariantId` names it. As built it is true when any direction names it; the fix is pending (F-5).
+- `isMaster` is true only when the variant's own direction's `masterVariantId` names it.
 - **No layers.** A variant's layers come from `variant.get` (Phase 3). `template.slots` gives the slots of the master.
 - `variantCount` in `CampaignSummary` is the number of variants in all the campaign's directions.
 - **Contracts the window imports** (the window imports nothing from `src/main/`): `ProjectGet`, `CampaignSummary`, `CampaignGet`, `VariantSummary`, `VariantBadges` from `src/shared/schemas/queries/campaign.ts`; `BriefParsed` from `src/shared/schemas/commands/brief.ts`; `SubjectCreated` from `src/shared/schemas/commands/subject.ts`; `CampaignCreated` from `src/shared/schemas/commands/campaign-edit.ts`; `BriefDraft`, `Brief` from `src/shared/schemas/brief.ts`; `TemplateSlots` and `SlotState` from `src/shared/templates/types.ts`. The variant list reads `title`, `width`, `height`, `sizeLabel`, `language`, `format`, `isMaster`.

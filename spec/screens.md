@@ -4,7 +4,7 @@ What each built screen offers today, its source files, its wording, and the choi
 
 ## Status of these screens
 
-Built (Phases 1 and 2). They are plain working screens, made so every function can be used and tested before the real interface exists. They are built with the app's existing controls and tokens (`screens/screens.module.css`, `ui/tokens.css`, `ui/base.css`, the Radix parts already used: Tabs, Dialog). No new visual language and no new package. The UI pass may replace any of them whole. A design prototype exists in `design/prototype/`; the built screens do not follow it.
+Built (Phases 1 and 2). They are plain working screens, made so every function can be used and tested before the real interface exists. They are built with the app's existing controls and tokens (`ui/tokens.css`, `ui/base.css`, `ui/layout.module.css`, each component's own CSS module, the Radix parts already used: Tabs, Dialog). All styling comes from `tokens.css` (`spec/structure.md`, "One styling source"). No new visual language and no new package. The UI pass may replace any of them whole. A design prototype exists in `design/prototype/`; the built screens do not follow it.
 
 | Screen | Fate |
 |--------|------|
@@ -33,7 +33,7 @@ Built. The reviewer checks these on every screen.
 
 ## Shell
 
-Built. `src/renderer/app/app-shell.tsx`, `app/error-banner.tsx`, `app/app-context.tsx`, `app/app.tsx`, `stores/app-store.ts`, `stores/project-store.ts`.
+Built. `src/renderer/app/app-shell/`, `app/error-banner/`, `app/app-context.tsx`, `app/app.tsx`, `stores/app-store.ts`, `stores/project-store.ts`.
 
 - A tab bar (Radix Tabs, label "Open projects"): "Start", then one tab per open project named after it [REQ: FR-003].
 - "Settings" button (pressed state while Settings shows). "Hand test" button only when `app.getState` says `devTools`.
@@ -43,7 +43,7 @@ Built. `src/renderer/app/app-shell.tsx`, `app/error-banner.tsx`, `app/app-contex
 
 ## Start
 
-Built. `src/renderer/screens/start/start-screen.tsx`, `new-project-form.tsx`, `recent-projects.tsx`.
+Built. `src/renderer/screens/start/start-screen/`, `new-project-form/`, `recent-projects/`.
 
 - Heading "Adman".
 - "New project": "Project name" field, "Location" (the default from Settings, shown as text), "Change location" (folder picker), "Create project" (`project.create`) [REQ: FR-002, FR-004].
@@ -51,7 +51,7 @@ Built. `src/renderer/screens/start/start-screen.tsx`, `new-project-form.tsx`, `r
 
 ## Project home
 
-Built. `src/renderer/screens/project-home/project-home.tsx`, `use-project.ts`, `brief-load.tsx`, `brief-summary.tsx`, `campaign-list.tsx`, `campaign-input.ts`.
+Built. `src/renderer/screens/project-home/project-home/` (with `use-project.ts`), `brief-load/`, `brief-summary/`, `campaign-list/`, `campaign-input.ts`.
 
 - Heading (project name), "Close project" button (`project.close`), file path line. "Loading the project…" while loading. Event `project.changed` for this project reads `project.get` again; one for another project does not.
 - **Load a brief.** Opens `dialog.pickFiles` with `purpose: 'brief'`; the picked path goes to `brief.parse`; a cancelled picker sends nothing. A refused `brief.parse` shows in the error banner and creates nothing.
@@ -61,16 +61,16 @@ Built. `src/renderer/screens/project-home/project-home.tsx`, `use-project.ts`, `
 
 ## Campaign page
 
-Built. `src/renderer/screens/campaign/campaign-view.tsx`, `variant-list.tsx`, `stores/job-store.ts`.
+Built. `src/renderer/screens/campaign/campaign-view/`, `variant-list/`, `src/renderer/stores/job-store.ts`.
 
 - "Back to project". "Loading the campaign…" while `campaign.get` is read. Then the campaign name.
 - **Variants** (radio group): each "{title} · {width}×{height} ({sizeLabel}) · {language} · {format}", plus "master". The first variant (the master) is chosen at the start. The picture panel, the video card and the run list work on the chosen variant.
-- **Job store,** one per open campaign page. Reads `job.list { projectId, variantId }` and keeps rows by ID. A `job.updated` row whose ID the store holds, or whose ID a command just returned, replaces the row; for any other row the store reads `job.list` again. It never guesses the project from a row. A `job.list` reply that arrives after a later one is dropped.
+- **Job store,** one per open campaign page. Reads `job.list { projectId, variantId }` and keeps rows by ID. A `job.updated` row whose ID the store holds, or whose ID a command just returned, replaces the row; for any other row the store reads `job.list` again. It never guesses the project from a row. A `job.list` reply that arrives after a later one is dropped. When a `job.list` reply holds a row the store already holds with an equal or later `updatedAt`, the store keeps its own row, so a late reply cannot turn a finished run back to "Working".
 - Known gaps, noted and not built: a refused `campaign.get` leaves the page on "Loading the campaign…" with no message ("Back to project" still works); the page does not read `campaign.get` again on `project.changed`.
 
 ### Make pictures
 
-Built. `generate-panel.tsx`, `reference-picker.tsx`, `reference-list.ts`, `paid-confirm.tsx`.
+Built. In `src/renderer/screens/campaign/`: `generate-panel/`, `reference-picker/`, `reference-list.ts`, `paid-confirm/`.
 
 - "Provider": providers from `app.getState` whose `jobs` holds `image` and that are `available`, starting at `settings.defaultProviders.image` when available. None: "No picture provider is available."
 - "Slot": picture slots from `template.slots` (copy slots left out), the first chosen. None: "This campaign has no picture slot."
@@ -86,7 +86,7 @@ Built. `generate-panel.tsx`, `reference-picker.tsx`, `reference-list.ts`, `paid-
 
 ### Make a video
 
-Built. `video-panel.tsx`, `video-picture-choice.tsx`, `video-start.ts`, `video-length.ts`. A card under "Make pictures", for the chosen variant. Its runs appear in the same run list.
+Built. In `src/renderer/screens/campaign/`: `video-panel/` (with `video-length.ts`), `video-picture-choice/`, `video-start.ts`. A card under "Make pictures", for the chosen variant. Its runs appear in the same run list.
 
 - "Provider": providers from `app.getState` that are available and list `video` in `jobs`. Preselects the saved default only when it is available, else the first available video provider. None: "No video provider is available."
 - "Start from": "A prompt" (default), "A first-frame picture", "A reference picture". A start is offered only if `comfy.getInfo` lists a video workflow for its pair (`videoStart.firstFrame`, `videoStart.references`). "A prompt" is offered for ComfyUI always, even before `comfy.getInfo` answers. Every other provider gets "A prompt" only. A start no longer offered falls back to "A prompt".
@@ -97,7 +97,7 @@ Built. `video-panel.tsx`, `video-picture-choice.tsx`, `video-start.ts`, `video-l
 
 ### Run list and run row
 
-Built. `run-list.tsx`, `run-row.tsx`, `run-result.tsx`, `video-result.tsx`, `video-status.ts`.
+Built. In `src/renderer/screens/campaign/`: `run-list/`, `run-row/` (with `video-status.ts`), `run-result/`, `video-result/`.
 
 - Each row: the provider's label (or "The provider" when unknown), "Video" for a video run, then the status.
 - Status: `queued` "Waiting"; `running` "Working", with `result.stage`, "place in queue {n}" and the percent when present; `succeeded` "Done" and its results; `failed` "Failed", the sentence from `plainMessage` (`src/shared/providers/messages.ts`) with the provider's label, and "Retry"; `cancelled` "Cancelled" and "Retry". A failed run never shows raw error text.
@@ -110,23 +110,23 @@ Built. `run-list.tsx`, `run-row.tsx`, `run-result.tsx`, `video-result.tsx`, `vid
 
 ## Settings
 
-Built. `src/renderer/screens/settings/settings-screen.tsx` and one file per section, in this order.
+Built. `src/renderer/screens/settings/settings-screen/` and one component folder per section, in this order.
 
 ### New projects
 
-`location-setting.tsx`. "Default location" shown as text; "Change default location" opens the folder picker and saves with `settings.update` [REQ: FR-004].
+`location-setting/`. "Default location" shown as text; "Change default location" opens the folder picker and saves with `settings.update` [REQ: FR-004].
 
 ### Default AI providers
 
-`provider-defaults.tsx`. One select per job: "Image generation", "Layout", "Text: briefs, copy and translation", "Video generation". Each lists the providers that do that job; an unavailable one shows as "{label} (not yet available)", disabled. A change saves with `settings.update` [REQ: FR-067].
+`provider-defaults/`. One select per job: "Image generation", "Layout", "Text: briefs, copy and translation", "Video generation". Each lists the providers that do that job; an unavailable one shows as "{label} (not yet available)", disabled. A change saves with `settings.update` [REQ: FR-067].
 
 ### Keys
 
-`keys-section.tsx`, `key-row.tsx`, `ui/secret-labels.ts`. Heading "Keys", the line "Keys are stored encrypted on this computer. After saving, only the last four characters are shown." One row per secret of each AI provider (storage providers left out; their sign-in comes with Phase 9). An unavailable provider shows "Not yet available". A row shows "Saved, ends in {last four}" (nothing after "ends in" for a key of four characters or fewer) or "Not set"; "Add" or "Replace" opens a password field with "Save" (`secret.set`, the field cleared before the call) and "Cancel"; "Delete" (`secret.delete`) [REQ: FR-170].
+`keys-section/`, `key-row/`, `ui/secret-labels.ts`. Heading "Keys", the line "Keys are stored encrypted on this computer. After saving, only the last four characters are shown." One row per secret of each AI provider (storage providers left out; their sign-in comes with Phase 9). An unavailable provider shows "Not yet available". A row shows "Saved, ends in {last four}" (nothing after "ends in" for a key of four characters or fewer) or "Not set"; "Add" or "Replace" opens a password field with "Save" (`secret.set`, the field cleared before the call) and "Cancel"; "Delete" (`secret.delete`) [REQ: FR-170].
 
 ### ComfyUI server
 
-`comfy-section.tsx`, `comfy-check-result.tsx`.
+`comfy-section/`, `comfy-check-result/`.
 
 - Heading "ComfyUI server". "Saved address" shown in full, or "No address saved."
 - A fixed privacy paragraph beside the address field, shown whether or not an address is saved, word for word: "When ComfyUI makes a picture or a video, your brief text, prompts and reference pictures are sent to the server at this address. Whoever runs that server can see them." [REQ: REQUIREMENTS-ComfyUI.md 3.3]. A constant in `comfy-section.tsx`, shown in this one place only, not returned by `comfy.getInfo`. A test pins it with and without a saved address.
@@ -137,7 +137,7 @@ Built. `src/renderer/screens/settings/settings-screen.tsx` and one file per sect
 
 ### Agent access
 
-`mcp-section.tsx`, `connect-panel.tsx`.
+`mcp-section/`, `connect-panel/`.
 
 - Heading "Agent access". A switch "Turn on agent access" (`mcp.setEnabled`). "Port" field with "Save port" (`settings.update`; no min or max on the field, so the command's own range sentence shows). "Make a new token" (`mcp.regenerateToken`).
 - Problem lines from `mcp.getConnectInfo`: "Port {port} is in use. Choose another."; "There is no access token. Make a new token."; "The MCP server could not start. Turn it off and on to try again." A refused command's message shows as a line too; a line equal to the state line is drawn once. Any successful agent-access command clears both refusal lines. After every command the section reads `mcp.getConnectInfo` again.
@@ -147,7 +147,7 @@ Built. `src/renderer/screens/settings/settings-screen.tsx` and one file per sect
 
 ### Agent runs
 
-Not built (Phase 2, after the agent-run commands). Design: a block below Agent access, shown whether or not the MCP server is on, file `src/renderer/screens/settings/agent-runs-section.tsx`.
+Not built (Phase 2, after the agent-run commands). Design: a block below Agent access, shown whether or not the MCP server is on, component folder `src/renderer/screens/settings/agent-runs-section/`.
 
 1. One checkbox per provider for which `agentRunsOffered` gives null, labelled "Let agents start runs with {label}", calling `agentRuns.setAllowed`, showing the command's refusal as other sections do.
 2. Under a provider whose `local` is false: "Paid. Each run an agent starts is charged to your account, with no click from you."
@@ -158,11 +158,11 @@ Whether the per-provider tick stays is open (OI-90; build default: yes, off). Th
 
 ## Key dialog
 
-Built. `src/renderer/dialogs/key/key-dialog.tsx`. Opens when a command returns `NEEDS_KEY` [REQ: FR-171]. Title "Add your {provider label} key", one password field per missing secret, "Save and continue" (saves each with `secret.set`, then the action is retried) and "Cancel". Keys are not tested when entered [REQ: FR-172].
+Built. `src/renderer/dialogs/key-dialog/`. Opens when a command returns `NEEDS_KEY` [REQ: FR-171]. Title "Add your {provider label} key", one password field per missing secret, "Save and continue" (saves each with `secret.set`, then the action is retried) and "Cancel". Keys are not tested when entered [REQ: FR-172].
 
 ## Hand test (dev)
 
-Built, throwaway. `src/renderer/dev/hand-test-screen.tsx`, `s3-settings-form.tsx`, `storage-actions.tsx`, `dropbox-sign-in.tsx`, `result-text.ts`. Not product UI.
+Built, throwaway. `src/renderer/dev/hand-test-screen/`, `s3-settings-form/`, `storage-actions/`, `dropbox-sign-in/`, `result-text.ts`. Not product UI.
 
 - Reachable from the shell only when `app.getState` says `devTools` (an unpackaged app started with `ADMAN_DEV_TOOLS=1`). It goes through the same IPC bridge, bus, key guard, key dialog, job runner and adapters as the real screens.
 - Heading "Hand test", line "Development tools only. Not part of the product."
@@ -215,7 +215,7 @@ Phases 1 and 2:
 
 - Navigation by one tab per open project, with Settings and Hand test as buttons beside the tabs (OI-31 is open).
 - Settings is shown in place of the tab panels, not as a tab or a window.
-- Every screen uses one shared stylesheet (`screens/screens.module.css`) of cards, rows and fields.
+- Screens share one layout stylesheet (`ui/layout.module.css`) of pages, sections, rows and fields; a class one component uses sits in its own module.
 - The brief summary is a plain definition list, the plainest form of the confirm step of FR-023.
 - The paid confirm is one line inside the panel, not the run confirmation dialog of Phase 4, and shows no paid-generation count (FR-230 waits for Phase 4).
 - Picture results are 160 px wide images in a row; the video result fills the panel's width.
@@ -223,6 +223,6 @@ Phases 1 and 2:
 - The variant list is a radio group with a text line per variant, not a grid of tiles.
 - The reference picker and the video card's picture choice are separate lists of the same pictures, with separate choices.
 - The local-provider reference sentence (OI-77) and the "<Picture 1>" hint (OI-89) are provisional wording.
-- The Claude Code line uses the default monospace font; a `--font-mono` token waits for the UI pass.
+- The Claude Code line uses the `--font-mono` token (a system monospace font list).
 - The check-result sentences are a local copy in `comfy-check-result.tsx` (F-11).
 - No crop preview for a first-frame picture.

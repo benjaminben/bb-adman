@@ -141,11 +141,11 @@ CREATE UNIQUE INDEX variant_grid ON variant(direction_id, size_label, language, 
 - The master is the variant named by `direction.master_variant_id`.
 - Default duration is 6000 ms. Default export frame rate is 30 (`DEFAULT_FPS`) [REQ: A-07]. Frame rate is an export choice and is not stored on a variant.
 
-**`agent_changed_at`** (wire `agentChangedAt`) [REQ: FR-239]. Not built (the writer): the column exists and is null for every variant, which is correct while no command bumps `variant.rev`.
+**`agent_changed_at`** (wire `agentChangedAt`) [REQ: FR-239]. Built: the column and its writer. No command bumps `variant.rev` yet, so the column is null for every variant.
 
-- It has one writer: the helper that bumps `variant.rev`, in `src/main/commands/variant-rev.ts`. When the command's actor is `agent`, the helper also sets `agent_changed_at` to the command's time. A command by the user never changes it, and undoing an agent's edit does not clear it.
+- It has one writer. `bumpVariantRev(ctx, variantId, now)` in `src/main/commands/variant-rev.ts` is the one way a command bumps `rev`: it adds one to `rev` inside the command's transaction and, only when the actor is the agent, sets `agent_changed_at` to `now`. A command by the user never changes it, and undoing an agent's edit does not clear it. Unit test: `tests/unit/main/commands/variant-rev.test.ts`, both actors.
 - Creating a variant does not set it; `created_by` records that. A variant made by an agent has `agentChangedAt: null`.
-- The helper is built by the first command that bumps `rev` (Phase 3's layer commands, or the Phase 4 handler that places a chosen option, whichever comes first), and tested there through that command, sent once as the user and once as the agent. Phase 10 adds no code for it. The export report reads it (Phase 8).
+- The first command that bumps `rev` (Phase 3's layer commands) adds the test through that command, sent once as the user and once as the agent. Phase 10 adds one test through an MCP tool and no code. The export report reads it (Phase 8).
 
 ### layer
 

@@ -4,8 +4,8 @@ How an outside agent (an MCP client such as Claude Code) reaches the app: the MC
 
 ## Status on `main`
 
-- **Built:** the server (`src/main/mcp/`), the token, the request checks, the on and off switch, the port, the Connect panel with one block, the Settings section "Agent access (MCP)", 4 tools (`get_project`, `list_assets`, `get_campaign`, `create_campaign`), the agent policy table with the `tick` value, and the fail-closed bus.
-- **Not built (Phase 2, agent-run slices):** the agent-run gate, the tick, the limit, the untick check, the Settings block "Agent runs", and the tools `list_projects`, `get_slots`, `get_job`, `list_jobs`, `generate_images`, `generate_video`, `cancel_job`. Today `agentPolicyFor` turns every `tick` row into `deny` (`src/main/commands/agent-policy.ts`), and `offeredWorkflow` refuses any actor that is not the user (`src/main/providers/comfyui/workflows/offered.ts`). So no agent can start or cancel a run yet.
+- **Built:** the server (`src/main/mcp/`), the token, the request checks, the on and off switch, the port, the Connect panel with one block, the Settings section "Agent access (MCP)", 8 tools (`list_projects`, `get_project`, `list_assets`, `get_campaign`, `create_campaign`, `get_slots`, `get_job`, `list_jobs`), the agent policy table with the `tick` value, and the fail-closed bus.
+- **Not built (Phase 2, agent-run slices):** the agent-run gate, the tick, the limit, the untick check, the Settings block "Agent runs", and the tools `generate_images`, `generate_video`, `cancel_job`. Today `agentPolicyFor` turns every `tick` row into `deny` (`src/main/commands/agent-policy.ts`), and `offeredWorkflow` refuses any actor that is not the user (`src/main/providers/comfyui/workflows/offered.ts`). So no agent can start or cancel a run yet.
 - **Not built (Phase 10):** bridge mode, the Claude Desktop block, the ask flow, the delete tools, `agent.activity`, and the other 4.5 tools.
 
 ## The MCP server (was 6.8)
@@ -47,7 +47,7 @@ Not built (Phase 10).
 
 ### Connect panel
 
-Built with one block. `src/renderer/screens/settings/mcp-section.tsx`, `connect-panel.tsx`.
+Built with one block. `src/renderer/screens/settings/mcp-section/`, `connect-panel/`.
 
 - Content comes only from `mcp.getConnectInfo`. The token may be shown in full [D-014].
 - The block to copy, for Claude Code: `claude mcp add --transport http adman http://127.0.0.1:{port}/mcp --header "Authorization: Bearer {token}"`. The user copies it into the agent. An agent never reads the token any other way.
@@ -69,23 +69,23 @@ Built. `src/main/mcp/token.ts`, `service.ts`, `sessions.ts`.
 
 ### Rules for every tool
 
-Built for the 4 tools that exist; every future tool follows them.
+Built for the 8 tools that exist; every future tool follows them.
 
 - Every tool that takes a `project_id` works only on projects open in the app [REQ: FR-201].
 - **Inputs.** A tool's input is its command's or query's own Zod schema, with top-level keys in snake_case and nested keys as the command has them (camelCase). That schema is the one owner. `project_id` reaches the command as `projectId`. Arguments that do not match the published input schema get the MCP SDK's own validation error before any command runs.
 - **Replies.** A reply is one MCP text content item holding JSON. A tool error is the command's own `code`, `message` and `details`, `INTERNAL` included, as an MCP tool error (`isError: true`).
-- **Every reply goes through an allow-list picker** in `src/main/mcp/tools/`. No reply passes a whole row through. Query targets are pinned to an allowed list (`tools/table.ts`); a tool name is never used as a command or query name.
+- **Every reply goes through an allow-list picker** in `src/main/mcp/tools/` (`read-replies.ts`, `project-replies.ts`, `agent-job-view.ts`). Each picker names every field it returns, so a field added to a row later cannot leave without a change there. No reply passes a whole row through. Query targets are pinned to an allowed list (`tools/table.ts`); a tool name is never used as a command or query name. Still open: `create_campaign` runs a command, and its reply has no picker yet.
 - **What a reply to an agent may never hold** [REQ: FR-198]: file contents; file or folder paths; settings; keys; the MCP access token (the agent sends it on each request, and no reply ever contains it); the ComfyUI address; a tick or the limit; the server's own words. Display names of assets may appear (`list_assets` gives them); a path may not. A file-system error is not an `AppError`, so the bus returns the fixed `INTERNAL` reply with no error text.
 - **Tool descriptions.** Every tool that starts a run, and every tool that puts an asset on a layer, carries this sentence (final words are owned by the slice that builds the tool): "A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose." [D-059 item 5]. No command refuses an agent's pick.
 
 ### The tool table
 
-25 tools. "Phase 2" means the agent-run slices; they are the next work. Policy is the agent policy of the command the tool runs (see 'Agent policy table').
+25 tools, 8 built. "Phase 2" means the agent-run slices; they are the next work. Policy is the agent policy of the command the tool runs (see 'Agent policy table').
 
 | Tool | Runs | Input | Output | Policy | Status | Requirements |
 |------|------|-------|--------|--------|--------|--------------|
-| `list_projects` | query `project.listOpen` (new) | — | Open projects: `id`, `name` | allow | Not built (Phase 2) | FR-192, FR-201 |
-| `get_project` | query `project.get` | project_id | Subjects, campaign summaries | allow | Built | FR-192 |
+| `list_projects` | query `project.listOpen` | — | Open projects: `id`, `name` | allow | Built | FR-192, FR-201 |
+| `get_project` | query `project.get` | project_id | Project meta, subjects, campaign summaries, missing asset count | allow | Built | FR-192 |
 | `list_subjects` | a subject list (query named in Phase 10) | project_id | id, name, description, attached asset IDs | allow | Not built (Phase 10) | FR-192 |
 | `list_assets` | query `asset.list` | project_id, library?, kind?, subject_id? | id, display name, kind, library, subject ID, width, height, duration, font family | allow | Built | R-11 |
 | `get_campaign` | query `campaign.get` | project_id, campaign_id | Campaign fields, rule set, directions, variant summaries with badges | allow | Built | FR-192 |
@@ -103,28 +103,28 @@ Built for the 4 tools that exist; every future tool follows them.
 | `get_check_results` | the latest check results (query named in Phase 10) | project_id, campaign_id | Latest results per variant | allow | Not built (Phase 10) | FR-196 |
 | `delete_variant` | command `variant.delete` | project_id, variant_id | — | ask | Not built (Phase 10) | FR-197 |
 | `delete_campaign` | command `campaign.delete` | project_id, campaign_id | — | ask | Not built (Phase 10) | FR-197 |
-| `get_slots` | query `template.slots` | project_id, campaign_id | Per slot of the master variant: `slotId`, `type`, `state` (`filled` or `empty`), `candidates` (asset IDs) | allow | Not built (Phase 2) | FR-192, D-080 |
+| `get_slots` | query `template.slots` | project_id, campaign_id | Per slot of the master variant: `slotId`, `type`, `state` (`filled` or `empty`), `candidates` (asset IDs) | allow | Built | FR-192, D-080 |
 | `generate_images` | command `generation.runImages` | The command's input as built: project_id, variant_id, slot or layer_id, prompt, reference_asset_ids, count, provider | `{ jobId }` | tick | Not built (Phase 2) | FR-062, FR-279, D-080 |
 | `generate_video` | command `generation.startVideo` | The command's input as built: project_id, variant_id, prompt, duration_ms, provider, start, use_references, reference_asset_ids | `{ jobId }` | tick | Not built (Phase 2) | FR-262, FR-279, D-080 |
-| `get_job` | query `job.get` (new) | project_id, job_id | The job view (below) | allow | Not built (Phase 2) | FR-279, D-080 |
-| `list_jobs` | query `job.list` | project_id, campaign_id?, variant_id?, state?, limit? | The job view per job, newest first | allow | Not built (Phase 2) | FR-279, D-080 |
+| `get_job` | query `job.get` | project_id, job_id | The job view (below) | allow | Built | FR-279, D-080 |
+| `list_jobs` | query `job.list` | project_id, campaign_id?, variant_id?, state?, limit? | The job view per job, newest first | allow | Built | FR-279, D-080 |
 | `cancel_job` | command `job.cancel` | project_id, job_id | `{ jobId }` | tick (own runs only) | Not built (Phase 2) | FR-281, D-080 |
 
 Each new tool maps one to one to its command or query, with an allow-list reply picker, and the tool-list snapshot is updated.
 
 ### Notes on single tools
 
-- **`list_projects`.** New query `project.listOpen`: `{ id, name }[]` for open projects only, never `filePath`. Agent policy allow.
-- **`get_project`, `get_campaign`.** Not built: allow-list pickers over today's fields, so a field added later (a path, say) cannot leave. Until then the reply-keys test guards them.
-- **`list_assets`.** Cut to the nine fields above by an allow-list (`assetFields` in `tools/table.ts`), so no file path is returned.
+- **`list_projects`.** Query `project.listOpen`: `{ id, name }[]` for open projects only, never `filePath`. Agent policy allow. `app.getState.openProjects` is not wrapped, since it carries `filePath`.
+- **`get_project`, `get_campaign`.** Allow-list pickers over today's fields (`projectFields`, `campaignFields` in `tools/project-replies.ts`), so a field added later to a campaign, variant, subject, rule set or direction row (a path, say) cannot leave. Whether `get_project` keeps `meta` and `missingAssetCount` is LP-7 (`spec/phases/review-leftovers.md`).
+- **`list_assets`.** Cut to the nine fields above by an allow-list (`assetFields` in `tools/read-replies.ts`), so no file path is returned.
 - **`create_campaign`.** OI-25 is open: whether, when the agent sends no sizes or languages, the tool falls back to the brief's own values, then the three default sizes and the region table's language, or requires both. Phase 10 builds the fallback unless told otherwise.
 - **`get_slots`** reads `template.slots` (`src/main/queries/template.ts`) for the campaign's master variant, from `slot.id`, `slot.type`, the slot's state and its candidate asset IDs.
-- **`get_job` and `list_jobs`.** New query `job.get` (a job ID unknown in the project gives `NOT_FOUND`); `list_jobs` runs over `job.list` (`src/main/queries/job.ts`). The `get_job` description asks the agent to poll no more than once every 5 seconds. Both replies are built by `agentJobView(row, providers)`, its own file in `src/main/mcp/tools/`, which gives exactly:
+- **`get_job` and `list_jobs`.** `get_job` runs query `job.get` (a job ID unknown in the project gives `NOT_FOUND` "That job was not found."); `list_jobs` runs over `job.list` (`src/main/queries/job.ts`). `list_jobs` leaves out the `layer_id` filter of `job.list` on purpose. The `get_job` description tells the agent to poll no more than once every 5 seconds. Both replies are built by `agentJobView(row, providers)` in `src/main/mcp/tools/agent-job-view.ts`, which names every field an agent sees of a job:
   - `id`, `kind`, `status`, `startedBy`, `campaignId`, `variantId`, `layerId`, `slot`, `progress`, `paidCalls`, `seenAt`, `errorKind`, `errorReason`, `createdAt`, `updatedAt`;
-  - `stage` and `queuePosition` from `result`, only when a string and a whole number;
+  - `stage` and `queuePosition` from `result`, only when a string and a whole number; otherwise left out;
   - `assetIds`: `result.assetIds` for a picture job, `[result.assetId]` for a video job, else `[]`, strings only;
-  - `failures` for a picture job: error kind to count;
-  - `message`: for an `errorReason`, the `reasonMessage` sentence with `{address}` replaced by "the saved ComfyUI address" and `{n}` by "some"; else for an `errorKind`, `plainMessage(kind, provider label)`; else null.
+  - `failures` for a picture job only: known error kind to count;
+  - `message`: for an `errorReason`, the `reasonMessage` sentence with `{address}` replaced by "the saved ComfyUI address" and `{n}` by "some"; else for an `errorKind`, `plainMessage(kind, provider label)`, where a provider this build does not list is called "The provider"; else null.
   - Left out: `provider`, `model`, `remoteJobId`, `request`, and the rest of `result`. A failed run is reported to the agent in the app's own words.
 - **`generate_images`, `generate_video`.** Reply `{ jobId }` only. Refusals are returned as the command gives them. The two start tools run one at a time through one `createSerial()` (`src/main/mcp/serial.ts`), made once when `toolSetup` is called and shared by every session; the bus is not changed for this. Descriptions say: the run makes options for the user to choose from, so leave the choice to the user unless asked; `provider` is `comfyui` (the user's own ComfyUI server, no charge) or `gemini` (pictures only; paid, charged to the user's Google account with no click); runs are refused unless the user allowed agents for that provider in Adman's Settings. `generate_video`'s description names the three starts (from a prompt, from a first-frame picture, with a reference picture; the shapes are in `spec/api-commands.md`) and says a picture is named by an asset ID from `list_assets`.
 - **`cancel_job`.** Only a run the agent started (`spec/agent-runs.md`, 'Gate steps for a run').
@@ -219,7 +219,8 @@ In `tests/integration/mcp/`, unless named otherwise. The tests the agent-run sli
 - `server.test.ts`: binds `127.0.0.1` only; port taken; missing or wrong token gets 401 and reaches no session or command; any `Origin` and a wrong `Host` get 403 even with the right token; both allowed `Host` values open a session; actor is `agent` whatever the headers and arguments say; turning off closes the listener and forgets every session; another path gets 404.
 - `secret-leak.test.ts`: calls every listed tool, with good and bad arguments, with the ComfyUI address and an asset path planted; no secret (`mcp.token` included, old and new) appears.
 - `reply-keys.test.ts` (`riskyKeys`): no reply key named like a path, address or secret.
-- `tool-list.test.ts`: a snapshot of the tools built so far.
+- `tool-list.test.ts`: a snapshot of the tools built so far (8).
+- `read-tools.test.ts`: `list_projects` gives only `id` and `name`; `get_slots` gives its four fields per slot; `get_job` and `list_jobs` give the job view and nothing outside it, over a job row with every column filled; an unknown job ID or campaign gives `NOT_FOUND` as a tool error; a failed job's `message` holds "the saved ComfyUI address" and not the stand-in's origin; the `get_job` description says to poll no more than once every 5 seconds. Unit tests: `tests/unit/main/mcp/tools/agent-job-view.test.ts`; query: `tests/integration/queries/job-get.test.ts`.
 - `mcp.getConnectInfo` refuses an agent (`tests/integration/queries/mcp-connect-info.test.ts`).
 
 ## Open items

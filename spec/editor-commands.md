@@ -18,14 +18,7 @@ Everything here is Not built (Phase 3). Schemas: `src/shared/schemas/commands/la
 
 ### New refusals
 
-Rows to add to the reason table of `spec/api-principles.md`:
-
-| Case | Code | `details.reason` | Message |
-|------|------|------------------|---------|
-| `layer.delete`, `layer.reorder` naming the background layer | `RULE_VIOLATION` | `background_layer` | "The background layer stays at the bottom and cannot be deleted." |
-| A layer command naming an asset in the reference library | `RULE_VIOLATION` | `reference_library` | "This file is in the reference library. Move it to the asset library to use it on a post." |
-| `layer.restore`: a layer with that ID or key is already in the variant | `RULE_VIOLATION` | `layer_exists` | "That layer is already there." |
-| `variant.render`: the draw failed or timed out | `RULE_VIOLATION` | `render_failed` | "The picture could not be drawn. Try again." |
+Four reasons are new with these commands: `background_layer`, `reference_library`, `layer_exists` and `render_failed`. Their cases, codes and messages are in the reason table of `spec/api-principles.md`.
 
 Fixed messages with no reason: "That layer was not found." (`NOT_FOUND`); "That variant was not found." (`NOT_FOUND`); "Only a text layer has text." (`INVALID_INPUT`, `copy` on another type); "A text layer has no picture." (`INVALID_INPUT`, `source` on a text layer); "Those style values do not fit this layer." (`INVALID_INPUT`); "Only text layers can have an entrance or exit animation." (`INVALID_INPUT`); "List every layer of the variant once, without the background." (`INVALID_INPUT`, `layer.reorder`).
 

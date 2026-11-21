@@ -1,105 +1,17 @@
 # Phase 2 leftovers
 
-Every piece of Phase 2 work that is not on `main`, in a proposed build order. Group 3 (agents generate through the MCP server) is in `spec/phases/phase-02-agent-generation.md`.
+Every piece of Phase 2 work that is not on `main`, in a proposed build order. Group 1 (renderer layout and the styling source) is built. Group 3 (agents generate through the MCP server) is in `spec/phases/phase-02-agent-generation.md`.
 
 `[UI]` work is built now, with its logic (D-084). Every screen follows the renderer layout rule in `spec/structure.md` and takes all styling from the shared tokens.
 
 Work that belongs with a later phase is in that phase's file: Dropbox (slice G) in Phase 9; the fal.ai Seedance adapter (slice J) in Phase 7; extending a background (CU-8 and the extend job) in Phase 5; the remaining MCP tools, bridge mode and the ask flow in Phase 10.
 
-## Group 1 — Renderer layout and design tokens
-
-Run first, because it touches every renderer file and D-084 makes modular components the base for all later screen work. Exception: see the target date in `phase-02-agent-generation.md`.
-
-### LO-1b — One folder per component
-
-- **Class:** D. Not security class.
-- **Depends on:** the `@/` alias (built). Its own worktree from `main`, with no other renderer slice open.
-- **Done when:**
-  - Each component file is moved with `git mv` into its folder per the renderer layout rule (`spec/structure.md`), with an `index.ts` that only re-exports, and imports point at the folder. No component, export or test file is renamed. No test file moves.
-  - `screens/screens.module.css`, `app/app-shell.module.css` and `dialogs/key/key-dialog.module.css` are split: each class goes to the module of the one component that uses it, or to `ui/layout.module.css` if two or more use it. Class names and rules do not change. `screens/screens.module.css` and `app/app-shell.module.css` are deleted.
-  - No behaviour change: no text, markup, class rule, prop or logic change. Tests are edited for import paths only. Any other test change means stop and report.
-- **Target tree** (each name ending in `/` inside a screen, `app/`, `dialogs/` or `dev/` is a component folder):
-
-```
-src/renderer/
-├── main.tsx
-├── app/            app.tsx, app-context.tsx, app-shell/, error-banner/
-├── screens/
-│   ├── start/          start-screen/, new-project-form/, recent-projects/
-│   ├── settings/       settings-screen/, keys-section/, key-row/, location-setting/,
-│   │                   provider-defaults/, comfy-section/, comfy-check-result/,
-│   │                   mcp-section/, connect-panel/
-│   ├── project-home/   project-home/ (with use-project.ts), brief-load/, brief-summary/,
-│   │                   campaign-list/, campaign-input.ts
-│   └── campaign/       campaign-view/, generate-panel/, paid-confirm/, reference-picker/,
-│                       run-list/, run-row/, run-result/, variant-list/,
-│                       video-panel/, video-result/, video-picture-choice/,
-│                       reference-list.ts, video-length.ts, video-start.ts, video-status.ts
-├── dialogs/        key-dialog/
-├── dev/            hand-test-screen/, s3-settings-form/, dropbox-sign-in/, storage-actions/,
-│                   result-text.ts
-├── stores/         unchanged
-└── ui/             tokens.css, base.css, layout.module.css, asset-url.ts, secret-labels.ts
-```
-
-  - The four campaign helpers are shown as plain files in the screen folder. A helper used by one component only moves inside that component's folder instead. The developer checks each and says where it went.
-- **Checks:** class D over all of `tests/unit/renderer/`, plus the built-page test in `tests/build/` (a wrong CSS import shows only in the build).
-- **State on `main`:** `src/renderer/` is flat; `screens/screens.module.css` and `dialogs/key/` exist; there is no `ui/layout.module.css`.
-
-### LO-1c — One styling source
-
-D-084: all styling comes from one set of shared tokens that can change every component at once. This slice is a proposal written for this plan; the old spec had only the token file and the `--font-mono` note.
-
-- **Class:** D. Not security class. After LO-1b.
-- **What exists on `main`:**
-  - `src/renderer/ui/tokens.css`: colour tokens (`--color-bg`, `--color-surface`, `--color-border`, `--color-text`, `--color-text-muted`, `--color-accent`, `--color-accent-text`, `--color-danger-bg`, `--color-danger-text`, `--color-focus`), `--radius`, spaces `--space-1` to `--space-4` and `--space-6` (4, 8, 12, 16, 24 px), `--font-body` and one `--font-size` (14px). Its head comment calls the values placeholders until a design hand-off; under D-084 it is the styling source.
-  - `src/renderer/ui/base.css`: element defaults.
-  - One-off values outside the tokens: `font-size: 16px`, `max-width: 960px` and `minmax(320px, 1fr)` in `screens/screens.module.css`; `rgb(0 0 0 / 40%)` and `min(440px, 90vw)` in `dialogs/key/key-dialog.module.css`; border and outline widths of `1px` and `2px` in several files.
-  - No `--font-mono` token. The Connect line uses the browser's default monospace font.
-- **Done when:**
-  - `tokens.css` gains a small type scale (at least body and heading sizes), `--font-mono`, an overlay colour, border and focus-ring widths, and the layout widths now written as one-off values. The head comment says this file is the one styling source (D-084).
-  - Every one-off value above is replaced by a token. The Connect line uses `--font-mono`.
-  - One test reads every `.css` file under `src/renderer/` other than `tokens.css` and fails on a colour literal (hex, `rgb`, `hsl`) or a length in `px` other than `0`. A rule that truly needs a literal names it in an allow-list inside the test, with a reason.
-  - No visible change except the Connect line's font.
-
 ## Group 2 — Small fixes and helpers
-
-### The `variant.rev` helper (`agent_changed_at`)
-
-- **What:** one helper in `src/main/commands/variant-rev.ts` that bumps `variant.rev` and, when the actor is the agent, also stamps `variant.agent_changed_at`. Every command that bumps `variant.rev` uses it [REQ: FR-239].
-- **State on `main`:** the column exists (`src/main/db/schema/variant.ts`, migration `0001_agent_changed_and_job_target.sql`); nothing under `src/main` writes `agentChangedAt`; the helper file does not exist.
-- **Tests:** a unit test of the helper here, for both actors. The first command that bumps `variant.rev` (Phase 3's layer commands, or Phase 4's handler that places a chosen option, whichever comes first) adds the test through that command, sent once as the user and once as the agent. Phase 10 adds one test through an MCP tool.
-- **Class:** B.
 
 ### "After the test" list
 
-One short run in the main folder, class B, unless an item says otherwise. State is as checked on `main`.
+One short run in the main folder, class B, unless an item says otherwise. State is as checked on `main`. F-1 to F-6, F-10 and F-14 to F-17 are built.
 
-- **F-1. Make the runner-close test real.** Not built.
-  - In `tests/integration/jobs/runner-close.test.ts`, the test "a close that returned leaves the file free to run jobs when opened again" today closes a project with no running job, so `cancelAll` never runs and it passes with the `finally` removed. It must start with:
-    ```ts
-        const x = fixture()
-        const g = gate()
-        x.f.body = async () => g.promise
-        await running(x, { provider: 'no-cancel' })
-        expect((await close(x)).ok).toBe(true)
-        g.open()
-        x.f.body = async () => ({ done: true })
-    ```
-    in place of `const x = fixture()` / `expect((await close(x)).ok).toBe(true)`. Nothing else changes.
-  - The developer then removes the `finally` line `state.closing.delete(projectId)` in `close-jobs.ts` by hand, shows the test fails, puts it back, and reports. If the test does not fail without the line, stop and report.
-- **F-2. `brief.parse` refuses a relative path.** Not built.
-  - `src/main/commands/brief/parse.ts`: a `filePath` for which `path.isAbsolute` is false is refused with `INVALID_INPUT` and the message "The file path must be absolute.", before any read.
-  - Test in `tests/integration/campaigns/brief-parse.test.ts`: a relative path to a brief that exists gives `INVALID_INPUT`; an absolute path to the same file is parsed.
-- **F-3.** Built (the two-part upload wait, as slice RF-1). Nothing left.
-- **F-4. Client test gaps.** Tests only. Not built.
-  - The header test (titled "on every call", but running 3 of the 11 client functions) and the redirect test (running only `systemStats`) each run over every function of `tests/helpers/comfy-every-call.ts`, with their assertions unchanged.
-  - One new test: `history` answers null on a 404.
-- **F-5. `isMaster` from the variant's own direction.** Not built.
-  - `src/main/queries/campaign.ts`: `isMaster` is true only when the variant's own direction's `masterVariantId` names it. Today it is true when any direction of the campaign names it. One line, no new test.
-- **F-6. Count every table in two tests.** Tests only. Not built.
-  - `campaign-delete.test.ts` and `campaign-get.test.ts`: the "every row is still there" and "writes nothing" checks count every table of the project file, through one helper that walks the table list (today they count 2 and 6 tables).
-  - In `campaign-get.test.ts` the job-mark test gains a job that carries both the variant's ID and the campaign's ID and sets both marks. Its name says that a job with only `variant_id` does not set the campaign's mark. No other assertion changes.
 - **F-7. Parser reading pass.** **Security class** (low). Not built.
   - A reading pass over `src/main/`: every call that parses text from a project file, a settings file, a brief or a server (`JSON.parse`, the YAML reader, any other parser). For each, say whether its error can reach `errorContext` with a piece of that text in its message.
   - Each one that can is wrapped the way `parsedJson` is: its own error, naming the place only, no cause, with one test. `errorContext` itself keeps logging `message` and `stack`.
@@ -110,27 +22,10 @@ One short run in the main folder, class B, unless an item says otherwise. State 
 - **F-9. `toPng` on a reference before a ComfyUI upload.** Waits for a ruling.
   - Whether a reference picture passes through `toPng` before upload, so the bytes match the `.png` name and nothing the user's file carries beside the picture is sent. It needs `toPng` reachable from `AdapterContext`, which it is not today.
   - Also covers a JPEG named `.png` that `LoadImage` fails on. The JPEG pass of the ComfyUI harness waits for it.
-- **F-10. The job store keeps a later row.** Not built.
-  - `src/renderer/stores/job-store.ts`, `load`: when a `job.list` reply holds a row whose ID the store already holds with a later `updatedAt`, the store keeps its own row. On equal `updatedAt` the store's row is kept. So a late list reply cannot turn a finished run back to "Working".
-  - One test in `tests/unit/renderer/stores/job-store.test.ts`: a `job.updated` that lands while a `job.list` read is open, with a later `updatedAt` than the reply's row, is still shown after the reply.
 - **F-11. Settings check sentences from one owner.** Not built. With F-12.
-  - `src/renderer/screens/settings/comfy-check-result.tsx` imports the six check sentences from `src/shared/providers/messages.ts` and holds no copy. The existing tests pin the text and do not change. If `messages.ts` lacks one of the six, stop and report.
+  - `src/renderer/screens/settings/comfy-check-result/comfy-check-result.tsx` imports the six check sentences from `src/shared/providers/messages.ts` and holds no copy. The existing tests pin the text and do not change. If `messages.ts` lacks one of the six, stop and report.
 - **F-12. `redirect_refused` in the Settings check.** Waits for a ruling.
   - The sentence "The server tried to send Adman to another address. Adman did not follow, and the run was stopped." reads oddly in the Settings check, where there is no run. Reword it, or give it a Settings form, together with F-11, so the wording has one owner.
-- **F-14. The two refusal sentences into shared messages.** Not built.
-  - Move "ComfyUI cannot make this kind of picture yet." and the reference-limit sentence from `src/main/commands/generation/comfy-checks.ts` into `src/shared/providers/messages.ts`. `comfy-checks.ts` imports them.
-  - The second gets a real plural: "ComfyUI takes one reference picture for this run." when the most is 1, else "ComfyUI takes at most {max} reference pictures for this run." Tests pin both.
-- **F-15. Cancel outcomes for ComfyUI pictures.** Not built.
-  - Today a ComfyUI picture cancel always ends `stopped`: `run.ts` throws `ProviderCancelled` right after `cancelOwnRun`.
-  - In `src/main/providers/comfyui/run.ts` and `cancel.ts`: on `finished`, fetch and return the picture (a job is never shown as cancelled when its result arrived); on `unknown`, keep polling under the run's own limits, so the runner's wait decides.
-  - Tests in `tests/unit/main/providers/comfyui/image-cancel.test.ts` for each.
-- **F-16. A 5xx poll answer is a failed poll.** Not built.
-  - `src/main/providers/comfyui/poll.ts`: a 5xx answer to a poll is a failed poll, retried until the 5-minute limit, then `lost_contact`. Today only an `offline` failure counts, so one 500 answer ends a run. Applies to video polling too.
-  - Tests: three 500 answers then a result succeeds; 500 for over 5 minutes gives `lost_contact`.
-- **F-17. Missing tests.** Not built.
-  - A picture run whose history holds `execution_interrupted` gives `server_stopped` (in `image-failures.test.ts`; today only the video tests cover it).
-  - The test that searches requests for the address marker searches headers too (today paths, queries and bodies).
-  - One whole picture run that ends with reason `certificate` (today only `checkFailure` is tested).
 - **F-18. Stand-in fixtures from the real server.** Tests only. Partly done.
   - After real ComfyUI runs, correct CU-4's hand-made stand-in fixtures to the shapes the real server showed. The Flux run showed the picture history shape holds. Still to check: the job-state status words and the video history entry, after a real video run.
   - If a real shape breaks a client schema, stop and report: that is a client change, ruled on its own.
@@ -167,16 +62,9 @@ One short run in the main folder, class B, unless an item says otherwise. State 
   - Approved change: the existing test that a WebP reference is refused before any job row (commit 1882e20) now expects the run to be accepted.
 - Until it merges, the WebP reference refusal stays as a stopgap.
 
-### CU-2b — Two proofs on a real process
-
-- **Security class.** One short run. Depends on CU-2 (merged). Not built.
-- (a) An HTTPS stand-in with a self-signed certificate, made at test time by `openssl` into a temporary folder. With `NODE_TLS_REJECT_UNAUTHORIZED=0` set, the ComfyUI client still refuses it with reason `certificate`. The test skips itself with one line where `openssl` is not installed, and must run on at least one CI system. No PEM key goes into the repository.
-- (b) A child process started with `NODE_USE_ENV_PROXY=1` and `HTTP_PROXY` pointing at a second local stand-in: the request reaches the pinned stand-in, and the second one sees no connection.
-- If either cannot be done without a new package, stop and report. If either proof fails, it is a security finding and the architect rules before any release.
-
 ### Hand-test file picker (slice I part 2, only if OI-64 keeps it)
 
-- The text field "File to upload (full path)" in `src/renderer/dev/storage-actions.tsx` becomes a "Choose a file" button that calls `dialog.pickFiles` and sends the path it gives to `dev.storage`. `dev.storage` does not change.
+- The text field "File to upload (full path)" in `src/renderer/dev/storage-actions/storage-actions.tsx` becomes a "Choose a file" button that calls `dialog.pickFiles` and sends the path it gives to `dev.storage`. `dev.storage` does not change.
 - Whether slice I part 2 and CU-8 are still wanted is OI-64. The hand-test screen is removed in Phase 9 anyway.
 
 ### TP-2 end-to-end test
@@ -186,6 +74,7 @@ One short run in the main folder, class B, unless an item says otherwise. State 
 
 ### ComfyUI follow-ups
 
+- **F-19. An interrupted run marked `error`.** `endedEntry` in `src/main/providers/comfyui/run.ts` checks `status_str === 'error'` before it looks for an `execution_interrupted` message. If the real server marks an interrupted run `error`, a run stopped on the server ends `run_failed` instead of `server_stopped`. Fix: look for `execution_interrupted` first, with one test whose entry has `status_str: 'error'` and that message, for a picture run and a video run. Built with CU-5b, whose real cancel run shows what the server writes.
 - **CU-5b, the rest of `test:comfy`.** Add the cancel case, the four-runs-at-once case, and anything else the real-server harness list (`spec/testing.md`) names that is not yet in `tests/comfy/`. Change the `hideAddress` printing in `tests/comfy/print.ts` to `cleanServerText`. The ruling on B-1 (single check items marked "could not check" instead of failing the whole check) is made with CU-5b, from what the real server showed. A names-only view of raw server answers (key names, never values) needs a change to the ComfyUI client and is **security class**.
 - **CU-9, live progress.** **Security class.** Class E. Depends on CU-4 (built). Owns `src/main/providers/comfyui/live.ts`. It reports "how far along" from ComfyUI's live connection [REQ: FR-269]. It listens only. A run never depends on it: on failure the run carries on by polling.
   - Conditions checked first and reported before any code: Electron's main process has a built-in `WebSocket`; it does not follow a redirect; it sends no `Origin`; one incoming message's size can be limited (text messages kept under 64 KiB, every binary message dropped). If any fails, stop; the architect rules; no package on the developer's own decision.
@@ -225,7 +114,7 @@ No later ruling cut this. It was only on the cut line for the stakeholder's test
 - **Done when:** starting a picture or video run, or a retry, with a workflow whose `licence.commercialNote` is not null shows the dialog described in `spec/comfyui-workflows.md`, "Licence text" ("Commercial-licence dialog"). Cancel starts nothing. Confirm starts the run. The "don't show again for {model}" box saves the model in the settings value `licenceConfirmed`, and Settings lists confirmed models with "Forget". The main process refuses a run of such a workflow that carries no `licenceConfirmed: true` and whose model is not in the saved list, with reason `licence_not_confirmed`, for the user and for an agent.
 - **Touches:** the settings schema and its "every key" tests (one new key, an approved edit), `generation.runImages`, `generation.startVideo`, `job.retry` and their input schemas, the reason table in `src/shared/providers/messages.ts`, the generate panel, the video card, the run row's Retry, a new `licence-dialog` component, the ComfyUI section of Settings.
 - **Tests:** the dialog shows for H3 and FLUX 3 klein and not for MOSS; Cancel sends no command; Confirm sends the run with `licenceConfirmed: true`; a ticked box saves the model and the next run shows no dialog; "Forget" brings the dialog back; the command refuses without the flag and accepts with it or with the saved model; an agent's run is refused until the model is saved; one offline end-to-end case.
-- **Depends on:** group 1. Runs with or after TP-4a (both edit the generate panel and the run row). If the agent-run gate is built first, the gate's tests gain the refusal case.
+- **Depends on:** nothing unbuilt. Runs with or after TP-4a (both edit the generate panel and the run row). If the agent-run gate is built first, the gate's tests gain the refusal case.
 
 ## Group 5 — Phase 2 screens never built
 

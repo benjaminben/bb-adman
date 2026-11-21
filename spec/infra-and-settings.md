@@ -60,7 +60,7 @@ On every push and pull request, with `permissions: contents: read`:
 
 Not built yet:
 
-- **Scene reference-picture tests** on macOS and Windows: a push step, Not built (Phase 3, with the Scene).
+- **Scene reference-picture tests** on macOS and Windows: a push step that runs them in Playwright (Electron and the render window), not in Vitest (`spec/testing.md`, "Reference pictures"). Not built (Phase 3, with the Scene).
 - **Licence check**: Not built (Phase 11). Fails on GPL or AGPL packages, on push and on tags from then on. Comes with `LICENSE` and `THIRD-PARTY-NOTICES.md`.
 - **Tag pipeline** on `v*`: Not built (Phase 11).
 

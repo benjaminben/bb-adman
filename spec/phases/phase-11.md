@@ -30,7 +30,7 @@ Bullets carry `[logic]` or `[UI]`; both are built in their phase (D-084). This p
   - OI-23: on macOS, closing the window quits the app (as built), or the app stays in the Dock.
   - OI-26: the window opens maximized on every launch (as built, recommended), or reopens at the last size and place.
   - OI-27: the approved install scripts (`esbuild` in three versions, `electron-winstaller`) stay approved, or a run with all four denied is wanted. Approvals stand until told otherwise.
-- **Security findings that block a release:** a failed CU-2b proof (Phase 2 leftovers) must be ruled on before any release.
+- **Security findings that block a release:** a failing real-process proof (`client-certificate.test.ts`, `client-proxy.test.ts`; `spec/comfyui.md`) must be ruled on before any release.
 
 ## Not designed yet
 

@@ -28,7 +28,7 @@ The spec is split into small files so that a reader loads only what a task needs
 |------|-------|
 | `spec/overview.md` | Where the spec departs from the requirements, architecture, component map, technology stack |
 | `spec/adrs-and-glossary.md` | Architecture decision records ADR-001 to ADR-013, glossary |
-| `spec/structure.md` | Folder tree, module and code rules, the renderer layout rule (`@/` alias, one folder per component) |
+| `spec/structure.md` | Folder tree, module and code rules, the renderer layout rule (`@/` alias, one folder per component, one styling source) |
 | `spec/data-model.md` | Where data lives, ID formats, the project-level tables (project, subject, asset, job, report, checks) |
 | `spec/data-model-campaign.md` | Campaign, sizes, rule set, direction, variant, layer and background clip |
 | `spec/data-rules.md` | Links, follow rules and sync, fan-out, data flow, caching, migrations, package project, format change |
@@ -61,7 +61,8 @@ The spec is split into small files so that a reader loads only what a task needs
 | File | Holds |
 |------|-------|
 | `spec/phases/README.md` | The build order, the topic files each phase needs, the rules for every phase |
-| `spec/phases/phase-02-leftovers.md` | Phase 2 work not built: renderer layout and styling source, small fixes, ComfyUI failure screens, Phase 2 screens |
+| `spec/phases/DEV-RULES.md` | What every developer run reads first: where things are, the rules the same for every slice |
+| `spec/phases/phase-02-leftovers.md` | Phase 2 work not built: small fixes, ComfyUI follow-ups, ComfyUI failure screens, Phase 2 screens |
 | `spec/phases/phase-02-agent-generation.md` | Agents generate through the MCP server [D-080] |
 | `spec/phases/review-leftovers.md` | Review findings not yet handled, sorted: fix now, fix with a later phase, test gaps |
 | `spec/phases/phase-03.md` to `phase-11.md` | One file per phase: goal, scope, exit criteria, work carried in, what is not designed yet |

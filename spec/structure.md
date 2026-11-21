@@ -51,14 +51,14 @@ project-root/
 │   ├── renderer/                  # app window (React). Files: "Renderer files on main" below
 │   │   ├── main.tsx, index.html, env.d.ts; render.html (Phase 3)
 │   │   ├── render-worker/         # the render window's page: main.tsx, render-root/ (Phase 3)
-│   │   ├── app/                   # app.tsx, app-context.tsx, app shell, error banner
+│   │   ├── app/                   # app.tsx, app-context.tsx, app-shell/, error-banner/
 │   │   ├── stores/                # app-store.ts, project-store.ts (one per open project), job-store.ts (one per campaign page);
 │   │   │                          #   nav-store.ts, variant-store.ts (one per open variant tab) (Phase 3)
 │   │   ├── dev/                   # the hand-test screen. Not product UI; removed in Phase 9
 │   │   ├── screens/               # start, project-home, campaign, settings; editor screens (Phase 3)
-│   │   ├── dialogs/               # key; brief-confirm, slots, generation, run-confirm, fan-out, sync-review, export,
-│   │   │                          #   publish, report, agent-permission, relink (later phases)
-│   │   ├── ui/                    # tokens.css, base.css, asset-url.ts, secret-labels.ts; shared controls;
+│   │   ├── dialogs/               # key-dialog/; brief-confirm, slots, generation, run-confirm, fan-out, sync-review,
+│   │   │                          #   export, publish, report, agent-permission, relink (later phases)
+│   │   ├── ui/                    # tokens.css, base.css, layout.module.css, asset-url.ts, secret-labels.ts; shared controls;
 │   │   │                          #   shortcuts.ts, variant-thumbnail/ (Phase 3)
 │   │   ├── editor/                # the editor's components and helpers (Phase 3; tree in spec/editor.md); timeline (Phase 7)
 │   │   └── panels/                # activity (Phase 4)
@@ -166,7 +166,7 @@ Built. Stakeholder's standing rules.
 ## Naming
 
 - Files and directories: kebab-case.
-- React components: PascalCase named exports in kebab-case files. Target folder layout: "Renderer component layout" below.
+- React components: PascalCase named exports in kebab-case files, one folder each: "Renderer component layout" below.
 - Environment variables: UPPER_SNAKE_CASE.
 - Database tables and columns: snake_case.
 - Commands and queries: `domain.action` in camelCase.
@@ -178,7 +178,7 @@ Not built (Phase 11). [REQ: FR-180]: what the app is; download and first-launch 
 
 ## Renderer component layout
 
-The target, decided by the stakeholder [D-069, D-072, D-073]. The `@/` alias is built. The move into one folder per component is not built: on `main` the renderer is still flat (`screens/campaign/generate-panel.tsx`), shares `screens/screens.module.css`, keeps the key dialog in `dialogs/key/`, and has no `ui/layout.module.css`. Until the move lands, the flat files and `screens/screens.module.css` stay. The rule changes no behaviour.
+Built, as decided by the stakeholder [D-069, D-072, D-073, D-084]: the `@/` alias, one folder per component, and one styling source. Every new component follows these rules, Phase 3 and the UI pass included.
 
 ### The `@/` alias
 
@@ -198,45 +198,32 @@ Built.
 
 ### One folder per component
 
+Built. All 34 renderer components sit in their own folder.
+
 - Each component has a kebab-case folder named after it, holding the component (`generate-panel.tsx`), its own CSS module (`generate-panel.module.css`), and `index.ts`. A component with no styles of its own leaves out the module.
 - **`index.ts` only re-exports:** `export { GeneratePanel } from './generate-panel'`, plus any props type another file imports. No logic. Exports stay named and PascalCase.
 - **Import from the folder.** Other files import the folder (`@/renderer/screens/campaign/generate-panel`), never the inner file (`.../generate-panel/generate-panel`). Only files inside the folder import its inner files.
-- **Where folders live.** Under their screen's folder: `screens/campaign/generate-panel/`. Names stay as today, with no screen prefix.
-  - A dialog lives in `dialogs/`, one folder each (`dialogs/key-dialog/`; the `key/` level goes).
+- **Where folders live.** Under their screen's folder: `screens/campaign/generate-panel/`. Names carry no screen prefix.
+  - A dialog lives in `dialogs/`, one folder each (`dialogs/key-dialog/`).
   - The app shell and error banner stay in `app/`. Hand-test parts stay in `dev/`. The Phase 3 editor gets `src/renderer/editor/` (its tree is in `spec/editor.md`, "Where the code lives").
   - A component used by two or more screens lives in `src/renderer/ui/{name}/`. A screen's part that a second screen starts to use moves there in the same change.
 - **What needs a folder.** Every `.tsx` file that exports a component another file imports. A small helper component used by one component only, and not imported by any other file, is a second `.tsx` inside that folder, not re-exported, using the parent's module; once a second component imports it, it gets its own folder.
 - **What does not get a folder.** Hooks, pure helpers, stores, context providers (`app-context.tsx`). The entry files stay: `src/renderer/main.tsx`, `src/renderer/app/app.tsx`. A hook or helper used by one component goes inside that component's folder, not re-exported. One used by several components of one screen stays a plain file in the screen folder. One used by several screens lives in `ui/`.
-- **Shared CSS files: three, all in `src/renderer/ui/`.** `tokens.css`: design tokens (custom properties) only. `base.css`: element defaults and resets, no class names. `layout.module.css` (replaces `screens/screens.module.css`): classes two or more components use (page, section, row, stack, field, error text). A class used by one component lives in that component's module. No other shared CSS file without a line in this file. The move splits `screens/screens.module.css`, `app/app-shell.module.css` and `dialogs/key/key-dialog.module.css` this way, with class names and rules unchanged, and deletes the first two.
-- **Tests stay where they are.** Not moved, not renamed. A new test goes under `tests/unit/renderer/` at the path of the folder holding the component folder, named after the component (`tests/unit/renderer/screens/campaign/generate-panel.test.tsx`). A component may have several test files (`reference-ticks.test.tsx`).
-- **Applying it** moves each file with `git mv`, adds the `index.ts` files and points imports at the folders. No component, export or test file is renamed; no test file moves; no text, markup, class rule, prop or logic changes. Tests are edited for import paths only. Checks: class D over all of `tests/unit/renderer/`, plus `tests/build/` (a wrong CSS import shows only in the build).
-- **When it applies.** New code after the alias lands uses `@/`. New components after the move follow the folder rule, including Phase 3 and the UI pass.
+- **Shared CSS files: three, all in `src/renderer/ui/`.** `tokens.css`: design tokens (custom properties) only. `base.css`: element defaults and resets, no class names. `layout.module.css`: classes two or more components use (screen, card, field, row, label, path, muted, primary, list, key row). A class used by one component lives in that component's module. No other shared CSS file without a line in this file.
+- **Where tests go.** A test goes under `tests/unit/renderer/` at the path of the folder holding the component folder, named after the component (`tests/unit/renderer/screens/campaign/generate-panel.test.tsx`). A component may have several test files (`reference-ticks.test.tsx`).
+
+### One styling source
+
+Built [D-084]. `src/renderer/ui/tokens.css` is the one source of every colour, space, radius, line width, type size and layout width in the renderer, so one edit there restyles every component.
+
+- **Tokens.** Colours `--color-bg`, `--color-surface`, `--color-border`, `--color-text`, `--color-text-muted`, `--color-accent`, `--color-accent-text`, `--color-danger-bg`, `--color-danger-text`, `--color-focus`, `--color-overlay`; `--radius`; `--border-width`, `--focus-ring-width`, `--focus-ring-offset`; spaces `--space-1` to `--space-4` and `--space-6`; fonts `--font-body`, `--font-mono`; type sizes `--font-size-body`, `--font-size-heading`; widths `--width-page`, `--width-column-min`, `--width-dialog`. Text colours keep 4.5:1 contrast.
+- `base.css` gives `pre` and `code` the font `var(--font-mono)`, and draws every focus ring from the focus tokens.
+- **Test:** `tests/unit/renderer/ui/styling-source.test.ts` reads every `.css` file under `src/renderer/` other than `tokens.css`. It fails on a hex, `rgb` or `hsl` colour, on a `px` length other than 0, on a `var(--x)` that `tokens.css` does not define, and when a required token above (the type sizes, mono font, overlay colour, line widths, layout widths) is missing. A rule that truly needs a literal names it in the test's allow-list with a reason. The one entry: `1px` in `screens/settings/key-row/key-row.module.css`, for the visually hidden label.
+- The Scene draws the ad, not the app, and takes no token (`spec/scene.md`).
 
 ### Renderer files on main
 
-```
-src/renderer/
-├── main.tsx, index.html, env.d.ts
-├── app/            app.tsx, app-context.tsx, app-shell.tsx, app-shell.module.css, error-banner.tsx
-├── screens/        screens.module.css
-│   ├── start/          start-screen.tsx, new-project-form.tsx, recent-projects.tsx
-│   ├── settings/       settings-screen.tsx, location-setting.tsx, provider-defaults.tsx, keys-section.tsx,
-│   │                   key-row.tsx, comfy-section.tsx, comfy-check-result.tsx, mcp-section.tsx, connect-panel.tsx
-│   ├── project-home/   project-home.tsx, use-project.ts, brief-load.tsx, brief-summary.tsx, campaign-list.tsx,
-│   │                   campaign-input.ts
-│   └── campaign/       campaign-view.tsx, variant-list.tsx, generate-panel.tsx, reference-picker.tsx,
-│                       reference-list.ts, paid-confirm.tsx, video-panel.tsx, video-picture-choice.tsx,
-│                       video-length.ts, video-start.ts, video-result.tsx, video-status.ts, run-list.tsx,
-│                       run-row.tsx, run-result.tsx
-├── dialogs/key/    key-dialog.tsx, key-dialog.module.css
-├── dev/            hand-test-screen.tsx, s3-settings-form.tsx, storage-actions.tsx, dropbox-sign-in.tsx, result-text.ts
-├── stores/         app-store.ts, project-store.ts, job-store.ts
-└── ui/             tokens.css, base.css, asset-url.ts, secret-labels.ts
-```
-
-### Target tree
-
-Each name ending in `/` inside a screen, `app/`, `dialogs/` or `dev/` is a component folder (component, optional CSS module, `index.ts`). Files in brackets sit inside that folder, not re-exported.
+Each name ending in `/` inside a screen, `app/`, `dialogs/` or `dev/` is a component folder: the component, its CSS module when it has styles of its own, and `index.ts`. Files in brackets sit inside that folder, not re-exported.
 
 ```
 src/renderer/
@@ -254,11 +241,13 @@ src/renderer/
 │                       reference-list.ts, video-start.ts
 ├── dialogs/        key-dialog/
 ├── dev/            hand-test-screen/, s3-settings-form/, storage-actions/, dropbox-sign-in/, result-text.ts
-├── stores/         app-store.ts, project-store.ts, job-store.ts (unchanged)
+├── stores/         app-store.ts, project-store.ts, job-store.ts
 └── ui/             tokens.css, base.css, layout.module.css, asset-url.ts, secret-labels.ts
 ```
 
-Why each helper sits where it does (who imports it on `main`):
+Components with their own CSS module: `app-shell`, `error-banner`, `key-dialog`, `start-screen`, `recent-projects`, `project-home`, `video-result`, `connect-panel`, `key-row`.
+
+Why each helper sits where it does (who imports it):
 
 | Helper | Imported by | Place |
 |--------|-------------|-------|
@@ -269,7 +258,7 @@ Why each helper sits where it does (who imports it on `main`):
 | `video-length.ts` | `video-panel.tsx` | inside `video-panel/` |
 | `video-status.ts` | `run-row.tsx` | inside `run-row/` |
 | `result-text.ts` | three `dev/` components | plain file in `dev/` |
-| `asset-url.ts` | four campaign components | `ui/` (shared by several components; already there) |
+| `asset-url.ts` | four campaign components | `ui/` (shared by several components) |
 | `secret-labels.ts` | `key-row.tsx` (settings), `key-dialog.tsx` (dialogs) | `ui/` |
 
 `key-row`, `comfy-check-result`, `connect-panel`, `video-picture-choice`, `video-result` and `run-result` are each imported by one other component, but since another file imports them they get their own folders, as the stakeholder's tree does for `key-row` and `comfy-check-result`.

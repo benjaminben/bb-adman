@@ -9,22 +9,13 @@ Source names: "CU4-Fixes OQ 2" means the report `REVIEW-Phase2-CU4-Fixes.md`, it
 
 Heaviest first.
 
-### FN-3. A paid picture that arrives after a stop is thrown away
-
-- Source: SliceH Q3.
-- Files: `src/main/jobs/kinds/image-generation.ts:85-90` (`store`), `:105-124` (`onePicture`), `:181-186` (`runImageJob` end).
-- What is wrong: `onePicture` checks `jc.cancelled()` after the provider answers (line 115) and `store` checks it twice more (lines 88, 90). If a stop was asked while the call ran, the answer is dropped, though the call was paid. SPEC 6.11.2 says a result that arrives anyway is stored, the job ends `succeeded` with `finishedAfterCancel`, and a job is never shown as cancelled when its result arrived. `src/main/jobs/job-end.ts:45-49` already builds `finishedAfterCancel`; the picture kind never reaches it.
-- Done when: once a provider answer is in hand, the picture is converted and stored whatever the stop state; only calls not yet sent are skipped. The job ends `succeeded` with `finishedAfterCancel: true` when every asked picture arrived, and `cancelled` with the kept pictures when some were never sent. The ruling for the mixed case is written next to the code. Tests (fake provider whose answer arrives after the stop): one picture asked, stop during the call: the job is `succeeded`, `finishedAfterCancel` is true, one asset row and file exist. Four pictures asked, stop after two calls started: those two are stored, the others are not sent.
-- Security class: no. Wastes paid calls and loses user results.
-
-### FN-4. Retry of a cancelled picture job asks for every picture again
+### FN-4. Retry's confirm line shows the stored count, not what retry asks for
 
 - Source: SliceH Q6.
-- Files: `src/main/commands/job/retry.ts:44-54` (sends `old.request` as is); `src/renderer/screens/campaign/run-row.tsx` (the paid confirm line).
-- What is wrong: a cancelled picture job may already have kept some pictures (its result lists their asset IDs). `job.retry` copies the stored request, so the full `count` is asked and paid for again.
-- Done when: for an `image_generation` row that kept pictures, retry asks only for the pictures not yet made (`count` minus kept, at least 1), and the confirm line shows that number. A failed row with no kept pictures is unchanged. Integration test: a cancelled job with `count: 4` and two kept asset IDs; retry makes a new queued job whose request has `count: 2`. A renderer test checks the confirm line shows 2.
-- Built in two parts: the command and its integration test first (main process), then the confirm line in the run row with its renderer test, after the move to one folder per component (it edits `run-row`).
-- Security class: no. Wastes paid calls.
+- Files: `src/renderer/screens/campaign/run-row/run-row.tsx` (the paid confirm line, `count={requestCount(row)}`).
+- What is wrong: `job.retry` on a picture job that kept pictures asks only for the rest (`spec/jobs.md`, "Retry"), but the run row's paid confirm line still shows the stored request's `count`.
+- Done when: for an `image_generation` row the confirm line shows `picturesLeft(requestCount(row), row.result)` (`src/shared/generation/pictures-left.ts`). Other rows are unchanged. A renderer test: a cancelled row with `count: 4` and two kept asset IDs shows 2.
+- Class D. Security class: no.
 
 ## Fix with a later phase
 
@@ -86,13 +77,13 @@ Heaviest first.
 
 ### Phase 10 (MCP server)
 
-#### LP-7. `get_project` returns fields the tool list does not name
+#### LP-7. `get_project`'s description does not name every field it returns
 
 - Source: MCP-B item 6.
-- Files: `src/main/mcp/tools/table.ts` (only `list_assets` has a `reply` picker).
-- What is wrong: `get_project` also returns `meta` and `missingAssetCount`. The reply allow-list for `get_project` and `get_campaign` (already planned for MCP-D) should decide whether they stay.
-- Done when: the MCP-D reply picker for `get_project` lists its fields by name, and the tool description matches. Test: the reply has exactly the listed keys.
-- Security class: no (the allow-list itself is the security part and is already planned).
+- Files: `src/main/mcp/tools/table.ts` (the `get_project` description); `src/main/mcp/tools/project-replies.ts` (`projectFields`).
+- What is wrong: the picker names its fields, and they include `meta` (project ID, name, schema version, app version, created time) and `missingAssetCount`. The description says only "its subjects and a summary of each campaign".
+- Done when: Phase 10 decides whether `meta` and `missingAssetCount` stay; the description and the tool table in `spec/mcp-and-agents.md` name what the picker gives.
+- Security class: no (the allow-list is built).
 
 ### Phase 11 (README, example set and release)
 
@@ -183,7 +174,7 @@ The code is right; the spec rewrite should describe it.
 - `frames` added to fill values without a slot check (`video.ts:121`): `fillWorkflow` refuses before anything is sent, with a plain `Error`. Cosmetic. (CU6a D5)
 - `checkMp4` gives a `RangeError` on an empty last `tkhd`/`mvhd` box: nothing outside the buffer is read and callers turn it into `bad_result`. (CU6a D6)
 - `pngConverter` has no `try` around decode: `nativeImage` returns an empty image rather than throwing. (CU6b-F note)
-- Any `ProviderCancelled` ends a picture job `cancelled` (`image-generation.ts:112`): every adapter throws it only after the stop signal fires today. Revisit with FN-3. (SliceH unverified)
+- Any `ProviderCancelled` from an adapter ends a picture job `cancelled`, even with every other picture stored (`onePicture` in `image-generation.ts`): every adapter throws it only after the stop signal fires. Revisit if an adapter ever throws it on its own. (SliceH unverified)
 - A picture start is offered whatever its workflow's status; refused at Start. Nuisance. (CU6b-R item 10)
 - `tests/comfy/video-facts.ts:38` keeps `{ cause: error }`; the cause is a fixed message. Cosmetic. (CU6p item 1)
 - `tests/e2e/launch.ts` imports from `tests/e2e-real/`; `tests/e2e-real/pictures.ts` repeats `given-picture.ts`. Cosmetic. (E2E-R S-5)

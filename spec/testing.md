@@ -274,7 +274,7 @@ The base rule: an existing test is not edited without the architect's ruling. Th
 
 ## Contract tests (was 10.3)
 
-Built for Gemini and S3. Provider adapters are tested against recorded responses in `tests/fixtures/providers/` (`gemini/`, `s3/`, each with a `README.md`). The MCP tool list is snapshot-tested (`tests/integration/mcp/tool-list.test.ts`), so a change to a tool's name or input is a visible diff. The snapshot holds the tools built so far: 4 on `main` (`get_project`, `list_assets`, `get_campaign`, `create_campaign`); each slice that adds a tool updates it (8 after MCP-D, 11 after MCP-G, all 19 of `spec/mcp-and-agents.md` by Phase 10).
+Built for Gemini and S3. Provider adapters are tested against recorded responses in `tests/fixtures/providers/` (`gemini/`, `s3/`, each with a `README.md`). The MCP tool list is snapshot-tested (`tests/integration/mcp/tool-list.test.ts`), so a change to a tool's name or input is a visible diff. The snapshot holds the tools built so far: 8 on `main` (`list_projects`, `get_project`, `list_assets`, `get_campaign`, `create_campaign`, `get_slots`, `get_job`, `list_jobs`); each slice that adds a tool updates it (11 after MCP-G, all 25 of `spec/mcp-and-agents.md` by Phase 10).
 
 ## Non-functional targets (was 11)
 

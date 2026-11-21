@@ -219,7 +219,7 @@ No screen holds a copy of any of these.
 | The Flux graph | `src/main/providers/comfyui/workflows/flux3-klein-edit-references.json`. `comfy-workflows/flux3-klein-image-references.json` is the hand-test copy; no code reads it. | `comfy.getInfo` (description only) |
 | Which providers an agent may run | `agentRunsOffered` in `src/shared/config/agent-runs.ts` | See `spec/mcp-and-agents.md` |
 
-The plain screens built so far (project page, campaign page, picture and video panels, Settings ComfyUI section) use the app's existing controls and tokens (`screens.module.css`, `tokens.css`, the Radix parts already used). No new visual language, no new package. The UI pass may replace any of them whole.
+The plain screens built so far (project page, campaign page, picture and video panels, Settings ComfyUI section) use the app's existing controls and tokens (`tokens.css`, `layout.module.css`, the Radix parts already used). No new visual language, no new package. The UI pass may replace any of them whole.
 
 ## Technology stack (was 2)
 

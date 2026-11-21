@@ -159,6 +159,7 @@ One way, for pictures and video. The runner fires the job's signal and starts on
 | Returns its result | `finished` |
 | Neither, before the timer ends | `unknown` |
 
+- **Pictures** (`src/main/jobs/kinds/image-generation.ts`). After the signal, a call not yet sent is skipped. A provider answer already in hand was paid for, so it is converted and stored whatever the stop state. If every asked picture arrived, the handler returns and the job ends `succeeded` with `finishedAfterCancel: true`. If some were never sent, or the provider confirmed the stop (`ProviderCancelled`), the job ends `cancelled` and keeps the pictures that arrived.
 - **Video** (`src/main/jobs/kinds/video-generation.ts`). When the signal fires, the handler calls the adapter's `cancel` once, with the ID it stored through `jc.setRemoteJobId`. `stopped`: it throws `ProviderCancelled`. `finished`: it fetches and stores the result and returns it. `unknown`: it keeps checking until it knows, for at most the provider's wait. A signal that fires before `start` stops the run with no more pictures uploaded.
 - **The wait has one owner:** `cancelWaitFor(providerId)` in `src/main/jobs/cancel-wait.ts`. An adapter has no cancel wait of its own; it keeps asking until it knows or until its own time limit for a run.
 
@@ -171,13 +172,13 @@ One way, for pictures and video. The runner fires the job's signal and starts on
 
   The runner options `cancelWaitMs` and `closeWaitMs` let tests hand in short waits; when left out, the runner uses this table and `CLOSE_WAIT_MS`. `core.ts` leaves them out. The runner fixture (`tests/integration/jobs/runner-fixture.ts`) defaults `cancelWaitMs` to 2,000 and `closeWaitMs` to 50.
 - **A row that has ended never changes.** A result that arrives after the timer ended the job as `outcomeUnknown` is dropped. The message already says the run may still finish.
-- A cancel that lands between the file write and `asset.addGenerated` leaves a file with no row. Accepted nuisance.
+- An answer that arrives after the job has ended (the cancel wait ran out, or the project closed) still writes its file; `asset.addGenerated` is then refused, so the file has no row in the assets folder (A-38).
 
 ## Cancel for each provider
 
 ### ComfyUI
 
-Built, with one gap (F-15). `src/main/providers/comfyui/cancel.ts` (`cancelOwnRun`), `run.ts`, `video.ts`, `own-ids.ts`. [REQ: FR-270, FR-271, FR-289]
+Built. `src/main/providers/comfyui/cancel.ts` (`cancelOwnRun`), `run.ts`, `video.ts`, `own-ids.ts`. [REQ: FR-270, FR-271, FR-289]
 
 - Only the app's own IDs are ever named (security class). The adapter keeps one set, for the life of the app process, of the IDs `submit` gave it. Only the adapter's `cancel` calls `adopt`, and then `removeFromQueue` or `interrupt`, and only for an ID in that set. For any other ID it sends nothing and answers `unknown`. An ID that only a job row or project file supplied may be checked and fetched, never removed or interrupted. Video cancel goes through the same set. Test: `cancel` for an ID this process did not submit sends no `POST` to the stand-in and answers `unknown`.
 - `cancelOwnRun` reads the queue:
@@ -186,7 +187,7 @@ Built, with one gap (F-15). `src/main/providers/comfyui/cancel.ts` (`cancelOwnRu
   - Neither: a history entry gives `finished`, none gives `unknown`.
   - Any error gives `unknown`.
 - Video: the adapter marks the run as cancel-asked; a later `execution_interrupted` (`server_stopped`) or a cancelled state is then read as `cancelled`.
-- **F-15 (not built):** in the picture path (`run.ts`) a cancel always ends `stopped`, whatever `cancelOwnRun` answers. The rule to build: on `finished`, fetch and return the picture; on `unknown`, keep polling under the run's own limits. Tests in `tests/unit/main/providers/comfyui/image-cancel.test.ts` for each.
+- Pictures (`run.ts`): the run ends cancelled only when `cancelOwnRun` answers `stopped`. On `finished` the picture is fetched and returned. On `unknown` polling goes on under the run's own waiting and working limits, so the runner's wait decides; the 5-minute lost-contact count starts again, the other limits do not. Tests: `tests/unit/main/providers/comfyui/image-cancel.test.ts`.
 - A cancel does not stop an HTTP call already in flight. Nuisance, noted, nothing built.
 - Nothing else on the server is cleared. Uploads and finished files stay (`spec/comfyui.md`).
 
