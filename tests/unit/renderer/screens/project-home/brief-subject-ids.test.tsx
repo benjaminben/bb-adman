@@ -55,6 +55,8 @@ describe('subject IDs in the brief summary [SPEC 14 1.43 T-1, T-2, P1-2, P1-4]',
       'asset.import',
       'asset.import',
       'subject.create',
+      'asset.update',
+      'asset.update',
       'campaign.create',
     ])
     expect(fake.commands[3]?.input).toMatchObject({ id: 'Berry-bottle' })

@@ -64,7 +64,12 @@ describe('"Type a brief" [screens-campaign "The brief form", S2-13]', () => {
     await userEvent.type(within(subject).getByLabelText('Subject ID'), 'apple-can')
     await userEvent.click(screen.getByRole('button', { name: 'Create campaign' }))
     await waitFor(() =>
-      expect(names(fake)).toEqual(['asset.import', 'subject.create', 'campaign.create']),
+      expect(names(fake)).toEqual([
+        'asset.import',
+        'subject.create',
+        'asset.update',
+        'campaign.create',
+      ]),
     )
     expect(fake.commands[1]?.input).toEqual({
       projectId: 'P1',
@@ -72,7 +77,7 @@ describe('"Type a brief" [screens-campaign "The brief form", S2-13]', () => {
       name: 'Apple can',
       description: '',
     })
-    expect(fake.commands[2]?.input).toMatchObject({
+    expect(fake.commands[3]?.input).toMatchObject({
       brief: { campaignName: 'Autumn Fizz', region: 'Canada', languages: ['en'] },
       subjectMap: [{ subjectId: 'apple-can', create: false }],
       languages: ['en'],

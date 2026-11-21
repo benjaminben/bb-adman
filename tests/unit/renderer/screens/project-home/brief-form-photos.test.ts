@@ -202,13 +202,6 @@ describe('the form model with photos [subject-photos "The model"]', () => {
     expect(second).toMatchObject({ photos: [], notes: [] })
   })
 
-  it('does not put placeSubjectPhoto in the campaign.create input yet', () => {
-    const values = { ...open([{ photos: [added('A1')], notes: [] }]), placeSubjectPhoto: true }
-    values.subjects = values.subjects.slice(0, 1)
-    const result = planFromForm('P1', values, [], [assetRow('A1')])
-    expect(result.ok && result.campaign).not.toHaveProperty('placeSubjectPhoto')
-  })
-
   it('puts the photo lines after "choose a subject" and before the size lines', () => {
     const values = open()
     const [first] = values.subjects

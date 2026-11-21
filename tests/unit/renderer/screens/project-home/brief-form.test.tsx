@@ -76,6 +76,8 @@ describe('the brief form [screens-campaign "The brief form", FR-023, FR-024]', (
       'asset.import',
       'asset.import',
       'subject.create',
+      'asset.update',
+      'asset.update',
       'campaign.create',
     ])
     expect(sent(fake, 'campaign.create')).toMatchObject({

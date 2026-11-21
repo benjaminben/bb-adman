@@ -13,10 +13,7 @@ import {
   type BriefPhotos,
   type FormPhoto,
 } from '@/renderer/screens/project-home/brief-form-model'
-import {
-  removeAddedPhotos,
-  withImported,
-} from '@/renderer/screens/project-home/subject-photos/use-add-photos'
+import { removeAddedPhotos, withImported } from '@/renderer/screens/project-home/subject-photos'
 import { noteLine } from './photo-notes'
 
 export function useBriefPhotos(projectId: string) {
