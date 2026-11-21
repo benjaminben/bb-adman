@@ -1,6 +1,5 @@
 // The job query domain (SPEC 12, 4.3; SPEC 14 slice D). job.list: wire rows, newest first.
-// error_detail is not in a wire row (SPEC 3.3 [1.9]). The map stays empty until the test
-// that pins it empty is changed by an approved edit.
+// error_detail is not in a wire row (SPEC 3.3 [1.9]).
 import type { CoreDeps } from '../core-deps'
 import type { QueryFn } from './types'
 import { readWireRows } from '../db/rows'
@@ -35,6 +34,6 @@ export function jobList(deps: Pick<CoreDeps, 'projects' | 'log'>): QueryFn {
   }
 }
 
-export function jobQueries(_deps: CoreDeps): Record<string, QueryFn> {
-  return {}
+export function jobQueries(deps: CoreDeps): Record<string, QueryFn> {
+  return { 'job.list': jobList(deps) }
 }

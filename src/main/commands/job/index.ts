@@ -1,9 +1,10 @@
-// The job command domain (SPEC 12). Empty in Phase 2 step 0; its slice adds the handlers.
-// Slice D built them (retry.ts, cancel.ts, mark-seen.ts); the list stays empty until the test
-// that pins it empty is changed by an approved edit.
+// The job command domain (SPEC 12; SPEC 14 slice D, 1.38 Y12).
 import type { CoreDeps } from '../../core-deps'
 import type { CommandHandler } from '../types'
+import { jobRetry } from './retry'
+import { jobCancel } from './cancel'
+import { jobMarkSeen } from './mark-seen'
 
-export function jobCommands(_deps: CoreDeps): CommandHandler[] {
-  return []
+export function jobCommands(deps: CoreDeps): CommandHandler[] {
+  return [jobRetry(deps), jobCancel(deps), jobMarkSeen(deps)]
 }

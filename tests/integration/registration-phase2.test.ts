@@ -27,7 +27,6 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
       campaignCommands,
       devCommands,
       generationCommands,
-      jobCommands,
       ruleSetCommands,
       storageCommands,
       subjectCommands,
@@ -39,7 +38,7 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
   it('gives an empty query map for each new query domain', () => {
     f = makeFixture()
     const deps = f.core.deps
-    for (const map of [campaignQueries, jobQueries, projectQueries, templateQueries]) {
+    for (const map of [campaignQueries, projectQueries, templateQueries]) {
       expect(map(deps)).toEqual({})
     }
   })
@@ -60,5 +59,23 @@ describe('the asset domain is registered [SPEC 14, Slice A part 2, A2-1]', () =>
   it('gives the asset.list query', () => {
     f = makeFixture()
     expect(Object.keys(assetQueries(f.core.deps))).toEqual(['asset.list'])
+  })
+})
+
+describe('the job domain is registered [SPEC 14, 1.38 Y12]', () => {
+  it('gives job.retry, job.cancel and job.markSeen, in that order', () => {
+    f = makeFixture()
+    const deps = f.core.deps
+    expect(jobCommands(deps).map((h) => h.name)).toEqual([
+      'job.retry',
+      'job.cancel',
+      'job.markSeen',
+    ])
+  })
+
+  it('gives the job.list query', () => {
+    f = makeFixture()
+    const deps = f.core.deps
+    expect(Object.keys(jobQueries(deps))).toEqual(['job.list'])
   })
 })
