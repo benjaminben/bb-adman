@@ -84,10 +84,7 @@ describe('activity store [P4-14, FR-152, FR-217]', () => {
 
   it('keeps its own later row over an older one in a reply', async () => {
     const later = '2026-11-21T00:05:00.000Z'
-    const { fake, store } = setup(
-      [entry('J1')],
-      [entry('J2'), entry('J1', { status: 'running' })],
-    )
+    const { fake, store } = setup([entry('J1')], [entry('J2'), entry('J1', { status: 'running' })])
     const stop = store.getState().subscribe()
     await store.getState().load('P1')
     fake.emit('job.updated', jobRow('J1', { status: 'succeeded', updatedAt: later }))

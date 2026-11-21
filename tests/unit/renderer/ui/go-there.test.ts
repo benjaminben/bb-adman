@@ -30,7 +30,12 @@ describe('goTarget [P4-14, FR-217]', () => {
       { ...ALL, layerName: null },
       { to: 'variant', campaignId: 'C1', variantId: 'V1' },
     ],
-    ['a slot with no layer', { layerId: null }, ALL, { to: 'variant', campaignId: 'C1', variantId: 'V1' }],
+    [
+      'a slot with no layer',
+      { layerId: null },
+      ALL,
+      { to: 'variant', campaignId: 'C1', variantId: 'V1' },
+    ],
     [
       'a gone variant',
       { layerId: 'L1' },
@@ -38,14 +43,24 @@ describe('goTarget [P4-14, FR-217]', () => {
       { to: 'campaign', campaignId: 'C1' },
     ],
     ['a video job', { kind: 'video_generation' }, ALL, { to: 'campaign', campaignId: 'C1' }],
-    ['a campaign job', { variantId: null }, { ...ALL, variantLabel: null }, { to: 'campaign', campaignId: 'C1' }],
+    [
+      'a campaign job',
+      { variantId: null },
+      { ...ALL, variantLabel: null },
+      { to: 'campaign', campaignId: 'C1' },
+    ],
     [
       'a brief reading',
       { kind: 'brief_extraction', campaignId: null, variantId: null, slot: null },
       { campaignName: null, variantLabel: null, layerName: null },
       { to: 'project' },
     ],
-    ['a gone campaign', { layerId: 'L1' }, { campaignName: null, variantLabel: null, layerName: null }, null],
+    [
+      'a gone campaign',
+      { layerId: 'L1' },
+      { campaignName: null, variantLabel: null, layerName: null },
+      null,
+    ],
   ])('%s', (_name, over, place, target) => {
     expect(goTarget(jobRow('J1', over), place)).toEqual(target)
   })

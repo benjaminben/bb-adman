@@ -36,5 +36,6 @@ export function goThere(nav: NavStoreState, projectId: string, target: GoTarget)
     return
   }
   nav.openVariant(projectId, target.campaignId, target.variantId)
-  if (target.to === 'layer') nav.setView(projectId, target.variantId, { selectedLayerId: target.layerId })
+  if (target.to === 'layer')
+    nav.setView(projectId, target.variantId, { selectedLayerId: target.layerId })
 }
