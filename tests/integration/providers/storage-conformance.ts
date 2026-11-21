@@ -44,6 +44,12 @@ export function describeStorageConformance(
       expect(await storage.exists(`${base}/exists/never.txt`)).toBe(false)
     })
 
+    it('exists is false for a path through a file [SPEC 6.5 1.14, H13]', async () => {
+      await storage.write(`${base}/through/a.txt`, text('a'), 'text/plain')
+      expect(await storage.exists(`${base}/through/a.txt/b`)).toBe(false)
+      expect(await storage.exists(`${base}/through/a.txt/b/c`)).toBe(false)
+    })
+
     it('write then read gives the same bytes, for bytes and for a stream', async () => {
       const bytes = new Uint8Array([0, 1, 2, 250, 255])
       await storage.write(`${base}/read/bytes.bin`, bytes, 'application/octet-stream')

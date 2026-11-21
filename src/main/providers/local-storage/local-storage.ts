@@ -12,8 +12,10 @@ import type { StorageProvider } from '../types'
 import { notThere, onDisk } from './failure'
 import { refusePath, storageFilePath, storageListPrefix } from '../storage-paths'
 
+// [1.14] H13: not there, a path through a file (`ENOTDIR`) included.
 function isMissing(error: unknown): boolean {
-  return (error as NodeJS.ErrnoException).code === 'ENOENT'
+  const code = (error as NodeJS.ErrnoException).code
+  return code === 'ENOENT' || code === 'ENOTDIR'
 }
 
 export function localStorageAt(root: string): StorageProvider {
