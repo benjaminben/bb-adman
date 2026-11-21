@@ -9,6 +9,7 @@ import { fail, type ErrorBody } from '../schemas/result'
 import type { ParseBrief } from '../templates/types'
 import { MAX_BRIEF_BYTES } from '../config/brief-limits'
 import { briefDraftFrom, BRIEF_UNREADABLE } from './draft'
+import { badLineError } from './bad-line'
 import { passesYamlTokens } from './yaml-tokens'
 import { passesYamlWalk } from './yaml-walk'
 
@@ -36,10 +37,19 @@ const YAML_OPTIONS: ParseOptions & DocumentOptions & SchemaOptions = {
   logLevel: 'error',
 }
 
+// SPEC 14 1.39 "The YAML message": carries the smallest start offset of the library's errors,
+// or null when the app's own rules refused the file. An error's message is never read.
+class YamlFault extends Error {
+  constructor(readonly offset: number | null) {
+    super('unreadable')
+  }
+}
+
 function readYaml(text: string): unknown {
-  if (!passesYamlTokens(text)) throw new Error('unreadable')
+  if (!passesYamlTokens(text)) throw new YamlFault(null)
   const doc = parseDocument(text, YAML_OPTIONS)
-  if (doc.errors.length > 0 || !passesYamlWalk(doc)) throw new Error('unreadable')
+  if (doc.errors.length > 0) throw new YamlFault(Math.min(...doc.errors.map((e) => e.pos[0])))
+  if (!passesYamlWalk(doc)) throw new YamlFault(null)
   return doc.toJS({ maxAliasCount: 0 })
 }
 
@@ -49,12 +59,20 @@ function tooLarge(text: string): boolean {
   return text.length > MAX_BRIEF_BYTES || new TextEncoder().encode(text).length > MAX_BRIEF_BYTES
 }
 
-export const parseBrief: ParseBrief = (text, syntax) => {
+// SPEC 14 1.39 Z3: as parseBrief, but a malformed YAML brief's error names its first bad line.
+export const parseBriefFile: ParseBrief = (text, syntax) => {
   if (tooLarge(text)) return fail(BRIEF_TOO_LARGE)
+  const body = text.startsWith(BYTE_ORDER_MARK) ? text.slice(1) : text
   try {
-    const body = text.startsWith(BYTE_ORDER_MARK) ? text.slice(1) : text
     return briefDraftFrom(syntax === 'json' ? JSON.parse(body) : readYaml(body))
-  } catch {
-    return fail(BRIEF_UNREADABLE)
+  } catch (error) {
+    const offset = error instanceof YamlFault ? error.offset : null
+    return fail(offset === null ? BRIEF_UNREADABLE : badLineError(body, offset))
   }
+}
+
+export const parseBrief: ParseBrief = (text, syntax) => {
+  const result = parseBriefFile(text, syntax)
+  const unreadable = !result.ok && result.error.details?.reason === 'brief_unreadable'
+  return unreadable ? fail(BRIEF_UNREADABLE) : result
 }

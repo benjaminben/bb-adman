@@ -7,7 +7,7 @@ import { fail, ok, type ErrorBody, type Result } from '../schemas/result'
 
 export const BRIEF_UNREADABLE: ErrorBody = {
   code: 'INVALID_INPUT',
-  message: 'The brief could not be read as JSON or YAML.',
+  message: 'The brief is malformed. It could not be read as JSON or YAML.',
   details: { reason: 'brief_unreadable' },
 }
 

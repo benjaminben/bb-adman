@@ -52,7 +52,7 @@ describe('briefDraftFrom: a parsed value to a BriefDraft [SPEC 6.1, 14 1.9]', ()
   it('has the error of Section 4.1, which holds none of the brief', () => {
     expect(BRIEF_UNREADABLE).toEqual({
       code: 'INVALID_INPUT',
-      message: 'The brief could not be read as JSON or YAML.',
+      message: 'The brief is malformed. It could not be read as JSON or YAML.',
       details: { reason: 'brief_unreadable' },
     })
     const result = briefDraftFrom('Secret launch plan')
