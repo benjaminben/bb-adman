@@ -57,7 +57,7 @@ These files hold types and schemas only and are the contract between parts of th
 |------|-------|
 | `src/shared/schemas/brief.ts` | `BriefDraft`, `Brief` (`spec/brief-and-templates.md`) |
 | `src/shared/schemas/commands/campaign.ts` | `campaign.create` input: `subjectMap`, `languages`, `sizes`, `ruleSet`, `copyRuleSetFrom`, `templateId`; `CampaignSize` |
-| `src/shared/schemas/layer.ts` | `Geometry`, `TextStyle` (with `letterSpacing`), `ImageStyle`, `Timing`, `AnimationBlock`, `Animation`, the `revs` counters (`Revs`). Not built (LK-1): the look fields of both styles, `Shade`, `SHADE_SIDES`, `VERTICAL_ALIGNS`, `LOOK_LIMITS` (`spec/data-model-campaign.md`, "Look fields"); a contract change designed in `spec/phases/look-pack.md` |
+| `src/shared/schemas/layer.ts` | `Geometry`, `TextStyle` (with `letterSpacing`), `ImageStyle`, `Timing`, `AnimationBlock`, `Animation`, the `revs` counters (`Revs`), and (LK-1) the look fields of both styles, `Shade`, `SHADE_SIDES`, `VERTICAL_ALIGNS`, `LOOK_LIMITS` (`spec/data-model-campaign.md`, "Look fields") |
 | `src/shared/templates/types.ts` | `Template`, `Slot`, `NewLayer` (a layer's values without `id` and `variant_id`), signatures of the template functions |
 | `src/main/assets/types.ts` | `AssetService`, including `missingAssetIds`, `writeManaged`, `read` |
 | `src/shared/schemas/rows/` | Wire row schemas; `keys.ts` (`ROW_KEYS` for every table, `TableName`, `rowKey`) |
@@ -101,9 +101,9 @@ Built. Campaign IDs: `src/main/commands/campaign/ids.ts`.
 
 ## Tables
 
-Built: every table below exists in the project file. The newest migration is `0002_job_started_by_and_error_reason` (`schema_version` 3). Drizzle schema: `src/main/db/schema/project.ts` (project_meta, subject, asset, campaign, campaign_subject, rule_set, direction), `variant.ts` (variant, variant_subject, layer, background_clip), `jobs.ts` (job, report, variant_check). Migrations: `src/main/db/migrations/`. This file defines the project-level tables; `campaign`, `campaign_subject`, `rule_set`, `direction`, `variant`, `variant_subject`, `layer` and `background_clip` are in `spec/data-model-campaign.md`.
+Built: every table below exists in the project file. The newest migration is `0003_job_kind_cutout` (`schema_version` 4, the count of migrations). Drizzle schema: `src/main/db/schema/project.ts` (project_meta, subject, asset, campaign, campaign_subject, rule_set, direction), `variant.ts` (variant, variant_subject, layer, background_clip), `jobs.ts` (job, report, variant_check). Migrations: `src/main/db/migrations/`. This file defines the project-level tables; `campaign`, `campaign_subject`, `rule_set`, `direction`, `variant`, `variant_subject`, `layer` and `background_clip` are in `spec/data-model-campaign.md`.
 
-All tables are in the project file. Timestamps are ISO 8601 UTC text. Booleans are `INTEGER` 0 or 1. JSON columns are validated by the Zod schema named beside them. The SQL below is the shape of a file after all three migrations. Column order in a real file can differ (columns added by a migration come last); no code reads columns by position.
+All tables are in the project file. Timestamps are ISO 8601 UTC text. Booleans are `INTEGER` 0 or 1. JSON columns are validated by the Zod schema named beside them. The SQL below is the shape of a file after all four migrations. Column order in a real file can differ (columns added by a migration come last); no code reads columns by position.
 
 **Reading and writing JSON columns** (`src/main/db/rows.ts`):
 
@@ -224,7 +224,8 @@ The table's definition. What the runner does with these rows (states, writes, re
 CREATE TABLE job (
   id            TEXT PRIMARY KEY,
   kind          TEXT NOT NULL,     -- CHECK job_kind: 'brief_extraction','image_generation','generative_fill',
-                                   --   'layout_proposal','copy_options','translation','video_generation','export','publish'
+                                   --   'layout_proposal','copy_options','translation','video_generation','export','publish',
+                                   --   'cutout' (migration 0003)
   status        TEXT NOT NULL,     -- CHECK job_status: 'queued','running','succeeded','failed','cancelled'
   campaign_id   TEXT,              -- no foreign key
   variant_id    TEXT,              -- no foreign key
@@ -249,7 +250,7 @@ CREATE INDEX job_status ON job(status, updated_at);
 CREATE INDEX job_target ON job(campaign_id, variant_id);   -- migration 0001
 ```
 
-Drizzle: `src/main/db/schema/jobs.ts`. In migration `0002` the `job_started_by` CHECK sits on the column (`ALTER TABLE ... ADD ... CONSTRAINT job_started_by CHECK (...)`); SQLite applies it the same as a table check.
+Drizzle: `src/main/db/schema/jobs.ts`. In migration `0002` the `job_started_by` CHECK sits on the column (`ALTER TABLE ... ADD ... CONSTRAINT job_started_by CHECK (...)`); SQLite applies it the same as a table check. Migration `0003` rebuilds the `job` table (new table, rows copied, old dropped, renamed, indexes made again) so `job_kind` lists `cutout`; after it every CHECK, `job_started_by` included, is a table check.
 
 **Wire row** `JobRow` (`src/shared/schemas/rows/job.ts`): `id`, `kind`, `status`, `campaignId`, `variantId`, `layerId`, `slot`, `provider`, `model`, `request`, `remoteJobId`, `result`, `errorKind` (one of `PROVIDER_ERROR_KINDS` or null), `progress`, `paidCalls`, `seenAt`, `startedBy` (`'user' | 'agent'`), `errorReason` (one of `PROVIDER_ERROR_REASONS` or null), `createdAt`, `updatedAt`. The kind and status lists come from `src/shared/config/job-kinds.ts`; the error kind and reason lists from `src/shared/schemas/queries/app.ts`.
 

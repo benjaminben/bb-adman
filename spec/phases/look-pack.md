@@ -41,7 +41,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`src/shar
 
 ## Slices
 
-### LK-1 — Contracts: the look fields, their defaults and the patch checks
+### LK-1 — Contracts: the look fields, their defaults and the patch checks (built)
 
 - **Exists when done:** `TextStyle` has `verticalAlign`, `allCaps`, `boxColor`, `boxOutlineColor`, `boxOutlineWidth`, `boxRadius`, `boxPadding`; `ImageStyle` has `fillColor` and `shade`; all optional, bounded, with no `.default()`. `LOOK_LIMITS`, `SHADE_SIDES`, `VERTICAL_ALIGNS` and `Shade` are exported from `layer.ts`. `textLookOf` and `pictureLookOf` fill the defaults. `layer.update` and `layer.updateMany` take the new fields through the existing patch; `fillColor` on an image layer is refused; the inverse holds defaults for absent fields; a patch that only sets a field to its default on a row without the field changes nothing. `rgbCss` turns a checked colour into CSS.
 - **New files:** `src/shared/config/look.ts` (`TEXT_LOOK_DEFAULTS`, `PICTURE_LOOK_DEFAULTS`, `NEW_SHADE`, `textLookOf`, `pictureLookOf`); `src/shared/scene/colour-css.ts` (`rgbCss(hex, alpha?)`).
@@ -50,7 +50,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`src/shar
 - **Tests:** `tests/unit/shared/schemas/look-fields.test.ts` (each field: a good value, each bound, a bad colour, an unknown side or align, `shade` with an unknown key; a stored text style and picture style without the fields parse; `TextStyle.partial()` and `ImageStyle.partial()` parse `{}` to `{}`, the Zod 4 guard); `tests/unit/shared/config/look.test.ts` (`textLookOf` and `pictureLookOf` fill each absent field and keep each present one); `tests/unit/shared/scene/colour-css.test.ts` (`#1A2B3C` gives `rgb(26 43 60)`; alpha clamped to 0..1 and written with at most 4 decimals; `red`, `#FFF`, `#12345G`, `url(x)` and a value with a semicolon give null); `tests/integration/commands/layer-update-look.test.ts` (each field saved on the right layer type and read back; `fillColor` on an image layer refused with "Those style values do not fit this layer."; a picture field on a text layer and a text field on a picture layer refused; `shade` replaced whole and `null` clears it; on a row stored without the fields, `{ boxColor: null }` changes nothing and adds no undo entry; undo of `{ boxColor: '#FFFFFF' }` on such a row gives `boxColor: null`; `revs.style` bumped once; the agent's call accepted the same). Approved edits: none expected; a test that compares a whole stored style may add the new fields if it fails only for that.
 - **Class:** A + B. Security class, short review (new fields an agent can send; the colour rule). **After:** nothing.
 
-### LK-2 — Scene: text boxes, vertical alignment, all capitals
+### LK-2 — Scene: text boxes, vertical alignment, all capitals (built)
 
 - **Exists when done:** a text layer draws its box (fill, outline, radius, padding), places its text top, middle or bottom, and draws all capitals when asked, as `spec/scene.md` "Text boxes" says. The overflow test measures the text against the box's inner area. Old layers draw pixel for pixel as before.
 - **New files:** `src/shared/scene/text-box-css.ts` (`textBoxCss(style)`, the outer box), `src/shared/scene/measure-text.ts` (`measuredText(box, text, padding)`, the values `measureOverflow` takes).
@@ -59,7 +59,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`src/shar
 - **Tests:** `tests/unit/shared/scene/text-box-css.test.ts` (each field to its CSS; defaults give no fill, no border, radius 0, padding 0, `flex-start`; a bad colour gives no fill; numbers out of bounds clamped; nothing of a field's text appears in the CSS except through `rgbCss`); `tests/unit/shared/scene/measure-text.test.ts` (padding and outline narrow the area; bottom-aligned text taller than the box is caught; a long word is caught); `text-style.test.ts` gains `text-transform` (approved addition). Scene reference cases (class C), new pictures: `text-box-button` (outlined, middle, centred), `text-box-label` (filled, radius, padding, left, bottom), `text-all-caps`, `text-box-overflow-bottom` (bottom-aligned text that does not fit: drawn past the top, flagged). Every existing case passes with its existing picture.
 - **Class:** C. Security class, short review (caller values becoming CSS). **After:** LK-1.
 
-### LK-3 — Scene: background colour and shade
+### LK-3 — Scene: background colour and shade (built)
 
 - **Exists when done:** a background layer draws its `fillColor` under its picture; a background or image layer draws its `shade` over its picture, inside its box, as `spec/scene.md` "Background colour and shade" says. Old layers draw as before.
 - **New files:** `src/shared/scene/shade-css.ts` (`shadeCss(shade)`, `SHADE_STOPS`).
@@ -68,7 +68,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`src/shar
 - **Tests:** `tests/unit/shared/scene/shade-css.test.ts` (each side to its gradient direction; the three stops at `reach`; `all` gives a plain colour; strength and reach clamped; a bad colour gives nothing); scene reference cases (class C), new pictures: `background-colour-no-picture`, `background-colour-under-transparent-picture` (a PNG with a transparent part shows the colour), `shade-bottom-on-photo`, `shade-all-on-image-layer` (with the layer turned 15°, the shade turns and is cut with the box), `image-past-the-edge` (an image layer half outside the canvas, cut off at the edge, as reference 02). Every existing case passes with its existing picture.
 - **Class:** C. Security class, short review. **After:** LK-2.
 
-### LK-4 — Starter layouts and the starting font size
+### LK-4 — Starter layouts and the starting font size (built)
 
 - **Exists when done:** five starter layouts exist as data (`spec/starter-layouts.md`); a new master is built from the default one, every new layer stores every look field, and each text layer's starting font size comes from its text's length; `starterLayoutPatches` turns a layout into `layer.updateMany` updates for a variant.
 - **New files:** `src/shared/config/starter-layouts.ts` (`STARTER_LAYOUTS`, `DEFAULT_STARTER_LAYOUT_ID`); `src/shared/templates/layout-rules.ts` (`frameOf`, `geometryOf`, `textStyleOf`, moved out of `master-layers.ts` so both users share them); `src/shared/templates/starting-font-size.ts`; `src/shared/templates/starter-layout-patches.ts`.
@@ -88,7 +88,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`src/shar
 
 ### LK-6 — "Layout…": apply a starter layout to the open variant
 
-- **Exists when done:** "Layout…" in the editor's top bar opens a dialog listing the starter layouts with a small preview of the open variant in each; "Apply" sends one `layer.updateMany` built by `starterLayoutPatches`, so one undo step.
+- **Exists when done:** "Layout…" in the editor's top bar opens a dialog listing the starter layouts with a small preview of the open variant in each; "Apply" sends one `layer.updateMany` built by `starterLayoutPatches`, so one undo step. "Place text with AI…" is disabled while a layout run this editor started for the variant is going.
 - **New files:** `src/renderer/editor/layout-button/`; `src/renderer/dialogs/layout-dialog/` (`layout-dialog.tsx`, `layout-preview.tsx`, `apply-patches.ts`: the layers with the updates merged, for the previews only).
 - **May touch:** `src/renderer/editor/top-bar/` (a slot for the button, a few lines); `src/renderer/editor/editor/` (passes the button its variant, layers and assets, a few lines).
 - **Read:** `spec/editor.md` "Top bar", "Layout…"; `spec/starter-layouts.md` "Applying a layout"; `spec/ai-jobs.md` "Layout proposal" (the `layer.updateMany` rules).

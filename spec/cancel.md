@@ -140,7 +140,7 @@ The provider is asked to stop, and the job says what really happened. Refusals a
 
 A job already asked to stop is not asked again.
 
-The window offers Cancel exactly when `cancelRefusal` accepts: `cancelShown(row, provider)` in `src/renderer/screens/campaign/run-row/cancel-shown.ts`, held to the same answer for every kind, status and provider by `tests/unit/main/jobs/cancel-shown.test.ts`.
+The window offers Cancel exactly when `cancelRefusal` accepts: `cancelShown(row, provider)` in `src/renderer/ui/cancel-shown.ts`, held to the same answer for every kind, status and provider by `tests/unit/main/jobs/cancel-shown.test.ts`.
 
 | Outcome | Job ends as | Shown |
 |---------|-------------|-------|

@@ -120,7 +120,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/main/providers/comfyui/fill-no-prompt.test.ts` (no prompt slot: a prompt value refused, none accepted; with a prompt slot, a missing prompt still refused); `workflows.test.ts` gains the new spec (every pointer exists, links point at nodes that exist, node 6 is the output); `tests/integration/providers/comfyui-cutout.test.ts` against the stand-in (one upload under `uploadName`, the graph sent holds that name at node 1 and no other value from the caller, the result read from node 6, details from the spec, a cancel before submission sends nothing); `comfy-check` shows `birefnet.safetensors` in `background_removal` when missing; `comfy.getInfo` marks `birefnet-cutout` `offered` with dev tools on and not with them off. Real server: `ADMAN_COMFY_CUTOUT=1 npm run test:comfy`, once.
 - **Class:** E. Security class, full review (graph filling, what is sent). **After:** P4-1.
 
-### P4-10 — Attached jobs and the close warnings
+### P4-10 — Attached jobs and the close warnings (built)
 
 - **Exists when done:** the window remembers the attached jobs it started; closing a variant tab, a campaign tab or an owning dialog with one running asks first; closing a project or quitting with jobs running asks first and stops them on confirm.
 - **New files:** `src/renderer/stores/attached-store.ts`; `src/renderer/ui/close-warning/`; `src/main/quit-question.ts` (the pure wording).
@@ -129,7 +129,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/renderer/stores/attached-store.test.ts` (register, end, finish runs once on success only, a cancelled job never finishes, per-owner lists); `tests/unit/renderer/ui/close-warning.test.tsx` (titles for one and several tasks; the paid line only with a paid provider; "Keep open" focused and closes nothing; "Stop and close" sends `job.cancel` for each then closes; axe); `tests/unit/renderer/screens/campaign/variant-tabs-warning.test.tsx` and `tests/unit/renderer/app/campaign-tabs-warning.test.tsx` (no job: closes at once; a job: warns); `tests/unit/renderer/app/project-switcher-close.test.tsx` (the wording, then `project.close` with `'stop'`); `tests/unit/main/quit-question.test.ts`; `tests/integration/core/close-all-stopping.test.ts` (no row stays `queued` or `running`). Shots: `tests/shots/p4-10.shots.ts`.
 - **Class:** D + G. Not security class. **After:** P4-1, Phase 3.
 
-### P4-11 — Cut-out command and job
+### P4-11 — Cut-out command and job (built)
 
 - **Exists when done:** `generation.cutOut` checks and enqueues a `cutout` job; the job makes a new asset with see-through pixels, kept through `toPng`; retry runs the ComfyUI checks again.
 - **New files:** the bodies of `src/main/commands/generation/cut-out.ts` and `src/main/jobs/kinds/cutout.ts`; `tests/e2e/cutout-alpha.spec.ts`.
@@ -147,7 +147,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/renderer/dialogs/run-dialog.test.tsx` (provider list per job; unavailable and not-offered providers disabled with their words; the default choice, ComfyUI first for cut-outs; each summary line, ComfyUI's with address and workflow; count bounds; retry mode fixed; Confirm disabled until the caller resolves; no provider enabled; axe); `tests/unit/renderer/dialogs/run-summary.test.ts`; `tests/unit/renderer/ui/paid-count.test.tsx` (wording with and without text requests; reads again on a `job.updated` of its campaign only). Shots: `tests/shots/p4-12.shots.ts` (the dialog for Gemini, ComfyUI and a retry; the overview line).
 - **Class:** D. Not security class. **After:** P4-2, Phase 3.
 
-### P4-13 — The picture section: generate fields and reference dialog
+### P4-13 — The picture section: generate fields and reference dialog (built)
 
 - **Exists when done:** a picture or background layer shows "Make pictures with AI" in the properties panel; Generate goes through the run dialog to `generation.runImages` for that layer; reference pictures are chosen in a dialog that also lists generated pictures; a layer run asks for the layer box's shape (OI-70).
 - **New files:** `src/renderer/editor/picture-ai/`, `editor/generate-fields/`, `src/renderer/dialogs/reference-dialog/`, `src/renderer/stores/generate-drafts.ts`; `src/renderer/ui/reference-picker/` (moved from `screens/campaign/reference-picker/`).
@@ -156,7 +156,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/renderer/editor/generate-fields.test.tsx` (prompt prefilled; the subjects' reference pictures chosen the first time; draft kept per layer; Generate opens the run dialog and Confirm sends one `generation.runImages` with `layerId`; the status line follows the job; locked layer disabled; axe); `tests/unit/renderer/dialogs/reference-dialog.test.tsx` (two lists; ticks in order across both; the limit; Done and Cancel; axe); `tests/integration/generation/run-images-box.test.ts` (an image layer 400 × 200 gives that request size; a background its own box; a slot the variant's size). Approved edits: the reference picker's tests and `generate-panel` tests (import path only). Shots: `tests/shots/p4-13.shots.ts`. Shots also hold the run dialog for Gemini and ComfyUI (owed by P4-12).
 - **Class:** D + B. Not security class. **After:** P4-12.
 
-### P4-14 — The activity panel
+### P4-14 — The activity panel (built)
 
 - **Exists when done:** an "Activity" button and panel list the shown project's jobs with what, where, status and marks; "Go there" opens the place in one action; Cancel and Retry work from a row.
 - **New files:** `src/renderer/app/activity-button/`, `app/activity-panel/`, `app/activity-row/`; `src/renderer/stores/activity-store.ts`; `src/renderer/ui/go-there.ts`; `src/renderer/ui/cancel-shown.ts` (moved from `screens/campaign/run-row/`).
@@ -165,7 +165,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/renderer/stores/activity-store.test.ts` (load, apply an update, read again for a new ID, a late reply dropped); `tests/unit/renderer/app/activity-row.test.tsx` (what and where wording per kind; deleted parts; marks; Cancel by the rule; Retry for background kinds only, paid through the run dialog; the failure sentence; axe); `activity-panel.test.tsx` (two lists and their order; the start-screen line; Escape closes; axe); `tests/unit/renderer/ui/go-there.test.ts` (layer, gone layer, gone variant, video job, brief job, gone campaign). Approved edit: `tests/unit/main/jobs/cancel-shown.test.ts` (import path only). Shots: `tests/shots/p4-14.shots.ts`, and the run dialog in retry mode (owed by P4-12).
 - **Class:** D. Not security class. **After:** P4-2, P4-5, P4-12.
 
-### P4-15 — Reading a Markdown or text brief
+### P4-15 — Reading a Markdown or text brief (built)
 
 - **Exists when done:** a `.md` or `.txt` brief loaded from the project home goes through the run dialog to `brief.extract`, shows a reading dialog, and opens the brief form filled; with no key, cancelling the key dialog opens the empty form.
 - **New files:** `src/renderer/dialogs/brief-reading-dialog/`.
@@ -174,7 +174,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/renderer/screens/project-home/brief-load-text.test.tsx` (`.json` still goes to `brief.parse`; `.md` opens the run dialog, then `brief.extract`; success opens the filled form and sends `job.markSeen`; failure shows the sentence, "Try again" and "Fill the form by hand"; a cancelled key dialog opens the empty form); `tests/unit/renderer/dialogs/brief-reading-dialog.test.tsx` (Stop; closing while running warns; axe). `brief-load.test.tsx` must pass unchanged. Shots: `tests/shots/p4-15.shots.ts`.
 - **Class:** D. Security class, short review (a path to a new command). **After:** P4-8, P4-10, P4-12.
 
-### P4-16 — Place text with AI
+### P4-16 — Place text with AI (built)
 
 - **Exists when done:** "Place text with AI…" in the editor's top bar runs the layout job through the run dialog; the banner follows it; on success the text layers move in one undo entry, also when the tab is not the one shown.
 - **New files:** `src/renderer/editor/layout-run.ts`.
@@ -183,7 +183,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/renderer/editor/layout-run.test.tsx` (disabled with no text; dialog then `generation.proposeLayout`; registered as attached with a finish step; success sends one `layer.updateMany` built by `layoutPatches`; success while another tab shows still applies; a cancelled job sends nothing; failure banner and Dismiss); `editor-banner` and `top-bar` tests gain the new lines (approved additions). Shots: `tests/shots/p4-16.shots.ts` (before and after, using the fake provider; the close warning on a tab, owed by P4-10).
 - **Class:** D. Not security class. **After:** P4-7, P4-10, P4-12.
 
-### P4-17 — Copy options dialog
+### P4-17 — Copy options dialog (built)
 
 - **Exists when done:** "Suggest copy…" beside a text layer's Copy field opens the copy options dialog; options are made through the run dialog and one is used with a `layer.update`.
 - **New files:** `src/renderer/dialogs/copy-options-dialog/`.
@@ -192,7 +192,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/renderer/dialogs/copy-options-dialog.test.tsx` (the newest earlier options shown; Make new options goes through the run dialog to `generation.copyOptions`; "Writing options…" and Stop; "Use this text" sends `layer.update { copy }` and closes; `job.markSeen`; a failure's sentence; closing while running warns; axe); `text-fields` test gains the button (hidden for the headline, disabled when locked). Shots: `tests/shots/p4-17.shots.ts` (and the close warning on a dialog, owed by P4-10).
 - **Class:** D. Not security class. **After:** P4-8, P4-10, P4-12.
 
-### P4-18 — Earlier options
+### P4-18 — Earlier options (built)
 
 - **Exists when done:** the picture section lists every earlier run of the layer with its options; choosing one sets the layer's picture with no provider call; results are marked looked at when shown.
 - **New files:** `src/renderer/editor/earlier-options/`.
@@ -201,7 +201,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/renderer/editor/earlier-options.test.tsx` (runs newest first with their status; "In use" on the layer's picture; Use sends one `layer.update` with `source` and `crop: null` and no generation command; missing file disabled; `job.markSeen` once per unseen run; reads again on a `job.updated` for the layer; Show more; failed run's sentence and Retry; axe). Shots: `tests/shots/p4-18.shots.ts`.
 - **Class:** D. Not security class. **After:** P4-13.
 
-### P4-19 — Cut-out button
+### P4-19 — Cut-out button (built)
 
 - **Exists when done:** "Cut out the subject…" in a picture layer's fields runs a cut-out through the run dialog; its result shows in the layer's earlier options.
 - **May touch:** `src/renderer/editor/picture-fields/`.
@@ -215,7 +215,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **New files:** `tests/e2e/workflow-5-1.spec.ts`; `tests/shots/p4-20.shots.ts`.
 - **May touch:** `tests/e2e/screen-tour.ts` and `screen-tour.spec.ts` (approved: the activity button and the picture section in the tour).
 - **Read:** `REQUIREMENTS.md` workflows 5.1 and 5.8; `spec/screens-ai.md`; `spec/test-harnesses.md`.
-- **Tests:** `workflow-5-1.spec.ts` with `ADMAN_FAKE_PROVIDERS=1`: load a Markdown brief, read it with AI, correct and create the campaign, open the master, generate pictures for the background through the run dialog, use one from earlier options, place text with AI, suggest copy for the call to action and use one, cut out the subject picture and use it; then start a run, open another campaign, see the mark, go there from the activity panel. A loop over the six error kinds (fake `fail`) checks each message and Retry in earlier options and the activity panel.
+- **Tests:** `workflow-5-1.spec.ts` with `ADMAN_FAKE_PROVIDERS=1`: load a Markdown brief, read it with AI, correct and create the campaign, open the master, generate pictures for the background through the run dialog, use one from earlier options, place text with AI, suggest copy for the call to action and use one, cut out the subject picture and use it; then start a run, open another campaign, see the mark, go there from the activity panel. A loop over the six error kinds (fake `fail`) checks each message and Retry in earlier options and the activity panel. The fake provider's `fail` can be set only in-process, not from an end-to-end run, so part of this loop is checked in renderer tests.
 - **Class:** G (end to end). Not security class. **After:** every other slice. The developer lists the stakeholder's hand checks: workflow 5.1 with a real Gemini key; the cut-out workflow's owner check toward `proven`; Windows (D-087).
 
 ## Carried in and settled here

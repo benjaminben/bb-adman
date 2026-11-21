@@ -60,12 +60,12 @@ Built as a table: `src/shared/config/job-kinds.ts` (frozen contract). It owns th
 | Attached | `generative_fill`, `layout_proposal`, `copy_options`, `translation`, `brief_extraction` | Belongs to the dialog or tab that started it. Before that dialog or tab closes while the job is `queued` or `running`, the window warns the user. If the user confirms, the window sends `job.cancel` and then closes. If the user cancels the warning, nothing closes and the job carries on. |
 
 - The stakeholder's words cover the first two background kinds and the first four attached kinds. `export`, `publish` and `brief_extraction` were placed by the architect: the first two were already designed as jobs in the activity list, and brief extraction is a wait inside the intake dialog. To confirm (OI-31: which kinds are attached, and whether partial results of a cancelled attached job are offered, are open).
-- The main process does not know about tabs or dialogs. The window finds the attached jobs of a variant or campaign with `job.list` and decides when to warn. No stored "owner" of a job is needed, whatever the navigation becomes.
+- The main process does not know about tabs or dialogs. The window keeps the attached jobs it started in `src/renderer/stores/attached-store.ts`, one store per window: `register(jobId, owner, finish?)` when a command replies (owner a variant tab or a dialog, each with its `projectId`), `end(jobId)` on Stop. It follows `job.updated`, runs `finish` once when a job succeeds, never for a cancelled or failed one, and forgets the job when it ends. The store decides when to warn (`spec/screens-ai.md`, "Attached jobs and the close warning"). Nothing about owners is stored in the project.
 - `job.cancel` on an attached job leaves the variant as it was. An attached job writes to the variant only through one last command when everything has arrived, and a cancelled job never sends it. For a layout proposal that command is the window's own `layer.updateMany`, sent when the job succeeds while its tab is open (`spec/ai-jobs.md`); the job writes nothing itself. What had already arrived is kept in `result` with status `cancelled`. The data allows the app to offer those partial results or not (OI-31).
 
 ## Job kinds on `main`
 
-Built: `image_generation` and `video_generation`. Handlers are listed in `src/main/jobs/kinds/index.ts`; request and result shapes in `src/shared/schemas/jobs/`. The other seven kinds exist in the table and the `kind` check only; no handler exists for them. Phase 4 adds `layout_proposal`, `copy_options`, `brief_extraction` and `cutout` (`spec/ai-jobs.md`).
+Built: `image_generation`, `video_generation`, and from Phase 4 `layout_proposal`, `copy_options`, `brief_extraction` and `cutout` (`spec/ai-jobs.md`). Handlers are listed in `src/main/jobs/kinds/index.ts`; request and result shapes in `src/shared/schemas/jobs/`. `export`, `publish`, `generative_fill` and `translation` exist in the table and the `kind` check only; no handler exists for them.
 
 ### `image_generation`
 
@@ -246,11 +246,11 @@ Today the only video provider that reaches the resume row is the fake one; Comfy
 
 ## Closing a project and quitting
 
-Built: the refusal and `'stop'`. Not built (Phase 4, P4-10): the close and quit warnings, worded in `spec/screens-ai.md`, and quitting through `project.close` with `'stop'`. What a stop does per provider: `spec/cancel.md`.
+Built: the refusal, `'stop'`, the close and quit warnings (P4-10, worded in `spec/screens-ai.md`) and quitting through `project.close` with `'stop'`. What a stop does per provider: `spec/cancel.md`.
 
 - `project.close` refuses with `RULE_VIOLATION`, `details.reason = 'jobs_running'` and `details.count`, when the project has a `queued` or `running` job, unless its input has `runningJobs: 'stop'`. With `'stop'` the runner (`cancelAll`, `src/main/jobs/close-jobs.ts`) asks the providers that can stop, waits at most `CLOSE_WAIT_MS = 5_000` for their answers, ends what is left, and the project closes. A job row never stays `queued` or `running` in a file the app closed this way.
 - Whether to ask, stop or keep running on close is not decided (Q-039). The one input serves each answer: Ask (the window shows a warning on the refusal and on confirm sends `runningJobs: 'stop'`); Stop (it always sends `'stop'`); Keep running (it does not close the project when the user goes to another one; the main process already holds several open projects by ID).
-- Quitting should close every project with `'stop'` after the same warning, whatever the answer. **As built,** `closeAll` in `src/main/core.ts` closes the files without `project.close`. Running jobs keep their `running` rows and are settled by the open rule at the next open, the same path as a crash. Quitting through `project.close` with `'stop'`, after the warning, comes with the quit warning in Phase 4.
+- **Quitting** (`src/main/index.ts`): with jobs queued or running in any open project, `before-quit` is stopped and a system message box asks first (wording from `quitQuestion` in `src/main/quit-question.ts`; "Cancel" is the default, so Enter or Escape keeps the app open). Closing the app window asks the same question, since closing it quits the app. "Quit" runs `closeAllStopping` (`src/main/core.ts`): `project.close` with `'stop'` for every open project, then `closeAll` for anything a refused close left open; then the app quits. With nothing running, no box, and `closeAll` closes the files.
 - `project.setAssetsDir` refuses with `RULE_VIOLATION`, `jobs_running` while `jobs.activeCount(projectId) > 0`: a job writes its file and then adds its row, and both must see one folder. `campaign.delete` refuses with `jobs_running` too (OI-69: provisional).
 - One or several projects at once (Q-038) and remembered tabs (Q-040) are not decided. The main process keeps any number of open projects, each named by `projectId`, which serves either answer.
 
@@ -268,7 +268,5 @@ Built. `src/main/providers/fake/` (`behaviour.ts`, `image.ts`, `video.ts`, `layo
 
 Not built.
 
-- **Phase 4: layout, copy options, brief reading, cut-out.** Designed in `spec/ai-jobs.md` (kinds, commands, queries, failure sentences, the fake provider's parts) and `spec/screens-ai.md` (the run dialog, the activity panel, the close warnings).
 - **Phase 7: video resume into the ad.** Resume already checks and fetches a left-over run. Phase 7 adds the clip to the variant's track (first free position) when the run ends, also for a resumed run, embeds details in the MP4 through FFmpeg (`details: 'pending'` goes away), and fills the clip row's `width`, `height`, `duration_ms`. The fal.ai Seedance adapter (slice J) must first find out whether fal charges for a status call or fetch: if it does, or that cannot be shown, fal rows are not resumed and end as interrupted. Slice J also says whether a resumed status call counts in `paid_calls`, and how a close treats a fal run that will still be charged (OI-51, OI-60).
-- **`export` and `publish`** become background job kinds with the phases that build them (`spec/export-and-checks.md`, `spec/storage-and-publish.md`). `generative_fill`, `translation` and `brief_extraction` become attached kinds with theirs.
-- **The activity panel**, "go there", and the close and quit warnings: Phase 4 (`spec/screens-ai.md`).
+- **`export` and `publish`** become background job kinds with the phases that build them (`spec/export-and-checks.md`, `spec/storage-and-publish.md`). `generative_fill` and `translation` become attached kinds with theirs.

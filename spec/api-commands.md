@@ -9,7 +9,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 **Scope.** A command is project-scope or app-scope (`spec/api-principles.md`, "Channels, actor and scope").
 
 - **Project-scope:** every row whose input starts with `projectId`. The bus finds the open project and runs the handler in one transaction on its file (`spec/data-rules.md`, "Data flow"). Every other ID in the input is looked up inside that project only.
-- **App-scope:** `project.create`, `project.open`, `project.close`, `settings.update`, `secret.set`, `secret.delete`, `mcp.setEnabled`, `mcp.regenerateToken`, `agent.answerPermission`, `storage.dropboxSignIn`, `storage.dropboxSignOut`, `dev.storage`, `comfy.setAddress`, `comfy.check`, `agentRuns.setAllowed`, `agentRuns.setLimit`. They run with no project transaction and have no `ctx.changes`. `project.close` takes a `projectId` but is app-scope, because it closes the file.
+- **App-scope:** `project.create`, `project.open`, `project.close`, `settings.update`, `secret.set`, `secret.delete`, `mcp.setEnabled`, `mcp.regenerateToken`, `agent.answerPermission`, `storage.dropboxSignIn`, `storage.dropboxSignOut`, `storage.checkS3`, `dev.storage`, `comfy.setAddress`, `comfy.check`, `agentRuns.setAllowed`, `agentRuns.setLimit`. They run with no project transaction and have no `ctx.changes`. `project.close` takes a `projectId` but is app-scope, because it closes the file.
 
 | Command | Input | Undo | Agent | Built | Requirements |
 |---------|-------|------|-------|-------|--------------|
@@ -70,6 +70,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `job.markSeen` | projectId, jobIds[] (at least one) | — | deny | Built | FR-218 |
 | `storage.dropboxSignIn` | — | — | deny | Not built (slice G, postponed) | FR-160, R-15 |
 | `storage.dropboxSignOut` | — | — | deny | Not built (slice G, postponed) | FR-160 |
+| `storage.checkS3` | `{}`. Tests the saved S3 settings and keys: list, put, read and delete one small test file; replies with ok or one fixed failure sentence (`spec/storage-and-publish.md`) | — | deny | Not built (AP-10b) | — |
 | `export.run` | projectId, campaignId, variantIds[], outputDir, imageFormat, jpgQuality, fps, proceedDespiteWarnings, reason? (FR-236) | — | deny | Not built (Phase 8) | FR-140, FR-199, FR-236 |
 | `publish.run` | projectId, campaignId, storage, replaceConfirmed | — | deny | Not built (Phase 9) | FR-161, FR-199 |
 | `history.undo` / `history.redo` | projectId, scope (`variant:{id}` or `campaign:{id}`) | — | deny | Built | FR-095 |
@@ -132,7 +133,7 @@ Built. `src/main/commands/brief/`, `src/main/commands/campaign/`, `src/main/comm
 
 ## Editing commands
 
-Built: `layer.create`, `layer.update`, `layer.delete`, `layer.restore`, `layer.reorder`, `layer.reportOverflow` and `variant.update` (title) (`src/main/commands/layer/`, `src/main/commands/variant/`). The rest Not built (Phases 5 to 7, per row). Formats in `spec/data-rules.md`.
+Built: `layer.create`, `layer.update`, `layer.updateMany`, `layer.delete`, `layer.restore`, `layer.reorder`, `layer.reportOverflow` and `variant.update` (title) (`src/main/commands/layer/`, `src/main/commands/variant/`). The rest Not built (Phases 5 to 7, per row). Formats in `spec/data-rules.md`.
 
 - **Layer commands and `variant.update`**: inputs, counters, the no-op rule, undo inverses, the asset checks, refusals and replies are in `spec/editor-commands.md`. Every one of them except `layer.reportOverflow` bumps `variant.rev` through `src/main/commands/variant-rev.ts`.
 - `variant.setFormat` works in both directions and an agent may run it without the permission dialog [D-020, D-025]. Defined in `spec/data-rules.md`, "Changing a variant's format".
@@ -145,17 +146,17 @@ Built: `layer.create`, `layer.update`, `layer.delete`, `layer.restore`, `layer.r
 
 ## Generation and job commands
 
-Built: `generation.runImages`, `generation.startVideo`, `job.retry`, `job.cancel`, `job.markSeen`. `src/main/commands/generation/`, `src/main/commands/job/`. Job rows and the runner: `spec/jobs.md`. ComfyUI checks: `spec/comfyui.md`. Cancel: `spec/cancel.md`.
+Built: `generation.runImages`, `generation.startVideo`, `generation.proposeLayout`, `generation.copyOptions`, `generation.cutOut`, `job.retry`, `job.cancel`, `job.markSeen`. `src/main/commands/generation/`, `src/main/commands/job/`. Job rows and the runner: `spec/jobs.md`. ComfyUI checks: `spec/comfyui.md`. Cancel: `spec/cancel.md`.
 
 - Every `generation.*` command and `job.retry` return `JobStarted = { jobId }` as soon as the job row exists.
 - Every caller of `enqueue` says who started the run: `EnqueueRequest.startedBy` is required, `'user' | 'agent'`, no default.
 - **Deferred agent abilities** [REQ: FR-199]. Opening `export.run` or `publish.run` to agents is a change to `agent-policy.ts` plus the MCP tool definitions. No command changes. The generation commands and `job.cancel` are `tick` [D-051, D-052, D-080], the Phase 4 ones included (`spec/ai-jobs.md`).
-- The Phase 4 commands (`generation.proposeLayout`, `generation.copyOptions`, `generation.cutOut`, `brief.extract`, `layer.updateMany`) are designed in `spec/ai-jobs.md`.
+- The Phase 4 commands (`generation.proposeLayout`, `generation.copyOptions`, `generation.cutOut` in `src/main/commands/generation/`, `brief.extract` in `brief/extract.ts`, `layer.updateMany` in `layer/update-many.ts`) are built and described in `spec/ai-jobs.md`.
 
 ### `generation.runImages`
 
 - Records `layerId` in `job.layer_id` when given a layer, and `slot` in `job.slot` when given a slot. It accepts any image or background layer of the variant by `layerId`, not only one that fills a template slot. Whether the screens offer that is part of Q-032 (OI-29, open: which layers the screens let the user generate into, cut-outs included); the command does not change either way.
-- **The shape asked for** (OI-70; Not built, P4-13). Given a layer, the request's `width` and `height` are the layer's box (`geometry.width` and `geometry.height`, rounded, at least 1), so less of the picture is cropped when it is placed; a background layer's box is usually the whole canvas. Given a slot, the variant's size, as built. A provider takes these as a shape (Gemini's nearest ratio, ComfyUI's `fitSize`).
+- **The shape asked for** (OI-70; Built, P4-13). Given a layer, the request's `width` and `height` are the layer's box (`geometry.width` and `geometry.height`, rounded, at least 1), so less of the picture is cropped when it is placed; a background layer's box is usually the whole canvas. Given a slot, the variant's size, as built. A provider takes these as a shape (Gemini's nearest ratio, ComfyUI's `fitSize`).
 - `count` is a whole number from 1 to 8. Each picture is one paid call. The number has one owner: `MAX_IMAGES_PER_RUN` in `src/shared/config/defaults.ts`, read by the schema in `src/shared/schemas/commands/generation.ts`. The default stays `settings.generation.optionsPerRun` (4).
 - Refusals: an unknown provider, one that cannot make pictures, or one not in this build: `INVALID_INPUT`. A text layer, a copy slot or an unknown slot: `INVALID_INPUT`. A missing variant, or a layer not in the variant: `NOT_FOUND`.
 - `prepare` reads every ID in `referenceAssetIds`: a picture that is gone, too large or not a picture (WebP included, until slice WP) is refused before a job row is made. The job kind reads the bytes again with `AssetService.read`.

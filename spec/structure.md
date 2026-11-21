@@ -248,7 +248,7 @@ src/renderer/
 │                       slot-view/ [use-slots.ts],
 │                       generate-panel/, provider-select/, reference-picker/, paid-confirm/,
 │                       video-panel/ [video-length.ts], video-picture-choice/, video-result/, run-list/,
-│                       run-row/ [video-status.ts, cancel-shown.ts], run-result/, reference-list.ts,
+│                       run-row/ [video-status.ts], run-result/, reference-list.ts,
 │                       video-start.ts, use-comfy-info.ts, offered-workflow.ts
 ├── dialogs/        key-dialog/, address-dialog/, licence-dialog/ [licence-choices.tsx],
 │                   import-dialog/ [import-choices.tsx, import-text.ts], relink-dialog/ [relink-body.tsx,
@@ -262,7 +262,7 @@ src/renderer/
 └── ui/             tokens.css, base.css, layout.module.css, asset-url.ts, secret-labels.ts, shortcuts.ts,
                     comfy-privacy.ts, missing-item-text.ts, dropped-paths.ts, dialog-frame/, tab-row/,
                     tab-marks/, variant-thumbnail/ [use-thumbnail.ts], run-failure/ [missing-items.ts,
-                    server-message.tsx], paid-count/ [use-paid-count.ts]
+                    server-message.tsx], paid-count/ [use-paid-count.ts], cancel-shown.ts
 ```
 
 The Phase 2 campaign screens and dialogs are described in `spec/screens-campaign.md`.
@@ -277,7 +277,7 @@ Why each helper sits where it does (who imports it):
 | `campaign-input.ts` | `brief-form-model.ts`, `brief-form-problems.ts` (`briefSubjectIds`) | plain file in `screens/project-home/` |
 | `brief-form-model.ts`, `brief-form-problems.ts`, `brief-form-sizes.ts` | `brief-load/`, `brief-form/`, `subject-rows/`, `size-fields/`, `rule-fields/` | plain files in `screens/project-home/` |
 | `offered-workflow.ts` | the two panels' trial mark | plain file in `screens/campaign/` |
-| `cancel-shown.ts` | `run-row.tsx` | inside `run-row/` |
+| `cancel-shown.ts` | `run-row.tsx`, `activity-row.tsx` | `ui/` |
 | `run-asks.ts` | `app-store.ts` | `stores/` |
 | `reference-list.ts` | `reference-picker.tsx`, `video-picture-choice.tsx` | plain file in `screens/campaign/` |
 | `video-start.ts` | `video-panel.tsx`, `video-picture-choice.tsx` | plain file in `screens/campaign/` |

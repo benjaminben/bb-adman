@@ -2,7 +2,7 @@
 
 The Phase 4 jobs beside picture and video generation: what each command checks, what each job sends and keeps, the cut-out workflow, the plain sentence for each failure cause, the fake provider's parts, and the agent rows. Read with `spec/jobs.md` (the job record, the runner, the two classes), `spec/providers.md` (interfaces, adapter rules, size limits), `spec/providers-adapters.md` (the Gemini calls), `spec/comfyui-workflows.md` (shipped workflows) and `spec/screens-ai.md` (the screens that start these jobs).
 
-Everything here is Not built (Phase 4), slices in `spec/phases/phase-04.md`. [REQ: FR-022, FR-045, FR-061, FR-069, FR-230, FR-248, FR-307; D-036, D-080]
+Everything here is Built (Phase 4), slices in `spec/phases/phase-04.md`. [REQ: FR-022, FR-045, FR-061, FR-069, FR-230, FR-248, FR-307; D-036, D-080]
 
 ## Contracts
 
@@ -90,6 +90,7 @@ export interface CutoutProvider {
 - Each `generation.*` here returns `JobStarted = { jobId }`. `brief.extract` too.
 - **The gate** (`src/main/commands/agent-run-gate.ts`) knows `generation.proposeLayout`, `generation.copyOptions` and `generation.cutOut` with the same three steps as `generation.runImages`; each input requires `provider`. Gate tests as for `generation.runImages`: each refused at steps 1, 2 and 3 with no job row; ticked, accepted with `startedBy: 'agent'`.
 - No MCP tool calls these commands or queries in Phase 4. Phase 10 adds the tools with its layer tools (A-66).
+- `job.retry` is `deny` for an agent (`agent-policy.ts`), so an agent never re-runs one of these jobs; a retried job is always the user's.
 - The three queries are open to both actors, as `job.get` is; no tool wraps them.
 
 ### The three queries
@@ -189,7 +190,7 @@ The request: `role` is `call_to_action` when the layer's slot is `call-to-action
 
 The request is `{ sourceAssetId }`, the layer's picture at that moment. Enqueued with campaign, variant and layer. `job.retry` of a ComfyUI cut-out runs step 4 again (`src/main/commands/job/retry.ts`).
 
-**The job** (`src/main/jobs/kinds/cutout.ts`): the key guard; the source read again through `readPictures` (below); one `jc.call` to `cutOut`; `deps.toPng`; details embedded with `kind: 'cutout'` and an empty prompt; stored through `storeResult` (below). `asset.addGenerated` writes `gen_prompt` null when the job's request has no prompt. Result `{ assetIds: [id] }`. The source asset is never changed [REQ: FR-307].
+**The job** (`src/main/jobs/kinds/cutout.ts`): the key guard; the source read again through `readPictures` (below), so what is sent is the clean PNG `AssetService.read` re-encodes, never the file's own bytes; one `jc.call` to `cutOut`; `deps.toPng`; details embedded with `kind: 'cutout'` and an empty prompt; stored through `storeResult` (below). `asset.addGenerated` writes `gen_prompt` null when the job's request has no prompt. Result `{ assetIds: [id] }`. The source asset is never changed [REQ: FR-307].
 
 **See-through pixels through `toPng`.** A cut-out goes through `toPng` like every picture, and its alpha survives: the decoder keeps four channels and the encoder writes a PNG with alpha. Fully see-through and fully solid pixels keep their alpha exactly. A fully see-through pixel's colour may come back as black, and a partly see-through edge pixel's colour may move by a rounding step, because the decoder holds colours multiplied by alpha. Both look the same when drawn. Accepted. Test: `tests/e2e/cutout-alpha.spec.ts` (Electron's real decoder).
 
@@ -216,7 +217,7 @@ The request is `{ sourceAssetId }`, the layer's picture at that moment. Enqueued
 | The variant, layer or campaign the job was for was deleted | `target_gone` | "The layer or variant this run was for has been deleted." |
 
 - **How it is decided** (security class). `LocalFailure` (`src/main/jobs/local-failure.ts`) carries a reason only. `readPictures` and `storeResult` throw it, comparing the `AppError`'s `code` and `details.reason` with the fixed values above and reading nothing else. The runner (`run-job.ts`) turns a `NEEDS_KEY` `AppError` into `key_missing` the same way. Any other `AppError` stays kind `other` with no reason and the sentence "{Provider} could not finish this request. Try again."
-- **Nothing from the error leaves.** The row's `error_detail` is the reason name (or `app_error` for another `AppError`), never the error's code, message or details. The log line holds the error kind and reason only. A write error's own code (for example `EACCES`) goes to one `warn` line with `event: 'job'` and no path.
+- **Nothing from the error leaves.** For a local failure the row's `error_detail` is the reason name; for another `AppError` it is `app_error`; never the error's code, message or details. A `ProviderFailure` keeps the provider's own detail there, as before (`run-job.ts`); it never goes into `job.updated`, a log line or a reply. The log line holds the error kind and reason only. A write error's own code (for example `EACCES`) goes to one `warn` line with `event: 'job'` and no path.
 - A failure that arrives after some pictures were kept ends as today: the run keeps them and counts the failure.
 - The window shows the sentence wherever a failed run shows (`ui/run-failure/`, the activity panel, the earlier options); the agent job view gives it with `{provider}` filled.
 
@@ -224,7 +225,7 @@ The request is `{ sourceAssetId }`, the layer's picture at that moment. Enqueued
 
 `src/main/providers/fake/` (`layout.ts`, `text.ts`, `cutout.ts`). Each honours `setFakeBehaviour` (`fail`, `waitMs`, `onCancel`) like the picture and video parts, makes no network call and counts no paid call.
 
-- **Layout:** for each item, the default layout box and text style of `src/shared/config/default-layout.ts` for the slot named like the item's key (`headline`, `call-to-action`), else the "any other copy slot" box, placed one box-height lower for each earlier such item and kept inside the canvas; colour the first palette colour, else `#FFFFFF`.
+- **Layout** (`fake/layout.ts`): for each item, the box and text style of the default layout (`SLOT_LAYOUTS` in `src/shared/config/default-layout.ts`) for the slot named like the item's key, placed by the shared box rules (`frameOf`, `geometryOf` in `src/shared/templates/layout-rules.ts`); else `OTHER_COPY_BOX`, placed one box-height lower for each earlier such item and kept inside the canvas. The font size is the style's largest, `fontSizeOfSmaller × S`, rounded. Colour the first palette colour, else `#FFFFFF`; `align` from the style.
 - **Extract brief:** reads lines of the form `Label: value`, labels in any letter case: "Campaign name", "Region", "Audience", "Message", "Offer", "Call to action", "Tone", "Languages" and "Sizes" (comma lists), and "Subject" (repeatable; `Name - description`). Other lines are ignored. So a test's Markdown brief gives a known draft.
 - **Copy options:** the first `count` of a fixed list of eight short English lines per role (for `call_to_action`: "Shop the collection", "Find your fit", …), each within `maxChars`.
 - **Translate:** `ProviderFailure` `other`, "Translate is not built yet" (Phase 6).

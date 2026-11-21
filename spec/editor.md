@@ -40,8 +40,10 @@ Each name ending in `/` is a component folder (OI-80): the component, its CSS mo
 
 ### The shell
 
-- The top row: the **project switcher** on the left, then the **campaign tabs** of the shown project, then "Settings" (and "Hand test" with dev tools) on the right. Project tabs go.
-- **Project switcher** (`app/project-switcher/`): a menu button showing the shown project's name, or "Adman" on the start screen. Its menu lists the open projects (choosing one shows it), then "Start" (the start screen: new, open, recent), then "Close project" for the shown one (`project.close`, with today's refusal when jobs run). Several projects stay open in the main process; one is shown at a time [REQ: FR-003].
+- The frame (`app/app-shell/`) is a grid of two rows: the top row, then one cell for the content, which the activity panel shares at its right end.
+- The top row: the **project switcher** on the left, then the **campaign tabs** of the shown project, then "Activity", "Settings" (and "Hand test" with dev tools) on the right. Project tabs go.
+- **Project switcher** (`app/project-switcher/`): a menu button showing the shown project's name, or "Adman" on the start screen. Its menu lists the open projects (choosing one shows it), then "Start" (the start screen: new, open, recent), then "Close project" for the shown one. Several projects stay open in the main process; one is shown at a time [REQ: FR-003].
+- **Closing a project** (`project-switcher/close-project.tsx`, `useCloseProject`, also used by the project home): it sends `project.close`. Refused with reason `jobs_running`, it clears the error banner and asks "Close {project}?", "{n} runs are still going in this project. Closing stops them." (one: "1 run is still going in this project. Closing stops it.") "Requests already sent to a paid provider may still be charged, and their results are lost." Buttons "Keep open" (sends nothing) and "Stop runs and close" (`project.close { runningJobs: 'stop' }`), both disabled while it sends.
 - **Campaign tabs** (`app/campaign-tabs/`, Radix Tabs, label "Open campaigns"): first a fixed tab "Project" (the project home: campaign list, brief intake, libraries), then one tab per open campaign named after it, each with a close button ("Close {name}"), then a "+" button ("Open or start a campaign") that shows the Project tab. Opening a campaign from the project home adds its tab, or shows it if open [REQ: FR-211].
 - A campaign tab shows the campaign's job marks (built in `campaign.get`): "Running" or a dot for "finished, not looked at" [REQ: FR-218], each with a text label for screen readers.
 
@@ -108,8 +110,9 @@ The side widths are tokens (`--editor-layers-width`, `--editor-props-width`). Ph
 
 `editor/editor-banner/`. At most one line, the first that applies:
 
-1. A file is missing: "A file this variant uses cannot be found. Relink it from the project page."
-2. Text does not fit [REQ: FR-098]. For one layer: "1 text layer does not fit its box. Make the box larger, the text smaller, or shorten the text." For several: "{n} text layers do not fit their box. Make the box larger, the text smaller, or shorten the text."
+1. The layout run's line ("Placing text with AI…" with "Stop", or its failure with "Dismiss"; `spec/screens-ai.md`, "Place text with AI"). While it shows, the lines below are hidden.
+2. A file is missing: "A file this variant uses cannot be found. Relink it from the project page."
+3. Text does not fit [REQ: FR-098]. For one layer: "1 text layer does not fit its box. Make the box larger, the text smaller, or shorten the text." For several: "{n} text layers do not fit their box. Make the box larger, the text smaller, or shorten the text."
 
 The line is a status message (`role="status"`), so a screen reader reads it when it changes.
 

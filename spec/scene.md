@@ -23,9 +23,9 @@ All in `src/shared/scene/`. Shared code: no import from `main`, `renderer`, `pre
 | `text-style.ts` | `textCss(style)`: the exact CSS of a text layer (below); the box is set separately |
 | `font-faces.ts` | `useSceneFonts(fonts)`, `registerDefaultFont()`, `DEFAULT_FONT_FAMILY`, `fontFamilyOf(fontAssetId)` |
 | `measure-overflow.ts` | `measureOverflow(element)`: the one overflow test |
-| `colour-css.ts` | Not built (LK-1). `rgbCss(hex, alpha?)`: the only way a look colour becomes CSS |
-| `text-box-css.ts`, `measure-text.ts` | Not built (LK-2). `textBoxCss(style)`, the outer box of a text layer; `measuredText(box, text, padding)`, the values `measureOverflow` takes |
-| `shade-css.ts` | Not built (LK-3). `shadeCss(shade)` and `SHADE_STOPS` |
+| `colour-css.ts` | `rgbCss(hex, alpha?)`: the only way a look colour becomes CSS (LK-1) |
+| `text-box-css.ts`, `measure-text.ts` | `textBoxCss(style)`, the outer box of a text layer, and `clampTo`; `measuredText(box, text, padding)`, the values `measureOverflow` takes (LK-2) |
+| `shade-css.ts` | `shadeCss(shade)` and `SHADE_STOPS` (LK-3) |
 | `fonts/InterVariable.woff2`, `fonts/OFL.txt` | The bundled default font and its licence |
 
 The Scene has no CSS file. Every value it draws comes from the layer data, so it uses inline styles only. App tokens (`src/renderer/ui/tokens.css`) never reach it: they style the app, not the ad.
@@ -74,8 +74,8 @@ Every layer is a box from its `geometry`: `left: x px; top: y px; width: width p
 
 ### Pictures (background and image layers)
 
-- The box is `overflow: hidden`. It holds one `<img>` with `alt=""`, `draggable={false}` and the style `position: absolute` at the place `placePicture` gives. The box's `opacity` is `style.opacity`.
-- **Nothing is drawn** when `source` is null (an empty picture layer), when the asset is not in `assets`, is `missing`, is not of kind `image`, or fails to load. The editor draws its own placeholder for an empty picture layer (`spec/editor.md`); the Scene never does, so thumbnails and exports show nothing there.
+- The box (`data-layer-id`) is `overflow: hidden`. It holds one `<img>` with `alt=""`, `draggable={false}` and the style `position: absolute` at the place `placePicture` gives, then, when the layer has a usable shade, the shade element ("Background colour and shade", below). The box's `opacity` is `style.opacity`. With no look fields set, the DOM is as before: the box and the `<img>` only.
+- **No picture is drawn** when `source` is null (an empty picture layer), when the asset is not in `assets`, is `missing`, is not of kind `image`, or fails to load. The editor draws its own placeholder for an empty picture layer (`spec/editor.md`); the Scene never does, so thumbnails and exports show nothing there.
 - **Transparency is kept** [REQ: FR-245]. The box and the `<img>` have no background colour (a background layer's own `fillColor` aside, "Background colour and shade" below), so a PNG or WebP with a transparent background shows the layers beneath it, in the editor, in thumbnails and in `variant.render`. Phase 8 adds the same test for the exported file.
 - The picture's own size is the loaded `<img>`'s `naturalWidth` and `naturalHeight`. Until it is known the `<img>` is drawn with `visibility: hidden`. The row's `width` and `height` are not used for drawing (WebP rows have none).
 
@@ -106,7 +106,7 @@ The box holds the copy as text content, never as HTML. A text layer whose style 
 | `white-space`, `overflow-wrap`, `word-break`, `hyphens` | `pre-wrap`, `normal`, `normal`, `manual` |
 | `font-kerning`, `overflow`, `padding`, `margin`, `box-sizing` | `normal`, `visible`, `0`, `0`, `border-box` |
 
-- Text starts at the top of its box unless `verticalAlign` says otherwise ("Text boxes", below, Not built).
+- Text starts at the top of its box unless `verticalAlign` says otherwise ("Text boxes", below).
 - The user's line breaks are kept (`pre-wrap`). Words wrap at the box's width. A word longer than the box is not broken; it overflows and is flagged.
 - **Letter spacing** is CSS `letter-spacing` in `em`, from −0.2 to 1 (the schema's range). It changes the text's width, so it is counted in the overflow test like any other style [REQ: FR-249].
 - **Text that does not fit is drawn as it is**, past its box. It is never cut off and never made smaller [REQ: FR-098]. The editor marks it; the export warns (R-18).
@@ -114,7 +114,7 @@ The box holds the copy as text content, never as HTML. A text layer whose style 
 
 ### Text boxes
 
-Not built (LK-2) [D-094]. Look values come from `textLookOf(style)`, so a layer stored without them draws as before, pixel for pixel. A text layer is two elements:
+Built (LK-2, `text-layer.tsx`) [D-094]. Look values come from `textLookOf(style)`, so a layer stored without them draws as before, pixel for pixel. A text layer is two elements, both `div`s:
 
 - **The box** (`data-layer-id`, the geometry box) gets `textBoxCss(style)`: `display: flex`, `flex-direction: column`, `box-sizing: border-box`, `overflow: visible`, and
 
@@ -132,11 +132,11 @@ Not built (LK-2) [D-094]. Look values come from `textLookOf(style)`, so a layer 
 
 ### Background colour and shade
 
-Not built (LK-3) [D-094]. Look values come from `pictureLookOf(style)`.
+Built (LK-3, `shade-css.ts`, `picture-layer.tsx`) [D-094]. Look values come from `pictureLookOf(style)`.
 
-- **Background colour.** A background layer whose `fillColor` is set draws it as the box's `background-color` (`rgbCss`), under its picture, with the box's opacity. With no picture it is a flat colour. Null or absent draws nothing, so the black root shows as before. An image layer never has one (refused by `layer.update`).
+- **Background colour.** A background layer whose `fillColor` is set draws it as the box's `background-color` (`rgbCss`), under its picture, with the box's opacity. With no picture it is a flat colour. Null, absent or not a usable colour draws nothing, so the black root shows as before. An image layer's `fillColor` is ignored by the Scene (and refused by `layer.update`).
 - **Shade.** A background or image layer whose `shade` is set draws one more element after the `<img>`, inside the box: `position: absolute`, `inset: 0`, `pointer-events: none`. So it covers the whole box, turns with it, is cut by the box's `overflow: hidden` as the picture is, and fades with the box's opacity. It is drawn with or without a picture (A-75).
-- **`shadeCss(shade)`.** For `all`: `background-color: rgbCss(color, strength)`. For a side: `background-image: linear-gradient(to {top | bottom | right | left}, …)` for `from` `bottom`, `top`, `left`, `right` (a fixed table), with the stops of `SHADE_STOPS`: at `0 %` alpha `strength`, at `reach × 50 %` alpha `strength × 0.45`, at `reach × 100 %` alpha 0. `strength` is clamped to 0..1 and `reach` to 0.05..1 (A-76).
+- **`shadeCss(shade)`.** For `all`: `background-color: rgbCss(color, strength)`. For a side, the shade is strongest at that side: `from: bottom` gives `linear-gradient(to top, …)`, `top` gives `to bottom`, `left` gives `to right`, `right` gives `to left` (a fixed table). `SHADE_STOPS` holds three stops, each a share of `reach` and a share of `strength`: at `reach × 0 %` alpha `strength × 1`, at `reach × 50 %` alpha `strength × 0.45`, at `reach × 100 %` alpha 0; positions are written with at most 4 decimals. `strength` is clamped to 0..1 and `reach` to 0.05..1 (A-76). A strength or reach that is not a finite number, an unknown side, or a colour `rgbCss` refuses drops the whole shade: no element is drawn.
 
 ### Fonts
 
@@ -155,7 +155,7 @@ Not built (LK-3) [D-094]. Look values come from `pictureLookOf(style)`.
 
 - After each change of `layers` or `assets` the Scene waits until it is settled: the default font and every font face it uses have loaded or failed, and every `<img>` it shows has decoded or failed (`img.decode()`). Then it waits two animation frames and measures. A settle that a newer change overtook is dropped.
 - **`measureOverflow(box)`** is the one test: the text box overflows when `box.scrollHeight − box.clientHeight > 1` or `box.scrollWidth − box.clientWidth > 1`, in variant pixels. The 1 pixel allows for rounding between systems.
-- **With a text box** (Not built, LK-2). The settle step gives `measureOverflow` the values of `measuredText(box, text, padding)`: `scrollHeight` is the text element's `scrollHeight`, `clientHeight` is the box's `clientHeight − 2 × padding` (the area inside the outline and padding), `scrollWidth` and `clientWidth` are the text element's. Measuring the text element, not the box, catches text that overflows past the top when it is aligned to the bottom, where the box's own scroll size would not grow. With no box values this gives the same result as before. `measureOverflow` itself does not change.
+- **With a text box** (Built, LK-2). The settle step gives `measureOverflow` the values of `measuredText(box, text, padding)`: `scrollHeight` is the text element's `scrollHeight`, `clientHeight` is the box's `clientHeight − 2 × padding` (the area inside the outline and padding), `scrollWidth` and `clientWidth` are the text element's. Measuring the text element, not the box, catches text that overflows past the top when it is aligned to the bottom, where the box's own scroll size would not grow. With no box values this gives the same result as before. `measureOverflow` itself does not change.
 - Every text layer is measured, hidden ones included (they keep their place). An empty copy never overflows.
 - The Scene then calls `onSettled({ overflow })` with one entry per text layer ID. It writes nothing itself.
 - **Who reports.** The editor window and the render service each compare the result with the stored `layer.overflow` and send `layer.reportOverflow` for each layer that differs, naming the `variant.rev` they drew (`spec/editor-commands.md`). Both use this one test, so they agree. The editor reports only from saved values, never during a drag. A report for an older `rev` changes nothing.

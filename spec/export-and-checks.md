@@ -27,7 +27,7 @@ This follows ComfyUI, which writes JSON into PNG text entries and MP4 container 
 
 ### PNG
 
-Built. `src/main/jobs/png-details.ts` (`embedGenerationDetails`, `GenerationDetails`), called by `pngOf` in `src/main/jobs/kinds/image-generation.ts`. Tests: `tests/unit/main/jobs/png-details.test.ts`, `tests/integration/generation/image-kind.test.ts`, fixture `tests/fixtures/png-chunks.ts`.
+Built. `src/main/jobs/png-details.ts` (`embedGenerationDetails`, `GenerationDetails`), called by `pngOf` in `src/main/jobs/kinds/image-generation.ts` and by the cut-out kind (`kinds/cutout.ts`). Tests: `tests/unit/main/jobs/png-details.test.ts`, `tests/integration/generation/image-kind.test.ts`, fixture `tests/fixtures/png-chunks.ts`.
 
 ```ts
 export type GenerationDetails = {
@@ -36,7 +36,7 @@ export type GenerationDetails = {
   provider: string
   model: string
   prompt: string
-  kind: 'image_generation'
+  kind: 'image_generation' | 'cutout'        // a cut-out has an empty prompt
   createdAt: string
   models?: string[]                          // ComfyUI only
   workflow?: { id: string; version: number } // ComfyUI only

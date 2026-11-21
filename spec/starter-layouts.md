@@ -1,6 +1,6 @@
 # Starter layouts and the starting font size
 
-Not built (look pack, slices LK-4 and LK-6, `spec/phases/look-pack.md`) [D-094].
+Built (LK-4): the five layouts as data, the box and style rules, the starting font size, `buildMasterLayers` from the default layout, and `starterLayoutPatches`. Not built (LK-6): "Layout…", the screen that applies a layout (`spec/phases/look-pack.md`) [D-094].
 
 A starter layout is a named set of starting boxes and looks for the template's slots. A new master is built from the default one (`spec/brief-and-templates.md`, "The default layout and `buildMasterLayers`"), and "Layout…" in the editor applies any of them to the open variant (`spec/editor.md`). The five are modelled on the reference ads in `design/references/`. Read with `spec/data-model-campaign.md` ("Look fields") and `spec/scene.md` ("Text boxes", "Background colour and shade").
 
@@ -10,10 +10,12 @@ A starter layout is a named set of starting boxes and looks for the template's s
 |------|-------|
 | `src/shared/config/default-layout.ts` | The types below, `MARGIN_OF_SMALLER`, `SIDE_OF_SMALLER`, `FONT_ESTIMATE`, the slot names, the "any other slot" rows, `LAYER_DEFAULTS`, and the default layout's own values (`SLOT_LAYOUTS`, `BACKGROUND_LOOK`, `DEFAULT_STARTER_LAYOUT`). `SLOT_LAYOUTS` keeps its name and shape, so Phase 4 code that reads it keeps working. |
 | `src/shared/config/starter-layouts.ts` | `STARTER_LAYOUTS`: the default layout (imported, not copied) then the other four; `DEFAULT_STARTER_LAYOUT_ID = 'photo-bottom-left'` |
-| `src/shared/templates/layout-rules.ts` | `frameOf`, `geometryOf`, `textStyleOf`: the box and style rules, shared by the two users below |
-| `src/shared/templates/starting-font-size.ts` | `startingFontSize(copy, box, rule, frame)` |
+| `src/shared/templates/layout-rules.ts` | The box and style rules, shared by the users below and the fake layout provider: `Frame` (`{ W, H, S, m, side }`), `frameOf(size)`, `geometryOf(box, frame)`; `textLayoutStyleOf(slot, copy, box, frame)`, a text style without `fontAssetId` (the rule's values, every look field, the starting font size), which a layout sends so the user's font stays; `textStyleOf(slot, copy, box, frame)`, the same plus the rule's `fontAssetId`, for a new layer |
+| `src/shared/templates/starting-font-size.ts` | `startingFontSize(copy, box, rule, frame)` and its `FontSizeRule` (`fontSizeOfSmaller`, `lineHeight`, `letterSpacing`, `allCaps`, `padding`, `outline`) |
 | `src/shared/templates/master-layers.ts` | `buildMasterLayers`, reading the default layout |
-| `src/shared/templates/starter-layout-patches.ts` | `starterLayoutPatches(layout, size, layers)` |
+| `src/shared/templates/new-layer.ts` | `newLayerValues(type, size, count)`: a layer the user adds, built by `buildMasterLayers` from a slot no layout names, so it takes the "any other slot" rows |
+| `src/shared/templates/starter-layout-patches.ts` | `starterLayoutPatches(layout, size, layers)` and `StarterLayoutUpdate`, one item of `layer.updateMany` |
+| `src/shared/templates/starter.ts`, `types.ts` | `starterTemplate`, `slotStates`, and the template types (`spec/brief-and-templates.md`, "Templates") |
 
 Each value has one owner. No number of a layout is written anywhere else.
 
@@ -50,7 +52,7 @@ Slot names ("Subject image", "Logo", "Headline", "Call to action") are read from
 
 ## Rules shared by every layout
 
-- `W`, `H`, `S`, `m = round(0.06 × S)` and `side = round(0.46 × S)` as in `spec/brief-and-templates.md`, "Boxes". Every result is rounded with `Math.round`.
+- `W`, `H`, `S`, `m = round(0.06 × S)` and `side = round(0.46 × S)` (`frameOf`): `W` and `H` are the size's sides, `S` the smaller one. Every result is rounded with `Math.round`.
 - `'end'` gives `whole − m − length`. `{ ofHeight }` is used for `y` only.
 - Box numbers: `boxPadding = round(boxPaddingOfSmaller × S)`, `boxRadius = round(boxRadiusOfSmaller × S)`, `boxOutlineWidth = max(1, round(boxOutlineOfSmaller × S))` when the share is above 0, else 0. A text slot with no `textBox` gets the defaults of `TEXT_LOOK_DEFAULTS` (no box).
 - `fontSize` is `startingFontSize` (below), at most `round(fontSizeOfSmaller × S)`.
@@ -166,7 +168,7 @@ Background: `fillColor` null; shade null.
 
 ## The starting font size
 
-`startingFontSize(copy, box, rule, frame)`, pure, no measuring. Used by `buildMasterLayers` in the main process and by `starterLayoutPatches` in the window, so both give the same number.
+`startingFontSize(copy, box, rule, frame)` (`src/shared/templates/starting-font-size.ts`), pure, no measuring. Called through `textLayoutStyleOf` by `buildMasterLayers` in the main process and by `starterLayoutPatches` in the window, so both give the same number. The fake layout provider does not use it: it sends the largest size.
 
 **Inputs.** `copy` (trimmed; null counts as empty), the box's width and height, the rule's `fontSizeOfSmaller`, `lineHeight`, `letterSpacing`, `allCaps`, padding and outline.
 

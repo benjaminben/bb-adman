@@ -96,13 +96,13 @@ Built. In `src/renderer/screens/campaign/`: `video-panel/` (with `video-length.t
 
 ### Run list and run row
 
-Built. In `src/renderer/screens/campaign/`: `run-list/`, `run-row/` (with `video-status.ts`, `cancel-shown.ts`), `run-result/`, `video-result/`. `run-failure/` is in `src/renderer/ui/` (the editor shows failures too).
+Built. In `src/renderer/screens/campaign/`: `run-list/`, `run-row/` (with `video-status.ts`), `run-result/`, `video-result/`. `run-failure/` and `cancel-shown.ts` are in `src/renderer/ui/` (the editor and the activity panel use them too).
 
 - Each row: the provider's label (or "The provider" when unknown), "Video" for a video run, then the status.
 - Under that first line, "Started by an agent" when `startedBy` is `agent`.
 - Status: `queued` "Waiting"; `running` "Working", with `result.stage`, "place in queue {n}" and the job's `progress` as a whole percent when present (a ComfyUI picture run gets a live percent, `spec/comfyui.md`, "Live progress"); `succeeded` "Done" and its results; `failed` "Failed", "Retry", and under them the run failure (the reason's or kind's sentence, missing items, "Open Settings", the server's message; `spec/screens-campaign.md`); `cancelled` "Cancelled" and "Retry". A failed run never shows raw error text.
 - A running video run says "Waiting (place {n})" (or "Waiting") while the server holds it in its queue, else "Working, {m} min" counted from the row's `createdAt` (there is no `startedAt` column), read again every 15 seconds (`run-row/video-status.ts`). It shows no percentage, even when a ComfyUI video run's `progress` holds one: the video row does not read `progress`.
-- **"Cancel"** shows exactly when `job.cancel` would accept the run: a `queued` run on any provider; a `running` run, unless its provider's `cancel` is `none` and the job is a background job other than pictures (`spec/cancel.md`). The rule lives in `run-row/cancel-shown.ts` and must always agree with `cancelRefusal` in `src/main/jobs/cancel.ts`; `tests/unit/main/jobs/cancel-shown.test.ts` holds the two to the same answer for every kind, status and provider. A refused cancel shows the command's message.
+- **"Cancel"** shows exactly when `job.cancel` would accept the run: a `queued` run on any provider; a `running` run, unless its provider's `cancel` is `none` and the job is a background job other than pictures (`spec/cancel.md`). The rule lives in `ui/cancel-shown.ts` and must always agree with `cancelRefusal` in `src/main/jobs/cancel.ts`; `tests/unit/main/jobs/cancel-shown.test.ts` holds the two to the same answer for every kind, status and provider. A refused cancel shows the command's message.
 - "Retry" sends `job.retry`; for a paid provider it first shows the paid confirm line with the count `job.retry` will ask for (FN-4, `spec/screens-campaign.md`).
 - Picture results: one `<img>` per asset ID, 160 px wide, `alt` "Result {i}", address from `assetUrl`. None: "No pictures."
 - Video result: `<video controls preload="metadata">`, `aria-label` "Video result", at the panel's width, `src` from `assetUrl`, no autoplay, sound as the clip has it. None: "No clip."

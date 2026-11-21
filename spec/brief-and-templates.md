@@ -283,9 +283,9 @@ Built (slices S2-13, S2-14, S2-15). In `spec/screens-campaign.md`, "The brief fo
 - **Editable confirm form** [REQ: FR-023, FR-024, FR-026, FR-034]. Every field; one row per subject with "New subject" (a "Subject ID" field) or "Use a subject this project has"; sizes, master size and languages; the brief's word lists per language, or "Copy the rules from another campaign" (`copyRuleSetFrom`). Colours and required files are not on the form (A-44). The pure model `brief-form-model.ts` replaced `campaignPlan`; `briefSubjectIds` stays.
 - **Slot view.** Filled and empty slots of the master with candidates from `template.slots` [REQ: FR-042], view only (A-46), on the campaign page below the grid.
 
-### Not built: Markdown and plain-text briefs
+### Markdown and plain-text briefs
 
-Not built (Phase 4). `.md`, `.markdown` and `.txt` briefs go to the command `brief.extract`, an attached `brief_extraction` job that calls `TextProvider.extractBrief` and gives a `BriefDraft` for the same brief form [REQ: FR-022]. With no key, the app shows the key dialog; the user can cancel and fill the form by hand [REQ: FR-171]. `brief.parse` keeps refusing these files with `brief_type_not_supported`. Design: `spec/ai-jobs.md`, "Brief reading"; screens: `spec/screens-ai.md`.
+Built (Phase 4, P4-15). `.md`, `.markdown` and `.txt` briefs go to the command `brief.extract`, an attached `brief_extraction` job that calls `TextProvider.extractBrief` and gives a `BriefDraft` for the same brief form [REQ: FR-022]. With no key, the app shows the key dialog; the user can cancel and fill the form by hand [REQ: FR-171]. `brief.parse` keeps refusing these files with `brief_type_not_supported`. Design: `spec/ai-jobs.md`, "Brief reading"; screens: `spec/screens-ai.md`.
 
 ## Templates
 
@@ -341,47 +341,20 @@ slotStates(template: Template, layers: LayerRow[], candidates: Record<string, st
 
 Built. `src/shared/config/default-layout.ts` (every number and name, as data), `src/shared/templates/master-layers.ts`. Tests: `tests/unit/shared/templates/master-layers.test.ts`, `master-layers-fields.test.ts`, `starter.test.ts`, `tests/integration/campaigns/campaign-create-fills.test.ts`.
 
-**Look pack** (Not built, LK-4) [D-094]. The default layout becomes the first of five starter layouts, `photo-bottom-left` (A-77), and its boxes, styles and look fields replace the values in the tables below; the "any other slot" rows stay. Each text layer's starting font size comes from its text's length by an estimate, with no measuring, so a long message no longer runs past its box. New layers store every look field. Full tables, the formula and its worked values: `spec/starter-layouts.md`. Until LK-4 merges, the tables below hold.
+**Look pack** (Built, LK-4) [D-094]. The default layout is layout 1 of the five starter layouts, `photo-bottom-left` (`DEFAULT_STARTER_LAYOUT` in `default-layout.ts`; A-77). Each text layer's starting font size comes from its text's length by an estimate, with no measuring. New layers store every look field. The boxes, styles, look fields, the formula and the worked values are in `spec/starter-layouts.md`; this file keeps only what is not there.
 
 **What it is.** The default layout gives each new layer of a master variant a starting box and style for the campaign's first size, so the post is not a pile of layers in one corner [REQ: FR-040, FR-043]. It is a starting point only: the user moves and restyles everything in the editor (Phase 3), and `generation.proposeLayout` can place the text again (Phase 4).
 
 **One owner.** `buildMasterLayers` reads `default-layout.ts` and holds no number of its own. Any later code that needs a starting box for a slot reads the same file. The values are provisional (the stakeholder's standing instruction on UI); the design pass may change any of them by editing that one file. The tests state the expected numbers for the four ready-made sizes, so a change to the file is a visible test change, approved with the design pass.
 
-### Boxes
+### Boxes and style
 
-`W` and `H` are the size's width and height in pixels. `S` is the smaller of the two. `m = round(0.06 × S)` is the margin. Every result is rounded to a whole pixel with `Math.round`. `rotation` is 0 and `crop` is null for every layer.
+- **The named slots** (`subject-image`, `logo`, `headline`, `call-to-action`) take layout 1's boxes, text styles and look fields (`SLOT_LAYOUTS`, built from `DEFAULT_STARTER_LAYOUT.slots`; tables in `spec/starter-layouts.md`). The box rules (`W`, `H`, `S`, the margin `m = round(0.06 × S)`, rounding) are `frameOf` and `geometryOf` in `src/shared/templates/layout-rules.ts`; text styles are `textStyleOf`, with the starting font size. `rotation` is 0 and `crop` is null for every layer.
+- **The background** takes the whole canvas and `{ opacity: 1, fillColor: null, shade: NEW_SHADE }` (`BACKGROUND_LOOK`): a new background starts with a dark shade from the bottom (`#000000`, 0.7, reach 0.6; `src/shared/config/look.ts`).
+- **Image layers**: `{ opacity: 1, shade }`, the slot's shade or null.
+- **A slot no layout names**, and a layer the user adds, keeps the look new layers had before the starter layouts: an image slot `OTHER_IMAGE_BOX` (centred, `side = round(0.46 × S)` square); a copy slot `OTHER_COPY_BOX` (`m`, `round(0.42 × H)`, `W − 2m`, `round(0.16 × H)`) with `OTHER_COPY_TEXT` (largest size `0.07 × S`, weight 700, `#FFFFFF`, `center`, line height 1.1, letter spacing 0), and no box look.
 
-| Slot | x | y | width | height |
-|------|---|---|-------|--------|
-| `background` | 0 | 0 | `W` | `H` |
-| `subject-image` | `round((W − side) / 2)` | `round(0.22 × H)` | `side` | `side`, where `side = round(0.46 × S)` |
-| `logo` | `m` | `m` | `round(0.14 × S)` | `round(0.14 × S)` |
-| `headline` | `m` | `round(0.70 × H)` | `W − 2m` | `round(0.16 × H)` |
-| `call-to-action` | `m` | `round(0.88 × H)` | `W − 2m` | `round(0.06 × H)` |
-| Any other image slot | `round((W − side) / 2)` | `round((H − side) / 2)` | `side` | `side` |
-| Any other copy slot | `m` | `round(0.42 × H)` | `W − 2m` | `round(0.16 × H)` |
-
-The rule works for any size the `CampaignSize` schema allows (each side from 50 to 8,192 pixels): every box has a width and height above zero and every font size is above zero. The five named boxes above the background do not overlap for any shape: the logo ends at `0.20 × S`, the subject image sits between `0.22 × H` and `0.68 × H`, the headline between `0.70 × H` and `0.86 × H`, the call to action between `0.88 × H` and `0.94 × H`. Worked values, which the tests use (each cell is x, y, width, height):
-
-| Size | `subject-image` | `logo` | `headline` | `call-to-action` |
-|------|-----------------|--------|------------|------------------|
-| 1080 × 1080 | 292, 238, 497, 497 | 65, 65, 151, 151 | 65, 756, 950, 173 | 65, 950, 950, 65 |
-| 1080 × 1920 | 292, 422, 497, 497 | 65, 65, 151, 151 | 65, 1344, 950, 307 | 65, 1690, 950, 115 |
-| 1920 × 1080 | 712, 238, 497, 497 | 65, 65, 151, 151 | 65, 756, 1790, 173 | 65, 950, 1790, 65 |
-| 1080 × 1350 | 292, 297, 497, 497 | 65, 65, 151, 151 | 65, 945, 950, 216 | 65, 1188, 950, 81 |
-
-`buildMasterLayers` does not know a picture's own width and height, so an image layer gets the slot's box as it is. How a picture of another shape is drawn inside its box is the Scene's rule, set in Phase 3.
-
-### Style
-
-Image and background layers: `{ opacity: 1 }`. Text layers:
-
-| Slot | fontAssetId | fontSize | fontWeight | color | align | lineHeight | letterSpacing |
-|------|-------------|----------|------------|-------|-------|------------|---------------|
-| `headline`, and any other copy slot | null | `round(0.07 × S)` (76 when `S` is 1080) | 700 | `#FFFFFF` | `center` | 1.1 | 0 |
-| `call-to-action` | null | `round(0.035 × S)` (38 when `S` is 1080) | 600 | `#FFFFFF` | `center` | 1.2 | 0 |
-
-The headline box holds two lines at that size and the call to action one (LK-4 replaces this with the starting font size of `spec/starter-layouts.md`). Longer text is not shrunk here; the Scene's overflow measurement reports it (`spec/data-model.md`).
+`buildMasterLayers` does not know a picture's own width and height, so an image layer gets the slot's box as it is. How a picture of another shape is drawn inside its box is the Scene's rule. Longer text than the starting size allows is not shrunk; the Scene's overflow measurement reports it (`spec/data-model.md`).
 
 ### The layers
 
