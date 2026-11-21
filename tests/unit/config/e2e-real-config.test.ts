@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import { describe, it, expect } from 'vitest'
+import { commandRefusal, REAL_COMMAND, WATCH_REFUSAL } from '../../e2e-real/run-checks'
 
 // Read as text: importing a Playwright config here would run it (SPEC 13, the 1.10 rules).
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')) as {
@@ -88,5 +89,31 @@ describe('a stuck step fails inside the guard, not at the test timeout [SPEC 14 
   it('sets an action timeout and an expect timeout below the default case limit', () => {
     expect(realText).toMatch(/actionTimeout: 60_000/)
     expect(realText).toMatch(/expect: \{ timeout: 60_000 \}/)
+  })
+})
+
+// FN-5: in watch mode every file save would run the paid Gemini case again.
+describe('test:e2e:real refuses Playwright watch mode [FN-5]', () => {
+  const argv = ['/usr/bin/node', '/x/node_modules/playwright/cli.js', ...REAL_COMMAND]
+
+  it('refuses when PWTEST_WATCH has any value that is not empty', () => {
+    for (const value of ['1', 'true', '0', 'x']) {
+      expect(commandRefusal(argv, { PWTEST_WATCH: value })).toBe(WATCH_REFUSAL)
+    }
+  })
+
+  it('accepts the plain command when PWTEST_WATCH is unset or empty', () => {
+    expect(commandRefusal(argv, {})).toBeNull()
+    expect(commandRefusal(argv, { PWTEST_WATCH: '' })).toBeNull()
+  })
+
+  it('the global setup gives the check its environment', () => {
+    expect(setupText).toContain('commandRefusal(process.argv, process.env)')
+  })
+
+  it('the refusal is one fixed sentence that names no value', () => {
+    expect(WATCH_REFUSAL).toBe(
+      'test:e2e:real does not run in watch mode. Unset PWTEST_WATCH and run it again.',
+    )
   })
 })
