@@ -5,6 +5,7 @@ import type { Parts } from '../app'
 import type { Env } from '../env'
 import { enterLink, leaveLink } from './actions'
 import { notFound, redirect, refused, textReply } from './headers'
+import { removeSignoff, signOff } from './signoffs'
 
 export type VisitorContext = {
   request: Request
@@ -47,6 +48,20 @@ const leave: VisitorHandler = async ({ request, env, parts, params }) => {
   return redirect(request, slug, { cookie: result.cookie })
 }
 
+const signOffRoute: VisitorHandler = async ({ request, env, parts, params }) => {
+  const slug = params[0] ?? ''
+  const result = await signOff(env.DB, request, slug, parts)
+  if (result.kind === 'refused') return refused(request)
+  return redirect(request, slug, { m: result.m, variant: result.variant })
+}
+
+const removeRoute: VisitorHandler = async ({ request, env, parts, params }) => {
+  const [slug = '', id = ''] = params
+  const result = await removeSignoff(env.DB, request, slug, id, parts.now())
+  if (result.kind === 'refused') return refused(request)
+  return redirect(request, slug, { m: result.m, variant: result.variant })
+}
+
 const robots: VisitorHandler = async ({ request }) =>
   textReply(request, 'User-agent: *\nDisallow: /\n')
 
@@ -55,12 +70,17 @@ const VARIANT = '([23456789abcdefghjkmnpqrstuvwxyz]{6})'
 
 export const VISITOR_ROUTES: VisitorRoute[] = [
   { name: 'enter', method: 'POST', path: new RegExp(`^/l/${SLUG}/enter$`), handler: enter },
-  { name: 'sign-off', method: 'POST', path: new RegExp(`^/l/${SLUG}/signoffs$`), handler: stub },
+  {
+    name: 'sign-off',
+    method: 'POST',
+    path: new RegExp(`^/l/${SLUG}/signoffs$`),
+    handler: signOffRoute,
+  },
   {
     name: 'remove-sign-off',
     method: 'POST',
     path: new RegExp(`^/l/${SLUG}/signoffs/([0-9A-Za-z]{24})/remove$`),
-    handler: stub,
+    handler: removeRoute,
   },
   { name: 'leave', method: 'POST', path: new RegExp(`^/l/${SLUG}/leave$`), handler: leave },
   {
