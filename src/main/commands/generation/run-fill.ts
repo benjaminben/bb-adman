@@ -7,11 +7,10 @@ import { defineCommand, type ProjectContext } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { readWireRow } from '@/main/db/rows'
-import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'
+import { masterOf } from '@/main/links/master-of'
 import { requireProviderKeys } from '@/main/providers/require-keys'
-import { checkLicence } from './licence-check'
+import { checkComfyExtend } from './comfy-checks'
 import { FILL_PROMPT, promptToSend } from '@/shared/generation/prompt'
-import { COMFY_JOB_NOT_OFFERED_MESSAGE, reasonMessage } from '@/shared/providers/messages'
 import {
   generationRunFillInput,
   type GenerationRunFillInput,
@@ -64,7 +63,8 @@ function covers(box: Geometry, variant: Variant): boolean {
   )
 }
 
-// Step 1: the variant, its background layer and the four refusals of A-132, in order.
+// Step 1: the variant (not its direction's master: a fill is placed only on the sizes made
+// from it), its background layer and the four refusals of A-132, in order.
 function target(project: ProjectHandle, input: GenerationRunFillInput): Target {
   const variant = readWireRow(project.db, 'variant', { id: input.variantId }) as Variant | null
   const direction =
@@ -73,6 +73,12 @@ function target(project: ProjectHandle, input: GenerationRunFillInput): Target {
       campaignId: string
     } | null)
   if (!variant || !direction) throw new AppError('NOT_FOUND', 'That variant was not found.')
+  if (masterOf(project.db, variant.directionId)?.variant.id === variant.id) {
+    throw refuse(
+      'master_variant',
+      'A fill is made for a size made from the master, not for the master itself.',
+    )
+  }
   const layer = background(project, variant.id)
   const box = layer.geometry
   if (!layer.source) {
@@ -95,21 +101,6 @@ function target(project: ProjectHandle, input: GenerationRunFillInput): Target {
     height: variant.height,
   }
   return { campaignId: direction.campaignId, layerId: layer.id, request }
-}
-
-// Step 2 for ComfyUI: the address, the offered extend workflow (none while moss-extend is a
-// draft), then the licence. Nothing is sent to the server here.
-function checkComfyFill(
-  deps: Deps,
-  ctx: Pick<ProjectContext, 'actor'>,
-  input: GenerationRunFillInput,
-): void {
-  if (deps.settings.get().comfyui.baseUrl === null) {
-    throw refuse('comfy_address_needed', reasonMessage('address_needed'))
-  }
-  const spec = offeredWorkflow({ job: 'extend' }, { devTools: deps.devTools, actor: ctx.actor })
-  if (!spec) throw refuse('comfy_job_not_offered', COMFY_JOB_NOT_OFFERED_MESSAGE)
-  checkLicence(deps, ctx, spec, input.licenceConfirmed)
 }
 
 function enqueue(deps: Deps, ctx: ProjectContext, input: GenerationRunFillInput) {
@@ -138,7 +129,7 @@ export function generationRunFill(deps: Deps) {
       const place = target(ctx.project, input)
       const provider = pictureProvider(deps, input.provider)
       requireProviderKeys(deps, provider.id, PURPOSE)
-      if (provider.id === 'comfyui') checkComfyFill(deps, ctx, input)
+      if (provider.id === 'comfyui') checkComfyExtend(deps, ctx, input.licenceConfirmed)
       await deps.assets.read(ctx.project, place.request.sourceAssetId)
     },
     run(ctx, input) {

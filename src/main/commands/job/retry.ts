@@ -7,7 +7,11 @@ import { requireProviderKeys } from '@/main/providers/require-keys'
 import { requireJob, wrongState } from './find-job'
 import { jobRetryInput, type JobRetryInput, type JobStarted } from '@/shared/schemas/commands/job'
 import { imageJobRequest } from '@/shared/schemas/jobs/image-generation'
-import { checkComfyCutout, checkComfyRun } from '@/main/commands/generation/comfy-checks'
+import {
+  checkComfyCutout,
+  checkComfyExtend,
+  checkComfyRun,
+} from '@/main/commands/generation/comfy-checks'
 import { checkLicence } from '@/main/commands/generation/licence-check'
 import { keptPictureCount, picturesLeft } from '@/shared/generation/pictures-left'
 import { promptToSend } from '@/shared/generation/prompt'
@@ -72,6 +76,10 @@ export function jobRetry(deps: Deps) {
       // P4-11 (spec/ai-jobs.md "Cut-out" step 4): a ComfyUI cut-out passes its checks again.
       if (old.provider === 'comfyui' && old.kind === 'cutout') {
         checkComfyCutout(deps, ctx, input.licenceConfirmed)
+      }
+      // spec/links-and-sync.md "Generative fill" step 2: a ComfyUI fill passes its checks again.
+      if (old.provider === 'comfyui' && old.kind === 'generative_fill') {
+        checkComfyExtend(deps, ctx, input.licenceConfirmed)
       }
       const jobId = deps.jobs.enqueue(ctx, {
         kind: old.kind,

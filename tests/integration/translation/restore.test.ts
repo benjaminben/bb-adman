@@ -179,3 +179,22 @@ describe('translation.restore writes the given values [P6-4]', () => {
     expect(bus.undoState('variant:D2')).toEqual({ canUndo: false, canRedo: false })
   })
 })
+
+describe('translation.restore puts the first item first in its own inverse', () => {
+  let bus: TranslationBus
+  beforeEach(async () => {
+    bus = await makeTranslationBus()
+  })
+  afterEach(() => bus.cleanup())
+
+  it('so undoing a restore that wrote only a twin keeps the redo on the first item list', async () => {
+    const key = bus.textKeys[0] as string
+    const [named, twin] = [bus.id('D1', key), bus.id('D2', key)]
+    const { copy, translationStatus, translationSource, syncedCopyRev } = bus.text(named)
+    const first = { layerId: named, copy, translationStatus, translationSource, syncedCopyRev }
+    await bus.user('translation.restore', { scope: 'variant', items: [first, item(twin)] })
+    expect(await bus.history('undo', 'variant:D1')).toMatchObject({ ok: true })
+    expect(bus.undoState('variant:D1')).toEqual({ canUndo: false, canRedo: true })
+    expect(bus.undoState('variant:D2')).toEqual({ canUndo: false, canRedo: false })
+  })
+})

@@ -47,7 +47,9 @@ export function translationSet(deps: CoreDeps) {
       const log = { variantId: placed.variant.id }
       if (writes.length === 0) return { data, log }
       writeTexts(ctx, writes, deps.now().toISOString())
-      const items = writes.map((w) => textValuesOf(w.row))
+      // The named layer first, written or not: translation.restore takes its list from items[0].
+      const written = writes.map((w) => w.row).filter((row) => row.id !== placed.layer.id)
+      const items = [placed.layer, ...written].map(textValuesOf)
       const list = `variant:${placed.variant.id}`
       return { data, log, inverse: restoreInverse(input.projectId, items, 'variant', list) }
     },

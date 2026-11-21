@@ -4,7 +4,12 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import { makeGenerationFixture, BACKGROUND_LAYER, VARIANT } from './generation-fixture'
+import {
+  makeGenerationFixture,
+  BACKGROUND_LAYER,
+  OTHER_VARIANT,
+  VARIANT,
+} from './generation-fixture'
 import { makeComfyFixture } from './comfy-fixture'
 import { givePicture } from './cutout-fixture'
 import { startComfyStandIn } from '../../helpers/comfy-stand-in'
@@ -44,6 +49,11 @@ function setGeometry(db: Database.Database, change: Record<string, unknown>): vo
   )
 }
 
+// A fill is for a size made from the master, so the fixture's master is the other variant.
+function makeMaster(db: Database.Database, variantId: string): void {
+  db.prepare('UPDATE direction SET master_variant_id = ?').run(variantId)
+}
+
 const input = (extra: Record<string, unknown> = {}) => ({
   variantId: VARIANT,
   provider: 'fake',
@@ -55,6 +65,7 @@ async function fakeFixture(opts: { picture?: boolean; webpToPng?: () => Promise<
   f = g
   g.core.deps.providers.push(NO_PICTURES)
   setGeometry(g.db, {})
+  makeMaster(g.db, OTHER_VARIANT)
   const sourceId = await g.importPicture('source.png', greyPng(6, 7))
   if (opts.picture ?? true) givePicture(g.db, BACKGROUND_LAYER, sourceId)
   return { g, sourceId }
@@ -69,6 +80,15 @@ const rule = (reason: string, message: string) => ({
 describe('generation.runFill refusals, in order [A-132, spec/links-and-sync.md]', () => {
   it.each([
     ['an unknown variant', {}, { variantId: 'gone' }, { code: 'NOT_FOUND' }],
+    [
+      'the master variant',
+      { master: true },
+      { provider: 'nope' },
+      rule(
+        'master_variant',
+        'A fill is made for a size made from the master, not for the master itself.',
+      ),
+    ],
     [
       'no background picture',
       { picture: false },
@@ -114,6 +134,7 @@ describe('generation.runFill refusals, in order [A-132, spec/links-and-sync.md]'
   ] as const)('refuses %s, with no job row', async (_case, setup, extra, error) => {
     const { g } = await fakeFixture({ picture: !('picture' in setup) })
     if ('geometry' in setup) setGeometry(g.db, setup.geometry)
+    if ('master' in setup) makeMaster(g.db, VARIANT)
     const r = await g.user('generation.runFill', input(extra))
     expect(r).toEqual({ ok: false, error: expect.objectContaining(error) })
     expect(g.jobs()).toEqual([])
@@ -175,6 +196,7 @@ describe('generation.runFill on ComfyUI [spec/links-and-sync.md "Generative fill
       const c = await makeComfyFixture({ devTools, ...(address && { origin: stand.origin }) })
       f = c
       setGeometry(c.db, {})
+      makeMaster(c.db, OTHER_VARIANT)
       givePicture(c.db, BACKGROUND_LAYER, await c.importPicture('pics', 'source.png'))
       data(await c.user('agentRuns.setAllowed', { provider: 'comfyui', allowed: true }))
       for (const actor of ['user', 'agent'] as const) {

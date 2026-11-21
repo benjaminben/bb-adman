@@ -6,6 +6,7 @@ import { ulid } from 'ulid'
 import {
   makeGenerationFixture,
   BACKGROUND_LAYER,
+  OTHER_VARIANT,
   VARIANT,
   type GenerationFixture,
 } from '../generation/generation-fixture'
@@ -29,6 +30,7 @@ async function ready(opts: { tick?: boolean; limit?: number } = {}) {
       JSON.stringify({ x: 0, y: 0, width: 500, height: 500, rotation: 0, crop: null }),
       BACKGROUND_LAYER,
     )
+  f.db.prepare('UPDATE direction SET master_variant_id = ?').run(OTHER_VARIANT)
   givePicture(f.db, BACKGROUND_LAYER, await f.importPicture('source.png'))
   if (opts.tick ?? true) {
     data(await f.user('agentRuns.setAllowed', { provider: 'fake', allowed: true }))
