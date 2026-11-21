@@ -48,8 +48,21 @@ export async function chooseProvider(page: Page, label: string): Promise<void> {
   await picturePanel(page).getByLabel('Provider').selectOption({ label })
 }
 
+// A fixed made-up prompt, typed in place of the one the brief fills in.
+export const E2E_PROMPT = 'A slim citrus can on a sunny picnic table, harness check'
+
 export async function setPrompt(page: Page, prompt: string): Promise<void> {
   await picturePanel(page).getByLabel('Prompt').fill(prompt)
+}
+
+// Chooses the last picture slot the template offers and gives its ID.
+export async function chooseSlot(page: Page): Promise<string> {
+  const select = picturePanel(page).getByLabel('Slot')
+  const last = await select.locator('option').last().getAttribute('value')
+  if (last === null) throw new Error('the template offers no picture slot')
+  await select.selectOption(last)
+  await expect(select).toHaveValue(last)
+  return last
 }
 
 // How many pictures one Generate asks for; each is its own request to the provider.

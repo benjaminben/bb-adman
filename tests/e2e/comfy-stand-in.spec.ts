@@ -52,7 +52,15 @@ async function campaignOnStandIn(): Promise<void> {
   await screens.loadBriefAndCreate(app, page)
   await screens.openCampaign(page)
   await screens.chooseProvider(page, 'ComfyUI')
+  await screens.chooseSlot(page)
+  await screens.setPrompt(page, screens.E2E_PROMPT)
   await screens.setCount(page, 1)
+}
+
+// The typed prompt is the one the app sent to the stand-in in its newest run.
+function lastSentPrompt(): string {
+  const posts = stand.seen.filter((r) => r.method === 'POST' && r.path === '/prompt')
+  return posts.at(-1)?.body.toString('utf8') ?? ''
 }
 
 const generate = () => screens.generate(page)
@@ -85,6 +93,7 @@ test('Campaign: a run waits, works and is done; a failed run is retried; a waiti
 
   await generate()
   const first = await nthSentId(stand, 1)
+  expect(lastSentPrompt()).toContain(screens.E2E_PROMPT)
   await expect(screens.runRow(page)).toContainText(screens.WAITING_ON_SERVER)
   startWorking(stand, first)
   await expect(screens.runRow(page)).toContainText(screens.WORKING_ON_SERVER, {

@@ -67,6 +67,10 @@ test('ComfyUI MOSS: a picture from a prompt [ADMAN_E2E_MOSS=1]', async () => {
   test.skip(!switches.moss, 'Runs only with ADMAN_E2E_MOSS=1: it makes a run on the server.')
   test.setTimeout(RUN_CASE_MS)
   await comfyCampaign()
+  await guardedStep('Choose a slot and type the test prompt', async () => {
+    await screens.chooseSlot(page)
+    await screens.setPrompt(page, screens.E2E_PROMPT)
+  })
   await guardedStep('Generate', () => screens.generate(page))
   await real.newestRunDone(page, RUN_WAIT_MS)
 })
