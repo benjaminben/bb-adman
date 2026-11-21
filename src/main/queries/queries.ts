@@ -9,6 +9,7 @@ import { campaignQueries } from './campaign'
 import { comfyQueries } from './comfy'
 import { historyQueries } from './history'
 import { jobQueries } from './job'
+import { mcpQueries } from './mcp'
 import { projectQueries } from './project'
 import { templateQueries } from './template'
 import type { QueryFn, QueryOptions } from './types'
@@ -25,6 +26,7 @@ export function createQueries(deps: CoreDeps) {
       ...comfyQueries(deps),
       ...historyQueries(deps),
       ...jobQueries(deps),
+      ...mcpQueries(deps),
       ...projectQueries(deps),
       ...templateQueries(deps),
     },
