@@ -4,7 +4,7 @@
 // that a window may see: the graph, the slots and the source stay in the main process.
 import type { SizeRule } from '../../comfy/fit-size'
 
-// The fixed list of shipped workflows (SPEC 6.10.4, the first set).
+// The fixed list of shipped workflows (SPEC 6.10.4, the first set, and the seventh of 1.46).
 export const WORKFLOW_IDS = [
   'moss-text-to-image',
   'moss-edit-references',
@@ -12,6 +12,7 @@ export const WORKFLOW_IDS = [
   'h3-text-to-video',
   'h3-image-to-video',
   'h3-reference-to-video',
+  'flux3-klein-edit-references',
 ] as const
 export type WorkflowId = (typeof WORKFLOW_IDS)[number]
 
