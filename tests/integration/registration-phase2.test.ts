@@ -22,13 +22,7 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
   it('gives an empty handler list for each new command domain', () => {
     f = makeFixture()
     const deps = f.core.deps
-    for (const list of [
-      campaignCommands,
-      devCommands,
-      generationCommands,
-      ruleSetCommands,
-      storageCommands,
-    ]) {
+    for (const list of [devCommands, generationCommands, ruleSetCommands, storageCommands]) {
       expect(list(deps)).toEqual([])
     }
   })
@@ -93,5 +87,12 @@ describe('the brief domain is registered [SPEC 14, slice C]', () => {
   it('gives brief.parse', () => {
     f = makeFixture()
     expect(briefCommands(f.core.deps).map((h) => h.name)).toEqual(['brief.parse'])
+  })
+})
+
+describe('the campaign domain is registered [SPEC 14, slice C]', () => {
+  it('gives campaign.create', () => {
+    f = makeFixture()
+    expect(campaignCommands(f.core.deps).map((h) => h.name)).toEqual(['campaign.create'])
   })
 })
