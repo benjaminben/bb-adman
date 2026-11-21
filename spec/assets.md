@@ -189,7 +189,7 @@ Decisions in `src/main/assets/asset-url.ts` (no Electron import, unit tested). E
 - **Headers:** `Content-Type` is the row's `mime`, never from the file name. `X-Content-Type-Options: nosniff` and `Cache-Control: no-store` on every answer, 404 included, so a changed linked file is read again. No path, file name or error text in any answer or header.
 - **Scheme privileges** (Electron 45.4.1): `standard`, `secure`, `stream`, `corsEnabled` true; `bypassCSP`, `allowServiceWorkers`, `supportFetchAPI`, `codeCache`, `allowExtensions` false. Fonts load only with `corsEnabled` true; no `Access-Control-Allow-Origin` header is sent. The ruling and its limits: `spec/security.md`, "Rules: the asset protocol" (A-53).
 - The page policy (`src/main/windows/csp.ts`) has `img-src 'self' adman-asset: data: blob:`, `media-src adman-asset:`, `font-src 'self' adman-asset:`.
-- No byte ranges: a clip plays from the start but seeking may not work. Accepted for now; byte ranges are Phase 7's.
+- One byte range is answered (P7-6): `206` with `Content-Range` for a single `bytes=` range inside the file, `416` for a start past the end, and the whole file with `200` for several ranges or a header the handler does not read. Every check above runs before the header is read.
 - The protocol does not check first bytes (accepted, OI-49).
 - A change to `asset-url.ts` is security class and ruled on its own.
 - Test: `tests/e2e/asset-protocol.spec.ts`: with a project open and one imported picture, a picture element pointed at its address loads; an unknown asset ID does not; a project not open does not.
@@ -255,5 +255,4 @@ Do not "fix" these without a ruling. Every value read from a project file is unt
 
 - Reading `duration_ms`, clip `width` and `height` (Phase 7).
 - WebP to PNG conversion (slice WP, above).
-- Byte ranges in the asset protocol (Phase 7).
 - The query for earlier options of a layer (Phase 4, `spec/jobs.md`).

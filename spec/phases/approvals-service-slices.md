@@ -68,7 +68,7 @@ Built on the earlier host (a Cloudflare Worker with D1, the Workers Vitest pool)
 - **Shots:** none.
 - **Class:** S+W. Security class, full review. **After:** AP-15.
 
-### AP-16 — Gallery pages
+### AP-16 — Gallery pages (built)
 
 - **Exists when done:** `GET /l/{slug}` shows the password page or the gallery as `spec/approvals-gallery.md` says, built from the token file and the components, under the nonce policy made in `proxy.ts`, working with JavaScript switched off; the screenshots exist.
 - **New files:** `proxy.ts`; `app/l/[slug]/page.tsx`, `app/l/[slug]/error.tsx`, `app/not-found.tsx`, `app/global-error.tsx`; the body of `app/layout.tsx`; `src/ui/tokens.css`, `src/ui/format-date.ts`, `src/ui/group-signoffs.ts` and the component folders in "Components"; `test/ui.test.tsx`; `e2e/build.spec.ts`, `e2e/gallery.spec.ts`, `e2e/shots.spec.ts`.

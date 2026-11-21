@@ -13,7 +13,7 @@
 - The "Make a video" card (`src/renderer/screens/campaign/video-panel/`), the run row, the clip result.
 - The `background_clip` table (no commands), `layer.timing` and `layer.animation` (stored and patched by `layer.update`, not drawn), `variant.duration_ms`, the Scene's `timeMs` prop (unused), the policy rows `clip.add`, `clip.update`, `clip.remove` (deny) and `variant.setFormat` (allow).
 - The `fal-seedance` registry row (`available: false`), its secret `fal.apiKey`, its cancel wait (10 minutes), an empty adapter folder.
-- `media-src adman-asset:` in the page policy; `video` is a served kind of the asset protocol (no byte ranges).
+- `media-src adman-asset:` in the page policy; `video` is a served kind of the asset protocol, which answers one byte range (P7-6, built).
 
 ## Exit criteria
 
@@ -54,7 +54,7 @@
 | P7-3 FFmpeg fetch script | Nothing | Everything | Any slice editing `package.json` scripts (none planned here) |
 | P7-4 Media runner | P7-1; P7-3 for its exit check (the real binary and test clips) | Everything but P7-1 | Any slice editing `src/main/index.ts` |
 | P7-5 Video facts, audio types | P7-2 | P7-4, P7-6, P7-7, P7-13, P7-14 | Any slice editing `inspect.ts`, `sniff.ts`, `file-types.ts` |
-| P7-6 Asset protocol ranges | Nothing | Everything | Any slice editing `asset-url.ts`, `asset-protocol.ts` |
+| P7-6 Asset protocol ranges (built) | Nothing | Everything | Any slice editing `asset-url.ts`, `asset-protocol.ts` |
 | P7-7 Presets and time | Nothing | Everything but P7-8 | P7-8 (`scene.tsx`, `scene-input.ts`) |
 | P7-8 Background track drawn | P7-1, P7-2, P7-3 (test clips), P7-7 | P7-9 to P7-15 | P7-7; P7-16 (`thumbnails/service.ts`) |
 | P7-9 Clip commands | P7-1, P7-2, P7-5 | P7-8, P7-11, P7-13, P7-14 | Phase 5 or 6 slices editing `queries/variant.ts` or `campaign-reads.ts` |
@@ -62,7 +62,7 @@
 | P7-11 Video start checks and offers | P7-1 | P7-8, P7-9, P7-10, P7-13, P7-14 | P7-15, P7-16 (`run-tools.ts`, `generation.ts` schemas) |
 | P7-12 Sound data | P7-1, P7-2, P7-5 | P7-10, P7-11, P7-13, P7-14 | Any slice editing `assets/in-use.ts` |
 | P7-13 Runs that would still charge | Nothing | Everything | Any slice editing `src/main/jobs/` or `close-words.ts` |
-| P7-14 fal adapter | Nothing | Everything | Any slice editing `src/main/providers/gemini/pinned-origin.ts` |
+| P7-14 fal adapter (built) | Nothing | Everything | Any slice editing `src/main/providers/gemini/pinned-origin.ts` |
 | P7-15 fal switched on | P7-11, P7-13, P7-14 | P7-10, P7-12, UI slices | P7-16 (`run-tools.ts`) |
 | P7-16 Video job into the ad | P7-4, P7-8, P7-9, P7-11 | P7-12, P7-17 to P7-22 | P7-15 |
 | P7-17 Format and duration controls | P7-10 | Other UI slices | Phase 5/6 slices editing `editor/top-bar/` |
