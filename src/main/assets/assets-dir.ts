@@ -38,8 +38,10 @@ async function requireFolder(given: string): Promise<string> {
 }
 
 async function repoint(project: ProjectHandle, dir: string, row: AssetRow) {
-  const file = managedPathIn(dir, row)
   try {
+    // SPEC 14 [1.32] U10: a row whose id or extension cannot form a path throws here and is
+    // left alone with its own paths.
+    const file = managedPathIn(dir, row)
     // SPEC 14, [1.29] T2: a regular file only; a link with that name is left alone.
     const stat = await fs.promises.lstat(file)
     if (!stat.isFile()) return null
