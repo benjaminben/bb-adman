@@ -23,6 +23,8 @@ import {
 } from './case-steps'
 
 export type { CaseKit, CaseOutcome } from './case-steps'
+// Case 8 (P4-9), in its own file.
+export { cutoutCase } from './cutout-case'
 
 const PICTURE_PROMPT = 'A red cube and a blue sphere on a plain light table, studio light'
 const REFERENCE_PROMPT = 'The same shapes and colours, drawn as a watercolour painting'
