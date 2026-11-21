@@ -5,12 +5,11 @@ import type Database from 'better-sqlite3'
 import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
 import { readWireRow, readWireRows } from '@/main/db/rows'
-import { directionsOf, jobMarks, openFor, requireCampaign } from './campaign-reads'
+import { badgesOf, directionsOf, jobMarks, openFor, requireCampaign } from './campaign-reads'
 import type { ActivityLog } from '@/main/log/activity-log'
 import {
   campaignScopedInput,
   type CampaignGet,
-  type VariantBadges,
   type VariantSummary,
 } from '@/shared/schemas/queries/campaign'
 import type { CampaignSubjectRow } from '@/shared/schemas/rows/campaign'
@@ -21,27 +20,6 @@ import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import type { VariantRow, VariantSubjectRow } from '@/shared/schemas/rows/variant'
 
 const byId = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
-
-// SPEC 4.3 [1.42]: what Phase 2 builds. A master is never out of date, and Phase 2 makes
-// only masters; checks are read from Phase 6.
-function badgesOf(
-  db: Database.Database,
-  variantId: string,
-  layers: LayerRow[],
-  missing: Set<string>,
-): VariantBadges {
-  return {
-    ...jobMarks(db, 'variant_id', variantId),
-    outOfDate: false,
-    overflow: layers.some((l) => l.overflow),
-    translationUnapproved: layers.some(
-      (l) => l.translationStatus === 'missing' || l.translationStatus === 'proposed',
-    ),
-    checkWarning: false,
-    checkStale: false,
-    missingFile: layers.some((l) => l.source !== null && missing.has(l.source.assetId)),
-  }
-}
 
 // By the direction's order, the master first inside a direction, then createdAt, then ID.
 function orderedVariants(
