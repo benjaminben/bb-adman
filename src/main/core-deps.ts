@@ -24,6 +24,9 @@ export type CoreDeps = {
   // Turns a JPEG (or PNG) into PNG bytes; throws when it cannot (SPEC 6.2 [1.18]).
   // index.ts fills it from Electron's nativeImage.
   toPng: (bytes: Uint8Array) => Uint8Array
+  // [1.24] Crops a picture to the exact size, centred and filled, then scales it; PNG out,
+  // behind the same limits as toPng (SPEC 6.10.7). index.ts fills it from CU-6.
+  fitPicture: (bytes: Uint8Array, size: { width: number; height: number }) => Uint8Array
   appVersion: string
   now: () => Date
   userDataDir: string

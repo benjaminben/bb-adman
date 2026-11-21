@@ -41,6 +41,7 @@ describe('registering commands and queries [SPEC 12]', () => {
         'appVersion',
         'assets',
         'devTools',
+        'fitPicture',
         'jobs',
         'log',
         'now',

@@ -84,3 +84,20 @@ describe('createCore option toPng [SPEC 6.2 1.18, 14 K3]', () => {
     expect(() => deps.toPng(new Uint8Array([0xff, 0xd8, 0xff]))).toThrow(/not available/)
   })
 })
+
+describe('createCore option fitPicture [SPEC 6.10.7, 14 CU-0 W4]', () => {
+  it('hands the fitPicture option to every domain through CoreDeps', () => {
+    const png = new Uint8Array([7, 7])
+    const fitPicture = vi.fn(() => png)
+    const deps = build({ fitPicture }).deps
+    expect(deps.fitPicture(new Uint8Array([1]), { width: 64, height: 32 })).toBe(png)
+    expect(fitPicture).toHaveBeenCalledWith(new Uint8Array([1]), { width: 64, height: 32 })
+  })
+
+  it('throws fitPicture is not available when no fitPicture option is given', () => {
+    const deps = build().deps
+    expect(() => deps.fitPicture(new Uint8Array([1]), { width: 64, height: 32 })).toThrow(
+      'fitPicture is not available',
+    )
+  })
+})

@@ -48,6 +48,9 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
       toPng: () => {
         throw new Error('toPng is not available')
       },
+      fitPicture: () => {
+        throw new Error('fitPicture is not available')
+      },
       appVersion: '0.1.0',
       now: () => new Date(),
       userDataDir: dir,

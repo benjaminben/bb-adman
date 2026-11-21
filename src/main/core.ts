@@ -41,6 +41,7 @@ export type CoreOptions = {
   openExternal?: (url: string) => Promise<void>
   devTools?: boolean
   toPng?: (bytes: Uint8Array) => Uint8Array
+  fitPicture?: CoreDeps['fitPicture']
 }
 
 const noBrowser = async (): Promise<void> => {
@@ -49,6 +50,10 @@ const noBrowser = async (): Promise<void> => {
 
 const noConverter = (): Uint8Array => {
   throw new Error('toPng is not available')
+}
+
+const noFitter = (): Uint8Array => {
+  throw new Error('fitPicture is not available')
 }
 
 export type Core = ReturnType<typeof createCore>
@@ -84,6 +89,7 @@ export function createCore(opts: CoreOptions) {
     openExternal: opts.openExternal ?? noBrowser,
     devTools: opts.devTools ?? false,
     toPng: opts.toPng ?? noConverter,
+    fitPicture: opts.fitPicture ?? noFitter,
     appVersion: opts.appVersion,
     now,
     userDataDir: opts.userDataDir,
