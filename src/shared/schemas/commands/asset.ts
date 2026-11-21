@@ -48,6 +48,15 @@ export const assetImportInput = projectScoped.extend({
 })
 export type AssetImportInput = z.infer<typeof assetImportInput>
 
+// The reply: each given file's asset ID in order, the ones the project already held, the
+// folder entries skipped, and the animated WebP files among them (S2-17), each once.
+export type AssetImportReply = {
+  assetIds: string[]
+  reusedAssetIds: string[]
+  skippedCount: number
+  animatedAssetIds: string[]
+}
+
 // asset.relink (FR-009; SPEC 14, Slice A rulings point 3). newPath comes from the system
 // picker; relinkSiblings also looks for the other missing files of the same old folder.
 export const assetRelinkInput = projectScoped.extend({

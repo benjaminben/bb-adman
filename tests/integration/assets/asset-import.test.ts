@@ -133,7 +133,7 @@ describe('asset.import refusals [SPEC 4.1, 8.3, 10.1]', () => {
     fs.mkdirSync(path.join(dir, 'pics.png'))
     expect(await importIt({ paths: [path.join(dir, 'pics.png')] })).toEqual({
       ok: true,
-      data: { assetIds: [], reusedAssetIds: [], skippedCount: 0 },
+      data: { assetIds: [], reusedAssetIds: [], skippedCount: 0, animatedAssetIds: [] },
     })
   })
 
@@ -205,7 +205,12 @@ describe('asset.import reply [SPEC 14, Slice A rulings point 5, A2-6]', () => {
     const [, freshId] = idsOf(result)
     expect(result).toEqual({
       ok: true,
-      data: { assetIds: [first, freshId, first], reusedAssetIds: [first], skippedCount: 0 },
+      data: {
+        assetIds: [first, freshId, first],
+        reusedAssetIds: [first],
+        skippedCount: 0,
+        animatedAssetIds: [],
+      },
     })
   })
 
@@ -213,7 +218,7 @@ describe('asset.import reply [SPEC 14, Slice A rulings point 5, A2-6]', () => {
     const result = await importIt({ paths: [put('a.png', PNG)] })
     expect(result).toEqual({
       ok: true,
-      data: { assetIds: idsOf(result), reusedAssetIds: [], skippedCount: 0 },
+      data: { assetIds: idsOf(result), reusedAssetIds: [], skippedCount: 0, animatedAssetIds: [] },
     })
   })
 })

@@ -1,6 +1,6 @@
 // Reads what an asset row stores about a file (SPEC 3.3 asset): type from the bytes, size,
-// time, SHA-256, for PNG and JPEG the pixel size from the header, and for a font its family
-// name (SPEC scene.md, "Font names at import"). Imported files are untrusted: the hash is
+// time, SHA-256, for PNG and JPEG the pixel size from the header, for a WebP whether it holds
+// an animation (S2-17), and for a font its family name (SPEC scene.md, "Font names at import"). Imported files are untrusted: the hash is
 // streamed, and only the first bytes are held in memory, except a font of at most
 // MAX_FONT_BYTES, whose bytes are kept as they are hashed for the name reader.
 import crypto from 'node:crypto'
@@ -8,6 +8,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { sniffType, SNIFF_BYTES } from './sniff'
 import { pictureSize } from '@/main/providers/picture-size'
+import { webpHeadInfo } from '@/main/providers/webp-size'
 import { extensionOf, type FileType } from '@/shared/config/file-types'
 import { AppError } from '@/shared/schemas/result'
 import { UnreadableFileError } from './unreadable'
@@ -27,6 +28,9 @@ export type InspectedFile = {
   width: number | null
   height: number | null
   fontFamily: string | null
+  // A WebP whose header says it is animated. False for every other file, and for a WebP
+  // whose header cannot be read.
+  animated: boolean
 }
 
 // The same facts for a file of no accepted type, which a caller may refuse or skip.
@@ -88,6 +92,16 @@ function pixelSize(
     return pictureSize(head, type.mime)
   } catch {
     return null
+  }
+}
+
+// Read from the first bytes only, so a large file is not loaded whole for this.
+function isAnimated(type: FileType | undefined, head: Uint8Array): boolean {
+  if (type?.id !== 'webp') return false
+  try {
+    return webpHeadInfo(head).animated
+  } catch {
+    return false
   }
 }
 
@@ -176,6 +190,7 @@ function factsOf<T extends FileType | undefined>(
     width: size?.width ?? null,
     height: size?.height ?? null,
     fontFamily,
+    animated: isAnimated(type, head),
   }
 }
 

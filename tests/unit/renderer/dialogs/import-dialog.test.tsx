@@ -7,6 +7,7 @@ import { ImportDialog } from '@/renderer/dialogs/import-dialog'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import { makeFakeApi } from '../fake-api'
 import { renderApp, axeViolations } from '../render'
+import { asset } from './relink-fixture'
 
 const SUBJECTS: SubjectRow[] = [
   { id: 'citrus-can', name: 'Citrus can', description: '', createdAt: '2026-11-20T00:00:00Z' },
@@ -212,5 +213,28 @@ describe('import dialog: accessibility', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Import' }))
     await within(dialog).findByRole('button', { name: 'Done' })
     expect(await axeViolations()).toEqual([])
+  })
+})
+
+describe('import dialog: animated WebP files [S2-17]', () => {
+  it('names each animated WebP from asset.list, as text, after the counts', async () => {
+    const animated = { assetIds: ['A1', 'A2'], reusedAssetIds: [], animatedAssetIds: ['A2'] }
+    const reply: Reply = { ...animated, skippedCount: 0 }
+    const { fake, dialog } = await openDialog({ reply })
+    const rows = [asset('A1', 'can-front.png'), asset('A2', '<b>spin</b>.webp')]
+    fake.onQuery('asset.list', () => ({ ok: true, data: rows }))
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Import' }))
+    await within(dialog).findByText(/holds an animation/)
+    const result = within(dialog).getByRole('list', { name: 'Import result' })
+    expect(
+      within(result)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual([
+      '2 file(s) added.',
+      '<b>spin</b>.webp holds an animation. Adman uses its first picture.',
+    ])
+    expect(result.querySelector('b')).toBeNull()
+    expect(fake.queries).toContainEqual({ name: 'asset.list', input: { projectId: 'P1' } })
   })
 })
