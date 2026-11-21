@@ -10,6 +10,18 @@ export const FIREFLY_SCOPE =
 
 export type Credentials = { clientId: string; clientSecret: string }
 
+// The parse error's own message quotes the answer, which can hold the token, so it is
+// replaced by a fixed detail.
+function tokenIn(text: string, secrets: string[]): unknown {
+  let body: unknown
+  try {
+    body = JSON.parse(text)
+  } catch {
+    throw fail('other', 'Sign-in answer is not JSON', secrets)
+  }
+  return (body as { access_token?: unknown } | null)?.access_token
+}
+
 export async function requestToken(
   transport: typeof fetch,
   credentials: Credentials,
@@ -31,7 +43,7 @@ export async function requestToken(
     })
     const text = await response.text()
     if (!response.ok) throw failureFromAnswer(response.status, text, secrets)
-    const token = (JSON.parse(text) as { access_token?: unknown }).access_token
+    const token = tokenIn(text, secrets)
     if (typeof token !== 'string' || token === '') {
       throw fail('other', 'No token in the sign-in answer', secrets)
     }

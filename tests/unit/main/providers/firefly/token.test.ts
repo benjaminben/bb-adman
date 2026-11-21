@@ -91,4 +91,14 @@ describe('Firefly token request [P4-6, spec/providers-adapters.md "Adobe Firefly
     })
     expect((await failureOf(call)).error.kind).toBe('offline')
   })
+
+  it('fails as other with a fixed detail when the answer is not JSON, quoting nothing', async () => {
+    const { call } = tokenWith(() => new Response(`not json ${TEST_TOKEN}`, { status: 200 }))
+    const failure = await failureOf(call)
+    expect(failure.error.kind).toBe('other')
+    expect(failure.error.detail).toBe('Sign-in answer is not JSON')
+    const everything = `${failure.message} ${JSON.stringify(failure.error)} ${String(failure.stack)}`
+    expect(everything).not.toContain('not json')
+    expect(everything).not.toContain(TEST_TOKEN)
+  })
 })
