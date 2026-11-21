@@ -123,10 +123,17 @@ export async function makePng(
 }
 
 // One draw sent straight to the render window, for a mode variant.render does not offer
-// (overlay-only). The same request, channel and capture as draw.ts; no size change after.
+// (overlay-only, or one tile with view, P8-3). The same request, channel and capture as
+// draw.ts; no size change after.
 export async function drawInRenderWindow(
   app: ElectronApplication,
-  request: { requestId: string; input: unknown; width: number; height: number },
+  request: {
+    requestId: string
+    input: unknown
+    width: number
+    height: number
+    view?: { x: number; y: number }
+  },
 ): Promise<Buffer> {
   const base64 = await app.evaluate(async ({ BrowserWindow, ipcMain }, req) => {
     const win = BrowserWindow.getAllWindows().find((w) =>
