@@ -11,6 +11,7 @@ import type { JobRow } from '../../../shared/schemas/rows/job'
 import { requestCount, type JobStore } from '../../stores/job-store'
 import { PaidConfirm } from './paid-confirm'
 import { RunResult } from './run-result'
+import { VideoResult } from './video-result'
 import { useNow, videoRunningText } from './video-status'
 import styles from '../screens.module.css'
 
@@ -101,7 +102,12 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
           onCancel={() => setAsking(false)}
         />
       )}
-      {row.status === 'succeeded' && <RunResult row={row} projectId={projectId} store={store} />}
+      {row.status === 'succeeded' && !video && (
+        <RunResult row={row} projectId={projectId} store={store} />
+      )}
+      {row.status === 'succeeded' && video && (
+        <VideoResult row={row} projectId={projectId} store={store} />
+      )}
     </li>
   )
 }
