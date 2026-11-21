@@ -23,7 +23,7 @@ describe('parseBrief YAML: 1.2 core rules [SPEC 6.1]', () => {
   })
 
   it('does not merge a << key', () => {
-    const text = 'base: &base\n  campaignName: Summer\n<<: *base\nregion: US\n'
+    const text = '<<: {campaignName: Summer}\nregion: US\n'
     expect(parseBrief(text, 'yaml')).toEqual({ ok: true, data: { region: 'US' } })
   })
 })
@@ -41,12 +41,9 @@ describe('parseBrief YAML: aliases [SPEC 6.1, 8.1]', () => {
     expect(parseBrief(lines.join('\n'), 'yaml')).toEqual(unreadable)
   })
 
-  it('reads one anchor used twice in a small file', () => {
+  it('refuses one anchor used twice in a small file', () => {
     const text = 'campaignName: &name Summer\nmessage: *name\n'
-    expect(parseBrief(text, 'yaml')).toEqual({
-      ok: true,
-      data: { campaignName: 'Summer', message: 'Summer' },
-    })
+    expect(parseBrief(text, 'yaml')).toEqual(unreadable)
   })
 })
 
@@ -59,8 +56,6 @@ describe('parseBrief YAML: tags give plain data only [SPEC 6.1]', () => {
     'tone: !thing warm',
     'offer: !!timestamp 2001-12-14',
     'subjects: !!set { a: null }',
-    '? [a, b]',
-    ': c',
     '',
   ].join('\n')
 
@@ -85,6 +80,7 @@ describe('parseBrief YAML: nothing is printed [SPEC 6.1]', () => {
   it.each([
     ['the tagged file', 'tone: !thing warm\n? [a, b]\n: c\n'],
     ['the broken file', 'campaignName: "Summer\nregion: [US\n'],
+    ['a tagged file that is read', 'tone: !thing warm\n'],
   ])('writes no warning for %s', (_, text) => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)

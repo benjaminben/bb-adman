@@ -2,7 +2,6 @@ import { afterEach, describe, it, expect, vi } from 'vitest'
 import { Document } from 'yaml'
 import { parseBrief } from '../../../../src/shared/brief/parse'
 import { BRIEF_UNREADABLE } from '../../../../src/shared/brief/draft'
-import { MAX_BRIEF_ALIASES } from '../../../../src/shared/config/brief-limits'
 
 const unreadable = { ok: false, error: BRIEF_UNREADABLE }
 
@@ -48,38 +47,11 @@ describe('parseBrief YAML: repeated keys, found in one walk [SPEC 6.1 item 7]', 
   })
 })
 
-// SPEC 6.1 item 7 [1.28]: two guards with one number. The library refuses growth through
-// one anchor (it counts the anchor from 1); the walk refuses more than 100 alias nodes.
-describe('parseBrief YAML: at most 100 aliases [SPEC 6.1 item 7]', () => {
-  const withAliases = (ofA: number, ofB: number): string => {
-    const aliases = [...Array<string>(ofA).fill('*a'), ...Array<string>(ofB).fill('*b')]
-    return `campaignName: &a Summer\nregion: &b US\nextra: [${aliases.join(', ')}]\n`
-  }
-  const read = { ok: true, data: { campaignName: 'Summer', region: 'US' } }
-
-  it('is 100', () => {
-    expect(MAX_BRIEF_ALIASES).toBe(100)
-  })
-
-  it('reads 99 aliases of one anchor', () => {
-    expect(parseBrief(withAliases(99, 0), 'yaml')).toEqual(read)
-  })
-
-  it('refuses 100 aliases of one anchor (the library guard)', () => {
-    expect(parseBrief(withAliases(100, 0), 'yaml')).toEqual(unreadable)
-  })
-
-  it('reads 100 aliases shared between two anchors, 50 each', () => {
-    expect(parseBrief(withAliases(50, 50), 'yaml')).toEqual(read)
-  })
-
-  it('refuses 101 aliases shared between two anchors (the walk guard)', () => {
-    expect(parseBrief(withAliases(51, 50), 'yaml')).toEqual(unreadable)
-  })
-
+// SPEC 6.1 item 9 [1.31]: the walk refuses any anchor and any alias, before toJS.
+describe('parseBrief YAML: no anchors, no aliases [SPEC 6.1 item 9]', () => {
   it('refuses before the document becomes data', () => {
     const toJS = vi.spyOn(Document.prototype, 'toJS')
-    expect(parseBrief(withAliases(51, 50), 'yaml')).toEqual(unreadable)
+    expect(parseBrief('campaignName: &a Summer\nmessage: *a\n', 'yaml')).toEqual(unreadable)
     expect(toJS).not.toHaveBeenCalled()
   })
 })

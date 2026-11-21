@@ -68,3 +68,46 @@ describe('parseBrief YAML: at most 32 levels of nesting [SPEC 6.1 item 9, 14 Q1]
     expect(parseBrief(lists(33), 'yaml')).toEqual(unreadable)
   })
 })
+
+// SPEC 6.1 item 9 rule 2 [1.31], 14 Q2, security class: after compose, the walk refuses any
+// alias, any anchor (also with no alias) and any key that is not a single value.
+describe('parseBrief YAML: no anchors and no aliases [SPEC 6.1 item 9, 14 Q2]', () => {
+  it.each([
+    ['on a value', 'campaignName: &a Summer\n'],
+    ['on a list', 'languages: &l [en]\n'],
+    ['on a block map', 'copy: &c\n  en:\n    headline: A\n'],
+    ['on a key', '&k region: US\n'],
+  ])('refuses an anchor with no alias %s', (_, text) => {
+    expect(parseBrief(text, 'yaml')).toEqual(unreadable)
+  })
+
+  it('refuses one alias', () => {
+    expect(parseBrief('campaignName: &a Summer\nmessage: *a\n', 'yaml')).toEqual(unreadable)
+  })
+
+  it('reads & and * inside text, with the texts unchanged', () => {
+    const text = 'message: Buy 1 & save *today*\ncallToAction: "*Terms apply & more"\n'
+    expect(parseBrief(text, 'yaml')).toEqual({
+      ok: true,
+      data: { message: 'Buy 1 & save *today*', callToAction: '*Terms apply & more' },
+    })
+  })
+})
+
+describe('parseBrief YAML: every key is a single value [SPEC 6.1 item 9, 14 Q2]', () => {
+  it.each([
+    ['a list as a key, block form', '? [a, b]\n: c\nregion: US\n'],
+    ['a list as a key, flow form', 'extra: {[a, b]: 1}\n'],
+    ['a map as a key', '? {a: 1}\n: c\n'],
+  ])('refuses %s', (_, text) => {
+    expect(parseBrief(text, 'yaml')).toEqual(unreadable)
+  })
+
+  it('reads a quoted key', () => {
+    expect(parseBrief('"region": US\n', 'yaml')).toEqual(usOnly)
+  })
+
+  it('reads a number key and an empty key', () => {
+    expect(parseBrief('region: US\n1: a\n: c\n', 'yaml')).toEqual(usOnly)
+  })
+})
