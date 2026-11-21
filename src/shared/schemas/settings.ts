@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { AGENT_RUN_LIMIT_MAX, AGENT_RUN_LIMIT_MIN } from '@/shared/config/agent-runs'
 
 // SPEC 13.1 settings.json. Defaults live in src/main/settings/defaults.ts.
 const recentProject = z.object({ path: z.string(), name: z.string(), openedAt: z.string() })
@@ -23,11 +24,12 @@ const mcp = z.object({
 const s3 = z.object({ bucket: z.string(), region: z.string(), prefix: z.string() })
 const dropbox = z.object({ accountName: z.string(), rootPath: z.string() })
 const storage = z.object({ s3: s3.nullable(), dropbox: dropbox.nullable() })
-// [1.24] Security class. Neither key is in settingsPatchSchema; each has one writer command:
-// comfy.setAddress for the address (an origin, SPEC 6.10.1), agentRuns.setAllowed for a
-// provider's tick (SPEC 6.11.3).
+// [1.24] Security class. None of these keys is in settingsPatchSchema; each has one writer
+// command: comfy.setAddress for the address (an origin, SPEC 6.10.1), agentRuns.setAllowed for
+// a provider's tick and agentRuns.setLimit for agentRunLimit (spec/agent-runs.md).
 const comfyui = z.object({ baseUrl: z.string().nullable() })
 const agentRuns = z.record(z.string(), z.object({ allowed: z.boolean() }))
+export const agentRunLimit = z.number().int().min(AGENT_RUN_LIMIT_MIN).max(AGENT_RUN_LIMIT_MAX)
 
 export const settingsSchema = z.object({
   defaultProjectDir: z.string().min(1),
@@ -39,6 +41,7 @@ export const settingsSchema = z.object({
   storage,
   comfyui,
   agentRuns,
+  agentRunLimit,
 })
 export type Settings = z.infer<typeof settingsSchema>
 export type RecentProject = z.infer<typeof recentProject>

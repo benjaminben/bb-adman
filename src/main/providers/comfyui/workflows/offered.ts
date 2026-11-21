@@ -1,7 +1,8 @@
-// SPEC 6.10.11 and 14 "[1.41] The test path" (security class): the one rule for which
-// shipped workflow a run gets. A proven one first. A trial one only for the user with the
-// hand-test tools on, where no proven one exists. An agent never gets a trial one, and a
-// draft is never sent to any server. Null means the job is not offered.
+// SPEC 6.10.11 and spec/agent-runs.md "trial workflows, same rule for both actors" (security
+// class): the one rule for which shipped workflow a run gets. A proven one first, for anyone.
+// Else a trial one while the hand-test tools are on, whoever asks [D-080]. A draft is never
+// sent to any server. Null means the job is not offered. A packaged app never has the tools,
+// so there only proven workflows are offered.
 import type { Actor } from '@/shared/schemas/events'
 import type { WorkflowJob } from '@/shared/schemas/queries/comfy'
 import type { WorkflowSpec } from './types'
@@ -29,6 +30,6 @@ export function offeredWorkflow(
   const fitting = workflows.filter((w) => fits(w, choice))
   const proven = fitting.find((w) => w.status === 'proven')
   if (proven) return proven
-  if (!who.devTools || who.actor !== 'user') return null
+  if (!who.devTools) return null
   return fitting.find((w) => w.status === 'trial') ?? null
 }

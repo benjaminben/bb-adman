@@ -1,7 +1,7 @@
 // SPEC 4.2 "No address yet" and "Not offered", 14 1.41 "trial workflows are picked by the
 // command" and 1.46 part B (security class): the ComfyUI checks of generation.runImages,
-// made before a job row. A proven workflow first; a trial one only for the user with the
-// hand-test tools on; an agent never gets a trial one, and a draft is never sent.
+// made before a job row. A proven workflow first; a trial one only while the hand-test tools
+// are on, for the user and an agent alike; a draft is never sent.
 import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectContext } from '@/main/commands/types'
 import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'

@@ -21,7 +21,7 @@ const reasonOf = (fn: () => void) => {
 describe('the trial rule of generation.startVideo for ComfyUI [SPEC 14 1.41] (security class)', () => {
   it.each([
     [false, 'user', 'comfy_job_not_offered'],
-    [true, 'agent', 'comfy_job_not_offered'],
+    [true, 'agent', 'accepted'],
     [false, 'agent', 'comfy_job_not_offered'],
     [true, 'user', 'accepted'],
   ] as const)('dev tools %s, actor %s: %s', (devTools, actor, outcome) => {
@@ -54,15 +54,14 @@ describe('checkComfyVideo takes the start pair [SPEC 14 1.60 CU-6b N-4 step 3] (
     [frame, 'h3-image-to-video'],
     [refs, 'h3-reference-to-video'],
     [{ firstFrame: false, references: false }, 'h3-text-to-video'],
-  ])('the user with dev tools on gets the workflow for %o: %s', (pair, id) => {
+  ])('the user and the agent with dev tools on get the workflow for %o: %s', (pair, id) => {
     expect(checkComfyVideo(deps(true), { actor: 'user' }, 2_000, pair).id).toBe(id)
+    expect(checkComfyVideo(deps(true), { actor: 'agent' }, 2_000, pair).id).toBe(id)
   })
 
   it.each([
     [false, 'user', frame],
-    [true, 'agent', frame],
     [false, 'user', refs],
-    [true, 'agent', refs],
   ] as const)('dev tools %s, actor %s, picture start: comfy_job_not_offered', (dt, actor, pair) => {
     expect(reasonOf(() => checkComfyVideo(deps(dt), { actor }, 2_000, pair))).toBe(
       'comfy_job_not_offered',

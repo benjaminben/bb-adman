@@ -10,6 +10,7 @@ import { closeProjectFile } from './db/project-file'
 import { createUndoLists } from './history/undo-lists'
 import { listProviders } from './providers/registry'
 import { createCommandBus, type BusEvent, type PermissionRequest } from './commands/bus'
+import { agentRunsCommands } from './commands/agent-runs'
 import { assetCommands } from './commands/asset'
 import { briefCommands } from './commands/brief'
 import { campaignCommands } from './commands/campaign'
@@ -126,6 +127,7 @@ export function createCore(opts: CoreOptions) {
 
   // One spread line per domain, in alphabetical order (SPEC 12).
   const handlers = [
+    ...agentRunsCommands(deps),
     ...assetCommands(deps),
     ...briefCommands(deps),
     ...campaignCommands(deps),
@@ -149,6 +151,7 @@ export function createCore(opts: CoreOptions) {
     log,
     emit: opts.emit,
     askPermission: opts.askPermission,
+    agentRuns: { providers, settings },
   })
   const queries = queryTable(deps, mcp)
   const query = createQueryRunner(queries, log)

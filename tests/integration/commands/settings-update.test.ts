@@ -27,6 +27,7 @@ describe('settings defaults [SPEC 13.1]', () => {
       storage: { s3: null, dropbox: null },
       comfyui: { baseUrl: null },
       agentRuns: {},
+      agentRunLimit: 4,
     })
   })
 
