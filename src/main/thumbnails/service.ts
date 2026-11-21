@@ -158,8 +158,9 @@ export function createRenderService(opts: RenderServiceOptions): RenderService {
         const v = scene.input.variant
         const size = fitSize(v, Math.min(maxDimension, Math.max(v.width, v.height)))
         const result = await drawOnce(scene, variantId, size)
-        if (!result)
+        if (!result) {
           throw new AppError('RULE_VIOLATION', RENDER_FAILED, { reason: 'render_failed' })
+        }
         await reportOverflow(scene, result.overflow)
         return { png: result.png, width: size.width, height: size.height, rev: scene.rev }
       })
