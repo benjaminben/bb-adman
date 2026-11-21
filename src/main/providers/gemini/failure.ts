@@ -53,6 +53,8 @@ export function failureFromError(error: unknown, timedOut: boolean, key: string)
     )
   }
   if (isNetworkError(error)) return fail('offline', error.message, key)
+  // The SDK's own parse error quotes the answer, so it gets a fixed detail instead.
+  if (error instanceof SyntaxError) return fail('other', 'Answer is not JSON', key)
   return fail('other', error instanceof Error ? error.message : String(error), key)
 }
 

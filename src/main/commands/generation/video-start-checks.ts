@@ -28,7 +28,7 @@ const SENDABLE = ['image/png', 'image/jpeg', 'image/webp']
 const notUsable = () =>
   new AppError(
     'RULE_VIOLATION',
-    'This picture cannot be used for a video yet. Use a PNG or JPEG.',
+    'This picture cannot be used for a video yet. Use a PNG, JPEG or WebP.',
     { reason: 'picture_not_usable' },
   )
 

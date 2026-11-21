@@ -49,13 +49,15 @@ function kindForAnswer(status: number, code: string | undefined): Kind {
   return kindForCode(code)
 }
 
-// A finished answer whose status is not a success.
+// A finished answer whose status is not a success. Secrets are removed from the whole text
+// before it is cut, so a secret that crosses the cut point cannot survive in part.
 export function failureFromAnswer(
   status: number,
   text: string,
   secrets: string[],
 ): ProviderFailure {
-  const detail = `HTTP ${status}: ${text.slice(0, DETAIL_CHARS)}`
+  const safe = secrets.reduce((all, secret) => redactSecret(all, secret), text)
+  const detail = `HTTP ${status}: ${safe.slice(0, DETAIL_CHARS)}`
   return fail(kindForAnswer(status, codeIn(text)), detail, secrets)
 }
 

@@ -74,7 +74,7 @@ const REFUSALS = [
   ['RULE_VIOLATION', 'ComfyUI does not offer this video start.', 'comfy_job_not_offered'],
   [
     'RULE_VIOLATION',
-    'This picture cannot be used for a video yet. Use a PNG or JPEG.',
+    'This picture cannot be used for a video yet. Use a PNG, JPEG or WebP.',
     'picture_not_usable',
   ],
   ['RULE_VIOLATION', 'ComfyUI makes clips of at most 30 seconds.', 'video_too_long'],

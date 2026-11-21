@@ -191,3 +191,13 @@ describe.each(calls)('Gemini %s: a key planted in an error answer', (_name, run)
     )
   })
 })
+
+describe.each(calls)('Gemini %s: an answer that is not JSON', (_name, run) => {
+  it('fails as other with a fixed detail that quotes nothing of the answer', async () => {
+    const { fetchFn } = recordingFetch(async () => new Response('not json made-up-answer-text'))
+    const failure = await failureOf(run(fetchFn))
+    expect(failure.error.kind).toBe('other')
+    expect(failure.error.detail).toBe('Answer is not JSON')
+    expect(`${failure.message} ${failure.error.detail}`).not.toContain('not json')
+  })
+})

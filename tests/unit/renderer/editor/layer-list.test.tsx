@@ -201,3 +201,12 @@ describe('Layer list: accessibility', () => {
     expect(await axeViolations()).toEqual([])
   })
 })
+
+describe('Layer list: the "Does not fit" mark [spec/editor.md "Layer list"]', () => {
+  it('marks a text layer whose text overflows, not one that fits, in the row name', async () => {
+    await openList([BACKGROUND, { ...HEADLINE, overflow: true }, { ...OFFER, overflow: false }])
+    expect(rowButton('Headline')).toHaveAccessibleName(/^Headline\s*Does not fit$/)
+    expect(rowButton('Offer')).toHaveAccessibleName('Offer')
+    expect(screen.getAllByText('Does not fit')).toHaveLength(1)
+  })
+})

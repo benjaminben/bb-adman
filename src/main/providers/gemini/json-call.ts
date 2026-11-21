@@ -2,20 +2,15 @@
 // shared by layout and text. Same pinned client and error mapping as pictures; no retry.
 // The model's answer is untrusted data: it is parsed and checked, never run, never used as a
 // path, never logged, and never put in a failure's detail.
-import { GoogleGenAI, type GenerateContentResponse, type Part, type Schema } from '@google/genai'
+import type { GenerateContentResponse, Part, Schema } from '@google/genai'
 import { redactSecret } from '@/main/providers/redact'
 import { ProviderCancelled, ProviderFailure, type AdapterContext } from '@/main/providers/types'
 import type { RunOptions } from '@/main/providers/types'
 import { failureFromError } from './failure'
-import type { Transport } from './image'
-import { GEMINI_ORIGIN, pinnedFetch } from './pinned-origin'
+import { pinnedClient, type Transport } from './image'
 
 export const TEXT_TIMEOUT_MS = 60_000
 export const NOT_THE_ASKED_JSON = 'Answer is not the asked JSON'
-
-// The same value as GEMINI_API_VERSION in image.ts (pinned so GOOGLE_GENAI_API_VERSION cannot
-// change the path). image.ts does not export its client, and this slice may not edit it.
-const GEMINI_API_VERSION = 'v1'
 
 // Finish reasons that mean the provider's content rules stopped a text answer.
 const REFUSED_FINISH = new Set(['SAFETY', 'PROHIBITED_CONTENT', 'BLOCKLIST', 'SPII', 'RECITATION'])
@@ -26,16 +21,6 @@ export type JsonCall<T> = {
   responseSchema: Schema
   // Gives the checked value, or null when the parsed JSON is not the asked shape.
   read: (value: unknown) => T | null
-}
-
-// Every setting the library would otherwise fill from the environment is given here.
-function pinnedClient(key: string, transport: Transport): GoogleGenAI {
-  return new GoogleGenAI({
-    apiKey: key,
-    vertexai: false,
-    apiVersion: GEMINI_API_VERSION,
-    httpOptions: { baseUrl: GEMINI_ORIGIN, fetch: pinnedFetch(transport.fetch ?? fetch) },
-  })
 }
 
 function whenAborted(signal: AbortSignal): Promise<never> {
