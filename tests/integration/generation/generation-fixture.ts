@@ -61,7 +61,7 @@ function insertLayer(
   )
 }
 
-function seed(db: Database.Database): void {
+export function seed(db: Database.Database): void {
   insertCampaign(db, 'c1')
   db.exec(`
     UPDATE campaign SET template_id = 'starter' WHERE id = 'c1';
