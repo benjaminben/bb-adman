@@ -25,6 +25,7 @@ export function baseState(overrides: Partial<AppState> = {}): AppState {
       storage: { s3: null, dropbox: null },
       comfyui: { baseUrl: null },
       agentRuns: {},
+      agentRunLimit: 4,
     },
     recentProjects: [],
     openProjects: [],

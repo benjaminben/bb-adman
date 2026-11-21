@@ -1,7 +1,13 @@
 // Reads and writes {userData}/settings.json. Only the app writes it (FR-170).
 import fs from 'node:fs'
 import path from 'node:path'
-import { settingsSchema, type Settings, type SettingsPatch } from '@/shared/schemas/settings'
+import {
+  agentRunLimit,
+  settingsSchema,
+  type Settings,
+  type SettingsPatch,
+} from '@/shared/schemas/settings'
+import { AGENT_MAX_ACTIVE_RUNS } from '@/shared/config/agent-runs'
 import { parseComfyAddress } from '@/shared/comfy/address'
 import { comfyOwnPorts } from '@/main/providers/comfyui/own-ports'
 import { DEFAULT_MCP_PORT } from './defaults'
@@ -38,13 +44,22 @@ function readComfyAddress(merged: unknown): unknown {
   return { ...merged, comfyui: { ...merged.comfyui, baseUrl } }
 }
 
+// AR-1: a limit in the file that is not a whole number in range loads as the default, so the
+// rest of the file is still read.
+function readAgentRunLimit(merged: unknown): unknown {
+  if (!isObject(merged) || agentRunLimit.safeParse(merged.agentRunLimit).success) return merged
+  return { ...merged, agentRunLimit: AGENT_MAX_ACTIVE_RUNS }
+}
+
 export function createSettingsStore(opts: { file: string; defaults: Settings }) {
   let current = load()
 
   function load(): Settings {
     try {
       const raw: unknown = JSON.parse(fs.readFileSync(opts.file, 'utf8'))
-      const parsed = settingsSchema.safeParse(readComfyAddress(merge(opts.defaults, raw)))
+      const parsed = settingsSchema.safeParse(
+        readAgentRunLimit(readComfyAddress(merge(opts.defaults, raw))),
+      )
       return parsed.success ? parsed.data : opts.defaults
     } catch {
       return opts.defaults
@@ -69,6 +84,14 @@ export function createSettingsStore(opts: { file: string; defaults: Settings }) 
     // Called only by comfy.setAddress, with an origin parseComfyAddress gave, or null.
     setComfyAddress(origin: string | null): void {
       save({ ...current, comfyui: { baseUrl: origin } })
+    },
+    // Called only by agentRuns.setAllowed, with a provider ID from the registry.
+    setAgentRunAllowed(provider: string, allowed: boolean): void {
+      save({ ...current, agentRuns: { ...current.agentRuns, [provider]: { allowed } } })
+    },
+    // Called only by agentRuns.setLimit, with a checked limit.
+    setAgentRunLimit(limit: number): void {
+      save({ ...current, agentRunLimit: limit })
     },
     // Called only by the MCP service, for mcp.setEnabled (SPEC 4.2 notes).
     setMcpEnabled(enabled: boolean): void {

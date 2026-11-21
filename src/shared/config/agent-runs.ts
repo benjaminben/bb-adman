@@ -1,4 +1,27 @@
-// SPEC 6.11.3 [1.24]: the one owner of the limit on runs an agent starts. The gate counts
-// an agent's jobs that are queued or running for one provider, over every open project.
-// A default until CQ-20 is answered.
+// SPEC agent-runs.md (security class): the one owner of which providers an agent run may be
+// ticked for, and of the bounds of agentRunLimit. Shared, so Settings shows the list the gate
+// checks.
+import type { ProviderInfo } from '@/shared/schemas/queries/app'
+
+// The default of agentRunLimit: queued or running agent jobs per provider, over every open
+// project.
 export const AGENT_MAX_ACTIVE_RUNS = 4
+export const AGENT_RUN_LIMIT_MIN = 1
+export const AGENT_RUN_LIMIT_MAX = 16
+
+export type AgentRunsRefusal = 'agent_runs_not_offered' | 'agent_runs_not_ready'
+
+// The only "tick offered" function. Its callers: the gate, agentRuns.setAllowed and the
+// runner's check before a job's first call.
+export function agentRunsOffered(info: ProviderInfo): AgentRunsRefusal | null {
+  const makesRuns = info.jobs.includes('image') || info.jobs.includes('video')
+  if (!info.available || !makesRuns) return 'agent_runs_not_offered'
+  // Until the runner checks the tick before a job's first call, only a local provider.
+  if (!info.local) return 'agent_runs_not_ready'
+  return null
+}
+
+// The sentence of gate step 1, also agentRuns.setAllowed's refusal.
+export function agentRunsNotOfferedMessage(label: string): string {
+  return `Agents cannot start runs with ${label}.`
+}

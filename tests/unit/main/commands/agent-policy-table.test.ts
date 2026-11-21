@@ -71,6 +71,7 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny' | 'tick'> = {
   'comfy.setAddress': 'deny',
   'comfy.check': 'deny',
   'agentRuns.setAllowed': 'deny',
+  'agentRuns.setLimit': 'deny',
   'dev.comfyExtend': 'deny',
 }
 

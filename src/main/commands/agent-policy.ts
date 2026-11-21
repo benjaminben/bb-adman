@@ -78,6 +78,7 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'comfy.setAddress': deny('change the ComfyUI address'),
   'comfy.check': deny('check the ComfyUI server'),
   'agentRuns.setAllowed': deny('change which runs agents may start'),
+  'agentRuns.setLimit': deny('change agent run limits'),
   'dev.comfyExtend': deny('use the hand-test tools'),
 }
 
