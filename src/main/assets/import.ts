@@ -7,7 +7,7 @@ import type { ProjectHandle } from '../db/project-file'
 import { readWireRows } from '../db/rows'
 import { inspectFile, inspectFolderFile, type InspectedFile } from './inspect'
 import { expandPaths } from './folder-walk'
-import { assetsDirOf } from './service'
+import { ensureAssetsDir } from './service'
 import { managedPath, relativeToProject } from './path-resolver'
 import type { AssetRow } from '../../shared/schemas/rows/asset'
 
@@ -49,9 +49,7 @@ async function place(
     const relPath = relativeToProject(project.filePath, file.file)
     return { ...file, id, storage: 'linked', absPath: file.file, relPath }
   }
-  const dir = assetsDirOf(project)
-  await fs.promises.mkdir(dir, { recursive: true })
-  const target = managedPath(dir, id, file.ext)
+  const target = managedPath(await ensureAssetsDir(project), id, file.ext)
   await fs.promises.copyFile(file.file, target, fs.constants.COPYFILE_EXCL)
   copies.push(target)
   const relPath = relativeToProject(project.filePath, target)

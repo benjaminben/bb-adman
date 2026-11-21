@@ -1,12 +1,13 @@
 // The AssetService of SPEC 14 "Contract between the slices" (types.ts). Paths come only from
 // the path resolver; rows are read only through db/rows.ts (SPEC 4.4).
 import fs from 'node:fs'
+import path from 'node:path'
 import type { AssetService } from './types'
 import type { ProjectHandle } from '../db/project-file'
 import { readMeta } from '../db/meta'
 import { readWireRow, readWireRows } from '../db/rows'
-import { assetsDirFor, managedPath, resolveAssetFile } from './path-resolver'
-import { assetNotFound, missingFile } from './errors'
+import { assetsDirFor, managedPath, pathInside, resolveAssetFile } from './path-resolver'
+import { assetNotFound, assetsFolderMissing, missingFile } from './errors'
 import { notAPicture, readPicture } from './read-picture'
 import { MAX_PICTURE_BYTES } from '../providers/picture-limits'
 import type { AssetRow } from '../../shared/schemas/rows/asset'
@@ -19,6 +20,18 @@ function assetRow(project: ProjectHandle, assetId: string): AssetRow {
 
 export function assetsDirOf(project: ProjectHandle): string {
   return assetsDirFor(project.filePath, readMeta(project.db))
+}
+
+// SPEC 14 [1.32] U9: the one place the assets folder is made. A folder that exists is used,
+// wherever it is; a missing one is made only inside the project file's folder, because the
+// stored places come from the project file and are untrusted (SPEC 8.1).
+export async function ensureAssetsDir(project: ProjectHandle): Promise<string> {
+  const dir = assetsDirOf(project)
+  const stat = await fs.promises.stat(dir).catch(() => null)
+  if (stat?.isDirectory()) return dir
+  if (pathInside(path.dirname(project.filePath), dir) === null) throw assetsFolderMissing()
+  await fs.promises.mkdir(dir, { recursive: true })
+  return dir
 }
 
 export function resolveRow(project: ProjectHandle, row: AssetRow): Promise<string | 'missing'> {
@@ -40,9 +53,9 @@ export function createAssetService(options: { maxPictureBytes?: number } = {}): 
     },
     assetsDir: assetsDirOf,
     async writeManaged(project, file) {
-      const dir = assetsDirOf(project)
-      const target = managedPath(dir, file.assetId, file.ext)
-      await fs.promises.mkdir(dir, { recursive: true })
+      // managedPath checks the ID and extension before any folder is made.
+      const target = managedPath(assetsDirOf(project), file.assetId, file.ext)
+      await ensureAssetsDir(project)
       await fs.promises.writeFile(target, file.bytes, {
         flag: 'wx',
       })
