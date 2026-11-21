@@ -11,6 +11,7 @@ import type { ElectronApplication } from '@playwright/test'
 export const MADE_UP_KEY = 'made-up-e2e-key-not-real'
 
 type Held = { __e2eGeminiAsked?: string[] }
+type Marked = { __e2eGeminiStandIn?: true }
 
 export async function standInForGemini(app: ElectronApplication): Promise<void> {
   await app.evaluate(() => {
@@ -18,7 +19,7 @@ export async function standInForGemini(app: ElectronApplication): Promise<void> 
     const asked: string[] = []
     held.__e2eGeminiAsked = asked
     const inner = globalThis.fetch
-    globalThis.fetch = async (input, init) => {
+    const standIn: typeof fetch = async (input, init) => {
       const address = typeof input === 'string' ? input : 'url' in input ? input.url : input.href
       const url = new URL(address)
       if (url.hostname === '127.0.0.1') return inner(input, init)
@@ -31,10 +32,20 @@ export async function standInForGemini(app: ElectronApplication): Promise<void> 
         headers: { 'content-type': 'application/json' },
       })
     }
+    const marked: Marked = { __e2eGeminiStandIn: true }
+    globalThis.fetch = Object.assign(standIn, marked)
   })
 }
 
-// The origins of the requests the stand-in answered, oldest first.
+// Re-review S-A: true only while the main process's global fetch is the stand-in itself.
+export async function standInInstalled(app: ElectronApplication): Promise<boolean> {
+  return app.evaluate(() => (globalThis.fetch as unknown as Marked).__e2eGeminiStandIn === true)
+}
+
+// The origins of the requests the stand-in answered, oldest first. Throws when the stand-in
+// was never installed, so an empty list always means it is there and was not asked.
 export async function geminiAsked(app: ElectronApplication): Promise<string[]> {
-  return app.evaluate(() => [...((globalThis as unknown as Held).__e2eGeminiAsked ?? [])])
+  const asked = await app.evaluate(() => (globalThis as unknown as Held).__e2eGeminiAsked)
+  if (asked === undefined) throw new Error('The Gemini stand-in is not installed.')
+  return [...asked]
 }

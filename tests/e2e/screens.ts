@@ -129,8 +129,9 @@ export async function checkServer(comfy: Locator, timeout = 60_000): Promise<voi
   await expect(comfy.getByText(/^The server answered: ComfyUI /)).toBeVisible({ timeout })
 }
 
+// Exact, because one workflow's label can begin another's (the two MOSS labels).
 export const workflowRow = (comfy: Locator, label: string): Locator =>
-  comfy.getByRole('list', { name: 'Workflows' }).getByRole('listitem', { name: label })
+  comfy.getByRole('list', { name: 'Workflows' }).getByRole('listitem', { name: label, exact: true })
 
 // Every top-level workflow row; a row's missing items are its own nested list.
 export const workflowRows = (comfy: Locator): Locator =>

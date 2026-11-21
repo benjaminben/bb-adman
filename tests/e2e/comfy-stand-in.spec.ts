@@ -18,7 +18,7 @@ import {
   startWorking,
 } from './stand-in-runs'
 import * as screens from './screens'
-import { geminiAsked, MADE_UP_KEY, standInForGemini } from './gemini-stand-in'
+import { geminiAsked, MADE_UP_KEY, standInForGemini, standInInstalled } from './gemini-stand-in'
 import { GEMINI_ORIGIN } from '../../src/main/providers/gemini/pinned-origin'
 
 const MOSS_OUTPUT = '9'
@@ -171,6 +171,8 @@ test('Key dialog and paid Retry: Cancel, then a made-up key saved; the refused r
   await generate()
   await panel.getByRole('button', { name: 'Confirm' }).click()
   await dialog.getByLabel('API key').fill(MADE_UP_KEY)
+  // Re-review S-A: the main process's fetch is the stand-in before the key can be sent.
+  expect(await standInInstalled(app)).toBe(true)
   await dialog.getByRole('button', { name: 'Save and continue' }).click()
   await expect(dialog).toBeHidden()
   await expect(screens.runRow(page)).toContainText('Failed', { timeout: 15_000 })
