@@ -149,7 +149,7 @@ export function createComfyClient(options: {
       const found = await getJson(`/history/${checkedId(promptId)}`, historyAnswer)
       return found?.[promptId] ?? null
     },
-    jobState: (promptId) => getJson(`/api/jobs/${checkedId(promptId)}`, jobStateAnswer),
+    jobState: async (promptId) => getJson(`/api/jobs/${checkedId(promptId)}`, jobStateAnswer),
     async queueIds() {
       const answer = await call('GET', '/queue')
       return ok(answer) ? read(answer, queueAnswer, 'bad_result') : unexpected(answer)
