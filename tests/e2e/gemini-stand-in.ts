@@ -23,7 +23,9 @@ export async function standInForGemini(app: ElectronApplication): Promise<void> 
       const url = new URL(address)
       if (url.hostname === '127.0.0.1') return inner(input, init)
       asked.push(url.origin)
-      const refusal = { error: { code: 400, message: 'stand-in refusal', status: 'INVALID_ARGUMENT' } }
+      const refusal = {
+        error: { code: 400, message: 'stand-in refusal', status: 'INVALID_ARGUMENT' },
+      }
       return new Response(JSON.stringify(refusal), {
         status: 400,
         headers: { 'content-type': 'application/json' },

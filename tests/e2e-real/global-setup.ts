@@ -5,7 +5,9 @@
 // The 1.10 rules: loading this file reads nothing; .env.local is read only inside the
 // function below. Not a test file itself.
 import fs from 'node:fs'
+import type { FullConfig } from '@playwright/test'
 import { comfyEnvFrom } from '../comfy/env-file'
+import { runRefusal } from './run-checks'
 
 function readEnvLocal(): string {
   try {
@@ -18,7 +20,10 @@ function readEnvLocal(): string {
   }
 }
 
-export default function setUp(): void {
+export default function setUp(config: FullConfig): void {
+  // 1.59 L-11: before anything is read, refuse a run that could record a typed value.
+  const refusal = runRefusal(config, process.env)
+  if (refusal !== null) throw new Error(refusal)
   Object.assign(process.env, comfyEnvFrom(readEnvLocal(), process.env))
   // A failed test would otherwise get an aria snapshot of the window, which on Settings or
   // the campaign screen holds the address or a photo's file name, written to test-results.

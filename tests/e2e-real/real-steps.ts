@@ -94,7 +94,10 @@ export async function confirmWithKey(page: Page): Promise<void> {
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error(NO_GEMINI_KEY)
   await guardedStep('Confirm the paid run and give the key', async () => {
-    await screens.picturePanel(page).getByRole('button', { name: 'Confirm' }).click()
+    const panel = screens.picturePanel(page)
+    // Review S-1: only a run of one paid request is ever confirmed.
+    await expect(panel.getByText(/^This sends 1 paid request\(s\)/)).toBeVisible()
+    await panel.getByRole('button', { name: 'Confirm' }).click()
     const dialog = page.getByRole('dialog')
     await dialog.getByLabel('API key').fill(key)
     await dialog.getByRole('button', { name: 'Save and continue' }).click()

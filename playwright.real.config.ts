@@ -10,8 +10,11 @@ export default defineConfig({
   globalSetup: './tests/e2e-real/global-setup.ts',
   // A real run can wait in the server's queue; each case sets its own limit.
   timeout: 5 * 60_000,
+  // Review S-2: a missing element fails inside its step's guard, well before the case's limit.
+  // A wait that is meant to be long (a run in the queue) sets its own timeout.
+  expect: { timeout: 60_000 },
   workers: 1,
   retries: 0,
   reporter: 'list',
-  use: { trace: 'off', screenshot: 'off', video: 'off' },
+  use: { trace: 'off', screenshot: 'off', video: 'off', actionTimeout: 60_000 },
 })

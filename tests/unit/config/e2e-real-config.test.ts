@@ -76,4 +76,17 @@ describe('the real config keeps nothing that could hold the address or a path [S
   it("turns off Playwright's page snapshot, which would draw the address into a file", () => {
     expect(setupText).toContain("process.env.PLAYWRIGHT_NO_COPY_PROMPT = '1'")
   })
+
+  it('refuses a run with another reporter, any recording or debug logs, first [1.59 L-11]', () => {
+    const body = setupText.slice(setupText.indexOf('export default function'))
+    expect(body).toContain('const refusal = runRefusal(config, process.env)')
+    expect(body.indexOf('runRefusal(')).toBeLessThan(body.indexOf('comfyEnvFrom('))
+  })
+})
+
+describe('a stuck step fails inside the guard, not at the test timeout [SPEC 14 1.56, S-2]', () => {
+  it('sets an action timeout and an expect timeout below the default case limit', () => {
+    expect(realText).toMatch(/actionTimeout: 60_000/)
+    expect(realText).toMatch(/expect: \{ timeout: 60_000 \}/)
+  })
 })
