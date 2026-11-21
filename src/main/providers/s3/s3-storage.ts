@@ -75,8 +75,10 @@ export function s3Storage(ctx: AdapterContext, options: Options = {}): StoragePr
         const page = await run(() =>
           client.send(new ListObjectsV2Command({ Bucket, Prefix, ContinuationToken })),
         )
+        // [1.14] H12: a key that ends in '/' is a folder marker, not a file.
         for (const item of page.Contents ?? []) {
-          if (item.Key?.startsWith(Prefix)) found.push(item.Key.slice(rootLength))
+          const key = item.Key
+          if (key?.startsWith(Prefix) && !key.endsWith('/')) found.push(key.slice(rootLength))
         }
         ContinuationToken = page.IsTruncated ? page.NextContinuationToken : undefined
       } while (ContinuationToken)
