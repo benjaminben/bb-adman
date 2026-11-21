@@ -83,7 +83,7 @@ describe('Scene layers', () => {
       .firstElementChild as HTMLElement
     expect(box.textContent).toBe('<b>Big</b> & bold')
     expect(box.querySelector('b')).toBeNull()
-    expect(box.style.letterSpacing).toBe('0.05em')
+    expect((box.firstElementChild as HTMLElement).style.letterSpacing).toBe('0.05em')
   })
 })
 
