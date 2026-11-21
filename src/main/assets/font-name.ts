@@ -170,9 +170,10 @@ function decode(bytes: Uint8Array, platform: number): string {
   return text
 }
 
-// Control characters removed, trimmed, at most 100 characters; empty gives null.
+// Control and format characters (right-to-left overrides, zero-width marks) removed, trimmed,
+// at most 100 characters; empty gives null.
 function clean(text: string): string | null {
-  const plain = text.replace(/\p{Cc}/gu, '').trim()
+  const plain = text.replace(/[\p{Cc}\p{Cf}]/gu, '').trim()
   const cut = Array.from(plain).slice(0, MAX_NAME_CHARS).join('').trim()
   return cut === '' ? null : cut
 }

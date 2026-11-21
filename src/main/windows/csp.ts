@@ -7,6 +7,10 @@ const DIRECTIVES: Array<[string, string]> = [
   ['style-src', "'self' 'unsafe-inline'"],
   ['script-src', "'self'"],
   ['connect-src', "'none'"],
+  ['frame-src', "'none'"],
+  ['object-src', "'none'"],
+  ['base-uri', "'none'"],
+  ['form-action', "'none'"],
 ]
 
 const join = (d: Array<[string, string]>) => d.map(([k, v]) => `${k} ${v}`).join('; ')

@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeRenderFixture, PNG, V1, V2, type RenderFixture } from './render-fixture'
+import { THUMBNAIL_DENIED } from '@/main/queries/render'
 
 let r: RenderFixture
 afterEach(() => r.f.cleanup())
@@ -53,12 +54,22 @@ describe('variant.render [spec/editor-commands.md, variant.render]', () => {
     })
   })
 
-  it('is open to both actors', async () => {
+  it('is open to the user only, like thumbnail.get', async () => {
     r = await makeRenderFixture()
     const input = { variantId: V1 }
-    await expect(r.query('variant.render', input, 'agent')).resolves.toMatchObject({ rev: 0 })
+    await expect(r.query('variant.render', input, 'user')).resolves.toMatchObject({ rev: 0 })
     await expect(r.query('thumbnail.get', input, 'agent')).rejects.toMatchObject({
       code: 'AGENT_DENIED',
     })
+  })
+
+  it('refuses an agent with the error thumbnail.get gives, and draws nothing', async () => {
+    r = await makeRenderFixture()
+    const input = { variantId: V1 }
+    const thumbnailError = await r.query('thumbnail.get', input, 'agent').catch((e: unknown) => e)
+    const renderError = await r.query('variant.render', input, 'agent').catch((e: unknown) => e)
+    expect(renderError).toMatchObject({ code: 'AGENT_DENIED', message: THUMBNAIL_DENIED })
+    expect(renderError).toEqual(thumbnailError)
+    expect(r.draw).not.toHaveBeenCalled()
   })
 })
