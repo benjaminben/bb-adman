@@ -7,6 +7,7 @@ import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { readWireRow } from '@/main/db/rows'
 import type { JobKindHandler, JobRunContext } from '@/main/jobs/types'
+import { LocalFailure } from '@/main/jobs/local-failure'
 import { runOptions } from '@/main/jobs/progress'
 import { adapterFor } from '@/main/providers/adapters'
 import { requireProviderKeys } from '@/main/providers/require-keys'
@@ -50,9 +51,6 @@ function fonts(project: ProjectHandle, layers: LayerRow[]): string[] {
   return [...names]
 }
 
-const targetGone = () =>
-  new ProviderFailure({ kind: 'other', reason: 'target_gone', detail: 'target_gone' })
-
 async function runLayoutJob(
   jc: JobRunContext,
   job: JobRow,
@@ -64,7 +62,7 @@ async function runLayoutJob(
   requireProviderKeys(jc.deps, providerId, 'place text with AI')
   const variantId = job.variantId ?? ''
   const variant = readWireRow(project.db, 'variant', { id: variantId }) as VariantRow | null
-  if (!variant) throw targetGone()
+  if (!variant) throw new LocalFailure('target_gone')
   const picture = await jc.deps.render.renderPictures(project, variantId, LAYOUT_PICTURE_SIDE)
   const layers = variantLayers(project, variantId)
   const items = layoutItems(layers)

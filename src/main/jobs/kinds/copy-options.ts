@@ -3,6 +3,7 @@
 // empty ones, ones over maxChars code points and repeats (in lower case) dropped; cut to count.
 // The answer is untrusted data and leaves only as plain strings (spec/ai-jobs.md "Security notes").
 import type { JobKindHandler, JobRunContext } from '@/main/jobs/types'
+import { LocalFailure } from '@/main/jobs/local-failure'
 import { runOptions } from '@/main/jobs/progress'
 import type { CoreDeps } from '@/main/core-deps'
 import { readWireRow } from '@/main/db/rows'
@@ -34,10 +35,6 @@ function cleanOptions(options: readonly unknown[], request: CopyJobRequest): str
   return kept
 }
 
-// spec/ai-jobs.md OI-68: the campaign deleted after the run was queued.
-const targetGone = () =>
-  new ProviderFailure({ kind: 'other', reason: 'target_gone', detail: 'target_gone' })
-
 async function runCopyJob(
   jc: JobRunContext,
   job: JobRow,
@@ -52,7 +49,8 @@ async function runCopyJob(
     job.campaignId === null
       ? null
       : (readWireRow(project.db, 'campaign', { id: job.campaignId }) as { brief: Brief } | null)
-  if (!campaign) throw targetGone()
+  // spec/ai-jobs.md OI-68: the campaign deleted after the run was queued.
+  if (!campaign) throw new LocalFailure('target_gone')
   const provider = textFor(jc.deps, providerId)
   const answer = await jc.call(() =>
     provider.copyOptions(
