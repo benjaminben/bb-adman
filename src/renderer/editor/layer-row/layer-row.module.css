@@ -1,0 +1,49 @@
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border-color: transparent;
+  text-align: left;
+}
+.row:hover {
+  background: var(--color-surface);
+}
+.selected,
+.selected:hover {
+  border-color: var(--color-accent);
+  background: var(--color-surface);
+}
+.thumb {
+  flex: none;
+  width: var(--layer-thumb);
+  height: var(--layer-thumb);
+  object-fit: contain;
+  background: var(--canvas-backdrop);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+}
+.textMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  font-weight: 600;
+  font-size: var(--font-size-heading);
+}
+.name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mark {
+  padding: 0 var(--space-1);
+  border-radius: var(--radius);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+}
+.selected .mark {
+  background: var(--color-bg);
+}

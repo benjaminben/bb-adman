@@ -11,7 +11,7 @@ export const V = 'V1'
 
 export function assetRow(
   id: string,
-  over: Partial<AssetRow> = {},
+  over: Partial<AssetRow & { missing: boolean }> = {},
 ): AssetRow & { missing: boolean } {
   return {
     id,
