@@ -12,6 +12,7 @@ import * as video from './video-screens'
 import { lastGraph, runSize, uploads, type Upload } from './stand-in-uploads'
 import { decodePng, type Bitmap } from './reference-compare'
 import { pictureType } from '@/main/providers/picture-type'
+import { answerQuit } from './quit-answer'
 
 let box: Sandbox
 let stand: StandIn
@@ -27,6 +28,7 @@ test.beforeEach(async () => {
 })
 test.afterEach(async () => {
   try {
+    if (app) await answerQuit(app)
     await app?.close()
     await stand?.close()
   } finally {

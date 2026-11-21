@@ -7,6 +7,7 @@ import { makeSandbox, launch, type Sandbox } from './launch'
 import { startComfyStandIn, type StandIn } from '../helpers/comfy-stand-in'
 import { nthSentId, serveNeedsFromApp } from './stand-in-runs'
 import * as screens from './screens'
+import { answerQuit } from './quit-answer'
 
 let box: Sandbox
 let stand: StandIn
@@ -23,6 +24,7 @@ test.beforeEach(async () => {
 // The sandbox holds the saved address, so it is removed even if a close fails.
 test.afterEach(async () => {
   try {
+    if (app) await answerQuit(app)
     await app?.close()
     await stand?.close()
   } finally {

@@ -203,5 +203,22 @@ export function createCore(opts: CoreOptions) {
         undo.dropProject(handle.projectId)
       }
     },
+    // spec/jobs.md, "Closing a project and quitting": quitting after the warning closes every
+    // project through project.close with 'stop', so no row stays queued or running; whatever
+    // a refused close leaves open is then closed as closeAll does.
+    async closeAllStopping(): Promise<void> {
+      await Promise.all(
+        projects
+          .all()
+          .map((h) =>
+            bus.execute(
+              'project.close',
+              { projectId: h.projectId, runningJobs: 'stop' },
+              { actor: 'user' },
+            ),
+          ),
+      )
+      this.closeAll()
+    },
   }
 }
