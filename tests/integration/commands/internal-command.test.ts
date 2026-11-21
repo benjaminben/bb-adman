@@ -36,6 +36,7 @@ describe('internal commands [SPEC 4.2 notes, step 0 item 5]', () => {
         },
         query: async () => ok(null),
         isInternal: (name) => name === 'asset.addGenerated',
+        mayCall: () => true,
       },
     )
     const command = handlers.get(IPC.command)

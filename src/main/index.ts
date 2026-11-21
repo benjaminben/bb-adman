@@ -10,11 +10,11 @@ import { pictureFitter } from './picture-fitter'
 import { registerAssetProtocol, registerAssetScheme } from './windows/asset-protocol'
 import { checkChangedFiles, withChangeChecks } from './assets/change-trigger'
 import { DIALOG_QUERIES, runDialogQuery } from './windows/dialogs'
-import { registerIpc } from './ipc'
+import { eventSender, fromMainFrame, registerIpc } from './ipc'
 import { projectPathFromArgv } from './open-file'
 import { safeStorageCrypto } from './secrets/safe-storage'
-import { IPC_CHANNELS } from '@/shared/schemas/api'
-import type { BusEvent } from './commands/bus'
+import { createDraw } from './render/draw'
+import { endRenderWindow } from './render/render-window'
 
 if (process.env.ADMAN_USER_DATA_DIR) app.setPath('userData', process.env.ADMAN_USER_DATA_DIR)
 registerAssetScheme(protocol)
@@ -24,14 +24,31 @@ const pendingOpens: string[] = []
 const fromArgv = projectPathFromArgv(process.argv)
 if (fromArgv) pendingOpens.push(fromArgv)
 
-function send(event: BusEvent): void {
-  for (const win of BrowserWindow.getAllWindows()) win.webContents.send(IPC_CHANNELS.event, event)
-  // spec/scene.md, "The render service": it sees every event, for the eager thumbnails.
-  core?.deps.render.onEvent(event)
+// The one app window. Every use goes through this reference, never through a list of all
+// windows, which would include the hidden render window (spec/scene.md, "Life of the window").
+let appWindow: BrowserWindow | null = null
+const liveAppWindow = () => (appWindow && !appWindow.isDestroyed() ? appWindow : null)
+
+function openAppWindow(): BrowserWindow {
+  const win = createAppWindow()
+  appWindow = win
+  // The render window ends first, so window-all-closed still quits the app (OI-23).
+  win.on('closed', () => {
+    if (appWindow === win) appWindow = null
+    endRenderWindow()
+  })
+  return win
 }
 
+// Events go to the app window only (LP-1). spec/scene.md, "The render service": the render
+// service sees every event, for the eager thumbnails.
+const send = eventSender(
+  () => liveAppWindow()?.webContents ?? null,
+  (event) => core?.deps.render.onEvent(event),
+)
+
 function mainWindow(): BrowserWindow {
-  const win = BrowserWindow.getAllWindows()[0] ?? createAppWindow()
+  const win = liveAppWindow() ?? openAppWindow()
   if (win.isMinimized()) win.restore()
   win.focus()
   return win
@@ -72,6 +89,7 @@ function start(): void {
     devTools: devToolsEnabled(app.isPackaged, process.env),
     toPng: pngConverter((buffer) => nativeImage.createFromBuffer(buffer)),
     fitPicture: pictureFitter((buffer) => nativeImage.createFromBuffer(buffer)),
+    drawScene: createDraw(),
   })
   const ready = core
   ready.log.write({
@@ -95,11 +113,12 @@ function start(): void {
           })
         : ready.query(name, input, opts),
     isInternal: (name) => ready.isInternal(name),
+    mayCall: (event) => fromMainFrame(event, liveAppWindow()?.webContents ?? null),
   })
   registerAssetProtocol(protocol, ready.projects)
   // Listens only while settings.mcp.enabled is on (SPEC 6.8); off on first run.
   void ready.mcp.startIfEnabled()
-  createAppWindow()
+  openAppWindow()
   for (const filePath of pendingOpens.splice(0)) void openFromSystem(filePath)
 }
 
@@ -124,6 +143,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('before-quit', () => {
     // Quitting closes the MCP listener and drops its sessions (SPEC 5.3).
     void core?.mcp.stop()
+    endRenderWindow()
     core?.closeAll()
   })
   void app.whenReady().then(start)
