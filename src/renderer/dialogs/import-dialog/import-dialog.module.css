@@ -1,0 +1,56 @@
+.names {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-4);
+  overflow-wrap: anywhere;
+}
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  padding: var(--space-3);
+  list-style: none;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  border: 0;
+}
+.legend {
+  margin-bottom: var(--space-1);
+  padding: 0;
+  font-weight: 600;
+}
+.choice {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+.hint {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-muted);
+}
+.group .hint {
+  margin: 0;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+.primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-text);
+}
