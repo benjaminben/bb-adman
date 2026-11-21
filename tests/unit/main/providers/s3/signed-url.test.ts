@@ -4,7 +4,9 @@
 // secret key is never in it; nothing is sent.
 import { describe, it, expect } from 'vitest'
 import { s3Storage } from '@/main/providers/s3/s3-storage'
-import { checkSignedUrl, SIGNED_URL_MAX_SECONDS } from '@/main/providers/s3/signed-url'
+import { S3Client } from '@aws-sdk/client-s3'
+import { checkSignedUrl, signReadUrl, SIGNED_URL_MAX_SECONDS } from '@/main/providers/s3/signed-url'
+import { ProviderFailure } from '@/main/providers/types'
 import { s3Hosts } from '@/main/providers/s3/pinned-host'
 import { REFUSED_PATH } from '@/main/providers/storage-paths'
 import type { AdapterContext } from '@/main/providers/types'
@@ -107,7 +109,7 @@ const GOOD =
   '&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=id%2F20261121%2Feu-west-1%2Fs3%2Faws4_request' +
   '&X-Amz-Date=20261121T000000Z&X-Amz-Expires=60&X-Amz-Signature=abc123&X-Amz-SignedHeaders=host' +
   '&x-amz-checksum-mode=ENABLED&x-id=GetObject'
-const expected = { hosts: HOSTS, bucket: TEST_BUCKET, key: KEY, seconds: 60 }
+const expected = { hosts: HOSTS, bucket: TEST_BUCKET, key: KEY, seconds: 60, region: 'eu-west-1' }
 
 describe('checkSignedUrl: the adapter refuses an address it did not expect [spec/approvals.md "Pictures"]', () => {
   it('accepts the expected address', () => {
@@ -133,12 +135,22 @@ describe('checkSignedUrl: the adapter refuses an address it did not expect [spec
     ['a missing signature', GOOD.replace('&X-Amz-Signature=abc123', '')],
     ['a fragment', `${GOOD}#x`],
     ['not an address', 'not a url'],
+    ['an inherited name: constructor', `${GOOD}&constructor=x`],
+    ['an inherited name: __proto__', `${GOOD}&__proto__=x`],
+    ['an inherited name: toString', `${GOOD}&toString=x`],
+    ['an encoded path letter', GOOD.replace('/p/', '/%70/')],
+    ['a dot-dot step', GOOD.replace('/p/', '/zzz/../p/')],
+    ['an upper-case host', GOOD.replace('made-up-bucket.s3', 'MADE-UP-BUCKET.s3')],
+    ['an explicit :443', GOOD.replace('amazonaws.com/', 'amazonaws.com:443/')],
+    ['a trailing &', `${GOOD}&`],
+    ['a credential for another region', GOOD.replace('%2Feu-west-1%2F', '%2Fus-east-1%2F')],
+    ['a credential for another service', GOOD.replace('%2Fs3%2F', '%2Fs4%2F')],
   ])('refuses %s', (_case, url) => {
     expect(checkSignedUrl(url, expected)).toBe(false)
   })
 
   it('accepts the path-style address only on the regional host', () => {
-    const dotted = { hosts: s3Hosts('a.b.c', 'eu-west-1'), bucket: 'a.b.c', key: KEY, seconds: 60 }
+    const dotted = { ...expected, hosts: s3Hosts('a.b.c', 'eu-west-1'), bucket: 'a.b.c' }
     const pathStyle = GOOD.replace(
       `${TEST_BUCKET}.s3.eu-west-1.amazonaws.com/`,
       's3.eu-west-1.amazonaws.com/a.b.c/',
@@ -146,4 +158,29 @@ describe('checkSignedUrl: the adapter refuses an address it did not expect [spec
     expect(checkSignedUrl(pathStyle, dotted)).toBe(true)
     expect(checkSignedUrl(pathStyle.replace('/a.b.c/', '/'), dotted)).toBe(false)
   })
+})
+
+describe('signReadUrl: a client that signs for an unexpected address [spec/approvals.md "Pictures"]', () => {
+  it.each([
+    ['another endpoint', 'https://made-up.example.com', 'eu-west-1'],
+    ['another region than the endpoint', 'https://s3.eu-west-1.amazonaws.com', 'us-east-1'],
+  ])(
+    'with %s it refuses, and the error holds no address and no key',
+    async (_case, endpoint, region) => {
+      const client = new S3Client({
+        region,
+        endpoint,
+        credentials: { accessKeyId: TEST_KEY_ID, secretAccessKey: TEST_SECRET },
+      })
+      const setup = { client, bucket: TEST_BUCKET, keys: [TEST_KEY_ID, TEST_SECRET] }
+      const error: unknown = await signReadUrl(setup, KEY, 60).catch((e: unknown) => e)
+      expect(error).toBeInstanceOf(ProviderFailure)
+      const failure = error as ProviderFailure
+      expect(failure.error.detail).toBe('Signed address refused: not the expected S3 address')
+      const shown = JSON.stringify([failure.message, failure.error, failure.stack])
+      for (const secret of [TEST_KEY_ID, TEST_SECRET, 'X-Amz-Signature', 'https://', KEY]) {
+        expect(shown).not.toContain(secret)
+      }
+    },
+  )
 })

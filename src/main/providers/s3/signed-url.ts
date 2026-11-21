@@ -27,16 +27,31 @@ const FIXED: Record<string, string | null> = {
 }
 const OPTIONAL: Record<string, string> = { 'x-amz-checksum-mode': 'ENABLED' }
 
-export type SignedUrlExpected = { hosts: string[]; bucket: string; key: string; seconds: number }
+export type SignedUrlExpected = {
+  hosts: string[]
+  bucket: string
+  key: string
+  seconds: number
+  region: string
+}
 
+// One path part as the SDK writes it: encodeURIComponent, plus ! ' ( ) * escaped.
+function escaped(part: string): string {
+  return encodeURIComponent(part).replace(
+    /[!'()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  )
+}
+
+// The written path must be exactly the object's own, so an encoded letter or a step is refused.
 function pathParts(url: URL, expected: SignedUrlExpected): boolean {
   const { hosts, bucket, key } = expected
   const want = url.hostname === hosts[0] ? key.split('/') : [bucket, ...key.split('/')]
-  const got = url.pathname.split('/').slice(1).map(decodeURIComponent)
-  return got.length === want.length && got.every((part, i) => part === want[i])
+  return url.pathname === `/${want.map(escaped).join('/')}`
 }
 
-function queryFields(url: URL, seconds: number): boolean {
+function queryFields(url: URL, { seconds, region }: SignedUrlExpected): boolean {
+  if (url.search.slice(1).split('&').includes('')) return false
   const names = [...url.searchParams.keys()]
   if (new Set(names).size !== names.length) return false
   const fixed = { ...FIXED, 'X-Amz-Expires': String(seconds) }
@@ -44,17 +59,23 @@ function queryFields(url: URL, seconds: number): boolean {
     const got = url.searchParams.get(name)
     if (got === null || got === '' || (value !== null && got !== value)) return false
   }
-  return names.every((name) => name in fixed || url.searchParams.get(name) === OPTIONAL[name])
+  const scope = `/${region}/s3/aws4_request`
+  if (!url.searchParams.get('X-Amz-Credential')?.endsWith(scope)) return false
+  const optional = (name: string) =>
+    Object.hasOwn(OPTIONAL, name) && url.searchParams.get(name) === OPTIONAL[name]
+  return names.every((name) => Object.hasOwn(fixed, name) || optional(name))
 }
 
-// True only for the address the adapter means to hand out.
+// True only for the address the adapter means to hand out. The text must be the URL's own
+// written form, so what was checked is exactly what is handed out.
 export function checkSignedUrl(text: string, expected: SignedUrlExpected): boolean {
   try {
     const url = new URL(text)
+    if (url.href !== text) return false
     if (url.protocol !== 'https:' || url.port !== '' || url.hash !== '') return false
     if (url.username !== '' || url.password !== '' || text.includes('#')) return false
     if (!expected.hosts.includes(url.hostname)) return false
-    return pathParts(url, expected) && queryFields(url, expected.seconds)
+    return pathParts(url, expected) && queryFields(url, expected)
   } catch {
     return false
   }
@@ -73,7 +94,8 @@ export async function signReadUrl(setup: SignerSetup, key: string, seconds: numb
     const region = await client.config.region()
     const command = new GetObjectCommand({ Bucket: bucket, Key: key })
     url = await getSignedUrl(client, command, { expiresIn: seconds })
-    if (checkSignedUrl(url, { hosts: s3Hosts(bucket, region), bucket, key, seconds })) return url
+    if (checkSignedUrl(url, { hosts: s3Hosts(bucket, region), bucket, key, seconds, region }))
+      return url
   } catch (error) {
     throw failureFromS3Error(error, keys)
   }
