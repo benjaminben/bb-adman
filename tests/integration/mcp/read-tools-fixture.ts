@@ -13,13 +13,40 @@ export type ReadSetUp = {
   s: ToolSession
 }
 
+// A campaign with every optional brief and rule set field filled.
+function fullInput() {
+  const base = createInput()
+  return {
+    ...base,
+    brief: {
+      ...base.brief,
+      subjects: [
+        { id: 'can', name: 'Can', description: 'A red can' },
+        { id: 'bottle', name: 'Bottle', description: 'A green bottle' },
+      ],
+      offer: 'Two for one',
+      callToAction: 'Buy now',
+      tone: 'Bright',
+      languages: ['en', 'de'],
+      sizes: ['1x1', '9x16'],
+      copy: { en: { headline: 'Stay cool', callToAction: 'Buy now' } },
+    },
+    ruleSet: {
+      requiredAssetIds: [],
+      palette: ['#FF0000'],
+      requiredWords: { en: ['fresh'] },
+      prohibitedWords: { en: ['cheap'] },
+    },
+  }
+}
+
 export async function readSetUp(): Promise<ReadSetUp> {
   const fx = await makeMcpFixture()
   const { projectId } = data<{ projectId: string }>(
     await fx.user('project.create', { name: 'Reads', location: fx.projectsDir }),
   )
   const made = data<{ campaignId: string; variantId: string }>(
-    await fx.user('campaign.create', { projectId, ...createInput() }),
+    await fx.user('campaign.create', { projectId, ...fullInput() }),
   )
   data(await fx.user('mcp.setEnabled', { enabled: true }))
   const s = await toolSession(fx.port, await fx.token())

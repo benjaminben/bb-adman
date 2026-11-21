@@ -17,6 +17,7 @@ import {
   slotFields,
   type ReplyPicker,
 } from './read-replies'
+import { campaignFields, projectFields } from './project-replies'
 
 export type ToolDef = {
   name: string
@@ -47,6 +48,7 @@ export const MCP_TOOLS: readonly ToolDef[] = [
     kind: 'query',
     target: 'project.get',
     input: projectGetInput,
+    reply: projectFields,
   },
   {
     name: 'list_assets',
@@ -66,6 +68,7 @@ export const MCP_TOOLS: readonly ToolDef[] = [
     kind: 'query',
     target: 'campaign.get',
     input: campaignScopedInput,
+    reply: campaignFields,
   },
   {
     name: 'create_campaign',
