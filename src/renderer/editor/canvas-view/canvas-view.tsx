@@ -10,7 +10,7 @@ import type { SceneAsset, SceneSettled } from '@/shared/scene/types'
 import { Scene } from '@/shared/scene/scene'
 import { useEditorKey } from '@/renderer/editor/use-editor-key'
 import { fitScale, scaleOf, zoomIn, zoomLabel, zoomOut, type Zoom } from '@/renderer/editor/zoom'
-import { pickLayer } from './pick-layer'
+import { pickLayer } from '@/renderer/editor/geometry-math'
 import { useAreaSize } from './use-area-size'
 import styles from './canvas-view.module.css'
 

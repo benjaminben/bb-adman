@@ -1,7 +1,7 @@
 // spec/editor.md, "Selecting": the topmost visible, unlocked layer whose turned box holds the
 // point; else the background.
 import { describe, expect, it } from 'vitest'
-import { boxHolds, pickLayer } from '@/renderer/editor/canvas-view/pick-layer'
+import { boxHolds, pickLayer } from '@/renderer/editor/geometry-math'
 import { BACKGROUND, HEADLINE, LOGO } from './editor-fixture'
 
 const box = { x: 0, y: 0, width: 200, height: 20, rotation: 0 }
