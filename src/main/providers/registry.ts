@@ -10,7 +10,7 @@ const PROVIDERS: ProviderInfo[] = [
     available: true,
     secrets: ['gemini.apiKey'],
     defaultModels: {
-      image: 'gemini-2.5-flash-image',
+      image: 'gemini-nano-banana-2.1',
       layout: 'gemini-2.5-flash',
       text: 'gemini-2.5-flash',
     },
