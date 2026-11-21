@@ -112,9 +112,13 @@ describe('CheckPanel [P6-11]', () => {
       'Text fits: Passed',
     ])
     expect(
-      within(rows[1]).getByText('Headline uses #FF0000, which is not in the palette.'),
+      within(rows[1] as HTMLElement).getByText(
+        'Headline uses #FF0000, which is not in the palette.',
+      ),
     ).toBeInTheDocument()
-    expect(within(rows[2]).getByText('There are no prohibited words for en.')).toBeInTheDocument()
+    expect(
+      within(rows[2] as HTMLElement).getByText('There are no prohibited words for en.'),
+    ).toBeInTheDocument()
     expect(within(block).queryByText('Changed since the last check.')).toBeNull()
     expect(within(region()).queryByRole('article', { name: /German post/ })).toBeNull()
     expect(await axeViolations()).toEqual([])

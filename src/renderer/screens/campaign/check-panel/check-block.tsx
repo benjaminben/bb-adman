@@ -16,7 +16,7 @@ const ICONS: Record<CheckResult['status'], IconName> = {
   skipped: 'minus',
 }
 
-const KINDS: Record<CheckResult['status'], string> = {
+const KINDS: Record<CheckResult['status'], string | undefined> = {
   pass: layout.ok,
   warn: layout.warn,
   skipped: layout.neutral,

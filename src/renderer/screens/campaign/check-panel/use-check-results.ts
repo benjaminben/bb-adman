@@ -1,7 +1,7 @@
 // The check panel's data (spec/phases/phase-06.md, design addition 8): check.results for the
 // campaign, read on mount and again on each project.changed for this project. A reply older
 // than the newest read is dropped.
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import type { CheckResultsReply, VariantCheckState } from '@/shared/schemas/queries/check'
 
@@ -10,30 +10,29 @@ export type ChecksRead =
   | { kind: 'refused'; message: string }
   | { kind: 'done'; states: VariantCheckState[] }
 
-export function useCheckResults(projectId: string, campaignId: string) {
+export function useCheckResults(projectId: string, campaignId: string): ChecksRead {
   const api = useApi()
   const [read, setRead] = useState<ChecksRead>({ kind: 'loading' })
-  const latest = useRef(0)
-
-  const load = useCallback(async () => {
-    const turn = ++latest.current
-    const reply = await api.query('check.results', { projectId, campaignId })
-    if (turn !== latest.current) return
-    if (!reply.ok) return setRead({ kind: 'refused', message: reply.error.message })
-    const data = reply.data as CheckResultsReply | null
-    setRead({ kind: 'done', states: data?.variants ?? [] })
-  }, [api, projectId, campaignId])
 
   useEffect(() => {
+    let latest = 0
+    const load = async () => {
+      const turn = ++latest
+      const reply = await api.query('check.results', { projectId, campaignId })
+      if (turn !== latest) return
+      if (!reply.ok) return setRead({ kind: 'refused', message: reply.error.message })
+      const data = reply.data as CheckResultsReply | null
+      setRead({ kind: 'done', states: data?.variants ?? [] })
+    }
     void load()
     const stop = api.on('project.changed', (payload) => {
       if (payload.projectId === projectId) void load()
     })
     return () => {
-      latest.current = -1
+      latest = -1
       stop()
     }
-  }, [api, projectId, load])
+  }, [api, projectId, campaignId])
 
   return read
 }
