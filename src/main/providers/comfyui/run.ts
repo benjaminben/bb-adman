@@ -42,7 +42,7 @@ export function fillValuesFor(spec: WorkflowSpec, ask: RunAsk, promptId: string)
   return values
 }
 
-function endedEntry(entry: HistoryEntry): void {
+export function endedEntry(entry: HistoryEntry): void {
   const messages = entry.status?.messages ?? []
   if (entry.status?.statusStr === 'error' || messages.some((m) => m.type === 'execution_error')) {
     throw runFailure(messages)
@@ -54,7 +54,7 @@ function endedEntry(entry: HistoryEntry): void {
 
 // SPEC 6.10.6 step 7: the first item that has filename, subfolder and type, under whichever
 // list name it sits (U-2).
-function resultRef(spec: WorkflowSpec, entry: HistoryEntry): ViewRef {
+export function resultRef(spec: WorkflowSpec, entry: HistoryEntry): ViewRef {
   const lists = entry.outputs[spec.slots.outputNode] ?? {}
   for (const items of Object.values(lists)) {
     for (const item of items) {
@@ -74,7 +74,11 @@ export type RunEnv = {
   serverVersion: string | undefined
 }
 
-async function submitted(env: RunEnv, graph: Record<string, unknown>, promptId: string) {
+export async function submitted(
+  env: Pick<RunEnv, 'client'>,
+  graph: Record<string, unknown>,
+  promptId: string,
+) {
   rememberOwnId(promptId)
   try {
     const answer = await env.client.submit(promptId, graph)

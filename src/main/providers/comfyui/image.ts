@@ -4,7 +4,6 @@
 // picture's bytes under the app's own name; nothing else about the picture enters a request.
 // The run keeps the origin it started with: before each request it compares it with the
 // saved address, and a change stops the run with nothing more sent (address_changed).
-import { randomUUID } from 'node:crypto'
 import {
   ProviderCancelled,
   type AdapterContext,
@@ -12,68 +11,31 @@ import {
   type ImageProvider,
   type ImageResult,
 } from '../types'
-import { createComfyClient, type ComfyClient } from './client'
-import { checkFailure, comfyFailure, missingFailure } from './failures'
+import type { ComfyClient } from './client'
 import { serverChecks, type ServerChecks } from './needs'
-import { comfyOwnPorts } from './own-ports'
 import { runPicture, type RunEnv, type RunTiming } from './run'
+import { checked, pinnedClient, realTiming, runOrigin } from './session'
 import { uploadName } from './values'
 import { NON_DRAFT_WORKFLOWS } from './workflows'
+import type { WorkflowChoice } from './workflows/offered'
 import type { WorkflowSpec } from './workflows/types'
-
-const realTiming: RunTiming = {
-  now: Date.now,
-  newId: randomUUID,
-  sleep: (ms, signal) =>
-    new Promise((done) => {
-      const stop = () => {
-        clearTimeout(timer)
-        done()
-      }
-      const timer = setTimeout(() => {
-        signal?.removeEventListener('abort', stop)
-        done()
-      }, ms)
-      signal?.addEventListener('abort', stop, { once: true })
-    }),
-}
 
 export type ComfyImageDeps = { timing?: RunTiming; checks?: ServerChecks }
 
 // The command has already refused a job with no workflow it may use (SPEC 14 1.41): a proven
 // one, else the trial one the user with the hand-test tools was allowed. Never a draft.
-export function workflowForRun(job: 'image' | 'image_refs'): WorkflowSpec {
-  const fitting = NON_DRAFT_WORKFLOWS.filter((w) => w.job === job)
-  const chosen = fitting.find((w) => w.status === 'proven') ?? fitting[0]
+export function workflowForRun(job: WorkflowChoice['job'], start?: WorkflowChoice['videoStart']) {
+  const fitting = NON_DRAFT_WORKFLOWS.filter(
+    (w) =>
+      w.job === job &&
+      (start === undefined ||
+        (w.videoStart?.firstFrame === start.firstFrame &&
+          w.videoStart.references === start.references)),
+  )
+  const chosen: WorkflowSpec | undefined =
+    fitting.find((w) => w.status === 'proven') ?? fitting[0]
   if (!chosen) throw new Error(`No shipped workflow for ${job}`)
   return chosen
-}
-
-// Every call first checks that the saved address is still the run's origin.
-function pinnedTo(client: ComfyClient, still: () => boolean): ComfyClient {
-  type Call = (...args: unknown[]) => unknown
-  const guarded = {} as Record<string, unknown>
-  for (const [name, fn] of Object.entries(client) as Array<[string, Call]>) {
-    guarded[name] = (...args: unknown[]) => {
-      if (!still()) throw comfyFailure('address_changed', 'The address changed during the run')
-      return fn(...args)
-    }
-  }
-  return guarded as ComfyClient
-}
-
-async function checked(
-  checks: ServerChecks,
-  origin: string,
-  client: ComfyClient,
-  spec: WorkflowSpec,
-): Promise<string | undefined> {
-  const result = await checks.run(origin, client, NON_DRAFT_WORKFLOWS)
-  if (result.outcome !== 'ok') throw checkFailure(result.outcome)
-  const missing = result.workflows.find((w) => w.id === spec.id)?.missing
-  if (!missing) throw new Error(`The check did not compare ${spec.id}`)
-  if (missing.length > 0) throw missingFailure(missing)
-  return result.version
 }
 
 // The file name to put in the graph: the server's answer, after the client's checks.
@@ -85,16 +47,12 @@ async function uploaded(client: ComfyClient, file: ImageFile): Promise<string> {
 export function comfyImage(ctx: AdapterContext, deps: ComfyImageDeps = {}): ImageProvider {
   const timing = deps.timing ?? realTiming
   const checks = deps.checks ?? serverChecks
-  const savedOrigin = () => ctx.settings().comfyui.baseUrl
   return {
     async generate(input, opts = {}) {
       if (opts.signal?.aborted) throw new ProviderCancelled()
-      const origin = savedOrigin()
-      if (origin === null) throw comfyFailure('address_needed', 'No address saved')
+      const origin = runOrigin(ctx)
       const spec = workflowForRun(input.references.length > 0 ? 'image_refs' : 'image')
-      const ownPorts = () => comfyOwnPorts(ctx.settings().mcp.port)
-      const still = () => savedOrigin() === origin
-      const client = pinnedTo(createComfyClient({ origin, ownPorts }), still)
+      const client = pinnedClient(ctx, origin)
       const serverVersion = await checked(checks, origin, client, spec)
       const references: string[] = []
       for (const file of input.references) {
