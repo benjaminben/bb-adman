@@ -5,7 +5,7 @@
 - `tests/unit/renderer/screens/settings/approvals-section.test.tsx` (15 cases, axe included).
 
 ## In progress / left
-- `tests/shots/ap-10.shots.ts`, picture `91-settings-approvals-service`.
+- Done: `tests/shots/ap-10.shots.ts`, picture `91-settings-approvals-service`.
 - Full run: lint, typecheck, test, build, test:build, test:e2e, shots.
 
 ## Decisions
