@@ -39,13 +39,22 @@ describe('test:e2e:real runs only when nothing can record a typed value [SPEC 14
     expect(runRefusal(safe, { DEBUG: 'other,pw:browser*' })).toBe(RUN_REFUSAL)
     expect(runRefusal(safe, { PWDEBUG: '1' })).toBe(RUN_REFUSAL)
     expect(runRefusal(safe, { PWDEBUG: '' })).toBe(RUN_REFUSAL)
-    expect(runRefusal(safe, { DEBUG: 'vite:*' })).toBeNull()
+  })
+
+  // Re-review R-1: a glob such as * or pw* turns on pw:api without naming pw:, so any
+  // DEBUG that is set and not empty is refused. Empty or unset turns on no log.
+  it('refuses any DEBUG that is set and not empty [R-1]', () => {
+    for (const value of ['*', 'pw*', 'pw:api', '*api', 'vite:*', 'unrelated']) {
+      expect(runRefusal(safe, { DEBUG: value })).toBe(RUN_REFUSAL)
+    }
+    expect(runRefusal(safe, { DEBUG: '' })).toBeNull()
+    expect(runRefusal(safe, { DEBUG: undefined })).toBeNull()
   })
 
   it('the refusal is one fixed sentence that names no value', () => {
     expect(RUN_REFUSAL).toBe(
       'test:e2e:real runs only with the list reporter, trace, screenshot and video off, ' +
-        'and no DEBUG=pw: or PWDEBUG. Run it with no extra flags.',
+        'and no DEBUG or PWDEBUG. Run it with no extra flags.',
     )
   })
 })

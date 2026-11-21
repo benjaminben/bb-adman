@@ -1,7 +1,7 @@
 // SPEC 14 1.59 L-11 (the review's S-3): test:e2e:real refuses to start when something could
 // record a typed value. A CLI flag such as `--trace on` or `--reporter html` changes the config
 // the global setup is given, and a trace or report keeps each `fill` value, the address and the
-// key among them. Playwright's debug logs (DEBUG=pw:*, PWDEBUG) print them too. Not a test file.
+// key among them. Playwright's debug logs (DEBUG, PWDEBUG) print them too. Not a test file.
 
 type Mode = string | { mode?: string } | undefined
 type Use = { trace?: Mode; screenshot?: Mode; video?: Mode }
@@ -12,7 +12,7 @@ export type RunConfig = {
 
 export const RUN_REFUSAL =
   'test:e2e:real runs only with the list reporter, trace, screenshot and video off, ' +
-  'and no DEBUG=pw: or PWDEBUG. Run it with no extra flags.'
+  'and no DEBUG or PWDEBUG. Run it with no extra flags.'
 
 const isOff = (mode: Mode): boolean =>
   mode === 'off' || (typeof mode === 'object' && mode.mode === 'off')
@@ -25,6 +25,8 @@ export function runRefusal(
   const allOff = config.projects.every(
     ({ use }) => isOff(use.trace) && isOff(use.screenshot) && isOff(use.video),
   )
-  const debugLogs = (env.DEBUG ?? '').includes('pw:') || env.PWDEBUG !== undefined
+  // Re-review R-1: a glob such as * or pw* turns on pw:api without naming pw:, so any DEBUG
+  // that is not empty is refused.
+  const debugLogs = (env.DEBUG ?? '') !== '' || env.PWDEBUG !== undefined
   return listOnly && allOff && !debugLogs ? null : RUN_REFUSAL
 }
