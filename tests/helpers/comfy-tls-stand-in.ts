@@ -26,13 +26,9 @@ export function hasOpenssl(): boolean {
 function makeCertificate(dir: string): { key: Buffer; cert: Buffer } {
   const key = path.join(dir, 'key.pem')
   const cert = path.join(dir, 'cert.pem')
-  const out = spawnSync(
-    'openssl',
-    ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1'].concat(
-      ['-subj', '/CN=adman-stand-in', '-keyout', key, '-out', cert],
-    ),
-    { encoding: 'utf8' },
-  )
+  const args = ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1']
+  args.push('-subj', '/CN=adman-stand-in', '-keyout', key, '-out', cert)
+  const out = spawnSync('openssl', args, { encoding: 'utf8' })
   if (out.error || out.status !== 0) throw new Error(`openssl failed: ${out.stderr}`)
   return { key: fs.readFileSync(key), cert: fs.readFileSync(cert) }
 }

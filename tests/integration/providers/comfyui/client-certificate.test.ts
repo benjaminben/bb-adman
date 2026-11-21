@@ -10,7 +10,7 @@ import { failureOf } from '../../../helpers/failure-of'
 import { hasOpenssl, startTlsStandIn, type TlsStandIn } from '../../../helpers/comfy-tls-stand-in'
 
 const openssl = hasOpenssl()
-if (!openssl) console.warn('CU-2b certificate proof skipped: openssl is not installed')
+if (!openssl) process.stdout.write('CU-2b certificate proof skipped: openssl is not installed\n')
 
 const started: TlsStandIn[] = []
 async function tlsStandIn(): Promise<TlsStandIn> {
