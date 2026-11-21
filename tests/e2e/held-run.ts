@@ -56,7 +56,7 @@ export async function startHeldRun(page: Page, ids: Ids): Promise<string> {
   const slots = (await query(page, 'template.slots', {
     projectId: ids.projectId,
     campaignId: ids.campaignId,
-  })) as { slot: { id: string; type: string } }[]
+  })) as unknown as { slot: { id: string; type: string } }[]
   const slot = slots.find((s) => s.slot.type === 'image') ?? slots[0]!
   const { jobId } = (await command(page, 'generation.runImages', {
     projectId: ids.projectId,
@@ -71,6 +71,9 @@ export async function startHeldRun(page: Page, ids: Ids): Promise<string> {
 }
 
 export async function jobStatus(page: Page, projectId: string, jobId: string): Promise<string> {
-  const rows = (await query(page, 'job.list', { projectId })) as { id: string; status: string }[]
+  const rows = (await query(page, 'job.list', { projectId })) as unknown as {
+    id: string
+    status: string
+  }[]
   return rows.find((r) => r.id === jobId)?.status ?? 'missing'
 }
