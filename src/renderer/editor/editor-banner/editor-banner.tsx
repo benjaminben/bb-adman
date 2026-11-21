@@ -3,7 +3,13 @@
 // the layout job's line comes first of all, "Placing text with AI…" with Stop, or its
 // failure with Dismiss.
 import type { LayoutBannerLine } from '@/renderer/editor/layout-run'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './editor-banner.module.css'
+
+// A full-width notice of its kind (spec/app-style.md "Editor", "Banner").
+const DANGER = `${layout.notice} ${layout.danger} ${styles.banner}`
+const WORKING = `${layout.notice} ${layout.info} ${styles.banner}`
 
 export type EditorBannerProps = {
   missingFile: boolean
@@ -27,7 +33,14 @@ export function bannerWords(props: EditorBannerProps): string | null {
 function LayoutLine({ line }: { line: LayoutBannerLine }) {
   const running = line.kind === 'running'
   return (
-    <div className={running ? styles.working : styles.banner}>
+    <div className={running ? WORKING : DANGER}>
+      {running ? (
+        <span className={styles.spin}>
+          <Icon name="spinner" size="small" />
+        </span>
+      ) : (
+        <Icon name="alert" size="small" />
+      )}
       <p role="status" className={styles.words}>
         {running ? 'Placing text with AI…' : line.words}
       </p>
@@ -43,7 +56,8 @@ export function EditorBanner(props: EditorBannerProps) {
   const words = bannerWords(props)
   if (words === null) return null
   return (
-    <p role="status" className={styles.banner}>
+    <p role="status" className={DANGER}>
+      <Icon name="alert" size="small" />
       {words}
     </p>
   )

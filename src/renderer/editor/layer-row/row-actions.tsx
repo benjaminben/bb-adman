@@ -3,6 +3,7 @@
 // not have. They show while the row is selected, pointed at or holds the focus; otherwise only a
 // hidden or locked state shows, so the list stays quiet and the state is still seen.
 import type { LayerRow as Layer } from '@/shared/schemas/rows/layer'
+import { Icon } from '@/renderer/ui/icon'
 import styles from './layer-row.module.css'
 
 export type RowActionsProps = {
@@ -12,8 +13,11 @@ export type RowActionsProps = {
   onDelete: () => void
 }
 
+// Icon-only, as in the prototype; each keeps its accessible name, shown again as a tooltip.
 export function RowActions({ layer, active, onToggle, onDelete }: RowActionsProps) {
   const hidden = !layer.visible
+  const hideName = `${hidden ? 'Show' : 'Hide'} ${layer.name}`
+  const lockName = `${layer.locked ? 'Unlock' : 'Lock'} ${layer.name}`
   const canDelete = layer.type !== 'background' && !layer.locked
   if (!active && !hidden && !layer.locked) return null
   return (
@@ -22,22 +26,24 @@ export function RowActions({ layer, active, onToggle, onDelete }: RowActionsProp
         <button
           type="button"
           className={styles.action}
-          aria-label={`${hidden ? 'Show' : 'Hide'} ${layer.name}`}
+          aria-label={hideName}
+          title={hideName}
           aria-pressed={hidden}
           onClick={() => onToggle({ visible: hidden })}
         >
-          {hidden ? 'Show' : 'Hide'}
+          <Icon name={hidden ? 'eyeOff' : 'eye'} size="small" />
         </button>
       )}
       {(active || layer.locked) && (
         <button
           type="button"
           className={styles.action}
-          aria-label={`${layer.locked ? 'Unlock' : 'Lock'} ${layer.name}`}
+          aria-label={lockName}
+          title={lockName}
           aria-pressed={layer.locked}
           onClick={() => onToggle({ locked: !layer.locked })}
         >
-          {layer.locked ? 'Unlock' : 'Lock'}
+          <Icon name="lock" size="small" />
         </button>
       )}
       {active && canDelete && (
@@ -45,9 +51,10 @@ export function RowActions({ layer, active, onToggle, onDelete }: RowActionsProp
           type="button"
           className={styles.action}
           aria-label={`Delete ${layer.name}`}
+          title={`Delete ${layer.name}`}
           onClick={onDelete}
         >
-          Delete
+          <Icon name="trash" size="small" />
         </button>
       )}
     </span>

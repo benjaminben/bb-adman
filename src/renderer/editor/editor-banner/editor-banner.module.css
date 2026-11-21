@@ -1,19 +1,29 @@
-.banner,
-.working {
-  display: flex;
+/* app-style */
+/* The banner is the shared notice, full width under the top bar, with no radius. The element
+   name lifts these rules over the shared notice's. */
+:is(p, div).banner {
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2) var(--space-4);
   margin: 0;
   padding: var(--space-2) var(--space-4);
-  background: var(--color-danger-bg);
-  color: var(--color-danger-text);
-  border-bottom: var(--border-width) solid var(--color-border);
-}
-.working {
-  background: var(--color-surface);
-  color: var(--color-text);
+  border-radius: 0;
+  border-bottom: var(--border-width) solid var(--color-line);
 }
 .words {
+  flex: 1;
   margin: 0;
+}
+.spin {
+  display: flex;
+  animation: spin var(--motion-spin) linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
 }

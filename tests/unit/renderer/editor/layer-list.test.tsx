@@ -1,5 +1,7 @@
 // spec/editor.md, "Layer list" (P3-12) [FR-090, FR-092]: add text and add picture, hide and
 // show, lock and unlock, rename, drag to reorder, Mod+] and Mod+[, delete, and axe.
+import fs from 'node:fs'
+import path from 'node:path'
 import { act, createEvent, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
@@ -208,5 +210,58 @@ describe('Layer list: the "Does not fit" mark [spec/editor.md "Layer list"]', ()
     expect(rowButton('Headline')).toHaveAccessibleName(/^Headline\s*Does not fit$/)
     expect(rowButton('Offer')).toHaveAccessibleName('Offer')
     expect(screen.getAllByText('Does not fit')).toHaveLength(1)
+  })
+})
+
+describe('Layer list: the type icon [ST-7, spec/app-style.md "Editor"]', () => {
+  it.each([
+    ['Background', /^Background\s*Stays at the bottom$/],
+    ['Offer', 'Offer'],
+  ] as const)('%s shows one hidden type icon beside an unchanged name', async (name, full) => {
+    await openList()
+    const row = rowButton(name)
+    const icons = row.querySelectorAll('svg')
+    expect(icons).toHaveLength(1)
+    expect(icons[0]).toHaveAttribute('aria-hidden', 'true')
+    expect(row).toHaveAccessibleName(full)
+  })
+
+  it('shows one hidden type icon on a picture layer row', async () => {
+    await openList()
+    expect(rowButton('Logo').querySelectorAll('svg[aria-hidden="true"]')).toHaveLength(1)
+  })
+})
+
+// Orchestrator ruling on ST-7: a row is one line at --row-height whether or not its actions
+// show; the actions lie over the row's right end instead of adding a strip below it.
+describe('Layer list: rows keep one height [ST-7]', () => {
+  const css = fs
+    .readFileSync(path.resolve('src/renderer/editor/layer-row/layer-row.module.css'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
+    selector: (m[1] ?? '').trim(),
+    body: m[2] ?? '',
+  }))
+  const body = (selector: string) => rules.find((r) => r.selector === selector)?.body ?? ''
+  const SIZING =
+    /(^|[\s;])(height|min-height|max-height|padding[\w-]*|margin[\w-]*|display|position|flex-direction|flex-wrap|font-size|line-height|border|border-width)\s*:/
+
+  it('gives the row box a fixed --row-height and lays the actions over it', () => {
+    expect(body('.box')).toMatch(/(^|[\s;])height:\s*var\(--row-height\)/)
+    expect(body('.box')).toMatch(/position:\s*relative/)
+    expect(body('.actions')).toMatch(/position:\s*absolute/)
+  })
+
+  it('changes no size on hover, focus or selection', () => {
+    const stateful = rules.filter((r) => /:hover|:focus|\.selected|:has\(/.test(r.selector))
+    expect(stateful.length).toBeGreaterThan(0)
+    expect(stateful.filter((r) => SIZING.test(r.body)).map((r) => r.selector)).toEqual([])
+  })
+
+  it('keeps the actions inside the row box, after its select button', async () => {
+    await openList(LAYERS, 'L3')
+    const box = rowBox('Offer')
+    expect(within(box).getByRole('button', { name: 'Hide Offer' })).toBeInTheDocument()
+    expect(box.firstElementChild).toBe(rowButton('Offer'))
   })
 })

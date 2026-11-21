@@ -17,6 +17,8 @@ import { useEditorKey } from '@/renderer/editor/use-editor-key'
 import { fitScale, scaleOf, zoomIn, zoomLabel, zoomOut, type Zoom } from '@/renderer/editor/zoom'
 import { pickLayer } from '@/renderer/editor/geometry-math'
 import type { VariantStore } from '@/renderer/stores/variant-store'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import { useAreaSize } from './use-area-size'
 import styles from './canvas-view.module.css'
 
@@ -35,6 +37,8 @@ export type CanvasViewProps = {
   cropId: string | null
   onCrop: (layerId: string | null) => void
 }
+
+const QUIET = `${layout.quiet} ${layout.small}`
 
 export function CanvasView(props: CanvasViewProps) {
   const { variant, layers, zoom, onZoom, onSelect } = props
@@ -136,17 +140,19 @@ export function CanvasView(props: CanvasViewProps) {
         </div>
       </div>
       <div className={styles.bar}>
-        <span>
+        <span className={styles.size}>
           {variant.width} × {variant.height} px
         </span>
         <div className={styles.zoom}>
-          <button type="button" onClick={() => onZoom(zoomOut(zoom, fit))}>
+          <button type="button" className={QUIET} onClick={() => onZoom(zoomOut(zoom, fit))}>
+            <Icon name="minus" size="small" />
             Zoom out
           </button>
-          <button type="button" title="Zoom to fit" onClick={() => onZoom('fit')}>
+          <button type="button" className={QUIET} title="Zoom to fit" onClick={() => onZoom('fit')}>
             {zoomLabel(zoom)}
           </button>
-          <button type="button" onClick={() => onZoom(zoomIn(zoom, fit))}>
+          <button type="button" className={QUIET} onClick={() => onZoom(zoomIn(zoom, fit))}>
+            <Icon name="plus" size="small" />
             Zoom in
           </button>
         </div>

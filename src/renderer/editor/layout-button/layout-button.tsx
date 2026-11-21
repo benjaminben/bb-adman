@@ -5,6 +5,7 @@ import { LayoutDialog } from '@/renderer/dialogs/layout-dialog'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { SceneAsset } from '@/shared/scene/types'
+import { Icon } from '@/renderer/ui/icon'
 
 export type LayoutButtonProps = {
   projectId: string
@@ -18,6 +19,7 @@ export function LayoutButton(props: LayoutButtonProps) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)}>
+        <Icon name="grid" size="small" />
         Layout…
       </button>
       <LayoutDialog {...props} open={open} onClose={() => setOpen(false)} />

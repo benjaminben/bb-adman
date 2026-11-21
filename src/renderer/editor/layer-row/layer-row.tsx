@@ -4,6 +4,7 @@
 // the name or F2 renames it; the row's buttons hide, lock and delete. The list owns the drag.
 import { Fragment, useEffect, useRef, useState, type DragEvent, type KeyboardEvent } from 'react'
 import type { LayerRow as Layer } from '@/shared/schemas/rows/layer'
+import { Icon, type IconName } from '@/renderer/ui/icon'
 import { NameField } from './name-field'
 import { RowActions, type RowActionsProps } from './row-actions'
 import { Thumb } from './thumb'
@@ -49,6 +50,13 @@ export function rowMarks(layer: Layer, assets: LayerRowProps['assets']): string[
   if (named(layer).some((id) => assets[id]?.missing)) marks.push('File not found')
   if (layer.type === 'background') marks.push('Stays at the bottom')
   return marks
+}
+
+// The type icon beside the name (spec/app-style.md "Editor", "Layer rows"); decorative.
+const TYPE_ICON: Record<Layer['type'], IconName> = {
+  background: 'layers',
+  image: 'image',
+  text: 'text',
 }
 
 function Marks(props: { marks: string[] }) {
@@ -121,6 +129,9 @@ export function LayerRow(props: LayerRowProps) {
           onKeyDown={onKeyDown}
         >
           {thumb}
+          <span className={styles.type}>
+            <Icon name={TYPE_ICON[layer.type]} size="small" />
+          </span>
           <span className={styles.text}>
             <span className={styles.name} onDoubleClick={() => setRenaming(true)}>
               {layer.name}

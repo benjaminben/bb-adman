@@ -1,4 +1,6 @@
-/* The editor fills the box its host gives it (spec/editor.md, "Layout"). */
+/* app-style */
+/* The editor fills the box its host gives it (spec/editor.md, "Layout"): no outer edge and no
+   radius (spec/app-style.md "Editor", "Frame"). */
 .editor {
   display: flex;
   flex-direction: column;
@@ -7,8 +9,6 @@
   min-height: 0;
   overflow: hidden;
   background: var(--color-bg);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
 }
 .body {
   display: grid;
