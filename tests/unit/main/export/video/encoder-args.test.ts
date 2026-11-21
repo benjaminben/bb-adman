@@ -46,19 +46,26 @@ function inputs(args: string[]): Array<{ options: string[]; value: string }> {
   let from = 0
   args.forEach((arg, i) => {
     if (arg !== '-i') return
-    out.push({ options: args.slice(from, i), value: args[i + 1] })
+    out.push({ options: args.slice(from, i), value: nth(args, i + 1) })
     from = i + 2
   })
   return out
 }
 
+// Item n of a list, failing the test when it is not there.
+function nth<T>(list: T[], n: number): T {
+  const item = list[n]
+  if (item === undefined) throw new Error(`No item ${n}.`)
+  return item
+}
+
 function after(args: string[], flag: string): string {
-  return args[args.indexOf(flag) + 1]
+  return nth(args, args.indexOf(flag) + 1)
 }
 
 // The value of the last use of a flag: the output options come after every input's.
 function last(args: string[], flag: string): string {
-  return args[args.lastIndexOf(flag) + 1]
+  return nth(args, args.lastIndexOf(flag) + 1)
 }
 
 const twoClips = [
@@ -98,7 +105,7 @@ describe('videoArgs encoders [P8-15]', () => {
 
 describe('videoArgs inputs [P8-15]', () => {
   it('reads the frame stream from pipe:0 as PNG at the frame rate', () => {
-    const [frames] = inputs(videoArgs(spec()))
+    const frames = nth(inputs(videoArgs(spec())), 0)
     expect(frames.value).toBe('pipe:0')
     expect(frames.options).toEqual([
       ...frames.options.slice(0, frames.options.indexOf('-protocol_whitelist')),
@@ -134,7 +141,7 @@ describe('videoArgs inputs [P8-15]', () => {
         '-itsoffset',
         '0.000',
       ],
-      value: `file:${twoClips[0].path}`,
+      value: `file:${nth(twoClips, 0).path}`,
     })
     expect(list[2]).toEqual({
       options: [
@@ -153,7 +160,7 @@ describe('videoArgs inputs [P8-15]', () => {
         '-itsoffset',
         '5.000',
       ],
-      value: `file:${twoClips[1].path}`,
+      value: `file:${nth(twoClips, 1).path}`,
     })
   })
 
@@ -164,7 +171,7 @@ describe('videoArgs inputs [P8-15]', () => {
     { fileType: 'webp' as const, demuxer: 'image2' },
   ])('pins the $demuxer demuxer for $fileType', ({ fileType, demuxer }) => {
     const list = inputs(videoArgs(spec({ clips: [clip({ fileType })] })))
-    expect(after(list[1].options, '-f')).toBe(demuxer)
+    expect(after(nth(list, 1).options, '-f')).toBe(demuxer)
   })
 
   it.each([
@@ -173,7 +180,7 @@ describe('videoArgs inputs [P8-15]', () => {
     path.resolve('/media/movie=x;[a].mp4'),
   ])('keeps the path %s as one argument and out of the graph', (file) => {
     const args = videoArgs(spec({ clips: [clip({ path: file })] }))
-    expect(inputs(args)[1].value).toBe(`file:${file}`)
+    expect(nth(inputs(args), 1).value).toBe(`file:${file}`)
     expect(args.filter((a) => a.includes(file))).toEqual([`file:${file}`])
     expect(() => assertSafeGraph(after(args, '-filter_complex'))).not.toThrow()
   })
