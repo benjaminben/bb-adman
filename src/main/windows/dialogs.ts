@@ -6,14 +6,35 @@ import type { ActivityLog } from '../log/activity-log'
 import { errorContext } from '../log/error-context'
 import { fail, internalError, ok, type Result } from '../../shared/schemas/result'
 import {
+  pickFilesInput,
   pickFolderInput,
   pickProjectFileInput,
   type PickedPath,
+  type PickedPaths,
 } from '../../shared/schemas/queries/dialog'
+import { pickerExtensions } from '../../shared/config/file-types'
 
-export const DIALOG_QUERIES = ['dialog.pickFolder', 'dialog.pickProjectFile'] as const
+export const DIALOG_QUERIES = [
+  'dialog.pickFolder',
+  'dialog.pickProjectFile',
+  'dialog.pickFiles',
+] as const
+
+// dialog.pickFiles (SPEC 4.3): the types come from file-types.ts by purpose and kind.
+function pickFilesOptions(input: unknown): Electron.OpenDialogOptions | null {
+  const parsed = pickFilesInput.safeParse(input)
+  if (!parsed.success) return null
+  const { purpose, kind, multiple, defaultPath } = parsed.data
+  const many = multiple ?? purpose === 'import'
+  return {
+    properties: many ? ['openFile', 'multiSelections'] : ['openFile'],
+    ...(defaultPath !== undefined ? { defaultPath } : {}),
+    filters: [{ name: 'Accepted files', extensions: pickerExtensions(purpose, kind) }],
+  }
+}
 
 function dialogOptions(name: string, input: unknown): Electron.OpenDialogOptions | null {
+  if (name === 'dialog.pickFiles') return pickFilesOptions(input)
   if (name === 'dialog.pickFolder') {
     const parsed = pickFolderInput.safeParse(input)
     if (!parsed.success) return null
@@ -37,13 +58,14 @@ export async function runDialogQuery(
   name: string,
   input: unknown,
   opts: DialogRunOptions = {},
-): Promise<Result<PickedPath>> {
+): Promise<Result<PickedPath | PickedPaths>> {
   const options = dialogOptions(name, input)
   if (!options) return fail({ code: 'INVALID_INPUT', message: 'Some values are not valid.' })
   try {
     const result = opts.window
       ? await dialog.showOpenDialog(opts.window, options)
       : await dialog.showOpenDialog(options)
+    if (name === 'dialog.pickFiles') return ok({ paths: result.canceled ? [] : result.filePaths })
     return ok({ path: result.canceled ? null : (result.filePaths[0] ?? null) })
   } catch (e) {
     const body = internalError(ulid())

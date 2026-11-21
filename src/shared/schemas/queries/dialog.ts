@@ -10,3 +10,17 @@ export const pickProjectFileInput = z.object({ defaultPath: z.string().optional(
 export type PickProjectFileInput = z.infer<typeof pickProjectFileInput>
 
 export type PickedPath = { path: string | null }
+
+// SPEC 4.3 dialog.pickFiles (Phase 2 slice A). The types offered come from file-types.ts by
+// purpose and kind; multiple defaults to true for import and false otherwise.
+export const pickFilesInput = z
+  .object({
+    purpose: z.enum(['import', 'relink', 'brief']),
+    kind: z.enum(['image', 'video', 'font', 'text']).optional(),
+    multiple: z.boolean().optional(),
+    defaultPath: z.string().optional(),
+  })
+  .strict()
+export type PickFilesInput = z.infer<typeof pickFilesInput>
+
+export type PickedPaths = { paths: string[] }
