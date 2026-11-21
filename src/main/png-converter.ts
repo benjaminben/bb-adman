@@ -27,15 +27,20 @@ function sideFits(side: number): boolean {
   return side > 0 && side <= MAX_PICTURE_SIDE
 }
 
+// [1.60] N-1: the checks made before any decode, in this order. pictureFitter runs them too.
+export function checkBeforeDecode(bytes: Uint8Array): void {
+  if (bytes.byteLength > MAX_PICTURE_BYTES) refuse()
+  const mime = pictureType(bytes)
+  if (mime === undefined) refuse()
+  const { width, height } = statedSize(bytes, mime)
+  if (!sideFits(width) || !sideFits(height) || width * height > MAX_PICTURE_PIXELS) refuse()
+}
+
 export function pngConverter(
   decode: (buffer: Buffer) => Decoded,
 ): (bytes: Uint8Array) => Uint8Array {
   return (bytes) => {
-    if (bytes.byteLength > MAX_PICTURE_BYTES) refuse()
-    const mime = pictureType(bytes)
-    if (mime === undefined) refuse()
-    const { width, height } = statedSize(bytes, mime)
-    if (!sideFits(width) || !sideFits(height) || width * height > MAX_PICTURE_PIXELS) refuse()
+    checkBeforeDecode(bytes)
     const image = decode(Buffer.from(bytes))
     if (image.isEmpty()) refuse()
     const png = image.toPNG()
