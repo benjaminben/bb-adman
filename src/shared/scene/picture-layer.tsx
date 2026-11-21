@@ -2,16 +2,27 @@ import { useState, type CSSProperties } from 'react'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { SceneAsset } from '@/shared/scene/types'
 import { placePicture, type Size } from '@/shared/scene/background-placement'
+import { pictureLookOf } from '@/shared/config/look'
+import { rgbCss } from '@/shared/scene/colour-css'
+import { shadeCss } from '@/shared/scene/shade-css'
 
 // spec/scene.md "Pictures": a background or image layer. The box and the <img> have no
-// background colour, so a transparent picture shows the layers beneath it [FR-245].
+// background colour, so a transparent picture shows the layers beneath it [FR-245]. Only a
+// background layer's own fillColor is drawn under its picture, and a shade over it, inside the
+// box ("Background colour and shade", LK-3). Absent look fields draw nothing, as before.
 type Props = { layer: LayerRow; box: CSSProperties; asset: SceneAsset | null }
 
 export function PictureLayer({ layer, box, asset }: Props) {
-  const opacity = 'opacity' in layer.style ? layer.style.opacity : 1
+  const look = 'opacity' in layer.style ? pictureLookOf(layer.style) : null
+  const opacity = look ? look.opacity : 1
+  const fill = layer.type === 'background' ? rgbCss(look?.fillColor) : null
+  const shade = shadeCss(look?.shade)
   const { width, height, crop } = layer.geometry
   return (
-    <div data-layer-id={layer.id} style={{ ...box, overflow: 'hidden', opacity }}>
+    <div
+      data-layer-id={layer.id}
+      style={{ ...box, overflow: 'hidden', opacity, ...(fill ? { backgroundColor: fill } : {}) }}
+    >
       {asset && (
         <Picture
           key={`${asset.url}#${asset.version}`}
@@ -21,6 +32,7 @@ export function PictureLayer({ layer, box, asset }: Props) {
           fit={layer.type === 'background' ? 'cover' : 'contain'}
         />
       )}
+      {shade && <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', ...shade }} />}
     </div>
   )
 }
