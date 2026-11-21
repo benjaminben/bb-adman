@@ -11,13 +11,19 @@ let f: Fixture
 afterEach(() => f.cleanup())
 
 describe('Phase 3 domains are registered empty [spec/structure.md, P3-0]', () => {
-  it('gives an empty handler list for layer and variant, and an empty query map for variant and render', () => {
+  it('gives an empty handler list for layer and variant, and an empty query map for variant', () => {
     f = makeFixture()
     const deps = f.core.deps
     expect(layerCommands(deps)).toEqual([])
     expect(variantCommands(deps)).toEqual([])
     expect(variantQueries(deps)).toEqual({})
-    expect(renderQueries(deps)).toEqual({})
+  })
+
+  // P3-7 fills the render domain (spec/editor-commands.md, "Queries").
+  it('gives thumbnail.get and variant.render in the render query map', () => {
+    f = makeFixture()
+    expect(Object.keys(renderQueries(f.core.deps))).toEqual(['thumbnail.get', 'variant.render'])
+    expect(f.core.queryNames).toEqual(expect.arrayContaining(['thumbnail.get', 'variant.render']))
   })
 
   it('puts the render service on CoreDeps', () => {

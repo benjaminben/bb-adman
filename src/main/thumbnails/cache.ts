@@ -3,13 +3,7 @@
 // that is a real folder (not a link) whose real path is inside {userData}/thumbnails/.
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import {
-  PARTIAL_NAME,
-  THUMBNAIL_NAME,
-  thumbnailDir,
-  thumbnailName,
-  thumbnailsRoot,
-} from './paths'
+import { PARTIAL_NAME, THUMBNAIL_NAME, thumbnailDir, thumbnailName, thumbnailsRoot } from './paths'
 
 export const MAX_THUMBNAIL_BYTES = 8 * 1024 * 1024
 
