@@ -6,6 +6,8 @@
 import { useCallback, useEffect, useId } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { assetUrl } from '@/renderer/ui/asset-url'
+import { MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
+import { tooManyReferencesLine } from '@/shared/schemas/reference-ids'
 import {
   type Reference,
   useAddPictures,
@@ -32,6 +34,9 @@ export function ReferencePicker(props: {
   const { list, read } = useReferences(projectId)
   const addPictures = useAddPictures(projectId, subjectId, read)
   const baseId = useId()
+  const fullId = `${baseId}-full`
+  // F-8 [A-56]: at the limit, an unticked picture cannot be ticked.
+  const full = ticks.length >= MAX_REFERENCES_PER_RUN
 
   // A tick is kept only for an asset that is still in the list and can be sent.
   const keepKnown = useCallback(
@@ -79,8 +84,10 @@ export function ReferencePicker(props: {
                   <input
                     type="checkbox"
                     checked={place > 0}
-                    disabled={reason !== null}
-                    aria-describedby={reason === null ? undefined : reasonId}
+                    disabled={reason !== null || (full && place === 0)}
+                    aria-describedby={
+                      reason !== null ? reasonId : full && place === 0 ? fullId : undefined
+                    }
                     onChange={() => toggle(asset.id)}
                   />
                   <img src={assetUrl(projectId, asset.id)} alt="" width={48} height={48} />
@@ -96,6 +103,11 @@ export function ReferencePicker(props: {
             )
           })}
         </ul>
+      )}
+      {full && (
+        <p id={fullId} className={layout.muted}>
+          {tooManyReferencesLine}
+        </p>
       )}
       {props.local && ticks.length > 0 && <p className={layout.muted}>{LOCAL_LINE}</p>}
       <div className={layout.row}>
