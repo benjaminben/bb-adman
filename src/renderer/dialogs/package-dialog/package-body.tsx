@@ -79,12 +79,12 @@ export function PackageBody(props: PackageBodyProps) {
               <li key={i}>{name}</li>
             ))}
           </ul>
-          <div className={styles.actions}>
-            {cancel}
+          <div className={styles.choices}>
+            {button('Find missing files…', () => setRelinkOpen(true))}
             <button type="button" disabled={packaging} onClick={() => void send(true)}>
               Package without them
             </button>
-            {button('Find missing files…', () => setRelinkOpen(true))}
+            {cancel}
           </div>
           <RelinkDialog
             projectId={props.projectId}
