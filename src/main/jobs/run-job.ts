@@ -4,7 +4,6 @@
 import { emitJob, nowText, writeJob, type LiveJob, type RunnerState } from './live'
 import { addPaidCall, readJob, type JobChange } from './job-store'
 import type { JobRunContext } from './types'
-import { setReporter } from './progress'
 import { errorContext } from '../log/error-context'
 import { ProviderCancelled, ProviderFailure } from '../providers/types'
 import { AppError } from '../../shared/schemas/result'
@@ -96,19 +95,20 @@ function context(state: RunnerState, live: LiveJob): JobRunContext {
       if (live.ended) throw new Error('The job has ended')
       return state.opts.bus().execute(command, input, { actor: 'user' })
     },
+    // A plain function, not a method: runOptions hands it to a provider on its own.
+    onProgress: (p) => {
+      if (live.ended) return
+      const { cancelAsked } = live.running
+      live.running = {
+        stage: p.stage,
+        ...(p.queuePosition === undefined ? {} : { queuePosition: p.queuePosition }),
+      }
+      if (cancelAsked) live.running.cancelAsked = cancelAsked
+      const change: JobChange = { result: live.running }
+      if (p.fraction !== undefined) change.progress = p.fraction
+      writeJob(state, live.projectId, live.id, change)
+    },
   }
-  setReporter(jc, (p) => {
-    if (live.ended) return
-    const { cancelAsked } = live.running
-    live.running = {
-      stage: p.stage,
-      ...(p.queuePosition === undefined ? {} : { queuePosition: p.queuePosition }),
-    }
-    if (cancelAsked) live.running.cancelAsked = cancelAsked
-    const change: JobChange = { result: live.running }
-    if (p.fraction !== undefined) change.progress = p.fraction
-    writeJob(state, live.projectId, live.id, change)
-  })
   return jc
 }
 

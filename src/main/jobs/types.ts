@@ -1,8 +1,8 @@
 // SPEC 14 "Contract between the slices" (D and H): the job service on CoreDeps.jobs and the
-// job kind handler. Frozen contract (Phase 2 step 0). Slice D builds the runner; core.ts
-// holds a stand-in until then.
+// job kind handler. Frozen contract (Phase 2 step 0). Slice D built the runner (`runner.ts`).
 import type { CoreDeps } from '../core-deps'
 import type { ProjectContext } from '../commands/types'
+import type { RunProgress } from '../providers/types'
 import type { JobKind } from '../../shared/config/job-kinds'
 import type { JobRow } from '../../shared/schemas/rows/job'
 import type { Result } from '../../shared/schemas/result'
@@ -42,6 +42,9 @@ export type JobRunContext = {
   cancelled(): boolean
   // Sends a command through the bus as the user.
   system(command: string, input: unknown): Promise<Result<unknown>>
+  // [1.38] What a provider reports while it works. Written into the job: `progress` from
+  // `fraction`, and `result.stage`, `result.queuePosition` while the job runs.
+  onProgress(p: RunProgress): void
 }
 
 export type JobKindHandler = {

@@ -1,7 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { gate, makeRunnerFixture, waitFor, type RunnerFixture } from './runner-fixture'
 import { readJobErrorDetail } from '../../../src/main/db/rows'
-import { reportProgress } from '../../../src/main/jobs/runner'
 import { ProviderFailure } from '../../../src/main/providers/types'
 
 const fixtures: RunnerFixture[] = []
@@ -169,7 +168,7 @@ describe('job runner: progress and system commands [SPEC 6.11.1, 3.6]', () => {
     const x = fixture()
     const g = gate()
     x.f.body = async (jc) => {
-      reportProgress(jc, { stage: 'waiting', queuePosition: 3 })
+      jc.onProgress({ stage: 'waiting', queuePosition: 3 })
       jc.progress(0.25)
       await g.promise
       return { assetIds: ['a1'] }

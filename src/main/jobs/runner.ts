@@ -11,7 +11,7 @@ import { cancelAll, cancelJob } from './cancel'
 import type { JobService } from './types'
 import { JOBS_AT_ONCE_PER_PROVIDER } from '../../shared/config/job-kinds'
 
-export { reportProgress, runOptions } from './progress'
+export { runOptions } from './progress'
 export type { JobRunnerOptions }
 
 export function createJobRunner(opts: JobRunnerOptions): JobService {
