@@ -1,5 +1,18 @@
-/* S2-5: a failed run's sentence, the missing list and the server's message. */
+/* app-style */
+/* S2-5: a failed run's sentence, the missing list and the server's message. ST-9: drawn as the
+   shared danger notice (layout.module.css), its alert icon on the left, its buttons at the
+   right end. */
 .failure {
+  align-items: flex-start;
+}
+.mark {
+  flex: none;
+  display: inline-flex;
+  padding-top: calc(var(--border-width) * 2);
+}
+.content {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -9,9 +22,12 @@
 .heading {
   margin: 0;
 }
+.label {
+  font-weight: var(--weight-medium);
+}
 .heading {
-  font-size: var(--font-size-body);
-  font-weight: 600;
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-bold);
 }
 .items {
   margin: 0;
@@ -20,7 +36,13 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: var(--space-2);
+}
+.actions > button {
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-small);
 }
 .message {
   display: flex;
@@ -28,10 +50,15 @@
   gap: var(--space-1);
   padding: var(--space-3);
   border-radius: var(--radius);
-  background: var(--color-surface);
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 .text {
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+pre.text {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
 }

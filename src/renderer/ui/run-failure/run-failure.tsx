@@ -5,6 +5,8 @@
 // fills the sentence only; the missing items come from the app's own workflow files.
 import { useId } from 'react'
 import { useApp } from '@/renderer/app/app-context'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import { missingItemText } from '@/renderer/ui/missing-item-text'
 import { fillMarks, plainMessage, reasonMessage } from '@/shared/providers/messages'
 import type { ProviderErrorReason, ProviderInfo } from '@/shared/schemas/queries/app'
@@ -57,50 +59,55 @@ export function RunFailure(props: {
   const serverText = provider?.serverText === true
 
   return (
-    <div className={styles.failure}>
-      {reason === null ? (
-        <p className={styles.sentence}>
-          {plainMessage(row.errorKind ?? 'other', props.providerLabel)}
-        </p>
-      ) : (
-        <ReasonSentence
-          reason={reason}
-          n={missing.length > 0 ? missing.length : undefined}
-          provider={props.providerLabel}
-        />
-      )}
-      {missing.length > 0 && (
-        <>
-          <p id={`${blockId}-missing`} className={styles.label}>
-            What the server is missing
+    <div className={`${layout.notice} ${layout.danger} ${styles.failure}`}>
+      <span className={styles.mark}>
+        <Icon name="alert" size="small" />
+      </span>
+      <div className={styles.content}>
+        {reason === null ? (
+          <p className={styles.sentence}>
+            {plainMessage(row.errorKind ?? 'other', props.providerLabel)}
           </p>
-          <ul className={styles.items} aria-labelledby={`${blockId}-missing`}>
-            {missing.map((item) => (
-              <li key={`${item.what}:${item.folder ?? ''}:${item.name}`}>
-                {missingItemText(item)}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-      {(settings || serverText) && (
-        <div className={styles.actions}>
-          {settings && (
-            <button type="button" onClick={() => show({ kind: 'settings' })}>
-              Open Settings
-            </button>
-          )}
-          {serverText && (
-            <ServerMessageButton
-              open={message.open}
-              loading={message.reply.state === 'loading'}
-              blockId={blockId}
-              onToggle={() => void message.toggle()}
-            />
-          )}
-        </div>
-      )}
-      {serverText && message.open && <ServerMessageBlock id={blockId} reply={message.reply} />}
+        ) : (
+          <ReasonSentence
+            reason={reason}
+            n={missing.length > 0 ? missing.length : undefined}
+            provider={props.providerLabel}
+          />
+        )}
+        {missing.length > 0 && (
+          <>
+            <p id={`${blockId}-missing`} className={styles.label}>
+              What the server is missing
+            </p>
+            <ul className={styles.items} aria-labelledby={`${blockId}-missing`}>
+              {missing.map((item) => (
+                <li key={`${item.what}:${item.folder ?? ''}:${item.name}`}>
+                  {missingItemText(item)}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        {(settings || serverText) && (
+          <div className={styles.actions}>
+            {settings && (
+              <button type="button" onClick={() => show({ kind: 'settings' })}>
+                Open Settings
+              </button>
+            )}
+            {serverText && (
+              <ServerMessageButton
+                open={message.open}
+                loading={message.reply.state === 'loading'}
+                blockId={blockId}
+                onToggle={() => void message.toggle()}
+              />
+            )}
+          </div>
+        )}
+        {serverText && message.open && <ServerMessageBlock id={blockId} reply={message.reply} />}
+      </div>
     </div>
   )
 }

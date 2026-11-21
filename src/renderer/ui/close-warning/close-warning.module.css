@@ -1,15 +1,11 @@
-.paid {
-  margin: var(--space-3) 0 0;
-  color: var(--color-text-muted);
+/* app-style */
+/* The close warning (spec/app-style.md "AI panels and the run dialog"): the paid line is the
+   shared warn notice with its icon (layout.module.css); the buttons are the foot band. */
+.mark {
+  flex: none;
+  display: inline-flex;
+  padding-top: calc(var(--border-width) * 2);
 }
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  margin-top: var(--space-6);
-}
-.stop {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-accent-text);
+p.paid {
+  margin: 0;
 }

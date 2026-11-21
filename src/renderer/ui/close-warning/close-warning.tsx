@@ -4,7 +4,9 @@
 // job and forgets them, so a late success never applies, then closes.
 import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { attachedStoreFor, type AttachedJob } from '@/renderer/stores/attached-store'
-import { DialogFrame } from '@/renderer/ui/dialog-frame'
+import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import { PAID_LINE, anyPaid, closeBody, closeTitle, type ClosePlace } from './close-words'
 import styles from './close-warning.module.css'
 
@@ -36,15 +38,22 @@ export function CloseWarning(props: CloseWarningProps) {
       title={closeTitle(jobs)}
       description={closeBody(jobs, props.place)}
     >
-      {anyPaid(jobs, providers) && <p className={styles.paid}>{PAID_LINE}</p>}
-      <div className={styles.actions}>
+      {anyPaid(jobs, providers) && (
+        <p className={`${layout.notice} ${layout.warn} ${styles.paid}`}>
+          <span className={styles.mark}>
+            <Icon name="alert" size="small" />
+          </span>
+          {PAID_LINE}
+        </p>
+      )}
+      <DialogFoot>
         <button type="button" onClick={props.onKeep}>
           Keep open
         </button>
-        <button type="button" className={styles.stop} onClick={stop}>
+        <button type="button" className={layout.primary} onClick={stop}>
           Stop and close
         </button>
-      </div>
+      </DialogFoot>
     </DialogFrame>
   )
 }
