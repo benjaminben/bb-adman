@@ -18,7 +18,7 @@ const PAGE_HEADERS = {
   'content-type': 'text/html; charset=utf-8',
   'x-content-type-options': 'nosniff',
   'x-frame-options': 'DENY',
-  'referrer-policy': 'no-referrer',
+  'referrer-policy': 'same-origin',
   'cross-origin-opener-policy': 'same-origin',
   'cache-control': 'no-store',
   'x-robots-tag': 'noindex, nofollow',

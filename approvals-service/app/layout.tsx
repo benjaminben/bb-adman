@@ -9,7 +9,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
-        <meta name="referrer" content="no-referrer" />
+        <meta name="referrer" content="same-origin" />
         <meta name="robots" content="noindex, nofollow" />
       </head>
       <body>{children}</body>
