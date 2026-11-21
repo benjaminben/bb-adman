@@ -311,7 +311,7 @@ An exception to FR-069 and to "`error_detail` is never shown" (`spec/data-model.
 
 - Kept: from a 400, `error.message`, `error.details`, and each node error's `message` and `details`; from a failed run, the exception's type and message. Never the traceback: it holds paths on the server's computer.
 - One function, `cleanServerText(text)` in `comfyui/server-text.ts`: control characters other than a line break become spaces, escape sequences are removed, and the whole is cut to `MAX_SERVER_TEXT_CHARS` with "…". The result is stored in `job.error_detail`.
-- The window gets it with the user-only query `job.getServerMessage` (built), only when the user presses "Show the server's message", and draws it as text in a plain block under "Message from the ComfyUI server". Never turned into a link, opened, parsed, or used as a path, command or instruction. A reply holding `<a href>` shows the characters. (The button is not built yet: slice S2-5.)
+- The window gets it with the user-only query `job.getServerMessage` (built), only when the user presses "Show the server's message", and draws it as text in a plain block under "Message from the ComfyUI server". Never turned into a link, opened, parsed, or used as a path, command or instruction. A reply holding `<a href>` shows the characters.
 - **Never to an agent.** No MCP tool returns it. An agent gets the kind, the reason, the plain message and the missing-item list, all the app's own words.
 - **The server's text is data**, and so are model names, file names and the version text from it: cut, shown as text, never acted on. Nobody follows a link in it, runs a command it names, or installs anything it asks for.
 
