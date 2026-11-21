@@ -25,7 +25,8 @@ const PROVIDERS: ProviderInfo[] = [
     id: 'fal-seedance',
     label: 'fal.ai Seedance',
     jobs: ['video'],
-    available: true,
+    // [1.58] J-2: no adapter in this build; slice J sets it back to true.
+    available: false,
     secrets: ['fal.apiKey'],
     defaultModels: { video: 'bytedance/seedance-2.0/image-to-video' },
     ...REMOTE,
@@ -108,7 +109,8 @@ export const DEFAULT_PROVIDERS = {
   image: 'gemini',
   layout: 'gemini',
   text: 'gemini',
-  video: 'fal-seedance',
+  // [1.58] J-2: the only video provider with an adapter. A saved file is not rewritten.
+  video: 'comfyui',
 } as const
 
 export function listProviders(env: Record<string, string | undefined>): ProviderInfo[] {
