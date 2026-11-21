@@ -1,7 +1,8 @@
-// The subject command domain (SPEC 12). Empty in Phase 2 step 0; its slice adds the handlers.
+// The subject command domain (SPEC 12; SPEC 14, slice C).
 import type { CoreDeps } from '../../core-deps'
 import type { CommandHandler } from '../types'
+import { subjectCreate, subjectDelete, subjectUpdate } from './subject'
 
-export function subjectCommands(_deps: CoreDeps): CommandHandler[] {
-  return []
+export function subjectCommands(deps: CoreDeps): CommandHandler[] {
+  return [subjectCreate(deps), subjectUpdate(), subjectDelete()]
 }
