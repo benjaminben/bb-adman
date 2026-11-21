@@ -1,4 +1,4 @@
-// F-8 [A-56]: a run takes at most MAX_REFERENCES_PER_RUN reference pictures.
+// F-8 [A-56]: a run takes at most MAX_REFERENCES_PER_RUN reference pictures, each named once.
 // The rule is written once, in referenceIds; the table also runs it through every schema that
 // takes a list, so none of them can let a longer list through.
 import { describe, expect, it } from 'vitest'
@@ -16,12 +16,14 @@ import { videoJobRequest } from '@/shared/schemas/jobs/video-generation'
 
 const ids = (n: number) => Array.from({ length: n }, (_, i) => `A${i + 1}`)
 const TOO_MANY = 'A run takes at most 8 reference pictures.'
+const TWICE = 'A reference picture is in the list twice.'
 
 const lists: [string, string[], string | null][] = [
   ['none', ids(0), null],
   ['one', ids(1), null],
   ['eight', ids(8), null],
   ['nine', ids(9), TOO_MANY],
+  ['the same picture twice', ['A1', 'A2', 'A1'], TWICE],
 ]
 
 const run = { projectId: 'P1', variantId: 'V1', prompt: 'a red shoe', provider: 'gemini' }
