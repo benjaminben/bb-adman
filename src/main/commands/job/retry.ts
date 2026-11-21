@@ -16,8 +16,9 @@ type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devT
 
 // [CU-6a, 14 1.53; 1.60 N-5] A ComfyUI video job is checked as generation.startVideo checks
 // it, pictures included, in prepare, since reading a picture is not done in the transaction.
-// The licence check (S2-4) is among them. The checks run whatever the old row's status, so a row that ends between prepare and run
-// is never retried unchecked; run still refuses a row that did not fail and was not cancelled.
+// The licence check (S2-4) is among them. The checks run whatever the old row's status, so a
+// row that ends between prepare and run is never retried unchecked; run still refuses a row
+// that did not fail and was not cancelled.
 async function checkVideoRetry(deps: Deps, ctx: PrepareContext, input: JobRetryInput) {
   const old = requireJob(ctx.project, input.jobId)
   if (old.provider !== 'comfyui' || old.kind !== 'video_generation') return
