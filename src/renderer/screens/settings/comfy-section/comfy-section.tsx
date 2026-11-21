@@ -7,11 +7,8 @@ import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
 import type { ComfyCheck } from '@/shared/schemas/commands/comfy-check'
 import type { AdmanApi } from '@/shared/schemas/api'
 import { ComfyCheckResult } from '@/renderer/screens/settings/comfy-check-result'
+import { COMFY_PRIVACY } from '@/renderer/ui/comfy-privacy'
 import layout from '@/renderer/ui/layout.module.css'
-
-// Fixed text, shown here only (SPEC 14 1.48 TL-1; REQUIREMENTS-ComfyUI.md 3.3). It never names the address.
-const PRIVACY_NOTE =
-  'When ComfyUI makes a picture or a video, your brief text, prompts and reference pictures are sent to the server at this address. Whoever runs that server can see them.'
 
 async function comfyInfo(api: AdmanApi): Promise<ComfyInfo | null> {
   const result = await api.query('comfy.getInfo', {})
@@ -98,7 +95,7 @@ export function ComfySection() {
           )}
         </div>
         {refusal !== null && <p id="comfy-address-refusal">{refusal}</p>}
-        <p className={layout.muted}>{PRIVACY_NOTE}</p>
+        <p className={layout.muted}>{COMFY_PRIVACY}</p>
       </form>
       <div className={layout.row}>
         <button type="button" disabled={address === null || checking} onClick={() => void check()}>
