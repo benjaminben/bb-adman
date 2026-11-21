@@ -1,8 +1,13 @@
 .box {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  border: var(--border-width) solid transparent;
   border-radius: var(--radius);
+}
+/* The selection frame holds the row and its buttons. */
+.box:has(> .selected) {
+  border-color: var(--color-accent);
+  background: var(--color-surface);
 }
 .box[data-drop='above'] {
   box-shadow: 0 calc(-1 * var(--focus-ring-width)) 0 var(--color-accent);
@@ -24,7 +29,6 @@
 }
 .selected,
 .selected:hover {
-  border-color: var(--color-accent);
   background: var(--color-surface);
 }
 .thumb {
@@ -81,7 +85,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-1);
-  padding: 0 var(--space-2);
+  padding: 0 var(--space-2) var(--space-1);
 }
 .action {
   padding: 0 var(--space-2);
