@@ -1,21 +1,20 @@
-# SP-6 handoff: blocked
+# SP-6 handoff
 
 ## Done
-- Nothing built. Stopped before any code or test change.
+- `campaignCreateInput` has `placeSubjectPhoto?: boolean`; `campaignCreateToolInput` is the same schema without it, same two refinements (`src/shared/schemas/commands/campaign.ts`).
+- `create_campaign` uses `campaignCreateToolInput` (`src/main/mcp/tools/table.ts`, ruled in by the coordinator).
+- `slotFills` takes `placeSubjectPhoto` (default true); false leaves `subject-image` empty. `create.ts` passes it through.
+- Tests: `campaign-create-fills.test.ts` (false / true / left out, with `template.slots` candidates), `contracts.test.ts` (boolean only; tool schema has no field, same refinements), `mcp/tools.test.ts` (tool schema has no field in either spelling; an agent call passing it, in either spelling, still fills the slot). Pinned tool-list snapshot unchanged.
 
-## Blocker
-`src/main/mcp/tools/table.ts` line 83 gives `create_campaign` the same schema as the command: `input: campaignCreateInput`. `src/main/mcp/tools/index.ts` builds the tool's input from `def.input.shape`. Adding `placeSubjectPhoto` to `campaignCreateInput` (as the slice requires) therefore also offers it on `create_campaign` (breaks A-122 and the pinned MCP tool-list snapshot). Keeping the tool without the field needs a change to `table.ts`, which SP-6 may not touch.
+## Decisions
+- An agent passing the field: dropped, not refused. The MCP layer drops unknown keys before the handler runs (existing behaviour in `src/main/mcp/tools/index.ts`).
 
-zod 4.6.7: `.omit()` throws on an object with refinements; `.extend()` and `.safeExtend()` work.
+## In progress / left
+- Nothing.
 
-## Proposed fix (needs a ruling)
-- `campaign.ts`: build the fields as a plain object, export `campaignCreateInput` (with `placeSubjectPhoto?: boolean`, same refinements) and a second schema for the tool without it, e.g. `campaignCreateToolInput`.
-- `table.ts` (add to SP-6's "May touch"): `input: campaignCreateToolInput`.
-- `fills.ts`: `slotFills` skips `subject-image` when `placeSubjectPhoto === false`; `create.ts` passes it through.
-
-## Left
-- The whole slice, once the ruling is in.
+## Open questions
+- None.
 
 ## Verify
-- `npx vitest run tests/integration/campaigns/campaign-create*.test.ts tests/integration/mcp/tool-list.test.ts tests/unit/shared/schemas/contracts.test.ts`
+- `npx vitest run tests/integration/campaigns/campaign-create tests/unit/shared/schemas/contracts.test.ts tests/integration/mcp/tools.test.ts tests/integration/mcp/tool-list.test.ts`
 - `npm run lint`, `npm run typecheck`, `npm test`
