@@ -10,3 +10,6 @@ src/main/db/migrations/
 design/
 comfy-workflows/
 .claude/
+approvals-service/.wrangler/
+approvals-service/node_modules/
+approvals-service/worker-configuration.d.ts
