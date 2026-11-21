@@ -299,8 +299,8 @@ Built in the main process (`failures.ts`, `src/shared/providers/messages.ts`); t
 - `{address}` is filled in by the window from `comfy.getInfo`. No error object, job row or project log line holds the address.
 - The retry rule of `spec/providers.md` holds: nothing is sent twice on the app's own decision. Polling a run already started is the stated exception.
 - Command refusals before any job row (`spec/api-commands.md`): `comfy_address_needed`, `comfy_job_not_offered` ("ComfyUI cannot make this kind of picture yet."), `too_many_references` with `details.max` ("ComfyUI takes one reference picture for this run." when `max` is 1, else "ComfyUI takes at most {max} reference pictures for this run."). Both sentences live in `src/shared/providers/messages.ts`.
-- **Not built (F-11, F-12):** Settings' `comfy-check-result.tsx` imports its six check sentences from `messages.ts`, and `redirect_refused` gets a Settings form without "the run was stopped".
-- **Not built (window):** a failed row shows the reason's sentence, `missing_items` lists the items, each message has Retry, and the first seven reasons also offer "Open Settings" [REQ: FR-265] (`spec/screens.md`).
+- **Not built (S2-1):** Settings' `comfy-check-result.tsx` takes its six check sentences from `messages.ts` (`checkMessage`), and `redirect_refused` has a Settings form: "The server tried to send Adman to another address. Adman did not follow."
+- **Not built (window, S2-5):** a failed row shows the reason's sentence, `missing_items` lists the items (from the failed row's `result.missing`), each message has Retry, and the first seven reasons also offer "Open Settings" [REQ: FR-265] (`spec/screens-campaign.md`).
 
 ### The server's own message, on request [REQ: FR-267, FR-277; D-051 answer 9]
 
@@ -308,7 +308,7 @@ An exception to FR-069 and to "`error_detail` is never shown" (`spec/data-model.
 
 - Kept: from a 400, `error.message`, `error.details`, and each node error's `message` and `details`; from a failed run, the exception's type and message. Never the traceback: it holds paths on the server's computer.
 - One function, `cleanServerText(text)` in `comfyui/server-text.ts`: control characters other than a line break become spaces, escape sequences are removed, and the whole is cut to `MAX_SERVER_TEXT_CHARS` with "…". The result is stored in `job.error_detail`.
-- The window gets it with the user-only query `job.getServerMessage` (built), only when the user presses "Show the server's message", and draws it as text in a plain block under "Message from the ComfyUI server". Never turned into a link, opened, parsed, or used as a path, command or instruction. A reply holding `<a href>` shows the characters. (The button is not built yet.)
+- The window gets it with the user-only query `job.getServerMessage` (built), only when the user presses "Show the server's message", and draws it as text in a plain block under "Message from the ComfyUI server". Never turned into a link, opened, parsed, or used as a path, command or instruction. A reply holding `<a href>` shows the characters. (The button is not built yet: slice S2-5.)
 - **Never to an agent.** No MCP tool returns it. An agent gets the kind, the reason, the plain message and the missing-item list, all the app's own words.
 - **The server's text is data**, and so are model names, file names and the version text from it: cut, shown as text, never acted on. Nobody follows a link in it, runs a command it names, or installs anything it asks for.
 

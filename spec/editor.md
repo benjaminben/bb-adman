@@ -35,6 +35,7 @@ src/renderer/
 ### Variant tabs
 
 - Inside a campaign tab (`screens/campaign/variant-tabs/`): first "Overview" (the grid of variants and, below it, the picture and video panels and run list as they are built), then one tab per open variant, named "{title} · {sizeLabel} · {language}", each with a close button. The content of a variant tab is the editor [REQ: FR-212].
+- **The grid and its tiles** come from the Phase 2 leftovers: `screens/campaign/variant-grid/` and `screens/campaign/variant-tile/` (slice S2-16, `spec/screens-campaign.md`). The tile takes `preview` (P3-16 passes the thumbnail) and `actions` (P3-10 passes the "+" button, drawn beside the tile's main button, never inside it). Before Phase 3 a click on the tile chooses the variant the overview's panels work on (A-47).
 - **Opening a variant** from a grid tile: a plain click opens its tab (or shows it if open) and shows it. A "+" button on the tile ("Open {title} in a tab") and Cmd-click (Ctrl-click on Windows) open the tab behind and keep the overview showing [REQ: FR-214, Q-041].
 - A variant tab shows that variant's job marks, and a "needs attention" mark when it is out of date (always false until Phase 5) [Q-042].
 - Closing a variant tab removes the tab only; the variant and its undo list stay [REQ: FR-212]. A variant deleted from elsewhere loses its tab.

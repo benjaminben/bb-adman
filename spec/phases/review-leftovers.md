@@ -16,6 +16,7 @@ Heaviest first.
 - What is wrong: `job.retry` on a picture job that kept pictures asks only for the rest (`spec/jobs.md`, "Retry"), but the run row's paid confirm line still shows the stored request's `count`.
 - Done when: for an `image_generation` row the confirm line shows `picturesLeft(requestCount(row), row.result)` (`src/shared/generation/pictures-left.ts`). Other rows are unchanged. A renderer test: a cancelled row with `count: 4` and two kept asset IDs shows 2.
 - Class D. Security class: no.
+- Built in slice S2-5 of `spec/phases/phase-02-leftovers.md`, which owns the run row after AR-3. Removed from this file when S2-5 merges.
 
 ## Fix with a later phase
 

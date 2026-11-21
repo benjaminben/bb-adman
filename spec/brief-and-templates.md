@@ -277,11 +277,11 @@ Built. `src/renderer/screens/project-home/brief-load/`, `brief-summary/`, `campa
 
 ### Not built: the full intake screens
 
-Not built (screen work, held for the deeper UI pass). The design they must meet:
+Not built (Phase 2 leftovers, slices S2-13, S2-14, S2-15). Designed in `spec/screens-campaign.md`, "The brief form" and "The slot view":
 
-- **Blank brief form.** The user can type a brief from nothing.
-- **Editable confirm form** [REQ: FR-023, FR-024, FR-034]. It shows every field; missing required fields are left empty for the user to fill. One row per subject with "New subject ID" or "Use existing subject" (these map to `subjectMap`), and a subject ID field (OI-72). Size and language pickers. The rule set editor with "Copy from campaign" (`copyRuleSetFrom`).
-- **Slot view.** Filled and empty slots with candidates from the `template.slots` query [REQ: FR-042]. Today only a slot dropdown in `generate-panel.tsx` exists.
+- **Blank brief form.** "Type a brief" opens the same form empty.
+- **Editable confirm form** [REQ: FR-023, FR-024, FR-026, FR-034]. Every field; one row per subject with "New subject" (a "Subject ID" field) or "Use a subject this project has"; sizes, master size and languages; the brief's word lists per language, or "Copy the rules from another campaign" (`copyRuleSetFrom`). Colours and required files are not on the form (A-44). The pure model `brief-form-model.ts` replaces `campaignPlan`; `briefSubjectIds` stays.
+- **Slot view.** Filled and empty slots of the master with candidates from `template.slots` [REQ: FR-042], view only (A-46).
 
 ### Not built: Markdown and plain-text briefs
 

@@ -146,6 +146,7 @@ Built unless marked.
 | A ComfyUI picture run with no offered workflow [REQ: FR-254] | `RULE_VIOLATION` | `comfy_job_not_offered` | "ComfyUI cannot make this kind of picture yet." |
 | A ComfyUI video run with no offered workflow for its start pair, or `first_frame` with `useReferences` true | `RULE_VIOLATION` | `comfy_job_not_offered` | "ComfyUI cannot make this kind of video yet." |
 | More references than the chosen workflow takes. `details.max`. | `RULE_VIOLATION` | `too_many_references` | "ComfyUI takes one reference picture for this run." when `max` is 1, else "ComfyUI takes at most {max} reference pictures for this run." (`src/shared/providers/messages.ts`) |
+| A ComfyUI run, or a retry of one, whose workflow's model needs a commercial licence, with no `licenceConfirmed: true` from the user and the model not in `settings.licenceConfirmed`. `details.workflow`. Not built (S2-4). | `INVALID_INPUT` | `licence_not_confirmed` | "{model} requires a commercial license. Confirm that you have one first." (`src/shared/providers/messages.ts`) |
 | A clip longer than the workflow makes. `details.maxMs`. | `RULE_VIOLATION` | `video_too_long` | "ComfyUI makes clips of at most {maxMs / 1000} seconds with this workflow." |
 | `generation.startVideo`, `job.retry` of a video: the start picture is not an image asset of type PNG or JPEG | `RULE_VIOLATION` | `picture_not_usable` | "This picture cannot be used for a video yet. Use a PNG or JPEG." |
 | `agentRuns.setAllowed`: a provider `agentRunsOffered` refuses. Not built (AR-1). | `RULE_VIOLATION` | `agent_runs_not_offered` / `agent_runs_not_ready` | "Agents cannot start runs with {Provider}." |
@@ -179,7 +180,7 @@ These carry no `details.reason`; each has one fixed message.
 
 ## What `details` may hold
 
-`details` holds only fixed words (`reason`, `kind`), IDs (`projectId`, `commandId`, `jobId`, an entity ID, `assetIds`), a provider ID, counts and limits (`count`, `max`, `maxMs`), `line` and `lineText` of a brief, a job kind (`job`), and `issues`. It never holds a file path or a folder path, whatever the command's agent policy is today. Reason: an MCP tool error carries the command's `details` unchanged, and no path may reach an agent. A rule that holds for every error cannot be broken later by changing one policy cell.
+`details` holds only fixed words (`reason`, `kind`, a shipped ComfyUI workflow ID in `workflow`), IDs (`projectId`, `commandId`, `jobId`, an entity ID, `assetIds`), a provider ID, counts and limits (`count`, `max`, `maxMs`), `line` and `lineText` of a brief, a job kind (`job`), and `issues`. It never holds a file path or a folder path, whatever the command's agent policy is today. Reason: an MCP tool error carries the command's `details` unchanged, and no path may reach an agent. A rule that holds for every error cannot be broken later by changing one policy cell.
 
 - `project.create` `file_exists` has `details = { reason: 'file_exists' }`, no `filePath`.
 - `project.open` `NOT_FOUND` (no file at the path) has no `details.filePath`.

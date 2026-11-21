@@ -88,7 +88,9 @@ type ConnectInfo = {
 
 Built. `src/main/queries/comfy.ts`, types in `src/shared/schemas/queries/comfy.ts`. [REQ: FR-253, FR-263, FR-285]
 
-Returns `{ address: string | null, workflows: [{ id, label, job, videoStart?, status, model, needs, size, video?, licence, leavesOnServer }], leavesOnServer: string[] }`. The list is the app's own shipped data, readable before any run. It contacts nothing. The graph, slots and source of a workflow stay in the main process. Field meanings are in `spec/comfyui.md`.
+Returns `{ address: string | null, workflows: [{ id, label, job, videoStart?, status, model, needs, size, video?, licence, leavesOnServer, offered }], leavesOnServer: string[] }`. The list is the app's own shipped data, readable before any run. It contacts nothing. The graph, slots and source of a workflow stay in the main process. Field meanings are in `spec/comfyui.md`.
+
+- **`offered: boolean`** (Not built, S2-4): true for the workflow `offeredWorkflow` gives the user's run of that job (and, for video, that start pair), with the app's dev-tools setting. At most one per job and pair. The window reads it for the "trial" mark (A-41) and holds no choice rule of its own.
 
 ### `job.get`
 

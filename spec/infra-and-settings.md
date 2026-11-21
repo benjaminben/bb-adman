@@ -260,11 +260,12 @@ type Settings = {
   comfyui: { baseUrl: string | null }            // default null. Written only by comfy.setAddress. Stored as an origin  [REQ: FR-250, FR-253]
   agentRuns: Record<string, { allowed: boolean }>  // provider ID to its tick; default {}. Written only by agentRuns.setAllowed  [REQ: FR-279]
   agentRunLimit: number                          // Not built. Whole number 1 to 16, default 4. Written only by agentRuns.setLimit
+  licenceConfirmed: string[]                     // Not built (S2-4). Model labels the user confirmed a commercial licence for; each 1 to 100 characters, at most 50; default []. Written by settings.update  [D-088]
 }
 ```
 
 - `DEFAULT_PROVIDERS` lives in `src/main/providers/registry.ts`; `DEFAULT_MCP_PORT = 47821` in `defaults.ts`. `defaultProviders.image` and `.video` may be `comfyui` [REQ: FR-254]. A saved file naming `fal-seedance` for video is not rewritten (`fal-seedance` is unavailable until its adapter is built, `spec/providers.md`).
-- **Who writes what.** `settings.update` (schema `settingsPatchSchema`, strict) can change `defaultProjectDir`, `defaultProviders`, `generation`, `export`, `mcp` except `enabled`, and `storage`. It refuses every other key. The app keeps `recentProjects`. `mcp.enabled` has one writer, `mcp.setEnabled`, which also starts or stops the server. `comfyui` has one writer, `comfy.setAddress`. `agentRuns` has one writer, `agentRuns.setAllowed`. `agentRunLimit` will have one writer, `agentRuns.setLimit`. These three keys are security class (`spec/security.md`).
+- **Who writes what.** `settings.update` (schema `settingsPatchSchema`, strict) can change `defaultProjectDir`, `defaultProviders`, `generation`, `export`, `mcp` except `enabled`, `storage`, and (from S2-4) `licenceConfirmed`. It refuses every other key. The app keeps `recentProjects`. `mcp.enabled` has one writer, `mcp.setEnabled`, which also starts or stops the server. `comfyui` has one writer, `comfy.setAddress`. `agentRuns` has one writer, `agentRuns.setAllowed`. `agentRunLimit` will have one writer, `agentRuns.setLimit`. These three keys are security class (`spec/security.md`).
 - `settings.update` for `storage.s3` checks the region with `regionRefusal` (`spec/storage-and-publish.md`).
 
 ### Loading the file
@@ -280,4 +281,5 @@ Built (`settings-store.ts`). Security class.
   2. An address that fails is read as null. The refused text is held nowhere: not in memory, not in a log line, an error or anything sent to the window.
   3. The next save, for any reason (a settings change, opening a project), writes null over it. The store keeps no second copy of the file's text. The user sees that no address is set and types it again. Whether to tell the user an address was refused is OI-50.
 - **`agentRunLimit` from the file** (Not built). Any value that is not a whole number from 1 to 16 is read as 4.
+- **`licenceConfirmed` from the file** (Not built, S2-4). A value that fails its schema is read as `[]`; the other keys load as usual, so a bad list never resets the whole file.
 - **Tests** (`tests/unit/main/settings/settings-store-comfy.test.ts`): a file with a failing address loads with `baseUrl` null, and after one `touchRecent` the file on disk holds `baseUrl: null` with its other keys kept; a file with `http://127.0.0.1:8188` loads with that origin and still holds it after a save; a file with `"comfyui": { "__proto__": { "baseUrl": "http://169.254.169.254" } }` loads with `baseUrl` null; a file with `"agentRuns": { "__proto__": { "comfyui": { "allowed": true } } }` loads with `agentRuns` having no `comfyui` entry, own or inherited, and `Object.prototype` has no new key after either load.

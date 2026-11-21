@@ -1,6 +1,6 @@
 # Screens as built
 
-What each built screen offers today, its source files, its wording, and the choices made without a design sign-off. Read with `spec/test-harnesses.md` (which of these functions the end-to-end harness reaches), `spec/structure.md` (renderer layout) and `spec/api-commands.md` / `spec/api-queries-events.md` (the calls each screen sends).
+What each built screen offers today, its source files, its wording, and the choices made without a design sign-off. The Phase 2 screens not yet built (ComfyUI failures and dialogs, import, drop, relink, package, the brief form, the slot view, the campaign grid) are in `spec/screens-campaign.md`. Read with `spec/test-harnesses.md` (which of these functions the end-to-end harness reaches), `spec/structure.md` (renderer layout) and `spec/api-commands.md` / `spec/api-queries-events.md` (the calls each screen sends).
 
 ## Status of these screens
 
@@ -26,7 +26,7 @@ Built. The reviewer checks these on every screen.
 - A provider that is not `available` is not offered for a run.
 - The ComfyUI address is drawn only in the Settings ComfyUI section and inside a failure sentence. It is sent in no input but `comfy.setAddress`. The window writes nothing to the console.
 - Text from a server or a file (server message, brief values, a file name, a display name) is drawn as text content, never as HTML, never as a link.
-- For pictures and other assets, the renderer draws no file path, reads no file, and sends a path in no call except `asset.import`, and only a path the system picker returned. Display names are drawn as text. (The project's own file path, the recent-project paths and the default location are shown on the start, project and Settings screens, and sent only to `project.open`, `project.create` and `settings.update`.)
+- For pictures and other assets, the renderer draws no file path and reads no file. It sends a path only to `asset.import` (a path from the system picker, or from a file dropped on the window through the drop bridge, S2-3), `asset.relink` (from the relink picker) and `project.package` (from the folder picker); and a brief's path only to `brief.parse` (from the brief picker). Display names and a file's base name are drawn as text. (The project's own file path, the recent-project paths and the default location are shown on the start, project and Settings screens, and sent only to `project.open`, `project.create` and `settings.update`.)
 - No screen has a field for a key. Keys go through the key dialog or the Settings key rows only.
 - Every control has a label and can be reached and used by keyboard (`spec/testing.md`, accessibility rules). Each screen file stays under 200 lines.
 - `assetUrl` (`src/renderer/ui/asset-url.ts`) builds every `adman-asset://` address and escapes both parts with `encodeURIComponent`.
@@ -55,7 +55,7 @@ Built. `src/renderer/screens/project-home/project-home/` (with `use-project.ts`)
 
 - Heading (project name), "Close project" button (`project.close`), file path line. "Loading the project…" while loading. Event `project.changed` for this project reads `project.get` again; one for another project does not.
 - **Load a brief.** Opens `dialog.pickFiles` with `purpose: 'brief'`; the picked path goes to `brief.parse`; a cancelled picker sends nothing. A refused `brief.parse` shows in the error banner and creates nothing.
-- **Brief summary,** read-only, the confirm step FR-023 asks for in its plainest form: Campaign name, Message (word for word), Audience, Region, Subjects (each with its ID and the notes "(made from the name)" and "already in this project, used as it is"), Sizes, Languages. When the brief lacks something, a list "What the brief lacks". "Create campaign" (disabled while the brief lacks something) sends `subject.create` for each subject the project does not hold, then `campaign.create`, and stops at the first refusal. "Creating the campaign…" while it runs. "Cancel" creates nothing.
+- **Brief summary** (replaced by the brief form, slice S2-13, `spec/screens-campaign.md`), read-only, the confirm step FR-023 asks for in its plainest form: Campaign name, Message (word for word), Audience, Region, Subjects (each with its ID and the notes "(made from the name)" and "already in this project, used as it is"), Sizes, Languages. When the brief lacks something, a list "What the brief lacks". "Create campaign" (disabled while the brief lacks something) sends `subject.create` for each subject the project does not hold, then `campaign.create`, and stops at the first refusal. "Creating the campaign…" while it runs. "Cancel" creates nothing.
 - **Campaign list:** name, "Variants: n", "Open" (`aria-label` "Open {name}"), or "No campaign yet."
 - The open campaign is state of this page, not of the app store. `CampaignPlace` renders `<CampaignView projectId campaignId onBack />` in the page's place; `CampaignView` owns its "Back to project" button and its `Campaign` region.
 
@@ -64,7 +64,7 @@ Built. `src/renderer/screens/project-home/project-home/` (with `use-project.ts`)
 Built. `src/renderer/screens/campaign/campaign-view/`, `variant-list/`, `src/renderer/stores/job-store.ts`.
 
 - "Back to project". "Loading the campaign…" while `campaign.get` is read. Then the campaign name.
-- **Variants** (radio group): each "{title} · {width}×{height} ({sizeLabel}) · {language} · {format}", plus "master". The first variant (the master) is chosen at the start. The picture panel, the video card and the run list work on the chosen variant.
+- **Variants** (radio group; replaced by the campaign grid, slice S2-16, `spec/screens-campaign.md`): each "{title} · {width}×{height} ({sizeLabel}) · {language} · {format}", plus "master". The first variant (the master) is chosen at the start. The picture panel, the video card and the run list work on the chosen variant.
 - **Job store,** one per open campaign page. Reads `job.list { projectId, variantId }` and keeps rows by ID. A `job.updated` row whose ID the store holds, or whose ID a command just returned, replaces the row; for any other row the store reads `job.list` again. It never guesses the project from a row. A `job.list` reply that arrives after a later one is dropped. When a `job.list` reply holds a row the store already holds with an equal or later `updatedAt`, the store keeps its own row, so a late reply cannot turn a finished run back to "Working".
 - Known gaps, noted and not built: a refused `campaign.get` leaves the page on "Loading the campaign…" with no message ("Back to project" still works); the page does not read `campaign.get` again on `project.changed`.
 
@@ -129,11 +129,12 @@ Built. `src/renderer/screens/settings/settings-screen/` and one component folder
 `comfy-section/`, `comfy-check-result/`.
 
 - Heading "ComfyUI server". "Saved address" shown in full, or "No address saved."
-- A fixed privacy paragraph beside the address field, shown whether or not an address is saved, word for word: "When ComfyUI makes a picture or a video, your brief text, prompts and reference pictures are sent to the server at this address. Whoever runs that server can see them." [REQ: REQUIREMENTS-ComfyUI.md 3.3]. A constant in `comfy-section.tsx`, shown in this one place only, not returned by `comfy.getInfo`. A test pins it with and without a saved address.
+- A fixed privacy paragraph beside the address field, shown whether or not an address is saved, word for word: "When ComfyUI makes a picture or a video, your brief text, prompts and reference pictures are sent to the server at this address. Whoever runs that server can see them." [REQ: REQUIREMENTS-ComfyUI.md 3.3]. A constant in `comfy-section.tsx`, not returned by `comfy.getInfo`. A test pins it with and without a saved address. Slice S2-2 moves the constant to `src/renderer/ui/comfy-privacy.ts`, its one owner, and S2-6 shows it in the address dialog too (A-42); nowhere else.
 - "Server address" field with Save and Remove. Save sends `comfy.setAddress` with the typed text and contacts nothing; a refused address shows the command's own sentence under the field and keeps the old address. Remove sends `null`.
 - "Check" sends `comfy.check`; disabled with no address saved. "Checking…" while it runs.
 - Outcome `ok`: the server version and, per non-draft workflow, its label, status (`trial` shown as "trial"), its licence note as text when it has one, and "complete" or its missing items by name and folder. An `ok` with no workflows shows the version alone. Each other outcome (`no_answer`, `not_comfyui`, `sign_in_needed`, `redirect_refused`, `certificate`, `address_refused`) shows its sentence from `spec/comfyui.md` with the address filled in. Under "What Adman leaves on the server", the "left on the server" sentences.
-- `comfy-check-result.tsx` holds a local copy of the six check sentences, pinned by its tests. Moving it to the shared copy is open (F-11).
+- `comfy-check-result.tsx` holds a local copy of the six check sentences, pinned by its tests. Slice S2-1 moves them to `src/shared/providers/messages.ts` (`checkMessage`), with the Settings form of `redirect_refused`: "The server tried to send Adman to another address. Adman did not follow."
+- Not built (S2-8): the list "Licences you confirmed" with "Forget" (`spec/screens-campaign.md`).
 
 ### Agent access
 
@@ -173,14 +174,7 @@ Built, throwaway. `src/renderer/dev/hand-test-screen/`, `s3-settings-form/`, `st
 
 ## Not built on the campaign page
 
-Not built (on a cut line for Phase 2; otherwise the UI pass). The design for ComfyUI refusals and failures on the campaign page:
-
-- Calls: `job.getServerMessage`, `comfy.getInfo`, and the reason sentences in `src/shared/providers/messages.ts` (`reasonMessage`); all three exist.
-- Refusal `comfy_address_needed` shows the message with an "Open Settings" button that shows Settings. Refusal `comfy_job_not_offered` shows the message. The address dialog of `spec/api-commands.md` is for the UI pass.
-- A failed ComfyUI row shows the sentence for its `errorReason` when it has one, with `{address}` filled from `comfy.getInfo`, else the kind's sentence. `missing_items` lists the items. The first seven reasons in `spec/comfyui.md` also offer "Open Settings". For a provider with `serverText`, "Show the server's message" sends `job.getServerMessage` and draws the reply as text in a plain block under "Message from the ComfyUI server".
-- A provider whose workflow is `trial` says "trial" beside the provider name.
-- Tests: a ComfyUI run asks for no paid confirm; `comfy_address_needed` shows the button and it shows Settings; a `failed` row with reason `out_of_memory` shows that sentence; `missing_items` lists names; the server's message is drawn as text and a reply holding `<a href>` shows the characters, not a link.
-- Cut order inside: "Show the server's message", the licence notes and the "left on the server" sentences go first.
+Not built (Phase 2 leftovers, slices S2-5 to S2-7). ComfyUI failures in the run row, the address dialog, the commercial-licence dialog and the trial mark are designed in `spec/screens-campaign.md`. Refusal `comfy_job_not_offered` keeps showing its message in the error banner, as built.
 
 ## Editor, tabs and thumbnails
 
@@ -224,5 +218,6 @@ Phases 1 and 2:
 - The reference picker and the video card's picture choice are separate lists of the same pictures, with separate choices.
 - The local-provider reference sentence (OI-77) and the "<Picture 1>" hint (OI-89) are provisional wording.
 - The Claude Code line uses the `--font-mono` token (a system monospace font list).
-- The check-result sentences are a local copy in `comfy-check-result.tsx` (F-11).
+- The check-result sentences are a local copy in `comfy-check-result.tsx` until S2-1.
+- The choices for the Phase 2 leftover screens are listed in `spec/screens-campaign.md`.
 - No crop preview for a first-frame picture.

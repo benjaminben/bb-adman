@@ -54,6 +54,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/editor.md` | Campaign and variant tabs, the editor (canvas, layer list, properties), keyboard shortcuts, undo per variant, several picture layers |
 | `spec/editor-commands.md` | The layer and variant commands, `variant.get`, `thumbnail.get`, `variant.render`, `thumbnail.changed` in full |
 | `spec/screens.md` | What each built screen offers, wording rules, choices made without a design sign-off |
+| `spec/screens-campaign.md` | The Phase 2 screens not yet built: ComfyUI failures, the address and licence dialogs, import and drop, relink, package, the brief form, the slot view, the campaign grid and its tile |
 | `spec/open-items.md` | Open questions, the assumptions made meanwhile, what waits on the stakeholder |
 
 ## Build plan
