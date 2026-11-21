@@ -1,10 +1,12 @@
 // SPEC 6, 6.2: every Gemini failure becomes one ProviderFailure with an error kind.
 // 401/403, or 400 with reason API_KEY_INVALID → bad_key; 429 → quota; content rules →
-// refused; no answer in time → timeout; network failure → offline; anything else → other.
+// refused; no answer in time → timeout; a network error marked by the fetch wrapper → offline
+// (SPEC 6 [1.12]); anything else → other.
 // The key never appears in `detail`.
 import { ApiError, type GenerateContentResponse } from '@google/genai'
 import { redactSecret } from '../redact'
 import { ProviderFailure, type ProviderError } from '../types'
+import { isNetworkError } from './pinned-origin'
 
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
 
@@ -51,7 +53,7 @@ export function failureFromError(error: unknown, timedOut: boolean, key: string)
       key,
     )
   }
-  if (error instanceof TypeError) return fail('offline', error.message, key)
+  if (isNetworkError(error)) return fail('offline', error.message, key)
   return fail('other', error instanceof Error ? error.message : String(error), key)
 }
 

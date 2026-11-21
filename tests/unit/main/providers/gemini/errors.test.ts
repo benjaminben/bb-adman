@@ -1,6 +1,7 @@
 import { afterEach, describe, it, expect, vi } from 'vitest'
 import { IMAGE_TIMEOUT_MS, geminiImage } from '../../../../../src/main/providers/gemini/image'
 import { ProviderFailure } from '../../../../../src/main/providers/types'
+import { failureFromError } from '../../../../../src/main/providers/gemini/failure'
 import {
   TEST_KEY,
   fetchAnswering,
@@ -132,6 +133,12 @@ describe('Gemini adapter call rules [SPEC 6]', () => {
     const failure = await failureOf(generateWith(fetchFn))
     expect(failure.error.detail).not.toContain(TEST_KEY)
     expect(failure.message).not.toContain(TEST_KEY)
+  })
+
+  it('maps a TypeError thrown outside the network call to other, not offline [1.12, G3]', () => {
+    const failure = failureFromError(new TypeError('x is not a function'), false, TEST_KEY)
+    expect(failure.error.kind).toBe('other')
+    expect(failure.error.detail).toContain('x is not a function')
   })
 
   it('removes the key in base64 form from a failure too [1.12, G4]', async () => {
