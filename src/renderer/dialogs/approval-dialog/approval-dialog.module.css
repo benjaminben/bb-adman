@@ -1,0 +1,66 @@
+/* The live link is long: the body scrolls inside the frame rather than past the window. */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.heading {
+  margin: 0;
+  font-size: var(--font-size-body);
+}
+.line {
+  margin: 0;
+}
+.line:empty {
+  display: none;
+}
+.address {
+  flex: 1;
+  min-width: 0;
+}
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.choices legend {
+  padding: 0;
+  margin-bottom: var(--space-1);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+.primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-text);
+}
+.waiting {
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-muted);
+}
+.alert {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}
