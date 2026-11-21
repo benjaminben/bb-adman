@@ -125,14 +125,14 @@ Content-Type: text/plain; charset=utf-8
 Content-Security-Policy: default-src 'none'; frame-ancestors 'none'; base-uri 'none'
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
-Referrer-Policy: no-referrer
+Referrer-Policy: same-origin
 Cross-Origin-Opener-Policy: same-origin
 Cache-Control: no-store
 X-Robots-Tag: noindex, nofollow
 Strict-Transport-Security: max-age=31536000        (only when the request is https)
 ```
 
-`Referrer-Policy: no-referrer` keeps the slug from leaving in a `Referer` header. One test compares each header set whole. Next.js may add `Vary` and `Content-Encoding` to these replies (`spec/approvals-service.md`, "What Vercel and Next.js add or change in front").
+`Referrer-Policy: same-origin` keeps the slug from leaving in a `Referer` header: a request to any other site carries no referrer. It is not `no-referrer`, because under that setting a browser sends `Origin: null` on a form post, and the Origin check of "Forms that write" would refuse every real form. Under `same-origin` the service's own forms carry its origin, and the Origin check itself is unchanged. One test compares each header set whole. Next.js may add `Vary` and `Content-Encoding` to these replies (`spec/approvals-service.md`, "What Vercel and Next.js add or change in front").
 
 ## Pictures
 

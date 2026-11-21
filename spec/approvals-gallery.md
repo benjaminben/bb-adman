@@ -58,7 +58,7 @@ default-src 'none'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'nonce-{
 - Only when `dev` is true: `'unsafe-eval'` is added to `script-src` and `'unsafe-inline'` to `style-src`, as the Next.js docs require for its development tools. `next start` and Vercel never run in development mode, so tests and shots always see the strict policy. `NODE_ENV` is read only in `src/server/env.ts`, which exports `isDev()` (`NODE_ENV` is `development` under `next dev`). `proxy.ts` imports `isDev` and passes it to `pagePolicy` and to `pageHeaders(request, nonce, dev = false)`, which makes the page header set.
 - `e2e/gallery.spec.ts` fails on any policy refusal reported in the browser during its flow, so a refused framework script or style is found, not hidden.
 
-Page header set (with the policy above): `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Cross-Origin-Opener-Policy: same-origin`, `Cache-Control: no-store`, `X-Robots-Tag: noindex, nofollow`, and `Strict-Transport-Security: max-age=31536000` when the request is https.
+Page header set (with the policy above): `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: same-origin`, `Cross-Origin-Opener-Policy: same-origin`, `Cache-Control: no-store`, `X-Robots-Tag: noindex, nofollow`, and `Strict-Transport-Security: max-age=31536000` when the request is https.
 
 **If `proxy.ts` did not run,** a page would arrive without our policy header. That is a weaker page, not an open door: React still escapes every value, and the session and every check still run in the logic. `e2e/gallery.spec.ts` checks the policy is on every page reply.
 
@@ -141,7 +141,7 @@ The text colours meet a contrast of at least 4.5 to 1 on their backgrounds. `--c
 - `src/ui/format-date.ts`: `YYYY-MM-DD HH:MM UTC` from milliseconds.
 - `src/ui/group-signoffs.ts`: for one variant, `current` (same version) and `earlier` (older versions), each oldest first.
 - Every value from outside our code (campaign name, titles, size lines, emails) is drawn as a React text child, which React escapes. No `dangerouslySetInnerHTML` anywhere (`test/config.test.ts` fails on it). Every `action` and `src` is built only from the checked slug, a variant key from the view and a whole number.
-- `app/layout.tsx`: `<html lang="en">`, `<meta name="referrer" content="no-referrer">`, `<meta name="robots" content="noindex, nofollow">`, the tokens, `<body>` with `--font-body`, `--color-page` and `--color-text`.
+- `app/layout.tsx`: `<html lang="en">`, `<meta name="referrer" content="same-origin">`, `<meta name="robots" content="noindex, nofollow">`, the tokens, `<body>` with `--font-body`, `--color-page` and `--color-text`.
 - Each page sets its `<title>` with a React `<title>` element (React 19 moves it into the head).
 
 ### Words
