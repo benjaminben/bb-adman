@@ -171,7 +171,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **New files:** `src/renderer/dialogs/brief-reading-dialog/`.
 - **May touch:** `src/renderer/screens/project-home/brief-load/`.
 - **Read:** `spec/screens-ai.md` "Reading a brief with AI"; `spec/screens-campaign.md` "The brief form"; `spec/ai-jobs.md` "Brief reading".
-- **Tests:** `tests/unit/renderer/screens/project-home/brief-load-text.test.tsx` (`.json` still goes to `brief.parse`; `.md` opens the run dialog, then `brief.extract`; success opens the filled form and sends `job.markSeen`; failure shows the sentence, "Try again" and "Fill the form by hand"; a cancelled key dialog opens the empty form); `tests/unit/renderer/dialogs/brief-reading-dialog.test.tsx` (Stop; closing while running warns; axe). `brief-load.test.tsx` must pass unchanged. Shots: `tests/shots/p4-15.shots.ts`.
+- **Tests:** `tests/unit/renderer/screens/project-home/brief-load-text.test.tsx` (`.json` still goes to `brief.parse`; `.md` opens the run dialog, then `brief.extract`; success opens the filled form and sends `job.markSeen`; failure shows the sentence, "Retry" and "Fill the form by hand"; a cancelled key dialog opens the empty form); `tests/unit/renderer/dialogs/brief-reading-dialog.test.tsx` (Stop; closing while running warns; axe). `brief-load.test.tsx` must pass unchanged. Shots: `tests/shots/p4-15.shots.ts`.
 - **Class:** D. Security class, short review (a path to a new command). **After:** P4-8, P4-10, P4-12.
 
 ### P4-16 — Place text with AI (built)
@@ -209,7 +209,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/renderer/editor/picture-fields-cutout.test.tsx` (shown only when a provider can cut out and the layer has a picture; the run dialog lists ComfyUI first; Confirm sends `generation.cutOut`; the status line; axe). Shots: `tests/shots/p4-19.shots.ts` (a cut-out over a coloured background, with the fake provider).
 - **Class:** D. Not security class. **After:** P4-11, P4-12.
 
-### P4-20 — Workflow 5.1 end to end and the exit check
+### P4-20 — Workflow 5.1 end to end and the exit check (built)
 
 - **Exists when done:** the exit criteria above pass; the spec's `Not built` marks for Phase 4 are listed for the orchestrator to turn to `Built`.
 - **New files:** `tests/e2e/workflow-5-1.spec.ts`; `tests/shots/p4-20.shots.ts`.
@@ -217,6 +217,23 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Read:** `REQUIREMENTS.md` workflows 5.1 and 5.8; `spec/screens-ai.md`; `spec/test-harnesses.md`.
 - **Tests:** `workflow-5-1.spec.ts` with `ADMAN_FAKE_PROVIDERS=1`: load a Markdown brief, read it with AI, correct and create the campaign, open the master, generate pictures for the background through the run dialog, use one from earlier options, place text with AI, suggest copy for the call to action and use one, cut out the subject picture and use it; then start a run, open another campaign, see the mark, go there from the activity panel. A loop over the six error kinds (fake `fail`) checks each message and Retry in earlier options and the activity panel. The fake provider's `fail` can be set only in-process, not from an end-to-end run, so part of this loop is checked in renderer tests.
 - **Class:** G (end to end). Not security class. **After:** every other slice. The developer lists the stakeholder's hand checks: workflow 5.1 with a real Gemini key; the cut-out workflow's owner check toward `proven`; Windows (D-087).
+
+### P4-T3 — Exit-check fixes (built)
+
+The fixes the exit check found: campaign tab marks driven by job events, layout results marked seen, the cut-out status tie, the palette read through one hook (`spec/jobs.md` "Marks"; `spec/screens-ai.md`; `spec/editor.md`).
+
+## Status
+
+Every slice is built (P4-1 to P4-20 and P4-T3). Phase 4 is complete as far as agents can take it.
+
+**Left for the stakeholder:**
+
+- Workflow 5.1 by hand with a real Gemini key.
+- One full real ComfyUI run (D-092).
+- The cut-out's one real run, once the server has `birefnet.safetensors`.
+- The look-pack looks by hand (`spec/phases/look-pack.md`, LK-7).
+- S3 "Test connection", three cases: good keys, wrong region, missing permission.
+- Windows (D-087).
 
 ## Carried in and settled here
 

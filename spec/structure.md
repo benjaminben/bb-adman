@@ -4,7 +4,7 @@ Where code and tests live, the module rules, how commands and queries are regist
 
 ## Folder tree
 
-Built through Phase 2. One repository, one package. The tree shows what is on `main`; a line marked `(Phase N)` is a folder or file a later phase adds.
+Built through Phase 4, with the look pack and the built approvals and subject-photo slices. One repository; the app is one package and `approvals-service/` is its own. The tree shows what is on `main`; a line marked `(Phase N)` names the phase that adds it, and those marked Phase 3 or 4 are built (`firefly/` is the Phase 4 stub).
 
 ```
 project-root/
@@ -20,17 +20,21 @@ project-root/
 │   │   ├── picture-fitter.ts      # the fitPicture of CoreDeps: crop, then scale, PNG out
 │   │   ├── windows/               # app-window.ts, app-window-options.ts, csp.ts, navigation.ts, open-external.ts,
 │   │   │                          #   dialogs.ts (native pickers), asset-protocol.ts (registers adman-asset://)
-│   │   ├── db/                    # schema/ (index, project, variant, jobs), migrations/ (drizzle-kit SQL), bundled-migrations.ts,
+│   │   ├── db/                    # schema/ (index, project, variant, jobs, approvals), migrations/ (drizzle-kit SQL, newest
+│   │   │                          #   0004_approvals, schema version 5), bundled-migrations.ts,
 │   │   │                          #   project-file.ts (open, create, close, migration runner), meta.ts (project_meta),
 │   │   │                          #   project-registry.ts (open projects), rows.ts (stored row to wire row and back)
 │   │   ├── commands/              # bus.ts, types.ts, change-recorder.ts, agent-policy.ts, run-in-project.ts,
-│   │   │                          #   one folder per domain with an index.ts: asset, brief, campaign, comfy, dev, generation,
-│   │   │                          #   history, job, mcp, project, rule-set, secret, settings, storage, subject
+│   │   │                          #   one folder per domain with an index.ts: approvals, asset, brief, campaign, comfy, dev,
+│   │   │                          #   generation, history, job, mcp, project, rule-set, secret, settings, storage, subject;
+│   │   │                          #   storage/ holds check-s3.ts and require-s3-settings.ts (AP-10b)
+│   │   ├── approvals/             # the approvals client, stores and helpers (spec/approvals-client.md)
 │   │   ├── queries/               # queries.ts (runner), types.ts, one file per domain: app, asset, campaign (+ campaign-reads.ts),
 │   │   │                          #   comfy, history, job (+ job-server-message.ts), mcp, project, template
 │   │   ├── history/               # undo-lists.ts
 │   │   ├── assets/                # path-resolver.ts, service.ts, types.ts, import, relink, package, sniff, change check,
-│   │   │                          #   assets-dir.ts, read-picture.ts, asset-url.ts (adman-asset:// address to file, no Electron)
+│   │   │                          #   assets-dir.ts, read-picture.ts, asset-url.ts (adman-asset:// address to file, no Electron),
+│   │   │                          #   brief-pictures.ts (a brief's photo paths, SP-1)
 │   │   ├── jobs/                  # runner.ts, run-job.ts, start-up.ts (resume), cancel.ts, job-store.ts, job-error-log.ts,
 │   │   │                          #   progress.ts, png-details.ts, types.ts; kinds/ (image-generation, video-generation)
 │   │   ├── providers/             # registry.ts, require-keys.ts (the NEEDS_KEY guard), types.ts and adapters.ts (frozen),
@@ -55,11 +59,12 @@ project-root/
 │   │   ├── stores/                # app-store.ts, project-store.ts (one per open project), job-store.ts (one per campaign page);
 │   │   │                          #   nav-store.ts, variant-store.ts (one per open variant tab) (Phase 3)
 │   │   ├── dev/                   # the hand-test screen. Not product UI; removed in Phase 9
-│   │   ├── screens/               # start, project-home, campaign, settings; editor screens (Phase 3)
+│   │   ├── screens/               # start, project-home, campaign, settings; editor screens (Phase 3);
+│   │   │                          #   settings/ holds s3-section/, s3-check/ (AP-10b), approvals-section/ (AP-10)
 │   │   ├── dialogs/               # key-dialog/; brief-confirm, slots, generation, run-confirm, fan-out, sync-review,
 │   │   │                          #   export, publish, report, agent-permission, relink (later phases)
 │   │   ├── ui/                    # tokens.css, base.css, layout.module.css, asset-url.ts, secret-labels.ts; shared controls;
-│   │   │                          #   shortcuts.ts, variant-thumbnail/ (Phase 3)
+│   │   │                          #   shortcuts.ts, variant-thumbnail/ (Phase 3); reference-picker/ (with reference-rows.ts, SP-7)
 │   │   ├── editor/                # the editor's components and helpers (Phase 3; tree in spec/editor.md); timeline (Phase 7)
 │   │   └── panels/                # activity (Phase 4)
 │   └── shared/                    # no Electron or Node imports
@@ -99,6 +104,8 @@ project-root/
 ├── examples/                      # brief.yaml; source images and six exported PNGs (Phase 11)
 ├── resources/                     # app icon; ffmpeg/ is fetched, not committed (Phase 7, Phase 8). The default font is in src/shared/scene/fonts/
 ├── scripts/                       # fetch-ffmpeg, ffmpeg-sources.json (Phase 7)
+├── approvals-service/             # the approvals service, its own Next.js app (app/, src/, test/, e2e/); layout in
+│                                  #   spec/approvals-service.md, "Folder and tooling"
 ├── comfy-workflows/               # the stakeholder's hand-test copies of the ComfyUI graphs; no code reads them; not in git
 ├── .github/workflows/             # ci.yml
 ├── LICENSE, THIRD-PARTY-NOTICES.md, README.md   # (Phase 11)

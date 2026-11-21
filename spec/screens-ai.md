@@ -32,15 +32,16 @@ Changed: `editor/properties-panel/` (mounts `picture-ai`), `editor/picture-field
 
 Props: `open`, `projectId`, `job` (`image`, `cutout`, `layout`, `text`), `title`, `confirmLabel`, `count?` (`{ label, value, min, max }`, editable), `referenceCount?`, `campaignId?`, `retry?` (provider and count fixed), `onConfirm(provider, count)`, `onCancel`. The dialog reads the providers from the app store. The caller sends the command inside `onConfirm` and returns its reply as a promise; `count` is null when the caller gave none. "Confirm" and "Cancel" stay disabled from the click until that promise settles. A refusal is shown inside the dialog and "Confirm" turns back on; on success the caller closes the dialog. With no ComfyUI address saved, the ComfyUI line leaves the address out.
 
-- **Title** from the caller: "Make pictures", "Cut out the subject", "Place text with AI", "Suggest copy", "Read the brief with AI", "Try again" (copy options, activity row), or "Retry the run" (earlier options).
+- **Title** from the caller: "Make pictures", "Cut out the subject", "Place text with AI", "Suggest copy", "Read the brief with AI", or "Retry the run" (every `retry` use: earlier options, copy options, activity row).
 - **"Provider"**, a radio group (`provider-choice.tsx`): every provider whose `jobs` holds the job. An unavailable one is shown disabled as "{label} (not yet available)" (Firefly). ComfyUI with no offered workflow for the job (`comfy.getInfo`, `offered`) is disabled as "ComfyUI (no workflow for this yet)"; an offered `trial` workflow shows the trial mark. Starts at `settings.defaultProviders[job]` when enabled, else the first enabled one; for `cutout`, ComfyUI first (OI-55). With `retry`, the provider is shown as text, not chosen.
+- **Until `comfy.getInfo` has answered** (built): no provider is shown as chosen, the provider list and Confirm are disabled, and neither the summary line nor "No provider can do this yet." is shown. With `retry` the dialog does not wait. Reason: the starting choice depends on that answer, and a choice shown early was swapped for ComfyUI under the user. `use-comfy-info.ts` exports `useComfyInfoState()`, which gives `{ info, loaded }`.
 - **Count** when the caller passes one: "Pictures" or "Options", a number field.
 - **What the run does**, one line from `run-summary.ts`:
   - paid: "This will use {n} generation(s) with {Provider}." and, with references, " It sends {m} reference picture(s)." For one request (layout, text): "This sends 1 paid request to {Provider}."
   - ComfyUI: "This runs on your ComfyUI server at {address} with the workflow {label}. Nothing is charged." The address comes from `comfy.getInfo` (FR-256 allows it here; the privacy paragraph stays in Settings and the address dialog).
   - the fake provider: "This uses the fake provider. Nothing is charged."
 - **The campaign's count** (with `campaignId`): `<PaidCount>` (below).
-- Buttons: the confirm label ("Generate", "Cut out", "Place text", "Suggest copy", "Read brief", "Try again", "Retry") and "Cancel". No enabled provider: the line "No provider can do this yet." and the confirm disabled.
+- Buttons: the confirm label ("Generate", "Cut out", "Place text", "Suggest copy", "Read brief", "Retry") and "Cancel". No enabled provider: the line "No provider can do this yet." and the confirm disabled.
 - A refusal of the caller's command shows in the dialog (A-50) and in the banner; `NEEDS_KEY`, the address and the licence dialogs open as for every run.
 
 ## The paid count
@@ -56,7 +57,7 @@ Props: `open`, `projectId`, `job` (`image`, `cutout`, `layout`, `text`), `title`
 `editor/generate-fields/` [REQ: FR-062, FR-063, workflow 5.1 step 5].
 
 - "Prompt": a text area, first filled by `prefilledPrompt` from the variant's subjects and the campaign's audience, region and message.
-- "Reference pictures": "{n} chosen" or "None chosen", and "Choose reference pictures…" (the reference dialog). The first time a layer is shown, the reference-library pictures of the variant's subjects are chosen, up to `MAX_REFERENCES_PER_RUN`, skipping ones that cannot be sent. (Not built, SP-7: every picture attached to the subjects, in either library; `spec/subject-photos.md`.)
+- "Reference pictures": "{n} chosen" or "None chosen", and "Choose reference pictures…" (the reference dialog). The first time a layer is shown, the reference-library pictures of the variant's subjects are chosen, up to `MAX_REFERENCES_PER_RUN`, skipping ones that cannot be sent. (Built, SP-7: every picture attached to the subjects, in either library; `spec/subject-photos.md`.)
 - The prompt and the chosen pictures are kept per layer while the project is open (`stores/generate-drafts.ts`), not saved.
 - "Generate…" opens the run dialog (`job: 'image'`, count "Pictures" from `settings.generation.optionsPerRun`, `referenceCount`, `campaignId`). Confirm sends `generation.runImages { projectId, variantId, layerId, prompt, referenceAssetIds, count, provider }`.
 - After the reply, one line follows the started job by `job.updated`: "Making {n} pictures…", "Done. Choose one under Earlier options.", "Cancelled.", or the failure sentence. A visit after the start reads `job.list` for the layer once, so a change it missed shows (`run-status.tsx`).
@@ -80,7 +81,7 @@ Props: `open`, `projectId`, `job` (`image`, `cutout`, `layout`, `text`), `title`
 
 ### Cut-out
 
-In `editor/picture-fields/` (`cut-out.tsx`, `cut-out-status.tsx`) [REQ: FR-307]. "Cut out the subject…" under "Choose picture…", for a layer with a picture, shown when the run dialog would have an enabled provider for `cutout` (`runChoices`: ComfyUI with an offered `cutout` workflow, or another available provider that lists `cutout`). Disabled on a locked layer. It opens the run dialog (`job: 'cutout'`, no count). Confirm sends `generation.cutOut { projectId, variantId, layerId, provider }`, never `licenceConfirmed`; a refusal stays in the run dialog. A line under the button follows the job: "Cutting out…", "Done. The cut-out is under Earlier options.", "Cancelled.", or the sentence; it reads `job.list` for the layer once, as the generate line does. The layer is not changed; the result is used like any option.
+In `editor/picture-fields/` (`cut-out.tsx`, `cut-out-status.tsx`) [REQ: FR-307]. "Cut out the subject…" under "Choose picture…", for a layer with a picture, shown when the run dialog would have an enabled provider for `cutout` (`runChoices`: ComfyUI with an offered `cutout` workflow, or another available provider that lists `cutout`). Disabled on a locked layer. It opens the run dialog (`job: 'cutout'`, no count). Confirm sends `generation.cutOut { projectId, variantId, layerId, provider }`, never `licenceConfirmed`; a refusal stays in the run dialog. A line under the button follows the job: "Cutting out…", "Done. The cut-out is under Earlier options.", "Cancelled.", or the sentence; it reads `job.list` for the layer once, as the generate line does. As built (P4-T3), a job that finished at the same instant as its start counts as finished (the time test is `>=`). The layer is not changed; the result is used like any option.
 
 ## Copy options
 
@@ -89,7 +90,7 @@ In `editor/picture-fields/` (`cut-out.tsx`, `cut-out-status.tsx`) [REQ: FR-307].
 - Title "Copy options for {layer name}". It reads `job.list` for the layer and keeps the rows of kind `copy_options` itself (the query has no kind filter); it shows the newest succeeded one's options, else "No options yet.". Buttons "Close" and "Make new options…" (disabled while a run goes).
 - "Make new options…" opens the run dialog (`job: 'text'`, title and confirm "Suggest copy", count "Options", default 4, 1 to `MAX_COPY_OPTIONS`). Confirm sends `generation.copyOptions`. The job is attached to this dialog (`attached-store`, owner `copy-options:{layerId}`).
 - While it runs: "Writing options…" and "Stop" (`job.cancel`, no warning; the dialog stays open). Then each option as text with "Use this text" (`layer.update { copy }`, closes the dialog); `job.markSeen` once when shown. A cancelled run goes back to the earlier options.
-- A failure shows its sentence and "Try again": the run dialog in `retry` mode (title and confirm "Try again", the failed job's count), whose Confirm sends `job.retry` for the failed job.
+- A failure shows its sentence and "Retry": the run dialog in `retry` mode (title "Retry the run", confirm "Retry", the failed job's count), whose Confirm sends `job.retry` for the failed job.
 - Closing while the job runs (Close, Escape or the frame's close): the close warning.
 
 ## Place text with AI
@@ -98,9 +99,9 @@ In `editor/picture-fields/` (`cut-out.tsx`, `cut-out-status.tsx`) [REQ: FR-307].
 
 - It opens the run dialog (`job: 'layout'`, title "Place text with AI", confirm "Place text"). Confirm sends `generation.proposeLayout`; the job is attached to the variant tab (`attached-store`, owner the variant) with a finish step.
 - The command's refusals, shown in the run dialog: "That provider cannot place text." (`INVALID_INPUT`), "That variant was not found." (`NOT_FOUND`), "Add text to a text layer first." (`INVALID_INPUT`), and `NEEDS_KEY`, which opens the key dialog.
-- The banner (`editor/editor-banner/`) shows, first of its lines: "Placing text with AI…" with "Stop" (`job.cancel`, no warning). As built, the top-bar button stays enabled while the run goes; Not built (LK-6): it is disabled while a layout run this editor started for the variant is going.
-- **When the job succeeds** while the window is open, the finish step reads `job.get` and `variant.get` again and sends one `layer.updateMany` built by `layoutPatches` from the result, whether or not the tab is the one shown. It sends through `window.api`, so a refusal does not reach the app banner. A variant deleted while the call was out: the job still succeeds, `layer.updateMany` refuses with `NOT_FOUND`, and nothing is shown. Undo puts the text back.
-- A failed job, or another refusal of `layer.updateMany`, shows "Text could not be placed. {sentence}" with "Dismiss". There is no "Try again"; the button starts a new run. The window keeps the line per variant, so a tab shown again still has it.
+- The banner (`editor/editor-banner/`) shows, first of its lines: "Placing text with AI…" with "Stop" (`job.cancel`, no warning). As built (LK-6), the top-bar button is disabled while a layout run this editor started for the variant is going.
+- **When the job succeeds** while the window is open, the finish step reads `job.get` and `variant.get` again and sends one `layer.updateMany` built by `layoutPatches` from the result, whether or not the tab is the one shown. It sends through `window.api`, so a refusal does not reach the app banner. A variant deleted while the call was out: the job still succeeds, `layer.updateMany` refuses with `NOT_FOUND`, and nothing is shown. Undo puts the text back. As built (P4-T3), `layout-run.ts` marks the handled result seen, also when it was refused or the variant is gone.
+- A failed job, or another refusal of `layer.updateMany`, shows "Text could not be placed. {sentence}" with "Dismiss". There is no "Retry"; the button starts a new run. The window keeps the line per variant, so a tab shown again still has it.
 
 ## Reading a brief with AI
 
@@ -109,7 +110,7 @@ In `editor/picture-fields/` (`cut-out.tsx`, `cut-out-status.tsx`) [REQ: FR-307].
 - "Load a brief" opens the brief picker as today. A path whose `briefFileKind` is `structured` goes to `brief.parse`; `text` opens the run dialog (`job: 'text'`, title "Read the brief with AI", no campaign). Cancel sends nothing.
 - Confirm sends `brief.extract { projectId, filePath, provider }`. `NEEDS_KEY` opens the key dialog; if the user cancels it, the brief form opens empty, so the brief can be typed by hand.
 - The reading dialog, title "Reading the brief", shows "{Provider} is reading the brief…" and "Stop". The job is attached to it. "Stop" sends `job.cancel` and closes the dialog with no warning; closing it another way while the job runs shows the close warning. A cancelled job closes it. On success it closes and the brief form opens filled from `result.draft` and `primaryLanguage`, as after `brief.parse`; `job.markSeen` is sent. A succeeded job whose result is not a brief draft is shown as a failure of kind `other`.
-- On failure: the sentence, "Try again" and "Fill the form by hand" (the empty form). "Try again" opens the run dialog again (a new provider choice) and its Confirm sends a new `brief.extract` with the same path, not `job.retry`. Closing after a failure asks nothing.
+- On failure: the sentence, "Retry" and "Fill the form by hand" (the empty form). "Retry" opens the run dialog again (a new provider choice) and its Confirm sends a new `brief.extract` with the same path, not `job.retry`. Closing after a failure asks nothing.
 
 ## The activity panel
 
@@ -122,7 +123,7 @@ In `editor/picture-fields/` (`cut-out.tsx`, `cut-out-status.tsx`) [REQ: FR-307].
   1. What (`row-text.ts`): "Pictures ({count})", "Video", "Cut-out", "Text layout", "Copy options ({count})", "Reading a brief", "Export", "Publish", "Generative fill", "Translation", then " · {Provider}". The count is left out when the request holds none.
   2. Where: "{campaign} › {variant} › {layer}", parts missing left out; a deleted part reads "(deleted)"; a brief reading reads "Project".
   3. Status, as the run row words it, and "Started {HH:MM}". "Started by an agent" when so. A not-yet-looked-at result shows the mark "New".
-  4. Buttons: "Go there" (`aria-label` "Go to {where}"); "Cancel" by `ui/cancel-shown.ts` (moved from `run-row/`); "Retry" for a failed or cancelled background job (`row-retry.tsx`): a local provider at once; a paid or unknown one, for pictures and cut-outs, through the run dialog with `retry` (title "Try again", the picture count fixed), and for a video, the run row's one-line paid confirm. An attached job is started again from its own dialog or tab, not from here (A-63).
+  4. Buttons: "Go there" (`aria-label` "Go to {where}"); "Cancel" by `ui/cancel-shown.ts` (moved from `run-row/`); "Retry" for a failed or cancelled background job (`row-retry.tsx`): a local provider at once; a paid or unknown one, for pictures and cut-outs, through the run dialog with `retry` (title "Retry the run", the picture count fixed), and for a video, the run row's one-line paid confirm. An attached job is started again from its own dialog or tab, not from here (A-63).
   5. A failed row shows its sentence through `ui/run-failure/`.
 - **Go there** (`ui/go-there.ts`, through the nav store), in one action, then the panel closes: a job with a layer opens the campaign tab and the variant tab, shows it and selects the layer, so its earlier options show; a gone layer leads to the variant; a gone variant, or a video job, leads to the campaign overview; a brief reading leads to the Project tab; a gone campaign has no "Go there". It sends no `job.markSeen`; the view that shows the result does.
 

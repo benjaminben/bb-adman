@@ -34,7 +34,7 @@ The desktop app's lower layer for approval links [D-095]: how it talks to the se
 
 ## Local tables
 
-**Built:** the schema and migration (AP-5); `local-store.ts` (AP-8, built, in security review).
+**Built:** the schema and migration (AP-5); `local-store.ts` (AP-8, built).
 
 Migration `0004_approvals` (made by `npm run db:generate` from `src/main/db/schema/approvals.ts`; three new tables, no rebuild). The next free number: the newest on `main` is `0003_job_kind_cutout`, and neither Phase 4 nor the look pack adds one.
 

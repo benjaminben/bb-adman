@@ -77,7 +77,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`src/shar
 - **Tests:** `tests/unit/shared/templates/starting-font-size.test.ts` (every worked value; an empty copy gives the largest size; a copy with two paragraphs counts both; a Japanese copy counts each letter as 1 em and has no long word; content area at or below 0 gives the smallest); `tests/unit/shared/config/starter-layouts.test.ts` (five layouts, unique IDs, the default among them; every colour passes `HEX_COLOUR`; for each layout at the four ready-made sizes and at 50 × 8192 and 8192 × 50, every box has a width and height of at least 1 and the named slots do not overlap except where the layout says a box runs off an edge); `tests/unit/shared/templates/starter-layout-patches.test.ts` (one update per named layer; a locked layer and a layer the layout does not name left out; text patches hold no `fontAssetId` and no `copy`; the background gets the whole canvas, rotation 0, its colour and shade; crop untouched; an image layer gets its shade, opacity untouched; the result passes `layerUpdateManyInput`). Approved edits: `master-layers.test.ts`, `master-layers-fields.test.ts`, `new-layer.test.ts`, `tests/integration/campaigns/campaign-create-fills.test.ts` (the new boxes, styles and look fields), and the worked-values table those tests hold.
 - **Class:** A + B. Not security class. **After:** LK-1, P4-3, P4-7.
 
-### LK-5 — Panel fields: box, shade, background colour
+### LK-5 — Panel fields: box, shade, background colour (built)
 
 - **Exists when done:** the properties panel shows the "Box" section for text layers, the "Shade" section for picture and background layers, and "Background colour" in the Picture section of the background, as `spec/editor.md` "Properties panel" says; each saves with one `layer.update`. Selection handles of a layer that reaches past the canvas edge are drawn past it.
 - **New files:** `src/renderer/editor/colour-choice/` (a labelled `#RRGGBB` field, picker, palette swatches and an optional "None"); `src/renderer/editor/text-box-fields/`; `src/renderer/editor/shade-fields/` (with `percent-slider.tsx`); `src/renderer/editor/background-colour-field/`.
@@ -86,7 +86,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`src/shar
 - **Tests:** `tests/unit/renderer/editor/colour-choice.test.tsx` (a bad hex goes back; "None" sends null; a swatch sends its colour; label; axe); `text-box-fields.test.tsx` (each field sends one `layer.update` with that field only; bounds; the values shown for a layer stored without the fields are the defaults; locked disables all; axe); `shade-fields.test.tsx` (None to a side sends `NEW_SHADE` with that side; changing one value sends the whole shade; the slider sends once on release; "Reach" disabled for "Whole picture"; None sends `shade: null`; axe); `background-colour-field.test.tsx` (shows `#000000` when the field is absent; background only; axe); `properties-panel` and `picture-fields` tests gain the new sections (approved additions). Shots: `tests/shots/lk-5.shots.ts` (a text layer with an outlined box; the shade fields over a photo; the background colour field; a layer half past the canvas edge with its handles).
 - **Class:** D. Not security class. **After:** LK-1, LK-2, LK-3.
 
-### LK-6 — "Layout…": apply a starter layout to the open variant
+### LK-6 — "Layout…": apply a starter layout to the open variant (built)
 
 - **Exists when done:** "Layout…" in the editor's top bar opens a dialog listing the starter layouts with a small preview of the open variant in each; "Apply" sends one `layer.updateMany` built by `starterLayoutPatches`, so one undo step. "Place text with AI…" is disabled while a layout run this editor started for the variant is going.
 - **New files:** `src/renderer/editor/layout-button/`; `src/renderer/dialogs/layout-dialog/` (`layout-dialog.tsx`, `layout-preview.tsx`, `apply-patches.ts`: the layers with the updates merged, for the previews only).
@@ -95,7 +95,9 @@ No two slices of one wave edit the same file: wave 2 splits by folder (`src/shar
 - **Tests:** `tests/unit/renderer/dialogs/layout-dialog.test.tsx` (lists five layouts by name and description, the first chosen; Apply sends one `layer.updateMany` with `starterLayoutPatches`' result and closes; a refusal shows its message and the dialog stays; a variant whose named layers are all locked shows "This layout changes no layer here." with Apply disabled; Cancel and Escape send nothing; axe); `tests/unit/renderer/dialogs/apply-patches.test.ts`; `top-bar` test gains the button (approved addition). Shots: `tests/shots/lk-6.shots.ts` (the dialog; a variant before and after each layout at 1080 × 1080 and 1080 × 1920).
 - **Class:** D. Not security class. **After:** LK-4, P4-7, P4-16.
 
-### LK-7 — Three references rebuilt, and the exit check
+### LK-7 — Three references rebuilt, and the exit check (built)
+
+All look-pack slices are built; the spec's `Not built` marks for them are turned to `Built`. Left for the stakeholder: the three looks by hand, and Windows.
 
 - **Exists when done:** the exit criteria above pass; the spec's `Not built` marks for the look pack are listed for the orchestrator to turn to `Built`.
 - **New files:** `tests/shots/lk-7.shots.ts`; pictures it needs in `tests/fixtures/look-pack/` (photos the project may keep, or made by the fake provider; never the reference files).

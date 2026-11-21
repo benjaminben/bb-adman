@@ -4,7 +4,7 @@ The visitor's side of the approvals service [D-095, D-097]: the routes the catch
 
 ## Visitor routes and logic
 
-The logic is **Built** (AP-3, with its review's fixes); the replies change in AP-15, sign-off and pictures are AP-4. The pages themselves are in `spec/approvals-gallery.md`. **The try limit, the session check and the form checks live only here**, never in `proxy.ts` or a page.
+The logic is **Built** (AP-3, with its review's fixes); the replies for the page app are **built** (AP-15); sign-off and pictures are AP-4. The pages themselves are in `spec/approvals-gallery.md`. **The try limit, the session check and the form checks live only here**, never in `proxy.ts` or a page.
 
 **Routes through the catch-all** (`visitor/routes.ts`; the table `VISITOR_ROUTES` of `{ name, method, path, handler }`, matched on the raw path of `request.url`, so a percent-encoded character never matches a slug):
 
@@ -13,13 +13,14 @@ The logic is **Built** (AP-3, with its review's fixes); the replies change in AP
 | `POST /l/{slug}/enter` | Form `password`. Right: session made, cookie set, `303` to `/l/{slug}`. Wrong, unknown slug or too many tries: `303` to `/l/{slug}?m=wrong-password`, the same bytes in all three cases (A-103) |
 | `POST /l/{slug}/signoffs` | Form `variant`, `version`, `email`. Adds a sign-off (AP-4). `303` to `/l/{slug}?m={code}#v-{variant}` |
 | `POST /l/{slug}/signoffs/{id}/remove` | Removes that sign-off if it belongs to this link (AP-4). `303` as above |
-| `POST /l/{slug}/leave` | Deletes this session's row, clears the cookie, `303` to `/l/{slug}`. No valid session: the `403` reply (as built) |
+| `POST /l/{slug}/leave` | Deletes this session's row, clears the cookie, `303` to `/l/{slug}`. No valid session: the plain-text `403` |
 | `GET /l/{slug}/p/{variantKey}/{version}` | The picture, for a valid session only ("Pictures", below, AP-4) |
 | `GET /robots.txt` | `User-agent: *` and `Disallow: /` |
 | Anything else (not the page) | `404`, "Not found.", with the plain text headers below |
 
 - Each handler call is wrapped: a throw logs the route name and the error's name only, and answers the fixed `500` "Something went wrong. Try again later." with the plain text headers.
-- **Every redirect is a `303`** built by `headers.ts` from the checked slug (never Next.js's `redirect()`, which may send a 307 that makes the browser post again). Its headers are the plain text set plus `Location` and, when entering or leaving, `Set-Cookie`.
+- **Every redirect is a `303`** built by `redirect(request, slug, { m?, cookie? })` in `headers.ts` from the checked slug (never Next.js's `redirect()`, which may send a 307 that makes the browser post again). Its headers are the plain text set plus `Location` and, when entering or leaving, `Set-Cookie`. AP-4's sign-off redirect with `#v-{variant}` goes through it too, with a checked variant option. It throws on an unknown notice key.
+- **`NODE_ENV` is read only in `src/server/env.ts`**, which exports `isDev()`. Nothing else reads it.
 - **The cookie is set and cleared only here**, never by a page or by `proxy.ts`.
 
 ### Session
@@ -41,7 +42,7 @@ SELECT ?1, id, ?2 FROM link WHERE id = ?3 AND password_salt = ?4 AND password_ha
 
 ### The gallery view
 
-**Built** (AP-3 review fix); its input changes in AP-15. `openGallery` gives `{ kind: 'password', notice }` or `{ kind: 'gallery', view }`, and the view is built field by field:
+**Built** (AP-3 review fix; the new input AP-15, built). `openGallery` gives `{ kind: 'password', notice }` or `{ kind: 'gallery', view }`, and the view is built field by field:
 
 ```ts
 type GalleryView = {
@@ -53,7 +54,7 @@ type GalleryView = {
 ```
 
 - Raw rows (`LinkRow`, `VariantRow`, `SignoffRow`) never leave `src/visitor/` and `src/db/`. The view holds no hash, salt, internal link ID, picture address or expiry time. Only this type may be passed to a component; nothing under `app/` or `src/ui/` imports a row type or a module from `src/db/` or `src/crypto/` (`test/config.test.ts` checks the imports).
-- **AP-15 changes the input** from a `Request` to what a page has: `openGallery(db, { slug, cookie, m }, now)`, where `cookie` is the `Cookie` header text or null and `m` the `m` query value or null. `readSession` takes the cookie text the same way.
+- **AP-15 changed the input** from a `Request` to what a page has: `openGallery(db, { slug, cookie, m }, now)`, where `cookie` is the `Cookie` header text or null and `m` the `m` query value or null. `readSession` takes the cookie text the same way.
 
 ### Wrong-password limit
 
@@ -103,7 +104,7 @@ One row written: `m=signed`. None: if a sign-off with that link, variant, versio
 
 ### Notices
 
-**Not built (AP-15)**, `visitor/notices.ts`. `m` is looked up in this fixed table and becomes a `NoticeKey`; an unknown value is null. A page never shows text from the address.
+**Built (AP-15)**, `visitor/notices.ts`. `m` is looked up in this fixed table and becomes a `NoticeKey`; an unknown value is null. A page never shows text from the address.
 
 | `m` | Shown on | Notice |
 |-----|----------|--------|

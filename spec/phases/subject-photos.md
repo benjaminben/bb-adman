@@ -32,32 +32,25 @@
 
 | Wave | Slice | Waits for | May run beside |
 |------|-------|-----------|----------------|
-| 1 | SP-1 Brief photo paths in `brief.parse` (in build) | Phase 4 | SP-2, SP-6, SP-7, SP-8, SP-9 |
-| 1 | SP-2 Form model: photos, problems, attach plan (in build; see "SP-2 change") | Phase 4 | SP-1, SP-6, SP-7, SP-8, SP-9 |
-| 1 | SP-6 `campaign.create` gains `placeSubjectPhoto` | Phase 4 | SP-1, SP-2, SP-7, SP-8, SP-9 |
-| 1 | SP-7 Subject photos in the reference lists and pre-choices | Phase 4 | SP-1, SP-2, SP-6, SP-8, SP-9 |
-| 1 | SP-8 Placing a reference-library subject photo | Phase 4 | SP-1, SP-2, SP-6, SP-7, SP-9 |
-| 1 | SP-9 The prompt ending keeps printing when pictures are sent | Phase 4 | Every other SP slice |
-| 2 | SP-3 The "Photos" part of a subject row and the place box | SP-2 | SP-1, SP-6, SP-7, SP-8, SP-9 |
-| 3 | SP-4 Brief photos on load, the Create order, cleanup | SP-1, SP-3, SP-6 | SP-9 |
-| 4 | SP-5 Fixtures, end-to-end and shots updates, exit check | Every other SP slice except SP-9 | SP-9 |
+| 1 | SP-1 Brief photo paths in `brief.parse` (built) | Phase 4 | SP-2, SP-6, SP-7, SP-8, SP-9 |
+| 1 | SP-2 Form model: photos, problems, attach plan (built) | Phase 4 | SP-1, SP-6, SP-7, SP-8, SP-9 |
+| 1 | SP-6 `campaign.create` gains `placeSubjectPhoto` (built) | Phase 4 | SP-1, SP-2, SP-7, SP-8, SP-9 |
+| 1 | SP-7 Subject photos in the reference lists and pre-choices (built) | Phase 4 | SP-1, SP-2, SP-6, SP-8, SP-9 |
+| 1 | SP-8 Placing a reference-library subject photo (built) | Phase 4 | SP-1, SP-2, SP-6, SP-7, SP-9 |
+| 1 | SP-9 The prompt ending keeps printing when pictures are sent (in build) | Phase 4 | Every other SP slice |
+| 2 | SP-3 The "Photos" part of a subject row and the place box (built, not yet merged) | SP-2 | SP-1, SP-6, SP-7, SP-8, SP-9 |
+| 3 | SP-4 Brief photos on load, the Create order, cleanup (in build) | SP-1, SP-3, SP-6 | SP-9 |
+| 4 | SP-5 Fixtures, end-to-end and shots updates, exit check (not started) | Every other SP slice except SP-9 | SP-9 |
+
+**SP-3, SP-4 and SP-5 merge into `main` together**, because the form's photo requirement breaks the end-to-end runs until SP-5.
 
 No two slices of one wave share a file: SP-1 is in `src/main/assets/`, `src/main/commands/brief/`, `src/main/jobs/kinds/brief-extraction.ts` and the brief schemas; SP-2 in the project-home model files; SP-6 in `campaign.ts` and `fills.ts`; SP-7 in `ui/reference-picker/`, `editor/generate-fields/`, `screens/campaign/campaign-view/` and `video-picture-choice/`; SP-8 in `dialogs/picture-chooser/`; SP-9 in `src/shared/generation/prompt.ts`, the picture and video commands and job kinds, `job/retry.ts`, and their tests. SP-9 shares no file with any other SP slice: it touches no renderer file and no end-to-end or shots file (none of them checks a prompt ending), so SP-3, SP-4, SP-5 and SP-7 can be built beside it.
 
-## SP-2 change (the developer building SP-2 now)
-
-The meaning of the row's choice changed (stakeholder's note on generating subjects into new scenes). In SP-2:
-
-- **Remove** `use` from `SubjectChoice` and any `PhotoUse` type: the form has no library choice. `emptySubject()` no longer sets it.
-- **Add** `placeSubjectPhoto: boolean` to `BriefFormValues`. `formFromDraft` sets it to `false` (one place; A-119). It is the only place the default lives.
-- **`attach` entries carry no `library`:** `{ projectId, assetId, subjectId }` for each photo not yet attached to any subject (added or reused); nothing for a photo attached to the row's own subject.
-- **Do not** put `placeSubjectPhoto` into the `campaign.create` input yet: the schema gains it in SP-6, and SP-4 adds that one line to `planFromForm`.
-- Problem lines 1 to 5 are unchanged, except line 4's wording: "Subject {i}: the photo "{name}" belongs to the subject "{subject id}". One photo belongs to one subject."
-- Tests: drop any test of `use` or of `library` in `attach`; add `formFromDraft` gives `placeSubjectPhoto: false` for a brief and for an empty form.
-
 ## Slices
 
-### SP-1 — Brief photo paths in `brief.parse` (in build, with the security review's `wide_folder` ruling)
+### SP-1 — Brief photo paths in `brief.parse` (built)
+
+- **As built:** `isWideFolder` also refuses `/Volumes` itself on macOS. Names are compared without case on macOS and Windows, and with case on Linux.
 
 - **Exists when done:** `BriefDraft` subjects read `pictures` (text or list). `brief.parse` with a `filePath` replies `subjectPictures`, checked by `checkBriefPictures` with the folder-width check and the six rules of `spec/subject-photos.md`; with `text`, every picture gets `no_folder`; a brief whose real folder is too wide gives `wide_folder` for every picture. `pictureName` gives the shown name. `cleanLineText` is exported from `bad-line.ts` and used by `badLineAt`. `brief-extraction.ts` removes `pictures` from the draft it returns. `Brief` has no `pictures`.
 - **New files:** `src/main/assets/brief-pictures.ts`; `src/shared/brief/picture-name.ts`.
@@ -72,7 +65,9 @@ The meaning of the row's choice changed (stakeholder's note on generating subjec
 - **Exit check:** lint, typecheck, the unit tests under `tests/unit/shared/brief/`, the integration tests named above.
 - **Class:** A + B. **Security class, full review.** **After:** nothing.
 
-### SP-2 — Form model: photos, problems, attach plan (in build, with the change above)
+### SP-2 — Form model: photos, problems, attach plan (built)
+
+- **As built:** `planFromForm(projectId, values, heldSubjectIds, images?, imagesRefused = false)`; the photo rules apply only when `images` is passed. SP-3 widened problem line 4 to any form photo, added or reused, attached to another subject.
 
 - **Exists when done:** `SubjectChoice` has `photos`, `adding`, `notes`; `BriefFormValues` has `placeSubjectPhoto`. `formFromDraft` takes `briefPhotos`. `planFromForm` takes `images` and gives `attach`. The five photo problem lines show in order.
 - **New files:** `src/renderer/screens/project-home/brief-form-photos.ts` (`rowPhotos`, `photoProblems`, `attachPlan`, all pure).
@@ -82,17 +77,20 @@ The meaning of the row's choice changed (stakeholder's note on generating subjec
 - **Exit check:** lint, typecheck, the pure unit tests `tests/unit/renderer/screens/project-home/brief-form-*.test.ts`.
 - **Class:** A. **After:** nothing.
 
-### SP-3 — The "Photos" part of a subject row and the place box (Not built)
+### SP-3 — The "Photos" part of a subject row and the place box (built, not yet merged)
 
 - **Exists when done:** each subject row shows the "Photos" fieldset of `spec/subject-photos.md`: the list, "Add photos", "Remove", the notes, "Adding photos…". "Add photos" picks and imports into the asset library; "Remove" and "Remove subject {i}" remove new assets. Under the subject list, the checkbox "Start the ad with a subject photo placed" with its hint. Above the subject list, "This brief added {n} photo(s) from its folder. Check them before you create the campaign." when the form opened with `n` > 0 photos (A-125). `brief-form/` reads `asset.list { kind: 'image' }` on open and on `project.changed` and passes `images` to the rows and to `planFromForm`.
 - **New files:** `src/renderer/screens/project-home/subject-photos/` (`index.ts`, `subject-photos.tsx`, `photo-tile.tsx`, `use-add-photos.ts`, `place-photo-field.tsx`, `subject-photos.module.css`); `src/renderer/screens/project-home/brief-form/use-project-images.ts`.
-- **May touch:** `subject-rows/subject-rows.tsx` (a mount point, and "Remove subject" calling the cleanup); `brief-form/brief-form.tsx` (the images hook, the place box mount).
+- **May touch:** `subject-rows/subject-rows.tsx` (a mount point; stable row keys; new props `projectId`, `images`, `onUpdate`; "Remove subject" sends `asset.remove` for the row's added photos); `brief-form/brief-form.tsx` (the images hook, the place box mount).
+- **As built:** the new test file may be split into `subject-photos.test.tsx`, `subject-photos-remove.test.tsx` and `subject-photos-fixture.tsx`.
 - **Tests first:** `tests/unit/renderer/screens/project-home/subject-photos.test.tsx`: wording and labels; "Add photos" sends `dialog.pickFiles { purpose: 'import', kind: 'image', multiple: true }` then `asset.import { library: 'asset', copy: false }` with no `subjectId`; a cancelled picker sends nothing; a reused ID shows "Already in this project" and is not removed on Remove; a refusal adds the message to the notes; an animated ID adds its note; "Remove" of an added photo sends `asset.remove`; focus after Remove (next, previous, "Add photos"); attached pictures show "Already attached" and no button; a missing file shows "file not found"; the place box starts unticked and sets `placeSubjectPhoto`; the brief line shows with the count of photos in `initial` and is not drawn for 0, and does not change after "Add photos" or "Remove"; axe check.
 - **Approved edits to existing tests** (only to add a photo or an `asset.list` stub so the form is valid): `brief-form-fixture.tsx` (stubs for `asset.list`, `dialog.pickFiles`, `asset.import`, and a helper `addPhoto(row)`), `brief-form.test.tsx`, `brief-form-rulings.test.tsx`, `brief-form-languages.test.tsx`, `brief-subject-ids.test.tsx`, `brief-type.test.tsx`, `size-fields.test.tsx`, all under `tests/unit/renderer/screens/project-home/`.
 - **Exit check:** lint, typecheck, the component tests named above.
 - **Class:** D. **After:** SP-2.
 
-### SP-4 — Brief photos on load, the Create order, cleanup (Not built)
+### SP-4 — Brief photos on load, the Create order, cleanup (in build)
+
+- **Starts from SP-3's branch**, and turns six red tests in `brief-load.test.tsx` and `project-sections.test.tsx` green.
 
 - **Exists when done:** after `brief.parse`, `brief-load/` imports each subject's checked paths (one `asset.import` per subject, `library: 'asset'`, `copy: true`: a brief's photos are copied, A-124), shows "Adding the brief's photos…", turns notes into lines, and opens the form with `briefPhotos`. "Create campaign" sends `subject.create`, then `asset.update` per `attach` entry, then `campaign.create` with `placeSubjectPhoto`, stopping at the first refusal; after a refusal, made subjects switch rows to "existing" and attached photos stop being `added`. Cancel and unmount remove every still-added photo.
 - **New files:** `src/renderer/screens/project-home/brief-load/use-brief-photos.ts`, `brief-load/photo-notes.ts` (the note lines, pure).
@@ -102,16 +100,19 @@ The meaning of the row's choice changed (stakeholder's note on generating subjec
 - **Exit check:** lint, typecheck, the component tests named above.
 - **Class:** D. **Security check, short review:** only a picker path, a drop path or a `subjectPictures` path reaches `asset.import`; every `subjectPictures` path goes with `copy: true` and every picked or dropped path with `copy: false`; no path is drawn, logged or put in `brief`; no note goes into a log line or an event. **After:** SP-1, SP-3, SP-6.
 
-### SP-6 — `campaign.create` gains `placeSubjectPhoto` (Not built)
+### SP-6 — `campaign.create` gains `placeSubjectPhoto` (built)
 
 - **Exists when done:** `campaignCreateInput` has `placeSubjectPhoto?: boolean`. `false` leaves `subject-image` unfilled; left out or `true` fills it as today. `template.slots` is unchanged. `create_campaign` does not offer it.
-- **May touch:** `src/shared/schemas/commands/campaign.ts`; `src/main/commands/campaign/create.ts`; `src/main/commands/campaign/fills.ts`.
+- **As built:** the `create_campaign` tool uses a second schema, `campaignCreateToolInput`, without `placeSubjectPhoto`; the field is dropped when an agent passes it.
+- **May touch:** `src/shared/schemas/commands/campaign.ts`; `src/main/commands/campaign/create.ts`; `src/main/commands/campaign/fills.ts`; `src/main/mcp/tools/table.ts`.
 - **Tests first:** `tests/integration/campaigns/campaign-create-fills.test.ts` (approved addition): with a hero image, `placeSubjectPhoto: false` gives a master with no `subject-image` layer and `template.slots` still lists the hero as a candidate; `true` and left out fill it as today. A schema test: a non-boolean is refused. The MCP tool's input schema has no such field (existing MCP schema test, approved addition).
 - **Approved edits to existing tests:** none expected beyond the additions.
 - **Exit check:** lint, typecheck, `tests/integration/campaigns/campaign-create*.test.ts`, the MCP tool schema test.
 - **Class:** A + B. No security review (no new data path). **After:** nothing.
 
-### SP-7 — Subject photos in the reference lists and pre-choices (Not built)
+### SP-7 — Subject photos in the reference lists and pre-choices (built)
+
+- **As built:** the lists share one read through `ReferenceRowsContext` (`use-picture-list.ts`). The video card also shows "Photo of {subject id}".
 
 - **Exists when done:** `reference-rows.ts` owns `isReferenceRow` and `subjectPhotoIds`. Every reference list reads `asset.list { kind: 'image' }` and keeps `isReferenceRow`; "Made in this project" drops rows with a subject; an asset-library subject photo shows "Photo of {subject id}". The campaign page pre-ticks, the editor's first draft pre-chooses, and the video card pre-chooses, as in the table of `spec/subject-photos.md`.
 - **New files:** `src/renderer/ui/reference-picker/reference-rows.ts`.
@@ -121,7 +122,7 @@ The meaning of the row's choice changed (stakeholder's note on generating subjec
 - **Exit check:** lint, typecheck, the component tests named above.
 - **Class:** D. **Security check, short review:** a picture reaches a provider only after the user presses Generate or Start with it shown ticked; every send goes through `AssetService.read`; no new command or path. **After:** nothing.
 
-### SP-8 — Placing a reference-library subject photo (Not built)
+### SP-8 — Placing a reference-library subject photo (built)
 
 - **Exists when done:** the picture chooser shows, under the asset library's pictures, "Subject photos in the reference library" with its hint; choosing one sends `asset.update { library: 'asset' }` and then places it; a refusal shows in the chooser and places nothing. Reference-library files with no subject are not listed.
 - **May touch:** `src/renderer/dialogs/picture-chooser/use-pictures.ts`, `picture-chooser.tsx`; a new `picture-chooser/subject-reference-list.tsx` if `picture-chooser.tsx` would pass 200 lines.
@@ -130,7 +131,7 @@ The meaning of the row's choice changed (stakeholder's note on generating subjec
 - **Exit check:** lint, typecheck, the component tests named above.
 - **Class:** D. No security review (an existing command, sent by the user's choice). **After:** nothing.
 
-### SP-9 — The prompt ending keeps printing when pictures are sent (Not built)
+### SP-9 — The prompt ending keeps printing when pictures are sent (in build)
 
 - **Exists when done:** `prompt.ts` exports `NO_TEXT_ENDING` (unchanged), `KEEP_PRINTING_ENDING`, `promptEnding(pictures)` and `promptToSend(prompt, { pictures })` as designed in `spec/providers-adapters.md`, "Prompt and text rules". Every caller passes `{ pictures: referenceAssetIds.length }` of its request. A picture or video run with one or more pictures (references or a first frame) stores and sends the "keep printing" ending; a run with none stores and sends "no text". `job.retry` of a picture or video row stores the prompt through `promptToSend` with the old row's picture count, and changes no other request field (the kept-pictures count rule stays). No window change.
 - **New files:** `tests/integration/commands/job-retry-prompt.test.ts`.
@@ -147,7 +148,7 @@ The meaning of the row's choice changed (stakeholder's note on generating subjec
 - **Exit check:** lint, typecheck, `tests/unit/shared/generation/`, the integration tests named above, `tests/integration/commands/job-retry*.test.ts`. Fake provider only; no paid run [D-049].
 - **Class:** A + B. No security review: the change is two fixed texts and which one is picked; no new command, path or data reaches a provider. **After:** nothing.
 
-### SP-5 — Fixtures, end-to-end and shots updates, exit check (Not built)
+### SP-5 — Fixtures, end-to-end and shots updates, exit check (not started)
 
 - **Exists when done:** the brief fixtures name small made-up photos; every e2e and shots run that makes a campaign through the form has a photo; new shots 140 to 146; the "Not built" marks in `spec/subject-photos.md` read "Built (SP-n)".
 - **New files:** made-up pictures, drawn shapes only, no brand, no text, no person: `tests/fixtures/briefs/photos/citrus-can.png` and `berry-bottle.png` (each a 256×256 PNG, a coloured can or bottle shape on a plain ground), `tests/shots/fixtures/photos/` with the pictures `s2-16-brief.yaml` names; `tests/shots/sp-5.shots.ts`.

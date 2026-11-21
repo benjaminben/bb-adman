@@ -118,6 +118,8 @@ Every function the built screens offer, and whether end-to-end tests reach it. "
 | Settings | ComfyUI Check and its result per workflow | Yes, offline and real | Real check sends GETs only |
 | Settings | Agent access (MCP): switch, port, Connect panel, Copy, refusal lines | No | Component tests only: `tests/unit/renderer/screens/settings/mcp-section*.test.tsx` |
 | Settings | Agent runs: one tick per provider, the limit | Not built | Planned: offline, by clicks; no agent and no run needed |
+| Settings | Cloud storage, S3 part (`s3-section/`) and "Test connection" (`s3-check/`) | No | Component tests (`tests/unit/renderer/screens/settings/s3-section.test.tsx`, `s3-check.test.tsx`); `checkS3Access` against a stand-in request handler. A real bucket by hand only |
+| Settings | Approvals service (`approvals-section/`): address, key, Test connection | No | Component tests (`approvals-section.test.tsx`); the offline approvals spec is AP-13 |
 | Key dialog | Save and continue, Cancel | Yes, offline | Opened by Generate with no key |
 | Project home | Close project | Yes, offline | Click |
 | Project home | Load a brief, brief summary, Create campaign, Cancel | Yes, offline | Dialog stub with a brief from `tests/fixtures/briefs/` |
@@ -134,6 +136,8 @@ Every function the built screens offer, and whether end-to-end tests reach it. "
 | Hand test (dev) | Storage on this computer: Upload, List, Remove all | Yes, offline | Sandbox app data folder only |
 | Hand test (dev) | Amazon S3 settings and actions | No | Needs real credentials and a real bucket. "Remove all" on a real bucket is destructive, so it is never automated. By hand only |
 | Hand test (dev) | Sign in to Dropbox | No | Hidden on `main` (`HAND_TEST_DROPBOX` is false). Sign-in runs in the web browser. By hand only |
+
+Project files in these runs are made at the newest migration, `0004_approvals` (schema version 5). The approvals service in `approvals-service/` is a separate Next.js app with its own Vitest and Playwright runs (`spec/approvals-service-tests.md`).
 
 **Gaps:** S3 and Dropbox (above). The MCP section (component tests only). The paid Gemini run through the screens (the stakeholder's own, D-081). Real-server failure screens (out of memory, server stopped) are tested offline only, since they cannot be caused on purpose without harm. A packaged app is not tested end to end, because `trial` workflows are never offered there.
 

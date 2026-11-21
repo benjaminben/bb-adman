@@ -2,7 +2,7 @@
 
 A subject (the product, service or person an ad is about) is defined first by one or more photos of it. Its description stays optional. Generating the subject into new angles and scenes is a core use, so every photo of a subject guides the AI, and any of them can also be placed in an ad as it is. This file covers the brief file's `pictures` field and how `brief.parse` checks it, the "Photos" part of the brief form, what "Create campaign" sends, how subject photos reach the reference pickers and the picture chooser, what agents see, and what is out of scope [D-098, R-21].
 
-Every part of this file is **Not built**. Slices: `spec/phases/subject-photos.md` (SP-1 to SP-9). Assumptions A-110 to A-126 are at the end of this file; A-127 (the prompt ending) is in `spec/assumptions.md`.
+**State.** Built and merged: SP-1, SP-2, SP-6, SP-7, SP-8. Built, not yet merged: SP-3 (it merges with SP-4 and SP-5). In build: SP-4, SP-9. Not started: SP-5. Each section says its own state. Slices: `spec/phases/subject-photos.md` (SP-1 to SP-9). Assumptions A-110 to A-126 are at the end of this file; A-127 (the prompt ending) is in `spec/assumptions.md`.
 
 Read with: `spec/brief-and-templates.md` (the brief's shape, `brief.parse`, "What the project page sends"), `spec/screens-campaign.md` ("The brief form"), `spec/assets.md` (import, reuse, libraries, reference pictures, the asset protocol), `spec/screens-ai.md` (generate fields, reference dialog), `spec/editor.md` ("Picture chooser"), `.claude/rules/security-priorities.md`.
 
@@ -18,7 +18,7 @@ Read with: `spec/brief-and-templates.md` (the brief's shape, `brief.parse`, "Wha
 - **On the brief form every subject needs at least one photo** before "Create campaign" works. The description stays optional.
 - **`campaign.create` and the MCP tool `create_campaign` do not check photos.** Agents cannot import files (`asset.import` is denied to them), so an agent can still make a campaign whose subjects have no files. A subject can also lose its files later (`asset.remove`, or `asset.update { subjectId: null }`). So FR-055's third case ("the subject has no files") stays reachable and stays built.
 
-## The brief file (Not built, SP-1)
+## The brief file (Built, SP-1)
 
 A subject in a JSON or YAML brief gains one optional field:
 
@@ -71,7 +71,7 @@ type BriefParsed = {
 
 `subjectPictures` has one entry per entry of `draft.subjects`, in the same order. A subject with no `pictures` gets `{ paths: [], notes: [] }`. `paths` are full paths that passed every check, in the brief's order, each once.
 
-## How `brief.parse` checks the paths (Not built, SP-1, security class)
+## How `brief.parse` checks the paths (Built, SP-1, security class)
 
 New file `src/main/assets/brief-pictures.ts` (asset code, because `src/main/assets/` is the only place that builds a file path for an import; `spec/assets.md`, "Single owners"):
 
@@ -81,7 +81,7 @@ checkBriefPictures(briefPath: string, subjects: BriefDraft['subjects']): Promise
 
 `brief.parse` calls it in `prepare` after the draft is read, for a `filePath` input only. For a `text` input there is no folder: every given picture gets a note with reason `no_folder` and no path is checked.
 
-**A folder that is too wide** (A-123). First, `realpath` of the brief's folder is compared with a short list. When it is the filesystem root (`/`), a drive or volume root (`C:\`, a `\\host\share\` root), on macOS a direct child of `/Volumes`, or the user's home folder itself (`os.homedir()`, by its real path), no picture is checked: every given picture gets a note with reason `wide_folder`. A folder below the home folder, such as Downloads or Desktop, is not refused, because a brief is often saved there. The comparison is on real paths, and on Windows and macOS without regard to letter case. The test is a pure function in the same file, `isWideFolder(realDir: string, realHome: string, platform: NodeJS.Platform): boolean`, so every case can be tested on any machine.
+**A folder that is too wide** (A-123). First, `realpath` of the brief's folder is compared with a short list. When it is the filesystem root (`/`), a drive or volume root (`C:\`, a `\\host\share\` root), on macOS `/Volumes` itself or a direct child of it, or the user's home folder itself (`os.homedir()`, by its real path), no picture is checked: every given picture gets a note with reason `wide_folder`. A folder below the home folder, such as Downloads or Desktop, is not refused, because a brief is often saved there. The comparison is on real paths; names are compared without regard to letter case on macOS and Windows, and with it on Linux. The test is a pure function in the same file, `isWideFolder(realDir: string, realHome: string, platform: NodeJS.Platform): boolean`, so every case can be tested on any machine.
 
 Otherwise, for each picture text, in this order. The first rule that fails gives the note and the text goes no further:
 
@@ -104,11 +104,11 @@ The accepted value is the real path. The same file may be accepted for two subje
 
 `pictureName(text: string): string` (`src/shared/brief/picture-name.ts`) gives the text a note shows: the part after the last `/` or `\`, then cleaned with `cleanLineText` (steps 2 to 5 of `badLineAt`: tabs to spaces, hidden and reordering characters removed, end trimmed, cut to 120 code points with "…"). `bad-line.ts` exports `cleanLineText` and `badLineAt` calls it, so the character list has one owner. An empty result reads `(no name)`. A note never shows a folder.
 
-## The AI brief reader (Not built, SP-1)
+## The AI brief reader (Built, SP-1)
 
 `brief.extract` (Markdown and plain-text briefs) gives no photos. In `src/main/jobs/kinds/brief-extraction.ts`, the draft has `pictures` removed from every subject before it is returned, so a path an AI answer made up is never stored in the job row or shown. Its reply has no `subjectPictures`. The user adds photos on the form. Markdown image links (`![](can.png)`) are not read (A-114): they would be paths steered by the AI's reading, and the form's "Add photos" already does the job.
 
-## The brief form (Not built, SP-2, SP-3)
+## The brief form (model built, SP-2; rows built, SP-3, not yet merged)
 
 ### The model
 
@@ -137,7 +137,8 @@ type ProjectImages = AssetList | null   // asset.list { projectId, kind: 'image'
 
 type BriefPhotos = { photos: FormPhoto[]; notes: string[] }[]   // one per draft subject
 formFromDraft(reply: BriefParsed | null, heldSubjectIds: string[], briefPhotos?: BriefPhotos): BriefFormValues
-planFromForm(projectId: string, values: BriefFormValues, heldSubjectIds: string[], images: ProjectImages): CampaignPlan
+planFromForm(projectId: string, values: BriefFormValues, heldSubjectIds: string[], images?: ProjectImages, imagesRefused = false): CampaignPlan
+// as built: the photo rules apply only when `images` is passed
 
 type CampaignPlan =
   | { ok: true; subjects: SubjectCreateInput[]; attach: AssetUpdateInput[]; campaign: CampaignCreateInput }
@@ -157,7 +158,7 @@ These join the subject problems of `brief-form-problems.ts`, after "Subject {i}:
 1. "The project's pictures are still being read." (once, while `images` is null and no refusal is known) or "The project's pictures could not be read." (once, after a refused `asset.list`).
 2. "Subject {i}: wait for the photos to be added." (the row's `adding` is true).
 3. "Subject {i}: add at least one photo." (the row has no photo; for an `existing` row only once a subject is chosen).
-4. "Subject {i}: the photo "{name}" belongs to the subject "{subject id}". One photo belongs to one subject." (a row's photo, `added: false`, attached to another subject than the row's own).
+4. "Subject {i}: the photo "{name}" belongs to the subject "{subject id}". One photo belongs to one subject." (any form photo, added or reused, attached to another subject than the row's own).
 5. "Subjects {i} and {j} use the same photo "{name}". One photo belongs to one subject." (one asset ID in two rows, as a form photo or an attached one; `{i}` the first row).
 
 `{name}` is the asset's `displayName`. Lines 2 to 5 skip a row while line 1 shows.
@@ -169,11 +170,11 @@ Inside each "Subject {i}" group, after "Description (optional)" and before the "
 - A hint: "Photos of the product, service or person. PNG, JPEG or WebP. At least one is needed. AI pictures are drawn from them."
 - A list labelled "Photos of subject {i}". One item per photo, in this order: attached pictures first (oldest first), then the form's photos in the order added. Each item:
   - a small picture: `assetUrl(projectId, assetId)`, a `--layer-thumb` square, `alt` the display name. A missing file shows the text "file not found" in its place;
-  - the display name as text, hidden from screen readers (the `alt` says it);
+  - the display name as text, hidden from screen readers (the `alt` says it); for a missing file it is not hidden, since there is no picture and so no `alt`;
   - for an attached picture: the text "Already attached". No button: the form never detaches a picture;
   - for a form photo with `added: false`: "Already in this project";
   - for a form photo: a button "Remove" (`aria-label` "Remove photo {name} from subject {i}").
-- With no photo: the line "No photos yet."
+- With no photo: the line "No photos yet." While the project's pictures are not read yet, or the read was refused, the list is empty and shows this line too.
 - A button "Add photos" (`aria-label` "Add photos to subject {i}").
 - While `adding`: the line "Adding photos…" (role `status`) and "Add photos" disabled.
 - **Notes**, when `notes` is not empty: a list labelled "Notes on the photos of subject {i}", each line as plain text.
@@ -253,15 +254,15 @@ It stops at the first refusal, whose message shows in the banner, as today. `cam
 | `asset.update` | Subject removed meanwhile | "That subject is not in this project." |
 | `campaign.create` | any | the command's own, as today |
 
-## `campaign.create`: `placeSubjectPhoto` (Not built, SP-6)
+## `campaign.create`: `placeSubjectPhoto` (Built, SP-6)
 
 `src/shared/schemas/commands/campaign.ts` (frozen; this change is designed here) gains one optional input: `placeSubjectPhoto?: boolean`.
 
 - Left out or `true`: as today. `slotFills` (`src/main/commands/campaign/fills.ts`) fills `subject-image` with the hero image (the newest asset-library image of the first subject that has one).
 - `false`: `subject-image` is left empty, so no layer is made for it (as for a subject with no hero). Nothing else changes: `template.slots` still lists the hero images as candidates, so the slot view offers them.
-- The brief form always sends it. The MCP tool `create_campaign` does not offer it, so an agent's campaign fills the slot as today (A-122).
+- The brief form always sends it. The MCP tool `create_campaign` does not offer it, so an agent's campaign fills the slot as today (A-122). As built, the tool uses a second schema, `campaignCreateToolInput`, without the field; a `placeSubjectPhoto` an agent passes is dropped.
 
-## Subject photos as reference pictures (Not built, SP-7)
+## Subject photos as reference pictures (Built, SP-7)
 
 **One owner.** New pure file `src/renderer/ui/reference-picker/reference-rows.ts`:
 
@@ -282,12 +283,12 @@ Every list of "reference pictures" reads `asset.list { projectId, kind: 'image' 
 
 - **The prompt keeps the printing (SP-9).** A run that sends any reference picture ends its prompt with "keep the printing on the things in the given pictures, add no other text" instead of "no text", so a product keeps its label; small print on packaging can still come out garbled, so the user checks it, and placing the real photo in the ad is the exact route (`spec/providers-adapters.md`, "Prompt and text rules"; A-127).
 - "Add pictures" in these pickers is unchanged: it imports into the reference library, attached to the variant's first subject when there is one.
-- Headings and empty lines stay ("Reference pictures", "No reference pictures in this project yet."). A row that is a subject photo in the asset library shows the extra text "Photo of {subject id}" after its name, so a user knows why an ad picture is listed.
+- Headings and empty lines stay ("Reference pictures", "No reference pictures in this project yet."). A row that is a subject photo in the asset library shows the extra text "Photo of {subject id}" after its name, so a user knows why an ad picture is listed. The video card shows it too. As built, the lists share one read through `ReferenceRowsContext` (`use-picture-list.ts`).
 - **No main-side change is needed for the lists** (the prompt ending above is SP-9's). Checked: `generation.runImages` (`run-images.ts`) and `generation.startVideo` (`video-start-checks.ts`, `usablePicture`) take any asset ID the project holds and read it with `AssetService.read`, which checks kind, size and picture type, never the library. Layer commands refuse a reference-library file as a picture source (`check-layer-assets.ts`, reason `reference_library`), which is what keeps R-12 true for placing.
 
 **Agents.** Agents find a subject's photos with `list_assets` filtered by subject (it gives library and subject ID) and, from Phase 10, `list_subjects` (attached asset IDs). `generate_images` and `generate_video` take any image asset ID from `list_assets`. Nothing changes for agents; agents get no pre-choice.
 
-## Placing a subject photo later (Not built, SP-8)
+## Placing a subject photo later (Built, SP-8)
 
 The editor's picture chooser (`src/renderer/dialogs/picture-chooser/`, `use-pictures.ts`) lists the asset library's pictures, as today, and under them a second list "Subject photos in the reference library": the reference-library images that have a subject, each with "Photo of {subject id}". Choosing one sends `asset.update { projectId, assetId, library: 'asset' }` and then the chooser's `onChoose` as for any picture. A refused update shows its message in the chooser and places nothing. The move is shown before it happens by the hint under that list: "Choosing one moves it to the asset library, so it can go on a post. It still guides AI pictures." Reference-library files with no subject are not listed (R-12).
 
@@ -349,7 +350,7 @@ The UI says "Photos" and "photo". It never says "product shot" or "product photo
 - **A-120. Pre-choice on the campaign page and the video card** happens when the page opens, and on a variant change only while nothing is ticked; a user's own ticks are kept. *SP-7. Easy.*
 - **A-121. The picture chooser moves a reference-library subject photo to the asset library when it is placed**, and nothing moves it back. *SP-8. Easy.*
 - **A-122. `create_campaign` does not offer `placeSubjectPhoto`**; an agent's campaign fills the slot as today. *SP-6. Easy.*
-- **A-123. A brief in a folder that is too wide brings no photos**: the filesystem root, a drive or volume root, a direct child of `/Volumes` on macOS, or the home folder itself. Downloads and Desktop are allowed. *SP-1. Easy.*
+- **A-123. A brief in a folder that is too wide brings no photos**: the filesystem root, a drive or volume root, `/Volumes` or a direct child of it on macOS, or the home folder itself. Downloads and Desktop are allowed. *SP-1. Easy.*
 - **A-124. Photos a brief names are copied into the assets folder**; photos the user picks or drops stay linked. *SP-4. Easy.*
 - **A-125. A line above the subject rows says how many photos the brief added**, counted once when the form opens. *SP-3. Easy.*
 - **A-126. Cancel leaves a brief photo's copy in the assets folder** with no row naming it; it is not an asset and Package leaves it out. Removing such files waits for OI-44 (managed files and the system bin). *SP-4. Easy.*

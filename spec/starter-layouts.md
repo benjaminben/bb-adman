@@ -1,6 +1,6 @@
 # Starter layouts and the starting font size
 
-Built (LK-4): the five layouts as data, the box and style rules, the starting font size, `buildMasterLayers` from the default layout, and `starterLayoutPatches`. Not built (LK-6): "Layout…", the screen that applies a layout (`spec/phases/look-pack.md`) [D-094].
+Built (LK-4): the five layouts as data, the box and style rules, the starting font size, `buildMasterLayers` from the default layout, and `starterLayoutPatches`. Built (LK-6): "Layout…", the screen that applies a layout (`spec/phases/look-pack.md`) [D-094].
 
 A starter layout is a named set of starting boxes and looks for the template's slots. A new master is built from the default one (`spec/brief-and-templates.md`, "The default layout and `buildMasterLayers`"), and "Layout…" in the editor applies any of them to the open variant (`spec/editor.md`). The five are modelled on the reference ads in `design/references/`. Read with `spec/data-model-campaign.md` ("Look fields") and `spec/scene.md` ("Text boxes", "Background colour and shade").
 

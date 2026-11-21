@@ -44,12 +44,13 @@ Built on the earlier host (a Cloudflare Worker with D1, the Workers Vitest pool)
 - **Shots:** none.
 - **Class:** S+W. Security class, full review (it touches reviewed code, the key check's path and the crypto). **After:** AP-2, AP-3 and its review fixes merged.
 
-### AP-15 — Service: visitor replies for the page app
+### AP-15 — Service: visitor replies for the page app (built)
 
 - **Exists when done:** the catch-all's visitor replies are only plain text, `303`s and (from AP-4) pictures: a failed entry is the one `303` to `/l/{slug}?m=wrong-password`; the `403` and `404` use the plain text headers; the notices table exists; `openGallery` takes `{ slug, cookie, m }` and `readSession` the cookie text; `pagePolicy(nonce)` and the page header set exist in `headers.ts`; the hand-written HTML is gone. Until AP-16, `GET /l/{slug}` answers the plain 404 (nothing is deployed in between).
+- **As built:** `NODE_ENV` is read only in `src/server/env.ts`, which exports `isDev()`. `pagePolicy(nonce, dev = false)` and `pageHeaders(request, nonce, dev = false)` take the flag; AP-16's `proxy.ts` imports `isDev` and passes it. `redirect(request, slug, { m?, cookie? })` in `headers.ts` builds every `303` itself from the checked slug, and throws on an unknown notice key. `pagePolicy` throws on a nonce that is not 22 base64 characters plus `==`.
 - **New files:** `src/visitor/notices.ts`; `test/view.test.ts`, `test/headers.test.ts`.
 - **Removes:** `src/visitor/html.ts`, `password-page.ts`, `gallery-page.ts`, `styles.ts`; `test/pages.test.ts`; the `gallery` and `stylesheet` rows of `VISITOR_ROUTES`.
-- **May touch:** `src/visitor/routes.ts`, `actions.ts`, `session.ts`, `headers.ts`; `test/throttle.test.ts`, `test/session.test.ts`, `test/forms.test.ts`, `test/entry.test.ts`, `test/visitor-setup.ts` (the replies they expect).
+- **May touch:** `src/visitor/routes.ts`, `actions.ts`, `session.ts`, `headers.ts`; `test/throttle.test.ts`, `test/session.test.ts`, `test/forms.test.ts`, `test/entry.test.ts`, `test/visitor-setup.ts`, `test/actions.test.ts`, `test/session-ends.test.ts`, `e2e/api.spec.ts` (the replies they expect).
 - **Must not get wrong** (security review): the three entry failures stay byte-equal and the unknown slug still runs the dummy hash; the view keeps exactly its fields; `m` only through the table; every redirect a `303` from the checked slug; the cookie set and cleared only here.
 - **Read:** `spec/approvals-service-visitor.md` "Visitor routes and logic" (all), "Headers on replies from the catch-all"; `spec/approvals-gallery.md` "The page policy and nonce".
 - **Tests:** as named; the throttle test's byte-equal check now over the three `303`s.
@@ -61,7 +62,7 @@ Built on the earlier host (a Cloudflare Worker with D1, the Workers Vitest pool)
 - **Exists when done:** a visitor can sign off and remove a sign-off; the picture route passes on a picture fetched through `PictureSource` with every check, as a stream.
 - **New files:** `src/visitor/signoffs.ts`, `picture-route.ts`; `src/pictures/source.ts`, `s3-source.ts`, `sniff.ts`; `e2e/pictures/` (two small PNG files and one JPEG made by the test, not downloaded).
 - **May touch:** `src/visitor/routes.ts` (the three routes' lines); `src/app.ts` and `src/server/serve.ts` (the default `PictureSource` in `parts`); `src/db/signoffs.ts`, `variants.ts`; `playwright.config.ts` (the picture server in `globalSetup`); `test/forms.test.ts` (rows for the two sign-off routes).
-- **Must not get wrong** (security review): the sign-off is the one conditional `INSERT … SELECT` from `gallery_variant` for this link and version; `checkPictureUrl` runs on the parsed `URL` right before the fetch and that same object is fetched; `redirect: 'manual'`; any non-200 fails; no visitor header passed on; the 16 MiB cap and the sniff before the first byte is sent; every failure a `404` with an empty body; the stored address never in a reply or log.
+- **Must not get wrong** (security review): the sign-off's `303` with `#v-{variant}` goes through `redirect` in `headers.ts`, with a checked variant option, never built by hand; the sign-off is the one conditional `INSERT … SELECT` from `gallery_variant` for this link and version; `checkPictureUrl` runs on the parsed `URL` right before the fetch and that same object is fetched; `redirect: 'manual'`; any non-200 fails; no visitor header passed on; the 16 MiB cap and the sniff before the first byte is sent; every failure a `404` with an empty body; the stored address never in a reply or log.
 - **Read:** `spec/approvals-service-visitor.md` "Forms that write", "Pictures"; `spec/approvals-service.md` "Environment" (`TEST_PICTURE_ORIGIN`).
 - **Tests:** `test/signoffs.test.ts`, `test/picture-route.test.ts` (with `s3-source` against a local Node server).
 - **Shots:** none.

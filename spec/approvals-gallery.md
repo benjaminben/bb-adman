@@ -48,14 +48,14 @@ export const config = { matcher: ['/l/:slug'] }  // one path part only; the API 
 3. Request headers: a copy of the visitor's, with any `Content-Security-Policy` and `x-nonce` the visitor sent deleted, then `Content-Security-Policy` set to the page policy below, so Next.js reads our nonce and never one the visitor chose.
 4. `NextResponse.next({ request: { headers } })`, with the page header set (below) put on the response.
 
-Page policy, from `pagePolicy(nonce)` in `src/visitor/headers.ts` (AP-15), one line:
+Page policy, from `pagePolicy(nonce, dev = false)` in `src/visitor/headers.ts` (AP-15, built; it throws on a nonce that is not 22 base64 characters plus `==`), one line:
 
 ```
 default-src 'none'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'nonce-{nonce}'; img-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'
 ```
 
 - No other origin anywhere. Scripts only from our own address or carrying the nonce; no `'unsafe-inline'`, no `'unsafe-eval'`, no `'strict-dynamic'` (the framework loads its later pieces from our own address, which `'self'` covers).
-- Only when `NODE_ENV` is `development` (`next dev`): `'unsafe-eval'` is added to `script-src` and `'unsafe-inline'` to `style-src`, as the Next.js docs require for its development tools. `next start` and Vercel never run in development mode, so tests and shots always see the strict policy.
+- Only when `dev` is true: `'unsafe-eval'` is added to `script-src` and `'unsafe-inline'` to `style-src`, as the Next.js docs require for its development tools. `next start` and Vercel never run in development mode, so tests and shots always see the strict policy. `NODE_ENV` is read only in `src/server/env.ts`, which exports `isDev()` (`NODE_ENV` is `development` under `next dev`). `proxy.ts` imports `isDev` and passes it to `pagePolicy` and to `pageHeaders(request, nonce, dev = false)`, which makes the page header set.
 - `e2e/gallery.spec.ts` fails on any policy refusal reported in the browser during its flow, so a refused framework script or style is found, not hidden.
 
 Page header set (with the policy above): `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Cross-Origin-Opener-Policy: same-origin`, `Cache-Control: no-store`, `X-Robots-Tag: noindex, nofollow`, and `Strict-Transport-Security: max-age=31536000` when the request is https.

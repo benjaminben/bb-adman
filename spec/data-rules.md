@@ -173,7 +173,7 @@ No asset thumbnails are made: the window draws asset pictures straight from the 
 
 ## Data migration
 
-Built. Main files: `src/main/db/project-file.ts`, `src/main/db/bundled-migrations.ts`, `src/main/db/migrations/`. The newest migration is `0003_job_kind_cutout`; a file with every migration has `schema_version` 4. Each migration test opens its file with the migrations up to its own only.
+Built. Main files: `src/main/db/project-file.ts`, `src/main/db/bundled-migrations.ts`, `src/main/db/migrations/`. The newest migration is `0004_approvals`; a file with every migration has `schema_version` 5. Each migration test opens its file with the migrations up to its own only.
 
 No legacy data [REQ: 6.4].
 

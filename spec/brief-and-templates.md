@@ -39,7 +39,7 @@ The file exports two Zod schemas with these field names:
 
 **Subjects.** `subjects` needs at least one entry and has no upper limit [REQ: FR-021]. A brief with one subject is valid, and briefs with two or more work the same way. FR-021's "at least two must be supported" is what the app must be able to handle, not the smallest brief allowed [D-024].
 
-**Subject photos** (Not built, SP-1 to SP-5) [D-098]: a draft subject gains `pictures` (paths inside the brief's folder), `brief.parse` checks them, and the form needs a photo per subject before "Create campaign", which then also sends `asset.update`; `campaign.create` gains `placeSubjectPhoto` (SP-6). `Brief` gains nothing. Design: `spec/subject-photos.md`.
+**Subject photos** (Built: SP-1, SP-2, SP-6; SP-3 built, not yet merged. Not built: SP-4, SP-5) [D-098]: a draft subject gains `pictures` (paths inside the brief's folder), `brief.parse` checks them, and the form needs a photo per subject before "Create campaign", which then also sends `asset.update`; `campaign.create` gains `placeSubjectPhoto` (SP-6). `Brief` gains nothing. Design: `spec/subject-photos.md`.
 
 **Word lists.** A plain word list for `requiredWords` or `prohibitedWords` is stored under the primary language [REQ: R-03]. `wordsByLanguage(words, primaryLanguage)` (`src/shared/brief/words.ts`) turns either form into `{ [language]: string[] }`: a plain list goes under the primary language, a per-language list is kept as given. The result shares no list with its input. `wordsByLanguage([], 'en')` gives `{ en: [] }`.
 

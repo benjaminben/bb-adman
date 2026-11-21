@@ -2,7 +2,7 @@
 
 A way to get sign-off on variants from people outside the app [D-095]. The user makes a password-protected link per campaign; a visitor opens it, enters the password, sees the campaign's variants and signs off on one with an email address; the sign-offs show in the app. Opt-in: nothing happens until the user sets up a service and makes a link.
 
-**State.** Built: the desktop contracts (AP-5), the service client, service settings and kept passwords (AP-6), the picture store (AP-7), the Settings section (AP-10, with AP-10a). Built and in security review: the link commands and queries (AP-8). In build: S3 "Test connection" (AP-10b). Not built: "Update gallery" and refresh (AP-9), the campaign page parts (AP-11, AP-12), the local proof (AP-13). Each section says its own state.
+**State.** Built: the desktop contracts (AP-5), the service client, service settings and kept passwords (AP-6), the picture store (AP-7), the Settings section (AP-10, with AP-10a). Built: the link commands and queries (AP-8, with its review fixes), S3 "Test connection" (AP-10b). Not built: "Update gallery" and refresh (AP-9), the campaign page parts (AP-11, AP-12), the local proof (AP-13). Each section says its own state.
 
 **Where things are.**
 
@@ -51,7 +51,7 @@ Desktop app (main process)                       Next.js service (Vercel) + db  
 
 ### Cloud storage: the S3 part
 
-The gallery needs a bucket. This feature builds the **S3 part** of Settings' "Cloud storage" ahead of Phase 9 (A-95). Built (AP-10a); "Test connection" is AP-10b (in build). Both are written in `spec/storage-and-publish.md`, "Storage settings screen". Phase 9 adds Dropbox to the same section.
+The gallery needs a bucket. This feature builds the **S3 part** of Settings' "Cloud storage" ahead of Phase 9 (A-95). Built (AP-10a); "Test connection" is AP-10b (built). Both are written in `spec/storage-and-publish.md`, "Storage settings screen". Phase 9 adds Dropbox to the same section.
 
 ## Versions and marks
 
@@ -182,8 +182,11 @@ To be added to the table in `spec/security.md`, "Project-file values that reach 
 
 ## Open items
 
-- **`createLink` without secure storage.** If the computer cannot store passwords securely, `createLink` (AP-8 as built) fails only after the service made the link, and each retry repeats that; `setPassword` changes the password on the service and keeps it nowhere. **Ruled:** both commands ask the password store whether encryption is available before anything is sent, and refuse with its sentence "This computer cannot store keys securely." (`spec/approvals-commands.md`, "Refusals"). Not built: an AP-8 follow-up.
+- **`createLink` without secure storage.** If the computer cannot store passwords securely, `createLink` (AP-8 as built) fails only after the service made the link, and each retry repeats that; `setPassword` changes the password on the service and keeps it nowhere. **Ruled:** both commands ask the password store whether encryption is available before anything is sent, and refuse with its sentence "This computer cannot store keys securely." (`spec/approvals-commands.md`, "Refusals"). Built with AP-8's review fixes.
 - **`setPassword`'s gone sentence.** On a `404`, `setPassword` refuses with `approval_link_gone` and changes nothing locally, but that reason's sentence says the link "is shown as turned off". The link is shown as turned off only after the next refresh. To be checked against the built sentence and worded for this case if needed.
+- **No word on a take-over.** On a `409` take-over the user is not told the campaign already had a link. Accepted (A-84).
+- **Sign-offs in a received project file** show as real until the next refresh.
+- **Two `createLink` calls at once** can keep the wrong password.
 
 ## Assumptions
 

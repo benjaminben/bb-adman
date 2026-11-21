@@ -1,7 +1,7 @@
 # SPEC.md — Technical Specification (index)
 
 **Project:** Adman, a desktop app (Electron) for making ad campaigns: one brief becomes a grid of image and video ads in many sizes and languages, with AI generation, checks, export and cloud publishing.
-**Status:** Phases 1 and 2 are built on `main`, except the leftovers listed in `spec/phases/`. Phases 3 to 11 are ahead.
+**Status:** Phases 1 and 2 are built on `main`, except the leftovers listed in `spec/phases/`. Phase 3's slices are built. Phase 4 and the look pack are built as far as agents can take them; the stakeholder's hand checks are listed in `spec/phases/phase-04.md`, "Status". Approvals and subject photos are in build. Phases 5 to 11 are ahead.
 
 The spec is split into small files so that a reader loads only what a task needs. This file is the map.
 
@@ -66,9 +66,10 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/approvals-service-data.md` | Approvals service: the shared contract, the database and migrate script, random values and passwords, the keyed API |
 | `spec/approvals-service-visitor.md` | Approvals service: visitor routes, sessions, the gallery view, the try limit, forms that write, notices, header sets, pictures |
 | `spec/approvals-service-tests.md` | Approvals service: the test files, the AP-14 port of the tests, the Playwright set-up |
-| `spec/subject-photos.md` | Subject photos (D-098, R-21): the brief's `pictures` field and its path checks, the "Photos" part of the brief form, the Create order, assumptions A-110 to A-118 |
+| `spec/subject-photos.md` | Subject photos (D-098, R-21): the brief's `pictures` field and its path checks, the "Photos" part of the brief form, the Create order, assumptions A-110 to A-126 |
 | `spec/open-items.md` | Open questions, the improvised choices listed for review, what waits on the stakeholder |
 | `spec/assumptions.md` | The assumptions made meanwhile (OI, Q and A numbers), with how hard each is to undo |
+| `spec/assumptions-settled.md` | Assumption groups whose work is built and settled, moved out of `assumptions.md` (A-40 to A-52) |
 
 ## Build plan
 

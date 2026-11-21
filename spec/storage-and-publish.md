@@ -151,14 +151,14 @@ The S3 half is **built** (AP-10a, `src/renderer/screens/settings/s3-section/`, m
 
 ### Test connection (S3)
 
-Not built (AP-10b). The user's own bucket and keys are proved in Settings at once, not later as a failed upload.
+Built (AP-10b). The user's own bucket and keys are proved in Settings at once, not later as a failed upload.
 
-- **Command `storage.checkS3`.** Input `{}`; app-scope; writes nothing to settings or the project; `deny` for an agent ("test the cloud storage connection"). Order: the S3 settings check (`requireS3Settings`, moved by AP-10b from `dev/storage.ts` to `src/main/commands/storage/require-s3-settings.ts`, its one owner; `dev/storage.ts` imports it); then `requireProviderKeys(deps, 's3', 'test the connection')`, the one `NEEDS_KEY` guard; then `checkS3Access`. Reply `{ ok: true }`, or a refusal with one fixed sentence.
+- **Command `storage.checkS3`.** Input `{}`; app-scope; writes nothing to settings or the project; `deny` for an agent ("test the cloud storage connection"). Order: the S3 settings check (`requireS3Settings`, in `src/main/commands/storage/require-s3-settings.ts`, its one owner; `dev/storage.ts` imports it); then `requireProviderKeys(deps, 's3', 'test the connection')`, the one `NEEDS_KEY` guard; then `checkS3Access`. Reply `{ ok: true }`, or a refusal with one fixed sentence. The command's secret reader gives only the two S3 keys.
 - **`checkS3Access(ctx)`** (`src/main/providers/s3/check-access.ts`) uses the saved settings and keys through `buildS3Client`: the same client, host pin, socket limits and single attempt as the adapter. No new outbound path. It does not go through `s3Storage`, because that folds a wrong key and a missing permission into one kind (`bad_key`); it needs the S3 error name. Four calls, in order, all inside the configured folder:
-  1. **list:** `ListObjectsV2`, prefix the folder (or the bucket when empty), `MaxKeys: 1`.
+  1. **list:** `ListObjectsV2`, prefix `{folder}/adman-connection-check/` (`adman-connection-check/` when the folder is empty), `MaxKeys: 1`.
   2. **write:** `PutObject` of the 39-byte text "Adman connection check. Safe to delete." (`text/plain`) at `adman-connection-check/{a new ULID}.txt` under the folder, the key made as `s3-storage.ts` makes it, through `storageFilePath`. The app writes nothing else under that name, and the ULID is new each time, so it cannot meet a real file.
   3. **read:** `GetObject` of that key; the bytes must equal what was written.
-  4. **delete:** `DeleteObjects` (the adapter's own call) of that key only. It runs whenever step 2 succeeded, even after a failed step 3. A key in the reply's `Errors` counts as a failure, like a thrown one.
+  4. **delete:** `DeleteObjects` (the adapter's own call) of that key only. It runs whenever step 2 was tried, even when step 2 or step 3 failed. A key in the reply's `Errors` counts as a failure, like a thrown one. A failed delete after a failed write does not change the reported reason and adds no left-file line. In a bucket with versioning on, the test file stays as an old version.
 - **Failure kinds.** The first failing step decides. The provider's message and detail go to the local log through `redactSecret` for both keys, with the step's name; never to the window or a reply. No sentence holds a key, an address or a path.
 
 | Kind (`reason`) | When | Sentence |
@@ -167,14 +167,14 @@ Not built (AP-10b). The user's own bucket and keys are proved in Settings at onc
 | `NEEDS_KEY` | A key not saved | "Add your Amazon S3 key to test the connection." |
 | `s3_wrong_keys` | `InvalidAccessKeyId`, `SignatureDoesNotMatch`, `ExpiredToken`, `InvalidToken` | "Amazon S3 did not accept these keys. Check the access key ID and the secret access key." |
 | `s3_bucket_not_found` | `NoSuchBucket` | "Amazon S3 has no bucket with that name. Check the bucket name." |
-| `s3_wrong_region` | `PermanentRedirect`, `AuthorizationHeaderMalformed`, or a 301 | "That bucket is in a different region. Check the region." |
+| `s3_wrong_region` | `PermanentRedirect`, `AuthorizationHeaderMalformed`, `IllegalLocationConstraintException`, `TemporaryRedirect`, or a 301 | "That bucket is in a different region. Check the region." |
 | `s3_permission_missing` | `AccessDenied` or another 403 at a step; `details.permission` is `list`, `write`, `read` or `delete` | "These keys may not {list files in / write files to / read files from / delete files from} the bucket. Give them the {s3:ListBucket / s3:PutObject / s3:GetObject / s3:DeleteObject} permission." |
-| `s3_cannot_reach` | A marked network error or timeout (a region that does not exist lands here) | "Adman could not reach Amazon S3. Check the internet connection and the region, then try again." |
+| `s3_cannot_reach` | A marked network error or timeout, `RequestTimeout` included (a region that does not exist lands here) | "Adman could not reach Amazon S3. Check the internet connection and the region, then try again." |
 | `s3_check_failed` | Anything else, a read that gave other bytes included | "Amazon S3 refused the test. Try again, or check the bucket's settings in Amazon Web Services." |
 
   The S3 refusals are `PROVIDER_ERROR`, `details: { reason, permission? }`. When step 2 succeeded and step 4 failed, the sentence gains "A small test file was left in the folder adman-connection-check. You may delete it."
 - **The button.** "Test connection", in the Cloud storage section under the key rows, with the hint "Tests the saved bucket, region and keys." Not set up (no saved bucket or region): disabled. Working: disabled, label "Testing…". Then a result line (`role="status"`): "Connected. Adman can list, write, read and delete files in this folder." or the refusal's sentence. The line is cleared when the saved S3 settings or keys change.
-- **Tests** use a stand-in request handler under the real host pin; no real bucket in any automatic test. Hand check (the stakeholder, with his own bucket): "Connected." with the right keys; a wrong secret key gives the wrong-keys sentence; keys without delete permission give the delete sentence and the left-file line.
+- **Tests** use a stand-in request handler under the real host pin; no real bucket in any automatic test. Hand check (the stakeholder, with his own bucket), three cases: "Connected." with good keys; a wrong region gives the wrong-region sentence; keys without delete permission give the delete sentence and the left-file line.
 
 ## Publishing
 

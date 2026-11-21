@@ -70,7 +70,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `job.markSeen` | projectId, jobIds[] (at least one) | — | deny | Built | FR-218 |
 | `storage.dropboxSignIn` | — | — | deny | Not built (slice G, postponed) | FR-160, R-15 |
 | `storage.dropboxSignOut` | — | — | deny | Not built (slice G, postponed) | FR-160 |
-| `storage.checkS3` | `{}`. Tests the saved S3 settings and keys: list, put, read and delete one small test file; replies with ok or one fixed failure sentence (`spec/storage-and-publish.md`) | — | deny | Not built (AP-10b) | — |
+| `storage.checkS3` | `{}`. Tests the saved S3 settings and keys: list, put, read and delete one small test file; replies with ok or one fixed failure sentence (`spec/storage-and-publish.md`) | — | deny | Built (AP-10b) | — |
 | `export.run` | projectId, campaignId, variantIds[], outputDir, imageFormat, jpgQuality, fps, proceedDespiteWarnings, reason? (FR-236) | — | deny | Not built (Phase 8) | FR-140, FR-199, FR-236 |
 | `publish.run` | projectId, campaignId, storage, replaceConfirmed | — | deny | Not built (Phase 9) | FR-161, FR-199 |
 | `history.undo` / `history.redo` | projectId, scope (`variant:{id}` or `campaign:{id}`) | — | deny | Built | FR-095 |
@@ -155,7 +155,7 @@ Built: `generation.runImages`, `generation.startVideo`, `generation.proposeLayou
 
 ### `generation.runImages`
 
-- Records `layerId` in `job.layer_id` when given a layer, and `slot` in `job.slot` when given a slot. It accepts any image or background layer of the variant by `layerId`, not only one that fills a template slot. Whether the screens offer that is part of Q-032 (OI-29, open: which layers the screens let the user generate into, cut-outs included); the command does not change either way.
+- Records `layerId` in `job.layer_id` when given a layer, and `slot` in `job.slot` when given a slot. It accepts any image or background layer of the variant by `layerId`, not only one that fills a template slot. The screens offer it: the picture section is shown for every image and background layer, and the cut-out for any such layer with a picture (Q-032 answered yes, A-26; `spec/screens-ai.md`).
 - **The shape asked for** (OI-70; Built, P4-13). Given a layer, the request's `width` and `height` are the layer's box (`geometry.width` and `geometry.height`, rounded, at least 1), so less of the picture is cropped when it is placed; a background layer's box is usually the whole canvas. Given a slot, the variant's size, as built. A provider takes these as a shape (Gemini's nearest ratio, ComfyUI's `fitSize`).
 - `count` is a whole number from 1 to 8. Each picture is one paid call. The number has one owner: `MAX_IMAGES_PER_RUN` in `src/shared/config/defaults.ts`, read by the schema in `src/shared/schemas/commands/generation.ts`. The default stays `settings.generation.optionsPerRun` (4).
 - Refusals: an unknown provider, one that cannot make pictures, or one not in this build: `INVALID_INPUT`. A text layer, a copy slot or an unknown slot: `INVALID_INPUT`. A missing variant, or a layer not in the variant: `NOT_FOUND`.

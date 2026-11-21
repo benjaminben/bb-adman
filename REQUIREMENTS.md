@@ -177,9 +177,10 @@ This build addresses items 1, 2 and 5 directly. It helps item 3 by producing org
 **FR-010:** A subject is the thing an ad is about. It can be a physical product or a service. The UI term is "Subject". The brief's term "product" maps to it.
 **Priority:** P0
 
-**FR-011:** Each subject has a unique ID within the project (for example a SKU), a display name, a description and attached reference files.
+**FR-011:** Each subject has a unique ID within the project (for example a SKU), a display name, one or more photos of it, and an optional description. The photos define the subject first.
 **Priority:** P0
-**Notes:** Two different subjects must never share stored assets. The ID, not the display name, identifies the subject. Files attached to a subject can be in either library (FR-054).
+**Notes:** Two different subjects must never share stored assets. The ID, not the display name, identifies the subject. Files attached to a subject can be in either library (FR-054). Every photo of a subject is offered, and chosen at the start, as a reference for AI pictures of it, and any of them can be placed in an ad.
+**Changed after 1.4:** R-21. Before, a description was required and photos were "attached reference files".
 
 **FR-012:** Subjects are shared by all campaigns in the project. They are not shared between projects except by import or copy.
 **Priority:** P0
@@ -191,8 +192,9 @@ This build addresses items 1, 2 and 5 directly. It helps item 3 by producing org
 
 **FR-021:** A brief contains: one or more subjects, target region or market, target audience and campaign message. The app must handle a brief with two or more subjects, with no hard upper limit. A brief with a single subject is also valid.
 **Priority:** P0
-**Notes:** Optional extra fields are accepted: offer, call-to-action, tone, required words, prohibited words, and copy per language. Required and prohibited words can be given per language. A list given with no language belongs to the campaign's main language (FR-033).
+**Notes:** Optional extra fields are accepted: offer, call-to-action, tone, required words, prohibited words, and copy per language. Required and prohibited words can be given per language. A list given with no language belongs to the campaign's main language (FR-033). A subject in a brief may name its photos; a subject's description is optional. Before the campaign is made, each subject has at least one photo (FR-011).
 **Changed in 1.1:** R-03 (notes only).
+**Changed after 1.4:** R-21 (notes only).
 **Changed in 1.3:** D-024. Before, the text said "at least two must be supported", which could be read as a minimum of two subjects per brief.
 
 **FR-022:** For markdown and plain text briefs, the app uses AI to extract the fields.
@@ -205,8 +207,9 @@ This build addresses items 1, 2 and 5 directly. It helps item 3 by producing org
 **Notes:** Exception: a campaign created by an external agent is created with no confirm form (FR-195). An agent cannot start generation (FR-199), so generation still starts only when the user asks for it.
 **Changed in 1.1:** R-01 (notes only).
 
-**FR-024:** For each subject in the brief, the user either confirms a new subject ID or picks an existing subject from the project. Picking an existing subject reuses its files.
+**FR-024:** For each subject in the brief, the user either confirms a new subject ID or picks an existing subject from the project. Picking an existing subject reuses its files. The user gives each subject at least one photo before confirming.
 **Priority:** P0
+**Changed after 1.4:** R-21.
 
 **FR-025:** One brief creates one campaign.
 **Priority:** P0
@@ -280,11 +283,13 @@ This build addresses items 1, 2 and 5 directly. It helps item 3 by producing org
 **Changed in 1.1:** R-12. Before, imported files went into one project pool.
 
 **FR-055:** For each subject the app handles three cases:
-- The subject has a hero image (an asset-library image attached to it). The image is used as-is.
+- The subject has a hero image (an asset-library image attached to it). The image can be used as-is.
 - The subject has only reference-library files (for example a product shot). They are sent to the image model to build a new scene.
 - The subject has no files. An image is generated from the subject description and campaign message.
 **Priority:** P0
+**Notes:** Generating the subject at new angles and in new scenes from its photos is a core use. Every photo of a subject, in either library, is offered and chosen at the start as a reference for the image model, and any of them can be placed in an ad (FR-011).
 **Changed in 1.1:** R-12. The three cases are now told apart by library.
+**Changed after 1.4:** R-21. Before, a hero image was always used as-is.
 
 **FR-056:** Uploaded fonts can be used on text layers. Non-Latin left-to-right scripts (for example Chinese, Japanese, Korean) can use their own font.
 **Priority:** P0

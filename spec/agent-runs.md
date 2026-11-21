@@ -55,7 +55,7 @@ An agent connected through the MCP server can start, follow and cancel its own p
 - Bus order: deny check, find handler and validate, find project, **gate**, ask, run.
 - The gate runs only for actor `agent` with policy `tick` (`agentPolicyFor` returns `tick`): `agentRunGate(gateDeps, name, parsed.input)` in `src/main/commands/agent-run-gate.ts`. It runs before `prepare`, so a refused agent causes no file read and no provider call. Its refusals are `AGENT_DENIED` with a plain sentence; nothing is enqueued or sent.
 - On a pass the gate returns a release function. The bus calls it in a `finally` once the command has ended, whatever the outcome.
-- The gate knows three commands: `generation.runImages`, `generation.startVideo`, `job.cancel`. Any other `tick` command is refused with `AGENT_DENIED` and `denialMessage(name)`, so `generation.runFill` and the raw-tick case of `bus-fail-closed.test.ts` stay refused. Not built (Phase 4, P4-1): `generation.proposeLayout`, `generation.copyOptions` and `generation.cutOut` join the run commands, with the same three steps (`spec/ai-jobs.md`).
+- The gate knows three commands: `generation.runImages`, `generation.startVideo`, `job.cancel`. Any other `tick` command is refused with `AGENT_DENIED` and `denialMessage(name)`, so `generation.runFill` and the raw-tick case of `bus-fail-closed.test.ts` stay refused. Built (Phase 4, P4-1): `generation.proposeLayout`, `generation.copyOptions` and `generation.cutOut` join the run commands, with the same three steps (`spec/ai-jobs.md`).
 
 ## Gate steps for a run
 

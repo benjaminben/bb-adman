@@ -282,7 +282,7 @@ Built. `src/main/providers/picture-limits.ts` is the one owner of the values; th
 
 ### Phase 4 additions
 
-Not built (Phase 4). `CutoutProvider` and the `cutout` key of `ProviderAdapters`, `'cutout'` in `ProviderJob`, `opts?: RunOptions` on the layout and text methods, and `extractBrief` returning a `BriefDraft`: `spec/ai-jobs.md`, "Provider interfaces". `ImageProvider` does not change. A cut-out keeps its see-through pixels through `toPng` (`spec/ai-jobs.md`, "Cut-out").
+Built (Phase 4). `CutoutProvider` and the `cutout` key of `ProviderAdapters`, `'cutout'` in `ProviderJob`, `opts?: RunOptions` on the layout and text methods, and `extractBrief` returning a `BriefDraft`: `spec/ai-jobs.md`, "Provider interfaces". `ImageProvider` does not change. A cut-out keeps its see-through pixels through `toPng` (`spec/ai-jobs.md`, "Cut-out").
 
 ## The adapters
 
