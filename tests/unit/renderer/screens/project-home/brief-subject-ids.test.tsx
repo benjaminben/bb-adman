@@ -21,7 +21,7 @@ function subjectItem(summary: HTMLElement, name: string): HTMLElement {
   const list = within(summary).getByRole('list', { name: 'Subjects' })
   const item = within(list)
     .getAllByRole('listitem')
-    .find((li) => li.textContent?.includes(name))
+    .find((li) => (within(li).getByLabelText('Name') as HTMLInputElement).value === name)
   if (!item) throw new Error(`no subject ${name}`)
   return item
 }
@@ -53,30 +53,33 @@ describe('subject IDs in the brief summary [SPEC 14 1.43 T-1, T-2, P1-2, P1-4]',
     expect(fake.commands[1]?.input).toMatchObject({ id: 'Berry-bottle' })
   })
 
-  it('shows each ID, and "(made from the name)" only beside a made one', async () => {
-    const summary = await summaryOf(projectApi(projectGet(), MIXED))
+  it('shows each ID in its "Subject ID" field, one made from the name when the brief has none', async () => {
+    const summary = await summaryOf(
+      projectApi(projectGet(), {
+        ...MIXED,
+        subjects: [{ id: 'citrus-can', name: 'Citrus can' }, { name: 'Berry bottle' }],
+      }),
+    )
     const own = subjectItem(summary, 'Citrus can')
-    const made = subjectItem(summary, 'Berry')
-    expect(own).toHaveTextContent('citrus-can')
-    expect(own).not.toHaveTextContent('(made from the name)')
-    expect(made).toHaveTextContent('Berry')
-    expect(made).toHaveTextContent('(made from the name)')
+    const made = subjectItem(summary, 'Berry bottle')
+    expect(within(own).getByLabelText('Subject ID')).toHaveValue('citrus-can')
+    expect(within(made).getByLabelText('Subject ID')).toHaveValue('Berry-bottle')
   })
 
-  it('says a subject the project holds is used as it is', async () => {
+  it('chooses "Use a subject this project has" for a subject the project holds', async () => {
     const reply = projectGet([], [subject('citrus-can', 'Citrus')])
     const summary = await summaryOf(projectApi(reply, MIXED))
-    expect(subjectItem(summary, 'Citrus can')).toHaveTextContent(
-      'already in this project, used as it is',
-    )
-    expect(subjectItem(summary, 'Berry')).not.toHaveTextContent('already in this project')
+    const held = subjectItem(summary, 'Citrus can')
+    expect(within(held).getByLabelText('Use a subject this project has')).toBeChecked()
+    expect(within(held).getByLabelText('Project subject')).toHaveValue('citrus-can')
+    expect(within(subjectItem(summary, 'Berry')).getByLabelText('New subject')).toBeChecked()
   })
 
   it('still names a brief ID with a space as a problem and sends nothing more', async () => {
     const draft = { ...DRAFT, subjects: [{ id: 'citrus can', name: 'Citrus can' }] }
     const fake = projectApi(projectGet(), draft)
     const summary = await summaryOf(fake)
-    expect(summary).toHaveTextContent('The subject ID "citrus can" may hold only')
+    expect(summary).toHaveTextContent('Subject 1: the ID "citrus can" may hold only')
     expect(screen.getByRole('button', { name: 'Create campaign' })).toBeDisabled()
     expect(names(fake)).toEqual(['brief.parse'])
   })

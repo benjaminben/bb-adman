@@ -4,13 +4,12 @@
 // form into subject.create inputs and one campaign.create input, or into problem lines.
 import type { BriefDraft } from '@/shared/schemas/brief'
 import type { BriefParsed } from '@/shared/schemas/commands/brief'
-import type { CampaignCreateInput, CampaignSize } from '@/shared/schemas/commands/campaign'
+import type { CampaignCreateInput } from '@/shared/schemas/commands/campaign'
 import type { SubjectCreateInput } from '@/shared/schemas/commands/subject'
-import { parseSize } from '@/shared/brief/size'
 import { wordsByLanguage } from '@/shared/brief/words'
-import { READY_MADE_SIZES } from '@/shared/config/defaults'
 import { briefSubjectIds } from '@/renderer/screens/project-home/campaign-input'
 import { formProblems, schemaCheck, subjectIdOf } from './brief-form-problems'
+import { chosenSizes, sizesFromDraft, type SizeChoice } from './brief-form-sizes'
 
 export type SubjectChoice = {
   name: string
@@ -29,7 +28,7 @@ export type BriefFormValues = {
   callToAction: string
   tone: string
   subjects: SubjectChoice[]
-  sizes: { readyMade: string[]; other: string; master: string | null }
+  sizes: SizeChoice
   languages: string
   rules: {
     mode: 'words' | 'copy'
@@ -52,26 +51,6 @@ export const emptySubject = (): SubjectChoice => ({
   existingId: null,
 })
 
-const defaultLabels = () => READY_MADE_SIZES.filter((s) => s.selectedByDefault).map((s) => s.label)
-const isReadyMade = (label: string) => READY_MADE_SIZES.some((s) => s.label === label)
-
-function sizesFromDraft(texts: string[]): BriefFormValues['sizes'] {
-  if (texts.length === 0) {
-    const readyMade = defaultLabels()
-    return { readyMade, other: '', master: readyMade[0] ?? null }
-  }
-  const readyMade: string[] = []
-  const other: string[] = []
-  let master: string | null = null
-  for (const text of texts) {
-    const size = parseSize(text)
-    if (size && isReadyMade(size.label)) readyMade.push(size.label)
-    else other.push(size ? `${size.width}x${size.height}` : text)
-    if (size && master === null) master = size.label
-  }
-  return { readyMade, other: other.join(', '), master }
-}
-
 function wordText(words: BriefDraft['requiredWords'], primary: string): Record<string, string> {
   if (words === undefined) return {}
   const byLanguage = wordsByLanguage(words, primary)
@@ -86,8 +65,19 @@ export function formFromDraft(
   const own = draft.languages ?? []
   const languages = own.length > 0 ? own.join(', ') : (reply?.primaryLanguage ?? '')
   const primary = splitLanguages(languages)[0] ?? ''
-  const draftSubjects = reply === null ? [{}] : (draft.subjects ?? [])
+  const draftSubjects = draft.subjects ?? []
   const ids = briefSubjectIds(draftSubjects)
+  const subjects = draftSubjects.map((s, i): SubjectChoice => {
+    const id = ids[i]?.id ?? ''
+    const held = heldSubjectIds.includes(id)
+    return {
+      name: s.name ?? '',
+      description: s.description ?? '',
+      mode: held ? 'existing' : 'new',
+      newId: id,
+      existingId: held ? id : null,
+    }
+  })
   return {
     campaignName: draft.campaignName ?? '',
     region: draft.region ?? '',
@@ -96,17 +86,7 @@ export function formFromDraft(
     offer: draft.offer ?? '',
     callToAction: draft.callToAction ?? '',
     tone: draft.tone ?? '',
-    subjects: draftSubjects.map((s, i) => {
-      const id = reply === null ? '' : (ids[i]?.id ?? '')
-      const held = heldSubjectIds.includes(id)
-      return {
-        name: s.name ?? '',
-        description: s.description ?? '',
-        mode: held ? 'existing' : 'new',
-        newId: id,
-        existingId: held ? id : null,
-      }
-    }),
+    subjects: reply === null ? [emptySubject()] : subjects,
     sizes: sizesFromDraft(draft.sizes ?? []),
     languages,
     rules: {
@@ -121,22 +101,6 @@ export function formFromDraft(
 
 export function splitLanguages(text: string): string[] {
   return text.split(/[\s,]+/).filter((tag) => tag !== '')
-}
-
-// The chosen sizes in order, the master first, and the typed texts that cannot be read.
-export function chosenSizes(sizes: BriefFormValues['sizes']): {
-  sizes: CampaignSize[]
-  unread: string[]
-} {
-  const typed = sizes.other
-    .split(',')
-    .map((t) => t.trim())
-    .filter((t) => t !== '')
-  const found = [...sizes.readyMade, ...typed].map((text) => ({ text, size: parseSize(text) }))
-  const read = found.flatMap((f) => (f.size ? [f.size] : []))
-  const master = read.findIndex((s) => s.label === sizes.master)
-  if (master > 0) read.unshift(...read.splice(master, 1))
-  return { sizes: read, unread: found.filter((f) => f.size === null).map((f) => f.text) }
 }
 
 // One list per language, a word or phrase per line, blank lines and empty lists left out. A
