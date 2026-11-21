@@ -116,7 +116,12 @@ export function Editor({ projectId, variantId }: Props) {
                 onSelect={setSelectedId}
                 onSettled={onSettled}
               />
-              <PropertiesPanel layer={selected} />
+              <PropertiesPanel
+                projectId={projectId}
+                campaignId={state.campaignId}
+                layer={selected}
+                layers={Object.values(layers)}
+              />
             </div>
           </>
         )}
