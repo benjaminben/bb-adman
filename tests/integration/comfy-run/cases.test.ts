@@ -120,7 +120,9 @@ describe('case 5, a picture from a reference [SPEC 14 1.46]', () => {
     expect(fs.readFileSync(written).equals(picture)).toBe(true)
     expect(printed).toContain('Pixel size: 768 x 768')
     expect(printed).toContain(`Byte size: ${picture.byteLength}`)
-    expect(printed).toContain('No small JPEG fixture is in tests/, so no JPEG run is made.')
+    expect(printed).toContain(
+      'No JPEG run is made; the only JPEG in tests/ is a 1×1 picture inside a Gemini fixture.',
+    )
     expect(foreignCancels(recorded.calls)).toEqual([])
     expect(holdsAddress(printed, s)).toBe(false)
   })

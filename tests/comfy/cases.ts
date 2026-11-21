@@ -118,7 +118,9 @@ export async function referenceCase(kit: CaseKit): Promise<CaseOutcome> {
   const name = kept.subfolder === '' ? kept.name : `${kept.subfolder}/${kept.name}`
   const values = { prompt: REFERENCE_PROMPT, references: [name] }
   await runAndReport(kit, spec, version, values, MAX_PICTURE_BYTES, checkPicture(kit))
-  kit.print('No small JPEG fixture is in tests/, so no JPEG run is made.')
+  kit.print(
+    'No JPEG run is made; the only JPEG in tests/ is a 1×1 picture inside a Gemini fixture.',
+  )
   return { done: true }
 }
 
