@@ -139,19 +139,3 @@ describe('Gemini TextProvider.copyOptions [spec/providers-adapters.md "Layout an
     expect(failure.error).toEqual({ kind: 'other', detail: 'Answer is not the asked JSON' })
   })
 })
-
-describe('Gemini TextProvider.translate', () => {
-  it('is not built yet and sends nothing', async () => {
-    const { fetchFn, seen } = answering('{}')
-    const run = text(fetchFn).translate({
-      items: [],
-      from: 'en',
-      to: 'fr',
-      region: '',
-      audience: '',
-    })
-    const failure = await failureOf(run)
-    expect(failure.error).toEqual({ kind: 'other', detail: 'Translate is not built yet' })
-    expect(seen).toHaveLength(0)
-  })
-})

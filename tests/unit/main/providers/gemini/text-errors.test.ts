@@ -32,7 +32,7 @@ const layoutInput = {
 
 type Run = (fetchFn: typeof fetch, signal?: AbortSignal, ctx?: AdapterContext) => Promise<unknown>
 
-// Each of the three JSON calls, run with a given transport.
+// Each of the four JSON calls, run with a given transport.
 const calls: Array<[string, Run]> = [
   [
     'extract brief',
@@ -44,6 +44,14 @@ const calls: Array<[string, Run]> = [
     (f, signal, ctx = testContext()) =>
       geminiText(ctx, { fetch: f }).copyOptions(
         { role: 'text', brief, language: 'en', count: 2, maxChars: 40 },
+        { signal },
+      ),
+  ],
+  [
+    'translate',
+    (f, signal, ctx = testContext()) =>
+      geminiText(ctx, { fetch: f }).translate(
+        { items: [{ key: 'k', text: 'Hi' }], from: 'en', to: 'de', region: 'R', audience: 'A' },
         { signal },
       ),
   ],
