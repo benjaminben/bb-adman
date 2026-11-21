@@ -9,6 +9,7 @@ import type { WorkflowSpec } from '../../../src/main/providers/comfyui/workflows
 import { flux3KleinEditReferences } from '../../../src/main/providers/comfyui/workflows/flux3'
 import { h3TextToVideo } from '../../../src/main/providers/comfyui/workflows/h3'
 import { mossTextToImage } from '../../../src/main/providers/comfyui/workflows/moss'
+import { mp4File } from '../../../src/main/providers/fake/mp4'
 import { foreignCancels, recordCalls } from '../../comfy/recorder'
 import { makePrinter } from '../../comfy/print'
 import { makeTestPicture } from '../../comfy/test-picture'
@@ -23,7 +24,7 @@ afterEach(async () => {
   outDir = ''
 })
 
-const FTYP = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypisom'), Buffer.alloc(16)])
+const FTYP = Buffer.from(mp4File({ width: 576, height: 576, durationMs: 1_000, sound: false }))
 
 const ID = '0b6f2c1e-7a3d-4c5b-9e8f-1a2b3c4d5e6f'
 
@@ -199,7 +200,7 @@ describe('case 2, the H3 video [SPEC 14 1.41]', () => {
     expect(s.seen).toEqual([])
   })
 
-  it('runs at 576 x 576 with 56 frames, and passes on an MP4 that starts with ftyp', async () => {
+  it('runs at 576 x 576 with 56 frames, and passes on an MP4 that passes `checkMp4`', async () => {
     const { s, printed, kit } = await setUp({ ADMAN_COMFY_VIDEO: '1' })
     complete(s, h3TextToVideo, { body: FTYP })
     expect(await videoCase(kit)).toEqual({ done: true })
