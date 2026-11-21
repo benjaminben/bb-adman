@@ -1,1 +1,2 @@
-export { LayerList, topFirst, type LayerListProps } from './layer-list'
+export { LayerList, type LayerListProps } from './layer-list'
+export { topFirst } from './stack-order'

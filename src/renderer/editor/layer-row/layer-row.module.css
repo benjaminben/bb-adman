@@ -1,3 +1,15 @@
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  border-radius: var(--radius);
+}
+.box[data-drop='above'] {
+  box-shadow: 0 calc(-1 * var(--focus-ring-width)) 0 var(--color-accent);
+}
+.box[data-drop='below'] {
+  box-shadow: 0 var(--focus-ring-width) 0 var(--color-accent);
+}
 .row {
   display: flex;
   align-items: center;
@@ -24,6 +36,9 @@
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
 }
+.hiddenLayer .thumb {
+  opacity: var(--opacity-disabled);
+}
 .textMark {
   display: flex;
   align-items: center;
@@ -42,6 +57,10 @@
 .name {
   overflow-wrap: anywhere;
 }
+.field {
+  flex: 1;
+  min-width: 0;
+}
 .marks {
   display: flex;
   flex-wrap: wrap;
@@ -52,7 +71,19 @@
   border-radius: var(--radius);
   color: var(--color-text-muted);
   background: var(--color-surface);
+  font-size: var(--font-size-small);
 }
 .selected .mark {
   background: var(--color-bg);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+}
+.action {
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-small);
 }
