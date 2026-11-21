@@ -15,8 +15,9 @@ export const briefParseInput = projectScoped
 export type BriefParseInput = z.infer<typeof briefParseInput>
 
 // spec/subject-photos.md "Schemas" [D-098]: why a picture a brief names was not used.
+// wide_folder: the brief's folder is a root, a Mac volume's top or the home folder (A-123).
 export type PictureNoteReason =
-  'outside_folder' | 'not_found' | 'not_a_picture' | 'not_readable' | 'no_folder'
+  'outside_folder' | 'not_found' | 'not_a_picture' | 'not_readable' | 'no_folder' | 'wide_folder'
 // name: pictureName of the text, never a folder.
 export type PictureNote = { name: string; reason: PictureNoteReason }
 // paths: real paths that passed every check, in the brief's order, each once.

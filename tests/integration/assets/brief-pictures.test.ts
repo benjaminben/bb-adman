@@ -91,6 +91,11 @@ describe('checkBriefPictures accepts a picture inside the brief folder [D-098, S
     })
   })
 
+  it('accepts a hard link inside the folder as an ordinary file', async () => {
+    fs.linkSync(path.join(root, 'brief/a.png'), path.join(root, 'brief/hard.png'))
+    expect(await one('hard.png')).toEqual({ paths: [inBrief('hard.png')], notes: [] })
+  })
+
   it('keeps one file named twice in a subject once, with no note', async () => {
     const [result] = await checkBriefPictures(briefPath, [
       { pictures: ['photos/b.jpg', 'photos\\b.jpg', 'a.png', 'inside-link.png'] },
