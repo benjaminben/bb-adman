@@ -47,4 +47,10 @@
   --rotate-handle-offset: 24px;
   --thumbnail-tile: 160px;
   --layer-thumb: 32px;
+  /* Phase 4 (spec/screens-ai.md): the activity panel, an earlier option's picture, the mark
+     on an unseen result, and the run confirmation dialog. */
+  --activity-width: 360px;
+  --option-thumb: 72px;
+  --mark-dot: 8px;
+  --run-dialog-width: 480px;
 }
