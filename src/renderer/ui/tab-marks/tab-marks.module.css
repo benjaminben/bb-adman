@@ -1,0 +1,23 @@
+.marks {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: var(--space-1);
+}
+.running {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: normal;
+}
+.dot,
+.attention {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: 50%;
+}
+.dot {
+  background: var(--color-accent);
+}
+.attention {
+  background: var(--color-danger-text);
+}

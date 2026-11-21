@@ -74,7 +74,7 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
     const line = 'Runs and panels below are for: '
     expect(await screen.findByText(`${line}Master post · 1:1 · en`)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /German post/ }))
-    await userEvent.click(screen.getByRole('button', { name: 'Back to overview' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
     expect(await screen.findByText(`${line}German post · 1:1 · de`)).toBeInTheDocument()
   })
 
@@ -89,7 +89,7 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
     expect(screen.getByText('Loading the variant…')).toBeInTheDocument()
     expect(screen.queryByRole('list', { name: 'Variants' })).toBeNull()
     expect(screen.queryByRole('region', { name: 'Make pictures' })).toBeNull()
-    await userEvent.click(screen.getByRole('button', { name: 'Back to overview' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
     expect(screen.getByRole('button', { name: /German post/ })).toHaveAttribute(
       'aria-pressed',
       'true',
