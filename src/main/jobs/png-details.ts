@@ -9,8 +9,9 @@ export type GenerationDetails = {
   provider: string
   model: string
   prompt: string
-  // P4-11: a cut-out's details carry kind 'cutout' and an empty prompt.
-  kind: 'image_generation' | 'cutout'
+  // P4-11: a cut-out's details carry kind 'cutout' and an empty prompt. P5-8: a fill's carry
+  // kind 'generative_fill' and the prompt sent.
+  kind: 'image_generation' | 'cutout' | 'generative_fill'
   createdAt: string
   // [1.53] G-1: written only when the provider gave them (ComfyUI).
   models?: string[]

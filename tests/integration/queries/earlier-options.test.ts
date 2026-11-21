@@ -53,6 +53,24 @@ describe('job.earlierOptions [spec/ai-jobs.md "The three queries"; FR-248, FR-21
     }
   })
 
+  // P5-8 (spec/links-and-sync.md "Generative fill"): a fill is listed with the background's runs.
+  it('lists a fill on the background layer with its picture', async () => {
+    f = await makeGenerationFixture()
+    const made = await f.importPicture()
+    insertJob(f.db, { id: 'image', layerId: BACKGROUND_LAYER, createdAt: '2026-01-01T00:00:00Z' })
+    insertJob(f.db, {
+      id: 'fill',
+      kind: 'generative_fill',
+      layerId: BACKGROUND_LAYER,
+      createdAt: '2026-01-02T00:00:00Z',
+      result: { assetIds: [made] },
+    })
+    const reply = data<EarlierOptions>(await query(BACKGROUND_LAYER))
+    expect(reply.map((o) => o.job.id)).toEqual(['fill', 'image'])
+    expect(reply[0]?.job.kind).toBe('generative_fill')
+    expect(reply[0]?.assets).toEqual([{ assetId: made, width: 5, height: 5, missing: false }])
+  })
+
   it('lists at most 50 runs', async () => {
     f = await makeGenerationFixture()
     for (let i = 0; i < 55; i++) {
