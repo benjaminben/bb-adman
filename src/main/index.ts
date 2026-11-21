@@ -7,6 +7,7 @@ import { httpsOnly } from './windows/open-external'
 import { devToolsEnabled } from './dev-tools-flag'
 import { pngConverter } from './png-converter'
 import { registerAssetProtocol, registerAssetScheme } from './windows/asset-protocol'
+import { checkChangedFiles, withChangeChecks } from './assets/change-trigger'
 import { DIALOG_QUERIES, runDialogQuery } from './windows/dialogs'
 import { registerIpc } from './ipc'
 import { projectPathFromArgv } from './open-file'
@@ -33,13 +34,23 @@ function mainWindow(): BrowserWindow {
   return win
 }
 
+// SPEC 14, Slice A rulings point 2b: looks for linked files of one open project that
+// changed outside the app.
+function checkFiles(projectId: string): Promise<void> {
+  const ready = core
+  if (!ready) return Promise.resolve()
+  const execute = ready.bus.execute
+  return checkChangedFiles({ execute, emit: send, log: ready.log }, projectId)
+}
+
 async function openFromSystem(filePath: string): Promise<void> {
   if (!core) {
     pendingOpens.push(filePath)
     return
   }
   const win = mainWindow()
-  const result = await core.bus.execute('project.open', { filePath }, { actor: 'user' })
+  const execute = withChangeChecks(core.bus.execute, checkFiles)
+  const result = await execute('project.open', { filePath }, { actor: 'user' })
   if (!result.ok)
     await dialog.showMessageBox(win, { type: 'warning', message: result.error.message })
 }
@@ -68,7 +79,10 @@ function start(): void {
     message: `Adman ${app.getVersion()} started`,
   })
   registerIpc(ipcMain, {
-    execute: (name, input, opts) => ready.bus.execute(name, input, opts),
+    execute: withChangeChecks(
+      (name, input, opts) => ready.bus.execute(name, input, opts),
+      checkFiles,
+    ),
     query: (name, input, opts, event) =>
       (DIALOG_QUERIES as readonly string[]).includes(name)
         ? runDialogQuery(name, input, {
@@ -82,6 +96,10 @@ function start(): void {
   createAppWindow()
   for (const filePath of pendingOpens.splice(0)) void openFromSystem(filePath)
 }
+
+app.on('browser-window-focus', () =>
+  core?.projects.all().forEach((h) => void checkFiles(h.projectId)),
+)
 
 app.on('open-file', (event, filePath) => {
   event.preventDefault()

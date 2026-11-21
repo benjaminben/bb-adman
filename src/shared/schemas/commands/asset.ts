@@ -13,6 +13,11 @@ export const assetAddGeneratedInput = projectScoped.extend({
 })
 export type AssetAddGeneratedInput = z.infer<typeof assetAddGeneratedInput>
 
+// asset.checkChanged (SPEC 14, Slice A rulings point 2b): a system command sent by the app
+// after a project opens and when a window gains focus.
+export const assetCheckChangedInput = projectScoped
+export type AssetCheckChangedInput = z.infer<typeof assetCheckChangedInput>
+
 const library = z.enum(['reference', 'asset'])
 const assetId = z.string().min(1)
 

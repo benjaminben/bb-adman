@@ -17,6 +17,7 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny'> = {
   'asset.relink': 'deny',
   'asset.remove': 'deny',
   'asset.addGenerated': 'deny',
+  'asset.checkChanged': 'deny',
   'brief.parse': 'deny',
   'campaign.create': 'allow',
   'campaign.update': 'deny',

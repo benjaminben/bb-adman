@@ -22,6 +22,7 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'asset.relink': deny('relink files'),
   'asset.remove': deny('remove assets'),
   'asset.addGenerated': deny('add generated files'),
+  'asset.checkChanged': deny('check files for changes'),
   'brief.parse': deny('read brief files'),
   'campaign.create': allow('create campaigns'),
   'campaign.update': deny('change campaign settings'),
