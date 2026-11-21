@@ -1,10 +1,12 @@
 // spec/editor.md, "The shell" [FR-003]: a menu button showing the shown project's name, or
 // "Adman" on the start screen. Its menu lists the open projects (choosing one shows it), then
-// "Start", then "Close project" for the shown one (project.close; the app store shows its
-// refusal). Arrow keys move through the items and wrap; Escape or a click elsewhere closes it.
+// "Start", then "Close project" for the shown one (project.close; with runs going it asks
+// first, close-project.tsx). Arrow keys move through the items and wrap; Escape or a click
+// elsewhere closes it.
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { EMPTY, useApp } from '@/renderer/app/app-context'
 import type { View } from '@/renderer/stores/app-store'
+import { useCloseProject } from './close-project'
 import styles from './project-switcher.module.css'
 
 type Item = { key: string; label: string; act: () => void }
@@ -13,7 +15,7 @@ export function ProjectSwitcher() {
   const projects = useApp((s) => s.app?.openProjects ?? EMPTY)
   const view = useApp((s) => s.view)
   const show = useApp((s) => s.show)
-  const command = useApp((s) => s.command)
+  const { closeProject, dialog } = useCloseProject()
   const [open, setOpen] = useState(false)
   const button = useRef<HTMLButtonElement>(null)
   const menu = useRef<HTMLUListElement>(null)
@@ -32,7 +34,7 @@ export function ProjectSwitcher() {
   ]
   if (shownId !== null) {
     const projectId = shownId
-    const close = () => void command('project.close', { projectId })
+    const close = () => void closeProject(projectId, shown?.name ?? 'this project')
     items.push({ key: 'close', label: 'Close project', act: close })
   }
 
@@ -105,6 +107,7 @@ export function ProjectSwitcher() {
           ))}
         </ul>
       )}
+      {dialog}
     </div>
   )
 }
