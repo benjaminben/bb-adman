@@ -1,6 +1,6 @@
 # Screens as built
 
-What each built screen offers today, its source files, its wording, and the choices made without a design sign-off. The Phase 2 screens not yet built (ComfyUI failures and dialogs, import, drop, relink, package, the brief form, the slot view, the campaign grid) are in `spec/screens-campaign.md`. Read with `spec/test-harnesses.md` (which of these functions the end-to-end harness reaches), `spec/structure.md` (renderer layout) and `spec/api-commands.md` / `spec/api-queries-events.md` (the calls each screen sends).
+What each built screen offers today, its source files, its wording, and the choices made without a design sign-off. The Phase 2 campaign screens and dialogs (ComfyUI failures, the address and licence dialogs, the trial mark, confirmed licences, import, drop, relink, package, the brief form, the slot view, the campaign grid) are in `spec/screens-campaign.md`. Read with `spec/test-harnesses.md` (which of these functions the end-to-end harness reaches), `spec/structure.md` (renderer layout) and `spec/api-commands.md` / `spec/api-queries-events.md` (the calls each screen sends).
 
 ## Status of these screens
 
@@ -21,7 +21,7 @@ Built (Phases 1 and 2). They are plain working screens, made so every function c
 Built. The reviewer checks these on every screen.
 
 - Every command goes through the app store's `command` (`src/renderer/stores/app-store.ts`), so `NEEDS_KEY` opens the key dialog and an error shows in the error banner. Queries go through `useApi().query`. A screen imports nothing from `src/main/`.
-- **A paid run starts only on the user's own confirm.** For a provider whose `local` is false, Generate, Start and Retry show one line in the panel with Confirm and Cancel (`paid-confirm.tsx`). The line names the provider the held request goes to. Nothing is sent before Confirm. Nothing is started on open, on a timer, or again after a failure. A local provider needs no confirm. A run row whose provider is not known is treated as paid: Retry asks first, and Cancel is hidden.
+- **A paid run starts only on the user's own confirm.** For a provider whose `local` is false, Generate, Start and Retry show one line in the panel with Confirm and Cancel (`paid-confirm.tsx`). The line names the provider the held request goes to. Nothing is sent before Confirm. Nothing is started on open, on a timer, or again after a failure. A local provider needs no confirm. A run row whose provider is not known is treated as paid: Retry asks first.
 - **One run per click.** From the moment `generation.runImages`, `generation.startVideo` or `job.retry` is sent until its reply arrives, the button that sent it is disabled, for every provider. Any reply, a refusal included, enables it again. Tests: `generate-panel-click.test.tsx`, `run-row-click.test.tsx`.
 - A provider that is not `available` is not offered for a run.
 - The ComfyUI address is drawn only in the Settings ComfyUI section and inside a failure sentence. It is sent in no input but `comfy.setAddress`. The window writes nothing to the console.
@@ -38,7 +38,7 @@ Built. `src/renderer/app/app-shell/`, `app/error-banner/`, `app/app-context.tsx`
 - A tab bar (Radix Tabs, label "Open projects"): "Start", then one tab per open project named after it [REQ: FR-003].
 - "Settings" button (pressed state while Settings shows). "Hand test" button only when `app.getState` says `devTools`.
 - The error banner (`role="alert"`) shows the last refused command's message with "Dismiss".
-- The key dialog is mounted once here.
+- The key dialog, the address dialog and the licence dialog are mounted once here.
 - The window opens maximized, never full screen [D-031].
 
 ## Start
@@ -51,20 +51,19 @@ Built. `src/renderer/screens/start/start-screen/`, `new-project-form/`, `recent-
 
 ## Project home
 
-Built. `src/renderer/screens/project-home/project-home/` (with `use-project.ts`), `brief-load/`, `brief-summary/`, `campaign-list/`, `campaign-input.ts`.
+Built. `src/renderer/screens/project-home/project-home/` (with `use-project.ts`), `brief-load/`, `brief-form/`, `campaign-list/`, `import-files/`, `missing-files/`, `package-project/`, `drop-import/`, `campaign-input.ts`. The sections, the brief form, import, drop, relink and package are in `spec/screens-campaign.md`.
 
 - Heading (project name), "Close project" button (`project.close`), file path line. "Loading the project…" while loading. Event `project.changed` for this project reads `project.get` again; one for another project does not.
-- **Load a brief.** Opens `dialog.pickFiles` with `purpose: 'brief'`; the picked path goes to `brief.parse`; a cancelled picker sends nothing. A refused `brief.parse` shows in the error banner and creates nothing.
-- **Brief summary** (replaced by the brief form, slice S2-13, `spec/screens-campaign.md`), read-only, the confirm step FR-023 asks for in its plainest form: Campaign name, Message (word for word), Audience, Region, Subjects (each with its ID and the notes "(made from the name)" and "already in this project, used as it is"), Sizes, Languages. When the brief lacks something, a list "What the brief lacks". "Create campaign" (disabled while the brief lacks something) sends `subject.create` for each subject the project does not hold, then `campaign.create`, and stops at the first refusal. "Creating the campaign…" while it runs. "Cancel" creates nothing.
+- **Load a brief** and **Type a brief** open the brief form, the confirm step of FR-023. A cancelled picker sends nothing. A refused `brief.parse` shows in the error banner and creates nothing.
 - **Campaign list:** name, "Variants: n", "Open" (`aria-label` "Open {name}"), or "No campaign yet."
 - The open campaign is state of this page, not of the app store. `CampaignPlace` renders `<CampaignView projectId campaignId onBack />` in the page's place; `CampaignView` owns its "Back to project" button and its `Campaign` region.
 
 ## Campaign page
 
-Built. `src/renderer/screens/campaign/campaign-view/`, `variant-list/`, `src/renderer/stores/job-store.ts`.
+Built. `src/renderer/screens/campaign/campaign-view/`, `variant-grid/`, `variant-tile/`, `slot-view/`, `src/renderer/stores/job-store.ts`.
 
 - "Back to project". "Loading the campaign…" while `campaign.get` is read. Then the campaign name.
-- **Variants** (radio group; replaced by the campaign grid, slice S2-16, `spec/screens-campaign.md`): each "{title} · {width}×{height} ({sizeLabel}) · {language} · {format}", plus "master". The first variant (the master) is chosen at the start. The picture panel, the video card and the run list work on the chosen variant.
+- **Variants:** the campaign grid of tiles (`spec/screens-campaign.md`, "The campaign grid and the variant tile"). The first variant (the master) is chosen at the start. The line "Runs and panels below are for: {title} · {sizeLabel} · {language}" names the chosen one. The slot view, the picture panel, the video card and the run list follow, in that order; the panels and the run list work on the chosen variant.
 - **Job store,** one per open campaign page. Reads `job.list { projectId, variantId }` and keeps rows by ID. A `job.updated` row whose ID the store holds, or whose ID a command just returned, replaces the row; for any other row the store reads `job.list` again. It never guesses the project from a row. A `job.list` reply that arrives after a later one is dropped. When a `job.list` reply holds a row the store already holds with an equal or later `updatedAt`, the store keeps its own row, so a late reply cannot turn a finished run back to "Working".
 - Known gaps, noted and not built: a refused `campaign.get` leaves the page on "Loading the campaign…" with no message ("Back to project" still works); the page does not read `campaign.get` again on `project.changed`.
 
@@ -72,7 +71,7 @@ Built. `src/renderer/screens/campaign/campaign-view/`, `variant-list/`, `src/ren
 
 Built. In `src/renderer/screens/campaign/`: `generate-panel/`, `reference-picker/`, `reference-list.ts`, `paid-confirm/`.
 
-- "Provider": providers from `app.getState` whose `jobs` holds `image` and that are `available`, starting at `settings.defaultProviders.image` when available. None: "No picture provider is available."
+- "Provider" (`provider-select/`, with the trial mark of `spec/screens-campaign.md`): providers from `app.getState` whose `jobs` holds `image` and that are `available`, starting at `settings.defaultProviders.image` when available. None: "No picture provider is available."
 - "Slot": picture slots from `template.slots` (copy slots left out), the first chosen. None: "This campaign has no picture slot."
 - "Prompt": prefilled by `prefilledPrompt` (`src/shared/generation/prompt.ts`) from the subjects, audience, region and message. The UI pass may reword `prefilledPrompt` with no ruling.
 - **Reference pictures,** under the prompt box. Heading "Reference pictures"; one small picture per asset with a tick box and its display name; "Add pictures". Empty: "No reference pictures in this project yet."
@@ -88,7 +87,7 @@ Built. In `src/renderer/screens/campaign/`: `generate-panel/`, `reference-picker
 
 Built. In `src/renderer/screens/campaign/`: `video-panel/` (with `video-length.ts`), `video-picture-choice/`, `video-start.ts`. A card under "Make pictures", for the chosen variant. Its runs appear in the same run list.
 
-- "Provider": providers from `app.getState` that are available and list `video` in `jobs`. Preselects the saved default only when it is available, else the first available video provider. None: "No video provider is available."
+- "Provider" (`provider-select/`, with the trial mark): providers from `app.getState` that are available and list `video` in `jobs`. Preselects the saved default only when it is available, else the first available video provider. None: "No video provider is available."
 - "Start from": "A prompt" (default), "A first-frame picture", "A reference picture". A start is offered only if `comfy.getInfo` lists a video workflow for its pair (`videoStart.firstFrame`, `videoStart.references`). "A prompt" is offered for ComfyUI always, even before `comfy.getInfo` answers. Every other provider gets "A prompt" only. A start no longer offered falls back to "A prompt".
 - **Picture start:** region "Picture to start from", the project's reference pictures (the list the reference picker shows), one choice, its own "Add pictures" (chooses the first added picture that can be sent), empty line "No reference pictures in this project yet.", hint "Tip: call the picture <Picture 1> in the prompt." (wording open, OI-89). A picture that cannot be sent shows its reason. The card's choice is separate from the picture panel's ticks. It is kept when switching between the two picture starts, kept but not sent under "A prompt", and dropped when it leaves the list or cannot be sent.
 - "Prompt" (empty at the start). "Length (seconds)": whole seconds, default 2, least 1, most from `comfy.getInfo`'s `maxMs` for the workflow of the chosen start. Above the most, the note "The clip will be shorter: at most {n} s" shows and the most is sent as `durationMs`. With `maxMs` unknown, the typed value is sent and the command's refusal shows.
@@ -97,14 +96,14 @@ Built. In `src/renderer/screens/campaign/`: `video-panel/` (with `video-length.t
 
 ### Run list and run row
 
-Built. In `src/renderer/screens/campaign/`: `run-list/`, `run-row/` (with `video-status.ts`), `run-result/`, `video-result/`.
+Built. In `src/renderer/screens/campaign/`: `run-list/`, `run-row/` (with `video-status.ts`, `cancel-shown.ts`), `run-failure/`, `run-result/`, `video-result/`.
 
 - Each row: the provider's label (or "The provider" when unknown), "Video" for a video run, then the status.
 - Under that first line, "Started by an agent" when `startedBy` is `agent`.
-- Status: `queued` "Waiting"; `running` "Working", with `result.stage`, "place in queue {n}" and the percent when present; `succeeded` "Done" and its results; `failed` "Failed", the sentence from `plainMessage` (`src/shared/providers/messages.ts`) with the provider's label, and "Retry"; `cancelled` "Cancelled" and "Retry". A failed run never shows raw error text.
+- Status: `queued` "Waiting"; `running` "Working", with `result.stage`, "place in queue {n}" and the percent when present; `succeeded` "Done" and its results; `failed` "Failed", "Retry", and under them the run failure (the reason's or kind's sentence, missing items, "Open Settings", the server's message; `spec/screens-campaign.md`); `cancelled` "Cancelled" and "Retry". A failed run never shows raw error text.
 - A running video run says "Waiting (place {n})" (or "Waiting") while the server holds it in its queue, else "Working, {m} min" counted from the row's `createdAt` (there is no `startedAt` column), read again every 15 seconds. No percentage.
-- "Cancel" shows for `queued` and `running` when the provider's `cancel` is not `none`. A refused cancel shows the command's message.
-- "Retry" sends `job.retry`; for a paid provider it first shows the paid confirm line with the stored request's count.
+- **"Cancel"** shows exactly when `job.cancel` would accept the run: a `queued` run on any provider; a `running` run, unless its provider's `cancel` is `none` and the job is a background job other than pictures (`spec/cancel.md`). The rule lives in `run-row/cancel-shown.ts` and must always agree with `cancelRefusal` in `src/main/jobs/cancel.ts`; `tests/unit/main/jobs/cancel-shown.test.ts` holds the two to the same answer for every kind, status and provider. A refused cancel shows the command's message.
+- "Retry" sends `job.retry`; for a paid provider it first shows the paid confirm line with the count `job.retry` will ask for (FN-4, `spec/screens-campaign.md`).
 - Picture results: one `<img>` per asset ID, 160 px wide, `alt` "Result {i}", address from `assetUrl`. None: "No pictures."
 - Video result: `<video controls preload="metadata">`, `aria-label` "Video result", at the panel's width, `src` from `assetUrl`, no autoplay, sound as the clip has it. None: "No clip."
 - When a succeeded row's results are first drawn, the page sends `job.markSeen` once for that job.
@@ -135,7 +134,7 @@ Built. `src/renderer/screens/settings/settings-screen/` and one component folder
 - "Check" sends `comfy.check`; disabled with no address saved. "Checking…" while it runs.
 - Outcome `ok`: the server version and, per non-draft workflow, its label, status (`trial` shown as "trial"), its licence note as text when it has one, and "complete" or its missing items by name and folder. An `ok` with no workflows shows the version alone. Each other outcome (`no_answer`, `not_comfyui`, `sign_in_needed`, `redirect_refused`, `certificate`, `address_refused`) shows its sentence from `spec/comfyui.md` with the address filled in. Under "What Adman leaves on the server", the "left on the server" sentences.
 - `comfy-check-result.tsx` takes the six check sentences from `src/shared/providers/messages.ts` (`checkMessage`, `fillMarks`) and the missing-item text from `missingItemText`, with the Settings form of `redirect_refused`: "The server tried to send Adman to another address. Adman did not follow."
-- Not built (S2-8): the list "Licences you confirmed" with "Forget" (`spec/screens-campaign.md`).
+- Below the check result, the list "Licences you confirmed" with "Forget" (`licence-list/`, `spec/screens-campaign.md`).
 
 ### Agent access
 
@@ -174,9 +173,9 @@ Built, throwaway. `src/renderer/dev/hand-test-screen/`, `s3-settings-form/`, `st
 - "Dropbox" with "Sign in to Dropbox" (`storage.dropboxSignIn`), shown only when `HAND_TEST_DROPBOX` is true. It is false on `main`, so the Dropbox parts are hidden.
 - It uses existing controls, labels and keyboard paths, with no visual design.
 
-## Not built on the campaign page
+## Address and licence dialogs
 
-Not built (Phase 2 leftovers, slices S2-5 to S2-7). ComfyUI failures in the run row, the address dialog, the commercial-licence dialog and the trial mark are designed in `spec/screens-campaign.md`. Refusal `comfy_job_not_offered` keeps showing its message in the error banner, as built.
+Built. `src/renderer/dialogs/address-dialog/`, `licence-dialog/`, mounted in the shell beside the key dialog; `src/renderer/stores/run-asks.ts`. A run refused for a missing ComfyUI address or an unconfirmed commercial licence opens one, then the run is sent again (`spec/screens-campaign.md`). Refusal `comfy_job_not_offered` shows its message in the error banner.
 
 ## Editor, tabs and thumbnails
 
@@ -212,11 +211,9 @@ Phases 1 and 2:
 - Navigation by one tab per open project, with Settings and Hand test as buttons beside the tabs (OI-31 is open).
 - Settings is shown in place of the tab panels, not as a tab or a window.
 - Screens share one layout stylesheet (`ui/layout.module.css`) of pages, sections, rows and fields; a class one component uses sits in its own module.
-- The brief summary is a plain definition list, the plainest form of the confirm step of FR-023.
 - The paid confirm is one line inside the panel, not the run confirmation dialog of Phase 4, and shows no paid-generation count (FR-230 waits for Phase 4).
 - Picture results are 160 px wide images in a row; the video result fills the panel's width.
 - A running video run counts whole minutes from `createdAt`, refreshed every 15 seconds, with no percentage.
-- The variant list is a radio group with a text line per variant, not a grid of tiles.
 - The reference picker and the video card's picture choice are separate lists of the same pictures, with separate choices.
 - The local-provider reference sentence (OI-77) and the "<Picture 1>" hint (OI-89) are provisional wording.
 - The Claude Code line uses the `--font-mono` token (a system monospace font list).

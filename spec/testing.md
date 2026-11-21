@@ -207,7 +207,7 @@ Each test below must exist and keep passing. A test marked "Not built" is writte
 | Overflow is set by the render service when text grows past its box by size and by letter spacing, and cleared when it fits [REQ: FR-098, FR-249] | `tests/e2e/scene-overflow.spec.ts`. Built |
 | The tab keys step through variant tabs and campaign tabs and wrap round [REQ: FR-242] | `tests/unit/renderer/app/tab-keys.test.tsx`. Not built (Phase 3) |
 | Security: `window.drop` has only `pathOf`; a page-made `File` gives no path; `window.api` unchanged | `tests/e2e/drop-bridge.spec.ts` |
-| Security: server text holding `<a href>` shows as characters in a run failure | `tests/unit/renderer/screens/campaign/run-failure.test.tsx`. Not built (S2-5) |
+| Security: server text holding `<a href>` shows as characters in a run failure | `tests/unit/renderer/screens/campaign/run-failure.test.tsx` |
 
 **Other pinned tests and fixtures:**
 

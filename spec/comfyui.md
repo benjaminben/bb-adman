@@ -303,7 +303,7 @@ Built in the main process (`failures.ts`, `src/shared/providers/messages.ts`); t
 - The retry rule of `spec/providers.md` holds: nothing is sent twice on the app's own decision. Polling a run already started is the stated exception.
 - Command refusals before any job row (`spec/api-commands.md`): `comfy_address_needed`, `comfy_job_not_offered` ("ComfyUI cannot make this kind of picture yet."), `too_many_references` with `details.max` ("ComfyUI takes one reference picture for this run." when `max` is 1, else "ComfyUI takes at most {max} reference pictures for this run."). Both sentences live in `src/shared/providers/messages.ts`.
 - **Built:** Settings' `comfy-check-result.tsx` takes its six check sentences from `messages.ts` (`checkMessage`), and `redirect_refused` has a Settings form: "The server tried to send Adman to another address. Adman did not follow."
-- **Not built (window, S2-5):** a failed row shows the reason's sentence, `missing_items` lists the items (from the failed row's `result.missing`), each message has Retry, and the first seven reasons also offer "Open Settings" [REQ: FR-265] (`spec/screens-campaign.md`).
+- **Built (window, S2-5):** a failed row shows the reason's sentence, `missing_items` lists the items (from the failed row's `result.missing`), each message has Retry, and the first seven reasons also offer "Open Settings" [REQ: FR-265] (`spec/screens-campaign.md`).
 
 ### The server's own message, on request [REQ: FR-267, FR-277; D-051 answer 9]
 

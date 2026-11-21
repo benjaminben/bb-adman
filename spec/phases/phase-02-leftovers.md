@@ -72,7 +72,7 @@ One short run in the main folder, class B, unless an item says otherwise. State 
 
 ## Groups 4 and 5 — Phase 2 screens (slices S2-4 to S2-17)
 
-In `spec/phases/phase-02-screens.md`.
+In `spec/phases/phase-02-screens.md`. S2-4 to S2-16 are built; only S2-17 is left.
 
 ## Phase 2 exit check
 
