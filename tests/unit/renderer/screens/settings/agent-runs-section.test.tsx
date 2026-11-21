@@ -22,18 +22,19 @@ describe('settings: agent runs [spec/agent-runs.md, Settings block]', () => {
     ['a local provider that makes pictures only', true, provider({ id: 'pics', jobs: ['image'] })],
     ['a provider that is not available', false, provider({ id: 'off', available: false })],
     ['a provider that makes no picture or video', false, provider({ id: 'words', jobs: ['text'] })],
-    ['a paid provider, not yet offered', false, provider({ id: 'paid', local: false })],
+    ['a paid provider', true, provider({ id: 'paid', local: false })],
   ])('offers a tick for %s: %s', async (_, shown, row) => {
     await renderApp(<SettingsScreen />, agentRunsFake([row]))
     const box = await section()
     expect(box.queryByRole('checkbox', { name: tickName(row.label) }) !== null).toBe(shown)
   })
 
-  it('shows no tick for the providers of the base state, and no paid line', async () => {
+  it('shows one tick for the base state, Google Gemini, with the paid line', async () => {
     await renderApp(<SettingsScreen />)
     const box = await section()
-    expect(box.queryAllByRole('checkbox')).toEqual([])
-    expect(box.queryByText(PAID)).toBeNull()
+    expect(box.getAllByRole('checkbox')).toHaveLength(1)
+    expect(box.getByRole('checkbox', { name: tickName('Google Gemini') })).toBeInTheDocument()
+    expect(box.getAllByText(PAID)).toHaveLength(1)
   })
 
   it('ticks and unticks with agentRuns.setAllowed, showing the saved state', async () => {
