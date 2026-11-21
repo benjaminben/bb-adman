@@ -2,13 +2,9 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { assetList } from '../../../src/main/queries/asset'
-import { createProjectRegistry } from '../../../src/main/db/project-registry'
-import {
-  closeProjectFile,
-  createProjectFile,
-  type ProjectHandle,
-} from '../../../src/main/db/project-file'
+import { assetList } from '@/main/queries/asset'
+import { createProjectRegistry } from '@/main/db/project-registry'
+import { closeProjectFile, createProjectFile, type ProjectHandle } from '@/main/db/project-file'
 import { insertTestAsset } from './asset-rows'
 
 let root: string

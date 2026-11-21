@@ -7,11 +7,8 @@ import {
   submitAnswer,
   systemStatsAnswer,
   uploadAnswer,
-} from '../../../../../src/main/providers/comfyui/answers'
-import {
-  MAX_SERVER_NAME_CHARS,
-  MAX_SERVER_TEXT_CHARS,
-} from '../../../../../src/main/providers/comfyui/limits'
+} from '@/main/providers/comfyui/answers'
+import { MAX_SERVER_NAME_CHARS, MAX_SERVER_TEXT_CHARS } from '@/main/providers/comfyui/limits'
 
 const long = 'v'.repeat(MAX_SERVER_TEXT_CHARS + 50)
 const id = '6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b'

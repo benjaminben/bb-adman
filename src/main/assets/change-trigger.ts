@@ -1,9 +1,9 @@
 // When the app looks for linked files changed outside it (SPEC 14, Slice A rulings point 2b;
 // FR-009, R-06): after a project opens and when a window gains focus. No Electron import;
 // index.ts wires both triggers. project/open.ts is not edited.
-import type { BusEvent, ExecuteOptions } from '../commands/bus'
-import type { ActivityLog } from '../log/activity-log'
-import type { Result } from '../../shared/schemas/result'
+import type { BusEvent, ExecuteOptions } from '@/main/commands/bus'
+import type { ActivityLog } from '@/main/log/activity-log'
+import type { Result } from '@/shared/schemas/result'
 
 type Execute = (name: string, input: unknown, opts: ExecuteOptions) => Promise<Result<unknown>>
 

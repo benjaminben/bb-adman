@@ -1,13 +1,9 @@
 // Answers for the campaign page tests (SPEC 14 1.41 TP-2): a campaign.get reply shaped as
 // slice C returns it (SPEC 4.3 [1.42]), and template.slots.
 import type { ReactElement } from 'react'
-import type {
-  CampaignGet,
-  TemplateSlots,
-  VariantSummary,
-} from '../../../../../src/shared/schemas/queries/campaign'
-import type { AppState, ProviderInfo } from '../../../../../src/shared/schemas/queries/app'
-import type { JobRow } from '../../../../../src/shared/schemas/rows/job'
+import type { CampaignGet, TemplateSlots, VariantSummary } from '@/shared/schemas/queries/campaign'
+import type { AppState, ProviderInfo } from '@/shared/schemas/queries/app'
+import type { JobRow } from '@/shared/schemas/rows/job'
 import { baseState, makeFakeApi } from '../../fake-api'
 import { renderApp } from '../../render'
 

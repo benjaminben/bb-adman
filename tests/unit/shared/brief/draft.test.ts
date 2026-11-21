@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { briefDraftFrom, BRIEF_UNREADABLE } from '../../../../src/shared/brief/draft'
+import { briefDraftFrom, BRIEF_UNREADABLE } from '@/shared/brief/draft'
 
 // The step parseBrief takes after either syntax has given a value (SPEC 14 1.9 slice B).
 describe('briefDraftFrom: a parsed value to a BriefDraft [SPEC 6.1, 14 1.9]', () => {

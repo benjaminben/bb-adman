@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { parseBrief } from '../../../../src/shared/brief/parse'
-import { BRIEF_UNREADABLE } from '../../../../src/shared/brief/draft'
-import type { BriefSyntax } from '../../../../src/shared/templates/types'
+import { parseBrief } from '@/shared/brief/parse'
+import { BRIEF_UNREADABLE } from '@/shared/brief/draft'
+import type { BriefSyntax } from '@/shared/templates/types'
 
 const unreadable = { ok: false, error: BRIEF_UNREADABLE }
 

@@ -4,7 +4,7 @@
 // field names are from a reading of ComfyUI's source, not from a run (CU-5a corrects them),
 // so every field may be missing.
 import { z } from 'zod'
-import { ProviderFailure } from '../types'
+import { ProviderFailure } from '@/main/providers/types'
 import { MAX_SERVER_NAME_CHARS, MAX_SERVER_TEXT_CHARS } from './limits'
 
 export type NodeRefusal = { type?: string; message?: string; details?: string; inputName?: string }

@@ -7,7 +7,7 @@ import {
   MAX_SERVER_TEXT_CHARS,
   SHORT_CALL_MS,
   UPLOAD_MS,
-} from '../../../../../src/main/providers/comfyui/limits'
+} from '@/main/providers/comfyui/limits'
 
 describe('ComfyUI client limits, one owner [SPEC 6.10.2, 14 CU-2]', () => {
   it('holds the byte and text limits of the 6.10.2 table', () => {

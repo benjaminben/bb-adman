@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { assetUpdate } from '../../../src/main/commands/asset/update'
+import { assetUpdate } from '@/main/commands/asset/update'
 import { insertTestAsset } from './asset-rows'
 import { makeAssetBus, expectRefused } from './asset-bus'
 import { insertLayer, seedVariant } from './usage-rows'

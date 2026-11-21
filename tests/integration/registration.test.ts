@@ -1,11 +1,11 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, type Fixture } from './core-fixture'
-import { AGENT_POLICY } from '../../src/main/commands/agent-policy'
-import { projectCommands } from '../../src/main/commands/project'
-import { secretCommands } from '../../src/main/commands/secret'
-import { settingsCommands } from '../../src/main/commands/settings'
-import { appQueries } from '../../src/main/queries/app'
-import { historyQueries } from '../../src/main/queries/history'
+import { AGENT_POLICY } from '@/main/commands/agent-policy'
+import { projectCommands } from '@/main/commands/project'
+import { secretCommands } from '@/main/commands/secret'
+import { settingsCommands } from '@/main/commands/settings'
+import { appQueries } from '@/main/queries/app'
+import { historyQueries } from '@/main/queries/history'
 
 let f: Fixture
 afterEach(() => f.cleanup())

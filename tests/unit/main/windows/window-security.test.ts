@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { appWindowOptions } from '../../../../src/main/windows/app-window-options'
-import { pageAddress } from '../../../../src/main/windows/app-window'
-import { CONTENT_SECURITY_POLICY, devContentSecurityPolicy } from '../../../../src/main/windows/csp'
-import { decideWindowOpen, isAllowedNavigation } from '../../../../src/main/windows/navigation'
+import { appWindowOptions } from '@/main/windows/app-window-options'
+import { pageAddress } from '@/main/windows/app-window'
+import { CONTENT_SECURITY_POLICY, devContentSecurityPolicy } from '@/main/windows/csp'
+import { decideWindowOpen, isAllowedNavigation } from '@/main/windows/navigation'
 
 describe('app window settings [SPEC 8.2]', () => {
   it('turns on context isolation, sandbox and web security and turns off node integration', () => {

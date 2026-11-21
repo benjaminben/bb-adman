@@ -27,7 +27,7 @@ type Api = {
 
 beforeEach(async () => {
   invoke.mockClear()
-  await import('../../../src/preload/index')
+  await import('@/preload/index')
 })
 
 describe('preload bridge [SPEC 1.3, 4.1]', () => {

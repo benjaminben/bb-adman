@@ -1,12 +1,8 @@
 // The parts the shipped workflows share (SPEC 6.10.4, 6.10.5, 6.10.10): sizes, model files
 // (analyst's V-17 and V-21), licences (V-24, V-25) and the "left on the server" sentences.
 // Each value has this one owner.
-import type {
-  WorkflowLicence,
-  WorkflowNeeds,
-  WorkflowVideo,
-} from '../../../../shared/schemas/queries/comfy'
-import type { SizeRule } from '../../../../shared/comfy/fit-size'
+import type { WorkflowLicence, WorkflowNeeds, WorkflowVideo } from '@/shared/schemas/queries/comfy'
+import type { SizeRule } from '@/shared/comfy/fit-size'
 
 // The full sizes of SPEC 6.10.5, for later runs; the drafts use them.
 export const MOSS_FULL_SIZE: SizeRule = { multiple: 16, minPixels: 1_000_000, maxPixels: 2_000_000 }

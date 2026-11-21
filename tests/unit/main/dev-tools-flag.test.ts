@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { devToolsEnabled } from '../../../src/main/dev-tools-flag'
+import { devToolsEnabled } from '@/main/dev-tools-flag'
 
 describe('devTools is on only in an unpackaged app with ADMAN_DEV_TOOLS=1 [SPEC 13]', () => {
   it('is on when not packaged and the variable is 1', () => {

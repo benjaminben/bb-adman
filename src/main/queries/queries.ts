@@ -1,8 +1,8 @@
 // The query runner (SPEC 4.3, 12). It merges the domain maps, one line per domain.
 import { ulid } from 'ulid'
-import type { CoreDeps } from '../core-deps'
-import type { ActivityLog } from '../log/activity-log'
-import { errorContext } from '../log/error-context'
+import type { CoreDeps } from '@/main/core-deps'
+import type { ActivityLog } from '@/main/log/activity-log'
+import { errorContext } from '@/main/log/error-context'
 import { appQueries } from './app'
 import { assetQueries } from './asset'
 import { campaignQueries } from './campaign'
@@ -14,7 +14,7 @@ import { mcpQueries, type McpState } from './mcp'
 import { projectQueries } from './project'
 import { templateQueries } from './template'
 import type { QueryFn, QueryOptions } from './types'
-import { AppError, fail, internalError, ok, type Result } from '../../shared/schemas/result'
+import { AppError, fail, internalError, ok, type Result } from '@/shared/schemas/result'
 
 export type { QueryFn, QueryOptions }
 

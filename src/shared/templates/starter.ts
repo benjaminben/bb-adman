@@ -1,6 +1,6 @@
 // SPEC 6.1 starter template [FR-040, FR-041] and the slot view's states [FR-042]. Pure.
 // A template lists slots only; it defines no positions (FR-040).
-import type { LayerRow } from '../schemas/rows/layer'
+import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { SlotStates, Template } from './types'
 
 export const starterTemplate: Template = {

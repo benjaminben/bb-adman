@@ -4,7 +4,7 @@ import {
   MAX_PICTURE_PIXELS,
   MAX_PICTURE_SIDE,
   MAX_PROVIDER_ANSWER_BYTES,
-} from '../../../../src/main/providers/picture-limits'
+} from '@/main/providers/picture-limits'
 
 describe('picture limits, one owner [SPEC 6.2 1.20, 14 L1]', () => {
   it('holds the four values of the Section 6.2 table', () => {

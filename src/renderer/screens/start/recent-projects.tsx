@@ -1,5 +1,5 @@
-import { useApp, EMPTY } from '../../app/app-context'
-import styles from '../screens.module.css'
+import { useApp, EMPTY } from '@/renderer/app/app-context'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function RecentProjects() {
   const recent = useApp((s) => s.app?.recentProjects ?? EMPTY)

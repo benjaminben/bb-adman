@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { LookupAddress } from 'node:dns'
-import {
-  AddressRefused,
-  checkedLookup,
-  type Resolve,
-} from '../../../../../src/main/providers/comfyui/lookup'
+import { AddressRefused, checkedLookup, type Resolve } from '@/main/providers/comfyui/lookup'
 
 function resolver(list: LookupAddress[] | Error): Resolve {
   return (_host, cb) => {

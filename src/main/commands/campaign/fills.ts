@@ -1,9 +1,9 @@
 // SPEC 6.1 starter template: what fills each slot of a new master variant. Reads asset rows
 // by ID only and never builds a path (SPEC 14, contracts A and C).
 import type Database from 'better-sqlite3'
-import type { Brief } from '../../../shared/schemas/brief'
-import type { RuleSetValues } from '../../../shared/schemas/commands/campaign'
-import type { SlotFills, Template } from '../../../shared/templates/types'
+import type { Brief } from '@/shared/schemas/brief'
+import type { RuleSetValues } from '@/shared/schemas/commands/campaign'
+import type { SlotFills, Template } from '@/shared/templates/types'
 
 // A hero image is an image in the asset library attached to a subject; with several, the
 // newest fills the slot (SPEC 3.3 asset rules, R-12). The first subject with one is used.

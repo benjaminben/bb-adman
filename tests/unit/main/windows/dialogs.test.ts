@@ -6,7 +6,7 @@ vi.mock('electron', () => ({
   dialog: { showOpenDialog },
 }))
 
-const { runDialogQuery } = await import('../../../../src/main/windows/dialogs')
+const { runDialogQuery } = await import('@/main/windows/dialogs')
 
 beforeEach(() => {
   showOpenDialog.mockReset()

@@ -1,7 +1,7 @@
 // Made-up mcp.getConnectInfo data for the Settings agent access tests. The token is a
 // placeholder that does not look like a real key.
-import type { ConnectInfo } from '../../../../../src/shared/schemas/queries/mcp'
-import type { Result } from '../../../../../src/shared/schemas/result'
+import type { ConnectInfo } from '@/shared/schemas/queries/mcp'
+import type { Result } from '@/shared/schemas/result'
 import { makeFakeApi } from '../../fake-api'
 
 export const TOKEN = 'made-up-test-token-not-a-key'

@@ -2,11 +2,11 @@
 // Only linked assets whose file is found are looked at; a file is read again only when its
 // size or time differs from the row. Missing files are the resolver's, not this check's.
 import fs from 'node:fs'
-import type { ProjectHandle } from '../db/project-file'
-import { readWireRows } from '../db/rows'
+import type { ProjectHandle } from '@/main/db/project-file'
+import { readWireRows } from '@/main/db/rows'
 import { readFileFacts, type FileFacts } from './inspect'
 import { resolveRow } from './service'
-import type { AssetRow } from '../../shared/schemas/rows/asset'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
 
 export type ChangedFile = { id: string; facts: FileFacts }
 

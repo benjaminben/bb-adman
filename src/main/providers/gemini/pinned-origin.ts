@@ -4,8 +4,8 @@
 // [1.14] G8: the whole answer body is read inside the marked step and the library gets a
 // finished answer, so a connection that breaks during the read is marked too.
 // [1.20] L1: the body read stops at a byte limit (Section 6, F-01).
-import { MAX_PROVIDER_ANSWER_BYTES } from '../picture-limits'
-import { ProviderFailure } from '../types'
+import { MAX_PROVIDER_ANSWER_BYTES } from '@/main/providers/picture-limits'
+import { ProviderFailure } from '@/main/providers/types'
 
 export const GEMINI_ORIGIN = 'https://generativelanguage.googleapis.com'
 

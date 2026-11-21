@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { projectPackage } from '../../../src/main/commands/project/package'
+import { projectPackage } from '@/main/commands/project/package'
 import { makeAssetBus, expectRefused } from './asset-bus'
 
 let bus: ReturnType<typeof makeAssetBus>

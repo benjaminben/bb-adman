@@ -1,14 +1,14 @@
 // The project query domain (SPEC 12, 4.3; SPEC 14, slice C). project.get: project meta,
 // subjects, campaign summaries with job marks, and the missing asset count. The count comes
 // from AssetService.missingAssetIds, the one call slice C makes on it (SPEC 14 contracts).
-import type { CoreDeps } from '../core-deps'
+import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
-import { readWireRows } from '../db/rows'
-import { readMeta } from '../db/meta'
+import { readWireRows } from '@/main/db/rows'
+import { readMeta } from '@/main/db/meta'
 import { jobMarks, openFor } from './campaign-reads'
-import { projectGetInput, type ProjectGet } from '../../shared/schemas/queries/campaign'
-import type { CampaignRow } from '../../shared/schemas/rows/campaign'
-import type { SubjectRow } from '../../shared/schemas/rows/subject'
+import { projectGetInput, type ProjectGet } from '@/shared/schemas/queries/campaign'
+import type { CampaignRow } from '@/shared/schemas/rows/campaign'
+import type { SubjectRow } from '@/shared/schemas/rows/subject'
 
 const byId = (a: { id: string }, b: { id: string }) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
 

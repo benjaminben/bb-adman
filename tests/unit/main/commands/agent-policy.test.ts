@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { agentPolicyFor, denialMessage } from '../../../../src/main/commands/agent-policy'
+import { agentPolicyFor, denialMessage } from '@/main/commands/agent-policy'
 
 describe('agent policy table [SPEC 4.2, ADR-009]', () => {
   it('treats an unknown command as deny', () => {

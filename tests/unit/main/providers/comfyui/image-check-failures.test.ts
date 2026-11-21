@@ -1,9 +1,9 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { startComfyStandIn, type Reply, type StandIn } from '../../../../helpers/comfy-stand-in'
 import { comfyContext, fakeTiming, requestLines } from '../../../../helpers/comfy-run'
-import { comfyImage } from '../../../../../src/main/providers/comfyui/image'
-import { createServerChecks } from '../../../../../src/main/providers/comfyui/needs'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
+import { comfyImage } from '@/main/providers/comfyui/image'
+import { createServerChecks } from '@/main/providers/comfyui/needs'
+import { ProviderFailure } from '@/main/providers/types'
 
 let stand: StandIn
 afterEach(async () => {

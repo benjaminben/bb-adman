@@ -1,10 +1,10 @@
 // One saved key: shown by its last four characters only, replaced or deleted (R-10).
 import { useState, type FormEvent } from 'react'
-import { useApp } from '../../app/app-context'
-import { secretLabel } from '../../ui/secret-labels'
-import type { ProviderInfo } from '../../../shared/schemas/queries/app'
-import type { SecretName } from '../../../shared/schemas/secrets'
-import styles from '../screens.module.css'
+import { useApp } from '@/renderer/app/app-context'
+import { secretLabel } from '@/renderer/ui/secret-labels'
+import type { ProviderInfo } from '@/shared/schemas/queries/app'
+import type { SecretName } from '@/shared/schemas/secrets'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function KeyRow(props: { provider: ProviderInfo; name: SecretName }) {
   const { provider, name } = props

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { greyPng } from '../../../../src/main/providers/fake/png'
-import { pictureType } from '../../../../src/main/providers/picture-type'
-import { pictureSize } from '../../../../src/main/providers/picture-size'
+import { greyPng } from '@/main/providers/fake/png'
+import { pictureType } from '@/main/providers/picture-type'
+import { pictureSize } from '@/main/providers/picture-size'
 
 describe("the fake provider's picture is a real PNG [SPEC 14 1.20 L6]", () => {
   it('reads as image/png with its size from the shared picture functions', () => {

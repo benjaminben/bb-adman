@@ -11,8 +11,8 @@ import {
   S3ServiceException,
 } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
-import { storageFilePath, storageListPrefix } from '../storage-paths'
-import type { AdapterContext, StorageProvider } from '../types'
+import { storageFilePath, storageListPrefix } from '@/main/providers/storage-paths'
+import type { AdapterContext, StorageProvider } from '@/main/providers/types'
 import { buildS3Client } from './client'
 import { failureFromS3Error, kindForCode, s3Failure } from './failure'
 import type { PinnableHandler } from './pinned-host'

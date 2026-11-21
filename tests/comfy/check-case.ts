@@ -5,13 +5,13 @@
 // kind, reason and detail. [1.57] H-3: then one line per draft workflow, its model files
 // present or missing (draft-files.ts). Everything goes through the printer, so the address
 // never shows.
-import type { ComfyClient } from '../../src/main/providers/comfyui/client'
-import { checkServer } from '../../src/main/providers/comfyui/needs'
-import { WORKFLOWS } from '../../src/main/providers/comfyui/workflows'
-import type { WorkflowSpec } from '../../src/main/providers/comfyui/workflows/types'
-import { ProviderFailure } from '../../src/main/providers/types'
-import type { MissingItem } from '../../src/shared/schemas/queries/app'
-import type { ComfyCheck } from '../../src/shared/schemas/commands/comfy-check'
+import type { ComfyClient } from '@/main/providers/comfyui/client'
+import { checkServer } from '@/main/providers/comfyui/needs'
+import { WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
+import { ProviderFailure } from '@/main/providers/types'
+import type { MissingItem } from '@/shared/schemas/queries/app'
+import type { ComfyCheck } from '@/shared/schemas/commands/comfy-check'
 import { draftFileLines, keepFolderLists } from './draft-files'
 import type { Print } from './print'
 import type { FailedCall } from './recorder'

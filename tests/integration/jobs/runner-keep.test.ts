@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { gate, makeRunnerFixture, waitFor, type RunnerFixture } from './runner-fixture'
-import { ProviderCancelled, ProviderFailure } from '../../../src/main/providers/types'
-import type { JobRunContext } from '../../../src/main/jobs/types'
+import { ProviderCancelled, ProviderFailure } from '@/main/providers/types'
+import type { JobRunContext } from '@/main/jobs/types'
 
 const fixtures: RunnerFixture[] = []
 function fixture(): RunnerFixture {

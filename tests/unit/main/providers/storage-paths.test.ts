@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { storageFilePath, storageListPrefix } from '../../../../src/main/providers/storage-paths'
+import { storageFilePath, storageListPrefix } from '@/main/providers/storage-paths'
 
 describe('storageFilePath: the path rules every storage adapter shares [SPEC 6]', () => {
   it.each(['a.txt', 'a/b/c.png', 'campaign-1/exports/post/1x1/en-v1.png', 'name with space.txt'])(

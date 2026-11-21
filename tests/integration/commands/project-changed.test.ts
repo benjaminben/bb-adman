@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { z } from 'zod'
-import { defineCommand } from '../../../src/main/commands/types'
+import { defineCommand } from '@/main/commands/types'
 import { makeMultiBus } from './multi-bus'
 import { expectChanges } from '../expect-changes'
 import { insertAsset, insertCampaign } from '../row-fixtures'

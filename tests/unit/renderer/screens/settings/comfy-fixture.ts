@@ -1,6 +1,6 @@
 // Made-up comfy.getInfo and comfy.check data for the Settings ComfyUI section tests.
-import type { ComfyInfo, WorkflowInfo } from '../../../../../src/shared/schemas/queries/comfy'
-import type { ComfyCheck } from '../../../../../src/shared/schemas/commands/comfy-check'
+import type { ComfyInfo, WorkflowInfo } from '@/shared/schemas/queries/comfy'
+import type { ComfyCheck } from '@/shared/schemas/commands/comfy-check'
 import { makeFakeApi } from '../../fake-api'
 
 export const ADDRESS = 'http://192.168.1.50:8188'

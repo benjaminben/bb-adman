@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { registerIpc, IPC } from '../../../src/main/ipc'
-import { projectPathFromArgv } from '../../../src/main/open-file'
-import { ok } from '../../../src/shared/schemas/result'
+import { registerIpc, IPC } from '@/main/ipc'
+import { projectPathFromArgv } from '@/main/open-file'
+import { ok } from '@/shared/schemas/result'
 
 type Handler = (event: unknown, ...args: unknown[]) => unknown
 

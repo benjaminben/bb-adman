@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { createMcpService } from '../../../../src/main/mcp/service'
-import type { McpHttp } from '../../../../src/main/mcp/server'
-import type { SettingsStore } from '../../../../src/main/settings/settings-store'
-import type { SecretStore } from '../../../../src/main/secrets/secret-store'
-import type { ActivityLog } from '../../../../src/main/log/activity-log'
+import { createMcpService } from '@/main/mcp/service'
+import type { McpHttp } from '@/main/mcp/server'
+import type { SettingsStore } from '@/main/settings/settings-store'
+import type { SecretStore } from '@/main/secrets/secret-store'
+import type { ActivityLog } from '@/main/log/activity-log'
 
 // An HTTP door whose stop always fails, as if closing a session threw (REVIEW MCP-A Fixes S-2).
 function build() {

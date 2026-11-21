@@ -2,7 +2,7 @@
 // stores in job.request, and what the job keeps and returns in job.result. Shared, so the
 // window can read them; this file imports nothing from the main process.
 import { z } from 'zod'
-import { MAX_IMAGES_PER_RUN } from '../../config/defaults'
+import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'
 
 export const imageJobRequest = z.object({
   prompt: z.string().min(1),

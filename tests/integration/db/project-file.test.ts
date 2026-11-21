@@ -3,14 +3,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import Database from 'better-sqlite3'
-import {
-  createProjectFile,
-  openProjectFile,
-  closeProjectFile,
-} from '../../../src/main/db/project-file'
-import { readMeta } from '../../../src/main/db/meta'
-import { bundledMigrations } from '../../../src/main/db/bundled-migrations'
-import { AppError } from '../../../src/shared/schemas/result'
+import { createProjectFile, openProjectFile, closeProjectFile } from '@/main/db/project-file'
+import { readMeta } from '@/main/db/meta'
+import { bundledMigrations } from '@/main/db/bundled-migrations'
+import { AppError } from '@/shared/schemas/result'
 
 const SPEC_TABLES = [
   'asset',

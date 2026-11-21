@@ -3,9 +3,9 @@
 // upload of each picture. An upload sends only the bytes, under the app's own name; never a
 // path, a display name, an asset ID or a file name. A cancel before submission uploads
 // nothing more.
-import { fitSize, type Size } from '../../../shared/comfy/fit-size'
-import { pngPixelSize } from '../png-size'
-import { ProviderCancelled, type ImageFile } from '../types'
+import { fitSize, type Size } from '@/shared/comfy/fit-size'
+import { pngPixelSize } from '@/main/providers/png-size'
+import { ProviderCancelled, type ImageFile } from '@/main/providers/types'
 import type { ComfyClient } from './client'
 import { uploaded } from './image'
 import type { WorkflowSpec } from './workflows/types'

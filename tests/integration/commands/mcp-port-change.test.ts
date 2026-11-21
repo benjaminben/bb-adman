@@ -3,7 +3,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { data } from '../core-fixture'
 import { makeMcpFixture, stopAndClean, type McpFixture } from '../mcp/mcp-fixture'
 import { connectError, freePort, INIT, mcpHeaders, openSession, send } from '../mcp/http-client'
-import type { ConnectInfo } from '../../../src/shared/schemas/queries/mcp'
+import type { ConnectInfo } from '@/shared/schemas/queries/mcp'
 
 let f: McpFixture | undefined
 let blocker: net.Server | undefined

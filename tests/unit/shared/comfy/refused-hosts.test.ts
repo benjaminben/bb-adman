@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isRefusedHost } from '../../../../src/shared/comfy/refused-hosts'
+import { isRefusedHost } from '@/shared/comfy/refused-hosts'
 
 const OWN = [47821, 47822]
 

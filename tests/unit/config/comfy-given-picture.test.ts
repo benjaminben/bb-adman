@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
-import { MAX_PICTURE_BYTES } from '../../../src/main/providers/picture-limits'
+import { MAX_PICTURE_BYTES } from '@/main/providers/picture-limits'
 import { makeTestPicture } from '../../comfy/test-picture'
 import { MAX_GIVEN_SIDE, pictureToSend } from '../../comfy/given-picture'
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { checkRequest } from '../../../../src/main/mcp/request-guard'
+import { checkRequest } from '@/main/mcp/request-guard'
 
 const PORT = 47999
 const TOKEN = 'made-up-local-token-for-tests-only'

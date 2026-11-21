@@ -2,17 +2,17 @@
 // asks the main process through these two queries. Inputs are checked with Zod.
 import { dialog, type BrowserWindow } from 'electron'
 import { ulid } from 'ulid'
-import type { ActivityLog } from '../log/activity-log'
-import { errorContext } from '../log/error-context'
-import { fail, internalError, ok, type Result } from '../../shared/schemas/result'
+import type { ActivityLog } from '@/main/log/activity-log'
+import { errorContext } from '@/main/log/error-context'
+import { fail, internalError, ok, type Result } from '@/shared/schemas/result'
 import {
   pickFilesInput,
   pickFolderInput,
   pickProjectFileInput,
   type PickedPath,
   type PickedPaths,
-} from '../../shared/schemas/queries/dialog'
-import { pickerExtensions } from '../../shared/config/file-types'
+} from '@/shared/schemas/queries/dialog'
+import { pickerExtensions } from '@/shared/config/file-types'
 
 export const DIALOG_QUERIES = [
   'dialog.pickFolder',

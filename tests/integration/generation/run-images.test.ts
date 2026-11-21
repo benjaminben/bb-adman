@@ -11,7 +11,7 @@ import {
   type GenerationFixture,
 } from './generation-fixture'
 import { data } from '../core-fixture'
-import { promptToSend } from '../../../src/shared/generation/prompt'
+import { promptToSend } from '@/shared/generation/prompt'
 
 let f: GenerationFixture
 afterEach(() => f.cleanup())

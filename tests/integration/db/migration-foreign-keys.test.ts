@@ -3,14 +3,10 @@ import os from 'node:os'
 import path from 'node:path'
 import Database from 'better-sqlite3'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import {
-  createProjectFile,
-  openProjectFile,
-  closeProjectFile,
-} from '../../../src/main/db/project-file'
-import { readMeta } from '../../../src/main/db/meta'
-import { bundledMigrations, type Migration } from '../../../src/main/db/bundled-migrations'
-import { AppError } from '../../../src/shared/schemas/result'
+import { createProjectFile, openProjectFile, closeProjectFile } from '@/main/db/project-file'
+import { readMeta } from '@/main/db/meta'
+import { bundledMigrations, type Migration } from '@/main/db/bundled-migrations'
+import { AppError } from '@/shared/schemas/result'
 
 let dir: string
 let file: string

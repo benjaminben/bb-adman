@@ -3,8 +3,8 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterAll, describe, it, expect } from 'vitest'
 import { checkPicture, pictureRefusal } from '../../e2e-real/pictures'
-import { greyPng } from '../../../src/main/providers/fake/png'
-import { MAX_PICTURE_BYTES } from '../../../src/main/providers/picture-limits'
+import { greyPng } from '@/main/providers/fake/png'
+import { MAX_PICTURE_BYTES } from '@/main/providers/picture-limits'
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-e2e-pictures-'))
 afterAll(() => fs.rmSync(dir, { recursive: true, force: true }))

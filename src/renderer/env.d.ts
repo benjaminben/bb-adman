@@ -1,4 +1,4 @@
-import type { AdmanApi } from '../shared/schemas/api'
+import type { AdmanApi } from '@/shared/schemas/api'
 
 declare global {
   interface Window {

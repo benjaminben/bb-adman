@@ -3,21 +3,21 @@
 // reference picture, then enqueues one image_generation job and returns its ID at once.
 // prepare does the checks that read files; run checks the rows again inside the
 // transaction, since another command may have changed them in between (SPEC 3.6).
-import { defineCommand, type ProjectContext } from '../types'
-import type { CoreDeps } from '../../core-deps'
-import type { ProjectHandle } from '../../db/project-file'
-import { readWireRow } from '../../db/rows'
-import { requireProviderKeys } from '../../providers/require-keys'
+import { defineCommand, type ProjectContext } from '@/main/commands/types'
+import type { CoreDeps } from '@/main/core-deps'
+import type { ProjectHandle } from '@/main/db/project-file'
+import { readWireRow } from '@/main/db/rows'
+import { requireProviderKeys } from '@/main/providers/require-keys'
 import { checkComfyRun } from './comfy-checks'
-import { starterTemplate } from '../../../shared/templates/starter'
-import { promptToSend } from '../../../shared/generation/prompt'
+import { starterTemplate } from '@/shared/templates/starter'
+import { promptToSend } from '@/shared/generation/prompt'
 import {
   generationRunImagesInput,
   type GenerationRunImagesInput,
-} from '../../../shared/schemas/commands/generation'
-import type { ImageJobRequest } from '../../../shared/schemas/jobs/image-generation'
-import type { ProviderInfo } from '../../../shared/schemas/queries/app'
-import { AppError } from '../../../shared/schemas/result'
+} from '@/shared/schemas/commands/generation'
+import type { ImageJobRequest } from '@/shared/schemas/jobs/image-generation'
+import type { ProviderInfo } from '@/shared/schemas/queries/app'
+import { AppError } from '@/shared/schemas/result'
 
 type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'assets' | 'settings' | 'devTools'>
 type Target = { campaignId: string; width: number; height: number }

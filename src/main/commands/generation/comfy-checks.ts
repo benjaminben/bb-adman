@@ -2,11 +2,11 @@
 // command" and 1.46 part B (security class): the ComfyUI checks of generation.runImages,
 // made before a job row. A proven workflow first; a trial one only for the user with the
 // hand-test tools on; an agent never gets a trial one, and a draft is never sent.
-import type { CoreDeps } from '../../core-deps'
-import type { ProjectContext } from '../types'
-import { offeredWorkflow } from '../../providers/comfyui/workflows/offered'
-import { reasonMessage } from '../../../shared/providers/messages'
-import { AppError } from '../../../shared/schemas/result'
+import type { CoreDeps } from '@/main/core-deps'
+import type { ProjectContext } from '@/main/commands/types'
+import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'
+import { reasonMessage } from '@/shared/providers/messages'
+import { AppError } from '@/shared/schemas/result'
 
 export const COMFY_JOB_NOT_OFFERED_MESSAGE = 'ComfyUI cannot make this kind of picture yet.'
 

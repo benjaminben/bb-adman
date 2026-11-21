@@ -1,10 +1,10 @@
 // A succeeded run's pictures (SPEC 14 1.41 TP-2 "Results"): one <img> per asset ID, with the
 // address from assetUrl. When they are first drawn, job.markSeen is sent once for the job.
 import { useEffect } from 'react'
-import { assetUrl } from '../../ui/asset-url'
-import { resultAssetIds, type JobStore } from '../../stores/job-store'
-import type { JobRow } from '../../../shared/schemas/rows/job'
-import styles from '../screens.module.css'
+import { assetUrl } from '@/renderer/ui/asset-url'
+import { resultAssetIds, type JobStore } from '@/renderer/stores/job-store'
+import type { JobRow } from '@/shared/schemas/rows/job'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function RunResult(props: { row: JobRow; projectId: string; store: JobStore }) {
   const { row, projectId, store } = props

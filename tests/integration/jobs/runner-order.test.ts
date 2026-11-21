@@ -3,13 +3,9 @@ import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
 import { gate, makeRunnerFixture, waitFor, type RunnerFixture } from './runner-fixture'
-import {
-  closeProjectFile,
-  createProjectFile,
-  type ProjectHandle,
-} from '../../../src/main/db/project-file'
-import { readWireRow } from '../../../src/main/db/rows'
-import type { JobRow } from '../../../src/shared/schemas/rows/job'
+import { closeProjectFile, createProjectFile, type ProjectHandle } from '@/main/db/project-file'
+import { readWireRow } from '@/main/db/rows'
+import type { JobRow } from '@/shared/schemas/rows/job'
 
 const cleanups: Array<() => void> = []
 afterEach(() => {

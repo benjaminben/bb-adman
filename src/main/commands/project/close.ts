@@ -1,13 +1,13 @@
 // project.close (SPEC 4.2; FR-006). Undo lists are dropped when a project closes.
 // [1.8] runningJobs (SPEC 3.6 "Jobs" item 6, slice D): refused with jobs_running while a job
 // is queued or running, unless the input says 'stop'; then the runner cancels them first.
-import { defineCommand } from '../types'
-import { closeProjectFile } from '../../db/project-file'
+import { defineCommand } from '@/main/commands/types'
+import { closeProjectFile } from '@/main/db/project-file'
 import type { ProjectCommandDeps } from './deps'
-import type { CoreDeps } from '../../core-deps'
-import { NOT_OPEN_MESSAGE } from '../../db/project-registry'
-import { projectCloseInput } from '../../../shared/schemas/commands/project'
-import { AppError } from '../../../shared/schemas/result'
+import type { CoreDeps } from '@/main/core-deps'
+import { NOT_OPEN_MESSAGE } from '@/main/db/project-registry'
+import { projectCloseInput } from '@/shared/schemas/commands/project'
+import { AppError } from '@/shared/schemas/result'
 
 export function projectClose(deps: ProjectCommandDeps & Pick<CoreDeps, 'jobs'>) {
   return defineCommand({

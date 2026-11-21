@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { isReserved } from '../config/reserved-names'
+import { isReserved } from '@/shared/config/reserved-names'
 
 // The one rule for a project name (SPEC 14 [1.30] U1). project.create checks a typed name with
 // it, and every open checks the stored name with it, exactly as stored. It lives here so that

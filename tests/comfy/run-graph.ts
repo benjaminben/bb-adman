@@ -2,11 +2,11 @@
 // `viewFile`. CU-5a comes before CU-4 and uses the client only; this is not the adapter's run.
 // It waits behind other work and never asks for a clean queue. A run that runs out of time
 // cancels its own run, by its own ID, and fails. Its waits are constants here (1.43 K-3).
-import type { ComfyClient, ViewRef } from '../../src/main/providers/comfyui/client'
-import { ComfyRefused } from '../../src/main/providers/comfyui/refusal'
-import type { HistoryEntry } from '../../src/main/providers/comfyui/answers'
-import type { Graph, WorkflowSpec } from '../../src/main/providers/comfyui/workflows/types'
-import { isViewType } from '../../src/main/providers/comfyui/values'
+import type { ComfyClient, ViewRef } from '@/main/providers/comfyui/client'
+import { ComfyRefused } from '@/main/providers/comfyui/refusal'
+import type { HistoryEntry } from '@/main/providers/comfyui/answers'
+import type { Graph, WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
+import { isViewType } from '@/main/providers/comfyui/values'
 import type { Print } from './print'
 import { refusalLines, runErrorLines } from './server-lines'
 import { MIN_TARGETED_INTERRUPT, versionAtLeast } from './version'

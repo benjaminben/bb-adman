@@ -4,11 +4,11 @@
 // returned, is replaced; for any other row job.list is read again. It never guesses the
 // project from a row.
 import { createStore, type StoreApi } from 'zustand/vanilla'
-import type { AdmanApi } from '../../shared/schemas/api'
-import type { JobStarted } from '../../shared/schemas/commands/job'
-import type { JobRow } from '../../shared/schemas/rows/job'
-import type { Result } from '../../shared/schemas/result'
-import { imageJobRequest, imageJobResult } from '../../shared/schemas/jobs/image-generation'
+import type { AdmanApi } from '@/shared/schemas/api'
+import type { JobStarted } from '@/shared/schemas/commands/job'
+import type { JobRow } from '@/shared/schemas/rows/job'
+import type { Result } from '@/shared/schemas/result'
+import { imageJobRequest, imageJobResult } from '@/shared/schemas/jobs/image-generation'
 
 export type JobStoreState = {
   rows: JobRow[]

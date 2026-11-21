@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { httpsOnly } from '../../../../src/main/windows/open-external'
+import { httpsOnly } from '@/main/windows/open-external'
 
 describe('openExternal is restricted to https: addresses [SPEC 14 step 0 R1, 8.1]', () => {
   it('passes an https address to the system call', async () => {

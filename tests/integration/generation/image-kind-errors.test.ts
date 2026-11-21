@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
-import { greyPng } from '../../../src/main/providers/fake/png'
+import { greyPng } from '@/main/providers/fake/png'
 import { makeKindFixture, pngAnswer, type KindFixture } from './kind-fixture'
 import { waitFor } from './generation-fixture'
 

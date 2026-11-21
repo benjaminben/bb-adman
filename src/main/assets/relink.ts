@@ -3,15 +3,15 @@
 // linked assets of the old folder are followed to the same relative path under the new
 // folder, and only when the file there has the row's own content hash (security class).
 import fs from 'node:fs'
-import type { ProjectHandle } from '../db/project-file'
-import { readWireRow, readWireRows } from '../db/rows'
+import type { ProjectHandle } from '@/main/db/project-file'
+import { readWireRow, readWireRows } from '@/main/db/rows'
 import { assetNotFound } from './errors'
 import { hashFile, readFileFacts, type InspectedFile } from './inspect'
 import { resolveRow } from './service'
 import { pathInside, relativeToProject, siblingCandidate } from './path-resolver'
-import type { AssetRelinkInput } from '../../shared/schemas/commands/asset'
-import { AppError } from '../../shared/schemas/result'
-import type { AssetRow } from '../../shared/schemas/rows/asset'
+import type { AssetRelinkInput } from '@/shared/schemas/commands/asset'
+import { AppError } from '@/shared/schemas/result'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
 
 export type SiblingMove = {
   id: string

@@ -2,13 +2,9 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
-import {
-  createProjectFile,
-  openProjectFile,
-  closeProjectFile,
-} from '../../../src/main/db/project-file'
-import { readMeta } from '../../../src/main/db/meta'
-import { bundledMigrations } from '../../../src/main/db/bundled-migrations'
+import { createProjectFile, openProjectFile, closeProjectFile } from '@/main/db/project-file'
+import { readMeta } from '@/main/db/meta'
+import { bundledMigrations } from '@/main/db/bundled-migrations'
 
 let dir: string | undefined
 afterEach(() => {

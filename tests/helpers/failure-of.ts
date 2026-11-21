@@ -1,6 +1,6 @@
 // The ProviderError a promise fails with. Fails the test when it does not fail that way.
-import { ProviderFailure } from '../../src/main/providers/types'
-import type { ProviderError } from '../../src/shared/schemas/queries/app'
+import { ProviderFailure } from '@/main/providers/types'
+import type { ProviderError } from '@/shared/schemas/queries/app'
 
 export async function failureOf(promise: Promise<unknown>): Promise<ProviderError> {
   const error: unknown = await promise.then(

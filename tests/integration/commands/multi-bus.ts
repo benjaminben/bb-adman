@@ -5,17 +5,13 @@ import path from 'node:path'
 import os from 'node:os'
 import { z } from 'zod'
 import type Database from 'better-sqlite3'
-import { createProjectFile, closeProjectFile } from '../../../src/main/db/project-file'
-import { createProjectRegistry } from '../../../src/main/db/project-registry'
-import {
-  createCommandBus,
-  type BusEvent,
-  type PermissionRequest,
-} from '../../../src/main/commands/bus'
-import { defineCommand, type CommandHandler } from '../../../src/main/commands/types'
-import { createUndoLists } from '../../../src/main/history/undo-lists'
-import { createActivityLog } from '../../../src/main/log/activity-log'
-import { AppError } from '../../../src/shared/schemas/result'
+import { createProjectFile, closeProjectFile } from '@/main/db/project-file'
+import { createProjectRegistry } from '@/main/db/project-registry'
+import { createCommandBus, type BusEvent, type PermissionRequest } from '@/main/commands/bus'
+import { defineCommand, type CommandHandler } from '@/main/commands/types'
+import { createUndoLists } from '@/main/history/undo-lists'
+import { createActivityLog } from '@/main/log/activity-log'
+import { AppError } from '@/shared/schemas/result'
 
 export type Control = { refuse: boolean; throwUnknown: boolean }
 

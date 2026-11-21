@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { nearestAspectRatio } from '../../../../../src/main/providers/gemini/aspect-ratio'
+import { nearestAspectRatio } from '@/main/providers/gemini/aspect-ratio'
 
 describe('nearestAspectRatio [SPEC 6.2, slice E]', () => {
   it.each([

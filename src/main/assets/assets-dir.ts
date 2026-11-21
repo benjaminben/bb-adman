@@ -3,12 +3,12 @@
 // folder, still named {assetId}.{ext}, is found there; the others keep their own paths.
 import fs from 'node:fs'
 import path from 'node:path'
-import type { ProjectHandle } from '../db/project-file'
-import { readWireRows } from '../db/rows'
+import type { ProjectHandle } from '@/main/db/project-file'
+import { readWireRows } from '@/main/db/rows'
 import { hashFile } from './inspect'
 import { managedPathIn, relativeToProject } from './path-resolver'
-import { AppError } from '../../shared/schemas/result'
-import type { AssetRow } from '../../shared/schemas/rows/asset'
+import { AppError } from '@/shared/schemas/result'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
 
 export type Repoint = {
   id: string

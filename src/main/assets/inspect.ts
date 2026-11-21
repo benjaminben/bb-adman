@@ -6,9 +6,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { pipeline } from 'node:stream/promises'
 import { sniffType, SNIFF_BYTES } from './sniff'
-import { pictureSize } from '../providers/picture-size'
-import { extensionOf, type FileType } from '../../shared/config/file-types'
-import { AppError } from '../../shared/schemas/result'
+import { pictureSize } from '@/main/providers/picture-size'
+import { extensionOf, type FileType } from '@/shared/config/file-types'
+import { AppError } from '@/shared/schemas/result'
 import { UnreadableFileError } from './unreadable'
 
 // A JPEG's frame header can sit after a large EXIF block, so more than SNIFF_BYTES is read.

@@ -2,8 +2,8 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import { createCore, type Core, type CoreOptions } from '../../src/main/core'
-import { devCommands } from '../../src/main/commands/dev'
+import { createCore, type Core, type CoreOptions } from '@/main/core'
+import { devCommands } from '@/main/commands/dev'
 import { fakeCrypto } from './core-fixture'
 
 let core: Core | null = null

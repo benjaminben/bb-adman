@@ -1,11 +1,11 @@
 // comfy.setAddress (SPEC 4.2, 6.10.1; FR-250, FR-251, FR-253): the one writer of
 // settings.comfyui.baseUrl. Security class. Contacts nothing. Agent policy deny.
-import { defineCommand } from '../types'
-import type { CoreDeps } from '../../core-deps'
-import { comfySetAddressInput } from '../../../shared/schemas/commands/comfy'
-import { AppError } from '../../../shared/schemas/result'
-import { COMFY_ADDRESS_MESSAGES, parseComfyAddress } from '../../../shared/comfy/address'
-import { comfyOwnPorts } from '../../providers/comfyui/own-ports'
+import { defineCommand } from '@/main/commands/types'
+import type { CoreDeps } from '@/main/core-deps'
+import { comfySetAddressInput } from '@/shared/schemas/commands/comfy'
+import { AppError } from '@/shared/schemas/result'
+import { COMFY_ADDRESS_MESSAGES, parseComfyAddress } from '@/shared/comfy/address'
+import { comfyOwnPorts } from '@/main/providers/comfyui/own-ports'
 
 export function comfySetAddress(deps: Pick<CoreDeps, 'settings'>) {
   return defineCommand({

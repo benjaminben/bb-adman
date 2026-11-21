@@ -1,9 +1,9 @@
 // The S3 settings the hand test needs, saved with settings.update (SPEC 13.1, 14 slice I).
 // Keys are not entered here: the key dialog asks for them, or Settings holds them.
 import { useState, type FormEvent } from 'react'
-import { useApp } from '../app/app-context'
+import { useApp } from '@/renderer/app/app-context'
 import { failedText } from './result-text'
-import styles from '../screens/screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function S3SettingsForm() {
   const command = useApp((s) => s.command)

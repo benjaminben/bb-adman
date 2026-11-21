@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { projectCreateInput } from '../../../../src/shared/schemas/commands/project'
+import { projectCreateInput } from '@/shared/schemas/commands/project'
 
 const valid = (name: string) => projectCreateInput.safeParse({ name, location: '/x' }).success
 

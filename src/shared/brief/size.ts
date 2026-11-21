@@ -4,10 +4,10 @@
 // ratio "W:H" [1.23]. A size whose pixels equal a ready-made size takes that size's label;
 // a ready-made label typed as is ("4x5") means that size. Each side is from MIN_SIZE_SIDE to
 // MAX_SIZE_SIDE [1.26], or the answer is null. This file holds no size of its own (SPEC 3.3).
-import type { CampaignSize } from '../schemas/commands/campaign'
-import type { ParseSize } from '../templates/types'
-import { READY_MADE_SIZES } from '../config/defaults'
-import { MAX_SIZE_SIDE, MIN_SIZE_SIDE } from '../config/size-limits'
+import type { CampaignSize } from '@/shared/schemas/commands/campaign'
+import type { ParseSize } from '@/shared/templates/types'
+import { READY_MADE_SIZES } from '@/shared/config/defaults'
+import { MAX_SIZE_SIDE, MIN_SIZE_SIDE } from '@/shared/config/size-limits'
 
 const SHORTER_SIDE = 1080
 const SMALLEST_PIXEL_SIDE = 100

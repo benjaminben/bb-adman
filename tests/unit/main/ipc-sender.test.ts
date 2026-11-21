@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { registerIpc, IPC } from '../../../src/main/ipc'
-import { ok } from '../../../src/shared/schemas/result'
+import { registerIpc, IPC } from '@/main/ipc'
+import { ok } from '@/shared/schemas/result'
 
 type Handler = (event: { sender: string }, ...args: unknown[]) => unknown
 

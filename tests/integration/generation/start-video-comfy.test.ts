@@ -15,9 +15,9 @@ import {
   videoHistoryEntry,
 } from '../../helpers/comfy-run'
 import { data } from '../core-fixture'
-import { assetsDirOf } from '../../../src/main/assets/service'
-import { h3TextToVideo as h3 } from '../../../src/main/providers/comfyui/workflows/h3'
-import type { VideoJobResult } from '../../../src/shared/schemas/jobs/video-generation'
+import { assetsDirOf } from '@/main/assets/service'
+import { h3TextToVideo as h3 } from '@/main/providers/comfyui/workflows/h3'
+import type { VideoJobResult } from '@/shared/schemas/jobs/video-generation'
 
 let f: ComfyFixture
 let stand: StandIn | null = null

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
-import { createActivityLog } from '../../../../src/main/log/activity-log'
+import { createActivityLog } from '@/main/log/activity-log'
 
 let dir: string
 beforeEach(() => {

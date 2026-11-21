@@ -4,9 +4,9 @@
 import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { CampaignView } from '../../../../../src/renderer/screens/campaign/campaign-view'
-import { plainMessage } from '../../../../../src/shared/providers/messages'
-import type { JobRow } from '../../../../../src/shared/schemas/rows/job'
+import { CampaignView } from '@/renderer/screens/campaign/campaign-view'
+import { plainMessage } from '@/shared/providers/messages'
+import type { JobRow } from '@/shared/schemas/rows/job'
 import { P, renderWith, sent } from './campaign-fixture'
 import { videoApi, videoRow } from './video-fixture'
 

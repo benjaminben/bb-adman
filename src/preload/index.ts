@@ -1,8 +1,8 @@
 // The preload bridge (SPEC 1.3): a typed window.api with command, query and on.
 // It sends only names and inputs; the main process sets the actor.
 import { contextBridge, ipcRenderer } from 'electron'
-import { IPC_CHANNELS, type AdmanApi } from '../shared/schemas/api'
-import type { EventName } from '../shared/schemas/events'
+import { IPC_CHANNELS, type AdmanApi } from '@/shared/schemas/api'
+import type { EventName } from '@/shared/schemas/events'
 
 type EventMessage = { name: EventName; payload: unknown }
 

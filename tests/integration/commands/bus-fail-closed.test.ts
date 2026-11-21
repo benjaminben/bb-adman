@@ -1,13 +1,13 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { makeBusFixture, setValueHandler } from './test-bus'
-import { denialMessage, type AgentPolicy } from '../../../src/main/commands/agent-policy'
+import { denialMessage, type AgentPolicy } from '@/main/commands/agent-policy'
 
 // The policy the bus reads for the test command, replaced for this file only (SPEC 14 1.37 X2).
 const NAME = 'test.failClosed'
 const policy = vi.hoisted(() => ({ value: 'deny' as string }))
 
-vi.mock('../../../src/main/commands/agent-policy', async (importOriginal) => {
-  const real = await importOriginal<typeof import('../../../src/main/commands/agent-policy')>()
+vi.mock('@/main/commands/agent-policy', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@/main/commands/agent-policy')>()
   return {
     ...real,
     agentPolicyFor: (name: string) =>

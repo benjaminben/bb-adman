@@ -3,9 +3,9 @@ import fsPromises from 'node:fs/promises'
 import path from 'node:path'
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import { makeDevFixture, sourceFile, type DevFixture } from './dev-fixture'
-import { devStorage } from '../../../src/main/commands/dev/storage'
-import { HAND_TEST_MAX_UPLOAD_BYTES } from '../../../src/shared/config/dev-tools'
-import type { AppError } from '../../../src/shared/schemas/result'
+import { devStorage } from '@/main/commands/dev/storage'
+import { HAND_TEST_MAX_UPLOAD_BYTES } from '@/shared/config/dev-tools'
+import type { AppError } from '@/shared/schemas/result'
 
 let f: DevFixture
 afterEach(() => f.cleanup())

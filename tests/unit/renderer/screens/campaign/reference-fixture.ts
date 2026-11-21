@@ -1,6 +1,6 @@
 // Reference picture rows for the picker tests (SPEC 14 1.46 TP-5), shaped as asset.list
 // returns them (an AssetRow with missing).
-import type { AssetList } from '../../../../../src/shared/schemas/queries/asset'
+import type { AssetList } from '@/shared/schemas/queries/asset'
 import { campaignApi } from './campaign-fixture'
 
 type Ref = AssetList[number]

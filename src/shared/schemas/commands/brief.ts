@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { projectScoped } from './project-scoped'
-import type { BriefDraft } from '../brief'
+import type { BriefDraft } from '@/shared/schemas/brief'
 
 // SPEC 4.2 brief.parse: a file path or pasted text, exactly one of the two (SPEC 6.1).
 export const briefParseInput = projectScoped

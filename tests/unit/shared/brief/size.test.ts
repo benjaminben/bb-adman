@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseSize } from '../../../../src/shared/brief/size'
+import { parseSize } from '@/shared/brief/size'
 
 describe('parseSize: ready-made sizes rule [SPEC 3.3 1.8, 14 slice B]', () => {
   it.each(['4:5', '4x5', '1080x1350'])('gives the ready-made 4x5 size for %s', (text) => {

@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest'
 import { screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { SettingsScreen } from '../../../../../src/renderer/screens/settings/settings-screen'
+import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
 import { renderApp } from '../../render'
 import { OFF, PORT, connect, line, mcpFake, refused } from './mcp-fixture'
 

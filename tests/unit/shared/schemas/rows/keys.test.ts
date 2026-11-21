@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ROW_KEYS, rowKey } from '../../../../../src/shared/schemas/rows/keys'
+import { ROW_KEYS, rowKey } from '@/shared/schemas/rows/keys'
 
 describe('row keys [SPEC 4.4]', () => {
   it('names the key fields of all 14 tables', () => {

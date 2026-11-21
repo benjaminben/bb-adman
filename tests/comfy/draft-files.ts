@@ -3,9 +3,9 @@
 // workflows, kept as they came back, so nothing new reaches the server. A file in a folder the
 // check did not list is said to be "not listed by the check". Node classes are not probed:
 // the draft node lists are stand-ins.
-import type { CheckClient } from '../../src/main/providers/comfyui/needs'
-import { WORKFLOWS } from '../../src/main/providers/comfyui/workflows'
-import type { WorkflowSpec } from '../../src/main/providers/comfyui/workflows/types'
+import type { CheckClient } from '@/main/providers/comfyui/needs'
+import { WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
 
 export const DRAFT_WORKFLOWS: readonly WorkflowSpec[] = WORKFLOWS.filter(
   (w) => w.status === 'draft',

@@ -8,9 +8,9 @@
 // (kind and detail, live values removed) in place of the real one. A case that expects the
 // failure prints nothing; Vitest shows the safe error only for a case that did not expect it.
 import { describe, it, expect } from 'vitest'
-import { s3Storage } from '../../src/main/providers/s3/s3-storage'
-import type { AdapterContext, StorageProvider } from '../../src/main/providers/types'
-import type { Settings } from '../../src/shared/schemas/settings'
+import { s3Storage } from '@/main/providers/s3/s3-storage'
+import type { AdapterContext, StorageProvider } from '@/main/providers/types'
+import type { Settings } from '@/shared/schemas/settings'
 import { describeStorageConformance } from '../integration/providers/storage-conformance'
 import { livePrint, missingNames, quietly } from './live-output'
 

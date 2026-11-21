@@ -2,9 +2,9 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { checkLocalRoot } from '../../../../../src/main/commands/dev/local-root'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
-import { AppError } from '../../../../../src/shared/schemas/result'
+import { checkLocalRoot } from '@/main/commands/dev/local-root'
+import { ProviderFailure } from '@/main/providers/types'
+import { AppError } from '@/shared/schemas/result'
 
 let base: string
 let root: string

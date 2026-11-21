@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pictureFitter } from '../../../src/main/picture-fitter'
+import { pictureFitter } from '@/main/picture-fitter'
 import { bands, columns, gridDecoder, jpegHead, pngHead, readFake } from './picture-fitter-fake'
 
 const RED = 1

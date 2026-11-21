@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { adapters } from '../../../../src/main/providers/comfyui'
-import { adapterFor } from '../../../../src/main/providers/adapters'
-import { listProviders } from '../../../../src/main/providers/registry'
-import type { ProviderInfo } from '../../../../src/shared/schemas/queries/app'
-import type { Settings } from '../../../../src/shared/schemas/settings'
+import { adapters } from '@/main/providers/comfyui'
+import { adapterFor } from '@/main/providers/adapters'
+import { listProviders } from '@/main/providers/registry'
+import type { ProviderInfo } from '@/shared/schemas/queries/app'
+import type { Settings } from '@/shared/schemas/settings'
 
 const comfyui: ProviderInfo = {
   id: 'comfyui',

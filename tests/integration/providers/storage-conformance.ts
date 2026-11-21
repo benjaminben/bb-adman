@@ -3,7 +3,7 @@
 // Each run works in its own folder and removes what it wrote.
 import { randomUUID } from 'node:crypto'
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import type { StorageProvider } from '../../../src/main/providers/types'
+import type { StorageProvider } from '@/main/providers/types'
 
 const text = (value: string) => new TextEncoder().encode(value)
 

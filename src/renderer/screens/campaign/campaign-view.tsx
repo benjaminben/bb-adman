@@ -2,14 +2,14 @@
 // for the chosen one, and its runs. The master is chosen at the start. One job store per
 // open page. SPEC 14 1.57 TP-6: the video card sits under the picture panel.
 import { useEffect, useState } from 'react'
-import { useApi, useApp } from '../../app/app-context'
-import { createJobStore } from '../../stores/job-store'
-import type { CampaignGet } from '../../../shared/schemas/queries/campaign'
+import { useApi, useApp } from '@/renderer/app/app-context'
+import { createJobStore } from '@/renderer/stores/job-store'
+import type { CampaignGet } from '@/shared/schemas/queries/campaign'
 import { GeneratePanel } from './generate-panel'
 import { RunList } from './run-list'
 import { VariantList } from './variant-list'
 import { VideoPanel } from './video-panel'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 function useCampaign(projectId: string, campaignId: string): CampaignGet | null {
   const api = useApi()

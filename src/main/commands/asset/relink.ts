@@ -2,15 +2,15 @@
 // reads the new file and finds siblings; run checks each row again and writes it. After a
 // relink the asset is linked. No file is moved, copied or deleted.
 import { eq } from 'drizzle-orm'
-import { defineCommand } from '../types'
-import type { CoreDeps } from '../../core-deps'
-import { asset } from '../../db/schema'
-import { readWireRow } from '../../db/rows'
+import { defineCommand } from '@/main/commands/types'
+import type { CoreDeps } from '@/main/core-deps'
+import { asset } from '@/main/db/schema'
+import { readWireRow } from '@/main/db/rows'
 import { requireAsset } from './update'
-import { prepareRelink } from '../../assets/relink'
-import { logUnreadable } from '../../assets/unreadable'
-import { assetRelinkInput } from '../../../shared/schemas/commands/asset'
-import type { AssetRow } from '../../../shared/schemas/rows/asset'
+import { prepareRelink } from '@/main/assets/relink'
+import { logUnreadable } from '@/main/assets/unreadable'
+import { assetRelinkInput } from '@/shared/schemas/commands/asset'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
 
 export function assetRelink(deps: Pick<CoreDeps, 'log'>) {
   return defineCommand({

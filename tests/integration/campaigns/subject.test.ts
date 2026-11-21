@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { subjectCommands } from '../../../src/main/commands/subject'
+import { subjectCommands } from '@/main/commands/subject'
 import { makeAssetBus, expectRefused } from '../assets/asset-bus'
 import { insertCampaign, insertAsset } from '../row-fixtures'
 import { seedVariant } from '../assets/usage-rows'

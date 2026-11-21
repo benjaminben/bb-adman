@@ -1,7 +1,7 @@
 // The fake provider's video (SPEC 14 slice D, 6.11.1). Runs are kept in memory by ID; a run
 // succeeds once its wait is over, or fails with the kind it was told to.
 import { FAKE_FAILURE_DETAIL, fakeBehaviour, type FakeBehaviour } from './behaviour'
-import type { CancelOutcome, VideoProvider } from '../types'
+import type { CancelOutcome, VideoProvider } from '@/main/providers/types'
 import { mp4File } from './mp4'
 
 export const FAKE_VIDEO_MODEL = 'fake-video'

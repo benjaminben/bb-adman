@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect } from 'vitest'
-import { geminiImage } from '../../../../../src/main/providers/gemini/image'
-import { GEMINI_ORIGIN } from '../../../../../src/main/providers/gemini/pinned-origin'
+import { geminiImage } from '@/main/providers/gemini/image'
+import { GEMINI_ORIGIN } from '@/main/providers/gemini/pinned-origin'
 import { TEST_KEY, TEST_MODEL, fetchAnswering, first, testContext } from './recorded'
 
 const savedEnv = { ...process.env }

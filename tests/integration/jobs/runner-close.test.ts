@@ -1,15 +1,15 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { gate, makeRunnerFixture, waitFor, type RunnerFixture } from './runner-fixture'
-import { runOptions } from '../../../src/main/jobs/runner'
-import { fakeImage } from '../../../src/main/providers/fake/image'
+import { runOptions } from '@/main/jobs/runner'
+import { fakeImage } from '@/main/providers/fake/image'
 import {
   resetFakeBehaviour,
   setFakeBehaviour,
   type FakeCancel,
-} from '../../../src/main/providers/fake/behaviour'
-import { openProjectFile, closeProjectFile } from '../../../src/main/db/project-file'
-import { readWireRow } from '../../../src/main/db/rows'
-import type { JobRow } from '../../../src/shared/schemas/rows/job'
+} from '@/main/providers/fake/behaviour'
+import { openProjectFile, closeProjectFile } from '@/main/db/project-file'
+import { readWireRow } from '@/main/db/rows'
+import type { JobRow } from '@/shared/schemas/rows/job'
 
 const fixtures: RunnerFixture[] = []
 function fixture(closeWaitMs = 300): RunnerFixture {

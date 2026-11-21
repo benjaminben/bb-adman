@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { AGENT_POLICY, agentPolicyFor } from '../../../../src/main/commands/agent-policy'
+import { AGENT_POLICY, agentPolicyFor } from '@/main/commands/agent-policy'
 
 // SPEC 1.9 Section 4.2, copied row by row. variant.setFormat is allow [D-025].
 // A change here must follow a change in SPEC.md.

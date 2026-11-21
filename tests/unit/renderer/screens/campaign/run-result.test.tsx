@@ -2,7 +2,7 @@
 // job.markSeen sent once when a succeeded run's results are first drawn.
 import { screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { CampaignView } from '../../../../../src/renderer/screens/campaign/campaign-view'
+import { CampaignView } from '@/renderer/screens/campaign/campaign-view'
 import { jobRow } from '../../stores/job-fixture'
 import { P, campaignApi, renderWith, sent } from './campaign-fixture'
 

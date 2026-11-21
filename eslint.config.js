@@ -24,6 +24,14 @@ const edgeMessage =
   'Only index.ts, windows/, secrets/safe-storage.ts and render/ may use Electron (SPEC 12).'
 const edgeFiles = ['**/windows', '**/windows/**', '**/render', '**/render/**', '**/safe-storage']
 
+// spec/structure.md: code in src/ reaches another folder through @/, never ../. This pattern
+// goes inside every block under src/: a later block's no-restricted-imports replaces an
+// earlier one for the same file, so one block over src/** would switch the others off.
+const noClimbing = {
+  regex: '^\\.\\./',
+  message: 'Import from another folder through @/, not ../ (spec/structure.md).',
+}
+
 // One block per folder depth, because the relative path to src/main/index.ts differs.
 function electronBoundary(files, mainIndex) {
   return {
@@ -34,11 +42,20 @@ function electronBoundary(files, mainIndex) {
         'error',
         {
           paths: [{ name: 'electron', message: edgeMessage }],
-          patterns: [{ group: [...edgeFiles, ...mainIndex], message: edgeMessage }],
+          patterns: [
+            { group: [...edgeFiles, ...mainIndex, '@/main/index'], message: edgeMessage },
+            noClimbing,
+          ],
         },
       ],
     },
   }
+}
+
+// Files no other block under src/ covers: the preload and the Electron edge files.
+const uncoveredSrc = {
+  files: ['src/preload/**', ...electronEdge],
+  rules: { 'no-restricted-imports': ['error', { patterns: [noClimbing] }] },
 }
 
 export default tseslint.config(
@@ -76,6 +93,7 @@ export default tseslint.config(
   electronBoundary(['src/main/*.ts'], ['./index']),
   electronBoundary(['src/main/*/*.ts'], ['../index']),
   electronBoundary(['src/main/*/*/**/*.ts'], ['../../index', '../../../index']),
+  uncoveredSrc,
   {
     files: ['src/shared/**'],
     rules: {
@@ -91,6 +109,7 @@ export default tseslint.config(
               group: ['**/main/**', '**/renderer/**', '**/preload/**'],
               message: 'src/shared imports nothing from main, renderer or preload.',
             },
+            noClimbing,
           ],
         },
       ],
@@ -111,6 +130,7 @@ export default tseslint.config(
               group: ['**/main/**', '**/preload/**'],
               message: 'The window reaches the main process only through window.api.',
             },
+            noClimbing,
           ],
         },
       ],

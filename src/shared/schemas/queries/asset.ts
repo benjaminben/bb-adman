@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { projectScoped } from '../commands/project-scoped'
-import type { AssetRow } from '../rows/asset'
+import { projectScoped } from '@/shared/schemas/commands/project-scoped'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
 
 export const assetLibrary = z.enum(['reference', 'asset'])
 export const assetKind = z.enum(['image', 'video', 'font', 'text'])

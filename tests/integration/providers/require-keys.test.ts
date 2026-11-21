@@ -1,10 +1,10 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { z } from 'zod'
 import { makeFixture, type Fixture } from '../core-fixture'
-import { requireProviderKeys } from '../../../src/main/providers/require-keys'
-import { createCommandBus } from '../../../src/main/commands/bus'
-import { defineCommand } from '../../../src/main/commands/types'
-import { AppError } from '../../../src/shared/schemas/result'
+import { requireProviderKeys } from '@/main/providers/require-keys'
+import { createCommandBus } from '@/main/commands/bus'
+import { defineCommand } from '@/main/commands/types'
+import { AppError } from '@/shared/schemas/result'
 
 let f: Fixture
 afterEach(() => f.cleanup())

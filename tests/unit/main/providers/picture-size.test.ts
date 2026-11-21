@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import { describe, it, expect } from 'vitest'
-import { pictureSize } from '../../../../src/main/providers/picture-size'
+import { pictureSize } from '@/main/providers/picture-size'
 
 // A PNG head: signature, IHDR length and type, width and height (big-endian).
 function pngHead(width: number, height: number): Uint8Array {

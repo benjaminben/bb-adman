@@ -2,8 +2,8 @@
 // One call per picture, two at a time. No automatic retry (SPEC 6 retry rule): the SDK
 // retries only when retryOptions is set, and it is never set here.
 import { GoogleGenAI } from '@google/genai'
-import { ProviderFailure, type AdapterContext, type ImageProvider } from '../types'
-import type { ImageFile, ImageResult } from '../types'
+import { ProviderFailure, type AdapterContext, type ImageProvider } from '@/main/providers/types'
+import type { ImageFile, ImageResult } from '@/main/providers/types'
 import { nearestAspectRatio } from './aspect-ratio'
 import { failureFromError, pictureFromResponse } from './failure'
 import { GEMINI_ORIGIN, pinnedFetch } from './pinned-origin'

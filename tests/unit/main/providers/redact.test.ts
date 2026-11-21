@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { redactSecret } from '../../../../src/main/providers/redact'
+import { redactSecret } from '@/main/providers/redact'
 
 // Made up; it does not look like a real key. It holds characters that URL encoding changes.
 const SECRET = 'made-up/secret+value=1'

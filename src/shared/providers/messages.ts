@@ -2,7 +2,7 @@
 // The one copy of the table in the code. The raw provider text never reaches the window.
 // SPEC 14 1.41 TP-0: kept in src/shared so the window can show a failed job's sentence.
 // Sentences only: nothing here may read keys, addresses or main-process modules.
-import type { ProviderErrorKind, ProviderErrorReason } from '../schemas/queries/app'
+import type { ProviderErrorKind, ProviderErrorReason } from '@/shared/schemas/queries/app'
 
 const MESSAGES: Record<ProviderErrorKind, (p: string) => string> = {
   bad_key: (p) => `${p} did not accept your key. Check it in Settings and try again.`,

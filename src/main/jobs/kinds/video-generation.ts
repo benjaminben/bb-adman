@@ -5,27 +5,27 @@
 // [1.40] (security class, cost): a row that already has a remote ID is only checked and
 // fetched; start is never called for it, so a row the app did not make cannot start work.
 import { ulid } from 'ulid'
-import type { JobKindHandler, JobRunContext } from '../types'
-import { cancelWaitFor } from '../cancel-wait'
-import type { CoreDeps } from '../../core-deps'
-import type { ProjectHandle } from '../../db/project-file'
-import { adapterFor } from '../../providers/adapters'
-import { requireProviderKeys } from '../../providers/require-keys'
+import type { JobKindHandler, JobRunContext } from '@/main/jobs/types'
+import { cancelWaitFor } from '@/main/jobs/cancel-wait'
+import type { CoreDeps } from '@/main/core-deps'
+import type { ProjectHandle } from '@/main/db/project-file'
+import { adapterFor } from '@/main/providers/adapters'
+import { requireProviderKeys } from '@/main/providers/require-keys'
 import {
   ProviderCancelled,
   ProviderFailure,
   type ImageFile,
   type VideoProvider,
   type VideoResult,
-} from '../../providers/types'
-import { checkMp4 } from '../../providers/video-check'
-import { promptToSend } from '../../../shared/generation/prompt'
-import type { JobRow } from '../../../shared/schemas/rows/job'
+} from '@/main/providers/types'
+import { checkMp4 } from '@/main/providers/video-check'
+import { promptToSend } from '@/shared/generation/prompt'
+import type { JobRow } from '@/shared/schemas/rows/job'
 import {
   videoJobRequest,
   type VideoJobRequest,
   type VideoJobResult,
-} from '../../../shared/schemas/jobs/video-generation'
+} from '@/shared/schemas/jobs/video-generation'
 
 // How often the job asks the provider where the run is.
 export const VIDEO_POLL_MS = 2_000

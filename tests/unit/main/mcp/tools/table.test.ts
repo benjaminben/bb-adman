@@ -1,9 +1,9 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { MCP_TOOLS, toolSetup, type ToolDef } from '../../../../../src/main/mcp/tools'
-import type { AgentCaller } from '../../../../../src/main/mcp/agent-caller'
-import { AGENT_POLICY, agentPolicyFor } from '../../../../../src/main/commands/agent-policy'
+import { MCP_TOOLS, toolSetup, type ToolDef } from '@/main/mcp/tools'
+import type { AgentCaller } from '@/main/mcp/agent-caller'
+import { AGENT_POLICY, agentPolicyFor } from '@/main/commands/agent-policy'
 import { makeFixture, type Fixture } from '../../../../integration/core-fixture'
 
 let f: Fixture | undefined

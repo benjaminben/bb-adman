@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createUndoLists, UNDO_LIMIT } from '../../../../src/main/history/undo-lists'
+import { createUndoLists, UNDO_LIMIT } from '@/main/history/undo-lists'
 
 const call = (n: number) => ({ name: 'test.set', input: { value: n } })
 

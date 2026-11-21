@@ -11,12 +11,12 @@ import {
   serveNeeds,
   servePicture,
 } from '../../../../helpers/comfy-run'
-import { comfyImage } from '../../../../../src/main/providers/comfyui/image'
-import { createServerChecks } from '../../../../../src/main/providers/comfyui/needs'
-import { uploadName } from '../../../../../src/main/providers/comfyui/values'
-import { flux3KleinEditReferences as flux } from '../../../../../src/main/providers/comfyui/workflows/flux3'
-import { ProviderFailure, type ImageFile } from '../../../../../src/main/providers/types'
-import { greyPng } from '../../../../../src/main/providers/fake/png'
+import { comfyImage } from '@/main/providers/comfyui/image'
+import { createServerChecks } from '@/main/providers/comfyui/needs'
+import { uploadName } from '@/main/providers/comfyui/values'
+import { flux3KleinEditReferences as flux } from '@/main/providers/comfyui/workflows/flux3'
+import { ProviderFailure, type ImageFile } from '@/main/providers/types'
+import { greyPng } from '@/main/providers/fake/png'
 
 let stand: StandIn
 afterEach(async () => {

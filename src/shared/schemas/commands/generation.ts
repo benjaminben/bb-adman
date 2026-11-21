@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { projectScoped } from './project-scoped'
-import { MAX_IMAGES_PER_RUN } from '../../config/defaults'
+import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'
 
 // SPEC 4.2 generation.runImages [1.8]. Built in Phase 2 slice H. A slot or a layer, not both.
 export const generationRunImagesInput = projectScoped

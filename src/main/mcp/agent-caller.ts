@@ -1,9 +1,9 @@
 // The only way the MCP server reaches core (SPEC 4.1, 5.2). The actor is fixed here as
 // 'agent'; no input, header or tool argument can change it. Agent policy stays in the bus
 // and in each query.
-import type { ExecuteOptions } from '../commands/bus'
-import type { QueryOptions } from '../queries/queries'
-import type { Result } from '../../shared/schemas/result'
+import type { ExecuteOptions } from '@/main/commands/bus'
+import type { QueryOptions } from '@/main/queries/queries'
+import type { Result } from '@/shared/schemas/result'
 
 export type CoreTargets = {
   execute(name: string, input: unknown, opts: ExecuteOptions): Promise<Result<unknown>>

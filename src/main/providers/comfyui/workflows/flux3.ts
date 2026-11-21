@@ -2,7 +2,7 @@
 // is the agent's draft comfy-workflows/flux3-klein-image-references.json, from the
 // stakeholder's reference file. It takes one reference picture and has no size slot: the
 // result takes the picture's shape at about 1 megapixel, so a run skips fitSize.
-import type { WorkflowLicence } from '../../../../shared/schemas/queries/comfy'
+import type { WorkflowLicence } from '@/shared/schemas/queries/comfy'
 import type { Graph, WorkflowSpec } from './types'
 import { AGENT_DRAFT, LEAVES } from './common'
 import graph from './flux3-klein-edit-references.json'

@@ -1,10 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { WORKFLOWS } from '../../../../../src/main/providers/comfyui/workflows'
-import type {
-  Pointer,
-  WorkflowSpec,
-} from '../../../../../src/main/providers/comfyui/workflows/types'
-import { WORKFLOW_IDS } from '../../../../../src/shared/schemas/queries/comfy'
+import { WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import type { Pointer, WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
+import { WORKFLOW_IDS } from '@/shared/schemas/queries/comfy'
 
 function pointersOf(spec: WorkflowSpec): Pointer[] {
   const s = spec.slots

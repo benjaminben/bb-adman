@@ -2,12 +2,12 @@
 // shown in full here, the one screen that may draw it. Save sends comfy.setAddress and
 // contacts nothing; only Check asks the server.
 import { useEffect, useState, type FormEvent } from 'react'
-import { useApi, useApp } from '../../app/app-context'
-import type { ComfyInfo } from '../../../shared/schemas/queries/comfy'
-import type { ComfyCheck } from '../../../shared/schemas/commands/comfy-check'
-import type { AdmanApi } from '../../../shared/schemas/api'
+import { useApi, useApp } from '@/renderer/app/app-context'
+import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
+import type { ComfyCheck } from '@/shared/schemas/commands/comfy-check'
+import type { AdmanApi } from '@/shared/schemas/api'
 import { ComfyCheckResult } from './comfy-check-result'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 // Fixed text, shown here only (SPEC 14 1.48 TL-1; REQUIREMENTS-ComfyUI.md 3.3). It never names the address.
 const PRIVACY_NOTE =

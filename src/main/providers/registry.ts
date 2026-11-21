@@ -1,7 +1,7 @@
 // Single owner of provider IDs and default model IDs (SPEC 3.1, 6).
 // Phase 1 holds the provider list only; adapters arrive with their phases.
 // [1.24] local, cancel and serverText follow the table of SPEC 6.11.1.
-import type { ProviderInfo } from '../../shared/schemas/queries/app'
+import type { ProviderInfo } from '@/shared/schemas/queries/app'
 
 // Not local, no way to stop a started request, no server text: every provider but the
 // ones that say otherwise.

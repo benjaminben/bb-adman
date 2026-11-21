@@ -1,5 +1,5 @@
-import type { CoreDeps } from '../../core-deps'
-import type { CommandHandler } from '../types'
+import type { CoreDeps } from '@/main/core-deps'
+import type { CommandHandler } from '@/main/commands/types'
 import { projectCreate } from './create'
 import { projectOpen } from './open'
 import { projectClose } from './close'

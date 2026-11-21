@@ -4,15 +4,15 @@
 // at it only after that transaction has ended, so a command that fails starts nothing.
 import { ulid } from 'ulid'
 import { activeJobs, insertQueued, markSeenRow, readJob, type ActiveJob } from './job-store'
-import type { ProjectHandle } from '../db/project-file'
+import type { ProjectHandle } from '@/main/db/project-file'
 import { emitJob, endUnreadable, nowText, type JobRunnerOptions, type RunnerState } from './live'
-import type { JobRow } from '../../shared/schemas/rows/job'
+import type { JobRow } from '@/shared/schemas/rows/job'
 import { startJob } from './run-job'
 import { projectOpened } from './start-up'
 import { cancelJob } from './cancel'
 import { cancelAll } from './close-jobs'
 import type { JobService } from './types'
-import { JOBS_AT_ONCE_PER_PROVIDER } from '../../shared/config/job-kinds'
+import { JOBS_AT_ONCE_PER_PROVIDER } from '@/shared/config/job-kinds'
 
 export { runOptions } from './progress'
 export type { JobRunnerOptions }

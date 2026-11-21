@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeBusFixture, setValueHandler } from './test-bus'
-import { AGENT_POLICY, agentPolicyFor } from '../../../src/main/commands/agent-policy'
+import { AGENT_POLICY, agentPolicyFor } from '@/main/commands/agent-policy'
 
 let fixture: ReturnType<typeof makeBusFixture> | undefined
 afterEach(() => fixture?.cleanup())

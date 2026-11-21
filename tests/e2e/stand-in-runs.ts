@@ -4,8 +4,8 @@
 // comfy.getInfo. Nothing here contacts a real server. Not a test file itself.
 import { expect, type Page } from '@playwright/test'
 import type { StandIn } from '../helpers/comfy-stand-in'
-import type { ComfyInfo } from '../../src/shared/schemas/queries/comfy'
-import { greyPng } from '../../src/main/providers/fake/png'
+import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
+import { greyPng } from '@/main/providers/fake/png'
 import { greyClip } from '../fixtures/video/grey-clip'
 
 // The version the stand-in reports: at least every shipped minimum (as comfy-run.ts).

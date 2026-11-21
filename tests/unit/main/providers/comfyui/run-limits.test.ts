@@ -5,7 +5,7 @@ import {
   PICTURE_WORK_MS,
   POLL_MS,
   QUEUE_WAIT_MS,
-} from '../../../../../src/main/providers/comfyui/limits'
+} from '@/main/providers/comfyui/limits'
 
 describe('the adapter limits CU-4 adds [SPEC 6.10.2, 6.10.14, 14 1.43 K-3]', () => {
   it('polls every 2 s and loses contact after 5 minutes of failed polls', () => {

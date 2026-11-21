@@ -1,11 +1,8 @@
 // Answers for the project page tests (SPEC 14 1.41 TP-1): a project.get reply and a
 // brief.parse reply shaped as slice C returns them.
-import type {
-  CampaignSummary,
-  ProjectGet,
-} from '../../../../../src/shared/schemas/queries/campaign'
-import type { BriefDraft } from '../../../../../src/shared/schemas/brief'
-import type { SubjectRow } from '../../../../../src/shared/schemas/rows/subject'
+import type { CampaignSummary, ProjectGet } from '@/shared/schemas/queries/campaign'
+import type { BriefDraft } from '@/shared/schemas/brief'
+import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import { baseState, makeFakeApi } from '../../fake-api'
 
 export const PROJECT = { projectId: 'P1', name: 'Summer', filePath: '/w/Summer.adman' }

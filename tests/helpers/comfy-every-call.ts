@@ -1,7 +1,7 @@
 // Each function of the ComfyUI client called once, with values that pass the client's own
 // checks, so a test can show a property holds for every call.
-import type { ComfyClient } from '../../src/main/providers/comfyui/client'
-import { uploadName } from '../../src/main/providers/comfyui/values'
+import type { ComfyClient } from '@/main/providers/comfyui/client'
+import { uploadName } from '@/main/providers/comfyui/values'
 
 const id = '6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b'
 const bytes = new Uint8Array([137, 80, 78, 71])

@@ -5,15 +5,15 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
-import { createCore, type Core, type CoreOptions } from '../../../src/main/core'
-import type { BusEvent } from '../../../src/main/commands/bus'
-import { readWireRow, readWireRows } from '../../../src/main/db/rows'
-import { greyPng } from '../../../src/main/providers/fake/png'
+import { createCore, type Core, type CoreOptions } from '@/main/core'
+import type { BusEvent } from '@/main/commands/bus'
+import { readWireRow, readWireRows } from '@/main/db/rows'
+import { greyPng } from '@/main/providers/fake/png'
 import { fakeCrypto, data } from '../core-fixture'
 import { seed, VARIANT } from './generation-fixture'
-import type { JobRow } from '../../../src/shared/schemas/rows/job'
-import type { AssetRow } from '../../../src/shared/schemas/rows/asset'
-import type { Actor } from '../../../src/shared/schemas/events'
+import type { JobRow } from '@/shared/schemas/rows/job'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
+import type { Actor } from '@/shared/schemas/events'
 
 type FixtureOptions = {
   devTools: boolean

@@ -4,10 +4,10 @@ import type Database from 'better-sqlite3'
 import { getTableColumns } from 'drizzle-orm'
 import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
 import * as schema from './schema'
-import type { ActivityLog } from '../log/activity-log'
-import { ROW_KEYS, rowKey, type TableName } from '../../shared/schemas/rows/keys'
-import { ROW_SCHEMAS } from '../../shared/schemas/rows'
-import type { WireRow } from '../../shared/schemas/events'
+import type { ActivityLog } from '@/main/log/activity-log'
+import { ROW_KEYS, rowKey, type TableName } from '@/shared/schemas/rows/keys'
+import { ROW_SCHEMAS } from '@/shared/schemas/rows'
+import type { WireRow } from '@/shared/schemas/events'
 
 const TABLES: Record<TableName, SQLiteTable> = {
   project_meta: schema.projectMeta,

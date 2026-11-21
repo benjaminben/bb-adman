@@ -1,4 +1,4 @@
-import type { SecretName } from '../../shared/schemas/secrets'
+import type { SecretName } from '@/shared/schemas/secrets'
 
 const LABELS: Record<string, string> = {
   apiKey: 'API key',

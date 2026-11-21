@@ -2,15 +2,15 @@
 // writer of job rows. Rows are read through rows.ts; written with SQL on the project file.
 // `request` and `result` are JSON columns: their stored text comes from storedJson in rows.ts
 // (SPEC 4.4 [1.38]), which writes nothing.
-import type { ProjectHandle } from '../db/project-file'
-import { job } from '../db/schema'
-import { readWireRow, storedJson } from '../db/rows'
-import type { ActivityLog } from '../log/activity-log'
-import { rowKey } from '../../shared/schemas/rows/keys'
+import type { ProjectHandle } from '@/main/db/project-file'
+import { job } from '@/main/db/schema'
+import { readWireRow, storedJson } from '@/main/db/rows'
+import type { ActivityLog } from '@/main/log/activity-log'
+import { rowKey } from '@/shared/schemas/rows/keys'
 import type { EnqueueRequest } from './types'
-import type { JobStatus } from '../../shared/config/job-kinds'
-import type { JobRow } from '../../shared/schemas/rows/job'
-import type { ProviderErrorKind, ProviderErrorReason } from '../../shared/schemas/queries/app'
+import type { JobStatus } from '@/shared/config/job-kinds'
+import type { JobRow } from '@/shared/schemas/rows/job'
+import type { ProviderErrorKind, ProviderErrorReason } from '@/shared/schemas/queries/app'
 
 export type JobChange = {
   status?: JobStatus

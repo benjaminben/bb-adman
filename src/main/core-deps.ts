@@ -4,7 +4,7 @@ import type { SettingsStore } from './settings/settings-store'
 import type { SecretStore } from './secrets/secret-store'
 import type { UndoLists } from './history/undo-lists'
 import type { ActivityLog } from './log/activity-log'
-import type { ProviderInfo } from '../shared/schemas/queries/app'
+import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { AssetService } from './assets/types'
 import type { JobService } from './jobs/types'
 

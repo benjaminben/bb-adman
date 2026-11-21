@@ -1,6 +1,6 @@
 // SPEC 6.1 language rules. Pure.
-import type { IsRightToLeft, PrimaryLanguageFor } from '../templates/types'
-import { REGION_LANGUAGES } from '../config/region-languages'
+import type { IsRightToLeft, PrimaryLanguageFor } from '@/shared/templates/types'
+import { REGION_LANGUAGES } from '@/shared/config/region-languages'
 
 // SPEC 6.1 [FR-104]: the right-to-left languages this build refuses.
 const RIGHT_TO_LEFT = new Set(['ar', 'he', 'fa', 'ur', 'yi', 'ps', 'sd', 'dv'])

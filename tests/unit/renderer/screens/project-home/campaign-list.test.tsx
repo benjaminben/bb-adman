@@ -1,7 +1,7 @@
 // SPEC 14 1.43 T-4: the campaign list shows each campaign's number of variants.
 import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { CampaignList } from '../../../../../src/renderer/screens/project-home/campaign-list'
+import { CampaignList } from '@/renderer/screens/project-home/campaign-list'
 import { campaign } from './project-fixture'
 
 describe('CampaignList [SPEC 14 1.43 T-4]', () => {

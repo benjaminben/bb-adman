@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createSerial } from '../../../../src/main/mcp/serial'
+import { createSerial } from '@/main/mcp/serial'
 
 const tick = () => new Promise((r) => setTimeout(r, 5))
 

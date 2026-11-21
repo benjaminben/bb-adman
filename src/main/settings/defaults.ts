@@ -1,7 +1,7 @@
 import path from 'node:path'
-import { DEFAULT_PROVIDERS } from '../providers/registry'
-import { DEFAULT_FPS } from '../../shared/config/defaults'
-import type { Settings } from '../../shared/schemas/settings'
+import { DEFAULT_PROVIDERS } from '@/main/providers/registry'
+import { DEFAULT_FPS } from '@/shared/config/defaults'
+import type { Settings } from '@/shared/schemas/settings'
 
 export const DEFAULT_MCP_PORT = 47821
 

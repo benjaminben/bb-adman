@@ -3,8 +3,8 @@
 // (lost_contact). In neither the queue nor the history on two polls in a row: server_stopped.
 // Over the waiting or working limit: too_long. The shapes of a job state are not verified
 // (U-2); the status words are read as in today's server and corrected after the trial.
-import type { RunProgress } from '../types'
-import { ProviderFailure } from '../types'
+import type { RunProgress } from '@/main/providers/types'
+import { ProviderFailure } from '@/main/providers/types'
 import type { HistoryEntry } from './answers'
 import type { ComfyClient } from './client'
 import { comfyFailure } from './failures'

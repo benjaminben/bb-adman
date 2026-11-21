@@ -1,4 +1,4 @@
-import type { Actor } from '../../shared/schemas/events'
+import type { Actor } from '@/shared/schemas/events'
 
 // Queries carry an actor set like a command's (SPEC 4.1). No Phase 1 query checks it;
 // mcp.getConnectInfo (Phase 10) refuses the agent.

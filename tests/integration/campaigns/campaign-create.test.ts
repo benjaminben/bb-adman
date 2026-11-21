@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { expectRefused } from '../assets/asset-bus'
 import { makeCampaignBus, createInput, SQUARE, TALL, type CampaignBus } from './campaign-fixture'
 import { TEST_NOW } from './campaign-deps'
-import type { LayerRow } from '../../../src/shared/schemas/rows/layer'
+import type { LayerRow } from '@/shared/schemas/rows/layer'
 
 let bus: CampaignBus
 beforeEach(() => {

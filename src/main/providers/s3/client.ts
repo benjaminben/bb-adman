@@ -5,7 +5,7 @@
 // Any error while building is a ProviderFailure of kind other.
 import { S3Client } from '@aws-sdk/client-s3'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
-import type { AdapterContext } from '../types'
+import type { AdapterContext } from '@/main/providers/types'
 import { failureFromS3Error, s3Failure } from './failure'
 import {
   isBucketName,

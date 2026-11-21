@@ -1,5 +1,5 @@
 // Plain text for a hand-test result (SPEC 14 slice I). A failure shows the error's own message.
-import type { Result } from '../../shared/schemas/result'
+import type { Result } from '@/shared/schemas/result'
 
 type StorageData = { name?: string; size?: number; names?: string[]; removed?: number }
 

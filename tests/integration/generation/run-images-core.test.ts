@@ -9,9 +9,9 @@ import {
   type GenerationFixture,
 } from './generation-fixture'
 import { data } from '../core-fixture'
-import { resetFakeBehaviour, setFakeBehaviour } from '../../../src/main/providers/fake/behaviour'
-import { plainMessage } from '../../../src/main/providers/messages'
-import { PROVIDER_ERROR_KINDS } from '../../../src/shared/schemas/queries/app'
+import { resetFakeBehaviour, setFakeBehaviour } from '@/main/providers/fake/behaviour'
+import { plainMessage } from '@/main/providers/messages'
+import { PROVIDER_ERROR_KINDS } from '@/shared/schemas/queries/app'
 import { generationDetailsOf } from '../../fixtures/png-chunks'
 
 let f: GenerationFixture

@@ -9,15 +9,12 @@ import {
   ended,
   type GenerationFixture,
 } from '../generation/generation-fixture'
-import { adapters as fakeAdapters } from '../../../src/main/providers/fake'
-import { fakeVideo } from '../../../src/main/providers/fake/video'
-import { resetFakeBehaviour, setFakeBehaviour } from '../../../src/main/providers/fake/behaviour'
-import type { VideoProvider } from '../../../src/main/providers/types'
-import type {
-  VideoJobRequest,
-  VideoJobResult,
-} from '../../../src/shared/schemas/jobs/video-generation'
-import { checkMp4 } from '../../../src/main/providers/video-check'
+import { adapters as fakeAdapters } from '@/main/providers/fake'
+import { fakeVideo } from '@/main/providers/fake/video'
+import { resetFakeBehaviour, setFakeBehaviour } from '@/main/providers/fake/behaviour'
+import type { VideoProvider } from '@/main/providers/types'
+import type { VideoJobRequest, VideoJobResult } from '@/shared/schemas/jobs/video-generation'
+import { checkMp4 } from '@/main/providers/video-check'
 
 let f: GenerationFixture
 afterEach(() => {

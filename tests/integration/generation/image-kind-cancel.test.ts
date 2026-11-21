@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeKindFixture, pngAnswer, type Answer, type KindFixture } from './kind-fixture'
 import { waitFor } from './generation-fixture'
-import { ProviderCancelled, type RunOptions } from '../../../src/main/providers/types'
+import { ProviderCancelled, type RunOptions } from '@/main/providers/types'
 
 let f: KindFixture
 afterEach(() => f.cleanup())

@@ -3,20 +3,20 @@
 // checks: the start pair, the ComfyUI checks for that pair, and each picture. Then it enqueues
 // one video_generation job with the variant's and its campaign's IDs and returns its ID at
 // once. run checks the variant again inside the transaction (SPEC 3.6).
-import { defineCommand, type ProjectContext } from '../types'
-import type { CoreDeps } from '../../core-deps'
-import type { ProjectHandle } from '../../db/project-file'
-import { readWireRow } from '../../db/rows'
-import { requireProviderKeys } from '../../providers/require-keys'
+import { defineCommand, type ProjectContext } from '@/main/commands/types'
+import type { CoreDeps } from '@/main/core-deps'
+import type { ProjectHandle } from '@/main/db/project-file'
+import { readWireRow } from '@/main/db/rows'
+import { requireProviderKeys } from '@/main/providers/require-keys'
 import { checkVideoStart } from './video-start-checks'
-import { promptToSend } from '../../../shared/generation/prompt'
+import { promptToSend } from '@/shared/generation/prompt'
 import {
   generationStartVideoInput,
   type GenerationStartVideoInput,
-} from '../../../shared/schemas/commands/generation'
-import type { VideoJobRequest } from '../../../shared/schemas/jobs/video-generation'
-import type { ProviderInfo } from '../../../shared/schemas/queries/app'
-import { AppError } from '../../../shared/schemas/result'
+} from '@/shared/schemas/commands/generation'
+import type { VideoJobRequest } from '@/shared/schemas/jobs/video-generation'
+import type { ProviderInfo } from '@/shared/schemas/queries/app'
+import { AppError } from '@/shared/schemas/result'
 
 type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets'>
 type Target = { campaignId: string; width: number; height: number }

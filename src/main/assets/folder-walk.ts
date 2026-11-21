@@ -6,7 +6,7 @@
 // and counted. A path the user named directly is passed on as it is.
 import fs from 'node:fs'
 import path from 'node:path'
-import { AppError } from '../../shared/schemas/result'
+import { AppError } from '@/shared/schemas/result'
 import { UnreadableFileError } from './unreadable'
 
 // Decided: D-053 item 19 (SPEC 14, 1.39 Z1).

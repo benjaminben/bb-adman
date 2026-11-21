@@ -4,9 +4,9 @@
 // other lstat error than ENOENT is a ProviderFailure of kind `other` with the code as detail.
 import fs from 'node:fs/promises'
 import nodePath from 'node:path'
-import { HAND_TEST_FOLDER, HAND_TEST_LOCAL_ROOT } from '../../../shared/config/dev-tools'
-import { AppError } from '../../../shared/schemas/result'
-import { ProviderFailure } from '../../providers/types'
+import { HAND_TEST_FOLDER, HAND_TEST_LOCAL_ROOT } from '@/shared/config/dev-tools'
+import { AppError } from '@/shared/schemas/result'
+import { ProviderFailure } from '@/main/providers/types'
 
 export const FOLDER_UNSAFE =
   'The hand-test folder holds a link and cannot be used. Remove the link and try again.'

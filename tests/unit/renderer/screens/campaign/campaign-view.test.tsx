@@ -3,7 +3,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { CampaignView } from '../../../../../src/renderer/screens/campaign/campaign-view'
+import { CampaignView } from '@/renderer/screens/campaign/campaign-view'
 import { axeViolations } from '../../render'
 import { jobRow } from '../../stores/job-fixture'
 import { P, campaignApi, renderWith } from './campaign-fixture'

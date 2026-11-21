@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { frameCount } from '../../../../../src/main/providers/comfyui/frames'
-import { H3_VIDEO } from '../../../../../src/main/providers/comfyui/workflows/common'
-import { VIDEO_WORK_MS } from '../../../../../src/main/providers/comfyui/limits'
+import { frameCount } from '@/main/providers/comfyui/frames'
+import { H3_VIDEO } from '@/main/providers/comfyui/workflows/common'
+import { VIDEO_WORK_MS } from '@/main/providers/comfyui/limits'
 
 describe('frameCount [SPEC 6.10.7, 14 1.45 B-6]', () => {
   it('gives 56 frames for two seconds of H3', () => {

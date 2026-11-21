@@ -1,12 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { SettingsScreen } from '../../../../../src/renderer/screens/settings/settings-screen'
-import type {
-  ComfyCheck,
-  ComfyCheckOutcome,
-} from '../../../../../src/shared/schemas/commands/comfy-check'
-import type { Result } from '../../../../../src/shared/schemas/result'
+import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
+import type { ComfyCheck, ComfyCheckOutcome } from '@/shared/schemas/commands/comfy-check'
+import type { Result } from '@/shared/schemas/result'
 import { renderApp, axeViolations } from '../../render'
 import { ADDRESS, comfyFake, info, workflow } from './comfy-fixture'
 

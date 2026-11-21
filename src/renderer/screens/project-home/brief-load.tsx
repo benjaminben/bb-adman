@@ -2,10 +2,10 @@
 // campaign sends subject.create for each new subject and then campaign.create; it stops at
 // the first refusal, whose message the app store shows in the alert. Cancel sends nothing.
 import { useState } from 'react'
-import { useApi, useApp } from '../../app/app-context'
-import type { BriefParsed } from '../../../shared/schemas/commands/brief'
-import type { PickedPaths } from '../../../shared/schemas/queries/dialog'
-import type { SubjectRow } from '../../../shared/schemas/rows/subject'
+import { useApi, useApp } from '@/renderer/app/app-context'
+import type { BriefParsed } from '@/shared/schemas/commands/brief'
+import type { PickedPaths } from '@/shared/schemas/queries/dialog'
+import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import { BriefSummary } from './brief-summary'
 import { campaignPlan } from './campaign-input'
 

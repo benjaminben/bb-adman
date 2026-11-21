@@ -9,7 +9,7 @@
 //            frame lines of the whole stack are kept
 //   message  with each of the provider's secrets removed; null when noMessage is set (a
 //            provider whose serverText is true, or one not in the registry)
-import { redactSecret } from '../providers/redact'
+import { redactSecret } from '@/main/providers/redact'
 
 export type JobErrorContext = { name: string; message: string | null; stack: string | null }
 

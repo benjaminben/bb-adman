@@ -13,7 +13,7 @@ import { DIALOG_QUERIES, runDialogQuery } from './windows/dialogs'
 import { registerIpc } from './ipc'
 import { projectPathFromArgv } from './open-file'
 import { safeStorageCrypto } from './secrets/safe-storage'
-import { IPC_CHANNELS } from '../shared/schemas/api'
+import { IPC_CHANNELS } from '@/shared/schemas/api'
 import type { BusEvent } from './commands/bus'
 
 if (process.env.ADMAN_USER_DATA_DIR) app.setPath('userData', process.env.ADMAN_USER_DATA_DIR)

@@ -3,13 +3,9 @@ import os from 'node:os'
 import path from 'node:path'
 import Database from 'better-sqlite3'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import {
-  closeProjectFile,
-  createProjectFile,
-  openProjectFile,
-} from '../../../src/main/db/project-file'
-import { bundledMigrations } from '../../../src/main/db/bundled-migrations'
-import { readMeta } from '../../../src/main/db/meta'
+import { closeProjectFile, createProjectFile, openProjectFile } from '@/main/db/project-file'
+import { bundledMigrations } from '@/main/db/bundled-migrations'
+import { readMeta } from '@/main/db/meta'
 
 const NOW = '2026-11-20T10:00:00.000Z'
 const v1 = bundledMigrations

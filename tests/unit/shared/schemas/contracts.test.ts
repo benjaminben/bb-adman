@@ -1,12 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { Brief, BriefDraft } from '../../../../src/shared/schemas/brief'
-import { CampaignSize, campaignCreateInput } from '../../../../src/shared/schemas/commands/campaign'
-import { TextStyle } from '../../../../src/shared/schemas/layer'
-import { READY_MADE_SIZES } from '../../../../src/shared/config/defaults'
-import {
-  JOB_KIND_CLASSES,
-  JOBS_AT_ONCE_PER_PROVIDER,
-} from '../../../../src/shared/config/job-kinds'
+import { Brief, BriefDraft } from '@/shared/schemas/brief'
+import { CampaignSize, campaignCreateInput } from '@/shared/schemas/commands/campaign'
+import { TextStyle } from '@/shared/schemas/layer'
+import { READY_MADE_SIZES } from '@/shared/config/defaults'
+import { JOB_KIND_CLASSES, JOBS_AT_ONCE_PER_PROVIDER } from '@/shared/config/job-kinds'
 
 const brief = {
   campaignName: 'Summer',

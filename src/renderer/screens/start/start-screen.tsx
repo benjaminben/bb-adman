@@ -1,8 +1,8 @@
 // Start screen (FR-002, FR-004): new project, open a project file, recent projects.
-import { useApi, useApp, pickPath } from '../../app/app-context'
+import { useApi, useApp, pickPath } from '@/renderer/app/app-context'
 import { NewProjectForm } from './new-project-form'
 import { RecentProjects } from './recent-projects'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function StartScreen() {
   const api = useApi()

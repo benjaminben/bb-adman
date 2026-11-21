@@ -1,6 +1,6 @@
 import { describe, it, expectTypeOf } from 'vitest'
-import type { JobRunContext } from '../../../../src/main/jobs/types'
-import type { RunProgress } from '../../../../src/main/providers/types'
+import type { JobRunContext } from '@/main/jobs/types'
+import type { RunProgress } from '@/main/providers/types'
 
 // A type-only contract: the check is `npm run typecheck`.
 describe('JobRunContext [SPEC 6.11.1, 14 CU-0]', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { pngPixelSize } from '../../../../src/main/providers/png-size'
+import { pngPixelSize } from '@/main/providers/png-size'
 
 // The first 24 bytes of a PNG: signature, IHDR length and type, width and height (big-endian).
 function pngHead(width: number, height: number): Uint8Array {

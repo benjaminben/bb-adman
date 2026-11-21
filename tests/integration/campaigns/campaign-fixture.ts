@@ -2,11 +2,11 @@
 // subject handlers, a valid campaign.create input, and readers for the rows it writes.
 // Not a test file itself.
 import { makeAssetBus } from '../assets/asset-bus'
-import { campaignCommands } from '../../../src/main/commands/campaign'
-import { subjectCommands } from '../../../src/main/commands/subject'
-import { ruleSetCommands } from '../../../src/main/commands/rule-set'
-import { readWireRows } from '../../../src/main/db/rows'
-import type { TableName } from '../../../src/shared/schemas/rows/keys'
+import { campaignCommands } from '@/main/commands/campaign'
+import { subjectCommands } from '@/main/commands/subject'
+import { ruleSetCommands } from '@/main/commands/rule-set'
+import { readWireRows } from '@/main/db/rows'
+import type { TableName } from '@/shared/schemas/rows/keys'
 import { testDeps } from './campaign-deps'
 
 export type CampaignBus = ReturnType<typeof makeCampaignBus>

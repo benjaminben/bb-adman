@@ -1,6 +1,6 @@
 // The confirm step for a paid provider (SPEC 14 1.41, "A paid run starts only on the user's
 // own confirm"): one line with Confirm and Cancel. Nothing is sent before Confirm.
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function paidLine(count: number | null, providerLabel: string, references = 0): string {
   // A run whose stored request cannot be read gives no number rather than a guessed one.

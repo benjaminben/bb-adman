@@ -2,12 +2,12 @@
 // a run with a picture. A fake clock stands in for the adapter's waits. Nothing here contacts
 // a real server.
 import type { StandIn } from './comfy-stand-in'
-import { NON_DRAFT_WORKFLOWS } from '../../src/main/providers/comfyui/workflows'
-import type { RunTiming } from '../../src/main/providers/comfyui/run'
-import type { AdapterContext } from '../../src/main/providers/types'
-import type { Settings } from '../../src/shared/schemas/settings'
-import { greyPng } from '../../src/main/providers/fake/png'
-import { mp4File } from '../../src/main/providers/fake/mp4'
+import { NON_DRAFT_WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import type { RunTiming } from '@/main/providers/comfyui/run'
+import type { AdapterContext } from '@/main/providers/types'
+import type { Settings } from '@/shared/schemas/settings'
+import { greyPng } from '@/main/providers/fake/png'
+import { mp4File } from '@/main/providers/fake/mp4'
 
 export const RESULT_PNG = greyPng(4, 4)
 

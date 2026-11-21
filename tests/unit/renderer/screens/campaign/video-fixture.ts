@@ -1,9 +1,9 @@
 // Answers for the video panel tests (SPEC 14 1.57 TP-6): a ComfyUI provider as the registry
 // lists it, a comfy.getInfo reply with the prompt-only video workflow, and a provider list the
 // test passes in (J-2: the list RV-1 makes, with fal-seedance not available).
-import type { AppState, ProviderInfo } from '../../../../../src/shared/schemas/queries/app'
-import type { ComfyInfo, WorkflowInfo } from '../../../../../src/shared/schemas/queries/comfy'
-import type { JobRow } from '../../../../../src/shared/schemas/rows/job'
+import type { AppState, ProviderInfo } from '@/shared/schemas/queries/app'
+import type { ComfyInfo, WorkflowInfo } from '@/shared/schemas/queries/comfy'
+import type { JobRow } from '@/shared/schemas/rows/job'
 import { baseState } from '../../fake-api'
 import { jobRow } from '../../stores/job-fixture'
 import { campaignApi } from './campaign-fixture'

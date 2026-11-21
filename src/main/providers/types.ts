@@ -1,8 +1,8 @@
 // SPEC 6 provider interfaces and the adapter contract. Frozen contract (Phase 2 step 0).
-import type { Brief } from '../../shared/schemas/brief'
-import type { Geometry } from '../../shared/schemas/layer'
-import type { Settings } from '../../shared/schemas/settings'
-import type { ProviderError } from '../../shared/schemas/queries/app'
+import type { Brief } from '@/shared/schemas/brief'
+import type { Geometry } from '@/shared/schemas/layer'
+import type { Settings } from '@/shared/schemas/settings'
+import type { ProviderError } from '@/shared/schemas/queries/app'
 
 export type { ProviderError }
 

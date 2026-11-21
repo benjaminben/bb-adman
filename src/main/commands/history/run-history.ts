@@ -1,10 +1,10 @@
 // history.undo and history.redo (SPEC 4.2). The bus has already validated the input and
 // found the project. Replays the stored inverse through the bus, so it gets the same
 // validation, transaction, events and log as any edit.
-import type { HistoryInput } from '../../../shared/schemas/commands/history'
-import { AppError, type Result } from '../../../shared/schemas/result'
-import type { UndoLists } from '../../history/undo-lists'
-import type { ExecuteOptions } from '../bus'
+import type { HistoryInput } from '@/shared/schemas/commands/history'
+import { AppError, type Result } from '@/shared/schemas/result'
+import type { UndoLists } from '@/main/history/undo-lists'
+import type { ExecuteOptions } from '@/main/commands/bus'
 
 type Deps = {
   undo: UndoLists

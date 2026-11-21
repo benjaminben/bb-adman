@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { Animation, Geometry, ImageStyle, Revs, TextStyle, Timing } from '../layer'
+import { Animation, Geometry, ImageStyle, Revs, TextStyle, Timing } from '@/shared/schemas/layer'
 
 // SPEC 3.3 layer, in wire form (SPEC 4.4).
 export const LayerRow = z.object({

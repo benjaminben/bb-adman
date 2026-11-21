@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { makeCampaignBus, type CampaignBus } from './campaign-fixture'
 import { testDeps } from './campaign-deps'
-import { campaignQueries } from '../../../src/main/queries/campaign'
-import { createQueryRunner } from '../../../src/main/queries/queries'
-import type { CoreDeps } from '../../../src/main/core-deps'
-import type { CampaignGet } from '../../../src/shared/schemas/queries/campaign'
+import { campaignQueries } from '@/main/queries/campaign'
+import { createQueryRunner } from '@/main/queries/queries'
+import type { CoreDeps } from '@/main/core-deps'
+import type { CampaignGet } from '@/shared/schemas/queries/campaign'
 
 let bus: CampaignBus
 let deps: CoreDeps

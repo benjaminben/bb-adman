@@ -3,8 +3,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
-import { createCore, type Core, type SecretCrypto } from '../../src/main/core'
-import type { BusEvent } from '../../src/main/commands/bus'
+import { createCore, type Core, type SecretCrypto } from '@/main/core'
+import type { BusEvent } from '@/main/commands/bus'
 
 // Stands in for Electron safeStorage. Reversible, and never stores the plain text.
 export function fakeCrypto(available = true): SecretCrypto {

@@ -1,10 +1,10 @@
 // Turns the MCP server on and off and replaces its token (SPEC 4.2, 5.1, 6.8).
 // The token is read from and written to secrets.bin only; it is never logged or returned.
-import type { SettingsStore } from '../settings/settings-store'
-import type { SecretStore } from '../secrets/secret-store'
-import type { ActivityLog } from '../log/activity-log'
-import { AppError } from '../../shared/schemas/result'
-import type { McpProblem } from '../../shared/schemas/queries/mcp'
+import type { SettingsStore } from '@/main/settings/settings-store'
+import type { SecretStore } from '@/main/secrets/secret-store'
+import type { ActivityLog } from '@/main/log/activity-log'
+import { AppError } from '@/shared/schemas/result'
+import type { McpProblem } from '@/shared/schemas/queries/mcp'
 import { makeToken } from './token'
 import { McpPortInUse, type McpHttp } from './server'
 import { createSerial } from './serial'

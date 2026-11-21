@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { ProjectHome } from '../../../../../src/renderer/screens/project-home/project-home'
+import { ProjectHome } from '@/renderer/screens/project-home/project-home'
 import { renderApp, axeViolations } from '../../render'
 import { PROJECT, campaign, projectApi, projectGet } from './project-fixture'
 

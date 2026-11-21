@@ -2,7 +2,7 @@
 // read back from the secret store, and never printed by a test.
 import { makeFixture, data, type Fixture } from '../core-fixture'
 import { freePort } from './http-client'
-import type { SecretCrypto } from '../../../src/main/core'
+import type { SecretCrypto } from '@/main/core'
 
 export type McpFixture = Fixture & { port: number; token: () => Promise<string> }
 

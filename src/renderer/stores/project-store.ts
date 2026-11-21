@@ -1,9 +1,9 @@
 // One store per project tab (ADR-003). It holds a copy of rows the main process sent
 // and is updated only from project.changed events; nothing is applied optimistically.
 import { createStore, type StoreApi } from 'zustand/vanilla'
-import type { AdmanApi } from '../../shared/schemas/api'
-import type { Actor, ProjectChangedPayload, WireRow } from '../../shared/schemas/events'
-import { rowKey, type TableName } from '../../shared/schemas/rows/keys'
+import type { AdmanApi } from '@/shared/schemas/api'
+import type { Actor, ProjectChangedPayload, WireRow } from '@/shared/schemas/events'
+import { rowKey, type TableName } from '@/shared/schemas/rows/keys'
 
 export type ProjectStoreState = {
   projectId: string

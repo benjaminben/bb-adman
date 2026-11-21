@@ -6,9 +6,9 @@ import { addPaidCall, readJob, type JobChange } from './job-store'
 import { endChange, runningResult, type JobEnd } from './job-end'
 import type { JobRunContext } from './types'
 import { jobErrorContext } from './job-error-log'
-import { ProviderCancelled, ProviderFailure } from '../providers/types'
-import { AppError } from '../../shared/schemas/result'
-import type { JobRow } from '../../shared/schemas/rows/job'
+import { ProviderCancelled, ProviderFailure } from '@/main/providers/types'
+import { AppError } from '@/shared/schemas/result'
+import type { JobRow } from '@/shared/schemas/rows/job'
 
 function failed(state: RunnerState, live: LiveJob, e: unknown): JobEnd {
   if (e instanceof ProviderCancelled) return { status: 'cancelled' }

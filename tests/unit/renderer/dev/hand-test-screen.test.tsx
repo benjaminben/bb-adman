@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { HandTestScreen } from '../../../../src/renderer/dev/hand-test-screen'
-import { KeyDialog } from '../../../../src/renderer/dialogs/key/key-dialog'
+import { HandTestScreen } from '@/renderer/dev/hand-test-screen'
+import { KeyDialog } from '@/renderer/dialogs/key/key-dialog'
 import { renderApp, axeViolations } from '../render'
 import { makeFakeApi, baseState } from '../fake-api'
-import { HAND_TEST_DROPBOX } from '../../../../src/shared/config/dev-tools'
-import type { ProviderInfo } from '../../../../src/shared/schemas/queries/app'
+import { HAND_TEST_DROPBOX } from '@/shared/config/dev-tools'
+import type { ProviderInfo } from '@/shared/schemas/queries/app'
 
 const S3: ProviderInfo = {
   id: 's3',

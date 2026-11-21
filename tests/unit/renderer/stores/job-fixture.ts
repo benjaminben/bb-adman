@@ -1,5 +1,5 @@
 // A wire job row for the campaign page tests (SPEC 3.3 job, SPEC 4.4 wire rows).
-import type { JobRow } from '../../../../src/shared/schemas/rows/job'
+import type { JobRow } from '@/shared/schemas/rows/job'
 
 export function jobRow(id: string, over: Partial<JobRow> = {}): JobRow {
   return {

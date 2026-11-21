@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { adapterFor, adapterFrom } from '../../../../src/main/providers/adapters'
-import type { ProviderAdapters } from '../../../../src/main/providers/types'
-import type { ProviderInfo } from '../../../../src/shared/schemas/queries/app'
-import type { Settings } from '../../../../src/shared/schemas/settings'
+import { adapterFor, adapterFrom } from '@/main/providers/adapters'
+import type { ProviderAdapters } from '@/main/providers/types'
+import type { ProviderInfo } from '@/shared/schemas/queries/app'
+import type { Settings } from '@/shared/schemas/settings'
 
 const gemini: ProviderInfo = {
   id: 'gemini',

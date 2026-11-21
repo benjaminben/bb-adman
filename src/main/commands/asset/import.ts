@@ -1,14 +1,14 @@
 // asset.import (SPEC 4.2, 3.6; FR-050 to FR-054, R-08). Not undoable. prepare inspects and
 // copies the files; run inserts one row per new content hash. run checks the hashes again,
 // since another command may have added the same file in between (SPEC 3.6).
-import { defineCommand } from '../types'
-import type { CoreDeps } from '../../core-deps'
-import { asset } from '../../db/schema'
+import { defineCommand } from '@/main/commands/types'
+import type { CoreDeps } from '@/main/core-deps'
+import { asset } from '@/main/db/schema'
 import { requireSubject } from './update'
-import { assetIdsByHash, prepareImport, removeCopies, type NewAsset } from '../../assets/import'
-import { assetImportInput, type AssetImportInput } from '../../../shared/schemas/commands/asset'
-import { logUnreadable } from '../../assets/unreadable'
-import { AppError } from '../../../shared/schemas/result'
+import { assetIdsByHash, prepareImport, removeCopies, type NewAsset } from '@/main/assets/import'
+import { assetImportInput, type AssetImportInput } from '@/shared/schemas/commands/asset'
+import { logUnreadable } from '@/main/assets/unreadable'
+import { AppError } from '@/shared/schemas/result'
 
 function rowOf(a: NewAsset, input: AssetImportInput, createdAt: string) {
   return {

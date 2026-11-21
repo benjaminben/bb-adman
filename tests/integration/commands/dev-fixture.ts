@@ -5,7 +5,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { createCore, type Core } from '../../../src/main/core'
+import { createCore, type Core } from '@/main/core'
 import { fakeCrypto } from '../core-fixture'
 
 export type DevFixture = {

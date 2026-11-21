@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { plainMessage } from '../../../../src/main/providers/messages'
-import { PROVIDER_ERROR_KINDS } from '../../../../src/shared/schemas/queries/app'
+import { plainMessage } from '@/main/providers/messages'
+import { PROVIDER_ERROR_KINDS } from '@/shared/schemas/queries/app'
 
 describe('plainMessage: one sentence per error kind [SPEC 6 plain messages, FR-069]', () => {
   it.each([

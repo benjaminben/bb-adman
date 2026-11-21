@@ -1,15 +1,15 @@
 // subject.create, subject.update, subject.delete (SPEC 4.2; FR-011, FR-197). Not undoable.
 import { eq } from 'drizzle-orm'
-import type { CoreDeps } from '../../core-deps'
-import { defineCommand, type ProjectContext } from '../types'
-import { subject } from '../../db/schema'
-import { readWireRow } from '../../db/rows'
-import { AppError } from '../../../shared/schemas/result'
+import type { CoreDeps } from '@/main/core-deps'
+import { defineCommand, type ProjectContext } from '@/main/commands/types'
+import { subject } from '@/main/db/schema'
+import { readWireRow } from '@/main/db/rows'
+import { AppError } from '@/shared/schemas/result'
 import {
   subjectCreateInput,
   subjectDeleteInput,
   subjectUpdateInput,
-} from '../../../shared/schemas/commands/subject'
+} from '@/shared/schemas/commands/subject'
 
 export function requireSubjectRow(ctx: ProjectContext, subjectId: string): void {
   if (!readWireRow(ctx.project.db, 'subject', { id: subjectId })) {

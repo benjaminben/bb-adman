@@ -2,9 +2,9 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
-import { createCore, type Core } from '../../../src/main/core'
+import { createCore, type Core } from '@/main/core'
 import { fakeCrypto } from '../core-fixture'
-import type { AppState } from '../../../src/shared/schemas/queries/app'
+import type { AppState } from '@/shared/schemas/queries/app'
 
 let core: Core | null = null
 let root = ''

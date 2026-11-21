@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { checkMp4, MP4_REFUSED } from '../../../../src/main/providers/video-check'
-import { MAX_VIDEO_BYTES, MAX_VIDEO_MS } from '../../../../src/main/providers/picture-limits'
-import { box, ftyp, hdlr, mp4File, mvhd, trak } from '../../../../src/main/providers/fake/mp4'
+import { checkMp4, MP4_REFUSED } from '@/main/providers/video-check'
+import { MAX_VIDEO_BYTES, MAX_VIDEO_MS } from '@/main/providers/picture-limits'
+import { box, ftyp, hdlr, mp4File, mvhd, trak } from '@/main/providers/fake/mp4'
 
 const join = (...parts: Uint8Array[]) => Buffer.concat(parts)
 const head = (size: number, type: string) => {

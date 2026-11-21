@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { defineCommand } from '../../../src/main/commands/types'
+import { defineCommand } from '@/main/commands/types'
 import { z } from 'zod'
 import { makeMultiBus, refusableSet, TEST_SCOPE } from './multi-bus'
 

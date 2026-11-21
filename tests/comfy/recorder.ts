@@ -3,7 +3,7 @@
 // failed, with its argument, so the check case can say which call ended the check (1.45 B-1).
 // Arguments recorded are the app's own values (a folder or class name from a shipped workflow,
 // or an ID this test made), never the server's text.
-import type { ComfyClient } from '../../src/main/providers/comfyui/client'
+import type { ComfyClient } from '@/main/providers/comfyui/client'
 
 export type CallName = Exclude<keyof ComfyClient, 'adopt'>
 export type Call = { name: CallName; arg?: string }

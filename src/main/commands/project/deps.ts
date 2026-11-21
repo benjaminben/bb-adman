@@ -1,7 +1,7 @@
-import type { CoreDeps } from '../../core-deps'
-import type { ProjectHandle } from '../../db/project-file'
-import { readMeta } from '../../db/meta'
-import type { OpenProjectSummary } from '../../../shared/schemas/project'
+import type { CoreDeps } from '@/main/core-deps'
+import type { ProjectHandle } from '@/main/db/project-file'
+import { readMeta } from '@/main/db/meta'
+import type { OpenProjectSummary } from '@/shared/schemas/project'
 
 export type ProjectCommandDeps = Pick<
   CoreDeps,

@@ -2,10 +2,10 @@
 // synchronously inside one SQLite transaction on that project's file. It may first run an
 // asynchronous prepare step outside the transaction, which may not write to the project.
 import type { z } from 'zod'
-import type { ProjectHandle } from '../db/project-file'
-import type { CommandCall, UndoScope } from '../history/undo-lists'
-import type { Actor } from '../../shared/schemas/events'
-import type { TableName } from '../../shared/schemas/rows/keys'
+import type { ProjectHandle } from '@/main/db/project-file'
+import type { CommandCall, UndoScope } from '@/main/history/undo-lists'
+import type { Actor } from '@/shared/schemas/events'
+import type { TableName } from '@/shared/schemas/rows/keys'
 
 // A handler names each row it added, updated or removed; the bus reads them back (SPEC 4.4).
 // `key` holds the table's key fields; a whole row is accepted.

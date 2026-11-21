@@ -1,8 +1,8 @@
 // The project page's copy of project.get (SPEC 14 1.41 TP-1). It is read on open and again
 // on each project.changed for this project; an event for another project is ignored.
 import { useEffect, useState } from 'react'
-import { useApi } from '../../app/app-context'
-import type { ProjectGet } from '../../../shared/schemas/queries/campaign'
+import { useApi } from '@/renderer/app/app-context'
+import type { ProjectGet } from '@/shared/schemas/queries/campaign'
 
 export function useProject(projectId: string): ProjectGet | null {
   const api = useApi()

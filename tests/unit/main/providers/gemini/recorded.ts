@@ -1,8 +1,8 @@
 // Test helper: a stand-in for fetch that answers with a recorded Gemini response
 // (tests/fixtures/providers/gemini). Every request goes through the real @google/genai SDK.
 import fs from 'node:fs'
-import type { AdapterContext } from '../../../../../src/main/providers/types'
-import type { Settings } from '../../../../../src/shared/schemas/settings'
+import type { AdapterContext } from '@/main/providers/types'
+import type { Settings } from '@/shared/schemas/settings'
 
 // Made up; it does not look like a real key.
 export const TEST_KEY = 'test-value-not-a-key'

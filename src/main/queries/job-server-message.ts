@@ -3,13 +3,13 @@
 // only: an agent is refused with AGENT_DENIED and no MCP tool calls it. The text is data: the
 // window draws it as text and nothing acts on it. Only the reasons whose detail holds the
 // server's words give a text; every other detail is the app's own and gives null.
-import type { CoreDeps } from '../core-deps'
+import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
-import { readJobErrorDetail, readWireRow } from '../db/rows'
-import { jobServerMessageInput, type JobServerMessage } from '../../shared/schemas/queries/job'
-import type { ProviderErrorReason } from '../../shared/schemas/queries/app'
-import type { JobRow } from '../../shared/schemas/rows/job'
-import { AppError } from '../../shared/schemas/result'
+import { readJobErrorDetail, readWireRow } from '@/main/db/rows'
+import { jobServerMessageInput, type JobServerMessage } from '@/shared/schemas/queries/job'
+import type { ProviderErrorReason } from '@/shared/schemas/queries/app'
+import type { JobRow } from '@/shared/schemas/rows/job'
+import { AppError } from '@/shared/schemas/result'
 
 export const SERVER_MESSAGE_DENIED =
   "Agents cannot read a server's own message. Ask the user to read it in the app."

@@ -5,11 +5,11 @@
 // refusal, the section reads it again: a refused new token may still have been saved
 // (REVIEW MCP-A point 7.2).
 import { useEffect, useState, type FormEvent } from 'react'
-import { useApi, useApp } from '../../app/app-context'
-import type { AdmanApi } from '../../../shared/schemas/api'
-import type { ConnectInfo } from '../../../shared/schemas/queries/mcp'
+import { useApi, useApp } from '@/renderer/app/app-context'
+import type { AdmanApi } from '@/shared/schemas/api'
+import type { ConnectInfo } from '@/shared/schemas/queries/mcp'
 import { ConnectPanel } from './connect-panel'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 // A refused query gives its own fixed message (SPEC 4.3; 14 1.59 L-21), never reply data.
 type Read = { info: ConnectInfo } | { refused: string }

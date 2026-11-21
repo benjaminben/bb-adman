@@ -3,14 +3,10 @@ import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
 import { z } from 'zod'
-import {
-  createProjectFile,
-  closeProjectFile,
-  type ProjectHandle,
-} from '../../../src/main/db/project-file'
-import { readWireRow, readWireRows } from '../../../src/main/db/rows'
-import { defineCommand } from '../../../src/main/commands/types'
-import type { LogInput } from '../../../src/main/log/activity-log'
+import { createProjectFile, closeProjectFile, type ProjectHandle } from '@/main/db/project-file'
+import { readWireRow, readWireRows } from '@/main/db/rows'
+import { defineCommand } from '@/main/commands/types'
+import type { LogInput } from '@/main/log/activity-log'
 import { makeMultiBus } from '../commands/multi-bus'
 
 let dir: string | undefined

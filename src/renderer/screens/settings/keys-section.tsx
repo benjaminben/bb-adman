@@ -1,7 +1,7 @@
 // Keys for the AI providers (FR-170, R-10). Storage sign-in arrives with Phase 9.
-import { useApp, EMPTY } from '../../app/app-context'
+import { useApp, EMPTY } from '@/renderer/app/app-context'
 import { KeyRow } from './key-row'
-import styles from '../screens.module.css'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function KeysSection() {
   const providers = useApp((s) => s.app?.providers ?? EMPTY)

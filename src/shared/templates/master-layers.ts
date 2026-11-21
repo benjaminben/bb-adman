@@ -2,8 +2,8 @@
 // The background layer always, then one layer per other filled slot in the template's
 // order, z counting up from 0 with no gaps. Every box, style, name and fixed value comes
 // from config/default-layout.ts. Pure; throws a plain Error only for a programming error.
-import type { CampaignSize } from '../schemas/commands/campaign'
-import type { Geometry, TextStyle } from '../schemas/layer'
+import type { CampaignSize } from '@/shared/schemas/commands/campaign'
+import type { Geometry, TextStyle } from '@/shared/schemas/layer'
 import type { BuildMasterLayers, NewLayer, Slot, SlotFill, SlotFills, Template } from './types'
 import {
   BACKGROUND_LAYOUT,
@@ -21,7 +21,7 @@ import {
   type Extent,
   type Place,
   type TextStyleRule,
-} from '../config/default-layout'
+} from '@/shared/config/default-layout'
 
 type Frame = { W: number; H: number; S: number; m: number; side: number }
 

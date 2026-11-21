@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import { defineConfig } from 'vitest/config'
+import { srcAlias } from './path-alias.config.js'
 import { COMFY_INCLUDE, comfyEnvFrom } from './tests/comfy/env-file.js'
 
 // SPEC 6.10.12, 13 [1.24]: hand-run tests against the project's ComfyUI test server. Kept out
@@ -17,6 +18,7 @@ function readEnvLocal(): string {
 }
 
 export default defineConfig(() => ({
+  resolve: { alias: srcAlias },
   test: {
     name: 'comfy',
     environment: 'node',

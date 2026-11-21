@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { PICTURE_NOT_DECODED, pngConverter } from '../../../src/main/png-converter'
-import { MAX_PICTURE_BYTES, MAX_PICTURE_SIDE } from '../../../src/main/providers/picture-limits'
+import { PICTURE_NOT_DECODED, pngConverter } from '@/main/png-converter'
+import { MAX_PICTURE_BYTES, MAX_PICTURE_SIDE } from '@/main/providers/picture-limits'
 
 // [1.21] L7: a hand-made JPEG start whose frame header (FFC0) states 1 x 1.
 const SMALL_JPEG = [0xff, 0xd8, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x01, 0x00, 0x01, 1, 1, 0x11, 0]

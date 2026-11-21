@@ -1,19 +1,15 @@
 import { describe, it, expect } from 'vitest'
-import {
-  jobCancelInput,
-  jobMarkSeenInput,
-  jobRetryInput,
-} from '../../../../src/shared/schemas/commands/job'
-import { generationRunImagesInput } from '../../../../src/shared/schemas/commands/generation'
+import { jobCancelInput, jobMarkSeenInput, jobRetryInput } from '@/shared/schemas/commands/job'
+import { generationRunImagesInput } from '@/shared/schemas/commands/generation'
 import {
   storageDropboxSignInInput,
   storageDropboxSignOutInput,
-} from '../../../../src/shared/schemas/commands/storage'
-import { devStorageInput } from '../../../../src/shared/schemas/commands/dev'
-import { MAX_IMAGES_PER_RUN } from '../../../../src/shared/config/defaults'
-import { assetAddGeneratedInput } from '../../../../src/shared/schemas/commands/asset'
-import { projectCloseInput } from '../../../../src/shared/schemas/commands/project'
-import { jobListInput } from '../../../../src/shared/schemas/queries/job'
+} from '@/shared/schemas/commands/storage'
+import { devStorageInput } from '@/shared/schemas/commands/dev'
+import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'
+import { assetAddGeneratedInput } from '@/shared/schemas/commands/asset'
+import { projectCloseInput } from '@/shared/schemas/commands/project'
+import { jobListInput } from '@/shared/schemas/queries/job'
 
 const P = { projectId: 'p1' }
 const images = {

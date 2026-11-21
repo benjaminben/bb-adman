@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import { defineConfig } from 'vitest/config'
+import { srcAlias } from './path-alias.config.js'
 import { LIVE_INCLUDE, liveEnvFrom } from './tests/live/env-file.js'
 
 // SPEC 10.2, 13: hand-run tests against real providers, with the developer's own keys.
@@ -20,6 +21,7 @@ function readEnvLocal(): string {
 }
 
 export default defineConfig(() => ({
+  resolve: { alias: srcAlias },
   test: {
     name: 'live',
     environment: 'node',

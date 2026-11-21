@@ -1,6 +1,7 @@
 import { defineConfig } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import type { Plugin } from 'vite'
+import { srcAlias } from './path-alias.config.js'
 import { CONTENT_SECURITY_POLICY, devContentSecurityPolicy } from './src/main/windows/csp'
 
 // Writes the SPEC 8.2 policy into the window page as a meta tag. The policy text has
@@ -19,8 +20,9 @@ function contentSecurityPolicy(command: 'build' | 'serve'): Plugin {
 }
 
 export default defineConfig(({ command }) => ({
-  main: {},
+  main: { resolve: { alias: srcAlias } },
   preload: {
+    resolve: { alias: srcAlias },
     build: {
       // A sandboxed preload must be one CommonJS file with nothing left to require.
       externalizeDeps: false,
@@ -28,6 +30,7 @@ export default defineConfig(({ command }) => ({
     },
   },
   renderer: {
+    resolve: { alias: srcAlias },
     plugins: [react(), contentSecurityPolicy(command)],
   },
 }))

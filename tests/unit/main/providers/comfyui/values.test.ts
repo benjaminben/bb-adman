@@ -6,7 +6,7 @@ import {
   isSubfolder,
   isViewType,
   uploadName,
-} from '../../../../../src/main/providers/comfyui/values'
+} from '@/main/providers/comfyui/values'
 
 describe('the values checked before they go into a path or body [SPEC 6.10.2, 14 CU-2]', () => {
   it('accepts a prompt ID made by crypto.randomUUID', () => {

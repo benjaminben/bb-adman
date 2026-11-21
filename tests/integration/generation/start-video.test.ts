@@ -9,9 +9,9 @@ import {
   type GenerationFixture,
 } from './generation-fixture'
 import { data } from '../core-fixture'
-import { resetFakeBehaviour, setFakeBehaviour } from '../../../src/main/providers/fake/behaviour'
-import { promptToSend } from '../../../src/shared/generation/prompt'
-import type { VideoJobResult } from '../../../src/shared/schemas/jobs/video-generation'
+import { resetFakeBehaviour, setFakeBehaviour } from '@/main/providers/fake/behaviour'
+import { promptToSend } from '@/shared/generation/prompt'
+import type { VideoJobResult } from '@/shared/schemas/jobs/video-generation'
 
 let f: GenerationFixture
 afterEach(() => {

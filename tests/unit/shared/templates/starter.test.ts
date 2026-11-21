@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { slotStates, starterTemplate } from '../../../../src/shared/templates/starter'
-import { buildMasterLayers } from '../../../../src/shared/templates/master-layers'
-import { LayerRow } from '../../../../src/shared/schemas/rows/layer'
-import type { Template } from '../../../../src/shared/templates/types'
+import { slotStates, starterTemplate } from '@/shared/templates/starter'
+import { buildMasterLayers } from '@/shared/templates/master-layers'
+import { LayerRow } from '@/shared/schemas/rows/layer'
+import type { Template } from '@/shared/templates/types'
 
 const zeroRevs = { copy: 0, style: 0, geometry: 0, source: 0, timing: 0, animation: 0 }
 const still = { preset: 'none' as const, startMs: 0, durationMs: 0 }

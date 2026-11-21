@@ -4,7 +4,7 @@ import net from 'node:net'
 import path from 'node:path'
 import Database from 'better-sqlite3'
 import { makeFixture, data, type Fixture } from '../core-fixture'
-import type { AppState } from '../../../src/shared/schemas/queries/app'
+import type { AppState } from '@/shared/schemas/queries/app'
 
 type Opened = { projectId: string; filePath: string }
 type Packed = { packagePath: string }

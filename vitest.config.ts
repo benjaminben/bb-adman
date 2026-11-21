@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import { srcAlias } from './path-alias.config.js'
 
 export default defineConfig({
   test: {
@@ -16,6 +17,7 @@ export default defineConfig({
     },
     projects: [
       {
+        resolve: { alias: srcAlias },
         test: {
           name: 'node',
           environment: 'node',
@@ -32,6 +34,7 @@ export default defineConfig({
       },
       {
         plugins: [react()],
+        resolve: { alias: srcAlias },
         test: {
           name: 'renderer',
           environment: 'jsdom',

@@ -1,10 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import {
-  briefSubjectIds,
-  campaignPlan,
-} from '../../../../../src/renderer/screens/project-home/campaign-input'
-import type { BriefDraft } from '../../../../../src/shared/schemas/brief'
-import { SubjectId } from '../../../../../src/shared/schemas/commands/subject'
+import { briefSubjectIds, campaignPlan } from '@/renderer/screens/project-home/campaign-input'
+import type { BriefDraft } from '@/shared/schemas/brief'
+import { SubjectId } from '@/shared/schemas/commands/subject'
 import { DRAFT } from './project-fixture'
 
 const parsed = (draft: BriefDraft, primaryLanguage: string | null = 'en') => ({

@@ -1,9 +1,9 @@
 // Reads and writes {userData}/settings.json. Only the app writes it (FR-170).
 import fs from 'node:fs'
 import path from 'node:path'
-import { settingsSchema, type Settings, type SettingsPatch } from '../../shared/schemas/settings'
-import { parseComfyAddress } from '../../shared/comfy/address'
-import { comfyOwnPorts } from '../providers/comfyui/own-ports'
+import { settingsSchema, type Settings, type SettingsPatch } from '@/shared/schemas/settings'
+import { parseComfyAddress } from '@/shared/comfy/address'
+import { comfyOwnPorts } from '@/main/providers/comfyui/own-ports'
 import { DEFAULT_MCP_PORT } from './defaults'
 
 export const RECENT_LIMIT = 20

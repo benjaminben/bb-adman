@@ -4,10 +4,10 @@
 import { isDeepStrictEqual } from 'node:util'
 import type Database from 'better-sqlite3'
 import { expect } from 'vitest'
-import { readWireRows } from '../../src/main/db/rows'
-import { ROW_KEYS, rowKey, type TableName } from '../../src/shared/schemas/rows/keys'
-import type { BusEvent } from '../../src/main/commands/bus'
-import type { WireRow } from '../../src/shared/schemas/events'
+import { readWireRows } from '@/main/db/rows'
+import { ROW_KEYS, rowKey, type TableName } from '@/shared/schemas/rows/keys'
+import type { BusEvent } from '@/main/commands/bus'
+import type { WireRow } from '@/shared/schemas/events'
 
 type Snapshot = Map<TableName, Map<string, WireRow>>
 

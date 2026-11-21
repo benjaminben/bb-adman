@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { createAssetService } from '../../../src/main/assets/service'
+import { createAssetService } from '@/main/assets/service'
 import { makeAssetBus } from './asset-bus'
 
 // Two writers, as two pictures of one job: both find no assets folder, one makes it, and the

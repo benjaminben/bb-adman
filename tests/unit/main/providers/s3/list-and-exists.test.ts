@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { s3Storage } from '../../../../../src/main/providers/s3/s3-storage'
-import { ProviderFailure } from '../../../../../src/main/providers/types'
+import { s3Storage } from '@/main/providers/s3/s3-storage'
+import { ProviderFailure } from '@/main/providers/types'
 import { handlerAnswering, testContext, xml } from './recorded'
 
 describe('S3 list returns files only [SPEC 6.5 1.14 F-07, H12]', () => {

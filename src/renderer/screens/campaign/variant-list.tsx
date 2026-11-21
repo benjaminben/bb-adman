@@ -1,8 +1,8 @@
 // The campaign's variants (SPEC 14 1.41 TP-2 "Variants"): title, size, language, format and
 // whether it is the master, in the order campaign.get gives them. One can be chosen. Titles
 // are drawn as text.
-import type { VariantSummary } from '../../../shared/schemas/queries/campaign'
-import styles from '../screens.module.css'
+import type { VariantSummary } from '@/shared/schemas/queries/campaign'
+import styles from '@/renderer/screens/screens.module.css'
 
 export function variantText(v: VariantSummary): string {
   const parts = [v.title, `${v.width}×${v.height} (${v.sizeLabel})`, v.language, v.format]

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createProjectStore } from '../../../../src/renderer/stores/project-store'
+import { createProjectStore } from '@/renderer/stores/project-store'
 import { makeFakeApi } from '../fake-api'
 
 describe('project store, one per tab [ADR-003, SPEC 3.6]', () => {

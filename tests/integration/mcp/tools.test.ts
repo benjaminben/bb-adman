@@ -3,7 +3,7 @@ import { data } from '../core-fixture'
 import { makeMcpFixture, stopAndClean, type McpFixture } from './mcp-fixture'
 import { BUILT_TOOLS, toolSession, replyJson, type ToolSession } from './tool-client'
 import { createInput } from '../campaigns/campaign-fixture'
-import type { ProjectGet } from '../../../src/shared/schemas/queries/campaign'
+import type { ProjectGet } from '@/shared/schemas/queries/campaign'
 
 let f: McpFixture | undefined
 afterEach(async () => {

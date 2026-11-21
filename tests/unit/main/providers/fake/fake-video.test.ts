@@ -1,11 +1,8 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { adapters } from '../../../../../src/main/providers/fake'
-import {
-  resetFakeBehaviour,
-  setFakeBehaviour,
-} from '../../../../../src/main/providers/fake/behaviour'
-import type { AdapterContext } from '../../../../../src/main/providers/types'
-import { checkMp4 } from '../../../../../src/main/providers/video-check'
+import { adapters } from '@/main/providers/fake'
+import { resetFakeBehaviour, setFakeBehaviour } from '@/main/providers/fake/behaviour'
+import type { AdapterContext } from '@/main/providers/types'
+import { checkMp4 } from '@/main/providers/video-check'
 
 const ctx = {} as AdapterContext
 const input = {

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { checkComfyVideo } from '../../../../../src/main/commands/generation/comfy-video-checks'
-import { offeredWorkflow } from '../../../../../src/main/providers/comfyui/workflows/offered'
-import { WORKFLOWS } from '../../../../../src/main/providers/comfyui/workflows'
-import type { Settings } from '../../../../../src/shared/schemas/settings'
+import { checkComfyVideo } from '@/main/commands/generation/comfy-video-checks'
+import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'
+import { WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import type { Settings } from '@/shared/schemas/settings'
 
 const deps = (devTools: boolean) => ({
   devTools,

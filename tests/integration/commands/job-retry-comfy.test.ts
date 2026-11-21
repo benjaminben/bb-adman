@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeComfyFixture, type ComfyFixture } from '../generation/comfy-fixture'
 import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
-import { WORKFLOWS } from '../../../src/main/providers/comfyui/workflows'
+import { WORKFLOWS } from '@/main/providers/comfyui/workflows'
 
 let f: ComfyFixture
 let stand: StandIn

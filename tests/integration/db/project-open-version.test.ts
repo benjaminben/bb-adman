@@ -3,11 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import Database from 'better-sqlite3'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import {
-  closeProjectFile,
-  createProjectFile,
-  openProjectFile,
-} from '../../../src/main/db/project-file'
+import { closeProjectFile, createProjectFile, openProjectFile } from '@/main/db/project-file'
 
 let dir: string
 let file: string

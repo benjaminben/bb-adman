@@ -10,16 +10,13 @@ import {
   serveNeeds,
   serveVideo,
 } from '../../../../helpers/comfy-run'
-import { comfyVideo } from '../../../../../src/main/providers/comfyui/video'
-import { createServerChecks } from '../../../../../src/main/providers/comfyui/needs'
-import { uploadName } from '../../../../../src/main/providers/comfyui/values'
-import {
-  h3ImageToVideo,
-  h3ReferenceToVideo,
-} from '../../../../../src/main/providers/comfyui/workflows/h3'
-import { fitSize } from '../../../../../src/shared/comfy/fit-size'
-import { greyPng } from '../../../../../src/main/providers/fake/png'
-import { ProviderCancelled } from '../../../../../src/main/providers/types'
+import { comfyVideo } from '@/main/providers/comfyui/video'
+import { createServerChecks } from '@/main/providers/comfyui/needs'
+import { uploadName } from '@/main/providers/comfyui/values'
+import { h3ImageToVideo, h3ReferenceToVideo } from '@/main/providers/comfyui/workflows/h3'
+import { fitSize } from '@/shared/comfy/fit-size'
+import { greyPng } from '@/main/providers/fake/png'
+import { ProviderCancelled } from '@/main/providers/types'
 
 let stand: StandIn
 let opened = false

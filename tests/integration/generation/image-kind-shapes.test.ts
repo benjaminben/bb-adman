@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeKindFixture, pngAnswer, type KindFixture } from './kind-fixture'
 import { waitFor } from './generation-fixture'
-import { imageJobResult } from '../../../src/shared/schemas/jobs/image-generation'
+import { imageJobResult } from '@/shared/schemas/jobs/image-generation'
 
 let f: KindFixture
 afterEach(() => f.cleanup())

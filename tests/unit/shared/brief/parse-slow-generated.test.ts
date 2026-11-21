@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { parseBrief } from '../../../../src/shared/brief/parse'
-import { BRIEF_UNREADABLE } from '../../../../src/shared/brief/draft'
+import { parseBrief } from '@/shared/brief/parse'
+import { BRIEF_UNREADABLE } from '@/shared/brief/draft'
 import { BRIEF_TEST_BYTES as MAX_BRIEF_BYTES } from './test-size'
 import { byteLength, fill } from './slow-fill'
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { jobErrorContext } from '../../../../src/main/jobs/job-error-log'
+import { jobErrorContext } from '@/main/jobs/job-error-log'
 
 // Made up for the test; not the shape of any real key.
 const SECRET = 'not/a real+secret=1'

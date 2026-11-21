@@ -2,15 +2,15 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { assetRelink } from '../../../src/main/commands/asset/relink'
+import { assetRelink } from '@/main/commands/asset/relink'
 import { makeAssetBus } from './asset-bus'
 import { insertTestAsset } from './asset-rows'
 import { testLog } from './test-log'
 
 // A watch on the hashing function: every file it is handed, by its real path.
 const hashed = vi.hoisted(() => [] as string[])
-vi.mock('../../../src/main/assets/inspect', async (importOriginal) => {
-  const real = await importOriginal<typeof import('../../../src/main/assets/inspect')>()
+vi.mock('@/main/assets/inspect', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@/main/assets/inspect')>()
   return {
     ...real,
     hashFile: (file: string) => {

@@ -1,7 +1,7 @@
 // SPEC 14 "Contract between the slices": the AssetService on CoreDeps.assets.
 // Frozen contract (Phase 2 step 0), built by slice A.
-import type { ProjectHandle } from '../db/project-file'
-import type { ImageFile } from '../providers/types'
+import type { ProjectHandle } from '@/main/db/project-file'
+import type { ImageFile } from '@/main/providers/types'
 
 export type AssetService = {
   // IDs of assets whose file cannot be found.

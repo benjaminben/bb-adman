@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { WORKFLOWS } from '../../../../../src/main/providers/comfyui/workflows'
+import { WORKFLOWS } from '@/main/providers/comfyui/workflows'
 import {
   H3_FIRST_RUN_SIZE,
   H3_FULL_SIZE,
   H3_VIDEO,
   MOSS_FIRST_RUN_SIZE,
   MOSS_FULL_SIZE,
-} from '../../../../../src/main/providers/comfyui/workflows/common'
-import { fitSize } from '../../../../../src/shared/comfy/fit-size'
+} from '@/main/providers/comfyui/workflows/common'
+import { fitSize } from '@/shared/comfy/fit-size'
 
 describe('the workflow data step: start small [SPEC 14 1.46, "Workflow data"]', () => {
   it('keeps the full sizes of SPEC 6.10.5 under their own names', () => {

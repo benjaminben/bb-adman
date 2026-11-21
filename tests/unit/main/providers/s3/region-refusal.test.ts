@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { regionRefusal } from '../../../../../src/main/providers/s3/pinned-host'
+import { regionRefusal } from '@/main/providers/s3/pinned-host'
 
 const CHINA = 'Amazon S3 regions in China are not supported in this build.'
 const NOT_A_REGION =

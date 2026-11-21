@@ -1,11 +1,11 @@
 // The asset query domain (SPEC 12; SPEC 14, Slice A part 2, A2-1).
-import type { CoreDeps } from '../core-deps'
+import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
-import { readWireRow, readWireRows } from '../db/rows'
-import { resolveRow } from '../assets/service'
-import { assetListInput, type AssetList } from '../../shared/schemas/queries/asset'
-import type { AssetRow } from '../../shared/schemas/rows/asset'
-import { AppError } from '../../shared/schemas/result'
+import { readWireRow, readWireRows } from '@/main/db/rows'
+import { resolveRow } from '@/main/assets/service'
+import { assetListInput, type AssetList } from '@/shared/schemas/queries/asset'
+import type { AssetRow } from '@/shared/schemas/rows/asset'
+import { AppError } from '@/shared/schemas/result'
 
 // SPEC 4.3 asset.list. Unknown filter values are INVALID_INPUT, a subject the project does
 // not hold is NOT_FOUND (SPEC 4.1). Rows come by id, ascending: IDs are ULIDs, so oldest

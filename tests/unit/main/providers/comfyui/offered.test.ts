@@ -1,12 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { offeredWorkflow } from '../../../../../src/main/providers/comfyui/workflows/offered'
-import { WORKFLOWS } from '../../../../../src/main/providers/comfyui/workflows'
-import type { WorkflowSpec } from '../../../../../src/main/providers/comfyui/workflows/types'
-import { mossTextToImage } from '../../../../../src/main/providers/comfyui/workflows/moss'
-import {
-  h3ImageToVideo,
-  h3TextToVideo,
-} from '../../../../../src/main/providers/comfyui/workflows/h3'
+import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'
+import { WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
+import { mossTextToImage } from '@/main/providers/comfyui/workflows/moss'
+import { h3ImageToVideo, h3TextToVideo } from '@/main/providers/comfyui/workflows/h3'
 
 const as = (spec: WorkflowSpec, status: WorkflowSpec['status']): WorkflowSpec => ({
   ...spec,

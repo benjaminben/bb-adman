@@ -2,8 +2,8 @@
 // preload="metadata"> with its adman-asset address, no autoplay, and sound as the clip has it.
 import { screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { CampaignView } from '../../../../../src/renderer/screens/campaign/campaign-view'
-import type { JobRow } from '../../../../../src/shared/schemas/rows/job'
+import { CampaignView } from '@/renderer/screens/campaign/campaign-view'
+import type { JobRow } from '@/shared/schemas/rows/job'
 import { P, renderWith, sent } from './campaign-fixture'
 import { A9, CLIP, videoApi, videoRow } from './video-fixture'
 

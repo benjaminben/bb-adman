@@ -3,7 +3,7 @@
 // (SPEC 4.4), and undo the prepare step if run throws.
 import type { BaseContext, CommandHandler, HandlerResult } from './types'
 import { createChangeRecorder, type ProjectChanges } from './change-recorder'
-import type { ProjectRegistry } from '../db/project-registry'
+import type { ProjectRegistry } from '@/main/db/project-registry'
 
 export type ProjectRun = { result: HandlerResult<unknown>; changes: ProjectChanges | null }
 

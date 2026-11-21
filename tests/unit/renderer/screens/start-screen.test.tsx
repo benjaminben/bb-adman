@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { StartScreen } from '../../../../src/renderer/screens/start/start-screen'
+import { StartScreen } from '@/renderer/screens/start/start-screen'
 import { renderApp, axeViolations } from '../render'
 import { makeFakeApi, baseState } from '../fake-api'
 

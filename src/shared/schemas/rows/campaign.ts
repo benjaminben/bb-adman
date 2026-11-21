@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { Brief } from '../brief'
-import { CampaignSize } from '../commands/campaign'
+import { Brief } from '@/shared/schemas/brief'
+import { CampaignSize } from '@/shared/schemas/commands/campaign'
 
 // SPEC 3.3 campaign and campaign_subject, in wire form (SPEC 4.4).
 export const CampaignRow = z.object({

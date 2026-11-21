@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { PROJECT_EXTENSION } from '../project'
-import { projectName } from '../project-name'
+import { PROJECT_EXTENSION } from '@/shared/schemas/project'
+import { projectName } from '@/shared/schemas/project-name'
 
 export { projectName }
 

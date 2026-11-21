@@ -12,7 +12,7 @@ import { writeJob, type LiveJob, type RunnerState } from './live'
 import { afterTransaction, askToStop } from './cancel'
 import { CLOSE_WAIT_MS } from './cancel-wait'
 import type { JobEnd } from './job-end'
-import { JOB_KIND_CLASSES } from '../../shared/config/job-kinds'
+import { JOB_KIND_CLASSES } from '@/shared/config/job-kinds'
 
 // The end of a job close does not wait for, or null when its provider is asked and waited for.
 function endWithoutWaiting(live: LiveJob): JobEnd | null {
