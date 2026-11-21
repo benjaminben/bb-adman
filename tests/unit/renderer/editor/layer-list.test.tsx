@@ -210,3 +210,22 @@ describe('Layer list: the "Does not fit" mark [spec/editor.md "Layer list"]', ()
     expect(screen.getAllByText('Does not fit')).toHaveLength(1)
   })
 })
+
+describe('Layer list: the type icon [ST-7, spec/app-style.md "Editor"]', () => {
+  it.each([
+    ['Background', /^Background\s*Stays at the bottom$/],
+    ['Offer', 'Offer'],
+  ] as const)('%s shows one hidden type icon beside an unchanged name', async (name, full) => {
+    await openList()
+    const row = rowButton(name)
+    const icons = row.querySelectorAll('svg')
+    expect(icons).toHaveLength(1)
+    expect(icons[0]).toHaveAttribute('aria-hidden', 'true')
+    expect(row).toHaveAccessibleName(full)
+  })
+
+  it('shows one hidden type icon on a picture layer row', async () => {
+    await openList()
+    expect(rowButton('Logo').querySelectorAll('svg[aria-hidden="true"]')).toHaveLength(1)
+  })
+})

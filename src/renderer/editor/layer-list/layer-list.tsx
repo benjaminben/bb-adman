@@ -7,6 +7,8 @@ import { useContext, useEffect, useId, useMemo, useRef, type KeyboardEvent } fro
 import type { LayerRow as Layer } from '@/shared/schemas/rows/layer'
 import { LayerRow, type RowAsset } from '@/renderer/editor/layer-row'
 import { EditorKeyRoot, useEditorKey } from '@/renderer/editor/use-editor-key'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import { focusCopyField } from './focus-copy-field'
 import { stackOrder, stepped, topFirst } from './stack-order'
 import { useLayerActions } from './use-layer-actions'
@@ -23,6 +25,7 @@ export type LayerListProps = {
 }
 
 const STEP: Record<string, number> = { ArrowUp: -1, ArrowDown: 1 }
+const ADD = `${layout.quiet} ${layout.small}`
 
 export function LayerList(props: LayerListProps) {
   const { layers, selectedId, onSelect } = props
@@ -78,10 +81,12 @@ export function LayerList(props: LayerListProps) {
           Layers
         </h3>
         <div className={styles.add}>
-          <button type="button" onClick={() => void add('text')}>
+          <button type="button" className={ADD} onClick={() => void add('text')}>
+            <Icon name="text" size="small" />
             Add text layer
           </button>
-          <button type="button" onClick={() => void add('image')}>
+          <button type="button" className={ADD} onClick={() => void add('image')}>
+            <Icon name="image" size="small" />
             Add picture layer
           </button>
         </div>

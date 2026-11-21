@@ -1,13 +1,16 @@
+/* app-style */
+/* A layer row (spec/app-style.md "Editor", "Layer rows"): the row and its buttons share one
+   ground, so the selection and the hover cover both. */
 .box {
   display: flex;
   flex-direction: column;
-  border: var(--border-width) solid transparent;
   border-radius: var(--radius);
 }
-/* The selection frame holds the row and its buttons. */
-.box:has(> .selected) {
-  border-color: var(--color-accent);
+.box:hover {
   background: var(--color-surface);
+}
+.box:has(> .selected) {
+  background: var(--color-accent-soft);
 }
 .box[data-drop='above'] {
   box-shadow: 0 calc(-1 * var(--focus-ring-width)) 0 var(--color-accent);
@@ -18,18 +21,31 @@
 .row {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: var(--space-2);
   width: 100%;
+  min-height: var(--row-height);
   padding: var(--space-1) var(--space-2);
   border-color: transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-regular);
   text-align: left;
 }
-.row:hover {
-  background: var(--color-surface);
+.row:hover:not(:disabled) {
+  border-color: transparent;
+  background: transparent;
 }
-.selected,
-.selected:hover {
-  background: var(--color-surface);
+.selected {
+  color: var(--color-accent-ink);
+}
+.selected .name {
+  font-weight: var(--weight-bold);
+}
+.hiddenLayer .name {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
 }
 .thumb {
   flex: none;
@@ -37,8 +53,8 @@
   height: var(--layer-thumb);
   object-fit: contain;
   background: var(--canvas-backdrop);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-inner);
 }
 .hiddenLayer .thumb {
   opacity: var(--opacity-disabled);
@@ -47,9 +63,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg);
-  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-family: var(--font-title);
   font-size: var(--font-size-heading);
+  font-weight: var(--weight-title);
+}
+.type {
+  display: flex;
+  flex: none;
+  color: var(--color-text-muted);
+}
+.selected .type {
+  color: var(--color-accent-ink);
 }
 .text {
   display: flex;
@@ -64,6 +89,7 @@
 .field {
   flex: 1;
   min-width: 0;
+  min-height: var(--control-height-small);
 }
 .marks {
   display: flex;
@@ -72,10 +98,11 @@
 }
 .mark {
   padding: 0 var(--space-1);
-  border-radius: var(--radius);
-  color: var(--color-text-muted);
+  border-radius: var(--radius-inner);
+  color: var(--color-text-secondary);
   background: var(--color-surface);
   font-size: var(--font-size-small);
+  font-weight: var(--weight-regular);
 }
 .selected .mark {
   background: var(--color-bg);
@@ -85,9 +112,21 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-1);
-  padding: 0 var(--space-2) var(--space-1);
+  padding: 0 var(--space-1) var(--space-1);
 }
+/* Small quiet buttons that keep their words (C-13). */
 .action {
+  min-height: var(--control-height-small);
   padding: 0 var(--space-2);
+  border-color: transparent;
+  background: transparent;
   font-size: var(--font-size-small);
+}
+.action:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--color-bg);
+}
+.action[aria-pressed='true'] {
+  color: var(--color-accent-ink);
+  font-weight: var(--weight-bold);
 }

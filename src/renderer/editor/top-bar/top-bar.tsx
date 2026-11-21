@@ -7,6 +7,8 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode 
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import { NO_TEXT_HINT } from '@/renderer/editor/layout-run'
 import { useEditorKey } from '@/renderer/editor/use-editor-key'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './top-bar.module.css'
 
 export type TopBarProps = {
@@ -22,6 +24,8 @@ export type TopBarProps = {
   placing?: boolean
   layout?: ReactNode
 }
+
+const QUIET = `${layout.quiet} ${layout.small}`
 
 export function sizeLine(v: VariantSummary): string {
   return `${v.sizeLabel} · ${v.width} × ${v.height} px · ${v.language} · ${v.format}`
@@ -75,12 +79,22 @@ export function TopBar(props: TopBarProps) {
         ) : (
           <>
             <h3 className={styles.title}>{variant.title}</h3>
-            <button ref={renameButton} type="button" onClick={() => setRenaming(true)}>
+            <button
+              ref={renameButton}
+              type="button"
+              className={QUIET}
+              onClick={() => setRenaming(true)}
+            >
               Rename
             </button>
           </>
         )}
-        {variant.isMaster && <span className={styles.mark}>Master</span>}
+        {variant.isMaster && (
+          <span className={`${layout.badge} ${layout.accent}`}>
+            <Icon name="star" size="small" />
+            Master
+          </span>
+        )}
       </div>
       <p className={styles.line}>{sizeLine(variant)}</p>
       <div className={styles.actions}>
@@ -90,6 +104,7 @@ export function TopBar(props: TopBarProps) {
           aria-describedby={props.canPlaceText ? undefined : hintId}
           onClick={props.onPlaceText}
         >
+          <Icon name="sparkle" size="small" />
           Place text with AI…
         </button>
         {!props.canPlaceText && (
@@ -98,10 +113,12 @@ export function TopBar(props: TopBarProps) {
           </span>
         )}
         {props.layout}
-        <button type="button" disabled={!props.canUndo} onClick={props.onUndo}>
+        <button type="button" className={QUIET} disabled={!props.canUndo} onClick={props.onUndo}>
+          <Icon name="undo" size="small" />
           Undo
         </button>
-        <button type="button" disabled={!props.canRedo} onClick={props.onRedo}>
+        <button type="button" className={QUIET} disabled={!props.canRedo} onClick={props.onRedo}>
+          <Icon name="redo" size="small" />
           Redo
         </button>
       </div>
