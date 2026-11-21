@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { adapters } from '@/main/providers/fake'
-import { ProviderFailure, type AdapterContext, type TextProvider } from '@/main/providers/types'
+import type { AdapterContext, TextProvider } from '@/main/providers/types'
 import type { Brief } from '@/shared/schemas/brief'
 import { describeSwitches } from './fake-switches'
 
@@ -81,21 +81,27 @@ describe('fake provider, copy options', () => {
   })
 })
 
-describe('fake provider, translate', () => {
-  it('refuses: not built yet', async () => {
-    const input = { items: [], from: 'en', to: 'fr', region: 'FR', audience: 'all' }
-    const error = await text()
-      .translate(input)
-      .catch((e: unknown) => e)
-    expect(error).toBeInstanceOf(ProviderFailure)
-    expect((error as ProviderFailure).error).toEqual({
-      kind: 'other',
-      detail: 'Translate is not built yet',
-    })
+describe('fake provider, translate [A-167]', () => {
+  it('gives each item its text with the target language in front, in order', async () => {
+    const items = [
+      { key: 'a', text: 'Shop now' },
+      { key: 'b', text: 'Made for every day' },
+    ]
+    const input = { items, from: 'en', to: 'ja', region: 'JP', audience: 'all' }
+    expect(await text().translate(input)).toEqual([
+      { key: 'a', text: '[ja] Shop now' },
+      { key: 'b', text: '[ja] Made for every day' },
+    ])
   })
 })
 
 describeSwitches('extract brief', (opts) => text().extractBrief({ text: BRIEF_MD }, opts))
 describeSwitches('copy options', (opts) =>
   text().copyOptions({ role: 'text', brief, language: 'en', count: 1, maxChars: 40 }, opts),
+)
+describeSwitches('translate', (opts) =>
+  text().translate(
+    { items: [{ key: 'a', text: 'Hi' }], from: 'en', to: 'de', region: 'DE', audience: 'all' },
+    opts,
+  ),
 )

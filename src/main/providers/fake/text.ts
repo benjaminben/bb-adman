@@ -1,7 +1,8 @@
 // The fake provider's text part (spec/ai-jobs.md "The fake provider's parts"): reads a brief
-// from `Label: value` lines, gives copy options from a fixed list, and refuses translate.
+// from `Label: value` lines, gives copy options from a fixed list, and translates as
+// `[{to}] {text}` (A-167).
 import { fakeRun } from './run'
-import { ProviderFailure, type CopyRole, type TextProvider } from '@/main/providers/types'
+import type { CopyRole, TextProvider } from '@/main/providers/types'
 import type { BriefDraft } from '@/shared/schemas/brief'
 
 type TextField = 'campaignName' | 'region' | 'audience' | 'message' | 'offer'
@@ -81,7 +82,9 @@ export function fakeText(): TextProvider {
       fakeRun(opts, () =>
         COPY[input.role].slice(0, input.count).map((line) => within(line, input.maxChars)),
       ),
-    translate: () =>
-      Promise.reject(new ProviderFailure({ kind: 'other', detail: 'Translate is not built yet' })),
+    translate: (input, opts) =>
+      fakeRun(opts, () =>
+        input.items.map(({ key, text }) => ({ key, text: `[${input.to}] ${text}` })),
+      ),
   }
 }

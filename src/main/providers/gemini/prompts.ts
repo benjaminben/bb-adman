@@ -1,6 +1,7 @@
 // spec/providers-adapters.md "Layout and text": the fixed instruction texts. Values from the
 // project are written as JSON so each one is plainly quoted. Nothing else about the project
 // is sent (spec/ai-jobs.md "Security notes").
+import { REGION_LANGUAGES } from '@/shared/config/region-languages'
 import type { Brief } from '@/shared/schemas/brief'
 import type { CopyRole } from '@/main/providers/types'
 
@@ -64,5 +65,50 @@ export function copyInstruction(input: CopyPromptInput): string {
     `Write them in the language ${JSON.stringify(input.language)}.`,
     `Each option has at most ${input.maxChars} characters.`,
     `The campaign: ${JSON.stringify(context)}`,
+  ].join('\n')
+}
+
+export const TEXTS_LINE = 'Texts:'
+
+export type TranslatePromptInput = { from: string; to: string; region: string; audience: string }
+
+// A tag by its English name and the tag itself, as `Japanese ("ja")`. A tag Intl cannot read
+// is named by the tag alone.
+function languageName(tag: string): string {
+  try {
+    const name = new Intl.DisplayNames('en', { type: 'language' }).of(tag)
+    return `${name ?? tag} (${JSON.stringify(tag)})`
+  } catch {
+    return JSON.stringify(tag)
+  }
+}
+
+// A-158: Traditional Chinese for Taiwan, Hong Kong and Macao, Simplified otherwise. The region
+// is found by code or English name in the region table; a bare code outside it counts too.
+const TRADITIONAL = new Set(['TW', 'HK', 'MO'])
+const REGION_CODES = new Map(
+  REGION_LANGUAGES.flatMap((row) =>
+    [row.code, ...row.names].map((key) => [key.toLowerCase(), row.code] as const),
+  ),
+)
+
+function scriptLine(region: string): string {
+  const key = region.trim().toLowerCase()
+  const code = REGION_CODES.get(key) ?? key.toUpperCase()
+  const script = TRADITIONAL.has(code) ? 'Traditional Chinese' : 'Simplified Chinese'
+  return `Write the Chinese in ${script}.`
+}
+
+// spec/phases/phase-06.md section 3 [FR-101]: the region and audience go as quoted context.
+export function translateInstruction(input: TranslatePromptInput): string {
+  return [
+    `You translate the texts of an ad, which follow the line "${TEXTS_LINE}" as a JSON list.`,
+    `Translate from ${languageName(input.from)} to ${languageName(input.to)}.`,
+    `The ad runs in the region ${JSON.stringify(input.region)}.`,
+    `The audience: ${JSON.stringify(input.audience)}`,
+    ...(input.to === 'zh' ? [scriptLine(input.region)] : []),
+    'Write ad copy for that audience that keeps the meaning and tone of each text.',
+    'Keep the line breaks. Keep brand names, product names, numbers and prices as written.',
+    'Add nothing. Give every key once, with its translated text.',
   ].join('\n')
 }
