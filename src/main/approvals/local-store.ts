@@ -164,3 +164,65 @@ export function endLocalLink(
   clearGallery(db, campaignId)
   if (lastRead !== null) replaceSignoffs(db, campaignId, lastRead)
 }
+
+// approvals.publish step 7: the gallery rows replaced with what was just published, and
+// published_at set. Call inside the command's transaction.
+export function publishLocalGallery(
+  db: Database.Database,
+  campaignId: string,
+  rows: VariantRecord[],
+  now: string,
+): void {
+  clearGallery(db, campaignId)
+  const insert = db.prepare(
+    `INSERT INTO approval_variant (campaign_id, variant_id, published_rev, expires_at)
+     VALUES (?, ?, ?, ?)`,
+  )
+  for (const r of rows) {
+    const row = VariantRecord.parse(r)
+    insert.run(campaignId, row.variantId, row.publishedRev, row.expiresAt)
+  }
+  db.prepare('UPDATE approval_link SET published_at = ? WHERE campaign_id = ?').run(now, campaignId)
+}
+
+export type Renewed = { variantId: string; version: number; expiresAt: string }
+
+// The stored sign-offs as they are, for comparison only; nothing read here is shown or sent.
+function storedSignoffs(db: Database.Database, campaignId: string): unknown[] {
+  return db
+    .prepare(
+      `SELECT id, variant_id AS variantId, version, email, signed_at AS signedAt
+       FROM approval_signoff WHERE campaign_id = ? ORDER BY id`,
+    )
+    .all(campaignId)
+}
+
+const byIdText = (list: unknown[]) =>
+  JSON.stringify(list.map((s) => SignoffRecord.safeParse(s).data ?? null))
+
+// approvals.refresh step 4: the sign-offs replaced with the service's list (each checked again),
+// the expiry of each renewed row of that version updated, checked_at set. True when the
+// sign-off list or an expiry changed. Call inside the command's transaction.
+export function refreshLocalLink(
+  db: Database.Database,
+  campaignId: string,
+  signoffs: SignoffRecord[],
+  renewed: Renewed[],
+  now: string,
+): boolean {
+  const checked = signoffs.map((s) => SignoffRecord.parse(s))
+  const sorted = [...checked].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+  let changed = byIdText(storedSignoffs(db, campaignId)) !== byIdText(sorted)
+  replaceSignoffs(db, campaignId, checked)
+  const update = db.prepare(
+    `UPDATE approval_variant SET expires_at = ?
+     WHERE campaign_id = ? AND variant_id = ? AND published_rev = ? AND expires_at != ?`,
+  )
+  for (const r of renewed) {
+    const expiresAt = Time.parse(r.expiresAt)
+    const done = update.run(expiresAt, campaignId, r.variantId, Version.parse(r.version), expiresAt)
+    if (done.changes > 0) changed = true
+  }
+  db.prepare('UPDATE approval_link SET checked_at = ? WHERE campaign_id = ?').run(now, campaignId)
+  return changed
+}
