@@ -3,6 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, afterAll } from 'vitest'
 import { localStorageAt } from '../../../src/main/providers/local-storage'
+import { ProviderFailure } from '../../../src/main/providers/types'
 import { describeStorageConformance } from './storage-conformance'
 
 const folders: string[] = []
@@ -126,6 +127,33 @@ describe('local storage messages hold no path [SPEC 6.5 1.14 H10]', () => {
     const failure = await localStorageAt(root)
       .read('private-link/x.txt')
       .catch((error: unknown) => error)
+    expect((failure as Error).message).toBe('Storage path refused')
+  })
+})
+
+describe('local storage errors are ProviderFailures with the code only [SPEC 6.5 1.13 Errors, H2]', () => {
+  it('a file-system error is a ProviderFailure of kind other whose detail is the code', async () => {
+    const storage = localStorageAt(tempRoot().root)
+    await storage.write('private-folder/x.txt', new Uint8Array([1]), 'text/plain')
+    const failure = await storage.read('private-folder').catch((error: unknown) => error)
+    expect(failure).toBeInstanceOf(ProviderFailure)
+    expect((failure as ProviderFailure).error).toEqual({ kind: 'other', detail: 'EISDIR' })
+  })
+
+  it('a missing file is a ProviderFailure of kind other whose detail is the code', async () => {
+    const storage = localStorageAt(tempRoot().root)
+    await storage.write('private-folder/x.txt', new Uint8Array([1]), 'text/plain')
+    for (const path of ['private-folder/never.txt', 'not-made/never.txt']) {
+      const failure = await storage.read(path).catch((error: unknown) => error)
+      expect((failure as ProviderFailure).error).toEqual({ kind: 'other', detail: 'ENOENT' })
+    }
+  })
+
+  it('a refused path stays a plain Error', async () => {
+    const failure = await localStorageAt(tempRoot().root)
+      .read('../x.txt')
+      .catch((error: unknown) => error)
+    expect(failure).not.toBeInstanceOf(ProviderFailure)
     expect((failure as Error).message).toBe('Storage path refused')
   })
 })

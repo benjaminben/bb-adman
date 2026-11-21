@@ -4,8 +4,10 @@
 
 // The one error for a path that breaks the rules or would leave the root. It holds no path
 // (SPEC 6.5 [1.13] Errors, [1.14] H10).
+export const REFUSED_PATH = 'Storage path refused'
+
 export function refusePath(): never {
-  throw new Error('Storage path refused')
+  throw new Error(REFUSED_PATH)
 }
 
 function checkParts(path: string): void {

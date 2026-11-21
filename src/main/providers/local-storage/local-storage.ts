@@ -1,7 +1,7 @@
 // SPEC 6, 6.5: StorageProvider on a local folder. Used by export and by tests (there is no
 // separate fake storage). It never touches anything outside `root`: every path passes the
 // shared path rules, and the real folder it lands in, after links are followed, must still be
-// inside the real root.
+// inside the real root. Every disk error leaves as a ProviderFailure with the code only.
 import fs from 'node:fs/promises'
 import nodePath from 'node:path'
 import { Readable } from 'node:stream'
@@ -9,6 +9,7 @@ import { pipeline } from 'node:stream/promises'
 import { createWriteStream } from 'node:fs'
 import type { ReadableStream as WebReadableStream } from 'node:stream/web'
 import type { StorageProvider } from '../types'
+import { notThere, onDisk } from './failure'
 import { refusePath, storageFilePath, storageListPrefix } from './paths'
 
 function isMissing(error: unknown): boolean {
@@ -93,50 +94,55 @@ export function localStorageAt(root: string): StorageProvider {
   }
 
   return {
-    async exists(path) {
-      const file = await fileFor(path, false)
-      if (file === null) return false
-      try {
-        return (await fs.stat(file)).isFile()
-      } catch (error) {
-        if (isMissing(error)) return false
-        throw error
-      }
-    },
+    exists: (path) =>
+      onDisk(async () => {
+        const file = await fileFor(path, false)
+        if (file === null) return false
+        try {
+          return (await fs.stat(file)).isFile()
+        } catch (error) {
+          if (isMissing(error)) return false
+          throw error
+        }
+      }),
 
-    async read(path) {
-      const file = await fileFor(path, false)
-      if (file === null) throw new Error('Storage file not found')
-      return new Uint8Array(await fs.readFile(file))
-    },
+    read: (path) =>
+      onDisk(async () => {
+        const file = await fileFor(path, false)
+        if (file === null) throw notThere()
+        return new Uint8Array(await fs.readFile(file))
+      }),
 
-    async write(path, data) {
-      const file = await fileFor(path, true)
-      if (file === null) throw new Error('Storage folder could not be made')
-      if (data instanceof Uint8Array) {
-        await fs.writeFile(file, data)
-        return
-      }
-      await pipeline(Readable.fromWeb(data as WebReadableStream), createWriteStream(file))
-    },
+    write: (path, data) =>
+      onDisk(async () => {
+        const file = await fileFor(path, true)
+        if (file === null) throw notThere()
+        if (data instanceof Uint8Array) {
+          await fs.writeFile(file, data)
+          return
+        }
+        await pipeline(Readable.fromWeb(data as WebReadableStream), createWriteStream(file))
+      }),
 
-    async list(prefix) {
-      const folder = storageListPrefix(prefix)
-      const found: string[] = []
-      if (folder !== '') {
-        const real = await folderFor(folder.slice(0, -1), false)
-        if (real === null) return []
-        await walk(real, folder, found)
-      } else {
-        await walk(absoluteRoot, '', found)
-      }
-      return found
-    },
+    list: (prefix) =>
+      onDisk(async () => {
+        const folder = storageListPrefix(prefix)
+        const found: string[] = []
+        if (folder !== '') {
+          const real = await folderFor(folder.slice(0, -1), false)
+          if (real === null) return []
+          await walk(real, folder, found)
+        } else {
+          await walk(absoluteRoot, '', found)
+        }
+        return found
+      }),
 
-    async remove(paths) {
-      const files = []
-      for (const path of paths) files.push(await fileFor(path, false))
-      for (const file of files) if (file !== null) await fs.rm(file, { force: true })
-    },
+    remove: (paths) =>
+      onDisk(async () => {
+        const files = []
+        for (const path of paths) files.push(await fileFor(path, false))
+        for (const file of files) if (file !== null) await fs.rm(file, { force: true })
+      }),
   }
 }

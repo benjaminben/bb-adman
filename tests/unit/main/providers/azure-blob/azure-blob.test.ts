@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { adapters } from '../../../../../src/main/providers/azure-blob'
-import type { AdapterContext } from '../../../../../src/main/providers/types'
+import { ProviderFailure, type AdapterContext } from '../../../../../src/main/providers/types'
 import type { Settings } from '../../../../../src/shared/schemas/settings'
 
 const ctx: AdapterContext = {
@@ -23,6 +23,23 @@ describe('Azure Blob storage stub [SPEC 6.5]', () => {
       storage.remove(['a.txt']),
     ]
     for (const call of calls)
-      await expect(call).rejects.toThrow('Azure Blob storage is not available')
+      await expect(call).rejects.toThrow(
+        expect.objectContaining({
+          error: { kind: 'other', detail: 'Azure Blob storage is not available' },
+        }),
+      )
+  })
+})
+
+describe('Azure Blob storage stub errors [SPEC 6.5 1.14, H2]', () => {
+  it('rejects every call with a ProviderFailure of kind other', async () => {
+    const storage = adapters.storage?.(ctx)
+    if (!storage) throw new Error('azure-blob exports no storage adapter')
+    const failure = await storage.list('').catch((error: unknown) => error)
+    expect(failure).toBeInstanceOf(ProviderFailure)
+    expect((failure as ProviderFailure).error).toEqual({
+      kind: 'other',
+      detail: 'Azure Blob storage is not available',
+    })
   })
 })
