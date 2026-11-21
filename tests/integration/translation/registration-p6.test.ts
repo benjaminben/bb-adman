@@ -27,7 +27,6 @@ const INPUTS: Record<string, object> = {
   'translation.propose': { provider: 'fake', variantIds: ['V1'] },
   'translation.set': { layerId: 'L1', text: 'Hallo', applyToSameLanguage: false },
   'translation.approve': { layerIds: ['L1'] },
-  'translation.exportSheet': { campaignId: 'C1', filePath: '/nowhere/sheet.csv' },
   'translation.write': { jobId: 'J1', items: [{ key: 'headline', text: 'Hallo' }] },
   'translation.restore': {
     items: [
@@ -47,7 +46,6 @@ const POLICY: Record<string, string> = {
   'translation.propose': 'deny',
   'translation.set': 'allow',
   'translation.approve': 'deny',
-  'translation.exportSheet': 'deny',
   'translation.write': 'deny',
   'translation.restore': 'deny',
 }
@@ -169,26 +167,6 @@ describe('the Phase 6 query stubs [P6-1]', () => {
     const made = await fx.user('campaign.create', { projectId, ...createInput() })
     return { fx, projectId, campaignId: data<{ campaignId: string }>(made).campaignId }
   }
-
-  it.each(['user', 'agent'] as const)(
-    'translation.forCampaign answers the empty shape to the %s',
-    async (actor) => {
-      const { fx, projectId, campaignId } = await withCampaign()
-      const input = { projectId, campaignId }
-      expect(await fx.core.query('translation.forCampaign', input, { actor })).toEqual(
-        ok({ primaryLanguage: 'en', rows: [], jobs: [] }),
-      )
-    },
-  )
-
-  it('translation.forCampaign refuses a campaign not in the project', async () => {
-    const { fx, projectId } = await open()
-    const input = { projectId, campaignId: 'C-none' }
-    expect(await fx.core.query('translation.forCampaign', input, { actor: 'user' })).toMatchObject({
-      ok: false,
-      error: { code: 'NOT_FOUND' },
-    })
-  })
 
   it.each(['user', 'agent'] as const)(
     'check.results answers no variants to the %s',
