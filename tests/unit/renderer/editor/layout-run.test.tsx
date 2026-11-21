@@ -204,4 +204,29 @@ describe('Place text with AI [spec/screens-ai.md "Place text with AI", P4-16]', 
     )
     expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument()
   })
+
+  // spec/jobs.md "Finished, not yet looked at" [FR-218] (P4-T3): the window marks the job seen
+  // once, when the finish step has put its result on the layers. No mark for a failed or
+  // cancelled job, or a result that could not be put on the layers.
+  it.each<[string, JobRow['status'], boolean, number]>([
+    ['a result put on the layers, sent once', 'succeeded', false, 1],
+    ['a failed job', 'failed', false, 0],
+    ['a cancelled job', 'cancelled', false, 0],
+    ['a result whose layer.updateMany is refused', 'succeeded', true, 0],
+  ])('job.markSeen for %s', async (_c, status, refuse, marks) => {
+    const { fake } = await open()
+    await start(fake)
+    if (refuse) {
+      const error = { code: 'INVALID_INPUT' as const, message: 'That layer is locked.' }
+      fake.onCommand('layer.updateMany', () => ({ ok: false, error }))
+    }
+    fake.emit('job.updated', row(status, { errorKind: status === 'failed' ? 'other' : null }))
+    fake.emit('job.updated', row(status, { errorKind: status === 'failed' ? 'other' : null }))
+    if (status === 'succeeded') {
+      await waitFor(() => expect(sent(fake, 'layer.updateMany')).toHaveLength(1))
+    }
+    await new Promise((r) => setTimeout(r, 10))
+    const expected = { projectId: P, jobIds: ['J1'] }
+    expect(sent(fake, 'job.markSeen')).toEqual(Array(marks).fill(expected))
+  })
 })

@@ -38,7 +38,13 @@ test.afterEach(async () => {
   }
 })
 
-type Job = { id: string; kind: string; status: string; result: { assetIds: string[] } | null }
+type Job = {
+  id: string
+  kind: string
+  status: string
+  seenAt: string | null
+  result: { assetIds: string[] } | null
+}
 
 async function jobs(place: w.Place, layerId?: string): Promise<Job[]> {
   const input = { projectId: place.projectId, ...(layerId ? { layerId } : {}) }
@@ -72,6 +78,10 @@ test('Workflow 5.1: a campaign from a Markdown brief, its pictures, text and cut
   await expect
     .poll(async () => (await jobs(place)).find((j) => j.kind === 'layout_proposal')?.status)
     .toBe('succeeded')
+  // Its result is on the layers, so the window marked it seen (spec/jobs.md [FR-218]).
+  await expect
+    .poll(async () => (await jobs(place)).find((j) => j.kind === 'layout_proposal')?.seenAt)
+    .toEqual(expect.any(String))
   const headline = await layer(place, (l) => l.slot === 'headline')
   expect(headline.copy).toBe(w.MESSAGE)
 

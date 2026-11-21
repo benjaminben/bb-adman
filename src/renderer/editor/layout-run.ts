@@ -106,6 +106,8 @@ function layoutRunsFor(api: AdmanApi): LayoutRuns {
 // The finish step. It reads the result and the variant's layers again, since the editor may
 // be gone. A variant deleted while the call was out refuses with NOT_FOUND: nothing is shown.
 // It sends through window.api, not the app store, so no refusal lands in the app's banner.
+// Once the result is on the layers (or changes none), it sends job.markSeen (spec/jobs.md,
+// "Finished, not yet looked at" [FR-218]); the finish runs once per job.
 export async function applyLayout(api: AdmanApi, target: Target, jobId: string): Promise<void> {
   const runs = layoutRunsFor(api)
   const job = await api.query('job.get', { projectId: target.projectId, jobId })
@@ -114,9 +116,11 @@ export async function applyLayout(api: AdmanApi, target: Target, jobId: string):
   const read = await api.query('variant.get', target)
   if (!read.ok) return
   const updates = layoutPatches(result.data.boxes, (read.data as VariantGet).layers)
-  if (updates.length === 0) return
-  const reply = await api.command('layer.updateMany', { ...target, updates })
-  if (!reply.ok && reply.error.code !== 'NOT_FOUND') {
+  const reply =
+    updates.length === 0 ? null : await api.command('layer.updateMany', { ...target, updates })
+  if (reply === null || reply.ok) {
+    await api.command('job.markSeen', { projectId: target.projectId, jobIds: [jobId] })
+  } else if (reply.error.code !== 'NOT_FOUND') {
     runs.fail(target, `Text could not be placed. ${reply.error.message}`)
   }
 }
