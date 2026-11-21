@@ -45,10 +45,13 @@ async function stillWaiting(outcome: Promise<unknown>): Promise<boolean> {
 }
 
 describe('time limits of a call [SPEC 6.10.2, 14 CU-2]', () => {
-  it('no answer within 10 s of the start is offline, no_answer', async () => {
+  it('no answer within 10 s of the request being sent is offline, no_answer', async () => {
     standIn.reply('GET /system_stats', { wait: true })
+    const spy = vi.spyOn(http, 'request')
     vi.useFakeTimers({ toFake: ['setTimeout'] })
     const outcome = failureOf(client.systemStats())
+    const req = spy.mock.results[0]?.value as ClientRequest
+    await new Promise((done) => req.once('finish', done))
     await vi.advanceTimersByTimeAsync(CONNECT_MS - 1)
     expect(await stillWaiting(outcome)).toBe(true)
     await vi.advanceTimersByTimeAsync(1)
