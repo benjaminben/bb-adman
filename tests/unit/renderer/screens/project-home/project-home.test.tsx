@@ -99,6 +99,14 @@ describe('project page [SPEC 14 1.41 TP-1]', () => {
     expect(screen.getByText('Campaign page: not built yet')).toBeInTheDocument()
   })
 
+  it('gives the campaign place the project ID and the opened campaign ID [TP-1 review F6]', async () => {
+    await renderApp(<ProjectHome project={PROJECT} />, projectApi(twoCampaigns))
+    await userEvent.click(await screen.findByRole('button', { name: 'Open Fall' }))
+    const place = screen.getByRole('region', { name: 'Campaign' })
+    expect(place).toHaveAttribute('data-project-id', 'P1')
+    expect(place).toHaveAttribute('data-campaign-id', 'fall-a2b3c4')
+  })
+
   it('draws a campaign name as text, not as HTML', async () => {
     const reply = projectGet([campaign('x-k3f9q2', '<a href="https://e.test">Click</a>')])
     await renderApp(<ProjectHome project={PROJECT} />, projectApi(reply))

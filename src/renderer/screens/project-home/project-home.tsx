@@ -8,9 +8,15 @@ import { CampaignList } from './campaign-list'
 import { useProject } from './use-project'
 import styles from '../screens.module.css'
 
-function CampaignPlace(props: { onBack: () => void }) {
+// The campaign page mounts here with these props (SPEC 14 1.41 TP-2).
+function CampaignPlace(props: { projectId: string; campaignId: string; onBack: () => void }) {
   return (
-    <section className={styles.card} aria-label="Campaign">
+    <section
+      className={styles.card}
+      aria-label="Campaign"
+      data-project-id={props.projectId}
+      data-campaign-id={props.campaignId}
+    >
       <div className={styles.row}>
         <button type="button" onClick={props.onBack}>
           Back to project
@@ -40,7 +46,11 @@ export function ProjectHome(props: { project: OpenProjectSummary }) {
       </header>
       <p className={styles.muted}>{project.filePath}</p>
       {openCampaignId !== null ? (
-        <CampaignPlace onBack={() => setOpenCampaignId(null)} />
+        <CampaignPlace
+          projectId={project.projectId}
+          campaignId={openCampaignId}
+          onBack={() => setOpenCampaignId(null)}
+        />
       ) : data === null ? (
         <p className={styles.muted}>Loading the project…</p>
       ) : (
