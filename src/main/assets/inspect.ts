@@ -44,6 +44,16 @@ async function readHead(file: string, length: number): Promise<Uint8Array> {
   }
 }
 
+// The accepted type of a file from its base name and first bytes, as import checks it, or
+// undefined when it does not match or cannot be read (SPEC 14 [1.30] U4).
+export async function sniffFile(file: string): Promise<FileType | undefined> {
+  try {
+    return sniffType(path.basename(file), await readHead(file, SNIFF_BYTES))
+  } catch {
+    return undefined
+  }
+}
+
 async function hashOf(stream: NodeJS.ReadableStream): Promise<string> {
   const hash = crypto.createHash('sha256')
   await pipeline(stream, hash)

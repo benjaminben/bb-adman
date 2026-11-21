@@ -10,10 +10,10 @@ import type { ProjectHandle } from '../db/project-file'
 import { readMeta, writeMeta } from '../db/meta'
 import { readWireRows } from '../db/rows'
 import { assetsDirOf, resolveRow } from './service'
-import { hashFile } from './inspect'
+import { hashFile, sniffFile } from './inspect'
 import { managedPath, pathInside } from './path-resolver'
 import { missingFile } from './errors'
-import { extensionOf } from '../../shared/config/file-types'
+import { extensionOf, fileTypeFor, type AssetKind } from '../../shared/config/file-types'
 import type { AssetRow } from '../../shared/schemas/rows/asset'
 import type { PackageResult } from '../../shared/schemas/commands/asset'
 import { AppError } from '../../shared/schemas/result'
@@ -57,15 +57,28 @@ async function checkTarget(project: ProjectHandle, targetDir: string, name: stri
   }
 }
 
+// SPEC 14 [1.30] U4: the extension comes from the base name only, must be one listed for the
+// row's kind, and the first bytes must match that type. Null means treat the asset as missing.
+async function extensionFor(file: string, kind: AssetKind): Promise<string | null> {
+  const type = fileTypeFor(path.basename(file))
+  if (type?.kind !== kind) return null
+  return (await sniffFile(file)) === type ? extensionOf(path.basename(file)) : null
+}
+
 async function findFiles(project: ProjectHandle, skipMissing: boolean) {
   const rows = readWireRows(project.db, 'asset') as AssetRow[]
-  const resolved = await Promise.all(rows.map((r) => resolveRow(project, r)))
+  const resolved = await Promise.all(
+    rows.map(async (r) => {
+      const file = await resolveRow(project, r)
+      return file === 'missing' ? null : { file, ext: await extensionFor(file, r.kind) }
+    }),
+  )
   const found: Found[] = []
   const missing: string[] = []
   rows.forEach((r, i) => {
-    const file = resolved[i] ?? 'missing'
-    if (file === 'missing') missing.push(r.id)
-    else found.push({ id: r.id, file, ext: extensionOf(file) })
+    const hit = resolved[i]
+    if (!hit?.ext) missing.push(r.id)
+    else found.push({ id: r.id, file: hit.file, ext: hit.ext })
   })
   if (missing.length > 0 && !skipMissing) throw missingFile(missing)
   return { found, missing }

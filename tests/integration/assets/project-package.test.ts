@@ -47,7 +47,7 @@ async function threeKinds() {
       copy: true,
     }),
   )
-  await assets.writeManaged(bus.project, { assetId: GEN, ext: 'png', bytes: new Uint8Array([7]) })
+  await assets.writeManaged(bus.project, { assetId: GEN, ext: 'png', bytes: PNG })
   insertTestAsset(bus.db, {
     id: GEN,
     relPath: path.join('P Assets', `${GEN}.png`),
