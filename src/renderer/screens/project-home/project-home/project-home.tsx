@@ -24,7 +24,7 @@ type Props = { project: OpenProjectSummary }
 
 function Section(props: { id: string; title: string; children: ReactNode }) {
   return (
-    <section className={styles.section} aria-labelledby={props.id}>
+    <section className={`${layout.card} ${styles.section}`} aria-labelledby={props.id}>
       <h2 id={props.id}>{props.title}</h2>
       {props.children}
     </section>
@@ -56,7 +56,7 @@ function ProjectPage(props: Props) {
     )
   }
   return (
-    <section className={layout.screen} aria-labelledby={`project-${projectId}`}>
+    <section className={styles.page} aria-labelledby={`project-${projectId}`}>
       <header className={styles.header}>
         <h1 id={`project-${projectId}`}>{project.name}</h1>
         <button
@@ -67,7 +67,7 @@ function ProjectPage(props: Props) {
           Close project
         </button>
       </header>
-      <p className={layout.muted}>{project.filePath}</p>
+      <p className={styles.path}>{project.filePath}</p>
       {data === null ? (
         <p className={layout.muted}>Loading the project…</p>
       ) : (

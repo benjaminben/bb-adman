@@ -6,6 +6,9 @@ import { useEffect, useId, useRef } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import type { SubjectChoice } from '@/renderer/screens/project-home/brief-form-model'
 import { rowPhotos, type ProjectImages } from '@/renderer/screens/project-home/brief-form-photos'
+import { BusySpinner } from '@/renderer/ui/dialog-frame'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import { PhotoTile } from './photo-tile'
 import { useAddPhotos, type RowUpdate } from './use-add-photos'
 import styles from './subject-photos.module.css'
@@ -91,17 +94,21 @@ export function SubjectPhotos({ projectId, n, row, images, update }: Props) {
           Add photos
         </button>
         {row.adding && (
-          <p role="status" className={styles.line}>
+          <p role="status" className={`${styles.line} ${styles.busy}`}>
+            <BusySpinner />
             Adding photos…
           </p>
         )}
       </div>
       {row.notes.length > 0 && (
-        <ul className={styles.notes} aria-label={`Notes on the photos of subject ${n}`}>
-          {row.notes.map((note, k) => (
-            <li key={k}>{note}</li>
-          ))}
-        </ul>
+        <div className={`${layout.notice} ${layout.warn} ${styles.notes}`}>
+          <Icon name="alert" />
+          <ul aria-label={`Notes on the photos of subject ${n}`}>
+            {row.notes.map((note, k) => (
+              <li key={k}>{note}</li>
+            ))}
+          </ul>
+        </div>
       )}
     </fieldset>
   )

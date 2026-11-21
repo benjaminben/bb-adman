@@ -1,13 +1,16 @@
+/* app-style */
+/* The subject rows (spec/app-style.md "Project home and brief form"): each row is a card with
+   its fields two to a line; "Photos" and the choice of subject take the full width. */
 .subjects {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
   align-self: stretch;
   margin: 0;
   padding: 0;
@@ -15,33 +18,50 @@
 }
 .row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--width-column-min), 1fr));
-  gap: var(--space-2) var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
   align-items: end;
+  min-width: 0;
   margin: 0;
-  padding: var(--space-3);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-1);
 }
 .row legend {
   padding: 0 var(--space-1);
-  font-weight: 600;
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-bold);
 }
 .field {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+.field input,
+.field select {
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-regular);
+  color: var(--color-text);
+}
+/* The description is long text: the reading face. */
+.field .reading {
+  font-family: var(--font-reading);
+  font-size: var(--font-size-reading);
 }
 .modes {
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
+  gap: var(--space-2) var(--space-4);
 }
 .modes label {
   display: flex;
-  gap: var(--space-1);
+  gap: var(--space-2);
   align-items: center;
 }
 .remove {

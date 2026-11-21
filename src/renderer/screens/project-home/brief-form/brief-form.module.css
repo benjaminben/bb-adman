@@ -1,49 +1,53 @@
+/* app-style */
+/* The brief form (spec/app-style.md "Project home and brief form"). It sits in the "Start a
+   campaign" card, so it draws no frame of its own. */
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
   align-self: stretch;
-  padding: var(--space-4);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
 }
 .form h3 {
   margin: 0;
-  font-size: var(--font-size-heading);
 }
 .body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-6);
   min-width: 0;
   margin: 0;
   padding: 0;
   border: none;
 }
+/* Two short fields side by side: the prototype's form grid. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--width-column-min), 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
 }
+/* A field: its label above, the shared label look; the control keeps the body text look. */
 .field {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  font-weight: 600;
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
 }
 .field input,
 .field textarea {
-  font-weight: normal;
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-regular);
+  color: var(--color-text);
 }
 .wide {
   grid-column: 1 / -1;
 }
+/* The message is long text: the reading face. */
 .field textarea {
-  padding: var(--space-1) var(--space-2);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
-  font: inherit;
-  font-weight: normal;
+  font-family: var(--font-reading);
+  font-size: var(--font-size-reading);
+  line-height: var(--leading-body);
   resize: vertical;
 }
 .block {
@@ -54,28 +58,38 @@
 }
 .hint {
   margin: 0;
+  font-size: var(--font-size-small);
   color: var(--color-text-muted);
 }
 .copy {
   margin: 0;
 }
+.notice {
+  margin: 0;
+}
 .end {
   display: flex;
   flex-direction: column;
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--color-line);
 }
 .end > p {
   margin: 0 0 var(--space-2);
 }
+.busy {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  color: var(--color-text-muted);
+}
+/* The problems are a warn notice: the icon, then the heading and its lines. */
 .problems {
   margin-bottom: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius);
-  background: var(--color-danger-bg);
-  color: var(--color-danger-text);
 }
 .problems h4 {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-body);
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-bold);
 }
 .problems ul {
   margin: 0;

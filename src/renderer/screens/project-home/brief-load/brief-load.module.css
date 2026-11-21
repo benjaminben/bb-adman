@@ -1,0 +1,9 @@
+/* app-style */
+/* "Load a brief" and "Type a brief", and the waiting line while a brief's photos are added. */
+.busy {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin: 0;
+  color: var(--color-text-muted);
+}

@@ -2,6 +2,7 @@
 // project home's "Package" section, and the dialog it opens.
 import { useState } from 'react'
 import { PackageDialog } from '@/renderer/dialogs/package-dialog'
+import { Icon } from '@/renderer/ui/icon'
 
 export type PackageProjectProps = { projectId: string }
 
@@ -11,6 +12,7 @@ export function PackageProject(props: PackageProjectProps) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)}>
+        <Icon name="box" />
         Package project…
       </button>
       <PackageDialog projectId={props.projectId} open={open} onClose={() => setOpen(false)} />

@@ -1,12 +1,41 @@
+/* app-style */
+/* The campaign cards (spec/app-style.md "Project home and brief form"): a grid of cards, each
+   with its cover on the soft ground above the name, as the prototype's campaign cards. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--thumbnail-tile), 1fr));
+  gap: var(--space-4);
+  align-self: stretch;
+}
+.card {
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
 .cover {
   display: flex;
-  flex: none;
   align-items: center;
   justify-content: center;
-  width: calc(var(--layer-thumb) * 2);
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 3;
+  padding: var(--space-3);
   overflow: hidden;
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
+  background: var(--color-surface-soft);
+  border-bottom: var(--border-width) solid var(--color-line);
+}
+.text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+.name {
+  font-weight: var(--weight-bold);
+  overflow-wrap: anywhere;
+}
+.count {
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
 }

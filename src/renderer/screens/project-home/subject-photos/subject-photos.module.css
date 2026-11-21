@@ -1,3 +1,6 @@
+/* app-style */
+/* A subject row's "Photos" part (spec/app-style.md "Project home and brief form"): the photo
+   list is a row of tiles, each picture a --layer-thumb square on the canvas backdrop. */
 .photos {
   grid-column: 1 / -1;
   display: flex;
@@ -5,16 +8,20 @@
   gap: var(--space-2);
   min-width: 0;
   margin: 0;
-  padding: var(--space-2) var(--space-3);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
 }
 .photos legend {
   padding: 0 var(--space-1);
-  font-weight: 600;
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
 }
 .muted {
   margin: 0;
+  font-size: var(--font-size-small);
   color: var(--color-text-muted);
 }
 .line {
@@ -22,8 +29,8 @@
 }
 .list {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  flex-wrap: wrap;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -33,20 +40,40 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--space-1);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius);
+  background: var(--color-bg);
 }
 .thumb {
+  flex: none;
   width: var(--layer-thumb);
   height: var(--layer-thumb);
   object-fit: contain;
-  background: var(--color-surface);
-  border-radius: var(--radius);
+  background: var(--canvas-backdrop);
+  border-radius: var(--radius-inner);
 }
 .missing {
+  display: flex;
+  align-items: center;
+  min-height: var(--layer-thumb);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-inner);
+  background: var(--color-danger-bg);
   color: var(--color-danger-text);
+  font-size: var(--font-size-small);
 }
 .name {
   min-width: 0;
+  font-size: var(--font-size-control);
   overflow-wrap: anywhere;
+}
+.tile button {
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-small);
 }
 .actions {
   display: flex;
@@ -54,7 +81,13 @@
   gap: var(--space-2);
   align-items: center;
 }
-.notes {
+.busy {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  color: var(--color-text-muted);
+}
+.notes ul {
   margin: 0;
   padding-left: var(--space-4);
 }
@@ -65,6 +98,6 @@
 }
 .place label {
   display: flex;
-  gap: var(--space-1);
+  gap: var(--space-2);
   align-items: center;
 }
