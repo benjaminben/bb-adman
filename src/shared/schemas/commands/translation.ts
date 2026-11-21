@@ -41,9 +41,14 @@ export const translationSetInput = projectScoped
   .strict()
 export type TranslationSetInput = z.infer<typeof translationSetInput>
 
-// translation.approve (A-159).
+// translation.approve (A-159): each layer with the copy counter of the text the user read, so
+// a text changed since then is never approved unseen. A layer named twice is refused in the
+// command.
+export const TranslationApproveLayer = z
+  .object({ layerId: id, copyRev: z.number().int().min(0) })
+  .strict()
 export const translationApproveInput = projectScoped
-  .extend({ layerIds: z.array(id).min(1).max(2000) })
+  .extend({ layers: z.array(TranslationApproveLayer).min(1).max(2000) })
   .strict()
 export type TranslationApproveInput = z.infer<typeof translationApproveInput>
 

@@ -39,6 +39,7 @@ function rowsOf(v: VariantRow, layers: LayerRow[], sources: Map<string, string>)
       status: l.translationStatus,
       source: l.translationSource,
       fontAssetId: fontOf(l),
+      copyRev: l.revs.copy,
     }))
 }
 

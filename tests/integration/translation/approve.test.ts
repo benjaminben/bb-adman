@@ -15,7 +15,14 @@ beforeEach(async () => {
 })
 afterEach(() => bus.cleanup())
 
-const approve = (layerIds: string[]) => bus.user('translation.approve', { layerIds })
+// The layers with the copy counters stored now, as the panel read them.
+const read = (layerIds: string[]) =>
+  layerIds.map((layerId) => {
+    const row = bus.db.prepare('SELECT revs FROM layer WHERE id = ?').get(layerId) as
+      { revs: string } | undefined
+    return { layerId, copyRev: row ? (JSON.parse(row.revs) as { copy: number }).copy : 0 }
+  })
+const approve = (layerIds: string[]) => bus.user('translation.approve', { layers: read(layerIds) })
 const propose = (id: string) =>
   bus.setRow(id, { copy: 'Hallo', translation_status: 'proposed', translation_source: 'ai' })
 
@@ -126,7 +133,7 @@ describe('translation.approve [P6-4, A-159]', () => {
   it('is denied to the agent', async () => {
     const id = bus.id('D1', key)
     propose(id)
-    expect(await bus.agent('translation.approve', { layerIds: [id] })).toEqual({
+    expect(await bus.agent('translation.approve', { layers: read([id]) })).toEqual({
       ok: false,
       error: { code: 'AGENT_DENIED', message: denialMessage('translation.approve') },
     })
@@ -145,5 +152,55 @@ describe('translation.approve [P6-4, A-159]', () => {
       translationStatus: 'proposed',
       translationSource: 'user',
     })
+  })
+
+  it('approves with the counters read, and refuses all when one counter is stale', async () => {
+    const ids = [bus.id('D1', key), bus.id('D2', key)]
+    ids.forEach(propose)
+    const layers = read(ids)
+    const stale = [layers[0], { ...layers[1], copyRev: (layers[1]?.copyRev ?? 0) + 1 }]
+    const before = ids.map((id) => bus.layer(id))
+    expect(await bus.user('translation.approve', { layers: stale })).toEqual({
+      ok: false,
+      error: {
+        code: 'RULE_VIOLATION',
+        message: 'A text changed after you read it. Read it again, then approve.',
+        details: { reason: 'translation_changed', layerIds: [ids[1]] },
+      },
+    })
+    expect(ids.map((id) => bus.layer(id))).toEqual(before)
+    expect(await bus.user('translation.approve', { layers })).toEqual({
+      ok: true,
+      data: { layerIds: ids },
+    })
+  })
+
+  it("an agent's set between the read and the approve is refused, and the text stays proposed from the agent", async () => {
+    const id = bus.id('D1', key)
+    propose(id)
+    const layers = read([id])
+    const set = { layerId: id, text: 'Unseen', applyToSameLanguage: false }
+    expect(await bus.agent('translation.set', set)).toMatchObject({ ok: true })
+    expect(await bus.user('translation.approve', { layers })).toMatchObject({
+      ok: false,
+      error: { details: { reason: 'translation_changed', layerIds: [id] } },
+    })
+    expect(bus.layer(id)).toMatchObject({
+      copy: 'Unseen',
+      translationStatus: 'proposed',
+      translationSource: 'agent',
+    })
+  })
+
+  it('refuses a layer named twice', async () => {
+    const id = bus.id('D1', key)
+    propose(id)
+    expect(
+      await bus.user('translation.approve', { layers: [...read([id]), ...read([id])] }),
+    ).toMatchObject({
+      ok: false,
+      error: { code: 'INVALID_INPUT' },
+    })
+    expect(bus.layer(id).translationStatus).toBe('proposed')
   })
 })

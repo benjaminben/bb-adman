@@ -158,4 +158,24 @@ describe('translation.restore writes the given values [P6-4]', () => {
     ).toMatchObject({ ok: false, error: { code: 'INVALID_INPUT' } })
     expect(bus.text(id).copy).toBe('Hallo')
   })
+
+  it('takes its own list from the first item even when that layer needs no write', async () => {
+    const named = bus.id('D1', key)
+    const twin = bus.id('D2', key)
+    const now = bus.text(named)
+    const unchanged = {
+      layerId: named,
+      copy: now.copy,
+      translationStatus: now.translationStatus,
+      translationSource: now.translationSource,
+      syncedCopyRev: now.syncedCopyRev,
+    }
+    const reply = await bus.user('translation.restore', {
+      scope: 'variant',
+      items: [unchanged, item(twin)],
+    })
+    expect(reply).toEqual({ ok: true, data: { layerIds: [twin] } })
+    expect(bus.undoState('variant:D1')).toEqual({ canUndo: true, canRedo: false })
+    expect(bus.undoState('variant:D2')).toEqual({ canUndo: false, canRedo: false })
+  })
 })

@@ -50,10 +50,11 @@ export function translationRestore(deps: CoreDeps) {
         .map(({ next, layer }) => ({ row: layer, next }))
         .filter(({ row, next }) => !sameText(textValuesOf(row), next))
       const data: TranslationLayersReply = { layerIds: writes.map((w) => w.row.id) }
-      const first = placed.find((p) => p.layer.id === writes[0]?.row.id)
-      if (!first) return { data }
+      // The list's ID comes from the first item's rows: set and approve put the named layer
+      // first, whether or not it needs a write now.
+      const first = placed[0]
+      if (!first || writes.length === 0) return { data }
       writeTexts(ctx, writes, deps.now().toISOString())
-      // The list the input names, its ID read from the first layer written's rows.
       const list =
         input.scope === 'campaign'
           ? `campaign:${first.direction.campaignId}`

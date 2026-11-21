@@ -27,6 +27,7 @@ export type TranslationRow = {
   status: LayerRow['translationStatus']
   source: LayerRow['translationSource']
   fontAssetId: string | null
+  copyRev: number // the layer's copy counter, sent back by translation.approve
 }
 
 // The newest translation job per direction and language.

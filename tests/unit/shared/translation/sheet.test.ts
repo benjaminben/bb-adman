@@ -21,6 +21,7 @@ function row(over: Partial<TranslationRow> = {}): TranslationRow {
     status: 'proposed',
     source: 'ai',
     fontAssetId: null,
+    copyRev: 0,
     ...over,
   }
 }
