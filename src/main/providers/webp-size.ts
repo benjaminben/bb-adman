@@ -46,16 +46,25 @@ const READERS: Record<string, { min: number; read: Reader }> = {
   },
 }
 
-export function webpInfo(bytes: Uint8Array): WebpInfo {
+// whole: the bytes are the whole file, so the RIFF size and the first chunk must fit in them.
+// Otherwise only the start of the first chunk that its reader needs must be there.
+function readFirstChunk(bytes: Uint8Array, whole: boolean): WebpInfo {
   if (bytes.length < 20 || !ascii(bytes, 0, 'RIFF') || !ascii(bytes, 8, 'WEBP')) refuse()
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  if (view.getUint32(4, true) + 8 > bytes.length) refuse()
+  if (whole && view.getUint32(4, true) + 8 > bytes.length) refuse()
   const fourcc = String.fromCharCode(...bytes.subarray(12, 16))
   const reader = Object.hasOwn(READERS, fourcc) ? READERS[fourcc] : undefined
   const size = view.getUint32(16, true)
-  if (!reader || size < reader.min || 20 + size > bytes.length) refuse()
-  const data = bytes.subarray(20, 20 + size)
+  if (!reader || size < reader.min) refuse()
+  const end = 20 + (whole ? size : reader.min)
+  if (end > bytes.length) refuse()
+  const data = bytes.subarray(20, end)
   const info = reader.read(data, new DataView(data.buffer, data.byteOffset, data.byteLength))
   if (info.width === 0 || info.height === 0) refuse()
   return info
 }
+
+export const webpInfo = (bytes: Uint8Array): WebpInfo => readFirstChunk(bytes, true)
+
+// S2-17: the same facts from the first bytes of a file that may be larger than them.
+export const webpHeadInfo = (head: Uint8Array): WebpInfo => readFirstChunk(head, false)
