@@ -82,17 +82,19 @@ function pngOf(run: Run, result: ImageResult): Uint8Array {
   })
 }
 
-async function store(run: Run, png: Uint8Array): Promise<Outcome> {
+async function store(run: Run, png: Uint8Array, model: string): Promise<Outcome> {
   const { jc, job, project } = run
   const assetId = ulid()
   if (jc.cancelled()) return 'stopped'
   await jc.deps.assets.writeManaged(project, { assetId, ext: 'png', bytes: png })
   if (jc.cancelled()) return 'stopped'
   const files = [{ assetId, ext: 'png' }]
+  // [1.58] J-13, J-14: the asset row keeps the model the result names, as the PNG does.
   const added = await jc.system('asset.addGenerated', {
     projectId: jc.projectId,
     jobId: job.id,
     files,
+    ...(model && { model }),
   })
   if (!added.ok) throw new Error(`asset.addGenerated refused: ${added.error.code}`)
   run.assetIds.push(assetId)
@@ -118,7 +120,7 @@ async function onePicture(run: Run): Promise<Outcome> {
     // SPEC 6.2 [1.20] F-05: the paid call stays counted; this picture failed as `other`.
     return fail(run, otherFailure(PICTURE_NOT_DECODED))
   }
-  return store(run, png)
+  return store(run, png, result.model)
 }
 
 // Runs count pictures, at most PICTURES_AT_ONCE at a time. After an unforeseen error no new

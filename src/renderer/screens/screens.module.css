@@ -80,3 +80,8 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+/* SPEC 14 1.57 TP-6: a clip at the width of the run that holds it. */
+.clip {
+  display: block;
+  width: 100%;
+}

@@ -9,6 +9,7 @@ import type { WorkflowSpec } from '../../../src/main/providers/comfyui/workflows
 import { flux3KleinEditReferences } from '../../../src/main/providers/comfyui/workflows/flux3'
 import { h3TextToVideo } from '../../../src/main/providers/comfyui/workflows/h3'
 import { mossTextToImage } from '../../../src/main/providers/comfyui/workflows/moss'
+import { mp4File } from '../../../src/main/providers/fake/mp4'
 import { foreignCancels, recordCalls } from '../../comfy/recorder'
 import { makePrinter } from '../../comfy/print'
 import { makeTestPicture } from '../../comfy/test-picture'
@@ -23,11 +24,14 @@ afterEach(async () => {
   outDir = ''
 })
 
-const FTYP = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypisom'), Buffer.alloc(16)])
+const FTYP = Buffer.from(mp4File({ width: 576, height: 576, durationMs: 1_000, sound: false }))
 
 const ID = '0b6f2c1e-7a3d-4c5b-9e8f-1a2b3c4d5e6f'
 
-async function setUp(env: Record<string, string> = {}) {
+// Both picture switches are on unless a test passes its own (1.53 G-12).
+const SWITCHES_ON = { ADMAN_COMFY_FLUX: '1', ADMAN_COMFY_MOSS: '1' }
+
+async function setUp(env: Record<string, string> = SWITCHES_ON) {
   stand = await startComfyStandIn()
   outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-comfy-case-'))
   const printed: string[] = []
@@ -67,6 +71,24 @@ function complete(s: StandIn, spec: WorkflowSpec, file: Reply): void {
 const holdsAddress = (lines: string[], s: StandIn) =>
   lines.join('\n').includes('127.0.0.1') || lines.join('\n').includes(String(s.port))
 
+describe('one switch per picture case [SPEC 14 1.53 G-12]', () => {
+  it('case 5 runs only with ADMAN_COMFY_FLUX=1, and contacts nothing without it', async () => {
+    const { s, kit } = await setUp({ ADMAN_COMFY_MOSS: '1', ADMAN_COMFY_FLUX: 'yes' })
+    expect(await referenceCase(kit)).toEqual({
+      skip: 'ADMAN_COMFY_FLUX is not 1, so the Flux reference case does not run.',
+    })
+    expect(s.seen).toEqual([])
+  })
+
+  it('case 3 runs only with ADMAN_COMFY_MOSS=1, and contacts nothing without it', async () => {
+    const { s, kit } = await setUp({ ADMAN_COMFY_FLUX: '1' })
+    expect(await pictureCase(kit)).toEqual({
+      skip: 'ADMAN_COMFY_MOSS is not 1, so the MOSS picture case does not run.',
+    })
+    expect(s.seen).toEqual([])
+  })
+})
+
 describe('case 5, a picture from a reference [SPEC 14 1.46]', () => {
   it('skips with one line when the check finds items missing, and uploads nothing', async () => {
     const { s, printed, recorded, kit } = await setUp()
@@ -99,7 +121,9 @@ describe('case 5, a picture from a reference [SPEC 14 1.46]', () => {
     expect(fs.readFileSync(written).equals(picture)).toBe(true)
     expect(printed).toContain('Pixel size: 768 x 768')
     expect(printed).toContain(`Byte size: ${picture.byteLength}`)
-    expect(printed).toContain('No small JPEG fixture is in tests/, so no JPEG run is made.')
+    expect(printed).toContain(
+      'No JPEG run is made; the only JPEG in tests/ is a 1×1 picture inside a Gemini fixture.',
+    )
     expect(foreignCancels(recorded.calls)).toEqual([])
     expect(holdsAddress(printed, s)).toBe(false)
   })
@@ -144,6 +168,27 @@ describe("a case hands its own check's version to the time-out rule [review CU-5
       { name: 'interrupt', arg: ID },
     ])
   })
+
+  // Case 5 here: Flux has no minimum version, so the check at 0.3.68 finds nothing missing.
+  it('sends no interrupt on time-out when its own check read 0.3.68 [review CU-5a item 4]', async () => {
+    const { s, kit } = await setUp()
+    complete(s, flux3KleinEditReferences, { body: Buffer.from(makeTestPicture()) })
+    s.reply('GET /system_stats', { json: { system: { comfyui_version: '0.3.68' }, devices: [] } })
+    s.reply(`GET /history/${ID}`, { json: {} })
+    s.reply(`GET /api/jobs/${ID}`, { json: { status: 'in_progress' } })
+    let at = 0
+    kit.timing = {
+      pollMs: 2_000,
+      limitMs: 10_000,
+      now: () => at,
+      sleep: async (ms) => {
+        at += ms
+      },
+    }
+    await expect(referenceCase(kit)).rejects.toThrow('not interrupted')
+    const posts = s.seen.filter((r) => r.method === 'POST').map((r) => r.path)
+    expect(posts).toEqual(['/upload/image', '/prompt', '/queue'])
+  })
 })
 
 describe('case 2, the H3 video [SPEC 14 1.41]', () => {
@@ -155,7 +200,7 @@ describe('case 2, the H3 video [SPEC 14 1.41]', () => {
     expect(s.seen).toEqual([])
   })
 
-  it('runs at 576 x 576 with 56 frames, and passes on an MP4 that starts with ftyp', async () => {
+  it('runs at 576 x 576 with 56 frames, and passes on an MP4 that passes `checkMp4`', async () => {
     const { s, printed, kit } = await setUp({ ADMAN_COMFY_VIDEO: '1' })
     complete(s, h3TextToVideo, { body: FTYP })
     expect(await videoCase(kit)).toEqual({ done: true })

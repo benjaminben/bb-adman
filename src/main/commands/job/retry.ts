@@ -1,6 +1,8 @@
 // job.retry (SPEC 4.2 notes; FR-069, FR-152): a new job from the old row's request, with the
 // same campaign, variant, layer and slot. The old row stays. The key guard runs again.
-import { defineCommand } from '../types'
+import { defineCommand, type ProjectContext } from '../types'
+import { checkComfyVideoRetry } from '../generation/comfy-video-checks'
+import type { JobRow } from '../../../shared/schemas/rows/job'
 import type { CoreDeps } from '../../core-deps'
 import { requireProviderKeys } from '../../providers/require-keys'
 import { requireJob, wrongState } from './find-job'
@@ -8,7 +10,13 @@ import { jobRetryInput, type JobStarted } from '../../../shared/schemas/commands
 import { imageJobRequest } from '../../../shared/schemas/jobs/image-generation'
 import { checkComfyRun } from '../generation/comfy-checks'
 
-type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'devTools' | 'settings'>
+type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools'>
+
+// [CU-6a, 14 1.53] A ComfyUI video job is checked as generation.startVideo checks it.
+function checkVideoRetry(deps: Deps, ctx: Pick<ProjectContext, 'actor'>, old: JobRow): void {
+  if (old.provider !== 'comfyui' || old.kind !== 'video_generation') return
+  checkComfyVideoRetry(deps, ctx, old.request)
+}
 
 export function jobRetry(deps: Deps) {
   return defineCommand({
@@ -27,6 +35,7 @@ export function jobRetry(deps: Deps) {
         const { referenceAssetIds } = imageJobRequest.parse(old.request)
         checkComfyRun(deps, ctx, referenceAssetIds.length)
       }
+      checkVideoRetry(deps, ctx, old)
       const jobId = deps.jobs.enqueue(ctx, {
         kind: old.kind,
         campaignId: old.campaignId,

@@ -27,18 +27,25 @@ function checkS3Region(patch: SettingsPatch): void {
   if (refusal) throw new AppError('INVALID_INPUT', refusal, { reason: 'storage_not_supported' })
 }
 
-export function settingsUpdate(deps: Pick<CoreDeps, 'settings' | 'providers'>) {
+// The MCP service, told when mcp.port changes (SPEC 14 1.58 J-7). It never throws for a
+// taken port: the port is saved either way and getConnectInfo reports the problem.
+export type PortWatcher = { portChanged: () => Promise<void> }
+
+export function settingsUpdate(deps: Pick<CoreDeps, 'settings' | 'providers'>, mcp?: PortWatcher) {
   return defineCommand({
     name: 'settings.update',
     input: settingsPatchSchema,
     changesAppState: true,
-    run(_ctx, patch) {
+    async run(_ctx, patch) {
       if (patch.defaultProjectDir !== undefined && !path.isAbsolute(patch.defaultProjectDir)) {
         throw new AppError('INVALID_INPUT', 'Choose a folder for new projects.')
       }
       checkProviders(patch, deps.providers)
       checkS3Region(patch)
-      return { data: deps.settings.update(patch) }
+      const before = deps.settings.get().mcp.port
+      const saved = deps.settings.update(patch)
+      if (saved.mcp.port !== before) await mcp?.portChanged()
+      return { data: saved }
     },
   })
 }

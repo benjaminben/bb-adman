@@ -17,16 +17,20 @@ import { comfyCommands } from './commands/comfy'
 import { devCommands } from './commands/dev'
 import { generationCommands } from './commands/generation'
 import { jobCommands } from './commands/job'
+import { mcpCommands } from './commands/mcp'
 import { projectCommands } from './commands/project'
 import { ruleSetCommands } from './commands/rule-set'
 import { secretCommands } from './commands/secret'
 import { settingsCommands } from './commands/settings'
 import { storageCommands } from './commands/storage'
 import { subjectCommands } from './commands/subject'
-import { createQueries } from './queries/queries'
+import { createQueryRunner, queryTable } from './queries/queries'
 import { createAssetService } from './assets/service'
 import { createJobRunner } from './jobs/runner'
 import { jobKindHandlers } from './jobs/kinds'
+import { agentCaller } from './mcp/agent-caller'
+import { createMcpHttp } from './mcp/server'
+import { createMcpService } from './mcp/service'
 import type { CoreDeps } from './core-deps'
 
 export type { SecretCrypto }
@@ -102,6 +106,19 @@ export function createCore(opts: CoreOptions) {
     userDataDir: opts.userDataDir,
   }
 
+  // The MCP server reaches core only through the agent caller, as actor agent (SPEC 4.1).
+  // MCP-A adds no tools (SPEC 14, 1.56).
+  const caller = agentCaller({
+    execute: (name, input, o) => bus.execute(name, input, o),
+    query: (name, input, o) => query(name, input, o),
+  })
+  const mcp = createMcpService({
+    http: createMcpHttp({ caller, appVersion: opts.appVersion }),
+    settings,
+    secrets,
+    log,
+  })
+
   // One spread line per domain, in alphabetical order (SPEC 12).
   const handlers = [
     ...assetCommands(deps),
@@ -111,10 +128,11 @@ export function createCore(opts: CoreOptions) {
     ...devCommands(deps),
     ...generationCommands(deps),
     ...jobCommands(deps),
+    ...mcpCommands(mcp),
     ...projectCommands(deps),
     ...ruleSetCommands(deps),
     ...secretCommands(deps),
-    ...settingsCommands(deps),
+    ...settingsCommands(deps, mcp),
     ...storageCommands(deps),
     ...subjectCommands(deps),
   ]
@@ -127,12 +145,16 @@ export function createCore(opts: CoreOptions) {
     emit: opts.emit,
     askPermission: opts.askPermission,
   })
+  const queries = queryTable(deps, mcp)
+  const query = createQueryRunner(queries, log)
 
   return {
     bus,
-    query: createQueries(deps),
+    query,
+    mcp,
     deps,
     commandNames: handlers.map((h) => h.name),
+    queryNames: Object.keys(queries),
     isInternal: (name: string) => handlers.some((h) => h.name === name && h.internal),
     projects,
     undo,
