@@ -13,7 +13,9 @@ import { comfyFailure, refusedFailure, runFailure } from './failures'
 import type { FillValues } from './fill'
 import { fillWorkflow } from './fill'
 import { rememberOwnId } from './own-ids'
+import type { LiveLink } from './live'
 import { PollStopped, pollRun, throughBreaks } from './poll'
+import { progressReporter } from './progress'
 import { ComfyRefused } from './refusal'
 import { isViewType } from './values'
 import type { WorkflowSpec } from './workflows/types'
@@ -72,6 +74,8 @@ export type RunEnv = {
   client: ComfyClient
   timing: RunTiming
   serverVersion: string | undefined
+  // CU-9: the run's live connection, when there is one. Polling never waits on it.
+  live?: Pick<LiveLink, 'watch'>
 }
 
 export async function submitted(
@@ -104,12 +108,16 @@ export async function runPicture(
   // goes on under the run's own limits, so an arrived picture is returned.
   const onStop = async () =>
     (await cancelOwnRun(env.client, promptId, env.serverVersion)) !== 'stopped'
+  const onProgress = progressReporter(opts.onProgress)
+  const stopLive = env.live?.watch(promptId, onProgress)
   let entry: HistoryEntry
   try {
-    entry = await pollRun(env.client, promptId, env.timing, { ...opts, onStop })
+    entry = await pollRun(env.client, promptId, env.timing, { ...opts, onProgress, onStop })
   } catch (e) {
     if (e instanceof PollStopped) throw new ProviderCancelled()
     throw e
+  } finally {
+    stopLive?.()
   }
   endedEntry(entry)
   const ref = resultRef(spec, entry)

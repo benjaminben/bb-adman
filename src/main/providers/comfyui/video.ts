@@ -23,7 +23,7 @@ import { LOST_CONTACT_MS, QUEUE_WAIT_MS, VIDEO_WORK_MS } from './limits'
 import { serverChecks, type ServerChecks } from './needs'
 import { isFailedPoll, look, throughBreaks } from './poll'
 import { endedEntry, fillValuesFor, resultRef, submitted, type RunTiming } from './run'
-import { checked, pinnedClient, realTiming, runOrigin } from './session'
+import { checked, pinnedClient, realTiming, runLive, runOrigin } from './session'
 import { checkFrameSize, runSizeOf, uploadPictures } from './video-pictures'
 import type { WorkflowSpec } from './workflows/types'
 
@@ -42,6 +42,9 @@ type VideoRun = {
   last: { status: 'waiting' | 'running'; queuePosition?: number }
   entry: HistoryEntry | null
   cancelAsked: boolean
+  // CU-9: the last whole percent the live connection gave, and how to stop listening.
+  fraction?: number
+  stopLive: () => void
 }
 
 const NOT_OURS = 'Not a run this app started'
@@ -71,6 +74,16 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
     }
     run.entry = entry
     return { status: 'succeeded' }
+  }
+
+  // CU-9: a run still going carries the live percent while running; one that ended stops
+  // listening.
+  function withLive(run: VideoRun, state: Checked): Checked {
+    if (state.status === 'running' && run.fraction !== undefined) {
+      return { ...state, progress: run.fraction }
+    }
+    if (state.status !== 'waiting' && state.status !== 'running') run.stopLive()
+    return state
   }
 
   async function looked(run: VideoRun, id: string): Promise<Checked> {
@@ -110,7 +123,8 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
       // [1.60] N-7: before anything is sent, the first frame must state the run size.
       if (input.image) checkFrameSize(input.image, size)
       if (opts.signal?.aborted) throw new ProviderCancelled()
-      const client = pinnedClient(ctx, origin)
+      const live = runLive(ctx, origin)
+      const client = pinnedClient(ctx, origin, live)
       const serverVersion = await checked(checks, origin, client, spec)
       const pictures = await uploadPictures(client, input, opts.signal)
       const sentId = timing.newId()
@@ -122,7 +136,7 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
         ...(pictures.firstFrame !== undefined && { firstFrame: pictures.firstFrame }),
       }
       const promptId = await submitted({ client }, fillWorkflow(spec, values), sentId)
-      runs.set(promptId, {
+      const run: VideoRun = {
         origin,
         spec,
         serverVersion,
@@ -133,7 +147,12 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
         last: { status: 'waiting' },
         entry: null,
         cancelAsked: false,
+        stopLive: () => undefined,
+      }
+      run.stopLive = live.watch(promptId, (seen) => {
+        if (seen.fraction !== undefined) run.fraction = seen.fraction
       })
+      runs.set(promptId, run)
       return { remoteJobId: promptId }
     },
 
@@ -141,20 +160,22 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
       const run = runs.get(remoteJobId)
       if (!run) return failed(comfyFailure('server_stopped', NOT_OURS))
       try {
-        return await looked(run, remoteJobId)
+        return withLive(run, await looked(run, remoteJobId))
       } catch (e) {
         if (!(e instanceof ProviderFailure)) throw e
-        if (!isFailedPoll(e)) return failed(e)
+        if (!isFailedPoll(e)) return withLive(run, failed(e))
         // SPEC 6.10.6 "A short break": a failed poll is not a failure, for 5 minutes.
         run.breakSince ??= timing.now()
-        if (timing.now() - run.breakSince < LOST_CONTACT_MS) return { ...run.last }
-        return failed(comfyFailure('lost_contact', 'Polls failed for 5 minutes', 'offline'))
+        if (timing.now() - run.breakSince < LOST_CONTACT_MS) return withLive(run, { ...run.last })
+        const lost = comfyFailure('lost_contact', 'Polls failed for 5 minutes', 'offline')
+        return withLive(run, failed(lost))
       }
     },
 
     async fetchResult(remoteJobId) {
       const run = runs.get(remoteJobId)
       if (!run) throw comfyFailure('server_stopped', NOT_OURS)
+      run.stopLive()
       const client = pinnedClient(ctx, run.origin)
       // After a cancel that came too late (`finished`), check has not seen the entry yet.
       const entry = run.entry ?? (await client.history(remoteJobId))
@@ -174,6 +195,7 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
       const run = runs.get(remoteJobId)
       if (!run) return 'unknown'
       run.cancelAsked = true
+      run.stopLive()
       return cancelOwnRun(pinnedClient(ctx, run.origin), remoteJobId, run.serverVersion)
     },
 

@@ -9,6 +9,7 @@ import { isRefusedHost } from '@/shared/comfy/refused-hosts'
 import type { ProviderErrorReason } from '@/shared/schemas/queries/app'
 import { ProviderFailure } from '@/main/providers/types'
 import { CONNECT_MS } from './limits'
+import type { LiveTarget } from './live'
 import { AddressRefused, checkedLookup } from './lookup'
 
 export type Connection = {
@@ -81,6 +82,20 @@ export function openConnection(origin: string, ownPorts: () => readonly number[]
     ? new https.Agent({ keepAlive: false, rejectUnauthorized: true })
     : new http.Agent({ keepAlive: false })
   return { secure, hostname: url.hostname.replace(/^\[(.*)\]$/, '$1'), port, agent, ownPorts }
+}
+
+// CU-9: where the live connection of this client goes. The same origin, agent and checked
+// lookup as every call; null when the typed host is refused with the ports as they are now.
+export function liveTarget(conn: Connection, clientId: string): LiveTarget | null {
+  if (isRefusedHost(conn.hostname, conn.port, conn.ownPorts())) return null
+  const host = conn.hostname.includes(':') ? `[${conn.hostname}]` : conn.hostname
+  const scheme = conn.secure ? 'wss' : 'ws'
+  return {
+    url: `${scheme}://${host}:${conn.port}/ws?clientId=${encodeURIComponent(clientId)}`,
+    secure: conn.secure,
+    agent: conn.agent,
+    lookup: checkedLookup(conn.port, conn.ownPorts),
+  }
 }
 
 export function send(conn: Connection, call: Call): Promise<Answer> {
