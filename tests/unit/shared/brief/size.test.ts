@@ -69,7 +69,6 @@ describe('parseSize: text that is not a size gives null', () => {
     '0x1080',
     '1080x0',
     '-4:5',
-    '4.5:1',
     '1080.5x1350',
     '1:1:1',
     '1080x1080x1',
@@ -80,5 +79,39 @@ describe('parseSize: text that is not a size gives null', () => {
     '1:9007199254740991',
   ])('refuses %j', (text) => {
     expect(parseSize(text)).toBeNull()
+  })
+})
+
+describe('parseSize: decimal ratios [SPEC 3.3 1.23, 14 N4]', () => {
+  it.each([
+    ['1.91:1', '2063x1080', 2063, 1080],
+    ['1:1.91', '1080x2063', 1080, 2063],
+    ['4.5:1', '4860x1080', 4860, 1080],
+    ['4:5.0', '4x5', 1080, 1350],
+    ['1.0:1', '1x1', 1080, 1080],
+  ])('gives %s the size %s', (text, label, width, height) => {
+    expect(parseSize(text)).toEqual({ label, width, height })
+  })
+
+  it.each(['1,91:1', '.5:1', '1.:1', '0.0:1', '1.5x2', '1.9.1:1', '1.5e1:1', '+1.5:1'])(
+    'refuses %j',
+    (text) => {
+      expect(parseSize(text)).toBeNull()
+    },
+  )
+})
+
+describe('parseSize: two numbers below 100 with x are a ratio [SPEC 3.3 1.23, 14 N4]', () => {
+  it('reads 2x3 as the ratio 2:3', () => {
+    expect(parseSize('2x3')).toEqual({ label: '1080x1620', width: 1080, height: 1620 })
+  })
+
+  it('reads 99x99 as the ready-made 1x1', () => {
+    expect(parseSize('99x99')).toEqual({ label: '1x1', width: 1080, height: 1080 })
+  })
+
+  it('keeps a pixel size when either number is 100 or more', () => {
+    expect(parseSize('50x1080')).toEqual({ label: '50x1080', width: 50, height: 1080 })
+    expect(parseSize('100x100')).toEqual({ label: '100x100', width: 100, height: 100 })
   })
 })
