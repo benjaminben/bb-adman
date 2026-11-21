@@ -69,3 +69,18 @@ describe('S3 failures become one ProviderFailure with an error kind [SPEC 6]', (
     expect(failureFromS3Error(original, [])).toBe(original)
   })
 })
+
+describe('every S3 ProviderFailure goes through redactSecret [SPEC 6 1.12, 6.5 1.14 H4, F-06]', () => {
+  it('removes both keys from a ProviderFailure it passes on, such as a refused request', () => {
+    const encoded = Buffer.from(TEST_SECRET).toString('base64')
+    const refused = new ProviderFailure({
+      kind: 'other',
+      detail: `Request refused: https://${TEST_KEY_ID}.example:${encoded} is not the S3 host`,
+    })
+    const failure = failureFromS3Error(refused, [TEST_KEY_ID, TEST_SECRET])
+    expect(failure.error).toEqual({
+      kind: 'other',
+      detail: 'Request refused: https://[key removed].example:[key removed] is not the S3 host',
+    })
+  })
+})

@@ -1,8 +1,11 @@
 // SPEC 6, 6.5: every S3 failure becomes one ProviderFailure with an error kind.
 // A rejected key or missing permission → bad_key; SlowDown or 429 → quota; RequestTimeout or a
 // timed-out request → timeout; a marked network error → offline (SPEC 6 [1.12]); anything
-// else, including a build error → other. Neither key ever appears in `detail`.
+// else, including a build error → other. Neither key ever appears in `detail`: every
+// ProviderFailure the adapter lets out, a passed-on one included, goes through the shared
+// redactSecret (SPEC 6 [1.12], 6.5 [1.14] H4).
 import { S3ServiceException } from '@aws-sdk/client-s3'
+import { redactSecret } from '../redact'
 import { ProviderFailure, type ProviderError } from '../types'
 import { isNetworkError } from './pinned-host'
 
@@ -24,16 +27,8 @@ export function kindForCode(code: string, status?: number): ProviderError['kind'
   return 'other'
 }
 
-// Local to S3 until the shared redactSecret (src/main/providers/redact.ts, SPEC 6 [1.12])
-// exists: removes each key as given, URL-encoded and in base64.
 function removeKeys(text: string, keys: string[]): string {
-  let safe = text
-  for (const key of keys) {
-    if (key === '') continue
-    const forms = [key, encodeURIComponent(key), Buffer.from(key).toString('base64')]
-    for (const form of forms) safe = safe.split(form).join('[key removed]')
-  }
-  return safe
+  return keys.reduce((safe, key) => redactSecret(safe, key), text)
 }
 
 export function s3Failure(kind: ProviderError['kind'], detail: string, keys: string[]) {
@@ -42,7 +37,10 @@ export function s3Failure(kind: ProviderError['kind'], detail: string, keys: str
 
 // A thrown error from the S3 client, lib-storage or the network below them.
 export function failureFromS3Error(error: unknown, keys: string[]): ProviderFailure {
-  if (error instanceof ProviderFailure) return error
+  if (error instanceof ProviderFailure) {
+    const detail = removeKeys(error.error.detail, keys)
+    return detail === error.error.detail ? error : s3Failure(error.error.kind, detail, keys)
+  }
   if (error instanceof S3ServiceException) {
     const status = error.$metadata.httpStatusCode
     const detail = `HTTP ${status ?? '?'} ${error.name}: ${error.message}`
