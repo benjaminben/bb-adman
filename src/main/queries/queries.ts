@@ -4,6 +4,7 @@ import type { CoreDeps } from '@/main/core-deps'
 import type { ActivityLog } from '@/main/log/activity-log'
 import { errorContext } from '@/main/log/error-context'
 import { appQueries } from './app'
+import { approvalsQueries } from './approvals'
 import { assetQueries } from './asset'
 import { campaignQueries } from './campaign'
 import { comfyQueries } from './comfy'
@@ -30,6 +31,7 @@ export type { QueryFn, QueryOptions }
 export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, QueryFn> {
   return {
     ...appQueries(deps),
+    ...approvalsQueries(deps),
     ...assetQueries(deps),
     ...campaignQueries(deps),
     ...comfyQueries(deps),

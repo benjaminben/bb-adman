@@ -1,6 +1,7 @@
 // The approvals feature's refusal reasons and sentences (spec/approvals.md "Commands", "The
 // service client", "Queries and the event"). The one copy: commands, queries and screens
 // import them from here. No sentence repeats a value the user typed or the service sent.
+import { AppError } from '@/shared/schemas/result'
 
 // details.reason of a RULE_VIOLATION, one sentence each.
 export const APPROVALS_REASONS = [
@@ -22,6 +23,12 @@ export const APPROVALS_REASON_MESSAGES: Record<ApprovalsReason, string> = {
   approval_link_gone:
     'This link no longer exists on the approvals service, so it is shown as turned off. Make a new link to share again.',
   too_many_variants: 'A gallery can show at most 500 variants.',
+}
+
+// The RULE_VIOLATION for a reason, with its sentence. Every approvals stub throws
+// approvalsRefusal('approvals_not_set_up') until its slice replaces it.
+export function approvalsRefusal(reason: ApprovalsReason): AppError {
+  return new AppError('RULE_VIOLATION', APPROVALS_REASON_MESSAGES[reason], { reason })
 }
 
 // RULE_VIOLATION reason render_failed, with details.variantId (approvals.publish step 5).

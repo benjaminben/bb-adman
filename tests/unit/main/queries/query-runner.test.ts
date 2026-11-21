@@ -11,6 +11,7 @@ import type { JobService } from '@/main/jobs/types'
 import type { RenderService } from '@/main/thumbnails/types'
 import type { SettingsStore } from '@/main/settings/settings-store'
 import type { SecretStore } from '@/main/secrets/secret-store'
+import type { ApprovalsDeps } from '@/main/approvals/types'
 
 let dir: string | undefined
 afterEach(() => {
@@ -56,6 +57,7 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
       webpToPng: async () => {
         throw new Error('webpToPng is not available')
       },
+      approvals: {} as unknown as ApprovalsDeps,
       appVersion: '0.1.0',
       now: () => new Date(),
       userDataDir: dir,
