@@ -9,6 +9,7 @@ import { createCore, type Core, type CoreOptions } from '@/main/core'
 import type { BusEvent } from '@/main/commands/bus'
 import { readWireRow, readWireRows } from '@/main/db/rows'
 import { greyPng } from '@/main/providers/fake/png'
+import { webpInfo } from '@/main/providers/webp-size'
 import { fakeCrypto, data } from '../core-fixture'
 import { seed, VARIANT } from './generation-fixture'
 import type { JobRow } from '@/shared/schemas/rows/job'
@@ -40,6 +41,11 @@ export async function makeComfyFixture(opts: FixtureOptions) {
     emit: (e) => events.push(e),
     askPermission: async () => false,
     toPng: (bytes) => bytes,
+    // Slice WP: a stand-in for the decoder window, a grey PNG of the WebP's own size.
+    webpToPng: async (bytes) => {
+      const { width, height } = webpInfo(bytes)
+      return greyPng(width, height)
+    },
     ...(opts.fitPicture && { fitPicture: opts.fitPicture }),
   })
   const as = (actor: Actor) => (name: string, input: Record<string, unknown>) =>
