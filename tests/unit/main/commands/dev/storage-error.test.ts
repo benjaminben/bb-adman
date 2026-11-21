@@ -22,10 +22,7 @@ describe('storageError: how dev.storage reports a failure [SPEC 4.1, 6 plain mes
       'Amazon S3 declined this request because of its content rules. Change the prompt or the images and try again.',
     ],
     ['timeout', 'Amazon S3 took too long to answer. Try again.'],
-    [
-      'offline',
-      'The app could not reach Amazon S3. Check your internet connection and try again.',
-    ],
+    ['offline', 'The app could not reach Amazon S3. Check your internet connection and try again.'],
     ['other', 'Amazon S3 could not finish this request. Try again.'],
   ] as const)('gives PROVIDER_ERROR with the plain message for %s', (kind, message) => {
     const error = storageError(failure(kind), S3)
