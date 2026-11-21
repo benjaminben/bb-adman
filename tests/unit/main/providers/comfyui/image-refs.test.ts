@@ -8,7 +8,7 @@ import {
   finishRun,
   historyEntry,
   requestLines,
-  serveModels,
+  serveNeeds,
   servePicture,
 } from '../../../../helpers/comfy-run'
 import { comfyImage } from '../../../../../src/main/providers/comfyui/image'
@@ -27,7 +27,7 @@ const reference: ImageFile = { bytes: greyPng(7, 5), mime: 'image/png' }
 
 async function fluxStandIn(): Promise<StandIn> {
   stand = await startComfyStandIn()
-  serveModels(stand)
+  serveNeeds(stand)
   servePicture(stand)
   finishRun(stand, PROMPT_ID, historyEntry(flux.slots.outputNode))
   return stand

@@ -10,8 +10,15 @@ import { greyPng } from '../../src/main/providers/fake/png'
 
 export const RESULT_PNG = greyPng(4, 4)
 
-// Every model file the shipped non-draft workflows need, under its folder.
-export function serveModels(stand: StandIn): void {
+// The version the stand-in reports for a run: at least every shipped minimum.
+export const SERVER_VERSION = '0.45.0'
+
+// A server version every shipped workflow takes, and every model file the shipped non-draft
+// workflows need, under its folder.
+export function serveNeeds(stand: StandIn): void {
+  stand.reply('GET /system_stats', {
+    json: { system: { comfyui_version: SERVER_VERSION }, devices: [{ name: 'stand-in' }] },
+  })
   const folders = new Map<string, string[]>()
   for (const w of NON_DRAFT_WORKFLOWS) {
     for (const m of w.needs.models) {
