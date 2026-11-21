@@ -1,3 +1,4 @@
+/* app-style */
 .shell {
   display: flex;
   flex-direction: column;
@@ -13,23 +14,32 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3) 0;
+  height: var(--bar-height);
+  padding: 0 var(--space-3);
   background: var(--color-surface);
-  border-bottom: var(--border-width) solid var(--color-border);
+  border-bottom: var(--border-width) solid var(--color-line);
 }
-/* The tabs sit on the bar's bottom border; everything else keeps a margin below. */
-.bar > :not(.tabs) {
-  margin-bottom: var(--space-2);
-}
-/* The campaign tabs take the room between the switcher and the settings buttons. */
+/* The campaign tabs take the room between the switcher and the settings buttons, and stand on
+   the bar's bottom edge. */
 .tabs {
   display: flex;
   flex: 1;
-  align-self: flex-end;
+  align-self: stretch;
   min-width: 0;
 }
-.settings[aria-pressed='true'] {
-  font-weight: 600;
+/* "Settings" (and "Hand test") are quiet buttons: no edge, a lighter ground on hover, and the
+   page ground while pressed. */
+.settings {
+  border-color: transparent;
+  background: transparent;
+}
+.settings:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--color-surface-soft);
+}
+.settings[aria-pressed='true'],
+.settings[aria-pressed='true']:hover {
+  background: var(--color-bg);
 }
 /* The content's cell, shared with the activity panel at its right end. */
 .main {

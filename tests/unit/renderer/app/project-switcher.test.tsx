@@ -94,3 +94,14 @@ describe('project switcher [FR-003]', () => {
     expect(await axeViolations()).toEqual([])
   })
 })
+
+describe('project switcher look [ST-3]', () => {
+  it('shows a hidden caret beside the name and keeps the name', async () => {
+    await draw('P2')
+    const button = screen.getByRole('button', { name: 'Winter' })
+    const caret = button.querySelectorAll('svg')
+    expect(caret).toHaveLength(1)
+    expect(caret[0]).toHaveAttribute('aria-hidden', 'true')
+    expect(button).toHaveTextContent(/^Winter$/)
+  })
+})

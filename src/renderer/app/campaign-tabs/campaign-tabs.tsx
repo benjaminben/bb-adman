@@ -62,7 +62,7 @@ export function CampaignTabs(props: { projectId: string }) {
 
   return (
     <div className={styles.row}>
-      <TabRow label="Open campaigns" items={items} value={shown} />
+      <TabRow label="Open campaigns" items={items} value={shown} look="bar" />
       <button
         type="button"
         className={styles.add}

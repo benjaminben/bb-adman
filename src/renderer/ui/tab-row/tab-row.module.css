@@ -1,4 +1,7 @@
-/* The tab list and the close strip share one grid, so a close button sits after its tab. */
+/* app-style */
+/* The tab list and the close strip share one grid, so a close button sits after its tab
+   (spec/app-style.md, "App shell and tabs"). A close button's cell carries the tab's ground
+   and indicator; the button inside is the small square. */
 .tabs {
   display: grid;
   min-width: 0;
@@ -10,43 +13,106 @@
   grid-row: 1;
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
-  align-items: stretch;
+  align-items: end;
 }
 .closers {
   pointer-events: none;
 }
 .tab,
-.close {
+.closeCell {
   grid-row: 1;
   display: inline-flex;
   align-items: center;
+  height: 100%;
   white-space: nowrap;
-  border: var(--border-width) solid transparent;
-  border-bottom: none;
-  background: transparent;
+  color: var(--color-text-secondary);
 }
 .tab {
-  border-radius: var(--radius) var(--radius) 0 0;
-  margin-right: var(--space-1);
+  gap: 0;
+  min-height: 0;
+  margin-right: calc(var(--border-width) * 2);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.tab:focus-visible {
+  outline-offset: calc(var(--focus-ring-width) * -1);
 }
 .closable {
-  border-right: none;
-  border-top-right-radius: 0;
   margin-right: 0;
+  padding-right: var(--space-1);
+}
+.closeCell {
+  margin-right: calc(var(--border-width) * 2);
+  padding-right: var(--space-1);
 }
 .close {
   pointer-events: auto;
-  padding: 0 var(--space-2);
-  margin-right: var(--space-1);
-  border-left: none;
-  border-radius: 0 var(--radius) 0 0;
+  min-height: 0;
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--radius-inner);
+  background: transparent;
   color: var(--color-text-muted);
 }
-.tab[data-state='active'],
-.close[data-active='true'] {
-  background: var(--color-bg);
-  border-color: var(--color-border);
+.close:hover:not(:disabled) {
+  background: var(--color-surface);
+  color: var(--color-text);
 }
-.tab[data-state='active'] {
-  font-weight: 600;
+.tab[data-state='active'],
+.closeCell[data-active='true'] {
+  color: var(--color-text);
+}
+
+/* The variant tab row: an underline in the spot colour under the shown tab. */
+.row {
+  height: var(--tab-row-height);
+  padding: 0 var(--space-3);
+  background: var(--color-bg);
+  border-bottom: var(--border-width) solid var(--color-line);
+}
+.row .tab,
+.row .closeCell {
+  border-block: var(--indicator-width) solid transparent;
+  font-size: var(--font-size-control);
+}
+.row .tab:hover:not([data-state='active']) {
+  background: var(--color-surface-soft);
+}
+.row .tab[data-state='active'],
+.row .closeCell[data-active='true'] {
+  border-bottom-color: var(--color-accent);
+}
+.row .tab[data-state='active'] {
+  font-weight: var(--weight-bold);
+}
+
+/* The campaign tabs in the top bar: rounded top corners and a bar on top of the shown tab. */
+.bar {
+  align-self: stretch;
+}
+.bar .tab,
+.bar .closeCell {
+  height: var(--tab-height);
+  border-top: var(--indicator-width) solid transparent;
+  font-size: var(--font-size-body);
+  font-weight: var(--weight-bold);
+}
+.bar .tab {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+.bar .closable {
+  border-top-right-radius: 0;
+}
+.bar .closeCell {
+  border-radius: 0 var(--radius-md) 0 0;
+}
+.bar .tab:hover:not([data-state='active']) {
+  background: var(--color-surface-soft);
+}
+.bar .tab[data-state='active'],
+.bar .closeCell[data-active='true'] {
+  background: var(--color-bg);
+  border-top-color: var(--color-accent);
 }

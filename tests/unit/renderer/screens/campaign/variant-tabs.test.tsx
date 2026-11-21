@@ -1,6 +1,8 @@
 // spec/editor.md, "Variant tabs" and "What each tab keeps" [FR-212 to FR-214, Q-041, Q-042]:
 // inside the campaign page, "Overview" and one tab per open variant, whose content is the editor.
 import '../../../shared/scene/fake-fonts'
+import fs from 'node:fs'
+import path from 'node:path'
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
@@ -174,5 +176,23 @@ describe('the tile\'s "+" button [FR-214, Q-041]', () => {
     await userEvent.click(tile('Master post'))
     expect(onChoose.mock.calls).toEqual([['V1']])
     expect(await axeViolations()).toEqual([])
+  })
+})
+
+// ST-3 (spec/app-style.md, "App shell and tabs"): the shared tab row's close icon is hidden
+// from assistive tech, and the row keeps its built overflow behaviour.
+describe('variant tab row look [ST-3]', () => {
+  it('draws a hidden "x" in the close button and keeps its name', async () => {
+    await draw()
+    await userEvent.click(tile('German post'))
+    const close = screen.getByRole('button', { name: 'Close tab' })
+    expect(close.querySelectorAll('svg')).toHaveLength(1)
+    expect(close.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+    expect(close).toHaveAccessibleDescription(SECOND_TAB)
+  })
+
+  it('keeps the row scrolling sideways when the tabs do not fit', () => {
+    const file = path.resolve('src/renderer/ui/tab-row/tab-row.module.css')
+    expect(fs.readFileSync(file, 'utf8')).toMatch(/overflow-x: auto/)
   })
 })

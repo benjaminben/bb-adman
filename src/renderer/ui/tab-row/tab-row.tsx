@@ -2,8 +2,11 @@
 // "Variant tabs"). A tab list may hold only tabs, so the close buttons sit in their own strip
 // laid over the same grid columns: tab, its close button, next tab. Each close button is
 // described by its tab's label. It goes inside the caller's Tabs.Root; value is that root's.
+// Two looks (spec/app-style.md, "App shell and tabs"): "row", the variant tab row with an
+// underline, and "bar", the campaign tabs in the top bar with a bar on top.
 import * as Tabs from '@radix-ui/react-tabs'
 import { useId, type CSSProperties, type ReactNode } from 'react'
+import { Icon } from '@/renderer/ui/icon'
 import styles from './tab-row.module.css'
 
 export type TabItem = {
@@ -13,7 +16,12 @@ export type TabItem = {
   close?: { label: string; onClose: () => void }
 }
 
-export type TabRowProps = { label: string; items: TabItem[]; value: string }
+export type TabRowProps = {
+  label: string
+  items: TabItem[]
+  value: string
+  look?: 'row' | 'bar'
+}
 
 const column = (index: number, close = false): CSSProperties => ({
   gridColumn: index * 2 + (close ? 2 : 1),
@@ -23,8 +31,9 @@ export function TabRow(props: TabRowProps) {
   const id = useId()
   const nameId = (index: number) => `${id}-tab-${index}`
   const columns = { gridTemplateColumns: `repeat(${props.items.length * 2}, max-content)` }
+  const look = props.look === 'bar' ? styles.bar : styles.row
   return (
-    <div className={styles.tabs} style={columns}>
+    <div className={`${styles.tabs} ${look}`} style={columns}>
       <Tabs.List aria-label={props.label} className={styles.list}>
         {props.items.map((item, index) => (
           <Tabs.Trigger
@@ -42,18 +51,22 @@ export function TabRow(props: TabRowProps) {
         {props.items.map(
           (item, index) =>
             item.close && (
-              <button
+              <span
                 key={item.value}
-                type="button"
-                className={styles.close}
+                className={styles.closeCell}
                 style={column(index, true)}
                 data-active={item.value === props.value}
-                aria-label={item.close.label}
-                aria-describedby={nameId(index)}
-                onClick={item.close.onClose}
               >
-                ×
-              </button>
+                <button
+                  type="button"
+                  className={styles.close}
+                  aria-label={item.close.label}
+                  aria-describedby={nameId(index)}
+                  onClick={item.close.onClose}
+                >
+                  <Icon name="x" size="small" />
+                </button>
+              </span>
             ),
         )}
       </div>
