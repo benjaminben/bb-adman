@@ -70,6 +70,12 @@ export function pathInside(dir: string, file: string): string | null {
   return out || path.isAbsolute(rel) ? null : rel
 }
 
+// SPEC 14 [1.34]: true when `p` is `dir` itself or inside it at any depth. The one owner of
+// that question for the assets folder check (V1) and the Package target check (V3).
+export function pathAtOrInside(dir: string, p: string): boolean {
+  return path.resolve(dir) === path.resolve(p) || pathInside(dir, p) !== null
+}
+
 // asset.relink siblings (SPEC 14, Slice A rulings point 3): a stored file inside the old
 // folder of the named asset is looked for at the same relative path under the new folder.
 // Null when the stored file is not inside the old folder or the candidate leaves the new one.

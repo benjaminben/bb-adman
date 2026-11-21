@@ -8,6 +8,7 @@ import {
   relativeToProject,
   resolveAssetFile,
 } from '../../../../src/main/assets/path-resolver'
+import { pathAtOrInside } from '../../../../src/main/assets/path-resolver'
 
 let root: string
 let projectFile: string
@@ -101,5 +102,28 @@ describe('managed files and relative paths [SPEC 3.3 asset rules]', () => {
   it('gives a path relative to the project file folder', () => {
     const file = path.join(root, 'old', 'a.png')
     expect(relativeToProject(projectFile, file)).toBe(path.join('..', 'old', 'a.png'))
+  })
+})
+
+describe('a path at or inside a folder [SPEC 14 1.34 pathAtOrInside]', () => {
+  const dir = path.join(path.sep, 'a', 'P Assets')
+
+  it('is true for the folder itself', () => {
+    expect(pathAtOrInside(dir, dir)).toBe(true)
+  })
+
+  it('is true for a child and a deep child', () => {
+    expect(pathAtOrInside(dir, path.join(dir, 'b'))).toBe(true)
+    expect(pathAtOrInside(dir, path.join(dir, 'b', 'c', 'd'))).toBe(true)
+  })
+
+  it('is false for the parent, a sibling and a folder named ..x beside it', () => {
+    expect(pathAtOrInside(dir, path.dirname(dir))).toBe(false)
+    expect(pathAtOrInside(dir, path.join(path.dirname(dir), 'Other'))).toBe(false)
+    expect(pathAtOrInside(dir, path.join(path.dirname(dir), '..x'))).toBe(false)
+  })
+
+  it('is true for a child named ..x', () => {
+    expect(pathAtOrInside(dir, path.join(dir, '..x'))).toBe(true)
   })
 })
