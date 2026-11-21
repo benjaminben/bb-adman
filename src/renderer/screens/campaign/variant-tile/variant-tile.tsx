@@ -23,7 +23,10 @@ export function sizeLine(v: VariantSummary): string {
 function ShapeBox(props: { variant: VariantSummary }) {
   const v = props.variant
   return (
-    <span className={styles.shape} style={{ aspectRatio: `${v.width} / ${v.height}` }}>
+    <span
+      className={`${styles.shape} ${v.width > v.height ? styles.wide : styles.tall}`}
+      style={{ aspectRatio: `${v.width} / ${v.height}` }}
+    >
       <span>{v.sizeLabel}</span>
       {v.format === 'video' && <span>Video</span>}
     </span>

@@ -1,0 +1,31 @@
+# A brief for the S2-16 campaign-grid pictures: two subjects, two languages and three sizes.
+campaignName: Alpine Spring Water
+region: DACH
+audience: Hikers and city runners aged 25 to 45
+message: Water straight from the mountain, in a bottle you can refill
+offer: Two bottles for the price of one in April
+callToAction: Find it at your local store
+tone: Fresh and calm
+subjects:
+  - id: glass-bottle
+    name: Glass bottle
+    description: A tall clear glass bottle with a pale blue mountain label
+  - id: sport-flask
+    name: Sport flask
+    description: A matt steel flask with a carry loop and a blue cap
+languages:
+  - en
+  - de
+sizes:
+  - '1:1'
+  - '9:16'
+  - '16:9'
+requiredWords:
+  - Alpine Spring
+copy:
+  en:
+    headline: Taste the mountain
+    callToAction: Find it at your local store
+  de:
+    headline: Schmeck die Berge
+    callToAction: Jetzt im Laden um die Ecke

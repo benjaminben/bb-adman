@@ -19,20 +19,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: var(--thumbnail-tile);
+  width: 100%;
+  aspect-ratio: 1 / 1;
 }
 .shape {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  max-width: 100%;
-  max-height: 100%;
-  height: 100%;
   background: var(--color-surface);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
   color: var(--color-text-muted);
+}
+.wide {
+  width: 100%;
+}
+.tall {
+  height: 100%;
 }
 .title {
   font-weight: 600;
