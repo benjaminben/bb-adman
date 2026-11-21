@@ -41,9 +41,9 @@ async function hashToken(token: string): Promise<string> {
 }
 
 // The value of the cookie of exactly this link's name, when it has the token's shape.
-function tokenOf(request: Request, slug: string): string | null {
+function tokenOf(cookie: string | null, slug: string): string | null {
   const name = cookieName(slug)
-  for (const pair of (request.headers.get('Cookie') ?? '').split(';')) {
+  for (const pair of (cookie ?? '').split(';')) {
     const at = pair.indexOf('=')
     if (at < 0 || pair.slice(0, at).trim() !== name) continue
     const value = pair.slice(at + 1).trim()
@@ -52,16 +52,17 @@ function tokenOf(request: Request, slug: string): string | null {
   return null
 }
 
-// The link of the slug, with the session when the request holds a live one for that link.
+// The link of the slug, with the session when the Cookie header text (or null) holds a live one
+// for that link.
 export async function readSession(
   db: Db,
-  request: Request,
+  cookie: string | null,
   slug: string,
   now: number,
 ): Promise<{ link: LinkRow | null; session: Session | null }> {
   const link = await findLinkBySlug(db, slug)
   if (link === null) return { link, session: null }
-  const token = tokenOf(request, slug)
+  const token = tokenOf(cookie, slug)
   if (token === null) return { link, session: null }
   const tokenHash = await hashToken(token)
   const live = await hasSession(db, tokenHash, link.id, now)

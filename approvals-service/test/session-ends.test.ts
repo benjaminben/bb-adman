@@ -6,9 +6,9 @@ import { deleteLink, setLinkPassword } from '../src/db/links'
 import type { Db, Statement } from '../src/db/client'
 import { deleteLinkSessions } from '../src/db/sessions'
 import { startSession } from '../src/visitor/session'
+import { openGallery } from '../src/visitor/actions'
 import { tryPassword } from '../src/visitor/throttle'
-import { FAILURE } from '../src/visitor/password-page'
-import { addLink, clearTables, clock, db, enter, form, get, PASSWORD } from './visitor-setup'
+import { addLink, clearTables, clock, db, enter, form, PASSWORD } from './visitor-setup'
 
 const KEY = 'k'.repeat(40)
 const PROJECT = '01ARZ3NDEKTSV4RRFFQ69G5FAV'
@@ -60,22 +60,26 @@ describe('a session is never made for a password or link that changed meanwhile'
       expect(await sessionRows()).toEqual([])
     })
 
-    it(`answers /enter with the failure page and no cookie after ${label} mid-check`, async () => {
+    it(`answers /enter with the failure 303 and no cookie after ${label} mid-check`, async () => {
       const time = clock()
       const link = await addLink(1)
       const raced = racingDb(() => change(link.id))
       const app = createApp({ DB: raced }, { now: time.now, random: cryptoBytes })
       const reply = await app.fetch(form(`/l/${link.slug}/enter`, { password: PASSWORD }))
-      expect(reply.status).toBe(200)
+      expect(reply.status).toBe(303)
+      expect(reply.headers.get('Location')).toBe(`/l/${link.slug}?m=wrong-password`)
       expect(reply.headers.has('Set-Cookie')).toBe(false)
-      expect(await reply.text()).toContain(FAILURE)
+      expect(await reply.text()).toBe('')
       expect(await sessionRows()).toEqual([])
     })
   }
 })
 
 describe('the API ends sessions [approvals-service.md "Session"]', () => {
-  const app = createApp({ DB: db, API_KEY: KEY }, { now: clock().now, random: cryptoBytes })
+  const time = clock()
+  const app = createApp({ DB: db, API_KEY: KEY }, { now: time.now, random: cryptoBytes })
+  const gallery = (slug: string, cookie: string) =>
+    openGallery(db, { slug, cookie, m: null }, time.now())
   const call = (method: string, path: string, body?: unknown) =>
     new Request(`https://approvals.example/api/v1/links/${PROJECT}/campaign-1-abc234${path}`, {
       method,
@@ -94,12 +98,12 @@ describe('the API ends sessions [approvals-service.md "Session"]', () => {
     it(`gives the old cookie the password page after ${label}`, async () => {
       const link = await addLink(1)
       const cookie = await enter(app, link.slug)
-      const before = await (await app.fetch(get(`/l/${link.slug}`, cookie))).text()
-      expect(before).toContain('<h1>Campaign 1</h1>')
+      const before = await gallery(link.slug, cookie)
+      expect(before.kind === 'gallery' && before.view.link.campaignName).toBe('Campaign 1')
       expect((await app.fetch(request())).status).toBe(200)
-      const after = await (await app.fetch(get(`/l/${link.slug}`, cookie))).text()
-      expect(after).toContain('<h1>Review campaign</h1>')
-      expect(after).not.toContain('Campaign 1')
+      const after = await gallery(link.slug, cookie)
+      expect(after).toEqual({ kind: 'password', notice: null })
+      expect(JSON.stringify(after)).not.toContain('Campaign 1')
     })
   }
 })

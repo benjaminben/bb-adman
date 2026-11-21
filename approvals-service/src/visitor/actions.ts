@@ -1,11 +1,12 @@
-// The visitor routes' logic, with no HTML: each takes the request and gives a plain result that
-// a page renders. The link always comes from the path's slug and its session, never a field.
+// The visitor routes' logic, with no page text: each gives a plain result that a reply or a page
+// is built from. The link always comes from the path's slug and its session, never a field.
 import type { Parts } from '../app'
 import { Slug } from '../contract'
 import { checkPassword } from '../crypto/password'
 import { listSignoffs } from '../db/signoffs'
 import { listVariants } from '../db/variants'
 import { readForm } from './forms'
+import { noticeOn, type NoticeKey } from './notices'
 import { clearedCookie, endSession, readSession, startSession } from './session'
 import { tryPassword } from './throttle'
 import type { Db } from '../db/client'
@@ -22,37 +23,40 @@ export type GalleryView = {
     expired: boolean
   }[]
   signoffs: { id: string; variantKey: string; version: number; email: string; createdAt: number }[]
-  m: string | null
+  notice: NoticeKey | null
 }
 
-export type GalleryResult = { kind: 'password' } | ({ kind: 'gallery' } & GalleryView)
+export type GalleryResult =
+  { kind: 'password'; notice: NoticeKey | null } | { kind: 'gallery'; view: GalleryView }
+
+// What a page has: the slug from its path, the Cookie header text and the `m` query value.
+export type GalleryInput = { slug: string; cookie: string | null; m: string | null }
 
 // `refused`: the form checks failed (403). `failed`: wrong password, unknown slug or too many
 // tries, one result for all three.
 export type EnterResult =
-  { kind: 'refused' } | { kind: 'failed' } | { kind: 'entered'; cookie: string; location: string }
+  { kind: 'refused' } | { kind: 'failed' } | { kind: 'entered'; cookie: string }
 
-export type LeaveResult = { kind: 'refused' } | { kind: 'left'; cookie: string; location: string }
+export type LeaveResult = { kind: 'refused' } | { kind: 'left'; cookie: string }
 
 // A slug of the wrong shape is treated exactly like an unknown one.
 const goodSlug = (slug: string) => Slug.safeParse(slug).success
 
 export async function openGallery(
   db: Db,
-  request: Request,
-  slug: string,
+  { slug, cookie, m }: GalleryInput,
   now: number,
 ): Promise<GalleryResult> {
-  if (!goodSlug(slug)) return { kind: 'password' }
-  const { session } = await readSession(db, request, slug, now)
-  if (session === null) return { kind: 'password' }
+  const password = { kind: 'password', notice: noticeOn('password', m) } as const
+  if (!goodSlug(slug)) return password
+  const { session } = await readSession(db, cookie, slug, now)
+  if (session === null) return password
   const linkId = session.link.id
   const [variants, signoffs] = await Promise.all([
     listVariants(db, linkId),
     listSignoffs(db, linkId),
   ])
-  return {
-    kind: 'gallery',
+  const view: GalleryView = {
     link: { slug: session.link.slug, campaignName: session.link.campaignName },
     variants: variants.map((row) => ({
       variantKey: row.variantKey,
@@ -69,8 +73,9 @@ export async function openGallery(
       email: row.email,
       createdAt: row.createdAt,
     })),
-    m: new URL(request.url).searchParams.get('m'),
+    notice: noticeOn('gallery', m),
   }
+  return { kind: 'gallery', view }
 }
 
 export async function enterLink(
@@ -91,7 +96,7 @@ export async function enterLink(
   if (checked === null) return { kind: 'failed' }
   const cookie = await startSession(db, checked, slug, parts)
   if (cookie === null) return { kind: 'failed' }
-  return { kind: 'entered', cookie, location: `/l/${slug}` }
+  return { kind: 'entered', cookie }
 }
 
 export async function leaveLink(
@@ -103,8 +108,8 @@ export async function leaveLink(
   const fields = await readForm(request)
   if (fields === null) return { kind: 'refused' }
   if (!goodSlug(slug)) return { kind: 'refused' }
-  const { session } = await readSession(db, request, slug, now)
+  const { session } = await readSession(db, request.headers.get('Cookie'), slug, now)
   if (session === null) return { kind: 'refused' }
   await endSession(db, session)
-  return { kind: 'left', cookie: clearedCookie(slug), location: `/l/${slug}` }
+  return { kind: 'left', cookie: clearedCookie(slug) }
 }

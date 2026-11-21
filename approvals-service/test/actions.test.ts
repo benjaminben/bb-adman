@@ -3,7 +3,7 @@ import { cryptoBytes } from '../src/crypto/random'
 import { addSignoff } from '../src/db/signoffs'
 import { putVariant } from '../src/db/variants'
 import { enterLink, leaveLink, openGallery } from '../src/visitor/actions'
-import { addLink, clearTables, db, enter, form, get, makeApp, PASSWORD } from './visitor-setup'
+import { addLink, clearTables, db, enter, form, makeApp, PASSWORD } from './visitor-setup'
 
 const NOW = Date.UTC(2026, 10, 21, 12, 0)
 const PICTURE = 'https://my-bucket.s3.eu-west-1.amazonaws.com/p.png?X-Amz-Signature=secret'
@@ -31,23 +31,32 @@ describe('openGallery gives a narrowed view [review AP-3 Low]', () => {
     await addSignoff(db, link.id, { ...signoff, createdAt: 5 }).run()
     const cookie = await enter(app, link.slug)
 
-    const result = await openGallery(db, get(`/l/${link.slug}?m=signed`, cookie), link.slug, NOW)
+    const result = await openGallery(db, { slug: link.slug, cookie, m: 'signed' }, NOW)
     expect(result).toEqual({
       kind: 'gallery',
-      link: { slug: link.slug, campaignName: 'Campaign 1' },
-      variants: [
-        {
-          variantKey: 'aaa234',
-          position: 0,
-          title: 'T',
-          sizeLine: 'S',
-          version: 3,
-          expired: false,
-        },
-        { variantKey: 'bbb234', position: 1, title: 'T', sizeLine: 'S', version: 3, expired: true },
-      ],
-      signoffs: [{ ...signoff, createdAt: 5 }],
-      m: 'signed',
+      view: {
+        link: { slug: link.slug, campaignName: 'Campaign 1' },
+        variants: [
+          {
+            variantKey: 'aaa234',
+            position: 0,
+            title: 'T',
+            sizeLine: 'S',
+            version: 3,
+            expired: false,
+          },
+          {
+            variantKey: 'bbb234',
+            position: 1,
+            title: 'T',
+            sizeLine: 'S',
+            version: 3,
+            expired: true,
+          },
+        ],
+        signoffs: [{ ...signoff, createdAt: 5 }],
+        notice: 'signed',
+      },
     })
     const text = JSON.stringify(result)
     const secrets = [
@@ -74,14 +83,14 @@ describe('a slug of the wrong shape is an unknown slug [review AP-3 Note]', () =
       const link = await addLink(1)
       const cookie = await enter(app, link.slug)
       const outcomes = async (s: string) => ({
-        gallery: await openGallery(db, get(`/l/${link.slug}`, cookie), s, NOW),
+        gallery: await openGallery(db, { slug: s, cookie, m: null }, NOW),
         enter: await enterLink(db, form(`/l/${link.slug}/enter`, { password: PASSWORD }), s, parts),
         leave: await leaveLink(db, form(`/l/${link.slug}/leave`, {}, { cookie }), s, NOW),
       })
       const wrong = await outcomes(slug)
       expect(wrong).toEqual(await outcomes(UNKNOWN))
       expect(wrong).toEqual({
-        gallery: { kind: 'password' },
+        gallery: { kind: 'password', notice: null },
         enter: { kind: 'failed' },
         leave: { kind: 'refused' },
       })

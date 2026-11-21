@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import * as sessions from '../src/db/sessions'
+import { openGallery } from '../src/visitor/actions'
 import {
   addLink,
   clearTables,
@@ -8,7 +9,6 @@ import {
   db,
   enter,
   form,
-  get,
   makeApp,
 } from './visitor-setup'
 
@@ -21,8 +21,17 @@ async function sha256Hex(text: string) {
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-const isGallery = (text: string) => text.includes('<h1>Campaign 1</h1>')
-const isPasswordPage = (text: string) => text.includes('<h1>Review campaign</h1>')
+// What the gallery page would get for this cookie text at this time.
+const opened = (slug: string, cookie: string, now: number) =>
+  openGallery(db, { slug, cookie, m: null }, now)
+const isGallery = async (slug: string, cookie: string, now: number) => {
+  const result = await opened(slug, cookie, now)
+  return result.kind === 'gallery' && result.view.link.campaignName === 'Campaign 1'
+}
+const isPasswordPage = async (slug: string, cookie: string, now: number) => {
+  const result = await opened(slug, cookie, now)
+  return result.kind === 'password' && !JSON.stringify(result).includes('Campaign')
+}
 
 beforeEach(clearTables)
 
@@ -39,9 +48,7 @@ describe('the session [approvals-service.md "Session"]', () => {
     const text = reply.headers.get('Set-Cookie') ?? ''
     expect(text).toMatch(COOKIE_TEXT)
     expect(COOKIE_TEXT.exec(text)?.[1]).toBe(link.slug)
-    expect(isGallery(await (await app.fetch(get(`/l/${link.slug}`, cookieOf(reply)))).text())).toBe(
-      true,
-    )
+    expect(await isGallery(link.slug, cookieOf(reply), time.now())).toBe(true)
   })
 
   it('stores the hash of the token with the link and a 12-hour end, never the token', async () => {
@@ -76,17 +83,16 @@ describe('the session [approvals-service.md "Session"]', () => {
       ['the name with another case', `__host-adman-${a.slug}=${ownToken}`],
     ]
     for (const [label, cookie] of cases) {
-      const text = await (await app.fetch(get(`/l/${a.slug}`, cookie))).text()
-      expect(isPasswordPage(text), label).toBe(true)
+      expect(await isPasswordPage(a.slug, cookie, time.now()), label).toBe(true)
     }
-    expect(isGallery(await (await app.fetch(get(`/l/${a.slug}`, ownCookie))).text())).toBe(true)
+    expect(await isGallery(a.slug, ownCookie, time.now())).toBe(true)
     time.advance(HOURS_12)
-    const expired = await (await app.fetch(get(`/l/${a.slug}`, ownCookie))).text()
-    expect(isPasswordPage(expired), 'expired').toBe(true)
+    expect(await isPasswordPage(a.slug, ownCookie, time.now()), 'expired').toBe(true)
   })
 
   it('"Leave" deletes the session row and clears the cookie', async () => {
-    const app = makeApp(clock().now)
+    const time = clock()
+    const app = makeApp(time.now)
     const [a, b] = [await addLink(1), await addLink(2)]
     const cookie = await enter(app, a.slug)
     await enter(app, b.slug)
@@ -98,8 +104,7 @@ describe('the session [approvals-service.md "Session"]', () => {
     )
     const left = await db.prepare('SELECT link_id FROM session').all()
     expect(left.results).toEqual([{ link_id: b.id }])
-    const after = await (await app.fetch(get(`/l/${a.slug}`, cookie))).text()
-    expect(isPasswordPage(after)).toBe(true)
+    expect(await isPasswordPage(a.slug, cookie, time.now())).toBe(true)
   })
 
   it("deletes this link's expired sessions on each right password, and no other", async () => {
