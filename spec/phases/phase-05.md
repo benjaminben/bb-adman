@@ -43,10 +43,10 @@
 | 1 | P5-5 The fan-out plan (pure) (built) | small | Phase 4 | P5-1, P5-2, P5-6, P5-7 | — |
 | 1 | P5-6 Gemini picture extend (built) | small | Phase 4 | every wave 1 slice | — |
 | 1 | P5-7 ComfyUI extend in the adapter (built) | small | Phase 4 | every wave 1 slice | — |
-| 2 | P5-3 Overrides on edit, `layer.revert`, `layer.clearOverride` | medium | P5-1, P5-2 | P5-4, P5-8, P5-12 | — |
+| 2 | P5-3 Overrides on edit, `layer.revert`, `layer.clearOverride` (built) | medium | P5-1, P5-2 | P5-4, P5-8, P5-12 | — |
 | 2 | P5-4 Snapshots, `variant.delete`, `remove`, `restore`, `restoreLayers` | medium | P5-1 | P5-3, P5-8, P5-12 | — |
 | 2 | P5-8 `generation.runFill`, the fill job, the gate | medium | P5-1; SP-9 merged | P5-3, P5-4, P5-12 | SP-9 (`prompt.ts`) |
-| 2 | P5-12 The sync plan and `sync.preview` | medium | P5-1, P5-2 | P5-3, P5-4, P5-8 | — |
+| 2 | P5-12 The sync plan and `sync.preview` (built) | medium | P5-1, P5-2 | P5-3, P5-4, P5-8 | — |
 | 3 | P5-9 `generation.applyFill` | small | P5-4, P5-8 | P5-10, P5-11, P5-13 | — |
 | 3 | P5-10 `variant.fanOut` and `variant.add` | medium | P5-4, P5-5 | P5-9, P5-11, P5-13 | — |
 | 3 | P5-11 Directions | small | P5-4 | P5-9, P5-10, P5-13 | — |

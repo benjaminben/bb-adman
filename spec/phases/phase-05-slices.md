@@ -34,7 +34,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** A + B. No security review (reads only).
 - **After:** nothing.
 
-### P5-3 — Overrides on edit, `layer.revert`, `layer.clearOverride`
+### P5-3 — Overrides on edit, `layer.revert`, `layer.clearOverride` (built)
 
 - **Size:** medium. **Needs:** P5-1, P5-2.
 - **Read:** `spec/links-and-sync.md`, "Overrides"; `spec/editor-commands.md`, the layer counters and inverses.
@@ -157,7 +157,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** B. No security review (deny for agents; data inside the project).
 - **After:** P5-4.
 
-### P5-12 — The sync plan and `sync.preview`
+### P5-12 — The sync plan and `sync.preview` (built)
 
 - **Size:** medium. **Needs:** P5-1, P5-2.
 - **Read:** `spec/links-and-sync.md`, "Sync".

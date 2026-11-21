@@ -50,8 +50,8 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `layer.delete` | projectId, layerId (refused for a background) | V | allow | Built | FR-092, FR-197 |
 | `layer.restore` | projectId, layer (whole row), order (system; only the inverse of `layer.delete`) | V | deny (system) | Built | FR-095 |
 | `layer.reorder` | projectId, variantId, layerIds (every non-background layer, lowest first) | V | allow | Built | FR-092 |
-| `layer.clearOverride` | projectId, layerId, paths[] | V | deny | Not built (Phase 5) | FR-080 |
-| `layer.revert` | projectId, variantId, layers[] of { layerId, patch, overrides } (system; the inverse of an edit that changed an override list) | V | deny (system) | Not built (Phase 5) | FR-080, FR-095 |
+| `layer.clearOverride` | projectId, layerId, paths[] | V | deny | Built | FR-080 |
+| `layer.revert` | projectId, variantId, layers[] of { layerId, patch, overrides } (system; the inverse of an edit that changed an override list) | V | deny (system) | Built | FR-080, FR-095 |
 | `layer.reportOverflow` | projectId, layerId, overflow, variantRev | — | deny | Built | FR-098 |
 | `clip.add` | projectId, variantId, assetId, startMs | V | deny | Not built (Phase 7) | FR-121 |
 | `clip.update` | projectId, clipId, startMs?, inMs?, outMs?, placement? | V | deny | Not built (Phase 7) | FR-122 |
