@@ -70,6 +70,10 @@ export function createSettingsStore(opts: { file: string; defaults: Settings }) 
     setComfyAddress(origin: string | null): void {
       save({ ...current, comfyui: { baseUrl: origin } })
     },
+    // Called only by the MCP service, for mcp.setEnabled (SPEC 4.2 notes).
+    setMcpEnabled(enabled: boolean): void {
+      save({ ...current, mcp: { ...current.mcp, enabled } })
+    },
     touchRecent(entry: { path: string; name: string }, openedAt: string): void {
       const others = current.recentProjects.filter((r) => r.path !== entry.path)
       const recentProjects = [{ ...entry, openedAt }, ...others].slice(0, RECENT_LIMIT)
