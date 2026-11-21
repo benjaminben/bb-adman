@@ -104,7 +104,7 @@ describe('reportFacts [P8-7]', () => {
 
   it('gives a generated asset its provider, model and prompt, and an imported one none', async () => {
     const { fx, p } = await setup()
-    const [first, second] = p.variantIds()
+    const [first = '', second = ''] = p.variantIds()
     insertAsset(p, 'gen1', true)
     insertAsset(p, 'imp1', false)
     useAsBackground(p, first, 'gen1')
@@ -152,7 +152,7 @@ describe('reportFacts [P8-7]', () => {
     const { fx, p } = await setup()
     fx.core.deps.settings.setComfyAddress(COMFY)
     insertAsset(p, 'gen1', true)
-    useAsBackground(p, p.variantIds()[0], 'gen1')
+    useAsBackground(p, p.variantIds()[0] ?? '', 'gen1')
     const project = fx.core.deps.projects.requireOpen(p.projectId)
     const json = JSON.stringify(reportFacts(fx.core.deps, project, p.campaignId))
     expect(json).toContain('gen1')

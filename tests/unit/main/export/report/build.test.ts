@@ -147,7 +147,7 @@ describe('buildReport', () => {
     ],
   ])('gives translations %s [FR-237]', (_, v, expected) => {
     const report = build(facts({ variants: [v] }), [done('pass')])
-    expect(report.variants[0].translations).toEqual(expected)
+    expect(report.variants[0]?.translations).toEqual(expected)
   })
 
   it.each([
@@ -157,7 +157,7 @@ describe('buildReport', () => {
     const report = build(facts({ variants: [variant('pass', { agentChangedAt: at })] }), [
       done('pass'),
     ])
-    expect(report.variants[0].lastAgentChangeAt).toBe(expected)
+    expect(report.variants[0]?.lastAgentChangeAt).toBe(expected)
   })
 
   it('holds the output folder name only, never the full path [A-196]', () => {
@@ -208,7 +208,7 @@ describe('buildReport', () => {
     expect(next.previousExport).toEqual({ exportNumber: 1, createdAt: previous.createdAt })
     expect(next.variants.map((v) => v.changedSincePrevious)).toEqual(['changed', 'not_in_previous'])
     expect(build().previousExport).toBeNull()
-    expect(build().variants[0].changedSincePrevious).toBeNull()
+    expect(build().variants[0]?.changedSincePrevious).toBeNull()
   })
 
   it('leaves out an ad deleted before the facts were read and counts it as failed', () => {
