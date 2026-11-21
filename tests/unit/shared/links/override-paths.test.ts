@@ -1,7 +1,12 @@
 // P5-3: the override paths of a patch and which of them follow for a variant
 // (spec/links-and-sync.md, "Overrides"; A-135).
 import { describe, it, expect } from 'vitest'
-import { addPaths, inheritedPaths, pathsOfPatch } from '@/shared/links/override-paths'
+import {
+  addPaths,
+  inheritedPaths,
+  masterPatchOf,
+  pathsOfPatch,
+} from '@/shared/links/override-paths'
 
 const block = { preset: 'fade', durationMs: 300 }
 
@@ -51,5 +56,35 @@ describe('addPaths', () => {
       'copy',
       'geometry',
     ])
+  })
+})
+
+describe("masterPatchOf: the master's values for cleared paths", () => {
+  const entrance = { preset: 'fade' as const, startMs: 0, durationMs: 300 }
+  const master = {
+    type: 'text' as const,
+    copy: 'Hello',
+    source: null,
+    timing: { startMs: 0, endMs: null },
+    geometry: { x: 1, y: 2, width: 3, height: 4, rotation: 0, crop: null },
+    style: { color: '#FFFFFF', fontSize: 40 },
+    animation: { entrance, exit: { ...entrance, preset: 'none' as const } },
+  }
+
+  it('takes whole groups, one style field and one animation block', () => {
+    const paths = ['copy', 'geometry', 'style.color', 'animation.entrance', 'timing']
+    expect(masterPatchOf(master as never, paths)).toEqual({
+      copy: 'Hello',
+      geometry: master.geometry,
+      timing: master.timing,
+      style: { color: '#FFFFFF' },
+      animation: { entrance },
+    })
+  })
+
+  it("takes a look field's default when the master lacks it", () => {
+    expect(masterPatchOf(master as never, ['style.boxColor'])).toEqual({
+      style: { boxColor: null },
+    })
   })
 })
