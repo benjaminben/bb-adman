@@ -1,7 +1,7 @@
 // tools/list and tools/call over the real HTTP door, for the MCP-B tests. Not a test file.
 import * as c from './http-client'
 
-// The 4.5 tools whose command or query exists on main (SPEC 14 1.56, MCP-B; MCP-D).
+// The 4.5 tools whose command or query exists on main (SPEC 14 1.56, MCP-B; MCP-D; MCP-G).
 export const BUILT_TOOLS = [
   'list_projects',
   'get_project',
@@ -11,6 +11,9 @@ export const BUILT_TOOLS = [
   'get_slots',
   'get_job',
   'list_jobs',
+  'generate_images',
+  'generate_video',
+  'cancel_job',
 ]
 
 export type ToolReply = {

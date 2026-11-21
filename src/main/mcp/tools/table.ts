@@ -18,6 +18,7 @@ import {
   type ReplyPicker,
 } from './read-replies'
 import { campaignFields, projectFields } from './project-replies'
+import { RUN_TOOLS } from './run-tools'
 
 export type ToolDef = {
   name: string
@@ -27,6 +28,8 @@ export type ToolDef = {
   input: z.ZodObject
   // Picks what the tool returns from the reply, where 4.5 gives fewer fields.
   reply?: ReplyPicker
+  // MCP-G: runs through the one serial toolSetup shares with every session.
+  oneAtATime?: boolean
 }
 
 export const MCP_TOOLS: readonly ToolDef[] = [
@@ -109,4 +112,5 @@ export const MCP_TOOLS: readonly ToolDef[] = [
     input: jobListInput.omit({ layerId: true }),
     reply: jobListFields,
   },
+  ...RUN_TOOLS,
 ]

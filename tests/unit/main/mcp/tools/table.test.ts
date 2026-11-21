@@ -9,6 +9,9 @@ import { makeFixture, type Fixture } from '../../../../integration/core-fixture'
 let f: Fixture | undefined
 afterEach(() => f?.cleanup())
 
+// MCP-G: the commands of the start and cancel tools, tick under the agent-run gate.
+const TICK_TARGETS = ['generation.runImages', 'generation.startVideo', 'job.cancel']
+
 describe('the fixed MCP tool table [SPEC 4.5; 14 1.56 MCP-B]', () => {
   it('maps each tool to one command or query that exists in core', () => {
     f = makeFixture()
@@ -22,14 +25,18 @@ describe('the fixed MCP tool table [SPEC 4.5; 14 1.56 MCP-B]', () => {
 
   it('widens nothing: every command a tool runs is allow in the agent policy today', () => {
     for (const t of MCP_TOOLS.filter((x) => x.kind === 'command')) {
-      expect(AGENT_POLICY[t.target]?.policy, t.name).toBe('allow')
-      expect(agentPolicyFor(t.target), t.name).toBe('allow')
+      const policy = TICK_TARGETS.includes(t.target) ? 'tick' : 'allow'
+      expect(AGENT_POLICY[t.target]?.policy, t.name).toBe(policy)
+      expect(agentPolicyFor(t.target), t.name).toBe(policy)
     }
   })
 
   it('offers no secret, token, settings, file, mcp, dev or generation target [FR-198]', () => {
     const banned = /^(secret|settings|mcp|dev|generation|comfy|storage|app|dialog)\./
-    for (const t of MCP_TOOLS) expect(banned.test(t.target), t.target).toBe(false)
+    for (const t of MCP_TOOLS) {
+      const named = TICK_TARGETS.includes(t.target)
+      expect(banned.test(t.target) && !named, t.target).toBe(false)
+    }
   })
 
   // B-2: a new query target must be added here on purpose, after a review.

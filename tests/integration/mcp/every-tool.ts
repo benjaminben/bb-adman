@@ -20,6 +20,17 @@ export async function callEveryTool(
     languages: input.languages,
     sizes: input.sizes,
     template_id: input.templateId,
+    // MCP-G: the start and cancel tools; 'a1' is the planted asset with a path.
+    variant_id: 'made-up-variant',
+    slot: 'background',
+    prompt: 'A red can on a rock',
+    reference_asset_ids: ['a1'],
+    count: 1,
+    provider: 'comfyui',
+    duration_ms: 2_000,
+    start: 'none',
+    use_references: true,
+    job_id: 'made-up-job',
   }
   const replies: string[] = []
   for (const name of names) {
