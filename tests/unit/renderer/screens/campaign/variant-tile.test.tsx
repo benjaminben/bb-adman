@@ -10,7 +10,7 @@ import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import { axeViolations } from '../../render'
 import { variant } from './campaign-fixture'
 
-type Extra = { chosen?: boolean; preview?: ReactNode; actions?: ReactNode }
+type Extra = { chosen?: boolean; preview?: ReactNode; actions?: ReactNode; footer?: ReactNode }
 
 const draw = (v: VariantSummary, extra: Extra = {}) => {
   const onChoose = vi.fn()
@@ -89,5 +89,13 @@ describe('VariantTile [S2-16]', () => {
     const badges = { ...POST.badges, jobRunning: true }
     draw({ ...POST, badges }, { chosen: true, actions: <button type="button">Open</button> })
     expect(await axeViolations()).toEqual([])
+  })
+
+  it('draws the footer after the main button, not inside it [AP-12]', () => {
+    const { button } = draw(POST, { footer: <p>Signed off by 1</p> })
+    const footer = screen.getByText('Signed off by 1')
+    expect(button.contains(footer)).toBe(false)
+    expect(button.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(button.parentElement!.contains(footer)).toBe(true)
   })
 })

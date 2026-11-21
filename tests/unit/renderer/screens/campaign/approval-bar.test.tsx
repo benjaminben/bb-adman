@@ -10,7 +10,15 @@ import { APPROVALS_REASON_MESSAGES } from '@/shared/approvals/messages'
 import { timeText } from '@/renderer/ui/signoff-list'
 import { makeFakeApi } from '../../fake-api'
 import { axeViolations, renderApp } from '../../render'
-import { C, P, TITLES, endedLink, forCampaign, liveLink } from '../../stores/approvals-fixture'
+import {
+  C,
+  P,
+  TITLES,
+  VARIANTS,
+  endedLink,
+  forCampaign,
+  liveLink,
+} from '../../stores/approvals-fixture'
 
 const OFFLINE = 'The approvals service could not be reached. Check the address and your connection.'
 const GONE = APPROVALS_REASON_MESSAGES.approval_link_gone
@@ -78,5 +86,14 @@ describe('approval bar [spec/approvals.md "The campaign page"]', () => {
   it('keeps "Approval link…" disabled until the first read arrives', async () => {
     await showBar({ data: null })
     expect(screen.getByRole('button', { name: 'Approval link…' })).toBeDisabled()
+  })
+
+  it.each([
+    [[VARIANTS[0]!], 'Signed off: 1 of 1 variant'],
+    [[VARIANTS[1]!], 'Signed off: 0 of 1 variant'],
+    [[], 'Signed off: 0 of 0 variants'],
+  ])('writes the count in the singular only for one variant [AP-12]', async (variants, line) => {
+    const { bar } = await showBar({ data: forCampaign({ variants }) })
+    expect(bar).toHaveTextContent(new RegExp(`${line}(?!s)`))
   })
 })
