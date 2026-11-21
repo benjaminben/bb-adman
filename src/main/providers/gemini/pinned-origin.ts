@@ -9,6 +9,14 @@ import { ProviderFailure } from '@/main/providers/types'
 
 export const GEMINI_ORIGIN = 'https://generativelanguage.googleapis.com'
 
+// FN-2: a redirect is never followed. On a redirect to another origin Node's fetch keeps
+// custom headers such as x-goog-api-key, so the key could reach the new host.
+export const REDIRECT_REFUSED = 'Request refused: the Gemini host answered with a redirect'
+
+function isRedirect(response: Response): boolean {
+  return response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)
+}
+
 export class NetworkError extends Error {
   constructor(cause: unknown) {
     super(cause instanceof Error ? cause.message : String(cause), { cause })
@@ -89,7 +97,11 @@ export function pinnedFetch(
     let response: Response
     let body: ArrayBuffer | null
     try {
-      response = await inner(input, init)
+      response = await inner(input, { ...init, redirect: 'manual' })
+      if (isRedirect(response)) {
+        await response.body?.cancel().catch(() => undefined)
+        throw new ProviderFailure({ kind: 'other', detail: REDIRECT_REFUSED })
+      }
       body = NO_BODY.has(response.status) ? null : await readLimited(response, limit)
     } catch (error) {
       if (error instanceof ProviderFailure) throw error
@@ -101,4 +113,4 @@ export function pinnedFetch(
 }
 
 // Statuses whose Response may not carry a body.
-const NO_BODY = new Set([204, 205, 304])
+const NO_BODY = new Set([204, 205])
