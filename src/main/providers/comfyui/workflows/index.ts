@@ -12,3 +12,12 @@ export const WORKFLOWS: readonly WorkflowSpec[] = [
   h3ImageToVideo,
   h3ReferenceToVideo,
 ]
+
+// [1.45] B-3: a draft's node classes are stand-ins, so no check compares one.
+export function withoutDrafts(list: readonly WorkflowSpec[]): readonly WorkflowSpec[] {
+  return list.filter((w) => w.status !== 'draft')
+}
+
+// The one list comfy.check and every run hand to the check, so the 60 s memory of an
+// origin always holds the same workflows (1.45 B-3).
+export const NON_DRAFT_WORKFLOWS: readonly WorkflowSpec[] = withoutDrafts(WORKFLOWS)

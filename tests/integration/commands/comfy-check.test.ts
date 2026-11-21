@@ -3,8 +3,13 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { makeFixture, data, type Fixture } from '../core-fixture'
 import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
-import { WORKFLOW_IDS } from '../../../src/shared/schemas/queries/comfy'
 import type { ComfyCheck } from '../../../src/shared/schemas/commands/comfy-check'
+import { comfyCheck } from '../../../src/main/commands/comfy/check'
+import { createServerChecks } from '../../../src/main/providers/comfyui/needs'
+import { NON_DRAFT_WORKFLOWS, withoutDrafts } from '../../../src/main/providers/comfyui/workflows'
+import { mossTextToImage } from '../../../src/main/providers/comfyui/workflows/moss'
+import { h3TextToVideo } from '../../../src/main/providers/comfyui/workflows/h3'
+import type { WorkflowSpec } from '../../../src/main/providers/comfyui/workflows/types'
 
 let f: Fixture
 let stand: StandIn | undefined
@@ -28,19 +33,15 @@ async function withStandIn(): Promise<StandIn> {
 }
 
 describe('comfy.check [SPEC 4.2, 6.10.3; FR-252]', () => {
-  it('checks the saved server and lists every shipped workflow, without the address', async () => {
+  it('checks the saved server and compares no draft workflow, without the address [1.45 B-3]', async () => {
     const s = await withStandIn()
     const before = settingsText()
     const eventsBefore = f.events.length
     const result = data<ComfyCheck>(await check())
-    expect(result.outcome).toBe('ok')
-    expect(result.version).toBe('0.3.40')
-    expect(result.workflows.map((w) => w.id)).toEqual([...WORKFLOW_IDS])
-    // The stand-in is too old for every workflow and has none of the model files.
-    for (const w of result.workflows) {
-      expect(w.missing.some((m) => m.what === 'version')).toBe(true)
-      expect(w.missing.some((m) => m.what === 'model')).toBe(true)
-    }
+    // Every shipped workflow is still a draft, so only the version is asked for.
+    expect(NON_DRAFT_WORKFLOWS).toEqual([])
+    expect(result).toEqual({ outcome: 'ok', version: '0.3.40', workflows: [] })
+    expect(s.seen.map((r) => `${r.method} ${r.path}`)).toEqual(['GET /system_stats'])
     const text = JSON.stringify(result)
     expect(text).not.toContain(s.origin)
     expect(text).not.toContain(String(s.port))
@@ -49,6 +50,40 @@ describe('comfy.check [SPEC 4.2, 6.10.3; FR-252]', () => {
       name: 'app.stateChanged',
       payload: {},
     })
+  })
+
+  it('hands the check no draft: none of its folders or node classes is asked for [1.45 N3-1]', async () => {
+    const s = await withStandIn()
+    const draft: WorkflowSpec = {
+      ...mossTextToImage,
+      needs: {
+        ...mossTextToImage.needs,
+        models: [{ folder: 'draft_folder', file: 'd.safetensors' }],
+        nodeClasses: ['DraftOnlyNode'],
+      },
+    }
+    const trial: WorkflowSpec = {
+      ...h3TextToVideo,
+      status: 'trial',
+      needs: {
+        ...h3TextToVideo.needs,
+        models: [{ folder: 'vae', file: 't.safetensors' }],
+        nodeClasses: ['TrialOnlyNode'],
+      },
+    }
+    const command = comfyCheck(
+      { settings: f.core.settings },
+      createServerChecks(),
+      withoutDrafts([draft, trial]),
+    )
+    const { data: result } = (await command.run({ actor: 'user', commandId: 'c1' }, {})) as {
+      data: ComfyCheck
+    }
+    expect(result.outcome).toBe('ok')
+    expect(result.workflows.map((w) => w.id)).toEqual([trial.id])
+    const paths = s.seen.map((r) => r.path)
+    expect(paths).toContain('/object_info/TrialOnlyNode')
+    expect(paths.some((p) => p.includes('draft_folder') || p.includes('DraftOnlyNode'))).toBe(false)
   })
 
   it('sends no prompt, no picture and nothing that changes the server', async () => {

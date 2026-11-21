@@ -8,12 +8,18 @@ import { AppError } from '../../../shared/schemas/result'
 import { createComfyClient } from '../../providers/comfyui/client'
 import { comfyOwnPorts } from '../../providers/comfyui/own-ports'
 import { serverChecks, type ServerChecks } from '../../providers/comfyui/needs'
-import { WORKFLOWS } from '../../providers/comfyui/workflows'
+import { NON_DRAFT_WORKFLOWS } from '../../providers/comfyui/workflows'
+import type { WorkflowSpec } from '../../providers/comfyui/workflows/types'
 
 // The sentence of SPEC 6.10.9 for "no address saved".
 export const COMFY_ADDRESS_NEEDED_MESSAGE = "Enter your ComfyUI server's address to use it."
 
-export function comfyCheck(deps: Pick<CoreDeps, 'settings'>, checks: ServerChecks = serverChecks) {
+// [1.45] B-3: the check compares no draft workflow.
+export function comfyCheck(
+  deps: Pick<CoreDeps, 'settings'>,
+  checks: ServerChecks = serverChecks,
+  workflows: readonly WorkflowSpec[] = NON_DRAFT_WORKFLOWS,
+) {
   return defineCommand({
     name: 'comfy.check',
     input: comfyCheckInput,
@@ -27,7 +33,7 @@ export function comfyCheck(deps: Pick<CoreDeps, 'settings'>, checks: ServerCheck
       // The app's own ports as they are at each connection (SPEC 6.10.1).
       const ownPorts = () => comfyOwnPorts(deps.settings.get().mcp.port)
       const client = createComfyClient({ origin, ownPorts })
-      return { data: await checks.run(origin, client, WORKFLOWS, { fresh: true }) }
+      return { data: await checks.run(origin, client, workflows, { fresh: true }) }
     },
   })
 }
