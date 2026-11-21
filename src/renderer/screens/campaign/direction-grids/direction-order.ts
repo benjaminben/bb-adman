@@ -17,17 +17,17 @@ export function directionOrder(
   masterVariantId: string,
 ): VariantSummary[] {
   const sizes = campaign.sizes.map((s) => s.label)
-  const key = (v: VariantSummary) => [
-    v.id === masterVariantId ? 0 : 1,
-    place(sizes, v.sizeLabel),
-    place(campaign.languages, v.language),
-    v.format === 'image' ? 0 : 1,
+  const rules: ((v: VariantSummary) => number)[] = [
+    (v) => (v.id === masterVariantId ? 0 : 1),
+    (v) => place(sizes, v.sizeLabel),
+    (v) => place(campaign.languages, v.language),
+    (v) => (v.format === 'image' ? 0 : 1),
   ]
   return [...variants].sort((a, b) => {
-    const ka = key(a)
-    const kb = key(b)
-    const differs = ka.findIndex((n, i) => n !== kb[i])
-    if (differs !== -1) return ka[differs] - kb[differs]
+    for (const rule of rules) {
+      const step = rule(a) - rule(b)
+      if (step !== 0) return step
+    }
     return a.createdAt.localeCompare(b.createdAt)
   })
 }
