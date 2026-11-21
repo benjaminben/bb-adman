@@ -6,6 +6,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { secretLabel } from '@/renderer/ui/secret-labels'
 import type { SecretName } from '@/shared/schemas/secrets'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './key-dialog.module.css'
 
 export function KeyDialog() {
@@ -37,30 +38,40 @@ export function KeyDialog() {
       <Dialog.Portal>
         <Dialog.Overlay className={styles.overlay} />
         <Dialog.Content className={styles.content}>
-          <Dialog.Title>Add your {request?.provider.label} key</Dialog.Title>
-          <Dialog.Description>
-            The key is stored encrypted on this computer and is used only for actions you start.
-          </Dialog.Description>
-          <form onSubmit={(e) => void save(e)}>
-            {request?.provider.secrets.map((name) => (
-              <div key={name} className={styles.field}>
-                <label htmlFor={`dialog-${name}`}>{secretLabel(name)}</label>
-                <input
-                  id={`dialog-${name}`}
-                  type="password"
-                  autoComplete="off"
-                  required
-                  value={values[name] ?? ''}
-                  onChange={(e) => setValues({ ...values, [name]: e.target.value })}
-                />
-              </div>
-            ))}
-            {error && <p role="alert">{error}</p>}
-            <div className={styles.actions}>
+          <div className={styles.head}>
+            <Dialog.Title className={styles.title}>
+              Add your {request?.provider.label} key
+            </Dialog.Title>
+            <Dialog.Description className={styles.description}>
+              The key is stored encrypted on this computer and is used only for actions you start.
+            </Dialog.Description>
+          </div>
+          <form className={styles.form} onSubmit={(e) => void save(e)}>
+            <div className={styles.body}>
+              {request?.provider.secrets.map((name) => (
+                <div key={name} className={layout.field}>
+                  <label htmlFor={`dialog-${name}`}>{secretLabel(name)}</label>
+                  <input
+                    id={`dialog-${name}`}
+                    type="password"
+                    autoComplete="off"
+                    required
+                    value={values[name] ?? ''}
+                    onChange={(e) => setValues({ ...values, [name]: e.target.value })}
+                  />
+                </div>
+              ))}
+              {error && (
+                <p role="alert" className={`${layout.notice} ${layout.danger}`}>
+                  {error}
+                </p>
+              )}
+            </div>
+            <div className={styles.foot}>
               <Dialog.Close asChild>
                 <button type="button">Cancel</button>
               </Dialog.Close>
-              <button type="submit" className={styles.primary}>
+              <button type="submit" className={layout.primary}>
                 Save and continue
               </button>
             </div>

@@ -2,6 +2,7 @@
 // (spec/screens-campaign.md, "The import dialog").
 import { useId } from 'react'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './import-dialog.module.css'
 
 export type Library = 'asset' | 'reference'
@@ -56,7 +57,7 @@ export function ImportChoices(props: ImportChoicesProps) {
           Not ticked: the files stay where they are, and the project links to them.
         </p>
       </div>
-      <div className={styles.field}>
+      <div className={`${layout.field} ${styles.field}`}>
         <label htmlFor={`${id}-subject`}>Attach to a subject</label>
         <select
           id={`${id}-subject`}

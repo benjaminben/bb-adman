@@ -1,7 +1,11 @@
+/* app-style */
+/* The subject photos part: an operating label, not a page title, so sans. */
 .heading {
   margin: 0 0 var(--space-1);
-  font-size: var(--font-size-body);
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-bold);
+  letter-spacing: normal;
 }
 .hint {
   margin: 0 0 var(--space-2);

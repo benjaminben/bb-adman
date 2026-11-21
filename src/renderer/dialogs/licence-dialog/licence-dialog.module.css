@@ -1,21 +1,7 @@
-.body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  margin-top: var(--space-4);
-}
+/* app-style */
+/* The licence dialog's box (spec/app-style.md, "Dialogs"); its buttons are the foot band. */
 .box {
   display: flex;
   gap: var(--space-2);
   align-items: center;
-}
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-}
-.primary {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-accent-text);
 }
