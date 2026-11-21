@@ -4,6 +4,7 @@
 // again. While one is sent, every Forget waits.
 import { useState } from 'react'
 import { EMPTY, useApp } from '@/renderer/app/app-context'
+import { NoticeLine } from '@/renderer/screens/settings/notice-line'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './licence-list.module.css'
 
@@ -47,7 +48,7 @@ export function LicenceList() {
           ))}
         </ul>
       )}
-      {refusal !== null && <p>{refusal}</p>}
+      {refusal !== null && <NoticeLine kind="danger">{refusal}</NoticeLine>}
     </div>
   )
 }

@@ -1,3 +1,29 @@
+/* app-style */
+/* A key is one list row (spec/app-style.md "Settings"): the name on the left, its state as a
+   badge, the buttons at the right end; rows are parted by a line, as table rows are. The
+   legend floats so it lays out in the row instead of on the border. */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  min-height: var(--row-height);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-2) 0;
+  border: 0;
+  border-top: var(--border-width) solid var(--color-line);
+}
+.row > legend {
+  float: left;
+  flex: 1;
+  padding: 0;
+  font-weight: var(--weight-bold);
+}
+.row > form,
+.row > div {
+  margin-left: auto;
+}
 .visuallyHidden {
   position: absolute;
   width: 1px;

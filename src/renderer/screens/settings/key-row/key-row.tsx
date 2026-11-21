@@ -4,6 +4,7 @@ import { useApp } from '@/renderer/app/app-context'
 import { secretLabel } from '@/renderer/ui/secret-labels'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { SecretName } from '@/shared/schemas/secrets'
+import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './key-row.module.css'
 
@@ -26,9 +27,12 @@ export function KeyRow(props: { provider: ProviderInfo; name: SecretName }) {
   }
 
   return (
-    <fieldset className={layout.keyRow}>
+    <fieldset className={styles.row}>
       <legend>{label}</legend>
-      <span>{saved ? `Saved, ends in ${saved.lastFour || '…'}` : 'Not set'}</span>
+      <span className={`${layout.badge} ${saved ? layout.ok : layout.neutral}`}>
+        {saved && <Icon name="check" size="small" />}
+        {saved ? `Saved, ends in ${saved.lastFour || '…'}` : 'Not set'}
+      </span>
       {editing ? (
         <form className={layout.row} onSubmit={(e) => void save(e)}>
           <label htmlFor={fieldId} className={styles.visuallyHidden}>

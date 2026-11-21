@@ -21,26 +21,28 @@ export function ProviderDefaults() {
   return (
     <div className={layout.card}>
       <h2>Default AI providers</h2>
-      {JOBS.map(({ job, label }) => (
-        <div key={job} className={layout.field}>
-          <label htmlFor={`provider-${job}`}>{label}</label>
-          <select
-            id={`provider-${job}`}
-            value={defaults?.[job] ?? ''}
-            onChange={(e) =>
-              void command('settings.update', { defaultProviders: { [job]: e.target.value } })
-            }
-          >
-            {providers
-              .filter((p) => p.jobs.includes(job))
-              .map((p) => (
-                <option key={p.id} value={p.id} disabled={!p.available}>
-                  {p.available ? p.label : `${p.label} (not yet available)`}
-                </option>
-              ))}
-          </select>
-        </div>
-      ))}
+      <div className={layout.formGrid}>
+        {JOBS.map(({ job, label }) => (
+          <div key={job} className={layout.field}>
+            <label htmlFor={`provider-${job}`}>{label}</label>
+            <select
+              id={`provider-${job}`}
+              value={defaults?.[job] ?? ''}
+              onChange={(e) =>
+                void command('settings.update', { defaultProviders: { [job]: e.target.value } })
+              }
+            >
+              {providers
+                .filter((p) => p.jobs.includes(job))
+                .map((p) => (
+                  <option key={p.id} value={p.id} disabled={!p.available}>
+                    {p.available ? p.label : `${p.label} (not yet available)`}
+                  </option>
+                ))}
+            </select>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

@@ -1,0 +1,15 @@
+/* app-style */
+/* The check's workflows as list rows parted by a line (spec/app-style.md "Settings"). */
+.rows > li {
+  padding: var(--space-2) 0;
+  border-top: var(--border-width) solid var(--color-line);
+}
+.rows p {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-control);
+}
+.rows ul {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-4);
+  font-size: var(--font-size-control);
+}

@@ -1,0 +1,5 @@
+/* app-style */
+/* A notice line sits in the card's own gap, so it keeps no margin of its own. */
+.line {
+  margin: 0;
+}

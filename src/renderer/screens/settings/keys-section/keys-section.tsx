@@ -1,6 +1,7 @@
 // Keys for the AI providers (FR-170, R-10). Storage sign-in arrives with Phase 9.
 import { useApp, EMPTY } from '@/renderer/app/app-context'
 import { KeyRow } from '@/renderer/screens/settings/key-row'
+import rows from '@/renderer/screens/settings/key-row/key-row.module.css'
 import layout from '@/renderer/ui/layout.module.css'
 
 export function KeysSection() {
@@ -18,9 +19,9 @@ export function KeysSection() {
         p.available ? (
           p.secrets.map((name) => <KeyRow key={name} provider={p} name={name} />)
         ) : (
-          <fieldset key={p.id} className={layout.keyRow}>
+          <fieldset key={p.id} className={rows.row}>
             <legend>{p.label}</legend>
-            <span className={layout.muted}>Not yet available</span>
+            <span className={`${layout.badge} ${layout.neutral}`}>Not yet available</span>
           </fieldset>
         ),
       )}

@@ -16,9 +16,11 @@ export function LocationSetting() {
       <h2 id="location-title">New projects</h2>
       <p className={layout.label}>Default location</p>
       <p className={layout.path}>{dir}</p>
-      <button type="button" onClick={() => void change()}>
-        Change default location
-      </button>
+      <div className={layout.row}>
+        <button type="button" onClick={() => void change()}>
+          Change default location
+        </button>
+      </div>
     </div>
   )
 }

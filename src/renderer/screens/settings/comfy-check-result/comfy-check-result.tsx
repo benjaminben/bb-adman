@@ -6,7 +6,9 @@ import type { WorkflowInfo } from '@/shared/schemas/queries/comfy'
 import type { MissingItem } from '@/shared/schemas/queries/app'
 import { checkMessage, fillMarks } from '@/shared/providers/messages'
 import { missingItemText } from '@/renderer/ui/missing-item-text'
+import { NoticeLine } from '@/renderer/screens/settings/notice-line'
 import layout from '@/renderer/ui/layout.module.css'
+import styles from './comfy-check-result.module.css'
 
 function WorkflowRow(props: { workflow: WorkflowInfo; missing: MissingItem[] }) {
   const { workflow, missing } = props
@@ -42,7 +44,11 @@ export function ComfyCheckResult(props: {
 }) {
   const { check, address } = props
   if (check.outcome !== 'ok') {
-    return <p role="status">{fillMarks(checkMessage(check.outcome), { address })}</p>
+    return (
+      <NoticeLine role="status" kind="danger">
+        {fillMarks(checkMessage(check.outcome), { address })}
+      </NoticeLine>
+    )
   }
 
   const rows = check.workflows.flatMap((entry) => {
@@ -55,7 +61,7 @@ export function ComfyCheckResult(props: {
       <p>{`The server answered: ComfyUI ${check.version ?? ''}`}</p>
       {check.note !== undefined && <p className={layout.muted}>{check.note}</p>}
       {rows.length > 0 && (
-        <ul aria-label="Workflows" className={layout.list}>
+        <ul aria-label="Workflows" className={`${layout.list} ${styles.rows}`}>
           {rows.map((row) => (
             <WorkflowRow key={row.workflow.id} workflow={row.workflow} missing={row.missing} />
           ))}
