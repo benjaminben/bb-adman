@@ -191,3 +191,38 @@ describe('PictureFields [spec/editor.md "Properties panel", Picture; FR-094]', (
     expect(await axeViolations()).toEqual([])
   })
 })
+
+// LK-5: "Background colour" in the background's Picture section, with the palette passed through.
+describe('PictureFields, Background colour [spec/editor.md "Properties panel", Picture; LK-5]', () => {
+  async function withPalette(layer: LayerRow) {
+    const onUpdate = vi.fn(async (_patch: LayerPatch): Promise<string | null> => null)
+    await renderApp(
+      <main>
+        <PictureFields
+          projectId={P}
+          layer={layer}
+          asset={picture()}
+          canvas={CANVAS}
+          palette={['#E85D2A']}
+          onUpdate={onUpdate}
+        />
+      </main>,
+    )
+    return { onUpdate }
+  }
+
+  it('the background shows it inside Picture, with the palette, sending fillColor', async () => {
+    const { onUpdate } = await withPalette(BACKGROUND)
+    const group = screen.getByRole('group', { name: 'Picture' })
+    expect(within(group).getByRole('textbox', { name: 'Background colour' })).toHaveValue('#000000')
+    await userEvent.click(
+      within(group).getByRole('button', { name: 'Palette #E85D2A for background colour' }),
+    )
+    expect(onUpdate.mock.calls).toEqual([[{ style: { fillColor: '#E85D2A' } }]])
+  })
+
+  it('a picture layer has no background colour', async () => {
+    await withPalette({ ...LOGO, source: { assetId: 'A1' } })
+    expect(screen.queryByRole('textbox', { name: 'Background colour' })).toBeNull()
+  })
+})

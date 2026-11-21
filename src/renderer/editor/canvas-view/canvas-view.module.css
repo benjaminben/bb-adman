@@ -12,12 +12,14 @@
   padding: var(--space-6);
   overflow: auto;
 }
-/* margin: auto centres the box when it is smaller and lets it scroll when larger. */
+/* margin: auto centres the box when it is smaller and lets it scroll when larger. The box does
+   not cut what it holds, so the handles of a layer past the edge are drawn over the backdrop;
+   the Scene's root cuts the ad at its edge (spec/editor.md "Canvas", "Past the edge"). */
 .box {
   position: relative;
   flex: none;
   margin: auto;
-  overflow: hidden;
+  overflow: visible;
 }
 /* Crop mode shows the whole picture, which may reach past the canvas. */
 .cropping {

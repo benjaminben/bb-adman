@@ -5,6 +5,7 @@
 // layer.update, so one undo step. A locked layer's fields are shown but disabled.
 // P4-19: "Cut out the subject…" under the buttons, for a layer with a picture (./cut-out.tsx).
 import { useState } from 'react'
+import { BackgroundColourField } from '@/renderer/editor/background-colour-field'
 import { PictureChooser } from '@/renderer/dialogs/picture-chooser'
 import type { LayerPatch } from '@/shared/schemas/commands/layer'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
@@ -25,6 +26,8 @@ export type PictureFieldsProps = {
   onUpdate: (patch: LayerPatch) => Promise<string | null>
   // Starts crop mode; without it "Crop…" is disabled.
   onCrop?: () => void
+  // The campaign's palette, for the background's "Background colour" (LK-5).
+  palette?: string[]
 }
 
 const known = (w: number | null | undefined, h: number | null | undefined): Size | null =>
@@ -107,6 +110,11 @@ export function PictureFields(props: PictureFieldsProps) {
           </button>
         </div>
       )}
+      <BackgroundColourField
+        layer={layer}
+        palette={props.palette ?? []}
+        onUpdate={props.onUpdate}
+      />
       {error && <p className={styles.error}>{error}</p>}
       <PictureChooser
         projectId={props.projectId}

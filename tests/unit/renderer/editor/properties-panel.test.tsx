@@ -7,6 +7,7 @@ import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { PropertiesPanel } from '@/renderer/editor/properties-panel'
+import { NEW_SHADE } from '@/shared/config/look'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { makeFakeApi } from '../fake-api'
 import { renderApp } from '../render'
@@ -152,5 +153,75 @@ describe('PropertiesPanel [spec/editor.md "Properties panel"]', () => {
     const fake = await open(LOGO)
     await userEvent.click(screen.getByRole('button', { name: 'Delete layer' }))
     expect(sent(fake)).toEqual([['layer.delete', { projectId: P, layerId: 'L2' }]])
+  })
+})
+
+// LK-5: the Box section after "Text settings" for text layers, and the Shade section after
+// "Picture" for image and background layers, each with the campaign palette.
+describe('PropertiesPanel, Box and Shade [spec/editor.md "Properties panel"; LK-5]', () => {
+  const legends = () =>
+    screen
+      .getAllByRole('group')
+      .flatMap((g) => g.querySelector(':scope > legend')?.textContent ?? [])
+
+  async function withPalette(layer: LayerRow) {
+    const fake = makeFakeApi()
+    fake.onQuery('campaign.get', () => ({ ok: true, data: { ruleSet: { palette: ['#F4E9D8'] } } }))
+    await renderApp(
+      <main>
+        <PropertiesPanel projectId={P} campaignId="C1" layer={layer} layers={LAYERS} />
+      </main>,
+      fake,
+    )
+    return fake
+  }
+
+  it('a text layer shows Box after Text settings, with the palette, and no Shade', async () => {
+    await withPalette(HEADLINE)
+    await screen.findByRole('button', { name: 'Palette #F4E9D8 for box colour' })
+    expect(legends()).toEqual(['Layer', 'Text settings', 'Box', 'Position and size'])
+  })
+
+  it.each([LOGO, BACKGROUND])(
+    '$name shows Shade after Picture, with the palette, and no Box',
+    async (layer) => {
+      await withPalette({
+        ...layer,
+        style: { opacity: 1, shade: { color: '#000000', from: 'top', strength: 0.5, reach: 0.5 } },
+      })
+      await screen.findByRole('button', { name: 'Palette #F4E9D8 for colour' })
+      const shown = legends()
+      expect(shown.indexOf('Shade')).toBe(shown.indexOf('Picture') + 1)
+      expect(shown).not.toContain('Box')
+    },
+  )
+
+  it('a Box field sends one layer.update for the selected layer', async () => {
+    const fake = await withPalette(HEADLINE)
+    await userEvent.click(screen.getByRole('button', { name: 'Bottom' }))
+    expect(sent(fake)).toEqual([
+      [
+        'layer.update',
+        { projectId: P, layerId: 'L1', patch: { style: { verticalAlign: 'bottom' } } },
+      ],
+    ])
+  })
+
+  it('the Shade select sends one layer.update for the selected layer', async () => {
+    const fake = await withPalette(LOGO)
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Shade' }), 'Whole picture')
+    expect(sent(fake)).toEqual([
+      [
+        'layer.update',
+        { projectId: P, layerId: 'L2', patch: { style: { shade: { ...NEW_SHADE, from: 'all' } } } },
+      ],
+    ])
+  })
+
+  it('the background gets the palette in its Background colour field', async () => {
+    await withPalette(BACKGROUND)
+    expect(
+      await screen.findByRole('button', { name: 'Palette #F4E9D8 for background colour' }),
+    ).toBeInTheDocument()
   })
 })
