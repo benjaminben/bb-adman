@@ -77,25 +77,40 @@ export class PollStopped extends Error {
   }
 }
 
+export type PollOptions = {
+  signal?: AbortSignal
+  onProgress?: (p: RunProgress) => void
+  // Asked once when the signal fires: true goes on polling, false ends with PollStopped.
+  onStop?: () => Promise<boolean>
+}
+
 export async function pollRun(
   client: PollClient,
   promptId: string,
   timing: RunTiming,
-  opts: { signal?: AbortSignal; onProgress?: (p: RunProgress) => void },
+  opts: PollOptions,
 ): Promise<HistoryEntry> {
   const started = timing.now()
   let workingSince: number | null = null
   let missed = 0
   let shown = ''
+  let signal = opts.signal
+  // F-15: when the signal fires, `onStop` says whether polling goes on, then without it.
+  const stopped = async () => {
+    if (!(await opts.onStop?.())) throw new PollStopped()
+    signal = undefined
+  }
   for (;;) {
-    await timing.sleep(POLL_MS, opts.signal)
-    if (opts.signal?.aborted) throw new PollStopped()
-    const seen = await throughBreaks(
-      timing,
-      () => look(client, promptId),
-      opts.signal,
-      isFailedPoll,
-    )
+    await timing.sleep(POLL_MS, signal)
+    if (signal?.aborted) await stopped()
+    let seen: Seen
+    try {
+      seen = await throughBreaks(timing, () => look(client, promptId), signal, isFailedPoll)
+    } catch (e) {
+      if (!(e instanceof PollStopped)) throw e
+      await stopped()
+      continue
+    }
     if (seen.at === 'history') return seen.entry
     if (seen.at === 'nowhere') {
       missed += 1
