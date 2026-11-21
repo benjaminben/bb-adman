@@ -6,6 +6,7 @@
 // "+" and Cmd-click (Ctrl-click on Windows) open it behind. The variant shown last is the one
 // the overview's panels work on (A-47). campaign.get is read again on project.changed and on
 // job.updated, so a deleted variant loses its tab and the marks follow the jobs.
+// P4-12 (spec/screens-ai.md, "The paid count"): the overview shows the paid count under the name.
 import { lazy, Suspense, useEffect, useRef, useState, type MouseEvent } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { NavScope, useNav } from '@/renderer/app/nav-context'
@@ -19,6 +20,7 @@ import { SlotView } from '@/renderer/screens/campaign/slot-view'
 import { VariantGrid } from '@/renderer/screens/campaign/variant-grid'
 import { VariantTabs } from '@/renderer/screens/campaign/variant-tabs'
 import { VideoPanel } from '@/renderer/screens/campaign/video-panel'
+import { PaidCount } from '@/renderer/ui/paid-count'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './campaign-view.module.css'
 
@@ -145,6 +147,7 @@ function CampaignPage(props: Props) {
         </button>
         {data && <h2 className={styles.name}>{data.campaign.name}</h2>}
       </div>
+      {shown === OVERVIEW_TAB && <PaidCount projectId={projectId} campaignId={campaignId} />}
       {data === null ? (
         <p className={layout.muted}>Loading the campaign…</p>
       ) : (
