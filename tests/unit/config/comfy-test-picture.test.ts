@@ -6,7 +6,11 @@ import { pngChunks } from '../../fixtures/png-chunks'
 import { makeTestPicture, TEST_PICTURE_SIDE } from '../../comfy/test-picture'
 
 function pixelAt(bytes: Uint8Array, x: number, y: number): number[] {
-  const idat = Buffer.concat(pngChunks(bytes).filter((c) => c.type === 'IDAT').map((c) => c.data))
+  const idat = Buffer.concat(
+    pngChunks(bytes)
+      .filter((c) => c.type === 'IDAT')
+      .map((c) => c.data),
+  )
   const raw = zlib.inflateSync(idat)
   const at = y * (TEST_PICTURE_SIDE * 3 + 1) + 1 + x * 3
   return [raw[at] ?? -1, raw[at + 1] ?? -1, raw[at + 2] ?? -1]
