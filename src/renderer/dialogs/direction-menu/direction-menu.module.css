@@ -1,0 +1,21 @@
+/* app-style */
+/* The direction menu (spec/screens-variants.md, "Direction dialogs"): the shared menu, opened
+   below its button. An item marked disabled is drawn as a disabled control is. */
+.holder {
+  position: relative;
+  flex: none;
+}
+.menu {
+  position: absolute;
+  z-index: 1;
+  top: 100%;
+  left: 0;
+  margin: var(--space-1) 0 0;
+  list-style: none;
+}
+.item:focus-visible {
+  background: var(--color-surface);
+}
+.item[aria-disabled='true'] {
+  opacity: var(--opacity-disabled);
+}
