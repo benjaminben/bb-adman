@@ -76,7 +76,8 @@ describe('the videoStart filter with two trial video workflows [SPEC 14 1.54 P-4
 
   it('picks h3-text-to-video only for no first frame and no references', () => {
     const none = { job: 'video', videoStart: { firstFrame: false, references: false } } as const
-    expect(offeredWorkflow(none, who)?.id).toBe('h3-text-to-video')
+    // The first-frame workflow first, so the pick fails if the videoStart filter is lost.
+    expect(offeredWorkflow(none, who, [h3ImageToVideo, h3TextToVideo])?.id).toBe('h3-text-to-video')
   })
 
   it('offers h3-image-to-video for a first frame to the user with dev tools on only', () => {

@@ -2,7 +2,8 @@
 // function that picks it. vitest.comfy.config.ts imports both. Never prints a value.
 // COMFY_BASE_URL is not in LIVE_ENV_NAMES and this file takes nothing from that list, so the
 // ComfyUI run can never load a paid key. ADMAN_COMFY_VIDEO, ADMAN_COMFY_FLUX, ADMAN_COMFY_MOSS,
-// ADMAN_COMFY_FRAME and ADMAN_COMFY_PICTURE are terminal only (1.53 G-12, 1.54 P-1, P-4).
+// ADMAN_COMFY_FRAME, ADMAN_COMFY_REFVIDEO and ADMAN_COMFY_PICTURE are terminal only (1.53 G-12,
+// 1.54 P-1, P-4).
 import { parseEnv } from 'node:util'
 
 // The one owner of the comfy test file list; vitest.comfy.config.ts uses it.
