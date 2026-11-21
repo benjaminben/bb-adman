@@ -1,18 +1,17 @@
-// spec/approvals-service.md "Headers on every page". Each reply's header set is fixed here, so
-// one test can compare each whole.
+// spec/approvals-service.md "Headers on replies from the catch-all" and spec/approvals-gallery.md
+// "The page policy and nonce". Each header set is fixed here, so one test can compare each whole.
 import type { Html } from './html'
 
-const PAGE_CSP =
+const HTML_CSP =
   "default-src 'none'; style-src 'self'; img-src 'self'; form-action 'self'; " +
   "frame-ancestors 'none'; base-uri 'none'"
 
-// A plain text page loads nothing at all.
+// A plain text reply loads nothing at all.
 const TEXT_CSP = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
 
-function common(request: Request, type: string, csp: string): Headers {
+// The headers every visitor reply shares, without Content-Type or the policy.
+function common(request: Request): Headers {
   const headers = new Headers({
-    'Content-Type': type,
-    'Content-Security-Policy': csp,
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'no-referrer',
@@ -26,13 +25,42 @@ function common(request: Request, type: string, csp: string): Headers {
   return headers
 }
 
-export function pageHeaders(request: Request): Headers {
-  return common(request, 'text/html; charset=utf-8', PAGE_CSP)
+function withType(request: Request, type: string, csp: string): Headers {
+  const headers = common(request)
+  headers.set('Content-Type', type)
+  headers.set('Content-Security-Policy', csp)
+  return headers
 }
 
 export function textHeaders(request: Request): Headers {
-  return common(request, 'text/plain; charset=utf-8', TEXT_CSP)
+  return withType(request, 'text/plain; charset=utf-8', TEXT_CSP)
 }
+
+// The page policy: our own address and the nonce only. `next dev` alone gets the two additions
+// its development tools need; `next start` and Vercel never run in development mode.
+export function pagePolicy(nonce: string): string {
+  const dev = process.env.NODE_ENV === 'development'
+  const script = `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ''}`
+  const style = `style-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-inline'" : ''}`
+  return (
+    `default-src 'none'; ${script}; ${style}; img-src 'self'; font-src 'self'; ` +
+    "connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; " +
+    "object-src 'none'"
+  )
+}
+
+// The page header set; Next.js sets the page's own Content-Type.
+export function pageHeaders(request: Request, nonce: string): Headers {
+  const headers = common(request)
+  headers.set('Content-Security-Policy', pagePolicy(nonce))
+  return headers
+}
+
+export function textReply(request: Request, text: string, status = 200): Response {
+  return new Response(text, { status, headers: textHeaders(request) })
+}
+
+export const notFound = (request: Request) => textReply(request, 'Not found.', 404)
 
 export function stylesheetHeaders(): Headers {
   return new Headers({
@@ -42,13 +70,17 @@ export function stylesheetHeaders(): Headers {
   })
 }
 
-export function pageReply(request: Request, page: Html, status = 200): Response {
-  return new Response(page.text, { status, headers: pageHeaders(request) })
+export function htmlReply(request: Request, page: Html, status = 200): Response {
+  return new Response(page.text, { status, headers: htmlHeaders(request) })
 }
 
-// Every write ends in a 303 back to a page of the same link.
+function htmlHeaders(request: Request): Headers {
+  return withType(request, 'text/html; charset=utf-8', HTML_CSP)
+}
+
+// Every redirect is a 303 back to a page of the same link, built from the checked slug.
 export function redirect(request: Request, location: string, cookie?: string): Response {
-  const headers = pageHeaders(request)
+  const headers = htmlHeaders(request)
   headers.set('Location', location)
   if (cookie !== undefined) headers.set('Set-Cookie', cookie)
   return new Response(null, { status: 303, headers })

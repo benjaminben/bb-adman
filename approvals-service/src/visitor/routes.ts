@@ -4,7 +4,7 @@ import type { Parts } from '../app'
 import type { Env } from '../env'
 import { enterLink, leaveLink, openGallery } from './actions'
 import { galleryPage } from './gallery-page'
-import { pageReply, redirect, stylesheetHeaders, textHeaders } from './headers'
+import { htmlReply, notFound, redirect, stylesheetHeaders, textReply } from './headers'
 import { passwordPage, refusedPage } from './password-page'
 import { STYLES } from './styles'
 
@@ -25,47 +25,32 @@ export type VisitorRoute = {
   handler: VisitorHandler
 }
 
-export function notFound(): Response {
-  return new Response('Not found.', {
-    status: 404,
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-store',
-      'X-Content-Type-Options': 'nosniff',
-    },
-  })
-}
+// The fixed reply to an unexpected failure, with the plain text headers.
+const failed = (request: Request) =>
+  textReply(request, 'Something went wrong. Try again later.', 500)
 
-// The fixed reply to an unexpected failure, with the plain text page headers.
-function failed(request: Request): Response {
-  return new Response('Something went wrong. Try again later.', {
-    status: 500,
-    headers: textHeaders(request),
-  })
-}
-
-const stub: VisitorHandler = async () => notFound()
+const stub: VisitorHandler = async ({ request }) => notFound(request)
 
 // The logic is in actions.ts; these handlers only render its results.
 const gallery: VisitorHandler = async ({ request, env, parts, params }) => {
   const slug = params[0] ?? ''
   const result = await openGallery(env.DB, request, slug, parts.now())
-  if (result.kind === 'password') return pageReply(request, passwordPage(slug, false))
-  return pageReply(request, galleryPage(result))
+  if (result.kind === 'password') return htmlReply(request, passwordPage(slug, false))
+  return htmlReply(request, galleryPage(result))
 }
 
 // Wrong password, unknown slug and too many tries all get this one reply.
 const enter: VisitorHandler = async ({ request, env, parts, params }) => {
   const slug = params[0] ?? ''
   const result = await enterLink(env.DB, request, slug, parts)
-  if (result.kind === 'refused') return pageReply(request, refusedPage(), 403)
-  if (result.kind === 'failed') return pageReply(request, passwordPage(slug, true))
+  if (result.kind === 'refused') return htmlReply(request, refusedPage(), 403)
+  if (result.kind === 'failed') return htmlReply(request, passwordPage(slug, true))
   return redirect(request, result.location, result.cookie)
 }
 
 const leave: VisitorHandler = async ({ request, env, parts, params }) => {
   const result = await leaveLink(env.DB, request, params[0] ?? '', parts.now())
-  if (result.kind === 'refused') return pageReply(request, refusedPage(), 403)
+  if (result.kind === 'refused') return htmlReply(request, refusedPage(), 403)
   return redirect(request, result.location, result.cookie)
 }
 
@@ -73,7 +58,7 @@ const stylesheet: VisitorHandler = async () =>
   new Response(STYLES, { headers: stylesheetHeaders() })
 
 const robots: VisitorHandler = async ({ request }) =>
-  new Response('User-agent: *\nDisallow: /\n', { headers: textHeaders(request) })
+  textReply(request, 'User-agent: *\nDisallow: /\n')
 
 const SLUG = '([0-9A-Za-z]{12})'
 const VARIANT = '([23456789abcdefghjkmnpqrstuvwxyz]{6})'
@@ -118,5 +103,5 @@ export async function visitorRoute(
       return failed(request)
     }
   }
-  return notFound()
+  return notFound(request)
 }
