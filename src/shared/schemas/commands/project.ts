@@ -31,4 +31,9 @@ export const projectOpenInput = z.object({
     ),
 })
 
-export const projectCloseInput = z.object({ projectId: z.string().min(1) })
+// runningJobs [1.8]: 'refuse' (the default) refuses while a job is queued or running;
+// 'stop' cancels those jobs first (SPEC 3.6, "Jobs").
+export const projectCloseInput = z.object({
+  projectId: z.string().min(1),
+  runningJobs: z.enum(['refuse', 'stop']).default('refuse'),
+})

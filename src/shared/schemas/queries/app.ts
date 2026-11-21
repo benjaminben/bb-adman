@@ -13,6 +13,18 @@ export type ProviderInfo = {
   defaultModels: Record<string, string>
 }
 
+// SPEC 6 ProviderError: the error kind and the raw text for the log.
+export const PROVIDER_ERROR_KINDS = [
+  'bad_key',
+  'quota',
+  'refused',
+  'timeout',
+  'offline',
+  'other',
+] as const
+export type ProviderErrorKind = (typeof PROVIDER_ERROR_KINDS)[number]
+export type ProviderError = { kind: ProviderErrorKind; detail: string }
+
 // SPEC 4.3 app.getState.
 export type AppState = {
   settings: Settings

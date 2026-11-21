@@ -96,3 +96,39 @@ describe('the per-table Zod check in rows.ts [SPEC 4.4]', () => {
     expect(fixture.events).toEqual([])
   })
 })
+
+describe('wire rows for the 1.8 fields [SPEC 3.3, 4.4]', () => {
+  it('reads agentChangedAt on a variant and the four new job fields', () => {
+    const db = setup()
+    db.exec(`
+      INSERT INTO campaign (id, name, region, audience, message, primary_language, languages, sizes, template_id, brief, created_by, created_at)
+        VALUES ('c1', 'C', 'US', 'all', 'Hello', 'en-US', '["en-US"]', '[]', 'starter', '{}', 'user', 'x');
+      INSERT INTO direction (id, campaign_id, name, master_variant_id, sort) VALUES ('d1', 'c1', 'A', 'v1', 0);
+      INSERT INTO variant (id, direction_id, title, width, height, size_label, language, format, duration_ms, created_by, created_at, agent_changed_at)
+        VALUES ('v1', 'd1', 'Shoe', 1080, 1080, '1x1', 'en-US', 'image', 6000, 'user', 'x', 't');
+      INSERT INTO job (id, kind, status, variant_id, layer_id, slot, request, paid_calls, seen_at, created_at, updated_at)
+        VALUES ('j1', 'image_generation', 'succeeded', 'v1', 'l1', 'background', '{"count":1}', 2, 's', 'x', 'y');
+    `)
+    expect(readWireRow(db, 'variant', { id: 'v1' })).toMatchObject({
+      durationOverridden: false,
+      agentChangedAt: 't',
+    })
+    expect(readWireRow(db, 'job', { id: 'j1' })).toMatchObject({
+      layerId: 'l1',
+      slot: 'background',
+      paidCalls: 2,
+      seenAt: 's',
+      request: { count: 1 },
+      result: null,
+    })
+  })
+
+  it('refuses a job row with a kind outside the nine', () => {
+    const db = setup()
+    db.pragma('ignore_check_constraints = ON')
+    db.prepare(
+      "INSERT INTO job (id, kind, status, request, created_at, updated_at) VALUES ('j1', 'cooking', 'queued', '{}', 'x', 'y')",
+    ).run()
+    expect(() => readWireRow(db, 'job', { id: 'j1' })).toThrow()
+  })
+})
