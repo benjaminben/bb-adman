@@ -92,3 +92,4 @@ Already built in Phase 2 and not repeated here: `generation.startVideo` with Com
 - Slice US: needs its own design pass.
 - Slice OA: needs its own design pass.
 - The temporary place for video files (FR-291).
+- **Cut-out through fal** (FR-307, OI-55, A-57), after slice J. A second `CutoutProvider` behind the Phase 4 command and job (`spec/ai-jobs.md`, "Cut-out"): `fal-seedance`'s key, one paid call per cut-out, listed after ComfyUI in the run dialog. Its model, host, price and cancel behaviour are designed with it.

@@ -11,7 +11,7 @@ Built (Phases 1 and 2). They are plain working screens, made so every function c
 | Shell with project tabs | Replaced in Phase 3 by the project switcher and campaign tabs [REQ: FR-211] (`spec/editor.md`, "Navigation"; OI-31 assumption). The start screen stays. |
 | Start | Stays in substance; restyled by the UI pass |
 | Project home | Placeholder for the campaign list and brief intake of the UI pass |
-| Campaign page, Make pictures, Make a video, run list | Placeholder. The Phase 3 editor, the Phase 4 generation panel, run confirmation dialog and activity panel, and the Phase 5 grid replace them |
+| Campaign page, Make pictures, Make a video, run list | Placeholder. The Phase 3 editor, the Phase 4 picture section, run confirmation dialog and activity panel (`spec/screens-ai.md`), and the Phase 5 grid replace them. Phase 4 leaves them working as they are |
 | Settings | Stays as the Settings screen (the agent runs block is built); sections are added (cloud storage in Phase 9, reports name in Phase 8) and restyled |
 | Key dialog | Stays (the `NEEDS_KEY` flow, FR-171) |
 | Hand test (dev) | Throwaway. Removed in Phase 9 with `dev.storage`, `{userData}/hand-test-local` handling and the `src/shared/config/dev-tools.ts` constants, once the publish dialog and storage settings screen exist |
@@ -26,7 +26,7 @@ Built. The reviewer checks these on every screen.
 - A provider that is not `available` is not offered for a run.
 - The ComfyUI address is drawn only in the Settings ComfyUI section and inside a failure sentence. It is sent in no input but `comfy.setAddress`. The window writes nothing to the console.
 - Text from a server or a file (server message, brief values, a file name, a display name) is drawn as text content, never as HTML, never as a link.
-- For pictures and other assets, the renderer draws no file path and reads no file. It sends a path only to `asset.import` (a path from the system picker, or from a file dropped on the window through the drop bridge), `asset.relink` (from the relink picker) and `project.package` (from the folder picker); and a brief's path only to `brief.parse` (from the brief picker). Display names and a file's base name are drawn as text. (The project's own file path, the recent-project paths and the default location are shown on the start, project and Settings screens, and sent only to `project.open`, `project.create` and `settings.update`.)
+- For pictures and other assets, the renderer draws no file path and reads no file. It sends a path only to `asset.import` (a path from the system picker, or from a file dropped on the window through the drop bridge), `asset.relink` (from the relink picker) and `project.package` (from the folder picker); and a brief's path only to `brief.parse` or, for a Markdown or text brief, `brief.extract` (Phase 4) (from the brief picker). Display names and a file's base name are drawn as text. (The project's own file path, the recent-project paths and the default location are shown on the start, project and Settings screens, and sent only to `project.open`, `project.create` and `settings.update`.)
 - No screen has a field for a key. Keys go through the key dialog or the Settings key rows only.
 - Every control has a label and can be reached and used by keyboard (`spec/testing.md`, accessibility rules). Each screen file stays under 200 lines.
 - `assetUrl` (`src/renderer/ui/asset-url.ts`) builds every `adman-asset://` address and escapes both parts with `encodeURIComponent`.

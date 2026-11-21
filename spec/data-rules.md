@@ -155,7 +155,7 @@ Built for pictures and video jobs (Phase 2); placing a chosen picture in a layer
 
 1. The user confirms the run dialog (count and provider).
 2. The job runner calls the provider, saves each result as a PNG or MP4 in the assets folder, embeds the generation details (`spec/export-and-checks.md`) and inserts an `asset` row with `origin = 'generated'` through the system command `asset.addGenerated`.
-3. The user picks one. Picking is a `layer.update` that sets `source`. All options stay in the asset library [REQ: FR-063].
+3. The user picks one. Picking is one `layer.update` that sets `source` and clears `geometry.crop`, so the picture sits in the layer's box by the Scene's rule (A-25); it calls no provider. All options stay in the asset library [REQ: FR-063]. The earlier options of a layer (Phase 4) offer the same pick (`spec/screens-ai.md`).
 
 ### Jobs, export and publish
 
@@ -206,6 +206,7 @@ On open, the app compares the file's `schema_version` with its own.
 | `0000_initial` | Every table of `spec/data-model.md` and `spec/data-model-campaign.md` without the columns below | `tests/integration/db/project-file.test.ts` |
 | `0001_agent_changed_and_job_target` | `variant.agent_changed_at`; on `job`: `layer_id`, `slot`, `paid_calls` (default 0), `seen_at`, and index `job_target`. All added columns, no rebuild. | `migration-0001.test.ts`: runs `0000` and `0001` only; a file made at version 1 holding a variant and a job keeps both rows unchanged apart from the new fields |
 | `0002_job_started_by_and_error_reason` | On `job`: `started_by` (default `'user'`, CHECK `job_started_by`), `error_reason`. Two hand-written `ALTER TABLE` statements. | `migration-0002.test.ts`: three tags in order; `schema_version` 3; an old row gains `started_by: 'user'` and `error_reason: null`; `'robot'` is refused and `'agent'` accepted, in old and new files |
+| `0003_job_kind_cutout` (Not built, P4-1) | `job_kind` CHECK lists `cutout`. A table rebuild, as drizzle-kit writes it. | `migration-0003.test.ts` (`spec/ai-jobs.md`, "Job kinds") |
 
 ## Package project
 

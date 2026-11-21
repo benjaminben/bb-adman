@@ -80,6 +80,7 @@ type WorkflowSpec = WorkflowInfo & {
 | `h3-reference-to-video` | Video from reference pictures, no first frame | `video` | `trial` | 0.33.0 | MiniMax H3 (`ref2va`) | node 14 `SaveVideo` | first-run `{32, 330,000, 420,000}` | exactly 1 reference (model takes up to 9); at most 15 s |
 | `flux3-klein-edit-references` | Picture from a prompt and one reference picture; the result takes the reference's shape | `image_refs` | `trial` | none known (`'0.0.0'`) | FLUX 3 klein | node 15 `PreviewImage` | not set by the app: about 1 MP in the graph | exactly 1 reference |
 
+- An eighth, `birefnet-cutout` (job `cutout`, core nodes only, `trial`), is Not built (Phase 4, P4-9): `spec/ai-jobs.md`, "Cut-out".
 - No workflow is `proven` on `main`; every `checkedWith` is `''`.
 - For `image_refs` the only non-draft workflow is Flux, so every ComfyUI reference-picture run uses it. Whether Flux or `moss-edit-references` serves references for good is OI-75 (open).
 - **Four kinds of video start** [REQ: FR-286]: three have a workflow. "First frame and references together" has none, because nothing public shows one run taking both (**U-20**). It is not offered and the app says so ("ComfyUI cannot make this kind of video yet."). It becomes its own workflow file if a trial finds a way.

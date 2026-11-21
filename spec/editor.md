@@ -232,7 +232,7 @@ The smallest design Phase 3 needs (Q-032 answered yes; A-26).
 - **Made by** `layer.create` with `type: 'image'`: key `layer-{ulid}`, `slot` null, no picture yet. As many as the user wants; there is no limit. Added text layers work the same way.
 - **An empty picture layer is a normal saved state.** The Scene draws nothing for it; the editor shows a placeholder; it does not stop anything in Phase 3.
 - **Filled** by the picture chooser (`layer.update` with `source`). Generating into it uses `generation.runImages` with its `layerId`, which already works; the panel that offers it per layer is Phase 4's.
-- **A cut-out** is a picture with a transparent background. It is drawn like any picture and keeps its transparency [REQ: FR-245]. Making a cut-out inside the app is not designed (S-12, OI-55).
+- **A cut-out** is a picture with a transparent background. It is drawn like any picture and keeps its transparency [REQ: FR-245]. Making one inside the app is Phase 4 (`spec/ai-jobs.md`, "Cut-out"; the button in `spec/screens-ai.md`).
 - **What a master's template holds** does not change: a template lists slots only. An added layer belongs to the variant, not to the template.
 - **Left for later:** Phase 5 treats an added layer on a master like any master layer, by its key (fan-out copies it; sync offers it as "add-layer"); only the background gets a fit choice in fan-out. Phase 8 decides whether an empty picture layer gives an export warning.
 

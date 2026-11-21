@@ -59,8 +59,11 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `check.run` | projectId, campaignId or variantIds[] | — | allow | Not built (Phase 6) | FR-114, FR-116, FR-196 |
 | `generation.runImages` | projectId, variantId, slot or layerId (exactly one), prompt, referenceAssetIds[], count (1 to 8), provider, licenceConfirmed? (S2-4) | — | tick | Built | FR-062–FR-065, FR-199 |
 | `generation.runFill` | projectId, variantId, provider | — | tick | Not built (Phase 5) | FR-076 |
-| `generation.proposeLayout` | projectId, variantId, provider | V (when applied) | deny (tick when built) | Not built (Phase 4) | FR-061 |
-| `generation.copyOptions` | projectId, campaignId, slot, count, provider | — | deny (tick when built) | Not built (Phase 4) | FR-045 |
+| `generation.proposeLayout` | projectId, variantId, provider (`spec/ai-jobs.md`) | — (applied by `layer.updateMany`, V) | tick | Not built (Phase 4) | FR-061 |
+| `generation.copyOptions` | projectId, variantId, layerId, count (1 to 8), provider | — | tick | Not built (Phase 4) | FR-045 |
+| `generation.cutOut` | projectId, variantId, layerId, provider, licenceConfirmed? | — | tick | Not built (Phase 4) | FR-307 |
+| `brief.extract` | projectId, filePath (`.md`, `.markdown`, `.txt`), provider | — | deny | Not built (Phase 4) | FR-022 |
+| `layer.updateMany` | projectId, variantId, updates[] of { layerId, patch } (1 to 100) | V | allow | Not built (Phase 4) | FR-061, FR-092 |
 | `generation.startVideo` | projectId, variantId, prompt, durationMs, provider, start (`none` or `first_frame`), useReferences: boolean, referenceAssetIds[], licenceConfirmed? (S2-4) | — | tick | Built (ComfyUI; fal.ai Seedance with slice J) | FR-123, FR-199, FR-286 |
 | `job.retry` | projectId, jobId, licenceConfirmed? (S2-4) | — | deny | Built | FR-069, FR-152 |
 | `job.cancel` | projectId, jobId | — | tick | Built | FR-152, FR-215 |
@@ -146,15 +149,17 @@ Built: `generation.runImages`, `generation.startVideo`, `job.retry`, `job.cancel
 
 - Every `generation.*` command and `job.retry` return `JobStarted = { jobId }` as soon as the job row exists.
 - Every caller of `enqueue` says who started the run: `EnqueueRequest.startedBy` is required, `'user' | 'agent'`, no default.
-- **Deferred agent abilities** [REQ: FR-199]. Opening `export.run` or `publish.run` to agents is a change to `agent-policy.ts` plus the MCP tool definitions. No command changes. The generation commands and `job.cancel` are `tick` [D-051, D-052, D-080]; `generation.proposeLayout` and `generation.copyOptions` become `tick` under the Gemini tick when Phase 4 builds them.
+- **Deferred agent abilities** [REQ: FR-199]. Opening `export.run` or `publish.run` to agents is a change to `agent-policy.ts` plus the MCP tool definitions. No command changes. The generation commands and `job.cancel` are `tick` [D-051, D-052, D-080], the Phase 4 ones included (`spec/ai-jobs.md`).
+- The Phase 4 commands (`generation.proposeLayout`, `generation.copyOptions`, `generation.cutOut`, `brief.extract`, `layer.updateMany`) are designed in `spec/ai-jobs.md`.
 
 ### `generation.runImages`
 
 - Records `layerId` in `job.layer_id` when given a layer, and `slot` in `job.slot` when given a slot. It accepts any image or background layer of the variant by `layerId`, not only one that fills a template slot. Whether the screens offer that is part of Q-032 (OI-29, open: which layers the screens let the user generate into, cut-outs included); the command does not change either way.
+- **The shape asked for** (OI-70; Not built, P4-13). Given a layer, the request's `width` and `height` are the layer's box (`geometry.width` and `geometry.height`, rounded, at least 1), so less of the picture is cropped when it is placed; a background layer's box is usually the whole canvas. Given a slot, the variant's size, as built. A provider takes these as a shape (Gemini's nearest ratio, ComfyUI's `fitSize`).
 - `count` is a whole number from 1 to 8. Each picture is one paid call. The number has one owner: `MAX_IMAGES_PER_RUN` in `src/shared/config/defaults.ts`, read by the schema in `src/shared/schemas/commands/generation.ts`. The default stays `settings.generation.optionsPerRun` (4).
 - Refusals: an unknown provider, one that cannot make pictures, or one not in this build: `INVALID_INPUT`. A text layer, a copy slot or an unknown slot: `INVALID_INPUT`. A missing variant, or a layer not in the variant: `NOT_FOUND`.
 - `prepare` reads every ID in `referenceAssetIds`: a picture that is gone, too large or not a picture (WebP included, until slice WP) is refused before a job row is made. The job kind reads the bytes again with `AssetService.read`.
-- Nothing limits how many references one Gemini run sends. A limit is pending F-8: one constant `MAX_REFERENCES_PER_RUN` in `src/shared/config/defaults.ts`, used by this schema, the job request schema and the picker, with duplicate IDs refused.
+- At most `MAX_REFERENCES_PER_RUN` (8) references per run, one constant in `src/shared/config/defaults.ts`, used by this schema, the job request schema and the pickers, with duplicate IDs refused (A-56).
 - For `comfyui`, before any job row: `comfy_address_needed`, then `comfy_job_not_offered`, then `too_many_references` (`checkComfyRun`, `src/main/commands/generation/comfy-checks.ts`). The command picks the workflow itself through `offeredWorkflow` (`spec/comfyui.md`): a `proven` one, else a `trial` one only when `deps.devTools` is true. The same rule holds for both actors. No agent sets a workflow's status to `proven`.
 
 ### `generation.startVideo`
