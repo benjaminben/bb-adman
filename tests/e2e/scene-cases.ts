@@ -187,6 +187,53 @@ export const CASES: SceneCase[] = [
     background: (a) => ({ source: { assetId: a.magenta } }),
     layers: (a) => [image(a.hole, box(100, 100, 200, 200))],
   },
+  // LK-2, spec/scene.md "Text boxes".
+  {
+    name: 'text-box-button',
+    title: 'a text box with an outline and a radius, text in the middle, centred',
+    layers: () => [
+      text('Shop now', box(80, 160, 240, 80), {
+        fontSize: 32,
+        align: 'center',
+        verticalAlign: 'middle',
+        boxOutlineColor: '#F0C828',
+        boxOutlineWidth: 4,
+        boxRadius: 40,
+      }),
+    ],
+  },
+  {
+    name: 'text-box-label',
+    title: 'a filled text box with a radius and padding, text at the bottom left',
+    layers: () => [
+      text('New season', box(40, 200, 260, 160), {
+        color: '#111111',
+        verticalAlign: 'bottom',
+        boxColor: '#F0C828',
+        boxRadius: 16,
+        boxPadding: 20,
+      }),
+    ],
+  },
+  {
+    name: 'text-all-caps',
+    title: 'the same copy drawn as typed and in all capitals',
+    layers: () =>
+      [false, true].map((allCaps, i) =>
+        text('Summer sale', box(20, 100 + i * 120, 360, 60), { fontSize: 40, allCaps }),
+      ),
+  },
+  {
+    name: 'text-box-overflow-bottom',
+    title: 'bottom-aligned text that does not fit is drawn past the top of its filled box',
+    layers: () => [
+      text('This headline is far too long for its box', box(50, 250, 200, 60), {
+        fontSize: 32,
+        verticalAlign: 'bottom',
+        boxColor: '#2850DC',
+      }),
+    ],
+  },
   {
     name: 'overlay-only',
     title: 'overlay-only mode is transparent where only the background was',
