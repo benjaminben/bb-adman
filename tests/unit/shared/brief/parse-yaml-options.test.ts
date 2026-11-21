@@ -30,3 +30,15 @@ describe('parseBrief YAML: the settings are given in the call [SPEC 6.1]', () =>
     expect(toJS).toHaveBeenCalledWith({ maxAliasCount: 100 })
   })
 })
+
+// SPEC 6.1 item 9 rule 1 [1.31], 14 Q1: the token check refuses before compose.
+describe('parseBrief YAML: the token check runs before compose [SPEC 6.1 item 9, 14 Q1]', () => {
+  it.each([
+    ['a %TAG file', '%TAG ! tag:example.com,2000:\n---\nregion: US\n'],
+    ['a file 100 lists deep', `extra: ${'['.repeat(100)}${']'.repeat(100)}\n`],
+  ])('does not compose %s', (_, text) => {
+    vi.mocked(yaml.parseDocument).mockClear()
+    expect(parseBrief(text, 'yaml')).toMatchObject({ ok: false })
+    expect(vi.mocked(yaml.parseDocument)).not.toHaveBeenCalled()
+  })
+})

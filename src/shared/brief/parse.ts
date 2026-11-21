@@ -7,6 +7,7 @@ import { fail, type ErrorBody } from '../schemas/result'
 import type { ParseBrief } from '../templates/types'
 import { MAX_BRIEF_ALIASES, MAX_BRIEF_BYTES } from '../config/brief-limits'
 import { briefDraftFrom, BRIEF_UNREADABLE } from './draft'
+import { passesYamlTokens } from './yaml-tokens'
 import { passesYamlWalk } from './yaml-walk'
 
 export const BRIEF_TOO_LARGE: ErrorBody = {
@@ -34,6 +35,7 @@ const YAML_OPTIONS: ParseOptions & DocumentOptions & SchemaOptions = {
 }
 
 function readYaml(text: string): unknown {
+  if (!passesYamlTokens(text)) throw new Error('unreadable')
   const doc = parseDocument(text, YAML_OPTIONS)
   if (doc.errors.length > 0 || !passesYamlWalk(doc)) throw new Error('unreadable')
   return doc.toJS({ maxAliasCount: MAX_BRIEF_ALIASES })

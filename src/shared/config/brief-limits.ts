@@ -4,3 +4,4 @@
 // both the most alias nodes a YAML file may hold and the library's maxAliasCount.
 export const MAX_BRIEF_BYTES = 65_536
 export const MAX_BRIEF_ALIASES = 100
+export const MAX_BRIEF_DEPTH = 32
