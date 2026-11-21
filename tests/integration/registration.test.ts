@@ -54,6 +54,7 @@ describe('registering commands and queries [SPEC 12]', () => {
         'toPng',
         'undo',
         'userDataDir',
+        'webpToPng',
       ].sort(),
     )
   })

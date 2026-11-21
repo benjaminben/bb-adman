@@ -101,3 +101,18 @@ describe('createCore option fitPicture [SPEC 6.10.7, 14 CU-0 W4]', () => {
     )
   })
 })
+
+describe('createCore option webpToPng [Slice WP]', () => {
+  it('hands the webpToPng option to every domain through CoreDeps', async () => {
+    const png = new Uint8Array([8, 8])
+    const webpToPng = vi.fn(async () => png)
+    const deps = build({ webpToPng }).deps
+    expect(await deps.webpToPng(new Uint8Array([1]))).toBe(png)
+    expect(webpToPng).toHaveBeenCalledWith(new Uint8Array([1]))
+  })
+
+  it('rejects with webpToPng is not available when no webpToPng option is given', async () => {
+    const deps = build().deps
+    await expect(deps.webpToPng(new Uint8Array([1]))).rejects.toThrow('webpToPng is not available')
+  })
+})

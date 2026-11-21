@@ -14,7 +14,7 @@ import {
   resolveAssetFile,
 } from './path-resolver'
 import { assetNotFound, assetsFolderMissing, missingFile } from './errors'
-import { notAPicture, readPicture } from './read-picture'
+import { notAPicture, readPicture, type PictureConverters } from './read-picture'
 import { MAX_PICTURE_BYTES } from '@/main/providers/picture-limits'
 import type { AssetRow } from '@/shared/schemas/rows/asset'
 
@@ -90,7 +90,9 @@ export function resolveRow(project: ProjectHandle, row: AssetRow): Promise<strin
 
 // Only a test hands in another picture limit; core.ts calls this with no argument (SPEC 14
 // [1.27] R2).
-export function createAssetService(options: { maxPictureBytes?: number } = {}): AssetService {
+export function createAssetService(
+  options: { maxPictureBytes?: number; pictures?: PictureConverters } = {},
+): AssetService {
   const maxPictureBytes = options.maxPictureBytes ?? MAX_PICTURE_BYTES
   return {
     async missingAssetIds(project) {
@@ -115,7 +117,7 @@ export function createAssetService(options: { maxPictureBytes?: number } = {}): 
       if (row.kind !== 'image') throw notAPicture(row.displayName)
       const file = await resolveRow(project, row)
       if (file === 'missing') throw missingFile([assetId])
-      return readPicture(file, row.displayName, maxPictureBytes)
+      return readPicture(file, row.displayName, maxPictureBytes, options.pictures)
     },
   }
 }

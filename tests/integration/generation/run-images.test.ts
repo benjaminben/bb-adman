@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import type Database from 'better-sqlite3'
 import {
   makeGenerationFixture,
@@ -12,6 +12,8 @@ import {
 } from './generation-fixture'
 import { data } from '../core-fixture'
 import { promptToSend } from '@/shared/generation/prompt'
+import { greyPng } from '@/main/providers/fake/png'
+import { vp8x, webp } from '../../fixtures/webp-bytes'
 
 let f: GenerationFixture
 afterEach(() => f.cleanup())
@@ -166,17 +168,34 @@ describe('generation.runImages [SPEC 4.2, 3.6 "Jobs" item 1; FR-062 to FR-065]',
 })
 
 describe('generation.runImages with reference pictures [SPEC 14 1.46 RF-0 item 3]', () => {
-  const WEBP = new Uint8Array([...Buffer.from('RIFF'), 1, 2, 3, 4, ...Buffer.from('WEBPVP8 ')])
+  const WEBP = webp(vp8x(5, 5, false))
 
-  it('refuses a WebP reference before any job row: asset_not_a_picture, with its name', async () => {
-    f = await makeGenerationFixture()
+  // Slice WP: the approved change. A WebP reference is turned into a PNG, so the run is taken.
+  it('accepts a WebP reference: the run is taken and the WebP goes to the decoder', async () => {
+    const webpToPng = vi.fn(async () => greyPng(5, 5))
+    f = await makeGenerationFixture({ webpToPng })
     const ref = await f.importPicture('photo.webp', WEBP)
     expect(f.asset(ref)?.mime).toBe('image/webp')
-    const error = await expectRefused(
-      () => run({ referenceAssetIds: [ref] }),
+    const r = (await run({ referenceAssetIds: [ref] })) as { ok: boolean }
+    expect(r.ok).toBe(true)
+    expect(webpToPng).toHaveBeenCalledWith(WEBP)
+    expect(f.toPngCalls).toContainEqual(greyPng(5, 5))
+  })
+
+  // Ruling F-9: a JPEG reference goes through toPng too, so only a clean PNG is sent.
+  it('passes a JPEG reference through toPng, and refuses it when toPng gives no PNG', async () => {
+    const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46, 0])
+    f = await makeGenerationFixture({ toPng: () => greyPng(5, 5) })
+    const ref = await f.importPicture('photo.jpg', jpeg)
+    expect(((await run({ referenceAssetIds: [ref] })) as { ok: boolean }).ok).toBe(true)
+    expect(f.toPngCalls).toContainEqual(jpeg)
+    f.cleanup()
+    f = await makeGenerationFixture()
+    const same = await f.importPicture('photo.jpg', jpeg)
+    await expectRefused(
+      () => run({ referenceAssetIds: [same] }),
       'RULE_VIOLATION',
       'asset_not_a_picture',
     )
-    expect(error.message).toBe('photo.webp is not a picture the app can send.')
   })
 })
