@@ -186,6 +186,7 @@ Built. `src/main/providers/comfyui/cancel.ts` (`cancelOwnRun`), `run.ts`, `video
   - ID running: `interrupt(id)` only when the server's version is readable and at least `MIN_TARGETED_INTERRUPT` (`'0.30.0'`, `limits.ts`), outcome `stopped`; otherwise nothing is sent and the outcome is `unknown`.
   - Neither: a history entry gives `finished`, none gives `unknown`.
   - Any error gives `unknown`.
+- So a cancel of a running ComfyUI job, by an agent or the user, ends `cancelled` at once only when the server still lists the run in its queue or as running. When the server no longer lists it and has no history for it, the outcome is `unknown` and the job ends after the 60-second cancel wait.
 - Video: the adapter marks the run as cancel-asked; a later `execution_interrupted` (`server_stopped`) or a cancelled state is then read as `cancelled`.
 - Pictures (`run.ts`): the run ends cancelled only when `cancelOwnRun` answers `stopped`. On `finished` the picture is fetched and returned. On `unknown` polling goes on under the run's own waiting and working limits, so the runner's wait decides; the 5-minute lost-contact count starts again, the other limits do not. Tests: `tests/unit/main/providers/comfyui/image-cancel.test.ts`.
 - A cancel does not stop an HTTP call already in flight. Nuisance, noted, nothing built.

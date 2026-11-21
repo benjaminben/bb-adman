@@ -2,9 +2,9 @@
 
 Picture and video runs an agent starts through the MCP server: what is open and shut, the per-provider tick, the gate, the limit, unticking, and paid runs. Read with `spec/mcp-and-agents.md` (the server, the tools, the permissions and the agent policy table), `spec/cancel.md` and `spec/jobs.md`. Old section 6.11.3 onward.
 
-Built: `agentRunsOffered` and the limit bounds, the settings key `agentRunLimit`, the commands `agentRuns.setAllowed` and `agentRuns.setLimit`, the `tick` policy, the gate and the `trial` workflow rule. Not built (Phase 2): the runner's untick check and the paid tick (AR-2), the Settings block (AR-3), the start and cancel tools (MCP-G). Security class. [REQ: FR-272, FR-279, FR-280, FR-281, FR-292; D-053 item 8; D-059 items 1 and 5; D-080]
+Built: `agentRunsOffered` and the limit bounds, the settings key `agentRunLimit`, the commands `agentRuns.setAllowed` and `agentRuns.setLimit`, the `tick` policy, the gate, the `trial` workflow rule, the runner's untick check, the paid tick, the Settings block, and the tools `generate_images`, `generate_video` and `cancel_job`. Security class. [REQ: FR-272, FR-279, FR-280, FR-281, FR-292; D-053 item 8; D-059 items 1 and 5; D-080]
 
-The stakeholder's decision: "Agent can generate anything thru mcp door" [D-080]. These rules hold whether or not built.
+The stakeholder's decision: "Agent can generate anything thru mcp door" [D-080].
 
 ## End state
 
@@ -36,14 +36,10 @@ An agent connected through the MCP server can start, follow and cancel its own p
 - The loader keeps `agentRuns` as the file has it. The rule "which provider may have a tick" is held where a tick is used, not only where it is written: a loader that drops entries would have to know the registry, and the next save would wipe them.
 - OI-90 is open: whether D-080's "anything" keeps the per-provider tick. The build keeps it, off by default. If the answer is "no ticks", gate step 2 always passes (one line) and the Settings block is removed. Nothing else moves.
 
-**`agentRunsOffered(info: ProviderInfo): null | 'agent_runs_not_offered' | 'agent_runs_not_ready'`**, in `src/shared/config/agent-runs.ts` (shared, so Settings shows the list the gate checks). In order:
+**`agentRunsOffered(info: ProviderInfo): null | 'agent_runs_not_offered'`**, in `src/shared/config/agent-runs.ts` (shared, so Settings shows the list the gate checks). `available` false, or `jobs` holds neither `image` nor `video`: `agent_runs_not_offered` (covers `fal-seedance` until slice J, Firefly, storage providers). Otherwise null. So Gemini can be ticked.
 
-1. `available` false, or `jobs` holds neither `image` nor `video`: `agent_runs_not_offered` (covers `fal-seedance` until slice J, Firefly, storage providers).
-2. `local` false: `agent_runs_not_ready`. This step exists only until the untick check below is built; then it is deleted and Gemini can be ticked.
-3. Otherwise null.
-
-- It is the only "tick offered" function. Three callers and no other copy: the gate (step 1), `agentRuns.setAllowed`, and the runner's untick check. A `settings.json` entry for a provider it refuses is never read as a set tick, however it got there (a hand-edited file included).
-- **One reader.** `agent-run-gate.ts` exports the only code in `src/main/` that reads `settings.agentRuns`: true when `agentRunsOffered` gives null for the provider's row and the entry's `allowed` is `true`. An entry for an ID the registry does not have is never read.
+- It is the only "tick offered" function. Three callers and no other copy: the gate (step 1), `agentRuns.setAllowed`, and the runner's untick check (through the one reader). A `settings.json` entry for a provider it refuses is never read as a set tick, however it got there (a hand-edited file included).
+- **One reader.** `agentRunAllowed` in `agent-run-gate.ts` is the only code in `src/main/` that reads `settings.agentRuns`: true when `agentRunsOffered` gives null for the provider's row and the entry's `allowed` is `true`. An entry for an ID the registry does not have is never read.
 - *Why this matters.* Whoever can edit `settings.json` works as the user's own account and can do much else. The rule still holds at the point of use, because it costs one function and a paid tick must never be set without the user.
 - **fal.ai Seedance.** Once slice J sets `available: true`, step 1 no longer refuses it. Slice J offers its tick only once fal's cancel is proven (U-25).
 
@@ -67,7 +63,7 @@ An agent connected through the MCP server can start, follow and cancel its own p
 
 1. The registry row for `input.provider` exists and `agentRunsOffered` gives null. Else "Agents cannot start runs with {Provider}." For an unknown ID: "Agents cannot start runs with that provider." `provider` is required for an agent, so the user's default is never used.
 2. The tick is on, read at that moment through the one reader. Else "The user has not allowed agents to start runs with {Provider}. They can allow it in Adman's Settings."
-3. Agent runs for that provider are fewer than `settings.agentRunLimit`. The count is jobs with `started_by = 'agent'`, status `queued` or `running`, and that provider, over every open project (one SQL count per project from the registry's `all()`), plus agent runs for that provider that have passed the gate and have no job row yet. Else "Agents already have the most runs allowed with {Provider}. Wait for one to finish." The sentence holds no number, so an agent learns neither the limit nor how many runs other projects hold. Not built (AR-2): the gate still sends "Agents already have {n} runs waiting or running with {Provider}. That is the limit set in Adman's Settings." So two agent calls sent together with limit 1 give one job and one refusal.
+3. Agent runs for that provider are fewer than `settings.agentRunLimit`. The count is jobs with `started_by = 'agent'`, status `queued` or `running`, and that provider, over every open project (one SQL count per project from the registry's `all()`), plus agent runs for that provider that have passed the gate and have no job row yet. Else "Agents already have the most runs allowed with {Provider}. Wait for one to finish." (`agentRunLimitMessage(label)`, exported from `agent-run-gate.ts`). The sentence holds no number, so an agent learns neither the limit nor how many runs other projects hold. Two agent calls sent together with limit 1 give one job and one refusal.
 
 - No `workflowId` step: neither input schema has the field, and the parse drops unknown keys. An agent never names a server, a workflow, a node or a model file.
 - A user's runs are never counted or held back by the agent limit. The runner's own limit (`JOBS_AT_ONCE_PER_PROVIDER`, 4 per provider, anyone; `spec/jobs.md`) is separate.
@@ -78,7 +74,23 @@ An agent connected through the MCP server can start, follow and cancel its own p
 
 - The command runs as for the user: same checks and job kind, the run enqueued with `startedBy: 'agent'`, `seenAt` null, the count limit of 8 pictures, the reference rule, the picture checks. One variant, in an open project.
 - **No dialog** [REQ: FR-280].
-- **Refusals reach the agent in the app's own words** (`comfy_job_not_offered`, `video_too_long` with `maxMs`, `too_many_references`, `picture_not_usable`, `NEEDS_KEY`, …), as the command gives them. None holds an address, path or key. Display names in `assets.read` refusals stay, for both actors; `missingFile` takes asset IDs.
+- **Refusals reach the agent in the app's own words**, as the command gives them. The full set from `generate_images`, `generate_video` and `cancel_job`:
+
+  | From | Code | Details, reason |
+  |------|------|-----------------|
+  | Bus | `INVALID_INPUT` | `issues` |
+  | Bus | `NOT_FOUND` | `projectId`, reason `project_not_open` |
+  | Bus | `INTERNAL` | `commandId` |
+  | Gate | `AGENT_DENIED` | none |
+  | Command | `INVALID_INPUT` | `provider` ("That provider cannot make pictures." / "videos."), or none (not a picture layer, not a picture slot, "Choose one picture for this video.") |
+  | Gate or command | `NOT_FOUND` | none (variant, layer or asset not found), or `jobId` ("That job is not in this project.") |
+  | Command | `NEEDS_KEY` | `provider` |
+  | Command | `MISSING_FILE` | `assetIds` |
+  | Command | `RULE_VIOLATION` | reason `comfy_address_needed`, `comfy_job_not_offered`, `too_many_references` (`max`), `video_too_long` (`maxMs`), `picture_not_usable`, `asset_not_a_picture`, `asset_too_large`, `job_wrong_state`, `cancel_not_supported`; not built: `licence_not_confirmed` (`workflow`) |
+
+  - None holds a file path, a folder name, a key, the saved server address or raw server text. The messages of `asset_not_a_picture` and `asset_too_large` hold the asset's display name, for both actors.
+  - Accepted: `NEEDS_KEY` tells an agent that the user has no key saved for a ticked paid provider.
+  - A ComfyUI run of a workflow whose model needs a commercial licence is refused with `licence_not_confirmed` (`details.workflow`) until the user has saved that model in Settings; an agent's `licenceConfirmed` flag is ignored (`spec/comfyui-workflows.md`). Not built (S2-4).
 - **Marked and waiting.** `JobRow.startedBy` is on the wire, so the activity panel and the run row can say "Started by an agent". The activity log line carries the actor. The result has `seen_at` null and waits for the user. An agent cannot mark it seen.
 - **An agent may pick a result** [D-059 item 5]. `layer.update` and `layer.create` by an agent make no check of `started_by` or `seen_at`. The tool descriptions ask it not to; no command refuses the pick. The test "a run started as the agent has `started_by = 'agent'` and `seen_at` null" stays.
 - **`jc.system` sends as the user.** A job's `jc.system` commands are sent as actor `user`, whoever started the job. The only command a job sends this way is `asset.addGenerated` (from the picture and the video job kinds). It is `internal` and `deny` for agents. Its input is built by app code: the job's own project, an asset ID the app makes, a fixed `png` or `mp4` extension, and the model name from the provider's result (for ComfyUI, the shipped workflow). The agent controls only what it already chose within its allowed run: the prompt text and the provider recorded on the asset. A new `jc.system` command is ruled on by itself before it is added.
@@ -88,26 +100,22 @@ An agent connected through the MCP server can start, follow and cancel its own p
 [D-059 item 1]
 
 - Unticking refuses new requests at once: gate step 2 reads the setting on every call.
-- **The runner's check before the first send.** Just before an agent-started job's first call, in `jc.call` (`src/main/jobs/run-job.ts`) and the live job (`src/main/jobs/live.ts`), the one reader checks `agentRunsOffered` and the tick (gate steps 1 and 2 again). Only when `startedBy` is `agent` and no call has gone out; the live job gains `startedBy` and a "a call has gone out" mark. Off: the job ends `cancelled` with no flag, the job's signal fires, `ProviderCancelled` is thrown, nothing is sent and `paid_calls` stays 0. Same rule for every provider, local included, and however the tick became off (a hand-edited `settings.json` included). If lint refuses the import from `src/main/commands/` into `src/main/jobs/`, the developer stops and reports.
-- **"Sent"**: a run is sent once its first call to the provider has gone out. After that its later calls are made and it is waited for. A request waiting in a provider's own queue has been sent. A job with a `remote_job_id` counts as sent. The user can cancel any of these by hand. (OI-62 is open: whether the stakeholder counts a request in a provider's queue as sent; the build says yes.)
-- A waiting run stays listed `queued` until its turn, then is cancelled. If the tick is set again before that turn, it is sent.
-- A run past its first call goes on.
+- **The runner's check before the first call.** Before an agent-started job's first call, `jc.call` (`src/main/jobs/run-job.ts`) checks the provider through the one reader, `agentRunAllowed` (gate steps 1 and 2 again). The live job (`src/main/jobs/live.ts`) has `startedBy` and `sent`.
+- **`sent`** starts true when the row already has a `remote_job_id`. It is set by the first call that passes the check, and by `jc.setRemoteJobId`. A request waiting in a provider's own queue has been sent (OI-62 is open: whether the stakeholder agrees; the build says yes).
+- **Cancelled at its turn** when all three hold: started by an agent, not yet sent, and the provider is not allowed (not in the registry, refused by `agentRunsOffered`, or not ticked). Then the job ends `cancelled` with no flag, its signal fires, `jc.call` throws `ProviderCancelled`, the call's function never runs and `paid_calls` is not raised. Same rule for every provider, local included, however the tick became off (a hand-edited `settings.json` included).
+- The row stays `queued` while it waits, is marked `running` at its turn, then ends `cancelled`. A tick set again before the turn lets it run.
+- A user's job is never checked. A run past its first call goes on and is waited for; the user can cancel it by hand.
+- Tests: `tests/integration/jobs/runner-untick.test.ts`.
 
 ## Paid runs and spending
 
-- With the Gemini tick on, an agent can start up to `agentRunLimit` Gemini runs at a time, each up to 8 pictures, with no click. The limit bounds the rate, not the total. There is no spending cap; the only other record is `started_by`. OI-91 is open: whether to add a spending guard.
+- With the Gemini tick on, an agent can start up to `agentRunLimit` Gemini runs at a time, each up to 8 pictures, with no click. The limit bounds the rate, not the total. There is no spending ceiling; the only other record is `started_by`. OI-91 is open: whether to add a spending guard.
 - A paid run charged either way is left to finish (`cancel_would_still_charge`, `spec/cancel.md`, 'fal.ai Seedance').
 - **Linked assets (U-2).** A linked asset's path comes from the project file, so a picture start uploads whatever PNG or JPEG it points to. Accepted: a project from someone else, opened by the user, with an agent ticked, could send a picture from the user's computer to a provider the user ticked. The agent gets no bytes back. Any tool that returns bytes (OI-92) must be judged with this.
 
 ## Settings block "Agent runs"
 
-Not built (Phase 2). New component folder `src/renderer/screens/settings/agent-runs-section/`, placed below the MCP section in `settings-screen/`.
-
-1. One checkbox per provider for which `agentRunsOffered` gives null, labelled "Let agents start runs with {label}", calling `agentRuns.setAllowed`, showing the command's refusal as other sections do.
-2. Under a provider whose `local` is false: "Paid. Each run an agent starts is charged to your account, with no click from you." (None shows until Gemini can be ticked.)
-3. Number field "Most runs agents may have waiting or running, per provider", 1 to 16, saved by `agentRuns.setLimit` on change, refusal shown.
-4. The block shows whether or not the MCP server is on.
-5. The run row says "Started by an agent" under the kind when `startedBy` is `agent` (`screens/campaign/run-row/`).
+Built. `src/renderer/screens/settings/agent-runs-section/`, below "Agent access" in `settings-screen/`. Its items and words are in `spec/screens.md`, 'Agent runs': the heading, one tick per offered provider, the paid line under a provider whose `local` is false, the limit field (1 to 16), and "Started by an agent" on a run row. End-to-end case: `tests/e2e/screen-tour.spec.ts`, "Settings · Agent runs: one tick per provider, the limit".
 
 The UI pass decides whether the job list should say more about a queued agent run that will be cancelled at its turn.
 
@@ -124,16 +132,16 @@ The UI pass decides whether the job list should say more about a queued agent ru
 
 ## Tests that must exist
 
-- **The word test.** One test lists every MCP tool's output schema and a recorded reply of each, success and refusal, and fails if any holds the words `comfyui` (case-sensitive), `baseUrl` or `agentRuns`, or the stand-in's address.
-- `agentRunsOffered`: Gemini as registered gives `agent_runs_not_ready` (until the untick check lands, then null); ComfyUI and the fake provider give null; `fal-seedance`, S3 and Firefly give `agent_runs_not_offered`.
+- **The word test** (`tests/integration/mcp/reply-words.test.ts`). It lists every MCP tool's output schema (the tools register none) and a recorded reply of each of the 11 tools, success and refusal, and fails if any holds the words `comfyui` (case-sensitive), `baseUrl` or `agentRuns`, or the stand-in's address.
+- `agentRunsOffered`: Gemini, ComfyUI and the fake provider give null; `fal-seedance`, S3 and Firefly give `agent_runs_not_offered`.
 - Each gate step's refusal sent as the agent through the bus: no job row, nothing sent. A ticked ComfyUI run as the agent is accepted with `startedBy: 'agent'` and `seenAt` null; with tools off and ticked, `comfy_job_not_offered`.
 - A hand-edited `settings.json` `{ "fal-seedance": { "allowed": true }, "gemini": { "allowed": true } }` loads with both kept and its other keys as written; each is refused at step 1; an agent job already queued for such a provider ends `cancelled` with nothing sent.
-- Limit 2: two agent jobs held `queued`, the third refused with the step 3 sentence, which holds no number; a user's queued job and another provider are not counted. Two agent calls sent together with limit 1: one job, one refusal with the limit sentence (`tests/integration/commands/agent-run-gate-together.test.ts`; through the tools once MCP-G lands).
+- Limit 2: two agent jobs held `queued`, the third refused with the step 3 sentence, which holds no number; a user's queued job and another provider are not counted. Two agent calls sent together with limit 1: one job, one refusal with the limit sentence (`tests/integration/commands/agent-run-gate-together.test.ts`, and through the tools in `tests/integration/mcp/run-tools.test.ts`).
 - Untick, then the next agent call is refused at step 2.
 - The agent's `job.cancel`: its own queued job is cancelled, its own running job ends `cancelled`; a user's job is refused "Agents can cancel only runs they started."
 - `agentRuns.setAllowed` and `agentRuns.setLimit` as the agent: `AGENT_DENIED`. `setLimit(0)` and `setLimit(17)` as the user: `INVALID_INPUT`. `"agentRunLimit": 99` loads as 4. `settings.update` refuses `agentRunLimit`.
-- The untick check (runner fixture, small `jobsAtOnce`): an agent job waits behind a full provider, the tick is unset, the place frees: it ends `cancelled`, `jc.call`'s function never ran, `paid_calls` 0, and the agent's next request is refused at the gate. An agent job whose first call is out, tick unset: its second `jc.call` runs and it ends `succeeded`. A user's job with the tick off runs to the end. Tick unset then set again before the turn: the job runs. A Gemini agent job (recorded responses) queued behind a full provider, then unticked, ends `cancelled` with `paid_calls` 0.
-- Through the tools (a door over the real core, the ComfyUI stand-in, dev tools on, ComfyUI ticked by the user): `generate_images` with a slot from `get_slots` gives a `jobId`, and `get_job` later shows `succeeded` and new asset IDs; `generate_video` from a first frame by asset ID makes the stand-in see one upload named `uploadName(...)`, and `get_job` shows the clip's asset ID; with the tick off, `AGENT_DENIED` with the step 2 sentence, no job row, and the stand-in saw nothing; a reference asset whose linked file is gone, and one over the size limit, give replies that hold the display name or ID and not the test's root folder, the file's folder or its file name on disk.
+- The untick check (`tests/integration/jobs/runner-untick.test.ts`, runner fixture, small `jobsAtOnce`): an agent job waits behind a full provider, the tick is unset, the place frees: it ends `cancelled`, `jc.call`'s function never ran, `paid_calls` 0, and the agent's next request is refused at the gate. An agent job whose first call is out, tick unset: its second `jc.call` runs and it ends `succeeded`. A user's job with the tick off runs to the end. Tick unset then set again before the turn: the job runs. A Gemini agent job (recorded responses) queued behind a full provider, then unticked, ends `cancelled` with `paid_calls` 0.
+- Through the tools (`tests/integration/mcp/run-tools.test.ts`, `run-tools-refusals.test.ts`, `tests/unit/main/mcp/tools/run-tools.test.ts`; a door over the real core, the ComfyUI stand-in, dev tools on, ComfyUI ticked by the user): `generate_images` with a slot from `get_slots` gives a `jobId`, and `get_job` later shows `succeeded` and new asset IDs; `generate_video` from a first frame by asset ID makes the stand-in see one upload named `uploadName(...)`, and `get_job` shows the clip's asset ID; with the tick off, `AGENT_DENIED` with the step 2 sentence, no job row, and the stand-in saw nothing; a reference asset whose linked file is gone, and one over the size limit, give replies that hold the display name or ID and not the test's root folder, the file's folder or its file name on disk.
 - The secret-leak test passes with the new tools' arguments in `tests/integration/mcp/every-tool.ts`.
 
 ## Open items

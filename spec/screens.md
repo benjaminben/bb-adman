@@ -100,6 +100,7 @@ Built. In `src/renderer/screens/campaign/`: `video-panel/` (with `video-length.t
 Built. In `src/renderer/screens/campaign/`: `run-list/`, `run-row/` (with `video-status.ts`), `run-result/`, `video-result/`.
 
 - Each row: the provider's label (or "The provider" when unknown), "Video" for a video run, then the status.
+- Under that first line, "Started by an agent" when `startedBy` is `agent`.
 - Status: `queued` "Waiting"; `running` "Working", with `result.stage`, "place in queue {n}" and the percent when present; `succeeded` "Done" and its results; `failed` "Failed", the sentence from `plainMessage` (`src/shared/providers/messages.ts`) with the provider's label, and "Retry"; `cancelled` "Cancelled" and "Retry". A failed run never shows raw error text.
 - A running video run says "Waiting (place {n})" (or "Waiting") while the server holds it in its queue, else "Working, {m} min" counted from the row's `createdAt` (there is no `startedAt` column), read again every 15 seconds. No percentage.
 - "Cancel" shows for `queued` and `running` when the provider's `cancel` is not `none`. A refused cancel shows the command's message.
@@ -148,14 +149,15 @@ Built. `src/renderer/screens/settings/settings-screen/` and one component folder
 
 ### Agent runs
 
-Not built (Phase 2, after the agent-run commands). Design: a block below Agent access, shown whether or not the MCP server is on, component folder `src/renderer/screens/settings/agent-runs-section/`.
+`agent-runs-section/`. Below Agent access, shown whether the MCP server is on or off.
 
-1. One checkbox per provider for which `agentRunsOffered` gives null, labelled "Let agents start runs with {label}", calling `agentRuns.setAllowed`, showing the command's refusal as other sections do.
-2. Under a provider whose `local` is false: "Paid. Each run an agent starts is charged to your account, with no click from you."
-3. Number field "Most runs agents may have waiting or running, per provider", 1 to 16, saved by `agentRuns.setLimit` on change, refusal shown.
-4. A run row says "Started by an agent" under the kind when `startedBy` is `agent`.
+1. Heading "Agent runs".
+2. One checkbox per provider for which `agentRunsOffered` gives null, labelled "Let agents start runs with {label}", calling `agentRuns.setAllowed`. A refused command's own message shows under its checkbox.
+3. Under a provider whose `local` is false: "Paid. Each run an agent starts is charged to your account, with no click from you."
+4. Number field "Most runs agents may have waiting or running, per provider", 1 to 16, saved by `agentRuns.setLimit` on each change. An empty field sends nothing. A refused command's own message shows under the field.
+5. A run row says "Started by an agent" when `startedBy` is `agent` ('Run list and run row').
 
-Whether the per-provider tick stays is open (OI-90; build default: yes, off). The rules for agent runs are in `spec/mcp-and-agents.md`.
+Whether the per-provider tick stays is open (OI-90; build default: yes, off). The rules for agent runs are in `spec/agent-runs.md`. End-to-end case: `tests/e2e/screen-tour.spec.ts`, "Settings · Agent runs: one tick per provider, the limit".
 
 ## Key dialog
 

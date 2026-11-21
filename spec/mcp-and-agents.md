@@ -4,8 +4,7 @@ How an outside agent (an MCP client such as Claude Code) reaches the app: the MC
 
 ## Status on `main`
 
-- **Built:** the server (`src/main/mcp/`), the token, the request checks, the on and off switch, the port, the Connect panel with one block, the Settings section "Agent access (MCP)", 8 tools (`list_projects`, `get_project`, `list_assets`, `get_campaign`, `create_campaign`, `get_slots`, `get_job`, `list_jobs`), the agent policy table with the `tick` value, the fail-closed bus, and the agent-run gate with the tick and the limit (`spec/agent-runs.md`).
-- **Not built (Phase 2, agent-run slices):** the untick check, the Settings block "Agent runs", and the tools `generate_images`, `generate_video`, `cancel_job`. So no agent can start or cancel a run through the MCP server yet.
+- **Built:** the server (`src/main/mcp/`), the token, the request checks, the on and off switch, the port, the Connect panel with one block, the Settings section "Agent access (MCP)", 11 tools (`list_projects`, `get_project`, `list_assets`, `get_campaign`, `create_campaign`, `get_slots`, `get_job`, `list_jobs`, `generate_images`, `generate_video`, `cancel_job`), the agent policy table with the `tick` value, the fail-closed bus, and agent runs: the gate, the tick, the limit, the untick check and the Settings block "Agent runs" (`spec/agent-runs.md`).
 - **Not built (Phase 10):** bridge mode, the Claude Desktop block, the ask flow, the delete tools, `agent.activity`, and the other 4.5 tools.
 
 ## The MCP server (was 6.8)
@@ -69,7 +68,7 @@ Built. `src/main/mcp/token.ts`, `service.ts`, `sessions.ts`.
 
 ### Rules for every tool
 
-Built for the 8 tools that exist; every future tool follows them.
+Built for the 11 tools that exist; every future tool follows them.
 
 - Every tool that takes a `project_id` works only on projects open in the app [REQ: FR-201].
 - **Inputs.** A tool's input is its command's or query's own Zod schema, with top-level keys in snake_case and nested keys as the command has them (camelCase). That schema is the one owner. `project_id` reaches the command as `projectId`. Arguments that do not match the published input schema get the MCP SDK's own validation error before any command runs.
@@ -80,7 +79,7 @@ Built for the 8 tools that exist; every future tool follows them.
 
 ### The tool table
 
-25 tools, 8 built. "Phase 2" means the agent-run slices; they are the next work. Policy is the agent policy of the command the tool runs (see 'Agent policy table').
+25 tools, 11 built. Policy is the agent policy of the command the tool runs (see 'Agent policy table').
 
 | Tool | Runs | Input | Output | Policy | Status | Requirements |
 |------|------|-------|--------|--------|--------|--------------|
@@ -104,11 +103,11 @@ Built for the 8 tools that exist; every future tool follows them.
 | `delete_variant` | command `variant.delete` | project_id, variant_id | — | ask | Not built (Phase 10) | FR-197 |
 | `delete_campaign` | command `campaign.delete` | project_id, campaign_id | — | ask | Not built (Phase 10) | FR-197 |
 | `get_slots` | query `template.slots` | project_id, campaign_id | Per slot of the master variant: `slotId`, `type`, `state` (`filled` or `empty`), `candidates` (asset IDs) | allow | Built | FR-192, D-080 |
-| `generate_images` | command `generation.runImages` | The command's input as built: project_id, variant_id, slot or layer_id, prompt, reference_asset_ids, count, provider | `{ jobId }` | tick | Not built (Phase 2) | FR-062, FR-279, D-080 |
-| `generate_video` | command `generation.startVideo` | The command's input as built: project_id, variant_id, prompt, duration_ms, provider, start, use_references, reference_asset_ids | `{ jobId }` | tick | Not built (Phase 2) | FR-262, FR-279, D-080 |
+| `generate_images` | command `generation.runImages` | The command's input as built: project_id, variant_id, slot or layer_id, prompt, reference_asset_ids, count, provider | `{ jobId }` | tick | Built | FR-062, FR-279, D-080 |
+| `generate_video` | command `generation.startVideo` | The command's input as built: project_id, variant_id, prompt, duration_ms, provider, start, use_references, reference_asset_ids | `{ jobId }` | tick | Built | FR-262, FR-279, D-080 |
 | `get_job` | query `job.get` | project_id, job_id | The job view (below) | allow | Built | FR-279, D-080 |
 | `list_jobs` | query `job.list` | project_id, campaign_id?, variant_id?, state?, limit? | The job view per job, newest first | allow | Built | FR-279, D-080 |
-| `cancel_job` | command `job.cancel` | project_id, job_id | `{ jobId }` | tick (own runs only) | Not built (Phase 2) | FR-281, D-080 |
+| `cancel_job` | command `job.cancel` | project_id, job_id | `{ jobId }` | tick (own runs only) | Built | FR-281, D-080 |
 
 Each new tool maps one to one to its command or query, with an allow-list reply picker, and the tool-list snapshot is updated.
 
@@ -126,8 +125,8 @@ Each new tool maps one to one to its command or query, with an allow-list reply 
   - `failures` for a picture job only: known error kind to count;
   - `message`: for an `errorReason`, the `reasonMessage` sentence with `{address}` replaced by "the saved ComfyUI address" and `{n}` by "some"; else for an `errorKind`, `plainMessage(kind, provider label)`, where a provider this build does not list is called "The provider"; else null.
   - Left out: `provider`, `model`, `remoteJobId`, `request`, and the rest of `result`. A failed run is reported to the agent in the app's own words.
-- **`generate_images`, `generate_video`.** Reply `{ jobId }` only. Refusals are returned as the command gives them. The two start tools run one at a time through one `createSerial()` (`src/main/mcp/serial.ts`), made once when `toolSetup` is called and shared by every session; the bus is not changed for this. Descriptions say: the run makes options for the user to choose from, so leave the choice to the user unless asked; `provider` is `comfyui` (the user's own ComfyUI server, no charge) or `gemini` (pictures only; paid, charged to the user's Google account with no click); runs are refused unless the user allowed agents for that provider in Adman's Settings. `generate_video`'s description names the three starts (from a prompt, from a first-frame picture, with a reference picture; the shapes are in `spec/api-commands.md`) and says a picture is named by an asset ID from `list_assets`.
-- **`cancel_job`.** Only a run the agent started (`spec/agent-runs.md`, 'Gate steps for a run').
+- **`generate_images`, `generate_video`** (`src/main/mcp/tools/run-tools.ts`). Reply `{ jobId }` only, through the picker `jobIdOnly`. Refusals pass through as the command gives them; the full set, `licence_not_confirmed` (not built, S2-4) included, is in `spec/agent-runs.md`, 'After the gate'. The two start tools run one at a time through one `createSerial()` (`src/main/mcp/serial.ts`), made when `toolSetup` is called and shared by every session (`oneAtATime` on the tool definition); the bus is not changed for this. A tool's published input schema does not carry the "slot or layer, not both" rule; the command enforces it. The tools register no output schema. Descriptions say: the run makes options for the user to choose from, so leave the choice to the user unless asked; `provider` is `comfyui` (the user's own ComfyUI server, no charge) or `gemini` (pictures only; paid, charged to the user's Google account with no click); runs are refused unless the user allowed agents for that provider in Adman's Settings. `generate_video`'s description names the three starts (from a prompt, from a first-frame picture, with a reference picture; the shapes are in `spec/api-commands.md`) and says a picture is named by an asset ID from `list_assets`.
+- **`cancel_job`.** Only a run the agent started (`spec/agent-runs.md`, 'Gate steps for a run'). Reply `{ jobId }` through `jobIdOnly`. Not run one at a time.
 - **`render_variant` writes no file** [REQ: FR-193, D-030]. The picture goes back to the agent inside the tool reply and nowhere else.
   - The reply is one MCP image content item: the PNG bytes in base64 with the type `image/png`. It holds no path and no address (not an `adman-asset://` address either).
   - The picture is made in memory from start to finish. The render service draws the variant in the hidden window, captures it, scales it to `max_dimension` and turns it into PNG bytes with `nativeImage.toPNG()`. No step writes it to disk: not to an export folder, the assets folder, the app data folder, or the system's temporary folder, not even for a moment.
@@ -177,9 +176,9 @@ Policy-based, with two actors.
 | Run checks | ✓ | ✓ |
 | Delete a variant or campaign | ✓ | With the user's permission, for every campaign and variant |
 | Fan-out, sync, undo | ✓ | ✗ |
-| Picture and video generation | ✓ | ✓ through the MCP server, on every provider the app offers for the job (today ComfyUI, and Gemini once its tick can be set), and on `trial` ComfyUI workflows while dev tools are on, only for a provider the user ticked, within the limit [D-080]. Not built. |
+| Picture and video generation | ✓ | ✓ through the MCP server, on every provider the app offers for the job (today ComfyUI and Gemini), and on `trial` ComfyUI workflows while dev tools are on, only for a provider the user ticked, within the limit [D-080]. |
 | AI layout and copy suggestions | ✓ | Under the Gemini tick, when Phase 4 builds them |
-| Cancel a run | ✓ where the provider can stop it | Only a run an agent started (all agent clients are one actor); no tick needed. Not built. |
+| Cancel a run | ✓ where the provider can stop it | Only a run an agent started (all agent clients are one actor); no tick needed. |
 | Retry a run; mark a result seen; read the server's own words | ✓ | ✗ |
 | Export, publish | ✓ | ✗ |
 | Import files, add pictures from disk | ✓ | ✗ (OI-93) |
