@@ -4,6 +4,7 @@
 import { useId, type ReactNode } from 'react'
 import { NumberField } from '@/renderer/editor/number-field'
 import type { LayerPatch } from '@/shared/schemas/commands/layer'
+import layout from '@/renderer/ui/layout.module.css'
 import type { TextStyle } from '@/shared/schemas/layer'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { ColourField } from './colour-field'
@@ -88,7 +89,7 @@ export function TextFields(props: TextFieldsProps) {
         disabled={disabled}
         onCommit={(color) => set({ color })}
       />
-      <div role="group" aria-label="Align" className={styles.align}>
+      <div role="group" aria-label="Align" className={`${layout.seg} ${styles.align}`}>
         {ALIGN.map(([align, name]) => (
           <button
             key={align}

@@ -6,6 +6,7 @@
 import { useState } from 'react'
 import { ColourChoice } from '@/renderer/editor/colour-choice'
 import { NumberField } from '@/renderer/editor/number-field'
+import layout from '@/renderer/ui/layout.module.css'
 import { textLookOf } from '@/shared/config/look'
 import type { LayerPatch } from '@/shared/schemas/commands/layer'
 import { LOOK_LIMITS, type TextStyle } from '@/shared/schemas/layer'
@@ -40,7 +41,7 @@ export function TextBoxFields(props: TextBoxFieldsProps) {
         <span className={styles.label} aria-hidden="true">
           Vertical align
         </span>
-        <div className={styles.align}>
+        <div className={`${layout.seg} ${styles.align}`}>
           {ALIGN.map(([verticalAlign, name]) => (
             <button
               key={verticalAlign}

@@ -95,7 +95,9 @@ export function PropertiesPanel(props: PropertiesPanelProps) {
             <h3 className={styles.name}>{layer.name}</h3>
             <p className={styles.kind}>{KIND[layer.type]}</p>
           </header>
-          <Sections key={layer.id} {...props} layer={layer} palette={palette} />
+          <div className={styles.body}>
+            <Sections key={layer.id} {...props} layer={layer} palette={palette} />
+          </div>
         </>
       ) : (
         <p className={styles.empty}>Select a layer to change it.</p>
