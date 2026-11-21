@@ -3,6 +3,8 @@
 import { describe, expect, it } from 'vitest'
 import { applyPatches } from '@/renderer/dialogs/layout-dialog/apply-patches'
 import { STARTER_LAYOUTS } from '@/shared/config/starter-layouts'
+import type { LayerRow } from '@/shared/schemas/rows/layer'
+import type { StarterLayout } from '@/shared/config/default-layout'
 import { starterLayoutPatches } from '@/shared/templates/starter-layout-patches'
 import { layer, textStyle } from '../../shared/scene/fixtures'
 
@@ -20,12 +22,14 @@ const HEADLINE = layer({
   style: { ...textStyle, fontAssetId: 'F1', boxColor: '#123456' },
 })
 const OTHER = layer({ id: 'extra', type: 'text' })
+const [PHOTO_BOTTOM_LEFT, PHOTO_TOP_CENTRE] = STARTER_LAYOUTS as [StarterLayout, StarterLayout]
 
 describe('applyPatches [spec/editor.md "Layout…", LK-6]', () => {
   it('merges each update into its layer and leaves the others alone', () => {
     const layers = [BACKGROUND, HEADLINE, OTHER]
-    const updates = starterLayoutPatches(STARTER_LAYOUTS[0], { width: 1080, height: 1080 }, layers)
-    const [background, headline, other] = applyPatches(layers, updates)
+    const updates = starterLayoutPatches(PHOTO_BOTTOM_LEFT, { width: 1080, height: 1080 }, layers)
+    const merged = applyPatches(layers, updates)
+    const [background, headline, other] = merged as [LayerRow, LayerRow, LayerRow]
     const patchOf = (id: string) => updates.find((u) => u.layerId === id)?.patch
 
     expect(background.geometry).toEqual({ ...patchOf('background')?.geometry, crop })
@@ -40,7 +44,8 @@ describe('applyPatches [spec/editor.md "Layout…", LK-6]', () => {
   it('does not change the layers it was given', () => {
     const layers = [BACKGROUND, HEADLINE]
     const before = structuredClone(layers)
-    applyPatches(layers, starterLayoutPatches(STARTER_LAYOUTS[1], { width: 900, height: 1600 }, layers))
+    const updates = starterLayoutPatches(PHOTO_TOP_CENTRE, { width: 900, height: 1600 }, layers)
+    applyPatches(layers, updates)
     expect(layers).toEqual(before)
   })
 

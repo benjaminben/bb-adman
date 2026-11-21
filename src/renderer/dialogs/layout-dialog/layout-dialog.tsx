@@ -7,7 +7,7 @@
 import { useId, useMemo, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
-import { STARTER_LAYOUTS } from '@/shared/config/starter-layouts'
+import { DEFAULT_STARTER_LAYOUT_ID, STARTER_LAYOUTS } from '@/shared/config/starter-layouts'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { SceneAsset } from '@/shared/scene/types'
@@ -34,7 +34,7 @@ function LayoutBody(props: BodyProps) {
   const { variant, layers, sending } = props
   const api = useApi()
   const ids = useId()
-  const [chosen, setChosen] = useState(STARTER_LAYOUTS[0].id)
+  const [chosen, setChosen] = useState(STARTER_LAYOUTS[0]?.id ?? DEFAULT_STARTER_LAYOUT_ID)
   const [refusal, setRefusal] = useState<string | null>(null)
   const choices = useMemo(
     () =>

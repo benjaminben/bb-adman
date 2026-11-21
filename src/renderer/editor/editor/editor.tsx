@@ -7,6 +7,7 @@ import { useApi, useApp } from '@/renderer/app/app-context'
 import { CanvasView } from '@/renderer/editor/canvas-view'
 import { EditorBanner } from '@/renderer/editor/editor-banner'
 import { LayerList } from '@/renderer/editor/layer-list'
+import { LayoutButton } from '@/renderer/editor/layout-button'
 import { useLayoutRun } from '@/renderer/editor/layout-run'
 import { PropertiesPanel } from '@/renderer/editor/properties-panel'
 import { TopBar } from '@/renderer/editor/top-bar'
@@ -110,6 +111,15 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
               onRename={rename}
               canPlaceText={layoutRun.canPlace}
               onPlaceText={layoutRun.onPlace}
+              placing={layoutRun.running}
+              layout={
+                <LayoutButton
+                  projectId={projectId}
+                  variant={variant}
+                  layers={scene}
+                  assets={forScene}
+                />
+              }
             />
             <EditorBanner
               missingFile={missingFile}

@@ -5,6 +5,7 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { LayoutDialog } from '@/renderer/dialogs/layout-dialog'
+import type { StarterLayout } from '@/shared/config/default-layout'
 import { STARTER_LAYOUTS } from '@/shared/config/starter-layouts'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { starterLayoutPatches } from '@/shared/templates/starter-layout-patches'
@@ -60,7 +61,7 @@ describe('LayoutDialog [spec/editor.md "Layout…", LK-6]', () => {
 
   it.each([0, 3])('Apply sends one layer.updateMany for layout %i and closes', async (i) => {
     const { fake, onClose } = await open()
-    const layout = STARTER_LAYOUTS[i]
+    const layout = STARTER_LAYOUTS[i] as StarterLayout
     await userEvent.click(screen.getByRole('radio', { name: layout.name }))
     await userEvent.click(screen.getByRole('button', { name: 'Apply' }))
     const updates = starterLayoutPatches(layout, VARIANT, LAYERS)
