@@ -110,14 +110,19 @@ export interface VideoProvider {
   // [1.60] N-6: the size the run is made at, which a first frame is fitted to before start.
   // A provider without it makes the run at the variant's own size.
   runSize?(width: number, height: number, videoStart: VideoStart): { width: number; height: number }
-  start(input: {
-    image: ImageFile | null
-    references: ImageFile[]
-    prompt: string
-    durationMs: number
-    width: number
-    height: number
-  }): Promise<{ remoteJobId: string }>
+  // [1.60] N-7: a signal that fires before submission stops start with ProviderCancelled,
+  // with no more pictures uploaded.
+  start(
+    input: {
+      image: ImageFile | null
+      references: ImageFile[]
+      prompt: string
+      durationMs: number
+      width: number
+      height: number
+    },
+    opts?: Pick<RunOptions, 'signal'>,
+  ): Promise<{ remoteJobId: string }>
   check(remoteJobId: string): Promise<{
     status: 'waiting' | 'running' | 'succeeded' | 'failed' | 'cancelled'
     queuePosition?: number

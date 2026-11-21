@@ -36,6 +36,7 @@ describe('the comfyui provider folder [SPEC 6, 14 CU-0]', () => {
         'check',
         'fetchResult',
         'cancel',
+        'runSize',
       ])
     },
   )
