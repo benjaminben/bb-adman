@@ -132,3 +132,33 @@ describe('wire rows for the 1.8 fields [SPEC 3.3, 4.4]', () => {
     expect(() => readWireRow(db, 'job', { id: 'j1' })).toThrow()
   })
 })
+
+describe('wire rows for the 1.35 job fields [SPEC 6.11.1, 4.4]', () => {
+  const insert = (startedBy: string, errorReason: string | null) =>
+    `INSERT INTO job (id, kind, status, request, started_by, error_reason, created_at, updated_at)
+       VALUES ('j1', 'image_generation', 'failed', '{}', '${startedBy}', ${errorReason === null ? 'NULL' : `'${errorReason}'`}, 'x', 'y')`
+
+  it('reads startedBy and errorReason on a job', () => {
+    const db = setup()
+    db.prepare(insert('agent', 'missing_items')).run()
+    expect(readWireRow(db, 'job', { id: 'j1' })).toMatchObject({
+      startedBy: 'agent',
+      errorReason: 'missing_items',
+    })
+  })
+
+  it('reads a job with no error reason as errorReason null', () => {
+    const db = setup()
+    db.prepare(insert('user', null)).run()
+    expect(readWireRow(db, 'job', { id: 'j1' })).toMatchObject({
+      startedBy: 'user',
+      errorReason: null,
+    })
+  })
+
+  it('refuses a job row whose errorReason is not one of PROVIDER_ERROR_REASONS', () => {
+    const db = setup()
+    db.prepare(insert('user', 'cooking')).run()
+    expect(() => readWireRow(db, 'job', { id: 'j1' })).toThrow(/errorReason/)
+  })
+})

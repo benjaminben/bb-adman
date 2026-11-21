@@ -31,7 +31,10 @@ function row(db: import('better-sqlite3').Database, sql: string): Record<string,
 
 describe('migration 0001 [SPEC 3.8, 3.3]', () => {
   it('upgrades a version 1 file: variant and job rows unchanged apart from the new fields', () => {
-    expect(bundledMigrations.map((m) => m.tag)).toHaveLength(2)
+    expect(bundledMigrations.slice(0, 2).map((m) => m.tag)).toEqual([
+      '0000_initial',
+      '0001_agent_changed_and_job_target',
+    ])
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-0001-'))
     const filePath = path.join(dir, 'A.adman')
     const v1 = createProjectFile({
@@ -46,7 +49,11 @@ describe('migration 0001 [SPEC 3.8, 3.3]', () => {
     const jobBefore = row(v1.db, "SELECT * FROM job WHERE id = 'j1'")
     closeProjectFile(v1)
 
-    const h = openProjectFile({ filePath, appVersion: '0.1.0' })
+    const h = openProjectFile({
+      filePath,
+      appVersion: '0.1.0',
+      migrations: bundledMigrations.slice(0, 2),
+    })
     expect(readMeta(h.db).schemaVersion).toBe(2)
     expect(row(h.db, "SELECT * FROM variant WHERE id = 'v1'")).toEqual({
       ...variantBefore,

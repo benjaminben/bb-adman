@@ -25,6 +25,9 @@ export const job = sqliteTable(
     // [1.8] migration 0001: provider calls sent that may be charged, and when the result was seen.
     paidCalls: integer('paid_calls').notNull().default(0),
     seenAt: text('seen_at'),
+    // [1.35] migration 0002: who started the run, and the reason a failed run gives (SPEC 6.11.1).
+    startedBy: text('started_by').notNull().default('user'),
+    errorReason: text('error_reason'),
     createdAt: text('created_at').notNull(),
     updatedAt: text('updated_at').notNull(),
   },
@@ -38,6 +41,7 @@ export const job = sqliteTable(
       'job_error_kind',
       sql`${t.errorKind} IN ('bad_key','quota','refused','timeout','offline','other')`,
     ),
+    check('job_started_by', sql`${t.startedBy} IN ('user','agent')`),
     index('job_status').on(t.status, t.updatedAt),
     index('job_target').on(t.campaignId, t.variantId),
   ],

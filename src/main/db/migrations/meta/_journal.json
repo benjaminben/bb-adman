@@ -15,6 +15,13 @@
       "when": 1795220065053,
       "tag": "0001_agent_changed_and_job_target",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1795240763054,
+      "tag": "0002_job_started_by_and_error_reason",
+      "breakpoints": true
     }
   ]
 }
