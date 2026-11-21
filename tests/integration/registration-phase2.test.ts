@@ -29,7 +29,6 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
       generationCommands,
       ruleSetCommands,
       storageCommands,
-      subjectCommands,
     ]) {
       expect(list(deps)).toEqual([])
     }
@@ -77,5 +76,16 @@ describe('the job domain is registered [SPEC 14, 1.38 Y12]', () => {
     f = makeFixture()
     const deps = f.core.deps
     expect(Object.keys(jobQueries(deps))).toEqual(['job.list'])
+  })
+})
+
+describe('the subject domain is registered [SPEC 14, slice C]', () => {
+  it('gives subject.create, subject.update and subject.delete, in that order', () => {
+    f = makeFixture()
+    expect(subjectCommands(f.core.deps).map((h) => h.name)).toEqual([
+      'subject.create',
+      'subject.update',
+      'subject.delete',
+    ])
   })
 })
