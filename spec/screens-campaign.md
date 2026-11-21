@@ -2,7 +2,7 @@
 
 The screens, dialogs and components of Phase 2's groups 4 and 5: ComfyUI failures and refusals on the campaign page, the address and commercial-licence dialogs, the trial mark, confirmed licences in Settings, import (by button and by dropping files), relink, package, the brief form, the slot view and the campaign grid. Read with `spec/screens.md` (rules for every screen, the other built screens, choices made without a design sign-off), `spec/structure.md` (one folder per component, one styling source) and `spec/api-commands.md` / `spec/api-queries-events.md` (the calls).
 
-Built (slices S2-1 to S2-16), except the animated-WebP line of the import dialog (S2-17, Not built; `spec/phases/phase-02-screens.md`). For built parts the code and its tests are the record of detail; this file keeps the wording, states, focus rules and limits.
+Built (slices S2-1 to S2-17; `spec/phases/phase-02-screens.md`). For built parts the code and its tests are the record of detail; this file keeps the wording, states, focus rules and limits.
 
 ## Rules for these screens
 
@@ -28,7 +28,7 @@ Built.
 
 ## Campaign page: ComfyUI failures in the run row (S2-5)
 
-Built. Component `src/renderer/screens/campaign/run-failure/` (with `missing-items.ts`, `server-message.tsx`), drawn by `run-row/` under the status line of a `failed` row. Props: `row: JobRow`, `projectId`, `provider: ProviderInfo | undefined`, `providerLabel`. [REQ: FR-265, FR-266, FR-267, FR-069]
+Built. Component `src/renderer/ui/run-failure/` (with `missing-items.ts`, `server-message.tsx`), drawn by `run-row/` under the status line of a `failed` row. Props: `row: JobRow`, `projectId`, `provider: ProviderInfo | undefined`, `providerLabel`. [REQ: FR-265, FR-266, FR-267, FR-069]
 
 **What it shows**
 
@@ -115,7 +115,7 @@ Built. Component `src/renderer/screens/settings/licence-list/`, mounted inside `
 
 Built. The layout, top to bottom, inside the page (heading, "Close project", file path):
 
-1. "Campaigns": the campaign list.
+1. "Campaigns": the campaign list (`campaign-list/`). Each row: a box holding the campaign's cover thumbnail (the master of its first direction; alt "Cover of {name}"; the box stays empty when there is no cover), the name as text, "Variants: {n}", and "Open". How thumbnails are drawn: `spec/editor.md`, "Thumbnails on the screens".
 2. "Start a campaign": `brief-load/` ("Load a brief" and "Type a brief"), and the brief form when one is open.
 3. "Files": `import-files/` ("Import files…", "Import a folder…") and `missing-files/` (the missing-file line).
 4. "Package": `package-project/` ("Package project…").
@@ -129,7 +129,7 @@ While a campaign is open, the campaign page takes the place of sections 1 to 4. 
 
 ## The import dialog (S2-9) [REQ: FR-050, FR-052, FR-053, FR-054, FR-246]
 
-Built, except the animated-WebP line (S2-17). Component `src/renderer/dialogs/import-dialog/` (with `import-choices.tsx`, `import-text.ts`). Props: `projectId`, `open`, `paths: string[]`, `folder: boolean` (the one path is a folder), `subjects: SubjectRow[]`, `onClose()`. Opened by `import-files/` and by `drop-import/`, each with its own instance. Every close resets it.
+Built. Component `src/renderer/dialogs/import-dialog/` (with `import-choices.tsx`, `import-text.ts`, `animated-names.ts`). Props: `projectId`, `open`, `paths: string[]`, `folder: boolean` (the one path is a folder), `subjects: SubjectRow[]`, `onClose()`. Opened by `import-files/` and by `drop-import/`, each with its own instance. Every close resets it.
 
 **What it shows**
 
@@ -155,7 +155,7 @@ Built, except the animated-WebP line (S2-17). Component `src/renderer/dialogs/im
   - "{r} file(s) were already in the project and were kept as they were." (`r` = `reusedAssetIds.length`)
   - "{s} item(s) in the folder were skipped: links, hidden files, and files Adman cannot use." (`s` = `skippedCount`)
   - All three 0: "Nothing was imported. The folder holds no file Adman can use."
-  - Not built (S2-17): one line per animated WebP, "{name} holds an animation. Adman uses its first picture."
+  - One line per ID in `animatedAssetIds` (S2-17): "{name} holds an animation. Adman uses its first picture.", the display name from `asset.list`. A name not found, or a refused `asset.list`, reads "A file holds an animation. Adman uses its first picture." No query is sent when the list is empty.
   - One button "Done" closes the dialog.
 
 **Focus:** the first radio has focus on open; "Done" has focus once the result shows.
@@ -296,9 +296,11 @@ Built. Component `src/renderer/screens/campaign/slot-view/` (with `use-slots.ts`
 
 Built. They replace the old radio list (`variant-list/` is gone). These are the parts Phase 3 builds on (`spec/editor.md`, "Navigation" and "Thumbnails on the screens"; slices P3-9, P3-10, P3-16).
 
-**`src/renderer/screens/campaign/variant-grid/`**, component `VariantGrid`. Props: `variants: VariantSummary[]`, `chosenId: string | null`, `onChoose(variantId: string)`.
+**`src/renderer/screens/campaign/variant-grid/`**, component `VariantGrid`. Props: `projectId?: string`, `variants: VariantSummary[]`, `chosenId: string | null`, `onChoose(variantId: string)`, `onOpenBehind?(variantId: string)`.
 
 - A list `<ul aria-label="Variants">` laid out as a CSS grid: columns at least `--thumbnail-tile` wide, filling the row; gaps `--space-3`. One `<li>` per variant, holding a `VariantTile`, in `campaign.get` order (master first in its direction). One grid for the whole campaign; one grid per direction comes with Phase 5.
+- With `projectId`, each tile's `preview` is the variant's drawn thumbnail (`VariantThumbnail`, alt empty, since the tile's text names the variant).
+- With `onOpenBehind`, each tile's `actions` is a small "+" button, label "Open {title} in a tab", that opens the variant's tab behind the overview.
 - No variants (a broken file): "This campaign has no variants."
 
 **`src/renderer/screens/campaign/variant-tile/`**, component `VariantTile`. Props:
@@ -308,8 +310,8 @@ type VariantTileProps = {
   variant: VariantSummary
   chosen: boolean                          // the variant the panels below work on
   onChoose: (variantId: string) => void
-  preview?: ReactNode                      // P3-16 passes <VariantThumbnail …/>; absent: the shape box
-  actions?: ReactNode                      // P3-10 passes the "+" button; drawn beside the main button, never inside it
+  preview?: ReactNode                      // the grid passes <VariantThumbnail …/>; absent: the shape box
+  actions?: ReactNode                      // the grid passes the "+" button; drawn beside the main button, never inside it
 }
 ```
 
@@ -321,9 +323,9 @@ type VariantTileProps = {
 - **Chosen look:** the tile's edge in `--color-accent`, `--focus-ring-width` wide. The focus ring is drawn from the focus tokens, as everywhere.
 - **Keyboard:** each tile is one stop in the tab order. Arrow keys are not used (A-47).
 
-**The campaign page** (`campaign-view/`): "Back to project"; the campaign name; `VariantGrid`; the line "Runs and panels below are for: {title} · {sizeLabel} · {language}" for the chosen variant; the slot view; Make pictures; Make a video; the run list. The master is chosen at the start.
+**The campaign page** (`campaign-view/`): "Back to project"; the campaign name; `VariantGrid` (given `projectId` and `onOpenBehind`); the line "Runs and panels below are for: {title} · {sizeLabel} · {language}" for the chosen variant; the slot view; Make pictures; Make a video; the run list. The master is chosen at the start.
 
-**What Phase 3 changes** (not built here): P3-9 and P3-10 make a plain click open the variant's tab and add the "+" through `actions`; P3-16 passes the thumbnail through `preview`. How the overview's panels then choose their variant is Phase 3's to settle (`spec/editor.md`).
+**Phase 3 additions** (built, P3-9, P3-10, P3-16): a plain click on a tile opens the variant's tab; the "+" opens it behind; the tiles show thumbnails. The rules for tabs and thumbnails are in `spec/editor.md`, "Variant tabs" and "Thumbnails on the screens".
 
 ## Choices made without a design sign-off
 

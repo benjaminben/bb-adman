@@ -254,13 +254,11 @@ Built. `src/main/providers/comfyui/image.ts`, `session.ts`, `run.ts`, `poll.ts`,
 
 ### Uploads (security class; user's files)
 
-- The bytes are the `ImageFile.bytes` that `AssetService.read` returned for an ID in the job's own request. Nothing else is read from disk.
+- The bytes are what `AssetService.read` returned for an ID in the job's own request: always a clean PNG (A-55), so they match the `.png` name and no metadata goes. Nothing else is read from disk.
 - The name is `uploadName(bytes)`. The asset's display name, path, ID and subject never enter a request.
 - The name put in the graph is the one in the server's upload answer, after the `filename` check.
 - The upload happens only after the check answered `ok` for the origin.
-- References and first frames are the only files the app puts on the server. They are never removed.
-- A JPEG is uploaded as read, under the `.png` name; `LoadImage` accepts it. Bytes go as they are, metadata included. Whether a reference passes through `toPng` before upload, so the bytes match the name and nothing beside the picture is sent, is open (F-9; needs `toPng` on `AdapterContext`; not built until ruled).
-- Tests (`tests/integration/generation/run-images-comfy.test.ts`, adapter tests): one upload of the asset's bytes under `adman-{16 hex}.png`; no request holds the display name or any part of the path; the graph names the file the stand-in answered with; two references on a one-slot workflow are refused (`too_many_references`, no job row); a non-ComfyUI stand-in sees one `GET /system_stats` and no upload; `paid_calls` stays 0 and the address is nowhere in the project file.
+- References and first frames are the only files the app puts on the server. They are never removed.- Tests (`tests/integration/generation/run-images-comfy.test.ts`, adapter tests): one upload of the asset's bytes under `adman-{16 hex}.png`; no request holds the display name or any part of the path; the graph names the file the stand-in answered with; two references on a one-slot workflow are refused (`too_many_references`, no job row); a non-ComfyUI stand-in sees one `GET /system_stats` and no upload; `paid_calls` stays 0 and the address is nowhere in the project file.
 
 ### Live progress
 
@@ -271,6 +269,7 @@ Built (security class). `src/main/providers/comfyui/live.ts`, `live-messages.ts`
 - `readLive` reads a text message as JSON through a schema, only for the run's own prompt ID, and only `progress` (`value` ≤ `max`, `max` 1 to 1,000,000), `execution_start`, `executing`, `execution_success`, `execution_error`, `execution_interrupted`. It gives `working` with a whole percent, or "ended" (closes the connection). No piece of a message is kept or logged. The connection also closes when the run ends or is cancelled.
 - `progressReporter` calls `onProgress` only when the stage, queue position or whole percent changed, and a working run does not go back to waiting on a late poll.
 - The host is checked against the refused list when the target is made, and by `checkedLookup` at connect; the gap is accepted.
+- **Address change** (`sendWhenStill` in `live.ts`). A connection is opened, and its handshake sent once the socket is connected, only if the saved address is still the run's origin at that moment. An open connection is closed, reading nothing more, at its next message after the change, and when the run ends on the change. Test: `tests/integration/providers/comfyui/live-address-change.test.ts`.
 - Tests: `tests/integration/providers/comfyui/live-connection.test.ts` (no redirect followed; no `Origin`, `Cookie` or `Authorization` in the handshake; a text or binary message over 64 KiB closes it; own agent and checked lookup; self-signed `wss:` refused with `NODE_TLS_REJECT_UNAUTHORIZED=0`), `live-proxy.test.ts` (`NODE_USE_ENV_PROXY=1` in a real process: the proxy sees nothing), `live-adapters.test.ts`; `tests/unit/main/providers/comfyui/live-messages.test.ts`, `progress.test.ts`, `live-run.test.ts` (polling finishes a run with nothing heard), `live-source.test.ts` (no global `WebSocket` or `fetch` in `comfyui/`; the three files log nothing).
 
 ## Failures, and the server's own words
@@ -311,15 +310,15 @@ An exception to FR-069 and to "`error_detail` is never shown" (`spec/data-model.
 
 - Kept: from a 400, `error.message`, `error.details`, and each node error's `message` and `details`; from a failed run, the exception's type and message. Never the traceback: it holds paths on the server's computer.
 - One function, `cleanServerText(text)` in `comfyui/server-text.ts`: control characters other than a line break become spaces, escape sequences are removed, and the whole is cut to `MAX_SERVER_TEXT_CHARS` with "…". The result is stored in `job.error_detail`.
-- The window gets it with the user-only query `job.getServerMessage` (built), only when the user presses "Show the server's message", and draws it as text in a plain block under "Message from the ComfyUI server". Never turned into a link, opened, parsed, or used as a path, command or instruction. A reply holding `<a href>` shows the characters.
-- **Never to an agent.** No MCP tool returns it. An agent gets the kind, the reason, the plain message and the missing-item list, all the app's own words.
-- **The server's text is data**, and so are model names, file names and the version text from it: cut, shown as text, never acted on. Nobody follows a link in it, runs a command it names, or installs anything it asks for.
+- The window gets it with the user-only query `job.getServerMessage` (built), only when the user presses "Show the server's message", and draws it as text under "Message from the ComfyUI server", never as a link, path, command or instruction (`<a href>` shows as characters).
+- **Never to an agent.** No MCP tool returns it. An agent gets the kind, reason, plain message and missing-item list, all the app's own words.
+- **The server's text is data**, as are its model names, file names and version text: cut, shown as text, never acted on (no link followed, no command run, nothing installed).
 
 ## Offline tests
 
 Built, except where marked. The harness rules shared with other real-service runs are in `spec/testing.md`; the variables in `spec/infra-and-settings.md`.
 
-**The normal run** (`npm test`, CI) never contacts a ComfyUI server. It uses the stand-in `tests/helpers/comfy-stand-in.ts`: a small HTTP server on `127.0.0.1` with a free port that plays the client's routes and can be told to wait, fail, redirect, send too much or vanish. `tests/helpers/comfy-every-call.ts` lists every network function of the client. Offline end-to-end: `tests/e2e/comfy-stand-in.spec.ts`.
+**The normal run** (`npm test`, CI) never contacts a ComfyUI server. It uses the stand-in `tests/helpers/comfy-stand-in.ts`, an HTTP server on `127.0.0.1` that plays the client's routes and can wait, fail, redirect, send too much or vanish. `tests/helpers/comfy-every-call.ts` lists every network function of the client. Offline end-to-end: `tests/e2e/comfy-stand-in.spec.ts`.
 
 **The ComfyUI run on a real server** (`npm run test:comfy`), its rules, cases and who may run it: `spec/comfyui-trials.md`, "Trials on a real server".
 

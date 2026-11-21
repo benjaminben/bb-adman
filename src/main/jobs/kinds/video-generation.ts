@@ -1,12 +1,13 @@
 // The video_generation job kind, first form (SPEC 6.10.7 "Into the project", 6.11.1, 6.11.2;
 // 14 1.40, 1.41 CU-6a). start once, store its ID with setRemoteJobId, check on a timer, then
-// fetch the clip, check it with checkMp4, write it with writeManaged and add it with
-// asset.addGenerated. No clip is put on a track (Phase 7).
+// fetch the clip, check it with checkMp4 and store it through storeResult (P4-5). No clip
+// is put on a track (Phase 7).
 // [1.40] (security class, cost): a row that already has a remote ID is only checked and
 // fetched; start is never called for it, so a row the app did not make cannot start work.
-import { ulid } from 'ulid'
 import type { JobKindHandler, JobRunContext } from '@/main/jobs/types'
 import { cancelWaitFor } from '@/main/jobs/cancel-wait'
+import { readPictures } from '@/main/jobs/read-pictures'
+import { storeResult } from '@/main/jobs/store-result'
 import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { adapterFor } from '@/main/providers/adapters'
@@ -14,7 +15,6 @@ import { requireProviderKeys } from '@/main/providers/require-keys'
 import {
   ProviderCancelled,
   ProviderFailure,
-  type ImageFile,
   type VideoProvider,
   type VideoResult,
 } from '@/main/providers/types'
@@ -47,8 +47,7 @@ const projectGone = (jc: JobRunContext) => !jc.deps.projects.get(jc.projectId)
 // reference is sent as read.
 async function pictures(run: Run, project: ProjectHandle, request: VideoJobRequest) {
   const { jc, provider } = run
-  const files: ImageFile[] = []
-  for (const id of request.referenceAssetIds) files.push(await jc.deps.assets.read(project, id))
+  const files = await readPictures(jc, project, request.referenceAssetIds)
   const [frame] = files
   if (request.start !== 'first_frame' || !frame) return { image: null, references: files }
   const { width, height } = request
@@ -122,17 +121,8 @@ async function stored(
     throw new ProviderFailure({ kind: 'other', reason: 'bad_result', detail })
   }
   if (projectGone(jc)) throw new ProviderCancelled()
-  const assetId = ulid()
-  await jc.deps.assets.writeManaged(project, { assetId, ext: 'mp4', bytes: result.bytes })
-  const files = [{ assetId, ext: 'mp4' }]
-  // [1.58] J-4: the asset row keeps the model the result names (SPEC 6.6).
-  const added = await jc.system('asset.addGenerated', {
-    projectId: jc.projectId,
-    jobId: job.id,
-    files,
-    ...(result.model && { model: result.model }),
-  })
-  if (!added.ok) throw new Error(`asset.addGenerated refused: ${added.error.code}`)
+  const file = { jobId: job.id, bytes: result.bytes, ext: 'mp4', model: result.model }
+  const assetId = await storeResult(jc, project, file)
   return { assetId, ...facts, details: 'pending' }
 }
 

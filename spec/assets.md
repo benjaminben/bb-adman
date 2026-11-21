@@ -81,7 +81,7 @@ Built. `asset.import { projectId, paths, library, subjectId?, copy }`. Files: `s
 - Each path comes from the system picker (`dialog.pickFiles`, `purpose: 'import'`). The window sends a path in no other call. `copy: true` saves a copy in the assets folder as `{assetId}.{ext}` (`managed`); `copy: false` links the file where it is (`linked`).
 - All file work is in `prepare`: inspect every file first (type, hash, size, time, picture size), then copy the new ones when asked. `run` checks again that no asset with each hash exists yet and inserts the rows. If `run` fails, `undoPrepare` removes the copies.
 - **Reuse** [REQ: FR-053]. A file whose content hash is already in the project is not imported again: the existing asset is reused, and keeps its own library and subject.
-- **Reply** `{ assetIds, reusedAssetIds, skippedCount }`. `assetIds` has one ID per imported or reused file, in input `paths` order, a folder's files sorted by relative path compared by code point. `reusedAssetIds` holds each ID once, in first-met order, naming assets that were in the project before the command. `skippedCount` counts skipped folder entries, so the app is never silent about them.
+- **Reply** `{ assetIds, reusedAssetIds, skippedCount, animatedAssetIds }`. `assetIds` has one ID per imported or reused file, in input `paths` order, a folder's files sorted by relative path compared by code point. `reusedAssetIds` holds each ID once, in first-met order, naming assets that were in the project before the command. `skippedCount` counts skipped folder entries, so the app is never silent about them. `animatedAssetIds` holds each ID once, among `assetIds`, of a file that is an animated WebP, read from its first bytes with `webpHeadInfo` (S2-17); a file whose header cannot be read counts as not animated.
 - **A path named directly** follows a link. A wrong type or an unreadable file refuses the whole command.
 - **Unreadable files.** In `asset.import` and `asset.relink`, an error from `stat`, open, read or hashing other than `ENOENT` and `ENOTDIR` gives `RULE_VIOLATION`, `file_not_readable`, "{file name} could not be read." with no path. One shared helper writes one `warn` line with the command name, reason `file_not_readable` and the OS error code (`EACCES`, `EBUSY`, `EIO` need different help), with no path and no file name. A second `warn` line from the bus is accepted. `ENOENT` gives `NOT_FOUND`.
 
@@ -93,7 +93,7 @@ Built. `src/main/assets/folder-walk.ts` [REQ: FR-050, FR-294; D-053 item 19].
 - `FOLDER_LIMITS = { maxDepth: 12, maxFiles: 500 }` (one owner). At most 12 levels below the named folder: a folder past the depth is not entered and counts as one skipped entry. At most 500 regular files found, skipped ones included, counted before any file is read. Over 500: `INVALID_INPUT`, reason `too_many_files`, nothing imported.
 - Inside a folder: an entry that is a link is skipped and never followed (checked with `lstat`); a name starting with a dot is skipped; a file of no accepted type, empty, or unreadable is skipped, not refused. A file's type is decided from its first bytes before it is hashed.
 - A directly named folder that cannot be listed refuses with `file_not_readable`.
-- An empty folder, even one named like a picture (`pics.png`), succeeds with `{ assetIds: [], reusedAssetIds: [], skippedCount: 0 }`.
+- An empty folder, even one named like a picture (`pics.png`), succeeds with `{ assetIds: [], reusedAssetIds: [], skippedCount: 0, animatedAssetIds: [] }`.
 - The 8-level depth rule of `checkMp4` is unrelated.
 
 ## File types and how a type is recognised
@@ -116,7 +116,7 @@ A file is accepted when its extension is listed **and** its first bytes match th
 | text | text | `text/plain`, `text/markdown`, `application/json`, `application/yaml` | `txt`; `md`; `json`; `yaml`, `yml` | first 4,096 bytes valid UTF-8 with no NUL |
 
 - The extension is the lower-case text after the last dot; a name that is only a dot and an extension (`.png`) has none. An empty file matches no type.
-- `pickerExtensions(purpose, kind?)`: `import` offers every extension; `relink` only those of the asset's kind; `brief` only the text ones.
+- `pickerExtensions(purpose, kind?)`: `import` offers every extension, or only those of `kind` when given; `relink` only those of the asset's kind; `brief` only the text ones.
 - **File facts as built.** Width and height come from PNG and JPEG headers only. `font_family` is filled from the font's `name` table at import, relink and the change check (`readFontFamily`, `spec/scene.md`, "Font names at import"); the change check sets it to null when a font file becomes another kind. `duration_ms` is null: Phase 7 reads video. `readFileFacts` hashes before checking type (direct files, relink and the change check; folder import checks type first). MP4 and MOV are recognised by `ftyp` alone, so a HEIC, AVIF or M4A named `.mp4` is taken as video; Phase 7 may tighten this.
 - Size limits for pictures sent to a provider (`src/main/providers/picture-limits.ts`): `MAX_PICTURE_BYTES` 32 MiB, `MAX_PICTURE_SIDE` 8,192, `MAX_PICTURE_PIXELS` 24,000,000. Import itself has no size limit.
 
@@ -124,29 +124,18 @@ A file is accepted when its extension is listed **and** its first bytes match th
 
 Rule: a picture is never refused only because it is WebP [REQ: FR-298, FR-051]. WebP is accepted everywhere, and the provider or workflow always gets a PNG.
 
-**As built today:** import, the library and the asset protocol accept WebP (it is in `file-types.ts` and `sniff.ts`). Sending a WebP picture onward is still refused, because `pictureType` knows PNG and JPEG only and `toPng`, the only decoder in the main process, is given only PNG or JPEG:
-
-- `AssetService.read` refuses it with `RULE_VIOLATION`, `asset_not_a_picture`.
-- `generation.runImages` refuses a WebP reference before any job row with `asset_not_a_picture`, "{name} is not a picture the app can send." (test from commit 1882e20).
-- `generation.startVideo` refuses a WebP picture with `picture_not_usable`, "This picture cannot be used for a video yet. Use a PNG or JPEG."
-- The reference picker shows a WebP picture but cannot tick it: "WebP cannot be sent yet".
-
-These refusals are a stopgap, not a rule. The conversion is not built: there is no `webp-size.ts` and no `webpToPng` in `src/`.
-
 ### WebP to PNG conversion
 
-Not built (Phase 2, slice WP, postponed).
+Built (Phase 2, slice WP).
 
-- Import, showing, placing and export need nothing new. A conversion happens only where the main process hands picture bytes on: a reference picture, a first frame, an extend source. The user's file is never changed.
-- `CoreDeps.webpToPng(bytes: Uint8Array): Promise<Uint8Array>`; the default throws (like `fitPicture`); `src/main/index.ts` fills it. Approved edit to the frozen `core-deps.ts`.
-- `webpInfo(bytes): { width; height; animated }` in `src/main/providers/webp-size.ts`, pure: reads the RIFF header and first chunk (`VP8 `, `VP8L`, `VP8X`), throws when it cannot. Limits `MAX_PICTURE_BYTES`, `MAX_PICTURE_SIDE`, `MAX_PICTURE_PIXELS`; an over-limit file never reaches the decoder window.
-- After decoding the result must be PNG by `pictureType`, its header size must equal `webpInfo`'s, and it then goes through `toPng`. Transparency is kept.
-- Animated WebP: first frame only. The import notice is slice S2-17, after this slice: `asset.import`'s reply gains `animatedAssetIds` (from `webpInfo(...).animated`), and the import dialog says "{name} holds an animation. Adman uses its first picture." (`spec/screens-campaign.md`).
-- Called in `readPicture` (`src/main/assets/read-picture.ts`): WebP by `sniff.ts` signature, then `webpInfo` check, convert, return `{ bytes, mime: 'image/png' }`. A failed conversion is `asset_not_a_picture`; over the byte limit, `asset_too_large`. No new reason. The three refusals above then go.
-- Decoder: one hidden window with the app window's `webPreferences` (`src/main/windows/app-window-options.ts`): sandbox on, context isolation on, no Node, no preload, a fixed bundled page, a session that lets no request leave. One conversion at a time; 10 s time limit; a crash or timeout is a failed conversion and the window is remade at next use. Recommended: `createImageBitmap` on a `Blob`, draw to a canvas, read back PNG. New files under `src/main/windows/`, each under 200 lines.
-- Check first: (1) `nativeImage.createFromBuffer` gives an empty image for WebP; (2) a hidden sandboxed window decodes still and animated WebP, animated giving the first frame; (3) up to `MAX_PICTURE_BYTES` in and PNG out without a channel the app window could also call. If any fails, stop; the architect rules.
-- Not chosen: a decoder package; sending WebP as-is to providers; the OS thumbnail maker.
-- Tests: unit `webpInfo` on the three chunk kinds, the animation flag, a cut-off file, a RIFF size past the end, a zero side; `readPicture` with a stand-in converter (WebP to PNG; a throwing converter gives `asset_not_a_picture`; pixels over the limit refused with the converter never called; a non-PNG or wrong-size PNG refused; PNG and JPEG never call it). End to end (class G): still and animated WebP through the real window; the window-security test covers the new window. The WebP-refused test from 1882e20 needs an approved change.
+- Import, the library, the asset protocol, showing, placing and export take WebP as it is. A conversion happens only where the main process hands picture bytes on: a reference picture, a first frame, an extend source. The user's file is never changed.
+- `generation.runImages`, `generation.startVideo` (its start check lists `image/webp` beside PNG and JPEG) and the reference picker all accept a WebP picture.
+- `CoreDeps.webpToPng(bytes: Uint8Array): Promise<Uint8Array>`; the default throws (like `fitPicture`); `src/main/index.ts` fills it from `src/main/windows/webp-window.ts`.
+- `src/main/providers/webp-size.ts` reads the RIFF header and first chunk (`VP8 `, `VP8L`, `VP8X`) without decoding, and throws when it cannot. `webpInfo(bytes)` takes a whole file and gives `{ width, height, animated }` before a conversion. `webpHeadInfo(head)` gives the same from a file's first bytes only, for the animation flag at import.
+- Called in `readPicture` (`src/main/assets/read-picture.ts`): a WebP by its `sniff.ts` signature is checked with `webpInfo` against `MAX_PICTURE_SIDE` and `MAX_PICTURE_PIXELS` (an over-limit file never reaches the decoder window), converted, then must be a PNG of the size `webpInfo` gave. It then goes through `toPng` like every picture. A failed conversion is `asset_not_a_picture`; over the byte limit, `asset_too_large`. Transparency is kept.
+- Animated WebP: first frame only. `asset.import` names these files in `animatedAssetIds` ("Import"), and the import dialog says so (`spec/screens-campaign.md`).
+- The decoder window: one hidden sandboxed window with no preload. The main process passes the bytes as a base64 argument of `executeJavaScript` and gets the PNG back as the call's result. One conversion at a time, 10 s limit; a crash, hang or wrong answer fails the conversion and the window is made again at next use. Its security rules: `spec/security.md`, "Rules: the WebP decoder window".
+- Tests: unit `webpInfo`; `readPicture` with a stand-in converter; `tests/e2e/webp-decoder.spec.ts` (a still and an animated WebP through the real window).
 
 ## Reading a picture to send it (security class)
 
@@ -154,7 +143,8 @@ Built. `AssetService.read` (`src/main/assets/read-picture.ts`) loads a file into
 
 - The row must be `kind = 'image'`, else `asset_not_a_picture`.
 - Before reading, the `stat` size must be at most `MAX_PICTURE_BYTES` (32 MiB). The file is read to the end or to the limit plus one byte, and the bytes read are checked again. Over: `RULE_VIOLATION`, `asset_too_large`, "{display name} is too large to send. The limit is 32 MB."
-- The bytes must be PNG or JPEG by signature (`pictureType`). The returned `mime` is what the bytes show, not the row's. Otherwise `RULE_VIOLATION`, `asset_not_a_picture`, "{display name} is not a picture the app can send."
+- The bytes must be PNG, JPEG or WebP by signature. Otherwise `RULE_VIOLATION`, `asset_not_a_picture`, "{display name} is not a picture the app can send."
+- **Every picture comes back as a clean PNG** (A-55): a WebP is first converted ("WebP to PNG conversion"), then the picture goes through `toPng`, which turns a JPEG by its orientation tag (EX-1) and keeps nothing the file carried beside the picture. The reply's `mime` is always `image/png`. A converter refusal is `asset_not_a_picture`; a PNG over the byte limit at either step is `asset_too_large`. Without converters (the asset service alone, in tests) the bytes go as read and a WebP is refused.
 - A file that cannot be found gives `MISSING_FILE` (`missingFile` takes asset IDs, never a path); a file gone after `stat` gives `NOT_FOUND`. A file-system error inside `readPicture` is not an `AppError`, so the bus returns the fixed `INTERNAL` reply with no error text.
 - Display names in these refusals stay, for the user and the agent alike; a folder or path never appears.
 
@@ -217,14 +207,15 @@ Built for the test path. Main files: `src/main/commands/generation/` (checks), `
 | Value | Owner | Rule |
 |-------|-------|------|
 | Which pictures a run sends | `job.request.referenceAssetIds`, written only by `generation.runImages` (and `generation.startVideo` for its picture) | The window sends asset IDs, never a path or bytes. |
+| How many pictures any run takes | `MAX_REFERENCES_PER_RUN` = 8 (`src/shared/config/defaults.ts`, A-56), applied by `referenceIds` (`src/shared/schemas/reference-ids.ts`) | Over 8 or an ID listed twice is refused by the schema. |
 | The name of a file uploaded to ComfyUI | `uploadName(bytes)` (`adman-{16 hex}.png`) | No caller, asset row or server text supplies a name. |
 | How many pictures a ComfyUI workflow takes | The length of `slots.references` in its `WorkflowSpec` | The command refuses with `too_many_references` and `details.max`. The window holds no copy of the number. |
 
-- `generation.runImages` reads every ID in `referenceAssetIds` in `prepare` with `AssetService.read`. A picture that is gone, too large, not a picture, or WebP is refused before a job row is made. The job kind reads the bytes again. An ID the project does not hold is refused.
+- `generation.runImages` reads every ID in `referenceAssetIds` in `prepare` with `AssetService.read`. A picture that is gone, too large, or not a picture the app can send is refused before a job row is made. The job kind reads the bytes again. An ID the project does not hold is refused.
 - `job.retry` sends the stored request again, references included, after the same checks.
-- Gemini gets the prompt text first, then each reference picture in order as an `inlineData` part with the file's own type and bytes (`spec/providers-adapters.md`). ComfyUI gets each picture uploaded under `uploadName(bytes)`, only after its server check answered `ok`; the display name, path, asset ID and subject never enter a request (`spec/comfyui.md`).
-- A video run's first-frame picture is fitted to the run size and sent as PNG; a reference picture is sent as read (`spec/jobs.md`, `video_generation`).
-- **The reference picker** (under the prompt box): heading "Reference pictures", one small picture per asset with a tick box and its display name, button "Add pictures"; empty: "No reference pictures in this project yet." It calls `asset.list { projectId, library: 'reference', kind: 'image' }`, `dialog.pickFiles { purpose: 'import', kind: 'image', multiple: true }`, and `asset.import { projectId, paths, library: 'reference', copy: false, subjectId? }` (`subjectId` is the chosen variant's first subject when it has one). After the reply the list is read again and the returned IDs are ticked. A cancelled picker sends nothing; a refused import shows the command's message and ticks nothing. Ticked IDs are sent in tick order, each showing its place ("1", "2"). An asset with `missing: true` or type `image/webp` cannot be ticked and says why: "file not found", "WebP cannot be sent yet". Ticks are kept while the campaign page is open, across variant changes, and dropped for an asset that left the list. Full screen wording: `spec/screens.md`.
+- Gemini gets the prompt text first, then each reference picture in order as an `inlineData` part holding the clean PNG `AssetService.read` gave (`spec/providers-adapters.md`). ComfyUI gets each picture uploaded under `uploadName(bytes)`, only after its server check answered `ok`; the display name, path, asset ID and subject never enter a request (`spec/comfyui.md`).
+- A video run's first-frame picture is fitted to the run size and sent as PNG; a reference picture is sent as the clean PNG `AssetService.read` gave, not fitted (`spec/jobs.md`, `video_generation`).
+- **The reference picker** (under the prompt box): heading "Reference pictures", one small picture per asset with a tick box and its display name, button "Add pictures"; empty: "No reference pictures in this project yet." It calls `asset.list { projectId, library: 'reference', kind: 'image' }`, `dialog.pickFiles { purpose: 'import', kind: 'image', multiple: true }`, and `asset.import { projectId, paths, library: 'reference', copy: false, subjectId? }` (`subjectId` is the chosen variant's first subject when it has one). After the reply the list is read again and the returned IDs are ticked. A cancelled picker sends nothing; a refused import shows the command's message and ticks nothing. Ticked IDs are sent in tick order, each showing its place ("1", "2"). An asset with `missing: true` cannot be ticked and says "file not found". With 8 ticked (`MAX_REFERENCES_PER_RUN`), an unticked picture cannot be ticked and the picker says "A run takes at most 8 reference pictures." Ticks are kept while the campaign page is open, across variant changes, and dropped for an asset that left the list. Full screen wording: `spec/screens.md`.
 - Phase 4's reference dialog (`spec/screens-ai.md`) also offers generated pictures as references (A-68). A full reference library screen, and removing a reference from the project, are UI-pass work.
 
 ## Generated assets [REQ: FR-063, FR-068, FR-216, FR-299]

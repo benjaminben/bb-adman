@@ -16,8 +16,8 @@ const PROVIDERS: ProviderInfo[] = [
     secrets: ['gemini.apiKey'],
     defaultModels: {
       image: 'gemini-nano-banana-2.1',
-      layout: 'gemini-2.5-flash',
-      text: 'gemini-2.5-flash',
+      layout: 'gemini-3.5-flash-lite',
+      text: 'gemini-3.5-flash-lite',
     },
     ...REMOTE,
   },

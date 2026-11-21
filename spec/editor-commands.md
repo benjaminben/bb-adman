@@ -54,6 +54,12 @@ Built (`src/main/commands/layer/update.ts`, `merge-patch.ts`, `inverse-patch.ts`
 - A preset other than `none` on a layer that is not text is refused [REQ: FR-128].
 - Picking a generated or imported picture for a layer is this command with `source` (`spec/data-rules.md`, "Generation").
 - **Inverse:** `layer.update` with the same `layerId` and a `patch` holding the stored value of every key the patch changed (for `style` and `geometry`, only the changed fields; for `animation`, only the changed blocks).
+- **Look fields** (Not built, LK-1) [D-094]. The patch shape does not change: `style` is still `Partial<TextStyle> | Partial<ImageStyle>`, and those types gain the optional look fields (`spec/data-model-campaign.md`, "Look fields"). So `layer.update`, `layer.updateMany` (each item) and `layer.create`'s `values.style` take them with no new key. The checks:
+  - **By the schema**, before the handler: every colour (`boxColor`, `boxOutlineColor`, `fillColor`, `shade.color`) is `#RRGGBB` by `HEX_COLOUR`, or null where the type allows null; `boxOutlineWidth` 0 to 100, `boxRadius` and `boxPadding` 0 to 2,000, `shade.strength` 0 to 1, `shade.reach` 0.05 to 1, every number finite; `verticalAlign` and `shade.from` from their fixed lists; `allCaps` a boolean; `shade` a strict object or null, replaced whole, never merged field by field. Failures are `INVALID_INPUT` with the bus's usual message.
+  - **By `mergeStyle`**: a text field on a picture layer, or a picture field on a text layer, is refused as today with "Those style values do not fit this layer." So is a `fillColor` other than null on an `image` layer (A-73).
+  - **Nothing changed.** The merged style is compared with the stored style with its defaults filled (`textLookOf` or `pictureLookOf`). So `{ boxColor: null }` on a layer stored without the field writes nothing and adds no undo entry.
+  - **Inverse.** For a look field the stored layer lacks, the inverse holds its default (for example `boxColor: null`, `verticalAlign: 'top'`), never an absent key, so undo puts the look back.
+  - The Scene still treats each value as untrusted (`spec/scene.md`, "Text boxes"): an agent can send these through `layer.update`.
 - **Reply:** `{ layerId }`.
 - **Refusals:** `NOT_FOUND` for the layer; the type and asset refusals above.
 

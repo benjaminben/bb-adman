@@ -57,7 +57,7 @@ These files hold types and schemas only and are the contract between parts of th
 |------|-------|
 | `src/shared/schemas/brief.ts` | `BriefDraft`, `Brief` (`spec/brief-and-templates.md`) |
 | `src/shared/schemas/commands/campaign.ts` | `campaign.create` input: `subjectMap`, `languages`, `sizes`, `ruleSet`, `copyRuleSetFrom`, `templateId`; `CampaignSize` |
-| `src/shared/schemas/layer.ts` | `Geometry`, `TextStyle` (with `letterSpacing`), `ImageStyle`, `Timing`, `AnimationBlock`, `Animation`, the `revs` counters (`Revs`) |
+| `src/shared/schemas/layer.ts` | `Geometry`, `TextStyle` (with `letterSpacing`), `ImageStyle`, `Timing`, `AnimationBlock`, `Animation`, the `revs` counters (`Revs`). Not built (LK-1): the look fields of both styles, `Shade`, `SHADE_SIDES`, `VERTICAL_ALIGNS`, `LOOK_LIMITS` (`spec/data-model-campaign.md`, "Look fields"); a contract change designed in `spec/phases/look-pack.md` |
 | `src/shared/templates/types.ts` | `Template`, `Slot`, `NewLayer` (a layer's values without `id` and `variant_id`), signatures of the template functions |
 | `src/main/assets/types.ts` | `AssetService`, including `missingAssetIds`, `writeManaged`, `read` |
 | `src/shared/schemas/rows/` | Wire row schemas; `keys.ts` (`ROW_KEYS` for every table, `TableName`, `rowKey`) |

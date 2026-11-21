@@ -39,16 +39,16 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 
 ## Slices
 
-### P4-1 — Contracts
+### P4-1 — Contracts (built)
 
 - **Exists when done:** the new job kind and its migration; the request and result schemas; the new command and query inputs; the provider interface additions; the policy and gate rows; every new command, kind and query registered against a stub; the reason sentences; the Phase 4 tokens.
 - **New files:** `src/main/db/migrations/0003_job_kind_cutout.sql` with its snapshot and journal entry (by `npm run db:generate`); `src/shared/schemas/jobs/layout-proposal.ts`, `copy-options.ts`, `brief-extraction.ts`, `cutout.ts`; `src/shared/schemas/queries/earlier-options.ts`, `activity.ts`, `paid-count.ts`; `src/shared/config/copy-options.ts`. Stubs (each replaced by its slice): `src/main/commands/generation/propose-layout.ts`, `copy-options.ts`, `cut-out.ts`; `src/main/commands/brief/extract.ts`; `src/main/commands/layer/update-many.ts`; `src/main/jobs/kinds/layout-proposal.ts`, `copy-options.ts`, `brief-extraction.ts`, `cutout.ts`; `src/main/queries/earlier-options.ts`, `activity.ts`, `paid-count.ts`. A stub command refuses in `prepare` with `INVALID_INPUT` "That provider cannot do this yet."; a stub kind throws `ProviderFailure` `other` "Not built yet"; a stub query returns an empty list or zeros.
 - **May touch:** `src/shared/config/job-kinds.ts`; `src/main/db/schema/jobs.ts`; `src/shared/schemas/commands/generation.ts`, `commands/brief.ts`, `commands/layer.ts`; `src/main/providers/types.ts`; `src/shared/schemas/queries/app.ts` (`ProviderJob`, `PROVIDER_ERROR_REASONS`); `src/main/providers/registry.ts` (`cutout` in the ComfyUI and fake rows); `src/shared/providers/messages.ts` (the eight reason sentences); the index files named in "Shared files"; `src/main/commands/agent-policy.ts`; `src/main/commands/agent-run-gate.ts`; `src/renderer/ui/tokens.css`; any file whose exhaustive table over `ProviderErrorReason` or `JobKind` stops compiling (one line each, named in the report).
 - **Read:** `spec/ai-jobs.md` "Contracts" and "A plain sentence per failure cause"; `spec/data-rules.md` "Data migration"; `spec/agent-runs.md` "Gate steps for a run"; `spec/mcp-and-agents.md` "Agent policy table"; `spec/screens-ai.md` "Where the code lives" (tokens).
-- **Tests:** `tests/integration/db/migration-0003.test.ts` (the cases in `spec/ai-jobs.md`); `tests/unit/shared/schemas/phase4-schemas.test.ts` (each new input and job schema: a good value, each refused field, `count` bounds, `updates` 1 to 100); `tests/integration/commands/agent-run-gate-phase4.test.ts` (for each of `generation.proposeLayout`, `generation.copyOptions`, `generation.cutOut` as the agent: unknown provider, provider not offered, tick off, limit reached each give `AGENT_DENIED` with the gate's sentence and no job row; ticked, the call passes the gate and reaches the stub's refusal); `brief.extract` as the agent gets `AGENT_DENIED`; `layer.updateMany` as the agent passes the deny check. Approved edits: `tests/unit/main/commands/agent-policy-table.test.ts` (the new rows), `tests/unit/shared/schemas/contracts.test.ts` (ten kinds), any test that lists command or query names (the new names), the registry test (the `cutout` jobs).
+- **Tests:** `tests/integration/db/migration-0003.test.ts` (the cases in `spec/ai-jobs.md`); `tests/unit/shared/schemas/phase4-schemas.test.ts` (each new input and job schema: a good value, each refused field, `count` bounds, `updates` 1 to 100); `tests/integration/commands/agent-run-gate-phase4.test.ts` (for each of `generation.proposeLayout`, `generation.copyOptions`, `generation.cutOut` as the agent: unknown provider, provider not offered, tick off, limit reached each give `AGENT_DENIED` with the gate's sentence and no job row; ticked, the call passes the gate and reaches the stub's refusal); `brief.extract` as the agent gets `AGENT_DENIED`; `layer.updateMany` as the agent passes the deny check. Approved edits: `tests/unit/main/commands/agent-policy-table.test.ts` (the new rows), `tests/unit/shared/schemas/contracts.test.ts` (ten kinds), any test that lists command or query names (the new names), the registry test (the `cutout` jobs), `tests/integration/db/migration-0002.test.ts` (opens with the first three migrations only).
 - **Class:** B (+ A). Security class, short review (policy rows, gate, migration). **After:** nothing.
 
-### P4-2 — Queries: earlier options, activity, paid count
+### P4-2 — Queries: earlier options, activity, paid count (built)
 
 - **Exists when done:** `job.earlierOptions`, `job.activity` and `campaign.paidCount` answer as `spec/ai-jobs.md`, "The three queries" says.
 - **New files:** the bodies of `src/main/queries/earlier-options.ts`, `activity.ts`, `paid-count.ts` (stubs from P4-1).
@@ -56,7 +56,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/integration/queries/earlier-options.test.ts` (runs by layer and by the layer's slot in its own variant only; a slot run of another variant left out; newest first; removed asset rows dropped; `missing` set; running and failed runs listed; unknown layer `NOT_FOUND`); `activity.test.ts` (names filled; a deleted layer, variant or campaign gives null; a brief job has all three null; an unreadable row left out; `limit`); `paid-count.test.ts` (the three sums by kind; another campaign's jobs left out; local providers add nothing because their `paid_calls` is 0; unknown campaign `NOT_FOUND`).
 - **Class:** B. Not security class. **After:** P4-1.
 
-### P4-3 — Fake provider: layout, text and cut-out parts
+### P4-3 — Fake provider: layout, text and cut-out parts (built)
 
 - **Exists when done:** the fake provider answers `layout`, `text` (extract brief, copy options; translate refuses) and `cutout` as `spec/ai-jobs.md`, "The fake provider's parts" says.
 - **New files:** `src/main/providers/fake/layout.ts`, `text.ts`, `cutout.ts`.
@@ -65,7 +65,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** in `tests/unit/main/providers/fake/`: `layout.test.ts` (headline and call-to-action boxes from the default layout; other items stacked inside the canvas; palette colour), `text.test.ts` (a Markdown brief with every label gives the expected draft; unknown lines ignored; copy options count and length), `cutout.test.ts` (output size equals input; colour type 6; a corner pixel alpha 0 and the centre 255, read with `node:zlib`), and the behaviour switches (`fail`, `waitMs`, `onCancel`) once per part.
 - **Class:** E. Not security class. **After:** P4-1.
 
-### P4-4 — Gemini: layout, extract brief, copy options
+### P4-4 — Gemini: layout, extract brief, copy options (built)
 
 - **Exists when done:** `adapterFor(deps, 'gemini', 'layout' | 'text')` returns working adapters; model IDs checked (OI-10); one live run of each feature made and reported.
 - **New files:** `src/main/providers/gemini/layout.ts`, `text.ts`, `json-call.ts`, `prompts.ts`; `tests/live/gemini-layout.live.test.ts`, `gemini-brief.live.test.ts`, `gemini-copy.live.test.ts`.
@@ -75,7 +75,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** in `tests/unit/main/providers/gemini/`: `layout.test.ts`, `text.test.ts`, `text-errors.test.ts` (cases in `spec/providers-adapters.md`), `environment.test.ts` extended to a text call; a key planted in an error answer is redacted from every detail. Live: the three files, run once each by the developer (D-085).
 - **Class:** E. Security class, full review (new outbound calls; every adapter rule). **After:** P4-1.
 
-### P4-5 — A plain sentence per failure cause (OI-68)
+### P4-5 — A plain sentence per failure cause (OI-68) (built)
 
 - **Exists when done:** a picture or video job that fails for a local cause ends with its own reason and sentence; nothing from the error reaches the row, the sentence or the log; the shared helpers `readPictures` and `storeResult` exist; the run failure component lives in `ui/`.
 - **New files:** `src/main/jobs/local-failure.ts`, `read-pictures.ts`, `store-result.ts`; `src/renderer/ui/run-failure/` (moved from `screens/campaign/run-failure/`).
@@ -84,7 +84,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/integration/jobs/local-failure.test.ts`, one case per cause, each queued then broken before its turn (key removed; reference file deleted; replaced by a file over 32 MiB; replaced by a text file; assets folder removed; assets folder made read-only; `asset.addGenerated` refused through a stand-in bus): the row ends `failed`, kind `other`, the reason; `error_detail` is the reason name; no path, code or message of the error in the row, and in **every** log line the test's log holds (this closes the H4 O-3 gap in `review-leftovers.md`); another `AppError` gives no reason and `error_detail` `app_error`. `tests/unit/shared/providers/messages-local.test.ts` (each sentence with `{provider}` filled). `tests/unit/main/mcp/tools/agent-job-view.test.ts` gains the filled sentence. Approved edits: `tests/integration/generation/image-kind-errors.test.ts` (`error_detail` is now the reason name), the run-failure and run-row tests (import path only).
 - **Class:** B + E + D. Security class, short review. **After:** P4-1.
 
-### P4-6 — Firefly stub
+### P4-6 — Firefly stub (built)
 
 - **Exists when done:** `src/main/providers/firefly/` implements `ImageProvider` from Adobe's public documentation, tested on recorded examples, never called at run time; `adapterFor` refuses an unavailable provider.
 - **New files:** `src/main/providers/firefly/index.ts`, `image.ts`, `token.ts`, `pinned-origin.ts`.
@@ -93,7 +93,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/main/providers/firefly/` (`token.test.ts`: the token request's form and host; `image.test.ts`: the generate request and a recorded answer; `pinned-origin.test.ts`: each host refuses the other; `environment.test.ts`); `tests/unit/main/providers/adapters-available.test.ts` (`adapterFor` on `firefly` and on `fal-seedance` gives `INVALID_INPUT`; Gemini and the fake still resolve).
 - **Class:** E. Security class, short review. **After:** P4-1.
 
-### P4-7 — Layout job, the picture without text, `layer.updateMany`
+### P4-7 — Layout job, the picture without text, `layer.updateMany` (built)
 
 - **Exists when done:** `generation.proposeLayout` enqueues an attached job that sends the variant drawn without text and keeps clamped boxes; `layer.updateMany` applies many layer patches as one undo entry; `layoutPatches` turns a result into that command's input.
 - **New files:** the bodies of `src/main/commands/generation/propose-layout.ts`, `src/main/jobs/kinds/layout-proposal.ts`, `src/main/commands/layer/update-many.ts`; `src/shared/generation/layout-clamp.ts`, `layout-patches.ts`.
@@ -102,7 +102,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **Tests:** `tests/unit/shared/generation/layout-clamp.test.ts` (each clamp, rounding, unknown key, repeated key, bad colour, palette snap, align fallback), `layout-patches.test.ts`; `tests/integration/generation/propose-layout.test.ts` (each refusal in order; no text layer; enqueued attached with campaign and variant); `layout-kind.test.ts` (with a stand-in adapter: the scene handed to the draw has no text layers; the picture's longest side is 1024; items, palette and fonts as specified; boxes clamped; no box gives `other`; a deleted variant gives `target_gone`; a cancelled job keeps no result); `tests/integration/commands/layer-update-many.test.ts` (one undo entry and one `rev` bump; undo restores every layer; all or nothing on one bad item; a layer of another variant `NOT_FOUND`; a repeated layer refused; asset checks per item; the agent stamps `agent_changed_at`). Plus the scene reference run of class C.
 - **Class:** B + A + C. Security class, short review (a new command open to agents). **After:** P4-1.
 
-### P4-8 — Copy options job and brief reading job
+### P4-8 — Copy options job and brief reading job (built)
 
 - **Exists when done:** `generation.copyOptions` and `brief.extract` enqueue their attached jobs; the jobs call the text adapter and keep clean results.
 - **New files:** the bodies of `src/main/commands/generation/copy-options.ts`, `src/main/jobs/kinds/copy-options.ts`, `src/main/commands/brief/extract.ts`, `src/main/jobs/kinds/brief-extraction.ts`; `src/shared/brief/brief-file-kind.ts`, `primary-language.ts`.
@@ -135,10 +135,10 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **New files:** the bodies of `src/main/commands/generation/cut-out.ts` and `src/main/jobs/kinds/cutout.ts`; `tests/e2e/cutout-alpha.spec.ts`.
 - **May touch:** `src/main/commands/generation/comfy-checks.ts` (`checkComfyCutout`); `src/main/commands/job/retry.ts`; `src/main/commands/asset/add-generated.ts` (`gen_prompt` null without a prompt); `src/main/jobs/png-details.ts` (the `cutout` kind in the details, if its type needs it).
 - **Read:** `spec/ai-jobs.md` "Cut-out", "Shared job helpers"; `spec/api-commands.md` "`generation.runImages`" (the checks it copies); `spec/export-and-checks.md` "Embedded generation details".
-- **Tests:** `tests/integration/generation/cut-out.test.ts` (each refusal in order; a layer with no picture; ComfyUI with no address, no offered workflow (dev tools off) and with one (dev tools on); the source read in `prepare`; enqueued with the layer; the agent ticked is accepted); `cutout-kind.test.ts` (fake provider: one new asset, `gen_prompt` null, `gen_run_id` the job, details embedded with kind `cutout`, the source asset unchanged; a source deleted after enqueue gives `picture_missing`); `tests/integration/commands/job-retry-cutout.test.ts`; `tests/e2e/cutout-alpha.spec.ts` (in Electron, a fake cut-out run ends with a PNG of colour type 6, a corner pixel alpha 0 and the centre 255, read with `nativeImage`). `asset-add-generated.test.ts` gains the no-prompt case.
+- **Tests:** `tests/integration/generation/cut-out.test.ts` (each refusal in order; a layer with no picture; ComfyUI with no address, no offered workflow (dev tools off) and with one (dev tools on); the source read in `prepare`; enqueued with the layer; the agent ticked is accepted; `licenceConfirmed: true` from the agent is ignored, so an unconfirmed licence still refuses); `cutout-kind.test.ts` (fake provider: one new asset, `gen_prompt` null, `gen_run_id` the job, details embedded with kind `cutout`, the source asset unchanged; a source deleted after enqueue gives `picture_missing`); `tests/integration/commands/job-retry-cutout.test.ts`; `tests/e2e/cutout-alpha.spec.ts` (in Electron, a fake cut-out run ends with a PNG of colour type 6, a corner pixel alpha 0 and the centre 255, read with `nativeImage`). `asset-add-generated.test.ts` gains the no-prompt case.
 - **Class:** B + G (the e2e file). Security class, short review. **After:** P4-3, P4-5, P4-9.
 
-### P4-12 — Run confirmation dialog and the paid count
+### P4-12 — Run confirmation dialog and the paid count (built)
 
 - **Exists when done:** one dialog confirms every Phase 4 run, with provider choice, count, what the run does and the campaign's paid count; the campaign overview shows the paid count.
 - **New files:** `src/renderer/dialogs/run-dialog/` (`run-dialog.tsx`, `provider-choice.tsx`, `run-summary.ts`); `src/renderer/ui/paid-count/`.

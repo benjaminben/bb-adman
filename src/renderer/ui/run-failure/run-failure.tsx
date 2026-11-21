@@ -1,5 +1,6 @@
 // S2-5 (spec/screens-campaign.md, "Campaign page: ComfyUI failures in the run row"): what a
 // failed run shows in place of one sentence. [REQ: FR-265, FR-266, FR-267, FR-069]
+// P4-5: moved to ui/ so the activity panel and the earlier options show it too.
 // The sentence comes from the reason when the row has one, else from the kind. The address
 // fills the sentence only; the missing items come from the app's own workflow files.
 import { useId } from 'react'
@@ -25,13 +26,17 @@ const SETTINGS_REASONS: ReadonlySet<ProviderErrorReason> = new Set([
 ])
 
 // Only a row with a reason asks comfy.getInfo, for the address its sentence may name. Before
-// the answer the mark reads "the saved address".
-function ReasonSentence(props: { reason: ProviderErrorReason; n: number | undefined }) {
+// the answer the mark reads "the saved address". P4-5 (OI-68): {provider} is the label.
+function ReasonSentence(props: {
+  reason: ProviderErrorReason
+  n: number | undefined
+  provider: string
+}) {
   const info = useComfyInfo()
   const address = info?.address ?? undefined
   return (
     <p className={styles.sentence}>
-      {fillMarks(reasonMessage(props.reason), { address, n: props.n })}
+      {fillMarks(reasonMessage(props.reason), { address, n: props.n, provider: props.provider })}
     </p>
   )
 }
@@ -58,7 +63,11 @@ export function RunFailure(props: {
           {plainMessage(row.errorKind ?? 'other', props.providerLabel)}
         </p>
       ) : (
-        <ReasonSentence reason={reason} n={missing.length > 0 ? missing.length : undefined} />
+        <ReasonSentence
+          reason={reason}
+          n={missing.length > 0 ? missing.length : undefined}
+          provider={props.providerLabel}
+        />
       )}
       {missing.length > 0 && (
         <>

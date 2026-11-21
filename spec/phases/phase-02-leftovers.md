@@ -10,14 +10,12 @@ Work that belongs with a later phase is in that phase's file: Dropbox (slice G) 
 
 ### "After the test" list
 
-One short run in the main folder, class B, unless an item says otherwise. State is as checked on `main`. F-1 to F-7, F-10 to F-12 and F-14 to F-17 are built.
+One short run in the main folder, class B, unless an item says otherwise. State is as checked on `main`. F-1 to F-12 and F-14 to F-17 are built.
 
-- **F-8. A limit on reference pictures per run.** Not built.
-  - One constant `MAX_REFERENCES_PER_RUN` in `src/shared/config/defaults.ts`, used by the `generation.runImages` schema, the job request schema and the picker. A duplicate ID in the list is refused. One test each.
-  - The number is 8 (A-56), until a real Gemini test shows a different limit. It also closes the security review's note that `referenceAssetIds` had no upper bound for an agent.
-- **F-9. `toPng` on a reference before a ComfyUI upload.** Ruled yes (A-55): built with slice WP, in `readPicture`, for every provider.
-  - Whether a reference picture passes through `toPng` before upload, so the bytes match the `.png` name and nothing the user's file carries beside the picture is sent. It needs `toPng` reachable from `AdapterContext`, which it is not today.
-  - Also covers a JPEG named `.png` that `LoadImage` fails on. The JPEG pass of the ComfyUI harness waits for it.
+- **F-8. A limit on reference pictures per run.** Built.
+  - At most 8 pictures per run (A-56), until a real Gemini test shows a different limit: one constant `MAX_REFERENCES_PER_RUN` in `src/shared/config/defaults.ts`. A list over 8, or one naming a picture twice, is refused ("A run takes at most 8 reference pictures.", "A reference picture is in the list twice.").
+  - One schema, `referenceIds` in `src/shared/schemas/reference-ids.ts`, is used by `generation.runImages` and `generation.startVideo`, both job request schemas (`image_generation`, `video_generation`) and both agent tools' inputs. The reference picker stops new ticks at 8 and shows the same line. This closes the security review's note that `referenceAssetIds` had no upper bound for an agent.
+- **F-9. `toPng` on a reference before a ComfyUI upload.** Built with slice WP (A-55), in `readPicture`, for every provider: every picture sent is a clean PNG, so the bytes match the `.png` name and nothing the file carries beside the picture is sent.
 - **F-18. Stand-in fixtures from the real server.** Tests only. Partly done.
   - After real ComfyUI runs, correct CU-4's hand-made stand-in fixtures to the shapes the real server showed. The Flux run showed the picture history shape holds. Still to check: the job-state status words and the video history entry, after a real video run.
   - If a real shape breaks a client schema, stop and report: that is a client change, ruled on its own.
@@ -25,34 +23,23 @@ One short run in the main folder, class B, unless an item says otherwise. State 
 ### EX-1 — A JPEG's rotation tag is applied (built)
 
 - **Class:** A, B. **Security class** (it reads bytes of a user's file). Built: `src/main/jpeg-orientation.ts`, `turn-pixels.ts`, `image-turner.ts`.
-- **Why:** every picture sent to a provider now passes through `toPng` (A-55), which drops the file's orientation tag without turning the pixels. A phone photograph would be sent on its side.
-- **Must build:**
+- **Why:** every picture sent to a provider passes through `toPng` (A-55), which drops the file's orientation tag. Without the turn, a phone photograph would be sent on its side.
+- **As built:**
   - A pure reader for the JPEG orientation tag (values 1 to 8). It reads only the first APP1 "Exif" segment, with every offset checked against the segment's length. A missing, broken or out-of-range tag is read as 1 (upright); it never throws.
   - `toPng` and the picture fitter (`src/main/png-converter.ts`, `src/main/picture-fitter.ts`) turn and mirror the decoded pixels by that tag before they encode or crop. The limits are checked on the header before any decode, as before (turning swaps the sides but keeps the pixel count). PNG and WebP are not touched. Built without a turner (tests only), both refuse a JPEG whose tag asks for a turn rather than send it on its side.
   - The user's file is never changed.
 - **Tests:** a table over the eight tag values with a small two-colour JPEG each (the marked corner ends where it should, the size swaps for 5 to 8); broken segments (cut off, offsets past the end, a huge count) read as upright; one test through `pngConverter` and one through the fitter; `tests/e2e/jpeg-orientation.spec.ts` checks a reference and a first frame through the built app.
 
-### Slice WP — WebP converted to PNG
+### Slice WP — WebP converted to PNG (built)
 
-- **Class:** A, B, G. **Security class.** [REQ: FR-298, FR-051, FR-245; D-053 item 20]
-- **When:** not beside another run that edits `src/main/core.ts`, `core-deps.ts` or `src/main/index.ts`.
-- **Rule:** a picture is never refused only because it is WebP. Import, showing, placing and export need nothing new. A conversion happens only where the main process hands picture bytes on (a reference picture, a first frame, an extend source): the provider and workflow always get a PNG. The user's file is never changed.
-- **Must build:**
-  - `CoreDeps.webpToPng(bytes: Uint8Array): Promise<Uint8Array>`. The default throws (like `fitPicture`). `src/main/index.ts` fills it. Approved edit to the frozen `core-deps.ts`.
-  - `webpInfo(bytes): { width; height; animated }` in `src/main/providers/webp-size.ts`. Pure: it reads the RIFF header and the first chunk (`VP8 `, `VP8L`, `VP8X`) and throws when it cannot. Limits `MAX_PICTURE_BYTES`, `MAX_PICTURE_SIDE` and `MAX_PICTURE_PIXELS` apply; a file over a limit never reaches the window.
-  - After decoding, the result must be a PNG by `pictureType`, its header size must equal `webpInfo`'s, and it then goes through `toPng`. Transparency is kept.
-  - Animated WebP: first frame only. The import notice is slice S2-17 (`spec/phases/phase-02-screens.md`); `webpInfo(...).animated` is its test.
-  - Called in `readPicture` (`src/main/assets/read-picture.ts`): WebP by the `sniff.ts` signature, then check `webpInfo`, convert, and return `{ bytes, mime: 'image/png' }`. A failed conversion gives `asset_not_a_picture`; over the byte limit gives `asset_too_large`. No new reason.
-  - **Decoder window:** one hidden window with the app window's `webPreferences` (`src/main/windows/app-window-options.ts`): sandbox on, context isolation on, no Node, no preload, a fixed bundled page, and a session that lets no request leave. One conversion at a time, a 10 s time limit; a crash or timeout is a failed conversion, and the window is made again on next use. Recommended: `createImageBitmap` on a `Blob`, draw to a canvas, read back a PNG. New files under `src/main/windows/`, each under 200 lines.
-  - The main-process decoder (`toPng`, `src/main/png-converter.ts`) is still handed only PNG or JPEG.
-- **Conditions checked first.** (1) `nativeImage.createFromBuffer` gives an empty image for WebP. (2) A hidden sandboxed window decodes still and animated WebP, and animated gives the first frame. (3) Up to `MAX_PICTURE_BYTES` goes in and a PNG comes out, without a channel the app window could also call. If any fails, stop; the architect rules.
-- **Not chosen:** a decoder package; sending WebP as is to providers; the system's thumbnail maker.
-- **Tests:**
-  - Unit `webpInfo`: the three chunk kinds, the animation flag, a cut-off file, a RIFF size past the end, a zero side.
-  - `readPicture` with a stand-in converter: WebP becomes PNG; a throwing converter gives `asset_not_a_picture`; pixels over the limit are refused and the converter is never called; a non-PNG or wrong-size PNG result is refused; PNG and JPEG never call it.
-  - End-to-end (class G): a still and an animated WebP through the real window. The window-security test covers the new window.
-  - Approved change: the existing test that a WebP reference is refused before any job row (commit 1882e20) now expects the run to be accepted.
-- Until it merges, the WebP reference refusal stays as a stopgap.
+- **Class:** A, B, G. **Security class.** [REQ: FR-298, FR-051, FR-245; D-053 item 20] Built: `src/main/providers/webp-size.ts`, `src/main/assets/read-picture.ts`, `src/main/windows/webp-window.ts`, `webp-decoder.ts`, `src/renderer/webp.html`, `src/renderer/webp-worker/main.ts`.
+- **Rule:** a picture is never refused only because it is WebP. A conversion happens only where the main process hands picture bytes on (a reference picture, a first frame, an extend source): the provider and workflow always get a PNG. The user's file is never changed.
+- **As built:**
+  - `CoreDeps.webpToPng(bytes: Uint8Array): Promise<Uint8Array>`, filled in `src/main/index.ts`. `readPicture` checks the WebP's size with `webpInfo` before the window sees it, requires a PNG of that size back, then sends it through `toPng`. A failure is `asset_not_a_picture` or `asset_too_large`; no new reason.
+  - The decoder window is hidden, sandboxed, with no preload. The main process passes the bytes as a base64 argument of `executeJavaScript` and takes the PNG as the call's result. Rules: `spec/security.md`, "Rules: the WebP decoder window".
+  - The refusals that stood in before are gone: `generation.runImages`, `generation.startVideo`'s start check and the reference picker all accept a WebP picture. Animated WebP gives its first frame; the import notice is S2-17 (built).
+  - Full description: `spec/assets.md`, "WebP to PNG conversion".
+- **Tests:** unit `webpInfo`; `readPicture` with a stand-in converter; `tests/e2e/webp-decoder.spec.ts` (a still and an animated WebP through the real window, and the window's walls); `tests/build/built-page.test.ts` (the page's policy, no preload).
 
 ### Hand-test file picker (slice I part 2, only if OI-64 keeps it)
 
@@ -77,7 +64,7 @@ One short run in the main folder, class B, unless an item says otherwise. State 
 
 ## Groups 4 and 5 — Phase 2 screens (slices S2-4 to S2-17)
 
-In `spec/phases/phase-02-screens.md`. S2-4 to S2-16 are built; only S2-17 is left.
+In `spec/phases/phase-02-screens.md`. S2-4 to S2-17 are built.
 
 ## Phase 2 exit check
 

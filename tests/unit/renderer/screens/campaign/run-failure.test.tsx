@@ -3,7 +3,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { RunFailure } from '@/renderer/screens/campaign/run-failure'
+import { RunFailure } from '@/renderer/ui/run-failure'
 import { fillMarks, plainMessage, reasonMessage } from '@/shared/providers/messages'
 import {
   PROVIDER_ERROR_REASONS,

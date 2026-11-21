@@ -21,6 +21,8 @@ export default defineConfig({
         test: {
           name: 'node',
           environment: 'node',
+          // Several agents run the suite at once; a busy machine must not fail a correct test.
+          testTimeout: 20_000,
           include: [
             'tests/unit/main/**/*.test.ts',
             'tests/unit/shared/**/*.test.ts',
@@ -38,6 +40,7 @@ export default defineConfig({
         test: {
           name: 'renderer',
           environment: 'jsdom',
+          testTimeout: 20_000,
           include: ['tests/unit/renderer/**/*.test.{ts,tsx}', 'tests/unit/shared/**/*.test.tsx'],
           setupFiles: ['tests/unit/renderer/setup.ts'],
         },

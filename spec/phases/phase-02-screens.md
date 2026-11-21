@@ -4,15 +4,15 @@ Part of the Phase 2 leftovers; the rest is in `spec/phases/phase-02-leftovers.md
 
 Group 4 is the ComfyUI failures and refusals on the campaign page (TP-4a), the commercial-licence dialog (LD-1, D-088) and the confirm count on Retry (review item FN-4). Group 5 is import by button and by drop, relink, package, the brief form, the slot view and the campaign grid. Every screen, its controls, states, sentences and focus are in `spec/screens-campaign.md`. The slices below say who built what, in which files, with which tests.
 
-**Status.** S2-1 to S2-16 are built and merged on `main`, with the UI-1 polish (disabled controls at `--opacity-disabled`, the `--font-size-small` token, the run row's Cancel rule in `run-row/cancel-shown.ts`; `spec/structure.md`, `spec/screens.md`). Only S2-17 is left. The built slices stay below as the record of what each one owns and which test edits were approved.
+**Status.** S2-1 to S2-17 are built and merged on `main`, with the UI-1 polish (disabled controls at `--opacity-disabled`, the `--font-size-small` token, the run row's Cancel rule in `run-row/cancel-shown.ts`; `spec/structure.md`, `spec/screens.md`). The built slices stay below as the record of what each one owns and which test edits were approved.
 
 **What these slices do not build**, by decision (`spec/assumptions.md`):
 
 - The run dialog of FR-256 (the address and the workflow before a ComfyUI run) is Phase 4's run confirmation dialog (A-49). The Settings parts the hand-test screen once stood in for are built: the check lists each workflow with its missing items and licence note, and the section lists what Adman leaves on the server.
 - No extra line for a queued agent run that will be cancelled at its turn (A-49).
-- The campaign page still does not read `campaign.get` again on `project.changed`, and shows no message when `campaign.get` is refused (a nuisance; not built unprompted).
+- The campaign page shows no message when `campaign.get` is refused: the reply is dropped and the last data stays (a nuisance; not built unprompted). It does read `campaign.get` again on `project.changed` and `job.updated` for its project (`useCampaign` in `campaign-view.tsx`, built with Phase 3).
 
-**Main-process work these screens need.** Every command and query the screens call exists (the licence check, `licenceConfirmed` and `offered` came with S2-4), except the animated-WebP list in the `asset.import` reply (S2-17, after slice WP).
+**Main-process work these screens need.** Every command and query the screens call exists (the licence check, `licenceConfirmed` and `offered` came with S2-4; the animated-WebP list in the `asset.import` reply with S2-17).
 
 ## Rules for these slices
 
@@ -32,7 +32,7 @@ Slices in one wave may run side by side in separate git worktrees: no two of the
 | 0 | S2-1, S2-2, S2-3 | Built |
 | 1 | S2-4, S2-5, S2-9, S2-11, S2-13, S2-15, S2-16 | Built |
 | 2 | S2-6, S2-7, S2-8, S2-10, S2-12, S2-14 | Built |
-| 3 | S2-17 | S2-9 (built) and slice WP |
+| 3 | S2-17 | Built |
 
 - **Built pieces the slices use** (S2-1 to S2-3): `checkMessage`, `fillMarks` and `licenceNotConfirmedMessage` in `src/shared/providers/messages.ts`; `src/renderer/ui/missing-item-text.ts`; the dialog frame `src/renderer/ui/dialog-frame/`; `src/renderer/ui/comfy-privacy.ts`; `src/renderer/screens/campaign/use-comfy-info.ts`; the drop bridge `window.drop.pathOf` and `droppedPaths(files)` in `src/renderer/ui/dropped-paths.ts`.
 - **Phase 3** builds on S2-16's `variant-tile/` and `variant-grid/`, and on the built `dialog-frame/`.
@@ -177,9 +177,8 @@ Built.
 
 ## S2-17 — The animated-WebP notice
 
-Not built.
+Built.
 
-- **Exists when done:** the `asset.import` reply holds `animatedAssetIds: string[]` (the imported or reused WebP files whose `webpInfo(...).animated` is true), and the import dialog's done state shows "{name} holds an animation. Adman uses its first picture." per ID, the name from `asset.list`.
-- **May touch:** the file in `src/main/assets/` that builds the import reply, `src/shared/schemas/commands/asset.ts` (the reply type), `dialogs/import-dialog/` (owned from S2-9).
-- **Tests:** `tests/integration/assets/import-animated-webp.test.ts` (an animated WebP is listed; a still WebP and a PNG are not; the same inside a folder import), one new case in `tests/unit/renderer/dialogs/import-dialog.test.tsx`.
-- **Class:** B + D. Security class, short review (reads file bytes through `webpInfo`). **After:** slice WP.
+- **What it does:** the `asset.import` reply holds `animatedAssetIds: string[]`, the imported or reused WebP files whose first bytes say they are animated (`webpHeadInfo`, in `src/main/assets/inspect.ts`; `src/main/assets/import.ts`; `src/main/commands/asset/import.ts`). The import dialog's done state adds one line per ID, "{name} holds an animation. Adman uses its first picture.", the name from `asset.list` (`animated-names.ts`, `animationLines` in `import-text.ts`). A name not found, or a refused `asset.list`, gives "A file holds an animation. Adman uses its first picture." No query is sent when the list is empty. Wording: `spec/screens-campaign.md`, "The import dialog".
+- **Tests:** `tests/integration/assets/import-animated-webp.test.ts` (an animated WebP is listed; a still WebP and a PNG are not; the same inside a folder import), cases in `tests/unit/renderer/dialogs/import-dialog.test.tsx`.
+- **Class:** B + D. Security class, short review (reads file bytes through `webpHeadInfo`).

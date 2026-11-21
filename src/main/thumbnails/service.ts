@@ -5,7 +5,7 @@ import type { ProjectHandle } from '@/main/db/project-file'
 import { readWireRow } from '@/main/db/rows'
 import { AppError } from '@/shared/schemas/result'
 import type { VariantRow } from '@/shared/schemas/rows/variant'
-import type { ThumbnailGet } from '@/shared/schemas/queries/render'
+import type { ThumbnailGet, VariantRender } from '@/shared/schemas/queries/render'
 import { cleanThumbnails, readThumbnail, writeThumbnail } from './cache'
 import { createEagerThumbnails } from './eager'
 import { fitSize, thumbnailName, thumbnailSize } from './paths'
@@ -136,6 +136,24 @@ export function createRenderService(opts: RenderServiceOptions): RenderService {
     return variant
   }
 
+  // A variant.render draw, or the layout job's picture: no text, so no overflow to report.
+  async function drawVariant(
+    project: ProjectHandle,
+    variantId: string,
+    maxDimension: number,
+    withoutText: boolean,
+  ): Promise<VariantRender> {
+    const open = opts.deps().projects.requireOpen(project.projectId)
+    const scene = await sceneInput(opts.deps(), open, variantId, { withoutText })
+    if (!scene) throw new AppError('NOT_FOUND', NOT_FOUND)
+    const v = scene.input.variant
+    const size = fitSize(v, Math.min(maxDimension, Math.max(v.width, v.height)))
+    const result = await drawOnce(scene, variantId, size)
+    if (!result) throw new AppError('RULE_VIOLATION', RENDER_FAILED, { reason: 'render_failed' })
+    if (!withoutText) await reportOverflow(scene, result.overflow)
+    return { png: result.png, width: size.width, height: size.height, rev: scene.rev }
+  }
+
   return {
     async thumbnail(project, variantId): Promise<ThumbnailGet> {
       const { rev } = variantOf(project, variantId)
@@ -151,19 +169,11 @@ export function createRenderService(opts: RenderServiceOptions): RenderService {
     },
 
     render(project, variantId, maxDimension) {
-      return queue.render(async () => {
-        const open = opts.deps().projects.requireOpen(project.projectId)
-        const scene = await sceneInput(opts.deps(), open, variantId)
-        if (!scene) throw new AppError('NOT_FOUND', NOT_FOUND)
-        const v = scene.input.variant
-        const size = fitSize(v, Math.min(maxDimension, Math.max(v.width, v.height)))
-        const result = await drawOnce(scene, variantId, size)
-        if (!result) {
-          throw new AppError('RULE_VIOLATION', RENDER_FAILED, { reason: 'render_failed' })
-        }
-        await reportOverflow(scene, result.overflow)
-        return { png: result.png, width: size.width, height: size.height, rev: scene.rev }
-      })
+      return queue.render(() => drawVariant(project, variantId, maxDimension, false))
+    },
+
+    renderPictures(project, variantId, maxDimension) {
+      return queue.render(() => drawVariant(project, variantId, maxDimension, true))
     },
 
     onEvent(event) {

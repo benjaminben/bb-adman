@@ -158,8 +158,8 @@ describe('Gemini ImageProvider.extend [SPEC 6.2, built in Phase 5]', () => {
 })
 
 describe('gemini/index.ts [SPEC 6.2]', () => {
-  it('exports the image adapter only', () => {
-    expect(Object.keys(adapters)).toEqual(['image'])
+  it('exports the image, layout and text adapters', () => {
+    expect(Object.keys(adapters)).toEqual(['image', 'layout', 'text'])
     expect(typeof adapters.image?.(testContext()).generate).toBe('function')
   })
 })
