@@ -1,10 +1,9 @@
-// The dev command domain (SPEC 12). Empty in Phase 2 step 0; slice I adds the handlers.
+// The dev command domain (SPEC 12): the hand-test command dev.storage (slice I).
 // Registered only when createCore gets devTools: true (SPEC 4.2, 13).
 import type { CoreDeps } from '../../core-deps'
 import type { CommandHandler } from '../types'
-
-const handlers: CommandHandler[] = []
+import { devStorage } from './storage'
 
 export function devCommands(deps: CoreDeps): CommandHandler[] {
-  return deps.devTools ? handlers : []
+  return deps.devTools ? [devStorage(deps)] : []
 }
