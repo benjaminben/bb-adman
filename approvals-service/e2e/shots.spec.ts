@@ -57,7 +57,8 @@ async function signOff(api: APIRequestContext, slug: string, variant: string, em
   expect(reply.headers().location).toBe(`/l/${slug}?m=signed#v-${variant}`)
 }
 
-// The link with its three cards; gives the slug and the session cookie's name and value.
+// The link with its three cards and two sign-offs, made through the API's own session; gives
+// the slug.
 async function seed(api: APIRequestContext) {
   const created = await api.post('/api/v1/links', {
     headers: auth,
@@ -71,12 +72,11 @@ async function seed(api: APIRequestContext) {
     form: { password: PASSWORD },
     maxRedirects: 0,
   })
-  const [pair = ''] = (entered.headers()['set-cookie'] ?? '').split(';')
-  const [name = '', value = ''] = pair.split('=')
+  expect(entered.headers().location).toBe(`/l/${slug}`)
   await signOff(api, slug, 'aaaa22', 'ann.lee@example.com')
   await signOff(api, slug, 'bbbb33', 'sam.ortiz@example.com')
   await putGallery(api, gallery(2, at(-DAY)))
-  return { slug, name, value }
+  return slug
 }
 
 async function shoot(page: Page, file: string) {
@@ -88,9 +88,15 @@ async function shoot(page: Page, file: string) {
   await page.screenshot({ path: `${SHOTS}${file}.png`, fullPage: true })
 }
 
+// The visitor's way in: the password form.
+async function enter(page: Page, password: string) {
+  await page.getByLabel('Password').fill(password)
+  await page.getByRole('button', { name: 'Open' }).click()
+}
+
 test('the gallery screenshots', async ({ browser, playwright }) => {
   const api = await playwright.request.newContext({ baseURL: ORIGIN })
-  const { slug, name, value } = await seed(api)
+  const slug = await seed(api)
   await api.dispose()
 
   const phone = await browser.newContext({ baseURL: ORIGIN, viewport: PHONE })
@@ -98,32 +104,19 @@ test('the gallery screenshots', async ({ browser, playwright }) => {
   await page.goto(`/l/${slug}`)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Review campaign')
   await shoot(page, '98-gallery-password')
-  // The page a wrong try lands on.
-  await page.goto(`/l/${slug}?m=wrong-password`)
+  await enter(page, 'not the password at all')
+  await expect(page).toHaveURL(`/l/${slug}?m=wrong-password`)
   await expect(page.locator('main [role=alert]')).toBeVisible()
   await shoot(page, '98-gallery-password-wrong')
-
-  // The session goes with every request of these contexts, pictures included.
-  const session = { Cookie: `${name}=${value}` }
-  const signedIn = await browser.newContext({
-    baseURL: ORIGIN,
-    viewport: PHONE,
-    extraHTTPHeaders: session,
-  })
-  const phoneGallery = await signedIn.newPage()
-  await phoneGallery.goto(`/l/${slug}`)
-  await expect(phoneGallery.getByRole('heading', { level: 1 })).toHaveText(NAME)
-  await shoot(phoneGallery, '99-gallery-phone')
-  await signedIn.close()
+  await enter(page, PASSWORD)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(NAME)
+  await shoot(page, '99-gallery-phone')
   await phone.close()
 
-  const desktop = await browser.newContext({
-    baseURL: ORIGIN,
-    viewport: DESKTOP,
-    extraHTTPHeaders: session,
-  })
+  const desktop = await browser.newContext({ baseURL: ORIGIN, viewport: DESKTOP })
   const wide = await desktop.newPage()
   await wide.goto(`/l/${slug}`)
+  await enter(wide, PASSWORD)
   await expect(wide.getByText('This picture has expired.')).toBeVisible()
   await expect(wide.getByText('For an earlier version')).toBeVisible()
   await shoot(wide, '99-gallery')
