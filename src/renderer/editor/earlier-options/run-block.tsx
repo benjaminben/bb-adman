@@ -8,7 +8,7 @@ import { RunFailure } from '@/renderer/ui/run-failure'
 import type { EarlierOption } from '@/shared/schemas/queries/earlier-options'
 import { RetryButton } from './retry-button'
 import { runKind, runStatus, runTime } from './run-words'
-import styles from './earlier-options.module.css'
+import styles from './run-block.module.css'
 
 export type RunBlockProps = {
   projectId: string

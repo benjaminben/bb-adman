@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import type { JobServerMessage } from '@/shared/schemas/queries/job'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './run-failure.module.css'
 
 type Reply = { state: 'none' } | { state: 'loading' } | { state: 'shown'; text: string }
@@ -40,6 +41,7 @@ export function ServerMessageButton(props: {
   return (
     <button
       type="button"
+      className={layout.small}
       aria-expanded={shown}
       aria-controls={props.blockId}
       disabled={props.loading}
