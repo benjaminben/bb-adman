@@ -2,7 +2,7 @@
 // running (tests/e2e/held-run.ts: no request leaves the computer), then "Close project" from
 // the project switcher asks "Close {project}?" with the run count.
 // The variant tab warnings (70, 71) need an attached job registered in the window, which no
-// screen starts yet; they are not taken here.
+// screen starts yet; they are taken in P4-16 and P4-17.
 import { test, expect } from '@playwright/test'
 import * as screens from '../e2e/screens'
 import { firstIds, holdGemini, startHeldRun, jobStatus } from '../e2e/held-run'
