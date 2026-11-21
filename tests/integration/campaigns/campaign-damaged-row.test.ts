@@ -71,3 +71,17 @@ describe('a damaged JSON column read as one row keeps its text out of the log [S
     expect(bus.logText()).not.toContain(MARKER)
   })
 })
+
+// F-7: the row check names a field by its path, and a key inside a stored record (a brief's
+// copy is keyed by language) is a piece of the project file, so it must not be in the path.
+describe('a stored row that fails its schema keeps its record keys out of the log [F-7]', () => {
+  it('campaign.get with a bad entry under a made-up copy key logs no piece of the key', async () => {
+    const copy = JSON.stringify({ [MARKER]: { headline: 5 } })
+    bus.db
+      .prepare(`UPDATE campaign SET brief = json_set(brief, '$.copy', json(?)) WHERE id = ?`)
+      .run(copy, campaignId)
+    expect(await runGet()).toMatchObject({ ok: false, error: { code: 'INTERNAL' } })
+    expect(logLines.length).toBeGreaterThan(0)
+    expect(JSON.stringify(logLines)).not.toContain(MARKER)
+  })
+})
