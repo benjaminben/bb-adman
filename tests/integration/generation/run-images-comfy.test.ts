@@ -44,10 +44,10 @@ describe('generation.runImages with provider comfyui [SPEC 4.2, 14 1.41, CU-4]',
     })
   })
 
-  it('with the hand-test tools on and the actor agent refuses a trial workflow', async () => {
+  it('with the tools on, the agent is refused with AGENT_DENIED: held as deny until CU-7 [1.57 H-1]', async () => {
     await withAddress(true)
     const error = await refused(f.run({}, 'agent'))
-    expect(error.code).not.toBe('OK')
+    expect(error.code).toBe('AGENT_DENIED')
   })
 
   it('with the tools on and the user, a trial workflow is accepted and a job is made', async () => {
