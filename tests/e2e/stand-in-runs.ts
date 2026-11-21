@@ -6,6 +6,7 @@ import { expect, type Page } from '@playwright/test'
 import type { StandIn } from '../helpers/comfy-stand-in'
 import type { ComfyInfo } from '../../src/shared/schemas/queries/comfy'
 import { greyPng } from '../../src/main/providers/fake/png'
+import { greyClip } from '../fixtures/video/grey-clip'
 
 // The version the stand-in reports: at least every shipped minimum (as comfy-run.ts).
 const SERVER_VERSION = '0.45.0'
@@ -59,6 +60,22 @@ export function finishWithPicture(stand: StandIn, id: string, outputNode: string
     outputs: {
       [outputNode]: {
         images: [{ filename: 'ComfyUI_temp_0001.png', subfolder: '', type: 'temp' }],
+      },
+    },
+  })
+}
+
+// A finished video run as the real server lists it: SaveVideo's clip under `images`, with
+// `animated` beside it; `/view` then serves a clip Chromium can decode (grey-clip.ts says why
+// mp4File's header-only file is not used).
+export function finishWithVideo(stand: StandIn, id: string, outputNode: string): void {
+  stand.reply('GET /view', { body: greyClip(), headers: { 'content-type': 'video/mp4' } })
+  finish(stand, id, {
+    status: { status_str: 'success', completed: true, messages: [] },
+    outputs: {
+      [outputNode]: {
+        images: [{ filename: 'adman_video_00001.mp4', subfolder: 'video', type: 'output' }],
+        animated: [true],
       },
     },
   })

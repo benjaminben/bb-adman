@@ -12,6 +12,7 @@ import { greyPng } from '../../src/main/providers/fake/png'
 import {
   finishWithError,
   finishWithPicture,
+  finishWithVideo,
   nthSentId,
   serveNeedsFromApp,
   startWorking,
@@ -23,6 +24,7 @@ import { handTestStorage, projectHomeTour, settingsTour, startTour } from './scr
 
 const MOSS_OUTPUT = '9'
 const FLUX_OUTPUT = '15'
+const H3_TEXT_OUTPUT = '14'
 
 let box: Sandbox
 let stand: StandIn
@@ -179,6 +181,19 @@ test('Key dialog and paid Retry: Cancel, then a made-up key saved; the refused r
   await row.getByRole('button', { name: 'Confirm' }).click()
   await expect.poll(() => geminiAsked(app)).toEqual([GEMINI_ORIGIN, GEMINI_ORIGIN])
   await expect(screens.runRow(page)).toContainText('Failed', { timeout: 15_000 })
+})
+
+// SPEC 14 1.57 TP-6: the clip's metadata loads in the built app, so its CSP (media-src) and
+// the adman-asset:// protocol let a video through.
+test('Make a video: a 2-second clip from a prompt is started, done and has its metadata', async () => {
+  await campaignOnStandIn()
+  await screens.startVideo(page, 2)
+  const id = await nthSentId(stand, 1)
+  expect(lastSentPrompt()).toContain(screens.E2E_VIDEO_PROMPT)
+  await expect(screens.runRow(page)).toContainText('Video')
+  finishWithVideo(stand, id, H3_TEXT_OUTPUT)
+  await expect(screens.runRow(page)).toContainText('Done', { timeout: 15_000 })
+  await screens.clipHasMetadata(page, 15_000)
 })
 
 test('The other screens of the reach table: hand-test storage, Settings, Start, project home', async () => {

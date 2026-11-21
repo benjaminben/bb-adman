@@ -76,6 +76,30 @@ export async function generate(page: Page): Promise<void> {
   await picturePanel(page).getByRole('button', { name: 'Generate' }).click()
 }
 
+// SPEC 14 1.57 TP-6: the "Make a video" card, prompt only.
+export const E2E_VIDEO_PROMPT = 'A slim citrus can turning slowly on a table, harness check'
+
+export const videoPanel = (page: Page): Locator =>
+  page.getByRole('region', { name: 'Make a video' })
+
+export async function startVideo(page: Page, seconds: number): Promise<void> {
+  const panel = videoPanel(page)
+  await panel.getByLabel('Provider').selectOption({ label: 'ComfyUI' })
+  await panel.getByLabel('Prompt').fill(E2E_VIDEO_PROMPT)
+  await panel.getByLabel('Length (seconds)').fill(String(seconds))
+  await panel.getByRole('button', { name: 'Start' }).click()
+}
+
+// The newest row's clip has its metadata (HAVE_METADATA or more): the built app's CSP and
+// adman-asset:// protocol let the clip through.
+export async function clipHasMetadata(page: Page, timeout: number): Promise<void> {
+  const clip = runRow(page).getByLabel('Video result')
+  await expect(clip).toBeVisible({ timeout })
+  await expect
+    .poll(() => clip.evaluate((v: HTMLVideoElement) => v.readyState), { timeout })
+    .toBeGreaterThanOrEqual(1)
+}
+
 // A run row's stage while it works, as the adapter reports it (poll.ts).
 export const WAITING_ON_SERVER = /Working.*waiting/
 export const WORKING_ON_SERVER = /Working.*working/
