@@ -1,8 +1,9 @@
 // The three MiniMax H3 workflows (SPEC 6.10.4, 6.10.7; 14 1.39: H3 needs 0.33.0, sound is
 // kept). h3-text-to-video is a trial: its graph is the agent's draft
-// comfy-workflows/h3-video-text.json, which the official template confirms (14 1.46). The
-// other two are drafts: their graphs are stand-ins that only the tests use, never sent to a
-// server, until real graphs arrive as data.
+// comfy-workflows/h3-video-text.json, which the official template confirms (14 1.46).
+// h3-image-to-video is a trial from the first-frame draft (14 1.54 P-4). h3-reference-to-video
+// is a draft: its graph is a stand-in that only the tests use, never sent to a server, until a
+// real graph arrives as data.
 import type { Graph, WorkflowSpec, WorkflowSlots } from './types'
 import {
   AGENT_DRAFT,
@@ -51,42 +52,50 @@ const making: Omit<WorkflowSlots, 'prompt'> = {
 
 const model = (mainFile: string) => ({ label: 'MiniMax H3', mainFile })
 
-export const h3TextToVideo: WorkflowSpec = {
+// The trial graphs' shared part: the "App fills" list of REFERENCE-NOTES.md, node 5 prompt,
+// width, height, length; node 6 noise_seed; node 14 filename_prefix.
+const TRIAL_SLOTS: WorkflowSlots = {
+  prompt: { node: '5', input: 'prompt' },
+  seed: [{ node: '6', input: 'noise_seed' }],
+  width: { node: '5', input: 'width' },
+  height: { node: '5', input: 'height' },
+  frames: { node: '5', input: 'length' },
+  outputPrefix: { node: '14', input: 'filename_prefix' },
+  outputNode: '14',
+}
+
+const TRIAL_CLASSES = [
+  'UNETLoader',
+  'CLIPLoader',
+  'VAELoader',
+  'MiniMaxH3ImageToVideo',
+  'RandomNoise',
+  'KSamplerSelect',
+  'BasicScheduler',
+  'BasicGuider',
+  'SamplerCustomAdvanced',
+  'VAEDecode',
+  'VAEDecodeAudio',
+  'CreateVideo',
+  'SaveVideo',
+]
+
+const trial = {
   ...common,
   version: 2,
   status: 'trial',
   size: H3_FIRST_RUN_SIZE,
+  model: model(H3_MAIN_FILE),
+} as const
+
+export const h3TextToVideo: WorkflowSpec = {
+  ...trial,
   id: 'h3-text-to-video',
   label: 'MiniMax H3: video from a prompt',
   videoStart: { firstFrame: false, references: false },
-  model: model(H3_MAIN_FILE),
   graph: textGraph as Graph,
-  // The "App fills" list of REFERENCE-NOTES.md: node 5 prompt, width, height, length;
-  // node 6 noise_seed; node 14 filename_prefix.
-  slots: {
-    prompt: { node: '5', input: 'prompt' },
-    seed: [{ node: '6', input: 'noise_seed' }],
-    width: { node: '5', input: 'width' },
-    height: { node: '5', input: 'height' },
-    frames: { node: '5', input: 'length' },
-    outputPrefix: { node: '14', input: 'filename_prefix' },
-    outputNode: '14',
-  },
-  needs: h3Needs(H3_MAIN_FILE, [
-    'UNETLoader',
-    'CLIPLoader',
-    'VAELoader',
-    'MiniMaxH3ImageToVideo',
-    'RandomNoise',
-    'KSamplerSelect',
-    'BasicScheduler',
-    'BasicGuider',
-    'SamplerCustomAdvanced',
-    'VAEDecode',
-    'VAEDecodeAudio',
-    'CreateVideo',
-    'SaveVideo',
-  ]),
+  slots: TRIAL_SLOTS,
+  needs: h3Needs(H3_MAIN_FILE, TRIAL_CLASSES),
   leavesOnServer: [LEAVES.video, LEAVES.record],
   source: {
     template:
@@ -102,27 +111,28 @@ export const h3TextToVideo: WorkflowSpec = {
   },
 }
 
+// [1.54] P-4: a trial whose graph is the agent's draft comfy-workflows/h3-video-first-frame.json,
+// the text graph with a LoadImage (node 15) into first_frame. Same model files as the text one.
 export const h3ImageToVideo: WorkflowSpec = {
-  ...common,
+  ...trial,
   id: 'h3-image-to-video',
   label: 'MiniMax H3: video from a first frame',
   videoStart: { firstFrame: true, references: false },
-  model: model(H3_MAIN_FILE),
   graph: imageGraph as Graph,
-  slots: {
-    prompt: { node: '5', input: 'text' },
-    firstFrame: { node: '13', input: 'image' },
-    ...making,
-  },
-  needs: h3Needs(H3_MAIN_FILE, [
-    ...LOADERS,
-    'LoadImage',
-    'VAEEncode',
-    'ReferenceLatent',
-    ...MAKING,
-  ]),
+  slots: { ...TRIAL_SLOTS, firstFrame: { node: '15', input: 'image' } },
+  needs: h3Needs(H3_MAIN_FILE, [...TRIAL_CLASSES, 'LoadImage']),
   leavesOnServer: [LEAVES.uploads, LEAVES.video, LEAVES.record],
-  source: DRAFT_SOURCE('MiniMax H3 image to video'),
+  source: {
+    template:
+      'MiniMax H3 image to video, the first-frame template, through the agent draft h3-video-first-frame.json',
+    exportedFrom: AGENT_DRAFT,
+    changes: [
+      'Taken from the draft as it is: the text graph with node 15 LoadImage into first_frame',
+      'The first frame goes straight from LoadImage, as the template does; no resize node',
+      'The save prefix is under adman/',
+      firstRunLine(H3_FULL_SIZE),
+    ],
+  },
 }
 
 export const h3ReferenceToVideo: WorkflowSpec = {

@@ -68,9 +68,9 @@ describe('fillWorkflow [SPEC 6.10.4, FR-258]', () => {
       firstFrame: 'adman/adman-0123456789abcdef.png',
       promptId: PROMPT_ID,
     })
-    expect(g['7']?.inputs.length).toBe(57)
-    expect(g['13']?.inputs.image).toBe('adman/adman-0123456789abcdef.png')
-    expect(g['12']?.inputs.filename_prefix).toBe(`adman/${PROMPT_ID}`)
+    expect(g['5']?.inputs.length).toBe(57)
+    expect(g['15']?.inputs.image).toBe('adman/adman-0123456789abcdef.png')
+    expect(g['14']?.inputs.filename_prefix).toBe(`adman/${PROMPT_ID}`)
   })
 
   it.each([
