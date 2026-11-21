@@ -1,10 +1,12 @@
 // "Load a brief" and "Type a brief" (spec/screens-campaign.md, "The brief form"): the picker
-// and brief.parse, or an empty form; then the brief form. Create campaign sends
+// and brief.parse, or an empty form; then the brief form. P4-15: a Markdown or text brief is
+// read with AI instead (use-text-brief.tsx, spec/screens-ai.md "Reading a brief with AI"). Create campaign sends
 // subject.create for each new subject and then campaign.create; it stops at the first refusal,
 // whose message the app store shows in the alert. Cancel sends nothing. A made campaign opens
 // at once (A-45): onCreated gets campaign.create's campaignId.
 import { useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
+import { briefFileKind } from '@/shared/brief/brief-file-kind'
 import type { BriefParsed } from '@/shared/schemas/commands/brief'
 import type { CampaignCreated } from '@/shared/schemas/commands/campaign-edit'
 import type { CampaignSummary } from '@/shared/schemas/queries/campaign'
@@ -17,6 +19,7 @@ import {
   type CampaignPlan,
 } from '@/renderer/screens/project-home/brief-form-model'
 import layout from '@/renderer/ui/layout.module.css'
+import { useTextBrief } from './use-text-brief'
 
 export type BriefLoadProps = {
   projectId: string
@@ -32,11 +35,15 @@ export function BriefLoad(props: BriefLoadProps) {
   const [creating, setCreating] = useState(false)
   const { projectId } = props
   const heldSubjectIds = props.subjects.map((s) => s.id)
+  const textBrief = useTextBrief(projectId, (parsed) =>
+    setOpened(formFromDraft(parsed, heldSubjectIds)),
+  )
 
   async function load() {
     const picked = await api.query('dialog.pickFiles', { purpose: 'brief' })
     const filePath = picked.ok ? (picked.data as PickedPaths | null)?.paths[0] : undefined
     if (filePath === undefined) return
+    if (briefFileKind(filePath) === 'text') return textBrief.start(filePath)
     const result = await command('brief.parse', { projectId, filePath })
     if (result.ok) setOpened(formFromDraft(result.data as BriefParsed, heldSubjectIds))
   }
@@ -63,6 +70,7 @@ export function BriefLoad(props: BriefLoadProps) {
         <button type="button" onClick={() => setOpened(formFromDraft(null, heldSubjectIds))}>
           Type a brief
         </button>
+        {textBrief.dialogs}
       </div>
     )
   }
