@@ -34,10 +34,14 @@ test.beforeEach(async () => {
   page = await app.firstWindow()
   await serveNeedsFromApp(page, stand)
 })
+// The sandbox holds the saved address and any typed key, so it is removed even if a close fails.
 test.afterEach(async () => {
-  await app.close()
-  await stand.close()
-  fs.rmSync(box.root, { recursive: true, force: true })
+  try {
+    await app?.close()
+    await stand?.close()
+  } finally {
+    fs.rmSync(box.root, { recursive: true, force: true })
+  }
 })
 
 // The project, the campaign from the test brief, and the stand-in's address saved.

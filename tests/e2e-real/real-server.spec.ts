@@ -30,9 +30,13 @@ test.beforeEach(async () => {
   app = await launchReal(box)
   page = await app.firstWindow()
 })
+// The sandbox holds the saved address and the typed key, so it is removed even if close fails.
 test.afterEach(async () => {
-  await app.close()
-  fs.rmSync(box.root, { recursive: true, force: true })
+  try {
+    await app?.close()
+  } finally {
+    fs.rmSync(box.root, { recursive: true, force: true })
+  }
 })
 
 async function comfyCampaign(): Promise<void> {
