@@ -17,6 +17,14 @@ export function isRegionName(region: string): boolean {
   return REGION.test(region)
 }
 
+// SPEC 14 1.39 "S3" [FR-308]: the words settings.update gives for a region this build does not
+// support, or null for a standard Amazon region. client.ts keeps its own check as a second guard.
+export function regionRefusal(region: string): string | null {
+  if (region.startsWith('cn-')) return 'Amazon S3 regions in China are not supported in this build.'
+  if (isRegionName(region)) return null
+  return 'That is not an Amazon S3 region. Storage services that copy S3 are not supported in this build.'
+}
+
 export function isBucketName(bucket: string): boolean {
   return BUCKET.test(bucket) && !bucket.includes('..')
 }
