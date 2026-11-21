@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { ProjectHome } from '@/renderer/screens/project-home/project-home'
 import { renderApp, axeViolations } from '../../render'
 import { PROJECT, projectApi } from './project-fixture'
+import { addPhotos, photoStubs } from './brief-form-fixture'
 
 const CREATED = { campaignId: 'summer-splash-k3f9q2', directionId: 'D1', variantId: 'V1' }
 
@@ -19,12 +20,13 @@ describe('project home sections [spec/screens-campaign.md, Project home]', () =>
   })
 
   it('opens the new campaign after "Create campaign" succeeds [A-45]', async () => {
-    const fake = projectApi()
+    const fake = photoStubs(projectApi())
     fake.onCommand('campaign.create', () => ({ ok: true, data: CREATED }))
     await renderApp(<ProjectHome project={PROJECT} />, fake)
     await screen.findByText('No campaign yet.')
     await userEvent.click(screen.getByRole('button', { name: 'Load a brief' }))
-    await userEvent.click(await screen.findByRole('button', { name: 'Create campaign' }))
+    await addPhotos(await screen.findByRole('region', { name: 'Brief' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Create campaign' }))
     expect(await screen.findByRole('button', { name: 'Back to project' })).toBeInTheDocument()
     await waitFor(() =>
       expect(fake.queries.filter((q) => q.name === 'campaign.get')).toEqual([

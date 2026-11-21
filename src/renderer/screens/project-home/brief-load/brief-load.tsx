@@ -1,9 +1,11 @@
 // "Load a brief" and "Type a brief" (spec/screens-campaign.md, "The brief form"): the picker
 // and brief.parse, or an empty form; then the brief form. P4-15: a Markdown or text brief is
 // read with AI instead (use-text-brief.tsx, spec/screens-ai.md "Reading a brief with AI"). Create campaign sends
-// subject.create for each new subject and then campaign.create; it stops at the first refusal,
-// whose message the app store shows in the alert. Cancel sends nothing. A made campaign opens
-// at once (A-45): onCreated gets campaign.create's campaignId.
+// subject.create for each new subject, asset.update for each photo to attach, then
+// campaign.create (spec/subject-photos.md, "Create campaign"); it stops at the first refusal,
+// whose message the app store shows in the alert. A made campaign opens at once (A-45):
+// onCreated gets campaign.create's campaignId. SP-4: a loaded brief's photos are imported
+// before the form opens (use-brief-photos.ts).
 import { useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { briefFileKind } from '@/shared/brief/brief-file-kind'
@@ -19,6 +21,7 @@ import {
   type CampaignPlan,
 } from '@/renderer/screens/project-home/brief-form-model'
 import layout from '@/renderer/ui/layout.module.css'
+import { useBriefPhotos } from './use-brief-photos'
 import { useTextBrief } from './use-text-brief'
 
 export type BriefLoadProps = {
@@ -35,6 +38,7 @@ export function BriefLoad(props: BriefLoadProps) {
   const [creating, setCreating] = useState(false)
   const { projectId } = props
   const heldSubjectIds = props.subjects.map((s) => s.id)
+  const briefPhotos = useBriefPhotos(projectId)
   const textBrief = useTextBrief(projectId, (parsed) =>
     setOpened(formFromDraft(parsed, heldSubjectIds)),
   )
@@ -45,13 +49,19 @@ export function BriefLoad(props: BriefLoadProps) {
     if (filePath === undefined) return
     if (briefFileKind(filePath) === 'text') return textBrief.start(filePath)
     const result = await command('brief.parse', { projectId, filePath })
-    if (result.ok) setOpened(formFromDraft(result.data as BriefParsed, heldSubjectIds))
+    if (!result.ok) return
+    const parsed = result.data as BriefParsed
+    const photos = await briefPhotos.importPhotos(parsed)
+    if (photos !== null) setOpened(formFromDraft(parsed, heldSubjectIds, photos))
   }
 
   async function create(plan: Extract<CampaignPlan, { ok: true }>) {
     setCreating(true)
     for (const subject of plan.subjects) {
       if (!(await command('subject.create', subject)).ok) return setCreating(false)
+    }
+    for (const entry of plan.attach) {
+      if (!(await command('asset.update', entry)).ok) return setCreating(false)
     }
     const result = await command('campaign.create', plan.campaign)
     setCreating(false)
@@ -70,6 +80,7 @@ export function BriefLoad(props: BriefLoadProps) {
         <button type="button" onClick={() => setOpened(formFromDraft(null, heldSubjectIds))}>
           Type a brief
         </button>
+        {briefPhotos.adding && <p role="status">Adding the brief's photos…</p>}
         {textBrief.dialogs}
       </div>
     )
