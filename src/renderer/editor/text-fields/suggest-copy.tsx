@@ -9,7 +9,9 @@ import type { LayerRow } from '@/shared/schemas/rows/layer'
 function ShownProjectDialog(props: { layer: LayerRow; onClose: () => void }) {
   const projectId = useApp((s) => (s.view.kind === 'project' ? s.view.projectId : null))
   if (projectId === null) return null
-  return <CopyOptionsDialog open projectId={projectId} layer={props.layer} onClose={props.onClose} />
+  return (
+    <CopyOptionsDialog open projectId={projectId} layer={props.layer} onClose={props.onClose} />
+  )
 }
 
 export function SuggestCopy(props: { layer: LayerRow }) {
