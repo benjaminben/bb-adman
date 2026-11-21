@@ -133,6 +133,7 @@ export function startJob(state: RunnerState, projectId: string, row: JobRow): vo
       for (const listener of [...state.onEnd]) listener()
     },
   }
+  state.enqueued.delete(row.id)
   state.active.set(row.id, live)
   writeJob(state, projectId, row.id, { status: 'running' })
   const handler = state.opts.handlers.find((h) => h.kind === row.kind)

@@ -29,7 +29,9 @@ function endQueued(state: RunnerState, projectId: string): void {
   const handle = state.opts.deps().projects.get(projectId)
   if (!handle) return
   for (const job of activeJobs(handle)) {
-    if (!state.active.has(job.id)) writeJob(state, projectId, job.id, { status: 'cancelled' })
+    if (state.active.has(job.id)) continue
+    state.enqueued.delete(job.id)
+    writeJob(state, projectId, job.id, { status: 'cancelled' })
   }
 }
 

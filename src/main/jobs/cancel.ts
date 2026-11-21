@@ -61,7 +61,10 @@ export async function cancelJob(state: RunnerState, projectId: string, jobId: st
   )
   if (refusal) throw refusal
   const live = state.active.get(jobId)
-  if (!live) return writeJob(state, projectId, jobId, { status: 'cancelled' })
+  if (!live) {
+    state.enqueued.delete(jobId)
+    return writeJob(state, projectId, jobId, { status: 'cancelled' })
+  }
   if (JOB_KIND_CLASSES[row.kind] === 'attached') return live.finish({ status: 'cancelled' })
   if (!live.cancelAsked) askToStop(state, live)
 }

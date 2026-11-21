@@ -34,7 +34,8 @@ export function projectOpened(state: RunnerState, projectId: string): void {
   const handle = state.opts.deps().projects.get(projectId)
   if (!handle) return
   for (const job of activeJobs(handle)) {
-    if (state.active.has(job.id)) continue
+    // [1.38] A row this process enqueued or is running is its own, not a left-over (Y15).
+    if (state.active.has(job.id) || state.enqueued.has(job.id)) continue
     const row = readJob(handle, job.id)
     if (!row) continue
     if (row.provider !== 'comfyui' && resumable(state, row)) startJob(state, projectId, row)

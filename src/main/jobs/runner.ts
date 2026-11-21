@@ -16,7 +16,13 @@ export { runOptions } from './progress'
 export type { JobRunnerOptions }
 
 export function createJobRunner(opts: JobRunnerOptions): JobService {
-  const state: RunnerState = { opts, active: new Map(), pump, onEnd: new Set() }
+  const state: RunnerState = {
+    opts,
+    active: new Map(),
+    enqueued: new Set(),
+    pump,
+    onEnd: new Set(),
+  }
 
   function runningFor(providerId: string): number {
     let n = 0
@@ -24,10 +30,11 @@ export function createJobRunner(opts: JobRunnerOptions): JobService {
     return n
   }
 
+  // SPEC 3.6 "Jobs" item 2 [1.38]: only a queued row this process enqueued is ever started.
   function pump(): void {
     for (const handle of opts.deps().projects.all()) {
       for (const job of activeJobs(handle)) {
-        if (job.status !== 'queued' || state.active.has(job.id)) continue
+        if (job.status !== 'queued' || !state.enqueued.has(job.id)) continue
         if (runningFor(job.provider ?? '') >= JOBS_AT_ONCE_PER_PROVIDER) continue
         const row = readJob(handle, job.id)
         if (row) startJob(state, handle.projectId, row)
@@ -39,8 +46,10 @@ export function createJobRunner(opts: JobRunnerOptions): JobService {
     enqueue(ctx, req) {
       const id = ulid()
       insertQueued(ctx.project, id, req, nowText(state))
+      state.enqueued.add(id)
       // Runs once the command's transaction has ended; a rolled-back row is not there.
       queueMicrotask(() => {
+        if (!readJob(ctx.project, id)) state.enqueued.delete(id)
         emitJob(state, ctx.project.projectId, id)
         pump()
       })
