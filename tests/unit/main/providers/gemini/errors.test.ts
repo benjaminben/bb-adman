@@ -83,6 +83,26 @@ describe('Gemini error mapping, one recorded response per kind [SPEC 6, 6.2, 10.
     expect(failure.error.detail).toContain('fetch failed')
   })
 
+  it('maps HTTP 400 with reason API_KEY_INVALID to bad_key [1.11]', async () => {
+    const { fetchFn } = fetchAnswering('error-400-api-key-invalid.json', 400)
+    const failure = await failureOf(generateWith(fetchFn))
+    expect(failure.error.kind).toBe('bad_key')
+    expect(failure.error.detail).toContain('API_KEY_INVALID')
+  })
+
+  it('keeps any other HTTP 400 as other [1.11]', async () => {
+    const { fetchFn } = fetchAnswering('error-400-invalid-argument.json', 400)
+    const failure = await failureOf(generateWith(fetchFn))
+    expect(failure.error.kind).toBe('other')
+  })
+
+  it('maps a picture stopped for recitation to refused [1.11]', async () => {
+    const { fetchFn } = fetchAnswering('finish-recitation.json')
+    const failure = await failureOf(generateWith(fetchFn))
+    expect(failure.error.kind).toBe('refused')
+    expect(failure.error.detail).toContain('RECITATION')
+  })
+
   it('maps any other HTTP error to other', async () => {
     const { fetchFn } = fetchAnswering('error-500-internal.json', 500)
     const failure = await failureOf(generateWith(fetchFn))
