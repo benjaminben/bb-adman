@@ -2,7 +2,9 @@
 // calling command's transaction has ended, like every other runner write. Close: close-jobs.ts.
 //   queued                                 cancelled at once, every provider
 //   running, attached kind                 cancelled at once; the app stops waiting
-//   running, background, cancel 'none'     refused: cancel_not_supported
+//   running, background, cancel 'none'     refused: cancel_not_supported, except a picture job:
+//                                          its unsent pictures are skipped, the calls in flight
+//                                          finish, and it ends with no cancel wait (FIX-E)
 //   running, background, stops/may_finish  result.cancelAsked, signal fired, then the outcome:
 //     the handler ends ProviderCancelled   cancelled                ("stopped")
 //     the handler returns its result       succeeded, finishedAfterCancel
@@ -28,7 +30,8 @@ export function cancelRefusal(row: JobRow, provider: ProviderInfo | undefined): 
     return new AppError('RULE_VIOLATION', JOB_ENDED_MESSAGE, { reason: 'job_wrong_state' })
   }
   const background = JOB_KIND_CLASSES[row.kind] === 'background'
-  if (row.status === 'running' && background && provider?.cancel === 'none') {
+  const skipsUnsent = row.kind === 'image_generation'
+  if (row.status === 'running' && background && !skipsUnsent && provider?.cancel === 'none') {
     const label = provider.label
     return new AppError('RULE_VIOLATION', `${label} cannot stop a request once it is sent.`, {
       reason: 'cancel_not_supported',
@@ -37,11 +40,14 @@ export function cancelRefusal(row: JobRow, provider: ProviderInfo | undefined): 
   return null
 }
 
-// Asks the provider to stop, as job.cancel does, and starts the provider's wait.
+// Asks the provider to stop, as job.cancel does, and starts the provider's wait. A provider
+// that cannot stop has no wait: the job ends when its calls in flight end, under the
+// adapter's own time limit, so the pictures they bring are kept (FIX-E).
 export function askToStop(state: RunnerState, live: LiveJob): void {
   live.cancelAsked = true
   writeJob(state, live.projectId, live.id, { result: runningResult(live) })
   live.controller.abort()
+  if (live.provider?.cancel === 'none') return
   const waitMs = (state.opts.cancelWaitMs ?? cancelWaitFor)(live.providerId)
   const timer = setTimeout(() => {
     live.finish({ status: 'cancelled', outcomeUnknown: true })

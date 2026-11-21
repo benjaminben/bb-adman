@@ -80,7 +80,11 @@ describe('job.cancel from an agent [spec/agent-runs.md, AR-1]', () => {
     const x = fixture()
     const g = gate()
     x.f.body = async () => g.promise
-    const own = await x.start({ startedBy: 'agent', provider: 'no-cancel' })
+    const own = await x.start({
+      startedBy: 'agent',
+      provider: 'no-cancel',
+      kind: 'video_generation',
+    })
     await waitFor(() => x.row(own)?.status === 'running')
     expect(await x.agent('job.cancel', { projectId: x.projectId, jobId: own })).toMatchObject({
       ok: false,

@@ -128,7 +128,7 @@ describe('the untick check skips a job already sent, and the user [AR-2]', () =>
       await jc.call(async () => calls++)
       return { done: true }
     }
-    const job = await x.start({ startedBy: 'agent' })
+    const job = await x.start({ startedBy: 'agent', kind: 'video_generation' })
     await waitFor(() => calls === 1)
     x.tick('fake', false)
     between.open()
