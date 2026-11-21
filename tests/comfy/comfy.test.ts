@@ -6,7 +6,14 @@
 import os from 'node:os'
 import { describe, it, expect, type TestContext } from 'vitest'
 import { createComfyClient } from '../../src/main/providers/comfyui/client'
-import { pictureCase, referenceCase, videoCase, type CaseKit, type CaseOutcome } from './cases'
+import {
+  firstFrameCase,
+  pictureCase,
+  referenceCase,
+  videoCase,
+  type CaseKit,
+  type CaseOutcome,
+} from './cases'
 import { runCheckCase } from './check-case'
 import { guarded } from './guard'
 import { makePrinter } from './print'
@@ -66,7 +73,8 @@ function runCase(
   }
 }
 
-// The order of 1.46: the check, the reference picture, the video, the MOSS picture.
+// The order of 1.46: the check, the reference picture, the video, the MOSS picture; case 6, the
+// video from a first frame, comes after case 2 (1.54 P-4).
 describe.skipIf(origin === '')('test:comfy on the test server', () => {
   it(
     '1. the check: the version, and per trial workflow what is missing',
@@ -91,6 +99,12 @@ describe.skipIf(origin === '')('test:comfy on the test server', () => {
   it(
     '2. MiniMax H3: a video from a prompt (only with ADMAN_COMFY_VIDEO=1)',
     runCase(videoCase, VIDEO_LIMIT_MS),
+    VIDEO_LIMIT_MS + SPARE_MS,
+  )
+
+  it(
+    '6. MiniMax H3: a video from a first frame (only with ADMAN_COMFY_FRAME=1)',
+    runCase(firstFrameCase, VIDEO_LIMIT_MS, ['uploadImage']),
     VIDEO_LIMIT_MS + SPARE_MS,
   )
 
