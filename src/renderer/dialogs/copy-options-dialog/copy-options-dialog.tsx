@@ -102,7 +102,7 @@ export function CopyOptionsDialog(props: CopyOptionsDialogProps) {
               providerLabel={provider?.label ?? failed.provider ?? ''}
             />
             <button type="button" onClick={() => setAsking('retry')}>
-              Try again
+              Retry
             </button>
           </div>
         )}
@@ -139,8 +139,8 @@ export function CopyOptionsDialog(props: CopyOptionsDialogProps) {
           open={asking === 'retry'}
           projectId={projectId}
           job="text"
-          title="Try again"
-          confirmLabel="Try again"
+          title="Retry"
+          confirmLabel="Retry"
           retry={{ provider: failed.provider ?? '' }}
           count={{ label: 'Options', value: requestCount(failed), min: 1, max: MAX_COPY_OPTIONS }}
           onConfirm={() => send('job.retry', { projectId, jobId: failed.id })}

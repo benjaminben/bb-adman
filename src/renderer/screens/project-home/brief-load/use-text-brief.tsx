@@ -2,7 +2,7 @@
 // the run dialog, then brief.extract, then the reading dialog until its job ends.
 // Security (spec/security.md, "Paths in the renderer"): `start` takes the path the brief picker
 // gave for the file the user chose, and that path, unchanged, is the only one brief.extract is
-// sent; "Try again" sends it again. Nothing here builds or takes a path from anywhere else.
+// sent; "Retry" sends it again. Nothing here builds or takes a path from anywhere else.
 // NEEDS_KEY: the app store opens the key dialog and sends again once a key is saved; a
 // NEEDS_KEY reply means the user cancelled it, so the empty form opens instead.
 import { useState } from 'react'

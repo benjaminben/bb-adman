@@ -79,8 +79,8 @@ export function RowRetry(props: {
           open
           projectId={projectId}
           job={dialogJob}
-          title="Try again"
-          confirmLabel="Try again"
+          title="Retry"
+          confirmLabel="Retry"
           count={pictureCount(job)}
           campaignId={job.campaignId ?? undefined}
           retry={{ provider: job.provider ?? '' }}

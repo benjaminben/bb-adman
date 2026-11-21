@@ -2,7 +2,7 @@
 // one brief_extraction job, which is attached to it. While the job runs it says who is reading
 // and offers Stop (job.cancel, then close). Closing it another way while the job runs asks first
 // ("Attached jobs and the close warning"). On success it sends job.markSeen and hands the
-// draft over; on failure it shows the sentence, "Try again" and "Fill the form by hand".
+// draft over; on failure it shows the sentence, "Retry" and "Fill the form by hand".
 import { useEffect, useRef } from 'react'
 import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { attachedStoreFor, dialogJobs } from '@/renderer/stores/attached-store'
@@ -80,7 +80,7 @@ export function BriefReadingDialog(props: BriefReadingDialogProps) {
         Fill the form by hand
       </button>
       <button type="button" className={layout.primary} onClick={props.onTryAgain}>
-        Try again
+        Retry
       </button>
     </>
   ) : (
