@@ -12,7 +12,7 @@ Built. Row schema: `src/shared/schemas/rows/job.ts`. Store: `src/main/jobs/job-s
 
 | Field (wire name) | Meaning in use |
 |-------------------|----------------|
-| `kind` | One of the nine job kinds (see "Job kinds"). |
+| `kind` | One of the job kinds (see "Job kinds"): nine, and `cutout` from Phase 4. |
 | `status` | `queued`, `running`, `succeeded`, `failed`, `cancelled`. Five values only. |
 | `campaignId`, `variantId`, `layerId`, `slot` | Where the job belongs [REQ: FR-217]. A job for a campaign has `campaignId`; for a variant also `variantId`; for one layer also `layerId`; for a template slot that has no layer yet, `slot`. Plain text, no foreign key: the job record outlives what it was for. If the layer is gone, "go to that place" leads to the variant; if the variant is gone, to the campaign. |
 | `provider`, `model` | The provider ID and model the job calls. |
@@ -56,16 +56,16 @@ Built as a table: `src/shared/config/job-kinds.ts` (frozen contract). It owns th
 
 | Class | Kinds | Rule |
 |-------|-------|------|
-| Background | `image_generation`, `video_generation`, `export`, `publish` | Keeps running when its dialog, panel or tab closes. Nothing in the window can stop it except `job.cancel` from the activity list. |
+| Background | `image_generation`, `video_generation`, `export`, `publish`, `cutout` (Phase 4) | Keeps running when its dialog, panel or tab closes. Nothing in the window can stop it except `job.cancel` from the activity list. |
 | Attached | `generative_fill`, `layout_proposal`, `copy_options`, `translation`, `brief_extraction` | Belongs to the dialog or tab that started it. Before that dialog or tab closes while the job is `queued` or `running`, the window warns the user. If the user confirms, the window sends `job.cancel` and then closes. If the user cancels the warning, nothing closes and the job carries on. |
 
 - The stakeholder's words cover the first two background kinds and the first four attached kinds. `export`, `publish` and `brief_extraction` were placed by the architect: the first two were already designed as jobs in the activity list, and brief extraction is a wait inside the intake dialog. To confirm (OI-31: which kinds are attached, and whether partial results of a cancelled attached job are offered, are open).
 - The main process does not know about tabs or dialogs. The window finds the attached jobs of a variant or campaign with `job.list` and decides when to warn. No stored "owner" of a job is needed, whatever the navigation becomes.
-- `job.cancel` on an attached job leaves the variant as it was. An attached job writes to the variant only through one last system command when everything has arrived, and a cancelled job never sends it. What had already arrived is kept in `result` with status `cancelled`. The data allows the app to offer those partial results or not (OI-31).
+- `job.cancel` on an attached job leaves the variant as it was. An attached job writes to the variant only through one last command when everything has arrived, and a cancelled job never sends it. For a layout proposal that command is the window's own `layer.updateMany`, sent when the job succeeds while its tab is open (`spec/ai-jobs.md`); the job writes nothing itself. What had already arrived is kept in `result` with status `cancelled`. The data allows the app to offer those partial results or not (OI-31).
 
 ## Job kinds on `main`
 
-Built: `image_generation` and `video_generation`. Handlers are listed in `src/main/jobs/kinds/index.ts`; request and result shapes in `src/shared/schemas/jobs/`. The other seven kinds exist in the table and the `kind` check only; no handler exists for them.
+Built: `image_generation` and `video_generation`. Handlers are listed in `src/main/jobs/kinds/index.ts`; request and result shapes in `src/shared/schemas/jobs/`. The other seven kinds exist in the table and the `kind` check only; no handler exists for them. Phase 4 adds `layout_proposal`, `copy_options`, `brief_extraction` and `cutout` (`spec/ai-jobs.md`).
 
 ### `image_generation`
 
@@ -214,7 +214,7 @@ Built (security class, low). A project file from elsewhere can hold a job row th
 Built.
 
 - `jc.call` turns a `ProviderFailure` into the job's error kind and reason. The plain message for each error kind has one owner, `src/main/providers/messages.ts`.
-- **An `AppError` met after enqueue** ends the job `failed`, kind `other`, with the sentence "{Provider} could not finish this request." (security class). The row and the sentence hold nothing from the `AppError`; its code is in `error_detail` only. No part of it reaches a log line: `logEnd` writes `errorKind` and `reason` only. Retry goes through the command again, so a missing key opens the key dialog and a missing reference file gets its own refusal. Test: `tests/integration/generation/image-kind-errors.test.ts` (a reference gone after enqueue ends `failed` kind `other`, no path in the row or the log). Own sentences for these cases: OI-68 (open: whether these get their own sentences, with the activity panel).
+- **An `AppError` met after enqueue** ends the job `failed`, kind `other`, with the sentence "{Provider} could not finish this request." (security class). The row and the sentence hold nothing from the `AppError`; its code is in `error_detail` only. No part of it reaches a log line: `logEnd` writes `errorKind` and `reason` only. Retry goes through the command again, so a missing key opens the key dialog and a missing reference file gets its own refusal. Test: `tests/integration/generation/image-kind-errors.test.ts` (a reference gone after enqueue ends `failed` kind `other`, no path in the row or the log). Not built (Phase 4, P4-5): each local cause gets its own reason and sentence, and `error_detail` holds the reason name, not the code (`spec/ai-jobs.md`, "A plain sentence per failure cause").
 - **Unforeseen errors** are logged through `jobErrorContext(error, secrets, noMessage)` in `src/main/jobs/job-error-log.ts`, which builds `context.error`. Secrets are `deps.secrets.get(name)` for each of the provider's `secrets`; `noMessage` is the provider's `serverText`; a provider not in the registry gets the flag set. A secret is removed in plain, URL-encoded and base64 forms from message and stack. `framesOf` cuts the header (name and message, all lines) off the stack before keeping only frame lines. With the flag, message is null. An error whose `message` was changed after it was made, with the flag set, gives `stack` null. A thrown value that is not an `Error` gives its type as the name and no stack. The row's `error_detail` is `internal`. Test: `tests/integration/jobs/runner-secret-log.test.ts`.
 - The job's log line holds the job ID, kind, provider, error kind and reason, never the raw provider text.
 - No code under `src/main/providers/` or `src/main/jobs/` assigns to an error's `message`.
@@ -245,11 +245,11 @@ Today the only video provider that reaches the resume row is the fake one; Comfy
 
 ## Closing a project and quitting
 
-Built: the refusal and `'stop'`. Not built: the warnings in the window (UI pass). What a stop does per provider: `spec/cancel.md`.
+Built: the refusal and `'stop'`. Not built (Phase 4, P4-10): the close and quit warnings, worded in `spec/screens-ai.md`, and quitting through `project.close` with `'stop'`. What a stop does per provider: `spec/cancel.md`.
 
 - `project.close` refuses with `RULE_VIOLATION`, `details.reason = 'jobs_running'` and `details.count`, when the project has a `queued` or `running` job, unless its input has `runningJobs: 'stop'`. With `'stop'` the runner (`cancelAll`, `src/main/jobs/close-jobs.ts`) asks the providers that can stop, waits at most `CLOSE_WAIT_MS = 5_000` for their answers, ends what is left, and the project closes. A job row never stays `queued` or `running` in a file the app closed this way.
 - Whether to ask, stop or keep running on close is not decided (Q-039). The one input serves each answer: Ask (the window shows a warning on the refusal and on confirm sends `runningJobs: 'stop'`); Stop (it always sends `'stop'`); Keep running (it does not close the project when the user goes to another one; the main process already holds several open projects by ID).
-- Quitting should close every project with `'stop'` after the same warning, whatever the answer. **As built,** `closeAll` in `src/main/core.ts` closes the files without `project.close`. Running jobs keep their `running` rows and are settled by the open rule at the next open, the same path as a crash. Quitting through `project.close` with `'stop'`, after the warning, comes with the quit warning in the UI pass.
+- Quitting should close every project with `'stop'` after the same warning, whatever the answer. **As built,** `closeAll` in `src/main/core.ts` closes the files without `project.close`. Running jobs keep their `running` rows and are settled by the open rule at the next open, the same path as a crash. Quitting through `project.close` with `'stop'`, after the warning, comes with the quit warning in Phase 4.
 - `project.setAssetsDir` refuses with `RULE_VIOLATION`, `jobs_running` while `jobs.activeCount(projectId) > 0`: a job writes its file and then adds its row, and both must see one folder. `campaign.delete` refuses with `jobs_running` too (OI-69: provisional).
 - One or several projects at once (Q-038) and remembered tabs (Q-040) are not decided. The main process keeps any number of open projects, each named by `projectId`, which serves either answer.
 
@@ -267,7 +267,7 @@ Built. `src/main/providers/fake/` (`behaviour.ts`, `image.ts`, `video.ts`, `png.
 
 Not built.
 
-- **Phase 4: attached jobs for layout and copy options.** Handlers for `layout_proposal` and `copy_options` in `src/main/jobs/kinds/`, one line each in `kinds/index.ts`, request and result shapes in `src/shared/schemas/jobs/`. Each writes to the variant only through one last system command when every option has arrived, checks `jc.cancelled()` before it, and calls `jc.keep` after each option. The window warns before closing a dialog or tab that owns a `queued` or `running` attached job, and on confirm sends `job.cancel` then closes (the attached rule above). `generation.proposeLayout` and `generation.copyOptions` become `tick` under the Gemini tick (`spec/mcp-and-agents.md`). Phase 4 also adds the query for earlier options of a layer (by `gen_run_id`, `layer_id` or `slot`).
+- **Phase 4: layout, copy options, brief reading, cut-out.** Designed in `spec/ai-jobs.md` (kinds, commands, queries, failure sentences, the fake provider's parts) and `spec/screens-ai.md` (the run dialog, the activity panel, the close warnings).
 - **Phase 7: video resume into the ad.** Resume already checks and fetches a left-over run. Phase 7 adds the clip to the variant's track (first free position) when the run ends, also for a resumed run, embeds details in the MP4 through FFmpeg (`details: 'pending'` goes away), and fills the clip row's `width`, `height`, `duration_ms`. The fal.ai Seedance adapter (slice J) must first find out whether fal charges for a status call or fetch: if it does, or that cannot be shown, fal rows are not resumed and end as interrupted. Slice J also says whether a resumed status call counts in `paid_calls`, and how a close treats a fal run that will still be charged (OI-51, OI-60).
 - **`export` and `publish`** become background job kinds with the phases that build them (`spec/export-and-checks.md`, `spec/storage-and-publish.md`). `generative_fill`, `translation` and `brief_extraction` become attached kinds with theirs.
-- **The activity panel** over all campaigns, "go there", and the close and quit warnings are UI-pass work.
+- **The activity panel**, "go there", and the close and quit warnings: Phase 4 (`spec/screens-ai.md`).

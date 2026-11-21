@@ -14,12 +14,12 @@ Built: picture generation with reference pictures (`ImageProvider.generate`). No
 |-----|------|------|------|
 | Image generate | `generateContent` with the prompt and reference pictures, picture output | `gemini-nano-banana-2.1` | Yes |
 | Image extend | Same, with the placed picture on a canvas of the target size and an instruction to extend the scene to the edges | the image model | No (Phase 5) |
-| Layout | `generateContent` with the background picture and a JSON response schema matching `LayoutBox[]` | `gemini-2.5-flash` | No (Phase 4) |
-| Extract brief, copy options, translate | `generateContent` with a JSON response schema | `gemini-2.5-flash` | No (Phase 4; translate Phase 6) |
+| Layout | `generateContent` with the background picture and a JSON response schema matching `LayoutBox[]` | `gemini-2.5-flash` (checked in P4-4) | No (Phase 4) |
+| Extract brief, copy options, translate | `generateContent` with a JSON response schema | `gemini-2.5-flash` (checked in P4-4) | No (Phase 4; translate Phase 6) |
 
 - The image model ID and API version `v1` are proven: live runs succeeded with them, one from a prompt and one with a product photo as reference (a 1024 × 1024 JPEG came back). The path through the app's screens is not yet proven by a live run.
 - **To check:** the layout and text model IDs (`gemini-2.5-flash`) are the ones the architect knew and are unproven. Check Google's current model list at the start of Phase 4 and update `registry.ts`. The proof that an ID is right is a live test passing with a real key.
-- `gemini/index.ts` exports `image` only. The unbuilt `extend` throws `ProviderFailure` `{ kind: 'other', detail: 'Image extend is not built yet' }`. `adapterFor(deps, 'gemini', 'layout' | 'text')` throws `INVALID_INPUT` until Phase 4 adds them. Gemini never does video: `adapterFor(deps, 'gemini', 'video')` throws `INVALID_INPUT` with `details = { provider: 'gemini', job: 'video' }`.
+- `gemini/index.ts` exports `image` only, and `layout` and `text` from P4-4. The unbuilt `extend` throws `ProviderFailure` `{ kind: 'other', detail: 'Image extend is not built yet' }`. `adapterFor(deps, 'gemini', 'layout' | 'text')` throws `INVALID_INPUT` until P4-4 adds them. Gemini never does video: `adapterFor(deps, 'gemini', 'video')` throws `INVALID_INPUT` with `details = { provider: 'gemini', job: 'video' }`.
 
 ### The pinned client (built)
 
@@ -70,14 +70,19 @@ Built for pictures; the rest not built (Phases 4 to 6).
 - The pre-filled prompt is built from subject name and description, audience, region and message. The user can edit it [REQ: FR-062].
 - Results are saved as PNG with generation details embedded (`spec/export-and-checks.md`, 'Embedded generation details').
 
-### Layout, text and extend (not built)
+### Layout and text (not built)
 
-Not built (layout, extract brief, copy options: Phase 4; extend: Phase 5; translate: Phase 6). Built to the interfaces in `spec/providers.md` and to every adapter rule; `gemini/index.ts` gains `layout` and `text`, and `image.extend` replaces its stub.
-- Layout: `LayoutProvider.propose` sends the background picture with a JSON response schema matching `LayoutBox[]`. Layout boxes are clamped to the canvas, and colours are snapped to the nearest palette colour when the palette is not empty. The app then creates or updates text layers. Text is always drawn by the app, never by the provider [REQ: FR-061].
-- Extract brief, copy options, translate: `generateContent` with a JSON response schema. The translation prompt includes the region and audience as context [REQ: FR-101].
-- Extend: the placed picture on a canvas of the target size, with an instruction to extend the scene to the edges; same answer rules as picture generation.
-- Timeout: 60 s for a text or layout call; no answer in time is `timeout`. Error mapping as in the table above.
-- `generation.proposeLayout` and `generation.copyOptions` are open to an agent under the Gemini tick when built (`spec/mcp-and-agents.md`).
+Not built (Phase 4, slice P4-4; translate Phase 6; extend Phase 5). Interfaces in `spec/ai-jobs.md`, "Provider interfaces"; every adapter rule holds. Files: `gemini/layout.ts`, `gemini/text.ts`, `gemini/json-call.ts` (one `generateContent` call with a JSON answer, shared by both), `gemini/prompts.ts` (the fixed instruction texts). `gemini/index.ts` exports `layout` and `text`.
+
+- **One JSON call.** Through the same pinned client. `config.responseMimeType = 'application/json'` and `config.responseSchema` for the answer's shape. `TEXT_TIMEOUT_MS = 60_000` per call, raced by the adapter's own abort timer, and the run's `signal` aborts it too (`ProviderCancelled`). The first text part of the first candidate is parsed with `JSON.parse` and checked with the answer's Zod schema; anything else is `other`, "Answer is not the asked JSON". Error mapping as in the table above, with `timeout` at 60 s.
+- **Layout** (`propose`). `parts` = the instruction text, then the background as one `inlineData` PNG part. The instruction states the canvas size in pixels, lists each item as `{ slot, text }` and the palette and fonts, and asks for one box per item in the canvas's pixels: `slot`, `x`, `y`, `width`, `height`, `fontSize`, `color` (`#RRGGBB`), `align`; text kept clear of faces and products, inside the canvas, large enough to read. Answer schema `{ boxes: LayoutBox[] }`. The adapter returns the boxes as parsed; the job clamps them (`spec/ai-jobs.md`). Text is always drawn by the app, never by the provider [REQ: FR-061].
+- **Extract brief** (`extractBrief`). `parts` = the instruction, then the brief text after a fixed line "Brief:". The instruction asks to fill only the listed fields, only from what the brief says, without translating, and to leave a field out when the brief does not give it. Answer schema: the `BriefDraft` fields, every one optional. The adapter returns `briefDraftFrom(parsed)`'s draft.
+- **Copy options** (`copyOptions`). The instruction names the role ("a call to action" or "a line of ad copy"), the language, `count`, `maxChars`, and the brief's message, audience, region, tone, offer and call to action. Answer schema `{ options: string[] }`.
+- **Translate** stays a stub: `ProviderFailure` `other`, "Translate is not built yet" (Phase 6). The translation prompt will include the region and audience as context [REQ: FR-101].
+- **Extend:** the placed picture on a canvas of the target size, with an instruction to extend the scene to the edges; same answer rules as picture generation (Phase 5).
+- **Tests.** Recorded answers, as for pictures: `layout.test.ts` (parts and order, the PNG part, the JSON config, a good answer, a non-JSON answer, a JSON answer of the wrong shape), `text.test.ts` (extract brief, copy options, the same three answers), `text-errors.test.ts` (401, 400 `API_KEY_INVALID`, 429, a safety block, no answer in 60 s, a marked network error), and `environment.test.ts` extended to a text call. Live, one each: `tests/live/gemini-layout.live.test.ts`, `gemini-brief.live.test.ts`, `gemini-copy.live.test.ts`; under D-085 the developer runs each once with the smallest input and reports the model ID, time and answer size, never the answer text.
+- **Model IDs** (OI-10). At the start of P4-4 the developer reads Google's public model list and sets `defaultModels.layout` and `defaultModels.text` in `registry.ts` to a current model that takes a picture and gives JSON. The live runs prove them.
+- `generation.proposeLayout` and `generation.copyOptions` are `tick` for an agent under the Gemini tick (`spec/ai-jobs.md`).
 
 ## fal.ai Seedance (image-to-video)
 
@@ -149,7 +154,7 @@ Not built (Phase 4). Stub by design: `available: false`; the `firefly` registry 
 
 No route was found to the Firefly API without an enterprise plan.
 
-- Deliver `src/main/providers/firefly/` implementing `ImageProvider` against Adobe's public documentation: an OAuth server-to-server token from client ID and secret (secrets `firefly.clientId`, `firefly.clientSecret`), then the picture generate call. Add its line to `adapters.ts`.
-- It stays `available: false`. It is listed in Settings and the run dialog as "Adobe Firefly — not yet available" [REQ: C-02]. `agentRunsOffered` gives `agent_runs_not_offered`.
+- Deliver `src/main/providers/firefly/` implementing `ImageProvider` against Adobe's public documentation: an OAuth server-to-server token from client ID and secret (secrets `firefly.clientId`, `firefly.clientSecret`), then the picture generate call. Two pinned hosts, Adobe's sign-in host for the token and the Firefly API host for the call, as constants in the folder, each request confined to its own. Add its line to `adapters.ts`.
+- It stays `available: false`. `adapterFor` refuses any provider whose `available` is false with `INVALID_INPUT` "That provider cannot do this yet.", so the stub is never reached at run time. It is listed in Settings and the run dialog as "Adobe Firefly — not yet available" [REQ: C-02]. `agentRunsOffered` gives `agent_runs_not_offered`.
 - Unit tests against recorded example responses from the public docs. It is never called at run time.
 - It follows every adapter rule in `spec/providers.md`.

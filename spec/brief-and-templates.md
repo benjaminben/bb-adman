@@ -285,7 +285,7 @@ Built (slices S2-13, S2-14, S2-15). In `spec/screens-campaign.md`, "The brief fo
 
 ### Not built: Markdown and plain-text briefs
 
-Not built (Phase 4). `.md` and `.txt` briefs go to `TextProvider.extractBrief(input: { text: string }): Promise<Brief>` (declared in `src/main/providers/types.ts`; no provider implements it) [REQ: FR-022]. With no key, the app shows the key dialog. The user can cancel and fill the form by hand [REQ: FR-171]. Until then such a file is refused with `brief_type_not_supported`.
+Not built (Phase 4). `.md`, `.markdown` and `.txt` briefs go to the command `brief.extract`, an attached `brief_extraction` job that calls `TextProvider.extractBrief` and gives a `BriefDraft` for the same brief form [REQ: FR-022]. With no key, the app shows the key dialog; the user can cancel and fill the form by hand [REQ: FR-171]. `brief.parse` keeps refusing these files with `brief_type_not_supported`. Design: `spec/ai-jobs.md`, "Brief reading"; screens: `spec/screens-ai.md`.
 
 ## Templates
 

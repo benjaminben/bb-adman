@@ -28,7 +28,7 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 | `history.state` | `UndoStateResult = { canUndo, canRedo }` for a scope | Built |
 | `publish.inspect` | Whether the campaign's cloud folder already has files [REQ: FR-164], and the component files a publish would upload, each with its full local path [REQ: R-06, 8.4] | Not built (Phase 9) |
 
-Phase 4 adds two queries not yet named: paid generations per campaign, split into pictures and videos, from `job.paid_calls` [REQ: FR-230]; and the earlier options of a layer, listing the assets of earlier runs by `job.layer_id` or `job.slot` [REQ: FR-248, FR-216].
+Not built (Phase 4, P4-2), designed in `spec/ai-jobs.md`, "The three queries": `job.earlierOptions { layerId }` (the runs of a layer with their pictures) [REQ: FR-248, FR-216]; `job.activity { limit? }` (job rows with the names of their campaign, variant and layer) [REQ: FR-152, FR-217]; `campaign.paidCount { campaignId }` (`{ pictures, videos, text }` from `job.paid_calls`) [REQ: FR-230]. Open to both actors; no MCP tool wraps them.
 
 ### Query inputs
 

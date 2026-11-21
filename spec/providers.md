@@ -218,8 +218,8 @@ export class ProviderFailure extends Error { readonly error: ProviderError }
 
 Built. `src/main/providers/adapters.ts`.
 
-- Each provider has one folder under `src/main/providers/` whose `index.ts` exports `adapters: ProviderAdapters`. Folders today: `gemini/`, `fal-seedance/`, `comfyui/`, `fake/`, `local-storage/`, `s3/`, `dropbox/`, `azure-blob/`. A provider with no built adapter exports `{}`. `firefly/` and `jev/` are added when built and stay out of `adapters.ts` until then.
-- `adapters.ts` joins the folders by provider ID and exports `adapterFor(deps, providerId, job)`. It returns the built interface for that job, or throws `AppError('INVALID_INPUT', 'That provider cannot do this yet.', { provider, job })` when the provider is not in `deps.providers`, does not list the job, or has no adapter for it. `adapterFrom(table, deps, providerId, job)` does the same over a given table, for tests.
+- Each provider has one folder under `src/main/providers/` whose `index.ts` exports `adapters: ProviderAdapters`. Folders today: `gemini/`, `fal-seedance/`, `comfyui/`, `fake/`, `local-storage/`, `s3/`, `dropbox/`, `azure-blob/`. A provider with no built adapter exports `{}`. `firefly/` is added in Phase 4 (the stub, `spec/providers-adapters.md`); `jev/` is added when built and stays out of `adapters.ts` until then.
+- `adapters.ts` joins the folders by provider ID and exports `adapterFor(deps, providerId, job)`. It returns the built interface for that job, or throws `AppError('INVALID_INPUT', 'That provider cannot do this yet.', { provider, job })` when the provider is not in `deps.providers`, is not `available` (from Phase 4), does not list the job, or has no adapter for it. `adapterFrom(table, deps, providerId, job)` does the same over a given table, for tests.
 - Every provider, `fake` included, must be in `deps.providers` and list the job. So `fake` is reachable only when `ADMAN_FAKE_PROVIDERS=1`.
 - A code path that uses a provider calls `adapterFor` and imports no adapter folder.
 - `ctx.secret` throws when the secret is not saved; `ctx.model` throws when the registry has no default model for that job.
@@ -275,14 +275,14 @@ Built. `src/main/providers/picture-limits.ts` is the one owner of the values; th
   4. Decode. An empty image is refused.
   5. Encode as PNG. A result of zero bytes is refused.
 - The job kind calls `deps.toPng` for every picture, a PNG too, and stores what comes back. A `toPng` refusal or throw counts as a failed call of kind `other` for that picture, and the paid call is still counted. The job's log detail is the fixed message.
-- Cost of re-encoding a PNG: ordinary 8-bit pixels come out the same; a 16-bit PNG becomes 8-bit, a colour profile is dropped, and partly see-through pixels can change by a rounding step. If a cut-out service is added (OI-29, OI-55), this point returns to the architect with it.
+- Cost of re-encoding a PNG: ordinary 8-bit pixels come out the same; a 16-bit PNG becomes 8-bit, a colour profile is dropped, and partly see-through pixels can change by a rounding step. The alpha channel is kept; the rule for cut-outs is in `spec/ai-jobs.md`, "Cut-out".
 - The fake provider's picture must be a real PNG that decodes.
 - **Accepted, not fixed.** The decode and encode block the main process (up to a second or two at the limit), and a fault in Electron's decoder would stop the app. Accepted for pictures from a pinned HTTPS host; a less trusted host sends this back to the architect.
 - **A video file** is read under `MAX_VIDEO_BYTES` and must pass `checkMp4` (`src/main/providers/video-check.ts`) before it is stored. It is stored as the provider returned it, sound included; `checkMp4` reports `hasSound`, and a sound track is not a fault. The full video file rules are in `spec/comfyui.md`.
 
-### Open: cut-outs (OI-29)
+### Phase 4 additions
 
-Nothing above is closed against a cut-out service (Q-032, OI-29: open sub-questions on the "no text" prompt ending and a per-direction style note). It would be one more interface and one more key in `ProviderAdapters`, a new value in `ProviderInfo.jobs` and a new job kind (one migration). `ImageResult` can carry a PNG with transparency. `ImageProvider` would not change.
+Not built (Phase 4). `CutoutProvider` and the `cutout` key of `ProviderAdapters`, `'cutout'` in `ProviderJob`, `opts?: RunOptions` on the layout and text methods, and `extractBrief` returning a `BriefDraft`: `spec/ai-jobs.md`, "Provider interfaces". `ImageProvider` does not change. A cut-out keeps its see-through pixels through `toPng` (`spec/ai-jobs.md`, "Cut-out").
 
 ## The adapters
 

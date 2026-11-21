@@ -41,6 +41,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/agent-runs.md` | Generation started by an agent: the tick, the gate, limits, unticking |
 | `spec/cancel.md` | Cancel for every provider, closing a project with runs out |
 | `spec/brief-and-templates.md` | Brief intake, the brief reader's rules, templates, the default layout |
+| `spec/ai-jobs.md` | Phase 4 jobs: layout, copy options, brief reading, cut-out; their commands and queries; the failure sentences; the fake provider's parts |
 | `spec/providers.md` | The provider registry, interfaces, error kinds and messages, the rules every adapter follows, size limits |
 | `spec/providers-adapters.md` | The Gemini adapter, the fal.ai Seedance adapter, the Adobe Firefly stub |
 | `spec/comfyui.md` | The ComfyUI adapter: address, client, checks, a picture run, failures |
@@ -57,6 +58,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/editor-commands.md` | The layer and variant commands, `variant.get`, `thumbnail.get`, `variant.render`, `thumbnail.changed` in full |
 | `spec/screens.md` | What each built screen offers, wording rules, choices made without a design sign-off |
 | `spec/screens-campaign.md` | The Phase 2 campaign screens and dialogs (built; S2-17 left): ComfyUI failures, the address and licence dialogs, import and drop, relink, package, the brief form, the slot view, the campaign grid and its tile |
+| `spec/screens-ai.md` | Phase 4 screens: the run dialog, the paid count, the picture section (generate, references, earlier options, cut-out), copy options, place text, brief reading, the activity panel, close warnings |
 | `spec/open-items.md` | Open questions, the improvised choices listed for review, what waits on the stakeholder |
 | `spec/assumptions.md` | The assumptions made meanwhile (OI, Q and A numbers), with how hard each is to undo |
 
