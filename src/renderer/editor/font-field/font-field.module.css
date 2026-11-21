@@ -1,3 +1,4 @@
+/* app-style */
 .field {
   display: flex;
   flex-direction: column;
@@ -5,8 +6,9 @@
   min-width: 0;
 }
 .label {
-  color: var(--color-text-muted);
   font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
 }
 .upload {
   align-self: flex-start;

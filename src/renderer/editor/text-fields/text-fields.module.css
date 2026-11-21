@@ -1,3 +1,6 @@
+/* app-style */
+/* The Text settings group. Copy takes the shared reading face (layout.module.css); alignment is
+   the shared segmented group, stretched to the panel width. */
 .section {
   display: flex;
   flex-direction: column;
@@ -10,7 +13,10 @@
 .legend {
   padding: 0;
   margin-bottom: var(--space-2);
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
 }
 .field {
   display: flex;
@@ -25,21 +31,17 @@
   justify-content: space-between;
 }
 .labelRow button {
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-2);
   font-size: var(--font-size-small);
 }
 .label {
-  color: var(--color-text-muted);
   font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
 }
 .copy {
-  font: inherit;
-  padding: var(--space-1) var(--space-2);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
   resize: vertical;
-}
-.copy:disabled {
-  opacity: var(--opacity-disabled);
 }
 .pair {
   display: grid;
@@ -60,38 +62,48 @@
   min-width: 0;
   font-family: var(--font-mono);
 }
+/* The swatches as in colour-choice.module.css. */
 .picker {
-  width: var(--layer-thumb);
-  padding: 0;
+  flex: none;
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: var(--space-1);
 }
 .swatches {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1);
+  gap: var(--space-2);
+  align-items: center;
 }
 .swatch {
-  width: var(--layer-thumb);
-  height: var(--layer-thumb);
+  flex: none;
+  width: var(--control-height-small);
+  min-height: 0;
+  height: var(--control-height-small);
   padding: 0;
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius-pill);
+}
+.swatch:hover:not(:disabled) {
+  border-color: var(--color-text);
 }
 .swatch[aria-pressed='true'] {
-  outline: var(--focus-ring-width) solid var(--color-accent);
+  outline: var(--focus-ring-width) solid var(--color-focus);
   outline-offset: var(--focus-ring-offset);
 }
 .align {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-1);
+  display: flex;
+  width: 100%;
 }
-.align button[aria-pressed='true'] {
-  background: var(--color-accent);
-  color: var(--color-accent-text);
-  border-color: var(--color-accent);
+.align > button {
+  flex: 1;
+  min-width: 0;
 }
 .overflow {
   margin: 0;
-  padding: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--radius);
+  font-size: var(--font-size-control);
   background: var(--color-danger-bg);
   color: var(--color-danger-text);
 }
