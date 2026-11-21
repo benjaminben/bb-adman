@@ -27,12 +27,10 @@ describe('Phase 2 domains are registered empty [SPEC 12, step 0 item 4]', () => 
     }
   })
 
-  it('gives an empty query map for each new query domain', () => {
+  it('gives the campaign.get query', () => {
     f = makeFixture()
     const deps = f.core.deps
-    for (const map of [campaignQueries]) {
-      expect(map(deps)).toEqual({})
-    }
+    expect(Object.keys(campaignQueries(deps))).toEqual(['campaign.get'])
   })
 })
 

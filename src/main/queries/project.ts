@@ -23,6 +23,11 @@ export function projectGet(deps: Pick<CoreDeps, 'projects' | 'assets' | 'log'>):
       createdAppVersion: stored.createdAppVersion,
       createdAt: stored.createdAt,
     }
+    // [1.42] the number of variants in all the campaign's directions.
+    const countVariants = project.db.prepare<[string], { n: number }>(
+      `SELECT COUNT(*) AS n FROM variant v JOIN direction d ON d.id = v.direction_id
+       WHERE d.campaign_id = ?`,
+    )
     const subjects = (readWireRows(project.db, 'subject', deps.log) as SubjectRow[]).sort(byId)
     const campaigns = (readWireRows(project.db, 'campaign', deps.log) as CampaignRow[])
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || byId(a, b))
@@ -34,6 +39,7 @@ export function projectGet(deps: Pick<CoreDeps, 'projects' | 'assets' | 'log'>):
         createdBy: c.createdBy,
         createdAt: c.createdAt,
         ...jobMarks(project.db, 'campaign_id', c.id),
+        variantCount: countVariants.get(c.id)?.n ?? 0,
       }))
     const missingAssetCount = (await deps.assets.missingAssetIds(project)).length
     return { meta, subjects, campaigns, missingAssetCount }
