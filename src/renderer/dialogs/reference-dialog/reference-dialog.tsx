@@ -3,7 +3,8 @@
 // ticks, at most MAX_REFERENCES_PER_RUN. "Done" gives the ticks to the caller; "Cancel" and
 // Escape drop this visit's changes. Each opening starts from the caller's chosen pictures.
 import { useId, useState } from 'react'
-import { DialogFrame } from '@/renderer/ui/dialog-frame'
+import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
+import layout from '@/renderer/ui/layout.module.css'
 import { ReferencePicker } from '@/renderer/ui/reference-picker'
 import { MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
 import styles from './reference-dialog.module.css'
@@ -45,14 +46,14 @@ function ReferenceBody(props: ReferenceDialogProps) {
           {LIMIT_LINE}
         </p>
       )}
-      <div className={styles.actions}>
+      <DialogFoot>
         <button type="button" onClick={props.onCancel}>
           Cancel
         </button>
-        <button type="button" className={styles.primary} onClick={() => props.onDone(ticks)}>
+        <button type="button" className={layout.primary} onClick={() => props.onDone(ticks)}>
           Done
         </button>
-      </div>
+      </DialogFoot>
     </div>
   )
 }
@@ -63,6 +64,7 @@ export function ReferenceDialog(props: ReferenceDialogProps) {
       open={props.open}
       onClose={props.onCancel}
       title={`Reference pictures for ${props.layerName}`}
+      size="wide"
     >
       {props.open && <ReferenceBody {...props} />}
     </DialogFrame>

@@ -7,7 +7,8 @@ import { useEffect, useRef } from 'react'
 import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { attachedStoreFor, dialogJobs } from '@/renderer/stores/attached-store'
 import { useCloseWarning } from '@/renderer/ui/close-warning'
-import { DialogFrame } from '@/renderer/ui/dialog-frame'
+import { BusySpinner, DialogFrame } from '@/renderer/ui/dialog-frame'
+import layout from '@/renderer/ui/layout.module.css'
 import { RunFailure } from '@/renderer/ui/run-failure'
 import { briefJobResult, type BriefJobResult } from '@/shared/schemas/jobs/brief-extraction'
 import type { JobRow } from '@/shared/schemas/rows/job'
@@ -73,38 +74,37 @@ export function BriefReadingDialog(props: BriefReadingDialogProps) {
     ask((s) => dialogJobs(s, owner), props.onClosed)
   }
 
+  const foot = failed ? (
+    <>
+      <button type="button" onClick={props.onByHand}>
+        Fill the form by hand
+      </button>
+      <button type="button" className={layout.primary} onClick={props.onTryAgain}>
+        Try again
+      </button>
+    </>
+  ) : (
+    <button type="button" onClick={stop}>
+      Stop
+    </button>
+  )
+
   return (
     <>
-      <DialogFrame open onClose={close} title="Reading the brief">
-        <div className={styles.body}>
-          {failed ? (
-            <>
-              <RunFailure
-                row={failed}
-                projectId={projectId}
-                provider={provider}
-                providerLabel={label}
-              />
-              <div className={styles.actions}>
-                <button type="button" onClick={props.onByHand}>
-                  Fill the form by hand
-                </button>
-                <button type="button" className={styles.primary} onClick={props.onTryAgain}>
-                  Try again
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <p>{`${label} is reading the brief…`}</p>
-              <div className={styles.actions}>
-                <button type="button" onClick={stop}>
-                  Stop
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+      <DialogFrame open onClose={close} title="Reading the brief" footer={foot}>
+        {failed ? (
+          <RunFailure
+            row={failed}
+            projectId={projectId}
+            provider={provider}
+            providerLabel={label}
+          />
+        ) : (
+          <div className={styles.busy}>
+            <BusySpinner />
+            <p>{`${label} is reading the brief…`}</p>
+          </div>
+        )}
       </DialogFrame>
       {warning}
     </>
