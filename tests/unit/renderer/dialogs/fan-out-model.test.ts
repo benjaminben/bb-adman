@@ -65,7 +65,10 @@ describe("fan-out model: pairs, count and fits [P5-16, spec/screens-variants.md 
   })
 
   it('a label or tag not in the campaign is never sent', () => {
-    expect(fanOutLists(BASIS, ticks(['4x5'], ['it']))).toEqual({ sizes: ['1x1'], languages: ['en'] })
+    expect(fanOutLists(BASIS, ticks(['4x5'], ['it']))).toEqual({
+      sizes: ['1x1'],
+      languages: ['en'],
+    })
   })
 
   it('leaves out a master size the campaign does not list, and counts nothing without a size', () => {
@@ -80,10 +83,25 @@ describe("fan-out model: pairs, count and fits [P5-16, spec/screens-variants.md 
   })
 
   it.each([
-    ['the chosen fits, scale where none is chosen', true, { '9x16': 'fill' }, { '9x16': 'fill', '16x9': 'scale' }],
+    [
+      'the chosen fits, scale where none is chosen',
+      true,
+      { '9x16': 'fill' },
+      { '9x16': 'fill', '16x9': 'scale' },
+    ],
     ['crop is kept', true, { '16x9': 'crop' }, { '9x16': 'scale', '16x9': 'crop' }],
-    ['no background picture sends scale for each', false, { '9x16': 'fill', '16x9': 'crop' }, { '9x16': 'scale', '16x9': 'scale' }],
-    ['a fit for a size not ticked is dropped', true, { '4x5': 'fill' }, { '9x16': 'scale', '16x9': 'scale' }],
+    [
+      'no background picture sends scale for each',
+      false,
+      { '9x16': 'fill', '16x9': 'crop' },
+      { '9x16': 'scale', '16x9': 'scale' },
+    ],
+    [
+      'a fit for a size not ticked is dropped',
+      true,
+      { '4x5': 'fill' },
+      { '9x16': 'scale', '16x9': 'scale' },
+    ],
   ] as const)('%s', (_name, picture, chosen, sent) => {
     const t = ticks(['9x16', '16x9'], [])
     expect(fitsToSend(BASIS, t, chosen, picture)).toEqual(sent)
