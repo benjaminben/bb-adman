@@ -3,6 +3,7 @@
 import type { WorkflowSpec } from './types'
 import { mossEditReferences, mossExtend, mossTextToImage } from './moss'
 import { h3ImageToVideo, h3ReferenceToVideo, h3TextToVideo } from './h3'
+import { flux3KleinEditReferences } from './flux3'
 
 export const WORKFLOWS: readonly WorkflowSpec[] = [
   mossTextToImage,
@@ -11,6 +12,7 @@ export const WORKFLOWS: readonly WorkflowSpec[] = [
   h3TextToVideo,
   h3ImageToVideo,
   h3ReferenceToVideo,
+  flux3KleinEditReferences,
 ]
 
 // [1.45] B-3: a draft's node classes are stand-ins, so no check compares one.
