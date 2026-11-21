@@ -14,6 +14,17 @@ import {
 } from './recorded'
 
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+type PictureBody = {
+  candidates: Array<{ content: { parts: Array<Record<string, unknown>> } }>
+}
+
+// The recorded success answer with its picture part replaced.
+function withPicture(mimeType: string, data: string): PictureBody {
+  const body = recorded('image-success.json') as PictureBody
+  first(body.candidates).content.parts[1] = { inlineData: { mimeType, data } }
+  return body
+}
+
 const input = { prompt: 'A red bicycle', references: [], width: 1080, height: 1080, count: 1 }
 
 describe('Gemini ImageProvider.generate [SPEC 6.2, slice E]', () => {
@@ -102,18 +113,32 @@ describe('Gemini ImageProvider.generate [SPEC 6.2, slice E]', () => {
     await expect(run).rejects.toMatchObject({ error: { kind: 'quota' } })
   })
 
-  it('refuses a non-PNG picture with kind other, naming the type', async () => {
-    const body = recorded('image-success.json') as {
-      candidates: Array<{ content: { parts: Array<Record<string, unknown>> } }>
+  it('returns a JPEG picture as it came, with mime image/jpeg [SPEC 6.2 1.18, K2]', async () => {
+    const { fetchFn } = fetchAnswering('image-success-jpeg.json')
+    const results = await geminiImage(testContext(), { fetch: fetchFn }).generate(input)
+    expect(first(results).mime).toBe('image/jpeg')
+    expect([...first(results).bytes.slice(0, 3)]).toEqual([0xff, 0xd8, 0xff])
+    expect(first(results).model).toBe(TEST_MODEL)
+  })
+
+  it('refuses a picture that is neither PNG nor JPEG with kind other, naming the claimed type [K2]', async () => {
+    for (const mimeType of ['image/gif', 'image/made-up']) {
+      const body = withPicture(mimeType, Buffer.from('GIF89a\u0001\u0000').toString('base64'))
+      const { fetchFn } = recordingFetch(async () => jsonResponse(body))
+      const run = geminiImage(testContext(), { fetch: fetchFn }).generate(input)
+      await expect(run).rejects.toThrow(ProviderFailure)
+      await expect(run).rejects.toMatchObject({ error: { kind: 'other' } })
+      await run.catch((e: ProviderFailure) => expect(e.error.detail).toContain(mimeType))
     }
-    first(body.candidates).content.parts[1] = {
-      inlineData: { mimeType: 'image/jpeg', data: 'AQID' },
-    }
+  })
+
+  it('reads the type from the bytes, not from the type the provider claims [K2]', async () => {
+    const jpeg = recorded('image-success-jpeg.json') as PictureBody
+    const data = first(jpeg.candidates).content.parts[1]?.inlineData
+    const body = withPicture('image/png', String((data as { data: string }).data))
     const { fetchFn } = recordingFetch(async () => jsonResponse(body))
-    const run = geminiImage(testContext(), { fetch: fetchFn }).generate(input)
-    await expect(run).rejects.toMatchObject({ error: { kind: 'other' } })
-    await expect(run).rejects.toThrow(ProviderFailure)
-    await run.catch((e: ProviderFailure) => expect(e.error.detail).toContain('image/jpeg'))
+    const results = await geminiImage(testContext(), { fetch: fetchFn }).generate(input)
+    expect(first(results).mime).toBe('image/jpeg')
   })
 })
 

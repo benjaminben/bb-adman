@@ -4,11 +4,10 @@
 // (SPEC 6 [1.12]); anything else → other.
 // The key never appears in `detail`.
 import { ApiError, type GenerateContentResponse } from '@google/genai'
+import { pictureType, type PictureType } from '../picture-type'
 import { redactSecret } from '../redact'
 import { ProviderFailure, type ProviderError } from '../types'
 import { isNetworkError } from './pinned-origin'
-
-const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
 
 // Finish reasons that mean the provider's content rules stopped the picture (SPEC 6.2 [1.11]).
 const REFUSED_FINISH = new Set([
@@ -57,12 +56,12 @@ export function failureFromError(error: unknown, timedOut: boolean, key: string)
   return fail('other', error instanceof Error ? error.message : String(error), key)
 }
 
-function isPng(bytes: Uint8Array): boolean {
-  return PNG_SIGNATURE.every((byte, i) => bytes[i] === byte)
-}
-
-// The PNG in a successful HTTP answer, or the failure the answer describes.
-export function pngFromResponse(response: GenerateContentResponse, key: string): Uint8Array {
+// The picture in a successful HTTP answer, PNG or JPEG as it came (SPEC 6.2 [1.18]), or the
+// failure the answer describes.
+export function pictureFromResponse(
+  response: GenerateContentResponse,
+  key: string,
+): { bytes: Uint8Array; mime: PictureType } {
   const blocked = response.promptFeedback?.blockReason
   if (blocked) throw fail('refused', `Prompt blocked: ${blocked}`, key)
   const candidate = response.candidates?.[0]
@@ -73,8 +72,7 @@ export function pngFromResponse(response: GenerateContentResponse, key: string):
   )?.inlineData
   if (!image?.data) throw fail('other', `No picture in the answer (finish: ${finish})`, key)
   const bytes = new Uint8Array(Buffer.from(image.data, 'base64'))
-  if (image.mimeType !== 'image/png' || !isPng(bytes)) {
-    throw fail('other', `Picture is not a PNG (type: ${image.mimeType})`, key)
-  }
-  return bytes
+  const mime = pictureType(bytes)
+  if (!mime) throw fail('other', `Picture is not a PNG or JPEG (type: ${image.mimeType})`, key)
+  return { bytes, mime }
 }

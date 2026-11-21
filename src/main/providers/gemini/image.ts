@@ -5,7 +5,7 @@ import { GoogleGenAI } from '@google/genai'
 import { ProviderFailure, type AdapterContext, type ImageProvider } from '../types'
 import type { ImageFile, ImageResult } from '../types'
 import { nearestAspectRatio } from './aspect-ratio'
-import { failureFromError, pngFromResponse } from './failure'
+import { failureFromError, pictureFromResponse } from './failure'
 import { GEMINI_ORIGIN, pinnedFetch } from './pinned-origin'
 
 export const IMAGE_TIMEOUT_MS = 120_000
@@ -63,7 +63,7 @@ async function oneCall(ctx: AdapterContext, transport: Transport, call: OneCall)
       },
     })
     const response = await Promise.race([request, whenAborted(timer.signal)])
-    return { bytes: pngFromResponse(response, key), mime: 'image/png' as const, model }
+    return { ...pictureFromResponse(response, key), model }
   } catch (error) {
     if (error instanceof ProviderFailure) throw error
     throw failureFromError(error, timer.signal.aborted, key)
