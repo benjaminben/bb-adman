@@ -24,7 +24,7 @@ describe('the adman-asset scheme [SPEC 14, Slice A rulings point 2, A2-2]', () =
           bypassCSP: false,
           allowServiceWorkers: false,
           supportFetchAPI: false,
-          corsEnabled: false,
+          corsEnabled: true,
           codeCache: false,
           allowExtensions: false,
         },

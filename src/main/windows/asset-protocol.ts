@@ -6,7 +6,9 @@ import { answerAssetRequest } from '@/main/assets/asset-url'
 
 const SCHEME = 'adman-asset'
 
-// Before the app is ready. Every privilege but these three is off.
+// Before the app is ready. Every privilege but these four is off. CORS is on because the
+// browser loads a font under cross-origin rules: without it an imported font loads in no
+// window (P3-6 ruling). connect-src 'none' still keeps fetch and XHR off the scheme.
 export function registerAssetScheme(protocol: Protocol): void {
   protocol.registerSchemesAsPrivileged([
     {
@@ -18,7 +20,7 @@ export function registerAssetScheme(protocol: Protocol): void {
         bypassCSP: false,
         allowServiceWorkers: false,
         supportFetchAPI: false,
-        corsEnabled: false,
+        corsEnabled: true,
         codeCache: false,
         allowExtensions: false,
       },
