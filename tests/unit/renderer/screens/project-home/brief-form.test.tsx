@@ -4,13 +4,14 @@ import userEvent from '@testing-library/user-event'
 import { ProjectHome } from '@/renderer/screens/project-home/project-home'
 import { renderApp, axeViolations } from '../../render'
 import { DRAFT, PROJECT, projectApi, projectGet, subject } from './project-fixture'
+import { addPhotos, photoStubs } from './brief-form-fixture'
 
 type Fake = ReturnType<typeof projectApi>
 const names = (fake: Fake) => fake.commands.map((c) => c.name)
 const sent = (fake: Fake, name: string) => fake.commands.find((c) => c.name === name)?.input
 
 async function openForm(fake: Fake = projectApi()) {
-  await renderApp(<ProjectHome project={PROJECT} />, fake)
+  await renderApp(<ProjectHome project={PROJECT} />, photoStubs(fake))
   await userEvent.click(await screen.findByRole('button', { name: 'Load a brief' }))
   return screen.findByRole('region', { name: 'Brief' })
 }
@@ -34,6 +35,7 @@ describe('the brief form [screens-campaign "The brief form", FR-023, FR-024]', (
   it('shows the message word for word and sends what the user typed', async () => {
     const fake = projectApi()
     const form = await openForm(fake)
+    await addPhotos(form)
     expect(within(form).getByLabelText('Message')).toHaveValue(DRAFT.message)
     await userEvent.clear(within(form).getByLabelText('Campaign name'))
     await userEvent.type(within(form).getByLabelText('Campaign name'), 'Autumn Fizz')
@@ -50,6 +52,7 @@ describe('the brief form [screens-campaign "The brief form", FR-023, FR-024]', (
   it('sends a typed Subject ID for a new subject', async () => {
     const fake = projectApi()
     const form = await openForm(fake)
+    await addPhotos(form)
     const id = within(row(form, 2)).getByLabelText('Subject ID')
     await userEvent.clear(id)
     await userEvent.type(id, 'berry-500ml')
@@ -62,12 +65,19 @@ describe('the brief form [screens-campaign "The brief form", FR-023, FR-024]', (
   it('uses a chosen subject of the project and sends no subject.create for it', async () => {
     const fake = projectApi(projectGet([], [subject('lime-can', 'Lime can')]))
     const form = await openForm(fake)
+    await addPhotos(form)
     const first = row(form, 1)
     await userEvent.click(within(first).getByLabelText('Use a subject this project has'))
     await userEvent.selectOptions(within(first).getByLabelText('Project subject'), 'lime-can')
     expect(within(first).queryByLabelText('Subject ID')).toBeNull()
     await create(fake)
-    expect(names(fake)).toEqual(['brief.parse', 'subject.create', 'campaign.create'])
+    expect(names(fake)).toEqual([
+      'brief.parse',
+      'asset.import',
+      'asset.import',
+      'subject.create',
+      'campaign.create',
+    ])
     expect(sent(fake, 'campaign.create')).toMatchObject({
       subjectMap: [{ subjectId: 'lime-can' }, { subjectId: 'berry-bottle' }],
     })
@@ -97,6 +107,7 @@ describe('the brief form [screens-campaign "The brief form", FR-023, FR-024]', (
 
   it('lists the problems and keeps "Create campaign" disabled', async () => {
     const form = await openForm(projectApi(projectGet(), { ...DRAFT, audience: undefined }))
+    await addPhotos(form)
     const list = within(form).getByRole('list', { name: 'Before the campaign can be made' })
     expect(
       within(list)
@@ -110,6 +121,7 @@ describe('the brief form [screens-campaign "The brief form", FR-023, FR-024]', (
     const fake = projectApi()
     fake.onCommand('campaign.create', () => new Promise(() => {}))
     const form = await openForm(fake)
+    await addPhotos(form)
     await create(fake)
     expect(await within(form).findByText('Creating the campaign…')).toBeInTheDocument()
     for (const control of [
@@ -124,7 +136,7 @@ describe('the brief form [screens-campaign "The brief form", FR-023, FR-024]', (
   it('opens the new campaign once it is made [A-45]', async () => {
     const fake = projectApi()
     fake.onCommand('campaign.create', () => ({ ok: true, data: { campaignId: 'C7' } }))
-    await openForm(fake)
+    await addPhotos(await openForm(fake))
     await create(fake)
     expect(await screen.findByRole('region', { name: 'Campaign' })).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Brief' })).toBeNull()

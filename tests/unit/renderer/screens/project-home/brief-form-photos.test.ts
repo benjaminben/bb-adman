@@ -84,6 +84,15 @@ describe('photoProblems: the photo lines [subject-photos "Problem lines", D-098]
     expect(photoProblems(subjects, null, refused)).toEqual([line])
   })
 
+  it.each([
+    ['a new row', row({ photos: [added('O1')] })],
+    ['an existing row with another subject', existing('can-1', { photos: [added('O1')] })],
+  ])('gives line 4 for an added photo since attached to another subject (%s)', (_, subject) => {
+    expect(photoProblems([subject], images, false)).toEqual([
+      'Subject 1: the photo "other.png" belongs to the subject "other-can". One photo belongs to one subject.',
+    ])
+  })
+
   it('lists each kind over every row before the next kind', () => {
     const subjects = [
       row({ adding: true }),

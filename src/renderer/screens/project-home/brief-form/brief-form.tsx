@@ -16,8 +16,10 @@ import {
 import { RuleFields } from '@/renderer/screens/project-home/rule-fields'
 import { SizeFields } from '@/renderer/screens/project-home/size-fields'
 import { SubjectRows } from '@/renderer/screens/project-home/subject-rows'
+import { PlacePhotoField } from '@/renderer/screens/project-home/subject-photos'
 import { CampaignFields, type CampaignText } from './campaign-fields'
 import { LanguageField } from './language-field'
+import { useProjectImages } from './use-project-images'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './brief-form.module.css'
 
@@ -37,7 +39,12 @@ export function BriefForm(props: BriefFormProps) {
   const firstField = useRef<HTMLInputElement>(null)
   const ids = useId()
   const held = props.subjects.map((s) => s.id)
-  const plan = planFromForm(props.projectId, values, held)
+  const { images, refusal } = useProjectImages(props.projectId)
+  const plan = planFromForm(props.projectId, values, held, images, refusal !== null)
+  // The photos the form opened with: only a loaded brief's import puts any there (A-125).
+  const [briefPhotoCount] = useState(() =>
+    props.initial.subjects.reduce((sum, s) => sum + s.photos.length, 0),
+  )
 
   useEffect(() => firstField.current?.focus(), [])
 
@@ -59,10 +66,24 @@ export function BriefForm(props: BriefFormProps) {
           onChange={setText}
           onRegionLeave={fillLanguages}
         />
+        {refusal !== null && <p role="alert">{refusal}</p>}
+        {briefPhotoCount > 0 && (
+          <p className={styles.copy}>
+            This brief added {briefPhotoCount} photo(s) from its folder. Check them before you
+            create the campaign.
+          </p>
+        )}
         <SubjectRows
+          projectId={props.projectId}
           subjects={values.subjects}
           held={props.subjects}
+          images={images}
           onChange={(subjects) => setValues((v) => ({ ...v, subjects }))}
+          onUpdate={(change) => setValues((v) => ({ ...v, subjects: change(v.subjects) }))}
+        />
+        <PlacePhotoField
+          checked={values.placeSubjectPhoto}
+          onChange={(placeSubjectPhoto) => setValues((v) => ({ ...v, placeSubjectPhoto }))}
         />
         <SizeFields
           sizes={values.sizes}
