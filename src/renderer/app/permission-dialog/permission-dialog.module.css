@@ -1,0 +1,19 @@
+/* app-style */
+/* The permission dialog (P10-7). Text from outside wraps inside the body, which scrolls, so a
+   long target never pushes the buttons in the foot band out of view. */
+.line {
+  margin: 0 0 var(--space-3);
+  overflow-wrap: anywhere;
+}
+/* The client name an agent supplied: a tagged value, not the app's own words. */
+.client {
+  padding: 0 var(--space-1);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-soft);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-control);
+}
+.target {
+  font-weight: var(--weight-medium);
+}
