@@ -42,7 +42,7 @@ describe('reasonMessage: the sentence of each 6.10.9 reason [SPEC 6.10.9, 14 1.4
       'The ComfyUI address was changed while this run was going. The run was stopped.',
     ],
     ['bad_result', 'The ComfyUI server sent a result Adman cannot use.'],
-    ['clip_has_sound', 'The server made a clip with sound. Adman stores silent clips only.'],
+    ['background_not_drawn', "The post's background could not be drawn for the first frame."],
   ] as const)('%s', (reason, sentence) => {
     expect(reasonMessage(reason)).toBe(sentence)
   })
