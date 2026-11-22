@@ -6,15 +6,20 @@
 // each row's copy counter as read (P6-4b). After every reply the rows are read again, so a
 // refusal such as "A text changed after you read it." is followed by the newest text. A
 // refusal's own message shows on its row, or under the header for "Approve all".
+// R3-3: the header is a level 2 heading in the title type role; the rows follow the Variants
+// tab's order, split by direction (direction-lists.tsx); a row whose source text changed since
+// it was last synced shows "Out of date".
 import { useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import layout from '@/renderer/ui/layout.module.css'
 import { Section } from '@/renderer/ui/section'
+import type { CampaignGet } from '@/shared/schemas/queries/campaign'
 import type {
   TranslationJobState,
   TranslationRow as Row,
 } from '@/shared/schemas/queries/translation'
 import type { Result } from '@/shared/schemas/result'
+import { DirectionLists } from './direction-lists'
 import { GroupHead } from './group-head'
 import { FailedNotice } from './job-line'
 import { TranslationRow } from './translation-row'
@@ -29,6 +34,8 @@ export type LanguageGroupProps = {
   rows: Row[]
   jobs: TranslationJobState[]
   revs: ReadonlyMap<string, number> // each variant's revision, for its thumbnail
+  data: CampaignGet // the campaign as the Variants tab draws it, for the order
+  outOfDate: ReadonlySet<string> // the layer IDs whose source text changed since their sync
   reload: () => void
 }
 
@@ -84,42 +91,54 @@ export function LanguageGroup(props: LanguageGroupProps) {
     />
   )
   return (
-    <Section id={`translations.${props.language}`} title={name} fold="none" summary={head}>
-      {props.jobs
-        .filter((job) => job.status === 'failed')
-        .map((job) => (
-          <FailedNotice
-            key={job.jobId}
-            projectId={props.projectId}
-            campaignId={props.campaignId}
-            job={job}
-          />
-        ))}
-      {messages.group !== null && (
-        <p role="alert" className={`${layout.notice} ${layout.warn}`}>
-          {messages.group}
-        </p>
-      )}
-      <div className={styles.heads}>
-        <span />
-        <span>{languageName(props.primaryLanguage)}</span>
-        <span>{name}</span>
-      </div>
-      <ul className={styles.rows} aria-label={`${name} translations`}>
-        {props.rows.map((row) => (
-          <TranslationRow
-            key={`${row.layerId}:${row.copyRev}`}
-            projectId={props.projectId}
-            row={row}
-            rev={props.revs.get(row.variantId)}
-            language={name}
-            message={messages.rows[row.layerId] ?? null}
-            busy={busy}
-            onSave={(text, apply) => save(row.layerId, text, apply)}
-            onApprove={() => approve(row.layerId, [{ layerId: row.layerId, copyRev: row.copyRev }])}
-          />
-        ))}
-      </ul>
-    </Section>
+    <div className={styles.block}>
+      <Section
+        id={`translations.${props.language}`}
+        title={name}
+        level={2}
+        size="title"
+        fold="none"
+        summary={head}
+      >
+        {props.jobs
+          .filter((job) => job.status === 'failed')
+          .map((job) => (
+            <FailedNotice
+              key={job.jobId}
+              projectId={props.projectId}
+              campaignId={props.campaignId}
+              job={job}
+            />
+          ))}
+        {messages.group !== null && (
+          <p role="alert" className={`${layout.notice} ${layout.warn}`}>
+            {messages.group}
+          </p>
+        )}
+        <div className={styles.heads}>
+          <span />
+          <span>{languageName(props.primaryLanguage)}</span>
+          <span>{name}</span>
+        </div>
+        <DirectionLists rows={props.rows} data={props.data} label={`${name} translations`}>
+          {(row) => (
+            <TranslationRow
+              key={`${row.layerId}:${row.copyRev}`}
+              projectId={props.projectId}
+              row={row}
+              rev={props.revs.get(row.variantId)}
+              language={name}
+              outOfDate={props.outOfDate.has(row.layerId)}
+              message={messages.rows[row.layerId] ?? null}
+              busy={busy}
+              onSave={(text, apply) => save(row.layerId, text, apply)}
+              onApprove={() =>
+                approve(row.layerId, [{ layerId: row.layerId, copyRev: row.copyRev }])
+              }
+            />
+          )}
+        </DirectionLists>
+      </Section>
+    </div>
   )
 }

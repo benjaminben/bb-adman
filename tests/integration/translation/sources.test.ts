@@ -49,7 +49,7 @@ describe('translation.sources [R3-3]', () => {
     expect(reply.outOfDate).toEqual([])
   })
 
-  it("marks the translations of a master text changed by layer.update as out of date", async () => {
+  it('marks the translations of a master text changed by layer.update as out of date', async () => {
     const t = await setup()
     const master = t.textLayers(t.masters[0])[0]
     if (!master) throw new Error('no text layer')
@@ -60,7 +60,10 @@ describe('translation.sources [R3-3]', () => {
     })
     const reply = await ask(t)
     const stale = [t.variants.de1, t.variants.de9].flatMap((v) =>
-      t.textLayers(v).filter((l) => l.key === master.key).map((l) => l.id),
+      t
+        .textLayers(v)
+        .filter((l) => l.key === master.key)
+        .map((l) => l.id),
     )
     expect(stale).toHaveLength(2)
     expect([...reply.outOfDate].sort()).toEqual([...stale].sort())

@@ -2,17 +2,25 @@
 // translation.forCampaign, read on mount, on each project.changed for this project and on each
 // job.updated for a translation job of this campaign. An agent may change a text at any time,
 // so the rows are always the newest read; a reply older than the newest read is dropped.
+// R3-3: translation.sources is read with it each time, for the source block and the
+// out-of-date marks.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
-import type { TranslationForCampaign } from '@/shared/schemas/queries/translation'
+import type {
+  TranslationForCampaign,
+  TranslationSources,
+} from '@/shared/schemas/queries/translation'
+
+export type TranslationsData = TranslationForCampaign & { sources: TranslationSources }
 
 // An empty reply reads as no rows.
 const EMPTY: TranslationForCampaign = { primaryLanguage: '', rows: [], jobs: [] }
+const NO_SOURCES: TranslationSources = { rows: [], outOfDate: [] }
 
 export type TranslationsRead =
   | { kind: 'loading' }
   | { kind: 'refused'; message: string }
-  | { kind: 'done'; data: TranslationForCampaign }
+  | { kind: 'done'; data: TranslationsData }
 
 export function useTranslations(
   projectId: string,
@@ -24,10 +32,17 @@ export function useTranslations(
 
   const reload = useCallback(() => {
     const turn = ++latest.current
-    void api.query('translation.forCampaign', { projectId, campaignId }).then((reply) => {
+    const input = { projectId, campaignId }
+    void Promise.all([
+      api.query('translation.forCampaign', input),
+      api.query('translation.sources', input),
+    ]).then(([reply, sources]) => {
       if (turn !== latest.current) return
       if (!reply.ok) return setRead({ kind: 'refused', message: reply.error.message })
-      setRead({ kind: 'done', data: (reply.data as TranslationForCampaign | null) ?? EMPTY })
+      if (!sources.ok) return setRead({ kind: 'refused', message: sources.error.message })
+      const data = (reply.data as TranslationForCampaign | null) ?? EMPTY
+      const source = (sources.data as TranslationSources | null) ?? NO_SOURCES
+      setRead({ kind: 'done', data: { ...data, sources: source } })
     })
   }, [api, projectId, campaignId])
 

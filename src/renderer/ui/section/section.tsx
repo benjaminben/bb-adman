@@ -30,8 +30,7 @@ export function Section(props: SectionProps) {
   const headingId = useId()
   const bodyId = useId()
   const Heading = `h${props.level ?? 3}` as const
-  const headingClass =
-    props.size === 'title' ? `${styles.heading} ${styles.title}` : styles.heading
+  const headingClass = props.size === 'title' ? `${styles.heading} ${styles.title}` : styles.heading
 
   function toggle() {
     writeFold(props.id, !open)

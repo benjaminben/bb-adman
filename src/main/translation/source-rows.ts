@@ -17,16 +17,16 @@ import type { VariantRow } from '@/shared/schemas/rows/variant'
 const sourceRow =
   (v: VariantRow) =>
   (l: LayerRow): SourceRow => ({
-  directionId: v.directionId,
-  variantId: v.id,
-  title: v.title,
-  sizeLabel: v.sizeLabel,
-  language: v.language,
-  layerId: l.id,
-  layerName: l.name,
-  text: l.copy ?? '',
-  copyRev: l.revs.copy,
-})
+    directionId: v.directionId,
+    variantId: v.id,
+    title: v.title,
+    sizeLabel: v.sizeLabel,
+    language: v.language,
+    layerId: l.id,
+    layerName: l.name,
+    text: l.copy ?? '',
+    copyRev: l.revs.copy,
+  })
 
 // The copy-stale translated text layers of one direction's variants.
 function staleIn(db: Database.Database, directionId: string, variants: VariantRow[]): string[] {
@@ -59,7 +59,11 @@ export function translationSources(
       .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
     const primary = mine.filter((v) => v.language === campaign.primaryLanguage)
     for (const v of primary) {
-      rows.push(...layersOf(db, v.id).filter((l) => l.type === 'text').map(sourceRow(v)))
+      rows.push(
+        ...layersOf(db, v.id)
+          .filter((l) => l.type === 'text')
+          .map(sourceRow(v)),
+      )
     }
     const others = mine.filter((v) => v.language !== campaign.primaryLanguage)
     outOfDate.push(...staleIn(db, d.id, others))

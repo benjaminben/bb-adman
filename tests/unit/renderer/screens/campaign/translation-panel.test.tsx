@@ -56,7 +56,7 @@ describe('TranslationPanel [P6-12]', () => {
       row('L4', { language: 'en', title: 'Main' }),
     ])
     expect(reads(fake)[0]?.input).toEqual({ projectId: P, campaignId: 'C1' })
-    const headings = await screen.findAllByRole('heading', { level: 3 })
+    const headings = await screen.findAllByRole('heading', { level: 2 })
     expect(headings.map((h) => h.textContent)).toEqual(['German', 'French'])
     expect((await group('German')).getByTitle('1 of 2 approved')).toBeTruthy()
     expect((await group('French')).getByTitle('0 of 1 approved')).toBeTruthy()
