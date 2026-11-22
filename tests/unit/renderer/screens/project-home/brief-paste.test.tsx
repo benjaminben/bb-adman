@@ -30,10 +30,10 @@ const readButton = (dialog: HTMLElement) =>
   within(dialog).getByRole('button', { name: 'Read brief' })
 
 describe('"Paste a brief" [R2P-4, D4]', () => {
-  it('shows the text area with its hint, and "Read brief" only works once there is text', async () => {
+  it('shows the text area with its placeholder, and "Read brief" only works once there is text', async () => {
     const { fake, dialog } = await openDialog()
     const area = within(dialog).getByLabelText('Brief text')
-    expect(area).toHaveAccessibleDescription('Paste a brief as JSON, YAML or Markdown.')
+    expect(area).toHaveAttribute('placeholder', 'JSON, YAML or Markdown')
     expect(area).toHaveFocus()
     expect(readButton(dialog)).toBeDisabled()
     await paste(dialog, '  \n\t ')

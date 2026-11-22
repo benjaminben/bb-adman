@@ -2,12 +2,15 @@
 // YAML or Markdown. "Read brief" sends brief.parse with the text; a refusal shows here (role
 // alert) and the text stays; a read brief goes to `onRead`, which closes the dialog and runs
 // the loaded brief's flow. "Start from an empty form" opens the form as "Type a brief" did.
+// DLG-3b: the `form` kind; a placeholder in place of the hint line; the foot is "Empty form"
+// (named "Start from an empty form", on the left), "Cancel", "Read brief"; a refusal is a
+// DialogAlert.
 // Pasted text names no folder, so brief.parse checks only full paths and asset IDs in it (D3).
 import { useId, useState, type FormEvent } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import type { BriefParsed } from '@/shared/schemas/commands/brief'
+import { DialogAlert } from '@/renderer/ui/dialog-alert'
 import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
-import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './brief-paste.module.css'
 
@@ -24,7 +27,6 @@ type BodyProps = BriefPasteProps & { sending: boolean; setSending: (on: boolean)
 function PasteBody(props: BodyProps) {
   const command = useApp((s) => s.command)
   const fieldId = useId()
-  const hintId = useId()
   const [text, setText] = useState('')
   const [refusal, setRefusal] = useState<string | null>(null)
 
@@ -49,26 +51,24 @@ function PasteBody(props: BodyProps) {
           rows={16}
           spellCheck={false}
           value={text}
-          aria-describedby={hintId}
+          placeholder="JSON, YAML or Markdown"
           disabled={props.sending}
           onChange={(event) => setText(event.target.value)}
         />
-        <p id={hintId} className={styles.hint}>
-          Paste a brief as JSON, YAML or Markdown.
-        </p>
       </div>
-      {refusal !== null && (
-        <p role="alert" className={`${layout.notice} ${layout.danger}`}>
-          <Icon name="alert" />
-          {refusal}
-        </p>
-      )}
+      {refusal !== null && <DialogAlert tone="danger">{refusal}</DialogAlert>}
       <DialogFoot>
+        <button
+          type="button"
+          className={`${layout.quiet} ${styles.empty}`}
+          aria-label="Start from an empty form"
+          disabled={props.sending}
+          onClick={props.onEmpty}
+        >
+          Empty form
+        </button>
         <button type="button" disabled={props.sending} onClick={props.onClose}>
           Cancel
-        </button>
-        <button type="button" disabled={props.sending} onClick={props.onEmpty}>
-          Start from an empty form
         </button>
         <button
           type="submit"
@@ -89,7 +89,7 @@ export function BriefPaste(props: BriefPasteProps) {
       open={props.open}
       onClose={props.onClose}
       title="Paste a brief"
-      size="wide"
+      kind="form"
       closable={!sending}
     >
       {props.open && <PasteBody {...props} sending={sending} setSending={setSending} />}

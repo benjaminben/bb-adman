@@ -30,7 +30,7 @@ describe('import buttons [spec/screens-campaign.md, Import buttons]', () => {
     [
       'Import files…',
       { name: 'dialog.pickFiles', input: { purpose: 'import', multiple: true } },
-      'Import 2 file(s)',
+      'Import 2 files',
       ['/shoot/can-front.png', '/shoot/can-side.png'],
     ],
     [

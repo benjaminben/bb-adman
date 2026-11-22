@@ -1,8 +1,10 @@
 // R2C-6 (spec/phases/round-2-campaign.md, design addition 5, "The subject dialog", New): the
 // "Photos" part. The picked files show by base name only (pictureName); their paths stay in
-// the dialog's state until Create sends them to asset.import.
+// the dialog's state until Create sends them to asset.import. DLG-3b: the hint is an InfoTip
+// "About Photos" beside the group's label.
 import { useId, type Ref } from 'react'
 import { Icon } from '@/renderer/ui/icon'
+import { InfoTip } from '@/renderer/ui/info-tip'
 import layout from '@/renderer/ui/layout.module.css'
 import { pictureName } from '@/shared/brief/picture-name'
 import styles from './subject-dialog.module.css'
@@ -16,13 +18,17 @@ export type PickedPhotosProps = {
 }
 
 export function PickedPhotos({ paths, disabled, ref, onAdd, onRemove }: PickedPhotosProps) {
-  const hintId = useId()
+  const labelId = useId()
   return (
-    <fieldset className={styles.photos} disabled={disabled}>
-      <legend className={layout.label}>Photos</legend>
-      <p id={hintId} className={styles.hint}>
-        PNG, JPEG or WebP. At least one is needed. AI pictures are drawn from them.
-      </p>
+    <fieldset className={styles.photos} disabled={disabled} aria-labelledby={labelId}>
+      <div className={styles.photosHead}>
+        <span id={labelId} className={layout.label}>
+          Photos
+        </span>
+        <InfoTip about="Photos">
+          PNG, JPEG or WebP. At least one is needed. AI pictures are drawn from them.
+        </InfoTip>
+      </div>
       {paths.length > 0 && (
         <ul className={styles.picked} aria-label="Photos to add">
           {paths.map((path, i) => {
@@ -44,7 +50,7 @@ export function PickedPhotos({ paths, disabled, ref, onAdd, onRemove }: PickedPh
         </ul>
       )}
       <div>
-        <button ref={ref} type="button" aria-describedby={hintId} onClick={onAdd}>
+        <button ref={ref} type="button" onClick={onAdd}>
           Add photos…
         </button>
       </div>

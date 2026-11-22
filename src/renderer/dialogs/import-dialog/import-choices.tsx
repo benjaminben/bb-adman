@@ -1,8 +1,11 @@
 // The import dialog's choices: the library, the copy box and the subject
 // (spec/screens-campaign.md, "The import dialog"). R2C-7: the subject list ends with
-// "New subject…", which shows the field "Subject name" (focused).
+// "New subject…", which shows the field "Subject name" (focused). DLG-3b: the library is a
+// Segmented "Assets" | "References" (radios keeping their old names), each with its long words
+// in an InfoTip; the subject select shows "Subject" and keeps the name "Attach to a subject".
 import { useId } from 'react'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
+import { InfoTip } from '@/renderer/ui/info-tip'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './import-dialog.module.css'
 
@@ -19,9 +22,21 @@ export const START_CHOICES: Choices = {
   subjectName: '',
 }
 
-const LIBRARIES: Array<{ value: Library; label: string }> = [
-  { value: 'asset', label: 'Asset library (can go on a post)' },
-  { value: 'reference', label: 'Reference library (only to guide AI pictures)' },
+type LibraryChoice = { value: Library; words: string; label: string; tip: string }
+
+const LIBRARIES: LibraryChoice[] = [
+  {
+    value: 'asset',
+    words: 'Assets',
+    label: 'Asset library (can go on a post)',
+    tip: 'Files that can go on a post.',
+  },
+  {
+    value: 'reference',
+    words: 'References',
+    label: 'Reference library (only to guide AI pictures)',
+    tip: 'Only to guide AI pictures. They never go on a post.',
+  },
 ]
 
 export type ImportChoicesProps = {
@@ -37,19 +52,28 @@ export function ImportChoices(props: ImportChoicesProps) {
   const { choices, disabled, onChange } = props
   return (
     <>
-      <fieldset className={styles.group} disabled={disabled}>
-        <legend className={styles.legend}>Put them in</legend>
+      <fieldset className={styles.library} disabled={disabled}>
+        <legend className={styles.hidden}>Put them in</legend>
+        <span className={styles.seg}>
+          {LIBRARIES.map((library) => (
+            <span key={library.value} className={styles.segment}>
+              <input
+                type="radio"
+                id={`${id}-${library.value}`}
+                name={`${id}-library`}
+                value={library.value}
+                aria-label={library.label}
+                checked={choices.library === library.value}
+                onChange={() => onChange({ ...choices, library: library.value })}
+              />
+              <label htmlFor={`${id}-${library.value}`}>{library.words}</label>
+            </span>
+          ))}
+        </span>
         {LIBRARIES.map((library) => (
-          <label key={library.value} className={styles.choice}>
-            <input
-              type="radio"
-              name={`${id}-library`}
-              value={library.value}
-              checked={choices.library === library.value}
-              onChange={() => onChange({ ...choices, library: library.value })}
-            />
-            {library.label}
-          </label>
+          <InfoTip key={library.value} about={library.words}>
+            {library.tip}
+          </InfoTip>
         ))}
       </fieldset>
       <div className={styles.group}>
@@ -68,9 +92,10 @@ export function ImportChoices(props: ImportChoicesProps) {
         </p>
       </div>
       <div className={`${layout.field} ${styles.field}`}>
-        <label htmlFor={`${id}-subject`}>Attach to a subject</label>
+        <label htmlFor={`${id}-subject`}>Subject</label>
         <select
           id={`${id}-subject`}
+          aria-label="Attach to a subject"
           value={choices.subjectId}
           disabled={disabled}
           onChange={(e) => onChange({ ...choices, subjectId: e.target.value })}

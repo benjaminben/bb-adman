@@ -13,10 +13,11 @@
   padding: 0;
   border: 0;
 }
-.hint {
-  margin: 0;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
+/* DLG-3b: the "Photos" label and its InfoTip. */
+.photosHead {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
 }
 .picked {
   display: flex;
@@ -42,14 +43,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.alerts p,
 .result p {
   margin: 0;
 }
-.alerts {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-1);
+/* The problem lines inside one DialogAlert, one under the other. */
+.alertLine {
+  display: block;
 }
 .result {
   display: flex;

@@ -35,12 +35,12 @@ test('a dropped file opens the import dialog, and "Import" adds it', async () =>
 
   await dragFiles(page, [file], ['drop'])
   await expect(page.getByText('Drop to import into Summer Launch')).toBeHidden()
-  const dialog = page.getByRole('dialog', { name: 'Import 1 file(s)' })
+  const dialog = page.getByRole('dialog', { name: 'Import 1 file' })
   await expect(dialog.getByText('citrus can front.png')).toBeVisible()
-  await expect(dialog.getByText('1 file(s) added.')).toBeHidden()
+  await expect(dialog.getByText('1 file added.')).toBeHidden()
 
   await dialog.getByRole('button', { name: 'Import' }).click()
-  await expect(dialog.getByText('1 file(s) added.')).toBeVisible()
+  await expect(dialog.getByText('1 file added.')).toBeVisible()
   await dialog.getByRole('button', { name: 'Done' }).click()
   await expect(dialog).toBeHidden()
 })

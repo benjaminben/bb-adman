@@ -118,7 +118,7 @@ describe('SubjectDialog, New [R2C-6]', () => {
     await fillAndPick()
     await userEvent.type(screen.getByRole('textbox', { name: 'Description (optional)' }), 'Tin')
     await userEvent.click(screen.getByRole('button', { name: 'Create subject' }))
-    await screen.findByText('Harbour Blend was made with 2 photo(s).')
+    await screen.findByText('Harbour Blend was made with 2 photos.')
     expect(fake.commands).toEqual([
       {
         name: 'subject.create',

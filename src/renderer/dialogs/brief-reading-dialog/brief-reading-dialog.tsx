@@ -2,7 +2,8 @@
 // one brief_extraction job, which is attached to it. While the job runs it says who is reading
 // and offers Stop (job.cancel, then close). Closing it another way while the job runs asks first
 // ("Attached jobs and the close warning"). On success it sends job.markSeen and hands the
-// draft over; on failure it shows the sentence, "Retry" and "Fill the form by hand".
+// draft over; on failure it shows the sentence, "Type it" (named "Fill the form by hand") and
+// "Retry". DLG-3b: the `run` kind.
 import { useEffect, useRef } from 'react'
 import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { attachedStoreFor, dialogJobs } from '@/renderer/stores/attached-store'
@@ -76,8 +77,8 @@ export function BriefReadingDialog(props: BriefReadingDialogProps) {
 
   const foot = failed ? (
     <>
-      <button type="button" onClick={props.onByHand}>
-        Fill the form by hand
+      <button type="button" aria-label="Fill the form by hand" onClick={props.onByHand}>
+        Type it
       </button>
       <button type="button" className={layout.primary} onClick={props.onTryAgain}>
         Retry
@@ -91,7 +92,7 @@ export function BriefReadingDialog(props: BriefReadingDialogProps) {
 
   return (
     <>
-      <DialogFrame open onClose={close} title="Reading the brief" footer={foot}>
+      <DialogFrame open onClose={close} title="Reading the brief" kind="run" footer={foot}>
         {failed ? (
           <RunFailure
             row={failed}
