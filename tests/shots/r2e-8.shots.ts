@@ -64,7 +64,7 @@ test('the Generate panel makes a video on the background layer', async () => {
   const panel = page.getByRole('group', { name: 'Generate' })
   const make = panel.getByRole('group', { name: 'Make' })
   await expect(make.getByRole('button', { name: 'Video' })).toHaveAttribute('aria-pressed', 'true')
-  await panel.getByLabel('Prompt').fill(PROMPT)
+  await panel.getByRole('textbox', { name: 'Prompt' }).fill(PROMPT)
   await panel.getByRole('radio', { name: "This layer's picture" }).check()
   await shot(page, '330-generate-panel-video')
 
