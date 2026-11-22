@@ -35,8 +35,10 @@ export function translationSourcesQuery(deps: Pick<CoreDeps, 'projects'>): Query
 }
 
 export function translationQueries(deps: CoreDeps): Record<string, QueryFn> {
-  return {
-    'translation.forCampaign': translationForCampaign(deps),
-    'translation.sources': translationSourcesQuery(deps),
-  }
+  return { 'translation.forCampaign': translationForCampaign(deps) }
+}
+
+// R3-3: its own map, so the Phase 6 domain keeps its one query.
+export function translationSourceQueries(deps: CoreDeps): Record<string, QueryFn> {
+  return { 'translation.sources': translationSourcesQuery(deps) }
 }
