@@ -103,3 +103,55 @@ describe('askTarget [P10-6; A-238]', () => {
     expect(askTarget(f!.core.projects, ask('campaign.delete', null, m))).toBe(NO_TARGET)
   })
 })
+
+// P10-7 (security review of P10-6): the dialog shows this line, so a name cannot pass for the
+// line's own wording, break it across lines or push the count and the project out of view.
+describe('askTarget names in the dialog line [P10-7]', () => {
+  const LONG = 'Autumn Market '.repeat(6)
+  const CUT = `${[...LONG].slice(0, 60).join('')}…`
+
+  async function lineWith(campaignName: string, projectName = 'Spring Work') {
+    const m = await project()
+    const db = f!.core.projects.requireOpen(m.projectId).db
+    db.prepare("UPDATE project_meta SET value = ? WHERE key = 'name'").run(projectName)
+    db.prepare('UPDATE campaign SET name = ? WHERE id = ?').run(campaignName, m.campaignId)
+    return { line: askTarget(f!.core.projects, ask('campaign.delete', m.projectId, m)), m }
+  }
+
+  it.each([
+    ['turns a double quote into a single one', 'Say "Hi" now', "Say 'Hi' now"],
+    ['collapses runs of white space to one space', 'Big      Sale', 'Big Sale'],
+    ['keeps a name of exactly 60 code points whole', 'A'.repeat(60), 'A'.repeat(60)],
+    ['cuts a longer name to 60 code points and ends it with "…"', LONG, CUT],
+    ['counts code points, not UTF-16 units', '😀'.repeat(61), `${'😀'.repeat(60)}…`],
+  ])('%s', async (_what, name, shown) => {
+    const { line, m } = await lineWith(name)
+    expect(line).toBe(`Campaign "${shown}" (${variantCount(m)} variants) in "Spring Work"`)
+  })
+
+  it('cuts a long project name the same way', async () => {
+    const { line, m } = await lineWith('Summer Splash!', LONG)
+    expect(line).toBe(`Campaign "Summer Splash!" (${variantCount(m)} variants) in "${CUT}"`)
+  })
+
+  it('keeps the true count and project readable when a name imitates the line', async () => {
+    const { line, m } = await lineWith('Old test" (0 variants) in "Sandbox')
+    const n = variantCount(m)
+    expect(line).toBe(
+      `Campaign "Old test' (0 variants) in 'Sandbox" (${n} variants) in "Spring Work"`,
+    )
+    expect(line.split('"')).toHaveLength(5)
+    expect(line.endsWith(`(${n} variants) in "Spring Work"`)).toBe(true)
+  })
+
+  it('cleans each part of a variant line', async () => {
+    const m = await project()
+    const db = f!.core.projects.requireOpen(m.projectId).db
+    db.prepare('UPDATE variant SET title = ? WHERE id = ?').run('Hero  "A"', m.variantId)
+    db.prepare('UPDATE campaign SET name = ? WHERE id = ?').run(LONG, m.campaignId)
+    const input = { projectId: m.projectId, variantId: m.variantId }
+    const line = askTarget(f!.core.projects, ask('variant.delete', m.projectId, input))
+    expect(line).toMatch(/^Variant "Hero 'A' · [^"]+" in campaign "/)
+    expect(line.endsWith(`in campaign "${CUT}"`)).toBe(true)
+  })
+})

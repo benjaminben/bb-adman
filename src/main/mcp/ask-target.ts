@@ -12,10 +12,20 @@ export const NO_TARGET = 'Something that no longer exists'
 const campaignTarget = z.object({ campaignId: z.string() })
 const variantTarget = z.object({ variantId: z.string() })
 
-// Names are the user's text: control, line-break and reordering characters are taken out so
-// one name cannot change how the rest of the line reads.
+const NAME_MAX = 60
+
+// Names are text from a project file anyone may have made, and the dialog shows this line.
+// Control, line-break and reordering characters are taken out, white space runs become one
+// space and `"` becomes `'`, so a name cannot close its own quotes, imitate the line's wording
+// or change how the rest reads; a cut at 60 code points keeps the count and project in view.
 function clean(name: string): string {
-  return name.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, '').trim()
+  const flat = name
+    .replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, '')
+    .replace(/\s+/gu, ' ')
+    .replaceAll('"', "'")
+    .trim()
+  const points = [...flat]
+  return points.length > NAME_MAX ? `${points.slice(0, NAME_MAX).join('')}…` : flat
 }
 
 // Read as stored: readMeta refuses a name an edited file may hold, and the ask must not fail.
