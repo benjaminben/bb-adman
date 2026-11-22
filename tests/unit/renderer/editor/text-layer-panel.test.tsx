@@ -122,6 +122,16 @@ describe('the text layer panel [ED-2]', () => {
     expect(updates(fake)).toEqual([patchOf({ style: { color: SWATCH } })])
   })
 
+  it('a colour that is not in the palette still shows, as the pressed swatch', async () => {
+    await open(TEXT)
+    const colour = within(region('Type')).getByRole('group', { name: 'Colour' })
+    const own = (TEXT.style as { color: string }).color
+    expect(within(colour).getByRole('button', { name: own })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
   it('Weight lists names only', async () => {
     await open(TEXT)
     const weight = screen.getByRole('combobox', { name: 'Weight' })

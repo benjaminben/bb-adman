@@ -66,7 +66,7 @@ test('A translated text layer on a project with no fonts, Box open', async () =>
   const panel = properties(page)
   await expect(panel.getByTitle('Translation: Proposed, from AI')).toBeVisible()
   await expect(panel.getByRole('button', { name: 'Approve' })).toBeVisible()
-  await expect(panel.getByRole('button', { name: 'All ja posts' })).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'All ja posts', exact: true })).toBeVisible()
   await expect(panel.getByRole('group', { name: 'Built-in styles' })).toBeVisible()
   const box = panel.getByRole('button', { name: 'Box' })
   if ((await box.getAttribute('aria-expanded')) === 'false') await box.click()

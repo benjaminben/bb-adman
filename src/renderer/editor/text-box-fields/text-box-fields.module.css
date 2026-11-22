@@ -13,7 +13,7 @@
 }
 .outline {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) calc(var(--field-label-width) * 1.5);
   gap: var(--gap-inline);
   align-items: end;
 }
@@ -22,10 +22,14 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--gap-inline);
 }
-/* Each short label takes only its own width (`.group` outranks the shared .field.inline). */
-.group .outline > div:last-child,
-.group .pair > div {
+/* The outline Width's short label takes only its own width; Corner radius and Padding have long
+   labels, so each sits above its box (`.group` outranks the shared .field.inline). */
+.group .outline > div:last-child {
   grid-template-columns: auto minmax(0, 1fr);
+}
+.group .pair > div {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap-tight);
 }
 .error {
   margin: 0;

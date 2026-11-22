@@ -11,6 +11,7 @@ import type { TextLook } from '@/shared/config/look'
 import type { TextStyle } from '@/shared/schemas/layer'
 import { IconSegments, type Segment } from './icon-segments'
 import { WEIGHTS } from './weights'
+import { withCurrent } from './with-current'
 import styles from './text-fields.module.css'
 
 type Patch = Partial<TextStyle>
@@ -97,7 +98,7 @@ export function ColourRow(props: RowProps & { palette: string[] }) {
     <SwatchField
       label="Colour"
       value={props.look.color}
-      palette={props.palette}
+      palette={withCurrent(props.palette, props.look.color)}
       onCommit={(color) => color !== null && props.send({ color })}
     />
   )

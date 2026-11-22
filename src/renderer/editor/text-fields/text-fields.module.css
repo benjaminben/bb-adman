@@ -50,15 +50,14 @@
   padding: 0;
   border: none;
 }
-/* Two inline fields on one row; each short label takes only its own width (`.group` makes the
-   rule outrank the shared .field.inline). */
+/* Size and Weight: two inline fields on one row, Weight wider for its names; each short label
+   takes only its own width (`.group` makes the rule outrank the shared .field.inline). */
 .pair {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
   gap: var(--gap-inline);
 }
-.group .pair > div,
-.group .spacing > div {
+.group .pair > div {
   grid-template-columns: auto minmax(0, 1fr);
 }
 .pair select {
@@ -80,11 +79,20 @@
 .seg {
   flex: none;
 }
+/* Line height and Letter spacing: their labels are long, so each sits above its box; All
+   capitals at the row's end, level with the boxes. */
 .spacing {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: var(--gap-inline);
-  align-items: center;
+  align-items: end;
+}
+.group .spacing > div {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap-tight);
+}
+.spacing > button {
+  margin-bottom: calc((var(--control-height) - var(--control-height-small)) / 2);
 }
 /* Words for a screen reader only: a box one hairline wide, clipped away. */
 .hidden {

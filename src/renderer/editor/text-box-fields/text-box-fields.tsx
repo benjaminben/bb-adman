@@ -7,6 +7,7 @@
 // without these fields shows the defaults (textLookOf). A locked layer disables the group.
 import { useState } from 'react'
 import { NumberField } from '@/renderer/editor/number-field'
+import { withCurrent } from '@/renderer/editor/text-fields'
 import { Section } from '@/renderer/ui/section'
 import { SwatchField } from '@/renderer/ui/swatch-field'
 import { textLookOf, type TextLook } from '@/shared/config/look'
@@ -43,7 +44,7 @@ export function TextBoxFields(props: TextBoxFieldsProps) {
         <SwatchField
           label="Box colour"
           value={look.boxColor}
-          palette={props.palette}
+          palette={withCurrent(props.palette, look.boxColor)}
           allowNone
           onCommit={(boxColor) => send({ boxColor })}
         />
@@ -51,7 +52,7 @@ export function TextBoxFields(props: TextBoxFieldsProps) {
           <SwatchField
             label="Outline colour"
             value={look.boxOutlineColor}
-            palette={props.palette}
+            palette={withCurrent(props.palette, look.boxOutlineColor)}
             allowNone
             onCommit={(boxOutlineColor) => send({ boxOutlineColor })}
           />
