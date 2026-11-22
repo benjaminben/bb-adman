@@ -178,7 +178,7 @@ describe('Agents page: Agent access [SET-5]', () => {
     const field = await within(box).findByLabelText('Port')
     await userEvent.clear(field)
     await userEvent.type(field, '48000')
-    await userEvent.click(within(box).getByRole('button', { name: 'Save port' }))
+    await userEvent.type(field, '{Enter}')
     expect(fake.commands).toContainEqual({
       name: 'settings.update',
       input: { mcp: { port: 48000 } },

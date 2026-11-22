@@ -1,6 +1,7 @@
 // Settings: agent access, the MCP server (SPEC 5.1, 5.3, 6.8; 14 1.56 MCP-C, 1.58 J-8, J-11,
-// 1.59 L-21). A Section with the switch in its header (SET-5); the port, the problem lines word
-// for word, "New token", the auto-delete row and, while on with a token, Connect.
+// 1.59 L-21). A Section with the switch in its header (SET-5); the port (saved on Enter or when
+// left, SET-6), the problem lines word for word, "New token", the auto-delete row and, while on
+// with a token, Connect.
 // The reply of mcp.getConnectInfo, token included, is kept in this section's own state only
 // (SPEC 5.3): never in a store, a log line or an attribute. After every command, success or
 // refusal, the section reads it again: a refused new token may still have been saved
@@ -41,7 +42,6 @@ export function McpSection() {
   const command = useApp((s) => s.command)
   const [read, setRead] = useState<Read | null>(null)
   const info = read !== null && 'info' in read ? read.info : null
-  const [typed, setTyped] = useState<string | null>(null)
   const [refusal, setRefusal] = useState<string | null>(null)
   const [portRefusal, setPortRefusal] = useState<string | null>(null)
   // SPEC 14 1.48 TL-2: true from the send until the panel is read again.
@@ -76,11 +76,10 @@ export function McpSection() {
     setRefusal(await send(name, input))
   }
 
-  async function savePort() {
-    if (info === null) return
-    const refused = await send('settings.update', { mcp: { port: Number(typed ?? info.port) } })
+  async function savePort(port: number): Promise<boolean> {
+    const refused = await send('settings.update', { mcp: { port } })
     setPortRefusal(refused)
-    if (refused === null) setTyped(null)
+    return refused === null
   }
 
   if (info === null) {
@@ -115,13 +114,7 @@ export function McpSection() {
 
   return (
     <Section id="settings.agentAccess" title="Agent access" level={3} fold="none" summary={summary}>
-      <PortField
-        value={typed ?? String(info.port)}
-        refusal={portRefusal}
-        sending={sending}
-        onType={setTyped}
-        onSave={() => void savePort()}
-      />
+      <PortField saved={info.port} refusal={portRefusal} sending={sending} onSave={savePort} />
       {lines.map((text) => (
         <NoticeLine key={text} kind={text === state ? 'warn' : 'danger'}>
           {text}

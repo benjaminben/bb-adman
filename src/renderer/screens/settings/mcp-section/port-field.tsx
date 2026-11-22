@@ -1,27 +1,30 @@
-// Agent access's port (SPEC 6.8; SET-5): an inline number field with "Save port" (until SET-6),
-// and the refusal under it. The section sends the command; this part only draws.
-import type { FormEvent } from 'react'
+// Agent access's port (SPEC 6.8; SET-5, SET-6): an inline number field that saves on Enter or
+// when left (choice C-4), then "Saved", and the refusal under it. An empty field sends nothing
+// and shows the saved port again. The section sends the command; this part only draws.
 import { NoticeLine } from '@/renderer/screens/settings/notice-line'
+import { SavedMark, onEnter, useSingleSave } from '@/renderer/screens/settings/saved-mark'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './mcp-section.module.css'
 
 type Props = {
-  value: string
+  saved: number
   refusal: string | null
   sending: boolean
-  onType: (text: string) => void
-  onSave: () => void
+  onSave: (port: number) => Promise<boolean>
 }
 
 export function PortField(props: Props) {
-  function submit(event: FormEvent) {
-    event.preventDefault()
-    props.onSave()
+  const field = useSingleSave(String(props.saved), (value) => props.onSave(Number(value)))
+
+  function save() {
+    const value = field.text.trim()
+    if (value === '') return field.reset()
+    if (!props.sending) void field.save(value)
   }
 
   return (
     <div className={styles.port}>
-      <form className={`${layout.field} ${layout.inline}`} onSubmit={submit}>
+      <div className={`${layout.field} ${layout.inline}`}>
         <label htmlFor="mcp-port">Port</label>
         <div className={layout.row}>
           {/* No min or max: settings.update owns the range, so its sentence is the one shown. */}
@@ -29,15 +32,15 @@ export function PortField(props: Props) {
             id="mcp-port"
             type="number"
             className={styles.portInput}
-            value={props.value}
-            onChange={(e) => props.onType(e.target.value)}
+            value={field.text}
+            onChange={(e) => field.type(e.target.value)}
+            onBlur={save}
+            onKeyDown={onEnter(save)}
             aria-describedby={props.refusal === null ? undefined : 'mcp-port-refusal'}
           />
-          <button type="submit" className={layout.secondary} disabled={props.sending}>
-            Save port
-          </button>
+          <SavedMark shown={field.saved} />
         </div>
-      </form>
+      </div>
       {props.refusal !== null && (
         <NoticeLine kind="danger" id="mcp-port-refusal">
           {props.refusal}

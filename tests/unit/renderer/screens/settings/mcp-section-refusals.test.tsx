@@ -26,7 +26,7 @@ describe('settings: agent access refusal lines are cleared [REVIEW MCP-C 6e]', (
     const field = within(box).getByLabelText('Port')
     await userEvent.clear(field)
     await userEvent.type(field, '48000')
-    await userEvent.click(within(box).getByRole('button', { name: 'Save port' }))
+    await userEvent.type(field, '{Enter}')
     await waitFor(() => expect(within(box).queryByText(IN_USE)).toBeNull())
   })
 
@@ -38,7 +38,7 @@ describe('settings: agent access refusal lines are cleared [REVIEW MCP-C 6e]', (
     const field = await within(box).findByLabelText('Port')
     await userEvent.clear(field)
     await userEvent.type(field, '80')
-    await userEvent.click(within(box).getByRole('button', { name: 'Save port' }))
+    await userEvent.type(field, '{Enter}')
     expect(await within(box).findByText(RANGE)).toBeInTheDocument()
     setInfo(connect())
     await userEvent.click(within(box).getByRole('switch', { name: 'Turn on agent access' }))
