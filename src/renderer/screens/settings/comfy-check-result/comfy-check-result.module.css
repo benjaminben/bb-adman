@@ -1,15 +1,29 @@
 /* app-style */
-/* The check's workflows as list rows parted by a line (spec/app-style.md "Settings"). */
+/* The checked workflows as rows parted by a hairline (SET-2): the label, its status, and the
+   marks at the right end; the missing items stay listed under the row. */
 .rows > li {
-  padding: var(--space-2) 0;
+  padding: var(--space-1) 0;
   border-top: var(--border-width) solid var(--color-line);
 }
-.rows p {
-  margin: var(--space-1) 0 0;
-  font-size: var(--font-size-control);
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  min-height: var(--row-height);
+  min-width: 0;
+}
+.name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.licence {
+  display: flex;
+  align-items: center;
 }
 .rows ul {
-  margin: var(--space-1) 0 0;
-  padding-left: var(--space-4);
-  font-size: var(--font-size-control);
+  margin: 0 0 var(--space-1);
+  padding-left: var(--space-6);
+  font-size: var(--type-meta-size);
+  color: var(--color-text-secondary);
 }

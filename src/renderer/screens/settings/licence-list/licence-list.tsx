@@ -1,10 +1,12 @@
-// Settings: the models whose commercial licence the user confirmed (spec/screens-campaign.md,
+// Settings: the models whose commercial licence the user confirmed, a folded Section with the
+// count on its header (SET-2) (spec/screens-campaign.md,
 // "Settings: confirmed licences"; D-088). The names come from the settings file and are drawn
 // as text only. "Forget" saves the list without that name, so the next run of that model asks
 // again. While one is sent, every Forget waits.
 import { useState } from 'react'
 import { EMPTY, useApp } from '@/renderer/app/app-context'
 import { NoticeLine } from '@/renderer/screens/settings/notice-line'
+import { Section } from '@/renderer/ui/section'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './licence-list.module.css'
 
@@ -27,10 +29,15 @@ export function LicenceList() {
   }
 
   return (
-    <div>
-      <h3>Licences you confirmed</h3>
+    <Section
+      id="settings.licences"
+      title="Licences"
+      level={4}
+      fold="closed"
+      summary={String(saved.length)}
+    >
       {saved.length === 0 ? (
-        <p className={layout.muted}>You have not confirmed a commercial license for any model.</p>
+        <p className={layout.muted}>None confirmed</p>
       ) : (
         <ul className={styles.list}>
           {saved.map((model) => (
@@ -38,6 +45,7 @@ export function LicenceList() {
               <span className={styles.name}>{model}</span>
               <button
                 type="button"
+                className={layout.quiet}
                 aria-label={`Forget ${model}`}
                 disabled={sending}
                 onClick={() => void forget(model)}
@@ -49,6 +57,6 @@ export function LicenceList() {
         </ul>
       )}
       {refusal !== null && <NoticeLine kind="danger">{refusal}</NoticeLine>}
-    </div>
+    </Section>
   )
 }

@@ -1,0 +1,6 @@
+/* app-style */
+/* The key rows, one under the other (SET-2). */
+.rows {
+  display: flex;
+  flex-direction: column;
+}
