@@ -13,6 +13,7 @@ import { lastGraph, runSize, uploads, type Upload } from './stand-in-uploads'
 import { decodePng, type Bitmap } from './reference-compare'
 import { pictureType } from '@/main/providers/picture-type'
 import { answerQuit } from './quit-answer'
+import { reopenAsVideo } from './timeline-seed'
 
 let box: Sandbox
 let stand: StandIn
@@ -74,6 +75,8 @@ async function videoFrom(start: string): Promise<Buffer> {
   await screens.saveAddress(comfy, stand.origin)
   await screens.createProject(page, 'Stand-in')
   await screens.loadBriefAndCreate(app, page)
+  // A video start needs a video post (P7-11).
+  await reopenAsVideo(page, 'Stand-in')
   await screens.openCampaign(page)
   await screens.chooseProvider(page, 'ComfyUI')
   await screens.chooseSlot(page)

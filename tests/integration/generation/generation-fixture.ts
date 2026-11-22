@@ -69,7 +69,7 @@ export function seed(db: Database.Database): void {
       VALUES ('d1', 'c1', 'D', '${VARIANT}', 0);
     INSERT INTO variant (id, direction_id, title, width, height, size_label, language, format,
       duration_ms, created_by, created_at)
-      VALUES ('${VARIANT}', 'd1', 'Master', 1080, 1350, '4:5', 'en', 'image', 0, 'user', 'x'),
+      VALUES ('${VARIANT}', 'd1', 'Master', 1080, 1350, '4:5', 'en', 'video', 0, 'user', 'x'),
              ('${OTHER_VARIANT}', 'd1', 'Other', 1080, 1080, '1:1', 'en', 'image', 0, 'user', 'x');
   `)
   insertLayer(db, {

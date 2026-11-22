@@ -39,7 +39,9 @@ export const RUN_TOOLS: readonly ToolDef[] = [
       '"none", use_references false, reference_asset_ids empty); from a first-frame picture ' +
       '(start "first_frame", use_references false, one ID in reference_asset_ids); with ' +
       'reference pictures (start "none", use_references true, their IDs in ' +
-      'reference_asset_ids). A picture is named by an asset ID from list_assets. ' +
+      'reference_asset_ids). A picture is named by an asset ID from list_assets. A fourth ' +
+      'start, "background" (use_references false, reference_asset_ids empty), uses the ' +
+      "variant's background picture as the first frame. " +
       `${PROVIDER_WORDS} ${FOLLOW} ${LEAVE_THE_CHOICE}`,
     kind: 'command',
     target: 'generation.startVideo',

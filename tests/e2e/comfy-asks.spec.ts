@@ -8,6 +8,7 @@ import { startComfyStandIn, type StandIn } from '../helpers/comfy-stand-in'
 import { nthSentId, serveNeedsFromApp } from './stand-in-runs'
 import * as screens from './screens'
 import { answerQuit } from './quit-answer'
+import { reopenAsVideo } from './timeline-seed'
 
 let box: Sandbox
 let stand: StandIn
@@ -32,9 +33,12 @@ test.afterEach(async () => {
   }
 })
 
-async function openCampaign(): Promise<void> {
+// A video start needs a video post (P7-11), so `asVideo` reopens the project with its first
+// variant one.
+async function openCampaign(asVideo = false): Promise<void> {
   await screens.createProject(page, 'Summer Launch')
   await screens.loadBriefAndCreate(app, page)
+  if (asVideo) await reopenAsVideo(page, 'Summer Launch')
   await screens.openCampaign(page)
 }
 
@@ -66,7 +70,7 @@ test('Address dialog: Generate with ComfyUI and no address asks for it, and the 
 test('Licence dialog: Cancel starts nothing; Confirm with the box ticked starts the video; the next start does not ask', async () => {
   const comfy = await screens.openSettings(page)
   await screens.saveAddress(comfy, stand.origin)
-  await openCampaign()
+  await openCampaign(true)
   const dialog = screens.licenceDialog(page)
   const box = dialog.getByRole('checkbox', { name: "don't show again for MiniMax H3" })
 

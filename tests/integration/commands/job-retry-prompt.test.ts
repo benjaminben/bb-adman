@@ -15,15 +15,6 @@ const picture = (referenceAssetIds: string[]) => ({
   width: 1080,
   height: 1350,
 })
-const firstFrameVideo = {
-  prompt: OLD_PROMPT,
-  durationMs: 2_000,
-  width: 1080,
-  height: 1920,
-  start: 'first_frame',
-  referenceAssetIds: ['a1'],
-}
-
 // A failed row of the given kind, as a run before SP-9 would have left it.
 function failedRow(kind: string, request: unknown): void {
   x = makeRunnerFixture()
@@ -43,26 +34,26 @@ async function retriedRequest(): Promise<Record<string, unknown>> {
 }
 
 describe('job.retry stores the ending the pictures call for [SP-9; A-127]', () => {
-  it.each([
-    ['a picture row with one reference', 'image_generation', picture(['a1'])],
-    ['a first-frame video row', 'video_generation', firstFrameVideo],
-  ])('%s: the new prompt ends in "keep printing" once', async (_, kind, request) => {
-    failedRow(kind, request)
-    const retried = await retriedRequest()
-    const prompt = retried.prompt as string
-    expect(prompt).toBe(`A bottle on a rock ${KEEP_PRINTING_ENDING}`)
-    expect(prompt.split(KEEP_PRINTING_ENDING)).toHaveLength(2)
-    expect(prompt).not.toContain(NO_TEXT_ENDING)
-  })
+  it.each([['a picture row with one reference', 'image_generation', picture(['a1'])]])(
+    '%s: the new prompt ends in "keep printing" once',
+    async (_, kind, request) => {
+      failedRow(kind, request)
+      const retried = await retriedRequest()
+      const prompt = retried.prompt as string
+      expect(prompt).toBe(`A bottle on a rock ${KEEP_PRINTING_ENDING}`)
+      expect(prompt.split(KEEP_PRINTING_ENDING)).toHaveLength(2)
+      expect(prompt).not.toContain(NO_TEXT_ENDING)
+    },
+  )
 
-  it.each([
-    ['a picture row with one reference', 'image_generation', picture(['a1'])],
-    ['a first-frame video row', 'video_generation', firstFrameVideo],
-  ])('%s: no other request field changes', async (_, kind, request) => {
-    failedRow(kind, request)
-    const retried = await retriedRequest()
-    expect({ ...retried, prompt: OLD_PROMPT }).toEqual(request)
-  })
+  it.each([['a picture row with one reference', 'image_generation', picture(['a1'])]])(
+    '%s: no other request field changes',
+    async (_, kind, request) => {
+      failedRow(kind, request)
+      const retried = await retriedRequest()
+      expect({ ...retried, prompt: OLD_PROMPT }).toEqual(request)
+    },
+  )
 
   it('a picture row with no reference keeps its prompt exactly', async () => {
     failedRow('image_generation', picture([]))

@@ -21,6 +21,7 @@ import {
 } from './stand-in-runs'
 import * as screens from './screens'
 import * as video from './video-screens'
+import { reopenAsVideo } from './timeline-seed'
 import { lastGraph, pngSize, runSize, uploads, type Upload } from './stand-in-uploads'
 import { uploadName } from '@/main/providers/comfyui/values'
 import { pictureType } from '@/main/providers/picture-type'
@@ -53,12 +54,14 @@ test.afterEach(async () => {
   }
 })
 
-// The project, the campaign from the test brief, and the stand-in's address saved.
-async function campaignOnStandIn(): Promise<void> {
+// The project, the campaign from the test brief, and the stand-in's address saved. A video
+// start needs a video post (P7-11), so `asVideo` reopens the project with its first variant one.
+async function campaignOnStandIn(asVideo = false): Promise<void> {
   const comfy = await screens.openSettings(page)
   await screens.saveAddress(comfy, stand.origin)
   await screens.createProject(page, 'Stand-in')
   await screens.loadBriefAndCreate(app, page)
+  if (asVideo) await reopenAsVideo(page, 'Stand-in')
   await screens.openCampaign(page)
   // SP-5: these runs are not about the subject's photo, so it is not sent.
   await screens.untickReferences(page)
@@ -202,7 +205,7 @@ test('Key dialog and paid Retry: Cancel, then a made-up key saved; the refused r
 // SPEC 14 1.57 TP-6: the clip's metadata loads in the built app, so its CSP (media-src) and
 // the adman-asset:// protocol let a video through.
 test('Make a video: a 2-second clip from a prompt is started, done and has its metadata', async () => {
-  await campaignOnStandIn()
+  await campaignOnStandIn(true)
   await screens.startVideo(page, 2)
   await screens.confirmLicence(page)
   const id = await nthSentId(stand, 1)
@@ -217,7 +220,7 @@ test('Make a video: a 2-second clip from a prompt is started, done and has its m
 // The built app's fitPicture (Electron's nativeImage) crops and scales it, so the one upload
 // is a PNG at the run's size under the app's own name, and the graph names that upload.
 test('Make a video from a first-frame picture: the upload is a PNG at the run size', async () => {
-  await campaignOnStandIn()
+  await campaignOnStandIn(true)
   const file = path.join(box.root, 'first-frame.png')
   fs.writeFileSync(file, greyPng(96, 64))
   await screens.startFromAddedPicture(app, page, video.FIRST_FRAME_START, file)
@@ -241,7 +244,7 @@ test('Make a video from a first-frame picture: the upload is a PNG at the run si
 
 // N-6: a reference is not fitted. Ruling F-9: it is sent as a clean PNG of the same size.
 test('Make a video from a reference picture: the picture is uploaded as a PNG of its own size', async () => {
-  await campaignOnStandIn()
+  await campaignOnStandIn(true)
   const file = path.join(box.root, 'reference.png')
   const bytes = greyPng(96, 64)
   fs.writeFileSync(file, bytes)

@@ -62,3 +62,24 @@ describe('startPair [SPEC 14 1.60 CU-6b N-4]', () => {
     })
   })
 })
+
+describe('startPair, the background start [P7-11, A-176]', () => {
+  const background = { start: 'background', useReferences: false, referenceAssetIds: [] } as const
+
+  it('counts as a first frame and names no picture', () => {
+    expect(startPair(background)).toEqual({ firstFrame: true, references: false })
+  })
+
+  it('refuses a picture ID with it: INVALID_INPUT', () => {
+    expect(refusal(() => startPair({ ...background, referenceAssetIds: ['a1'] }))).toEqual({
+      code: 'INVALID_INPUT',
+      message: 'A start from the background takes no other picture.',
+      reason: undefined,
+    })
+  })
+
+  it('refuses references with it: comfy_job_not_offered (no workflow does both)', () => {
+    const fields = { ...background, useReferences: true, referenceAssetIds: ['a1'] }
+    expect(refusal(() => startPair(fields))).toMatchObject({ reason: 'comfy_job_not_offered' })
+  })
+})
