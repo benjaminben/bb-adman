@@ -1,9 +1,6 @@
-// DLG-4a (design-wave-screens-b.md; choice C-15): in the run dialog the action button is the
-// one click that pays. The cost line (a MoneyLine for a paid provider) is the body's last thing
-// above the foot and in the dialog's accessible description; nothing is sent before the click;
-// one click sends one run, with the provider, count, seconds and pictures the line names.
-// The caller here sends a command from onConfirm, as the real callers do, so the fake api's
-// command list shows what left. No provider is called.
+// DLG-4a (C-15): the run dialog's action is the one click that pays; the cost line (MoneyLine
+// when paid) is last above the foot and in the description; nothing is sent before the click;
+// one click sends one run as named. The caller sends from onConfirm; no provider is called.
 import { act, fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
@@ -83,7 +80,12 @@ const action = (name = 'Generate') => screen.getByRole('button', { name })
 
 describe('the run dialog sends only on its action click [DLG-4a, C-15]', () => {
   it('sends nothing on open or on a change of provider or count; one click sends one run as shown', async () => {
-    const { dialog, fake, onConfirm, seen } = await open({ count: PICTURES, referenceCount: 3 })
+    const over = { count: PICTURES, referenceCount: 3, campaignId: 'C1' }
+    const { dialog, fake, onConfirm, seen } = await open(over)
+    // The paid count (OI-DW-7): a short mark, today's sentence as its tip; it starts nothing.
+    const tip = 'Paid generations for this campaign so far: 3 pictures, 1 videos.'
+    expect(await dialog.findByTitle(tip)).toHaveTextContent('Paid so far: 3 pictures, 1 video')
+    expect(await axeViolations()).toEqual([])
     expect(fake.commands).toEqual([])
     await userEvent.click(dialog.getByRole('radio', { name: 'Fake provider' }))
     await userEvent.click(dialog.getByRole('radio', { name: 'Google Gemini' }))
@@ -100,20 +102,36 @@ describe('the run dialog sends only on its action click [DLG-4a, C-15]', () => {
       { name: 'generation.runImages', input: { provider: 'gemini', count: 2, video: undefined } },
     ])
     expect(seen[0]?.at(-1)).toBe('Paid: 2 pictures + 3 references to Google Gemini')
+    const line = dialog.getByText(costLine('Paid: 2 pictures + 3 references → Google Gemini'))
+    expect(line.previousElementSibling).toHaveTextContent('Paid so far:')
   })
 
-  it('puts the MoneyLine words in the description, last in the body, directly above the foot', async () => {
-    const { element, dialog } = await open({ count: PICTURES, referenceCount: 3 })
-    expect(element).toHaveAccessibleDescription('Paid: 4 pictures + 3 references to Google Gemini')
-    const line = dialog.getByText(costLine('Paid: 4 pictures + 3 references → Google Gemini'))
-    const foot = line.nextElementSibling as HTMLElement
-    expect(
-      within(foot)
-        .getAllByRole('button')
-        .map((b) => b.textContent),
-    ).toEqual(['Cancel', 'Generate'])
-    expect(foot.nextElementSibling).toBeNull()
-  })
+  const CUTTER = { ...FAL, id: 'cutter', label: 'Cut Cloud', jobs: ['cutout'] } as ProviderInfo
+  it.each<[string, Partial<RunDialogProps>, ProviderInfo[] | undefined, string]>([
+    [
+      'pictures',
+      { count: PICTURES, referenceCount: 3 },
+      undefined,
+      'Paid: 4 pictures + 3 references → Google Gemini',
+    ],
+    ['a layout', { job: 'layout' }, undefined, 'Paid: 1 request → Google Gemini'],
+    ['a text run', { job: 'text', requests: 3 }, undefined, 'Paid: 3 requests → Google Gemini'],
+    ['a cut-out', { job: 'cutout' }, [CUTTER, FAKE], 'Paid: 1 cut-out → Cut Cloud'],
+  ])(
+    'puts the MoneyLine for %s in the description, last in the body, directly above the foot',
+    async (_n, over, providers, words) => {
+      const { element, dialog } = await open(over, setup(providers))
+      expect(element).toHaveAccessibleDescription(spoken(words))
+      const line = dialog.getByText(costLine(words))
+      const foot = line.nextElementSibling as HTMLElement
+      expect(
+        within(foot)
+          .getAllByRole('button')
+          .map((b) => b.textContent),
+      ).toEqual(['Cancel', 'Generate'])
+      expect(foot.nextElementSibling).toBeNull()
+    },
+  )
 
   it.each([
     ['1', 0, 'Paid: 1 picture → Google Gemini'],
@@ -278,18 +296,5 @@ describe('provider choices and the no-provider alert [DLG-4a]', () => {
     await userEvent.click(within(alert).getByRole('button', { name: 'Settings' }))
     expect(store.getState().view).toEqual({ kind: 'settings' })
     expect(fake.commands).toEqual([])
-  })
-})
-
-describe('the paid count in the run dialog [DLG-4a, OI-DW-7]', () => {
-  it('shows the short mark with the full sentence as its tip, above the cost line; axe clean', async () => {
-    const { dialog } = await open({ campaignId: 'C1', count: PICTURES })
-    const mark = await dialog.findByTitle(
-      'Paid generations for this campaign so far: 3 pictures, 1 videos.',
-    )
-    expect(mark).toHaveTextContent('Paid so far: 3 pictures, 1 video')
-    const line = dialog.getByText(costLine('Paid: 4 pictures → Google Gemini'))
-    expect(mark.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(await axeViolations()).toEqual([])
   })
 })
