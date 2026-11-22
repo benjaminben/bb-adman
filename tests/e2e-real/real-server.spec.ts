@@ -68,9 +68,7 @@ test('Gemini: the paid confirm is cancelled and nothing is sent', async () => {
   await guardedStep('Open the paid confirm and press Cancel', async () => {
     await screens.chooseProvider(page, 'Google Gemini')
     const run = await screens.openRunDialog(page)
-    await expect(
-      run.getByText(/^This will use 1 generation\(s\) with Google Gemini\./),
-    ).toBeVisible()
+    await expect(run.getByText(/^Paid: 1 picture.* to Google Gemini$/)).toBeVisible()
     await run.getByRole('button', { name: 'Cancel' }).click()
     await expect(run).toBeHidden()
     await expect(screens.runRows(page)).toHaveCount(0)

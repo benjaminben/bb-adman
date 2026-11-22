@@ -143,7 +143,7 @@ test('Campaign: a run waits, works and is done; a failed run is retried; a waiti
 })
 
 // The paid run's cost is on screen in the run dialog at the click that sends it (C-15).
-const PAID_LINE = /^This will use 1 generation\(s\) with Google Gemini\./
+const PAID_LINE = /^Paid: 1 picture to Google Gemini$/
 
 test("References and the paid confirm: an added picture goes to Flux; Gemini's confirm is cancelled", async () => {
   await campaignOnStandIn()

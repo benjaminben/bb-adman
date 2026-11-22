@@ -92,8 +92,9 @@ export async function makePictures(page: Page, count: number): Promise<void> {
   const run = page.getByRole('dialog', { name: 'Make pictures' })
   await run.getByRole('spinbutton', { name: 'Pictures' }).fill(String(count))
   await run.getByRole('radio', { name: 'Google Gemini' }).check()
-  await expect(run).toContainText(`This will use ${count} generation`)
-  await expect(run).toContainText('with Google Gemini.')
+  await expect(run).toContainText(
+    `Paid: ${count} picture${count === 1 ? '' : 's'} to Google Gemini`,
+  )
   await run.getByRole('radio', { name: 'Fake provider' }).check()
   await expect(run).toContainText('This uses the fake provider. Nothing is charged.')
   await run.getByRole('button', { name: 'Generate' }).click()
