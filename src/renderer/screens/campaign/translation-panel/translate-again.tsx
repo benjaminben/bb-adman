@@ -1,6 +1,7 @@
-// "Translate {language} again…" (spec/phases/phase-06.md, design addition 8; A-156, A-157):
-// the run dialog (job text, title and confirm "Translate"). translation.propose is sent only from
-// the dialog's confirm, with the provider chosen there; nothing is sent before. It goes through
+// "Translate again…" (named "Translate {language} again…"; spec/phases/phase-06.md, design
+// addition 8; A-156, A-157; CAMP-5): the run dialog (job text, title and confirm "Translate").
+// translation.propose is sent only from the dialog's confirm, with the provider chosen there;
+// nothing is sent before. It goes through
 // the app store's command, so NEEDS_KEY opens the key dialog and sends again once a key is
 // saved. The started jobs are registered under the campaign for the tab's close warning.
 // A failed job's "Retry" opens the same dialog with that job's direction and language.
@@ -8,9 +9,11 @@ import { useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { RunDialog } from '@/renderer/dialogs/run-dialog'
 import { attachedStoreFor } from '@/renderer/stores/attached-store'
+import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import type { TranslationProposeReply } from '@/shared/schemas/commands/translation'
 import { languageName } from './translation-words'
+import styles from './translation-panel.module.css'
 
 // What to translate: the group's posts, or one direction in one language.
 export type ProposeTarget = { variantIds: string[] } | { directionId: string; language: string }
@@ -63,15 +66,19 @@ export function TranslateAgain(props: {
   requests: number
 }) {
   const [open, setOpen] = useState(false)
+  const name = `Translate ${languageName(props.language)} again…`
   return (
     <>
       <button
         type="button"
-        className={`${layout.quiet} ${layout.small}`}
+        className={`${layout.secondary} ${layout.small} ${styles.again}`}
+        aria-label={name}
+        title={name}
         disabled={props.variantIds.length === 0}
         onClick={() => setOpen(true)}
       >
-        {`Translate ${languageName(props.language)} again…`}
+        <Icon name="sync" />
+        Translate again…
       </button>
       {open && (
         <ProposeDialog

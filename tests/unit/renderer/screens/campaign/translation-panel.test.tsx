@@ -38,7 +38,7 @@ const sent = (fake: ReturnType<typeof makeFakeApi>, name: string) =>
   fake.commands.filter((c) => c.name === name).map((c) => c.input)
 
 async function group(name: string) {
-  return within(await screen.findByRole('region', { name: new RegExp(`^${name} · `) }))
+  return within(await screen.findByRole('region', { name }))
 }
 
 async function rowOf(groupName: string, line: string) {
@@ -57,10 +57,9 @@ describe('TranslationPanel [P6-12]', () => {
     ])
     expect(reads(fake)[0]?.input).toEqual({ projectId: P, campaignId: 'C1' })
     const headings = await screen.findAllByRole('heading', { level: 3 })
-    expect(headings.map((h) => h.textContent)).toEqual([
-      'German · 1 of 2 approved',
-      'French · 0 of 1 approved',
-    ])
+    expect(headings.map((h) => h.textContent)).toEqual(['German', 'French'])
+    expect((await group('German')).getByTitle('1 of 2 approved')).toBeTruthy()
+    expect((await group('French')).getByTitle('0 of 1 approved')).toBeTruthy()
     expect(screen.queryByRole('heading', { name: /^English/ })).toBeNull()
     expect(screen.queryByRole('textbox', { name: 'Main · Story · Headline' })).toBeNull()
   })
@@ -76,15 +75,15 @@ describe('TranslationPanel [P6-12]', () => {
     expect(one.getByRole('textbox')).toHaveProperty('value', '<i>Hallo</i>')
     expect(one.getByText('Proposed')).toBeTruthy()
     expect(one.getByText('from an agent')).toBeTruthy()
-    expect(one.getByRole('button', { name: 'Approve' })).toBeTruthy()
+    expect(one.getByRole('button', { name: 'Proposed: approve' })).toBeTruthy()
     const two = await rowOf('German', 'Noon · Story · Headline')
     expect(two.getByText('No source text')).toBeTruthy()
     expect(two.getByText('Approved')).toBeTruthy()
     expect(two.getByText('from you')).toBeTruthy()
-    expect(two.queryByRole('button', { name: 'Approve' })).toBeNull()
+    expect(two.queryByRole('button', { name: 'Proposed: approve' })).toBeNull()
     const three = await rowOf('German', 'Night · Story · Headline')
     expect(three.getByText('Missing')).toBeTruthy()
-    expect(three.queryByRole('button', { name: 'Approve' })).toBeNull()
+    expect(three.queryByRole('button', { name: 'Proposed: approve' })).toBeNull()
     expect(container.querySelector('b, i')).toBeNull()
     expect(await axeViolations()).toEqual([])
   })
@@ -96,7 +95,7 @@ describe('TranslationPanel [P6-12]', () => {
     await userEvent.type(one.getByRole('textbox'), 'Neuer Kaffee')
     await userEvent.tab()
     const two = await rowOf('German', 'Noon · Story · Headline')
-    await userEvent.click(two.getByRole('checkbox', { name: /^Use for every German post/ }))
+    await userEvent.click(two.getByRole('button', { name: /^Use for every German post/ }))
     await userEvent.type(two.getByRole('textbox'), '!')
     await userEvent.tab()
     await waitFor(() =>
@@ -105,9 +104,12 @@ describe('TranslationPanel [P6-12]', () => {
         { projectId: P, layerId: 'L2', text: 'Frischer Kaffee!', applyToSameLanguage: true },
       ]),
     )
-    expect(two.getByRole('checkbox').closest('label')?.textContent).toBe(
-      'Use for every German post with this text box',
-    )
+    expect(
+      two.getByRole('button', {
+        name: 'Use for every German post with this text box',
+        pressed: true,
+      }),
+    ).toBeTruthy()
   })
 
   it('sends nothing when a field is left unchanged', async () => {
@@ -126,7 +128,7 @@ describe('TranslationPanel [P6-12]', () => {
       row('L4', { title: 'Late', status: 'missing', source: null, copyRev: 0 }),
     ])
     const one = await rowOf('German', 'Night · Story · Headline')
-    await userEvent.click(one.getByRole('button', { name: 'Approve' }))
+    await userEvent.click(one.getByRole('button', { name: 'Proposed: approve' }))
     const g = await group('German')
     await userEvent.click(g.getByRole('button', { name: 'Approve all German' }))
     await waitFor(() =>
@@ -152,7 +154,7 @@ describe('TranslationPanel [P6-12]', () => {
   it('shows "Approved" only once the rows read again say so', async () => {
     const { fake, setRows } = await show([row('L1')])
     const one = await rowOf('German', 'Morning · Story · Headline')
-    await userEvent.click(one.getByRole('button', { name: 'Approve' }))
+    await userEvent.click(one.getByRole('button', { name: 'Proposed: approve' }))
     await waitFor(() => expect(reads(fake).length).toBe(2))
     expect(one.getByText('Proposed')).toBeTruthy()
     setRows([row('L1', { status: 'approved' })])
@@ -176,7 +178,7 @@ describe('TranslationPanel [P6-12]', () => {
     fake.onCommand('translation.approve', () => refuse(CHANGED))
     const before = reads(fake).length
     const two = await rowOf('German', 'Noon · Story · Headline')
-    await userEvent.click(two.getByRole('button', { name: 'Approve' }))
+    await userEvent.click(two.getByRole('button', { name: 'Proposed: approve' }))
     expect((await two.findByRole('alert')).textContent).toBe(CHANGED)
     await waitFor(() => expect(reads(fake).length).toBeGreaterThan(before))
   })
@@ -250,8 +252,8 @@ describe('TranslationPanel shows each source [R2C-4]', () => {
     const field = g.getByRole('textbox', { name: 'German Morning · Story · Headline' })
     expect(field).toHaveAccessibleDescription('Fresh coffee')
     const one = within(field.closest('li') as HTMLElement)
-    expect(one.getByText('English (source)')).toBeTruthy()
-    expect(one.getByText('German')).toBeTruthy()
+    expect(g.getByText('English', { exact: true })).toBeTruthy()
+    expect(g.queryByText('English (source)')).toBeNull()
     expect(one.getByText('Fresh coffee')).toBeTruthy()
     const two = await rowOf('German', 'Noon · Story · Headline')
     expect(two.getByText('No source text')).toBeTruthy()

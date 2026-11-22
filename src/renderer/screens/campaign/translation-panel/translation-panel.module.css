@@ -1,51 +1,93 @@
 /* app-style */
-/* One block per language; its rows with a line between them, the text field full width. */
-.group {
+/* The Translations tab (CAMP-5): no card. The InfoTip and the export button at the top right;
+   one Section per language; under its header the column heads once, then one grid line per row:
+   the post, the source text on a quiet ground, the field, then the toggle, mark and source. */
+.panel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding-top: var(--space-2);
-}
-.heading {
-  flex: 1;
-  margin: 0;
-  font-size: var(--font-size-body);
-  font-weight: var(--weight-medium);
-}
-.row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-2) 0;
-  border-top: var(--border-width) solid var(--color-line);
-}
-.row > p {
-  margin: 0;
-}
-.source {
-  font-size: var(--font-size-small);
-}
-.note {
-  margin: 0;
-  font-size: var(--font-size-small);
-}
-/* R2C-4: the source beside its translation, stacking when narrow. */
-.pair {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(var(--width-column-min), 1fr));
-  gap: var(--space-3);
-}
-.side {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--gap-field);
   min-width: 0;
 }
-.label {
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--gap-inline);
+}
+.wide {
+  flex-basis: 100%;
+  margin: 0;
+}
+.groupHead {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-inline);
+}
+.progress {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  font-variant-numeric: tabular-nums;
+  pointer-events: auto;
+}
+.bar {
+  display: inline-block;
+  width: var(--space-12);
+}
+.again {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}
+.heads,
+.row {
+  display: grid;
+  grid-template-columns:
+    minmax(0, var(--thumbnail-tile)) minmax(0, 1fr) minmax(0, 1fr)
+    auto;
+  align-items: center;
+  gap: var(--gap-inline);
+}
+.heads {
+  font-size: var(--type-meta-size);
+  font-weight: var(--type-meta-weight);
+  color: var(--color-text-secondary);
+}
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.row {
+  padding: var(--space-1) 0;
+  border-top: var(--border-width) solid var(--color-line);
+}
+.post {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  min-width: 0;
   font-size: var(--font-size-small);
 }
+.thumb {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--layer-thumb);
+  height: var(--layer-thumb);
+}
+.postLine {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .sourceText {
-  flex: 1;
+  align-self: stretch;
   margin: 0;
   padding: var(--space-2);
   border-radius: var(--radius);
@@ -61,15 +103,48 @@
   font-size: var(--font-size-control);
 }
 .controls {
-  flex-wrap: wrap;
-}
-.tick {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  font-size: var(--font-size-small);
+  gap: var(--gap-tight);
+}
+.proposed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  color: var(--color-info);
+}
+.markIcon {
+  display: inline-flex;
+}
+.markIcon svg {
+  width: var(--mark-icon);
+  height: var(--mark-icon);
+}
+.markWord {
+  font-size: var(--type-meta-size);
+  font-weight: var(--type-meta-weight);
   color: var(--color-text-secondary);
 }
-.approve {
-  margin-left: auto;
+.from {
+  position: relative;
+  display: inline-flex;
+  width: var(--mark-icon);
+  color: var(--color-text-muted);
+}
+.from svg {
+  width: var(--mark-icon);
+  height: var(--mark-icon);
+}
+.refusal {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

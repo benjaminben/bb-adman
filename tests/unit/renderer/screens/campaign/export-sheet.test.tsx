@@ -40,7 +40,9 @@ describe('Export translation sheet… [P6-13]', () => {
   it('asks the save dialog for the translation sheet, then sends the command it allows', async () => {
     const fake = sheetApi(CHOSEN)
     const { container } = await exportWith(fake)
-    expect(await screen.findByText('Saved sheet.csv.')).toBeVisible()
+    const saved = await screen.findByTitle('sheet.csv')
+    expect(saved.textContent).toContain('Saved')
+    expect(saved.closest('[role="status"]')).not.toBeNull()
     const picks = fake.queries.filter((q) => q.name === 'dialog.pickSaveFile')
     expect(picks).toEqual([
       { name: 'dialog.pickSaveFile', input: { purpose: 'translation-sheet' } },
@@ -57,7 +59,7 @@ describe('Export translation sheet… [P6-13]', () => {
     await exportWith(fake)
     await screen.findByRole('button', { name: 'Export translation sheet…' })
     expect(sheetCommands(fake)).toEqual([])
-    expect(screen.queryByText(/^Saved /)).toBeNull()
+    expect(screen.queryByText(/^Saved/)).toBeNull()
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
@@ -74,7 +76,7 @@ describe('Export translation sheet… [P6-13]', () => {
     expect(
       await screen.findByText("Choose a folder outside the project's assets folder."),
     ).toBeVisible()
-    expect(screen.queryByText(/^Saved /)).toBeNull()
+    expect(screen.queryByText(/^Saved/)).toBeNull()
     expect(container.innerHTML).not.toContain('private-folder')
   })
 })
