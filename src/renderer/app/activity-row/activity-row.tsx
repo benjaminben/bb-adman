@@ -1,8 +1,8 @@
 // One job in the activity panel (spec/screens-ai.md, "The activity panel", Row) [REQ: FR-152,
 // FR-217, FR-218; D-036]. SH-4 (spec/phases/design-wave-screens-a.md, "SH-4 — Activity panel"):
-// an ObjectRow with the kind icon, what ran and on which provider, where and when (the robot for
-// an agent's job), the status mark and one action: Cancel (ui/cancel-shown.ts) or Retry
-// (background jobs only, row-retry.tsx). A row with a place to go is one button, "Go to
+// an ObjectRow with the kind icon, what ran and on which provider, when and where (the robot for
+// an agent's job; the time first, so a long place never hides it), the status mark and one
+// action: Cancel (ui/cancel-shown.ts) or Retry (background jobs only, row-retry.tsx). A row with a place to go is one button, "Go to
 // {where}" (to the place ui/show-result.ts finds, R2E-6). A failed row keeps its sentence
 // (ui/run-failure/) under it, visible; the paid two-step line of a Retry draws there too.
 import { useState } from 'react'
@@ -33,7 +33,7 @@ function RowMeta(props: { job: JobRow; where: string }) {
           <span className={styles.hidden}>Started by an agent</span>
         </span>
       )}
-      <span>{props.where}</span> · <span>{timeText(props.job.createdAt)}</span>
+      <span>{timeText(props.job.createdAt)}</span> · <span>{props.where}</span>
     </>
   )
 }
