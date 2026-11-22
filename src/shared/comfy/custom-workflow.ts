@@ -41,15 +41,28 @@ export const workflowNameSchema = z
       [...name].length <= MAX_WORKFLOW_NAME && name.trim() !== '' && !NAME_REFUSED.test(name),
   )
 
-// One megapixel here is 2^20 pixels, as the defaults are.
+// One megapixel here is 2^20 pixels, except the 0.4 option: exactly 640 × 640.
 const MEGAPIXEL = 1_048_576
 export const SIZE_MULTIPLES = [8, 16, 32, 64] as const
-export const MAX_MEGAPIXEL_OPTIONS = [0.25, 0.5, 1, 2, 4] as const
+export const MAX_MEGAPIXEL_OPTIONS = [0.25, 0.4, 0.5, 1, 2, 4] as const
+
+const maxPixelsOf = (option: number) => (option === 0.4 ? 409_600 : option * MEGAPIXEL)
+
+export function sizeFromChoice(multiple: number, maxMegapixels: number): SizeRule {
+  const multiples: readonly number[] = SIZE_MULTIPLES
+  const options: readonly number[] = MAX_MEGAPIXEL_OPTIONS
+  if (!multiples.includes(multiple) || !options.includes(maxMegapixels)) {
+    throw new Error('Not a size option')
+  }
+  const maxPixels = maxPixelsOf(maxMegapixels)
+  // 80% of the largest, rounded up, in whole numbers so no fraction creeps in.
+  return { multiple, minPixels: Math.ceil((maxPixels * 4) / 5), maxPixels }
+}
 
 export const CUSTOM_SIZE_DEFAULTS: Readonly<Record<CustomJob, SizeRule>> = {
-  image: { multiple: 16, minPixels: 838_861, maxPixels: 1_048_576 },
-  image_refs: { multiple: 16, minPixels: 838_861, maxPixels: 1_048_576 },
-  video: { multiple: 32, minPixels: 327_680, maxPixels: 409_600 },
+  image: sizeFromChoice(16, 1),
+  image_refs: sizeFromChoice(16, 1),
+  video: sizeFromChoice(32, 0.4),
 }
 
 export const CUSTOM_VIDEO_DEFAULT: WorkflowVideo = {
@@ -59,27 +72,17 @@ export const CUSTOM_VIDEO_DEFAULT: WorkflowVideo = {
   frameOffset: 1,
 }
 
-export function sizeFromChoice(multiple: number, maxMegapixels: number): SizeRule {
-  const multiples: readonly number[] = SIZE_MULTIPLES
-  const options: readonly number[] = MAX_MEGAPIXEL_OPTIONS
-  if (!multiples.includes(multiple) || !options.includes(maxMegapixels)) {
-    throw new Error('Not a size option')
-  }
-  const maxPixels = maxMegapixels * MEGAPIXEL
-  return { multiple, minPixels: Math.floor(maxPixels * 0.8), maxPixels }
-}
-
-const sameSize = (a: SizeRule, b: SizeRule) =>
-  a.multiple === b.multiple && a.minPixels === b.minPixels && a.maxPixels === b.maxPixels
-
-// A size from the options, or one of the defaults (the defaults are not all options).
+// A size made from the options, nothing else.
 export function isAllowedSize(rule: SizeRule): boolean {
-  if (Object.values(CUSTOM_SIZE_DEFAULTS).some((d) => sameSize(d, rule))) return true
-  const mp = rule.maxPixels / MEGAPIXEL
   return SIZE_MULTIPLES.some((multiple) =>
-    MAX_MEGAPIXEL_OPTIONS.some(
-      (option) => option === mp && sameSize(sizeFromChoice(multiple, option), rule),
-    ),
+    MAX_MEGAPIXEL_OPTIONS.some((option) => {
+      const made = sizeFromChoice(multiple, option)
+      return (
+        made.multiple === rule.multiple &&
+        made.minPixels === rule.minPixels &&
+        made.maxPixels === rule.maxPixels
+      )
+    }),
   )
 }
 

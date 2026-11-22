@@ -9,7 +9,7 @@ import { storedFrom } from './stored'
 
 describe('toCustomSpec: the in-memory table [D-104]', () => {
   it('fills every field for a picture workflow', () => {
-    const size = { multiple: 64, minPixels: 1_677_721, maxPixels: 2_097_152 }
+    const size = { multiple: 64, minPixels: 1_677_722, maxPixels: 2_097_152 }
     const spec = toCustomSpec(storedFrom('picture', { size }))
     const { graph, slots, ...facts } = spec
     expect(facts).toEqual({

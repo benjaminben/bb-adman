@@ -6,6 +6,8 @@ import {
   MAX_CUSTOM_WORKFLOWS,
   MAX_WORKFLOW_BYTES,
   MAX_WORKFLOW_NODES,
+  MAX_MEGAPIXEL_OPTIONS,
+  SIZE_MULTIPLES,
   isAllowedSize,
   isAllowedVideo,
   sizeFromChoice,
@@ -64,30 +66,56 @@ describe('the limits and defaults of the stored shape', () => {
 })
 
 describe('the size options', () => {
-  it('makes a rule from a multiple and a largest size, the smallest 80% rounded down', () => {
+  it('makes a rule from a multiple and a largest size, the smallest 80% rounded up', () => {
     expect(sizeFromChoice(32, 0.25)).toEqual({
       multiple: 32,
-      minPixels: 209_715,
+      minPixels: 209_716,
       maxPixels: 262_144,
+    })
+    expect(sizeFromChoice(8, 0.5)).toEqual({ multiple: 8, minPixels: 419_431, maxPixels: 524_288 })
+    expect(sizeFromChoice(64, 2)).toEqual({
+      multiple: 64,
+      minPixels: 1_677_722,
+      maxPixels: 2_097_152,
     })
     expect(sizeFromChoice(8, 4)).toEqual({
       multiple: 8,
-      minPixels: 3_355_443,
+      minPixels: 3_355_444,
       maxPixels: 4_194_304,
     })
+  })
+
+  it('takes 0.4 as exactly 640 × 640 pixels', () => {
+    expect(sizeFromChoice(16, 0.4)).toEqual({
+      multiple: 16,
+      minPixels: 327_680,
+      maxPixels: 409_600,
+    })
+  })
+
+  it('makes each default from the options', () => {
+    expect(sizeFromChoice(16, 1)).toEqual(CUSTOM_SIZE_DEFAULTS.image)
+    expect(sizeFromChoice(16, 1)).toEqual(CUSTOM_SIZE_DEFAULTS.image_refs)
+    expect(sizeFromChoice(32, 0.4)).toEqual(CUSTOM_SIZE_DEFAULTS.video)
   })
 
   it('refuses a multiple or a largest size outside the lists', () => {
     expect(() => sizeFromChoice(12, 1)).toThrow()
     expect(() => sizeFromChoice(16, 3)).toThrow()
+    expect(() => sizeFromChoice(16, 0.39)).toThrow()
   })
 
-  it('allows every option and every default, and nothing else', () => {
-    expect(isAllowedSize(sizeFromChoice(64, 2))).toBe(true)
-    expect(isAllowedSize(CUSTOM_SIZE_DEFAULTS.image)).toBe(true)
-    expect(isAllowedSize(CUSTOM_SIZE_DEFAULTS.video)).toBe(true)
+  it('allows every option, and nothing else', () => {
+    for (const multiple of SIZE_MULTIPLES) {
+      for (const mp of MAX_MEGAPIXEL_OPTIONS) {
+        expect(isAllowedSize(sizeFromChoice(multiple, mp))).toBe(true)
+      }
+    }
+    expect(MAX_MEGAPIXEL_OPTIONS).toEqual([0.25, 0.4, 0.5, 1, 2, 4])
     expect(isAllowedSize({ multiple: 16, minPixels: 1, maxPixels: 1_048_576 })).toBe(false)
-    expect(isAllowedSize({ multiple: 7, minPixels: 838_860, maxPixels: 1_048_576 })).toBe(false)
+    expect(isAllowedSize({ multiple: 16, minPixels: 838_860, maxPixels: 1_048_576 })).toBe(false)
+    expect(isAllowedSize({ multiple: 7, minPixels: 838_861, maxPixels: 1_048_576 })).toBe(false)
+    expect(isAllowedSize({ multiple: 16, minPixels: 400_000, maxPixels: 500_000 })).toBe(false)
   })
 
   it('allows video values only within their ranges', () => {
