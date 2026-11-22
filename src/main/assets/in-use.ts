@@ -1,5 +1,6 @@
 // Whether a project uses an asset (SPEC 14, Slice A rulings point 6): a layer's picture, a
-// layer's font, a background clip, a rule set's required assets. asset.remove and
+// layer's font, a background clip, a rule set's required assets, a variant's sound file
+// (A-184; the kept ID after leaving 'file' counts too). asset.remove and
 // asset.update refuse with the same error.
 import type Database from 'better-sqlite3'
 import { readWireRows } from '@/main/db/rows'
@@ -17,7 +18,8 @@ export function assetInUse(db: Database.Database, assetId: string): boolean {
   const inClip = readWireRows(db, 'background_clip').some((c) => c.assetId === assetId)
   const ruleSets = readWireRows(db, 'rule_set') as RuleSetRow[]
   const required = ruleSets.some((r) => r.requiredAssetIds.includes(assetId))
-  return onLayer || inClip || required
+  const asSound = db.prepare('SELECT 1 FROM variant WHERE sound_asset_id = ?').get(assetId)
+  return onLayer || inClip || required || asSound !== undefined
 }
 
 export function assetInUseError(): AppError {
