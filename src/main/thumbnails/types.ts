@@ -25,6 +25,14 @@ export type RenderService = {
     maxDimension: number,
     timeMs?: number,
   ): Promise<VariantRender>
+  // P10-3 (A-234): the agent's picture, the complete variant as the user sees it. It reports
+  // no overflow, sends no event and keeps no file: an agent's look changes nothing.
+  renderForAgent(
+    project: ProjectHandle,
+    variantId: string,
+    maxDimension: number,
+    timeMs?: number,
+  ): Promise<VariantRender>
   // The variant with its text layers left out, for the layout job (spec/ai-jobs.md). It
   // reports no overflow and keeps no file.
   renderPictures(
