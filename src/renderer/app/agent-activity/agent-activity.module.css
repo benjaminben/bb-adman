@@ -1,0 +1,42 @@
+/* app-style */
+/* The agent activity line (P10-8): a small note fixed in the window's bottom-left corner, away
+   from the activity panel on the right. It comes before the dialogs' layer in the page, so a
+   dialog is drawn over it, and it takes no clicks, so it never covers or moves their buttons. */
+.line {
+  position: fixed;
+  bottom: var(--space-4);
+  left: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: var(--width-dialog);
+  min-height: var(--chip-height);
+  padding: 0 var(--space-3);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
+  color: var(--color-text);
+  font-size: var(--font-size-small);
+  pointer-events: none;
+}
+.line > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  unicode-bidi: isolate;
+}
+.dot {
+  flex: none;
+  width: var(--mark-dot);
+  height: var(--mark-dot);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+}
+.project {
+  color: var(--color-text-secondary);
+}
+/* Kept in the page while empty, out of the flow, so a screen reader hears the next line. */
+.empty {
+  position: fixed;
+}
