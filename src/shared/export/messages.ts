@@ -63,6 +63,10 @@ export const REPORT_NOT_SAVED = 'The report was written but could not be saved i
 export const OVERWRITE_NOTE =
   'Files from an earlier export of the same ads are replaced. Nothing else in the folder is changed.'
 
+// The export dialog's end line: "Exported 1 ad. 0 failed.", "Exported 2 ads. 1 failed."
+export const exportDoneLine = (exported: number, failed: number) =>
+  `Exported ${exported} ${exported === 1 ? 'ad' : 'ads'}. ${failed} failed.`
+
 // The report's fixed words ("Report", words), shared by the HTML file and the in-app view.
 export const REPORT_WORDS = {
   nameNotSet: 'name not set',
