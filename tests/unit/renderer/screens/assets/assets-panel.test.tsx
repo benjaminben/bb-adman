@@ -196,3 +196,58 @@ describe('AssetsPanel [R2C-5]', () => {
     expect(await axeViolations()).toEqual([])
   })
 })
+
+describe('AssetsPanel, Subjects [R2C-6]', () => {
+  const PARK: SubjectRow = { ...SUBJECTS[0]!, id: 's-park', name: 'linnea Park' }
+  const ZINC: SubjectRow = { ...SUBJECTS[0]!, id: 's-zinc', name: 'Zinc Mug' }
+
+  async function openWith(subjects: SubjectRow[], rows: ListedAsset[] = FILES) {
+    await renderApp(
+      <AssetsScope projectId="P1">
+        <main>
+          <AssetsButton projectId="P1" />
+        </main>
+        <AssetsPanel projectId="P1" subjects={subjects} />
+      </AssetsScope>,
+      listApi(rows),
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Assets' }))
+    return screen.getByRole('region', { name: 'Assets' })
+  }
+
+  it('draws the Subjects group first, a card per subject by name, with its photos', async () => {
+    const panel = await openWith([ZINC, ...SUBJECTS, PARK])
+    await screen.findByText('cup.png')
+    const groups = within(panel).getAllByRole('region')
+    expect(groups[0]).toHaveAccessibleName('Subjects · 3')
+    const cards = within(groups[0]!).getAllByRole('article')
+    expect(cards.map((c) => within(c).getByRole('heading', { level: 4 }).textContent)).toEqual([
+      'Harbour Blend',
+      'linnea Park',
+      'Zinc Mug',
+    ])
+    expect(within(cards[0]!).getByRole('img', { name: 'beans.png' })).toBeInTheDocument()
+    expect(within(cards[1]!).getByText('No photos yet. Add at least one.')).toBeInTheDocument()
+  })
+
+  it('shows the empty lines with no subject', async () => {
+    await openWith([], [])
+    const subjects = await screen.findByRole('region', { name: 'Subjects · 0' })
+    expect(within(subjects).getByText('No subjects yet.')).toBeInTheDocument()
+    expect(
+      within(subjects).getByText(
+        'A subject is the product, service or person an ad is about. Its photos guide AI pictures and can be placed in ads.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('opens the new subject dialog from "New subject…" in the action row', async () => {
+    await openWith(SUBJECTS)
+    await screen.findByText('cup.png')
+    await userEvent.click(screen.getByRole('button', { name: 'New subject…' }))
+    expect(await screen.findByRole('dialog', { name: 'New subject' })).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('region', { name: 'Assets' })).toBeInTheDocument()
+  })
+})
