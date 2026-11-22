@@ -7,8 +7,7 @@
   font-size: var(--font-size-control);
   line-height: var(--leading-body);
 }
-.hint {
-  margin: 0;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
+/* "Empty form" sits at the foot's left. */
+.empty {
+  margin-right: auto;
 }
