@@ -9,6 +9,6 @@ describe('CampaignList [SPEC 14 1.43 T-4]', () => {
     const two = { ...campaign('summer-k3f9q2', 'Summer'), variantCount: 2 }
     render(<CampaignList campaigns={[two]} onOpen={() => {}} />)
     const row = within(screen.getByRole('list', { name: 'Campaigns' })).getByRole('listitem')
-    expect(within(row).getByText('Variants: 2')).toBeInTheDocument()
+    expect(within(row).getByTitle('2 variants')).toBeInTheDocument()
   })
 })

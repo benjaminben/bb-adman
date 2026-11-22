@@ -1,35 +1,61 @@
 /* app-style */
-/* The project home (spec/app-style.md "Project home and brief form"). The shell's panel already
-   gives --space-6 on every side, so the page adds what reaches the spec's side padding. */
+/* The project home (spec/app-style.md "Project home and brief form"; HOME-1). The shell's panel
+   already gives --space-6 on every side, so the page adds what reaches the spec's side padding. */
 .page {
   max-width: calc(var(--width-wide) + 2 * (var(--space-8) - var(--space-6)));
   padding: 0 calc(var(--space-8) - var(--space-6));
 }
-/* The title and "Close project" share one line; the button stands at the title's middle. */
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  align-items: center;
-  justify-content: space-between;
-}
-.header h1 {
-  margin: 0;
+.title {
+  margin: 0 0 var(--space-4);
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.path {
-  margin: var(--space-1) 0 var(--space-6);
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
-  overflow-wrap: anywhere;
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
-/* Each section is a card with its h2; a lone button keeps its own width. */
-.section {
-  align-items: flex-start;
+/* The Campaigns header's right end: the count, then the brief buttons. The buttons, and the
+   dialogs they open, take the pointer back from the Section's header. The header keeps room
+   for a fold chevron this Section does not have, so the buttons reach into it. */
+.head {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-right: calc(-1 * (var(--icon-size) + var(--gap-inline)));
 }
-.section > * {
-  max-width: 100%;
+.actions {
+  display: inline-flex;
+  font-size: var(--type-body-size);
+  color: var(--color-text);
+  pointer-events: auto;
+}
+/* The Assets header row, drawn as a Section header (spec/app-style-parts.md "Section"). */
+.assets {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  min-height: var(--section-header-height);
+  border-bottom: var(--border-width) solid var(--color-line);
+}
+.assetsTitle {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--type-section-size);
+  font-weight: var(--type-section-weight);
+  line-height: var(--leading-tight);
+  letter-spacing: normal;
+  color: var(--color-text-secondary);
+}
+.assetsEnd {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  margin-left: auto;
 }
 /* R2C-5: the campaign page keeps its raised parts (the editor's sticky heads) to itself, so
    the Assets panel and the dialogs mounted after it are drawn over all of it. */

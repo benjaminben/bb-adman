@@ -53,7 +53,7 @@ export async function startTour(app: ElectronApplication, page: Page, box: Sandb
   const file = path.join(other, 'Gamma.adman')
   expect(fs.existsSync(file)).toBe(true)
 
-  const close = () => page.getByRole('button', { name: 'Close Gamma' }).click()
+  const close = () => screens.closeProject(page, 'Gamma')
   await close()
   await expect(page.getByRole('button', { name: 'Gamma', exact: true })).toHaveCount(0)
   await screens.answerOpenDialog(app, [file])

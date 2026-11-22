@@ -26,9 +26,7 @@ function makeVideo(filePath: string, variantId: string, durationMs: number): voi
 // too, since generation.startVideo refuses an image post.
 export async function reopenAsVideo(page: Page, name: string, durationMs = VIDEO_MS) {
   const ids = await firstIds(page)
-  const close = page.getByRole('button', { name: `Close ${name}` })
-  await close.click()
-  await expect(close).toHaveCount(0)
+  await screens.closeProject(page, name)
   makeVideo(ids.filePath, ids.variantId, durationMs)
   await page.getByRole('button', { name: new RegExp(`^Open ${name}`) }).click()
   await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible()

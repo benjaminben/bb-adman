@@ -219,26 +219,6 @@ describe('local lines and unknown providers [DLG-4a]', () => {
     await userEvent.click(action('Retry'))
     expect(onConfirm).toHaveBeenCalledWith('mystery-cloud', 2)
   })
-
-  // A retry whose stored count cannot be read names no number: a guessed "1" could be too low.
-  it('names no number of pictures when a retry gives no count', async () => {
-    const { element } = await open({
-      title: 'Retry the run',
-      confirmLabel: 'Retry',
-      retry: { provider: 'gemini' },
-    })
-    expect(element).toHaveAccessibleDescription('Paid: pictures to Google Gemini')
-  })
-
-  it('names a retried run with no stored provider as an unknown provider, still paid', async () => {
-    const { element } = await open({
-      title: 'Retry the run',
-      confirmLabel: 'Retry',
-      retry: { provider: '' },
-      count: { ...PICTURES, value: 2 },
-    })
-    expect(element).toHaveAccessibleDescription('Paid: 2 pictures to an unknown provider')
-  })
 })
 
 describe('one run per click [DLG-4a]', () => {

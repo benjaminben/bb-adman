@@ -13,7 +13,7 @@ import { openSettingsPage } from './settings-pages'
 export { chooseSettingsPage, openSettingsPage } from './settings-pages'
 
 export * from './picture-run'
-export { createProject, openNewProject, showStart } from './start-steps'
+export { closeProject, createProject, openNewProject, showStart } from './start-steps'
 
 export const E2E_BRIEF = path.resolve('tests/fixtures/briefs/e2e-brief.yaml')
 export const E2E_CAMPAIGN = 'Harness Check'

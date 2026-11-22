@@ -105,9 +105,7 @@ export async function turnOffLink(page: Page): Promise<void> {
 // The project closed from the campaign view, so its file can be changed on disk.
 export async function closeProject(page: Page, name: string): Promise<void> {
   await page.getByRole('button', { name: 'Back to project' }).click()
-  const close = page.getByRole('button', { name: `Close ${name}` })
-  await close.click()
-  await expect(close).toHaveCount(0)
+  await screens.closeProject(page, name)
 }
 
 export async function reopenProject(page: Page, name: string): Promise<void> {

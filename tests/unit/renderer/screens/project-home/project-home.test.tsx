@@ -21,7 +21,7 @@ describe('project page [SPEC 14 1.41 TP-1]', () => {
   it('reads project.get for its own project', async () => {
     const fake = projectApi()
     await renderApp(<ProjectHome project={PROJECT} />, fake)
-    await screen.findByText('No campaign yet.')
+    await screen.findByText('No campaigns yet')
     expect(projectGets(fake)).toEqual([{ name: 'project.get', input: { projectId: 'P1' } }])
   })
 
@@ -34,7 +34,7 @@ describe('project page [SPEC 14 1.41 TP-1]', () => {
 
   it('shows one line and the Load a brief button for an empty project', async () => {
     await renderApp(<ProjectHome project={PROJECT} />, projectApi())
-    expect(await screen.findByText('No campaign yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No campaigns yet')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Load a brief' })).toBeInTheDocument()
   })
 
@@ -44,20 +44,20 @@ describe('project page [SPEC 14 1.41 TP-1]', () => {
     expect(list).toHaveTextContent('Summer')
     expect(list).toHaveTextContent('Fall')
     expect(screen.getByRole('button', { name: 'Open Fall' })).toBeInTheDocument()
-    expect(screen.queryByText('No campaign yet.')).toBeNull()
+    expect(screen.queryByText('No campaigns yet')).toBeNull()
   })
 
-  it('keeps the heading, the Close project button and the file path', async () => {
+  it('keeps the heading, with the file path as its description', async () => {
     await renderApp(<ProjectHome project={PROJECT} />, projectApi())
-    expect(screen.getByRole('heading', { name: 'Summer' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Close Summer' })).toBeInTheDocument()
-    expect(screen.getByText('/w/Summer.adman')).toBeInTheDocument()
+    const heading = screen.getByRole('heading', { name: 'Summer' })
+    expect(heading).toBeInTheDocument()
+    expect(heading).toHaveAccessibleDescription('/w/Summer.adman')
   })
 
   it('reads project.get again on a project.changed for this project', async () => {
     const fake = projectApi()
     await renderApp(<ProjectHome project={PROJECT} />, fake)
-    await screen.findByText('No campaign yet.')
+    await screen.findByText('No campaigns yet')
     fake.onQuery('project.get', () => ({ ok: true, data: twoCampaigns }))
     act(() => fake.emit('project.changed', changed('P1')))
     expect(await screen.findByRole('button', { name: 'Open Summer' })).toBeInTheDocument()
@@ -67,7 +67,7 @@ describe('project page [SPEC 14 1.41 TP-1]', () => {
   it('does not read project.get on a project.changed for another project', async () => {
     const fake = projectApi()
     await renderApp(<ProjectHome project={PROJECT} />, fake)
-    await screen.findByText('No campaign yet.')
+    await screen.findByText('No campaigns yet')
     act(() => fake.emit('project.changed', changed('P2')))
     await waitFor(() => expect(projectGets(fake)).toHaveLength(1))
   })
@@ -75,7 +75,7 @@ describe('project page [SPEC 14 1.41 TP-1]', () => {
   it('stops listening for project.changed once it is gone', async () => {
     const fake = projectApi()
     const view = await renderApp(<ProjectHome project={PROJECT} />, fake)
-    await screen.findByText('No campaign yet.')
+    await screen.findByText('No campaigns yet')
     view.unmount()
     act(() => fake.emit('project.changed', changed('P1')))
     expect(projectGets(fake)).toHaveLength(1)

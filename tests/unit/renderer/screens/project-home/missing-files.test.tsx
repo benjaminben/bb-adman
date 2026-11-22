@@ -15,15 +15,17 @@ describe('the missing-file line [spec/screens-campaign.md, relink dialog; FR-009
 
   it('says how many files cannot be found and offers to find them', async () => {
     await renderApp(<MissingFiles projectId="p1" missingCount={3} />)
-    expect(screen.getByText('3 file(s) this project links to cannot be found.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Find missing files…' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^3 missing/ })).toHaveTextContent('3 missing')
+    expect(screen.getByRole('button', { name: /^3 missing/ })).toHaveAccessibleName(
+      '3 missing: Find missing files…',
+    )
   })
 
   it('opens the relink dialog, which stays open when the count drops to 0', async () => {
     const fake = makeFakeApi()
     serveAssets(fake, [asset('a1', 'hero-shot.png')])
     const view = await renderApp(<MissingFiles projectId="p1" missingCount={1} />, fake)
-    await userEvent.click(screen.getByRole('button', { name: 'Find missing files…' }))
+    await userEvent.click(screen.getByRole('button', { name: /^1 missing/ }))
     expect(screen.getByRole('dialog', { name: 'Find missing files' })).toBeInTheDocument()
 
     view.rerender(
@@ -32,6 +34,6 @@ describe('the missing-file line [spec/screens-campaign.md, relink dialog; FR-009
       </AppProvider>,
     )
     expect(screen.getByRole('dialog', { name: 'Find missing files' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Find missing files…' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /missing/ })).toBeNull()
   })
 })

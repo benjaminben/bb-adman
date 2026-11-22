@@ -46,7 +46,9 @@ async function draw(open: string[]) {
   return fake
 }
 
-const plus = () => screen.getByRole('button', { name: 'New campaign' })
+// HOME-1: the project home has its own "New campaign" tile; this is the top bar's "+".
+// It comes first in the page; with no home showing it is the only one.
+const plus = () => screen.getAllByRole('button', { name: 'New campaign' })[0]!
 const form = () => screen.findByRole('region', { name: 'Brief' })
 
 describe('"+" starts a new campaign [R2-Q C]', () => {

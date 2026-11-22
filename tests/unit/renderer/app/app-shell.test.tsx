@@ -57,16 +57,11 @@ describe('the shell [FR-003]', () => {
     expect(store.getState().view).toEqual({ kind: 'project', projectId: 'P1' })
   })
 
-  it.each([
-    ['the switcher', () => choose('Winter', 'Close Winter')],
-    [
-      'the project page',
-      () => userEvent.click(screen.getByRole('button', { name: 'Close Winter' })),
-    ],
-  ])('closes the shown project with project.close from %s', async (_, close) => {
+  // HOME-1: the page's own close button is gone; the project menu closes the project.
+  it('closes the shown project with project.close from the switcher', async () => {
     const fake = twoProjects()
     await renderApp(<AppShell />, fake)
-    await close()
+    await choose('Winter', 'Close Winter')
     expect(fake.commands).toContainEqual({ name: 'project.close', input: { projectId: 'P2' } })
   })
 
@@ -84,7 +79,7 @@ describe('the shell [FR-003]', () => {
       error: { code: 'NOT_FOUND', message: 'That project is not open.' },
     }))
     await renderApp(<AppShell />, fake)
-    await userEvent.click(screen.getByRole('button', { name: 'Close Winter' }))
+    await choose('Winter', 'Close Winter')
     expect(await screen.findByRole('alert')).toHaveTextContent('That project is not open.')
     await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
     await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
@@ -142,7 +137,7 @@ describe('the shell: icons beside the words [ST-3]', () => {
       error: { code: 'NOT_FOUND', message: 'That project is not open.' },
     }))
     await renderApp(<AppShell />, fake)
-    await userEvent.click(screen.getByRole('button', { name: 'Close Winter' }))
+    await choose('Winter', 'Close Winter')
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('That project is not open.')
     expect(icons(alert)[0]).toHaveAttribute('aria-hidden', 'true')

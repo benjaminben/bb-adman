@@ -32,3 +32,11 @@ export async function createProject(page: Page, name: string): Promise<void> {
   await page.getByRole('button', { name: 'Create', exact: true }).click()
   await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible()
 }
+
+// The open project `name` is closed from the project menu (HOME-1: the project page has no
+// close button of its own). With one project open the app then shows the start screen.
+export async function closeProject(page: Page, name: string): Promise<void> {
+  await switcher(page).click()
+  await page.getByRole('menuitem', { name: `Close ${name}` }).click()
+  await expect(page.getByRole('heading', { name, level: 1 })).toHaveCount(0)
+}
