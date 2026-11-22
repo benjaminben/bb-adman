@@ -15,6 +15,7 @@ A running list kept by the orchestrator. Each item is a choice made without the 
 9. **The "Master" badge is not read aloud** by a screen reader, because the tile's size line already ends in "master".
 10a. **Select, then open.** On the variant grid a click selects, a double-click or Enter opens. Up or Down into a cell holding both an image and a video goes to the image; onto an empty cell it goes to the nearest column, the left one on a tie. In the shot the selected tile's ring ends above its small buttons; the design wave tidies the tile.
 10b. **The Generate panel's "Add pictures…"** (in the same-shape list) imports a picture as a reference with no subject attached. The old video card attached the variant's subject; a start picture is not a subject photo, so the builder left it off.
+10c. **Open projects on the start screen.** There is no separate "Open now" card. Projects that are open come first in the "Recent" list with a small dot, as the design audit proposes. The top-bar switcher lists every open project and has "Open another project…".
 
 ## Choices about approvals
 
@@ -40,4 +41,5 @@ A running list kept by the orchestrator. Each item is a choice made without the 
 - The Keychain entry and saved keys after the rename to AdManager.
 - A double-click on a project file in Finder while the app runs under `npm run dev`.
 - Video playback in the gallery in Safari and Chrome (the automatic tests may not be able to play H.264).
+- A double-click on a project file in Finder with a packaged copy registered for the file type: the running app should open and show it.
 - Anything on Windows.
