@@ -5,7 +5,8 @@
 // the checks run again with no warning; every translation approved at the end.
 // Ruling for this slice: no forced failure. The fake can be made to fail only from inside the
 // main process, and no test hook is added, so a failed translation and its Retry are proved by
-// the integration tests (tests/integration/translation/retry.test.ts) and p6-13's shots.
+// tests/integration/translation/propose-again.test.ts, retry.test.ts and
+// tests/unit/renderer/screens/campaign/translate-again.test.tsx.
 // No paid call and no request leaves the computer. Made-up names only.
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
 import fs from 'node:fs'
