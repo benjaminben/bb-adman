@@ -5,7 +5,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
-import { checkBriefPictures, picturesWithoutFolder } from '@/main/assets/brief-pictures'
+import { checkBriefPictures } from '@/main/assets/brief-pictures'
 
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13])
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46, 0x49, 0x46, 0, 1])
@@ -81,26 +81,31 @@ describe('checkBriefPictures accepts a picture inside the brief folder [D-098, S
     ['inside-link.png', 'a.png'],
     ['relative-link.png', 'a.png'],
   ])('accepts %j as the real path of %s', async (text, accepted) => {
-    expect(await one(text)).toEqual({ paths: [inBrief(accepted)], notes: [] })
+    expect(await one(text)).toEqual({ paths: [inBrief(accepted)], assetIds: [], notes: [] })
   })
 
   it('reads %2e%2e as a file name, not decoded', async () => {
     expect(await one('photos/%2e%2e')).toEqual({
       paths: [],
+      assetIds: [],
       notes: [{ name: '%2e%2e', reason: 'not_a_picture' }],
     })
   })
 
   it('accepts a hard link inside the folder as an ordinary file', async () => {
     fs.linkSync(path.join(root, 'brief/a.png'), path.join(root, 'brief/hard.png'))
-    expect(await one('hard.png')).toEqual({ paths: [inBrief('hard.png')], notes: [] })
+    expect(await one('hard.png')).toEqual({ paths: [inBrief('hard.png')], assetIds: [], notes: [] })
   })
 
   it('keeps one file named twice in a subject once, with no note', async () => {
     const [result] = await checkBriefPictures(briefPath, [
       { pictures: ['photos/b.jpg', 'photos\\b.jpg', 'a.png', 'inside-link.png'] },
     ])
-    expect(result).toEqual({ paths: [inBrief('photos/b.jpg'), inBrief('a.png')], notes: [] })
+    expect(result).toEqual({
+      paths: [inBrief('photos/b.jpg'), inBrief('a.png')],
+      assetIds: [],
+      notes: [],
+    })
   })
 
   it('accepts the same picture for two subjects', async () => {
@@ -109,8 +114,8 @@ describe('checkBriefPictures accepts a picture inside the brief folder [D-098, S
       { pictures: 'a.png' },
     ])
     expect(result).toEqual([
-      { paths: [inBrief('a.png')], notes: [] },
-      { paths: [inBrief('a.png')], notes: [] },
+      { paths: [inBrief('a.png')], assetIds: [], notes: [] },
+      { paths: [inBrief('a.png')], assetIds: [], notes: [] },
     ])
   })
 
@@ -118,6 +123,7 @@ describe('checkBriefPictures accepts a picture inside the brief folder [D-098, S
     const linkedBrief = path.join(root, 'linked/brief.json')
     expect(await one('photos/b.jpg', linkedBrief)).toEqual({
       paths: [inBrief('photos/b.jpg')],
+      assetIds: [],
       notes: [],
     })
   })
@@ -125,18 +131,35 @@ describe('checkBriefPictures accepts a picture inside the brief folder [D-098, S
   it('gives one entry per subject, empty for a subject with no pictures', async () => {
     expect(await checkBriefPictures(briefPath, undefined)).toEqual([])
     expect(await checkBriefPictures(briefPath, [{ name: 'Can' }, { pictures: [] }])).toEqual([
-      { paths: [], notes: [] },
-      { paths: [], notes: [] },
+      { paths: [], assetIds: [], notes: [] },
+      { paths: [], assetIds: [], notes: [] },
     ])
   })
 })
 
 const LONG_UP = `${'../'.repeat(2000)}x.png`
-describe('checkBriefPictures refuses a path outside the folder [D-098, SP-1]', () => {
+// R2P-3 [D3]: the folder rule is lifted, so a path outside the folder is checked as a file.
+describe('checkBriefPictures checks a path outside the folder as a file [D3, R2P-3]', () => {
+  it.each(['../outside/x.png', 'photos/..\\../outside/x.png', 'out-link.png', 'out-dir/x.png'])(
+    'accepts %j as the real path',
+    async (text) => {
+      const outside = path.join(real, 'outside/x.png')
+      expect(await one(text)).toEqual({ paths: [outside], assetIds: [], notes: [] })
+    },
+  )
+
+  it('accepts an absolute path outside the folder as the real path', async () => {
+    const outside = path.join(real, 'outside/x.png')
+    expect(await one(path.join(root, 'outside/x.png'))).toEqual({
+      paths: [outside],
+      assetIds: [],
+      notes: [],
+    })
+  })
+
   it.each([
     ['', '(no name)'],
     ['/abs/x.png', 'x.png'],
-    [path.join(os.tmpdir(), 'x.png'), 'x.png'],
     ['C:\\x.png', 'x.png'],
     ['C:/x.png', 'x.png'],
     ['C:x.png', 'C:x.png'],
@@ -146,16 +169,16 @@ describe('checkBriefPictures refuses a path outside the folder [D-098, SP-1]', (
     ['~/x.png', 'x.png'],
     ['~x.png', '~x.png'],
     ['../x.png', 'x.png'],
-    ['../outside/x.png', 'x.png'],
     ['photos/../../x.png', 'x.png'],
     ['photos\\..\\..\\x.png', 'x.png'],
-    ['photos/..\\../outside/x.png', 'x.png'],
     ['a.png\u0000.txt', 'a.png.txt'],
-    ['out-link.png', 'out-link.png'],
-    ['out-dir/x.png', 'x.png'],
     [LONG_UP, 'x.png'],
-  ])('gives outside_folder for %j', async (text, name) => {
-    expect(await one(text)).toEqual({ paths: [], notes: [{ name, reason: 'outside_folder' }] })
+  ])('gives not_found for %j, which names no file', async (text, name) => {
+    expect(await one(text)).toEqual({
+      paths: [],
+      assetIds: [],
+      notes: [{ name, reason: 'not_found' }],
+    })
   })
 })
 
@@ -172,7 +195,11 @@ describe('checkBriefPictures notes a missing file or a non-picture [D-098, SP-1]
     ['loop-a.png', 'not_readable'],
   ])('gives %j the reason %s', async (text, reason) => {
     const result = await one(text)
-    expect(result).toEqual({ paths: [], notes: [{ name: path.basename(text), reason }] })
+    expect(result).toEqual({
+      paths: [],
+      assetIds: [],
+      notes: [{ name: path.basename(text), reason }],
+    })
   })
 
   it.each([
@@ -192,8 +219,9 @@ describe('checkBriefPictures notes a missing file or a non-picture [D-098, SP-1]
     ])
     expect(result).toEqual({
       paths: [inBrief('a.png'), inBrief('photos/b.jpg')],
+      assetIds: [],
       notes: [
-        { name: 'x.png', reason: 'outside_folder' },
+        { name: 'x.png', reason: 'not_found' },
         { name: 'missing.png', reason: 'not_found' },
       ],
     })
@@ -208,20 +236,5 @@ describe('checkBriefPictures says nothing of a path [D-098, SP-1]', () => {
     for (const spy of spies) expect(spy).not.toHaveBeenCalled()
     expect(JSON.stringify(result[0]?.notes)).not.toContain(real)
     expect(JSON.stringify(result[0]?.notes)).not.toContain('/')
-  })
-
-  it('gives every picture of a typed brief no_folder and checks no path', () => {
-    expect(
-      picturesWithoutFolder([{ pictures: ['a.png', 'photos/b.jpg'] }, { name: 'Can' }]),
-    ).toEqual([
-      {
-        paths: [],
-        notes: [
-          { name: 'a.png', reason: 'no_folder' },
-          { name: 'b.jpg', reason: 'no_folder' },
-        ],
-      },
-      { paths: [], notes: [] },
-    ])
   })
 })

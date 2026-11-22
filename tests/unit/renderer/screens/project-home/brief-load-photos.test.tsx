@@ -19,12 +19,11 @@ import {
 } from './brief-load-photos-fixture'
 
 const NOTES: PictureNote[] = [
-  { name: 'out.png', reason: 'outside_folder' },
   { name: 'gone.png', reason: 'not_found' },
   { name: 'd.png', reason: 'not_a_picture' },
   { name: 'locked.png', reason: 'not_readable' },
-  { name: 'typed.png', reason: 'no_folder' },
-  { name: 'home.png', reason: 'wide_folder' },
+  { name: 'pasted.png', reason: 'not_full_path' },
+  { name: '01JABCDEFGHJKMNPQRSTVWXYZ2', reason: 'unknown_asset' },
 ]
 
 afterEach(() => vi.restoreAllMocks())
@@ -55,8 +54,8 @@ describe("Load a brief: the brief's photos [SP-4, A-124]", () => {
 
   it("shows every note's line, in the brief's order, and imports nothing for a subject with no path", async () => {
     const pictures: SubjectPictures[] = [
-      { paths: [], notes: NOTES },
-      { paths: [PATHS[1]], notes: [] },
+      { paths: [], assetIds: [], notes: NOTES },
+      { paths: [PATHS[1]], assetIds: [], notes: [] },
     ]
     const { fake } = briefApi(pictures)
     const form = await openForm(fake)
@@ -101,8 +100,8 @@ describe("Load a brief: the brief's photos [SP-4, A-124]", () => {
       vi.spyOn(console, k).mockImplementation(() => {}),
     )
     const { fake } = briefApi([
-      { paths: [PATHS[0]], notes: NOTES },
-      { paths: [PATHS[1]], notes: [] },
+      { paths: [PATHS[0]], assetIds: [], notes: NOTES },
+      { paths: [PATHS[1]], assetIds: [], notes: [] },
     ])
     await openForm(fake)
     for (const path of PATHS) expect(document.body.innerHTML).not.toContain(path)

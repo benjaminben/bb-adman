@@ -1,12 +1,15 @@
 // brief.parse (SPEC 4.2, 6.1; FR-020, FR-022). Writes nothing: the file is read in
 // prepare and the draft is returned from run (SPEC 3.6). A brief has no size limit
 // (SPEC 14 1.39 Z7), so the whole file is read. Nothing of the brief reaches the log.
-// The pictures a brief names are checked in prepare too (spec/subject-photos.md, D-098).
+// The pictures a brief names are checked in prepare too (Round 2 plan D3): any path, or the
+// asset ID of an image in this project. Only a person may call it (agent policy deny).
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { checkBriefPictures, picturesWithoutFolder } from '@/main/assets/brief-pictures'
+import type Database from 'better-sqlite3'
+import { checkBriefPictures } from '@/main/assets/brief-pictures'
 import { defineCommand } from '@/main/commands/types'
 import { parseBriefFile } from '@/shared/brief/parse'
+import { parseBriefText } from '@/shared/brief/text'
 import { primaryLanguageOf } from '@/shared/brief/primary-language'
 import { briefParseInput, type BriefParsed } from '@/shared/schemas/commands/brief'
 import type { BriefDraft } from '@/shared/schemas/brief'
@@ -63,33 +66,40 @@ async function readBrief(filePath: string): Promise<string> {
   }
 }
 
-// SPEC 6.1 item 6: text has no file ending, so JSON is tried first and the YAML try's
-// answer is returned.
-function parseText(text: string): Result<BriefDraft> {
-  const json = parseBriefFile(text, 'json')
-  return json.ok ? json : parseBriefFile(text, 'yaml')
-}
-
 function draftOf(result: Result<BriefDraft>): BriefDraft {
   if (!result.ok) throw new BriefError(result.error)
   return result.data
 }
 
-const answer = (draft: BriefDraft, subjectPictures: BriefParsed['subjectPictures']) => ({
-  draft,
-  primaryLanguage: primaryLanguageOf(draft),
-  subjectPictures,
-})
+// D3 rule 1: an asset ID is used only when it names an image of the open project.
+function imageLookup(db: Database.Database): (assetId: string) => boolean {
+  const row = db.prepare("SELECT 1 FROM asset WHERE id = ? AND kind = 'image'")
+  return (assetId) => row.get(assetId) !== undefined
+}
+
+async function answer(
+  db: Database.Database,
+  briefPath: string | null,
+  draft: BriefDraft,
+): Promise<BriefParsed> {
+  const isImage = imageLookup(db)
+  return {
+    draft,
+    primaryLanguage: primaryLanguageOf(draft),
+    subjectPictures: await checkBriefPictures(briefPath, draft.subjects, { isImage }),
+  }
+}
 
 export function briefParse() {
   return defineCommand({
     name: 'brief.parse',
     input: briefParseInput,
     projectId: (input) => input.projectId,
-    async prepare(_ctx, input): Promise<BriefParsed> {
+    async prepare(ctx, input): Promise<BriefParsed> {
       if (input.filePath === undefined) {
-        const draft = draftOf(parseText(input.text ?? ''))
-        return answer(draft, picturesWithoutFolder(draft.subjects))
+        const read = parseBriefText(input.text ?? '')
+        const draft = draftOf(read.ok ? { ok: true, data: read.data.draft } : read)
+        return answer(ctx.project.db, null, draft)
       }
       // F-2: a relative path would be read against the app's own folder.
       if (!path.isAbsolute(input.filePath)) {
@@ -98,7 +108,7 @@ export function briefParse() {
       const syntax = SYNTAX_BY_ENDING[path.extname(input.filePath).toLowerCase()]
       if (!syntax) throw typeNotSupported()
       const draft = draftOf(parseBriefFile(await readBrief(input.filePath), syntax))
-      return answer(draft, await checkBriefPictures(input.filePath, draft.subjects))
+      return answer(ctx.project.db, input.filePath, draft)
     },
     run(_ctx, _input, prepared) {
       return { data: prepared }

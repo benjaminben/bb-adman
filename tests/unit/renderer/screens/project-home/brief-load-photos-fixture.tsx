@@ -15,7 +15,11 @@ import { DRAFT, PROJECT, projectApi, projectGet, subject } from './project-fixtu
 
 export const PATHS = ['/b/photos/can.png', '/b/bottle.png'] as const
 const IDS: Record<string, string> = { [PATHS[0]]: 'B1', [PATHS[1]]: 'B2', '/p/F1.png': 'F1' }
-const PICTURES: SubjectPictures[] = PATHS.map((path) => ({ paths: [path], notes: [] }))
+const PICTURES: SubjectPictures[] = PATHS.map((path) => ({
+  paths: [path],
+  assetIds: [],
+  notes: [],
+}))
 
 export function briefApi(pictures: SubjectPictures[] = PICTURES) {
   const base = projectApi()
