@@ -108,9 +108,9 @@ test('with no key and the network off, import, a hand layout and an image export
   fs.copyFileSync(PHOTO, picture)
   await screens.answerOpenDialog(app, [picture])
   await page.getByRole('button', { name: 'Import files…' }).click()
-  const importing = page.getByRole('dialog', { name: 'Import 1 file(s)' })
+  const importing = page.getByRole('dialog', { name: 'Import 1 file' })
   await importing.getByRole('button', { name: 'Import' }).click()
-  await expect(importing.getByText('1 file(s) added.')).toBeVisible()
+  await expect(importing.getByText('1 file added.')).toBeVisible()
   await importing.getByRole('button', { name: 'Done' }).click()
 
   const state = (await query(page, 'app.getState', {})) as {
