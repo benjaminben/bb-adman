@@ -83,7 +83,8 @@ describe('GenerateFields registers its run with whether the layer was empty [D6]
     fake.onQuery('variant.get', () => ({ ok: true, data: variantGet() }))
     fake.onCommand('generation.runImages', () => ({ ok: true, data: { jobId: 'J1' } }))
     await renderApp(<GenerateFields projectId={P} campaignId="C1" layer={layer} />, fake)
-    await screen.findByText('None chosen')
+    // ED-4a: the reference strip shows once the layer's first draft is made.
+    await screen.findByRole('list', { name: 'Reference pictures' })
     await userEvent.click(screen.getByRole('button', { name: 'Generate…' }))
     const dialog = await screen.findByRole('dialog', { name: 'Make pictures' })
     await userEvent.click(within(dialog).getByRole('button', { name: 'Generate' }))

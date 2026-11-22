@@ -39,6 +39,7 @@ describe('PictureAi in the properties panel [spec/screens-ai.md]', () => {
 
   it('is not shown for a text layer', async () => {
     await open(HEADLINE)
-    expect(screen.queryByRole('group', { name: 'Generate' })).toBeNull()
+    // ED-4a: Generate is a Section (a region).
+    expect(screen.queryByRole('region', { name: 'Generate' })).toBeNull()
   })
 })

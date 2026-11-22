@@ -47,10 +47,17 @@ async function open(opts: { refs?: AssetList; layer?: LayerRow } = {}) {
   fake.onCommand('generation.runImages', () => ({ ok: true, data: { jobId: 'J1' } }))
   fake.onQuery('variant.get', () => ({ ok: true, data: variantGet() }))
   await renderApp(<Harness layer={opts.layer ?? LOGO} />, fake)
-  // The line shows once the layer's first draft is made.
-  await screen.findByText(/^(None|\d+) chosen$/)
+  // ED-4a: the reference strip shows once the layer's first draft is made.
+  await screen.findByRole('list', { name: 'Reference pictures' })
   return { fake, prompt: screen.getByRole('textbox', { name: 'Prompt' }) }
 }
+
+// ED-4a: "{n} chosen" is the count of thumbnails in the strip, each with its ✕.
+const chosen = () =>
+  within(screen.getByRole('list', { name: 'Reference pictures' })).queryAllByRole('button', {
+    name: /^Remove /,
+  }).length
+const shows = (n: number) => waitFor(() => expect(chosen()).toBe(n))
 
 async function generate() {
   await userEvent.click(screen.getByRole('button', { name: 'Generate…' }))
@@ -67,13 +74,13 @@ describe('GenerateFields [spec/screens-ai.md "Generate fields"; FR-062, FR-063]'
 
   const tenCans = Array.from({ length: 10 }, (_, i) => can(`R${i}`))
   it.each([
-    ['only the subjects’ pictures', [can('R1'), ref('R2'), can('R3')], '2 chosen'],
-    ['skipping a missing file', [can('R1', { missing: true }), can('R2')], '1 chosen'],
-    ['at most 8', tenCans, '8 chosen'],
-    ['none when the subjects have none', [ref('R2')], 'None chosen'],
-  ])('chooses the reference pictures the first time: %s', async (_name, refs, line) => {
+    ['only the subjects’ pictures', [can('R1'), ref('R2'), can('R3')], 2],
+    ['skipping a missing file', [can('R1', { missing: true }), can('R2')], 1],
+    ['at most 8', tenCans, 8],
+    ['none when the subjects have none', [ref('R2')], 0],
+  ])('chooses the reference pictures the first time: %s', async (_name, refs, count) => {
     await open({ refs })
-    expect(await screen.findByText(line)).toBeVisible()
+    await shows(count)
   })
 
   it('keeps the prompt and the chosen pictures per layer', async () => {
@@ -84,7 +91,7 @@ describe('GenerateFields [spec/screens-ai.md "Generate fields"; FR-062, FR-063]'
     expect(await screen.findByRole('textbox', { name: 'Prompt' })).not.toHaveValue('A can on ice')
     await userEvent.click(screen.getByRole('button', { name: 'Switch' }))
     expect(await screen.findByRole('textbox', { name: 'Prompt' })).toHaveValue('A can on ice')
-    expect(screen.getByText('1 chosen')).toBeVisible()
+    await shows(1)
   })
 
   it('chooses reference pictures in the reference dialog', async () => {
@@ -93,7 +100,7 @@ describe('GenerateFields [spec/screens-ai.md "Generate fields"; FR-062, FR-063]'
     const dialog = await screen.findByRole('dialog', { name: 'Reference pictures for Logo' })
     await userEvent.click(await within(dialog).findByRole('checkbox', { name: 'R2.png' }))
     await userEvent.click(within(dialog).getByRole('button', { name: 'Done' }))
-    expect(await screen.findByText('2 chosen')).toBeVisible()
+    await shows(2)
   })
 
   it('Generate opens the run dialog, and Confirm sends one generation.runImages for the layer', async () => {
@@ -145,7 +152,7 @@ describe('GenerateFields [spec/screens-ai.md "Generate fields"; FR-062, FR-063]'
 
   it('has no axe violations', async () => {
     await open()
-    await screen.findByText('1 chosen')
+    await shows(1)
     expect(await axeViolations()).toEqual([])
   })
 })
@@ -154,7 +161,7 @@ describe('GenerateFields first draft [SP-7]', () => {
   it("reads every image and chooses the subject's asset-library photo", async () => {
     const photo = can('S1', { library: 'asset' })
     const { fake } = await open({ refs: [photo, ref('R2'), ref('A3', { library: 'asset' })] })
-    expect(await screen.findByText('1 chosen')).toBeVisible()
+    await shows(1)
     expect(fake.queries.filter((q) => q.name === 'asset.list')[0]?.input).toEqual({
       projectId: P,
       kind: 'image',

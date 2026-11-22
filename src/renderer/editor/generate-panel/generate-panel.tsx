@@ -1,31 +1,27 @@
-// "Generate" (spec/phases/round-2-editor.md D4, R2E-4): the properties panel's group for image
-// and background layers, between "Shade" and "Position and size". It holds the line about
-// videos for this layer, "Start from", the generate fields with the start picture they send
-// first, then the earlier options (P4-18). Pictures only: the run goes through the run dialog
-// and its confirm as before. Disabled parts follow the layer's lock. The draft's last picture
-// run is drawn first in the earlier options, under "New pictures" (R2E-5, D6). R2E-8: on the
-// background of a video post, "Make" switches to the video fields, chosen first when some
-// available provider makes videos. R2E-11 (D7): askPromptFocus puts the focus on a layer's
-// "Prompt" once its panel shows it enabled.
+// "Generate" (spec/phases/round-2-editor.md D4, R2E-4; design wave ED-4a): the properties
+// panel's Section for image and background layers. It holds "Make" (Picture or Video, with the
+// reason when a video cannot be made here), "Start from" as tiles, the generate fields with the
+// start picture they send first, then the earlier options (P4-18). The run goes through the run
+// dialog, whose own button is the one send (C-15); nothing here sends a command. Disabled parts
+// follow the layer's lock. The draft's last picture run is drawn first in the earlier options
+// (R2E-5, D6). The Section's summary is "Running" while the draft's run goes. R2E-11 (D7):
+// askPromptFocus puts the focus on a layer's "Prompt" once its panel shows it enabled.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useStore } from 'zustand'
 import { createStore } from 'zustand/vanilla'
-import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
+import { useApi } from '@/renderer/app/app-context'
 import { EarlierOptions } from '@/renderer/editor/earlier-options'
 import { GenerateFields } from '@/renderer/editor/generate-fields'
-import {
-  draftKey,
-  draftOf,
-  generateDrafts,
-  type GenerateKind,
-} from '@/renderer/stores/generate-drafts'
+import { draftKey, draftOf, generateDrafts } from '@/renderer/stores/generate-drafts'
+import { Section } from '@/renderer/ui/section'
+import { StatusMark } from '@/renderer/ui/status-mark'
 import type { AssetList } from '@/shared/schemas/queries/asset'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
-import layout from '@/renderer/ui/layout.module.css'
 import { anyStarts, mostReferences } from './card-starts'
 import { MakeSwitch } from './make-switch'
 import { shaped } from './same-shape-list'
 import { shownStart, StartFrom, startChoices } from './start-from'
+import { useKind, useRunGoing, videoReason } from './use-kind'
 import { useComfyInfo } from './video-length'
 import { VideoFields } from './video-fields'
 import styles from './generate-panel.module.css'
@@ -40,26 +36,12 @@ export type GeneratePanelProps = {
   format?: 'image' | 'video'
 }
 
-function videoLine(
-  type: LayerRow['type'],
-  format: 'image' | 'video',
-  kind: GenerateKind,
-): string | null {
-  if (format === 'video') {
-    if (type !== 'background') return 'Videos are made on the background layer.'
-    return kind === 'image'
-      ? 'On a video post, the clips on the timeline show over this picture.'
-      : null
-  }
-  return type === 'background' ? 'To make a video, set Format to Video in the top bar first.' : null
-}
-
 // The layer whose "Prompt" should take the focus, until it does.
 const promptFocus = createStore<{ key: string | null }>(() => ({ key: null }))
 export const askPromptFocus = (key: string) => promptFocus.setState({ key })
 
 function usePromptFocus(key: string) {
-  const section = useRef<HTMLFieldSetElement>(null)
+  const section = useRef<HTMLDivElement>(null)
   const asked = useStore(promptFocus, (s) => s.key === key)
   useEffect(() => {
     const prompt = asked ? section.current?.querySelector('textarea') : null
@@ -96,29 +78,6 @@ function useImages(projectId: string) {
   return { images, read }
 }
 
-// The providers that can make a video now (available, with their keys saved), and the kind
-// the layer shows.
-function useKind(key: string, videoPost: boolean) {
-  const providers = useApp((s) => s.app?.providers ?? EMPTY)
-  const saved = useApp((s) => s.app?.secrets ?? EMPTY)
-  const keyed = (names: readonly string[]) => names.every((n) => saved.some((s) => s.name === n))
-  const ids = providers
-    .filter((p) => p.available && p.jobs.includes('video') && keyed(p.secrets))
-    .map((p) => p.id)
-  const canVideo = videoPost && ids.length > 0
-  // A kind not yet chosen (no draft, or one made on an image post) is "Video" here.
-  const held = useStore(generateDrafts, (s) => s.drafts[key]?.kind ?? s.wanted[key])
-  const made = useStore(generateDrafts, (s) => s.drafts[key] !== undefined)
-  useEffect(() => {
-    if (!canVideo) return
-    const drafts = generateDrafts.getState()
-    if (!made) drafts.wantKind(key, 'video')
-    else if (drafts.drafts[key]?.kind === undefined) drafts.change(key, { kind: 'video' })
-  }, [canVideo, key, made])
-  const kind: GenerateKind = canVideo && (held ?? 'video') === 'video' ? 'video' : 'image'
-  return { ids, kind }
-}
-
 export function GeneratePanel(props: GeneratePanelProps) {
   const { projectId, layer } = props
   const format = props.format ?? 'image'
@@ -142,58 +101,63 @@ export function GeneratePanel(props: GeneratePanelProps) {
   const choices = startChoices(kind, anyStarts(info, ids))
   const shown = shownStart(choices, draft?.start)
   const start = shown === 'layer' ? layerPicture : shown === 'shape' ? shapePicture : undefined
-  const line = videoLine(layer.type, format, kind)
+  const reason = videoReason(layer.type, format, ids.length)
   const change = generateDrafts.getState().change
   const run = draft?.run
   const newJobId = run && run.kind !== 'video' ? run.jobId : undefined
+  const going = useRunGoing(projectId, layer.id, run?.jobId ?? null)
 
   return (
-    <fieldset ref={section} className={styles.section}>
-      <legend className={styles.legend}>Generate</legend>
-      {videoPost && (
+    <Section
+      id="props.generate"
+      title="Generate"
+      level={4}
+      {...(going ? { summary: <StatusMark tone="running" label="Running" tip="Running" /> } : {})}
+    >
+      <div ref={section} className={styles.section}>
         <MakeSwitch
           kind={kind}
-          videoOff={ids.length === 0}
+          videoReason={reason}
+          videoPost={videoPost}
           disabled={layer.locked || draft === undefined}
           onChange={(next) => change(key, { kind: next })}
         />
-      )}
-      {line !== null && <p className={layout.muted}>{line}</p>}
-      <StartFrom
-        projectId={projectId}
-        layer={layer}
-        draft={draft}
-        choices={choices}
-        start={shown}
-        layerPicture={layerPicture}
-        images={images}
-        read={read}
-        onChange={(patch) => change(key, patch)}
-      />
-      {kind === 'video' ? (
-        <VideoFields
+        <StartFrom
           projectId={projectId}
-          campaignId={props.campaignId}
           layer={layer}
-          {...(props.layers ? { layers: props.layers } : {})}
+          draft={draft}
+          choices={choices}
           start={shown}
-          picture={start ?? null}
-          most={mostReferences(info, ids)}
+          layerPicture={layerPicture}
+          images={images}
+          read={read}
+          onChange={(patch) => change(key, patch)}
         />
-      ) : (
-        <GenerateFields
+        {kind === 'video' ? (
+          <VideoFields
+            projectId={projectId}
+            campaignId={props.campaignId}
+            layer={layer}
+            {...(props.layers ? { layers: props.layers } : {})}
+            start={shown}
+            picture={start ?? null}
+            most={mostReferences(info, ids)}
+          />
+        ) : (
+          <GenerateFields
+            projectId={projectId}
+            campaignId={props.campaignId}
+            layer={layer}
+            {...(props.layers ? { layers: props.layers } : {})}
+            {...(start === undefined ? {} : { start })}
+          />
+        )}
+        <EarlierOptions
           projectId={projectId}
-          campaignId={props.campaignId}
           layer={layer}
-          {...(props.layers ? { layers: props.layers } : {})}
-          {...(start === undefined ? {} : { start })}
+          {...(newJobId === undefined ? {} : { newJobId })}
         />
-      )}
-      <EarlierOptions
-        projectId={projectId}
-        layer={layer}
-        {...(newJobId === undefined ? {} : { newJobId })}
-      />
-    </fieldset>
+      </div>
+    </Section>
   )
 }

@@ -110,7 +110,8 @@ describe('AI in the editor and the run dialog take the look [ST-9]', () => {
       </main>,
       fake,
     )
-    await screen.findByText('None chosen')
+    // ED-4a: the reference strip shows once the layer's first draft is made.
+    await screen.findByRole('list', { name: 'Reference pictures' })
     expect(layout.reading).toBeTruthy()
     has(screen.getByRole('textbox', { name: 'Prompt' }), layout.reading)
   })

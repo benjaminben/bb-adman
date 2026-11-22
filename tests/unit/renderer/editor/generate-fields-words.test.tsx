@@ -24,7 +24,8 @@ async function promptBox(ui: React.ReactElement) {
   const fake = campaignApi()
   fake.onQuery('asset.list', () => ({ ok: true, data: [] }))
   await renderApp(ui, fake)
-  await screen.findByText('None chosen')
+  // ED-4a: the reference strip shows once the layer's first draft is made.
+  await screen.findByRole('list', { name: 'Reference pictures' })
   return screen.getByRole('textbox', { name: 'Prompt' })
 }
 

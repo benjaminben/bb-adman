@@ -39,11 +39,12 @@ async function open(opts: { rows?: Row[]; layer?: LayerRow; format?: 'image' | '
     </main>,
     fake,
   )
-  await screen.findByText(/^(None|\d+) chosen$/)
-  return { fake, list, panel: within(screen.getByRole('group', { name: 'Generate' })) }
+  // ED-4a: the reference strip shows once the layer's first draft is made.
+  await screen.findByRole('list', { name: 'Reference pictures' })
+  return { fake, list, panel: within(screen.getByRole('region', { name: 'Generate' })) }
 }
 
-const starts = () => within(screen.getByRole('radiogroup', { name: 'Start from' }))
+const starts = () => within(screen.getByRole('group', { name: 'Start from' }))
 
 async function generate() {
   await userEvent.click(screen.getByRole('button', { name: 'Generate…' }))
@@ -58,22 +59,28 @@ const references = (fake: Awaited<ReturnType<typeof open>>['fake']) =>
   )
 
 async function chooseShape() {
-  await userEvent.click(starts().getByRole('radio', { name: 'Another picture of the same shape…' }))
+  await userEvent.click(
+    starts().getByRole('button', { name: 'Another picture of the same shape…' }),
+  )
   return within(await screen.findByRole('region', { name: 'Pictures of the same shape' }))
 }
 
 const LAYER_PICTURE = "This layer's picture"
+const ON_TIMELINE = 'On a video post, the clips on the timeline show over this picture.'
 
 describe('GeneratePanel [R2E-4, D4]', () => {
   it('is a fieldset named Generate with three ways to start, a prompt only first', async () => {
     await open()
-    const radios = starts().getAllByRole('radio')
-    expect(radios.map((r) => r.closest('label')?.textContent)).toEqual([
+    const radios = starts().getAllByRole('button')
+    expect(radios.map((r) => r.textContent)).toEqual([
       'A prompt only',
       LAYER_PICTURE,
       'Another picture of the same shape…',
     ])
-    expect(starts().getByRole('radio', { name: 'A prompt only' })).toBeChecked()
+    expect(starts().getByRole('button', { name: 'A prompt only' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
   })
 
   it.each([
@@ -81,7 +88,7 @@ describe('GeneratePanel [R2E-4, D4]', () => {
     ['a layer whose picture is missing', BACKGROUND, [assetRow('A1', { missing: true })]],
   ])(`offers "${LAYER_PICTURE}" disabled for %s`, async (_name, layer, rows) => {
     await open({ layer, rows })
-    const radio = starts().getByRole('radio', { name: LAYER_PICTURE })
+    const radio = starts().getByRole('button', { name: LAYER_PICTURE })
     expect(radio).toBeDisabled()
     expect(radio).toHaveAccessibleDescription('This layer has no picture yet.')
   })
@@ -89,13 +96,13 @@ describe('GeneratePanel [R2E-4, D4]', () => {
   it('disables every choice on a locked layer', async () => {
     await open({ layer: { ...BACKGROUND, locked: true } })
     starts()
-      .getAllByRole('radio')
+      .getAllByRole('button')
       .forEach((r) => expect(r).toBeDisabled())
   })
 
   it(`sends the layer's own picture first for "${LAYER_PICTURE}"`, async () => {
     const { fake } = await open({ layer: BACKGROUND })
-    await userEvent.click(starts().getByRole('radio', { name: LAYER_PICTURE }))
+    await userEvent.click(starts().getByRole('button', { name: LAYER_PICTURE }))
     await generate()
     expect(references(fake)).toEqual([['A1', 'R1']])
   })
@@ -167,11 +174,18 @@ describe('GeneratePanel [R2E-4, D4]', () => {
     ],
   ] as const)('shows a line for the %s layer of a %s post', async (_name, format, layer, line) => {
     const { panel } = await open({ layer, format })
-    expect(panel.getByText(line)).toBeVisible()
+    // ED-4a: the line is the disabled "Video" segment's title, or the InfoTip's words.
+    if (line === ON_TIMELINE) {
+      expect(panel.getByRole('button', { name: 'About pictures on a video post' })).toBeVisible()
+      expect(panel.getByText(line)).toBeInTheDocument()
+    } else {
+      expect(panel.getByRole('button', { name: 'Video' })).toHaveAttribute('title', line)
+    }
   })
 
   it('shows no video line for a picture layer of an image post', async () => {
     const { panel } = await open({ layer: LOGO, format: 'image' })
-    expect(panel.queryByText(/video/i)).toBeNull()
+    // ED-4a: no line is printed; the reason is the disabled "Video" segment's title.
+    expect(panel.queryByText(/video/i, { selector: 'p' })).toBeNull()
   })
 })
