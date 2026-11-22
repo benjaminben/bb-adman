@@ -2,12 +2,13 @@
 // post's background, the video starts of the available providers, "Clip length (seconds)",
 // and what generation.startVideo is sent after the run dialog's own Generate. Ported from the
 // "Make a video" card's offer and start tests (video-offer, video-start) so their cases hold.
-import { screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { generateDrafts } from '@/renderer/stores/generate-drafts'
 import { baseState } from '../fake-api'
 import { ref } from '../screens/campaign/reference-fixture'
+import { CLIP, videoRow } from '../screens/campaign/video-fixture'
 import { INFO_NO_FRAME } from '../screens/campaign/video-start-fixture'
 import { assetRow, BACKGROUND, LOGO, P } from './editor-fixture'
 import {
@@ -223,5 +224,22 @@ describe('the video starts [R2E-8, D4; ported from video-offer, video-start]', (
         referenceAssetIds: ['R1'],
       }),
     )
+  })
+})
+
+describe('a started video in the panel [R2E-8, D6]', () => {
+  it('follows the run under Generate… and shows its clip once done', async () => {
+    const { fake } = await openVideo()
+    await typePrompt()
+    await generateVideo()
+    expect(await screen.findByText('Making the video. Waiting.')).toBeVisible()
+    const result = { ...CLIP, clipId: 'C9', replacedStill: true }
+    act(() => fake.emit('job.updated', videoRow({ id: 'J7', status: 'succeeded', result })))
+    expect(
+      await screen.findByText(
+        'Done. The new clip is on the timeline below, in place of the still.',
+      ),
+    ).toBeVisible()
+    expect(screen.getByLabelText('Video result')).toBeInTheDocument()
   })
 })

@@ -156,7 +156,10 @@ const LICENCE = {
 }
 
 async function startOnComfy() {
-  const workflows = INFO_ALL.workflows.map((w) => ({ ...w, model: { label: 'Clipmaker 2' } }))
+  const workflows = INFO_ALL.workflows.map((w) => ({
+    ...w,
+    model: { label: 'Clipmaker 2', mainFile: 'clipmaker-2.safetensors' },
+  }))
   const { fake } = await openVideo({
     providers: [COMFY],
     video: 'comfyui',
