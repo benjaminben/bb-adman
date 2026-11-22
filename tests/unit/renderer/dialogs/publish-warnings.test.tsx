@@ -60,9 +60,7 @@ async function openWarned(replies: Array<Result<unknown>> = []) {
     fake,
   ))
   await userEvent.click(await screen.findByRole('radio', { name: 'Amazon S3' }))
-  await userEvent.click(
-    await screen.findByRole('checkbox', { name: 'Replace the published files' }),
-  )
+  await userEvent.click(await screen.findByRole('switch', { name: 'Replace the published files' }))
   await userEvent.click(screen.getByRole('button', { name: 'Publish' }))
   await screen.findByRole('list', { name: 'These ads have warnings' })
   // The button waits 500 ms after the step opens, so a double click cannot land on it.

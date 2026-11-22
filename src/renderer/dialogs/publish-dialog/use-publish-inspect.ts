@@ -2,7 +2,8 @@
 // it asks with no storage (the choices and the files only); choosing a storage asks again for
 // what is published there. Only the latest answer counts, and `answeredFor` says which storage
 // it describes, so a reply about one storage never stands for another. A failed read clears the
-// last answer and gives its sentence; `again` repeats the read (the "Retry" button).
+// last answer and gives its sentence; `again` repeats the read (the "Retry" button), and
+// reads nothing while the chosen storage is not set up.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import type { PublishStorageId } from '@/shared/schemas/commands/publish'
@@ -13,6 +14,8 @@ type Answer = { reply: PublishInspect; answeredFor: PublishStorageId | null }
 export function usePublishInspect(projectId: string, campaignId: string) {
   const api = useApi()
   const [storage, setStorage] = useState<PublishStorageId | null>(null)
+  // False while the chosen storage is one that is not set up: reads then ask with no storage.
+  const [readable, setReadable] = useState(true)
   const [answer, setAnswer] = useState<Answer | null>(null)
   const [looking, setLooking] = useState(true)
   const [failure, setFailure] = useState<string | null>(null)
@@ -44,9 +47,15 @@ export function usePublishInspect(projectId: string, campaignId: string) {
     ask(wanted)
   }
 
-  function choose(id: PublishStorageId) {
+  // A storage that is not set up is chosen without a read: nothing is asked of it (DLG-6b), and
+  // any read still on its way is dropped.
+  function choose(id: PublishStorageId, read = true) {
     setStorage(id)
-    inspect(id)
+    setReadable(read)
+    if (read) return inspect(id)
+    latest.current += 1
+    setLooking(false)
+    setFailure(null)
   }
 
   // What is published in the chosen storage, only once the latest answer is about it.
@@ -60,6 +69,6 @@ export function usePublishInspect(projectId: string, campaignId: string) {
     looking,
     failure,
     choose,
-    again: () => inspect(storage),
+    again: () => inspect(readable ? storage : null),
   }
 }

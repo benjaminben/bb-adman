@@ -1,45 +1,24 @@
 /* app-style */
-/* The publish file list (P9-12): a section label, then each folder with its files. A long name
-   or path wraps; it never widens the dialog. */
+/* The publish file list (DLG-6b): a section label, then one ObjectRow per file with its full
+   local path under it (A-218). A long name is cut by the row; a long path wraps and is shown
+   whole; neither widens the dialog. */
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-1);
   min-width: 0;
 }
-.heading,
-.folder {
+.heading {
   margin: 0;
   font-family: var(--font-body);
   font-size: var(--font-size-small);
   font-weight: var(--weight-medium);
   color: var(--color-text-secondary);
 }
-.folder {
-  margin-bottom: var(--space-1);
-  font-weight: var(--weight-regular);
-}
-.group {
-  min-width: 0;
-}
-.item {
-  display: flex;
-  flex-direction: column;
-  padding: var(--space-1) 0;
-  border-top: var(--border-width) solid var(--color-line);
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.name {
-  font-size: var(--font-size-control);
-  font-weight: var(--weight-medium);
-}
 .path {
-  font-family: var(--font-mono);
+  display: block;
+  padding: 0 var(--space-2) var(--space-1);
   font-size: var(--font-size-small);
   color: var(--color-text-secondary);
-}
-.mark {
-  font-size: var(--font-size-small);
-  color: var(--color-warn-text);
+  user-select: text;
 }

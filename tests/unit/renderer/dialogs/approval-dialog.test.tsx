@@ -40,6 +40,11 @@ async function openDialog(data: ApprovalsForCampaign = forCampaign()) {
 
 const sent = (fake: ReturnType<typeof makeFakeApi>) => fake.commands.map((c) => [c.name, c.input])
 const button = (name: string) => screen.getByRole('button', { name })
+// DLG-6b: "Set a new password…" is now "New password…" in the link row's menu.
+async function newPassword(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(button('More actions for the link'))
+  await user.click(screen.getByRole('menuitem', { name: 'New password…' }))
+}
 
 describe('approval dialog, not ready and no link [spec/approvals.md "The approval link dialog"]', () => {
   it.each([
@@ -154,7 +159,7 @@ describe('approval dialog, a live link [spec/approvals.md "The approval link dia
 
   it('sets a new password', async () => {
     const { user, fake, dialog } = await openDialog()
-    await user.click(button('Set a new password…'))
+    await newPassword(user)
     expect(dialog).toHaveTextContent(
       'People who already opened the link must enter the new password.',
     )
@@ -166,11 +171,11 @@ describe('approval dialog, a live link [spec/approvals.md "The approval link dia
   it('forgets a typed password on Cancel and sends nothing', async () => {
     const { user, fake } = await openDialog()
     const field = () => screen.getByLabelText('Password', { selector: 'input' })
-    await user.click(button('Set a new password…'))
+    await newPassword(user)
     await user.click(screen.getByRole('radio', { name: 'Choose a password' }))
     await user.type(field(), 'a-typed-password-1')
     await user.click(button('Cancel'))
-    await user.click(button('Set a new password…'))
+    await newPassword(user)
     expect(screen.getByRole('radio', { name: 'Make a password for me' })).toBeChecked()
     await user.click(screen.getByRole('radio', { name: 'Choose a password' }))
     expect(field()).toHaveValue('')
@@ -191,9 +196,10 @@ describe('approval dialog, a live link [spec/approvals.md "The approval link dia
   })
 
   it('turns off only after the confirmation, with "Keep link" focused', async () => {
-    const { user, fake, dialog } = await openDialog()
+    const { user, fake } = await openDialog()
     await user.click(button('Turn off link…'))
-    expect(dialog).toHaveTextContent(
+    // DLG-6b: the question is a confirm dialog over the approval dialog.
+    expect(screen.getByRole('dialog', { name: 'Turn off link?' })).toHaveTextContent(
       'Turn off this link? Reviewers can no longer open it. The gallery and its pictures are ' +
         'deleted from the service and your bucket. Sign-offs so far stay in this project.',
     )

@@ -58,9 +58,7 @@ async function openWarned(warned = 1) {
     fake,
   )
   await userEvent.click(await screen.findByRole('radio', { name: 'Amazon S3' }))
-  await userEvent.click(
-    await screen.findByRole('checkbox', { name: 'Replace the published files' }),
-  )
+  await userEvent.click(await screen.findByRole('switch', { name: 'Replace the published files' }))
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
   const timers = { set: vi.spyOn(globalThis, 'setTimeout') }
   fireEvent.click(screen.getByRole('button', { name: 'Publish' }))
@@ -100,7 +98,7 @@ describe('"Publish anyway" waits 500 ms [lows C]', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     await flush()
     await flush()
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Replace the published files' }))
+    fireEvent.click(screen.getByRole('switch', { name: 'Replace the published files' }))
     fireEvent.click(screen.getByRole('button', { name: 'Publish' }))
     await flush()
     expect(anyway()).toBeDisabled()
