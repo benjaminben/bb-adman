@@ -162,7 +162,9 @@ describe('delete_variant over MCP [P10-11; FR-197; D-099, A-141]', () => {
     const asked = await x.nthAsk()
     expect(asked).toMatchObject({
       action: 'delete variants',
-      target: expect.stringMatching(/^Variant "[^"]+ · 9x16 · de" in campaign "Summer Splash!"$/),
+      target: expect.stringMatching(
+        /^Variant "[^"]+ · 9x16 · de" in campaign "Summer Splash!" in "Spring Work"$/,
+      ),
     })
     const shown = JSON.stringify({ ...asked, requestId: '' })
     for (const id of [x.projectId, x.campaignId, variantId, m.directionId]) {

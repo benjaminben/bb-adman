@@ -66,11 +66,11 @@ describe('askTarget [P10-6; A-238]', () => {
     expect(line).toBe(`Campaign "Summer Splash!" (${counted(n)}) in "Spring Work"`)
   })
 
-  it('names a variant by title, size and language, and its campaign', async () => {
+  it('names a variant by title, size and language, its campaign and its project', async () => {
     const m = await project()
     const input = { projectId: m.projectId, variantId: m.variantId }
     const line = askTarget(f!.core.projects, ask('variant.delete', m.projectId, input))
-    expect(line).toBe(`Variant "${variantLine(m)}" in campaign "Summer Splash!"`)
+    expect(line).toBe(`Variant "${variantLine(m)}" in campaign "Summer Splash!" in "Spring Work"`)
   })
 
   // The commands refuse such names, so they are planted in the file as an edited file holds them.
@@ -192,6 +192,6 @@ describe('askTarget names in the dialog line [P10-7]', () => {
     const input = { projectId: m.projectId, variantId: m.variantId }
     const line = askTarget(f!.core.projects, ask('variant.delete', m.projectId, input))
     expect(line).toMatch(/^Variant "Hero 'A' · [^"]+" in campaign "/)
-    expect(line.endsWith(`in campaign "${CUT}"`)).toBe(true)
+    expect(line.endsWith(`in campaign "${CUT}" in "Spring Work"`)).toBe(true)
   })
 })
