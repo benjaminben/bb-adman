@@ -122,7 +122,11 @@ export function PropertiesPanel(props: PropertiesPanelProps) {
           </div>
         </>
       ) : (
-        <p className={styles.empty}>Select a layer to change it.</p>
+        <p className={styles.empty}>
+          {props.canvas?.format === 'video'
+            ? 'Select a layer to change it. To make a video, select the background layer.'
+            : 'Select a layer to change it.'}
+        </p>
       )}
     </section>
   )

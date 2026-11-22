@@ -1,6 +1,7 @@
 // P7-18 (spec/phases/phase-07-slices-2.md): a video variant's timeline along the editor's foot:
 // the transport bar, then the ruler, one row per layer, the background row, and the playhead
 // over the lanes. Each row keeps its name under the layer list's width, so the lanes line up.
+// onMakeVideo goes to the background row's "Make a video…" (R2E-11, D7).
 import { useStore } from 'zustand'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
@@ -20,9 +21,10 @@ type Props = {
   layers: LayerRow[]
   store: VariantStore
   playback: PlaybackStore
+  onMakeVideo?: () => void
 }
 
-export function Timeline({ projectId, variant, layers, store, playback }: Props) {
+export function Timeline({ projectId, variant, layers, store, playback, onMakeVideo }: Props) {
   const { timeMs, playing, durationMs, toggle, scrub } = useStore(playback)
   usePlayKey(toggle)
   return (
@@ -46,7 +48,12 @@ export function Timeline({ projectId, variant, layers, store, playback }: Props)
             layers={layers}
             playback={playback}
           />
-          <ClipTrack projectId={projectId} variant={variant} store={store} />
+          <ClipTrack
+            projectId={projectId}
+            variant={variant}
+            store={store}
+            onMakeVideo={onMakeVideo}
+          />
           <div className={styles.lanes}>
             <Playhead timeMs={timeMs} durationMs={durationMs} />
           </div>

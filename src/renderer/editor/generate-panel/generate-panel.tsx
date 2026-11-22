@@ -5,9 +5,11 @@
 // and its confirm as before. Disabled parts follow the layer's lock. The draft's last picture
 // run is drawn first in the earlier options, under "New pictures" (R2E-5, D6). R2E-8: on the
 // background of a video post, "Make" switches to the video fields, chosen first when some
-// available provider makes videos.
-import { useCallback, useEffect, useState } from 'react'
+// available provider makes videos. R2E-11 (D7): askPromptFocus puts the focus on a layer's
+// "Prompt" once its panel shows it enabled.
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useStore } from 'zustand'
+import { createStore } from 'zustand/vanilla'
 import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { EarlierOptions } from '@/renderer/editor/earlier-options'
 import { GenerateFields } from '@/renderer/editor/generate-fields'
@@ -50,6 +52,22 @@ function videoLine(
       : null
   }
   return type === 'background' ? 'To make a video, set Format to Video in the top bar first.' : null
+}
+
+// The layer whose "Prompt" should take the focus, until it does.
+const promptFocus = createStore<{ key: string | null }>(() => ({ key: null }))
+export const askPromptFocus = (key: string) => promptFocus.setState({ key })
+
+function usePromptFocus(key: string) {
+  const section = useRef<HTMLFieldSetElement>(null)
+  const asked = useStore(promptFocus, (s) => s.key === key)
+  useEffect(() => {
+    const prompt = asked ? section.current?.querySelector('textarea') : null
+    if (!prompt || prompt.disabled) return
+    prompt.focus()
+    promptFocus.setState({ key: null })
+  })
+  return section
 }
 
 // The project's images, read once and again after an import or when the layer's picture is
@@ -108,6 +126,7 @@ export function GeneratePanel(props: GeneratePanelProps) {
   const draft = draftOf(useStore(generateDrafts, (s) => s.drafts[key]))
   const videoPost = format === 'video' && layer.type === 'background'
   const { ids, kind } = useKind(key, videoPost)
+  const section = usePromptFocus(key)
   const info = useComfyInfo()
   const { images, read } = useImages(projectId)
   const own = layer.source?.assetId ?? null
@@ -129,7 +148,7 @@ export function GeneratePanel(props: GeneratePanelProps) {
   const newJobId = run && run.kind !== 'video' ? run.jobId : undefined
 
   return (
-    <fieldset className={styles.section}>
+    <fieldset ref={section} className={styles.section}>
       <legend className={styles.legend}>Generate</legend>
       {videoPost && (
         <MakeSwitch

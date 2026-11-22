@@ -2,12 +2,14 @@
 // the banner, then the layer list, the canvas and the properties panel. One variant store per
 // editor. One layer is selected at a time (A-28); a selected layer that goes away is dropped.
 // A video variant also has the timeline along the foot, with one playback store per tab (P7-18),
-// and the sound player under it (P7-21).
+// and the sound player under it (P7-21). R2E-11 (D7): the timeline's "Make a video…" selects
+// the background layer, chooses "Video" in its Generate panel and moves the focus to "Prompt".
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from 'zustand'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { CanvasView } from '@/renderer/editor/canvas-view'
 import { EditorBanner } from '@/renderer/editor/editor-banner'
+import { askPromptFocus } from '@/renderer/editor/generate-panel/generate-panel'
 import { LayerList } from '@/renderer/editor/layer-list'
 import { LayoutButton } from '@/renderer/editor/layout-button'
 import { useLayoutRun } from '@/renderer/editor/layout-run'
@@ -19,6 +21,7 @@ import { TopBar } from '@/renderer/editor/top-bar'
 import { EditorKeyRoot } from '@/renderer/editor/use-editor-key'
 import { RunDialog } from '@/renderer/dialogs/run-dialog'
 import type { Zoom } from '@/renderer/editor/zoom'
+import { draftKey, generateDrafts } from '@/renderer/stores/generate-drafts'
 import type { TabView } from '@/renderer/stores/nav-store'
 import { createPlaybackStore } from '@/renderer/stores/playback-store'
 import { createVariantStore, type VariantStoreState } from '@/renderer/stores/variant-store'
@@ -92,6 +95,17 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
   async function rename(title: string): Promise<boolean> {
     const result = await command('variant.update', { projectId, variantId, title })
     return result.ok
+  }
+
+  function makeVideo() {
+    const background = Object.values(layers).find((l) => l.type === 'background')
+    if (!background) return
+    setSelectedId(background.id)
+    const key = draftKey(projectId, background.id)
+    const drafts = generateDrafts.getState()
+    if (drafts.drafts[key]) drafts.change(key, { kind: 'video' })
+    else drafts.wantKind(key, 'video')
+    askPromptFocus(key)
   }
 
   return (
@@ -169,6 +183,7 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
                   layers={scene}
                   store={store}
                   playback={playback}
+                  onMakeVideo={makeVideo}
                 />
                 <SoundPlayer projectId={projectId} variant={variant} playback={playback} />
               </SoundScope.Provider>

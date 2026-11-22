@@ -2,7 +2,8 @@
 // the variant's clips from the variant store as blocks, in track order, named "Clip {n}:
 // {display name}"; a gap is left as empty track, and the part of a clip past the variant's
 // end is not drawn. "Add clip…" opens the add list under the row; the chosen clip's actions
-// follow it, and a refused command's own sentence stands last, as an alert.
+// follow it, and a refused command's own sentence stands last, as an alert. R2E-11 (D7):
+// "Make a video…" beside "Add clip…" calls onMakeVideo, which the editor passes.
 import { useId, useMemo, useState } from 'react'
 import { useStore } from 'zustand'
 import { AddClipButton, AddClipList } from '@/renderer/editor/add-clip'
@@ -10,9 +11,15 @@ import { ClipActions, ClipBlock, type ClipKind } from '@/renderer/editor/clip-bl
 import type { HeldAsset, VariantStore } from '@/renderer/stores/variant-store'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { BackgroundClipRow } from '@/shared/schemas/rows/background-clip'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './clip-track.module.css'
 
-export type ClipTrackProps = { projectId: string; variant: VariantSummary; store: VariantStore }
+export type ClipTrackProps = {
+  projectId: string
+  variant: VariantSummary
+  store: VariantStore
+  onMakeVideo?: () => void
+}
 
 type Shown = { clip: BackgroundClipRow; label: string; kind: ClipKind; fileMs: number | null }
 
@@ -31,7 +38,7 @@ function shownClips(
   })
 }
 
-export function ClipTrack({ projectId, variant, store }: ClipTrackProps) {
+export function ClipTrack({ projectId, variant, store, onMakeVideo }: ClipTrackProps) {
   const listId = useId()
   const clips = useStore(store, (s) => s.clips)
   const assets = useStore(store, (s) => s.assets)
@@ -51,7 +58,14 @@ export function ClipTrack({ projectId, variant, store }: ClipTrackProps) {
       <div className={styles.row}>
         <div className={styles.name}>
           <span className={styles.title}>Background</span>
-          <AddClipButton open={adding} listId={listId} onToggle={() => setAdding(!adding)} />
+          <span className={layout.row}>
+            {onMakeVideo && (
+              <button type="button" className={layout.small} onClick={onMakeVideo}>
+                Make a video…
+              </button>
+            )}
+            <AddClipButton open={adding} listId={listId} onToggle={() => setAdding(!adding)} />
+          </span>
         </div>
         <ul className={styles.lane} aria-label="Clips" data-clip-lane>
           {shown.map((s) => (
