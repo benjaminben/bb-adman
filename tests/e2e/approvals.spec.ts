@@ -72,13 +72,13 @@ test('link, gallery, sign-off, edit, update: the marks, and a changed variant re
 
   await steps.refresh(page)
   await expect(steps.bar(page).getByText('Signed off: 1 of 1 variant')).toBeVisible()
-  await expect(steps.grid(page).getByText('Signed off by 1')).toBeVisible()
+  await expect(steps.grid(page).getByTitle('Signed off by 1')).toBeVisible()
 
   await steps.editVariant(page)
   // R-10: the edit leaves the sign-off on an older version, so the app shows none at once.
-  await expect(steps.grid(page).getByText('Changed since published')).toBeVisible()
-  await expect(steps.grid(page).getByText('Signed off by 1')).toHaveCount(0)
-  await expect(steps.grid(page).getByRole('button', { name: /^Sign-offs/ })).toHaveCount(0)
+  await expect(steps.grid(page).getByTitle('Changed since published')).toBeVisible()
+  await expect(steps.grid(page).getByTitle('Signed off by 1')).toHaveCount(0)
+  await expect(steps.grid(page).getByTitle(/^Signed off by/)).toHaveCount(0)
 
   const dialog = await steps.updateGallery(page)
   const updated = stand.links.get([...stand.links.keys()][0] ?? '')?.gallery[0]
@@ -90,7 +90,7 @@ test('link, gallery, sign-off, edit, update: the marks, and a changed variant re
 
   await expect(steps.bar(page).getByText('Signed off: 0 of 1 variant')).toBeVisible()
   const marks = steps.grid(page)
-  await expect(marks.getByText(/earlier version|Changed since/i)).toHaveCount(0)
-  await expect(marks.getByRole('button', { name: /^Sign-offs/ })).toHaveCount(0)
+  await expect(marks.getByTitle(/earlier version|Changed since/i)).toHaveCount(0)
+  await expect(marks.getByTitle(/^Signed off by/)).toHaveCount(0)
   await expect(marks.getByText(/reviewer@example\.com/)).toHaveCount(0)
 })

@@ -20,8 +20,7 @@ describe('approval marks look [ST-11]', () => {
   ])('draws "%s" with an aria-hidden icon and its words unchanged', (word, entry) => {
     render(<ApprovalMark title="Square post" entry={entry} linkState="live" />)
     const group = screen.getByRole('group', { name: 'Approval marks for Square post' })
-    const mark = within(group).getByText(word)
-    expect(mark.textContent).toBe(word)
+    const mark = within(group).getByTitle(word)
     expect(mark.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
   })
 })

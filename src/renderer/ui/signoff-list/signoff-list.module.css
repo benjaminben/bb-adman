@@ -7,3 +7,11 @@
   padding: var(--space-1) 0;
   overflow-wrap: anywhere;
 }
+/* Design wave CAMP-1: the popover over the page, placed by signoff-popover.tsx. */
+.popover {
+  position: fixed;
+  z-index: 2;
+  width: max-content;
+  max-width: var(--width-menu);
+  font-size: var(--font-size-small);
+}

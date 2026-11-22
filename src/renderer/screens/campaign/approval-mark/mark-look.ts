@@ -1,12 +1,16 @@
-// ST-11 (spec/app-style.md, "Campaign page, grid and tiles"): an approval mark's badge kind and
-// icon, from its words (shared/approvals/marks.ts). Pure; the words are drawn unchanged.
+// A tile's approval mark as a StatusMark (design wave CAMP-1), from its words
+// (shared/approvals/marks.ts). Pure; the words are the mark's tip, unchanged. "Signed off by
+// {n}" shows its count as the label.
 import type { IconName } from '@/renderer/ui/icon'
+import type { StatusTone } from '@/renderer/ui/status-mark'
 
-export type MarkLook = { kind: 'ok' | 'warn' | 'neutral'; icon: IconName }
+export type MarkLook = { tone: StatusTone; icon: IconName; label?: string }
 
 export function markLook(word: string): MarkLook {
-  if (word.startsWith('Signed off by')) return { kind: 'ok', icon: 'check' }
-  if (word.startsWith('Changed since')) return { kind: 'warn', icon: 'alert' }
-  if (word === 'Not in the gallery') return { kind: 'neutral', icon: 'eye' }
-  return { kind: 'neutral', icon: 'clock' }
+  if (word.startsWith('Signed off by')) {
+    return { tone: 'ok', icon: 'check', label: word.slice('Signed off by '.length) }
+  }
+  if (word.startsWith('Changed since')) return { tone: 'warn', icon: 'sync' }
+  if (word === 'Not in the gallery') return { tone: 'none', icon: 'eyeOff' }
+  return { tone: 'none', icon: 'clock' }
 }

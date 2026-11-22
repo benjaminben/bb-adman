@@ -35,7 +35,7 @@ export async function localise(app: ElectronApplication, page: Page, project: st
   await v.createFromForm(app, page, { languages: 'en, de, ja', sizes: [WIDE] })
   await v.fanOut(page, DIRECTION, { sizes: [TALL, WIDE], languages: ['de', 'ja'] })
   await expect(v.grid(page, DIRECTION).getByRole('listitem')).toHaveCount(POSTS)
-  await expect(v.grid(page, DIRECTION).getByText('Translation not approved')).toHaveCount(
+  await expect(v.grid(page, DIRECTION).getByTitle('Translation not approved')).toHaveCount(
     TRANSLATED_POSTS,
     { timeout: 60_000 },
   )

@@ -1,7 +1,7 @@
 // spec/screens-campaign.md, "The campaign grid and the variant tile": the marks' words come
 // from one table, and a mark shows only when it is true.
 import { describe, expect, it } from 'vitest'
-import { badgeWords } from '@/renderer/screens/campaign/variant-tile/badge-words'
+import { badgeMarks, badgeWords } from '@/renderer/screens/campaign/variant-tile/badge-words'
 import type { VariantBadges } from '@/shared/schemas/queries/campaign'
 
 const NONE: VariantBadges = {
@@ -38,5 +38,26 @@ describe('badgeWords [S2-16]', () => {
   it('gives every word in the table order when all are true', () => {
     const all = Object.fromEntries(Object.keys(NONE).map((k) => [k, true])) as VariantBadges
     expect(badgeWords(all)).toEqual(TABLE.map(([, word]) => word))
+  })
+})
+
+// Design wave CAMP-1: each mark's kind is its StatusMark tone.
+describe('badgeMarks tones [CAMP-1]', () => {
+  it('gives each mark its tone, in the table order', () => {
+    const all = Object.fromEntries(Object.keys(NONE).map((k) => [k, true])) as VariantBadges
+    expect(badgeMarks(all).map((mark) => mark.kind)).toEqual([
+      'running',
+      'accent',
+      'danger',
+      'warn',
+      'none',
+      'warn',
+      'warn',
+      'none',
+    ])
+  })
+
+  it('draws "New result" as a dot, with no icon', () => {
+    expect(badgeMarks({ ...NONE, resultUnseen: true })[0]?.icon).toBeUndefined()
   })
 })

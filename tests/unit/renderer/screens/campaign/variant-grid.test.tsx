@@ -30,7 +30,9 @@ describe('VariantGrid [S2-16]', () => {
     const list = screen.getByRole('list', { name: 'Variants' })
     const tiles = within(list).getAllByRole('button')
     const titles = VARIANTS.map((v) => v.title)
-    expect(tiles.map((t) => titles.find((title) => within(t).queryByText(title)))).toEqual(titles)
+    expect(tiles.map((t) => titles.find((title) => t.title.startsWith(`${title} · `)))).toEqual(
+      titles,
+    )
     expect(tiles.map((t) => t.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false'])
     expect(within(list).getAllByRole('listitem')).toHaveLength(3)
   })
@@ -90,7 +92,7 @@ describe('VariantGrid tile actions [P5-15]', () => {
 
   // The tile's own button is the first in its list item.
   const mainButton = (title: string) =>
-    within(screen.getByText(title).closest('li')!).getAllByRole('button')[0]
+    screen.getByRole('button', { name: new RegExp(`^${title} · `) })
 
   it('puts "Quick look" and, except on the master, "Delete" after the "+", with titles', async () => {
     const { onQuickLook, onDelete } = actions()
@@ -212,7 +214,7 @@ describe('VariantGrid by size and language [R2C-2]', () => {
   it("puts the master's button first in the list", () => {
     drawTable()
     const first = within(list()).getAllByRole('button')[0]!
-    expect(within(first).getByText('Harbour Blend master')).toBeInTheDocument()
+    expect(first).toHaveAccessibleName(/^Harbour Blend master · /)
   })
 
   it('heads each column with the language name and code, each row with the size', () => {

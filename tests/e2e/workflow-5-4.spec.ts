@@ -85,7 +85,7 @@ test('Workflow 5.4: a second direction, a fill on fan-out, tab behind, quick loo
   await v.fanOut(page, STUDIO, { sizes: [TALL], fill: TALL })
   await expect(v.grid(page, STUDIO).getByRole('listitem')).toHaveCount(2)
   const tall = v.tile(page, STUDIO, '1080×1920 · en')
-  await expect(tall.getByText('New result')).toBeVisible({ timeout: 60_000 })
+  await expect(tall.getByTitle('New result')).toBeVisible({ timeout: 60_000 })
   const thumb = tall.locator('img')
   await expect
     .poll(() => thumb.evaluate((i: HTMLImageElement) => i.naturalWidth))

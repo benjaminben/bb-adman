@@ -14,7 +14,11 @@ type Extra = { chosen?: boolean; preview?: ReactNode; actions?: ReactNode; foote
 
 const draw = (v: VariantSummary, extra: Extra = {}) => {
   const onChoose = vi.fn()
-  render(<VariantTile variant={v} chosen={false} onChoose={onChoose} {...extra} />)
+  render(
+    <main>
+      <VariantTile variant={v} chosen={false} onChoose={onChoose} {...extra} />
+    </main>,
+  )
   return { onChoose, button: screen.getAllByRole('button')[0]! }
 }
 
@@ -36,9 +40,8 @@ describe('VariantTile [S2-16]', () => {
     [false, '1080×1920 · en · image'],
     [true, '1080×1920 · en · image · master'],
   ])('shows the title and the size line (master: %s)', (isMaster, line) => {
-    const { button } = draw({ ...POST, isMaster })
-    expect(within(button).getByText('Summer post')).toBeInTheDocument()
-    expect(within(button).getByText(line)).toBeInTheDocument()
+    draw({ ...POST, isMaster })
+    expect(screen.getByRole('button', { name: `Summer post · ${line}` })).toBeInTheDocument()
   })
 
   it.each([
@@ -46,18 +49,18 @@ describe('VariantTile [S2-16]', () => {
     ['video', true],
   ] as const)('draws a %s variant as a box in its shape, "Video" shown: %s', (format, video) => {
     const { button } = draw({ ...POST, format })
-    const box = within(button).getByText('9:16').parentElement!
+    const box = within(button).getByText('9:16')
     expect(box.style.aspectRatio).toBe('1080 / 1920')
-    expect(within(box).queryByText('Video') !== null).toBe(video)
+    expect(within(button).queryByTitle('Video') !== null).toBe(video)
   })
 
   it('shows a mark only when it is true', () => {
     const marked = { ...POST.badges, overflow: true, missingFile: true }
-    const { button } = draw({ ...POST, badges: marked })
-    expect(within(button).getByText('Text does not fit')).toBeInTheDocument()
-    expect(within(button).getByText('File missing')).toBeInTheDocument()
-    expect(within(button).queryByText('Running')).toBeNull()
-    expect(within(button).queryByText('Not checked')).toBeNull()
+    draw({ ...POST, badges: marked })
+    expect(screen.getByTitle('Text does not fit')).toBeInTheDocument()
+    expect(screen.getByTitle('File missing')).toBeInTheDocument()
+    expect(screen.queryByTitle('Running')).toBeNull()
+    expect(screen.queryByTitle('Not checked')).toBeNull()
   })
 
   it.each([true, false])('marks the button pressed when chosen is %s', (chosen) => {
@@ -92,7 +95,7 @@ describe('VariantTile [S2-16]', () => {
 
   it('shows a title holding markup as plain characters', () => {
     const { button } = draw({ ...POST, title: '<b>Bold</b> post' })
-    expect(within(button).getByText('<b>Bold</b> post')).toBeInTheDocument()
+    expect(button).toHaveAccessibleName('<b>Bold</b> post · 1080×1920 · en · image')
     expect(button.querySelector('b')).toBeNull()
   })
 
@@ -112,10 +115,11 @@ describe('VariantTile [S2-16]', () => {
 
   it('gives each mark an aria-hidden icon and keeps its words [ST-11]', () => {
     const all = Object.fromEntries(Object.keys(POST.badges).map((key) => [key, true]))
-    const { button } = draw({ ...POST, badges: { ...POST.badges, ...all } })
+    draw({ ...POST, badges: { ...POST.badges, ...all } })
     for (const word of WORDS) {
-      const mark = within(button).getByText(word)
-      expect(mark.textContent).toBe(word)
+      const mark = screen.getByTitle(word)
+      // CAMP-1: "New result" is an accent dot with no icon.
+      if (word === 'New result') continue
       const icon = mark.querySelector('svg')
       expect(icon).not.toBeNull()
       expect(icon).toHaveAttribute('aria-hidden', 'true')
@@ -128,16 +132,15 @@ describe('VariantTile [S2-16]', () => {
 describe('VariantTile master mark [R2C-2]', () => {
   it('shows "Master" with a hidden icon on the master, before the title', () => {
     const { button } = draw({ ...POST, isMaster: true })
-    const badge = within(button).getByText('Master')
-    expect(badge.textContent).toBe('Master')
-    expect(badge.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
-    const title = within(button).getByText('Summer post')
-    expect(badge.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    const badge = within(button).getByTitle('Master')
+    expect(badge).toHaveAttribute('aria-hidden', 'true')
+    expect(badge.querySelector('svg')).not.toBeNull()
+    expect(button).toHaveAccessibleName(/^Summer post · /)
   })
 
   it('shows no "Master" on a variant that is not the master', () => {
     const { button } = draw(POST)
-    expect(within(button).queryByText('Master')).toBeNull()
+    expect(within(button).queryByTitle('Master')).toBeNull()
   })
 
   it('has no accessibility violations on the master', async () => {

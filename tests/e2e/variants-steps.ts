@@ -30,16 +30,20 @@ export const section = (page: Page, direction: string): Locator =>
 export const grid = (page: Page, direction: string): Locator =>
   section(page, direction).getByRole('list', { name: `Variants in ${direction}`, exact: true })
 
-// The tile whose size line holds `line`, such as "1080×1920 · en".
+// The tile whose size line holds `line`, such as "1080×1920 · en". CAMP-1: the size line is in
+// the tile button's name, "{title} · {sizeLine}".
 export const tile = (page: Page, direction: string, line: string): Locator =>
-  grid(page, direction).getByRole('listitem').filter({ hasText: line })
+  grid(page, direction)
+    .getByRole('listitem')
+    .filter({ has: page.getByRole('button', { name: line }) })
 
-// The tile's own button (a double-click opens it in the editor; it holds the title).
-export const tileButton = (t: Locator): Locator =>
-  t.getByRole('button', { name: /^(?!Open |Quick look at |Delete )/ })
+// The tile's own button (a double-click opens it in the editor), named "{title} · {sizeLine}";
+// CAMP-1's marks are buttons too, named by their words.
+export const tileButton = (t: Locator): Locator => t.getByRole('button', { name: / · \d+×\d+ · / })
 
+// CAMP-1: the mark is an icon whose word is its tooltip.
 export const outOfDate = (page: Page, direction: string): Locator =>
-  section(page, direction).getByText('Out of date', { exact: true })
+  section(page, direction).getByTitle('Out of date', { exact: true })
 
 export type FanOut = { sizes?: string[]; languages?: string[]; fill?: string }
 

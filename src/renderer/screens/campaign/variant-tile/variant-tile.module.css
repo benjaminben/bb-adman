@@ -1,41 +1,23 @@
 /* app-style */
-/* The tile is the card (spec/app-style.md, "Campaign page, grid and tiles"): the main button
-   fills it without an edge of its own; the actions and a footer (AP-12) follow it inside. */
+/* Design wave CAMP-1 (C-11): the tile is its picture, with no edge and no ground of its own.
+   Hover lifts the picture; the chosen tile keeps the accent edge round it. The strip of marks
+   follows the button, outside it. */
 .tile {
-  position: relative;
   display: flex;
   flex-direction: column;
+  gap: var(--space-1);
   height: 100%;
-  border: var(--border-width) solid var(--color-line);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-soft);
-  transition:
-    border-color var(--motion-fast),
-    box-shadow var(--motion-fast);
-}
-/* R2C-2 (A-311): the master's tinted ground; the chosen border below is drawn over it. */
-.master {
-  background: var(--color-accent-soft);
-}
-.tile:hover {
-  border-color: var(--color-border);
-  box-shadow: var(--shadow-1);
-}
-.tile:has(> .chosen) {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 var(--border-width) var(--color-accent);
 }
 .main {
   display: flex;
-  flex: 1;
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
   gap: var(--space-1);
   width: 100%;
-  padding: var(--space-2);
+  padding: 0;
   border: 0;
-  border-radius: inherit;
+  border-radius: var(--radius-md);
   background: none;
   font-weight: var(--weight-regular);
   text-align: left;
@@ -44,20 +26,27 @@
   background: none;
 }
 .picture {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  margin-bottom: var(--space-1);
   padding: var(--space-2);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   background: var(--canvas-backdrop);
+  transition: box-shadow var(--motion-fast);
+}
+.main:hover .picture {
+  box-shadow: var(--shadow-1);
+}
+.chosen .picture,
+.chosen:hover .picture {
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--color-accent);
 }
 .shape {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   max-width: 100%;
@@ -75,30 +64,43 @@
 .tall {
   height: 100%;
 }
-.titleLine {
-  display: flex;
-  flex-wrap: wrap;
+/* A ★ disc top left for the master, a film disc bottom left for a video. */
+.corner {
+  position: absolute;
+  left: var(--space-1);
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  justify-content: center;
+  width: var(--control-height-small);
+  height: var(--control-height-small);
+  border-radius: 50%;
+  background: var(--color-bg);
+  box-shadow: var(--shadow-1);
+}
+.star {
+  top: var(--space-1);
+  color: var(--color-accent);
+}
+.film {
+  bottom: var(--space-1);
+  color: var(--color-text-secondary);
 }
 .title {
+  font-size: var(--type-meta-size);
   font-weight: var(--weight-bold);
   overflow-wrap: anywhere;
 }
-.line {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+.strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  min-height: var(--control-height-small);
 }
 .marks {
   display: flex;
-  margin-top: var(--space-1);
   flex-wrap: wrap;
-  gap: var(--space-1);
-}
-/* A long mark wraps inside the tile instead of running past its edge. */
-.marks > * {
-  max-width: 100%;
-  height: auto;
-  min-height: var(--badge-height);
-  white-space: normal;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-width: 0;
 }
