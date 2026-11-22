@@ -3,10 +3,13 @@
 // failure with "Retry" and a field to type the text by hand. Typing sends translation.set
 // (status `proposed`, source `user`, never `approved`), so the text is no longer out of date.
 // With no job started (a paid text provider) the Phase 5 line stays. Text is drawn as text.
+// P6-18: with a paid provider "Retry" opens the paid confirm in its place (`ask`).
 import { useId, useState } from 'react'
+import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'
 import { BusySpinner } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
 import type { SyncChange } from '@/shared/schemas/queries/sync'
+import { type PaidAsk, SYNC_REQUESTS } from './translate-ask'
 import type { LanguageRun } from './use-sync-translations'
 import styles from './sync-review.module.css'
 
@@ -17,6 +20,7 @@ export type TranslationLineProps = {
   proposed: NonNullable<SyncChange['proposedTranslation']>
   run: LanguageRun | undefined
   disabled: boolean
+  ask: PaidAsk | null // the language's open paid confirm, or null
   onRetry: () => void
   onType: (text: string) => Promise<string | null> // a refusal's message, or null
 }
@@ -78,15 +82,25 @@ export function TranslationLine(props: TranslationLineProps) {
     <div className={styles.detail}>
       <div className={styles.failure}>
         <p role="alert">{`The translation did not finish${sentence}`}</p>
-        <button
-          type="button"
-          className={layout.small}
-          disabled={props.disabled}
-          onClick={props.onRetry}
-        >
-          Retry
-        </button>
+        {!props.ask && (
+          <button
+            type="button"
+            className={layout.small}
+            disabled={props.disabled}
+            onClick={props.onRetry}
+          >
+            Retry
+          </button>
+        )}
       </div>
+      {props.ask && (
+        <PaidConfirm
+          count={SYNC_REQUESTS}
+          providerLabel={props.ask.label}
+          onConfirm={props.ask.onConfirm}
+          onCancel={props.ask.onCancel}
+        />
+      )}
       <ByHand {...props} />
     </div>
   )

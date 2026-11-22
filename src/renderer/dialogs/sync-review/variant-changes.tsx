@@ -8,6 +8,7 @@ import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { SyncChange, SyncPreview } from '@/shared/schemas/queries/sync'
 import { changeKey, choiceKey, type Choice, type Choices } from './decisions'
 import { OverrideChoice } from './override-choice'
+import type { PaidAsk } from './translate-ask'
 import { TranslationLine } from './translation-line'
 import type { LanguageRun } from './use-sync-translations'
 import { groupWords } from './sync-words'
@@ -24,6 +25,7 @@ export type VariantChangesProps = {
   onChoose: (key: string, choice: Choice) => void
   // P6-16: this variant's language's sync translation, and its two actions.
   run: LanguageRun | undefined
+  ask: PaidAsk | null // P6-18: the language's open paid confirm
   onRetry: () => void
   onType: (layerKey: string, text: string) => Promise<string | null>
 }
@@ -59,6 +61,7 @@ function ChangeItem(props: VariantChangesProps & { change: SyncChange }) {
           proposed={change.proposedTranslation}
           run={props.run}
           disabled={props.disabled}
+          ask={props.ask}
           onRetry={props.onRetry}
           onType={(text) => props.onType(change.layerKey, text)}
         />

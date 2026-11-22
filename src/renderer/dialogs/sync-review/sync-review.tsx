@@ -5,6 +5,7 @@
 // success the dialog closes. Changes left unticked stay out of date. The button mounts it
 // afresh for each opening, so each opening starts unticked. P6-16: translated copy changes
 // start their sync translations (use-sync-translations.ts) and are read again when one ends.
+// P6-18: with a paid text provider each waiting language gets a "Translate" line instead.
 import { useCallback, useEffect, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import type { DirectionControlProps } from '@/renderer/screens/campaign/direction-header'
@@ -13,6 +14,7 @@ import layout from '@/renderer/ui/layout.module.css'
 import type { SyncDecision } from '@/shared/schemas/links'
 import type { SyncPreviewReply } from '@/shared/schemas/queries/sync'
 import { acceptAll, acceptSelected, type Choices } from './decisions'
+import { type PaidAsk, TranslateAsk } from './translate-ask'
 import { VariantChanges } from './variant-changes'
 import { typedTranslation } from './typed-translation'
 import { useSyncTranslations } from './use-sync-translations'
@@ -69,6 +71,15 @@ export function SyncReview(props: SyncReviewProps) {
     languageOf,
     onDone: readAgain,
   })
+  const paid = translations.paid
+  const askOf = (language: string): PaidAsk | null =>
+    paid?.asking.has(language)
+      ? {
+          label: paid.label,
+          onConfirm: () => translations.confirm(language),
+          onCancel: () => translations.cancel(language),
+        }
+      : null
   const onType = (variantId: string) => async (layerKey: string, text: string) => {
     const refusal = await typedTranslation(api, command, { projectId, variantId, layerKey, text })
     if (refusal === null) readAgain()
@@ -154,6 +165,17 @@ export function SyncReview(props: SyncReviewProps) {
           </p>
         )}
         {reply && variants.length === 0 && <p>Every variant is up to date.</p>}
+        {paid?.needs
+          .filter((language) => translations.runs[language] === undefined)
+          .map((language) => (
+            <TranslateAsk
+              key={language}
+              language={language}
+              ask={askOf(language)}
+              disabled={sending}
+              onAsk={() => translations.ask(language)}
+            />
+          ))}
         {variants.map((preview) => (
           <VariantChanges
             key={preview.variantId}
@@ -166,6 +188,7 @@ export function SyncReview(props: SyncReviewProps) {
             onTick={tick}
             onChoose={(key, choice) => setChoices((was) => ({ ...was, [key]: choice }))}
             run={translations.runs[languageOf(preview.variantId) ?? '']}
+            ask={askOf(languageOf(preview.variantId) ?? '')}
             onRetry={() => translations.retry(languageOf(preview.variantId) ?? '')}
             onType={onType(preview.variantId)}
           />
