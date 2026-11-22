@@ -1,20 +1,23 @@
 // The campaign's variants as a grid of tiles (spec/screens-campaign.md, "The campaign grid
-// and the variant tile"), in the order campaign.get gives them. One grid for the whole
-// campaign; one per direction comes with Phase 5. With onOpenBehind, each tile gets the "+"
-// button that opens the variant's tab behind the overview (spec/editor.md, "Variant tabs").
-// With projectId, each tile shows its thumbnail (spec/editor.md, "Thumbnails on the screens");
-// its alt is empty, since the tile's own text names the variant. P5-14: label names the list
-// ("Variants in {direction name}"); without it the list is "Variants".
-// P5-15 (spec/screens-variants.md, "The tile's actions"): after the "+", "Quick look at
-// {title}" and, except on the master, "Delete {title}". When a variant asked for deletion
-// leaves the list while focus has nowhere to be, focus goes to the next tile's main button,
-// else the previous one, else the direction's heading.
-import { useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react'
+// and the variant tile"). With onOpenBehind, each tile gets the "+" button that opens the
+// variant's tab behind the overview (spec/editor.md, "Variant tabs"). With projectId, each tile
+// shows its thumbnail (spec/editor.md, "Thumbnails on the screens"); its alt is empty, since the
+// tile's own text names the variant. P5-14: label names the list ("Variants in {direction
+// name}"); without it the list is "Variants". P5-15: the tile's actions (tile-actions.tsx) and
+// focus after a delete (use-focus-after-delete.ts).
+// R2C-2 (spec/phases/round-2-campaign.md, design addition 2): a table with sizes as rows and
+// languages as columns, in the order of the list given, so the master sits top left. The list
+// holds one item per occupied cell in reading order; an image and a video of one size and
+// language share a cell. A row never wraps: the box scrolls sideways (A-310).
+import { useRef, type ReactNode } from 'react'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import { VariantTile } from '@/renderer/screens/campaign/variant-tile'
-import { Icon } from '@/renderer/ui/icon'
 import { VariantThumbnail } from '@/renderer/ui/variant-thumbnail'
 import layout from '@/renderer/ui/layout.module.css'
+import { gridAxes } from './grid-axes'
+import { GridHeads } from './grid-heads'
+import { TileActions } from './tile-actions'
+import { useFocusAfterDelete } from './use-focus-after-delete'
 import styles from './variant-grid.module.css'
 
 export type VariantGridProps = {
@@ -30,84 +33,35 @@ export type VariantGridProps = {
   tileFooter?: (variant: VariantSummary) => ReactNode
 }
 
-type Pending = { id: string; neighbours: string[] }
-
-function focusHeading(from: HTMLElement | null) {
-  const heading = from?.closest('section')?.querySelector<HTMLElement>('h2, h3')
-  if (!heading) return
-  if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1')
-  heading.focus()
-}
-
-function useFocusAfterDelete(variants: VariantSummary[], root: RefObject<HTMLElement | null>) {
-  const pending = useRef<Pending | null>(null)
-  useLayoutEffect(() => {
-    const asked = pending.current
-    if (!asked || variants.some((v) => v.id === asked.id)) return
-    pending.current = null
-    const active = document.activeElement
-    if (active && active !== document.body && active.isConnected) return
-    const target = asked.neighbours.find((id) => variants.some((v) => v.id === id))
-    const button = root.current?.querySelector<HTMLElement>(
-      `[data-variant="${CSS.escape(target ?? '')}"] button`,
-    )
-    if (target && button) button.focus()
-    else focusHeading(root.current)
-  }, [variants, root])
-  return (id: string) => {
-    const i = variants.findIndex((v) => v.id === id)
-    const neighbours = [variants[i + 1]?.id, variants[i - 1]?.id].filter((n) => n !== undefined)
-    pending.current = { id, neighbours }
-  }
-}
-
-function TileActions(props: VariantGridProps & { variant: VariantSummary; asked: () => void }) {
-  const { variant: v, onOpenBehind, onQuickLook, onDelete } = props
-  const look = `Quick look at ${v.title}`
-  const remove = `Delete ${v.title}`
-  if (!onOpenBehind && !onQuickLook && !onDelete) return null
+function Tile(props: VariantGridProps & { variant: VariantSummary; asked: () => void }) {
+  const { variant: v, projectId } = props
   return (
-    <span className={styles.actions}>
-      {onOpenBehind && (
-        <button
-          type="button"
-          aria-label={`Open ${v.title} in a tab`}
-          onClick={() => onOpenBehind(v.id)}
-        >
-          +
-        </button>
-      )}
-      {onQuickLook && (
-        <button
-          type="button"
-          className={layout.iconOnly}
-          aria-label={look}
-          title={look}
-          onClick={() => onQuickLook(v.id)}
-        >
-          <Icon name="eye" />
-        </button>
-      )}
-      {onDelete && !v.isMaster && (
-        <button
-          type="button"
-          className={layout.iconOnly}
-          aria-label={remove}
-          title={remove}
-          onClick={() => {
-            props.asked()
-            onDelete(v.id)
-          }}
-        >
-          <Icon name="trash" />
-        </button>
-      )}
-    </span>
+    <div data-variant={v.id}>
+      <VariantTile
+        variant={v}
+        chosen={v.id === props.chosenId}
+        onChoose={props.onChoose}
+        preview={
+          projectId && (
+            <VariantThumbnail projectId={projectId} variantId={v.id} rev={v.rev} alt="" />
+          )
+        }
+        actions={
+          <TileActions
+            variant={v}
+            onOpenBehind={props.onOpenBehind}
+            onQuickLook={props.onQuickLook}
+            onDelete={props.onDelete}
+            asked={props.asked}
+          />
+        }
+        footer={props.tileFooter?.(v)}
+      />
+    </div>
   )
 }
 
 export function VariantGrid(props: VariantGridProps) {
-  const { projectId, tileFooter } = props
   const root = useRef<HTMLElement | null>(null)
   const askDelete = useFocusAfterDelete(props.variants, root)
   if (props.variants.length === 0) {
@@ -117,28 +71,33 @@ export function VariantGrid(props: VariantGridProps) {
       </p>
     )
   }
+  const { rows, columns, cells } = gridAxes(props.variants)
+  const tracks = {
+    gridTemplateColumns: `max-content repeat(${columns.length}, var(--thumbnail-tile))`,
+    gridTemplateRows: `repeat(${rows.length + 1}, auto)`,
+  }
   return (
-    <ul
-      ref={(el) => void (root.current = el)}
-      aria-label={props.label ?? 'Variants'}
-      className={styles.grid}
-    >
-      {props.variants.map((v) => (
-        <li key={v.id} data-variant={v.id}>
-          <VariantTile
-            variant={v}
-            chosen={v.id === props.chosenId}
-            onChoose={props.onChoose}
-            preview={
-              projectId && (
-                <VariantThumbnail projectId={projectId} variantId={v.id} rev={v.rev} alt="" />
-              )
-            }
-            actions={<TileActions {...props} variant={v} asked={() => askDelete(v.id)} />}
-            footer={tileFooter?.(v)}
-          />
-        </li>
-      ))}
-    </ul>
+    <div className={styles.scroll}>
+      <div className={styles.table} style={tracks}>
+        <GridHeads rows={rows} columns={columns} />
+        <ul
+          ref={(el) => void (root.current = el)}
+          aria-label={props.label ?? 'Variants'}
+          className={styles.cells}
+        >
+          {cells.map((cell) => (
+            <li
+              key={`${cell.row}:${cell.column}`}
+              className={styles.cell}
+              style={{ gridRow: cell.row, gridColumn: cell.column }}
+            >
+              {cell.variants.map((v) => (
+                <Tile key={v.id} {...props} variant={v} asked={() => askDelete(v.id)} />
+              ))}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   )
 }

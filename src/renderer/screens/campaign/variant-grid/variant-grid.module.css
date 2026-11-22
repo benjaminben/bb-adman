@@ -1,11 +1,53 @@
 /* app-style */
-.grid {
+/* R2C-2: the direction's own sideways scroll box; the page itself never scrolls sideways. */
+.scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+/* One grid: the row heads' column, then one tile column per language (set inline). */
+.table {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--thumbnail-tile), 1fr));
   gap: var(--space-3);
+  width: max-content;
+}
+.corner,
+.rowHead {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--color-bg);
+}
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.rowHead {
+  padding-right: var(--space-2);
+}
+.name {
+  font-weight: var(--weight-bold);
+}
+.detail {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+/* The tiles' list sits under the column heads and beside the row heads, on the same tracks. */
+.cells {
+  display: grid;
+  grid-column: 2 / -1;
+  grid-row: 2 / -1;
+  grid-template-columns: subgrid;
+  grid-template-rows: subgrid;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+/* An image and a video of one size and language: stacked, image first. */
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 /* The tile's actions ("+", quick look, delete): a row of small square buttons inside the
    tile, after its main button and outside it, so they never cover the picture on any shape. */

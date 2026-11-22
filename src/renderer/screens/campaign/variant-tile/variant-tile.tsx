@@ -3,6 +3,9 @@
 // and the marks. A plain click opens the variant in the editor; pressed marks the variant the
 // overview's panels work on, the one opened last (P3-9, A-47). `preview` replaces the shape box
 // (P3-16); `actions` sit beside the button, never inside it (P3-10). Text is drawn as text.
+// R2C-2 (A-311): the master has a "Master" badge before its title and a tinted ground. The
+// badge is hidden from the button's name, which keeps starting with the title; the size
+// line's " · master" already says it.
 import type { ReactNode } from 'react'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import { Icon } from '@/renderer/ui/icon'
@@ -42,7 +45,7 @@ export function VariantTile(props: VariantTileProps) {
   const v = props.variant
   const marks = badgeMarks(v.badges)
   return (
-    <div className={styles.tile}>
+    <div className={v.isMaster ? `${styles.tile} ${styles.master}` : styles.tile}>
       <button
         type="button"
         className={props.chosen ? `${styles.main} ${styles.chosen}` : styles.main}
@@ -50,7 +53,15 @@ export function VariantTile(props: VariantTileProps) {
         onClick={() => props.onChoose(v.id)}
       >
         <span className={styles.picture}>{props.preview ?? <ShapeBox variant={v} />}</span>
-        <span className={styles.title}>{v.title}</span>
+        <span className={styles.titleLine}>
+          {v.isMaster && (
+            <span className={`${layout.badge} ${layout.accent}`} aria-hidden="true">
+              <Icon name="star" size="small" />
+              Master
+            </span>
+          )}
+          <span className={styles.title}>{v.title}</span>
+        </span>
         <span className={styles.line}>{sizeLine(v)}</span>
         {marks.length > 0 && (
           <span className={styles.marks}>
