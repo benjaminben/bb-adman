@@ -3,7 +3,7 @@
 // own dialog or tab (A-63). A local provider retries at once. A paid picture or cut-out run
 // goes through the run dialog in retry mode, with the count job.retry will ask for (FN-4).
 // Any other paid kind (video) keeps the run row's one-line paid confirm: the run dialog has
-// no video job.
+// no video job. A publish is started again from the campaign, never from its row (P9-13).
 import { useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import { RunDialog, type RunCount, type RunJob } from '@/renderer/dialogs/run-dialog'
@@ -22,7 +22,8 @@ const DIALOG_JOBS: Partial<Record<JobRow['kind'], RunJob>> = {
 
 export const retryShown = (job: JobRow) =>
   (job.status === 'failed' || job.status === 'cancelled') &&
-  JOB_KIND_CLASSES[job.kind] === 'background'
+  JOB_KIND_CLASSES[job.kind] === 'background' &&
+  job.kind !== 'publish'
 
 function pictureCount(job: JobRow): RunCount | undefined {
   const count = requestCount(job)
