@@ -138,7 +138,12 @@ describe('the plain text set through the router', () => {
     expect(reply.status).toBe(303)
     const { 'set-cookie': cookie, ...rest } = whole(reply.headers)
     expect(rest).toEqual({ ...TEXT, ...HSTS, location: `/l/${link.slug}` })
-    expect(cookie).toMatch(new RegExp(`^__Host-adman-${link.slug}=`))
+    expect(cookie).toBeDefined()
+    // The session cookie, then the cleared reviewer cookie.
+    expect(reply.headers.getSetCookie()).toEqual([
+      expect.stringMatching(new RegExp(`^__Host-adman-${link.slug}=`)),
+      `__Host-adman-${link.slug}-as=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+    ])
   })
 
   it('is on the 303 after Leave, whole: the cleared cookie and an empty body', async () => {

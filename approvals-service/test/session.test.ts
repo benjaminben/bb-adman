@@ -36,7 +36,7 @@ describe('the session [approvals-service.md "Session"]', () => {
     )
     expect(reply.status).toBe(303)
     expect(reply.headers.get('Location')).toBe(`/l/${link.slug}`)
-    const text = reply.headers.get('Set-Cookie') ?? ''
+    const text = reply.headers.getSetCookie()[0] ?? ''
     expect(text).toMatch(COOKIE_TEXT)
     expect(COOKIE_TEXT.exec(text)?.[1]).toBe(link.slug)
     expect(await isGallery(link.slug, cookieOf(reply), time.now())).toBe(true)

@@ -168,7 +168,13 @@ test('a wrong password, then the right one, then the gallery in order [gallery 2
   const entered = page.waitForResponse((r) => r.url().endsWith(`/l/${slug}/enter`))
   await page.getByLabel('Password').fill(PASSWORD)
   await page.getByRole('button', { name: 'Open' }).click()
-  const cookie = (await (await entered).headerValue('set-cookie')) ?? ''
+  // Two cookies are set: the session one, then the cleared reviewer one.
+  const [cookie = '', cleared = ''] = (
+    (await (await entered).headerValue('set-cookie')) ?? ''
+  ).split('\n')
+  expect(cleared).toBe(
+    `__Host-adman-${slug}-as=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+  )
   expect(cookie).toMatch(
     new RegExp(
       `^__Host-adman-${slug}=[A-Za-z0-9_-]{43}; Path=/; Max-Age=43200; HttpOnly; Secure; SameSite=Lax$`,

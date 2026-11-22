@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { openGallery } from '../src/visitor/actions'
 import { clearedReviewerCookie, reviewerCookie, reviewerOf } from '../src/visitor/reviewer'
-import { addLink, clearTables, db, enter, form, makeApp } from './visitor-setup'
+import { addLink, clearTables, db, enter, form, makeApp, PASSWORD } from './visitor-setup'
 
 // spec/phases/round-2-approvals.md "How the email is kept and checked (R-11)": S-2, S-3, S-5,
 // S-9 of "Security rules and the test that proves each".
@@ -180,5 +180,31 @@ describe('"Log out" clears both cookies [S-9]', () => {
     const again = await save('ann@example.com', both)
     expect(again.status).toBe(403)
     expect(again.headers.has('Set-Cookie')).toBe(false)
+  })
+})
+
+describe('entering the password clears the saved email [verify list 10]', () => {
+  it('sets the session cookie, then clears the reviewer cookie', async () => {
+    const { app, link } = await setUp()
+    const planted = `__Host-adman-${link.slug}-as=ann@example.com`
+    const reply = await app.fetch(
+      form(`/l/${link.slug}/enter`, { password: PASSWORD }, { cookie: planted }),
+    )
+    expect(reply.status).toBe(303)
+    expect(reply.headers.get('Location')).toBe(`/l/${link.slug}`)
+    const set = reply.headers.getSetCookie()
+    expect(set).toHaveLength(2)
+    expect(set[0]).toMatch(new RegExp(`^__Host-adman-${link.slug}=[A-Za-z0-9_-]{43}; `))
+    expect(set[1]).toBe(clearedReviewerCookie(link.slug))
+  })
+
+  it('sets no cookie at all for a wrong password', async () => {
+    const { app, link } = await setUp()
+    const planted = `__Host-adman-${link.slug}-as=ann@example.com`
+    const reply = await app.fetch(
+      form(`/l/${link.slug}/enter`, { password: 'not-it' }, { cookie: planted }),
+    )
+    expect(reply.status).toBe(303)
+    expect(reply.headers.has('Set-Cookie')).toBe(false)
   })
 })

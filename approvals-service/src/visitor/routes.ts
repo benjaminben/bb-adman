@@ -6,6 +6,7 @@ import { enterLink, leaveLink, saveReviewer } from './actions'
 import { clipRoute } from './clip-route'
 import { notFound, redirect, refused, textReply } from './headers'
 import { pictureRoute } from './picture-route'
+import { clearedReviewerCookie } from './reviewer'
 import { removeSignoff, signOff } from './signoffs'
 
 export type VisitorContext = {
@@ -37,7 +38,9 @@ const enter: VisitorHandler = async ({ request, env, parts, params }) => {
   const result = await enterLink(env.DB, request, slug, parts)
   if (result.kind === 'refused') return refused(request)
   if (result.kind === 'failed') return redirect(request, slug, { m: 'wrong-password' })
-  return redirect(request, slug, { cookies: [result.cookie] })
+  // A new entry starts with no saved reviewer email, so a later person on a shared browser
+  // never signs off under an earlier person's email.
+  return redirect(request, slug, { cookies: [result.cookie, clearedReviewerCookie(slug)] })
 }
 
 const leave: VisitorHandler = async ({ request, env, parts, params }) => {

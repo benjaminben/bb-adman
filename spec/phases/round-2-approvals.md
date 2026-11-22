@@ -356,7 +356,7 @@ At most two developers at once. Slices in one wave own disjoint files.
 ## Assumptions (A-360 to A-379)
 
 - **A-360.** The reviewer email lives in a cookie with no `Max-Age` (a browser-session cookie), not in browser storage: the server must know it to draw each card's state with script off, and `HttpOnly` keeps it from scripts.
-- **A-361.** The cookie is not cleared on a new password entry, only on "Log out"; a reviewer who reopens the link in the same browser session finds their email still there.
+- **A-361.** The cookie is cleared by "Log out" and by every right password entry (the entry reply sets the session cookie, then the cleared reviewer cookie), so a later person on a shared browser never signs off under an earlier person's email. A reviewer whose session is still live finds their email still there. A wrong password sets no cookie.
 - **A-362.** Every sign-off uses the posted field text; the cookie only fills the field and marks the cards.
 - **A-363.** "Use this email" exists so Enter in the field saves the email and can never press "Sign off all".
 - **A-364.** "Sign off all" is one request carrying a stamp of the shown set; a stale stamp writes nothing.
