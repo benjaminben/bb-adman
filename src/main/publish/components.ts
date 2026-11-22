@@ -80,7 +80,12 @@ function requiredOf(db: Database.Database, campaignId: string): Set<string> {
   return new Set(Array.isArray(list) ? list.filter((v): v is string => typeof v === 'string') : [])
 }
 
-function folderOf(row: AssetRow, kind: ComponentKind, use: Use, required: Set<string>) {
+function folderOf(
+  row: AssetRow,
+  kind: ComponentKind,
+  use: Use,
+  required: Set<string>,
+): PublishComponentFolder {
   if (required.has(row.id)) return 'logos'
   if (isUlid(row.subjectId)) return 'subjects'
   if (kind === 'font') return 'fonts'
