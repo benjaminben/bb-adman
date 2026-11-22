@@ -93,7 +93,8 @@ async function setUp(setup: Setup = {}, textProvider: string | null = 'fake') {
 }
 type Bus = Awaited<ReturnType<typeof setUp>>
 
-const replyOf = (r: unknown) => data<{ variantIds: string[]; translationJobIds?: string[] }>(r)
+const replyOf = (r: Parameters<typeof data>[0]) =>
+  data<{ variantIds: string[]; translationJobIds?: string[] }>(r)
 const states = (bus: Bus, language: string) =>
   bus
     .inLanguage(language)
