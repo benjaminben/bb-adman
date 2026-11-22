@@ -85,7 +85,7 @@ const CASES: Case[] = [
     good: fanOut,
     required: 'fits',
     bad: [
-      ["formats ['video']", { ...fanOut, formats: ['video'] }],
+      ['a format outside image and video', { ...fanOut, formats: ['gif'] }],
       ['no format', { ...fanOut, formats: [] }],
       ['no size', { ...fanOut, sizes: [] }],
       ['no language', { ...fanOut, languages: [] }],

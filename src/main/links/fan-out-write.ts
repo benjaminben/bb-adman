@@ -79,6 +79,8 @@ export function refuseLanguage(source: FanOutSource, language: string): void {
   }
 }
 
+export type VariantFormat = 'image' | 'video'
+
 export const sameSize = (a: Size, b: Size) => a.width === b.width && a.height === b.height
 
 export function factsOf(size: Size, language: string): VariantFacts {
@@ -90,21 +92,28 @@ export function hasVariantAt(
   directionId: string,
   sizeLabel: string,
   language: string,
+  format: VariantFormat = 'image',
 ): boolean {
   const row = db
     .prepare(
       `SELECT 1 FROM variant WHERE direction_id = ? AND size_label = ? AND language = ?
-       AND format = 'image'`,
+       AND format = ?`,
     )
-    .get(directionId, sizeLabel, language)
+    .get(directionId, sizeLabel, language, format)
   return row !== undefined
 }
 
-// One new image variant: the master's title, duration and subjects, rev 0, created by the actor.
+// One new variant (an image unless format says video): the master's title, duration and
+// subjects, rev 0, created by the actor.
 export function writeVariant(
   ctx: ProjectContext,
   source: FanOutSource,
-  target: { size: CampaignSize; language: string; layers: PlannedLayer[] },
+  target: {
+    size: CampaignSize
+    language: string
+    layers: PlannedLayer[]
+    format?: VariantFormat
+  },
   now: string,
 ): string {
   const { orm, db } = ctx.project
@@ -120,7 +129,7 @@ export function writeVariant(
       height: target.size.height,
       sizeLabel: target.size.label,
       language: target.language,
-      format: 'image',
+      format: target.format ?? 'image',
       durationMs: master.durationMs,
       durationOverridden: master.durationOverridden ? 1 : 0,
       rev: 0,

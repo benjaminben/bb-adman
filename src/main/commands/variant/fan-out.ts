@@ -2,9 +2,11 @@
 // from its master with planVariant. Agent policy deny. Combinations that exist are skipped. A
 // fill size is placed as scale and named in the reply; no fill job starts here (A-129). Step 6
 // (P6-15): new texts in another language, the brief's copy, and one translation job per
-// language, named in the reply. The inverse is variant.remove with the new variants, on the
-// campaign's list.
-import { defineCommand, type HandlerResult } from '@/main/commands/types'
+// language, named in the reply. Step 7 (P7-23): each new video variant's first clip from the
+// background picture. The inverse is variant.remove with the new variants, on the campaign's
+// list.
+import { addFirstClip } from '@/main/clips/write-clip'
+import { defineCommand, type HandlerResult, type ProjectContext } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import {
   factsOf,
@@ -15,6 +17,7 @@ import {
   sizeOf,
   writeVariant,
   type FanOutSource,
+  type VariantFormat,
 } from '@/main/links/fan-out-write'
 import {
   startFanOutTranslations,
@@ -33,10 +36,13 @@ import { AppError } from '@/shared/schemas/result'
 const MAX_NEW_VARIANTS = 200
 const FITS = 'Choose how the background fits for each new size.'
 
-type Cell = { size: CampaignSize; language: string }
+type Cell = { size: CampaignSize; language: string; format: VariantFormat }
+
+const FORMATS: VariantFormat[] = ['image', 'video']
 
 // The grid in campaign order: sizes, then the master's language first so a new language can
-// copy its size's plan (R-02). The master's size and language are always in it.
+// copy its size's plan (R-02), then image before video. The master's size and language are
+// always in it.
 function gridOf(source: FanOutSource, input: VariantFanOutInput): Cell[] {
   const { campaign, master } = source
   for (const language of input.languages) refuseLanguage(source, language)
@@ -49,7 +55,21 @@ function gridOf(source: FanOutSource, input: VariantFanOutInput): Cell[] {
     master.language,
     ...campaign.languages.filter((l) => l !== master.language && input.languages.includes(l)),
   ]
-  return sizes.flatMap((size) => languages.map((language) => ({ size, language })))
+  const formats = FORMATS.filter((f) => input.formats.includes(f))
+  return sizes.flatMap((size) =>
+    languages.flatMap((language) => formats.map((format) => ({ size, language, format }))),
+  )
+}
+
+// Step 7 through addFirstClip, which checks the asset and the row as every clip command does.
+// A row that fails those checks (a project file made elsewhere can hold anything) is left out:
+// the variant is still made, with no clip and first_clip_made 0.
+function firstClip(ctx: ProjectContext, variantId: string, now: string): void {
+  try {
+    addFirstClip(ctx, variantId, now)
+  } catch (error) {
+    if (!(error instanceof AppError)) throw error
+  }
 }
 
 // fits names exactly the listed sizes whose pixel size differs from the master's (A-147).
@@ -74,7 +94,7 @@ export function variantFanOut(deps: CoreDeps) {
       const grid = gridOf(source, input)
       refuseFits(source, input)
       const todo = grid.filter(
-        (c) => !hasVariantAt(db, input.directionId, c.size.label, c.language),
+        (c) => !hasVariantAt(db, input.directionId, c.size.label, c.language, c.format),
       )
       if (todo.length > MAX_NEW_VARIANTS) {
         throw new AppError('RULE_VIOLATION', 'Fan-out can make at most 200 variants at a time.', {
@@ -87,7 +107,7 @@ export function variantFanOut(deps: CoreDeps) {
       const variantIds: string[] = []
       const fill: VariantFanOutReply['fill'] = []
       const made: NewVariant[] = []
-      for (const { size, language } of todo) {
+      for (const { size, language, format } of todo) {
         const fit = input.fits[size.label]
         const planned = planVariant({
           master: factsOf(master, master.language),
@@ -98,10 +118,11 @@ export function variantFanOut(deps: CoreDeps) {
           sameSizePlan: plans.get(size.label) ?? null,
         })
         const layers = translatedLayers(source.campaign, language, planned)
-        const variantId = writeVariant(ctx, source, { size, language, layers }, now)
+        const variantId = writeVariant(ctx, source, { size, language, layers, format }, now)
+        if (format === 'video') firstClip(ctx, variantId, now)
         variantIds.push(variantId)
         made.push({ variantId, language })
-        if (language !== master.language) continue
+        if (language !== master.language || plans.has(size.label)) continue
         plans.set(size.label, layers)
         if (fit === 'fill') fill.push({ sizeLabel: size.label, variantId })
       }
