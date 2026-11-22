@@ -64,10 +64,10 @@ describe('DirectionGrids', () => {
   it('shows the count line for each direction', async () => {
     await draw()
     expect(
-      within(screen.getByRole('region', { name: 'Beach day' })).getByText('2 variant(s)'),
+      within(screen.getByRole('region', { name: 'Beach day' })).getByText('2 variants'),
     ).toBeInTheDocument()
     expect(
-      within(screen.getByRole('region', { name: 'City night' })).getByText('1 variant(s)'),
+      within(screen.getByRole('region', { name: 'City night' })).getByText('1 variant'),
     ).toBeInTheDocument()
   })
 
@@ -89,7 +89,8 @@ describe('DirectionGrids', () => {
     await user.keyboard(`{${mod}>}`)
     await user.click(screen.getByRole('button', { name: /^Night master/ }))
     await user.keyboard(`{/${mod}}`)
-    await user.click(screen.getByRole('button', { name: 'Open Master post in a tab' }))
+    await user.click(screen.getByRole('button', { name: 'More actions for Master post' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Open in a tab' }))
     expect(onChoose).toHaveBeenCalledTimes(1)
     expect(onOpenBehind.mock.calls).toEqual([['V3'], ['V1']])
   })

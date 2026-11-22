@@ -1,5 +1,5 @@
 // P5-19, Phase 5 exit criteria 2, 4 and 6: workflow 5.4 (a second creative direction) end to end
-// in the built app with ADMAN_FAKE_PROVIDERS=1. "New direction from this master…" named Studio;
+// in the built app with ADMAN_FAKE_PROVIDERS=1. "New direction…" named Studio;
 // another background picture in its master; fan-out with one size on "Generate fill" (the fake
 // provider); the fill placed; Cmd-click opens a tab behind; quick look Next; delete a variant,
 // and the campaign's Undo does not bring it back [D-099]. No paid call. Made-up names only.
@@ -63,12 +63,8 @@ test('Workflow 5.4: a second direction, a fill on fan-out, tab behind, quick loo
   await screens.openCampaign(page)
   const place = await placeOf(page, screens.E2E_CAMPAIGN)
 
-  // "New direction from this master…" named Studio: two grids show.
-  await v
-    .section(page, 'Direction 1')
-    .getByRole('button', { name: 'Direction', exact: true })
-    .click()
-  await page.getByRole('menuitem', { name: 'New direction from this master…' }).click()
+  // "New direction…" named Studio: two grids show.
+  await v.directionMore(page, 'Direction 1', 'New direction…')
   const make = page.getByRole('dialog', { name: 'New direction' })
   await make.getByRole('textbox', { name: 'Name' }).fill(STUDIO)
   await make.getByRole('button', { name: 'Make direction' }).click()
@@ -123,9 +119,7 @@ test('Workflow 5.4: a second direction, a fill on fan-out, tab behind, quick loo
   await expect(page.getByRole('dialog')).toHaveCount(0)
 
   // Delete the tall variant: the warning, "Delete variant", and Undo does not bring it back.
-  const remove = tall.getByRole('button', { name: /^Delete / })
-  const title = ((await remove.getAttribute('aria-label')) ?? '').replace(/^Delete /, '')
-  await remove.click()
+  const title = await v.tileMore(page, tall, 'Delete…')
   const warning = page.getByRole('dialog', { name: `Delete ${title}?` })
   await expect(warning.getByText('This cannot be undone.')).toBeVisible()
   await warning.getByRole('button', { name: 'Delete variant' }).click()

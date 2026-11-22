@@ -170,10 +170,11 @@ describe('DirectionGrids tile marks [CAMP-1]', () => {
     expect(await screen.findByRole('dialog', { name: 'Find missing files' })).toBeInTheDocument()
   })
 
-  it('"Out of date" is a plain mark here', async () => {
+  // CAMP-2: inside a direction the mark opens that direction's sync review; it sends nothing.
+  it('"Out of date" is a button that keeps its tooltip', async () => {
     const { strip } = await drawGrids()
-    expect(within(strip).queryByRole('button', { name: 'Out of date' })).toBeNull()
-    expect(within(strip).getByTitle('Out of date')).toBeInTheDocument()
+    const mark = within(strip).getByRole('button', { name: 'Out of date' })
+    expect(mark).toHaveAttribute('title', 'Out of date')
   })
 
   it('"Running" opens Activity and starts nothing', async () => {

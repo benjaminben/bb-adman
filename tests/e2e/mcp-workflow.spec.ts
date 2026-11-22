@@ -116,7 +116,9 @@ test('Workflow 5.7: an agent reads, renders and places copy; the user watches an
     patch: { style: { color: '#1F6FEB' } },
   })
   expect(edit.isError).toBeFalsy()
-  await expect(v.tile(page, DIRECTION, GERMAN).getByText('Out of date')).toBeVisible()
+  await expect(
+    v.tile(page, DIRECTION, GERMAN).getByTitle('Out of date', { exact: true }),
+  ).toBeVisible()
   await expect(
     v.section(page, DIRECTION).getByRole('button', { name: 'Sync 1 out of date…' }),
   ).toBeEnabled()

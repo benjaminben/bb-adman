@@ -1,1 +1,1 @@
-export { SyncButton } from './sync-button'
+export { SyncButton, outOfDateCount, useSyncOpen, type SyncOpen } from './sync-button'

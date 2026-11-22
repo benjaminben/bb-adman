@@ -35,8 +35,10 @@ async function draw() {
   )
 }
 
+// CAMP-2: "Delete…" is an item of the tile's More menu.
 async function openDelete(title = 'German post') {
-  await userEvent.click(screen.getByRole('button', { name: `Delete ${title}` }))
+  await userEvent.click(screen.getByRole('button', { name: `More actions for ${title}` }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Delete…' }))
   return screen.getByRole('dialog', { name: `Delete ${title}?` })
 }
 
@@ -102,7 +104,10 @@ describe('Delete variant on the campaign page [D-099, exit criterion 4]', () => 
       return { ok: true, data: { variantId: 'V2' } }
     })
     await renderWith(<CampaignView projectId={P} campaignId="C1" onBack={() => {}} />, fake)
-    await userEvent.click(await screen.findByRole('button', { name: 'Delete German post' }))
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'More actions for German post' }),
+    )
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Delete…' }))
     const dialog = screen.getByRole('dialog', { name: 'Delete German post?' })
     await userEvent.click(within(dialog).getByRole('button', { name: 'Delete variant' }))
     act(() =>

@@ -45,10 +45,10 @@ test('Workflow 5.3: a master edit, the sync review, Accept selected, then Accept
   await expect(v.grid(page, DIRECTION).getByRole('listitem')).toHaveCount(3)
   await v.fanOut(page, DIRECTION, { languages: ['de'] })
   await expect(v.grid(page, DIRECTION).getByRole('listitem')).toHaveCount(4)
-  await expect(v.section(page, DIRECTION).getByText('4 variant(s)')).toBeVisible()
+  await expect(v.section(page, DIRECTION).getByText('4 variants')).toBeVisible()
   await expect(
-    v.section(page, DIRECTION).getByRole('button', { name: 'Nothing to sync' }),
-  ).toBeDisabled()
+    v.section(page, DIRECTION).getByRole('button', { name: /^Sync \d+ out of date…$/ }),
+  ).toHaveCount(0)
 
   // The tall variant's headline colour changed by hand first: an override.
   await v.editLayer(page, v.tile(page, DIRECTION, '1080×1920 · en'), 'Headline')
@@ -62,7 +62,9 @@ test('Workflow 5.3: a master edit, the sync review, Accept selected, then Accept
   await v.showOverview(page)
   await expect(v.outOfDate(page, DIRECTION)).toHaveCount(3)
   for (const line of ['1080×1920 · en', '1920×1080 · en', '1080×1080 · de'])
-    await expect(v.tile(page, DIRECTION, line).getByText('Out of date')).toBeVisible()
+    await expect(
+      v.tile(page, DIRECTION, line).getByTitle('Out of date', { exact: true }),
+    ).toBeVisible()
 
   // The review lists each and flags the override; one variant's change, "Accept selected".
   const review = await v.openSyncReview(page, DIRECTION, 3)
@@ -77,7 +79,9 @@ test('Workflow 5.3: a master edit, the sync review, Accept selected, then Accept
 
   // The unticked ones stay out of date.
   await expect(v.outOfDate(page, DIRECTION)).toHaveCount(2)
-  await expect(v.tile(page, DIRECTION, '1920×1080 · en').getByText('Out of date')).toHaveCount(0)
+  await expect(
+    v.tile(page, DIRECTION, '1920×1080 · en').getByTitle('Out of date', { exact: true }),
+  ).toHaveCount(0)
 
   // "Accept all" clears the rest, "Keep mine" left on for the flagged colour.
   const rest = await v.openSyncReview(page, DIRECTION, 2)
@@ -87,8 +91,8 @@ test('Workflow 5.3: a master edit, the sync review, Accept selected, then Accept
   await expect(rest).toBeHidden()
   await expect(v.outOfDate(page, DIRECTION)).toHaveCount(0)
   await expect(
-    v.section(page, DIRECTION).getByRole('button', { name: 'Nothing to sync' }),
-  ).toBeDisabled()
+    v.section(page, DIRECTION).getByRole('button', { name: /^Sync \d+ out of date…$/ }),
+  ).toHaveCount(0)
 
   // The flagged variant kept its colour and took the copy; the other took both.
   const { variants } = await v.campaignRead(page, place)

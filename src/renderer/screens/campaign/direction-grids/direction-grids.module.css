@@ -1,25 +1,12 @@
 /* app-style */
-/* One direction as a card: its heading and count line with the controls at the right end,
-   then the grid across the whole card. The source order (and so the focus order) is kept. */
+/* One direction (design wave CAMP-2): the Section look with no fold and no card. Its header
+   line (direction-header/) with the hairline under it, then the grid; --gap-section between
+   directions. The source order (and so the focus order) is kept. */
 .direction {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-3) var(--space-2);
-  padding: var(--space-4);
-  border: var(--border-width) solid var(--color-line);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  box-shadow: var(--shadow-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
-.direction > :last-child {
-  grid-column: 1 / -1;
-}
-.heading {
-  margin: 0;
-  font-size: var(--font-size-heading);
-}
-.count {
-  margin: 0;
-  font-size: var(--font-size-control);
+.direction + .direction {
+  margin-top: var(--gap-section);
 }
