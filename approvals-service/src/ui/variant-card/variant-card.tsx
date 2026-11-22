@@ -43,7 +43,7 @@ export function VariantCard({ slug, variant, signoffs, reviewer, mine }: Props) 
         </div>
       </div>
       {state === 'needs' ? (
-        <CardSignoff variantKey={variantKey} version={version} title={title} />
+        <CardSignoff slug={slug} variantKey={variantKey} version={version} title={title} />
       ) : null}
       {state === 'signed' ? (
         <div className={styles.end}>

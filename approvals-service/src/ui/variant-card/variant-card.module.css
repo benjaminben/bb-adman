@@ -9,10 +9,13 @@
   border-radius: var(--radius-md);
 }
 
+/* The accent edge is a ring outside the card, so the full-width button's corners meet the
+   card's own corners with no gap. */
 .needs {
-  border: var(--indicator-width) solid var(--color-accent);
   background: var(--color-bg);
-  box-shadow: var(--shadow-2);
+  box-shadow:
+    0 0 0 var(--indicator-width) var(--color-accent),
+    var(--shadow-2);
 }
 
 .signed {
