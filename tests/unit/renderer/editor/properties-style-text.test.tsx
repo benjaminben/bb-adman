@@ -42,11 +42,15 @@ function TextHarness() {
 }
 
 describe('the properties panel takes the look, text layer [ST-8]', () => {
-  it.each([['text-fields/text-fields.module.css']])('%s gives swatches control edges', (file) => {
-    expect(rule(read(file), '.swatch')).toMatch(
-      /border:\s*var\(--border-width\) solid var\(--color-control-border\)/,
-    )
-  })
+  // ED-2: the text colour is the shared swatch field, so its swatch rule is the one read.
+  it.each([['../ui/swatch-field/swatch-field.module.css']])(
+    '%s gives swatches control edges',
+    (file) => {
+      expect(rule(read(file), '.swatch')).toMatch(
+        /border:\s*var\(--border-width\) solid var\(--color-control-border\)/,
+      )
+    },
+  )
 
   it('sets the copy in the reading face and alignment as a segmented group', () => {
     render(<TextHarness />)

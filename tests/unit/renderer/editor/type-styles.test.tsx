@@ -47,7 +47,7 @@ describe('TypeStyles [R2E-3, D3 "In the editor"]', () => {
   it('shows the five styles and the no-fonts line when the project has no font', async () => {
     const { fake } = await setup()
     const buttons = within(await group()).getAllByRole('button')
-    expect(buttons.map((b) => b.textContent)).toEqual(LABELS)
+    expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual(LABELS)
     expect(screen.getByText(NO_FONTS_LINE)).toBeInTheDocument()
     expect(fontQueries(fake).map((q) => q.input)).toEqual([
       { projectId: P, library: 'asset', kind: 'font' },
@@ -72,7 +72,7 @@ describe('TypeStyles [R2E-3, D3 "In the editor"]', () => {
     const pressed = within(await group())
       .getAllByRole('button')
       .filter((b) => b.getAttribute('aria-pressed') === 'true')
-    expect(pressed.map((b) => b.textContent)).toEqual([name])
+    expect(pressed.map((b) => b.getAttribute('aria-label'))).toEqual([name])
   })
 
   it('presses none when the layer matches no style', async () => {

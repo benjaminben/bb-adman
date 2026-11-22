@@ -47,8 +47,6 @@ describe('TextFields [spec/editor.md "Properties panel", Text]', () => {
     ['Line height', 'spinbutton', '1.35', { style: { lineHeight: 1.35 } }, '{Enter}'],
     ['Line height', 'spinbutton', '1.35', { style: { lineHeight: 1.35 } }, '{Tab}'],
     ['Letter spacing', 'spinbutton', '0.08', { style: { letterSpacing: 0.08 } }, '{Enter}'],
-    ['Colour', 'textbox', '#2A7DE8', { style: { color: '#2A7DE8' } }, '{Enter}'],
-    ['Colour', 'textbox', '#2A7DE8', { style: { color: '#2A7DE8' } }, '{Tab}'],
   ])(
     '%s sends one layer.update on %#, not per keystroke',
     async (name, role, typed, patch, key) => {
@@ -100,17 +98,38 @@ describe('TextFields [spec/editor.md "Properties panel", Text]', () => {
     ])
   })
 
-  it('a colour that is not #RRGGBB sends nothing and goes back', async () => {
+  // ED-2: the colour is a swatch field; other colours are typed in its "+" popover.
+  const otherColour = () =>
+    userEvent.click(
+      within(screen.getByRole('group', { name: 'Colour' })).getByRole('button', {
+        name: 'Other colour',
+      }),
+    )
+
+  it('Colour: "Hex colour" sends one layer.update on Enter, not per keystroke', async () => {
     const { onUpdate } = setup()
-    const field = screen.getByRole('textbox', { name: 'Colour' })
+    await otherColour()
+    const field = screen.getByRole('textbox', { name: 'Hex colour' })
+    await userEvent.clear(field)
+    await userEvent.type(field, '#2A7DE8')
+    expect(onUpdate).not.toHaveBeenCalled()
+    await userEvent.keyboard('{Enter}')
+    await elsewhere()
+    expect(onUpdate.mock.calls).toEqual([[{ style: { color: '#2A7DE8' } }]])
+  })
+
+  it('a colour that is not #RRGGBB sends nothing', async () => {
+    const { onUpdate } = setup()
+    await otherColour()
+    const field = screen.getByRole('textbox', { name: 'Hex colour' })
     await userEvent.clear(field)
     await userEvent.type(field, 'orange{Enter}')
     expect(onUpdate).not.toHaveBeenCalled()
-    expect(field).toHaveValue((HEADLINE.style as { color: string }).color)
   })
 
   it('the colour picker saves once, when its choice is made', async () => {
     const { onUpdate } = setup()
+    await otherColour()
     const picker = screen.getByLabelText('Colour picker')
     fireEvent.input(picker, { target: { value: '#112233' } })
     fireEvent.input(picker, { target: { value: '#112244' } })
@@ -121,8 +140,8 @@ describe('TextFields [spec/editor.md "Properties panel", Text]', () => {
 
   it('one button per palette colour, each sending that colour', async () => {
     const { onUpdate } = setup()
-    await userEvent.click(screen.getByRole('button', { name: 'Palette colour #E85D2A' }))
-    expect(screen.getByRole('button', { name: 'Palette colour #1B1D22' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: '#E85D2A' }))
+    expect(screen.getByRole('button', { name: '#1B1D22' })).toBeInTheDocument()
     expect(onUpdate.mock.calls).toEqual([[{ style: { color: '#E85D2A' } }]])
   })
 
@@ -134,20 +153,22 @@ describe('TextFields [spec/editor.md "Properties panel", Text]', () => {
         .getAllByRole('option')
         .map((o) => o.textContent),
     ).toEqual([
-      'Thin 100',
-      'Extra light 200',
-      'Light 300',
-      'Regular 400',
-      'Medium 500',
-      'Semibold 600',
-      'Bold 700',
-      'Extra bold 800',
-      'Black 900',
+      'Thin',
+      'Extra light',
+      'Light',
+      'Regular',
+      'Medium',
+      'Semibold',
+      'Bold',
+      'Extra bold',
+      'Black',
     ])
-    expect(weight).toHaveAccessibleDescription(
-      'Weight changes only fonts that have more than one weight.',
-    )
-    await userEvent.selectOptions(weight, 'Black 900')
+    // ED-2: the hint is in the InfoTip beside Weight.
+    await userEvent.click(screen.getByRole('button', { name: 'About weight' }))
+    expect(
+      screen.getByText('Weight changes only fonts that have more than one weight.'),
+    ).toBeVisible()
+    await userEvent.selectOptions(weight, 'Black')
     expect(onUpdate.mock.calls).toEqual([[{ style: { fontWeight: 900 } }]])
   })
 

@@ -56,7 +56,7 @@ describe('FontField [spec/editor.md "Fonts: upload and choice"]', () => {
       { projectId: P, library: 'asset', kind: 'font' },
     ])
     expect(optionNames(select)).toEqual([
-      'Default font (Inter)',
+      'Inter (default)',
       'Fraunces',
       'F2.woff2',
       'Bebas Neue (file not found)',
@@ -66,7 +66,7 @@ describe('FontField [spec/editor.md "Fonts: upload and choice"]', () => {
 
   it.each([
     ['Fraunces', 'F1'],
-    ['Default font (Inter)', null],
+    ['Inter (default)', null],
   ])('choosing %s sends that font', async (name, id) => {
     const { onChange, select } = await setup({ fontAssetId: id === null ? 'F2' : null })
     await userEvent.selectOptions(select, name)
