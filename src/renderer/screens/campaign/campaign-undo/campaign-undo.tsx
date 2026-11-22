@@ -9,6 +9,7 @@ import { useApi, useApp } from '@/renderer/app/app-context'
 import { useNav } from '@/renderer/app/nav-context'
 import { platform } from '@/renderer/editor/use-editor-key'
 import { OVERVIEW_TAB, campaignNav } from '@/renderer/stores/nav-store'
+import { Icon } from '@/renderer/ui/icon'
 import { matchShortcut } from '@/renderer/ui/shortcuts'
 import type { HistoryState } from '@/shared/schemas/queries/history'
 import layout from '@/renderer/ui/layout.module.css'
@@ -76,9 +77,11 @@ export function CampaignUndo(props: Props) {
   return (
     <div role="group" aria-label="Campaign changes" className={layout.row}>
       <button type="button" disabled={!state.canUndo} onClick={() => send('history.undo')}>
+        <Icon name="undo" />
         Undo
       </button>
       <button type="button" disabled={!state.canRedo} onClick={() => send('history.redo')}>
+        <Icon name="redo" />
         Redo
       </button>
     </div>
