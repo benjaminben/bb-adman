@@ -1,12 +1,16 @@
 // One variant in the campaign grid (spec/screens-campaign.md, "The campaign grid and the
 // variant tile"): a pressed-or-not button holding the picture area, the title, the size line
-// and the marks. A plain click opens the variant in the editor; pressed marks the variant the
-// overview's panels work on, the one opened last (P3-9, A-47). `preview` replaces the shape box
+// and the marks. Pressed marks the selected variant, the one the overview's panels work on
+// (P3-9, A-47). `preview` replaces the shape box
 // (P3-16); `actions` sit beside the button, never inside it (P3-10). Text is drawn as text.
 // R2C-2 (A-311): the master has a "Master" badge before its title and a tinted ground. The
 // badge is hidden from the button's name, which keeps starting with the title; the size
 // line's " · master" already says it.
-import type { ReactNode } from 'react'
+// R2C-3 (design addition 3): a click selects; a double-click or Enter opens (onOpen), Mod+Enter
+// opens behind. Enter's own click is stopped, so Enter does not also select. A tile given no
+// open action keeps the button's own Enter, a click.
+import type { KeyboardEvent, ReactNode } from 'react'
+import { platform } from '@/renderer/editor/use-editor-key'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
@@ -17,6 +21,8 @@ export type VariantTileProps = {
   variant: VariantSummary
   chosen: boolean
   onChoose: (variantId: string) => void
+  onOpen?: (variantId: string) => void
+  onOpenBehind?: (variantId: string) => void
   preview?: ReactNode
   actions?: ReactNode
   // AP-12: drawn after the main button, never inside it (the approval marks).
@@ -41,6 +47,15 @@ function ShapeBox(props: { variant: VariantSummary }) {
   )
 }
 
+function onEnter(event: KeyboardEvent, props: VariantTileProps) {
+  if (event.key !== 'Enter') return
+  const behind = platform === 'mac' ? event.metaKey : event.ctrlKey
+  const open = behind ? props.onOpenBehind : props.onOpen
+  if (!open) return
+  event.preventDefault()
+  open(props.variant.id)
+}
+
 export function VariantTile(props: VariantTileProps) {
   const v = props.variant
   const marks = badgeMarks(v.badges)
@@ -51,6 +66,8 @@ export function VariantTile(props: VariantTileProps) {
         className={props.chosen ? `${styles.main} ${styles.chosen}` : styles.main}
         aria-pressed={props.chosen}
         onClick={() => props.onChoose(v.id)}
+        onDoubleClick={() => props.onOpen?.(v.id)}
+        onKeyDown={(event) => onEnter(event, props)}
       >
         <span className={styles.picture}>{props.preview ?? <ShapeBox variant={v} />}</span>
         <span className={styles.titleLine}>

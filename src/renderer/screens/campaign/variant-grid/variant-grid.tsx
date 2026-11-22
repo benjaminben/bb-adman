@@ -9,6 +9,8 @@
 // languages as columns, in the order of the list given, so the master sits top left. The list
 // holds one item per occupied cell in reading order; an image and a video of one size and
 // language share a cell. A row never wraps: the box scrolls sideways (A-310).
+// R2C-3 (design addition 3): onOpen opens a tile (double-click, Enter); the list's keys move the
+// selection and ask to delete (use-grid-keys.ts).
 import { useRef, type ReactNode } from 'react'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import { VariantTile } from '@/renderer/screens/campaign/variant-tile'
@@ -17,6 +19,7 @@ import layout from '@/renderer/ui/layout.module.css'
 import { gridAxes } from './grid-axes'
 import { GridHeads } from './grid-heads'
 import { TileActions } from './tile-actions'
+import { useGridKeys } from './use-grid-keys'
 import { useFocusAfterDelete } from './use-focus-after-delete'
 import styles from './variant-grid.module.css'
 
@@ -26,6 +29,7 @@ export type VariantGridProps = {
   variants: VariantSummary[]
   chosenId: string | null
   onChoose: (variantId: string) => void
+  onOpen?: (variantId: string) => void
   onOpenBehind?: (variantId: string) => void
   onQuickLook?: (variantId: string) => void
   onDelete?: (variantId: string) => void
@@ -41,6 +45,8 @@ function Tile(props: VariantGridProps & { variant: VariantSummary; asked: () => 
         variant={v}
         chosen={v.id === props.chosenId}
         onChoose={props.onChoose}
+        onOpen={props.onOpen}
+        onOpenBehind={props.onOpenBehind}
         preview={
           projectId && (
             <VariantThumbnail projectId={projectId} variantId={v.id} rev={v.rev} alt="" />
@@ -64,6 +70,17 @@ function Tile(props: VariantGridProps & { variant: VariantSummary; asked: () => 
 export function VariantGrid(props: VariantGridProps) {
   const root = useRef<HTMLElement | null>(null)
   const askDelete = useFocusAfterDelete(props.variants, root)
+  const { onDelete } = props
+  const axes = gridAxes(props.variants)
+  const onKeyDown = useGridKeys(axes, {
+    onChoose: props.onChoose,
+    onDelete:
+      onDelete &&
+      ((id) => {
+        askDelete(id)
+        onDelete(id)
+      }),
+  })
   if (props.variants.length === 0) {
     return (
       <p ref={(el) => void (root.current = el)} className={layout.muted}>
@@ -71,7 +88,7 @@ export function VariantGrid(props: VariantGridProps) {
       </p>
     )
   }
-  const { rows, columns, cells } = gridAxes(props.variants)
+  const { rows, columns, cells } = axes
   const tracks = {
     gridTemplateColumns: `max-content repeat(${columns.length}, var(--thumbnail-tile))`,
     gridTemplateRows: `repeat(${rows.length + 1}, auto)`,
@@ -84,6 +101,7 @@ export function VariantGrid(props: VariantGridProps) {
           ref={(el) => void (root.current = el)}
           aria-label={props.label ?? 'Variants'}
           className={styles.cells}
+          onKeyDown={onKeyDown}
         >
           {cells.map((cell) => (
             <li
