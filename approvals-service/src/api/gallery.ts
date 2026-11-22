@@ -1,5 +1,6 @@
 // PUT .../gallery and PUT .../pictures (spec/approvals-service.md "The keyed API"). Every
-// picture address has passed checkPictureUrl (the routes' `check`) before a handler runs.
+// picture and clip address has passed checkPictureUrl (the routes' `check`) before a handler
+// runs (spec/phases/round-2-approvals-video.md "Contract and data changes").
 import type { z } from 'zod'
 import type { Gallery, PictureRenewals } from '../contract'
 import type { Env } from '../env'
@@ -29,15 +30,25 @@ function cleaned(url: string, env: Env): string {
 
 export const checkGalleryPictures = (body: GalleryBody, env: Env) =>
   checkAll(
-    body.variants.map((v) => v.pictureUrl),
+    body.variants.flatMap((v) =>
+      v.clip === null ? [v.pictureUrl] : [v.pictureUrl, v.clip.clipUrl],
+    ),
     env,
   )
 
 export const checkRenewalPictures = (body: RenewalBody, env: Env) =>
   checkAll(
-    body.pictures.map((p) => p.pictureUrl),
+    body.pictures.flatMap((p) => (p.clipUrl === null ? [p.pictureUrl] : [p.pictureUrl, p.clipUrl])),
     env,
   )
+
+// The four clip columns of a variant: an image, a video sent as its still only, or a video with
+// its clip.
+function clipColumns(v: GalleryBody['variants'][number], env: Env) {
+  if (v.clip === null) return { kind: v.kind, clipUrl: null, clipMs: null, clipBytes: null }
+  const { clipUrl, durationMs, bytes } = v.clip
+  return { kind: v.kind, clipUrl: cleaned(clipUrl, env), clipMs: durationMs, clipBytes: bytes }
+}
 
 // One batch: the name, then the gallery rows rewritten in list order, then the sign-offs of
 // every variant no longer listed.
@@ -54,6 +65,7 @@ export const replaceGallery: ApiHandler<GalleryBody> = async (ctx) => {
       version: v.version,
       pictureUrl: cleaned(v.pictureUrl, ctx.env),
       pictureExpiresAt: Date.parse(v.pictureExpiresAt),
+      ...clipColumns(v, ctx.env),
     }),
   )
   await db.batch([
@@ -78,6 +90,7 @@ export const renewPictures: ApiHandler<RenewalBody> = async (ctx) => {
         version: p.version,
         pictureUrl: cleaned(p.pictureUrl, ctx.env),
         pictureExpiresAt: Date.parse(p.pictureExpiresAt),
+        clipUrl: p.clipUrl === null ? null : cleaned(p.clipUrl, ctx.env),
       }),
     ),
   )

@@ -97,8 +97,8 @@ describe('contract rules [approvals-service.md "The shared contract"]', () => {
     expect(c.Email.parse(' Ann@Example.COM ')).toBe('ann@example.com')
   })
 
-  it('is version 1', () => {
-    expect(c.CONTRACT_VERSION).toBe(1)
+  it('is version 2', () => {
+    expect(c.CONTRACT_VERSION).toBe(2)
   })
 })
 

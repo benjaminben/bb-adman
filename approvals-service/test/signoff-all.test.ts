@@ -50,6 +50,10 @@ const variant = (variantKey: string, version: number, position: number, expiresA
     version,
     pictureUrl: 'https://bucket.s3.eu-west-1.amazonaws.com/p.png',
     pictureExpiresAt: expiresAt,
+    kind: 'image',
+    clipUrl: null,
+    clipMs: null,
+    clipBytes: null,
   }) satisfies VariantRow
 
 async function rows() {
