@@ -2,13 +2,14 @@
 // before a close that would leave attached jobs running. "Keep open" has the focus and closes
 // nothing (Escape and a click outside do the same). "Stop and close" sends job.cancel for each
 // job and forgets them, so a late success never applies, then closes.
+// SH-5: one close question, a confirm dialog. With a paid provider the paid line is its warning
+// (visible in the head and its accessible description). A tab's question has no sentence that
+// repeats the title; a dialog's (copy options, brief reading) keeps it.
 import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { attachedStoreFor, type AttachedJob } from '@/renderer/stores/attached-store'
 import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
-import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import { PAID_LINE, anyPaid, closeBody, closeTitle, type ClosePlace } from './close-words'
-import styles from './close-warning.module.css'
 
 export type CloseWarningProps = {
   jobs: AttachedJob[]
@@ -35,19 +36,13 @@ export function CloseWarning(props: CloseWarningProps) {
     <DialogFrame
       open={jobs.length > 0}
       onClose={props.onKeep}
+      kind="confirm"
       title={closeTitle(jobs)}
-      description={closeBody(jobs, props.place)}
+      {...(props.place === 'dialog' && { description: closeBody(jobs, props.place) })}
+      {...(anyPaid(jobs, providers) && { warning: PAID_LINE })}
     >
-      {anyPaid(jobs, providers) && (
-        <p className={`${layout.notice} ${layout.warn} ${styles.paid}`}>
-          <span className={styles.mark}>
-            <Icon name="alert" size="small" />
-          </span>
-          {PAID_LINE}
-        </p>
-      )}
       <DialogFoot>
-        <button type="button" onClick={props.onKeep}>
+        <button type="button" className={layout.quiet} onClick={props.onKeep}>
           Keep open
         </button>
         <button type="button" className={layout.primary} onClick={stop}>

@@ -1,18 +1,20 @@
 // spec/screens-ai.md, "Attached jobs and the close warning"; spec/jobs.md, "Closing a project
 // and quitting" (the Ask answer to Q-039): "Close project" sends project.close; refused with
-// jobs_running, it asks "Close {project}?" instead of showing the refusal. "Stop runs and close"
+// jobs_running, it asks "Close {project}?" instead of showing the refusal. "Stop and close"
 // sends project.close with runningJobs 'stop'; "Keep open" (focused) sends nothing.
+// SH-5: the same confirm look as the tab question; the lost-work words and each left-running
+// line are its warning, word for word (visible in the head and its accessible description).
 // P7-15 (A-174): a started paid video run the close leaves running adds the left-running line,
 // one per provider. The rows come from job.activity for the project.
 import { useState } from 'react'
 import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { cancelShown } from '@/renderer/ui/cancel-shown'
 import { leftRunningLine } from '@/renderer/ui/close-warning/close-words'
-import { DialogFrame } from '@/renderer/ui/dialog-frame'
+import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
+import layout from '@/renderer/ui/layout.module.css'
 import { ACTIVITY_LIMIT_MAX, type JobActivity } from '@/shared/schemas/queries/activity'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { AdmanApi } from '@/shared/schemas/api'
-import styles from './project-switcher.module.css'
 
 type Asking = { projectId: string; name: string; count: number; lines: string[] }
 type LeftRunning = { left: number; lines: string[] }
@@ -80,29 +82,37 @@ export function useCloseProject() {
     setAsking(null)
   }
 
+  const words = [closeProjectWords(asking?.count ?? 0), ...(asking?.lines ?? [])]
+    .filter((line) => line !== '')
+    .join(' ')
+
   const dialog = (
     <DialogFrame
       open={asking !== null}
       onClose={() => setAsking(null)}
+      kind="confirm"
       title={`Close ${asking?.name ?? ''}?`}
-      description={[closeProjectWords(asking?.count ?? 0), ...(asking?.lines ?? [])]
-        .filter((line) => line !== '')
-        .join(' ')}
+      {...(words !== '' && { warning: words })}
       closable={!sending}
     >
-      <div className={styles.actions}>
-        <button type="button" disabled={sending} onClick={() => setAsking(null)}>
+      <DialogFoot>
+        <button
+          type="button"
+          className={layout.quiet}
+          disabled={sending}
+          onClick={() => setAsking(null)}
+        >
           Keep open
         </button>
         <button
           type="button"
-          className={styles.stop}
+          className={layout.primary}
           disabled={sending}
           onClick={() => void stopAndClose()}
         >
-          Stop runs and close
+          Stop and close
         </button>
-      </div>
+      </DialogFoot>
     </DialogFrame>
   )
   return { closeProject, dialog }
