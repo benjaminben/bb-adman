@@ -24,3 +24,11 @@ export const publishRunInput = projectScoped
   .strict()
 export type PublishRunInput = z.infer<typeof publishRunInput>
 export type PublishRunReply = { jobId: string }
+
+// publish.setFontConsent (A-260): this machine's consent to share one font of the project. The
+// asset ID is checked against the project's rows by the command, so a bad one is NOT_FOUND.
+export const publishSetFontConsentInput = projectScoped
+  .extend({ assetId: z.string().min(1).max(200), allowed: z.boolean() })
+  .strict()
+export type PublishSetFontConsentInput = z.infer<typeof publishSetFontConsentInput>
+export type PublishSetFontConsentReply = Record<string, never>

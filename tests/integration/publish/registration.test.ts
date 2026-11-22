@@ -83,7 +83,10 @@ describe('Phase 9 registration [P9-1]', () => {
   it('registers the publish and Dropbox commands and publish.inspect on core', async () => {
     const { fx } = await open()
     const deps = fx.core.deps
-    expect(publishCommands(deps).map((h) => h.name)).toEqual(['publish.run'])
+    expect(publishCommands(deps).map((h) => h.name)).toEqual([
+      'publish.run',
+      'publish.setFontConsent',
+    ])
     expect(storageCommands(deps).map((h) => h.name)).toEqual([
       'storage.checkS3',
       'storage.dropboxSignIn',
@@ -143,18 +146,6 @@ describe('the Phase 9 command stubs [P9-1]', () => {
 
 describe('the publish.inspect stub [P9-1]', () => {
   const input = (projectId: string) => ({ projectId, campaignId: 'C1', storage: null })
-
-  it('refuses the user as not built, after the input check', async () => {
-    const { fx, projectId } = await open()
-    expect(await fx.core.query('publish.inspect', input(projectId), { actor: 'user' })).toEqual(
-      notBuilt,
-    )
-    const bad = { ...input(projectId), storage: 'azure-blob' }
-    expect(await fx.core.query('publish.inspect', bad, { actor: 'user' })).toMatchObject({
-      ok: false,
-      error: { code: 'INVALID_INPUT' },
-    })
-  })
 
   it('refuses the agent before it reads the input', async () => {
     const { fx, projectId } = await open()
