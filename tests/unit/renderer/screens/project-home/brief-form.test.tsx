@@ -13,7 +13,7 @@ const sent = (fake: Fake, name: string) => fake.commands.find((c) => c.name === 
 async function openForm(fake: Fake = projectApi()) {
   await renderApp(<ProjectHome project={PROJECT} />, photoStubs(fake))
   await userEvent.click(await screen.findByRole('button', { name: 'Load a brief' }))
-  return screen.findByRole('region', { name: 'Brief' })
+  return screen.findByRole('region', { name: 'New campaign' })
 }
 
 const row = (form: HTMLElement, n: number) =>
@@ -141,7 +141,7 @@ describe('the brief form [screens-campaign "The brief form", FR-023, FR-024]', (
     await addPhotos(await openForm(fake))
     await create(fake)
     expect(await screen.findByRole('region', { name: 'Campaign' })).toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Brief' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'New campaign' })).toBeNull()
   })
 
   it('has no axe violations', async () => {

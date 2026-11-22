@@ -2,7 +2,7 @@
 // a title and its parts. Cloud storage holds the S3 part (D-096) and Dropbox; the approvals
 // service follows it (spec/approvals.md "Screens"). The Setup button sits at the list's foot.
 // Given onClose, the screen has a way out (SH-2, choice C-14): the "Close settings" icon button
-// at its top right, and Escape (use-escape-leave.ts).
+// at its top right, and Escape (ui/escape-leave).
 import { useState, type ReactNode } from 'react'
 import { SetupButton } from '@/renderer/screens/settings/setup-section'
 import { LocationSetting } from '@/renderer/screens/settings/location-setting'
@@ -18,7 +18,7 @@ import { SideList } from '@/renderer/ui/side-list'
 import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import { SETTINGS_PAGES, rememberPage, rememberedPage, type SettingsPage } from './settings-pages'
-import { useEscapeLeave } from './use-escape-leave'
+import { useEscapeLeave } from '@/renderer/ui/escape-leave'
 import styles from './settings-screen.module.css'
 
 const PARTS: Record<SettingsPage, () => ReactNode> = {

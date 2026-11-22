@@ -13,7 +13,7 @@ async function typeBrief(fake: Fake = projectApi()) {
   await renderApp(<ProjectHome project={PROJECT} />, photoStubs(fake))
   await userEvent.click(await screen.findByRole('button', { name: 'Paste a brief' }))
   await userEvent.click(await screen.findByRole('button', { name: 'Start from an empty form' }))
-  return screen.findByRole('region', { name: 'Brief' })
+  return screen.findByRole('region', { name: 'New campaign' })
 }
 
 const field = (form: HTMLElement, label: string) => within(form).getByLabelText(label)

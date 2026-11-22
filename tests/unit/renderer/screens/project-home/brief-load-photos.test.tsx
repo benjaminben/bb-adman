@@ -46,9 +46,9 @@ describe("Load a brief: the brief's photos [SP-4, A-124]", () => {
     await openPage(fake)
     await userEvent.click(screen.getByRole('button', { name: 'Load a brief' }))
     expect(await screen.findByRole('status')).toHaveTextContent("Adding the brief's photos…")
-    expect(screen.queryByRole('region', { name: 'Brief' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'New campaign' })).toBeNull()
     await act(async () => release())
-    await screen.findByRole('region', { name: 'Brief' })
+    await screen.findByRole('region', { name: 'New campaign' })
     expect(screen.queryByText("Adding the brief's photos…")).toBeNull()
   })
 

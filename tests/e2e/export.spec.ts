@@ -53,7 +53,7 @@ async function makeCampaign(): Promise<ex.Place & { ads: Ad[] }> {
   await screens.createProject(page, 'Summer Splash')
   await screens.answerOpenDialog(app, [BRIEF])
   await page.getByRole('button', { name: 'Load a brief' }).click()
-  const form = page.getByRole('region', { name: 'Brief' })
+  const form = page.getByRole('region', { name: 'New campaign' })
   await expect(form.getByLabel('Campaign name')).toHaveValue(CAMPAIGN)
   await screens.addPhoto(app, form, 1, PHOTOS[0]!)
   await screens.addPhoto(app, form, 2, PHOTOS[1]!)

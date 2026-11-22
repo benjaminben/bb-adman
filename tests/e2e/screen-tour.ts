@@ -67,7 +67,10 @@ export async function startTour(app: ElectronApplication, page: Page, box: Sandb
 export async function projectHomeTour(app: ElectronApplication, page: Page) {
   await screens.answerOpenDialog(app, [screens.E2E_BRIEF])
   await page.getByRole('button', { name: 'Load a brief' }).click()
-  await page.getByRole('region', { name: 'Brief' }).getByRole('button', { name: 'Cancel' }).click()
+  await page
+    .getByRole('region', { name: 'New campaign' })
+    .getByRole('button', { name: 'Cancel' })
+    .click()
   await expect(page.getByRole('button', { name: 'Load a brief' })).toBeVisible()
 
   await screens.loadBriefAndCreate(app, page)

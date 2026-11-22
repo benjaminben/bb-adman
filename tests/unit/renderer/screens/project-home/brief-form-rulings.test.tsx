@@ -11,7 +11,7 @@ type Fake = ReturnType<typeof projectApi>
 async function open(button: 'Load a brief' | 'Type a brief', fake: Fake = projectApi()) {
   await renderApp(<ProjectHome project={PROJECT} />, photoStubs(fake))
   await userEvent.click(await screen.findByRole('button', { name: button }))
-  return screen.findByRole('region', { name: 'Brief' })
+  return screen.findByRole('region', { name: 'New campaign' })
 }
 
 function problemLines(form: HTMLElement) {

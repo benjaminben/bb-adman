@@ -64,7 +64,7 @@ describe('project home sections [HOME-1]', () => {
     const plus = within(list).getByRole('button', { name: 'New campaign' })
     expect(plus).toHaveAttribute('title', 'New campaign')
     await userEvent.click(plus)
-    expect(await screen.findByRole('region', { name: 'Brief' })).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'New campaign' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Campaigns' })).toBeNull()
   })
 

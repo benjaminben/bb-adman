@@ -73,7 +73,7 @@ export async function renderForm(
     />,
     fake,
   )
-  const form = await screen.findByRole('region', { name: 'Brief' })
+  const form = await screen.findByRole('region', { name: 'New campaign' })
   await act(async () => {})
   return { ...view, form, onCreate }
 }

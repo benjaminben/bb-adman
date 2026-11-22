@@ -35,7 +35,7 @@ describe('removing the photos the form added [SP-4, A-111]', () => {
     fake.reuse('B2')
     const { unmount } = await openPage(fake)
     await userEvent.click(screen.getByRole('button', { name: 'Load a brief' }))
-    await addPhoto(await screen.findByRole('region', { name: 'Brief' }), 1)
+    await addPhoto(await screen.findByRole('region', { name: 'New campaign' }), 1)
     unmount()
     await waitFor(() => expect(removed(fake).sort()).toEqual(['B1', 'F1']))
   })
@@ -44,12 +44,12 @@ describe('removing the photos the form added [SP-4, A-111]', () => {
     const { fake } = briefApi()
     const { unmount } = await openPage(fake)
     await userEvent.click(screen.getByRole('button', { name: 'Load a brief' }))
-    await screen.findByRole('region', { name: 'Brief' })
+    await screen.findByRole('region', { name: 'New campaign' })
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Create campaign' })).toBeEnabled(),
     )
     await create()
-    await waitFor(() => expect(screen.queryByRole('region', { name: 'Brief' })).toBeNull())
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'New campaign' })).toBeNull())
     unmount()
     expect(removed(fake)).toEqual([])
   })

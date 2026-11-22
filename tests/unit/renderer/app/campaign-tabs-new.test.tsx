@@ -49,7 +49,7 @@ async function draw(open: string[]) {
 // HOME-1: the project home has its own "New campaign" tile; this is the top bar's "+".
 // It comes first in the page; with no home showing it is the only one.
 const plus = () => screen.getAllByRole('button', { name: 'New campaign' })[0]!
-const form = () => screen.findByRole('region', { name: 'Brief' })
+const form = () => screen.findByRole('region', { name: 'New campaign' })
 
 describe('"+" starts a new campaign [R2-Q C]', () => {
   it('is named "New campaign" and has the same tooltip', async () => {
@@ -81,7 +81,7 @@ describe('"+" starts a new campaign [R2-Q C]', () => {
     const name = within(opened).getByLabelText('Campaign name')
     await userEvent.type(name, 'Autumn')
     await userEvent.click(plus())
-    expect(screen.getAllByRole('region', { name: 'Brief' })).toHaveLength(1)
+    expect(screen.getAllByRole('region', { name: 'New campaign' })).toHaveLength(1)
     expect(within(await form()).getByLabelText('Campaign name')).toHaveValue('Autumn')
     await waitFor(() => expect(within(opened).getByLabelText('Campaign name')).toHaveFocus())
   })

@@ -6,17 +6,6 @@
   gap: var(--space-2);
   align-items: center;
 }
-/* The open form's title, in place of the home's Sections (HOME-2 makes it a SubPage). */
-.title {
-  display: flex;
-  align-items: center;
-  min-height: var(--section-header-height);
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: var(--type-section-size);
-  font-weight: var(--type-section-weight);
-  color: var(--color-text-secondary);
-}
 /* Words for a screen reader only: a box one hairline wide, clipped away. */
 .hidden {
   position: absolute;
