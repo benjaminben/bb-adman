@@ -11,7 +11,7 @@ describe('Icon [ST-2]', () => {
     expect(ICON_NAMES).toContain('plus')
     expect(ICON_NAMES).toContain('spinner')
     expect(ICON_NAMES).toContain('unlink')
-    expect(ICON_NAMES.length).toBe(46)
+    expect(ICON_NAMES.length).toBe(75)
   })
 
   it.each(ICON_NAMES.map((name) => [name]))('%s draws one hidden 24 by 24 svg', (name) => {
