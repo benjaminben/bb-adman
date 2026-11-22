@@ -21,7 +21,7 @@ let app: ElectronApplication
 let page: Page
 let stand: StandIn | undefined
 
-// ADMAN_DEV_TOOLS is on so the stand-in's `trial` ComfyUI workflow is offered.
+// ADMAN_DEV_TOOLS is on; the ComfyUI workflows are proven (D-103), so they are offered either way.
 test.beforeEach(async () => {
   box = makeSandbox()
   app = await launch(box, [], { ADMAN_DEV_TOOLS: '1' })

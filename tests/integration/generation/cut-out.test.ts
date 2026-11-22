@@ -18,6 +18,12 @@ import { licenceNotConfirmedMessage } from '@/shared/providers/messages'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { JobRow } from '@/shared/schemas/rows/job'
 
+// [D-103] The shipped workflows are proven. This file proves the trial rule, so it runs on
+// a copy of the list where each of them is a trial (tests/helpers/trial-workflows.ts).
+vi.mock('@/main/providers/comfyui/workflows', async (load) =>
+  (await import('../../helpers/trial-workflows')).asTrial(await load()),
+)
+
 // S2-4 [D-088]: BiRefNet ships with no licence note. This file can give it one, so the agent
 // rule can be seen on the cut-out workflow itself.
 const licence = vi.hoisted(() => ({ note: null as string | null }))

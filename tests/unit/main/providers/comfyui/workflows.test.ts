@@ -24,9 +24,9 @@ describe('the shipped workflows [SPEC 6.10.4, FR-258, FR-278]', () => {
     expect(WORKFLOWS.map((w) => w.id)).toEqual([...WORKFLOW_IDS])
   })
 
-  it('keeps every workflow as draft but the trial ones of the data step [SPEC 14 1.46]', () => {
-    const trial = WORKFLOWS.filter((w) => w.status !== 'draft').map((w) => w.id)
-    expect(trial).toEqual([
+  it('keeps every workflow as draft but the proven ones of the data step [SPEC 14 1.46, D-103]', () => {
+    const proven = WORKFLOWS.filter((w) => w.status !== 'draft').map((w) => w.id)
+    expect(proven).toEqual([
       'moss-text-to-image',
       'h3-text-to-video',
       'h3-image-to-video',
@@ -34,7 +34,7 @@ describe('the shipped workflows [SPEC 6.10.4, FR-258, FR-278]', () => {
       'flux3-klein-edit-references',
       'birefnet-cutout',
     ])
-    expect(WORKFLOWS.every((w) => w.status === 'draft' || w.status === 'trial')).toBe(true)
+    expect(WORKFLOWS.every((w) => w.status === 'draft' || w.status === 'proven')).toBe(true)
   })
 
   it.each(each)('%s: every pointer names a node and an input that exist', (_id, spec) => {
@@ -176,7 +176,7 @@ describe('birefnet-cutout, the cut-out workflow [P4-9, spec/ai-jobs.md "Cut-out"
   it('states the job, status, model, needs, licence and what it leaves', () => {
     expect(spec).toMatchObject({
       job: 'cutout',
-      status: 'trial',
+      status: 'proven',
       model: { label: 'BiRefNet', mainFile: 'birefnet.safetensors' },
       size: { multiple: 1, minPixels: 1 },
       licence: { name: 'MIT', commercialNote: null },

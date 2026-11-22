@@ -3,7 +3,7 @@
 // the job poll on their real 2 s clocks.
 import fs from 'node:fs'
 import path from 'node:path'
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { makeComfyFixture, type ComfyFixture } from './comfy-fixture'
 import { waitFor } from './generation-fixture'
 import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
@@ -18,6 +18,12 @@ import { data } from '../core-fixture'
 import { assetsDirOf } from '@/main/assets/service'
 import { h3TextToVideo as h3 } from '@/main/providers/comfyui/workflows/h3'
 import type { VideoJobResult } from '@/shared/schemas/jobs/video-generation'
+
+// [D-103] The shipped workflows are proven. This file proves the trial rule, so it runs on
+// a copy of the list where each of them is a trial (tests/helpers/trial-workflows.ts).
+vi.mock('@/main/providers/comfyui/workflows', async (load) =>
+  (await import('../../helpers/trial-workflows')).asTrial(await load()),
+)
 
 let f: ComfyFixture
 let stand: StandIn | null = null

@@ -2,9 +2,15 @@
 // the same checks as generation.startVideo, before a job row.
 import fs from 'node:fs'
 import path from 'node:path'
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { makeComfyFixture, type ComfyFixture } from './comfy-fixture'
 import { greyPng } from '@/main/providers/fake/png'
+
+// [D-103] The shipped workflows are proven. This file proves the trial rule, so it runs on
+// a copy of the list where each of them is a trial (tests/helpers/trial-workflows.ts).
+vi.mock('@/main/providers/comfyui/workflows', async (load) =>
+  (await import('../../helpers/trial-workflows')).asTrial(await load()),
+)
 
 let f: ComfyFixture
 afterEach(() => f.cleanup())

@@ -35,7 +35,7 @@ export function lastGraph(stand: StandIn): Graph {
   return ((JSON.parse(body) as { prompt?: Graph }).prompt ?? {}) as Graph
 }
 
-// The H3 graphs' node 5 holds the run's width and height (workflows/h3.ts TRIAL_SLOTS).
+// The H3 graphs' node 5 holds the run's width and height (workflows/h3.ts H3_SLOTS).
 export function runSize(graph: Graph): { width: number; height: number } {
   const inputs = graph['5']?.inputs ?? {}
   return { width: Number(inputs.width), height: Number(inputs.height) }

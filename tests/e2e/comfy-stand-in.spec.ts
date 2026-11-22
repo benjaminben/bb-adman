@@ -1,5 +1,5 @@
 // SPEC 14 1.56 E2E-R, the offline spec: the built app driven through its screens against the
-// stand-in ComfyUI on 127.0.0.1, with the hand-test tools on so trial workflows are offered.
+// stand-in ComfyUI on 127.0.0.1, with the hand-test tools on (the workflows are proven, D-103).
 // No real server, no paid provider and no network beyond 127.0.0.1 is reached: Gemini is
 // answered inside the app's main process by gemini-stand-in.ts. TP-6's video start is here,
 // and CU-6b-R's video from a picture (1.60 N-11); the rows that need no stand-in are in

@@ -1,4 +1,4 @@
-// The FLUX 3 klein reference workflow (SPEC 6.10.4 [1.46], 14 1.46 part B), a trial: its graph
+// The FLUX 3 klein reference workflow (SPEC 6.10.4 [1.46], 14 1.46 part B), proven [D-103]: its graph
 // is the agent's draft comfy-workflows/flux3-klein-image-references.json, from the
 // stakeholder's reference file. It takes one reference picture and has no size slot: the
 // result takes the picture's shape at about 1 megapixel, so a run skips fitSize.
@@ -22,7 +22,7 @@ export const flux3KleinEditReferences: WorkflowSpec = {
   version: 1,
   label: 'FLUX 3 klein: picture from a prompt and one reference picture',
   job: 'image_refs',
-  status: 'trial',
+  status: 'proven',
   model: { label: 'FLUX 3 klein', mainFile: MAIN_FILE },
   graph: graph as Graph,
   // The "App fills" list of REFERENCE-NOTES.md: node 6 text; node 9 seed; node 10 image.

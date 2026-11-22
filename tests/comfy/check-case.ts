@@ -1,5 +1,5 @@
 // SPEC 14 1.41 CU-5a case 1, 1.45 B-1, 1.46: the check. It prints the server's version and,
-// for each `trial` workflow, "complete" or the missing items. The names come from the app's
+// for each workflow that is not a draft (trial or proven), "complete" or the missing items. The names come from the app's
 // own workflow file, never from the server's text. When the check does not end `ok`, it prints
 // which call failed (its folder or class name, from the app's own file) and the failure's
 // kind, reason and detail. [1.57] H-3: then one line per draft workflow, its model files
@@ -7,7 +7,7 @@
 // never shows.
 import type { ComfyClient } from '@/main/providers/comfyui/client'
 import { checkServer } from '@/main/providers/comfyui/needs'
-import { WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import { NON_DRAFT_WORKFLOWS } from '@/main/providers/comfyui/workflows'
 import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
 import { ProviderFailure } from '@/main/providers/types'
 import type { MissingItem } from '@/shared/schemas/queries/app'
@@ -16,9 +16,7 @@ import { draftFileLines, keepFolderLists } from './draft-files'
 import type { Print } from './print'
 import type { FailedCall } from './recorder'
 
-export const TRIAL_WORKFLOWS: readonly WorkflowSpec[] = WORKFLOWS.filter(
-  (w) => w.status === 'trial',
-)
+export const CHECKED_WORKFLOWS: readonly WorkflowSpec[] = NON_DRAFT_WORKFLOWS
 
 function itemLine(item: MissingItem): string {
   if (item.what === 'version') return `  version: ${item.name} or later`
@@ -43,7 +41,7 @@ export async function runCheckCase(
   client: Pick<ComfyClient, 'systemStats' | 'modelFiles' | 'nodeInfo'>,
   failures: readonly FailedCall[],
   print: Print,
-  workflows: readonly WorkflowSpec[] = TRIAL_WORKFLOWS,
+  workflows: readonly WorkflowSpec[] = CHECKED_WORKFLOWS,
 ): Promise<ComfyCheck> {
   const before = failures.length
   const kept = keepFolderLists(client)

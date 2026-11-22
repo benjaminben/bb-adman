@@ -1,5 +1,5 @@
-// P4-9 (spec/ai-jobs.md "Cut-out") [REQ: FR-307; OI-55]: the cut-out workflow, an agent draft
-// shipped as a trial. ComfyUI's built-in background removal, core nodes only. Node 3 gives
+// P4-9 (spec/ai-jobs.md "Cut-out") [REQ: FR-307; OI-55]: the cut-out workflow, an agent draft,
+// proven [D-103]. ComfyUI's built-in background removal, core nodes only. Node 3 gives
 // the subject's mask; JoinImageWithAlpha stores 1 − mask as the alpha, so node 4 inverts it
 // first and the subject stays solid while the background turns see-through. It takes one
 // picture and no prompt, no seed and no size.
@@ -22,7 +22,7 @@ export const birefnetCutout: WorkflowSpec = {
   version: 1,
   label: 'BiRefNet: cut a picture out from its background',
   job: 'cutout',
-  status: 'trial',
+  status: 'proven',
   model: { label: 'BiRefNet', mainFile: MAIN_FILE },
   graph: graph as Graph,
   slots: {

@@ -1,5 +1,5 @@
 // SPEC 14 1.57 H-3: case 1's line per draft workflow, its model files present or missing, by
-// the app's own names. It reads only the folder lists the check already fetched for the trial
+// the app's own names. It reads only the folder lists the check already fetched for the checked
 // workflows, kept as they came back, so nothing new reaches the server. A file in a folder the
 // check did not list is said to be "not listed by the check". Node classes are not probed:
 // the draft node lists are stand-ins.

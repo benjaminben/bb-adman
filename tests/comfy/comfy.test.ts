@@ -80,7 +80,7 @@ function runCase(
 // after case 6 (1.54 P-4).
 describe.skipIf(origin === '')('test:comfy on the test server', () => {
   it(
-    '1. the check: the version, and per trial workflow what is missing',
+    '1. the check: the version, and per workflow that is not a draft what is missing',
     () =>
       guarded(origin, () => {
         const recorded = connect()

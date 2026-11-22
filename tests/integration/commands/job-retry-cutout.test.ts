@@ -6,6 +6,12 @@ import { makeComfyFixture, type ComfyFixture } from '../generation/comfy-fixture
 import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
 import { data } from '../core-fixture'
 
+// [D-103] The shipped workflows are proven. This file proves the trial rule, so it runs on
+// a copy of the list where each of them is a trial (tests/helpers/trial-workflows.ts).
+vi.mock('@/main/providers/comfyui/workflows', async (load) =>
+  (await import('../../helpers/trial-workflows')).asTrial(await load()),
+)
+
 const licence = vi.hoisted(() => ({ note: null as string | null }))
 vi.mock('@/main/providers/comfyui/workflows/birefnet', async (original) => {
   const real = await original<typeof import('@/main/providers/comfyui/workflows/birefnet')>()

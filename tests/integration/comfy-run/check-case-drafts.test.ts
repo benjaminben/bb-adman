@@ -3,7 +3,7 @@ import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
 import { createComfyClient } from '@/main/providers/comfyui/client'
 import { mossEditReferences } from '@/main/providers/comfyui/workflows/moss'
 import { recordCalls } from '../../comfy/recorder'
-import { runCheckCase, TRIAL_WORKFLOWS } from '../../comfy/check-case'
+import { runCheckCase, CHECKED_WORKFLOWS } from '../../comfy/check-case'
 import { DRAFT_WORKFLOWS } from '../../comfy/draft-files'
 import { makePrinter } from '../../comfy/print'
 
@@ -58,7 +58,7 @@ describe('case 1, the model files of each draft workflow [SPEC 14 1.57 H-3]', ()
     await runCheckCase(recorded.client, recorded.failures, print)
     const folders = recorded.calls.filter((c) => c.name === 'modelFiles').map((c) => c.arg)
     const trialFolders = new Set(
-      TRIAL_WORKFLOWS.flatMap((w) => w.needs.models.map((m) => m.folder)),
+      CHECKED_WORKFLOWS.flatMap((w) => w.needs.models.map((m) => m.folder)),
     )
     expect(folders.sort()).toEqual([...trialFolders].sort())
     expect(s.seen.some((r) => r.path === '/models/loras')).toBe(false)
@@ -71,7 +71,7 @@ describe('case 1, the model files of each draft workflow [SPEC 14 1.57 H-3]', ()
     const { print, recorded } = await setUp()
     await runCheckCase(recorded.client, recorded.failures, print)
     const probed = recorded.calls.filter((c) => c.name === 'nodeInfo').map((c) => c.arg)
-    const trialClasses = new Set(TRIAL_WORKFLOWS.flatMap((w) => w.needs.nodeClasses))
+    const trialClasses = new Set(CHECKED_WORKFLOWS.flatMap((w) => w.needs.nodeClasses))
     const draftOnly = mossEditReferences.needs.nodeClasses.filter((c) => !trialClasses.has(c))
     expect(draftOnly.length).toBeGreaterThan(0)
     for (const c of draftOnly) expect(probed).not.toContain(c)

@@ -1,6 +1,12 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { checkComfyRun } from '@/main/commands/generation/comfy-checks'
 import type { Settings } from '@/shared/schemas/settings'
+
+// [D-103] The shipped workflows are proven. This file proves the trial rule, so it runs on
+// a copy of the list where each of them is a trial (tests/helpers/trial-workflows.ts).
+vi.mock('@/main/providers/comfyui/workflows', async (load) =>
+  (await import('../../../../helpers/trial-workflows')).asTrial(await load()),
+)
 
 const deps = (devTools: boolean) => ({
   devTools,
