@@ -29,6 +29,7 @@ export function baseState(overrides: Partial<AppState> = {}): AppState {
       licenceConfirmed: [],
       approvals: { baseUrl: null },
       reports: { exporterName: '' },
+      setup: { done: true },
     },
     recentProjects: [],
     openProjects: [],
