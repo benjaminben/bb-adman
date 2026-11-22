@@ -3,8 +3,10 @@
 // P4-16 (spec/screens-ai.md, "Place text with AI"): "Place text with AI…", disabled with its
 // hint when no visible text layer has copy, and disabled while its run for the variant is going.
 // LK-6 ("Layout…"): a slot after it for the layout button.
+// P7-17: the format choice and, for a video, its length, after the size line.
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
+import { FormatFields } from '@/renderer/editor/format-fields'
 import { NO_TEXT_HINT } from '@/renderer/editor/layout-run'
 import { useEditorKey } from '@/renderer/editor/use-editor-key'
 import { Icon } from '@/renderer/ui/icon'
@@ -12,6 +14,7 @@ import layout from '@/renderer/ui/layout.module.css'
 import styles from './top-bar.module.css'
 
 export type TopBarProps = {
+  projectId: string
   variant: VariantSummary
   canUndo: boolean
   canRedo: boolean
@@ -97,6 +100,7 @@ export function TopBar(props: TopBarProps) {
         )}
       </div>
       <p className={styles.line}>{sizeLine(variant)}</p>
+      <FormatFields projectId={props.projectId} variant={variant} />
       <div className={styles.actions}>
         <button
           type="button"

@@ -110,6 +110,7 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
         ) : (
           <>
             <TopBar
+              projectId={projectId}
               variant={variant}
               canUndo={history.canUndo}
               canRedo={history.canRedo}
