@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest'
 import { subjectPhotos } from '@/renderer/screens/assets/assets-panel/asset-groups'
 import { assetView } from '@/renderer/screens/assets/assets-panel/asset-view'
 import { SubjectCard } from '@/renderer/screens/assets/subject-card'
+import cardStyles from '@/renderer/screens/assets/subject-card/subject-card.module.css'
+import stripStyles from '@/renderer/ui/photo-strip/photo-strip.module.css'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import { makeFakeApi } from '../../fake-api'
 import { axeViolations, renderApp } from '../../render'
@@ -67,9 +69,13 @@ describe('SubjectCard [R2C-6]', () => {
     expect(within(card).queryByRole('img', { name: 'pour.mp4' })).toBeNull()
   })
 
-  it('says "No photos yet. Add at least one." with none, and leaves out an empty description', async () => {
+  it('shows an empty strip with the "+" tile with none, and leaves out an empty description', async () => {
     const { card } = await renderCard(api(), { ...PARK, id: 's-none' })
-    expect(within(card).getByText('No photos yet. Add at least one.')).toBeInTheDocument()
+    const list = within(card).getByRole('list', { name: 'Photos of Linnea Park' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(1)
+    expect(
+      within(list).getByRole('button', { name: 'Add photos to Linnea Park' }),
+    ).toBeInTheDocument()
     expect(card.querySelectorAll('p')).toHaveLength(1)
   })
 
@@ -120,7 +126,7 @@ describe('SubjectCard [R2C-6]', () => {
       ok: true,
       data: { assetIds: ['n1', 'n2'], reusedAssetIds: [], skippedCount: 0, animatedAssetIds: [] },
     })
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('2 photo(s) added.'))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('2 photos added.'))
     expect(add).toBeEnabled()
     expect(named(fake, 'asset.update')).toEqual([])
   })
@@ -138,7 +144,7 @@ describe('SubjectCard [R2C-6]', () => {
     }))
     await renderCard(fake)
     await userEvent.click(screen.getByRole('button', { name: 'Add photos to Harbour Blend' }))
-    const status = await screen.findByText('1 photo(s) added.')
+    const status = await screen.findByText('1 photo added.')
     expect(status.closest('[role="status"]')).toHaveTextContent(
       'face.png is already a photo of Linnea Park. It was left there.',
     )
@@ -169,6 +175,63 @@ describe('SubjectCard [R2C-6]', () => {
 
   it('has no accessibility violations', async () => {
     await renderCard()
+    expect(await axeViolations()).toEqual([])
+  })
+})
+
+describe('SubjectCard, the photo strip [AST-2]', () => {
+  it('draws the photos as the strip "Photos of {name}" with the "+" tile last', async () => {
+    const { card } = await renderCard()
+    const list = within(card).getByRole('list', { name: 'Photos of Harbour Blend' })
+    const items = within(list).getAllByRole('listitem')
+    expect(items).toHaveLength(3)
+    expect(within(list).getByTitle('File not found').closest('li')).not.toBe(items[2])
+    expect(within(items[2]!).getByRole('button', { name: 'Add photos to Harbour Blend' })).toBe(
+      within(card).getByTitle('Add photos to Harbour Blend'),
+    )
+  })
+
+  it('has no visible "Add photos…", "Edit…" or "No photos yet" words, and a pencil to edit', async () => {
+    const { card } = await renderCard()
+    expect(within(card).queryByText(/Add photos…|Edit…|No photos yet/)).toBeNull()
+    const edit = within(card).getByRole('button', { name: 'Edit Harbour Blend' })
+    expect(edit).toHaveAttribute('title', 'Edit Harbour Blend')
+    expect(edit).toHaveTextContent('')
+  })
+
+  it('says "No photos yet" to a screen reader only, and gives the "+" tile the warn edge', async () => {
+    const { card } = await renderCard(api(), { ...PARK, id: 's-none' })
+    expect(within(card).getByText('No photos yet')).toHaveClass(cardStyles.hidden ?? 'missing')
+    expect(within(card).getByRole('button', { name: 'Add photos to Linnea Park' })).toHaveClass(
+      stripStyles.warn ?? 'missing',
+    )
+  })
+
+  it('removes a photo from the subject only: the ✕ names the subject and sends no delete', async () => {
+    const { fake, card } = await renderCard()
+    await userEvent.click(
+      within(card).getByRole('button', { name: 'Remove gone.png from Harbour Blend' }),
+    )
+    expect(fake.commands).toEqual([
+      { name: 'asset.update', input: { projectId: 'P1', assetId: 'gone', subjectId: null } },
+    ])
+  })
+
+  it('keeps picked paths out of every title, name and data attribute while and after adding', async () => {
+    const fake = api()
+    let finish: (value: { ok: true; data: unknown }) => void = () => {}
+    fake.onCommand('asset.import', () => new Promise((resolve) => (finish = resolve)))
+    await renderCard(fake)
+    await userEvent.click(screen.getByRole('button', { name: 'Add photos to Harbour Blend' }))
+    await screen.findByText('Adding photos…')
+    expect(document.body.innerHTML).not.toContain(PLANTED_ABS)
+    finish({ ok: true, data: { assetIds: ['n1'], reusedAssetIds: [], animatedAssetIds: [] } })
+    await screen.findByText('1 photo added.')
+    expect(document.body.innerHTML).not.toContain(PLANTED_ABS)
+  })
+
+  it('has no accessibility violations with no photo', async () => {
+    await renderCard(api(), { ...PARK, id: 's-none' })
     expect(await axeViolations()).toEqual([])
   })
 })

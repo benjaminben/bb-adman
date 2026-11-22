@@ -7,6 +7,7 @@ import { useApi, useApp } from '@/renderer/app/app-context'
 import { animationLines } from '@/renderer/dialogs/import-dialog/import-text'
 import { addedCount, attachPlan, noteLines } from '@/renderer/screens/assets/attach-photos'
 import { assetView, type AssetView } from '@/renderer/screens/assets/assets-panel/asset-view'
+import { plural } from '@/renderer/ui/plural'
 import type { AdmanApi } from '@/shared/schemas/api'
 import type { AssetImportReply } from '@/shared/schemas/commands/asset'
 import type { PickedPaths } from '@/shared/schemas/queries/dialog'
@@ -73,7 +74,10 @@ export function useAddPhotos(projectId: string, subjectId: string, subjects: Sub
     setState({ kind: 'busy' })
     const outcome = await importPhotos(api, command, { projectId, paths, subjectId, subjects })
     if (!outcome.ok) return setState({ kind: 'refused', message: outcome.message })
-    setState({ kind: 'done', lines: [`${outcome.count} photo(s) added.`, ...outcome.notes] })
+    setState({
+      kind: 'done',
+      lines: [`${plural(outcome.count, 'photo')} added.`, ...outcome.notes],
+    })
   }
 
   return { state, add: () => void add() }

@@ -227,7 +227,9 @@ describe('AssetsPanel, Subjects [R2C-6]', () => {
       'Zinc Mug',
     ])
     expect(within(cards[0]!).getByRole('img', { name: 'beans.png' })).toBeInTheDocument()
-    expect(within(cards[1]!).getByText('No photos yet. Add at least one.')).toBeInTheDocument()
+    const empty = within(cards[1]!).getByRole('list', { name: 'Photos of linnea Park' })
+    expect(within(empty).getAllByRole('listitem')).toHaveLength(1)
+    expect(within(empty).getByRole('button', { name: 'Add photos to linnea Park' })).toBeVisible()
   })
 
   it('shows the empty lines with no subject', async () => {
