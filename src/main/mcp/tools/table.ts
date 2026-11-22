@@ -103,8 +103,9 @@ export const ALL_TOOLS: readonly ToolDef[] = [
   {
     name: 'get_job',
     description:
-      'Read one run (job) of an open project: its status, progress, the asset IDs it made ' +
-      'and, when it failed, a plain message. Poll no more than once every 5 seconds.',
+      'Read one run (job) of an open project: its status, progress, the asset IDs it made, ' +
+      'layout for a propose_layout run and copyOptions for a copy_options run once it has ' +
+      'succeeded, and, when it failed, a plain message. Poll no more than once every 5 seconds.',
     kind: 'query',
     target: 'job.get',
     input: jobGetInput,
