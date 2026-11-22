@@ -121,3 +121,19 @@ describe('removeStale, Dropbox-style names [P9-10 ruling]', () => {
     expect(removedPaths).toEqual([[`${CAMPAIGN}/stale.png`]])
   })
 })
+
+describe('removeStale, a campaign folder listed in its display spelling [P9-11 review fix 1]', () => {
+  it('removes the stale files of a folder Dropbox lists as CAMPAIGN/, by the campaign ID', async () => {
+    const removedPaths: string[][] = []
+    const shown = CAMPAIGN.toUpperCase()
+    const storage = {
+      ...localStorageAt(root),
+      list: async () => [`${shown}/stale.png`, `${shown}/Report.HTML`, `${shown}X/a.png`],
+      remove: async (paths: string[]) => {
+        removedPaths.push(paths)
+      },
+    }
+    expect(await removeStale(storage, CAMPAIGN, ['report.html'])).toBe(1)
+    expect(removedPaths).toEqual([[`${CAMPAIGN}/stale.png`]])
+  })
+})

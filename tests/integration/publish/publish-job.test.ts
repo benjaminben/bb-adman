@@ -7,7 +7,7 @@ import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
 import { localStorageAt } from '@/main/providers/local-storage'
 import { ProviderFailure, type StorageProvider } from '@/main/providers/types'
-import { createPublishDeps } from '@/main/publish/deps'
+import { LocalFailure } from '@/main/jobs/local-failure'
 import { reasonMessage } from '@/shared/providers/messages'
 import { ADS, PNG } from '../../helpers/fake-publish-export'
 import { CAMPAIGN } from './component-project'
@@ -197,7 +197,9 @@ describe('the publish job, failures keep the old publish [P9-10]', () => {
 
   it('ends export_not_built with the stub port, and export_failed with no text when export throws', async () => {
     const x = await setUp()
-    x.fx.core.deps.publish.exportForPublish = createPublishDeps().exportForPublish
+    // P9-11 filled the stub; this stand-in refuses as the stub did.
+    x.fx.core.deps.publish.exportForPublish = () =>
+      Promise.reject(new LocalFailure('export_not_built'))
     expect(await x.publish()).toMatchObject({ status: 'failed', errorReason: 'export_not_built' })
     x.fx.core.deps.publish.exportForPublish = x.fake.port
     x.fake.fail = new Error(`could not write ${SECRET}`)

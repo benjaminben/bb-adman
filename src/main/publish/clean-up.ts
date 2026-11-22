@@ -9,6 +9,15 @@ import { campaignPrefix } from './manifest'
 
 export const foldPath = (text: string) => text.normalize('NFC').toLowerCase()
 
+// The listed paths under `prefix`, relative to it, the prefix compared with letter case folded:
+// Dropbox lists a folder in its display spelling, so CAMPAIGN-abc/ is this campaign's folder.
+export function insidePrefix(listed: string[], prefix: string): string[] {
+  const folded = foldPath(prefix)
+  return listed.flatMap((file) =>
+    foldPath(file.slice(0, prefix.length)) === folded ? [file.slice(prefix.length)] : [],
+  )
+}
+
 // `keep` holds the new manifest's paths, relative to {campaignId}/. Gives the number removed.
 export async function removeStale(
   storage: StorageProvider,
@@ -17,10 +26,9 @@ export async function removeStale(
 ): Promise<number> {
   const prefix = campaignPrefix(campaignId)
   const kept = new Set([...keep, MANIFEST_NAME].map(foldPath))
-  const listed = await storage.list(prefix)
-  const stale = listed.filter(
-    (file) => file.startsWith(prefix) && !kept.has(foldPath(file.slice(prefix.length))),
-  )
+  const listed = insidePrefix(await storage.list(prefix), prefix)
+  // Removed by the campaign ID's own spelling, so every path removed starts with {campaignId}/.
+  const stale = listed.filter((rel) => !kept.has(foldPath(rel))).map((rel) => `${prefix}${rel}`)
   if (stale.length > 0) await storage.remove(stale)
   return stale.length
 }

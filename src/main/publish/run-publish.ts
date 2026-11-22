@@ -14,7 +14,7 @@ import { LocalFailure } from '@/main/jobs/local-failure'
 import { ProviderCancelled, ProviderFailure } from '@/main/providers/types'
 import type { ManifestFile } from '@/shared/publish/manifest'
 import { AppError } from '@/shared/schemas/result'
-import { removeStale } from './clean-up'
+import { insidePrefix, removeStale } from './clean-up'
 import { componentUpload, type SkipProblem } from './component-upload'
 import { collectComponents, type CollectedComponent } from './components'
 import { fontConsent } from './font-consent'
@@ -115,7 +115,7 @@ async function publishIn(
   const storage = deps.publish.storageFor(deps, plan.storage)
   const prefix = campaignPrefix(campaignId)
   const before = await step('read', async () => {
-    const files = (await storage.list(prefix)).filter((p) => p.startsWith(prefix)).length
+    const files = insidePrefix(await storage.list(prefix), prefix).length
     return { files, previous: await readPrevious(storage, campaignId, { log: deps.log }) }
   })
   if (before.files > 0 && !plan.replaceConfirmed) throw stepFailure('replace_not_confirmed')

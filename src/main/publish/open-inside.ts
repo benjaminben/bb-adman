@@ -3,7 +3,9 @@
 // made, so each attempt checks again: `root` must be a real folder, not a link, and its own real
 // path (as src/main/export/target.ts checks its root); the file a regular file with one name
 // (no link, no hard link), its real path inside `root`, and the file opened the one checked
-// (same device and inode). A refusal is LocalFileRefused, whose message holds no path.
+// (same device and inode). Given the facts of a handle checked earlier, the file opened must
+// also be that one: same inode, device, size and modified time. A refusal is LocalFileRefused,
+// whose message holds no path.
 import fs from 'node:fs/promises'
 import type { FileHandle } from 'node:fs/promises'
 import { pathInside } from '@/main/assets/path-resolver'
@@ -17,12 +19,29 @@ export class LocalFileRefused extends Error {
   }
 }
 
+// What ties an upload's open to the handle a component was checked on.
+export type CheckedFacts = { ino: number; dev: number; size: number; mtimeMs: number }
+
+export const factsOf = ({ ino, dev, size, mtimeMs }: CheckedFacts): CheckedFacts => ({
+  ino,
+  dev,
+  size,
+  mtimeMs,
+})
+
+const sameFacts = (a: CheckedFacts, b: CheckedFacts) =>
+  a.ino === b.ino && a.dev === b.dev && a.size === b.size && a.mtimeMs === b.mtimeMs
+
 async function checkRoot(root: string): Promise<void> {
   const stats = await fs.lstat(root)
   if (!stats.isDirectory() || (await fs.realpath(root)) !== root) throw new LocalFileRefused()
 }
 
-async function openChecked(root: string, file: string): Promise<FileHandle> {
+async function openChecked(
+  root: string,
+  file: string,
+  checked?: CheckedFacts,
+): Promise<FileHandle> {
   await checkRoot(root)
   const before = await fs.lstat(file)
   if (!before.isFile() || before.nlink !== 1) throw new LocalFileRefused()
@@ -31,7 +50,8 @@ async function openChecked(root: string, file: string): Promise<FileHandle> {
   const handle = await fs.open(realFile, 'r')
   const opened = await handle.stat().catch(() => null)
   const same = opened?.ino === before.ino && opened.dev === before.dev
-  if (!opened?.isFile() || !same || opened.nlink !== 1) {
+  const unchanged = !checked || (opened !== null && sameFacts(opened, checked))
+  if (!opened?.isFile() || !same || opened.nlink !== 1 || !unchanged) {
     await handle.close()
     throw new LocalFileRefused()
   }
@@ -48,8 +68,13 @@ export async function openInside(root: string, file: string): Promise<FileHandle
   }
 }
 
-// The bytes of `file`, a main-process path the caller listed, read only if it is inside `root`.
-export function openFileInside(root: string, file: string): ReadableStream<Uint8Array> {
+// The bytes of `file`, a main-process path the caller listed, read only if it is inside `root`
+// (and, with `checked`, only if it is still the file checked).
+export function openFileInside(
+  root: string,
+  file: string,
+  checked?: CheckedFacts,
+): ReadableStream<Uint8Array> {
   let handle: FileHandle | null = null
   const close = async () => {
     const open = handle
@@ -60,7 +85,7 @@ export function openFileInside(root: string, file: string): ReadableStream<Uint8
     {
       async pull(controller) {
         try {
-          handle ??= await openChecked(root, file)
+          handle ??= await openChecked(root, file, checked)
           const buffer = new Uint8Array(CHUNK)
           const { bytesRead } = await handle.read(buffer, 0, CHUNK, null)
           if (bytesRead === 0) {

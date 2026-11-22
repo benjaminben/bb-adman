@@ -4,7 +4,7 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LocalFailure } from '@/main/jobs/local-failure'
 import { makeWorkFolder, WORK_FOLDER } from '@/main/publish/work-folder'
 
@@ -81,5 +81,42 @@ describe('makeWorkFolder [P9-10, A-227]', () => {
   it('refuses a job ID that is not a ULID', async () => {
     const error = await failure(makeWorkFolder(userData, '../escape'))
     expect(error).toMatchObject({ reason: 'work_folder_unsafe' })
+  })
+})
+
+describe('makeWorkFolder, review fixes 3 and 4 [P9-11]', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('refuses work_folder_unsafe when publish-work is swapped for a link after its lstat', async () => {
+    const target = path.join(path.dirname(userData), 'elsewhere')
+    await fs.mkdir(target, { recursive: true })
+    await fs.mkdir(base, { recursive: true })
+    const lstat = fs.lstat.bind(fs)
+    vi.spyOn(fs, 'lstat').mockImplementation(async (p, opts) => {
+      const stats = await lstat(p, opts)
+      if (p === base) {
+        await fs.rm(base, { recursive: true })
+        await fs.symlink(target, base)
+      }
+      return stats
+    })
+    const error = await failure(makeWorkFolder(userData, JOB))
+    expect(error).toMatchObject({ reason: 'work_folder_unsafe' })
+    expect(await fs.readdir(target)).toEqual([])
+  })
+
+  it('makes publish-work and the job folder readable by this user only', async () => {
+    const work = await makeWorkFolder(userData, JOB)
+    expect((await fs.stat(base)).mode & 0o777).toBe(0o700)
+    expect((await fs.stat(work.path)).mode & 0o777).toBe(0o700)
+    await work.remove()
+  })
+
+  it('swallows a failed removal, so the publish keeps its end and no path is thrown', async () => {
+    const work = await makeWorkFolder(userData, JOB)
+    vi.spyOn(fs, 'rm').mockRejectedValue(new Error(`EACCES: permission denied, ${work.path}`))
+    await expect(work.remove()).resolves.toBeUndefined()
   })
 })
