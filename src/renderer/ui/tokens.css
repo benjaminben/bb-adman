@@ -116,6 +116,7 @@
   --width-menu: 300px;
   --width-wide: 1360px;
   --width-start-art: 640px;
+  --width-start-column: 360px;
   /* Start page drawings. */
   --drawing-height: 176px;
   --drawing-stroke: 1.25px;
@@ -144,6 +145,9 @@
   --motion-pop: 1.6s;
   --motion-calm: 16s;
   --ease-calm: cubic-bezier(0.45, 0, 0.55, 1);
+  /* The start picture: from the start of one fade to the next, and the fade itself. */
+  --start-image-hold: 10s;
+  --start-image-fade: 1200ms;
 }
 
 /* With the system's "reduce motion" on, the short motion time is zero. */

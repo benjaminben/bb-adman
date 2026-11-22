@@ -1,0 +1,34 @@
+/* app-style */
+/* The start picture (design/audit/spec-start.md "Left half: the image"): it fills its box,
+   cropped from the centre. The box is the surface colour while the first picture loads, and
+   stays so when there are none. A new picture fades in on top of the old one. */
+.images {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  background: var(--color-surface);
+}
+.image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+.fadeIn {
+  animation: fade-in var(--start-image-fade) var(--ease-calm) both;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fadeIn {
+    animation: none;
+  }
+}
