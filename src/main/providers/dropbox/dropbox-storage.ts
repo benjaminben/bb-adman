@@ -70,8 +70,15 @@ export function headerArg(arg: object): string {
 function rootOf(ctx: AdapterContext): string {
   const rootPath = ctx.settings().storage.dropbox?.rootPath ?? ''
   if (rootPath === '') return ''
-  if (rootPath.length > MAX_ROOT || /\p{Cc}/u.test(rootPath)) refusePath()
-  return storageFilePath(rootPath)
+  if (rootPath.length > MAX_ROOT) refusePath()
+  return noControl(storageFilePath(rootPath))
+}
+
+// The root and every caller path: no control character of any kind (\p{Cc}, which also holds
+// DEL and the C1 codes the shared path rules let through).
+function noControl(path: string): string {
+  if (/\p{Cc}/u.test(path)) refusePath()
+  return path
 }
 
 const chainStarts = (chain: string, start: string) =>
@@ -168,7 +175,7 @@ export function dropboxStorage(
   // The Dropbox path of one file, checked before anything is sent.
   function fileAt(path: string): string {
     const root = rootOf(ctx)
-    const file = storageFilePath(path)
+    const file = noControl(storageFilePath(path))
     return root === '' ? `/${file}` : `/${root}/${file}`
   }
 
@@ -219,7 +226,7 @@ export function dropboxStorage(
 
     async list(prefix) {
       const root = rootOf(ctx)
-      const folder = storageListPrefix(prefix)
+      const folder = noControl(storageListPrefix(prefix))
       const base = root === '' ? '' : `/${root}`
       const at = folder === '' ? base : `${base}/${folder.slice(0, -1)}`
       return run(() => listFiles(calls, at, `${base}/`))
