@@ -8,6 +8,16 @@
   },
   "files": ["out/**", "package.json"],
   "asarUnpack": ["**/*.node"],
+  "extraResources": [
+    { "from": "resources/ffmpeg/${platform}-${arch}", "to": "ffmpeg/${platform}-${arch}" }
+  ],
+  "electronFuses": {
+    "runAsNode": false,
+    "enableNodeOptionsEnvironmentVariable": false,
+    "enableNodeCliInspectArguments": false,
+    "onlyLoadAppFromAsar": true,
+    "resetAdHocDarwinSignature": true
+  },
   "fileAssociations": [
     {
       "ext": "adman",
