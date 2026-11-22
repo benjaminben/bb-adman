@@ -31,6 +31,13 @@ export function closeBody(jobs: AttachedJob[], place: ClosePlace): string {
   return `${jobs.length} AI tasks are still running. Closing this ${place} stops them.`
 }
 
+// P7-13 (A-174): started paid video runs a close leaves running for the next open.
+export function leftRunningLine(provider: string, n: number): string {
+  return n === 1
+    ? `${provider} has started 1 video and will charge for it. It keeps running; open the project again to collect it.`
+    : `${provider} has started ${n} videos and will charge for them. They keep running; open the project again to collect them.`
+}
+
 // A provider the window does not know is not called paid.
 export function anyPaid(jobs: AttachedJob[], providers: readonly ProviderInfo[]): boolean {
   return jobs.some((j) => providers.some((p) => p.id === j.provider && !p.local))
