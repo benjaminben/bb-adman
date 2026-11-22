@@ -20,13 +20,15 @@ export type GenerateFieldsProps = {
   projectId: string
   campaignId: string | null
   layer: LayerRow
+  // The variant's layers; none passed means no words on layers (R2E-1).
+  layers?: LayerRow[]
 }
 
 export function GenerateFields(props: GenerateFieldsProps) {
   const { projectId, layer } = props
   const command = useApp((s) => s.command)
   const perRun = useApp((s) => s.app?.settings.generation.optionsPerRun ?? 1)
-  const { key, draft, subjectId } = useFirstDraft(projectId, props.campaignId, layer)
+  const { key, draft, subjectId } = useFirstDraft(projectId, props.campaignId, layer, props.layers)
   const [dialog, setDialog] = useState<'run' | 'references' | null>(null)
   const promptId = useId()
   const disabled = layer.locked || draft === undefined

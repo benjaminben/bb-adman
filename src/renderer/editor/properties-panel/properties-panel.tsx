@@ -93,7 +93,12 @@ function Sections(props: SectionsProps) {
         <ShadeFields layer={layer} palette={props.palette} onUpdate={actions.update} />
       )}
       {layer.type !== 'text' && (
-        <PictureAi projectId={props.projectId} campaignId={props.campaignId} layer={layer} />
+        <PictureAi
+          projectId={props.projectId}
+          campaignId={props.campaignId}
+          layer={layer}
+          layers={props.layers}
+        />
       )}
       <GeometryFields geometry={layer.geometry} disabled={layer.locked} onUpdate={actions.update} />
     </>
