@@ -51,8 +51,8 @@ describe('agentRunsOffered, the one "tick offered" rule [SPEC agent-runs.md, AR-
     expect(agentRunsOffered(row('fake'))).toBeNull()
   })
 
-  it('gives agent_runs_not_offered for fal-seedance, S3 and Firefly', () => {
-    for (const id of ['fal-seedance', 's3', 'firefly']) {
+  it('gives agent_runs_not_offered for S3 and Firefly', () => {
+    for (const id of ['s3', 'firefly']) {
       expect(agentRunsOffered(row(id)), id).toBe('agent_runs_not_offered')
     }
   })

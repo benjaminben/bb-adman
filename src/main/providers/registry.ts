@@ -25,8 +25,9 @@ const PROVIDERS: ProviderInfo[] = [
     id: 'fal-seedance',
     label: 'fal.ai Seedance',
     jobs: ['video'],
-    // [1.58] J-2: no adapter in this build; slice J sets it back to true.
-    available: false,
+    // P7-15: the adapter is built (P7-14). Runs are paid: a user start needs the paid confirm,
+    // an agent start the fal tick (spec/agent-runs.md).
+    available: true,
     secrets: ['fal.apiKey'],
     defaultModels: { video: 'bytedance/seedance-2.0/image-to-video' },
     ...REMOTE,
@@ -110,7 +111,8 @@ export const DEFAULT_PROVIDERS = {
   image: 'gemini',
   layout: 'gemini',
   text: 'gemini',
-  // [1.58] J-2: the only video provider with an adapter. A saved file is not rewritten.
+  // [1.58] J-2: the local provider, so no run is paid unless the user picks fal. A saved file is
+  // not rewritten.
   video: 'comfyui',
 } as const
 
