@@ -116,7 +116,7 @@ describe('the layer tools [P10-4; A-233; FR-239]', () => {
       const reply = await call(x, tool, args)
       expect(reply.isError, `${tool} ${JSON.stringify(args)}`).toBe(true)
       const own = await x.fx.agent(command, camel(args))
-      expect(own.ok).toBe(false)
+      if (own.ok) throw new Error(`${command} ran for the agent`)
       expect(refusalOf(reply)).toEqual(own.error)
     }
     expect(x.layers(v)).toEqual(before)
