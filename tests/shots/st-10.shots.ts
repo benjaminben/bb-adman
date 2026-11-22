@@ -87,7 +87,7 @@ test('The copy options dialog in the new look', async () => {
     .getByRole('button', { name: 'Create campaign' })
     .click()
   await expect(page.getByRole('list', { name: 'Variants' }).getByRole('listitem')).toHaveCount(1)
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
 
   const layer = await textLayerName(page)

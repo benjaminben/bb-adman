@@ -72,7 +72,7 @@ export async function readBriefAndCreate(app: ElectronApplication, page: Page): 
 
 // Step 4: the master variant in the editor.
 export async function openMaster(page: Page): Promise<void> {
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
 }
 

@@ -57,7 +57,7 @@ test('Workflow 5.7: an agent reads, renders and places copy; the user watches an
   }
 
   // Steps 3 and 4: the German variant open in the editor; the agent's layers appear in it.
-  await v.tileButton(v.tile(page, DIRECTION, GERMAN)).click()
+  await v.tileButton(v.tile(page, DIRECTION, GERMAN)).dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   const create = (name: string, copy: string, x: number) =>
     s.call('create_layer', {

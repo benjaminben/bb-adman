@@ -26,7 +26,7 @@ async function openEditor(): Promise<Page> {
   await screens.createProject(page, 'Keys')
   await screens.loadBriefAndCreate(app, page)
   await screens.openCampaign(page)
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   return page
 }

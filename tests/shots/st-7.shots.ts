@@ -86,7 +86,7 @@ async function editorWithPicture(s: Session) {
       geometry: { ...LAYER, rotation: 0, crop: null },
     },
   })) as { layerId: string }
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   const photo = page.locator(`[data-stage] [data-layer-id="${layerId}"]`)
   await expect(photo).toBeVisible()
   await page.waitForTimeout(600)

@@ -95,7 +95,7 @@ test('Canvas editing', async () => {
   const update = (layerId: string, p: unknown) =>
     command(page, 'layer.update', { projectId, layerId, patch: p })
 
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   const canvas = page.getByRole('region', { name: /^Canvas, / })
   await expect(canvas).toBeVisible()
   await page.waitForTimeout(500)

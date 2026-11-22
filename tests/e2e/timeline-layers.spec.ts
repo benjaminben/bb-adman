@@ -28,7 +28,7 @@ async function openAsVideo(page: Page): Promise<void> {
   await screens.createProject(page, 'Layer Track Check')
   await screens.loadBriefAndCreate(app!, page)
   await screens.openCampaign(page)
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await page
     .getByRole('radiogroup', { name: 'Format' })
     .getByRole('radio', { name: 'Video' })

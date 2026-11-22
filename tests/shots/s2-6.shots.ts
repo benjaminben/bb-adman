@@ -55,7 +55,7 @@ test('The licence dialog for an H3 video run', async () => {
   const page = await campaign(true)
   // A video start needs a video post (P7-11): the master is changed to video in the editor,
   // as in video-variant-steps.ts, and the overview is shown again.
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await format(page).getByRole('radio', { name: 'Video' }).click()
   await expect(format(page).getByRole('radio', { name: 'Video' })).toBeChecked()
   await page.getByRole('tab', { name: 'Overview' }).click()

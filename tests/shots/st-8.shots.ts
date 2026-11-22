@@ -43,7 +43,7 @@ async function campaignWithPalette(page: Page): Promise<void> {
   })) as { campaignId: string }
   await command(page, 'ruleSet.update', { projectId, campaignId, palette: PALETTE })
   await page.getByRole('button', { name: 'Open Fresh loaf' }).click()
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
 }
 

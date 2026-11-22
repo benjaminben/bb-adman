@@ -36,7 +36,7 @@ test('the video card: an image post, the background start, reference pictures', 
   await card.scrollIntoViewIfNeeded()
   await shot(page, '237-video-card-image-post')
 
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   const format = page.getByRole('radiogroup', { name: 'Format' })
   await format.getByRole('radio', { name: 'Video' }).click()
   await expect(format.getByRole('radio', { name: 'Video' })).toBeChecked()

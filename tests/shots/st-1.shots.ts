@@ -30,7 +30,7 @@ test('The tokens on the start screen and in the editor', async () => {
     .click()
   const variants = page.getByRole('list', { name: 'Variants' })
   await expect(variants.getByRole('listitem')).toHaveCount(1)
-  await variants.getByRole('button').first().click()
+  await variants.getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page.getByRole('button', { name: /^Headline/ }).click()
   await page.waitForTimeout(500)

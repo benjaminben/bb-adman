@@ -101,7 +101,7 @@ test('The editor frame', async () => {
   const headline = layers.find((l) => l.type === 'text' && l.name === 'Headline')!
   const short = { copy: 'Taste the mountain' }
   await command(page, 'layer.update', { projectId, layerId: headline.id, patch: short })
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page.waitForTimeout(500)
   await shot(page, '01-editor-open')

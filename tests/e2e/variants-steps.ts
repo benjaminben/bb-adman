@@ -34,7 +34,7 @@ export const grid = (page: Page, direction: string): Locator =>
 export const tile = (page: Page, direction: string, line: string): Locator =>
   grid(page, direction).getByRole('listitem').filter({ hasText: line })
 
-// The tile's own button (a plain click opens it in the editor; it holds the title).
+// The tile's own button (a double-click opens it in the editor; it holds the title).
 export const tileButton = (t: Locator): Locator =>
   t.getByRole('button', { name: /^(?!Open |Quick look at |Delete )/ })
 
@@ -91,7 +91,7 @@ const properties = (page: Page): Locator => page.getByRole('region', { name: 'Pr
 
 // Opens the tile in the editor and selects the named layer.
 export async function editLayer(page: Page, t: Locator, layer: string): Promise<void> {
-  await tileButton(t).click()
+  await tileButton(t).dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page
     .getByRole('list', { name: 'Layers' })

@@ -43,7 +43,7 @@ export async function openVideoEditor(
   await screens.loadBriefAndCreate(app, page)
   await reopenAsVideo(page, name)
   await screens.openCampaign(page)
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: 'Timeline' })).toBeVisible()
 }
 

@@ -63,14 +63,14 @@ export async function projectHomeTour(app: ElectronApplication, page: Page) {
   await screens.loadBriefAndCreate(app, page)
   await screens.openCampaign(page)
   // campaign.create makes the master variant only, and no screen adds another yet, so the
-  // choice is between one: it is chosen at the start, opens in the editor when clicked (P3-9),
+  // choice is between one: it is chosen at the start, opens in the editor when double-clicked (P3-9),
   // and stays chosen back on the overview.
   const variants = page
     .getByRole('list', { name: 'Variants' })
     .getByRole('button', { name: /^(?!Open |Quick look at |Delete )/ })
   await expect(variants).toHaveCount(1)
   await expect(variants.first()).toHaveAttribute('aria-pressed', 'true')
-  await variants.first().click()
+  await variants.first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page.getByRole('tab', { name: 'Overview' }).click()
   await expect(variants.first()).toHaveAttribute('aria-pressed', 'true')
@@ -111,7 +111,7 @@ export async function aiTour(app: ElectronApplication, page: Page) {
   await screens.createProject(page, 'Delta')
   await screens.loadBriefAndCreate(app, page)
   await screens.openCampaign(page)
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page.getByRole('button', { name: 'Add picture layer' }).click()
   const section = page.getByRole('group', { name: 'Make pictures with AI' })

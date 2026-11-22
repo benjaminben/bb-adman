@@ -97,7 +97,7 @@ async function tilted(page: Page, projectId: string, layers: Layer[]): Promise<n
 }
 
 async function openVariant(page: Page) {
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
 }
 

@@ -89,7 +89,7 @@ test('The generate fields with earlier options, then the run dialog', async () =
     copy: false,
     ...(ids.subjectId === undefined ? {} : { subjectId: ids.subjectId }),
   })
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page.getByRole('button', { name: new RegExp(`^${ids.background}`) }).click()
   const section = page.getByRole('group', { name: 'Make pictures with AI' })

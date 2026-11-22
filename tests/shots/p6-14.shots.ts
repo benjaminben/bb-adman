@@ -71,7 +71,7 @@ async function frenchCampaign(page: Page): Promise<void> {
   await page
     .getByRole('list', { name: 'Variants' })
     .getByRole('button', { name: /1080×1350 · fr/ })
-    .click()
+    .dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
 }
 

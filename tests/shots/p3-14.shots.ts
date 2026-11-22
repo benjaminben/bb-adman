@@ -112,7 +112,7 @@ test('Picture properties and the picture chooser', async () => {
   const photos = listed as unknown as { id: string }[]
   for (const { id } of photos) await command(page, 'asset.remove', { projectId, assetId: id })
 
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await select(page, background.name)
   await pictureSection(page).getByRole('button', { name: 'Choose picture…' }).click()

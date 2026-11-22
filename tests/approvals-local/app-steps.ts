@@ -62,7 +62,7 @@ export async function refresh(page: Page): Promise<void> {
 
 // A saved edit of the variant: its title, in the editor; then back to the overview.
 export async function editVariant(page: Page): Promise<void> {
-  await grid(page).getByRole('button').first().click()
+  await grid(page).getByRole('button').first().dblclick()
   await page.getByRole('button', { name: 'Rename' }).click()
   await page.getByRole('textbox', { name: 'Variant title' }).fill(EDITED_TITLE)
   await page.keyboard.press('Enter')

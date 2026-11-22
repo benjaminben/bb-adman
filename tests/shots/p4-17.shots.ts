@@ -66,7 +66,7 @@ test('Copy options for a text layer', async () => {
   await expect(page.getByRole('list', { name: 'Variants' }).getByRole('listitem')).toHaveCount(1)
   const layer = await textLayer(page)
 
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page.getByRole('button', { name: new RegExp(`^${layer.name}`) }).click()
   const suggest = panel(page).getByRole('button', { name: 'Suggest copy…' })
