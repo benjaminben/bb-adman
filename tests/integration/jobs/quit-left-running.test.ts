@@ -55,6 +55,6 @@ describe('leftRunningList, for the quit question [P7-15, A-174]', () => {
     f = await makeGenerationFixture()
     for (let i = 0; i < count; i++) row('fal-seedance', `r${i}`, 'working')
     const question = quitQuestion(count, list())
-    expect(question?.detail.endsWith(` ${sentence}`)).toBe(true)
+    expect(question?.detail).toBe(sentence)
   })
 })

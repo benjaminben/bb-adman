@@ -15,6 +15,7 @@ import type { AdmanApi } from '@/shared/schemas/api'
 import styles from './project-switcher.module.css'
 
 type Asking = { projectId: string; name: string; count: number; lines: string[] }
+type LeftRunning = { left: number; lines: string[] }
 
 // The close's own test (leftRunningOnClose in src/main/jobs/leave-running.ts): a running video
 // row of a provider that is not local, with cancel may_finish, whose cancel the app refuses
@@ -23,9 +24,9 @@ async function leftRunningLines(
   api: AdmanApi,
   projectId: string,
   providers: readonly ProviderInfo[],
-): Promise<string[]> {
+): Promise<LeftRunning> {
   const result = await api.query('job.activity', { projectId, limit: ACTIVITY_LIMIT_MAX })
-  if (!result.ok || !Array.isArray(result.data)) return []
+  if (!result.ok || !Array.isArray(result.data)) return { left: 0, lines: [] }
   const counts = new Map<string, number>()
   for (const { job } of result.data as JobActivity) {
     const provider = providers.find((p) => p.id === job.provider)
@@ -37,10 +38,13 @@ async function leftRunningLines(
       !cancelShown(job, provider)
     if (left) counts.set(provider.label, (counts.get(provider.label) ?? 0) + 1)
   }
-  return [...counts].map(([label, n]) => leftRunningLine(label, n))
+  const lines = [...counts].map(([label, n]) => leftRunningLine(label, n))
+  return { left: [...counts.values()].reduce((sum, n) => sum + n, 0), lines }
 }
 
+// P7-15b: count is the runs the close really stops; with none, there are no words.
 export function closeProjectWords(count: number): string {
+  if (count <= 0) return ''
   const going =
     count === 1
       ? '1 run is still going in this project. Closing stops it.'
@@ -64,8 +68,8 @@ export function useCloseProject() {
     if (result.ok || result.error.details?.reason !== 'jobs_running') return
     clearError()
     const count = Number(result.error.details.count ?? 0)
-    const lines = await leftRunningLines(api, projectId, providers)
-    setAsking({ projectId, name, count, lines })
+    const { left, lines } = await leftRunningLines(api, projectId, providers)
+    setAsking({ projectId, name, count: count - left, lines })
   }
 
   async function stopAndClose() {
@@ -81,7 +85,9 @@ export function useCloseProject() {
       open={asking !== null}
       onClose={() => setAsking(null)}
       title={`Close ${asking?.name ?? ''}?`}
-      description={[closeProjectWords(asking?.count ?? 0), ...(asking?.lines ?? [])].join(' ')}
+      description={[closeProjectWords(asking?.count ?? 0), ...(asking?.lines ?? [])]
+        .filter((line) => line !== '')
+        .join(' ')}
       closable={!sending}
     >
       <div className={styles.actions}>

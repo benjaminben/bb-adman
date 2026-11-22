@@ -76,7 +76,10 @@ describe('the project close warning names runs left running [P7-15, A-174]', () 
   ])('adds the line, singular and plural', async (rows, line) => {
     const fake = await draw(rows)
     const dialog = await closeSummer()
-    const start = START.replace('{n} runs are', `${rows.length} runs are`)
+    const start = START.replace(
+      '{n} runs are still going in this project. Closing stops them.',
+      '1 run is still going in this project. Closing stops it.',
+    )
     expect(dialog).toHaveAccessibleDescription(`${start} ${line}`)
     expect(fake.queries).toContainEqual({
       name: 'job.activity',
@@ -96,5 +99,27 @@ describe('the project close warning names runs left running [P7-15, A-174]', () 
     const dialog = await screen.findByRole('dialog', { name: 'Close Summer?' })
     expect(dialog).toHaveAccessibleDescription(START.replace('{n} runs are', '2 runs are'))
     expect(fake.queries.some((q) => q.name === 'job.activity')).toBe(true)
+  })
+})
+
+// P7-15b: the first sentence counts only the runs the close really stops.
+describe('the project close warning counts only the runs it stops [P7-15b]', () => {
+  const ONE =
+    'fal.ai Seedance has started 1 video and will charge for it. It keeps running; open the project again to collect it.'
+
+  it('counts the other runs, not the left-running one', async () => {
+    await draw([
+      started('a'),
+      jobRow('b', { status: 'running' }),
+      jobRow('c', { status: 'queued' }),
+    ])
+    const dialog = await closeSummer()
+    expect(dialog).toHaveAccessibleDescription(`${START.replace('{n}', '2')} ${ONE}`)
+  })
+
+  it('shows only the left-running line when every run keeps running', async () => {
+    await draw([started('a')])
+    const dialog = await closeSummer()
+    expect(dialog).toHaveAccessibleDescription(ONE)
   })
 })

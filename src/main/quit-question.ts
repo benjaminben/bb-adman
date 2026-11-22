@@ -25,19 +25,23 @@ export function quitQuestion(
   leftRunning: readonly LeftRunning[] = [],
 ): QuitQuestion | null {
   if (running <= 0) return null
+  const left = leftRunning.filter((l) => l.count > 0)
+  // P7-15b: the first sentence counts only the runs quitting really stops; with none, it and
+  // the lost-results sentence are not shown.
+  const stopped = running - left.reduce((sum, l) => sum + l.count, 0)
   const going =
-    running === 1
+    stopped === 1
       ? '1 run is still going. Quitting stops it.'
-      : `${running} runs are still going. Quitting stops them.`
+      : `${stopped} runs are still going. Quitting stops them.`
+  const stops =
+    stopped > 0
+      ? [
+          `${going} Requests already sent to a paid provider may still be charged, and their results are lost.`,
+        ]
+      : []
   return {
     message: 'Quit Adman?',
-    detail:
-      `${going} Requests already sent to a paid provider may still be ` +
-      'charged, and their results are lost.' +
-      leftRunning
-        .filter((l) => l.count > 0)
-        .map((l) => ` ${leftRunningLine(l)}`)
-        .join(''),
+    detail: [...stops, ...left.map(leftRunningLine)].join(' '),
     buttons: ['Quit', 'Cancel'],
     defaultId: 1,
     cancelId: 1,
