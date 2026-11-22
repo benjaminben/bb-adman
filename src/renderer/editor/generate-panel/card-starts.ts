@@ -7,7 +7,7 @@
 import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
 import { MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
 import { VIDEO_START_KINDS, videoOffer, type VideoStartKind } from '@/shared/config/video-offers'
-import { STARTS, maxMsFor, offeredStarts } from '@/renderer/screens/campaign/video-start'
+import { STARTS, maxMsFor, offeredStarts } from '@/renderer/editor/generate-panel/video-start'
 import { START_SECONDS } from './video-length'
 
 // A card start is named by its start kind.

@@ -15,7 +15,7 @@ import {
   whyNot,
 } from '@/renderer/ui/reference-picker/reference-list'
 import { photoOfLine, subjectPhotoIds } from '@/renderer/ui/reference-picker/reference-rows'
-import { PICTURE_HINT } from '@/renderer/screens/campaign/video-start'
+import { PICTURE_HINT } from '@/renderer/editor/generate-panel/video-start'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './video-picture-choice.module.css'
 

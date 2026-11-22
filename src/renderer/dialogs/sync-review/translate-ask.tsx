@@ -4,7 +4,7 @@
 // request: translation.propose with a direction and a language starts one job. Only its
 // "Confirm" starts the run; nothing is sent before it.
 import { languageName } from '@/renderer/screens/campaign/translation-panel/translation-words'
-import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'
+import { PaidConfirm } from '@/renderer/ui/paid-confirm'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './sync-review.module.css'
 

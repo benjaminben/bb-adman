@@ -12,29 +12,15 @@ import { useNavStore } from '@/renderer/app/nav-context'
 import { picturesLeft } from '@/shared/generation/pictures-left'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import { requestCount, type JobStore } from '@/renderer/stores/job-store'
-import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'
+import { PaidConfirm } from '@/renderer/ui/paid-confirm'
 import { RunFailure } from '@/renderer/ui/run-failure'
 import { RunResult } from '@/renderer/screens/campaign/run-result'
 import { VideoResult } from '@/renderer/screens/campaign/video-result'
 import { cancelShown } from '@/renderer/ui/cancel-shown'
 import { showResult } from '@/renderer/ui/show-result'
-import { useNow, videoRunningText } from './video-status'
+import { useNow, videoRunningText, workingDetail } from '@/renderer/ui/run-status'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './run-row.module.css'
-
-// What a provider reports while it works (SPEC 6.11.1 [1.38]): read from `result` only when
-// it is there and of the right type.
-export function workingDetail(row: JobRow): string {
-  const shown = (typeof row.result === 'object' && row.result !== null ? row.result : {}) as {
-    stage?: unknown
-    queuePosition?: unknown
-  }
-  const parts: string[] = []
-  if (typeof shown.stage === 'string') parts.push(shown.stage)
-  if (typeof shown.queuePosition === 'number') parts.push(`place in queue ${shown.queuePosition}`)
-  if (row.progress !== null) parts.push(`${Math.round(row.progress * 100)}%`)
-  return parts.join(' · ')
-}
 
 // FN-4: a picture run's Retry asks only for the pictures not yet kept, as job.retry does.
 function retryCount(row: JobRow): number | null {

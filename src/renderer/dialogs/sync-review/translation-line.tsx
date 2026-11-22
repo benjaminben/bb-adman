@@ -5,7 +5,7 @@
 // With no job started (a paid text provider) the Phase 5 line stays. Text is drawn as text.
 // P6-18: with a paid provider "Retry" opens the paid confirm in its place (`ask`).
 import { useId, useState } from 'react'
-import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'
+import { PaidConfirm } from '@/renderer/ui/paid-confirm'
 import { BusySpinner } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
 import type { SyncChange } from '@/shared/schemas/queries/sync'

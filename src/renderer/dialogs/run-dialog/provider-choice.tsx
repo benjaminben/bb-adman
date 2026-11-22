@@ -7,7 +7,7 @@
 // "{label} (cannot start this way)"; ComfyUI needs an offered workflow for the start's pair.
 import { useId } from 'react'
 import { offeredFor } from '@/renderer/screens/campaign/offered-workflow'
-import { STARTS } from '@/renderer/screens/campaign/video-start'
+import { STARTS } from '@/renderer/editor/generate-panel/video-start'
 import { videoOffer, type VideoStartKind } from '@/shared/config/video-offers'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { ComfyInfo, WorkflowInfo } from '@/shared/schemas/queries/comfy'

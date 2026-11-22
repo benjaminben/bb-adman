@@ -1,6 +1,6 @@
-// What a video run's row says while it runs (SPEC 14 1.57 TP-6 "While it runs"): "Waiting
-// (place n)" while the server holds it in its queue, else "Working, m min" from the row's
-// start time. No percentage: the poll gives none.
+// What a video run says while it runs (SPEC 14 1.57 TP-6 "While it runs"), on the activity
+// row and the editor's run status: "Waiting (place n)" while the server holds it in its queue,
+// else "Working, m min" from the row's start time. No percentage: the poll gives none.
 import { useEffect, useState } from 'react'
 import type { JobRow } from '@/shared/schemas/rows/job'
 

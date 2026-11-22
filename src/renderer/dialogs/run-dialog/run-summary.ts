@@ -3,7 +3,7 @@
 // nothing is charged. The ComfyUI address is allowed here (FR-256). R2E-8 (round-2-editor.md
 // D4): a paid video names the length and the pictures it sends, and a length the provider
 // changes gets a second line.
-import { paidLine } from '@/renderer/screens/campaign/paid-confirm/paid-confirm'
+import { paidLine } from '@/renderer/ui/paid-confirm/paid-confirm'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 
 export type RunJob = 'image' | 'cutout' | 'layout' | 'text' | 'video'

@@ -8,7 +8,8 @@ import path from 'node:path'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import { PaidConfirm, paidLine } from '@/renderer/ui/paid-confirm'
+import { PaidConfirm } from '@/renderer/ui/paid-confirm'
+import { paidLine } from '@/renderer/ui/paid-confirm/paid-confirm'
 import layout from '@/renderer/ui/layout.module.css'
 
 const FOLDER = path.resolve('src/renderer/ui/paid-confirm')
