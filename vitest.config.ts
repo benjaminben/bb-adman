@@ -30,6 +30,7 @@ export default defineConfig({
             'tests/unit/preload/**/*.test.ts',
             'tests/unit/live/**/*.test.ts',
             'tests/unit/e2e-real/**/*.test.ts',
+            'tests/unit/scripts/**/*.test.ts',
             'tests/integration/**/*.test.ts',
           ],
         },

@@ -1,0 +1,34 @@
+{
+  "version": "9.0.2",
+  "windows": {
+    "url": "https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2026-11-21-12-37/ffmpeg-n9.0.2-61-gd59078794d-win64-lgpl-9.0.zip",
+    "sha256": "3508eac94b9cfd5ffe34e88cef4fd5ba15b4ccdd6b4083488e070c702342a26a",
+    "member": "ffmpeg-n9.0.2-61-gd59078794d-win64-lgpl-9.0/bin/ffmpeg.exe"
+  },
+  "source": {
+    "url": "https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz",
+    "sha256": "8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e",
+    "configure": [
+      "--disable-everything",
+      "--disable-gpl",
+      "--disable-nonfree",
+      "--disable-network",
+      "--disable-autodetect",
+      "--disable-doc",
+      "--disable-ffplay",
+      "--disable-ffprobe",
+      "--disable-x86asm",
+      "--enable-pthreads",
+      "--enable-videotoolbox",
+      "--enable-audiotoolbox",
+      "--enable-decoder=h264,hevc,vp8,vp9,prores,png,rawvideo,pcm_u8,pcm_s16le,pcm_s32le,pcm_f32le,pcm_f64le",
+      "--enable-demuxer=mov,matroska,image2pipe,png_pipe,ffmetadata",
+      "--enable-muxer=mp4,mov",
+      "--enable-parser=h264,hevc,vp8,vp9,png,aac",
+      "--enable-protocol=file,pipe",
+      "--enable-filter=scale,crop,overlay,trim,setpts,loop,color,format,fps,anullsrc,aresample",
+      "--enable-encoder=h264_videotoolbox,aac_at",
+      "--enable-indev=lavfi"
+    ]
+  }
+}
