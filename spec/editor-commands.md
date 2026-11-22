@@ -49,6 +49,7 @@ Built (`src/main/commands/layer/update.ts`, `merge-patch.ts`, `inverse-patch.ts`
 - After merging, the whole `style`, `geometry`, `timing` and `animation` must pass their schemas in `src/shared/schemas/layer.ts`; a text layer's style must be a `TextStyle`, an image or background layer's an `ImageStyle`. A style field of the other kind is refused with "Those style values do not fit this layer."
 - Any `source` key on a text layer is refused, `null` included ("A text layer has no picture.").
 - `geometry`: `width` and `height` at least 1; every number finite; `rotation` is stored folded into (−180, 180]. A `crop` with `width` or `height` below 1 is refused. A crop outside the picture is accepted and drawn cut to the picture (`spec/scene.md`).
+- `timing.startMs`, `timing.endMs` and each animation block's `startMs` and `durationMs` are from 0 to the longest variant length (`MAX_DURATION_MS`, the bound of `variant.update`'s `durationMs`), checked in the schema. Agents reach them through `update_layer`.
 - The asset checks run on the values in the patch, even when they equal what is stored. So re-sending a font that has since moved to the reference library is refused, not a no-op.
 - **Refusal order:** unknown layer (`NOT_FOUND`); then the type and style refusals; then the asset refusals (`NOT_FOUND`, then wrong kind `INVALID_INPUT`, then `RULE_VIOLATION` `reference_library`).
 - A preset other than `none` on a layer that is not text is refused [REQ: FR-128].

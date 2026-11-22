@@ -121,11 +121,11 @@ Built (`src/main/assets/`, `src/main/db/`).
 **A hostile project file is in scope for every slice.** A project file may come from anyone, so every value read from it is untrusted: names, paths, `mime`, sizes, IDs, counts. Code that puts such a value into a file path, a header, a command line or a request first checks it against the same rule the app uses when it writes that value. That code is security class.
 
 - What always holds: the app never creates a folder outside the project file's own folder; a file is never written over an existing one; bytes handed to the window never leave it and page script cannot read them; a linked file goes to a provider or into a package only when its first bytes fit the row's kind; the checks in the table below. There is no confirm step for projects from elsewhere.
-- Not yet checked: the database layout itself. A hostile file could hold a trigger, a view or an unknown table. Planned, not built: refuse such a file on open (`spec/phases/review-leftovers.md`, LP-11).
+- The layout is checked before any write: a trigger, view, virtual table, unknown or reshaped table or index refuses the file (`spec/data-model.md`, "Layout check"). `trusted_schema` is off on every project connection and the package copy.
 
 ### Project-file values that reach a path, a header or a request
 
-This file owns the table. A change that makes a project-file value reach a path, header, command line or request adds or changes its row in the same change (the developer reports the text, the architect writes it). Reviewers check each row against the code whenever a slice touches its file.
+This file owns the table. A change that makes a project-file value reach one of these adds or changes its row in the same change (the developer reports the text, the architect writes it). Reviewers check each row against the code whenever a slice touches its file.
 
 | Value from the project file | Where it goes | File | Check before use | Left open |
 |---|---|---|---|---|

@@ -56,6 +56,8 @@ type CampaignSize = { label: string; width: number; height: number }
 | `4x5` | 1080 × 1350 | No |
 
 - **One pixel size, one label.** A size whose pixels equal a ready-made size takes that size's label, however it was typed. `4:5`, `4x5` and `1080x1350` all give `{ label: '4x5', width: 1080, height: 1350 }`, and `1080x1080` gives `1x1`. Any other size keeps `{width}x{height}`. Reason: the label names the export folder and is part of the `variant_grid` index, so two labels for the same pixels would allow two variants that are the same ad.
+- **Commands check it too.** A size's label must be the ready-made label for its pixels, or exactly `{width}x{height}` (`labelFitsPixels` in `src/shared/brief/size.ts`). `campaign.create` refuses a mismatch in its schema with `INVALID_INPUT`; `campaign.update` refuses it in its handler, after the "master keeps its size" rule. So an agent cannot send `{ label: '1x1', width: 1080, height: 1920 }`.
+- **Caps** (`src/shared/config/campaign-limits.ts`, A-300): at most 20 sizes, 50 languages, and 35 characters per language. An agent's `create_campaign` language must also match export's language pattern (letters, digits and `-`).
 - A brief that names no sizes gets the three default ones.
 
 **Reading a typed size** (`parseSize` in `src/shared/brief/size.ts`; it reads the list and holds no size of its own):

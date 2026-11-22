@@ -12,7 +12,7 @@ Built. `src/main/providers/types.ts`.
 // Paths are relative, use '/', never start with '/' and never hold '..'.
 export interface StorageProvider {
   exists(path: string): Promise<boolean>
-  read(path: string): Promise<Uint8Array>
+  read(path: string, maxBytes?: number): Promise<Uint8Array>
   write(path: string, data: ReadableStream | Uint8Array, contentType: string): Promise<void>
   list(prefix: string): Promise<string[]>
   remove(paths: string[]): Promise<void>
@@ -25,7 +25,7 @@ A provider folder exports `storage?: (ctx: AdapterContext) => StorageProvider` i
 
 - **`list(prefix)`** returns paths relative to the adapter's root. Each can be handed straight to `read` and `remove`. The prefix names a folder: `a` and `a/` list the same files, and `a` never lists `ab.txt`. An empty prefix lists everything under the root. Only files are returned; folder-marker keys (ending in `/`) are left out. `list('a.txt')` on a file gives an empty list.
 - **`exists`** answers false whenever the file is not there: a missing bucket and a path through a file included (`exists('a.txt/b')` is false).
-- **`read`** returns the whole file in memory, and for a moment holds about three times the file's size. It is for small files (a report, a list). Uploads go through `write`, which streams. No size limit is set. If publishing needs to read large files back, that goes to the architect first.
+- **`read`** returns the whole file in memory, and for a moment holds about three times the file's size. It is for small files (a report, a list). Uploads go through `write`, which streams. **Byte limit:** `maxBytes`, default `STORAGE_READ_MAX_BYTES` = 256 MiB (A-301); the publish manifest is read under `MANIFEST_MAX_BYTES` (8 MiB, `src/main/publish/manifest.ts`). A file over the limit is a `ProviderFailure` of kind `other`, detail "Answer too large". Local reads stop reading at the limit. If publishing needs to read large files back, that goes to the architect first.
 - **Errors.** An error from the provider or from the disk is a `ProviderFailure`, passed through `redactSecret` (`src/main/providers/redact.ts`). No message an adapter makes holds a path. An error detail may hold a host name; it goes to the local log and `job.error_detail`, never to a window or an agent. When the call is part of a job, the detail goes to `job.error_detail` only and the log line names the job.
 - **A refused path** is the caller's mistake, not a provider's answer. It is a plain `Error` with exactly the message "Storage path refused" (`REFUSED_PATH`), holding no path, thrown before anything is sent or written. Conformance cases expect that exact text.
 

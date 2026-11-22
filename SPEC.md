@@ -1,7 +1,7 @@
 # SPEC.md — Technical Specification (index)
 
 **Project:** Adman, a desktop app (Electron) for making ad campaigns: one brief becomes a grid of image and video ads in many sizes and languages, with AI generation, checks, export and cloud publishing.
-**Status:** Phases 1 to 10, the app style pass (ST-1 to ST-14), the look pack, approvals and subject photos are built on `main`, except the leftovers listed in `spec/phases/`. Phase 11 is held. The stakeholder's hand checks are listed in each phase file and in `spec/open-items.md`, section 5.
+**Status:** Phases 1 to 10, the app style pass (ST-1 to ST-14), the look pack, approvals and subject photos are built on `main`, except the leftovers listed in `spec/phases/`. Phase 11 is held. The stakeholder's hand checks are listed in each phase file and in `spec/open-items.md`, section 5; questions for him are in section 6.
 
 The spec is split into small files so that a reader loads only what a task needs. This file is the map.
 

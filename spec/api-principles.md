@@ -132,7 +132,9 @@ Built unless marked.
 | `settings.update`: an S3 region in China | `INVALID_INPUT` | `storage_not_supported` | "Amazon S3 regions in China are not supported in this build." |
 | `settings.update`: a value that is not an Amazon region name | `INVALID_INPUT` | `storage_not_supported` | "That is not an Amazon S3 region. Storage services that copy S3 are not supported in this build." |
 | A storage command or `publish.run`: the chosen storage has no settings saved (no bucket or region, or no Dropbox root folder). `details` is `{ reason, provider }`. Built for `storage.checkS3`, `publish.inspect` and `publish.run`. | `RULE_VIOLATION` | `storage_not_set_up` | For S3: "Amazon S3 is not set up yet. Enter a bucket and a region, then try again." |
-| `storage.dropboxSignIn`: a sign-in is already waiting for the browser, or a sign-out is running; `storage.dropboxSignOut` while a sign-in waits (P9-5, P9-6) | `RULE_VIOLATION` | `sign_in_in_progress` | "A Dropbox sign-in is already waiting for the browser." (`src/shared/publish/messages.ts`) |
+| `storage.dropboxSignIn` while a sign-in already waits; `storage.dropboxSignOut` while a sign-in waits (P9-5, P9-6) | `RULE_VIOLATION` | `sign_in_in_progress` | "A Dropbox sign-in is already waiting for the browser." (`src/shared/publish/messages.ts`) |
+| `storage.dropboxSignIn` while a sign-out runs | `RULE_VIOLATION` | `sign_in_in_progress` | "Adman is signing out of Dropbox. Try again when that has finished." |
+| `storage.dropboxSignOut` while another sign-out runs | `RULE_VIOLATION` | `sign_out_in_progress` | "Adman is already signing out of Dropbox." |
 | `mcp.setEnabled(true)` or `mcp.regenerateToken` with the setting on: the MCP port is taken | `RULE_VIOLATION` | `port_in_use` | "Port {port} is in use. Choose another." |
 | `comfy.setAddress`: the address is wrong (`spec/comfyui.md`, "Address"). Messages in `COMFY_ADDRESS_MESSAGES`, `src/shared/comfy/address.ts`. | `INVALID_INPUT` | `address_empty` | "Enter the address of your ComfyUI server." |
 | | `INVALID_INPUT` | `address_unreadable` | "That address cannot be read. Enter it as it is shown, for example http://127.0.0.1:8188." |

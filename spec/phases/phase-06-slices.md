@@ -98,7 +98,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class B.
 - **Security:** full (agent-reachable). **Size:** small.
 
-## P6-10 — Rule set panel
+## P6-10 — Rule set panel (built)
 
 - **Exists when done:** the overview shows "Brand and legal rules" as section 8 says, and every change saves.
 - **New files:** the body of `screens/campaign/rule-set-panel/`; `palette-list.tsx`, `required-files.tsx`, `word-list-fields.tsx` in that folder (reusing `screens/project-home/rule-fields/word-lists.tsx` if its props fit without change; if it would need a change, the panel has its own).
@@ -128,7 +128,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class D; `npm run test:e2e`. **Shots:** `tests/shots/p6-12.shots.ts`, 205 (proposed rows), 206 (all approved); need a language variant (rules).
 - **Security:** none. **Size:** medium.
 
-## P6-13 — Translation panel: translate again, sheet, close warning
+## P6-13 — Translation panel: translate again, sheet, close warning (built)
 
 - **Exists when done:** "Translate {language} again…", the failed line with "Retry", "Running…" with "Stop", "Export translation sheet…", and the campaign-tab close warning for translation jobs.
 - **New files:** `screens/campaign/translation-panel/translate-again.tsx`, `export-sheet.tsx`, `job-line.tsx`.

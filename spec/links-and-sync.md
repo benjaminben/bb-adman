@@ -95,7 +95,7 @@ The steps are in `spec/data-rules.md`, "Fan-out". Phase 5 builds them with these
 **`variant.fanOut { projectId, directionId, sizes, languages, formats, fits }`** (C, deny).
 
 - `sizes`: size labels from `campaign.sizes`, at least one. `languages`: tags from `campaign.languages`, at least one. A label or tag not in the campaign: `RULE_VIOLATION`, `not_in_campaign`, "Choose sizes and languages from the campaign's lists." The master's size and language are always part of the grid, whether or not they are listed.
-- `formats`: `['image']` only in Phase 5 (A-133). Phase 7 widens the schema to `'video'` and builds step 7.
+- `formats`: one or more of `'image'` and `'video'` (P7-23); a video variant gets step 7 of `spec/data-rules.md`.
 - `fits`: `{ [sizeLabel]: 'scale' | 'crop' | 'fill' }`, one entry for each listed size whose pixel size differs from the master's, and no others. A missing or extra entry: `INVALID_INPUT`, "Choose how the background fits for each new size." A size with the master's pixel size but another label takes geometry as it follows (A-147).
 - `fill` makes the variant exactly as `scale` does. The command starts no job (A-129).
 - Combinations that already exist in the direction are skipped. Nothing new to make: success with empty lists.

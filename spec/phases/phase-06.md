@@ -27,7 +27,7 @@ Phase 5 (variants, fan-out, sync) is not built. Only three parts of this phase u
 - `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run test:build` and `npm run test:e2e` pass.
 - `tests/e2e/localize.spec.ts` (P6-17) passes with the fake provider: workflow 5.2 from fan-out of a master to two sizes and two more languages (one of them `ja`) to every translation approved, with one translation edited, the sheet exported, and the checks run with a warning, fixed, and run again with none.
 - `tests/unit/shared/checks/` has, for each of the six checks, at least one pass, one warn and one skipped case, and the word checks each have a CJK case (P6-2).
-- Named tests pass: "an agent `translation.set` never yields `approved`" (`spec/testing.md`); "editing an approved translation sets it back to proposed"; "a translation that arrives after the user typed over the layer does not overwrite it"; "the sheet guards cells that start with a formula sign".
+- Named tests pass: "An agent `set_translation` never yields `approved`" (`tests/integration/mcp/translation-check-tools.test.ts`, with `tests/integration/translation/set.test.ts`); "editing an approved translation sets it back to proposed"; "a translation that arrives after the user typed over the layer does not overwrite it"; "the sheet guards cells that start with a formula sign".
 - One low-cost live `translate` call has passed once under D-085 (`tests/live/gemini-translate.live.test.ts`), reported with model ID, time and answer size and never the answer text; or the report says why it was not run.
 - Shots 200 to 219 made and named in the slice reports.
 - This phase adds no migration; `variant_check` and the two `translation_*` columns exist since `0000`.

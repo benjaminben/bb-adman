@@ -11,34 +11,7 @@ None open.
 
 ## Fix with a later phase
 
-### Phase 7 (Video and timeline)
-
-#### LP-2. Two owners of the "cancel answered unknown" wait for video
-
-- Source: CU6a D3, and CU6a missing test.
-- Files: `src/main/jobs/kinds/video-generation.ts:78-99` (`untilDone`, line 90-91).
-- What is wrong: after a cancel, the video kind ends itself with `ProviderCancelled` once `cancelWaitFor(provider)` passes. The runner reads that as `stopped`, so the job ends `cancelled` without `outcomeUnknown`. `spec/cancel.md`, "`job.cancel`", makes the runner's timer the one owner (outcome `unknown`, `outcomeUnknown: true`). Which timer wins depends on timing. The kind also ignores the runner's `cancelWaitMs` test option.
-- Done when: the kind does not time the wait itself; the runner's timer ends it. Test: a video job with the fake set to `onCancel: 'no_confirm'` ends `cancelled` with `result.outcomeUnknown === true` and no asset. (Today `no_confirm` is used only with `generative_fill` and fake jobs.)
-- Security class: no.
-
 ### Phase 8 (Export and reports)
-
-#### LP-3. A language tag from the project file goes into an export file name
-
-- Source: SliceC, unverified.
-- Files: `src/shared/schemas/commands/campaign.ts:36` (`languages: z.array(z.string().min(1))`); `src/shared/schemas/rows/campaign.ts:16`; export path pattern `{outputDir}/{campaignId}/{postTitle}/{sizeLabel}/{language}-{variantId}.{ext}`.
-- Status: the export side is built (`adPath` in `src/shared/export/output-paths.ts` refuses a size label or language outside its pattern; P8-2's target checks keep writes inside the folder). Left: the row in the security table of project-file values, and the `campaign.create` cap below (Owed follow-ups, agent tools).
-- What is wrong: a language is any non-empty text, read from the project file. `postTitle` is cleaned; nothing says `{language}` is. A hostile project file could put `/` or `..` in a language and make export write outside the chosen folder.
-- Done when: export checks each part of the path built from project-file values (language, size label, IDs) against a strict pattern (for example BCP 47 letters, digits and `-`), refuses others, and checks the final path is inside the chosen folder. The security table of project-file values gets a row for it. Tests: a project with language `../x` and one with `a/b`; export refuses, nothing is written outside the folder.
-- Security class: yes (destructive: write outside the chosen folder).
-
-#### LP-4. A size label is not checked against its pixels
-
-- Source: SliceC, unverified.
-- Files: `src/shared/schemas/commands/campaign.ts:12-16` (`CampaignSize`), `src/main/commands/campaign/create.ts:108-130`.
-- What is wrong: `campaign.create` accepts `{ label: '1x1', width: 1080, height: 1920 }`. "One pixel size, one label" is checked only in `parseSize`, which the window uses. An agent can send a mismatched size. Export uses the label as a folder name.
-- Done when: `campaign.create` and `campaign.update` refuse a size whose label does not match its pixels (same rule as `parseSize`). Test: one mismatched size is refused with `INVALID_INPUT`.
-- Security class: no.
 
 #### LP-5. Workflow and model details do not reach the asset row
 
@@ -58,16 +31,6 @@ None open.
 - What is wrong: the figures are in no spec line. If `requestTimeout` limits the whole request rather than idle time, a large upload over a slow line fails at 60 s.
 - Done when: the publish slice confirms how the handler applies `requestTimeout`, sets figures that fit a large video upload, and records them in the spec. Test: a stand-in server that accepts a body slowly but steadily for longer than the limit does not cause a failure, while one that goes silent does.
 - Security class: no.
-
-### Phase 10 (MCP server)
-
-#### LP-7. `get_project`'s description does not name every field it returns
-
-- Source: MCP-B item 6.
-- Files: `src/main/mcp/tools/table.ts` (the `get_project` description); `src/main/mcp/tools/project-replies.ts` (`projectFields`).
-- What is wrong: the picker names its fields, and they include `meta` (project ID, name, schema version, app version, created time) and `missingAssetCount`. The description says only "its subjects and a summary of each campaign".
-- Done when: Phase 10 decides whether `meta` and `missingAssetCount` stay; the description and the tool table in `spec/mcp-and-agents.md` name what the picker gives.
-- Security class: no (the allow-list is built).
 
 ### Phase 11 (README, example set and release)
 
@@ -94,42 +57,26 @@ None open.
 - Done when: the release phase adds the icon files and a packaged build shows them.
 - Security class: no.
 
-#### LP-11. The app trusts the database layout inside a project file (planned, not built)
-
-- Source: P10-6 review, low finding 4.
-- Files: `src/main/db/` (opening a project file and running migrations).
-- What is wrong: a project file may come from someone else (`spec/security.md`, "A hostile project file is in scope for every slice"). The app checks the values it reads, but it trusts the SQLite layout itself. A hostile file could hold a trigger that runs on the app's own writes, a view that stands in for a table, or a table built without the primary key the app expects.
-- Done when: on open, before any write, the app reads `sqlite_master` and refuses a project file that holds a trigger, a view, or a table the app does not know (a fixed sentence, no names from the file). A hardening slice, placed before the release (Phase 11) unless the owner moves it. Tests: a file with a trigger, one with a view, one with an extra table, each refused with nothing written; a file made by the app opens.
-- Security class: yes (destructive: a trigger can change or delete the user's work).
-
-## Owed follow-ups (Phases 7 to 10)
+## Owed follow-ups (Phases 7 to 11)
 
 One line each; none blocks an exit slice unless it says so. Security-class items are marked.
 
 ### Publish
 
-- "Publish anyway" stays disabled for about 500 ms after the warnings step opens (a double click), and "Back" reads `publish.inspect` again (P9-13 review).
-- `StorageProvider.read` has no byte limit on the shared port (P9-10 review).
 - Failures after an upload has started share the job reason of failures before it; give them their own reason (P9-10 review).
 - Remove leftover `publish-work` folders at app start too, as export does (P9-11 review, optional).
 
 ### Dropbox sign-in
 
-- `session.ts` `save()`: put the token restore in its own `try`/`catch` (P9-6 review, L1).
-- Sign-out: keep its flag as a counter, or refuse a second sign-out while one runs (P9-6 review, L2).
-- A sign-in refused during a sign-out reuses "A Dropbox sign-in is already waiting for the browser."; give it its own sentence.
+- A sign-in refused during a sign-out has its own sentence but keeps the reason `sign_in_in_progress`; it could get its own reason.
 
 ### Agent tools
 
-- `campaignCreateFields`: cap the `sizes` and `languages` arrays and the length of each language; `logoImage` adds `library: 'asset'`; check each language's form (P10-10 review). Security class: no (export's `adPath` refuses a bad language).
-- `layer.update`: bound the `timing` and `animation` numbers in the schema; agents reach them through `update_layer` (P7-19 review, hardening).
-- `undoClipId` and `redoClipId`: check the ULID form (P7-10b review, L1).
-- Tool descriptions: `get_job`'s should name `layout` and `copyOptions`; `PROVIDER_WORDS` still calls Gemini "pictures only" (A-247). Still owed after P10-14.
+- `logoImage` (`src/main/commands/campaign/fills.ts`) should also require `library: 'asset'` (P10-10 review).
 - A tool call the SDK refuses before the handler is not logged; say so in the spec or log it (P10-8 review, L2).
 
 ### Editor and video
 
-- The fan-out dialog sends only `['image']`; add a video choice (paid-line count unchanged) (P7-23).
 - Tidy: wrap P7-18's renders in `renderApp`, then remove the `SoundScope` context and the missing-context catch in `layer-tracks/use-layer-send.ts`; retire the stub test "SoundFields: renders nothing yet" (P7-19, P7-21).
 - Share the clip math of `clip-block/clip-drag.ts` with `timeline-math` (P7-20).
 - The length field rounds 0.35 s to 0.3 s (floating point) (P7-19).
@@ -160,6 +107,12 @@ One line each; none blocks an exit slice unless it says so. Security-class items
 
 - `tests/unit/config/no-hand-test.test.ts`: add `handTest` and `HandTestScreen` to its names (P9-14 review, optional).
 - `dropbox-sign-in.test.ts` is at 299 lines: split it at its next change.
+- `tests/helpers/recording-storage.ts` does not pass `maxBytes` on to the storage it wraps.
+
+### Release (Phase 11)
+
+- Ship the full LGPL text and `THIRD-PARTY-NOTICES.md` inside the package, not only in the repository.
+- The macOS x64 FFmpeg binary has never been built.
 
 ## Test gaps
 

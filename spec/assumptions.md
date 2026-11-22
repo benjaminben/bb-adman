@@ -154,3 +154,10 @@ Designs in `spec/ai-jobs.md` and `spec/screens-ai.md`; slices in `spec/phases/ph
 ## Variants, fan-out and sync (Phase 5)
 
 - **A-128 to A-149** are kept in `spec/phases/phase-05.md`, "Assumptions made for Phase 5", for the same reason.
+
+## Input limits (before the release)
+
+Chosen by the orchestrator; the stakeholder reviews them. A-250 to A-259 are in `spec/phases/phase-11.md`.
+
+- **A-300. Campaign caps.** **Assumption:** a campaign has at most 20 sizes and 50 languages, and a language is at most 35 characters (`src/shared/config/campaign-limits.ts`; `spec/data-model-campaign.md`). *Change later: easy (one file).*
+- **A-301. Storage read limit.** **Assumption:** `StorageProvider.read` reads at most 256 MiB by default (`STORAGE_READ_MAX_BYTES`; `spec/storage-and-publish.md`). *Change later: easy (one constant).*

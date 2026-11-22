@@ -137,7 +137,6 @@ Bullets carry `[logic]` or `[UI]` (D-084). This phase has no screen work.
 
 1. **Which licence?** The stakeholder chooses. *Recommendation:* MIT (A-252); the plan proceeds on it.
 2. **What to do with the history report's findings** is the stakeholder's alone (D-009). *Recommendation:* decide before the first push; an agent rewrites nothing.
-3. **A hardening slice before the release:** refuse a project file that holds a trigger, a view or a table the app does not know (`spec/phases/review-leftovers.md`, LP-11). Not in this phase's slices yet. *Recommendation:* one small security-class slice, merged before P11-7.
 
 ## Found in the existing design
 

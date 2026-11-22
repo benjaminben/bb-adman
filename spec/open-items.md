@@ -116,3 +116,9 @@ The video card and the agent settings block were built with these choices. Each 
 - **Answers to the client reviewers (Q-050).** Whether to send the "already covered" answers back to them.
 - **Old history backup.** He may delete the scratchpad copy of the old git history (see Large items).
 - **Approvals service: deploying (D-095, D-097).** He sets the service up on Vercel with the steps in `approvals-service/README.md` (from AP-13; listed in `spec/approvals-service.md`): the project, the Turso database, the service key and the address. Then one "Update gallery" to his real S3 bucket and one sign-off through the deployed service, by hand.
+
+## 6. Questions for the stakeholder
+
+- **Fill on a video variant.** In the fan-out dialog, with only "Video" ticked and "Generate fill" chosen for a size, the command names a fill on a video variant. Is that wanted?
+- **The example brief warns on export.** `examples/brief.yaml` requires the words "Summer Splash", but its message does not hold them. So every export of the example warns and needs "Export anyway". Should the example export cleanly?
+- **Titles of ads made from a brief.** They are titled by subject IDs (for example `citrus-can+berry-bottle`), and that title also becomes the export folder name. Is that wanted, or should they get a readable title?

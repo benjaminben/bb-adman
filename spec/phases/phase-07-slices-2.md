@@ -110,7 +110,7 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 
 ### P7-23 — Video in fan-out (built)
 
-- **As built:** a new video variant gets one clip made from the background picture, not a copy of the master's clips or sound. The fan-out dialog still sends only `['image']`; a screen control for video fan-out is an owed follow-up.
+- **As built:** a new video variant gets one clip made from the background picture, not a copy of the master's clips or sound. The fan-out dialog's "Formats" choice came later (`spec/screens-variants.md`, "Fan-out").
 
 - **Exists when done:** fan-out's step 7 (`spec/data-rules.md`, "Fan-out") makes each new video variant's first clip with `addFirstClip`, which sets `first_clip_made`.
 - **May touch:** the Phase 5 file that holds fan-out's steps (named by the Phase 5 plan), one call.
