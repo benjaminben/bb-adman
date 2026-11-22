@@ -1,0 +1,30 @@
+/* app-style */
+/* P7-21: the sound choice in the transport bar, the audio list and "Add audio…" beside it,
+   a refusal after them. */
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.label {
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+.select {
+  width: auto;
+  max-width: var(--width-menu);
+  font-size: var(--font-size-control);
+}
+.error {
+  margin: 0;
+  color: var(--color-danger-text);
+  font-size: var(--font-size-small);
+}
