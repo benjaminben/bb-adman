@@ -24,6 +24,10 @@ A running list kept by the orchestrator, like `round-2-verify.md`. The design wa
 16. **A workflow that needs a commercial licence** shows a short "Commercial licence needed" mark in Settings, with the detail behind an info button. The question you asked for at run time is unchanged.
 17. **Layer order:** "Bring forward" and "Send backward" move into the layer row's "⋯" menu, with Duplicate and Delete.
 18. **One short line per storage service stays visible** saying where data goes (your own bucket, your Dropbox, the approvals service).
+19. **Four Settings values save by themselves:** the agent access port, the Dropbox folder, JPG quality and the report name save when you press Enter or leave the field, and show "Saved" for two seconds. A value the app refuses stays in the field with its message. Clicking the agent access switch straight after typing a port saves the port first; that first click does nothing, so click again.
+20. **Leaving Settings:** the Settings button, Escape, the ✕, a click on a campaign tab and "+" all leave. Escape does not leave while a dialog, a menu or a help popover is open, or while a key you are typing sits unsaved in its field. A typed key that is not saved is dropped when you leave, as before. While Settings shows over a project, the project menu reads "AdManager" and the campaign tab you came from still looks selected.
+21. **Picture panel:** an empty background still shows "Fill the canvas" and "Fit inside". A colour that is not one of the palette's swatches shows as an extra first swatch, so the current colour is always visible.
+22. **Subject cards:** "File not found" stays written on a photo whose file is missing. In the Assets panel the photos are small (four a row); the brief form will use the larger size.
 
 ## Hand checks only you can do
 
