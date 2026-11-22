@@ -1,6 +1,6 @@
 // The Checks tab's words (spec/phases/design-wave-screens-b.md, "CAMP-4"): the six checks in
 // column order with their full names and short heads, a cell's tip "{name}: {state}", a row's
-// label "{size} · {language}" and the two summary counts. Pure.
+// label "{size} · {language}" and the not-checked count. Pure.
 import type { CheckId, CheckResult, CheckStatus } from '@/shared/schemas/checks'
 import type { VariantCheckState } from '@/shared/schemas/queries/check'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
@@ -63,17 +63,10 @@ export function cellTip(r: CheckResult): string {
 
 export const rowLabel = (v: VariantSummary): string => `${v.sizeLabel} · ${v.language}`
 
-// A warning counts only on a check that is still current, as the tile's "Check warning" badge
-// does (src/main/checks/badges.ts); a stale check counts under "not checked".
-export function hasBrandWarning(s: VariantCheckState): boolean {
-  return !s.stale && s.results.some((r) => r.group === 'brand-legal' && r.status === 'warn')
-}
-
-export function summaryCounts(states: VariantCheckState[]): { warnings: number; stale: number } {
-  return {
-    warnings: states.filter(hasBrandWarning).length,
-    stale: states.filter((s) => s.stale).length,
-  }
+// The posts whose stored check is out of date, for the "{n} not checked" mark. The warning
+// count is campaign-overview/check-count.ts's, the same as the tab's badge.
+export function staleCount(states: VariantCheckState[]): number {
+  return states.filter((s) => s.stale).length
 }
 
 // The results with something to read under an open row, in column order.

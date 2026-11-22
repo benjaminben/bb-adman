@@ -13,7 +13,7 @@ import type { VariantCheckState } from '@/shared/schemas/queries/check'
 import { CheckHead } from './check-head'
 import { CheckTable } from './check-table'
 import { warningCount } from '@/renderer/screens/campaign/campaign-overview/check-count'
-import { summaryCounts } from './check-words'
+import { staleCount } from './check-words'
 import { rowButtonId, type Post } from './post-rows'
 import { useCheckResults } from './use-check-results'
 import styles from './check-panel.module.css'
@@ -53,7 +53,7 @@ export function CheckPanel(props: CampaignSectionProps) {
   })
   // The header mark counts what the tab's badge counts: every warned result of a current check.
   const states = posts.map((p) => p.state)
-  const counts = { warnings: warningCount(states), stale: summaryCounts(states).stale }
+  const counts = { warnings: warningCount(states), stale: staleCount(states) }
   const warnedResult = (s: VariantCheckState) =>
     s.stale ? undefined : s.results.find((r) => r.status === 'warn')
   const firstWarned = posts.find((p) => warnedResult(p.state) !== undefined)
