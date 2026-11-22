@@ -108,13 +108,11 @@ describe('scripts/ffmpeg-sources.json [P7-3, OI-09]', () => {
 
   it('the listed hosts are the builder release and download hosts and ffmpeg.org only', () => {
     expect([...LISTED_HOSTS].sort()).toEqual(
-      [
-        'ffmpeg.org',
-        'github.com',
-        'objects.githubusercontent.com',
-        'release-assets.githubusercontent.com',
-      ].sort(),
+      ['ffmpeg.org', 'github.com', 'release-assets.githubusercontent.com'].sort(),
     )
+    // GitHub's release downloads go to release-assets (seen on the pinned file); the older
+    // download host is not needed, so it is refused.
+    expect(() => checkUrl('https://objects.githubusercontent.com/x', LISTED_HOSTS)).toThrow()
     expect(() => checkUrl(`https://github.com.example.com/x?h=${hash}`, LISTED_HOSTS)).toThrow()
     expect(() => checkUrl('https://ffmpeg.org./x', LISTED_HOSTS)).toThrow()
     expect(checkUrl('https://release-assets.githubusercontent.com/x', LISTED_HOSTS).hostname).toBe(

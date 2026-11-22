@@ -9,7 +9,6 @@ export const SOURCES_FILE = new URL('../ffmpeg-sources.json', import.meta.url)
 export const LISTED_HOSTS = Object.freeze([
   'github.com',
   'release-assets.githubusercontent.com',
-  'objects.githubusercontent.com',
   'ffmpeg.org',
 ])
 
