@@ -37,7 +37,7 @@ export function assetDetail(asset: AssetView): string | null {
   return [size, time].filter((part) => part !== null).join(' · ') || null
 }
 
-function marks(asset: AssetView): Array<{ words: string; look: string }> {
+function marks(asset: AssetView): Array<{ words: string; look: string | undefined }> {
   const all = [
     { on: asset.library === 'reference', words: 'Reference only', look: layout.neutral },
     { on: asset.origin === 'generated', words: 'Made with AI', look: layout.info },
