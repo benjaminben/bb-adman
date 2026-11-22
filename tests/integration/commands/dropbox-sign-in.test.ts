@@ -3,7 +3,7 @@
 // function: it reads `state` from the address and calls the listener as the browser would. The
 // token host is the stand-in, through the pinned fetch. No browser opens; nothing leaves.
 import net from 'node:net'
-import { describe, it, expect, afterEach, beforeEach } from 'vitest'
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest'
 import { makeFixture, fakeCrypto, type Fixture } from '../core-fixture'
 import { createCommandBus, type BusEvent } from '@/main/commands/bus'
 import { storageDropboxSignIn } from '@/main/commands/storage/dropbox-sign-in'
@@ -267,5 +267,33 @@ describe('storage.dropboxSignIn: agents', () => {
     })
     expect(b.opened).toEqual([])
     expect(await connectError('127.0.0.1', PORT)).toBe('ECONNREFUSED')
+  })
+})
+
+// P9-5b: a sign-in that fails after the exchange revokes its own new token, quietly.
+describe('storage.dropboxSignIn: after the exchange [P9-5b]', () => {
+  const boom = () => {
+    throw new Error('disk full')
+  }
+  it.each([
+    ['the account call fails', 'account', false],
+    ['saving the token throws', 'set', false],
+    ['saving the settings throws', 'setDropbox', false],
+    ['the account call fails and so does the revoke', 'account', true],
+  ] as const)('revokes the new token when %s', async (_n, step, revokeFails) => {
+    f = makeFixture()
+    if (step === 'account') standIn.once('account', { status: 500, text: 'down' })
+    if (step === 'set') vi.spyOn(f.core.deps.secrets, 'set').mockImplementation(boom)
+    if (step === 'setDropbox') vi.spyOn(f.core.deps.settings, 'setDropbox').mockImplementation(boom)
+    if (revokeFails) standIn.once('revoke', { status: 500, text: 'down' })
+    const b = browser('code')
+    const reply = await signInBus(b.open).run()
+    expect(reply).toMatchObject({ ok: false })
+    if (step === 'account') expect(reply).toEqual(refusal('sign_in_failed', 'PROVIDER_ERROR'))
+    const revoke = standIn.seen.filter((s) => s.route === 'revoke')
+    expect(revoke).toHaveLength(1)
+    const bearer = /^Bearer (\S+)$/.exec(revoke[0]?.headers.authorization ?? '')?.[1] ?? ''
+    expect(standIn.isRevoked(standIn.refreshFor(bearer) ?? '')).toBe(!revokeFails)
+    expectNoSecretIn(b, reply)
   })
 })

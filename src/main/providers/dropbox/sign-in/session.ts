@@ -1,6 +1,7 @@
 // One Dropbox sign-in at a time (spec/phases/phase-09.md "The sign-in redirect"; security class
 // full). Order: in progress, canStore(), listen, openExternal, wait, exchange, account, save the
-// token, save the settings, revoke an old token. The code and verifier go only to exchangeCode;
+// token, save the settings, revoke an old token (a failure after the exchange revokes the new
+// one instead, P9-5b). The code and verifier go only to exchangeCode;
 // the authorize address (it holds state and the challenge) goes only to openExternal. No log
 // line, error or reply holds any of them, or a token: failures are logged by kind only.
 import type { CoreDeps } from '@/main/core-deps'
@@ -30,9 +31,14 @@ const REFRESH = 'dropbox.refreshToken'
 let waiting: RedirectWait | null = null
 let busy = false
 
-// App quit: the listener closes, and the sign-in ends sign_in_failed.
+// App quit (index.ts, before-quit): the listener closes, and the sign-in ends sign_in_failed.
 export function cancelDropboxSignIn(): void {
   waiting?.close()
+}
+
+// P9-5b: true from the start of a sign-in until it has finished, so sign-out can refuse.
+export function dropboxSignInBusy(): boolean {
+  return busy
 }
 
 function logFailure(deps: Pick<CoreDeps, 'log'>, step: Step, error: unknown): void {
@@ -63,6 +69,15 @@ export async function revokeQuietly(
   }
 }
 
+// Revoking an access token also revokes the refresh token it came with.
+async function revokeAccessQuietly(deps: SignInDeps, accessToken: string, step: Step) {
+  try {
+    await revokeToken(accessToken, deps.dropboxFetch)
+  } catch (error) {
+    logFailure(deps, step, error)
+  }
+}
+
 async function codeFromBrowser(deps: SignInDeps, timeoutMs: number) {
   const { verifier, challenge, state } = makePkce()
   const wait = await waitForRedirect({ port: DROPBOX_SIGN_IN_PORT, state, timeoutMs })
@@ -85,15 +100,26 @@ async function codeFromBrowser(deps: SignInDeps, timeoutMs: number) {
   return { code: answer.value.code, verifier }
 }
 
-async function tokensFor(deps: SignInDeps, code: string, verifier: string, step: Step) {
+// A Dropbox call that failed is logged by kind and becomes sign_in_failed.
+async function orFailed<T>(deps: SignInDeps, step: Step, call: () => Promise<T>): Promise<T> {
   try {
-    const tokens = await exchangeCode({ code, verifier }, deps.dropboxFetch)
-    const accountName = await currentAccountName(tokens.accessToken, deps.dropboxFetch)
-    return { refreshToken: tokens.refreshToken, accountName }
+    return await call()
   } catch (error) {
     logFailure(deps, step, error)
     throw publishRefusal('sign_in_failed')
   }
+}
+
+// The account, then the token, then the settings.
+async function save(deps: SignInDeps, refreshToken: string, accessToken: string, step: Step) {
+  const accountName = await orFailed(deps, step, () =>
+    currentAccountName(accessToken, deps.dropboxFetch),
+  )
+  const old = deps.secrets.get(REFRESH)
+  deps.secrets.set(REFRESH, refreshToken)
+  const kept = deps.settings.get().storage.dropbox?.rootPath ?? ''
+  deps.settings.setDropbox({ accountName, rootPath: isDropboxRootPath(kept) ? kept : '' })
+  return { accountName, old }
 }
 
 async function signIn(deps: SignInDeps, timeoutMs: number, step: Step) {
@@ -103,16 +129,22 @@ async function signIn(deps: SignInDeps, timeoutMs: number, step: Step) {
     })
   }
   const { code, verifier } = await codeFromBrowser(deps, timeoutMs)
-  const { refreshToken, accountName } = await tokensFor(deps, code, verifier, step)
-  const old = deps.secrets.get(REFRESH)
-  deps.secrets.set(REFRESH, refreshToken)
-  const kept = deps.settings.get().storage.dropbox?.rootPath ?? ''
-  deps.settings.setDropbox({ accountName, rootPath: isDropboxRootPath(kept) ? kept : '' })
-  if (old !== undefined && old !== refreshToken) {
-    await revokeQuietly(deps, old, step)
-    forgetDropboxAccess(old)
+  const tokens = await orFailed(deps, step, () =>
+    exchangeCode({ code, verifier }, deps.dropboxFetch),
+  )
+  let saved: { accountName: string; old: string | undefined }
+  try {
+    saved = await save(deps, tokens.refreshToken, tokens.accessToken, step)
+  } catch (error) {
+    // P9-5b: the new token is revoked, quietly; the refusal the user sees stays the same.
+    await revokeAccessQuietly(deps, tokens.accessToken, step)
+    throw error
   }
-  return { accountName }
+  if (saved.old !== undefined && saved.old !== tokens.refreshToken) {
+    await revokeQuietly(deps, saved.old, step)
+    forgetDropboxAccess(saved.old)
+  }
+  return { accountName: saved.accountName }
 }
 
 export async function signInToDropbox(
@@ -122,14 +154,11 @@ export async function signInToDropbox(
 ): Promise<{ accountName: string }> {
   if (busy) throw publishRefusal('sign_in_in_progress')
   busy = true
-  const quit = () => cancelDropboxSignIn()
-  process.once('exit', quit)
   try {
     return await signIn(deps, timeoutMs, step)
   } finally {
     waiting?.close()
     waiting = null
     busy = false
-    process.removeListener('exit', quit)
   }
 }
