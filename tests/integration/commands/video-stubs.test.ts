@@ -52,6 +52,7 @@ describe('Phase 7 registration [P7-1]', () => {
       'clip.reorder',
       'clip.restore',
       'clip.addGenerated',
+      'clip.swap',
     ])
     const variant = variantCommands(deps).map((h) => h.name)
     expect(variant).toEqual(expect.arrayContaining(['variant.setFormat', 'variant.setSound']))

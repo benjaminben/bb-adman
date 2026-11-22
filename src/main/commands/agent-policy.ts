@@ -72,6 +72,7 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'clip.reorder': deny('reorder background clips'),
   'clip.restore': deny('restore background clips'),
   'clip.addGenerated': deny('add generated clips'),
+  'clip.swap': deny('swap background clips'),
   'translation.propose': deny('start AI translation'),
   'translation.set': allow('set translations'),
   'translation.approve': deny('approve translations'),

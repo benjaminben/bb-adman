@@ -37,6 +37,11 @@ const GOOD: [string, z.ZodType, object][] = [
   ['clip.reorder', clipReorderInput, { ...P, variantId: 'V1', clipIds: ['K2', 'K1'] }],
   ['clip.restore', clipRestoreInput, { ...P, rows: [row] }],
   ['clip.addGenerated', clipAddGeneratedInput, { ...P, variantId: 'V1', assetId: 'A1' }],
+  [
+    'clip.addGenerated replacing a still',
+    clipAddGeneratedInput,
+    { ...P, variantId: 'V1', assetId: 'A1', replaceStill: true },
+  ],
 ]
 
 describe('clip command inputs take a good value [P7-1]', () => {

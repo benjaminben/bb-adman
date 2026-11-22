@@ -7,6 +7,7 @@ import { clipRemove } from './remove'
 import { clipReorder } from './reorder'
 import { clipRestore } from './restore'
 import { clipAddGenerated } from './add-generated'
+import { clipSwap } from './swap'
 
 export function clipCommands(deps: CoreDeps): CommandHandler[] {
   return [
@@ -16,5 +17,6 @@ export function clipCommands(deps: CoreDeps): CommandHandler[] {
     clipReorder(deps),
     clipRestore(deps),
     clipAddGenerated(deps),
+    clipSwap(deps),
   ]
 }

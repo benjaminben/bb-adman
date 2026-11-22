@@ -93,13 +93,34 @@ export const clipRestoreInput = projectScoped
   .strict()
 export type ClipRestoreInput = z.infer<typeof clipRestoreInput>
 
-// clip.addGenerated (A-182): the video job's clip, at the first free position.
-export const clipAddGeneratedInput = projectScoped.extend({ variantId: id, assetId: id }).strict()
+// clip.swap (spec/phases/round-2-editor.md D5): the inverse of a clip that took a still's
+// place, and of itself. It removes the named clips of the variant and writes the rows.
+const uniqueIds = (ids: string[]) => new Set(ids).size === ids.length
+export const clipSwapInput = projectScoped
+  .extend({
+    variantId: id,
+    remove: z.array(id).min(1).max(MAX_CLIPS).refine(uniqueIds, 'Name each clip once.'),
+    put: z
+      .array(restoreRow)
+      .min(1)
+      .max(MAX_CLIPS)
+      .refine((rows) => uniqueIds(rows.map((r) => r.id)), 'Name each clip once.'),
+  })
+  .strict()
+export type ClipSwapInput = z.infer<typeof clipSwapInput>
+
+// clip.addGenerated (A-182): the video job's clip, at the first free position. D5:
+// replaceStill puts it in the place of the background's still instead, when one fits.
+export const clipAddGeneratedInput = projectScoped
+  .extend({ variantId: id, assetId: id, replaceStill: z.boolean().optional() })
+  .strict()
 export type ClipAddGeneratedInput = z.infer<typeof clipAddGeneratedInput>
 
 // Replies.
 export type ClipReply = { clipId: string }
 export type ClipReorderReply = { variantId: string }
 export type ClipRestoreReply = { clipIds: string[] }
-// A variant that is gone gives { clipId: null }, never a refusal.
-export type ClipAddGeneratedReply = { clipId: string | null }
+export type ClipSwapReply = { clipIds: string[] }
+// A variant that is gone gives { clipId: null }, never a refusal. replacedStill: the clip
+// took the still's place.
+export type ClipAddGeneratedReply = { clipId: string | null; replacedStill?: boolean }

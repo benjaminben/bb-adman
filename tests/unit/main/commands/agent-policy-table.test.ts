@@ -57,6 +57,7 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny' | 'tick'> = {
   'clip.reorder': 'deny',
   'clip.restore': 'deny',
   'clip.addGenerated': 'deny',
+  'clip.swap': 'deny',
   'translation.propose': 'deny',
   'translation.set': 'allow',
   'translation.approve': 'deny',
