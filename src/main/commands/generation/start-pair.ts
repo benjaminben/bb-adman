@@ -2,24 +2,29 @@
 // and of a stored video request on job.retry, give one of three start pairs. A prompt alone;
 // one first-frame picture; or reference pictures. Every other shape is refused here, before
 // any picture is read or any job row is made. How many references a run takes is checked
-// against its workflow later.
+// against its workflow later. P7-11 (A-176): a background start is a first frame drawn from
+// the variant's background layer, so it names no picture.
 import { videoNotOffered } from './comfy-video-checks'
 import type { VideoStart } from '@/main/providers/types'
 import { AppError } from '@/shared/schemas/result'
 
 export type StartFields = {
-  start: 'none' | 'first_frame'
+  start: 'none' | 'first_frame' | 'background'
   useReferences: boolean
   referenceAssetIds: readonly string[]
 }
 
 const choosePicture = () => new AppError('INVALID_INPUT', 'Choose one picture for this video.')
+const noOtherPicture = () =>
+  new AppError('INVALID_INPUT', 'A start from the background takes no other picture.')
 
 export function startPair(fields: StartFields): VideoStart {
   const count = fields.referenceAssetIds.length
-  const firstFrame = fields.start === 'first_frame'
+  const background = fields.start === 'background'
+  const firstFrame = fields.start === 'first_frame' || background
   if (firstFrame && fields.useReferences) throw videoNotOffered()
-  if (firstFrame && count !== 1) throw choosePicture()
+  if (background && count > 0) throw noOtherPicture()
+  if (fields.start === 'first_frame' && count !== 1) throw choosePicture()
   if (fields.useReferences && count === 0) throw choosePicture()
   if (!firstFrame && !fields.useReferences && count > 0) throw choosePicture()
   return { firstFrame, references: fields.useReferences }

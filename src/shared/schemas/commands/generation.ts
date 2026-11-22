@@ -32,13 +32,14 @@ export type GenerationRunImagesInput = z.infer<typeof generationRunImagesInput>
 export const generationRunImagesAgentInput = runImagesFields.refine(oneTarget, ONE_TARGET)
 
 // SPEC 4.2 generation.startVideo, with the 1.24 start and references [REQ: FR-286]. Built in
-// CU-6a, which accepts only start 'none' with useReferences false and no references.
+// CU-6a, which accepts only start 'none' with useReferences false and no references. P7-11:
+// start 'background' draws the variant's background layer as the first frame.
 const startVideoFields = projectScoped.extend({
   variantId: z.string().min(1),
   prompt: z.string().trim().min(1, 'Enter a prompt.'),
   durationMs: z.number().int().positive(),
   provider: z.string().min(1),
-  start: z.enum(['none', 'first_frame']),
+  start: z.enum(['none', 'first_frame', 'background']),
   useReferences: z.boolean(),
   referenceAssetIds: referenceIds,
 })

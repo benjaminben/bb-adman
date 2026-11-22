@@ -9,19 +9,22 @@ export const videoJobRequest = z.object({
   durationMs: z.number().int().positive(),
   width: z.number().int().positive(),
   height: z.number().int().positive(),
-  start: z.enum(['none', 'first_frame']),
+  start: z.enum(['none', 'first_frame', 'background']),
   referenceAssetIds: referenceIds,
 })
 
 // The stored clip's asset and what checkMp4 read from it. [1.39] hasSound. OI-36 default:
 // `details: 'pending'` marks a clip whose file holds no details of the app yet (Phase 7).
+// P7-11: 'embedded' once they are written in; clipId is the clip put on the track, optional
+// so rows made before Phase 7 parse.
 export const videoJobResult = z.object({
   assetId: z.string(),
   width: z.number().int(),
   height: z.number().int(),
   durationMs: z.number().int(),
   hasSound: z.boolean(),
-  details: z.literal('pending'),
+  details: z.enum(['embedded', 'pending']),
+  clipId: z.string().nullable().optional(),
 })
 
 export type VideoJobRequest = z.infer<typeof videoJobRequest>
