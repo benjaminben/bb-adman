@@ -9,7 +9,7 @@ import { createSettingsStore } from '@/main/settings/settings-store'
 import { defaultSettings } from '@/main/settings/defaults'
 import { createSecretStore, type SecretCrypto } from '@/main/secrets/secret-store'
 import { bridgeDoor, runRelay } from './relay'
-import { useTempSessionData, type SessionPathApp } from './session-folder'
+import { tempSessionData, type SessionPathApp } from './session-folder'
 
 // The few parts of Electron's app the bridge uses; index.ts hands them in (SPEC 12: only it
 // may use Electron here).
@@ -52,7 +52,7 @@ export function runBridge(app: BridgeApp, crypto: SecretCrypto): void {
   // Chromium's session files go to a temporary folder, removed as the bridge ends. Without one
   // the bridge does not start, rather than write them in the app data folder.
   try {
-    removeSessionData = useTempSessionData(app)
+    removeSessionData = tempSessionData(app)
   } catch {
     exit(1)
     return

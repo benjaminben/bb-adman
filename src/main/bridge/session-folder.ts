@@ -8,9 +8,9 @@ import path from 'node:path'
 
 export type SessionPathApp = { setPath(name: 'sessionData', value: string): void }
 
-export const SESSION_FOLDER_PREFIX = 'adman-bridge-'
+const SESSION_FOLDER_PREFIX = 'adman-bridge-'
 
-export function useTempSessionData(app: SessionPathApp): () => void {
+export function tempSessionData(app: SessionPathApp): () => void {
   const base = fs.realpathSync(os.tmpdir())
   const folder = fs.mkdtempSync(path.join(base, SESSION_FOLDER_PREFIX))
   app.setPath('sessionData', folder)

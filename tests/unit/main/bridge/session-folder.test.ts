@@ -5,7 +5,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { useTempSessionData } from '@/main/bridge/session-folder'
+import { tempSessionData } from '@/main/bridge/session-folder'
 
 const made: string[] = []
 afterEach(() => {
@@ -14,13 +14,13 @@ afterEach(() => {
 
 function start() {
   const calls: [string, string][] = []
-  const remove = useTempSessionData({ setPath: (name, value) => calls.push([name, value]) })
+  const remove = tempSessionData({ setPath: (name, value) => calls.push([name, value]) })
   const folder = calls[0]?.[1] ?? ''
   made.push(folder)
   return { calls, remove, folder }
 }
 
-describe('useTempSessionData', () => {
+describe('tempSessionData', () => {
   it('points sessionData at a new empty folder in the system temp folder', () => {
     const { calls, folder } = start()
     expect(calls).toEqual([['sessionData', folder]])
