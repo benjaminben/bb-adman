@@ -1,8 +1,10 @@
 // The report view's first parts, in the HTML file's order (spec/phases/phase-08.md "Report",
 // HTML): the header, the summary, the warnings exported past and asked for against delivered.
-// Every value is React text. Field and Section are shared with report-ad.tsx.
+// Every value is React text. Field and Section are shared with report-ad.tsx. DLG-7: the header
+// sits in the folded "Details"; the paid line moves out of it to the summary, on the page.
 import { useId, type ReactNode } from 'react'
 import layout from '@/renderer/ui/layout.module.css'
+import { StatusMark } from '@/renderer/ui/status-mark'
 import type { Report } from '@/shared/schemas/report'
 import * as W from './report-words'
 import styles from './report-view.module.css'
@@ -51,23 +53,40 @@ export function ReportHeader(props: { report: Report }) {
       </Field>
       <Field label={W.LABELS.exportNumber}>{String(report.exportNumber)}</Field>
       <Field label={W.LABELS.appVersion}>{report.appVersion}</Field>
-      <Field label={W.LABELS.paid}>{W.paidLine(report.paidGenerations)}</Field>
     </dl>
   )
 }
 
+// DLG-7: the counts as marks, each named by its words; the paid line stays on the page.
 export function ReportSummary(props: { report: Report }) {
-  const { summary, checksRun } = props.report
+  const { report } = props
+  const { summary } = report
   return (
-    <Section heading={W.HEADINGS.summary}>
-      <dl className={styles.fields}>
-        <Field label={W.LABELS.exported}>{String(summary.exported)}</Field>
-        <Field label={W.LABELS.passedAll}>{String(summary.passedAll)}</Field>
-        <Field label={W.LABELS.withWarnings}>{String(summary.withWarnings)}</Field>
-        <Field label={W.LABELS.failed}>{String(summary.failed)}</Field>
-      </dl>
-      {!checksRun && <p className={styles.note}>{W.REPORT_WORDS.checksNotRun}</p>}
-    </Section>
+    <section aria-label={W.HEADINGS.summary} className={styles.summary}>
+      <div className={styles.marks}>
+        <StatusMark
+          tone="none"
+          icon="export"
+          label={String(summary.exported)}
+          tip={W.LABELS.exported}
+        />
+        <StatusMark
+          tone="ok"
+          icon="check"
+          label={String(summary.passedAll)}
+          tip={W.LABELS.passedAll}
+        />
+        <StatusMark
+          tone="warn"
+          icon="alert"
+          label={String(summary.withWarnings)}
+          tip={W.LABELS.withWarnings}
+        />
+        <StatusMark tone="danger" icon="x" label={String(summary.failed)} tip={W.LABELS.failed} />
+      </div>
+      <p className={styles.paid}>{`${W.LABELS.paid}: ${W.paidLine(report.paidGenerations)}`}</p>
+      {!report.checksRun && <p className={styles.note}>{W.REPORT_WORDS.checksNotRun}</p>}
+    </section>
   )
 }
 
