@@ -3,14 +3,16 @@ import { Scene } from '@/shared/scene/scene'
 import type { SceneAsset, SceneSettled } from '@/shared/scene/types'
 import type { RenderDone, RenderRequest } from '@/shared/schemas/render'
 import { assetUrl } from '@/renderer/ui/asset-url'
+import { frameStyle } from './frame-style'
 import styles from './render-root.module.css'
 
 type Props = { request: RenderRequest; onDone: (reply: RenderDone) => void }
 
 // spec/scene.md "One draw" step 3: builds each asset's address, draws the Scene scaled to the
-// asked width from the top-left corner, and answers once, when the Scene has settled.
+// asked width from the top-left corner (or one tile of it at scale 1 with view, P8-3), and
+// answers once, when the Scene has settled.
 export function RenderRoot({ request, onDone }: Props) {
-  const { requestId, input, width } = request
+  const { requestId, input } = request
   const assets = useMemo(() => {
     const entries = Object.entries(input.assets).map(([id, asset]): [string, SceneAsset] => [
       id,
@@ -28,7 +30,7 @@ export function RenderRoot({ request, onDone }: Props) {
     [requestId, onDone],
   )
   return (
-    <div className={styles.frame} style={{ transform: `scale(${width / input.variant.width})` }}>
+    <div className={styles.frame} style={frameStyle(request)}>
       <Scene
         variant={input.variant}
         layers={input.layers}
