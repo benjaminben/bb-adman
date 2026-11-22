@@ -74,7 +74,10 @@ async function openVisitor(browser: Browser, link: string): Promise<Page> {
   // "Check first": Chromium keeps the __Host- session cookie from http://localhost.
   const cookies = await visitor.cookies()
   expect(cookies.filter((c) => c.name.startsWith('__Host-adman-')).length).toBe(1)
-  const picture = page.getByRole('article').getByRole('img')
+  const picture = page
+    .getByRole('article')
+    .getByRole('button', { name: /^View larger: / })
+    .locator('img')
   await expect.poll(() => picture.evaluate(loaded)).toBeGreaterThan(0)
   return page
 }
@@ -94,32 +97,39 @@ test('link, password, sign-off, edit, update, turn off: app and visitor agree', 
   const link = address.replace(`${SERVICE}/`, `http://localhost:${port}/`)
   const gallery = await openVisitor(browser, link)
   const card = gallery.getByRole('article')
-  await card.getByLabel('Your email').fill(EMAIL)
-  await card.getByRole('button', { name: 'Sign off' }).click()
+  const title = await card.getByRole('heading', { level: 2 }).textContent()
+  await gallery.getByLabel('Signing off as:').fill(EMAIL)
+  await card.getByRole('button', { name: `Sign off: ${title ?? ''}` }).click()
   await expect(gallery.locator('main [role=status]')).toHaveText('Your sign-off was saved.')
+  await expect(card.getByRole('button', { name: /^Sign off: / })).toHaveCount(0)
+  await expect(card.getByText(/^Signed off by \d+$/)).toHaveText('Signed off by 1')
 
   await steps.refresh(page)
   await expect(steps.bar(page).getByText('Signed off: 1 of 1 variant')).toBeVisible()
   await expect(steps.grid(page).getByText('Signed off by 1')).toBeVisible()
+  // R-10: the edit leaves the sign-off on an older version, so the app shows none at once.
   await steps.editVariant(page)
-  await expect(steps.grid(page).getByText('Changed since sign-off')).toBeVisible()
+  await expect(steps.grid(page).getByText('Changed since published')).toBeVisible()
+  await expect(steps.grid(page).getByText('Signed off by 1')).toHaveCount(0)
+  await expect(steps.grid(page).getByRole('button', { name: /^Sign-offs/ })).toHaveCount(0)
   const dialog = await steps.updateGallery(page)
-  const earlier = new RegExp(`^${EMAIL.replaceAll('.', '\\.')} · .* · for an earlier version$`)
-  await expect(dialog.getByText(earlier)).toBeVisible()
+  await expect(dialog.getByText('No sign-offs yet.')).toBeVisible()
+  await expect(dialog.getByText(EMAIL)).toHaveCount(0)
   await dialog.getByRole('button', { name: 'Close' }).click()
 
-  // The visitor's gallery: the new title and the sign-off under "For an earlier version".
+  // The visitor's gallery: the new title, and the card needs a sign-off again.
   await gallery.goto(link)
   await expect(card.getByRole('heading', { level: 2 })).toHaveText(steps.EDITED_TITLE)
-  await expect(card.getByText('No sign-offs yet.')).toBeVisible()
-  const older = card.getByRole('heading', { level: 3, name: 'For an earlier version' })
-  await expect(older).toBeVisible()
-  await expect(card).toContainText(`${EMAIL} · `)
+  await expect(card.getByRole('button', { name: `Sign off: ${steps.EDITED_TITLE}` })).toBeVisible()
+  // The card's count line; the closed lightbox's "Signed off by" heading is not it.
+  await expect(card.getByText(/^Signed off by \d+$/)).toHaveCount(0)
+  await expect(gallery.getByRole('heading', { name: 'For an earlier version' })).toHaveCount(0)
 
   await steps.refresh(page)
-  await expect(steps.grid(page).getByText('Earlier version signed off')).toBeVisible()
-  await steps.grid(page).getByRole('button', { name: 'Sign-offs (1)' }).click()
-  await expect(steps.grid(page).getByText(earlier)).toBeVisible()
+  await expect(steps.bar(page).getByText('Signed off: 0 of 1 variant')).toBeVisible()
+  await expect(steps.grid(page).getByText(/earlier version|Changed since/i)).toHaveCount(0)
+  await expect(steps.grid(page).getByRole('button', { name: /^Sign-offs/ })).toHaveCount(0)
+  await expect(steps.grid(page).getByText(EMAIL)).toHaveCount(0)
 
   // Turned off: the same address shows the password page and nothing else.
   await steps.turnOffLink(page)
