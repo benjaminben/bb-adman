@@ -84,7 +84,7 @@ type StoredCustomWorkflow = {
 
 | Value | Default | Allowed |
 |-------|---------|---------|
-| `size` for `image` and `image_refs` | `{ multiple: 16, minPixels: 838_861, maxPixels: 1_048_576 }` (about 1 MP) | `multiple` 8, 16, 32 or 64; `maxPixels` 0.25, 0.5, 1, 2 or 4 MP; `minPixels` is always 80% of `maxPixels`, rounded down |
+| `size` for `image` and `image_refs` | `{ multiple: 16, minPixels: 838_861, maxPixels: 1_048_576 }` (about 1 MP) | `multiple` 8, 16, 32 or 64; `maxPixels` 0.25, 0.4, 0.5, 1, 2 or 4 MP, where 0.4 is exactly 409,600 pixels (640 × 640) and every other option is that many times 1,048,576; `minPixels` is always 80% of `maxPixels`, rounded up |
 | `size` for `video` | `{ multiple: 32, minPixels: 327_680, maxPixels: 409_600 }` (about 0.4 MP) | as above |
 | `video.fps` | 24 | whole number 1 to 60 |
 | `video.maxMs` | 5,000 | 1,000 to 60,000, in whole seconds |
@@ -122,14 +122,14 @@ type StoredCustomWorkflow = {
 
 ## The file checks
 
-One pure function, `checkWorkflowText(text): CheckedWorkflow | Refusal`, in `src/main/providers/comfyui/custom/check-file.ts`. The person's add, the agent's add (before the ask and again after the allow) and the start-up read all use it. Steps in this order; the first failure ends the check.
+One pure function, `checkWorkflowText(text): Result<CheckedWorkflow>` (the app's usual result: the data, or an error body from the refusal table), in `src/main/providers/comfyui/custom/check-file.ts`. The person's add and the agent's add (before the ask and again after the allow) use it. The start-up read holds a parsed record, so it calls `checkWorkflowValue(graph)`, the same function from step 3 on; the store measures the stored file's bytes before parsing (CW-2: a stored file is the graph plus a small wrapper, written as compact JSON, so its limit is `MAX_WORKFLOW_BYTES` plus 4,096). Steps in this order; the first failure ends the check.
 
 1. At most 2 MiB of UTF-8 (`MAX_WORKFLOW_BYTES`).
 2. Parses as JSON. The app's own parse; the parser's error is dropped.
 3. The top level is an object. If it has `nodes` and `links` lists, it is the canvas format.
 4. 1 to 500 nodes (`MAX_WORKFLOW_NODES`).
-5. Each key (node ID) is 1 to 64 characters of `A-Z a-z 0-9 _ : . -`. Each node has `class_type`: text of 1 to 128 characters with no control or format character (Unicode Cc, Cf) and no line break; and `inputs`: an object. Each input name is 1 to 128 characters with no control or format character. Each value is text, a number, true, false, null, or a list or object of these, at most 8 levels deep.
-6. Every link (a two-item list of text and a whole number from 0) names a node in the graph.
+5. Each key (node ID) is 1 to 64 characters of `A-Z a-z 0-9 _ : . -`. The node ID `__proto__` and the input name `__proto__` are refused (`workflow_bad_shape`); every lookup by a name from the file checks the object's own keys only. Each node has `class_type`: text of 1 to 128 characters with no control or format character (Unicode Cc, Cf) and no line break; and `inputs`: an object. Each input name is 1 to 128 characters with no control or format character. Each value is text, a number, true, false, null, or a list or object of these, at most 8 levels deep.
+6. Every link names a node in the graph. A link is a two-item list of text and a number, read only at an input's top level; its number must be a whole number from 0. A link that fails either rule is `workflow_bad_link`. A two-item list of text and text is a plain value.
 7. The marks, by the rules above.
 8. The job, by the table above.
 
@@ -253,7 +253,7 @@ Built on the ask flow of `spec/mcp-and-agents.md`. `ASK_KINDS` gains `'comfyWork
 - Empty list: "No workflows added yet."
 - One row per workflow: the name; under it "{job words} · {n} nodes", plus " · Added by an agent" when `addedBy` is `agent`. Buttons: "Change" and a trash icon named "Remove {name}".
 - "Add workflow…" opens the system file picker (`dialog.pickFiles`, purpose `comfy-workflow`, `.json` only, one file), then sends `comfyWorkflow.addFromFile`. On success a line "Added {name}." On refusal the command's sentence as a danger line. No other question. At 50 the button is disabled with the title "You can add at most 50 workflows."
-- **Change** (a form dialog, "Change workflow"): "Name"; when the graph has size marks, "Largest size" (0.25, 0.5, 1, 2, 4 megapixels) and "Sides are a multiple of" (8, 16, 32, 64); for video, "Frames per second", "Longest clip, in seconds", and "Frame counts it takes: a multiple of {n}, plus {m}". Buttons "Cancel" and "Save" (`comfyWorkflow.update`). A refusal shows in the dialog.
+- **Change** (a form dialog, "Change workflow"): "Name"; when the graph has size marks, "Largest size" (0.25, 0.4, 0.5, 1, 2, 4 megapixels) and "Sides are a multiple of" (8, 16, 32, 64); for video, "Frames per second", "Longest clip, in seconds", and "Frame counts it takes: a multiple of {n}, plus {m}". Buttons "Cancel" and "Save" (`comfyWorkflow.update`). A refusal shows in the dialog.
 - **Remove** (a confirm dialog, built like `dialogs/delete-subject/`): title "Remove {name}?"; body "This removes the workflow from this computer and cannot be undone. Runs that have not started yet will fail."; foot "Keep" (first focus) and "Remove workflow" (danger). No undo.
 - "On the server" gains the custom sentence below when any custom workflow exists.
 
