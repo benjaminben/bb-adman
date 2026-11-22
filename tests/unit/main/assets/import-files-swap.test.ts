@@ -96,8 +96,8 @@ describe('the bytes copied are the bytes checked [R2P-5b]', () => {
     expect(prepared.hashes[3]).toBe(prepared.hashes[0])
     expect(prepared.newAssets).toHaveLength(2)
     expect(filesIn(assetsDir)).toHaveLength(2)
-    expect(fs.readFileSync(prepared.newAssets[0].absPath)).toEqual(fs.readFileSync(a))
-    expect(fs.readFileSync(prepared.newAssets[1].absPath)).toEqual(fs.readFileSync(other))
+    expect(fs.readFileSync(prepared.newAssets[0]!.absPath)).toEqual(fs.readFileSync(a))
+    expect(fs.readFileSync(prepared.newAssets[1]!.absPath)).toEqual(fs.readFileSync(other))
   })
 
   it.runIf(process.platform !== 'win32')(
