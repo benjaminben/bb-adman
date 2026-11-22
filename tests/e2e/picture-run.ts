@@ -128,10 +128,10 @@ export async function generate(page: Page): Promise<void> {
   await dialog.getByRole('button', { name: 'Generate', exact: true }).click()
 }
 
-// The newest option of the newest run, under "New pictures" in Earlier options.
+// The newest option of the newest run, in the "New pictures" strip above Earlier options
+// (ED-4b: the strip is outside the folded Section, so the first shown match is in it).
 export const newPicture = (page: Page): Locator =>
-  page
-    .getByRole('region', { name: 'Earlier options' })
+  picturePanel(page)
     .getByRole('button', { name: /^Use option 1 from / })
     .first()
     .locator('img')

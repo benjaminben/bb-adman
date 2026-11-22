@@ -57,12 +57,22 @@ async function open(opts: { reply?: Reply; layer?: LayerRow; local?: boolean } =
   }
 }
 
+// ED-4b: "Earlier options" is a folded Section; open it when it is closed (the fold lasts).
+async function unfold() {
+  const button = await screen.findByRole('button', { name: 'Earlier options' })
+  if (button.getAttribute('aria-expanded') === 'false') await userEvent.click(button)
+}
+
+// ED-4b: the old header text is the run row's `title`; the time stays visible.
+const header = (text: string) => screen.findByTitle(text)
+
 const blocks = () => screen.getAllByRole('listitem').filter((li) => li.dataset.run !== undefined)
 
 describe('EarlierOptions [spec/screens-ai.md "Earlier options"; FR-248, FR-216]', () => {
   it('reads job.earlierOptions for the layer and lists the runs newest first', async () => {
     const { fake } = await open()
-    expect(await screen.findByText(`${at(LATE)} · Google Gemini · Pictures`)).toBeVisible()
+    await unfold()
+    expect(await header(`${at(LATE)} · Google Gemini · Pictures`)).toBeVisible()
     expect(fake.queries.find((q) => q.name === 'job.earlierOptions')?.input).toEqual({
       projectId: P,
       layerId: LAYER.id,
@@ -78,6 +88,7 @@ describe('EarlierOptions [spec/screens-ai.md "Earlier options"; FR-248, FR-216]'
     ['failed', { errorKind: 'quota' as const }, 'Failed'],
   ] as const)('shows the status of a %s run', async (status, over, text) => {
     await open({ reply: [run('J1', { status, ...over })] })
+    await unfold()
     expect(await screen.findByText(text)).toBeVisible()
   })
 
@@ -89,21 +100,24 @@ describe('EarlierOptions [spec/screens-ai.md "Earlier options"; FR-248, FR-216]'
       createdAt: LATE,
     })
     await open({ reply: [cut] })
-    expect(await screen.findByText(`${at(LATE)} · Google Gemini · Cut-out`)).toBeVisible()
+    await unfold()
+    expect(await header(`${at(LATE)} · Google Gemini · Cut-out`)).toBeVisible()
     expect(screen.getByText('Started by an agent')).toBeVisible()
   })
 
   it('marks the layer’s own picture "In use"', async () => {
     await open()
+    await unfold()
     const used = await screen.findByRole('button', { name: `Use option 2 from ${at(EARLY)}` })
     expect(used).toHaveAttribute('aria-pressed', 'true')
-    expect(within(used).getByText('In use')).toBeVisible()
+    expect(within(used).getByTitle('In use')).toBeVisible()
     const other = screen.getByRole('button', { name: `Use option 1 from ${at(LATE)}` })
     expect(other).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('Use sends one layer.update with the source and no crop, and no generation command', async () => {
     const { fake } = await open()
+    await unfold()
     await userEvent.click(
       await screen.findByRole('button', { name: `Use option 1 from ${at(LATE)}` }),
     )
@@ -121,6 +135,7 @@ describe('EarlierOptions [spec/screens-ai.md "Earlier options"; FR-248, FR-216]'
     await open({
       reply: [run('J1', { status: 'succeeded', createdAt: LATE }, [asset('A9', true)])],
     })
+    await unfold()
     const button = await screen.findByRole('button', { name: `Use option 1 from ${at(LATE)}` })
     expect(button).toBeDisabled()
     expect(within(button).getByText('file not found')).toBeVisible()
@@ -128,6 +143,7 @@ describe('EarlierOptions [spec/screens-ai.md "Earlier options"; FR-248, FR-216]'
 
   it('disables Use on a locked layer', async () => {
     await open({ layer: { ...LAYER, locked: true } })
+    await unfold()
     expect(
       await screen.findByRole('button', { name: `Use option 1 from ${at(LATE)}` }),
     ).toBeDisabled()
@@ -135,7 +151,8 @@ describe('EarlierOptions [spec/screens-ai.md "Earlier options"; FR-248, FR-216]'
 
   it('says so when the layer has no earlier runs', async () => {
     await open({ reply: [] })
-    expect(await screen.findByText('No earlier options for this layer.')).toBeVisible()
+    await unfold()
+    expect(await screen.findByText('No earlier options yet')).toBeVisible()
   })
 })
 
@@ -162,7 +179,7 @@ describe('EarlierOptions: looked at and read again [FR-218]', () => {
     ['a job of another layer', jobRow('J8', { layerId: 'L9', slot: null }), 1],
   ])('reads again on a job.updated for %s', async (_name, row, count) => {
     const { fake, reads } = await open()
-    await screen.findByText(`${at(LATE)} · Google Gemini · Pictures`)
+    await header(`${at(LATE)} · Google Gemini · Pictures`)
     act(() => fake.emit('job.updated', row))
     await waitFor(() => expect(reads()).toBe(count))
     await new Promise((r) => setTimeout(r, 20))
@@ -171,7 +188,7 @@ describe('EarlierOptions: looked at and read again [FR-218]', () => {
 
   it('reads again on a project.changed naming an asset it shows', async () => {
     const { fake, reads } = await open()
-    await screen.findByText(`${at(LATE)} · Google Gemini · Pictures`)
+    await header(`${at(LATE)} · Google Gemini · Pictures`)
     act(() =>
       fake.emit('project.changed', {
         projectId: P,
@@ -196,6 +213,7 @@ describe('EarlierOptions: looked at and read again [FR-218]', () => {
       run(`J${i}`, { status: 'cancelled', createdAt: LATE }),
     )
     await open({ reply: many })
+    await unfold()
     await screen.findAllByText('Cancelled')
     expect(blocks()).toHaveLength(10)
     await userEvent.click(screen.getByRole('button', { name: 'Show more' }))
@@ -242,6 +260,7 @@ describe('EarlierOptions: a failed run [FR-069]', () => {
         run('J5', { status: 'succeeded' }, [asset('A9', true)]),
       ],
     })
+    await unfold()
     await screen.findByText(plainMessage('quota', 'Google Gemini'))
     expect(await axeViolations()).toEqual([])
   })

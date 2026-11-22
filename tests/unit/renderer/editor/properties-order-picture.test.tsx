@@ -60,7 +60,12 @@ describe('PropertiesPanel, Box and Shade [spec/editor.md "Properties panel"; LK-
         name: '#F4E9D8',
       })
       const shown = legends()
-      expect(shown.slice(shown.indexOf('Picture') + 1)).toEqual(['Shade', 'Generate', 'Position'])
+      expect(shown.slice(shown.indexOf('Picture') + 1)).toEqual([
+        'Shade',
+        'Generate',
+        'Earlier options',
+        'Position',
+      ])
       expect(shown).not.toContain('Box')
     },
   )

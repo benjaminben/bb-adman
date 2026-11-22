@@ -1,0 +1,68 @@
+/* app-style */
+/* An option tile (ED-4b): the picture at --option-thumb on the canvas ground; the one in use
+   is ringed in the accent colour and carries a check on a disc; a new result an accent dot.
+   A placeholder is the same square, dashed, with the spinner in its middle. No motion here:
+   the spinner icon turns by itself. */
+.tile,
+.pending {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--option-thumb);
+  height: var(--option-thumb);
+  min-height: 0;
+  padding: 0;
+  background: var(--canvas-backdrop);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.tile {
+  cursor: pointer;
+}
+.tile:hover:not(:disabled) {
+  background: var(--canvas-backdrop);
+  border-color: var(--color-border);
+}
+.tile[aria-pressed='true'],
+.tile[aria-pressed='true']:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 var(--border-width) var(--color-accent);
+}
+.tile:disabled {
+  cursor: default;
+  opacity: var(--opacity-disabled);
+}
+.pending {
+  border-style: dashed;
+  color: var(--color-accent);
+}
+.thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.missing {
+  padding: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-regular);
+  text-align: center;
+}
+.mark {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  display: inline-flex;
+}
+.inUse {
+  padding: var(--space-1);
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+.inUse > span {
+  color: inherit;
+}

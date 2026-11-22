@@ -1,6 +1,7 @@
 // The words of one earlier run (spec/screens-ai.md, "Earlier options"): its time as HH:MM, its
 // kind ("Pictures" or "Cut-out"), its status, and the count a Retry asks for.
 import { requestCount } from '@/renderer/stores/job-store'
+import type { StatusMarkProps } from '@/renderer/ui/status-mark'
 import { picturesLeft } from '@/shared/generation/pictures-left'
 import type { JobRow } from '@/shared/schemas/rows/job'
 
@@ -13,6 +14,15 @@ export function runTime(iso: string): string {
 
 export function runKind(row: JobRow): string {
   return row.kind === 'cutout' ? 'Cut-out' : 'Pictures'
+}
+
+// ED-4b: the status as a StatusMark; a succeeded run shows its options, so it has none.
+export function runMark(row: JobRow): StatusMarkProps | null {
+  const label = runStatus(row)
+  if (label === null) return null
+  if (row.status === 'failed') return { tone: 'danger', icon: 'xCircle', label, tip: label }
+  if (row.status === 'cancelled') return { tone: 'none', label, tip: label }
+  return { tone: 'running', label, tip: label }
 }
 
 // A succeeded run shows its options, so it has no status word.
@@ -37,4 +47,11 @@ export function referenceCount(row: JobRow): number {
   const request = row.request as { referenceAssetIds?: unknown } | null
   const ids = request?.referenceAssetIds
   return Array.isArray(ids) ? ids.length : 0
+}
+
+// A run's header, the tooltip of its row or strip: "21:06 · Google Gemini · Pictures".
+export function runTitle(row: JobRow, providers: readonly { id: string; label: string }[]): string {
+  const label =
+    providers.find((p) => p.id === row.provider)?.label ?? row.provider ?? 'The provider'
+  return `${runTime(row.createdAt)} · ${label} · ${runKind(row)}`
 }

@@ -127,7 +127,8 @@ test('Workflow 5.8: a run left going while the user works in another campaign', 
   await expect(done).toContainText(`${w.CAMPAIGN} › `)
   await done.getByRole('button', { name: new RegExp(`^Go to ${w.CAMPAIGN} › `) }).click()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
-  await expect(w.earlierOptions(page).getByText(/· Google Gemini · Pictures$/)).toBeVisible()
+  // ED-4b: the run's new pictures show under Generate; its header is the run's tooltip.
+  await expect(w.pictureSection(page).getByTitle(/· Google Gemini · Pictures$/)).toBeVisible()
   await w.useOption(page, 1)
   await expect(activityButton(page).getByRole('img', { name: 'New results' })).toHaveCount(0)
   await expect(first.getByRole('img', { name: 'New result' })).toHaveCount(0)
