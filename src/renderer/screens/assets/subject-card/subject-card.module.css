@@ -1,18 +1,23 @@
 /* app-style */
-/* One subject in the Assets panel (R2C-6), in the look of the layer rows: the name, the photos
-   as small pictures, then small buttons. */
+/* One subject in the Assets panel (R2C-6, AST-2): a head row with the name and a pencil, the
+   description muted, then the photo strip. No box: a card is mostly its photos. */
 .card {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-2);
-  border-radius: var(--radius);
+  padding: var(--space-2) 0;
 }
-.card:hover {
-  background: var(--color-surface-soft);
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 .name {
   margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: var(--font-body);
   font-size: var(--font-size-control);
   font-weight: var(--weight-medium);
@@ -22,48 +27,6 @@
   margin: 0;
   font-size: var(--font-size-small);
   color: var(--color-text-muted);
-}
-.photos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.photo {
-  position: relative;
-}
-.thumb {
-  display: block;
-  box-sizing: border-box;
-  width: var(--option-thumb);
-  height: var(--option-thumb);
-  border: var(--border-width) solid var(--color-line);
-  border-radius: var(--radius-inner);
-  object-fit: contain;
-  background: var(--canvas-backdrop);
-}
-.missing {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-1);
-  font-size: var(--font-size-small);
-  text-align: center;
-  background: var(--color-warn-bg);
-  color: var(--color-warn-text);
-}
-.remove {
-  position: absolute;
-  top: var(--space-1);
-  right: var(--space-1);
-  background: var(--color-bg);
-}
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
 }
 .status {
   display: flex;
@@ -75,4 +38,14 @@
 }
 .status p {
   margin: 0;
+}
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
