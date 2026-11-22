@@ -38,6 +38,7 @@ const IMPORT_COST =
 const COST: Record<string, string> = {
   'delete variants': 'This cannot be undone. It also clears the undo list of this campaign.',
   'delete campaigns': CAMPAIGN_COST,
+  'delete subjects': 'This cannot be undone. Its photos stay in the project without a subject.',
 }
 
 // False until `ms` after `start` first turns true.
