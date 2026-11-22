@@ -1,0 +1,29 @@
+/* app-style */
+/* A PanelHead (spec/app-style-parts.md "Panel and PanelHead"): one row at the row height with a
+   hairline under it; the title is an operating label in the body face, not a page title. */
+.head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--gap-inline);
+  height: var(--row-height);
+  padding: 0 var(--pad-panel);
+  border-bottom: var(--border-width) solid var(--color-line);
+}
+.icon {
+  display: inline-flex;
+  color: var(--color-text-muted);
+}
+.title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-body);
+  font-size: var(--type-body-size);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
