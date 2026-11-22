@@ -75,7 +75,8 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
   const userData = path.join(folder, 'userData')
   const pictures = path.join(userData, 'approvals-test-pictures')
   fs.mkdirSync(pictures, { recursive: true })
-  const defaults = { defaultProjectDir: path.join(folder, 'projects') }
+  // The first-run setup is marked done, as tests/e2e/launch.ts does.
+  const defaults = { defaultProjectDir: path.join(folder, 'projects'), setup: { done: true } }
   fs.writeFileSync(path.join(userData, 'settings.json'), JSON.stringify(defaults))
 
   const key = randomBytes(36).toString('base64url')
