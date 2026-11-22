@@ -14,6 +14,7 @@ const WEBM = bytes([0x1a, 0x45, 0xdf, 0xa3, 0x9f])
 const TTF = bytes([0, 1, 0, 0, 0, 0x10])
 const OTF = bytes('OTTO', [0, 0x0b])
 const WOFF2 = bytes('wOF2', [0, 1, 0, 0])
+const brand = (major: string) => bytes([0, 0, 0, 0x18], 'ftyp', major, [0, 0, 0, 0], 'mp42')
 
 describe('type sniffing: the extension and the first bytes must agree [SPEC 8.3, FR-051]', () => {
   it.each([
@@ -32,6 +33,12 @@ describe('type sniffing: the extension and the first bytes must agree [SPEC 8.3,
     ['brief.yaml', bytes('campaignName: Été'), 'application/yaml'],
     ['brief.json', bytes('{"a":1}'), 'application/json'],
     ['notes.md', bytes('# Title'), 'text/markdown'],
+    ['song.mp3', bytes('ID3', [4, 0, 0]), 'audio/mpeg'],
+    ['song.MP3', bytes([0xff, 0xfb, 0x90, 0x64]), 'audio/mpeg'],
+    ['song.wav', bytes('RIFF', [1, 2, 3, 4], 'WAVEfmt '), 'audio/wav'],
+    ['song.m4a', brand('M4A '), 'audio/mp4'],
+    ['song.m4a', brand('mp42'), 'audio/mp4'],
+    ['song.aac', bytes([0xff, 0xf1, 0x50, 0x80]), 'audio/aac'],
   ])('accepts %s whose bytes match', (name, head, mime) => {
     expect(sniffType(name, head)).toMatchObject({ mime })
   })
@@ -48,6 +55,24 @@ describe('type sniffing: the extension and the first bytes must agree [SPEC 8.3,
     ['copy.txt', bytes([0xff, 0xfe, 0x41])],
     ['photo.png', new Uint8Array()],
     ['copy.txt', new Uint8Array()],
+    ['photo.mp4', brand('heic')],
+    ['photo.mov', brand('heix')],
+    ['clip.mp4', brand('hevc')],
+    ['clip.mp4', brand('hevx')],
+    ['photo.mp4', brand('mif1')],
+    ['clip.mov', brand('msf1')],
+    ['photo.mp4', brand('avif')],
+    ['photo.mov', brand('avis')],
+    ['song.mp4', brand('M4A ')],
+    ['book.mp4', brand('M4B ')],
+    ['song.mov', brand('M4P ')],
+    ['song.mp3', bytes([0xff, 0xf1, 0x50, 0x80])],
+    ['song.mp3', PNG],
+    ['song.wav', WEBP],
+    ['song.m4a', brand('heic')],
+    ['song.m4a', MOV_OLD],
+    ['song.aac', bytes([0xff, 0xfb, 0x90, 0x64])],
+    ['song.aac', bytes('ID3', [4, 0, 0])],
   ])('refuses %s whose bytes do not match', (name, head) => {
     expect(sniffType(name, head)).toBeUndefined()
   })

@@ -2,15 +2,16 @@ import { describe, it, expect } from 'vitest'
 import { FILE_TYPES, fileTypeFor, pickerExtensions } from '@/shared/config/file-types'
 
 describe('accepted file types [SPEC 8.3, FR-051]', () => {
-  it('lists the four kinds of Section 8.3 and nothing else', () => {
+  it('lists the five kinds of Section 8.3 and nothing else', () => {
     const byKind = (kind: string) =>
       FILE_TYPES.filter((t) => t.kind === kind).flatMap((t) => t.extensions)
     expect(byKind('image')).toEqual(['png', 'jpg', 'jpeg', 'webp'])
     expect(byKind('video')).toEqual(['mp4', 'mov', 'webm'])
     expect(byKind('font')).toEqual(['ttf', 'otf', 'woff2'])
     expect(byKind('text')).toEqual(['txt', 'md', 'json', 'yaml', 'yml'])
+    expect(byKind('audio')).toEqual(['mp3', 'wav', 'm4a', 'aac'])
     expect(new Set(FILE_TYPES.map((t) => t.kind))).toEqual(
-      new Set(['image', 'video', 'font', 'text']),
+      new Set(['image', 'video', 'font', 'text', 'audio']),
     )
   })
 

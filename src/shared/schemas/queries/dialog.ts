@@ -16,7 +16,7 @@ export type PickedPath = { path: string | null }
 export const pickFilesInput = z
   .object({
     purpose: z.enum(['import', 'relink', 'brief']),
-    kind: z.enum(['image', 'video', 'font', 'text']).optional(),
+    kind: z.enum(['image', 'video', 'font', 'text', 'audio']).optional(),
     multiple: z.boolean().optional(),
     defaultPath: z.string().optional(),
   })

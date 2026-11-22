@@ -1,6 +1,6 @@
 // Reads what an asset row stores about a file (SPEC 3.3 asset): type from the bytes, size,
 // time, SHA-256, for PNG and JPEG the pixel size from the header, for a WebP whether it holds
-// an animation (S2-17), and for a font its family name (SPEC scene.md, "Font names at import"). Imported files are untrusted: the hash is
+// an animation (S2-17), for an MP4 or MOV its size and duration from the boxes (P7-5), and for a font its family name (SPEC scene.md, "Font names at import"). Imported files are untrusted: the hash is
 // streamed, and only the first bytes are held in memory, except a font of at most
 // MAX_FONT_BYTES, whose bytes are kept as they are hashed for the name reader.
 import crypto from 'node:crypto'
@@ -13,6 +13,7 @@ import { extensionOf, type FileType } from '@/shared/config/file-types'
 import { AppError } from '@/shared/schemas/result'
 import { UnreadableFileError } from './unreadable'
 import { MAX_FONT_BYTES, readFontFamily } from './font-name'
+import { videoFileFacts, type VideoFileFacts } from './video-file-facts'
 
 // A JPEG's frame header can sit after a large EXIF block, so more than SNIFF_BYTES is read.
 const HEADER_BYTES = 256 * 1024
@@ -27,6 +28,7 @@ export type InspectedFile = {
   contentHash: string
   width: number | null
   height: number | null
+  durationMs: number | null
   fontFamily: string | null
   // A WebP whose header says it is animated. False for every other file, and for a WebP
   // whose header cannot be read.
@@ -105,6 +107,16 @@ function isAnimated(type: FileType | undefined, head: Uint8Array): boolean {
   }
 }
 
+type Checked = { type: FileType | undefined; video: VideoFileFacts | null }
+
+// P7-5: an MP4 or MOV must hold a readable video track, as its first bytes must match its
+// name; one that does not is of no accepted type.
+async function checkVideo(handle: fs.promises.FileHandle, type: FileType | undefined) {
+  if (type?.id !== 'mp4' && type?.id !== 'mov') return { type, video: null }
+  const video = await videoFileFacts(handle)
+  return { type: video ? type : undefined, video }
+}
+
 // SPEC 14, Slice A rulings point 6: a file that is not there is NOT_FOUND; any other error
 // from stat, open, read or hashing is file_not_readable. Neither message holds the path.
 function fileError(e: unknown, fileName: string): unknown {
@@ -157,11 +169,15 @@ export async function inspectFolderFile(file: string): Promise<InspectedFile | n
   try {
     const stat = await handle.stat()
     if (!stat.isFile()) return null
-    const type = sniffType(fileName, await headOf(handle, Math.min(stat.size, SNIFF_BYTES)))
+    const sniffed = sniffType(fileName, await headOf(handle, Math.min(stat.size, SNIFF_BYTES)))
+    const { type, video } = await checkVideo(handle, sniffed)
     if (!type) return null
     const head = await headOf(handle, Math.min(stat.size, HEADER_BYTES))
     const stream = handle.createReadStream({ start: 0, autoClose: false })
-    return factsOf(file, stat, type, head, await hashOf(stream, keepFor(type)))
+    return {
+      ...factsOf(file, stat, { type, video }, head, await hashOf(stream, keepFor(type))),
+      type,
+    }
   } catch {
     return null
   } finally {
@@ -169,15 +185,15 @@ export async function inspectFolderFile(file: string): Promise<InspectedFile | n
   }
 }
 
-function factsOf<T extends FileType | undefined>(
+function factsOf(
   file: string,
   stat: fs.Stats,
-  type: T,
+  { type, video }: Checked,
   head: Uint8Array,
   { contentHash, kept }: Hashed,
-) {
+): FileFacts {
   const fileName = path.basename(file)
-  const size = pixelSize(type, head)
+  const size = video ?? pixelSize(type, head)
   const fontFamily = type?.kind === 'font' && kept ? readFontFamily(kept) : null
   return {
     file,
@@ -189,6 +205,7 @@ function factsOf<T extends FileType | undefined>(
     contentHash,
     width: size?.width ?? null,
     height: size?.height ?? null,
+    durationMs: video?.durationMs ?? null,
     fontFamily,
     animated: isAnimated(type, head),
   }
@@ -197,7 +214,13 @@ function factsOf<T extends FileType | undefined>(
 async function readFacts(file: string, fileName: string): Promise<FileFacts> {
   const stat = await fs.promises.stat(file)
   if (!stat.isFile()) throw new AppError('INVALID_INPUT', 'Choose files, not a folder.')
-  const head = await readHead(file, Math.min(stat.size, HEADER_BYTES))
-  const type = sniffType(fileName, head.subarray(0, SNIFF_BYTES))
-  return factsOf(file, stat, type, head, await hashOf(fs.createReadStream(file), keepFor(type)))
+  const handle = await fs.promises.open(file, 'r')
+  try {
+    const head = await headOf(handle, Math.min(stat.size, HEADER_BYTES))
+    const checked = await checkVideo(handle, sniffType(fileName, head.subarray(0, SNIFF_BYTES)))
+    const hashed = await hashOf(fs.createReadStream(file), keepFor(checked.type))
+    return factsOf(file, stat, checked, head, hashed)
+  } finally {
+    await handle.close()
+  }
 }
