@@ -73,6 +73,11 @@ describe('the Phase 10 tool plan [P10-1, A-230, A-231]', () => {
     expect(ALL_TOOLS.filter((t) => t.notBuilt).map((t) => t.name)).toEqual(STILL_NOT_BUILT)
   })
 
+  it('has no tool left to build [P10-14, exit criterion 5]', () => {
+    expect(STILL_NOT_BUILT).toEqual([])
+    expect(MCP_TOOLS).toHaveLength(29)
+  })
+
   it('lists no notBuilt row to an agent, and every other row', () => {
     expect(MCP_TOOLS.some((t) => t.notBuilt)).toBe(false)
     expect(MCP_TOOLS.map((t) => t.name)).toEqual(PLAN.filter((n) => !STILL_NOT_BUILT.includes(n)))
