@@ -3,7 +3,7 @@
 // the same way; Delete removes it. Every change is judged by the track rules before it is
 // sent (clip-drag.ts), and a drag that would overlap snaps back. The block shows the stored
 // place, apart from the drag in hand. ED-6: the chosen block's actions bar (clip-actions.tsx)
-// is drawn beside it, over its top edge.
+// is drawn beside it; Z-1b: fully above it, ending at its right end.
 import { useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { formatTime } from '@/renderer/stores/playback-store'
 import { clipEnd, type TrackClip } from '@/shared/clips/track'
@@ -155,7 +155,7 @@ export function ClipBlock(props: ClipBlockProps) {
           clip={clip}
           label={label}
           kind={kind}
-          right={`${Math.max(0, 100 - left - width)}%`}
+          end={`${Math.min(100, left + width)}%`}
           onResult={props.onResult}
         />
       )}
