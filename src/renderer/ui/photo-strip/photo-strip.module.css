@@ -1,0 +1,79 @@
+/* app-style */
+/* PhotoStrip (AST-2): photo tiles at --thumbnail-tile with a ✕ in the corner, then a dashed "+"
+   tile. With needsOne and no photo the "+" tile has the warn edge. */
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tile {
+  position: relative;
+}
+.picture {
+  display: flex;
+  box-sizing: border-box;
+  width: var(--thumbnail-tile);
+  height: var(--thumbnail-tile);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-inner);
+  object-fit: contain;
+  background: var(--canvas-backdrop);
+}
+.missing {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  font-size: var(--font-size-small);
+  text-align: center;
+  color: var(--color-warn-text);
+  background: var(--color-surface-soft);
+}
+.faded {
+  display: inline-flex;
+  opacity: var(--opacity-disabled);
+  color: var(--color-text-secondary);
+}
+.add {
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: var(--border-width) dashed var(--color-control-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+.add:hover:not(:disabled) {
+  background: var(--color-row-hover);
+}
+.warn {
+  border-color: var(--color-warn);
+}
+.remove {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  background: var(--color-bg);
+}
+.remove:hover:not(:disabled) {
+  background: var(--color-bg);
+}
+.marks {
+  position: absolute;
+  left: var(--space-1);
+  bottom: var(--space-1);
+  display: flex;
+  gap: var(--space-1);
+}
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
