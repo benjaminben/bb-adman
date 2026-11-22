@@ -4,6 +4,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { startComfyStandIn, type StandIn } from '../helpers/comfy-stand-in'
 import * as screens from '../e2e/screens'
 import { serveNeedsFromApp } from '../e2e/stand-in-runs'
+import { format } from '../e2e/video-variant-steps'
 import { closeApp, openApp, shot, type Session } from './shot'
 
 let session: Session | undefined
@@ -52,6 +53,12 @@ test('The address dialog, empty and with a refused address', async () => {
 
 test('The licence dialog for an H3 video run', async () => {
   const page = await campaign(true)
+  // A video start needs a video post (P7-11): the master is changed to video in the editor,
+  // as in video-variant-steps.ts, and the overview is shown again.
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await format(page).getByRole('radio', { name: 'Video' }).click()
+  await expect(format(page).getByRole('radio', { name: 'Video' })).toBeChecked()
+  await page.getByRole('tab', { name: 'Overview' }).click()
   await screens.startVideo(page, 4)
   await expect(screens.licenceDialog(page).getByRole('checkbox')).toBeFocused()
   await shot(page, '03-licence-dialog-h3-video')
