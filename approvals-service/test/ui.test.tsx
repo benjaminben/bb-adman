@@ -42,6 +42,7 @@ const view = (extra: Partial<GalleryView> = {}): GalleryView => ({
   variants: [variant('aaaa22')],
   signoffs: [],
   reviewer: null,
+  stamp: '0'.repeat(64),
   notice: null,
   ...extra,
 })
@@ -154,8 +155,7 @@ describe('the gallery page [approvals-gallery.md "Words"]', () => {
       'cccc44',
     ])
     expect(hasTag(markup, 'form', posts(`/l/${SLUG}/signoffs`))).toBe(true)
-    expect(markup).toContain('<input type="hidden" name="variant" value="aaaa22"/>')
-    expect(markup).toContain('<input type="hidden" name="version" value="3"/>')
+    expect(hasTag(markup, 'button', ['type="submit"', 'name="one"', 'value="aaaa22.3"'])).toBe(true)
     const field = ['type="email"', 'name="email"', 'autoComplete="email"', 'required=""']
     expect(hasTag(markup, 'input', field)).toBe(true)
   })

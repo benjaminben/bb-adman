@@ -6,12 +6,15 @@ import { randomLetters } from '../crypto/random'
 import { addSignoffIfVariant, hasSignoff, removeSignoffOf } from '../db/signoffs'
 import { readForm } from './forms'
 import type { NoticeKey } from './notices'
+import { reviewerCookie } from './reviewer'
 import { readSession, type Session } from './session'
+import { signOffAll } from './signoff-all'
 import type { Db } from '../db/client'
 
-// `refused`: the form checks or the session failed (403). Otherwise the notice for the 303, and
-// the variant to go back to when it has the checked shape.
-export type SignoffResult = { kind: 'refused' } | { kind: 'done'; m: NoticeKey; variant?: string }
+// `refused`: the form checks or the session failed (403). Otherwise the notice for the 303, the
+// variant to go back to when it has the checked shape, and the cookies to set.
+export type SignoffResult =
+  { kind: 'refused' } | { kind: 'done'; m: NoticeKey; variant?: string; cookies?: string[] }
 
 const VERSION_TEXT = /^[0-9]{1,16}$/
 
@@ -34,6 +37,33 @@ function versionOf(text: string): number | null {
   return parsed.success ? parsed.data : null
 }
 
+// One sign-off from `one` = `{variantKey}.{version}`. The reply goes back to the variant whenever
+// the key part has the checked shape, as before the field was joined.
+async function signOne(
+  db: Db,
+  linkId: string,
+  one: string,
+  email: string,
+  parts: Parts,
+): Promise<SignoffResult> {
+  const dot = one.indexOf('.')
+  const variantKey = VariantKey.safeParse(dot < 0 ? one : one.slice(0, dot))
+  // A key of the wrong shape cannot be in the gallery; it is never put in the address.
+  if (!variantKey.success) return { kind: 'done', m: 'changed' }
+  const variant = variantKey.data
+  const version = dot < 0 ? null : versionOf(one.slice(dot + 1))
+  if (version === null) return { kind: 'done', m: 'changed', variant }
+  const id = randomLetters(24, parts.random)
+  const row = { id, variantKey: variant, version, email, createdAt: parts.now() }
+  const { meta } = await addSignoffIfVariant(db, linkId, row).run()
+  if (meta.changes === 1 || (await hasSignoff(db, linkId, row))) {
+    return { kind: 'done', m: 'signed', variant }
+  }
+  return { kind: 'done', m: 'changed', variant }
+}
+
+// The form: `email`, then exactly one of `one` and `all=1` (spec/phases/round-2-approvals.md
+// "Routes and data changes"). Neither or both, or the old `variant` and `version` fields: changed.
 export async function signOff(
   db: Db,
   request: Request,
@@ -43,27 +73,15 @@ export async function signOff(
   const checked = await checkedForm(db, request, slug, parts.now())
   if (checked === null) return { kind: 'refused' }
   const { fields, session } = checked
-  const variantKey = VariantKey.safeParse(fields.get('variant') ?? '')
-  // A key of the wrong shape cannot be in the gallery; it is never put in the address.
-  if (!variantKey.success) return { kind: 'done', m: 'changed' }
-  const variant = variantKey.data
-  const version = versionOf(fields.get('version') ?? '')
-  if (version === null) return { kind: 'done', m: 'changed', variant }
   const email = Email.safeParse(fields.get('email') ?? '')
-  if (!email.success) return { kind: 'done', m: 'bad-email', variant }
+  if (!email.success) return { kind: 'done', m: 'bad-email' }
+  const one = fields.get('one')
+  const all = fields.get('all')
   const linkId = session.link.id
-  const row = {
-    id: randomLetters(24, parts.random),
-    variantKey: variant,
-    version,
-    email: email.data,
-    createdAt: parts.now(),
-  }
-  const { meta } = await addSignoffIfVariant(db, linkId, row).run()
-  if (meta.changes === 1 || (await hasSignoff(db, linkId, row))) {
-    return { kind: 'done', m: 'signed', variant }
-  }
-  return { kind: 'done', m: 'changed', variant }
+  if (one !== null && all === null) return signOne(db, linkId, one, email.data, parts)
+  if (all !== '1' || one !== null) return { kind: 'done', m: 'changed' }
+  const m = await signOffAll(db, linkId, fields.get('seen'), email.data, parts)
+  return { kind: 'done', m, cookies: [reviewerCookie(slug, email.data)] }
 }
 
 // Anyone with the link may remove any of its sign-offs [D-095]; an ID of another link removes

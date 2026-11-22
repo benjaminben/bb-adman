@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { addSignoff } from '../src/db/signoffs'
 import { putVariant } from '../src/db/variants'
+import { galleryStamp } from '../src/visitor/stamp'
 import {
   addLink,
   clearTables,
@@ -18,7 +19,9 @@ const REFUSED = 'This form could not be sent. Open the link again and try once m
 const KIB_8 = 8 * 1024
 
 // The fields of every route's form, so a form that got through would write on any of them.
-const FIELDS = { password: PASSWORD, variant: 'abc234', version: '1', email: 'ann@example.com' }
+// Round 2 (R2A-3): the sign-off form is either `one` or `all`; each is run on its own below.
+const KEY = 'abc234'
+const FIELDS = { password: PASSWORD, one: `${KEY}.1`, all: '1', email: 'ann@example.com' }
 
 // A body of `size` bytes holding the right password, so a form that got through would write.
 const padded = (size: number) => {
@@ -86,17 +89,29 @@ async function written() {
 
 // AP-4: the two sign-off routes need a session, so they take every row that /leave takes.
 // Round 2 (R2A-2): /reviewer needs a session too, so it takes every row /leave takes.
-type Route = 'enter' | 'leave' | 'signoffs' | 'remove' | 'reviewer'
+type Route = 'enter' | 'leave' | 'signoffs' | 'signoffs-all' | 'remove' | 'reviewer'
 const SIGNOFF_ID = 'A'.repeat(24)
-const pathOf = (route: Route) => (route === 'remove' ? `signoffs/${SIGNOFF_ID}/remove` : route)
+const pathOf = (route: Route) => {
+  if (route === 'remove') return `signoffs/${SIGNOFF_ID}/remove`
+  return route === 'signoffs-all' ? 'signoffs' : route
+}
 const routesOf = (routes: Row[2]): Route[] =>
-  routes.includes('leave') ? [...routes, 'signoffs', 'remove', 'reviewer'] : routes
+  routes.includes('leave') ? [...routes, 'signoffs', 'signoffs-all', 'remove', 'reviewer'] : routes
+
+// "Sign off all" with the stamp of the gallery addGallery makes, so a form that got through
+// would sign it.
+const SEEN = await galleryStamp([{ variantKey: KEY, version: 1 }])
+function fieldsOf(route: Route): Record<string, string> {
+  const { one, all, ...rest } = FIELDS
+  if (route === 'signoffs') return { ...rest, one }
+  return route === 'signoffs-all' ? { ...rest, all, seen: SEEN } : FIELDS
+}
 
 async function addGallery(linkId: string) {
-  const variant = { variantKey: FIELDS.variant, position: 0, title: 'T', sizeLine: 'S' }
+  const variant = { variantKey: KEY, position: 0, title: 'T', sizeLine: 'S' }
   const picture = { pictureUrl: 'https://b.s3.x.amazonaws.com/p', pictureExpiresAt: 9e12 }
   await putVariant(db, linkId, { ...variant, version: 1, ...picture }).run()
-  const row = { variantKey: FIELDS.variant, version: 1, email: 'bo@example.com', createdAt: 1 }
+  const row = { variantKey: KEY, version: 1, email: 'bo@example.com', createdAt: 1 }
   await addSignoff(db, linkId, { id: SIGNOFF_ID, ...row }).run()
 }
 
@@ -113,7 +128,7 @@ describe('forms that write [approvals-service.md "Forms that write"]', () => {
         const request =
           options === 'stream'
             ? streamed(path, cookie, KIB_8 + 1)
-            : form(path, FIELDS, { cookie, ...options })
+            : form(path, fieldsOf(route), { cookie, ...options })
         if (options !== 'stream' && options.headers?.Origin === '') request.headers.delete('Origin')
         if (options !== 'stream' && options.headers?.['Content-Type'] === '') {
           request.headers.delete('Content-Type')

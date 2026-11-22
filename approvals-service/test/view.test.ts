@@ -7,7 +7,7 @@ import { addLink, clearTables, db, enter, makeApp } from './visitor-setup'
 
 // spec/approvals-service.md "Notices": `m` becomes a key only through the fixed table.
 describe('the notices table [approvals-service.md "Notices"]', () => {
-  it('holds exactly the six notices, each on its one page, with the spec text', () => {
+  it('holds exactly the eight notices, each on its one page, with the spec text', () => {
     expect(NOTICES).toEqual({
       'wrong-password': {
         page: 'password',
@@ -23,6 +23,11 @@ describe('the notices table [approvals-service.md "Notices"]', () => {
       'email-saved': {
         page: 'gallery',
         text: 'Your email is saved until you log out or close the browser.',
+      },
+      'signed-all': { page: 'gallery', text: 'Your sign-offs were saved.' },
+      'gallery-changed': {
+        page: 'gallery',
+        text: 'The gallery changed while you were looking. Nothing was signed. Look at it again, and sign off if you still approve.',
       },
     })
   })
@@ -119,6 +124,7 @@ describe(WIRING, () => {
       'notice',
       'reviewer',
       'signoffs',
+      'stamp',
       'variants',
     ])
     expect(Object.keys(result.view.link).sort()).toEqual(['campaignName', 'slug'])

@@ -9,6 +9,7 @@ import { readForm } from './forms'
 import { noticeOn, type NoticeKey } from './notices'
 import { clearedReviewerCookie, reviewerCookie, reviewerOf } from './reviewer'
 import { clearedCookie, endSession, readSession, startSession } from './session'
+import { galleryStamp, signableSet } from './stamp'
 import { tryPassword } from './throttle'
 import type { Db } from '../db/client'
 
@@ -28,6 +29,8 @@ export type GalleryView = {
   signoffs: { id: string; variantKey: string; version: number; email: string; createdAt: number }[]
   // The reviewer cookie's checked email, or null.
   reviewer: string | null
+  // galleryStamp of the signable set, sent back as `seen` by "Sign off all".
+  stamp: string
   notice: NoticeKey | null
 }
 
@@ -91,6 +94,7 @@ export async function openGallery(
       })),
     // Read only here, once the session is valid; the password page never reads it.
     reviewer: reviewerOf(cookie, slug),
+    stamp: await galleryStamp(signableSet(variants, now)),
     notice: noticeOn('gallery', m),
   }
   return { kind: 'gallery', view }

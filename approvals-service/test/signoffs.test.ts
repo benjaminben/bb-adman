@@ -37,11 +37,14 @@ async function setUp() {
   return { app, link, cookie, time, signOff, remove }
 }
 
-const fields = (over: Record<string, string> = {}) => ({
-  variant: KEY,
-  version: '1',
-  email: EMAIL,
-  ...over,
+// Round 2 (R2A-3): the variant and version travel as one field, `one = {key}.{version}`.
+const fields = ({
+  variant = KEY,
+  version = '1',
+  email = EMAIL,
+}: { variant?: string; version?: string; email?: string } = {}) => ({
+  one: `${variant}.${version}`,
+  email,
 })
 
 beforeEach(clearTables)
@@ -84,7 +87,9 @@ describe('POST /l/{slug}/signoffs [approvals-service-visitor.md "Forms that writ
     const sent = await make(link.id)
     const reply = await signOff(sent)
     expect(reply.status).toBe(303)
-    expect(reply.headers.get('Location')).toBe(`/l/${link.slug}?m=changed#v-${sent.variant}`)
+    expect(reply.headers.get('Location')).toBe(
+      `/l/${link.slug}?m=changed#v-${sent.one.slice(0, 6)}`,
+    )
     expect(await rows()).toEqual([])
   })
 
@@ -108,14 +113,14 @@ describe('POST /l/{slug}/signoffs [approvals-service-visitor.md "Forms that writ
   ])('writes nothing for the email %j and answers m=bad-email', async (email) => {
     const { link, signOff } = await setUp()
     const reply = await signOff(fields({ email }))
-    expect(reply.headers.get('Location')).toBe(`/l/${link.slug}?m=bad-email#v-${KEY}`)
+    expect(reply.headers.get('Location')).toBe(`/l/${link.slug}?m=bad-email`)
     expect(await rows()).toEqual([])
   })
 
   it('writes nothing when the email field is missing', async () => {
     const { link, signOff } = await setUp()
-    const reply = await signOff({ variant: KEY, version: '1' })
-    expect(reply.headers.get('Location')).toBe(`/l/${link.slug}?m=bad-email#v-${KEY}`)
+    const reply = await signOff({ one: `${KEY}.1` })
+    expect(reply.headers.get('Location')).toBe(`/l/${link.slug}?m=bad-email`)
     expect(await rows()).toEqual([])
   })
 

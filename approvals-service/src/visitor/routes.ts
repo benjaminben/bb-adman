@@ -58,7 +58,7 @@ const signOffRoute: VisitorHandler = async ({ request, env, parts, params }) => 
   const slug = params[0] ?? ''
   const result = await signOff(env.DB, request, slug, parts)
   if (result.kind === 'refused') return refused(request)
-  return redirect(request, slug, { m: result.m, variant: result.variant })
+  return redirect(request, slug, { m: result.m, variant: result.variant, cookies: result.cookies })
 }
 
 const removeRoute: VisitorHandler = async ({ request, env, parts, params }) => {

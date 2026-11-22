@@ -56,6 +56,8 @@ describe('openGallery gives a narrowed view [review AP-3 Low]', () => {
         ],
         signoffs: [{ ...signoff, createdAt: 5 }],
         reviewer: null,
+        // galleryStamp of the live set: printf 'aaa234.3\n' | shasum -a 256
+        stamp: 'ae28cf159071e8b0702a4474821e3a3b8ad618ff942ff578d197ab04b2f82492',
         notice: 'signed',
       },
     })
