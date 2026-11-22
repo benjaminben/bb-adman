@@ -65,6 +65,8 @@ async function exportAll(session: Session, folder: string) {
   await screens.answerOpenDialog(app, [folder])
   await dialog.getByRole('button', { name: 'Choose folder…' }).click()
   await dialog.getByRole('button', { name: 'Export', exact: true }).click()
+  // The export checks (P8-13) warn that the de ads have no translation yet.
+  await dialog.getByRole('button', { name: 'Export anyway' }).click()
   await expect(dialog.getByText(/^Exported \d+ ads\./)).toBeVisible({ timeout: 120_000 })
   await dialog.getByRole('button', { name: 'Close' }).click()
   await expect(dialog).toBeHidden()

@@ -28,12 +28,16 @@ test('Settings, every section as a card', async () => {
   await expect(comfy.locator('#comfy-address-refusal')).toBeVisible()
 
   const agent = page.getByRole('region', { name: 'Agent access' })
-  await agent.getByRole('switch', { name: 'Turn on agent access' }).check()
-  await expect(agent.getByRole('switch', { name: 'Turn on agent access' })).toBeChecked()
+  const toggle = agent.getByRole('switch', { name: 'Turn on agent access' })
+  // The switch is held to the saved state: it flips only once mcp.setEnabled replies, so
+  // check() and uncheck(), which test the state right after the click, can lose that race.
+  await toggle.click()
+  await expect(toggle).toBeChecked({ timeout: 10_000 })
   await expect(agent.getByRole('button', { name: 'Make a new token' })).toBeEnabled()
   await page.waitForTimeout(300)
   await shot(page, '187-settings')
   // Turned off again so the app closes without a running server.
-  await agent.getByRole('switch', { name: 'Turn on agent access' }).uncheck()
-  await expect(agent.getByRole('switch', { name: 'Turn on agent access' })).not.toBeChecked()
+  await expect(toggle).toBeEnabled()
+  await toggle.click()
+  await expect(toggle).not.toBeChecked({ timeout: 10_000 })
 })

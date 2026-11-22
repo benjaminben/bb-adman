@@ -12,13 +12,22 @@ import { closeApp, openApp, shot, type Session } from './shot'
 
 let session: Session | undefined
 
-test.afterEach(async () => {
-  if (session) await releaseGemini(session.app, 10, 'refuse')
-  await closeApp(session)
-  session = undefined
-})
-
 const activityButton = (page: Page) => page.getByRole('button', { name: /^Activity/ })
+
+// A run still going when the app quits opens the native "quit anyway?" question, which no one
+// answers here, so close() would hang. The held runs are refused, then the close waits for the
+// last one to end.
+test.afterEach(async () => {
+  try {
+    if (session) {
+      await releaseGemini(session.app, 10, 'refuse')
+      await expect(activityButton(session.page)).not.toContainText('running', { timeout: 30_000 })
+    }
+  } finally {
+    await closeApp(session)
+    session = undefined
+  }
+})
 const activityPanel = (page: Page) => page.getByRole('region', { name: 'Activity' })
 
 async function generateWith(page: Page, provider: string): Promise<void> {
