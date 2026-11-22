@@ -13,3 +13,4 @@ comfy-workflows/
 approvals-service/.next/
 approvals-service/node_modules/
 approvals-service/next-env.d.ts
+approvals-service/.vercel/
