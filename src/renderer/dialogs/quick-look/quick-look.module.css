@@ -1,0 +1,20 @@
+/* app-style */
+/* Quick look: the picture fitted inside the dialog with its shape kept, then the steps row. */
+.view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.picture {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100vh - var(--space-12) * 6);
+  object-fit: contain;
+}
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
