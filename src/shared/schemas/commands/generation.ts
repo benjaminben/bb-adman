@@ -44,7 +44,12 @@ const startVideoFields = projectScoped.extend({
   referenceAssetIds: referenceIds,
 })
 
-export const generationStartVideoInput = startVideoFields.extend({ licenceConfirmed })
+// R2E-7 (round-2-editor.md D5): layerId, the user's only, names the background layer whose
+// still the clip replaces. The command ignores it for an agent; the tool below does not offer it.
+export const generationStartVideoInput = startVideoFields.extend({
+  licenceConfirmed,
+  layerId: z.string().min(1).optional(),
+})
 export type GenerationStartVideoInput = z.infer<typeof generationStartVideoInput>
 
 // The generate_video tool's input: the same, without licenceConfirmed.
