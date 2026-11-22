@@ -10,7 +10,7 @@ type Props = { request: RenderRequest; onDone: (reply: RenderDone) => void }
 
 // spec/scene.md "One draw" step 3: builds each asset's address, draws the Scene scaled to the
 // asked width from the top-left corner (or one tile of it at scale 1 with view, P8-3), and
-// answers once, when the Scene has settled.
+// answers once, when the Scene has settled (for a video variant, once its clip is drawn, P7-8).
 export function RenderRoot({ request, onDone }: Props) {
   const { requestId, input } = request
   const assets = useMemo(() => {
@@ -36,6 +36,7 @@ export function RenderRoot({ request, onDone }: Props) {
         layers={input.layers}
         assets={assets}
         timeMs={input.timeMs}
+        clips={input.clips}
         mode={input.mode}
         onSettled={settled}
       />
