@@ -83,9 +83,11 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
         { project_id: p, job_id: 'x' },
       ],
     ],
+    // P10-6: this core refuses every ask, so its success reply is word-tested in ask-flow.test.ts.
+    ['delete_campaign', null, [{ project_id: p, campaign_id: ids.campaign }]],
   ]
   return table.flatMap(([tool, good, bad]) => [
-    { tool, args: good, ok: true },
+    ...(good === null ? [] : [{ tool, args: good, ok: true }]),
     ...bad.map((args) => ({ tool, args, ok: false })),
   ])
 }
@@ -110,7 +112,9 @@ describe('no tool reply or output schema holds a provider ID, a settings key or 
       seen.push(JSON.stringify(reply))
     }
     expect([...outcomes.keys()]).toEqual(BUILT_TOOLS)
-    for (const [tool, both] of outcomes) expect(both.size, tool).toBe(2)
+    for (const [tool, both] of outcomes) {
+      expect(both.size, tool).toBe(tool === 'delete_campaign' ? 1 : 2)
+    }
     const text = seen.join('\n')
     expect(text).toContain(agentJob)
     expect(text).toContain('AGENT_DENIED')
