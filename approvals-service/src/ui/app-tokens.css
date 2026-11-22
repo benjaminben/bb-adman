@@ -102,6 +102,9 @@
   --icon-size-small: 13px;
   --icon-stroke: 1.7;
   --check-size: 16px;
+  /* The dropdown arrow: the width of each of its two strokes' boxes, and the stroke. */
+  --select-caret: 5px;
+  --select-caret-stroke: 0.8px;
   --switch-width: 36px;
   --switch-height: 20px;
   --switch-knob: 16px;
