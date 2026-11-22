@@ -3,18 +3,29 @@
 // videos for this layer, "Start from", the generate fields with the start picture they send
 // first, then the earlier options (P4-18). Pictures only: the run goes through the run dialog
 // and its confirm as before. Disabled parts follow the layer's lock. The draft's last picture
-// run is drawn first in the earlier options, under "New pictures" (R2E-5, D6).
+// run is drawn first in the earlier options, under "New pictures" (R2E-5, D6). R2E-8: on the
+// background of a video post, "Make" switches to the video fields, chosen first when some
+// available provider makes videos.
 import { useCallback, useEffect, useState } from 'react'
 import { useStore } from 'zustand'
-import { useApi } from '@/renderer/app/app-context'
+import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { EarlierOptions } from '@/renderer/editor/earlier-options'
 import { GenerateFields } from '@/renderer/editor/generate-fields'
-import { draftKey, draftOf, generateDrafts } from '@/renderer/stores/generate-drafts'
+import {
+  draftKey,
+  draftOf,
+  generateDrafts,
+  type GenerateKind,
+} from '@/renderer/stores/generate-drafts'
 import type { AssetList } from '@/shared/schemas/queries/asset'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import layout from '@/renderer/ui/layout.module.css'
+import { anyStarts, mostReferences } from './card-starts'
+import { MakeSwitch } from './make-switch'
 import { shaped } from './same-shape-list'
-import { StartFrom } from './start-from'
+import { shownStart, StartFrom, startChoices } from './start-from'
+import { useComfyInfo } from './video-length'
+import { VideoFields } from './video-fields'
 import styles from './generate-panel.module.css'
 
 export type GeneratePanelProps = {
@@ -27,11 +38,16 @@ export type GeneratePanelProps = {
   format?: 'image' | 'video'
 }
 
-function videoLine(type: LayerRow['type'], format: 'image' | 'video'): string | null {
+function videoLine(
+  type: LayerRow['type'],
+  format: 'image' | 'video',
+  kind: GenerateKind,
+): string | null {
   if (format === 'video') {
-    return type === 'background'
+    if (type !== 'background') return 'Videos are made on the background layer.'
+    return kind === 'image'
       ? 'On a video post, the clips on the timeline show over this picture.'
-      : 'Videos are made on the background layer.'
+      : null
   }
   return type === 'background' ? 'To make a video, set Format to Video in the top bar first.' : null
 }
@@ -62,10 +78,27 @@ function useImages(projectId: string) {
   return { images, read }
 }
 
+// The available providers that make videos, and the kind the layer shows.
+function useKind(key: string, videoPost: boolean) {
+  const providers = useApp((s) => s.app?.providers ?? EMPTY)
+  const ids = providers.filter((p) => p.available && p.jobs.includes('video')).map((p) => p.id)
+  const canVideo = videoPost && ids.length > 0
+  const held = useStore(generateDrafts, (s) => s.drafts[key]?.kind ?? s.wanted[key])
+  useEffect(() => {
+    if (canVideo) generateDrafts.getState().wantKind(key, 'video')
+  }, [canVideo, key])
+  const kind: GenerateKind = canVideo && held === 'video' ? 'video' : 'image'
+  return { ids, kind }
+}
+
 export function GeneratePanel(props: GeneratePanelProps) {
   const { projectId, layer } = props
+  const format = props.format ?? 'image'
   const key = draftKey(projectId, layer.id)
   const draft = draftOf(useStore(generateDrafts, (s) => s.drafts[key]))
+  const videoPost = format === 'video' && layer.type === 'background'
+  const { ids, kind } = useKind(key, videoPost)
+  const info = useComfyInfo()
   const { images, read } = useImages(projectId)
   const own = layer.source?.assetId ?? null
   const layerPicture = images?.some((a) => a.id === own && !a.missing) ? own : null
@@ -77,32 +110,56 @@ export function GeneratePanel(props: GeneratePanelProps) {
   const chosen = draft?.startAssetId ?? null
   const fits = images !== null && shaped(images, { box: layer.geometry, ownId: own })
   const shapePicture = fits && fits.some((a) => a.id === chosen) ? chosen : null
-  const start =
-    draft?.start === 'layer' ? layerPicture : draft?.start === 'shape' ? shapePicture : undefined
-  const line = videoLine(layer.type, props.format ?? 'image')
+  const choices = startChoices(kind, anyStarts(info, ids))
+  const shown = shownStart(choices, draft?.start)
+  const start = shown === 'layer' ? layerPicture : shown === 'shape' ? shapePicture : undefined
+  const line = videoLine(layer.type, format, kind)
+  const change = generateDrafts.getState().change
   const run = draft?.run
   const newJobId = run && run.kind !== 'video' ? run.jobId : undefined
 
   return (
     <fieldset className={styles.section}>
       <legend className={styles.legend}>Generate</legend>
+      {videoPost && (
+        <MakeSwitch
+          kind={kind}
+          videoOff={ids.length === 0}
+          disabled={layer.locked || draft === undefined}
+          onChange={(next) => change(key, { kind: next })}
+        />
+      )}
       {line !== null && <p className={layout.muted}>{line}</p>}
       <StartFrom
         projectId={projectId}
         layer={layer}
         draft={draft}
+        choices={choices}
+        start={shown}
         layerPicture={layerPicture}
         images={images}
         read={read}
-        onChange={(patch) => generateDrafts.getState().change(key, patch)}
+        onChange={(patch) => change(key, patch)}
       />
-      <GenerateFields
-        projectId={projectId}
-        campaignId={props.campaignId}
-        layer={layer}
-        {...(props.layers ? { layers: props.layers } : {})}
-        {...(start === undefined ? {} : { start })}
-      />
+      {kind === 'video' ? (
+        <VideoFields
+          projectId={projectId}
+          campaignId={props.campaignId}
+          layer={layer}
+          {...(props.layers ? { layers: props.layers } : {})}
+          start={shown}
+          picture={start ?? null}
+          most={mostReferences(info, ids)}
+        />
+      ) : (
+        <GenerateFields
+          projectId={projectId}
+          campaignId={props.campaignId}
+          layer={layer}
+          {...(props.layers ? { layers: props.layers } : {})}
+          {...(start === undefined ? {} : { start })}
+        />
+      )}
       <EarlierOptions
         projectId={projectId}
         layer={layer}

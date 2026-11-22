@@ -2,8 +2,11 @@
 // an offer in video-offers.ts (A-175) gets its starts, with "The post's background" new, its
 // length bounds and its reference count. ComfyUI has no offer and keeps its built rules
 // (video-start.ts): its starts and each start's most from comfy.getInfo, one picture.
+// R2E-8 (round-2-editor.md D4): the Generate panel offers the starts of any available provider,
+// and lets the reference start take the most pictures any of them takes.
 import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
-import { videoOffer, type VideoStartKind } from '@/shared/config/video-offers'
+import { MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
+import { VIDEO_START_KINDS, videoOffer, type VideoStartKind } from '@/shared/config/video-offers'
 import { STARTS, maxMsFor, offeredStarts } from '@/renderer/screens/campaign/video-start'
 import { START_SECONDS } from './video-length'
 
@@ -77,4 +80,21 @@ export function cardStartFields(id: CardStartId, pictures: readonly string[], mo
     useReferences: id === 'reference',
     referenceAssetIds: pictures.slice(0, most),
   }
+}
+
+// The starts some of the providers offers.
+export function anyStarts(
+  info: ComfyInfo | null,
+  providerIds: readonly string[],
+): VideoStartKind[] {
+  const offered = new Set(providerIds.flatMap((id) => cardStarts(info, id).map((s) => s.id)))
+  return VIDEO_START_KINDS.filter((kind) => offered.has(kind))
+}
+
+// The most reference pictures any of the providers that offer the reference start takes.
+export function mostReferences(info: ComfyInfo | null, providerIds: readonly string[]): number {
+  const counts = providerIds
+    .filter((id) => cardStarts(info, id).some((s) => s.id === 'reference'))
+    .map((id) => picturesFor(id, 'reference'))
+  return Math.min(Math.max(0, ...counts), MAX_REFERENCES_PER_RUN)
 }
