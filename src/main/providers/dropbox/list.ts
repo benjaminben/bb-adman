@@ -22,13 +22,16 @@ type Entry = z.infer<typeof Entry>
 
 const NOT_A_FOLDER = ['path/not_found', 'path/not_folder']
 
-// The path relative to the root, or null for an entry that is not kept.
-function relative(entry: Entry, under: string, root: string): string | null {
+// The path relative to the root, or null for an entry that is not kept. The shown prefix is
+// lower-cased on its own and must equal `under` exactly, so each of its characters lower-cases
+// to one; the root is then cut by its lower-case length (`cut`), which a character such as a
+// capital dotted I cannot shift.
+function relative(entry: Entry, under: string, cut: number): string | null {
   const display = entry.path_display
   if (entry['.tag'] !== 'file' || !entry.path_lower?.startsWith(under) || !display) return null
-  if (!display.toLowerCase().startsWith(under)) return null
+  if (display.slice(0, under.length).toLowerCase() !== under) return null
   try {
-    return storageFilePath(display.slice(root.length))
+    return storageFilePath(display.slice(cut))
   } catch {
     return null
   }
@@ -42,12 +45,13 @@ export async function listFiles(
   root: string,
 ): Promise<string[]> {
   const under = `${folder}/`.toLowerCase()
+  const cut = root.toLowerCase().length
   const first = await calls.rpc('listFolder', { path: folder, recursive: true })
   let page = await calls.lookup(first, Page, NOT_A_FOLDER)
   const found: string[] = []
   while (page) {
     for (const entry of page.entries) {
-      const path = relative(entry, under, root)
+      const path = relative(entry, under, cut)
       if (path !== null) found.push(path)
     }
     if (!page.has_more) break
