@@ -11,6 +11,7 @@ import {
 } from '../generation/generation-fixture'
 import { insertTestAsset } from '../assets/asset-rows'
 import { data } from '../core-fixture'
+import { KEEP_PRINTING_ENDING, NO_TEXT_ENDING } from '@/shared/generation/prompt'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 
 let f: GenerationFixture
@@ -128,6 +129,19 @@ describe('job.retry of a video row of any provider [P7-11, A-176] (security clas
     const r = await refused({ code: 'INVALID_INPUT', message: 'That provider cannot make videos.' })
     expect(JSON.stringify(r)).not.toContain('gemini')
   })
+
+  // SP-9 [A-127], the video rows of job-retry-prompt.test.ts with a real picture: the old
+  // prompt's ending is swapped for "keep printing" and no other request field changes.
+  it('fake: a first-frame row is tried again with the ending its picture calls for', async () => {
+    await ready()
+    const id = await f.importPicture('frame.png')
+    const old = { start: 'first_frame', referenceAssetIds: [id] }
+    failedVideo('fake', { ...old, prompt: `A bottle on a rock ${NO_TEXT_ENDING}` })
+    const { jobId } = data<{ jobId: string }>(await f.user('job.retry', { jobId: 'j-old' }))
+    const sent = `A bottle on a rock ${KEEP_PRINTING_ENDING}`
+    expect(f.job(jobId)?.request).toEqual({ ...request, ...old, prompt: sent })
+    await waitFor(ended(f, jobId), 10_000)
+  }, 15_000)
 
   it('fake: a good row on a video post is tried again', async () => {
     await ready()

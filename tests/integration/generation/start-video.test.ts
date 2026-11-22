@@ -83,14 +83,17 @@ describe('generation.startVideo [SPEC 4.2, 14 CU-6a]', () => {
   it.each([
     ['a first frame', { start: 'first_frame', referenceAssetIds: ['a1'] }],
     ['a reference', { useReferences: true, referenceAssetIds: ['a1'] }],
-  ])('another provider takes only a prompt: %s is not offered [1.60 N-4]', async (_, input) => {
-    f = await makeGenerationFixture()
-    expect(await start(input)).toMatchObject({
-      ok: false,
-      error: { code: 'RULE_VIOLATION', details: { reason: 'comfy_job_not_offered' } },
-    })
-    expect(f.jobs()).toEqual([])
-  })
+  ])(
+    'the fake provider offers %s, so its picture is checked: NOT_FOUND [P7-11]',
+    async (_, input) => {
+      f = await makeGenerationFixture()
+      expect(await start(input)).toMatchObject({
+        ok: false,
+        error: { code: 'NOT_FOUND' },
+      })
+      expect(f.jobs()).toEqual([])
+    },
+  )
 
   it('refuses a provider that does not make videos', async () => {
     f = await makeGenerationFixture()

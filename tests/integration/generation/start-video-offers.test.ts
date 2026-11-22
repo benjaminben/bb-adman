@@ -72,13 +72,17 @@ describe('generation.startVideo offers [P7-11, A-175] (security class)', () => {
     ['a prompt start of 120 s', { durationMs: 120_000 }, 0],
     ['a first-frame start', { start: 'first_frame' }, 1],
     ['four references', { useReferences: true }, 4],
-  ])('the fake provider takes %s', async (_, input, n) => {
-    await ready()
-    const referenceAssetIds = await pictures(n)
-    const { jobId } = data<{ jobId: string }>(await start({ ...input, referenceAssetIds }))
-    expect(f.job(jobId)?.request).toMatchObject({ referenceAssetIds })
-    await waitFor(ended(f, jobId), 10_000)
-  }, 15_000)
+  ])(
+    'the fake provider takes %s',
+    async (_, input, n) => {
+      await ready()
+      const referenceAssetIds = await pictures(n)
+      const { jobId } = data<{ jobId: string }>(await start({ ...input, referenceAssetIds }))
+      expect(f.job(jobId)?.request).toMatchObject({ referenceAssetIds })
+      await waitFor(ended(f, jobId), 10_000)
+    },
+    15_000,
+  )
 
   it.each([
     ['fake', 999, FAKE_LENGTH],
