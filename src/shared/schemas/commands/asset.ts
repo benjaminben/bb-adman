@@ -6,13 +6,16 @@ import { projectScoped } from './project-scoped'
 // asset.addGenerated [1.8]: a system command sent only by the job runner. It holds asset
 // IDs and file extensions; no path and no file contents. [1.58] J-4: `model` is the model the
 // provider's result names (for ComfyUI, the shipped workflow's main model file name); when
-// given it is stored instead of the job row's model.
+// given it is stored instead of the job row's model. P7-16 (A-177): `video` is what checkMp4
+// read from a generated clip, written to a video file's row.
+const whole = z.number().int().positive()
 export const assetAddGeneratedInput = projectScoped.extend({
   jobId: z.string().min(1),
   files: z
     .array(z.object({ assetId: z.string().min(1), ext: z.string().regex(/^[a-z0-9]{1,10}$/) }))
     .min(1),
   model: z.string().min(1).max(200).optional(),
+  video: z.object({ width: whole, height: whole, durationMs: whole }).strict().optional(),
 })
 export type AssetAddGeneratedInput = z.infer<typeof assetAddGeneratedInput>
 

@@ -143,11 +143,12 @@ export function createRenderService(opts: RenderServiceOptions): RenderService {
     project: ProjectHandle,
     variantId: string,
     maxDimension: number,
-    how: { withoutText?: boolean; report: boolean; timeMs?: number },
+    how: { withoutText?: boolean; backgroundOnly?: boolean; report: boolean; timeMs?: number },
   ): Promise<VariantRender> {
-    const { withoutText, timeMs } = how
+    const { withoutText, backgroundOnly, timeMs } = how
     const open = opts.deps().projects.requireOpen(project.projectId)
-    const scene = await sceneInput(opts.deps(), open, variantId, { withoutText, timeMs })
+    const which = { withoutText, backgroundOnly, timeMs }
+    const scene = await sceneInput(opts.deps(), open, variantId, which)
     if (!scene) throw new AppError('NOT_FOUND', NOT_FOUND)
     const v = scene.input.variant
     const size = fitSize(v, Math.min(maxDimension, Math.max(v.width, v.height)))
@@ -186,6 +187,15 @@ export function createRenderService(opts: RenderServiceOptions): RenderService {
     renderPictures(project, variantId, maxDimension) {
       const how = { withoutText: true, report: false }
       return queue.render(() => drawVariant(project, variantId, maxDimension, how))
+    },
+
+    renderBackground(project, variantId, size) {
+      const how = { backgroundOnly: true, report: false, timeMs: 0 }
+      const longSide = Math.max(size.width, size.height)
+      return queue.render(async () => {
+        const drawn = await drawVariant(project, variantId, longSide, how)
+        return drawn.png
+      })
     },
 
     drawFull: drawFullWith(queue, opts.draw, () => opts.deps().exportPictures),

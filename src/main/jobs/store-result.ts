@@ -6,7 +6,14 @@ import type { JobRunContext } from '@/main/jobs/types'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { LocalFailure, errnoCode, writeFailureReason } from './local-failure'
 
-export type StoredFile = { jobId: string; bytes: Uint8Array; ext: string; model: string }
+// P7-16: `video` is a generated clip's facts as checkMp4 read them, kept on its asset row.
+export type StoredFile = {
+  jobId: string
+  bytes: Uint8Array
+  ext: string
+  model: string
+  video?: { width: number; height: number; durationMs: number }
+}
 
 async function write(jc: JobRunContext, project: ProjectHandle, file: StoredFile, assetId: string) {
   try {
@@ -45,6 +52,7 @@ export async function storeResult(
     jobId: file.jobId,
     files: [{ assetId, ext: file.ext }],
     ...(file.model && { model: file.model }),
+    ...(file.video && { video: file.video }),
   })
   if (!added.ok) throw new LocalFailure('results_not_added')
   return assetId

@@ -25,9 +25,21 @@ function promptOf(request: unknown): string | null {
   return typeof prompt === 'string' ? prompt : null
 }
 
-type RowContext = { job: JobRow; model: string | null; projectFile: string; createdAt: string }
+type RowContext = {
+  job: JobRow
+  model: string | null
+  projectFile: string
+  createdAt: string
+  video: AssetAddGeneratedInput['video']
+}
 
-function rowOf(item: Prepared[number], { job, model, projectFile, createdAt }: RowContext) {
+// P7-16 (A-177): a clip's facts as the job's checkMp4 read them, else as the file's own boxes.
+function factsOf(file: InspectedFile, video: RowContext['video']) {
+  if (file.type.kind === 'video' && video) return video
+  return { width: file.width, height: file.height, durationMs: file.durationMs }
+}
+
+function rowOf(item: Prepared[number], { job, model, projectFile, createdAt, video }: RowContext) {
   const { assetId, file } = item
   return {
     id: assetId,
@@ -43,8 +55,7 @@ function rowOf(item: Prepared[number], { job, model, projectFile, createdAt }: R
     byteSize: file.byteSize,
     mtimeMs: file.mtimeMs,
     contentHash: file.contentHash,
-    width: file.width,
-    height: file.height,
+    ...factsOf(file, video),
     genRunId: job.id,
     genProvider: job.provider,
     genModel: model ?? job.model,
@@ -86,6 +97,7 @@ export function assetAddGenerated(deps: Pick<CoreDeps, 'now'>) {
         model: input.model ?? null,
         projectFile: ctx.project.filePath,
         createdAt: deps.now().toISOString(),
+        video: input.video,
       }
       for (const item of prepared) {
         ctx.project.orm.insert(asset).values(rowOf(item, row)).run()

@@ -116,6 +116,7 @@ export function makeRunnerFixture(
     render: () => Promise.reject(new Error('render is not available')),
     renderForAgent: () => Promise.reject(new Error('render is not available')),
     renderPictures: () => Promise.reject(new Error('render is not available')),
+    renderBackground: () => Promise.reject(new Error('render is not available')),
     drawFull: () => Promise.reject(new Error('render is not available')),
     onEvent: () => undefined,
     projectClosed: async () => undefined,
