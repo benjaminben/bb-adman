@@ -18,13 +18,17 @@ export const VIDEO_PROMPT = 'Warm light drifts slowly across the sand dunes at d
 export { format }
 export const length = (page: Page) => page.getByRole('textbox', { name: 'Length (seconds)' })
 export const clips = (page: Page) => timeline(page).getByRole('list', { name: 'Clips' })
-export const clipBlocks = (page: Page) => clips(page).getByRole('button', { name: /^Clip \d+: / })
+// ED-6: a clip is named by its file alone, so clip n is the n-th block in the lane (track order).
+const clipBox = (page: Page, n: number) =>
+  clips(page)
+    .locator('[data-clip]')
+    .nth(n - 1)
+export const clipBlocks = (page: Page) => clips(page).locator('[data-clip]').getByRole('button')
 export const clipStart = (page: Page, n: number) =>
-  clips(page).getByRole('slider', { name: new RegExp(`^Start of Clip ${n}: `) })
+  clipBox(page, n).getByRole('slider', { name: /^Start of / })
 export const clipEnd = (page: Page, n: number) =>
-  clips(page).getByRole('slider', { name: new RegExp(`^End of Clip ${n}: `) })
-export const clipBlock = (page: Page, n: number) =>
-  clips(page).getByRole('button', { name: new RegExp(`^Clip ${n}: `) })
+  clipBox(page, n).getByRole('slider', { name: /^End of / })
+export const clipBlock = (page: Page, n: number) => clipBox(page, n).getByRole('button')
 export const valueOf = async (slider: Locator) => Number(await slider.getAttribute('aria-valuenow'))
 
 // 180 by 320: a deep orange sky at the top fading to a pale sand at the foot.
@@ -125,7 +129,14 @@ export async function selectTextLayer(page: Page): Promise<string> {
   for (const label of await bars.evaluateAll((els) => els.map((e) => e.ariaLabel ?? ''))) {
     const name = label.replace(/^Timing of /, '')
     await selectLayer(page, name)
-    if ((await page.getByRole('combobox', { name: 'Entrance' }).count()) > 0) return name
+    if ((await animation(page).count()) > 0) return name
   }
   throw new Error('The ad has no text layer.')
+}
+
+// The Animation section of the properties panel starts folded (ED-6).
+const animation = (page: Page) => page.getByRole('button', { name: 'Animation', exact: true })
+export async function openAnimation(page: Page): Promise<void> {
+  if ((await animation(page).getAttribute('aria-expanded')) !== 'true')
+    await animation(page).click()
 }

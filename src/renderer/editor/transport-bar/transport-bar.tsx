@@ -1,5 +1,6 @@
 // P7-18 (spec/phases/phase-07-slices-2.md): the timeline's bar: one button, "Play" or "Pause" by
-// state, the time as m:ss.s / m:ss.s, and the mount for the sound choice (P7-21).
+// state, the time as m:ss.s / m:ss.s, and the mount for the sound choice (P7-21). ED-6: the
+// button is an icon button of fixed width named "Play" or "Pause", so the time does not move.
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import { SoundFields } from '@/renderer/editor/sound-fields'
 import { formatTime } from '@/renderer/stores/playback-store'
@@ -16,11 +17,17 @@ type Props = {
 }
 
 export function TransportBar({ projectId, variant, playing, timeMs, onToggle }: Props) {
+  const name = playing ? 'Pause' : 'Play'
   return (
     <div className={styles.bar}>
-      <button type="button" className={`${layout.quiet} ${layout.small}`} onClick={onToggle}>
+      <button
+        type="button"
+        className={layout.iconButton}
+        aria-label={name}
+        title={name}
+        onClick={onToggle}
+      >
         <Icon name={playing ? 'pause' : 'play'} size="small" />
-        {playing ? 'Pause' : 'Play'}
       </button>
       <span className={styles.time}>
         {formatTime(timeMs)} / {formatTime(variant.durationMs)}

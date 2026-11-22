@@ -52,7 +52,7 @@ test('Workflow 5.5: a video variant from an image post, its clips, a run and its
   // The still is the first clip, made when the format changed, to the length the post had
   // then (6 s); the 8 s set after does not stretch it. Its end is pulled back to 2 s.
   await expect(s.clipBlocks(page)).toHaveCount(1)
-  await expect(s.clipBlock(page, 1)).toHaveAccessibleName(`Clip 1: ${s.BACKDROP}`)
+  await expect(s.clipBlock(page, 1)).toHaveAccessibleName(s.BACKDROP)
   expect(await s.valueOf(s.clipStart(page, 1))).toBe(0)
   const stillEnd = await s.valueOf(s.clipEnd(page, 1))
   expect(stillEnd).toBeGreaterThan(2000)
@@ -62,7 +62,7 @@ test('Workflow 5.5: a video variant from an image post, its clips, a run and its
 
   // An imported MP4 goes to the first free position, after the still.
   await s.importAndAdd(app, page, s.TINY)
-  await expect(s.clipBlock(page, 2)).toHaveAccessibleName('Clip 2: tiny.mp4')
+  await expect(s.clipBlock(page, 2)).toHaveAccessibleName('tiny.mp4')
   expect(await s.valueOf(s.clipStart(page, 2))).toBe(2000)
   const tinyEnd = await s.valueOf(s.clipEnd(page, 2))
   expect(tinyEnd).toBeGreaterThan(2000)
@@ -80,13 +80,14 @@ test('Workflow 5.5: a video variant from an image post, its clips, a run and its
   await end.focus()
   await page.keyboard.press('Shift+ArrowLeft')
   await expect.poll(() => s.valueOf(end)).toBe(7000)
+  await s.openAnimation(page)
   await page.getByRole('combobox', { name: 'Entrance' }).selectOption({ label: 'Fade up' })
   await page.getByRole('combobox', { name: 'Exit' }).selectOption({ label: 'Fade' })
   await expect(trackSlider(`Start of Entrance of ${name}`)).toHaveAttribute('aria-valuenow', '1000')
   await expect(trackSlider(`End of Exit of ${name}`)).toHaveAttribute('aria-valuenow', '7000')
 
   // R2E-9: the run's clip takes the still's place: clip 1, from 0, ending by tiny.mp4's start.
-  await expect(s.clipBlock(page, 1)).not.toHaveAccessibleName(`Clip 1: ${s.BACKDROP}`, {
+  await expect(s.clipBlock(page, 1)).not.toHaveAccessibleName(s.BACKDROP, {
     timeout: 30_000,
   })
   await expect(s.clipBlocks(page)).toHaveCount(2)

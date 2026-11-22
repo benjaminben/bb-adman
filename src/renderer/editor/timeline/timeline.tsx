@@ -28,7 +28,7 @@ export function Timeline({ projectId, variant, layers, store, playback, onMakeVi
   const { timeMs, playing, durationMs, toggle, scrub } = useStore(playback)
   usePlayKey(toggle)
   return (
-    <section className={styles.timeline} aria-label="Timeline" data-timeline>
+    <section className={styles.timeline} aria-label="Timeline" data-timeline data-density="compact">
       <TransportBar
         projectId={projectId}
         variant={variant}

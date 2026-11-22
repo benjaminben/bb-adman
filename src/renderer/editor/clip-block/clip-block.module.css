@@ -52,26 +52,20 @@
   cursor: grabbing;
 }
 
-/* The chosen clip's actions, under the row. */
+/* ED-6: the chosen clip's actions, a small bar laid over the top edge of its block at the
+   block's right end (the right offset is set inline). It stands beside the block in the lane, so
+   the block keeps its size; the lane lets it rise above its own top edge. */
 .actions {
-  position: relative;
-  z-index: 1;
-  background: var(--color-bg);
+  position: absolute;
+  top: var(--space-1);
+  z-index: 2;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-1) var(--space-3);
-  border-top: var(--border-width) solid var(--color-line);
-  font-size: var(--font-size-small);
-}
-.actionsName {
-  overflow: hidden;
-  color: var(--color-text-secondary);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.sound {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
+  margin-right: var(--space-2);
+  padding: 0 var(--gap-tight);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-1);
+  transform: translateY(-50%);
 }

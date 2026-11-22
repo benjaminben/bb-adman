@@ -47,7 +47,7 @@ export async function addSoundClip(app: ElectronApplication, page: Page): Promis
   )
 }
 
-// Chooses "An audio file" and brings `file` in through "Add audio…".
+// Chooses "Audio file" and brings `file` in through "Add audio…".
 export async function useAudioFile(app: ElectronApplication, page: Page, file: string) {
   await timeline(page).getByRole('combobox', { name: 'Sound' }).selectOption('file')
   await answerOpenDialog(app, [file])

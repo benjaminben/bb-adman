@@ -1,5 +1,5 @@
-// P7-21 (spec/phases/phase-07-slices-2.md): the transport bar's "Sound" choice ("The clips' own
-// sound", "An audio file", "None") sends variant.setSound; "An audio file" shows the assets
+// P7-21 (spec/phases/phase-07-slices-2.md): the transport bar's "Sound" choice ("Clip sound",
+// "Audio file", "None", ED-6) sends variant.setSound; "Audio file" shows the assets
 // library's audio files and "Add audio…", which imports through the picker with kind audio.
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -48,8 +48,8 @@ describe('SoundFields [P7-21]', () => {
     expect(soundChoice()).toHaveValue('clips')
     expect([...(soundChoice() as HTMLSelectElement).options].map((o) => [o.value, o.text])).toEqual(
       [
-        ['clips', "The clips' own sound"],
-        ['file', 'An audio file'],
+        ['clips', 'Clip sound'],
+        ['file', 'Audio file'],
         ['none', 'None'],
       ],
     )

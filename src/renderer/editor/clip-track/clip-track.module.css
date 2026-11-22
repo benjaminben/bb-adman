@@ -1,7 +1,7 @@
 /* app-style */
 /* The background row: the name and "Add clip…" under the layer list's width, the lane beside
    it. The lane is the empty track; clips stand on it by time, and it hides what runs past the
-   variant's end. */
+   variant's end. ED-6: it clips only across, so the chosen clip's bar can rise over its top. */
 .track {
   border-top: var(--border-width) solid var(--color-line);
 }
@@ -29,7 +29,8 @@
   position: relative;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   background: var(--color-surface);
   list-style: none;
 }

@@ -81,6 +81,6 @@ test('a video run started before the app process ended lands after the next laun
   await s.backToEditor(again)
   // R2E-9: the run's clip takes the still's place, so it is the one clip, starting at 0.
   await expect(s.clipBlocks(again)).toHaveCount(1)
-  await expect(s.clipBlock(again, 1)).not.toHaveAccessibleName(`Clip 1: ${s.BACKDROP}`)
+  await expect(s.clipBlock(again, 1)).not.toHaveAccessibleName(s.BACKDROP)
   expect(await s.valueOf(s.clipStart(again, 1))).toBe(0)
 })

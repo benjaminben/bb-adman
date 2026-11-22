@@ -23,7 +23,10 @@ test.afterEach(async () => {
 })
 
 const clips = (page: Page) => timeline(page).getByRole('list', { name: 'Clips' })
-const block = (page: Page, name: string) => clips(page).getByRole('button', { name })
+// A clip is named by its file (ED-6); `exact` keeps out the chosen clip's "Sound for …" and
+// "Remove …" buttons.
+const block = (page: Page, name: string) => clips(page).getByRole('button', { name, exact: true })
+const blocks = (page: Page) => clips(page).locator('[data-clip]')
 const end = (page: Page, clip: string) =>
   clips(page).getByRole('slider', { name: `End of ${clip}` })
 const start = (page: Page, clip: string) =>
@@ -52,17 +55,17 @@ test('clips are added, moved, trimmed, reordered, removed and brought back by un
   app = await launch(box)
   const page = await app.firstWindow()
   await openVideoEditor(app, page, 'Clip Track Check')
-  await expect(clips(page).getByRole('button')).toHaveCount(0)
+  await expect(blocks(page)).toHaveCount(0)
 
   await importAndAdd(app, page, TINY)
-  await expect(block(page, 'Clip 1: tiny.mp4')).toBeVisible()
-  expect(await valueOf(start(page, 'Clip 1: tiny.mp4'))).toBe(0)
-  const tinyEnd = await valueOf(end(page, 'Clip 1: tiny.mp4'))
+  await expect(block(page, 'tiny.mp4')).toBeVisible()
+  expect(await valueOf(start(page, 'tiny.mp4'))).toBe(0)
+  const tinyEnd = await valueOf(end(page, 'tiny.mp4'))
   expect(tinyEnd).toBeGreaterThanOrEqual(100)
 
   // The still goes to the first free place and runs to the variant's end.
   await importAndAdd(app, page, STILL)
-  const still = 'Clip 2: berry-bottle.png'
+  const still = 'berry-bottle.png'
   await expect(block(page, still)).toBeVisible()
   expect(await valueOf(start(page, still))).toBe(tinyEnd)
   expect(await valueOf(end(page, still))).toBe(VIDEO_MS)
@@ -74,20 +77,20 @@ test('clips are added, moved, trimmed, reordered, removed and brought back by un
   await end(page, still).focus()
   await page.keyboard.press('Shift+ArrowLeft')
   await expect.poll(() => valueOf(end(page, still))).toBe(VIDEO_MS)
-  await end(page, 'Clip 1: tiny.mp4').focus()
+  await end(page, 'tiny.mp4').focus()
   await page.keyboard.press('ArrowLeft')
-  await expect.poll(() => valueOf(end(page, 'Clip 1: tiny.mp4'))).toBe(tinyEnd - 100)
+  await expect.poll(() => valueOf(end(page, 'tiny.mp4'))).toBe(tinyEnd - 100)
 
   // Reorder: tiny dragged past the still's middle; the track closes up from 0 in the new order.
-  await dragCentreTo(page, block(page, 'Clip 1: tiny.mp4'), block(page, still))
-  await expect(block(page, 'Clip 1: berry-bottle.png')).toBeVisible()
-  await expect(block(page, 'Clip 2: tiny.mp4')).toBeVisible()
-  expect(await valueOf(start(page, 'Clip 1: berry-bottle.png'))).toBe(0)
+  await dragCentreTo(page, block(page, 'tiny.mp4'), block(page, still))
+  await expect(blocks(page).nth(0).getByRole('button')).toHaveAccessibleName('berry-bottle.png')
+  await expect(blocks(page).nth(1).getByRole('button')).toHaveAccessibleName('tiny.mp4')
+  expect(await valueOf(start(page, 'berry-bottle.png'))).toBe(0)
 
   // Remove with Delete, then Undo brings it back.
-  await block(page, 'Clip 2: tiny.mp4').focus()
+  await block(page, 'tiny.mp4').focus()
   await page.keyboard.press('Delete')
-  await expect(clips(page).getByRole('button')).toHaveCount(1)
+  await expect(blocks(page)).toHaveCount(1)
   await page.getByRole('button', { name: 'Undo' }).click()
-  await expect(block(page, 'Clip 2: tiny.mp4')).toBeVisible()
+  await expect(block(page, 'tiny.mp4')).toBeVisible()
 })

@@ -34,6 +34,13 @@ async function openAsVideo(page: Page): Promise<void> {
   await expect(timeline(page)).toBeVisible()
 }
 
+// The Animation section of the properties panel starts folded (ED-6).
+const animation = (page: Page) => page.getByRole('button', { name: 'Animation', exact: true })
+async function openAnimation(page: Page): Promise<void> {
+  if ((await animation(page).getAttribute('aria-expanded')) !== 'true')
+    await animation(page).click()
+}
+
 // The first layer whose panel has the Animation fields: a text layer.
 async function selectTextLayer(page: Page): Promise<string> {
   const bars = tracks(page).getByRole('button', { name: /^Timing of / })
@@ -42,7 +49,7 @@ async function selectTextLayer(page: Page): Promise<string> {
     const name = label.replace(/^Timing of /, '')
     const rows = page.getByRole('list', { name: 'Layers' })
     await rows.getByRole('button', { name: new RegExp(`^${name}`) }).click()
-    if ((await page.getByRole('combobox', { name: 'Entrance' }).count()) > 0) return name
+    if ((await animation(page).count()) > 0) return name
   }
   throw new Error('The ad has no text layer.')
 }
@@ -81,6 +88,7 @@ test('a text layer gets an entrance; bar and block drags are one undo step each'
   expect(lengthMs).toBeGreaterThanOrEqual(1000)
 
   // A preset puts a half-second entrance block at the layer's start.
+  await openAnimation(page)
   await page.getByRole('combobox', { name: 'Entrance' }).selectOption({ label: 'Fade' })
   const entranceEnd = slider(page, `End of Entrance of ${name}`)
   await expect(entranceEnd).toHaveAttribute('aria-valuenow', '500')
@@ -98,6 +106,7 @@ test('a text layer gets an entrance; bar and block drags are one undo step each'
   await expect.poll(() => valueOf(entranceEnd)).toBeGreaterThan(500)
   await undo(page)
   await expect(entranceEnd).toHaveAttribute('aria-valuenow', '500')
+  await openAnimation(page)
   await expect(page.getByRole('combobox', { name: 'Entrance' })).toHaveValue('fade')
 
   // The canvas inside the entrance draws the text part-faded; after it, in full.
