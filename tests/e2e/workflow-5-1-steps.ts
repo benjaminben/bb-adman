@@ -106,13 +106,22 @@ export async function makePictures(page: Page, count: number): Promise<void> {
 }
 
 // Step 5: picks option `n` of the newest run.
+// ED-4b: the newest run is in the "New pictures" strip or, when it was not started here, in the
+// folded Earlier options, opened first; "In use" is a mark's tooltip.
 export async function useOption(page: Page, n: number): Promise<void> {
-  const section = earlierOptions(page)
-  await section
-    .getByRole('button', { name: new RegExp(`^Use option ${n} from `) })
-    .first()
-    .click()
-  await expect(section.getByText('In use')).toBeVisible()
+  const section = pictureSection(page)
+  const name = new RegExp(`^Use option ${n} from `)
+  if ((await section.getByRole('region', { name: 'New pictures' }).count()) === 0) {
+    await openEarlierOptions(page)
+  }
+  await section.getByRole('button', { name }).first().click()
+  await expect(section.getByRole('button', { name }).first().getByTitle('In use')).toBeVisible()
+}
+
+// ED-4b: opens the folded "Earlier options" Section when it is closed (the fold lasts).
+export async function openEarlierOptions(page: Page): Promise<void> {
+  const fold = earlierOptions(page).getByRole('button', { name: 'Earlier options' })
+  if ((await fold.getAttribute('aria-expanded')) === 'false') await fold.click()
 }
 
 // Step 6: the layout from the fake provider.

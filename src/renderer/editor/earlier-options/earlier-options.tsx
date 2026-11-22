@@ -2,13 +2,17 @@
 // picture and cut-out run of the layer, newest first, ten at first and ten more per "Show
 // more". Choosing an option sends one layer.update that sets the source and clears the crop:
 // one undo entry, no provider call. A succeeded run not yet looked at is marked seen once,
-// when it is drawn. A locked layer's buttons are disabled. The title names the region but is
-// not an h element: the properties panel keeps one heading, the layer's name.
-// R2E-5 (spec/phases/round-2-editor.md D6): the run named by newJobId is drawn first under
-// "New pictures" (new-options.tsx), its own region inside this one, so that a picker of the
-// layer's options finds every run here; the other runs follow under the title.
+// when it is drawn. A locked layer's buttons are disabled.
+// R2E-5 (spec/phases/round-2-editor.md D6): the run named by newJobId, while it goes or once it
+// kept pictures, is drawn first under "New pictures" (new-options.tsx); the other runs follow.
+// ED-4b: "Earlier options" is a Section folded at first with the number of runs as its summary;
+// it opens when its newest run failed, so a failure is never folded shut by default.
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
+import { EmptyState } from '@/renderer/ui/empty-state'
+import { plural } from '@/renderer/ui/plural'
+import { Section } from '@/renderer/ui/section'
+import type { EarlierOptions as Reply } from '@/shared/schemas/queries/earlier-options'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { NewOptions } from './new-options'
 import { RunBlock } from './run-block'
@@ -16,6 +20,33 @@ import { useEarlierOptions } from './use-earlier-options'
 import styles from './earlier-options.module.css'
 
 const PAGE = 10
+const FOLD_ID = 'props.earlier'
+
+// The named run is new while it is the layer's newest and is going or kept pictures; a later
+// run (a cut-out, an agent's) is above it in the plain newest-first order.
+function freshOf(reply: Reply | null, newJobId: string | undefined) {
+  const newest = reply?.[0] ?? null
+  if (newest === null || newest.job.id !== newJobId) return null
+  const { status } = newest.job
+  const going = status === 'queued' || status === 'running'
+  return going || (status === 'succeeded' && newest.assets.length > 0) ? newest : null
+}
+
+// The newest listed run when it failed: the Section is opened for it once, as a click on its
+// header would, so the failure is not folded shut. The fold memory then says open.
+function useFailureOpens(failedId: string | null) {
+  const body = useRef<HTMLDivElement>(null)
+  const opened = useRef<string | null>(null)
+  useEffect(() => {
+    if (failedId === null || opened.current === failedId) return
+    opened.current = failedId
+    const head = body.current?.closest('section')?.querySelector('[aria-expanded]')
+    if (head instanceof HTMLButtonElement && head.getAttribute('aria-expanded') === 'false') {
+      head.click()
+    }
+  }, [failedId])
+  return body
+}
 
 export type EarlierOptionsProps = {
   projectId: string
@@ -30,13 +61,12 @@ export function EarlierOptions(props: EarlierOptionsProps) {
   const reply = useEarlierOptions(projectId, layer)
   const [limit, setLimit] = useState(PAGE)
   const marked = useRef(new Set<string>())
-  // The named run is new while it is the layer's newest; a later run (a cut-out, an agent's)
-  // is above it in the plain newest-first order.
-  const newest = reply?.[0] ?? null
-  const fresh = newest !== null && newest.job.id === props.newJobId ? newest : null
+  const fresh = freshOf(reply, props.newJobId)
   const rest = (reply ?? []).filter((option) => option !== fresh)
   const shown = rest.slice(0, limit)
   const inUse = layer.source?.assetId ?? null
+  const failedId = rest[0]?.job.status === 'failed' ? rest[0].job.id : null
+  const body = useFailureOpens(failedId)
 
   const unseenKey = (fresh ? [fresh, ...shown] : shown)
     .filter(({ job }) => job.status === 'succeeded' && job.seenAt === null)
@@ -61,42 +91,50 @@ export function EarlierOptions(props: EarlierOptionsProps) {
   }
 
   return (
-    <section className={styles.section} aria-labelledby={`${layer.id}-earlier`}>
+    <>
       {fresh && (
         <NewOptions
           projectId={projectId}
-          layerId={layer.id}
           option={fresh}
           inUse={inUse}
           locked={layer.locked}
           onUse={use}
         />
       )}
-      <p id={`${layer.id}-earlier`} className={styles.heading}>
-        Earlier options
-      </p>
-      {reply !== null && rest.length === 0 && !fresh && (
-        <p className={styles.muted}>No earlier options for this layer.</p>
-      )}
-      {shown.length > 0 && (
-        <ul className={styles.runs}>
-          {shown.map((option) => (
-            <RunBlock
-              key={option.job.id}
-              projectId={projectId}
-              option={option}
-              inUse={inUse}
-              locked={layer.locked}
-              onUse={use}
-            />
-          ))}
-        </ul>
-      )}
-      {rest.length > limit && (
-        <button type="button" onClick={() => setLimit(limit + PAGE)}>
-          Show more
-        </button>
-      )}
-    </section>
+      <Section
+        id={FOLD_ID}
+        title="Earlier options"
+        level={4}
+        fold="closed"
+        {...(reply === null
+          ? {}
+          : { summary: rest.length === 0 ? 'No runs' : plural(rest.length, 'run') })}
+      >
+        <div ref={body} className={styles.body}>
+          {reply !== null && rest.length === 0 && !fresh && (
+            <EmptyState icon="clock" words="No earlier options yet" />
+          )}
+          {shown.length > 0 && (
+            <ul className={styles.runs}>
+              {shown.map((option) => (
+                <RunBlock
+                  key={option.job.id}
+                  projectId={projectId}
+                  option={option}
+                  inUse={inUse}
+                  locked={layer.locked}
+                  onUse={use}
+                />
+              ))}
+            </ul>
+          )}
+          {rest.length > limit && (
+            <button type="button" onClick={() => setLimit(limit + PAGE)}>
+              Show more
+            </button>
+          )}
+        </div>
+      </Section>
+    </>
   )
 }

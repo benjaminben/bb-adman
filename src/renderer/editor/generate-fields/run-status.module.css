@@ -1,0 +1,20 @@
+/* app-style */
+/* ED-4b: the run's progress and done sentences are read out only (a box one hairline wide,
+   clipped away); the lines that stay visible and the clip sit in their own column. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.shown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.shown:empty {
+  display: none;
+}

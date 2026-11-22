@@ -1,6 +1,7 @@
 // spec/screens-ai.md, "The picture section of the properties panel": "Make pictures with AI"
 // holds the generate fields, then the earlier options (P4-18).
 import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { GeneratePanel } from '@/renderer/editor/generate-panel'
 import { generateDrafts } from '@/renderer/stores/generate-drafts'
@@ -23,6 +24,8 @@ describe('PictureAi with the earlier options [spec/screens-ai.md]', () => {
     const heading = await within(section).findByRole('region', { name: 'Earlier options' })
     const prompt = await within(section).findByRole('textbox', { name: 'Prompt' })
     expect(prompt.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(await within(section).findByText('No earlier options for this layer.')).toBeVisible()
+    // ED-4b: Earlier options is a folded Section; open it first.
+    await userEvent.click(within(heading).getByRole('button', { name: 'Earlier options' }))
+    expect(await within(section).findByText('No earlier options yet')).toBeVisible()
   })
 })

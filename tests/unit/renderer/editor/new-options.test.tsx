@@ -48,6 +48,12 @@ async function open(newJobId?: string, reply: Reply = REPLY) {
   return fake
 }
 
+// ED-4b: "Earlier options" is a folded Section; open it when it is closed (the fold lasts).
+async function unfold() {
+  const button = await screen.findByRole('button', { name: 'Earlier options' })
+  if (button.getAttribute('aria-expanded') === 'false') await userEvent.click(button)
+}
+
 const runsIn = (region: HTMLElement) =>
   within(region)
     .getAllByRole('listitem')
@@ -57,17 +63,19 @@ const runsIn = (region: HTMLElement) =>
 describe('EarlierOptions: new pictures first [spec/phases/round-2-editor.md D6]', () => {
   it('draws the new run first under "New pictures", the rest under "Earlier options"', async () => {
     await open('J3')
+    await unfold()
     const fresh = await screen.findByRole('region', { name: 'New pictures' })
     const earlier = screen.getByRole('region', { name: 'Earlier options' })
     expect(runsIn(fresh)).toEqual(['J3'])
-    // The new run's region sits first inside the earlier options', above their title.
-    expect(runsIn(earlier)).toEqual(['J3', 'J2', 'J1'])
-    const titles = within(earlier).getAllByText(/^(New pictures|Earlier options)$/)
-    expect(titles.map((t) => t.textContent)).toEqual(['New pictures', 'Earlier options'])
+    // ED-4b: the new run's strip sits above the folded "Earlier options", outside it, so it
+    // shows while that is folded; the other runs are inside.
+    expect(runsIn(earlier)).toEqual(['J2', 'J1'])
+    expect(fresh.compareDocumentPosition(earlier) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('the new run’s options are the same buttons, and Use sends one layer.update', async () => {
     const fake = await open('J3')
+    await unfold()
     const fresh = await screen.findByRole('region', { name: 'New pictures' })
     const options = within(fresh).getAllByRole('button', { name: /^Use option/ })
     expect(options).toHaveLength(2)
@@ -83,7 +91,7 @@ describe('EarlierOptions: new pictures first [spec/phases/round-2-editor.md D6]'
       'button',
       { pressed: true },
     )
-    expect(within(used).getByText('In use')).toBeVisible()
+    expect(within(used).getByTitle('In use')).toBeVisible()
   })
 
   it('marks each run not yet looked at seen once, the new run among them', async () => {
@@ -103,6 +111,7 @@ describe('EarlierOptions: new pictures first [spec/phases/round-2-editor.md D6]'
     ['a newer run, such as a cut-out, came after it', 'J2'],
   ])('has no "New pictures" when %s', async (_name, newJobId) => {
     await open(newJobId)
+    await unfold()
     const earlier = await screen.findByRole('region', { name: 'Earlier options' })
     await within(earlier).findAllByRole('button', { name: /^Use option/ })
     expect(screen.queryByRole('region', { name: 'New pictures' })).toBeNull()
@@ -112,7 +121,7 @@ describe('EarlierOptions: new pictures first [spec/phases/round-2-editor.md D6]'
   it('says nothing under "Earlier options" when the new run is the only one', async () => {
     await open('J3', [REPLY[0]!])
     await screen.findByRole('region', { name: 'New pictures' })
-    expect(screen.queryByText('No earlier options for this layer.')).toBeNull()
+    expect(screen.queryByText('No earlier options yet')).toBeNull()
   })
 
   it('has no axe violations', async () => {
@@ -139,6 +148,7 @@ describe('GeneratePanel names its last picture run as new [D6]', () => {
       </main>,
       fake,
     )
+    await unfold()
     const earlier = await screen.findByRole('region', { name: 'Earlier options' })
     await within(earlier).findAllByRole('button', { name: /^Use option/ })
     expect(screen.queryAllByRole('region', { name: 'New pictures' })).toHaveLength(shown ? 1 : 0)

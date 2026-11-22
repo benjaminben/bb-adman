@@ -1,29 +1,27 @@
 /* app-style */
-/* "Earlier options" (spec/app-style.md "AI panels and the run dialog"): the section, its title
-   and the list of runs. Each run's own look is in run-block.module.css. */
-.section {
+/* "Earlier options" (ED-4b): the list of runs inside its Section, and the "New pictures"
+   strip above it. Each run's own look is in run-block.module.css, each tile's in
+   option-tile.module.css. */
+.fresh {
+  min-width: 0;
+}
+.runs,
+.tiles {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.runs {
+  flex-direction: column;
+}
+.tiles {
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.body {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   min-width: 0;
-}
-.section p {
-  margin: 0;
-}
-.heading {
-  margin: 0;
-  font-size: var(--font-size-small);
-  font-weight: var(--weight-medium);
-  color: var(--color-text-secondary);
-}
-.muted {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
-}
-.runs {
-  display: flex;
-  flex-direction: column;
-  list-style: none;
-  margin: 0;
-  padding: 0;
 }
