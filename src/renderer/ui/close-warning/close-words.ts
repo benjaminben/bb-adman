@@ -1,6 +1,6 @@
 // spec/screens-ai.md, "Attached jobs and the close warning": the words of the warning. A kind
-// the spec gives no task words for (generative fill, translation; or a job whose first row has
-// not come yet) is "the AI task".
+// the spec gives no task words for (generative fill; or a job whose first row has not come yet)
+// is "the AI task". A translation job is "translating" (P6-13).
 import type { JobKind } from '@/shared/config/job-kinds'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { AttachedJob } from '@/renderer/stores/attached-store'
@@ -11,6 +11,7 @@ const TASKS: Partial<Record<JobKind, string>> = {
   layout_proposal: 'placing text with AI',
   copy_options: 'writing copy options',
   brief_extraction: 'reading the brief',
+  translation: 'translating',
 }
 const ANY_TASK = 'the AI task'
 

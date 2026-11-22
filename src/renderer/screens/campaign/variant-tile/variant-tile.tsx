@@ -5,7 +5,9 @@
 // (P3-16); `actions` sit beside the button, never inside it (P3-10). Text is drawn as text.
 import type { ReactNode } from 'react'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
-import { badgeWords } from './badge-words'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
+import { badgeMarks } from './badge-words'
 import styles from './variant-tile.module.css'
 
 export type VariantTileProps = {
@@ -38,7 +40,7 @@ function ShapeBox(props: { variant: VariantSummary }) {
 
 export function VariantTile(props: VariantTileProps) {
   const v = props.variant
-  const marks = badgeWords(v.badges)
+  const marks = badgeMarks(v.badges)
   return (
     <div className={styles.tile}>
       <button
@@ -52,9 +54,10 @@ export function VariantTile(props: VariantTileProps) {
         <span className={styles.line}>{sizeLine(v)}</span>
         {marks.length > 0 && (
           <span className={styles.marks}>
-            {marks.map((word) => (
-              <span key={word} className={styles.mark}>
-                {word}
+            {marks.map((mark) => (
+              <span key={mark.word} className={`${layout.badge} ${layout[mark.kind]}`}>
+                <Icon name={mark.icon} size="small" />
+                {mark.word}
               </span>
             ))}
           </span>
