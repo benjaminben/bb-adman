@@ -1,8 +1,9 @@
 // P8-11: the export dialog. One campaign at two sizes in two languages, fanned out to four ads.
 // 251 the dialog with a folder chosen (the picker answered with a made-up folder) and JPG
 // picked, so the quality field shows. 253 (running) and 254 (done) export the four ads with the
-// fake providers to a folder in the sandbox (P8-12). 252 (warnings) needs the export checks
-// (P8-13); until then no check warns, so it is not made here. Nothing is paid. Made-up names only.
+// fake providers to a folder in the sandbox (P8-12), past the warnings step the export checks
+// (P8-13) show for the untranslated de ads. 252 (warnings) is not made here. Nothing is paid.
+// Made-up names only.
 import { test, expect, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -93,6 +94,8 @@ test('Export: running, then the end counts', async () => {
   await screens.answerOpenDialog(app, [folder])
   await dialog.getByRole('button', { name: 'Choose folder…' }).click()
   await dialog.getByRole('button', { name: 'Export', exact: true }).click()
+  // The export checks (P8-13) warn that the de ads have no translation yet.
+  await dialog.getByRole('button', { name: 'Export anyway' }).click()
   await expect(dialog.getByText(/^Exporting… \d+%$/)).toBeVisible()
   await shot(page, '253-export-running')
   await expect(dialog.getByText('Exported 4 ads. 0 failed.')).toBeVisible({ timeout: 120_000 })
