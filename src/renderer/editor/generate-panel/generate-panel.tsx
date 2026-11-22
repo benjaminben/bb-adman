@@ -39,15 +39,24 @@ function videoLine(type: LayerRow['type'], format: 'image' | 'video'): string | 
 function useImages(projectId: string) {
   const api = useApi()
   const [images, setImages] = useState<AssetList | null>(null)
-  const read = useCallback(async () => {
+  const list = useCallback(async () => {
     const got = await api.query('asset.list', { projectId, kind: 'image' })
-    const rows = got.ok ? ((got.data as AssetList | null) ?? []) : []
+    return got.ok ? ((got.data as AssetList | null) ?? []) : []
+  }, [api, projectId])
+  const read = useCallback(async () => {
+    const rows = await list()
     setImages(rows)
     return rows
-  }, [api, projectId])
+  }, [list])
   useEffect(() => {
-    void read()
-  }, [read])
+    let live = true
+    void list().then((rows) => {
+      if (live) setImages(rows)
+    })
+    return () => {
+      live = false
+    }
+  }, [list])
   return { images, read }
 }
 
