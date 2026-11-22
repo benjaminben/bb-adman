@@ -215,3 +215,28 @@ describe('revoke and the account name [P9-2]', () => {
     expect((await failureOf(currentAccountName(accessToken, dropboxFetch))).kind).toBe('other')
   })
 })
+
+describe('nothing from the environment [P9-2, spec/providers.md "Rules for every adapter"]', () => {
+  const saved = { ...process.env }
+  afterEach(() => {
+    process.env = { ...saved }
+  })
+
+  it('sends the calls to the pinned host with the app key on record, whatever is set', async () => {
+    Object.assign(process.env, {
+      DROPBOX_APP_KEY: 'environment-app-key',
+      DROPBOX_APP_SECRET: 'environment-app-secret',
+      DROPBOX_ACCESS_TOKEN: 'environment-access-token',
+      HTTPS_PROXY: 'http://proxy-environment.example:8080',
+      https_proxy: 'http://proxy-environment.example:8080',
+      ALL_PROXY: 'http://proxy-environment.example:8080',
+      NODE_USE_ENV_PROXY: '1',
+    })
+    const { accessToken } = await signedIn()
+    await currentAccountName(accessToken, dropboxFetch)
+    expect(standIn.seen.map((s) => s.host)).toEqual(['api.dropboxapi.com', 'api.dropboxapi.com'])
+    expect(formOf(0).client_id).toBe(DROPBOX_APP_KEY)
+    const sent = JSON.stringify(standIn.seen.map((s) => [s.headers, s.body.toString()]))
+    expect(sent).not.toMatch(/environment-/)
+  })
+})
