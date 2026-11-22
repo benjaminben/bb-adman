@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { RENDER_LIMITS } from '@/shared/config/render'
 import { MAX_SIZE_SIDE } from '@/shared/config/size-limits'
 import { LayerRow } from '@/shared/schemas/rows/layer'
+import { Geometry } from '@/shared/schemas/layer'
+import { MAX_TRACK_MS } from '@/shared/schemas/commands/clip'
 import type { SceneInput } from '@/shared/scene/types'
 
 export const RENDER_CHANNELS = {
@@ -12,6 +14,20 @@ export const RENDER_CHANNELS = {
 } as const
 
 const side = z.number().int().min(1).max(RENDER_LIMITS.maxDimension)
+
+// P7-8: one clip of a video variant's background track, in whole milliseconds on the track.
+const ms = z.number().int().min(0).max(MAX_TRACK_MS)
+const SceneClipSchema = z
+  .object({
+    id: z.string().min(1),
+    assetId: z.string().min(1),
+    startMs: ms,
+    inMs: ms,
+    outMs: ms,
+    placement: Geometry.nullable(),
+    soundOn: z.boolean(),
+  })
+  .strict()
 
 const SceneInputSchema: z.ZodType<SceneInput> = z
   .object({
@@ -30,7 +46,7 @@ const SceneInputSchema: z.ZodType<SceneInput> = z
       z.string(),
       z
         .object({
-          kind: z.enum(['image', 'font']),
+          kind: z.enum(['image', 'video', 'font']),
           missing: z.boolean(),
           width: z.number().int().nullable(),
           height: z.number().int().nullable(),
@@ -39,6 +55,7 @@ const SceneInputSchema: z.ZodType<SceneInput> = z
     ),
     timeMs: z.number().min(0),
     mode: z.enum(['full', 'overlay-only']),
+    clips: z.array(SceneClipSchema).optional(),
   })
   .strict()
 

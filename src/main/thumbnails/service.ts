@@ -92,7 +92,7 @@ export function createRenderService(opts: RenderServiceOptions): RenderService {
   async function drawThumbnail(projectId: string, variantId: string): Promise<void> {
     const project = opts.deps().projects.get(projectId)
     if (!project) return
-    const scene = await sceneInput(opts.deps(), project, variantId)
+    const scene = await sceneInput(opts.deps(), project, variantId, { timeMs: 'poster' })
     const key = keyOf(projectId, variantId)
     if (!scene || failed.get(key) === scene.rev) return
     if (await readThumbnail(userData(), projectId, variantId, scene.rev)) return
