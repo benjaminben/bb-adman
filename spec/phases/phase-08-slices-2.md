@@ -2,7 +2,7 @@
 
 Late plug-ins, video, packaging and the end-to-end proof. Rules, order and the design: `spec/phases/phase-08.md` ("Rules for these slices", "Interfaces with other phases", "Design additions"). Slices P8-1 to P8-12: `spec/phases/phase-08-slices.md`.
 
-### P8-13 — Checks and usage in the report
+### P8-13 — Checks and usage in the report (built: the checks part only; the part that needs slice US is not built)
 
 - **Exists when done:** the export gate and the report use Phase 6's six checks; `checksRun` is true; the results are stored with `ranBy: 'export'`. If slice US is built, the report carries the campaign's usage with its estimated price.
 - **New files:** the body of `src/main/export/checks-port.ts`; `tests/unit/main/export/check-types.test.ts` (compile-time: `CheckResult` and `ReportCheck` assignable both ways).
@@ -41,7 +41,8 @@ Late plug-ins, video, packaging and the end-to-end proof. Rules, order and the d
 - **New files:** the body of `src/main/export/video-port.ts`; `src/main/export/video/video-ad.ts`; `src/main/export/video/spawn-ffmpeg.ts` (`child_process.spawn` with an argument array, `shell: false`, `windowsHide: true`, stdin for frames, stderr kept to 64 KiB and never logged as text); `src/main/export/video/work-dir.ts` (make, check, remove; `cleanLeftovers(userDataDir)`); `src/main/export/video/still.ts`.
 - **May touch:** `src/main/index.ts` (call `cleanLeftovers` once at start, one line), only if Phase 7 has no start-up hook to add it to.
 - **Needs:** P8-6, P8-14, P8-15; Phase 7's FFmpeg locator and the fetched binary on the developer's machine; Phase 7's clip commands (to make clips in tests).
-- **Read:** `spec/phases/phase-08.md` "Video", "Export run"; `spec/export-and-checks.md` "Video variant"; Phase 7's FFmpeg files as built; `spec/security.md`.
+- **Read:** `spec/phases/phase-08.md` "Video", "Export run"; `spec/export-and-checks.md` "Video variant"; Phase 7's FFmpeg files as built; `spec/phases/phase-07.md` "How FFmpeg is run" (its rules for later FFmpeg slices apply here); `spec/security.md`.
+- **Clip rows are checked again** (from the P7-9 review): the export checks every `background_clip` row when it reads it, with the same bounds as the clip commands (rows from a project file never passed the commands); it measures stills itself rather than trusting stored sizes; it clamps and rounds placement numbers before they reach a filter graph.
 - **Tests first:** `tests/unit/main/export/video/work-dir.test.ts` (a job ID that is not a ULID is refused; a link at `export-work` is refused; clean-up removes only `export-work/{ULID}` folders); `tests/integration/export/video-export.test.ts` (with the real binary, skipped with "FFmpeg is not fetched." when absent: a 2 s variant with one still clip exports one MP4 at the layout's name; the named frame count is read back from the file and equals 60; FFmpeg's exit other than 0 fails that ad with "The video could not be made." and leaves no `.partial` and no work folder; cancel mid-way kills the process, removes the work folder; the report still is a JPEG; no FFmpeg argument holds the output folder); `tests/integration/export/ffmpeg-no-network.test.ts` (an asset whose stored path is `http://127.0.0.1:{port}/x.mp4` or `concat:a|b`: the ad fails as a missing file and the local listener gets no request).
 - **Exit check:** class C and B checks; the integration file run with the binary present, and its output named in the report.
 - **Class:** C + B. **Security:** full (spawns a process with project-supplied file paths). **Size:** large: if it nears the budget, hand off after the work folder and spawn, leaving the still for a fresh run.

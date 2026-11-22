@@ -103,7 +103,7 @@ Built. Campaign IDs: `src/main/commands/campaign/ids.ts`.
 
 Built: every table below exists in the project file. The newest migration is `0003_job_kind_cutout` (`schema_version` 4, the count of migrations). Drizzle schema: `src/main/db/schema/project.ts` (project_meta, subject, asset, campaign, campaign_subject, rule_set, direction), `variant.ts` (variant, variant_subject, layer, background_clip), `jobs.ts` (job, report, variant_check). Migrations: `src/main/db/migrations/`. This file defines the project-level tables; `campaign`, `campaign_subject`, `rule_set`, `direction`, `variant`, `variant_subject`, `layer` and `background_clip` are in `spec/data-model-campaign.md`.
 
-All tables are in the project file. Timestamps are ISO 8601 UTC text. Booleans are `INTEGER` 0 or 1. JSON columns are validated by the Zod schema named beside them. The SQL below is the shape of a file after all four migrations. Column order in a real file can differ (columns added by a migration come last); no code reads columns by position.
+All tables are in the project file. Timestamps are ISO 8601 UTC text. Booleans are `INTEGER` 0 or 1. JSON columns are validated by the Zod schema named beside them. The SQL below is the shape of a file after every migration through 0005 (`0005_video_and_sound`: asset kind `audio`; `variant.first_clip_made`, `variant.sound`, `variant.sound_asset_id`; `background_clip.sound_on`; the last three are in `spec/data-model-campaign.md`). Column order in a real file can differ (columns added by a migration come last); no code reads columns by position.
 
 **Reading and writing JSON columns** (`src/main/db/rows.ts`):
 
@@ -168,7 +168,7 @@ Import, linking, change detection, relink, the assets folder and the `adman-asse
 CREATE TABLE asset (
   id            TEXT PRIMARY KEY,
   library       TEXT NOT NULL,          -- CHECK asset_library: 'reference' | 'asset'
-  kind          TEXT NOT NULL,          -- CHECK asset_kind: 'image' | 'video' | 'font' | 'text'
+  kind          TEXT NOT NULL,          -- CHECK asset_kind: 'image' | 'video' | 'font' | 'text' | 'audio' ('audio' from migration 0005, which rebuilds the table)
   origin        TEXT NOT NULL,          -- CHECK asset_origin: 'imported' | 'generated'
   storage       TEXT NOT NULL,          -- CHECK asset_storage: 'linked' | 'managed'
   subject_id    TEXT REFERENCES subject(id) ON DELETE SET NULL,
@@ -204,7 +204,7 @@ Wire row: `src/shared/schemas/rows/asset.ts`.
 - Resolving a path: try `rel_path` against the project file's folder, then `abs_path`. If neither exists the asset is missing [REQ: FR-009, R-06].
 - Linked files are compared with `byte_size` and `mtime_ms` to find changes on disk (`spec/assets.md`) [REQ: R-06].
 - A hero image is a row with `library = 'asset'`, `kind = 'image'` and a `subject_id`. If a subject has several, the newest fills the slot and the others are offered [REQ: R-12].
-- `font_publish_allowed` is set by the user with a checkbox "I am allowed to share this font" [REQ: FR-162].
+- `font_publish_allowed` is set by the user with a checkbox "I am allowed to share this font" [REQ: FR-162]. It is only a hint: publish uploads a font only with consent given on this computer, kept in app data, not in this file (`spec/phases/phase-09.md`, A-260).
 - `font_family` is null for every font as built. Phase 3 fills it for imported fonts.
 
 **A generated asset row:**

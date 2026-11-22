@@ -103,9 +103,9 @@ China regions (`amazonaws.com.cn`) and S3-compatible services are not supported.
 
 ## Dropbox
 
-Not built (Phase 2, postponed). `src/main/providers/dropbox/index.ts` exports an empty `adapters` object; `src/main/commands/storage/index.ts` returns no commands. Built: `DROPBOX_SIGN_IN_PORT = 47822` in `src/main/providers/dropbox/sign-in-port.ts`, its one owner; `src/main/providers/comfyui/own-ports.ts` imports it and no other file under `src/` writes 47822.
+Being built in Phase 9 (`spec/phases/phase-09.md`; the client core, P9-2, and the sign-in listener, P9-4, are built; the storage adapter, P9-3, is not yet). Built: `DROPBOX_SIGN_IN_PORT = 47822` in `src/main/providers/dropbox/sign-in-port.ts`, its one owner; `src/main/providers/comfyui/own-ports.ts` imports it and no other file under `src/` writes 47822.
 
-- **Library:** the `dropbox` SDK.
+- **Library:** none. The app makes plain HTTPS calls to the Dropbox HTTP API through its own pinned fetch (`src/main/providers/dropbox/pinned-fetch.ts`), not through the Dropbox SDK (A-217).
 - **Sign-in:** OAuth 2 with PKCE in the user's browser, opened through `openExternal` (`https:` only), redirecting to `http://127.0.0.1:47822/oauth/dropbox`. The listener runs on `127.0.0.1:47822` only while a sign-in waits, and checks the `state` value. Scopes: `files.content.write`, `files.content.read`, `files.metadata.read`. Access type: app folder [D-090]. The app can read and write only inside its own folder in the user's Dropbox (`Apps/<app name>/`), and every path the API takes is relative to that folder. The user cannot pick a folder outside it; sharing a published folder with others is done in Dropbox itself.
 - **App key:** `sxcjvdik8esx6mx` [D-007]. A public identifier, not a secret. It lives only in `src/shared/config/public-ids.ts`. The Dropbox app is registered as an app-folder app [D-090]. It also needs the redirect address above and the three scopes switched on in the Dropbox console (OI-18: not yet confirmed). The sign-in uses PKCE and no app secret: an app secret is never read, stored or shipped by the app.
 - **Secret:** `dropbox.refreshToken`. **Settings:** `storage.dropbox = { accountName, rootPath }`. `rootPath` is a path inside the app folder; empty means the app folder itself.
@@ -194,14 +194,14 @@ Not built (Phase 9). Needs Phase 8 export.
   components/logos/...
   components/subjects/{subjectId}/...
   components/images/...
-  components/fonts/...            only fonts with font_publish_allowed
+  components/fonts/...            only fonts the user allowed on this computer (A-260)
   translations.csv
   report.html
   report.json
   manifest.json
 ```
 
-`{prefix or root}` is the S3 prefix or the Dropbox root folder. `assetId8` is the first 8 characters of the asset ID. `postTitle`, `displayName` and the other parts typed by a user are made safe before they reach the adapter (see "Path rules"). `font_publish_allowed` is a column of `asset` (built, default 0); the font sharing checkbox that sets it is Phase 9 UI.
+`{prefix or root}` is the S3 prefix or the Dropbox root folder. `assetId8` is the last 8 characters of the asset ID (the random part). `postTitle`, `displayName` and the other parts typed by a user are made safe before they reach the adapter (see "Path rules"). `font_publish_allowed` is a column of `asset` (built, default 0), but it is only a hint: a project file can come from someone else, so a font is uploaded only with consent given on this computer, kept in app data (`spec/phases/phase-09.md`, "Font sharing consent is local", A-260).
 
 ### Flow
 

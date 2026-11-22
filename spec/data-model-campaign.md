@@ -125,7 +125,10 @@ CREATE TABLE variant (
   rev           INTEGER NOT NULL DEFAULT 0, -- +1 on every change to the variant, its layers or clips
   created_by    TEXT NOT NULL,             -- CHECK variant_created_by: 'user' | 'agent'
   created_at    TEXT NOT NULL,
-  agent_changed_at TEXT                    -- migration 0001. Last time an agent changed the variant; null = never
+  agent_changed_at TEXT,                   -- migration 0001. Last time an agent changed the variant; null = never
+  first_clip_made INTEGER NOT NULL DEFAULT 0, -- migration 0005. 1 once the variant has had a clip (OI-20); set to 1 for variants that had clips
+  sound         TEXT NOT NULL DEFAULT 'clips', -- migration 0005. CHECK variant_sound: 'clips' | 'file' | 'none'
+  sound_asset_id TEXT REFERENCES asset(id)   -- migration 0005. The sound file when sound = 'file'; kept after leaving 'file'
 );
 
 CREATE TABLE variant_subject (
@@ -251,7 +254,8 @@ CREATE TABLE background_clip (
   start_ms    INTEGER NOT NULL,   -- position on the track
   in_ms       INTEGER NOT NULL,   -- trim from the start of the source
   out_ms      INTEGER NOT NULL,   -- trim point at the end of the source; for a still, in_ms + shown length
-  placement   TEXT                -- JSON: Geometry, or null to use the background layer's geometry
+  placement   TEXT,               -- JSON: Geometry, or null to use the background layer's geometry
+  sound_on    INTEGER NOT NULL DEFAULT 1 -- migration 0005. A video clip's own sound on (1) or off (0)
 );
 CREATE INDEX clip_variant ON background_clip(variant_id, start_ms);
 ```

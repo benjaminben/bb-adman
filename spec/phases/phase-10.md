@@ -16,7 +16,7 @@ The outline's 14, plus four for the Phase 4 commands (A-66, A-231): 18 new tools
 |------|-------|---------------|--------|----------|-----------|
 | `list_subjects` | query `subject.list` (new, A-235) | No; P10-1 registers it, P10-2 builds it | both actors | P10-2 | P10-1 |
 | `get_variant` | query `variant.get` | Yes | both actors | P10-2 | P10-1 |
-| `render_variant` | query `variant.render` | Yes, user only today | agent, complete picture (A-234) | P10-3 | P10-1 |
+| `render_variant` | query `variant.render` | Yes (agent use built by P10-3) | agent, complete picture (A-234) | P10-3 | P10-1 |
 | `create_layer` | `layer.create` | Yes | allow | P10-4 | P10-1 |
 | `update_layer` | `layer.update` | Yes | allow | P10-4 | P10-1 |
 | `update_layers` | `layer.updateMany` | Yes | allow | P10-4 | P10-1 |
@@ -56,9 +56,9 @@ Twelve can be built as soon as P10-1 merges. Six wait, each for exactly the comm
 ## Rules for these slices
 
 - Test first; one slice per developer run, well under 300k tokens; `HANDOFF.md` if near it.
-- **Shared files.** Only P10-1 edits `src/main/mcp/tools/table.ts`, `src/main/mcp/tools/index.ts`, `src/main/mcp/agent-caller.ts`, `src/main/commands/bus.ts`, `src/main/core.ts`, `src/shared/schemas/events.ts`, `src/main/queries/queries.ts`, `src/shared/schemas/queries/mcp.ts`, `src/shared/schemas/commands/generation.ts`, `src/renderer/app/app-shell/app-shell.tsx`, `tests/integration/mcp/every-tool.ts` and `tests/unit/main/mcp/tools/table.test.ts`. Two named exceptions: P10-9 adds the bridge branch to `src/main/index.ts`; P10-12 may add one line to `queries.ts` (see that slice).
+- **Shared files.** Only P10-1 edits `src/main/mcp/tools/table.ts`, `src/main/mcp/tools/index.ts`, `src/main/mcp/agent-caller.ts`, `src/main/commands/bus.ts`, `src/main/core.ts`, `src/shared/schemas/events.ts`, `src/main/queries/queries.ts`, `src/shared/schemas/queries/mcp.ts`, `src/shared/schemas/commands/generation.ts`, `src/renderer/app/app-shell/app-shell.tsx`, `tests/integration/mcp/every-tool.ts` and `tests/unit/main/mcp/tools/table.test.ts`. Named exceptions: P10-9 adds the bridge branch to `src/main/index.ts`; P10-12 may add one line to `queries.ts` (see that slice); P10-15 edits the place in `bus.ts` where an inverse is recorded (A-261).
 - **Tool rows.** P10-1 puts every new tool in a group file as a `notBuilt` row. A `notBuilt` row is not registered with the MCP server, so an agent never sees a tool that cannot work. The slice that owns the group file replaces its rows with full ones and touches no other tool file.
-- **The two tool lists in tests.** Each tool slice adds its names to `BUILT_TOOLS` in `tests/integration/mcp/tool-client.ts`, at the place the table gives them, and updates the snapshot (`npx vitest run tests/integration/mcp/tool-list.test.ts -u`). These two files are the only test files two slices both edit. On a merge conflict in either, the merger re-applies the slice's names and re-makes the snapshot; the diff must only add that slice's tools (A-248).
+- **The shared tool lists in tests.** Each tool slice edits these five, and they are the only test files two slices both edit: `BUILT_TOOLS` in `tests/integration/mcp/tool-client.ts` (its names at the place the table gives them); the snapshot (`npx vitest run tests/integration/mcp/tool-list.test.ts -u`); `STILL_NOT_BUILT` in `tests/unit/main/mcp/tools/tool-plan.test.ts` (a unit test, not under `tests/integration/mcp/`); `tests/integration/mcp/reply-words.test.ts` (one row per tool, in tool list order); `SECTION_4_5_TOOLS` in `tests/integration/mcp/no-tools.test.ts`. On a merge conflict in any of them, the merger keeps both slices' rows in tool list order and re-makes the snapshot; the diff must only add that slice's tools (A-248).
 - **Replies.** Every reply goes through a picker in the slice's own reply file that names every field. No reply holds a file path, file contents, a setting, a key, the token, the ComfyUI address, a tick or the limit, a signed address, a picture note, an approvals slug or a reviewer's email. Each slice's tests run `riskyKeys` and the word test over its recorded replies, success and refusal.
 - **Security class.** Every slice that makes a command or query reachable by an agent is "full" and states what the agent can read and what it can change. A full slice merges only after its review.
 - **Screens.** One folder per component, CSS from `src/renderer/ui/tokens.css` only, no new token. Shots in `tests/shots/p10-{n}.shots.ts`, picture names from 290 to 299.
@@ -69,11 +69,11 @@ Twelve can be built as soon as P10-1 merges. Six wait, each for exactly the comm
 | Slice | Needs | May run beside | Must not run beside |
 |-------|-------|----------------|---------------------|
 | P10-1 Contracts (built) | Phases 1 to 4 | Any slice of another phase that edits none of its shared files | Any other phase's contracts slice or slice editing `core.ts`, `events.ts`, `queries.ts`, `bus.ts`, `generation.ts` (schemas) or `app-shell.tsx` |
-| P10-2 Read tools | P10-1 | P10-3 to P10-10 | Nothing |
-| P10-3 `render_variant` | P10-1 | P10-2, P10-4 to P10-10 | Phase 7 or 8 slices editing `src/main/thumbnails/` or `src/main/queries/render.ts`; any slice editing `src/main/assets/path-resolver.ts` |
-| P10-4 Layer tools | P10-1 | P10-2, P10-3, P10-5 to P10-10 | Nothing |
+| P10-2 Read tools (built) | P10-1 | P10-3 to P10-10 | Nothing |
+| P10-3 `render_variant` (built) | P10-1 | P10-2, P10-4 to P10-10 | Phase 7 or 8 slices editing `src/main/thumbnails/` or `src/main/queries/render.ts` |
+| P10-4 Layer tools (built) | P10-1 | P10-2, P10-3, P10-5 to P10-10 | Nothing |
 | P10-5 AI tools | P10-1 | P10-2 to P10-4, P10-6 to P10-10 | Any slice editing `agent-job-view.ts` (none planned) |
-| P10-6 Ask flow, `delete_campaign` | P10-1 | P10-2 to P10-5, P10-8 to P10-10 | Nothing |
+| P10-6 Ask flow, `delete_campaign` (built) | P10-1 | P10-2 to P10-5, P10-8 to P10-10 | Nothing |
 | P10-7 Permission dialog | P10-6 | P10-8 to P10-10 | Any slice editing `mcp-section/` (none planned) |
 | P10-8 Activity, client name | P10-1 | P10-2 to P10-7, P10-9, P10-10 | Nothing |
 | P10-9 Bridge, Claude Desktop block | P10-1 | P10-2 to P10-8, P10-10 | Any slice editing `src/main/index.ts` or `connect-panel/` |
@@ -81,7 +81,8 @@ Twelve can be built as soon as P10-1 merges. Six wait, each for exactly the comm
 | P10-11 Phase 5 tools | P10-2, P10-6; Phase 5's `variant.add`, `variant.delete`, out-of-date detail in `variant.get` | P10-12, P10-13 if their phases are in | P10-12, P10-13 (`variant-replies.ts`) at the same time |
 | P10-12 Phase 6 tools | P10-2; Phase 6's `translation.set`, `check.run`, `variant_check` row | P10-11, P10-13 | P10-11, P10-13 (`variant-replies.ts`); any slice editing `queries.ts` |
 | P10-13 Phase 7 tool | P10-2; Phase 7's `variant.setFormat`, clips in `variant.get` | P10-11, P10-12 | P10-11, P10-12 (`variant-replies.ts`) |
-| P10-14 Workflow, shots, exit | Every other P10 slice | Slices of other phases | Nothing |
+| P10-15 The agent undo guard | P10-4 | Any slice that edits neither `undo-lists.ts` nor `bus.ts` | Any slice editing `src/main/history/` or `src/main/commands/bus.ts` |
+| P10-14 Workflow, shots, exit | Every other P10 slice, P10-15 included | Slices of other phases | Nothing |
 
 ## Can start now
 
@@ -97,7 +98,7 @@ Files more than one slice, or another phase, is likely to edit:
 - `src/main/index.ts`: P10-1 (removes one line), P10-9 (the bridge branch); Phase 8 or 9 window or sign-in work.
 - `src/renderer/app/app-shell/app-shell.tsx`: P10-1 (two mounts); any phase adding a shell-level panel.
 - `src/main/thumbnails/service.ts`, `types.ts`, `scene-input.ts`, `src/main/queries/render.ts`: P10-3; Phase 7 (clips, time) and Phase 8 (export frames).
-- `src/main/assets/path-resolver.ts`: P10-3 (one function); any phase touching asset paths.
+- `src/main/history/undo-lists.ts` and the place in `src/main/commands/bus.ts` where an inverse is recorded: P10-15 (a named exception to the P10-1 rule for `bus.ts`).
 - `src/main/mcp/tools/variant-replies.ts`: P10-2 makes it; P10-11, P10-12, P10-13 each add one part.
 - `src/main/mcp/tools/agent-job-view.ts`: P10-5 only.
 - `tests/integration/mcp/tool-client.ts` and `tests/integration/mcp/__snapshots__/tool-list.test.ts.snap`: every tool slice (merge rule above).
@@ -110,7 +111,7 @@ Where the design is silent. The orchestrator folds these into `spec/mcp-and-agen
 
 **Tool rows and group files (A-230).** `ToolDef` gains `notBuilt?: true`, `content?: 'json' | 'png'` (default `json`) and `prepareInput?(input)`. `ALL_TOOLS` in `table.ts` joins the group files; `MCP_TOOLS = ALL_TOOLS.filter((t) => !t.notBuilt)` is what core registers. Group files: `campaign-tool.ts` (`create_campaign`, moved unchanged), `read-more-tools.ts`, `render-tool.ts`, `layer-tools.ts`, `ai-tools.ts`, `delete-tools.ts`, `variant-edit-tools.ts`, `translation-check-tools.ts`, `format-tool.ts`. Listing order: the 11 built tools as today, then the group files in that order.
 
-**Inputs follow the built schemas (A-233).** The tool table's older input lists give way to the commands as built: `create_layer` takes `project_id, variant_id, type, values` (`layerCreateInput`); `update_layer` takes `project_id, layer_id, patch`; `update_layers` takes `project_id, variant_id, updates`; `render_variant` takes `project_id, variant_id, max_dimension` (`variantRenderInput`). `time_ms` arrives by itself when Phase 7 or 8 adds `timeMs` to `variantRenderInput`; `hide_text` is dropped. Replies are the command's own: `{ layerId }`, `{ layerIds }`, `{ variantId }`, through a picker.
+**Inputs follow the built schemas (A-233).** The tool table's older input lists give way to the commands as built: `create_layer` takes `project_id, variant_id, type, values` (`layerCreateInput`); `update_layer` takes `project_id, layer_id, patch`; `update_layers` takes `project_id, variant_id, updates`; `render_variant` takes `project_id, variant_id, max_dimension, time_ms` (`variantRenderInput`; `time_ms` came with Phase 7's `timeMs`); `hide_text` is dropped. Replies are the command's own: `{ layerId }`, `{ layerIds }`, `{ variantId }`, through a picker.
 
 **Ask flow (A-237 to A-240).**
 - The bus passes `{ command, agentClient, projectId, input }` (the parsed input) to `askPermission`, which answers `true`, `false` or one of `'allowed' | 'refused' | 'timed_out' | 'busy'` (`true` is `allowed`, `false` is `refused`).
@@ -120,7 +121,7 @@ Where the design is silent. The orchestrator folds these into `spec/mcp-and-agen
 - The wait is 120 seconds (`ASK_WAIT_MS` in `src/shared/config/agent-ask.ts`). The window closes its dialog at `expiresAt`. An answer for a request that has ended is `NOT_FOUND` "That request has ended."
 - `agent.answerPermission { requestId, allow, rememberAuto }`: user only (policy `deny` exists). `rememberAuto: true` with `allow: true` also saves `mcp.autoApproveDestructive = true`.
 - With `autoApproveDestructive` true, no event is sent and the answer is `allowed`.
-- Every outcome writes one log line `event: 'ask'`: command, agentClient, projectId, outcome (`allowed`, `refused`, `timed_out`, `busy`, `auto_approved`). No input values.
+- Every outcome writes one log line `event: 'ask'`: command, agentClient, projectId, outcome (`allowed`, `refused`, `timed_out`, `busy`, `auto_approved`, or `project_closed` when the project closed during the wait). No input values.
 
 **Activity and the client name (A-241, A-242).** The client name is the MCP `clientInfo.name` from `initialize`, cleaned by `cleanClientName` (control and reordering characters removed, trimmed, cut to 60 code points; empty is null). It is passed as `agentClient` on every command an agent sends, so the bus's log lines carry it. Each tool call ends with one log line `event: 'tool'` (tool, agentClient, projectId, ok, errorKind; no arguments, no reply) and one `agent.activity` event `{ tool, projectId: string | null, ok, at }`. The client name is untrusted text: drawn as text content only.
 
@@ -132,7 +133,9 @@ Where the design is silent. The orchestrator folds these into `spec/mcp-and-agen
 
 **`get_check_results` (A-236).** Query `check.results { projectId, campaignId }`, both actors: per variant of the campaign, its latest stored check row and whether it is stale (`checkedRev < rev`). Fields picked from Phase 6's `VariantCheckRow`.
 
-**`render_variant` and linked pictures (A-234).** Ruled by the stakeholder: the agent's picture is the complete ad, every layer drawn wherever its source file lives, the same picture the user sees. `variant.render` for the agent actor draws managed and linked assets alike and leaves nothing out. The limits that stay: the reply is the drawn PNG only (no path, file name or hash of any source), the size cap of `max_dimension`, and the asset rules already in force for linked files (a linked path is one the user chose through a picker or relink; a project file cannot make the app read a new path by itself, `spec/assets.md`). P10-3 tests that a linked picture outside the project folder is drawn for the agent and that no path reaches the reply or a log.
+**`render_variant` and linked pictures (A-234).** Ruled by the stakeholder: the agent's picture is the complete ad, every layer drawn wherever its source file lives, the same picture the user sees. `variant.render` for the agent actor draws managed and linked assets alike and leaves nothing out. The limits that stay: the reply is the drawn PNG only (no path, file name or hash of any source), the size cap of `max_dimension`, and the asset rules already in force for linked files (a linked path is one the user chose through a picker or relink; a project file cannot make the app read a new path by itself, `spec/assets.md`). P10-3 tests that a linked picture outside the project folder is drawn for the agent and that no path reaches the reply or a log. Known exposure (P10-3 review): a project file from someone else can itself name any picture on disk as a linked source, and the agent then gets its pixels. Accepted under A-234; on the owner's list.
+
+**An agent cannot push its own changes off the undo list (A-261, assumption, for the owner's review).** An undo list keeps 200 entries and drops the oldest (`UNDO_LIMIT` in `src/main/history/undo-lists.ts`). So an agent could delete a layer, then make 200 small edits, and the delete could no longer be undone. Rule: each undo list counts the agent entries in a row since the user last acted on that list. An agent command that would add the 101st is refused before anything is written: `RULE_VIOLATION`, `details.reason: 'agent_undo_limit'`, "This ad has too many agent changes in a row. Ask the user to look before going on." Any user action on that list (an edit, an undo or a redo) sets the count to 0; an undo or redo sent by an agent never does. So everything an agent did since the user's last action there stays undoable (100 is half of 200). Built by P10-15; security class full.
 
 **AI tool results (A-232).** `agentJobView` adds: `assetIds` for a `cutout` job (from `result.assetIds`, strings only); `layout: { boxes }` for a succeeded `layout_proposal` (each box's `slot, x, y, width, height, fontSize, align, color`, numbers and strings only); `copyOptions: string[]` for a succeeded `copy_options`. Nothing else of `result`.
 
@@ -166,6 +169,7 @@ Where the design is silent. The orchestrator folds these into `spec/mcp-and-agen
 | A-247 | One file owns the tool words | Easy |
 | A-248 | The tool list in tests and the snapshot are re-made on a merge conflict | Easy |
 | A-249 | `get_variant` gives asset names and sizes, never asset paths or hashes | Easy |
+| A-261 | An agent command is refused when it would be the 101st agent entry in a row on one undo list since the user last acted there (assumption, for the owner's review; numbered past Phase 11's range because A-230 to A-249 are full) | Easy |
 
 ## Open questions
 

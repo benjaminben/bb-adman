@@ -103,6 +103,13 @@ Built. `package.json`.
 
 No CI workflow names `test:e2e:real`, `test:comfy`, `test:live` or `shots`. No agent runs `test:live` or makes any paid call [D-081] (`spec/test-harnesses.md`). What CI runs and when is in `spec/infra-and-settings.md`.
 
+### Quiet windows
+
+- Test launches set `ADMAN_QUIET_WINDOWS=1` through `quietEnv` in `tests/e2e/launch.ts` (the switch is read in `src/main/windows/quiet.ts`). The app window is then never shown, so its `isVisible()` is false.
+- So a test must not find the app window by visibility. It finds it another way (for example by its title or its URL), never with `isVisible()`.
+- `ADMAN_SHOW_WINDOWS=1` in the shell that runs the tests makes `quietEnv` leave the switch out, so the windows show. It is for a person debugging a test, never for an agent.
+- A packaged app ignores `ADMAN_QUIET_WINDOWS`, and it changes no security setting of any window.
+
 ## Coverage and test types
 
 | Test type | Coverage target | Tooling | Runs in |

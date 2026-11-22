@@ -123,7 +123,7 @@ Every slice also reads `spec/phases/DEV-RULES.md` and the "Design additions" sec
 - **Exit check:** class D checks and `npm run test:e2e`.
 - **Class:** D. **Security:** short (the path from the picker to `export.run`; the screen rule list grows). **Size:** medium.
 
-### P8-12 — Reports list and view
+### P8-12 — Reports list and view (built)
 
 - **Exists when done:** "Reports" beside "Export…" opens a list of the campaign's reports and one report's view, drawn from `report.get`.
 - **New files:** `src/renderer/dialogs/report-view/` (`report-view.tsx`, `report-summary.tsx`, `report-ad.tsx`, `report-words.ts`, CSS module); `src/renderer/screens/campaign/report-list/` (the list dialog); tests `tests/unit/renderer/dialogs/report-view.test.tsx`, `tests/unit/renderer/screens/campaign/report-list.test.tsx`; `tests/shots/p8-12.shots.ts` (shots `255-report-list`, `256-report-view`).

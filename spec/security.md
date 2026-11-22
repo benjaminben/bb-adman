@@ -121,6 +121,7 @@ Built (`src/main/assets/`, `src/main/db/`).
 **A hostile project file is in scope for every slice.** A project file may come from anyone, so every value read from it is untrusted: names, paths, `mime`, sizes, IDs, counts. Code that puts such a value into a file path, a header, a command line or a request first checks it against the same rule the app uses when it writes that value. That code is security class.
 
 - What always holds: the app never creates a folder outside the project file's own folder; a file is never written over an existing one; bytes handed to the window never leave it and page script cannot read them; a linked file goes to a provider or into a package only when its first bytes fit the row's kind; the checks in the table below. There is no confirm step for projects from elsewhere.
+- Not yet checked: the database layout itself. A hostile file could hold a trigger, a view or an unknown table. Planned, not built: refuse such a file on open (`spec/phases/review-leftovers.md`, LP-11).
 
 ### Project-file values that reach a path, a header or a request
 
@@ -147,6 +148,7 @@ This file owns the table. A change that makes a project-file value reach a path,
 | `assets_dir_rel`, `assets_dir_abs` | The output folder check | `src/main/commands/export/output-dir.ts` (`checkOutputDir`) | The typed folder must be absolute, at most 4,096 characters, no NUL. Its real path must be a folder, not the app data folder or inside it, nor the assets folder or inside it (real paths; a missing assets folder by its resolved path). From then on the real path is the root; the typed path is not used again. No path in any refusal | Owed in P8-5: `{real}/{campaignId}` and the assets folder are not yet compared both ways, and a missing assets folder is not yet resolved through its nearest existing parent's real path |
 | The names above, at write time | Files written under the output folder | `target.ts`, `src/main/providers/local-storage/local-storage.ts` | Every folder's real path inside the root's real path, checked before folders are made and again after; a link that leads nowhere refused; a link at the file or at its `.partial` refused; every write through `{name}.partial` and a rename (`spec/storage-and-publish.md`, "Local storage") | Owed in P8-6: before each ad's write, check again that the root's real path is the root and that the root is not a link |
 | A font file's bytes (asset of kind `font`) | `asset.font_family`, shown as text | `src/main/assets/font-name.ts`, `inspect.ts` | Files over 32 MiB not parsed; WOFF2 Brotli output capped at 32 MiB; every offset, count and length bounded; never throws, any failure gives null; Cc and Cf removed, trimmed, at most 100 code points, drawn as text only | None |
+| Asset `font_publish_allowed` | Whether publish uploads a font | `src/main/publish/font-consent.ts`, `run-publish.ts` | A hint only. A font is uploaded only when the local consent list in app data holds project ID + asset ID + the SHA-256 of the bytes about to be sent, and the check is `=== true` (`spec/phases/phase-09.md`, A-260) | None |
 
 ### Hand-test tools
 
@@ -261,7 +263,7 @@ Do not "fix" these without a ruling.
 | Prompts in generated files are readable by others [REQ: 6.3] | Reminder in the publish dialog (Not built, Phase 9) |
 | Agent can read open projects [REQ: 6.3] | Stated beside the MCP switch in Settings: "A connected agent can read the projects you have open. That content goes to the AI service that runs the agent." |
 | Licence intent: public code, no commercial reuse by others [REQ: 9.3, R-19] | `LICENSE` is PolyForm Noncommercial 1.0.0 (Not built, Phase 11). npm dependencies under MIT, ISC, BSD, Apache-2.0 or similar; the CI licence check fails on GPL or AGPL (Phase 11). FFmpeg is LGPL and shipped as a separate program. |
-| Font licences [REQ: 9.3] | Fonts publish only with `font_publish_allowed` |
+| Font licences [REQ: 9.3] | Fonts publish only with consent given on this computer (A-260); `font_publish_allowed` is a hint |
 
 The stakeholder confirmed PolyForm Noncommercial 1.0.0 [REQ: R-19]. The architect is not a lawyer and this is not legal advice.
 

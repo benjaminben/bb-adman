@@ -1,8 +1,10 @@
 # Phase 10: the slices
 
-P10-1 to P10-14. Rules, exit criteria, the wave table, the design additions and the assumptions are in `spec/phases/phase-10.md`. Design: `spec/mcp-and-agents.md`, `spec/agent-runs.md`, `spec/api-principles.md`, `spec/api-commands.md`, `spec/api-queries-events.md`, `spec/security.md`, `spec/screens.md`, `spec/testing.md`.
+P10-1 to P10-15 (P10-15 was added later and merges before P10-14). Rules, exit criteria, the wave table, the design additions and the assumptions are in `spec/phases/phase-10.md`. Design: `spec/mcp-and-agents.md`, `spec/agent-runs.md`, `spec/api-principles.md`, `spec/api-commands.md`, `spec/api-queries-events.md`, `spec/security.md`, `spec/screens.md`, `spec/testing.md`.
 
 Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.md` ("Rules", "Design additions"), then the sections named below.
+
+**The five shared tool-list test files** every tool slice edits (merge rule: `phase-10.md`, "Rules"): `BUILT_TOOLS` in `tests/integration/mcp/tool-client.ts`; the tool-list snapshot; `STILL_NOT_BUILT` in `tests/unit/main/mcp/tools/tool-plan.test.ts` (a unit test; it is not under `tests/integration/mcp/`); `tests/integration/mcp/reply-words.test.ts` (one row per tool, in tool list order); `SECTION_4_5_TOOLS` in `tests/integration/mcp/no-tools.test.ts`.
 
 ---
 
@@ -29,33 +31,33 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 - **Security:** short (the bus ask path, the agent caller, events to the window). No agent-reachable change: every new tool is unlisted; the stub broker refuses as today.
 - **Size:** medium.
 
-### P10-2 — Read tools: `list_subjects`, `get_variant`
+### P10-2 — Read tools: `list_subjects`, `get_variant` (built)
 
 - **Exists when done:** both tools listed and working; `subject.list` built.
 - **New files:** the body of `src/main/queries/subject-list.ts`; the rows of `read-more-tools.ts`; `src/main/mcp/tools/variant-replies.ts` (`subjectListFields`, `variantFields` per A-249).
-- **May touch:** `tests/integration/mcp/tool-client.ts` (`BUILT_TOOLS`) and the snapshot; `tool-plan.test.ts` (`STILL_NOT_BUILT`).
+- **May touch:** the five shared tool-list test files.
 - **Needs:** P10-1.
 - **Agent reads:** subject names and descriptions, asset IDs per subject; one variant's fields, every layer value, asset names, kinds and sizes. **Never:** an asset path, hash or MIME type; the brief's picture paths or notes (not stored); approvals data. **Agent changes:** nothing.
 - **Tests first:** `tests/integration/queries/subject-list.test.ts` (both actors; unknown project `NOT_FOUND`; asset IDs in ID order; a damaged subject row left out and logged); `tests/integration/mcp/read-more-tools.test.ts` (each tool over a project with every asset column filled and a linked asset outside the folder: no path in the reply; `riskyKeys` empty; the word test; an unknown variant `NOT_FOUND` as a tool error); a picker unit test naming every field.
 - **Exit check:** class E + B.
 - **Security:** full. **Size:** small.
 
-### P10-3 — `render_variant`
+### P10-3 — `render_variant` (built)
 
 - **Exists when done:** the agent gets one PNG of a variant drawn in memory, the complete ad with every layer, linked pictures outside the project's folder included (A-234, stakeholder ruling); the user's `variant.render` is unchanged.
-- **New files:** `src/main/thumbnails/agent-pictures.ts` (`agentMayDraw(project, asset): Promise<boolean>`); the row of `render-tool.ts` (`content: 'png'`, picker `pngOnly` taking `png` from `VariantRender`).
-- **May touch:** `src/main/queries/render.ts` (`variant.render` for the agent calls `deps.render.renderForAgent`); `src/main/thumbnails/types.ts` (`renderForAgent(project, variantId, maxDimension): Promise<VariantRender>`); `src/main/thumbnails/service.ts` and `scene-input.ts` (an option that drops the sources `agentMayDraw` refuses); `src/main/assets/path-resolver.ts` (one function `isInsideFolder(realPath, folder)`, the only place the path check is done); `BUILT_TOOLS`, the snapshot, `tool-plan.test.ts`.
+- **New files:** the row of `render-tool.ts` (`content: 'png'`, picker `pngOnly` taking `png` from `VariantRender`; inputs `project_id`, `variant_id`, `max_dimension`, `time_ms`).
+- **May touch:** `src/main/queries/render.ts` (the agent's draw shows every layer wherever its source lives, A-234; no source is dropped); the shared tool-list test files (`phase-10.md`, "Rules").
 - **Needs:** P10-1.
-- **Agent reads:** the pixels of the complete variant, every layer drawn, linked pictures included wherever they live (A-234, stakeholder ruling). **Never:** a path, a file name, a hash or an `adman-asset://` address of any source. **Agent changes:** nothing; no file written, no row, no event.
-- **Tests first:** the named test `tests/integration/mcp/render-variant-no-file.test.ts` (`spec/testing.md`, with a stand-in `drawScene` returning a fixed PNG; lists the four folders before and after; one `image/png` item; no path); `tests/unit/main/thumbnails/agent-pictures.test.ts` (table: managed yes; linked inside yes; linked outside no; a link inside that points outside no; a missing file no); `tests/integration/queries/variant-render-agent.test.ts` (the scene input given to the stand-in has no source for the outside picture, keeps the inside one and the font); `tests/e2e/render-variant-agent.spec.ts` (built app: the outside picture's area shows the background).
-- **Exit check:** class E + C (the reference-picture spec must still pass) + `npm run test:e2e -- tests/e2e/render-variant-agent.spec.ts`.
+- **Agent reads:** the pixels of the complete variant, every layer drawn, linked pictures included wherever they live (A-234, stakeholder ruling). The reply is the PNG only. **Never:** a path, a file name, a hash or an `adman-asset://` address of any source. **Agent changes:** nothing; no file written, no row, no event.
+- **Tests first:** the named test `tests/integration/mcp/render-variant-no-file.test.ts` (`spec/testing.md`, with a stand-in `drawScene` returning a fixed PNG; lists the four folders before and after; one `image/png` item; no path); `tests/integration/queries/variant-render-agent.test.ts` (the scene input given to the stand-in keeps every source, a linked picture outside the project folder included, and the font; no path in the reply or a log line).
+- **Exit check:** class E + C (the reference-picture spec must still pass).
 - **Security:** full. **Size:** medium.
 
-### P10-4 — Layer tools
+### P10-4 — Layer tools (built)
 
 - **Exists when done:** `create_layer`, `update_layer`, `update_layers`, `delete_layer`, `reorder_layers` listed and working; edits by an agent stamp `agent_changed_at` and land on the variant's undo list.
 - **New files:** the rows of `layer-tools.ts`; `src/main/mcp/tools/layer-replies.ts` (`layerIdOnly`, `layerIdsOnly`, `variantIdOnly`).
-- **May touch:** `BUILT_TOOLS`, the snapshot, `tool-plan.test.ts`.
+- **May touch:** the five shared tool-list test files.
 - **Needs:** P10-1.
 - **Agent reads:** the layer or variant ID it changed. **Agent changes:** layers of open projects, any field the command accepts, any asset of the project as a source (a pick is allowed; descriptions carry `LEAVE_THE_CHOICE`). Policy `allow`, rows exist.
 - **Tests first:** `tests/integration/mcp/layer-tools.test.ts` (table over the five: success through the tool equals the same command sent by the user apart from the actor; `project.changed` has `actor: 'agent'`; `variant.agent_changed_at` set, the FR-239 test through a tool; the user can undo each with `history.undo` on `variant:{id}`; each refusal comes back as the command's own code and message; a closed project `NOT_FOUND`; `riskyKeys` and the word test).
@@ -66,21 +68,22 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 
 - **Exists when done:** the three start tools work under the tick, one at a time through the shared serial; `get_job` shows a layout's boxes, copy options and a cut-out's asset ID (A-232).
 - **New files:** the rows of `ai-tools.ts` (`oneAtATime`, reply `jobIdOnly`; `cut_out` uses `generationCutOutAgentInput`; descriptions name `get_job` and, for a layout, `update_layers`).
-- **May touch:** `src/main/mcp/tools/agent-job-view.ts`; `tests/unit/main/mcp/tools/agent-job-view.test.ts` (new cases only); `BUILT_TOOLS`, the snapshot, `tool-plan.test.ts`.
+- **May touch:** `src/main/mcp/tools/agent-job-view.ts`; `tests/unit/main/mcp/tools/agent-job-view.test.ts` (new cases only); the five shared tool-list test files.
 - **Needs:** P10-1. The gate rows exist (Phase 4).
 - **Agent reads:** a job ID; through `get_job`, the boxes (numbers, a key, an alignment, a colour), the option texts, the cut-out's asset ID. **Never:** the request, the prompt sent, the model, the server's words. **Agent changes:** starts runs only for a ticked provider within the limit; cannot confirm a licence.
 - **Tests first:** `tests/integration/mcp/ai-tools.test.ts` (table: each tool refused unticked, over the limit and with an unknown provider, with no job row; ticked, a job with `startedBy: 'agent'` from the fake provider; two calls sent together run one at a time; `licence_confirmed` is not in the published input); agent-job-view cases (each kind gives only the named fields over a result with extra planted keys; a failed layout job gives no `layout`).
 - **Exit check:** class E.
 - **Security:** full. **Size:** small to medium.
 
-### P10-6 — The ask flow and `delete_campaign`
+### P10-6 — The ask flow and `delete_campaign` (built)
 
 - **Exists when done:** an agent's `delete_campaign` asks the user and waits; allow runs it, refuse or time-out refuses, a second ask is busy, auto-approve skips the ask; `agent.answerPermission` works.
 - **New files:** the bodies of `src/main/mcp/permissions.ts` and `src/main/commands/agent/answer-permission.ts`; `src/main/mcp/ask-target.ts` (`askTarget(projects, request): string`, the target lines of the design additions); the row of `delete-tools.ts` (reply `{ campaignId }`; description says the user is asked every time, the agent waits up to two minutes, and a refusal is final).
-- **May touch:** `BUILT_TOOLS`, the snapshot, `tool-plan.test.ts`.
+- **May touch:** the five shared tool-list test files.
 - **Needs:** P10-1.
 - **Agent reads:** the outcome only. **Never:** the dialog's wording beyond the refusal sentence, the setting. **Agent changes:** deletes a campaign only after the user's allow, or with the user's auto-approve on; cannot answer a request (`agent.answerPermission` is `deny`), cannot change `autoApproveDestructive` (`settings.update` is `deny`).
 - **Tests first:** `tests/integration/mcp/ask-flow.test.ts` (fake clock: allow runs the delete and `project.changed` follows; refuse, time-out at 120 s, busy, each `AGENT_REFUSED` with its reason and nothing written; the event payload holds exactly the five fields and no ID; auto-approve sends no event and writes the `auto_approved` log line; an answer after the end `NOT_FOUND`; the project closed during the wait gives the command's own `NOT_FOUND`; `rememberAuto` saves the setting; the agent sending `agent.answerPermission` gets `AGENT_DENIED`); `tests/unit/main/mcp/ask-target.test.ts` (each line; a name with control characters cleaned; unknown target).
+- **As built:** a request ended because its project closed during the wait writes the `event: 'ask'` log line with outcome `project_closed`.
 - **Exit check:** class E + B.
 - **Security:** full. **Size:** medium.
 
@@ -88,7 +91,8 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 
 - **Exists when done:** the dialog shows on `agent.permissionRequested` and answers; Settings has the checkbox for deletes without asking.
 - **New files:** the body of `src/renderer/app/permission-dialog/` (Radix Dialog, its CSS module from tokens); `src/renderer/screens/settings/auto-approve-setting/`.
-- **May touch:** `src/renderer/screens/settings/mcp-section/mcp-section.tsx` (mount, a few lines).
+- **May touch:** `src/renderer/screens/settings/mcp-section/mcp-section.tsx` (mount, a few lines); `src/main/mcp/ask-target.ts` (`clean()`: turn `"` into `'`, collapse each run of white space to one space, cut each name to 60 code points ending in "…"; from the P10-6 review, needed because the dialog shows this line) and `tests/unit/main/mcp/ask-target.test.ts` (one row per rule).
+- **The client name** in the dialog is text the agent chose. It is drawn as text only and shown as the agent's own label, never as something Adman checked.
 - **Needs:** P10-6.
 - **Words:** title "An agent asks to delete"; body "{agent} wants to {action}: {target}." where `{agent}` is the client name or "An agent"; "Answer within 2 minutes."; checkbox "Don't ask again for deletes"; buttons "Refuse" (focused first) and "Allow". Escape refuses. At `expiresAt` the dialog closes with no answer. Settings checkbox under Agent access: "Let agents delete campaigns and variants without asking", with the line "An agent can then delete work with no click from you. Deleting a campaign cannot be undone." Saved with `settings.update { mcp: { autoApproveDestructive } }`.
 - **Tests first:** `tests/unit/renderer/app/permission-dialog.test.tsx` (keyboard path; axe; Refuse focused; Escape sends `allow: false`; the client name with markup shows as text; closes at `expiresAt` with nothing sent; a refused answer shows its message); `tests/unit/renderer/screens/settings/auto-approve-setting.test.tsx`. Shots `tests/shots/p10-7.shots.ts`: 290 the dialog, 291 the dialog with a long target, 292 the Settings checkbox.
@@ -131,7 +135,7 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 
 - **Exists when done:** both listed; `delete_variant` asks as `delete_campaign` does; `get_variant` gives the out-of-date detail.
 - **New files:** the rows of `variant-edit-tools.ts`. Targets for `askTarget`'s variant line are already in P10-6.
-- **May touch:** `variant-replies.ts` (the out-of-date part, its fields named); `BUILT_TOOLS`, the snapshot, `tool-plan.test.ts`.
+- **May touch:** `variant-replies.ts` (the out-of-date part, its fields named); the five shared tool-list test files.
 - **Needs:** Phase 5's `variant.add` and `variant.delete` commands and the out-of-date detail in `variant.get` (the Phase 5 slices that build them); P10-2; P10-6.
 - **Agent changes:** adds a variant as one fan-out cell with fit `scale` and no translation job (`spec/mcp-and-agents.md`); deletes one only after the user's allow; a master is refused by the command.
 - **Tests first:** `tests/integration/mcp/variant-edit-tools.test.ts` (add: the cell, `createdBy: 'agent'`, text layers in another language `missing`; a taken cell refused; delete: allow, refuse, a master refused; the user can undo the delete from the campaign list).
@@ -141,7 +145,7 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 
 - **Exists when done:** the three tools listed; the named test "An agent `set_translation` never yields `approved`" passes; `get_variant` gives the latest check.
 - **New files:** the rows of `translation-check-tools.ts`; `src/main/mcp/tools/check-replies.ts`. If Phase 6 built no `check.results`: `src/main/queries/check-results.ts` and one line in `src/main/queries/queries.ts`.
-- **May touch:** `variant-replies.ts` (the check part); `BUILT_TOOLS`, the snapshot, `tool-plan.test.ts`.
+- **May touch:** `variant-replies.ts` (the check part); the five shared tool-list test files.
 - **Needs:** Phase 6's `translation.set`, `check.run` and the `variant_check` row schema; P10-2.
 - **Agent changes:** sets text, always `proposed`, `translation_source: 'agent'`; runs checks (writes check rows). Cannot approve (`translation.approve` is `deny`).
 - **Tests first:** `tests/integration/mcp/translation-check-tools.test.ts` (the named test, with `apply_to_same_language` both ways; check results with a stale variant; replies through `riskyKeys`).
@@ -151,16 +155,26 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 
 - **Exists when done:** the tool changes format both ways with no dialog [D-025]; `get_variant` gives the clips (IDs, asset IDs, times, placement; no path).
 - **New files:** the row of `format-tool.ts`.
-- **May touch:** `variant-replies.ts` (the clip part); `BUILT_TOOLS`, the snapshot, `tool-plan.test.ts`.
+- **May touch:** `variant-replies.ts` (the clip part); the five shared tool-list test files.
 - **Needs:** Phase 7's `variant.setFormat` and clips in `variant.get`; P10-2.
 - **Tests first:** `tests/integration/mcp/format-tool.test.ts` (image to video and back; no `agent.permissionRequested` sent; a taken cell `RULE_VIOLATION`; the user's undo works).
 - **Exit check:** class E. **Security:** full. **Size:** small.
+
+### P10-15 — The agent undo guard
+
+- **Exists when done:** A-261 holds: an agent command that would be the 101st agent entry in a row on one undo list since the user last acted there is refused with nothing written; any user action on that list resets the count.
+- **New files:** none needed; a small helper file beside `undo-lists.ts` is allowed if it keeps that file under 200 lines.
+- **May touch:** `src/main/history/undo-lists.ts` (a per-list count of agent entries in a row; reset by a user entry, a user undo or a user redo; never by an agent's undo or redo); `src/main/commands/bus.ts`, only the place where an inverse is recorded (`recordUndo` and the check before it), a named exception to the P10-1 rule. The refusal is `RULE_VIOLATION`, `details.reason: 'agent_undo_limit'`, "This ad has too many agent changes in a row. Ask the user to look before going on."; if reasons are typed in a shared list, add it there (one line, named in the report). The refusal must leave nothing written: if the list is known only from the command's result, the check runs before the command's write is kept, so the refusal undoes it. If that cannot be done in these files, stop and report.
+- **Needs:** P10-4 (agent layer edits land on undo lists).
+- **Agent reads:** the refusal sentence only. **Agent changes:** nothing new; it loses the 101st change in a row.
+- **Tests first:** `tests/integration/history/agent-undo-guard.test.ts`: 100 agent edits on one variant pass and the 101st is refused `RULE_VIOLATION`, `agent_undo_limit`, with the variant and its `rev` unchanged and no event; one user edit in between resets the count (100 more pass); a user undo or redo resets it; an agent's undo does not; an agent layer delete followed by 100 agent edits can still be undone back to the delete by the user, and the layer returns; two undo lists count apart. A unit table for the count in `undo-lists.ts`.
+- **Exit check:** class E + B. **Security:** full (shared code every agent edit passes through; keeps the user able to undo an agent's work). **Size:** small. Must merge before P10-14.
 
 ### P10-14 — Workflow 5.7, shots, exit check
 
 - **Exists when done:** the phase's exit criteria are met or listed as the stakeholder's.
 - **New files:** `tests/e2e/mcp-workflow.spec.ts` (the built app with fake providers; an MCP client from the test process: read the campaign, render each variant, create and move text layers, see `project.changed` in the window, undo one; then a translation set and shown unapproved; then a master edit marking linked variants out of date); `tests/shots/p10-14.shots.ts`: 297 the campaign after an agent's edits, 298 a variant tab with an agent-made layer, 299 the activity line during the run.
 - **May touch:** `tool-plan.test.ts` (assert `STILL_NOT_BUILT` is empty).
-- **Needs:** every other P10 slice.
+- **Needs:** every other P10 slice, P10-15 (the agent undo guard) included.
 - **Also:** read every tool description once against A-247 and the rules for every tool; report wording changes needed (the owning slice's file is edited here only for words). List for the stakeholder: Claude Code places copy on a variant by hand; Claude Desktop through the bridge block; Windows. List for the orchestrator: the topic-file edits from "Design additions".
 - **Exit check:** class E + D + `npm run test:e2e`; the full checks on `main`. **Security:** none. **Size:** medium.

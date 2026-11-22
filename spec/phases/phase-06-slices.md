@@ -148,7 +148,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class D; `npm run test:e2e`. **Shots:** `tests/shots/p6-14.shots.ts`, 209 (status and Approve), 210 (the font button); need a language variant.
 - **Security:** none. **Size:** medium.
 
-## P6-15 — Translation at fan-out
+## P6-15 — Translation at fan-out (built)
 
 - **Exists when done:** fan-out step 6 works as section 7 says: new text layers start `missing`, brief copy fills what it gives, one translation job per language runs, the reply names the jobs, the fan-out dialog states the text calls, and the campaign tab owns the jobs for the close warning.
 - **New files:** `src/main/translation/fan-out.ts` (the step, called by the fan-out handler with its transaction context).
@@ -158,7 +158,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class B, D; `npm run test:e2e`. **Shots:** `tests/shots/p6-15.shots.ts`, 211 (the fan-out dialog's text-call line), 212 (the grid with "Translation not approved" marks).
 - **Security:** short (reuses P6-6's reviewed path). **Size:** medium.
 
-## P6-16 — Translation in the sync review
+## P6-16 — Translation in the sync review (built)
 
 - **Exists when done:** opening the sync review after a master copy change starts one `sync` translation per language; the preview shows the proposed text or the failure with retry and type-by-hand; an accepted change writes `proposed`, source `ai`.
 - **New files:** `src/main/translation/sync-result.ts` (`latestSyncTranslation`).

@@ -76,7 +76,7 @@ tag v*
 
 ## Release and packaging
 
-Packaging config: Built (`electron-builder.json`). Release workflow, signing steps in the README, FFmpeg: Not built (Phase 11, FFmpeg Phase 8).
+Packaging config: Built (`electron-builder.json`). Release workflow, signing steps in the README: Not built (Phase 11). FFmpeg in the package: Not built (P8-18; the fetch script is built, "FFmpeg" below).
 
 - `electron-builder.json`: `appId` `com.adman.app`, output `dist/`, files `out/**` and `package.json`, native `.node` files unpacked from the archive. macOS: DMG for arm64 and x64, no signing identity. Windows: NSIS x64, not one-click, per user.
 - **File association** [REQ: R-06]: the installer registers the `.adman` extension (`fileAssociations`, MIME `application/x-adman`; on macOS the exported type `com.adman.project`) so a double-click opens the project.
@@ -88,14 +88,12 @@ Packaging config: Built (`electron-builder.json`). Release workflow, signing ste
 
 ### FFmpeg [REQ: FR-143, 9.3]
 
-Not built (Phase 8 for the source, Phase 11 for the release step).
+Built: the fetch script and the media runner (Phase 7). Not built: packaging and the notices (P8-18), the release step (Phase 11).
 
-- Built with `--disable-gpl --disable-nonfree`, plus `--enable-videotoolbox` on macOS and `--enable-mediafoundation` on Windows.
-- Needed parts: decoders for H.264, HEVC, VP8, VP9, ProRes and PNG; demuxers for MP4, MOV, WebM and image pipe; filters `scale`, `crop`, `overlay`, `trim`, `setpts`, `loop`, `color`, `format`, `fps`; the MP4 muxer.
-- `scripts/fetch-ffmpeg` downloads one archive per platform from a URL pinned in `scripts/ffmpeg-sources.json` with its SHA-256. The binaries are not committed.
-- Packaged at `resources/ffmpeg/{platform}-{arch}/ffmpeg[.exe]`.
-- `THIRD-PARTY-NOTICES.md` carries the LGPL text, the exact build flags and a link to the matching source.
-- **Source of the LGPL builds** (OI-09, settled): Windows from the public builder repository `FFmpeg-Builds/FFmpeg-Builds`; macOS built on this machine from the FFmpeg release source archive. Both are pinned in `scripts/ffmpeg-sources.json`. The exact pins, the configure flags and the pin checks are in `spec/phases/phase-07.md`, "Where FFmpeg comes from"; where this section differs, that one is current.
+- **Where it comes from, how it is fetched and checked:** `spec/phases/phase-07.md`, "Where FFmpeg comes from", "Pin checks", "Configure flags" and "Licence check"; the fetch script is slice P7-3 (`npm run fetch:ffmpeg`, `scripts/ffmpeg/fetch.mjs`, pins in `scripts/ffmpeg-sources.json`). It is never run by `npm install` or `npm ci`. The binaries are not committed.
+- **How it is run:** `spec/phases/phase-07.md`, "How FFmpeg is run" (the one place it is spawned, and the rules for every later FFmpeg slice).
+- Placed at `resources/ffmpeg/{platform}-{arch}/ffmpeg[.exe]`, in development and in the packaged app.
+- `THIRD-PARTY-NOTICES.md` carries the LGPL text, the exact build flags and a link to the matching source (P8-18).
 
 ## Packages: licences and install scripts
 

@@ -92,6 +92,14 @@ None open.
 - Done when: the release phase adds the icon files and a packaged build shows them.
 - Security class: no.
 
+#### LP-11. The app trusts the database layout inside a project file (planned, not built)
+
+- Source: P10-6 review, low finding 4.
+- Files: `src/main/db/` (opening a project file and running migrations).
+- What is wrong: a project file may come from someone else (`spec/security.md`, "A hostile project file is in scope for every slice"). The app checks the values it reads, but it trusts the SQLite layout itself. A hostile file could hold a trigger that runs on the app's own writes, a view that stands in for a table, or a table built without the primary key the app expects.
+- Done when: on open, before any write, the app reads `sqlite_master` and refuses a project file that holds a trigger, a view, or a table the app does not know (a fixed sentence, no names from the file). A hardening slice, placed before the release (Phase 11) unless the owner moves it. Tests: a file with a trigger, one with a view, one with an extra table, each refused with nothing written; a file made by the app opens.
+- Security class: yes (destructive: a trigger can change or delete the user's work).
+
 ## Test gaps
 
 | Test or file | What is not pinned | Security guard | Source |

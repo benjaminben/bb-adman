@@ -89,7 +89,7 @@ Built for the 11 tools that exist; every future tool follows them.
 | `list_assets` | query `asset.list` | project_id, library?, kind?, subject_id? | id, display name, kind, library, subject ID, width, height, duration, font family | allow | Built | R-11 |
 | `get_campaign` | query `campaign.get` | project_id, campaign_id | Campaign fields, rule set, directions, variant summaries with badges | allow | Built | FR-192 |
 | `get_variant` | query `variant.get` | project_id, variant_id | Variant, layers (all values), clips, out-of-date detail | allow | Not built (Phase 10) | FR-192 |
-| `render_variant` | the render service (no command) | project_id, variant_id, time_ms? (default 0), max_dimension? (default 1024, max 2048), hide_text? | One PNG image | allow | Not built (Phase 10; calls the built `variant.render`, which is user only until Phase 10 writes a rule for linked private pictures) | FR-193 |
+| `render_variant` | query `variant.render` | project_id, variant_id, max_dimension, time_ms | One PNG image, nothing else | allow | Built (P10-3): the complete ad, every layer drawn wherever its source lives (A-234) | FR-193 |
 | `create_campaign` | command `campaign.create` | The command's input as built: project_id, brief (`spec/brief-and-templates.md`), subject_map, sizes, languages, template_id, rule_set?, copy_rule_set_from? | campaign_id, master variant_id (and direction_id) | allow | Built | FR-195, R-01 |
 | `add_variant` | command `variant.add` | project_id, direction_id, size_label, language, format | variant_id | allow | Not built (Phase 10) | FR-195 |
 | `set_variant_format` | command `variant.setFormat` | project_id, variant_id, format (`image` or `video`) | variant_id, format | allow | Not built (Phase 10) | R-20, D-025 |

@@ -23,7 +23,7 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, `npm test`; a second `npm run db:generate` writes nothing.
 - **Class:** B. **Security:** short (migration). **Size:** small.
 
-### P7-3 — FFmpeg fetch script and test clips (script built; not yet run)
+### P7-3 — FFmpeg fetch script and test clips (built)
 
 - **Exists when done:** `npm run fetch:ffmpeg` puts a licence-checked LGPL FFmpeg at `resources/ffmpeg/{platform}-{arch}/ffmpeg[.exe]`; on this Mac it has run once; two tiny test clips made with it are committed.
 - **New files:** `scripts/ffmpeg/fetch.mjs` (entry), `sources.mjs` (reads and checks `ffmpeg-sources.json`), `download.mjs`, `unpack.mjs`, `run.mjs`, `build-mac.mjs`, `licence-check.mjs`, `make-fixtures.mjs`; `scripts/ffmpeg-sources.json`; `tests/fixtures/video/tiny.mp4` (1 s, 64 × 64, H.264, no sound) and `tiny-sound.mp4` (the same with an AAC track), each under 50 KB.
@@ -32,23 +32,23 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **The script's rules:** downloads only over `https:` to listed hosts, following a redirect only to a listed host, at most 300 MB, into `resources/ffmpeg/.work/` (already ignored by git); checks the SHA-256 before unpacking; unpacks with the system `tar` run by `spawn` with an argument array and `shell: false`, extracting only the named member (Windows) or the source tree (macOS); on macOS runs `./configure` with exactly the `configure` list from the JSON and `make ffmpeg`, both by `spawn` with `shell: false`; copies the binary into place, sets mode 755; then runs the licence check (`phase-07.md`, "Where FFmpeg comes from") and deletes a binary that fails. The configure list is the `configure` list of `scripts/ffmpeg-sources.json`, written out in `phase-07.md`, "Configure flags". It never runs with an elevated account and installs no system software: if the build tools are missing it stops and says which.
 - **Needs:** nothing.
 - **Tests first:** `tests/unit/scripts/ffmpeg-sources.test.ts` (the committed JSON passes; a table of bad values each refused: `http:`, an unlisted host, a short hash, `../x`, `/abs`); `tests/unit/scripts/ffmpeg-licence-check.test.ts` (sample `-L` and `-buildconf` texts: LGPL passes; GPL, `--enable-gpl` and `--enable-nonfree` fail); `tests/unit/scripts/ffmpeg-download.test.ts` (with a stand-in `fetch`: a redirect to an unlisted host refused, an oversize answer stopped, a wrong hash refused and the file deleted).
-- **Built so far:** the fetch script, `ffmpeg-sources.json` and the script tests. Not yet done: the hand run below and the two test clips.
+- **Built:** the fetch script, `ffmpeg-sources.json`, the script tests, the hand run on this Mac and the two committed test clips.
 - **Hand run** (a second stage, after the script's review fixes merge): `npm run fetch:ffmpeg` once on this Mac; report the first line of `-version`, the licence check result and the binary size. Then `node scripts/ffmpeg/make-fixtures.mjs` makes the two clips (the only place the binary is run with `-f lavfi`); report their sizes. The Windows binary's licence check is the stakeholder's (D-087).
 - **Exit check:** lint, typecheck, `npm test`, the hand run.
 - **Class:** A plus the hand run. **Security:** full (downloads and runs a program). **Size:** medium.
 
-### P7-4 — The media runner
+### P7-4 — The media runner (built)
 
 - **Exists when done:** `createMediaTool` writes generation details into an MP4 with the fetched FFmpeg under every rule of `phase-07.md`, "How FFmpeg is run"; the app passes it to `createCore`.
 - **New files:** `src/main/media/ffmpeg-path.ts` (pure path rule and `binaryUsable(path)` by `lstat`), `run-ffmpeg.ts` (the one `spawn`; one run at a time; 60 s limit; standard error capped and dropped), `run-folder.ts` (make and remove `{userData}/media-temp/run-{ULID}/`; the start-up sweep), `ffmetadata.ts` (escaping `=`, `;`, `#`, `\` and line breaks with `\`; the file text `;FFMETADATA1` then `comment=...`), `embed-args.ts` (the one argument builder), `embed-details.ts` (`createMediaTool({ binary, userData, log })`).
-- **The embed arguments,** exactly: `-hide_banner -nostdin -loglevel error -protocol_whitelist file -i file:{in} -protocol_whitelist file -f ffmetadata -i file:{meta} -map 0:v -map 0:a? -map_metadata 1 -c copy -f mp4 -n file:{out}`.
+- **The embed arguments,** exactly: `-hide_banner -nostdin -loglevel error -protocol_whitelist file,pipe -f mov -i file:{in} -protocol_whitelist file,pipe -f ffmetadata -i file:{meta} -map 0:v -map 0:a? -map_metadata 1 -c copy -f mp4 -n file:{out}`. Every input has its own `-protocol_whitelist file,pipe` and a pinned `-f`. Rules for later FFmpeg slices: `phase-07.md`, "How FFmpeg is run".
 - **May touch:** `src/main/index.ts` (build the tool with the fixed path and `app.getPath('userData')`, pass it as `media`, run the sweep once at start).
 - **Needs:** P7-1.
 - **Tests first:** `tests/unit/main/media/ffmetadata.test.ts` (table: each special character, a line break, an empty value, non-ASCII kept); `embed-args.test.ts` (the exact array; every path `file:`-prefixed; a path not inside the run folder throws); `ffmpeg-path.test.ts` (packaged and development, each platform and arch; a link, a folder and a missing file are not usable); `run-folder.test.ts` (made inside `media-temp`; a link in place of `media-temp` refused; the sweep removes only real `run-*` folders); `tests/integration/media/run-ffmpeg.test.ts` (a stand-in executable written by the test with the shebang `#!{process.execPath}`, skipped on Windows: over time it is killed; a non-zero exit gives null; a large standard error is cut and never logged; the environment it sees is empty); `tests/integration/media/embed-details.test.ts` (a stand-in run that returns a changed or broken file: null, the original kept); `tests/integration/media/embed-real.test.ts` (with the fetched binary and `tests/fixtures/video/tiny-sound.mp4`: the output holds the comment, keeps the sound track and the facts; skips with "No FFmpeg here; run npm run fetch:ffmpeg." when the binary is absent).
 - **Exit check:** lint, typecheck, `npm test` (with `embed-real` run, not skipped, on this Mac), `npm run test:e2e` (the app still starts).
 - **Class:** B + G. **Security:** full (spawns a program, writes and deletes files). **Size:** medium.
 
-### P7-5 — Video file facts, tighter detection, audio types
+### P7-5 — Video file facts, tighter detection, audio types (built)
 
 - **Exists when done:** imported MP4 and MOV rows have `width`, `height` and `duration_ms`; a file named `.mp4` or `.mov` with no video track is refused; MP3, WAV, M4A and AAC import as kind `audio`.
 - **New files:** `src/main/providers/mp4-boxes.ts` (the box walk and header fields, moved out of `video-check.ts`, behaviour unchanged); `src/main/assets/video-file-facts.ts` (`videoFileFacts(handle)`: reads top-level box headers by position, at most 10,000 boxes; reads `moov` only, at most 32 MiB; gives `{ width, height, durationMs, hasSound }` or null; never throws; no file text reaches a message); `src/main/assets/audio-sniff.ts` (MP3: `ID3` or a frame sync `FF Ex`/`FF Fx` with a valid layer; WAV: `RIFF....WAVE`; M4A: `ftyp` with brand `M4A ` or `mp42`/`isom` and the `.m4a` name; AAC: ADTS sync `FF F1` or `FF F9`) (A-185).
@@ -89,7 +89,7 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, `npm test`, `npm run test:e2e`.
 - **Class:** C + G. **Security:** short (the render window loads video). **Size:** medium to large; if large, stop after the Scene part and hand off the thumbnail part.
 
-### P7-9 — Clip commands, and clips in `variant.get`
+### P7-9 — Clip commands, and clips in `variant.get` (built)
 
 - **Exists when done:** the six clip commands work as `phase-07.md`, "Clips and the track", says; `variant.get` returns the clips and their assets; `missingFile` counts clips.
 - **New files:** `src/shared/clips/track.ts` (pure: clip end, overlap, first free position, the reorder layout; the renderer uses it to judge a drag before sending); `src/main/clips/clip-asset.ts` (the usable-asset check; reads and stores a video's facts with `videoFileFacts` when the row has none); `src/main/clips/write-clip.ts` (insert, change, delete, restore rows; sets `first_clip_made`; bumps `rev` with `bumpVariantRev`; `addFirstClip(ctx, variantId)` for P7-10 and P7-23); the bodies of `src/main/commands/clip/*.ts`.
@@ -100,12 +100,13 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Tests first:** `tests/unit/shared/clips/track.test.ts` (table); `tests/integration/commands/clip-add.test.ts`, `clip-update.test.ts`, `clip-remove.test.ts`, `clip-reorder.test.ts`, `clip-add-generated.test.ts` (each under the four refusal rules of `spec/testing.md`; every named refusal; first free position; `first_clip_made` set; `rev` up; undo and redo; a facts read stored on the asset; a gone variant gives `clipId: null`); `tests/integration/queries/variant-get-clips.test.ts`; one `missingFile` case.
 - **Exit check:** lint, typecheck, `npm test`.
 - **Class:** B. **Security:** short (asset checks, an internal command reached by `jc.system`). **Size:** medium.
+- **Follow-ups from its review** (each in the slice named): P7-10 adds lower bounds and safe-integer checks to `checkClip` in `src/main/clips/write-clip.ts`; P7-20 adds `clips: []` to the `variantGet()` builder in `tests/unit/renderer/editor/editor-fixture.ts` and makes `VariantGet.clips` required; the video export (P8-16) checks every clip row again when it reads one (rows from a project file never passed the commands), measures stills itself, and clamps and rounds placement numbers.
 
 ### P7-10 — Format change and duration
 
 - **Exists when done:** `variant.setFormat` works as `spec/data-rules.md`, "Changing a variant's format", says, with OI-20 settled by `first_clip_made`; `variant.update` takes `durationMs`.
 - **New files:** `src/shared/config/format-changes.ts` (the one table); `src/main/commands/variant/grid-test.ts`; the body of `set-format.ts`.
-- **May touch:** `src/main/commands/variant/update.ts` (the P7-1 guard replaced: writes `duration_ms`; on a variant that is not its direction's master also sets `duration_overridden`; the inverse holds both old values).
+- **May touch:** `src/main/commands/variant/update.ts` (the P7-1 guard replaced: writes `duration_ms`; on a variant that is not its direction's master also sets `duration_overridden`; the inverse holds both old values); `src/main/clips/write-clip.ts` (`checkClip` also checks `startMs >= 0`, `inMs >= 0` and `outMs <= MAX_TRACK_MS`, each a safe integer; from the P7-9 review).
 - **Needs:** P7-9.
 - **Tests first:** the named `tests/integration/commands/variant-format-round-trip.test.ts` (as `spec/testing.md` names it, plus: an emptied track stays empty after video, image, video; a master and a linked variant, the linked one made with rows directly, so Phase 5 is not needed); the named `variant-format-refused.test.ts` (both directions; an undo refused when the cell was taken after the change; nothing written); `variant-update-duration.test.ts` (499 and 86,400,001 refused; the flag on a non-master only; undo).
 - **Exit check:** lint, typecheck, `npm test`.
@@ -121,7 +122,7 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, `npm test`.
 - **Class:** B + E. **Security:** full (an agent-reachable command that leads to paid calls). **Size:** medium.
 
-### P7-12 — Sound data
+### P7-12 — Sound data (built)
 
 - **Exists when done:** `variant.setSound` works as `phase-07.md`, "Sound", says; an asset a variant names as its sound cannot be removed.
 - **New files:** the body of `src/main/commands/variant/set-sound.ts`.
@@ -131,6 +132,7 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Tests first:** `tests/integration/commands/variant-set-sound.test.ts` (each value; `'file'` with no asset, a picture, a reference-library file, a missing ID; leaving `'file'` keeps the ID; undo; the four refusal rules); `tests/integration/commands/asset-remove-sound.test.ts`.
 - **Exit check:** lint, typecheck, `npm test`.
 - **Class:** B. **Security:** none. **Size:** small.
+- **As built:** a sound file kept after the variant leaves `'file'` still counts as in use, so it cannot be removed, and no command clears the stored ID. Undo replays the old sound value, which does not always bring back the old stored ID. Both are open questions for the owner (`phase-07.md`, open questions).
 
 ### P7-13 — Runs that would still charge (built)
 
