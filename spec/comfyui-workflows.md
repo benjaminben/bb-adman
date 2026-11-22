@@ -63,7 +63,7 @@ type WorkflowSpec = WorkflowInfo & {
 }
 ```
 
-- **Status.** `draft`: a stand-in graph for the tests, never sent to any server and never compared by the check. `trial`: a real graph, not yet proven; offered only with dev tools on, to the user or an agent (`spec/agent-runs.md`). `proven`: passed the owner check (`spec/comfyui-trials.md`, "Trials and `proven`").
+- **Status.** `draft`: a stand-in graph for the tests, never sent to any server and never compared by the check. `trial`: a real graph, not yet proven; offered only with dev tools on, to the user or an agent (`spec/agent-runs.md`). `proven`: passed the owner check (`spec/comfyui-trials.md`, "Trials and `proven`"). Since D-103 every shipped real workflow is `proven`; `trial` stays as the status a new shipped workflow enters with.
 - `WORKFLOWS` (`workflows/index.ts`) lists all eight; `NON_DRAFT_WORKFLOWS` is the one list the check and every run use.
 - **Owners.** A graph's owner is its file in `src/main/providers/comfyui/workflows/`. `comfy-workflows/` holds hand-test copies (canvas copies in `ui/`) that no code reads. Where `comfy-workflows/REFERENCE-NOTES.md` and `comfy-workflows/README.md` differ, the notes win. How many pictures a workflow takes has one owner: the length of `slots.references`; the window holds no copy.
 - Stock workflows use ComfyUI core nodes only. `needs.addOns` is empty for every shipped workflow, and one test holds that.
@@ -72,15 +72,15 @@ type WorkflowSpec = WorkflowInfo & {
 
 | ID | What it does | Job | Status on `main` | Min. ComfyUI | Model | Result node | Size rule in use | Limits |
 |----|--------------|-----|------------------|--------------|-------|-------------|------------------|--------|
-| `moss-text-to-image` | Picture from a prompt [REQ: FR-259] | `image` | `trial` | 0.42.0 | MOSS-Image | node 9 `PreviewImage` | first-run `{16, 840,000, 1,050,000}` | no references |
+| `moss-text-to-image` | Picture from a prompt [REQ: FR-259] | `image` | `proven` | 0.42.0 | MOSS-Image | node 9 `PreviewImage` | first-run `{16, 840,000, 1,050,000}` | no references |
 | `moss-edit-references` | Picture from a prompt and reference pictures, the "Image Edit" workflow (V-23); the first reference is the source photo [REQ: FR-260] | `image_refs` | `draft` | 0.43.0 | MOSS-Image with its edit LoRA | node 17 `PreviewImage` | full `{16, 1,000,000, 2,000,000}` | 1 to 2 references (two slots declared) |
 | `moss-extend` | Extend a background [REQ: FR-261] | `extend` | `draft` | 0.43.0 | MOSS-Image with its edit LoRA | node 18 `PreviewImage` | full `{16, 1,000,000, 2,000,000}` | the picture to extend, as one reference |
-| `h3-text-to-video` | Video from a prompt, no start picture | `video` | `trial` | 0.33.0 | MiniMax H3 (`fl2va`) | node 14 `SaveVideo` | first-run `{32, 330,000, 420,000}` | clip at most 15 s |
-| `h3-image-to-video` | Video from a first frame | `video` | `trial` | 0.33.0 | MiniMax H3 (`fl2va`) | node 14 `SaveVideo` | first-run `{32, 330,000, 420,000}` | one first frame; at most 15 s |
-| `h3-reference-to-video` | Video from reference pictures, no first frame | `video` | `trial` | 0.33.0 | MiniMax H3 (`ref2va`) | node 14 `SaveVideo` | first-run `{32, 330,000, 420,000}` | exactly 1 reference (model takes up to 9); at most 15 s |
-| `flux3-klein-edit-references` | Picture from a prompt and one reference picture; the result takes the reference's shape | `image_refs` | `trial` | none known (`'0.0.0'`) | FLUX 3 klein | node 15 `PreviewImage` | not set by the app: about 1 MP in the graph | exactly 1 reference |
+| `h3-text-to-video` | Video from a prompt, no start picture | `video` | `proven` | 0.33.0 | MiniMax H3 (`fl2va`) | node 14 `SaveVideo` | first-run `{32, 330,000, 420,000}` | clip at most 15 s |
+| `h3-image-to-video` | Video from a first frame | `video` | `proven` | 0.33.0 | MiniMax H3 (`fl2va`) | node 14 `SaveVideo` | first-run `{32, 330,000, 420,000}` | one first frame; at most 15 s |
+| `h3-reference-to-video` | Video from reference pictures, no first frame | `video` | `proven` | 0.33.0 | MiniMax H3 (`ref2va`) | node 14 `SaveVideo` | first-run `{32, 330,000, 420,000}` | exactly 1 reference (model takes up to 9); at most 15 s |
+| `flux3-klein-edit-references` | Picture from a prompt and one reference picture; the result takes the reference's shape | `image_refs` | `proven` | none known (`'0.0.0'`) | FLUX 3 klein | node 15 `PreviewImage` | not set by the app: about 1 MP in the graph | exactly 1 reference |
 
-- The eighth, `birefnet-cutout` (job `cutout`, core nodes only, `birefnet.ts`), is built and `trial`; its one real-server run is still owed, because the server lacks the model file. Design: `spec/ai-jobs.md`, "Cut-out".
+- The eighth, `birefnet-cutout` (job `cutout`, core nodes only, `birefnet.ts`), is built and `proven` by D-103; its one real-server run is still owed, because the server lacks the model file. Design: `spec/ai-jobs.md`, "Cut-out".
 - No workflow is `proven` on `main`; every `checkedWith` is `''`.
 - For `image_refs` the only non-draft workflow is Flux, so every ComfyUI reference-picture run uses it. Whether Flux or `moss-edit-references` serves references for good is OI-75 (open).
 - **Four kinds of video start** [REQ: FR-286]: three have a workflow. "First frame and references together" has none, because nothing public shows one run taking both (**U-20**). It is not offered and the app says so ("ComfyUI cannot make this kind of video yet."). It becomes its own workflow file if a trial finds a way.
@@ -106,7 +106,7 @@ The MOSS version is `SFT`; `SFT` or `Base` is decided with the MOSS trial (OI-34
 
 ### MiniMax H3
 
-All three are `trial`, version 2, graphs from agent drafts in `comfy-workflows/`. Shared slots: node 5 `prompt`, `width`, `height`, `length` (frames); node 6 `noise_seed`; node 14 `filename_prefix` (output prefix); output node 14. Node classes: `UNETLoader`, `CLIPLoader`, `VAELoader`, the conditioning node, `RandomNoise`, `KSamplerSelect`, `BasicScheduler`, `BasicGuider`, `SamplerCustomAdvanced`, `VAEDecode`, `VAEDecodeAudio`, `CreateVideo`, `SaveVideo`.
+All three are `proven` (D-103), version 2, graphs from agent drafts in `comfy-workflows/`. Shared slots: node 5 `prompt`, `width`, `height`, `length` (frames); node 6 `noise_seed`; node 14 `filename_prefix` (output prefix); output node 14. Node classes: `UNETLoader`, `CLIPLoader`, `VAELoader`, the conditioning node, `RandomNoise`, `KSamplerSelect`, `BasicScheduler`, `BasicGuider`, `SamplerCustomAdvanced`, `VAEDecode`, `VAEDecodeAudio`, `CreateVideo`, `SaveVideo`.
 
 - `h3-text-to-video`: the official template `video_minimax_h3_t2v.json`, flattened (20 steps, no speed-up LoRA). Conditioning node `MiniMaxH3ImageToVideo` with `prompt`, `width`, `height`, `length`, `clip`, `vae`, no first frame.
 - `h3-image-to-video`: the text graph plus node 15 `LoadImage` into `first_frame` (`slots.firstFrame` = node 15 `image`); `needs` adds `LoadImage`. The first frame goes straight from `LoadImage`, as the template does. H3 stretches a first frame of another shape; the fix is `fitPicture`'s crop in the app ("A video run"), never a resize node in the graph. An edit to `_meta.title` only is not a graph change.
@@ -144,14 +144,14 @@ All three are `trial`, version 2, graphs from agent drafts in `comfy-workflows/`
 Built. `offeredWorkflow` (`workflows/offered.ts`) for the commands; `workflowForRun` (`comfyui/image.ts`) in the adapter. Security class.
 
 - A `proven` workflow for the job (and, for video, the matching `videoStart` pair) first.
-- With `deps.devTools` true and the actor the user, a `trial` one where no `proven` one exists, so the plain screens can run it. Test it with `ADMAN_DEV_TOOLS=1 npm run dev`. Never in a packaged app.
-- An agent never gets a `trial` workflow. A `draft` is never sent to any server.
+- With `deps.devTools` true, a `trial` one where no `proven` one exists, so the plain screens can run it. Test it with `ADMAN_DEV_TOOLS=1 npm run dev`. Never in a packaged app.
+- The same holds for an agent under the ComfyUI tick [D-080]. A `draft` is never sent to any server.
 - Otherwise `generation.runImages`, `generation.startVideo` and `job.retry` refuse with `comfy_job_not_offered` before any job row, and the app says why [REQ: FR-254].
-- Tests: dev tools off refuses a `trial`; dev tools on with actor `agent` refuses; dev tools on with the user runs against the stand-in.
+- Tests: dev tools off refuses a `trial`; dev tools on runs it against the stand-in. The rule tests use a made-up trial copy of the shipped list (`tests/helpers/trial-workflows.ts`), since no shipped workflow is `trial` today.
 
 ## Where a graph comes from, and how one is fixed
 
-- **Source.** ComfyUI's own template for the model, in "Export (API)" form (V-3), changed by hand only as `source.changes` records: `PreviewImage` for pictures, the video prefix under `adman/`, app-filled values left at template defaults, a first-run size. Who exports is OI-38. Today's `trial` graphs are agent drafts flattened from the official templates.
+- **Source.** ComfyUI's own template for the model, in "Export (API)" form (V-3), changed by hand only as `source.changes` records: `PreviewImage` for pictures, the video prefix under `adman/`, app-filled values left at template defaults, a first-run size. Who exports is OI-38. Today's shipped graphs are agent drafts flattened from the official templates.
 - **Entering.** A drafted or exported graph enters `src/main/providers/comfyui/workflows/` as `trial` under its ID with `source` filled in, each in its own small commit. The tests on shipped files run on every one.
 - **Fixing one that fails on the real server.** Fix the shipped file, bump `version`, add one line to `source.changes`; in the same commit copy the graph over `comfy-workflows/{file}.json` and add one line under "Not verified" in `comfy-workflows/README.md` (canvas copies in `ui/` are not remade). A fix may change only an input name or value the server's answer names, a missing input, or a `class_type` spelling, each checked against ComfyUI's public source. A fix that needs an add-on, a model file outside the README's table, or a different graph shape goes to the architect. The tests on shipped files must pass: the graph is fixed, not the test.
 - **Licence text** [REQ: FR-285]. `licence.commercialNote` is shown wherever a workflow is described: the list of what a workflow needs, Settings, and the confirmation dialog. The app checks no licence.
@@ -204,7 +204,7 @@ Full sizes (`MOSS_FULL_SIZE`, `H3_FULL_SIZE`); these rows are unit tests, with o
 
 H3 at 768 × 1344 for 9:16 is accepted; the H3 numbers stay provisional until a trial (U-19). A video clip is therefore smaller in pixels than the variant, as FR-262 expects.
 
-**First-run sizes ("start small").** The `trial` specs use `MOSS_FIRST_RUN_SIZE = { 16, 840000, 1050000 }` and `H3_FIRST_RUN_SIZE = { 32, 330000, 420000 }` (1080 × 1080 gives 576 × 576 on H3); `draft` specs use the full sizes. Each first-run spec has one `source.changes` line: "first-run size; full size is { multiple: …, minPixels: …, maxPixels: … }". Moving to full size is one line per spec, by a ruling, after the stakeholder has seen a small run work. Video frames stay 56 on first runs.
+**First-run sizes ("start small").** The shipped MOSS and H3 specs (entered as `trial`, now `proven`) use `MOSS_FIRST_RUN_SIZE = { 16, 840000, 1050000 }` and `H3_FIRST_RUN_SIZE = { 32, 330000, 420000 }` (1080 × 1080 gives 576 × 576 on H3); `draft` specs use the full sizes. Each first-run spec has one `source.changes` line: "first-run size; full size is { multiple: …, minPixels: …, maxPixels: … }". Moving to full size is one line per spec, by a ruling, after the stakeholder has seen a small run work. Video frames stay 56 on first runs.
 
 ## A video run [REQ: FR-262, FR-283, FR-286]
 

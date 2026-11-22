@@ -162,7 +162,7 @@ The request: `role` is `call_to_action` when the layer's slot is `call-to-action
 
 **Route.** ComfyUI on the stakeholder's own server, with ComfyUI's built-in background removal: core nodes only, no add-on. fal comes in Phase 7 (slice J) as a second, paid route behind the same `CutoutProvider`. The fake provider does it for tests.
 
-**The workflow** `birefnet-cutout` (`src/main/providers/comfyui/workflows/birefnet-cutout.json`, spec `birefnet.ts`), an agent draft shipped as `trial` (`spec/comfyui-trials.md`: only with dev tools on until the stakeholder's own check sets `proven`):
+**The workflow** `birefnet-cutout` (`src/main/providers/comfyui/workflows/birefnet-cutout.json`, spec `birefnet.ts`), an agent draft shipped as `trial` and set to `proven` by D-103, so it is offered without dev tools:
 
 | Node | `class_type` | Inputs |
 |------|--------------|--------|
