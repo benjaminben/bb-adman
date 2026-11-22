@@ -23,8 +23,8 @@ const item = (n: number, over: Partial<ReportListItem> = {}): ReportListItem => 
   ...over,
 })
 
-const ROW_2 = 'Export 2 · 2026-11-22 09:05 UTC · 3 exported, 1 failed · ' + FOLDER
-const ROW_1 = 'Export 1 · 2026-11-21 09:05 UTC · 3 exported, 0 failed · ' + FOLDER
+const ROW_2 = 'Export 2…'
+const ROW_1 = 'Export 1…'
 
 async function openList(answers: ReportListItem[][] = [[item(2), item(1)]]) {
   const fake = makeFakeApi()
@@ -47,8 +47,8 @@ async function openList(answers: ReportListItem[][] = [[item(2), item(1)]]) {
 const rows = async () => {
   const list = await screen.findByRole('list', { name: 'Reports' })
   return within(list)
-    .getAllByRole('listitem')
-    .map((li) => li.querySelector('p')?.textContent)
+    .getAllByRole('button')
+    .map((row) => row.getAttribute('aria-label'))
 }
 const lists = (fake: ReturnType<typeof makeFakeApi>) =>
   fake.queries.filter((q) => q.name === 'report.list')
@@ -62,9 +62,9 @@ describe('the reports list [P8-12]', () => {
     expect(await axeViolations()).toEqual([])
   })
 
-  it('says "No export yet." when the campaign has none', async () => {
+  it('says "No exports yet" when the campaign has none', async () => {
     const { dialog } = await openList([[]])
-    expect(await within(dialog).findByText('No export yet.')).toBeTruthy()
+    expect(await within(dialog).findByText('No exports yet')).toBeTruthy()
   })
 
   it('reads again on project.changed for its project only', async () => {
@@ -77,7 +77,7 @@ describe('the reports list [P8-12]', () => {
     act(() =>
       fake.emit('project.changed', { projectId: P, changed: {}, removed: {}, actor: 'user' }),
     )
-    await screen.findByText(ROW_2)
+    await screen.findByRole('button', { name: ROW_2 })
     expect(lists(fake)).toHaveLength(2)
   })
 
@@ -91,16 +91,15 @@ describe('the reports list [P8-12]', () => {
     job({ status: 'succeeded', kind: 'image_generation' })
     expect(lists(fake)).toHaveLength(1)
     job({ status: 'succeeded' })
-    await screen.findByText(ROW_2)
+    await screen.findByRole('button', { name: ROW_2 })
     job({ status: 'failed' })
     expect(lists(fake)).toHaveLength(3)
   })
 
-  it("opens a report's view with Open", async () => {
+  it("opens a report's view with a click on its row", async () => {
     const { fake } = await openList()
     await rows()
-    const opens = screen.getAllByRole('button', { name: 'Open' })
-    await userEvent.click(opens[1] as HTMLElement)
+    await userEvent.click(screen.getByRole('button', { name: ROW_1 }))
     expect(await screen.findByRole('dialog', { name: 'Export report' })).toBeTruthy()
     expect(fake.queries).toContainEqual({
       name: 'report.get',
