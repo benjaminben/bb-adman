@@ -114,6 +114,28 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
       { project_id: p, variant_id: 'v1', layer_ids: ['l-text'] },
       [{ project_id: p, variant_id: 'v1', layer_ids: [] }],
     ],
+    // P10-5: the AI tools, on the fake provider, over variant v-ai of ai-tools-fixture.ts.
+    [
+      'propose_layout',
+      { project_id: p, variant_id: 'v-ai', provider: 'fake' },
+      [
+        { project_id: p, variant_id: 'v-ai', provider: 'gemini' },
+        { project_id: p, variant_id: 'x', provider: 'fake' },
+      ],
+    ],
+    [
+      'copy_options',
+      { project_id: p, variant_id: 'v-ai', layer_id: 'l-ai-cta', count: 2, provider: 'fake' },
+      [{ project_id: p, variant_id: 'v1', layer_id: 'l-text', count: 2, provider: 'fake' }],
+    ],
+    [
+      'cut_out',
+      { project_id: p, variant_id: 'v-ai', layer_id: 'l-ai-picture', provider: 'fake' },
+      [
+        { project_id: p, variant_id: 'v-ai', layer_id: 'l-ai-picture', provider: 'made-up' },
+        { project_id: p, variant_id: 'v1', layer_id: 'l-text', provider: 'fake' },
+      ],
+    ],
     // P10-6: this core refuses every ask, so its success reply is word-tested in ask-flow.test.ts.
     ['delete_campaign', null, [{ project_id: p, campaign_id: ids.campaign }]],
   ]

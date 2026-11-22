@@ -38,6 +38,9 @@ const SECTION_4_5_TOOLS = [
   'generate_images',
   'generate_video',
   'cancel_job',
+  'propose_layout',
+  'copy_options',
+  'cut_out',
 ]
 
 async function listTools(fx: McpFixture): Promise<string[]> {

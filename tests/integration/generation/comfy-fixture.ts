@@ -23,6 +23,8 @@ type FixtureOptions = {
   fitPicture?: CoreOptions['fitPicture']
   // P10-3: a stand-in for the render window's draw.
   drawScene?: CoreOptions['drawScene']
+  // P10-5: ADMAN_FAKE_PROVIDERS, so the AI tools can run on the fake provider.
+  env?: Record<string, string>
   // S2-4: the model labels saved in settings.licenceConfirmed. By default every model that
   // needs a commercial licence, so tests of other rules are not refused by that check.
   licenceConfirmed?: string[]
@@ -38,7 +40,7 @@ export async function makeComfyFixture(opts: FixtureOptions) {
     documentsDir: root,
     appVersion: '0.1.0',
     crypto: fakeCrypto(),
-    env: {},
+    env: opts.env ?? {},
     devTools: opts.devTools,
     emit: (e) => events.push(e),
     askPermission: async () => false,

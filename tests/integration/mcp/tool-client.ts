@@ -22,6 +22,9 @@ export const BUILT_TOOLS = [
   'update_layers',
   'delete_layer',
   'reorder_layers',
+  'propose_layout',
+  'copy_options',
+  'cut_out',
   'delete_campaign',
 ]
 
