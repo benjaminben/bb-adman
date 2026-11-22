@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { Geometry } from '@/shared/schemas/layer'
 
 // spec/data-model-campaign.md background_clip, in wire form (SPEC 4.4). P5-1 adds it for
-// VariantSnapshot; the clip commands and its place in ROW_SCHEMAS come with Phase 7.
+// VariantSnapshot; P7-2 adds soundOn and its place in ROW_SCHEMAS.
 export const BackgroundClipRow = z.object({
   id: z.string(),
   variantId: z.string(),
@@ -11,5 +11,6 @@ export const BackgroundClipRow = z.object({
   inMs: z.number().int(),
   outMs: z.number().int(),
   placement: Geometry.nullable(), // null = the background layer's geometry
+  soundOn: z.boolean(),
 })
 export type BackgroundClipRow = z.infer<typeof BackgroundClipRow>

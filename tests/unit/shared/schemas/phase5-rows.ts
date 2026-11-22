@@ -43,6 +43,9 @@ export const VARIANT = {
   createdBy: 'user',
   createdAt: '2026-11-21T10:00:00.000Z',
   agentChangedAt: null,
+  firstClipMade: false,
+  sound: 'clips',
+  soundAssetId: null,
 }
 
 const CLIP = {
@@ -53,6 +56,7 @@ const CLIP = {
   inMs: 0,
   outMs: 1000,
   placement: null,
+  soundOn: true,
 }
 
 export const SNAPSHOT = { variant: VARIANT, subjectIds: ['S1'], layers: [LAYER], clips: [CLIP] }

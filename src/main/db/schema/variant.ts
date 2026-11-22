@@ -31,9 +31,14 @@ export const variant = sqliteTable(
     createdAt: text('created_at').notNull(),
     // [1.8] migration 0001: last time an agent changed the variant; null = never (FR-239).
     agentChangedAt: text('agent_changed_at'),
+    // P7-2 migration 0005: the first clip has been made (OI-20); the sound of a video.
+    firstClipMade: integer('first_clip_made').notNull().default(0),
+    sound: text('sound').notNull().default('clips'),
+    soundAssetId: text('sound_asset_id').references(() => asset.id),
   },
   (t) => [
     check('variant_format', sql`${t.format} IN ('image','video')`),
+    check('variant_sound', sql`${t.sound} IN ('clips','file','none')`),
     check('variant_created_by', sql`${t.createdBy} IN ('user','agent')`),
     uniqueIndex('variant_grid').on(t.directionId, t.sizeLabel, t.language, t.format),
   ],
@@ -106,6 +111,7 @@ export const backgroundClip = sqliteTable(
     inMs: integer('in_ms').notNull(),
     outMs: integer('out_ms').notNull(),
     placement: text('placement'),
+    soundOn: integer('sound_on').notNull().default(1),
   },
   (t) => [index('clip_variant').on(t.variantId, t.startMs)],
 )

@@ -133,6 +133,9 @@ const variant = (v: VariantSummary) => ({
   createdBy: v.createdBy,
   createdAt: v.createdAt,
   agentChangedAt: v.agentChangedAt,
+  firstClipMade: v.firstClipMade,
+  sound: v.sound,
+  soundAssetId: v.soundAssetId,
   isMaster: v.isMaster,
   subjectIds: [...v.subjectIds],
   badges: {

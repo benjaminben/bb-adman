@@ -33,6 +33,8 @@ const FLAGS = new Set([
   'locked',
   'linked',
   'overflow',
+  'firstClipMade',
+  'soundOn',
 ])
 
 // SPEC 3.3 JSON columns, by table. Each value is checked with its table's wire row schema.

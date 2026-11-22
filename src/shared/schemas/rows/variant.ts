@@ -16,6 +16,9 @@ export const VariantRow = z.object({
   createdBy: z.enum(['user', 'agent']),
   createdAt: z.string(),
   agentChangedAt: z.string().nullable(), // [1.8] FR-239; null = never
+  firstClipMade: z.boolean(), // P7-2, OI-20: the first clip has been made
+  sound: z.enum(['clips', 'file', 'none']),
+  soundAssetId: z.string().nullable(), // the sound file when sound is 'file'
 })
 export type VariantRow = z.infer<typeof VariantRow>
 

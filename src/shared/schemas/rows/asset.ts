@@ -4,7 +4,7 @@ import { z } from 'zod'
 export const AssetRow = z.object({
   id: z.string(),
   library: z.enum(['reference', 'asset']),
-  kind: z.enum(['image', 'video', 'font', 'text']),
+  kind: z.enum(['image', 'video', 'font', 'text', 'audio']),
   origin: z.enum(['imported', 'generated']),
   storage: z.enum(['linked', 'managed']),
   subjectId: z.string().nullable(),

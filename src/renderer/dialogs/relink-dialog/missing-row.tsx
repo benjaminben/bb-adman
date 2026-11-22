@@ -8,6 +8,7 @@ const KIND_WORDS: Record<MissingAsset['kind'], string> = {
   video: 'video',
   font: 'font',
   text: 'text file',
+  audio: 'sound file',
 }
 
 const LIBRARY_WORDS: Record<MissingAsset['library'], string> = {
