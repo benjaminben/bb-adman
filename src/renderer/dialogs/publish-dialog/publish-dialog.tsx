@@ -39,6 +39,7 @@ const STARTED =
 export function PublishDialog(props: PublishDialogProps) {
   const { projectId, campaignId } = props
   const command = useApp((s) => s.command)
+  const clearError = useApp((s) => s.clearError)
   const inspect = usePublishInspect(projectId, campaignId)
   const { reply, existing, storage } = inspect
   const [replaceTicked, setReplaceTicked] = useState(false)
@@ -74,6 +75,8 @@ export function PublishDialog(props: PublishDialogProps) {
     if (sent.ok) return setStarted(true)
     const listed = input.proceedDespiteWarnings ? null : warningsOf(sent.error)
     if (listed === null) return setRefusal(sent.error)
+    // The step shows the warnings, so they leave the error banner, as in the export dialog.
+    clearError()
     setHeld(input)
     setReason('')
     setWarnings(listed)

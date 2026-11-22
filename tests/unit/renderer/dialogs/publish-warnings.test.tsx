@@ -32,6 +32,8 @@ const WARNED: Result<unknown> = {
   },
 }
 
+let store: Awaited<ReturnType<typeof renderApp>>['store']
+
 async function openWarned(replies: Array<Result<unknown>> = []) {
   const fake = makeFakeApi()
   fake.onQuery('publish.inspect', (input) => ({
@@ -48,7 +50,7 @@ async function openWarned(replies: Array<Result<unknown>> = []) {
   }))
   const sends = [WARNED, ...replies]
   fake.onCommand('publish.run', () => sends.shift() ?? { ok: true, data: { jobId: 'job1' } })
-  await renderApp(
+  ;({ store } = await renderApp(
     <PublishDialog
       projectId="p1"
       campaignId="01JD00000000000000000000CA"
@@ -56,7 +58,7 @@ async function openWarned(replies: Array<Result<unknown>> = []) {
       onClose={() => undefined}
     />,
     fake,
-  )
+  ))
   await userEvent.click(await screen.findByRole('radio', { name: 'Amazon S3' }))
   await userEvent.click(
     await screen.findByRole('checkbox', { name: 'Replace the published files' }),
@@ -87,6 +89,11 @@ describe('the publish warnings step [P9-13]', () => {
     expect(reasonField()).toHaveAccessibleDescription(PUBLISHED_LINE)
     expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull()
     expect(screen.getByRole('button', { name: 'Back' })).toBeEnabled()
+  })
+
+  it('takes the warnings refusal out of the error banner', async () => {
+    await openWarned()
+    expect(store.getState().error).toBeNull()
   })
 
   it('caps the reason at 500 characters', async () => {
