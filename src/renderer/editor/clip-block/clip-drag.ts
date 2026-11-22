@@ -5,8 +5,9 @@
 // (A-181); any other overlap snaps back.
 import { MAX_TRACK_MS, MIN_CLIP_MS } from '@/shared/schemas/commands/clip'
 import { clipEnd, overlapsAny, type TrackClip } from '@/shared/clips/track'
+import { stepsOf } from '@/renderer/editor/timeline-math/timeline-math'
 
-const STEP_MS = 100
+export { stepsOf }
 
 export type ClipKind = 'image' | 'video'
 
@@ -17,12 +18,6 @@ export type TrimJudgement =
   { kind: 'back' } | { kind: 'update'; change: Partial<Omit<TrackClip, 'id'>> }
 
 const clamp = (n: number, low: number, high: number) => Math.min(Math.max(n, low), high)
-
-// A pointer's move across the lane, as a time in 100 ms steps.
-export function stepsOf(px: number, laneWidth: number, durationMs: number): number {
-  if (laneWidth <= 0) return 0
-  return Math.round((px / laneWidth) * (durationMs / STEP_MS)) * STEP_MS || 0
-}
 
 export function moveBy(clip: TrackClip, deltaMs: number): TrackClip {
   return { ...clip, startMs: clamp(clip.startMs + deltaMs, 0, MAX_TRACK_MS) }
