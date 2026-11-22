@@ -44,11 +44,20 @@ export async function localise(app: ElectronApplication, page: Page, project: st
 export const translations = (page: Page): Locator =>
   page.getByRole('region', { name: 'Translations' })
 
-// The language's group, its heading "{language} · {a} of {n} approved".
+// The language's Section, its heading the language's name (CAMP-5).
 export const group = (page: Page, language: string): Locator =>
-  translations(page).getByRole('region', {
-    name: new RegExp(`^${language} · \\d+ of \\d+ approved$`),
-  })
+  translations(page).getByRole('region', { name: language, exact: true })
+
+// The language's approved bar, its title "{a} of {n} approved" (CAMP-5).
+export const approvedBar = (page: Page, language: string): Locator =>
+  group(page, language).getByTitle(/^\d+ of \d+ approved$/)
+
+// "{a} of {n} approved" read from the bar: gives [a, n].
+export async function approvedCount(page: Page, language: string): Promise<[number, number]> {
+  const tip = (await approvedBar(page, language).getAttribute('title')) ?? ''
+  const found = /^(\d+) of (\d+) approved$/.exec(tip)
+  return [Number(found?.[1]), Number(found?.[2])]
+}
 
 export const rows = (page: Page, language: string): Locator =>
   group(page, language)
@@ -70,8 +79,10 @@ export async function approveAll(page: Page, language: string, count: number): P
   await group(page, language)
     .getByRole('button', { name: `Approve all ${language}` })
     .click()
-  const heading = `${language} · ${count} of ${count} approved`
-  await expect(translations(page).getByRole('region', { name: heading })).toBeVisible()
+  await expect(approvedBar(page, language)).toHaveAttribute(
+    'title',
+    `${count} of ${count} approved`,
+  )
 }
 
 // The next save dialog answers with this path, as if the user had chosen it.
@@ -87,7 +98,8 @@ export async function answerSaveDialog(app: ElectronApplication, filePath: strin
 export async function exportSheet(page: Page, fileName: string): Promise<void> {
   await showCampaignView(page, 'Translations')
   await translations(page).getByRole('button', { name: 'Export translation sheet…' }).click()
-  await expect(translations(page).getByText(`Saved ${fileName}.`)).toBeVisible()
+  // CAMP-5: a "Saved" mark with the file's base name in its title.
+  await expect(translations(page).getByTitle(fileName, { exact: true })).toContainText('Saved')
 }
 
 // The Checks tab's "Rules" Section, opened when it is shut (CAMP-4: it starts shut when a rule
