@@ -1,10 +1,10 @@
 // P8-1 (spec/phases/phase-08-slices.md, "P8-1 — Contracts"): every Phase 8 command, query, job
 // kind and port is registered against a stub. A stub checks its input, then refuses before it
-// reads or writes anything. The agent rows are final now. Each later slice removes exactly its
-// own rows from the tables below when it fills its stub.
+// reads or writes anything. Each later slice removed its own rows when it filled its stub: the
+// command and query stubs are all filled now (P8-5, P8-9), so what stays here is the
+// registration, the internal-command rule and the ports still unfilled.
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, data, type Fixture } from '../core-fixture'
-import { AGENT_POLICY, denialMessage } from '@/main/commands/agent-policy'
 import { exportCommands } from '@/main/commands/export'
 import { reportQueries } from '@/main/queries/report'
 import { jobKindHandlers } from '@/main/jobs/kinds'
@@ -25,40 +25,6 @@ async function open(): Promise<{ fx: Fixture; projectId: string }> {
   return { fx, projectId: data<{ projectId: string }>(made).projectId }
 }
 
-const refusal = (message: string, reason: string) => ({
-  ok: false,
-  error: { code: 'RULE_VIOLATION', message, details: { reason } },
-})
-
-// One row per stub command: a good input without projectId, the stub's answer, its policy,
-// whether it is internal, and an input its schema refuses.
-type CommandRow = {
-  name: string
-  input: object
-  answer: object
-  policy: 'deny'
-  internal: boolean
-  bad: object
-}
-const COMMANDS: CommandRow[] = [
-  {
-    name: 'export.run',
-    input: {
-      campaignId: 'C1',
-      variantIds: ['V1'],
-      outputDir: '/nowhere/Exports',
-      imageFormat: 'png',
-      jpgQuality: 90,
-      fps: 30,
-      proceedDespiteWarnings: false,
-    },
-    answer: refusal('Export is not built yet.', 'export_not_built'),
-    policy: 'deny',
-    internal: false,
-    bad: { campaignId: 'C1', variantIds: [] },
-  },
-]
-
 describe('Phase 8 registration [P8-1]', () => {
   it('registers the export commands and the report queries on core', async () => {
     const { fx } = await open()
@@ -72,41 +38,9 @@ describe('Phase 8 registration [P8-1]', () => {
   it('has one handler for the export job kind', () => {
     expect(jobKindHandlers.filter((h) => h.kind === 'export')).toHaveLength(1)
   })
-
-  it.each(COMMANDS)('$name has its own policy row', ({ name, policy }) => {
-    expect(AGENT_POLICY[name]?.policy).toBe(policy)
-  })
-
-  it.each(COMMANDS)('$name is internal exactly when it is a system command', async (row) => {
-    const { fx } = await open()
-    expect(fx.core.isInternal(row.name)).toBe(row.internal)
-  })
 })
 
-describe('the Phase 8 command stubs [P8-1]', () => {
-  it.each(COMMANDS)('$name as the user refuses and writes nothing', async (row) => {
-    const { fx, projectId } = await open()
-    const before = fx.events.length
-    expect(await fx.user(row.name, { projectId, ...row.input })).toEqual(row.answer)
-    expect(fx.events.slice(before)).toEqual([])
-  })
-
-  it.each(COMMANDS)('$name checks its input before the stub answers', async (row) => {
-    const { fx, projectId } = await open()
-    expect(await fx.user(row.name, { projectId, ...row.bad })).toMatchObject({
-      ok: false,
-      error: { code: 'INVALID_INPUT' },
-    })
-  })
-
-  it.each(COMMANDS)('$name as the agent is AGENT_DENIED', async (row) => {
-    const { fx, projectId } = await open()
-    expect(await fx.agent(row.name, { projectId, ...row.input })).toEqual({
-      ok: false,
-      error: { code: 'AGENT_DENIED', message: denialMessage(row.name) },
-    })
-  })
-
+describe('the Phase 8 internal command [P8-1]', () => {
   it('answers a window that sends an internal command as unknown, and runs nothing', async () => {
     const { fx, projectId } = await open()
     type Handler = (event: unknown, ...args: unknown[]) => unknown
@@ -125,12 +59,11 @@ describe('the Phase 8 command stubs [P8-1]', () => {
       },
     )
     const command = handlers.get(IPC.command)
-    for (const row of COMMANDS.filter((r) => r.internal)) {
-      expect(await command?.({}, row.name, { projectId, ...row.input })).toEqual({
-        ok: false,
-        error: { code: 'INVALID_INPUT', message: `Unknown command: ${row.name}` },
-      })
-    }
+    expect(fx.core.isInternal('report.add')).toBe(true)
+    expect(await command?.({}, 'report.add', { projectId, campaignId: 'C1' })).toEqual({
+      ok: false,
+      error: { code: 'INVALID_INPUT', message: 'Unknown command: report.add' },
+    })
     expect(sent).toEqual([])
   })
 })
@@ -168,17 +101,6 @@ describe('the Phase 8 job kind and port stubs [P8-1]', () => {
 })
 
 describe('what the Phase 8 contracts keep out of logs and replies [P8-1, A-196, A-201]', () => {
-  it('puts no folder path in a stub refusal or a log line', async () => {
-    const { fx, projectId } = await open()
-    const replies = []
-    for (const row of COMMANDS) {
-      replies.push(await fx.user(row.name, { projectId, ...row.input }))
-      replies.push(await fx.agent(row.name, { projectId, ...row.input }))
-    }
-    expect(JSON.stringify(replies)).not.toContain('/nowhere')
-    expect(fx.readLogs()).not.toContain('/nowhere')
-  })
-
   it('saves the exporter name through settings.update and logs none of it', async () => {
     const { fx } = await open()
     const saved = await fx.user('settings.update', { reports: { exporterName: ' Sam Rivera ' } })
