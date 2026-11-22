@@ -1,5 +1,5 @@
-// Start-up and the single-instance lock (SPEC 12). A double-clicked project file
-// arrives as 'open-file' on macOS and as a command-line argument on Windows.
+// Start-up (SPEC 12). A double-clicked project file arrives as 'open-file' on macOS and as a
+// command-line argument on Windows; single-instance.ts and open-from-system.ts handle both.
 import {
   app,
   BrowserWindow,
@@ -26,6 +26,8 @@ import { checkChangedFiles, withChangeChecks } from './assets/change-trigger'
 import { DIALOG_QUERIES, runDialogQuery } from './windows/dialogs'
 import { eventSender, fromMainFrame, registerIpc } from './ipc'
 import { projectPathFromArgv } from './open-file'
+import { systemOpener } from './open-from-system'
+import { runSingleInstance } from './single-instance'
 import { safeStorageCrypto } from './secrets/safe-storage'
 import { createDraw } from './render/draw'
 import { endRenderWindow } from './render/render-window'
@@ -53,9 +55,6 @@ if (quiet && process.platform === 'darwin') app.setActivationPolicy('accessory')
 if (!bridgeMode) registerAssetScheme(protocol)
 
 let core: Core | null = null
-const pendingOpens: string[] = []
-const fromArgv = projectPathFromArgv(process.argv)
-if (fromArgv) pendingOpens.push(fromArgv)
 
 // The one app window. Every use goes through this reference, never through a list of all
 // windows, which would include the hidden render window (spec/scene.md, "Life of the window").
@@ -150,17 +149,14 @@ function checkFiles(projectId: string): Promise<void> {
   return checkChangedFiles({ execute, emit: send, log: ready.log }, projectId)
 }
 
-async function openFromSystem(filePath: string): Promise<void> {
-  if (!core) {
-    pendingOpens.push(filePath)
-    return
-  }
-  const win = mainWindow()
-  const execute = withChangeChecks(core.bus.execute, checkFiles)
-  const result = await execute('project.open', { filePath }, { actor: 'user' })
-  if (!result.ok)
-    await dialog.showMessageBox(win, { type: 'warning', message: result.error.message })
-}
+const opener = systemOpener({
+  execute: () => (core ? withChangeChecks(core.bus.execute, checkFiles) : null),
+  mainWindow,
+  emit: send,
+  warn: (win, message) => dialog.showMessageBox(win, { type: 'warning', message }),
+})
+const fromArgv = projectPathFromArgv(process.argv)
+if (fromArgv) opener.pending.push(fromArgv)
 
 function start(): void {
   // Both windows use the default session, so this covers the render window too.
@@ -237,43 +233,42 @@ function start(): void {
   const devTools = devToolsEnabled(app.isPackaged, process.env)
   setAppMenu(Menu, { platform: process.platform, appName: app.name, devTools })
   openAppWindow()
-  for (const filePath of pendingOpens.splice(0)) void openFromSystem(filePath)
+  opener.openPending()
+}
+
+function quitHandlers(): void {
+  app.on('window-all-closed', () => app.quit())
+  app.on('before-quit', (event) => {
+    if (mustAsk()) {
+      event.preventDefault()
+      void askToQuit()
+      return
+    }
+    // Quitting closes the MCP listener and drops its sessions (SPEC 5.3).
+    void core?.mcp.stop()
+    cancelDropboxSignIn()
+    endRenderWindow()
+    endWebpDecoder()
+    core?.closeAll()
+  })
 }
 
 function startApp(): void {
   app.on('browser-window-focus', () =>
     core?.projects.all().forEach((h) => void checkFiles(h.projectId)),
   )
-
   app.on('open-file', (event, filePath) => {
     event.preventDefault()
-    void openFromSystem(filePath)
+    void opener.open(filePath)
   })
-
-  if (!app.requestSingleInstanceLock()) {
-    app.quit()
-  } else {
-    app.on('second-instance', (_event, argv) => {
-      const filePath = projectPathFromArgv(argv)
-      if (filePath) void openFromSystem(filePath)
-      else mainWindow()
-    })
-    app.on('window-all-closed', () => app.quit())
-    app.on('before-quit', (event) => {
-      if (mustAsk()) {
-        event.preventDefault()
-        void askToQuit()
-        return
-      }
-      // Quitting closes the MCP listener and drops its sessions (SPEC 5.3).
-      void core?.mcp.stop()
-      cancelDropboxSignIn()
-      endRenderWindow()
-      endWebpDecoder()
-      core?.closeAll()
-    })
-    void app.whenReady().then(start)
-  }
+  runSingleInstance(app, {
+    platform: process.platform,
+    pendingPaths: () => opener.pending,
+    open: (filePath) => void opener.open(filePath),
+    wake: () => mainWindow(),
+    onLocked: quitHandlers,
+    start,
+  })
 }
 
 if (bridgeMode) runBridge(app, safeStorageCrypto)
