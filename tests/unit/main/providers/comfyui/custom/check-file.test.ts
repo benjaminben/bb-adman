@@ -109,8 +109,8 @@ describe('checkWorkflowText: the shape of each node', () => {
     ['no class_type', { n: { inputs: {} } }],
     ['an empty class_type', { n: node('', {}) }],
     ['a class_type of 129 characters', { n: node('C'.repeat(129), {}) }],
-    ['a class_type with a format character', { n: node('A‎B', {}) }],
-    ['a class_type with a line separator', { n: node('A B', {}) }],
+    ['a class_type with a format character', { n: node(`A${String.fromCharCode(0x200e)}B`, {}) }],
+    ['a class_type with a line separator', { n: node(`A${String.fromCharCode(0x2028)}B`, {}) }],
     ['inputs that are a list', { n: { class_type: 'X', inputs: [] } }],
     ['no inputs', { n: { class_type: 'X' } }],
     ['an empty input name', { n: node('X', { '': 1 }) }],

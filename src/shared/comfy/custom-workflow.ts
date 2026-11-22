@@ -31,6 +31,16 @@ export const MAX_WORKFLOW_BYTES = 2 * 1024 * 1024
 export const MAX_WORKFLOW_NODES = 500
 export const MAX_WORKFLOW_NAME = 60
 
+// A workflow's name: 1 to 60 characters, not only spaces, with no control, format or line
+// break character. Uniqueness is the store's rule.
+const NAME_REFUSED = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u
+export const workflowNameSchema = z
+  .string()
+  .refine(
+    (name) =>
+      [...name].length <= MAX_WORKFLOW_NAME && name.trim() !== '' && !NAME_REFUSED.test(name),
+  )
+
 // One megapixel here is 2^20 pixels, as the defaults are.
 const MEGAPIXEL = 1_048_576
 export const SIZE_MULTIPLES = [8, 16, 32, 64] as const

@@ -26,10 +26,12 @@ export const LEAVES = {
     "Reference pictures and first frames that Adman uploads stay in the server's input folder, under adman/.",
   preview: "Each picture leaves a file in the server's temporary folder until the server restarts.",
   video: "Each video run leaves a file in the server's output folder, under adman/.",
+  // D-104: only a workflow a person or an agent added has it.
+  custom: 'A workflow you add can leave files on the server wherever its own steps save them.',
   record: 'The server keeps its own record of each run, the prompt included.',
 } as const
 
-// The four sentences in one fixed order, for comfy.getInfo's list.
+// The sentences in one fixed order, for comfy.getInfo's list.
 export const LEAVES_ORDER: readonly string[] = Object.values(LEAVES)
 
 export const MOSS_MODEL = {
