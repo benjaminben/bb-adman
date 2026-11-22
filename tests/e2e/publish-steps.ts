@@ -12,6 +12,8 @@ export const CAMPAIGN = 'Harbor Day Cold Brew'
 const PHOTO = path.resolve('tests/shots/fixtures/photos/glass-bottle.png')
 
 export type Ids = { projectId: string; campaignId: string; variantId: string }
+export type Size = { label: string; width: number; height: number }
+const SQUARE: Size = { label: '1080x1080', width: 1080, height: 1080 }
 
 // The app window, found by its page address (the quiet launch keeps every window hidden).
 export async function appWindow(app: ElectronApplication): Promise<Page> {
@@ -29,7 +31,9 @@ function sandboxPicture(projects: string): string {
   return copy
 }
 
-export async function setUpCampaign(page: Page, projects: string): Promise<Ids> {
+// One size, the square one unless another is given (the shots use a large one, so the
+// publish runs long enough to be seen running).
+export async function setUpCampaign(page: Page, projects: string, size = SQUARE): Promise<Ids> {
   await screens.createProject(page, 'Harbor Day')
   const state = (await query(page, 'app.getState', {})) as {
     openProjects: { projectId: string }[]
@@ -53,7 +57,7 @@ export async function setUpCampaign(page: Page, projects: string): Promise<Ids> 
     },
     subjectMap: [{ subjectId: 'bottle', create: true }],
     languages: ['en', 'de'],
-    sizes: [{ label: '1080x1080', width: 1080, height: 1080 }],
+    sizes: [size],
     templateId: 'starter',
   })) as { campaignId: string; variantId: string }
   await command(page, 'layer.create', {
@@ -66,7 +70,7 @@ export async function setUpCampaign(page: Page, projects: string): Promise<Ids> 
       style: { opacity: 1 },
     },
   })
-  await addGerman(page, projectId, campaignId)
+  await addGerman(page, { projectId, campaignId }, size.label)
   return { projectId, campaignId, variantId }
 }
 
@@ -79,12 +83,17 @@ const GERMAN: Record<string, string> = {
 
 // The German post, its texts typed and approved, so the ads have no warnings and the
 // translation sheet has rows.
-async function addGerman(page: Page, projectId: string, campaignId: string): Promise<void> {
+async function addGerman(
+  page: Page,
+  ids: { projectId: string; campaignId: string },
+  sizeLabel: string,
+): Promise<void> {
+  const { projectId, campaignId } = ids
   const got = (await query(page, 'campaign.get', { projectId, campaignId })) as {
     directions: Array<{ id: string }>
   }
   const directionId = got.directions[0]!.id
-  const add = { projectId, directionId, sizeLabel: '1080x1080', language: 'de', format: 'image' }
+  const add = { projectId, directionId, sizeLabel, language: 'de', format: 'image' }
   await command(page, 'variant.add', add)
   const rows = async () =>
     ((await query(page, 'translation.forCampaign', { projectId, campaignId })) as { rows: Row[] })
