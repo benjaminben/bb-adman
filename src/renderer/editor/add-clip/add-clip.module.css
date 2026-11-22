@@ -2,6 +2,8 @@
 /* The add list under the background row: the usable files as a wrapping row of choices,
    then "Import…". */
 .panel {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

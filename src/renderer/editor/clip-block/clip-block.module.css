@@ -11,7 +11,7 @@
   border: var(--border-width) solid var(--color-accent);
   border-radius: var(--radius);
   background: var(--color-accent-soft);
-  color: var(--color-accent-text);
+  color: var(--color-accent-ink);
 }
 .video {
   background: var(--color-info-bg);
@@ -41,6 +41,7 @@
   background: transparent;
   color: inherit;
   font-size: var(--font-size-small);
+  justify-content: flex-start;
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -53,6 +54,9 @@
 
 /* The chosen clip's actions, under the row. */
 .actions {
+  position: relative;
+  z-index: 1;
+  background: var(--color-bg);
   display: flex;
   align-items: center;
   gap: var(--space-3);
