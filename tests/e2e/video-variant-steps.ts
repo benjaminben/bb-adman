@@ -18,13 +18,17 @@ export const VIDEO_PROMPT = 'Warm light drifts slowly across the sand dunes at d
 export { format }
 export const length = (page: Page) => page.getByRole('textbox', { name: 'Length (seconds)' })
 export const clips = (page: Page) => timeline(page).getByRole('list', { name: 'Clips' })
-export const clipBlocks = (page: Page) => clips(page).getByRole('button', { name: /^Clip \d+: / })
+// ED-6: a clip is named by its file alone, so clip n is the n-th block in the lane (track order).
+const clipBox = (page: Page, n: number) =>
+  clips(page)
+    .locator('[data-clip]')
+    .nth(n - 1)
+export const clipBlocks = (page: Page) => clips(page).locator('[data-clip]').getByRole('button')
 export const clipStart = (page: Page, n: number) =>
-  clips(page).getByRole('slider', { name: new RegExp(`^Start of Clip ${n}: `) })
+  clipBox(page, n).getByRole('slider', { name: /^Start of / })
 export const clipEnd = (page: Page, n: number) =>
-  clips(page).getByRole('slider', { name: new RegExp(`^End of Clip ${n}: `) })
-export const clipBlock = (page: Page, n: number) =>
-  clips(page).getByRole('button', { name: new RegExp(`^Clip ${n}: `) })
+  clipBox(page, n).getByRole('slider', { name: /^End of / })
+export const clipBlock = (page: Page, n: number) => clipBox(page, n).getByRole('button')
 export const valueOf = async (slider: Locator) => Number(await slider.getAttribute('aria-valuenow'))
 
 // 180 by 320: a deep orange sky at the top fading to a pale sand at the foot.
