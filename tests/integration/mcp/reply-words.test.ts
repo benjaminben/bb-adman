@@ -83,6 +83,9 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
         { project_id: p, job_id: 'x' },
       ],
     ],
+    // P10-2: the two read tools.
+    ['list_subjects', { project_id: p }, [other]],
+    ['get_variant', { project_id: p, variant_id: 'v1' }, [{ project_id: p, variant_id: 'x' }]],
   ]
   return table.flatMap(([tool, good, bad]) => [
     { tool, args: good, ok: true },
