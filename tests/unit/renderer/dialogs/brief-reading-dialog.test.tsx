@@ -94,11 +94,11 @@ describe('BriefReadingDialog [P4-15]', () => {
     })
   })
 
-  it('on failure shows the sentence, Try again and Fill the form by hand', async () => {
+  it('on failure shows the sentence, Retry and Fill the form by hand', async () => {
     const { fake, onTryAgain, onByHand, onClosed } = await draw()
     act(() => fake.emit('job.updated', row({ status: 'failed', errorKind: 'timeout' })))
     expect(screen.getByText('Google Gemini took too long to answer. Try again.')).toBeVisible()
-    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(onTryAgain).toHaveBeenCalledOnce()
     await userEvent.click(screen.getByRole('button', { name: 'Fill the form by hand' }))
     expect(onByHand).toHaveBeenCalledOnce()

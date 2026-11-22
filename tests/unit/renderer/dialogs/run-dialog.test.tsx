@@ -190,8 +190,8 @@ describe('run dialog [P4-12]', () => {
 
   it('fixes the provider and count in retry mode', async () => {
     const { onConfirm } = await open({
-      title: 'Try again',
-      confirmLabel: 'Try again',
+      title: 'Retry the run',
+      confirmLabel: 'Retry',
       retry: { provider: 'gemini' },
       count: { label: 'Pictures', value: 2, min: 1, max: 8 },
     })
@@ -202,7 +202,7 @@ describe('run dialog [P4-12]', () => {
     expect(
       screen.getByText('This will use 2 generation(s) with Google Gemini.'),
     ).toBeInTheDocument()
-    await userEvent.click(confirm('Try again'))
+    await userEvent.click(confirm('Retry'))
     expect(onConfirm).toHaveBeenCalledWith('gemini', 2)
   })
 

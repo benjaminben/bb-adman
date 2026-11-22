@@ -59,7 +59,7 @@ test('The activity panel: a failed paid row, its retry dialog, then running and 
   await shot(page, '82-activity-failed-row')
 
   await failed.getByRole('button', { name: 'Retry' }).click()
-  const retry = page.getByRole('dialog', { name: 'Try again' })
+  const retry = page.getByRole('dialog', { name: 'Retry the run' })
   await expect(retry.getByText('Provider: Google Gemini')).toBeVisible()
   await expect(retry.getByText(/^Paid generations for this campaign so far:/)).toBeVisible()
   await page.waitForTimeout(300)

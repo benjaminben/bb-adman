@@ -40,11 +40,14 @@ export function PasswordSection(props: Props) {
     await props.copy(password)
   }
 
+  // Closing the part, by Cancel or after a sent password, forgets the choice and the typed value.
+  function close() {
+    setOpen(false)
+    setChoice(MAKE_PASSWORD)
+  }
+
   async function setPassword() {
-    if (await sender.send('approvals.setPassword', choiceInput(choice))) {
-      setOpen(false)
-      setChoice(MAKE_PASSWORD)
-    }
+    if (await sender.send('approvals.setPassword', choiceInput(choice))) close()
   }
 
   return (
@@ -73,7 +76,7 @@ export function PasswordSection(props: Props) {
             People who already opened the link must enter the new password.
           </p>
           <div className={styles.actions}>
-            <button type="button" disabled={busy} onClick={() => setOpen(false)}>
+            <button type="button" disabled={busy} onClick={close}>
               Cancel
             </button>
             <button

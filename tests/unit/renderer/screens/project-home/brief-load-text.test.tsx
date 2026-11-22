@@ -129,7 +129,7 @@ describe('Load a brief: Markdown and text [P4-15]', () => {
     expect(document.body.innerHTML).not.toContain('private.png')
   })
 
-  it('on failure offers Try again, which sends the same path again', async () => {
+  it('on failure offers Retry, which sends the same path again', async () => {
     const fake = textApi()
     await startReading(fake)
     act(() => fake.emit('job.updated', row({ status: 'failed', errorKind: 'offline' })))
@@ -138,7 +138,7 @@ describe('Load a brief: Markdown and text [P4-15]', () => {
         'The app could not reach Google Gemini. Check your internet connection and try again.',
       ),
     ).toBeVisible()
-    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
     const run = await screen.findByRole('dialog', { name: 'Read the brief with AI' })
     fake.onCommand('brief.extract', () => ({ ok: true, data: { jobId: 'J2' } }))
     await userEvent.click(within(run).getByRole('button', { name: 'Read brief' }))

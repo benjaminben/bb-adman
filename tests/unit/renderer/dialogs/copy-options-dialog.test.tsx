@@ -145,17 +145,17 @@ describe('CopyOptionsDialog [spec/screens-ai.md "Copy options", FR-045]', () => 
     expect(onClose).not.toHaveBeenCalled()
   })
 
-  it('a failed run shows its sentence and "Try again" sends job.retry through the run dialog', async () => {
+  it('a failed run shows its sentence and "Retry" sends job.retry through the run dialog', async () => {
     const { fake } = await open()
     await startRun(fake)
     act(() => fake.emit('job.updated', copyJob('J9', { status: 'failed', errorKind: 'timeout' })))
     expect(
       await screen.findByText('Google Gemini took too long to answer. Try again.'),
     ).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
-    const retry = await screen.findByRole('dialog', { name: 'Try again' })
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    const retry = await screen.findByRole('dialog', { name: 'Retry the run' })
     expect(within(retry).getByText('Options: 3')).toBeInTheDocument()
-    await userEvent.click(within(retry).getByRole('button', { name: 'Try again' }))
+    await userEvent.click(within(retry).getByRole('button', { name: 'Retry' }))
     expect(sent(fake, 'job.retry')).toEqual([{ projectId: 'P1', jobId: 'J9' }])
     act(() => fake.emit('job.updated', copyJob('J8', { status: 'running' })))
     expect(await screen.findByText('Writing options…')).toBeInTheDocument()
