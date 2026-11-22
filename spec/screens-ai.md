@@ -2,7 +2,7 @@
 
 The Phase 4 screens: the run confirmation dialog and the paid count, the picture section of the properties panel (generate, reference pictures, earlier options, cut-out), copy options, placing text with AI, reading a brief with AI, the activity panel, and the warnings before closing a tab, a dialog, a project or the app. Read with `spec/screens.md` (rules for every screen), `spec/editor.md` (the editor these sit in), `spec/ai-jobs.md` (the commands and jobs behind them) and `spec/jobs.md`.
 
-Everything here is Built (P4-1 to P4-19). Built without a design sign-off [D-084]: each component has its own folder and CSS module, takes every colour, space, radius and type size from `src/renderer/ui/tokens.css`, and gets its data through props or a store. Every rule of `spec/screens.md`, "Rules for every screen", holds: a paid run starts only on the user's confirm, one run per click, no raw error text, server and file text drawn as text.
+Everything here is Built (P4-1 to P4-19). Built without a design sign-off [D-084]: each component has its own folder and CSS module, takes every colour, space, radius and type size from `src/renderer/ui/tokens.css`, and gets its data through props or a store. Every rule of `spec/screens.md`, "Rules for every screen", holds: a paid call starts only after the user's own click with the cost on screen at that click (C-15), one run per click, no raw error text, server and file text drawn as text.
 
 ## Where the code lives
 
@@ -40,6 +40,7 @@ Props: `open`, `projectId`, `job` (`image`, `cutout`, `layout`, `text`), `title`
   - paid: "This will use {n} generation(s) with {Provider}." and, with references, " It sends {m} reference picture(s)." For one request (layout, text): "This sends 1 paid request to {Provider}."
   - ComfyUI: "This runs on your ComfyUI server at {address} with the workflow {label}. Nothing is charged." The address comes from `comfy.getInfo` (FR-256 allows it here; the privacy paragraph stays in Settings and the address dialog).
   - the fake provider: "This uses the fake provider. Nothing is charged."
+  - **The click that pays** (C-15, `spec/screens.md`, "Rules for every screen"): the run dialog was opened to make something, so for a paid provider its confirm button is the one click that sends; there is no second confirm step. The paid line is the cost line of that rule: directly above the buttons, in the dialog's accessible description, and nothing is sent before the click. DLG-4 of the design wave moves the paid count above the line and links the line by `aria-describedby`.
 - **The campaign's count** (with `campaignId`): `<PaidCount>` (below).
 - Buttons: the confirm label ("Generate", "Cut out", "Place text", "Suggest copy", "Read brief", "Retry") and "Cancel". No enabled provider: the line "No provider can do this yet." and the confirm disabled.
 - A refusal of the caller's command shows in the dialog (A-50) and in the banner; `NEEDS_KEY`, the address and the licence dialogs open as for every run.

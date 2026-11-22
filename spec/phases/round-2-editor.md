@@ -8,7 +8,7 @@ The default picture prompt no longer asks for the ad's own words. A finished run
 
 ## Status
 
-Built and merged on `main`: R2E-1 to R2E-8, R2E-10 and R2E-11. In progress: R2E-9 (the "Make a video" card, and the campaign page's "Make pictures" panel and "Runs" list, leave the campaign page). The rules now live in `spec/editor.md`, `spec/screens-ai.md` and `spec/screens.md`; this file keeps the design for reference.
+Built and merged on `main`: R2E-1 to R2E-11. R2E-9 removed the "Make a video" card; the campaign page's "Make pictures" panel, slot view and "Runs" list are still there and leave in the design wave (`design-wave.md`, CAMP-7). The rules now live in `spec/editor.md`, `spec/screens-ai.md` and `spec/screens.md`; this file keeps the design for reference.
 
 ## Rules for these slices
 

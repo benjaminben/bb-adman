@@ -21,7 +21,11 @@ Built (Phases 1 and 2). They are plain working screens, made so every function c
 Built. The reviewer checks these on every screen.
 
 - Every command goes through the app store's `command` (`src/renderer/stores/app-store.ts`), so `NEEDS_KEY` opens the key dialog and an error shows in the error banner. Queries go through `useApi().query`. A screen imports nothing from `src/main/`.
-- **A paid run starts only on the user's own confirm.** For a provider whose `local` is false, Generate, Start and Retry show one line in the panel with Confirm and Cancel (`paid-confirm.tsx`). The line names the provider the held request goes to. Nothing is sent before Confirm. Nothing is started on open, on a timer, or again after a failure. A local provider needs no confirm. A run row whose provider is not known is treated as paid: Retry asks first.
+- **A paid call starts only after the user's own click, with the cost on screen at that click** (design-wave choice C-15, `spec/phases/design-wave.md`). For a provider whose `local` is false:
+  - **In a dialog the user opened to make something** (the run dialog, fan-out), the dialog's action button is that click. The cost line sits directly above the dialog's buttons, its element is in the dialog's accessible description (`aria-describedby`), and the button names the action ("Generate", "Cut out", "Place text", "Suggest copy", "Read brief", "Retry", "Make variants"). Nothing is sent before that click, and there is no second confirm step after it.
+  - **From a control in a place not opened to pay** (the campaign page's "Make pictures" panel and run rows while they exist, the activity row's Retry for a video, the sync review's Translate), the first click shows one line in place with the cost, "Confirm" and "Cancel" (`paid-confirm.tsx`); only Confirm sends.
+  - The cost line names the provider the held request goes to. Nothing is started on open, on a timer, or again after a failure. A local provider needs no cost line and no second step. A run whose provider is not known is treated as paid.
+  - As built, the run dialog's summary line is not yet in its accessible description and the campaign's paid count sits between it and the buttons. Design-wave slice DLG-4 brings both dialogs to this rule (the cost line as a MoneyLine, `spec/app-style-parts.md`, "Dialog").
 - **One run per click.** From the moment `generation.runImages`, `generation.startVideo` or `job.retry` is sent until its reply arrives, the button that sent it is disabled, for every provider. Any reply, a refusal included, enables it again. Tests: `generate-panel-click.test.tsx`, `run-row-click.test.tsx`.
 - A provider that is not `available` is not offered for a run.
 - The ComfyUI address is drawn only in the Settings ComfyUI section, inside a failure sentence, and in the run confirmation dialog's ComfyUI line (`spec/screens-ai.md`). It is sent in no input but `comfy.setAddress`. The window writes nothing to the console.
@@ -87,7 +91,7 @@ Built. In `src/renderer/screens/campaign/`: `generate-panel/`, `reference-picker
 
 ### Make a video
 
-**Leaving.** Videos are now made in the editor's Generate panel (`spec/screens-ai.md`, "The Generate panel"). R2E-9 (in progress) removes this card and `video-panel/`; `video-picture-choice/`, `video-start.ts`, `provider-select/` and the run list stay. Until it merges, the card works as below.
+**Leaving.** Videos are now made in the editor's Generate panel (`spec/screens-ai.md`, "The Generate panel"). R2E-9 removed this card and `video-panel/`; `video-picture-choice/`, `video-start.ts`, `provider-select/` and the run list stay. What follows describes the card as it was and is kept for the rules the Generate panel took over.
 
 Built (P7-22 as the latest change). In `src/renderer/screens/campaign/`: `video-panel/` (with `video-length.ts`, `card-starts.ts`, `use-post.ts`), `video-picture-choice/`, `video-start.ts`. A card under "Make pictures", for the chosen variant. Its runs appear in the same run list.
 

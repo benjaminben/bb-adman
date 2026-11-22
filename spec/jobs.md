@@ -224,7 +224,7 @@ Built.
 
 Built (`src/main/jobs/run-job.ts`). `paid_calls` gains one each time `jc.call` sends a call to a provider whose registry row has `local` false, at the moment of sending, so a run that failed half way still counts what it sent. Local providers (ComfyUI, the fake provider) never count. A call refused before sending (project closed, stop asked, agent tick off) adds nothing. A campaign's total is the sum over its job rows, split by `kind`. It is a count of calls, not money; usage and estimated cost come later (slice US, OI-52).
 
-A paid call is made only when a person presses a button (with the paid confirm, `spec/screens.md`), an agent with its tick on starts a run, or the project owner runs the live tests. Nothing in CI calls a real provider. Spending the user did not ask for is treated as in the threat scope (OI-63: not yet confirmed by the stakeholder); the rules on left-over video runs, own rows only, and closing projects stand either way.
+A paid call is made only when a person presses a button with the cost on screen at that click (`spec/screens.md`, "Rules for every screen", C-15), an agent with its tick on starts a run, or the project owner runs the live tests. Nothing in CI calls a real provider. Spending the user did not ask for is treated as in the threat scope (OI-63: not yet confirmed by the stakeholder); the rules on left-over video runs, own rows only, and closing projects stand either way.
 
 ## Left-over runs on project open
 
