@@ -4,15 +4,18 @@
 // drop, each with its own instance. Every close resets it for the next open. R2C-7
 // (spec/phases/round-2-campaign.md, design addition 5): "New subject…" makes the subject first
 // (send-import.ts), and inside the project's Assets scope, with the panel closed, the result
-// offers "Show in assets".
+// offers "Show in assets". DLG-3b: the `form` kind; the names are a strip of icon tiles
+// (file-strip.tsx); the result lines are a status; a refusal is a DialogAlert.
 import { useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { useAssetsPanel } from '@/renderer/screens/assets/assets-scope'
+import { DialogAlert } from '@/renderer/ui/dialog-alert'
 import { BusySpinner, DialogFrame } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import { ImportChoices, START_CHOICES, type Choices } from './import-choices'
-import { importTitle, shownNames } from './import-text'
+import { FileStrip } from './file-strip'
+import { importTitle } from './import-text'
 import { importProblem, sendImport } from './send-import'
 import styles from './import-dialog.module.css'
 
@@ -34,7 +37,6 @@ export function ImportDialog(props: ImportDialogProps) {
   const [problem, setProblem] = useState<string | null>(null)
   const [result, setResult] = useState<string[] | null>(null)
   const panel = useAssetsPanel()
-  const { names, more } = shownNames(props.paths)
   const offerPanel = panel !== null && panel.projectId === props.projectId && !panel.open
 
   function close() {
@@ -104,21 +106,19 @@ export function ImportDialog(props: ImportDialogProps) {
       open={props.open}
       onClose={close}
       title={importTitle(props.paths, props.folder)}
+      kind="form"
       closable={!importing}
       footer={footer}
     >
-      <ul className={styles.names} aria-label="Files to import">
-        {names.map((name, i) => (
-          <li key={i}>{name}</li>
-        ))}
-      </ul>
-      {more > 0 && <p className={styles.hint}>and {more} more</p>}
+      <FileStrip paths={props.paths} folder={props.folder} />
       {result !== null ? (
-        <ul className={styles.result} aria-label="Import result">
-          {result.map((line, i) => (
-            <li key={i}>{line}</li>
-          ))}
-        </ul>
+        <div role="status">
+          <ul className={styles.result} aria-label="Import result">
+            {result.map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ul>
+        </div>
       ) : (
         <>
           <ImportChoices
@@ -132,9 +132,7 @@ export function ImportDialog(props: ImportDialogProps) {
             }}
           />
           {(problem ?? refusal) !== null && (
-            <p role="alert" className={`${layout.notice} ${layout.danger}`}>
-              {problem ?? refusal}
-            </p>
+            <DialogAlert tone="danger">{problem ?? refusal}</DialogAlert>
           )}
           {importing && (
             <p role="status" className={styles.busy}>

@@ -97,7 +97,7 @@ describe('drop target: dropping [FR-246]', () => {
     const notPrevented = fireEvent.drop(window, { dataTransfer: files() })
     expect(notPrevented).toBe(false)
     expect(screen.queryByText(layerText)).toBeNull()
-    const dialog = await screen.findByRole('dialog', { name: 'Import 2 file(s)' })
+    const dialog = await screen.findByRole('dialog', { name: 'Import 2 files' })
     expect(within(dialog).getByText('can-front.png')).toBeInTheDocument()
     expect(within(dialog).getByRole('option', { name: 'Citrus can (citrus-can)' })).toBeTruthy()
     expect(fake.commands).toEqual([])
@@ -112,7 +112,7 @@ describe('drop target: dropping [FR-246]', () => {
   it('leaves out files the bridge gives no path for', async () => {
     await page()
     fireEvent.drop(window, { dataTransfer: files(['made.png', 'can-side.png']) })
-    const dialog = await screen.findByRole('dialog', { name: 'Import 1 file(s)' })
+    const dialog = await screen.findByRole('dialog', { name: 'Import 1 file' })
     expect(within(dialog).getByText('can-side.png')).toBeInTheDocument()
   })
 
@@ -128,21 +128,21 @@ describe('drop target: dropping [FR-246]', () => {
   it('ignores a drop, and shows no layer, while its import dialog is open', async () => {
     await page()
     fireEvent.drop(window, { dataTransfer: files(['can-front.png']) })
-    await screen.findByRole('dialog', { name: 'Import 1 file(s)' })
+    await screen.findByRole('dialog', { name: 'Import 1 file' })
     fireEvent.dragEnter(window, { dataTransfer: files() })
     expect(screen.queryByText(layerText)).toBeNull()
     fireEvent.drop(window, { dataTransfer: files() })
-    expect(screen.getByRole('dialog', { name: 'Import 1 file(s)' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Import 1 file' })).toBeInTheDocument()
   })
 
   it('takes a new drop once the dialog is closed', async () => {
     await page()
     fireEvent.drop(window, { dataTransfer: files(['can-front.png']) })
-    const dialog = await screen.findByRole('dialog', { name: 'Import 1 file(s)' })
+    const dialog = await screen.findByRole('dialog', { name: 'Import 1 file' })
     await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     fireEvent.drop(window, { dataTransfer: files() })
-    expect(await screen.findByRole('dialog', { name: 'Import 2 file(s)' })).toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: 'Import 2 files' })).toBeInTheDocument()
   })
 
   it('removes its listeners on unmount', async () => {

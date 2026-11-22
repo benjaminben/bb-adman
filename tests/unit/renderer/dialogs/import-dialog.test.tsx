@@ -112,7 +112,7 @@ describe('import dialog: choosing [FR-050, FR-052, FR-054]', () => {
 describe('import dialog: names [spec/screens-campaign.md, Paths]', () => {
   it("titles the dialog by count and shows base names only, never a path's folders", async () => {
     const { dialog } = await openDialog()
-    expect(dialog).toHaveAccessibleName('Import 2 file(s)')
+    expect(dialog).toHaveAccessibleName('Import 2 files')
     expect(dialog).toHaveTextContent('can-front.png')
     expect(dialog).toHaveTextContent('bottle.jpg')
     for (const folder of ['Users', 'Shoots', 'summer/', 'Pictures', 'C:']) {
@@ -127,13 +127,13 @@ describe('import dialog: names [spec/screens-campaign.md, Paths]', () => {
     expect(dialog.textContent).not.toContain('Shoots')
   })
 
-  it('shows ten names and "and 1 more" for eleven files', async () => {
+  it('shows six names and "+5" for eleven files', async () => {
     const paths = Array.from({ length: 11 }, (_, i) => `/pics/shot-${i + 1}.png`)
     const { dialog } = await openDialog({ paths })
     const names = within(dialog).getByRole('list', { name: 'Files to import' })
-    expect(within(names).getAllByRole('listitem')).toHaveLength(10)
+    expect(within(names).getAllByRole('listitem')).toHaveLength(6)
     expect(names).not.toHaveTextContent('shot-11.png')
-    expect(dialog).toHaveTextContent('and 1 more')
+    expect(dialog).toHaveTextContent('+5')
   })
 })
 
@@ -155,16 +155,16 @@ describe('import dialog: importing and the result [FR-053]', () => {
       'a mix of added, reused and skipped',
       { assetIds: ['A1', 'A2', 'A2', 'R1', 'R1'], reusedAssetIds: ['R1'], skippedCount: 3 },
       [
-        '2 file(s) added.',
-        '1 file(s) were already in the project and were kept as they were.',
-        '3 item(s) in the folder were skipped: links, hidden files, and files Adman cannot use.',
+        '2 files added.',
+        '1 file was already in the project and was kept as it was.',
+        '3 items in the folder were skipped: links, hidden files, and files Adman cannot use.',
       ],
     ],
-    ['only added', { assetIds: ['A1'], reusedAssetIds: [], skippedCount: 0 }, ['1 file(s) added.']],
+    ['only added', { assetIds: ['A1'], reusedAssetIds: [], skippedCount: 0 }, ['1 file added.']],
     [
       'only reused',
       { assetIds: ['R1', 'R2'], reusedAssetIds: ['R1', 'R2'], skippedCount: 0 },
-      ['2 file(s) were already in the project and were kept as they were.'],
+      ['2 files were already in the project and were kept as they were.'],
     ],
     [
       'all zero',
@@ -231,7 +231,7 @@ describe('import dialog: animated WebP files [S2-17]', () => {
         .getAllByRole('listitem')
         .map((li) => li.textContent),
     ).toEqual([
-      '2 file(s) added.',
+      '2 files added.',
       '<b>spin</b>.webp holds an animation. Adman uses its first picture.',
     ])
     expect(result.querySelector('b')).toBeNull()
