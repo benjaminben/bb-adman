@@ -21,7 +21,7 @@ describe('get_project description [LP-7]', () => {
   const description = ALL_TOOLS.find((t) => t.name === 'get_project')?.description ?? ''
 
   it('names each field of the reply', () => {
-    const fields = Object.keys(projectFields(sample) as Record<string, unknown>)
+    const fields = Object.keys(projectFields(sample, { providers: [] }) as Record<string, unknown>)
     expect(fields).toEqual(['meta', 'subjects', 'campaigns', 'missingAssetCount'])
     for (const field of fields) expect(description).toContain(field)
   })
