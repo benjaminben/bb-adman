@@ -1,0 +1,8 @@
+/* app-style */
+/* The app mark beside the start screen's name. The drawing's square fills about four fifths
+   of its box, so at the wordmark's size it matches the small square it replaced. */
+.mark {
+  flex: none;
+  width: var(--font-size-wordmark);
+  height: var(--font-size-wordmark);
+}

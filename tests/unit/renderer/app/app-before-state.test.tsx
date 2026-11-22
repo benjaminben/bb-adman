@@ -14,7 +14,7 @@ describe('app window before app.getState has answered', () => {
         <AppShell />
       </AppProvider>,
     )
-    expect(screen.getByRole('button', { name: 'Adman' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'AdManager' })).toBeInTheDocument()
     await store.getState().refresh()
     expect(await screen.findByText('/Users/me/Documents/Adman Projects')).toBeInTheDocument()
   })

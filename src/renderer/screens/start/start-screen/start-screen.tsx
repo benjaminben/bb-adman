@@ -5,7 +5,9 @@ import { EMPTY, useApi, useApp, pickPath } from '@/renderer/app/app-context'
 import { NewProjectForm } from '@/renderer/screens/start/new-project-form'
 import { RecentProjects } from '@/renderer/screens/start/recent-projects'
 import { StartImages } from '@/renderer/screens/start/start-images'
+import { AppMark } from '@/renderer/ui/app-mark'
 import { Icon } from '@/renderer/ui/icon'
+import { APP_DISPLAY_NAME } from '@/shared/config/app-name'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './start-screen.module.css'
 
@@ -25,7 +27,8 @@ export function StartScreen() {
       <div className={styles.side}>
         <div className={styles.column}>
           <h1 id="start-title" className={styles.wordmark}>
-            Adman
+            <AppMark />
+            {APP_DISPLAY_NAME}
           </h1>
           <NewProjectForm>
             <button type="button" className={layout.large} onClick={() => void openProject()}>

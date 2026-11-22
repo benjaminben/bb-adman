@@ -1,5 +1,5 @@
 // spec/editor.md, "The shell" [FR-003]: a menu button showing the shown project's name, or
-// "Adman" on the start screen. Its menu lists the open projects (choosing one shows it), then
+// "AdManager" on the start screen. Its menu lists the open projects (choosing one shows it), then
 // "Start", then "Close project" for the shown one (project.close; with runs going it asks
 // first, close-project.tsx). Arrow keys move through the items and wrap; Escape or a click
 // elsewhere closes it.
@@ -7,6 +7,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { EMPTY, useApp } from '@/renderer/app/app-context'
 import type { View } from '@/renderer/stores/app-store'
 import { Icon } from '@/renderer/ui/icon'
+import { APP_DISPLAY_NAME } from '@/shared/config/app-name'
 import layout from '@/renderer/ui/layout.module.css'
 import { menuPlaceStyles, useMenuPlace } from '@/renderer/ui/menu-place'
 import { useCloseProject } from './close-project'
@@ -92,7 +93,7 @@ export function ProjectSwitcher() {
         onClick={() => setOpen(!open)}
       >
         <span className={styles.name}>
-          <span className={styles.title}>{shown?.name ?? 'Adman'}</span>
+          <span className={styles.title}>{shown?.name ?? APP_DISPLAY_NAME}</span>
           {projects.length > 1 && (
             <>
               {' '}

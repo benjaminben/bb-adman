@@ -1,5 +1,5 @@
 // spec/editor.md, "The shell" [FR-003]: a menu button showing the shown project's name, or
-// "Adman" on the start screen. Its menu lists the open projects, then "Start", then "Close
+// "AdManager" on the start screen. Its menu lists the open projects, then "Start", then "Close
 // project" for the shown one.
 import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -34,7 +34,7 @@ const items = () =>
 
 describe('project switcher [FR-003]', () => {
   it.each([
-    ['"Adman" on the start screen', null, 'Adman · 2 open'],
+    ['"AdManager" on the start screen', null, 'AdManager · 2 open'],
     ['the shown project name', 'P2', 'Winter · 2 open'],
   ])('shows %s', async (_, shown, label) => {
     await draw(shown)
@@ -53,7 +53,7 @@ describe('project switcher [FR-003]', () => {
 
   it('has no Close project item on the start screen', async () => {
     await draw()
-    await userEvent.click(screen.getByRole('button', { name: 'Adman · 2 open' }))
+    await userEvent.click(screen.getByRole('button', { name: 'AdManager · 2 open' }))
     expect(items()).toEqual(['Summer', 'Winter', 'Open another project…', 'Start'])
   })
 
