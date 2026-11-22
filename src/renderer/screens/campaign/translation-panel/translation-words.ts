@@ -1,6 +1,9 @@
 // The translation panel's words and lists (spec/phases/phase-06.md, design addition 8), worked
 // out from translation.forCampaign's rows alone. Pure. Every text here is drawn as React text.
+import { languageName } from '@/renderer/ui/language-name'
 import type { TranslationForCampaign, TranslationRow } from '@/shared/schemas/queries/translation'
+
+export { languageName }
 
 export type LanguageGroup = { language: string; rows: TranslationRow[] }
 export type ApproveLayer = { layerId: string; copyRev: number }
@@ -28,12 +31,9 @@ export function rowLine(row: TranslationRow): string {
   return `${row.title} · ${row.sizeLabel} · ${row.layerName}`
 }
 
-export function languageName(code: string): string {
-  try {
-    return new Intl.DisplayNames('en', { type: 'language', fallback: 'code' }).of(code) ?? code
-  } catch {
-    return code
-  }
+// The label over a row's source text: "English (source)" (R2C-4).
+export function sourceLabel(name: string): string {
+  return `${name} (source)`
 }
 
 export function groupHeading(language: string, rows: TranslationRow[]): string {
