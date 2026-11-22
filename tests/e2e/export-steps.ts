@@ -6,6 +6,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { expect, type ElectronApplication, type Locator, type Page } from '@playwright/test'
+import { ffmpegPath } from '@/main/media/ffmpeg-path'
 import * as screens from './screens'
 import { command, query } from './render-helpers'
 
@@ -89,4 +90,22 @@ export async function reportOf(page: Page, projectId: string, reportId: string) 
     }
   }
   return got.report
+}
+
+// The fetched FFmpeg in this checkout (resources/ffmpeg/{platform}-{arch}), which the app finds
+// when not packaged. The test process runs it only to read exported files back.
+export const FETCHED_FFMPEG = ffmpegPath({
+  packaged: false,
+  resourcesPath: '',
+  appPath: process.cwd(),
+  platform: process.platform,
+  arch: process.arch,
+})
+export const ffmpegFetched = () => fs.existsSync(FETCHED_FFMPEG)
+
+// The number of video frames an MP4 holds: the sample count of its one stsz box.
+export function frameCountOf(mp4: Buffer): number {
+  const at = mp4.indexOf(Buffer.from('stsz', 'latin1'))
+  if (at < 0) throw new Error('No stsz box')
+  return mp4.readUInt32BE(at + 12)
 }
