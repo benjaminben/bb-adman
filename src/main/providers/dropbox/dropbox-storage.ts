@@ -5,7 +5,8 @@
 // removed. Endpoints are fixed strings; no value from a project or a setting picks an endpoint
 // or a header. The content host takes its argument in the Dropbox-API-Arg header, as ASCII JSON.
 // The access token comes from access-token.ts; after a 401 it is forgotten, renewed once and
-// the request sent once more (every body here is bytes in memory, so it can be sent again).
+// the request sent once more (every body here is bytes in memory, so it can be sent again),
+// unless the saved refresh token is gone or changed by then: that is dropbox_signed_out.
 // Every failure is one ProviderFailure through thrownFailure, with both tokens redacted.
 import { z } from 'zod'
 import { refusePath, storageFilePath, storageListPrefix } from '@/main/providers/storage-paths'
@@ -51,6 +52,9 @@ const MAX_ROOT = 200
 const NOT_THERE = ['path/not_found', 'path/not_folder']
 const NOT_A_FILE = 'Dropbox has a folder where a file was named'
 
+const signedOut = () =>
+  new ProviderFailure({ kind: 'bad_key', reason: 'dropbox_signed_out', detail: 'signed out' })
+
 const Metadata = z.object({ '.tag': z.string(), rev: z.string().min(1).max(64).optional() })
 const Result = z.object({ size: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER) })
 
@@ -66,8 +70,15 @@ export function headerArg(arg: object): string {
 function rootOf(ctx: AdapterContext): string {
   const rootPath = ctx.settings().storage.dropbox?.rootPath ?? ''
   if (rootPath === '') return ''
-  if (rootPath.length > MAX_ROOT || /\p{Cc}/u.test(rootPath)) refusePath()
-  return storageFilePath(rootPath)
+  if (rootPath.length > MAX_ROOT) refusePath()
+  return noControl(storageFilePath(rootPath))
+}
+
+// The root and every caller path: no control character of any kind (\p{Cc}, which also holds
+// DEL and the C1 codes the shared path rules let through).
+function noControl(path: string): string {
+  if (/\p{Cc}/u.test(path)) refusePath()
+  return path
 }
 
 const chainStarts = (chain: string, start: string) =>
@@ -112,7 +123,17 @@ export function dropboxStorage(
     if (first.status !== 401) return first
     await first.body?.cancel().catch(() => undefined)
     forgetDropboxAccess(refreshToken)
+    if (savedRefreshToken() !== refreshToken) throw signedOut()
     return authorised(refreshToken, url, out)
+  }
+
+  // The refresh token as saved now, or undefined when it is gone (the user signed out).
+  function savedRefreshToken(): string | undefined {
+    try {
+      return ctx.secret(REFRESH_TOKEN)
+    } catch {
+      return undefined
+    }
   }
 
   const calls: DropboxCalls = {
@@ -154,7 +175,7 @@ export function dropboxStorage(
   // The Dropbox path of one file, checked before anything is sent.
   function fileAt(path: string): string {
     const root = rootOf(ctx)
-    const file = storageFilePath(path)
+    const file = noControl(storageFilePath(path))
     return root === '' ? `/${file}` : `/${root}/${file}`
   }
 
@@ -205,7 +226,7 @@ export function dropboxStorage(
 
     async list(prefix) {
       const root = rootOf(ctx)
-      const folder = storageListPrefix(prefix)
+      const folder = noControl(storageListPrefix(prefix))
       const base = root === '' ? '' : `/${root}`
       const at = folder === '' ? base : `${base}/${folder.slice(0, -1)}`
       return run(() => listFiles(calls, at, `${base}/`))

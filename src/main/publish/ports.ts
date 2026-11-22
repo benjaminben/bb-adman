@@ -44,4 +44,7 @@ export type PublishPorts = {
   storageFor(deps: StorageForDeps, storage: PublishStorageId): StorageProvider
 }
 
-export type StorageForDeps = Pick<CoreDeps, 'providers' | 'secrets' | 'settings' | 'userDataDir'>
+export type StorageForDeps = Pick<
+  CoreDeps,
+  'providers' | 'secrets' | 'settings' | 'userDataDir' | 'dropboxFetch'
+>
