@@ -5,8 +5,7 @@ import { axeViolations } from '../../render'
 import { createdInput, loadForm, retype } from './brief-form-fixture'
 
 const sizes = (form: HTMLElement) => within(form).getByRole('group', { name: 'Sizes' })
-const chip = (form: HTMLElement, name: string) =>
-  within(sizes(form)).getByRole('button', { name, exact: true })
+const chip = (form: HTMLElement, name: string) => within(sizes(form)).getByRole('button', { name })
 const star = (form: HTMLElement, label: string) => chip(form, `Master: ${label}`)
 
 describe('the brief form: size chips [HOME-3a, AP-5, AP-6]', () => {

@@ -10,7 +10,7 @@ const rules = (form: HTMLElement) => within(form).getByRole('group', { name: 'Ru
 const area = (form: HTMLElement, label: string) => within(rules(form)).getByLabelText(label)
 const COPY = 'Copy from'
 const choice = (form: HTMLElement, name: string) =>
-  within(rules(form)).getByRole('button', { name, exact: true })
+  within(rules(form)).getByRole('button', { name })
 
 async function loadRules(...args: Parameters<typeof loadForm>) {
   const loaded = await loadForm(...args)
@@ -20,7 +20,7 @@ async function loadRules(...args: Parameters<typeof loadForm>) {
 
 // HOME-3a: the Rules Section starts shut (the fold lasts for the session), so open it first.
 async function openRules(form: HTMLElement) {
-  const head = within(form).getByRole('button', { name: 'Rules', exact: true })
+  const head = within(form).getByRole('button', { name: 'Rules' })
   if (head.getAttribute('aria-expanded') === 'false') await userEvent.click(head)
 }
 
