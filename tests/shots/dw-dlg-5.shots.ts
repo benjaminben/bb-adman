@@ -100,9 +100,8 @@ test('482 the reference dialog with three pictures ticked', async () => {
   await screens.answerOpenDialog(app, files)
   await library.getByRole('button', { name: 'Add pictures' }).click()
   await expect(library.getByRole('checkbox')).toHaveCount(5)
-  for (const tick of await library.getByRole('checkbox', { checked: true }).all()) {
-    await tick.uncheck()
-  }
+  const ticked = library.getByRole('checkbox', { checked: true })
+  while ((await ticked.count()) > 0) await ticked.first().uncheck()
   for (const name of ['lantern-glow.png', 'harbour-dusk.png', 'night-boats.png']) {
     await library.getByRole('checkbox', { name, exact: true }).check()
   }
