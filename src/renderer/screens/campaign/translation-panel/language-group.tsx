@@ -16,7 +16,13 @@ import layout from '@/renderer/ui/layout.module.css'
 import { JobLine } from './job-line'
 import { TranslateAgain } from './translate-again'
 import { TranslationRow } from './translation-row'
-import { type ApproveLayer, approvalOf, groupHeading, languageName } from './translation-words'
+import {
+  type ApproveLayer,
+  approvalOf,
+  groupHeading,
+  languageName,
+  requestCount,
+} from './translation-words'
 import styles from './translation-panel.module.css'
 
 export type LanguageGroupProps = {
@@ -88,6 +94,7 @@ export function LanguageGroup(props: LanguageGroupProps) {
           campaignId={props.campaignId}
           language={props.language}
           variantIds={variantIds}
+          requests={requestCount(props.rows)}
         />
       </div>
       {props.jobs.map((job) => (

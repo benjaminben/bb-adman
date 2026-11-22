@@ -2,11 +2,11 @@
 // "Sync"; P6-16). When the preview has a translated copy change that is not yet proposed, the
 // dialog sends one translation.propose in `sync` mode per language, with the text provider
 // from Settings, and reads the preview again when a job succeeds. Only a local provider is
-// started this way: a paid run starts only on the user's own confirm and never on open
-// (spec/screens.md), and no confirm step for the review is designed yet, so with a paid
-// provider nothing is sent and the Phase 5 line stays. Each language starts once per opening;
-// "Retry" starts it again.
-import { useCallback, useEffect, useRef, useState } from 'react'
+// started on open. A paid run starts only on the user's own confirm and never on open
+// (spec/screens.md; P6-18): with a paid provider each waiting language is listed in `needs`,
+// `ask` opens its paid confirm and only `confirm` starts it. Each language starts once per
+// opening; "Retry" starts it again, through the confirm when the provider is paid.
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { plainMessage } from '@/shared/providers/messages'
 import type { SyncPreviewReply } from '@/shared/schemas/queries/sync'
@@ -45,9 +45,11 @@ export function useSyncTranslations(options: Options) {
   const command = useApp((s) => s.command)
   const app = useApp((s) => s.app)
   const provider = app?.providers.find((p) => p.id === app.settings.defaultProviders.text)
-  const local = provider?.local === true && provider.available && provider.jobs.includes('text')
+  const usable = provider !== undefined && provider.available && provider.jobs.includes('text')
+  const local = usable && provider.local === true
   const label = provider?.label ?? ''
   const [runs, setRuns] = useState<LanguageRuns>({})
+  const [asking, setAsking] = useState<ReadonlySet<string>>(new Set())
   const started = useRef(new Set<string>())
   const ended = useRef(new Map<string, JobRow>())
   const jobs = useRef(new Map<string, string>()) // job ID to language
@@ -66,7 +68,7 @@ export function useSyncTranslations(options: Options) {
 
   const start = useCallback(
     async (language: string) => {
-      if (!local || !provider) return
+      if (!usable) return
       started.current.add(language)
       setRuns((was) => ({ ...was, [language]: { kind: 'running', jobId: null } }))
       const input = { projectId, provider: provider.id, mode: 'sync', directionId, language }
@@ -81,7 +83,7 @@ export function useSyncTranslations(options: Options) {
       const row = ended.current.get(jobId)
       if (row) finish(language, row)
     },
-    [command, directionId, finish, local, projectId, provider],
+    [command, directionId, finish, usable, projectId, provider],
   )
 
   useEffect(
@@ -95,12 +97,35 @@ export function useSyncTranslations(options: Options) {
     [api, finish],
   )
 
+  const needs = useMemo(
+    () => (reply ? languagesToTranslate(reply, languageOf) : []),
+    [reply, languageOf],
+  )
   useEffect(() => {
-    if (!reply) return
-    for (const language of languagesToTranslate(reply, languageOf)) {
+    if (!local) return
+    for (const language of needs) {
       if (!started.current.has(language)) void start(language)
     }
-  }, [reply, languageOf, start])
+  }, [local, needs, start])
 
-  return { runs, retry: (language: string) => void start(language) }
+  const setAsk = (language: string, on: boolean) =>
+    setAsking((was) => {
+      const next = new Set(was)
+      if (on) next.add(language)
+      else next.delete(language)
+      return next
+    })
+  const paid = usable && !local
+  return {
+    runs,
+    // P6-18: the paid path. Empty and unused with a local provider.
+    paid: paid ? { label, needs, asking } : null,
+    ask: (language: string) => setAsk(language, true),
+    cancel: (language: string) => setAsk(language, false),
+    confirm: (language: string) => {
+      setAsk(language, false)
+      void start(language)
+    },
+    retry: (language: string) => (paid ? setAsk(language, true) : void start(language)),
+  }
 }
