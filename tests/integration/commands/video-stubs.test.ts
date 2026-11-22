@@ -1,11 +1,11 @@
 // P7-1 (spec/phases/phase-07-slices.md, "P7-1 — Contracts"): every Phase 7 command is
 // registered against a stub that checks its input, then refuses in prepare with
-// video_not_built and writes nothing. The two system commands are internal. variant.update
-// with durationMs refuses the same way until P7-10. Each owning slice removes its own row.
+// video_not_built and writes nothing. The two system commands are internal. Each owning slice
+// removes its own row; P7-10 filled the last stub, so the stub cases went with it.
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, data, type Fixture } from '../core-fixture'
 import { createInput } from '../campaigns/campaign-fixture'
-import { AGENT_POLICY, denialMessage } from '@/main/commands/agent-policy'
+import { AGENT_POLICY } from '@/main/commands/agent-policy'
 import { clipCommands } from '@/main/commands/clip'
 import { variantCommands } from '@/main/commands/variant'
 import { noMediaTool } from '@/main/media/no-media'
@@ -32,15 +32,6 @@ async function open(): Promise<{ fx: Fixture; ids: Ids }> {
   return { fx, ids: { projectId, variantId: id, assetId: 'A1', clipId: 'K1' } }
 }
 
-const NOT_BUILT = {
-  ok: false,
-  error: {
-    code: 'RULE_VIOLATION',
-    message: 'This part of video editing is not built yet.',
-    details: { reason: 'video_not_built' },
-  },
-}
-
 type Row = {
   name: string
   input: (ids: Ids) => object
@@ -48,21 +39,7 @@ type Row = {
   internal: boolean
   bad: (ids: Ids) => object
 }
-const COMMANDS: Row[] = [
-  {
-    name: 'variant.setFormat',
-    input: (i) => ({ variantId: i.variantId, format: 'video' }),
-    policy: 'allow',
-    internal: false,
-    bad: (i) => ({ variantId: i.variantId, format: 'gif' }),
-  },
-]
-
-function snapshot(fx: Fixture, projectId: string): string {
-  const db = fx.core.projects.requireOpen(projectId).db
-  const tables = ['variant', 'layer', 'background_clip', 'asset']
-  return JSON.stringify(tables.map((t) => db.prepare(`SELECT * FROM ${t}`).all()))
-}
+const COMMANDS: Row[] = []
 
 describe('Phase 7 registration [P7-1]', () => {
   it('registers the clip commands and the two new variant commands on core', async () => {
@@ -100,59 +77,7 @@ describe('Phase 7 registration [P7-1]', () => {
   })
 })
 
-describe('the Phase 7 command stubs [P7-1]', () => {
-  it.each(COMMANDS)('$name as the user refuses video_not_built and writes nothing', async (row) => {
-    const { fx, ids } = await open()
-    const before = { events: fx.events.length, rows: snapshot(fx, ids.projectId) }
-    const input = { projectId: ids.projectId, ...row.input(ids) }
-    expect(await fx.user(row.name, input)).toEqual(NOT_BUILT)
-    expect(fx.events.slice(before.events)).toEqual([])
-    expect(snapshot(fx, ids.projectId)).toBe(before.rows)
-    expect(fx.core.undo.state(ids.projectId, `variant:${ids.variantId}`)).toMatchObject({
-      canUndo: false,
-    })
-  })
-
-  it.each(COMMANDS)('$name checks its input before the stub answers', async (row) => {
-    const { fx, ids } = await open()
-    const input = { projectId: ids.projectId, ...row.bad(ids) }
-    expect(await fx.user(row.name, input)).toMatchObject({
-      ok: false,
-      error: { code: 'INVALID_INPUT' },
-    })
-  })
-
-  it.each(COMMANDS.filter((r) => r.policy === 'deny'))(
-    '$name as the agent is AGENT_DENIED',
-    async (row) => {
-      const { fx, ids } = await open()
-      expect(await fx.agent(row.name, { projectId: ids.projectId, ...row.input(ids) })).toEqual({
-        ok: false,
-        error: { code: 'AGENT_DENIED', message: denialMessage(row.name) },
-      })
-    },
-  )
-
-  it('variant.setFormat as the agent reaches the stub and is refused the same way', async () => {
-    const { fx, ids } = await open()
-    const input = { projectId: ids.projectId, variantId: ids.variantId, format: 'video' }
-    expect(await fx.agent('variant.setFormat', input)).toEqual(NOT_BUILT)
-  })
-})
-
 describe('variant.update with durationMs before P7-10 [P7-1]', () => {
-  it('refuses video_not_built and writes nothing, with or without a title', async () => {
-    const { fx, ids } = await open()
-    const before = { events: fx.events.length, rows: snapshot(fx, ids.projectId) }
-    const base = { projectId: ids.projectId, variantId: ids.variantId }
-    expect(await fx.user('variant.update', { ...base, durationMs: 8000 })).toEqual(NOT_BUILT)
-    expect(await fx.user('variant.update', { ...base, title: 'New', durationMs: 8000 })).toEqual(
-      NOT_BUILT,
-    )
-    expect(fx.events.slice(before.events)).toEqual([])
-    expect(snapshot(fx, ids.projectId)).toBe(before.rows)
-  })
-
   it('still changes the title alone', async () => {
     const { fx, ids } = await open()
     const input = { projectId: ids.projectId, variantId: ids.variantId, title: 'New title' }

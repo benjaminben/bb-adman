@@ -3,6 +3,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { expectRefused } from '../assets/asset-bus'
 import { clipIdOf, makeClipBus, type ClipBus } from './clip-fixture'
+import type { ClipAsset } from '@/main/clips/clip-asset'
+import { checkClip } from '@/main/clips/write-clip'
 
 let bus: ClipBus
 let videoClip: string
@@ -98,5 +100,40 @@ describe('clip.update refusals', () => {
 
   it('refuses a clip that is not there with NOT_FOUND', async () => {
     await refused('no-such-clip', { startMs: 0 }, 'NOT_FOUND')
+  })
+})
+
+// Security review of P7-9: a row read back from a project file made by someone else can hold
+// values the schema never lets in; clip.update refuses to write such a row back.
+describe('clip.update refuses a stored row out of bounds', () => {
+  it.each([
+    ['a start before 0', 'start_ms', -100],
+    ['a trim in before 0', 'in_ms', -100],
+    ['a trim out past a day', 'out_ms', 86_400_001],
+  ])('refuses %s with INVALID_INPUT', async (_, column, value) => {
+    bus.db.prepare(`UPDATE background_clip SET ${column} = ? WHERE id = ?`).run(value, stillClip)
+    await expectRefused(bus, () => update(stillClip, { soundOn: false }), 'INVALID_INPUT')
+    expect(bus.undoState()).toEqual({ canUndo: false, canRedo: false })
+  })
+
+  // The row reader already refuses a number that is not a safe whole one, before checkClip.
+  it.each([
+    ['a start that is not whole', 'start_ms', 6000.5],
+    ['a trim in that is not a safe integer', 'in_ms', 2 ** 53 + 2],
+  ])('refuses %s and writes nothing', async (_, column, value) => {
+    bus.db.prepare(`UPDATE background_clip SET ${column} = ? WHERE id = ?`).run(value, stillClip)
+    await expectRefused(bus, () => update(stillClip, { soundOn: false }), 'INTERNAL')
+  })
+
+  it.each([
+    ['startMs', 0.5],
+    ['inMs', 2 ** 53 + 2],
+    ['outMs', Number.NaN],
+  ])('checkClip itself refuses a %s of %d with INVALID_INPUT', (field, value) => {
+    const row = { ...bus.clip(stillClip), [field]: value }
+    const still: ClipAsset = { id: 'P1', kind: 'image', durationMs: null }
+    expect(() => checkClip(row, still, [])).toThrow(
+      expect.objectContaining({ code: 'INVALID_INPUT' }),
+    )
   })
 })
