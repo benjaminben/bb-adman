@@ -240,3 +240,20 @@ describe('nothing from the environment [P9-2, spec/providers.md "Rules for every
     expect(sent).not.toMatch(/environment-/)
   })
 })
+
+describe('the lifetime of an access token [P9-3 hardening of P9-2]', () => {
+  it.each([
+    ['a day', 86_400, true],
+    ['over a day', 86_401, false],
+  ])('expires_in of %s accepted: %s', async (_name, expiresIn, accepted) => {
+    const body = { access_token: 'sl.a', token_type: 'bearer', expires_in: expiresIn }
+    standIn.once('token', { status: 200, json: body })
+    const run = renewAccess(standIn.plantRefreshToken(), dropboxFetch)
+    if (accepted) expect((await run).expiresInSeconds).toBe(expiresIn)
+    else
+      expect(await failureOf(run)).toEqual({
+        kind: 'other',
+        detail: 'Dropbox sent an answer Adman cannot read',
+      })
+  })
+})

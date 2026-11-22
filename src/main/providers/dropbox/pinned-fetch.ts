@@ -12,13 +12,16 @@ import { DROPBOX_HOSTS } from './hosts'
 export const NOT_DROPBOX = 'Request refused: the address is not a Dropbox API host'
 export const REDIRECT_REFUSED = 'Request refused: Dropbox answered with a redirect'
 
+// The cause itself is not kept (its words or fields can hold a token or a path), only its name.
 export class DropboxNetworkError extends Error {
   readonly timedOut: boolean
+  readonly causeName: string
   constructor(cause: unknown) {
     const timedOut = cause instanceof Error && cause.name === 'TimeoutError'
-    super(timedOut ? 'Dropbox did not answer in time' : 'Could not reach Dropbox', { cause })
+    super(timedOut ? 'Dropbox did not answer in time' : 'Could not reach Dropbox')
     this.name = 'DropboxNetworkError'
     this.timedOut = timedOut
+    this.causeName = cause instanceof Error ? cause.name : typeof cause
   }
 }
 
@@ -52,13 +55,25 @@ function isRefusedRedirect(error: unknown): boolean {
   return cause instanceof Error && cause.message === 'unexpected redirect'
 }
 
+// Node's fetch takes an undici `dispatcher` in its options, which could send the request through
+// another connection; it is always cleared, beside the forced redirect and credentials rules.
+function forcedInit(init: RequestInit | undefined): RequestInit {
+  const forced: RequestInit & { dispatcher: undefined } = {
+    ...init,
+    redirect: 'error',
+    credentials: 'omit',
+    dispatcher: undefined,
+  }
+  return forced
+}
+
 export function pinnedFetch(inner: typeof fetch = fetch): typeof fetch {
   return async (input, init) => {
     const address = pinnedAddress(input)
     if (!address) throw refused(NOT_DROPBOX)
     let response: Response
     try {
-      response = await inner(address, { ...init, redirect: 'error', credentials: 'omit' })
+      response = await inner(address, forcedInit(init))
     } catch (error) {
       if (isRefusedRedirect(error)) throw refused(REDIRECT_REFUSED)
       throw new DropboxNetworkError(error)

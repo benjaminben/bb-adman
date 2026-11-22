@@ -116,3 +116,19 @@ describe('the access token in memory [P9-2, phase-09 "Dropbox tokens"]', () => {
     expect(standIn.refreshFor(next)).toBe(gone)
   })
 })
+
+describe('sign-out during a renewal [P9-3 hardening of P9-2]', () => {
+  it('every caller waiting on the renewal gets dropbox_signed_out, not the new token', async () => {
+    const refresh = standIn.plantRefreshToken()
+    standIn.once('token', { slowMs: 100 })
+    const first = accessTokenFor(refresh, dropboxFetch, now)
+    const second = accessTokenFor(refresh, dropboxFetch, now)
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    forgetDropboxAccess()
+    for (const waiting of [first, second]) {
+      const failure = await failureOf(waiting)
+      expect(failure).toMatchObject({ kind: 'bad_key', reason: 'dropbox_signed_out' })
+    }
+    expect(renewals()).toBe(1)
+  })
+})

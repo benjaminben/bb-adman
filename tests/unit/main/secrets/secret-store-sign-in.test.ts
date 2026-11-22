@@ -46,3 +46,17 @@ describe('the secret store and sign-in secrets [P9-1, A-211]', () => {
     expect(JSON.stringify(store.summaries())).not.toContain('wxyz')
   })
 })
+
+// P9-5b: sign-out must tell "no token saved" from "the saved keys cannot be read".
+describe('readable() [P9-5b]', () => {
+  it('is true with no file and with a file that reads, false with one that does not', () => {
+    const store = createSecretStore({ file, crypto: fakeCrypto() })
+    expect(store.readable()).toBe(true)
+    store.set('dropbox.refreshToken', 'made-up-refresh-token-wxyz')
+    expect(store.readable()).toBe(true)
+    fs.writeFileSync(file, 'not base64 json {')
+    expect(store.readable()).toBe(false)
+    fs.writeFileSync(file, Buffer.from('[1, 2]').toString('base64'))
+    expect(store.readable()).toBe(false)
+  })
+})

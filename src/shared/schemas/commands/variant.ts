@@ -14,18 +14,35 @@ export const variantUpdateInput = projectScoped
     variantId: z.string().min(1),
     title: z.string().trim().min(1).max(200).optional(),
     durationMs: z.number().int().min(MIN_DURATION_MS).max(MAX_DURATION_MS).optional(),
+    // P7-10: set only by the inverse of a duration change, which puts the old flag back. The
+    // handler refuses it from the agent.
+    durationOverridden: z.boolean().optional(),
   })
   .strict()
   .refine((i) => i.title !== undefined || i.durationMs !== undefined, {
     message: 'Name a title or a duration.',
   })
+  .refine((i) => i.durationOverridden === undefined || i.durationMs !== undefined, {
+    message: 'The duration flag goes with a duration.',
+    path: ['durationOverridden'],
+  })
 export type VariantUpdateInput = z.infer<typeof variantUpdateInput>
 
 // P7-1 (spec/data-rules.md, "Changing a variant's format"; phase-07.md "Clips and the track",
 // Sound). setSound names an asset only with 'file'; 'file' without one keeps the stored asset.
+// undoClipId (P7-10): set only by the inverse of an image-to-video change that made the first
+// clip; that clip is removed. The handler refuses it from the agent.
 export const variantSetFormatInput = projectScoped
-  .extend({ variantId: z.string().min(1), format: z.enum(['image', 'video']) })
+  .extend({
+    variantId: z.string().min(1),
+    format: z.enum(['image', 'video']),
+    undoClipId: z.string().min(1).optional(),
+  })
   .strict()
+  .refine((i) => i.undoClipId === undefined || i.format === 'image', {
+    message: 'Only a change back to image removes a clip.',
+    path: ['undoClipId'],
+  })
 export type VariantSetFormatInput = z.infer<typeof variantSetFormatInput>
 
 export const variantSetSoundInput = projectScoped

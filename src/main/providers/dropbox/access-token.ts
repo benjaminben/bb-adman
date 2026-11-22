@@ -3,7 +3,9 @@
 // reused until 5 minutes before it ends, then renewed; the caller forgets it after a 401 so the
 // next call renews. It is never written to disk and forgotten at sign-out. Calls at the same time
 // share one renewal. A failed renewal keeps nothing for that refresh token and touches no other.
+// A caller still waiting on a renewal when sign-out forgets every token gets dropbox_signed_out.
 import { createHash } from 'node:crypto'
+import { ProviderFailure } from '@/main/providers/types'
 import { renewAccess } from './oauth'
 
 const RENEW_BEFORE_MS = 5 * 60 * 1000
@@ -11,6 +13,10 @@ const RENEW_BEFORE_MS = 5 * 60 * 1000
 type Held = { accessToken: string; endsAt: number }
 const held = new Map<string, Held>()
 const renewing = new Map<string, Promise<Held>>()
+let signOuts = 0
+
+const signedOut = () =>
+  new ProviderFailure({ kind: 'bad_key', reason: 'dropbox_signed_out', detail: 'signed out' })
 
 const keyOf = (refreshToken: string) => createHash('sha256').update(refreshToken).digest('hex')
 
@@ -36,15 +42,18 @@ export async function accessTokenFor(
   const key = keyOf(refreshToken)
   const current = held.get(key)
   if (current && now() < current.endsAt - RENEW_BEFORE_MS) return current.accessToken
+  const before = signOuts
   const pending = renewing.get(key)
-  if (pending) return (await pending).accessToken
-  held.delete(key)
-  return (await renew(key, refreshToken, dropboxFetch, now())).accessToken
+  if (!pending) held.delete(key)
+  const fresh = await (pending ?? renew(key, refreshToken, dropboxFetch, now()))
+  if (signOuts !== before) throw signedOut()
+  return fresh.accessToken
 }
 
 // One refresh token's access token (after a 401), or every one (at sign-out).
 export function forgetDropboxAccess(refreshToken?: string): void {
   if (refreshToken === undefined) {
+    signOuts += 1
     held.clear()
     renewing.clear()
     return

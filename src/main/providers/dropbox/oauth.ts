@@ -22,7 +22,7 @@ const TOKEN_TEXT = /^[\x21-\x7e]+$/
 const AccessGrant = z.object({
   access_token: z.string().min(1).max(4096).regex(TOKEN_TEXT),
   token_type: z.string().refine((type) => type.toLowerCase() === 'bearer'),
-  expires_in: z.number().finite().positive(),
+  expires_in: z.number().finite().positive().max(86_400),
 })
 const CodeGrant = AccessGrant.extend({
   refresh_token: z.string().min(1).max(1000).regex(TOKEN_TEXT),
