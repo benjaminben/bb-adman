@@ -1,13 +1,11 @@
-// ST-1 (spec/phases/app-style.md "The stricter rules"): a renderer CSS file whose first line is
-// `/* app-style */` takes its type, shadows and times from tokens.css too. ST-14 removes the
-// marks and holds every file to these rules.
+// ST-1 and ST-14 (spec/phases/app-style.md "The stricter rules"): every renderer CSS file but
+// tokens.css takes its type, shadows and times from tokens.css, with no mark needed.
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const RENDERER = path.resolve('src/renderer')
 const TOKENS = path.join(RENDERER, 'ui', 'tokens.css')
-const MARK = '/* app-style */'
 
 function cssFiles(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
@@ -70,13 +68,11 @@ function problems(css: string): string[] {
   return found
 }
 
-const marked = cssFiles(RENDERER).filter(
-  (f) => f !== TOKENS && fs.readFileSync(f, 'utf8').trimStart().startsWith(MARK),
-)
+const ruled = cssFiles(RENDERER).filter((f) => f !== TOKENS)
 
-describe('the stricter styling rules [ST-1]', () => {
-  it('every marked renderer CSS file keeps them', () => {
-    const bad = marked.flatMap((f) =>
+describe('the stricter styling rules [ST-1, ST-14]', () => {
+  it('every renderer CSS file but tokens.css keeps them', () => {
+    const bad = ruled.flatMap((f) =>
       problems(fs.readFileSync(f, 'utf8')).map((p) => `${path.relative(RENDERER, f)}: ${p}`),
     )
     expect(bad).toEqual([])
