@@ -45,7 +45,6 @@ const REASONS: Record<ProviderErrorReason, string> = {
   too_long: 'This run took longer than Adman waits. The server may still be working on it.',
   address_changed: 'The ComfyUI address was changed while this run was going. The run was stopped.',
   bad_result: 'The ComfyUI server sent a result Adman cannot use.',
-  clip_has_sound: 'The server made a clip with sound. Adman stores silent clips only.',
   // P4-1 (spec/ai-jobs.md, OI-68): local failure causes. `{provider}` is the registry label.
   key_missing:
     'Your {provider} key was removed after this run was queued. Add it in Settings, then try again.',
@@ -61,6 +60,8 @@ const REASONS: Record<ProviderErrorReason, string> = {
     "The results could not be saved in the project's assets folder. Check that the folder can be written to, then try again.",
   results_not_added: 'The results were made but could not be added to the project. Try again.',
   target_gone: 'The layer or variant this run was for has been deleted.',
+  // P7-16: a background start.
+  background_not_drawn: "The post's background could not be drawn for the first frame.",
   // P9-1: the publish job's reasons.
   dropbox_signed_out: "Dropbox no longer accepts Adman's sign-in. Sign in again in Settings.",
   export_not_built: 'Publishing needs export, which this version does not have yet.',

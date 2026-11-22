@@ -73,17 +73,20 @@ function trackOf(
 // not a picture or a font, is left out: the Scene draws nothing for it. `withoutText` leaves
 // out the text layers and the fonts only they name (the layout job's picture). `timeMs` is the
 // time the variant is drawn at, 0 when left out; 'poster' is a video variant's poster time
-// (A-183). A video variant's input carries its clips (P7-8).
+// (A-183). A video variant's input carries its clips (P7-8). `backgroundOnly` keeps the
+// background layer alone, beside the clips (P7-16, a background start's first frame).
 export async function sceneInput(
   deps: Pick<CoreDeps, 'assets'>,
   project: ProjectHandle,
   variantId: string,
-  opts: { withoutText?: boolean; timeMs?: number | 'poster' } = {},
+  opts: { withoutText?: boolean; backgroundOnly?: boolean; timeMs?: number | 'poster' } = {},
 ): Promise<VariantScene | null> {
   const variant = readWireRow(project.db, 'variant', { id: variantId }) as VariantRow | null
   if (!variant) return null
   const all = variantLayers(project, variantId)
-  const layers = opts.withoutText ? all.filter((l) => l.type !== 'text') : all
+  const kept = (l: LayerRow) =>
+    opts.backgroundOnly ? l.type === 'background' : !opts.withoutText || l.type !== 'text'
+  const layers = all.filter(kept)
   const named = new Set(layers.flatMap(layerAssetIds))
   const video = variant.format === 'video'
   const check = named.size > 0 || video

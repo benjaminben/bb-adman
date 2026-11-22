@@ -40,6 +40,14 @@ export type RenderService = {
     variantId: string,
     maxDimension: number,
   ): Promise<VariantRender>
+  // P7-16 (A-176): the first frame of a `background` video start. The background layer and
+  // the clip track only, at time 0, with the longer side of `size` (the run size), the
+  // variant's shape kept. Through the same queue; no overflow report, no event, no file kept.
+  renderBackground(
+    project: ProjectHandle,
+    variantId: string,
+    size: { width: number; height: number },
+  ): Promise<Uint8Array>
   // P8-4: a PNG of exactly the variant's pixel size, drawn in tiles of at most 2,048 a side.
   // One queue item at render priority; no layer.reportOverflow and no file kept.
   drawFull(input: SceneInput): Promise<Uint8Array>

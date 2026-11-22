@@ -5,7 +5,16 @@
 // FFmpeg's ffmetadata format: '=', ';', '#', '\' and line breaks are escaped with '\'.
 const SPECIAL = /[=;#\\\n\r]/g
 
+// P7-16: NUL ends a value inside FFmpeg, and no other control character belongs in the
+// details, so a value holding one is refused, not written.
+function isControl(c: string): boolean {
+  const code = c.charCodeAt(0)
+  if (c === '\n' || c === '\r') return false
+  return code < 0x20 || (code >= 0x7f && code <= 0x9f)
+}
+
 export function escapeMetadata(value: string): string {
+  if ([...value].some(isControl)) throw new Error('The value holds a control character')
   return value.replace(SPECIAL, (c) => `\\${c}`)
 }
 

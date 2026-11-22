@@ -54,6 +54,4 @@ export function checkVideoTarget(
   if (variant.format !== 'video') throw videoRefusal('video_needs_video_post')
   if (start !== 'background') return
   if (!hasBackgroundPicture(project, variantId)) throw videoRefusal('background_empty')
-  // The background is drawn into a first frame by P7-16; until then the start is refused.
-  throw videoRefusal('video_not_built')
 }

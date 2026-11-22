@@ -164,12 +164,18 @@ describe('generation.startVideo offers [P7-11, A-175] (security class)', () => {
     },
   )
 
-  it('refuses a background start with a picture: video_not_built until P7-16', async () => {
+  it('accepts a background start with a picture (P7-16): one job, start background', async () => {
     await ready()
     const [id] = await pictures(1)
     const source = JSON.stringify({ assetId: id })
     f.db.prepare('UPDATE layer SET source = ? WHERE id = ?').run(source, BACKGROUND_LAYER)
-    await refused({ start: 'background' }, { details: { reason: 'video_not_built' } })
+    expect(await start({ start: 'background' })).toMatchObject({ ok: true })
+    expect(f.jobs()).toEqual([
+      expect.objectContaining({
+        kind: 'video_generation',
+        request: expect.objectContaining({ start: 'background' }),
+      }),
+    ])
   })
 
   it('refuses a background start that names a picture too', async () => {

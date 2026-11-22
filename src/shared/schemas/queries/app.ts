@@ -50,7 +50,6 @@ export const PROVIDER_ERROR_REASONS = [
   'too_long',
   'address_changed',
   'bad_result',
-  'clip_has_sound',
   // P4-1 (spec/ai-jobs.md, OI-68): a job that failed after it was queued, for a local cause.
   'key_missing',
   'picture_missing',
@@ -60,6 +59,8 @@ export const PROVIDER_ERROR_REASONS = [
   'assets_not_writable',
   'results_not_added',
   'target_gone',
+  // P7-16: a background start's first frame could not be drawn.
+  'background_not_drawn',
   // P9-1 (spec/phases/phase-09.md "Publishing"): the publish job's reasons.
   'dropbox_signed_out',
   'export_not_built',
