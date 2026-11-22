@@ -108,6 +108,11 @@
 .bar .closeCell {
   border-radius: 0 var(--radius-md) 0 0;
 }
+/* A campaign tab keeps room for one mark (the marks' gap and their fixed slot), so it does not
+   widen when a run starts or a result arrives (SH-1). */
+.bar .closable:not(:has(> :nth-child(2))) {
+  padding-right: calc(var(--space-1) * 2 + var(--icon-size-small));
+}
 .bar .tab:hover:not([data-state='active']) {
   background: var(--color-surface-soft);
 }
