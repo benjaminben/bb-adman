@@ -27,3 +27,25 @@ describe('the quit question [spec/screens-ai.md, D-036]', () => {
     expect(quitQuestion(2)?.buttons[QUIT_BUTTON]).toBe('Quit')
   })
 })
+
+describe('the quit question names runs that keep running [P7-13, A-174]', () => {
+  it.each([
+    [
+      [{ label: 'fal.ai Seedance', count: 1 }],
+      'fal.ai Seedance has started 1 video and will charge for it. It keeps running; open the project again to collect it.',
+    ],
+    [
+      [{ label: 'fal.ai Seedance', count: 2 }],
+      'fal.ai Seedance has started 2 videos and will charge for them. They keep running; open the project again to collect them.',
+    ],
+  ])('adds one sentence for %o', (left, sentence) => {
+    const detail = quitQuestion(2, left)?.detail ?? ''
+    expect(detail.endsWith(` ${sentence}`)).toBe(true)
+    expect(detail.startsWith('2 runs are still going.')).toBe(true)
+  })
+
+  it('adds nothing when no run keeps running', () => {
+    expect(quitQuestion(1, [])).toEqual(quitQuestion(1))
+    expect(quitQuestion(1, [{ label: 'fal.ai Seedance', count: 0 }])).toEqual(quitQuestion(1))
+  })
+})
