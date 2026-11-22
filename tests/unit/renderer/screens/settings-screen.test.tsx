@@ -54,7 +54,7 @@ describe('settings: default project location [FR-004]', () => {
   it('changes the default location through the folder dialog', async () => {
     const fake = makeFakeApi()
     fake.onQuery('dialog.pickFolder', () => ({ ok: true, data: { path: '/Volumes/Work' } }))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="files" />, fake)
     await userEvent.click(screen.getByRole('button', { name: 'Change default location' }))
     expect(fake.commands).toContainEqual({
       name: 'settings.update',

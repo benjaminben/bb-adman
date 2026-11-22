@@ -1,17 +1,43 @@
 /* app-style */
-/* Settings: one column at page width. The shell's panel already gives --space-6 on every side,
-   so the page adds what reaches the spec's padding (spec/app-style.md "Settings"). */
+/* Settings (SET-1, choice C-1): the side list on the left, the chosen page on the right. The
+   shell's panel already gives --space-6 on every side, so the page adds what reaches the spec's
+   padding (spec/app-style.md "Settings"). The shell's main cell scrolls; the side column sticks
+   to its top, so only the page column moves. */
 .screen {
-  max-width: calc(var(--width-page) + 2 * (var(--space-8) - var(--space-6)));
+  display: grid;
+  grid-template-columns: calc(4 * var(--space-12)) minmax(0, var(--width-page));
+  gap: var(--space-8);
+  align-items: start;
   padding: calc(var(--space-8) - var(--space-6)) calc(var(--space-8) - var(--space-6))
     calc(var(--space-12) - var(--space-6));
 }
-.screen h1 {
-  margin: 0 0 var(--space-6);
+.side {
+  position: sticky;
+  top: calc(var(--space-8) - var(--space-6));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  height: calc(100vh - var(--bar-height) - 2 * var(--space-8));
+}
+.side h1 {
+  margin: 0;
+  padding: 0 var(--space-2);
   font-size: var(--font-size-title);
 }
+.side nav {
+  flex: 1;
+  min-height: 0;
+}
+.page {
+  min-width: 0;
+}
+.title {
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-title);
+  font-size: var(--type-title-size);
+}
 /* A sub-heading inside a card stays under the card's h2. */
-.screen h3 {
+.page h3 {
   margin: var(--space-2) 0 0;
   font-size: var(--font-size-body);
 }

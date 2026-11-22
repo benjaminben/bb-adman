@@ -26,7 +26,7 @@ function mockClipboard() {
 async function openPanel(claudeDesktop: string | null) {
   const user = userEvent.setup()
   const { fake } = mcpFake(connect({ claudeDesktop }))
-  const { container } = await renderApp(<SettingsScreen />, fake)
+  const { container } = await renderApp(<SettingsScreen page="agents" />, fake)
   const box = await screen.findByRole('region', { name: 'Agent access' })
   const panel = await within(box).findByRole('region', { name: 'Connect to Claude' })
   return { user, panel, container }

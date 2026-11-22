@@ -26,7 +26,7 @@ async function saveKey(page: Page, box: string, label: string, value: string) {
 
 // Settings: a made-up bucket and keys, then the service's address and key and "Test connection".
 export async function setUpSettings(page: Page, origin: string, key: string): Promise<void> {
-  await screens.openSettings(page)
+  await screens.openSettingsPage(page, 'Publish')
   const s3 = page.getByRole('region', { name: 'Cloud storage' })
   await s3.getByLabel('Bucket', { exact: true }).fill('made-up-adman-pictures')
   await s3.getByLabel('Region', { exact: true }).fill('eu-west-1')

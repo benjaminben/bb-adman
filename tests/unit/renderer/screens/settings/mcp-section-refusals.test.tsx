@@ -18,7 +18,7 @@ describe('settings: agent access refusal lines are cleared [REVIEW MCP-C 6e]', (
   it('a refused switch line goes after a port is saved', async () => {
     const { fake } = mcpFake(OFF)
     fake.onCommand('mcp.setEnabled', () => refused(IN_USE, 'port_in_use'))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     await userEvent.click(await within(box).findByRole('switch'))
     expect(await within(box).findByText(IN_USE)).toBeInTheDocument()
@@ -32,7 +32,7 @@ describe('settings: agent access refusal lines are cleared [REVIEW MCP-C 6e]', (
   it('a refused port line goes after the switch is turned on', async () => {
     const { fake, setInfo } = mcpFake(OFF)
     fake.onCommand('settings.update', () => refused(RANGE))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     const field = await within(box).findByLabelText('Port')
     await userEvent.clear(field)
@@ -49,7 +49,7 @@ describe('settings: agent access refusal lines are cleared [REVIEW MCP-C 6e]', (
   it('a refused switch line goes after a new token is made', async () => {
     const { fake } = mcpFake(OFF)
     fake.onCommand('mcp.setEnabled', () => refused(IN_USE, 'port_in_use'))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     await userEvent.click(await within(box).findByRole('switch'))
     expect(await within(box).findByText(IN_USE)).toBeInTheDocument()

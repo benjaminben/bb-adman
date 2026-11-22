@@ -8,6 +8,9 @@ import path from 'node:path'
 import { firstIds } from './held-run'
 import { openActivity } from './picture-run'
 import { query } from './render-helpers'
+import { openSettingsPage } from './settings-pages'
+
+export { chooseSettingsPage, openSettingsPage } from './settings-pages'
 
 export * from './picture-run'
 
@@ -196,7 +199,7 @@ export async function clipHasMetadata(page: Page, timeout: number): Promise<void
 }
 
 export async function openSettings(page: Page): Promise<Locator> {
-  await page.getByRole('button', { name: 'Settings', exact: true }).click()
+  await openSettingsPage(page, 'AI services')
   return page.getByRole('region', { name: 'ComfyUI server' })
 }
 

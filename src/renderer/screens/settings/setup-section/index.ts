@@ -1,1 +1,1 @@
-export { SetupSection } from './setup-section'
+export { SetupButton } from './setup-section'

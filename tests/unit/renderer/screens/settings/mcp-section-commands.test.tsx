@@ -20,7 +20,7 @@ async function toggle(box: HTMLElement) {
 describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', () => {
   it('the switch sends mcp.setEnabled and reads the panel again', async () => {
     const { fake, setInfo, reads } = mcpFake(OFF)
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     const before = reads()
     setInfo(connect())
@@ -32,7 +32,7 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
 
   it('turning the switch off sends enabled false', async () => {
     const { fake, setInfo } = mcpFake(connect())
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     setInfo(OFF)
     await userEvent.click(await toggle(box))
@@ -43,7 +43,7 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
   it('a refused switch shows the sentence and still reads the panel again', async () => {
     const { fake, reads } = mcpFake(OFF)
     fake.onCommand('mcp.setEnabled', () => refused(IN_USE, 'port_in_use'))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     const before = reads()
     await userEvent.click(await toggle(box))
@@ -56,7 +56,7 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
     const { fake } = mcpFake(OFF)
     const held = heldReply()
     fake.onCommand('mcp.setEnabled', held.answer)
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     const sw = await toggle(box)
     await userEvent.click(sw)
@@ -71,7 +71,7 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
 
   it('Save port sends settings.update with the number and reads the panel again', async () => {
     const { fake, setInfo, reads } = mcpFake(connect())
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     const field = await within(box).findByLabelText('Port')
     await userEvent.clear(field)
@@ -91,7 +91,7 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
     const { fake, reads } = mcpFake(connect())
     const sentence = 'Choose a port from 1024 to 65535.'
     fake.onCommand('settings.update', () => refused(sentence))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     const field = await within(box).findByLabelText('Port')
     await userEvent.clear(field)
@@ -105,7 +105,7 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
 
   it('Make a new token sends mcp.regenerateToken and shows the new line', async () => {
     const { fake, setInfo, reads } = mcpFake(connect())
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     await within(box).findByText(line())
     const before = reads()
@@ -120,7 +120,7 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
     // REVIEW MCP-A point 7.2: the token is saved, then the taken port refuses the start.
     const { fake, setInfo, reads } = mcpFake(connect())
     fake.onCommand('mcp.regenerateToken', () => refused(IN_USE, 'port_in_use'))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     await within(box).findByText(line())
     const before = reads()

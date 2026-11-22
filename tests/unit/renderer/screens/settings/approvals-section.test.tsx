@@ -27,7 +27,7 @@ function approvalsState(baseUrl: string | null, secrets: AppState['secrets'] = [
 
 async function section(state: AppState) {
   const fake = makeFakeApi(state)
-  const { store } = await renderApp(<SettingsScreen />, fake)
+  const { store } = await renderApp(<SettingsScreen page="publish" />, fake)
   store.getState().subscribe()
   const box = await screen.findByRole('region', { name: 'Approvals service' })
   return { fake, box }
@@ -74,7 +74,7 @@ describe('settings: approvals service [AP-10]', () => {
   it("a refused address shows the rule's sentence under the field and keeps the text", async () => {
     const fake = makeFakeApi(approvalsState(null))
     fake.onCommand('approvals.setService', refusal('INVALID_INPUT', APPROVALS_ADDRESS_MESSAGE))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="publish" />, fake)
     const box = await screen.findByRole('region', { name: 'Approvals service' })
     const field = within(box).getByLabelText('Service address')
     await userEvent.type(field, 'http://made-up.example/path')
@@ -145,7 +145,7 @@ describe('settings: approvals service [AP-10]', () => {
   ])('Test connection when %s shows its line', async (_, answer, line) => {
     const fake = makeFakeApi(approvalsState('https://kept.example'))
     fake.onCommand('approvals.check', answer)
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="publish" />, fake)
     const box = await screen.findByRole('region', { name: 'Approvals service' })
     await userEvent.click(within(box).getByRole('button', { name: 'Test connection' }))
     expect(fake.commands).toContainEqual({ name: 'approvals.check', input: {} })
@@ -156,7 +156,7 @@ describe('settings: approvals service [AP-10]', () => {
   it('a new address clears an earlier Test connection line', async () => {
     const fake = makeFakeApi(approvalsState('https://kept.example'))
     fake.onCommand('approvals.check', () => ({ ok: true, data: { ok: true } }))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="publish" />, fake)
     const box = await screen.findByRole('region', { name: 'Approvals service' })
     await userEvent.click(within(box).getByRole('button', { name: 'Test connection' }))
     expect(await within(box).findByText('Connected.')).toBeInTheDocument()
@@ -169,7 +169,7 @@ describe('settings: approvals service [AP-10]', () => {
       approvalsState('https://kept.example', [{ name: 'approvals.apiKey', lastFour: 'K9QZ' }]),
     )
     fake.onCommand('approvals.setService', refusal('INVALID_INPUT', APPROVALS_ADDRESS_MESSAGE))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="publish" />, fake)
     const box = await screen.findByRole('region', { name: 'Approvals service' })
     await userEvent.click(within(box).getByRole('button', { name: 'Save' }))
     await within(box).findByText(APPROVALS_ADDRESS_MESSAGE)

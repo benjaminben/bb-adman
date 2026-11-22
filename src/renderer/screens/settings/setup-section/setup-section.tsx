@@ -1,18 +1,13 @@
-// R2E-10 (spec/phases/round-2-editor.md D8): the first Settings card, which opens the
-// first-run setup at its welcome step whatever the mark says.
+// R2E-10 (spec/phases/round-2-editor.md D8) and SET-1: the Setup button at the foot of the
+// Settings side list. It opens the first-run setup at its welcome step whatever the mark says.
+// The visible word is "Setup"; the name stays "Open the setup…" (the name rule).
 import { openSetup } from '@/renderer/app/first-run'
 import layout from '@/renderer/ui/layout.module.css'
 
-export function SetupSection() {
+export function SetupButton() {
   return (
-    <section className={layout.card} aria-labelledby="setup-title">
-      <h2 id="setup-title">Setup</h2>
-      <p className={layout.muted}>Walk through adding keys again.</p>
-      <div className={layout.row}>
-        <button type="button" onClick={openSetup}>
-          Open the setup…
-        </button>
-      </div>
-    </section>
+    <button type="button" className={layout.quiet} aria-label="Open the setup…" onClick={openSetup}>
+      Setup
+    </button>
   )
 }

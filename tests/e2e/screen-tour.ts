@@ -10,10 +10,11 @@ import * as screens from './screens'
 export async function settingsTour(app: ElectronApplication, page: Page, box: Sandbox) {
   const elsewhere = path.join(box.root, 'elsewhere')
   fs.mkdirSync(elsewhere)
-  await screens.openSettings(page)
+  await screens.openSettingsPage(page, 'Files')
   await screens.answerOpenDialog(app, [elsewhere])
   await page.getByRole('button', { name: 'Change default location' }).click()
   await expect(page.getByText(elsewhere, { exact: true })).toBeVisible()
+  await screens.chooseSettingsPage(page, 'AI services')
 
   const row = page.getByRole('group', { name: 'Google Gemini API key' })
   await row.getByRole('button', { name: 'Add' }).click()
@@ -82,7 +83,7 @@ export async function projectHomeTour(app: ElectronApplication, page: Page) {
 // and the limit, each saved to settings.json. Clicks only: no agent and no run.
 export async function agentRunsTour(page: Page, box: Sandbox) {
   const saved = () => JSON.parse(fs.readFileSync(path.join(box.userData, 'settings.json'), 'utf8'))
-  await screens.openSettings(page)
+  await screens.openSettingsPage(page, 'Agents')
   const block = page.getByRole('region', { name: 'Agent runs' })
   const tick = (label: string) =>
     block.getByRole('checkbox', { name: `Let agents start runs with ${label}` })

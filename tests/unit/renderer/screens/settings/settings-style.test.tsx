@@ -34,19 +34,22 @@ describe('settings: the app style [ST-5]', () => {
     }
   })
 
-  it('draws the page as one column with each section a card under its h2', async () => {
-    await renderApp(<SettingsScreen />, mcpFake(connect()).fake)
+  it('draws the page with its h2 as the page title', async () => {
+    await renderApp(<SettingsScreen page="agents" />, mcpFake(connect()).fake)
     const region = screen.getByRole('region', { name: 'Settings' })
     expect(page.screen).toBeTruthy()
     expect(region).toHaveClass(page.screen as string)
     await within(region).findByRole('region', { name: 'Agent access' })
-    const headings = within(region).getAllByRole('heading', { level: 2 })
-    expect(headings.length).toBeGreaterThan(5)
-    for (const h2 of headings) expect(h2.parentElement).toHaveClass(layout.card as string)
+    const [title] = within(region).getAllByRole('heading', { level: 2 })
+    expect(title).toHaveTextContent('Agents')
+    expect(title).toHaveClass(page.title as string)
   })
 
   it('draws the agent access state line as a warn notice', async () => {
-    await renderApp(<SettingsScreen />, mcpFake(connect({ problem: 'port_in_use' })).fake)
+    await renderApp(
+      <SettingsScreen page="agents" />,
+      mcpFake(connect({ problem: 'port_in_use' })).fake,
+    )
     const text = `Port ${PORT} is in use. Choose another.`
     const line = await screen.findByText(text)
     expect(line).toHaveClass(layout.notice as string, layout.warn as string)
