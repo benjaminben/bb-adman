@@ -9,7 +9,7 @@ import { COMFY_PRIVACY } from '@/renderer/ui/comfy-privacy'
 import type { ComfyCheck } from '@/shared/schemas/commands/comfy-check'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import { axeViolations, renderApp } from '../../render'
-import { baseState, makeFakeApi } from '../../fake-api'
+import { baseState } from '../../fake-api'
 import { ADDRESS, comfyFake, info, workflow } from './comfy-fixture'
 
 const TYPED = 'made-up-key-value-Q2RT'
