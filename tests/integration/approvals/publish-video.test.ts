@@ -260,3 +260,18 @@ describe('approvals.publish with a video variant [R2V-5]', () => {
     expect(lf.stand.seen.slice(from).map((s) => s.route)).toEqual(['health'])
   })
 })
+
+describe('the clean-up after a failed run [R2V-7, from R2V-5’s review]', () => {
+  it('keeps files that were in the folder before the run and removes only new ones', async () => {
+    stubDraw(lf)
+    stubExport()
+    data(await publish())
+    // The local rows are out of date, so this run writes again to still(0) and clip(0).
+    lf.db().prepare('DELETE FROM approval_variant WHERE variant_id = ?').run(videoId)
+    const [fresh] = addVariants(lf, lf.c1, 1)
+    lf.stand.once('replaceGallery', { status: 500, json: { error: { code: 'x', message: 'x' } } })
+    expect(await publish()).toMatchObject({ ok: false })
+    expect(onDisk(still()) && onDisk(clip())).toBe(true)
+    expect(onDisk(picturePath(lf.projectId, lf.c1, fresh!, 0))).toBe(false)
+  })
+})

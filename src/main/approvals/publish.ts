@@ -2,7 +2,8 @@
 // class): the network half, run in the command's prepare. All or nothing for the gallery
 // (A-90): ask the service's health, draw the changed variants and make their clips (gallery-
 // files.ts), sign every still and clip, replace the gallery; if any of those fails or the run
-// is stopped, this run's files, clips included, are removed and the command fails. After
+// is stopped, the files this run added to the folder, clips included, are removed and the
+// command fails. After
 // success, the campaign's folder keeps only the current stills and clips. Paths come only from
 // picture-paths.ts; no signed address, key or path reaches a log line or an error.
 import type Database from 'better-sqlite3'
@@ -87,6 +88,17 @@ async function removeOld(deps: CoreDeps, store: PictureStore, pair: Pair, keep: 
 
 export type { PublishInput }
 
+// What the folder held before this run's first upload. A failing run removes only the paths it
+// added, never a file the live gallery may already show (a path written again). When the folder
+// cannot be listed, a failing run removes nothing; the next good run's clean-up does it.
+async function listBefore(store: PictureStore, pair: Pair) {
+  try {
+    return new Set(await store.list(pictureFolder(pair.projectId, pair.campaignId)))
+  } catch (error) {
+    return { error }
+  }
+}
+
 export type Published = { rows: VariantRecord[]; drawn: number; clips: number }
 
 // One expiry covers a still and its clip, so the earlier of the two is sent and kept.
@@ -133,6 +145,7 @@ export async function publishGallery(deps: CoreDeps, input: PublishInput): Promi
   const { pair } = input
   await input.client.health()
   const store = deps.approvals.pictures()
+  const before = await listBefore(store, pair)
   const uploaded: string[] = []
   const rows: VariantRecord[] = []
   const keep = new Set<string>()
@@ -154,7 +167,12 @@ export async function publishGallery(deps: CoreDeps, input: PublishInput): Promi
     })
     if (shown === null) throw approvalsRefusal('approval_link_gone')
   } catch (error) {
-    if (uploaded.length > 0) await removeQuietly(deps, store, pair, uploaded)
+    if (before instanceof Set) {
+      const added = uploaded.filter((p) => !before.has(p))
+      if (added.length > 0) await removeQuietly(deps, store, pair, added)
+    } else if (uploaded.length > 0) {
+      logPictureStep(deps, pair, 'publishUndo', before.error)
+    }
     throw error
   }
   await removeOld(deps, store, pair, keep)
