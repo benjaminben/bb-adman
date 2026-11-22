@@ -32,6 +32,12 @@
   line-height: var(--leading-tight);
   letter-spacing: normal;
 }
+/* The panel scrolls, so it clips what passes its edges. A row's More menu sits at the row's
+   right end, so it opens leftwards, over the row, and stays inside the panel. */
+.list [role='menu'][data-inline] {
+  right: 0;
+  left: auto;
+}
 .list {
   display: flex;
   flex-direction: column;
