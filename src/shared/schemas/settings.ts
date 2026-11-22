@@ -68,7 +68,8 @@ export const settingsPatchSchema = z
     generation: generation.partial().strict(),
     export: exportSettings.partial().strict(),
     mcp: mcp.omit({ enabled: true }).partial().strict(),
-    storage: storage.partial().strict(),
+    // P9-1 (A-213): storage.dropbox is written only by the Dropbox commands.
+    storage: storage.pick({ s3: true }).partial().strict(),
     licenceConfirmed,
     reports: reportsSettings.partial().strict(),
   })

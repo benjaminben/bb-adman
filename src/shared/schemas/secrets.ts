@@ -15,7 +15,13 @@ export const SECRET_NAMES = [
 ] as const
 export type SecretName = (typeof SECRET_NAMES)[number]
 
-export const USER_SECRET_NAMES = SECRET_NAMES.filter((n) => n !== 'mcp.token')
+// P9-1 (A-211): sign-in secrets are written and deleted only by their sign-in and sign-out
+// commands, in the main process. Their summary shows no characters.
+export const SIGN_IN_SECRET_NAMES: readonly SecretName[] = ['dropbox.refreshToken']
+
+export const USER_SECRET_NAMES = SECRET_NAMES.filter(
+  (n) => n !== 'mcp.token' && !SIGN_IN_SECRET_NAMES.includes(n),
+)
 export const userSecretName = z.enum(USER_SECRET_NAMES as [SecretName, ...SecretName[]])
 
 export const secretSetInput = z.object({

@@ -19,6 +19,7 @@ import { mcpQueries, type McpState } from './mcp'
 import { paidCountQueries } from './paid-count'
 import { projectQueries } from './project'
 import { projectListOpenQueries } from './project-list-open'
+import { publishQueries } from './publish'
 import { renderQueries } from './render'
 import { reportQueries } from './report'
 import { subjectListQueries } from './subject-list'
@@ -51,6 +52,7 @@ export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, Query
     ...(mcp ? mcpQueries(deps, mcp) : {}),
     ...projectQueries(deps),
     ...projectListOpenQueries(deps),
+    ...publishQueries(deps),
     ...renderQueries(deps),
     ...reportQueries(deps),
     ...subjectListQueries(deps),

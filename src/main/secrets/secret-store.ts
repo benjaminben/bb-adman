@@ -3,7 +3,12 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { AppError } from '@/shared/schemas/result'
-import { SECRET_NAMES, type SecretName, type SecretSummary } from '@/shared/schemas/secrets'
+import {
+  SECRET_NAMES,
+  SIGN_IN_SECRET_NAMES,
+  type SecretName,
+  type SecretSummary,
+} from '@/shared/schemas/secrets'
 
 export type SecretCrypto = {
   isAvailable(): boolean
@@ -60,6 +65,10 @@ export function createSecretStore(opts: { file: string; crypto: SecretCrypto }) 
   }
 
   return {
+    // P9-1: whether a secret could be saved now, so a sign-in refuses before anything opens.
+    canStore(): boolean {
+      return opts.crypto.isAvailable()
+    },
     get(name: SecretName): string | undefined {
       return read()[name]
     },
@@ -80,10 +89,11 @@ export function createSecretStore(opts: { file: string; crypto: SecretCrypto }) 
     },
     summaries(): SecretSummary[] {
       const map = read()
-      // Every secret, mcp.token included, is listed by its last four characters only.
+      // Every secret, mcp.token included, is listed by its last four characters only. A
+      // sign-in secret shows none (A-211): the window learns only that it exists.
       return SECRET_NAMES.filter((n) => map[n] !== undefined).map((name) => ({
         name,
-        lastFour: lastFour(map[name] ?? ''),
+        lastFour: SIGN_IN_SECRET_NAMES.includes(name) ? '' : lastFour(map[name] ?? ''),
       }))
     },
   }

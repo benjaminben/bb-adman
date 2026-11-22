@@ -572,6 +572,45 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     "name": "cancel_job",
   },
   {
+    "description": "List the subjects of an open project: for each, its ID, name, description and the IDs of the assets that show it.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+      ],
+      "type": "object",
+    },
+    "name": "list_subjects",
+  },
+  {
+    "description": "Read one variant of an open project: its fields and badges, its campaign ID, every layer with all its values (z ascending), and the assets its layers use, with display name, kind, size and whether the file is missing.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "variant_id",
+      ],
+      "type": "object",
+    },
+    "name": "get_variant",
+  },
+  {
     "description": "Add a picture or text layer on top of one variant of an open project. type is "image" or "text"; values may set name, copy, style, geometry, source, visible and locked. Gives the new layer ID. The user can undo the change. A picture is set as source: { assetId } with an asset ID from list_assets (asset library, kind image); source null clears it. A font is set as style.fontAssetId with a font asset ID, or null for the default font. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",

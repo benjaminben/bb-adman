@@ -82,6 +82,7 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny' | 'tick'> = {
   'storage.dropboxSignIn': 'deny',
   'storage.dropboxSignOut': 'deny',
   'storage.checkS3': 'deny',
+  'storage.setDropboxFolder': 'deny',
   'dev.storage': 'deny',
   'mcp.setEnabled': 'deny',
   'mcp.regenerateToken': 'deny',

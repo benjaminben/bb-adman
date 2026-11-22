@@ -37,7 +37,7 @@ export function changePatch(row: AssetRow, facts: FileFacts) {
   const { byteSize, mtimeMs, contentHash } = facts
   if (contentHash === row.contentHash) return { patch: { byteSize, mtimeMs }, outcome: 'time' }
   if (facts.type?.kind === row.kind) {
-    const { width, height, fontFamily } = facts
+    const { width, height, durationMs, fontFamily } = facts
     const patch = {
       mime: facts.type.mime,
       byteSize,
@@ -45,10 +45,12 @@ export function changePatch(row: AssetRow, facts: FileFacts) {
       contentHash,
       width,
       height,
+      durationMs,
       fontFamily,
     }
     return { patch, outcome: 'content' }
   }
-  const patch = { byteSize, mtimeMs, contentHash, width: null, height: null, fontFamily: null }
+  const cleared = { width: null, height: null, durationMs: null, fontFamily: null }
+  const patch = { byteSize, mtimeMs, contentHash, ...cleared }
   return { patch, outcome: 'other kind' }
 }

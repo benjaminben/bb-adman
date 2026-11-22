@@ -28,6 +28,11 @@ export async function setup(): Promise<Setup> {
   const folder = path.join(fx.documents, FOLDER)
   fs.mkdirSync(folder)
   vi.spyOn(fx.core.deps, 'now').mockReturnValue(NOW)
+  // P8-13: Phase 6's checks warn on this campaign (no "fresh", no German translation). These
+  // tests are about the folder and the job, so the checks answer nothing unless a test says so.
+  vi.spyOn(fx.core.deps.export.checks, 'run').mockImplementation(
+    async (_project, ids) => new Map(ids.map((id) => [id, []])),
+  )
   const input = {
     projectId: p.projectId,
     campaignId: p.campaignId,

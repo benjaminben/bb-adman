@@ -6,7 +6,21 @@ export type AssetKind = 'image' | 'video' | 'font' | 'text' | 'audio'
 
 export type FileType = {
   // The signature sniff.ts checks the first bytes against.
-  id: 'png' | 'jpeg' | 'webp' | 'mp4' | 'mov' | 'webm' | 'ttf' | 'otf' | 'woff2' | 'text'
+  id:
+    | 'png'
+    | 'jpeg'
+    | 'webp'
+    | 'mp4'
+    | 'mov'
+    | 'webm'
+    | 'ttf'
+    | 'otf'
+    | 'woff2'
+    | 'text'
+    | 'mp3'
+    | 'wav'
+    | 'm4a'
+    | 'aac'
   kind: AssetKind
   mime: string
   extensions: string[]
@@ -26,6 +40,10 @@ export const FILE_TYPES: FileType[] = [
   { id: 'text', kind: 'text', mime: 'text/markdown', extensions: ['md'] },
   { id: 'text', kind: 'text', mime: 'application/json', extensions: ['json'] },
   { id: 'text', kind: 'text', mime: 'application/yaml', extensions: ['yaml', 'yml'] },
+  { id: 'mp3', kind: 'audio', mime: 'audio/mpeg', extensions: ['mp3'] },
+  { id: 'wav', kind: 'audio', mime: 'audio/wav', extensions: ['wav'] },
+  { id: 'm4a', kind: 'audio', mime: 'audio/mp4', extensions: ['m4a'] },
+  { id: 'aac', kind: 'audio', mime: 'audio/aac', extensions: ['aac'] },
 ]
 
 // The lower-case extension after the last dot, or '' when there is none. A name that is

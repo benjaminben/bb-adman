@@ -14,6 +14,8 @@ export const BUILT_TOOLS = [
   'generate_images',
   'generate_video',
   'cancel_job',
+  'list_subjects',
+  'get_variant',
   'create_layer',
   'update_layer',
   'update_layers',

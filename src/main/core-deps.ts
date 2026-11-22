@@ -11,6 +11,8 @@ import type { RenderService } from './thumbnails/types'
 import type { ApprovalsDeps } from './approvals/types'
 import type { ExportDeps, ExportPictures } from './export/types'
 import type { MediaTool } from './media/types'
+import type { PublishPorts } from './publish/ports'
+import type { DropboxFetch } from './providers/dropbox/fetch'
 
 export type CoreDeps = {
   projects: ProjectRegistry
@@ -44,6 +46,10 @@ export type CoreDeps = {
   exportPictures: ExportPictures
   // FFmpeg behind one door (P7-4); noMediaTool until index.ts fills it.
   media: MediaTool
+  // The export, checks and storage ports of publishing (spec/phases/phase-09.md).
+  publish: PublishPorts
+  // Every Dropbox call goes through it; tests hand in one that reaches the stand-in.
+  dropboxFetch: DropboxFetch
   appVersion: string
   now: () => Date
   userDataDir: string

@@ -31,6 +31,7 @@ function rowOf(a: NewAsset, input: AssetImportInput, createdAt: string) {
     contentHash: a.contentHash,
     width: a.width,
     height: a.height,
+    durationMs: a.durationMs,
     fontFamily: a.fontFamily,
     createdAt,
   }
