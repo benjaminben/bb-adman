@@ -77,11 +77,11 @@ describe('ResultNotice words [R2E-6]', () => {
   })
 
   it('stays quiet for other kinds, failed runs and results already seen', async () => {
-    const jobs = [running('J1', { kind: 'export' }), running('J2'), running('J3')]
-    const { fake } = await draw(jobs.map((job) => ({ job, place: CAN })))
-    finish(fake, jobs[0])
-    finish(fake, jobs[1], { status: 'failed' })
-    finish(fake, jobs[2], { seenAt: later() })
+    const [other, failed, seen] = [running('J1', { kind: 'export' }), running('J2'), running('J3')]
+    const { fake } = await draw([other, failed, seen].map((job) => ({ job, place: CAN })))
+    finish(fake, other)
+    finish(fake, failed, { status: 'failed' })
+    finish(fake, seen, { seenAt: later() })
     expect(notice()).toBeEmptyDOMElement()
   })
 
