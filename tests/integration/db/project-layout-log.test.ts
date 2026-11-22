@@ -36,6 +36,7 @@ describe('project.open refuses a hostile layout with a fixed sentence [LP-11]', 
     expect(f.core.projects.all()).toEqual([])
     expect(fs.readFileSync(made.filePath).equals(before)).toBe(true)
     expect(JSON.stringify(f.events)).not.toContain(MARKER)
+    expect(f.readLogs()).toContain('project.open')
     expect(f.readLogs()).not.toContain(MARKER)
   })
 })

@@ -58,6 +58,11 @@ const hostile: Array<[string, string]> = [
     'a trigger',
     'CREATE TRIGGER trg_marker_zq AFTER UPDATE ON project_meta BEGIN DELETE FROM campaign; END',
   ],
+  [
+    'a trigger, in WAL journal mode',
+    `PRAGMA journal_mode = WAL;
+      CREATE TRIGGER trg_marker_zq AFTER UPDATE ON layer BEGIN DELETE FROM layer; END`,
+  ],
   ['a view', 'CREATE VIEW view_marker_zq AS SELECT 1 AS one'],
   ['a view standing in for a table', 'DROP TABLE report; CREATE VIEW report AS SELECT 1 AS id'],
   ['an extra table', 'CREATE TABLE extra_marker_zq (id TEXT PRIMARY KEY)'],
