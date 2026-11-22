@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { localStorageAt } from '@/main/providers/local-storage'
 import type { ActivityLog } from '@/main/log/activity-log'
 import {
+  campaignPrefix,
   MANIFEST_MAX_BYTES,
   nextPublishNumber,
   readPrevious,
@@ -127,5 +128,22 @@ describe('writeManifest', () => {
       )
     }
     expect(storage.calls).toEqual([])
+  })
+})
+
+describe('campaignPrefix [P9-10, A-221]', () => {
+  it('gives {campaignId}/ for an ID of the campaign ID form', () => {
+    expect(campaignPrefix(CAMPAIGN)).toBe(`${CAMPAIGN}/`)
+    expect(campaignPrefix('campaign-x1y2z3')).toBe('campaign-x1y2z3/')
+  })
+
+  it.each([
+    'C1',
+    'Summer-sale-a1b2c3',
+    'summer sale-a1b2c3',
+    'summer-sale-a1b2c',
+    `${'a'.repeat(41)}-a1b2c3`,
+  ])('refuses %s, which is not of the campaign ID form', (id) => {
+    expect(() => campaignPrefix(id)).toThrow('Storage path refused')
   })
 })

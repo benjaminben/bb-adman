@@ -100,3 +100,24 @@ describe('removeStale [A-219]', () => {
     expect(storage.calls).toEqual([])
   })
 })
+
+describe('removeStale, Dropbox-style names [P9-10 ruling]', () => {
+  it('keeps a listed path that differs from a kept one only in letter case or Unicode form', async () => {
+    const removedPaths: string[][] = []
+    const nfd = 'Cafe\u0301'
+    const storage = {
+      ...localStorageAt(root),
+      list: async () => [
+        `${CAMPAIGN}/exports/${nfd}/A.PNG`,
+        `${CAMPAIGN}/Report.HTML`,
+        `${CAMPAIGN}/stale.png`,
+      ],
+      remove: async (paths: string[]) => {
+        removedPaths.push(paths)
+      },
+    }
+    const kept = ['exports/Caf\u00e9/a.png', 'report.html']
+    expect(await removeStale(storage, CAMPAIGN, kept)).toBe(1)
+    expect(removedPaths).toEqual([[`${CAMPAIGN}/stale.png`]])
+  })
+})

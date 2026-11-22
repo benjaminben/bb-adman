@@ -18,7 +18,7 @@ import type {
   PublishInspectInput,
 } from '@/shared/schemas/queries/publish'
 import { AppError } from '@/shared/schemas/result'
-import { collectComponents, type CollectedComponent } from './components'
+import { collectComponents } from './components'
 import { fontConsent } from './font-consent'
 import { campaignPrefix, readPrevious } from './manifest'
 import { publishStorages } from './readiness'
@@ -84,15 +84,12 @@ function campaignVariantIds(project: ProjectHandle, campaignId: string): string[
 }
 
 // A font is `confirmed` only when the local list holds the key for the hash of its bytes now;
-// the project file's flag gives at most `needs_confirming` (A-260).
-async function shareOf(
-  deps: CoreDeps,
-  projectId: string,
-  c: CollectedComponent,
-): Promise<PublishComponent['share']> {
-  if (c.kind !== 'font' || c.absPath === null) return c.share
-  const sha256 = await hashFile(c.absPath)
-  return fontConsent(deps).hasConsent(projectId, c.assetId, sha256) ? 'confirmed' : c.share
+// the project file's flag gives at most `needs_confirming` (A-260). The publish job follows the
+// same rule (collectComponents).
+export function consentCheck(deps: Pick<CoreDeps, 'userDataDir' | 'log'>, projectId: string) {
+  const list = fontConsent(deps)
+  return async (assetId: string, file: string): Promise<boolean> =>
+    list.hasConsent(projectId, assetId, await hashFile(file))
 }
 
 async function componentsOf(
@@ -101,18 +98,17 @@ async function componentsOf(
   campaignId: string,
 ): Promise<PublishComponent[]> {
   const variantIds = campaignVariantIds(project, campaignId)
-  const collected = await collectComponents(project, { campaignId, variantIds })
-  return Promise.all(
-    collected.map(async (c) => ({
-      assetId: c.assetId,
-      displayName: c.displayName,
-      kind: c.kind,
-      folder: c.folder,
-      localPath: c.localPath,
-      problem: c.problem,
-      share: await shareOf(deps, project.projectId, c),
-    })),
-  )
+  const consented = consentCheck(deps, project.projectId)
+  const collected = await collectComponents(project, { campaignId, variantIds }, { consented })
+  return collected.map((c) => ({
+    assetId: c.assetId,
+    displayName: c.displayName,
+    kind: c.kind,
+    folder: c.folder,
+    localPath: c.localPath,
+    problem: c.problem,
+    share: c.share,
+  }))
 }
 
 export async function inspectPublish(

@@ -65,6 +65,8 @@ export const PROVIDER_ERROR_REASONS = [
   'export_not_built',
   'export_failed',
   'work_folder_unsafe',
+  // P9-10: two files of one publish would share a published name.
+  'publish_paths_clash',
 ] as const
 export type ProviderErrorReason = (typeof PROVIDER_ERROR_REASONS)[number]
 

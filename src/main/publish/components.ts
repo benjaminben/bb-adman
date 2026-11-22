@@ -18,15 +18,22 @@ import type { AssetRow } from '@/shared/schemas/rows/asset'
 import { checkComponentFile, isComponentKind, type ComponentKind } from './component-file'
 
 // remotePath is relative to the campaign folder; null when the file is not uploaded (a problem,
-// or a font the project file does not mark as shared). absPath is the checked file, null with a
-// problem. A font's `share` here is the project file's flag as a hint only (A-260): never
-// `confirmed`, which only the local consent list gives (font-consent.ts).
+// or a font without local consent). absPath is the checked file, null with a problem. A font is
+// `confirmed`, and has an upload path, only when `consented` answers exactly true for its file
+// (A-260, the local list in font-consent.ts); the project file's flag gives at most
+// `needs_confirming`, a hint with no upload path.
 export type CollectedComponent = PublishComponent & {
   remotePath: string | null
   absPath: string | null
 }
 
+// Whether this machine holds consent to share the font at `file` (checked) of asset `assetId`.
+export type FontConsentCheck = (assetId: string, file: string) => Promise<boolean>
+export type CollectOptions = { consented?: FontConsentCheck }
+
 type Use = { background: boolean; font: boolean }
+
+const noConsent: FontConsentCheck = () => Promise.resolve(false)
 
 const FOLDER_ORDER: PublishComponentFolder[] = [
   'logos',
@@ -103,14 +110,15 @@ async function componentOf(
   row: AssetRow,
   use: Use,
   required: Set<string>,
+  consented: FontConsentCheck,
 ): Promise<CollectedComponent> {
   // A row of another kind (text, sound) is listed as the kind its use asks for, unfit.
   const kind = isComponentKind(row.kind) ? row.kind : use.font ? 'font' : 'image'
   const folder = folderOf(row, kind, use, required)
-  const share: PublishFontShare | null =
+  const hint: PublishFontShare | null =
     kind !== 'font' ? null : row.fontPublishAllowed ? 'needs_confirming' : 'not_shared'
   const checked = await checkComponentFile(handle, row)
-  const base = { assetId: row.id, displayName: row.displayName, kind, folder, share }
+  const base = { assetId: row.id, displayName: row.displayName, kind, folder, share: hint }
   if ('problem' in checked) {
     return {
       ...base,
@@ -121,8 +129,10 @@ async function componentOf(
     }
   }
   // The share rule holds for every font, whichever folder it is in.
+  const confirmed = kind === 'font' && (await consented(row.id, checked.absPath)) === true
+  const share = confirmed ? 'confirmed' : hint
   const remotePath =
-    share === 'not_shared'
+    kind === 'font' && !confirmed
       ? null
       : componentPath({
           folder,
@@ -133,6 +143,7 @@ async function componentOf(
         })
   return {
     ...base,
+    share,
     localPath: checked.absPath,
     problem: null,
     remotePath,
@@ -148,14 +159,16 @@ const order = (a: CollectedComponent, b: CollectedComponent) =>
 export async function collectComponents(
   handle: ProjectHandle,
   input: { campaignId: string; variantIds: string[] },
+  opts: CollectOptions = {},
 ): Promise<CollectedComponent[]> {
+  const consented = opts.consented ?? noConsent
   const uses = usesOf(handle.db, input.campaignId, input.variantIds)
   const required = requiredOf(handle.db, input.campaignId)
   const rows = (readWireRows(handle.db, 'asset') as AssetRow[]).filter(
     (r) => r.library === 'asset' && uses.has(r.id),
   )
   const list = await Promise.all(
-    rows.map((r) => componentOf(handle, r, uses.get(r.id) as Use, required)),
+    rows.map((r) => componentOf(handle, r, uses.get(r.id) as Use, required, consented)),
   )
   return list.sort(order)
 }

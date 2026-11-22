@@ -67,6 +67,8 @@ const REASONS: Record<ProviderErrorReason, string> = {
   export_failed: 'The export for this publish failed. Nothing was replaced.',
   work_folder_unsafe:
     "Adman's work folder for publishing is not safe to use. Nothing was published.",
+  publish_paths_clash:
+    'Two files would have the same name in the published folder. Nothing was published.',
 }
 
 export function reasonMessage(reason: ProviderErrorReason): string {

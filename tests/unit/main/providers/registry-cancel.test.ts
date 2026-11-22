@@ -56,6 +56,7 @@ describe('ProviderError reason and missing [SPEC 6.10.9, 6.11.1]', () => {
       'export_not_built',
       'export_failed',
       'work_folder_unsafe',
+      'publish_paths_clash',
     ])
   })
 
