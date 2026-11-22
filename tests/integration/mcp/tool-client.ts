@@ -14,6 +14,8 @@ export const BUILT_TOOLS = [
   'generate_images',
   'generate_video',
   'cancel_job',
+  'list_subjects',
+  'get_variant',
 ]
 
 export type ToolReply = {
