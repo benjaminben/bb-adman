@@ -1,0 +1,19 @@
+/* app-style */
+/* Slider field (spec/app-style-parts.md "Field"): the range takes the row, the number box sits
+   at its end at a fixed width. The label and the grid come from .field.inline. */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  min-width: 0;
+}
+.range {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  accent-color: var(--color-accent);
+}
+.number {
+  flex: none;
+  width: calc(var(--control-height) * 2);
+}
