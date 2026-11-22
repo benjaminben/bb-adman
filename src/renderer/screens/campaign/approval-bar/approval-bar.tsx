@@ -1,10 +1,10 @@
 // The approval bar (spec/approvals.md "The campaign page"), in the page's head row. CAMP-3: one
 // button with the `link` icon and "Approvals", which opens the dialog; with a live link a mark
 // "{a}/{b}" inside it, the sentences "Signed off: …" and "Checked {time}" in its tip, and a
-// `sync` icon button "Refresh" (a spinner while refreshing). A refresh failure stays words on
-// the page, right of Refresh; with `failureApart` the bar leaves it to its caller, which draws
-// ApprovalFailure on a line of its own (Z-1b). An ended link shows the mark "Off" and keeps "Link turned off" (or
-// the gone sentence) as words beside the button.
+// `sync` icon button "Refresh" (a spinner while refreshing). A refresh failure is its caller's
+// to draw: the campaign head draws ApprovalFailure on a line of its own (Z-1b). An ended link
+// shows the mark "Off" and keeps "Link turned off" (or the gone sentence) as words beside the
+// button.
 import { useState } from 'react'
 import { useStore } from 'zustand'
 import { ApprovalDialog } from '@/renderer/dialogs/approval-dialog'
@@ -20,7 +20,6 @@ type Props = {
   campaignId: string
   store: ApprovalsStore
   titles: Record<string, string>
-  failureApart?: boolean
 }
 
 export function ApprovalBar(props: Props) {
@@ -57,9 +56,6 @@ export function ApprovalBar(props: Props) {
         >
           <Icon name={refreshing ? 'spinner' : 'sync'} />
         </button>
-      )}
-      {state === 'live' && failure !== null && props.failureApart !== true && (
-        <span className={styles.failure}>{failure}</span>
       )}
       {state === 'ended' && <span className={styles.muted}>{look.title}</span>}
       {data && (

@@ -1,9 +1,6 @@
 /* app-style */
 /* The shared pieces of spec/app-style.md "Shared pieces". Button kinds go on a button; badge
    and notice kinds go beside .badge or .notice. */
-.screen {
-  max-width: var(--width-page);
-}
 .card {
   display: flex;
   flex-direction: column;
@@ -103,15 +100,6 @@ button.card:hover {
   list-style: none;
   margin: 0;
   padding: 0;
-}
-.keyRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-  justify-content: space-between;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
 }
 .primary {
   background: var(--color-accent);

@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest'
 import {
   checkName,
   rowLabel,
+  staleCount,
   statusWord,
-  summaryCounts,
 } from '@/renderer/screens/campaign/check-panel/check-words'
 import type { CheckId, CheckResult, CheckStatus } from '@/shared/schemas/checks'
 import type { VariantCheckState } from '@/shared/schemas/queries/check'
@@ -60,29 +60,21 @@ function state(id: string, opts: { stale?: boolean; results?: CheckResult[] } = 
 }
 
 const BRAND_WARN = [result('prohibited-words', 'warn', 'brand-legal')]
-const READY_WARN = [result('text-overflow', 'warn', 'readiness')]
 
-type Counts = { warnings: number; stale: number }
-
-describe('summaryCounts [P6-11, CAMP-4]', () => {
-  it.each<[string, VariantCheckState[], Counts]>([
-    ['nothing checked', [], { warnings: 0, stale: 0 }],
-    ['one post, all passed', [state('A')], { warnings: 0, stale: 0 }],
+describe('staleCount [P6-11, CAMP-4]', () => {
+  it.each<[string, VariantCheckState[], number]>([
+    ['nothing checked', [], 0],
+    ['one post, all passed', [state('A')], 0],
     [
-      'a brand warning counts, a readiness warning does not',
-      [state('A', { results: BRAND_WARN }), state('B', { results: READY_WARN })],
-      { warnings: 1, stale: 0 },
-    ],
-    [
-      'a stale post counts as not checked, not as a warning',
+      'a stale post counts as not checked',
       [
         state('A', { stale: true, results: BRAND_WARN }),
         state('B'),
         state('C', { results: BRAND_WARN }),
       ],
-      { warnings: 1, stale: 1 },
+      1,
     ],
-  ])('%s', (_name, states, counts) => {
-    expect(summaryCounts(states)).toEqual(counts)
+  ])('%s', (_name, states, count) => {
+    expect(staleCount(states)).toBe(count)
   })
 })

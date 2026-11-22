@@ -6,7 +6,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import iconStyles from '@/renderer/ui/icon/icon.module.css'
 import markStyles from '@/renderer/ui/status-mark/status-mark.module.css'
-import { ApprovalBar } from '@/renderer/screens/campaign/approval-bar'
+import { ApprovalBar, ApprovalFailure } from '@/renderer/screens/campaign/approval-bar'
 import { createApprovalsStore, type ApprovalsStoreState } from '@/renderer/stores/approvals-store'
 import { APPROVALS_REASON_MESSAGES } from '@/shared/approvals/messages'
 import { timeText } from '@/renderer/ui/signoff-list'
@@ -33,10 +33,16 @@ async function showBar(state: Partial<ApprovalsStoreState>) {
   const view = await renderApp(
     <main>
       <ApprovalBar projectId={P} campaignId={C} store={store} titles={TITLES} />
+      <ApprovalFailure store={store} />
     </main>,
     fake,
   )
-  return { ...view, fake, bar: screen.getByRole('group', { name: 'Approval link' }) }
+  return {
+    ...view,
+    fake,
+    bar: screen.getByRole('group', { name: 'Approval link' }),
+    page: screen.getByRole('main'),
+  }
 }
 
 describe('approval bar [spec/approvals.md "The campaign page"]', () => {
@@ -57,10 +63,10 @@ describe('approval bar [spec/approvals.md "The campaign page"]', () => {
     ],
     ['no link', { data: forCampaign({ link: null }) }, [], ['Signed off', 'Link turned off']],
   ])('with %s, draws its lines', async (_name, state, shown, hidden) => {
-    const { bar } = await showBar(state)
+    const { page } = await showBar(state)
     expect(screen.getByRole('button', { name: /^Approval link…/ })).toBeEnabled()
-    for (const line of shown) expect(bar).toHaveTextContent(line)
-    for (const line of hidden) expect(bar).not.toHaveTextContent(line)
+    for (const line of shown) expect(page).toHaveTextContent(line)
+    for (const line of hidden) expect(page).not.toHaveTextContent(line)
     const refresh = screen.queryByRole('button', { name: 'Refresh' })
     expect(refresh !== null).toBe(state.data.link?.state === 'live')
     expect(await axeViolations()).toEqual([])
@@ -154,7 +160,7 @@ describe('the approvals button [CAMP-3]', () => {
 
   it('keeps a refresh failure and an ended link as visible words beside the button', async () => {
     const failed = await showBar({ data: forCampaign(), failure: OFFLINE })
-    expect(button()).not.toContainElement(within(failed.bar).getByText(OFFLINE))
+    expect(button()).not.toContainElement(within(failed.page).getByText(OFFLINE))
     failed.unmount()
     const ended = await showBar({ data: forCampaign({ link: endedLink() }) })
     expect(button()).not.toContainElement(within(ended.bar).getByText('Link turned off'))

@@ -28,7 +28,6 @@ const MODULES = [
   'text-box-fields/text-box-fields.module.css',
   'picture-fields/picture-fields.module.css',
   'shade-fields/shade-fields.module.css',
-  'colour-choice/colour-choice.module.css',
 ]
 
 describe('the properties panel takes the look [ST-8]', () => {
@@ -48,13 +47,4 @@ describe('the properties panel takes the look [ST-8]', () => {
     const css = read('geometry-fields/geometry-fields.module.css')
     expect(rule(css, '.grid')).toMatch(/grid-template-columns:\s*repeat\(4,/)
   })
-
-  it.each([['colour-choice/colour-choice.module.css']])(
-    '%s gives swatches control edges',
-    (file) => {
-      expect(rule(read(file), '.swatch')).toMatch(
-        /border:\s*var\(--border-width\) solid var\(--color-control-border\)/,
-      )
-    },
-  )
 })
