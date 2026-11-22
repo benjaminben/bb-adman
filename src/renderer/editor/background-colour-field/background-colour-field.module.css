@@ -1,0 +1,12 @@
+/* app-style */
+/* The swatches take the row; the InfoTip sits at its right end, level with the label. */
+.row {
+  display: flex;
+  gap: var(--gap-inline);
+  align-items: flex-start;
+  min-width: 0;
+}
+.row > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}

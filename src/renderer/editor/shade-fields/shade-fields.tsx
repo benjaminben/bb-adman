@@ -1,15 +1,19 @@
 // spec/editor.md, "Properties panel", "Shade" (LK-5) [D-094], for image and background layers
-// after "Picture": the "Shade" select (None or a side), then "Colour" (palette, no "None"),
-// "Strength" (0 to 100 %) and "Reach" (5 to 100 %, disabled for Whole picture). Choosing a side
-// when there is none sends NEW_SHADE with that side; None sends shade null. Every change sends
-// the whole shade, which a patch replaces whole (A-75).
-import { useId, useState } from 'react'
-import { ColourChoice } from '@/renderer/editor/colour-choice'
+// after the picture; as ED-3 draws it, a folded Section summed up as "None" or "{side} ·
+// {strength} %". Inside: the side as six icon segments in the group "Shade" (None or a side),
+// then "Colour" (palette, no "No colour"), "Strength" (0 to 100 %) and "Reach" (5 to 100 %, off
+// for the whole picture). Choosing a side when there is none sends NEW_SHADE with that side;
+// None sends shade null. Every change sends the whole shade, which a patch replaces whole (A-75).
+import { useState } from 'react'
+import { Icon, type IconName } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
+import { Section } from '@/renderer/ui/section'
+import { SliderField } from '@/renderer/ui/slider-field'
+import { SwatchField } from '@/renderer/ui/swatch-field'
 import { NEW_SHADE, pictureLookOf } from '@/shared/config/look'
 import type { LayerPatch } from '@/shared/schemas/commands/layer'
-import { LOOK_LIMITS, SHADE_SIDES, type ImageStyle, type Shade } from '@/shared/schemas/layer'
+import { LOOK_LIMITS, type ImageStyle, type Shade } from '@/shared/schemas/layer'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
-import { PercentSlider } from './percent-slider'
 import styles from './shade-fields.module.css'
 
 export type ShadeFieldsProps = {
@@ -19,74 +23,92 @@ export type ShadeFieldsProps = {
   onUpdate: (patch: LayerPatch) => Promise<string | null>
 }
 
-const SIDES: Array<[Shade['from'] | 'none', string]> = [
-  ['none', 'None'],
-  ['bottom', 'From the bottom'],
-  ['top', 'From the top'],
-  ['left', 'From the left'],
-  ['right', 'From the right'],
-  ['all', 'Whole picture'],
+type Side = Shade['from'] | 'none'
+
+const SIDES: Array<[Side, IconName, string]> = [
+  ['none', 'shadeNone', 'None'],
+  ['bottom', 'shadeBottom', 'From the bottom'],
+  ['top', 'shadeTop', 'From the top'],
+  ['left', 'shadeLeft', 'From the left'],
+  ['right', 'shadeRight', 'From the right'],
+  ['all', 'shadeAll', 'Whole picture'],
 ]
 
+// The summary's side words (architect's wording).
+const SIDE_WORD: Record<Shade['from'], string> = {
+  bottom: 'Bottom',
+  top: 'Top',
+  left: 'Left',
+  right: 'Right',
+  all: 'Whole',
+}
+
+const percent = (n: number) => Math.round(n * 100)
+
 export function ShadeFields(props: ShadeFieldsProps) {
-  const id = useId()
   const { shade } = pictureLookOf(props.layer.style as ImageStyle)
   const disabled = props.layer.locked
   const [error, setError] = useState<string | null>(null)
-  const save = (next: Shade | null) => props.onUpdate({ style: { shade: next } })
-  const change = (values: Partial<Shade>) => save({ ...(shade ?? NEW_SHADE), ...values })
-
-  const choose = async (value: string) => {
-    const from = SHADE_SIDES.find((side) => side === value) ?? null
-    setError(await (from === null ? save(null) : change({ from })))
-  }
+  const save = async (next: Shade | null) =>
+    setError(await props.onUpdate({ style: { shade: next } }))
+  const change = (values: Partial<Shade>) => void save({ ...(shade ?? NEW_SHADE), ...values })
+  const choose = (side: Side) => (side === 'none' ? void save(null) : change({ from: side }))
+  const summary = shade ? `${SIDE_WORD[shade.from]} · ${percent(shade.strength)} %` : 'None'
+  const { shadeStrength: strength, shadeReach: reach } = LOOK_LIMITS
+  const whole = shade?.from === 'all'
 
   return (
-    <fieldset className={styles.section}>
-      <legend className={styles.legend}>Shade</legend>
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor={id}>
-          Shade
-        </label>
-        <select
-          id={id}
-          disabled={disabled}
-          value={shade?.from ?? 'none'}
-          onChange={(event) => void choose(event.target.value)}
-        >
-          {SIDES.map(([side, name]) => (
-            <option key={side} value={side}>
-              {name}
-            </option>
-          ))}
-        </select>
-        {error && <p className={styles.error}>{error}</p>}
+    <Section id="props.shade" title="Shade" level={4} fold="closed" summary={summary}>
+      <div role="group" aria-label="Shade" className={layout.seg}>
+        {SIDES.map(([side, icon, name]) => (
+          <button
+            key={side}
+            type="button"
+            className={layout.iconButton}
+            aria-label={name}
+            title={name}
+            aria-pressed={(shade?.from ?? 'none') === side}
+            disabled={disabled}
+            onClick={() => (shade?.from ?? 'none') !== side && choose(side)}
+          >
+            <Icon name={icon} />
+          </button>
+        ))}
       </div>
+      {error && <p className={styles.error}>{error}</p>}
       {shade && (
         <>
-          <ColourChoice
+          <SwatchField
             label="Colour"
             value={shade.color}
             palette={props.palette}
             disabled={disabled}
             onCommit={(color) => change({ color: color ?? shade.color })}
           />
-          <PercentSlider
+          <SliderField
             label="Strength"
-            value={shade.strength}
-            {...LOOK_LIMITS.shadeStrength}
+            unit="%"
+            min={percent(strength.min)}
+            max={percent(strength.max)}
+            step={1}
+            value={percent(shade.strength)}
             disabled={disabled}
-            onCommit={(strength) => change({ strength })}
+            onCommit={(value) => change({ strength: value / 100 })}
           />
-          <PercentSlider
-            label="Reach"
-            value={shade.reach}
-            {...LOOK_LIMITS.shadeReach}
-            disabled={disabled || shade.from === 'all'}
-            onCommit={(reach) => change({ reach })}
-          />
+          <div title={whole ? 'Not used for the whole picture' : undefined}>
+            <SliderField
+              label="Reach"
+              unit="%"
+              min={percent(reach.min)}
+              max={percent(reach.max)}
+              step={1}
+              value={percent(shade.reach)}
+              disabled={disabled || whole}
+              onCommit={(value) => change({ reach: value / 100 })}
+            />
+          </div>
         </>
       )}
-    </fieldset>
+    </Section>
   )
 }

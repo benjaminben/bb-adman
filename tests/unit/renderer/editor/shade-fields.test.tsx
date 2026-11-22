@@ -3,7 +3,7 @@
 // Colour, Strength (0 to 100 %) and Reach (5 to 100 %, disabled for Whole picture). Choosing a
 // side when there is none sends NEW_SHADE with that side; None sends shade null; every change
 // sends the whole shade; each slider saves once when it is let go.
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { ShadeFields } from '@/renderer/editor/shade-fields'
@@ -28,18 +28,32 @@ function setup(layer: LayerRow = LOGO) {
       <ShadeFields layer={layer} palette={PALETTE} onUpdate={onUpdate} />
     </main>,
   )
+  // ED-3: Shade is a folded Section; open it once (the fold lasts for the session).
+  const head = screen.getByRole('button', { name: 'Shade' })
+  if (head.getAttribute('aria-expanded') === 'false') fireEvent.click(head)
   return { onUpdate }
 }
 
-const select = () => screen.getByRole('combobox', { name: 'Shade' })
-const spin = (name: string) => screen.getByRole('spinbutton', { name })
+// ED-3: the side is six named icon segments in the group "Shade".
+const side = (name: string) =>
+  within(screen.getByRole('group', { name: 'Shade' })).getByRole('button', { name })
+const pressed = () =>
+  within(screen.getByRole('group', { name: 'Shade' }))
+    .getAllByRole('button')
+    .filter((b) => b.getAttribute('aria-pressed') === 'true')
+    .map((b) => b.getAttribute('aria-label'))
+const spin = (name: string) => screen.getByRole('spinbutton', { name: `${name} value` })
 const slider = (name: string) => screen.getByRole('slider', { name })
 
 describe('ShadeFields [spec/editor.md "Properties panel", Shade; D-094]', () => {
   it('a layer with no shade shows None and no other field', () => {
     setup()
-    expect(select()).toHaveValue('none')
-    expect(Array.from(select().querySelectorAll('option')).map((o) => o.textContent)).toEqual([
+    expect(pressed()).toEqual(['None'])
+    expect(
+      within(screen.getByRole('group', { name: 'Shade' }))
+        .getAllByRole('button')
+        .map((b) => b.getAttribute('aria-label')),
+    ).toEqual([
       'None',
       'From the bottom',
       'From the top',
@@ -47,7 +61,7 @@ describe('ShadeFields [spec/editor.md "Properties panel", Shade; D-094]', () => 
       'From the right',
       'Whole picture',
     ])
-    expect(screen.queryByRole('spinbutton', { name: 'Strength' })).toBeNull()
+    expect(screen.queryByRole('spinbutton', { name: 'Strength value' })).toBeNull()
   })
 
   it.each([
@@ -55,14 +69,18 @@ describe('ShadeFields [spec/editor.md "Properties panel", Shade; D-094]', () => 
     ['all', 'Whole picture'],
   ] as const)('None to %s sends NEW_SHADE with that side', async (from, name) => {
     const { onUpdate } = setup()
-    await userEvent.selectOptions(select(), name)
+    await userEvent.click(side(name))
     expect(onUpdate.mock.calls).toEqual([[{ style: { shade: { ...NEW_SHADE, from } } }]])
   })
 
   it('shows a stored shade in percent', () => {
     setup(shaded(SHADE))
-    expect(select()).toHaveValue('left')
-    expect(screen.getByRole('textbox', { name: 'Colour' })).toHaveValue('#1B1D22')
+    expect(pressed()).toEqual(['From the left'])
+    expect(
+      within(screen.getByRole('group', { name: 'Colour' })).getByRole('button', {
+        name: '#1B1D22',
+      }),
+    ).toHaveAttribute('aria-pressed', 'true')
     expect(spin('Strength')).toHaveValue('50')
     expect(spin('Reach')).toHaveValue('40')
     expect(slider('Strength')).toHaveValue('50')
@@ -70,16 +88,20 @@ describe('ShadeFields [spec/editor.md "Properties panel", Shade; D-094]', () => 
 
   it('a fresh background shows its starting shade', () => {
     setup(shaded(NEW_SHADE, BACKGROUND))
-    expect(select()).toHaveValue('bottom')
+    expect(pressed()).toEqual(['From the bottom'])
     expect(spin('Strength')).toHaveValue('70')
   })
 
   it.each([
-    ['side', async () => userEvent.selectOptions(select(), 'From the right'), { from: 'right' }],
+    ['side', async () => userEvent.click(side('From the right')), { from: 'right' }],
     [
       'colour',
       async () =>
-        userEvent.click(screen.getByRole('button', { name: 'Palette #E85D2A for colour' })),
+        userEvent.click(
+          within(screen.getByRole('group', { name: 'Colour' })).getByRole('button', {
+            name: '#E85D2A',
+          }),
+        ),
       { color: '#E85D2A' },
     ],
     [
@@ -106,8 +128,8 @@ describe('ShadeFields [spec/editor.md "Properties panel", Shade; D-094]', () => 
 
   it.each(['Strength', 'Reach'])('the %s slider sends once on release', async (name) => {
     const { onUpdate } = setup(shaded(SHADE))
-    fireEvent.change(slider(name), { target: { value: '30' } })
-    fireEvent.change(slider(name), { target: { value: '35' } })
+    fireEvent.input(slider(name), { target: { value: '30' } })
+    fireEvent.input(slider(name), { target: { value: '35' } })
     expect(onUpdate).not.toHaveBeenCalled()
     fireEvent.pointerUp(slider(name))
     fireEvent.blur(slider(name))
@@ -124,14 +146,16 @@ describe('ShadeFields [spec/editor.md "Properties panel", Shade; D-094]', () => 
 
   it('None sends shade null', async () => {
     const { onUpdate } = setup(shaded(SHADE))
-    await userEvent.selectOptions(select(), 'None')
+    await userEvent.click(side('None'))
     expect(onUpdate.mock.calls).toEqual([[{ style: { shade: null } }]])
   })
 
   it('a locked layer has every field disabled', () => {
     setup({ ...shaded(SHADE), locked: true })
-    const group = screen.getByRole('group', { name: 'Shade' })
-    for (const control of group.querySelectorAll('input, button, select')) {
+    const head = screen.getByRole('button', { name: 'Shade' })
+    const body = document.getElementById(head.getAttribute('aria-controls') ?? '') as HTMLElement
+    expect(body.querySelectorAll('input, button').length).toBeGreaterThan(6)
+    for (const control of body.querySelectorAll('input, button, select')) {
       expect(control).toBeDisabled()
     }
   })

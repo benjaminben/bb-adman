@@ -1,80 +1,102 @@
 /* app-style */
+/* ED-3: the picture block first, with no title; then Opacity and Background colour. */
 .section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--gap-field);
+  min-width: 0;
+}
+/* A fieldset whose legend "Picture" is for a screen reader only: no title on the page. */
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
   min-width: 0;
   margin: 0;
   padding: 0;
   border: none;
 }
-.legend {
-  padding: 0;
-  margin-bottom: var(--space-2);
-  font-family: var(--font-body);
-  font-size: var(--font-size-control);
-  font-weight: var(--weight-bold);
-  color: var(--color-text);
-}
+/* The picture at the panel's full width, kept whole, with its icon bar on its lower edge. */
 .preview {
   display: flex;
-  gap: var(--space-2);
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius-md);
+}
+.frame {
+  position: relative;
+  display: flex;
   align-items: center;
-  min-width: 0;
-}
-/* The picture whole, at the size of a tile's half. */
-.picture {
-  flex: none;
-  width: calc(var(--thumbnail-tile) / 2);
-  height: calc(var(--thumbnail-tile) / 2);
-  object-fit: contain;
+  justify-content: center;
+  height: var(--thumbnail-tile);
   background: var(--canvas-backdrop);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
 }
-.name {
-  min-width: 0;
-  overflow-wrap: anywhere;
+.picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .muted {
   color: var(--color-text-muted);
+  font-size: var(--type-meta-size);
 }
-.buttons {
+/* The cut-out's turning ring over the picture. */
+.ring {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent-ink);
+  font-size: var(--type-section-size);
+}
+.ring > svg {
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-1);
+}
+.bar {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--gap-tight);
+  padding: var(--space-1);
+  background: var(--color-bg);
+  border-top: var(--border-width) solid var(--color-line);
 }
-.opacity {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
-  align-items: flex-end;
-  min-width: 0;
+.divider {
+  align-self: stretch;
+  width: var(--border-width);
+  margin: 0 var(--space-1);
+  background: var(--color-line);
 }
-/* The number is short (0 to 100), so the slider gets the rest of the row. */
-.amount {
-  flex: 0 0 calc(var(--thumbnail-tile) / 2);
-  min-width: 0;
+/* The background's pair with no picture above it stands alone. */
+.block > .bar {
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius-md);
 }
-.slider {
-  flex: 1 1 0;
-  min-width: 0;
-  margin: 0 0 var(--space-2);
+.status {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--type-meta-size);
 }
 .error {
   margin: 0;
   color: var(--color-danger-text);
   font-size: var(--font-size-small);
 }
-.cutOut {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-.status {
-  color: var(--color-text-muted);
-}
-.status p {
-  margin: 0;
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
