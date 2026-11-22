@@ -9,7 +9,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { greyPng } from '@/main/providers/fake/png'
 import * as screens from '../e2e/screens'
-import { format } from '../e2e/video-variant-steps'
+import { chooseFormat, expectFormat } from '../e2e/format-steps'
 import { closeApp, openApp, shot, type Session } from './shot'
 
 let session: Session | undefined
@@ -69,8 +69,8 @@ test('430 the background of a video post, Video chosen, two reference pictures',
   session = await openApp()
   const { app, page, box } = session
   await campaign(session, 'Harbour Lights')
-  await format(page).getByRole('radio', { name: 'Video' }).click()
-  await expect(format(page).getByRole('radio', { name: 'Video' })).toBeChecked()
+  await chooseFormat(page, 'Video')
+  await expectFormat(page, 'Video')
   const panel = await screens.videoPanel(page)
   await screens.chooseStart(panel, screens.VIDEO_REFERENCE_START)
   const list = panel.getByRole('region', { name: 'Picture to start from' })

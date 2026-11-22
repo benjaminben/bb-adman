@@ -44,10 +44,10 @@ const length = () => screen.getByRole('textbox', { name: 'Length (seconds)' })
 describe('FormatFields: the format choice [P7-17]', () => {
   it('shows "Format" with Image and Video, the stored one checked, and no length for an image', async () => {
     await setup(IMAGE)
-    const group = screen.getByRole('radiogroup', { name: 'Format' })
+    const group = screen.getByRole('group', { name: 'Format' })
     expect(group).toBeInTheDocument()
-    expect(screen.getByRole('radio', { name: 'Image' })).toBeChecked()
-    expect(screen.getByRole('radio', { name: 'Video' })).not.toBeChecked()
+    expect(screen.getByRole('button', { name: 'Image' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Video' })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.queryByRole('textbox', { name: 'Length (seconds)' })).toBeNull()
     expect(await axeViolations()).toEqual([])
   })
@@ -55,8 +55,8 @@ describe('FormatFields: the format choice [P7-17]', () => {
   it('sends variant.setFormat when Video is chosen with the keyboard', async () => {
     const { sent } = await setup(IMAGE)
     const user = userEvent.setup()
-    await user.click(screen.getByRole('radio', { name: 'Image' }))
-    await user.keyboard('{ArrowRight}')
+    await user.click(screen.getByRole('button', { name: 'Image' }))
+    await user.keyboard('{Tab}{Enter}')
     expect(sent('variant.setFormat').map((c) => c.input)).toEqual([
       { projectId: P, variantId: 'V1', format: 'video' },
     ])
@@ -64,19 +64,19 @@ describe('FormatFields: the format choice [P7-17]', () => {
 
   it('sends Image for a video and shows the stored choice until the change arrives', async () => {
     const { sent } = await setup(VIDEO)
-    await userEvent.setup().click(screen.getByRole('radio', { name: 'Image' }))
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Image' }))
     expect(sent('variant.setFormat').map((c) => c.input)).toEqual([
       { projectId: P, variantId: 'V1', format: 'image' },
     ])
-    expect(screen.getByRole('radio', { name: 'Video' })).toBeChecked()
+    expect(screen.getByRole('button', { name: 'Video' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('shows the grid refusal under the controls and keeps the stored format', async () => {
     const { fake } = await setup(IMAGE)
     fake.onCommand('variant.setFormat', refused(GRID))
-    await userEvent.setup().click(screen.getByRole('radio', { name: 'Video' }))
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Video' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(GRID)
-    expect(screen.getByRole('radio', { name: 'Image' })).toBeChecked()
+    expect(screen.getByRole('button', { name: 'Image' })).toHaveAttribute('aria-pressed', 'true')
     expect(await axeViolations()).toEqual([])
   })
 })

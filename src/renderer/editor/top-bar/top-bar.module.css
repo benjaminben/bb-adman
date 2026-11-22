@@ -1,8 +1,8 @@
 /* app-style */
-/* The editor's top bar (spec/app-style.md "Editor", "Top bar"). */
+/* The editor's top bar on one line (spec/app-style.md "Editor", "Top bar"; ED-5). A long title
+   is cut with an ellipsis before anything else gives way. */
 .bar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-4);
   padding: var(--space-2) var(--space-4);
@@ -16,9 +16,36 @@
   min-width: 0;
 }
 .title {
+  min-width: 0;
   margin: 0;
   font-size: var(--font-size-title);
-  overflow-wrap: anywhere;
+}
+.titleButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: 0 var(--space-1);
+  font: inherit;
+  color: var(--color-text);
+}
+.titleWords {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pencil {
+  display: flex;
+  flex: none;
+  color: var(--color-text-muted);
+  visibility: hidden;
+}
+.titleButton:hover .pencil,
+.titleButton:focus-visible .pencil {
+  visibility: visible;
+}
+.name > :not(.title) {
+  flex: none;
 }
 .field {
   min-width: var(--width-column-min);
@@ -26,19 +53,18 @@
   font-size: var(--font-size-heading);
   font-weight: var(--weight-title);
 }
-.line {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
-}
 .actions {
   display: flex;
-  flex-wrap: wrap;
+  flex: none;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
   margin-left: auto;
 }
-.hint {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

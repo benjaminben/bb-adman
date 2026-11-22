@@ -13,8 +13,8 @@ import { axeViolations, renderApp } from '../render'
 import { jobRow } from '../stores/job-fixture'
 import { BACKGROUND, HEADLINE, LOGO, P, V, variantGet } from './editor-fixture'
 
-const ONE = 'Text placed. The colour of 1 text was changed so it stands out from the picture.'
-const TWO = 'Text placed. The colours of 2 texts were changed so they stand out from the picture.'
+const ONE = 'Text colour changed for legibility (1)'
+const TWO = 'Text colour changed for legibility (2)'
 
 describe('EditorBanner changed line [D2 "Banner"]', () => {
   it.each([
@@ -31,7 +31,9 @@ describe('EditorBanner changed line [D2 "Banner"]', () => {
           layout={{ kind: 'changed', count, onDismiss }}
         />,
       )
-      expect(screen.getByRole('status')).toHaveTextContent(new RegExp(`^${words}$`))
+      expect(screen.getByRole('status')).toHaveTextContent(
+        new RegExp(`^${words.replace(/[()]/g, '\\$&')}$`),
+      )
       await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
       expect(onDismiss).toHaveBeenCalledOnce()
       expect(await axeViolations()).toEqual([])

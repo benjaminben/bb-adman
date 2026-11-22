@@ -1,7 +1,7 @@
 // spec/editor.md, "Canvas": the Scene in full mode at variant pixels, scaled by the zoom from
 // its top-left corner inside a box of the scaled size, centred in the backdrop when smaller and
-// scrolled when larger. The bar at the foot shows the size and the zoom. A click picks a layer;
-// a click on the backdrop, or Escape, clears the selection. The overlay over the Scene draws the
+// scrolled when larger. The bar at the foot shows the zoom (ED-5: the size is in the top bar's
+// chip). A click picks a layer; a click on the backdrop, or Escape, clears the selection. The overlay over the Scene draws the
 // selection and handles the drags; Escape during a drag cancels it instead. In crop mode the
 // crop overlay takes the layer's place, the normal overlay leaves it alone, and Escape leaves
 // crop mode. For a video variant it draws the Scene at the playback time (P7-18); the clips' own
@@ -155,20 +155,27 @@ export function CanvasView(props: CanvasViewProps) {
         </div>
       </div>
       <div className={styles.bar}>
-        <span className={styles.size}>
-          {variant.width} × {variant.height} px
-        </span>
         <div className={styles.zoom}>
-          <button type="button" className={QUIET} onClick={() => onZoom(zoomOut(zoom, fit))}>
-            <Icon name="minus" size="small" />
-            Zoom out
+          <button
+            type="button"
+            className={layout.iconButton}
+            aria-label="Zoom out"
+            title="Zoom out"
+            onClick={() => onZoom(zoomOut(zoom, fit))}
+          >
+            <Icon name="minus" />
           </button>
           <button type="button" className={QUIET} title="Zoom to fit" onClick={() => onZoom('fit')}>
             {zoomLabel(zoom)}
           </button>
-          <button type="button" className={QUIET} onClick={() => onZoom(zoomIn(zoom, fit))}>
-            <Icon name="plus" size="small" />
-            Zoom in
+          <button
+            type="button"
+            className={layout.iconButton}
+            aria-label="Zoom in"
+            title="Zoom in"
+            onClick={() => onZoom(zoomIn(zoom, fit))}
+          >
+            <Icon name="plus" />
           </button>
         </div>
       </div>

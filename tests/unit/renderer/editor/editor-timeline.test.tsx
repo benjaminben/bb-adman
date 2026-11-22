@@ -94,14 +94,14 @@ describe('Space plays or pauses [P7-18]', () => {
 
   it('in a text field: does nothing and is not prevented', async () => {
     await open(videoGet())
-    await userEvent.click(screen.getByRole('button', { name: 'Rename' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Rename / }))
     expect(pressSpace(screen.getByRole('textbox', { name: 'Variant title' }))).toBe(true)
     expect(playing()).toBe(false)
   })
 
   it('on a button elsewhere in the editor: does nothing and is not prevented', async () => {
     await open(videoGet())
-    expect(pressSpace(screen.getByRole('button', { name: 'Rename' }))).toBe(true)
+    expect(pressSpace(screen.getByRole('button', { name: /^Rename / }))).toBe(true)
     expect(playing()).toBe(false)
   })
 })

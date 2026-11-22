@@ -31,7 +31,7 @@ describe('Top bar "Layout…" [spec/editor.md "Top bar", LK-6]', () => {
     const bar = screen.getByRole('banner')
     const names = within(bar)
       .getAllByRole('button')
-      .map((b) => b.textContent)
+      .map((b) => b.getAttribute('aria-label'))
     const place = names.indexOf('Place text with AI…')
     expect(place).toBeGreaterThanOrEqual(0)
     expect(names[place + 1]).toBe('Layout…')
