@@ -8,7 +8,12 @@ export type { WorkflowId } from '@/shared/schemas/queries/comfy'
 // One input of one node in the graph.
 export type Pointer = { node: string; input: string }
 
-export type GraphNode = { class_type: string; inputs: Record<string, unknown> }
+// `_meta.title` is the step title; a custom workflow's marks are read from it (D-104).
+export type GraphNode = {
+  class_type: string
+  inputs: Record<string, unknown>
+  _meta?: { title?: string }
+}
 // ComfyUI's "API" form (V-3).
 export type Graph = Record<string, GraphNode>
 
