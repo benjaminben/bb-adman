@@ -164,3 +164,58 @@ test('the round 2 gallery screenshots', async ({ browser, playwright }) => {
   await shootLoaded(page, '99-r2-bad-email')
   await fresh.close()
 })
+
+// R2A-8: where the browser has no grid lanes, the script's spans close the gaps under shorter
+// cards. Eight cards of three shapes, no email saved.
+const MASONRY = `spring-shapes-${Date.now()}-r2a8tk`
+const SQUARE = { name: 'square, feed post', size: '1080 × 1080', file: 'a.png' }
+const BANNER = { name: 'banner, wide', size: '1200 × 600', file: 'b.png' }
+const STORY = { name: 'tile, story', size: '1080 × 1920', file: 'c.jpg' }
+const MIXED = [
+  ['aaaa22', 'Coral', SQUARE],
+  ['bbbb33', 'Mint', STORY],
+  ['cccc44', 'Navy', BANNER],
+  ['dddd55', 'Sand', BANNER],
+  ['eeee66', 'Plum', SQUARE],
+  ['ffff77', 'Teal', STORY],
+  ['gggg88', 'Rose', SQUARE],
+  ['hhhh99', 'Slate', BANNER],
+] as const
+
+test('the round 2 masonry screenshot', async ({ browser, playwright }) => {
+  const api = await playwright.request.newContext({ baseURL: ORIGIN })
+  const created = await api.post('/api/v1/links', {
+    headers: auth,
+    data: {
+      projectId: PROJECT,
+      campaignId: MASONRY,
+      campaignName: 'Spring shapes',
+      password: PASSWORD,
+    },
+  })
+  expect(created.status()).toBe(201)
+  const { slug } = (await created.json()) as { slug: string }
+  const variants = MIXED.map(([variantKey, colour, shape]) => ({
+    variantKey,
+    title: `${colour} ${shape.name}`,
+    sizeLine: `${shape.size} · Made-up placement`,
+    version: 1,
+    pictureUrl: `${PICTURES}/${shape.file}`,
+    pictureExpiresAt: new Date(Date.now() + DAY).toISOString(),
+  }))
+  const put = await api.put(`/api/v1/links/${PROJECT}/${MASONRY}/gallery`, {
+    headers: auth,
+    data: { campaignName: 'Spring shapes', variants },
+  })
+  expect(put.status()).toBe(200)
+  await api.dispose()
+
+  const context = await browser.newContext({ baseURL: ORIGIN, viewport: DESKTOP })
+  const page = await context.newPage()
+  await page.goto(`/l/${slug}`)
+  await page.getByLabel('Password').fill(PASSWORD)
+  await page.getByRole('button', { name: 'Open' }).click()
+  await expect(page.locator('main article').first()).toHaveCSS('grid-row-end', /^span \d+$/)
+  await shootLoaded(page, '99-r2-masonry')
+  await context.close()
+})
