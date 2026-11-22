@@ -18,8 +18,9 @@ import {
   type PlannedClip,
 } from './filter-graph'
 import { soundArgs, type AdSound } from './sound-args'
+import { CLIP_DEMUXERS, type ClipFileType } from './clip-demuxers'
 
-export type ClipFileType = 'png' | 'jpeg' | 'webp' | 'mp4' | 'mov' | 'webm'
+export type { ClipFileType }
 
 export type VideoClip = Omit<GraphClip, 'still'> & {
   path: string
@@ -50,16 +51,6 @@ const ENCODERS: Partial<Record<NodeJS.Platform, string>> = {
   win32: 'h264_mf',
 }
 
-// One demuxer per type, so a file is never read as a playlist or a script.
-const DEMUXERS: Record<ClipFileType, string> = {
-  mp4: 'mov',
-  mov: 'mov',
-  webm: 'matroska',
-  png: 'image2',
-  jpeg: 'image2',
-  webp: 'image2',
-}
-
 const STILLS: ReadonlySet<ClipFileType> = new Set(['png', 'jpeg', 'webp'])
 
 export function checkedAbsolute(file: string): string {
@@ -82,7 +73,7 @@ function clipInput(c: PlannedClip<VideoClip & GraphClip>, fps: 30 | 60): string[
   return [
     ...WHITELIST,
     '-f',
-    DEMUXERS[clip.fileType],
+    CLIP_DEMUXERS[clip.fileType],
     ...read,
     '-i',
     `file:${checkedAbsolute(clip.path)}`,
