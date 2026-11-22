@@ -1,3 +1,18 @@
+.open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: zoom-in;
+  transition: box-shadow var(--motion-fast);
+}
+
+.open:hover {
+  box-shadow: var(--shadow-2);
+}
+
 .picture {
   display: block;
   width: 100%;
@@ -11,6 +26,7 @@
   align-items: center;
   justify-content: center;
   aspect-ratio: 1;
+  margin: 0;
   padding: var(--space-4);
   border-radius: var(--radius);
   background: var(--gallery-placeholder);

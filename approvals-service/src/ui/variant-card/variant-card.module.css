@@ -1,12 +1,39 @@
-.card {
+/* spec/phases/round-2-approvals.md "The cards": three states, each with its edge, ground and
+   shadow. The sign-off button runs the full width at the bottom, so the card has no padding of
+   its own; its body does. */
+.needs,
+.signed,
+.expired {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-4);
-  border: var(--border-width) solid var(--color-line);
   border-radius: var(--radius-md);
+}
+
+/* The accent edge is a ring outside the card, so the full-width button's corners meet the
+   card's own corners with no gap. */
+.needs {
   background: var(--color-bg);
+  box-shadow:
+    0 0 0 var(--indicator-width) var(--color-accent),
+    var(--shadow-2);
+}
+
+.signed {
+  border: var(--border-width) solid var(--color-line);
+  background: var(--color-surface-soft);
   box-shadow: var(--shadow-1);
+}
+
+.expired {
+  border: var(--border-width) solid var(--color-line);
+  background: var(--color-bg);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
 }
 
 .words {
@@ -21,8 +48,17 @@
   overflow-wrap: anywhere;
 }
 
-.size {
+.muted {
   margin: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-small);
+  overflow-wrap: anywhere;
+}
+
+/* The tick, bottom right. */
+.end {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(var(--space-4) * -1);
+  padding: 0 var(--space-2) var(--space-2);
 }

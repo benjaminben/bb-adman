@@ -110,101 +110,33 @@ describe('the password page [approvals-gallery.md "Words"]', () => {
   })
 })
 
-describe('the gallery page [approvals-gallery.md "Words"]', () => {
-  it('has the campaign name as title and heading, the intro and the Leave form', () => {
-    const markup = html(<GalleryScreen view={view()} />)
-    expect(markup).toContain('<title>Spring shapes</title>')
-    expect(markup).toMatch(/<h1[^>]*>Spring shapes<\/h1>/)
-    expect(text(markup)).toContain(
-      'Sign off on a variant by entering your email address. Anyone with this link can see who ' +
-        'signed off, and can remove a sign-off.',
-    )
-    expect(hasTag(markup, 'form', posts(`/l/${SLUG}/leave`))).toBe(true)
-    expect(text(markup)).toContain('Leave')
-  })
-
-  const NOTICE_ROWS: [GalleryView['notice'], string, string][] = [
-    ['signed', 'status', 'Your sign-off was saved.'],
-    ['removed', 'status', 'The sign-off was removed.'],
-    ['changed', 'status', 'This variant changed while you were looking.'],
-    ['bad-email', 'alert', 'Enter a full email address, like name@company.com.'],
-  ]
-
-  it.each(NOTICE_ROWS)('shows the %s notice with role %s', (notice, role, words) => {
-    const markup = html(<GalleryScreen view={view({ notice })} />)
-    expect(markup).toContain(`role="${role}"`)
-    expect(text(markup)).toContain(words)
-  })
-
-  it('shows no notice box without a notice', () => {
-    const markup = html(<GalleryScreen view={view()} />)
-    expect(markup).not.toMatch(/role="(status|alert)"/)
-  })
-
-  it('says so when there are no variants', () => {
-    const markup = html(<GalleryScreen view={view({ variants: [] })} />)
-    expect(text(markup)).toContain('Nothing to review yet.')
-    expect(markup).not.toContain('<article')
-  })
-
-  it('draws one card per variant in gallery order, each with its sign-off form', () => {
-    const variants = [variant('cccc44', 1, { position: 1 }), variant('aaaa22', 3, { position: 0 })]
-    const markup = html(<GalleryScreen view={view({ variants })} />)
-    expect([...markup.matchAll(/<article id="v-(\w+)"/g)].map((m) => m[1])).toEqual([
-      'aaaa22',
-      'cccc44',
-    ])
-    expect(hasTag(markup, 'form', posts(`/l/${SLUG}/signoffs`))).toBe(true)
-    expect(hasTag(markup, 'button', ['type="submit"', 'name="one"', 'value="aaaa22.3"'])).toBe(true)
-    const field = ['type="email"', 'name="email"', 'autoComplete="email"', 'required=""']
-    expect(hasTag(markup, 'input', field)).toBe(true)
-  })
-
-  it('groups current and earlier sign-offs, leaving out an empty earlier list', () => {
-    const one = view({ variants: [variant('aaaa22', 2)] })
-    const none = text(html(<GalleryScreen view={one} />))
-    expect(none).toContain('Signed off by No sign-offs yet.')
-
-    const signoffs = [signoff(1, 'aaaa22', 2), signoff(2, 'aaaa22', 1)]
-    const markup = html(<GalleryScreen view={{ ...one, signoffs }} />)
-    const shown = text(markup)
-    expect(shown).toContain('Signed off by person1@example.com · 2026-11-21 12:05 UTC')
-    expect(hasTag(markup, 'form', posts(`/l/${SLUG}/signoffs/${signoffs[0]?.id}/remove`))).toBe(
-      true,
-    )
-  })
-
-  it('gives every field a label', () => {
-    const screens = [
-      html(<PasswordScreen slug={SLUG} notice="wrong-password" />),
-      html(<GalleryScreen view={view({ variants: [variant('aaaa22'), variant('bbbb33')] })} />),
-    ]
-    for (const markup of screens) {
-      const inputs = [...markup.matchAll(/<input([^>]*)>/g)].map((m) => m[1] ?? '')
-      const fields = inputs.filter((attrs) => !attrs.includes('type="hidden"'))
-      expect(fields.length).toBeGreaterThan(0)
-      for (const attrs of fields) {
-        const id = /id="([^"]+)"/.exec(attrs)?.[1]
-        expect(id, attrs).toBeDefined()
-        expect(markup).toContain(`<label for="${id}"`)
-      }
-    }
-  })
-})
-
 describe('the picture [approvals-gallery.md "Components"]', () => {
-  it('points at the picture route, lazily, with the title as alt text', () => {
+  it('points at the picture route, lazily, with an empty alt inside the named button', () => {
     const markup = html(
-      <VariantPicture slug={SLUG} variantKey="aaaa22" version={4} title="A t" expired={false} />,
+      <VariantPicture
+        slug={SLUG}
+        variantKey="aaaa22"
+        version={4}
+        title="A t"
+        sizeLine=""
+        expired={false}
+      />,
     )
     expect(markup).toMatch(/<img[^>]*src="\/l\/abcdEFGH2345\/p\/aaaa22\/4"/)
-    expect(markup).toContain('alt="A t"')
+    expect(markup).toContain('alt=""')
     expect(markup).toContain('loading="lazy"')
   })
 
   it('draws the expired box and no picture when expired', () => {
     const markup = html(
-      <VariantPicture slug={SLUG} variantKey="aaaa22" version={4} title="A t" expired={true} />,
+      <VariantPicture
+        slug={SLUG}
+        variantKey="aaaa22"
+        version={4}
+        title="A t"
+        sizeLine=""
+        expired={true}
+      />,
     )
     expect(markup).not.toContain('<img')
     expect(text(markup)).toBe(

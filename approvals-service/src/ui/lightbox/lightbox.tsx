@@ -53,6 +53,7 @@ export function Lightbox({ slug, variant, signoffs, reviewer }: Props) {
             <button
               type="submit"
               form="reviewer"
+              formAction={`/l/${slug}/signoffs`}
               name="one"
               value={`${variantKey}.${version}`}
               formNoValidate

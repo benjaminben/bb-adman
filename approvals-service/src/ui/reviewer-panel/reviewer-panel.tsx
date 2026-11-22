@@ -26,7 +26,7 @@ export function ReviewerPanel({ slug, campaignName, reviewer, stamp, notice, lef
         sign-off. Anyone with this link can see who signed off, and can remove a sign-off.
       </p>
       <ReviewerForm slug={slug} reviewer={reviewer} stamp={stamp} notice={notice} />
-      <SignoffAll reviewer={reviewer} left={left} live={live} />
+      <SignoffAll slug={slug} reviewer={reviewer} left={left} live={live} />
       <LogOutForm slug={slug} />
     </aside>
   )

@@ -1,7 +1,7 @@
 import styles from './signoff-all.module.css'
 
 // `left`: live variants this reviewer has not signed. `live`: live variants in the gallery.
-type Props = { reviewer: string | null; left: number; live: number }
+type Props = { slug: string; reviewer: string | null; left: number; live: number }
 
 // HTML's command buttons; React passes these lowercase names through as written. A spread,
 // since React's types do not list them yet.
@@ -46,6 +46,7 @@ export function SignoffAll(props: Props) {
           <button
             type="submit"
             form="reviewer"
+            formAction={`/l/${props.slug}/signoffs`}
             name="all"
             value="1"
             formNoValidate
