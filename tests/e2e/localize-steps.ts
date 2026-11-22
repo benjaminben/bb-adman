@@ -17,7 +17,7 @@ export const POSTS = 9
 export const TRANSLATED_POSTS = 6
 
 // Settings · Default AI providers: the fake provider for text, before any project is open.
-export async function useFakeText(page: Page): Promise<void> {
+export async function chooseFakeText(page: Page): Promise<void> {
   await screens.openSettings(page)
   const select = page.getByLabel('Text: briefs, copy and translation', { exact: true })
   await select.selectOption({ label: 'Fake provider' })
@@ -27,7 +27,7 @@ export async function useFakeText(page: Page): Promise<void> {
 // The project, the brief form in en, de and ja with one more size, and the fan-out to the two
 // other sizes and both languages. Waits until the fake's translations are on the grid.
 export async function localise(app: ElectronApplication, page: Page, project: string) {
-  await useFakeText(page)
+  await chooseFakeText(page)
   await screens.createProject(page, project)
   await v.createFromForm(app, page, { languages: 'en, de, ja', sizes: [WIDE] })
   await v.fanOut(page, DIRECTION, { sizes: [TALL, WIDE], languages: ['de', 'ja'] })
