@@ -16,7 +16,7 @@ const config = JSON.parse(fs.readFileSync('electron-builder.json', 'utf8')) as B
 describe('installers [SPEC 2, 3.1, 7.5, R-16]', () => {
   it('uses the app ID and product name from SPEC 3.1', () => {
     expect(config.appId).toBe('com.adman.app')
-    expect(config.productName).toBe('Adman')
+    expect(config.productName).toBe('AdManager')
   })
 
   it('registers the .adman extension so a double-click opens the project [R-06]', () => {
