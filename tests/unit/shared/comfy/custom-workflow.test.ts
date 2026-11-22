@@ -70,7 +70,11 @@ describe('the size options', () => {
       minPixels: 209_715,
       maxPixels: 262_144,
     })
-    expect(sizeFromChoice(8, 4)).toEqual({ multiple: 8, minPixels: 3_355_443, maxPixels: 4_194_304 })
+    expect(sizeFromChoice(8, 4)).toEqual({
+      multiple: 8,
+      minPixels: 3_355_443,
+      maxPixels: 4_194_304,
+    })
   })
 
   it('refuses a multiple or a largest size outside the lists', () => {
