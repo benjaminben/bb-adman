@@ -30,13 +30,13 @@ describe('PictureAi in the properties panel [spec/screens-ai.md]', () => {
     async (layer) => {
       await open(layer)
       await screen.findByRole('textbox', { name: 'Prompt' })
-      const wanted = ['Picture', 'Make pictures with AI', 'Position and size']
+      const wanted = ['Picture', 'Generate', 'Position and size']
       expect(sections().filter((s) => wanted.includes(s ?? ''))).toEqual(wanted)
     },
   )
 
   it('is not shown for a text layer', async () => {
     await open(HEADLINE)
-    expect(screen.queryByRole('group', { name: 'Make pictures with AI' })).toBeNull()
+    expect(screen.queryByRole('group', { name: 'Generate' })).toBeNull()
   })
 })

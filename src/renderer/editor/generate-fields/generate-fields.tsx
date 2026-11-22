@@ -3,12 +3,15 @@
 // opens the run dialog. Its Confirm sends one generation.runImages for this layer; the
 // provider is asked for the layer box's shape by the command (OI-70). The prompt and the
 // chosen pictures are the layer's draft (A-70). A locked layer's fields are disabled.
+// R2E-4 (spec/phases/round-2-editor.md D4): the Generate panel may give a start picture, which
+// is sent first with the chosen pictures after it, no picture twice, at most
+// MAX_REFERENCES_PER_RUN. A start that needs a picture with none chosen disables "Generate…".
 import { useId, useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import { RunDialog } from '@/renderer/dialogs/run-dialog'
 import { ReferenceDialog } from '@/renderer/dialogs/reference-dialog'
 import { generateDrafts } from '@/renderer/stores/generate-drafts'
-import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'
+import { MAX_IMAGES_PER_RUN, MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
 import type { JobStarted } from '@/shared/schemas/commands/job'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { RunStatus } from './run-status'
@@ -22,7 +25,18 @@ export type GenerateFieldsProps = {
   layer: LayerRow
   // The variant's layers; none passed means no words on layers (R2E-1).
   layers?: LayerRow[]
+  // The picture the run starts from: none given when the run starts from the prompt only,
+  // null when the start needs a picture and none is chosen.
+  start?: string | null
 }
+
+// The pictures a run sends: the start first, then the chosen ones, each once, at most
+// MAX_REFERENCES_PER_RUN.
+const sentPictures = (start: string | null | undefined, chosen: string[]) =>
+  [...new Set(typeof start === 'string' ? [start, ...chosen] : chosen)].slice(
+    0,
+    MAX_REFERENCES_PER_RUN,
+  )
 
 export function GenerateFields(props: GenerateFieldsProps) {
   const { projectId, layer } = props
@@ -33,6 +47,7 @@ export function GenerateFields(props: GenerateFieldsProps) {
   const promptId = useId()
   const disabled = layer.locked || draft === undefined
   const chosen = draft?.referenceAssetIds ?? []
+  const pictures = sentPictures(props.start, chosen)
   const change = generateDrafts.getState().change
   const count = Math.min(Math.max(perRun, 1), MAX_IMAGES_PER_RUN)
 
@@ -43,7 +58,7 @@ export function GenerateFields(props: GenerateFieldsProps) {
       variantId: layer.variantId,
       layerId: layer.id,
       prompt: draft?.prompt ?? '',
-      referenceAssetIds: chosen,
+      referenceAssetIds: pictures,
       count: sent,
       provider,
     })
@@ -66,7 +81,7 @@ export function GenerateFields(props: GenerateFieldsProps) {
         rows={5}
         value={draft?.prompt ?? ''}
         disabled={disabled}
-        onChange={(e) => change(key, { prompt: e.target.value })}
+        onChange={(e) => change(key, { prompt: e.target.value, promptTyped: true })}
       />
       <p className={styles.label}>Reference pictures</p>
       {draft && (
@@ -78,7 +93,11 @@ export function GenerateFields(props: GenerateFieldsProps) {
         <button type="button" disabled={disabled} onClick={() => setDialog('references')}>
           Choose reference pictures…
         </button>
-        <button type="button" disabled={disabled} onClick={() => setDialog('run')}>
+        <button
+          type="button"
+          disabled={disabled || props.start === null}
+          onClick={() => setDialog('run')}
+        >
           Generate…
         </button>
       </div>
@@ -102,7 +121,7 @@ export function GenerateFields(props: GenerateFieldsProps) {
         title="Make pictures"
         confirmLabel="Generate"
         count={{ label: 'Pictures', value: count, min: 1, max: MAX_IMAGES_PER_RUN }}
-        referenceCount={chosen.length}
+        referenceCount={pictures.length}
         {...(props.campaignId === null ? {} : { campaignId: props.campaignId })}
         onConfirm={confirm}
         onCancel={() => setDialog(null)}

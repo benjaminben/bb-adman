@@ -1,13 +1,13 @@
 // spec/editor.md, "Properties panel": the header (the layer's name and kind), then one section
-// per component: Layer, Text and Box (text layers), Picture, Shade and Make pictures with AI
+// per component: Layer, Text and Box (text layers), Picture, Shade and Generate
 // (image and background layers), Position and size. Sections are keyed by the layer, so an unsaved edit
 // or a refusal message does not carry over to another layer.
 import { AnimationFields } from '@/renderer/editor/animation-fields'
 import { FontField } from '@/renderer/editor/font-field'
+import { GeneratePanel } from '@/renderer/editor/generate-panel'
 import { GeometryFields } from '@/renderer/editor/geometry-fields'
 import { LanguageFont } from '@/renderer/editor/language-font'
 import { LayerFields } from '@/renderer/editor/layer-fields'
-import { PictureAi } from '@/renderer/editor/picture-ai'
 import { PictureFields, type PictureAsset } from '@/renderer/editor/picture-fields'
 import { ShadeFields } from '@/renderer/editor/shade-fields'
 import { TextBoxFields } from '@/renderer/editor/text-box-fields'
@@ -93,11 +93,12 @@ function Sections(props: SectionsProps) {
         <ShadeFields layer={layer} palette={props.palette} onUpdate={actions.update} />
       )}
       {layer.type !== 'text' && (
-        <PictureAi
+        <GeneratePanel
           projectId={props.projectId}
           campaignId={props.campaignId}
           layer={layer}
           layers={props.layers}
+          format={props.canvas?.format ?? 'image'}
         />
       )}
       <GeometryFields geometry={layer.geometry} disabled={layer.locked} onUpdate={actions.update} />
