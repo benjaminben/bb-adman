@@ -18,7 +18,8 @@ const LAST = STEPS.length
 
 // On a step change the step's heading takes the focus; on opening, the frame places it. Its
 // name is "Step n of 3: {short name}"; the first words are for a screen reader only. The
-// welcome's heading is for a screen reader only.
+// welcome's heading is for a screen reader only, and so is a step's whose part draws the same
+// words (Z-1b); that step's InfoTip sits at the end of the strip row instead.
 function StepHeading(props: { step: number; focus: boolean }) {
   const ref = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
@@ -32,12 +33,16 @@ function StepHeading(props: { step: number; focus: boolean }) {
       </h2>
     )
   }
+  const heading = (
+    <h2 ref={ref} tabIndex={-1} className={shown.partNamed ? styles.hidden : styles.heading}>
+      <span className={styles.hidden}>{`Step ${props.step} of ${STEPS.length}:`}</span>{' '}
+      {shown.heading}
+    </h2>
+  )
+  if (shown.partNamed) return heading
   return (
     <div className={styles.headingRow}>
-      <h2 ref={ref} tabIndex={-1} className={styles.heading}>
-        <span className={styles.hidden}>{`Step ${props.step} of ${STEPS.length}:`}</span>{' '}
-        {shown.heading}
-      </h2>
+      {heading}
       <InfoTip about="this step">{shown.line}</InfoTip>
     </div>
   )
@@ -93,7 +98,10 @@ export function FirstRun() {
       size="wide"
       footer={footer}
     >
-      <StepStrip current={current - 1} />
+      <div className={styles.stripRow}>
+        <StepStrip current={current - 1} />
+        {shown?.partNamed && <InfoTip about="this step">{shown.line}</InfoTip>}
+      </div>
       <StepHeading key={current} step={current} focus={moved} />
       {shown !== undefined && <shown.Part fold="none" />}
     </DialogFrame>

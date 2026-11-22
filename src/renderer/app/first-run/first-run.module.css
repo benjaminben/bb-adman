@@ -1,10 +1,17 @@
 /* R2E-10, SET-7: the first-run setup. The step strip sits at the top of the body; the step
    heading with its InfoTip sits above the Settings part it holds; Back stands apart at the left
    of the foot. */
+/* The strip, then (Z-1b) the InfoTip of a step whose part draws the step's heading itself. */
+.stripRow {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-section);
+  margin: 0 0 var(--space-4);
+}
 .strip {
   display: flex;
   gap: var(--gap-section);
-  margin: 0 0 var(--space-4);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
