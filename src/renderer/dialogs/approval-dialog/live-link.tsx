@@ -1,13 +1,16 @@
-// The live link (spec/approvals.md "The approval link dialog"): the address and "Copy link",
-// the password part, the gallery with its still-only lines and "Update gallery", every
-// variant's sign-offs, and "Turn off link…" with its confirmation. Copy uses
-// navigator.clipboard.writeText on the click.
+// The live link (spec/approvals.md "The approval link dialog"; DLG-6b). The link row: the
+// address in its read-only field, the icon buttons "Copy link" and "Copy password", and a menu
+// with "New password…". The gallery row: when it was updated, how many variants changed since,
+// the still-only lines and "Update gallery". Then every variant's sign-offs. "Turn off…" is in
+// the dialog's foot. Copy uses navigator.clipboard.writeText on the click; the password is
+// never drawn.
 import { useId, useState } from 'react'
 import type { ApprovalsForCampaign } from '@/shared/schemas/queries/approvals'
-import { timeText } from '@/renderer/ui/signoff-list'
+import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
-import { EndLinkConfirm } from './end-link-confirm'
-import { PasswordSection } from './password-section'
+import { MoreMenu } from '@/renderer/ui/more-menu'
+import { timeText } from '@/renderer/ui/signoff-list'
+import { NOT_KEPT, NewPassword, useCopyPassword } from './password-section'
 import { SignoffsByVariant } from './signoffs-by-variant'
 import { StillOnlyNotes } from './still-only-notes'
 import type { Sender } from './use-send'
@@ -27,16 +30,26 @@ function changedText(n: number): string {
   return n === 1 ? '1 variant changed since.' : `${n} variants changed since.`
 }
 
+function IconAction(props: { label: string; icon: 'copy' | 'key'; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className={layout.iconButton}
+      aria-label={props.label}
+      title={props.label}
+      onClick={props.onClick}
+    >
+      <Icon name={props.icon} />
+    </button>
+  )
+}
+
 export function LiveLink(props: Props) {
   const { sender } = props
   const id = useId()
   const busy = sender.running !== null
   const [status, setStatus] = useState<string | null>(null)
-  const [confirming, setConfirming] = useState(false)
-  const link = props.data.link
-  if (link === null) return null
-  const address = link.address
-  const changed = props.data.variants.filter((v) => v.publishedRev !== v.currentRev).length
+  const [newPassword, setNewPassword] = useState(false)
 
   async function copy(text: string) {
     try {
@@ -47,15 +60,21 @@ export function LiveLink(props: Props) {
     }
   }
 
-  if (confirming) {
-    return (
-      <EndLinkConfirm
-        busy={busy}
-        onKeep={() => setConfirming(false)}
-        onTurnOff={() => void sender.send('approvals.endLink')}
-      />
-    )
-  }
+  const password = useCopyPassword({ ...props, copy, onStatus: setStatus })
+  const link = props.data.link
+  if (link === null) return null
+  const address = link.address
+  const kept = link.passwordKept && !password.notKept
+  const changed = props.data.variants.filter((v) => v.publishedRev !== v.currentRev).length
+  const menu = [
+    {
+      id: 'password',
+      label: 'New password…',
+      disabled: busy,
+      reason: 'Working…',
+      onChoose: () => setNewPassword(true),
+    },
+  ]
 
   return (
     <>
@@ -63,59 +82,52 @@ export function LiveLink(props: Props) {
         <h3 id={`${id}-link`} className={styles.heading}>
           Link
         </h3>
-        <div className={layout.row}>
+        <div className={styles.linkRow}>
           <input
             className={styles.address}
             aria-labelledby={`${id}-link`}
             readOnly
             value={address ?? ''}
           />
-          <button
-            type="button"
-            disabled={address === null}
-            onClick={() => address !== null && void copy(address)}
-          >
-            Copy link
-          </button>
+          {address !== null && (
+            <IconAction label="Copy link" icon="copy" onClick={() => void copy(address)} />
+          )}
+          {kept && (
+            <IconAction
+              label="Copy password"
+              icon="key"
+              onClick={() => void password.copyPassword()}
+            />
+          )}
+          <MoreMenu label="the link" items={menu} />
         </div>
+        {!kept && <p className={styles.line}>{NOT_KEPT}</p>}
+        {newPassword && <NewPassword sender={sender} onClose={() => setNewPassword(false)} />}
       </section>
-      <PasswordSection
-        projectId={props.projectId}
-        campaignId={props.campaignId}
-        kept={link.passwordKept}
-        sender={sender}
-        headingId={`${id}-password`}
-        copy={copy}
-        onStatus={setStatus}
-      />
       <p role="status" className={styles.line}>
         {status}
       </p>
       <section className={styles.section} aria-labelledby={`${id}-gallery`}>
-        <h3 id={`${id}-gallery`} className={styles.heading}>
-          Gallery
-        </h3>
-        {link.publishedAt !== null && (
-          <p className={styles.line}>Updated {timeText(link.publishedAt)}.</p>
-        )}
-        {changed > 0 && <p className={styles.line}>{changedText(changed)}</p>}
-        <StillOnlyNotes variants={props.data.variants} titles={props.titles} />
-        <div className={layout.row}>
+        <div className={styles.galleryRow}>
+          <h3 id={`${id}-gallery`} className={styles.heading}>
+            Gallery
+          </h3>
+          <span className={styles.meta}>
+            {link.publishedAt !== null && <span>Updated {timeText(link.publishedAt)}.</span>}
+            {changed > 0 && <span>{changedText(changed)}</span>}
+          </span>
           <button
             type="button"
+            className={layout.secondary}
             disabled={busy}
             onClick={() => void sender.send('approvals.publish')}
           >
             Update gallery
           </button>
         </div>
+        <StillOnlyNotes variants={props.data.variants} titles={props.titles} />
       </section>
       <SignoffsByVariant variants={props.data.variants} titles={props.titles} />
-      <div className={layout.row}>
-        <button type="button" disabled={busy} onClick={() => setConfirming(true)}>
-          Turn off link…
-        </button>
-      </div>
       <p className={styles.line}>If you delete this campaign, turn its link off first.</p>
     </>
   )

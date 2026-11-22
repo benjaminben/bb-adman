@@ -1,69 +1,88 @@
-// "Files that will be uploaded" in the publish dialog (spec/phases/phase-09.md "Screens"; R-06,
-// A-218): by folder, each display name and full local path as plain text, so the user sees
-// exactly which files on this computer will leave it. A project file from someone else can
-// point an asset at any file, so this list is the user's check. A font without consent given on
-// this computer is marked as not uploaded (A-260).
-import { useId } from 'react'
+// "Files that will be uploaded" in the publish dialog (DLG-6b; spec/phases/phase-09.md
+// "Screens"; R-06): every file that will leave this computer, one ObjectRow each with its
+// thumbnail, display name and kind, in the published folders' order. No path is drawn, put in a
+// tooltip or kept in any attribute (AP-9): the thumbnail is drawn through the asset address,
+// which holds only the project and asset IDs. A file that will be skipped, and a font without
+// consent given on this computer (A-260), keep a visible mark with their words.
+import { Icon, type IconName } from '@/renderer/ui/icon'
+import { assetUrl } from '@/renderer/ui/asset-url'
 import layout from '@/renderer/ui/layout.module.css'
-import { displayName, displayPath } from '@/shared/publish/display-text'
+import { ObjectRow } from '@/renderer/ui/object-row'
+import { StatusMark, type StatusTone } from '@/renderer/ui/status-mark'
+import { displayName } from '@/shared/publish/display-text'
 import type {
   PublishComponentFolder,
   PublishInspectComponent,
 } from '@/shared/schemas/queries/publish'
 import styles from './publish-file-list.module.css'
 
-export type PublishFileListProps = { components: PublishInspectComponent[] }
+export type PublishFileListProps = { projectId: string; components: PublishInspectComponent[] }
 
-// The order and names of the published folders (the order publish.inspect sorts by).
-const FOLDERS: Array<[PublishComponentFolder, string]> = [
-  ['logos', 'Logos'],
-  ['subjects', 'Subjects'],
-  ['fonts', 'Fonts'],
-  ['backgrounds', 'Backgrounds'],
-  ['images', 'Images'],
-]
+// The order of the published folders (the order publish.inspect sorts by).
+const FOLDERS: PublishComponentFolder[] = ['logos', 'subjects', 'fonts', 'backgrounds', 'images']
 
-function mark(c: PublishInspectComponent): string | null {
-  if (c.problem === 'missing') return 'file not found, will be skipped'
-  if (c.problem === 'wrong_type') return 'not a usable file, will be skipped'
-  if (c.kind === 'font' && c.share !== 'confirmed') return 'will not be uploaded'
+const KINDS: Record<PublishInspectComponent['kind'], { word: string; icon: IconName }> = {
+  image: { word: 'Picture', icon: 'image' },
+  video: { word: 'Video', icon: 'film' },
+  font: { word: 'Font', icon: 'text' },
+}
+
+type Mark = { tone: StatusTone; label: string; tip: string }
+
+function markOf(c: PublishInspectComponent): Mark | null {
+  if (c.problem === 'missing')
+    return { tone: 'danger', label: 'File not found', tip: 'File not found, will be skipped' }
+  if (c.problem === 'wrong_type')
+    return { tone: 'danger', label: 'Not usable', tip: 'Not a usable file, will be skipped' }
+  if (c.kind === 'font' && c.share !== 'confirmed')
+    return { tone: 'warn', label: 'Not uploaded', tip: 'Will not be uploaded' }
   return null
 }
 
-export function PublishFileList(props: PublishFileListProps) {
-  const headingId = useId()
-  const groups = FOLDERS.map(([folder, name]) => ({
-    name,
-    items: props.components.filter((c) => c.folder === folder),
-  })).filter((g) => g.items.length > 0)
+// The row's main button only covers it; the rows hold no action.
+const COVER = { tabIndex: -1, 'aria-hidden': true } as const
 
+function FileRow(props: { projectId: string; file: PublishInspectComponent }) {
+  const { file } = props
+  const name = displayName(file.displayName)
+  const kind = KINDS[file.kind]
+  const mark = markOf(file)
+  const picture = file.kind === 'image' && file.problem === null
   return (
-    <section aria-labelledby={headingId} className={styles.list}>
-      <h3 id={headingId} className={styles.heading}>
-        Files that will be uploaded
-      </h3>
-      {groups.length === 0 && (
+    <ObjectRow
+      name={<bdi>{name}</bdi>}
+      label={[name, kind.word, mark?.tip].filter(Boolean).join(' · ')}
+      meta={kind.word}
+      muted={file.problem !== null}
+      thumb={
+        picture ? (
+          <img src={assetUrl(props.projectId, file.assetId)} alt="" />
+        ) : (
+          <Icon name={kind.icon} />
+        )
+      }
+      marks={mark && <StatusMark tone={mark.tone} icon="alert" label={mark.label} tip={mark.tip} />}
+      mainProps={COVER}
+    />
+  )
+}
+
+export function PublishFileList(props: PublishFileListProps) {
+  const files = FOLDERS.flatMap((folder) => props.components.filter((c) => c.folder === folder))
+  return (
+    <section aria-label="Files that will be uploaded" className={styles.list}>
+      <h3 className={styles.heading}>Files that will be uploaded</h3>
+      {files.length === 0 ? (
         <p className={layout.muted}>No pictures, videos or fonts are used.</p>
+      ) : (
+        <ul aria-label="Files" className={layout.list}>
+          {files.map((c) => (
+            <li key={c.assetId}>
+              <FileRow projectId={props.projectId} file={c} />
+            </li>
+          ))}
+        </ul>
       )}
-      {groups.map((group) => (
-        <div key={group.name} className={styles.group}>
-          <p className={styles.folder}>{group.name}</p>
-          <ul aria-label={group.name} className={layout.list}>
-            {group.items.map((c) => {
-              const line = mark(c)
-              return (
-                <li key={c.assetId} className={styles.item}>
-                  <bdi className={styles.name}>{displayName(c.displayName)}</bdi>
-                  <span className={`${layout.path} ${styles.path}`}>
-                    {displayPath(c.localPath)}
-                  </span>
-                  {line !== null && <span className={styles.mark}>{line}</span>}
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-      ))}
     </section>
   )
 }

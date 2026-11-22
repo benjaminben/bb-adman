@@ -71,10 +71,8 @@ describe('the publish dialog [P9-12]', () => {
       { projectId: 'p1', campaignId: '01JD00000000000000000000CA', storage: null },
     ])
     expect(dialog).toHaveTextContent(PROMPT_LINE)
-    expect(dialog).toHaveTextContent(
-      'Also uploaded: the exported ads, the report, the translation sheet and a list of the files.',
-    )
-    expect(dialog).toHaveTextContent('/Users/ann/Pictures/Summer/beach-at-dawn.png')
+    expect(dialog).toHaveTextContent('Also uploaded')
+    expect(dialog.outerHTML).not.toContain('/Users/ann/Pictures/Summer/beach-at-dawn.png')
     expect(publish()).toBeDisabled()
     expect(await axeViolations()).toEqual([])
   })
@@ -82,15 +80,18 @@ describe('the publish dialog [P9-12]', () => {
   it.each([
     ['not_set_up', 'Set up Amazon S3 in Settings.'],
     ['needs_key', 'Add your Amazon S3 keys in Settings.'],
-  ] as const)('disables a storage that is %s, with its line', async (ready, line) => {
+  ] as const)('marks a storage that is %s "Not set", with its line', async (ready, line) => {
     const storages = [{ ...STORAGES[0], ready }, STORAGES[1]] as PublishInspect['storages']
-    const { dialog } = await openDialog({
+    await openDialog({
       answer: () => ({ ok: true, data: inspectReply({ storages }) }),
     })
-    expect(await screen.findByRole('radio', { name: 'Amazon S3' })).toBeDisabled()
-    expect(screen.getByRole('radio', { name: 'Dropbox' })).toBeDisabled()
-    expect(dialog).toHaveTextContent(line)
-    expect(dialog).toHaveTextContent('Sign in to Dropbox in Settings.')
+    const s3 = await screen.findByRole('radio', { name: 'Amazon S3' })
+    expect(s3).toHaveAccessibleDescription(new RegExp(`^Not set.*${line}$`))
+    expect(screen.getByRole('radio', { name: 'Dropbox' })).toHaveAccessibleDescription(
+      /^Not set.*Sign in to Dropbox in Settings\.$/,
+    )
+    await userEvent.click(s3)
+    expect(publish()).toBeDisabled()
   })
 
   it('inspects again when a storage is chosen, showing "Looking…", then nothing published', async () => {
@@ -124,8 +125,8 @@ describe('the publish dialog [P9-12]', () => {
     expect(dialog).toHaveTextContent(
       'These files were published from another project with the same campaign ID.',
     )
-    expect(dialog).toHaveTextContent(/Last published .+, publish 3\./)
-    const box = screen.getByRole('checkbox', { name: 'Replace the published files' })
+    expect(dialog).toHaveTextContent(/Replaces publish 3 · .+/)
+    const box = screen.getByRole('switch', { name: 'Replace the published files' })
     expect(box).not.toBeChecked()
     expect(publish()).toBeDisabled()
     await userEvent.click(box)
@@ -148,7 +149,7 @@ describe('the publish dialog [P9-12]', () => {
     )
     await screen.findByRole('radio', { name: 'Amazon S3' })
     await chooseS3()
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Replace the published files' }))
+    await userEvent.click(screen.getByRole('switch', { name: 'Replace the published files' }))
     await userEvent.click(publish())
     expect(publish()).toBeDisabled()
     await userEvent.click(publish())
@@ -163,7 +164,7 @@ describe('the publish dialog [P9-12]', () => {
     ])
     finish()
     expect(await within(dialog).findByText(STARTED)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Close' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Run in background' }))
     expect(onClose).toHaveBeenCalled()
   })
 
@@ -233,25 +234,23 @@ describe('the publish dialog [P9-12]', () => {
     })
     await screen.findByRole('radio', { name: 'Amazon S3' })
     await chooseS3()
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Replace the published files' }))
+    await userEvent.click(screen.getByRole('switch', { name: 'Replace the published files' }))
     await userEvent.click(screen.getByRole('radio', { name: 'Dropbox' }))
     expect(await screen.findByText(message)).toBeInTheDocument()
-    expect(
-      screen.queryByText('This will replace the files published for this campaign.'),
-    ).toBeNull()
+    expect(screen.queryByText(/^Replaces publish/)).toBeNull()
     expect(publish()).toBeDisabled()
     dropboxFails = false
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
-    await screen.findByText('This will replace the files published for this campaign.')
+    await screen.findByText(/^Replaces publish/)
     expect(screen.getByRole('radio', { name: 'Dropbox' })).toBeChecked()
-    expect(screen.getByRole('checkbox', { name: 'Replace the published files' })).not.toBeChecked()
+    expect(screen.getByRole('switch', { name: 'Replace the published files' })).not.toBeChecked()
     expect(publish()).toBeDisabled()
     expect(runs(fake)).toEqual([])
   })
 })
 
 describe('the replace tick and the folder listing never outlive a read [P9-12 review]', () => {
-  const REPLACE = 'This will replace the files published for this campaign.'
+  const REPLACE = /^Replaces publish/
   const withFont = (existing: PublishInspect['existing']) =>
     inspectReply({ existing, components: [...COMPONENTS, font({ share: 'needs_confirming' })] })
 
@@ -267,7 +266,7 @@ describe('the replace tick and the folder listing never outlive a read [P9-12 re
     })
     await screen.findByRole('radio', { name: 'Amazon S3' })
     await chooseS3()
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Replace the published files' }))
+    await userEvent.click(screen.getByRole('switch', { name: 'Replace the published files' }))
     expect(publish()).toBeEnabled()
     await userEvent.click(screen.getByRole('checkbox', { name: 'I am allowed to share this font' }))
   }
@@ -275,9 +274,7 @@ describe('the replace tick and the folder listing never outlive a read [P9-12 re
   it('clears the replace tick when the same storage is read again', async () => {
     await tickThenReadAgain(() => ({ ok: true, data: withFont(PUBLISHED) }))
     await waitFor(() =>
-      expect(
-        screen.getByRole('checkbox', { name: 'Replace the published files' }),
-      ).not.toBeChecked(),
+      expect(screen.getByRole('switch', { name: 'Replace the published files' })).not.toBeChecked(),
     )
     expect(screen.getByText(REPLACE)).toBeInTheDocument()
     expect(publish()).toBeDisabled()
@@ -288,7 +285,7 @@ describe('the replace tick and the folder listing never outlive a read [P9-12 re
     await tickThenReadAgain(() => ({ ok: false, error: { code: 'PROVIDER_ERROR', message } }))
     expect(await screen.findByRole('alert')).toHaveTextContent(message)
     expect(screen.queryByText(REPLACE)).toBeNull()
-    expect(screen.queryByRole('checkbox', { name: 'Replace the published files' })).toBeNull()
+    expect(screen.queryByRole('switch', { name: 'Replace the published files' })).toBeNull()
     expect(publish()).toBeDisabled()
   })
 })

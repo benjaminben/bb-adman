@@ -103,7 +103,9 @@ export async function turnOffLink(page: Page): Promise<void> {
     .click()
   const box = dialog(page)
   await box.getByRole('button', { name: 'Turn off link…' }).click()
-  await box.getByRole('button', { name: 'Turn off link', exact: true }).click()
+  // DLG-6b: the question is a confirm dialog over the approval dialog.
+  const ask = page.getByRole('dialog', { name: 'Turn off link?' })
+  await ask.getByRole('button', { name: 'Turn off link', exact: true }).click()
   await expect(box.getByText(/This link was turned off on /)).toBeVisible({ timeout: 30_000 })
   await box.getByRole('button', { name: 'Close' }).click()
   await expect(bar(page).getByText('Link turned off')).toBeVisible()

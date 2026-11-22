@@ -1,26 +1,27 @@
-// "Publish {campaign name}" [P9-12] (spec/phases/phase-09.md "Screens", "Publishing"). The
-// first view: where to publish, what is published there, the prompt line, every file that will
-// leave this computer with its full local path (A-218), the font ticks (A-260) and Publish.
-// Nothing is sent but publish.inspect until the user presses Publish, which sends publish.run
-// once, with replaceConfirmed only from the user's own tick. While it waits every control is
-// disabled and the dialog cannot close. A refusal shows its sentence and the first view stays
-// (`refusal` keeps the whole error). A publish_has_warnings refusal opens the warnings step
-// [P9-13]: "Publish anyway" sends the same input again with proceedDespiteWarnings and the
-// user's own reason, the replace tick as the user gave it. It is armed 500 ms after the step
-// opens (lows C). "Back" reads publish.inspect again. After the start, the started view.
-import { useState } from 'react'
+// "Publish {campaign name}" [P9-12] (spec/phases/phase-09.md "Screens", "Publishing"; DLG-6b).
+// The first view (publish-choose.tsx): where to publish, what is published there, the prompt
+// line, every file that will leave this computer (by name and kind, no path), the font ticks
+// (A-260) and Publish. The full prompt sentence is the dialog's description. Nothing is sent
+// but publish.inspect until the user presses Publish, which sends publish.run once, with
+// replaceConfirmed only from the user's own "Replace" switch; a storage that is not set up
+// cannot be published to. While it waits every control is disabled and the dialog cannot close.
+// A refusal shows its sentence and the first view stays (`refusal` keeps the whole error). A
+// publish_has_warnings refusal opens the warnings step [P9-13]: "Publish anyway" sends the same
+// input again with proceedDespiteWarnings and the user's own reason, the switch as the user
+// gave it. It is armed 500 ms after the step opens (lows C). "Back" reads publish.inspect
+// again. After the start, the "Publishing" bar.
+import { useId, useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
-import { FontShareChoice } from '@/renderer/ui/font-share-choice'
 import layout from '@/renderer/ui/layout.module.css'
-import { PublishFileList } from '@/renderer/ui/publish-file-list'
 import type { PublishRunInput, PublishStorageId } from '@/shared/schemas/commands/publish'
 import type { ErrorBody } from '@/shared/schemas/result'
+import { PROMPT_LINE, PublishChoose } from './publish-choose'
+import { PublishStarted } from './publish-started'
 import { PublishWarnings, warningsOf, type PublishWarningLine } from './publish-warnings'
-import { ReplaceWarning } from './replace-warning'
-import { StorageChoice } from './storage-choice'
 import { useArmed } from './use-armed'
 import { usePublishInspect } from './use-publish-inspect'
+import { jobIdOf, usePublishJob } from './use-publish-job'
 import styles from './publish-dialog.module.css'
 
 export type PublishDialogProps = {
@@ -30,12 +31,14 @@ export type PublishDialogProps = {
   onClose: () => void
 }
 
-const PROMPT_LINE =
-  'Generated images and videos carry the prompt that made them. Anyone with these files can read it.'
-const ALSO_LINE =
-  'Also uploaded: the exported ads, the report, the translation sheet and a list of the files.'
-const STARTED =
-  'Publishing has started. You can close this window and follow it in the activity list.'
+function Refusal(props: { refusal: ErrorBody | null }) {
+  if (props.refusal === null) return null
+  return (
+    <p role="alert" className={`${layout.notice} ${layout.danger}`}>
+      {props.refusal.message}
+    </p>
+  )
+}
 
 export function PublishDialog(props: PublishDialogProps) {
   const { projectId, campaignId } = props
@@ -43,29 +46,32 @@ export function PublishDialog(props: PublishDialogProps) {
   const clearError = useApp((s) => s.clearError)
   const inspect = usePublishInspect(projectId, campaignId)
   const { reply, existing, storage } = inspect
-  const [replaceTicked, setReplaceTicked] = useState(false)
+  const { job, follow } = usePublishJob()
+  const promptId = useId()
+  const [replaceOn, setReplaceOn] = useState(false)
   const [sending, setSending] = useState(false)
   const [refusal, setRefusal] = useState<ErrorBody | null>(null)
-  const [started, setStarted] = useState(false)
   const [warnings, setWarnings] = useState<PublishWarningLine[] | null>(null)
   const [reason, setReason] = useState('')
   // The input the last "Publish" sent; "Publish anyway" sends it again.
   const [held, setHeld] = useState<PublishRunInput | null>(null)
   const armed = useArmed(warnings)
 
-  const ready = reply?.storages.some((s) => s.id === storage && s.ready === 'ready') === true
+  const readyOf = (id: PublishStorageId | null) =>
+    reply?.storages.some((s) => s.id === id && s.ready === 'ready') === true
+  const ready = readyOf(storage)
   const hasFiles = existing !== null && existing.files > 0
-  const canPublish = ready && existing !== null && (!hasFiles || replaceTicked) && !sending
+  const canPublish = ready && existing !== null && (!hasFiles || replaceOn) && !sending
 
   function choose(id: PublishStorageId) {
-    setReplaceTicked(false)
+    setReplaceOn(false)
     setRefusal(null)
-    inspect.choose(id)
+    inspect.choose(id, readyOf(id))
   }
 
-  // Every read of the folder, of the same storage too, asks for the replace tick anew.
+  // Every read of the folder, of the same storage too, asks for the switch anew.
   function readAgain() {
-    setReplaceTicked(false)
+    setReplaceOn(false)
     inspect.again()
   }
 
@@ -74,7 +80,7 @@ export function PublishDialog(props: PublishDialogProps) {
     setRefusal(null)
     const sent = await command('publish.run', input)
     setSending(false)
-    if (sent.ok) return setStarted(true)
+    if (sent.ok) return follow(jobIdOf(sent))
     const listed = input.proceedDespiteWarnings ? null : warningsOf(sent.error)
     if (listed === null) return setRefusal(sent.error)
     // The step shows the warnings, so they leave the error banner, as in the export dialog.
@@ -86,7 +92,7 @@ export function PublishDialog(props: PublishDialogProps) {
 
   function publish() {
     if (!canPublish || storage === null) return
-    const replaceConfirmed = hasFiles && replaceTicked
+    const replaceConfirmed = hasFiles && replaceOn
     const input = { projectId, campaignId, storage, replaceConfirmed }
     void send({ ...input, proceedDespiteWarnings: false })
   }
@@ -104,49 +110,53 @@ export function PublishDialog(props: PublishDialogProps) {
     readAgain()
   }
 
-  const footer = started ? (
-    <button type="button" className={layout.primary} onClick={props.onClose}>
-      Close
-    </button>
-  ) : warnings !== null ? (
-    <>
-      <button type="button" disabled={sending} onClick={back}>
-        Back
-      </button>
-      <button
-        type="button"
-        className={layout.primary}
-        disabled={sending || !armed}
-        onClick={publishAnyway}
-      >
-        Publish anyway
-      </button>
-    </>
-  ) : (
-    <>
-      <button type="button" disabled={sending} onClick={props.onClose}>
-        Cancel
-      </button>
-      <button type="button" className={layout.primary} disabled={!canPublish} onClick={publish}>
-        Publish
-      </button>
-    </>
-  )
+  const footer =
+    job !== null ? (
+      job.kind === 'ended' && (
+        <button type="button" className={layout.primary} onClick={props.onClose}>
+          Close
+        </button>
+      )
+    ) : warnings !== null ? (
+      <>
+        <button type="button" disabled={sending} onClick={back}>
+          Back
+        </button>
+        <button
+          type="button"
+          className={layout.primary}
+          disabled={sending || !armed}
+          onClick={publishAnyway}
+        >
+          Publish anyway
+        </button>
+      </>
+    ) : (
+      <>
+        <button type="button" disabled={sending} onClick={props.onClose}>
+          Cancel
+        </button>
+        <button type="button" className={layout.primary} disabled={!canPublish} onClick={publish}>
+          Publish
+        </button>
+      </>
+    )
 
-  const fonts = reply?.components.filter((c) => c.kind === 'font') ?? []
   return (
     <DialogFrame
       open
       onClose={props.onClose}
       title={`Publish ${props.campaignName}`}
+      describedBy={promptId}
       closable={!sending}
       footer={footer}
-      size="wide"
+      kind="publish"
     >
-      {started ? (
-        <p role="status" className={styles.line}>
-          {STARTED}
-        </p>
+      <span id={promptId} className={styles.hidden}>
+        {PROMPT_LINE}
+      </span>
+      {job !== null ? (
+        <PublishStarted job={job} onClose={props.onClose} />
       ) : warnings !== null ? (
         <div className={styles.body}>
           <PublishWarnings
@@ -157,11 +167,7 @@ export function PublishDialog(props: PublishDialogProps) {
             disabled={sending}
             onReason={setReason}
           />
-          {refusal !== null && (
-            <p role="alert" className={`${layout.notice} ${layout.danger}`}>
-              {refusal.message}
-            </p>
-          )}
+          <Refusal refusal={refusal} />
         </div>
       ) : (
         <div className={styles.body}>
@@ -175,44 +181,21 @@ export function PublishDialog(props: PublishDialogProps) {
             </div>
           )}
           {reply !== null && (
-            <>
-              <StorageChoice
-                storages={reply.storages}
-                chosen={storage}
-                disabled={sending}
-                onChoose={choose}
-              />
-              {storage !== null && inspect.looking && (
-                <p role="status" className={styles.line}>
-                  Looking at the published folder…
-                </p>
-              )}
-              {existing !== null && (
-                <ReplaceWarning
-                  existing={existing}
-                  confirmed={replaceTicked}
-                  disabled={sending}
-                  onConfirm={setReplaceTicked}
-                />
-              )}
-              <p className={styles.line}>{PROMPT_LINE}</p>
-              <PublishFileList components={reply.components} />
-              {fonts.length > 0 && (
-                <FontShareChoice
-                  projectId={projectId}
-                  fonts={fonts}
-                  disabled={sending}
-                  onChanged={readAgain}
-                />
-              )}
-              <p className={styles.line}>{ALSO_LINE}</p>
-            </>
+            <PublishChoose
+              projectId={projectId}
+              reply={reply}
+              storage={storage}
+              looking={inspect.looking}
+              existing={existing}
+              replaceOn={replaceOn}
+              sending={sending}
+              onChoose={choose}
+              onReplace={setReplaceOn}
+              onFontsChanged={readAgain}
+              onClose={props.onClose}
+            />
           )}
-          {refusal !== null && (
-            <p role="alert" className={`${layout.notice} ${layout.danger}`}>
-              {refusal.message}
-            </p>
-          )}
+          <Refusal refusal={refusal} />
         </div>
       )}
     </DialogFrame>

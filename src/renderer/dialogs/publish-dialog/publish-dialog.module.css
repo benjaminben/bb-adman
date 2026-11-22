@@ -1,6 +1,6 @@
 /* app-style */
-/* The publish dialog (P9-12): one column with the dialog's spacing. Every value from outside
-   (a storage label, a name, a path) wraps, so the foot band with its buttons stays in view. */
+/* The publish dialog (P9-12, DLG-6b): one column with the dialog's spacing. Every value from
+   outside (a storage label, a name) wraps, so the foot band with its buttons stays in view. */
 .body {
   display: flex;
   flex-direction: column;
@@ -11,56 +11,125 @@
 .body p {
   margin: 0;
 }
-.group {
+/* "To": the storages as segments, as the run dialog's providers. The radio covers its
+   segment, unseen, so the whole segment is the click target and the radio keeps its role. */
+.choices {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
   min-width: 0;
   margin: 0;
   padding: 0;
   border: none;
 }
+.choices legend,
+.label {
+  padding: 0;
+  margin-bottom: var(--space-1);
+  font-size: var(--type-meta-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+.toRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+.seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--border-width) * 2);
+  padding: calc(var(--border-width) * 2);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.choice {
+  position: relative;
+  display: flex;
+  gap: var(--gap-tight);
+  align-items: center;
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-3);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-inner);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-control);
+}
+.choice input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.choice:hover {
+  color: var(--color-text);
+}
+.choice:has(input:checked) {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+.choice:has(input:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+.mark {
+  display: inline-flex;
+}
+.first {
+  display: flex;
+}
+/* The replace notice: its words, the InfoTip, the other-project mark, then the switch. */
+.replace {
+  flex-wrap: wrap;
+  align-items: center;
+}
+.replaceText {
+  font-weight: var(--weight-medium);
+}
+.switchLabel {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-left: auto;
+}
+.prompt {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  font-size: var(--font-size-control);
+}
+.line {
+  font-size: var(--font-size-control);
+}
+.also {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+.also .label {
+  margin: 0;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* The warnings step (P9-13), as the export dialog's. */
 .heading {
   padding: 0;
   font-size: var(--font-size-small);
   font-weight: var(--weight-medium);
   color: var(--color-text-secondary);
 }
-.storage {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-.choice {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-  font-size: var(--font-size-control);
-}
-.choice:has(input:disabled) {
-  color: var(--color-text-muted);
-}
-.hint {
-  padding-left: var(--space-6);
-  font-size: var(--font-size-small);
-  color: var(--color-text-secondary);
-}
-.replace {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border-radius: var(--radius);
-  background: var(--color-warn-bg);
-  color: var(--color-warn-text);
-}
-.strong {
-  font-weight: var(--weight-medium);
-}
-.line {
-  font-size: var(--font-size-control);
-}
-/* The warnings step (P9-13), as the export dialog's. */
 .warnings {
   display: flex;
   flex-direction: column;
@@ -72,4 +141,13 @@
 .note {
   font-size: var(--font-size-small);
   color: var(--color-text-secondary);
+}
+/* Read by a screen reader, not drawn. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

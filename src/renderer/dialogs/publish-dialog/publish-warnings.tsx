@@ -1,7 +1,8 @@
 // The publish dialog's warnings step [P9-13] (spec/phases/phase-09.md "Screens"), built as the
 // export dialog's: the warnings publish.run refused with, one line each, "{ad} · {check}:
 // {message}", drawn as text with displayName (a message can quote project text); and the
-// optional reason, at most 500 characters, which is written into the published report. The ads
+// optional reason, at most 500 characters (DLG-6b: its words are the placeholder and the name),
+// which is written into the published report: that line stays visible words. The ads
 // are named from campaign.get; an ad not found there is left out of its line. The buttons are
 // the dialog's foot.
 import { useEffect, useId, useState } from 'react'
@@ -75,10 +76,10 @@ export function PublishWarnings(props: PublishWarningsProps) {
         ))}
       </ul>
       <div className={layout.field}>
-        <label htmlFor={`${id}-reason`}>Why publish anyway? (optional)</label>
         <input
-          id={`${id}-reason`}
           type="text"
+          aria-label="Why publish anyway? (optional)"
+          placeholder="Why publish anyway? (optional)"
           maxLength={PROCEED_REASON_MAX}
           aria-describedby={`${id}-published`}
           value={props.reason}

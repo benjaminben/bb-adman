@@ -2,11 +2,15 @@
 // state comes from the campaign's approvals store: not ready, no link, a live link, or an
 // ended link. Every button that sends is disabled while a command runs, with "Working…" (or the
 // update's progress line and "Stop") beside them, and the frame cannot be closed meanwhile.
+// DLG-6b: the foot holds "Turn off…" (named "Turn off link…", a live link only) and "Close";
+// "Turn off…" opens the confirm dialog over this one (end-link-confirm.tsx).
 import { useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import { APPROVALS_REASON_MESSAGES } from '@/shared/approvals/messages'
 import type { ApprovalsForCampaign } from '@/shared/schemas/queries/approvals'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
+import layout from '@/renderer/ui/layout.module.css'
+import { EndLinkConfirm } from './end-link-confirm'
 import { SignoffsByVariant } from './signoffs-by-variant'
 import { dateText } from '@/renderer/ui/signoff-list'
 import { LiveLink } from './live-link'
@@ -85,12 +89,36 @@ function Body(props: ApprovalDialogProps & { sender: Sender }) {
 
 export function ApprovalDialog(props: ApprovalDialogProps) {
   const sender = useSend(props.projectId, props.campaignId)
+  const [asking, setAsking] = useState(false)
+  const busy = sender.running !== null
+  const { data } = props
+  const live = data.ready === 'ready' && data.link?.state === 'live'
+  const making = data.ready === 'ready' && data.link === null
+  const footer = making ? undefined : (
+    <>
+      {live && (
+        <button
+          type="button"
+          className={`${layout.secondary} ${layout.danger} ${styles.turnOff}`}
+          aria-label="Turn off link…"
+          disabled={busy}
+          onClick={() => setAsking(true)}
+        >
+          Turn off…
+        </button>
+      )}
+      <button type="button" disabled={busy} onClick={props.onClose}>
+        Close
+      </button>
+    </>
+  )
   return (
     <DialogFrame
       open={props.open}
       onClose={props.onClose}
       title="Approval link"
-      closable={sender.running === null}
+      closable={!busy}
+      footer={footer}
     >
       <div className={styles.body}>
         <Body {...props} sender={sender} />
@@ -98,20 +126,19 @@ export function ApprovalDialog(props: ApprovalDialogProps) {
       {sender.running === 'approvals.publish' ? (
         <UpdateProgress projectId={props.projectId} campaignId={props.campaignId} />
       ) : (
-        sender.running !== null && <p className={styles.waiting}>Working…</p>
+        busy && <p className={styles.waiting}>Working…</p>
       )}
       {sender.refusal !== null && (
         <p role="alert" className={styles.alert}>
           {sender.refusal}
         </p>
       )}
-      {!(props.data.ready === 'ready' && props.data.link === null) && (
-        <div className={styles.footer}>
-          <button type="button" disabled={sender.running !== null} onClick={props.onClose}>
-            Close
-          </button>
-        </div>
-      )}
+      <EndLinkConfirm
+        open={live && asking}
+        busy={busy}
+        onClose={() => setAsking(false)}
+        onTurnOff={() => sender.send('approvals.endLink')}
+      />
     </DialogFrame>
   )
 }

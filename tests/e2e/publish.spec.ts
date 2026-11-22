@@ -40,7 +40,8 @@ const manifestOf = (folder: string) =>
 
 // The dialog closed, the activity list shows `count` publish rows, all of them Done.
 async function waitForDone(count: number) {
-  await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click()
+  const close = /^(Run in background|Close)$/
+  await page.getByRole('dialog').getByRole('button', { name: close }).click()
   const panel = page.getByRole('region', { name: 'Activity' })
   if (!(await panel.isVisible())) await p.activityButton(page).click()
   await expect(p.publishRows(page)).toHaveCount(count)
@@ -55,11 +56,13 @@ test('Publishing a campaign to the fake storage, then publishing it again', asyn
   const folder = p.fakeFolder(box.userData, ids.campaignId)
   await p.openCampaign(page)
 
-  // The first publish: nothing there yet, the picture listed with its full local path.
+  // The first publish: nothing there yet, the picture listed by name with no path.
   const dialog = await p.openOnFake(page)
-  await expect(dialog.getByText('Nothing is published for this campaign yet.')).toBeVisible()
-  const images = dialog.getByRole('list', { name: 'Images' })
-  await expect(images).toContainText(path.join(box.projects, 'Harbor Day pictures'))
+  await expect(dialog.getByText('First publish')).toBeVisible()
+  const files = dialog.getByRole('list', { name: 'Files' })
+  await expect(files.getByRole('listitem')).not.toHaveCount(0)
+  await expect(files).not.toContainText('Harbor Day pictures')
+  expect(await dialog.innerHTML()).not.toContain(box.projects)
   await p.pressPublish(dialog)
   await waitForDone(1)
 
@@ -88,15 +91,12 @@ test('Publishing a campaign to the fake storage, then publishing it again', asyn
   fs.writeFileSync(stale, 'made-up')
   fs.writeFileSync(beside, 'made-up')
 
-  // The second publish: the replace block, Publish only once ticked.
+  // The second publish: the replace notice, Publish only once the "Replace" switch is on.
   const again = await p.openOnFake(page)
-  await expect(
-    again.getByText('This will replace the files published for this campaign.'),
-  ).toBeVisible()
-  await expect(again.getByText(/, publish 1\.$/)).toBeVisible()
+  await expect(again.getByText(/^Replaces publish 1 · /)).toBeVisible()
   const publish = again.getByRole('button', { name: 'Publish', exact: true })
   await expect(publish).toBeDisabled()
-  await again.getByRole('checkbox', { name: 'Replace the published files' }).check()
+  await again.getByRole('switch', { name: 'Replace the published files' }).check()
   await p.pressPublish(again)
   await waitForDone(2)
 
