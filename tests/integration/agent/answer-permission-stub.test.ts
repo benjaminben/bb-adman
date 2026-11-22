@@ -1,7 +1,6 @@
 // P10-1 (spec/phases/phase-10-slices.md, "P10-1 — Contracts"): agent.answerPermission is user
 // only by its deny row; the stub broker knows no request, so the user gets NOT_FOUND. A core
-// built with no askPermission uses the stub broker, which refuses every ask as today. The
-// activity recorder and the client-name cleaner are stubs that do nothing.
+// built with no askPermission uses the stub broker, which refuses every ask as today.
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -11,8 +10,6 @@ import { createInput } from '../campaigns/campaign-fixture'
 import { AGENT_POLICY, denialMessage } from '@/main/commands/agent-policy'
 import type { BusEvent } from '@/main/commands/bus'
 import { createCore, type Core } from '@/main/core'
-import { createAgentActivity } from '@/main/mcp/activity'
-import { cleanClientName } from '@/main/mcp/client-name'
 import { createPermissionBroker } from '@/main/mcp/permissions'
 import { ASK_WAIT_MS } from '@/shared/config/agent-ask'
 
@@ -140,34 +137,6 @@ describe('the broker in core [P10-1; P10-6]', () => {
 })
 
 describe('the other Phase 10 stubs [P10-1]', () => {
-  it('records no activity: no event and no log line', () => {
-    const emitted: BusEvent[] = []
-    const lines: unknown[] = []
-    const activity = createAgentActivity({
-      emit: (e) => void emitted.push(e),
-      log: { write: (l: unknown) => void lines.push(l) } as never,
-      now: () => new Date(),
-    })
-    activity.record({
-      tool: 'get_job',
-      agentClient: null,
-      projectId: 'P1',
-      ok: true,
-      errorKind: null,
-    })
-    expect(emitted).toEqual([])
-    expect(lines).toEqual([])
-  })
-
-  it('cleans every client name to null', () => {
-    expect(['Made-up Client', '', undefined, 7].map(cleanClientName)).toEqual([
-      null,
-      null,
-      null,
-      null,
-    ])
-  })
-
   it('waits 120 seconds for an answer', () => {
     expect(ASK_WAIT_MS).toBe(120_000)
   })
