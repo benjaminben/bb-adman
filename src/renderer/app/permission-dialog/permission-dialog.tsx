@@ -14,8 +14,11 @@
 // R2P-6 (spec/phases/round-2-platform.md, D7): an import ask shows the full paths from
 // agent.askFiles and has no tick. Its allow button waits ALLOW_WAIT_MS from the moment the
 // whole list is shown, and is not offered at all when the list cannot be read.
+// Design wave DLG-2: the `confirm` kind and a refusal drawn as a danger DialogAlert, in the
+// same place and words; nothing else changed.
 import { useEffect, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
+import { DialogAlert } from '@/renderer/ui/dialog-alert'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
 import { askWords } from './ask-words'
@@ -129,18 +132,14 @@ function AskDialog(props: { ask: Ask; onEnd: () => void }) {
       </button>
     )
 
-  const notice =
-    refusal === null ? null : (
-      <p role="alert" className={`${layout.notice} ${layout.danger}`}>
-        {refusal}
-      </p>
-    )
+  const notice = refusal === null ? null : <DialogAlert tone="danger">{refusal}</DialogAlert>
 
   return (
     <DialogFrame
       open
       onClose={close}
       title={words.title}
+      kind="confirm"
       describedBy={isImport ? `${LINE_ID} ${COST_ID}` : COST_ID}
       closable={!sending}
       footer={footer}
