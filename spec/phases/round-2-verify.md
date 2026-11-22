@@ -8,7 +8,7 @@ A running list kept by the orchestrator. Each item is a choice made without the 
 2. **Signing off a video without playing it is allowed.** The gallery asks in words to watch it first and does not lock the button. The other way (button locked until the video has played) needs a script in the page and can be got round. Planned as Q-V7 in `round-2-approvals-video.md`.
 3. **Design audit choices C-1 to C-18** are taken as the auditor recommends (`design/DESIGN-AUDITOR-SPEC.md` section 5), built as their own wave after Round 2. The one that changes a current rule: C-15 folds the separate "Run this generation?" step into the run dialog, with the cost line right above the button. A paid call still starts only after your own click with the cost on screen.
 4. **Grid row heads.** When a size has no name of its own, the row head shows the size once, not twice. (Built.)
-5. **The campaign page's "Make pictures" panel and "Runs" list** stay until the editor's Generate panel is built, then go in a later slice.
+5. **The campaign page's "Make pictures" panel, slot view and "Runs" list** are still there. The editor's Generate panel now does their job, so they go in the design wave (the audit's choice C-12). The old "Make a video" card goes with the last Round 2 slice.
 6. **"Same size" for starting a generation from another asset** means the same shape within 1%.
 7. **Text contrast after "Place text with AI"** is held to 4.5:1 for all text sizes.
 8. **Fonts.** Five built-in type styles from one family now; two or three more open-licence families later, picked by you.
