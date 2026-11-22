@@ -86,7 +86,12 @@ export function CanvasView(props: CanvasViewProps) {
   }
 
   return (
-    <section className={styles.canvas} aria-label={`Canvas, ${variant.title}`} tabIndex={0}>
+    <section
+      className={styles.canvas}
+      aria-label={`Canvas, ${variant.title}`}
+      tabIndex={0}
+      data-canvas
+    >
       {crop.layer && (
         <CropBar
           layerName={crop.layer.name}

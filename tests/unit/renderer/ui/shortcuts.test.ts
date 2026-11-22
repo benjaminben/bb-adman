@@ -49,6 +49,7 @@ const TABLE: [ShortcutName, string[], string[]][] = [
   ['previousVariantTab', ['Ctrl+Shift+Tab'], ['Ctrl+Shift+Tab']],
   ['nextCampaignTab', ['Meta+Shift+BracketRight'], ['Ctrl+Shift+BracketRight']],
   ['previousCampaignTab', ['Meta+Shift+BracketLeft'], ['Ctrl+Shift+BracketLeft']],
+  ['playPause', ['Space'], ['Space']],
 ]
 
 const ROWS: [ShortcutName, Platform, string][] = TABLE.flatMap(([name, mac, win]) => [

@@ -48,6 +48,28 @@ test('play moves the playhead, pause stops it, and a drag on the ruler sets the 
   const middle = await rulerTime(page)
   expect(Math.abs(middle - VIDEO_MS / 2)).toBeLessThanOrEqual(VIDEO_MS / 50)
   await expect(ruler(page)).toBeFocused()
+
+  // Space plays and pauses with the focus on the ruler, on the canvas and on the Play button
+  // (one toggle per press, not the button's click as well); in a text field it types a space.
+  const play = timeline(page).getByRole('button', { name: 'Play' })
+  const pause = timeline(page).getByRole('button', { name: 'Pause' })
+  await page.keyboard.press('Space')
+  await expect(pause).toBeVisible()
+  await page.getByRole('region', { name: /^Canvas, / }).focus()
+  await page.keyboard.press('Space')
+  await expect(play).toBeVisible()
+  await play.focus()
+  await page.keyboard.press('Space')
+  await expect(pause).toBeVisible()
+  await page.waitForTimeout(300)
+  await expect(pause).toBeVisible()
+  await pause.click()
+  await page.getByRole('button', { name: 'Rename' }).click()
+  const title = page.getByRole('textbox', { name: 'Variant title' })
+  await title.press('End')
+  await title.press('Space')
+  await expect(title).toHaveValue(/ $/)
+  await expect(play).toBeVisible()
 })
 
 test('playing runs to the end and stops there', async () => {

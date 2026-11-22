@@ -11,6 +11,7 @@ import { TimeRuler } from '@/renderer/editor/time-ruler'
 import { TransportBar } from '@/renderer/editor/transport-bar'
 import type { PlaybackStore } from '@/renderer/stores/playback-store'
 import type { VariantStore } from '@/renderer/stores/variant-store'
+import { usePlayKey } from './use-play-key'
 import styles from './timeline.module.css'
 
 type Props = {
@@ -23,8 +24,9 @@ type Props = {
 
 export function Timeline({ projectId, variant, layers, store, playback }: Props) {
   const { timeMs, playing, durationMs, toggle, scrub } = useStore(playback)
+  usePlayKey(toggle)
   return (
-    <section className={styles.timeline} aria-label="Timeline">
+    <section className={styles.timeline} aria-label="Timeline" data-timeline>
       <TransportBar
         projectId={projectId}
         variant={variant}
