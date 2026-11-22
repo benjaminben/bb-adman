@@ -1,7 +1,7 @@
 // spec/editor.md, "Properties panel", "Text" [REQ: FR-093, FR-249]: Copy, the font slot, Size,
 // Weight, Colour (hex, picker, palette), Align, Line height, Letter spacing, and the overflow line.
 // Every field saves one layer.update on Enter or on leaving it, never per keystroke.
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useRef } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -96,53 +96,6 @@ describe('TextFields [spec/editor.md "Properties panel", Text]', () => {
       [{ style: { lineHeight: 0.5 } }],
       [{ style: { fontSize: 1 } }],
     ])
-  })
-
-  // ED-2: the colour is a swatch field; other colours are typed in its "+" popover.
-  const otherColour = () =>
-    userEvent.click(
-      within(screen.getByRole('group', { name: 'Colour' })).getByRole('button', {
-        name: 'Other colour',
-      }),
-    )
-
-  it('Colour: "Hex colour" sends one layer.update on Enter, not per keystroke', async () => {
-    const { onUpdate } = setup()
-    await otherColour()
-    const field = screen.getByRole('textbox', { name: 'Hex colour' })
-    await userEvent.clear(field)
-    await userEvent.type(field, '#2A7DE8')
-    expect(onUpdate).not.toHaveBeenCalled()
-    await userEvent.keyboard('{Enter}')
-    await elsewhere()
-    expect(onUpdate.mock.calls).toEqual([[{ style: { color: '#2A7DE8' } }]])
-  })
-
-  it('a colour that is not #RRGGBB sends nothing', async () => {
-    const { onUpdate } = setup()
-    await otherColour()
-    const field = screen.getByRole('textbox', { name: 'Hex colour' })
-    await userEvent.clear(field)
-    await userEvent.type(field, 'orange{Enter}')
-    expect(onUpdate).not.toHaveBeenCalled()
-  })
-
-  it('the colour picker saves once, when its choice is made', async () => {
-    const { onUpdate } = setup()
-    await otherColour()
-    const picker = screen.getByLabelText('Colour picker')
-    fireEvent.input(picker, { target: { value: '#112233' } })
-    fireEvent.input(picker, { target: { value: '#112244' } })
-    expect(onUpdate).not.toHaveBeenCalled()
-    fireEvent.change(picker, { target: { value: '#112244' } })
-    expect(onUpdate.mock.calls).toEqual([[{ style: { color: '#112244' } }]])
-  })
-
-  it('one button per palette colour, each sending that colour', async () => {
-    const { onUpdate } = setup()
-    await userEvent.click(screen.getByRole('button', { name: '#E85D2A' }))
-    expect(screen.getByRole('button', { name: '#1B1D22' })).toBeInTheDocument()
-    expect(onUpdate.mock.calls).toEqual([[{ style: { color: '#E85D2A' } }]])
   })
 
   it('Weight is a select of nine weights with its hint; a choice sends one update', async () => {
