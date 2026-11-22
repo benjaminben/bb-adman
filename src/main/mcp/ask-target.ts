@@ -15,6 +15,7 @@ export const NO_TARGET = 'Something that no longer exists'
 
 const campaignTarget = z.object({ campaignId: z.string() })
 const variantTarget = z.object({ variantId: z.string() })
+const subjectTarget = z.object({ subjectId: z.string() })
 const filesTarget = z.object({ paths: z.array(z.string()) })
 
 // Read as stored: readMeta refuses a name an edited file may hold, and the ask must not fail.
@@ -52,6 +53,19 @@ function variantLine(db: Database.Database, variantId: string): string | null {
   return `Variant "${name}" in campaign "${cleanName(row.campaign)}" in "${projectName(db)}"`
 }
 
+// SUBJ-1: the subject's name and how many photos it holds; never a photo's name or path.
+function subjectLine(db: Database.Database, subjectId: string): string | null {
+  const row = db
+    .prepare<[string, string], { name: string; n: number }>(
+      `SELECT s.name AS name, (SELECT COUNT(*) FROM asset a WHERE a.subject_id = ?) AS n
+       FROM subject s WHERE s.id = ?`,
+    )
+    .get(subjectId, subjectId)
+  if (!row) return null
+  const count = row.n === 0 ? 'no photos' : row.n === 1 ? '1 photo' : `${row.n} photos`
+  return `Subject "${cleanName(row.name)}" (${count}) in "${projectName(db)}"`
+}
+
 const fileCount = (count: number) => (count === 1 ? '1 file' : `${count} files`)
 
 // D7: the count only; the paths reach the dialog through agent.askFiles.
@@ -83,6 +97,10 @@ function lineFor(db: Database.Database, command: string, input: unknown): string
   if (command === 'variant.delete') {
     const parsed = variantTarget.safeParse(input)
     return parsed.success ? variantLine(db, parsed.data.variantId) : null
+  }
+  if (command === 'subject.delete') {
+    const parsed = subjectTarget.safeParse(input)
+    return parsed.success ? subjectLine(db, parsed.data.subjectId) : null
   }
   if (command === 'asset.importFiles') {
     const parsed = filesTarget.safeParse(input)

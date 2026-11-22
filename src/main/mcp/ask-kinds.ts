@@ -8,6 +8,7 @@ export type AskKind = EventMap['agent.permissionRequested']['kind']
 export const ASK_KINDS: Readonly<Record<string, AskKind>> = {
   'campaign.delete': 'delete',
   'variant.delete': 'delete',
+  'subject.delete': 'delete',
   'asset.importFiles': 'import',
   'campaign.createFromBriefWithFiles': 'import',
 }

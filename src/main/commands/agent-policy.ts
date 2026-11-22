@@ -20,7 +20,7 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'project.package': deny('package projects'),
   'subject.create': deny('create subjects'),
   'subject.update': deny('change subjects'),
-  'subject.delete': deny('delete subjects'),
+  'subject.delete': ask('delete subjects'),
   'asset.import': deny('import files'),
   'asset.update': deny('change assets'),
   'asset.relink': deny('relink files'),

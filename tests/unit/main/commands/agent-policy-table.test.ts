@@ -12,7 +12,7 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny' | 'tick'> = {
   'project.package': 'deny',
   'subject.create': 'deny',
   'subject.update': 'deny',
-  'subject.delete': 'deny',
+  'subject.delete': 'ask',
   'asset.import': 'deny',
   'asset.update': 'deny',
   'asset.relink': 'deny',
