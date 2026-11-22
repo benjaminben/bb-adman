@@ -96,6 +96,8 @@ describe('fan-out dialog counts against variant.fanOut [lows C]', () => {
     expect(count).toBe(4)
     expect(reply.fill.length).toBeGreaterThan(0)
     expect(fills).toBeGreaterThanOrEqual(reply.fill.length)
+    // DLG-4b: the fill line counts exactly the fills the command asks for.
+    expect(model.fillsSent(basis, ticks, fits, formats)).toBe(reply.fill.length)
     expect(translationJobs.length).toBeGreaterThan(0)
     expect(translations).toBeGreaterThanOrEqual(translationJobs.length)
     expect(bus.jobs().length - before).toBe(translationJobs.length)

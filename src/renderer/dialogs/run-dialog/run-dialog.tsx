@@ -48,7 +48,12 @@ export type RunDialogProps = {
   onCancel: () => void
 }
 
-type BodyProps = RunDialogProps & {
+// DLG-4b: the run setup alone (provider, count, cost line and the foot with the action), for a
+// dialog that draws it inside its own body (copy options) instead of opening a dialog in a
+// dialog. Its holder keeps `busy` (no close while waiting) and lists `setDescribed`'s ids in its
+// own `describedBy`. `cancelLabel` names the quiet button ("Close" where it closes the holder).
+export type RunSetupProps = Omit<RunDialogProps, 'open' | 'title'> & {
+  cancelLabel?: string
   busy: boolean
   setBusy: (busy: boolean) => void
   setDescribed: (ids: string | undefined) => void
@@ -75,7 +80,7 @@ function videoSent(
   }
 }
 
-function RunBody(props: BodyProps) {
+export function RunSetup(props: RunSetupProps) {
   const { job, count, retry, busy, setDescribed } = props
   const app = useApp((s) => s.app)
   const show = useApp((s) => s.show)
@@ -179,7 +184,7 @@ function RunBody(props: BodyProps) {
       />
       <DialogFoot className={styles.foot}>
         <button type="button" className={layout.quiet} disabled={busy} onClick={props.onCancel}>
-          Cancel
+          {props.cancelLabel ?? 'Cancel'}
         </button>
         <button
           type="button"
@@ -206,7 +211,7 @@ export function RunDialog(props: RunDialogProps) {
       describedBy={described}
       closable={!busy}
     >
-      <RunBody {...props} busy={busy} setBusy={setBusy} setDescribed={setDescribed} />
+      <RunSetup {...props} busy={busy} setBusy={setBusy} setDescribed={setDescribed} />
     </DialogFrame>
   )
 }

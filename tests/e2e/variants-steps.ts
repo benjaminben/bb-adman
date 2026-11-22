@@ -47,24 +47,27 @@ export const outOfDate = (page: Page, direction: string): Locator =>
 
 export type FanOut = { sizes?: string[]; languages?: string[]; fill?: string }
 
-// "Fan out…", the boxes ticked, a "Generate fill" size with the fake provider, "Make variants".
+// "Fan out…", the chips pressed, a "Generate fill" size with the fake provider, "Make {n}
+// variants". The fill's cost line is read before the click that sends.
 export async function fanOut(page: Page, direction: string, ask: FanOut): Promise<void> {
   await section(page, direction).getByRole('button', { name: 'Fan out…' }).click()
   const dialog = page.getByRole('dialog', { name: `Fan out ${direction}` })
-  for (const size of ask.sizes ?? []) await dialog.getByRole('checkbox', { name: size }).check()
-  for (const tag of ask.languages ?? [])
-    await dialog.getByRole('checkbox', { name: tag, exact: true }).check()
+  const press = async (name: string) => {
+    const chip = dialog.getByRole('button', { name, exact: true })
+    if ((await chip.getAttribute('aria-pressed')) !== 'true') await chip.click()
+    await expect(chip).toHaveAttribute('aria-pressed', 'true')
+  }
+  for (const size of ask.sizes ?? []) await press(size)
+  for (const tag of ask.languages ?? []) await press(tag)
   if (ask.fill) {
     await dialog
       .getByRole('group', { name: `Background for ${ask.fill}` })
       .getByRole('radio', { name: 'Generate fill: extend the picture with AI' })
       .check()
     await dialog.getByLabel('Provider').selectOption({ label: 'Fake provider' })
-    await expect(
-      dialog.getByText('This will use 1 generation(s) with Fake provider.'),
-    ).toBeVisible()
+    await expect(dialog.getByText('1 fill on Fake provider. Nothing is charged.')).toBeVisible()
   }
-  await dialog.getByRole('button', { name: 'Make variants' }).click()
+  await dialog.getByRole('button', { name: /^Make (\d+ )?variants?$/ }).click()
   await expect(dialog).toHaveCount(0)
 }
 

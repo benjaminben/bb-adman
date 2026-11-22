@@ -1,6 +1,7 @@
 // spec/screens-variants.md, "Fan-out" [P5-16]: the pairs, the new count and the fits to send.
 import { describe, expect, it } from 'vitest'
 import {
+  fillsToStart,
   fanOutLists,
   fillCount,
   fitSizes,
@@ -146,5 +147,14 @@ describe('fan-out model: formats [lows C, spec/data-rules.md fan-out step 7]', (
     expect(formatsToSend(['video', 'image'])).toEqual(['image', 'video'])
     expect(formatsToSend(['video'])).toEqual(['video'])
     expect(formatsToSend([])).toEqual([])
+  })
+
+  // A security review of DLG-4b: the reply may list more fills than the cost line showed (the
+  // direction changed in between). Never more paid fills are started than the line named.
+  it('starts at most as many fills as the cost line showed', () => {
+    const fill = [{ variantId: 'V2' }, { variantId: 'V3' }, { variantId: 'V4' }]
+    expect(fillsToStart(fill, 2)).toEqual([{ variantId: 'V2' }, { variantId: 'V3' }])
+    expect(fillsToStart(fill, 0)).toEqual([])
+    expect(fillsToStart(fill, 5)).toEqual(fill)
   })
 })

@@ -1,10 +1,11 @@
 /* app-style */
-/* The fan-out dialog (spec/screens-variants.md, "Fan-out"): the sizes, languages and each
-   background fit as a group of rows; the count line and the paid line in control type. */
+/* The fan-out dialog (spec/screens-variants.md, "Fan-out"; DLG-4b): rows of toggle chips for
+   sizes, languages and formats; a size chip draws its shape; each new size's background fit as
+   three icon choices; the cost lines last, in control type. */
 .body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--gap-field);
 }
 .body p {
   margin: 0;
@@ -25,14 +26,101 @@
   font-weight: var(--weight-medium);
   color: var(--color-text-secondary);
 }
-.choice {
+.chips {
   display: flex;
-  gap: var(--space-2);
-  align-items: center;
-  font-size: var(--font-size-control);
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
 }
-.choice:has(input:disabled) {
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-2);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  font-variant-numeric: tabular-nums;
+}
+.chip[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-selected-bg);
+  color: var(--color-accent-ink);
+}
+.chip:disabled {
+  cursor: default;
+}
+.shape {
+  display: inline-block;
+  height: var(--icon-size-small);
+  border: var(--border-width) solid currentColor;
+  border-radius: var(--radius-inner);
+}
+.fitList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+}
+.fitRow {
+  display: flex;
+  gap: var(--gap-inline);
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.fitLabel {
+  min-width: var(--space-12);
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+.fits {
+  display: inline-flex;
+  gap: var(--gap-tight);
+}
+.fit {
+  position: relative;
+}
+.fit input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+}
+.fit label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-small);
+  height: var(--control-height-small);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.fit input:checked + label {
+  border-color: var(--color-accent);
+  background: var(--color-selected-bg);
+  color: var(--color-accent-ink);
+}
+.fit input:focus-visible + label {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+.fit input:disabled + label {
+  cursor: default;
   color: var(--color-text-muted);
+}
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .line {
   font-size: var(--font-size-control);

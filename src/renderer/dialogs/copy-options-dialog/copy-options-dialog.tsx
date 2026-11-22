@@ -1,21 +1,23 @@
 // The copy options dialog (spec/screens-ai.md, "Copy options") [REQ: FR-045]: the layer's
-// newest succeeded options and "Make new options…", which goes through the run dialog to
-// generation.copyOptions. The job is attached to this dialog, so closing it while the job
-// runs (its Close button, Escape or the frame's close) shows the close warning.
+// newest succeeded options as tiles, "Use" for the chosen one, and "New options" (named "Make
+// new options…"). DLG-4b (choice C-15): the run setup (provider, count, cost line) is drawn in
+// this dialog's own body, never in a dialog inside it: at once when there are no options yet,
+// and after "New options" or a failed run's "Retry". Its action ("Generate", "Retry") is the one
+// click that sends generation.copyOptions or job.retry; the cost line is last above the foot and
+// in this dialog's description. Opening, "New options" and choosing an option send nothing. The
+// job is attached to this dialog, so closing it while the job runs shows the close warning.
 import { useState } from 'react'
 import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
-import { RunDialog } from '@/renderer/dialogs/run-dialog'
 import { attachedStoreFor, dialogJobs } from '@/renderer/stores/attached-store'
 import { useCloseWarning } from '@/renderer/ui/close-warning'
+import { DialogAlert } from '@/renderer/ui/dialog-alert'
 import { BusySpinner, DialogFrame } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
 import { RunFailure } from '@/renderer/ui/run-failure'
-import { MAX_COPY_OPTIONS } from '@/shared/config/copy-options'
-import { copyJobRequest } from '@/shared/schemas/jobs/copy-options'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
-import type { JobRow } from '@/shared/schemas/rows/job'
 import type { Result } from '@/shared/schemas/result'
-import { OptionList } from './option-list'
+import { CopySetup, type SetupKind } from './copy-setup'
+import { OptionTiles, optionsOf, useApplyCopy } from './option-list'
 import { useCopyRun } from './use-copy-run'
 import styles from './copy-options-dialog.module.css'
 
@@ -26,30 +28,33 @@ export type CopyOptionsDialogProps = {
   onClose: () => void
 }
 
-const DEFAULT_COUNT = 4
-
-const requestCount = (row: JobRow) => {
-  const parsed = copyJobRequest.safeParse(row.request)
-  return parsed.success ? parsed.data.count : DEFAULT_COUNT
-}
-
 export function CopyOptionsDialog(props: CopyOptionsDialogProps) {
   const { projectId, layer } = props
   const api = useApi()
   const command = useApp((s) => s.command)
   const providers = useApp((s) => s.app?.providers ?? EMPTY)
-  const { current, follow } = useCopyRun(projectId, layer.id)
-  const [asking, setAsking] = useState<'new' | 'retry' | null>(null)
+  const { current, follow, loaded } = useCopyRun(projectId, layer.id)
+  const [asked, setAsked] = useState<SetupKind | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [described, setDescribed] = useState<string | undefined>(undefined)
+  const [chosen, setChosen] = useState<{ row: string; index: number } | null>(null)
   const { ask, warning } = useCloseWarning('dialog')
+  const applied = useApplyCopy(projectId, layer.id, props.onClose)
   const dialog = `copy-options:${layer.id}`
   const failed = current.state === 'failed' ? current.row : null
+  const shown = current.state === 'options' ? current.row : null
+  const options = shown ? optionsOf(shown) : []
+  const index = shown && chosen?.row === shown.id ? chosen.index : null
+  const first = loaded && current.state === 'none' ? 'new' : null
+  const setup =
+    current.state === 'running' ? null : ((asked === 'retry' && !failed ? null : asked) ?? first)
 
   async function send(name: string, input: unknown): Promise<Result<unknown>> {
     const reply = await command(name, input)
     const jobId = follow(reply)
     if (jobId !== null) {
       attachedStoreFor(api).getState().register(jobId, { projectId, dialog })
-      setAsking(null)
+      setAsked(null)
     }
     return reply
   }
@@ -59,17 +64,29 @@ export function CopyOptionsDialog(props: CopyOptionsDialogProps) {
 
   const foot = (
     <>
-      <button type="button" onClick={close}>
-        Close
-      </button>
       <button
         type="button"
-        className={layout.primary}
+        className={`${layout.secondary} ${styles.newOptions}`}
+        aria-label="Make new options…"
         disabled={current.state === 'running'}
-        onClick={() => setAsking('new')}
+        onClick={() => setAsked('new')}
       >
-        Make new options…
+        New options
       </button>
+      <button type="button" className={layout.quiet} onClick={close}>
+        Close
+      </button>
+      {shown && (
+        <button
+          type="button"
+          className={layout.primary}
+          disabled={index === null || applied.busy}
+          title={index === null ? 'Choose an option first' : undefined}
+          onClick={() => index !== null && void applied.apply(options[index] ?? '')}
+        >
+          Use
+        </button>
+      )}
     </>
   )
 
@@ -78,9 +95,13 @@ export function CopyOptionsDialog(props: CopyOptionsDialogProps) {
       open={props.open}
       onClose={close}
       title={`Copy options for ${layer.name}`}
-      footer={foot}
+      kind="run"
+      describedBy={setup ? described : undefined}
+      closable={!busy}
+      footer={setup ? undefined : foot}
     >
       <div className={styles.body}>
+        {applied.refusal !== null && <DialogAlert tone="danger">{applied.refusal}</DialogAlert>}
         {current.state === 'running' && (
           <div className={styles.running}>
             <BusySpinner />
@@ -101,52 +122,37 @@ export function CopyOptionsDialog(props: CopyOptionsDialogProps) {
               provider={provider ?? undefined}
               providerLabel={provider?.label ?? failed.provider ?? ''}
             />
-            <button type="button" onClick={() => setAsking('retry')}>
-              Retry
-            </button>
+            {setup !== 'retry' && (
+              <button type="button" onClick={() => setAsked('retry')}>
+                Retry
+              </button>
+            )}
           </div>
         )}
-        {current.state === 'options' && (
-          <OptionList
-            projectId={projectId}
-            layerId={layer.id}
-            row={current.row}
-            onUsed={props.onClose}
+        {shown && setup === null && (
+          <OptionTiles
+            options={options}
+            chosen={index}
+            disabled={applied.busy}
+            onChoose={(i) => setChosen({ row: shown.id, index: i })}
           />
         )}
-        {current.state === 'none' && <p className={styles.muted}>No options yet.</p>}
+        {setup !== null && (
+          <CopySetup
+            key={setup}
+            kind={setup}
+            projectId={projectId}
+            layer={layer}
+            failed={failed}
+            busy={busy}
+            setBusy={setBusy}
+            setDescribed={setDescribed}
+            send={send}
+            closes={current.state === 'none'}
+            onCancel={() => (current.state === 'none' ? close() : setAsked(null))}
+          />
+        )}
       </div>
-      <RunDialog
-        open={asking === 'new'}
-        projectId={projectId}
-        job="text"
-        title="Suggest copy"
-        confirmLabel="Suggest copy"
-        count={{ label: 'Options', value: DEFAULT_COUNT, min: 1, max: MAX_COPY_OPTIONS }}
-        onConfirm={(provider, count) =>
-          send('generation.copyOptions', {
-            projectId,
-            variantId: layer.variantId,
-            layerId: layer.id,
-            count,
-            provider,
-          })
-        }
-        onCancel={() => setAsking(null)}
-      />
-      {failed && (
-        <RunDialog
-          open={asking === 'retry'}
-          projectId={projectId}
-          job="text"
-          title="Retry the run"
-          confirmLabel="Retry"
-          retry={{ provider: failed.provider ?? '' }}
-          count={{ label: 'Options', value: requestCount(failed), min: 1, max: MAX_COPY_OPTIONS }}
-          onConfirm={() => send('job.retry', { projectId, jobId: failed.id })}
-          onCancel={() => setAsking(null)}
-        />
-      )}
       {warning}
     </DialogFrame>
   )

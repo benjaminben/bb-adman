@@ -2,6 +2,7 @@
 // options"): the layer's newest succeeded copy_options job from job.list, and the run started
 // in this dialog, followed through job.updated. Rows of copy jobs for the layer that come
 // before a command's reply are kept, so the reply finds its row. Shown options are marked seen.
+// `loaded` turns true once job.list has answered (DLG-4b: the inline setup waits for it).
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import type { JobRow } from '@/shared/schemas/rows/job'
@@ -25,6 +26,7 @@ function jobIdOf(data: unknown): string | null {
 export function useCopyRun(projectId: string, layerId: string) {
   const api = useApi()
   const [latest, setLatest] = useState<JobRow | null>(null)
+  const [loaded, setLoaded] = useState(false)
   const [run, setRun] = useState<JobRow | { id: string } | null>(null)
   const seen = useRef(new Map<string, JobRow>())
   const runId = useRef<string | null>(null)
@@ -41,7 +43,9 @@ export function useCopyRun(projectId: string, layerId: string) {
   useEffect(() => {
     let live = true
     void api.query('job.list', { projectId, layerId }).then((reply) => {
-      if (!live || !reply.ok || !Array.isArray(reply.data)) return
+      if (!live) return
+      setLoaded(true)
+      if (!reply.ok || !Array.isArray(reply.data)) return
       const rows = reply.data as JobRow[]
       const done = rows.find((r) => isCopy(r, layerId) && r.status === 'succeeded')
       if (done) setLatest((now) => now ?? done)
@@ -80,7 +84,7 @@ export function useCopyRun(projectId: string, layerId: string) {
     void api.command('job.markSeen', { projectId, jobIds: [shownRow.id] })
   }, [api, projectId, shownRow])
 
-  return { current, follow }
+  return { current, follow, loaded }
 }
 
 function describe(run: JobRow | { id: string } | null, latest: JobRow | null): CopyRun {

@@ -13,6 +13,7 @@ import { baseState, makeFakeApi } from '../fake-api'
 import { axeViolations, renderApp } from '../render'
 import { LOCAL, P, campaignGet, sent, variant } from '../screens/campaign/campaign-fixture'
 import { REFUSED, heldReply } from '../screens/campaign/held-reply'
+import { costLine } from '../cost-line'
 import { jobRow } from '../stores/job-fixture'
 
 const MASTER = variant('V1', { title: 'Master post', isMaster: true, sizeLabel: '1x1' })
@@ -61,8 +62,8 @@ async function open(fake = api()) {
   return { ...view, dialog }
 }
 
-const tick = (name: string) => userEvent.click(screen.getByRole('checkbox', { name }))
-const make = () => screen.getByRole('button', { name: 'Make variants' })
+const tick = (name: string) => userEvent.click(screen.getByRole('button', { name }))
+const make = () => screen.getByRole('button', { name: /^Make (\d+ )?variants?$/ })
 const fillOf = (size: string) =>
   within(screen.getByRole('group', { name: `Background for ${size}` })).getByRole('radio', {
     name: 'Generate fill: extend the picture with AI',
@@ -72,16 +73,17 @@ describe('Fan-out dialog [P5-16]', () => {
   it("draws the sizes and languages with the master's ticked and disabled", async () => {
     const { dialog } = await open()
     const sizes = within(dialog).getByRole('group', { name: 'Sizes' })
-    expect(within(sizes).getAllByRole('checkbox')).toHaveLength(3)
-    const square = within(sizes).getByRole('checkbox', { name: '1x1 (1080×1080)' })
-    expect(square).toBeChecked()
+    expect(within(sizes).getAllByRole('button')).toHaveLength(3)
+    const square = within(sizes).getByRole('button', { name: '1x1 (1080×1080)' })
+    expect(square).toHaveAttribute('aria-pressed', 'true')
     expect(square).toBeDisabled()
-    expect(within(sizes).getByRole('checkbox', { name: '9x16 (1080×1920)' })).not.toBeChecked()
+    const tall = within(sizes).getByRole('button', { name: '9x16 (1080×1920)' })
+    expect(tall).toHaveAttribute('aria-pressed', 'false')
     const languages = within(dialog).getByRole('group', { name: 'Languages' })
-    expect(within(languages).getByRole('checkbox', { name: 'en' })).toBeDisabled()
-    expect(within(languages).getByRole('checkbox', { name: 'de' })).toBeEnabled()
-    expect(within(dialog).getByText('This makes 0 variant(s).')).toBeInTheDocument()
-    expect(within(dialog).getByText('Nothing new to make.')).toBeInTheDocument()
+    expect(within(languages).getByRole('button', { name: 'en' })).toBeDisabled()
+    expect(within(languages).getByRole('button', { name: 'de' })).toBeEnabled()
+    expect(make()).toHaveTextContent(/^Make variants$/)
+    expect(make()).toHaveAttribute('title', 'Nothing new to make')
     expect(make()).toBeDisabled()
     expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeEnabled()
     expect(await axeViolations()).toEqual([])
@@ -90,7 +92,7 @@ describe('Fan-out dialog [P5-16]', () => {
   it('draws a fit group for each ticked size of another pixel size, scale first', async () => {
     const { dialog } = await open()
     await tick('1080x1080 (1080×1080)')
-    expect(within(dialog).queryByText(/Background for/)).toBeNull()
+    expect(within(dialog).queryByRole('group', { name: /Background for/ })).toBeNull()
     await tick('9x16 (1080×1920)')
     const group = within(dialog).getByRole('group', { name: 'Background for 9x16 (1080×1920)' })
     const radios = within(group).getAllByRole('radio')
@@ -100,16 +102,16 @@ describe('Fan-out dialog [P5-16]', () => {
       'Generate fill: extend the picture with AI',
     ])
     expect(radios[0]).toBeChecked()
-    expect(within(dialog).getByText('This makes 2 variant(s).')).toBeInTheDocument()
+    expect(make()).toHaveTextContent('Make 2 variants')
     await tick('9x16 (1080×1920)')
-    expect(within(dialog).queryByText(/Background for/)).toBeNull()
+    expect(within(dialog).queryByRole('group', { name: /Background for/ })).toBeNull()
   })
 
   it('shows the provider select and paid line only with a fill, naming the chosen provider', async () => {
     const { dialog } = await open()
     await tick('9x16 (1080×1920)')
     expect(within(dialog).queryByRole('combobox')).toBeNull()
-    expect(within(dialog).queryByText(/generation\(s\)/)).toBeNull()
+    expect(within(dialog).queryByText(/Paid/)).toBeNull()
     await userEvent.click(fillOf('9x16 (1080×1920)'))
     const select = within(dialog).getByRole('combobox', { name: 'Provider' })
     expect(
@@ -118,11 +120,9 @@ describe('Fan-out dialog [P5-16]', () => {
         .map((o) => o.textContent),
     ).toEqual(['Google Gemini', 'Stand-in'])
     expect(select).toHaveValue('gemini')
-    expect(
-      within(dialog).getByText('This will use 1 generation(s) with Google Gemini.'),
-    ).toBeInTheDocument()
+    expect(within(dialog).getByText(costLine('Paid: 1 fill → Google Gemini'))).toBeInTheDocument()
     await userEvent.selectOptions(select, 'fake')
-    expect(within(dialog).getByText('This will use 1 generation(s) with Stand-in.')).toBeVisible()
+    expect(within(dialog).getByText('1 fill on Stand-in. Nothing is charged.')).toBeVisible()
     expect(await axeViolations()).toEqual([])
   })
 
@@ -130,7 +130,7 @@ describe('Fan-out dialog [P5-16]', () => {
     const { dialog, fake } = await open(api({ picture: false }))
     fake.onCommand('variant.fanOut', () => ({ ok: true, data: { variantIds: ['V2'], fill: [] } }))
     await tick('9x16 (1080×1920)')
-    expect(within(dialog).queryByText(/Background for/)).toBeNull()
+    expect(within(dialog).queryByRole('group', { name: /Background for/ })).toBeNull()
     await userEvent.click(make())
     await waitFor(() => expect(sent(fake, 'variant.fanOut')).toHaveLength(1))
     expect(sent(fake, 'variant.fanOut')[0]?.input).toMatchObject({ fits: { '9x16': 'scale' } })
@@ -191,7 +191,7 @@ describe('Fan-out dialog [P5-16]', () => {
     await userEvent.click(fillOf('9x16 (1080×1920)'))
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Provider' }), 'fake')
     expect(sent(fake, 'generation.runFill')).toEqual([])
-    expect(screen.getByText('This will use 1 generation(s) with Stand-in.')).toBeVisible()
+    expect(screen.getByText('1 fill on Stand-in. Nothing is charged.')).toBeVisible()
     await userEvent.click(make())
     await waitFor(() => expect(sent(fake, 'generation.runFill')).toHaveLength(1))
     expect(sent(fake, 'variant.fanOut')[0]?.input).toMatchObject({ fits: { '9x16': 'fill' } })

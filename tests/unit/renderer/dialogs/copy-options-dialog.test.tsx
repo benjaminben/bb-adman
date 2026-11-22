@@ -1,6 +1,7 @@
 // P4-17 (spec/screens-ai.md, "Copy options"; spec/ai-jobs.md, "Copy options") [REQ: FR-045]:
 // the dialog shows the layer's newest succeeded copy options, makes new ones through the run
-// dialog, and uses one with layer.update { copy }. Provider text is drawn as plain text.
+// setup drawn inside it (DLG-4b), and uses one with layer.update { copy }. Provider text is drawn
+// as plain text.
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
@@ -57,10 +58,10 @@ const sent = (fake: ReturnType<typeof makeFakeApi>, name: string) =>
 
 async function startRun(fake: ReturnType<typeof makeFakeApi>) {
   await userEvent.click(screen.getByRole('button', { name: 'Make new options…' }))
-  const run = await screen.findByRole('dialog', { name: 'Suggest copy' })
+  const run = screen.getByRole('dialog', { name: 'Copy options for Tagline' })
   expect(within(run).getByRole('spinbutton', { name: 'Options' })).toHaveValue(4)
-  await userEvent.click(within(run).getByRole('button', { name: 'Suggest copy' }))
-  await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Suggest copy' })).toBeNull())
+  await userEvent.click(within(run).getByRole('button', { name: 'Generate' }))
+  await waitFor(() => expect(screen.queryByRole('spinbutton', { name: 'Options' })).toBeNull())
   act(() => fake.emit('job.updated', copyJob('J9', { status: 'running' })))
 }
 
@@ -87,13 +88,13 @@ describe('CopyOptionsDialog [spec/screens-ai.md "Copy options", FR-045]', () => 
     expect(sent(second.fake, 'job.markSeen')).toEqual([])
   })
 
-  it('with no earlier options it says so and offers to make some', async () => {
+  it('with no earlier options it shows the run setup to make some', async () => {
     await open([])
-    expect(screen.getByText('No options yet.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Make new options…' })).toBeEnabled()
+    expect(screen.getByRole('spinbutton', { name: 'Options' })).toHaveValue(4)
+    expect(screen.getByRole('button', { name: 'Generate' })).toBeEnabled()
   })
 
-  it('Make new options goes through the run dialog to generation.copyOptions and attaches the job', async () => {
+  it('Make new options goes through the inline run setup to generation.copyOptions and attaches the job', async () => {
     const { fake } = await open()
     await startRun(fake)
     expect(sent(fake, 'generation.copyOptions')).toEqual([
@@ -116,7 +117,7 @@ describe('CopyOptionsDialog [spec/screens-ai.md "Copy options", FR-045]', () => 
     expect(screen.getByText('Chill out')).toBeInTheDocument()
   })
 
-  it('shows the new options when the job succeeds, marks them seen, and "Use this text" sends layer.update and closes', async () => {
+  it('shows the new options when the job succeeds, marks them seen, and "Use" sends layer.update and closes', async () => {
     const { fake, onClose } = await open()
     await startRun(fake)
     const done = copyJob('J9', { status: 'succeeded', result: { options: ['Ice ice', 'Brrr'] } })
@@ -125,9 +126,8 @@ describe('CopyOptionsDialog [spec/screens-ai.md "Copy options", FR-045]', () => 
     await waitFor(() =>
       expect(sent(fake, 'job.markSeen')).toContainEqual({ projectId: 'P1', jobIds: ['J9'] }),
     )
-    const use = screen.getAllByRole('button', { name: 'Use this text' })[1]!
-    expect(use).toHaveAccessibleDescription('Brrr')
-    await userEvent.click(use)
+    await userEvent.click(screen.getByRole('radio', { name: 'Brrr' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Use' }))
     expect(sent(fake, 'layer.update')).toEqual([
       { projectId: 'P1', layerId: 'L3', patch: { copy: 'Brrr' } },
     ])
@@ -140,12 +140,13 @@ describe('CopyOptionsDialog [spec/screens-ai.md "Copy options", FR-045]', () => 
       ok: false,
       error: { code: 'INVALID_INPUT', message: 'That layer is locked.' },
     }))
-    await userEvent.click(screen.getAllByRole('button', { name: 'Use this text' })[0]!)
+    await userEvent.click(screen.getByRole('radio', { name: 'Chill out' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Use' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('That layer is locked.')
     expect(onClose).not.toHaveBeenCalled()
   })
 
-  it('a failed run shows its sentence and "Retry" sends job.retry through the run dialog', async () => {
+  it('a failed run shows its sentence and "Retry" sends job.retry through the inline run setup', async () => {
     const { fake } = await open()
     await startRun(fake)
     act(() => fake.emit('job.updated', copyJob('J9', { status: 'failed', errorKind: 'timeout' })))
@@ -153,7 +154,7 @@ describe('CopyOptionsDialog [spec/screens-ai.md "Copy options", FR-045]', () => 
       await screen.findByText('Google Gemini took too long to answer. Try again.'),
     ).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
-    const retry = await screen.findByRole('dialog', { name: 'Retry the run' })
+    const retry = screen.getByRole('dialog', { name: 'Copy options for Tagline' })
     expect(within(retry).getByText('Options: 3')).toBeInTheDocument()
     await userEvent.click(within(retry).getByRole('button', { name: 'Retry' }))
     expect(sent(fake, 'job.retry')).toEqual([{ projectId: 'P1', jobId: 'J9' }])

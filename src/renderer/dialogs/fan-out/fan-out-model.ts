@@ -2,10 +2,9 @@
 // sends and counts. The master's size and language are always in. A size, language and format
 // the direction already has is not made again (step 7: image and video). A fit is sent for each
 // listed size whose pixel size differs from the master's, and for no other; with no background
-// picture on the master each is `scale`. And the text-call line (P6-15). Pure.
+// picture on the master each is `scale`. The count of text calls (P6-15). Pure.
 import type { CampaignSize } from '@/shared/schemas/commands/campaign'
 import type { FanOutFit } from '@/shared/schemas/links'
-import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { VariantRow } from '@/shared/schemas/rows/variant'
 
 export type FanOutBasis = {
@@ -100,6 +99,19 @@ export function fillCount(fits: Readonly<Record<string, FanOutFit>>): number {
   return Object.values(fits).filter((f) => f === 'fill').length
 }
 
+// DLG-4b: the fills variant.fanOut asks for, exactly: a size on fill whose first new variant in
+// the master's language is made by this call (one fill per size, never for another language).
+export function fillsSent(
+  basis: FanOutBasis,
+  ticks: FanOutTicks,
+  fits: Readonly<Record<string, FanOutFit>>,
+  formats: readonly FanOutFormat[],
+): number {
+  const cells = newCells(basis, ticks, formats).filter((c) => c.language === basis.master.language)
+  const sizes = new Set(cells.map((c) => c.sizeLabel))
+  return Object.entries(fits).filter(([label, fit]) => fit === 'fill' && sizes.has(label)).length
+}
+
 // P6-15: the fan-out starts at most one translation job per new language other than the
 // master's, which is the campaign's main language, whatever the formats. So the count may
 // overstate the paid requests (brief copy or no key starts none) but never understates them.
@@ -112,16 +124,8 @@ export function translationCount(
   return new Set(languages.filter((l) => l !== basis.master.language)).size
 }
 
-// The text-call line, worded as the run dialog words its runs; null with no new language.
-export function translationLine(
-  n: number,
-  provider: Pick<ProviderInfo, 'id' | 'label' | 'local'> | null,
-): string | null {
-  if (n === 0) return null
-  if (!provider)
-    return 'No provider can translate yet. The new texts stay marked as missing a translation.'
-  const what = `Translating ${n} language(s)`
-  if (provider.id === 'fake') return `${what} uses the fake provider. Nothing is charged.`
-  if (provider.local) return `${what} runs on ${provider.label}. Nothing is charged.`
-  return `${what} sends up to ${n} paid request(s) to ${provider.label}.`
+// The fills to start after the reply: never more than the cost line showed at the click, so a
+// direction that changed in between cannot start a paid fill the user did not see.
+export function fillsToStart<T>(fill: readonly T[], shown: number): T[] {
+  return fill.slice(0, Math.max(0, shown))
 }

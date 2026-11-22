@@ -6,13 +6,15 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { FanOutButton } from '@/renderer/dialogs/fan-out'
-import { translationCount, translationLine } from '@/renderer/dialogs/fan-out/fan-out-model'
+import { translationLine } from '@/renderer/dialogs/fan-out/fan-out-costs'
+import { translationCount } from '@/renderer/dialogs/fan-out/fan-out-model'
 import { attachedStoreFor } from '@/renderer/stores/attached-store'
 import type { CampaignGet } from '@/shared/schemas/queries/campaign'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import { baseState, makeFakeApi } from '../fake-api'
 import { axeViolations, renderApp } from '../render'
 import { LOCAL, P, campaignGet, sent, variant } from '../screens/campaign/campaign-fixture'
+import { costLine } from '../cost-line'
 
 const MASTER = variant('V1', { title: 'Master post', isMaster: true, sizeLabel: '1x1' })
 const FAKE_TEXT: ProviderInfo = { ...LOCAL, label: 'Fake provider', jobs: ['image', 'text'] }
@@ -58,8 +60,8 @@ async function open(text = 'gemini') {
   return { fake, dialog }
 }
 
-const tick = (name: string) => userEvent.click(screen.getByRole('checkbox', { name }))
-const make = () => screen.getByRole('button', { name: 'Make variants' })
+const tick = (name: string) => userEvent.click(screen.getByRole('button', { name }))
+const make = () => screen.getByRole('button', { name: /^Make (\d+ )?variants?$/ })
 const basis = {
   sizes: SIZES,
   languages: ['en', 'de', 'fr'],
@@ -84,16 +86,16 @@ describe('translationCount and translationLine [P6-15]', () => {
 
   it.each([
     [0, FAKE_TEXT, null],
-    [2, FAKE_TEXT, 'Translating 2 language(s) uses the fake provider. Nothing is charged.'],
+    [2, FAKE_TEXT, 'Translating 2 languages uses the fake provider. Nothing is charged.'],
     [
       1,
       { id: 'other', label: 'Local text', local: true },
-      'Translating 1 language(s) runs on Local text. Nothing is charged.',
+      'Translating 1 language runs on Local text. Nothing is charged.',
     ],
     [
       2,
       { id: 'gemini', label: 'Google Gemini', local: false },
-      'Translating 2 language(s) sends up to 2 paid request(s) to Google Gemini.',
+      'Paid: up to 2 translations → Google Gemini',
     ],
     [1, null, 'No provider can translate yet. The new texts stay marked as missing a translation.'],
   ])('words %i language(s) with %j', (n, provider, line) => {
@@ -105,13 +107,11 @@ describe('Fan-out dialog, translation [P6-15]', () => {
   it('shows the paid line for a paid text provider only when a new language is ticked', async () => {
     const { dialog } = await open()
     await tick('9x16 (1080×1920)')
-    expect(within(dialog).queryByText(/Translating/)).toBeNull()
+    expect(within(dialog).queryByText(/translation/)).toBeNull()
     await tick('de')
     await tick('fr')
     expect(
-      within(dialog).getByText(
-        'Translating 2 language(s) sends up to 2 paid request(s) to Google Gemini.',
-      ),
+      within(dialog).getByText(costLine('Paid: up to 2 translations → Google Gemini')),
     ).toBeVisible()
     expect(await axeViolations()).toEqual([])
   })
@@ -121,10 +121,10 @@ describe('Fan-out dialog, translation [P6-15]', () => {
     await tick('de')
     expect(
       within(dialog).getByText(
-        'Translating 1 language(s) uses the fake provider. Nothing is charged.',
+        'Translating 1 language uses the fake provider. Nothing is charged.',
       ),
     ).toBeVisible()
-    expect(within(dialog).queryByText(/paid/)).toBeNull()
+    expect(within(dialog).queryByText(/paid/i)).toBeNull()
   })
 
   it('sends nothing before "Make variants", then registers the translation jobs under the campaign', async () => {

@@ -45,9 +45,9 @@ async function open() {
   return { fake, dialog }
 }
 
-const box = (name: string) => screen.getByRole('checkbox', { name })
+const box = (name: string) => screen.getByRole('button', { name })
 const tick = (name: string) => userEvent.click(box(name))
-const make = () => screen.getByRole('button', { name: 'Make variants' })
+const make = () => screen.getByRole('button', { name: /^Make (\d+ )?variants?$/ })
 
 async function formatsSent(fake: Awaited<ReturnType<typeof open>>['fake']) {
   await userEvent.click(make())
@@ -66,8 +66,12 @@ describe('Fan-out dialog, formats [lows C, data-rules fan-out step 7]', () => {
     ])
     const formats = within(dialog).getByRole('group', { name: 'Formats' })
     expect(formats.tagName).toBe('FIELDSET')
-    expect(within(formats).getByRole('checkbox', { name: 'Image' })).toBeChecked()
-    expect(within(formats).getByRole('checkbox', { name: 'Video' })).not.toBeChecked()
+    const image = within(formats).getByRole('button', { name: 'Image' })
+    expect(image).toHaveAttribute('aria-pressed', 'true')
+    expect(within(formats).getByRole('button', { name: 'Video' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
     expect(await axeViolations()).toEqual([])
   })
 
@@ -99,26 +103,26 @@ describe('Fan-out dialog, formats [lows C, data-rules fan-out step 7]', () => {
     expect(await formatsSent(fake)).toEqual(['video'])
   })
 
-  it('disables "Make variants" with no format ticked and says why', async () => {
-    const { dialog, fake } = await open()
+  it('keeps the last format on and says why', async () => {
+    const { fake } = await open()
     await tick('de')
     await tick('Image')
-    expect(make()).toBeDisabled()
-    expect(within(dialog).getByText('Choose at least one format.')).toBeVisible()
-    await userEvent.click(make())
+    expect(box('Image')).toHaveAttribute('aria-pressed', 'true')
+    expect(box('Image')).toHaveAttribute('aria-disabled', 'true')
+    expect(box('Image')).toHaveAttribute('title', 'Choose at least one format')
     expect(fake.commands).toEqual([])
     await tick('Video')
+    expect(box('Image')).not.toHaveAttribute('aria-disabled')
     expect(make()).toBeEnabled()
-    expect(within(dialog).queryByText('Choose at least one format.')).toBeNull()
   })
 
   it('counts each new size and language once per ticked format', async () => {
     const { dialog } = await open()
     await tick('de')
-    expect(within(dialog).getByText('This makes 1 variant(s).')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Make 1 variant' })).toBeInTheDocument()
     await tick('Video')
-    expect(within(dialog).getByText('This makes 3 variant(s).')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Make 3 variants' })).toBeInTheDocument()
     await tick('9x16 (1080×1920)')
-    expect(within(dialog).getByText('This makes 7 variant(s).')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Make 7 variants' })).toBeInTheDocument()
   })
 })
