@@ -1,26 +1,30 @@
 // spec/screens-variants.md, "Fan-out": the sizes and languages to add to a direction, each new
-// size's background fit, and for a fill the provider select and the paid line. Nothing is sent
-// before "Make variants"; no fill is started before variant.fanOut succeeds, and each goes to
-// the provider the select shows. From the click until the reply the dialog is locked and
-// cannot close; a refusal shows inside it (A-50). The ticked formats go in the order image,
-// video; at least one must be ticked (data-rules fan-out step 7). P6-15: the
-// line under it states the text calls with the Settings text provider, and the translation
-// jobs in the reply are registered under the campaign for the tab's close warning.
-import { useState } from 'react'
+// size's background fit, and for a fill the provider select. DLG-4b (choice C-15): "Make {n}
+// variants" is the one click that pays. The cost lines (a MoneyLine when paid: the fills to the
+// provider the select shows, the translations to the Settings text provider) are the body's
+// last lines and in the dialog's accessible description, and they are computed from the same
+// state the click sends, so they follow every chip. Nothing is sent before the click; no fill is
+// started before variant.fanOut succeeds, and each goes to the provider shown at the click. From
+// the click until the reply the dialog is locked and cannot close; a refusal shows inside it
+// (A-50). Translation jobs in the reply are registered under the campaign (P6-15).
+import { useId, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { ProviderSelect } from '@/renderer/screens/campaign/provider-select'
 import { useComfyInfoState } from '@/renderer/screens/campaign/use-comfy-info'
 import { attachedStoreFor } from '@/renderer/stores/attached-store'
+import { DialogAlert } from '@/renderer/ui/dialog-alert'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
-import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
+import { plural } from '@/renderer/ui/plural'
 import type { VariantFanOutReply } from '@/shared/schemas/commands/variant'
 import type { FanOutFit } from '@/shared/schemas/links'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
-import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
 import type { DirectionRow } from '@/shared/schemas/rows/direction'
-import { FitChoices, TickGroup, sizeName } from './fit-choices'
+import { CostLine, fillProviders } from './cost-line'
+import { fillCost, translationCost } from './fan-out-costs'
+import { FanOutChips } from './fan-out-chips'
 import * as model from './fan-out-model'
+import { FitChoices } from './fit-choices'
 import { useHasPicture } from './use-has-picture'
 import styles from './fan-out.module.css'
 
@@ -33,26 +37,13 @@ export type FanOutDialogProps = {
 }
 
 const NONE: ProviderInfo[] = []
-const FORMAT_ITEMS = [
-  { id: 'image', label: 'Image', fixed: false },
-  { id: 'video', label: 'Video', fixed: false },
-]
-
-// Image providers that can run now; ComfyUI only with an offered `extend` workflow.
-function fillProviders(providers: ProviderInfo[], info: ComfyInfo | null) {
-  const extend = info?.workflows.find((w) => w.offered && w.job === 'extend')
-  const listed = providers.filter((p) => p.available && p.jobs.includes('image'))
-  return {
-    list: listed.filter((p) => p.id !== 'comfyui' || extend),
-    trial: extend?.status === 'trial',
-  }
-}
 
 export function FanOutDialog(props: FanOutDialogProps) {
   const { projectId, basis } = props
   const api = useApi()
   const app = useApp((s) => s.app)
   const command = useApp((s) => s.command)
+  const show = useApp((s) => s.show)
   const comfy = useComfyInfoState()
   const picture = useHasPicture(projectId, props.direction.masterVariantId)
   const [ticks, setTicks] = useState(() => model.startTicks(basis))
@@ -61,24 +52,28 @@ export function FanOutDialog(props: FanOutDialogProps) {
   const [picked, setPicked] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
+  const fillId = useId()
+  const textId = useId()
 
   const fits = model.fitsToSend(basis, ticks, chosen, picture === true)
-  const fills = model.fillCount(fits)
   const formats = model.formatsToSend(ticked)
   const count = model.newCells(basis, ticks, formats).length
+  const fills = model.fillsSent(basis, ticks, fits, formats)
   const providers = fillProviders(app?.providers ?? NONE, comfy.info)
   const preferred = app?.settings.defaultProviders.image
   const provider =
     providers.list.find((p) => p.id === picked) ??
     providers.list.find((p) => p.id === preferred) ??
     providers.list[0]
-  const textId = app?.settings.defaultProviders.text
-  const text = app?.providers.find((p) => p.id === textId && p.available && p.jobs.includes('text'))
-  const textLine = model.translationLine(
-    model.translationCount(basis, ticks, formats),
-    text ?? null,
+  const textChoice = app?.settings.defaultProviders.text
+  const text = app?.providers.find(
+    (p) => p.id === textChoice && p.available && p.jobs.includes('text'),
   )
-  const ready = picture !== null && count > 0 && (fills === 0 || provider !== undefined)
+  const fillLine = provider ? fillCost(fills, provider) : null
+  const textLine = translationCost(model.translationCount(basis, ticks, formats), text ?? null)
+  const noProvider = fills > 0 && provider === undefined
+  const ready = picture !== null && count > 0 && !noProvider
+  const described = [fillLine && fillId, textLine && textId].filter(Boolean).join(' ')
 
   async function send() {
     const fillProvider = provider?.id
@@ -96,56 +91,52 @@ export function FanOutDialog(props: FanOutDialogProps) {
     if (fill.length > 0 && fillProvider !== undefined) props.onMade(fill, fillProvider)
   }
 
+  function openSettings() {
+    props.onClose()
+    show({ kind: 'settings' })
+  }
+
   const footer = (
     <>
-      <button type="button" disabled={busy} onClick={props.onClose}>
+      <button type="button" className={layout.quiet} disabled={busy} onClick={props.onClose}>
         Cancel
       </button>
       <button
         type="button"
         className={layout.primary}
         disabled={busy || !ready}
+        title={count === 0 ? 'Nothing new to make' : undefined}
         onClick={() => void send()}
       >
-        Make variants
+        {count === 0 ? 'Make variants' : `Make ${plural(count, 'variant')}`}
       </button>
     </>
   )
 
-  const master = basis.master
   return (
     <DialogFrame
       open
       onClose={props.onClose}
       title={`Fan out ${props.direction.name}`}
+      kind="run"
+      describedBy={described || undefined}
       closable={!busy}
       footer={footer}
     >
       <div className={styles.body}>
-        <TickGroup
-          legend="Sizes"
-          items={basis.sizes.map((s) => ({
-            id: s.label,
-            label: sizeName(s),
-            fixed: s.label === master.sizeLabel,
-          }))}
-          ticked={ticks.sizes}
+        {refusal !== null && <DialogAlert tone="danger">{refusal}</DialogAlert>}
+        {noProvider && (
+          <DialogAlert tone="warn" action={{ label: 'Settings', onClick: openSettings }}>
+            No provider can do this yet.
+          </DialogAlert>
+        )}
+        <FanOutChips
+          basis={basis}
+          ticks={ticks}
+          formats={ticked}
           disabled={busy}
-          onChange={(sizes) => setTicks({ ...ticks, sizes })}
-        />
-        <TickGroup
-          legend="Languages"
-          items={basis.languages.map((l) => ({ id: l, label: l, fixed: l === master.language }))}
-          ticked={ticks.languages}
-          disabled={busy}
-          onChange={(languages) => setTicks({ ...ticks, languages })}
-        />
-        <TickGroup
-          legend="Formats"
-          items={FORMAT_ITEMS}
-          ticked={ticked}
-          disabled={busy}
-          onChange={setTicked}
+          onTicks={setTicks}
+          onFormats={setTicked}
         />
         {picture === true && (
           <FitChoices
@@ -156,30 +147,16 @@ export function FanOutDialog(props: FanOutDialogProps) {
           />
         )}
         {fills > 0 && provider !== undefined && (
-          <>
-            <ProviderSelect
-              label="Provider"
-              providers={providers.list}
-              value={provider.id}
-              onChange={setPicked}
-              trial={provider.id === 'comfyui' && providers.trial}
-            />
-            <p className={styles.line}>
-              {`This will use ${fills} generation(s) with ${provider.label}.`}
-            </p>
-          </>
+          <ProviderSelect
+            label="Provider"
+            providers={providers.list}
+            value={provider.id}
+            onChange={setPicked}
+            trial={provider.id === 'comfyui' && providers.trial}
+          />
         )}
-        {fills > 0 && provider === undefined && <p>No provider can do this yet.</p>}
-        {textLine !== null && <p className={styles.line}>{textLine}</p>}
-        <p className={styles.line}>{`This makes ${count} variant(s).`}</p>
-        {formats.length === 0 && <p className={layout.muted}>Choose at least one format.</p>}
-        {formats.length > 0 && count === 0 && <p className={layout.muted}>Nothing new to make.</p>}
-        {refusal !== null && (
-          <p role="alert" className={`${layout.notice} ${layout.danger}`}>
-            <Icon name="alert" size="small" />
-            {refusal}
-          </p>
-        )}
+        <CostLine id={fillId} cost={fillLine} />
+        <CostLine id={textId} cost={textLine} />
       </div>
     </DialogFrame>
   )

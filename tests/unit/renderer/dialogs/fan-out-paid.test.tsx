@@ -81,7 +81,7 @@ async function open(ask: Ask = {}) {
   return { fake, dialog, atClick }
 }
 
-const chip = (name: string) => screen.getByRole('button', { name, exact: true })
+const chip = (name: string) => screen.getByRole('button', { name })
 const press = (name: string) => userEvent.click(chip(name))
 const make = () => screen.getByRole('button', { name: MAKE })
 const shownCount = () => Number(/\d+/.exec(make().textContent ?? '')?.[0] ?? 0)
@@ -266,12 +266,15 @@ describe('Fan-out, the chips [DLG-4b]', () => {
 
   it('keeps one format on: the last one on cannot be turned off', async () => {
     await open()
-    expect(chip('Image')).toBeDisabled()
+    expect(chip('Image')).toHaveAttribute('aria-disabled', 'true')
     expect(chip('Image')).toHaveAttribute('title', 'Choose at least one format')
-    await press('Video')
-    expect(chip('Image')).toBeEnabled()
     await press('Image')
-    expect(chip('Video')).toBeDisabled()
+    expect(chip('Image')).toHaveAttribute('aria-pressed', 'true')
+    await press('Video')
+    expect(chip('Image')).not.toHaveAttribute('aria-disabled')
+    await press('Image')
+    expect(chip('Image')).toHaveAttribute('aria-pressed', 'false')
+    expect(chip('Video')).toHaveAttribute('aria-disabled', 'true')
     expect(chip('Video')).toHaveAttribute('aria-pressed', 'true')
   })
 

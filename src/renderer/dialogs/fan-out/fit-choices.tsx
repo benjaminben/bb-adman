@@ -1,15 +1,17 @@
-// spec/screens-variants.md, "Fan-out": the dialog's choice groups. The sizes and languages as
-// ticks, the master's ticked and fixed; and (A-145) for each ticked size of another pixel size,
-// a group "Background for {label} ({width}×{height})" with three choices, Scale the default.
+// spec/screens-variants.md, "Fan-out" (A-145): for each ticked size of another pixel size, a
+// group "Background for {label} ({width}×{height})" with three choices, Scale the default.
+// DLG-4b (AP-5): the group shows the size's label and three icon choices; each radio keeps its
+// words as its name and `title`, and as hidden text.
 import { useId } from 'react'
 import type { CampaignSize } from '@/shared/schemas/commands/campaign'
 import type { FanOutFit } from '@/shared/schemas/links'
+import { Icon, type IconName } from '@/renderer/ui/icon'
 import styles from './fan-out.module.css'
 
-const FITS: Array<[FanOutFit, string]> = [
-  ['scale', 'Scale: show the whole picture, black at the edges'],
-  ['crop', 'Crop: fill the size and hide the edges'],
-  ['fill', 'Generate fill: extend the picture with AI'],
+const FITS: Array<[FanOutFit, IconName, string]> = [
+  ['scale', 'fit', 'Scale: show the whole picture, black at the edges'],
+  ['crop', 'crop', 'Crop: fill the size and hide the edges'],
+  ['fill', 'sparkle', 'Generate fill: extend the picture with AI'],
 ]
 
 export const sizeName = (s: CampaignSize) => `${s.label} (${s.width}×${s.height})`
@@ -22,20 +24,33 @@ function FitGroup(props: {
 }) {
   const name = useId()
   return (
-    <fieldset className={styles.group} disabled={props.disabled}>
-      <legend>Background for {sizeName(props.size)}</legend>
-      {FITS.map(([fit, words]) => (
-        <div key={fit} className={styles.choice}>
-          <input
-            type="radio"
-            id={`${name}-${fit}`}
-            name={name}
-            checked={props.value === fit}
-            onChange={() => props.onChange(fit)}
-          />
-          <label htmlFor={`${name}-${fit}`}>{words}</label>
-        </div>
-      ))}
+    <fieldset
+      className={styles.fitRow}
+      aria-label={`Background for ${sizeName(props.size)}`}
+      disabled={props.disabled}
+    >
+      <span className={styles.fitLabel} aria-hidden="true">
+        {props.size.label}
+      </span>
+      <div className={styles.fits}>
+        {FITS.map(([fit, icon, words]) => (
+          <div key={fit} className={styles.fit} title={words}>
+            <input
+              type="radio"
+              id={`${name}-${fit}`}
+              name={name}
+              aria-label={words}
+              title={words}
+              checked={props.value === fit}
+              onChange={() => props.onChange(fit)}
+            />
+            <label htmlFor={`${name}-${fit}`}>
+              <Icon name={icon} />
+              <span className={styles.hidden}>{words}</span>
+            </label>
+          </div>
+        ))}
+      </div>
     </fieldset>
   )
 }
@@ -46,8 +61,9 @@ export function FitChoices(props: {
   disabled: boolean
   onChange: (label: string, fit: FanOutFit) => void
 }) {
+  if (props.sizes.length === 0) return null
   return (
-    <>
+    <div className={styles.fitList}>
       {props.sizes.map((size) => (
         <FitGroup
           key={size.label}
@@ -57,33 +73,6 @@ export function FitChoices(props: {
           onChange={(fit) => props.onChange(size.label, fit)}
         />
       ))}
-    </>
-  )
-}
-
-export function TickGroup(props: {
-  legend: string
-  items: Array<{ id: string; label: string; fixed: boolean }>
-  ticked: string[]
-  disabled: boolean
-  onChange: (ticked: string[]) => void
-}) {
-  const flip = (id: string, on: boolean) =>
-    props.onChange(on ? [...props.ticked, id] : props.ticked.filter((t) => t !== id))
-  return (
-    <fieldset className={styles.group} disabled={props.disabled}>
-      <legend>{props.legend}</legend>
-      {props.items.map((item) => (
-        <label key={item.id} className={styles.choice}>
-          <input
-            type="checkbox"
-            checked={item.fixed || props.ticked.includes(item.id)}
-            disabled={item.fixed}
-            onChange={(e) => flip(item.id, e.target.checked)}
-          />
-          {item.label}
-        </label>
-      ))}
-    </fieldset>
+    </div>
   )
 }
