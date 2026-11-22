@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event'
 import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
 import { renderApp, axeViolations } from '../../render'
 import { TOKEN, connect, mcpFake } from './mcp-fixture'
+import { openConnect } from './connect-steps'
 
 const DESKTOP = JSON.stringify(
   {
@@ -28,7 +29,7 @@ async function openPanel(claudeDesktop: string | null) {
   const { fake } = mcpFake(connect({ claudeDesktop }))
   const { container } = await renderApp(<SettingsScreen page="agents" />, fake)
   const box = await screen.findByRole('region', { name: 'Agent access' })
-  const panel = await within(box).findByRole('region', { name: 'Connect to Claude' })
+  const panel = await openConnect(box)
   return { user, panel, container }
 }
 

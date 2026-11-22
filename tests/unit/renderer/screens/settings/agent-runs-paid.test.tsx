@@ -13,13 +13,11 @@ describe('settings: agent runs, the paid line [spec/agent-runs.md, Settings bloc
   it('shows the paid line under each provider whose local is false, and only there', async () => {
     await renderApp(<SettingsScreen page="agents" />, agentRunsFake([COMFY, CLOUD]))
     const box = within(await screen.findByRole('region', { name: 'Agent runs' }))
-    expect(box.getAllByText(PAID)).toHaveLength(2)
+    expect(box.getAllByText(PAID)).toHaveLength(1)
     for (const label of ['Cloud Pictures', 'Google Gemini']) {
-      expect(box.getByRole('checkbox', { name: tickName(label) })).toHaveAccessibleDescription(PAID)
+      expect(box.getByRole('switch', { name: tickName(label) })).toHaveAccessibleDescription(PAID)
     }
-    expect(
-      box.getByRole('checkbox', { name: tickName('ComfyUI') }),
-    ).not.toHaveAccessibleDescription()
+    expect(box.getByRole('switch', { name: tickName('ComfyUI') })).not.toHaveAccessibleDescription()
     expect(await axeViolations()).toEqual([])
   })
 })

@@ -1,5 +1,27 @@
 /* app-style */
-/* SPEC 6.8: the Claude Code setup line, wrapped so it stays inside the card, on a code ground
+/* SET-5: the address and the token, each a label, its value and its buttons on one row. */
+.values {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) auto;
+  gap: var(--gap-tight) var(--gap-inline);
+  align-items: center;
+}
+.value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  word-break: break-all;
+}
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}
+/* A copy failure line under its row, across the whole grid. */
+.wide {
+  grid-column: 1 / -1;
+}
+/* SPEC 6.8: the Claude Code setup line, wrapped so it stays inside the page, on a code ground
    as the prototype's agent access code line. */
 .codeLine {
   margin: 0;
@@ -11,4 +33,13 @@
   font-size: var(--font-size-small);
   white-space: pre-wrap;
   word-break: break-all;
+}
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event'
 import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
 import { renderApp, axeViolations } from '../../render'
 import { TOKEN, connect, line, mcpFake } from './mcp-fixture'
+import { openConnect } from './connect-steps'
 
 const FAILED = 'Copy did not work. Select the line and copy it.'
 
@@ -24,7 +25,7 @@ async function openPanel() {
   const { fake } = mcpFake(connect())
   await renderApp(<SettingsScreen page="agents" />, fake)
   const box = await screen.findByRole('region', { name: 'Agent access' })
-  const panel = await within(box).findByRole('region', { name: 'Connect to Claude' })
+  const panel = await openConnect(box)
   return { user, box, panel }
 }
 

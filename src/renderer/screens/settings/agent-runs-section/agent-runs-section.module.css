@@ -1,0 +1,29 @@
+/* app-style */
+/* SET-5: Agent runs. One row per provider; the limit as an inline field with its unit inside. */
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+.limit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+}
+/* The label with its InfoTip, then the field: one row, the label never wrapped. */
+.limitRow {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+}
+.label {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  font-size: var(--type-meta-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+.box {
+  width: calc(var(--control-height) * 4);
+}

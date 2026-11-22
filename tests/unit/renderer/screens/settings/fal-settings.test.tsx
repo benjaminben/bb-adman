@@ -29,7 +29,7 @@ describe('Settings with fal.ai Seedance switched on [P7-15]', () => {
   it('offers the agent tick for fal with the paid line', async () => {
     await renderApp(<SettingsScreen page="agents" />, withRealFal())
     const box = within(await screen.findByRole('region', { name: 'Agent runs' }))
-    const tick = box.getByRole('checkbox', { name: tickName('fal.ai Seedance') })
+    const tick = box.getByRole('switch', { name: tickName('fal.ai Seedance') })
     expect(tick).toHaveAccessibleDescription(PAID)
   })
 })

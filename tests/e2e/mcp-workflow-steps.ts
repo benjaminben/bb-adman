@@ -31,6 +31,12 @@ export async function connectThroughSettings(page: Page): Promise<ToolSession> {
   await expect(section.getByLabel('Port', { exact: true })).toHaveValue(String(port))
   await section.getByRole('switch', { name: 'Turn on agent access' }).click()
   await expect(section.getByRole('switch', { name: 'Turn on agent access' })).toBeChecked()
+  // SET-5: Connect starts folded and the token masked; open it and press Show to read it.
+  const connect = page.getByRole('region', { name: 'Connect to Claude' })
+  const head = connect.getByRole('button', { name: 'Connect to Claude' })
+  if ((await head.getAttribute('aria-expanded')) !== 'true') await head.click()
+  await connect.getByRole('button', { name: 'Show' }).click()
+  await expect(connect.getByRole('button', { name: 'Hide' })).toBeVisible()
   const address = (await valueUnder(page, 'Address').textContent()) ?? ''
   const token = (await valueUnder(page, 'Access token').textContent()) ?? ''
   // Away from Settings before any check can fail: a failure's page snapshot then holds no token.

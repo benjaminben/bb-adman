@@ -4,6 +4,7 @@ import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
 import layout from '@/renderer/ui/layout.module.css'
 import { renderApp, axeViolations } from '../../render'
 import { OFF, PORT, TOKEN, connect, line, mcpFake } from './mcp-fixture'
+import { showToken } from './connect-steps'
 
 async function section() {
   return screen.findByRole('region', { name: 'Agent access' })
@@ -31,7 +32,7 @@ describe('settings: agent access states [SPEC 6.8; 14 1.56 MCP-C, 1.58 J-8, J-9,
     await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     expect(await within(box).findByRole('switch', { name: 'Turn on agent access' })).toBeChecked()
-    const panel = within(box).getByRole('region', { name: 'Connect to Claude' })
+    const panel = await showToken(box)
     expect(within(panel).getByText(line())).toBeInTheDocument()
     expect(panel.querySelectorAll('pre')).toHaveLength(1)
     expect(within(panel).queryByText(/Claude Desktop/)).toBeNull()
@@ -79,13 +80,13 @@ describe('settings: agent access states [SPEC 6.8; 14 1.56 MCP-C, 1.58 J-8, J-9,
     const { fake } = mcpFake(connect())
     const { store } = await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
-    const panel = await within(box).findByRole('region', { name: 'Connect to Claude' })
+    const panel = await showToken(box)
     for (const el of Array.from(document.body.querySelectorAll('*'))) {
       for (const attr of Array.from(el.attributes)) expect(attr.value).not.toContain(TOKEN)
     }
     expect(document.title).not.toContain(TOKEN)
     const outside = document.body.cloneNode(true) as HTMLElement
-    outside.querySelector('[aria-labelledby="mcp-connect-title"]')?.remove()
+    outside.querySelector(`[aria-labelledby="${panel.getAttribute('aria-labelledby')}"]`)?.remove()
     expect(outside.innerHTML).not.toContain(TOKEN)
     expect(panel.textContent).toContain(TOKEN)
     expect(JSON.stringify(store.getState())).not.toContain(TOKEN)

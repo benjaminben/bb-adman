@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event'
 import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
 import { renderApp } from '../../render'
 import { OFF, PORT, connect, line, mcpFake, refused } from './mcp-fixture'
+import { showToken } from './connect-steps'
 
 const IN_USE = `Port ${PORT} is in use. Choose another.`
 const RANGE = 'Choose a port from 1024 to 65535.'
@@ -20,7 +21,7 @@ describe('settings: agent access refusal lines are cleared [REVIEW MCP-C 6e]', (
     fake.onCommand('mcp.setEnabled', () => refused(IN_USE, 'port_in_use'))
     await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
-    await userEvent.click(await within(box).findByRole('switch'))
+    await userEvent.click(await within(box).findByRole('switch', { name: 'Turn on agent access' }))
     expect(await within(box).findByText(IN_USE)).toBeInTheDocument()
     const field = within(box).getByLabelText('Port')
     await userEvent.clear(field)
@@ -40,7 +41,8 @@ describe('settings: agent access refusal lines are cleared [REVIEW MCP-C 6e]', (
     await userEvent.click(within(box).getByRole('button', { name: 'Save port' }))
     expect(await within(box).findByText(RANGE)).toBeInTheDocument()
     setInfo(connect())
-    await userEvent.click(within(box).getByRole('switch'))
+    await userEvent.click(within(box).getByRole('switch', { name: 'Turn on agent access' }))
+    await showToken(box)
     expect(await within(box).findByText(line())).toBeInTheDocument()
     expect(within(box).queryByText(RANGE)).toBeNull()
     expect(field).not.toHaveAccessibleDescription(RANGE)
@@ -51,7 +53,7 @@ describe('settings: agent access refusal lines are cleared [REVIEW MCP-C 6e]', (
     fake.onCommand('mcp.setEnabled', () => refused(IN_USE, 'port_in_use'))
     await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
-    await userEvent.click(await within(box).findByRole('switch'))
+    await userEvent.click(await within(box).findByRole('switch', { name: 'Turn on agent access' }))
     expect(await within(box).findByText(IN_USE)).toBeInTheDocument()
     await userEvent.click(within(box).getByRole('button', { name: 'Make a new token' }))
     await waitFor(() => expect(within(box).queryByText(IN_USE)).toBeNull())

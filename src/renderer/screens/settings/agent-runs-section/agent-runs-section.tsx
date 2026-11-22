@@ -1,25 +1,20 @@
-// Settings: agent runs (spec/agent-runs.md, "Settings block"). One tick per provider that
-// agentRunsOffered offers, a paid line under one whose `local` is false, and the limit. Shown
-// whether or not the MCP server is on. Each command's refusal shows as a line under its control,
-// as the agent access section does.
+// Settings: agent runs (spec/agent-runs.md, "Settings block"; SET-5). A Section with "{n} on" in
+// its header. While any offered provider is paid, the paid line once at the top, word for word;
+// then one row per provider that agentRunsOffered offers, each with its Switch ("Paid" marked and
+// described by the paid line when its `local` is false); then the limit. Shown whether or not
+// the MCP server is on. Each command's refusal shows as a line under its control.
 import { useState } from 'react'
 import { EMPTY, useApp } from '@/renderer/app/app-context'
-import {
-  AGENT_RUN_LIMIT_MAX,
-  AGENT_RUN_LIMIT_MIN,
-  agentRunsOffered,
-} from '@/shared/config/agent-runs'
+import { agentRunsOffered } from '@/shared/config/agent-runs'
 import { NoticeLine } from '@/renderer/screens/settings/notice-line'
-import layout from '@/renderer/ui/layout.module.css'
+import { Section } from '@/renderer/ui/section'
+import { ProviderRow } from './provider-row'
+import { RunLimit } from './run-limit'
+import { PAID_ID } from './described-by'
+import styles from './agent-runs-section.module.css'
 
 const PAID = 'Paid. Each run an agent starts is charged to your account, with no click from you.'
 const LIMIT_ID = 'agent-run-limit'
-
-// The ids of the lines that describe a control, or undefined when there is none.
-function describedBy(...ids: Array<string | false>): string | undefined {
-  const shown = ids.filter((id): id is string => id !== false)
-  return shown.length > 0 ? shown.join(' ') : undefined
-}
 
 export function AgentRunsSection() {
   const providers = useApp((s) => s.app?.providers ?? EMPTY)
@@ -41,60 +36,38 @@ export function AgentRunsSection() {
   }
 
   const offered = providers.filter((p) => agentRunsOffered(p) === null)
-  const limitRefusal = refusals[LIMIT_ID] ?? null
+  const anyPaid = offered.some((p) => !p.local)
+  const on = offered.filter((p) => agentRuns?.[p.id]?.allowed === true).length
 
   return (
-    <section className={layout.card} aria-labelledby="agent-runs-title">
-      <h2 id="agent-runs-title">Agent runs</h2>
-      {offered.map((p) => {
-        const allowed = agentRuns?.[p.id]?.allowed === true
-        const refusal = refusals[p.id] ?? null
-        const paidId = `agent-runs-paid-${p.id}`
-        const refusalId = `agent-runs-refusal-${p.id}`
-        return (
-          <div key={p.id} className={layout.field}>
-            <label className={layout.row}>
-              <input
-                type="checkbox"
-                checked={allowed}
-                aria-describedby={describedBy(!p.local && paidId, refusal !== null && refusalId)}
-                onChange={() =>
-                  void send(p.id, 'agentRuns.setAllowed', { provider: p.id, allowed: !allowed })
-                }
-              />
-              Let agents start runs with {p.label}
-            </label>
-            {!p.local && (
-              <p id={paidId} className={layout.muted}>
-                {PAID}
-              </p>
-            )}
-            {refusal !== null && (
-              <NoticeLine kind="danger" id={refusalId}>
-                {refusal}
-              </NoticeLine>
-            )}
-          </div>
-        )
-      })}
-      <div className={layout.field}>
-        <label htmlFor={LIMIT_ID}>Most runs agents may have waiting or running, per provider</label>
-        <input
-          id={LIMIT_ID}
-          type="number"
-          min={AGENT_RUN_LIMIT_MIN}
-          max={AGENT_RUN_LIMIT_MAX}
-          step={1}
-          value={typed ?? String(limit ?? '')}
-          onChange={(e) => changeLimit(e.target.value)}
-          aria-describedby={describedBy(limitRefusal !== null && `${LIMIT_ID}-refusal`)}
-        />
-        {limitRefusal !== null && (
-          <NoticeLine kind="danger" id={`${LIMIT_ID}-refusal`}>
-            {limitRefusal}
-          </NoticeLine>
-        )}
+    <Section id="settings.agentRuns" title="Agent runs" level={3} summary={`${on} on`}>
+      {anyPaid && (
+        <NoticeLine kind="warn" id={PAID_ID}>
+          {PAID}
+        </NoticeLine>
+      )}
+      <div className={styles.rows}>
+        {offered.map((p) => {
+          const allowed = agentRuns?.[p.id]?.allowed === true
+          return (
+            <ProviderRow
+              key={p.id}
+              provider={p}
+              allowed={allowed}
+              refusal={refusals[p.id] ?? null}
+              onChange={() =>
+                void send(p.id, 'agentRuns.setAllowed', { provider: p.id, allowed: !allowed })
+              }
+            />
+          )
+        })}
       </div>
-    </section>
+      <RunLimit
+        id={LIMIT_ID}
+        value={typed ?? String(limit ?? '')}
+        refusal={refusals[LIMIT_ID] ?? null}
+        onChange={changeLimit}
+      />
+    </Section>
   )
 }

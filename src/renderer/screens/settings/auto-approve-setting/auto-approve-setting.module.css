@@ -1,0 +1,28 @@
+/* app-style */
+/* SET-5: "Delete without asking" with its InfoTip, the Switch at the row's right end, and the
+   short warning under it in the warn text colour. */
+.setting {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}
+.label {
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+}
+.switch {
+  margin-left: auto;
+}
+.warning {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  margin: 0;
+  font-size: var(--type-meta-size);
+  color: var(--color-warn-text);
+}
