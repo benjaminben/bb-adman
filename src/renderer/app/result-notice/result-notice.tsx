@@ -36,8 +36,9 @@ export function ResultNotice(props: { projectId: string }) {
           </button>
           <button
             type="button"
-            className={`${layout.quiet} ${layout.small} ${layout.iconOnly} ${styles.dismiss}`}
+            className={`${layout.iconButton} ${styles.dismiss}`}
             aria-label="Dismiss"
+            title="Dismiss"
             onClick={close}
           >
             <Icon name="x" size="small" />
