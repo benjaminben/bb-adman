@@ -1,0 +1,20 @@
+/* app-style */
+/* SET-5: Agent access. The switch and its On or Off word in the Section header; the port as an
+   inline field sized to its value. */
+.access {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-inline);
+}
+.port {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+}
+.portInput {
+  width: calc(var(--control-height) * 3);
+  font-variant-numeric: tabular-nums;
+}
+.actions {
+  display: flex;
+}

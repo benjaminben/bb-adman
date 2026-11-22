@@ -33,6 +33,6 @@ export function agentRunsFake(
 }
 
 export const tickName = (label: string) => `Let agents start runs with ${label}`
-export const LIMIT = 'Most runs agents may have waiting or running, per provider'
+export const LIMIT = 'Run limit'
 export const PAID =
   'Paid. Each run an agent starts is charged to your account, with no click from you.'

@@ -5,6 +5,7 @@ import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
 import { renderApp } from '../../render'
 import { heldReply } from '../campaign/held-reply'
 import { OFF, PORT, connect, line, mcpFake, refused } from './mcp-fixture'
+import { showToken } from './connect-steps'
 
 const NEW_TOKEN = 'another-made-up-test-token'
 const IN_USE = `Port ${PORT} is in use. Choose another.`
@@ -26,6 +27,7 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
     setInfo(connect())
     await userEvent.click(await toggle(box))
     expect(fake.commands).toContainEqual({ name: 'mcp.setEnabled', input: { enabled: true } })
+    await showToken(box)
     expect(await within(box).findByText(line())).toBeInTheDocument()
     expect(reads()).toBe(before + 1)
   })
@@ -83,6 +85,7 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
       name: 'settings.update',
       input: { mcp: { port: 48000 } },
     })
+    await showToken(box)
     expect(await within(box).findByText(line(48000))).toBeInTheDocument()
     expect(reads()).toBe(before + 1)
   })
@@ -107,11 +110,14 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
     const { fake, setInfo, reads } = mcpFake(connect())
     await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
+    await showToken(box)
     await within(box).findByText(line())
     const before = reads()
     setInfo(connect({ token: NEW_TOKEN, claudeCode: line(PORT, NEW_TOKEN) }))
     await userEvent.click(within(box).getByRole('button', { name: 'Make a new token' }))
     expect(fake.commands).toContainEqual({ name: 'mcp.regenerateToken', input: {} })
+    await waitFor(() => expect(within(box).queryByRole('button', { name: 'Show' })).not.toBeNull())
+    await showToken(box)
     expect(await within(box).findByText(line(PORT, NEW_TOKEN))).toBeInTheDocument()
     expect(reads()).toBe(before + 1)
   })
@@ -122,6 +128,7 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
     fake.onCommand('mcp.regenerateToken', () => refused(IN_USE, 'port_in_use'))
     await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
+    await showToken(box)
     await within(box).findByText(line())
     const before = reads()
     setInfo(
@@ -133,6 +140,8 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
       }),
     )
     await userEvent.click(within(box).getByRole('button', { name: 'Make a new token' }))
+    await waitFor(() => expect(within(box).queryByRole('button', { name: 'Show' })).not.toBeNull())
+    await showToken(box)
     expect(await within(box).findByText(line(PORT, NEW_TOKEN))).toBeInTheDocument()
     expect(within(box).getAllByText(IN_USE).length).toBeGreaterThan(0)
     expect(reads()).toBe(before + 1)

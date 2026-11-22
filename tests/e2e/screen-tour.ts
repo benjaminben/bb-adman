@@ -86,22 +86,22 @@ export async function agentRunsTour(page: Page, box: Sandbox) {
   await screens.openSettingsPage(page, 'Agents')
   const block = page.getByRole('region', { name: 'Agent runs' })
   const tick = (label: string) =>
-    block.getByRole('checkbox', { name: `Let agents start runs with ${label}` })
+    block.getByRole('switch', { name: `Let agents start runs with ${label}` })
   for (const label of ['ComfyUI', 'Fake provider', 'fal.ai Seedance'])
     await expect(tick(label)).toHaveCount(1)
   await expect(tick('Adobe Firefly')).toHaveCount(0)
 
-  await tick('ComfyUI').check()
+  await tick('ComfyUI').click()
   await expect(tick('ComfyUI')).toBeChecked()
   await expect(tick('Fake provider')).not.toBeChecked()
   await expect.poll(() => saved().agentRuns).toEqual({ comfyui: { allowed: true } })
 
-  const limit = block.getByLabel('Most runs agents may have waiting or running, per provider')
+  const limit = block.getByLabel('Run limit', { exact: true })
   await expect(limit).toHaveValue('4')
   await limit.fill('9')
   await expect.poll(() => saved().agentRunLimit).toBe(9)
 
-  await tick('ComfyUI').uncheck()
+  await tick('ComfyUI').click()
   await expect.poll(() => saved().agentRuns).toEqual({ comfyui: { allowed: false } })
 }
 

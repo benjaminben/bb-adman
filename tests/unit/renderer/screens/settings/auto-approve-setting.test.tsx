@@ -9,10 +9,8 @@ import { axeViolations, renderApp } from '../../render'
 import { baseState, makeFakeApi } from '../../fake-api'
 import { connect, mcpFake } from './mcp-fixture'
 
-const LABEL = 'Let agents delete campaigns and variants without asking'
-const LINE =
-  'An agent can then delete work with no click from you. Deletes cannot be undone, and ' +
-  "deleting a variant clears its campaign's undo list."
+const LABEL = 'Delete without asking'
+const LINE = 'Deletes cannot be undone.'
 
 function withAuto(on: boolean) {
   const state = baseState()
@@ -23,7 +21,7 @@ function withAuto(on: boolean) {
 describe('auto-approve setting [P10-7]', () => {
   it('shows the box, described by its warning line', async () => {
     await renderApp(<AutoApproveSetting />, withAuto(false))
-    const box = screen.getByRole('checkbox', { name: LABEL })
+    const box = screen.getByRole('switch', { name: LABEL })
     expect(box).not.toBeChecked()
     expect(box).toHaveAccessibleDescription(LINE)
   })
@@ -34,7 +32,7 @@ describe('auto-approve setting [P10-7]', () => {
   ])('from %s, saves autoApproveDestructive %s', async (from, to) => {
     const fake = withAuto(from)
     await renderApp(<AutoApproveSetting />, fake)
-    const box = screen.getByRole('checkbox', { name: LABEL })
+    const box = screen.getByRole('switch', { name: LABEL })
     expect((box as HTMLInputElement).checked).toBe(from)
     await userEvent.click(box)
     await waitFor(() =>
@@ -52,7 +50,7 @@ describe('auto-approve setting [P10-7]', () => {
       error: { code: 'INVALID_INPUT', message: 'The setting could not be saved.' },
     }))
     await renderApp(<AutoApproveSetting />, fake)
-    await userEvent.click(screen.getByRole('checkbox', { name: LABEL }))
+    await userEvent.click(screen.getByRole('switch', { name: LABEL }))
     expect(await screen.findByText('The setting could not be saved.')).toBeInTheDocument()
   })
 
@@ -60,7 +58,7 @@ describe('auto-approve setting [P10-7]', () => {
     const { fake } = mcpFake(connect())
     await renderApp(<McpSection />, fake)
     const section = await screen.findByRole('region', { name: 'Agent access' })
-    expect(section).toContainElement(await screen.findByRole('checkbox', { name: LABEL }))
+    expect(section).toContainElement(await screen.findByRole('switch', { name: LABEL }))
     expect(await axeViolations()).toEqual([])
   })
 })

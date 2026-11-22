@@ -26,21 +26,21 @@ describe('settings: agent runs [spec/agent-runs.md, Settings block]', () => {
   ])('offers a tick for %s: %s', async (_, shown, row) => {
     await renderApp(<SettingsScreen page="agents" />, agentRunsFake([row]))
     const box = await section()
-    expect(box.queryByRole('checkbox', { name: tickName(row.label) }) !== null).toBe(shown)
+    expect(box.queryByRole('switch', { name: tickName(row.label) }) !== null).toBe(shown)
   })
 
   it('shows one tick for the base state, Google Gemini, with the paid line', async () => {
     await renderApp(<SettingsScreen page="agents" />)
     const box = await section()
-    expect(box.getAllByRole('checkbox')).toHaveLength(1)
-    expect(box.getByRole('checkbox', { name: tickName('Google Gemini') })).toBeInTheDocument()
+    expect(box.getAllByRole('switch')).toHaveLength(1)
+    expect(box.getByRole('switch', { name: tickName('Google Gemini') })).toBeInTheDocument()
     expect(box.getAllByText(PAID)).toHaveLength(1)
   })
 
   it('ticks and unticks with agentRuns.setAllowed, showing the saved state', async () => {
     const fake = agentRunsFake([COMFY])
     await renderApp(<SettingsScreen page="agents" />, fake)
-    const tick = (await section()).getByRole('checkbox', { name: tickName('ComfyUI') })
+    const tick = (await section()).getByRole('switch', { name: tickName('ComfyUI') })
     expect(tick).not.toBeChecked()
     await userEvent.click(tick)
     await waitFor(() => expect(tick).toBeChecked())
@@ -57,7 +57,7 @@ describe('settings: agent runs [spec/agent-runs.md, Settings block]', () => {
       <SettingsScreen page="agents" />,
       agentRunsFake([COMFY], { agentRuns: { comfyui: { allowed: true } } }),
     )
-    expect((await section()).getByRole('checkbox', { name: tickName('ComfyUI') })).toBeChecked()
+    expect((await section()).getByRole('switch', { name: tickName('ComfyUI') })).toBeChecked()
   })
 
   it("shows a refused tick's message under it, and leaves it unticked", async () => {
@@ -67,7 +67,7 @@ describe('settings: agent runs [spec/agent-runs.md, Settings block]', () => {
     )
     await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
-    const tick = box.getByRole('checkbox', { name: tickName('ComfyUI') })
+    const tick = box.getByRole('switch', { name: tickName('ComfyUI') })
     await userEvent.click(tick)
     expect(await box.findByText('Agents cannot start runs with ComfyUI.')).toBeInTheDocument()
     expect(tick).toHaveAccessibleDescription('Agents cannot start runs with ComfyUI.')
