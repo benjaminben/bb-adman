@@ -35,6 +35,7 @@ export const BUILT_TOOLS = [
   'import_assets',
   'create_campaign_from_brief',
   'create_project',
+  'delete_subject',
 ]
 
 export type ToolReply = {

@@ -4,7 +4,8 @@
 // own Zod schema, with its top-level keys in snake_case (SPEC 4.5: project_id -> projectId).
 // Every reply goes through an allow-list picker (spec/mcp-and-agents.md, rules for every tool).
 // ALL_TOOLS is the Phase 10 plan (A-230): the built tools, then one group file per slice, then
-// Round 2's three. A notBuilt row is left out of MCP_TOOLS, so it is never listed to an agent.
+// Round 2's three, then SUBJ-1's delete_subject. A notBuilt row is left out of MCP_TOOLS, so
+// it is never listed to an agent.
 import type { z } from 'zod'
 import { assetListInput } from '@/shared/schemas/queries/asset'
 import { campaignScopedInput, projectGetInput } from '@/shared/schemas/queries/campaign'
@@ -25,7 +26,7 @@ import { READ_MORE_TOOLS } from './read-more-tools'
 import { RENDER_TOOLS } from './render-tool'
 import { LAYER_TOOLS } from './layer-tools'
 import { AI_TOOLS } from './ai-tools'
-import { DELETE_TOOLS } from './delete-tools'
+import { DELETE_TOOLS, SUBJECT_DELETE_TOOLS } from './delete-tools'
 import { VARIANT_EDIT_TOOLS } from './variant-edit-tools'
 import { TRANSLATION_CHECK_TOOLS } from './translation-check-tools'
 import { FORMAT_TOOLS } from './format-tool'
@@ -142,6 +143,7 @@ export const ALL_TOOLS: readonly ToolDef[] = [
   ...IMPORT_TOOLS,
   ...BRIEF_TOOLS,
   ...PROJECT_TOOLS,
+  ...SUBJECT_DELETE_TOOLS,
 ]
 
 // What core registers: every built row, in the same order.

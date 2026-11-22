@@ -38,6 +38,7 @@ const PLAN = [
   'import_assets',
   'create_campaign_from_brief',
   'create_project',
+  'delete_subject',
 ]
 
 // The tools not built yet. A tool slice removes exactly its own names.
@@ -66,10 +67,11 @@ const TARGETS: Record<string, [kind: 'command' | 'query', target: string]> = {
   import_assets: ['command', 'asset.importFiles'],
   create_campaign_from_brief: ['command', 'campaign.createFromBrief'],
   create_project: ['command', 'project.createInDefaultFolder'],
+  delete_subject: ['command', 'subject.delete'],
 }
 
 describe('the Phase 10 tool plan [P10-1, A-230, A-231]', () => {
-  it('holds the 32 tools of the plan, each once, in listing order', () => {
+  it('holds the 33 tools of the plan, each once, in listing order', () => {
     const names = ALL_TOOLS.map((t) => t.name)
     expect(names).toEqual(PLAN)
     expect(new Set(names).size).toBe(names.length)
