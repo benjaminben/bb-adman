@@ -6,7 +6,7 @@ import { COMFY_PRIVACY } from '@/renderer/ui/comfy-privacy'
 import { renderApp, axeViolations } from '../render'
 import { makeFakeApi } from '../fake-api'
 
-const TITLE = "Enter your ComfyUI server's address"
+const TITLE = 'ComfyUI address'
 const REFUSED = 'Enter an address that starts with http:// or https://.'
 
 async function open(fake = makeFakeApi()) {
@@ -27,7 +27,7 @@ describe('address dialog [S2-6, FR-255]', () => {
     expect(field).toHaveValue('')
     expect(field).toHaveAttribute('autocomplete', 'off')
     expect(field).toHaveAttribute('spellcheck', 'false')
-    expect(field).toHaveAccessibleDescription(/For example http:\/\/127\.0\.0\.1:8188/)
+    expect(field).toHaveAttribute('placeholder', 'http://127.0.0.1:8188')
   })
 
   it('puts focus on the field, then Cancel, then Save and continue', async () => {
@@ -36,7 +36,7 @@ describe('address dialog [S2-6, FR-255]', () => {
     await userEvent.tab()
     expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus()
     await userEvent.tab()
-    expect(screen.getByRole('button', { name: 'Save and continue' })).toHaveFocus()
+    expect(screen.getByRole('button', { name: 'Save' })).toHaveFocus()
   })
 
   it('saves the typed address with comfy.setAddress on Enter and reports the save', async () => {
@@ -58,7 +58,7 @@ describe('address dialog [S2-6, FR-255]', () => {
     }))
     const view = await open(fake)
     await userEvent.type(screen.getByLabelText('Server address'), 'ftp://127.0.0.1:21')
-    await userEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     const dialog = screen.getByRole('dialog', { name: TITLE })
     expect(await screen.findByLabelText('Server address')).toHaveAccessibleDescription(
       expect.stringContaining(REFUSED),
@@ -73,7 +73,7 @@ describe('address dialog [S2-6, FR-255]', () => {
     fake.onCommand('comfy.setAddress', () => new Promise((r) => (answer = r)))
     const view = await open(fake)
     await userEvent.type(screen.getByLabelText('Server address'), 'http://127.0.0.1:8188')
-    await userEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(await screen.findByRole('button', { name: 'Saving…' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled()
     await userEvent.keyboard('{Escape}')

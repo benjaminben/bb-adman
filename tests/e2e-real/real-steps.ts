@@ -142,9 +142,9 @@ export async function confirmWithKey(page: Page): Promise<void> {
     // Review S-1: only a run of one paid request is ever confirmed.
     await expect(run.getByText(/^Paid: 1 picture.* to Google Gemini$/)).toBeVisible()
     await run.getByRole('button', { name: 'Generate', exact: true }).click()
-    const dialog = page.getByRole('dialog', { name: 'Add your Google Gemini key' })
+    const dialog = page.getByRole('dialog', { name: 'Google Gemini key' })
     await dialog.getByLabel('API key').fill(key)
-    await dialog.getByRole('button', { name: 'Save and continue' }).click()
+    await dialog.getByRole('button', { name: 'Save' }).click()
     await expect(dialog).toBeHidden()
   })
 }

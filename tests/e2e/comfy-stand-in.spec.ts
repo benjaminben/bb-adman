@@ -181,7 +181,7 @@ test('Key dialog and paid Retry: Cancel, then a made-up key saved; the refused r
   await campaignOnStandIn()
   await standInForGemini(app)
   await screens.chooseProvider(page, 'Google Gemini')
-  const dialog = page.getByRole('dialog', { name: 'Add your Google Gemini key' })
+  const dialog = page.getByRole('dialog', { name: 'Google Gemini key' })
 
   const run = await screens.openRunDialog(page)
   await expect(run.getByText(PAID_LINE)).toBeVisible()
@@ -198,7 +198,7 @@ test('Key dialog and paid Retry: Cancel, then a made-up key saved; the refused r
   await dialog.getByLabel('API key').fill(MADE_UP_KEY)
   // Re-review S-A: the main process's fetch is the stand-in before the key can be sent.
   expect(await standInInstalled(app)).toBe(true)
-  await dialog.getByRole('button', { name: 'Save and continue' }).click()
+  await dialog.getByRole('button', { name: 'Save' }).click()
   await expect(dialog).toBeHidden()
   await expect(screens.runRow(page)).toContainText('Failed', { timeout: 15_000 })
   expect(await geminiAsked(app)).toEqual([GEMINI_ORIGIN])
