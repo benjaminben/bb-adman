@@ -4,6 +4,8 @@
 // is run through the app's one runner with the frames piped to pipe:0 and writes only ad.mp4 in
 // that folder; the still is read from it; the file then reaches the output folder only through
 // the export target. The work folder is removed on every path. A stop kills FFmpeg at once.
+// P8-17: the ad's one sound source is checked and copied in too (sound-file.ts), and an overlay
+// frame the same as the one before is sent again without a draw (frame-reuse.ts).
 import { constants } from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -22,6 +24,9 @@ import type { ExportPlan, ExportTarget } from '@/main/export/types'
 import { clipFiles } from './clip-files'
 import { videoArgs, workVideoPath, type VideoClip } from './encoder-args'
 import { pipeFrames } from './frame-pipe'
+import { frameReuse } from './frame-reuse'
+import type { AdSound } from './sound-args'
+import { adSound } from './sound-file'
 import { reportStill } from './still'
 import { makeWorkDir } from './work-dir'
 
@@ -59,7 +64,7 @@ async function encode(
   jc: JobRunContext,
   scene: SceneInput,
   fps: ExportPlan['fps'],
-  clips: VideoClip[],
+  inputs: { clips: VideoClip[]; sound: AdSound },
   workDir: string,
 ): Promise<void> {
   const { width, height, durationMs } = scene.variant
@@ -73,7 +78,7 @@ async function encode(
         durationMs,
         fps,
         background,
-        clips,
+        ...inputs,
         workDir,
       })
     } catch {
@@ -86,7 +91,10 @@ async function encode(
   const result = await jc.deps.media.ffmpeg.run(args, workDir, {
     timeoutMs: encodeTimeLimitMs(count),
     signal: jc.signal,
-    feed: (sink) => pipeFrames({ count, draw, sink, signal: jc.signal }),
+    feed: (sink) => {
+      const sameAsPrevious = frameReuse(frames, fps)
+      return pipeFrames({ count, draw, sameAsPrevious, sink, signal: jc.signal })
+    },
   })
   if (jc.cancelled()) throw new ProviderCancelled()
   if (result !== 'done') throw notMade()
@@ -127,8 +135,9 @@ export async function exportVideoAd(
   })
   try {
     const clips = await clipFiles(jc.deps, project, variantId, work.path)
+    const sound = await adSound(jc.deps, project, variantId, work.path)
     if (jc.cancelled()) throw new ProviderCancelled()
-    await encode(jc, scene, plan.fps, clips, work.path)
+    await encode(jc, scene, plan.fps, { clips, sound }, work.path)
     const { durationMs } = scene.variant
     const still = await reportStill(jc.deps.media.ffmpeg, work.path, durationMs, jc.signal)
     if (jc.cancelled()) throw new ProviderCancelled()

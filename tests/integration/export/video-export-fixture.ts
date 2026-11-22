@@ -84,6 +84,13 @@ export async function setupVideoExport(opts: { binary?: string } = {}) {
   db()
     .prepare('UPDATE variant SET duration_ms = ?, width = ?, height = ? WHERE id = ?')
     .run(DURATION_MS, SIZE.width, SIZE.height, video.id)
+  // P8-17 reuses still frames: a fade over the whole ad makes every frame change, so every
+  // frame is drawn, as these cases count.
+  const fade = { preset: 'fade', startMs: 0, durationMs: DURATION_MS }
+  const none = { preset: 'none', startMs: 0, durationMs: 0 }
+  db()
+    .prepare('UPDATE layer SET animation = ? WHERE variant_id = ?')
+    .run(JSON.stringify({ entrance: fade, exit: none }), video.id)
 
   const frame = solidPng(SIZE, [0, 0, 0, 0])
   const drawn: SceneInput[] = []
