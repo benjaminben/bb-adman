@@ -21,12 +21,12 @@ const PROMPT_LIMIT = 2000
 export const HEADINGS = {
   page: 'Export report',
   summary: 'Summary',
+  details: 'Details',
   warnings: 'Warnings exported past',
   delivered: 'Asked for against delivered',
 } as const
 
 export const LABELS = {
-  folder: 'Folder',
   campaign: 'Campaign',
   market: 'Market',
   audience: 'Audience',

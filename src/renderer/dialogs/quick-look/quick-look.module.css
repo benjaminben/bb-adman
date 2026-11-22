@@ -1,9 +1,17 @@
 /* app-style */
-/* Quick look: the picture fitted inside the dialog with its shape kept, then the steps row. */
+/* Quick look (DLG-7): the picture fitted between the "Previous" and "Next" icon buttons with
+   its shape kept; the "{i} / {n}" count sits at the start of the foot. */
 .view {
   display: flex;
   align-items: center;
+  gap: var(--space-3);
+}
+.frame {
+  display: flex;
+  flex: 1;
+  align-items: center;
   justify-content: center;
+  min-width: 0;
 }
 .picture {
   display: block;
@@ -11,10 +19,24 @@
   max-height: calc(100vh - var(--space-12) * 6);
   object-fit: contain;
 }
-.steps {
+.drawing {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
+  margin: 0;
+  padding: var(--space-8) 0;
+}
+.count {
+  margin-right: auto;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+/* Words for a screen reader only. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

@@ -1,6 +1,7 @@
 /* app-style */
-/* The report view (P8-12): the folder, the header fields, then one band per section and per
-   ad. Labels sit in a narrow column beside their values; long values wrap anywhere. */
+/* The report view (P8-12; DLG-7): the count marks and the paid line, the folded details, the
+   ads in two panes (rows left, the picked ad right), then one band per section. Labels sit in
+   a narrow column beside their values; long values wrap anywhere. */
 .body {
   display: flex;
   flex-direction: column;
@@ -54,11 +55,41 @@
 .note {
   color: var(--color-text-secondary);
 }
-.path {
-  font-family: var(--font-mono);
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  align-items: center;
+}
+.marks {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+.paid {
+  font-weight: var(--weight-medium);
+}
+.panes {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+.ads {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0 var(--space-4) 0 0;
+  border-right: var(--border-width) solid var(--color-line);
+  list-style: none;
 }
 .failure {
   color: var(--color-danger-text);
+}
+.panes .ad {
+  padding-top: 0;
+  border-top: none;
 }
 .ad .fields {
   padding-left: var(--space-2);

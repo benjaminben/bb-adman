@@ -3,10 +3,12 @@
 // failure with "Retry" and a field to type the text by hand. Typing sends translation.set
 // (status `proposed`, source `user`, never `approved`), so the text is no longer out of date.
 // With no job started (a paid text provider) the Phase 5 line stays. Text is drawn as text.
-// P6-18: with a paid provider "Retry" opens the paid confirm in its place (`ask`).
+// P6-18: with a paid provider "Retry" opens the paid confirm in its place (`ask`). DLG-7: the
+// Phase 5 line is a warn mark "No {language}" whose tip is the old sentence.
 import { useId, useState } from 'react'
 import { PaidConfirm } from '@/renderer/ui/paid-confirm'
 import { BusySpinner } from '@/renderer/ui/dialog-frame'
+import { StatusMark } from '@/renderer/ui/status-mark'
 import layout from '@/renderer/ui/layout.module.css'
 import type { SyncChange } from '@/shared/schemas/queries/sync'
 import { type PaidAsk, SYNC_REQUESTS } from './translate-ask'
@@ -18,6 +20,7 @@ export const NO_TRANSLATION =
 
 export type TranslationLineProps = {
   proposed: NonNullable<SyncChange['proposedTranslation']>
+  languageName: string
   run: LanguageRun | undefined
   disabled: boolean
   ask: PaidAsk | null // the language's open paid confirm, or null
@@ -68,7 +71,18 @@ export function TranslationLine(props: TranslationLineProps) {
   if (proposed.status === 'proposed') {
     return <p className={styles.detail}>Proposed translation: {proposed.text}</p>
   }
-  if (!run) return <p className={styles.detail}>{NO_TRANSLATION}</p>
+  if (!run) {
+    return (
+      <p className={styles.detail}>
+        <StatusMark
+          tone="warn"
+          icon="alert"
+          label={`No ${props.languageName}`}
+          tip={NO_TRANSLATION}
+        />
+      </p>
+    )
+  }
   if (run.kind === 'running') {
     return (
       <p role="status" className={`${styles.detail} ${styles.reading}`}>

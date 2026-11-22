@@ -69,8 +69,9 @@ test('Workflow 5.3: a master edit, the sync review, Accept selected, then Accept
   // The review lists each and flags the override; one variant's change, "Accept selected".
   const review = await v.openSyncReview(page, DIRECTION, 3)
   for (const heading of [/· 9x16 · en$/, /· 16x9 · en$/, /· 1x1 · de$/])
-    await expect(v.changesOf(review, heading)).toBeVisible()
+    await expect(review.getByRole('listitem', { name: heading })).toBeVisible()
   const flag = 'Changed on this variant: style: colour'
+  await review.getByRole('button', { name: /· 9x16 · en$/ }).click()
   await expect(
     v.changesOf(review, /· 9x16 · en$/).getByRole('radiogroup', { name: flag }),
   ).toBeVisible()
@@ -85,6 +86,7 @@ test('Workflow 5.3: a master edit, the sync review, Accept selected, then Accept
 
   // "Accept all" clears the rest, "Keep mine" left on for the flagged colour.
   const rest = await v.openSyncReview(page, DIRECTION, 2)
+  await rest.getByRole('button', { name: /· 9x16 · en$/ }).click()
   const choice = rest.getByRole('radiogroup', { name: flag })
   await expect(choice.getByRole('radio', { name: 'Keep mine' })).toBeChecked()
   await rest.getByRole('button', { name: 'Accept all' }).click()

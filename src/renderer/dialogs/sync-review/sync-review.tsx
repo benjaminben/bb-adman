@@ -6,15 +6,19 @@
 // afresh for each opening, so each opening starts unticked. P6-16: translated copy changes
 // start their sync translations (use-sync-translations.ts) and are read again when one ends.
 // P6-18: with a paid text provider each waiting language gets a "Translate" line instead.
+// DLG-7: kind="review", two panes: the variants listed on the left (sync-list.tsx), the picked
+// one's changes on the right (variant-changes.tsx). Ticks and choices are kept here, so
+// picking another row changes nothing that is sent.
 import { useCallback, useEffect, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import type { DirectionControlProps } from '@/renderer/screens/campaign/direction-header'
 import { BusySpinner, DialogFrame } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
 import type { SyncDecision } from '@/shared/schemas/links'
-import type { SyncPreviewReply } from '@/shared/schemas/queries/sync'
+import type { SyncPreview, SyncPreviewReply } from '@/shared/schemas/queries/sync'
 import { acceptAll, acceptSelected, type Choices } from './decisions'
-import { type PaidAsk, TranslateAsk } from './translate-ask'
+import type { PaidAsk } from './translate-ask'
+import { SyncList, type SyncRowState, waitsForText } from './sync-list'
 import { VariantChanges } from './variant-changes'
 import { typedTranslation } from './typed-translation'
 import { useSyncTranslations } from './use-sync-translations'
@@ -42,6 +46,7 @@ export function SyncReview(props: SyncReviewProps) {
   const [sending, setSending] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
   const [reads, setReads] = useState(0)
+  const [picked, setPicked] = useState<string>()
 
   useEffect(() => {
     if (!open) return
@@ -80,6 +85,17 @@ export function SyncReview(props: SyncReviewProps) {
           onCancel: () => translations.cancel(language),
         }
       : null
+  const rowState = (preview: SyncPreview): SyncRowState => {
+    const language = languageOf(preview.variantId) ?? ''
+    const run = translations.runs[language]
+    const waiting = waitsForText(preview)
+    return {
+      offer: waiting && run === undefined && paid !== null && paid.needs.includes(language),
+      ask: askOf(language),
+      untranslated: waiting && (run === undefined || run.kind === 'failed'),
+    }
+  }
+  const shown = variants.find((v) => v.variantId === picked) ?? variants[0]
   const onType = (variantId: string) => async (layerKey: string, text: string) => {
     const refusal = await typedTranslation(api, command, { projectId, variantId, layerKey, text })
     if (refusal === null) readAgain()
@@ -145,7 +161,7 @@ export function SyncReview(props: SyncReviewProps) {
       title={`Sync ${direction.name}`}
       closable={!sending}
       footer={foot}
-      size="wide"
+      kind="review"
     >
       <div className={styles.body}>
         {refusal !== null && (
@@ -165,34 +181,35 @@ export function SyncReview(props: SyncReviewProps) {
           </p>
         )}
         {reply && variants.length === 0 && <p>Every variant is up to date.</p>}
-        {paid?.needs
-          .filter((language) => translations.runs[language] === undefined)
-          .map((language) => (
-            <TranslateAsk
-              key={language}
-              language={language}
-              ask={askOf(language)}
+        {shown && (
+          <div className={styles.panes}>
+            <SyncList
+              projectId={projectId}
+              variants={variants}
+              summaries={summaries}
+              picked={shown.variantId}
               disabled={sending}
-              onAsk={() => translations.ask(language)}
+              stateOf={rowState}
+              onPick={setPicked}
+              onAsk={(id) => translations.ask(languageOf(id) ?? '')}
             />
-          ))}
-        {variants.map((preview) => (
-          <VariantChanges
-            key={preview.variantId}
-            projectId={projectId}
-            variant={props.campaign.variants.find((v) => v.id === preview.variantId)}
-            preview={preview}
-            ticked={ticked}
-            choices={choices}
-            disabled={sending}
-            onTick={tick}
-            onChoose={(key, choice) => setChoices((was) => ({ ...was, [key]: choice }))}
-            run={translations.runs[languageOf(preview.variantId) ?? '']}
-            ask={askOf(languageOf(preview.variantId) ?? '')}
-            onRetry={() => translations.retry(languageOf(preview.variantId) ?? '')}
-            onType={onType(preview.variantId)}
-          />
-        ))}
+            <VariantChanges
+              key={shown.variantId}
+              projectId={projectId}
+              variant={summaries.find((v) => v.id === shown.variantId)}
+              preview={shown}
+              ticked={ticked}
+              choices={choices}
+              disabled={sending}
+              onTick={tick}
+              onChoose={(key, choice) => setChoices((was) => ({ ...was, [key]: choice }))}
+              run={translations.runs[languageOf(shown.variantId) ?? '']}
+              ask={askOf(languageOf(shown.variantId) ?? '')}
+              onRetry={() => translations.retry(languageOf(shown.variantId) ?? '')}
+              onType={onType(shown.variantId)}
+            />
+          </div>
+        )}
       </div>
     </DialogFrame>
   )

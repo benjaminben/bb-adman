@@ -83,20 +83,20 @@ describe('Quick look [FR-244]', () => {
   it('moves through the campaign order with Next, Previous and the arrow keys, wrapping', async () => {
     const { fake } = await draw(() => drawn)
     await open()
-    const at = () => [titleOf(), within(dialog()).getByText(/ of 3$/).textContent]
-    expect(at()).toEqual(['Master post · 1:1 · en', '1 of 3'])
+    const at = () => [titleOf(), within(dialog()).getByText(/ \/ 3$/).textContent]
+    expect(at()).toEqual(['Master post · 1:1 · en', '1 / 3'])
     await userEvent.click(within(dialog()).getByRole('button', { name: 'Next' }))
-    expect(at()).toEqual(['German post · 1:1 · de', '2 of 3'])
+    expect(at()).toEqual(['German post · 1:1 · de', '2 / 3'])
     await userEvent.click(within(dialog()).getByRole('button', { name: 'Next' }))
-    expect(at()).toEqual(['Night master · 9:16 · en', '3 of 3'])
+    expect(at()).toEqual(['Night master · 9:16 · en', '3 / 3'])
     await userEvent.click(within(dialog()).getByRole('button', { name: 'Next' }))
-    expect(at()[1]).toBe('1 of 3')
+    expect(at()[1]).toBe('1 / 3')
     await userEvent.click(within(dialog()).getByRole('button', { name: 'Previous' }))
-    expect(at()[1]).toBe('3 of 3')
+    expect(at()[1]).toBe('3 / 3')
     await userEvent.keyboard('{ArrowRight}')
-    expect(at()[1]).toBe('1 of 3')
+    expect(at()[1]).toBe('1 / 3')
     await userEvent.keyboard('{ArrowLeft}')
-    expect(at()[1]).toBe('3 of 3')
+    expect(at()[1]).toBe('3 / 3')
     await waitFor(() =>
       expect(renders(fake).map((i) => (i as { variantId: string }).variantId)).toEqual([
         'V1',

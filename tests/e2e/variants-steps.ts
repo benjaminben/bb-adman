@@ -111,6 +111,8 @@ export const changesOf = (review: Locator, heading: RegExp): Locator =>
 
 // Ticks every change of the named variant's group and sends "Accept selected".
 export async function acceptSelected(review: Locator, heading: RegExp): Promise<void> {
+  // DLG-7: the review shows one variant at a time; its row on the left picks it.
+  await review.getByRole('button', { name: heading }).click()
   const boxes = changesOf(review, heading).getByRole('checkbox')
   await expect(boxes.first()).toBeVisible()
   for (const box of await boxes.all()) await box.check()

@@ -40,22 +40,22 @@ describe('the report view [P8-12]', () => {
   it('shows the sections in the HTML order, then one per ad', async () => {
     await openView()
     await screen.findByRole('region', { name: 'Summary' })
+    // DLG-7: the counts are marks, the head facts are "Details", and the picked ad (the first
+    // at opening) sits in the right pane before the warnings and the delivered pairs.
     const headings = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
     expect(headings).toEqual([
-      'Summary',
+      'Details',
+      '<img src=x onerror=alert(1)>',
       'Warnings exported past',
       'Asked for against delivered',
-      '<img src=x onerror=alert(1)>',
-      'Spring fizz, French video',
-      'Spring fizz, banner',
     ])
   })
 
-  it('shows the pictures note and the folder as plain text', async () => {
+  it('shows the pictures note and no part of the folder (DLG-7)', async () => {
     const { dialog } = await openView()
     await screen.findByRole('region', { name: 'Summary' })
     expect(dialog).toHaveTextContent('Pictures of each ad are in the report file.')
-    expect(dialog).toHaveTextContent(FOLDER)
+    expect(document.body.innerHTML).not.toContain('handover')
     expect(dialog.querySelector('a, b, img')).toBeNull()
   })
 
@@ -79,7 +79,7 @@ describe('the report view [P8-12]', () => {
   it('shows the counts, the warnings exported past and the missing pairs', async () => {
     await openView()
     const summary = await screen.findByRole('region', { name: 'Summary' })
-    expect(summary).toHaveTextContent('Exported2Passed every check1With warnings1Failed1')
+    expect(summary).toHaveTextContent('2Exported1Passed every check1With warnings1Failed')
     expect(summary).not.toHaveTextContent('Checks were not run')
     const warnings = section('Warnings exported past')
     expect(warnings).toHaveTextContent('Headline contains “free”.')
@@ -103,12 +103,14 @@ describe('the report view [P8-12]', () => {
     expect(first).toHaveTextContent('Harbour background (01JASSET0000000000000000001)')
     expect(first).toHaveTextContent('(cut)')
     expect(first).toHaveTextContent('Text overflow: passed')
+    await userEvent.click(screen.getByRole('button', { name: 'Spring fizz, French video' }))
     const video = section('Spring fizz, French video')
     expect(video).toHaveTextContent('Not changed since export 1')
     expect(video).toHaveTextContent('last changed by an agent on 2026-11-19 22:15 UTC')
     expect(video).toHaveTextContent('headline: an agent, proposed, not approved')
     expect(video).toHaveTextContent('Video')
     expect(video).toHaveTextContent('bubbles rising </style><script>alert(1)</script>')
+    await userEvent.click(screen.getByRole('button', { name: 'Spring fizz, banner' }))
     const failed = section('Spring fizz, banner')
     expect(failed).toHaveTextContent('Not in export 1')
     expect(failed).toHaveTextContent('no file')
