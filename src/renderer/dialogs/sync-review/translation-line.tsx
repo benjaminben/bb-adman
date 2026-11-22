@@ -76,7 +76,7 @@ export function TranslationLine(props: TranslationLineProps) {
   const sentence = run.kind === 'failed' && run.sentence !== null ? `: ${run.sentence}` : '.'
   return (
     <div className={styles.detail}>
-      <div className={layout.row}>
+      <div className={styles.failure}>
         <p role="alert">{`The translation did not finish${sentence}`}</p>
         <button
           type="button"
