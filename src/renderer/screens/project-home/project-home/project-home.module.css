@@ -20,11 +20,13 @@
   white-space: nowrap;
 }
 /* The Campaigns header's right end: the count, then the brief buttons. The buttons, and the
-   dialogs they open, take the pointer back from the Section's header. */
+   dialogs they open, take the pointer back from the Section's header. The header keeps room
+   for a fold chevron this Section does not have, so the buttons reach into it. */
 .head {
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
+  margin-right: calc(-1 * (var(--icon-size) + var(--gap-inline)));
 }
 .actions {
   display: inline-flex;

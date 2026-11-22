@@ -31,7 +31,7 @@ export function HomeSections(props: HomeSectionsProps) {
         fold="none"
         summary={
           <span className={styles.head}>
-            {data.campaigns.length}
+            {data.campaigns.length > 0 && data.campaigns.length}
             <span className={styles.actions}>{props.actions}</span>
           </span>
         }
