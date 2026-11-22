@@ -3,11 +3,14 @@
 //   queued                                     cancelled at once
 //   running, attached kind                     cancelled at once
 //   running, background, cancel 'none'         cancelled at once, stoppedWaiting; not asked
+//   running video, paid, may_finish, working   not asked; left running for the next open
+//                                              (P7-13, A-174; leave-running.ts)
 //   running, background, any other provider    asked to stop as job.cancel does, then waited
 //                                              for; the outcome, or cancelled, outcomeUnknown
 // The close waits at most closeWaitMs for the whole project and ends as soon as no job of the
 // project is running. Then every job still queued or running is ended at once.
-import { activeJobs } from './job-store'
+import { activeJobs, readJob } from './job-store'
+import { leaveRunning, leftRunningOnClose } from './leave-running'
 import { writeJob, type LiveJob, type RunnerState } from './live'
 import { afterTransaction, askToStop } from './cancel'
 import { CLOSE_WAIT_MS } from './cancel-wait'
@@ -25,11 +28,23 @@ function liveOf(state: RunnerState, projectId: string): LiveJob[] {
   return [...state.active.values()].filter((l) => l.projectId === projectId)
 }
 
-function endQueued(state: RunnerState, projectId: string): void {
+// The jobs a close leaves running, read from their rows when the close starts.
+function charged(state: RunnerState, projectId: string): LiveJob[] {
+  const deps = state.opts.deps()
+  const handle = deps.projects.get(projectId)
+  if (!handle) return []
+  return liveOf(state, projectId).filter((live) => {
+    const row = readJob(handle, live.id, deps.log)
+    return row !== null && leftRunningOnClose(row, live.provider)
+  })
+}
+
+// Ends every queued or running row the runner does not hold, apart from the rows left running.
+function endQueued(state: RunnerState, projectId: string, left: ReadonlySet<string>): void {
   const handle = state.opts.deps().projects.get(projectId)
   if (!handle) return
   for (const job of activeJobs(handle)) {
-    if (state.active.has(job.id)) continue
+    if (state.active.has(job.id) || left.has(job.id)) continue
     state.enqueued.delete(job.id)
     writeJob(state, projectId, job.id, { status: 'cancelled' })
   }
@@ -58,7 +73,12 @@ export async function cancelAll(state: RunnerState, projectId: string): Promise<
   // [1.40] SPEC 6.11.2: while the close runs, pump starts no job of this project.
   state.closing.add(projectId)
   try {
-    endQueued(state, projectId)
+    const left = new Set<string>()
+    endQueued(state, projectId, left)
+    for (const live of charged(state, projectId)) {
+      leaveRunning(state, live)
+      left.add(live.id)
+    }
     for (const live of liveOf(state, projectId)) {
       const end = endWithoutWaiting(live)
       if (!end) {
@@ -69,7 +89,7 @@ export async function cancelAll(state: RunnerState, projectId: string): Promise<
       live.finish(end)
     }
     await waitForProject(state, projectId, state.opts.closeWaitMs ?? CLOSE_WAIT_MS)
-    endQueued(state, projectId)
+    endQueued(state, projectId, left)
     for (const live of liveOf(state, projectId)) {
       const end = endWithoutWaiting(live)
       if (!end) live.cancelAsked = true
