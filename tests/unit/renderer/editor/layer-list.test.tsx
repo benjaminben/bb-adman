@@ -173,7 +173,8 @@ describe('Layer list: reorder', () => {
 describe('Layer list: delete', () => {
   it('Delete Offer, and the Delete and Backspace keys, send layer.delete', async () => {
     const { sent } = await openList(LAYERS, 'L3')
-    await userEvent.click(button('Delete Offer'))
+    await userEvent.click(button('More actions for Offer'))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Delete' }))
     rowButton('Offer').focus()
     await userEvent.keyboard('{Delete}{Backspace}')
     expect(sent('layer.delete')).toEqual(Array(3).fill({ projectId: P, layerId: 'L3' }))
@@ -236,7 +237,7 @@ describe('Layer list: the type icon [ST-7, spec/app-style.md "Editor"]', () => {
 // show; the actions lie over the row's right end instead of adding a strip below it.
 describe('Layer list: rows keep one height [ST-7]', () => {
   const css = fs
-    .readFileSync(path.resolve('src/renderer/editor/layer-row/layer-row.module.css'), 'utf8')
+    .readFileSync(path.resolve('src/renderer/ui/object-row/object-row.module.css'), 'utf8')
     .replace(/\/\*[\s\S]*?\*\//g, '')
   const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
     selector: (m[1] ?? '').trim(),

@@ -13,27 +13,24 @@
   top: 0;
   z-index: 1;
   display: flex;
-  flex-wrap: wrap;
+  flex: none;
   align-items: center;
-  gap: var(--space-1) var(--space-2);
-  min-height: var(--bar-height);
-  padding: var(--space-1) var(--space-3);
+  gap: var(--space-1);
+  height: var(--row-height);
+  padding: 0 var(--pad-panel);
   background: var(--color-bg);
   border-bottom: var(--border-width) solid var(--color-line);
 }
-/* A panel head is an operating label, not a page title. */
+/* A panel head is an operating label, not a page title (as PanelHead's title). */
 .heading {
   flex: 1;
+  min-width: 0;
   margin: 0;
   font-family: var(--font-body);
-  font-size: var(--font-size-control);
+  font-size: var(--type-body-size);
   font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
   letter-spacing: normal;
-}
-.add {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
 }
 .list {
   display: flex;

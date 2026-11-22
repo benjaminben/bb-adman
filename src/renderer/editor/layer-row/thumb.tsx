@@ -15,7 +15,7 @@ export function Thumb(props: ThumbProps) {
   const { layer } = props
   if (layer.type === 'text') {
     return (
-      <span className={`${styles.thumb} ${styles.textMark}`} aria-hidden="true">
+      <span className={`${styles.picture} ${styles.textMark}`} aria-hidden="true">
         T
       </span>
     )
@@ -23,12 +23,12 @@ export function Thumb(props: ThumbProps) {
   const id = layer.source?.assetId
   const asset = id ? props.assets[id] : undefined
   if (!id || !asset || asset.missing || asset.kind !== 'image') {
-    return <span className={styles.thumb} aria-hidden="true" />
+    return <span className={styles.picture} aria-hidden="true" />
   }
   return (
     <img
       key={asset.version}
-      className={styles.thumb}
+      className={styles.picture}
       src={assetUrl(props.projectId, id)}
       alt=""
       draggable={false}
