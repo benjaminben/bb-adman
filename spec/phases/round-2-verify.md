@@ -14,6 +14,7 @@ A running list kept by the orchestrator. Each item is a choice made without the 
 8. **Fonts.** Five built-in type styles from one family now; two or three more open-licence families later, picked by you.
 9. **The "Master" badge is not read aloud** by a screen reader, because the tile's size line already ends in "master".
 10a. **Select, then open.** On the variant grid a click selects, a double-click or Enter opens. Up or Down into a cell holding both an image and a video goes to the image; onto an empty cell it goes to the nearest column, the left one on a tie. In the shot the selected tile's ring ends above its small buttons; the design wave tidies the tile.
+10b. **The Generate panel's "Add pictures…"** (in the same-shape list) imports a picture as a reference with no subject attached. The old video card attached the variant's subject; a start picture is not a subject photo, so the builder left it off.
 
 ## Choices about approvals
 
