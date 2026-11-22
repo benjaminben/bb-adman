@@ -32,7 +32,7 @@ async function draw(running: number) {
   )
   act(() => view.store.getState().show({ kind: 'project', projectId: 'P1' }))
   await userEvent.click(screen.getByRole('button', { name: 'Summer' }))
-  await userEvent.click(screen.getByRole('menuitem', { name: 'Close project' }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Close Summer' }))
   return { ...view, fake }
 }
 

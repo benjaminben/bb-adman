@@ -26,7 +26,7 @@ async function draw(openProjects = [SPRING]) {
 describe('project switcher with several projects [R2P-10, D9]', () => {
   it.each([
     ['one open: the name alone', [SPRING], 'Spring Launch'],
-    ['two open: the name and the count', [SPRING, HARBOUR], 'Spring Launch · 2 open'],
+    ['two open: the name and the count', [SPRING, HARBOUR], 'Spring Launch 2 projects open'],
   ])('labels the button with %s', async (_, open, name) => {
     await draw(open)
     expect(screen.getByRole('button', { name })).toHaveTextContent(name)
@@ -43,24 +43,29 @@ describe('project switcher with several projects [R2P-10, D9]', () => {
       return { ok: true, data: HARBOUR }
     })
     await userEvent.click(screen.getByRole('button', { name: 'Spring Launch' }))
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Open another project…' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Open…' }))
     expect(fake.commands).toContainEqual({
       name: 'project.open',
       input: { filePath: HARBOUR.filePath },
     })
     expect(store.getState().view).toEqual({ kind: 'project', projectId: 'P2' })
-    await userEvent.click(screen.getByRole('button', { name: 'Harbour Lights · 2 open' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Harbour Lights 2 projects open' }))
     const names = within(screen.getByRole('menu'))
       .getAllByRole('menuitem')
-      .map((i) => i.textContent)
-    expect(names.slice(0, 2)).toEqual(['Spring Launch', 'Harbour Lights'])
+      .map((i) => i.getAttribute('aria-label') ?? i.textContent)
+    expect(names.slice(0, 4)).toEqual([
+      'Spring Launch',
+      'Close Spring Launch',
+      'Harbour Lights',
+      'Close Harbour Lights',
+    ])
   })
 
   it('opens nothing when the picker is cancelled', async () => {
     const { fake, store } = await draw()
     fake.onQuery('dialog.pickProjectFile', () => ({ ok: true, data: { path: null } }))
     await userEvent.click(screen.getByRole('button', { name: 'Spring Launch' }))
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Open another project…' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Open…' }))
     expect(fake.commands).toEqual([])
     expect(store.getState().view).toEqual({ kind: 'project', projectId: 'P1' })
   })

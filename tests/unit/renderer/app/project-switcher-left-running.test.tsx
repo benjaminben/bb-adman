@@ -59,7 +59,7 @@ async function draw(rows: JobRow[]) {
 
 async function closeSummer() {
   await userEvent.click(screen.getByRole('button', { name: 'Summer' }))
-  await userEvent.click(screen.getByRole('menuitem', { name: 'Close project' }))
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Close Summer' }))
   return screen.findByRole('dialog', { name: 'Close Summer?' })
 }
 

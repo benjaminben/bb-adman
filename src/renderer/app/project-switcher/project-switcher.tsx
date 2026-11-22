@@ -1,17 +1,22 @@
-// spec/editor.md, "The shell" [FR-003]: a menu button showing the shown project's name, or
-// "AdManager" on the start screen. Its menu lists the open projects (choosing one shows it), then
-// "Start", then "Close project" for the shown one (project.close; with runs going it asks
-// first, close-project.tsx). Arrow keys move through the items and wrap; Escape or a click
-// elsewhere closes it.
+// spec/editor.md, "The shell" [FR-003], tidied by SH-3: a menu button showing the shown
+// project's name, or "AdManager" on the start screen, then with two or more open a count chip
+// "{n}" (hidden words " projects open"). Its menu holds a row per open project (choosing it
+// shows the project; its ✕ "Close {name}" closes that project through close-project.tsx, which
+// asks first with runs going), a separator, then "Package…" (shown project only), "Open…" and
+// "Start screen". Arrow keys move through every item and wrap; Escape or a click elsewhere
+// closes it.
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { EMPTY, useApp } from '@/renderer/app/app-context'
 import type { View } from '@/renderer/stores/app-store'
+import { usePackageProject } from '@/renderer/screens/project-home/package-project'
 import { Icon } from '@/renderer/ui/icon'
 import { APP_DISPLAY_NAME } from '@/shared/config/app-name'
 import layout from '@/renderer/ui/layout.module.css'
 import { menuPlaceStyles, useMenuPlace } from '@/renderer/ui/menu-place'
 import { useCloseProject } from './close-project'
 import { useOpenAnother } from './open-another'
+import { ProjectRows } from './project-rows'
+import { useShownRunning } from './use-shown-running'
 import styles from './project-switcher.module.css'
 
 type Item = { key: string; label: string; act: () => void }
@@ -29,24 +34,20 @@ export function ProjectSwitcher() {
   const place = useMenuPlace(open, button, menu)
   const shownId = view.kind === 'project' ? view.projectId : null
   const shown = projects.find((p) => p.projectId === shownId)
+  const running = useShownRunning(shownId)
+  const pack = usePackageProject(shown ? shown.projectId : null)
+  const count = projects.length
 
   const go = (next: View) => () => show(next)
   const items: Item[] = [
-    ...projects.map((p) => ({
-      key: p.projectId,
-      label: p.name,
-      act: go({ kind: 'project', projectId: p.projectId }),
-    })),
-    { key: 'open', label: 'Open another project…', act: () => void openAnother() },
-    { key: 'start', label: 'Start', act: go({ kind: 'start' }) },
+    ...(shown ? [{ key: 'package', label: 'Package…', act: pack.open }] : []),
+    { key: 'open', label: 'Open…', act: () => void openAnother() },
+    { key: 'start', label: 'Start screen', act: go({ kind: 'start' }) },
   ]
-  if (shownId !== null) {
-    const projectId = shownId
-    const close = () => void closeProject(projectId, shown?.name ?? 'this project')
-    items.push({ key: 'close', label: 'Close project', act: close })
-  }
 
-  const menuItems = () => [...(menu.current?.querySelectorAll('button') ?? [])]
+  const menuItems = () => [
+    ...(menu.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []),
+  ]
 
   useEffect(() => {
     if (!open) return
@@ -64,6 +65,11 @@ export function ProjectSwitcher() {
   function close() {
     setOpen(false)
     button.current?.focus()
+  }
+
+  const choose = (act: () => void) => () => {
+    close()
+    act()
   }
 
   function onKeyDown(event: KeyboardEvent) {
@@ -90,14 +96,17 @@ export function ProjectSwitcher() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
+        title={count > 1 ? `${count} projects open` : undefined}
         onClick={() => setOpen(!open)}
       >
         <span className={styles.name}>
           <span className={styles.title}>{shown?.name ?? APP_DISPLAY_NAME}</span>
-          {projects.length > 1 && (
+          {count > 1 && (
             <>
               {' '}
-              <span className={styles.count}>· {projects.length} open</span>
+              <span className={`${layout.chip} ${styles.count}`}>
+                {count} <span className={styles.hidden}>projects open</span>
+              </span>
             </>
           )}
         </span>
@@ -114,18 +123,22 @@ export function ProjectSwitcher() {
           onKeyDown={onKeyDown}
           {...place}
         >
+          <ProjectRows
+            projects={projects}
+            shownId={shownId}
+            running={running}
+            onShow={(projectId) => choose(go({ kind: 'project', projectId }))()}
+            onClose={(projectId, name) => choose(() => void closeProject(projectId, name))()}
+          />
+          <li role="separator" className={styles.separator} />
           {items.map((item) => (
             <li key={item.key} role="none">
               <button
                 type="button"
                 role="menuitem"
                 tabIndex={-1}
-                className={`${layout.menuItem} ${item.key === 'open' ? styles.after : styles.item}`}
-                aria-current={item.key === shownId || undefined}
-                onClick={() => {
-                  close()
-                  item.act()
-                }}
+                className={`${layout.menuItem} ${styles.item}`}
+                onClick={choose(item.act)}
               >
                 {item.label}
               </button>
@@ -134,6 +147,7 @@ export function ProjectSwitcher() {
         </ul>
       )}
       {dialog}
+      {pack.dialog}
     </div>
   )
 }
