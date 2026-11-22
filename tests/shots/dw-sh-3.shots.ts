@@ -30,12 +30,15 @@ test('The project menu with two projects, one running', async () => {
   const { app, page } = session
   await stillPage(page)
   await holdGemini(app)
-  await screens.createProject(page, 'Harbour Lights')
+  // firstIds reads the first open project, so the running one is made first.
   await screens.createProject(page, 'Alpine Spring')
   await screens.loadBriefAndCreate(app, page)
   const ids = await firstIds(page)
   const jobId = await startHeldRun(page, ids)
   await expect.poll(() => jobStatus(page, ids.projectId, jobId)).toBe('running')
+  await screens.createProject(page, 'Harbour Lights')
+  await page.getByRole('button', { name: 'Harbour Lights 2 projects open' }).click()
+  await page.getByRole('menuitem', { name: 'Alpine Spring', exact: true }).click()
 
   await page.getByRole('button', { name: 'Alpine Spring 2 projects open' }).click()
   const menu = page.getByRole('menu')
