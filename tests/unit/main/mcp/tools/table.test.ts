@@ -19,6 +19,9 @@ const TICK_TARGETS = [
   'generation.cutOut',
 ]
 
+// P10-6, P10-11: the delete tools, ask under the permission broker (D-023, D-099).
+const ASK_TARGETS = ['campaign.delete', 'variant.delete']
+
 describe('the fixed MCP tool table [SPEC 4.5; 14 1.56 MCP-B]', () => {
   it('maps each tool to one command or query that exists in core', () => {
     f = makeFixture()
@@ -32,7 +35,8 @@ describe('the fixed MCP tool table [SPEC 4.5; 14 1.56 MCP-B]', () => {
 
   it('widens nothing: every command a tool runs is allow in the agent policy today', () => {
     for (const t of MCP_TOOLS.filter((x) => x.kind === 'command')) {
-      const policy = TICK_TARGETS.includes(t.target) ? 'tick' : 'allow'
+      const asked = ASK_TARGETS.includes(t.target) ? 'ask' : 'allow'
+      const policy = TICK_TARGETS.includes(t.target) ? 'tick' : asked
       expect(AGENT_POLICY[t.target]?.policy, t.name).toBe(policy)
       expect(agentPolicyFor(t.target), t.name).toBe(policy)
     }
