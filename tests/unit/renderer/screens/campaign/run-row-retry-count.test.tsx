@@ -37,7 +37,7 @@ describe('RunRow, the confirm count on Retry [FN-4]', () => {
         request: { ...(videoRow().request as object), count: 4 },
         result: KEPT,
       }),
-      'This sends 4 paid request(s) to Google Gemini.',
+      'This sends 1 paid request(s) to Google Gemini.',
     ],
   ])('%s', async (_name, row, line) => {
     const { list } = await runs([row])

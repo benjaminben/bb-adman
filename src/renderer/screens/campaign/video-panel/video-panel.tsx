@@ -172,6 +172,7 @@ export function VideoPanel(props: {
       ) : (
         <PaidConfirm
           count={1}
+          references={pending.referenceAssetIds.length}
           providerLabel={provider?.label ?? pending.provider}
           onConfirm={() => void send(pending)}
           onCancel={() => setPending(null)}
