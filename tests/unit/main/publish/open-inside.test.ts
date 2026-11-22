@@ -4,7 +4,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { LocalFileRefused, openFileInside } from '@/main/publish/open-inside'
+import { LocalFileRefused, openFileInside, openInside } from '@/main/publish/open-inside'
 
 let base: string
 let work: string
@@ -123,5 +123,26 @@ describe('openFileInside, P9-10 hardening', () => {
     const file = path.join(work, 'a.png')
     await fs.writeFile(file, 'x')
     expect(await refusal(openFileInside(file, file))).toBeInstanceOf(LocalFileRefused)
+  })
+})
+
+describe('openInside, one checked handle [P9-10]', () => {
+  it('gives a handle to the checked file, whose bytes are read once', async () => {
+    const file = path.join(work, 'a.ttf')
+    await fs.writeFile(file, 'font bytes')
+    const handle = await openInside(work, file)
+    expect((await handle.readFile()).toString()).toBe('font bytes')
+    await handle.close()
+  })
+
+  it('refuses as openFileInside does, with no path in the error', async () => {
+    const file = path.join(work, 'a.ttf')
+    await fs.writeFile(file, 'x')
+    await fs.link(file, path.join(base, 'twin.ttf'))
+    const error = await openInside(work, file).catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(LocalFileRefused)
+    expect(JSON.stringify(error) + String(error)).not.toContain(base)
+    const missing = await openInside(work, path.join(work, 'gone.ttf')).catch((e: unknown) => e)
+    expect(missing).toBeInstanceOf(LocalFileRefused)
   })
 })

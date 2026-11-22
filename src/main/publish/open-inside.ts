@@ -38,6 +38,16 @@ async function openChecked(root: string, file: string): Promise<FileHandle> {
   return handle
 }
 
+// One checked handle on `file`, for a caller that checks and reads the same bytes (a font is
+// hashed and uploaded from one read). The caller closes it.
+export async function openInside(root: string, file: string): Promise<FileHandle> {
+  try {
+    return await openChecked(root, file)
+  } catch {
+    throw new LocalFileRefused()
+  }
+}
+
 // The bytes of `file`, a main-process path the caller listed, read only if it is inside `root`.
 export function openFileInside(root: string, file: string): ReadableStream<Uint8Array> {
   let handle: FileHandle | null = null
