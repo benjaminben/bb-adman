@@ -1,9 +1,11 @@
 // R2E-6: results elsewhere (spec/phases/round-2-editor.md D6, "Elsewhere"). The campaign comes
 // from the S2-16 brief, with a second post added. 328: the window shows the second post's tab
 // while the fake provider makes a picture for the first post's background; the result notice
-// says where it is, and Show goes there. 329: on the campaign page, the finished run's row has
-// "Choose in the editor", which opens the post with that layer. Reduce motion and a fixed
-// Math.random keep the window still. Only the fake provider runs; nothing leaves this machine.
+// says where it is, and Show goes there. 329: the finished run's row in the Activity panel has
+// "Go there", which opens the post with that layer (CAMP-7: the campaign page's run list is
+// gone). Reduce motion and a fixed Math.random keep the window still. Only the fake provider
+// runs; nothing leaves this machine.
+
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
 import path from 'node:path'
 import * as screens from '../e2e/screens'
@@ -91,14 +93,16 @@ test('A run that finishes on another post says where its pictures are', async ()
   await expect(page.getByRole('group', { name: 'Generate' })).toBeVisible()
 })
 
-test('The run list offers Choose in the editor for a finished picture run', async () => {
+test('The Activity row offers Go there for a finished picture run', async () => {
   session = await openApp()
   const { app, page } = session
   const ids = await setUp(app, page)
   await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await screens.openActivity(page)
   await makePicture(page, ids)
-  const runs = page.getByRole('list', { name: 'Runs' })
-  const choose = runs.getByRole('button', { name: 'Choose in the editor' })
+  const runs = page.getByRole('list', { name: 'Finished' })
+  const choose = runs.getByRole('button', { name: /^Go to / })
+
   await expect(choose).toBeVisible({ timeout: 20_000 })
   await choose.scrollIntoViewIfNeeded()
   await page.waitForTimeout(500)

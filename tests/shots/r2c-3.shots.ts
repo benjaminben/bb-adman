@@ -1,5 +1,5 @@
 // R2C-3 (spec/phases/round-2-campaign.md, design addition 3): select, then open. 347: one click
-// on the German square post selects it; no tab opens and the "Runs and panels" line names it.
+// on the German square post selects it; no tab opens (CAMP-7: the line naming it is gone).
 // 348: Down then Left move the selection to the English story post. 349: a double-click opens
 // that post in the editor. Made-up names only; only the fake provider runs.
 import { test, expect, type Page } from '@playwright/test'
@@ -71,7 +71,6 @@ test('select a post, move the selection, open it', async () => {
 
   await germanSquare.click()
   await expect(germanSquare).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.getByText(/^Runs and panels below are for: .* · 1080x1080 · de$/)).toBeVisible()
   await expect(page.getByRole('tablist', { name: 'Open variants' }).getByRole('tab')).toHaveCount(1)
   await shot(page, '347-tile-selected-not-open')
 
@@ -79,7 +78,7 @@ test('select a post, move the selection, open it', async () => {
   await page.keyboard.press('ArrowLeft')
   await expect(englishStory).toBeFocused()
   await expect(englishStory).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.getByText(/^Runs and panels below are for: .* · 1080x1920 · en$/)).toBeVisible()
+
   await shot(page, '348-selection-moved-by-arrows')
 
   await englishStory.dblclick()
