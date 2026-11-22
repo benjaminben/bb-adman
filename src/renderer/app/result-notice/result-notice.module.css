@@ -1,0 +1,21 @@
+/* app-style */
+/* Full width under the error banner with square corners, as the banner; the notice look and
+   the info tone are layout.module.css's. Empty, the live region takes no room. */
+.region:empty {
+  display: none;
+}
+.line {
+  align-items: center;
+  border-radius: 0;
+  border-bottom: var(--border-width) solid var(--color-line);
+}
+.words {
+  flex: 1;
+  min-width: 0;
+}
+.line > button {
+  margin-left: 0;
+}
+.dismiss {
+  color: inherit;
+}
