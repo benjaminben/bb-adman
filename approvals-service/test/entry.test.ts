@@ -45,7 +45,7 @@ describe('the catch-all route [AP-14]', () => {
   it('answers health with the key from its environment', async () => {
     const reply = await route.GET(get('/api/v1/health', { Authorization: `Bearer ${KEY}` }))
     expect(reply.status).toBe(200)
-    expect(await reply.json()).toEqual({ service: 'adman-approvals', contract: 1 })
+    expect(await reply.json()).toEqual({ service: 'adman-approvals', contract: 2 })
   })
 
   it('answers robots.txt with its text', async () => {

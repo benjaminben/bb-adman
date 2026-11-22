@@ -42,7 +42,7 @@ const TEXT_HEADERS = {
 test('health answers with the key, with exactly the API headers', async ({ request }) => {
   const reply = await request.get('/api/v1/health', { headers: auth })
   expect(reply.status()).toBe(200)
-  expect(await reply.json()).toEqual({ service: 'adman-approvals', contract: 1 })
+  expect(await reply.json()).toEqual({ service: 'adman-approvals', contract: 2 })
   expect(reply.headers()).toMatchObject(API_HEADERS)
   expect(extraHeaders(reply, Object.keys(API_HEADERS))).toEqual([])
 })

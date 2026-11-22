@@ -136,11 +136,11 @@ describe('scripts/migrate.ts [AP-14]', () => {
 
   it('applies each migration once, in name order, and records it', async () => {
     const client = createClient({ url: ':memory:', intMode: 'number' })
-    expect(await migrate(client, MIGRATIONS)).toEqual(['0001_init.sql'])
+    expect(await migrate(client, MIGRATIONS)).toEqual(['0001_init.sql', '0002_clips.sql'])
     expect(await migrate(client, MIGRATIONS)).toEqual([])
     const local = createDb(client)
     const done = await local.prepare('SELECT name FROM schema_migrations').all()
-    expect(done.results).toEqual([{ name: '0001_init.sql' }])
+    expect(done.results).toEqual([{ name: '0001_init.sql' }, { name: '0002_clips.sql' }])
     const sql = "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"
     const tables = await local.prepare(sql).all<{ name: string }>()
     expect(tables.results.map((t) => t.name)).toEqual([

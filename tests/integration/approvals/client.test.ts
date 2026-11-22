@@ -3,6 +3,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createApprovalsClient, type ApprovalsService } from '@/main/approvals/client'
 import type { ActivityLog, LogInput } from '@/main/log/activity-log'
+import { CONTRACT_VERSION } from '@/shared/approvals/contract'
 import { APPROVALS_FAILURE_MESSAGES, APPROVALS_REASON_MESSAGES } from '@/shared/approvals/messages'
 import { startApprovalsStandIn, type ApprovalsStandIn } from '../../helpers/approvals-stand-in'
 
@@ -137,7 +138,7 @@ describe('the approvals client: what it sends [spec/approvals.md "Named tests"]'
   })
 
   it('refuses a 5 MiB reply', async () => {
-    const json = { service: 'adman-approvals', contract: 1 }
+    const json = { service: 'adman-approvals', contract: CONTRACT_VERSION }
     const c = client()
     stand.once('health', { oversized: 4 * 1024 * 1024 - 1, json })
     await expect(c.health()).resolves.toBeUndefined()
@@ -171,7 +172,7 @@ describe('the approvals client: failures [spec/approvals.md "The service client"
     [
       'another contract number',
       () => (
-        stand.once('health', { status: 200, json: { service: 'adman-approvals', contract: 2 } }),
+        stand.once('health', { status: 200, json: { service: 'adman-approvals', contract: 1 } }),
         client().health()
       ),
       'version',

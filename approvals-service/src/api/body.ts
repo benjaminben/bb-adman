@@ -1,8 +1,9 @@
 // Check 4 of every API request with a body (spec/approvals-service.md "The keyed API"): JSON
-// only, at most 2 MiB, read with a cap so a missing or false Content-Length cannot get past it.
+// only, at most 4 MiB (round-2-approvals-video.md), read with a cap so a missing or false
+// Content-Length cannot get past it.
 import { apiError } from './errors'
 
-export const BODY_LIMIT = 2 * 1024 * 1024
+export const BODY_LIMIT = 4 * 1024 * 1024
 
 export type BodyResult = { ok: true; value: unknown } | { ok: false; reply: Response }
 

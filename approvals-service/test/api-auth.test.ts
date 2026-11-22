@@ -12,9 +12,9 @@ const LINKS = `${ORIGIN}/api/v1/links`
 const bearer = (key: string) => ({ Authorization: `Bearer ${key}` })
 const json = { 'Content-Type': 'application/json' }
 
-// A body larger than 2 MiB, sent as a stream so the request has no Content-Length.
+// A body larger than 4 MiB, sent as a stream so the request has no Content-Length.
 function bigStream(): ReadableStream<Uint8Array> {
-  let left = 2 * 1024 * 1024 + 1
+  let left = 4 * 1024 * 1024 + 1
   return new ReadableStream({
     pull(controller) {
       const size = Math.min(left, 64 * 1024)
@@ -112,7 +112,7 @@ const rows: Row[] = [
     'bad_request',
   ],
   [
-    'a body over 2 MiB without Content-Length',
+    'a body over 4 MiB without Content-Length',
     KEY,
     () =>
       new Request(LINKS, {
@@ -177,7 +177,7 @@ describe('the keyed API order of checks [approvals-service.md "The keyed API"]',
   it('answers health with the right key', async () => {
     const reply = await app(KEY).fetch(new Request(HEALTH, { headers: bearer(KEY) }))
     expect(reply.status).toBe(200)
-    expect(await reply.json()).toEqual({ service: 'adman-approvals', contract: 1 })
+    expect(await reply.json()).toEqual({ service: 'adman-approvals', contract: 2 })
   })
 
   it('sends no-store, nosniff and no CORS header on every reply', async () => {

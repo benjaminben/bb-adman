@@ -17,6 +17,10 @@ const variant = (version = 1, variantKey = KEY): VariantRow => ({
   version,
   pictureUrl: 'https://bucket.s3.eu-west-1.amazonaws.com/p.png',
   pictureExpiresAt: Date.UTC(2030, 0, 1),
+  kind: 'image',
+  clipUrl: null,
+  clipMs: null,
+  clipBytes: null,
 })
 
 async function rows() {

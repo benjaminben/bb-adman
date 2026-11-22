@@ -28,6 +28,10 @@ function variant(variantKey: string, position: number, version = 1): variants.Va
     version,
     pictureUrl: `https://h.example/${variantKey}.png`,
     pictureExpiresAt: 5000,
+    kind: 'image',
+    clipUrl: null,
+    clipMs: null,
+    clipBytes: null,
   }
 }
 

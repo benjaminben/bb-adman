@@ -84,11 +84,14 @@ describe('approvals.publish [spec/approvals-commands.md "approvals.publish"]', (
         version: v.rev,
         pictureUrl: `${lf.stand.origin}/${fileOf(v.id, v.rev)}`,
         pictureExpiresAt: expect.any(String),
+        kind: 'image',
+        clip: null,
       })
       expect(onDisk(fileOf(v.id, v.rev))).toBe(true)
     }
     const body = JSON.parse(lf.stand.seen.filter((s) => s.route === 'replaceGallery')[0]!.body)
     expect(body.campaignName).toBe('Spring Sale')
+    for (const v of body.variants) expect(v.clip ?? null).toBeNull()
     expect(readVariants(lf.db(), lf.c1, log())).toEqual(
       variants
         .map((v, i) => ({

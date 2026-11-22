@@ -10,16 +10,29 @@ export type VariantRow = {
   version: number
   pictureUrl: string
   pictureExpiresAt: number
+  kind: 'image' | 'video'
+  // All three null (an image, or a video sent as its still only), or all three set.
+  clipUrl: string | null
+  clipMs: number | null
+  clipBytes: number | null
 }
 
-const COLUMNS = `variant_key AS variantKey, position, title, size_line AS sizeLine, version,
-  picture_url AS pictureUrl, picture_expires_at AS pictureExpiresAt`
+type ClipKey = 'kind' | 'clipUrl' | 'clipMs' | 'clipBytes'
 
-export function putVariant(db: Db, linkId: string, row: VariantRow): Statement {
+// A row to write. Left out, the kind is 'image' and the clip columns are null, as the
+// contract's defaults read a body without them.
+export type NewVariantRow = Omit<VariantRow, ClipKey> & Partial<Pick<VariantRow, ClipKey>>
+
+const COLUMNS = `variant_key AS variantKey, position, title, size_line AS sizeLine, version,
+  picture_url AS pictureUrl, picture_expires_at AS pictureExpiresAt, kind, clip_url AS clipUrl,
+  clip_ms AS clipMs, clip_bytes AS clipBytes`
+
+export function putVariant(db: Db, linkId: string, row: NewVariantRow): Statement {
   return db
     .prepare(
       `INSERT OR REPLACE INTO gallery_variant (link_id, variant_key, position, title, size_line,
-        version, picture_url, picture_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        version, picture_url, picture_expires_at, kind, clip_url, clip_ms, clip_bytes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       linkId,
@@ -30,6 +43,10 @@ export function putVariant(db: Db, linkId: string, row: VariantRow): Statement {
       row.version,
       row.pictureUrl,
       row.pictureExpiresAt,
+      row.kind ?? 'image',
+      row.clipUrl ?? null,
+      row.clipMs ?? null,
+      row.clipBytes ?? null,
     )
 }
 
@@ -76,16 +93,31 @@ export function deleteUnlistedSignoffs(db: Db, linkId: string): Statement {
     .bind(linkId, linkId)
 }
 
-// Changes the picture only when the version still matches; never changes the version.
-export function renewPicture(
-  db: Db,
-  linkId: string,
-  renewal: { variantKey: string; version: number; pictureUrl: string; pictureExpiresAt: number },
-): Statement {
+export type Renewal = {
+  variantKey: string
+  version: number
+  pictureUrl: string
+  pictureExpiresAt: number
+  // Left out: null, a renewal of a row without a clip.
+  clipUrl?: string | null
+}
+
+// Changes the picture (and the clip) only when the version still matches and the renewal has a
+// clip exactly when the row has one; never changes the version. So a renewal never extends the
+// expiry of a clip it did not renew.
+export function renewPicture(db: Db, linkId: string, renewal: Renewal): Statement {
   return db
     .prepare(
-      `UPDATE gallery_variant SET picture_url = ?, picture_expires_at = ?
-        WHERE link_id = ? AND variant_key = ? AND version = ?`,
+      `UPDATE gallery_variant SET picture_url = ?1, picture_expires_at = ?2, clip_url = ?3
+        WHERE link_id = ?4 AND variant_key = ?5 AND version = ?6
+        AND (clip_url IS NULL) = (?3 IS NULL)`,
     )
-    .bind(renewal.pictureUrl, renewal.pictureExpiresAt, linkId, renewal.variantKey, renewal.version)
+    .bind(
+      renewal.pictureUrl,
+      renewal.pictureExpiresAt,
+      renewal.clipUrl ?? null,
+      linkId,
+      renewal.variantKey,
+      renewal.version,
+    )
 }

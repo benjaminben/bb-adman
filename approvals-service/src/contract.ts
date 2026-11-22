@@ -3,7 +3,7 @@
 // is made here and copied in the same commit. Constants and schemas only.
 import { z } from 'zod'
 
-export const CONTRACT_VERSION = 1
+export const CONTRACT_VERSION = 2
 export const SERVICE_NAME = 'adman-approvals'
 export const GALLERY_MAX = 500
 
@@ -59,14 +59,33 @@ export const CreateLink = z.strictObject({
 
 export const NewPassword = z.strictObject({ password: Password })
 
-export const GalleryVariant = z.strictObject({
-  variantKey: VariantKey,
-  title: Title,
-  sizeLine: SizeLine,
-  version: Version,
-  pictureUrl: PictureUrl,
-  pictureExpiresAt: Time,
+export const CLIP_MAX_MS = 180_000 // 3 minutes
+export const CLIP_MAX_BYTES = 384 * 1024 * 1024 // 384 MiB
+export const VariantKind = z.enum(['image', 'video'])
+
+// A video variant's clip. Its address passes the same host rule as a picture's.
+export const GalleryClip = z.strictObject({
+  clipUrl: PictureUrl,
+  type: z.literal('video/mp4'),
+  durationMs: z.number().int().min(1).max(CLIP_MAX_MS),
+  bytes: z.number().int().min(1).max(CLIP_MAX_BYTES),
 })
+
+// The defaults of `kind` and `clip` keep a body from contract 1 valid.
+export const GalleryVariant = z
+  .strictObject({
+    variantKey: VariantKey,
+    title: Title,
+    sizeLine: SizeLine,
+    version: Version,
+    pictureUrl: PictureUrl,
+    pictureExpiresAt: Time,
+    kind: VariantKind.default('image'),
+    clip: GalleryClip.nullable().default(null),
+  })
+  .refine((v) => v.kind === 'video' || v.clip === null, {
+    message: 'Only a video variant may have a clip.',
+  })
 
 export const Gallery = z.strictObject({
   campaignName: CampaignName,
@@ -83,6 +102,8 @@ export const PictureRenewal = z.strictObject({
   version: Version,
   pictureUrl: PictureUrl,
   pictureExpiresAt: Time,
+  // Null for a row without a clip; a row with one is renewed only together with its clip.
+  clipUrl: PictureUrl.nullable().default(null),
 })
 
 export const PictureRenewals = z.strictObject({
