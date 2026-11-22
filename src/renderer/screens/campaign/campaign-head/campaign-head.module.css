@@ -1,4 +1,15 @@
 /* app-style */
+/* The head row, then a refresh failure on its own line under it (Z-1b). */
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+/* The failure wraps in full; it is never cut short. */
+.failure {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
 /* The page head: back, the campaign's name in the title face, its actions at the right end. */
 .head {
   display: flex;

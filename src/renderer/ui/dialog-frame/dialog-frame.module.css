@@ -38,6 +38,12 @@
 .title {
   margin: 0;
 }
+/* Z-1b: a title with its icon before the words. */
+.withIcon {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}
 .description {
   margin: var(--space-1) 0 0;
   font-size: var(--font-size-control);

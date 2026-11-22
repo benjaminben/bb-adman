@@ -52,20 +52,28 @@
   cursor: grabbing;
 }
 
-/* ED-6: the chosen clip's actions, a small bar laid over the top edge of its block at the
-   block's right end (the right offset is set inline). It stands beside the block in the lane, so
-   the block keeps its size; the lane lets it rise above its own top edge. */
-.actions {
+/* ED-6, Z-1b: the chosen clip's actions. The place box spans the lane from its left edge to the
+   block's right end (its width is set inline) and stands on the block's top edge, so the bar sits
+   fully above the block at its right end and never covers the name. The box is at least as wide
+   as the bar, so the bar stays inside the lane; it takes no pointer, so the row above it stays
+   usable. The lane lets it rise above its own top edge. */
+.place {
   position: absolute;
-  top: var(--space-1);
+  bottom: calc(100% - var(--space-1));
+  left: 0;
   z-index: 2;
   display: flex;
+  justify-content: flex-end;
+  min-width: max-content;
+  pointer-events: none;
+}
+.actions {
+  display: flex;
   align-items: center;
-  margin-right: var(--space-2);
   padding: 0 var(--gap-tight);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-bg);
   box-shadow: var(--shadow-1);
-  transform: translateY(-50%);
+  pointer-events: auto;
 }

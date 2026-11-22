@@ -8,10 +8,11 @@
 // dialog is described by instead; it may hold several ids separated by spaces.
 // T4 (spec/app-style-parts.md, "Dialog"): `kind` sets the width (`size` wins when both are
 // given), and `warning` is a plain-text line in the head, read first as the description.
-// Without them the frame draws exactly as before.
+// Without them the frame draws exactly as before. Z-1b: `icon` draws an icon before the title
+// words, hidden from screen readers, so the dialog's name stays the title.
 import { useId, useRef, type ReactNode } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { Icon } from '@/renderer/ui/icon'
+import { Icon, type IconName } from '@/renderer/ui/icon'
 import styles from './dialog-frame.module.css'
 
 export type DialogSize = 'normal' | 'wide' | 'large'
@@ -38,6 +39,7 @@ export type DialogFrameProps = {
   size?: DialogSize
   kind?: DialogKind
   warning?: string
+  icon?: IconName
   children: ReactNode
 }
 
@@ -101,7 +103,14 @@ export function DialogFrame(props: DialogFrameProps) {
           onInteractOutside={stay}
         >
           <div className={styles.head}>
-            <Dialog.Title className={styles.title}>{props.title}</Dialog.Title>
+            <Dialog.Title
+              className={
+                props.icon === undefined ? styles.title : `${styles.title} ${styles.withIcon}`
+              }
+            >
+              {props.icon !== undefined && <Icon name={props.icon} />}
+              {props.title}
+            </Dialog.Title>
             {props.warning !== undefined && (
               <p id={warningId} className={styles.warning}>
                 <Icon name="alert" size="small" />

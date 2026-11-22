@@ -50,6 +50,7 @@ export function KeyDialog() {
       open={request !== null}
       onClose={() => finish(false)}
       title={`${request?.provider.label ?? ''} key`}
+      icon="key"
       kind="form"
     >
       <form className={styles.form} onSubmit={(e) => void save(e)}>
