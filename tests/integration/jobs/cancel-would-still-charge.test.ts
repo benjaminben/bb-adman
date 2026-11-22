@@ -64,7 +64,7 @@ describe('cancel_would_still_charge [P7-13, spec/cancel.md fal.ai Seedance]', ()
     expect(error).toMatchObject({
       code: 'RULE_VIOLATION',
       message:
-        'Charge Test has started this and will charge for it. The app lets it finish and keeps the result.',
+        'Charge Test · m1 has started this and will charge for it. The app lets it finish and keeps the result.',
       details: { reason: 'cancel_would_still_charge' },
     })
     expect(JSON.stringify(error)).not.toContain('r-1')
