@@ -8,6 +8,7 @@ import {
   languageName,
   markWords,
   rowLine,
+  sourceLabel,
   sourceLine,
 } from '@/renderer/screens/campaign/translation-panel/translation-words'
 import { translationRow as row } from './translation-fixture'
@@ -77,5 +78,9 @@ describe('translation words [P6-12]', () => {
       { layerId: 'L1', copyRev: 4 },
       { layerId: 'L4', copyRev: 7 },
     ])
+  })
+
+  it('labels the source text with its language [R2C-4]', () => {
+    expect(sourceLabel('English')).toBe('English (source)')
   })
 })

@@ -1,16 +1,19 @@
 // One translation (spec/phases/phase-06.md, design addition 8): "{title} · {size} · {layer}",
-// the source text, the text field, the mark and its source, and "Approve" on a proposed row.
+// then side by side the source text under "{primary} (source)" and the text field under
+// "{language}" (R2C-4), the mark and its source, and "Approve" on a proposed row. The field is
+// named "{language} {row line}" and described by the source text.
 // Leaving an edited field sends the text, with the tick's choice. The mark is the stored status
 // as read, never a local guess. Every text from the row is drawn as React text only.
 import { useId, useState } from 'react'
 import type { TranslationRow as Row } from '@/shared/schemas/queries/translation'
 import layout from '@/renderer/ui/layout.module.css'
-import { markWords, rowLine, sourceLine } from './translation-words'
+import { markWords, rowLine, sourceLabel, sourceLine } from './translation-words'
 import styles from './translation-panel.module.css'
 
 export type TranslationRowProps = {
   row: Row
   language: string // the language's name in words
+  sourceLanguage: string // the primary language's name in words
   message: string | null
   busy: boolean
   onSave: (text: string, applyToSameLanguage: boolean) => void
@@ -34,15 +37,30 @@ export function TranslationRow(props: TranslationRowProps) {
       <p id={`${id}-line`} className={layout.label}>
         {rowLine(row)}
       </p>
-      <p className={`${layout.muted} ${styles.source}`}>{sourceLine(row.sourceText)}</p>
-      <textarea
-        className={styles.text}
-        aria-labelledby={`${id}-line`}
-        value={draft}
-        rows={2}
-        onChange={(event) => setDraft(event.target.value)}
-        onBlur={leave}
-      />
+      <div className={styles.pair}>
+        <div className={styles.side}>
+          <span className={`${layout.muted} ${styles.label}`}>
+            {sourceLabel(props.sourceLanguage)}
+          </span>
+          <p id={`${id}-source`} className={styles.sourceText}>
+            {sourceLine(row.sourceText)}
+          </p>
+        </div>
+        <div className={styles.side}>
+          <span id={`${id}-lang`} className={`${layout.muted} ${styles.label}`}>
+            {props.language}
+          </span>
+          <textarea
+            className={styles.text}
+            aria-labelledby={`${id}-lang ${id}-line`}
+            aria-describedby={`${id}-source`}
+            value={draft}
+            rows={2}
+            onChange={(event) => setDraft(event.target.value)}
+            onBlur={leave}
+          />
+        </div>
+      </div>
       <div className={`${layout.row} ${styles.controls}`}>
         <span className={`${layout.badge} ${kind}`}>{words.mark}</span>
         {words.from !== null && (

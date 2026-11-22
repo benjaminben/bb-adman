@@ -1,12 +1,13 @@
 // The "Translations" section of the campaign overview (spec/phases/phase-06.md, design
 // addition 8): one group per language other than the primary one, from translation.forCampaign
-// read again on every change. "Export translation sheet…" at the top; each group gets its
-// language's newest jobs (P6-13).
+// read again on every change. "Export translation sheet…" at the top, then a line saying these
+// are the posts' own texts (R2C-4); each group gets its language's newest jobs (P6-13).
 import type { CampaignTabProps as CampaignSectionProps } from '@/renderer/screens/campaign/campaign-overview'
 import layout from '@/renderer/ui/layout.module.css'
 import { ExportSheet } from './export-sheet'
 import { LanguageGroup } from './language-group'
 import { groupRows } from './translation-words'
+import styles from './translation-panel.module.css'
 import { type TranslationsRead, useTranslations } from './use-translations'
 
 type BodyProps = {
@@ -37,6 +38,7 @@ function Body(props: BodyProps) {
       projectId={props.projectId}
       campaignId={props.campaignId}
       language={group.language}
+      primaryLanguage={read.data.primaryLanguage}
       rows={group.rows}
       jobs={read.data.jobs.filter((job) => job.language === group.language)}
       reload={props.reload}
@@ -50,6 +52,9 @@ export function TranslationPanel(props: CampaignSectionProps) {
     <section className={layout.card} aria-labelledby="translations-heading">
       <h2 id="translations-heading">Translations</h2>
       <ExportSheet projectId={props.projectId} campaignId={props.campaignId} />
+      <p className={`${layout.muted} ${styles.note}`}>
+        These are the texts on the posts themselves. A change here changes that post at once.
+      </p>
       <Body projectId={props.projectId} campaignId={props.campaignId} read={read} reload={reload} />
     </section>
   )

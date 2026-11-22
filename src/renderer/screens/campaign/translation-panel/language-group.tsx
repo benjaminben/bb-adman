@@ -5,6 +5,7 @@
 // "A text changed after you read it." is followed by the newest text. A refusal's own message
 // shows on its row, or under the heading for "Approve all". Beside it "Translate {language}
 // again…" with the group's posts, and under the heading the language's newest jobs (P6-13).
+// Each row is told the primary language's name, the language of its source text (R2C-4).
 import { useId, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import type {
@@ -29,6 +30,7 @@ export type LanguageGroupProps = {
   projectId: string
   campaignId: string
   language: string
+  primaryLanguage: string // the source texts' language code
   rows: Row[]
   jobs: TranslationJobState[]
   reload: () => void
@@ -42,6 +44,7 @@ export function LanguageGroup(props: LanguageGroupProps) {
   const [busy, setBusy] = useState(false)
   const [messages, setMessages] = useState<Messages>({ group: null, rows: {} })
   const name = languageName(props.language)
+  const sourceName = languageName(props.primaryLanguage)
   const proposed = approvalOf(props.rows)
   const variantIds = [...new Set(props.rows.map((row) => row.variantId))]
 
@@ -116,6 +119,7 @@ export function LanguageGroup(props: LanguageGroupProps) {
             key={`${row.layerId}:${row.copyRev}`}
             row={row}
             language={name}
+            sourceLanguage={sourceName}
             message={messages.rows[row.layerId] ?? null}
             busy={busy}
             onSave={(text, apply) => save(row.layerId, text, apply)}

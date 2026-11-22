@@ -43,7 +43,7 @@ async function group(name: string) {
 
 async function rowOf(groupName: string, line: string) {
   const g = await group(groupName)
-  const field = await g.findByRole('textbox', { name: line })
+  const field = await g.findByRole('textbox', { name: `${groupName} ${line}` })
   return within(field.closest('li') as HTMLElement)
 }
 
@@ -232,5 +232,30 @@ describe('TranslationPanel [P6-12]', () => {
     expect((await region.findByRole('alert')).textContent).toBe('That campaign was not found.')
     await userEvent.click(region.getByRole('button', { name: 'Retry' }))
     expect(reads(fake).length).toBe(2)
+  })
+})
+
+describe('TranslationPanel shows each source [R2C-4]', () => {
+  it('says under "Export translation sheet…" that these are the texts on the posts', async () => {
+    await show([row('L1')])
+    const region = within(screen.getByRole('region', { name: 'Translations' }))
+    const note =
+      'These are the texts on the posts themselves. A change here changes that post at once.'
+    expect(region.getByText(note)).toBeTruthy()
+  })
+
+  it('labels the source with the primary language and the field with the row language', async () => {
+    await show([row('L1'), row('L2', { title: 'Noon', sourceText: null })])
+    const g = await group('German')
+    const field = g.getByRole('textbox', { name: 'German Morning · Story · Headline' })
+    expect(field).toHaveAccessibleDescription('Fresh coffee')
+    const one = within(field.closest('li') as HTMLElement)
+    expect(one.getByText('English (source)')).toBeTruthy()
+    expect(one.getByText('German')).toBeTruthy()
+    expect(one.getByText('Fresh coffee')).toBeTruthy()
+    const two = await rowOf('German', 'Noon · Story · Headline')
+    expect(two.getByText('No source text')).toBeTruthy()
+    expect(two.getByRole('textbox')).toHaveAccessibleDescription('No source text')
+    expect(await axeViolations()).toEqual([])
   })
 })

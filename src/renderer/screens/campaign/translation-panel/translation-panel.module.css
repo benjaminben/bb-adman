@@ -25,6 +25,35 @@
 .source {
   font-size: var(--font-size-small);
 }
+.note {
+  margin: 0;
+  font-size: var(--font-size-small);
+}
+/* R2C-4: the source beside its translation, stacking when narrow. */
+.pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--width-column-min), 1fr));
+  gap: var(--space-3);
+}
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.label {
+  font-size: var(--font-size-small);
+}
+.sourceText {
+  flex: 1;
+  margin: 0;
+  padding: var(--space-2);
+  border-radius: var(--radius);
+  background: var(--color-surface-soft);
+  font-size: var(--font-size-control);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .text {
   width: 100%;
   resize: vertical;
