@@ -1,0 +1,37 @@
+/* app-style */
+/* JobProgress (DLG-1; spec/app-style-parts.md, "Dialog"): the .progress bar across the row and
+   the one button at its right end. With no known value a short piece of the fill slides along
+   the track; under reduce motion it stands still in the middle. */
+.job {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+}
+.bar {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.fill {
+  transition: width var(--motion-fast) ease-out;
+}
+.moving {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 30%;
+  animation: slide var(--motion-pop) ease-in-out infinite alternate;
+}
+@keyframes slide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(233%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .moving {
+    animation: none;
+    transform: translateX(117%);
+  }
+}
