@@ -1,6 +1,7 @@
 /* app-style */
 /* Along the left edge under the top bar, over the page (spec/phases/round-2-campaign.md,
-   design addition 5, A-315). The Activity panel keeps the right edge. */
+   design addition 5, A-315). The Activity panel keeps the right edge. Mounted after the page,
+   so it is drawn over it, and dialogs, mounted later still, over the panel. */
 .panel {
   position: fixed;
   top: var(--bar-height);

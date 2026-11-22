@@ -56,12 +56,14 @@ function ProjectPage(props: Props) {
   if (shown !== PROJECT_TAB) {
     return (
       <>
-        <CampaignView
-          key={shown}
-          projectId={projectId}
-          campaignId={shown}
-          onBack={() => showCampaign(projectId, PROJECT_TAB)}
-        />
+        <div className={styles.campaign}>
+          <CampaignView
+            key={shown}
+            projectId={projectId}
+            campaignId={shown}
+            onBack={() => showCampaign(projectId, PROJECT_TAB)}
+          />
+        </div>
         {kept}
       </>
     )
