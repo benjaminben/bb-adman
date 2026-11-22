@@ -21,8 +21,10 @@ test('Agent access: both connect blocks, then the setting off', async () => {
   const agent = page.getByRole('region', { name: 'Agent access' })
   const toggle = agent.getByRole('switch', { name: 'Turn on agent access' })
 
-  await toggle.check()
-  await expect(toggle).toBeChecked()
+  // The switch is held to the saved state: it flips only once mcp.setEnabled replies, so
+  // check() and uncheck(), which test the state right after the click, can lose that race.
+  await toggle.click()
+  await expect(toggle).toBeChecked({ timeout: 10_000 })
   await expect(agent.getByRole('button', { name: 'Make a new token' })).toBeEnabled()
   const desktop = agent.getByRole('region', { name: 'Claude Desktop' })
   await expect(desktop.locator('pre code')).toContainText('--mcp-bridge')
@@ -31,8 +33,8 @@ test('Agent access: both connect blocks, then the setting off', async () => {
   await shot(page, '295-settings-connect-both-blocks')
 
   await expect(toggle).toBeEnabled()
-  await toggle.uncheck()
-  await expect(toggle).not.toBeChecked()
+  await toggle.click()
+  await expect(toggle).not.toBeChecked({ timeout: 10_000 })
   await expect(agent.getByRole('region', { name: 'Connect to Claude' })).toHaveCount(0)
   await page.waitForTimeout(300)
   await shot(page, '296-settings-agent-access-off')

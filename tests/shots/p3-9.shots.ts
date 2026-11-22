@@ -114,7 +114,11 @@ test('The editor frame', async () => {
     layerId: headline.id,
     patch: { copy: LONG_HEADLINE },
   })
-  await expect(page.getByRole('status')).toContainText(/not fit/, { timeout: 10_000 })
+  // The app shell also keeps an empty role="status" line for agent activity, so the notice is
+  // picked by its words.
+  await expect(page.getByRole('status').filter({ hasText: /not fit/ })).toBeVisible({
+    timeout: 10_000,
+  })
   await page.waitForTimeout(300)
   await shot(page, '03-editor-overflow')
 })
