@@ -123,6 +123,16 @@ describe('job.retry of a video row of any provider [P7-11, A-176] (security clas
     await refused({ code: 'RULE_VIOLATION', details: { reason: 'video_start_not_offered' } })
   })
 
+  it('a row of a provider that is not available is refused before any check reads it', async () => {
+    await ready()
+    const providers = f.core.deps.providers as ProviderInfo[]
+    const at = providers.findIndex((p) => p.id === 'fal-seedance')
+    providers.splice(at, 1, { ...(providers[at] as ProviderInfo), available: false })
+    failedVideo('fal-seedance')
+    const r = await refused({ code: 'INVALID_INPUT', message: 'That provider cannot make videos.' })
+    expect(JSON.stringify(r)).not.toContain('fal-seedance')
+  })
+
   it('a row whose provider makes no videos is refused with no ID echoed', async () => {
     await ready()
     failedVideo('gemini')

@@ -21,6 +21,19 @@ function makeVideo(filePath: string, variantId: string, durationMs: number): voi
   }
 }
 
+// The open project `name` is closed, its first variant changed to a video post in the closed
+// file, and opened again. It ends on the project's page. P7-11: the video start specs use it
+// too, since generation.startVideo refuses an image post.
+export async function reopenAsVideo(page: Page, name: string, durationMs = VIDEO_MS) {
+  const ids = await firstIds(page)
+  const close = page.getByRole('button', { name: `Close ${name}` })
+  await close.click()
+  await expect(close).toHaveCount(0)
+  makeVideo(ids.filePath, ids.variantId, durationMs)
+  await page.getByRole('button', { name: new RegExp(`^Open ${name}`) }).click()
+  await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible()
+}
+
 export async function openVideoEditor(
   app: ElectronApplication,
   page: Page,
@@ -28,13 +41,7 @@ export async function openVideoEditor(
 ): Promise<void> {
   await screens.createProject(page, name)
   await screens.loadBriefAndCreate(app, page)
-  const ids = await firstIds(page)
-  const close = page.getByRole('button', { name: `Close ${name}` })
-  await close.click()
-  await expect(close).toHaveCount(0)
-  makeVideo(ids.filePath, ids.variantId, VIDEO_MS)
-  await page.getByRole('button', { name: new RegExp(`^Open ${name}`) }).click()
-  await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible()
+  await reopenAsVideo(page, name)
   await screens.openCampaign(page)
   await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
   await expect(page.getByRole('region', { name: 'Timeline' })).toBeVisible()

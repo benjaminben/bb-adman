@@ -47,11 +47,11 @@ async function usablePicture(deps: Deps, project: ProjectHandle, id: string): Pr
   await deps.assets.read(project, id)
 }
 
-// The provider's display name. A provider that makes no videos is refused; the ID is not
-// echoed, since on job.retry it comes from the project file.
+// The provider's display name. A provider that is not available or makes no videos is
+// refused; the ID is not echoed, since on job.retry it comes from the project file.
 function videoLabel(deps: Deps, providerId: string): string {
   const info = deps.providers.find((p) => p.id === providerId)
-  if (!info?.jobs.includes('video')) {
+  if (!info?.available || !info.jobs.includes('video')) {
     throw new AppError('INVALID_INPUT', 'That provider cannot make videos.')
   }
   return info.label
