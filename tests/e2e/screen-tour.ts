@@ -119,7 +119,7 @@ export async function aiTour(app: ElectronApplication, page: Page) {
   await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page.getByRole('button', { name: 'Add picture layer' }).click()
-  const section = page.getByRole('group', { name: 'Generate' })
+  const section = screens.picturePanel(page)
   await expect(section.getByRole('button', { name: 'Choose reference pictures…' })).toBeVisible()
   await expect(page.getByRole('region', { name: 'Earlier options' })).toBeVisible()
   await section.getByRole('button', { name: 'Generate…' }).click()

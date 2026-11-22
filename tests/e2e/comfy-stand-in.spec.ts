@@ -161,7 +161,7 @@ test("References and the paid confirm: an added picture goes to Flux; Gemini's c
   await expect(tick).toHaveCount(1)
   await tick.check()
   await chooser.getByRole('button', { name: 'Done' }).click()
-  await expect(panel.getByText('1 chosen', { exact: true })).toBeVisible()
+  await expect(screens.referenceThumbs(panel)).toHaveCount(1)
   await generate()
   await screens.confirmLicence(page)
   finishWithPicture(stand, await nthSentId(stand, 1), FLUX_OUTPUT)

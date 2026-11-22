@@ -104,7 +104,7 @@ export async function importAndAdd(app: ElectronApplication, page: Page, file: s
 // ends on the overview, with the runs.
 export async function startFromBackground(page: Page): Promise<void> {
   const panel = await screens.videoPanel(page)
-  await panel.getByRole('radio', { name: "This layer's picture" }).check()
+  await screens.chooseStart(panel, "This layer's picture")
   await panel.getByRole('textbox', { name: 'Prompt' }).fill(VIDEO_PROMPT)
   await panel.getByRole('button', { name: 'Generate…' }).click()
   await screens.generateVideo(page, 'Fake provider')
