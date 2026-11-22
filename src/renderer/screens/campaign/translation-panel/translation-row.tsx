@@ -4,7 +4,7 @@
 // by the source text; the link toggle "Use for every {language} post with this text box"; the
 // status mark ("Proposed" approves the row) and the source icon. Leaving an edited field sends
 // the text with the toggle's choice. The mark is the stored status as read, never a local guess.
-// R3-3: "Out of date" when the source text changed since the row was last synced.
+// R3-3: "Out of date" under the source text when the source text changed since the row was last synced.
 // A refusal shows as one line under the row. Every text from the row is drawn as React text only.
 import { useId, useState } from 'react'
 import { Icon } from '@/renderer/ui/icon'
@@ -54,9 +54,14 @@ export function TranslationRow(props: TranslationRowProps) {
         </span>
         <span className={styles.postLine}>{postLine(row)}</span>
       </span>
-      <p id={`${id}-source`} className={styles.sourceText}>
-        {sourceLine(row.sourceText)}
-      </p>
+      <div className={styles.sourceCell}>
+        <p id={`${id}-source`} className={styles.sourceText}>
+          {sourceLine(row.sourceText)}
+        </p>
+        {props.outOfDate && (
+          <StatusMark tone="warn" icon="clock" label="Out of date" tip={OUT_OF_DATE} />
+        )}
+      </div>
       <textarea
         className={styles.text}
         aria-label={`${props.language} ${rowLine(row)}`}
@@ -67,9 +72,6 @@ export function TranslationRow(props: TranslationRowProps) {
         onBlur={leave}
       />
       <span className={styles.controls}>
-        {props.outOfDate && (
-          <StatusMark tone="warn" icon="clock" label="Out of date" tip={OUT_OF_DATE} />
-        )}
         <button
           type="button"
           className={layout.iconButton}
