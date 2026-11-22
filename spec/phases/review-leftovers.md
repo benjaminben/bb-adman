@@ -1,6 +1,6 @@
 # Review leftovers
 
-Every finding from the Phase 2 review reports that nothing in the code or the spec has handled yet, checked against the code on `main`.
+Every finding from the Phase 2 review reports that nothing in the code or the spec has handled yet, checked against the code on `main`, and (section "Owed follow-ups") the small items the Phase 7 to 10 reviews left open.
 Each item is removed from this file when it is done. The review reports themselves are gone; this file replaces them.
 
 Source names: "CU4-Fixes OQ 2" means the report `REVIEW-Phase2-CU4-Fixes.md`, its open question 2. "Phase 1 review" means `REVIEW.md`.
@@ -27,6 +27,7 @@ None open.
 
 - Source: SliceC, unverified.
 - Files: `src/shared/schemas/commands/campaign.ts:36` (`languages: z.array(z.string().min(1))`); `src/shared/schemas/rows/campaign.ts:16`; export path pattern `{outputDir}/{campaignId}/{postTitle}/{sizeLabel}/{language}-{variantId}.{ext}`.
+- Status: the export side is built (`adPath` in `src/shared/export/output-paths.ts` refuses a size label or language outside its pattern; P8-2's target checks keep writes inside the folder). Left: the row in the security table of project-file values, and the `campaign.create` cap below (Owed follow-ups, agent tools).
 - What is wrong: a language is any non-empty text, read from the project file. `postTitle` is cleaned; nothing says `{language}` is. A hostile project file could put `/` or `..` in a language and make export write outside the chosen folder.
 - Done when: export checks each part of the path built from project-file values (language, size label, IDs) against a strict pattern (for example BCP 47 letters, digits and `-`), refuses others, and checks the final path is inside the chosen folder. The security table of project-file values gets a row for it. Tests: a project with language `../x` and one with `a/b`; export refuses, nothing is written outside the folder.
 - Security class: yes (destructive: write outside the chosen folder).
@@ -45,6 +46,7 @@ None open.
 - Files: `src/shared/schemas/rows/asset.ts:23-26` (only `genRunId`, `genProvider`, `genModel`, `genPrompt`); `src/main/jobs/kinds/image-generation.ts:78-81` (writes `models` and `workflow` into the PNG only).
 - What is wrong: `spec/export-and-checks.md`, "Embedded generation details", says the PNG's details are also stored on the asset row. `models` and `workflow` are in the PNG only. The report (FR-150) may need them.
 - Done when: the report phase decides whether the report reads them from the row (add columns) or from the PNG, and the spec says which. A test checks the report shows the workflow ID and version for a ComfyUI picture.
+- Also (P7-16): a ComfyUI video's embedded details lack `models` and `workflow`, because the video result carries no details; settle with the same answer.
 - Security class: no.
 
 ### Phase 9 (Cloud publishing)
@@ -99,6 +101,59 @@ None open.
 - What is wrong: a project file may come from someone else (`spec/security.md`, "A hostile project file is in scope for every slice"). The app checks the values it reads, but it trusts the SQLite layout itself. A hostile file could hold a trigger that runs on the app's own writes, a view that stands in for a table, or a table built without the primary key the app expects.
 - Done when: on open, before any write, the app reads `sqlite_master` and refuses a project file that holds a trigger, a view, or a table the app does not know (a fixed sentence, no names from the file). A hardening slice, placed before the release (Phase 11) unless the owner moves it. Tests: a file with a trigger, one with a view, one with an extra table, each refused with nothing written; a file made by the app opens.
 - Security class: yes (destructive: a trigger can change or delete the user's work).
+
+## Owed follow-ups (Phases 7 to 10)
+
+One line each; none blocks an exit slice unless it says so. Security-class items are marked.
+
+### Publish
+
+- "Publish anyway" stays disabled for about 500 ms after the warnings step opens (a double click), and "Back" reads `publish.inspect` again (P9-13 review).
+- `StorageProvider.read` has no byte limit on the shared port (P9-10 review).
+- Failures after an upload has started share the job reason of failures before it; give them their own reason (P9-10 review).
+- Remove leftover `publish-work` folders at app start too, as export does (P9-11 review, optional).
+
+### Dropbox sign-in
+
+- `session.ts` `save()`: put the token restore in its own `try`/`catch` (P9-6 review, L1).
+- Sign-out: keep its flag as a counter, or refuse a second sign-out while one runs (P9-6 review, L2).
+- A sign-in refused during a sign-out reuses "A Dropbox sign-in is already waiting for the browser."; give it its own sentence.
+
+### Export
+
+- P8-16's four review lows are in P8-17's slice text; nothing more here.
+
+### Agent tools
+
+- `campaignCreateFields`: cap the `sizes` and `languages` arrays and the length of each language; `logoImage` adds `library: 'asset'`; check each language's form (P10-10 review). Security class: no (export's `adPath` refuses a bad language).
+- `layer.update`: bound the `timing` and `animation` numbers in the schema; agents reach them through `update_layer` (P7-19 review, hardening).
+- `undoClipId` and `redoClipId`: check the ULID form (P7-10b review, L1).
+- Tool descriptions: `get_job`'s should name `layout` and `copyOptions`; `PROVIDER_WORDS` still calls Gemini "pictures only" (A-247). For P10-14's read of every description.
+- A tool call the SDK refuses before the handler is not logged; say so in the spec or log it (P10-8 review, L2).
+
+### Editor and video
+
+- The fan-out dialog sends only `['image']`; add a video choice (paid-line count unchanged) (P7-23).
+- Tidy: wrap P7-18's renders in `renderApp`, then remove the `SoundScope` context and the missing-context catch in `layer-tracks/use-layer-send.ts`; retire the stub test "SoundFields: renders nothing yet" (P7-19, P7-21).
+- Share the clip math of `clip-block/clip-drag.ts` with `timeline-math` (P7-20).
+- The length field rounds 0.35 s to 0.3 s (floating point) (P7-19).
+- `video_not_built` in `src/shared/video/messages.ts` may now be unused (P7-16).
+- The header comment of `src/renderer/screens/campaign/video-start.ts` is out of date (P7-22).
+
+### fal
+
+- A run started from a prompt should name the text-to-video endpoint as the job's model; the row's default model is the image-to-video one (P7-11, P7-14 notes).
+- Out-of-date comments: `src/main/providers/fal-seedance/index.ts`; the fal row in `tests/unit/renderer/fake-api.ts`.
+
+### Bridge mode (security class, before the release)
+
+- In bridge mode, put Chromium's own session files in a temporary folder (`app.setPath('sessionData', …)`), with a test that the app data folder's listing is unchanged; this also avoids a Windows race on Chromium's `Local State` file (P10-9 review, Low 1).
+- A packaged app ignores `ADMAN_USER_DATA_DIR`, and the packaging slice sets the Electron fuses `RunAsNode`, `EnableNodeCliInspectArguments` and `EnableNodeOptionsEnvironmentVariable` off (P10-9 review, Low 2).
+
+### Tests
+
+- `tests/unit/config/no-hand-test.test.ts`: add `handTest` and `HandTestScreen` to its names (P9-14 review, optional).
+- `dropbox-sign-in.test.ts` is at 299 lines: split it at its next change.
 
 ## Test gaps
 
@@ -170,7 +225,6 @@ The code is right; the spec rewrite should describe it.
 - `tests/e2e/launch.ts` imports from `tests/e2e-real/`; `tests/e2e-real/pictures.ts` repeats `given-picture.ts`. Cosmetic. (E2E-R S-5)
 - `afterEach` throws on `box.root` after a worker refusal (`real-server.spec.ts:50`). Nuisance. (E2E-R-Fixes-2 S-G)
 - JPEG reader trusts the first frame header: worst case is a large decode, a nuisance. (Fixes-LM U-1)
-- A hard link in the hand-test folder is not seen by `lstat`: dev tools only, needs write access to app data, removed in Phase 9. (Fixes-LM U-2)
 - `run-images.ts` imports the request type, not the schema. Cosmetic. (H4 H41-3)
 - `ensureAssetsDir` treats any `lstat` error as "nothing found" (`service.ts:71`): the real-path check and `mkdir` that follow still keep it inside the project folder. (H4 O-4)
 - A second typed key can stay in the key row's state after the first save (`key-row.tsx:24`). Nuisance. (KeyRowFix item 2)
@@ -187,12 +241,11 @@ The code is right; the spec rewrite should describe it.
 - Paid Retry's confirm line does not say it re-sends the reference pictures: the user still confirms the cost. (TP-5 Q1)
 - The Flux spec has no "first-run size" line in `source.changes`. Cosmetic. (WorkflowData DV-2)
 - The brief summary shows planned size labels and languages and does not mark defaults: for the UI pass. (TP-1 F7)
-- No keyboard-path test for the hand-test screen: dev tool, removed in Phase 9. (SliceI-1 unverified 4)
 - Helper still named `removeKeys` (`s3/failure.ts:30`). Cosmetic. (SliceF-RunA A-06)
-- Hand-test `details.provider` is `local`. Cosmetic. (SliceI-1 unverified 5)
 - `campaign-list.tsx:1-2` comment omits the count. Cosmetic. (TP-2)
 - A refused Save shows its sentence twice. Cosmetic. (TP-3 unverified 2)
 
 ## No longer applies
 
+- Three hand-test items (a hard link in the hand-test folder, Fixes-LM U-2; no keyboard-path test for the hand-test screen, SliceI-1 unverified 4; hand-test `details.provider` is `local`, SliceI-1 unverified 5): the hand-test tools were removed in P9-14.
 - `reply-keys.test.ts` sends `campaign_id` to `get_project` and relies on the SDK dropping unknown keys: the test passes on `main` (2 of 2). (MCP-Followup unverified)

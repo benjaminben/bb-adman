@@ -104,7 +104,7 @@ Built (Phase 4, slice P4-4); each of layout, extract brief and copy options pass
 
 ## fal.ai Seedance (image-to-video)
 
-The adapter is built (P7-14) and tested on recorded answers only; the registry row stays `available: false` until P7-15 switches it on, and its one paid run is P7-24's. It uses no client package (A-170): direct HTTPS calls through one pinned fetch. Where this section and `spec/phases/phase-07.md`, "fal.ai Seedance" differ, the phase file is right until P7-15 folds it in here.
+The adapter is built (P7-14) and tested on recorded answers only; P7-15 switched the registry row on (`available: true`), and its one paid run is P7-24's. Status, result and download calls are not paid calls; a started run left running on close or quit is collected at the next open (`spec/cancel.md`, "fal rows"). It uses no client package (A-170): direct HTTPS calls through one pinned fetch. Where this section and `spec/phases/phase-07.md`, "fal.ai Seedance" differ, the phase file is right until P7-15 folds it in here.
 
 **Direction:** outbound. **Protocol:** HTTPS queue API, direct calls (no client package). **Authentication:** API key, secret `fal.apiKey`. [REQ: FR-123, FR-124, OI-04]
 

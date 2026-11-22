@@ -165,9 +165,11 @@ A project file can come from someone else, so its `asset.font_publish_allowed` f
 
 ### The export interface (asked of Phase 8 and Phase 6)
 
-P9-1 writes the port types in `src/main/publish/ports.ts`; P9-11 adapts the real code to them. What P9-11 needs:
+P9-1 writes the port types in `src/main/publish/ports.ts`; P9-11 adapts the real code to them (built, `src/main/publish/export-adapter.ts`). As built:
 
-- **From Phase 8, one main-process function** that exports a whole campaign **inside the calling job** (not as a job of its own): input `{ projectId, campaignId, outputRoot, proceedDespiteWarnings, proceedReason, publishHeader: { publishedAt, publishNumber } | null, signal, onProgress }`, where `outputRoot` is a main-process folder (the work folder); it writes the ads, `report-*.html` and `report-*.json` with the publish header at the top of the report when given [REQ: FR-241], inserts the `report` row, and returns the files written, each `{ role: 'ad' | 'report_html' | 'report_json', relPath, absPath }` (`relPath` relative to the campaign folder) and the exported variant IDs.
+- **Phase 8's `runExport`** runs **inside the publish job** (not as a job of its own), into `outputRoot`, the work folder, which must be a real folder at its own real path. It is given a job context that makes no provider call and whose `report.add` saves nothing. Phase 8 has no publish-header option: the adapter writes the header `{ publishedAt, publishNumber }` at the top of the two report files after Phase 8 has written them [REQ: FR-241]. The port returns the files written, each `{ role, relPath, absPath }` (`relPath` relative to the campaign folder, without `exports/`), and the exported variant IDs.
+- **All or nothing about its ads** (ruled at P9-11): if any ad fails to export, the export ends `export_failed` before the report is written, so nothing is uploaded or cleaned up and the earlier published copy of that ad stays.
+- **No `report` row** (ruled at P9-11): a publish stores no local path and is not counted as a local export.
 - **From Phase 8, the checks** for a campaign as a list of warnings `{ variantId, title, message }`, without exporting.
 - **From Phase 6**, the translation sheet's bytes for a campaign (`translation.exportSheet`'s content), or none.
 - The port, as P9 uses it: `exportForPublish(deps, input) → { files: ExportedFile[]; variantIds: string[] }` with roles `ad`, `report_html`, `report_json`, `translations_csv`; `warningsForPublish(deps, { projectId, campaignId }) → PublishWarning[]`. Until P9-11 both stubs throw `LocalFailure('export_not_built')`.

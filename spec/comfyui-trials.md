@@ -1,6 +1,6 @@
-# ComfyUI: trials, the real-server tests and the hand-test screen
+# ComfyUI: trials and the real-server tests
 
-How a shipped workflow becomes `proven`, the real-server test harness `test:comfy`, the hand-test screen's ComfyUI part, what is not built (Krea 2, custom workflows) and what a server needs. The workflows themselves, sizes, video runs and extend are in `spec/comfyui-workflows.md`; the address, the client, the check and failures are in `spec/comfyui.md`.
+How a shipped workflow becomes `proven`, the real-server test harness `test:comfy`, the dropped hand-test screen part, what is not built (Krea 2, custom workflows) and what a server needs. The workflows themselves, sizes, video runs and extend are in `spec/comfyui-workflows.md`; the address, the client, the check and failures are in `spec/comfyui.md`.
 
 ## Trials and `proven` [REQ: FR-284]
 
@@ -52,7 +52,7 @@ Built, except where marked. Shared harness rules: `spec/testing.md`; variables: 
 
 ## The hand-test screen's ComfyUI part [REQ: FR-290]
 
-Not built (Phase 2; whether still wanted is OI-64). Dev-only, like `dev.storage`: shown only when `app.getState` says `devTools`, never in a packaged app. Owns the ComfyUI section of `src/renderer/dev/` and `src/main/commands/dev/comfy-extend.ts`. It uses the product commands. The test-path screens with dev tools on stand in for it.
+Not built. The hand-test screen it was planned for was removed in P9-14 (`src/renderer/dev/` is gone). The product screens with dev tools on stand in for it. Whether any of it is still wanted, and where, is OI-64. The plan, kept for the record:
 
 - The address field (`comfy.setAddress`), "Check" (`comfy.check`), the missing items and licence notes per workflow, the "left on the server" sentences.
 - A workflow picker that includes `trial` ones: `generation.runImages` and `generation.startVideo` take an optional `workflowId` from `WORKFLOW_IDS`, accepted only when `deps.devTools` is true and the actor is the user; otherwise `INVALID_INPUT`.

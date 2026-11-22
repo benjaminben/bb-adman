@@ -36,13 +36,13 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `direction.createFromMaster` | projectId, masterVariantId, name | — | deny | Built | FR-074 |
 | `direction.rename` | projectId, directionId, name | C | deny | Built | FR-072 |
 | `direction.delete` | projectId, directionId (refused if it is the campaign's last) | — | deny | Built | A-06 |
-| `variant.fanOut` | projectId, directionId, sizes[], languages[], formats[] (`image` only until Phase 7), fits{} | C | deny | Built | FR-075, FR-076 |
+| `variant.fanOut` | projectId, directionId, sizes[], languages[], formats[] (video cells since P7-23; the fan-out dialog still sends `image` only), fits{} | C | deny | Built | FR-075, FR-076 |
 | `variant.add` | projectId, directionId, sizeLabel, language, format, fit? (`scale` or `crop`) | C | allow | Built | FR-195 |
 | `variant.remove` | projectId, variantIds[] (system; the inverse of fan-out, `variant.add`, `variant.restore`) | C | deny (system) | Built | R-17 |
 | `variant.restore` | projectId, snapshots[] (system; the inverse of `variant.remove`) | C | deny (system) | Built | R-17 |
 | `variant.restoreLayers` | projectId, variants[] of { variantId, layers } (system; the inverse of `sync.apply`, `generation.applyFill`) | C | deny (system) | Built | R-17 |
-| `variant.update` | projectId, variantId, title (Phase 3); durationMs (Phase 7) | V | allow | Built (title; durationMs Phase 7) | FR-070, FR-120 |
-| `variant.setFormat` | projectId, variantId, format (`spec/data-rules.md`, "Changing a variant's format") | V | allow | Not built (Phase 7) | FR-070, FR-120, R-20, D-025 |
+| `variant.update` | projectId, variantId, title (Phase 3); durationMs (Phase 7) | V | allow | Built (title; durationMs P7-10) | FR-070, FR-120 |
+| `variant.setFormat` | projectId, variantId, format (`spec/data-rules.md`, "Changing a variant's format") | V | allow | Built (P7-10) | FR-070, FR-120, R-20, D-025 |
 | `variant.delete` | projectId, variantId (refused for a master) | — | ask | Built | FR-073, FR-197 |
 | `layer.create` | projectId, variantId, type (image or text), values? | V | allow | Built | FR-090, FR-194 |
 | `layer.update` | projectId, layerId, patch of copy, style, geometry, source, timing, animation, name, visible, locked | V | allow | Built | FR-092–FR-094, FR-194, FR-249 |
@@ -52,9 +52,9 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `layer.clearOverride` | projectId, layerId, paths[] | V | deny | Built | FR-080 |
 | `layer.revert` | projectId, variantId, layers[] of { layerId, patch, overrides } (system; the inverse of an edit that changed an override list) | V | deny (system) | Built | FR-080, FR-095 |
 | `layer.reportOverflow` | projectId, layerId, overflow, variantRev | — | deny | Built | FR-098 |
-| `clip.add` | projectId, variantId, assetId, startMs | V | deny | Not built (Phase 7) | FR-121 |
-| `clip.update` | projectId, clipId, startMs?, inMs?, outMs?, placement? | V | deny | Not built (Phase 7) | FR-122 |
-| `clip.remove` | projectId, clipId | V | deny | Not built (Phase 7) | FR-122 |
+| `clip.add` | projectId, variantId, assetId, startMs | V | deny | Built (P7-9) | FR-121 |
+| `clip.update` | projectId, clipId, startMs?, inMs?, outMs?, placement? | V | deny | Built (P7-9) | FR-122 |
+| `clip.remove` | projectId, clipId | V | deny | Built (P7-9) | FR-122 |
 | `translation.propose` | projectId, variantIds[] or directionId + language | — | deny | Not built (Phase 6) | FR-101 |
 | `translation.set` | projectId, layerId, text, applyToSameLanguage: boolean | V | allow | Built | FR-102, FR-194 |
 | `translation.approve` | projectId, layerIds[] (becomes layers[] of { layerId, copyRev } in P6-4b) | C | deny | Built | FR-101 |
@@ -69,27 +69,27 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `generation.cutOut` | projectId, variantId, layerId, provider, licenceConfirmed? | — | tick | Built | FR-307 |
 | `brief.extract` | projectId, filePath (`.md`, `.markdown`, `.txt`), provider | — | deny | Built | FR-022 |
 | `layer.updateMany` | projectId, variantId, updates[] of { layerId, patch } (1 to 100) | V | allow | Built | FR-061, FR-092 |
-| `generation.startVideo` | projectId, variantId, prompt, durationMs, provider, start (`none` or `first_frame`), useReferences: boolean, referenceAssetIds[], licenceConfirmed? (S2-4) | — | tick | Built (ComfyUI; fal.ai Seedance with slice J) | FR-123, FR-199, FR-286 |
+| `generation.startVideo` | projectId, variantId, prompt, durationMs, provider, start (`none` or `first_frame`), useReferences: boolean, referenceAssetIds[], licenceConfirmed? (S2-4) | — | tick | Built (ComfyUI; fal.ai Seedance since P7-15) | FR-123, FR-199, FR-286 |
 | `job.retry` | projectId, jobId, licenceConfirmed? (S2-4) | — | deny | Built | FR-069, FR-152 |
 | `job.cancel` | projectId, jobId | — | tick | Built | FR-152, FR-215 |
 | `job.markSeen` | projectId, jobIds[] (at least one) | — | deny | Built | FR-218 |
-| `storage.dropboxSignIn` | — | — | deny | Not built (slice G, postponed) | FR-160, R-15 |
-| `storage.dropboxSignOut` | — | — | deny | Not built (slice G, postponed) | FR-160 |
+| `storage.dropboxSignIn` | — | — | deny | Built (P9-5) | FR-160, R-15 |
+| `storage.dropboxSignOut` | — | — | deny | Built (P9-5) | FR-160 |
 | `storage.checkS3` | `{}`. Tests the saved S3 settings and keys: list, put, read and delete one small test file; replies with ok or one fixed failure sentence (`spec/storage-and-publish.md`) | — | deny | Built (AP-10b) | — |
-| `export.run` | projectId, campaignId, variantIds[], outputDir, imageFormat, jpgQuality, fps, proceedDespiteWarnings, reason? (FR-236) | — | deny | Not built (Phase 8) | FR-140, FR-199, FR-236 |
-| `publish.run` | projectId, campaignId, storage, replaceConfirmed | — | deny | Not built (Phase 9) | FR-161, FR-199 |
+| `export.run` | projectId, campaignId, variantIds[], outputDir, imageFormat, jpgQuality, fps, proceedDespiteWarnings, reason? (FR-236) | — | deny | Built (P8-5) | FR-140, FR-199, FR-236 |
+| `publish.run` | projectId, campaignId, storage, replaceConfirmed, proceedDespiteWarnings, proceedReason? (`spec/phases/phase-09.md`) | — | deny | Built (P9-10) | FR-161, FR-199 |
+| `publish.setFontConsent` | projectId, assetId, allowed, sha256 (needed when allowed) (A-260) | — | deny | Built (P9-9, P9-12) | — |
 | `history.undo` / `history.redo` | projectId, scope (`variant:{id}` or `campaign:{id}`) | — | deny | Built | FR-095 |
 | `settings.update` | patch of settings | — | deny | Built | FR-067 |
 | `secret.set` | name, value | — | deny | Built | FR-170, FR-198 |
 | `secret.delete` | name | — | deny | Built | FR-170, FR-198 |
 | `mcp.setEnabled` | enabled | — | deny | Built | FR-191 |
 | `mcp.regenerateToken` | — | — | deny | Built | R-04 |
-| `agent.answerPermission` | requestId, allow, rememberAuto | — | deny | Not built (Phase 10) | FR-197 |
+| `agent.answerPermission` | requestId, allow, rememberAuto | — | deny | Built (P10-6) | FR-197 |
 | `comfy.setAddress` | address (text or null) | — | deny | Built | FR-251 |
 | `comfy.check` | — | — | deny | Built | — |
 | `agentRuns.setAllowed` | provider, allowed | — | deny | Built | FR-279, FR-280 |
 | `agentRuns.setLimit` | limit | — | deny | Built | — |
-| `dev.storage` | storage (`s3`, `dropbox` or `local`), action (`write`, `list` or `remove`), filePath? (for `write`) | — | deny | Built (dev tools only) | — |
 | `dev.comfyExtend` | projectId, assetId, width, height, prompt | — | deny | Not built, and not to be built: `generation.runFill` replaces it (CU-8 is dropped under OI-64's assumption) | — |
 
 The registry on `main` is `src/main/core.ts` (one spread line per domain). `src/main/commands/storage/index.ts` is empty; the Dropbox schemas exist in `src/shared/schemas/commands/storage.ts`. `history.undo` and `history.redo` are dispatched by the bus itself (`src/main/commands/history/run-history.ts`).
@@ -220,15 +220,15 @@ Built unless marked. `src/main/commands/settings/`, `secret/`, `mcp/`, `comfy/`.
 - **`comfy.check`** (`spec/comfyui.md`, "The check"). Returns `ComfyCheck = { outcome, version?, note?, workflows: [{ id, missing }] }`. No address saved is `comfy_address_needed`. Writes nothing.
 - **`agentRuns.setAllowed { provider, allowed }`**. The one writer of `settings.agentRuns`. App scope, not undoable, sets `changesAppState`, returns `{ provider, allowed }`. Unknown provider: `INVALID_INPUT`. A provider `agentRunsOffered` refuses: `RULE_VIOLATION`, `details.reason` the value it gave, message "Agents cannot start runs with {Provider}." `allowed: false` is always accepted.
 - **`agentRuns.setLimit { limit }`**. The one writer of `settings.agentRunLimit`: a whole number 1 to 16, default 4 (`AGENT_MAX_ACTIVE_RUNS`, bounds in `src/shared/config/agent-runs.ts`). App scope, not undoable, sets `changesAppState`, returns `{ limit }`. Out of range is `INVALID_INPUT`. Policy row `'agentRuns.setLimit': deny('change agent run limits')`.
-- **`agent.answerPermission`** (Not built, Phase 10): answers an `agent.permissionRequested` event (`spec/mcp-and-agents.md`).
+- **`agent.answerPermission`** (built, P10-6): answers an `agent.permissionRequested` event (`spec/mcp-and-agents.md`).
 
 ## Storage commands
 
-Not built (slice G, postponed). Schemas in `src/shared/schemas/commands/storage.ts`, both `z.object({}).strict()`.
+Built (P9-5, with the hardening P9-5b), with `storage.setDropboxFolder`. Schemas in `src/shared/schemas/commands/storage.ts`. Full rules: `spec/phases/phase-09.md`.
 
 - `storage.dropboxSignIn` runs the browser sign-in of `spec/storage-and-publish.md`: it starts the listener on `127.0.0.1:47822`, opens the system browser, waits up to 5 minutes for the redirect, saves `dropbox.refreshToken` in the secrets store and writes `settings.storage.dropbox.accountName`. It returns `DropboxSignInResult = { accountName }` and never the token. It sets `changesAppState`. Opening the browser uses the `openExternal` option of `createCore` (`spec/structure.md`). A second sign-in while one waits is `sign_in_in_progress`.
 - `storage.dropboxSignOut` deletes the token and sets `settings.storage.dropbox` to null.
 
 ## Hand-test commands (`dev.*`)
 
-Moved to `spec/api-dev-commands.md`.
+`dev.storage` was removed in P9-14; the `dev` group is empty. `dev.comfyExtend` was never built; its policy row stays. See `spec/api-dev-commands.md`.

@@ -49,7 +49,7 @@ Every slice also reads `spec/phases/DEV-RULES.md` and the "Design additions" sec
 - **Exit check:** class C checks.
 - **Class:** C. **Security:** none (no new input; pictures only). **Size:** medium.
 
-### P8-5 — The export command
+### P8-5 — The export command (built)
 
 - **Exists when done:** `export.run` checks its input, the folder, the campaign's other export, the warnings, and enqueues the job with its plan; `job.retry` refuses an export row.
 - **New files:** the body of `src/main/commands/export/run.ts`; `src/main/commands/export/warnings.ts` (the gate, from `ExportChecks.run`).
@@ -60,7 +60,7 @@ Every slice also reads `spec/phases/DEV-RULES.md` and the "Design additions" sec
 - **Exit check:** class B checks.
 - **Class:** B. **Security:** full (takes a path from the window; decides where files go). **Size:** medium.
 
-### P8-6 — The image export job
+### P8-6 — The image export job (built; since P8-16 a video ad exports too, so the "Video export is not built yet." case is gone)
 
 - **Exists when done:** an export job writes every chosen image ad in the layout, lists failures, reports progress, stops on cancel and hands its outcomes to the report port.
 - **New files:** `src/main/export/run-export.ts` (`runExport(jc, plan, target, opts)`: the loop, order, progress, cancel); `src/main/export/image-ad.ts` (draw, encode, write one ad); `src/main/export/failure.ts` (`ExportFailure` with a sentence); the body of `src/main/jobs/kinds/export.ts`.
@@ -90,7 +90,7 @@ Every slice also reads `spec/phases/DEV-RULES.md` and the "Design additions" sec
 - **Exit check:** class A checks plus the one e2e file.
 - **Class:** A. **Security:** short (text from agents and providers into a file people open). **Size:** medium.
 
-### P8-9 — Report writing and the report queries
+### P8-9 — Report writing and the report queries (built)
 
 - **Exists when done:** an export writes `report-{stamp}.json` and `.html` in `{campaignId}/` and saves the `report` row; `report.list` and `report.get` answer.
 - **New files:** the body of `src/main/export/report-port.ts` (facts, build, HTML, the names rule, write through the target, then `report.add`); the bodies of `src/main/commands/export/report-add.ts` and `src/main/queries/report.ts`.
@@ -111,7 +111,7 @@ Every slice also reads `spec/phases/DEV-RULES.md` and the "Design additions" sec
 - **Exit check:** class D checks and `npm run test:e2e`.
 - **Class:** D. **Security:** none. **Size:** small.
 
-### P8-11 — The export dialog
+### P8-11 — The export dialog (built)
 
 - **Exists when done:** "Export…" on the campaign page opens the export dialog; the user ticks ads, picks a folder and a format, starts; warnings show with a reason field and "Export anyway"; progress and the end counts show.
 - **New files:** `src/renderer/screens/campaign/campaign-export/` (the "Export…" button; P8-12 adds "Reports" here); `src/renderer/dialogs/export-dialog/` (`export-dialog.tsx`, `ad-ticks.tsx`, `export-options.tsx`, `export-warnings.tsx`, `use-export-job.ts`, CSS module); tests `tests/unit/renderer/dialogs/export-dialog.test.tsx`, `export-warnings.test.tsx`; `tests/shots/p8-11.shots.ts` (shots `251-export-dialog`, `252-export-warnings`, `253-export-running`, `254-export-done`).

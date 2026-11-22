@@ -78,7 +78,7 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, `npm test`, `npm run test:e2e` (the reference spec passes on macOS).
 - **Class:** A + C. **Security:** none. **Size:** medium.
 
-### P7-8 — The background track drawn
+### P7-8 — The background track drawn (built)
 
 - **Exists when done:** a video variant's background is drawn from its clips at any time, black where there is none, in the editor, thumbnails and `variant.render`; the render window waits for a video frame before it settles.
 - **First step (report the result before going on):** a small e2e check that `capturePage()` of the hidden render window holds a frame of `tests/fixtures/video/tiny.mp4`. If it does not, build the fallback of `phase-07.md` open question 4 and say so.
@@ -102,7 +102,7 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Class:** B. **Security:** short (asset checks, an internal command reached by `jc.system`). **Size:** medium.
 - **Follow-ups from its review** (each in the slice named): P7-10 adds lower bounds and safe-integer checks to `checkClip` in `src/main/clips/write-clip.ts`; P7-20 adds `clips: []` to the `variantGet()` builder in `tests/unit/renderer/editor/editor-fixture.ts` and makes `VariantGet.clips` required; the video export (P8-16) checks every clip row again when it reads one (rows from a project file never passed the commands), measures stills itself, and clamps and rounds placement numbers.
 
-### P7-10 — Format change and duration
+### P7-10 — Format change and duration (built)
 
 - **Exists when done:** `variant.setFormat` works as `spec/data-rules.md`, "Changing a variant's format", says, with OI-20 settled by `first_clip_made`; `variant.update` takes `durationMs`.
 - **New files:** `src/shared/config/format-changes.ts` (the one table); `src/main/commands/variant/grid-test.ts`; the body of `set-format.ts`.
@@ -112,7 +112,7 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, `npm test`.
 - **Class:** B. **Security:** none (an allowed agent edit that deletes nothing). **Size:** medium.
 
-### P7-11 — Video start checks and offers
+### P7-11 — Video start checks and offers (built)
 
 - **Exists when done:** `generation.startVideo` and `job.retry` apply the offer table, the format refusal, the `background` start and provider-neutral picture refusals, for every provider.
 - **New files:** `src/shared/config/video-offers.ts` (`phase-07.md`, fal section); `src/main/commands/generation/video-offer-checks.ts` (for a provider with an offer: start kind, length, reference count; for every provider: the format refusal and `background_empty`).

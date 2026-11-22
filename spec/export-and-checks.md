@@ -9,7 +9,7 @@ The generation details written into generated files, the export of variants to d
 | File type | Where | Content | State |
 |-----------|-------|---------|-------|
 | PNG (every generated picture) | One uncompressed `iTXt` chunk with keyword `generation`, placed just before `IEND` | JSON below | Built |
-| MP4 (generated video) | Container tag `comment`, written by FFmpeg | JSON below | Not built (Phase 7) |
+| MP4 (generated video) | Container tag `comment`, written by FFmpeg | JSON below | Built (P7-16) |
 
 ```json
 {
@@ -51,14 +51,14 @@ export type GenerationDetails = {
 
 ### MP4
 
-Not built (Phase 7, with FFmpeg). Today a generated clip is stored as the provider returned it, after `checkMp4`, and the video job's result says `details: 'pending'`. A video result may set `details` for the asset row.
+Built (P7-16, `src/main/jobs/video-store.ts`, `src/main/media/ffmetadata.ts`). The video job's result says `details: 'embedded'`, or `'pending'` when no media tool is there. Gap: a ComfyUI video's details do not yet hold `models` and `workflow`, because the video result carries none (with LP-5, `spec/phases/review-leftovers.md`).
 
 - FFmpeg writes the same JSON into the `comment` tag with stream copy (`-c:v copy -metadata comment=...`), with `kind: "video_generation"`. For ComfyUI it adds `models` and `workflow` as for PNG (OI-36: what a ComfyUI clip carries before Phase 7).
 - The sound stream is kept (copied as it is). No `-an` on a generated clip.
 
 ## Export
 
-Not built (Phase 8). Needs Phase 7 (FFmpeg fetch script, video data). [REQ: FR-126, FR-130 to FR-132, FR-140 to FR-143, FR-150, FR-151]
+Built (Phase 8: P8-1 to P8-16; slices in `spec/phases/phase-08-slices.md` and `phase-08-slices-2.md`). Not built: P8-17 (frame reuse, sound in the MP4), P8-18 (packaging FFmpeg), P8-19 (end-to-end proof). [REQ: FR-126, FR-130 to FR-132, FR-140 to FR-143, FR-150, FR-151]
 
 **Trigger:** `export.run` with `projectId, campaignId, variantIds[], outputDir, imageFormat, jpgQuality, fps, proceedDespiteWarnings`, and an optional reason for proceeding past warnings [REQ: FR-236]. `deny` for an agent. Job kind `export` (class `background`). Defaults come from `settings.export = { imageFormat: 'png' | 'jpg', jpgQuality: 1..100, fps: 30 | 60 }` (built).
 
@@ -96,6 +96,10 @@ The render service draws the full Scene at the variant's pixel size and captures
 4. FFmpeg builds the background: a black base of the variant's size and duration, then each clip cut to its time range (`trim`), scaled and cropped by `background-placement.ts`, and overlaid. Each clip is placed in time by options on its own input, not by `setpts`: `-t` (length), `-itsoffset` (start), and `-ss` (in point) for a video; a still is looped for its length (`-loop 1`).
 5. FFmpeg overlays the frame stream on the background and encodes.
 
+- **A gap between clips is black,** in the MP4 as in the editor, thumbnails and `variant.render` (ruled; P7-8, P8-16).
+- **One FFmpeg runner.** FFmpeg is run through `src/main/media/run-ffmpeg.ts` only (argument array, no shell). Video export feeds the frames to it on stdin. There is no second spawn file.
+- A clip row that fails the clip bounds when export reads it fails that ad.
+
 ```
 Encoder:  macOS   -c:v h264_videotoolbox -b:v 12M
           Windows -c:v h264_mf -b:v 12M
@@ -109,7 +113,7 @@ Sound:    -an when the variant's sound source is "none"
 
 ### Sound in export
 
-Not built (data and preview Phase 7, export Phase 8). OI-54 [REQ: FR-301, FR-302, FR-051 as changed]. Waits for CQ-32.
+Data and preview built (P7-12, P7-21). In the export: not built, owned by P8-17; until then a video ad exports silent (`-an`). OI-54 [REQ: FR-301, FR-302, FR-051 as changed]. CQ-32 is ruled: the MP4 carries the one sound source the editor plays (the clips' own sound, the chosen audio file, or none).
 
 - A video variant has one sound source at a time: the clips' own sound, one added audio file, or none. Each clip's sound can be switched off.
 - An added file starts at the variant's start and is cut at the variant's end. No mixing, no volume control.
@@ -118,7 +122,7 @@ Not built (data and preview Phase 7, export Phase 8). OI-54 [REQ: FR-301, FR-302
 
 ## Report
 
-Not built (Phase 8). [REQ: FR-150, FR-151]
+Built (P8-7 to P8-9, P8-12; the full shape is in `spec/phases/phase-08.md`, "Report"; the sketch below is the first outline). [REQ: FR-150, FR-151]
 
 ```ts
 type Report = {

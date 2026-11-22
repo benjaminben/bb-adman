@@ -1,6 +1,6 @@
 # Cloud storage and publishing
 
-The storage interface and its implementations (local folder, Amazon S3, Dropbox, Azure stub), their path and error rules, the hand-test storage command, and the publish flow that copies a campaign to cloud storage. Read with `spec/providers.md` (the registry, error kinds, `redactSecret`), `spec/export-and-checks.md` (publish runs a fresh export) and `spec/security.md`.
+The storage interface and its implementations (local folder, Amazon S3, Dropbox, Azure stub), their path and error rules, and the publish flow that copies a campaign to cloud storage. Read with `spec/providers.md` (the registry, error kinds, `redactSecret`), `spec/export-and-checks.md` (publish runs a fresh export) and `spec/security.md`.
 
 [REQ: FR-160 to FR-164, R-15]
 
@@ -56,7 +56,7 @@ Built. `tests/integration/providers/storage-conformance.ts` is one set of cases 
 Built. `src/main/providers/local-storage/` (`localStorageAt(root)`).
 
 - **Reached directly, not through `adapterFor`.** Its root differs for each use and is not a setting. A caller imports `localStorageAt(root)` from `src/main/providers/local-storage`. That folder is the one exception to "a slice that uses a provider imports no adapter folder". `adapterFor(deps, 'local-storage', 'storage')` throws `INVALID_INPUT`.
-- **Who may set the root** (security class). Only main-process code, from one of two sources: a folder the user picked in a system dialog (export, Phase 8), or a fixed folder under the app data folder (the hand-test command, and tests with a temporary folder). No command input an agent may send, and no settings value, names or changes a local storage root.
+- **Who may set the root** (security class). Only main-process code, from one of two sources: a folder the user picked in a system dialog (export, Phase 8), or a fixed folder under the app data folder (the publish work folder, the fake storage, and tests with a temporary folder). No command input an agent may send, and no settings value, names or changes a local storage root.
 - **Write.** `write` may make the root and any missing parent of it first; the root is trusted. Below the root, before it makes any folder, it finds the deepest existing folder of the target, takes its real path, and refuses unless it is inside the root's real path. Then it makes the folders and checks the file's folder again (security class).
 - **Partial write** (A-194, built in P8-2). Every `write` goes to `{name}.partial` and is then renamed to `{name}`, so a reader never sees half a file. A link at `{name}` is refused. Before writing, a left-over `{name}.partial` that is a regular file is removed; one that is a link is refused, so nothing is written through it; anything else stays, and the open (`wx`, which fails when the file exists) fails. A failed write removes the `.partial` it made and leaves any older file of the name whole. An existing regular file at `{name}` is replaced by the rename. `list` skips names that end in `.partial`.
 - **Links.** On the way down a path, any part that is a link (`lstat`) whose target does not exist is refused with "Storage path refused", for `write`, `read`, `exists`, `list` and `remove`. Nothing is made at the target. A link that cannot be checked for another reason (`ELOOP`, `EACCES`) gives a `ProviderFailure` of kind `other` with the code as detail.
@@ -103,7 +103,7 @@ China regions (`amazonaws.com.cn`) and S3-compatible services are not supported.
 
 ## Dropbox
 
-Being built in Phase 9 (`spec/phases/phase-09.md`; the client core, P9-2, and the sign-in listener, P9-4, are built; the storage adapter, P9-3, is not yet). Built: `DROPBOX_SIGN_IN_PORT = 47822` in `src/main/providers/dropbox/sign-in-port.ts`, its one owner; `src/main/providers/comfyui/own-ports.ts` imports it and no other file under `src/` writes 47822.
+Built (Phase 9, P9-2 to P9-6: the client core, the storage adapter, the sign-in listener, the commands and the Settings part; `spec/phases/phase-09.md`). The live test and the hand proof are P9-15's and the stakeholder's. Built: `DROPBOX_SIGN_IN_PORT = 47822` in `src/main/providers/dropbox/sign-in-port.ts`, its one owner; `src/main/providers/comfyui/own-ports.ts` imports it and no other file under `src/` writes 47822.
 
 - **Library:** none. The app makes plain HTTPS calls to the Dropbox HTTP API through its own pinned fetch (`src/main/providers/dropbox/pinned-fetch.ts`), not through the Dropbox SDK (A-217).
 - **Sign-in:** OAuth 2 with PKCE in the user's browser, opened through `openExternal` (`https:` only), redirecting to `http://127.0.0.1:47822/oauth/dropbox`. The listener runs on `127.0.0.1:47822` only while a sign-in waits, and checks the `state` value. Scopes: `files.content.write`, `files.content.read`, `files.metadata.read`. Access type: app folder [D-090]. The app can read and write only inside its own folder in the user's Dropbox (`Apps/<app name>/`), and every path the API takes is relative to that folder. The user cannot pick a folder outside it; sharing a published folder with others is done in Dropbox itself.
@@ -112,33 +112,21 @@ Being built in Phase 9 (`spec/phases/phase-09.md`; the client core, P9-2, and th
 - **Live test:** `DROPBOX_ACCESS_TOKEN` in `.env.local` is a short-lived token made in the Dropbox console. One live test may use it to upload, list and remove one file, under the paid-call rule in `spec/test-harnesses.md` (Dropbox itself costs nothing). It skips when the token is missing or expired. The token is test-only: the app never reads it. Its value joins `LIVE_REDACTED_NAMES`, with `DROPBOX_APP_SECRET`.
 - **A refresh token is never typed.** A missing token leads the user to the sign-in, not the key dialog. No dialog or settings row offers a field for `dropbox.refreshToken`. How the window tells "missing token" from "missing key" is ruled when the Dropbox work is briefed.
 - **Tokens.** Access tokens are short-lived. The adapter gets one from the refresh token when it starts work and again after a 401. Neither token is logged or returned.
-- **Commands:** `storage.dropboxSignIn` returns `{ accountName }` (the hand-test button already reads it); `storage.dropboxSignOut`. Both `deny` for an agent (rows already in `agent-policy.ts`). See `spec/api-commands.md`.
+- **Commands:** `storage.dropboxSignIn` returns `{ accountName }`; `storage.dropboxSignOut`. Both `deny` for an agent (rows already in `agent-policy.ts`). See `spec/api-commands.md`.
 - **Rules:** the shared path rules, the exact "Storage path refused", `redactSecret` on every failure, the `list` rules, and the conformance cases.
 - **Tests:** recorded responses and a local stand-in for the token address. The work may be built and tested before OI-18 is done. Hand proof after OI-18: one file uploaded to, listed in and removed from real Dropbox, and the sign-in opens the browser and the app then shows the account name.
-- **When built:** set `HAND_TEST_DROPBOX = true` in `src/shared/config/dev-tools.ts`, and the screen test "while `HAND_TEST_DROPBOX` is false, the screen has no 'Sign in to Dropbox' button and no Dropbox storage choice" becomes "both are shown".
 
 ## Azure Blob
 
 Built (stub). `src/main/providers/azure-blob/index.ts`. Registered with `available: false`. Every `StorageProvider` call rejects with a `ProviderFailure` of kind `other`, detail "Azure Blob storage is not available". The user never reaches it, because the registry lists Azure as not available.
 
-## Hand-test storage command
+## Hand-test storage command (removed)
 
-Built. `dev.storage` in `src/main/commands/dev/` (`storage.ts`, `hand-test-storage.ts`, `local-root.ts`, `storage-error.ts`). Not a product feature; `deny` for an agent. Inputs and messages: `spec/api-commands.md`.
-
-- Targets `local`, `s3`, `dropbox`. Actions `write`, `list`, `remove`; there is no `read` action. Everything stays inside the folder `adman-hand-test/` (`HAND_TEST_FOLDER`).
-- Order: key guard (skipped for `local`), then the S3 settings check, then the `StorageProvider`.
-- `requireS3Settings`: null settings, an empty bucket or an empty region give `RULE_VIOLATION`, `details: { reason: 'storage_not_set_up', provider: 's3' }`, "Amazon S3 is not set up yet. Enter a bucket and a region, then try again."
-- A provider failure is `PROVIDER_ERROR`, with the detail in the log and not in the reply, and no key in either.
-- `local` opens `localStorageAt({userData}/hand-test-local)` (`HAND_TEST_LOCAL_ROOT = 'hand-test-local'`). Before any `local` action the root and `{root}/adman-hand-test` are checked with `lstat`: a link or a non-folder is `RULE_VIOLATION`, `details: { reason: 'storage_folder_unsafe' }`, no path. Any other `lstat` error is a `ProviderFailure` of kind `other` with the code as detail (`PROVIDER_ERROR`), and nothing is made.
-- "Storage path refused" from the adapter becomes `RULE_VIOLATION` `storage_folder_unsafe`. Bad names (a backslash, ending in a dot, a reserved name, a path ending in `..`) stay `INVALID_INPUT`.
-- The file to upload: over `HAND_TEST_MAX_UPLOAD_BYTES` (100 MiB) is `INVALID_INPUT` before it is read. A `stat` or read error other than `ENOENT`/`ENOTDIR` is `RULE_VIOLATION` `file_not_readable`, with a `warn` log line holding the error code.
-- `HAND_TEST_DROPBOX = false` (`src/shared/config/dev-tools.ts`): while false the screen shows no Dropbox choice and no "Sign in to Dropbox" button.
-- Not built: the path text field "File to upload (full path)" in `src/renderer/dev/storage-actions.tsx` becomes a "Choose a file" button calling `dialog.pickFiles`; `dev.storage` does not change.
-- **Removed in Phase 9**, once the publish dialog and the storage settings screen exist (`requireS3Settings` stays: `storage.checkS3` uses it): the hand-test screen and `dev` commands, the `{userData}/hand-test-local` handling, and the constants `HAND_TEST_LOCAL_ROOT`, `HAND_TEST_MAX_UPLOAD_BYTES`, `HAND_TEST_DROPBOX`, `HAND_TEST_FOLDER`.
+Removed in P9-14, with the hand-test screen, the `{userData}/hand-test-local` handling and the `HAND_TEST_*` constants. `requireS3Settings` stays (`storage.checkS3` and publish use it): null settings, an empty bucket or an empty region give `RULE_VIOLATION`, `details: { reason: 'storage_not_set_up', provider: 's3' }`, "Amazon S3 is not set up yet. Enter a bucket and a region, then try again."
 
 ## Storage settings screen
 
-The S3 half is **built** (AP-10a, `src/renderer/screens/settings/s3-section/`, mounted in `settings-screen.tsx`). The Dropbox half is **not built** (Phase 9): sign-in and sign-out, account name and root folder, in the same section.
+The S3 half is **built** (AP-10a, `src/renderer/screens/settings/s3-section/`, mounted in `settings-screen.tsx`). The Dropbox half is **built** (P9-6, `src/renderer/screens/settings/dropbox-section/`): sign-in and sign-out, account name and root folder, in the same section (words in `spec/phases/phase-09.md`, "Screens").
 
 **As built (S3):**
 
@@ -179,7 +167,10 @@ Built (AP-10b). The user's own bucket and keys are proved in Settings at once, n
 
 ## Publishing
 
-Not built (Phase 9). Needs Phase 8 export.
+Built (P9-7 to P9-13; the design as built is in `spec/phases/phase-09.md`, "Publishing" and "The export interface"). Not built: the end-to-end proof (P9-15).
+
+- **All or nothing about its ads** (ruled): if any ad fails to export, the publish ends `export_failed` before any upload. Otherwise clean-up would delete the failed ad's earlier published copy.
+- **No `report` row** (ruled): a publish stores no local path and is not counted as a local export.
 
 **Trigger:** `publish.run`, manual, one campaign at a time [REQ: FR-161]. `deny` for an agent. Job kind `publish` (class `background`).
 

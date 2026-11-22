@@ -35,7 +35,9 @@ Late plug-ins, video, packaging and the end-to-end proof. Rules, order and the d
 - **Exit check:** class A checks.
 - **Class:** A. **Security:** short (builds a command line from project data; the full review is P8-16's). **Size:** medium.
 
-### P8-16 — Video export in the job
+### P8-16 — Video export in the job (built)
+
+- **As built:** there is no `spawn-ffmpeg.ts`. FFmpeg is run through one runner only, `src/main/media/run-ffmpeg.ts` (Phase 7's reviewed runner), which this slice extended to feed frames on stdin; no other file spawns FFmpeg. A bad clip row fails that ad. A gap between clips is black in the MP4, as in the editor. The four lows of its review are in P8-17.
 
 - **Exists when done:** a video ad exports to MP4 through FFmpeg: work folder, spawn, frame pipe, copy into the output folder through the target, the report still; the work folder is cleaned at the end and at app start.
 - **New files:** the body of `src/main/export/video-port.ts`; `src/main/export/video/video-ad.ts`; `src/main/export/video/spawn-ffmpeg.ts` (`child_process.spawn` with an argument array, `shell: false`, `windowsHide: true`, stdin for frames, stderr kept to 64 KiB and never logged as text); `src/main/export/video/work-dir.ts` (make, check, remove; `cleanLeftovers(userDataDir)`); `src/main/export/video/still.ts`.
@@ -52,7 +54,9 @@ Late plug-ins, video, packaging and the end-to-end proof. Rules, order and the d
 - **Exists when done:** frames that do not change are sent again without a draw; text over a clip keeps the background's shade; the variant's one sound source goes into the MP4.
 - **New files:** `src/main/export/video/frame-reuse.ts` (from Phase 7's timing functions: no animation running and no layer starting or ending between two frame times); `src/main/export/video/sound-args.ts`.
 - **May touch:** `src/shared/scene/` (the one file that draws the background in `overlay-only`, to keep its shade, A-202; name it in the report); `src/main/export/video/encoder-args.ts` (map the chosen sound source or `-an`); `tests/e2e/scene-cases.ts` (one case `overlay-only-shade`, with its new reference).
-- **Needs:** P8-16; Phase 7's Scene time, presets, clip and sound data merged; CQ-32 for the sound part (if unanswered, skip it and say so).
+- **Needs:** P8-16; Phase 7's Scene time, presets, clip and sound data merged. CQ-32 is ruled: the MP4 carries the one sound source the editor plays (the clips' own sound, the chosen audio file, or none).
+- **Sound rules:** each audio input gets the `file` protocol whitelist, a pinned `-f` and a copied file; no `amovie` or `concat`; `amix` and `adelay` take numbers only; `assertSafeGraph` stays; frames are never reused from a clip.
+- **Also in this slice** (P8-16 review lows): a real hostile MOV with a `url ` data reference (a loopback listener and a marker file) in `ffmpeg-no-network.test.ts`; the work-folder base name typed as the two constants; the timer limit capped with `Math.min(limit, 2 ** 31 - 1)` in `video-ad.ts`; a rejected promise, not a throw, when the spawn throws at once in `run-ffmpeg.ts`.
 - **Read:** `spec/export-and-checks.md` "Video variant" step 2, "Sound in export"; `spec/scene.md` "Left for later phases" (the shade note); Phase 7's timing and sound files as built.
 - **Tests first:** `tests/unit/main/export/video/frame-reuse.test.ts` (table: still layers → reuse; a preset running → draw; a layer starting at that frame → draw); `tests/unit/main/export/video/sound-args.test.ts` (none → `-an`; the clips' sound → the clip's audio mapped; an added file → its audio, cut at the end with `-t`); the `overlay-only-shade` reference case; the named frame-count test still passes with reuse on.
 - **Exit check:** class C checks.

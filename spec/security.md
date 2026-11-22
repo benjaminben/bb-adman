@@ -69,7 +69,7 @@ Built (`src/main/render/`, `src/preload/render.ts`). How it works: `spec/scene.m
 - **What a request holds.** Variant and layer values (copy text included), asset IDs with kind, size and `missing`, and the project ID. Never a file path, a display name, a key, a token, the ComfyUI address or settings. The page builds `adman-asset://` addresses itself with `assetUrl`.
 - **No calls from it.** The app's command and query channels refuse it ("Who may call", above), and it gets no event.
 - **Picture bytes stay in the main process.** The captured PNG goes to the thumbnail file or to the asking query's reply, nowhere else.
-- **Its life is short.** It is ended on a crash, a hang, a time-out and when the app window closes; a window that stops answering is ended and the draw fails as `crashed`. It has developer tools only with the hand-test flag.
+- **Its life is short.** It is ended on a crash, a hang, a time-out and when the app window closes; a window that stops answering is ended and the draw fails as `crashed`. It has developer tools only with the `devTools` flag.
 - **Transparent.** It is created `transparent: true`, so an `overlay-only` draw has alpha 0 where nothing is drawn (`tests/e2e/scene-reference.spec.ts`).
 
 ## Rules: the WebP decoder window
@@ -152,13 +152,7 @@ This file owns the table. A change that makes a project-file value reach a path,
 
 ### Hand-test tools
 
-Built, removed in Phase 9 (`src/main/commands/dev/`, `src/shared/config/dev-tools.ts`). On only in an unpackaged app with `ADMAN_DEV_TOOLS=1`.
-
-- `dev.storage` order: key guard (skipped for `local`), then the S3 settings check (`RULE_VIOLATION`, `storage_not_set_up`), then the `StorageProvider`. A provider failure is `PROVIDER_ERROR` with the detail in the log and not in the reply, and no key in either. There is no `read` action.
-- `local` writes only under `{userData}/hand-test-local/adman-hand-test/` (`HAND_TEST_LOCAL_ROOT`, `HAND_TEST_FOLDER`). Before any `local` action the root and `{root}/adman-hand-test` are checked with `lstat` (`local-root.ts`): a link or a non-folder is refused with `RULE_VIOLATION`, `details = { reason: 'storage_folder_unsafe' }`, no path. Any other `lstat` error is `PROVIDER_ERROR`, `details.kind` `other`, and nothing is made.
-- The adapter's "storage path refused" becomes `RULE_VIOLATION` `storage_folder_unsafe` (`storage-error.ts`). Bad names (a backslash, ending in a dot, a reserved name, a path ending in `..`) stay `INVALID_INPUT`.
-- The file to upload: a `stat` or read error other than `ENOENT`/`ENOTDIR` is `RULE_VIOLATION` `file_not_readable` with a `warn` log line holding the error code; a file over `HAND_TEST_MAX_UPLOAD_BYTES` (100 MiB) is `INVALID_INPUT` before it is read.
-- `HAND_TEST_DROPBOX = false`: the hand-test screen shows no Dropbox choice or sign-in button.
+Removed (P9-14): the hand-test screen, `dev.storage` and its `{userData}/hand-test-local` folder. `tests/unit/config/no-hand-test.test.ts` keeps them out. The `devTools` flag (`ADMAN_DEV_TOOLS=1`, unpackaged only) stays, as does the policy row of the never-built `dev.comfyExtend`.
 
 ## Rules: keys and secrets
 
@@ -167,7 +161,7 @@ Built (`src/main/secrets/`, `src/main/providers/require-keys.ts`). Storage detai
 - Secrets are encrypted at rest in `{userData}/secrets.bin` with `safeStorage`. If encryption is not available the app refuses to save keys.
 - **A key file that cannot be read is never written over.** When `secrets.bin` exists but does not decrypt to a JSON object, `secret.set` and `secret.delete` refuse with `RULE_VIOLATION`, reason `secrets_unreadable`, message "Saved keys could not be read, so no key was changed. They are left as they were." The file stays as it was and no `.tmp` file is left. `get` and the summaries show nothing saved. Test: `tests/unit/main/secrets/secret-store.test.ts`. Open: the screen offers no way out (A-20).
 - **Provider and storage keys** are held only in the main process. No command, query, event or tool returns one. The window sees only the last four characters, and nothing for a value of four characters or fewer.
-- **The MCP token** leaves the main process one way only: the reply to `mcp.getConnectInfo`, to the app window, actor `user`. An agent asking gets `AGENT_DENIED` and a reply with no token. The bridge mode (Not built) reads it from `secrets.bin` itself.
+- **The MCP token** leaves the main process one way only: the reply to `mcp.getConnectInfo`, to the app window, actor `user`. An agent asking gets `AGENT_DENIED` and a reply with no token. Bridge mode (P10-9) reads it from `secrets.bin` itself and writes it only into the `Authorization` header of requests to `127.0.0.1:{port}/mcp`, redirects refused (`spec/mcp-and-agents.md`, "Bridge mode"). Accepted: whatever listens on that port gets it, as with the Claude Code line.
 - No secret is ever written to a project file, a package, the log, a report or an MCP reply.
 - `requireProviderKeys(deps, providerId, purpose)` is the only `NEEDS_KEY` guard. Later phases call it and build none of their own.
 - No key from the environment is ever written to `secrets.bin`, a log or a project file. `.env.local` rules: `spec/infra-and-settings.md`.
@@ -181,7 +175,7 @@ Built (`src/main/settings/settings-store.ts`). Detail: `spec/infra-and-settings.
 
 ## Rules: network requests
 
-Built for MCP and ComfyUI; the Dropbox sign-in listener is Not built (Phase 9).
+Built for MCP, ComfyUI and the Dropbox sign-in listener (P9-4).
 
 - The app listens in two cases only: the MCP server on `127.0.0.1:{mcp.port}`, and the Dropbox sign-in redirect on `127.0.0.1:47822` (`DROPBOX_SIGN_IN_PORT`) for the length of the sign-in. The ComfyUI adapter opens no listener.
 - Outbound calls go only to the provider the user chose for the action, or one the user ticked for agents. There is no telemetry [REQ: 1.4]. Calls use TLS through provider SDKs, except ComfyUI.
@@ -260,7 +254,7 @@ Do not "fix" these without a ruling.
 | Requirement | Control |
 |-------------|---------|
 | No personal data, no telemetry [REQ: 6.3] | No outbound calls except chosen providers |
-| Prompts in generated files are readable by others [REQ: 6.3] | Reminder in the publish dialog (Not built, Phase 9) |
+| Prompts in generated files are readable by others [REQ: 6.3] | Reminder in the publish dialog (P9-12) |
 | Agent can read open projects [REQ: 6.3] | Stated beside the MCP switch in Settings: "A connected agent can read the projects you have open. That content goes to the AI service that runs the agent." |
 | Licence intent: public code, no commercial reuse by others [REQ: 9.3, R-19] | `LICENSE` is PolyForm Noncommercial 1.0.0 (Not built, Phase 11). npm dependencies under MIT, ISC, BSD, Apache-2.0 or similar; the CI licence check fails on GPL or AGPL (Phase 11). FFmpeg is LGPL and shipped as a separate program. |
 | Font licences [REQ: 9.3] | Fonts publish only with consent given on this computer (A-260); `font_publish_allowed` is a hint |
@@ -300,4 +294,4 @@ These must keep passing. A change that weakens one needs a ruling.
 | `tests/e2e/webp-decoder.spec.ts` | The WebP decoder window is never shown, has no `window.api`, `require` or `process`, cannot `fetch()` out, and the app window cannot reach its decode function |
 | `tests/unit/main/thumbnails/paths.test.ts`, `tests/unit/main/thumbnails/cache.test.ts`, `tests/integration/thumbnails/thumbnail-clean.test.ts` | Bad IDs touch no file; clean-up deletes only old thumbnails directly in the project's folder, never a link, a sub-folder or another file |
 | `tests/unit/main/assets/font-name.test.ts` | A damaged or hostile font gives null and never throws |
-| `tests/integration/commands/dev-storage-confinement.test.ts` | Hand-test storage changes nothing outside its folder: the app data tree, `secrets.bin`, `settings.json`, `logs/app.log` compared byte for byte |
+| `tests/integration/publish/campaign-folder-isolation.test.ts`, `tests/unit/main/publish/work-folder.test.ts` | (Replace the hand-test confinement test, Q-P9-5.) A publish lists, writes and deletes nothing outside `{campaignId}/`; clean-up of the publish work folder removes only ULID folders, never a link or a file |

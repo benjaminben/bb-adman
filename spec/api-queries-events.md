@@ -8,7 +8,7 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 
 | Query | Returns | Built |
 |-------|---------|-------|
-| `app.getState` | `AppState = { settings, recentProjects, openProjects, providers, secrets, devTools }`: settings (no secrets), recent projects, open projects, provider list with availability, secret names with last four characters, and whether the hand-test tools are on. This holds for every secret, `mcp.token` included. No full value is ever in this reply. | Built |
+| `app.getState` | `AppState = { settings, recentProjects, openProjects, providers, secrets, devTools }`: settings (no secrets), recent projects, open projects, provider list with availability, secret names with last four characters, and whether the dev tools flag is on. This holds for every secret, `mcp.token` included. No full value is ever in this reply. | Built |
 | `mcp.getConnectInfo` | `ConnectInfo` for the Connect panel (below). User only. | Built |
 | `project.get` | `ProjectGet = { meta, subjects, campaigns: CampaignSummary[], missingAssetCount }`. `meta` leaves out `assetsDirRel` and `assetsDirAbs`. | Built |
 | `asset.list` | `AssetList = Array<AssetRow & { missing: boolean }>`, filtered by library, kind, subject; ordered by `id` ascending (ULIDs: oldest first, stable). The window sorts for display. | Built |
@@ -24,9 +24,9 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 | `job.getServerMessage` | `{ text: string \| null }`: the cleaned server text for a failed ComfyUI job, or null (`spec/comfyui.md`) [REQ: FR-267]. User only. | Built |
 | `comfy.getInfo` | Shipped ComfyUI workflow data (below). User only. | Built |
 | `project.listOpen` | `{ id, name }[]` for open projects only, never `filePath` | Built |
-| `report.list` / `report.get` | Saved reports [REQ: FR-151] | Not built (Phase 8) |
+| `report.list` / `report.get` | Saved reports [REQ: FR-151]. User only | Built (P8-9) |
 | `history.state` | `UndoStateResult = { canUndo, canRedo }` for a scope | Built |
-| `publish.inspect` | Whether the campaign's cloud folder already has files [REQ: FR-164], and the component files a publish would upload, each with its full local path [REQ: R-06, 8.4] | Not built (Phase 9) |
+| `publish.inspect` | Whether the campaign's cloud folder already has files [REQ: FR-164], and the component files a publish would upload, each with its full local path [REQ: R-06, 8.4], and each font's `share` and `sha256` (`spec/phases/phase-09.md`). User only | Built (P9-9, P9-12) |
 
 Built (Phase 4, P4-2), designed in `spec/ai-jobs.md`, "The three queries": `job.earlierOptions { layerId }` (the runs of a layer with their pictures) [REQ: FR-248, FR-216]; `job.activity { limit? }` (job rows with the names of their campaign, variant and layer) [REQ: FR-152, FR-217]; `campaign.paidCount { campaignId }` (`{ pictures, videos, text }` from `job.paid_calls`) [REQ: FR-230]. Open to both actors; no MCP tool wraps them.
 
@@ -76,13 +76,14 @@ type ConnectInfo = {
   port: number
   token: string | null     // the full MCP access token, or null if none has been made yet
   claudeCode: string | null
+  claudeDesktop: string | null
 }
 ```
 
 - `claudeCode` is `claude mcp add --transport http adman {address} --header "Authorization: Bearer {token}"`, or null with no token.
 - This is the only query, command or event whose reply holds a secret value. The named `mcp.getConnectInfo` test checks that an agent is refused.
 - `problem` is null while the setting is off. The meaning of each value is in `spec/mcp-and-agents.md`.
-- One setup block until bridge mode. The Claude Desktop block is Not built (Phase 10).
+- `claudeDesktop` (P10-9): pretty-printed JSON `{ "mcpServers": { "adman": { "command", "args" } } }` that starts the app with `--mcp-bridge`. No token and no port in it. Null while agent access is off. The Connect panel shows it as the second block (`spec/mcp-and-agents.md`, "Bridge mode").
 
 ### `comfy.getInfo`
 
@@ -198,9 +199,9 @@ Built: `project.changed`, `app.stateChanged`, `job.updated`, `asset.changedOnDis
 | `asset.changedOnDisk` | `{ projectId, assetIds }`: the linked assets whose content changed outside the app. Sent after `asset.checkChanged` succeeds with a non-empty list. The signal to draw those pictures again; the render service redraws the thumbnails of variants that use them (`spec/scene.md`). | Built |
 | `thumbnail.changed` | `{ projectId, variantId }`: sent after a thumbnail write, a delete, a failed draw or a failed save; a window showing it sends `thumbnail.get` again (`spec/editor-commands.md`) | Built |
 | `app.stateChanged` | Empty (`Record<string, never>`). Something `app.getState` returns has changed: a project was opened or closed, settings changed, a key was saved or deleted, or agent access changed. Each window reads `app.getState` again. | Built |
-| `agent.permissionRequested` | requestId, tool, target summary, expiresAt | Not built (Phase 10) |
-| `agent.activity` | Tool name and target, for a "the agent is working" indicator | Not built (Phase 10) |
-| `mcp.status` | enabled, port, connected client names | Not built (Phase 10) |
+| `agent.permissionRequested` | `{ requestId, agentClient, action, target, expiresAt }` (`agentClient` the cleaned client name or null) | Built (P10-6) |
+| `agent.activity` | `{ tool, projectId, ok, at }`, one per tool call, never arguments or replies; for the "Agent working" line | Built (P10-8) |
+| `mcp.status` | enabled, port, connected client names | Not built (A-243: `app.stateChanged` with `mcp.getConnectInfo` gives on, off and port) |
 
 - `app.stateChanged` exists because not every change starts in the window that needs to hear of it. A project opened by double-click starts in the operating system, and an agent access change can start in another window.
 - The event carries no data on purpose. `app.getState` stays the one source of that state, and no secret detail can leak through an event.

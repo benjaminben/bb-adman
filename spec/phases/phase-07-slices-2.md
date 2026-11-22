@@ -12,7 +12,9 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, `npm test`.
 - **Class:** E. **Security:** full (outbound calls, the key, a downloaded file). **Size:** medium.
 
-### P7-15 — fal switched on
+### P7-15 — fal switched on (built)
+
+- **As built:** status, result and download calls are not paid calls (`paid_calls` counts the submit only). A started fal run is left running on close and on quit, and collected at the next open. Opening a project file with a running fal row sends the user's fal key to the fal queue host for status and result only, never a submit (`spec/cancel.md`, 'fal.ai Seedance'). Three wording fixes from its review were slice P7-15b (the retry count of a video run, the reference count in the card's paid line, and left-running runs not counted as stopped in the quit and close sentences).
 
 - **Exists when done:** `fal-seedance` is `available: true`; users can start fal video runs with the paid confirm; agents can, once ticked; the MCP start tool names it; the quit question and the project close warning say when a started fal run will be left running.
 - **The left-running sentence** (built by P7-13, not yet shown): pass `quitQuestion`'s second argument (`LeftRunning[]`, the started paid video runs by provider label) from `src/main/index.ts`, and add `leftRunningLine` from `src/renderer/ui/close-warning/close-words.ts` to the close warning in `src/renderer/app/project-switcher/close-project.tsx`. The runs counted are those `leftRunningOnClose` (`src/main/jobs/leave-running.ts`) is true for.
@@ -22,7 +24,9 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, `npm test`, `npm run test:e2e`.
 - **Class:** E + B. **Security:** full (opens a paid provider, and to agents). **Size:** small.
 
-### P7-16 — The video job into the ad
+### P7-16 — The video job into the ad (built)
+
+- **As built:** the start-`background` guard is gone; `background_not_drawn` is the job's failure when the first frame cannot be drawn. The embedded details of a ComfyUI video do not yet hold `models` and `workflow`: the video result carries no such details (a gap, with LP-5 in `spec/phases/review-leftovers.md`).
 
 - **Exists when done:** a finished run (new or picked up) stores the clip with its facts on the asset row and its details embedded, and adds it to the variant's track at the first free position; a `background` start draws the first frame from the variant's background.
 - **New files:** `src/main/jobs/video-store.ts` (`stored()` moved out of `video-generation.ts`: `checkMp4`, the embed, `checkMp4` again and the facts compared, `storeResult` with the facts, then `clip.addGenerated` through `jc.system`); `src/main/jobs/background-frame.ts` (asks `deps.render.renderBackground`, then `fitPicture` to the run size; a failure is `LocalFailure` `background_not_drawn`).
@@ -35,7 +39,7 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, `npm test`.
 - **Class:** B + E. **Security:** short (`jc.system` with a new command; files written). **Size:** medium to large; if large, hand off after the store part.
 
-### P7-17 — Format and duration controls
+### P7-17 — Format and duration controls (built)
 
 - **Exists when done:** the editor's top bar has a format choice and, for a video, a length field.
 - **New files:** `src/renderer/editor/format-fields/` (`format-fields.tsx`, its CSS module, its test): a radio group "Format" with "Image" and "Video" sending `variant.setFormat`; for a video, "Length (seconds)", a number field with one decimal, 0.5 to 86,400, sending `variant.update { durationMs }` on Enter or leaving the field, Escape puts the stored value back. A refusal shows its sentence under the controls (`role="alert"`) and the controls keep the stored values.
@@ -57,7 +61,7 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, component tests, `npm run test:e2e`.
 - **Class:** D. **Security:** none. **Size:** medium.
 
-### P7-19 — Layer tracks and animation blocks
+### P7-19 — Layer tracks and animation blocks (built)
 
 - **Exists when done:** each layer's row shows its timing bar, and a text layer's row its entrance and exit blocks; bars and blocks move and resize; text layers choose entrance and exit presets.
 - **New files:** `src/renderer/editor/timeline-math/timeline-math.ts` (pure: pixels to milliseconds, snapping to 100 ms and to the playhead); `timing-bar/` (drag to move, its ends to resize; `layer.update { timing }` once at the end of a drag; a null end drawn to the variant's end); `animation-block/` (entrance and exit blocks inside the bar, moved and resized the same way, `layer.update { animation }`; arrow keys move 100 ms, with Shift 1 s); `animation-fields/` (in the properties panel of a text layer: "Entrance" and "Exit", each a preset select "None", "Fade", "Fade up", "Slide", "Words one by one", and a length in seconds); the body of `layer-tracks/`.
@@ -68,7 +72,7 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, component tests, `npm run test:e2e`.
 - **Class:** D. **Security:** none. **Size:** medium.
 
-### P7-20 — The clip track
+### P7-20 — The clip track (built)
 
 - **Exists when done:** the background row shows the clips as blocks; they can be added, moved, trimmed at either end, reordered by dragging past another, removed, and a video clip's sound switched on and off.
 - **New files:** `src/renderer/editor/clip-block/` (move, trim handles, "Remove" and the Delete key, "Sound" on and off for a video clip; a drag judged by `src/shared/clips/track.ts` before sending, and a drag that would overlap snaps back); `add-clip/` (a button "Add clip…" listing the asset library's pictures and MP4 and MOV videos, with "Import…" through the existing import flow); the body of `clip-track/` (gaps drawn as empty track; a refusal sentence under the row with `role="alert"`).
@@ -79,7 +83,9 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, component tests, `npm run test:e2e`.
 - **Class:** D. **Security:** none. **Size:** medium.
 
-### P7-21 — Sound controls and preview
+### P7-21 — Sound controls and preview (built)
+
+- **As built:** the editor canvas draws the variant's clips, video clips included; a clip's sound plays only while playing.
 
 - **Exists when done:** the transport bar has a "Sound" choice ("The clips' own sound", "An audio file", "None") and an audio file picker; the preview plays the chosen sound in time with the playhead.
 - **New files:** the body of `src/renderer/editor/sound-fields/` (sends `variant.setSound`; the audio list from the asset library, kind `audio`, with "Add audio…" through import); `src/renderer/editor/sound-player/` (one `<audio>` for `'file'`, kept to the playback time, started at 0 and stopped at the variant's end; with `'clips'` the Scene gets `sound` true; with `'none'` nothing plays).
@@ -90,7 +96,9 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, component tests, `npm run test:e2e`.
 - **Class:** D. **Security:** none. **Size:** small.
 
-### P7-22 — The "Make a video" card
+### P7-22 — The "Make a video" card (built)
+
+- **As built:** ComfyUI does not offer the start "The post's background"; it could once it has a first-frame workflow (a question for the stakeholder).
 
 - **Exists when done:** the card offers the starts and lengths of the chosen provider's offer (ComfyUI as built), the new start "The post's background" (the default when the background has a picture), up to the offer's reference count, and for an image variant the line "Change this post to video first." with "Start" disabled.
 - **May touch:** `src/renderer/screens/campaign/video-panel/video-panel.tsx` and its CSS module; `src/renderer/screens/campaign/video-picture-choice/` (hidden for the background start). Approved edits to the existing video card tests and e2e for the new start and lengths.
@@ -100,7 +108,9 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, component tests, `npm run test:e2e`.
 - **Class:** D. **Security:** none. **Size:** small.
 
-### P7-23 — Video in fan-out
+### P7-23 — Video in fan-out (built)
+
+- **As built:** a new video variant gets one clip made from the background picture, not a copy of the master's clips or sound. The fan-out dialog still sends only `['image']`; a screen control for video fan-out is an owed follow-up.
 
 - **Exists when done:** fan-out's step 7 (`spec/data-rules.md`, "Fan-out") makes each new video variant's first clip with `addFirstClip`, which sets `first_clip_made`.
 - **May touch:** the Phase 5 file that holds fan-out's steps (named by the Phase 5 plan), one call.

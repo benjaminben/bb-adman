@@ -2,7 +2,7 @@
 
 Publishing, the dialog, clean-up of the hand-test tools and the end-to-end proof. Goal, exit criteria, rules, wave table, design additions and assumptions: `spec/phases/phase-09.md`. Slices P9-1 to P9-8: `spec/phases/phase-09-slices.md`. "Class" is the verification class (`spec/testing.md`); "Security" is none, short or full.
 
-### P9-9 — `publish.inspect`
+### P9-9 — `publish.inspect` (built)
 
 - **Exists when done:** the query answers as "Design additions" says.
 - **New files:** `src/main/publish/readiness.ts` (`storageReadiness(deps)`, using `requireS3Settings`, `requireProviderKeys` and the sign-in check without throwing to the window); `src/main/publish/inspect.ts`; the body of `src/main/queries/publish.ts`; `src/main/publish/font-consent.ts` (the local consent list, A-260); `src/main/commands/publish/set-font-consent.ts` (`publish.setFontConsent`).
@@ -14,7 +14,7 @@ Publishing, the dialog, clean-up of the hand-test tools and the end-to-end proof
 - **Exit check:** lint, typecheck, `npm test`.
 - **Class:** B. **Security:** full (a network call; paths to the window; the consent list). **Size:** medium.
 
-### P9-10 — `publish.run` and the publish job
+### P9-10 — `publish.run` and the publish job (built)
 
 - **Exists when done:** `publish.run` refuses and starts as "Design additions" says; the job publishes through the ports, with the fake exporter in tests.
 - **New files:** `src/main/publish/work-folder.ts`; `src/main/publish/run-publish.ts`; the bodies of `src/main/commands/publish/run.ts` and `src/main/jobs/kinds/publish.ts`; `tests/helpers/fake-publish-export.ts` (a port that writes two small ads, `report-x.html`, `report-x.json` and a sheet into the work folder and records the header it was given).
@@ -34,9 +34,10 @@ Publishing, the dialog, clean-up of the hand-test tools and the end-to-end proof
 - **Exit check:** lint, typecheck, `npm test`.
 - **Class:** B. **Security:** full (writes and deletes in the user's storage, a local folder made and removed). **Size:** large; if it nears the budget, hand off after `publish.run` and its tests, leaving the job body.
 
-### P9-11 — Export wiring
+### P9-11 — Export wiring (built)
 
 - **Exists when done:** `exportForPublish` and `warningsForPublish` call Phase 8's export and checks and Phase 6's sheet, so a publish carries real ads, the report with its publish header, and `translations.csv`.
+- **As built** (rulings at build time): Phase 8's export has no publish-header option; the adapter writes the header at the top of the two report files after Phase 8 has written them. A publish is all or nothing about its ads: if any ad fails to export, the job ends `export_failed` before any upload, so the earlier published copy of that ad stays. A publish inserts no `report` row (no local path is stored) and is not counted as a local export. Its four review lows went to P9-13.
 - **New files:** the body of `src/main/publish/export-adapter.ts`.
 - **May touch:** nothing else. If Phase 8 or Phase 6 code must change to fit "The export interface", stop and report; the architect rules.
 - **Needs:** P9-10; Phase 8's in-job export function and checks list; Phase 6's translation sheet.
@@ -45,7 +46,9 @@ Publishing, the dialog, clean-up of the hand-test tools and the end-to-end proof
 - **Exit check:** lint, typecheck, `npm test`, and the reference-picture tests if the export's drawing is touched (it should not be).
 - **Class:** B + C. **Security:** short. **Size:** small.
 
-### P9-12 — Publish dialog
+### P9-12 — Publish dialog (built)
+
+- **As built:** each font's full local path is shown under its tick; names are cleaned and drawn in `<bdi>`; the replace tick and the answer are cleared when inspect is read again; `publish.inspect` gives each font's `sha256`, the dialog sends it back, and `publish.setFontConsent` with `allowed: true` needs it and refuses when the file's fresh hash differs.
 
 - **Exists when done:** the dialog's first view as "Design additions", "Screens" says: storage choice, the replace block, the prompt line, the file list, the fonts, Publish, and the started view.
 - **New files:** `src/renderer/dialogs/publish-dialog/` (`publish-dialog.tsx`, `storage-choice.tsx`, `replace-warning.tsx`, `use-publish-inspect.ts`, CSS module, `index.ts`); `src/renderer/ui/publish-file-list/`; `src/renderer/ui/font-share-choice/`; `tests/shots/p9-12.shots.ts`.
@@ -56,7 +59,7 @@ Publishing, the dialog, clean-up of the hand-test tools and the end-to-end proof
 - **Exit check:** lint, typecheck, the tests, `npm run test:e2e`.
 - **Class:** D. **Security:** short (local paths drawn; nothing sent but the three calls). **Size:** medium.
 
-### P9-13 — Warnings step and the Publish button
+### P9-13 — Warnings step and the Publish button (built)
 
 - **Exists when done:** the dialog's warnings step; "Publish…" on the campaign page; no Retry on publish rows.
 - **New files:** `src/renderer/dialogs/publish-dialog/publish-warnings.tsx` (and its use in `publish-dialog.tsx`, a file of P9-12, merged before); `src/renderer/screens/campaign/publish-button/`; `tests/shots/p9-13.shots.ts`.
@@ -67,7 +70,9 @@ Publishing, the dialog, clean-up of the hand-test tools and the end-to-end proof
 - **Exit check:** lint, typecheck, the tests, `npm run test:e2e`.
 - **Class:** D. **Security:** none. **Size:** small.
 
-### P9-14 — Remove the hand-test tools
+### P9-14 — Remove the hand-test tools (built)
+
+- **As built:** `src/main/commands/dev/index.ts` returns `[]`; the `dev.storage` policy row is gone and `dev.comfyExtend`'s stays; the named test `dev-storage-confinement.test.ts` is replaced, as Q-P9-5 says, by campaign folder isolation and the publish work-folder test. A local-storage test was added back: links inside a folder are left out of its listing.
 
 - **Exists when done:** what "Removing the hand-test tools" in the old outline named is gone: the hand-test screen, `dev.storage`, `{userData}/hand-test-local` handling, the four `HAND_TEST_*` constants. `requireS3Settings` stays. The `devTools` flag stays.
 - **Delete:** `src/renderer/dev/` (all of it); `src/main/commands/dev/storage.ts`, `hand-test-storage.ts`, `local-root.ts`, `storage-error.ts`; `src/shared/config/dev-tools.ts`; `src/shared/schemas/commands/dev.ts`; the tests that cover only these (`tests/unit/renderer/dev/`, `tests/unit/main/commands/dev/`, `tests/integration/commands/dev-storage*.test.ts`, `dev-fixture.ts`).

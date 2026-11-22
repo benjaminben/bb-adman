@@ -197,18 +197,18 @@ Each test below must exist and keep passing. A test marked "Not built" is writte
 | `details.issues` names fields and never holds an input value | `tests/integration/commands/issues-no-value.test.ts` |
 | An internal command is refused when sent from a window | `tests/integration/commands/internal-command.test.ts` |
 | A generated PNG has a `generation` chunk [REQ: FR-068] | `tests/integration/generation/run-images-core.test.ts` |
-| An exported PNG has no `generation` chunk [REQ: FR-068] | Not built (Phase 8) |
+| An exported PNG has no `generation` chunk [REQ: FR-068] | Not built (P8-19, `tests/e2e/export-picture.spec.ts`) |
 | No MCP tool reply, log line or project file contains a secret value. Saves a value for every secret name, `mcp.token` included; calls every listed tool with the ComfyUI address and an asset path planted [REQ: FR-198] | `tests/integration/mcp/secret-leak.test.ts` (grows with each tool) |
 | `mcp.getConnectInfo` is refused for the agent actor, and it is the only query whose reply contains a secret value [D-014] | `tests/integration/queries/mcp-connect-info.test.ts` |
-| `render_variant` writes no file [REQ: FR-193, D-030]. Lists every file under the project's folder, its assets folder, a temporary app data folder and a temporary folder set as the system's temporary folder; calls the tool; lists again. Equal apart from the activity log. The reply holds one `image/png` item and no path | Not built (Phase 10) |
-| The same variant drawn at frame `i` twice gives identical pictures [REQ: FR-131] | Not built (Phase 8) |
-| A video export of a fixed variant has exactly `ceil(duration × fps)` frames [REQ: FR-131] | Not built (Phase 8) |
-| Publishing campaign A never lists, writes or deletes outside `{campaignIdA}/` [REQ: FR-164] | Not built (Phase 9) |
-| An agent `set_translation` never yields `approved` [REQ: FR-200] | Not built (Phase 6 command, Phase 10 tool) |
+| `render_variant` writes no file [REQ: FR-193, D-030]. Lists every file under the project's folder, its assets folder, a temporary app data folder and a temporary folder set as the system's temporary folder; calls the tool; lists again. Equal apart from the activity log. The reply holds one `image/png` item and no path | `tests/integration/mcp/render-variant-no-file.test.ts` (P10-3) |
+| The same variant drawn at frame `i` twice gives identical pictures [REQ: FR-131] | Not built (P8-19, `tests/e2e/export-frames.spec.ts`) |
+| A video export of a fixed variant has exactly `ceil(duration × fps)` frames [REQ: FR-131] | `tests/integration/export/frame-count.test.ts` (P8-14) |
+| Publishing campaign A never lists, writes or deletes outside `{campaignIdA}/` [REQ: FR-164] | `tests/integration/publish/campaign-folder-isolation.test.ts` (P9-10) |
+| An agent `set_translation` never yields `approved` [REQ: FR-200] | `tests/integration/mcp/translation-check-tools.test.ts` (P10-12) |
 | Editing a master changes no other variant's layer rows [REQ: FR-081] | Not built (Phase 5) |
-| Format round trip keeps every video setting [D-026]. Builds a video variant with a changed duration and `duration_overridden` set, two clips with trims and a placement, and a layer with its own timing, entrance and exit and overrides on them; changes it to image and back. Every value in the table of `spec/data-rules.md`, format change, is equal to before, clip IDs included, and no clip was added. Runs once on a master and once on a linked variant | Not built (Phase 7) |
-| `variant.setFormat` is refused in each direction when the target cell already has a variant, and nothing is written [REQ: R-20]. Also covers an undo refused because the cell was taken after the change | Not built (Phase 7) |
-| The app starts and completes import, manual layout and image export with no secrets saved and the network disabled [REQ: 8.2] | Not built (Phase 8) |
+| Format round trip keeps every video setting [D-026]. Builds a video variant with a changed duration and `duration_overridden` set, two clips with trims and a placement, and a layer with its own timing, entrance and exit and overrides on them; changes it to image and back. Every value in the table of `spec/data-rules.md`, format change, is equal to before, clip IDs included, and no clip was added. Runs once on a master and once on a linked variant | `tests/integration/commands/variant-format-round-trip.test.ts` (P7-10) |
+| `variant.setFormat` is refused in each direction when the target cell already has a variant, and nothing is written [REQ: R-20]. Also covers an undo refused because the cell was taken after the change | `tests/integration/commands/variant-format-refused.test.ts` (P7-10) |
+| The app starts and completes import, manual layout and image export with no secrets saved and the network disabled [REQ: 8.2] | Not built (P8-19, `tests/e2e/offline-export.spec.ts`) |
 | A layer command sent as the user leaves `variant.agent_changed_at` null; the same sent as the agent sets it to the command's time [REQ: FR-239] | `tests/integration/commands/layer-update-agent.test.ts`. Built |
 | Undo then redo of `layer.delete` brings back the same layer ID, key, counters and order | `tests/integration/commands/layer-delete.test.ts`. Built |
 | A `layer.reportOverflow` naming an older `variantRev` writes nothing | `tests/integration/commands/layer-report-overflow.test.ts`. Built |

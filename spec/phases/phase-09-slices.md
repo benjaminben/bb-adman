@@ -24,7 +24,7 @@ Slices P9-1 to P9-8 (P9-9 to P9-15: `spec/phases/phase-09-slices-2.md`). Goal, e
 - **Exit check:** lint, typecheck, `npm test`.
 - **Class:** E. **Security:** full (outbound calls, tokens). **Size:** medium.
 
-### P9-3 — Dropbox storage
+### P9-3 — Dropbox storage (built, with its review fixes P9-3b)
 
 - **Exists when done:** `adapters.storage` in `src/main/providers/dropbox/index.ts` gives a `StorageProvider` that passes the shared conformance cases against the stand-in.
 - **New files:** `src/main/providers/dropbox/dropbox-storage.ts` (`dropboxStorage(ctx, { fetch })`: root joining, the five calls, one renewal and one resend after a `401` for a body that can be sent again); `upload.ts` (single call up to 8 MiB, upload session above it and for every stream); `list.ts` (recursive listing, `continue`, files only, the `path_lower` match); the body of `index.ts`; `tests/helpers/dropbox-stand-in-files.ts` (the file routes for the stand-in, in memory, case-insensitive like Dropbox).
@@ -47,7 +47,7 @@ Slices P9-1 to P9-8 (P9-9 to P9-15: `spec/phases/phase-09-slices-2.md`). Goal, e
 - **Exit check:** lint, typecheck, `npm test`.
 - **Class:** E. **Security:** full (a listener, data from outside). **Size:** medium.
 
-### P9-5 — Sign-in, sign-out and folder commands
+### P9-5 — Sign-in, sign-out and folder commands (built, with its hardening P9-5b)
 
 - **Exists when done:** `storage.dropboxSignIn`, `storage.dropboxSignOut` and `storage.setDropboxFolder` work as "Design additions" says.
 - **New files:** `src/main/providers/dropbox/sign-in/session.ts` (one sign-in at a time; its order: in progress, `canStore()`, listen, `openExternal`, wait, exchange, account, save token, save settings, revoke an old token); the bodies of `src/main/commands/storage/dropbox-sign-in.ts`, `dropbox-sign-out.ts`, `set-dropbox-folder.ts`.
@@ -59,7 +59,7 @@ Slices P9-1 to P9-8 (P9-9 to P9-15: `spec/phases/phase-09-slices-2.md`). Goal, e
 - **Exit check:** lint, typecheck, `npm test`.
 - **Class:** B + E. **Security:** full (redirect handling, token storage). **Size:** medium.
 
-### P9-6 — Dropbox in Settings
+### P9-6 — Dropbox in Settings (built)
 
 - **Exists when done:** the Dropbox part of "Cloud storage" as "Design additions", "Screens" says.
 - **New files:** `src/renderer/screens/settings/dropbox-section/` (`dropbox-section.tsx`, `dropbox-folder.tsx`, CSS module, `index.ts`); `tests/shots/p9-6.shots.ts`.

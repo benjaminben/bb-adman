@@ -36,12 +36,12 @@ An agent connected through the MCP server can start, follow and cancel its own p
 - The loader keeps `agentRuns` as the file has it. The rule "which provider may have a tick" is held where a tick is used, not only where it is written: a loader that drops entries would have to know the registry, and the next save would wipe them.
 - OI-90 is open: whether D-080's "anything" keeps the per-provider tick. The build keeps it, off by default. If the answer is "no ticks", gate step 2 always passes (one line) and the Settings block is removed. Nothing else moves.
 
-**`agentRunsOffered(info: ProviderInfo): null | 'agent_runs_not_offered'`**, in `src/shared/config/agent-runs.ts` (shared, so Settings shows the list the gate checks). `available` false, or `jobs` holds neither `image` nor `video`: `agent_runs_not_offered` (covers `fal-seedance` until slice J, Firefly, storage providers). Otherwise null. So Gemini can be ticked.
+**`agentRunsOffered(info: ProviderInfo): null | 'agent_runs_not_offered'`**, in `src/shared/config/agent-runs.ts` (shared, so Settings shows the list the gate checks). `available` false, or `jobs` holds neither `image` nor `video`: `agent_runs_not_offered` (covers Firefly and storage providers; `fal-seedance` until P7-15 switched it on). Otherwise null. So Gemini can be ticked.
 
 - It is the only "tick offered" function. Three callers and no other copy: the gate (step 1), `agentRuns.setAllowed`, and the runner's untick check (through the one reader). A `settings.json` entry for a provider it refuses is never read as a set tick, however it got there (a hand-edited file included).
 - **One reader.** `agentRunAllowed` in `agent-run-gate.ts` is the only code in `src/main/` that reads `settings.agentRuns`: true when `agentRunsOffered` gives null for the provider's row and the entry's `allowed` is `true`. An entry for an ID the registry does not have is never read.
 - *Why this matters.* Whoever can edit `settings.json` works as the user's own account and can do much else. The rule still holds at the point of use, because it costs one function and a paid tick must never be set without the user.
-- **fal.ai Seedance.** Once slice J sets `available: true`, step 1 no longer refuses it. Slice J offers its tick only once fal's cancel is proven (U-25).
+- **fal.ai Seedance.** P7-15 set `available: true`, so step 1 no longer refuses it and Settings offers its tick (paid line shown). Whether fal charges for a cancelled started request (U-25) is still open; such a run is left to finish.
 
 ## Commands for the tick and the limit
 
@@ -111,7 +111,7 @@ An agent connected through the MCP server can start, follow and cancel its own p
 ## Paid runs and spending
 
 - With the Gemini tick on, an agent can start up to `agentRunLimit` Gemini runs at a time, each up to 8 pictures, with no click. The limit bounds the rate, not the total. The app has no spending ceiling and none is planned: the cap is set on the provider's own account [D-093]. The only other record is `started_by`.
-- A paid run charged either way is left to finish (`cancel_would_still_charge`, `spec/cancel.md`, 'fal.ai Seedance'; not built, slice J).
+- A paid run charged either way is left to finish (`cancel_would_still_charge`, `spec/cancel.md`, 'fal.ai Seedance'; built, P7-13, and reachable since fal was switched on in P7-15).
 - **Linked assets (U-2).** A linked asset's path comes from the project file, so a picture start uploads whatever PNG or JPEG it points to. Accepted: a project from someone else, opened by the user, with an agent ticked, could send a picture from the user's computer to a provider the user ticked. The agent gets no bytes back. Any tool that returns bytes (OI-92) must be judged with this.
 
 ## Settings block "Agent runs"

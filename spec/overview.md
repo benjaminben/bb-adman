@@ -50,7 +50,7 @@ Each is in `DECISIONS.md` and REQUIREMENTS.md. The last column says where the sp
 | D-007 | The Dropbox app key is supplied. | `spec/storage-and-publish.md` |
 | D-010, D-023 | R-01 | `spec/api-commands.md`; agent policy in `spec/mcp-and-agents.md` |
 | D-011, D-022 | R-09 | `spec/data-rules.md`, "Package project" |
-| D-012, D-020, D-025, D-026 | R-20. One round-trip case is not covered without a schema change (OI-20). | `spec/data-rules.md`, "Changing a variant's format"; ADR-013 |
+| D-012, D-020, D-025, D-026 | R-20. The empty-track round trip (OI-20) is covered by `variant.first_clip_made` (A-180). | `spec/data-rules.md`, "Changing a variant's format"; ADR-013 |
 | D-013 | Geometry follows only between variants of the same pixel size. There is no ratio-based rule. | `spec/data-rules.md`, "Links" |
 | D-014 | R-10 | `spec/mcp-and-agents.md`, `spec/security.md`; ADR-011 |
 | D-016 | Opening a project by double-click, the publish dialog listing files first, replacing the MCP token. | `spec/storage-and-publish.md`, `spec/mcp-and-agents.md` |

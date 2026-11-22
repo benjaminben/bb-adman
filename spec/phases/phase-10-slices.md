@@ -64,7 +64,7 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 - **Exit check:** class E + B.
 - **Security:** full. **Size:** small.
 
-### P10-5 — AI tools: `propose_layout`, `copy_options`, `cut_out`
+### P10-5 — AI tools: `propose_layout`, `copy_options`, `cut_out` (built)
 
 - **Exists when done:** the three start tools work under the tick, one at a time through the shared serial; `get_job` shows a layout's boxes, copy options and a cut-out's asset ID (A-232).
 - **New files:** the rows of `ai-tools.ts` (`oneAtATime`, reply `jobIdOnly`; `cut_out` uses `generationCutOutAgentInput`; descriptions name `get_job` and, for a layout, `update_layers`).
@@ -87,19 +87,22 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 - **Exit check:** class E + B.
 - **Security:** full. **Size:** medium.
 
-### P10-7 — Permission dialog and the delete setting
+### P10-7 — Permission dialog and the delete setting (built, with its follow-up P10-7b)
 
 - **Exists when done:** the dialog shows on `agent.permissionRequested` and answers; Settings has the checkbox for deletes without asking.
 - **New files:** the body of `src/renderer/app/permission-dialog/` (Radix Dialog, its CSS module from tokens); `src/renderer/screens/settings/auto-approve-setting/`.
 - **May touch:** `src/renderer/screens/settings/mcp-section/mcp-section.tsx` (mount, a few lines); `src/main/mcp/ask-target.ts` (`clean()`: turn `"` into `'`, collapse each run of white space to one space, cut each name to 60 code points ending in "…"; from the P10-6 review, needed because the dialog shows this line) and `tests/unit/main/mcp/ask-target.test.ts` (one row per rule).
 - **The client name** in the dialog is text the agent chose. It is drawn as text only and shown as the agent's own label, never as something Adman checked.
 - **Needs:** P10-6.
-- **Words:** title "An agent asks to delete"; body "{agent} wants to {action}: {target}." where `{agent}` is the client name or "An agent"; "Answer within 2 minutes."; checkbox "Don't ask again for deletes"; buttons "Refuse" (focused first) and "Allow". Escape refuses. At `expiresAt` the dialog closes with no answer. Settings checkbox under Agent access: "Let agents delete campaigns and variants without asking", with the line "An agent can then delete work with no click from you. Deleting a campaign cannot be undone." Saved with `settings.update { mcp: { autoApproveDestructive } }`.
+- **Words** (as built with P10-7b): title "An agent asks to delete"; body "{agent} wants to {action}: {target}." where `{agent}` is "Agent named {client name}" or "An agent"; the variant target line names the project (` in "{project}"`), and a count of one reads "(1 variant)"; a cost line under the body (D-099: deletes have no undo): for a variant "This cannot be undone. It also clears the undo list of this campaign.", for a campaign "This cannot be undone."; "Answer within 2 minutes."; checkbox "Don't ask again for deletes"; buttons "Refuse" (focused first) and "Allow". "Allow" can be pressed only 750 ms after the dialog opens. Escape refuses. At `expiresAt` the dialog closes with no answer. Settings checkbox under Agent access: "Let agents delete campaigns and variants without asking", with the line "An agent can then delete work with no click from you. Deletes cannot be undone, and deleting a variant clears its campaign's undo list." Saved with `settings.update { mcp: { autoApproveDestructive } }`. The shared dialog frame gained an optional `describedBy`.
+- **Name cleaning** (as built): one cleaner, `cleanName` in `src/main/mcp/clean-name.ts`, for the target names and the client name (`spec/phases/phase-10.md`, "Activity and the client name"). A tool call that throws is logged too (`errorKind` `INTERNAL`).
 - **Tests first:** `tests/unit/renderer/app/permission-dialog.test.tsx` (keyboard path; axe; Refuse focused; Escape sends `allow: false`; the client name with markup shows as text; closes at `expiresAt` with nothing sent; a refused answer shows its message); `tests/unit/renderer/screens/settings/auto-approve-setting.test.tsx`. Shots `tests/shots/p10-7.shots.ts`: 290 the dialog, 291 the dialog with a long target, 292 the Settings checkbox.
 - **Exit check:** class D + `npm run test:e2e`.
 - **Security:** short. **Size:** small to medium.
 
-### P10-8 — Activity, the client name, agent marking
+### P10-8 — Activity, the client name, agent marking (built)
+
+- **As built:** the line reads "Agent working: {tool}", then " · {project name}" when the project is open in the app.
 
 - **Exists when done:** every tool call writes one `event: 'tool'` log line and sends `agent.activity`; commands from an agent carry the cleaned client name; the shell shows the activity line.
 - **New files:** the bodies of `src/main/mcp/activity.ts`, `src/main/mcp/client-name.ts` and `src/renderer/app/agent-activity/` ("Agent working: {tool}", plus the project's name from the app store's open projects when known; `role="status"`; hidden 10 seconds after the last event).
@@ -109,7 +112,9 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 - **Exit check:** class E + D.
 - **Security:** short. **Size:** small.
 
-### P10-9 — Bridge mode and the Claude Desktop block
+### P10-9 — Bridge mode and the Claude Desktop block (built)
+
+- **As built:** see `spec/mcp-and-agents.md`, "Bridge mode". `--mcp-bridge` on the command line is the only switch. No stderr text at all (not even fixed sentences); an error never opens a box. Hand checks and owed hardening are listed there.
 
 - **Exists when done:** `"{app}" --mcp-bridge` relays MCP between stdio and `http://127.0.0.1:{port}/mcp`; `ConnectInfo.claudeDesktop` is filled; the Connect panel shows the second block.
 - **New files:** `src/main/bridge/run-bridge.ts` (no window, no single-instance lock; reads `mcp.port` from `settings.json` and `mcp.token` from `secrets.bin` with `safeStorage` after `app.whenReady()`); `src/main/bridge/relay.ts` (Electron-free: the SDK's `StdioServerTransport` to `StreamableHTTPClientTransport` with the bearer header, each message passed on unchanged); `src/main/bridge/closed-answer.ts` (with the app not running, the setting off or no token: every request answered with a JSON-RPC error "Open the app and turn on agent access in Settings."; notifications dropped); `src/renderer/screens/settings/connect-panel/desktop-block/`.
@@ -120,7 +125,7 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 - **Exit check:** class E + G (`npm run test:e2e -- tests/e2e/bridge.spec.ts`) + D.
 - **Security:** full (reads the token, a new way in). **Size:** medium.
 
-### P10-10 — `create_campaign`: the fallback and its reply
+### P10-10 — `create_campaign`: the fallback and its reply (built; OI-25 settled by it)
 
 - **Exists when done:** sizes and languages may be left out by an agent (A-246); the reply goes through a picker.
 - **New files:** `src/shared/campaign/create-defaults.ts` (pure `fillCreateDefaults(input)`); `src/shared/schemas/commands/campaign-agent.ts` (`campaignCreateAgentInput`); `src/main/mcp/tools/campaign-replies.ts` (`createdFields`). If the three default sizes live only in the renderer, they move to `src/shared/config/default-sizes.ts` and the brief form imports them (one import line).
@@ -131,9 +136,10 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 - **Exit check:** class E + A.
 - **Security:** full. **Size:** small.
 
-### P10-11 — Phase 5 tools: `add_variant`, `delete_variant`
+### P10-11 — Phase 5 tools: `add_variant`, `delete_variant` (built)
 
-- **Exists when done:** both listed; `delete_variant` asks as `delete_campaign` does; `get_variant` gives the out-of-date detail.
+- **Exists when done:** both listed; `delete_variant` asks as `delete_campaign` does. `get_variant` gives only the `outOfDate` badge, not a detail of what is out of date (A-165; the detail is `sync.preview`'s, which agents have no tool for).
+- **As built:** a delete has no undo (D-099), and deleting a variant clears the campaign's undo list (A-141); the tool description says both. The test line below about undoing the delete does not apply.
 - **New files:** the rows of `variant-edit-tools.ts`. Targets for `askTarget`'s variant line are already in P10-6.
 - **May touch:** `variant-replies.ts` (the out-of-date part, its fields named); the five shared tool-list test files.
 - **Needs:** Phase 5's `variant.add` and `variant.delete` commands and the out-of-date detail in `variant.get` (the Phase 5 slices that build them); P10-2; P10-6.
@@ -141,9 +147,10 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 - **Tests first:** `tests/integration/mcp/variant-edit-tools.test.ts` (add: the cell, `createdBy: 'agent'`, text layers in another language `missing`; a taken cell refused; delete: allow, refuse, a master refused; the user can undo the delete from the campaign list).
 - **Exit check:** class E + B. **Security:** full. **Size:** small.
 
-### P10-12 — Phase 6 tools: `set_translation`, `run_checks`, `get_check_results`
+### P10-12 — Phase 6 tools: `set_translation`, `run_checks`, `get_check_results` (built)
 
-- **Exists when done:** the three tools listed; the named test "An agent `set_translation` never yields `approved`" passes; `get_variant` gives the latest check.
+- **Exists when done:** the three tools listed; the named test "An agent `set_translation` never yields `approved`" passes. `get_variant` carries only the check badges (`checkWarning`, `checkStale`; A-165); the results are `get_check_results`'.
+- **As built:** `run_checks` by an agent replaces the variant's stored check row (`ranBy: 'agent'`), the user's included; export runs the checks again itself. `variant-replies.ts` has no check part (the "May touch" line below named one that does not exist). The P10-5 review lows went in here.
 - **New files:** the rows of `translation-check-tools.ts`; `src/main/mcp/tools/check-replies.ts`. If Phase 6 built no `check.results`: `src/main/queries/check-results.ts` and one line in `src/main/queries/queries.ts`.
 - **May touch:** `variant-replies.ts` (the check part); the five shared tool-list test files.
 - **Needs:** Phase 6's `translation.set`, `check.run` and the `variant_check` row schema; P10-2.
@@ -151,7 +158,7 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 - **Tests first:** `tests/integration/mcp/translation-check-tools.test.ts` (the named test, with `apply_to_same_language` both ways; check results with a stale variant; replies through `riskyKeys`).
 - **Exit check:** class E + B. **Security:** full. **Size:** small to medium.
 
-### P10-13 — Phase 7 tool: `set_variant_format`
+### P10-13 — Phase 7 tool: `set_variant_format` (built; its input is `variantSetFormatBaseInput`, without the undo-only fields)
 
 - **Exists when done:** the tool changes format both ways with no dialog [D-025]; `get_variant` gives the clips (IDs, asset IDs, times, placement; no path).
 - **New files:** the row of `format-tool.ts`.
@@ -160,7 +167,7 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 - **Tests first:** `tests/integration/mcp/format-tool.test.ts` (image to video and back; no `agent.permissionRequested` sent; a taken cell `RULE_VIOLATION`; the user's undo works).
 - **Exit check:** class E. **Security:** full. **Size:** small.
 
-### P10-15 — The agent undo guard
+### P10-15 — The agent undo guard (built; the count is taken at check time, so a batch of 100 passes)
 
 - **Exists when done:** A-261 holds: an agent command that would be the 101st agent entry in a row on one undo list since the user last acted there is refused with nothing written; any user action on that list resets the count.
 - **New files:** none needed; a small helper file beside `undo-lists.ts` is allowed if it keeps that file under 200 lines.

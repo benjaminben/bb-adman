@@ -129,8 +129,8 @@ System command (`internal: true`), agent deny, not on the window's channel. It e
 [REQ: FR-070]. Undo V. Agent allow. Built (`src/main/commands/variant/update.ts`).
 
 - Input `{ projectId, variantId, title?, durationMs? }`, strict, with at least one of the two ("Name a title or a duration."). `title` is trimmed, 1 to 200 characters. `durationMs` is a whole number from 500 to 86,400,000 (`MIN_DURATION_MS`, `MAX_DURATION_MS` in `src/shared/schemas/commands/variant.ts`).
-- Until P7-10 fills it, a call with `durationMs` (or with no `title`) is refused: `RULE_VIOLATION`, reason `video_not_built`, "This part of video editing is not built yet." Nothing is written.
-- **Inverse:** `variant.update` with the old title. **Reply:** `{ variantId }`.
+- `durationMs` (P7-10) writes `duration_ms`; on a variant that is not its direction's master it also sets `duration_overridden`. `durationOverridden` in the input is undo-only: accepted only while the bus replays an undo or redo, never from an agent (`spec/data-rules.md`, "Undo-only fields").
+- **Inverse:** `variant.update` with the old title, or the old duration and flag. **Reply:** `{ variantId }`.
 
 ## Queries
 

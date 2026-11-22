@@ -89,7 +89,7 @@ Built (`src/main/commands/agent-policy.ts`).
 
 ### ADR-010: MCP over HTTP on 127.0.0.1 with a token, plus a bridge mode
 
-Server built (`src/main/mcp/server.ts`). Bridge mode not built (Phase 10).
+Built: the server (`src/main/mcp/server.ts`) and bridge mode (P10-9, `src/main/bridge/`; `spec/mcp-and-agents.md`, "Bridge mode").
 
 - **Context:** The server must accept only same-computer connections [REQ: FR-191]. Any local program or web page could otherwise reach it. The first agent app is Claude.
 - **Decision:** Streamable HTTP bound to 127.0.0.1, bearer token, `Origin` and `Host` checks. The app executable has a `--mcp-bridge` mode for clients that only launch command-line servers.
@@ -107,7 +107,7 @@ Built.
 
 ### ADR-012: Publish does a fresh export
 
-Not built (Phase 9). The storage adapters are built; the publish flow is not.
+Built (P9-7 to P9-13). As built, the export runs inside the publish job into its work folder; it is all or nothing about its ads and inserts no `report` row (`spec/storage-and-publish.md`, "Publishing").
 
 - **Context:** Publishing must upload final exports, components, the sheet and the report as one consistent set [REQ: FR-162].
 - **Decision:** `publish.run` exports the whole campaign to a temporary folder, then uploads, writes a manifest and removes stale files under the campaign's folder only.
@@ -116,12 +116,12 @@ Not built (Phase 9). The storage adapters are built; the publish flow is not.
 
 ### ADR-013: Format change is its own command with one table of allowed changes
 
-Not built (Phase 7).
+Built (P7-10; the tool P10-13).
 
 - **Context:** A variant's format can be changed in both directions: image to video [REQ: R-20, D-012] and video back to image [D-020]. Video settings must survive a change to image and back [D-026]. An agent may make the change [D-025]. The change has side effects that a title or duration edit does not: it must respect the `variant_grid` unique index and may create a background clip.
 - **Decision:** A command of its own, `variant.setFormat`, on the variant's undo list, allowed for agents. One table in `src/shared/config/format-changes.ts` says which changes are allowed, and both are. The change writes `format` and nothing else, except the first clip of a variant that has none. Clips, duration, timing and animation stay stored while a variant is an image, so neither direction loses anything.
 - **Alternatives considered:** Adding `format` to `variant.update`, which would hide the grid test and the clip step inside a title-and-duration edit. Deleting the variant and adding a new one in the other format, which loses the variant's ID, overrides, translations and video settings. Deleting clips when a variant becomes an image, which D-026 rules out.
-- **Consequences:** One more command, one more MCP tool (`set_variant_format`) and one more single-owner file. An image variant can hold clip rows it does not draw. The unique index and the schema do not change. One round-trip case, a video variant with an empty track, is not covered without a new column (OI-20: open whether to add one).
+- **Consequences:** One more command, one more MCP tool (`set_variant_format`) and one more single-owner file. An image variant can hold clip rows it does not draw. The unique index does not change. The empty-track round trip (OI-20) is covered by the column `variant.first_clip_made` (A-180, migration 0005).
 
 ## Glossary
 

@@ -244,7 +244,7 @@ type Revs = { copy: number; style: number; geometry: number; source: number; tim
 
 ### background_clip
 
-[REQ: FR-121, FR-122]. Table built; clip commands not built (Phase 7).
+[REQ: FR-121, FR-122]. Table built; clip commands built (P7-9); a gap between clips draws black, in the editor and in the export.
 
 ```sql
 CREATE TABLE background_clip (

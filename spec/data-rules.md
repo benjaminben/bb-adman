@@ -94,7 +94,7 @@ For every combination of size, language and format that does not already exist i
    - `fill`: place as `scale`; then the window starts one `generative_fill` job per such size (`generation.runFill`) that extends the image to the new size. On success (`generation.applyFill`) the new asset becomes the variant's background with `source` added to `overrides`. On failure the background stays as `scale` and retry is offered [REQ: FR-076, workflow 5.2].
 5. **Geometry for a new size and a new language.** Copy geometry from the variant with the same size and format in the master's language, created in step 3 [REQ: R-02].
 6. **Copy for a new language.** Start one translation job per language for the direction, covering every text layer in the master. The result is written to every new variant in that language with `translation_status = 'proposed'`. If the brief supplied copy for the language, that text is used with `translation_source = 'brief'` and no job runs [REQ: FR-027]. If there is no key or the job fails, the layers keep the master's text with `translation_status = 'missing'` and the variant offers retry [REQ: workflow 5.2].
-7. **Video format.** Create one background clip from the variant's background image, from 0 to the variant's duration.
+7. **Video format** (built, P7-23). Create one background clip from the variant's background picture with `addFirstClip`, which sets `first_clip_made`. The new variant does not copy the master's clips or its sound settings. A background with no picture gives no clip. Image variants get none. The fan-out dialog sends only `['image']` for now; a screen control for video fan-out is an owed follow-up (`spec/phases/review-leftovers.md`).
 8. Ask the render service to measure text overflow on each new variant.
 
 Fan-out is one entry on the campaign undo list. Generative fill is the only image generation the fan-out dialog can start, and only when the user chose `fill` [REQ: FR-076].
@@ -260,7 +260,7 @@ The command is not undoable and does not change any `rev`. It never opens the co
 
 ## Changing a variant's format
 
-Not built. Phase 7 for the command; Phase 10 for the MCP tool. [REQ: FR-070, FR-120, workflow 5.5 step 1, R-20, D-012, D-020, D-025, D-026]
+Built: the command (P7-10, `src/main/commands/variant/set-format.ts`, with the undo fix P7-10b) and the MCP tool `set_variant_format` (P10-13). [REQ: FR-070, FR-120, workflow 5.5 step 1, R-20, D-012, D-020, D-025, D-026]
 
 `variant.setFormat` changes one variant from one format to the other. Input: `projectId`, `variantId`, `format`. Setting the format a variant already has changes nothing and returns success.
 
@@ -282,7 +282,7 @@ Not built. Phase 7 for the command; Phase 10 for the MCP tool. [REQ: FR-070, FR-
 
 1. Run the grid test.
 2. Set `format = 'video'`. `duration_ms` and `duration_overridden` keep their stored values. The user changes the duration with `variant.update`.
-3. If the variant has no `background_clip` rows and its background layer has a `source`, create one clip from that asset, from 0 to `duration_ms`. This is the same clip fan-out creates ("Fan-out", step 7). If the background layer has no `source`, no clip is created and the track shows black.
+3. If `first_clip_made` is 0, the variant has no `background_clip` rows and its background layer has a usable `source`, create one clip from that asset at 0 (`addFirstClip` in `src/main/clips/write-clip.ts`) and set `first_clip_made` to 1. The clip runs to `duration_ms` for a still; for a video file it runs the file's own length. This is the same clip fan-out creates ("Fan-out", step 7). If the background layer has no `source`, no clip is created and the track shows black.
 4. Layers are not touched and no layer `revs` change. `variant.rev` goes up by one, so the thumbnail is redrawn and the last check result becomes stale.
 
 **Video to image:**
@@ -307,7 +307,11 @@ Not built. Phase 7 for the command; Phase 10 for the MCP tool. [REQ: FR-070, FR-
 - The guarantee covers what the format change does. Edits made while the variant is an image are ordinary edits and stay: a sync still writes followed timing and animation to a linked variant, and a new background image changes `source` but no clip.
 - If another video variant was added at the same size and language while this one was an image, changing back is refused by the grid test. The video settings stay stored on the variant, so nothing is lost and the change works once the other variant is deleted or changed.
 
-**Open (OI-20), settle before Phase 7.** One case breaks the guarantee and cannot be fixed without a schema change. A video variant whose track the user emptied on purpose (every clip removed, all black) has no clip rows. After video to image and back, step 3 cannot tell it from a variant that was never a video, so it creates one clip from the background image. The user can remove the clip or undo the change. Fixing it needs one new column on `variant` that records "the first clip has been created", added by a migration in Phase 7.
+**OI-20, settled by `first_clip_made`** (A-180, migration 0005). A video variant whose track the user emptied on purpose keeps `first_clip_made` at 1, so after video to image and back step 3 makes no clip and the track stays empty. Any clip add sets it to 1.
+
+**Undo and redo of the first clip** (P7-10b). The inverse of an image-to-video change that made the first clip carries `undoClipId`: the undo removes that clip and sets `first_clip_made` back to 0 when the track is then empty. The inverse of that undo carries `redoClipId`: the redo makes the clip again under the same ID, so a later redo of a clip edit finds it. `variant.update` has the same kind of field, `durationOverridden`, which its inverse carries.
+
+**Undo-only fields.** `undoClipId`, `redoClipId` and `durationOverridden` are accepted only while the bus replays an inverse for `history.undo` or `history.redo` (`ctx.replay`), and never from an agent. Sent at any other time they are refused with `INVALID_INPUT`, "Only an undo or redo names a clip this way." (for `durationOverridden`: "Only an undo or redo sets the duration flag."). A hand-sent `undoClipId` would otherwise delete a clip with no way back. The MCP tool's published input leaves all three out.
 
 **Master and linked variants.** The command works the same on both.
 

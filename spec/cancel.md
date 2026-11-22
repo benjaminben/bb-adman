@@ -68,7 +68,7 @@ Wire fields `startedBy` and `errorReason` on `JobRow`. A failed job's missing it
 - `available` means this build has a working adapter for the provider. It is a constant in `registry.ts`, never worked out from settings, the address or a workflow's status.
 - "No address yet" and "no offered workflow" are not `available: false`. They are the refusals `comfy_address_needed` and `comfy_job_not_offered` at the moment of a run (`spec/api-commands.md`), so the user can pick ComfyUI and be led to the address dialog [REQ: FR-254, FR-255].
 - The `comfyui` row: label `ComfyUI`, `jobs: ['image', 'video']`, `available: true`, `secrets: []`, `defaultModels: {}` (the model is the workflow, `spec/export-and-checks.md`), `local: true`, `cancel: 'stops'`, `serverText: true`. It sits after `fal-seedance`, before `firefly`.
-- `fal-seedance` is `available: false` until slice J.
+- `fal-seedance` is `available: true` (P7-15).
 
 ### Paid calls
 
@@ -198,7 +198,7 @@ Built. `src/main/providers/comfyui/cancel.ts` (`cancelOwnRun`), `run.ts`, `video
 
 ### fal.ai Seedance
 
-The adapter is built (P7-14); the registry row stays `available: false` until P7-15. The cancel rule below is built (P7-13): `src/main/jobs/leave-running.ts`, `src/main/jobs/cancel.ts`, `src/renderer/ui/cancel-shown.ts`.
+The adapter is built (P7-14) and switched on (P7-15: `available: true`). The cancel rule below is built (P7-13): `src/main/jobs/leave-running.ts`, `src/main/jobs/cancel.ts`, `src/renderer/ui/cancel-shown.ts`.
 
 - The queue cancel call. A request that still completes is `finished`, kept.
 - **A paid run charged either way is left to finish.** One test, `leftRunningOnClose(row, provider)` in `leave-running.ts`, says which runs these are. It is true only when all of these hold:
@@ -270,4 +270,4 @@ On opening a project, every job left `queued` or `running` by a process that is 
 
 **A left-over video run is only checked and fetched, never started again** (security, cost). When the video job kind gets a row that has a `remote_job_id`, it never calls the adapter's `start`. It calls `check`, fetches the result if there is one, and stores it. A remote ID the provider does not know ends the job `failed` with nothing kept. It is never removed or interrupted. This holds for any project file, packaged copies included.
 
-Not built (slice J): check whether fal charges for a status call or a fetch. If it does, or that cannot be shown, fal rows are not picked up and end as interrupted. Slice J says whether a status call on a left-over row counts in `paid_calls`.
+**fal rows** (built, P7-15). A status, result or download call is not a paid call: `paid_calls` counts only the submit, and stays as it was when a left-over row is picked up. A started fal run is left running on close and on quit and is collected at the next open. So opening a project file that holds a running fal row (someone else's file included) sends the user's fal key to the fal queue host for status and result only; it never submits. Whether fal charges for a status call is still the stakeholder's check on his fal usage page (A-173, P7-24).
