@@ -23,7 +23,7 @@ describe('EmptyState [T3c]', () => {
     expect(screen.getByText('No campaigns yet')).toBeVisible()
     expect(screen.getAllByRole('button')).toHaveLength(1)
     const button = screen.getByRole('button', { name: 'New campaign' })
-    expect(button).toHaveClass(layout.primary)
+    expect(button).toHaveClass(layout.primary ?? 'missing')
     await userEvent.click(button)
     expect(onClick).toHaveBeenCalledTimes(1)
     expect(await axeViolations()).toEqual([])
@@ -31,12 +31,14 @@ describe('EmptyState [T3c]', () => {
 
   it('draws the empty look and no button without an action', () => {
     const { container } = render(<EmptyState icon="image" words="No pictures" />)
-    expect(container.firstElementChild).toHaveClass(layout.empty)
+    expect(container.firstElementChild).toHaveClass(layout.empty ?? 'missing')
     expect(screen.queryByRole('button')).toBeNull()
   })
 
   it('draws a secondary button unless primary is asked for', () => {
     render(<EmptyState icon="key" words="No keys" action={{ label: 'Add key', onClick() {} }} />)
-    expect(screen.getByRole('button', { name: 'Add key' })).not.toHaveClass(layout.primary)
+    expect(screen.getByRole('button', { name: 'Add key' })).not.toHaveClass(
+      layout.primary ?? 'missing',
+    )
   })
 })

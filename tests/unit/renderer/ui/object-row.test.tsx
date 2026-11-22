@@ -64,7 +64,7 @@ describe('ObjectRow: one height, actions laid over [T3c]', () => {
   it('lets a row with meta grow from a min-height of --row-height', () => {
     expect(body('.box.withMeta')).toMatch(/min-height:\s*var\(--row-height\)/)
     render(<Row meta="3 variants" />)
-    expect(rowBox()).toHaveClass(styles.withMeta)
+    expect(rowBox()).toHaveClass(styles.withMeta ?? 'missing')
     expect(screen.getByText('3 variants')).toBeInTheDocument()
   })
 
@@ -102,7 +102,7 @@ describe('ObjectRow: which actions show [T3c]', () => {
 
   it('marks the selected row with its class', () => {
     render(<Row selected />)
-    expect(rowBox()).toHaveClass(styles.selected)
+    expect(rowBox()).toHaveClass(styles.selected ?? 'missing')
     expect(body('.selected .name')).toMatch(/font-weight:\s*var\(--weight-bold\)/)
   })
 })
@@ -110,7 +110,7 @@ describe('ObjectRow: which actions show [T3c]', () => {
 describe('ObjectRow: muted, title and events [T3c]', () => {
   it('strikes the name of a muted row and dims the row but not its actions', () => {
     render(<Row muted />)
-    expect(rowBox()).toHaveClass(styles.muted)
+    expect(rowBox()).toHaveClass(styles.muted ?? 'missing')
     expect(body('.muted .name')).toMatch(/text-decoration:\s*line-through/)
     expect(body('.muted .content')).toMatch(/opacity:\s*var\(--opacity-disabled\)/)
     expect(rules.some((r) => /\.muted\s+\.(tail|actions|state)/.test(r.selector))).toBe(false)

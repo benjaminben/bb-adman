@@ -6,6 +6,7 @@
   position: relative;
   display: flex;
   align-items: center;
+  min-width: 0;
   height: var(--row-height);
   border-radius: var(--radius);
   background: var(--color-bg);
