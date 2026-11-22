@@ -51,19 +51,13 @@ function setup(providers?: ProviderInfo[], video = 'fal-seedance') {
   return fake
 }
 
-type Seen = { description: string; line: string | null }
-
-// A caller as the editor's: it sends the run from onConfirm, and notes what was on screen then.
+// A caller as the editor's: it sends the run from onConfirm, and notes the words that described
+// the dialog at that moment (the last is the cost line).
 async function open(over: Partial<RunDialogProps> = {}, fake = setup()) {
-  const seen: Seen[] = []
+  const seen: string[][] = []
   const onConfirm = vi.fn(async (provider: string, count: number | null, video?: unknown) => {
-    const dialog = screen.getByRole('dialog')
-    const ids = (dialog.getAttribute('aria-describedby') ?? '').split(' ')
-    const last = ids
-      .map((id) => document.getElementById(id))
-      .filter(Boolean)
-      .at(-1)
-    seen.push({ description: dialogDescription(dialog), line: last?.textContent ?? null })
+    const ids = screen.getByRole('dialog').getAttribute('aria-describedby') ?? ''
+    seen.push(ids.split(' ').map((id) => document.getElementById(id)?.textContent ?? ''))
     return fake.api.command('generation.runImages', { provider, count, video })
   })
   const props: RunDialogProps = {
@@ -80,14 +74,6 @@ async function open(over: Partial<RunDialogProps> = {}, fake = setup()) {
   const element = await screen.findByRole('dialog', { name: props.title })
   await act(async () => {})
   return { ...view, element, dialog: within(element), onConfirm, seen, fake }
-}
-
-function dialogDescription(dialog: HTMLElement): string {
-  return (dialog.getAttribute('aria-describedby') ?? '')
-    .split(' ')
-    .map((id) => document.getElementById(id)?.textContent ?? '')
-    .filter(Boolean)
-    .join(' ')
 }
 
 const runs = (fake: ReturnType<typeof makeFakeApi>) =>
@@ -113,7 +99,7 @@ describe('the run dialog sends only on its action click [DLG-4a, C-15]', () => {
     expect(runs(fake)).toEqual([
       { name: 'generation.runImages', input: { provider: 'gemini', count: 2, video: undefined } },
     ])
-    expect(seen[0]?.line).toBe('Paid: 2 pictures + 3 references to Google Gemini')
+    expect(seen[0]?.at(-1)).toBe('Paid: 2 pictures + 3 references to Google Gemini')
   })
 
   it('puts the MoneyLine words in the description, last in the body, directly above the foot', async () => {
@@ -143,7 +129,7 @@ describe('the run dialog sends only on its action click [DLG-4a, C-15]', () => {
       expect(dialog.getByText(costLine(words))).toBeVisible()
       await userEvent.click(action())
       expect(runs(fake)[0]?.input).toMatchObject({ provider: 'gemini', count: Number(typed) })
-      expect(seen[0]?.description).toBe(spoken(words))
+      expect(seen[0]?.join(' ')).toBe(spoken(words))
     },
   )
 })
@@ -165,7 +151,7 @@ describe('the video cost line [DLG-4a, R2E-8]', () => {
     expect(element).toHaveAccessibleDescription(spoken(words))
     await userEvent.click(action())
     expect(onConfirm).toHaveBeenCalledWith('fal-seedance', null, { seconds: 5, pictures: 9 })
-    expect(seen[0]?.line).toBe(spoken(words))
+    expect(seen[0]?.at(-1)).toBe(spoken(words))
   })
 
   it('keeps the length line directly above the cost line, both in the description', async () => {
@@ -185,7 +171,9 @@ describe('the video cost line [DLG-4a, R2E-8]', () => {
 })
 
 const noMoneyLine = (scope: ReturnType<typeof within>) =>
-  scope.queryByText((_c, el) => el?.tagName === 'P' && /^Paid:/.test(el.textContent ?? ''))
+  scope.queryByText(
+    (_c: string, el: Element | null) => /^Paid:/.test(el?.textContent ?? '') && el?.tagName === 'P',
+  )
 
 describe('local lines and unknown providers [DLG-4a]', () => {
   it.each([

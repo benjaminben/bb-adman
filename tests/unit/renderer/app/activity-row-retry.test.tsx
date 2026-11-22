@@ -14,6 +14,7 @@ import { baseState, makeFakeApi } from '../fake-api'
 import { renderApp } from '../render'
 import { LOCAL } from '../screens/campaign/campaign-fixture'
 import { REFUSED, heldReply } from '../screens/campaign/held-reply'
+import { costLine } from '../cost-line'
 import { COMFY, videoRow } from '../screens/campaign/video-fixture'
 import { jobRow } from '../stores/job-fixture'
 
@@ -65,7 +66,7 @@ describe('ActivityRow Retry, one retry per click [TL-2]', () => {
       const { held, row, retries } = await draw(jobRow('J1', { status: 'failed' }))
       await userEvent.click(row.getByRole('button', { name: 'Retry' }))
       const dialog = within(await screen.findByRole('dialog', { name: 'Retry the run' }))
-      expect(dialog.getByText('This will use 2 generation(s) with Google Gemini.')).toBeVisible()
+      expect(dialog.getByText(costLine('Paid: 2 pictures → Google Gemini'))).toBeVisible()
       expect(retries()).toEqual([])
       const confirm = dialog.getByRole('button', { name: 'Retry' })
       await userEvent.dblClick(confirm)
@@ -87,7 +88,7 @@ describe('ActivityRow Retry, one retry per click [TL-2]', () => {
       const retry = row.getByRole('button', { name: 'Retry' })
       expect(retry).toBeDisabled()
       await userEvent.click(retry)
-      expect(row.queryByText(/paid request/)).toBeNull()
+      expect(row.queryByText(/^Paid:/)).toBeNull()
       held.release(reply)
       await waitFor(() => expect(retry).toBeEnabled())
       expect(retries()).toHaveLength(1)
@@ -103,7 +104,7 @@ describe('ActivityRow, the confirm count on Retry [FN-4]', () => {
     await userEvent.click(row.getByRole('button', { name: 'Retry' }))
     const dialog = within(await screen.findByRole('dialog', { name: 'Retry the run' }))
     expect(dialog.getByText('Pictures: 2')).toBeVisible()
-    expect(dialog.getByText('This will use 2 generation(s) with Google Gemini.')).toBeVisible()
+    expect(dialog.getByText(costLine('Paid: 2 pictures → Google Gemini'))).toBeVisible()
   })
 
   it('a video row counts one request', async () => {
@@ -116,14 +117,14 @@ describe('ActivityRow, the confirm count on Retry [FN-4]', () => {
     })
     const { row } = await draw(job)
     await userEvent.click(row.getByRole('button', { name: 'Retry' }))
-    expect(row.getByText('This sends 1 paid request(s) to Google Gemini.')).toBeInTheDocument()
+    expect(row.getByText(costLine('Paid: 1 request → Google Gemini'))).toBeInTheDocument()
   })
 
   it('sends job.retry for a failed ComfyUI row with no confirm line', async () => {
     const job = jobRow('J1', { status: 'failed', provider: 'comfyui', errorReason: 'run_failed' })
     const { row, retries } = await draw(job)
     await userEvent.click(row.getByRole('button', { name: 'Retry' }))
-    expect(row.queryByText(/paid request/)).toBeNull()
+    expect(row.queryByText(/^Paid:/)).toBeNull()
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(retries().map((c) => c.input)).toEqual([{ projectId: 'P1', jobId: 'J1' }])
   })

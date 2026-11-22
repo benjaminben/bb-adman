@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest'
 import { ProjectHome } from '@/renderer/screens/project-home/project-home'
 import { ErrorBanner } from '@/renderer/app/error-banner'
 import type { JobRow } from '@/shared/schemas/rows/job'
+import { costLine } from '../../cost-line'
 import { renderApp } from '../../render'
 import { jobRow } from '../../stores/job-fixture'
 import { PROJECT, projectApi } from './project-fixture'
@@ -82,7 +83,7 @@ describe('Load a brief: Markdown and text [P4-15]', () => {
       await openPage(fake)
       await userEvent.click(screen.getByRole('button', { name: 'Load a brief' }))
       const run = await screen.findByRole('dialog', { name: 'Read the brief with AI' })
-      expect(within(run).getByText('This sends 1 paid request to Google Gemini.')).toBeVisible()
+      expect(within(run).getByText(costLine('Paid: 1 request → Google Gemini'))).toBeVisible()
       await userEvent.click(within(run).getByRole('button', { name: 'Cancel' }))
       expect(screen.queryByRole('dialog')).toBeNull()
       expect(fake.commands).toEqual([])

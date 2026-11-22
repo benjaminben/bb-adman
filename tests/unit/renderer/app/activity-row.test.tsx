@@ -10,6 +10,7 @@ import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import { plainMessage } from '@/shared/providers/messages'
 import { axeViolations, renderApp } from '../render'
 import { baseState, makeFakeApi } from '../fake-api'
+import { costLine } from '../cost-line'
 import { jobRow } from '../stores/job-fixture'
 
 const FAKE: ProviderInfo = {
@@ -213,9 +214,7 @@ describe('ActivityRow Cancel and Retry [P4-14, D-036, A-63]', () => {
     const over: Over = { status: 'failed', kind: 'video_generation', provider: 'fal-seedance' }
     const { row, fake } = await draw(over)
     await userEvent.click(within(row).getByRole('button', { name: 'Retry' }))
-    expect(
-      within(row).getByText(/^This sends .*paid request\(s\) to fal.ai Seedance/),
-    ).toBeVisible()
+    expect(within(row).getByText(costLine('Paid: 1 request → fal.ai Seedance'))).toBeVisible()
     await userEvent.click(within(row).getByRole('button', { name: 'Confirm' }))
     expect(sent(fake, 'job.retry')).toHaveLength(1)
   })

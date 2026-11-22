@@ -36,7 +36,7 @@ describe('PaidCount [P4-12, FR-230]', () => {
   ])('draws the line with %s', async (_name, counts, line) => {
     const fake = withCounts(counts)
     await renderApp(<PaidCount projectId="P1" campaignId="C1" />, fake)
-    expect(await screen.findByText(line)).toBeInTheDocument()
+    expect(await screen.findByTitle(line)).toBeInTheDocument()
     expect(reads(fake)[0]?.input).toEqual({ projectId: 'P1', campaignId: 'C1' })
   })
 
@@ -46,12 +46,12 @@ describe('PaidCount [P4-12, FR-230]', () => {
       { pictures: 5, videos: 0, text: 0 },
     )
     await renderApp(<PaidCount projectId="P1" campaignId="C1" />, fake)
-    await screen.findByText(/1 pictures/)
+    await screen.findByTitle(/1 pictures/)
     fake.emit('job.updated', jobRow('J1', { campaignId: 'C2' }))
     fake.emit('job.updated', jobRow('J2', { campaignId: null }))
     expect(reads(fake)).toHaveLength(1)
     fake.emit('job.updated', jobRow('J3', { campaignId: 'C1' }))
-    expect(await screen.findByText(/5 pictures/)).toBeInTheDocument()
+    expect(await screen.findByTitle(/5 pictures/)).toBeInTheDocument()
     expect(reads(fake)).toHaveLength(2)
   })
 

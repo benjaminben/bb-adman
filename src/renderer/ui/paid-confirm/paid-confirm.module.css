@@ -1,12 +1,13 @@
 /* app-style */
-/* The paid confirm line: an info notice, the sentence first, its two buttons at the right. */
+/* The two-step paid line: the MoneyLine, then Confirm and Cancel at its right, on one row
+   that wraps in a narrow place. */
 .line {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: var(--gap-inline);
 }
-.text {
+.line > p {
   flex: 1;
   min-width: 0;
-}
-.line > button + button {
-  margin-left: 0;
 }

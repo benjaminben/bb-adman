@@ -12,6 +12,7 @@ import { plainMessage } from '@/shared/providers/messages'
 import type { TranslationJobState, TranslationRow } from '@/shared/schemas/queries/translation'
 import { baseState, makeFakeApi } from '../../fake-api'
 import { renderApp } from '../../render'
+import { costLine } from '../../cost-line'
 import { jobRow } from '../../stores/job-fixture'
 import { LOCAL, MASTER, P, campaignGet } from './campaign-fixture'
 import { translationRow as row, translations } from './translation-fixture'
@@ -65,7 +66,7 @@ describe('Translate {language} again… [P6-13, A-157]', () => {
   it('opens the run dialog with the paid line and sends nothing before the confirm', async () => {
     const { fake } = await show(ROWS)
     const dialog = await openAgain()
-    expect(dialog.getByText('This sends 1 paid request to Google Gemini.')).toBeVisible()
+    expect(dialog.getByText(costLine('Paid: 1 request → Google Gemini'))).toBeVisible()
     expect(proposes(fake)).toEqual([])
     await userEvent.click(dialog.getByRole('button', { name: 'Cancel' }))
     expect(screen.queryByRole('dialog')).toBeNull()

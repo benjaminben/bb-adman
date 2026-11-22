@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { generateDrafts } from '@/renderer/stores/generate-drafts'
 import { baseState } from '../fake-api'
+import { costLine } from '../cost-line'
 import { ref } from '../screens/campaign/reference-fixture'
 import { CLIP, videoRow } from '../screens/campaign/video-fixture'
 import { assetRow, BACKGROUND, LOGO, P } from './editor-fixture'
@@ -197,9 +198,7 @@ describe('the video starts [R2E-8, D4; ported from video-offer, video-start]', (
     const { fake } = await openVideo({ providers: WITH_FAL, video: 'fal-seedance' })
     await typePrompt()
     const dialog = await openDialog()
-    expect(
-      dialog.getByText('This will use 1 video generation of 4 seconds with fal.ai Seedance.'),
-    ).toBeVisible()
+    expect(dialog.getByText(costLine('Paid: 1 video, 4 seconds → fal.ai Seedance'))).toBeVisible()
     expect(videoInputs(fake)).toEqual([])
     await userEvent.click(dialog.getByRole('button', { name: 'Generate' }))
     await waitFor(() =>

@@ -1,9 +1,11 @@
-// What the run does, one line (spec/screens-ai.md, "The run confirmation dialog"): a paid run
-// names its count and provider, a ComfyUI run its server and workflow, the fake provider says
-// nothing is charged. The ComfyUI address is allowed here (FR-256). R2E-8 (round-2-editor.md
-// D4): a paid video names the length and the pictures it sends, and a length the provider
-// changes gets a second line.
+// What the run costs, one line (spec/screens-ai.md, "The run confirmation dialog"; DLG-4a,
+// choice C-15). A paid provider (not local, not the fake one) gets the MoneyLine words "Paid:
+// {what} → {Provider}", naming the count, references, seconds and pictures the run sends. A
+// ComfyUI run names its server and workflow, the fake provider says nothing is charged; both
+// keep today's words. The ComfyUI address is allowed here (FR-256). A provider the app does
+// not know reaches here with `local: false`, so it counts as paid. Fan-out uses `runCost` too.
 import { paidLine } from '@/renderer/ui/paid-confirm/paid-confirm'
+import { plural } from '@/renderer/ui/plural'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 
 export type RunJob = 'image' | 'cutout' | 'layout' | 'text' | 'video'
@@ -23,31 +25,49 @@ export type SummaryInput = {
   video?: VideoSent
 }
 
+export type RunCost = { paid: boolean; words: string }
+
 const FREE = 'Nothing is charged.'
 
-export function runSummary(input: SummaryInput): string {
-  const { job, provider } = input
+function localLine(input: SummaryInput): string {
+  const { provider } = input
   if (provider.id === 'fake') return `This uses the fake provider. ${FREE}`
-  if (provider.id === 'comfyui') {
-    const at = input.comfy?.address ? ` at ${input.comfy.address}` : ''
-    const workflow = input.comfy ? ` with the workflow ${input.comfy.label}` : ''
-    return `This runs on your ComfyUI server${at}${workflow}. ${FREE}`
-  }
-  const requests = input.requests ?? 1
-  if (job === 'text' && requests > 1) return paidLine(requests, provider.label)
-  if (job === 'layout' || job === 'text') return `This sends 1 paid request to ${provider.label}.`
-  if (job === 'video' && input.video) {
-    const { seconds, pictures } = input.video
-    const sends = pictures > 0 ? ` It sends ${pictures} picture(s).` : ''
-    return `This will use 1 video generation of ${seconds} seconds with ${provider.label}.${sends}`
-  }
-  const n = input.count ?? 1
-  const m = input.referenceCount ?? 0
-  const refs = m > 0 ? ` It sends ${m} reference picture(s).` : ''
-  return `This will use ${n} generation(s) with ${provider.label}.${refs}`
+  if (provider.id !== 'comfyui') return `This runs on ${provider.label}. ${FREE}`
+  const at = input.comfy?.address ? ` at ${input.comfy.address}` : ''
+  const workflow = input.comfy ? ` with the workflow ${input.comfy.label}` : ''
+  return `This runs on your ComfyUI server${at}${workflow}. ${FREE}`
 }
 
-// The second line when the provider makes another length than the one typed.
+// What a paid run sends, before the arrow.
+function paidWhat(input: SummaryInput): string {
+  const { job } = input
+  if (job === 'cutout') return '1 cut-out'
+  if (job === 'video') {
+    if (!input.video) return '1 video'
+    const { seconds, pictures } = input.video
+    const sends = pictures > 0 ? ` + ${plural(pictures, 'picture')}` : ''
+    return `1 video, ${plural(seconds, 'second')}${sends}`
+  }
+  const m = input.referenceCount ?? 0
+  const refs = m > 0 ? ` + ${plural(m, 'reference')}` : ''
+  return `${plural(input.count ?? 1, 'picture')}${refs}`
+}
+
+export function runCost(input: SummaryInput): RunCost {
+  const { job, provider } = input
+  const paid = !provider.local && provider.id !== 'fake'
+  if (!paid) return { paid, words: localLine(input) }
+  if (job === 'layout' || job === 'text') {
+    return { paid, words: paidLine(job === 'text' ? (input.requests ?? 1) : 1, provider.label) }
+  }
+  return { paid, words: `Paid: ${paidWhat(input)} → ${provider.label}` }
+}
+
+export function runSummary(input: SummaryInput): string {
+  return runCost(input).words
+}
+
+// The line above the cost when the provider makes another length than the one typed.
 export function lengthLine(
   label: string,
   bounds: { min: number; max: number | null },

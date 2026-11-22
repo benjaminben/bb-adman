@@ -8,6 +8,7 @@ import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { Result } from '@/shared/schemas/result'
 import { axeViolations, renderApp } from '../render'
 import { baseState, makeFakeApi } from '../fake-api'
+import { costLine } from '../cost-line'
 
 const LOCAL = { local: true, cancel: 'stops', serverText: false } as const
 const COMFY: ProviderInfo = {
@@ -91,11 +92,8 @@ const confirm = (name = 'Generate') => screen.getByRole('button', { name })
 
 describe('run dialog [P4-12]', () => {
   it.each<[RunDialogProps['job'], string[]]>([
-    [
-      'image',
-      ['Google Gemini', 'Adobe Firefly (not yet available) [off]', 'ComfyUI', 'Fake provider'],
-    ],
-    ['cutout', ['ComfyUI (no workflow for this yet) [off]', 'Fake provider']],
+    ['image', ['Google Gemini', 'Adobe Firefly [off]', 'ComfyUI', 'Fake provider']],
+    ['cutout', ['ComfyUI [off]', 'Fake provider']],
     ['layout', ['Google Gemini', 'Fake provider']],
     ['text', ['Google Gemini', 'Fake provider']],
   ])('lists the providers whose jobs hold %s, ComfyUI first for cut-outs', async (job, list) => {
@@ -105,7 +103,7 @@ describe('run dialog [P4-12]', () => {
 
   it('disables ComfyUI with its words when no workflow is offered for the run', async () => {
     await open({ referenceCount: 2 })
-    expect(screen.getByRole('radio', { name: 'ComfyUI (no workflow for this yet)' })).toBeDisabled()
+    expect(screen.getByRole('radio', { name: 'ComfyUI' })).toBeDisabled()
   })
 
   it('shows the trial mark beside ComfyUI for an offered trial workflow', async () => {
@@ -137,9 +135,7 @@ describe('run dialog [P4-12]', () => {
 
   it('draws the summary line for the chosen provider, ComfyUI with its address and workflow', async () => {
     await open({ count: { label: 'Pictures', value: 4, min: 1, max: 8 }, referenceCount: 0 })
-    expect(
-      screen.getByText('This will use 4 generation(s) with Google Gemini.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText(costLine('Paid: 4 pictures → Google Gemini'))).toBeInTheDocument()
     await userEvent.click(screen.getByRole('radio', { name: 'ComfyUI' }))
     expect(
       screen.getByText(
@@ -153,9 +149,7 @@ describe('run dialog [P4-12]', () => {
   it('names the reference pictures a paid run sends', async () => {
     await open({ count: { label: 'Pictures', value: 2, min: 1, max: 8 }, referenceCount: 3 })
     expect(
-      screen.getByText(
-        'This will use 2 generation(s) with Google Gemini. It sends 3 reference picture(s).',
-      ),
+      screen.getByText(costLine('Paid: 2 pictures + 3 references → Google Gemini')),
     ).toBeInTheDocument()
   })
 
@@ -182,7 +176,7 @@ describe('run dialog [P4-12]', () => {
       title: 'Place text with AI',
       confirmLabel: 'Place text',
     })
-    expect(screen.getByText('This sends 1 paid request to Google Gemini.')).toBeInTheDocument()
+    expect(screen.getByText(costLine('Paid: 1 request → Google Gemini'))).toBeInTheDocument()
     await userEvent.click(screen.getByRole('radio', { name: 'Fake provider' }))
     await userEvent.click(confirm('Place text'))
     expect(onConfirm).toHaveBeenCalledWith('fake', null)
@@ -199,9 +193,7 @@ describe('run dialog [P4-12]', () => {
     expect(screen.queryByRole('spinbutton')).toBeNull()
     expect(screen.getByText('Provider: Google Gemini')).toBeInTheDocument()
     expect(screen.getByText('Pictures: 2')).toBeInTheDocument()
-    expect(
-      screen.getByText('This will use 2 generation(s) with Google Gemini.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText(costLine('Paid: 2 pictures → Google Gemini'))).toBeInTheDocument()
     await userEvent.click(confirm('Retry'))
     expect(onConfirm).toHaveBeenCalledWith('gemini', 2)
   })
@@ -237,7 +229,7 @@ describe('run dialog [P4-12]', () => {
   it('says no provider can do this when none is enabled, with Confirm disabled', async () => {
     const state = baseState()
     await open({ job: 'cutout' }, setup({ providers: [...state.providers, COMFY] }))
-    expect(screen.getByText('No provider can do this yet.')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('No provider can do this yet.')
     expect(confirm()).toBeDisabled()
   })
 

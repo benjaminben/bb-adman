@@ -11,6 +11,7 @@ import { requestCount } from '@/renderer/screens/campaign/translation-panel/tran
 import type { TranslationRow } from '@/shared/schemas/queries/translation'
 import { baseState, makeFakeApi } from '../../fake-api'
 import { renderApp } from '../../render'
+import { costLine } from '../../cost-line'
 import { MASTER, P, campaignGet } from './campaign-fixture'
 import { translationRow as row, translations } from './translation-fixture'
 
@@ -38,10 +39,10 @@ describe('requestCount [P6-18]', () => {
 
 describe('runSummary for a paid text run with several requests [P6-18]', () => {
   it.each<[number | undefined, string]>([
-    [undefined, 'This sends 1 paid request to Google Gemini.'],
-    [1, 'This sends 1 paid request to Google Gemini.'],
-    [2, 'This sends 2 paid request(s) to Google Gemini.'],
-    [4, 'This sends 4 paid request(s) to Google Gemini.'],
+    [undefined, 'Paid: 1 request → Google Gemini'],
+    [1, 'Paid: 1 request → Google Gemini'],
+    [2, 'Paid: 2 requests → Google Gemini'],
+    [4, 'Paid: 4 requests → Google Gemini'],
   ])('%s request(s)', (requests, line) => {
     expect(runSummary({ job: 'text', provider: GEMINI, requests })).toBe(line)
   })
@@ -61,11 +62,11 @@ async function openAgain(rows: TranslationRow[]) {
 describe('Translate {language} again… counts its requests [P6-18]', () => {
   it('a language spanning two directions shows 2 paid requests', async () => {
     const dialog = await openAgain([row('L1'), row('L2', { directionId: 'D2', variantId: 'V7' })])
-    expect(dialog.getByText('This sends 2 paid request(s) to Google Gemini.')).toBeVisible()
+    expect(dialog.getByText(costLine('Paid: 2 requests → Google Gemini'))).toBeVisible()
   })
 
   it('one direction and one language keeps the singular wording', async () => {
     const dialog = await openAgain([row('L1'), row('L2', { variantId: 'V7' })])
-    expect(dialog.getByText('This sends 1 paid request to Google Gemini.')).toBeVisible()
+    expect(dialog.getByText(costLine('Paid: 1 request → Google Gemini'))).toBeVisible()
   })
 })
