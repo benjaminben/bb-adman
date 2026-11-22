@@ -1,13 +1,15 @@
 /* app-style */
-/* "Use this font for every {language} post", under the font field. */
+/* "All {language} posts" and its InfoTip, under the font select. */
 .field {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   min-width: 0;
 }
-.button {
-  align-self: flex-start;
+.row {
+  display: flex;
+  gap: var(--gap-tight);
+  align-items: center;
 }
 .error {
   margin: 0;

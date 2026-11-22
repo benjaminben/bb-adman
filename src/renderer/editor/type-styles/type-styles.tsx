@@ -2,9 +2,10 @@
 // project has no font of its own, "Built-in styles": five looks made from Inter alone. The one
 // matching the layer is pressed; a click sends one layer.update of weight, capitals and spacing
 // with the font back to the default (one undo entry). A refusal shows under the group.
-import { useId, useState } from 'react'
+// ED-2: five chips, each "Aa" drawn in its own style, named by the style; the hint is an InfoTip.
+import { useState, type CSSProperties } from 'react'
 import { useApi, useApp, useHasApp } from '@/renderer/app/app-context'
-import layout from '@/renderer/ui/layout.module.css'
+import { InfoTip } from '@/renderer/ui/info-tip'
 import { TYPE_STYLES, typeStyleOf, typeStylePatch } from '@/shared/config/type-styles'
 import type { AdmanApi } from '@/shared/schemas/api'
 import type { LayerPatch } from '@/shared/schemas/commands/layer'
@@ -19,9 +20,15 @@ export type TypeStylesProps = {
   onUpdate: (patch: LayerPatch) => Promise<string | null>
 }
 
+// The chip's own look: the style's weight, capitals and spacing.
+const lookOf = (s: (typeof TYPE_STYLES)[number]): CSSProperties => ({
+  fontWeight: s.fontWeight,
+  textTransform: s.allCaps ? 'uppercase' : 'none',
+  letterSpacing: `${s.letterSpacing}em`,
+})
+
 function Group(props: TypeStylesProps & { api: AdmanApi; projectId: string }) {
   const { layer } = props
-  const id = useId()
   const hasFonts = useHasFonts(props.api, props.projectId)
   const [error, setError] = useState<string | null>(null)
   if (hasFonts !== false) return null
@@ -33,31 +40,28 @@ function Group(props: TypeStylesProps & { api: AdmanApi; projectId: string }) {
 
   return (
     <div className={styles.field}>
-      <span id={`${id}-label`} className={styles.label}>
-        Built-in styles
-      </span>
-      <div
-        role="group"
-        aria-labelledby={`${id}-label`}
-        aria-describedby={`${id}-hint`}
-        className={styles.styles}
-      >
-        {TYPE_STYLES.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            className={`${layout.small} ${styles.style}`}
-            aria-pressed={current === s.id}
-            disabled={layer.locked}
-            onClick={() => void choose(s.id)}
-          >
-            {s.label}
-          </button>
-        ))}
+      <div className={styles.row}>
+        <div role="group" aria-label="Built-in styles" className={styles.styles}>
+          {TYPE_STYLES.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              className={styles.chip}
+              style={lookOf(s)}
+              aria-label={s.label}
+              title={s.label}
+              aria-pressed={current === s.id}
+              disabled={layer.locked}
+              onClick={() => void choose(s.id)}
+            >
+              Aa
+            </button>
+          ))}
+        </div>
+        <InfoTip about="built-in styles">
+          This project has no fonts of its own. Use Upload font… to add one.
+        </InfoTip>
       </div>
-      <p id={`${id}-hint`} className={styles.hint}>
-        This project has no fonts of its own. Use Upload font… to add one.
-      </p>
       {error && <p className={styles.error}>{error}</p>}
     </div>
   )
@@ -70,7 +74,7 @@ function InProject(props: TypeStylesProps) {
   return <Group {...props} api={api} projectId={projectId} />
 }
 
-// Text settings is also drawn alone, with no app around it (its own tests); then there is no
+// The Type Section is also drawn alone, with no app around it (its own tests); then there is no
 // project to read and the group is left out.
 export function TypeStyles(props: TypeStylesProps) {
   return useHasApp() ? <InProject {...props} /> : null

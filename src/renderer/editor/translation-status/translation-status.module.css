@@ -1,16 +1,9 @@
 /* app-style */
-/* The translation line under Copy: the status words, then "Approve" on a proposed text. */
+/* The translation mark under Copy, then "Approve" on a proposed text. */
 .status {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--gap-tight);
   align-items: center;
-  justify-content: space-between;
-}
-.words {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-small);
 }
 .error {
   margin: 0;

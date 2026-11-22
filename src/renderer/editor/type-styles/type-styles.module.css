@@ -1,32 +1,40 @@
 /* app-style */
-/* "Built-in styles" under the font field: a short label, five small buttons that wrap, and the
-   hint line. The pressed button looks like the pressed one of a segmented group. */
+/* "Built-in styles": five chips, each "Aa" drawn in its own style (the inline style sets only
+   weight, capitals and spacing), then the InfoTip. The pressed chip is ringed in the accent. */
 .field {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   min-width: 0;
 }
-.label {
-  font-size: var(--font-size-small);
-  font-weight: var(--weight-medium);
-  color: var(--color-text-secondary);
+.row {
+  display: flex;
+  gap: var(--gap-tight);
+  align-items: center;
 }
 .styles {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1);
+  gap: var(--gap-tight);
 }
-.style[aria-pressed='true'] {
-  border-color: var(--color-text);
+.chip {
+  min-width: var(--control-height);
+  min-height: var(--control-height);
+  padding: 0 var(--space-2);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius);
   background: var(--color-bg);
   color: var(--color-text);
-  box-shadow: var(--shadow-1);
+  font-family: var(--font-body);
+  font-size: var(--font-size-control);
 }
-.hint {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+.chip:hover:not(:disabled) {
+  background: var(--color-surface-soft);
+}
+.chip[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 var(--border-width) var(--color-accent);
+  color: var(--color-accent-ink);
 }
 .error {
   margin: 0;

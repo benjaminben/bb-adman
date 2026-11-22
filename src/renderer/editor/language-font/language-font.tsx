@@ -3,8 +3,10 @@
 // gives the layer's stored font (null for the default) to every layer of the same direction,
 // language and key. {language} is the variant's language tag, as the editor's other lines show
 // it. Hidden on a layer in the campaign's main language and outside a campaign.
+// ED-2: a quiet button "All {language} posts" with the longer words in an InfoTip.
 import { useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
+import { InfoTip } from '@/renderer/ui/info-tip'
 import layout from '@/renderer/ui/layout.module.css'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { useSameLanguageLayers } from './use-same-language-layers'
@@ -35,13 +37,18 @@ export function LanguageFont(props: LanguageFontProps) {
 
   return (
     <div className={styles.field}>
-      <button
-        type="button"
-        className={`${layout.small} ${styles.button}`}
-        onClick={() => void apply(same.layerIds)}
-      >
-        {`Use this font for every ${same.language} post`}
-      </button>
+      <div className={styles.row}>
+        <button
+          type="button"
+          className={`${layout.quiet} ${layout.small}`}
+          onClick={() => void apply(same.layerIds)}
+        >
+          {`All ${same.language} posts`}
+        </button>
+        <InfoTip about={`all ${same.language} posts`}>
+          {`Uses this font for every ${same.language} post.`}
+        </InfoTip>
+      </div>
       {error && (
         <p role="alert" className={styles.error}>
           {error}

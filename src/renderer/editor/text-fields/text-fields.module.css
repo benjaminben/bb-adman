@@ -1,22 +1,12 @@
 /* app-style */
-/* The Text settings group. Copy takes the shared reading face (layout.module.css); alignment is
-   the shared segmented group, stretched to the panel width. */
-.section {
+/* ED-2: Copy first (the shared reading face, "Suggest copy…" in its top right corner), the
+   "does not fit" line, then the Type Section's rows. Short values are inline fields, two to a
+   row; alignment is two icon segment groups on one row. */
+.fields {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--gap-field);
   min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: none;
-}
-.legend {
-  padding: 0;
-  margin-bottom: var(--space-2);
-  font-family: var(--font-body);
-  font-size: var(--font-size-control);
-  font-weight: var(--weight-bold);
-  color: var(--color-text);
 }
 .field {
   display: flex;
@@ -24,80 +14,23 @@
   gap: var(--space-1);
   min-width: 0;
 }
-.labelRow {
+.copyBox {
+  position: relative;
   display: flex;
-  gap: var(--space-2);
-  align-items: center;
-  justify-content: space-between;
-}
-.labelRow button {
-  min-height: var(--control-height-small);
-  padding: 0 var(--space-2);
-  font-size: var(--font-size-small);
-}
-.label {
-  font-size: var(--font-size-small);
-  font-weight: var(--weight-medium);
-  color: var(--color-text-secondary);
 }
 .copy {
+  flex: 1;
+  min-width: 0;
   resize: vertical;
 }
-.pair {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3);
+/* Room on the right for the corner button, so the words never run under it. */
+.roomy {
+  padding-right: calc(var(--control-height-small) + var(--space-2));
 }
-.hint {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
-}
-.row {
-  display: flex;
-  gap: var(--space-2);
-}
-.hex {
-  flex: 1;
-  min-width: 0;
-  font-family: var(--font-mono);
-}
-/* The swatches as in colour-choice.module.css. */
-.picker {
-  flex: none;
-  width: var(--control-height);
-  height: var(--control-height);
-  padding: var(--space-1);
-}
-.swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-}
-.swatch {
-  flex: none;
-  width: var(--control-height-small);
-  min-height: 0;
-  height: var(--control-height-small);
-  padding: 0;
-  border: var(--border-width) solid var(--color-control-border);
-  border-radius: var(--radius-pill);
-}
-.swatch:hover:not(:disabled) {
-  border-color: var(--color-text);
-}
-.swatch[aria-pressed='true'] {
-  outline: var(--focus-ring-width) solid var(--color-focus);
-  outline-offset: var(--focus-ring-offset);
-}
-.align {
-  display: flex;
-  width: 100%;
-}
-.align > button {
-  flex: 1;
-  min-width: 0;
+.corner {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
 }
 .overflow {
   margin: 0;
@@ -106,6 +39,61 @@
   font-size: var(--font-size-control);
   background: var(--color-danger-bg);
   color: var(--color-danger-text);
+}
+/* The Type group: a fieldset only so a locked layer disables it whole; it draws nothing. */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-field);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+/* Two inline fields on one row; each short label takes only its own width (`.group` makes the
+   rule outrank the shared .field.inline). */
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap-inline);
+}
+.group .pair > div,
+.group .spacing > div {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.pair select {
+  min-width: 0;
+}
+.labelTip {
+  display: flex;
+  align-items: center;
+}
+.alignRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-inline);
+  align-items: center;
+}
+.alignRow > span:first-child {
+  min-width: var(--field-label-width);
+}
+.seg {
+  flex: none;
+}
+.spacing {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: var(--gap-inline);
+  align-items: center;
+}
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .error {
   margin: 0;

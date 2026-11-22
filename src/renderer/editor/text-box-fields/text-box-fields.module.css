@@ -1,51 +1,31 @@
 /* app-style */
-/* The same look as the "Text settings" section (text-fields.module.css). */
-.section {
+/* ED-2: the Box Section's rows. The group is a fieldset only so a locked layer disables it
+   whole; it draws nothing. Outline colour and its Width share a row; Corner radius and Padding
+   are two inline fields on one row. */
+.group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--gap-field);
   min-width: 0;
   margin: 0;
   padding: 0;
   border: none;
 }
-.legend {
-  padding: 0;
-  margin-bottom: var(--space-2);
-  font-family: var(--font-body);
-  font-size: var(--font-size-control);
-  font-weight: var(--weight-bold);
-  color: var(--color-text);
-}
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-.label {
-  font-size: var(--font-size-small);
-  font-weight: var(--weight-medium);
-  color: var(--color-text-secondary);
-}
-/* The shared segmented group, stretched to the panel width. */
-.align {
-  display: flex;
-  width: 100%;
-}
-.align > button {
-  flex: 1;
-  min-width: 0;
-}
-.check {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
+.outline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--gap-inline);
+  align-items: end;
 }
 .pair {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3);
+  gap: var(--gap-inline);
+}
+/* Each short label takes only its own width (`.group` outranks the shared .field.inline). */
+.group .outline > div:last-child,
+.group .pair > div {
+  grid-template-columns: auto minmax(0, 1fr);
 }
 .error {
   margin: 0;
