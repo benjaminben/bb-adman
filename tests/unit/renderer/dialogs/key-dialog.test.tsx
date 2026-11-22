@@ -19,7 +19,7 @@ async function openFor(providerId: string, fake = makeFakeApi()) {
 describe('key dialog, NEEDS_KEY flow [FR-171, FR-172]', () => {
   it('asks for each key the provider needs, in password fields', async () => {
     await openFor('firefly')
-    expect(screen.getByRole('dialog', { name: 'Add your Adobe Firefly key' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Adobe Firefly key' })).toBeInTheDocument()
     expect(screen.getByLabelText('Client ID')).toHaveAttribute('type', 'password')
     expect(screen.getByLabelText('Client secret')).toHaveAttribute('type', 'password')
   })
@@ -28,7 +28,7 @@ describe('key dialog, NEEDS_KEY flow [FR-171, FR-172]', () => {
     const fake = makeFakeApi()
     const view = await openFor('gemini', fake)
     await userEvent.type(screen.getByLabelText('API key'), 'abc-123-key')
-    await userEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(fake.commands).toContainEqual({
       name: 'secret.set',
       input: { name: 'gemini.apiKey', value: 'abc-123-key' },
@@ -44,7 +44,7 @@ describe('key dialog, NEEDS_KEY flow [FR-171, FR-172]', () => {
     }))
     const view = await openFor('gemini', fake)
     await userEvent.type(screen.getByLabelText('API key'), 'abc')
-    await userEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(await screen.findByText('This computer cannot store keys securely.')).toBeInTheDocument()
     expect(view.saved()).toBeUndefined()
   })

@@ -1,83 +1,84 @@
 // The key dialog of the NEEDS_KEY flow (FR-171): it opens when an action needs a key,
 // saves it with secret.set, and reports back so the action can retry. Keys are not
-// tested when entered (FR-172).
+// tested when entered (FR-172). DLG-3a: a `form` DialogFrame; the help sentence sits in an
+// InfoTip beside the first field. Fields are password fields and start empty: a saved key is
+// never read back. Cancel, Escape and a click outside send nothing. The fields are uncontrolled,
+// so a typed key never becomes a `value` attribute; it is read from the form on Save.
 import { useState, type FormEvent } from 'react'
-import * as Dialog from '@radix-ui/react-dialog'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { secretLabel } from '@/renderer/ui/secret-labels'
-import type { SecretName } from '@/shared/schemas/secrets'
+import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
+import { DialogAlert } from '@/renderer/ui/dialog-alert'
+import { InfoTip } from '@/renderer/ui/info-tip'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './key-dialog.module.css'
+
+const KEY_HELP =
+  'The key is stored encrypted on this computer and is used only for actions you start.'
 
 export function KeyDialog() {
   const api = useApi()
   const request = useApp((s) => s.keyRequest)
   const refresh = useApp((s) => s.refresh)
-  const [values, setValues] = useState<Partial<Record<SecretName, string>>>({})
   const [error, setError] = useState<string | null>(null)
 
   function finish(saved: boolean) {
-    setValues({})
     setError(null)
     request?.resolve(saved)
   }
 
-  async function save(event: FormEvent) {
+  async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!request) return
+    const form = new FormData(event.currentTarget)
     for (const name of request.provider.secrets) {
-      const result = await api.command('secret.set', { name, value: values[name] ?? '' })
+      const value = form.get(name)
+      const result = await api.command('secret.set', {
+        name,
+        value: typeof value === 'string' ? value : '',
+      })
       if (!result.ok) return setError(result.error.message)
     }
     await refresh()
     finish(true)
   }
 
+  const secrets = request?.provider.secrets ?? []
+
   return (
-    <Dialog.Root open={request !== null} onOpenChange={(open) => !open && finish(false)}>
-      <Dialog.Portal>
-        <Dialog.Overlay className={styles.overlay} />
-        <Dialog.Content className={styles.content}>
-          <div className={styles.head}>
-            <Dialog.Title className={styles.title}>
-              Add your {request?.provider.label} key
-            </Dialog.Title>
-            <Dialog.Description className={styles.description}>
-              The key is stored encrypted on this computer and is used only for actions you start.
-            </Dialog.Description>
+    <DialogFrame
+      open={request !== null}
+      onClose={() => finish(false)}
+      title={`${request?.provider.label ?? ''} key`}
+      kind="form"
+    >
+      <form className={styles.form} onSubmit={(e) => void save(e)}>
+        {secrets.map((name, i) => (
+          <div key={name} className={layout.field}>
+            <span className={layout.row}>
+              <label htmlFor={`dialog-${name}`}>{secretLabel(name)}</label>
+              {i === 0 && <InfoTip about="keys">{KEY_HELP}</InfoTip>}
+            </span>
+            <input
+              id={`dialog-${name}`}
+              type="password"
+              autoComplete="off"
+              autoFocus={i === 0}
+              name={name}
+              required
+            />
           </div>
-          <form className={styles.form} onSubmit={(e) => void save(e)}>
-            <div className={styles.body}>
-              {request?.provider.secrets.map((name) => (
-                <div key={name} className={layout.field}>
-                  <label htmlFor={`dialog-${name}`}>{secretLabel(name)}</label>
-                  <input
-                    id={`dialog-${name}`}
-                    type="password"
-                    autoComplete="off"
-                    required
-                    value={values[name] ?? ''}
-                    onChange={(e) => setValues({ ...values, [name]: e.target.value })}
-                  />
-                </div>
-              ))}
-              {error && (
-                <p role="alert" className={`${layout.notice} ${layout.danger}`}>
-                  {error}
-                </p>
-              )}
-            </div>
-            <div className={styles.foot}>
-              <Dialog.Close asChild>
-                <button type="button">Cancel</button>
-              </Dialog.Close>
-              <button type="submit" className={layout.primary}>
-                Save and continue
-              </button>
-            </div>
-          </form>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+        ))}
+        {error !== null && <DialogAlert tone="danger">{error}</DialogAlert>}
+        <DialogFoot>
+          <button type="button" className={layout.quiet} onClick={() => finish(false)}>
+            Cancel
+          </button>
+          <button type="submit" className={layout.primary}>
+            Save
+          </button>
+        </DialogFoot>
+      </form>
+    </DialogFrame>
   )
 }

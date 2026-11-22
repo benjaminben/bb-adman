@@ -1,62 +1,8 @@
 /* app-style */
-/* The key dialog keeps its own Radix dialog; its bands match the dialog frame's
-   (spec/app-style.md, "Dialogs"). The form holds the body and the foot. */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--color-overlay);
-}
-.content {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  width: min(var(--width-dialog), calc(100vw - var(--space-8)));
-  max-height: calc(100vh - var(--space-12));
-  overflow: hidden;
-  background: var(--color-bg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-3);
-}
-.content:focus-visible {
-  outline: none;
-}
-.head {
-  flex: none;
-  padding: var(--space-4) var(--space-6) var(--space-3);
-  border-bottom: var(--border-width) solid var(--color-line);
-}
-.title {
-  margin: 0;
-}
-.description {
-  margin: var(--space-1) 0 0;
-  font-size: var(--font-size-control);
-  color: var(--color-text-muted);
-}
+/* DLG-3a: the key dialog's form inside the frame's body: the fields, a refusal and the foot. */
 .form {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-.body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  padding: var(--space-6);
-}
-.foot {
-  flex: none;
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-6);
-  border-top: var(--border-width) solid var(--color-line);
-  background: var(--color-surface-soft);
+  gap: var(--gap-field);
+  margin: 0;
 }
