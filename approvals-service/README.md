@@ -26,3 +26,17 @@ The stakeholder's steps. No value is written in the repository; the stakeholder 
 To change the key later: replace `API_KEY` in Vercel and redeploy, then put the new key in the app. Every session and link stays as it was.
 
 **Values the stakeholder supplies:** the Vercel account and project; the Turso database (made through Vercel); the `API_KEY` value; the service address. **What the stakeholder creates on Vercel:** the project (root `approvals-service`), the Turso database connected to it, the `API_KEY` variable, the function region, the Deployment Protection setting, and optionally a custom domain.
+
+## Updating for video clips (contract 2)
+
+An app that sends video clips uses contract 2. Do these steps before you use such an app with a service that is already deployed. Until then the app's "Test connection" and "Update gallery" stop with "The approvals service is a different version from this app."
+
+1. **Migration.** In `approvals-service/`, run the migration again as in step 5 above (`npm run db:migrate -- --hosted`, with the two Turso values read in without echo). It adds `0002_clips.sql`; the rows already there keep working as pictures.
+2. **Redeploy** the production branch (step 8 above). Nothing else changes in Vercel: no new variable, and still no `TEST_PICTURE_ORIGIN`.
+3. **Check by hand** on the deployed link, with a campaign that has a video variant and "Update gallery" pressed in the app. Do this in Safari on a Mac, in Safari on an iPhone, and in Chrome:
+   1. The card shows "Video" and its length. Open it: the video plays, with sound, only after you press play.
+   2. Seeking (dragging the play bar) works.
+   3. Reload the page and play again: it plays the current video.
+   4. Close the lightbox while the video plays: the sound stops.
+   5. In the browser's console (Safari: Develop, Show JavaScript Console; Chrome: View, Developer, JavaScript Console) there is no "Content Security Policy" or "Refused to" error.
+4. **Usage.** After a few days of reviews, look at the project's Usage page in Vercel, **Fast Origin Transfer**: every second of video a reviewer watches passes through the service, so this number grows with viewing.
