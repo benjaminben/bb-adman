@@ -1,7 +1,8 @@
 // spec/editor.md, "The editor screen" [FR-090 to FR-098]: one variant, laid out as the top bar,
 // the banner, then the layer list, the canvas and the properties panel. One variant store per
 // editor. One layer is selected at a time (A-28); a selected layer that goes away is dropped.
-// A video variant also has the timeline along the foot, with one playback store per tab (P7-18).
+// A video variant also has the timeline along the foot, with one playback store per tab (P7-18),
+// and the sound player under it (P7-21).
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from 'zustand'
 import { useApi, useApp } from '@/renderer/app/app-context'
@@ -11,6 +12,8 @@ import { LayerList } from '@/renderer/editor/layer-list'
 import { LayoutButton } from '@/renderer/editor/layout-button'
 import { useLayoutRun } from '@/renderer/editor/layout-run'
 import { PropertiesPanel } from '@/renderer/editor/properties-panel'
+import { SoundScope } from '@/renderer/editor/sound-fields'
+import { SoundPlayer } from '@/renderer/editor/sound-player'
 import { Timeline } from '@/renderer/editor/timeline'
 import { TopBar } from '@/renderer/editor/top-bar'
 import { EditorKeyRoot } from '@/renderer/editor/use-editor-key'
@@ -19,10 +22,9 @@ import type { Zoom } from '@/renderer/editor/zoom'
 import type { TabView } from '@/renderer/stores/nav-store'
 import { createPlaybackStore } from '@/renderer/stores/playback-store'
 import { createVariantStore, type VariantStoreState } from '@/renderer/stores/variant-store'
-import { assetUrl } from '@/renderer/ui/asset-url'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
-import type { SceneAsset } from '@/shared/scene/types'
 import { useHistory } from './use-history'
+import { sceneAssets, sceneClips } from './scene-inputs'
 import { useOverflowReport } from './use-overflow-report'
 import styles from './editor.module.css'
 
@@ -33,20 +35,6 @@ type Props = {
   variantId: string
   view?: TabView
   onView?: (change: Partial<TabView>) => void
-}
-
-function sceneAssets(
-  projectId: string,
-  { assets, versions }: Pick<VariantStoreState, 'assets' | 'versions'>,
-): Record<string, SceneAsset> {
-  const out: Record<string, SceneAsset> = {}
-  for (const a of Object.values(assets)) {
-    if (a.kind !== 'image' && a.kind !== 'font') continue
-    const { missing, width, height } = a
-    const version = versions[a.id] ?? 0
-    out[a.id] = { url: assetUrl(projectId, a.id), kind: a.kind, missing, width, height, version }
-  }
-  return out
 }
 
 // The draft's moving values merged into its layer: what the Scene draws.
@@ -76,14 +64,18 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
     return stop
   }, [store])
 
-  const { layers, assets, versions, draft, variant } = state
+  const { layers, assets, versions, clips, draft, variant } = state
   const durationMs = variant?.durationMs ?? 0
   useEffect(() => playback.getState().setDuration(durationMs), [playback, durationMs])
   useEffect(() => () => playback.getState().pause(), [playback])
   const scene = useMemo(() => drawn(layers, draft), [layers, draft])
   const forScene = useMemo(
-    () => sceneAssets(projectId, { assets, versions }),
-    [projectId, assets, versions],
+    () => sceneAssets(projectId, { assets, versions, clips }),
+    [projectId, assets, versions, clips],
+  )
+  const track = useMemo(
+    () => (variant?.format === 'video' ? sceneClips(clips) : undefined),
+    [variant?.format, clips],
   )
   const forRows = useMemo(
     () =>
@@ -157,6 +149,7 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
                 cropId={cropId}
                 onCrop={setCropId}
                 playback={playback}
+                clips={track}
               />
               <PropertiesPanel
                 projectId={projectId}
@@ -169,13 +162,16 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
               />
             </div>
             {variant.format === 'video' && (
-              <Timeline
-                projectId={projectId}
-                variant={variant}
-                layers={scene}
-                store={store}
-                playback={playback}
-              />
+              <SoundScope.Provider value={api}>
+                <Timeline
+                  projectId={projectId}
+                  variant={variant}
+                  layers={scene}
+                  store={store}
+                  playback={playback}
+                />
+                <SoundPlayer projectId={projectId} variant={variant} playback={playback} />
+              </SoundScope.Provider>
             )}
             <RunDialog
               {...layoutRun.dialog}
