@@ -50,11 +50,11 @@
   padding: 0;
   border: none;
 }
-/* Size and Weight: two inline fields on one row, Weight wider for its names; each short label
+/* Size and Weight: two inline fields on one row, Weight as wide as its longest name; each label
    takes only its own width (`.group` makes the rule outrank the shared .field.inline). */
 .pair {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--gap-inline);
 }
 .group .pair > div {
