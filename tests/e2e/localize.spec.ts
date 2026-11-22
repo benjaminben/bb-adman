@@ -92,7 +92,8 @@ test('Workflow 5.2: fan-out to sizes and languages, translations approved, sheet
   await l.runChecks(page, 1)
   const warned = l.warnedBlocks(page, 'Prohibited words')
   await expect(warned).toHaveCount(1)
-  await expect(warned.getByRole('heading')).toHaveText(/ · de$/)
+  await expect(warned.getByRole('button').first()).toContainText(/ · de/)
+  await l.openFindings(warned)
   await expect(warned.getByText(/contains “!”\.$/)).toBeVisible()
 
   // The "!" taken out; the edit sets it back to proposed, so it is approved again.

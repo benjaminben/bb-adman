@@ -90,13 +90,26 @@ export async function exportSheet(page: Page, fileName: string): Promise<void> {
   await expect(translations(page).getByText(`Saved ${fileName}.`)).toBeVisible()
 }
 
-// One of the rule set panel's word lists, "Required words" or "Prohibited words", for one
-// language, saved on leaving the field. Not exact: the label holds the field, so its words count
-// in the name.
-export async function setWords(page: Page, list: string, tag: string, words: string) {
+// The Checks tab's "Rules" Section, opened when it is shut (CAMP-4: it starts shut when a rule
+// is set).
+export async function openRules(page: Page): Promise<Locator> {
   await showCampaignView(page, 'Checks')
-  const rules = page.getByRole('region', { name: 'Brand and legal rules' })
-  const field = rules.getByLabel(`${list} (${tag})`)
+  const rules = page.getByRole('region', { name: 'Rules', exact: true })
+  const fold = rules.getByRole('button', { name: 'Rules', exact: true })
+  if ((await fold.getAttribute('aria-expanded')) === 'false') await fold.click()
+  return rules
+}
+
+// One of the rule set's word lists, "Required words" or "Prohibited words", for one language,
+// saved on leaving the field. With two or more languages the language is chosen first in the
+// group "Word list language".
+export async function setWords(page: Page, list: string, tag: string, words: string) {
+  const rules = await openRules(page)
+  const languages = rules.getByRole('group', { name: 'Word list language' })
+  if ((await languages.count()) > 0) {
+    await languages.getByRole('button', { name: tag, exact: true }).click()
+  }
+  const field = rules.getByRole('textbox', { name: `${list} (${tag})`, exact: true })
   await field.fill(words)
   await field.blur()
   await expect(field).toHaveValue(words)
@@ -104,16 +117,36 @@ export async function setWords(page: Page, list: string, tag: string, words: str
 
 export const checks = (page: Page): Locator => page.getByRole('region', { name: 'Checks' })
 
-// "Run checks", and the summary once every post is checked and current.
+// Each checked post's row group in the check table (the head row's group left out).
+const postRows = (page: Page): Locator =>
+  checks(page)
+    .getByRole('rowgroup')
+    .filter({ has: page.locator('th[scope="row"]') })
+
+// "Run checks", then wait until every post has its row, none is out of date and the warnings
+// mark shows the count ("1 warning", "2 warnings"; no mark at 0).
 export async function runChecks(page: Page, warnings: number): Promise<void> {
   await showCampaignView(page, 'Checks')
-  await checks(page).getByRole('button', { name: 'Run checks' }).click()
-  const summary = `${POSTS} posts checked · ${warnings} with brand or legal warnings · 0 not checked since a change`
-  await expect(checks(page).getByText(summary, { exact: true })).toBeVisible({ timeout: 30_000 })
+  const run = checks(page).getByRole('button', { name: 'Run checks', exact: true })
+  await run.click()
+  await expect(run).toBeEnabled({ timeout: 30_000 })
+  await expect(postRows(page)).toHaveCount(POSTS, { timeout: 30_000 })
+  await expect(checks(page).getByRole('button', { name: /^\d+ not checked/ })).toHaveCount(0)
+  const mark = checks(page).getByRole('button', { name: /^\d+ warnings?\b/ })
+  if (warnings === 0) await expect(mark).toHaveCount(0)
+  else await expect(mark).toHaveText(warnings === 1 ? '1 warning' : `${warnings} warnings`)
 }
 
-// The check blocks with a warning on the named check, such as "Prohibited words".
+// The posts with a warning on the named check, such as "Prohibited words": a cell's mark is
+// named "{check}: warning".
 export const warnedBlocks = (page: Page, check: string): Locator =>
-  checks(page)
-    .getByRole('article')
-    .filter({ has: page.getByText(`${check}: Warning`, { exact: true }) })
+  postRows(page).filter({
+    has: page.getByRole('cell', { name: `${check}: warning`, exact: true }),
+  })
+
+// Opens a post's findings under its row (its button holds "{size} · {language}").
+export async function openFindings(block: Locator): Promise<void> {
+  const button = block.getByRole('button').first()
+  if ((await button.getAttribute('aria-expanded')) === 'false') await button.click()
+  await expect(button).toHaveAttribute('aria-expanded', 'true')
+}
