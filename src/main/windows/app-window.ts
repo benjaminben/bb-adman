@@ -1,6 +1,6 @@
 // Creates the app window with the SPEC 8.2 settings, the SPEC 8.1 navigation rules and the
 // SPEC 1.3 opening state.
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, screen, shell } from 'electron'
 import { fileURLToPath } from 'node:url'
 import { appWindowOptions } from './app-window-options'
 import { decideWindowOpen, isAllowedNavigation } from './navigation'
@@ -19,9 +19,9 @@ export function pageAddress(opts: {
   return builtPage
 }
 
-export function createAppWindow(): BrowserWindow {
+export function createAppWindow(quiet = false): BrowserWindow {
   const preload = fileURLToPath(new URL('../preload/index.cjs', import.meta.url))
-  const win = new BrowserWindow(appWindowOptions(preload))
+  const win = new BrowserWindow(appWindowOptions(preload, quiet))
   const pageUrl = pageAddress({
     isPackaged: app.isPackaged,
     rendererUrl: process.env.ELECTRON_RENDERER_URL,
@@ -37,10 +37,14 @@ export function createAppWindow(): BrowserWindow {
     if (!isAllowedNavigation(url, pageUrl)) event.preventDefault()
   })
   // SPEC 1.3 [D-031]: maximized before it is first shown, on every launch. Never full screen.
-  win.once('ready-to-show', () => {
-    win.maximize()
-    win.show()
-  })
+  // Quiet mode (quiet.ts) gives the window the maximized size and never shows it: on macOS
+  // maximize() would show it.
+  if (quiet) win.setBounds(screen.getPrimaryDisplay().workArea)
+  else
+    win.once('ready-to-show', () => {
+      win.maximize()
+      win.show()
+    })
   void win.loadURL(pageUrl)
   return win
 }

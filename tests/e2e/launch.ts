@@ -20,6 +20,11 @@ export function makeSandbox(): Sandbox {
   return { root, userData, projects }
 }
 
+// The app window stays hidden and the app never comes to the front; ADMAN_SHOW_WINDOWS=1 shows it.
+export function quietEnv(env: Record<string, string | undefined>): Record<string, string> {
+  return env.ADMAN_SHOW_WINDOWS === '1' ? {} : { ADMAN_QUIET_WINDOWS: '1' }
+}
+
 export async function launch(
   box: Sandbox,
   extraArgs: string[] = [],
@@ -31,6 +36,7 @@ export async function launch(
       ...process.env,
       ADMAN_USER_DATA_DIR: box.userData,
       ADMAN_FAKE_PROVIDERS: '1',
+      ...quietEnv(process.env),
       ...extraEnv,
     },
   })
@@ -42,6 +48,6 @@ export async function launch(
 export async function launchReal(box: Sandbox): Promise<ElectronApplication> {
   return electron.launch({
     args: ['.', '--use-mock-keychain'],
-    env: realAppEnv(process.env, box.userData),
+    env: { ...realAppEnv(process.env, box.userData), ...quietEnv(process.env) },
   })
 }
