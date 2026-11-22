@@ -8,7 +8,7 @@ A reviewer opens a video variant in the gallery and watches the real MP4, with s
 
 ## Status
 
-R2V-1 to R2V-4 are built (under `next start` the server may drop the clip reply's `Content-Length`; playback works without it). Slices R2V-5 to R2V-8 below are not; they are placed among R2A-1 to R2A-9 in the wave table.
+R2V-1 to R2V-5 are built (under `next start` the server may drop the clip reply's `Content-Length`; playback works without it). Slices R2V-6 to R2V-8 below are not; they are placed among R2A-1 to R2A-9 in the wave table.
 
 ## Design additions
 
@@ -373,6 +373,7 @@ Service slices run the service checks of `round-2-approvals.md` "Slices" (`cd ap
 
 ### R2V-7 — App: progress, Stop and the still-only note
 
+- **From R2V-5's review (must be built here):** the clean-up after a failed or stopped run removes only files this run added to the folder. `publishGallery` lists the link's folder once before its first upload; after a failure it removes the paths it uploaded that were **not** in that first listing. So a run that writes again to a path the live gallery already shows (a lost reply from an earlier run, or two runs of one campaign) and then fails never deletes that file. Tests first in `publish-video.test.ts`: a still and a clip already in the folder at this run's paths (local rows out of date) survive a failing run; a path that was not there is removed. The `update_running` lock of this slice closes the two-runs case.
 - **Exists when done:** `approvals.progress`, `runs.ts`, `approvals.cancelUpdate`, `update_running` and `publish_cancelled`, `stillOnly` in `approvals.forCampaign`; the dialog's progress line, "Stop", "Stopping…" and the still-only lines; shots.
 - **New files:** `src/main/approvals/runs.ts`, `src/main/commands/approvals/cancel-update.ts`, `src/renderer/dialogs/approval-dialog/update-progress.tsx`, `use-update-progress.ts`, `still-only-notes.tsx`; `tests/integration/approvals/cancel-update.test.ts`, `tests/unit/renderer/dialogs/approval-dialog/update-progress.test.tsx`; `tests/shots/r2v-7.shots.ts` (`92-r2v-making-video`, `92-r2v-stopping`, `92-r2v-still-only`).
 - **May touch:** `src/main/approvals/types.ts`, `deps.ts`, `publish.ts` (the run entry and `onStep`), `src/main/commands/approvals/index.ts`, `publish.ts`, `src/main/commands/agent-policy.ts`, `src/main/queries/approvals.ts`, `src/shared/schemas/queries/approvals.ts`, `src/shared/schemas/commands/approvals.ts`, `src/shared/schemas/events.ts`, the preload's event list if it names events, `src/shared/approvals/messages.ts`, `src/renderer/dialogs/approval-dialog/approval-dialog.tsx`, `live-link.tsx`, its CSS module.

@@ -34,5 +34,5 @@ export type ApprovalsPasswordInput = z.infer<typeof approvalsCreateLinkInput>
 
 export type ApprovalsCreateLinkReply = { slug: string }
 export type ApprovalsSetPasswordReply = Record<string, never>
-export type ApprovalsPublishReply = { variants: number; drawn: number }
+export type ApprovalsPublishReply = { variants: number; drawn: number; clips: number }
 export type ApprovalsRefreshReply = { changed: boolean; gone: boolean }

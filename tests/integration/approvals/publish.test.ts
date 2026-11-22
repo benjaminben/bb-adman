@@ -72,7 +72,9 @@ describe('approvals.publish [spec/approvals-commands.md "approvals.publish"]', (
     const draw = stubDraw(lf)
     const before = lf.f.events.length
     const variants = variantsOf(lf)
-    expect(await publish()).toEqual({ ok: true, data: { variants: 3, drawn: 3 } })
+    const from = lf.stand.seen.length
+    expect(await publish()).toEqual({ ok: true, data: { variants: 3, drawn: 3, clips: 0 } })
+    expect(lf.stand.seen[from]?.route).toBe('health')
     expect(draw).toHaveBeenCalledTimes(3)
     expect(draw.mock.calls.map((c) => c[2])).toEqual([1600, 1600, 1600])
     const sent = gallery()
@@ -120,7 +122,7 @@ describe('approvals.publish [spec/approvals-commands.md "approvals.publish"]', (
     bumpRev(lf, extra)
     vi.restoreAllMocks()
     const draw = stubDraw(lf)
-    expect(await publish()).toEqual({ ok: true, data: { variants: 2, drawn: 1 } })
+    expect(await publish()).toEqual({ ok: true, data: { variants: 2, drawn: 1, clips: 0 } })
     expect(draw.mock.calls.map((c) => c[1])).toEqual([extra])
     expect(onDisk(fileOf(extra, 2))).toBe(true)
     expect(onDisk(fileOf(extra, 0))).toBe(false)

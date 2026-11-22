@@ -1,18 +1,16 @@
 // approvals.publish, "Update gallery" (spec/approvals-commands.md "approvals.publish", security
 // class): the network half, run in the command's prepare. All or nothing for the gallery
-// (A-90): draw the changed variants, upload them, sign every picture, replace the gallery; if
-// any of those fails, this run's files are removed and the command fails. After success, the
-// campaign's folder keeps only the current pictures. Paths come only from picture-paths.ts;
-// no signed address, key or path reaches a log line or an error.
+// (A-90): ask the service's health, draw the changed variants and make their clips (gallery-
+// files.ts), sign every still and clip, replace the gallery; if any of those fails or the run
+// is stopped, this run's files, clips included, are removed and the command fails. After
+// success, the campaign's folder keeps only the current stills and clips. Paths come only from
+// picture-paths.ts; no signed address, key or path reaches a log line or an error.
 import type Database from 'better-sqlite3'
 import type { CoreDeps } from '@/main/core-deps'
-import type { ProjectHandle } from '@/main/db/project-file'
 import { readWireRows } from '@/main/db/rows'
 import { directionsOf } from '@/main/queries/campaign-reads'
-import { ProviderFailure } from '@/main/providers/types'
-import { plainMessage } from '@/main/providers/messages'
 import { CampaignName, GALLERY_MAX, SizeLine, Title } from '@/shared/approvals/contract'
-import { approvalsRefusal, renderFailedMessage } from '@/shared/approvals/messages'
+import { approvalsRefusal } from '@/shared/approvals/messages'
 import {
   PICTURE_URL_MAX_SECONDS,
   pictureFolder,
@@ -20,14 +18,20 @@ import {
 } from '@/shared/approvals/picture-paths'
 import type { VariantRow } from '@/shared/schemas/rows/variant'
 import { AppError } from '@/shared/schemas/result'
-import type { ApprovalsClient } from './client'
+import { stopIfAsked } from './clip-step'
 import { APPROVALS_REQUEST_REFUSED } from './failure'
+import {
+  galleryFiles,
+  logPictureStep,
+  storage,
+  type GalleryEntry,
+  type GalleryFiles,
+  type PublishInput,
+} from './gallery-files'
 import type { VariantRecord } from './local-store'
 import type { PictureStore } from './types'
 
 type Pair = { projectId: string; campaignId: string }
-
-export const PICTURE_SIDE = 1600
 
 const byId = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 
@@ -61,44 +65,7 @@ export function checkGallery(pair: Pair, campaignName: string, variants: Variant
   if (shown.includes(false)) throw new AppError('INVALID_INPUT', APPROVALS_REQUEST_REFUSED)
 }
 
-// A storage failure: PROVIDER_ERROR with the provider's own sentence for its kind.
-async function storage<T>(call: () => Promise<T>): Promise<T> {
-  try {
-    return await call()
-  } catch (error) {
-    if (!(error instanceof ProviderFailure)) throw error
-    const { kind } = error.error
-    throw new AppError('PROVIDER_ERROR', plainMessage(kind, 'Amazon S3'), { provider: 's3', kind })
-  }
-}
-
-function kindOf(error: unknown): string {
-  if (error instanceof ProviderFailure) return error.error.kind
-  if (error instanceof AppError) return error.code
-  return 'other'
-}
-
-// One warn line for a picture step that may fail without failing the command: IDs and the
-// error kind only.
-export function logPictureStep(
-  deps: Pick<CoreDeps, 'log'>,
-  pair: Pair,
-  step: string,
-  error: unknown,
-) {
-  deps.log.write({
-    level: 'warn',
-    event: 'provider',
-    name: 'approvals.pictures',
-    actor: 'system',
-    ok: false,
-    projectId: pair.projectId,
-    campaignId: pair.campaignId,
-    errorKind: kindOf(error),
-    message: 'A step with the approval pictures could not be finished.',
-    context: { step },
-  })
-}
+export { logPictureStep }
 
 async function removeQuietly(deps: CoreDeps, store: PictureStore, pair: Pair, paths: string[]) {
   try {
@@ -118,73 +85,69 @@ async function removeOld(deps: CoreDeps, store: PictureStore, pair: Pair, keep: 
   }
 }
 
-export type PublishInput = {
-  project: ProjectHandle
-  pair: Pair
-  client: ApprovalsClient
-  campaignName: string
-  variants: VariantRow[]
-  // published_rev by variant ID, from the local gallery rows.
-  published: Map<string, number>
+export type { PublishInput }
+
+export type Published = { rows: VariantRecord[]; drawn: number; clips: number }
+
+// One expiry covers a still and its clip, so the earlier of the two is sent and kept.
+const earlier = (a: string, b: string | undefined) =>
+  b !== undefined && Date.parse(b) < Date.parse(a) ? b : a
+
+// Step 3 and 4 for one entry: both files signed, the local row and the gallery variant.
+async function signed(store: PictureStore, e: GalleryEntry) {
+  const still = await storage(() => store.signedUrl(e.file, PICTURE_URL_MAX_SECONDS))
+  const clip =
+    e.clip && (await storage(() => store.signedUrl(e.clip!.file, PICTURE_URL_MAX_SECONDS)))
+  const expiresAt = earlier(still.expiresAt, clip?.expiresAt)
+  const row: VariantRecord = {
+    variantId: e.v.id,
+    publishedRev: e.rev,
+    expiresAt,
+    clipMs: e.clip?.durationMs ?? null,
+    clipBytes: e.clip?.bytes ?? null,
+    clipMissing: e.missing,
+  }
+  const variant = {
+    variantKey: e.v.id,
+    title: e.v.title,
+    sizeLine: sizeLine(e.v),
+    version: e.rev,
+    pictureUrl: still.url,
+    pictureExpiresAt: expiresAt,
+    kind: e.v.format,
+    clip:
+      e.clip && clip
+        ? {
+            clipUrl: clip.url,
+            type: 'video/mp4' as const,
+            durationMs: e.clip.durationMs,
+            bytes: e.clip.bytes,
+          }
+        : null,
+  }
+  return { row, variant }
 }
 
-export type Published = { rows: VariantRecord[]; drawn: number }
-
-async function drawAndUpload(
-  deps: CoreDeps,
-  store: PictureStore,
-  input: PublishInput,
-  v: VariantRow,
-) {
-  const drawn = await deps.render.render(input.project, v.id, PICTURE_SIDE).catch(() => {
-    throw new AppError('RULE_VIOLATION', renderFailedMessage(v.title), {
-      reason: 'render_failed',
-      variantId: v.id,
-    })
-  })
-  const file = picturePath(input.pair.projectId, input.pair.campaignId, v.id, drawn.rev)
-  await storage(() => store.put(file, drawn.png))
-  return { file, rev: drawn.rev }
-}
-
-// Steps 2 to 6. Gives the rows run writes.
+// Steps 0 and 2 to 6. Gives the rows run writes.
 export async function publishGallery(deps: CoreDeps, input: PublishInput): Promise<Published> {
   const { pair } = input
+  await input.client.health()
   const store = deps.approvals.pictures()
   const uploaded: string[] = []
-  const entries: Array<{ v: VariantRow; rev: number; file: string }> = []
   const rows: VariantRecord[] = []
+  const keep = new Set<string>()
+  let made: GalleryFiles
   try {
-    for (const v of input.variants) {
-      const was = input.published.get(v.id)
-      if (was === v.rev) {
-        entries.push({ v, rev: was, file: picturePath(pair.projectId, pair.campaignId, v.id, was) })
-        continue
-      }
-      const made = await drawAndUpload(deps, store, input, v)
-      uploaded.push(made.file)
-      entries.push({ v, ...made })
-    }
+    made = await galleryFiles(deps, store, input, uploaded)
     const variants = []
-    for (const { v, rev, file } of entries) {
-      const signed = await storage(() => store.signedUrl(file, PICTURE_URL_MAX_SECONDS))
-      rows.push({
-        variantId: v.id,
-        publishedRev: rev,
-        expiresAt: signed.expiresAt,
-        clipMs: null,
-        clipBytes: null,
-        clipMissing: null,
-      })
-      variants.push({
-        variantKey: v.id,
-        title: v.title,
-        sizeLine: sizeLine(v),
-        version: rev,
-        pictureUrl: signed.url,
-        pictureExpiresAt: signed.expiresAt,
-      })
+    for (const e of made.entries) {
+      const { row, variant } = await signed(store, e)
+      rows.push(row)
+      variants.push(variant)
+      keep.add(e.file)
+      if (e.clip) keep.add(e.clip.file)
     }
+    stopIfAsked(input.signal)
     const shown = await input.client.replaceGallery(pair, {
       campaignName: input.campaignName,
       variants,
@@ -194,6 +157,6 @@ export async function publishGallery(deps: CoreDeps, input: PublishInput): Promi
     if (uploaded.length > 0) await removeQuietly(deps, store, pair, uploaded)
     throw error
   }
-  await removeOld(deps, store, pair, new Set(entries.map((e) => e.file)))
-  return { rows, drawn: uploaded.length }
+  await removeOld(deps, store, pair, keep)
+  return { rows, drawn: made.drawn, clips: made.clips }
 }

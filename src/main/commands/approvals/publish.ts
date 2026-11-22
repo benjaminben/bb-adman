@@ -1,7 +1,7 @@
 // approvals.publish, "Update gallery" (spec/approvals-commands.md "approvals.publish").
 // Security class; agent policy deny. prepare makes the shared refusals (a live link, the bucket
 // and its keys), checks the gallery, then draws, uploads, signs and replaces the gallery on the
-// service (src/main/approvals/publish.ts); run replaces the local gallery rows and sets
+// service, making and sending video clips too (src/main/approvals/publish.ts); run replaces the local gallery rows and sets
 // published_at. approvals.changed goes after the commit.
 // Half-done states: when the service took the gallery but run failed, the local rows stay as
 // they were; the next press draws the variants they call changed again and sends the whole
@@ -46,7 +46,7 @@ export function approvalsPublish(deps: CoreDeps) {
       const variants = campaignVariants(deps, db, input.campaignId)
       checkGallery(pair, campaign.name, variants)
       const published = new Map(
-        readVariants(db, input.campaignId, deps.log).map((r) => [r.variantId, r.publishedRev]),
+        readVariants(db, input.campaignId, deps.log).map((r) => [r.variantId, r]),
       )
       const client = createApprovalsClient(service, {
         allowLocalHttp: deps.devTools,
@@ -59,6 +59,8 @@ export function approvalsPublish(deps: CoreDeps) {
         campaignName: campaign.name,
         variants,
         published,
+        signal: new AbortController().signal,
+        onStep: () => undefined,
       })
     },
     run(ctx, input, prepared): HandlerResult<ApprovalsPublishReply> {
@@ -72,7 +74,7 @@ export function approvalsPublish(deps: CoreDeps) {
         () => deps.approvals.changed(projectId, campaignId),
       )
       return {
-        data: { variants: prepared.rows.length, drawn: prepared.drawn },
+        data: { variants: prepared.rows.length, drawn: prepared.drawn, clips: prepared.clips },
         log: { campaignId },
       }
     },
