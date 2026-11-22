@@ -8,7 +8,8 @@ import { openFor } from './campaign-reads'
 import { layersOf } from './variant-reads'
 import { readWireRow, readWireRows } from '@/main/db/rows'
 import { masterOf } from '@/main/links/master-of'
-import { syncPreviewOf } from '@/shared/links/sync-plan'
+import { withSyncTranslations } from '@/main/translation/sync-result'
+import { syncPreviewOf, type SyncPlanInput } from '@/shared/links/sync-plan'
 import type { Size } from '@/shared/scene/background-placement'
 import { syncPreviewInput, type SyncPreviewReply } from '@/shared/schemas/queries/sync'
 import { AppError } from '@/shared/schemas/result'
@@ -46,15 +47,17 @@ export function syncPreview(deps: Pick<CoreDeps, 'projects' | 'log'>): QueryFn {
     const variants = (readWireRows(db, 'variant', deps.log) as VariantRow[])
       .filter((v) => v.directionId === direction.id && v.id !== master.variant.id)
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || byId(a.id, b.id))
+    const plan: SyncPlanInput = {
+      master: { row: master.variant, layers: master.layers },
+      variants: variants.map((v) => ({ row: v, layers: layersOf(db, v.id, deps.log) })),
+      pictureSizes: pictureSizesOf(db, master.layers),
+    }
     return {
       directionId: direction.id,
       masterVariantId: master.variant.id,
       masterRev: master.variant.rev,
-      variants: syncPreviewOf({
-        master: { row: master.variant, layers: master.layers },
-        variants: variants.map((v) => ({ row: v, layers: layersOf(db, v.id, deps.log) })),
-        pictureSizes: pictureSizesOf(db, master.layers),
-      }),
+      // P6-16: a translated copy change shows the newest sync job's text when it may be used.
+      variants: withSyncTranslations(db, direction.id, plan, syncPreviewOf(plan)),
     }
   }
 }

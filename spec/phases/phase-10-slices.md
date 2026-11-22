@@ -6,7 +6,7 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 
 ---
 
-### P10-1 — Contracts
+### P10-1 — Contracts (built)
 
 - **Exists when done:** every new tool is a `notBuilt` row in its group file; the tool registration handles `notBuilt`, picture replies, `prepareInput`, the client name and a call hook; the bus hands the ask its project and input and maps the four answers; the permission broker, the activity recorder and the client-name cleaner exist as stubs wired in core; `agent.answerPermission` and `subject.list` are registered against stubs; the two new events and `ConnectInfo.claudeDesktop` exist; the shell mounts two empty components.
 - **New files:**

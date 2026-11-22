@@ -34,6 +34,7 @@
 - **FFmpeg is a security point.** Its arguments are an array (no shell), every input is `file:` plus a checked absolute path with `-protocol_whitelist file,pipe`, and no text from a project goes into a filter graph (P8-15, P8-16).
 - **Nothing in a report** holds a secret, the ComfyUI address, a key, a signed address, an asset's path, or the output folder's full path (A-196).
 - **Screens** (D-084): one folder per component, CSS from `src/renderer/ui/tokens.css` only, no new token. A mount point in an existing component is a few lines, named in the slice. Each screen slice adds `tests/shots/p8-{n}.shots.ts`; picture names start with the slice's numbers from 250 to 269.
+- **No test hook into the main process.** End-to-end tests reach the app only as a user would, through `window.api` and the screens. No slice adds a test hook or a new way into the main process for an end-to-end test. A case that needs `drawFull` or the frame pipe is proven through a real export (P8-19).
 - **Security class.** "Full" slices merge after a full security review, "short" after a short one.
 - **Paid calls.** None. Every provider in every test is the fake one; no slice needs a key.
 - **Nothing leaves this machine** (D-086). No push, tag, release, deploy or sign-in.
@@ -44,16 +45,16 @@
 | Wave | Slice | Needs | May run beside | Must not run beside |
 |------|-------|-------|----------------|---------------------|
 | 1 | P8-1 Contracts (built) | Phases 1 to 4 (built) | Any Phase 8 slice that has not started; Phase 5 to 7 slices that edit none of its files | Any other phase's contracts slice (`core.ts`, `core-deps.ts`, `index.ts`, `agent-policy.ts`, `queries.ts`, `jobs/kinds/index.ts`, `settings.ts`, `settings-store.ts`); Phase 7 slice US if it adds a settings key |
-| 2 | P8-2 Output folder, paths, safe writes | P8-1 | Every wave 2 slice | Any Phase 9 slice editing `src/main/providers/local-storage/` (slice G does not) |
-| 2 | P8-3 Render window tiles | P8-1 | Every wave 2 slice but none that edits the render window | Phase 7 slices editing `render-root.tsx`, `src/shared/schemas/render.ts` or `draw.ts` |
-| 2 | P8-4 Full-size draw, picture encoder | P8-1 | Every wave 2 slice | Any slice editing `src/main/thumbnails/service.ts` (Phase 7 may, for time) |
-| 2 | P8-7 Report facts and builder | P8-1 | Every wave 2 slice | Nothing |
-| 2 | P8-8 Report HTML | P8-1 | Every wave 2 slice | Nothing |
-| 2 | P8-10 Settings: Export section | P8-1 | Every wave 2 slice | Any slice editing `settings-screen.tsx` (Phase 9 storage screen, Phase 7 slice US price list) |
+| 2 | P8-2 Output folder, paths, safe writes (built) | P8-1 | Every wave 2 slice | Any Phase 9 slice editing `src/main/providers/local-storage/` (slice G does not) |
+| 2 | P8-3 Render window tiles (built) | P8-1 | Every wave 2 slice but none that edits the render window | Phase 7 slices editing `render-root.tsx`, `src/shared/schemas/render.ts` or `draw.ts` |
+| 2 | P8-4 Full-size draw, picture encoder (built) | P8-1 | Every wave 2 slice | Any slice editing `src/main/thumbnails/service.ts` (Phase 7 may, for time) |
+| 2 | P8-7 Report facts and builder (built) | P8-1 | Every wave 2 slice | Nothing |
+| 2 | P8-8 Report HTML (built) | P8-1 | Every wave 2 slice | Nothing |
+| 2 | P8-10 Settings: Export section (built) | P8-1 | Every wave 2 slice | Any slice editing `settings-screen.tsx` (Phase 9 storage screen, Phase 7 slice US price list) |
 | 2 | P8-11 Export dialog | P8-1 | Every wave 2 slice | Any slice editing `campaign-view.tsx` (AP-11, Phase 5, Phase 7 timeline): the mount line only, so merge order matters, not run order |
 | 2 | P8-12 Reports list and view | P8-1; P8-11 merged for its 2-line mount | Every wave 2 slice | P8-11 while it edits `campaign-export/` |
-| 2 | P8-14 Video frames | P8-1 | Every wave 2 slice | Nothing |
-| 2 | P8-15 FFmpeg arguments | P8-1 | Every wave 2 slice | Nothing |
+| 2 | P8-14 Video frames (built) | P8-1 | Every wave 2 slice | Nothing |
+| 2 | P8-15 FFmpeg arguments (built) | P8-1 | Every wave 2 slice | Nothing |
 | 3 | P8-5 Export command | P8-2 | P8-6, P8-9 | Phase 7 slice J (`src/main/commands/job/retry.ts`) |
 | 3 | P8-6 Image export job | P8-2, P8-4 | P8-5, P8-9 | Nothing |
 | 3 | P8-9 Report writing and queries | P8-2, P8-7, P8-8 | P8-5, P8-6 | Nothing |
@@ -224,7 +225,7 @@ type Report = {
 
 ## Open questions
 
-1. **OI-09, the FFmpeg build source.** Needed by Phase 7 already (the MP4 embed). Recommendation: decided once for Phases 7 and 8; Windows from a ready-made LGPL build with its URL and SHA-256 pinned; macOS built by a script in this repository on the stakeholder's machine, the archive hosted by the stakeholder. P8-18 waits for it.
+1. **OI-09, the FFmpeg build source.** Settled for Phases 7 and 8 (A-189): Windows from a ready-made LGPL build of the public builder repository `FFmpeg-Builds/FFmpeg-Builds`, macOS built on this machine by the fetch script from the FFmpeg release source archive, both pinned in `scripts/ffmpeg-sources.json`. Pins, configure flags and pin checks: `spec/phases/phase-07.md`, "Where FFmpeg comes from". The Windows pin is checked by hand against the release's own checksum file before the first Windows run. P8-18 needs the fetch script's hand run done (P7-3).
 2. **Phase 6's check engine name.** Recommendation: Phase 6 exposes `runChecks(project, variantIds)` and `storeChecks(project, results, ranBy)` in `src/main/checks/`; P8-13 adapts to whatever is built.
 3. **Phase 7's FFmpeg locator name.** Recommendation: `ffmpegPath()` in `src/main/video/ffmpeg-path.ts`, null when the binary is not there.
 4. **Does publish's fresh export add a `report` row and an export number?** Recommendation: no; publish has its own number (FR-241). Phase 9 rules; `runExport` takes `record: boolean`.

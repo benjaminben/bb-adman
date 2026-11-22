@@ -24,7 +24,7 @@ These need the stakeholder. A wrong guess would be costly to undo, would spend r
 ### OI-09. Where the shipped FFmpeg comes from
 
 - **Question:** The app ships an FFmpeg program for macOS and Windows. It must be an LGPL build, not GPL, so the app's own licence is not affected. Which source supplies it?
-- **Meanwhile:** ready-made LGPL builds from a public builder for Windows, and an LGPL FFmpeg built by a CI job for macOS, each pinned by address and SHA-256 checksum in `ffmpeg-sources.json`. Work starts at the beginning of Phase 7 (writing details into an MP4). Nothing is released (D-086), so no binary leaves the machine.
+- **Meanwhile:** for Windows, a ready-made LGPL build from the public builder repository `FFmpeg-Builds/FFmpeg-Builds`; for macOS, an LGPL FFmpeg built on this machine by the fetch script from the FFmpeg release source archive. Each is pinned by address and SHA-256 checksum in `scripts/ffmpeg-sources.json` (P7-3; details in `spec/phases/phase-07.md`, "Where FFmpeg comes from"). The macOS source archive's pin was checked against its PGP signature from the FFmpeg release signing key on 2026-11-21. The Windows pin must be checked by hand against the release's own checksum file before the first Windows run. Nothing is released (D-086), so no binary leaves the machine.
 - **Answered:** the stakeholder agreed to this plan ("Good with ffmpeg source plan"). A swap stays a one-line change while nothing is released.
 
 ### Approvals by link (D-095)
