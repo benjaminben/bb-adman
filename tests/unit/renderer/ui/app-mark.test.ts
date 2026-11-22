@@ -10,8 +10,9 @@ const tokens = fs.readFileSync('src/renderer/ui/tokens.css', 'utf8')
 
 function token(name: string): string {
   const found = new RegExp(`${name}:\\s*(#[0-9a-f]{6});`, 'i').exec(tokens)
-  if (!found) throw new Error(`${name} is not in tokens.css`)
-  return found[1].toLowerCase()
+  const value = found?.[1]
+  if (!value) throw new Error(`${name} is not in tokens.css`)
+  return value.toLowerCase()
 }
 
 describe('app mark [D10]', () => {
