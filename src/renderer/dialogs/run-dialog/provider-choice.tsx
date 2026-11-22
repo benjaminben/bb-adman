@@ -2,8 +2,13 @@
 // every provider whose `jobs` holds the job. One not available is disabled with its words;
 // ComfyUI is disabled when comfy.getInfo offers no workflow for the run, and an offered
 // `trial` workflow shows the trial mark (spec/screens-campaign.md, "The trial mark in the
-// panels"). For a cut-out ComfyUI is listed first (OI-55).
+// panels"). For a cut-out ComfyUI is listed first (OI-55). R2E-8 (round-2-editor.md D4): for a
+// video, a provider with an offer (video-offers.ts) that lacks the start is disabled as
+// "{label} (cannot start this way)"; ComfyUI needs an offered workflow for the start's pair.
 import { useId } from 'react'
+import { offeredFor } from '@/renderer/screens/campaign/offered-workflow'
+import { STARTS } from '@/renderer/screens/campaign/video-start'
+import { videoOffer, type VideoStartKind } from '@/shared/config/video-offers'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { ComfyInfo, WorkflowInfo } from '@/shared/schemas/queries/comfy'
 import type { RunJob } from './run-summary'
@@ -26,15 +31,37 @@ function comfyJob(job: RunJob, referenceCount: number): string | null {
   return job === 'cutout' ? 'cutout' : null
 }
 
-function choiceFor(provider: ProviderInfo, wanted: string | null, info: ComfyInfo | null): Choice {
+const NO_WORKFLOW = 'ComfyUI (no workflow for this yet)'
+
+// A video choice once the provider is available: the start must be one it offers.
+function videoChoice(base: Choice, start: VideoStartKind, info: ComfyInfo | null): Choice {
+  const { provider } = base
+  const cannot = { ...base, enabled: false, label: `${provider.label} (cannot start this way)` }
+  const offer = videoOffer(provider.id)
+  if (offer) return offer.starts.includes(start) ? base : cannot
+  if (provider.id !== COMFY) return start === 'prompt' ? base : cannot
+  const pair = STARTS.find((s) => s.id === start)?.pair
+  if (!pair) return cannot
+  const workflow = offeredFor(info, 'video', pair)
+  if (!workflow) return { ...base, enabled: false, label: NO_WORKFLOW }
+  return { ...base, trial: workflow.status === 'trial', workflow }
+}
+
+function choiceFor(
+  provider: ProviderInfo,
+  wanted: string | null,
+  info: ComfyInfo | null,
+  start: VideoStartKind | undefined,
+): Choice {
   const base = { provider, enabled: true, label: provider.label, trial: false }
   if (!provider.available) {
     return { ...base, enabled: false, label: `${provider.label} (not yet available)` }
   }
+  if (start !== undefined) return videoChoice(base, start, info)
   if (provider.id !== COMFY) return base
   // Before comfy.getInfo answers, no workflow is known.
   const workflow = info?.workflows.find((w) => w.offered && w.job === wanted)
-  if (!workflow) return { ...base, enabled: false, label: 'ComfyUI (no workflow for this yet)' }
+  if (!workflow) return { ...base, enabled: false, label: NO_WORKFLOW }
   return { ...base, trial: workflow.status === 'trial', workflow }
 }
 
@@ -43,11 +70,13 @@ export function runChoices(
   providers: ProviderInfo[],
   info: ComfyInfo | null,
   referenceCount: number,
+  videoStart?: VideoStartKind,
 ): Choice[] {
   const listed = providers.filter((p) => p.jobs.includes(job))
   if (job === 'cutout') listed.sort((a, b) => Number(b.id === COMFY) - Number(a.id === COMFY))
   const wanted = comfyJob(job, referenceCount)
-  return listed.map((p) => choiceFor(p, wanted, info))
+  const start = job === 'video' ? (videoStart ?? 'prompt') : undefined
+  return listed.map((p) => choiceFor(p, wanted, info, start))
 }
 
 // The saved default for the job when it is enabled, else the first enabled choice.

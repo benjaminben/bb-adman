@@ -5,8 +5,10 @@
 // project; when that closes or changes, every draft is dropped, as the activity store does.
 // R2E-4 (spec/phases/round-2-editor.md D4, "Draft"): a draft also holds its kind, where the
 // run starts from and the video fields. A draft made without them reads through draftOf.
+// R2E-8: while the user has not typed in the prompt, it follows the kind: the made prompt
+// starts "A picture" or "A video" (prefilledPrompt, D1), and only that word changes.
 import { createStore } from 'zustand/vanilla'
-import { START_SECONDS } from '@/renderer/screens/campaign/video-panel/video-length'
+import { START_SECONDS } from '@/renderer/editor/generate-panel/video-length'
 
 export type GenerateKind = 'image' | 'video'
 // The "Start from" choices: a prompt only, this layer's picture, another picture of the same
@@ -48,6 +50,17 @@ export function draftOf(draft: GenerateDraft | undefined): FullDraft | undefined
   return draft && { ...DEFAULTS, ...draft }
 }
 
+const NOUNS: Record<GenerateKind, string> = { image: 'A picture', video: 'A video' }
+
+// The draft with another kind, its prompt following when the user has not typed in it.
+function withKind(draft: GenerateDraft, kind: GenerateKind): GenerateDraft {
+  const was = draftOf(draft).kind
+  if (was === kind || draft.promptTyped) return { ...draft, kind }
+  const [from, to] = [NOUNS[was], NOUNS[kind]]
+  const prompt = draft.prompt.startsWith(from) ? to + draft.prompt.slice(from.length) : draft.prompt
+  return { ...draft, kind, prompt }
+}
+
 export type GenerateDraftsState = {
   projectId: string | null
   drafts: Readonly<Record<string, GenerateDraft>>
@@ -75,13 +88,15 @@ export const generateDrafts = createStore<GenerateDraftsState>((set, get) => ({
   start(key, draft) {
     if (get().drafts[key]) return
     const kind = get().wanted[key]
-    const made = kind === undefined ? draft : { ...draft, kind }
+    const made = kind === undefined ? draft : withKind(draft, kind)
     set({ drafts: { ...get().drafts, [key]: made }, wanted: without(get().wanted, key) })
   },
   change(key, patch) {
     const held = get().drafts[key]
     if (!held) return
-    set({ drafts: { ...get().drafts, [key]: { ...held, ...patch } } })
+    const { kind, ...rest } = patch
+    const next = { ...held, ...rest }
+    set({ drafts: { ...get().drafts, [key]: kind === undefined ? next : withKind(next, kind) } })
   },
   wantKind(key, kind) {
     if (get().drafts[key]) return

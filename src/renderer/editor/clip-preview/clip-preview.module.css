@@ -1,0 +1,11 @@
+/* app-style */
+/* R2E-8 (round-2-editor.md D6): the clip at the panel's width on the canvas ground, edged as
+   the same-shape thumbnails are. */
+.clip {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  background: var(--canvas-backdrop);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius);
+}

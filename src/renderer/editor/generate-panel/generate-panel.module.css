@@ -69,3 +69,20 @@
   overflow-wrap: anywhere;
   color: var(--color-text);
 }
+/* The video fields read like the picture fields: a column of label, prompt, length, button. */
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.prompt {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.length {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}

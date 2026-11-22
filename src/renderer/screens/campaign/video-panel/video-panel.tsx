@@ -14,7 +14,11 @@ import {
   type GenerationStartVideoInput,
 } from '@/shared/schemas/commands/generation'
 import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'
-import { LENGTH_PROBLEM, typedSeconds, useComfyInfo } from './video-length'
+import {
+  LENGTH_PROBLEM,
+  typedSeconds,
+  useComfyInfo,
+} from '@/renderer/editor/generate-panel/video-length'
 import { VideoPictureChoice } from '@/renderer/screens/campaign/video-picture-choice'
 import { STARTS } from '@/renderer/screens/campaign/video-start'
 import { ProviderSelect } from '@/renderer/screens/campaign/provider-select'
@@ -26,7 +30,7 @@ import {
   picturesFor,
   shownStart,
   type CardStartId,
-} from './card-starts'
+} from '@/renderer/editor/generate-panel/card-starts'
 import { usePost } from './use-post'
 import layout from '@/renderer/ui/layout.module.css'
 
