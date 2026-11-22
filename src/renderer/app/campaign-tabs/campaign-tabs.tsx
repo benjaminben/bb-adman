@@ -1,12 +1,13 @@
 // spec/editor.md, "The shell" [FR-211, FR-218]: the shown project's tabs, labelled "Open
 // campaigns": a fixed "Project" tab (the project home), one tab per open campaign named after
-// it with its job marks and a close button ("Close {name}"), then a "+" button ("Open or start
-// a campaign") that shows the Project tab. Names and marks come from project.get; a campaign
+// it with its job marks and a close button ("Close {name}"), then a "+" button ("New campaign",
+// with the same tooltip) that shows the Project tab and asks its project home to open the
+// typed brief form (R2-Q). Names and marks come from project.get; a campaign
 // that is gone loses its tab. It goes inside a Tabs.Root driven by useCampaignTab. Closing a
 // campaign tab while an attached job of its variant tabs, or of the campaign itself (its
 // translation jobs, P6-13), runs asks first (spec/screens-ai.md).
 import { useEffect } from 'react'
-import { useNav, useNavStore } from '@/renderer/app/nav-context'
+import { useNav, useNavStore, useNewCampaignAsk } from '@/renderer/app/nav-context'
 import { useProject } from '@/renderer/screens/project-home/project-home/use-project'
 import { PROJECT_TAB, campaignNav, projectNav } from '@/renderer/stores/nav-store'
 import { campaignJobs, variantJobs } from '@/renderer/stores/attached-store'
@@ -29,6 +30,7 @@ export function CampaignTabs(props: { projectId: string }) {
   const closeCampaign = useNav((s) => s.closeCampaign)
   const keepCampaigns = useNav((s) => s.keepCampaigns)
   const navStore = useNavStore()
+  const askNewCampaign = useNewCampaignAsk().ask
   const { ask, warning } = useCloseWarning('tab')
   const campaigns = data?.campaigns
   const close = (campaignId: string) => {
@@ -67,8 +69,12 @@ export function CampaignTabs(props: { projectId: string }) {
       <button
         type="button"
         className={styles.add}
-        aria-label="Open or start a campaign"
-        onClick={() => showCampaign(projectId, PROJECT_TAB)}
+        aria-label="New campaign"
+        title="New campaign"
+        onClick={() => {
+          showCampaign(projectId, PROJECT_TAB)
+          askNewCampaign(projectId)
+        }}
       >
         +
       </button>

@@ -79,7 +79,7 @@ describe('campaign tabs [FR-211]', () => {
 
   it('"+" shows the Project tab', async () => {
     await draw()
-    await userEvent.click(screen.getByRole('button', { name: 'Open or start a campaign' }))
+    await userEvent.click(screen.getByRole('button', { name: 'New campaign' }))
     expect(screen.getByText('Showing project')).toBeInTheDocument()
     expect(tabs()).toEqual(['Project', 'Summer Splash', 'Fall Harvest'])
   })
