@@ -1,37 +1,26 @@
-// The campaign's reports [P8-12] (spec/phases/phase-08.md "Report", queries): one row per
-// report, newest first as report.list gives them, each with "Open", which shows that report's
-// view over the list. Every value is React text; the folder is text only, never a link.
-import { useId, useState } from 'react'
+// The campaign's reports [P8-12; CAMP-6]: one ObjectRow per export, newest first as report.list
+// gives them; a row's click shows that report's view over the list. No path is drawn: a row's
+// tooltip is its folder's base name. A refused read stays as a visible alert. With no export,
+// "Export…" asks the caller to open the export dialog; it starts nothing itself.
+import { useState } from 'react'
 import { ReportView } from '@/renderer/dialogs/report-view'
-import { utcTime } from '@/renderer/dialogs/report-view/report-words'
+import { DialogAlert } from '@/renderer/ui/dialog-alert'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
+import { EmptyState } from '@/renderer/ui/empty-state'
 import layout from '@/renderer/ui/layout.module.css'
-import type { ReportListItem } from '@/shared/schemas/queries/report'
-import { useReports } from './use-reports'
+import { useReportRead } from './read-reports'
+import { ReportRow } from './report-row'
 import styles from './report-list.module.css'
 
-export type ReportListProps = { projectId: string; campaignId: string; onClose: () => void }
-
-export const rowLine = (r: ReportListItem) =>
-  `Export ${r.exportNumber} · ${utcTime(r.createdAt)} · ${r.summary.exported} exported, ` +
-  `${r.summary.failed} failed · ${r.outputDir}`
-
-function ReportRow(props: { report: ReportListItem; onOpen: () => void }) {
-  const id = useId()
-  return (
-    <li className={styles.row}>
-      <p id={id} className={styles.line}>
-        {rowLine(props.report)}
-      </p>
-      <button type="button" className={layout.small} aria-describedby={id} onClick={props.onOpen}>
-        Open
-      </button>
-    </li>
-  )
+export type ReportListProps = {
+  projectId: string
+  campaignId: string
+  onClose: () => void
+  onExport: () => void
 }
 
 export function ReportList(props: ReportListProps) {
-  const read = useReports(props.projectId, props.campaignId)
+  const read = useReportRead(props.projectId, props.campaignId)
   const [opened, setOpened] = useState<string | null>(null)
   const footer = (
     <button type="button" className={layout.primary} onClick={props.onClose}>
@@ -40,14 +29,14 @@ export function ReportList(props: ReportListProps) {
   )
   return (
     <DialogFrame open onClose={props.onClose} title="Reports" footer={footer} size="wide">
-      {read.kind === 'loading' && <p className={layout.muted}>Loading the reports…</p>}
-      {read.kind === 'refused' && (
-        <p role="alert" className={layout.muted}>
-          {read.message}
-        </p>
-      )}
+      {read.kind === 'loading' && <DialogAlert tone="busy">Loading the reports…</DialogAlert>}
+      {read.kind === 'refused' && <DialogAlert tone="danger">{read.message}</DialogAlert>}
       {read.kind === 'shown' && read.reports.length === 0 && (
-        <p className={layout.empty}>No export yet.</p>
+        <EmptyState
+          icon="export"
+          words="No exports yet"
+          action={{ label: 'Export…', onClick: props.onExport }}
+        />
       )}
       {read.kind === 'shown' && read.reports.length > 0 && (
         <ul aria-label="Reports" className={styles.list}>

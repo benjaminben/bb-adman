@@ -99,7 +99,10 @@ test('a prohibited word: the warnings step, a reason, Export anyway, and the rea
   await page.getByRole('button', { name: 'Reports' }).click()
   const reports = page.getByRole('dialog', { name: 'Reports' })
   await expect(reports.getByRole('listitem')).toHaveCount(1)
-  await reports.getByRole('button', { name: 'Open' }).click()
+  await reports
+    .getByRole('button', { name: /^Export / })
+    .first()
+    .click()
   const view = page.getByRole('dialog', { name: 'Export report' })
   await expect(view).toContainText('cheap')
   await expect(view).toContainText(REASON)
