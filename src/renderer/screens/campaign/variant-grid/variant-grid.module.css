@@ -5,10 +5,13 @@
   max-width: 100%;
 }
 /* One grid: the row heads' column, then one tile column per language (set inline). */
+/* Its own stacking context: the pinned heads stay above the tiles but under any dialog's
+   overlay, which has no z-index of its own. */
 .table {
   display: grid;
   gap: var(--space-3);
   width: max-content;
+  isolation: isolate;
 }
 .corner,
 .rowHead {
