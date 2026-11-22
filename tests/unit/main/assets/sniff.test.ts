@@ -14,6 +14,7 @@ const WEBM = bytes([0x1a, 0x45, 0xdf, 0xa3, 0x9f])
 const TTF = bytes([0, 1, 0, 0, 0, 0x10])
 const OTF = bytes('OTTO', [0, 0x0b])
 const WOFF2 = bytes('wOF2', [0, 1, 0, 0])
+const brand = (major: string) => bytes([0, 0, 0, 0x18], 'ftyp', major, [0, 0, 0, 0], 'mp42')
 
 describe('type sniffing: the extension and the first bytes must agree [SPEC 8.3, FR-051]', () => {
   it.each([
@@ -48,6 +49,17 @@ describe('type sniffing: the extension and the first bytes must agree [SPEC 8.3,
     ['copy.txt', bytes([0xff, 0xfe, 0x41])],
     ['photo.png', new Uint8Array()],
     ['copy.txt', new Uint8Array()],
+    ['photo.mp4', brand('heic')],
+    ['photo.mov', brand('heix')],
+    ['clip.mp4', brand('hevc')],
+    ['clip.mp4', brand('hevx')],
+    ['photo.mp4', brand('mif1')],
+    ['clip.mov', brand('msf1')],
+    ['photo.mp4', brand('avif')],
+    ['photo.mov', brand('avis')],
+    ['song.mp4', brand('M4A ')],
+    ['book.mp4', brand('M4B ')],
+    ['song.mov', brand('M4P ')],
   ])('refuses %s whose bytes do not match', (name, head) => {
     expect(sniffType(name, head)).toBeUndefined()
   })

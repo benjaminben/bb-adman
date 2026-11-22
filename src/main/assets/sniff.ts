@@ -17,6 +17,26 @@ function startsWith(head: Uint8Array, prefix: number[]): boolean {
 // QuickTime files made before the ftyp box start with one of these boxes.
 const QUICKTIME_BOXES = ['moov', 'mdat', 'wide', 'free', 'skip', 'pnot']
 
+// P7-5: ftyp major brands of still pictures and sound-only files, which share the MP4 box
+// layout and so are refused for a file named .mp4 or .mov.
+const NOT_VIDEO_BRANDS = [
+  'heic',
+  'heix',
+  'hevc',
+  'hevx',
+  'mif1',
+  'msf1',
+  'avif',
+  'avis',
+  'M4A ',
+  'M4B ',
+  'M4P ',
+]
+
+const hasFtyp = (h: Uint8Array) => asciiAt(h, 4, 'ftyp')
+const isVideoFtyp = (h: Uint8Array) =>
+  hasFtyp(h) && !NOT_VIDEO_BRANDS.some((brand) => asciiAt(h, 8, brand))
+
 // Text has no signature: it must be UTF-8 with no NUL byte. A character cut off at the end
 // of the first bytes is allowed, since only the start of the file is read.
 function isText(head: Uint8Array): boolean {
@@ -36,8 +56,8 @@ const MATCHES: Record<FileType['id'], (head: Uint8Array) => boolean> = {
   png: (h) => pictureType(h) === 'image/png',
   jpeg: (h) => pictureType(h) === 'image/jpeg',
   webp: hasWebpSignature,
-  mp4: (h) => asciiAt(h, 4, 'ftyp'),
-  mov: (h) => asciiAt(h, 4, 'ftyp') || QUICKTIME_BOXES.some((box) => asciiAt(h, 4, box)),
+  mp4: isVideoFtyp,
+  mov: (h) => (hasFtyp(h) ? isVideoFtyp(h) : QUICKTIME_BOXES.some((box) => asciiAt(h, 4, box))),
   webm: (h) => startsWith(h, [0x1a, 0x45, 0xdf, 0xa3]),
   ttf: (h) => startsWith(h, [0, 1, 0, 0]) || asciiAt(h, 0, 'true'),
   otf: (h) => asciiAt(h, 0, 'OTTO'),
