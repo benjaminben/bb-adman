@@ -1,0 +1,6 @@
+/* app-style */
+/* "Assets": a plain button with its icon; pressed while the panel is open. */
+.button[aria-expanded='true'],
+.button[aria-expanded='true']:hover {
+  background: var(--color-surface);
+}

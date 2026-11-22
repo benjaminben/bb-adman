@@ -9,11 +9,11 @@ import { addPhotos, photoStubs } from './brief-form-fixture'
 const CREATED = { campaignId: 'summer-splash-k3f9q2', directionId: 'D1', variantId: 'V1' }
 
 describe('project home sections [spec/screens-campaign.md, Project home]', () => {
-  it('shows "Start a campaign", "Files" and "Package" after the campaign list', async () => {
+  it('shows "Start a campaign", "Assets" and "Package" after the campaign list', async () => {
     await renderApp(<ProjectHome project={PROJECT} />, projectApi())
     await screen.findByText('No campaign yet.')
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
-    expect(headings).toEqual(['Campaigns', 'Start a campaign', 'Files', 'Package'])
+    expect(headings).toEqual(['Campaigns', 'Start a campaign', 'Assets', 'Package'])
     const empty = screen.getByText('No campaign yet.')
     const start = screen.getByRole('heading', { name: 'Start a campaign' })
     expect(empty.compareDocumentPosition(start) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()

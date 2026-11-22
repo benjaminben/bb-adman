@@ -1,0 +1,74 @@
+/* app-style */
+/* Along the left edge under the top bar, over the page (spec/phases/round-2-campaign.md,
+   design addition 5, A-315). The Activity panel keeps the right edge. Mounted after the page,
+   so it is drawn over it, and dialogs, mounted later still, over the panel. */
+.panel {
+  position: fixed;
+  top: var(--bar-height);
+  bottom: 0;
+  left: 0;
+  width: var(--activity-width);
+  max-width: 100%;
+  overflow: auto;
+  padding: 0 0 var(--space-4);
+  background: var(--color-bg);
+  border-right: var(--border-width) solid var(--color-line);
+  box-shadow: var(--shadow-3);
+}
+.panel:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: calc(var(--focus-ring-width) * -1);
+}
+/* The head stays while the groups scroll, as the Activity panel's. */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: var(--bar-height);
+  padding: 0 var(--space-2) 0 var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-line);
+  background: var(--color-bg);
+}
+.title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-bold);
+  letter-spacing: normal;
+}
+.close {
+  color: var(--color-text-secondary);
+}
+.actions {
+  padding: var(--space-3) var(--space-4) 0;
+}
+.group {
+  margin-top: var(--space-4);
+}
+.heading {
+  margin: 0 var(--space-4) var(--space-1);
+  font-family: var(--font-body);
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  letter-spacing: normal;
+  color: var(--color-text-muted);
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-2);
+}
+.empty {
+  margin: var(--space-2) var(--space-4) 0;
+  font-size: var(--font-size-control);
+  color: var(--color-text-muted);
+}
+.refused {
+  margin: var(--space-4) var(--space-4) 0;
+}

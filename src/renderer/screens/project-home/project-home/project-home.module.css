@@ -31,3 +31,9 @@
 .section > * {
   max-width: 100%;
 }
+/* R2C-5: the campaign page keeps its raised parts (the editor's sticky heads) to itself, so
+   the Assets panel and the dialogs mounted after it are drawn over all of it. */
+.campaign {
+  height: 100%;
+  isolation: isolate;
+}

@@ -1,6 +1,8 @@
 // R2C-1 (spec/phases/round-2-campaign.md, design addition 1): the campaign page's head, moved
 // out of the page with no change in what it shows. "Back to project", the campaign's name, the
-// approval bar (AP-11), "Export…" with "Reports" (P8-11) and "Publish…" (P9-13).
+// approval bar (AP-11), "Export…" with "Reports" (P8-11) and "Publish…" (P9-13). R2C-5: "Assets"
+// at the end of the row opens the project's Assets panel (drawn only inside its scope).
+import { AssetsButton } from '@/renderer/screens/assets/assets-button'
 import { ApprovalBar } from '@/renderer/screens/campaign/approval-bar'
 import { CampaignExport } from '@/renderer/screens/campaign/campaign-export'
 import { PublishButton } from '@/renderer/screens/campaign/publish-button'
@@ -43,6 +45,7 @@ export function CampaignHead(props: CampaignHeadProps) {
           campaignName={data.campaign.name}
         />
       )}
+      <AssetsButton projectId={projectId} />
     </div>
   )
 }
