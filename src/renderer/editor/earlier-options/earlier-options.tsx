@@ -4,9 +4,12 @@
 // one undo entry, no provider call. A succeeded run not yet looked at is marked seen once,
 // when it is drawn. A locked layer's buttons are disabled. The title names the region but is
 // not an h element: the properties panel keeps one heading, the layer's name.
+// R2E-5 (spec/phases/round-2-editor.md D6): the run named by newJobId is drawn first under
+// "New pictures" (new-options.tsx); the other runs follow here.
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
+import { NewOptions } from './new-options'
 import { RunBlock } from './run-block'
 import { useEarlierOptions } from './use-earlier-options'
 import styles from './earlier-options.module.css'
@@ -16,6 +19,8 @@ const PAGE = 10
 export type EarlierOptionsProps = {
   projectId: string
   layer: LayerRow
+  // The run the Generate panel started, drawn first under "New pictures".
+  newJobId?: string
 }
 
 export function EarlierOptions(props: EarlierOptionsProps) {
@@ -24,10 +29,12 @@ export function EarlierOptions(props: EarlierOptionsProps) {
   const reply = useEarlierOptions(projectId, layer)
   const [limit, setLimit] = useState(PAGE)
   const marked = useRef(new Set<string>())
-  const shown = (reply ?? []).slice(0, limit)
+  const fresh = reply?.find(({ job }) => job.id === props.newJobId) ?? null
+  const rest = (reply ?? []).filter((option) => option !== fresh)
+  const shown = rest.slice(0, limit)
   const inUse = layer.source?.assetId ?? null
 
-  const unseenKey = shown
+  const unseenKey = (fresh ? [fresh, ...shown] : shown)
     .filter(({ job }) => job.status === 'succeeded' && job.seenAt === null)
     .map(({ job }) => job.id)
     .join(' ')
@@ -50,32 +57,44 @@ export function EarlierOptions(props: EarlierOptionsProps) {
   }
 
   return (
-    <section className={styles.section} aria-labelledby={`${layer.id}-earlier`}>
-      <p id={`${layer.id}-earlier`} className={styles.heading}>
-        Earlier options
-      </p>
-      {reply !== null && reply.length === 0 && (
-        <p className={styles.muted}>No earlier options for this layer.</p>
+    <>
+      {fresh && (
+        <NewOptions
+          projectId={projectId}
+          layerId={layer.id}
+          option={fresh}
+          inUse={inUse}
+          locked={layer.locked}
+          onUse={use}
+        />
       )}
-      {shown.length > 0 && (
-        <ul className={styles.runs}>
-          {shown.map((option) => (
-            <RunBlock
-              key={option.job.id}
-              projectId={projectId}
-              option={option}
-              inUse={inUse}
-              locked={layer.locked}
-              onUse={use}
-            />
-          ))}
-        </ul>
-      )}
-      {reply !== null && reply.length > limit && (
-        <button type="button" onClick={() => setLimit(limit + PAGE)}>
-          Show more
-        </button>
-      )}
-    </section>
+      <section className={styles.section} aria-labelledby={`${layer.id}-earlier`}>
+        <p id={`${layer.id}-earlier`} className={styles.heading}>
+          Earlier options
+        </p>
+        {reply !== null && rest.length === 0 && !fresh && (
+          <p className={styles.muted}>No earlier options for this layer.</p>
+        )}
+        {shown.length > 0 && (
+          <ul className={styles.runs}>
+            {shown.map((option) => (
+              <RunBlock
+                key={option.job.id}
+                projectId={projectId}
+                option={option}
+                inUse={inUse}
+                locked={layer.locked}
+                onUse={use}
+              />
+            ))}
+          </ul>
+        )}
+        {rest.length > limit && (
+          <button type="button" onClick={() => setLimit(limit + PAGE)}>
+            Show more
+          </button>
+        )}
+      </section>
+    </>
   )
 }
