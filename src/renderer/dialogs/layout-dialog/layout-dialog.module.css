@@ -1,7 +1,8 @@
 /* app-style */
-/* The layout dialog (spec/app-style.md, "AI panels and the run dialog": layout options): each
-   layout a selectable card, the chosen one edged and ringed in the spot colour. The dialog is
-   the frame's wide size, which fits three cards in a row; Cancel and Apply are the foot band. */
+/* The layout dialog (spec/app-style.md, "AI panels and the run dialog": layout options; DLG-5,
+   the `pick` kind): a line with the InfoTip and the lock mark, then the previews as a pickGrid
+   of tiles with no caption, the chosen one ringed in the spot colour. Cancel and Apply are the
+   foot band. */
 .body {
   display: flex;
   flex-direction: column;
@@ -15,23 +16,23 @@
 .body > :last-child {
   margin-top: calc(var(--space-6) - var(--space-3));
 }
+.top {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+}
 .choices {
-  display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(calc(var(--thumbnail-tile) + var(--space-2) * 2 + var(--border-width) * 2), 1fr)
-  );
-  gap: var(--space-3);
+  padding: var(--focus-ring-width);
 }
 .choice {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-2);
+  align-items: center;
+  justify-content: center;
   border: var(--border-width) solid var(--color-line);
   border-radius: var(--radius-md);
-  background: var(--color-bg);
-  box-shadow: var(--shadow-1);
+  background: var(--color-surface-soft);
+  cursor: pointer;
 }
 .choice:hover {
   border-color: var(--color-border);
@@ -39,17 +40,19 @@
 }
 .choice:has(input:checked) {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 var(--border-width) var(--color-accent);
+  outline: var(--focus-ring-width) solid var(--color-accent);
+  outline-offset: var(--focus-ring-offset);
+}
+.choice:has(input:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
 }
 .preview {
   display: flex;
   align-items: center;
   justify-content: center;
-  align-self: center;
   width: var(--thumbnail-tile);
   height: var(--thumbnail-tile);
-  border-radius: var(--radius);
-  background: var(--color-surface-soft);
 }
 .frame {
   overflow: hidden;
@@ -58,17 +61,12 @@
 .stage {
   transform-origin: 0 0;
 }
-.name {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 0 var(--space-1);
-  font-weight: var(--weight-bold);
-}
-.choice .muted {
-  padding: 0 var(--space-1) var(--space-1);
-}
-.muted {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+/* Words for screen readers and the tile's tooltip only. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

@@ -5,8 +5,10 @@
 // again every time. Focus goes back to the control that opened it (the dialog frame).
 // SP-8: a reference-library subject photo is first moved to the asset library (asset.update);
 // a refused move shows its message and places nothing.
+// DLG-5 (C-16): the `pick` kind; an empty library is an EmptyState whose action imports.
 import { useState } from 'react'
 import { BusySpinner, DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
+import { EmptyState } from '@/renderer/ui/empty-state'
 import layout from '@/renderer/ui/layout.module.css'
 import { PictureGrid } from './picture-grid'
 import { SubjectReferenceList } from './subject-reference-list'
@@ -56,7 +58,11 @@ function ChooserBody(props: BodyProps) {
           Reading the asset library…
         </p>
       ) : pictures.length === 0 ? (
-        <p className={`${layout.empty} ${styles.line}`}>No pictures in the asset library yet.</p>
+        <EmptyState
+          icon="image"
+          words="No pictures yet"
+          action={{ label: 'Import pictures…', onClick: () => void importPictures() }}
+        />
       ) : (
         <PictureGrid
           projectId={props.projectId}
@@ -91,7 +97,7 @@ export function PictureChooser(props: PictureChooserProps) {
       onClose={props.onClose}
       title={`Choose a picture for ${props.layerName}`}
       closable={!busy}
-      size="large"
+      kind="pick"
     >
       {props.open && (
         <ChooserBody

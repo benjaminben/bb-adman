@@ -1,6 +1,6 @@
 /* app-style */
-/* The reference dialog's body (spec/app-style.md, "AI panels and the run dialog"): the two
-   pickers and the limit line above the foot band. */
+/* The reference dialog's body (spec/app-style.md, "AI panels and the run dialog"; DLG-5): the
+   count of ticks, then the two pickers above the foot band. */
 .body {
   display: flex;
   flex-direction: column;
@@ -9,9 +9,13 @@
 .body p {
   margin: 0;
 }
-.muted {
+/* "{k} / {limit}": the tick count, right of the line, in the tabular figures of a mark. */
+.count {
+  align-self: flex-end;
   font-size: var(--font-size-control);
-  color: var(--color-text-muted);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
 }
 /* The foot band (DialogFoot) is the body's last child: the flex gap already gives part of its
    top space. */

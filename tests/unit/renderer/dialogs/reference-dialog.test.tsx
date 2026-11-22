@@ -107,10 +107,13 @@ describe('ReferenceDialog [spec/screens-ai.md "Reference dialog"; A-68]', () => 
     const chosen = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'G1']
     await open({ refs, assets: [made('G1'), made('G2')], chosen })
     expect(box('G2.png')).toBeDisabled()
-    expect(screen.getByText('At most 8 pictures.')).toBeVisible()
+    // DLG-5: the counter and the disabled tile's reason say it.
+    expect(screen.getByText('8 / 8')).toBeVisible()
+    expect(box('G2.png')).toHaveAccessibleDescription('At most 8 pictures')
     await userEvent.click(box('R3.png'))
     expect(box('G2.png')).toBeEnabled()
-    expect(screen.queryByText('At most 8 pictures.')).toBeNull()
+    expect(screen.getByText('7 / 8')).toBeVisible()
+    expect(box('G2.png')).toHaveAccessibleDescription('')
   })
 
   it("Cancel drops this visit's changes; opening again starts from the chosen pictures", async () => {

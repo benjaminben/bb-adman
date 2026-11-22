@@ -4,11 +4,17 @@
 // starterLayoutPatches (spec/starter-layouts.md "Applying a layout"), so one undo step, and
 // closes. A refusal shows in the dialog and it stays open. Cancel and Escape send nothing.
 // It sends through window.api, not the app store, so a refusal is shown here only.
+// DLG-5 (C-16): the `pick` kind. The previews are a pickGrid of tiles with no caption: each
+// radio is named by the layout's name and described by its description, and the tile's
+// `title` holds both. The locked-layers line is in an InfoTip; a lock mark counts the locked
+// layers. Choosing a tile sends nothing; only Apply sends.
 import { useId, useMemo, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
-import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
+import { DialogFoot, DialogFrame, dialogStyles } from '@/renderer/ui/dialog-frame'
 import { Icon } from '@/renderer/ui/icon'
+import { InfoTip } from '@/renderer/ui/info-tip'
 import layout from '@/renderer/ui/layout.module.css'
+import { StatusMark } from '@/renderer/ui/status-mark'
 import { DEFAULT_STARTER_LAYOUT_ID, STARTER_LAYOUTS } from '@/shared/config/starter-layouts'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
@@ -29,6 +35,7 @@ export type LayoutDialogProps = {
 
 export const LOCKED_LINE = 'Locked layers stay as they are.'
 export const NO_CHANGE_LINE = 'This layout changes no layer here.'
+const KEPT_TIP = 'Locked layers stay as they are'
 
 type BodyProps = LayoutDialogProps & { sending: boolean; setSending: (on: boolean) => void }
 
@@ -47,6 +54,7 @@ function LayoutBody(props: BodyProps) {
     [variant, layers],
   )
   const updates = choices.find((c) => c.layout.id === chosen)?.updates ?? []
+  const kept = layers.filter((l) => l.locked).length
 
   async function apply() {
     props.setSending(true)
@@ -59,28 +67,38 @@ function LayoutBody(props: BodyProps) {
 
   return (
     <div className={styles.body}>
-      <div role="radiogroup" aria-label="Layouts" className={styles.choices}>
+      <div className={styles.top}>
+        <InfoTip about="Layout">{LOCKED_LINE}</InfoTip>
+        {kept > 0 && <StatusMark tone="none" icon="lock" label={`${kept} kept`} tip={KEPT_TIP} />}
+      </div>
+      <div
+        role="radiogroup"
+        aria-label="Layouts"
+        className={`${dialogStyles.pickGrid} ${styles.choices}`}
+      >
         {choices.map(({ layout, drawn }) => (
-          <div key={layout.id} className={styles.choice}>
+          <label
+            key={layout.id}
+            className={styles.choice}
+            title={`${layout.name}. ${layout.description}`}
+          >
+            <input
+              type="radio"
+              className={styles.hidden}
+              name={`${ids}-layout`}
+              value={layout.id}
+              checked={chosen === layout.id}
+              aria-label={layout.name}
+              aria-describedby={`${ids}-${layout.id}`}
+              onChange={() => setChosen(layout.id)}
+            />
             <LayoutPreview variant={variant} layers={drawn} assets={props.assets} />
-            <label className={styles.name}>
-              <input
-                type="radio"
-                name={`${ids}-layout`}
-                value={layout.id}
-                checked={chosen === layout.id}
-                aria-describedby={`${ids}-${layout.id}`}
-                onChange={() => setChosen(layout.id)}
-              />
-              {layout.name}
-            </label>
-            <p id={`${ids}-${layout.id}`} className={styles.muted}>
+            <span id={`${ids}-${layout.id}`} className={styles.hidden}>
               {layout.description}
-            </p>
-          </div>
+            </span>
+          </label>
         ))}
       </div>
-      <p className={styles.muted}>{LOCKED_LINE}</p>
       {updates.length === 0 && <p>{NO_CHANGE_LINE}</p>}
       {refusal !== null && (
         <p role="alert" className={`${layout.notice} ${layout.danger}`}>
@@ -112,7 +130,7 @@ export function LayoutDialog(props: LayoutDialogProps) {
       open={props.open}
       onClose={props.onClose}
       title="Choose a layout"
-      size="wide"
+      kind="pick"
       closable={!sending}
     >
       {props.open && <LayoutBody {...props} sending={sending} setSending={setSending} />}

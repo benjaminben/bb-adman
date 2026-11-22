@@ -36,7 +36,7 @@ async function openChooser(list: ListedAsset[] = PICTURES) {
   const dialog = screen.getByRole('dialog', { name: 'Choose a picture for Hero photo' })
   const first = list[0]
   if (first) await within(dialog).findByText(first.displayName)
-  else await within(dialog).findByText('No pictures in the asset library yet.')
+  else await within(dialog).findByText('No pictures yet')
   return { fake, onChoose, onClose, dialog, setRows: (next: ListedAsset[]) => (rows = next) }
 }
 
@@ -69,7 +69,7 @@ describe('PictureChooser [spec/editor.md "Picture chooser"]', () => {
 
   it('says so when the asset library has no pictures', async () => {
     const { dialog } = await openChooser([])
-    expect(within(dialog).getByText('No pictures in the asset library yet.')).toBeInTheDocument()
+    expect(within(dialog).getByText('No pictures yet')).toBeInTheDocument()
     expect(within(dialog).queryByRole('list', { name: 'Pictures' })).toBeNull()
   })
 
