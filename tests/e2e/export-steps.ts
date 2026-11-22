@@ -85,7 +85,7 @@ export async function reportOf(page: Page, projectId: string, reportId: string) 
     report: {
       exportNumber: number
       proceeded: { reason: string | null } | null
-      warningsExportedPast: Array<{ variantId: string; checkId: string }>
+      warningsExportedPast: Array<{ variantId: string; checkId: string; seenBeforeExport: boolean }>
       variants: Array<{ variantId: string; changedSincePrevious: string | null; file: string }>
     }
   }
