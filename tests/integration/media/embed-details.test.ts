@@ -1,7 +1,8 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
+import type { LogInput } from '@/main/log/activity-log'
 import { createMediaTool } from '@/main/media/embed-details'
 import { ffmetadataText } from '@/main/media/ffmetadata'
 import { mp4File } from '@/main/providers/fake/mp4'
@@ -38,10 +39,10 @@ process.stderr.write(${JSON.stringify(stderr)}, () => process.exit(${exitCode}))
 }
 
 let userData = ''
-let log: { write: ReturnType<typeof vi.fn> }
+let log: { write: Mock<(entry: LogInput) => void> }
 beforeEach(() => {
   userData = fs.mkdtempSync(path.join(dir, 'user-'))
-  log = { write: vi.fn() }
+  log = { write: vi.fn<(entry: LogInput) => void>() }
 })
 
 function runFoldersLeft(): string[] {
@@ -100,6 +101,15 @@ describe.skipIf(process.platform === 'win32')('createMediaTool (P7-4)', () => {
     const bytes = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9])
     expect(await tool.embedDetails({ bytes, details })).toBeNull()
     expect(fs.existsSync(path.join(dir, 'seen'))).toBe(false)
+  })
+
+  it('removes left-over run folders when it is made, before its first run', async () => {
+    const left = path.join(userData, 'media-temp', 'run-01JD0000000000000000000000')
+    fs.mkdirSync(left, { recursive: true })
+    const out = prepared('again.mp4', mp4File(facts))
+    const tool = createMediaTool({ binary: copyingStandIn(out), userData, log })
+    expect(await tool.embedDetails({ bytes: input, details })).not.toBeNull()
+    expect(runFoldersLeft()).toEqual([])
   })
 
   it('is not available, and writes nothing, without a binary', async () => {

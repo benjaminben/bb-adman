@@ -2,17 +2,17 @@
 // details", A-179): writes a generated clip's details into its global `comment` by stream copy.
 // The output must pass checkMp4 with the same width, height, duration and sound as the input,
 // else null and the caller keeps the original. Every run uses a fresh run folder that is removed
-// afterwards on every path. A warn line names a fixed reason only: never standard error, a path
+// afterwards on every path; making the tool sweeps left-over ones. A warn line names a fixed reason only: never standard error, a path
 // or the details.
 import fs from 'node:fs/promises'
-import type { ActivityLog } from '../log/activity-log'
-import { MAX_VIDEO_BYTES } from '../providers/picture-limits'
-import { checkMp4, type Mp4Details } from '../providers/video-check'
+import type { ActivityLog } from '@/main/log/activity-log'
+import { MAX_VIDEO_BYTES } from '@/main/providers/picture-limits'
+import { checkMp4, type Mp4Details } from '@/main/providers/video-check'
 import { embedArgs, embedPaths } from './embed-args'
 import { ffmetadataText } from './ffmetadata'
 import { binaryUsableNow } from './ffmpeg-path'
 import { createFfmpegRunner } from './run-ffmpeg'
-import { makeRunFolder, removeRunFolder, writeRunFile } from './run-folder'
+import { makeRunFolder, removeRunFolder, sweepRunFolders, writeRunFile } from './run-folder'
 import type { MediaTool } from './types'
 
 type Reason =
@@ -52,6 +52,9 @@ export function createMediaTool(opts: {
   log: Pick<ActivityLog, 'write'>
 }): MediaTool {
   const runner = createFfmpegRunner({ binary: opts.binary })
+  // The start-up sweep of left-over run folders; the first run waits for it, so it never
+  // removes a folder in use.
+  const swept = sweepRunFolders(opts.userData).catch(() => undefined)
 
   const skip = (reason: Reason): null => {
     opts.log.write({
@@ -81,6 +84,7 @@ export function createMediaTool(opts: {
       if (!binaryUsableNow(opts.binary)) return skip('ffmpeg_missing')
       const before = factsOf(bytes)
       if (!before) return skip('input_not_mp4')
+      await swept
       let folder: string | null = null
       try {
         folder = await makeRunFolder(opts.userData)
