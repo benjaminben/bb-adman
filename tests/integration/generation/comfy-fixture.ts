@@ -21,6 +21,8 @@ type FixtureOptions = {
   origin?: string
   // [1.60] CU-6b: a stand-in for the picture fitter of CU-6b-F.
   fitPicture?: CoreOptions['fitPicture']
+  // P10-3: a stand-in for the render window's draw.
+  drawScene?: CoreOptions['drawScene']
   // S2-4: the model labels saved in settings.licenceConfirmed. By default every model that
   // needs a commercial licence, so tests of other rules are not refused by that check.
   licenceConfirmed?: string[]
@@ -47,6 +49,7 @@ export async function makeComfyFixture(opts: FixtureOptions) {
       return greyPng(width, height)
     },
     ...(opts.fitPicture && { fitPicture: opts.fitPicture }),
+    ...(opts.drawScene && { drawScene: opts.drawScene }),
   })
   const as = (actor: Actor) => (name: string, input: Record<string, unknown>) =>
     core.bus.execute(name, { projectId, ...input }, { actor })

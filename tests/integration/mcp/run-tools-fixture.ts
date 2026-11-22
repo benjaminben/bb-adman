@@ -6,6 +6,7 @@ import { waitFor } from '../generation/generation-fixture'
 import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
 import { finishRun, serveNeeds } from '../../helpers/comfy-run'
 import { data } from '../core-fixture'
+import { greyPng } from '@/main/providers/fake/png'
 import { freePort } from './http-client'
 import { replyJson, toolSession, type ToolReply, type ToolSession } from './tool-client'
 import type { Size } from '@/shared/comfy/fit-size'
@@ -35,6 +36,8 @@ export async function runSetUp(
   const f = await makeComfyFixture({
     devTools: true,
     origin: stand.origin,
+    // P10-3: render_variant draws through this stand-in, a grey PNG.
+    drawScene: async () => ({ png: greyPng(4, 4), overflow: {} }),
     ...(opts.fitPicture && { fitPicture: opts.fitPicture }),
   })
   if (opts.ticked !== false) {

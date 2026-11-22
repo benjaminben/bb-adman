@@ -83,6 +83,7 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
         { project_id: p, job_id: 'x' },
       ],
     ],
+    ['render_variant', { project_id: p, variant_id: 'v1' }, [{ project_id: p, variant_id: 'x' }]],
   ]
   return table.flatMap(([tool, good, bad]) => [
     { tool, args: good, ok: true },
