@@ -1,7 +1,8 @@
 /* app-style */
-/* The copy options dialog (spec/app-style.md, "AI panels and the run dialog"): each option a
-   selectable card with its copy in the reading face; the busy line centred with the spinner.
-   Close and "Make new options…" are in the frame's foot band. */
+/* The copy options dialog (spec/app-style.md, "AI panels and the run dialog"; DLG-4b): each
+   option a tile with its copy in the reading face, the chosen one ringed in the accent; the
+   busy line centred with the spinner. "New options", Close and Use are in the foot band; the
+   inline run setup draws its own foot at the end of the body. */
 .body {
   display: flex;
   flex-direction: column;
@@ -9,6 +10,20 @@
 }
 .body p {
   margin: 0;
+}
+.group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .options {
   display: flex;
@@ -19,28 +34,44 @@
   list-style: none;
 }
 .option {
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-  justify-content: space-between;
+  position: relative;
+}
+.radio {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+}
+.tile {
+  display: block;
   padding: var(--space-3) var(--space-4);
-  border: var(--border-width) solid var(--color-line);
+  border: var(--border-width) solid var(--color-control-border);
   border-radius: var(--radius-md);
   background: var(--color-bg);
+  cursor: pointer;
+}
+.tile:hover {
+  border-color: var(--color-border);
   box-shadow: var(--shadow-1);
 }
-.option:hover,
-.option:focus-within {
-  border-color: var(--color-border);
-  box-shadow: var(--shadow-2);
+.radio:checked + .tile {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--color-accent);
+}
+.radio:focus-visible + .tile {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
 }
 .text {
   min-width: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.option button {
-  flex: none;
+.newOptions {
+  margin-right: auto;
+}
+.setup:focus {
+  outline: none;
 }
 .running {
   display: flex;
@@ -57,7 +88,4 @@
   flex-direction: column;
   gap: var(--space-2);
   align-items: flex-start;
-}
-.muted {
-  color: var(--color-text-muted);
 }
