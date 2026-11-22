@@ -2,7 +2,9 @@
 // 1.60 CU-6b). Checks the provider and the variant, calls the key guard, then makes the start
 // checks: the start pair, the ComfyUI checks for that pair, and each picture. Then it enqueues
 // one video_generation job with the variant's and its campaign's IDs and returns its ID at
-// once. run checks the variant again inside the transaction (SPEC 3.6).
+// once. run checks the variant again inside the transaction (SPEC 3.6). R2E-7 (D5): a user's
+// layerId must name the variant's background layer; it is stored on the job, so the clip takes
+// the place of the background's still. An agent's layerId is ignored: its runs have no layer.
 import { defineCommand, type ProjectContext } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectHandle } from '@/main/db/project-file'
@@ -20,6 +22,19 @@ import { AppError } from '@/shared/schemas/result'
 
 type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets'>
 type Target = { campaignId: string; width: number; height: number }
+
+// The layer the clip replaces: the user's, never an agent's.
+const layerOf = (ctx: { actor: string }, input: GenerationStartVideoInput) =>
+  ctx.actor === 'agent' ? null : (input.layerId ?? null)
+
+function checkLayer(project: ProjectHandle, variantId: string, layerId: string | null): void {
+  if (layerId === null) return
+  type Layer = { variantId: string; type: string }
+  const layer = readWireRow(project.db, 'layer', { id: layerId }) as Layer | null
+  if (layer?.variantId !== variantId || layer.type !== 'background') {
+    throw new AppError('INVALID_INPUT', 'Videos are made on the background layer.')
+  }
+}
 
 // SPEC 4.1 "Choosing a code": a provider chosen for a job it does not do is INVALID_INPUT.
 function videoProvider(deps: Deps, id: string): ProviderInfo {
@@ -45,6 +60,8 @@ function target(project: ProjectHandle, variantId: string): Target {
 function enqueue(deps: Deps, ctx: ProjectContext, input: GenerationStartVideoInput) {
   const provider = videoProvider(deps, input.provider)
   const place = target(ctx.project, input.variantId)
+  const layerId = layerOf(ctx, input)
+  checkLayer(ctx.project, input.variantId, layerId)
   // [1.60] The stored request keeps the start and the picture IDs prepare checked.
   const request: VideoJobRequest = {
     prompt: promptToSend(input.prompt, { pictures: input.referenceAssetIds.length }),
@@ -58,7 +75,7 @@ function enqueue(deps: Deps, ctx: ProjectContext, input: GenerationStartVideoInp
     kind: 'video_generation',
     campaignId: place.campaignId,
     variantId: input.variantId,
-    layerId: null,
+    layerId,
     slot: null,
     provider: provider.id,
     model: provider.defaultModels.video ?? '',
@@ -76,6 +93,7 @@ export function generationStartVideo(deps: Deps) {
     async prepare(ctx, input) {
       const provider = videoProvider(deps, input.provider)
       target(ctx.project, input.variantId)
+      checkLayer(ctx.project, input.variantId, layerOf(ctx, input))
       requireProviderKeys(deps, provider.id, 'make videos')
       await checkVideoStart(deps, ctx, provider.id, input)
     },

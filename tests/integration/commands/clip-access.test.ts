@@ -45,6 +45,11 @@ const COMMANDS: Array<{ name: string; internal: boolean; input: (v: string) => o
   { name: 'clip.reorder', internal: false, input: (v) => ({ variantId: v, clipIds: ['K1'] }) },
   { name: 'clip.restore', internal: true, input: (v) => ({ rows: [row(v)] }) },
   { name: 'clip.addGenerated', internal: true, input: (v) => ({ variantId: v, assetId: 'A1' }) },
+  {
+    name: 'clip.swap',
+    internal: true,
+    input: (v) => ({ variantId: v, remove: ['K0'], put: [row(v)] }),
+  },
 ]
 
 describe('clip command access [P7-9]', () => {
@@ -82,7 +87,7 @@ describe('clip command access [P7-9]', () => {
     )
     const command = handlers.get(IPC.command)
     const internal = COMMANDS.filter((c) => c.internal)
-    expect(internal.map((c) => c.name)).toEqual(['clip.restore', 'clip.addGenerated'])
+    expect(internal.map((c) => c.name)).toEqual(['clip.restore', 'clip.addGenerated', 'clip.swap'])
     for (const c of internal) {
       expect(
         await command?.({}, c.name, { projectId: ids.projectId, ...c.input(ids.variantId) }),

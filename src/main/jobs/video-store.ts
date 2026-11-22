@@ -4,12 +4,15 @@
 // again with the same facts, else the provider's clip is kept (`details: 'pending'`, not a job
 // failure). The file is stored with its facts on the asset row, then clip.addGenerated puts it
 // on the job's variant at the first free position. A variant that is gone gives clipId null.
+// R2E-7 (round-2-editor.md D5): a job with a layer asks for the background's still to be
+// replaced, and the result says whether it was.
 // No path, standard error text or provider's words reach the row, a log line or an event.
 import type { JobRunContext } from '@/main/jobs/types'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { storeResult } from '@/main/jobs/store-result'
 import { ProviderCancelled, ProviderFailure, type VideoResult } from '@/main/providers/types'
 import { checkMp4, type Mp4Details } from '@/main/providers/video-check'
+import type { ClipAddGeneratedReply } from '@/shared/schemas/commands/clip'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import type { VideoJobResult } from '@/shared/schemas/jobs/video-generation'
 
@@ -89,16 +92,18 @@ async function embedded(run: Stored, result: VideoResult, facts: Mp4Details) {
   return after && sameFacts(facts, after) ? out : skipped('output_differs')
 }
 
-async function placed(run: Stored, assetId: string): Promise<string | null> {
+async function placed(run: Stored, assetId: string): Promise<ClipAddGeneratedReply> {
   const { jc, job } = run
-  if (!job.variantId) return null
-  const input = { projectId: jc.projectId, variantId: job.variantId, assetId }
+  const none: ClipAddGeneratedReply = { clipId: null }
+  if (!job.variantId) return none
+  const replaceStill = job.layerId !== null
+  const input = { projectId: jc.projectId, variantId: job.variantId, assetId, replaceStill }
   const added = await jc.system('clip.addGenerated', input)
   if (!added.ok) {
     warn(run, 'clip.addGenerated', 'clip_not_added', 'A generated clip was not put on the track.')
-    return null
+    return none
   }
-  return (added.data as { clipId: string | null }).clipId
+  return added.data as ClipAddGeneratedReply
 }
 
 export async function storeVideo(run: Stored, result: VideoResult): Promise<VideoJobResult> {
@@ -120,6 +125,7 @@ export async function storeVideo(run: Stored, result: VideoResult): Promise<Vide
     video: { width, height, durationMs },
   }
   const assetId = await storeResult(jc, project, file)
-  const clipId = await placed(run, assetId)
-  return { assetId, ...facts, details: written ? 'embedded' : 'pending', clipId }
+  const { clipId, replacedStill } = await placed(run, assetId)
+  const details = written ? 'embedded' : 'pending'
+  return { assetId, ...facts, details, clipId, replacedStill: replacedStill === true }
 }
