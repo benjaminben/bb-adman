@@ -1,0 +1,86 @@
+/* app-style */
+/* One file of the Assets panel, in the look of the editor's layer rows: mostly picture and
+   name, small marks under it. */
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  border-radius: var(--radius);
+}
+.row:hover {
+  background: var(--color-surface-soft);
+}
+.thumb,
+.icon {
+  flex: none;
+  box-sizing: border-box;
+  width: var(--option-thumb);
+  height: var(--option-thumb);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-inner);
+}
+.thumb {
+  object-fit: contain;
+  background: var(--canvas-backdrop);
+}
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+.missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  background: var(--color-warn-bg);
+  color: var(--color-warn-text);
+  font-size: var(--font-size-small);
+  text-align: center;
+}
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.detail {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+.marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.marks:empty {
+  display: none;
+}
+.mark {
+  padding: 0 var(--space-2);
+}
+.subject {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+.subject select {
+  min-height: var(--control-height-small);
+  max-width: 100%;
+  font-size: var(--font-size-small);
+}

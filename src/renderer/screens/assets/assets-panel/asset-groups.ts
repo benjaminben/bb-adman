@@ -10,13 +10,17 @@ export type AssetGroup = {
   empty: string | null
 }
 
-const GROUPS: Array<{ key: string; title: string; kinds: AssetView['kind'][]; empty: string | null }> =
-  [
-    { key: 'pictures', title: 'Pictures', kinds: ['image'], empty: 'No pictures yet.' },
-    { key: 'clips', title: 'Clips', kinds: ['video'], empty: 'No clips yet.' },
-    { key: 'fonts', title: 'Fonts', kinds: ['font'], empty: 'No fonts yet.' },
-    { key: 'other', title: 'Other files', kinds: ['audio', 'text'], empty: null },
-  ]
+const GROUPS: Array<{
+  key: string
+  title: string
+  kinds: AssetView['kind'][]
+  empty: string | null
+}> = [
+  { key: 'pictures', title: 'Pictures', kinds: ['image'], empty: 'No pictures yet.' },
+  { key: 'clips', title: 'Clips', kinds: ['video'], empty: 'No clips yet.' },
+  { key: 'fonts', title: 'Fonts', kinds: ['font'], empty: 'No fonts yet.' },
+  { key: 'other', title: 'Other files', kinds: ['audio', 'text'], empty: null },
+]
 
 function byName(a: AssetView, b: AssetView): number {
   const named = a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' })
