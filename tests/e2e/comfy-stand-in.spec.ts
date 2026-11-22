@@ -216,13 +216,14 @@ test('Make a video: a 2-second clip from a prompt is started, done and has its m
   await screens.clipHasMetadata(page, 15_000)
 })
 
-// SPEC 14 1.60 CU-6b-R N-11 and CU-6b-F N-3: a 96 x 64 picture made here is the first frame.
-// The built app's fitPicture (Electron's nativeImage) crops and scales it, so the one upload
-// is a PNG at the run's size under the app's own name, and the graph names that upload.
+// SPEC 14 1.60 CU-6b-R N-11 and CU-6b-F N-3: a 200 x 199 picture made here is the first frame.
+// R2E-9: the Generate panel lists only pictures of the 1:1 post's shape (within 1%), so it is
+// nearly square. The built app's fitPicture (Electron's nativeImage) crops and scales it, so
+// the one upload is a PNG at the run's size under the app's own name, and the graph names it.
 test('Make a video from a first-frame picture: the upload is a PNG at the run size', async () => {
   await campaignOnStandIn(true)
   const file = path.join(box.root, 'first-frame.png')
-  fs.writeFileSync(file, greyPng(96, 64))
+  fs.writeFileSync(file, greyPng(200, 199))
   await screens.startFromAddedPicture(app, page, video.FIRST_FRAME_START, file)
   await screens.startVideo(page, 2)
   await screens.confirmLicence(page)
@@ -234,7 +235,7 @@ test('Make a video from a first-frame picture: the upload is a PNG at the run si
   expect(pictureType(frame.bytes)).toBe('image/png')
   const graph = lastGraph(stand)
   const size = runSize(graph)
-  expect(size.width / size.height).not.toBe(96 / 64)
+  expect(size.width / size.height).not.toBe(200 / 199)
   expect(pngSize(frame.bytes)).toEqual(size)
   expect(JSON.stringify(graph['15'])).toContain(frame.name)
   finishWithVideo(stand, id, H3_TEXT_OUTPUT)

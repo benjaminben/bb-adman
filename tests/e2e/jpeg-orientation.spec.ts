@@ -37,18 +37,17 @@ test.afterEach(async () => {
   }
 })
 
-// Stored 96 wide and 64 tall: the left half white, the right half black. Shown by tag 6, it
-// is 64 wide and 96 tall with the white half on top.
-async function sidewaysJpeg(): Promise<Buffer> {
-  const base64 = await app.evaluate(({ nativeImage }) => {
-    const [width, height] = [96, 64]
+// Stored `width` wide and `height` tall (96 by 64 unless given): the left half white, the right
+// half black. Shown by tag 6, it is turned a quarter, with the white half on top.
+async function sidewaysJpeg(size: [number, number] = [96, 64]): Promise<Buffer> {
+  const base64 = await app.evaluate(({ nativeImage }, [width, height]) => {
     const data = Buffer.alloc(width * height * 4)
     for (let i = 0; i < width * height; i++) {
       const shade = i % width < width / 2 ? 255 : 0
       data.set([shade, shade, shade, 255], i * 4)
     }
     return nativeImage.createFromBitmap(data, { width, height }).toJPEG(95).toString('base64')
-  })
+  }, size)
   const jpeg = Buffer.from(base64, 'base64')
   const tiff = [0x4d, 0x4d, 0, 42, 0, 0, 0, 8, 0, 1, 0x01, 0x12, 0, 3, 0, 0, 0, 1, 0, 6, 0, 0]
   const body = [0x45, 0x78, 0x69, 0x66, 0, 0, ...tiff, 0, 0, 0, 0]
@@ -70,7 +69,7 @@ async function onlyUpload(): Promise<Bitmap> {
 
 // Starts a video from the sideways JPEG and waits for the run to be sent. Gives the bytes
 // written, so the test can see the user's file is unchanged.
-async function videoFrom(start: string): Promise<Buffer> {
+async function videoFrom(start: string, size?: [number, number]): Promise<Buffer> {
   const comfy = await screens.openSettings(page)
   await screens.saveAddress(comfy, stand.origin)
   await screens.createProject(page, 'Stand-in')
@@ -83,7 +82,7 @@ async function videoFrom(start: string): Promise<Buffer> {
   await screens.setPrompt(page, screens.E2E_PROMPT)
   await screens.setCount(page, 1)
   const file = path.join(box.root, 'phone-photo.jpg')
-  const bytes = await sidewaysJpeg()
+  const bytes = await sidewaysJpeg(size)
   fs.writeFileSync(file, bytes)
   await screens.startFromAddedPicture(app, page, start, file)
   await screens.startVideo(page, 2)
@@ -106,8 +105,10 @@ test('A sideways JPEG reference is sent upright, its width and height swapped', 
   }
 })
 
+// R2E-9: the Generate panel lists only first frames of the 1:1 post's shape, so this JPEG is
+// square; turned the wrong way, its white half would be on the left, not on top.
 test('A sideways JPEG first frame is turned before it is cropped to the run', async () => {
-  await videoFrom(video.FIRST_FRAME_START)
+  await videoFrom(video.FIRST_FRAME_START, [96, 96])
   const sent = await onlyUpload()
   const size = runSize(lastGraph(stand))
   expect([sent.width, sent.height]).toEqual([size.width, size.height])

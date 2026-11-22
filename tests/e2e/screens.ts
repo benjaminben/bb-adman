@@ -132,8 +132,9 @@ export const VIDEO_SHAPE_START = 'Another picture of the same shape…'
 export const VIDEO_REFERENCE_START = 'Reference pictures'
 
 const canvas = (page: Page): Locator => page.getByRole('region', { name: /^Canvas, / })
+// includeHidden: the licence dialog hides the page behind it, the run dialog too, from roles.
 export const videoDialog = (page: Page): Locator =>
-  page.getByRole('dialog', { name: 'Make a video' })
+  page.getByRole('dialog', { name: 'Make a video', includeHidden: true })
 
 // The master's tab (opened from the overview unless an editor shows), its background layer
 // selected, and its "Generate" group with "Video" chosen.
@@ -210,7 +211,10 @@ export async function showOverview(page: Page): Promise<void> {
   await expect(tab).toHaveAttribute('aria-selected', 'true')
 }
 
+// A run dialog left open (its licence question cancelled) is cancelled first.
 export async function startVideo(page: Page, seconds: number): Promise<void> {
+  const left = videoDialog(page)
+  if (await left.isVisible()) await left.getByRole('button', { name: 'Cancel' }).click()
   const panel = await videoPanel(page)
   await panel.getByRole('textbox', { name: 'Prompt' }).fill(E2E_VIDEO_PROMPT)
   await panel.getByLabel('Clip length (seconds)').fill(String(seconds))
