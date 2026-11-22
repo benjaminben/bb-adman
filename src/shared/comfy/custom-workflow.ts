@@ -98,7 +98,7 @@ export function isAllowedVideo(v: WorkflowVideo): boolean {
 }
 
 // The mark words of a step title (spec/comfyui-custom.md, "Marks"), in the table's order.
-export const MAX_REFERENCE_MARKS = 8
+// One ref word per picture a run takes (MAX_REFERENCES_PER_RUN, held by a test).
 export const MARK_WORDS = [
   'prompt',
   'seed',

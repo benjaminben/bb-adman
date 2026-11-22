@@ -14,6 +14,16 @@ import {
   workflowIdSchema,
 } from '@/shared/comfy/custom-workflow'
 import { WORKFLOW_IDS } from '@/shared/schemas/queries/comfy'
+import { MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
+import { MARK_WORDS } from '@/shared/comfy/custom-workflow'
+
+describe('the mark words', () => {
+  it('has one ref word per reference picture a run takes, ref1 to refN', () => {
+    const refs = MARK_WORDS.filter((w) => /^ref\d+$/.test(w))
+    expect(refs).toHaveLength(MAX_REFERENCES_PER_RUN)
+    expect(refs).toEqual(refs.map((_, i) => `ref${i + 1}`))
+  })
+})
 
 describe('the custom workflow ID form [D-104]', () => {
   it('accepts custom- plus 12 lowercase hex characters', () => {
