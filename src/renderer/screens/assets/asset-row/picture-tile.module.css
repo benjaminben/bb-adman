@@ -1,0 +1,72 @@
+/* app-style */
+/* A picture of the Assets panel (AST-1): a square thumbnail up to --thumbnail-tile, the name
+   under it in one line, the marks on the corner, the subject choice small under the name. */
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.frame {
+  position: relative;
+  display: flex;
+}
+.picture {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 1;
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-inner);
+  object-fit: contain;
+  background: var(--canvas-backdrop);
+}
+.missing {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  font-size: var(--type-meta-size);
+  text-align: center;
+  color: var(--color-warn-text);
+  background: var(--color-surface-soft);
+}
+.faded {
+  display: inline-flex;
+  opacity: var(--opacity-disabled);
+  color: var(--color-text-secondary);
+}
+/* On their own ground, so an icon keeps its contrast over any picture. */
+.marks {
+  position: absolute;
+  left: var(--space-1);
+  bottom: var(--space-1);
+  display: flex;
+  gap: var(--gap-tight);
+  padding: var(--space-1);
+  border-radius: var(--radius-inner);
+  background: var(--color-bg);
+}
+.name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--type-body-size);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.subject {
+  width: 100%;
+  min-height: var(--control-height-small);
+  font-size: var(--type-meta-size);
+}
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
