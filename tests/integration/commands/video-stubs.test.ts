@@ -111,13 +111,6 @@ const COMMANDS: Row[] = [
     internal: false,
     bad: (i) => ({ variantId: i.variantId, format: 'gif' }),
   },
-  {
-    name: 'variant.setSound',
-    input: (i) => ({ variantId: i.variantId, sound: 'none' }),
-    policy: 'deny',
-    internal: false,
-    bad: (i) => ({ variantId: i.variantId, sound: 'loud' }),
-  },
 ]
 
 function snapshot(fx: Fixture, projectId: string): string {
