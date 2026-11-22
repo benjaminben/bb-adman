@@ -1,0 +1,27 @@
+/* app-style */
+/* The reports list (P8-12): one row per report, its line beside its "Open" button; a long
+   folder path wraps anywhere. */
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--color-line);
+}
+.row > button {
+  flex-shrink: 0;
+}
+.line {
+  min-width: 0;
+  margin: 0;
+  font-size: var(--font-size-control);
+  overflow-wrap: anywhere;
+}
