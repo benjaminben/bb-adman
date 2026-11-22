@@ -4,9 +4,13 @@
 // goes through the run dialog in retry mode, with the count job.retry will ask for (FN-4).
 // Any other paid kind (video) keeps the run row's one-line paid confirm: the run dialog has
 // no video job. A publish is started again from the campaign, never from its row (P9-13).
-import { useState } from 'react'
+// SH-4: Retry is an icon button; the two-step line draws in `lineSlot`, the row's place under
+// its ObjectRow, when the row gives one.
+import { useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useApp } from '@/renderer/app/app-context'
 import { RunDialog, type RunCount, type RunJob } from '@/renderer/dialogs/run-dialog'
+import { Icon } from '@/renderer/ui/icon'
 import { PaidConfirm } from '@/renderer/ui/paid-confirm'
 import { requestCount } from '@/renderer/stores/job-store'
 import layout from '@/renderer/ui/layout.module.css'
@@ -38,11 +42,15 @@ function referenceCount(job: JobRow): number {
   return job.kind === 'image_generation' && Array.isArray(ids) ? ids.length : 0
 }
 
+const inSlot = (line: ReactNode, slot: HTMLElement | null | undefined) =>
+  slot ? createPortal(line, slot) : line
+
 export function RowRetry(props: {
   job: JobRow
   projectId: string
   provider: ProviderInfo | undefined
   providerLabel: string
+  lineSlot?: HTMLElement | null
 }) {
   const { job, projectId } = props
   const command = useApp((s) => s.command)
@@ -74,11 +82,13 @@ export function RowRetry(props: {
       {!(asking && dialogJob === undefined) && (
         <button
           type="button"
-          className={layout.small}
+          className={layout.iconButton}
+          aria-label="Retry"
+          title="Retry"
           disabled={sending}
           onClick={() => (paid ? setAsking(true) : void retryNow())}
         >
-          Retry
+          <Icon name="sync" />
         </button>
       )}
       {asking && dialogJob !== undefined && (
@@ -96,14 +106,17 @@ export function RowRetry(props: {
           onCancel={() => setAsking(false)}
         />
       )}
-      {asking && dialogJob === undefined && (
-        <PaidConfirm
-          count={requestCount(job)}
-          providerLabel={props.providerLabel}
-          onConfirm={() => void retryNow()}
-          onCancel={() => setAsking(false)}
-        />
-      )}
+      {asking &&
+        dialogJob === undefined &&
+        inSlot(
+          <PaidConfirm
+            count={requestCount(job)}
+            providerLabel={props.providerLabel}
+            onConfirm={() => void retryNow()}
+            onCancel={() => setAsking(false)}
+          />,
+          props.lineSlot,
+        )}
     </>
   )
 }

@@ -148,14 +148,14 @@ describe('ActivityRow status and marks [P4-14, FR-218]', () => {
   it('shows the start time, "Started by an agent" and the New mark', async () => {
     const createdAt = new Date(2026, 10, 21, 9, 5).toISOString()
     const { row } = await draw({ status: 'succeeded', startedBy: 'agent', createdAt })
-    expect(within(row).getByText('Started 09:05')).toBeInTheDocument()
+    expect(within(row).getByText('09:05')).toBeInTheDocument()
     expect(within(row).getByText('Started by an agent')).toBeInTheDocument()
-    expect(within(row).getByText('New')).toBeInTheDocument()
+    expect(within(row).getByTitle('New result')).toBeInTheDocument()
   })
 
   it('shows no New mark once looked at', async () => {
     const { row } = await draw({ status: 'succeeded', seenAt: '2026-11-21T00:02:00Z' })
-    expect(within(row).queryByText('New')).toBeNull()
+    expect(within(row).queryByTitle('New result')).toBeNull()
   })
 
   it('shows the failure sentence', async () => {

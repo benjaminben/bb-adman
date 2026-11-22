@@ -1,44 +1,29 @@
 /* app-style */
-/* One activity row as a card (spec/app-style.md, "Activity panel"); a finished, unseen row has
-   a spot colour edge and ring. */
+/* One activity row (SH-4, spec/app-style-parts.md "ObjectRow"): the shared row, then what draws
+   under it: a failure's sentence and the paid two-step line of a Retry. */
 .row {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: var(--border-width) solid var(--color-line);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
+  gap: var(--gap-tight);
 }
-.fresh {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 var(--border-width) var(--color-accent);
-}
-.row p {
-  margin: 0;
-}
-.what {
-  font-weight: var(--weight-bold);
-}
-.muted {
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
-}
-.line {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-}
-.new {
+.below {
   padding: 0 var(--space-2);
 }
-.buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-}
-.buttons:empty {
+.below:empty {
   display: none;
+}
+/* The robot before the place: an agent started the job. */
+.agent {
+  display: inline-flex;
+  margin-right: var(--gap-tight);
+  vertical-align: middle;
+  color: var(--color-text-secondary);
+}
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

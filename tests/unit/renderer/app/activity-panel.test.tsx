@@ -104,14 +104,14 @@ describe('ActivityPanel [P4-14, FR-152]', () => {
   it('says to open a project on the start screen', async () => {
     const { fake } = await draw(null)
     await openPanel()
-    expect(screen.getByText('Open a project to see its activity.')).toBeInTheDocument()
+    expect(screen.getByText('No project open')).toBeInTheDocument()
     expect(fake.queries.some((q) => q.name === 'job.activity')).toBe(false)
   })
 
   it('says when nothing has run', async () => {
     await draw('P1', [])
     await openPanel()
-    expect(await screen.findByText('Nothing has run in this project yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No runs yet')).toBeInTheDocument()
   })
 
   it('closes with Escape and with Close activity', async () => {
