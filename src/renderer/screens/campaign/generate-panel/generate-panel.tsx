@@ -3,8 +3,10 @@
 // providers come from app.getState, so a second picture provider shows here with no change.
 // SPEC 14 1.46 TP-5: the reference picker sits under the prompt box; the ticked IDs, held by
 // the campaign page, go into referenceAssetIds in tick order.
+// R2E-1 (D1): once variant.get answers, the prompt leaves out the message when the variant's
+// text layers hold words; it is replaced once, and only if the user has not typed.
 import { useEffect, useState } from 'react'
-import type { Dispatch, SetStateAction } from 'react'
+import type { ChangeEvent, Dispatch, SetStateAction } from 'react'
 import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'
 import { prefilledPrompt } from '@/shared/generation/prompt'
@@ -16,6 +18,7 @@ import { ReferencePicker } from '@/renderer/ui/reference-picker'
 import { ProviderSelect } from '@/renderer/screens/campaign/provider-select'
 import { offeredFor } from '@/renderer/screens/campaign/offered-workflow'
 import { useComfyInfo } from '@/renderer/screens/campaign/use-comfy-info'
+import { useWordsOnLayers } from './use-words-on-layers'
 import layout from '@/renderer/ui/layout.module.css'
 
 function usePictureSlots(projectId: string, campaignId: string): string[] | null {
@@ -35,13 +38,14 @@ function usePictureSlots(projectId: string, campaignId: string): string[] | null
   return slots
 }
 
-function promptFrom(data: CampaignGet): string {
+function promptFrom(data: CampaignGet, wordsOnLayers = false): string {
   const { campaign, subjects } = data
   return prefilledPrompt({
     subjects: subjects.map((s) => ({ name: s.name, description: s.description })),
     audience: campaign.audience,
     region: campaign.region,
     message: campaign.message,
+    wordsOnLayers,
   })
 }
 
@@ -65,6 +69,13 @@ export function GeneratePanel(props: {
   )
   const [slot, setSlot] = useState<string | undefined>(undefined)
   const [prompt, setPrompt] = useState(() => promptFrom(props.data))
+  const words = useWordsOnLayers(props.projectId, props.variantId)
+  // Set by the first typing and by the one replacement, so neither is undone later.
+  const [settled, setSettled] = useState(false)
+  if (words !== null && !settled) {
+    setSettled(true)
+    setPrompt(promptFrom(props.data, words))
+  }
   const startCount = Math.min(
     Math.max(settings?.generation.optionsPerRun ?? 1, 1),
     MAX_IMAGES_PER_RUN,
@@ -89,6 +100,11 @@ export function GeneratePanel(props: {
     } finally {
       setSending(false)
     }
+  }
+
+  function typePrompt(e: ChangeEvent<HTMLTextAreaElement>) {
+    setSettled(true)
+    setPrompt(e.target.value)
   }
 
   function generate() {
@@ -138,7 +154,7 @@ export function GeneratePanel(props: {
       )}
       <label className={layout.field}>
         Prompt
-        <textarea rows={4} value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+        <textarea rows={4} value={prompt} onChange={typePrompt} />
       </label>
       <ReferencePicker
         projectId={props.projectId}
