@@ -21,10 +21,22 @@
   background: var(--color-surface-soft);
 }
 .name {
+  display: inline-flex;
   max-width: var(--width-column-min);
   padding: 0 var(--space-2);
+}
+.title {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* "· {n} open" with two or more open (round-2-platform.md D9): kept whole, the name gives way.
+   The space before it is a text node for the accessible name; a flex row drops it, so the
+   padding draws it. */
+.count {
+  flex: none;
+  padding-left: var(--space-1);
+  color: var(--color-text-secondary);
+  font-weight: var(--weight-regular);
 }
 .caret {
   display: inline-flex;
