@@ -33,7 +33,7 @@ type AssetSpec = {
   bytes?: Uint8Array | null
 }
 
-export const video = (durationMs: number) => mp4File({ width: 640, height: 360, durationMs })
+export const video = (durationMs: number) => mp4File({ width: 640, height: 360, durationMs, sound: false })
 
 export async function makeClipBus() {
   const deps = testDeps({ assets: createAssetService() })

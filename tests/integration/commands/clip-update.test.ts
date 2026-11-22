@@ -62,7 +62,12 @@ describe('clip.update', () => {
 })
 
 describe('clip.update refusals', () => {
-  const refused = async (clipId: string, change: object, code: string, reason?: string) => {
+  const refused = async (
+    clipId: string,
+    change: Record<string, unknown>,
+    code: string,
+    reason?: string,
+  ) => {
     await expectRefused(bus, () => update(clipId, change), code, reason)
     expect(bus.undoState()).toEqual({ canUndo: false, canRedo: false })
   }
