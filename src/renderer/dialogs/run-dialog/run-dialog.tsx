@@ -93,7 +93,11 @@ function RunBody(props: BodyProps) {
   const chosenId = retry?.provider ?? picked ?? startChoice(choices, preferred)
   const chosen = choices.find((c) => c.provider.id === chosenId)
   // A retried run whose provider is not known is treated as paid (spec/screens.md).
-  const provider = chosen?.provider ?? { id: chosenId ?? '', label: chosenId ?? '', local: false }
+  const provider = chosen?.provider ?? {
+    id: chosenId ?? '',
+    label: chosenId || 'an unknown provider',
+    local: false,
+  }
   const n = count === undefined ? null : retry ? count.value : countIn(typed, count)
   const ready = chosenId !== null && (retry !== undefined || chosen?.enabled === true)
   const locked = busy || !settled

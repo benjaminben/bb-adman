@@ -32,6 +32,12 @@ function pictureCount(job: JobRow): RunCount | undefined {
   return { label: 'Pictures', value: left, min: left, max: left }
 }
 
+// The references a picture run sends again, so the cost line names them.
+function referenceCount(job: JobRow): number {
+  const ids = (job.request as { referenceAssetIds?: unknown } | null)?.referenceAssetIds
+  return job.kind === 'image_generation' && Array.isArray(ids) ? ids.length : 0
+}
+
 export function RowRetry(props: {
   job: JobRow
   projectId: string
@@ -83,6 +89,7 @@ export function RowRetry(props: {
           title="Retry the run"
           confirmLabel="Retry"
           count={pictureCount(job)}
+          referenceCount={referenceCount(job)}
           campaignId={job.campaignId ?? undefined}
           retry={{ provider: job.provider ?? '' }}
           onConfirm={confirmInDialog}

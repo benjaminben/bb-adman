@@ -50,7 +50,9 @@ function paidWhat(input: SummaryInput): string {
   }
   const m = input.referenceCount ?? 0
   const refs = m > 0 ? ` + ${plural(m, 'reference')}` : ''
-  return `${plural(input.count ?? 1, 'picture')}${refs}`
+  // No count (a retry whose stored request cannot be read) names no number, never a guess.
+  const pictures = input.count === undefined ? 'pictures' : plural(input.count, 'picture')
+  return `${pictures}${refs}`
 }
 
 export function runCost(input: SummaryInput): RunCost {

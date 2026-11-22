@@ -107,6 +107,16 @@ describe('ActivityRow, the confirm count on Retry [FN-4]', () => {
     expect(dialog.getByText(costLine('Paid: 2 pictures → Google Gemini'))).toBeVisible()
   })
 
+  it('names the references a retried picture run sends again', async () => {
+    const request = { ...(REQUEST as object), referenceAssetIds: ['A1', 'A2', 'A3'] }
+    const { row } = await draw(jobRow('J1', { status: 'failed', request, result: KEPT }))
+    await userEvent.click(row.getByRole('button', { name: 'Retry' }))
+    const dialog = within(await screen.findByRole('dialog', { name: 'Retry the run' }))
+    expect(
+      dialog.getByText(costLine('Paid: 2 pictures + 3 references → Google Gemini')),
+    ).toBeVisible()
+  })
+
   it('a video row counts one request', async () => {
     // A video retry is one paid submit, whatever its stored request says.
     const job = videoRow({
