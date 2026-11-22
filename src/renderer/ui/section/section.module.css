@@ -1,0 +1,83 @@
+/* app-style */
+/* A Section (spec/app-style-parts.md "Section"): no box, no ground, one hairline under it. The
+   fold button stretches over the whole header row; the InfoTip and the summary lie over it. */
+.section {
+  border-bottom: var(--border-width) solid var(--color-line);
+}
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  min-height: var(--section-header-height);
+}
+.heading {
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--type-section-size);
+  font-weight: var(--type-section-weight);
+  line-height: var(--leading-tight);
+  letter-spacing: normal;
+  color: var(--color-text-secondary);
+}
+.toggle {
+  justify-content: flex-start;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+}
+.toggle:hover:not(:disabled) {
+  background: none;
+  color: var(--color-text);
+}
+/* The whole header row is the button's to click. */
+.toggle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  display: inline-flex;
+  color: var(--color-text-muted);
+  transform: translateY(-50%);
+  transition: transform var(--motion-fast);
+}
+.closed {
+  transform: translateY(-50%) rotate(-90deg);
+}
+/* The InfoTip and the summary: on top of the button. Plain words let a click through to it;
+   their own controls take it. */
+.over {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  pointer-events: none;
+}
+.over :is(button, a, input, select, [tabindex]) {
+  pointer-events: auto;
+}
+.summary {
+  margin-left: auto;
+  padding-right: calc(var(--icon-size) + var(--gap-inline));
+  font-size: var(--type-meta-size);
+  color: var(--color-text-secondary);
+}
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-field);
+  padding-bottom: var(--gap-section);
+}
+.body[hidden] {
+  display: none;
+}
