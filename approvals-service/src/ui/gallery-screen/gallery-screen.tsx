@@ -1,6 +1,7 @@
 import type { GalleryView, Signoff, Variant } from '../../visitor/actions'
 import { NOTICES, type NoticeKey } from '../../visitor/notices'
 import { GalleryGrid } from '../gallery-grid/gallery-grid'
+import { GalleryScript } from '../gallery-script/gallery-script'
 import { Notice } from '../notice/notice'
 import { PageShell } from '../page-shell/page-shell'
 import { ReviewerPanel } from '../reviewer-panel/reviewer-panel'
@@ -63,6 +64,7 @@ export function GalleryScreen({ view }: { view: GalleryView }) {
           ))}
         </GalleryGrid>
       )}
+      <GalleryScript />
     </PageShell>
   )
 }
