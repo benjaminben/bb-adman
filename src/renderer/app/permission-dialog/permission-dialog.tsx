@@ -7,6 +7,10 @@
 // Allow cannot be pressed for ALLOW_WAIT_MS after each ask is shown (the body is keyed by
 // requestId, so a new ask waits again); it stays in the tab order with aria-disabled and a
 // described reason. Refuse, Escape and the tick work at once.
+// P10-7b: a fixed line says what allowing costs. It is chosen from the action, which the main
+// process takes from the fixed policy table, so no text an agent writes can choose or change
+// it; it is the last line of the body, above the buttons, and the dialog's description. The
+// client name is labelled "Agent named", so a name such as "Adman" cannot pass for the app.
 import { useEffect, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
@@ -16,6 +20,13 @@ import styles from './permission-dialog.module.css'
 
 const ALLOW_WAIT_MS = 750
 const WAIT_ID = 'permission-allow-wait'
+const COST_ID = 'permission-cost'
+
+const CAMPAIGN_COST = 'This cannot be undone.'
+const COST: Record<string, string> = {
+  'delete variants': 'This cannot be undone. It also clears the undo list of this campaign.',
+  'delete campaigns': CAMPAIGN_COST,
+}
 
 // False until `ms` after the first draw.
 function useReady(ms: number): boolean {
@@ -87,6 +98,7 @@ function AskDialog(props: { ask: Ask; onEnd: () => void }) {
       open
       onClose={close}
       title="An agent asks to delete"
+      describedBy={COST_ID}
       closable={!sending}
       footer={footer}
     >
@@ -94,7 +106,9 @@ function AskDialog(props: { ask: Ask; onEnd: () => void }) {
         {ask.agentClient === null ? (
           'An agent'
         ) : (
-          <span className={styles.client}>{ask.agentClient}</span>
+          <>
+            Agent named <span className={styles.client}>{ask.agentClient}</span>
+          </>
         )}{' '}
         wants to {ask.action}: <span className={styles.target}>{ask.target}</span>.
       </p>
@@ -116,6 +130,9 @@ function AskDialog(props: { ask: Ask; onEnd: () => void }) {
           {refusal}
         </p>
       )}
+      <p id={COST_ID} className={styles.cost}>
+        {COST[ask.action] ?? CAMPAIGN_COST}
+      </p>
     </DialogFrame>
   )
 }

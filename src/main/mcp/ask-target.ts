@@ -46,7 +46,7 @@ function variantLine(db: Database.Database, variantId: string): string | null {
     .get(variantId)
   if (!row) return null
   const name = [row.title, row.sizeLabel, row.language].map(cleanName).join(' · ')
-  return `Variant "${name}" in campaign "${cleanName(row.campaign)}"`
+  return `Variant "${name}" in campaign "${cleanName(row.campaign)}" in "${projectName(db)}"`
 }
 
 function lineFor(db: Database.Database, command: string, input: unknown): string | null {

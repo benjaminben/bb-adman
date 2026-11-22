@@ -4,6 +4,8 @@
 // goes back to the control that opened it, or to the page's heading when that control is gone.
 // ST-4 (spec/app-style.md, "Dialogs"): three bands, head (title, description), body (the
 // content, which scrolls) and foot (`footer`, drawn after the body); `size` picks the width.
+// `describedBy`, used when there is no `description`, names an element in the body that the
+// dialog is described by instead.
 import { useRef, type ReactNode } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import styles from './dialog-frame.module.css'
@@ -15,6 +17,7 @@ export type DialogFrameProps = {
   onClose: () => void
   title: string
   description?: string
+  describedBy?: string
   closable?: boolean
   footer?: ReactNode
   size?: DialogSize
@@ -61,7 +64,7 @@ export function DialogFrame(props: DialogFrameProps) {
         <Dialog.Overlay className={styles.overlay} />
         <Dialog.Content
           className={`${styles.content} ${styles[props.size ?? 'normal']}`}
-          {...(props.description === undefined && { 'aria-describedby': undefined })}
+          {...(props.description === undefined && { 'aria-describedby': props.describedBy })}
           onOpenAutoFocus={onOpenAutoFocus}
           onCloseAutoFocus={onCloseAutoFocus}
           onEscapeKeyDown={stay}
