@@ -36,14 +36,19 @@ export async function settingsTour(app: ElectronApplication, page: Page, box: Sa
   )
 }
 
-// Change location, Create, Close, Open project…, Recent projects, then the project home.
+// Location, Create, Close, Open…, Recent projects, then the project home.
 export async function startTour(app: ElectronApplication, page: Page, box: Sandbox) {
   const other = path.join(box.root, 'other')
   fs.mkdirSync(other)
   await screens.showStart(page)
   await screens.answerOpenDialog(app, [other])
-  await page.getByRole('button', { name: 'Change location' }).click()
-  await expect(page.getByText(other, { exact: true })).toBeVisible()
+  await screens.openNewProject(page)
+  // START-2: the folder shows only in the folder button's name and tooltip.
+  await page.getByRole('button', { name: /^Location: / }).click()
+  await expect(page.getByRole('button', { name: /^Location: / })).toHaveAttribute(
+    'title',
+    `Location: ${other}. Change`,
+  )
   await screens.createProject(page, 'Gamma')
   const file = path.join(other, 'Gamma.adman')
   expect(fs.existsSync(file)).toBe(true)
@@ -52,7 +57,7 @@ export async function startTour(app: ElectronApplication, page: Page, box: Sandb
   await close()
   await expect(page.getByRole('button', { name: 'Gamma', exact: true })).toHaveCount(0)
   await screens.answerOpenDialog(app, [file])
-  await page.getByRole('button', { name: 'Open project…' }).click()
+  await page.getByRole('button', { name: 'Open…' }).click()
   await expect(page.getByRole('heading', { name: 'Gamma', level: 1 })).toBeVisible()
   await close()
   await page.getByRole('button', { name: /^Open Gamma/ }).click()

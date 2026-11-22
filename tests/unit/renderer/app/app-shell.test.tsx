@@ -42,8 +42,11 @@ describe('the shell [FR-003]', () => {
     expect(screen.getByRole('heading', { name: 'Winter' })).toBeInTheDocument()
     await choose('Winter', 'Start screen')
     expect(store.getState().view).toEqual({ kind: 'start' })
-    expect(screen.getByRole('button', { name: 'AdManager 2 projects open' })).toBeInTheDocument()
+    // START-2: the start screen has no switcher; its Recent rows lead back to the open projects.
+    expect(screen.queryByRole('button', { name: 'AdManager 2 projects open' })).toBeNull()
     expect(screen.queryByRole('tablist', { name: 'Open campaigns' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Show Summer, open now' }))
+    expect(store.getState().view).toEqual({ kind: 'project', projectId: 'P1' })
   })
 
   it('switches project by keyboard', async () => {

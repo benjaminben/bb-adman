@@ -13,6 +13,7 @@ import { openSettingsPage } from './settings-pages'
 export { chooseSettingsPage, openSettingsPage } from './settings-pages'
 
 export * from './picture-run'
+export { createProject, openNewProject, showStart } from './start-steps'
 
 export const E2E_BRIEF = path.resolve('tests/fixtures/briefs/e2e-brief.yaml')
 export const E2E_CAMPAIGN = 'Harness Check'
@@ -27,19 +28,6 @@ export async function answerOpenDialog(app: ElectronApplication, paths: string[]
       filePaths: given,
     })) as unknown as typeof dialog.showOpenDialog
   }, paths)
-}
-
-// The start screen, through the project switcher (spec/editor.md, "The shell").
-export async function showStart(page: Page): Promise<void> {
-  await page.locator('header button[aria-haspopup="menu"]').click()
-  await page.getByRole('menuitem', { name: 'Start screen' }).click()
-}
-
-export async function createProject(page: Page, name: string): Promise<void> {
-  await showStart(page)
-  await page.getByLabel('Project name').fill(name)
-  await page.getByRole('button', { name: 'Create project' }).click()
-  await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible()
 }
 
 // Load a brief, see its summary, and create the campaign from it.

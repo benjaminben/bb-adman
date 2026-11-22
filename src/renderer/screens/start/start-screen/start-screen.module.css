@@ -1,20 +1,30 @@
 /* app-style */
-/* The start screen (design/audit/spec-start.md "Layout"): two equal halves under the shell
-   bar, the full height of the content area. The shell's panel pads by --space-6, so the
-   screen steps back out over that padding to reach the edges. */
+/* The start screen (design/audit/spec-start.md "Layout"): two equal halves, the full height of
+   the window, with no shell bar above (START-2, C-6). The shell's panel pads by --space-6, so
+   the screen steps back out over that padding to reach the edges. */
 .start {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  height: calc(100vh - var(--bar-height));
+  height: 100vh;
   margin: calc(var(--space-6) * -1);
 }
 /* The right half: one column, centred both ways, its text left-aligned. */
 .side {
+  position: relative;
   display: grid;
   place-items: center;
   min-width: 0;
   padding: var(--space-6);
   overflow-y: auto;
+}
+/* Activity and Settings, in the right half's top right corner. */
+.corner {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 .column {
   display: flex;

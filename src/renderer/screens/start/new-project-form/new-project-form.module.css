@@ -1,27 +1,32 @@
 /* app-style */
-/* The new project form on the start screen (design/audit/spec-start.md "Right half"): the
-   name field, the location line, then the two large buttons on one row. */
+/* New project on the start screen (START-2): the two large buttons on one row; or, in their
+   place, one row of the name field, the folder button and Create, with a refusal under it. */
+.actions {
+  flex-wrap: wrap;
+}
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
-.location {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-1) var(--space-2);
+.row {
+  display: flex;
   align-items: center;
+  gap: var(--space-2);
 }
-.location > :first-child {
-  grid-column: 1 / -1;
+/* The field stands as tall as the buttons beside it. */
+.name {
+  flex: 1;
+  min-width: 0;
+  height: var(--control-height-large);
 }
-.where {
+/* The folder button is square at the row's height. */
+.folder {
+  flex: none;
+  width: var(--control-height-large);
+  height: var(--control-height-large);
+}
+.refusal {
+  margin: 0;
   font-size: var(--font-size-small);
-}
-.change {
-  align-self: start;
-}
-.actions {
-  flex-wrap: wrap;
-  margin-top: var(--space-2);
 }
