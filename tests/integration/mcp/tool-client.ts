@@ -22,6 +22,7 @@ export const BUILT_TOOLS = [
   'update_layers',
   'delete_layer',
   'reorder_layers',
+  'delete_campaign',
 ]
 
 export type ToolReply = {
