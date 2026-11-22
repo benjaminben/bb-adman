@@ -10,6 +10,8 @@ import { readWireRow, storedJson } from '@/main/db/rows'
 import { campaignNotFound } from './rule-set-values'
 import { refuseRightToLeft } from './create'
 import { AppError } from '@/shared/schemas/result'
+import { labelFitsPixels } from '@/shared/brief/size'
+import { LABEL_MISFIT } from '@/shared/schemas/commands/campaign'
 import {
   campaignUpdateInput,
   type CampaignUpdateInput,
@@ -43,6 +45,8 @@ function checkLists(db: Database.Database, row: CampaignRow, input: CampaignUpda
     if (!masters.every(kept)) {
       throw new AppError('RULE_VIOLATION', 'The size of the master cannot be removed or changed.')
     }
+    // LP-4: after the master rule, so a master's label with other pixels stays RULE_VIOLATION.
+    if (!sizes.every(labelFitsPixels)) throw new AppError('INVALID_INPUT', LABEL_MISFIT)
   }
 }
 

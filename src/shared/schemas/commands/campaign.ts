@@ -8,6 +8,7 @@ import {
   MAX_CAMPAIGN_SIZES,
   MAX_LANGUAGE_CHARS,
 } from '@/shared/config/campaign-limits'
+import { labelFitsPixels } from '@/shared/brief/size'
 
 // SPEC 3.3 CampaignSize and SPEC 6.1 campaign.create inputs. Frozen contract
 // (SPEC 14, Phase 2 step 0). Slice C adds its other campaign schemas beside this file.
@@ -34,15 +35,20 @@ export type RuleSetValues = z.infer<typeof RuleSetValues>
 
 export const SubjectMapEntry = z.object({ subjectId: z.string().min(1), create: z.boolean() })
 
+// campaign.update takes this list and checks each label after its master-size rule (LP-4).
+export const CampaignSizes = z
+  .array(CampaignSize)
+  .min(1)
+  .max(MAX_CAMPAIGN_SIZES)
+  .refine((s) => new Set(s.map((x) => x.label)).size === s.length, 'Size labels must differ.')
+
+export const LABEL_MISFIT = 'Each size label must match its pixels.'
+
 const campaignCreateFields = projectScoped.extend({
   brief: Brief,
   subjectMap: z.array(SubjectMapEntry),
   languages: z.array(z.string().min(1).max(MAX_LANGUAGE_CHARS)).min(1).max(MAX_CAMPAIGN_LANGUAGES),
-  sizes: z
-    .array(CampaignSize)
-    .min(1)
-    .max(MAX_CAMPAIGN_SIZES)
-    .refine((s) => new Set(s.map((x) => x.label)).size === s.length, 'Size labels must differ.'),
+  sizes: CampaignSizes.refine((s) => s.every(labelFitsPixels), LABEL_MISFIT),
   ruleSet: RuleSetValues.optional(),
   copyRuleSetFrom: z.string().min(1).optional(),
   templateId: z.string().min(1),

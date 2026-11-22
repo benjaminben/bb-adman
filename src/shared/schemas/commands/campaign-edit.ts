@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { campaignCreateInput } from './campaign'
+import { CampaignSizes, campaignCreateInput } from './campaign'
 import { projectScoped } from './project-scoped'
 
 // SPEC 4.2 campaign.update and campaign.delete. Beside the frozen campaign.ts (SPEC 14
@@ -8,7 +8,8 @@ import { projectScoped } from './project-scoped'
 const filled = z.string().trim().min(1)
 const optionalText = z.string().nullable().optional()
 
-// [1.42] languages and sizes take the campaign.create schemas. An unknown key is refused, so
+// [1.42] languages and sizes take the campaign.create schemas (the size labels are checked by
+// the handler, LP-4). An unknown key is refused, so
 // a caller is never told a change was made when it was not.
 export const campaignUpdateInput = projectScoped
   .extend({
@@ -19,7 +20,7 @@ export const campaignUpdateInput = projectScoped
     offer: optionalText,
     callToAction: optionalText,
     languages: campaignCreateInput.shape.languages.optional(),
-    sizes: campaignCreateInput.shape.sizes.optional(),
+    sizes: CampaignSizes.optional(),
   })
   .strict()
 export type CampaignUpdateInput = z.infer<typeof campaignUpdateInput>
