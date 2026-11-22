@@ -22,7 +22,6 @@ const FOLDERS = [
   'run-list',
   'run-row',
   'run-result',
-  'video-panel',
   'video-picture-choice',
   'video-result',
   'provider-select',

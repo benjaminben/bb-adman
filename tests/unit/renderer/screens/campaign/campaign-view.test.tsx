@@ -90,7 +90,7 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
   it('opens a variant in the editor on a double-click, in place of the overview [P3-9, A-47]', async () => {
     const { fake } = await renderWith(view())
     await userEvent.dblClick(await screen.findByRole('button', { name: /^German post/ }))
-    // The "Make a video" card reads its own post too (P7-22), so only V2's reads are counted.
+    // Only V2's reads are counted.
     const readsOfV2 = () =>
       fake.queries
         .filter((q) => q.name === 'variant.get')

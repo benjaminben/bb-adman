@@ -8,18 +8,42 @@ import { GeneratePanel } from '@/renderer/editor/generate-panel'
 import { LicenceDialog } from '@/renderer/dialogs/licence-dialog'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { AssetList } from '@/shared/schemas/queries/asset'
-import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
+import type { ComfyInfo, WorkflowInfo } from '@/shared/schemas/queries/comfy'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { SecretName } from '@/shared/schemas/secrets'
 import { baseState } from '../fake-api'
 import { renderApp } from '../render'
 import { campaignApi, sent } from '../screens/campaign/campaign-fixture'
-import { FAKE_VIDEO } from '../screens/campaign/video-offer-fixture'
-import { COMFY, PAID_VIDEO } from '../screens/campaign/video-fixture'
-import { INFO_ALL } from '../screens/campaign/video-start-fixture'
+import { COMFY, INFO, PAID_VIDEO } from '../screens/campaign/video-fixture'
 import { assetRow, BACKGROUND, P } from './editor-fixture'
 
-export { COMFY, FAKE_VIDEO, INFO_ALL, P }
+export { COMFY, P }
+
+export const FAKE_VIDEO: ProviderInfo = {
+  id: 'fake',
+  label: 'Fake provider',
+  jobs: ['image', 'video'],
+  available: true,
+  secrets: [],
+  defaultModels: {},
+  local: true,
+  cancel: 'stops',
+  serverText: false,
+}
+
+const [FIRST_FRAME, PROMPT_ONLY] = INFO.workflows as [WorkflowInfo, WorkflowInfo]
+const REFERENCE = {
+  ...PROMPT_ONLY,
+  id: 'h3-reference-to-video',
+  videoStart: { firstFrame: false, references: true },
+  video: { fps: 24, maxMs: 10_000, frameStep: 17, frameOffset: 5 },
+} as WorkflowInfo
+
+// ComfyUI's three H3 video workflows. Most: 15 s from a prompt, 30 s from a first frame, 10 s
+// from a reference.
+export const INFO_ALL: ComfyInfo = { ...INFO, workflows: [FIRST_FRAME, PROMPT_ONLY, REFERENCE] }
+// No first-frame workflow listed.
+export const INFO_NO_FRAME: ComfyInfo = { ...INFO, workflows: [PROMPT_ONLY, REFERENCE] }
 export const FAL = PAID_VIDEO.find((p) => p.id === 'fal-seedance') as ProviderInfo
 export const WITH_FAL = [FAKE_VIDEO, FAL]
 export const A1 = assetRow('A1')

@@ -9,13 +9,13 @@ import { generateDrafts } from '@/renderer/stores/generate-drafts'
 import { baseState } from '../fake-api'
 import { ref } from '../screens/campaign/reference-fixture'
 import { CLIP, videoRow } from '../screens/campaign/video-fixture'
-import { INFO_NO_FRAME } from '../screens/campaign/video-start-fixture'
 import { assetRow, BACKGROUND, LOGO, P } from './editor-fixture'
 import {
   A1,
   ALL_VIDEO_STARTS,
   COMFY,
   FAL,
+  INFO_NO_FRAME,
   WITH_FAL,
   chooseStart,
   clipLength,

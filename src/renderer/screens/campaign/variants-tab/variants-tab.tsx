@@ -1,15 +1,14 @@
 // R2C-1 (spec/phases/round-2-campaign.md, design addition 1): the overview's Variants view,
 // moved out of campaign-view.tsx. One grid per direction (P5-14), the line naming the chosen
 // variant (S2-16), the slot view, the picture panel for the chosen variant with the reference
-// ticks the page keeps (SP-7, A-120), the "Make a video" card under it (SPEC 14 1.57 TP-6;
-// another round-2 slice removes it, R-13), and the chosen variant's runs.
+// ticks the page keeps (SP-7, A-120), and the chosen variant's runs. Videos are made in the
+// editor's Generate panel (R2E-9, R-13).
 // R2C-3 (design addition 3): first the muted hint line; onChoose selects a tile, onOpen opens it.
 import type { Dispatch, ReactNode, SetStateAction } from 'react'
 import { DirectionGrids } from '@/renderer/screens/campaign/direction-grids'
 import { GeneratePanel } from '@/renderer/screens/campaign/generate-panel'
 import { RunList } from '@/renderer/screens/campaign/run-list'
 import { SlotView } from '@/renderer/screens/campaign/slot-view'
-import { VideoPanel } from '@/renderer/screens/campaign/video-panel'
 import type { JobStore } from '@/renderer/stores/job-store'
 import { ReferenceRowsContext } from '@/renderer/ui/reference-picker/use-picture-list'
 import type { AssetList } from '@/shared/schemas/queries/asset'
@@ -67,15 +66,6 @@ export function VariantsTab(props: VariantsTabProps) {
             onStarted={(reply) => store.getState().track(reply)}
           />
         </ReferenceRowsContext.Provider>
-      )}
-      {variant && (
-        <VideoPanel
-          key={`video-${variant.id}`}
-          projectId={projectId}
-          variantId={variant.id}
-          subjectId={variant.subjectIds[0]}
-          onStarted={(reply) => store.getState().track(reply)}
-        />
       )}
       <RunList projectId={projectId} store={store} />
     </div>
