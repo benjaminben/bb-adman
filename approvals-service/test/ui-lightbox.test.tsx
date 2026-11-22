@@ -75,7 +75,9 @@ describe('pictureSize [round-2 "The page: layout"]', () => {
 
 describe('the card parts [round-2 "The cards"]', () => {
   it('signs one variant through the reviewer form, named for its title', () => {
-    const markup = html(<CardSignoff variantKey={KEY} version={3} title="Blue circle, square" />)
+    const markup = html(
+      <CardSignoff slug={SLUG} variantKey={KEY} version={3} title="Blue circle, square" />,
+    )
     expect(
       hasTag(markup, 'button', [...signButton, 'aria-label="Sign off: Blue circle, square"']),
     ).toBe(true)
@@ -198,7 +200,10 @@ describe('visitor text is drawn only as escaped text [S-13]', () => {
     ['size line', box([], null, variant({ sizeLine: HOSTILE }))],
     ['sign-off email', box([signoff(1, HOSTILE)], null)],
     ['reviewer email', box([], HOSTILE)],
-    ['card button title', html(<CardSignoff variantKey={KEY} version={3} title={HOSTILE} />)],
+    [
+      'card button title',
+      html(<CardSignoff slug={SLUG} variantKey={KEY} version={3} title={HOSTILE} />),
+    ],
   ])('escapes a %s', (_name, markup) => {
     expect(markup).not.toContain('<script')
     expect(markup).not.toContain('</style>')

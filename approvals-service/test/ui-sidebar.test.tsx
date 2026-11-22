@@ -145,7 +145,7 @@ describe('the reviewer form [round-2 "The sidebar" 3]', () => {
 
 describe('"Sign off all" [round-2 "Sign off all"]', () => {
   const all = (reviewer: string | null, left: number, live: number) =>
-    html(<SignoffAll reviewer={reviewer} left={left} live={live} />)
+    html(<SignoffAll slug={SLUG} reviewer={reviewer} left={left} live={live} />)
   const opener = (markup: string) => tags(markup, 'button')[0] ?? ''
 
   it('opens the confirmation with a full-width primary button', () => {
