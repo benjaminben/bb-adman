@@ -10,9 +10,9 @@ const REMOTE = {
   available: true,
   secrets: [],
   local: false,
-  cancel: 'none',
+  cancel: 'none' as const,
   serverText: false,
-} as const
+}
 const GEMINI: ProviderInfo = {
   ...REMOTE,
   id: 'gemini',
