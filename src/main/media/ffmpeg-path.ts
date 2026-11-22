@@ -1,5 +1,6 @@
 // Where the app's FFmpeg is (spec/phases/phase-07.md, "How FFmpeg is run"). The path is worked
 // out by the app only: never from a project, a setting, the environment or a PATH lookup.
+import { lstatSync } from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
@@ -22,6 +23,15 @@ export function ffmpegPath(place: FfmpegPlace): string {
 export async function binaryUsable(file: string): Promise<boolean> {
   try {
     return (await fs.lstat(file)).isFile()
+  } catch {
+    return false
+  }
+}
+
+// The same rule, at once, for MediaTool.available().
+export function binaryUsableNow(file: string): boolean {
+  try {
+    return lstatSync(file).isFile()
   } catch {
     return false
   }
