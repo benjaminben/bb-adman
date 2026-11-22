@@ -50,7 +50,6 @@ const STILL_NOT_BUILT = [
   'propose_layout',
   'copy_options',
   'cut_out',
-  'delete_campaign',
   'add_variant',
   'delete_variant',
   'set_translation',

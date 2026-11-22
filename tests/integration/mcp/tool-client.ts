@@ -14,6 +14,7 @@ export const BUILT_TOOLS = [
   'generate_images',
   'generate_video',
   'cancel_job',
+  'delete_campaign',
 ]
 
 export type ToolReply = {

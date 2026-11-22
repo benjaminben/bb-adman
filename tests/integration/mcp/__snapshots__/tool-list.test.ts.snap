@@ -571,5 +571,27 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     },
     "name": "cancel_job",
   },
+  {
+    "description": "Delete a campaign of an open project, with its directions, variants, layers and reports. This cannot be undone. The user is asked in the app every time, and this call waits up to two minutes for the answer. A refusal is final: do not ask again for the same campaign unless the user tells you to.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "campaign_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "campaign_id",
+      ],
+      "type": "object",
+    },
+    "name": "delete_campaign",
+  },
 ]
 `;
