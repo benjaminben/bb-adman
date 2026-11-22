@@ -26,6 +26,9 @@ export const BUILT_TOOLS = [
   'copy_options',
   'cut_out',
   'delete_campaign',
+  'set_translation',
+  'run_checks',
+  'get_check_results',
 ]
 
 export type ToolReply = {
