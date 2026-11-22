@@ -1,6 +1,6 @@
 // The folder inside the Dropbox app folder, saved with storage.setDropboxFolder (P9-6). Outer
 // spaces are trimmed before saving. A refused save shows the command's sentence and keeps the
-// typed text.
+// typed text. The example is the placeholder (SET-4): no hint line.
 import { useState, type FormEvent } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import layout from '@/renderer/ui/layout.module.css'
@@ -18,24 +18,21 @@ export function DropboxFolder(props: { saved: string }) {
     setRefusal(result.ok ? null : result.error.message)
   }
 
-  const describedBy = ['dropbox-folder-hint', refusal === null ? '' : 'dropbox-folder-refusal']
-
   return (
     <form className={styles.form} onSubmit={(e) => void save(e)}>
-      <div className={layout.field}>
-        <label htmlFor="dropbox-folder">Folder in the app folder</label>
+      <div className={`${layout.field} ${layout.inline}`}>
+        <label htmlFor="dropbox-folder">Folder</label>
         <input
           id="dropbox-folder"
           type="text"
           autoComplete="off"
           spellCheck={false}
+          placeholder="App folder"
+          aria-label="Folder in the app folder"
           value={rootPath}
           onChange={(e) => setRootPath(e.target.value)}
-          aria-describedby={describedBy.filter(Boolean).join(' ')}
+          aria-describedby={refusal === null ? undefined : 'dropbox-folder-refusal'}
         />
-        <p id="dropbox-folder-hint" className={styles.hint}>
-          Leave empty to use the app folder itself.
-        </p>
       </div>
       {refusal !== null && <Refusal id="dropbox-folder-refusal">{refusal}</Refusal>}
       <div className={layout.row}>

@@ -36,24 +36,28 @@ async function open(state: AppState) {
   return { fake, box }
 }
 
+// The folder field is in the row's form, which starts closed while signed in.
+const openRow = (box: HTMLElement) =>
+  userEvent.click(within(box).getByRole('button', { name: 'Dropbox', expanded: false }))
+
 const sent = (fake: ReturnType<typeof makeFakeApi>, name: string) =>
   fake.commands.filter((c) => c.name === name)
 
 describe('settings: Dropbox, signed out [P9-6]', () => {
-  it('shows the line, "Not signed in." and the sign-in button', async () => {
+  it('shows the line, "Not signed in" and the sign-in button', async () => {
     const { box } = await open(dropboxState(null))
     expect(
       within(box).getByText(
         'Adman keeps published files in its own folder in your Dropbox, under Apps.',
       ),
     ).toBeInTheDocument()
-    expect(within(box).getByText('Not signed in.')).toBeInTheDocument()
+    expect(within(box).getByText('Not signed in')).toBeInTheDocument()
     expect(within(box).getByRole('button', { name: 'Sign in to Dropbox' })).toBeEnabled()
   })
 
   it('a saved name without a saved token is not signed in', async () => {
     const { box } = await open({ ...signedIn('Ann Example'), secrets: [] })
-    expect(within(box).getByText('Not signed in.')).toBeInTheDocument()
+    expect(within(box).getByText('Not signed in')).toBeInTheDocument()
   })
 
   it('sends storage.dropboxSignIn once and waits, the button disabled until the reply', async () => {
@@ -63,14 +67,14 @@ describe('settings: Dropbox, signed out [P9-6]', () => {
     const button = within(box).getByRole('button', { name: 'Sign in to Dropbox' })
     await userEvent.click(button)
     await userEvent.click(button)
-    expect(await within(box).findByText(WAITING)).toBeInTheDocument()
+    expect(await within(box).findByRole('status')).toHaveTextContent(WAITING)
     expect(button).toBeDisabled()
     expect(sent(fake, 'storage.dropboxSignIn')).toEqual([
       { name: 'storage.dropboxSignIn', input: {} },
     ])
     fake.setState(signedIn('Ann Example'))
     answer({ ok: true, data: { accountName: 'Ann Example' } })
-    expect(await within(box).findByText('Signed in as Ann Example.')).toBeInTheDocument()
+    expect(await within(box).findByText('Signed in as Ann Example')).toBeInTheDocument()
     expect(within(box).queryByText(WAITING)).not.toBeInTheDocument()
   })
 
@@ -90,7 +94,7 @@ describe('settings: Dropbox, signed out [P9-6]', () => {
 describe('settings: Dropbox, signed in [P9-6]', () => {
   it('draws the account name as text, tags and all', async () => {
     const { box } = await open(signedIn('<b>Ann</b> Example'))
-    expect(within(box).getByText('Signed in as <b>Ann</b> Example.')).toBeInTheDocument()
+    expect(within(box).getByText('Signed in as <b>Ann</b> Example')).toBeInTheDocument()
     expect(box.querySelector('b')).toBeNull()
   })
 
@@ -104,7 +108,7 @@ describe('settings: Dropbox, signed in [P9-6]', () => {
     expect(sent(fake, 'storage.dropboxSignOut')).toEqual([
       { name: 'storage.dropboxSignOut', input: {} },
     ])
-    expect(await within(box).findByText('Not signed in.')).toBeInTheDocument()
+    expect(await within(box).findByText('Not signed in')).toBeInTheDocument()
   })
 
   it('a refused sign-out shows its sentence and stays signed in', async () => {
@@ -113,14 +117,15 @@ describe('settings: Dropbox, signed in [P9-6]', () => {
     fake.onCommand('storage.dropboxSignOut', () => refusal('secrets_unreadable', text))
     await userEvent.click(within(box).getByRole('button', { name: 'Sign out' }))
     expect(await within(box).findByRole('alert')).toHaveTextContent(text)
-    expect(within(box).getByText('Signed in as Ann Example.')).toBeInTheDocument()
+    expect(within(box).getByText('Signed in as Ann Example')).toBeInTheDocument()
   })
 
   it('the folder field starts with rootPath and "Save folder" sends it', async () => {
     const { fake, box } = await open(signedIn('Ann Example', 'Adman'))
+    await openRow(box)
     const field = within(box).getByLabelText('Folder in the app folder')
     expect(field).toHaveValue('Adman')
-    expect(field).toHaveAccessibleDescription('Leave empty to use the app folder itself.')
+    expect(field).toHaveAttribute('placeholder', 'App folder')
     await userEvent.clear(field)
     await userEvent.type(field, ' Spring ads ')
     await userEvent.click(within(box).getByRole('button', { name: 'Save folder' }))
@@ -135,6 +140,7 @@ describe('settings: Dropbox, signed in [P9-6]', () => {
   ])('a %s refusal shows its sentence and keeps the typed text', async (reason, text) => {
     const { fake, box } = await open(signedIn('Ann Example'))
     fake.onCommand('storage.setDropboxFolder', () => refusal(reason, text))
+    await openRow(box)
     const field = within(box).getByLabelText('Folder in the app folder')
     await userEvent.type(field, 'bad:name')
     await userEvent.click(within(box).getByRole('button', { name: 'Save folder' }))

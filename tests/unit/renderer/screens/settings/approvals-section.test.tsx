@@ -16,8 +16,7 @@ import { makeFakeApi, baseState } from '../../fake-api'
 
 const INTRO =
   "Share a campaign's variants with a password-protected link and see who signed off. The service runs on your own Vercel account."
-const PICTURES =
-  'Pictures for the gallery are kept in your Amazon S3 bucket (Cloud storage, above).'
+const PICTURES = 'Gallery pictures are kept in your Amazon S3 bucket.'
 const KEY_ROW = 'Service API key'
 
 function approvalsState(baseUrl: string | null, secrets: AppState['secrets'] = []): AppState {
@@ -33,6 +32,10 @@ async function section(state: AppState) {
   return { fake, box }
 }
 
+// The address field is in the row's form, which starts closed once an address is saved.
+const openRow = (box: HTMLElement) =>
+  userEvent.click(within(box).getByRole('button', { name: 'Approvals', expanded: false }))
+
 function refusal(code: ErrorCode, message: string, details: Record<string, unknown> = {}) {
   return () => ({ ok: false as const, error: { code, message, details } })
 }
@@ -45,10 +48,11 @@ describe('settings: approvals service [AP-10]', () => {
     expect(titles.indexOf('Approvals service')).toBe(titles.indexOf('Cloud storage') + 1)
   })
 
-  it('shows the two lines the spec gives', async () => {
+  it('shows the two lines the spec gives: the intro in the InfoTip, the pictures line', async () => {
     const { box } = await section(approvalsState(null))
+    await userEvent.click(within(box).getByRole('button', { name: 'About approvals service' }))
     expect(within(box).getByText(INTRO)).toBeInTheDocument()
-    expect(within(box).getByText(PICTURES)).toBeInTheDocument()
+    expect(within(box).getByText(/Gallery pictures are kept in your/)).toHaveTextContent(PICTURES)
   })
 
   it('save sends approvals.setService with the typed address', async () => {
@@ -62,6 +66,7 @@ describe('settings: approvals service [AP-10]', () => {
 
   it('fills the field with the saved address and offers Remove', async () => {
     const { box } = await section(approvalsState('https://kept.example'))
+    await openRow(box)
     expect(within(box).getByLabelText('Service address')).toHaveValue('https://kept.example')
     expect(within(box).getByRole('button', { name: 'Remove' })).toBeInTheDocument()
   })
@@ -86,6 +91,7 @@ describe('settings: approvals service [AP-10]', () => {
 
   it('Remove sends approvals.setService with null', async () => {
     const { fake, box } = await section(approvalsState('https://kept.example'))
+    await openRow(box)
     await userEvent.click(within(box).getByRole('button', { name: 'Remove' }))
     expect(fake.commands).toContainEqual({
       name: 'approvals.setService',
@@ -160,6 +166,7 @@ describe('settings: approvals service [AP-10]', () => {
     const box = await screen.findByRole('region', { name: 'Approvals service' })
     await userEvent.click(within(box).getByRole('button', { name: 'Test connection' }))
     expect(await within(box).findByText('Connected.')).toBeInTheDocument()
+    await openRow(box)
     await userEvent.click(within(box).getByRole('button', { name: 'Remove' }))
     expect(within(box).queryByText('Connected.')).toBeNull()
   })
@@ -171,6 +178,7 @@ describe('settings: approvals service [AP-10]', () => {
     fake.onCommand('approvals.setService', refusal('INVALID_INPUT', APPROVALS_ADDRESS_MESSAGE))
     await renderApp(<SettingsScreen page="publish" />, fake)
     const box = await screen.findByRole('region', { name: 'Approvals service' })
+    await openRow(box)
     await userEvent.click(within(box).getByRole('button', { name: 'Save' }))
     await within(box).findByText(APPROVALS_ADDRESS_MESSAGE)
     expect(await axeViolations(box)).toEqual([])

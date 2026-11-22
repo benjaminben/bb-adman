@@ -60,16 +60,27 @@ describe('settings: cloud storage, Amazon S3 [D-096, A-95]', () => {
   })
 
   it.each([
-    ['nothing saved', null, 'Not set up.'],
-    ['an empty region', { bucket: 'b', region: '', prefix: '' }, 'not set up'],
-    ['a saved region', { bucket: 'b', region: 'us-east-2', prefix: '' }, 'us-east-2'],
+    ['nothing saved', null, 'Not set'],
+    ['an empty region', { bucket: 'b', region: '', prefix: '' }, 'Not set'],
+    ['a saved region', { bucket: 'b', region: 'us-east-2', prefix: '' }, 'b · us-east-2'],
   ])('shows the saved state with %s', async (_, s3, text) => {
     const { box } = await section(s3State(s3))
-    expect(within(box).getByText(text)).toBeInTheDocument()
+    const row = within(box).getByRole('group', { name: 'Amazon S3' })
+    expect(within(row).getByRole('status')).toHaveTextContent(text)
+  })
+
+  it('reads the examples from the placeholders', async () => {
+    const { box } = await section(s3State(null))
+    expect(within(box).getByLabelText('Region')).toHaveAttribute('placeholder', 'eu-west-1')
+    expect(within(box).getByLabelText('Folder in the bucket')).toHaveAttribute(
+      'placeholder',
+      'Whole bucket',
+    )
   })
 
   it('fills the fields with the saved values', async () => {
     const { box } = await section(s3State({ bucket: 'kept', region: 'eu-west-1', prefix: 'p/' }))
+    await userEvent.click(within(box).getByRole('button', { name: 'Amazon S3', expanded: false }))
     expect(within(box).getByLabelText('Bucket')).toHaveValue('kept')
     expect(within(box).getByLabelText('Region')).toHaveValue('eu-west-1')
     expect(within(box).getByLabelText('Folder in the bucket')).toHaveValue('p/')
@@ -98,7 +109,8 @@ describe('settings: cloud storage, Amazon S3 [D-096, A-95]', () => {
 
   it('states the permissions the keys need', async () => {
     const { box } = await section(s3State(null))
-    expect(within(box).getByText(PERMISSIONS)).toBeInTheDocument()
+    await userEvent.click(within(box).getByRole('button', { name: 'About Amazon S3' }))
+    expect(within(box).getByText(new RegExp(PERMISSIONS))).toBeInTheDocument()
   })
 
   it.each([
