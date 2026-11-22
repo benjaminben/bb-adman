@@ -52,6 +52,12 @@ export function PublishDialog(props: PublishDialogProps) {
     inspect.choose(id)
   }
 
+  // Every read of the folder, of the same storage too, asks for the replace tick anew.
+  function readAgain() {
+    setReplaceTicked(false)
+    inspect.again()
+  }
+
   async function publish() {
     if (!canPublish || storage === null) return
     setSending(true)
@@ -104,7 +110,7 @@ export function PublishDialog(props: PublishDialogProps) {
           {inspect.failure !== null && (
             <div role="alert" className={`${layout.notice} ${layout.danger}`}>
               {inspect.failure}
-              <button type="button" onClick={inspect.again}>
+              <button type="button" onClick={readAgain}>
                 Retry
               </button>
             </div>
@@ -137,7 +143,7 @@ export function PublishDialog(props: PublishDialogProps) {
                   projectId={projectId}
                   fonts={fonts}
                   disabled={sending}
-                  onChanged={inspect.again}
+                  onChanged={readAgain}
                 />
               )}
               <p className={styles.line}>{ALSO_LINE}</p>

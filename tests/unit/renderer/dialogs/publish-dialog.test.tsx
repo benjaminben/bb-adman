@@ -9,7 +9,14 @@ import type { PublishInspect } from '@/shared/schemas/queries/publish'
 import type { Result } from '@/shared/schemas/result'
 import { makeFakeApi } from '../fake-api'
 import { axeViolations, renderApp } from '../render'
-import { NOTHING_PUBLISHED, PUBLISHED, STORAGES, inspectReply } from './publish-fixture'
+import {
+  COMPONENTS,
+  NOTHING_PUBLISHED,
+  PUBLISHED,
+  STORAGES,
+  font,
+  inspectReply,
+} from './publish-fixture'
 
 const PROMPT_LINE =
   'Generated images and videos carry the prompt that made them. Anyone with these files can read it.'
@@ -214,9 +221,10 @@ describe('the publish dialog [P9-12]', () => {
   it("never lets one storage's answer or tick stand for another", async () => {
     const storages = STORAGES.map((s) => ({ ...s, ready: 'ready' as const }))
     const message = 'Adman could not look at the published folder.'
+    let dropboxFails = true
     const { fake } = await openDialog({
       answer: (input) =>
-        input.storage === 'dropbox'
+        input.storage === 'dropbox' && dropboxFails
           ? { ok: false, error: { code: 'PROVIDER_ERROR', message } }
           : {
               ok: true,
@@ -232,10 +240,55 @@ describe('the publish dialog [P9-12]', () => {
       screen.queryByText('This will replace the files published for this campaign.'),
     ).toBeNull()
     expect(publish()).toBeDisabled()
-    await userEvent.click(screen.getByRole('radio', { name: 'Amazon S3' }))
+    dropboxFails = false
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
     await screen.findByText('This will replace the files published for this campaign.')
+    expect(screen.getByRole('radio', { name: 'Dropbox' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Replace the published files' })).not.toBeChecked()
     expect(publish()).toBeDisabled()
     expect(runs(fake)).toEqual([])
+  })
+})
+
+describe('the replace tick and the folder listing never outlive a read [P9-12 review]', () => {
+  const REPLACE = 'This will replace the files published for this campaign.'
+  const withFont = (existing: PublishInspect['existing']) =>
+    inspectReply({ existing, components: [...COMPONENTS, font({ share: 'needs_confirming' })] })
+
+  // S3 chosen with files there, the replace box ticked; then a font tick reads the folder again.
+  async function tickThenReadAgain(next: () => Result<unknown>) {
+    let reads = 0
+    await openDialog({
+      answer: (input) => {
+        if (input.storage === null) return { ok: true, data: withFont(null) }
+        reads += 1
+        return reads === 1 ? { ok: true, data: withFont(PUBLISHED) } : next()
+      },
+    })
+    await screen.findByRole('radio', { name: 'Amazon S3' })
+    await chooseS3()
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Replace the published files' }))
+    expect(publish()).toBeEnabled()
+    await userEvent.click(screen.getByRole('checkbox', { name: 'I am allowed to share this font' }))
+  }
+
+  it('clears the replace tick when the same storage is read again', async () => {
+    await tickThenReadAgain(() => ({ ok: true, data: withFont(PUBLISHED) }))
+    await waitFor(() =>
+      expect(
+        screen.getByRole('checkbox', { name: 'Replace the published files' }),
+      ).not.toBeChecked(),
+    )
+    expect(screen.getByText(REPLACE)).toBeInTheDocument()
+    expect(publish()).toBeDisabled()
+  })
+
+  it('clears the earlier answer when a read fails, so no replace block or Publish beside the error', async () => {
+    const message = 'Adman could not look at the published folder.'
+    await tickThenReadAgain(() => ({ ok: false, error: { code: 'PROVIDER_ERROR', message } }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(message)
+    expect(screen.queryByText(REPLACE)).toBeNull()
+    expect(screen.queryByRole('checkbox', { name: 'Replace the published files' })).toBeNull()
+    expect(publish()).toBeDisabled()
   })
 })

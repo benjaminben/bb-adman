@@ -1,8 +1,8 @@
 // The publish dialog's reads of publish.inspect (spec/phases/phase-09.md "Publishing"). On open
 // it asks with no storage (the choices and the files only); choosing a storage asks again for
 // what is published there. Only the latest answer counts, and `answeredFor` says which storage
-// it describes, so a reply about one storage never stands for another. A failed read keeps the
-// last answer on screen and gives its sentence; `again` repeats the read (the "Retry" button).
+// it describes, so a reply about one storage never stands for another. A failed read clears the
+// last answer and gives its sentence; `again` repeats the read (the "Retry" button).
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import type { PublishStorageId } from '@/shared/schemas/commands/publish'
@@ -28,8 +28,8 @@ export function usePublishInspect(projectId: string, campaignId: string) {
         .then((reply) => {
           if (asked !== latest.current) return
           setLooking(false)
-          if (reply.ok) setAnswer({ reply: reply.data as PublishInspect, answeredFor: wanted })
-          else setFailure(reply.error.message)
+          setAnswer(reply.ok ? { reply: reply.data as PublishInspect, answeredFor: wanted } : null)
+          setFailure(reply.ok ? null : reply.error.message)
         })
     },
     [api, projectId, campaignId],
