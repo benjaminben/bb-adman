@@ -4,7 +4,7 @@ A running list kept by the orchestrator. Each item is a choice made without the 
 
 ## Choices that change what you see
 
-1. **Start screen pictures.** All ten generated pictures are used as made, except number 3, which was redone so it has one pink sheet, as the art direction asks. Shipped at 1152 × 1440 px as WebP. Swap any of them by replacing the file of the same name.
+1. **Start screen pictures.** A second set, made after your note: one magenta thing among many alike. The ten are a flower among white daisies, marker shapes, raised hands with one set of magenta nails, beach umbrellas, paper planes, pencils, sailboats, balloons, buttons and window shutters. Two more were made and left out (cups on a shelf, chairs on a lawn). In some the magenta is darker than the app's accent colour. The first set (paper shapes) is kept in `design/start-images/first-set/`. Shipped at 1152 × 1440 px as WebP, 1.6 MB in all. Swap any of them by replacing the file of the same name.
 2. **Signing off a video without playing it is allowed.** The gallery asks in words to watch it first and does not lock the button. The other way (button locked until the video has played) needs a script in the page and can be got round. Planned as Q-V7 in `round-2-approvals-video.md`.
 3. **Design audit choices C-1 to C-18** are taken as the auditor recommends (`design/DESIGN-AUDITOR-SPEC.md` section 5), built as their own wave after Round 2. The one that changes a current rule: C-15 folds the separate "Run this generation?" step into the run dialog, with the cost line right above the button. A paid call still starts only after your own click with the cost on screen.
 4. **Grid row heads.** When a size has no name of its own, the row head shows the size once, not twice.
@@ -30,7 +30,7 @@ A running list kept by the orchestrator. Each item is a choice made without the 
 14. **A brief sent by an agent that names a file path** asks you on screen, every time. A brief you paste or load yourself imports with no question.
 15. **An agent importing files:** more than 20 files in one call is refused.
 16. **Markdown briefs** are read by fixed rules (no AI). Edge cases chosen by the builder: a label inside a subject or a Copy section is ignored; an empty `Region:` sets nothing; the first value of a repeated field wins.
-17. **Agent file import, hardening after review.** On Windows an agent may not name a network path (`\\server\share\…`), a device path, or a path with no drive letter; on every system a path with unusual space or line-break characters is refused. Each file is read through one open handle that follows no link, and the finished copy is compared with what was checked. Still not covered: a file whose bytes are swapped before you click Allow (you see only the path).
+17. **Agent file import, hardening after review.** On Windows an agent may not name a network path (`\\server\share\…`) or a device path; on every system a path with unusual space or line-break characters is refused. Each file is read through one open handle that follows no link, and the finished copy is compared with what was checked. Still not covered: a file whose bytes are swapped before you click Allow (you see only the path), and on Windows the no-link open is weaker because the system has no such switch.
 
 ## Hand checks only you can do
 
