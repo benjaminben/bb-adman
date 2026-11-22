@@ -3,9 +3,12 @@
 // its results. failed: RunFailure (the sentence by reason or kind, S2-5), and Retry. cancelled:
 // Cancelled, and Retry. Cancel shows when job.cancel would accept it (cancel-shown.ts). A failed
 // run never shows raw error text: the wire row holds none (SPEC 3.3 [1.9]). A video run
-// (SPEC 14 1.57 TP-6) says "Video" and, while running, the text from video-status.ts.
+// (SPEC 14 1.57 TP-6) says "Video" and, while running, the text from video-status.ts. A done
+// row of a variant has "Choose in the editor" (pictures) or "See it in the editor" (a video),
+// which go to the result through ui/show-result.ts (R2E-6).
 import { useState } from 'react'
-import { EMPTY, useApp } from '@/renderer/app/app-context'
+import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
+import { useNavStore } from '@/renderer/app/nav-context'
 import { picturesLeft } from '@/shared/generation/pictures-left'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import { requestCount, type JobStore } from '@/renderer/stores/job-store'
@@ -14,6 +17,7 @@ import { RunFailure } from '@/renderer/ui/run-failure'
 import { RunResult } from '@/renderer/screens/campaign/run-result'
 import { VideoResult } from '@/renderer/screens/campaign/video-result'
 import { cancelShown } from '@/renderer/ui/cancel-shown'
+import { showResult } from '@/renderer/ui/show-result'
 import { useNow, videoRunningText } from './video-status'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './run-row.module.css'
@@ -49,6 +53,8 @@ const STATUS_TEXT = {
 
 export function RunRow(props: { row: JobRow; projectId: string; store: JobStore }) {
   const { row, projectId, store } = props
+  const api = useApi()
+  const nav = useNavStore()
   const command = useApp((s) => s.command)
   const providers = useApp((s) => s.app?.providers ?? EMPTY)
   const [asking, setAsking] = useState(false)
@@ -91,6 +97,15 @@ export function RunRow(props: { row: JobRow; projectId: string; store: JobStore 
             onClick={() => void command('job.cancel', { projectId, jobId: row.id })}
           >
             Cancel
+          </button>
+        )}
+        {row.status === 'succeeded' && row.variantId !== null && (
+          <button
+            type="button"
+            className={layout.small}
+            onClick={() => void showResult(api, nav, projectId, row)}
+          >
+            {video ? 'See it in the editor' : 'Choose in the editor'}
           </button>
         )}
         {ended && !asking && (
