@@ -41,7 +41,6 @@ const PLAN = [
 const STILL_NOT_BUILT = [
   'list_subjects',
   'get_variant',
-  'render_variant',
   'create_layer',
   'update_layer',
   'update_layers',
