@@ -7,8 +7,31 @@
   gap: var(--space-6);
 }
 
+/* spec/phases/round-2-approvals.md "The page: layout": one column on a narrow window, the
+   sidebar (which draws its own look) beside the main column on a wide one. */
+.frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.column {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+  padding: var(--space-4);
+}
+
 @media (min-width: 48rem) {
-  .shell {
+  .shell,
+  .column {
     padding: var(--space-8);
+  }
+
+  .frame {
+    flex-direction: row;
+    align-items: flex-start;
   }
 }

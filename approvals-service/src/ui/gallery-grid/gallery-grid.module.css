@@ -1,6 +1,15 @@
+/* spec/phases/round-2-approvals.md "Masonry (item 21)": lanes at least --gallery-card-min wide,
+   cards in gallery order across each row. Without grid lanes: a grid whose rows leave gaps
+   under shorter cards. Multi-column CSS is not used, as it orders cards down each column. */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--gallery-card-min), 1fr));
   gap: var(--space-4);
   align-items: start;
+}
+
+@supports (display: grid-lanes) {
+  .grid {
+    display: grid-lanes;
+  }
 }

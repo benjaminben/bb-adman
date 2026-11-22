@@ -1,11 +1,14 @@
 import type { GalleryView, Signoff, Variant } from '../../visitor/actions'
-import { NOTICES } from '../../visitor/notices'
+import { NOTICES, type NoticeKey } from '../../visitor/notices'
 import { GalleryGrid } from '../gallery-grid/gallery-grid'
-import { GalleryHeader } from '../gallery-header/gallery-header'
 import { Notice } from '../notice/notice'
 import { PageShell } from '../page-shell/page-shell'
+import { ReviewerPanel } from '../reviewer-panel/reviewer-panel'
 import { VariantCard } from '../variant-card/variant-card'
 import styles from './gallery-screen.module.css'
+
+// Shown in the sidebar, by the reviewer form; every other gallery notice heads the main column.
+const SIDEBAR_NOTICES: readonly NoticeKey[] = ['bad-email', 'email-saved']
 
 // One variant's sign-offs of its current version, oldest first. The view already holds only
 // those; the version check keeps an older one off the page whatever the view holds.
@@ -14,29 +17,48 @@ const signoffsOf = (signoffs: Signoff[], variant: Variant) =>
     .filter((s) => s.variantKey === variant.variantKey && s.version === variant.version)
     .sort((a, b) => a.createdAt - b.createdAt)
 
-// The gallery drawn from the view alone, one card per variant in gallery order.
+// spec/phases/round-2-approvals.md "The page": the sidebar, then the notice and the cards, drawn
+// from the view alone, one card per variant in gallery order.
 export function GalleryScreen({ view }: { view: GalleryView }) {
   const { slug, campaignName } = view.link
-  const variants = [...view.variants].sort((a, b) => a.position - b.position)
+  const { reviewer, notice } = view
+  const cards = [...view.variants]
+    .sort((a, b) => a.position - b.position)
+    .map((variant) => {
+      const signoffs = signoffsOf(view.signoffs, variant)
+      const mine = reviewer !== null && signoffs.some((s) => s.email === reviewer)
+      return { variant, signoffs, mine }
+    })
+  const live = cards.filter((card) => !card.variant.expired)
+  const side = (
+    <ReviewerPanel
+      slug={slug}
+      campaignName={campaignName}
+      reviewer={reviewer}
+      stamp={view.stamp}
+      notice={notice}
+      left={live.filter((card) => !card.mine).length}
+      live={live.length}
+    />
+  )
   return (
-    <PageShell>
+    <PageShell side={side}>
       <title>{campaignName}</title>
-      <GalleryHeader slug={slug} campaignName={campaignName} />
-      {view.notice === null ? null : (
-        <Notice tone={view.notice === 'bad-email' ? 'error' : 'info'}>
-          {NOTICES[view.notice].text}
-        </Notice>
+      {notice === null || SIDEBAR_NOTICES.includes(notice) ? null : (
+        <Notice tone="info">{NOTICES[notice].text}</Notice>
       )}
-      {variants.length === 0 ? (
+      {cards.length === 0 ? (
         <p className={styles.empty}>Nothing to review yet.</p>
       ) : (
         <GalleryGrid>
-          {variants.map((variant) => (
+          {cards.map(({ variant, signoffs, mine }) => (
             <VariantCard
               key={variant.variantKey}
               slug={slug}
               variant={variant}
-              signoffs={signoffsOf(view.signoffs, variant)}
+              signoffs={signoffs}
+              reviewer={reviewer}
+              mine={mine}
             />
           ))}
         </GalleryGrid>

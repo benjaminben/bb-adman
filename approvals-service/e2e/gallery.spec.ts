@@ -117,6 +117,28 @@ test('an unknown slug and a real one without a session get the same page [galler
   await visitor.close()
 })
 
+test('the password page ignores a planted reviewer cookie [gallery 1, S-4]', async ({
+  browser,
+}) => {
+  const slug = await seed(browser)
+  const visitor = await browser.newContext({ baseURL: ORIGIN })
+  const plain = async (reply: APIResponse, own: string) =>
+    (await reply.text()).replaceAll(nonceOf(reply) ?? '-', 'NONCE').replaceAll(own, 'SLUG')
+  const bodies: string[] = []
+  for (const own of [slug, UNKNOWN]) {
+    for (const planted of [false, true]) {
+      const cookie = planted ? { Cookie: `__Host-adman-${own}-as=ann@example.com` } : undefined
+      const reply = await visitor.request.get(`/l/${own}`, { headers: cookie })
+      expect(reply.status()).toBe(200)
+      expect(reply.headers()['set-cookie']).toBeUndefined()
+      bodies.push(await plain(reply, own))
+    }
+  }
+  expect(new Set(bodies).size).toBe(1)
+  expect(bodies[0]).not.toContain('ann@example.com')
+  await visitor.close()
+})
+
 test("a visitor's own policy and x-nonce headers are never used [gallery 1]", async ({
   request,
 }) => {
@@ -154,30 +176,68 @@ test('a wrong password, then the right one, then the gallery in order [gallery 2
   )
   await expect(page).toHaveURL(`/l/${slug}`)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Shapes')
-  await expect(page.getByRole('heading', { level: 2 })).toHaveText(VARIANTS.map((v) => v.title))
+  const cards = page.locator('main article')
+  await expect(cards.getByRole('heading', { level: 2 })).toHaveText(VARIANTS.map((v) => v.title))
   for (const { title } of VARIANTS) {
-    const picture = page.getByRole('img', { name: title })
+    const picture = cards.getByRole('button', { name: `View larger: ${title}` }).locator('img')
     await picture.scrollIntoViewIfNeeded()
     await expect.poll(() => picture.evaluate(loaded)).toBeGreaterThan(0)
   }
   expect(refusals).toEqual([])
 })
 
-// Sign off, see it, remove it, leave: plain forms and redirects only.
+// The reviewer cookie's exact text (S-2), as the sign-off and reviewer replies set it.
+const reviewerCookie = (slug: string, email: string) =>
+  `__Host-adman-${slug}-as=${email}; Path=/; HttpOnly; Secure; SameSite=Lax`
+const TICK = 'Signed off by you. Open to view or remove.'
+
+// Sign off as the sidebar's email, see the tick, remove it from the lightbox, sign off all, log
+// out: plain forms, command buttons and redirects only.
 async function signOffFlow(page: Page, slug: string) {
   await enterWith(page, slug, PASSWORD)
-  const card = page.locator('#v-bbbb33')
-  await card.getByLabel('Your email').fill('ann@example.com')
-  await card.getByRole('button', { name: 'Sign off' }).click()
+  await page.getByLabel('Signing off as:').fill('ann@example.com')
+  const signed = page.waitForResponse((r) => r.url().endsWith(`/l/${slug}/signoffs`))
+  await page.getByRole('button', { name: 'Sign off: Blue tile' }).click()
+  expect(await (await signed).headerValue('set-cookie')).toBe(
+    reviewerCookie(slug, 'ann@example.com'),
+  )
   await expect(page).toHaveURL(`/l/${slug}?m=signed#v-bbbb33`)
   await expect(page.locator('main [role=status]')).toHaveText('Your sign-off was saved.')
-  await expect(card).toContainText('ann@example.com · ')
-  await card.getByRole('button', { name: 'Remove sign-off by ann@example.com' }).click()
+  const card = page.locator('#v-bbbb33')
+  await expect(card.getByRole('button', { name: TICK })).toBeVisible()
+  await expect(card.getByRole('button', { name: 'Sign off: Blue tile' })).toHaveCount(0)
+
+  await page.reload()
+  await expect(page.getByLabel('Signing off as:')).toHaveValue('ann@example.com')
+
+  await card.getByRole('button', { name: TICK }).click()
+  const box = page.getByRole('dialog', { name: 'Blue tile' })
+  await expect(box).toBeVisible()
+  await expect(box).toContainText('ann@example.com · ')
+  await box.getByRole('button', { name: 'Remove sign-off by ann@example.com' }).click()
   await expect(page.locator('main [role=status]')).toHaveText('The sign-off was removed.')
-  await expect(page.locator('#v-bbbb33')).not.toContainText('ann@example.com')
-  await page.getByRole('button', { name: 'Leave' }).click()
+  await expect(card.getByRole('button', { name: 'Sign off: Blue tile' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Sign off all…' }).click()
+  const confirm = page.getByRole('dialog', { name: 'Sign off all?' })
+  await expect(confirm).toBeVisible()
+  await confirm.getByRole('button', { name: 'Sign off all', exact: true }).click()
+  await expect(page).toHaveURL(`/l/${slug}?m=signed-all`)
+  await expect(page.locator('main [role=status]')).toHaveText('Your sign-offs were saved.')
+  for (const { variantKey } of VARIANTS) {
+    await expect(page.locator(`#v-${variantKey}`).getByRole('button', { name: TICK })).toBeVisible()
+  }
+
+  const left = page.waitForResponse((r) => r.url().endsWith(`/l/${slug}/leave`))
+  await page.getByRole('button', { name: 'Log out' }).click()
+  expect(await (await left).headerValue('set-cookie')).toContain(
+    `__Host-adman-${slug}-as=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+  )
   await expect(page).toHaveURL(`/l/${slug}`)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Review campaign')
+  const names = (await page.context().cookies()).map((c) => c.name)
+  expect(names).not.toContain(`__Host-adman-${slug}-as`)
+  expect(names).not.toContain(`__Host-adman-${slug}`)
 }
 
 for (const javaScript of [false, true]) {
