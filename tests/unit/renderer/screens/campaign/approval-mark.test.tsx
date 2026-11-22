@@ -97,7 +97,7 @@ describe('approvalFooter [AP-12]', () => {
         tileFooter={approvalFooter(forCampaign({ variants: rows }))}
       />,
     )
-    const items = screen.getAllByRole('listitem').filter((li) => li.parentElement?.tagName === 'UL')
+    const items = [...document.querySelectorAll<HTMLElement>('[data-variant]')]
     const marked = items.filter((li) => within(li).queryByText('Signed off by 1') !== null)
     expect(marked).toHaveLength(30)
     expect(screen.getAllByRole('button', { name: 'Sign-offs (1)' })).toHaveLength(30)

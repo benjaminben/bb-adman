@@ -122,3 +122,26 @@ describe('VariantTile [S2-16]', () => {
     }
   })
 })
+
+// R2C-2 (spec/phases/round-2-campaign.md, design addition 2, A-311): the master's tile has a
+// "Master" badge with a hidden icon at the start of its title line; no other tile has one.
+describe('VariantTile master mark [R2C-2]', () => {
+  it('shows "Master" with a hidden icon on the master, before the title', () => {
+    const { button } = draw({ ...POST, isMaster: true })
+    const badge = within(button).getByText('Master')
+    expect(badge.textContent).toBe('Master')
+    expect(badge.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+    const title = within(button).getByText('Summer post')
+    expect(badge.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('shows no "Master" on a variant that is not the master', () => {
+    const { button } = draw(POST)
+    expect(within(button).queryByText('Master')).toBeNull()
+  })
+
+  it('has no accessibility violations on the master', async () => {
+    draw({ ...POST, isMaster: true }, { chosen: true })
+    expect(await axeViolations()).toEqual([])
+  })
+})

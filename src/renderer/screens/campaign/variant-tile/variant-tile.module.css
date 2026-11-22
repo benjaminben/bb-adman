@@ -13,6 +13,10 @@
     border-color var(--motion-fast),
     box-shadow var(--motion-fast);
 }
+/* R2C-2 (A-311): the master's tinted ground; the chosen border below is drawn over it. */
+.master {
+  background: var(--color-accent-soft);
+}
 .tile:hover {
   border-color: var(--color-border);
   box-shadow: var(--shadow-1);
@@ -70,6 +74,12 @@
 }
 .tall {
   height: 100%;
+}
+.titleLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
 }
 .title {
   font-weight: var(--weight-bold);
