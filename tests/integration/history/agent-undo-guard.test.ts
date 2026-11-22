@@ -51,6 +51,29 @@ describe('the agent undo guard [A-261, P10-15]', () => {
     expect(last).toMatchObject({ name: 'layer.update', ok: false, errorKind: 'RULE_VIOLATION' })
   })
 
+  it('counts at check time, so 100 agent edits sent together at 99 let exactly one through', async () => {
+    bus = await makeLayerBus()
+    await agentEdits(99)
+    const rev = bus.variant().rev
+    const results = await Promise.all(
+      Array.from({ length: 100 }, (_, i) =>
+        bus.update(bus.ids.text, { copy: `Together ${i}` }, 'agent'),
+      ),
+    )
+    const passed = results.filter((r) => r.ok)
+    const refused = results.filter(
+      (r) =>
+        !r.ok &&
+        r.error.code === 'RULE_VIOLATION' &&
+        r.error.details?.reason === 'agent_undo_limit',
+    )
+    expect(passed).toHaveLength(1)
+    expect(refused).toHaveLength(99)
+    expect(bus.variant().rev).toBe(rev + 1)
+    expect(bus.layer(bus.ids.text).copy).toMatch(/^Together \d+$/)
+    expect(bus.undo.agentRun(bus.projectId, `variant:${bus.variantId}`)).toBe(100)
+  })
+
   it('never refuses the user, and one user edit sets the count to 0', async () => {
     bus = await makeLayerBus()
     await agentEdits(100)

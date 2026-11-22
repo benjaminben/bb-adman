@@ -25,6 +25,9 @@ export function guardAgentUndo(
       if (undo.agentRun(projectId, result.inverse.scope) >= AGENT_RUN_LIMIT) {
         throw new AppError('RULE_VIOLATION', LIMIT_MESSAGE, { reason: 'agent_undo_limit' })
       }
+      // Counted now, with no await since the check. If the transaction still fails after this,
+      // the count stays one too high; that only makes the guard stricter.
+      undo.reserveAgent(projectId, result.inverse.scope)
       return result
     },
   }

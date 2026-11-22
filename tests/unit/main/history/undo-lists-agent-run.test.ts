@@ -5,16 +5,24 @@ const call = { name: 'test.set', input: {} }
 const S = 'variant:a'
 
 type Step = (lists: UndoLists) => void
-const agent: Step = (l) => l.record('p', S, call, { actor: 'agent' })
+// The guard counts an agent entry when it checks (reserveAgent); recording it adds nothing.
+const agent: Step = (l) => {
+  l.reserveAgent('p', S)
+  l.record('p', S, call, { actor: 'agent' })
+}
+const recordOnly: Step = (l) => l.record('p', S, call, { actor: 'agent' })
 const user: Step = (l) => l.record('p', S, call, { actor: 'user' })
 const userUndo: Step = (l) => l.recordRedo('p', S, call, 'user')
 const userRedo: Step = (l) => l.record('p', S, call, { fromRedo: true, actor: 'user' })
 const agentUndo: Step = (l) => l.recordRedo('p', S, call, 'agent')
-const agentRedo: Step = (l) => l.record('p', S, call, { fromRedo: true, actor: 'agent' })
+const agentRedo: Step = (l) => {
+  l.reserveAgent('p', S)
+  l.record('p', S, call, { fromRedo: true, actor: 'agent' })
+}
 const putBack: Step = (l) => l.record('p', S, call, { fromRedo: true })
 const putBackRedo: Step = (l) => l.recordRedo('p', S, call)
 const take: Step = (l) => void l.takeUndo('p', S)
-const other: Step = (l) => l.record('p', 'variant:b', call, { actor: 'agent' })
+const other: Step = (l) => l.reserveAgent('p', 'variant:b')
 const otherProject: Step = (l) => l.record('q', S, call, { actor: 'user' })
 
 describe('agent entries in a row per undo list [A-261]', () => {
@@ -25,6 +33,8 @@ describe('agent entries in a row per undo list [A-261]', () => {
   it.each<[string, Step[], number]>([
     ['an empty list', [], 0],
     ['agent entries count up', [agent, agent, agent], 3],
+    ['a reservation counts before anything is recorded', [agent, (l) => l.reserveAgent('p', S)], 2],
+    ['recording an agent entry adds nothing', [agent, recordOnly], 1],
     ['a user entry sets it to 0', [agent, agent, user], 0],
     ['agent entries after a user entry count from 0', [agent, user, agent], 1],
     ['a user undo sets it to 0', [agent, agent, userUndo], 0],

@@ -32,11 +32,11 @@ export function createUndoLists() {
     return projects.get(projectId)?.get(scope)
   }
 
-  // A user edit, undo or redo sets the count to 0; an agent's undo never does. An entry put
-  // back after a failed replay names no actor and changes nothing.
-  function count(l: Lists, actor: Actor | undefined, entry: 'undo' | 'redo') {
+  // A user edit, undo or redo sets the count to 0. An agent entry was already counted by
+  // reserveAgent, and an agent's undo never changes the count. An entry put back after a
+  // failed replay names no actor and changes nothing.
+  function reset(l: Lists, actor: Actor | undefined) {
     if (actor === 'user') l.agentRun = 0
-    else if (actor === 'agent' && entry === 'undo') l.agentRun++
   }
 
   return {
@@ -47,14 +47,14 @@ export function createUndoLists() {
       opts?: { fromRedo?: boolean; actor?: Actor },
     ) {
       const l = lists(projectId, scope)
-      count(l, opts?.actor, 'undo')
+      reset(l, opts?.actor)
       l.undo.push(inverse)
       if (l.undo.length > UNDO_LIMIT) l.undo.shift()
       if (!opts?.fromRedo) l.redo = []
     },
     recordRedo(projectId: string, scope: UndoScope, inverse: CommandCall, actor?: Actor) {
       const l = lists(projectId, scope)
-      count(l, actor, 'redo')
+      reset(l, actor)
       l.redo.push(inverse)
       if (l.redo.length > UNDO_LIMIT) l.redo.shift()
     },
@@ -67,6 +67,11 @@ export function createUndoLists() {
     state(projectId: string, scope: UndoScope): UndoState {
       const l = peek(projectId, scope)
       return { canUndo: (l?.undo.length ?? 0) > 0, canRedo: (l?.redo.length ?? 0) > 0 }
+    },
+    // The agent undo guard counts an agent entry in the same step as its check, so commands
+    // running at once cannot all pass the check before any is recorded.
+    reserveAgent(projectId: string, scope: UndoScope) {
+      lists(projectId, scope).agentRun++
     },
     agentRun(projectId: string, scope: UndoScope): number {
       return peek(projectId, scope)?.agentRun ?? 0
