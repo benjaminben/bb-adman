@@ -1,14 +1,15 @@
 /* app-style */
 /* The subject photos part: an operating label, not a page title, so sans. */
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  margin: 0 0 var(--space-2);
+}
 .heading {
-  margin: 0 0 var(--space-1);
+  margin: 0;
   font-family: var(--font-body);
   font-size: var(--font-size-control);
   font-weight: var(--weight-bold);
   letter-spacing: normal;
-}
-.hint {
-  margin: 0 0 var(--space-2);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
 }
