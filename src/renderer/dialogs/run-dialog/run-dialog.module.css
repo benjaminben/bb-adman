@@ -80,6 +80,7 @@
   color: var(--color-text-muted);
 }
 .choice input:disabled {
+  opacity: 0;
   cursor: default;
 }
 .trial {
