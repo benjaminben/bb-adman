@@ -124,3 +124,26 @@ describe('pinnedFetch [P9-2]', () => {
     expect(failure.kind).toBe('other')
   })
 })
+
+describe('pinnedFetch hardening [P9-3 hardening of P9-2]', () => {
+  it('keeps no raw error as the cause of a network error, only its name', async () => {
+    const inner: typeof fetch = () => Promise.reject(new TypeError('words with sl.secret-token'))
+    const error = await pinnedFetch(inner)('https://api.dropboxapi.com/oauth2/token').catch(
+      (e: unknown) => e,
+    )
+    expect(isDropboxNetworkError(error)).toBe(true)
+    expect((error as Error).cause).toBeUndefined()
+    expect((error as { causeName?: string }).causeName).toBe('TypeError')
+    expect(JSON.stringify(error)).not.toContain('sl.secret-token')
+    expect(String((error as Error).stack)).not.toContain('sl.secret-token')
+  })
+
+  it('forces dispatcher to undefined so a caller cannot send the request elsewhere', async () => {
+    const { seen, inner } = recorder()
+    const init = { method: 'POST', dispatcher: { elsewhere: true } } as RequestInit
+    await pinnedFetch(inner)('https://api.dropboxapi.com/oauth2/token', init)
+    const sent = seen[0]?.init as Record<string, unknown>
+    expect('dispatcher' in sent).toBe(true)
+    expect(sent.dispatcher).toBeUndefined()
+  })
+})
