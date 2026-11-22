@@ -1,9 +1,11 @@
-// spec/screens-variants.md, "Sync review": one variant's group, headed "{title} · {sizeLabel} ·
-// {language}" with its thumbnail, and one checkbox per change, starting unticked (A-138). Under
-// a change: its new text or its translation line (P6-16), then each blocked path's choice.
-// Every name here comes from the project file and is drawn as text.
+// The sync review's right pane (DLG-7; spec/screens-variants.md, "Sync review"): the picked
+// variant as a group named "{title} · {sizeLabel} · {language}", one checkbox per change
+// (starting unticked, A-138; named "{layer}: {change words}", the words drawn quieter). Under
+// a change: the variant's own text beside the master's new text, its translation line
+// (P6-16), then each blocked path's "Mine" | "Master". Ticks and choices live in the
+// dialog, so picking another variant loses none. Every name is drawn as text.
 import { useId } from 'react'
-import { VariantThumbnail } from '@/renderer/ui/variant-thumbnail'
+import { languageName } from '@/renderer/ui/language-name'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { SyncChange, SyncPreview } from '@/shared/schemas/queries/sync'
 import { changeKey, choiceKey, type Choice, type Choices } from './decisions'
@@ -11,7 +13,9 @@ import { OverrideChoice } from './override-choice'
 import type { PaidAsk } from './translate-ask'
 import { TranslationLine } from './translation-line'
 import type { LanguageRun } from './use-sync-translations'
+import { variantName } from './sync-list'
 import { groupWords } from './sync-words'
+import { useOwnCopy } from './use-own-copy'
 import styles from './sync-review.module.css'
 
 export type VariantChangesProps = {
@@ -36,29 +40,46 @@ function changeWords(change: SyncChange): string {
   return groupWords(change.groups)
 }
 
-function headingOf(v: VariantSummary | undefined): string {
-  return v ? `${v.title} · ${v.sizeLabel} · ${v.language}` : 'A variant'
+function Compare(props: { own: string | undefined; master: string }) {
+  return (
+    <dl className={styles.compare}>
+      {props.own !== undefined && (
+        <div>
+          <dt>Mine</dt>
+          <dd>{props.own}</dd>
+        </div>
+      )}
+      <div>
+        <dt>Master</dt>
+        <dd>{props.master}</dd>
+      </div>
+    </dl>
+  )
 }
 
-function ChangeItem(props: VariantChangesProps & { change: SyncChange }) {
+function ChangeItem(props: VariantChangesProps & { change: SyncChange; own: string | undefined }) {
   const { change, preview } = props
   const key = changeKey(preview.variantId, change.layerKey)
   const copy = change.kind === 'update' ? change.proposed.copy : undefined
+  const words = changeWords(change)
   return (
     <li className={styles.change}>
       <label className={styles.option}>
         <input
           type="checkbox"
+          aria-label={`${change.layerName}: ${words}`}
           checked={props.ticked.has(key)}
           disabled={props.disabled}
           onChange={(e) => props.onTick(key, e.target.checked)}
         />
-        {change.layerName}: {changeWords(change)}
+        <span className={styles.layerName}>{change.layerName}</span>
+        <span className={styles.words}>{words}</span>
       </label>
-      {typeof copy === 'string' && <p className={styles.detail}>New text: {copy}</p>}
+      {typeof copy === 'string' && <Compare own={props.own} master={copy} />}
       {change.proposedTranslation && (
         <TranslationLine
           proposed={change.proposedTranslation}
+          languageName={languageName(props.variant?.language ?? '')}
           run={props.run}
           disabled={props.disabled}
           ask={props.ask}
@@ -84,22 +105,20 @@ function ChangeItem(props: VariantChangesProps & { change: SyncChange }) {
 
 export function VariantChanges(props: VariantChangesProps) {
   const headingId = useId()
-  const v = props.variant
+  const own = useOwnCopy(props.projectId, props.preview.variantId)
   return (
     <div role="group" aria-labelledby={headingId} className={styles.variant}>
-      <div className={styles.head}>
-        {v && (
-          <span className={styles.thumb}>
-            <VariantThumbnail projectId={props.projectId} variantId={v.id} rev={v.rev} alt="" />
-          </span>
-        )}
-        <h3 id={headingId} className={styles.heading}>
-          {headingOf(v)}
-        </h3>
-      </div>
+      <h3 id={headingId} className={styles.heading}>
+        {variantName(props.variant)}
+      </h3>
       <ul className={styles.changes}>
         {props.preview.changes.map((change) => (
-          <ChangeItem key={change.layerKey} {...props} change={change} />
+          <ChangeItem
+            key={change.layerKey}
+            {...props}
+            change={change}
+            own={own.get(change.layerKey)}
+          />
         ))}
       </ul>
     </div>

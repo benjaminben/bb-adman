@@ -130,21 +130,23 @@ describe('SyncButton and the sync review', () => {
     const first = await within(dialog).findByRole('group', { name: 'Spring post · 1:1 · en' })
     expect(within(first).getAllByRole('checkbox')).toHaveLength(3)
     expect(within(first).getByRole('checkbox', { name: 'Headline: text, style' })).not.toBeChecked()
-    expect(within(first).getByText('New text: Fresh as spring')).toBeVisible()
+    expect(within(first).getByText('Fresh as spring')).toBeVisible()
     expect(
       within(first).getByRole('checkbox', { name: 'Badge: new layer from the master' }),
     ).toBeVisible()
     expect(
       within(first).getByRole('checkbox', { name: 'Sticker: removed from the master' }),
     ).toBeVisible()
+    // DLG-7: the variants are rows on the left; picking one shows its changes on the right.
+    await userEvent.click(within(dialog).getByRole('button', { name: 'German post · 9:16 · de' }))
     const second = within(dialog).getByRole('group', { name: 'German post · 9:16 · de' })
     expect(within(second).getByRole('checkbox', { name: 'Headline: text' })).not.toBeChecked()
     expect(
-      within(second).getByText(
+      within(second).getByTitle(
         'No translation yet. The text stays as it is and is marked as missing a translation.',
       ),
     ).toBeVisible()
-    expect(within(second).queryByText(/New text/)).toBeNull()
+    expect(within(second).queryByText('Fresh as spring')).toBeNull()
     expect(await axeViolations()).toEqual([])
   })
 

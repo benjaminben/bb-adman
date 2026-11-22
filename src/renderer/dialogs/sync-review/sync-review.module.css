@@ -1,6 +1,7 @@
 /* app-style */
-/* The sync review (spec/screens-variants.md, "Sync review"): one group per variant, its
-   thumbnail beside the heading, then its changes, each with its detail lines and choices. */
+/* The sync review (spec/screens-variants.md, "Sync review"; DLG-7): two panes, the variants
+   listed on the left and the picked one's changes on the right, each with its detail lines
+   and choices. */
 .body {
   display: flex;
   flex-direction: column;
@@ -14,32 +15,29 @@
   gap: var(--space-2);
   align-items: center;
 }
+.panes {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0 var(--space-4) 0 0;
+  border-right: var(--border-width) solid var(--color-line);
+  list-style: none;
+}
+.rowConfirm {
+  padding: var(--space-2) 0 var(--space-2) var(--space-2);
+}
 .variant {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding-bottom: var(--space-4);
-  border-bottom: var(--border-width) solid var(--color-line);
-}
-.variant:last-child {
-  padding-bottom: 0;
-  border-bottom: none;
-}
-.head {
-  display: flex;
   gap: var(--space-3);
-  align-items: center;
-}
-.thumb {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: var(--option-thumb);
-  height: var(--option-thumb);
-  border-radius: var(--radius);
-  background: var(--color-surface-soft);
-  overflow: hidden;
+  min-width: 0;
 }
 .heading {
   margin: 0;
@@ -50,7 +48,7 @@
 .changes {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -58,7 +56,7 @@
 .change {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 .option {
   display: flex;
@@ -66,24 +64,84 @@
   align-items: center;
   overflow-wrap: anywhere;
 }
+.layerName {
+  font-weight: var(--weight-medium);
+}
+.words {
+  color: var(--color-text-secondary);
+  font-size: var(--type-meta-size);
+}
 .detail {
   padding-left: var(--space-6);
   color: var(--color-text-secondary);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+/* The variant's own text beside the master's new text. */
+.compare {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding-left: var(--space-6);
+}
+.compare dt {
+  color: var(--color-text-muted);
+  font-size: var(--type-meta-size);
+}
+.compare dd {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .choice {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1) var(--space-4);
-  margin: 0;
-  padding: 0 0 0 var(--space-6);
-  border: none;
+  gap: var(--space-2);
+  align-items: center;
+  padding-left: var(--space-6);
 }
-.choice legend {
-  padding: 0;
-  margin-bottom: var(--space-1);
+/* "Mine" | "Master": a surface strip of radios; each radio covers its segment, unseen, so the
+   whole segment is the click target and the radio keeps its role. */
+.seg {
+  display: inline-flex;
+  gap: calc(var(--border-width) * 2);
+  padding: calc(var(--border-width) * 2);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.segment {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-inner);
   color: var(--color-text-secondary);
+  font-size: var(--font-size-control);
+  white-space: nowrap;
+}
+.segment input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.segment:has(input:checked) {
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+}
+.segment:has(input:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+.segment:has(input:disabled) {
+  color: var(--color-text-muted);
 }
 .byHand {
   display: flex;
