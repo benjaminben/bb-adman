@@ -182,6 +182,22 @@ describe('approvals.forCampaign [spec/approvals.md "Queries and the event"]', ()
     )
     expect(reply).toMatchObject({ ok: false, error: { code: 'NOT_FOUND' } })
   })
+
+  it('gives stillOnly from the gallery row, and null for a variant not in the gallery [R2V-7]', async () => {
+    await withLink()
+    expect((await forCampaign()).variants.every((v) => v.stillOnly === null)).toBe(true)
+    const [first = ''] = (await forCampaign()).variants.map((v) => v.variantId)
+    const write = lf.db().prepare(
+      `INSERT OR REPLACE INTO approval_variant
+       (campaign_id, variant_id, published_rev, expires_at, clip_missing)
+       VALUES (?, ?, 0, '2026-11-09T10:00:00.000Z', ?)`,
+    )
+    for (const reason of ['no_tool', 'too_long', 'too_large', null]) {
+      write.run(lf.c1, first, reason)
+      const v = (await forCampaign()).variants.find((x) => x.variantId === first)
+      expect(v?.stillOnly).toBe(reason)
+    }
+  })
 })
 
 describe('approvals.getPassword [spec/approvals.md "Queries and the event"]', () => {

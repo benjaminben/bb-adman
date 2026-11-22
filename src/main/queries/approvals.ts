@@ -70,11 +70,12 @@ function variantsOf(
   const published = new Map(readVariants(db, campaignId, log).map((v) => [v.variantId, v]))
   const signoffs = readSignoffs(db, campaignId, log)
   return campaignVariants(db, campaignId, log).map((v) => {
-    const publishedRev = published.get(v.id)?.publishedRev ?? null
+    const row = published.get(v.id)
     return {
       variantId: v.id,
       currentRev: v.rev,
-      publishedRev,
+      publishedRev: row?.publishedRev ?? null,
+      stillOnly: row?.clipMissing ?? null,
       signoffs: signoffs
         .filter((s) => s.variantId === v.id && s.version === v.rev)
         .map((s) => ({ id: s.id, email: s.email, signedAt: s.signedAt, version: s.version })),

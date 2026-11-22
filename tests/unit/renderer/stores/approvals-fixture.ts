@@ -32,6 +32,7 @@ export const VARIANTS: ApprovalsVariant[] = [
     variantId: 'v1',
     currentRev: 4,
     publishedRev: 4,
+    stillOnly: null,
     signoffs: [
       {
         id: 's1',
@@ -41,8 +42,8 @@ export const VARIANTS: ApprovalsVariant[] = [
       },
     ],
   },
-  { variantId: 'v2', currentRev: 6, publishedRev: 5, signoffs: [] },
-  { variantId: 'v3', currentRev: 1, publishedRev: null, signoffs: [] },
+  { variantId: 'v2', currentRev: 6, publishedRev: 5, stillOnly: null, signoffs: [] },
+  { variantId: 'v3', currentRev: 1, publishedRev: null, stillOnly: null, signoffs: [] },
 ]
 
 export const TITLES: Record<string, string> = {
