@@ -110,7 +110,7 @@ describe('the brief form [screens-campaign "The brief form", FR-023, FR-024]', (
   it('lists the problems and keeps "Create campaign" disabled', async () => {
     const form = await openForm(projectApi(projectGet(), { ...DRAFT, audience: undefined }))
     await addPhotos(form)
-    const list = within(form).getByRole('list', { name: 'Before the campaign can be made' })
+    const list = within(form).getByRole('list', { name: 'To fix' })
     expect(
       within(list)
         .getAllByRole('listitem')

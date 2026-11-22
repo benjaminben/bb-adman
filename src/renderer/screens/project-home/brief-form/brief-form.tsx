@@ -3,9 +3,11 @@
 // campaign" / "Cancel". It is not an HTML form, so Enter in a field sends nothing. While
 // creating, the fieldset disables every control in it, Back too. HOME-2 (choice C-13): the
 // form is its own page, a SubPage "New campaign" whose Back calls onBack (Cancel when not
-// given); the caller handles Escape. The problems sit in one box with the foot, so an empty
-// problems region leaves no gap above it; the foot, held at the bottom of the scrolling page,
-// has "Cancel" then "Create campaign", whose spinner turns while creating.
+// given); the caller handles Escape. The problems ("To fix", every line in words, never folded;
+// OI-DW-2) sit in one box with the foot, so an empty problems region leaves no gap above it;
+// the foot, held at the bottom of the scrolling page, has the "{n} to fix" mark (HOME-3a: a
+// click focuses the list's heading), "Cancel", then "Create campaign", whose spinner turns
+// while creating.
 import { useEffect, useId, useRef, useState } from 'react'
 import type { CampaignSummary } from '@/shared/schemas/queries/campaign'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
@@ -25,6 +27,8 @@ import { LanguageField } from './language-field'
 import { useProjectImages } from './use-project-images'
 import { BusySpinner } from '@/renderer/ui/dialog-frame'
 import { Icon } from '@/renderer/ui/icon'
+import { plural } from '@/renderer/ui/plural'
+import { StatusMark } from '@/renderer/ui/status-mark'
 import { SubPage } from '@/renderer/ui/sub-page'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './brief-form.module.css'
@@ -50,6 +54,7 @@ export type BriefFormProps = {
 export function BriefForm(props: BriefFormProps) {
   const [values, setValues] = useState(props.initial)
   const firstField = useRef<HTMLInputElement>(null)
+  const problemsHeading = useRef<HTMLHeadingElement>(null)
   const ids = useId()
   const held = props.subjects.map((s) => s.id)
   const { images, refusal } = useProjectImages(props.projectId)
@@ -72,7 +77,11 @@ export function BriefForm(props: BriefFormProps) {
       setValues((v) => ({ ...v, languages: language }))
   }
 
-  const copyLanguages = Object.keys(values.copy ?? {})
+  const toFix = plan.ok ? 0 : plan.problems.length
+  function goToProblems() {
+    problemsHeading.current?.scrollIntoView?.({ block: 'center' })
+    problemsHeading.current?.focus({ preventScroll: true })
+  }
   return (
     <fieldset className={styles.frame} disabled={props.creating}>
       <SubPage title="New campaign" onBack={props.onBack ?? props.onCancel} escapeBack={false}>
@@ -113,6 +122,7 @@ export function BriefForm(props: BriefFormProps) {
           />
           <LanguageField
             value={values.languages}
+            copyGiven={Object.keys(values.copy ?? {})}
             onChange={(languages) => setValues((v) => ({ ...v, languages }))}
           />
           <RuleFields
@@ -121,16 +131,15 @@ export function BriefForm(props: BriefFormProps) {
             campaigns={props.campaigns}
             onChange={(rules) => setValues((v) => ({ ...v, rules }))}
           />
-          {copyLanguages.length > 0 && (
-            <p className={styles.copy}>Copy given for: {copyLanguages.join(', ')}</p>
-          )}
           <div className={styles.end}>
             <div aria-live="polite" className={styles.live}>
               {!plan.ok && (
                 <div className={`${layout.notice} ${layout.warn} ${styles.problems}`}>
                   <Icon name="alert" />
                   <div>
-                    <h3 id={`${ids}-problems`}>Before the campaign can be made</h3>
+                    <h3 id={`${ids}-problems`} ref={problemsHeading} tabIndex={-1}>
+                      To fix
+                    </h3>
                     <ul aria-labelledby={`${ids}-problems`}>
                       {plan.problems.map((line) => (
                         <li key={line}>{line}</li>
@@ -141,6 +150,15 @@ export function BriefForm(props: BriefFormProps) {
               )}
             </div>
             <div className={styles.foot}>
+              {toFix > 0 && (
+                <StatusMark
+                  tone="warn"
+                  icon="alert"
+                  label={`${toFix} to fix`}
+                  tip={`${toFix} to fix: go to the list`}
+                  onClick={goToProblems}
+                />
+              )}
               <button type="button" className={layout.quiet} onClick={props.onCancel}>
                 Cancel
               </button>
@@ -148,6 +166,7 @@ export function BriefForm(props: BriefFormProps) {
                 type="button"
                 className={layout.primary}
                 disabled={!plan.ok}
+                title={toFix > 0 ? `Fix the ${plural(toFix, 'problem')} first` : undefined}
                 onClick={() => {
                   if (!plan.ok) return
                   void Promise.resolve(props.onCreate(plan)).then((change) => {

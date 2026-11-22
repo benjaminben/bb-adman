@@ -13,47 +13,67 @@
   flex-direction: column;
   gap: var(--space-6);
 }
-/* Two short fields side by side: the prototype's form grid. */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3) var(--space-4);
-}
-/* A field: its label above, the shared label look; the control keeps the body text look. */
-.field {
+/* The campaign fields (HOME-3a): inline fields stacked, then one row of three small ones. */
+.fields {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  font-size: var(--font-size-small);
-  font-weight: var(--weight-medium);
-  color: var(--color-text-secondary);
+  gap: var(--gap-field);
+  max-width: var(--width-dialog-wide);
 }
-.field input,
-.field textarea {
-  font-size: var(--font-size-control);
-  font-weight: var(--weight-regular);
-  color: var(--color-text);
+.message {
+  align-items: start;
 }
-.wide {
-  grid-column: 1 / -1;
-}
-/* The message is long text: the reading face. */
-.field textarea {
-  font-family: var(--font-reading);
-  font-size: var(--font-size-reading);
-  line-height: var(--leading-body);
+.message textarea {
   resize: vertical;
+}
+.trio {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap-field) var(--space-4);
+}
+/* A small field's label takes only its own width. */
+.small {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+/* A field with its InfoTip at the right end. */
+.withTip {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}
+.withTip input {
+  flex: 1;
+  min-width: 0;
+}
+/* The languages in order, as chips: ★ on the main one, a pencil where copy was given. */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+  margin: 0;
+  padding: 0 0 0 calc(var(--field-label-width) + var(--gap-inline));
+  list-style: none;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: var(--chip-height);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--type-meta-size);
+}
+.tagMark {
+  display: inline-flex;
+  color: var(--color-accent-ink);
 }
 .block {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
   max-width: var(--width-dialog);
-}
-.hint {
-  margin: 0;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
 }
 .copy {
   margin: 0;
