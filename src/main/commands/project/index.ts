@@ -14,6 +14,6 @@ export function projectCommands(deps: CoreDeps): CommandHandler[] {
     projectClose(deps),
     projectPackage(),
     projectSetAssetsDir(deps),
-    projectCreateInDefaultFolder(),
+    projectCreateInDefaultFolder(deps),
   ]
 }

@@ -53,6 +53,8 @@ export async function callEveryTool(
     // R2P-5: import_assets; the path is planted, and the secret-leak test looks for it.
     paths: [PLANTED_IMPORT_PATH],
     library: 'asset',
+    // R2P-8: create_project; a made-up name, made in the default projects folder.
+    name: 'Made-up agent project',
   }
   const replies: string[] = []
   for (const name of names) {

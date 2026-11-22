@@ -41,7 +41,7 @@ const PLAN = [
 ]
 
 // The tools not built yet. A tool slice removes exactly its own names.
-const STILL_NOT_BUILT: string[] = ['create_campaign_from_brief', 'create_project']
+const STILL_NOT_BUILT: string[] = ['create_campaign_from_brief']
 
 // What each tool runs (spec/phases/phase-10.md, "The tools left").
 const TARGETS: Record<string, [kind: 'command' | 'query', target: string]> = {
@@ -64,6 +64,7 @@ const TARGETS: Record<string, [kind: 'command' | 'query', target: string]> = {
   get_check_results: ['query', 'check.results'],
   set_variant_format: ['command', 'variant.setFormat'],
   import_assets: ['command', 'asset.importFiles'],
+  create_project: ['command', 'project.createInDefaultFolder'],
 }
 
 describe('the Phase 10 tool plan [P10-1, A-230, A-231]', () => {
