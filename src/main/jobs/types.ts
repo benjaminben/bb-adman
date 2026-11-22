@@ -45,6 +45,9 @@ export type JobRunContext = {
   progress(fraction: number): void
   // [1.38] True once a stop was asked for or the job has ended.
   cancelled(): boolean
+  // LP-2: true once the job has ended, for example by the runner's cancel wait. Left out of a
+  // context made outside the runner, whose job never ends before its handler.
+  ended?(): boolean
   // Sends a command through the bus as the user.
   system(command: string, input: unknown): Promise<Result<unknown>>
   // [1.38] What a provider reports while it works. Written into the job: `progress` from

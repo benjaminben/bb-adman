@@ -8,7 +8,6 @@
 // P7-13, P7-16: once the runner lets the job go on a close, this handler sends nothing more.
 import type { JobKindHandler, JobRunContext } from '@/main/jobs/types'
 import { backgroundFrame } from '@/main/jobs/background-frame'
-import { cancelWaitFor } from '@/main/jobs/cancel-wait'
 import { readPictures } from '@/main/jobs/read-pictures'
 import { runGone, storeVideo } from '@/main/jobs/video-store'
 import type { CoreDeps } from '@/main/core-deps'
@@ -35,7 +34,6 @@ type Run = {
   job: JobRow
   project: ProjectHandle
   provider: VideoProvider
-  providerId: string
   pollMs: number
 }
 
@@ -82,22 +80,19 @@ async function started(run: Run, request: VideoJobRequest) {
 
 // Waits until the run has a result. Ends with ProviderCancelled when it was stopped or let go,
 // and with the provider's failure when it failed. SPEC 6.11.2: when the signal fires, the
-// provider's cancel is called once; `unknown` keeps checking, for at most the provider's
-// cancel wait.
+// provider's cancel is called once; `unknown` keeps checking until the run ends or the
+// runner's cancel wait ends the job (LP-2: the runner's timer is the one owner of that wait).
 async function untilDone(run: Run, remoteJobId: string): Promise<void> {
   const { jc, provider } = run
-  let cancelSentAt: number | null = null
+  let cancelSent = false
   for (;;) {
-    await pause(run.pollMs, cancelSentAt === null ? jc.signal : undefined)
-    if (runGone(jc, run.project)) throw new ProviderCancelled()
-    if (jc.signal.aborted && cancelSentAt === null) {
-      cancelSentAt = Date.now()
+    await pause(run.pollMs, cancelSent ? undefined : jc.signal)
+    if (runGone(jc, run.project) || jc.ended?.()) throw new ProviderCancelled()
+    if (jc.signal.aborted && !cancelSent) {
+      cancelSent = true
       const outcome = await provider.cancel(remoteJobId)
       if (outcome === 'stopped') throw new ProviderCancelled()
       if (outcome === 'finished') return
-    }
-    if (cancelSentAt !== null && Date.now() - cancelSentAt > cancelWaitFor(run.providerId)) {
-      throw new ProviderCancelled()
     }
     const state = await provider.check(remoteJobId)
     if (state.status === 'succeeded') return
@@ -127,7 +122,7 @@ async function runVideoJob(
   if (!project) throw new ProviderCancelled()
   requireProviderKeys(jc.deps, providerId, 'make videos')
   const provider = opts.videoFor(jc.deps, providerId)
-  const run: Run = { jc, job, project, provider, providerId, pollMs: opts.pollMs }
+  const run: Run = { jc, job, project, provider, pollMs: opts.pollMs }
   if (job.remoteJobId === null && jc.cancelled()) throw new ProviderCancelled()
   const remoteJobId = job.remoteJobId ?? (await started(run, request))
   await untilDone(run, remoteJobId)

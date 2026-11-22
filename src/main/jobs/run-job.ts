@@ -110,6 +110,7 @@ function context(state: RunnerState, live: LiveJob): JobRunContext {
     },
     // SPEC 6.11.1 [1.38]: true once a stop was asked for or the job has ended.
     cancelled: () => live.ended || live.cancelAsked,
+    ended: () => live.ended,
     async system(command, input) {
       if (live.ended) throw new Error('The job has ended')
       return state.opts.bus().execute(command, input, { actor: 'user' })
