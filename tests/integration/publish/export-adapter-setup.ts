@@ -24,10 +24,12 @@ export type AdapterSetUp = {
   p: CheckProject
   work: string
   storageRoot: string
-  draws: { fail: boolean }
+  draws: { fail: boolean; failOn: number; count: number }
   input(over?: Partial<ExportForPublishInput>): ExportForPublishInput
   publish(input?: object): Promise<JobRow>
   storageFiles(): string[]
+  // Each stored file's bytes as base64, by path.
+  storageBytes(): Record<string, string>
   reportRows(): number
 }
 
@@ -42,9 +44,10 @@ function listed(dir: string, base = ''): string[] {
 export async function adapterSetUp(): Promise<AdapterSetUp> {
   const fx = makeFixture({ env: { ADMAN_FAKE_PROVIDERS: '1' } })
   const p = await openCheckProject(fx)
-  const draws = { fail: false }
+  const draws = { fail: false, failOn: 0, count: 0 }
   const draw: DrawScene = async (_input, size) => {
-    if (draws.fail) throw new Error('The draw failed')
+    draws.count += 1
+    if (draws.fail || draws.count === draws.failOn) throw new Error('The draw failed')
     return { png: new Uint8Array([...PNG_START, size.width % 256]), overflow: {} }
   }
   fx.core.deps.render = createRenderService({
@@ -102,6 +105,13 @@ export async function adapterSetUp(): Promise<AdapterSetUp> {
       )
     },
     storageFiles: () => listed(storageRoot).sort(),
+    storageBytes: () =>
+      Object.fromEntries(
+        listed(storageRoot).map((rel) => [
+          rel,
+          fs.readFileSync(path.join(storageRoot, rel)).toString('base64'),
+        ]),
+      ),
     reportRows: () => readWireRows(db(), 'report').length,
   }
 }

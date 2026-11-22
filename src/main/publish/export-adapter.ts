@@ -6,19 +6,19 @@
 // into outputRoot, which must be a real folder at its own real path (the checks target.ts
 // makes; every write goes through exportTarget, which makes them again). The difference from
 // "The export interface" is absorbed here (Q-P9-4): runExport wants a job context, so it gets
-// one made from the port's input that makes no provider call, and saves the report row as
-// report.add does; the publish header is written at the top of both report files once Phase 8
-// has written them; Phase 6's sheet is added when it has rows. Ads that failed are left out, as
-// Phase 8 leaves them out (the report names them); when no ad was exported the export ends
-// export_failed before any report is written. warningsForPublish gives Phase 8's checks as
+// one made from the port's input that makes no provider call, and whose report.add saves
+// nothing: a publish inserts no report row (ruling, P9-11), so no work folder path is stored and
+// a publish is not counted as an export. The publish header is written at the top of both
+// report files once Phase 8 has written them; Phase 6's sheet is added when it has rows. A
+// publish is all or nothing about its ads (ruling, P9-11): if any ad fails, the export ends
+// export_failed before any report is written, so nothing is uploaded or cleaned up and the
+// earlier published copy of that ad stays. warningsForPublish gives Phase 8's checks as
 // PublishWarning: the check's fixed name and the finding's own message.
 import fs from 'node:fs/promises'
 import nodePath from 'node:path'
-import { ulid } from 'ulid'
 import { warningsGate } from '@/main/commands/export/warnings'
 import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectHandle } from '@/main/db/project-file'
-import { report as reportTable } from '@/main/db/schema'
 import { element } from '@/main/export/report/escape'
 import { utcTime } from '@/main/export/report/html-parts'
 import { CHECK_NAMES } from '@/main/export/report/html-words'
@@ -31,7 +31,7 @@ import { localStorageAt } from '@/main/providers/local-storage'
 import { ProviderCancelled } from '@/main/providers/types'
 import { requireCampaign } from '@/main/queries/campaign-reads'
 import { translationRows } from '@/main/translation/rows'
-import { reportAddInput, type ExportWarning } from '@/shared/schemas/commands/export'
+import type { ExportWarning } from '@/shared/schemas/commands/export'
 import { ok } from '@/shared/schemas/result'
 import { sheetCsv } from '@/shared/translation/sheet'
 import type {
@@ -73,31 +73,17 @@ function warningsNow(deps: CoreDeps, project: ProjectHandle, variantIds: string[
   return warningsGate(deps.export.checks, project, { variantIds, proceedDespiteWarnings: true })
 }
 
-// report.add's row, saved directly: the port has no command bus. Only report.add is answered.
-function saveReport(deps: CoreDeps, command: string, body: unknown) {
+// Only report.add is answered, and it saves no row: a publish is not an export.
+function noReportRow(command: string) {
   if (command !== 'report.add') throw failed()
-  const input = reportAddInput.parse(body)
-  const project = deps.projects.requireOpen(input.projectId)
-  requireCampaign(project.db, input.campaignId)
-  const reportId = ulid()
-  project.orm
-    .insert(reportTable)
-    .values({
-      id: reportId,
-      campaignId: input.campaignId,
-      createdAt: input.report.createdAt,
-      outputDir: input.outputDir,
-      body: JSON.stringify(input.report),
-    })
-    .run()
-  return ok({ reportId })
+  return ok({ reportId: null })
 }
 
-// Keeps the ads' ends for the answer; refuses before the report when no ad was exported.
+// Keeps the ads' ends for the answer; refuses before the report unless every ad was exported.
 function keepingOutcomes(inner: ExportReport, kept: VariantOutcome[]): ExportReport {
   return {
     write(jc, plan, target, outcomes, checks) {
-      if (!outcomes.some((o) => o.file !== null)) throw failed()
+      if (outcomes.length === 0 || outcomes.some((o) => o.file === null)) throw failed()
       kept.push(...outcomes)
       return inner.write(jc, plan, target, outcomes, checks)
     },
@@ -116,7 +102,7 @@ function publishContext(
     call: () => Promise.reject(failed()),
     progress: (fraction) => input.onProgress(fraction),
     cancelled: () => input.signal.aborted,
-    system: async (command, body) => saveReport(deps, command, body),
+    system: async (command) => noReportRow(command),
     onProgress: () => undefined,
     setRemoteJobId: () => undefined,
     keep: () => undefined,

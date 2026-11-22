@@ -6,7 +6,6 @@
 // its detail kept out of the reply and the log.
 import type { CoreDeps } from '@/main/core-deps'
 import { requireS3Settings } from '@/main/commands/storage/require-s3-settings'
-import { LocalFailure } from '@/main/jobs/local-failure'
 import { isDropboxRootPath } from '@/main/providers/dropbox/root-path'
 import { plainMessage } from '@/main/providers/messages'
 import { requireProviderKeys } from '@/main/providers/require-keys'
@@ -67,19 +66,10 @@ export async function publishedFileCount(
   }
 }
 
-// The checks' warnings. Until export is built (P9-11) the port refuses with export_not_built;
-// that counts as none here, and the job then fails with export_not_built before it uploads.
-export async function warningsOf(
-  deps: CoreDeps,
-  input: PublishRunInput,
-): Promise<PublishWarning[]> {
-  try {
-    return await deps.publish.warningsForPublish(deps, {
-      projectId: input.projectId,
-      campaignId: input.campaignId,
-    })
-  } catch (error) {
-    if (error instanceof LocalFailure && error.reason === 'export_not_built') return []
-    throw error
-  }
+// The checks' warnings (Phase 8's checks, through the export port).
+export function warningsOf(deps: CoreDeps, input: PublishRunInput): Promise<PublishWarning[]> {
+  return deps.publish.warningsForPublish(deps, {
+    projectId: input.projectId,
+    campaignId: input.campaignId,
+  })
 }

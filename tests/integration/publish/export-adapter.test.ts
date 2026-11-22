@@ -73,7 +73,8 @@ describe('exportForPublish [P9-11]', () => {
       expect(file.absPath.startsWith(`${x.work}${path.sep}`)).toBe(true)
     }
     expect(result.files).toHaveLength(5)
-    expect(x.reportRows()).toBe(1)
+    // Ruling: a publish inserts no report row.
+    expect(x.reportRows()).toBe(0)
     expect(fractions.at(-1)).toBe(1)
   })
 
@@ -81,7 +82,9 @@ describe('exportForPublish [P9-11]', () => {
     const x = await setUp()
     x.p
       .db()
-      .prepare("UPDATE variant SET language = 'en', size_label = 'B' WHERE language = 'de'")
+      .prepare(
+        "UPDATE variant SET language = 'en', size_label = '9x16', height = 1920 WHERE language = 'de'",
+      )
       .run()
     const result = await exportForPublish(x.fx.core.deps, x.input({ publishHeader: null }))
     expect(byRole(result.files, 'translations_csv')).toEqual([])
@@ -171,6 +174,32 @@ describe('the publish job with the export adapter [P9-11]', () => {
     expect(x.fx.readLogs()).not.toContain(reason)
     const json = fs.readFileSync(path.join(x.storageRoot, x.p.campaignId, 'report.json'), 'utf8')
     expect(json).toContain(reason)
+  })
+
+  it('is all or nothing: one failed ad ends export_failed and leaves the old publish as it was', async () => {
+    const x = await setUp()
+    expect((await x.publish()).status).toBe('succeeded')
+    const before = x.storageBytes()
+    x.draws.count = 0
+    x.draws.failOn = 1
+    const job = await x.publish()
+    expect(job).toMatchObject({ status: 'failed', errorReason: 'export_failed' })
+    expect(x.storageBytes()).toEqual(before)
+    expect(Object.keys(before)).toContain(`${x.p.campaignId}/manifest.json`)
+    expect(fs.readdirSync(path.join(x.fx.userData, 'publish-work'))).toEqual([])
+    expect(x.reportRows()).toBe(0)
+  })
+
+  it('inserts no report row and stores no local path in the project file', async () => {
+    const x = await setUp()
+    expect((await x.publish()).status).toBe('succeeded')
+    expect(x.reportRows()).toBe(0)
+    const file = x.fx.core.deps.projects.requireOpen(x.p.projectId).filePath
+    for (const part of [file, `${file}-wal`].filter((f) => fs.existsSync(f))) {
+      const bytes = fs.readFileSync(part)
+      expect(bytes.includes(x.fx.userData)).toBe(false)
+      expect(bytes.includes('publish-work')).toBe(false)
+    }
   })
 
   it('ends export_failed when no ad could be exported, and uploads nothing', async () => {
