@@ -68,6 +68,7 @@ test('subject cards: one with photos, one without', async () => {
   await expect(
     panel(page).getByRole('button', { name: 'Add photos to Tidewater Mug' }),
   ).toBeVisible()
+  await page.mouse.move(800, 900)
   await page.waitForTimeout(500)
   await shot(page, '458-subject-cards')
 })
