@@ -33,6 +33,12 @@ describe('type sniffing: the extension and the first bytes must agree [SPEC 8.3,
     ['brief.yaml', bytes('campaignName: Été'), 'application/yaml'],
     ['brief.json', bytes('{"a":1}'), 'application/json'],
     ['notes.md', bytes('# Title'), 'text/markdown'],
+    ['song.mp3', bytes('ID3', [4, 0, 0]), 'audio/mpeg'],
+    ['song.MP3', bytes([0xff, 0xfb, 0x90, 0x64]), 'audio/mpeg'],
+    ['song.wav', bytes('RIFF', [1, 2, 3, 4], 'WAVEfmt '), 'audio/wav'],
+    ['song.m4a', brand('M4A '), 'audio/mp4'],
+    ['song.m4a', brand('mp42'), 'audio/mp4'],
+    ['song.aac', bytes([0xff, 0xf1, 0x50, 0x80]), 'audio/aac'],
   ])('accepts %s whose bytes match', (name, head, mime) => {
     expect(sniffType(name, head)).toMatchObject({ mime })
   })
@@ -60,6 +66,13 @@ describe('type sniffing: the extension and the first bytes must agree [SPEC 8.3,
     ['song.mp4', brand('M4A ')],
     ['book.mp4', brand('M4B ')],
     ['song.mov', brand('M4P ')],
+    ['song.mp3', bytes([0xff, 0xf1, 0x50, 0x80])],
+    ['song.mp3', PNG],
+    ['song.wav', WEBP],
+    ['song.m4a', brand('heic')],
+    ['song.m4a', MOV_OLD],
+    ['song.aac', bytes([0xff, 0xfb, 0x90, 0x64])],
+    ['song.aac', bytes('ID3', [4, 0, 0])],
   ])('refuses %s whose bytes do not match', (name, head) => {
     expect(sniffType(name, head)).toBeUndefined()
   })

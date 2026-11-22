@@ -2,6 +2,7 @@
 // first bytes match that type. Imported files are untrusted, so the bytes decide, not the name.
 import { pictureType } from '@/main/providers/picture-type'
 import { fileTypeFor, type FileType } from '@/shared/config/file-types'
+import { AUDIO_MATCHES } from './audio-sniff'
 
 // How many first bytes a caller reads before calling sniffType.
 export const SNIFF_BYTES = 4096
@@ -63,6 +64,7 @@ const MATCHES: Record<FileType['id'], (head: Uint8Array) => boolean> = {
   otf: (h) => asciiAt(h, 0, 'OTTO'),
   woff2: (h) => asciiAt(h, 0, 'wOF2'),
   text: isText,
+  ...AUDIO_MATCHES,
 }
 
 // The accepted type of a file from its name and its first bytes, or undefined. An empty
