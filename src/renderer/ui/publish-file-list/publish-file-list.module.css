@@ -10,6 +10,7 @@
 .heading,
 .folder {
   margin: 0;
+  font-family: var(--font-body);
   font-size: var(--font-size-small);
   font-weight: var(--weight-medium);
   color: var(--color-text-secondary);
