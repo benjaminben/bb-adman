@@ -86,6 +86,14 @@ async function findFiles(project: ProjectHandle, skipMissing: boolean) {
   return { found, missing }
 }
 
+// The copy, opened with trusted_schema off: a view or trigger in it cannot call an
+// app-defined function while it is rewritten.
+export function openPackageCopy(dbFile: string): Database.Database {
+  const db = new Database(dbFile)
+  db.pragma('trusted_schema = OFF')
+  return db
+}
+
 // Step 6: paths, meta and jobs rewritten in the copy, in one transaction.
 async function rewriteCopy(dbFile: string, finalDir: string, assetsName: string, found: Found[]) {
   const facts = await Promise.all(
@@ -95,7 +103,7 @@ async function rewriteCopy(dbFile: string, finalDir: string, assetsName: string,
       return { ...f, name: path.basename(file), stat, hash: await hashFile(file) }
     }),
   )
-  const db = new Database(dbFile)
+  const db = openPackageCopy(dbFile)
   try {
     const update = db.prepare(
       `UPDATE asset SET storage = 'managed', rel_path = ?, abs_path = ?, byte_size = ?,
