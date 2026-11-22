@@ -53,11 +53,13 @@ function variantLine(db: Database.Database, variantId: string): string | null {
   return `Variant "${name}" in campaign "${cleanName(row.campaign)}" in "${projectName(db)}"`
 }
 
-// SUBJ-1: the subject's name and how many photos it holds; never a photo's name or path.
+// SUBJ-1: the subject's name and how many photos (pictures, as its card counts them) it holds;
+// never a photo's name or path.
 function subjectLine(db: Database.Database, subjectId: string): string | null {
   const row = db
     .prepare<[string, string], { name: string; n: number }>(
-      `SELECT s.name AS name, (SELECT COUNT(*) FROM asset a WHERE a.subject_id = ?) AS n
+      `SELECT s.name AS name, (SELECT COUNT(*) FROM asset a
+         WHERE a.subject_id = ? AND a.kind = 'image') AS n
        FROM subject s WHERE s.id = ?`,
     )
     .get(subjectId, subjectId)

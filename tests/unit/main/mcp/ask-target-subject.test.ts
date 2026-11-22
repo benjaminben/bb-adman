@@ -24,15 +24,15 @@ async function project(): Promise<string> {
   return projectId
 }
 
-function addPhotos(projectId: string, count: number): void {
+function addPhotos(projectId: string, count: number, kind = 'image'): void {
   const db = f!.core.projects.requireOpen(projectId).db
   const insert = db.prepare(
     `INSERT INTO asset (id, library, kind, origin, storage, subject_id, display_name, abs_path,
       rel_path, mime, byte_size, mtime_ms, content_hash, created_at)
-     VALUES (?, 'asset', 'image', 'imported', 'linked', 'tea-tin-7', 'tin-front-hero.png', ?,
+     VALUES (?, 'asset', ?, 'imported', 'linked', 'tea-tin-7', 'tin-front-hero.png', ?,
       'tin-front-hero.png', 'image/png', 10, 1, ?, 'x')`,
   )
-  for (let i = 0; i < count; i++) insert.run(`photo-${i}`, PHOTO_PATH, `hash-${i}`)
+  for (let i = 0; i < count; i++) insert.run(`${kind}-${i}`, kind, PHOTO_PATH, `${kind}-${i}`)
 }
 
 const ask = (projectId: string | null, input: unknown) => ({
@@ -74,11 +74,19 @@ describe('askTarget for subject.delete [SUBJ-1]', () => {
     expect(lineFor(projectId)).toBe(`Subject "Tea tin" (${words}) in "Spring Work"`)
   })
 
+  // The count the subject card shows: its pictures, not a clip that names the subject.
+  it('counts the pictures only, as the subject card does', async () => {
+    const projectId = await project()
+    addPhotos(projectId, 1)
+    addPhotos(projectId, 2, 'video')
+    expect(lineFor(projectId)).toBe('Subject "Tea tin" (1 photo) in "Spring Work"')
+  })
+
   it('holds no ID, no path and no file name of a photo', async () => {
     const projectId = await project()
     addPhotos(projectId, 2)
     const line = lineFor(projectId)
-    for (const word of [projectId, 'tea-tin-7', 'photo-0', PHOTO_PATH, 'tin-front-hero', '/']) {
+    for (const word of [projectId, 'tea-tin-7', 'image-0', PHOTO_PATH, 'tin-front-hero', '/']) {
       expect(line.includes(word), word).toBe(false)
     }
   })

@@ -1,10 +1,12 @@
 // R2C-6 (spec/phases/round-2-campaign.md, design addition 5, "The subject card") and AST-2
 // (spec/phases/design-wave-screens-b.md): one subject in the Assets panel: its name with a pencil
 // to edit, the description, then its photos as a PhotoStrip. Removing a photo only detaches it
-// (asset.update with subjectId null); no asset and no subject is deleted here. Refusals and
-// notes stay on the page as words.
+// (asset.update with subjectId null); no asset is deleted here. SUBJ-1 (D-101): the trash
+// button opens the delete dialog, which alone sends subject.delete. Refusals and notes stay on
+// the page as words.
 import { useId, useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
+import { DeleteSubject } from '@/renderer/dialogs/delete-subject'
 import { SubjectDialog } from '@/renderer/dialogs/subject-dialog'
 import type { AssetView } from '@/renderer/screens/assets/assets-panel/asset-view'
 import { assetUrl } from '@/renderer/ui/asset-url'
@@ -44,6 +46,7 @@ export function SubjectCard({ projectId, subject, photos, subjects }: SubjectCar
   const command = useApp((s) => s.command)
   const headingId = useId()
   const [editing, setEditing] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const { state, add } = useAddPhotos(projectId, subject.id, subjects)
   const detach = (assetId: string) =>
     void command('asset.update', { projectId, assetId, subjectId: null })
@@ -55,6 +58,7 @@ export function SubjectCard({ projectId, subject, photos, subjects }: SubjectCar
     removeLabel: `Remove ${photo.displayName} from ${subject.name}`,
   }))
   const editLabel = `Edit ${subject.name}`
+  const deleteLabel = `Delete ${subject.name}`
 
   return (
     <article aria-labelledby={headingId} className={styles.card}>
@@ -70,6 +74,15 @@ export function SubjectCard({ projectId, subject, photos, subjects }: SubjectCar
           onClick={() => setEditing(true)}
         >
           <Icon name="pencil" size="small" />
+        </button>
+        <button
+          type="button"
+          className={layout.iconButton}
+          aria-label={deleteLabel}
+          title={deleteLabel}
+          onClick={() => setDeleting(true)}
+        >
+          <Icon name="trash" size="small" />
         </button>
       </div>
       {subject.description !== '' && <p className={styles.description}>{subject.description}</p>}
@@ -92,6 +105,12 @@ export function SubjectCard({ projectId, subject, photos, subjects }: SubjectCar
         subjects={subjects}
         subject={subject}
         onClose={() => setEditing(false)}
+      />
+      <DeleteSubject
+        projectId={projectId}
+        subject={deleting ? subject : null}
+        photoCount={photos.length}
+        onClose={() => setDeleting(false)}
       />
     </article>
   )
