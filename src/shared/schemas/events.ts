@@ -32,16 +32,22 @@ export type EventMap = {
   'approvals.changed': { projectId: string; campaignId: string }
   // spec/phases/phase-10.md, ask flow (A-238): an agent waits for the user's answer. The action
   // and target are lines for the dialog; no ID of the target, no input, no path. agentClient is
-  // untrusted text from the MCP client, drawn as text only. expiresAt is an ISO time.
+  // untrusted text from the MCP client, drawn as text only. expiresAt is an ISO time. Round 2
+  // (D7): kind says which dialog to draw; fileCount is how many files an import names (0 for a
+  // delete). The paths reach the window only through the agent.askFiles reply.
   'agent.permissionRequested': {
     requestId: string
     agentClient: string | null
     action: string
     target: string
     expiresAt: string
+    kind: 'delete' | 'import'
+    fileCount: number
   }
   // spec/phases/phase-10.md, activity (A-241): one per tool call. No input, no reply.
   'agent.activity': { tool: string; projectId: string | null; ok: boolean; at: string }
+  // spec/phases/round-2-platform.md, D9: show this open project in the window (a Finder open).
+  'app.showProject': { projectId: string }
 }
 
 export type EventName = keyof EventMap
@@ -54,4 +60,5 @@ export const EVENT_NAMES: EventName[] = [
   'approvals.changed',
   'agent.permissionRequested',
   'agent.activity',
+  'app.showProject',
 ]

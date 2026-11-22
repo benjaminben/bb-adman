@@ -12,6 +12,7 @@ import { ASK_WAIT_MS } from '@/shared/config/agent-ask'
 import type { AgentAnswerPermissionInput } from '@/shared/schemas/commands/agent'
 import { AppError } from '@/shared/schemas/result'
 import { askTarget } from './ask-target'
+import { ASK_KINDS } from './ask-kinds'
 
 export type PermissionBrokerDeps = {
   emit: (event: BusEvent) => void
@@ -104,6 +105,8 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
           action: AGENT_POLICY[request.command]?.action ?? request.command,
           target: askTarget(deps.projects, request),
           expiresAt,
+          kind: ASK_KINDS[request.command] ?? 'delete',
+          fileCount: 0,
         },
       })
     })

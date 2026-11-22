@@ -50,7 +50,7 @@ describe('delete_campaign over MCP [P10-6; A-237, A-238]', () => {
     })
     const asked = await x.nthAsk()
     expect(Object.keys(asked).sort()).toEqual(
-      ['action', 'agentClient', 'expiresAt', 'requestId', 'target'].sort(),
+      ['action', 'agentClient', 'expiresAt', 'fileCount', 'kind', 'requestId', 'target'].sort(),
     )
     expect(asked).toMatchObject({
       agentClient: 'adman-test-client',

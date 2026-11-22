@@ -4,7 +4,14 @@ import type { CommandHandler } from '@/main/commands/types'
 import { campaignCreate } from './create'
 import { campaignDelete } from './delete'
 import { campaignUpdate } from './update'
+import { campaignFromBrief } from './from-brief'
 
 export function campaignCommands(deps: CoreDeps): CommandHandler[] {
-  return [campaignCreate(deps), campaignUpdate(), campaignDelete()]
+  return [
+    campaignCreate(deps),
+    campaignUpdate(),
+    campaignDelete(),
+    campaignFromBrief('campaign.createFromBrief'),
+    campaignFromBrief('campaign.createFromBriefWithFiles'),
+  ]
 }

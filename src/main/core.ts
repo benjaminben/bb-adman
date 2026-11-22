@@ -231,7 +231,7 @@ export function createCore(opts: CoreOptions) {
     askPermission: opts.askPermission ?? broker.ask,
     agentRuns: { providers, settings },
   })
-  const queries = queryTable(deps, mcp)
+  const queries = queryTable(deps, mcp, broker)
   const query = createQueryRunner(queries, log)
 
   return {

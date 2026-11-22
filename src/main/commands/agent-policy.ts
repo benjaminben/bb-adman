@@ -14,6 +14,8 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'project.create': deny('create projects'),
   'project.open': deny('open projects'),
   'project.close': deny('close projects'),
+  // Round 2 (D8): a new project in the default folder only; the input names no place.
+  'project.createInDefaultFolder': allow('create projects'),
   'project.setAssetsDir': deny('change the assets folder'),
   'project.package': deny('package projects'),
   'subject.create': deny('create subjects'),
@@ -25,12 +27,17 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'asset.remove': deny('remove assets'),
   'asset.addGenerated': deny('add generated files'),
   'asset.checkChanged': deny('check files for changes'),
+  // Round 2 (D5, D7): an agent's import by full path, always through the dialog.
+  'asset.importFiles': ask('import files'),
   'brief.parse': deny('read brief files'),
   // P4-1: brief.extract reads a path, so it is denied as brief.parse is.
   'brief.extract': deny('read brief files'),
   'campaign.create': allow('create campaigns'),
   'campaign.update': deny('change campaign settings'),
   'campaign.delete': ask('delete campaigns'),
+  // Round 2 (D6): one handler, two names; the one that imports files asks.
+  'campaign.createFromBrief': allow('make campaigns from a brief'),
+  'campaign.createFromBriefWithFiles': ask('make campaigns that import files'),
   'ruleSet.update': deny('change rule sets'),
   'ruleSet.copyFrom': deny('copy rule sets'),
   'direction.createFromMaster': deny('create directions'),
