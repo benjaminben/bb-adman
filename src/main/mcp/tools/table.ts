@@ -3,8 +3,8 @@
 // 4.5 tools whose command or query exists are listed. Each input is the command's or query's
 // own Zod schema, with its top-level keys in snake_case (SPEC 4.5: project_id -> projectId).
 // Every reply goes through an allow-list picker (spec/mcp-and-agents.md, rules for every tool).
-// ALL_TOOLS is the Phase 10 plan (A-230): the built tools, then one group file per slice. A
-// notBuilt row is left out of MCP_TOOLS, so it is never listed to an agent.
+// ALL_TOOLS is the Phase 10 plan (A-230): the built tools, then one group file per slice, then
+// Round 2's three. A notBuilt row is left out of MCP_TOOLS, so it is never listed to an agent.
 import type { z } from 'zod'
 import { assetListInput } from '@/shared/schemas/queries/asset'
 import { campaignScopedInput, projectGetInput } from '@/shared/schemas/queries/campaign'
@@ -29,6 +29,9 @@ import { DELETE_TOOLS } from './delete-tools'
 import { VARIANT_EDIT_TOOLS } from './variant-edit-tools'
 import { TRANSLATION_CHECK_TOOLS } from './translation-check-tools'
 import { FORMAT_TOOLS } from './format-tool'
+import { IMPORT_TOOLS } from './import-tools'
+import { BRIEF_TOOLS } from './brief-tools'
+import { PROJECT_TOOLS } from './project-tools'
 
 export type ToolDef = {
   name: string
@@ -46,6 +49,10 @@ export type ToolDef = {
   content?: 'json' | 'png'
   // Runs on the camelCase input, after the snake_case mapping, before the call (A-246).
   prepareInput?: (input: Record<string, unknown>) => Record<string, unknown>
+  // R2P-1 (D6): the commands this tool may run, and the one each call runs, picked from the
+  // camelCase input. A pick outside targets is the fixed INTERNAL reply and runs nothing.
+  targets?: readonly string[]
+  pickTarget?: (input: Record<string, unknown>) => string
 }
 
 export const ALL_TOOLS: readonly ToolDef[] = [
@@ -132,6 +139,9 @@ export const ALL_TOOLS: readonly ToolDef[] = [
   ...VARIANT_EDIT_TOOLS,
   ...TRANSLATION_CHECK_TOOLS,
   ...FORMAT_TOOLS,
+  ...IMPORT_TOOLS,
+  ...BRIEF_TOOLS,
+  ...PROJECT_TOOLS,
 ]
 
 // What core registers: every built row, in the same order.

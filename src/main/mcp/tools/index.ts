@@ -3,7 +3,8 @@
 // policy in core decides. A reply is the command's or query's own result as JSON; an
 // error is the app's own code, message and details, as an MCP tool error (SPEC 4.5).
 // Phase 10 (A-230, A-241, A-242): a notBuilt row is not registered; a png row replies one
-// image item; prepareInput runs before the call; onCall hears of every call.
+// image item; prepareInput runs before the call; onCall hears of every call. Round 2 (R2P-1):
+// a row with pickTarget runs the one of its targets the input picks.
 import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
@@ -66,15 +67,24 @@ function snakeInput(def: ToolDef) {
   return { names, schema: z.object(shape) }
 }
 
-function run(
+// R2P-1 (D6): the target this call runs; a pick outside the row's targets is null.
+function targetOf(def: ToolDef, input: Record<string, unknown>): string | null {
+  if (!def.pickTarget) return def.target
+  const picked = def.pickTarget(input)
+  return (def.targets ?? []).includes(picked) ? picked : null
+}
+
+async function run(
   def: ToolDef,
   caller: AgentCaller,
-  input: unknown,
+  input: Record<string, unknown>,
   agentClient: string | null,
 ): Promise<Result<unknown>> {
+  const target = targetOf(def, input)
+  if (target === null) return fail({ code: 'INTERNAL', message: INTERNAL_MESSAGE })
   return def.kind === 'command'
-    ? caller.execute(def.target, input, agentClient)
-    : caller.query(def.target, input)
+    ? caller.execute(target, input, agentClient)
+    : caller.query(target, input)
 }
 
 // The client's own name from its initialize hello, cleaned (A-242). Read at call time, since

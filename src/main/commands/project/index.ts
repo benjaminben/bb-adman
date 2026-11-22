@@ -5,6 +5,7 @@ import { projectOpen } from './open'
 import { projectClose } from './close'
 import { projectPackage } from './package'
 import { projectSetAssetsDir } from './set-assets-dir'
+import { projectCreateInDefaultFolder } from './create-default'
 
 export function projectCommands(deps: CoreDeps): CommandHandler[] {
   return [
@@ -13,5 +14,6 @@ export function projectCommands(deps: CoreDeps): CommandHandler[] {
     projectClose(deps),
     projectPackage(),
     projectSetAssetsDir(deps),
+    projectCreateInDefaultFolder(),
   ]
 }

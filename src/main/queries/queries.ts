@@ -10,6 +10,8 @@ import { campaignQueries } from './campaign'
 import { checkQueries } from './check'
 import { comfyQueries } from './comfy'
 import { activityQueries } from './activity'
+import { askFilesQueries } from './ask-files'
+import type { PermissionBroker } from '@/main/mcp/permissions'
 import { earlierOptionsQueries } from './earlier-options'
 import { historyQueries } from './history'
 import { jobQueries } from './job'
@@ -32,9 +34,14 @@ import { AppError, fail, internalError, ok, type Result } from '@/shared/schemas
 
 export type { QueryFn, QueryOptions }
 
-// Every registered query by name. mcp.getConnectInfo needs the MCP service, so it is
-// registered only when core passes one (a unit test builds the table without it).
-export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, QueryFn> {
+// Every registered query by name. mcp.getConnectInfo needs the MCP service and agent.askFiles
+// the permission broker, so each is registered only when core passes it (a unit test builds the
+// table without them).
+export function queryTable(
+  deps: CoreDeps,
+  mcp?: McpState,
+  broker?: PermissionBroker,
+): Record<string, QueryFn> {
   return {
     ...appQueries(deps),
     ...approvalsQueries(deps),
@@ -48,6 +55,7 @@ export function queryTable(deps: CoreDeps, mcp?: McpState): Record<string, Query
     ...jobServerMessageQueries(deps),
     ...earlierOptionsQueries(deps),
     ...activityQueries(deps),
+    ...(broker ? askFilesQueries(broker) : {}),
     ...paidCountQueries(deps),
     ...(mcp ? mcpQueries(deps, mcp) : {}),
     ...projectQueries(deps),

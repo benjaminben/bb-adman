@@ -43,6 +43,7 @@ describe('the asset domain is registered [SPEC 14, Slice A part 2, A2-1]', () =>
       'asset.remove',
       'asset.checkChanged',
       'asset.addGenerated',
+      'asset.importFiles',
     ])
   })
 
@@ -110,6 +111,8 @@ describe('the campaign domain is registered [SPEC 14, slice C]', () => {
       'campaign.create',
       'campaign.update',
       'campaign.delete',
+      'campaign.createFromBrief',
+      'campaign.createFromBriefWithFiles',
     ])
   })
 })

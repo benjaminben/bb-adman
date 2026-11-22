@@ -16,6 +16,8 @@ const ask = (requestId: string): Ask => ({
   action: 'delete campaigns',
   target: 'Campaign "Summer Splash!" (1 variant) in "Spring Work"',
   expiresAt: new Date(Date.now() + 120_000).toISOString(),
+  kind: 'delete',
+  fileCount: 0,
 })
 
 beforeEach(() => {

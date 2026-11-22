@@ -35,10 +35,13 @@ const PLAN = [
   'run_checks',
   'get_check_results',
   'set_variant_format',
+  'import_assets',
+  'create_campaign_from_brief',
+  'create_project',
 ]
 
 // The tools not built yet. A tool slice removes exactly its own names.
-const STILL_NOT_BUILT: string[] = []
+const STILL_NOT_BUILT: string[] = ['import_assets', 'create_campaign_from_brief', 'create_project']
 
 // What each tool runs (spec/phases/phase-10.md, "The tools left").
 const TARGETS: Record<string, [kind: 'command' | 'query', target: string]> = {
@@ -63,7 +66,7 @@ const TARGETS: Record<string, [kind: 'command' | 'query', target: string]> = {
 }
 
 describe('the Phase 10 tool plan [P10-1, A-230, A-231]', () => {
-  it('holds the 29 tools of the plan, each once, in listing order', () => {
+  it('holds the 32 tools of the plan, each once, in listing order', () => {
     const names = ALL_TOOLS.map((t) => t.name)
     expect(names).toEqual(PLAN)
     expect(new Set(names).size).toBe(names.length)
@@ -73,9 +76,10 @@ describe('the Phase 10 tool plan [P10-1, A-230, A-231]', () => {
     expect(ALL_TOOLS.filter((t) => t.notBuilt).map((t) => t.name)).toEqual(STILL_NOT_BUILT)
   })
 
-  it('has no tool left to build [P10-14, exit criterion 5]', () => {
-    expect(STILL_NOT_BUILT).toEqual([])
-    expect(MCP_TOOLS).toHaveLength(29)
+  // R2P-1: the Round 2 rows are notBuilt until their slices, so this checks the 29 of Phase 10.
+  it('has no Phase 10 tool left to build [P10-14, exit criterion 5]', () => {
+    expect(STILL_NOT_BUILT.filter((n) => PLAN.indexOf(n) < 29)).toEqual([])
+    expect(MCP_TOOLS).toHaveLength(PLAN.length - STILL_NOT_BUILT.length)
   })
 
   it('lists no notBuilt row to an agent, and every other row', () => {
