@@ -1,5 +1,5 @@
 // requireS3Settings (spec/storage-and-publish.md "Hand-test storage command", "Test connection
-// (S3)"): its one owner, used by dev.storage and storage.checkS3.
+// (S3)"): its one owner, used by storage.checkS3, publish.run and publish.inspect.
 import { describe, it, expect } from 'vitest'
 import { requireS3Settings } from '@/main/commands/storage/require-s3-settings'
 import { AppError } from '@/shared/schemas/result'

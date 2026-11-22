@@ -1,5 +1,5 @@
-// P9-3b: Dropbox storage reached through the app's own path (storageFor, dev.storage) uses the
-// core's injected dropboxFetch, never the default one that goes to the real network. The default
+// P9-3b: Dropbox storage reached through the app's own path (storageFor, publish.inspect) uses
+// the core's injected dropboxFetch, never the default one that goes to the real network. The default
 // is replaced here by a fetch that throws if called; nothing in this file reaches Dropbox.
 import fs from 'node:fs'
 import os from 'node:os'
@@ -8,6 +8,8 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { fakeCrypto } from '../core-fixture'
 import { standInFetch, type DropboxStandIn } from '../../helpers/dropbox-stand-in'
 import { startDropboxFilesStandIn, type DropboxFiles } from '../../helpers/dropbox-stand-in-files'
+import { CAMPAIGN, makeComponentProject } from '../publish/component-project'
+import { closeProjectFile } from '@/main/db/project-file'
 import { createCore, type Core } from '@/main/core'
 import { adapters } from '@/main/providers/dropbox'
 import { forgetDropboxAccess } from '@/main/providers/dropbox/access-token'
@@ -46,7 +48,6 @@ beforeEach(() => {
     env: {},
     emit: () => undefined,
     askPermission: async () => false,
-    devTools: true,
     dropboxFetch: standInFetch(standIn),
   })
   core.secrets.set('dropbox.refreshToken', standIn.plantRefreshToken())
@@ -69,15 +70,25 @@ describe('Dropbox storage uses the injected fetch [P9-3b]', () => {
     expect(realNetwork).not.toHaveBeenCalled()
   })
 
-  it('dev.storage { storage: dropbox } is answered by the injected fetch', async () => {
-    const result = await core.bus.execute(
-      'dev.storage',
-      { storage: 'dropbox', action: 'list' },
-      { actor: 'user' },
-    )
-    expect(result).toMatchObject({ ok: true, data: { names: [] } })
-    expect(standIn.seen.map((s) => s.route)).toContain('files/list_folder')
-    expect(realNetwork).not.toHaveBeenCalled()
+  it('publish.inspect with Dropbox chosen is answered by the injected fetch', async () => {
+    const project = makeComponentProject()
+    const filePath = project.handle.filePath
+    closeProjectFile(project.handle)
+    try {
+      const opened = await core.bus.execute('project.open', { filePath }, { actor: 'user' })
+      const { projectId } = (opened as { data: { projectId: string } }).data
+      const result = await core.query(
+        'publish.inspect',
+        { projectId, campaignId: CAMPAIGN, storage: 'dropbox' },
+        { actor: 'user' },
+      )
+      expect(result).toMatchObject({ ok: true, data: { existing: { files: 0 } } })
+      expect(standIn.seen.map((s) => s.route)).toContain('files/list_folder')
+      expect(realNetwork).not.toHaveBeenCalled()
+    } finally {
+      core.closeAll()
+      fs.rmSync(project.dir, { recursive: true, force: true })
+    }
   })
 
   it('a context with no Dropbox fetch is refused, never sent over the default one', () => {

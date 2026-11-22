@@ -27,7 +27,7 @@
   align-self: stretch;
   min-width: 0;
 }
-/* "Settings" (and "Hand test") are quiet buttons: no edge, a lighter ground on hover, and the
+/* "Settings" is a quiet button: no edge, a lighter ground on hover, and the
    page ground while pressed. */
 .settings {
   border-color: transparent;
