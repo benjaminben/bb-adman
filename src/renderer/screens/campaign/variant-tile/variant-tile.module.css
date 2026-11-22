@@ -45,6 +45,7 @@
   justify-content: center;
   width: 100%;
   aspect-ratio: 1 / 1;
+  overflow: hidden;
   margin-bottom: var(--space-1);
   padding: var(--space-2);
   border-radius: var(--radius);
@@ -83,4 +84,11 @@
   margin-top: var(--space-1);
   flex-wrap: wrap;
   gap: var(--space-1);
+}
+/* A long mark wraps inside the tile instead of running past its edge. */
+.marks > * {
+  max-width: 100%;
+  height: auto;
+  min-height: var(--badge-height);
+  white-space: normal;
 }
