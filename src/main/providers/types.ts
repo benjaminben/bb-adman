@@ -170,6 +170,9 @@ export type AdapterContext = {
   secret(name: string): string // a saved secret; the key guard has already passed
   settings(): Settings // read at call time
   model(job: string): string // the default model ID from the registry
+  // P9-3b: the core's Dropbox fetch (CoreDeps.dropboxFetch). adapterFor always sets it; it is
+  // optional only so a context built by hand for another provider need not name it.
+  dropboxFetch?: typeof fetch
 }
 
 // What one provider folder exports from its index.ts.

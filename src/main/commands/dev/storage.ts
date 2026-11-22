@@ -24,7 +24,10 @@ import { checkLocalRoot, handTestLocalRoot } from './local-root'
 import { storageError, type StorageLabel } from './storage-error'
 
 type Target = DevStorageInput['storage']
-type Deps = Pick<CoreDeps, 'providers' | 'secrets' | 'settings' | 'userDataDir' | 'log'>
+type Deps = Pick<
+  CoreDeps,
+  'providers' | 'secrets' | 'settings' | 'userDataDir' | 'log' | 'dropboxFetch'
+>
 type Ctx = { actor: LogActor; commandId: string }
 export type OpenStorage = (target: Target) => StorageProvider
 
