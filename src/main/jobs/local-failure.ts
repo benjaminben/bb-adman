@@ -16,6 +16,10 @@ export type LocalReason = Extract<
   | 'assets_not_writable'
   | 'results_not_added'
   | 'target_gone'
+  // P9-1: the publish job's local causes.
+  | 'export_not_built'
+  | 'export_failed'
+  | 'work_folder_unsafe'
 >
 
 export class LocalFailure extends Error {

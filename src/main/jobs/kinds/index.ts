@@ -9,6 +9,7 @@ import { cutoutKind } from './cutout'
 import { generativeFillKind } from './generative-fill'
 import { translationKind } from './translation'
 import { exportKind } from './export'
+import { publishKind } from './publish'
 
 export const jobKindHandlers: JobKindHandler[] = [
   imageGenerationKind(),
@@ -20,4 +21,5 @@ export const jobKindHandlers: JobKindHandler[] = [
   generativeFillKind(),
   translationKind(),
   exportKind(),
+  publishKind(),
 ]

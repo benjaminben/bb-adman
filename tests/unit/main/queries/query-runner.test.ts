@@ -14,6 +14,8 @@ import type { SecretStore } from '@/main/secrets/secret-store'
 import type { ApprovalsDeps } from '@/main/approvals/types'
 import type { ExportDeps, ExportPictures } from '@/main/export/types'
 import { noMediaTool } from '@/main/media/no-media'
+import { createPublishDeps } from '@/main/publish/deps'
+import { defaultDropboxFetch } from '@/main/providers/dropbox/fetch'
 
 let dir: string | undefined
 afterEach(() => {
@@ -63,6 +65,8 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
       export: {} as unknown as ExportDeps,
       exportPictures: {} as unknown as ExportPictures,
       media: noMediaTool,
+      publish: createPublishDeps(),
+      dropboxFetch: defaultDropboxFetch,
       appVersion: '0.1.0',
       now: () => new Date(),
       userDataDir: dir,

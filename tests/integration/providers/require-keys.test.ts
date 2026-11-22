@@ -53,6 +53,24 @@ describe('requireProviderKeys [SPEC 4.1 NEEDS_KEY, FR-171, correction 14]', () =
     })
   })
 
+  // P9-1 (A-212): a missing Dropbox token sends the user to Settings, never to the key dialog.
+  it('refuses Dropbox with no saved token as dropbox_not_signed_in, never NEEDS_KEY', () => {
+    const deps = setup()
+    const e = caught(() => requireProviderKeys(deps, 'dropbox', 'publish'))
+    expect(e).toBeInstanceOf(AppError)
+    expect((e as AppError).toBody()).toEqual({
+      code: 'RULE_VIOLATION',
+      message: 'Sign in to Dropbox in Settings, then try again.',
+      details: { reason: 'dropbox_not_signed_in' },
+    })
+  })
+
+  it('passes for Dropbox once the refresh token is saved', () => {
+    const deps = setup()
+    deps.secrets.set('dropbox.refreshToken', 'made-up-refresh-token-0042')
+    expect(() => requireProviderKeys(deps, 'dropbox', 'publish')).not.toThrow()
+  })
+
   it('passes for the fake provider, which needs no secret', () => {
     const deps = setup()
     expect(() => requireProviderKeys(deps, 'fake', 'generate images')).not.toThrow()

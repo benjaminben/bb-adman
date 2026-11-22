@@ -42,10 +42,7 @@ describe('dev.storage is denied to agents [SPEC 4.2, 5.2]', () => {
 })
 
 describe('dev.storage calls the key guard first [SPEC 4.1, 4.2 dev.storage]', () => {
-  it.each([
-    ['s3', 'Amazon S3'],
-    ['dropbox', 'Dropbox'],
-  ])('answers NEEDS_KEY for %s with no key saved', async (storage) => {
+  it.each([['s3', 'Amazon S3']])('answers NEEDS_KEY for %s with no key saved', async (storage) => {
     f = makeDevFixture(true)
     const result = await f.user('dev.storage', { storage, action: 'list' })
     expect(result.ok ? null : result.error).toMatchObject({
@@ -53,6 +50,20 @@ describe('dev.storage calls the key guard first [SPEC 4.1, 4.2 dev.storage]', ()
       details: { provider: storage },
     })
   })
+
+  // P9-1 (A-212): Dropbox has no key to type, so a missing token sends the user to Settings.
+  it.each([['dropbox', 'Dropbox']])(
+    'answers dropbox_not_signed_in for %s with no token saved',
+    async (storage) => {
+      f = makeDevFixture(true)
+      const result = await f.user('dev.storage', { storage, action: 'list' })
+      expect(result.ok ? null : result.error).toEqual({
+        code: 'RULE_VIOLATION',
+        message: 'Sign in to Dropbox in Settings, then try again.',
+        details: { reason: 'dropbox_not_signed_in' },
+      })
+    },
+  )
 
   it('with the S3 keys saved and no S3 settings, gives RULE_VIOLATION and no key', async () => {
     f = makeDevFixture(true)
