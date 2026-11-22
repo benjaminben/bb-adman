@@ -7,6 +7,7 @@ import { ulid } from 'ulid'
 import * as schema from './schema'
 import { bundledMigrations, type Migration } from './bundled-migrations'
 import { readMeta, readSchemaVersion, readStoredName, writeMeta, notAProject } from './meta'
+import { checkLayout } from './layout-check'
 import { AppError } from '@/shared/schemas/result'
 
 // Only the project ID is kept in memory; project_meta is the owner of every other value
@@ -40,11 +41,16 @@ function mapOpenError(e: unknown): unknown {
 
 // Applies the SPEC 3.1 settings and takes the exclusive lock at once by starting
 // an exclusive transaction. In EXCLUSIVE locking mode the lock is kept until close.
-function connect(filePath: string, create: boolean): Database.Database {
-  const db = new Database(filePath, { fileMustExist: !create, timeout: 0 })
+// trusted_schema is off so the file's schema cannot call app-defined SQL functions. An
+// existing file's layout is checked inside that first transaction, before any pragma or
+// statement that writes (LP-11); BEGIN EXCLUSIVE alone makes no journal file.
+function connect(filePath: string, migrations: Migration[] | null): Database.Database {
+  const db = new Database(filePath, { fileMustExist: migrations !== null, timeout: 0 })
   try {
+    db.pragma('trusted_schema = OFF')
     db.pragma('locking_mode = EXCLUSIVE')
     db.exec('BEGIN EXCLUSIVE')
+    if (migrations !== null) checkLayout(db, migrations)
     db.exec('COMMIT')
     db.pragma('journal_mode = DELETE')
     db.pragma('synchronous = FULL')
@@ -95,7 +101,7 @@ export function createProjectFile(opts: {
       reason: 'file_exists',
     })
   }
-  const db = connect(opts.filePath, true)
+  const db = connect(opts.filePath, null)
   try {
     const assetsDirRel = `${opts.name} Assets`
     runMigrations(db, migrations, 0)
@@ -124,7 +130,7 @@ export function openProjectFile(opts: {
   if (!fs.existsSync(opts.filePath)) {
     throw new AppError('NOT_FOUND', 'The project file could not be found.')
   }
-  const db = connect(opts.filePath, false)
+  const db = connect(opts.filePath, migrations)
   try {
     const version = readSchemaVersion(db)
     if (version > migrations.length) {
