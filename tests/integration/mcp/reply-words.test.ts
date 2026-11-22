@@ -86,6 +86,32 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
     // P10-2: the two read tools.
     ['list_subjects', { project_id: p }, [other]],
     ['get_variant', { project_id: p, variant_id: 'v1' }, [{ project_id: p, variant_id: 'x' }]],
+    // P10-4: the layer tools, over the seeded variants v1 and v2.
+    [
+      'create_layer',
+      { project_id: p, variant_id: 'v2', type: 'text' },
+      [{ project_id: p, variant_id: 'x', type: 'text' }],
+    ],
+    [
+      'update_layer',
+      { project_id: p, layer_id: 'l-text', patch: { copy: 'Stay cool' } },
+      [{ project_id: p, layer_id: 'x', patch: { copy: 'Stay cool' } }],
+    ],
+    [
+      'update_layers',
+      {
+        project_id: p,
+        variant_id: 'v1',
+        updates: [{ layerId: 'l-text', patch: { visible: false } }],
+      },
+      [{ project_id: p, variant_id: 'v1', updates: [{ layerId: 'x', patch: { visible: false } }] }],
+    ],
+    ['delete_layer', { project_id: p, layer_id: 'l-other' }, [{ project_id: p, layer_id: 'l-bg' }]],
+    [
+      'reorder_layers',
+      { project_id: p, variant_id: 'v1', layer_ids: ['l-text'] },
+      [{ project_id: p, variant_id: 'v1', layer_ids: [] }],
+    ],
   ]
   return table.flatMap(([tool, good, bad]) => [
     { tool, args: good, ok: true },
