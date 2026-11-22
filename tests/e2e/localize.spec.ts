@@ -66,7 +66,7 @@ test('Workflow 5.2: fan-out to sizes and languages, translations approved, sheet
   await l.approveAll(page, 'German', german)
   await l.approveAll(page, 'Japanese', japanese)
   await showCampaignView(page, 'Variants')
-  await expect(v.grid(page, l.DIRECTION).getByText('Translation not approved')).toHaveCount(0)
+  await expect(v.grid(page, l.DIRECTION).getByTitle('Translation not approved')).toHaveCount(0)
 
   // The sheet, saved where the dialog said, read back.
   const file = path.join(box.root, SHEET)
@@ -114,5 +114,5 @@ test('Workflow 5.2: fan-out to sizes and languages, translations approved, sheet
     await expect(l.rows(page, language).getByText('Approved', { exact: true })).toHaveCount(n)
   }
   await showCampaignView(page, 'Variants')
-  await expect(v.grid(page, l.DIRECTION).getByText('Translation not approved')).toHaveCount(0)
+  await expect(v.grid(page, l.DIRECTION).getByTitle('Translation not approved')).toHaveCount(0)
 })
