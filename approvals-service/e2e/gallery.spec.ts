@@ -24,7 +24,7 @@ const PAGE_HEADERS = {
   'x-robots-tag': 'noindex, nofollow',
 }
 const POLICY =
-  /^default-src 'none'; script-src 'self' 'nonce-([A-Za-z0-9+/]{22}==)'; style-src 'self' 'nonce-\1'; img-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'$/
+  /^default-src 'none'; script-src 'self' 'nonce-([A-Za-z0-9+/]{22}==)'; style-src 'self' 'nonce-\1'; img-src 'self'; media-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'$/
 
 const VARIANTS = [
   { variantKey: 'aaaa22', title: 'Red tile', file: 'a.png' },

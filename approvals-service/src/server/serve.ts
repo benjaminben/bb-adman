@@ -3,10 +3,18 @@ import 'server-only'
 // request, unchanged, to the reviewed router. Its own path regexes decide what a request is.
 import { createApp, type Parts } from '../app'
 import { cryptoBytes } from '../crypto/random'
+import { s3ClipSource } from '../pictures/s3-clip-source'
+import type { Env } from '../env'
 import { loadEnv } from './env'
 
-const liveParts: Parts = { now: () => Date.now(), random: cryptoBytes }
+// The environment is made per request, so the clip source that reads it is too.
+const liveParts = (env: Env): Parts => ({
+  now: () => Date.now(),
+  random: cryptoBytes,
+  clips: s3ClipSource(env),
+})
 
 export function serve(request: Request): Promise<Response> {
-  return createApp(loadEnv(), liveParts).fetch(request)
+  const env = loadEnv()
+  return createApp(env, liveParts(env)).fetch(request)
 }

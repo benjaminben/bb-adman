@@ -7,20 +7,7 @@ import type { Picture } from '../pictures/source'
 import { emptyNotFound, pictureHeaders } from './headers'
 import { readSession } from './session'
 import type { VisitorHandler } from './routes'
-
-const PIECE = 1024 * 1024
-
-// Hands the checked bytes over in 1 MiB pieces, so no whole-reply size limit applies.
-function streamOf(bytes: Uint8Array): ReadableStream<Uint8Array> {
-  let at = 0
-  return new ReadableStream({
-    pull(controller) {
-      if (at >= bytes.byteLength) return controller.close()
-      controller.enqueue(bytes.subarray(at, at + PIECE))
-      at += PIECE
-    },
-  })
-}
+import { streamOf } from './stream-of'
 
 async function findPicture(
   request: Request,

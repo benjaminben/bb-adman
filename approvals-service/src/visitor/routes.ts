@@ -3,6 +3,7 @@
 import type { Parts } from '../app'
 import type { Env } from '../env'
 import { enterLink, leaveLink, saveReviewer } from './actions'
+import { clipRoute } from './clip-route'
 import { notFound, redirect, refused, textReply } from './headers'
 import { pictureRoute } from './picture-route'
 import { removeSignoff, signOff } from './signoffs'
@@ -100,6 +101,12 @@ export const VISITOR_ROUTES: VisitorRoute[] = [
     method: 'GET',
     path: new RegExp(`^/l/${SLUG}/p/${VARIANT}/([0-9]{1,16})$`),
     handler: pictureRoute,
+  },
+  {
+    name: 'clip',
+    method: 'GET',
+    path: new RegExp(`^/l/${SLUG}/c/${VARIANT}/([0-9]{1,16})$`),
+    handler: clipRoute,
   },
   { name: 'robots', method: 'GET', path: /^\/robots\.txt$/, handler: robots },
 ]

@@ -8,7 +8,7 @@ A reviewer opens a video variant in the gallery and watches the real MP4, with s
 
 ## Status
 
-R2V-1 is built. Slices R2V-2 to R2V-8 below are not; they are placed among R2A-1 to R2A-9 in the wave table.
+R2V-1 and R2V-2 are built (under `next start` the server may drop the clip reply's `Content-Length`; playback works without it). Slices R2V-3 to R2V-8 below are not; they are placed among R2A-1 to R2A-9 in the wave table.
 
 ## Design additions
 
@@ -315,6 +315,7 @@ Service slices run the service checks of `round-2-approvals.md` "Slices" (`cd ap
   - `test/headers.test.ts`: the expected page policy string gains `media-src 'self'; ` after `img-src 'self'; ` (every other header set stays byte-equal); a new whole-set case for `clipHeaders`.
   - `test/routes.test.ts`: any count or list of `VISITOR_ROUTES` grows by the one `clip` row.
   - `test/picture-route.test.ts`: none (the stream helper moves without a behaviour change).
+  - `e2e/gallery.spec.ts`: the `POLICY` pattern gains `media-src 'self'; ` after `img-src 'self'; `.
 - **Exit check:** the service checks.
 - **Security class:** full. **Depends on:** R2V-1, R2A-2 (`headers.ts`, `routes.ts` and their tests); runs beside R2A-8.
 
