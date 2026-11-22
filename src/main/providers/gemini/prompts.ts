@@ -4,6 +4,7 @@
 import { chineseScript } from '@/shared/translation/script'
 import type { Brief } from '@/shared/schemas/brief'
 import type { CopyRole } from '@/main/providers/types'
+import type { TypeStyleOffer } from '@/shared/config/type-styles'
 
 export type LayoutPromptInput = {
   width: number
@@ -11,6 +12,16 @@ export type LayoutPromptInput = {
   items: Array<{ slot: string; text: string }>
   palette: string[]
   fonts: string[]
+  typeStyles?: TypeStyleOffer[]
+}
+
+// R2E-3 (spec/phases/round-2-editor.md D3): only for a project with no font of its own.
+function typeStyleLines(typeStyles: TypeStyleOffer[] | undefined): string[] {
+  if (!typeStyles) return []
+  return [
+    `This ad has no brand fonts. For each box also give typeStyle, one of: ${JSON.stringify(typeStyles)}.`,
+    'Choose a heavier style for the headline and a plainer one for small text.',
+  ]
 }
 
 export function layoutInstruction(input: LayoutPromptInput): string {
@@ -24,6 +35,7 @@ export function layoutInstruction(input: LayoutPromptInput): string {
     'color (#RRGGBB, from the palette when there is one) and align (left, center or right).',
     'Keep the text clear of faces and products, inside the canvas, and large enough to read.',
     'Do not draw the text: give only the boxes.',
+    ...typeStyleLines(input.typeStyles),
   ].join('\n')
 }
 

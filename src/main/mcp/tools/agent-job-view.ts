@@ -2,7 +2,8 @@
 // field is named here, so a column added to the job row later does not leave through MCP.
 // Left out: provider, model, remoteJobId, request and the rest of result (FR-198). A failed
 // run is told in the app's own words, with no address and no server text. P10-5 (A-232): a
-// succeeded layout run gives its boxes, a succeeded copy run its option texts.
+// succeeded layout run gives its boxes, a succeeded copy run its option texts. R2E-3 (round-2-
+// editor.md D3): a box also gives its text box colour and padding and its type style, when set.
 import { fillMarks, plainMessage, reasonMessage } from '@/shared/providers/messages'
 import {
   PROVIDER_ERROR_KINDS,
@@ -11,6 +12,7 @@ import {
 } from '@/shared/schemas/queries/app'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import { MAX_COPY_OPTIONS } from '@/shared/config/copy-options'
+import { isTypeStyleId, type TypeStyleId } from '@/shared/config/type-styles'
 
 export type AgentJobView = Pick<
   JobRow,
@@ -48,6 +50,9 @@ export type LayoutBoxView = {
   fontSize: number
   align: 'left' | 'center' | 'right'
   color: string | null
+  boxColor?: string
+  boxPadding?: number
+  typeStyle?: TypeStyleId | null
 }
 
 type Labels = readonly Pick<ProviderInfo, 'id' | 'label'>[]
@@ -74,8 +79,21 @@ function assetIdsOf(row: JobRow, result: Record<string, unknown>): string[] {
 
 const ALIGNS: ReadonlySet<unknown> = new Set(['left', 'center', 'right'])
 const isAlign = (v: unknown): v is LayoutBoxView['align'] => ALIGNS.has(v)
-const isColor = (v: unknown): v is string | null =>
-  v === null || (isString(v) && /^#[0-9a-f]{6}$/i.test(v))
+const isHex = (v: unknown): v is string => isString(v) && /^#[0-9a-f]{6}$/i.test(v)
+const isColor = (v: unknown): v is string | null => v === null || isHex(v)
+
+// R2E-3: the three look fields, each only when it holds a plain value of its kind.
+function lookOf(b: Record<string, unknown>): Partial<LayoutBoxView> {
+  const { boxColor, boxPadding, typeStyle } = b
+  return {
+    ...(isHex(boxColor) && { boxColor }),
+    ...(Number.isInteger(boxPadding) &&
+      (boxPadding as number) >= 0 && {
+        boxPadding: boxPadding as number,
+      }),
+    ...((typeStyle === null || isTypeStyleId(typeStyle)) && { typeStyle }),
+  }
+}
 
 // The longest copy option an agent is given, in code points (P10-12, review of P10-5).
 const MAX_OPTION_CHARS = 200
@@ -86,14 +104,14 @@ const copyOptionsOf = (result: Record<string, unknown>): string[] =>
     .map((text) => [...text].slice(0, MAX_OPTION_CHARS).join(''))
 
 // Each box by its eight named fields; a box with a field of the wrong type is left out. align
-// is one of the three, color a 6-digit hex or null.
+// is one of the three, color a 6-digit hex or null. The look fields are added when valid.
 function boxOf(v: unknown): LayoutBoxView[] {
   const b = asObject(v)
   const { slot, x, y, width, height, fontSize, align, color } = b
   if (!isString(slot) || !isAlign(align) || !isColor(color)) return []
   if (!isNumber(x) || !isNumber(y) || !isNumber(width) || !isNumber(height)) return []
   if (!isNumber(fontSize)) return []
-  return [{ slot, x, y, width, height, fontSize, align, color }]
+  return [{ slot, x, y, width, height, fontSize, align, color, ...lookOf(b) }]
 }
 
 const boxesOf = (result: Record<string, unknown>): LayoutBoxView[] =>

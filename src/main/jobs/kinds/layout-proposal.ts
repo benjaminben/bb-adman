@@ -3,7 +3,8 @@
 // clampLayout leaves. It writes nothing to the variant: the window applies the boxes with one
 // layer.updateMany. It is an attached kind, so the runner ends a cancelled one at once and
 // keeps no result, whatever the call answers after. R2E-2 (spec/phases/round-2-editor.md D2):
-// after the clamp, each box is checked against the same picture so its text can be read.
+// after the clamp, each box is checked against the same picture so its text can be read. R2E-3
+// (D3): a project with no font of its own is offered the built-in type styles.
 import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { readWireRow } from '@/main/db/rows'
@@ -17,6 +18,7 @@ import { variantLayers } from '@/main/thumbnails/scene-input'
 import type { Pixels } from '@/shared/generation/contrast'
 import { clampLayout } from '@/shared/generation/layout-clamp'
 import { keepReadable } from '@/shared/generation/layout-readable'
+import { TYPE_STYLE_IDS, typeStylePrompt } from '@/shared/config/type-styles'
 import type { LayoutJobResult } from '@/shared/schemas/jobs/layout-proposal'
 import type { AssetRow } from '@/shared/schemas/rows/asset'
 import type { JobRow } from '@/shared/schemas/rows/job'
@@ -52,6 +54,14 @@ function fonts(project: ProjectHandle, layers: LayerRow[]): string[] {
     if (asset?.fontFamily) names.add(asset.fontFamily)
   }
   return [...names]
+}
+
+// "No fonts of its own": the project's asset library holds no font (D3).
+function hasOwnFont(project: ProjectHandle): boolean {
+  const row = project.db
+    .prepare(`SELECT 1 FROM asset WHERE library = 'asset' AND kind = 'font' LIMIT 1`)
+    .get()
+  return row !== undefined
 }
 
 // The drawn picture's pixels, or null when they cannot be read: then the check is skipped
@@ -100,11 +110,14 @@ async function runLayoutJob(
     items,
     palette: palette(project, job.campaignId),
     fonts: fonts(project, layers),
+    ...(!hasOwnFont(project) && { typeStyles: typeStylePrompt() }),
   }
   const provider = layoutFor(jc.deps, providerId)
   const answer = await jc.call(() => provider.propose(input, runOptions(jc)))
   const keys = items.map((item) => item.slot)
-  const boxes = clampLayout(answer, { ...input, keys })
+  const { width, height, palette: colours } = input
+  const offered = input.typeStyles ? { typeStyles: TYPE_STYLE_IDS } : {}
+  const boxes = clampLayout(answer, { width, height, palette: colours, keys, ...offered })
   if (boxes.length === 0) {
     throw new ProviderFailure({ kind: 'other', detail: 'No usable layout in the answer' })
   }
