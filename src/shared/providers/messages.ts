@@ -61,6 +61,12 @@ const REASONS: Record<ProviderErrorReason, string> = {
     "The results could not be saved in the project's assets folder. Check that the folder can be written to, then try again.",
   results_not_added: 'The results were made but could not be added to the project. Try again.',
   target_gone: 'The layer or variant this run was for has been deleted.',
+  // P9-1: the publish job's reasons.
+  dropbox_signed_out: "Dropbox no longer accepts Adman's sign-in. Sign in again in Settings.",
+  export_not_built: 'Publishing needs export, which this version does not have yet.',
+  export_failed: 'The export for this publish failed. Nothing was replaced.',
+  work_folder_unsafe:
+    "Adman's work folder for publishing is not safe to use. Nothing was published.",
 }
 
 export function reasonMessage(reason: ProviderErrorReason): string {

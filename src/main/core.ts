@@ -33,6 +33,9 @@ import { languageFontCommands } from './commands/language-font'
 import { layerCommands } from './commands/layer'
 import { mcpCommands } from './commands/mcp'
 import { projectCommands } from './commands/project'
+import { publishCommands } from './commands/publish'
+import { createPublishDeps } from './publish/deps'
+import { defaultDropboxFetch, type DropboxFetch } from './providers/dropbox/fetch'
 import { ruleSetCommands } from './commands/rule-set'
 import { secretCommands } from './commands/secret'
 import { settingsCommands } from './commands/settings'
@@ -78,6 +81,8 @@ export type CoreOptions = {
   exportPictures?: ExportPictures
   // P7-4's media tool over the fetched FFmpeg; index.ts fills it.
   media?: MediaTool
+  // Phase 9: tests send Dropbox calls to the stand-in through it.
+  dropboxFetch?: DropboxFetch
 }
 
 const noBrowser = async (): Promise<void> => {
@@ -158,6 +163,8 @@ export function createCore(opts: CoreOptions) {
     export: createExportDeps(() => deps),
     exportPictures: opts.exportPictures ?? noPictures,
     media: opts.media ?? noMediaTool,
+    publish: createPublishDeps(),
+    dropboxFetch: opts.dropboxFetch ?? defaultDropboxFetch,
     appVersion: opts.appVersion,
     now,
     userDataDir: opts.userDataDir,
@@ -204,6 +211,7 @@ export function createCore(opts: CoreOptions) {
     ...layerCommands(deps),
     ...mcpCommands(mcp),
     ...projectCommands(deps),
+    ...publishCommands(deps),
     ...ruleSetCommands(deps),
     ...secretCommands(deps),
     ...settingsCommands(deps, mcp),
