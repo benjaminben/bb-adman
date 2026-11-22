@@ -23,13 +23,13 @@ export const NEWER_VERSION_MESSAGE =
   'This project was made with a newer version of the app. Download the latest version to open it.'
 const LOCKED_MESSAGE = 'This project is open in another copy of the app.'
 
-function sqliteCode(e: unknown): string | undefined {
+function errorCode(e: unknown): string | undefined {
   return typeof e === 'object' && e !== null && 'code' in e ? String(e.code) : undefined
 }
 
 function mapOpenError(e: unknown): unknown {
   if (e instanceof AppError) return e
-  const code = sqliteCode(e) ?? ''
+  const code = errorCode(e) ?? ''
   if (code.startsWith('SQLITE_BUSY') || code.startsWith('SQLITE_LOCKED')) {
     return new AppError('PROJECT_LOCKED', LOCKED_MESSAGE)
   }
@@ -98,6 +98,29 @@ function handle(db: Database.Database, filePath: string): ProjectHandle {
   return { db, orm: drizzle({ client: db, schema }), filePath, projectId }
 }
 
+const fileExists = () =>
+  new AppError('RULE_VIOLATION', 'A file with this name already exists in that folder.', {
+    reason: 'file_exists',
+  })
+
+// R2P-8 (D8): any entry at the name refuses, a link that leads nowhere included, so nothing
+// already there is replaced or followed. lstat looks at the entry itself; the exclusive create
+// ('wx') then makes the empty file without following a link, so an entry that appears between
+// the two steps refuses too.
+function claimNewFile(filePath: string): void {
+  try {
+    fs.lstatSync(filePath)
+    throw fileExists()
+  } catch (e) {
+    if (e instanceof AppError || errorCode(e) !== 'ENOENT') throw e
+  }
+  try {
+    fs.closeSync(fs.openSync(filePath, 'wx'))
+  } catch (e) {
+    throw errorCode(e) === 'EEXIST' ? fileExists() : e
+  }
+}
+
 export function createProjectFile(opts: {
   filePath: string
   name: string
@@ -106,13 +129,10 @@ export function createProjectFile(opts: {
   migrations?: Migration[]
 }): ProjectHandle {
   const migrations = opts.migrations ?? bundledMigrations
-  if (fs.existsSync(opts.filePath)) {
-    throw new AppError('RULE_VIOLATION', 'A file with this name already exists in that folder.', {
-      reason: 'file_exists',
-    })
-  }
-  const db = connect(opts.filePath, null)
+  claimNewFile(opts.filePath)
+  let db: Database.Database | undefined
   try {
+    db = connect(opts.filePath, null)
     const assetsDirRel = `${opts.name} Assets`
     runMigrations(db, migrations, 0)
     writeMeta(db, {
@@ -125,7 +145,7 @@ export function createProjectFile(opts: {
     })
     return handle(db, opts.filePath)
   } catch (e) {
-    db.close()
+    db?.close()
     fs.rmSync(opts.filePath, { force: true })
     throw e
   }
