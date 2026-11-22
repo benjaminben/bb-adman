@@ -45,7 +45,7 @@ describe("the runner's untick check, for a job waiting its turn [AR-2]", () => {
     // [case, provider, ticks while the job waits, the agent job's end]
     ['unticked while waiting (test 1)', 'fake', [false], 'cancelled'],
     ['unticked, then ticked again before its turn (test 4)', 'fake', [false, true], 'succeeded'],
-    ['a hand-edited tick for a refused provider (test 5)', 'fal-seedance', [], 'cancelled'],
+    ['a hand-edited tick for a refused provider (test 5)', 'firefly', [], 'cancelled'],
     ['Gemini, unticked while waiting (test 7)', 'gemini', [false], 'cancelled'],
   ] as const)('%s', async (_name, provider, ticks, end) => {
     const x = fixture()

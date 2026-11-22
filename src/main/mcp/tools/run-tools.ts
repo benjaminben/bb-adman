@@ -9,6 +9,8 @@ import {
   generationStartVideoAgentInput,
 } from '@/shared/schemas/commands/generation'
 import { jobCancelInput, type JobStarted } from '@/shared/schemas/commands/job'
+import { MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
+import { videoOffer } from '@/shared/config/video-offers'
 import type { ReplyPicker } from './read-replies'
 import type { ToolDef } from './table'
 import { LEAVE_THE_CHOICE, PROVIDER_WORDS } from './tool-words'
@@ -17,6 +19,19 @@ import { LEAVE_THE_CHOICE, PROVIDER_WORDS } from './tool-words'
 export const jobIdOnly: ReplyPicker = (data) => ({ jobId: (data as JobStarted).jobId })
 
 const FOLLOW = 'Gives the job ID at once; follow the run with get_job.'
+
+// P7-15: fal.ai Seedance, for videos only. Its lengths come from the offer table; its reference
+// count is the smaller of the offer's and the app's input cap.
+function falWords(): string {
+  const offer = videoOffer('fal-seedance')
+  if (!offer) return ''
+  const references = Math.min(offer.maxReferences, MAX_REFERENCES_PER_RUN)
+  return (
+    'For a video, provider can also be "fal-seedance" (fal.ai Seedance; paid, charged to ' +
+    `the user's fal.ai account with no click; duration_ms from ${offer.minMs} to ` +
+    `${offer.maxMs}, in whole seconds; at most ${references} reference pictures).`
+  )
+}
 
 export const RUN_TOOLS: readonly ToolDef[] = [
   {
@@ -42,7 +57,7 @@ export const RUN_TOOLS: readonly ToolDef[] = [
       'reference_asset_ids). A picture is named by an asset ID from list_assets. A fourth ' +
       'start, "background" (use_references false, reference_asset_ids empty), uses the ' +
       "variant's background picture as the first frame. " +
-      `${PROVIDER_WORDS} ${FOLLOW} ${LEAVE_THE_CHOICE}`,
+      `${PROVIDER_WORDS} ${falWords()} ${FOLLOW} ${LEAVE_THE_CHOICE}`,
     kind: 'command',
     target: 'generation.startVideo',
     input: generationStartVideoAgentInput,

@@ -51,8 +51,8 @@ describe('agentRunsOffered, the one "tick offered" rule [SPEC agent-runs.md, AR-
     expect(agentRunsOffered(row('fake'))).toBeNull()
   })
 
-  it('gives agent_runs_not_offered for fal-seedance, S3 and Firefly', () => {
-    for (const id of ['fal-seedance', 's3', 'firefly']) {
+  it('gives agent_runs_not_offered for S3 and Firefly', () => {
+    for (const id of ['s3', 'firefly']) {
       expect(agentRunsOffered(row(id)), id).toBe('agent_runs_not_offered')
     }
   })
@@ -136,11 +136,11 @@ describe('agentRuns.setAllowed [SPEC api-commands.md, AR-1]', () => {
   it('refuses a provider agentRunsOffered refuses: RULE_VIOLATION with its reason', async () => {
     f = fixture()
     expect(
-      await f.user('agentRuns.setAllowed', { provider: 'fal-seedance', allowed: true }),
+      await f.user('agentRuns.setAllowed', { provider: 'firefly', allowed: true }),
     ).toMatchObject({
       ok: false,
       error: {
-        message: 'Agents cannot start runs with fal.ai Seedance.',
+        message: 'Agents cannot start runs with Adobe Firefly.',
         details: { reason: 'agent_runs_not_offered' },
       },
     })
