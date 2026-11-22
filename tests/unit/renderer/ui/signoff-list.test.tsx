@@ -12,14 +12,12 @@ const OLD: ApprovalsSignoff = {
   email: 'ben@example.com',
   signedAt: '2026-11-18T11:00:00.000Z',
   version: 3,
-  current: false,
 }
 const NEW: ApprovalsSignoff = {
   id: 's2',
   email: 'ana@example.com',
   signedAt: '2026-11-19T10:00:00.000Z',
   version: 4,
-  current: true,
 }
 
 describe('sign-off list [spec/approvals.md "Sign-off list"]', () => {
@@ -32,7 +30,7 @@ describe('sign-off list [spec/approvals.md "Sign-off list"]', () => {
     const lines = screen.getAllByRole('listitem').map((li) => li.textContent)
     expect(lines).toEqual([
       `ana@example.com · ${timeText(NEW.signedAt)}`,
-      `ben@example.com · ${timeText(OLD.signedAt)} · for an earlier version`,
+      `ben@example.com · ${timeText(OLD.signedAt)}`,
     ])
     expect(screen.getByRole('list', { name: 'Sign-offs for Square post' })).toBeInTheDocument()
     expect(await axeViolations()).toEqual([])

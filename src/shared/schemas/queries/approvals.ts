@@ -12,9 +12,8 @@ export type ApprovalsSignoff = {
   id: string
   email: string
   signedAt: string
+  // Always the variant's currentRev: approvals.forCampaign gives no older sign-off (R-10).
   version: number
-  // The version equals the variant's publishedRev.
-  current: boolean
 }
 
 export type ApprovalsLink = {

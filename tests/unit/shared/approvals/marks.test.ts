@@ -9,7 +9,6 @@ const signoff = (id: string, current: boolean): ApprovalsSignoff => ({
   email: `${id}@example.com`,
   signedAt: '2026-11-19T10:00:00.000Z',
   version: current ? 4 : 3,
-  current,
 })
 
 const entry = (
@@ -36,26 +35,26 @@ const ROWS: Row[] = [
     ['Signed off by 2'],
   ],
   ['ended link keeps the sign-off mark', entry(4, 4, [CUR]), 'ended', ['Signed off by 1']],
-  [
-    'changed, with a current sign-off',
-    entry(5, 4, [CUR]),
-    'live',
-    ['Signed off by 1', 'Changed since sign-off'],
-  ],
   ['changed, no sign-off', entry(5, 4), 'live', ['Changed since published']],
   [
-    'changed, only earlier sign-offs',
-    entry(6, 5, [OLD]),
+    'published rev differs, a sign-off of the current rev',
+    entry(4, 3, [CUR]),
     'live',
-    ['Changed since published', 'Earlier version signed off'],
+    ['Signed off by 1'],
   ],
   ['live link, not in the gallery', entry(4, null), 'live', ['Not in the gallery']],
-  ['unchanged, only earlier sign-offs', entry(5, 5, [OLD]), 'live', ['Earlier version signed off']],
   [
-    'ended link, not in the gallery, earlier sign-offs',
-    entry(4, null, [OLD]),
+    'ended link, not in the gallery, a sign-off of the current rev',
+    entry(4, null, [CUR]),
     'ended',
-    ['Earlier version signed off'],
+    ['Signed off by 1'],
+  ],
+  ['an older sign-off in the reply is not counted', entry(5, 5, [OLD]), 'live', []],
+  [
+    'changed, an older sign-off in the reply',
+    entry(6, 5, [OLD]),
+    'live',
+    ['Changed since published'],
   ],
   ['in the gallery, unchanged, nothing signed', entry(4, 4), 'live', []],
 ]

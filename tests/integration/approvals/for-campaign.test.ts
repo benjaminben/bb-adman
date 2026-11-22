@@ -7,7 +7,14 @@ import { APPROVALS_QUERY_DENIED } from '@/shared/approvals/messages'
 import type { ApprovalsForCampaign } from '@/shared/schemas/queries/approvals'
 import type { CampaignGet } from '@/shared/schemas/queries/campaign'
 import { data } from '../core-fixture'
-import { makeLinkFixture, pair, setUp, type LinkFixture, type SetUpParts } from './link-fixture'
+import {
+  bumpRev,
+  makeLinkFixture,
+  pair,
+  setUp,
+  type LinkFixture,
+  type SetUpParts,
+} from './link-fixture'
 
 const PASSWORD = 'the-link-password-00001'
 const asUser = { actor: 'user' as const }
@@ -105,10 +112,33 @@ describe('approvals.forCampaign [spec/approvals.md "Queries and the event"]', ()
     plantSignoff('B'.repeat(24), first, 2, 'sam@client.example.com')
     const v = (await forCampaign()).variants.find((x) => x.variantId === first)
     expect(v?.publishedRev).toBe(3)
-    expect(v?.signoffs).toEqual([
-      expect.objectContaining({ id: 'A'.repeat(24), version: 3, current: true }),
-      expect.objectContaining({ id: 'B'.repeat(24), version: 2, current: false }),
+    expect(v?.signoffs).toEqual([])
+  })
+
+  it('gives only the sign-offs for the current rev, and none once the variant is edited [R-10]', async () => {
+    await withLink()
+    const [first = ''] = (await forCampaign()).variants.map((v) => v.variantId)
+    lf.db().prepare('UPDATE variant SET rev = 3 WHERE id = ?').run(first)
+    plantSignoff('E'.repeat(24), first, 3, 'pat@client.example.com')
+    plantSignoff('F'.repeat(24), first, 2, 'sam@client.example.com')
+    const at3 = (await forCampaign()).variants.find((x) => x.variantId === first)
+    expect(at3?.currentRev).toBe(3)
+    expect(at3?.signoffs).toEqual([
+      {
+        id: 'E'.repeat(24),
+        email: 'pat@client.example.com',
+        signedAt: '2026-11-02T10:00:00.000Z',
+        version: 3,
+      },
     ])
+    bumpRev(lf, first)
+    const at4 = (await forCampaign()).variants.find((x) => x.variantId === first)
+    expect(at4?.currentRev).toBe(4)
+    expect(at4?.signoffs).toEqual([])
+    const kept = lf.db().prepare('SELECT COUNT(*) AS n FROM approval_signoff').get() as {
+      n: number
+    }
+    expect(kept.n).toBe(2)
   })
 
   it.each([
@@ -132,8 +162,8 @@ describe('approvals.forCampaign [spec/approvals.md "Queries and the event"]', ()
     await withLink()
     const [first = ''] = (await forCampaign()).variants.map((v) => v.variantId)
     const bad = '<img src=x onerror=alert(1)>@client.example.com'
-    plantSignoff('C'.repeat(24), first, 1, bad)
-    plantSignoff('D'.repeat(24), first, 1, 'ok@client.example.com')
+    plantSignoff('C'.repeat(24), first, 0, bad)
+    plantSignoff('D'.repeat(24), first, 0, 'ok@client.example.com')
     const result = await forCampaign()
     const all = result.variants.flatMap((v) => v.signoffs)
     expect(all.map((s) => s.id)).toEqual(['D'.repeat(24)])
