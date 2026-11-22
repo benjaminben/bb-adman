@@ -1,6 +1,6 @@
 # App style — the prototype's look in the real app
 
-**Status:** designed, not built. Build plan: `spec/phases/app-style.md` (slices ST-1 to ST-14).
+**Status:** Built (ST-1 to ST-14). Build plan: `spec/phases/app-style.md`.
 
 **Goal:** the built screens take the look of the design prototype (`design/prototype/`, round 3) without any change to what they do. D-084 stays: every value comes from `src/renderer/ui/tokens.css`, so one edit there restyles every component.
 

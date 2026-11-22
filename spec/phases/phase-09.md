@@ -9,14 +9,14 @@
 ## Exit criteria
 
 - On `main`: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run test:build` and `npm run test:e2e` pass. `npm test` includes the named tests of this phase: campaign folder isolation (`tests/integration/publish/campaign-folder-isolation.test.ts`), the storage conformance cases against the Dropbox stand-in, the sign-in listener tests and the policy table test.
-- `tests/e2e/publish.spec.ts` passes: the built app publishes the example campaign to the fake provider's storage, shows the replace warning on the second publish, and the second manifest says publish 2.
+- `tests/e2e/publish.spec.ts` passes: the built app publishes a made-up campaign to the fake storage (`{userData}/fake-storage`), shows the replace warning on the second publish, and the second manifest says publish 2.
 - The hand-test screen, `dev.storage`, `{userData}/hand-test-local` handling and the four `HAND_TEST_*` constants are gone; a search of `src/` and `tests/` finds none of them.
 - Shots 270 to 280 made and named in the slice reports.
 - No agent signed in to Dropbox, opened the Dropbox sign-in page, contacted the real Dropbox or a real bucket, or ran `npm run test:live`.
 
 **Left for the stakeholder** (each after merge, with his own accounts; none blocks the merge):
 
-- **OI-18 hand proof, Dropbox.** Sign in to Dropbox from Settings: the browser opens Dropbox's page, and after approval Settings shows "Signed in as {name}". Publish the example campaign to Dropbox: the layout of `spec/storage-and-publish.md`, "Published layout", appears under `Apps/{app folder}/{root folder}/{campaignId}/`, with `manifest.json`. Delete one variant, publish again: the dialog shows the replace warning, the report header says publish 2, and the deleted variant's files are gone. Sign out: Settings shows "Not signed in", and the app is no longer listed under the Dropbox account's connected apps.
+- **OI-18 hand proof, Dropbox.** Sign in to Dropbox from Settings: the browser opens Dropbox's page, and after approval Settings shows "Signed in as {name}". Publish a campaign to Dropbox: the layout of `spec/storage-and-publish.md`, "Published layout", appears under `Apps/{app folder}/{root folder}/{campaignId}/`, with `manifest.json`. Delete one variant, publish again: the dialog shows the replace warning, the report header says publish 2, and the deleted variant's files are gone. Sign out: Settings shows "Not signed in", and the app is no longer listed under the Dropbox account's connected apps.
 - **Hand publish, S3.** The same publish, re-publish and clean-up with his own bucket.
 - **Live Dropbox test.** `npm run test:live -- tests/live/dropbox.live.test.ts` with his short-lived token in `.env.local` (one file uploaded, listed, removed).
 - **Windows** (D-087): the Dropbox sign-in and one publish.

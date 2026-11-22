@@ -119,16 +119,12 @@ One line each; none blocks an exit slice unless it says so. Security-class items
 - Sign-out: keep its flag as a counter, or refuse a second sign-out while one runs (P9-6 review, L2).
 - A sign-in refused during a sign-out reuses "A Dropbox sign-in is already waiting for the browser."; give it its own sentence.
 
-### Export
-
-- P8-16's four review lows are in P8-17's slice text; nothing more here.
-
 ### Agent tools
 
 - `campaignCreateFields`: cap the `sizes` and `languages` arrays and the length of each language; `logoImage` adds `library: 'asset'`; check each language's form (P10-10 review). Security class: no (export's `adPath` refuses a bad language).
 - `layer.update`: bound the `timing` and `animation` numbers in the schema; agents reach them through `update_layer` (P7-19 review, hardening).
 - `undoClipId` and `redoClipId`: check the ULID form (P7-10b review, L1).
-- Tool descriptions: `get_job`'s should name `layout` and `copyOptions`; `PROVIDER_WORDS` still calls Gemini "pictures only" (A-247). For P10-14's read of every description.
+- Tool descriptions: `get_job`'s should name `layout` and `copyOptions`; `PROVIDER_WORDS` still calls Gemini "pictures only" (A-247). Still owed after P10-14.
 - A tool call the SDK refuses before the handler is not logged; say so in the spec or log it (P10-8 review, L2).
 
 ### Editor and video
@@ -139,16 +135,26 @@ One line each; none blocks an exit slice unless it says so. Security-class items
 - The length field rounds 0.35 s to 0.3 s (floating point) (P7-19).
 - `video_not_built` in `src/shared/video/messages.ts` may now be unused (P7-16).
 - The header comment of `src/renderer/screens/campaign/video-start.ts` is out of date (P7-22).
+- A generated clip shows its asset ID as its name on the timeline; give it a readable name.
+- The first clip (made when a post is changed to video) does not stretch when the ad's length is changed later (A-180).
+- A new direction copies the master's title, so tiles in two directions share a name.
+- For the last style slice (ST-14): with the Activity panel open, the "Publish…" button wraps under the campaign title; the "Agent working" line covers the start of the editor's size label.
 
 ### fal
 
 - A run started from a prompt should name the text-to-video endpoint as the job's model; the row's default model is the image-to-video one (P7-11, P7-14 notes).
-- Out-of-date comments: `src/main/providers/fal-seedance/index.ts`; the fal row in `tests/unit/renderer/fake-api.ts`.
+- The fal row in `tests/unit/renderer/fake-api.ts` has an out-of-date comment.
+
+### Stale code comments
+
+- `src/main/providers/fal-seedance/index.ts` (still says `available: false` until P7-15).
+- `tests/e2e/launch.ts` and `tests/e2e/workflow-5-1.spec.ts` (still name the "hand-test tools").
+- `src/shared/schemas/queries/mcp.ts`.
 
 ### Bridge mode (security class, before the release)
 
-- In bridge mode, put Chromium's own session files in a temporary folder (`app.setPath('sessionData', …)`), with a test that the app data folder's listing is unchanged; this also avoids a Windows race on Chromium's `Local State` file (P10-9 review, Low 1).
-- A packaged app ignores `ADMAN_USER_DATA_DIR`, and the packaging slice sets the Electron fuses `RunAsNode`, `EnableNodeCliInspectArguments` and `EnableNodeOptionsEnvironmentVariable` off (P10-9 review, Low 2).
+- On Windows the bridge may need Chromium's `Local State` file copied into its temporary session folder, so `safeStorage` can decrypt the token there (`spec/open-items.md`, "Windows test"). Do it only if the stakeholder's Windows check fails.
+- The packaging slice sets the Electron fuses `RunAsNode`, `EnableNodeCliInspectArguments` and `EnableNodeOptionsEnvironmentVariable` off (P10-9 review, Low 2).
 
 ### Tests
 

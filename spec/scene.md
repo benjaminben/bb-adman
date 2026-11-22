@@ -136,6 +136,7 @@ Built (LK-3, `shade-css.ts`, `picture-layer.tsx`) [D-094]. Look values come from
 
 - **Background colour.** A background layer whose `fillColor` is set draws it as the box's `background-color` (`rgbCss`), under its picture, with the box's opacity. With no picture it is a flat colour. Null, absent or not a usable colour draws nothing, so the black root shows as before. An image layer's `fillColor` is ignored by the Scene (and refused by `layer.update`).
 - **Shade.** A background or image layer whose `shade` is set draws one more element after the `<img>`, inside the box: `position: absolute`, `inset: 0`, `pointer-events: none`. So it covers the whole box, turns with it, is cut by the box's `overflow: hidden` as the picture is, and fades with the box's opacity. It is drawn with or without a picture (A-75).
+- **Shade over a gap.** On an image variant the background's shade is always drawn. On a video variant it is drawn only where a clip covers the time; in a gap between clips nothing is drawn, so the gap is black. The editor and export agree: `ClipTrack` draws an empty box in a gap, and the overlay-only draw (`ShadeOnly` in `scene.tsx`, A-202) draws the shade alone, not the colour or picture, only where a clip covers the time.
 - **`shadeCss(shade)`.** For `all`: `background-color: rgbCss(color, strength)`. For a side, the shade is strongest at that side: `from: bottom` gives `linear-gradient(to top, …)`, `top` gives `to bottom`, `left` gives `to right`, `right` gives `to left` (a fixed table). `SHADE_STOPS` holds three stops, each a share of `reach` and a share of `strength`: at `reach × 0 %` alpha `strength × 1`, at `reach × 50 %` alpha `strength × 0.45`, at `reach × 100 %` alpha 0; positions are written with at most 4 decimals. `strength` is clamped to 0..1 and `reach` to 0.05..1 (A-76). A strength or reach that is not a finite number, an unknown side, or a colour `rgbCss` refuses drops the whole shade: no element is drawn.
 
 ### Fonts
@@ -296,13 +297,12 @@ Built (`paths.ts`, `cache.ts`). Security class, short review: file names come fr
 
 ## Left for later phases
 
-- Time, presets and background clips in the Scene (Phase 7).
+- Time, presets and background clips in the Scene are built (Phase 7); their design is in `spec/phases/phase-07.md`, "Design additions".
 - Drawing at full size past 2,048 pixels, and the exported-file test of FR-245 (Phase 8).
 - `render_variant` for agents (Phase 10) calls `variant.render`; its `hide_text` choice adds a Scene prop then.
 - A WebP decoder window (slice WP) is a separate hidden window with its own rules; it does not share the render window.
 - **The look fields** (`spec/phases/look-pack.md`) in later phases. They are part of `style`:
   - Fan-out and links (Phase 5) copy them with the rest of `style`; a linked layer follows them and overrides them as style. Fan-out does not scale padding, radius or outline (geometry follows by pixel size only, D-013).
   - Translation (Phase 6) copies them unchanged; all capitals applies to the translated text as drawn.
-  - Video and export (Phases 7 and 8): `overlay-only` leaves out the background layer, and so its colour and shade. Text laid over a video must still get the background's shade: Phase 8 draws it (the shade alone, or in the overlay).
   - MCP layer tools (Phase 10) take them with the same checks as `layer.update`.
   - The AI layout proposal (Phase 4) is not changed now; a later slice may let it choose a starter layout, a text box or a shade.

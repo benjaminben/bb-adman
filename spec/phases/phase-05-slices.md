@@ -89,7 +89,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Exists when done:** `gemini/image.ts` `extend` sends one call as the design says and returns one picture, with the same answer, size and error rules as `generate`.
 - **May touch:** `src/main/providers/gemini/image.ts`, `prompts.ts`.
 - **Tests first:** `tests/unit/main/providers/gemini/extend.test.ts` with the recorded transport: `parts` is the prompt then one `inlineData` PNG part; `aspectRatio` is the nearest to the target (1080×1920 gives `9:16`); a good answer gives the picture; the signal fires before the call (`ProviderCancelled`); no picture in the answer (`other`); a 429 (`quota`); the timeout (`timeout`). One recorded-answer case per kind where `errors.test.ts` does not already cover the shared path.
-- **Live:** `tests/live/gemini-extend.live.test.ts`, written but not run here (P5-19 runs it once).
+- **Live:** `tests/live/gemini-extend.live.test.ts`, run once after P5-19 and passed; not repeated.
 - **Approved edits to existing tests:** a test that expects `extend` to throw "not built yet", if one exists.
 - **Exit check:** lint, typecheck, `tests/unit/main/providers/gemini/`.
 - **Class:** E. **Security class, full review:** a new network call (through the pinned client only, key redacted, no redirect).

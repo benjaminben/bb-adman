@@ -1,6 +1,6 @@
 # Links, overrides, sync, fan-out and directions
 
-Not built (Phase 5; slices in `spec/phases/phase-05.md` and `phase-05-slices.md`). How one master drives the variants of its direction: the follow rules, out-of-date, overrides, sync, fan-out, generative fill, directions, adding and deleting variants, and the campaign undo list. Read with `spec/data-model-campaign.md` (the tables) and `spec/data-rules.md` (data flow). The screens are in `spec/screens-variants.md`. Phase 5's assumptions (A-128 to A-149) are in `spec/phases/phase-05.md`.
+Built (Phase 5, P5-1 to P5-19; slices in `spec/phases/phase-05-slices.md` and `phase-05-screens.md`). How one master drives the variants of its direction: the follow rules, out-of-date, overrides, sync, fan-out, generative fill, directions, adding and deleting variants, and the campaign undo list. Read with `spec/data-model-campaign.md` (the tables) and `spec/data-rules.md` (data flow). The screens are in `spec/screens-variants.md`. Phase 5's assumptions (A-128 to A-149) are in `spec/phases/phase-05.md`.
 
 No schema change: every column used here exists, and `generative_fill` is already in the `job_kind` check. Phase 5 adds no migration.
 

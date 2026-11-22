@@ -20,7 +20,7 @@
 
 - **Still-picture export, the folder layout, the report and the screens need only Phases 1 to 4** plus P8-1. The render service, the render window, local storage, the folder picker, `campaign.paidCount`, the `report` and `variant_check` tables are built.
 - **Check results in the report** wait for Phase 6's check engine (P8-13). Until then the report says the checks were not run.
-- **Video export** waits for Phase 7: the FFmpeg binary and its locator (P8-16), and the Scene's time, presets, clips and sound data (P8-17). Until then a video ad fails with "Video export is not built yet."
+- **Video export** is built: the FFmpeg binary and its locator (P8-16), and the Scene's time, presets, clips and sound (P8-17).
 - **Packaging** waits for Phase 7's fetch script and OI-09 (P8-18).
 - **Phase 9** (publish) runs a fresh export through this phase's writer (`ExportTarget`, below).
 
@@ -194,8 +194,8 @@ type Report = {
 - **Work folder:** `{userData}/export-work/{jobId}/` (ULID checked, made with `lstat` checks as the thumbnail folders are). FFmpeg writes only there; the finished MP4 is streamed into the output folder through `exportTarget`. The folder is removed at the job's end and every leftover is removed at app start. FFmpeg is never given the output folder.
 - **FFmpeg inputs:** each clip's source from `AssetService.resolve`, `realpath`, a regular file, passed as `file:{path}` after `-protocol_whitelist file,pipe`. The frame stream is `pipe:0`. The filter graph holds only numbers and fixed names; a test refuses any graph with a character outside `[0-9a-z_=:,;\[\].\-]` or the words `movie` or `amovie`.
 - **Encoders:** macOS `h264_videotoolbox`, Windows `h264_mf`, as the topic file says. Any other system: the ad fails with "Video export works on macOS and Windows only."
-- **Shade over video:** in `overlay-only`, the Scene draws the background layer's shade (not its colour or picture) so text over a clip keeps it.
-- **Sound:** as `spec/export-and-checks.md`, "Sound in export", once Phase 7's data exists; before CQ-32 is answered the export is silent (`-an`).
+- **Shade over video:** in `overlay-only`, the Scene draws the background layer's shade (not its colour or picture) so text over a clip keeps it, and only where a clip covers the time (`spec/scene.md`, "Shade over a gap").
+- **Sound:** built (P8-17), as `spec/export-and-checks.md`, "Sound in export", says: the one chosen source, encoded with FFmpeg's own `aac` at 192k; `-an` when there is none.
 - **Report still:** `-ss {durationMs / 2000} -i file:{out.mp4} -frames:v 1 -f image2pipe -c:v png pipe:1`, then `shrink`.
 
 ## Assumptions
@@ -230,11 +230,9 @@ type Report = {
 3. **Phase 7's FFmpeg locator name.** Recommendation: `ffmpegPath()` in `src/main/video/ffmpeg-path.ts`, null when the binary is not there.
 4. **Does publish's fresh export add a `report` row and an export number?** Recommendation: no; publish has its own number (FR-241). Phase 9 rules; `runExport` takes `record: boolean`.
 5. **A list of the files an export will replace, shown first?** Recommendation: no; the dialog's one sentence is enough (A-193).
-6. **CQ-32, sound.** If unanswered when P8-17 runs, the export stays silent.
 
 ## Notes on the design as written
 
-- `spec/export-and-checks.md` says the checks are "Phase 8 for export"; Phase 6's outline builds all six. This plan takes them from Phase 6.
 - `spec/infra-and-settings.md` places the FFmpeg source decision in Phase 8; Phase 7 needs it first (outline: "the MP4 embed needs it").
 - "Partial-file rename" is in the export flow, but `localStorageAt` writes in place today; A-194 moves it into local storage.
 - The `Report` in the topic file has `outputDir` (a full local path); A-196 changes the file to the folder's name, because a published report would carry the user's home folder.

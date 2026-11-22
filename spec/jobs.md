@@ -264,9 +264,9 @@ Built. `src/main/providers/fake/` (`behaviour.ts`, `image.ts`, `video.ts`, `layo
 - The fake video provider keeps its runs in memory (tests and hand tests only). It is how the resume path is tested, since no ComfyUI row is resumed.
 - Runner tests use a test-only job kind handler. `tests/integration/jobs/runner-fixture.ts` takes `cancelWaitMs` (default 2_000), `closeWaitMs` (default 50), `jobsAtOnce` (default 3, so older tests keep running at three) and `secrets`, and returns `project` and `projects`.
 
-## What later phases add
+## What later phases added
 
-Not built.
+Built.
 
-- **Phase 7: video resume into the ad.** Resume already checks and fetches a left-over run. Phase 7 adds the clip to the variant's track (first free position) when the run ends, also for a resumed run, embeds details in the MP4 through FFmpeg (`details: 'pending'` goes away), and fills the clip row's `width`, `height`, `duration_ms`. The fal.ai Seedance adapter (slice J) must first find out whether fal charges for a status call or fetch: if it does, or that cannot be shown, fal rows are not resumed and end as interrupted. Slice J also says whether a resumed status call counts in `paid_calls`, and how a close treats a fal run that will still be charged (OI-51, OI-60).
-- **`export` and `publish`** become background job kinds with the phases that build them (`spec/export-and-checks.md`, `spec/storage-and-publish.md`). `generative_fill` and `translation` become attached kinds with theirs.
+- **Phase 7: video resume into the ad** (P7-16). When a run ends, also a resumed one, the clip goes on the variant's track at the first free position, its details are embedded in the MP4 through FFmpeg (`details: 'pending'` only when no FFmpeg is there), and the clip's `width`, `height` and `duration_ms` come from the file. fal status, result and download calls are treated as free (A-173), so fal rows are resumed; a resumed status call adds nothing to `paid_calls`; a close leaves a started fal run running and the next open collects it (A-174, `spec/cancel.md`).
+- **`export` and `publish`** are background job kinds (`spec/export-and-checks.md`, `spec/storage-and-publish.md`). `generative_fill` and `translation` are attached kinds.

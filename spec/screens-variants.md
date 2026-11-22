@@ -1,6 +1,6 @@
 # Screens: variants, directions, fan-out and sync
 
-Not built (Phase 5; slices P5-14 to P5-18 in `spec/phases/phase-05-slices.md`). The campaign overview's grids per direction, the campaign's Undo and Redo, the tile's actions, quick look, the fan-out dialog, the sync review and the direction dialogs. The commands are in `spec/links-and-sync.md`. Every rule of `spec/screens.md` ("Rules for every screen") and `spec/screens-campaign.md` ("Rules for these screens") holds: one folder per component, CSS from `src/renderer/ui/tokens.css` only, dialogs on `ui/dialog-frame/`, a refusal shown in the dialog as well as the banner, counts with "(s)". No new token is expected.
+Built (Phase 5; slices P5-14 to P5-19 in `spec/phases/phase-05-screens.md`). The campaign overview's grids per direction, the campaign's Undo and Redo, the tile's actions, quick look, the fan-out dialog, the sync review and the direction dialogs. The commands are in `spec/links-and-sync.md`. Every rule of `spec/screens.md` ("Rules for every screen") and `spec/screens-campaign.md` ("Rules for these screens") holds: one folder per component, CSS from `src/renderer/ui/tokens.css` only, dialogs on `ui/dialog-frame/`, a refusal shown in the dialog as well as the banner, counts with "(s)". No new token is expected.
 
 These are choices made without a design sign-off; the UI pass may change any of them.
 

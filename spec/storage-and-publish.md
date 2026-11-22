@@ -47,7 +47,7 @@ The path rules are a last check, not a name cleaner. Code that builds a storage 
 
 ### Conformance test
 
-Built. `tests/integration/providers/storage-conformance.ts` is one set of cases written against `StorageProvider`: write then `exists`; write then `read` gives the same bytes; `list` shows what was written and nothing outside the prefix; `remove` removes only the named paths; a path with `..` is refused; plus the `list` rules above. In CI it runs against the local implementation on a temporary folder, and nowhere else. There is no fake storage. `npm run test:live` runs the same cases against a real S3 bucket. A live run prints a failure only when it was not expected: a case that expects a refusal prints nothing for it.
+Built. `tests/integration/providers/storage-conformance.ts` is one set of cases written against `StorageProvider`: write then `exists`; write then `read` gives the same bytes; `list` shows what was written and nothing outside the prefix; `remove` removes only the named paths; a path with `..` is refused; plus the `list` rules above. In CI it runs against the local implementation on a temporary folder, and nowhere else. `npm run test:live` runs the same cases against a real S3 bucket. A live run prints a failure only when it was not expected: a case that expects a refusal prints nothing for it.
 
 `src/main/providers/**` counts toward the `src/main/**` coverage threshold (`spec/testing.md`).
 
@@ -99,17 +99,17 @@ China regions (`amazonaws.com.cn`) and S3-compatible services are not supported.
 
 ### Live tests
 
-`tests/live/s3.live.test.ts`, under `npm run test:live`. A literal secret is never logged or printed. `LIVE_REDACTED_NAMES` in `tests/live/env-file.ts` (its one owner) is `GEMINI_API_KEY`, `FAL_KEY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. Bucket, region and prefix are not sensitive and are not removed from output.
+`tests/live/s3.live.test.ts`, under `npm run test:live`. A literal secret is never logged or printed. `LIVE_REDACTED_NAMES` in `tests/live/env-file.ts` (its one owner) holds six names: `GEMINI_API_KEY`, `FAL_KEY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DROPBOX_ACCESS_TOKEN`, `DROPBOX_APP_SECRET`. Bucket, region and prefix are not sensitive and are not removed from output.
 
 ## Dropbox
 
-Built (Phase 9, P9-2 to P9-6: the client core, the storage adapter, the sign-in listener, the commands and the Settings part; `spec/phases/phase-09.md`). The live test and the hand proof are P9-15's and the stakeholder's. Built: `DROPBOX_SIGN_IN_PORT = 47822` in `src/main/providers/dropbox/sign-in-port.ts`, its one owner; `src/main/providers/comfyui/own-ports.ts` imports it and no other file under `src/` writes 47822.
+Built (Phase 9, P9-2 to P9-6: the client core, the storage adapter, the sign-in listener, the commands and the Settings part; `spec/phases/phase-09.md`). The live test (written in P9-15) and the hand proof are the stakeholder's to run. Built: `DROPBOX_SIGN_IN_PORT = 47822` in `src/main/providers/dropbox/sign-in-port.ts`, its one owner; `src/main/providers/comfyui/own-ports.ts` imports it and no other file under `src/` writes 47822.
 
 - **Library:** none. The app makes plain HTTPS calls to the Dropbox HTTP API through its own pinned fetch (`src/main/providers/dropbox/pinned-fetch.ts`), not through the Dropbox SDK (A-217).
 - **Sign-in:** OAuth 2 with PKCE in the user's browser, opened through `openExternal` (`https:` only), redirecting to `http://127.0.0.1:47822/oauth/dropbox`. The listener runs on `127.0.0.1:47822` only while a sign-in waits, and checks the `state` value. Scopes: `files.content.write`, `files.content.read`, `files.metadata.read`. Access type: app folder [D-090]. The app can read and write only inside its own folder in the user's Dropbox (`Apps/<app name>/`), and every path the API takes is relative to that folder. The user cannot pick a folder outside it; sharing a published folder with others is done in Dropbox itself.
 - **App key:** `sxcjvdik8esx6mx` [D-007]. A public identifier, not a secret. It lives only in `src/shared/config/public-ids.ts`. The Dropbox app is registered as an app-folder app [D-090]. It also needs the redirect address above and the three scopes switched on in the Dropbox console (OI-18: not yet confirmed). The sign-in uses PKCE and no app secret: an app secret is never read, stored or shipped by the app.
 - **Secret:** `dropbox.refreshToken`. **Settings:** `storage.dropbox = { accountName, rootPath }`. `rootPath` is a path inside the app folder; empty means the app folder itself.
-- **Live test:** `DROPBOX_ACCESS_TOKEN` in `.env.local` is a short-lived token made in the Dropbox console. One live test may use it to upload, list and remove one file, under the paid-call rule in `spec/test-harnesses.md` (Dropbox itself costs nothing). It skips when the token is missing or expired. The token is test-only: the app never reads it. Its value joins `LIVE_REDACTED_NAMES`, with `DROPBOX_APP_SECRET`.
+- **Live test:** `DROPBOX_ACCESS_TOKEN` in `.env.local` is a short-lived token made in the Dropbox console. One live test may use it to upload, list and remove one file, under the paid-call rule in `spec/test-harnesses.md` (Dropbox itself costs nothing). It skips when the token is missing or expired. The token is test-only: the app never reads it. Its value is in `LIVE_REDACTED_NAMES`, with `DROPBOX_APP_SECRET`. The live test is `tests/live/dropbox.live.test.ts`.
 - **A refresh token is never typed.** A missing token leads the user to the sign-in, not the key dialog. No dialog or settings row offers a field for `dropbox.refreshToken`. How the window tells "missing token" from "missing key" is ruled when the Dropbox work is briefed.
 - **Tokens.** Access tokens are short-lived. The adapter gets one from the refresh token when it starts work and again after a 401. Neither token is logged or returned.
 - **Commands:** `storage.dropboxSignIn` returns `{ accountName }`; `storage.dropboxSignOut`. Both `deny` for an agent (rows already in `agent-policy.ts`). See `spec/api-commands.md`.
@@ -167,7 +167,7 @@ Built (AP-10b). The user's own bucket and keys are proved in Settings at once, n
 
 ## Publishing
 
-Built (P9-7 to P9-13; the design as built is in `spec/phases/phase-09.md`, "Publishing" and "The export interface"). Not built: the end-to-end proof (P9-15).
+Built (P9-7 to P9-15; the design as built is in `spec/phases/phase-09.md`, "Publishing" and "The export interface"). The hand proofs are the stakeholder's.
 
 - **All or nothing about its ads** (ruled): if any ad fails to export, the publish ends `export_failed` before any upload. Otherwise clean-up would delete the failed ad's earlier published copy.
 - **No `report` row** (ruled): a publish stores no local path and is not counted as a local export.
@@ -209,6 +209,8 @@ Components are uploaded as they are on disk, so generated ones keep their embedd
 
 **Errors:** each file upload is retried up to 3 times, with 1, 4 and 10 second waits. Uploads are free to repeat. A failed publish leaves the old manifest in place and can be run again. No circuit breaker.
 
-**Named test:** campaign folder isolation. A publish lists, writes and deletes nothing outside `{campaignId}/`. It runs against the local implementation on a temporary folder (there is no fake storage).
+**Named test:** campaign folder isolation. A publish lists, writes and deletes nothing outside `{campaignId}/`. It runs against the local implementation on a temporary folder.
+
+**Fake storage** (built, `src/main/publish/storage-for.ts`): local storage in `{userData}/fake-storage` (`FAKE_STORAGE_FOLDER`), offered as the publish target "Fake provider" only when the fake provider is listed (`ADMAN_FAKE_PROVIDERS=1`); otherwise it is refused as any provider the app cannot use. `tests/e2e/publish.spec.ts` publishes to it.
 
 **Hand proof (Phase 9):** a hand-run publish to a real S3 bucket and a real Dropbox folder shows the layout above, the manifest, the replace warning and the clean-up of old files. Dropbox waits for OI-18.

@@ -4,8 +4,7 @@ How an outside agent (an MCP client such as Claude Code) reaches the app: the MC
 
 ## Status on `main`
 
-- **Built:** the server (`src/main/mcp/`), the token, the request checks, the on and off switch, the port, the Connect panel with both blocks, bridge mode (P10-9), the Settings section "Agent access (MCP)", all 29 tools of the tool table, the ask flow and its dialog (P10-6, P10-7), `agent.activity` and the client name (P10-8), the agent undo guard (P10-15, A-261), the agent policy table with the `tick` value, the fail-closed bus, and agent runs: the gate, the tick, the limit, the untick check and the Settings block "Agent runs" (`spec/agent-runs.md`). The design as built is in `spec/phases/phase-10.md` and `phase-10-slices.md`.
-- **Not built:** the Phase 10 exit slice P10-14.
+- **Built:** the server (`src/main/mcp/`), the token, the request checks, the on and off switch, the port, the Connect panel with both blocks, bridge mode (P10-9), the Settings section "Agent access (MCP)", all 29 tools of the tool table, the ask flow and its dialog (P10-6, P10-7), `agent.activity` and the client name (P10-8), the agent undo guard (P10-15, A-261), the agent policy table with the `tick` value, the fail-closed bus, and agent runs: the gate, the tick, the limit, the untick check and the Settings block "Agent runs" (`spec/agent-runs.md`). The design as built is in `spec/phases/phase-10.md` and `phase-10-slices.md`. The Phase 10 exit slice P10-14 is built (workflow 5.7, `tests/e2e/mcp-workflow.spec.ts`).
 
 ## The MCP server
 
@@ -36,16 +35,17 @@ Built. `src/main/mcp/server.ts`, `service.ts`, `request-guard.ts`, `sessions.ts`
 
 ### Bridge mode
 
-Built (P10-9). `src/main/bridge/` (`run-bridge.ts`, `relay.ts`, `closed-answer.ts`, `launch-command.ts`). Security class full.
+Built (P10-9). `src/main/bridge/` (`run-bridge.ts`, `relay.ts`, `closed-answer.ts`, `launch-command.ts`, `session-folder.ts`). Security class full.
 
-- **The switch.** `--mcp-bridge` on the command line is the only one. With it, the app runs the bridge and nothing else: no window, no single-instance lock, no core, no server, no listener, no file written.
+- **The switch.** `--mcp-bridge` on the command line is the only one. With it, the app runs the bridge and nothing else: no window, no single-instance lock, no core, no server, no listener, nothing written into the app data folder.
+- **Chromium's own files.** Before anything else the bridge sets Chromium's `sessionData` to a fresh folder in the system temp folder (`session-folder.ts`) and removes it when the bridge ends. If that folder cannot be made, the bridge does not start (exit code 1).
 - **The relay.** After `app.whenReady()` it reads `mcp.port` and `mcp.enabled` from `settings.json` and `mcp.token` from `secrets.bin` (through `safeStorage`). It relays MCP messages, unchanged, between stdio and `http://127.0.0.1:{port}/mcp`, with the bearer token in the `Authorization` header. Every request goes to that one address; redirects are refused. A message from the client may be at most 4 MiB. The server decides everything, as actor `agent`.
 - **Output.** stdout carries only MCP messages. Nothing is written to stderr, and an error never opens Electron's error box. Nothing read from the client is logged or echoed.
 - **Any failure** (the app not running, agent access off, no token, the token refused, the server unreachable) gives every request one fixed JSON-RPC error: code `-32000`, "Open the app and turn on agent access in Settings." A notification or a response gets nothing.
 - **`ConnectInfo.claudeDesktop`**: pretty-printed JSON `{ "mcpServers": { "adman": { "command", "args" } } }`. A packaged app gives its own executable and `["--mcp-bridge"]`; an unpackaged one gives Electron and `[appPath, "--mcp-bridge"]`. It holds no token and no port (the bridge reads both itself). It is null while agent access is off. The Connect panel shows it as a second block with its own Copy button.
 - **Accepted:** the bridge sends the token to whatever listens on that local port, as the Claude Code line does.
-- **Open, for the stakeholder's hand check:** on macOS the bridge process may keep the app from opening from the Dock while Claude Desktop runs it; Windows stdio in a packaged build.
-- **Owed hardening** (`spec/phases/review-leftovers.md`): in bridge mode Chromium's own session files should go to a temporary folder (`app.setPath('sessionData', …)`), not the app data folder; a packaged app should ignore `ADMAN_USER_DATA_DIR` and set the Electron fuses (the packaging slice).
+- **Open, for the stakeholder's hand check:** on macOS the bridge process may keep the app from opening from the Dock while Claude Desktop runs it; Windows stdio in a packaged build; on Windows, `safeStorage`'s key lives in Chromium's `Local State` file, which moves with `sessionData`, so the bridge may not be able to decrypt the token there (`spec/open-items.md`, "Windows test").
+- A packaged app ignores `ADMAN_USER_DATA_DIR` (`spec/infra-and-settings.md`). Owed: the packaging slice sets the Electron fuses (`spec/phases/review-leftovers.md`).
 
 ### Connect panel
 
@@ -91,10 +91,10 @@ Built for all 29 tools; every future tool follows them.
 | `list_subjects` | query `subject.list` | project_id | id, name, description, attached asset IDs | allow | Built (P10-2) | FR-192 |
 | `list_assets` | query `asset.list` | project_id, library?, kind?, subject_id? | id, display name, kind, library, subject ID, width, height, duration, font family | allow | Built | R-11 |
 | `get_campaign` | query `campaign.get` | project_id, campaign_id | Campaign fields, rule set, directions, variant summaries with badges | allow | Built | FR-192 |
-| `get_variant` | query `variant.get` | project_id, variant_id | Variant with its badges (`outOfDate`, `checkWarning`, `checkStale` among them; no out-of-date detail and no check results, A-165), layers (all values), clips (P10-13), assets used, by an allow-list (`variantFields`) | allow | Built (P10-2) | FR-192 |
+| `get_variant` | query `variant.get` | project_id, variant_id | Variant with its badges (`outOfDate`, `checkWarning`, `checkStale` among them; no out-of-date detail and no check results, A-165), layers (all values), its video clips (P10-13; the tool's description names them), assets used, by an allow-list (`variantFields`) | allow | Built (P10-2) | FR-192 |
 | `render_variant` | query `variant.render` | project_id, variant_id, max_dimension, time_ms | One PNG image, nothing else | allow | Built (P10-3): the complete ad, every layer drawn wherever its source lives (A-234) | FR-193 |
 | `create_campaign` | command `campaign.create` | The command's input as built: project_id, brief (`spec/brief-and-templates.md`), subject_map, sizes, languages, template_id, rule_set?, copy_rule_set_from? | campaign_id, master variant_id, direction_id, through `createdFields`; sizes and languages left out are filled in (P10-10, A-246) | allow | Built | FR-195, R-01 |
-| `add_variant` | command `variant.add` | project_id, direction_id, size_label, language, format | variant_id | allow | Built (P10-11) | FR-195 |
+| `add_variant` | command `variant.add` | project_id, direction_id, size_label, language, format (`image` only) | variant_id | allow | Built (P10-11) | FR-195 |
 | `set_variant_format` | command `variant.setFormat` | project_id, variant_id, format (`image` or `video`); no undo-only field | variant_id, format | allow | Built (P10-13) | R-20, D-025 |
 | `create_layer` | command `layer.create` | project_id, variant_id, type (`text` or `image`), copy?, asset_id?, geometry, style?, timing?, animation? | layer_id | allow | Built (P10-4) | FR-194 |
 | `update_layer` | command `layer.update` | project_id, layer_id, any of copy, geometry, style, asset_id, timing, animation, visible, name | layer_id | allow | Built (P10-4) | FR-194 |
@@ -142,7 +142,7 @@ Each new tool maps one to one to its command or query, with an allow-list reply 
 - **`run_checks`** runs all six checks (`spec/export-and-checks.md`): the four brand and legal checks FR-196 names, and the two readiness checks [REQ: FR-116]. The readiness results come from translation status and overflow values the agent can already read through `get_variant`. It replaces the variant's stored check row (`ranBy: 'agent'`), the user's included; export runs the checks again itself. `get_variant` carries only the check badges (A-165); the results are `get_check_results`'.
 - **`delete_variant`** asks as `delete_campaign` does. A delete has no undo (D-099), and deleting a variant clears the campaign's undo list (A-141); the description says both.
 - **`delete_campaign`** asks for permission for every campaign, including one the agent created [D-023].
-- **`set_variant_format`** runs `variant.setFormat` in either direction with no permission dialog [D-025]. Same rules as for the user: the grid test can refuse it with `RULE_VIOLATION`, and the user can undo it from the variant's list. An agent can also choose a format when it adds a variant. The agent has no clip tools, so on a video variant it changes layer timing and animation only.
+- **`set_variant_format`** runs `variant.setFormat` in either direction with no permission dialog [D-025]. Same rules as for the user: the grid test can refuse it with `RULE_VIOLATION`, and the user can undo it from the variant's list. `add_variant` adds an image variant only; to make a video variant the agent then calls `set_variant_format`. The agent has no clip tools, so on a video variant it changes layer timing and animation only.
 - **`add_variant`** by an agent creates the variant as one fan-out cell (`spec/data-rules.md`) with background fit `scale` and no translation job. Text layers in another language get `translation_status = 'missing'` until the agent or the user supplies text.
 - **Picture and clip bytes.** No tool returns the bytes of a picture or clip an agent made (OI-92: whether a `view_asset` tool for generated pictures should exist; to be judged with `spec/agent-runs.md`, 'Paid runs and spending', linked assets). `render_variant` is the only image reply.
 

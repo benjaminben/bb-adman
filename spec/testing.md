@@ -117,7 +117,7 @@ No CI workflow names `test:e2e:real`, `test:comfy`, `test:live` or `shots`. No a
 | Unit | 90% of lines in `src/shared/`, 80% in `src/main/`, providers included | Vitest | CI |
 | Integration (commands against a temporary project file) | Every command in `spec/api-commands.md` has a success test and its refusal tests (below) | Vitest | CI |
 | Provider adapters | Each adapter tested against recorded responses, including one test per error kind | Vitest | CI |
-| Scene reference pictures | Each layer type, CJK text, overflow, letter spacing, transparency (Phase 3); each preset at 5 points in time (Phase 7) | Playwright (Electron) + the render window, per-system reference files, the rule in "Reference pictures" | Developer on macOS; CI on both systems at the release gate. Phase 3 cases built (macOS references); Phase 7 cases not built |
+| Scene reference pictures | Each layer type, CJK text, overflow, letter spacing, transparency (Phase 3); each preset at 5 points in time (Phase 7) | Playwright (Electron) + the render window, per-system reference files, the rule in "Reference pictures" | Developer on macOS; CI on both systems at the release gate. Phase 3 and Phase 7 cases built (macOS references; Phase 7's in `tests/e2e/scene-cases-time.ts`) |
 | Component and accessibility | Every dialog and panel: keyboard path, labels, axe-core with no violations | Testing Library, axe-core | CI |
 | End-to-end | Workflows 5.1 to 5.7 with fake providers | Playwright (Electron) | CI on tags (Phase 11) |
 | MCP | Every tool, the ask flow, token and header rejection | MCP SDK client in Vitest | CI |
@@ -212,10 +212,10 @@ Each test below must exist and keep passing. A test marked "Not built" is writte
 | A layer command sent as the user leaves `variant.agent_changed_at` null; the same sent as the agent sets it to the command's time [REQ: FR-239] | `tests/integration/commands/layer-update-agent.test.ts`. Built |
 | Undo then redo of `layer.delete` brings back the same layer ID, key, counters and order | `tests/integration/commands/layer-delete.test.ts`. Built |
 | A `layer.reportOverflow` naming an older `variantRev` writes nothing | `tests/integration/commands/layer-report-overflow.test.ts`. Built |
-| A drag sends exactly one `layer.update` on release, and Escape sends none [REQ: 8.2] | `tests/unit/renderer/editor/canvas-overlay.test.tsx`. Not built (Phase 3) |
+| A drag sends exactly one `layer.update` on release, and Escape sends none [REQ: 8.2] | `tests/unit/renderer/editor/canvas-overlay.test.tsx`. Built |
 | A picture with a transparent background keeps it in the drawn variant [REQ: FR-245] | `tests/e2e/scene-reference.spec.ts`, case `transparent-hole`. Built |
 | Overflow is set by the render service when text grows past its box by size and by letter spacing, and cleared when it fits [REQ: FR-098, FR-249] | `tests/e2e/scene-overflow.spec.ts`. Built |
-| The tab keys step through variant tabs and campaign tabs and wrap round [REQ: FR-242] | `tests/unit/renderer/app/tab-keys.test.tsx`. Not built (Phase 3) |
+| The tab keys step through variant tabs and campaign tabs and wrap round [REQ: FR-242] | `tests/unit/renderer/app/tab-keys.test.tsx`. Built |
 | Security: `window.drop` has only `pathOf`; a page-made `File` gives no path; `window.api` unchanged | `tests/e2e/drop-bridge.spec.ts` |
 | Security: server text holding `<a href>` shows as characters in a run failure | `tests/unit/renderer/screens/campaign/run-failure.test.tsx` |
 
@@ -306,4 +306,4 @@ The stakeholder set no numeric targets [REQ: 8.1]. These are the testable target
 
 **Accessibility rules** [REQ: 8.6]: every control is a Radix primitive or a native element with a visible label or `aria-label`; focus rings are never removed; text and controls use design tokens that meet 4.5:1 contrast; every action on the canvas (select, move, resize, reorder) also has a keyboard path through the layer list and the properties panel.
 
-**Keyboard shortcuts** [REQ: FR-097, FR-242]: the table is in `spec/editor.md`, "Keyboard shortcuts"; the code owner is `src/renderer/ui/shortcuts.ts`. Not built (Phase 3). On the timeline, play or pause with `Space` (Phase 7).
+**Keyboard shortcuts** [REQ: FR-097, FR-242]: the table is in `spec/editor.md`, "Keyboard shortcuts"; the code owner is `src/renderer/ui/shortcuts.ts`. Built. On the timeline, `Space` plays or pauses (`playPause`, Phase 7).

@@ -25,7 +25,7 @@ Phase 5 (variants, fan-out, sync) is not built. Only three parts of this phase u
 ## Exit criteria
 
 - `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run test:build` and `npm run test:e2e` pass.
-- `tests/e2e/localize.spec.ts` (P6-17) passes with the fake provider: workflow 5.2 from fan-out of a master to two sizes and two more languages (one of them `ja`) to every translation approved, with one failed translation retried, one translation edited, the sheet exported, and the checks run with a warning, fixed, and run again with none.
+- `tests/e2e/localize.spec.ts` (P6-17) passes with the fake provider: workflow 5.2 from fan-out of a master to two sizes and two more languages (one of them `ja`) to every translation approved, with one translation edited, the sheet exported, and the checks run with a warning, fixed, and run again with none.
 - `tests/unit/shared/checks/` has, for each of the six checks, at least one pass, one warn and one skipped case, and the word checks each have a CJK case (P6-2).
 - Named tests pass: "an agent `translation.set` never yields `approved`" (`spec/testing.md`); "editing an approved translation sets it back to proposed"; "a translation that arrives after the user typed over the layer does not overwrite it"; "the sheet guards cells that start with a formula sign".
 - One low-cost live `translate` call has passed once under D-085 (`tests/live/gemini-translate.live.test.ts`), reported with model ID, time and answer size and never the answer text; or the report says why it was not run.
@@ -315,8 +315,6 @@ Each to be added to `spec/assumptions.md` under a "Phase 6" heading. All "Change
 
 # Where the existing design disagrees or is already built differently
 
-- `spec/api-queries-events.md` says `variant.get` gains the latest check result in Phase 6; this phase uses `check.results` instead (A-165).
-- `spec/export-and-checks.md`, "Checks", says "Not built (Phase 8 for export; ...)"; `check.run` and the engine are this phase, export's call is Phase 8.
 - `spec/api-commands.md` gives `translation.propose` no provider input and implies one job; this phase adds `provider` and replies with a list.
 - `spec/data-rules.md`, sync preview: "opening the review starts one translation job per language" cannot be done by a query (queries never write); the review dialog sends `translation.propose` with `mode: 'sync'`.
 - `spec/data-rules.md`, fan-out step 6: "if the brief supplied copy... no job runs" is read per layer, not per language (A-163).

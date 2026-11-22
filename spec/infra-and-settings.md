@@ -76,7 +76,7 @@ tag v*
 
 ## Release and packaging
 
-Packaging config: Built (`electron-builder.json`). Release workflow, signing steps in the README: Not built (Phase 11). FFmpeg in the package: Not built (P8-18; the fetch script is built, "FFmpeg" below).
+Packaging config: Built (`electron-builder.json`). Release workflow, signing steps in the README: Not built (Phase 11). FFmpeg in the package: Built (P8-18, "FFmpeg" below).
 
 - `electron-builder.json`: `appId` `com.adman.app`, output `dist/`, files `out/**` and `package.json`, native `.node` files unpacked from the archive. macOS: DMG for arm64 and x64, no signing identity. Windows: NSIS x64, not one-click, per user.
 - **File association** [REQ: R-06]: the installer registers the `.adman` extension (`fileAssociations`, MIME `application/x-adman`; on macOS the exported type `com.adman.project`) so a double-click opens the project.
@@ -88,7 +88,7 @@ Packaging config: Built (`electron-builder.json`). Release workflow, signing ste
 
 ### FFmpeg [REQ: FR-143, 9.3]
 
-Built: the fetch script and the media runner (Phase 7). Not built: packaging and the notices (P8-18), the release step (Phase 11).
+Built: the fetch script and the media runner (Phase 7); packaging and the FFmpeg notice (P8-18: `extraResources` carries only `resources/ffmpeg/${platform}-${arch}`; `electronFuses` switch off run-as-node, `NODE_OPTIONS` and the inspect flags and load the app only from the asar). Not built: the release step (Phase 11), which also puts the full LGPL text and `THIRD-PARTY-NOTICES.md` inside the package.
 
 - **Where it comes from, how it is fetched and checked:** `spec/phases/phase-07.md`, "Where FFmpeg comes from", "Pin checks", "Configure flags" and "Licence check"; the fetch script is slice P7-3 (`npm run fetch:ffmpeg`, `scripts/ffmpeg/fetch.mjs`, pins in `scripts/ffmpeg-sources.json`). It is never run by `npm install` or `npm ci`. The binaries are not committed.
 - **How it is run:** `spec/phases/phase-07.md`, "How FFmpeg is run" (the one place it is spawned, and the rules for every later FFmpeg slice).
@@ -155,9 +155,9 @@ Built. Users never set any of these. They exist for development, tests and CI. U
 | Variable | Read by | What it does | Default |
 |----------|---------|--------------|---------|
 | `ADMAN_FAKE_PROVIDERS` | `src/main/providers/registry.ts` (`listProviders`) | `1` adds the fake provider to the registry. It makes no network call. | Not set. `1` in `test:e2e` and in integration fixtures. |
-| `ADMAN_USER_DATA_DIR` | `src/main/index.ts` | Overrides the app data folder (`app.setPath('userData', …)`) | Not set. A temporary folder in end-to-end tests. |
+| `ADMAN_USER_DATA_DIR` | `src/main/index.ts` (`userDataOverride`, `src/main/user-data-override.ts`) | Overrides the app data folder (`app.setPath('userData', …)`). A packaged app ignores it, so nothing in a user's environment can point the installed app at another folder of settings and secrets. | Not set. A temporary folder in end-to-end tests. |
 | `ADMAN_LOG_LEVEL` | `src/main/core.ts` (`parseLogLevel`) | Lowest level written to the log. An unknown value reads as `info`. | `info` |
-| `ADMAN_DEV_TOOLS` | `src/main/index.ts` (`devToolsEnabled`) | `1` switches on the hand-test tools: the `dev.storage` command, the hand-test screen, and `trial` ComfyUI workflows offered to the user. Ignored by a packaged app: `devTools` is true only when `app.isPackaged` is false and the variable is `1`. | Not set |
+| `ADMAN_DEV_TOOLS` | `src/main/index.ts` (`devToolsEnabled`) | `1` switches on the dev-only switches, such as `trial` ComfyUI workflows offered to the user (the hand-test tools were removed in P9-14). Ignored by a packaged app: `devTools` is true only when `app.isPackaged` is false and the variable is `1`. | Not set |
 | `ELECTRON_RENDERER_URL` | `src/main/windows/app-window.ts` (`pageAddress`) | Set by electron-vite in `npm run dev`. The window loads it only when the app is not packaged and it is `http://localhost:{port}` with at most one trailing slash (`spec/security.md`, "Renderer and windows"). | Set by the tool |
 
 ### `test:live` (paid calls; project owner only)
@@ -259,14 +259,14 @@ type Settings = {
   }                                              // default { s3: null, dropbox: null }
   comfyui: { baseUrl: string | null }            // default null. Written only by comfy.setAddress. Stored as an origin  [REQ: FR-250, FR-253]
   agentRuns: Record<string, { allowed: boolean }>  // provider ID to its tick; default {}. Written only by agentRuns.setAllowed  [REQ: FR-279]
-  agentRunLimit: number                          // Not built. Whole number 1 to 16, default 4. Written only by agentRuns.setLimit
+  agentRunLimit: number                          // Whole number 1 to 16, default 4 (AGENT_MAX_ACTIVE_RUNS). Written only by agentRuns.setLimit
   licenceConfirmed: string[]                     // Model labels the user confirmed a commercial licence for; each 1 to 100 characters, at most 50; default []. Written by settings.update  [D-088]
   reports: { exporterName: string }              // trimmed, at most 100 characters, no control characters; default { exporterName: '' }. Written only by settings.update
 }
 ```
 
-- `DEFAULT_PROVIDERS` lives in `src/main/providers/registry.ts`; `DEFAULT_MCP_PORT = 47821` in `defaults.ts`. `defaultProviders.image` and `.video` may be `comfyui` [REQ: FR-254]. A saved file naming `fal-seedance` for video is not rewritten (`fal-seedance` is unavailable until its adapter is built, `spec/providers.md`).
-- **Who writes what.** `settings.update` (schema `settingsPatchSchema`, strict) can change `defaultProjectDir`, `defaultProviders`, `generation`, `export`, `mcp` except `enabled`, `storage`, (from S2-4) `licenceConfirmed`, and `reports` (agents are denied `settings.update`). It refuses every other key. The app keeps `recentProjects`. `mcp.enabled` has one writer, `mcp.setEnabled`, which also starts or stops the server. `comfyui` has one writer, `comfy.setAddress`. `agentRuns` has one writer, `agentRuns.setAllowed`. `agentRunLimit` will have one writer, `agentRuns.setLimit`. These three keys are security class (`spec/security.md`).
+- `DEFAULT_PROVIDERS` lives in `src/main/providers/registry.ts`; `DEFAULT_MCP_PORT = 47821` in `defaults.ts`. `defaultProviders.image` and `.video` may be `comfyui` [REQ: FR-254]. A saved file naming `fal-seedance` for video is not rewritten (`fal-seedance` is available since P7-15, `spec/providers.md`).
+- **Who writes what.** `settings.update` (schema `settingsPatchSchema`, strict) can change `defaultProjectDir`, `defaultProviders`, `generation`, `export`, `mcp` except `enabled`, `storage`, (from S2-4) `licenceConfirmed`, and `reports` (agents are denied `settings.update`). It refuses every other key. The app keeps `recentProjects`. `mcp.enabled` has one writer, `mcp.setEnabled`, which also starts or stops the server. `comfyui` has one writer, `comfy.setAddress`. `agentRuns` has one writer, `agentRuns.setAllowed`. `agentRunLimit` has one writer, `agentRuns.setLimit`. These three keys are security class (`spec/security.md`).
 - `settings.update` for `storage.s3` checks the region with `regionRefusal` (`spec/storage-and-publish.md`).
 
 ### Loading the file
@@ -282,6 +282,6 @@ Built (`settings-store.ts`). Security class.
   1. An address that passes `parseComfyAddress` (`src/shared/comfy/address.ts`) is held in memory as its origin, and a later save writes it in that form.
   2. An address that fails is read as null. The refused text is held nowhere: not in memory, not in a log line, an error or anything sent to the window.
   3. The next save, for any reason (a settings change, opening a project), writes null over it. The store keeps no second copy of the file's text. The user sees that no address is set and types it again. Whether to tell the user an address was refused is OI-50.
-- **`agentRunLimit` from the file** (Not built). Any value that is not a whole number from 1 to 16 is read as 4.
+- **`agentRunLimit` from the file.** Any value that is not a whole number from 1 to 16 is read as 4.
 - **`licenceConfirmed` from the file.** A value that fails its schema is read as `[]`; the other keys load as usual, so a bad list never resets the whole file.
 - **Tests** (`tests/unit/main/settings/settings-store-comfy.test.ts`): a file with a failing address loads with `baseUrl` null, and after one `touchRecent` the file on disk holds `baseUrl: null` with its other keys kept; a file with `http://127.0.0.1:8188` loads with that origin and still holds it after a save; a file with `"comfyui": { "__proto__": { "baseUrl": "http://169.254.169.254" } }` loads with `baseUrl` null; a file with `"agentRuns": { "__proto__": { "comfyui": { "allowed": true } } }` loads with `agentRuns` having no `comfyui` entry, own or inherited, and `Object.prototype` has no new key after either load.

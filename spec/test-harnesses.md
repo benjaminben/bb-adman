@@ -5,9 +5,9 @@ The harnesses that run the app or real services: the offline end-to-end harness,
 ## Paid calls by an agent [D-085, D-089]
 
 - An agent may make a paid call to prove a new feature works on the real service. One run per feature, at the lowest-cost settings the service offers (smallest size, shortest clip, one picture), with no retries on a paid failure without a changed cause.
-- A feature already proven on the real service is not run again. Proven so far: a Gemini picture, a Gemini picture from a reference picture, the S3 upload, list and remove.
+- A feature already proven on the real service is not run again. Proven so far: a Gemini picture, a Gemini picture from a reference picture, the S3 upload, list and remove, and one fal.ai Seedance clip from a still (P7-24).
 - Everything else uses recorded responses in `tests/fixtures/providers/` or a fake provider row with `local: false`. `npm test`, the offline end-to-end run and CI never make a paid call.
-- The keys are in the environment (`.env.local` or the terminal): `GEMINI_API_KEY`, `FAL_KEY` and the AWS names. An agent never opens, prints or copies `.env.local` or a key value. A live test reads the key itself and prints through `tests/live/live-output.ts`, which removes key values.
+- The keys are in the environment (`.env.local` or the terminal): `GEMINI_API_KEY`, `FAL_KEY`, the AWS names and the Dropbox test token. An agent never opens, prints or copies `.env.local` or a key value. A live test reads the key itself and prints through `tests/live/live-output.ts`, which removes key values.
 - The paid Gemini run through the app's screens (`ADMAN_E2E_GEMINI=1`) is still the stakeholder's own, when they choose [D-081].
 - Each paid run an agent makes is listed in its report: what was called, the settings, and the result.
 - Proof on real services outranks screens: picture and video from realistic product references are proved on real services even before their screens exist (D-075).
@@ -85,9 +85,14 @@ Built. `tests/comfy/`, `vitest.comfy.config.ts`, `npm run test:comfy`. The desig
 
 Built. `tests/live/`, `vitest.live.config.ts`, `npm run test:live`. Real paid calls. Never run by `npm test` or CI. An agent runs one live test file only under the rule at the top of this file: once, to prove a new feature.
 
-- Gemini with `GEMINI_API_KEY` (`gemini-image.live.test.ts`, `gemini-reference.live.test.ts`); S3 (`s3.live.test.ts`) with `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `ADMAN_LIVE_S3_BUCKET`, `ADMAN_LIVE_S3_REGION`, `ADMAN_LIVE_S3_PREFIX`. Values come from the terminal or `.env.local`; the terminal wins.
+- The files in `tests/live/`:
+  - Gemini, with `GEMINI_API_KEY`: `gemini-image.live.test.ts`, `gemini-reference.live.test.ts`, `gemini-brief.live.test.ts`, `gemini-copy.live.test.ts`, `gemini-layout.live.test.ts`, `gemini-extend.live.test.ts` (picture extend, P5-6), `gemini-translate.live.test.ts`.
+  - fal.ai Seedance, with `FAL_KEY`: `seedance.live.test.ts` (P7-24; its one run is done and is never repeated).
+  - S3: `s3.live.test.ts`, with `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `ADMAN_LIVE_S3_BUCKET`, `ADMAN_LIVE_S3_REGION`, `ADMAN_LIVE_S3_PREFIX`.
+  - Dropbox, with `DROPBOX_ACCESS_TOKEN`: `dropbox.live.test.ts` (P9-15; the stakeholder's, never run by an agent).
+  - Values come from the terminal or `.env.local`; the terminal wins.
 - `npm test` never reads `.env.local`. `vitest.live.config.ts` exports `defineConfig(() => ({ … }))` and reads the file only inside that function; `include: LIVE_INCLUDE` from `tests/live/env-file.ts` (`['tests/live/**/*.test.ts']`), which also holds the name list and `liveEnvFrom`. The top level of the config reads nothing; a reviewer checks it by reading. `vitest.live.config.ts` imports `./tests/live/env-file.js`.
-- Everything printed goes through `tests/live/live-output.ts`, which removes the set values of `LIVE_REDACTED_NAMES` = `GEMINI_API_KEY`, `FAL_KEY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. Bucket name, prefix and region are kept. A skip message names only the missing variables. A failed live test throws a short error holding the error kind only ("Gemini error" when it is not a `ProviderFailure`). The S3 test prints a failure only when the case did not expect one.
+- Everything printed goes through `tests/live/live-output.ts`, which removes the set values of `LIVE_REDACTED_NAMES` = `GEMINI_API_KEY`, `FAL_KEY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DROPBOX_ACCESS_TOKEN`, `DROPBOX_APP_SECRET`. Bucket name, prefix and region are kept. A skip message names only the missing variables. A failed live test throws a short error holding the error kind only ("Gemini error" when it is not a `ProviderFailure`). The S3 test prints a failure only when the case did not expect one.
 - `ADMAN_LIVE_KEEP=1` makes the S3 test skip its final remove, leaving `adman-hand-test/hello.txt` in the bucket; the next run without it removes it.
 - The Gemini test writes the picture with its real extension and prints the file type and pixel size only.
 - `ADMAN_LIVE_REFERENCE_FILES`: up to three absolute picture paths for the reference test (see below).

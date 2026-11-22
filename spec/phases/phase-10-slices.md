@@ -177,7 +177,9 @@ Every slice reads `spec/phases/DEV-RULES.md` first, then `spec/phases/phase-10.m
 - **Tests first:** `tests/integration/history/agent-undo-guard.test.ts`: 100 agent edits on one variant pass and the 101st is refused `RULE_VIOLATION`, `agent_undo_limit`, with the variant and its `rev` unchanged and no event; one user edit in between resets the count (100 more pass); a user undo or redo resets it; an agent's undo does not; an agent layer delete followed by 100 agent edits can still be undone back to the delete by the user, and the layer returns; two undo lists count apart. A unit table for the count in `undo-lists.ts`.
 - **Exit check:** class E + B. **Security:** full (shared code every agent edit passes through; keeps the user able to undo an agent's work). **Size:** small. Must merge before P10-14.
 
-### P10-14 — Workflow 5.7, shots, exit check
+### P10-14 — Workflow 5.7, shots, exit check (built)
+
+- **As built:** `tests/e2e/mcp-workflow.spec.ts` and `tests/shots/p10-14.shots.ts`. The "Design additions" of `phase-10.md` are folded into the topic files (`spec/mcp-and-agents.md`, `spec/api-commands.md`, `spec/api-queries-events.md`). The tool-word fixes still owed are in `spec/phases/review-leftovers.md`. The stakeholder's hand checks are in `phase-10.md`, exit criterion 6.
 
 - **Exists when done:** the phase's exit criteria are met or listed as the stakeholder's.
 - **New files:** `tests/e2e/mcp-workflow.spec.ts` (the built app with fake providers; an MCP client from the test process: read the campaign, render each variant, create and move text layers, see `project.changed` in the window, undo one; then a translation set and shown unapproved; then a master edit marking linked variants out of date); `tests/shots/p10-14.shots.ts`: 297 the campaign after an agent's edits, 298 a variant tab with an agent-made layer, 299 the activity line during the run.

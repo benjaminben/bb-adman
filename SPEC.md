@@ -1,7 +1,7 @@
 # SPEC.md — Technical Specification (index)
 
 **Project:** Adman, a desktop app (Electron) for making ad campaigns: one brief becomes a grid of image and video ads in many sizes and languages, with AI generation, checks, export and cloud publishing.
-**Status:** Phases 1 and 2 are built on `main`, except the leftovers listed in `spec/phases/`. Phase 3's slices are built. Phase 4 and the look pack are built as far as agents can take them; the stakeholder's hand checks are listed in `spec/phases/phase-04.md`, "Status". Approvals and subject photos are in build. Phase 5 is sliced (P5-1 to P5-19) and ready to build. Phases 6 to 11 are ahead.
+**Status:** Phases 1 to 10, the app style pass (ST-1 to ST-14), the look pack, approvals and subject photos are built on `main`, except the leftovers listed in `spec/phases/`. Phase 11 is held. The stakeholder's hand checks are listed in each phase file and in `spec/open-items.md`, section 5.
 
 The spec is split into small files so that a reader loads only what a task needs. This file is the map.
 
@@ -37,7 +37,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/assets.md` | Import, linking, the assets folder, file types, relink, change detection, the asset protocol, reference pictures |
 | `spec/api-principles.md` | How commands, queries and events work; error codes, reasons and messages; undo |
 | `spec/api-commands.md` | Every command, built or not, with its agent policy |
-| `spec/api-dev-commands.md` | The hand-test commands (`dev.*`), dev tools only |
+| `spec/api-dev-commands.md` | The `dev` command group (empty since P9-14) and the `devTools` flag |
 | `spec/api-queries-events.md` | Every query and event |
 | `spec/mcp-and-agents.md` | The MCP server, token, tools, the ask flow, the permissions matrix, the agent policy table |
 | `spec/agent-runs.md` | Generation started by an agent: the tick, the gate, limits, unticking |
@@ -49,7 +49,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/providers-adapters.md` | The Gemini adapter, the fal.ai Seedance adapter, the Adobe Firefly stub |
 | `spec/comfyui.md` | The ComfyUI adapter: address, client, checks, a picture run, failures |
 | `spec/comfyui-workflows.md` | The workflows, which one a run gets, filling a run, sizes, video runs, extend, what is left on the server |
-| `spec/comfyui-trials.md` | Trials and `proven`, the real-server tests `test:comfy`, the hand-test screen's ComfyUI part, Krea 2 and custom workflows, what a server needs |
+| `spec/comfyui-trials.md` | Trials and `proven`, the real-server tests `test:comfy`, the never-built ComfyUI hand-test plan (OI-64), Krea 2 and custom workflows, what a server needs |
 | `spec/storage-and-publish.md` | Storage interface, local, S3, Dropbox, the publish flow |
 | `spec/export-and-checks.md` | Embedded generation details, export, reports, the six checks |
 | `spec/infra-and-settings.md` | Environments, scripts, CI, release, secrets, environment variables, `settings.json` |

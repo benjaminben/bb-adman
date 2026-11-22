@@ -168,7 +168,9 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class B, D; `npm run test:e2e`. **Shots:** `tests/shots/p6-16.shots.ts`, 213 (a proposed translation in the review), 214 (a failed one with "Retry").
 - **Security:** short. **Size:** medium.
 
-## P6-17 — Workflow 5.2, shots, live run, exit check
+## P6-17 — Workflow 5.2, shots, live run, exit check (built)
+
+- **As built:** `tests/e2e/localize.spec.ts` (steps in `localize-steps.ts`) runs without a forced failure, because no test hook into the main process is allowed; the failed translation and its "Retry" are proven by `tests/integration/translation/propose-again.test.ts` and the panel's component test. The live `translate` call (`tests/live/gemini-translate.live.test.ts`) was run once from the main folder and passed with `gemini-3.5-flash-lite`; it is not repeated. Shots 215 to 219; no shot 205 to 210 was handed on.
 
 - **Exists when done:** the exit criteria of `spec/phases/phase-06.md` are met.
 - **New files:** `tests/e2e/localize.spec.ts`; `tests/shots/p6-17.shots.ts`; `tests/live/gemini-translate.live.test.ts` (prints model ID, time and answer size, never the text; skips with one line naming the missing variable).

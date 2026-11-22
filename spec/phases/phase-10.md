@@ -51,7 +51,7 @@ Twelve can be built as soon as P10-1 merges. Six wait, each for exactly the comm
 3. Named tests pass: `secret-leak.test.ts` over all 29 tools; `mcp-connect-info.test.ts`; "`render_variant` writes no file" (P10-3); "An agent `set_translation` never yields `approved`" (P10-12).
 4. The ask flow: allow, refuse, time-out, busy and auto-approve each tested through `delete_campaign` (P10-6), and the dialog answers by keyboard (P10-7).
 5. The tool-list snapshot holds 29 tools, and `tests/unit/main/mcp/tools/tool-plan.test.ts` finds no `notBuilt` row left.
-6. **Hand checks by the stakeholder** (listed by P10-14, not run by agents): Claude Code places copy on a variant, the edits show live and can be undone; Claude Desktop connects through the bridge block; Windows (D-087).
+6. **Hand checks by the stakeholder** (listed by P10-14, not run by agents): Claude Code places copy on a variant, the edits show live and can be undone; Claude Desktop connects through the bridge block; Windows (D-087), including whether the bridge can read the stored token there, since `safeStorage`'s key file `Local State` moves with the bridge's temporary `sessionData` (`spec/open-items.md`, "Windows test").
 
 ## Rules for these slices
 
@@ -107,7 +107,7 @@ Files more than one slice, or another phase, is likely to edit:
 
 ## Design additions
 
-Where the design is silent. The orchestrator folds these into `spec/mcp-and-agents.md`, `spec/api-queries-events.md`, `spec/api-commands.md`, `spec/security.md` and `spec/screens.md`.
+Where the design was silent. Folded into `spec/mcp-and-agents.md`, `spec/api-queries-events.md`, `spec/api-commands.md`, `spec/security.md` and `spec/screens.md`; kept here as the record of each assumption.
 
 **Tool rows and group files (A-230).** `ToolDef` gains `notBuilt?: true`, `content?: 'json' | 'png'` (default `json`) and `prepareInput?(input)`. `ALL_TOOLS` in `table.ts` joins the group files; `MCP_TOOLS = ALL_TOOLS.filter((t) => !t.notBuilt)` is what core registers. Group files: `campaign-tool.ts` (`create_campaign`, moved unchanged), `read-more-tools.ts`, `render-tool.ts`, `layer-tools.ts`, `ai-tools.ts`, `delete-tools.ts`, `variant-edit-tools.ts`, `translation-check-tools.ts`, `format-tool.ts`. Listing order: the 11 built tools as today, then the group files in that order.
 

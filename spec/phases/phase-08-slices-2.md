@@ -49,7 +49,9 @@ Late plug-ins, video, packaging and the end-to-end proof. Rules, order and the d
 - **Exit check:** class C and B checks; the integration file run with the binary present, and its output named in the report.
 - **Class:** C + B. **Security:** full (spawns a process with project-supplied file paths). **Size:** large: if it nears the budget, hand off after the work folder and spawn, leaving the still for a fresh run.
 
-### P8-17 — Video after Phase 7
+### P8-17 — Video after Phase 7 (built)
+
+- **As built:** sound is encoded by FFmpeg's own `aac` at 192k and mixed with `adelay` and `amix` only. The overlay-only draw of the background's shade is `ShadeOnly` in `src/shared/scene/scene.tsx`; it draws only where a clip covers the time, so frame reuse also redraws at a clip's start and end. A clip's picture and sound share one demuxer table, `src/main/export/video/clip-demuxers.ts`.
 
 - **Exists when done:** frames that do not change are sent again without a draw; text over a clip keeps the background's shade; the variant's one sound source goes into the MP4.
 - **New files:** `src/main/export/video/frame-reuse.ts` (from Phase 7's timing functions: no animation running and no layer starting or ending between two frame times); `src/main/export/video/sound-args.ts`.
@@ -62,7 +64,7 @@ Late plug-ins, video, packaging and the end-to-end proof. Rules, order and the d
 - **Exit check:** class C checks.
 - **Class:** C. **Security:** short (an added audio file is one more FFmpeg input; same `file:` rule). **Size:** medium.
 
-### P8-18 — Packaging FFmpeg and the notices
+### P8-18 — Packaging FFmpeg and the notices (built)
 
 - **Exists when done:** the packaged app carries `resources/ffmpeg/{platform}-{arch}/ffmpeg[.exe]` and finds it; `THIRD-PARTY-NOTICES.md` has the FFmpeg part (LGPL text, the exact build flags, the source link).
 - **New files:** `THIRD-PARTY-NOTICES.md` if Phase 11 has not made it (FFmpeg part only); `tests/unit/config/ffmpeg-packaging.test.ts`.
@@ -73,7 +75,9 @@ Late plug-ins, video, packaging and the end-to-end proof. Rules, order and the d
 - **Exit check:** lint, typecheck, unit tests, `test:build`; one local `electron-builder --dir` run for macOS that finds the binary, named in the report. Nothing is published.
 - **Class:** F (local part only). **Security:** short (a binary shipped and run). **Size:** small.
 
-### P8-19 — End-to-end proof, shots, exit check
+### P8-19 — End-to-end proof, shots, exit check (built)
+
+- **As built:** the five end-to-end files share `tests/e2e/export-steps.ts`. `offline-export.spec.ts` turns the network off from the test process only: every session is set offline and any request it still makes is cancelled and counted; the main process's `fetch` fails and counts; a socket to any host but this computer is refused and counted. The test first proves the guard catches a fetch and a socket, then asserts the count stays empty.
 
 - **Exists when done:** the workflows run through the screens; the exit criteria in `spec/phases/phase-08.md` are met and listed with their proof.
 - **New files:** `tests/e2e/export.spec.ts` (load `examples/brief.yaml`, make the campaign with the fake provider, open Export, choose a temporary folder, export everything; the folder holds exactly the layout's files; the report row and both report files exist; export again after editing one ad: the second report marks that ad changed and the others not changed; the export number is 2); `tests/e2e/export-warnings.spec.ts` (a prohibited word: the warnings step, a reason, "Export anyway"; the report shows the reason); named `tests/e2e/offline-export.spec.ts` (no secret saved, the network turned off for the app's session: import, a hand layout, an image export all succeed) [REQ: 8.2]; named `tests/e2e/export-picture.spec.ts` (from P8-4: through the real export, `export.run` sent from `window.api` with a temporary output folder, wait for the job, read the PNG written: the `transparent-hole` scene matches its scene reference [REQ: FR-245]; the PNG has no `generation` chunk [REQ: FR-068], read with `tests/fixtures/png-chunks.ts`; a variant wider than 2,048, 3,000 × 1,000, comes out at exactly that size); named `tests/e2e/export-frames.spec.ts` (from P8-14: the same frame drawn twice gives identical bytes, checked through a real video export once P8-16 is merged); `tests/shots/p8-19.shots.ts` (shots `257-report-html` of the HTML file in a hidden window, `258-video-export-done`).

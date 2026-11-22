@@ -83,10 +83,12 @@ Publishing, the dialog, clean-up of the hand-test tools and the end-to-end proof
 - **Exit check:** lint, typecheck, `npm test`, `npm run build`, `npm run test:e2e`.
 - **Class:** B + D. **Security:** short (a named security test removed, Q-P9-5). **Size:** small to medium (many deletions).
 
-### P9-15 — End to end, shots, exit check
+### P9-15 — End to end, shots, exit check (built)
+
+- **As built:** `tests/e2e/publish.spec.ts`, `tests/live/dropbox.live.test.ts` (not run by an agent) and `tests/shots/p9-15.shots.ts`; `LIVE_REDACTED_NAMES` holds six names. The stakeholder's checks are in `phase-09.md`, "Left for the stakeholder".
 
 - **Exists when done:** the phase's exit criteria hold; the stakeholder's checks are written down.
-- **New files:** `tests/e2e/publish.spec.ts` (fake providers on: the example campaign, open the dialog, choose "Fake provider", the file list shows, Publish, the activity list shows the publish done; files under `{userData}/fake-storage/{campaignId}/` in the documented layout with `manifest.json`; publish again: the replace block, tick, publish; the second manifest says 2; a file planted in the campaign folder is gone and one planted beside it is not); `tests/live/dropbox.live.test.ts` (the stakeholder's: with `DROPBOX_ACCESS_TOKEN`, upload, list and remove one file under `adman-live-test/`; skips without the token; never run by an agent); `tests/shots/p9-15.shots.ts` (`279-publish-running`, `280-publish-done`).
+- **New files:** `tests/e2e/publish.spec.ts` (fake providers on: a made-up campaign, open the dialog, choose "Fake provider", the file list shows, Publish, the activity list shows the publish done; files under `{userData}/fake-storage/{campaignId}/` in the documented layout with `manifest.json`; publish again: the replace block, tick, publish; the second manifest says 2; a file planted in the campaign folder is gone and one planted beside it is not); `tests/live/dropbox.live.test.ts` (the stakeholder's: with `DROPBOX_ACCESS_TOKEN`, upload, list and remove one file under `adman-live-test/`; skips without the token; never run by an agent); `tests/shots/p9-15.shots.ts` (`279-publish-running`, `280-publish-done`).
 - **May touch:** `tests/live/env-file.ts` (`DROPBOX_ACCESS_TOKEN` read; `LIVE_REDACTED_NAMES` gains `DROPBOX_ACCESS_TOKEN` and `DROPBOX_APP_SECRET`) and its test; `src/main/providers/dropbox/dropbox-storage.ts` only to accept a fixed access token for the live test, if P9-3 did not.
 - **Needs:** every other P9 slice (P9-11 for real ads in the e2e run).
 - **Read:** `phase-09.md` "Exit criteria"; `spec/test-harnesses.md`; `spec/testing.md` "Test commands".

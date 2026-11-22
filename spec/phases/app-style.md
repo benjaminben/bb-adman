@@ -20,7 +20,7 @@
 - **No behaviour change.** No slice changes what a component does, which commands or queries it sends, its visible words, its labels or accessible names, its roles, its heading levels or its focus order. A wanted look that needs any of those: stop and report; it goes to "Out of scope" in `spec/app-style.md`.
 - **End-to-end tests pass unchanged.** No slice edits a file under `tests/e2e/`. An end-to-end failure caused by layout (a control moved out of reach, a canvas drag that lands elsewhere): stop and report, do not edit the test.
 - **A slice edits only the folders it owns** and the files it may touch. Shared pieces are owned by one slice: `base.css`, `layout.module.css` and `ui/icon/` by ST-2; `ui/tab-row/` and `ui/tab-marks/` by ST-3; `ui/dialog-frame/` by ST-4. A later slice uses them and does not edit them; a change needed there: stop and report.
-- **The mark.** A slice puts the line `/* app-style */` first in every CSS file it restyles. `styling-rules.test.ts` holds those files to the stricter rules (below). ST-14 removes the marks and applies the rules to every file.
+- **The mark.** A slice puts the line `/* app-style */` first in every CSS file it restyles. `styling-rules.test.ts` holds those files to the stricter rules (below). Since ST-14 the rules apply to every file, mark or no mark; the marks stay as plain comments.
 - **Tokens.** Only ST-1 edits `tokens.css`. A later slice that finds a value missing: stop and report; the architect adds it to `spec/app-style.md` and a small follow-up edits `tokens.css`.
 - **Components.** `.tsx` edits are limited to class names, wrapper elements that carry no role or name, decorative icons (`aria-hidden`), and the two new `DialogFrame` props (ST-4). Files stay under 200 lines where they can, 300 at most.
 - **Shots.** New pictures are numbered 180 to 199 (allocated below), in `tests/shots/st-{n}.shots.ts`. "Retake" means run the named existing shots files again and list in the report the pictures that changed. Shots are taken by hand on a desktop and are not a routine check (`spec/testing.md`).
@@ -193,7 +193,9 @@ If Phase 5 starts its campaign page slices before ST-11 and ST-12, those slices 
 - **Exit check:** lint, typecheck, `tests/unit/renderer/screens/project-home/`, `styling-rules.test.ts`, `npm run test:e2e -- tests/e2e/workflow-5-1.spec.ts tests/e2e/drop-import.spec.ts tests/e2e/jpeg-orientation.spec.ts` on a desktop.
 - **Class:** D, with one end-to-end run. **After:** ST-4; SP-3, SP-4 and SP-5 merged.
 
-### ST-14 — Close-out: every file under the rules, full check
+### ST-14 — Close-out: every file under the rules, full check (built)
+
+- **As built:** `styling-rules.test.ts` covers every renderer CSS file except `tokens.css`, mark or no mark. The `/* app-style */` marks stay as plain comments: six earlier slices' tests assert them and the rules no longer depend on them. Two layout fixes rode along: the campaign title ends in an ellipsis so its actions keep its row, and the agent activity line is no wider than the editor's layer column.
 
 - **Exists when done:** `styling-rules.test.ts` applies to every renderer CSS file except `tokens.css`, with no mark needed; the `/* app-style */` marks are gone. Files no screen slice owned (`render-worker/render-root/`, `dev/`, any folder added meanwhile) pass the rules or get the smallest token edit that makes them pass. The "Status" line of `spec/app-style.md` reads "Built (ST-1 to ST-14)".
 - **May touch:** `tests/unit/renderer/ui/styling-rules.test.ts`; the first line of every marked CSS file; any renderer CSS file the rules now flag (token use only); `spec/app-style.md` (the "Status" line only).

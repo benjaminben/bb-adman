@@ -65,14 +65,16 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** D. No security review.
 - **After:** P5-11, P5-14.
 
-### P5-19 — Workflows 5.3 and 5.4, real runs, exit check
+### P5-19 — Workflows 5.3 and 5.4, real runs, exit check (built)
+
+- **As built:** shot 171 (a failed fill with Retry) was not made: the built app cannot set the fake provider to fail, and no test hook was added for it. The one ComfyUI extend run is still owed (U-13, `spec/open-items.md`).
 
 - **Size:** medium. **Needs:** every other P5 slice; SP-5 merged.
 - **Exists when done:** both workflows pass end to end with the fake provider; the real runs below are made and reported; the "Not built" marks in `spec/links-and-sync.md`, `spec/screens-variants.md` and the rows in `spec/api-commands.md` and `spec/api-queries-events.md` are reported for the orchestrator to change to "Built (P5-n)" (the developer does not edit the spec).
 - **New files:** `tests/e2e/workflow-5-3.spec.ts`, `tests/e2e/workflow-5-4.spec.ts`, `tests/e2e/variants-steps.ts` (helpers: fan out, open the sync review, accept selected); `tests/shots/p5-19.shots.ts`.
 - **May touch:** `tests/e2e/screen-tour.ts` (one stop for the overview with two directions) only if SP-5 is merged.
 - **Workflow 5.3:** a campaign through the form (SP-5's helpers), fan-out to two more sizes and one more language; change the master headline's colour and its copy; the three linked variants show "Out of date"; on one, change the colour by hand first (an override); the review flags it; tick one change and "Accept selected"; one variant stays out of date; "Accept all" clears the rest, with "Keep mine" for the flagged one; that variant keeps its colour.
-- **Workflow 5.4:** "New direction from this master…" named "Studio"; two grids show; in the new master, choose another background picture; fan out "Studio" with one size on "Generate fill" (fake provider); the fill places on that size and the tile shows "New result" then the picture; Cmd-click a tile opens its tab behind; quick look Next once; delete a variant and Undo brings it back.
+- **Workflow 5.4:** "New direction from this master…" named "Studio"; two grids show; in the new master, choose another background picture; fan out "Studio" with one size on "Generate fill" (fake provider); the fill places on that size and the tile shows "New result" then the picture; Cmd-click a tile opens its tab behind; quick look Next once; delete a variant: the ask dialog says "This cannot be undone.", and after the delete the campaign's Undo is off (D-099: deleting a variant or campaign has no undo, only the ask dialog).
 - **Real runs** (each once, reported with time, model ID and picture size, never a key or a picture's contents): `tests/live/gemini-extend.live.test.ts` at the smallest size (D-085). One ComfyUI extend run through the app at the lowest settings only if a non-draft extend workflow exists by then; otherwise report "owed: `moss-extend` is still draft (U-13)".
 - **Shots:** `170-tour-two-directions`, `171-fill-retry` (a failed fill with Retry, fake provider set to fail).
 - **Exit check:** lint, typecheck, `npm run test:coverage`, `npm run build`, `npm run test:build`, `npm run test:e2e`; the exit criteria of `spec/phases/phase-05.md`, checked one by one in the report.

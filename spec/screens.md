@@ -11,10 +11,10 @@ Built (Phases 1 and 2). They are plain working screens, made so every function c
 | Shell with project tabs | Replaced in Phase 3 by the project switcher and campaign tabs [REQ: FR-211] (`spec/editor.md`, "Navigation"; OI-31 assumption). The start screen stays. |
 | Start | Stays in substance; restyled by the UI pass |
 | Project home | Placeholder for the campaign list and brief intake of the UI pass |
-| Campaign page, Make pictures, Make a video, run list | Placeholder. The Phase 3 editor, the Phase 4 picture section, run confirmation dialog and activity panel (`spec/screens-ai.md`), and the Phase 5 grid replace them. Phase 4 leaves them working as they are |
-| Settings | Stays as the Settings screen (the agent runs block is built); sections are added (cloud storage in Phase 9, reports name in Phase 8) and restyled |
+| Campaign page, Make pictures, Make a video, run list | Replaced: by the Phase 3 editor, the Phase 4 picture section, run confirmation dialog and activity panel (`spec/screens-ai.md`), the Phase 5 grids (`spec/screens-variants.md`) and the Phase 7 video card |
+| Settings | Stays as the Settings screen, with the sections added since (agent runs, export and reports name in Phase 8, cloud storage in Phase 9, agent access in Phase 10) |
 | Key dialog | Stays (the `NEEDS_KEY` flow, FR-171) |
-| Hand test (dev) | Throwaway. Removed in Phase 9 with `dev.storage`, `{userData}/hand-test-local` handling and the `src/shared/config/dev-tools.ts` constants, once the publish dialog and storage settings screen exist |
+| Hand test (dev) | Removed in P9-14, with `dev.storage`, the `{userData}/hand-test-local` handling and the `src/shared/config/dev-tools.ts` constants |
 
 ## Rules for every screen
 
@@ -36,7 +36,7 @@ Built. The reviewer checks these on every screen.
 Built. `src/renderer/app/app-shell/`, `app/error-banner/`, `app/app-context.tsx`, `app/app.tsx`, `stores/app-store.ts`, `stores/project-store.ts`.
 
 - A tab bar (Radix Tabs, label "Open projects"): "Start", then one tab per open project named after it [REQ: FR-003].
-- "Settings" button (pressed state while Settings shows). "Hand test" button only when `app.getState` says `devTools`.
+- "Settings" button (pressed state while Settings shows).
 - The error banner (`role="alert"`) shows the last refused command's message with "Dismiss".
 - The key dialog, the address dialog and the licence dialog are mounted once here.
 - The window opens maximized, never full screen [D-031].
@@ -93,7 +93,7 @@ Built (P7-22 as the latest change). In `src/renderer/screens/campaign/`: `video-
 - **An image post:** the line "Change this post to video first." and "Start" disabled.
 - **Picture start:** region "Picture to start from", the project's reference pictures (the list the reference picker shows), one choice, its own "Add pictures" (chooses the first added picture that can be sent), empty line "No reference pictures in this project yet.", hint "Tip: call the picture <Picture 1> in the prompt." (wording open, OI-89). A picture that cannot be sent shows its reason. The card's choice is separate from the picture panel's ticks. It is kept when switching between the two picture starts, kept but not sent under "A prompt", and dropped when it leaves the list or cannot be sent.
 - "Prompt" (empty at the start). "Length (seconds)" for ComfyUI: whole seconds, default 2, least 1, most from `comfy.getInfo`'s `maxMs` for the workflow of the chosen start. Above the most, the note "The clip will be shorter: at most {n} s" shows and the most is sent as `durationMs`. With `maxMs` unknown, the typed value is sent and the command's refusal shows.
-- "Start" is disabled until a picture is chosen (picture starts), and with no prompt or no video provider. It sends `generation.startVideo` with `start` (`'background'`, `'first_frame'` or `'none'`), `useReferences` and `referenceAssetIds` (the chosen pictures, as many as the start takes, or empty) from the start table in `spec/data-model.md`. Refusals show as the command gives them. A paid provider goes through the paid confirm line with a count of 1 and the number of pictures sent (a background start counts the background picture).
+- "Start" is disabled until a picture is chosen (picture starts), and with no prompt or no video provider. It sends `generation.startVideo` with `start` (`'background'`, `'first_frame'` or `'none'`), `useReferences` and `referenceAssetIds` (the chosen pictures, as many as the start takes, or empty) from the start table in `spec/data-model.md`. Refusals show as the command gives them. A paid provider goes through the paid confirm line with a count of 1 and the number of pictures sent. A background start counts the post's background picture as one reference picture: "This sends 1 paid request(s) and 1 reference picture(s) to {Provider}."
 - No crop preview. No autoplay. The card adds no command, IPC channel, CSP rule or protocol change, and shows no server address or file name. The finished clip lands on the variant's track through the job (P7-16), not through the card.
 
 ### Run list and run row
@@ -105,7 +105,7 @@ Built. In `src/renderer/screens/campaign/`: `run-list/`, `run-row/` (with `video
 - Status: `queued` "Waiting"; `running` "Working", with `result.stage`, "place in queue {n}" and the job's `progress` as a whole percent when present (a ComfyUI picture run gets a live percent, `spec/comfyui.md`, "Live progress"); `succeeded` "Done" and its results; `failed` "Failed", "Retry", and under them the run failure (the reason's or kind's sentence, missing items, "Open Settings", the server's message; `spec/screens-campaign.md`); `cancelled` "Cancelled" and "Retry". A failed run never shows raw error text.
 - A running video run says "Waiting (place {n})" (or "Waiting") while the server holds it in its queue, else "Working, {m} min" counted from the row's `createdAt` (there is no `startedAt` column), read again every 15 seconds (`run-row/video-status.ts`). It shows no percentage, even when a ComfyUI video run's `progress` holds one: the video row does not read `progress`.
 - **"Cancel"** shows exactly when `job.cancel` would accept the run: a `queued` run on any provider; a `running` run, unless its provider's `cancel` is `none` and the job is a background job other than pictures (`spec/cancel.md`). The rule lives in `ui/cancel-shown.ts` and must always agree with `cancelRefusal` in `src/main/jobs/cancel.ts`; `tests/unit/main/jobs/cancel-shown.test.ts` holds the two to the same answer for every kind, status and provider. A refused cancel shows the command's message.
-- "Retry" sends `job.retry`; for a paid provider it first shows the paid confirm line with the count `job.retry` will ask for (FN-4, `spec/screens-campaign.md`).
+- "Retry" sends `job.retry`; for a paid provider it first shows the paid confirm line with the count `job.retry` will ask for (FN-4, `spec/screens-campaign.md`). A video run row always counts one request (`requestCount` in `src/renderer/stores/job-store.ts`).
 - Picture results: one `<img>` per asset ID, 160 px wide, `alt` "Result {i}", address from `assetUrl`. None: "No pictures."
 - Video result: `<video controls preload="metadata">`, `aria-label` "Video result", at the panel's width, `src` from `assetUrl`, no autoplay, sound as the clip has it. None: "No clip."
 - When a succeeded row's results are first drawn, the page sends `job.markSeen` once for that job.
@@ -144,7 +144,8 @@ Built. `src/renderer/screens/settings/settings-screen/` and one component folder
 
 - Heading "Agent access". A switch "Turn on agent access" (`mcp.setEnabled`). "Port" field with "Save port" (`settings.update`; no min or max on the field, so the command's own range sentence shows). "Make a new token" (`mcp.regenerateToken`).
 - Problem lines from `mcp.getConnectInfo`: "Port {port} is in use. Choose another."; "There is no access token. Make a new token."; "The MCP server could not start. Turn it off and on to try again." A refused command's message shows as a line too; a line equal to the state line is drawn once. Any successful agent-access command clears both refusal lines. After every command the section reads `mcp.getConnectInfo` again.
-- **Connect to Claude** panel, shown when the server is on and a token exists: "Address", "Access token" and "Claude Code" (the command line, in a code block) as text, never in an attribute. "Copy" beside the line uses `navigator.clipboard.writeText` on click only (no preload, IPC, CSP or permission-handler change; a permission handler added later must allow `clipboard-sanitized-write`). It reads "Copied" after a click; on failure "Copy did not work. Select the line and copy it." Nothing is logged about the token.
+- **Connect to Claude** panel, shown when the server is on and a token exists: "Address", "Access token" and "Claude Code" (the command line, in a code block) as text, never in an attribute. "Copy" beside the line uses `navigator.clipboard.writeText` on click only (no preload, IPC, CSP or permission-handler change; a permission handler added later must allow `clipboard-sanitized-write`). It reads "Copied" after a click; on failure "Copy did not work. Select the line and copy it." Nothing is logged about the token. A second block, "Claude Desktop", shows `ConnectInfo.claudeDesktop` (the bridge's config JSON, no token) with its own Copy button (P10-9; `spec/mcp-and-agents.md`, "Bridge mode").
+- Checkbox "Let agents delete campaigns and variants without asking" (`auto-approve-setting/`, P10-7), with the line "An agent can then delete work with no click from you. Deletes cannot be undone, and deleting a variant clears its campaign's undo list." Saved with `settings.update { mcp: { autoApproveDestructive } }`.
 - The token is kept in this section's own state only: never in a store, a log line or an attribute.
 - A refused `mcp.getConnectInfo` shows the heading and the query's own fixed error message, with no switch.
 
@@ -164,16 +165,12 @@ Whether the per-provider tick stays is open (OI-90; build default: yes, off). Th
 
 Built. `src/renderer/dialogs/key-dialog/`. Opens when a command returns `NEEDS_KEY` [REQ: FR-171]. Title "Add your {provider label} key", one password field per missing secret, "Save and continue" (saves each with `secret.set`, then the action is retried) and "Cancel". Keys are not tested when entered [REQ: FR-172].
 
-## Hand test (dev)
+## Agent ask dialog and activity line
 
-Built, throwaway. `src/renderer/dev/hand-test-screen/`, `s3-settings-form/`, `storage-actions/`, `dropbox-sign-in/`, `result-text.ts`. Not product UI.
+Built (P10-7, P10-7b, P10-8). `src/renderer/app/permission-dialog/`, `src/renderer/app/agent-activity/`.
 
-- Reachable from the shell only when `app.getState` says `devTools` (an unpackaged app started with `ADMAN_DEV_TOOLS=1`). It goes through the same IPC bridge, bus, key guard, key dialog, job runner and adapters as the real screens.
-- Heading "Hand test", line "Development tools only. Not part of the product."
-- "Amazon S3 settings": Bucket, Region, "Prefix (optional)", "Save S3 settings" (`settings.update` for `storage.s3`). Keys are not entered here.
-- "Storage": a select of "This computer (app data folder)", "Amazon S3", and "Dropbox" only when `HAND_TEST_DROPBOX` is true; "File to upload (full path)"; "Upload", "List", "Remove all", all through `dev.storage`. The line "Every action touches only the folder adman-hand-test/ in the chosen storage." Local files go to `hand-test-local/adman-hand-test/` under the app data folder.
-- "Dropbox" with "Sign in to Dropbox" (`storage.dropboxSignIn`), shown only when `HAND_TEST_DROPBOX` is true. It is false on `main`, so the Dropbox parts are hidden.
-- It uses existing controls, labels and keyboard paths, with no visual design.
+- **Ask dialog**, on `agent.permissionRequested`: title "An agent asks to delete"; body "{agent} wants to {action}: {target}.", where `{agent}` is "Agent named {client name}" or "An agent" (the name is the agent's own text, drawn as text only); a cost line ("This cannot be undone." for a campaign; for a variant also "It also clears the undo list of this campaign."); "Answer within 2 minutes."; checkbox "Don't ask again for deletes"; buttons "Refuse" (focused first) and "Allow" (pressable 750 ms after opening). Escape refuses. At `expiresAt` it closes with no answer.
+- **Activity line:** "Agent working: {tool}", then " · {project name}" when the project is open; `role="status"`; hidden 10 seconds after the last `agent.activity` event.
 
 ## Address and licence dialogs
 
@@ -181,7 +178,7 @@ Built. `src/renderer/dialogs/address-dialog/`, `licence-dialog/`, mounted in the
 
 ## Editor, tabs and thumbnails
 
-Not built (Phase 3). Designed in `spec/editor.md`: the project switcher, campaign tabs and variant tabs replace the project tabs; the editor (canvas, layer list, properties panel, picture chooser, font upload) is the content of a variant tab; the campaign grid and project home show thumbnails. Every rule in "Rules for every screen" holds for them.
+Built (Phase 3). Described in `spec/editor.md`: the project switcher, campaign tabs and variant tabs replace the project tabs; the editor (canvas, layer list, properties panel, picture chooser, font upload) is the content of a variant tab; the campaign grid and project home show thumbnails. Every rule in "Rules for every screen" holds for them.
 
 **Phase 3 tokens**, added to `src/renderer/ui/tokens.css` by slice P3-0 and used by no other file's literal: `--editor-layers-width` (260px), `--editor-props-width` (312px), `--canvas-backdrop` (a mid grey that is neither ad black nor page white), `--selection-dark` and `--selection-light` (the selection line and its two sides), `--guide-color` (a magenta that shows on most pictures), `--handle-size` (8px), `--rotate-handle-offset` (24px), `--thumbnail-tile` (the grid tile's picture width), `--layer-thumb` (32px). Overflow and missing marks use the existing danger tokens.
 
@@ -210,7 +207,7 @@ Phase 3 (editor and tabs, `spec/editor.md`):
 
 Phases 1 and 2:
 
-- Navigation by one tab per open project, with Settings and Hand test as buttons beside the tabs (OI-31 is open).
+- Navigation by one tab per open project, with Settings as a button beside the tabs (OI-31 is open).
 - Settings is shown in place of the tab panels, not as a tab or a window.
 - Screens share one layout stylesheet (`ui/layout.module.css`) of pages, sections, rows and fields; a class one component uses sits in its own module.
 - The paid confirm is one line inside the panel, not the run confirmation dialog of Phase 4, and shows no paid-generation count (FR-230 waits for Phase 4).

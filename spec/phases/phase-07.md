@@ -22,7 +22,7 @@
 3. **Preset reference pictures pass on macOS** (`tests/e2e/scene-reference.spec.ts`, the time cases); Windows is the stakeholder's check (D-087).
 4. **A running video job survives closing and reopening the app:** `tests/e2e/video-resume.spec.ts` ends the app process while a fake run works, starts the app again, opens the project, and the clip lands on the track. `tests/integration/jobs/close-leaves-charged-run.test.ts` shows a graceful close leaves a started paid run running and the next open collects it.
 5. **FFmpeg:** `npm run fetch:ffmpeg` has placed an LGPL FFmpeg on this Mac once and its licence check passed; `tests/integration/media/embed-real.test.ts` passes with it (it skips with a message when no binary is present, so CI stays green).
-6. **One paid fal run** (`tests/live/seedance.live.test.ts`, 4 s, 480p, from a still) turned one picture into one MP4 (D-085, D-089).
+6. **One paid fal run** (`tests/live/seedance.live.test.ts`, 4 s, 480p, from a still) turned one picture into one MP4 (D-085, D-089). Done in P7-24; never repeated. Its facts are OI-04's (`spec/open-items.md`).
 7. Full checks on `main`: lint, typecheck, `npm test`, build, `test:build`, `npm run test:e2e`. Shots 220 to 249 made and named in the reports.
 
 ## Dependencies, as they really are
@@ -41,7 +41,7 @@
 - **FFmpeg is run only through `src/main/media/run-ffmpeg.ts`** (P7-4). No other file spawns a process. No slice uses `exec`, a shell, `PATH` lookup, or a path from settings or a project file for the binary.
 - **No new token.** Screens take CSS from `src/renderer/ui/tokens.css` only. One folder per component. Each screen slice adds `tests/shots/p7-{n}.shots.ts`, picture names from its numbers.
 - **Test clips.** Tests that need a playable video use `tests/fixtures/video/tiny.mp4` and `tiny-sound.mp4`, made once by P7-3 with the fetched FFmpeg and committed (each under 50 KB). Tests that need only box headers keep using the fake MP4 builder (`src/main/providers/fake/mp4.ts`).
-- **Paid calls:** the fake provider and recorded answers only, except the one fal run in P7-24. `test:live` runs only there.
+- **Paid calls:** the fake provider and recorded answers only, except the one fal run in P7-24, which is done and is never repeated.
 - **Nothing leaves this machine** (D-086). The fetch script downloads; nothing is uploaded, pushed or released.
 - Budget: one slice per run, well under 300k tokens; hand off with `HANDOFF.md` if near it.
 
@@ -105,7 +105,8 @@ These fill gaps in the topic files. The orchestrator folds them in later; develo
 - **No client package** (OI-30, A-170). Four HTTPS calls through the adapter's own pinned `fetch` wrapper: submit `POST https://queue.fal.run/{endpoint}`, status `GET https://queue.fal.run/bytedance/seedance-2.0/requests/{id}/status`, result `GET .../requests/{id}`, cancel `PUT .../requests/{id}/cancel`. Header `Authorization: Key {key}`, sent to the queue host only. Status and result addresses are built by the adapter from the fixed owner and app and the request ID, never taken from an answer or a row. A request ID must match the UUID form before it is put in a path.
 - **Two origins.** The queue origin `https://queue.fal.run` (key sent) and the media hosts, `https://` plus a host matching `^([a-z0-9-]+\.)*fal\.media$` (no key, no other header). Every other origin, every redirect and every `http:` address is refused before sending. The answer limit is `MAX_PROVIDER_ANSWER_BYTES` for JSON and `MAX_VIDEO_BYTES` for the download.
 - **Endpoints by start** (A-172): a prompt start uses `bytedance/seedance-2.0/text-to-video`; a first-frame or background start `bytedance/seedance-2.0/image-to-video` (`image_url`); a reference start `bytedance/seedance-2.0/reference-to-video` (`image_urls`, at most 9). Body: `prompt`, `resolution: '720p'`, `duration` as whole seconds in a string (4 to 15), `aspect_ratio` the nearest of `21:9, 16:9, 4:3, 1:1, 3:4, 9:16` to the variant (ties to the wider), `generate_audio: true` (D-053 item 12; the price is the same with or without sound). The app's `<Picture n>` names in a reference prompt are written as `@Image{n}` for fal. The registry's `defaultModels.video` stays `bytedance/seedance-2.0/image-to-video`; the job row's `model` is the endpoint used.
-- **Pictures as data addresses** (A-171): each picture is sent as `data:image/png;base64,...` in the JSON body. No fal upload call, no upload host. If the live run shows fal refuses data addresses, P7-24 stops and reports; the architect then adds the upload call.
+- **Pictures as data addresses** (A-171): each picture is sent as `data:image/png;base64,...` in the JSON body. No fal upload call, no upload host. The one live run (P7-24) showed fal accepts a start picture sent this way, so A-171 holds.
+- **What the live run returned** (OI-04): asked for 4 s at 480p, square, on `bytedance/seedance-2.0/image-to-video`, fal returned a clip 4,064 ms long, 640 × 640, with a sound track (fal adds sound by default), about 0.7 MB, in about 95 s. So a returned clip's length is not exactly what was asked: the app always takes the length (and size) from the file, through `checkMp4`, never from the request.
 - **Status mapping:** `IN_QUEUE` is `waiting` with `queue_position`; `IN_PROGRESS` is `running`; `COMPLETED` with an `error` is `failed` (mapped like the error table); `COMPLETED` is `succeeded`. A `404` on status is `failed`, kind `other`, detail `unknown_request` (the job ends with nothing kept). The result answer must hold `video.url` on a media host; the file is downloaded, read under `MAX_VIDEO_BYTES`, and returned as bytes.
 - **Cancel:** `200` is `stopped`; `400 ALREADY_COMPLETED` is `finished`; `202` and any other answer are `unknown`. The cancel call is sent only for a run still `waiting`: a started run is refused before by `cancel_would_still_charge` (P7-13).
 - **Charges and resume** (U-25, A-173): status, result and media downloads are treated as free, so left-over fal rows are picked up on open. Only `start` goes through `jc.call`, so only the submit counts in `paid_calls`; a picked-up row adds nothing. A cancelled started request is treated as charged (OI-60 assumption stands).
@@ -134,6 +135,7 @@ These fill gaps in the topic files. The orchestrator folds them in later; develo
   - A number reaches a filter graph only through the number formatter.
   - No `concat`, `movie=`, `amovie=`, `subtitles=` or `drawtext` with `textfile=`.
   - Copy each imported source into the run folder under a fixed name before the run; never pass the user's own path.
+  - **No data references.** The two MOV demuxer options that make FFmpeg follow a file's data references (`-enable_drefs`, `-use_absolute_path`) appear nowhere under `src/`; `tests/unit/main/media/no-dref-flags.test.ts` keeps them out. Only the control case in `tests/integration/export/ffmpeg-no-network.test.ts` passes them, to show a hostile MOV is followed with them and not without.
 
 ### Clips and the track [A-180 to A-183]
 

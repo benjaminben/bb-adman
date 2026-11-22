@@ -58,7 +58,7 @@ Built (P7-16, `src/main/jobs/video-store.ts`, `src/main/media/ffmetadata.ts`). T
 
 ## Export
 
-Built (Phase 8: P8-1 to P8-16; slices in `spec/phases/phase-08-slices.md` and `phase-08-slices-2.md`). Not built: P8-17 (frame reuse, sound in the MP4), P8-18 (packaging FFmpeg), P8-19 (end-to-end proof). [REQ: FR-126, FR-130 to FR-132, FR-140 to FR-143, FR-150, FR-151]
+Built (Phase 8: P8-1 to P8-19; slices in `spec/phases/phase-08-slices.md` and `phase-08-slices-2.md`). [REQ: FR-126, FR-130 to FR-132, FR-140 to FR-143, FR-150, FR-151]
 
 **Trigger:** `export.run` with `projectId, campaignId, variantIds[], outputDir, imageFormat, jpgQuality, fps, proceedDespiteWarnings`, and an optional reason for proceeding past warnings [REQ: FR-236]. `deny` for an agent. Job kind `export` (class `background`). Defaults come from `settings.export = { imageFormat: 'png' | 'jpg', jpgQuality: 1..100, fps: 30 | 60 }` (built).
 
@@ -91,12 +91,13 @@ The render service draws the full Scene at the variant's pixel size and captures
 ### Video variant
 
 1. Frame count = `ceil(durationMs / 1000 × fps)`. Frame `i` is drawn at time `i × 1000 / fps`. Time comes from the frame number, never from a clock, so every machine makes the same frames [REQ: FR-131].
-2. The render service draws the Scene with the background left out on a transparent page, and captures each frame as PNG. If no layer changes between two frames (no animation running, no layer starting or ending), the previous frame is sent again without redrawing.
+2. The render service draws the Scene with the background left out on a transparent page (only the background's shade is drawn, where a clip covers the time; `spec/scene.md`, "Shade over a gap"), and captures each frame as PNG. If nothing changes between two frames (no animation running, no layer starting or ending, no clip starting or ending), the previous frame is sent again without redrawing (`frame-reuse.ts`).
 3. Frames are piped to FFmpeg as `-f image2pipe -framerate {fps} -c:v png -i -`.
 4. FFmpeg builds the background: a black base of the variant's size and duration, then each clip cut to its time range (`trim`), scaled and cropped by `background-placement.ts`, and overlaid. Each clip is placed in time by options on its own input, not by `setpts`: `-t` (length), `-itsoffset` (start), and `-ss` (in point) for a video; a still is looped for its length (`-loop 1`).
 5. FFmpeg overlays the frame stream on the background and encodes.
 
-- **A gap between clips is black,** in the MP4 as in the editor, thumbnails and `variant.render` (ruled; P7-8, P8-16).
+- **A gap between clips is black,** in the MP4 as in the editor, thumbnails and `variant.render` (ruled; P7-8, P8-16). No shade is drawn over a gap; an image variant always draws its shade.
+- **One demuxer table.** A clip's picture and its own sound are both read with the FFmpeg demuxer pinned by the clip's sniffed type, from one table: `src/main/export/video/clip-demuxers.ts`. A file is never probed.
 - **One FFmpeg runner.** FFmpeg is run through `src/main/media/run-ffmpeg.ts` only (argument array, no shell). Video export feeds the frames to it on stdin. There is no second spawn file.
 - A clip row that fails the clip bounds when export reads it fails that ad.
 
@@ -104,7 +105,7 @@ The render service draws the full Scene at the variant's pixel size and captures
 Encoder:  macOS   -c:v h264_videotoolbox -b:v 12M
           Windows -c:v h264_mf -b:v 12M
 Common:   -pix_fmt yuv420p -r {fps} -movflags +faststart
-Sound:    -an when the variant's sound source is "none"
+Sound:    -c:a aac -b:a 192k (FFmpeg's own AAC encoder); -an when there is no sound
 ```
 
 `fps` is 30 by default and can be raised to 60 [REQ: FR-132, A-07].
@@ -113,12 +114,13 @@ Sound:    -an when the variant's sound source is "none"
 
 ### Sound in export
 
-Data and preview built (P7-12, P7-21). In the export: not built, owned by P8-17; until then a video ad exports silent (`-an`). OI-54 [REQ: FR-301, FR-302, FR-051 as changed]. CQ-32 is ruled: the MP4 carries the one sound source the editor plays (the clips' own sound, the chosen audio file, or none).
+Built (data and preview P7-12, P7-21; export P8-17, `src/main/export/video/sound-args.ts`). OI-54 [REQ: FR-301, FR-302, FR-051 as changed]. CQ-32 is ruled: the MP4 carries the one sound source the editor plays (the clips' own sound, the chosen audio file, or none).
 
 - A video variant has one sound source at a time: the clips' own sound, one added audio file, or none. Each clip's sound can be switched off.
-- An added file starts at the variant's start and is cut at the variant's end. No mixing, no volume control.
-- Audio files: MP3, WAV, M4A, AAC (a new audio asset kind).
-- With source "none" the export is silent (`-an`). Otherwise FFmpeg maps the one chosen source into the output.
+- **The clips' sound:** each clip whose sound is on and whose file holds sound is read a second time for its sound, from its in point for its length (`-ss`, `-t`), and placed at the clip's start with `adelay`. Two or more are mixed with `amix`. No other audio filter is used. No clip with sound: silent.
+- **An added file** starts at the variant's start and is cut at the variant's end (`-t`). No mixing, no volume control.
+- Audio files: MP3, WAV, M4A, AAC (a new audio asset kind), each read with its pinned demuxer.
+- Sound is encoded with FFmpeg's own `aac` encoder at 192 kbit/s. With source "none", or no sound found, the export is silent (`-an`).
 
 ## Report
 
@@ -164,13 +166,13 @@ Phase 8. Each is one addition to `Report`, to be specified when Phase 8 is prepa
 
 ## Translation sheet
 
-Not built. [REQ: FR-103]
+Built (P6-7, P6-7b, P6-8; the button is `translation-panel/export-sheet.tsx`). The full rules (cell quoting, the formula guard, the one chosen path) are in `spec/phases/phase-06.md`, section 4. [REQ: FR-103]
 
 `translation.exportSheet` writes a CSV in UTF-8 with a byte-order mark, so Excel opens it correctly. Columns: `variant_id, title, size, language, layer, source_text, text, status`. One row per text layer of every variant not in the primary language. Publishing includes it as `translations.csv`.
 
 ## Checks
 
-Not built (Phase 8 for export; `check.run` with the editor data it reads). The `variant_check` table is built. [REQ: FR-110 to FR-116, R-03, R-13, R-18]
+Built: the engine, `check.run`, `check.results` and the badges (P6-2, P6-3), the check panel (P6-11), and export's call before every export (P8-13, the checks part). The engine's rules are in `spec/phases/phase-06.md`, section 5. [REQ: FR-110 to FR-116, R-03, R-13, R-18]
 
 ```ts
 type CheckResult = {

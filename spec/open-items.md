@@ -103,6 +103,8 @@ The video card and the agent settings block were built with these choices. Each 
 ## 5. Waiting on the stakeholder's own action
 
 - **Windows test (D-087).** He tests on Windows once the first draft is complete. Until then, anything the spec says must pass "on both systems" is recorded as checked on macOS only.
+  - **Bridge mode on Windows.** The bridge points Chromium's `sessionData` at a fresh temporary folder (`spec/mcp-and-agents.md`, "Bridge mode"). On Windows, `safeStorage`'s key lives in Chromium's `Local State` file, which moves with `sessionData`, so the bridge may not be able to decrypt the stored token there. To check by hand: Claude Desktop connects through the bridge on Windows. If it fails, the likely fix is to copy `Local State` into the temporary folder (`spec/phases/review-leftovers.md`).
+- **fal usage page (OI-04, A-173).** The one paid fal run is done and is never repeated. He reads his fal usage page for that run's price and for whether status calls were charged.
 - **His paid Gemini run (D-081).** He runs the paid Gemini test case at a time of his choosing.
 - **Dropbox registration (OI-18).** See Large items.
 - **Naming the models that need the commercial-licence dialog (OI-76, D-088).** FLUX 3 klein is assumed; say which others.

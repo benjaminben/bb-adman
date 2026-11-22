@@ -52,7 +52,7 @@ export type ProviderError = {
 | ID | Label | Jobs | Available | Secrets | Default models | Other fields | Where |
 |----|-------|------|-----------|---------|----------------|--------------|-------|
 | `gemini` | Google Gemini | image, layout, text | Yes | `gemini.apiKey` | image `gemini-nano-banana-2.1`, layout `gemini-2.5-flash`, text `gemini-2.5-flash` | | `spec/providers-adapters.md` |
-| `fal-seedance` | fal.ai Seedance | video | No, until its adapter is built | `fal.apiKey` | video `bytedance/seedance-2.0/image-to-video` | `cancel: 'may_finish'` | `spec/providers-adapters.md` |
+| `fal-seedance` | fal.ai Seedance | video | Yes (P7-15) | `fal.apiKey` | video `bytedance/seedance-2.0/image-to-video` | `cancel: 'may_finish'` | `spec/providers-adapters.md` |
 | `comfyui` | ComfyUI | image, video | Yes | none | none | `local: true`, `cancel: 'stops'`, `serverText: true` | `spec/comfyui.md` |
 | `firefly` | Adobe Firefly | image | No | `firefly.clientId`, `firefly.clientSecret` | none | | `spec/providers-adapters.md` |
 | `s3` | Amazon S3 | storage | Yes | `s3.accessKeyId`, `s3.secretAccessKey` | none | | `spec/storage-and-publish.md` |

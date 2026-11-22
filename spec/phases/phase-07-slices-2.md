@@ -119,11 +119,12 @@ Rules, exit criteria, the wave table and the design additions: `spec/phases/phas
 - **Exit check:** lint, typecheck, `npm test`.
 - **Class:** B. **Security:** none. **Size:** small.
 
-### P7-24 — End to end, shots, the paid run, exit check
+### P7-24 — End to end, shots, the paid run, exit check (built)
 
+- **As built:** the end-to-end files are `tests/e2e/video-variant.spec.ts` (workflow 5.5) and `tests/e2e/video-resume.spec.ts` (resume after the app is ended); shots 240 to 243 were made. The live test `tests/live/seedance.live.test.ts` was run once, from the main folder, by the orchestrator. Its facts are OI-04's (`spec/open-items.md`). **That one paid fal run is done and is never repeated.**
 - **Exists when done:** every exit criterion of `phase-07.md` is met and reported.
 - **New files:** `tests/e2e/video-variant.spec.ts` (workflow 5.5, exit criterion 1); `tests/e2e/video-resume.spec.ts` (a fake run with a 10 s wait; the app process is ended while it works; a new launch opens the project; the clip lands on the track); `tests/live/seedance.live.test.ts` (one still to one MP4, 4 s, through the adapter with `resolution: '480p'` passed for the test only, into a temporary folder; prints the endpoint, the length and size returned, `hasSound`, the time taken; never the key or any address); `tests/shots/p7-24.shots.ts`: 240 to 249 (a video variant at three times; the run row of a fal run; the close warning for a started fal run; the whole editor with the timeline).
 - **May touch:** test files only.
-- **The paid run:** once, under D-085 and D-089, with the key the stakeholder set in the environment for `test:live`. Report OI-04's facts (lengths, sizes, sound, the price shown by fal if any). If fal refuses data addresses (A-171), stop and report. Ask the stakeholder to check his fal usage page for a status-call charge (A-173).
+- **The paid run** (done; never repeated): once, under D-085 and D-089, with the key the stakeholder set in the environment for `test:live`. Report OI-04's facts (lengths, sizes, sound, the price shown by fal if any). If fal refuses data addresses (A-171), stop and report. Ask the stakeholder to check his fal usage page for a status-call charge (A-173).
 - **Exit check:** lint, typecheck, `npm test` (with `embed-real` not skipped), build, `test:build`, `npm run test:e2e`; `test:live -- seedance` once; `npm run shots` once. List Windows references and the Windows FFmpeg check as the stakeholder's (D-087).
 - **Class:** all of the above. **Security:** none new. **Size:** medium.

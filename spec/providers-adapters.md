@@ -65,7 +65,7 @@ Built: picture generation with reference pictures (`ImageProvider.generate`), la
 
 ### Picture extend
 
-Built (P5-6), tested on recorded answers; the live test `tests/live/gemini-extend.live.test.ts` has not been run (P5-19 runs it once). Used by the `generative_fill` job (`spec/links-and-sync.md`, "Generative fill"). [REQ: FR-076]
+Built (P5-6), tested on recorded answers; the live test `tests/live/gemini-extend.live.test.ts` was run once and passed (a 512 × 512 PNG came back as a 768 × 1376 JPEG with the picture kept in the centre); it is not repeated. Used by the `generative_fill` job (`spec/links-and-sync.md`, "Generative fill"). [REQ: FR-076]
 
 - **No canvas** (A-128). The app draws no canvas and moves no pixels. `extend({ image, placement, width, height, prompt })` sends one `generateContent` call through the pinned client: `parts` = the prompt text, then the picture as one `inlineData` PNG part; `config.responseModalities = ['IMAGE']`; `config.imageConfig.aspectRatio = nearestAspectRatio(width, height)`. `placement` is not sent: the fill dialog always places the picture centred (`scale`), and the prompt asks for the scene to continue outward.
 - The prompt is the job's stored prompt (`FILL_PROMPT` with the "keep printing" ending, since one picture is sent).
@@ -104,7 +104,7 @@ Built (Phase 4, slice P4-4); each of layout, extract brief and copy options pass
 
 ## fal.ai Seedance (image-to-video)
 
-The adapter is built (P7-14) and tested on recorded answers only; P7-15 switched the registry row on (`available: true`), and its one paid run is P7-24's. Status, result and download calls are not paid calls; a started run left running on close or quit is collected at the next open (`spec/cancel.md`, "fal rows"). It uses no client package (A-170): direct HTTPS calls through one pinned fetch. Where this section and `spec/phases/phase-07.md`, "fal.ai Seedance" differ, the phase file is right until P7-15 folds it in here.
+Built (P7-14, `src/main/providers/fal-seedance/`) and switched on (P7-15, `available: true`). Tested on recorded answers; its one paid run was made in P7-24 and is never repeated. Status, result and download calls are not paid calls; a started run left running on close or quit is collected at the next open (`spec/cancel.md`, "fal rows"). It uses no client package (A-170): direct HTTPS calls through one pinned fetch. The calls, the two origins, the endpoints by start, the body and the status and cancel tables are in `spec/phases/phase-07.md`, "fal.ai Seedance".
 
 **Direction:** outbound. **Protocol:** HTTPS queue API, direct calls (no client package). **Authentication:** API key, secret `fal.apiKey`. [REQ: FR-123, FR-124, OI-04]
 
@@ -112,55 +112,37 @@ The adapter is built (P7-14) and tested on recorded answers only; P7-15 switched
 
 **Registry row** (in place): `id 'fal-seedance'`, label "fal.ai Seedance", `jobs: ['video']`, `secrets: ['fal.apiKey']`, `defaultModels: { video: 'bytedance/seedance-2.0/image-to-video' }`, `local: false`, `cancel: 'may_finish'`, `serverText: false`.
 
-**OI-04, to be answered by testing with a real key:** the model ID, its accepted durations and sizes, its price, and which start kinds it supports. The panel offers only the durations and sizes the model accepts.
+**What the one live run showed** (OI-04): the endpoint `bytedance/seedance-2.0/image-to-video` took a start picture sent as an inline data address (A-171 holds). Asked for 4 s at 480p, square, it returned a clip 4,064 ms long, 640 × 640, with a sound track (fal adds sound by default), about 0.7 MB, in about 95 s. The price is not visible through the adapter.
+
+**Rule: the file decides a clip's facts.** A returned clip's length is not exactly what was asked. The app reads the real length, width, height and sound from the file (`checkMp4`, stored by `asset.addGenerated`) and never uses the asked-for length as the clip's length.
 
 ### The adapter
 
-The `video_generation` job kind and `generation.startVideo` exist and are tested with ComfyUI and the fake provider (`spec/jobs.md`), so this work is the adapter and its paid proof.
-
-- Implements `VideoProvider` in full:
-  - `start`: upload each picture with the fal storage upload call, then `fal.queue.submit` to the registry model with the prompt, picture URL(s), duration and aspect ratio. Returns the request ID; the job kind saves it with `jc.setRemoteJobId`. A signal that fires before submission stops `start` with `ProviderCancelled`, with no more pictures uploaded.
-  - `check`: `fal.queue.status`. The job kind polls every 5 seconds and updates `job.progress`.
-  - `fetchResult`: downloads the MP4 and returns the bytes, so no caller is handed a video address. The download is read under `MAX_VIDEO_BYTES` and must pass `checkMp4` before it is stored.
-  - `cancel`: fal's queue cancel; outcome `stopped`, `finished` or `unknown` (`spec/cancel.md`).
-- Follows every adapter rule in `spec/providers.md`. Its host-pattern constant covers the API host and the host the file is downloaded from.
-- Error mapping as for Gemini (401/403 `bad_key`, 429 `quota`, content rules `refused`, marked network error `offline`, rest `other`), with a 15-minute timeout on the whole job. One recorded-response test per kind. **Circuit breaker:** no.
-- **Sound.** Stored as returned, after `checkMp4`, sound included. To check: whether fal needs a setting to make sound.
-- `@fal-ai/client` is added at an exact version, its licence checked against the licence rules in `spec/security.md`, any install script given a `false` entry.
-- **Done when:** recorded-response tests for start, check, fetch, cancel and each error kind; `tests/live/seedance.live.test.ts` turns one still into one MP4 in a temporary folder, printing the same kind of facts as the Gemini live tests. OI-04 is answered by it.
+- Implements `VideoProvider` in full: `start` (one submit with the prompt, pictures as data addresses, duration and aspect ratio; returns the request ID, which the job kind saves with `jc.setRemoteJobId`; a signal fired before submit gives `ProviderCancelled` and sends nothing), `check` (the status call), `fetchResult` (downloads the MP4 from a media host and returns the bytes, read under `MAX_VIDEO_BYTES`; it must pass `checkMp4` before it is stored), `cancel` (the queue cancel; `stopped`, `finished` or `unknown`, `spec/cancel.md`).
+- Follows every adapter rule in `spec/providers.md`.
+- Error mapping (`failure.ts`): 401/403 `bad_key`, 429 `quota`, content rules `refused`, a marked network error `offline`, the rest `other`; no result within 15 minutes is `timeout` (`FAL_RUN_MS`). The key is removed from every detail. **Circuit breaker:** no.
+- **Sound** is stored as returned, after `checkMp4`.
 
 ### Start kinds
 
-- Offer only the start kinds fal's model is proven to have. The analyst's reading is that it has all three (from a prompt, from a first-frame picture, from reference pictures); that is not verified (with OI-04).
-- A kind fal lacks is refused by `generation.startVideo` before any call, with the same refusal ComfyUI gives for a start pair with no workflow.
-- Adding a `VideoProvider` member that states a provider's start kinds goes to the architect first.
-- `checkVideoRetry` must run checks 2 and 4 of the `generation.startVideo` checks (start pair, picture) for every provider, with one test (U-1).
-- A picture start on a provider that is not ComfyUI needs a provider-neutral sentence with its own refusal, in place of today's "ComfyUI cannot make this kind of video yet." (U-3).
+- All four starts (prompt, the post's background, a first-frame picture, reference pictures) and lengths 4 to 15 s in whole seconds, up to 9 references, from `src/shared/config/video-offers.ts`. Only the image-to-video start has been shown to work live; the others rest on recorded answers.
+- A start the offer lacks is refused by `generation.startVideo` before any call (`video_start_not_offered`). `job.retry` runs the start pair and picture checks for every provider.
 
 ### Cancel and charges
 
-- `cancel: 'may_finish'`: a paid run charged either way is left to finish. Queued with nothing sent: cancelled at once. Still in fal's queue: the queue cancel. Started by fal (`result.stage` is `working`): `job.cancel` is refused `RULE_VIOLATION`, reason `cancel_would_still_charge`, "{Provider} has started this and will charge for it. The app lets it finish and keeps the result." (`cancelRefusal`, `spec/cancel.md`). This applies to fal as soon as it is built.
-- To check (U-25): whether fal charges for a started request that is cancelled. Until shown otherwise it is treated as charged.
-- What closing a project does with such a job is ruled when the adapter is designed in detail (OI-60, OI-51).
+- `cancel: 'may_finish'`: a paid run charged either way is left to finish. Queued with nothing sent: cancelled at once. Still in fal's queue: the queue cancel. Started by fal (`result.stage` is `working`): `job.cancel` is refused `RULE_VIOLATION`, reason `cancel_would_still_charge`, "{Provider} has started this and will charge for it. The app lets it finish and keeps the result." (`cancelRefusal`, `spec/cancel.md`).
+- Open (U-25): whether fal charges for a started request that is cancelled. Until shown otherwise it is treated as charged.
+- Closing a project or quitting leaves a started fal run running; the next open collects it (A-174, `spec/cancel.md`).
 
 ### Left-over runs after a restart
 
-- A left-over video run is only checked and fetched, never started again: when the video job kind gets a row that has a `remote_job_id`, it never calls `start`; it calls `check`, fetches the result if there is one, and stores it. A remote ID the provider does not know ends the job `failed` with nothing kept (`spec/jobs.md`).
-- For fal, check whether a status call or a download is charged. If it is, or that cannot be shown, fal rows are not picked up again after a restart and end as interrupted. Say whether a picked-up status call counts in `paid_calls`.
+- A left-over video run is only checked and fetched, never started again: a row with a `remote_job_id` never calls `start`; it calls `check`, fetches the result if there is one, and stores it. A remote ID fal does not know ends the job `failed` with nothing kept (`spec/jobs.md`).
+- Status, result and download calls are treated as free (A-173) and do not count in `paid_calls`. Open: whether fal charges for status calls is for the stakeholder to read on his fal usage page.
+- Agent tick: `agentRunsOffered` (`src/shared/config/agent-runs.ts`) gives null for fal, so the user can tick it (`spec/agent-runs.md`).
 
-### What else changes when it is built
+### Into the ad
 
-- `fal-seedance` is set back to `available: true`, and the row in `app-state.test.ts` becomes `['fal-seedance', true]`.
-- Agent tick: `agentRunsOffered` (`src/shared/config/agent-runs.ts`) decides, as for every provider. While `available` is false it gives `agent_runs_not_offered`; once available, it gives null, so the user can tick it (`spec/agent-runs.md`).
-
-### What stays in Phase 7
-
-| Part | Needs | When |
-|------|-------|------|
-| Rendering the variant's background to a PNG as the first frame (until then the chosen picture asset is the first frame) | The Scene and the render service | Phase 3 render, swapped in Phase 7 |
-| Embedding generation details in the MP4 | FFmpeg in the app (the fetch script, OI-09, due at the start of Phase 7) | Phase 7 |
-| Adding the clip at the first free position on the track | The `background_clip` commands and the Scene's video support | Phase 7 |
-
+- The first frame of a background start is the variant's background drawn by the Scene at job time (P7-16). The MP4 gets its generation details (`spec/export-and-checks.md`, "MP4"). The clip lands at the first free position on the track.
 - On failure the job is set to failed. The track is untouched and the activity panel and variant tile offer retry [REQ: FR-124].
 - A clip shorter than the variant leaves the rest of the track black until the user fills it [REQ: FR-122].
 
