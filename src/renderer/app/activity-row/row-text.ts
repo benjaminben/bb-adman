@@ -1,9 +1,10 @@
 // The words of an activity row (spec/screens-ai.md, "The activity panel", Row) [REQ: FR-217]:
-// what the job is, where it belongs and when it started. Kinds the spec does not word yet
+// what the job is, where it belongs, when it started and its kind's icon. Kinds the spec does not word yet
 // (export, publish, generative fill, translation) get their plain name.
 import type { JobPlace } from '@/shared/schemas/queries/activity'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import type { JobKind } from '@/shared/config/job-kinds'
+import type { IconName } from '@/renderer/ui/icon'
 
 const KIND_TEXT: Record<JobKind, string> = {
   image_generation: 'Pictures',
@@ -16,6 +17,20 @@ const KIND_TEXT: Record<JobKind, string> = {
   copy_options: 'Copy options',
   translation: 'Translation',
   brief_extraction: 'Reading a brief',
+}
+
+// SH-4: the kind icon a row shows as its thumb.
+export const KIND_ICON: Record<JobKind, IconName> = {
+  image_generation: 'image',
+  video_generation: 'film',
+  export: 'export',
+  publish: 'cloud',
+  cutout: 'scissors',
+  generative_fill: 'sparkle',
+  layout_proposal: 'sparkle',
+  copy_options: 'text',
+  translation: 'globe',
+  brief_extraction: 'book',
 }
 
 const COUNTED: ReadonlySet<JobKind> = new Set(['image_generation', 'copy_options'])
@@ -50,8 +65,8 @@ export function whereText(job: JobRow, place: JobPlace): string {
 
 const two = (n: number) => String(n).padStart(2, '0')
 
-// "Started {HH:MM}" in the computer's own time.
-export function startedText(createdAt: string): string {
+// "{HH:MM}" in the computer's own time: when the job started.
+export function timeText(createdAt: string): string {
   const at = new Date(createdAt)
-  return `Started ${two(at.getHours())}:${two(at.getMinutes())}`
+  return `${two(at.getHours())}:${two(at.getMinutes())}`
 }
