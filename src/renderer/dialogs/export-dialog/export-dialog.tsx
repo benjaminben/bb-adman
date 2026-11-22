@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
+import { exportDoneLine } from '@/shared/export/messages'
 import type { ExportRunInput } from '@/shared/schemas/commands/export'
 import type { CampaignGet, VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { PickedPath } from '@/shared/schemas/queries/dialog'
@@ -37,7 +38,7 @@ function useAds(projectId: string, campaignId: string) {
 
 function endLine(step: ExportStep): string | null {
   if (step.kind === 'running') return `Exporting… ${step.percent}%`
-  if (step.kind === 'done') return `Exported ${step.exported} ads. ${step.failed} failed.`
+  if (step.kind === 'done') return exportDoneLine(step.exported, step.failed)
   return step.kind === 'ended' ? ENDED[step.status] : null
 }
 

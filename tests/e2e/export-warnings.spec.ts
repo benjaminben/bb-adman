@@ -90,7 +90,7 @@ test('a prohibited word: the warnings step, a reason, Export anyway, and the rea
   expect(filesUnder(folder)).toEqual([])
   await dialog.getByLabel('Reason for exporting anyway (optional)').fill(`  ${REASON}  `)
   await dialog.getByRole('button', { name: 'Export anyway' }).click()
-  await ex.finishExport(dialog, 'Exported 1 ads. 0 failed.')
+  await ex.finishExport(dialog, 'Exported 1 ad. 0 failed.')
 
   // The Reports view of that export shows the warning and the reason, trimmed.
   await page.getByRole('button', { name: 'Reports' }).click()

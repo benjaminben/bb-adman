@@ -169,7 +169,7 @@ test('with no key and the network off, import, a hand layout and an image export
   const folder = ex.outputFolder(box.root, 'Quiet Harbour export')
   const dialog = await ex.openExport(app, page, folder)
   await dialog.getByRole('button', { name: 'Export', exact: true }).click()
-  await ex.finishExport(dialog, 'Exported 1 ads. 0 failed.')
+  await ex.finishExport(dialog, 'Exported 1 ad. 0 failed.')
   const files = filesUnder(folder)
   expect(files.filter((f) => f.endsWith('.png'))).toHaveLength(1)
   expect(files.filter((f) => /report-[^/]+\.(html|json)$/.test(f))).toHaveLength(2)

@@ -21,7 +21,7 @@ let app: ElectronApplication
 let page: Page
 let stand: StandIn | undefined
 
-// The hand-test tools are on so the stand-in's `trial` ComfyUI workflow is offered.
+// ADMAN_DEV_TOOLS is on so the stand-in's `trial` ComfyUI workflow is offered.
 test.beforeEach(async () => {
   box = makeSandbox()
   app = await launch(box, [], { ADMAN_DEV_TOOLS: '1' })

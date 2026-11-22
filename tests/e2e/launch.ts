@@ -42,7 +42,7 @@ export async function launch(
   })
 }
 
-// SPEC 14 1.56 E2E-R: the app for test:e2e:real. No fake providers, the hand-test tools on;
+// SPEC 14 1.56 E2E-R: the app for test:e2e:real. No fake providers, ADMAN_DEV_TOOLS on;
 // the same sandbox folders and mock keychain, so nothing touches the real settings or
 // Keychain. The address, key, photo paths and switches stay with the test (real-env.ts).
 export async function launchReal(box: Sandbox): Promise<ElectronApplication> {

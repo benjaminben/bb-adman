@@ -5,6 +5,6 @@ export const LEAVE_THE_CHOICE =
   'unless they asked you to choose.'
 
 export const PROVIDER_WORDS =
-  'provider is "comfyui" (the user\'s own ComfyUI server, no charge) or "gemini" (pictures ' +
-  "only; paid, charged to the user's Google account with no click). Runs are refused unless " +
+  'provider is "comfyui" (the user\'s own ComfyUI server, no charge) or "gemini" (pictures, ' +
+  "not videos; paid, charged to the user's Google account with no click). Runs are refused unless " +
   "the user allowed agents for that provider in Adman's Settings."

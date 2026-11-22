@@ -3,6 +3,11 @@ import { Brief } from '@/shared/schemas/brief'
 import { HEX_COLOUR } from '@/shared/schemas/layer'
 import { projectScoped } from './project-scoped'
 import { MAX_SIZE_SIDE, MIN_SIZE_SIDE } from '@/shared/config/size-limits'
+import {
+  MAX_CAMPAIGN_LANGUAGES,
+  MAX_CAMPAIGN_SIZES,
+  MAX_LANGUAGE_CHARS,
+} from '@/shared/config/campaign-limits'
 
 // SPEC 3.3 CampaignSize and SPEC 6.1 campaign.create inputs. Frozen contract
 // (SPEC 14, Phase 2 step 0). Slice C adds its other campaign schemas beside this file.
@@ -32,10 +37,11 @@ export const SubjectMapEntry = z.object({ subjectId: z.string().min(1), create: 
 const campaignCreateFields = projectScoped.extend({
   brief: Brief,
   subjectMap: z.array(SubjectMapEntry),
-  languages: z.array(z.string().min(1)).min(1),
+  languages: z.array(z.string().min(1).max(MAX_LANGUAGE_CHARS)).min(1).max(MAX_CAMPAIGN_LANGUAGES),
   sizes: z
     .array(CampaignSize)
     .min(1)
+    .max(MAX_CAMPAIGN_SIZES)
     .refine((s) => new Set(s.map((x) => x.label)).size === s.length, 'Size labels must differ.'),
   ruleSet: RuleSetValues.optional(),
   copyRuleSetFrom: z.string().min(1).optional(),
