@@ -27,6 +27,7 @@ import { RunList } from '@/renderer/screens/campaign/run-list'
 import { SlotView } from '@/renderer/screens/campaign/slot-view'
 import { VariantTabs } from '@/renderer/screens/campaign/variant-tabs'
 import { VideoPanel } from '@/renderer/screens/campaign/video-panel'
+import { Icon } from '@/renderer/ui/icon'
 import { PaidCount } from '@/renderer/ui/paid-count'
 import { ReferenceRowsContext } from '@/renderer/ui/reference-picker/use-picture-list'
 import layout from '@/renderer/ui/layout.module.css'
@@ -122,8 +123,9 @@ function CampaignPage(props: Props) {
 
   return (
     <section className={styles.page} aria-label="Campaign">
-      <div className={layout.row}>
-        <button type="button" onClick={props.onBack}>
+      <div className={styles.head}>
+        <button type="button" className={layout.quiet} onClick={props.onBack}>
+          <Icon name="left" />
           Back to project
         </button>
         {data && <h2 className={styles.name}>{data.campaign.name}</h2>}
