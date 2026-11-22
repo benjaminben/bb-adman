@@ -18,7 +18,7 @@ export function RunLimit(props: Props) {
   const refusalId = `${props.id}-refusal`
   return (
     <div className={styles.limit}>
-      <div className={`${layout.field} ${layout.inline}`}>
+      <div className={styles.limitRow}>
         <span className={styles.label}>
           <label htmlFor={props.id}>Run limit</label>
           <InfoTip about="run limit">

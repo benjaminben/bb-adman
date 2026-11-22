@@ -9,7 +9,14 @@
   flex-direction: column;
   gap: var(--gap-tight);
 }
+/* The label with its InfoTip, then the field: one row, the label never wrapped. */
+.limitRow {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+}
 .label {
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: var(--gap-tight);

@@ -2,7 +2,7 @@
 /* SET-5: the address and the token, each a label, its value and its buttons on one row. */
 .values {
   display: grid;
-  grid-template-columns: var(--field-label-width) minmax(0, 1fr) auto;
+  grid-template-columns: max-content minmax(0, 1fr) auto;
   gap: var(--gap-tight) var(--gap-inline);
   align-items: center;
 }
