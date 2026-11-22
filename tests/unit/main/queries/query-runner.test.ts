@@ -61,6 +61,9 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
       webpToPng: async () => {
         throw new Error('webpToPng is not available')
       },
+      readPixels: () => {
+        throw new Error('readPixels is not available')
+      },
       approvals: {} as unknown as ApprovalsDeps,
       export: {} as unknown as ExportDeps,
       exportPictures: {} as unknown as ExportPictures,

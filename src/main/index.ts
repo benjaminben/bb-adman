@@ -40,6 +40,7 @@ import { cancelDropboxSignIn } from './providers/dropbox/sign-in/session'
 import { runBridge } from './bridge/run-bridge'
 import { BRIDGE_FLAG, setBridgeLaunch } from './bridge/launch-command'
 import { userDataOverride } from './user-data-override'
+import { pixelReader } from './pixel-reader'
 
 const userDataDir = userDataOverride(process.env, app.isPackaged)
 if (userDataDir) app.setPath('userData', userDataDir)
@@ -192,6 +193,7 @@ function start(): void {
     toPng: pngConverter((buffer) => nativeImage.createFromBuffer(buffer), turnImage),
     fitPicture: pictureFitter((buffer) => nativeImage.createFromBuffer(buffer), turnImage),
     webpToPng,
+    readPixels: pixelReader((buffer) => nativeImage.createFromBuffer(buffer)),
     drawScene: createDraw(),
     exportPictures: createExportPictures(
       (b) => nativeImage.createFromBuffer(b),
