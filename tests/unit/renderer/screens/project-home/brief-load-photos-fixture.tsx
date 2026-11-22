@@ -110,7 +110,7 @@ export async function openPage(fake: BriefFake) {
     </>,
     fake,
   )
-  await screen.findByText('No campaign yet.')
+  await screen.findByText('No campaigns yet')
   return view
 }
 
