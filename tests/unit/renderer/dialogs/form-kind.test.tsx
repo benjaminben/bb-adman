@@ -255,7 +255,7 @@ describe('subject dialog on the form frame [DLG-3b]', () => {
 
   it('puts the photos description in an InfoTip and problems in one alert', async () => {
     const { fake, dialog } = await openSubject()
-    expect(dialog).not.toHaveTextContent('PNG, JPEG or WebP.')
+    expect(within(dialog).getByText(/^PNG, JPEG or WebP\./)).not.toBeVisible()
     expect(within(dialog).getByRole('button', { name: 'About Photos' })).toBeVisible()
     await userEvent.click(within(dialog).getByRole('button', { name: 'Create subject' }))
     const alert = within(dialog).getByRole('alert')

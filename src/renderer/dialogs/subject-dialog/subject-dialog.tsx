@@ -2,12 +2,15 @@
 // name, a description and picked photos; nothing is sent before "Create subject", which sends
 // subject.create, then asset.import with the photos and the attach step. Edit: the name and the
 // description; "Save" sends only what changed. Each opening starts from the subject's values,
-// and the picked paths go when the dialog closes.
+// and the picked paths go when the dialog closes. DLG-3b: the `form` kind; the problems and a
+// refusal are one DialogAlert at the top of the body; the result line uses a real plural.
 import { useId, useRef, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { importPhotos, pickPhotos } from '@/renderer/screens/assets/subject-card/use-add-photos'
+import { DialogAlert } from '@/renderer/ui/dialog-alert'
 import { BusySpinner, DialogFrame } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
+import { plural } from '@/renderer/ui/plural'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import { PickedPhotos } from './picked-photos'
 import { newSubjectId, subjectProblems, type SubjectProblem } from './subject-plan'
@@ -89,7 +92,7 @@ export function SubjectDialog(props: SubjectDialogProps) {
     const to = { projectId, paths, subjectId: id, subjects: props.subjects }
     const added = await importPhotos(api, command, to)
     const result = added.ok
-      ? [`${name} was made with ${added.count} photo(s).`, ...added.notes]
+      ? [`${name} was made with ${plural(added.count, 'photo')}.`, ...added.notes]
       : [`${name} was made, but its photos could not be added: ${added.message}`]
     change({ busy: false, paths: [], result })
   }
@@ -136,6 +139,7 @@ export function SubjectDialog(props: SubjectDialogProps) {
       open={props.open}
       onClose={props.onClose}
       title={subject ? `Edit ${subject.name}` : 'New subject'}
+      kind="form"
       closable={!busy}
       footer={footer}
     >
@@ -147,6 +151,15 @@ export function SubjectDialog(props: SubjectDialogProps) {
         </div>
       ) : (
         <div className={styles.form}>
+          {alerts.length > 0 && (
+            <DialogAlert tone="danger">
+              {alerts.map((line, i) => (
+                <span key={i} className={styles.alertLine}>
+                  {line}
+                </span>
+              ))}
+            </DialogAlert>
+          )}
           <div className={layout.field}>
             <label htmlFor={nameId}>Name</label>
             <input
@@ -177,13 +190,6 @@ export function SubjectDialog(props: SubjectDialogProps) {
               onAdd={() => void addPhotos()}
               onRemove={(index) => edit((f) => ({ paths: f.paths.filter((_, i) => i !== index) }))}
             />
-          )}
-          {alerts.length > 0 && (
-            <div role="alert" className={`${layout.notice} ${layout.danger} ${styles.alerts}`}>
-              {alerts.map((line, i) => (
-                <p key={i}>{line}</p>
-              ))}
-            </div>
           )}
           {busy && (
             <p role="status" className={styles.busy}>
