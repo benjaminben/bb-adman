@@ -19,6 +19,8 @@ export type ProposeDialogProps = {
   projectId: string
   campaignId: string
   target: ProposeTarget
+  // P6-18: one paid request per direction and language the target spans; 1 when not given.
+  requests?: number
   onClose: () => void
 }
 
@@ -44,6 +46,7 @@ export function ProposeDialog(props: ProposeDialogProps) {
       projectId={projectId}
       campaignId={campaignId}
       job="text"
+      requests={props.requests}
       title="Translate"
       confirmLabel="Translate"
       onConfirm={(provider) => confirm(provider)}
@@ -57,6 +60,7 @@ export function TranslateAgain(props: {
   campaignId: string
   language: string
   variantIds: string[]
+  requests: number
 }) {
   const [open, setOpen] = useState(false)
   return (
@@ -74,6 +78,7 @@ export function TranslateAgain(props: {
           projectId={props.projectId}
           campaignId={props.campaignId}
           target={{ variantIds: props.variantIds }}
+          requests={props.requests}
           onClose={() => setOpen(false)}
         />
       )}
