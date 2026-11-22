@@ -99,6 +99,9 @@ describe('approvals.publish [spec/approvals-commands.md "approvals.publish"]', (
           variantId: v.id,
           publishedRev: v.rev,
           expiresAt: sent[i]!.pictureExpiresAt,
+          clipMs: null,
+          clipBytes: null,
+          clipMissing: null,
         }))
         .sort((a, b) => (a.variantId < b.variantId ? -1 : 1)),
     )

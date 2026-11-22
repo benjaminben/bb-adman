@@ -38,6 +38,13 @@ export const approvalVariant = sqliteTable(
     publishedRev: integer('published_rev').notNull(),
     // When its signed picture address runs out.
     expiresAt: text('expires_at').notNull(),
+    // A video variant's clip as sent (migration 0006_approval_clips): its length and size,
+    // both set or both null. Null for an image and for a row from before the migration.
+    clipMs: integer('clip_ms'),
+    clipBytes: integer('clip_bytes'),
+    // Why a video variant went as its still only: 'no_tool', 'too_long' or 'too_large'; set
+    // only when both clip numbers are null.
+    clipMissing: text('clip_missing'),
   },
   (t) => [primaryKey({ columns: [t.campaignId, t.variantId] })],
 )
