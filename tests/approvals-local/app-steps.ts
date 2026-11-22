@@ -18,10 +18,10 @@ export const dialog = (page: Page): Locator => page.getByRole('dialog', { name: 
 
 async function saveKey(page: Page, box: string, label: string, value: string) {
   const row = page.getByRole('region', { name: box }).getByRole('group', { name: label })
-  await row.getByRole('button', { name: 'Add' }).click()
+  await row.getByRole('button', { name: 'Add key' }).click()
   await row.getByLabel(`New ${label}`).fill(value)
   await row.getByRole('button', { name: 'Save' }).click()
-  await expect(row.getByText(/Saved, ends in/)).toBeVisible()
+  await expect(row.getByText(/^•••/)).toBeVisible()
 }
 
 // Settings: a made-up bucket and keys, then the service's address and key and "Test connection".
