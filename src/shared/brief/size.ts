@@ -28,10 +28,19 @@ function inRange(side: number): boolean {
   return Number.isSafeInteger(side) && side >= MIN_SIZE_SIDE && side <= MAX_SIZE_SIDE
 }
 
+const readyMadeAt = (width: number, height: number) =>
+  READY_MADE_SIZES.find((s) => s.width === width && s.height === height)
+
 function sized(width: number, height: number): CampaignSize | null {
   if (!inRange(width) || !inRange(height)) return null
-  const ready = READY_MADE_SIZES.find((s) => s.width === width && s.height === height)
+  const ready = readyMadeAt(width, height)
   return { label: ready ? ready.label : `${width}x${height}`, width, height }
+}
+
+// LP-4: a size's label is the ready-made label for its pixels or exactly "{width}x{height}".
+export function labelFitsPixels(size: CampaignSize): boolean {
+  const { label, width, height } = size
+  return label === `${width}x${height}` || readyMadeAt(width, height)?.label === label
 }
 
 function fromRatio(a: number, b: number): CampaignSize | null {

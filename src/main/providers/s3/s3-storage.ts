@@ -12,7 +12,12 @@ import {
 } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import { storageFilePath, storageListPrefix } from '@/main/providers/storage-paths'
-import type { AdapterContext, StorageProvider } from '@/main/providers/types'
+import { readLimited } from '@/main/providers/read-limited'
+import {
+  STORAGE_READ_MAX_BYTES,
+  type AdapterContext,
+  type StorageProvider,
+} from '@/main/providers/types'
 import { buildS3Client } from './client'
 import { failureFromS3Error, kindForCode, s3Failure } from './failure'
 import type { PinnableHandler } from './pinned-host'
@@ -49,12 +54,18 @@ export function s3Storage(ctx: AdapterContext, options: Options = {}): StoragePr
       }
     },
 
-    async read(path) {
+    // The stated length is checked before any byte is read; the body is counted as it comes.
+    async read(path, maxBytes = STORAGE_READ_MAX_BYTES) {
       const Key = keyFor(storageFilePath(path))
       return run(async () => {
         const answer = await client.send(new GetObjectCommand({ Bucket, Key }))
         if (!answer.Body) throw new Error('GetObject gave no body')
-        return answer.Body.transformToByteArray()
+        const headers = new Headers()
+        if (answer.ContentLength !== undefined) {
+          headers.set('content-length', String(answer.ContentLength))
+        }
+        const body = new Response(answer.Body.transformToWebStream(), { headers })
+        return new Uint8Array(await readLimited(body, maxBytes))
       })
     },
 

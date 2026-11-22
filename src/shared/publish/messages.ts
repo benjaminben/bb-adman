@@ -20,6 +20,10 @@ export const PUBLISH_REFUSALS = {
     code: 'RULE_VIOLATION',
     message: 'A Dropbox sign-in is already waiting for the browser.',
   },
+  sign_out_in_progress: {
+    code: 'RULE_VIOLATION',
+    message: 'Adman is already signing out of Dropbox.',
+  },
   sign_in_port_busy: {
     code: 'RULE_VIOLATION',
     message:
@@ -62,6 +66,16 @@ export function publishRefusal(
 ): AppError {
   const { code, message } = PUBLISH_REFUSALS[reason]
   return new AppError(code, message, { reason })
+}
+
+// A sign-in while a sign-out runs: the reason of sign_in_in_progress, with its own sentence.
+export const SIGN_IN_DURING_SIGN_OUT =
+  'Adman is signing out of Dropbox. Try again when that has finished.'
+
+export function signInDuringSignOut(): AppError {
+  return new AppError(PUBLISH_REFUSALS.sign_in_in_progress.code, SIGN_IN_DURING_SIGN_OUT, {
+    reason: 'sign_in_in_progress',
+  })
 }
 
 // sign_in_port_busy names the port, a fixed number from the code, never a value from outside.

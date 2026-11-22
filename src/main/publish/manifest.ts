@@ -2,6 +2,7 @@
 // A-220). Every path here is inside {campaignId}/. A manifest that is damaged, too large or of
 // the wrong shape counts as none: it is logged by reason only, never with its content.
 import type { ActivityLog } from '@/main/log/activity-log'
+import { isTooLarge } from '@/main/providers/read-limited'
 import type { StorageProvider } from '@/main/providers/types'
 import { storageFilePath } from '@/main/providers/storage-paths'
 import { MANIFEST_NAME, Manifest } from '@/shared/publish/manifest'
@@ -38,6 +39,16 @@ function parse(bytes: Uint8Array): Manifest | null {
   }
 }
 
+// Empty bytes, which do not parse, when the storage stops at the limit; other failures pass.
+async function readUnder(storage: StorageProvider, file: string): Promise<Uint8Array> {
+  try {
+    return await storage.read(file, MANIFEST_MAX_BYTES)
+  } catch (error) {
+    if (isTooLarge(error)) return new Uint8Array()
+    throw error
+  }
+}
+
 // The old manifest's number, project and time, or null when there is none or it is unusable.
 // A storage failure is the caller's to handle.
 export async function readPrevious(
@@ -47,7 +58,7 @@ export async function readPrevious(
 ): Promise<PreviousPublish | null> {
   const file = manifestPath(campaignId)
   if (!(await storage.exists(file))) return null
-  const manifest = parse(await storage.read(file))
+  const manifest = parse(await readUnder(storage, file))
   if (!manifest) {
     opts.log.write({
       level: 'warn',

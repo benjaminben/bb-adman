@@ -109,6 +109,17 @@ export function describeStorageConformance(
       await expect(storage.remove([`${base}/fine.txt`, bad])).rejects.toThrow(REFUSED)
     })
 
+    // Review leftovers, "Publish": read stops at its byte limit and fails as `other`.
+    it('read takes a file at its byte limit and refuses one over it', async () => {
+      const bytes = text('0123456789')
+      await storage.write(`${base}/limit/ten.txt`, bytes, 'text/plain')
+      expect(await storage.read(`${base}/limit/ten.txt`, 10)).toEqual(bytes)
+      await expect(storage.read(`${base}/limit/ten.txt`, 9)).rejects.toMatchObject({
+        name: 'ProviderFailure',
+        error: { kind: 'other' },
+      })
+    })
+
     // [1.20] B-01, L3: a character Windows cannot hold is refused by every implementation.
     it('refuses a?.txt with exactly the fixed text', async () => {
       await expect(storage.write('a?.txt', text('x'), 'text/plain')).rejects.toThrow(REFUSED)

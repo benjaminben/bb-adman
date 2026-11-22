@@ -2,10 +2,16 @@
 // wrapper unchanged (P7-14) so the fal wrapper reads the same way.
 import { ProviderFailure } from '@/main/providers/types'
 
-// An answer over the limit is `other`, never `offline`: the network did not fail.
-function tooLarge(): ProviderFailure {
-  return new ProviderFailure({ kind: 'other', detail: 'Answer too large' })
+const TOO_LARGE = 'Answer too large'
+
+// An answer over the limit is `other`, never `offline`: the network did not fail. A storage
+// read over its byte limit fails the same way.
+export function tooLarge(): ProviderFailure {
+  return new ProviderFailure({ kind: 'other', detail: TOO_LARGE })
 }
+
+export const isTooLarge = (error: unknown): boolean =>
+  error instanceof ProviderFailure && error.error.detail === TOO_LARGE
 
 // For an answer with no body stream to count.
 function checkedWhole(body: ArrayBuffer, limit: number): ArrayBuffer {

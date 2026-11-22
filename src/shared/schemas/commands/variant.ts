@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { LayerRow } from '@/shared/schemas/rows/layer'
 import { AddFit, FanOutFit, MAX_SYSTEM_VARIANTS, VariantSnapshot } from '@/shared/schemas/links'
 import { projectScoped } from './project-scoped'
+import { Ulid } from '@/shared/schemas/ulid'
 
 // Whole milliseconds, half a second to a day.
 export const MIN_DURATION_MS = 500
@@ -47,8 +48,8 @@ export const variantSetFormatBaseInput = projectScoped
 // first clip is made again under the ID it had, so later redone clip edits find it.
 export const variantSetFormatInput = variantSetFormatBaseInput
   .extend({
-    undoClipId: z.string().min(1).optional(),
-    redoClipId: z.string().min(1).optional(),
+    undoClipId: Ulid.optional(),
+    redoClipId: Ulid.optional(),
   })
   .strict()
   .refine((i) => i.undoClipId === undefined || i.format === 'image', {

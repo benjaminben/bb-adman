@@ -2,14 +2,14 @@
 // full). Order: in progress, canStore(), listen, openExternal, wait, exchange, account, save the
 // token, save the settings, revoke an old token (a failure after the exchange revokes the new
 // one instead, P9-5b; a failed settings save puts the old token back, P9-6). A sign-out that
-// is running makes it refuse sign_in_in_progress (P9-6). The code and verifier go only to exchangeCode;
+// is running makes it refuse sign_in_in_progress, with its own sentence (P9-6). The code and verifier go only to exchangeCode;
 // the authorize address (it holds state and the challenge) goes only to openExternal. No log
 // line, error or reply holds any of them, or a token: failures are logged by kind only.
 import type { CoreDeps } from '@/main/core-deps'
 import type { LogActor } from '@/main/log/activity-log'
 import { ProviderFailure } from '@/main/providers/types'
 import { INSECURE_MESSAGE } from '@/main/secrets/secret-store'
-import { publishRefusal } from '@/shared/publish/messages'
+import { publishRefusal, signInDuringSignOut } from '@/shared/publish/messages'
 import { AppError } from '@/shared/schemas/result'
 import { accessTokenFor, forgetDropboxAccess } from '@/main/providers/dropbox/access-token'
 import { currentAccountName, exchangeCode, revokeToken } from '@/main/providers/dropbox/oauth'
@@ -36,6 +36,11 @@ let signingOut = false
 // P9-6: set by sign-out for its whole run, so a sign-in cannot start in the middle of it.
 export function setDropboxSigningOut(value: boolean): void {
   signingOut = value
+}
+
+// P9-6 review, L2: a second sign-out refuses while one runs, so one flag is enough.
+export function dropboxSigningOut(): boolean {
+  return signingOut
 }
 
 // App quit (index.ts, before-quit): the listener closes, and the sign-in ends sign_in_failed.
@@ -117,6 +122,26 @@ async function orFailed<T>(deps: SignInDeps, step: Step, call: () => Promise<T>)
   }
 }
 
+// P9-6 review, L1: the token goes back on its own, so a failure here is logged by kind and the
+// settings failure that led to it is the one that leaves.
+function restoreToken(deps: SignInDeps, old: string | undefined, step: Step): void {
+  try {
+    if (old === undefined) deps.secrets.delete(REFRESH)
+    else deps.secrets.set(REFRESH, old)
+  } catch (error) {
+    deps.log.write({
+      level: 'warn',
+      event: 'provider',
+      name: step.name,
+      actor: step.actor,
+      ok: false,
+      errorKind: error instanceof Error ? error.name : 'Error',
+      message: 'The saved Dropbox token could not be put back.',
+      context: { commandId: step.commandId, provider: 'dropbox' },
+    })
+  }
+}
+
 // The account, then the token, then the settings.
 async function save(deps: SignInDeps, refreshToken: string, accessToken: string, step: Step) {
   const accountName = await orFailed(deps, step, () =>
@@ -129,8 +154,7 @@ async function save(deps: SignInDeps, refreshToken: string, accessToken: string,
     deps.settings.setDropbox({ accountName, rootPath: isDropboxRootPath(kept) ? kept : '' })
   } catch (error) {
     // P9-6: the saved state goes back to what it was before the sign-in.
-    if (old === undefined) deps.secrets.delete(REFRESH)
-    else deps.secrets.set(REFRESH, old)
+    restoreToken(deps, old, step)
     throw error
   }
   return { accountName, old }
@@ -166,7 +190,8 @@ export async function signInToDropbox(
   step: Step,
   { timeoutMs = SIGN_IN_TIMEOUT_MS }: SignInOptions = {},
 ): Promise<{ accountName: string }> {
-  if (busy || signingOut) throw publishRefusal('sign_in_in_progress')
+  if (busy) throw publishRefusal('sign_in_in_progress')
+  if (signingOut) throw signInDuringSignOut()
   busy = true
   try {
     return await signIn(deps, timeoutMs, step)

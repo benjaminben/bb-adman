@@ -8,6 +8,7 @@
 // "Project-file values that reach a path"); a bad one throws "Storage path refused", no path.
 import { isSafePart, safePathPart } from '@/shared/paths/safe-part'
 import type { PublishComponentFolder } from '@/shared/schemas/queries/publish'
+import { ULID } from '@/shared/schemas/ulid'
 
 // The same words as REFUSED_PATH in src/main/providers/storage-paths.ts.
 const REFUSED_PATH = 'Storage path refused'
@@ -23,7 +24,6 @@ export const TRANSLATIONS_CSV = 'translations.csv'
 
 // A-221: the campaign ID form. `campaign-{6}` is one case of it.
 const CAMPAIGN_ID_FORM = /^[a-z0-9-]{1,40}-[a-z0-9]{6}$/
-const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/
 const FOLDERS: readonly PublishComponentFolder[] = [
   'backgrounds',
   'logos',
