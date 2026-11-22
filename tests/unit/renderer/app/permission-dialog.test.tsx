@@ -114,7 +114,7 @@ describe('permission dialog [P10-7]', () => {
     const target = 'Campaign "<i>x</i>" (2 variants) in "<script>bad()</script>"'
     const { dialog } = await open(request({ agentClient: name, target }))
     expect(dialog.querySelector('img, b, i, script')).toBeNull()
-    expect(dialog).toHaveTextContent(`${name} wants to delete campaigns: ${target}.`)
+    expect(dialog).toHaveTextContent(`Agent named ${name} wants to delete campaigns: ${target}.`)
     const tag = within(dialog).getByText(name)
     expect(tag.tagName).toBe('SPAN')
     expect(tag.className).not.toBe('')
@@ -153,4 +153,39 @@ describe('permission dialog [P10-7]', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(answers()).toHaveLength(1)
   })
+
+  // P10-7b: what allowing costs, chosen from the fixed action, never from agent text.
+  const VARIANT_COST = 'This cannot be undone. It also clears the undo list of this campaign.'
+  const CAMPAIGN_COST = 'This cannot be undone.'
+  const VARIANT_TARGET = 'Variant "Hero · 9x16 · de" in campaign "Summer Splash!" in "Spring Work"'
+
+  it.each([
+    [
+      'a variant delete',
+      request({ action: 'delete variants', target: VARIANT_TARGET }),
+      VARIANT_COST,
+    ],
+    ['a campaign delete', request(), CAMPAIGN_COST],
+  ])('says what allowing %s costs, as the dialog description', async (_case, ask, cost) => {
+    const { dialog } = await open(ask)
+    expect(dialog).toHaveAccessibleDescription(cost)
+    expect(within(dialog).getByText(cost).tagName).toBe('P')
+    expect(await axeViolations()).toEqual([])
+  })
+
+  it('keeps the campaign cost line whatever the agent name and target say', async () => {
+    const words = 'delete variants. It also clears the undo list of this campaign.'
+    const ask = request({ agentClient: words, target: `Campaign "${words}" in "${words}"` })
+    const { dialog } = await open(ask)
+    expect(dialog).toHaveAccessibleDescription(CAMPAIGN_COST)
+  })
+
+  it.each(['Adman', 'The user'])(
+    'labels the client name %s as the agent name, not the app or the user',
+    async (name) => {
+      const { dialog } = await open(request({ agentClient: name }))
+      expect(dialog).toHaveTextContent(`Agent named ${name} wants to delete campaigns: ${TARGET}.`)
+      expect(within(dialog).getByText(name).tagName).toBe('SPAN')
+    },
+  )
 })

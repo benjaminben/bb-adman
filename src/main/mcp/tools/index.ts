@@ -109,14 +109,19 @@ export function toolSetup(
           const input = def.prepareInput ? def.prepareInput(mapped) : mapped
           const agentClient = clientOf(server)
           const call = () => run(def, caller, input, agentClient)
-          const result = checkPng(def, def.oneAtATime ? await serial(call) : await call())
-          hooks.onCall?.({
-            tool: def.name,
-            agentClient,
-            projectId: projectOf(input),
-            ok: result.ok,
-            errorKind: result.ok ? null : result.error.code,
-          })
+          // A call that throws is recorded too: INTERNAL, with nothing of the thrown error.
+          let result: Result<unknown> | null = null
+          try {
+            result = checkPng(def, def.oneAtATime ? await serial(call) : await call())
+          } finally {
+            hooks.onCall?.({
+              tool: def.name,
+              agentClient,
+              projectId: projectOf(input),
+              ok: result?.ok === true,
+              errorKind: result === null ? 'INTERNAL' : result.ok ? null : result.error.code,
+            })
+          }
           return toReply(result, ctx, def)
         },
       )

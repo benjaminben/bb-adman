@@ -3,7 +3,7 @@
 // name, the project ID, ok and the time only: never an argument, a reply, a path or the
 // request ID. The tool name is the table's, never the agent's text. The cleaned client name
 // reaches the bus's command line (security class short).
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { data } from '../core-fixture'
 import * as c from './http-client'
 import { askSetUp, type AskSetUp } from './ask-fixture'
@@ -155,5 +155,37 @@ describe('agent activity over MCP [P10-8; A-241]', () => {
     ])
     expect(written(x)).not.toContain(x.campaignId)
     expect(x.readLogs()).not.toContain('Sneaky "Client"')
+  })
+
+  // P10-7b: a handler that throws is still recorded, as INTERNAL, with none of the error's text.
+  it('a call whose handler throws writes one line and one event, with no error text', async () => {
+    x = await askSetUp()
+    const call = await session(x)
+    const execute = x.core.bus.execute.bind(x.core.bus)
+    vi.spyOn(x.core.bus, 'execute').mockImplementation((name, input, opts) =>
+      opts.actor === 'agent'
+        ? Promise.reject(new Error('Thrown-Words at /Users/made-up/secret.adman'))
+        : execute(name, input, opts),
+    )
+    const reply = await call('delete_campaign', {
+      project_id: x.projectId,
+      campaign_id: x.campaignId,
+    })
+    expect(reply.isError).toBe(true)
+    expect(toolLines(x)).toEqual([
+      expect.objectContaining({
+        name: 'delete_campaign',
+        agentClient: CLEAN_CLIENT,
+        projectId: x.projectId,
+        ok: false,
+        errorKind: 'INTERNAL',
+      }),
+    ])
+    expect(activity(x)).toEqual([
+      { tool: 'delete_campaign', projectId: x.projectId, ok: false, at: expect.any(String) },
+    ])
+    for (const word of ['Thrown-Words', 'secret.adman', x.campaignId, REQUEST_ID]) {
+      expect(written(x)).not.toContain(word)
+    }
   })
 })

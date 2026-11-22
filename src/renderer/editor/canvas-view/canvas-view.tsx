@@ -4,7 +4,8 @@
 // a click on the backdrop, or Escape, clears the selection. The overlay over the Scene draws the
 // selection and handles the drags; Escape during a drag cancels it instead. In crop mode the
 // crop overlay takes the layer's place, the normal overlay leaves it alone, and Escape leaves
-// crop mode. For a video variant it draws the Scene at the playback time (P7-18).
+// crop mode. For a video variant it draws the Scene at the playback time (P7-18); the clips' own
+// sound is on only while playing (P7-21).
 import { useRef, type MouseEvent } from 'react'
 import { useStore } from 'zustand'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
@@ -128,7 +129,7 @@ export function CanvasView(props: CanvasViewProps) {
               timeMs={timeMs}
               playing={playing}
               clips={props.clips}
-              sound={variant.sound === 'clips'}
+              sound={playing && variant.sound === 'clips'}
               mode="full"
               onSettled={props.onSettled}
             />

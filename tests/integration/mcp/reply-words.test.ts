@@ -7,6 +7,7 @@ import { data } from '../core-fixture'
 import { createInput } from '../campaigns/campaign-fixture'
 import { BUILT_TOOLS } from './tool-client'
 import { imageArgs, runSetUp, startedId, type RunSetUp } from './run-tools-fixture'
+import { seedTranslation } from './translation-check-fixture'
 
 let r: RunSetUp | undefined
 afterEach(async () => {
@@ -146,6 +147,27 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
       [{ project_id: p, direction_id: 'x', size_label: '4:5', language: 'en-US', format: 'image' }],
     ],
     ['delete_variant', null, [{ project_id: p, variant_id: 'v2' }]],
+    // P10-12: over a de translation seeded beside v1 (translation-check-fixture.ts).
+    [
+      'set_translation',
+      {
+        project_id: p,
+        layer_id: seedTranslation(x.f.db),
+        text: 'Kühl bleiben',
+        apply_to_same_language: true,
+      },
+      [{ project_id: p, layer_id: 'x', text: 'Hallo', apply_to_same_language: false }],
+    ],
+    [
+      'run_checks',
+      { project_id: p, campaign_id: ids.campaign },
+      [{ project_id: p, campaign_id: 'x' }],
+    ],
+    [
+      'get_check_results',
+      { project_id: p, campaign_id: ids.campaign },
+      [{ project_id: p, campaign_id: ids.campaign, variant_ids: ['v1'] }],
+    ],
     // P10-13: the format change, on the seeded variant v2.
     [
       'set_variant_format',

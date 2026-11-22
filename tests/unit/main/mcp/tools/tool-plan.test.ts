@@ -38,7 +38,7 @@ const PLAN = [
 ]
 
 // The tools not built yet. A tool slice removes exactly its own names.
-const STILL_NOT_BUILT = ['set_translation', 'run_checks', 'get_check_results']
+const STILL_NOT_BUILT: string[] = []
 
 // What each tool runs (spec/phases/phase-10.md, "The tools left").
 const TARGETS: Record<string, [kind: 'command' | 'query', target: string]> = {

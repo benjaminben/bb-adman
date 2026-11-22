@@ -10,6 +10,7 @@ import {
   type ProviderInfo,
 } from '@/shared/schemas/queries/app'
 import type { JobRow } from '@/shared/schemas/rows/job'
+import { MAX_COPY_OPTIONS } from '@/shared/config/copy-options'
 
 export type AgentJobView = Pick<
   JobRow,
@@ -45,8 +46,8 @@ export type LayoutBoxView = {
   width: number
   height: number
   fontSize: number
-  align: string
-  color: string
+  align: 'left' | 'center' | 'right'
+  color: string | null
 }
 
 type Labels = readonly Pick<ProviderInfo, 'id' | 'label'>[]
@@ -71,11 +72,25 @@ function assetIdsOf(row: JobRow, result: Record<string, unknown>): string[] {
   return []
 }
 
-// Each box by its eight named fields; a box with a field of the wrong type is left out.
+const ALIGNS: ReadonlySet<unknown> = new Set(['left', 'center', 'right'])
+const isAlign = (v: unknown): v is LayoutBoxView['align'] => ALIGNS.has(v)
+const isColor = (v: unknown): v is string | null =>
+  v === null || (isString(v) && /^#[0-9a-f]{6}$/i.test(v))
+
+// The longest copy option an agent is given, in code points (P10-12, review of P10-5).
+const MAX_OPTION_CHARS = 200
+
+const copyOptionsOf = (result: Record<string, unknown>): string[] =>
+  strings(result.options)
+    .slice(0, MAX_COPY_OPTIONS)
+    .map((text) => [...text].slice(0, MAX_OPTION_CHARS).join(''))
+
+// Each box by its eight named fields; a box with a field of the wrong type is left out. align
+// is one of the three, color a 6-digit hex or null.
 function boxOf(v: unknown): LayoutBoxView[] {
   const b = asObject(v)
   const { slot, x, y, width, height, fontSize, align, color } = b
-  if (!isString(slot) || !isString(align) || !isString(color)) return []
+  if (!isString(slot) || !isAlign(align) || !isColor(color)) return []
   if (!isNumber(x) || !isNumber(y) || !isNumber(width) || !isNumber(height)) return []
   if (!isNumber(fontSize)) return []
   return [{ slot, x, y, width, height, fontSize, align, color }]
@@ -130,7 +145,7 @@ export function agentJobView(row: JobRow, providers: Labels): AgentJobView {
     }),
     assetIds: assetIdsOf(row, result),
     ...(done && row.kind === 'layout_proposal' && { layout: { boxes: boxesOf(result) } }),
-    ...(done && row.kind === 'copy_options' && { copyOptions: strings(result.options) }),
+    ...(done && row.kind === 'copy_options' && { copyOptions: copyOptionsOf(result) }),
     ...(row.kind === 'image_generation' && { failures: failuresOf(result) }),
     message: messageOf(row, providers),
   }
