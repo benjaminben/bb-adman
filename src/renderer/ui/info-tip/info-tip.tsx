@@ -7,6 +7,9 @@
 // rests on the button or the popover. Escape, a click outside or a second click closes it, and
 // focus stays on or returns to the button. One InfoTip is open at a time. Not modal; the
 // popover holds no control.
+// Z-1b: the open tip takes Escape before anything else (it listens on the window in the capture
+// phase and stops the key there), so the first Escape closes only the tip; the next one reaches
+// the dialog, sub-page or page as before. A dialog or menu opened above the tip keeps the key.
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
@@ -17,6 +20,13 @@ export type InfoTipProps = { about: string; children: ReactNode }
 
 // Opened by the pointer resting on it, or pinned open by a click or a key.
 type Mode = 'closed' | 'hover' | 'pinned'
+
+// True when a dialog or menu that does not hold the tip is drawn above it.
+function coveredAbove(holder: HTMLElement | null) {
+  const layers = document.querySelectorAll('[role="dialog"], [role="alertdialog"], [role="menu"]')
+  const top = layers[layers.length - 1]
+  return top !== undefined && holder !== null && !top.contains(holder)
+}
 
 // The one open InfoTip's way to close itself.
 let closeOpen: (() => void) | null = null
@@ -37,18 +47,19 @@ export function InfoTip(props: InfoTipProps) {
     if (closeOpen !== close) closeOpen?.()
     closeOpen = close
     function onKey(event: KeyboardEvent) {
-      if (event.key !== 'Escape') return
+      if (event.key !== 'Escape' || coveredAbove(holder.current)) return
+      event.stopPropagation()
       close()
       button.current?.focus()
     }
     function onPointer(event: PointerEvent) {
       if (!holder.current?.contains(event.target as Node)) close()
     }
-    document.addEventListener('keydown', onKey)
+    window.addEventListener('keydown', onKey, true)
     document.addEventListener('pointerdown', onPointer)
     return () => {
       if (closeOpen === close) closeOpen = null
-      document.removeEventListener('keydown', onKey)
+      window.removeEventListener('keydown', onKey, true)
       document.removeEventListener('pointerdown', onPointer)
     }
   }, [open])
