@@ -4,16 +4,25 @@
 // reply. From the click until that reply, Confirm and Cancel are disabled and the dialog
 // cannot close; a refusal shows inside it (A-50). Nothing is sent before the click. The
 // starting choice depends on comfy.getInfo, so until it answers nothing can be chosen or sent.
+// R2E-8 (round-2-editor.md D4): a video names the length and pictures the chosen provider will
+// be sent (video-lengths.ts) and hands those same numbers to `onConfirm`.
 import { useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
+import {
+  clipBounds,
+  videoPictures,
+  videoSeconds,
+} from '@/renderer/editor/generate-panel/video-lengths'
 import { useComfyInfoState } from '@/renderer/screens/campaign/use-comfy-info'
 import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
 import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import { PaidCount } from '@/renderer/ui/paid-count'
+import type { VideoStartKind } from '@/shared/config/video-offers'
+import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
 import type { Result } from '@/shared/schemas/result'
 import { ProviderChoice, runChoices, startChoice } from './provider-choice'
-import { runSummary, type RunJob } from './run-summary'
+import { lengthLine, runSummary, type RunJob, type VideoSent } from './run-summary'
 import styles from './run-dialog.module.css'
 
 export type RunCount = { label: string; value: number; min: number; max: number }
@@ -31,7 +40,9 @@ export type RunDialogProps = {
   campaignId?: string
   // A retry: the provider (and the count) are the failed run's, shown, not chosen.
   retry?: { provider: string }
-  onConfirm: (provider: string, count: number | null) => Promise<Result<unknown>>
+  // A video run: its start and the seconds typed. `referenceCount` is the pictures chosen.
+  video?: { start: VideoStartKind; seconds: number }
+  onConfirm: (provider: string, count: number | null, video?: VideoSent) => Promise<Result<unknown>>
   onCancel: () => void
 }
 
@@ -42,13 +53,27 @@ function countIn(text: string, count: RunCount): number | null {
   return text !== '' && Number.isInteger(n) && n >= count.min && n <= count.max ? n : null
 }
 
+// What a video sends with the chosen provider.
+function videoSent(
+  video: RunDialogProps['video'],
+  info: ComfyInfo | null,
+  providerId: string | null,
+  chosen: number,
+): VideoSent | undefined {
+  if (!video || providerId === null) return undefined
+  return {
+    seconds: videoSeconds(info, providerId, video.start, video.seconds),
+    pictures: videoPictures(providerId, video.start, chosen),
+  }
+}
+
 function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolean) => void }) {
   const { job, count, retry, busy } = props
   const app = useApp((s) => s.app)
   const { info, loaded } = useComfyInfoState()
   const settled = retry !== undefined || loaded
   const referenceCount = props.referenceCount ?? 0
-  const choices = runChoices(job, app?.providers ?? NONE, info, referenceCount)
+  const choices = runChoices(job, app?.providers ?? NONE, info, referenceCount, props.video?.start)
   const preferred = job === 'cutout' ? undefined : app?.settings.defaultProviders[job]
   const [picked, setPicked] = useState<string | null>(null)
   const [typed, setTyped] = useState(String(count?.value ?? ''))
@@ -63,12 +88,14 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
   const locked = busy || !settled
   const workflow = chosen?.workflow
   const comfy = workflow && { address: info?.address ?? null, label: workflow.label }
+  const video = videoSent(props.video, info, chosenId, referenceCount)
+  const changed = props.video && video && video.seconds !== props.video.seconds
 
   async function send() {
     if (chosenId === null) return
     props.setBusy(true)
     setRefusal(null)
-    const reply = await props.onConfirm(chosenId, n)
+    const reply = await (video ? props.onConfirm(chosenId, n, video) : props.onConfirm(chosenId, n))
     props.setBusy(false)
     if (!reply.ok) setRefusal(reply.error.message)
   }
@@ -109,7 +136,17 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
             referenceCount,
             comfy,
             requests: props.requests,
+            video,
           })}
+        </p>
+      )}
+      {settled && ready && changed && props.video && (
+        <p className={styles.summary}>
+          {lengthLine(
+            provider.label,
+            clipBounds(info, provider.id, props.video.start),
+            video.seconds,
+          )}
         </p>
       )}
       {settled && !ready && <p>No provider can do this yet.</p>}
