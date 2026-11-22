@@ -66,15 +66,18 @@ describe('the Round 2 command stubs [R2P-1]', () => {
     for (const name of NAMES) expect(AGENT_POLICY[name]?.policy, name).toBe(POLICY[name])
   })
 
-  it.each(NAMES)('%s as the user refuses not_built and writes nothing', async (name) => {
-    const { fx, projectId } = await open()
-    fs.mkdirSync(fx.core.settings.get().defaultProjectDir, { recursive: true })
-    const files = projectFiles(fx).length
-    const before = fx.events.length
-    expect(await fx.user(name, INPUTS[name]?.(projectId))).toEqual(NOT_BUILT)
-    expect(fx.events.slice(before)).toEqual([])
-    expect(projectFiles(fx)).toHaveLength(files)
-  })
+  it.each(NAMES.filter((n) => n !== 'asset.importFiles'))(
+    '%s as the user refuses not_built and writes nothing',
+    async (name) => {
+      const { fx, projectId } = await open()
+      fs.mkdirSync(fx.core.settings.get().defaultProjectDir, { recursive: true })
+      const files = projectFiles(fx).length
+      const before = fx.events.length
+      expect(await fx.user(name, INPUTS[name]?.(projectId))).toEqual(NOT_BUILT)
+      expect(fx.events.slice(before)).toEqual([])
+      expect(projectFiles(fx)).toHaveLength(files)
+    },
+  )
 
   it.each(NAMES.filter((n) => POLICY[n] === 'allow'))(
     '%s as the agent reaches its stub',

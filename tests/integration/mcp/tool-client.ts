@@ -32,6 +32,7 @@ export const BUILT_TOOLS = [
   'run_checks',
   'get_check_results',
   'set_variant_format',
+  'import_assets',
 ]
 
 export type ToolReply = {

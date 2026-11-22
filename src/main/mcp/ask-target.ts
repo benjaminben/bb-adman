@@ -13,6 +13,7 @@ export const NO_TARGET = 'Something that no longer exists'
 
 const campaignTarget = z.object({ campaignId: z.string() })
 const variantTarget = z.object({ variantId: z.string() })
+const filesTarget = z.object({ paths: z.array(z.string()) })
 
 // Read as stored: readMeta refuses a name an edited file may hold, and the ask must not fail.
 function projectName(db: Database.Database): string {
@@ -49,6 +50,11 @@ function variantLine(db: Database.Database, variantId: string): string | null {
   return `Variant "${name}" in campaign "${cleanName(row.campaign)}" in "${projectName(db)}"`
 }
 
+// D7: the count only; the paths reach the dialog through agent.askFiles.
+function filesLine(db: Database.Database, count: number): string {
+  return `${count === 1 ? '1 file' : `${count} files`} into "${projectName(db)}"`
+}
+
 function lineFor(db: Database.Database, command: string, input: unknown): string | null {
   if (command === 'campaign.delete') {
     const parsed = campaignTarget.safeParse(input)
@@ -57,6 +63,10 @@ function lineFor(db: Database.Database, command: string, input: unknown): string
   if (command === 'variant.delete') {
     const parsed = variantTarget.safeParse(input)
     return parsed.success ? variantLine(db, parsed.data.variantId) : null
+  }
+  if (command === 'asset.importFiles') {
+    const parsed = filesTarget.safeParse(input)
+    return parsed.success ? filesLine(db, parsed.data.paths.length) : null
   }
   return null
 }

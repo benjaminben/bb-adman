@@ -195,3 +195,34 @@ describe('askTarget names in the dialog line [P10-7]', () => {
     expect(line.endsWith(`in campaign "${CUT}" in "Spring Work"`)).toBe(true)
   })
 })
+
+// R2P-5 (round-2-platform.md, D7): an import ask names the count and the project, never a path.
+describe('askTarget for an import of files [R2P-5, D7]', () => {
+  const PATHS = ['/Users/someone/Pictures/hero.png', '/Users/someone/Movies/clip.mp4']
+
+  it.each([
+    ['1 file', PATHS.slice(0, 1)],
+    ['2 files', PATHS],
+  ])('says "%s into" the project, with no path', async (count, paths) => {
+    const m = await project()
+    const input = { projectId: m.projectId, paths, library: 'asset' }
+    const line = askTarget(f!.core.projects, ask('asset.importFiles', m.projectId, input))
+    expect(line).toBe(`${count} into "Spring Work"`)
+    for (const p of paths) expect(line).not.toContain(p.split('/').pop())
+  })
+
+  it('cleans the project name', async () => {
+    const m = await project()
+    const db = f!.core.projects.requireOpen(m.projectId).db
+    db.prepare("UPDATE project_meta SET value = ? WHERE key = 'name'").run('Spring\u0007 "Work"')
+    const input = { projectId: m.projectId, paths: PATHS }
+    const line = askTarget(f!.core.projects, ask('asset.importFiles', m.projectId, input))
+    expect(line).toBe(`2 files into "Spring 'Work'"`)
+  })
+
+  it('gives "Something that no longer exists" for an input without paths', async () => {
+    const m = await project()
+    const line = askTarget(f!.core.projects, ask('asset.importFiles', m.projectId, {}))
+    expect(line).toBe(NO_TARGET)
+  })
+})

@@ -3,6 +3,9 @@
 import { createInput } from '../campaigns/campaign-fixture'
 import { toolSession } from './tool-client'
 
+// R2P-5: a made-up full path given to import_assets, which no reply may hold.
+export const PLANTED_IMPORT_PATH = '/made-up-agent-folder/made-up-agent-import.png'
+
 export async function callEveryTool(
   port: number,
   token: string,
@@ -47,6 +50,9 @@ export async function callEveryTool(
     apply_to_same_language: false,
     variant_ids: ['made-up-variant'],
     request_id: 'made-up-request',
+    // R2P-5: import_assets; the path is planted, and the secret-leak test looks for it.
+    paths: [PLANTED_IMPORT_PATH],
+    library: 'asset',
   }
   const replies: string[] = []
   for (const name of names) {

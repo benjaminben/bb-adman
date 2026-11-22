@@ -2042,5 +2042,38 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     },
     "name": "set_variant_format",
   },
+  {
+    "description": "Import picture, video or font files into an open project by their full paths, at most 20 at a time. The user is asked every time and sees each full path; you wait up to two minutes, and a refusal is final. Each file is copied into the project. Gives one asset ID per path, in order. Text files, SVG and folders are not accepted. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "library": {
+          "default": "asset",
+          "enum": [
+            "asset",
+            "reference",
+          ],
+          "type": "string",
+        },
+        "paths": {
+          "items": {
+            "type": "string",
+          },
+          "minItems": 1,
+          "type": "array",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "paths",
+      ],
+      "type": "object",
+    },
+    "name": "import_assets",
+  },
 ]
 `;
