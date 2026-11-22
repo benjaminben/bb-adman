@@ -143,6 +143,12 @@ Where the design was silent. Folded into `spec/mcp-and-agents.md`, `spec/api-que
 
 **Tool words (A-247).** `src/main/mcp/tools/tool-words.ts` owns `LEAVE_THE_CHOICE` (the built sentence) and `PROVIDER_WORDS`. Every run tool and every tool that can put an asset on a layer (`create_layer`, `update_layer`, `update_layers`) carries it.
 
+**The tool words name the models (R3-2).** The descriptions of `generate_images`, `generate_video`, `propose_layout`, `copy_options` and `cut_out` name the model each provider runs, built by `src/main/mcp/tools/model-words.ts` from the registry and the shipped workflow list, never from the user's server:
+- a registry model by its name and model ID, `registryModel(providerId, job)`: Gemini pictures 'Nano Banana 2.1, model ID "gemini-nano-banana-2.1"', Gemini layout and text 'Gemini 3.5 Flash-Lite, model ID "gemini-3.5-flash-lite"', fal video 'Seedance 2.0, model ID "bytedance/seedance-2.0/image-to-video"';
+- ComfyUI, which has no fixed model, by the models of the shipped workflows for the job, once each, joined by "or" (`comfyModels(jobs)`): for pictures, videos and cut-outs.
+- `PROVIDER_WORDS` carries the ComfyUI picture and video models and the Gemini picture model; `generate_video` adds the fal sentence; `propose_layout` and `copy_options` name the Gemini layout or text model; `cut_out` names the ComfyUI cut-out models.
+- The job reply an agent gets (`agentJobView`) is unchanged: it names neither the provider nor the model. `tests/integration/mcp/reply-words.test.ts` holds that; changing it needs the stakeholder's word.
+
 **`get_variant` reply (A-249).** The variant as `get_campaign` gives it, every layer field of `LayerRow`, the assets with `id, displayName, kind, library, subjectId, width, height, durationMs, fontFamily, missing` (never `absPath`, `relPath`, `contentHash`, `mime`, `byteSize`, `mtimeMs`), and `campaignId`. Fields Phases 5 to 7 add to `variant.get` stay out until P10-11, P10-12 and P10-13 add them. As built: the badges only for Phases 5 and 6 (`outOfDate`, `checkWarning`, `checkStale`; A-165, no out-of-date detail and no check results), and the clips from P10-13.
 
 ## Assumptions

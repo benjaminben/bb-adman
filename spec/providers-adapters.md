@@ -130,7 +130,7 @@ Built (P7-14, `src/main/providers/fal-seedance/`) and switched on (P7-15, `avail
 
 ### Cancel and charges
 
-- `cancel: 'may_finish'`: a paid run charged either way is left to finish. Queued with nothing sent: cancelled at once. Still in fal's queue: the queue cancel. Started by fal (`result.stage` is `working`): `job.cancel` is refused `RULE_VIOLATION`, reason `cancel_would_still_charge`, "{Provider} has started this and will charge for it. The app lets it finish and keeps the result." (`cancelRefusal`, `spec/cancel.md`).
+- `cancel: 'may_finish'`: a paid run charged either way is left to finish. Queued with nothing sent: cancelled at once. Still in fal's queue: the queue cancel. Started by fal (`result.stage` is `working`): `job.cancel` is refused `RULE_VIOLATION`, reason `cancel_would_still_charge`, "fal.ai · Seedance 2.0 has started this and will charge for it. The app lets it finish and keeps the result." (`cancelRefusal`, `spec/cancel.md`).
 - Open (U-25): whether fal charges for a started request that is cancelled. Until shown otherwise it is treated as charged.
 - Closing a project or quitting leaves a started fal run running; the next open collects it (A-174, `spec/cancel.md`).
 

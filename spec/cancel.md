@@ -140,6 +140,8 @@ The provider is asked to stop, and the job says what really happened. Refusals a
 
 A job already asked to stop is not asked again.
 
+**`{Provider}` in the refusals** (`cancel_not_supported`, `cancel_would_still_charge`) is `namedWords(provider, row.model)` (`spec/providers.md`, "Model words"): the provider and the model the run uses when the registry has a name for the row's model ID ("fal.ai · Seedance 2.0 has started this and will charge for it. …"), else the plain provider label. An agent can read these sentences, so a model ID the registry cannot name is never put in them. With no provider in the registry, `cancel_would_still_charge` reads "The provider has started this…".
+
 The window offers Cancel exactly when `cancelRefusal` accepts: `cancelShown(row, provider)` in `src/renderer/ui/cancel-shown.ts`, held to the same answer for every kind, status and provider by `tests/unit/main/jobs/cancel-shown.test.ts`.
 
 | Outcome | Job ends as | Shown |
@@ -250,6 +252,7 @@ Built. `JobService.cancelAll(projectId)`, `src/main/jobs/close-jobs.ts`.
 - **The close wait** is at most 5 s for the whole project, not per job: `CLOSE_WAIT_MS = 5_000` in `cancel-wait.ts`. The wait ends as soon as no job of the project is running. After it, every job of the project still `queued` or `running` is ended at once, a job started during the wait included, apart from the runs left running. Then `cancelAll` returns and the file closes.
 - **A closing project starts no job.** `RunnerState.closing` (`src/main/jobs/live.ts`) holds closing project IDs. `cancelAll` adds the ID before ending queued rows and removes it in a `finally`; `pump` skips rows of a project in the set. `enqueue` still writes the row; it stays `queued` and ends `cancelled` with nothing sent when the wait is over.
 - **A paid call already sent stays counted.** A close does not change `paid_calls`. A request that could not be stopped may still be charged, and its result is not kept: the file is closed when it arrives.
+- **Runs left running are named by provider and model.** The close warning's left-running lines and the quit question's list count them by `storedWords(provider, row.model)` ("fal.ai · Seedance 2.0"), screens only the user sees (`spec/screens-ai.md`, "Closing a project", "Quitting").
 - **What the user is told before closing.** The window builds the warning from what it already has: `job.list` with `state: 'active'` and the provider list of `app.getState`. A running background job whose provider has `cancel: 'none'` cannot be stopped; one whose provider is not `local` may be charged. `jobs_running` has no field for this.
 - **What the user is told after** (waits for the UI pass; the row holds the facts either way). For `stoppedWaiting`: "The project was closed while {Provider} was working. The request could not be stopped. Its result was not kept." For a provider that is not local: "…could not be stopped and may still be charged. Its result was not kept." The outcome sentences above cover the rest.
 - OI-51 is open: whether, for a paid request that cannot be stopped, the app should keep the project open in the background until the answer arrives instead. The 5 s close wait is the architect's number, to confirm with it.

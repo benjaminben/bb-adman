@@ -16,7 +16,7 @@ The generation details written into generated files, the export of variants to d
   "app": "Adman",
   "appVersion": "1.0.0",
   "provider": "gemini",
-  "model": "gemini-2.5-flash-image",
+  "model": "gemini-nano-banana-2.1",
   "prompt": "the full prompt sent",
   "kind": "image_generation",
   "createdAt": "2026-11-20T14:30:00Z"
@@ -141,7 +141,7 @@ type Report = {
 }
 ```
 
-`report.html` is one self-contained file with no scripts. The report view in the app draws the same JSON [REQ: FR-151]. Saved reports are read with `report.list` and `report.get` (`spec/api-queries-events.md`).
+`report.html` is one self-contained file with no scripts. The report view in the app draws the same JSON [REQ: FR-151]. `model` stores the model ID; both show it by its name, or the ID when the name is unknown (`spec/phases/phase-08.md`, "Report", Model). Saved reports are read with `report.list` and `report.get` (`spec/api-queries-events.md`).
 
 A report never holds a secret, the ComfyUI address [REQ: FR-253], or the path or file name of a picture given to a test by path.
 

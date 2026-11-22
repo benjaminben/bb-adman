@@ -71,7 +71,7 @@ No two slices of one wave edit the same file: wave 2 splits by folder (queries, 
 - **New files:** `src/main/providers/gemini/layout.ts`, `text.ts`, `json-call.ts`, `prompts.ts`; `tests/live/gemini-layout.live.test.ts`, `gemini-brief.live.test.ts`, `gemini-copy.live.test.ts`.
 - **May touch:** `src/main/providers/gemini/index.ts`; `src/main/providers/registry.ts` (`defaultModels.layout` and `.text` only).
 - **Read:** `spec/providers-adapters.md` "Gemini" (all of it); `spec/providers.md` "Rules for every adapter"; `spec/ai-jobs.md` "Provider interfaces", "Security notes"; `spec/test-harnesses.md` (live runs).
-- **Check first:** Google's public model list for a current model that takes a picture and gives JSON. Change the registry ID if `gemini-2.5-flash` is retired.
+- **Check first:** Google's public model list for a current model that takes a picture and gives JSON. Change the registry ID if the current one (`gemini-3.5-flash-lite`) is retired.
 - **Tests:** in `tests/unit/main/providers/gemini/`: `layout.test.ts`, `text.test.ts`, `text-errors.test.ts` (cases in `spec/providers-adapters.md`), `environment.test.ts` extended to a text call; a key planted in an error answer is redacted from every detail. Live: the three files, run once each by the developer (D-085).
 - **Class:** E. Security class, full review (new outbound calls; every adapter rule). **After:** P4-1.
 

@@ -92,6 +92,12 @@ One line each; none blocks an exit slice unless it says so. Security-class items
 - A run started from a prompt should name the text-to-video endpoint as the job's model; the row's default model is the image-to-video one (P7-11, P7-14 notes).
 - The fal row in `tests/unit/renderer/fake-api.ts` has an out-of-date comment.
 
+### Model names (R3-2 review)
+
+- `src/main/commands/job/retry.ts` copies the old row's model ID into the new row, while the adapter always sends the registry default. After a default model change, a retried run's row could name the old model.
+- A finished ComfyUI run is named from the workflow offered now, not the one that made it. Settle when custom workflows store `request.workflowId` (slices CW-3 and CW-7).
+- `src/renderer/ui/run-name/use-run-name.ts` and `use-model-name.ts` each repeat the `comfy.getInfo` effect that `src/renderer/screens/campaign/use-comfy-info.ts` already has.
+
 ### Stale code comments
 
 - `src/main/providers/fal-seedance/index.ts` (still says `available: false` until P7-15).

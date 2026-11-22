@@ -10,7 +10,7 @@ Built. `src/main/providers/registry.ts` (the list), `src/shared/schemas/queries/
 
 ```ts
 // src/shared/schemas/queries/app.ts
-export type ProviderJob = 'image' | 'layout' | 'text' | 'video' | 'storage' | 'verification'
+export type ProviderJob = 'image' | 'layout' | 'text' | 'video' | 'cutout' | 'storage' | 'verification'
 export type ProviderInfo = {
   id: string                       // e.g. "gemini"
   label: string                    // e.g. "Google Gemini"
@@ -18,6 +18,7 @@ export type ProviderInfo = {
   available: boolean               // false shows "Not yet available" and disables the choice
   secrets: SecretName[]            // secret names it needs
   defaultModels: Record<string, string>
+  modelLabels?: Partial<Record<ProviderJob, string>> // the name a person reads for each job's model; absent or empty when there is no fixed model
   local: boolean                   // local runs are never counted in paid_calls
   cancel: ProviderCancel           // how a started run can be stopped (spec/cancel.md)
   serverText: boolean              // the server's own words may be shown on request (ComfyUI only)
@@ -49,22 +50,36 @@ export type ProviderError = {
 
 **Registered providers** [REQ: FR-067, IR-002]. Every row not marked otherwise has `local: false`, `cancel: 'none'`, `serverText: false`.
 
-| ID | Label | Jobs | Available | Secrets | Default models | Other fields | Where |
-|----|-------|------|-----------|---------|----------------|--------------|-------|
-| `gemini` | Google Gemini | image, layout, text | Yes | `gemini.apiKey` | image `gemini-nano-banana-2.1`, layout `gemini-2.5-flash`, text `gemini-2.5-flash` | | `spec/providers-adapters.md` |
-| `fal-seedance` | fal.ai Seedance | video | Yes (P7-15) | `fal.apiKey` | video `bytedance/seedance-2.0/image-to-video` | `cancel: 'may_finish'` | `spec/providers-adapters.md` |
-| `comfyui` | ComfyUI | image, video | Yes | none | none | `local: true`, `cancel: 'stops'`, `serverText: true` | `spec/comfyui.md` |
-| `firefly` | Adobe Firefly | image | No | `firefly.clientId`, `firefly.clientSecret` | none | | `spec/providers-adapters.md` |
-| `s3` | Amazon S3 | storage | Yes | `s3.accessKeyId`, `s3.secretAccessKey` | none | | `spec/storage-and-publish.md` |
-| `dropbox` | Dropbox | storage | Yes | `dropbox.refreshToken` | none | | `spec/storage-and-publish.md` |
-| `azure-blob` | Azure Blob Storage | storage | No | none | none | | `spec/storage-and-publish.md` |
-| `jev` | Jev | verification | No | none | none | | `spec/export-and-checks.md` |
-| `fake` | Fake provider | all six | Only when `ADMAN_FAKE_PROVIDERS=1` | none | none | `local: true`, `cancel: 'stops'` | `spec/jobs.md` |
+| ID | Label | Jobs | Available | Secrets | Default models | Model names (`modelLabels`) | Other fields | Where |
+|----|-------|------|-----------|---------|----------------|-----------------------------|--------------|-------|
+| `gemini` | Google Gemini | image, layout, text | Yes | `gemini.apiKey` | image `gemini-nano-banana-2.1`, layout `gemini-3.5-flash-lite`, text `gemini-3.5-flash-lite` | image "Nano Banana 2.1", layout and text "Gemini 3.5 Flash-Lite" | | `spec/providers-adapters.md` |
+| `fal-seedance` | fal.ai Seedance | video | Yes (P7-15) | `fal.apiKey` | video `bytedance/seedance-2.0/image-to-video` | video "Seedance 2.0" | `cancel: 'may_finish'` | `spec/providers-adapters.md` |
+| `comfyui` | ComfyUI | image, video, cutout | Yes | none | none | `{}`: the workflow names the model (`WorkflowFacts.model.label`) | `local: true`, `cancel: 'stops'`, `serverText: true` | `spec/comfyui.md` |
+| `firefly` | Adobe Firefly | image | No | `firefly.clientId`, `firefly.clientSecret` | none | none | | `spec/providers-adapters.md` |
+| `s3` | Amazon S3 | storage | Yes | `s3.accessKeyId`, `s3.secretAccessKey` | none | none | | `spec/storage-and-publish.md` |
+| `dropbox` | Dropbox | storage | Yes | `dropbox.refreshToken` | none | none | | `spec/storage-and-publish.md` |
+| `azure-blob` | Azure Blob Storage | storage | No | none | none | none | | `spec/storage-and-publish.md` |
+| `jev` | Jev | verification | No | none | none | none | | `spec/export-and-checks.md` |
+| `fake` | Fake provider | all six | Only when `ADMAN_FAKE_PROVIDERS=1` | none | none | none | `local: true`, `cancel: 'stops'` | `spec/jobs.md` |
 
 - The code lists them in the table's order; `listProviders(env)` adds `fake` at the end only when `ADMAN_FAKE_PROVIDERS=1`.
 - `available` is a build fact: true only when the build has an adapter for a listed job. ComfyUI is offered for a job only when a shipped workflow for it is offered (`spec/comfyui.md`).
 - `DEFAULT_PROVIDERS = { image: 'gemini', layout: 'gemini', text: 'gemini', video: 'comfyui' }`. ComfyUI is the default video provider because it is the only video provider with an adapter. A saved `settings.json` that names `fal-seedance` as the video default is not rewritten; the window shows it selected and disabled (`spec/screens.md`).
 - The model IDs live only in `defaultModels` in `registry.ts`. An adapter gets its model from `ctx.model(job)` and holds no model ID of its own. No other file under `src/` names a model ID; tests use made-up IDs.
+- The model names live only in `modelLabels` in `registry.ts`, beside the IDs. ComfyUI's is `{}`: it has no fixed model, so the workflow a run gets names it (`WorkflowFacts.model.label`, `spec/comfyui.md`).
+
+**Model words** [R3-2]. Wherever the app names the service doing a generative job, it names the model too. `src/shared/providers/model-words.ts` (pure) owns the words; no screen builds them itself.
+
+- The words are "{provider} · {model}", for example "Google Gemini · Nano Banana 2.1", "fal.ai · Seedance 2.0", "ComfyUI · MOSS-Image".
+- A word is never said twice. When the provider label's last word is the model's first word (case ignored), the label drops that word: "fal.ai Seedance" with "Seedance 2.0" gives "fal.ai · Seedance 2.0"; "Google Gemini" with "Gemini 3.5 Flash-Lite" gives "Google · Gemini 3.5 Flash-Lite".
+- No model for the job (a storage provider, ComfyUI before its workflow is known): the plain label.
+- The model for a job comes from `modelLabels[job]`, or for ComfyUI from the workflow the run would get (`workflowModel` of the workflow `comfy.getInfo` offers).
+- `modelNameOf(id, providers, workflows)` names a stored model ID (a job row's `model`, an asset's `model`): the registry's name for it, else the model of a shipped ComfyUI workflow whose main file it is, else the ID itself. A fal ID with a slash names the same model as a default that shares everything before the last slash (`bytedance/seedance-2.0/text-to-video` is "Seedance 2.0").
+- `storedWords(provider, modelId)` gives the words for a stored run, for screens only the user sees: an unknown ID is shown as the ID.
+- `namedWords(provider, modelId)` is for a sentence an agent or the log may read (the `job.cancel` refusals, `spec/cancel.md`): an ID the registry has no name for is left out and the plain provider label is shown. The raw ID never reaches such a sentence.
+- `modelList(provider)` gives the provider's models once each, in job order ("Nano Banana 2.1, Gemini 3.5 Flash-Lite"), or null when it has no fixed model (Settings, `spec/screens.md` and `spec/agent-runs.md`).
+- In the window, `{Provider}` in a run's status, failure sentence or cost line stands for these words. `src/renderer/ui/run-name/` (`useRunName`) gives them for a job row; a ComfyUI row stores no model, so it is named from the workflow `comfy.getInfo` offers now for that kind of job. `src/renderer/ui/provider-name/` draws them on two lines (`spec/app-style-parts.md`).
+- What an agent reads: the run tools' descriptions name each model with its ID (`spec/phases/phase-10.md`, A-247). The job reply (`agentJobView`) still names neither the provider nor the model.
 
 ## Error kinds and plain messages
 

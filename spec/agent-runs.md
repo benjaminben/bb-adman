@@ -59,7 +59,7 @@ An agent connected through the MCP server can start, follow and cancel its own p
 
 ## Gate steps for a run
 
-`{Provider}` is the registry `label`. Each refusal is `AGENT_DENIED` with the sentence given.
+`{Provider}` is the registry `label`, with no model (the tick is per provider). Each refusal is `AGENT_DENIED` with the sentence given.
 
 1. The registry row for `input.provider` exists and `agentRunsOffered` gives null. Else "Agents cannot start runs with {Provider}." For an unknown ID: "Agents cannot start runs with that provider." `provider` is required for an agent, so the user's default is never used.
 2. The tick is on, read at that moment through the one reader. Else "The user has not allowed agents to start runs with {Provider}. They can allow it in Adman's Settings."
@@ -116,7 +116,7 @@ An agent connected through the MCP server can start, follow and cancel its own p
 
 ## Settings block "Agent runs"
 
-Built. `src/renderer/screens/settings/agent-runs-section/`, below "Agent access" in `settings-screen/`. Its items and words are in `spec/screens.md`, 'Agent runs': the heading, one tick per offered provider, the paid line under a provider whose `local` is false, the limit field (1 to 16), and "Started by an agent" on a run row. End-to-end case: `tests/e2e/screen-tour.spec.ts`, "Settings · Agent runs: one tick per provider, the limit".
+Built. `src/renderer/screens/settings/agent-runs-section/`, below "Agent access" in `settings-screen/`. Its items and words are in `spec/screens.md`, 'Agent runs': the heading, one tick per offered provider, under each provider's name a second line with the models it runs (`modelList`, `spec/providers.md`, "Model words": for Gemini "Nano Banana 2.1, Gemini 3.5 Flash-Lite"; ComfyUI has no fixed model, so no line), the paid line under a provider whose `local` is false, the limit field (1 to 16), and "Started by an agent" on a run row. End-to-end case: `tests/e2e/screen-tour.spec.ts`, "Settings · Agent runs: one tick per provider, the limit".
 
 The UI pass decides whether the job list should say more about a queued agent run that will be cancelled at its turn.
 

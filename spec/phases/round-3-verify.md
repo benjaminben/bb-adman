@@ -13,3 +13,7 @@ Assumptions made while building the stakeholder's round 3 notes (2026-11-22), fo
 9. **Changing a workflow** means removing it and adding the new export; the app does not watch the picked file. Removing one makes runs that have not started fail; runs already sent go on.
 10. **The remembered workflow choice** is per computer and per job kind.
 11. **Translations tab.** Rows follow the Variants tab's order; each language starts with a larger heading; a first "Source" block edits the primary language's words. An edit there changes that one post. A linked post of another size in the same language keeps its old words until Sync, by the usual link rule; its translations read "Out of date". Undo for a source edit is on that post's own undo list, as in the editor, not on the campaign's Undo button. An edit never starts a translation run.
+12. **Model names.** Wherever the app names an AI service, it now names the model too, as "service · model": "Google Gemini · Nano Banana 2.1", "fal.ai · Seedance 2.0", "ComfyUI · MOSS-Image" (for ComfyUI, the model of the workflow in use). Please check:
+    - (a) Gemini's layout and text jobs read "Google · Gemini 3.5 Flash-Lite", because a word is never said twice. The other choice is "Google Gemini · Gemini 3.5 Flash-Lite".
+    - (b) The tool descriptions an agent reads name each model and its model ID. The job status an agent reads still names neither the service nor the model. A security test holds that; changing it needs your word.
+    - (c) In the run dialog the service buttons now have two lines, so they are taller.

@@ -28,7 +28,7 @@ Built.
 
 ## ComfyUI failures: the run failure (S2-5)
 
-Built. Component `src/renderer/ui/run-failure/` (with `missing-items.ts`, `server-message.tsx`), drawn under a failed run wherever one shows: the Activity row, an earlier-options row, the Generate panel's run state, copy options and the brief reading dialog. Props: `row: JobRow`, `projectId`, `provider: ProviderInfo | undefined`, `providerLabel`. [REQ: FR-265, FR-266, FR-267, FR-069]
+Built. Component `src/renderer/ui/run-failure/` (with `missing-items.ts`, `server-message.tsx`), drawn under a failed run wherever one shows: the Activity row, an earlier-options row, the Generate panel's run state, copy options and the brief reading dialog. Props: `row: JobRow`, `projectId`, `provider: ProviderInfo | undefined`, `providerLabel` (the caller passes the provider and model words from `useRunName`, `spec/providers.md`, "Model words", so a sentence reads "Google Gemini · Nano Banana 2.1 took too long to answer. Try again."). [REQ: FR-265, FR-266, FR-267, FR-069]
 
 **What it shows**
 
