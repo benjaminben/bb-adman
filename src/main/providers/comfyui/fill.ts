@@ -21,10 +21,7 @@ export type FillValues = {
   promptId?: string
 }
 
-type SlotName = Exclude<
-  keyof WorkflowSlots,
-  'seed' | 'outputNode' | 'minReferences' | 'seedBelow'
->
+type SlotName = Exclude<keyof WorkflowSlots, 'seed' | 'outputNode' | 'minReferences' | 'seedBelow'>
 type ValueName = keyof FillValues
 
 // Which value feeds which slot.
