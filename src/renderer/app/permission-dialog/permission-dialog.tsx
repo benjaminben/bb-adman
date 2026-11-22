@@ -4,12 +4,28 @@
 // and the target come from outside (an agent, a project file someone else made): both are drawn
 // as text, never markup, and the name sits in its own tag so it cannot pass for the app's words.
 // A refused answer shows its message; Close then ends the dialog with nothing more sent.
-import { useState } from 'react'
+// Allow cannot be pressed for ALLOW_WAIT_MS after each ask is shown (the body is keyed by
+// requestId, so a new ask waits again); it stays in the tab order with aria-disabled and a
+// described reason. Refuse, Escape and the tick work at once.
+import { useEffect, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
 import { useAsk, type Ask } from './use-ask'
 import styles from './permission-dialog.module.css'
+
+const ALLOW_WAIT_MS = 750
+const WAIT_ID = 'permission-allow-wait'
+
+// False until `ms` after the first draw.
+function useReady(ms: number): boolean {
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setReady(true), ms)
+    return () => clearTimeout(timer)
+  }, [ms])
+  return ready
+}
 
 // A stable callback ref: React calls it once, when the button mounts.
 function focusOnMount(button: HTMLButtonElement | null) {
@@ -22,6 +38,7 @@ function AskDialog(props: { ask: Ask; onEnd: () => void }) {
   const [remember, setRemember] = useState(false)
   const [sending, setSending] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
+  const ready = useReady(ALLOW_WAIT_MS)
 
   async function answer(allow: boolean) {
     setSending(true)
@@ -45,12 +62,19 @@ function AskDialog(props: { ask: Ask; onEnd: () => void }) {
         </button>
         <button
           type="button"
-          className={layout.danger}
+          className={`${layout.danger} ${styles.allow}`}
           disabled={sending}
-          onClick={() => void answer(true)}
+          aria-disabled={!ready || undefined}
+          aria-describedby={ready ? undefined : WAIT_ID}
+          onClick={() => ready && void answer(true)}
         >
           Allow
         </button>
+        {!ready && (
+          <span id={WAIT_ID} className={styles.hidden}>
+            Allow can be pressed in a moment.
+          </span>
+        )}
       </>
     ) : (
       <button type="button" ref={focusOnMount} onClick={props.onEnd}>

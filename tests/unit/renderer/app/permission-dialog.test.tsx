@@ -32,6 +32,15 @@ async function open(ask: Ask = request(), fake = makeFakeApi()) {
   return { ...view, dialog, answers }
 }
 
+// Allow waits 750 ms after the ask is shown (P10-7 review); these tests use real time.
+async function allowReady() {
+  const allow = screen.getByRole('button', { name: 'Allow' })
+  await waitFor(() => expect(allow).not.toHaveAttribute('aria-disabled', 'true'), {
+    timeout: 5000,
+  })
+  return allow
+}
+
 describe('permission dialog [P10-7]', () => {
   it('shows the ask in the spec words, with no axe violations', async () => {
     const { dialog } = await open()
@@ -66,6 +75,7 @@ describe('permission dialog [P10-7]', () => {
     while (document.activeElement !== tick) await userEvent.tab()
     await userEvent.keyboard(' ')
     expect(tick).toBeChecked()
+    await allowReady()
     while (document.activeElement !== allow) await userEvent.tab()
     await userEvent.keyboard('{Enter}')
     await waitFor(() =>
@@ -91,7 +101,7 @@ describe('permission dialog [P10-7]', () => {
 
   it('sends Allow without the tick when it is not ticked', async () => {
     const { answers } = await open()
-    await userEvent.click(screen.getByRole('button', { name: 'Allow' }))
+    await userEvent.click(await allowReady())
     await waitFor(() =>
       expect(answers().map((a) => a.input)).toEqual([
         { requestId: 'made-up-request-1', allow: true, rememberAuto: false },
@@ -135,7 +145,7 @@ describe('permission dialog [P10-7]', () => {
       error: { code: 'NOT_FOUND', message: 'That request has ended.' },
     }))
     const { answers } = await open(request(), fake)
-    await userEvent.click(screen.getByRole('button', { name: 'Allow' }))
+    await userEvent.click(await allowReady())
     expect(await screen.findByRole('alert')).toHaveTextContent('That request has ended.')
     expect(screen.queryByRole('button', { name: 'Allow' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus()
