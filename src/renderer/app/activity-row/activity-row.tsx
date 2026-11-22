@@ -1,8 +1,9 @@
 // One job in the activity panel (spec/screens-ai.md, "The activity panel", Row) [REQ: FR-152,
 // FR-217, FR-218; D-036]: what and where, the status as the run row words it, when it started,
-// who started it and the "New" mark; then Go there, Cancel (ui/cancel-shown.ts) and Retry
-// (background jobs only). A failed row shows its sentence through ui/run-failure/.
-import { EMPTY, useApp } from '@/renderer/app/app-context'
+// who started it and the "New" mark; then Go there (to the place ui/show-result.ts finds,
+// R2E-6), Cancel (ui/cancel-shown.ts) and Retry (background jobs only). A failed row shows its
+// sentence through ui/run-failure/.
+import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { workingDetail } from '@/renderer/screens/campaign/run-row/run-row'
 import { useNow, videoRunningText } from '@/renderer/screens/campaign/run-row/video-status'
 import type { ActivityEntry } from '@/renderer/stores/activity-store'
@@ -10,6 +11,7 @@ import { cancelShown } from '@/renderer/ui/cancel-shown'
 import { BusySpinner } from '@/renderer/ui/dialog-frame'
 import { goTarget, type GoTarget } from '@/renderer/ui/go-there'
 import { Icon } from '@/renderer/ui/icon'
+import { resultTarget } from '@/renderer/ui/show-result'
 import layout from '@/renderer/ui/layout.module.css'
 import { RunFailure } from '@/renderer/ui/run-failure'
 import { RowRetry, retryShown } from './row-retry'
@@ -40,6 +42,7 @@ export function ActivityRow(props: {
 }) {
   const { job, place } = props.entry
   const { projectId } = props
+  const api = useApi()
   const command = useApp((s) => s.command)
   const providers = useApp((s) => s.app?.providers ?? EMPTY)
   const provider = providers.find((p) => p.id === job.provider)
@@ -82,7 +85,9 @@ export function ActivityRow(props: {
             type="button"
             className={layout.small}
             aria-label={`Go to ${where}`}
-            onClick={() => props.onGo(target)}
+            onClick={() =>
+              void resultTarget(api, projectId, job, place).then((t) => t && props.onGo(t))
+            }
           >
             Go there
           </button>

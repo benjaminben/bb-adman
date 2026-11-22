@@ -225,3 +225,30 @@ describe('ActivityRow Cancel and Retry [P4-14, D-036, A-63]', () => {
     expect(await axeViolations()).toEqual([])
   })
 })
+
+describe('ActivityRow Go there through showResult [R2E-6]', () => {
+  it('leads a job with a slot and no layer to the layer in that slot', async () => {
+    const { row, onGo, fake } = await draw({ layerId: null, slot: 'subject-image' })
+    fake.onQuery('variant.get', () => ({
+      ok: true,
+      data: { layers: [{ id: 'L3', slot: 'subject-image' }], clips: [], assets: [] },
+    }))
+    await userEvent.click(within(row).getByRole('button', { name: /^Go to/ }))
+    await vi.waitFor(() =>
+      expect(onGo).toHaveBeenCalledWith({
+        to: 'layer',
+        campaignId: 'C1',
+        variantId: 'V1',
+        layerId: 'L3',
+      }),
+    )
+  })
+
+  it('leads a video job to its variant, not the campaign overview', async () => {
+    const { row, onGo } = await draw({ kind: 'video_generation', layerId: null, slot: null })
+    await userEvent.click(within(row).getByRole('button', { name: /^Go to/ }))
+    await vi.waitFor(() =>
+      expect(onGo).toHaveBeenCalledWith({ to: 'variant', campaignId: 'C1', variantId: 'V1' }),
+    )
+  })
+})
