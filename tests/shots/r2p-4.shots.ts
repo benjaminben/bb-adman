@@ -62,6 +62,7 @@ test('Paste a brief', async () => {
 
   await dialog.getByLabel('Brief text').fill(markdownBrief(picture))
   await expect(dialog.getByRole('button', { name: 'Read brief' })).toBeEnabled()
+  await dialog.getByLabel('Brief text').evaluate((area) => area.scrollTo(0, 0))
   await shot(page, '371-brief-paste-markdown')
 
   await dialog.getByRole('button', { name: 'Read brief' }).click()
