@@ -3,7 +3,8 @@
 // No real server, no paid provider and no network beyond 127.0.0.1 is reached: Gemini is
 // answered inside the app's main process by gemini-stand-in.ts. TP-6's video start is here,
 // and CU-6b-R's video from a picture (1.60 N-11); the rows that need no stand-in are in
-// screen-tour.spec.ts (1.59 L-12).
+// screen-tour.spec.ts (1.59 L-12). CAMP-7: pictures are made in the editor's Generate panel
+// and the runs are read from the Activity panel (screens.ts, picture-run.ts).
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -54,8 +55,10 @@ test.afterEach(async () => {
   }
 })
 
-// The project, the campaign from the test brief, and the stand-in's address saved. A video
-// start needs a video post (P7-11), so `asVideo` reopens the project with its first variant one.
+// The project, the campaign from the test brief, and the stand-in's address saved; the master
+// open in the editor on its background layer. A video start needs a video post
+
+// (P7-11), so `asVideo` reopens the project with its first variant one.
 async function campaignOnStandIn(asVideo = false): Promise<void> {
   const comfy = await screens.openSettings(page)
   await screens.saveAddress(comfy, stand.origin)
@@ -63,10 +66,10 @@ async function campaignOnStandIn(asVideo = false): Promise<void> {
   await screens.loadBriefAndCreate(app, page)
   if (asVideo) await reopenAsVideo(page, 'Stand-in')
   await screens.openCampaign(page)
+  await screens.chooseSlot(page)
   // SP-5: these runs are not about the subject's photo, so it is not sent.
   await screens.untickReferences(page)
   await screens.chooseProvider(page, 'ComfyUI')
-  await screens.chooseSlot(page)
   await screens.setPrompt(page, screens.E2E_PROMPT)
   await screens.setCount(page, 1)
 }
@@ -120,7 +123,8 @@ test('Campaign: a run waits, works and is done; a failed run is retried; a waiti
   })
   finishWithPicture(stand, first, MOSS_OUTPUT)
   await expect(screens.runRow(page)).toContainText('Done', { timeout: 15_000 })
-  const picture = screens.runRow(page).getByRole('img', { name: 'Result 1' })
+  await expect(screens.picturePanel(page).getByText(screens.ON_THE_LAYER)).toBeVisible()
+  const picture = screens.newPicture(page)
   await expect(picture).toBeVisible()
   expect(await picture.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0)
 
@@ -138,18 +142,26 @@ test('Campaign: a run waits, works and is done; a failed run is retried; a waiti
   await expect(screens.runRow(page)).toContainText('Cancelled', { timeout: 15_000 })
 })
 
+// The paid run's cost is on screen in the run dialog at the click that sends it (C-15).
+const PAID_LINE = /^This will use 1 generation\(s\) with Google Gemini\./
+
 test("References and the paid confirm: an added picture goes to Flux; Gemini's confirm is cancelled", async () => {
   await campaignOnStandIn()
   const file = path.join(box.root, 'reference.png')
   fs.writeFileSync(file, greyPng(32, 24))
 
+  const panel = screens.picturePanel(page)
+  await panel.getByRole('button', { name: 'Choose reference pictures…' }).click()
+  const chooser = page.getByRole('dialog', { name: /^Reference pictures for / })
   await screens.answerOpenDialog(app, [file])
-  const references = page.getByRole('region', { name: 'Reference pictures' })
+  const references = chooser.getByRole('region', { name: 'Reference pictures' })
   await references.getByRole('button', { name: 'Add pictures' }).click()
   // SP-5: the list also holds the subject's photo (unticked above); this is the added one.
   const tick = references.getByRole('checkbox', { name: 'reference.png', exact: true })
   await expect(tick).toHaveCount(1)
   await tick.check()
+  await chooser.getByRole('button', { name: 'Done' }).click()
+  await expect(panel.getByText('1 chosen', { exact: true })).toBeVisible()
   await generate()
   await screens.confirmLicence(page)
   finishWithPicture(stand, await nthSentId(stand, 1), FLUX_OUTPUT)
@@ -157,11 +169,11 @@ test("References and the paid confirm: an added picture goes to Flux; Gemini's c
   expect(stand.seen.some((r) => r.method === 'POST' && r.path === '/upload/image')).toBe(true)
 
   await screens.chooseProvider(page, 'Google Gemini')
-  await generate()
-  const panel = screens.picturePanel(page)
-  await expect(panel.getByText(/^This sends 1 paid request\(s\)/)).toBeVisible()
-  await panel.getByRole('button', { name: 'Cancel' }).click()
-  await expect(panel.getByRole('button', { name: 'Generate' })).toBeVisible()
+  const run = await screens.openRunDialog(page)
+  await expect(run.getByText(PAID_LINE)).toBeVisible()
+  await run.getByRole('button', { name: 'Cancel' }).click()
+  await expect(run).toBeHidden()
+  await expect(panel.getByRole('button', { name: 'Generate…' })).toBeVisible()
   await expect(screens.runRows(page)).toHaveCount(1)
 })
 
@@ -169,20 +181,20 @@ test('Key dialog and paid Retry: Cancel, then a made-up key saved; the refused r
   await campaignOnStandIn()
   await standInForGemini(app)
   await screens.chooseProvider(page, 'Google Gemini')
-  const panel = screens.picturePanel(page)
   const dialog = page.getByRole('dialog', { name: 'Add your Google Gemini key' })
 
-  await generate()
-  await expect(panel.getByText(/^This sends 1 paid request\(s\)/)).toBeVisible()
-  await panel.getByRole('button', { name: 'Confirm' }).click()
+  const run = await screens.openRunDialog(page)
+  await expect(run.getByText(PAID_LINE)).toBeVisible()
+  await run.getByRole('button', { name: 'Generate', exact: true }).click()
   await expect(dialog).toBeVisible()
   await dialog.getByRole('button', { name: 'Cancel' }).click()
   await expect(dialog).toBeHidden()
+  if (await run.isVisible()) await run.getByRole('button', { name: 'Cancel' }).click()
+  await expect(run).toBeHidden()
   await expect(screens.runRows(page)).toHaveCount(0)
   expect(await geminiAsked(app)).toEqual([])
 
   await generate()
-  await panel.getByRole('button', { name: 'Confirm' }).click()
   await dialog.getByLabel('API key').fill(MADE_UP_KEY)
   // Re-review S-A: the main process's fetch is the stand-in before the key can be sent.
   expect(await standInInstalled(app)).toBe(true)
@@ -191,13 +203,16 @@ test('Key dialog and paid Retry: Cancel, then a made-up key saved; the refused r
   await expect(screens.runRow(page)).toContainText('Failed', { timeout: 15_000 })
   expect(await geminiAsked(app)).toEqual([GEMINI_ORIGIN])
 
+  // A paid Retry from Activity goes through the run dialog in retry mode, its cost shown.
   const row = screens.runRow(page)
+  const retry = page.getByRole('dialog', { name: 'Retry the run' })
   await row.getByRole('button', { name: 'Retry' }).click()
-  await expect(row.getByText(/^This sends 1 paid request\(s\)/)).toBeVisible()
-  await row.getByRole('button', { name: 'Cancel' }).click()
+  await expect(retry.getByText(PAID_LINE)).toBeVisible()
+  await retry.getByRole('button', { name: 'Cancel' }).click()
+  await expect(retry).toBeHidden()
   expect(await geminiAsked(app)).toEqual([GEMINI_ORIGIN])
   await row.getByRole('button', { name: 'Retry' }).click()
-  await row.getByRole('button', { name: 'Confirm' }).click()
+  await retry.getByRole('button', { name: 'Retry' }).click()
   await expect.poll(() => geminiAsked(app)).toEqual([GEMINI_ORIGIN, GEMINI_ORIGIN])
   await expect(screens.runRow(page)).toContainText('Failed', { timeout: 15_000 })
 })
