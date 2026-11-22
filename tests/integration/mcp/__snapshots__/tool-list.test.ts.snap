@@ -12,7 +12,7 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     "name": "list_projects",
   },
   {
-    "description": "Read one project that is open in the app: its subjects and a summary of each campaign. Works only on open projects.",
+    "description": "Read one project that is open in the app: meta (project ID, name, schema version, the app version that made it, created time), its subjects, a summary of each campaign in campaigns, and missingAssetCount, the number of assets whose file cannot be found. Works only on open projects.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {

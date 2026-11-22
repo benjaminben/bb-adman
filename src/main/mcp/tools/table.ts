@@ -62,8 +62,10 @@ export const ALL_TOOLS: readonly ToolDef[] = [
   {
     name: 'get_project',
     description:
-      'Read one project that is open in the app: its subjects and a summary of each ' +
-      'campaign. Works only on open projects.',
+      'Read one project that is open in the app: meta (project ID, name, schema version, ' +
+      'the app version that made it, created time), its subjects, a summary of each ' +
+      'campaign in campaigns, and missingAssetCount, the number of assets whose file ' +
+      'cannot be found. Works only on open projects.',
     kind: 'query',
     target: 'project.get',
     input: projectGetInput,
