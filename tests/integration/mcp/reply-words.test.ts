@@ -186,6 +186,8 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
     // R2P-5: this core refuses every ask, so its success reply is word-tested in
     // import-assets-checks.test.ts; a relative path is refused before the ask.
     ['import_assets', null, [{ project_id: p, paths: ['Pictures/hero.png'] }]],
+    // R2P-8: a new project in the default folder; a reserved Windows name is refused.
+    ['create_project', { name: 'Autumn Work' }, [{ name: 'CON' }]],
   ]
   return table.flatMap(([tool, good, bad]) => [
     ...(good === null ? [] : [{ tool, args: good, ok: true }]),

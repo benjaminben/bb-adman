@@ -66,7 +66,7 @@ describe('the Round 2 command stubs [R2P-1]', () => {
     for (const name of NAMES) expect(AGENT_POLICY[name]?.policy, name).toBe(POLICY[name])
   })
 
-  it.each(NAMES.filter((n) => n !== 'asset.importFiles'))(
+  it.each(NAMES.filter((n) => n !== 'asset.importFiles' && n !== 'project.createInDefaultFolder'))(
     '%s as the user refuses not_built and writes nothing',
     async (name) => {
       const { fx, projectId } = await open()
@@ -79,7 +79,7 @@ describe('the Round 2 command stubs [R2P-1]', () => {
     },
   )
 
-  it.each(NAMES.filter((n) => POLICY[n] === 'allow'))(
+  it.each(NAMES.filter((n) => POLICY[n] === 'allow' && n !== 'project.createInDefaultFolder'))(
     '%s as the agent reaches its stub',
     async (name) => {
       const { fx, projectId } = await open()

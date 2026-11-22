@@ -2075,5 +2075,23 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     },
     "name": "import_assets",
   },
+  {
+    "description": "Create a new, empty project in the user's default projects folder and open it in the app. name is the project's name and its file name: no folder, at most 100 characters. An existing file is never replaced. Gives the project's ID to use as project_id.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "name": {
+          "maxLength": 100,
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "name",
+      ],
+      "type": "object",
+    },
+    "name": "create_project",
+  },
 ]
 `;

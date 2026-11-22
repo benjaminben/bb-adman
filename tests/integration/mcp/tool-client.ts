@@ -33,6 +33,7 @@ export const BUILT_TOOLS = [
   'get_check_results',
   'set_variant_format',
   'import_assets',
+  'create_project',
 ]
 
 export type ToolReply = {

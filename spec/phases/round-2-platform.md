@@ -436,7 +436,7 @@ One owner: `APP_DISPLAY_NAME = 'AdManager'` in `src/shared/config/app-name.ts`. 
 
 - **Exists when done:** the command and tool work as D8; `createProjectFile` refuses any entry at the name.
 - **New files:** the body of `src/main/commands/project/create-default.ts`; the row of `project-tools.ts`; `src/main/mcp/tools/project-create-replies.ts`.
-- **May touch:** `src/main/db/project-file.ts` (the `lstat` check only); `src/main/commands/project/create.ts` (share the create work); the five shared tool-list test files.
+- **May touch:** `src/main/db/project-file.ts` (the `lstat` check only); `src/main/commands/project/create.ts` (share the create work); `src/main/commands/project/index.ts` (pass `deps`); the five shared tool-list test files.
 - **Agent reads:** the project ID and its own name. **Never:** the folder, the path. **Agent changes:** creates and opens an empty project in the default folder.
 - **Tests first:** `tests/integration/mcp/create-project.test.ts` (the file lands in the default folder and the project is open; the reply is exactly `projectId` and `name`; a name with `/`, `..`, `\`, `:`, a control character, a leading dot, `CON` and 101 characters each refused with no file; an existing file, and a link that leads nowhere, at the name each refused, the file unchanged and the link's target not made; a `location` argument is dropped; no reply or log line holds the folder's path; `riskyKeys`; the word test); `tests/integration/commands/project-create-link.test.ts` (the user's `project.create` also refuses a dangling link).
 - **Approved edits:** the five shared files; `tests/integration/mcp/every-tool.ts` (add `name`).
