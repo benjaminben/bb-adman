@@ -25,6 +25,17 @@ export type PromptFacts = {
   audience: string
   region: string
   message: string
+  // R2E-1 (D1): the ad's text layers already hold words, so the message is left out.
+  wordsOnLayers?: boolean
+  kind?: 'picture' | 'video'
+}
+
+// The fields of a layer hasWordsOnLayers reads, so the shared code takes any layer shape.
+type WordsLayer = { type: string; visible: boolean; copy?: string | null }
+
+// True when a visible text layer holds copy that is not blank after trimming.
+export function hasWordsOnLayers(layers: WordsLayer[]): boolean {
+  return layers.some((l) => l.type === 'text' && l.visible && (l.copy ?? '').trim() !== '')
 }
 
 function subjectText(subject: PromptFacts['subjects'][number]): string {
@@ -35,10 +46,14 @@ function subjectText(subject: PromptFacts['subjects'][number]): string {
 // The text the user starts from and can edit. It holds no ending: promptToSend adds it.
 export function prefilledPrompt(facts: PromptFacts): string {
   const subjects = facts.subjects.map(subjectText).filter((s) => s.length > 0)
-  const what = subjects.length > 0 ? `A picture of ${subjects.join(' and ')}` : 'A picture'
+  const noun = facts.kind === 'video' ? 'A video' : 'A picture'
+  const what = subjects.length > 0 ? `${noun} of ${subjects.join(' and ')}` : noun
+  const last = facts.wordsOnLayers
+    ? "Leave clear space for the advertisement's words, which are added separately."
+    : `The advertisement's message: ${facts.message.trim()}`
   return (
     `${what} for an advertisement aimed at ${facts.audience.trim()} in ${facts.region.trim()}. ` +
-    `The advertisement's message: ${facts.message.trim()}`
+    last
   )
 }
 
