@@ -69,6 +69,7 @@ A running list kept by the orchestrator, like `round-2-verify.md`. The design wa
 53. **Approval dialog.** Copy link and Copy password are icon buttons; "New password…" is in a "⋯" menu. "Turn off…" opens its own question, "Turn off link?", with "Keep link" focused.
 54. **Five small fixes after the wave.** With a help tip open inside a dialog, the first Escape closes only the tip. A long refresh failure wraps on its own line under the campaign head. On the first-run ComfyUI and Storage steps the step name shows once, not twice. The chosen clip's speaker and trash bar sits above the clip, so it never covers the name; it overlaps the bottom edge of the layer row above by a few pixels (say if that bothers you). The key dialog's title has its key icon.
 55. **Clean-up.** Code that no screen used any more was removed; nothing you see or do changed. Four shared style classes that nothing uses yet (two badge tones, a menu label, a two-column form grid) were kept as part of the style framework.
+56. **Screenshot scripts tidied.** Of the 111 older screenshot scripts, 94 were retired because the design wave replaced the screens they pictured, and 17 were kept (5 after a one-line fix for a renamed label). One early design-wave script was retired too: later ones picture the same screens. No app fault turned up: every failure was a renamed label. One kept script (a video export picture) skips itself on this Mac because FFmpeg is not fetched.
 
 ## Small things left as they are
 

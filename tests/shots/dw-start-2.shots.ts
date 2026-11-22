@@ -33,7 +33,7 @@ test('The start screen with three recent projects, then the New project row', as
   await stillPage(page)
   for (const name of ['Alpine Spring', 'Harbour Lights']) {
     await screens.createProject(page, name)
-    await page.getByRole('button', { name: `Close ${name}` }).click()
+    await screens.closeProject(page, name)
   }
   await screens.createProject(page, 'Coastal Autumn')
   await screens.showStart(page)

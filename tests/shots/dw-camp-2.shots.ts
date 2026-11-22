@@ -64,7 +64,9 @@ test('462 the delete-direction warning', async () => {
   await expect(make).toBeHidden()
   await v.directionMore(page, 'Studio', 'Delete direction…')
   const warning = page.getByRole('dialog', { name: 'Delete Studio?' })
-  await expect(warning.getByText('Its 1 variant go with it. This cannot be undone.')).toBeVisible()
+  await expect(
+    warning.getByText('Its 1 variant goes with it. This cannot be undone.'),
+  ).toBeVisible()
   await expect(warning.getByRole('button', { name: 'Keep' })).toBeFocused()
   await shot(page, '462-delete-direction-confirm')
 })

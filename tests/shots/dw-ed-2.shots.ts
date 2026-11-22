@@ -38,7 +38,7 @@ test('A text layer on an image post, as made', async () => {
   await screens.answerOpenDialog(app, [BRIEF])
   await page.getByRole('button', { name: 'Load a brief' }).click()
   await page
-    .getByRole('region', { name: 'Brief' })
+    .getByRole('region', { name: 'New campaign' })
     .getByRole('button', { name: 'Create campaign' })
     .click()
   await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
