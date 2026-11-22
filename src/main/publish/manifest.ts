@@ -3,8 +3,9 @@
 // the wrong shape counts as none: it is logged by reason only, never with its content.
 import type { ActivityLog } from '@/main/log/activity-log'
 import type { StorageProvider } from '@/main/providers/types'
-import { refusePath, storageFilePath } from '@/main/providers/storage-paths'
+import { storageFilePath } from '@/main/providers/storage-paths'
 import { MANIFEST_NAME, Manifest } from '@/shared/publish/manifest'
+import { campaignFolder } from '@/shared/publish/paths'
 
 // The most of an old manifest that is read (publish.inspect reads as much).
 export const MANIFEST_MAX_BYTES = 8 * 1024 * 1024
@@ -12,10 +13,10 @@ export const MANIFEST_MAX_BYTES = 8 * 1024 * 1024
 export type PreviousPublish = { publishNumber: number; projectId: string; publishedAt: string }
 
 // `{campaignId}/`, the one folder a publish lists, writes and deletes in. The campaign ID must
-// be a single part that passes the storage path rules; anything else is "Storage path refused".
+// be of the campaign ID form (A-221) and pass the storage path rules; anything else is
+// "Storage path refused".
 export function campaignPrefix(campaignId: string): string {
-  if (campaignId === '' || campaignId.includes('/')) refusePath()
-  return `${storageFilePath(campaignId)}/`
+  return `${storageFilePath(campaignFolder(campaignId))}/`
 }
 
 export function manifestPath(campaignId: string): string {

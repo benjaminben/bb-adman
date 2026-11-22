@@ -19,7 +19,7 @@ let work: string
 let bucket: string
 
 beforeEach(async () => {
-  base = await fs.mkdtemp(path.join(os.tmpdir(), 'adman-upload-local-'))
+  base = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'adman-upload-local-')))
   work = path.join(base, 'work')
   bucket = path.join(base, 'bucket')
   await fs.mkdir(path.join(work, 'exports'), { recursive: true })

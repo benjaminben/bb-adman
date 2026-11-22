@@ -10,7 +10,8 @@ let base: string
 let work: string
 
 beforeEach(async () => {
-  base = await fs.mkdtemp(path.join(os.tmpdir(), 'adman-open-inside-'))
+  // The real path: a root reached through a link (as /var is on macOS) is refused (P9-10).
+  base = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'adman-open-inside-')))
   work = path.join(base, 'work')
   await fs.mkdir(path.join(work, 'exports'), { recursive: true })
   await fs.writeFile(path.join(base, 'outside.txt'), 'outside bytes')
@@ -89,5 +90,38 @@ describe('openFileInside', () => {
     const text = `${(error as Error).message} ${JSON.stringify(error)}`
     expect(text).not.toContain(base)
     expect(text).not.toContain('outside')
+  })
+})
+
+describe('openFileInside, P9-10 hardening', () => {
+  it('refuses a hard link, a file with more than one name', async () => {
+    const file = path.join(work, 'a.png')
+    await fs.writeFile(file, 'shared bytes')
+    await fs.link(file, path.join(base, 'second-name.png'))
+    expect(await refusal(openFileInside(work, file))).toBeInstanceOf(LocalFileRefused)
+  })
+
+  it('refuses a root that is a link, even to a real folder', async () => {
+    await fs.writeFile(path.join(work, 'a.png'), 'x')
+    const linkedRoot = path.join(base, 'linked-work')
+    await fs.symlink(work, linkedRoot)
+    const stream = openFileInside(linkedRoot, path.join(linkedRoot, 'a.png'))
+    expect(await refusal(stream)).toBeInstanceOf(LocalFileRefused)
+  })
+
+  it('refuses a root whose real path differs from it', async () => {
+    await fs.mkdir(path.join(base, 'real', 'work'), { recursive: true })
+    await fs.writeFile(path.join(base, 'real', 'work', 'a.png'), 'x')
+    await fs.symlink(path.join(base, 'real'), path.join(base, 'via'))
+    const root = path.join(base, 'via', 'work')
+    expect(await refusal(openFileInside(root, path.join(root, 'a.png')))).toBeInstanceOf(
+      LocalFileRefused,
+    )
+  })
+
+  it('refuses a root that is a file', async () => {
+    const file = path.join(work, 'a.png')
+    await fs.writeFile(file, 'x')
+    expect(await refusal(openFileInside(file, file))).toBeInstanceOf(LocalFileRefused)
   })
 })
