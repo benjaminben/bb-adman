@@ -82,7 +82,7 @@ export async function selectLayer(page: Page, name: string): Promise<void> {
 }
 
 export const pictureSection = (page: Page): Locator =>
-  page.getByRole('group', { name: 'Make pictures with AI' })
+  page.getByRole('group', { name: 'Generate' })
 export const earlierOptions = (page: Page): Locator =>
   page.getByRole('region', { name: 'Earlier options' })
 

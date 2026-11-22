@@ -92,7 +92,7 @@ test('The generate fields with earlier options, then the run dialog', async () =
   await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page.getByRole('button', { name: new RegExp(`^${ids.background}`) }).click()
-  const section = page.getByRole('group', { name: 'Make pictures with AI' })
+  const section = page.getByRole('group', { name: 'Generate' })
   await expect(section.getByText(/^(\d+|None) chosen$/)).toBeVisible()
 
   await section.getByRole('button', { name: 'Generate…' }).click()
