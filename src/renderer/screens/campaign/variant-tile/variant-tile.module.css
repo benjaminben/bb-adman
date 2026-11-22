@@ -1,22 +1,43 @@
+/* app-style */
+/* The tile is the card (spec/app-style.md, "Campaign page, grid and tiles"): the main button
+   fills it without an edge of its own; the actions and a footer (AP-12) follow it inside. */
 .tile {
   position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
 }
-/* Fills the tile; a footer (AP-12) takes its own height under it. */
+.tile:hover {
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-1);
+}
+.tile:has(> .chosen) {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 var(--border-width) var(--color-accent);
+}
 .main {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   gap: var(--space-1);
   width: 100%;
-  flex: 1;
   padding: var(--space-2);
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  font-weight: var(--weight-regular);
   text-align: left;
 }
-.chosen {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 calc(var(--focus-ring-width) - var(--border-width)) var(--color-accent);
+.main:hover:not(:disabled) {
+  background: none;
 }
 .picture {
   display: flex;
@@ -24,16 +45,24 @@
   justify-content: center;
   width: 100%;
   aspect-ratio: 1 / 1;
+  margin-bottom: var(--space-1);
+  padding: var(--space-2);
+  border-radius: var(--radius);
+  background: var(--canvas-backdrop);
 }
 .shape {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--color-surface);
+  max-width: 100%;
+  max-height: 100%;
+  background: var(--color-bg);
   border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-inner);
+  box-shadow: var(--shadow-1);
   color: var(--color-text-muted);
+  font-size: var(--font-size-small);
 }
 .wide {
   width: 100%;
@@ -42,7 +71,7 @@
   height: 100%;
 }
 .title {
-  font-weight: 600;
+  font-weight: var(--weight-bold);
   overflow-wrap: anywhere;
 }
 .line {
@@ -51,13 +80,7 @@
 }
 .marks {
   display: flex;
+  margin-top: var(--space-1);
   flex-wrap: wrap;
   gap: var(--space-1);
-}
-.mark {
-  padding: 0 var(--space-1);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  font-size: var(--font-size-small);
 }
