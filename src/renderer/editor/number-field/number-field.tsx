@@ -1,8 +1,11 @@
 // spec/editor.md, "Properties panel": a number field. Whole numbers unless a step says
 // otherwise; the arrow keys step within the bounds; Enter or leaving the field saves once.
-// Text that is not a number goes back to the stored value and sends nothing.
+// Text that is not a number goes back to the stored value and sends nothing. With `inline` (or a
+// `prefix`) it is drawn with the shared .field.inline and .unitBox (spec/app-style-parts.md
+// "Field"): the unit and prefix sit inside the box, as text outside the input's name.
 import { useId, type KeyboardEvent } from 'react'
 import { useDraft } from './use-draft'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './number-field.module.css'
 
 export type NumberFieldProps = {
@@ -10,6 +13,9 @@ export type NumberFieldProps = {
   // The accessible name when the visible label is short ("W" for "Width").
   name?: string
   unit?: string
+  // Design wave (T3d): label left on one row, and a prefix inside the box ("X", "W").
+  inline?: boolean
+  prefix?: string
   value: number
   step?: number
   min?: number
@@ -52,12 +58,17 @@ export function NumberField(props: NumberFieldProps) {
     }
   }
 
+  const boxed = props.inline === true || props.prefix !== undefined
+  const fieldClass = props.inline ? `${layout.field} ${layout.inline}` : styles.field
+  const unitClass = boxed ? layout.unit : styles.unit
+
   return (
-    <div className={styles.field}>
+    <div className={fieldClass}>
       <label className={styles.label} htmlFor={id}>
         {props.label}
       </label>
-      <div className={styles.row}>
+      <div className={boxed ? layout.unitBox : styles.row}>
+        {boxed && props.prefix && <span className={layout.unit}>{props.prefix}</span>}
         <input
           id={id}
           className={styles.input}
@@ -75,10 +86,13 @@ export function NumberField(props: NumberFieldProps) {
           onKeyDown={onKeyDown}
           onBlur={save}
         />
-        {props.unit && <span className={styles.unit}>{props.unit}</span>}
+        {props.unit && <span className={unitClass}>{props.unit}</span>}
       </div>
       {draft.error && (
-        <p id={`${id}-error`} className={styles.error}>
+        <p
+          id={`${id}-error`}
+          className={props.inline ? `${styles.error} ${styles.inlineError}` : styles.error}
+        >
           {draft.error}
         </p>
       )}

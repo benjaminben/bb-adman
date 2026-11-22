@@ -35,9 +35,9 @@ describe('the base and shared layout take the look [ST-2]', () => {
   it('sets headings in the title face and sizes', () => {
     const css = read('base.css')
     expect(rule(css, 'h1, h2, h3')).toMatch(/font-family:\s*var\(--font-title\)/)
-    expect(rule(css, 'h1')).toMatch(/font-size:\s*var\(--font-size-page\)/)
-    expect(rule(css, 'h2')).toMatch(/font-size:\s*var\(--font-size-title\)/)
-    expect(rule(css, 'h3')).toMatch(/font-size:\s*var\(--font-size-heading\)/)
+    expect(rule(css, 'h1')).toMatch(/font-size:\s*var\(--type-page-size\)/)
+    expect(rule(css, 'h2')).toMatch(/font-size:\s*var\(--type-title-size\)/)
+    expect(rule(css, 'h3')).toMatch(/font-size:\s*var\(--type-title-size\)/)
   })
 
   it('gives buttons and fields the control edge and height', () => {

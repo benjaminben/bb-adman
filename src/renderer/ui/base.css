@@ -19,7 +19,8 @@ body {
   background: var(--color-page);
   -webkit-font-smoothing: antialiased;
 }
-/* Headings: the serif title face. A screen with a smaller h1 sets it in its own module. */
+/* Headings: the serif title face at the page and title roles (spec/app-style.md "Type roles").
+   A screen with a smaller h1 sets it in its own module. */
 h1,
 h2,
 h3 {
@@ -29,13 +30,16 @@ h3 {
   line-height: var(--leading-tight);
 }
 h1 {
-  font-size: var(--font-size-page);
+  font-size: var(--type-page-size);
+  font-weight: var(--type-page-weight);
 }
 h2 {
-  font-size: var(--font-size-title);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
 }
 h3 {
-  font-size: var(--font-size-heading);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
 }
 b,
 strong {
