@@ -20,8 +20,8 @@ export const READ_MORE_TOOLS: readonly ToolDef[] = [
     name: 'get_variant',
     description:
       'Read one variant of an open project: its fields and badges, its campaign ID, every ' +
-      'layer with all its values (z ascending), and the assets its layers use, with display ' +
-      'name, kind, size and whether the file is missing.',
+      'layer with all its values (z ascending), its video clips, and the ' +
+      'assets its layers use, with display name, kind, size and whether the file is missing.',
     kind: 'query',
     target: 'variant.get',
     input: variantGetInput,

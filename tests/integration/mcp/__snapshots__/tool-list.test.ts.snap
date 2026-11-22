@@ -588,7 +588,7 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     "name": "list_subjects",
   },
   {
-    "description": "Read one variant of an open project: its fields and badges, its campaign ID, every layer with all its values (z ascending), and the assets its layers use, with display name, kind, size and whether the file is missing.",
+    "description": "Read one variant of an open project: its fields and badges, its campaign ID, every layer with all its values (z ascending), its video clips, and the assets its layers use, with display name, kind, size and whether the file is missing.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
