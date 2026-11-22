@@ -90,20 +90,21 @@ export async function openVideo(opts: PanelOpts = {}) {
     fake,
   )
   await waitFor(() => expect(screen.getByLabelText('Prompt')).toBeEnabled())
-  return { fake, list, panel: within(screen.getByRole('group', { name: 'Generate' })) }
+  return { fake, list, panel: within(screen.getByRole('region', { name: 'Generate' })) }
 }
 
 export const makeGroup = () => within(screen.getByRole('group', { name: 'Make' }))
-export const starts = () => within(screen.getByRole('radiogroup', { name: 'Start from' }))
+// ED-4a: the start choices are pressed-state tiles in the group "Start from".
+export const starts = () => within(screen.getByRole('group', { name: 'Start from' }))
 export const startLabels = () =>
   starts()
-    .getAllByRole('radio')
-    .map((r) => r.closest('label')?.textContent)
+    .getAllByRole('button')
+    .map((r) => r.textContent)
 export const generateButton = () => screen.getByRole('button', { name: 'Generate…' })
 export const clipLength = () => screen.getByLabelText('Clip length (seconds)')
 
 export async function chooseStart(name: string) {
-  await userEvent.click(starts().getByRole('radio', { name }))
+  await userEvent.click(starts().getByRole('button', { name }))
 }
 
 // Opens the run dialog; the caller confirms or cancels.

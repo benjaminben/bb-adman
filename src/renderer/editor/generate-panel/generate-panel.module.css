@@ -1,33 +1,81 @@
 /* app-style */
-/* "Generate": one properties panel group. The panel floats its legend
-   (properties-panel.module.css), so the group reads like its neighbours. "Start from" is a
-   short column of radio rows; the same-shape list is a grid of --option-thumb squares on the
-   canvas ground with the name below, the chosen one edged in the spot colour. */
+/* "Generate" (ED-4a): the Section's body is a column of Make, Start from, the fields and the
+   earlier options. Start from is one row of equal tiles, a square look over the name, the pressed
+   one edged in the accent colour. The same-shape list is a grid of --option-thumb squares on the
+   canvas ground with the name below, the chosen one edged in the accent colour. */
 .section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--gap-field);
   min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: none;
 }
 .section p {
   margin: 0;
 }
-.legend {
-  padding: 0;
-  margin-bottom: var(--space-2);
-  font-family: var(--font-body);
-  font-size: var(--font-size-control);
-  font-weight: var(--weight-bold);
-  color: var(--color-text);
+.make {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
 }
-.starts {
+.segment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}
+.startFrom {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  font-size: var(--font-size-control);
+}
+.starts {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+}
+.startTile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+  min-height: 0;
+  padding: var(--space-1) calc(var(--space-1) / 2);
+  border-color: var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  font-size: var(--font-size-small);
+  text-align: center;
+}
+.startTile[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 var(--border-width) var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.tileThumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+.tileName {
+  overflow-wrap: break-word;
+  hyphens: auto;
+  color: var(--color-text);
+}
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .grid {
   display: grid;
@@ -82,7 +130,13 @@
   resize: vertical;
 }
 .length {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  width: var(--field-label-width);
+}
+.length input {
+  min-width: 0;
+}
+/* The clip length's problem stays as words under it. */
+.problem {
+  font-size: var(--font-size-small);
+  color: var(--color-danger-text);
 }

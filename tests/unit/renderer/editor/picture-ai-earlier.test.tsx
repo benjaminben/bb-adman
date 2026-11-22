@@ -18,7 +18,8 @@ describe('PictureAi with the earlier options [spec/screens-ai.md]', () => {
       </main>,
       campaignApi(),
     )
-    const section = screen.getByRole('group', { name: 'Generate' })
+    // ED-4a: Generate is a Section (a region).
+    const section = screen.getByRole('region', { name: 'Generate' })
     const heading = await within(section).findByRole('region', { name: 'Earlier options' })
     const prompt = await within(section).findByRole('textbox', { name: 'Prompt' })
     expect(prompt.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()

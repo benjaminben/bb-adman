@@ -28,6 +28,8 @@ export type PhotoStripProps = {
   needsOne?: boolean
   // "small" draws the tiles at --option-thumb, for a narrow panel (the Assets panel).
   size?: 'regular' | 'small'
+  // Every ✕ and the "+" disabled (a locked layer's references, ED-4a).
+  disabled?: boolean
   removeRef?(id: string, el: HTMLButtonElement | null): void
 }
 
@@ -54,6 +56,7 @@ function Tile({ photo, props }: { photo: StripPhoto; props: PhotoStripProps }) {
           className={`${layout.iconButton} ${styles.remove}`}
           aria-label={photo.removeLabel}
           title={photo.removeLabel}
+          disabled={props.disabled === true}
           onClick={() => props.onRemove(photo.id)}
         >
           <Icon name="x" size="small" />
@@ -78,7 +81,7 @@ export function PhotoStrip(props: PhotoStripProps) {
           className={`${styles.picture} ${styles.add}${warn ? ` ${styles.warn}` : ''}`}
           aria-label={props.addLabel}
           title={props.addLabel}
-          disabled={adding}
+          disabled={adding || props.disabled === true}
           onClick={props.onAdd}
         >
           {adding ? <BusySpinner /> : <Icon name="plus" />}

@@ -1,6 +1,7 @@
 // The Generate panel's video fields (spec/phases/round-2-editor.md D4): the reference pictures
-// for that start, "Prompt" (the layer's draft, shared with pictures), "Clip length (seconds)"
-// and "Generate…", which opens the run dialog for a video. Only that dialog's own Generate
+// for that start, "Prompt" (the layer's draft, shared with pictures), the clip length (an inline
+// field "Length" in seconds, named "Clip length (seconds)", ED-4a) and "Generate…", the
+// Section's one primary, which opens the run dialog for a video. Only that dialog's own Generate
 // sends generation.startVideo, with the provider, the length and the pictures the dialog named
 // (video-lengths.ts) and this layer, so the clip takes the still's place (D5).
 import { useId, useState } from 'react'
@@ -46,6 +47,7 @@ export function VideoFields(props: VideoFieldsProps) {
   const draft = draftOf(first.draft)
   const [open, setOpen] = useState(false)
   const promptId = useId()
+  const lengthId = useId()
   const change = generateDrafts.getState().change
   const kind = VIDEO_START[start]
   const chosen = (draft?.videoPictureIds ?? []).slice(0, props.most)
@@ -92,24 +94,35 @@ export function VideoFields(props: VideoFieldsProps) {
         id={promptId}
         className={`${styles.prompt} ${layout.reading}`}
         rows={5}
+        placeholder="Describe the video"
         value={draft?.prompt ?? ''}
         disabled={disabled}
         onChange={(e) => change(key, { prompt: e.target.value, promptTyped: true })}
       />
-      <label className={`${layout.label} ${styles.length}`}>
-        Clip length (seconds)
-        <input
-          type="number"
-          min={1}
-          step={1}
-          value={draft?.seconds ?? ''}
-          disabled={disabled}
-          onChange={(e) => change(key, { seconds: e.target.value })}
-        />
-      </label>
-      {draft && seconds === null && <p className={layout.muted}>{LENGTH_PROBLEM}</p>}
+      <div className={`${layout.field} ${layout.inline}`}>
+        <label htmlFor={lengthId}>Length</label>
+        <div className={`${layout.unitBox} ${styles.length}`}>
+          <input
+            id={lengthId}
+            type="number"
+            aria-label="Clip length (seconds)"
+            min={1}
+            step={1}
+            value={draft?.seconds ?? ''}
+            disabled={disabled}
+            onChange={(e) => change(key, { seconds: e.target.value })}
+          />
+          <span className={layout.unit}>s</span>
+        </div>
+      </div>
+      {draft && seconds === null && <p className={styles.problem}>{LENGTH_PROBLEM}</p>}
       <div className={layout.row}>
-        <button type="button" disabled={disabled || !ready} onClick={() => setOpen(true)}>
+        <button
+          type="button"
+          className={layout.primary}
+          disabled={disabled || !ready}
+          onClick={() => setOpen(true)}
+        >
           Generate…
         </button>
       </div>

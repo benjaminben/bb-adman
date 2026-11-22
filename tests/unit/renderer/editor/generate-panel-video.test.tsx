@@ -34,7 +34,8 @@ beforeEach(() => generateDrafts.setState({ drafts: {}, wanted: {} }))
 
 const FIELDS = { projectId: P, variantId: 'V1', prompt: 'A can', provider: 'fake', layerId: 'L0' }
 const NONE = { start: 'none', useReferences: false, referenceAssetIds: [] }
-const startRadio = (name: string) => starts().getByRole('radio', { name })
+// ED-4a: a start choice is a tile button with aria-pressed.
+const startRadio = (name: string) => starts().getByRole('button', { name })
 const ON_TIMELINE = 'On a video post, the clips on the timeline show over this picture.'
 
 async function typePrompt(text = 'A can') {
@@ -77,8 +78,13 @@ describe('the "Make" switch [R2E-8, D4]', () => {
       'aria-pressed',
       'true',
     )
-    expect(panel.getByText('No video service is set up. Add a key in Settings.')).toBeVisible()
-    expect(panel.getByText(ON_TIMELINE)).toBeVisible()
+    // ED-4a: the line is the "Video" segment's title; the picture's line is an InfoTip.
+    expect(makeGroup().getByRole('button', { name: 'Video' })).toHaveAttribute(
+      'title',
+      'No video service is set up. Add a key in Settings.',
+    )
+    expect(panel.getByRole('button', { name: 'About pictures on a video post' })).toBeVisible()
+    expect(panel.getByText(ON_TIMELINE)).toBeInTheDocument()
   })
 
   it.each([
@@ -94,14 +100,17 @@ describe('the "Make" switch [R2E-8, D4]', () => {
     ['an image layer of a video post', LOGO, 'video'],
   ] as const)('has no switch on %s', async (_name, layer, format) => {
     await openVideo({ layer, format })
-    expect(screen.queryByRole('group', { name: 'Make' })).toBeNull()
+    // ED-4a: "Make" shows on every picture and background layer, "Video" disabled here.
+    expect(makeGroup().getByRole('button', { name: 'Video' })).toBeDisabled()
     expect(screen.queryByLabelText('Clip length (seconds)')).toBeNull()
   })
 
   it('shows the picture fields and their line on "Picture", and the video ones again on "Video"', async () => {
     const { panel } = await openVideo()
     await userEvent.click(makeGroup().getByRole('button', { name: 'Picture' }))
-    expect(panel.getByText(ON_TIMELINE)).toBeVisible()
+    // ED-4a: the picture's line is an InfoTip.
+    expect(panel.getByRole('button', { name: 'About pictures on a video post' })).toBeVisible()
+    expect(panel.getByText(ON_TIMELINE)).toBeInTheDocument()
     expect(panel.getByRole('button', { name: 'Choose reference pictures…' })).toBeVisible()
     expect(startLabels()).toEqual(ALL_VIDEO_STARTS.slice(0, 3))
     await userEvent.click(makeGroup().getByRole('button', { name: 'Video' }))
@@ -125,7 +134,7 @@ describe('the video starts [R2E-8, D4; ported from video-offer, video-start]', (
   it("offers the four starts of the fake provider's offer, a prompt only first and chosen", async () => {
     await openVideo()
     expect(startLabels()).toEqual(ALL_VIDEO_STARTS)
-    expect(startRadio('A prompt only')).toBeChecked()
+    expect(startRadio('A prompt only')).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('offers only the starts ComfyUI has a workflow for', async () => {

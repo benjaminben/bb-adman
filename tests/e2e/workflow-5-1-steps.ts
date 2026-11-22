@@ -81,7 +81,7 @@ export async function selectLayer(page: Page, name: string): Promise<void> {
   await rows.getByRole('button', { name: new RegExp(`^${name}`) }).click()
 }
 
-export const pictureSection = (page: Page): Locator => page.getByRole('group', { name: 'Generate' })
+export const pictureSection = (page: Page): Locator => screens.picturePanel(page)
 export const earlierOptions = (page: Page): Locator =>
   page.getByRole('region', { name: 'Earlier options' })
 

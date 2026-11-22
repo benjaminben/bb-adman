@@ -8,6 +8,8 @@
 // MAX_REFERENCES_PER_RUN. A start that needs a picture with none chosen disables "Generate…".
 // R2E-5 (D6): a started run is registered with the window's placed runs, with whether the
 // layer was empty, so an empty layer gets the run's first picture.
+// ED-4a: the chosen pictures are a strip of thumbnails (reference-strip.tsx) above the prompt,
+// and "Generate…" is the Section's one primary. It only opens the run dialog (C-15).
 import { useId, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { RunDialog } from '@/renderer/dialogs/run-dialog'
@@ -17,6 +19,7 @@ import { placedRunsFor } from '@/renderer/stores/placed-runs'
 import { MAX_IMAGES_PER_RUN, MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
 import type { JobStarted } from '@/shared/schemas/commands/job'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
+import { ReferenceStrip } from './reference-strip'
 import { RunStatus } from './run-status'
 import layout from '@/renderer/ui/layout.module.css'
 import { useFirstDraft } from './use-first-draft'
@@ -78,6 +81,15 @@ export function GenerateFields(props: GenerateFieldsProps) {
 
   return (
     <div className={styles.fields}>
+      {draft && (
+        <ReferenceStrip
+          projectId={projectId}
+          chosen={chosen}
+          disabled={disabled}
+          onChange={(ids) => change(key, { referenceAssetIds: ids })}
+          onChoose={() => setDialog('references')}
+        />
+      )}
       <label htmlFor={promptId} className={styles.label}>
         Prompt
       </label>
@@ -85,22 +97,15 @@ export function GenerateFields(props: GenerateFieldsProps) {
         id={promptId}
         className={`${styles.prompt} ${layout.reading}`}
         rows={5}
+        placeholder="Describe the picture"
         value={draft?.prompt ?? ''}
         disabled={disabled}
         onChange={(e) => change(key, { prompt: e.target.value, promptTyped: true })}
       />
-      <p className={styles.label}>Reference pictures</p>
-      {draft && (
-        <p className={styles.count}>
-          {chosen.length > 0 ? `${chosen.length} chosen` : 'None chosen'}
-        </p>
-      )}
       <div className={styles.buttons}>
-        <button type="button" disabled={disabled} onClick={() => setDialog('references')}>
-          Choose reference pictures…
-        </button>
         <button
           type="button"
+          className={layout.primary}
           disabled={disabled || props.start === null}
           onClick={() => setDialog('run')}
         >

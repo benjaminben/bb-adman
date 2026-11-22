@@ -20,8 +20,23 @@ function choiceOf(page: Page): Choice {
 
 const canvas = (page: Page): Locator => page.getByRole('region', { name: /^Canvas, / })
 
-// The selected layer's "Generate" group.
-export const picturePanel = (page: Page): Locator => page.getByRole('group', { name: 'Generate' })
+// The selected layer's "Generate" Section (ED-4a: a region).
+export const picturePanel = (page: Page): Locator =>
+  page.getByRole('region', { name: 'Generate', exact: true })
+
+// ED-4a: the chosen reference pictures are thumbnails in a strip, each with its ✕.
+export const referenceThumbs = (panel: Locator): Locator =>
+  panel.getByRole('list', { name: 'Reference pictures' }).getByRole('button', { name: /^Remove / })
+
+// ED-4a: a start choice is a tile button with aria-pressed in the group "Start from".
+export async function chooseStart(panel: Locator, name: string): Promise<void> {
+  const tile = panel.getByRole('group', { name: 'Start from' }).getByRole('button', {
+    name,
+    exact: true,
+  })
+  await tile.click()
+  await expect(tile).toHaveAttribute('aria-pressed', 'true')
+}
 
 // includeHidden: the licence, address and key dialogs hide the page behind them from roles.
 export const runDialog = (page: Page): Locator =>
@@ -81,13 +96,14 @@ export async function setPrompt(page: Page, prompt: string): Promise<void> {
 // references lets them go in the reference dialog, so it sends what it sent before.
 export async function untickReferences(page: Page): Promise<void> {
   const panel = await panelShown(page)
-  if (await panel.getByText('None chosen', { exact: true }).isVisible()) return
+  await expect(panel.getByRole('list', { name: 'Reference pictures' })).toBeVisible()
+  if ((await referenceThumbs(panel).count()) === 0) return
   await panel.getByRole('button', { name: 'Choose reference pictures…' }).click()
   const dialog = page.getByRole('dialog', { name: /^Reference pictures for / })
   const ticked = dialog.getByRole('checkbox', { checked: true })
   while ((await ticked.count()) > 0) await ticked.first().uncheck()
   await dialog.getByRole('button', { name: 'Done' }).click()
-  await expect(panel.getByText('None chosen', { exact: true })).toBeVisible()
+  await expect(referenceThumbs(panel)).toHaveCount(0)
 }
 
 // Generate… with the remembered provider and count; the caller reads, confirms or cancels.

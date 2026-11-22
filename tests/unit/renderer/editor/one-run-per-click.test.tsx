@@ -37,7 +37,8 @@ async function openPictures() {
     </main>,
     fake,
   )
-  await screen.findByText(/^(None|\d+) chosen$/)
+  // ED-4a: the reference strip shows once the layer's first draft is made.
+  await screen.findByRole('list', { name: 'Reference pictures' })
   await userEvent.click(screen.getByRole('button', { name: 'Generate…' }))
   const dialog = within(await screen.findByRole('dialog', { name: 'Make pictures' }))
   return { fake, held, dialog }

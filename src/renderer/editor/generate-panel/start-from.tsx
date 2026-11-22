@@ -1,9 +1,9 @@
-// "Start from" for a picture run (spec/phases/round-2-editor.md D4): a prompt only, this
-// layer's picture (disabled with a reason while the layer has no picture that can be sent),
-// or another picture of the same shape, which shows the same-shape list. The choice is the
-// layer's draft. R2E-8: a video offers the starts some available provider offers, and
-// "Reference pictures" too.
-import { useId } from 'react'
+// "Start from" (spec/phases/round-2-editor.md D4; design wave ED-4a): a row of tiles in one
+// group, each a button with aria-pressed: a prompt only (a pencil), this layer's picture (its
+// thumbnail; disabled with its reason while the layer has no picture that can be sent), another
+// picture of the same shape (a grid; it shows the same-shape list under the tiles), and for a
+// video "Reference pictures". The choice is the layer's draft; choosing sends nothing.
+import { useId, type ReactNode } from 'react'
 import type {
   FullDraft,
   GenerateDraft,
@@ -13,6 +13,8 @@ import type {
 import type { VideoStartKind } from '@/shared/config/video-offers'
 import type { AssetList } from '@/shared/schemas/queries/asset'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
+import { assetUrl } from '@/renderer/ui/asset-url'
+import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import { SameShapeList } from './same-shape-list'
 import styles from './generate-panel.module.css'
@@ -57,39 +59,56 @@ export type StartFromProps = {
   onChange: (patch: Partial<GenerateDraft>) => void
 }
 
+const NO_PICTURE = 'This layer has no picture yet.'
+
+function tileLook(start: GenerateStart, projectId: string, picture: string | null): ReactNode {
+  if (start === 'layer' && picture !== null) {
+    return <img className={styles.tileThumb} src={assetUrl(projectId, picture)} alt="" />
+  }
+  const icon = start === 'prompt' ? 'pencil' : start === 'shape' ? 'grid' : 'image'
+  return (
+    <span className={styles.tileThumb}>
+      <Icon name={icon} />
+    </span>
+  )
+}
+
 export function StartFrom(props: StartFromProps) {
-  const { layer, draft } = props
+  const { layer, draft, start } = props
   const baseId = useId()
   const disabled = layer.locked || draft === undefined
   const noPictureId = `${baseId}-no-picture`
-  const { start } = props
 
   return (
     <>
-      <div role="radiogroup" aria-labelledby={`${baseId}-label`} className={styles.starts}>
-        <p id={`${baseId}-label`} className={layout.label}>
+      <div className={styles.startFrom}>
+        <span id={`${baseId}-label`} className={layout.label}>
           Start from
-        </p>
-        {props.choices.map((c) => {
-          const none = c.start === 'layer' && props.layerPicture === null
-          return (
-            <label key={c.start} className={layout.row}>
-              <input
-                type="radio"
-                name={`${baseId}-start`}
-                checked={start === c.start}
+        </span>
+        <div role="group" aria-labelledby={`${baseId}-label`} className={styles.starts}>
+          {props.choices.map((c) => {
+            const none = c.start === 'layer' && props.layerPicture === null
+            return (
+              <button
+                key={c.start}
+                type="button"
+                className={styles.startTile}
+                aria-pressed={start === c.start}
                 disabled={disabled || none}
+                title={none ? NO_PICTURE : c.label}
                 aria-describedby={none ? noPictureId : undefined}
-                onChange={() => props.onChange({ start: c.start })}
-              />
-              {c.label}
-            </label>
-          )
-        })}
+                onClick={() => props.onChange({ start: c.start })}
+              >
+                {tileLook(c.start, props.projectId, props.layerPicture)}
+                <span className={styles.tileName}>{c.label}</span>
+              </button>
+            )
+          })}
+        </div>
         {props.layerPicture === null && (
-          <p id={noPictureId} className={layout.muted}>
-            This layer has no picture yet.
-          </p>
+          <span id={noPictureId} className={styles.hidden}>
+            {NO_PICTURE}
+          </span>
         )}
       </div>
       {start === 'shape' && (

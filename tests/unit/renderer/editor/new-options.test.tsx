@@ -170,6 +170,7 @@ describe('GeneratePanel after a new picture is put on the layer [D6]', () => {
     rows = [assetRow('A5')]
     await userEvent.click(screen.getByRole('button', { name: 'Place' }))
     await waitFor(() => expect(screen.queryByText('This layer has no picture yet.')).toBeNull())
-    expect(screen.getByRole('radio', { name: "This layer's picture" })).toBeEnabled()
+    // ED-4a: the start choices are tile buttons.
+    expect(screen.getByRole('button', { name: "This layer's picture" })).toBeEnabled()
   })
 })

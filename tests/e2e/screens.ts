@@ -6,7 +6,7 @@
 import { expect, type ElectronApplication, type Locator, type Page } from '@playwright/test'
 import path from 'node:path'
 import { firstIds } from './held-run'
-import { openActivity } from './picture-run'
+import { chooseStart, openActivity, picturePanel } from './picture-run'
 import { query } from './render-helpers'
 import { openSettingsPage } from './settings-pages'
 
@@ -104,7 +104,7 @@ export async function videoPanel(page: Page): Promise<Locator> {
     .getByRole('list', { name: 'Layers' })
     .getByRole('button', { name: new RegExp(`^${background}`) })
     .click()
-  const panel = page.getByRole('group', { name: 'Generate' })
+  const panel = picturePanel(page)
   const video = panel.getByRole('group', { name: 'Make' }).getByRole('button', { name: 'Video' })
   await video.click()
   await expect(video).toHaveAttribute('aria-pressed', 'true')
@@ -123,7 +123,7 @@ export async function chooseAddedPicture(
   photoFirst = false,
 ): Promise<void> {
   const panel = await videoPanel(page)
-  await panel.getByRole('radio', { name: start, exact: true }).check()
+  await chooseStart(panel, start)
   const shape = start === VIDEO_SHAPE_START
   const list = panel.getByRole('region', {
     name: shape ? 'Pictures of the same shape' : 'Picture to start from',

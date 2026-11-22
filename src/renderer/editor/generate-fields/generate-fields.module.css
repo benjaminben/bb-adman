@@ -1,7 +1,7 @@
 /* app-style */
-/* The generate fields (spec/app-style.md "AI panels and the run dialog"): the field label above
-   the prompt, which takes the shared reading face (layout.module.css), then the reference line,
-   the two buttons and the run line. */
+/* The generate fields (spec/app-style.md "AI panels and the run dialog"; ED-4a): the reference
+   strip, the field label above the prompt, which takes the shared reading face
+   (layout.module.css), then Generate… and the run line. */
 .fields {
   display: flex;
   flex-direction: column;
@@ -20,10 +20,6 @@
   width: 100%;
   box-sizing: border-box;
   resize: vertical;
-}
-.count {
-  font-size: var(--font-size-control);
-  color: var(--color-text-muted);
 }
 .buttons {
   display: flex;
