@@ -1,5 +1,5 @@
-// The Connect panel (SPEC 5.1 step 2, 5.3, 6.8; 14 1.58 J-9, 1.59 L-20): one block, for
-// Claude Code. The token and the line reach it only as props from mcp.getConnectInfo, held
+// The Connect panel (SPEC 5.1 step 2, 5.3, 6.8; 14 1.58 J-9, 1.59 L-20): a block for Claude
+// Code and, while there is an entry, one for Claude Desktop (P10-9, DesktopBlock). The token and the line reach it only as props from mcp.getConnectInfo, held
 // in the Agent access section's own state. They are drawn as text and put in no attribute.
 // "Copy" hands the line to the renderer's clipboard on click only; that is the one other
 // place it goes. A failed copy logs nothing.
@@ -7,11 +7,14 @@ import { useState } from 'react'
 import { NoticeLine } from '@/renderer/screens/settings/notice-line'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './connect-panel.module.css'
+import { DesktopBlock } from './desktop-block'
 
 // The line a copy was tried for, so a new token's line starts again at "Copy".
 type CopyResult = { line: string; ok: boolean }
 
-export function ConnectPanel(props: { address: string; token: string; claudeCode: string }) {
+type Props = { address: string; token: string; claudeCode: string; claudeDesktop: string | null }
+
+export function ConnectPanel(props: Props) {
   const [copy, setCopy] = useState<CopyResult | null>(null)
   const result = copy !== null && copy.line === props.claudeCode ? copy : null
 
@@ -44,6 +47,7 @@ export function ConnectPanel(props: { address: string; token: string; claudeCode
       {result?.ok === false && (
         <NoticeLine kind="warn">Copy did not work. Select the line and copy it.</NoticeLine>
       )}
+      {props.claudeDesktop !== null && <DesktopBlock entry={props.claudeDesktop} />}
     </section>
   )
 }
