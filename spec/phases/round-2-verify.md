@@ -30,6 +30,7 @@ A running list kept by the orchestrator. Each item is a choice made without the 
 14. **A brief sent by an agent that names a file path** asks you on screen, every time. A brief you paste or load yourself imports with no question.
 15. **An agent importing files:** more than 20 files in one call is refused.
 16. **Markdown briefs** are read by fixed rules (no AI). Edge cases chosen by the builder: a label inside a subject or a Copy section is ignored; an empty `Region:` sets nothing; the first value of a repeated field wins.
+17. **Agent file import, hardening after review.** On Windows an agent may not name a network path (`\\server\share\…`), a device path, or a path with no drive letter; on every system a path with unusual space or line-break characters is refused. Each file is read through one open handle that follows no link, and the finished copy is compared with what was checked. Still not covered: a file whose bytes are swapped before you click Allow (you see only the path).
 
 ## Hand checks only you can do
 
