@@ -10,6 +10,7 @@ import { createStore, type StoreApi } from 'zustand/vanilla'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { attachedStoreFor, variantJobs } from '@/renderer/stores/attached-store'
 import { layoutPatches } from '@/shared/generation/layout-patches'
+import { hasWordsOnLayers } from '@/shared/generation/prompt'
 import { fillMarks, plainMessage, reasonMessage } from '@/shared/providers/messages'
 import type { AdmanApi } from '@/shared/schemas/api'
 import { layoutJobResult } from '@/shared/schemas/jobs/layout-proposal'
@@ -28,7 +29,7 @@ export type LayoutBannerLine =
 
 // As generation.proposeLayout's own check: a visible text layer whose copy is not blank.
 export function canPlaceText(layers: LayerRow[]): boolean {
-  return layers.some((l) => l.type === 'text' && l.visible && (l.copy ?? '').trim() !== '')
+  return hasWordsOnLayers(layers)
 }
 
 export function failureWords(row: JobRow, label: string): string {

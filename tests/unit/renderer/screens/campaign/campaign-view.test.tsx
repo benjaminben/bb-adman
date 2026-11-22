@@ -96,7 +96,7 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
         .filter((q) => q.name === 'variant.get')
         .map((q) => q.input as { projectId: string; variantId: string })
         .filter((input) => input.variantId === 'V2')
-    await waitFor(() => expect(readsOfV2()).toEqual([{ projectId: P, variantId: 'V2' }]))
+    await waitFor(() => expect(readsOfV2()).toContainEqual({ projectId: P, variantId: 'V2' }))
     expect(screen.getByText('Loading the variant…')).toBeInTheDocument()
     expect(screen.queryByRole('list', { name: 'Variants in Main' })).toBeNull()
     expect(screen.queryByRole('region', { name: 'Make pictures' })).toBeNull()

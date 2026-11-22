@@ -11,6 +11,8 @@ export type PictureAiProps = {
   projectId: string
   campaignId: string | null
   layer: LayerRow
+  // The variant's layers, so the first draft knows whether the ad already holds words (R2E-1).
+  layers?: LayerRow[]
 }
 
 export function PictureAi(props: PictureAiProps) {
@@ -21,6 +23,7 @@ export function PictureAi(props: PictureAiProps) {
         projectId={props.projectId}
         campaignId={props.campaignId}
         layer={props.layer}
+        {...(props.layers ? { layers: props.layers } : {})}
       />
       <EarlierOptions projectId={props.projectId} layer={props.layer} />
     </fieldset>
