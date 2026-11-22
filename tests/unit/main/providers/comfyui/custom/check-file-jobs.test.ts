@@ -116,14 +116,32 @@ describe('checkWorkflowText: limits and what is kept', () => {
     expect(w.graph['1']).toEqual(basePicture()['1'])
   })
 
-  it('keeps a node named __proto__ as an own node, not as the prototype', () => {
-    const text = JSON.stringify(basePicture()).replace(
+  it('refuses __proto__ as a node ID or an input name as bad shape', () => {
+    const asNode = JSON.stringify(basePicture()).replace(
       /^\{/,
       '{"__proto__":{"class_type":"MadeUpOdd","inputs":{}},',
     )
-    const w = checked(text)
-    expect(Object.hasOwn(w.graph, '__proto__')).toBe(true)
-    expect(Object.getPrototypeOf(w.graph)).toBe(Object.prototype)
-    expect(w.nodeTypes).toContain('MadeUpOdd')
+    expect(reasonOf(asNode)).toBe('workflow_bad_shape')
+    const asInput = JSON.stringify(basePicture()).replace('"text":', '"__proto__":{},"text":')
+    expect(asInput).toContain('"__proto__"')
+    expect(reasonOf(asInput)).toBe('workflow_bad_shape')
+  })
+
+  it('keeps constructor, toString and hasOwnProperty as ordinary own nodes', () => {
+    const g = {
+      ...basePicture(),
+      constructor: node('MadeUpA', { toString: 1 }),
+      toString: node('MadeUpB', { hasOwnProperty: ['constructor', 0] }),
+      hasOwnProperty: node('MadeUpC', {}),
+    }
+    const w = checked(JSON.stringify(g))
+    expect(Object.hasOwn(w.graph, 'constructor')).toBe(true)
+    expect(w.graph.toString).toEqual(g.toString)
+    expect(w.nodeCount).toBe(6)
+  })
+
+  it('refuses a link to a key the graph only inherits', () => {
+    const g = { ...basePicture(), '4': node('MadeUpD', { a: ['constructor', 0] }) }
+    expect(reasonOf(JSON.stringify(g))).toBe('workflow_bad_link')
   })
 })

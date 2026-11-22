@@ -41,7 +41,8 @@ const videoSchema = z
   .strict()
   .refine(isAllowedVideo)
 
-// The file as written. The graph is read by the file checks, not by this schema.
+// The file as written. The graph is read by the file checks, not by this schema: a record
+// parser would silently drop a __proto__ key that the checks must see and refuse.
 export const storedCustomWorkflowSchema = z
   .object({
     format: z.literal(1),
@@ -54,7 +55,7 @@ export const storedCustomWorkflowSchema = z
     addedAt: z.iso.datetime(),
     size: sizeSchema.nullable(),
     video: videoSchema.nullable(),
-    graph: z.record(z.string(), z.unknown()),
+    graph: z.unknown(),
   })
   .strict()
 

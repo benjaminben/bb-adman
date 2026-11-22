@@ -52,6 +52,16 @@ describe('readStoredWorkflow: the stored shape [D-104]', () => {
     expect(readStoredWorkflow(storedFrom('video-refs', { video: fast }))).toBeNull()
   })
 
+  it('refuses a graph with a __proto__ node or input name, not silently changed', () => {
+    const good = JSON.stringify(storedFrom('picture', { size: SIZE }))
+    const asNode = good.replace('"graph":{', '"graph":{"__proto__":{"class_type":"X","inputs":{}},')
+    const asInput = good.replace('"text":', '"__proto__":1,"text":')
+    for (const text of [asNode, asInput]) {
+      expect(text).toContain('"__proto__"')
+      expect(readStoredWorkflow(JSON.parse(text))).toBeNull()
+    }
+  })
+
   it('refuses a value that is not an object', () => {
     expect(readStoredWorkflow(null)).toBeNull()
     expect(readStoredWorkflow('text')).toBeNull()

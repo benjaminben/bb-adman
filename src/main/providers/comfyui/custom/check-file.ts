@@ -47,8 +47,12 @@ const refuse = (reason: CustomWorkflowReason, mark?: MarkWord): WorkflowCheck =>
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v)
 
+// __proto__ is refused as a node ID and as an input name, so no copy of the graph can turn
+// it into a prototype.
+const PROTO = '__proto__'
+
 const isName = (v: unknown): v is string =>
-  typeof v === 'string' && v.length >= 1 && v.length <= MAX_NAME && !CONTROL.test(v)
+  typeof v === 'string' && v.length >= 1 && v.length <= MAX_NAME && v !== PROTO && !CONTROL.test(v)
 
 // Text, a number, true, false, null, or a list or object of these, at most 8 levels deep.
 function isPlain(value: unknown, levels: number): boolean {
@@ -112,11 +116,11 @@ export function checkWorkflowValue(value: unknown): WorkflowCheck {
 
   const kept: Array<[string, GraphNode]> = []
   for (const [id, raw] of entries) {
-    const node = NODE_ID.test(id) ? keptNode(raw) : null
+    const node = NODE_ID.test(id) && id !== PROTO ? keptNode(raw) : null
     if (!node) return refuse('workflow_bad_shape')
     kept.push([id, node])
   }
-  // Own entries only: a node named __proto__ stays a node.
+  // Own keys only: a node named constructor or toString stays an ordinary node.
   const graph: Graph = Object.fromEntries(kept)
   for (const [, node] of kept) {
     for (const input of Object.values(node.inputs)) {
