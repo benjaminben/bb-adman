@@ -1,6 +1,7 @@
 // P4-14 (spec/screens-ai.md, "The activity panel", Go there): where a job's row leads, and the
-// nav store after one action. A gone layer leads to the variant; a gone variant, or a video
-// job, to the campaign overview; a brief reading to the Project tab; a gone campaign nowhere.
+// nav store after one action. A gone layer leads to the variant; a gone variant to the
+// campaign overview; a video job to its layer, or its variant when it has none (R2E-6); a brief
+// reading to the Project tab; a gone campaign nowhere.
 import { describe, expect, it } from 'vitest'
 import { goTarget, goThere } from '@/renderer/ui/go-there'
 import {
@@ -42,7 +43,18 @@ describe('goTarget [P4-14, FR-217]', () => {
       { ...ALL, variantLabel: null, layerName: null },
       { to: 'campaign', campaignId: 'C1' },
     ],
-    ['a video job', { kind: 'video_generation' }, ALL, { to: 'campaign', campaignId: 'C1' }],
+    [
+      'a video job',
+      { kind: 'video_generation' },
+      ALL,
+      { to: 'variant', campaignId: 'C1', variantId: 'V1' },
+    ],
+    [
+      'a video job with a layer',
+      { kind: 'video_generation', layerId: 'L1' },
+      ALL,
+      { to: 'layer', campaignId: 'C1', variantId: 'V1', layerId: 'L1' },
+    ],
     [
       'a campaign job',
       { variantId: null },

@@ -13,6 +13,7 @@ import { CampaignTabs, useCampaignTab, useTabKeys } from '@/renderer/app/campaig
 import { ErrorBanner } from '@/renderer/app/error-banner'
 import { NavScope, useNav } from '@/renderer/app/nav-context'
 import { PermissionDialog } from '@/renderer/app/permission-dialog'
+import { ResultNotice } from '@/renderer/app/result-notice'
 import { FirstRun } from '@/renderer/app/first-run'
 import { ProjectSwitcher } from '@/renderer/app/project-switcher'
 import { StartScreen } from '@/renderer/screens/start/start-screen'
@@ -56,6 +57,7 @@ function ProjectFrame(props: { project: OpenProjectSummary }) {
       <TopRow tabs={<CampaignTabs projectId={projectId} />} />
       <main className={styles.main}>
         <ErrorBanner />
+        <ResultNotice projectId={projectId} />
         <Tabs.Content
           value={tab.value}
           className={tab.value === PROJECT_TAB ? styles.panel : styles.fullPanel}
