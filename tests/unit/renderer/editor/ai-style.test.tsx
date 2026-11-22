@@ -36,7 +36,7 @@ function rule(css: string, selector: string): string {
 
 const MODULES = [
   'editor/generate-fields/generate-fields.module.css',
-  'editor/picture-ai/picture-ai.module.css',
+  'editor/generate-panel/generate-panel.module.css',
   'editor/earlier-options/earlier-options.module.css',
   'dialogs/run-dialog/run-dialog.module.css',
   'ui/paid-count/paid-count.module.css',

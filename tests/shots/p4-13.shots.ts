@@ -84,7 +84,7 @@ async function selectBackground(page: Page, name: string): Promise<void> {
   await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page.getByRole('button', { name: new RegExp(`^${name}`) }).click()
-  await expect(page.getByRole('group', { name: 'Make pictures with AI' })).toBeVisible()
+  await expect(page.getByRole('group', { name: 'Generate' })).toBeVisible()
 }
 
 test('Make pictures with AI on a picture layer', async () => {
@@ -101,7 +101,7 @@ test('Make pictures with AI on a picture layer', async () => {
     ...(ids.subjectId === undefined ? {} : { subjectId: ids.subjectId }),
   })
   await selectBackground(page, ids.background)
-  const section = page.getByRole('group', { name: 'Make pictures with AI' })
+  const section = page.getByRole('group', { name: 'Generate' })
   await expect(section.getByText(/^(\d+|None) chosen$/)).toBeVisible()
   await page.waitForTimeout(300)
   await shot(page, '77-picture-ai-section')
@@ -140,7 +140,7 @@ test('The run dialog from Generate with ComfyUI chosen', async () => {
   await screens.saveAddress(comfy, stand.origin)
   const ids = await campaignFromBrief(app, page)
   await selectBackground(page, ids.background)
-  const section = page.getByRole('group', { name: 'Make pictures with AI' })
+  const section = page.getByRole('group', { name: 'Generate' })
   await section.getByRole('button', { name: 'Generate…' }).click()
   const run = page.getByRole('dialog', { name: 'Make pictures' })
   await run.getByRole('radio', { name: /^ComfyUI/ }).check()

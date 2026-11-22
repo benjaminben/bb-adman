@@ -1,0 +1,71 @@
+/* app-style */
+/* "Generate": one properties panel group. The panel floats its legend
+   (properties-panel.module.css), so the group reads like its neighbours. "Start from" is a
+   short column of radio rows; the same-shape list is a grid of --option-thumb squares on the
+   canvas ground with the name below, the chosen one edged in the spot colour. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.section p {
+  margin: 0;
+}
+.legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-body);
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+}
+.starts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-size-control);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--option-thumb));
+  gap: var(--space-2);
+}
+.tile {
+  position: relative;
+  min-width: 0;
+  font-size: var(--font-size-small);
+}
+.pick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  cursor: pointer;
+}
+.pick input {
+  position: absolute;
+  top: var(--space-1);
+  left: var(--space-1);
+  margin: 0;
+}
+.thumb {
+  box-sizing: border-box;
+  width: var(--option-thumb);
+  height: var(--option-thumb);
+  object-fit: contain;
+  background: var(--canvas-backdrop);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius);
+}
+.tile:has(input:checked) .thumb {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 var(--border-width) var(--color-accent);
+}
+.name {
+  overflow-wrap: anywhere;
+  color: var(--color-text);
+}

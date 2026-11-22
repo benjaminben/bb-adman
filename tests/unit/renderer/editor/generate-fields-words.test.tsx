@@ -3,7 +3,7 @@
 import { screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { GenerateFields } from '@/renderer/editor/generate-fields'
-import { PictureAi } from '@/renderer/editor/picture-ai'
+import { GeneratePanel } from '@/renderer/editor/generate-panel'
 import { generateDrafts } from '@/renderer/stores/generate-drafts'
 import { prefilledPrompt } from '@/shared/generation/prompt'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
@@ -51,7 +51,7 @@ describe('the first draft and the words on layers [R2E-1, D1]', () => {
 
   it('reaches the draft through the picture section', async () => {
     const box = await promptBox(
-      <PictureAi projectId={P} campaignId="C1" layer={LOGO} layers={[HEADLINE, LOGO]} />,
+      <GeneratePanel projectId={P} campaignId="C1" layer={LOGO} layers={[HEADLINE, LOGO]} />,
     )
     expect(box).toHaveValue(prefilledPrompt({ ...facts, wordsOnLayers: true }))
   })
