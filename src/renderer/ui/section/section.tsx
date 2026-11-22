@@ -13,6 +13,9 @@ export type SectionProps = {
   id: string
   title: string
   level?: 2 | 3 | 4
+  // R3-3: 'title' sets the heading in the title type role, for a Section that starts a new
+  // part of a page (a language of the Translations tab).
+  size?: 'section' | 'title'
   summary?: ReactNode
   info?: ReactNode
   fold?: SectionFold
@@ -27,6 +30,8 @@ export function Section(props: SectionProps) {
   const headingId = useId()
   const bodyId = useId()
   const Heading = `h${props.level ?? 3}` as const
+  const headingClass =
+    props.size === 'title' ? `${styles.heading} ${styles.title}` : styles.heading
 
   function toggle() {
     writeFold(props.id, !open)
@@ -64,7 +69,7 @@ export function Section(props: SectionProps) {
   return (
     <section className={styles.section} aria-labelledby={headingId}>
       <div className={styles.header}>
-        <Heading id={headingId} className={styles.heading}>
+        <Heading id={headingId} className={headingClass}>
           {head()}
         </Heading>
         {props.info !== undefined && <span className={styles.over}>{props.info}</span>}

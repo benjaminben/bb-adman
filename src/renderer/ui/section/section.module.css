@@ -21,6 +21,12 @@
   letter-spacing: normal;
   color: var(--color-text-secondary);
 }
+/* R3-3: the start of a new part of a page. */
+.title {
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  color: var(--color-text);
+}
 .toggle {
   justify-content: flex-start;
   min-height: 0;
