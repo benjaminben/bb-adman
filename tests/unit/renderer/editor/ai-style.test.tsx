@@ -5,7 +5,7 @@
 // module of the slice carries the app-style mark. Names, words and focus stay as they are.
 import fs from 'node:fs'
 import path from 'node:path'
-import { act, screen } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { RunDialog } from '@/renderer/dialogs/run-dialog'
@@ -162,8 +162,9 @@ describe('AI in the editor and the run dialog take the look [ST-9]', () => {
     const keep = await screen.findByRole('button', { name: 'Keep open' })
     expect(keep).toHaveFocus()
     expect(keep.closest(`.${frame.foot}`)).not.toBeNull()
-    const paid = screen.getByRole('dialog').querySelector(`.${layout.notice}`)
-    expect(paid).not.toBeNull()
-    has(paid!, layout.warn)
+    // SH-5: the charge line is the question's warning, so it is also its description.
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveAccessibleDescription('A request already sent may still be charged.')
+    expect(within(dialog).getByText('A request already sent may still be charged.')).toBeVisible()
   })
 })

@@ -1,11 +1,3 @@
 /* app-style */
-/* The close warning (spec/app-style.md "AI panels and the run dialog"): the paid line is the
-   shared warn notice with its icon (layout.module.css); the buttons are the foot band. */
-.mark {
-  flex: none;
-  display: inline-flex;
-  padding-top: calc(var(--border-width) * 2);
-}
-p.paid {
-  margin: 0;
-}
+/* The close question (SH-5) has no look of its own: DialogFrame's confirm kind draws the paid
+   line as its warning in the head, and the buttons are the foot band (layout.module.css). */

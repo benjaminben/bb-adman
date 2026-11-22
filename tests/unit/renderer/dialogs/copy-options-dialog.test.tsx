@@ -176,7 +176,7 @@ describe('CopyOptionsDialog [spec/screens-ai.md "Copy options", FR-045]', () => 
     await userEvent.keyboard('{Escape}')
     const warning = await screen.findByRole('dialog', { name: 'Stop writing copy options?' })
     expect(warning).toHaveAccessibleDescription(
-      'Writing copy options is still running. Closing this dialog stops it.',
+      'A request already sent may still be charged. Writing copy options is still running. Closing this dialog stops it.',
     )
     await userEvent.click(within(warning).getByRole('button', { name: 'Keep open' }))
     expect(onClose).not.toHaveBeenCalled()

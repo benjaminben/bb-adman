@@ -1,5 +1,5 @@
 // spec/screens-ai.md, "Attached jobs and the close warning": "Close project" with any job queued
-// or running (project.close refuses with jobs_running) shows "Close {project}?"; "Stop runs and
+// or running (project.close refuses with jobs_running) shows "Close {project}?"; "Stop and
 // close" sends project.close with runningJobs 'stop', "Keep open" sends nothing more.
 import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -60,9 +60,9 @@ describe('closing a project with runs going [spec/screens-ai.md, D-036]', () => 
     expect(store.getState().error).toBeNull()
   })
 
-  it('"Stop runs and close" sends project.close with runningJobs stop', async () => {
+  it('"Stop and close" sends project.close with runningJobs stop', async () => {
     const { fake, store } = await draw(2)
-    await userEvent.click(await screen.findByRole('button', { name: 'Stop runs and close' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Stop and close' }))
     expect(closes(fake)).toEqual([{ projectId: 'P1' }, { projectId: 'P1', runningJobs: 'stop' }])
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(store.getState().error).toBeNull()

@@ -76,9 +76,8 @@ describe('closing a campaign tab with a running translation [P6-13]', () => {
     const { fake } = await draw('C1')
     await userEvent.click(screen.getByRole('button', { name: 'Close Summer Splash' }))
     const dialog = screen.getByRole('dialog', { name: 'Stop translating?' })
-    expect(
-      within(dialog).getByText('Translating is still running. Closing this tab stops it.'),
-    ).toBeInTheDocument()
+    // SH-5: the sentence that repeated the title is gone.
+    expect(dialog).not.toHaveTextContent('Translating is still running.')
     await userEvent.click(screen.getByRole('button', { name: 'Stop and close' }))
     expect(fake.commands).toContainEqual({
       name: 'job.cancel',

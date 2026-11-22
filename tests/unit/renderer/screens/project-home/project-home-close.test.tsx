@@ -1,6 +1,6 @@
 // spec/screens-ai.md, "Attached jobs and the close warning": the project page's own "Close
 // project" button asks "Close {project}?" when project.close refuses with jobs_running, as the
-// project switcher does; "Stop runs and close" sends project.close with runningJobs 'stop'.
+// project switcher does; "Stop and close" sends project.close with runningJobs 'stop'.
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
@@ -37,12 +37,12 @@ describe('the project page closes with runs going [spec/screens-ai.md, D-036]', 
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  it('asks "Close Summer?" and sends stop on "Stop runs and close", with no refusal shown', async () => {
+  it('asks "Close Summer?" and sends stop on "Stop and close", with no refusal shown', async () => {
     const { fake, store } = await draw(2)
     const dialog = await screen.findByRole('dialog', { name: 'Close Summer?' })
     expect(dialog).toHaveAccessibleDescription(/^2 runs are still going in this project\./)
     expect(store.getState().error).toBeNull()
-    await userEvent.click(screen.getByRole('button', { name: 'Stop runs and close' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Stop and close' }))
     expect(closes(fake)).toEqual([{ projectId: 'P1' }, { projectId: 'P1', runningJobs: 'stop' }])
     expect(screen.queryByRole('dialog')).toBeNull()
   })

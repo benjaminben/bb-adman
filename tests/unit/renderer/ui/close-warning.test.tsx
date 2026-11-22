@@ -65,7 +65,7 @@ describe('close warning [spec/screens-ai.md, D-036]', () => {
   ] as const)('names one %s task', async (kind, title, start) => {
     await draw([{ id: 'J1', kind, provider: 'fake' }])
     const dialog = screen.getByRole('dialog', { name: title })
-    expect(dialog).toHaveAccessibleDescription(`${start} Closing this tab stops it.`)
+    expect(dialog).not.toHaveTextContent(`${start} Closing this tab stops it.`)
   })
 
   it('counts several tasks, and names the dialog it closes', async () => {
