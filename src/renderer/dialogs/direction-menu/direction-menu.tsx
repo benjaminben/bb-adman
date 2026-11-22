@@ -8,6 +8,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import type { DirectionControlProps } from '@/renderer/screens/campaign/direction-header'
 import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
+import { menuPlaceStyles, useMenuPlace } from '@/renderer/ui/menu-place'
 import { DeleteDirection } from './delete-direction'
 import { NameDialog } from './name-dialog'
 import { nextDirectionName } from './next-name'
@@ -24,6 +25,7 @@ export function DirectionMenu({ projectId, campaign, direction }: DirectionContr
   const button = useRef<HTMLButtonElement>(null)
   const menu = useRef<HTMLUListElement>(null)
   const ids = useId()
+  const place = useMenuPlace(open, button, menu)
   const only = campaign.directions.length <= 1
   const items: Item[] = [
     { key: 'new', label: 'New direction from this master…' },
@@ -69,11 +71,10 @@ export function DirectionMenu({ projectId, campaign, direction }: DirectionContr
 
   const shut = () => setShown(null)
   return (
-    <div className={styles.holder}>
+    <div className={menuPlaceStyles.holder}>
       <button
         ref={button}
         type="button"
-        className={layout.small}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? `${ids}-menu` : undefined}
@@ -88,8 +89,9 @@ export function DirectionMenu({ projectId, campaign, direction }: DirectionContr
           id={`${ids}-menu`}
           role="menu"
           aria-label={`Direction ${direction.name}`}
-          className={`${layout.menu} ${styles.menu}`}
+          className={`${layout.menu} ${menuPlaceStyles.placed}`}
           onKeyDown={onKeyDown}
+          {...place}
         >
           {items.map((item) => (
             <li key={item.key} role="none">

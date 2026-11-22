@@ -34,12 +34,8 @@
   border-left: var(--border-width) solid var(--color-border);
   color: var(--color-text-secondary);
 }
+/* The menu is placed by ui/menu-place; this class only scopes "Start" below. */
 .menu {
-  position: absolute;
-  z-index: 1;
-  top: 100%;
-  left: 0;
-  margin: var(--space-1) 0 0;
   list-style: none;
 }
 .item[aria-current='true'] {

@@ -1,0 +1,25 @@
+/* app-style */
+/* A menu opened from its button (R2-Q): the holder wraps the button and the menu, and
+   useMenuPlace marks the menu with the side that keeps it inside the window. The menu itself
+   is the shared `menu` of layout.module.css. */
+.holder {
+  position: relative;
+  flex: none;
+}
+.placed {
+  position: absolute;
+  z-index: 1;
+  top: 100%;
+  left: 0;
+  margin: var(--space-1) 0 0;
+  list-style: none;
+}
+.placed[data-inline='end'] {
+  right: 0;
+  left: auto;
+}
+.placed[data-block='above'] {
+  top: auto;
+  bottom: 100%;
+  margin: 0 0 var(--space-1);
+}

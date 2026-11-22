@@ -7,9 +7,11 @@
 // onCreated gets campaign.create's campaignId. SP-4: a loaded brief's photos are imported
 // before the form opens (use-brief-photos.ts). Cancel, and the page going away with the form
 // open, remove every photo the form added (A-111); after a refused step the form is made safe
-// to press again (A-118).
+// to press again (A-118). R2-Q: the top bar's "+" asks for a new campaign; this answers by
+// opening the typed form, or, with a form open, by putting the focus back in its first field.
 import { useEffect, useRef, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
+import { useNewCampaignAsk } from '@/renderer/app/nav-context'
 import { briefFileKind } from '@/shared/brief/brief-file-kind'
 import type { BriefParsed } from '@/shared/schemas/commands/brief'
 import type { CampaignCreated } from '@/shared/schemas/commands/campaign-edit'
@@ -65,6 +67,8 @@ export function BriefLoad(props: BriefLoadProps) {
   const briefPhotos = useBriefPhotos(projectId)
   // The open form's newest values, kept without a re-render; null once no form is open.
   const formValues = useRef<BriefFormValues | null>(null)
+  const formBox = useRef<HTMLDivElement>(null)
+  const { askedFor, ask } = useNewCampaignAsk()
   const textBrief = useTextBrief(projectId, (parsed) =>
     setOpened(formFromDraft(parsed, heldSubjectIds)),
   )
@@ -74,6 +78,13 @@ export function BriefLoad(props: BriefLoadProps) {
     return () => dropPhotos(form.current)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the page goes away
   }, [])
+
+  useEffect(() => {
+    if (askedFor !== projectId) return
+    ask(null)
+    if (formValues.current === null) setOpened(formFromDraft(null, heldSubjectIds))
+    else formBox.current?.querySelector<HTMLElement>('input, select, textarea')?.focus()
+  }, [askedFor, ask, projectId, heldSubjectIds])
 
   function dropPhotos(values: BriefFormValues | null) {
     formValues.current = null
@@ -145,20 +156,22 @@ export function BriefLoad(props: BriefLoadProps) {
   }
 
   return (
-    <BriefForm
-      projectId={projectId}
-      initial={opened}
-      subjects={props.subjects}
-      campaigns={props.campaigns}
-      creating={creating}
-      onCreate={create}
-      onCancel={() => {
-        dropPhotos(formValues.current)
-        setOpened(null)
-      }}
-      onValues={(values) => {
-        formValues.current = values
-      }}
-    />
+    <div ref={formBox}>
+      <BriefForm
+        projectId={projectId}
+        initial={opened}
+        subjects={props.subjects}
+        campaigns={props.campaigns}
+        creating={creating}
+        onCreate={create}
+        onCancel={() => {
+          dropPhotos(formValues.current)
+          setOpened(null)
+        }}
+        onValues={(values) => {
+          formValues.current = values
+        }}
+      />
+    </div>
   )
 }
