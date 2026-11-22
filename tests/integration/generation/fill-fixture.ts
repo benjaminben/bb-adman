@@ -4,6 +4,7 @@
 // test file itself.
 import { expectChanges } from '../expect-changes'
 import { testDeps } from '../campaigns/campaign-deps'
+import { noKeyDeps } from '../translation/no-key-deps'
 import { createInput, SQUARE, TALL } from '../campaigns/campaign-fixture'
 import { makeBusFixture } from '../commands/test-bus'
 import { layersOf } from '../links/linked-fixture'
@@ -21,7 +22,7 @@ const ASSET_COLUMNS = `(id, library, kind, origin, storage, display_name, abs_pa
   mime, byte_size, mtime_ms, content_hash, created_at, width, height)`
 
 export async function makeFillBus() {
-  const deps = testDeps()
+  const deps = testDeps(noKeyDeps())
   const f = makeBusFixture([
     ...campaignCommands(deps),
     ...layerCommands(deps),

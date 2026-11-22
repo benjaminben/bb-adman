@@ -2,9 +2,10 @@
 // sends and counts. The master's size and language are always in. A pair the direction already
 // has as an image is not made again (Phase 5 sends images only, A-133). A fit is sent for each
 // listed size whose pixel size differs from the master's, and for no other; with no background
-// picture on the master each is `scale`. Pure.
+// picture on the master each is `scale`. And the text-call line (P6-15). Pure.
 import type { CampaignSize } from '@/shared/schemas/commands/campaign'
 import type { FanOutFit } from '@/shared/schemas/links'
+import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { VariantRow } from '@/shared/schemas/rows/variant'
 
 export type FanOutBasis = {
@@ -70,4 +71,26 @@ export function fitsToSend(
 
 export function fillCount(fits: Readonly<Record<string, FanOutFit>>): number {
   return Object.values(fits).filter((f) => f === 'fill').length
+}
+
+// P6-15: the fan-out starts at most one translation job per new language other than the
+// master's, which is the campaign's main language. So the count may overstate the paid
+// requests (brief copy or no key starts none) but never understates them.
+export function translationCount(basis: FanOutBasis, ticks: FanOutTicks): number {
+  const languages = newPairs(basis, ticks).map((p) => p.language)
+  return new Set(languages.filter((l) => l !== basis.master.language)).size
+}
+
+// The text-call line, worded as the run dialog words its runs; null with no new language.
+export function translationLine(
+  n: number,
+  provider: Pick<ProviderInfo, 'id' | 'label' | 'local'> | null,
+): string | null {
+  if (n === 0) return null
+  if (!provider)
+    return 'No provider can translate yet. The new texts stay marked as missing a translation.'
+  const what = `Translating ${n} language(s)`
+  if (provider.id === 'fake') return `${what} uses the fake provider. Nothing is charged.`
+  if (provider.local) return `${what} runs on ${provider.label}. Nothing is charged.`
+  return `${what} sends up to ${n} paid request(s) to ${provider.label}.`
 }
