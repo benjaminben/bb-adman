@@ -15,9 +15,10 @@ type FetchModule = {
     getBinary: (work: string) => Promise<string>
     check: (binary: string) => Promise<Verdict>
   }) => Promise<string>
+  startKind: (started: string | undefined, self: string) => 'run' | 'not-started' | 'quiet'
 }
 
-const { refuseRoot, realFolder, freshWork, install, fetchFfmpeg } = (await import(
+const { refuseRoot, realFolder, freshWork, install, fetchFfmpeg, startKind } = (await import(
   /* @vite-ignore */ path.resolve('scripts/ffmpeg/fetch.mjs')
 )) as FetchModule
 
@@ -193,5 +194,20 @@ describe.skipIf(process.platform === 'win32')('fetchFfmpeg: check first, then sh
     const check = async (): Promise<Verdict> => ({ ok: true })
     await expect(fetchFfmpeg({ ffmpegDir, key, getBinary, check })).rejects.toThrow()
     expect(fs.readFileSync(path.join(outside, 'keep.txt'), 'utf8')).toBe('keep')
+  })
+})
+
+describe('startKind: a wrong start does not look like success [P7-3]', () => {
+  const self = path.resolve('scripts/ffmpeg/fetch.mjs')
+
+  it.each([
+    ['this file', self, 'run'],
+    ['this file by a relative path', 'scripts/ffmpeg/fetch.mjs', 'run'],
+    ['another file named fetch', path.resolve('scripts/fetch-ffmpeg.mjs'), 'not-started'],
+    ['a missing file named fetch.mjs', '/nowhere/fetch.mjs', 'not-started'],
+    ['the test runner', path.resolve('node_modules/vitest/vitest.mjs'), 'quiet'],
+    ['no started file', undefined, 'quiet'],
+  ] as const)('%s', (_name, started, kind) => {
+    expect(startKind(started, self)).toBe(kind)
   })
 })
