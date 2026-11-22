@@ -147,10 +147,15 @@ export interface VideoProvider {
   cancel(remoteJobId: string): Promise<CancelOutcome>
 }
 
+// Review leftovers, "Publish": the most a storage read takes when the caller names no limit.
+// The app's own report files are read under it; a manifest names its own, smaller limit.
+export const STORAGE_READ_MAX_BYTES = 256 * 1024 * 1024
+
 // Paths are relative, use '/', never start with '/' and never hold '..' (SPEC 6).
 export interface StorageProvider {
   exists(path: string): Promise<boolean>
-  read(path: string): Promise<Uint8Array>
+  // Stops reading and fails (ProviderFailure `other`) once the file passes maxBytes.
+  read(path: string, maxBytes?: number): Promise<Uint8Array>
   write(path: string, data: ReadableStream | Uint8Array, contentType: string): Promise<void>
   list(prefix: string): Promise<string[]>
   remove(paths: string[]): Promise<void>

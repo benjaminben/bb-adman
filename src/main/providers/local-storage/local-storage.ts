@@ -4,8 +4,9 @@
 // inside the real root. Every disk error leaves as a ProviderFailure with the code only.
 import fs from 'node:fs/promises'
 import nodePath from 'node:path'
-import type { StorageProvider } from '@/main/providers/types'
+import { STORAGE_READ_MAX_BYTES, type StorageProvider } from '@/main/providers/types'
 import { notThere, onDisk } from './failure'
+import { readFileUnder } from './read-file'
 import { PARTIAL, isMissing, writeNewThroughPartial, writeThroughPartial } from './partial-write'
 import { refusePath, storageFilePath, storageListPrefix } from '@/main/providers/storage-paths'
 
@@ -127,11 +128,11 @@ export function localStorageAt(root: string): LocalStorage {
         }
       }),
 
-    read: (path) =>
+    read: (path, maxBytes = STORAGE_READ_MAX_BYTES) =>
       onDisk(async () => {
         const file = await fileFor(path, false)
         if (file === null) throw notThere()
-        return new Uint8Array(await fs.readFile(file))
+        return readFileUnder(file, maxBytes)
       }),
 
     write: (path, data) =>

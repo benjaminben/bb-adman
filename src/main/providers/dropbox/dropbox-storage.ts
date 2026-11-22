@@ -12,7 +12,12 @@
 // Every failure is one ProviderFailure through thrownFailure, with both tokens redacted.
 import { z } from 'zod'
 import { refusePath, storageFilePath, storageListPrefix } from '@/main/providers/storage-paths'
-import { ProviderFailure, type AdapterContext, type StorageProvider } from '@/main/providers/types'
+import {
+  ProviderFailure,
+  STORAGE_READ_MAX_BYTES,
+  type AdapterContext,
+  type StorageProvider,
+} from '@/main/providers/types'
 import { accessTokenFor, forgetDropboxAccess } from './access-token'
 import { MAX_JSON_ANSWER_BYTES, readAnswer, UNREADABLE } from './answer'
 import { answerFailure, errorTags, thrownFailure } from './failure'
@@ -192,7 +197,8 @@ export function dropboxStorage(
   const metadataOf = async (path: string) =>
     calls.lookup(await calls.rpc('getMetadata', { path }), Metadata, NOT_THERE)
 
-  async function download(path: string): Promise<Uint8Array> {
+  // The stated size bounds the read too; a body past either limit is cut off and refused.
+  async function download(path: string, maxBytes: number): Promise<Uint8Array> {
     const response = await calls.content('download', { path })
     if (!response.ok) {
       const bytes = await readAnswer(response, MAX_JSON_ANSWER_BYTES)
@@ -205,7 +211,7 @@ export function dropboxStorage(
       await response.body?.cancel().catch(() => undefined)
       throw new ProviderFailure({ kind: 'other', detail: UNREADABLE })
     }
-    return readAnswer(response, size)
+    return readAnswer(response, Math.min(size, maxBytes))
   }
 
   // Only a file, and only at the revision just looked up: delete_v2 would take a whole folder.
@@ -224,9 +230,9 @@ export function dropboxStorage(
       return run(async () => (await metadataOf(file))?.['.tag'] === 'file')
     },
 
-    async read(path) {
+    async read(path, maxBytes = STORAGE_READ_MAX_BYTES) {
       const file = fileAt(path)
-      return run(() => download(file))
+      return run(() => download(file, maxBytes))
     },
 
     async write(path, data) {
