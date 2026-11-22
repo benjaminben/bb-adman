@@ -92,9 +92,9 @@ describe('the check reply pickers [P10-12, A-236] (security class)', () => {
     const out = checkRunFields(reply, ctx) as {
       variants: Array<{ results: Array<{ findings: Array<{ layerId: string; message: string }> }> }>
     }
-    const findings = out.variants[0].results[0].findings
+    const findings = out.variants[0]?.results[0]?.findings
     expect(findings).toHaveLength(MAX_FINDINGS)
-    expect(findings[0]).toEqual({ layerId: 'l0', message: 'Ä'.repeat(MAX_FINDING_CHARS) })
+    expect(findings?.[0]).toEqual({ layerId: 'l0', message: 'Ä'.repeat(MAX_FINDING_CHARS) })
     expect(MAX_FINDINGS).toBeLessThanOrEqual(100)
     expect(MAX_FINDING_CHARS).toBeLessThanOrEqual(500)
   })
@@ -113,6 +113,7 @@ describe('the check reply pickers [P10-12, A-236] (security class)', () => {
     const out = checkRunFields(reply, ctx) as {
       variants: Array<{ results: Array<{ findings: Array<{ message: string }> }> }>
     }
-    expect([...out.variants[0].results[0].findings[0].message]).toHaveLength(MAX_FINDING_CHARS)
+    const message = out.variants[0]?.results[0]?.findings[0]?.message ?? ''
+    expect([...message]).toHaveLength(MAX_FINDING_CHARS)
   })
 })
