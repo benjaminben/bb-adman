@@ -31,7 +31,9 @@
     "db:generate": "drizzle-kit generate",
     "fetch:ffmpeg": "node scripts/ffmpeg/fetch.mjs",
     "package": "npm run build && electron-builder",
-    "package:dir": "npm run build && electron-builder --dir"
+    "package:dir": "npm run build && electron-builder --dir",
+    "package:mac": "npm run build && electron-builder --mac dmg --arm64 --publish never",
+    "package:win": "npm run build && electron-builder --win nsis --x64 --publish never"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1174.0",

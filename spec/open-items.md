@@ -38,16 +38,16 @@ Designed in `spec/approvals.md` and `spec/approvals-service.md`; none of these b
 
 ### Before the repository is made public
 
-- **Where things stand:** `main` may be pushed to the private GitHub repository of D-008, and releases made there as drafts (D-102). The repository becomes public only on the stakeholder's word.
+- **Where things stand:** `main` may be pushed to the private GitHub repository of D-008, and releases made there from installers built locally (D-102). The repository becomes public only on the stakeholder's word.
 - **The personal-data check** (D-009) was run on 2026-11-22 over every version of every file reachable from `main` (9,855 file versions, 2,257 commits) and every commit message:
   - *Not found anywhere:* a key or token of any service, a private key, a real server address, the stakeholder's name, email address or computer name in any file, a real person's home-folder path, a real email address. Every address, path and email in tests is made up.
   - *Found, for the stakeholder to rule on before going public:*
     1. The author field of every commit holds the stakeholder's name and email address (accepted under D-018; a GitHub private-address setting or a history rewrite would hide the email).
     2. D-008 in `DECISIONS.md` names the remote, which holds the GitHub username.
     3. D-034 in `DECISIONS.md` names another project's folder on the stakeholder's computer, and with it the company the work was made for.
-    4. One commit message (an approvals-service commit) holds a path inside the stakeholder's home folder, which shows the account's short name and this folder's name. Only a history rewrite removes it.
+    4. Done: one commit message held a path inside the stakeholder's home folder. On the stakeholder's word the message was rewritten on 2026-11-22, before anything was pushed, so `main` no longer holds it. The files of every commit are unchanged; the commit and the 433 after it have new hashes. The old history stays on this computer only, in the backup ref `refs/original/` and the local slice branches. Never push with `--all` or `--mirror`.
     5. The requirement, decision and spec files quote the stakeholder's own words throughout. That is by design (D-019, D-091), listed so it is a choice.
-  - Items 2, 3 and 5 can be changed in a new commit, but stay in history. Removing anything from history needs a rewrite, which no agent does without the stakeholder's word.
+  - Items 2, 3 and 5 can be changed in a new commit, but stay in history. Removing anything else from history needs another rewrite, which no agent does without the stakeholder's word.
 - **Not in the repository, and not pushed** (untracked): `client/` (Q-045), `design/` with its 12 stock photos (Q-047) and the reference ads, `.claude/`, `comfy-workflows/`, the two loose documents in the root, `examples/hydrating-shampoo/` and `examples/silk-hour-ads/`. Each stays out unless the stakeholder says otherwise.
 - **Only `main` is pushed.** The other local branches (several hundred, one per finished slice) stay local.
 - **Still open:**

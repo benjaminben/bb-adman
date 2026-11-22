@@ -3,7 +3,7 @@
 Bullets carry `[logic]` or `[UI]` (D-084). This phase has no screen work.
 
 **Goal:** A repository someone can run, ready to publish. **Nothing is pushed, tagged, released or published by any agent** (D-086): the release workflow is written and checked by reading and by a local dry run only.
-**Changed by D-102 (2026-11-22):** the stakeholder asked for the repository to be pushed to GitHub and for releases there, with the licence left for later. Built ahead of the slices below: the history check (P11-1, by the orchestrator; findings in `spec/open-items.md`), a first `release.yml` and its test (P11-3, without the coverage, smoke-test and licence steps), `"publish": null`, and a first `README.md` (P11-4). The push itself and each tag are the stakeholder's own commands. Still to do from this file: P11-2 (waits for the licence), P11-5 to P11-8, and the left-out steps of P11-3.
+**Changed by D-102 (2026-11-22):** the stakeholder asked for the repository to be pushed to GitHub and for releases there, with the licence left for later, and chose to build installers locally and upload them by hand. So P11-3 is replaced: there is no `release.yml`; `npm run package:mac` and `npm run package:win` build the installers (`spec/infra-and-settings.md`, "Release and packaging"), and `"publish": null` is set. Also done ahead of the slices below: the history check (P11-1, by the orchestrator; findings in `spec/open-items.md`), one commit message rewritten on the stakeholder's word, and a first `README.md` (P11-4). The push and each release upload are the stakeholder's own steps. Still to do from this file: P11-2 (waits for the licence), P11-5 to P11-8.
 **Class:** F (the full gate, in P11-8). The other slices: A (scripts and their tests) and the config tests.
 
 ## Scope

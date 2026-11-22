@@ -60,8 +60,10 @@ To make an installer for the computer you are on:
 
 ```
 npm run fetch:ffmpeg
-npm run package
+npm run package:mac
 ```
+
+On Windows the last line is `npm run package:win`.
 
 `npm run fetch:ffmpeg` gets the FFmpeg that video export needs. On Windows it downloads a pinned build; on macOS it builds the pinned source, which needs the Xcode Command Line Tools. Each system builds its own installer: the Windows installer is made on Windows, the macOS one on a Mac.
 
@@ -78,10 +80,13 @@ None of these calls a paid service or leaves the computer.
 
 ## Making a release
 
+Installers are built on your own computer and uploaded by hand. Nothing is built on GitHub.
+
 1. Set `version` in `package.json` and commit.
-2. Tag that commit with the same number and push the tag: `git tag v0.1.0`, then `git push origin v0.1.0`.
-3. The Release workflow builds the macOS and Windows installers and attaches them to a draft release.
-4. Read the draft on GitHub and publish it by hand.
+2. On a Mac with Apple silicon: `npm run fetch:ffmpeg` (once), then `npm run package:mac`. The `.dmg` lands in `dist/`.
+3. On a Windows PC: `npm run fetch:ffmpeg` (once), then `npm run package:win`. The `Setup .exe` lands in `dist/`.
+4. On GitHub, open Releases, draft a new release with a tag such as `v0.1.0`, and drop both files onto it. With the GitHub command line tool the same step is `gh release create v0.1.0 dist/*.dmg --draft`.
+5. Read the draft and publish it.
 
 ## Licence
 
