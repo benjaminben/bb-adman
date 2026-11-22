@@ -83,6 +83,7 @@ export function SubjectCard({ projectId, subject, photos, subjects }: SubjectCar
         adding={state.kind === 'busy'}
         addingLabel="Adding photos…"
         needsOne
+        size="small"
       />
       <Outcome state={state} />
       <SubjectDialog
