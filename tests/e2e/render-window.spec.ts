@@ -24,9 +24,13 @@ test('the hidden render window draws a variant and ends with the app window', as
   const app = await launch(box)
   const page = await app.firstWindow()
   const ids = await projectWithFont(page, box.projects, font)
-  // Only the app window is shown. The hidden render window may already be opening here: the
-  // app draws a thumbnail about a second after the variant is made, so its count is not fixed.
-  expect((await windows(app)).filter((w) => w.visible)).toHaveLength(1)
+  // One app window, and no other window is shown. The app window is found by its page, not by
+  // being shown: test launches keep it hidden (ADMAN_QUIET_WINDOWS). The hidden render window
+  // may already be opening here: the app draws a thumbnail about a second after the variant
+  // is made, so its count is not fixed.
+  const early = await windows(app)
+  expect(early.filter((w) => w.url.endsWith('/index.html'))).toHaveLength(1)
+  expect(early.filter((w) => w.visible && !w.url.endsWith('/index.html'))).toEqual([])
 
   // A draw gives a PNG of the asked size: 1200 by 800 at a longer side of 300.
   const drawn = await renderVariant(page, { ...ids, maxDimension: 300 })
@@ -64,7 +68,9 @@ test('the hidden render window draws a variant and ends with the app window', as
   expect(again).toMatchObject({ pngWidth: 300, pngHeight: 200 })
   const faces = `[...document.fonts].filter((f) => f.family.includes(${JSON.stringify(ids.fontId)})).map((f) => f.status)`
   expect(await inRenderWindow(app, faces)).toEqual(['loaded'])
-  expect((await windows(app)).every((w) => w.url.endsWith('/render.html') !== w.visible)).toBe(true)
+  const late = await windows(app)
+  expect(late.filter((w) => w.url.endsWith('/index.html'))).toHaveLength(1)
+  expect(late.find((w) => w.url.endsWith('/render.html'))?.visible).toBe(false)
 
   // Closing the app window ends the render window first, so the app quits.
   const closed = app.waitForEvent('close')

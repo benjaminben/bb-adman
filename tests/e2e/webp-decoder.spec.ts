@@ -103,7 +103,7 @@ test('WebP references are taken and decoded to PNG by the hidden decoder window'
   const closed = app.waitForEvent('close')
   await app.evaluate(({ BrowserWindow }) =>
     BrowserWindow.getAllWindows()
-      .find((w) => w.isVisible())
+      .find((w) => w.webContents.getURL().endsWith('/index.html'))
       ?.close(),
   )
   await closed
