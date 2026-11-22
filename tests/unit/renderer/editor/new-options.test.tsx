@@ -58,9 +58,10 @@ describe('EarlierOptions: new pictures first [spec/phases/round-2-editor.md D6]'
     const fresh = await screen.findByRole('region', { name: 'New pictures' })
     const earlier = screen.getByRole('region', { name: 'Earlier options' })
     expect(runsIn(fresh)).toEqual(['J3'])
-    expect(runsIn(earlier)).toEqual(['J2', 'J1'])
-    const regions = screen.getAllByRole('region').map((r) => r.getAttribute('aria-labelledby'))
-    expect(regions).toEqual([`${LAYER.id}-new`, `${LAYER.id}-earlier`])
+    // The new run's region sits first inside the earlier options', above their title.
+    expect(runsIn(earlier)).toEqual(['J3', 'J2', 'J1'])
+    const titles = within(earlier).getAllByText(/^(New pictures|Earlier options)$/)
+    expect(titles.map((t) => t.textContent)).toEqual(['New pictures', 'Earlier options'])
   })
 
   it('the new run’s options are the same buttons, and Use sends one layer.update', async () => {

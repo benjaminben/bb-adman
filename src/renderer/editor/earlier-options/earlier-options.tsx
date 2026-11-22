@@ -5,7 +5,8 @@
 // when it is drawn. A locked layer's buttons are disabled. The title names the region but is
 // not an h element: the properties panel keeps one heading, the layer's name.
 // R2E-5 (spec/phases/round-2-editor.md D6): the run named by newJobId is drawn first under
-// "New pictures" (new-options.tsx); the other runs follow here.
+// "New pictures" (new-options.tsx), its own region inside this one, so that a picker of the
+// layer's options finds every run here; the other runs follow under the title.
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
@@ -57,7 +58,7 @@ export function EarlierOptions(props: EarlierOptionsProps) {
   }
 
   return (
-    <>
+    <section className={styles.section} aria-labelledby={`${layer.id}-earlier`}>
       {fresh && (
         <NewOptions
           projectId={projectId}
@@ -68,33 +69,31 @@ export function EarlierOptions(props: EarlierOptionsProps) {
           onUse={use}
         />
       )}
-      <section className={styles.section} aria-labelledby={`${layer.id}-earlier`}>
-        <p id={`${layer.id}-earlier`} className={styles.heading}>
-          Earlier options
-        </p>
-        {reply !== null && rest.length === 0 && !fresh && (
-          <p className={styles.muted}>No earlier options for this layer.</p>
-        )}
-        {shown.length > 0 && (
-          <ul className={styles.runs}>
-            {shown.map((option) => (
-              <RunBlock
-                key={option.job.id}
-                projectId={projectId}
-                option={option}
-                inUse={inUse}
-                locked={layer.locked}
-                onUse={use}
-              />
-            ))}
-          </ul>
-        )}
-        {rest.length > limit && (
-          <button type="button" onClick={() => setLimit(limit + PAGE)}>
-            Show more
-          </button>
-        )}
-      </section>
-    </>
+      <p id={`${layer.id}-earlier`} className={styles.heading}>
+        Earlier options
+      </p>
+      {reply !== null && rest.length === 0 && !fresh && (
+        <p className={styles.muted}>No earlier options for this layer.</p>
+      )}
+      {shown.length > 0 && (
+        <ul className={styles.runs}>
+          {shown.map((option) => (
+            <RunBlock
+              key={option.job.id}
+              projectId={projectId}
+              option={option}
+              inUse={inUse}
+              locked={layer.locked}
+              onUse={use}
+            />
+          ))}
+        </ul>
+      )}
+      {rest.length > limit && (
+        <button type="button" onClick={() => setLimit(limit + PAGE)}>
+          Show more
+        </button>
+      )}
+    </section>
   )
 }
