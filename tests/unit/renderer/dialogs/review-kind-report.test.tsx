@@ -67,8 +67,8 @@ describe('the report view as a review dialog [DLG-7]', () => {
       ['Passed every check', '1'],
       ['With warnings', '1'],
       ['Failed', '1'],
-    ])
-      expect(within(summary).getByTitle(title)).toHaveTextContent(n!)
+    ] as const)
+      expect(within(summary).getByTitle(title)).toHaveTextContent(n)
     expect(dialog).toHaveTextContent('Paid generations: pictures 4, videos 1, text 7')
     const details = within(dialog).getByRole('button', { name: 'Details' })
     expect(details).toHaveAttribute('aria-expanded', 'false')
