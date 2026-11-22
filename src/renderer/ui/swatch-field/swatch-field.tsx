@@ -30,11 +30,11 @@ export function SwatchField(props: SwatchFieldProps) {
     if (!same(value, props.value)) props.onCommit(value)
   }
 
-  // The current colour is always on show: one the palette lacks leads the row.
+  // The current colour is always on show: one the palette lacks follows it.
   const { value } = props
   const extra =
     value !== null && HEX_COLOUR.test(value) && !props.palette.some((p) => same(p, value))
-  const swatches = extra ? [value, ...props.palette] : props.palette
+  const swatches = extra ? [...props.palette, value] : props.palette
 
   function close(focusBack: boolean) {
     setOpen(false)

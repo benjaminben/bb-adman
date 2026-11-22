@@ -4,8 +4,10 @@
 // colour field and in the colour choices (here the Box and outline colours) alike.
 import '../../shared/scene/fake-fonts'
 import { screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { PropertiesPanel } from '@/renderer/editor/properties-panel'
+import { writeFold } from '@/renderer/ui/section/fold-memory'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { makeFakeApi } from '../fake-api'
 import { renderApp } from '../render'
@@ -30,7 +32,9 @@ async function open(layer: LayerRow, palette: string[]) {
 }
 
 const swatchNames = () =>
-  screen.queryAllByRole('button', { name: /^Palette / }).map((b) => b.getAttribute('aria-label'))
+  screen.queryAllByRole('button', { name: /^#/ }).map((b) => b.getAttribute('aria-label'))
+
+beforeEach(() => writeFold('props.box', false))
 
 describe('palette swatches show exact #RRGGBB only', () => {
   it.each([
@@ -41,11 +45,9 @@ describe('palette swatches show exact #RRGGBB only', () => {
     ['hex followed by CSS', '#E85D2A; background-image: url(x)'],
   ])('leaves out %s, in the text, box and outline colours', async (_c, bad) => {
     await open(HEADLINE, [VALID, bad])
-    await screen.findByRole('button', { name: `Palette colour ${VALID}` })
-    expect(swatchNames()).toEqual([
-      `Palette colour ${VALID}`,
-      `Palette ${VALID} for box colour`,
-      `Palette ${VALID} for outline colour`,
-    ])
+    await screen.findByRole('button', { name: VALID })
+    await userEvent.click(screen.getByRole('button', { name: 'Box' }))
+    // The text's own colour (#112233, not in the palette) shows after the palette (ED-2).
+    expect(swatchNames()).toEqual([VALID, '#112233', VALID, VALID])
   })
 })

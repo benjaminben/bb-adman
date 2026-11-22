@@ -41,10 +41,14 @@ describe('PropertiesPanel, Box and Shade [spec/editor.md "Properties panel"; LK-
     return fake
   }
 
-  it('a text layer shows Box after Text settings, with the palette, and no Shade', async () => {
+  // ED-2: Type, then Box, then Position; Copy comes before Type.
+  it('a text layer shows Box after Type, with the palette, and no Shade', async () => {
     await withPalette(HEADLINE)
-    await screen.findByRole('button', { name: 'Palette #F4E9D8 for box colour' })
-    expect(legends()).toEqual(['Text settings', 'Box', 'Position'])
+    await screen.findByRole('button', { name: '#F4E9D8' })
+    expect(legends()).toEqual(['Type', 'Box', 'Position'])
+    const copy = screen.getByRole('textbox', { name: 'Copy' })
+    const type = screen.getByRole('button', { name: 'Type' })
+    expect(copy.compareDocumentPosition(type) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('a Box field sends one layer.update for the selected layer', async () => {

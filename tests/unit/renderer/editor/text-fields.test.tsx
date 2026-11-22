@@ -1,7 +1,7 @@
 // spec/editor.md, "Properties panel", "Text" [REQ: FR-093, FR-249]: Copy, the font slot, Size,
 // Weight, Colour (hex, picker, palette), Align, Line height, Letter spacing, and the overflow line.
 // Every field saves one layer.update on Enter or on leaving it, never per keystroke.
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useRef } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -47,8 +47,6 @@ describe('TextFields [spec/editor.md "Properties panel", Text]', () => {
     ['Line height', 'spinbutton', '1.35', { style: { lineHeight: 1.35 } }, '{Enter}'],
     ['Line height', 'spinbutton', '1.35', { style: { lineHeight: 1.35 } }, '{Tab}'],
     ['Letter spacing', 'spinbutton', '0.08', { style: { letterSpacing: 0.08 } }, '{Enter}'],
-    ['Colour', 'textbox', '#2A7DE8', { style: { color: '#2A7DE8' } }, '{Enter}'],
-    ['Colour', 'textbox', '#2A7DE8', { style: { color: '#2A7DE8' } }, '{Tab}'],
   ])(
     '%s sends one layer.update on %#, not per keystroke',
     async (name, role, typed, patch, key) => {
@@ -100,32 +98,6 @@ describe('TextFields [spec/editor.md "Properties panel", Text]', () => {
     ])
   })
 
-  it('a colour that is not #RRGGBB sends nothing and goes back', async () => {
-    const { onUpdate } = setup()
-    const field = screen.getByRole('textbox', { name: 'Colour' })
-    await userEvent.clear(field)
-    await userEvent.type(field, 'orange{Enter}')
-    expect(onUpdate).not.toHaveBeenCalled()
-    expect(field).toHaveValue((HEADLINE.style as { color: string }).color)
-  })
-
-  it('the colour picker saves once, when its choice is made', async () => {
-    const { onUpdate } = setup()
-    const picker = screen.getByLabelText('Colour picker')
-    fireEvent.input(picker, { target: { value: '#112233' } })
-    fireEvent.input(picker, { target: { value: '#112244' } })
-    expect(onUpdate).not.toHaveBeenCalled()
-    fireEvent.change(picker, { target: { value: '#112244' } })
-    expect(onUpdate.mock.calls).toEqual([[{ style: { color: '#112244' } }]])
-  })
-
-  it('one button per palette colour, each sending that colour', async () => {
-    const { onUpdate } = setup()
-    await userEvent.click(screen.getByRole('button', { name: 'Palette colour #E85D2A' }))
-    expect(screen.getByRole('button', { name: 'Palette colour #1B1D22' })).toBeInTheDocument()
-    expect(onUpdate.mock.calls).toEqual([[{ style: { color: '#E85D2A' } }]])
-  })
-
   it('Weight is a select of nine weights with its hint; a choice sends one update', async () => {
     const { onUpdate } = setup()
     const weight = screen.getByRole('combobox', { name: 'Weight' })
@@ -134,20 +106,22 @@ describe('TextFields [spec/editor.md "Properties panel", Text]', () => {
         .getAllByRole('option')
         .map((o) => o.textContent),
     ).toEqual([
-      'Thin 100',
-      'Extra light 200',
-      'Light 300',
-      'Regular 400',
-      'Medium 500',
-      'Semibold 600',
-      'Bold 700',
-      'Extra bold 800',
-      'Black 900',
+      'Thin',
+      'Extra light',
+      'Light',
+      'Regular',
+      'Medium',
+      'Semibold',
+      'Bold',
+      'Extra bold',
+      'Black',
     ])
-    expect(weight).toHaveAccessibleDescription(
-      'Weight changes only fonts that have more than one weight.',
-    )
-    await userEvent.selectOptions(weight, 'Black 900')
+    // ED-2: the hint is in the InfoTip beside Weight.
+    await userEvent.click(screen.getByRole('button', { name: 'About weight' }))
+    expect(
+      screen.getByText('Weight changes only fonts that have more than one weight.'),
+    ).toBeVisible()
+    await userEvent.selectOptions(weight, 'Black')
     expect(onUpdate.mock.calls).toEqual([[{ style: { fontWeight: 900 } }]])
   })
 

@@ -73,9 +73,7 @@ describe('PropertiesPanel [spec/editor.md "Properties panel"]', () => {
       </main>,
       fake,
     )
-    expect(
-      await screen.findByRole('button', { name: 'Palette colour #F4E9D8' }),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: '#F4E9D8' })).toBeInTheDocument()
     expect(fake.queries.find((q) => q.name === 'campaign.get')?.input).toEqual({
       projectId: P,
       campaignId: 'C1',

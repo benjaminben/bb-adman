@@ -44,12 +44,12 @@ describe('SwatchField [T3d]', () => {
     expect(screen.getByRole('button', { name: '#1a2b3c' })).toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('shows a current colour that is not in the palette as the first swatch, pressed', () => {
+  it('shows a current colour that is not in the palette after the palette, pressed', () => {
     const { group } = setup({ value: '#0A0B0C' })
     const names = within(group)
       .getAllByRole('button')
       .map((b) => b.getAttribute('aria-label') ?? b.textContent)
-    expect(names).toEqual(['#0A0B0C', ...PALETTE, 'Other colour'])
+    expect(names).toEqual([...PALETTE, '#0A0B0C', 'Other colour'])
     expect(screen.getByRole('button', { name: '#0A0B0C' })).toHaveAttribute('aria-pressed', 'true')
   })
 

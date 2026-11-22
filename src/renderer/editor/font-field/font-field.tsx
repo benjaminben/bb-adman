@@ -4,10 +4,15 @@
 // picker, imports it linked into the asset library and sets it as the font. A cancelled picker
 // sends nothing; a refused import shows its message and changes nothing. Font names from a file
 // are shown as text only. A path goes only from the picker to asset.import.
+// ED-2: the select shows no title (its name stays "Font"); the default reads "Inter (default)";
+// "Upload font…" is an icon button beside it, name unchanged. It tells the Type summary the name.
 import { useCallback, useEffect, useId, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import type { AssetList } from '@/shared/schemas/queries/asset'
 import type { PickedPaths } from '@/shared/schemas/queries/dialog'
+import { useReportFontName } from './font-name'
 import styles from './font-field.module.css'
 
 export type FontFieldProps = {
@@ -20,8 +25,10 @@ export type FontFieldProps = {
 
 type ImportReply = { assetIds: string[] }
 
+const nameOf = (asset: AssetList[number]) => asset.fontFamily ?? asset.displayName
 const labelOf = (asset: AssetList[number]) =>
-  `${asset.fontFamily ?? asset.displayName}${asset.missing ? ' (file not found)' : ''}`
+  `${nameOf(asset)}${asset.missing ? ' (file not found)' : ''}`
+const UPLOAD = 'Upload font…'
 
 export function FontField(props: FontFieldProps) {
   const { projectId } = props
@@ -68,35 +75,42 @@ export function FontField(props: FontFieldProps) {
   }
 
   const known = props.fontAssetId === null || fonts.some((f) => f.id === props.fontAssetId)
+  const chosen = fonts.find((f) => f.id === props.fontAssetId)
+  useReportFontName(props.fontAssetId === null ? 'Inter' : chosen ? nameOf(chosen) : null)
 
   return (
     <div className={styles.field}>
-      <label className={styles.label} htmlFor={id}>
+      <label className={styles.hidden} htmlFor={id}>
         Font
       </label>
-      <select
-        id={id}
-        aria-describedby={error ? `${id}-error` : undefined}
-        disabled={props.disabled}
-        value={props.fontAssetId ?? ''}
-        onChange={(event) => void choose(event.target.value || null)}
-      >
-        <option value="">Default font (Inter)</option>
-        {fonts.map((f) => (
-          <option key={f.id} value={f.id}>
-            {labelOf(f)}
-          </option>
-        ))}
-        {!known && <option value={props.fontAssetId ?? ''}>Font not in the asset library</option>}
-      </select>
-      <button
-        type="button"
-        className={styles.upload}
-        disabled={props.disabled}
-        onClick={() => void upload()}
-      >
-        Upload font…
-      </button>
+      <div className={styles.row}>
+        <select
+          id={id}
+          className={styles.select}
+          aria-describedby={error ? `${id}-error` : undefined}
+          disabled={props.disabled}
+          value={props.fontAssetId ?? ''}
+          onChange={(event) => void choose(event.target.value || null)}
+        >
+          <option value="">Inter (default)</option>
+          {fonts.map((f) => (
+            <option key={f.id} value={f.id}>
+              {labelOf(f)}
+            </option>
+          ))}
+          {!known && <option value={props.fontAssetId ?? ''}>Font not in the asset library</option>}
+        </select>
+        <button
+          type="button"
+          className={layout.iconButton}
+          aria-label={UPLOAD}
+          title={UPLOAD}
+          disabled={props.disabled}
+          onClick={() => void upload()}
+        >
+          <Icon name="upload" />
+        </button>
+      </div>
       {error && (
         <p id={`${id}-error`} className={styles.error}>
           {error}

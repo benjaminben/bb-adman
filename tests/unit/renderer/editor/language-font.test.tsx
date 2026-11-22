@@ -66,7 +66,7 @@ async function setup(layer: LayerRow, rows = ROWS, campaignId: string | null = '
   return { fake, setRows: (next: TranslationRow[]) => (current = next) }
 }
 
-const button = () => screen.findByRole('button', { name: 'Use this font for every ja post' })
+const button = () => screen.findByRole('button', { name: 'All ja posts' })
 
 describe('LanguageFont [P6-14, A-166]', () => {
   it('sends one layer.setFonts with the layers of the same direction, language and key', async () => {
