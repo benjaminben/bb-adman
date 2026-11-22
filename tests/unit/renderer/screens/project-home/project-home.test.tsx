@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { act, screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ProjectHome } from '@/renderer/screens/project-home/project-home'
 import { renderApp, axeViolations } from '../../render'
@@ -120,6 +120,27 @@ describe('project page [SPEC 14 1.41 TP-1]', () => {
     const list = await screen.findByRole('list', { name: 'Campaigns' })
     expect(list).toHaveTextContent('<a href="https://e.test">Click</a>')
     expect(list.querySelector('a')).toBeNull()
+  })
+
+  it('opens the Assets panel from "Open assets" and from a campaign\'s "Assets" [R2C-5]', async () => {
+    const fake = projectApi(twoCampaigns)
+    fake.onQuery('asset.list', () => ({ ok: true, data: [] }))
+    await renderApp(<ProjectHome project={PROJECT} />, fake)
+    const heading = await screen.findByRole('heading', { name: 'Assets', level: 2 })
+    const section = heading.closest('section') as HTMLElement
+    expect(section).toHaveTextContent('The pictures, clips, fonts and subjects of this project.')
+    expect(within(section).getByRole('button', { name: 'Import files…' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Open assets' }))
+    const panel = screen.getByRole('region', { name: 'Assets' })
+    expect(within(panel).getByRole('heading', { name: 'Assets', level: 2 })).toBeInTheDocument()
+    await within(panel).findByText('No pictures yet.')
+    expect(await axeViolations()).toEqual([])
+    await userEvent.click(within(panel).getByRole('button', { name: 'Close assets' }))
+    expect(document.getElementById('assets-panel')).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Open Summer' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Assets' }))
+    expect(document.getElementById('assets-panel')).toHaveAttribute('aria-label', 'Assets')
+    expect(await screen.findByText('No pictures yet.')).toBeInTheDocument()
   })
 
   it('has no axe violations with campaigns listed', async () => {

@@ -13,7 +13,7 @@ describe('project home sections [spec/screens-campaign.md, Project home]', () =>
     await renderApp(<ProjectHome project={PROJECT} />, projectApi())
     await screen.findByText('No campaign yet.')
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
-    expect(headings).toEqual(['Campaigns', 'Start a campaign', 'Files', 'Package'])
+    expect(headings).toEqual(['Campaigns', 'Start a campaign', 'Assets', 'Package'])
     const empty = screen.getByText('No campaign yet.')
     const start = screen.getByRole('heading', { name: 'Start a campaign' })
     expect(empty.compareDocumentPosition(start) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
