@@ -1,6 +1,7 @@
 // spec/editor.md, "The variant store": one store per open variant. Loads variant.get and keeps
 // it current from project.changed and asset.changedOnDisk. The window applies nothing before the
 // main process confirms it, apart from the draft: the moving values of one layer during a drag.
+// P7-20: it holds the variant's clips too, and applies background_clip rows and removed IDs.
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { AdmanApi } from '@/shared/schemas/api'
 import type { ProjectChangedPayload } from '@/shared/schemas/events'
@@ -8,6 +9,7 @@ import type { Geometry } from '@/shared/schemas/layer'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { VariantGet } from '@/shared/schemas/queries/variant'
 import { AssetRow } from '@/shared/schemas/rows/asset'
+import { BackgroundClipRow } from '@/shared/schemas/rows/background-clip'
 import { LayerRow } from '@/shared/schemas/rows/layer'
 import { VariantRow } from '@/shared/schemas/rows/variant'
 
@@ -18,6 +20,7 @@ export type VariantStoreState = {
   variant: VariantSummary | null
   campaignId: string | null
   layers: Record<string, LayerRow>
+  clips: Record<string, BackgroundClipRow>
   assets: Record<string, HeldAsset>
   versions: Record<string, number> // per asset; goes up when its file changed on disk
   draft: Draft | null
@@ -47,6 +50,7 @@ function parsed<T>(schema: { safeParse(v: unknown): { success: boolean; data?: T
 const variantRows = parsed<VariantRow>(VariantRow)
 const layerRows = parsed<LayerRow>(LayerRow)
 const assetRows = parsed<AssetRow>(AssetRow)
+const clipRows = parsed<BackgroundClipRow>(BackgroundClipRow)
 
 export function createVariantStore(
   api: AdmanApi,
@@ -63,6 +67,7 @@ export function createVariantStore(
         variant: data.variant,
         campaignId: data.campaignId,
         layers: byId(data.layers),
+        clips: byId(data.clips),
         assets: byId(data.assets),
         versions: Object.fromEntries(data.assets.map((a) => [a.id, held[a.id] ?? 0])),
       })
@@ -84,19 +89,26 @@ export function createVariantStore(
       const variantRow = variantRows(event.changed.variant).find((v) => v.id === variantId)
       const layers = layerRows(event.changed.layer).filter((l) => l.variantId === variantId)
       const removed = (event.removed.layer ?? []).filter((id) => id in s.layers)
+      const clips = clipRows(event.changed.background_clip).filter((c) => c.variantId === variantId)
+      const gone = (event.removed.background_clip ?? []).filter((id) => id in s.clips)
       const assets = assetRows(event.changed.asset).filter((a) => a.id in s.assets)
-      if (!variantRow && layers.length === 0 && removed.length === 0 && assets.length === 0) return
+      const counts = [layers, removed, clips, gone, assets].map((list) => list.length)
+      if (!variantRow && counts.every((n) => n === 0)) return
       touches += 1
       const nextLayers = { ...s.layers, ...byId(layers) }
       for (const id of removed) delete nextLayers[id]
+      const nextClips = { ...s.clips, ...byId(clips) }
+      for (const id of gone) delete nextClips[id]
       const nextAssets = { ...s.assets }
       for (const a of assets) nextAssets[a.id] = { ...a, missing: s.assets[a.id]?.missing ?? false }
       set({
         variant: variantRow && s.variant ? { ...s.variant, ...variantRow } : s.variant,
         layers: nextLayers,
+        clips: nextClips,
         assets: nextAssets,
       })
-      if (layers.some((l) => namedAssets(l).some((id) => !(id in nextAssets)))) void load()
+      const named = [...layers.flatMap(namedAssets), ...clips.map((c) => c.assetId)]
+      if (named.some((id) => !(id in nextAssets))) void load()
     }
 
     function applyChangedOnDisk(event: { projectId: string; assetIds: string[] }) {
@@ -112,6 +124,7 @@ export function createVariantStore(
       variant: null,
       campaignId: null,
       layers: {},
+      clips: {},
       assets: {},
       versions: {},
       draft: null,

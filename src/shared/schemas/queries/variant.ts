@@ -14,8 +14,6 @@ export type VariantGet = {
   variant: VariantSummary // as in campaign.get: the row, isMaster, subjectIds, badges
   campaignId: string
   layers: LayerRow[] // z ascending, then ID
-  // startMs ascending, then ID. Always sent; optional in the type only until the editor's test
-  // fixture (tests/unit/renderer/editor/editor-fixture.ts) gives it.
-  clips?: BackgroundClipRow[]
+  clips: BackgroundClipRow[] // startMs ascending, then ID
   assets: Array<AssetRow & { missing: boolean }> // each asset a layer or clip names, once, by ID
 }
