@@ -55,7 +55,7 @@ function fileOf(path: string, text: string, contentType = 'image/png') {
 const offline = () => new ProviderFailure({ kind: 'offline', detail: 'ECONNRESET' })
 
 function options(signal = new AbortController().signal) {
-  const sleep = vi.fn(async () => undefined)
+  const sleep = vi.fn(async (_ms: number, _signal: AbortSignal) => undefined)
   const onProgress = vi.fn()
   return { signal, sleep, onProgress }
 }
@@ -104,7 +104,7 @@ describe('uploadAll [A-224]', () => {
     const [done] = await uploadAll(storage, CAMPAIGN, [a.file], opts)
     expect(a.open).toHaveBeenCalledTimes(3)
     expect(opts.sleep.mock.calls.map((call) => call[0])).toEqual([1000, 4000])
-    expect(done.bytes).toBe(7)
+    expect(done?.bytes).toBe(7)
     expect(written.get(`${CAMPAIGN}/report.json`)?.bytes).toEqual(a.bytes)
   })
 

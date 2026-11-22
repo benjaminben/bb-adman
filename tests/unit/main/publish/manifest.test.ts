@@ -28,11 +28,11 @@ const good: Manifest = {
 }
 
 let root: string
-let log: ActivityLog & { write: ReturnType<typeof vi.fn> }
+let log: ActivityLog & { write: ReturnType<typeof vi.fn<ActivityLog['write']>> }
 
 beforeEach(async () => {
   root = await fs.mkdtemp(path.join(os.tmpdir(), 'adman-manifest-'))
-  log = { write: vi.fn(), prune: vi.fn() }
+  log = { write: vi.fn<ActivityLog['write']>(), prune: vi.fn() }
 })
 afterEach(async () => {
   await fs.rm(root, { recursive: true, force: true })
@@ -88,7 +88,7 @@ describe('readPrevious [A-220]', () => {
     expect(previous).toBeNull()
     expect(nextPublishNumber(previous)).toBe(1)
     expect(log.write).toHaveBeenCalledTimes(1)
-    const entry = log.write.mock.calls[0][0]
+    const entry = log.write.mock.calls[0]?.[0]
     expect(entry).toMatchObject({ level: 'warn', context: { reason: 'manifest_unreadable' } })
     const text = JSON.stringify(entry)
     expect(text).not.toContain(SECRET_WORD)

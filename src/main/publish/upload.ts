@@ -41,14 +41,17 @@ function waitFor(ms: number, signal: AbortSignal): Promise<void> {
 }
 
 // The full storage path of each file, refused as a whole before anything is written.
-function targetsOf(campaignId: string, files: UploadFile[]): string[] {
+function targetsOf(
+  campaignId: string,
+  files: UploadFile[],
+): Array<{ file: UploadFile; target: string }> {
   const prefix = campaignPrefix(campaignId)
   const seen = new Set<string>([MANIFEST_NAME])
-  return files.map(({ path }) => {
-    const folded = path.toLowerCase()
+  return files.map((file) => {
+    const folded = file.path.toLowerCase()
     if (seen.has(folded)) refusePath()
     seen.add(folded)
-    return storageFilePath(`${prefix}${path}`)
+    return { file, target: storageFilePath(`${prefix}${file.path}`) }
   })
 }
 
@@ -120,8 +123,9 @@ async function uploadOne(
     } catch (error) {
       if (opts.signal.aborted) throw new ProviderCancelled()
       const failure = failureOf(error)
-      if (!retried(failure) || tries >= RETRY_WAITS_MS.length) throw failure
-      await sleep(RETRY_WAITS_MS[tries], opts.signal)
+      const wait = RETRY_WAITS_MS[tries]
+      if (!retried(failure) || wait === undefined) throw failure
+      await sleep(wait, opts.signal)
     }
   }
 }
@@ -135,9 +139,9 @@ export async function uploadAll(
 ): Promise<ManifestFile[]> {
   const targets = targetsOf(campaignId, files)
   const done: ManifestFile[] = []
-  for (const [index, file] of files.entries()) {
+  for (const [index, { file, target }] of targets.entries()) {
     if (opts.signal.aborted) throw new ProviderCancelled()
-    done.push(await uploadOne(storage, targets[index], file, opts))
+    done.push(await uploadOne(storage, target, file, opts))
     opts.onProgress?.((index + 1) / files.length)
   }
   return done
