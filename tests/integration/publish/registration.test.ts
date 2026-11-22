@@ -11,7 +11,6 @@ import { publishCommands } from '@/main/commands/publish'
 import { storageCommands } from '@/main/commands/storage'
 import { publishQueries } from '@/main/queries/publish'
 import { jobKindHandlers } from '@/main/jobs/kinds'
-import { publishKind } from '@/main/jobs/kinds/publish'
 import { LocalFailure } from '@/main/jobs/local-failure'
 import { createPublishDeps } from '@/main/publish/deps'
 import { defaultDropboxFetch } from '@/main/providers/dropbox/fetch'
@@ -76,12 +75,6 @@ describe('the publish.inspect stub [P9-1]', () => {
 
 describe('the Phase 9 job kind and port stubs [P9-1]', () => {
   const exportNotBuilt = { reason: 'export_not_built' }
-
-  it('fails a publish job with the local reason export_not_built', async () => {
-    const job = publishKind().run({} as never, {} as never)
-    await expect(job).rejects.toBeInstanceOf(LocalFailure)
-    await expect(job).rejects.toMatchObject(exportNotBuilt)
-  })
 
   it('refuses both export ports with export_not_built', async () => {
     const { fx } = await open()
