@@ -1,27 +1,22 @@
-// spec/editor.md, "Properties panel": the header (the layer's name and kind), then one section
-// per component: Layer, Text and Box (text layers), Picture, Shade and Generate
-// (image and background layers), Position and size. Sections are keyed by the layer, so an unsaved edit
-// or a refusal message does not carry over to another layer.
+// spec/editor.md, "Properties panel": the head (the layer's type icon and name, ED-1b), then one
+// section per component: Text and Box (text layers), Picture, Shade and Generate (image and
+// background layers), Position. The Layer section is gone: its actions are on the layer row
+// (choice C-3). Sections are keyed by the layer, so an unsaved edit or a refusal message does
+// not carry over to another layer. The panel is compact (spec/app-style-parts.md, "Panel").
 import { AnimationFields } from '@/renderer/editor/animation-fields'
 import { FontField } from '@/renderer/editor/font-field'
 import { GeneratePanel } from '@/renderer/editor/generate-panel'
 import { GeometryFields } from '@/renderer/editor/geometry-fields'
 import { LanguageFont } from '@/renderer/editor/language-font'
-import { LayerFields } from '@/renderer/editor/layer-fields'
 import { PictureFields, type PictureAsset } from '@/renderer/editor/picture-fields'
 import { ShadeFields } from '@/renderer/editor/shade-fields'
 import { TextBoxFields } from '@/renderer/editor/text-box-fields'
 import { TextFields } from '@/renderer/editor/text-fields'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
+import { PanelEmpty, PanelTop } from './panel-top'
 import { useLayerActions } from './use-layer-actions'
 import { usePalette } from './use-palette'
 import styles from './properties-panel.module.css'
-
-const KIND: Record<LayerRow['type'], string> = {
-  text: 'Text',
-  image: 'Picture',
-  background: 'Background',
-}
 
 export type PropertiesPanelProps = {
   projectId: string
@@ -41,7 +36,7 @@ type SectionsProps = PropertiesPanelProps & { layer: LayerRow; palette: string[]
 
 function Sections(props: SectionsProps) {
   const { layer } = props
-  const actions = useLayerActions(props.projectId, layer, props.layers)
+  const actions = useLayerActions(props.projectId, layer)
   const font = layer.type === 'text' && 'fontAssetId' in layer.style && (
     <>
       <FontField
@@ -57,16 +52,6 @@ function Sections(props: SectionsProps) {
   )
   return (
     <>
-      <LayerFields
-        layer={layer}
-        canForward={actions.canForward}
-        canBackward={actions.canBackward}
-        onUpdate={actions.update}
-        onForward={actions.forward}
-        onBackward={actions.backward}
-        onDuplicate={actions.duplicate}
-        onDelete={actions.remove}
-      />
       {font && (
         <TextFields layer={layer} palette={props.palette} font={font} onUpdate={actions.update} />
       )}
@@ -110,23 +95,16 @@ export function PropertiesPanel(props: PropertiesPanelProps) {
   const { layer } = props
   const palette = usePalette(props.projectId, props.campaignId)
   return (
-    <section aria-label="Properties" className={styles.panel}>
+    <section aria-label="Properties" className={styles.panel} data-density="compact">
       {layer ? (
         <>
-          <header className={styles.header}>
-            <h3 className={styles.name}>{layer.name}</h3>
-            <p className={styles.kind}>{KIND[layer.type]}</p>
-          </header>
+          <PanelTop projectId={props.projectId} layer={layer} />
           <div className={styles.body}>
             <Sections key={layer.id} {...props} layer={layer} palette={palette} />
           </div>
         </>
       ) : (
-        <p className={styles.empty}>
-          {props.canvas?.format === 'video'
-            ? 'Select a layer to change it. To make a video, select the background layer.'
-            : 'Select a layer to change it.'}
-        </p>
+        <PanelEmpty video={props.canvas?.format === 'video'} />
       )}
     </section>
   )

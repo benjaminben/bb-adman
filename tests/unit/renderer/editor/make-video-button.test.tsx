@@ -15,8 +15,9 @@ import { assetRow, BACKGROUND, HEADLINE, LOGO, P, V, variantGet } from './editor
 import { FAKE_VIDEO, INFO_ALL } from './generate-panel-video-fixture'
 
 const MAKE = 'Make a video…'
-const EMPTY = 'Select a layer to change it.'
-const EMPTY_VIDEO = 'Select a layer to change it. To make a video, select the background layer.'
+const EMPTY = 'Select a layer'
+// ED-1b: the second sentence is the InfoTip's words beside "Select a layer".
+const EMPTY_VIDEO = 'To make a video, select the background layer.'
 
 function videoGet(): VariantGet {
   const base = variantGet({ layers: [BACKGROUND, HEADLINE, LOGO] })

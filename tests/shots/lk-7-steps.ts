@@ -163,7 +163,7 @@ export async function expectTextFits(page: Page): Promise<void> {
 // Clear the selection by clicking the backdrop beside the ad, so no handles are drawn.
 export async function clearSelection(page: Page): Promise<void> {
   await page.locator('[data-backdrop]').click({ position: { x: 4, y: 4 } })
-  await expect(panel(page).getByText('Select a layer to change it.')).toBeVisible()
+  await expect(panel(page).getByText('Select a layer', { exact: true })).toBeVisible()
 }
 
 const FOLDER = path.resolve('shots')

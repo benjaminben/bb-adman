@@ -1,24 +1,13 @@
 /* app-style */
-.section {
-  margin: 0;
-  padding: 0;
-  border: none;
-  min-width: 0;
-}
-.legend {
-  padding: 0;
-  margin-bottom: var(--space-2);
-  font-family: var(--font-body);
-  font-size: var(--font-size-control);
-  font-weight: var(--weight-bold);
-  color: var(--color-text);
-}
+/* ED-1b: X, Y, W and H on one row in the Position Section, then Rotation as an inline field. */
 .grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
+  gap: var(--gap-inline);
 }
-/* Four columns are narrow: the value keeps the room its digits need. */
-.grid input {
-  padding: 0 var(--space-1);
+/* Each of the four is a .field.inline (two classes); `.grid.boxes` outranks it. Its short label
+   ("X", "W") takes only its own width, so the box keeps the rest of the column. */
+.grid.boxes > div {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--gap-tight);
 }
