@@ -1,5 +1,5 @@
-// The three MOSS-Image workflows (SPEC 6.10.4). moss-text-to-image is a trial: its graph is
-// the agent's draft comfy-workflows/moss-image-plain.json (14 1.41, 1.46 "Workflow data").
+// The three MOSS-Image workflows (SPEC 6.10.4). moss-text-to-image is proven [D-103]: its graph
+// is the agent's draft comfy-workflows/moss-image-plain.json (14 1.41, 1.46 "Workflow data").
 // The other two are drafts: their graphs are stand-ins that only the tests use, never sent to
 // a server, until real graphs arrive as data.
 import type { Graph, WorkflowSpec } from './types'
@@ -32,7 +32,7 @@ const common = {
 export const mossTextToImage: WorkflowSpec = {
   ...common,
   version: 2,
-  status: 'trial',
+  status: 'proven',
   size: MOSS_FIRST_RUN_SIZE,
   id: 'moss-text-to-image',
   label: 'MOSS-Image: picture from a prompt',

@@ -32,7 +32,7 @@ const sortedClasses = (spec: WorkflowSpec) =>
 
 const each = NON_DRAFT_WORKFLOWS.map((w) => [w.id, w] as const)
 
-describe('the trial workflows: real graphs from the drafts [SPEC 14 1.41, 1.46 "Workflow data"]', () => {
+describe('the proven workflows: real graphs from the drafts [SPEC 14 1.41, 1.46 "Workflow data"]', () => {
   it.each(each)('%s: needs.nodeClasses is exactly the classes its graph uses', (_id, spec) => {
     expect([...spec.needs.nodeClasses].sort()).toEqual(sortedClasses(spec))
   })
@@ -44,15 +44,15 @@ describe('the trial workflows: real graphs from the drafts [SPEC 14 1.41, 1.46 "
   })
 
   it.each(each)('%s: says it is an agent draft never opened in ComfyUI', (_id, spec) => {
-    expect(spec.status).toBe('trial')
+    expect(spec.status).toBe('proven')
     expect(spec.source.exportedFrom).toBe('agent draft, never opened in ComfyUI')
     expect(spec.source.changes.length).toBeGreaterThan(0)
   })
 })
 
-describe('moss-text-to-image as trial [comfy-workflows/moss-image-plain.json]', () => {
-  it('is a trial with the slots of the notes: node 4 text, node 6 size, node 7 seed, node 9', () => {
-    expect(mossTextToImage.status).toBe('trial')
+describe('moss-text-to-image as proven [comfy-workflows/moss-image-plain.json]', () => {
+  it('is proven, with the slots of the notes: node 4 text, node 6 size, node 7 seed, node 9', () => {
+    expect(mossTextToImage.status).toBe('proven')
     expect(mossTextToImage.slots).toEqual({
       prompt: { node: '4', input: 'text' },
       seed: [{ node: '7', input: 'seed' }],
@@ -90,9 +90,9 @@ describe('moss-text-to-image as trial [comfy-workflows/moss-image-plain.json]', 
   })
 })
 
-describe('h3-text-to-video as trial [comfy-workflows/h3-video-text.json]', () => {
-  it('is a trial with the slots of the notes: node 5, node 6 noise_seed, node 14', () => {
-    expect(h3TextToVideo.status).toBe('trial')
+describe('h3-text-to-video as proven [comfy-workflows/h3-video-text.json]', () => {
+  it('is proven, with the slots of the notes: node 5, node 6 noise_seed, node 14', () => {
+    expect(h3TextToVideo.status).toBe('proven')
     expect(h3TextToVideo.slots).toEqual({
       prompt: { node: '5', input: 'prompt' },
       seed: [{ node: '6', input: 'noise_seed' }],

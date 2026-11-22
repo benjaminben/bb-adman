@@ -1,5 +1,5 @@
 // The three MiniMax H3 workflows (SPEC 6.10.4, 6.10.7; 14 1.39: H3 needs 0.33.0, sound is
-// kept). All three are trials, each graph an agent draft from comfy-workflows/ shipped as data.
+// kept). All three are proven [D-103], each graph an agent draft from comfy-workflows/ shipped as data.
 // h3-text-to-video is the draft h3-video-text.json, which the official template confirms
 // (14 1.46). h3-image-to-video is the first-frame draft (14 1.54 P-4 part 1).
 // h3-reference-to-video is the reference draft h3-video-references.json (P-4 part 2).
@@ -22,9 +22,9 @@ import referenceGraph from './h3-reference-to-video.json'
 
 const model = (mainFile: string) => ({ label: 'MiniMax H3', mainFile })
 
-// The trial graphs' shared part: the "App fills" list of REFERENCE-NOTES.md, node 5 prompt,
+// The three graphs' shared part: the "App fills" list of REFERENCE-NOTES.md, node 5 prompt,
 // width, height, length; node 6 noise_seed; node 14 filename_prefix.
-const TRIAL_SLOTS: WorkflowSlots = {
+const H3_SLOTS: WorkflowSlots = {
   prompt: { node: '5', input: 'prompt' },
   seed: [{ node: '6', input: 'noise_seed' }],
   width: { node: '5', input: 'width' },
@@ -34,7 +34,7 @@ const TRIAL_SLOTS: WorkflowSlots = {
   outputNode: '14',
 }
 
-// Every class of the trial graphs but node 5, the conditioning node.
+// Every class of the text and first-frame graphs but node 5, the conditioning node.
 const LOADERS = ['UNETLoader', 'CLIPLoader', 'VAELoader']
 const MAKING = [
   'RandomNoise',
@@ -47,11 +47,11 @@ const MAKING = [
   'CreateVideo',
   'SaveVideo',
 ]
-const TRIAL_CLASSES = [...LOADERS, 'MiniMaxH3ImageToVideo', ...MAKING]
+const H3_CLASSES = [...LOADERS, 'MiniMaxH3ImageToVideo', ...MAKING]
 
-const trial = {
+const shared = {
   version: 2,
-  status: 'trial',
+  status: 'proven',
   job: 'video',
   size: H3_FIRST_RUN_SIZE,
   video: H3_VIDEO,
@@ -59,14 +59,14 @@ const trial = {
 } as const
 
 export const h3TextToVideo: WorkflowSpec = {
-  ...trial,
+  ...shared,
   id: 'h3-text-to-video',
   label: 'MiniMax H3: video from a prompt',
   videoStart: { firstFrame: false, references: false },
   model: model(H3_MAIN_FILE),
   graph: textGraph as Graph,
-  slots: TRIAL_SLOTS,
-  needs: h3Needs(H3_MAIN_FILE, TRIAL_CLASSES),
+  slots: H3_SLOTS,
+  needs: h3Needs(H3_MAIN_FILE, H3_CLASSES),
   leavesOnServer: [LEAVES.video, LEAVES.record],
   source: {
     template:
@@ -82,17 +82,17 @@ export const h3TextToVideo: WorkflowSpec = {
   },
 }
 
-// [1.54] P-4: a trial whose graph is the agent's draft comfy-workflows/h3-video-first-frame.json,
+// [1.54] P-4: the graph is the agent's draft comfy-workflows/h3-video-first-frame.json,
 // the text graph with a LoadImage (node 15) into first_frame. Same model files as the text one.
 export const h3ImageToVideo: WorkflowSpec = {
-  ...trial,
+  ...shared,
   id: 'h3-image-to-video',
   label: 'MiniMax H3: video from a first frame',
   videoStart: { firstFrame: true, references: false },
   model: model(H3_MAIN_FILE),
   graph: imageGraph as Graph,
-  slots: { ...TRIAL_SLOTS, firstFrame: { node: '15', input: 'image' } },
-  needs: h3Needs(H3_MAIN_FILE, [...TRIAL_CLASSES, 'LoadImage']),
+  slots: { ...H3_SLOTS, firstFrame: { node: '15', input: 'image' } },
+  needs: h3Needs(H3_MAIN_FILE, [...H3_CLASSES, 'LoadImage']),
   leavesOnServer: [LEAVES.uploads, LEAVES.video, LEAVES.record],
   source: {
     template:
@@ -107,20 +107,20 @@ export const h3ImageToVideo: WorkflowSpec = {
   },
 }
 
-// [1.54] P-4 part 2: a trial whose graph is the agent's draft comfy-workflows/
+// [1.54] P-4 part 2: the graph is the agent's draft comfy-workflows/
 // h3-video-references.json: the ref2va model, MiniMaxH3ReferenceToVideo with audio_vae, and
 // two LoadImage nodes (15, 16) into ref_images. [1.59] L-16: one reference is declared, at
 // most and at least, so only what ran is offered; node 16 and its key stay as data and every
 // fill drops them. Two references wait for their own real run, with CU-6b.
 export const h3ReferenceToVideo: WorkflowSpec = {
-  ...trial,
+  ...shared,
   id: 'h3-reference-to-video',
   label: 'MiniMax H3: video from reference pictures',
   videoStart: { firstFrame: false, references: true },
   model: model(H3_REF_FILE),
   graph: referenceGraph as Graph,
   slots: {
-    ...TRIAL_SLOTS,
+    ...H3_SLOTS,
     // The one reference is never unused.
     references: [
       { image: { node: '15', input: 'image' }, dropWhenUnused: { nodes: [], inputs: [] } },

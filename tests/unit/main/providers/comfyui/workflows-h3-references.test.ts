@@ -18,9 +18,9 @@ const REFS = { job: 'video', videoStart: { firstFrame: false, references: true }
 
 const graphClasses = () => [...new Set(Object.values(spec.graph).map((n) => n.class_type))].sort()
 
-describe('h3-reference-to-video as trial [SPEC 14 1.54 P-4 part 2, comfy-workflows/h3-video-references.json]', () => {
-  it('is a trial with the slots of the notes: node 5, node 6, node 15 image, node 14 [1.59 L-16]', () => {
-    expect(spec.status).toBe('trial')
+describe('h3-reference-to-video as proven [SPEC 14 1.54 P-4 part 2, comfy-workflows/h3-video-references.json]', () => {
+  it('is proven, with the slots of the notes: node 5, node 6, node 15 image, node 14 [1.59 L-16]', () => {
+    expect(spec.status).toBe('proven')
     expect(spec.slots).toEqual({
       prompt: { node: '5', input: 'prompt' },
       seed: [{ node: '6', input: 'noise_seed' }],
@@ -113,19 +113,25 @@ describe('h3-reference-to-video as trial [SPEC 14 1.54 P-4 part 2, comfy-workflo
   })
 })
 
-describe('the videoStart filter with three trial video workflows [SPEC 14 1.54 P-4 condition]', () => {
+describe('the videoStart filter with three video workflows [SPEC 14 1.54 P-4 condition]', () => {
   const who = { devTools: true, actor: 'user' } as const
   // The reference workflow first, so a lost filter would pick it for the wrong start.
   const list = [spec, h3ImageToVideo, h3TextToVideo]
 
-  it('offers h3-reference-to-video for references only, to the user with dev tools on', () => {
+  it('offers h3-reference-to-video for references only, to either actor [D-103]', () => {
     expect(offeredWorkflow(REFS, who)?.id).toBe('h3-reference-to-video')
-    expect(offeredWorkflow(REFS, { devTools: false, actor: 'user' })).toBeNull()
-    // [D-080] an agent gets a trial workflow as the user does, only with dev tools on.
-    expect(offeredWorkflow(REFS, { devTools: true, actor: 'agent' })?.id).toBe(
+    expect(offeredWorkflow(REFS, { devTools: false, actor: 'user' })?.id).toBe(
       'h3-reference-to-video',
     )
-    expect(offeredWorkflow(REFS, { devTools: false, actor: 'agent' })).toBeNull()
+    expect(offeredWorkflow(REFS, { devTools: false, actor: 'agent' })?.id).toBe(
+      'h3-reference-to-video',
+    )
+    // [D-080] as a trial it would go to either actor only with dev tools on.
+    const trial = [{ ...spec, status: 'trial' as const }]
+    expect(offeredWorkflow(REFS, { devTools: true, actor: 'agent' }, trial)?.id).toBe(
+      'h3-reference-to-video',
+    )
+    expect(offeredWorkflow(REFS, { devTools: false, actor: 'agent' }, trial)).toBeNull()
   })
 
   it('never picks it for no start or a first frame', () => {

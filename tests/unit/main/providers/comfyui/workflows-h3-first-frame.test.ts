@@ -6,9 +6,9 @@ import { offeredWorkflow } from '@/main/providers/comfyui/workflows/offered'
 
 const PROMPT_ID = '0b7e8f52-5d1c-4c1e-9a3e-2f6f1d9b7c10'
 
-describe('h3-image-to-video as trial [SPEC 14 1.54 P-4, comfy-workflows/h3-video-first-frame.json]', () => {
-  it('is a trial with the slots of the notes: node 5, node 6 noise_seed, node 15 image, node 14', () => {
-    expect(h3ImageToVideo.status).toBe('trial')
+describe('h3-image-to-video as proven [SPEC 14 1.54 P-4, comfy-workflows/h3-video-first-frame.json]', () => {
+  it('is proven, with the slots of the notes: node 5, node 6 noise_seed, node 15 image, node 14', () => {
+    expect(h3ImageToVideo.status).toBe('proven')
     expect(h3ImageToVideo.slots).toEqual({
       prompt: { node: '5', input: 'prompt' },
       seed: [{ node: '6', input: 'noise_seed' }],
@@ -64,7 +64,7 @@ describe('h3-image-to-video as trial [SPEC 14 1.54 P-4, comfy-workflows/h3-video
   })
 })
 
-describe('the videoStart filter with two trial video workflows [SPEC 14 1.54 P-4 condition]', () => {
+describe('the videoStart filter with two video workflows [SPEC 14 1.54 P-4 condition]', () => {
   const who = { devTools: true, actor: 'user' } as const
 
   it('picks h3-text-to-video only for no first frame and no references', () => {
@@ -73,12 +73,19 @@ describe('the videoStart filter with two trial video workflows [SPEC 14 1.54 P-4
     expect(offeredWorkflow(none, who, [h3ImageToVideo, h3TextToVideo])?.id).toBe('h3-text-to-video')
   })
 
-  it('offers h3-image-to-video for a first frame to the user with dev tools on only', () => {
+  it('offers h3-image-to-video for a first frame to either actor, tools or not [D-103]', () => {
     const frame = { job: 'video', videoStart: { firstFrame: true, references: false } } as const
     expect(offeredWorkflow(frame, who)?.id).toBe('h3-image-to-video')
-    expect(offeredWorkflow(frame, { devTools: false, actor: 'user' })).toBeNull()
-    // [D-080] an agent gets a trial workflow as the user does, only with dev tools on.
+    expect(offeredWorkflow(frame, { devTools: false, actor: 'user' })?.id).toBe('h3-image-to-video')
     expect(offeredWorkflow(frame, { devTools: true, actor: 'agent' })?.id).toBe('h3-image-to-video')
-    expect(offeredWorkflow(frame, { devTools: false, actor: 'agent' })).toBeNull()
+    expect(offeredWorkflow(frame, { devTools: false, actor: 'agent' })?.id).toBe(
+      'h3-image-to-video',
+    )
+    // [D-080] as a trial it would go to either actor only with dev tools on.
+    const trial = [{ ...h3ImageToVideo, status: 'trial' as const }]
+    expect(offeredWorkflow(frame, { devTools: true, actor: 'agent' }, trial)?.id).toBe(
+      'h3-image-to-video',
+    )
+    expect(offeredWorkflow(frame, { devTools: false, actor: 'agent' }, trial)).toBeNull()
   })
 })

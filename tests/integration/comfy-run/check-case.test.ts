@@ -4,7 +4,7 @@ import { createComfyClient } from '@/main/providers/comfyui/client'
 import { flux3KleinEditReferences } from '@/main/providers/comfyui/workflows/flux3'
 import { mossTextToImage } from '@/main/providers/comfyui/workflows/moss'
 import { recordCalls, unexpectedCalls } from '../../comfy/recorder'
-import { runCheckCase, TRIAL_WORKFLOWS } from '../../comfy/check-case'
+import { runCheckCase, CHECKED_WORKFLOWS } from '../../comfy/check-case'
 import { makePrinter } from '../../comfy/print'
 
 let stand: StandIn | undefined
@@ -30,8 +30,8 @@ function holdsAddress(lines: string[], s: StandIn): boolean {
 }
 
 describe('test:comfy case 1, the check [SPEC 14 1.41 CU-5a, 1.45 B-1, 1.46]', () => {
-  it('checks the trial workflows only: MOSS picture, the three H3 videos and Flux 3 reference', () => {
-    expect(TRIAL_WORKFLOWS.map((w) => w.id)).toEqual([
+  it('checks every workflow but the drafts: MOSS picture, the three H3 videos and Flux 3 reference', () => {
+    expect(CHECKED_WORKFLOWS.map((w) => w.id)).toEqual([
       'moss-text-to-image',
       'h3-text-to-video',
       'h3-image-to-video',

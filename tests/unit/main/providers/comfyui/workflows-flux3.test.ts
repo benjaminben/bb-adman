@@ -17,13 +17,13 @@ describe('flux3-klein-edit-references, the seventh workflow [SPEC 14 1.46 part B
     expect(WORKFLOWS.indexOf(flux)).toBe(6)
   })
 
-  it('is a trial picture-from-references workflow on FLUX 3 klein', () => {
+  it('is a proven picture-from-references workflow on FLUX 3 klein', () => {
     expect(flux).toMatchObject({
       id: 'flux3-klein-edit-references',
       version: 1,
       label: 'FLUX 3 klein: picture from a prompt and one reference picture',
       job: 'image_refs',
-      status: 'trial',
+      status: 'proven',
       model: { label: 'FLUX 3 klein', mainFile: 'flux3-image-klein-base-int8-convrot.safetensors' },
     })
     expect(flux.videoStart).toBeUndefined()
@@ -107,12 +107,16 @@ describe('flux3-klein-edit-references, the seventh workflow [SPEC 14 1.46 part B
     }
   })
 
-  it('is the workflow a reference run gets, with dev tools on, for the user [1.46 part B]', () => {
+  it('is the workflow a reference run gets, for either actor [1.46 part B, D-103]', () => {
     expect(NON_DRAFT_WORKFLOWS).toContain(flux)
     expect(offeredWorkflow({ job: 'image_refs' }, USER_DEV)).toBe(flux)
-    // [D-080] an agent gets a trial workflow as the user does, only with dev tools on.
     expect(offeredWorkflow({ job: 'image_refs' }, { devTools: true, actor: 'agent' })).toBe(flux)
-    expect(offeredWorkflow({ job: 'image_refs' }, { devTools: false, actor: 'agent' })).toBeNull()
+    expect(offeredWorkflow({ job: 'image_refs' }, { devTools: false, actor: 'agent' })).toBe(flux)
+    // [D-080] as a trial it would go to an agent only with dev tools on.
+    const trial = [{ ...flux, status: 'trial' as const }]
+    expect(
+      offeredWorkflow({ job: 'image_refs' }, { devTools: false, actor: 'agent' }, trial),
+    ).toBeNull()
   })
 
   it('takes one picture: a fill sets it, and a width or a second picture throws', () => {

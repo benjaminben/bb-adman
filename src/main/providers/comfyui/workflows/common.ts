@@ -9,7 +9,7 @@ export const MOSS_FULL_SIZE: SizeRule = { multiple: 16, minPixels: 1_000_000, ma
 export const H3_FULL_SIZE: SizeRule = { multiple: 32, minPixels: 589_824, maxPixels: 1_048_576 }
 
 // [1.46] Start small: the first runs use the reference templates' figures, about 1 MP for
-// MOSS-Image and 0.4 MP for MiniMax H3. The trial specs use these.
+// MOSS-Image and 0.4 MP for MiniMax H3. The proven specs use these.
 export const MOSS_FIRST_RUN_SIZE: SizeRule = {
   multiple: 16,
   minPixels: 840_000,
@@ -85,7 +85,7 @@ export function h3Needs(mainFile: string, nodeClasses: string[]) {
   return needs('0.33.0', files, nodeClasses)
 }
 
-// A trial graph is an agent's draft from comfy-workflows/, shipped as data (14 1.41, OI-65).
+// A shipped graph is an agent's draft from comfy-workflows/, shipped as data (14 1.41, OI-65).
 export const AGENT_DRAFT = 'agent draft, never opened in ComfyUI'
 
 // [1.46] The one source.changes line of a spec that runs at a first-run size.
