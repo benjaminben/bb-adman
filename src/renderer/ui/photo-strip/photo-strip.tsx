@@ -26,6 +26,8 @@ export type PhotoStripProps = {
   adding: boolean
   addingLabel?: string
   needsOne?: boolean
+  // "small" draws the tiles at --option-thumb, for a narrow panel (the Assets panel).
+  size?: 'regular' | 'small'
   removeRef?(id: string, el: HTMLButtonElement | null): void
 }
 
@@ -64,8 +66,9 @@ function Tile({ photo, props }: { photo: StripPhoto; props: PhotoStripProps }) {
 export function PhotoStrip(props: PhotoStripProps) {
   const { photos, adding } = props
   const warn = props.needsOne === true && photos.length === 0
+  const small = props.size === 'small' ? ` ${styles.small}` : ''
   return (
-    <ul className={styles.strip} aria-label={props.label}>
+    <ul className={`${styles.strip}${small}`} aria-label={props.label}>
       {photos.map((photo) => (
         <Tile key={photo.id} photo={photo} props={props} />
       ))}

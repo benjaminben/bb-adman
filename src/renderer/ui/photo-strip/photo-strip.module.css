@@ -22,6 +22,13 @@
   object-fit: contain;
   background: var(--canvas-backdrop);
 }
+.small .picture {
+  width: var(--option-thumb);
+  height: var(--option-thumb);
+}
+.small .missing {
+  padding: var(--space-1);
+}
 .missing {
   flex-direction: column;
   align-items: center;
