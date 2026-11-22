@@ -131,13 +131,18 @@ export async function suggestAndUse(page: Page, layer: string, line: string): Pr
   const panel = page.getByRole('region', { name: 'Properties' })
   await panel.getByRole('button', { name: 'Suggest copy…' }).click()
   const dialog = page.getByRole('dialog', { name: `Copy options for ${layer}` })
-  await dialog.getByRole('button', { name: 'Make new options…' }).click()
-  const run = page.getByRole('dialog', { name: 'Suggest copy' })
-  await run.getByRole('radio', { name: 'Fake provider' }).check()
-  await run.getByRole('button', { name: 'Suggest copy' }).click()
-  await expect(run).toHaveCount(0, CLOSES)
-  const option = dialog.getByRole('listitem').filter({ hasText: line })
-  await option.getByRole('button', { name: 'Use this text' }).click()
+  // DLG-4b: with no options yet the run setup shows inside the dialog at once; otherwise
+  // "New options" (named "Make new options…") shows it.
+  const generate = dialog.getByRole('button', { name: 'Generate' })
+  const newOptions = dialog.getByRole('button', { name: 'Make new options…' })
+  await expect(generate.or(newOptions)).toBeVisible()
+  if (!(await generate.isVisible())) await newOptions.click()
+  await dialog.getByRole('radio', { name: 'Fake provider' }).check()
+  await expect(dialog.getByText('This uses the fake provider. Nothing is charged.')).toBeVisible()
+  await generate.click()
+  await expect(generate).toHaveCount(0, CLOSES)
+  await dialog.getByRole('radio', { name: line }).check()
+  await dialog.getByRole('button', { name: 'Use', exact: true }).click()
 }
 
 // Step 7: the cut-out of the selected picture layer, through its run dialog.
