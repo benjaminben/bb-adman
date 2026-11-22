@@ -99,9 +99,10 @@ export const copyLabel = (raw: string): CopyField | null =>
 export function heading(line: string): { level: number; text: string } | null {
   const match = /^(#{1,6}) (.*)$/.exec(line)
   if (match === null) return null
-  const text = unmarked(match[2])
+  const [, marks = '', rest = ''] = match
+  const text = unmarked(rest)
   const label = text.endsWith(':') ? text.slice(0, -1).trimEnd() : text
-  return label === '' ? null : { level: match[1].length, text: label }
+  return label === '' ? null : { level: marks.length, text: label }
 }
 
 // `Label: value`, `**Label:** value` or `**Label**: value`; the label is not yet looked up.
@@ -123,7 +124,7 @@ export function labelLine(line: string): { label: string; value: string } | null
 // A list item: `- `, `* `, `+ ` or a number and `. `, after any indent. Its text, trimmed.
 export function listItem(line: string): string | null {
   const match = /^\s*(?:[-*+]|\d+\.) (.*)$/.exec(line)
-  return match === null ? null : match[1].trim()
+  return match === null ? null : (match[1] ?? '').trim()
 }
 
 export function fence(line: string): boolean {

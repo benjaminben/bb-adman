@@ -31,6 +31,7 @@ type Section =
   | { kind: 'subjects'; subject: Subject | null }
   | { kind: 'copy'; entry: Map<CopyField, string> }
 
+const BYTE_ORDER_MARK = String.fromCharCode(0xfeff)
 const TOP: Section = { kind: 'top' }
 const IGNORED: Section = { kind: 'ignored' }
 
@@ -118,7 +119,7 @@ class Walk {
       if (label !== null) this.section = this.collected.section(label)
       else if (level === 2) this.section = IGNORED
       else {
-        this.collected.text('campaignName')?.[0].push(text)
+        this.collected.text('campaignName')?.[0]?.push(text)
         this.section = TOP
       }
     } else if (level === 3 && this.section.kind === 'subjects') {
@@ -154,7 +155,7 @@ class Walk {
       return section.subject !== null && this.subjectLabel(section.subject, raw, value)
     const label = topLabel(raw)
     if (label?.kind === 'text') {
-      if (value !== '') this.collected.text(label.field)?.[0].push(value)
+      if (value !== '') this.collected.text(label.field)?.[0]?.push(value)
       return this.closeList()
     }
     if (label?.kind !== 'list') return false
@@ -237,7 +238,8 @@ function draftOf(collected: Collected): Record<string, unknown> {
 export function parseMarkdownBrief(text: string): Result<BriefDraft> {
   const walk = new Walk()
   let inFence = false
-  for (const raw of text.replace(/^﻿/, '').split('\n')) {
+  const body = text.startsWith(BYTE_ORDER_MARK) ? text.slice(1) : text
+  for (const raw of body.split('\n')) {
     const line = raw.endsWith('\r') ? raw.slice(0, -1) : raw
     if (fence(line)) inFence = !inFence
     else if (!inFence) {

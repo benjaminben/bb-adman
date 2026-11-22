@@ -71,7 +71,8 @@ describe('parseMarkdownBrief: the D2 example [A-342]', () => {
   })
 
   it('reads the same with a byte-order mark and CRLF line ends', () => {
-    expect(parseMarkdownBrief(`﻿${EXAMPLE.replaceAll('\n', '\r\n')}`)).toEqual(
+    const mark = String.fromCharCode(0xfeff)
+    expect(parseMarkdownBrief(mark + EXAMPLE.replaceAll('\n', '\r\n'))).toEqual(
       parseMarkdownBrief(EXAMPLE),
     )
   })
