@@ -17,6 +17,6 @@ export function assetCommands(deps: CoreDeps): CommandHandler[] {
     assetRemove(),
     assetCheckChanged(deps),
     assetAddGenerated(deps),
-    assetImportFiles(),
+    assetImportFiles(deps),
   ]
 }

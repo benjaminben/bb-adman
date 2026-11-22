@@ -1,8 +1,12 @@
 // The permission broker (spec/phases/phase-10.md, ask flow, A-237 to A-240): the bus's ask for
 // an agent command whose policy is ask, and the user's answer through agent.answerPermission.
 // One request waits at a time. It ends once: on the user's answer, at ASK_WAIT_MS, or when its
-// project closes. An answer that comes after the end changes nothing.
+// project closes. An answer that comes after the end changes nothing. Round 2 (D7, R2P-5): each
+// ask has a kind; mcp.autoApproveDestructive answers deletes only; an import ask holds its list
+// of normalised paths for agent.askFiles while it waits, and never sends one in an event.
 import { randomUUID } from 'node:crypto'
+import { z } from 'zod'
+import { importPathTexts } from '@/main/assets/import-files'
 import { AGENT_POLICY } from '@/main/commands/agent-policy'
 import type { AskAnswer, BusEvent, PermissionRequest } from '@/main/commands/bus'
 import type { ProjectRegistry } from '@/main/db/project-registry'
@@ -12,7 +16,7 @@ import { ASK_WAIT_MS } from '@/shared/config/agent-ask'
 import type { AgentAnswerPermissionInput } from '@/shared/schemas/commands/agent'
 import { AppError } from '@/shared/schemas/result'
 import { askTarget } from './ask-target'
-import { ASK_KINDS } from './ask-kinds'
+import { ASK_KINDS, type AskKind } from './ask-kinds'
 
 export type PermissionBrokerDeps = {
   emit: (event: BusEvent) => void
@@ -25,6 +29,8 @@ export type PermissionBrokerDeps = {
 export type PermissionBroker = {
   ask(request: PermissionRequest): Promise<AskAnswer>
   answer(input: AgentAnswerPermissionInput): void
+  // The paths of the open request with this ID, for agent.askFiles; NOT_FOUND once it ended.
+  files(requestId: string): string[]
 }
 
 export const REQUEST_ENDED = 'That request has ended.'
@@ -34,8 +40,21 @@ const PROJECT_CHECK_MS = 250
 
 type Outcome = AskAnswer | 'auto_approved' | 'project_closed'
 
+const importInput = z.object({ paths: z.array(z.string()) })
+
+// The paths each import command asks about, checked by the text rules before anything is sent
+// (a refusal here is the command's INVALID_INPUT). An import ask with no reader is refused.
+const FILE_READERS: Readonly<Record<string, (input: unknown) => string[] | null>> = {
+  'asset.importFiles': (input) => {
+    const parsed = importInput.safeParse(input)
+    return parsed.success ? importPathTexts(parsed.data.paths) : null
+  },
+}
+
 type Waiting = {
   requestId: string
+  kind: AskKind
+  files: string[]
   projectId: string | null
   stillOpen: () => boolean
   end: (answer: AskAnswer | AppError) => void
@@ -78,7 +97,7 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
     }
   }
 
-  function wait(request: PermissionRequest): Promise<AskAnswer> {
+  function wait(request: PermissionRequest, kind: AskKind, files: string[]): Promise<AskAnswer> {
     const requestId = randomUUID()
     const stillOpen = projectWatch(request.projectId)
     return new Promise<AskAnswer>((resolve, reject) => {
@@ -95,7 +114,7 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
       const watch = setInterval(() => {
         if (!stillOpen()) end(projectGone(request.projectId))
       }, PROJECT_CHECK_MS)
-      waiting = { requestId, projectId: request.projectId, stillOpen, end }
+      waiting = { requestId, kind, files, projectId: request.projectId, stillOpen, end }
       const expiresAt = new Date(deps.now().getTime() + ASK_WAIT_MS).toISOString()
       deps.emit({
         name: 'agent.permissionRequested',
@@ -105,8 +124,8 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
           action: AGENT_POLICY[request.command]?.action ?? request.command,
           target: askTarget(deps.projects, request),
           expiresAt,
-          kind: ASK_KINDS[request.command] ?? 'delete',
-          fileCount: 0,
+          kind,
+          fileCount: files.length,
         },
       })
     })
@@ -114,7 +133,14 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
 
   return {
     async ask(request) {
-      if (deps.settings.get().mcp.autoApproveDestructive) {
+      const kind = ASK_KINDS[request.command]
+      const reader = FILE_READERS[request.command]
+      const files = kind === 'import' ? (reader?.(request.input) ?? null) : []
+      if (!kind || !files) {
+        logOutcome(request, 'refused')
+        return 'refused'
+      }
+      if (kind === 'delete' && deps.settings.get().mcp.autoApproveDestructive) {
         logOutcome(request, 'auto_approved')
         return 'allowed'
       }
@@ -122,7 +148,7 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
         logOutcome(request, 'busy')
         return 'busy'
       }
-      return wait(request)
+      return wait(request, kind, files)
     },
     answer(input) {
       const current = waiting
@@ -133,10 +159,17 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
         current.end(projectGone(current.projectId))
         throw new AppError('NOT_FOUND', REQUEST_ENDED)
       }
-      if (input.allow && input.rememberAuto) {
+      if (input.allow && input.rememberAuto && current.kind === 'delete') {
         deps.settings.update({ mcp: { autoApproveDestructive: true } })
       }
       current.end(input.allow ? 'allowed' : 'refused')
+    },
+    files(requestId) {
+      const current = waiting
+      if (!current || current.requestId !== requestId || !current.stillOpen()) {
+        throw new AppError('NOT_FOUND', REQUEST_ENDED)
+      }
+      return [...current.files]
     },
   }
 }
