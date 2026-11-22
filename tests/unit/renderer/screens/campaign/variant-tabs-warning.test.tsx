@@ -51,7 +51,7 @@ async function draw(jobOf: string | null) {
 }
 
 const tabs = () =>
-  within(screen.getByRole('tablist', { name: 'Open variants' }))
+  within(screen.getByRole('tablist', { name: 'Campaign' }))
     .getAllByRole('tab')
     .map((t) => t.textContent)
 
@@ -62,7 +62,7 @@ describe('closing a variant tab with an attached job [spec/screens-ai.md, D-036]
     await draw(MASTER.id)
     await closeSecond()
     expect(screen.queryByRole('dialog')).toBeNull()
-    expect(tabs()).toEqual(['Overview', 'Master post · 1:1 · en'])
+    expect(tabs()).toEqual(['Variants', 'Master post · 1:1 · en'])
   })
 
   it('warns first when one runs, and "Keep open" keeps the tab', async () => {
@@ -82,6 +82,6 @@ describe('closing a variant tab with an attached job [spec/screens-ai.md, D-036]
       input: { projectId: P, jobId: 'J1' },
     })
     await act(async () => {})
-    expect(tabs()).toEqual(['Overview', 'Master post · 1:1 · en'])
+    expect(tabs()).toEqual(['Variants', 'Master post · 1:1 · en'])
   })
 })
