@@ -1,5 +1,5 @@
 // spec/screens-ai.md, "Attached jobs and the close warning": quitting with jobs queued or
-// running shows "Quit Adman?" with the count; with nothing running, no box.
+// running shows "Quit AdManager?" with the count; with nothing running, no box.
 import { describe, expect, it } from 'vitest'
 import { QUIT_BUTTON, quitQuestion } from '@/main/quit-question'
 
@@ -13,7 +13,7 @@ describe('the quit question [spec/screens-ai.md, D-036]', () => {
     [3, '3 runs are still going. Quitting stops them.'],
   ])('with %i runs gives the title, the count, the warning and the two buttons', (n, start) => {
     expect(quitQuestion(n)).toEqual({
-      message: 'Quit Adman?',
+      message: 'Quit AdManager?',
       detail:
         `${start} Requests already sent to a paid provider may still be ` +
         'charged, and their results are lost.',

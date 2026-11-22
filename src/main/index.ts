@@ -16,6 +16,8 @@ import { createAppWindow } from './windows/app-window'
 import { httpsOnly } from './windows/open-external'
 import { denyPermissions } from './windows/permissions'
 import { setAppMenu } from './windows/app-menu'
+import { applyAppIdentity } from './windows/app-identity'
+import { APP_DISPLAY_NAME } from '@/shared/config/app-name'
 import { devToolsEnabled } from './dev-tools-flag'
 import { pngConverter } from './png-converter'
 import { pictureFitter } from './picture-fitter'
@@ -231,7 +233,8 @@ function start(): void {
       : { execPath, packaged: false, appPath: app.getAppPath() },
   )
   const devTools = devToolsEnabled(app.isPackaged, process.env)
-  setAppMenu(Menu, { platform: process.platform, appName: app.name, devTools })
+  applyAppIdentity(app, process.platform, APP_DISPLAY_NAME)
+  setAppMenu(Menu, { platform: process.platform, appName: APP_DISPLAY_NAME, devTools })
   openAppWindow()
   opener.openPending()
 }

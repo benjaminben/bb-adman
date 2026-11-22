@@ -1,6 +1,8 @@
 // spec/screens-ai.md, "Attached jobs and the close warning": the system message box shown
 // before quitting while runs are queued or running in any open project. No box when none run.
 // "Cancel" is the default, so Enter or Escape keeps the app open.
+import { APP_DISPLAY_NAME } from '@/shared/config/app-name'
+
 export type QuitQuestion = {
   message: string
   detail: string
@@ -40,7 +42,7 @@ export function quitQuestion(
         ]
       : []
   return {
-    message: 'Quit Adman?',
+    message: `Quit ${APP_DISPLAY_NAME}?`,
     detail: [...stops, ...left.map(leftRunningLine)].join(' '),
     buttons: ['Quit', 'Cancel'],
     defaultId: 1,
