@@ -30,13 +30,13 @@
   gap: var(--gap-inline);
 }
 .name {
-  flex: 0 1 var(--field-label-width);
+  flex: 1 1 0;
   min-width: 0;
   font-weight: var(--weight-medium);
 }
 /* The description is long text: the reading face. */
 .description {
-  flex: 1;
+  flex: 2 1 0;
   min-width: 0;
   font-family: var(--font-reading);
   font-size: var(--font-size-reading);
@@ -95,6 +95,7 @@
   color: var(--color-text-muted);
 }
 .choice input:disabled {
+  opacity: 0;
   cursor: default;
 }
 /* "ID" or "Project subject": a short label before its control. */
