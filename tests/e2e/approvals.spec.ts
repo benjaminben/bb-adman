@@ -1,7 +1,8 @@
 // AP-13, offline (spec/phases/approvals.md, exit criteria): the built app against the approvals
 // stand-in on 127.0.0.1 and the test picture store (dev tools on). Settings, make a link, the
 // gallery, a sign-off planted in the stand-in, Refresh, the marks; an edit, "Changed since
-// sign-off", "Update gallery", the earlier-version line. People are made up, at example.com.
+// published" and no sign-off (R-10), "Update gallery", still none. People are made up, at
+// example.com.
 import { test, expect, type ElectronApplication } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -74,22 +75,22 @@ test('link, gallery, sign-off, edit, update: the marks and the earlier-version l
   await expect(steps.grid(page).getByText('Signed off by 1')).toBeVisible()
 
   await steps.editVariant(page)
-  await expect(steps.grid(page).getByText('Changed since sign-off')).toBeVisible()
+  // R-10: the edit leaves the sign-off on an older version, so the app shows none at once.
+  await expect(steps.grid(page).getByText('Changed since published')).toBeVisible()
+  await expect(steps.grid(page).getByText('Signed off by 1')).toHaveCount(0)
+  await expect(steps.grid(page).getByRole('button', { name: /^Sign-offs/ })).toHaveCount(0)
 
   const dialog = await steps.updateGallery(page)
   const updated = stand.links.get([...stand.links.keys()][0] ?? '')?.gallery[0]
   expect(updated?.title).toBe(steps.EDITED_TITLE)
   expect(updated?.version).not.toBe(first.version)
-  await expect(
-    dialog.getByText(/^reviewer@example\.com · .* · for an earlier version$/),
-  ).toBeVisible()
+  await expect(dialog.getByText('No sign-offs yet.')).toBeVisible()
+  await expect(dialog.getByText(/reviewer@example\.com/)).toHaveCount(0)
   await dialog.getByRole('button', { name: 'Close' }).click()
 
   await expect(steps.bar(page).getByText('Signed off: 0 of 1 variant')).toBeVisible()
   const marks = steps.grid(page)
-  await expect(marks.getByText('Earlier version signed off')).toBeVisible()
-  await marks.getByRole('button', { name: 'Sign-offs (1)' }).click()
-  await expect(
-    marks.getByText(/^reviewer@example\.com · .* · for an earlier version$/),
-  ).toBeVisible()
+  await expect(marks.getByText(/earlier version|Changed since/i)).toHaveCount(0)
+  await expect(marks.getByRole('button', { name: /^Sign-offs/ })).toHaveCount(0)
+  await expect(marks.getByText(/reviewer@example\.com/)).toHaveCount(0)
 })

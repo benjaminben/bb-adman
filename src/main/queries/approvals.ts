@@ -61,6 +61,7 @@ function campaignVariants(db: Database.Database, campaignId: string, log: Activi
   )
 }
 
+// R-10: only the sign-offs of the variant's current rev; older rows stay on disk, unshown.
 function variantsOf(
   db: Database.Database,
   campaignId: string,
@@ -75,14 +76,8 @@ function variantsOf(
       currentRev: v.rev,
       publishedRev,
       signoffs: signoffs
-        .filter((s) => s.variantId === v.id)
-        .map((s) => ({
-          id: s.id,
-          email: s.email,
-          signedAt: s.signedAt,
-          version: s.version,
-          current: s.version === publishedRev,
-        })),
+        .filter((s) => s.variantId === v.id && s.version === v.rev)
+        .map((s) => ({ id: s.id, email: s.email, signedAt: s.signedAt, version: s.version })),
     }
   })
 }

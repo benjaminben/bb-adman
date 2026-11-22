@@ -48,7 +48,7 @@ describe('ApprovalMark [AP-12]', () => {
 
   it('opens and closes the sign-off list with the toggle', async () => {
     draw(SIGNED)
-    const toggle = screen.getByRole('button', { name: 'Sign-offs (2)' })
+    const toggle = screen.getByRole('button', { name: 'Sign-offs (1)' })
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
     expect(screen.queryByRole('list', { name: 'Sign-offs for Square post' })).toBeNull()
     await userEvent.click(toggle)
@@ -58,10 +58,7 @@ describe('ApprovalMark [AP-12]', () => {
       within(list)
         .getAllByRole('listitem')
         .map((li) => li.textContent),
-    ).toEqual([
-      `ana@example.com · ${timeText('2026-11-19T10:00:00.000Z')}`,
-      `ben@example.com · ${timeText('2026-11-18T11:00:00.000Z')} · for an earlier version`,
-    ])
+    ).toEqual([`ana@example.com · ${timeText('2026-11-19T10:00:00.000Z')}`])
     await userEvent.click(toggle)
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
     expect(screen.queryByRole('list', { name: 'Sign-offs for Square post' })).toBeNull()
@@ -71,7 +68,7 @@ describe('ApprovalMark [AP-12]', () => {
     const email = '<b>bold</b>@example.com'
     const signoffs = SIGNED.signoffs.map((s) => ({ ...s, email }))
     const { container } = draw({ ...SIGNED, signoffs })
-    await userEvent.click(screen.getByRole('button', { name: 'Sign-offs (2)' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sign-offs (1)' }))
     expect(container.querySelector('b')).toBeNull()
     expect(screen.getAllByRole('listitem')[0]).toHaveTextContent(email)
   })
@@ -79,7 +76,7 @@ describe('ApprovalMark [AP-12]', () => {
   it('has no accessibility violations, closed and open', async () => {
     draw(SIGNED)
     expect(await axeViolations()).toEqual([])
-    await userEvent.click(screen.getByRole('button', { name: 'Sign-offs (2)' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sign-offs (1)' }))
     expect(await axeViolations()).toEqual([])
   })
 })
@@ -103,7 +100,7 @@ describe('approvalFooter [AP-12]', () => {
     const items = screen.getAllByRole('listitem').filter((li) => li.parentElement?.tagName === 'UL')
     const marked = items.filter((li) => within(li).queryByText('Signed off by 1') !== null)
     expect(marked).toHaveLength(30)
-    expect(screen.getAllByRole('button', { name: 'Sign-offs (2)' })).toHaveLength(30)
+    expect(screen.getAllByRole('button', { name: 'Sign-offs (1)' })).toHaveLength(30)
     expect(screen.getByRole('group', { name: 'Approval marks for Post 29' })).toBeInTheDocument()
   })
 

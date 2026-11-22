@@ -17,10 +17,11 @@ type Props = {
   titles: Record<string, string>
 }
 
-// {a}: variants in the gallery with at least one current sign-off; {b}: those in the gallery.
+// {a}: variants in the gallery with at least one sign-off (all are of the current rev, R-10);
+// {b}: those in the gallery.
 function signedLine(variants: ApprovalsVariant[]): string {
   const shown = variants.filter((v) => v.publishedRev !== null)
-  const signed = shown.filter((v) => v.signoffs.some((s) => s.current))
+  const signed = shown.filter((v) => v.signoffs.length > 0)
   const noun = shown.length === 1 ? 'variant' : 'variants'
   return `Signed off: ${signed.length} of ${shown.length} ${noun}`
 }
