@@ -4,6 +4,7 @@ import { app, BrowserWindow, screen, shell } from 'electron'
 import { fileURLToPath } from 'node:url'
 import { appWindowOptions } from './app-window-options'
 import { decideWindowOpen, isAllowedNavigation } from './navigation'
+import { revealOnce } from './reveal-window'
 
 const DEV_SERVER = /^http:\/\/localhost:\d{1,5}\/?$/
 
@@ -41,7 +42,7 @@ export function createAppWindow(quiet = false): BrowserWindow {
   // maximize() would show it.
   if (quiet) win.setBounds(screen.getPrimaryDisplay().workArea)
   else
-    win.once('ready-to-show', () => {
+    revealOnce(win, () => {
       win.maximize()
       win.show()
     })

@@ -74,6 +74,16 @@ function openAppWindow(): BrowserWindow {
       void askToQuit()
     }
   })
+  // A page that did not load, or whose process ended, is written to the log: codes only, no
+  // address or path.
+  const fault = (name: string, message: string) =>
+    core?.log.write({ level: 'error', event: 'app', name, actor: 'system', ok: false, message })
+  win.webContents.on('did-fail-load', (_event, code, _text, _url, isMainFrame) => {
+    if (isMainFrame) fault('app.pageLoadFailed', `The app page did not load (code ${code})`)
+  })
+  win.webContents.on('render-process-gone', (_event, details) =>
+    fault('app.pageProcessGone', `The app page's process ended (${details.reason})`),
+  )
   // The render window ends first, so window-all-closed still quits the app (OI-23).
   win.on('closed', () => {
     if (appWindow === win) appWindow = null

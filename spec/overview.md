@@ -160,6 +160,7 @@ Built (`src/main/windows/app-window.ts`) [D-031] [REQ: FR-220]. The stakeholder'
 - Every time the app creates its window, it opens maximized: it fills the screen's work area and keeps its title bar. The macOS menu bar and Dock, and the Windows taskbar, stay visible.
 - Never full screen. The app does not set the `fullscreen` option and never calls `setFullScreen`. The user can still enter full screen with the system's own control.
 - The window is maximized on `ready-to-show`, before it is first shown, so the user never sees it small first.
+- The window is shown once, on whichever comes first: `ready-to-show`, a page that did not load (`did-fail-load`), or 4 seconds after it is made (`src/main/windows/reveal-window.ts`). The app must never run with no window: on its first launch the installed macOS app did, because `ready-to-show` never arrived. The cause is not known yet; the first launch also asks for Keychain access, which is the suspect. A page that does not load, or whose process ends, writes one line to the activity log (`app.pageLoadFailed`, `app.pageProcessGone`) with a code only, no address or path.
 - The size numbers have one owner, `src/main/windows/app-window-options.ts`: 1280 × 820 when un-maximized, 900 × 600 at the smallest.
 - Nothing about the window is remembered between launches. `settings.json` has no key for it. Whether it should reopen at its last size is open (OI-26); until answered, it opens maximized on every launch.
 - The app window only. The hidden render window is never shown and is sized by the picture it draws.
