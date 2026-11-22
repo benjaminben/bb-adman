@@ -170,7 +170,7 @@ test('467 German with its rows and a failed job', async () => {
   await expect(german.getByText(/^Failed: /)).toBeVisible()
   await expect(german.getByRole('button', { name: 'Retry' })).toBeVisible()
   await expect(l.rows(page, 'German')).toHaveCount(rows.length)
-  await expect(german.locator('img').first()).toBeVisible({ timeout: 30_000 })
+  await expect(german.locator('img')).toHaveCount(rows.length, { timeout: 30_000 })
   await page.mouse.move(0, 0)
   await shot(page, '467-translations-german-failed-job')
 })
