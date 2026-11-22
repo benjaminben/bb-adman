@@ -17,6 +17,7 @@ import {
   translationJobRequest,
   type TranslationJobRequest,
 } from '@/shared/schemas/jobs/translation'
+import type { CampaignRow } from '@/shared/schemas/rows/campaign'
 import type { DirectionRow } from '@/shared/schemas/rows/direction'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
@@ -37,17 +38,24 @@ function runningJob(db: Database.Database, jobId: string): Job {
 }
 
 // A text layer of the job's campaign, direction and language that is still a translation the
-// AI may replace (A-155, A-156).
+// AI may replace (A-155, A-156). Never the direction's master, never a post in the campaign's
+// main language (P6-16, from the Phase 5 review).
 function mayReplace(db: Database.Database, layer: LayerRow, job: Job): boolean {
   const variant = readWireRow(db, 'variant', { id: layer.variantId }) as VariantRow | null
   const direction = variant
     ? (readWireRow(db, 'direction', { id: variant.directionId }) as DirectionRow | null)
+    : null
+  const campaign = direction
+    ? (readWireRow(db, 'campaign', { id: direction.campaignId }) as CampaignRow | null)
     : null
   return (
     layer.type === 'text' &&
     variant?.directionId === job.request.directionId &&
     variant.language === job.request.to &&
     direction?.campaignId === job.row.campaignId &&
+    direction.masterVariantId !== variant.id &&
+    campaign !== null &&
+    variant.language !== campaign.primaryLanguage &&
     (layer.translationStatus === 'missing' || layer.translationStatus === 'proposed') &&
     !layer.overrides.includes('copy')
   )

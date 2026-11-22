@@ -7,6 +7,7 @@ import { defineCommand } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import { requireProviderKeys } from '@/main/providers/require-keys'
 import { enqueueTranslation } from '@/main/translation/start'
+import { withSyncTargets } from '@/main/translation/sync-result'
 import { groupsFor, planGroup, type TranslationPlan } from '@/main/translation/targets'
 import {
   translationProposeInput,
@@ -27,9 +28,13 @@ function translateProvider(deps: Deps, id: string): ProviderInfo {
 }
 
 // Steps 2 to 4: one plan per group that has text and a layer to replace; refuses when none has.
+// In 'sync' mode (P6-16) the targets only record each layer's copy counter: nothing is written.
 function plansFor(db: Database.Database, input: TranslationProposeInput): TranslationPlan[] {
   const plans = groupsFor(db, input)
-    .map((group) => planGroup(db, group, input.mode))
+    .map((group) => {
+      const plan = planGroup(db, group, input.mode)
+      return plan && input.mode === 'sync' ? withSyncTargets(db, plan, group) : plan
+    })
     .filter((plan): plan is TranslationPlan => plan !== null)
   if (plans.length === 0) {
     throw new AppError('RULE_VIOLATION', 'There is no text to translate.', {
