@@ -1,0 +1,42 @@
+/* app-style */
+/* MoreMenu (spec/app-style-parts.md, "ObjectRow"): a square quiet icon button at
+   --control-height-small, and the shared menu, as narrow as its words up to --width-menu. */
+.trigger {
+  width: var(--control-height-small);
+  min-width: var(--control-height-small);
+  height: var(--control-height-small);
+  min-height: var(--control-height-small);
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+}
+.trigger:hover:not(:disabled),
+.trigger[aria-expanded='true'] {
+  border-color: transparent;
+  background: var(--color-row-hover);
+  color: var(--color-text);
+}
+ul.menu {
+  z-index: 2;
+  width: max-content;
+  max-width: var(--width-menu);
+  padding: var(--space-1);
+  box-shadow: var(--shadow-2);
+}
+.item {
+  gap: var(--gap-inline);
+  white-space: nowrap;
+}
+.item[aria-disabled='true'] {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+.danger {
+  color: var(--color-danger-text);
+}
+.separator {
+  height: 0;
+  margin: var(--space-1) 0;
+  border-top: var(--border-width) solid var(--color-line);
+}

@@ -1,0 +1,16 @@
+/* app-style */
+/* EmptyState (spec/app-style-parts.md, "ObjectRow"): the `.empty` look of layout.module.css
+   (dashed edge, --radius-md) holding an icon, the words and one button, stacked. */
+.box {
+  gap: var(--gap-inline);
+  padding: var(--space-6) var(--space-4);
+}
+.icon {
+  display: flex;
+  color: var(--color-text-muted);
+}
+.words {
+  margin: 0;
+  font-size: var(--type-body-size);
+  color: var(--color-text-secondary);
+}

@@ -1,0 +1,157 @@
+/* app-style */
+/* ObjectRow (spec/app-style-parts.md, "ObjectRow"): the box, the one fixed height and the
+   actions over the right end start as a copy of editor/layer-row/layer-row.module.css. No rule
+   for hover, focus or selection changes a size. */
+.box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: var(--row-height);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+.box.withMeta {
+  height: auto;
+  min-height: var(--row-height);
+}
+.box:hover {
+  background: var(--color-row-hover);
+}
+.box.selected {
+  background: var(--color-selected-bg);
+}
+/* The main button covers the whole row; what is drawn over it lets clicks through. */
+.main {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border-color: transparent;
+  border-radius: var(--radius);
+  background: transparent;
+}
+.main:hover:not(:disabled) {
+  border-color: transparent;
+  background: transparent;
+}
+.content {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--gap-inline);
+  min-width: 0;
+  padding: 0 var(--space-2);
+  pointer-events: none;
+  font-size: var(--type-body-size);
+  white-space: nowrap;
+}
+.withMeta .content {
+  padding: var(--space-1) var(--space-2);
+}
+/* A rename field (or any control) passed as the name takes clicks itself. */
+.content :is(input, textarea, select, button, a) {
+  pointer-events: auto;
+}
+.thumb {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--color-text-muted);
+}
+.thumb > img {
+  box-sizing: border-box;
+  width: var(--layer-thumb);
+  height: var(--layer-thumb);
+  object-fit: contain;
+  background: var(--canvas-backdrop);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-inner);
+}
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+.name,
+.meta {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.meta {
+  font-size: var(--type-meta-size);
+  color: var(--color-text-muted);
+}
+.selected .name {
+  color: var(--color-accent-ink);
+  font-weight: var(--weight-bold);
+}
+.muted .name {
+  text-decoration: line-through;
+}
+.muted .content {
+  opacity: var(--opacity-disabled);
+}
+.marks {
+  display: flex;
+  flex: 0 1000 auto;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-width: 0;
+  overflow: hidden;
+}
+/* State actions, the slot for the other actions and the More menu, at the right end. */
+.tail {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius);
+  background: inherit;
+}
+.slot {
+  position: relative;
+  align-self: stretch;
+  background: inherit;
+}
+/* Laid over the end of the name, on the row's own ground, so showing them moves nothing. */
+.actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-left: var(--space-1);
+  border-radius: var(--radius);
+  background: inherit;
+  visibility: hidden;
+}
+.box:hover .actions {
+  visibility: visible;
+}
+.box:focus-within .actions {
+  visibility: visible;
+}
+.selected .actions {
+  visibility: visible;
+}
+.state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+}
+.state > button:not([aria-pressed='true']) {
+  color: var(--color-text-muted);
+}
