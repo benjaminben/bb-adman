@@ -83,8 +83,8 @@ export async function addAndTickReference(app: ElectronApplication, box: Sandbox
   })
 }
 
-// SPEC 14 1.60 N-11: the video card's start, then the first given picture (or the test-made
-// one) added through its own "Add pictures" and chosen.
+// SPEC 14 1.60 N-11: the Generate panel's start (R2E-9), then the first given picture (or the
+// test-made one) added through its list's own button and chosen.
 export async function chooseVideoPicture(
   app: ElectronApplication,
   box: Sandbox,
