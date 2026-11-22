@@ -2,7 +2,9 @@
 // A-260). The row is read again and its file checked as collectComponents checked it; the file
 // must still be the one collected. It is then opened once, inside the real path of its own
 // folder (open-inside.ts: a regular file with one name, the folder not a link). An MP4 or MOV
-// must give videoFileFacts. A font is read whole from that one handle, its type checked and its
+// must give videoFileFacts. A picture or video is uploaded from a fresh open for each attempt,
+// refused unless it is the checked handle's file: same inode, device, size and modified time
+// (open-inside.ts). A font is read whole from that one handle, its type checked and its
 // SHA-256 counted from those bytes, and those same bytes are what is uploaded, only when
 // hasConsent(...) answers exactly true for that hash. Anything else is skipped with its problem.
 import { createHash } from 'node:crypto'
@@ -17,7 +19,7 @@ import { contentTypeFor } from '@/shared/publish/content-types'
 import type { AssetRow } from '@/shared/schemas/rows/asset'
 import { checkComponentFile } from './component-file'
 import type { CollectedComponent } from './components'
-import { openFileInside, openInside } from './open-inside'
+import { factsOf, openFileInside, openInside, type CheckedFacts } from './open-inside'
 import type { UploadFile } from './upload'
 
 export type SkipProblem = 'missing' | 'wrong_type' | 'not_shared'
@@ -84,14 +86,17 @@ export async function componentUpload(
   const handle = await openInside(root, file).catch(() => null)
   if (handle === null) return { problem: 'wrong_type' }
   const remote = { ...c, remotePath: c.remotePath }
+  let facts: CheckedFacts
   try {
     if (c.kind === 'font') return await fontUpload(handle, remote, name, consented)
     if (VIDEO_CHECKED.has(checked.ext) && (await videoFileFacts(handle)) === null) {
       return { problem: 'wrong_type' }
     }
+    facts = factsOf(await handle.stat())
   } finally {
     await handle.close().catch(() => undefined)
   }
   const contentType = contentTypeFor(c.remotePath) as string
-  return { file: { path: c.remotePath, contentType, open: () => openFileInside(root, file) } }
+  const open = () => openFileInside(root, file, facts)
+  return { file: { path: c.remotePath, contentType, open } }
 }
