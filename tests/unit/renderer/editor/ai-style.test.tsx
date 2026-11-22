@@ -42,7 +42,6 @@ const MODULES = [
   'ui/paid-count/paid-count.module.css',
   'ui/run-failure/run-failure.module.css',
   'ui/reference-picker/reference-picker.module.css',
-  'ui/close-warning/close-warning.module.css',
 ]
 
 const has = (el: Element, ...names: (string | undefined)[]) =>
