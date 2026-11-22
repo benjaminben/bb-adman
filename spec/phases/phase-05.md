@@ -51,11 +51,11 @@
 | 3 | P5-10 `variant.fanOut` and `variant.add` (built) | medium | P5-4, P5-5 | P5-9, P5-11, P5-13 | — |
 | 3 | P5-11 Directions (built) | small | P5-4 | P5-9, P5-10, P5-13 | — |
 | 3 | P5-13 `sync.apply` (built) | medium | P5-3, P5-4, P5-12 | P5-9, P5-10, P5-11 | — |
-| 4 | P5-14 Campaign page: Undo, Redo, one grid per direction | medium | P5-1; AP-12 merged | wave 3 slices | AP-11, AP-12 (`campaign-view/`, `variant-grid/`) |
-| 5 | P5-15 Tile actions: delete and quick look | medium | P5-4, P5-14 | P5-16, P5-17, P5-18 | — |
-| 5 | P5-16 Fan-out dialog | medium | P5-9, P5-10, P5-14 | P5-15, P5-17, P5-18 | — |
-| 5 | P5-17 Sync review dialog | medium | P5-13, P5-14 | P5-15, P5-16, P5-18 | — |
-| 5 | P5-18 Direction menu and dialogs | small | P5-11, P5-14 | P5-15, P5-16, P5-17 | — |
+| 4 | P5-14 Campaign page: Undo, Redo, one grid per direction (built) | medium | P5-1; AP-12 merged | wave 3 slices | AP-11, AP-12 (`campaign-view/`, `variant-grid/`) |
+| 5 | P5-15 Tile actions: delete and quick look (built) | medium | P5-4, P5-14 | P5-16, P5-17, P5-18 | — |
+| 5 | P5-16 Fan-out dialog (built) | medium | P5-9, P5-10, P5-14 | P5-15, P5-17, P5-18 | — |
+| 5 | P5-17 Sync review dialog (built) | medium | P5-13, P5-14 | P5-15, P5-16, P5-18 | — |
+| 5 | P5-18 Direction menu and dialogs (built) | small | P5-11, P5-14 | P5-15, P5-16, P5-17 | — |
 | 6 | P5-19 Workflows 5.3 and 5.4, real runs, exit check | medium | every other P5 slice; SP-5 merged | — | any slice editing `tests/e2e/` helpers |
 
 No two slices of one wave share a file. Wave 1: P5-1 owns the shared files and the stub files; P5-2 `src/shared/links/follow-rules.ts`, `out-of-date.ts`, `campaign-reads.ts`, `queries/variant.ts`; P5-5 `src/shared/links/fan-out-plan.ts`; P5-6 `src/main/providers/gemini/`; P5-7 `src/main/providers/comfyui/`. Wave 5: P5-15 `variant-grid/`, `direction-grids/`, `dialogs/quick-look/`; P5-16 `dialogs/fan-out/`, `stores/run-asks.ts`; P5-17 `dialogs/sync-review/`; P5-18 `dialogs/direction-menu/`.

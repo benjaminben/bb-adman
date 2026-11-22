@@ -137,7 +137,7 @@ Every function the built screens offer, and whether end-to-end tests reach it. "
 | Hand test (dev) | Amazon S3 settings and actions | No | Needs real credentials and a real bucket. "Remove all" on a real bucket is destructive, so it is never automated. By hand only |
 | Hand test (dev) | Sign in to Dropbox | No | Hidden on `main` (`HAND_TEST_DROPBOX` is false). Sign-in runs in the web browser. By hand only |
 
-Project files in these runs are made at the newest migration, `0004_approvals` (schema version 5). The approvals service in `approvals-service/` is a separate Next.js app with its own Vitest and Playwright runs (`spec/approvals-service-tests.md`).
+Project files in these runs are made at the newest migration, `0005_video_and_sound` (schema version 6). The approvals service in `approvals-service/` is a separate Next.js app with its own Vitest and Playwright runs (`spec/approvals-service-tests.md`).
 
 **Gaps:** S3 and Dropbox (above). The MCP section (component tests only). The paid Gemini run through the screens (the stakeholder's own, D-081). Real-server failure screens (out of memory, server stopped) are tested offline only, since they cannot be caused on purpose without harm. A packaged app is not tested end to end, because `trial` workflows are never offered there.
 

@@ -198,15 +198,22 @@ Built. `src/main/providers/comfyui/cancel.ts` (`cancelOwnRun`), `run.ts`, `video
 
 ### fal.ai Seedance
 
-Not built (slice J). The registry row exists with `available: false`.
+The adapter is built (P7-14); the registry row stays `available: false` until P7-15. The cancel rule below is built (P7-13): `src/main/jobs/leave-running.ts`, `src/main/jobs/cancel.ts`, `src/renderer/ui/cancel-shown.ts`.
 
 - The queue cancel call. A request that still completes is `finished`, kept.
-- **A paid run charged either way is left to finish.** For a provider that is not local and whose `cancel` is `may_finish`:
+- **A paid run charged either way is left to finish.** One test, `leftRunningOnClose(row, provider)` in `leave-running.ts`, says which runs these are. It is true only when all of these hold:
+  - the job kind is `video_generation` and the row is `running`;
+  - the row has a `remote_job_id`;
+  - the provider is in the registry, is not `local`, and its `cancel` is `may_finish`;
+  - `result.stage` is `working` (the provider has started the request).
+- **What `job.cancel` does** for such a provider:
   - `queued`, nothing sent: cancelled at once.
-  - A request still in the provider's queue: the queue cancel.
-  - A request the provider has started (`result.stage` is `working`) is not asked to stop. `job.cancel` is refused: `RULE_VIOLATION`, reason `cancel_would_still_charge`, "{Provider} has started this and will charge for it. The app lets it finish and keeps the result."
-  - Not built: `cancelRefusal` has no `cancel_would_still_charge` rule yet; slice J adds it there (and to `cancelShown`). A cancel crossing with the start is `finished`, kept.
-- Slice J checks U-25 (does fal charge for a cancelled started request). What closing a project does with such a job is ruled when slice J is designed (OI-60 part 2: whether fal charges for a started request that is cancelled; OI-51: closing a project while a paid request that cannot be stopped is out).
+  - `running`, still in the provider's queue (`result.stage` is `waiting`), or with no remote ID yet: asked to stop as for any `may_finish` provider; the handler sends the queue cancel.
+  - `running` and `leftRunningOnClose` is true: refused, `RULE_VIOLATION`, reason `cancel_would_still_charge`, "{Provider} has started this and will charge for it. The app lets it finish and keeps the result."
+- `cancelRefusal` checks in this order: an ended job (`job_wrong_state`); a running background job other than pictures on a provider whose `cancel` is `none` (`cancel_not_supported`); then `cancel_would_still_charge`. The command and the runner both call it.
+- `cancelShown` gives the same answer: no Cancel on such a row. `tests/unit/main/jobs/cancel-shown.test.ts` holds the two together.
+- A cancel crossing with the start is `finished`, kept.
+- A cancelled started request is treated as charged (U-25; OI-60 part 2 stays open). Closing a project leaves such a run running for the next open (A-174; "Closing a project" below).
 
 ### Gemini
 
@@ -221,7 +228,10 @@ Built. `src/main/providers/fake/behaviour.ts`, `src/main/providers/fake/video.ts
 
 - `cancel: 'stops'`, `local: true` (never counted), wait 5 s.
 - `FakeBehaviour.onCancel`: `'stop'` (default) confirms; `'finish'` finishes anyway; `'no_confirm'` never answers, so the job ends `outcomeUnknown`. Set by `setFakeBehaviour`, reset by `resetFakeBehaviour`.
-- The fake video provider keeps its runs in memory (test and hand-test use only).
+- **Video runs live in the run ID,** so they survive a restart of the app. The remote ID is `fake-video-v1-{startedAtMs}-{waitMs}-{width}x{height}-{durationMs}`. `check` and `fetchResult` work from the ID and the clock: the run is ready once `startedAtMs + waitMs` has passed. So a fresh process answers for a run an earlier process started.
+- The ID is read strictly: whole numbers with no sign and no leading zero, of bounded length; width and height at most 16,384 and the duration at most 120,000 ms. A malformed ID is a failed run (kind `other`), and the failure never holds the ID's text.
+- What a test told the process (a failure, the cancel answer, a confirmed stop) is kept in memory only. A run this process did not start has no failure, its cancel confirms (`stop`), and it succeeds once its wait is over.
+- Test and hand-test use only.
 
 ## Closing a project
 
@@ -232,11 +242,12 @@ Built. `JobService.cancelAll(projectId)`, `src/main/jobs/close-jobs.ts`.
 | `queued`, nothing sent | Ends it at once | `cancelled` |
 | `running`, an attached job | Stops waiting, as `job.cancel` does | `cancelled` |
 | `running`, a background job, provider `cancel` is `none` | Stops waiting. The provider is not asked: it cannot stop | `cancelled`, with `result.stoppedWaiting = true` |
+| `running`, a paid video run the provider has started (`leftRunningOnClose` is true, "fal.ai Seedance" above) | Not asked to stop and not waited for. The runner lets go of it (`leaveRunning` in `src/main/jobs/leave-running.ts`): it clears the job's wait, drops it from its own jobs, and drops any later write from this process | `running`, with `result.leftRunning = true` and its `remote_job_id`. The next `projectOpened` of the project picks it up as a left-over and collects the clip (A-174) |
 | `running`, a background job, provider `cancel` is `stops` or `may_finish` (or the provider is not in the registry) | Asks it to stop, exactly as `job.cancel` does, then waits | Whatever the outcome table gives if it comes within the close wait; otherwise `cancelled` with `result.outcomeUnknown = true` |
 
-- **Every signal is fired.** Close fires the signal of every running job it ends, attached and `none` included, so a handler that listens stops its own work. An adapter that cannot stop ignores it.
+- **Every signal is fired,** with one exception. Close fires the signal of every running job it ends, attached and `none` included, so a handler that listens stops its own work. An adapter that cannot stop ignores it. The exception is a run left running: its signal is not fired, because the video handler would then send the provider's cancel. Which runs are left running is read from their rows when the close starts.
 - A job already asked to stop joins the wait and is not asked twice. The wait leaves no timer behind.
-- **The close wait** is at most 5 s for the whole project, not per job: `CLOSE_WAIT_MS = 5_000` in `cancel-wait.ts`. The wait ends as soon as no job of the project is running. After it, every job of the project still `queued` or `running` is ended at once, a job started during the wait included. Then `cancelAll` returns and the file closes.
+- **The close wait** is at most 5 s for the whole project, not per job: `CLOSE_WAIT_MS = 5_000` in `cancel-wait.ts`. The wait ends as soon as no job of the project is running. After it, every job of the project still `queued` or `running` is ended at once, a job started during the wait included, apart from the runs left running. Then `cancelAll` returns and the file closes.
 - **A closing project starts no job.** `RunnerState.closing` (`src/main/jobs/live.ts`) holds closing project IDs. `cancelAll` adds the ID before ending queued rows and removes it in a `finally`; `pump` skips rows of a project in the set. `enqueue` still writes the row; it stays `queued` and ends `cancelled` with nothing sent when the wait is over.
 - **A paid call already sent stays counted.** A close does not change `paid_calls`. A request that could not be stopped may still be charged, and its result is not kept: the file is closed when it arrives.
 - **What the user is told before closing.** The window builds the warning from what it already has: `job.list` with `state: 'active'` and the provider list of `app.getState`. A running background job whose provider has `cancel: 'none'` cannot be stopped; one whose provider is not `local` may be charged. `jobs_running` has no field for this.

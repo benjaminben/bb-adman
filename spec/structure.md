@@ -21,7 +21,7 @@ project-root/
 │   │   ├── windows/               # app-window.ts, app-window-options.ts, csp.ts, navigation.ts, open-external.ts,
 │   │   │                          #   dialogs.ts (native pickers), asset-protocol.ts (registers adman-asset://)
 │   │   ├── db/                    # schema/ (index, project, variant, jobs, approvals), migrations/ (drizzle-kit SQL, newest
-│   │   │                          #   0004_approvals, schema version 5), bundled-migrations.ts,
+│   │   │                          #   0005_video_and_sound, schema version 6), bundled-migrations.ts,
 │   │   │                          #   project-file.ts (open, create, close, migration runner), meta.ts (project_meta),
 │   │   │                          #   project-registry.ts (open projects), rows.ts (stored row to wire row and back)
 │   │   ├── commands/              # bus.ts, types.ts, change-recorder.ts, agent-policy.ts, run-in-project.ts,

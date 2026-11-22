@@ -173,7 +173,7 @@ No asset thumbnails are made: the window draws asset pictures straight from the 
 
 ## Data migration
 
-Built. Main files: `src/main/db/project-file.ts`, `src/main/db/bundled-migrations.ts`, `src/main/db/migrations/`. The newest migration is `0004_approvals`; a file with every migration has `schema_version` 5. Each migration test opens its file with the migrations up to its own only.
+Built. Main files: `src/main/db/project-file.ts`, `src/main/db/bundled-migrations.ts`, `src/main/db/migrations/`. The newest migration is `0005_video_and_sound`; a file with every migration has `schema_version` 6. Each migration test opens its file with the migrations up to its own only.
 
 No legacy data [REQ: 6.4].
 
@@ -208,6 +208,7 @@ On open, the app compares the file's `schema_version` with its own.
 | `0002_job_started_by_and_error_reason` | On `job`: `started_by` (default `'user'`, CHECK `job_started_by`), `error_reason`. Two hand-written `ALTER TABLE` statements. | `migration-0002.test.ts`: three tags in order; `schema_version` 3; an old row gains `started_by: 'user'` and `error_reason: null`; `'robot'` is refused and `'agent'` accepted, in old and new files |
 | `0003_job_kind_cutout` | `job_kind` CHECK lists `cutout`. A table rebuild, as drizzle-kit writes it. | `migration-0003.test.ts` (`spec/ai-jobs.md`, "Job kinds") |
 | `0004_approvals` (Built, AP-5) | New tables `approval_link`, `approval_variant`, `approval_signoff` and index `approval_signoff_campaign` (`spec/approvals-client.md`, "Local tables"). No rebuild. Gives `schema_version` 5 | `migration-0004.test.ts` (`spec/approvals-client.md`, "Local tables") |
+| `0005_video_and_sound` (Built, P7-2) | A rebuild of `asset` so its `asset_kind` CHECK lists `audio`, as drizzle-kit writes it (indexes and the other checks kept). On `variant`: `first_clip_made` (integer, default 0), `sound` (default `'clips'`, CHECK `variant_sound` in `'clips','file','none'`), `sound_asset_id` (references `asset(id)`, null). On `background_clip`: `sound_on` (integer, default 1). One data step: `first_clip_made = 1` for every variant that has a clip. Gives `schema_version` 6 | `migration-0005.test.ts`: every row and child row of a version 5 file kept apart from the new fields; the defaults; a variant with a clip marked; `'audio'` accepted and `'midi'` refused; `sound: 'loud'` refused; a `sound_asset_id` naming no asset refused |
 
 ## Package project
 

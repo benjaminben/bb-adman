@@ -58,7 +58,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class E.
 - **Security:** full (a network call carrying user text). **Size:** small.
 
-## P6-6 — Translation job, propose, write
+## P6-6 — Translation job, propose, write (built)
 
 - **Exists when done:** `translation.propose` starts one job per direction and language; the job calls the provider, cleans the answer and writes through `translation.write`; brief copy is available for fan-out.
 - **New files:** `src/main/translation/start.ts` (`startTranslations`, shared by propose and fan-out), `src/main/translation/targets.ts` (items and targets per group), `src/main/translation/clean-answer.ts`, `src/shared/translation/brief-copy.ts`, `src/shared/translation/script.ts` (the `zh` script choice from the region); the bodies of `commands/translation/propose.ts`, `write.ts`, `jobs/kinds/translation.ts`.
@@ -108,7 +108,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class D; `npm run test:e2e`. **Shots:** `tests/shots/p6-10.shots.ts`, 200 (empty), 201 (filled).
 - **Security:** none. **Size:** medium.
 
-## P6-11 — Check panel
+## P6-11 — Check panel (built)
 
 - **Exists when done:** "Checks" runs and shows results as section 8 says.
 - **New files:** the body of `screens/campaign/check-panel/`; `check-block.tsx`, `check-words.ts` (pure: check names, status words, summary) in that folder.
@@ -118,7 +118,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **Exit check:** class D; `npm run test:e2e`. **Shots:** `tests/shots/p6-11.shots.ts`, 202 (all pass or skipped on the master), 203 (a prohibited `!` and a colour warning), 204 (stale after an edit). These need only the master.
 - **Security:** none. **Size:** medium.
 
-## P6-12 — Translation panel: rows, edit, approve
+## P6-12 — Translation panel: rows, edit, approve (built)
 
 - **Exists when done:** "Translations" lists the groups and rows, edits with `translation.set`, approves one and all, as section 8 says. "Approve" and "Approve all" send each row's `copyRev` (from `translation.forCampaign`); a `translation_changed` refusal shows its own sentence ("A text changed after you read it. Read it again, then approve.") and the panel reads the rows again (P6-4b).
 - **New files:** the body of `screens/campaign/translation-panel/`; `language-group.tsx`, `translation-row.tsx`, `translation-words.ts` (pure), `use-translations.ts` (reads `translation.forCampaign`, again on `project.changed` and `job.updated`) in that folder.
@@ -130,15 +130,15 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 
 ## P6-13 — Translation panel: translate again, sheet, close warning
 
-- **Exists when done:** "Translate {language} again…", the failed line with "Try again", "Running…" with "Stop", "Export translation sheet…", and the campaign-tab close warning for translation jobs.
+- **Exists when done:** "Translate {language} again…", the failed line with "Retry", "Running…" with "Stop", "Export translation sheet…", and the campaign-tab close warning for translation jobs.
 - **New files:** `screens/campaign/translation-panel/translate-again.tsx`, `export-sheet.tsx`, `job-line.tsx`.
 - **May touch:** `src/renderer/screens/campaign/translation-panel/translation-panel.tsx`, `language-group.tsx` (mounts); `src/renderer/stores/attached-store.ts` (owner `{ projectId, campaignId }`); `src/renderer/ui/close-warning/close-words.ts` (task "translating"); `src/renderer/app/campaign-tabs/campaign-tabs.tsx` (include the campaign-owned jobs in the close check, a few lines); `src/renderer/dialogs/run-dialog/run-summary.ts` (the translate title and confirm words, if it holds them).
 - **Needs:** P6-6, P6-8, P6-12.
-- **Tests first:** `translate-again.test.tsx`: the run dialog opens with job `text`; confirm sends `translation.propose` with the group's variant IDs and the chosen provider; `NEEDS_KEY` opens the key dialog; "Try again" sends a new propose. `export-sheet.test.tsx`: cancelled picker sends nothing; saved shows the file name; a refusal's message. `attached-store` test: a campaign-owned job warns on closing its campaign tab, with "translating".
-- **Exit check:** class D; `npm run test:e2e`. **Shots:** `tests/shots/p6-13.shots.ts`, 207 (a failed language with "Try again"), 208 (sheet saved); need a language variant.
+- **Tests first:** `translate-again.test.tsx`: the run dialog opens with job `text`; confirm sends `translation.propose` with the group's variant IDs and the chosen provider; `NEEDS_KEY` opens the key dialog; "Retry" sends a new propose. `export-sheet.test.tsx`: cancelled picker sends nothing; saved shows the file name; a refusal's message. `attached-store` test: a campaign-owned job warns on closing its campaign tab, with "translating".
+- **Exit check:** class D; `npm run test:e2e`. **Shots:** `tests/shots/p6-13.shots.ts`, 207 (a failed language with "Retry"), 208 (sheet saved); need a language variant.
 - **Security:** none. **Size:** medium.
 
-## P6-14 — Editor controls
+## P6-14 — Editor controls (built)
 
 - **Exists when done:** in the editor, a translated text layer shows its status with "Approve", its Copy field sends `translation.set`, and "Use this font for every {language} post" sends `layer.setFonts`.
 - **New files:** `src/renderer/editor/translation-status/` (component, CSS module, `index.ts`), `src/renderer/editor/language-font/` (component, `use-same-language-layers.ts` reading `translation.forCampaign`, CSS module, `index.ts`).
@@ -165,7 +165,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **May touch:** Phase 5's `sync.preview` and `sync.apply` handlers and the sync review dialog, a few lines each, named in the report; `src/main/commands/translation/propose.ts` (the `sync` mode: no targets, no write).
 - **Needs:** P6-6; Phase 5's `sync.preview`, `sync.apply` and sync review dialog merged.
 - **Tests first:** `tests/integration/translation/sync-translation.test.ts`: the preview shows the fake text when the job matches the master's `revs.copy`; an older job is not used; a failed job gives `failed` and the layer keeps its text; apply writes `proposed`, source `ai`, `synced_revs.copy` set; a rejected change writes nothing.
-- **Exit check:** class B, D; `npm run test:e2e`. **Shots:** `tests/shots/p6-16.shots.ts`, 213 (a proposed translation in the review), 214 (a failed one with "Try again").
+- **Exit check:** class B, D; `npm run test:e2e`. **Shots:** `tests/shots/p6-16.shots.ts`, 213 (a proposed translation in the review), 214 (a failed one with "Retry").
 - **Security:** short. **Size:** medium.
 
 ## P6-17 — Workflow 5.2, shots, live run, exit check
@@ -174,7 +174,7 @@ Test classes as in `spec/testing.md`. Security class: none, short or full (`spec
 - **New files:** `tests/e2e/localize.spec.ts`; `tests/shots/p6-17.shots.ts`; `tests/live/gemini-translate.live.test.ts` (prints model ID, time and answer size, never the text; skips with one line naming the missing variable).
 - **May touch:** the shot files of P6-12, P6-13 and P6-14 if their shots were handed on.
 - **Needs:** every other P6 slice; Phase 5 merged.
-- **Tests first:** `localize.spec.ts` with the fake provider: fan out a master to two sizes and `de` and `ja`; the grid shows "Translation not approved"; the fake is told to fail `ja` once, "Try again" succeeds; edit one `de` text; "Approve all" per language; export the sheet and read it back (BOM, rows); add `!` to the prohibited list, run checks, see the warning on the right variants, remove the `!` text, run again, all pass; every translation approved at the end.
+- **Tests first:** `localize.spec.ts` with the fake provider: fan out a master to two sizes and `de` and `ja`; the grid shows "Translation not approved"; the fake is told to fail `ja` once, "Retry" succeeds; edit one `de` text; "Approve all" per language; export the sheet and read it back (BOM, rows); add `!` to the prohibited list, run checks, see the warning on the right variants, remove the `!` text, run again, all pass; every translation approved at the end.
 - **Live run:** one `translate` call with two short items, `en` to `de`, under D-085, by the developer once; report as the exit criteria say.
 - **Exit check:** the full list in the exit criteria. **Shots:** 215 (the grid after fan-out), 216 (a `ja` variant in the editor), 217 (checks across the grid with warnings), 218 (the sheet saved), 219 (all translations approved), plus any handed-on shots 205 to 210.
 - **Security:** none (no new code beyond tests). **Size:** medium.
