@@ -99,7 +99,9 @@ export async function makePictures(page: Page, count: number): Promise<void> {
   await run.getByRole('button', { name: 'Generate' }).click()
   await expect(run).toBeHidden(CLOSES)
   await expect(
-    pictureSection(page).getByText('Done. Choose one under Earlier options.'),
+    pictureSection(page).getByText(
+      'Done. The first new picture is on the layer. Click another below to use it instead.',
+    ),
   ).toBeVisible({ timeout: 20_000 })
 }
 

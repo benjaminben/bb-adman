@@ -101,7 +101,11 @@ test('The generate fields with earlier options, then the run dialog', async () =
   await run.getByRole('spinbutton', { name: 'Pictures' }).fill('2')
   await run.getByRole('button', { name: 'Generate' }).click()
   await expect(run).toBeHidden()
-  await expect(section.getByText('Done. Choose one under Earlier options.')).toBeVisible({
+  await expect(
+    section.getByText(
+      'Done. The first new picture is on the layer. Click another below to use it instead.',
+    ),
+  ).toBeVisible({
     timeout: 20_000,
   })
   await section.getByRole('button', { name: /^Use option 1 from / }).click()
