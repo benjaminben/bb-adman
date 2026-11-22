@@ -26,6 +26,12 @@
   font-size: var(--type-meta-size);
   font-variant-numeric: tabular-nums;
 }
+/* R3-2: the service and model wrap rather than end in an ellipsis, so the model is never cut. */
+.service {
+  min-width: 0;
+  color: var(--color-text-muted);
+  font-size: var(--type-meta-size);
+}
 .retry {
   margin-left: auto;
   display: inline-flex;

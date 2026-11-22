@@ -2,7 +2,9 @@
 // kind ("Pictures" or "Cut-out"), its status, and the count a Retry asks for.
 import { requestCount } from '@/renderer/stores/job-store'
 import type { StatusMarkProps } from '@/renderer/ui/status-mark'
+import { runName } from '@/renderer/ui/run-name/run-name'
 import { picturesLeft } from '@/shared/generation/pictures-left'
+import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { JobRow } from '@/shared/schemas/rows/job'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -49,9 +51,12 @@ export function referenceCount(row: JobRow): number {
   return Array.isArray(ids) ? ids.length : 0
 }
 
-// A run's header, the tooltip of its row or strip: "21:06 · Google Gemini · Pictures".
-export function runTitle(row: JobRow, providers: readonly { id: string; label: string }[]): string {
-  const label =
-    providers.find((p) => p.id === row.provider)?.label ?? row.provider ?? 'The provider'
+// A run's header, the tooltip of its row or strip: "21:06 · Google Gemini · Nano Banana 2.1 ·
+// Pictures" (R3-2: the stored model's name, or its ID).
+type Named = Pick<ProviderInfo, 'id' | 'label'> &
+  Partial<Pick<ProviderInfo, 'defaultModels' | 'modelLabels'>>
+
+export function runTitle(row: JobRow, providers: readonly Named[]): string {
+  const label = runName(row, providers, null, 'The provider')
   return `${runTime(row.createdAt)} · ${label} · ${runKind(row)}`
 }

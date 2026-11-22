@@ -8,6 +8,7 @@
 import { offeredFor } from '@/renderer/screens/campaign/offered-workflow'
 import { STARTS } from '@/renderer/editor/generate-panel/video-start'
 import { videoOffer, type VideoStartKind } from '@/shared/config/video-offers'
+import { jobModel, workflowModel } from '@/shared/providers/model-words'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { ComfyInfo, WorkflowInfo } from '@/shared/schemas/queries/comfy'
 import type { RunJob } from './run-summary'
@@ -19,6 +20,8 @@ export type Choice = {
   reason?: string
   trial: boolean
   workflow?: WorkflowInfo
+  // R3-2: the model the run would use, named under the provider; null when none is known.
+  model: string | null
 }
 
 const COMFY = 'comfyui'
@@ -48,23 +51,25 @@ function videoChoice(base: Choice, start: VideoStartKind, info: ComfyInfo | null
   if (!pair) return off(base, REASONS.cannotStart)
   const workflow = offeredFor(info, 'video', pair)
   if (!workflow) return off(base, REASONS.noWorkflow)
-  return { ...base, trial: workflow.status === 'trial', workflow }
+  return { ...base, trial: workflow.status === 'trial', workflow, model: workflowModel(workflow) }
 }
 
 function choiceFor(
   provider: ProviderInfo,
+  job: RunJob,
   wanted: string | null,
   info: ComfyInfo | null,
   start: VideoStartKind | undefined,
 ): Choice {
-  const base = { provider, enabled: true, label: provider.label, trial: false }
+  const model = jobModel(provider, job)
+  const base = { provider, enabled: true, label: provider.label, trial: false, model }
   if (!provider.available) return off(base, REASONS.unavailable)
   if (start !== undefined) return videoChoice(base, start, info)
   if (provider.id !== COMFY) return base
   // Before comfy.getInfo answers, no workflow is known.
   const workflow = info?.workflows.find((w) => w.offered && w.job === wanted)
   if (!workflow) return off(base, REASONS.noWorkflow)
-  return { ...base, trial: workflow.status === 'trial', workflow }
+  return { ...base, trial: workflow.status === 'trial', workflow, model: workflowModel(workflow) }
 }
 
 export function runChoices(
@@ -78,7 +83,7 @@ export function runChoices(
   if (job === 'cutout') listed.sort((a, b) => Number(b.id === COMFY) - Number(a.id === COMFY))
   const wanted = comfyJob(job, referenceCount)
   const start = job === 'video' ? (videoStart ?? 'prompt') : undefined
-  return listed.map((p) => choiceFor(p, wanted, info, start))
+  return listed.map((p) => choiceFor(p, job, wanted, info, start))
 }
 
 // The saved default for the job when it is enabled, else the first enabled choice.

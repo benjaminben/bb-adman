@@ -3,6 +3,7 @@
 // the providers a fill may go to.
 import { MoneyLine } from '@/renderer/ui/money-line'
 import type { RunCost } from '@/renderer/dialogs/run-dialog/run-summary'
+import { jobModel, workflowModel } from '@/shared/providers/model-words'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
 import styles from './fan-out.module.css'
@@ -18,12 +19,13 @@ export function CostLine(props: { id: string; cost: RunCost | null }) {
   )
 }
 
-// Image providers that can run now; ComfyUI only with an offered `extend` workflow.
+// Image providers that can run now; ComfyUI only with an offered `extend` workflow. R3-2:
+// `models` names each one's fill model, ComfyUI's from that workflow.
 export function fillProviders(providers: ProviderInfo[], info: ComfyInfo | null) {
   const extend = info?.workflows.find((w) => w.offered && w.job === 'extend')
   const listed = providers.filter((p) => p.available && p.jobs.includes('image'))
-  return {
-    list: listed.filter((p) => p.id !== 'comfyui' || extend),
-    trial: extend?.status === 'trial',
-  }
+  const list = listed.filter((p) => p.id !== 'comfyui' || extend)
+  const models: Record<string, string | null> = {}
+  for (const p of list) models[p.id] = jobModel(p, 'image', workflowModel(extend))
+  return { list, models, trial: extend?.status === 'trial' }
 }

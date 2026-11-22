@@ -20,6 +20,7 @@ import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
 import { PaidCount } from '@/renderer/ui/paid-count'
 import type { VideoStartKind } from '@/shared/config/video-offers'
+import { providerModelWords } from '@/shared/providers/model-words'
 import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
 import type { Result } from '@/shared/schemas/result'
 import { CostLines, describedIds } from './cost-lines'
@@ -111,12 +112,13 @@ export function RunSetup(props: RunSetupProps) {
   const video = videoSent(props.video, info, chosenId, referenceCount)
   const shown = settled && ready
   const { requests } = props
-  const cost = shown
-    ? runCost({ job, provider, count: n ?? count?.value, referenceCount, comfy, requests, video })
-    : null
+  const model = chosen?.model ?? null
+  const name = providerModelWords(provider.label, model)
+  const sent = { job, provider, count: n ?? count?.value, referenceCount, comfy, requests, video }
+  const cost = shown ? runCost({ ...sent, model }) : null
   const changed = shown && props.video && video && video.seconds !== props.video.seconds
   const bounds = props.video && clipBounds(info, provider.id, props.video.start)
-  const length = changed && bounds ? lengthLine(provider.label, bounds, video.seconds) : null
+  const length = changed && bounds ? lengthLine(name, bounds, video.seconds) : null
   const described = describedIds([
     [lengthId, length !== null],
     [costId, cost !== null],
@@ -148,7 +150,7 @@ export function RunSetup(props: RunSetupProps) {
         </DialogAlert>
       )}
       {retry ? (
-        <p>Provider: {provider.label}</p>
+        <p>Provider: {name}</p>
       ) : (
         <ProviderChoice
           choices={choices}

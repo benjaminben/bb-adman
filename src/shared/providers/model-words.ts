@@ -35,6 +35,11 @@ export function jobModel(provider: Named, job: string, comfyModel?: string | nul
   return provider.modelLabels?.[job as ProviderJob] ?? null
 }
 
+// The model of a ComfyUI workflow from comfy.getInfo, or null when none is known.
+export function workflowModel(workflow?: { model?: { label: string } } | null): string | null {
+  return workflow?.model?.label ?? null
+}
+
 export function serviceWords(provider: Named, job: string, comfyModel?: string | null): string {
   return providerModelWords(provider.label, jobModel(provider, job, comfyModel))
 }

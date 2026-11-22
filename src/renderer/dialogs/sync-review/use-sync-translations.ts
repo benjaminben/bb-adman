@@ -11,6 +11,7 @@ import { useApi, useApp } from '@/renderer/app/app-context'
 import { plainMessage } from '@/shared/providers/messages'
 import type { SyncPreviewReply } from '@/shared/schemas/queries/sync'
 import type { JobRow } from '@/shared/schemas/rows/job'
+import { serviceWords } from '@/shared/providers/model-words'
 
 export type LanguageRun =
   | { kind: 'running'; jobId: string | null }
@@ -47,7 +48,8 @@ export function useSyncTranslations(options: Options) {
   const provider = app?.providers.find((p) => p.id === app.settings.defaultProviders.text)
   const usable = provider !== undefined && provider.available && provider.jobs.includes('text')
   const local = usable && provider.local === true
-  const label = provider?.label ?? ''
+  // R3-2: the provider and its text model.
+  const label = provider ? serviceWords(provider, 'text') : ''
   const [runs, setRuns] = useState<LanguageRuns>({})
   const [asking, setAsking] = useState<ReadonlySet<string>>(new Set())
   const started = useRef(new Set<string>())

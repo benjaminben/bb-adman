@@ -1,11 +1,12 @@
 // What the run costs, one line (spec/screens-ai.md, "The run confirmation dialog"; DLG-4a,
 // choice C-15). A paid provider (not local, not the fake one) gets the MoneyLine words "Paid:
-// {what} → {Provider}", naming the count, references, seconds and pictures the run sends. A
+// {what} → {Provider} · {model}" (R3-2), naming the count, references, seconds and pictures the run sends. A
 // ComfyUI run names its server and workflow, the fake provider says nothing is charged; both
 // keep today's words. The ComfyUI address is allowed here (FR-256). A provider the app does
 // not know reaches here with `local: false`, so it counts as paid. Fan-out uses `runCost` too.
 import { paidLine } from '@/renderer/ui/paid-confirm/paid-confirm'
 import { plural } from '@/renderer/ui/plural'
+import { providerModelWords } from '@/shared/providers/model-words'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 
 export type RunJob = 'image' | 'cutout' | 'layout' | 'text' | 'video'
@@ -23,6 +24,8 @@ export type SummaryInput = {
   // The saved address and the offered workflow's label, from comfy.getInfo.
   comfy?: { address: string | null; label: string }
   video?: VideoSent
+  // R3-2: the model the run uses; a paid line names it after the provider.
+  model?: string | null
 }
 
 export type RunCost = { paid: boolean; words: string }
@@ -59,10 +62,11 @@ export function runCost(input: SummaryInput): RunCost {
   const { job, provider } = input
   const paid = !provider.local && provider.id !== 'fake'
   if (!paid) return { paid, words: localLine(input) }
+  const name = providerModelWords(provider.label, input.model)
   if (job === 'layout' || job === 'text') {
-    return { paid, words: paidLine(job === 'text' ? (input.requests ?? 1) : 1, provider.label) }
+    return { paid, words: paidLine(job === 'text' ? (input.requests ?? 1) : 1, name) }
   }
-  return { paid, words: `Paid: ${paidWhat(input)} → ${provider.label}` }
+  return { paid, words: `Paid: ${paidWhat(input)} → ${name}` }
 }
 
 export function runSummary(input: SummaryInput): string {

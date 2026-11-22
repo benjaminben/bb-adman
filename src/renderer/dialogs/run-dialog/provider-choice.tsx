@@ -1,10 +1,13 @@
 // The run dialog's "Provider" (DLG-4a; spec/app-style-parts.md "Field", Segmented): two to four
 // choices are one row of segments, each a radio named by the provider; five or more are a
 // select. A disabled choice shows only its name and gives its reason in `title`. An offered
-// trial workflow shows a small "Trial" mark; the radio is described by it, read "(trial)" as
+// trial workflow shows a small "Trial" mark; R3-2: the model is a second, muted line under the
+// provider (an option of the select names both on one line); the radio is described by it, read "(trial)" as
 // before. The choices themselves come from run-choices.ts.
 import { useId } from 'react'
 import layout from '@/renderer/ui/layout.module.css'
+import { ProviderName } from '@/renderer/ui/provider-name'
+import { providerModelWords } from '@/shared/providers/model-words'
 import type { Choice } from './run-choices'
 import styles from './run-dialog.module.css'
 
@@ -47,10 +50,13 @@ function Segments(props: Props) {
                 checked={props.value === c.provider.id}
                 disabled={!c.enabled}
                 title={c.reason}
+                aria-label={providerModelWords(c.provider.label, c.model)}
                 aria-describedby={c.trial ? `${id}-trial` : undefined}
                 onChange={() => props.onChange(c.provider.id)}
               />
-              <label htmlFor={id}>{c.provider.label}</label>
+              <label htmlFor={id}>
+                <ProviderName label={c.provider.label} model={c.model} />
+              </label>
               {c.trial && <TrialMark id={`${id}-trial`} />}
             </div>
           )
@@ -81,7 +87,7 @@ function ProviderSelect(props: Props) {
               disabled={!c.enabled}
               title={c.reason}
             >
-              {c.provider.label}
+              {providerModelWords(c.provider.label, c.model)}
             </option>
           ))}
         </select>
