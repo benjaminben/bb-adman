@@ -41,7 +41,7 @@ Built. Owner: `package.json`. The project needs Node 22.12 or newer (`engines`);
 
 ## CI pipeline
 
-Push and pull request: Built (`.github/workflows/ci.yml`). Tag pipeline: Not built (Phase 11).
+Push and pull request: Built (`.github/workflows/ci.yml`). Tag pipeline: Built in part (`.github/workflows/release.yml`, D-102), never run yet.
 
 On every push and pull request, with `permissions: contents: read`:
 
@@ -63,20 +63,27 @@ Not built yet:
 
 - **Scene reference-picture tests** on macOS and Windows: a push step that runs them in Playwright (Electron and the render window), not in Vitest (`spec/testing.md`, "Reference pictures"). Not built (Phase 3, with the Scene).
 - **Licence check**: Not built (Phase 11). Fails on GPL or AGPL packages, on push and on tags from then on. Comes with `LICENSE` and `THIRD-PARTY-NOTICES.md`.
-- **Tag pipeline** on `v*`: Not built (Phase 11).
+- **Tag pipeline, the parts left out**: the coverage thresholds, the end-to-end smoke test, the licence check and a macOS x64 installer (below).
 
-```
-tag v*
-  └─ every push job above; the dependency audit and the coverage thresholds now fail the run
-  └─ fetch FFmpeg (pinned version, SHA-256 checked)
-  └─ end-to-end smoke test (Playwright, fake providers)
-  └─ package (electron-builder): DMG arm64, DMG x64, NSIS x64
-  └─ create a draft GitHub Release with the installers attached (GITHUB_TOKEN)
-```
+**Tag pipeline** (`.github/workflows/release.yml`, pinned by `tests/unit/config/release-workflow.test.ts`). It starts only on a pushed tag `v*`, with `permissions: contents: read`.
+
+| Job | Runs on | Steps | Fails the run? |
+|-----|---------|-------|----------------|
+| Version and dependency audit | `ubuntu-latest` | The tag equals `v` + the `version` of `package.json`; `npm audit --audit-level=high` | Yes, both |
+| Package | `macos-latest` (DMG arm64), `windows-latest` (NSIS x64) | `npm ci`; on macOS only `npm run lint`, `npm run typecheck`, `npm test`; `npm run fetch:ffmpeg`; `npm run build`; `npm run test:build`; `npx electron-builder {target} --publish never`; the installer kept as a run artifact | Yes |
+| Draft release | `ubuntu-latest`, after both | Downloads the installers; `gh release create "$GITHUB_REF_NAME" --draft` with `GITHUB_TOKEN`. The only job with `contents: write`; it checks out and runs no code from the repository | Yes |
+
+- **A release is a draft.** A person reads it on GitHub and publishes it by hand. `electron-builder.json` has `"publish": null`, and the builder is always called with `--publish never`.
+- **No secret** but the run's own `GITHUB_TOKEN`. Nothing is signed.
+- **Left out for now, on purpose** (D-102, for the stakeholder to confirm):
+  - *Windows tests do not gate a release.* They run in the push workflow. They have never run on Windows, so the first runs may fail there.
+  - *Coverage thresholds and the end-to-end smoke test* are not in the tag pipeline yet.
+  - *The licence check* waits for the licence choice.
+  - *macOS x64.* The FFmpeg script builds for the machine it runs on, so an Intel installer needs an Intel runner. Only Apple silicon is built.
 
 ## Release and packaging
 
-Packaging config: Built (`electron-builder.json`). Release workflow, signing steps in the README: Not built (Phase 11). FFmpeg in the package: Built (P8-18, "FFmpeg" below).
+Packaging config: Built (`electron-builder.json`). Release workflow: Built in part ("CI pipeline" above). First-launch steps in the README: Built. FFmpeg in the package: Built (P8-18, "FFmpeg" below).
 
 - `electron-builder.json`: `appId` `com.adman.app`, `productName` "AdManager", output `dist/`, files `out/**` and `package.json`, native `.node` files unpacked from the archive. macOS: DMG for arm64 and x64, no signing identity, icon `resources/icon.icns`. Windows: NSIS x64, not one-click, per user, icon `resources/icon.png`.
 - **The app's name** (R2P-11). People see "AdManager": the window title, the menus ("About AdManager", "Hide AdManager", "Quit AdManager"), the About panel, the quit question "Quit AdManager?", the start screen, the bundle and installer names. One owner: `APP_DISPLAY_NAME` in `src/shared/config/app-name.ts`. On purpose the old name stays where changing it would lose the user's data or keys: `package.json` `name` and `productName` ("Adman", which sets the run-time `app.name`), the `appId`, the data folder (`Application Support/Adman`, `%APPDATA%\Adman`), the Keychain entry "Adman Safe Storage", the `.adman` file type and its words, `adman-asset://`, every `ADMAN_` variable, the MCP server name `adman`, the default projects folder "Adman Projects", and sentences inside messages. `npm run test:package` (after `npm run package:dir`) checks the packaged names on macOS. Whether the Keychain entry keeps working after the rename is the stakeholder's hand check (`spec/phases/round-2-verify.md`).

@@ -36,17 +36,25 @@ Designed in `spec/approvals.md` and `spec/approvals-service.md`; none of these b
 - **OI-96. Pictures in the user's S3 bucket, or in the service's own storage?** Answered [D-096]: the user's bucket (A-89).
 - **OI-97. The S3 part of Settings' "Cloud storage".** Answered [D-096]: built now, and required. The user enters their own bucket credentials in Settings; the app is never given an environment file (A-95).
 
-### Before anything leaves this machine
+### Before the repository is made public
 
-- **Question:** Nothing is pushed, tagged or released for now (D-086). Before the first push, what may the public repository hold?
-- **Meanwhile:** all work is committed and merged locally only. Nothing below blocks the build.
-- **Stakeholder:** before the first push, decide or check each of these:
-  - A personal-data check of the whole repository and its history (D-009). Two decision records quote the names of other projects on his computer.
-  - Q-045: whether the `client/` folder goes into the repository.
-  - Q-047: keep or delete the 12 Unsplash photos in the design prototype.
-  - Whether `.claude/rules/security-priorities.md` goes into the repository.
+- **Where things stand:** `main` may be pushed to the private GitHub repository of D-008, and releases made there as drafts (D-102). The repository becomes public only on the stakeholder's word.
+- **The personal-data check** (D-009) was run on 2026-11-22 over every version of every file reachable from `main` (9,855 file versions, 2,257 commits) and every commit message:
+  - *Not found anywhere:* a key or token of any service, a private key, a real server address, the stakeholder's name, email address or computer name in any file, a real person's home-folder path, a real email address. Every address, path and email in tests is made up.
+  - *Found, for the stakeholder to rule on before going public:*
+    1. The author field of every commit holds the stakeholder's name and email address (accepted under D-018; a GitHub private-address setting or a history rewrite would hide the email).
+    2. D-008 in `DECISIONS.md` names the remote, which holds the GitHub username.
+    3. D-034 in `DECISIONS.md` names another project's folder on the stakeholder's computer, and with it the company the work was made for.
+    4. One commit message (an approvals-service commit) holds a path inside the stakeholder's home folder, which shows the account's short name and this folder's name. Only a history rewrite removes it.
+    5. The requirement, decision and spec files quote the stakeholder's own words throughout. That is by design (D-019, D-091), listed so it is a choice.
+  - Items 2, 3 and 5 can be changed in a new commit, but stay in history. Removing anything from history needs a rewrite, which no agent does without the stakeholder's word.
+- **Not in the repository, and not pushed** (untracked): `client/` (Q-045), `design/` with its 12 stock photos (Q-047) and the reference ads, `.claude/`, `comfy-workflows/`, the two loose documents in the root, `examples/hydrating-shampoo/` and `examples/silk-hour-ads/`. Each stays out unless the stakeholder says otherwise.
+- **Only `main` is pushed.** The other local branches (several hundred, one per finished slice) stay local.
+- **Still open:**
   - OI-27: four build tools (`esbuild` in three versions and `electron-winstaller`) are allowed to run a script at install. A reviewer read all four and found nothing unexpected. Assumption: keep them allowed.
-  - A backup of the old git history, from before the history rewrite, sits in a session scratchpad folder and still holds the private documents. He may delete it.
+  - A backup of the old git history, from before the history rewrite, sits in a session scratchpad folder and still holds the private documents. The stakeholder may delete it.
+  - No licence is chosen (D-102). Until one is, the README says all rights are reserved.
+  - The push workflow runs the whole test suite on macOS and Windows at every push. On a private repository this uses the account's included build minutes quickly (macOS minutes count ten times). Nothing is charged unless a spending limit is set.
 
 ## 2. Assumptions made to keep the build moving
 

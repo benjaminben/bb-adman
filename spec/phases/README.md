@@ -37,5 +37,5 @@ Every developer also reads `overview.md`. Open questions are in `open-items.md`;
 - **Security-class slices get a review** before they merge. The brief says "full" or "short".
 - **Verification classes** (A to G) and what each runs are in `spec/testing.md`.
 - **Paid calls.** Automatic tests never make a paid call. A developer may make one low-cost paid run per new feature, at the smallest size and shortest length (D-085). No agent reads a key file.
-- **Nothing leaves this machine.** Work is committed and merged locally. Nothing is pushed, tagged or released (D-086).
+- **What leaves this machine.** `main` may be pushed to the private GitHub repository and releases made there as drafts (D-102). Nothing else: no deploy, no sign-in to a host, no hosted database, no real bucket or Dropbox by an agent (D-086).
 - **Windows.** Agents verify on macOS only. An exit criterion that says "on both systems" is met on macOS, and Windows is listed as the stakeholder's check (D-087).

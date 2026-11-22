@@ -3,6 +3,7 @@
 Bullets carry `[logic]` or `[UI]` (D-084). This phase has no screen work.
 
 **Goal:** A repository someone can run, ready to publish. **Nothing is pushed, tagged, released or published by any agent** (D-086): the release workflow is written and checked by reading and by a local dry run only.
+**Changed by D-102 (2026-11-22):** the stakeholder asked for the repository to be pushed to GitHub and for releases there, with the licence left for later. Built ahead of the slices below: the history check (P11-1, by the orchestrator; findings in `spec/open-items.md`), a first `release.yml` and its test (P11-3, without the coverage, smoke-test and licence steps), `"publish": null`, and a first `README.md` (P11-4). The push itself and each tag are the stakeholder's own commands. Still to do from this file: P11-2 (waits for the licence), P11-5 to P11-8, and the left-out steps of P11-3.
 **Class:** F (the full gate, in P11-8). The other slices: A (scripts and their tests) and the config tests.
 
 ## Scope
@@ -64,7 +65,7 @@ Bullets carry `[logic]` or `[UI]` (D-084). This phase has no screen work.
   1. Terms: the developer builds the list from `git config user.name` and `user.email`, the home folder path, the macOS account name and any term the orchestrator passes from the stakeholder. The list stays in the scratchpad (A-251).
   2. Every commit of every ref (`git rev-list --all`, stashes and notes included): `git grep -n -I -i -F -e {term} {commit}` per term; commit messages and author and committer fields (`git log --all --format`); file and folder names in every tree (`git ls-tree -r --name-only`); branch and tag names.
   3. Untracked items that could be added before a push: `client/`, `comfy-workflows/`, `design/`, `.claude/`, `AUDIENCE-SYSTEM-PROMPT.md`, `REQUIREMENTS-Diff-1.4.md`, and anything else `git status --porcelain` lists.
-  4. Known items to list whatever the search finds (`spec/open-items.md`, "Before anything leaves this machine"): the two decision records that name other projects; Q-045 (`client/`), Q-047 (the 12 stock photos in `design/prototype/`); `.claude/rules/`; the backup of the old history in a scratchpad; author fields (accepted under D-018, listed so the stakeholder sees it).
+  4. Known items to list whatever the search finds (`spec/open-items.md`, "Before the repository is made public"): the two decision records that name other projects; Q-045 (`client/`), Q-047 (the 12 stock photos in `design/prototype/`); `.claude/rules/`; the backup of the old history in a scratchpad; author fields (accepted under D-018, listed so the stakeholder sees it).
   5. Report lines: commit (short hash), path, line number, kind of item (name, email, path, other project, photo), and the line with the found value replaced by `[term {n}]`. A summary at the top: counts per kind, whether any hit is in a commit reachable from `main`, and the choices for the stakeholder (keep, remove in a new commit, rewrite history) with what each means. The report recommends; it does nothing.
 - **Exit check:** the report exists, holds no unmasked term, and every term was searched in every commit (the counts per term are in the report).
 - **Class:** none (no code). **Security:** none (reads only; nothing leaves). **Size:** small to medium.
@@ -115,7 +116,7 @@ Bullets carry `[logic]` or `[UI]` (D-084). This phase has no screen work.
 ### P11-8 — README finish, full gate, exit
 
 - **Exists when done:** the README has the feature list, the Claude Desktop block and screenshots of the example (`tests/shots/p11.shots.ts`, shots 300 to 309, saved to `docs/readme/`; A-257); `THIRD-PARTY-NOTICES.md` re-made; the release workflow has its FFmpeg step; the full gate passed on macOS; the P11-1 report re-run on the final `main`.
-- **Report to the orchestrator:** what of the class F list passed; what was not run (the tag pipeline, the draft release, Windows, a fresh machine); the stakeholder answers still needed: OI-23 (closing the window on macOS), OI-26 (window size at launch), OI-27 (the four install scripts), the release-blocking real-process proofs (`client-certificate.test.ts`, `client-proxy.test.ts`, `spec/comfyui.md`), the history report's choices, and the items of `spec/open-items.md`, "Before anything leaves this machine".
+- **Report to the orchestrator:** what of the class F list passed; what was not run (the tag pipeline, the draft release, Windows, a fresh machine); the stakeholder answers still needed: OI-23 (closing the window on macOS), OI-26 (window size at launch), OI-27 (the four install scripts), the release-blocking real-process proofs (`client-certificate.test.ts`, `client-proxy.test.ts`, `spec/comfyui.md`), the history report's choices, and the items of `spec/open-items.md`, "Before the repository is made public".
 - **Needs:** every other P11 slice; Phases 1 to 10. **Class:** F on macOS. **Size:** medium.
 
 ## Assumptions

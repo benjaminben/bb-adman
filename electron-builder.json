@@ -8,6 +8,7 @@
   },
   "files": ["out/**", "package.json"],
   "asarUnpack": ["**/*.node"],
+  "publish": null,
   "extraResources": [
     { "from": "resources/ffmpeg/${platform}-${arch}", "to": "ffmpeg/${platform}-${arch}" }
   ],
