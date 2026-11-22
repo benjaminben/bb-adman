@@ -11,10 +11,11 @@ import { AGENT_POLICY } from '@/main/commands/agent-policy'
 import { REPORT_NOT_FOUND, REPORT_QUERY_DENIED } from '@/shared/export/messages'
 import type { ReportListItem } from '@/shared/schemas/queries/report'
 import type { Report } from '@/shared/schemas/report'
+import type { QueryOptions } from '@/main/queries/types'
 
 const DIR = '/Users/someone/Deliveries/Spring'
-const USER = { actor: 'user' as const }
-const AGENT = { actor: 'agent' as const }
+const USER: QueryOptions = { actor: 'user' }
+const AGENT: QueryOptions = { actor: 'agent' }
 
 let f: Fixture | undefined
 afterEach(() => {
@@ -47,10 +48,8 @@ describe('report.add saves one report row [P8-9]', () => {
     const { fx, p } = await setup()
     const report = reportFor(p, '2026-11-21T10:00:00.000Z', 1)
     const reportId = await add(fx, p, report)
-    const row = p.db().prepare('SELECT * FROM report WHERE id = ?').get(reportId) as Record<
-      string,
-      string
-    >
+    type Row = { campaign_id: string; created_at: string; output_dir: string; body: string }
+    const row = p.db().prepare('SELECT * FROM report WHERE id = ?').get(reportId) as Row
     expect(row).toMatchObject({
       campaign_id: p.campaignId,
       created_at: report.createdAt,
