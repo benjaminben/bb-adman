@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest'
 import { rowModel, runName } from '@/renderer/ui/run-name/run-name'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
+import type { ProviderInfo } from '@/shared/schemas/queries/app'
 
-const providers = [
+type Named = Pick<ProviderInfo, 'id' | 'label' | 'defaultModels' | 'modelLabels'>
+
+const providers: Named[] = [
   {
     id: 'gemini',
     label: 'Google Gemini',
