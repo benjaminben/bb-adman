@@ -4,16 +4,13 @@
 // own rows from the tables below when it fills its stub.
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, data, type Fixture } from '../core-fixture'
-import { createInput } from '../campaigns/campaign-fixture'
 import { AGENT_POLICY, denialMessage } from '@/main/commands/agent-policy'
 import { exportCommands } from '@/main/commands/export'
 import { reportQueries } from '@/main/queries/report'
 import { jobKindHandlers } from '@/main/jobs/kinds'
 import { createExportDeps } from '@/main/export/deps'
 import { registerIpc, IPC } from '@/main/ipc'
-import { REPORT_QUERY_DENIED } from '@/shared/export/messages'
 import { ok } from '@/shared/schemas/result'
-import { sampleReport } from '../../unit/shared/schemas/report-sample'
 
 let f: Fixture | undefined
 afterEach(() => {
@@ -59,26 +56,6 @@ const COMMANDS: CommandRow[] = [
     policy: 'deny',
     internal: false,
     bad: { campaignId: 'C1', variantIds: [] },
-  },
-  {
-    name: 'report.add',
-    input: { campaignId: 'C1', outputDir: '/nowhere/Exports', report: sampleReport() },
-    answer: refusal('report.add is not built yet.', 'not_built'),
-    policy: 'deny',
-    internal: true,
-    bad: { campaignId: 'C1', outputDir: '', report: sampleReport() },
-  },
-]
-
-// One row per stub query: a good input without projectId (campaignId filled in), its answer to
-// the user.
-type QueryRow = { name: string; input: (campaignId: string) => object; answer: object }
-const QUERIES: QueryRow[] = [
-  { name: 'report.list', input: (campaignId) => ({ campaignId }), answer: ok([]) },
-  {
-    name: 'report.get',
-    input: () => ({ reportId: 'R1' }),
-    answer: { ok: false, error: { code: 'NOT_FOUND', message: 'That report was not found.' } },
   },
 ]
 
@@ -158,37 +135,6 @@ describe('the Phase 8 command stubs [P8-1]', () => {
   })
 })
 
-describe('the Phase 8 query stubs [P8-1]', () => {
-  async function withCampaign() {
-    const { fx, projectId } = await open()
-    const made = await fx.user('campaign.create', { projectId, ...createInput() })
-    return { fx, projectId, campaignId: data<{ campaignId: string }>(made).campaignId }
-  }
-
-  it.each(QUERIES)('$name answers the user', async (row) => {
-    const { fx, projectId, campaignId } = await withCampaign()
-    const input = { projectId, ...row.input(campaignId) }
-    expect(await fx.core.query(row.name, input, { actor: 'user' })).toEqual(row.answer)
-  })
-
-  it.each(QUERIES)('$name refuses the agent before it reads the input', async (row) => {
-    const { fx, projectId, campaignId } = await withCampaign()
-    const denied = { ok: false, error: { code: 'AGENT_DENIED', message: REPORT_QUERY_DENIED } }
-    const input = { projectId, ...row.input(campaignId) }
-    expect(await fx.core.query(row.name, input, { actor: 'agent' })).toEqual(denied)
-    expect(await fx.core.query(row.name, { extra: 1 }, { actor: 'agent' })).toEqual(denied)
-  })
-
-  it.each(QUERIES)('$name checks the input', async (row) => {
-    const { fx, projectId, campaignId } = await withCampaign()
-    const input = { projectId, ...row.input(campaignId), extra: 1 }
-    expect(await fx.core.query(row.name, input, { actor: 'user' })).toMatchObject({
-      ok: false,
-      error: { code: 'INVALID_INPUT' },
-    })
-  })
-})
-
 describe('the Phase 8 job kind and port stubs [P8-1]', () => {
   it('answers no checks for every variant and says the checks were not run', async () => {
     const { fx } = await open()
@@ -201,14 +147,11 @@ describe('the Phase 8 job kind and port stubs [P8-1]', () => {
     ])
   })
 
-  it('refuses a video ad, writes no report and draws nothing', async () => {
+  it('refuses a video ad and draws nothing', async () => {
     const { fx } = await open()
     const ports = createExportDeps(() => fx.core.deps)
     const video = ports.video.exportVariant({} as never, {} as never, {} as never, {} as never, 'a')
     await expect(video).rejects.toThrow('Video export is not built yet.')
-    await expect(
-      ports.report.write({} as never, {} as never, {} as never, [], new Map()),
-    ).resolves.toBeNull()
   })
 
   it('keeps a plan once: take gives it and removes it, drop removes it', async () => {

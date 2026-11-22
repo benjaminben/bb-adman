@@ -59,7 +59,7 @@ export async function setupExport() {
   const shrink = vi.fn((_png: Uint8Array, side: number) => new Uint8Array([0xff, 0xd8, side]))
   const pictures = { toJpeg, shrink, stitch: vi.fn() } as unknown as ExportPictures
   fx.core.deps.exportPictures = pictures
-  const stubReport = fx.core.deps.export.report
+  const coreReport = fx.core.deps.export.report
   const report = vi.fn<ExportReport['write']>(async () => 'R1')
   fx.core.deps.export.report = { write: report }
 
@@ -112,7 +112,7 @@ export async function setupExport() {
     },
     failDrawWhen: (fn: (size: Size) => boolean) => void (draws.failWhen = fn),
     cancelOnDraw: (n: number) => void (draws.cancelAt = n),
-    useStubReport: () => void (fx.core.deps.export.report = stubReport),
+    useCoreReport: () => void (fx.core.deps.export.report = coreReport),
     makeVideo: (id: string) =>
       void db().prepare("UPDATE variant SET format = 'video' WHERE id = ?").run(id),
     useMissingPicture(variantId: string, displayName: string) {

@@ -4,53 +4,18 @@
 // inside the real root. Every disk error leaves as a ProviderFailure with the code only.
 import fs from 'node:fs/promises'
 import nodePath from 'node:path'
-import { Readable } from 'node:stream'
-import { pipeline } from 'node:stream/promises'
-import type { ReadableStream as WebReadableStream } from 'node:stream/web'
 import type { StorageProvider } from '@/main/providers/types'
 import { notThere, onDisk } from './failure'
+import { PARTIAL, isMissing, writeNewThroughPartial, writeThroughPartial } from './partial-write'
 import { refusePath, storageFilePath, storageListPrefix } from '@/main/providers/storage-paths'
 
-// [1.14] H13: not there, a path through a file (`ENOTDIR`) included.
-function isMissing(error: unknown): boolean {
-  const code = (error as NodeJS.ErrnoException).code
-  return code === 'ENOENT' || code === 'ENOTDIR'
+// Local storage, plus the write a report needs (A-193): writeNew never replaces anything and
+// answers false when the name is taken.
+export type LocalStorage = StorageProvider & {
+  writeNew(path: string, data: ReadableStream | Uint8Array): Promise<boolean>
 }
 
-// spec/phases/phase-08.md "The output folder" [A-194]: every write goes to {name}.partial and
-// is renamed to {name}, so a reader never sees half a file.
-const PARTIAL = '.partial'
-
-// A leftover .partial that is a regular file is removed; a link there is refused, so nothing
-// is written through it. Anything else stays and makes the `wx` open fail.
-async function clearLeftover(partial: string): Promise<void> {
-  const stats = await fs.lstat(partial).catch((error: unknown) => {
-    if (isMissing(error)) return null
-    throw error
-  })
-  if (stats?.isSymbolicLink()) refusePath()
-  if (stats?.isFile()) await fs.rm(partial)
-}
-
-// `file` was checked by fileFor: inside the real root and not a link. A failed write removes
-// the .partial it made and leaves any older file of the name whole.
-async function writeThroughPartial(file: string, data: ReadableStream | Uint8Array) {
-  const partial = `${file}${PARTIAL}`
-  await clearLeftover(partial)
-  const handle = await fs.open(partial, 'wx')
-  try {
-    if (data instanceof Uint8Array) await handle.writeFile(data)
-    else await pipeline(Readable.fromWeb(data as WebReadableStream), handle.createWriteStream())
-    await handle.close()
-    await fs.rename(partial, file)
-  } catch (error) {
-    await handle.close().catch(() => undefined)
-    await fs.rm(partial, { force: true })
-    throw error
-  }
-}
-
-export function localStorageAt(root: string): StorageProvider {
+export function localStorageAt(root: string): LocalStorage {
   const absoluteRoot = nodePath.resolve(root)
 
   // The real path of `folder`, refused unless it is inside the real root. Null when missing.
@@ -174,6 +139,13 @@ export function localStorageAt(root: string): StorageProvider {
         const file = await fileFor(path, true)
         if (file === null) throw notThere()
         await writeThroughPartial(file, data)
+      }),
+
+    writeNew: (path, data) =>
+      onDisk(async () => {
+        const file = await fileFor(path, true)
+        if (file === null) throw notThere()
+        return writeNewThroughPartial(file, data)
       }),
 
     list: (prefix) =>

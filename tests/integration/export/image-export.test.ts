@@ -201,11 +201,15 @@ describe('what the export job hands on and keeps out [P8-6, A-195, A-196]', () =
   })
 })
 
-describe('the export job with the stub report port [P8-6]', () => {
-  it('ends with reportId null when no report was saved', async () => {
+describe("the export job with the core's own report port [P8-6, P8-9]", () => {
+  it('ends with the ID of the report it saved', async () => {
     const t = await setup()
-    t.useStubReport()
+    t.useCoreReport()
     const end = await t.run()
-    expect(end.result).toEqual({ exported: 4, failed: 0, reportId: null })
+    expect(end.result).toEqual({
+      exported: 4,
+      failed: 0,
+      reportId: expect.stringMatching(/^[0-9A-HJKMNP-TV-Z]{26}$/),
+    })
   })
 })
