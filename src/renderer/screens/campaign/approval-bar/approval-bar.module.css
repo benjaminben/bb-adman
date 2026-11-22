@@ -1,12 +1,18 @@
 /* app-style */
-/* Sits at the right end of the page's head. */
+/* Sits in the page's head row: the approvals button, Refresh, then any words that must stay on
+   the page. */
 .bar {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
-  margin-left: auto;
   font-size: var(--font-size-control);
+}
+/* The button holds its icon, the word and the count mark. */
+.open {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 .muted {
   color: var(--color-text-muted);

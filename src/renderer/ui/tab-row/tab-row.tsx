@@ -3,7 +3,8 @@
 // laid over the same grid columns: tab, its close button, next tab. Each close button is
 // described by its tab's label. It goes inside the caller's Tabs.Root; value is that root's.
 // Two looks (spec/app-style.md, "App shell and tabs"): "row", the variant tab row with an
-// underline, and "bar", the campaign tabs in the top bar with a bar on top.
+// underline, and "bar", the campaign tabs in the top bar with a bar on top. CAMP-3: an item
+// with `divider` draws a thin line before its tab (data-divider), so one strip can hold groups.
 import * as Tabs from '@radix-ui/react-tabs'
 import { useId, type CSSProperties, type ReactNode } from 'react'
 import { Icon } from '@/renderer/ui/icon'
@@ -14,6 +15,7 @@ export type TabItem = {
   label: ReactNode
   marks?: ReactNode
   close?: { label: string; onClose: () => void }
+  divider?: boolean
 }
 
 export type TabRowProps = {
@@ -41,6 +43,7 @@ export function TabRow(props: TabRowProps) {
             value={item.value}
             className={item.close ? `${styles.tab} ${styles.closable}` : styles.tab}
             style={column(index)}
+            data-divider={item.divider || undefined}
           >
             <span id={nameId(index)}>{item.label}</span>
             {item.marks && <> {item.marks}</>}

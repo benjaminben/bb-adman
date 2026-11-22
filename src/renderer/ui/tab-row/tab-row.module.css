@@ -121,3 +121,9 @@
   background: var(--color-bg);
   border-top-color: var(--color-accent);
 }
+
+/* A thin divider before a tab that starts a new group (CAMP-3). */
+.tab[data-divider='true'] {
+  margin-left: var(--space-2);
+  border-left: var(--border-width) solid var(--color-line);
+}

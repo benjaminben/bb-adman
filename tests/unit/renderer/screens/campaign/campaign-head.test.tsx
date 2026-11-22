@@ -92,7 +92,10 @@ function Row(props: { failure?: string; paid?: boolean }) {
 
 function drawRow(props: { failure?: string; paid?: boolean } = {}) {
   const fake = campaignApi()
-  fake.onQuery('campaign.paidCount', () => ({ ok: true, data: { pictures: 3, videos: 1, text: 0 } }))
+  fake.onQuery('campaign.paidCount', () => ({
+    ok: true,
+    data: { pictures: 3, videos: 1, text: 0 },
+  }))
   fake.onQuery('report.list', () => ({ ok: true, data: [] }))
   return renderWith(<Row {...props} />, fake)
 }

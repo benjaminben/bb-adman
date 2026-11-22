@@ -15,6 +15,8 @@
 // shown view. The page keeps the stores and which view shows.
 // R2C-3 (design addition 3): a click on a tile selects it (setChosenId); a double-click or Enter
 // opens its tab, and the shown tab is then the selected one.
+// CAMP-3 (C-10): one head row (the paid count is its mark on the campaign views) and one tab
+// strip, drawn by the overview: the views, then the open variants.
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useStore } from 'zustand'
 import { useApi } from '@/renderer/app/app-context'
@@ -27,9 +29,7 @@ import {
   CampaignOverview,
   type CampaignViewName,
 } from '@/renderer/screens/campaign/campaign-overview'
-import { VariantTabs } from '@/renderer/screens/campaign/variant-tabs'
 import { VariantsTab } from '@/renderer/screens/campaign/variants-tab'
-import { PaidCount } from '@/renderer/ui/paid-count'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './campaign-view.module.css'
 import { useCampaign } from './use-campaign'
@@ -67,13 +67,18 @@ function CampaignPage(props: Props) {
       )
   }, [keepVariants, projectId, campaignId, variants])
 
-  const overview = data && (
+  const tabs = data && (
     <CampaignOverview
       projectId={projectId}
       campaignId={campaignId}
       data={data}
       view={view}
       onView={setView}
+      renderVariant={(id, tab, onTab) => (
+        <Suspense fallback={loadingVariant}>
+          <Editor key={id} projectId={projectId} variantId={id} view={tab} onView={onTab} />
+        </Suspense>
+      )}
       variants={
         <VariantsTab
           projectId={projectId}
@@ -97,23 +102,9 @@ function CampaignPage(props: Props) {
         data={data}
         approvals={approvals}
         onBack={props.onBack}
+        paid={shown === OVERVIEW_TAB}
       />
-      {shown === OVERVIEW_TAB && <PaidCount projectId={projectId} campaignId={campaignId} />}
-      {data === null ? (
-        <p className={layout.muted}>Loading the campaign…</p>
-      ) : (
-        <VariantTabs
-          projectId={projectId}
-          campaignId={campaignId}
-          variants={data.variants}
-          overview={overview}
-          renderVariant={(id, view, onView) => (
-            <Suspense fallback={loadingVariant}>
-              <Editor key={id} projectId={projectId} variantId={id} view={view} onView={onView} />
-            </Suspense>
-          )}
-        />
-      )}
+      {tabs ?? <p className={layout.muted}>Loading the campaign…</p>}
     </section>
   )
 }

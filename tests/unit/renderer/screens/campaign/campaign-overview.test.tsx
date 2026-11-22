@@ -82,8 +82,7 @@ function draw(opts: { languages?: string[]; checks?: Answer } = {}) {
   return renderWith(<Harness languages={opts.languages ?? ['en', 'de']} />, fake)
 }
 
-const tabs = () =>
-  within(screen.getByRole('tablist', { name: 'Campaign' })).getAllByRole('tab')
+const tabs = () => within(screen.getByRole('tablist', { name: 'Campaign' })).getAllByRole('tab')
 const panels = () =>
   screen.queryAllByText(/^(rules|checks|translations) P C1$|^the grids$/).map((p) => p.textContent)
 
