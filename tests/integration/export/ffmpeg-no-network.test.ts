@@ -7,8 +7,9 @@ import type { AddressInfo } from 'node:net'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
+import { createFfmpegRunner } from '@/main/media/run-ffmpeg'
 import { AD_FAILURES } from '@/shared/export/messages'
-import { ffmpegFetched, setupVideoExport } from './video-export-fixture'
+import { FETCHED_FFMPEG, ffmpegFetched, setupVideoExport } from './video-export-fixture'
 
 type Setup = Awaited<ReturnType<typeof setupVideoExport>>
 let s: Setup | undefined
@@ -162,6 +163,37 @@ describe('FFmpeg follows no data reference inside a MOV [P8-17]', () => {
       expect(t.workLeft()).toEqual([])
     } finally {
       fs.rmSync(elsewhere, { recursive: true, force: true })
+    }
+  })
+})
+
+// Review fix, the control for the block above: the hand-built file really is hostile. The same
+// project copy (samples zeroed, an alias to the file elsewhere), run through the app's one
+// runner with the two data-reference flags added here by the test alone, reads the file
+// elsewhere and gives a frame. Without them, nothing is made. The flags never appear under src/.
+describe('the hostile MOV is hostile when data references are switched on [control]', () => {
+  it('reads the file elsewhere only with the flags the app never passes', async (ctx) => {
+    if (!ffmpegFetched()) ctx.skip('FFmpeg is not fetched.')
+    const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-dref-control-'))
+    try {
+      const far = path.join(folder, 'far.mov')
+      const copy = path.join(folder, 'copy.mov')
+      fs.writeFileSync(far, movReferring(alias(far), false))
+      fs.writeFileSync(copy, movReferring(alias(far), true))
+      const runner = createFfmpegRunner({ binary: FETCHED_FFMPEG })
+      const frameOf = async (flags: string[], name: string) => {
+        const out = path.join(folder, name)
+        const input = ['-protocol_whitelist', 'file,pipe', '-f', 'mov', ...flags]
+        const output = ['-map', '0:v:0', '-frames:v', '1', '-c:v', 'png', '-f', 'image2pipe']
+        const args = ['-nostdin', '-y', ...input, '-i', `file:${copy}`, ...output, `file:${out}`]
+        const result = await runner.run(args, folder)
+        return { result, made: fs.existsSync(out) && fs.statSync(out).size > 0 }
+      }
+      expect(await frameOf([], 'plain.png')).toEqual({ result: null, made: false })
+      const followed = await frameOf(['-enable_drefs', '1', '-use_absolute_path', '1'], 'far.png')
+      expect(followed).toEqual({ result: 'done', made: true })
+    } finally {
+      fs.rmSync(folder, { recursive: true, force: true })
     }
   })
 })

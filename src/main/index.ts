@@ -39,8 +39,10 @@ import { ffmpegPath } from './media/ffmpeg-path'
 import { cancelDropboxSignIn } from './providers/dropbox/sign-in/session'
 import { runBridge } from './bridge/run-bridge'
 import { BRIDGE_FLAG, setBridgeLaunch } from './bridge/launch-command'
+import { userDataOverride } from './user-data-override'
 
-if (process.env.ADMAN_USER_DATA_DIR) app.setPath('userData', process.env.ADMAN_USER_DATA_DIR)
+const userDataDir = userDataOverride(process.env, app.isPackaged)
+if (userDataDir) app.setPath('userData', userDataDir)
 // P10-9: started with --mcp-bridge, the process is the bridge and nothing else: no window, no
 // lock, no listener (src/main/bridge/run-bridge.ts).
 const bridgeMode = process.argv.includes(BRIDGE_FLAG)

@@ -7,11 +7,12 @@
 //   sound: silent.
 // - 'file': the added audio file from the ad's start, cut at its end (-t). Nothing is mixed.
 // Security (spec/phases/phase-07.md "How FFmpeg is run"): every input is `-protocol_whitelist
-// file,pipe`, the demuxer the sniffed type pins (one per type, never a probe), then `file:` and
+// file,pipe`, the demuxer the sniffed type pins (a clip's from clip-demuxers.ts, never a probe), then `file:` and
 // an absolute path of a copy in the work folder. The graph holds only numbers from the formatter
 // and fixed names; the caller checks the whole graph with assertSafeGraph.
 import path from 'node:path'
 import type { VideoClip } from './encoder-args'
+import { CLIP_DEMUXERS } from './clip-demuxers'
 import { seconds, whole, type GraphClip, type PlannedClip } from './filter-graph'
 
 export type SoundFileType = 'mp3' | 'wav' | 'm4a' | 'aac'
@@ -24,7 +25,6 @@ export type AdSound =
 export type SoundArgs = { inputs: string[]; graph: string[]; output: string[] }
 
 const DEMUXERS: Record<SoundFileType, string> = { mp3: 'mp3', wav: 'wav', m4a: 'mov', aac: 'aac' }
-const CLIP_DEMUXER = 'mov'
 const ENCODE = ['-c:a', 'aac', '-b:a', '192k']
 const SILENT: SoundArgs = { inputs: [], graph: [], output: ['-an'] }
 
@@ -41,7 +41,7 @@ function clipsSound(planned: Planned[], first: number): SoundArgs {
   const single = heard.length === 1
   const inputs = heard.flatMap(({ clip, startMs, endMs }) => {
     const read = ['-ss', seconds(clip.inMs), '-t', seconds(endMs - startMs)]
-    return fileInput(CLIP_DEMUXER, read, clip.path)
+    return fileInput(CLIP_DEMUXERS[clip.fileType], read, clip.path)
   })
   const graph = heard.map(
     (c, k) =>

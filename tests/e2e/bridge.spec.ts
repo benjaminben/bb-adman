@@ -6,6 +6,7 @@ import { test, expect, type ElectronApplication } from '@playwright/test'
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
 import { createRequire } from 'node:module'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { makeSandbox, launch, quietEnv, type Sandbox } from './launch'
 import { command, query } from './render-helpers'
@@ -136,4 +137,51 @@ test('with agent access on in the running app, the bridge relays to it and lists
   // The bridge changed neither file it read.
   expect(saved('settings.json').equals(before.settings)).toBe(true)
   expect(saved('secrets.bin').equals(before.secrets)).toBe(true)
+})
+
+// Every name in a folder, recursively, as paths relative to it.
+function listing(folder: string): string[] {
+  return (fs.readdirSync(folder, { recursive: true }) as string[]).sort()
+}
+
+const bridgeSessionFolders = () =>
+  fs.readdirSync(fs.realpathSync(os.tmpdir())).filter((n) => n.startsWith('adman-bridge-'))
+
+// Review fix (spec/mcp-and-agents.md "Bridge mode", owed hardening): Chromium's own files go to
+// a temporary folder. The bridge runs on a data folder holding only the app's settings.json and
+// secrets.bin, copied from the running app's. It still decrypts the token (the tools are
+// listed), and afterwards the folder holds the same names and both files the same bytes.
+test('the bridge leaves the data folder as it found it and removes its session folder', async () => {
+  box = makeSandbox()
+  app = await launch(box)
+  const page = await app.firstWindow()
+  const port = await freePort()
+  await command(page, 'settings.update', { mcp: { port } })
+  await command(page, 'mcp.setEnabled', { enabled: true })
+  const own = path.join(box.root, 'bridge-data')
+  fs.mkdirSync(own)
+  for (const name of ['settings.json', 'secrets.bin'])
+    fs.copyFileSync(path.join(box.userData, name), path.join(own, name))
+  const saved = (name: string) => fs.readFileSync(path.join(own, name))
+  const before = {
+    names: listing(own),
+    settings: saved('settings.json'),
+    secrets: saved('secrets.bin'),
+  }
+  const sessionsBefore = bridgeSessionFolders()
+
+  bridge = startBridge(own)
+  bridge.send(INIT)
+  expect(await bridge.next()).toMatchObject({ id: 1, result: { serverInfo: expect.any(Object) } })
+  bridge.send({ jsonrpc: '2.0', method: 'notifications/initialized' })
+  bridge.send({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} })
+  const listed = (await bridge.next()) as { result: { tools: { name: string }[] } }
+  expect(listed.result.tools.map((t) => t.name)).toContain('list_projects')
+  bridge.child.stdin.end()
+  expect(await exited(bridge)).toBe(0)
+
+  expect(listing(own)).toEqual(before.names)
+  expect(saved('settings.json').equals(before.settings)).toBe(true)
+  expect(saved('secrets.bin').equals(before.secrets)).toBe(true)
+  expect(bridgeSessionFolders()).toEqual(sessionsBefore)
 })

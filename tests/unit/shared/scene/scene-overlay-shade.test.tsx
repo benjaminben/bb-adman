@@ -29,6 +29,10 @@ function draw(over: Partial<SceneProps>) {
     assets: { A1: asset() },
     timeMs: 500,
     mode: 'overlay-only',
+    // A clip covers the whole track: in a gap no shade is drawn (scene-overlay-shade-gap.test).
+    clips: [
+      { id: 'c0', assetId: 'A1', startMs: 0, inMs: 0, outMs: 2000, placement: null, soundOn: true },
+    ],
     ...over,
   }
   const { container } = render(<Scene {...props} />)

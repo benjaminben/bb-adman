@@ -31,11 +31,14 @@ function drawOrder(layers: LayerRow[]): LayerRow[] {
 
 // A-202 (P8-17): overlay-only leaves out the background's picture, clip and colour, but draws
 // its shade, as PictureLayer and ClipTrack draw it over their picture, so text over a video
-// keeps it. A background with no usable shade draws nothing.
-function ShadeOnly({ layer, box }: { layer: LayerRow; box: CSSProperties }) {
+// keeps it. A background with no usable shade draws nothing. On a video variant the shade is
+// drawn only where a clip covers the time: in a gap ClipTrack draws an empty box, so does this.
+type ShadeOnlyProps = { layer: LayerRow; box: CSSProperties; covered: boolean }
+
+function ShadeOnly({ layer, box, covered }: ShadeOnlyProps) {
   const look = 'opacity' in layer.style ? pictureLookOf(layer.style) : null
   const shade = shadeCss(look?.shade)
-  if (!look || !shade) return null
+  if (!covered || !look || !shade) return null
   return (
     <div data-shade-of={layer.id} style={{ ...box, overflow: 'hidden', opacity: look.opacity }}>
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', ...shade }} />
@@ -161,7 +164,8 @@ export function Scene(props: SceneProps) {
       {drawOrder(layers).map((layer) => {
         const box = boxCss(layer, t !== null && !visibleAt(layer, t, variant.durationMs))
         if (layer.type === 'background' && mode === 'overlay-only') {
-          return <ShadeOnly key={layer.id} layer={layer} box={box} />
+          const covered = t === null || found !== null
+          return <ShadeOnly key={layer.id} layer={layer} box={box} covered={covered} />
         }
         if (layer.type === 'background' && t !== null) {
           const clip = { found, asset: found && clipAsset(assets, found.clip.assetId) }
