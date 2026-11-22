@@ -13,7 +13,6 @@
   border: var(--border-width) solid var(--color-line);
   border-radius: var(--radius-md);
   background: var(--color-bg);
-  box-shadow: var(--shadow-1);
 }
 .card h2 {
   margin: 0 0 var(--space-2);
@@ -36,6 +35,47 @@ button.card:hover {
   font-weight: var(--weight-medium);
   letter-spacing: normal;
   color: var(--color-text-secondary);
+}
+/* Inline field (design wave T2): label left, a value-sized control right. */
+.field.inline {
+  display: grid;
+  grid-template-columns: var(--field-label-width) 1fr;
+  gap: var(--gap-inline);
+  align-items: center;
+}
+/* Unit inside: one field box holding an input with no edge and a .unit span. A .unit placed
+   before the input is a prefix. The box draws the focus outline for its input. */
+.unitBox {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  height: var(--control-height);
+  padding: 0 var(--space-2);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+.unitBox:focus-within {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+.unitBox > input {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-variant-numeric: tabular-nums;
+}
+.unitBox > input:focus-visible {
+  outline: none;
+}
+.unit {
+  flex: none;
+  font-size: var(--type-meta-size);
+  color: var(--color-text-muted);
 }
 .reading {
   font-family: var(--font-reading);
@@ -82,6 +122,24 @@ button.card:hover {
   background: var(--color-accent-hover);
   border-color: var(--color-accent-hover);
 }
+/* Design wave T2: the danger action of a confirm dialog that deletes. */
+.primary.danger {
+  background: var(--color-danger-text);
+  border-color: var(--color-danger-text);
+  color: var(--color-accent-text);
+}
+.primary.danger:hover:not(:disabled) {
+  background: var(--color-danger-text);
+  border-color: var(--color-danger-text);
+}
+/* The default button look, by name. */
+.secondary {
+  background: var(--color-bg);
+  border-color: var(--color-control-border);
+}
+.secondary:hover:not(:disabled) {
+  background: var(--color-surface-soft);
+}
 .quiet,
 .menuItem {
   border-color: transparent;
@@ -110,6 +168,22 @@ button.card:hover {
 }
 .iconOnly.small {
   width: var(--control-height-small);
+}
+/* Design wave T2: a square quiet button for row actions and toolbars. */
+.iconButton {
+  width: var(--control-height-small);
+  height: var(--control-height-small);
+  min-height: var(--control-height-small);
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
+.iconButton:hover:not(:disabled) {
+  background: var(--color-row-hover);
+  border-color: transparent;
+}
+.iconButton[aria-pressed='true'] {
+  color: var(--color-accent-ink);
 }
 .link {
   min-height: 0;
@@ -237,7 +311,7 @@ button.card:hover {
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg);
-  box-shadow: var(--shadow-3);
+  box-shadow: var(--shadow-2);
   overflow-wrap: anywhere;
 }
 .menuItem {
