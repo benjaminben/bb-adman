@@ -1,0 +1,65 @@
+/* app-style */
+/* The report view (P8-12): the folder, the header fields, then one band per section and per
+   ad. Labels sit in a narrow column beside their values; long values wrap anywhere. */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  font-size: var(--font-size-control);
+}
+.body p {
+  margin: 0;
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--color-line);
+}
+.heading {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+}
+.field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+  gap: var(--space-3);
+}
+.field dt {
+  color: var(--color-text-secondary);
+}
+.field dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-4);
+  overflow-wrap: anywhere;
+}
+.note {
+  color: var(--color-text-secondary);
+}
+.path {
+  font-family: var(--font-mono);
+}
+.failure {
+  color: var(--color-danger-text);
+}
+.ad .fields {
+  padding-left: var(--space-2);
+}
