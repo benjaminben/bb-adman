@@ -21,6 +21,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:build": "vitest run --config vitest.build.config.ts",
+    "test:package": "vitest run --config vitest.package.config.ts",
     "test:live": "vitest run --config vitest.live.config.ts",
     "test:comfy": "vitest run --config vitest.comfy.config.ts",
     "test:e2e": "npm run build && playwright test",

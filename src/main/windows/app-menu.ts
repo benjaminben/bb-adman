@@ -17,7 +17,14 @@ const separator: MenuItemConstructorOptions = { type: 'separator' }
 export function appMenuTemplate(options: AppMenuOptions): MenuItemConstructorOptions[] {
   const app: MenuItemConstructorOptions = {
     label: options.appName,
-    submenu: [{ role: 'about' }, separator, { role: 'hide' }, separator, { role: 'quit' }],
+    // Labelled here (D10): the roles' own labels use app.name, which stays "Adman".
+    submenu: [
+      { role: 'about', label: `About ${options.appName}` },
+      separator,
+      { role: 'hide', label: `Hide ${options.appName}` },
+      separator,
+      { role: 'quit', label: `Quit ${options.appName}` },
+    ],
   }
   const edit: MenuItemConstructorOptions = {
     label: 'Edit',

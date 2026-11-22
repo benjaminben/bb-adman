@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.adman.app",
-  "productName": "Adman",
+  "productName": "AdManager",
   "directories": {
     "output": "dist",
     "buildResources": "resources"
@@ -30,6 +30,7 @@
   "mac": {
     "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }],
     "category": "public.app-category.graphics-design",
+    "icon": "resources/icon.icns",
     "identity": null,
     "extendInfo": {
       "UTExportedTypeDeclarations": [
@@ -43,7 +44,8 @@
     }
   },
   "win": {
-    "target": [{ "target": "nsis", "arch": ["x64"] }]
+    "target": [{ "target": "nsis", "arch": ["x64"] }],
+    "icon": "resources/icon.png"
   },
   "nsis": {
     "oneClick": false,

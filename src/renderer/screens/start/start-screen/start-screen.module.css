@@ -35,12 +35,3 @@
   letter-spacing: normal;
   text-transform: uppercase;
 }
-/* The small rotated square in the spot colour before the word. */
-.wordmark::before {
-  content: '';
-  width: calc(var(--font-size-wordmark) * 0.8);
-  height: calc(var(--font-size-wordmark) * 0.8);
-  border-radius: var(--radius-inner);
-  background: var(--color-accent);
-  transform: rotate(12deg);
-}

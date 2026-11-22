@@ -16,6 +16,7 @@ A running list kept by the orchestrator. Each item is a choice made without the 
 10a. **Select, then open.** On the variant grid a click selects, a double-click or Enter opens. Up or Down into a cell holding both an image and a video goes to the image; onto an empty cell it goes to the nearest column, the left one on a tie. In the shot the selected tile's ring ends above its small buttons; the design wave tidies the tile.
 10b. **The Generate panel's "Add pictures…"** (in the same-shape list) imports a picture as a reference with no subject attached. The old video card attached the variant's subject; a start picture is not a subject photo, so the builder left it off.
 10c. **Open projects on the start screen.** There is no separate "Open now" card. Projects that are open come first in the "Recent" list with a small dot, as the design audit proposes. The top-bar switcher lists every open project and has "Open another project…".
+10d. **The name and the icon.** The app shows "AdManager" (window title, menus, About, the quit question, the start screen). The icon is three stacked rounded squares in the accent pink on a dark ground, with no letters. On the start screen the wordmark keeps its capitals, so it reads "ADMANAGER"; say if you want "AdManager" there (a one-line change).
 
 ## Choices about approvals
 
@@ -38,7 +39,7 @@ A running list kept by the orchestrator. Each item is a choice made without the 
 
 ## Hand checks only you can do
 
-- The Keychain entry and saved keys after the rename to AdManager.
+- The Keychain entry and saved keys after the rename to AdManager. Steps: quit every copy of the app; run `npm run package:dir` and open `dist/mac-arm64/AdManager.app`; if macOS asks to use "Adman Safe Storage", choose Always Allow; Settings should show your saved keys' last four characters; there should be no new `AdManager` folder in `~/Library/Application Support` and no "AdManager Safe Storage" entry in Keychain Access. If either appears, tell me: there is a planned fallback.
 - A double-click on a project file in Finder while the app runs under `npm run dev`.
 - Video playback in the gallery in Safari and Chrome (the automatic tests may not be able to play H.264).
 - A double-click on a project file in Finder with a packaged copy registered for the file type: the running app should open and show it.

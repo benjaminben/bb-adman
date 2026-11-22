@@ -1,5 +1,5 @@
 // spec/screens-ai.md, "Attached jobs and the close warning", class G: quitting with a run going
-// shows the system box "Quit Adman?"; "Cancel" keeps the app, "Quit" stops the run through
+// shows the system box "Quit AdManager?"; "Cancel" keeps the app, "Quit" stops the run through
 // project.close with 'stop' and quits. With nothing running, no box (every other test quits so).
 // The box is answered by quit-answer.ts. The run is held by held-run.ts: no request
 // leaves the computer.
@@ -44,7 +44,7 @@ test('quitting with a run going asks first; Cancel keeps the app, Quit stops the
   await app.evaluate(({ app: electronApp }) => electronApp.quit())
   await expect.poll(async () => (await asked(app)).length).toBe(1)
   expect((await asked(app))[0]).toMatchObject({
-    message: 'Quit Adman?',
+    message: 'Quit AdManager?',
     detail:
       '1 run is still going. Quitting stops it. Requests already sent to a paid provider may ' +
       'still be charged, and their results are lost.',

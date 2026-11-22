@@ -42,7 +42,7 @@ describe('the shell [FR-003]', () => {
     expect(screen.getByRole('heading', { name: 'Winter' })).toBeInTheDocument()
     await choose('Winter', 'Start')
     expect(store.getState().view).toEqual({ kind: 'start' })
-    expect(screen.getByRole('button', { name: 'Adman · 2 open' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'AdManager · 2 open' })).toBeInTheDocument()
     expect(screen.queryByRole('tablist', { name: 'Open campaigns' })).toBeNull()
   })
 
