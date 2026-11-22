@@ -2,7 +2,9 @@
 // (given by the panel), Size, Weight, Colour, Align, Line height and Letter spacing, and the line
 // "This text does not fit its box." when it overflows. It is never shrunk for the user.
 import { useId, type ReactNode } from 'react'
+import { useApi, useApp } from '@/renderer/app/app-context'
 import { NumberField } from '@/renderer/editor/number-field'
+import { TranslationStatus } from '@/renderer/editor/translation-status'
 import type { LayerPatch } from '@/shared/schemas/commands/layer'
 import layout from '@/renderer/ui/layout.module.css'
 import type { TextStyle } from '@/shared/schemas/layer'
@@ -37,6 +39,31 @@ const ALIGN: Array<[TextStyle['align'], string]> = [
   ['right', 'Right'],
 ]
 
+// P6-14 (A-162): a translated text's Copy sends translation.set for the shown project, and its
+// status line sits under it.
+function TranslatedCopy(props: { layer: LayerRow }) {
+  const { layer } = props
+  const api = useApi()
+  const projectId = useApp((s) => (s.view.kind === 'project' ? s.view.projectId : null))
+  if (projectId === null) return null
+  async function commit(text: string): Promise<string | null> {
+    const input = { projectId, layerId: layer.id, text, applyToSameLanguage: false }
+    const result = await api.command('translation.set', input)
+    return result.ok ? null : result.error.message
+  }
+  return (
+    <>
+      <CopyField
+        copy={layer.copy ?? ''}
+        disabled={layer.locked}
+        action={<SuggestCopy layer={layer} />}
+        onCommit={commit}
+      />
+      <TranslationStatus projectId={projectId} layer={layer} />
+    </>
+  )
+}
+
 export function TextFields(props: TextFieldsProps) {
   const { layer } = props
   const style = layer.style as TextStyle
@@ -47,12 +74,16 @@ export function TextFields(props: TextFieldsProps) {
   return (
     <fieldset className={styles.section}>
       <legend className={styles.legend}>Text settings</legend>
-      <CopyField
-        copy={layer.copy ?? ''}
-        disabled={disabled}
-        action={<SuggestCopy layer={layer} />}
-        onCommit={(copy) => props.onUpdate({ copy })}
-      />
+      {layer.translationStatus === null ? (
+        <CopyField
+          copy={layer.copy ?? ''}
+          disabled={disabled}
+          action={<SuggestCopy layer={layer} />}
+          onCommit={(copy) => props.onUpdate({ copy })}
+        />
+      ) : (
+        <TranslatedCopy layer={layer} />
+      )}
       {props.font}
       <div className={styles.pair}>
         <NumberField

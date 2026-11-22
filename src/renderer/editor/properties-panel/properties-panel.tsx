@@ -4,6 +4,7 @@
 // or a refusal message does not carry over to another layer.
 import { FontField } from '@/renderer/editor/font-field'
 import { GeometryFields } from '@/renderer/editor/geometry-fields'
+import { LanguageFont } from '@/renderer/editor/language-font'
 import { LayerFields } from '@/renderer/editor/layer-fields'
 import { PictureAi } from '@/renderer/editor/picture-ai'
 import { PictureFields, type PictureAsset } from '@/renderer/editor/picture-fields'
@@ -39,12 +40,17 @@ function Sections(props: SectionsProps) {
   const { layer } = props
   const actions = useLayerActions(props.projectId, layer, props.layers)
   const font = layer.type === 'text' && 'fontAssetId' in layer.style && (
-    <FontField
-      projectId={props.projectId}
-      fontAssetId={layer.style.fontAssetId}
-      disabled={layer.locked}
-      onChange={(fontAssetId) => actions.update({ style: { fontAssetId } })}
-    />
+    <>
+      <FontField
+        projectId={props.projectId}
+        fontAssetId={layer.style.fontAssetId}
+        disabled={layer.locked}
+        onChange={(fontAssetId) => actions.update({ style: { fontAssetId } })}
+      />
+      {layer.translationStatus !== null && (
+        <LanguageFont projectId={props.projectId} campaignId={props.campaignId} layer={layer} />
+      )}
+    </>
   )
   return (
     <>

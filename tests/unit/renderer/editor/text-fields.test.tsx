@@ -239,3 +239,60 @@ describe('TextFields: Suggest copy [spec/screens-ai.md "Copy options"]', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 })
+
+describe('TextFields: Copy on a translation [P6-14, A-162]', () => {
+  const JAPANESE = {
+    ...HEADLINE,
+    translationStatus: 'proposed' as const,
+    translationSource: 'ai' as const,
+  }
+
+  async function shown(layer: LayerRow, fake = makeFakeApi()) {
+    const onUpdate = vi.fn(async () => null)
+    const { store } = await renderApp(<Harness layer={layer} onUpdate={onUpdate} />, fake)
+    act(() => store.getState().show({ kind: 'project', projectId: 'P1' }))
+    return { fake, onUpdate }
+  }
+
+  it('a layer with no translation status still sends layer.update and shows no status', async () => {
+    const { fake, onUpdate } = await shown(HEADLINE)
+    await userEvent.type(screen.getByRole('textbox', { name: 'Copy' }), '!')
+    await elsewhere()
+    expect(onUpdate.mock.calls).toEqual([[{ copy: 'Cool down this summer!' }]])
+    expect(fake.commands).toEqual([])
+    expect(screen.queryByText(/^Translation:/)).toBeNull()
+  })
+
+  it('a translated layer sends translation.set and shows its status under Copy', async () => {
+    const { fake, onUpdate } = await shown(JAPANESE)
+    const copy = screen.getByRole('textbox', { name: 'Copy' })
+    const status = screen.getByText('Translation: Proposed, from AI')
+    expect(copy.compareDocumentPosition(status) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    await userEvent.type(copy, '!')
+    await elsewhere()
+    expect(onUpdate).not.toHaveBeenCalled()
+    expect(fake.commands).toEqual([
+      {
+        name: 'translation.set',
+        input: {
+          projectId: 'P1',
+          layerId: 'L1',
+          text: 'Cool down this summer!',
+          applyToSameLanguage: false,
+        },
+      },
+    ])
+  })
+
+  it('a refused translation.set shows its message under Copy', async () => {
+    const fake = makeFakeApi()
+    fake.onCommand('translation.set', () => ({
+      ok: false,
+      error: { code: 'INVALID_INPUT', message: 'Translations are for text layers.' },
+    }))
+    await shown(JAPANESE, fake)
+    await userEvent.type(screen.getByRole('textbox', { name: 'Copy' }), '!')
+    await elsewhere()
+    expect(await screen.findByText('Translations are for text layers.')).toBeInTheDocument()
+  })
+})
