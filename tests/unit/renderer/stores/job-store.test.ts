@@ -157,3 +157,12 @@ describe('requestCount', () => {
     expect(requestCount(jobRow('J1', { request: { count: 'x' } }))).toBeNull()
   })
 })
+
+// P7-15b: a video retry is one paid submit, so its paid line states 1.
+describe('requestCount for a video job', () => {
+  it('gives 1 for a video_generation row', () => {
+    expect(
+      requestCount(jobRow('J1', { kind: 'video_generation', request: { prompt: 'A can' } })),
+    ).toBe(1)
+  })
+})

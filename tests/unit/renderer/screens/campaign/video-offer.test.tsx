@@ -129,7 +129,10 @@ describe('"Make a video" offers [P7-22]', () => {
     await userEvent.type(p.getByLabelText('Prompt'), 'A can')
     await chooseFal(p)
     await userEvent.click(start(p))
-    expect(p.getByText('This sends 1 paid request(s) to fal.ai Seedance.')).toBeInTheDocument()
+    // The default start is the post's background, which sends one picture.
+    expect(
+      p.getByText('This sends 1 paid request(s) and 1 reference picture(s) to fal.ai Seedance.'),
+    ).toBeInTheDocument()
     await userEvent.click(p.getByRole('button', { name: 'Cancel' }))
     expect(sent(fake, 'generation.startVideo')).toEqual([])
     await userEvent.selectOptions(p.getByLabelText('Provider'), 'fake')
@@ -150,5 +153,32 @@ describe('"Make a video" offers [P7-22]', () => {
     await userEvent.type(p.getByLabelText('Prompt'), 'A can')
     await userEvent.click(start(p))
     expect(await screen.findByRole('alert')).toHaveTextContent(message)
+  })
+
+  // P7-15b: the paid line counts the pictures the start sends to the provider.
+  it('names the reference pictures a paid start sends', async () => {
+    const { p } = await postPanel(postApi({ pictures: 3, providers: WITH_FAL }))
+    await chooseFal(p)
+    await userEvent.selectOptions(p.getByLabelText('Start from'), 'A reference picture')
+    const list = within(await p.findByRole('region', { name: 'Picture to start from' }))
+    const boxes = await list.findAllByRole('checkbox')
+    for (const box of boxes.slice(0, 2)) await userEvent.click(box)
+    await userEvent.type(p.getByLabelText('Prompt'), 'A can')
+    await userEvent.click(start(p))
+    expect(
+      p.getByText('This sends 1 paid request(s) and 2 reference picture(s) to fal.ai Seedance.'),
+    ).toBeInTheDocument()
+  })
+
+  // A background start sends the post's background picture, so the line counts one picture.
+  it('counts the background picture a paid background start sends', async () => {
+    const { p } = await postPanel(postApi({ providers: WITH_FAL }))
+    await chooseFal(p)
+    await waitFor(() => expect(p.getByLabelText('Start from')).toHaveDisplayValue(ALL_STARTS[1]!))
+    await userEvent.type(p.getByLabelText('Prompt'), 'A can')
+    await userEvent.click(start(p))
+    expect(
+      p.getByText('This sends 1 paid request(s) and 1 reference picture(s) to fal.ai Seedance.'),
+    ).toBeInTheDocument()
   })
 })

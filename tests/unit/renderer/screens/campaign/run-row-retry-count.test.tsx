@@ -29,15 +29,15 @@ describe('RunRow, the confirm count on Retry [FN-4]', () => {
       'This sends 2 paid request(s) to Google Gemini.',
     ],
     [
-      // A video row's stored request is read as it is; kept asset IDs do not lower it.
-      'a video row keeps the stored count',
+      // A video retry is one paid submit, whatever its stored request says.
+      'a video row counts one request',
       videoRow({
         status: 'failed',
         provider: 'gemini',
         request: { ...(videoRow().request as object), count: 4 },
         result: KEPT,
       }),
-      'This sends 4 paid request(s) to Google Gemini.',
+      'This sends 1 paid request(s) to Google Gemini.',
     ],
   ])('%s', async (_name, row, line) => {
     const { list } = await runs([row])

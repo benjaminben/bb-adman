@@ -17,9 +17,7 @@ const deps = {
 }
 
 describe('adapterFor refuses a provider that is not available [P4-6]', () => {
-  it.each([
-    ['firefly', 'image'],
-  ] as const)('%s with %s gives INVALID_INPUT', (provider, job) => {
+  it.each([['firefly', 'image']] as const)('%s with %s gives INVALID_INPUT', (provider, job) => {
     expect(() => adapterFor(deps, provider, job)).toThrow(
       expect.objectContaining({
         code: 'INVALID_INPUT',

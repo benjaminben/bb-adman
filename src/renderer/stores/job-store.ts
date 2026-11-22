@@ -34,8 +34,10 @@ export function resultAssetIds(row: JobRow): string[] {
   return parsed.success ? parsed.data.assetIds : []
 }
 
-// How many pictures a picture job asked for, for the paid confirm line of a retry.
+// How many paid requests a retry sends, for its paid confirm line: the pictures a picture job
+// asked for, or one submit for a video job.
 export function requestCount(row: JobRow): number | null {
+  if (row.kind === 'video_generation') return 1
   const parsed = imageJobRequest.safeParse(row.request)
   return parsed.success ? parsed.data.count : null
 }

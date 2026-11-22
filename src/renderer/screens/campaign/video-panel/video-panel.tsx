@@ -172,6 +172,8 @@ export function VideoPanel(props: {
       ) : (
         <PaidConfirm
           count={1}
+          // A background start sends the post's background picture too.
+          references={pending.referenceAssetIds.length + (pending.start === 'background' ? 1 : 0)}
           providerLabel={provider?.label ?? pending.provider}
           onConfirm={() => void send(pending)}
           onCancel={() => setPending(null)}
