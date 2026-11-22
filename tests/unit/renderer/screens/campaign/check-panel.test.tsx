@@ -1,6 +1,7 @@
 // P6-11 (spec/phases/phase-06.md, design addition 8): the "Checks" region. "Run checks" sends
-// check.run { campaignId } and shows "Checking…" while it runs; the summary and one block per
-// checked variant come from check.results, read again on project.changed.
+// check.run { campaignId } and shows "Checking…" while it runs; the summary marks and one row
+// per checked variant come from check.results, read again on project.changed (CAMP-4: blocks
+// became table rows, "Name: Status" badges cell marks, the summary line two marks).
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
@@ -55,6 +56,9 @@ function setup(states: VariantCheckState[]) {
 }
 
 const region = () => screen.getByRole('region', { name: 'Checks' })
+// A post's row group, found by its row button "{size} · {language}".
+const postRow = async (name: RegExp) =>
+  (await within(region()).findByRole('button', { name })).closest('tbody') as HTMLElement
 const resultReads = (fake: ReturnType<typeof campaignApi>) =>
   fake.queries.filter((q) => q.name === 'check.results')
 
@@ -62,11 +66,8 @@ describe('CheckPanel [P6-11]', () => {
   it('reads check.results for the campaign and shows the summary', async () => {
     const { fake, ui } = setup([checked('V1')])
     await renderWith(ui, fake)
-    expect(
-      await within(region()).findByText(
-        '1 post checked · 1 with brand or legal warnings · 0 not checked since a change',
-      ),
-    ).toBeInTheDocument()
+    expect(await within(region()).findByRole('button', { name: /^1 warning\b/ })).toBeVisible()
+    expect(within(region()).queryByRole('button', { name: /not checked/ })).toBeNull()
     expect(resultReads(fake)[0]?.input).toEqual({ projectId: P, campaignId: 'C1' })
   })
 
@@ -94,48 +95,36 @@ describe('CheckPanel [P6-11]', () => {
     expect(await within(region()).findByRole('alert')).toHaveTextContent('The run was refused.')
   })
 
-  it('shows one block per checked variant with six rows and the findings', async () => {
+  it('shows one row per checked variant with six cells and the findings', async () => {
     const { fake, ui } = setup([checked('V1')])
     await renderWith(ui, fake)
-    const block = await within(region()).findByRole('article', {
-      name: 'Master post · 1080×1080 · en',
-    })
-    const rows = within(block)
-      .getAllByRole('listitem')
-      .filter((li) => li.parentElement?.getAttribute('aria-label') === 'Checks run')
-    expect(rows.map((li) => li.firstChild?.textContent)).toEqual([
-      'Required files: Passed',
-      'Text colours: Warning',
-      'Prohibited words: Skipped',
-      'Required words: Passed',
-      'Translations approved: Passed',
-      'Text fits: Passed',
+    const block = await postRow(/^1:1 · en/)
+    const rows = within(block).getAllByRole('cell').slice(0, 6)
+    expect(rows.map((cell) => cell.textContent)).toEqual([
+      'Required files: passed',
+      'Text colours: warning',
+      'Prohibited words: skipped. There are no prohibited words for en.',
+      'Required words: passed',
+      'Translations approved: passed',
+      'Text fits: passed',
     ])
+    await userEvent.click(within(block).getByRole('button', { name: /^1:1 · en/ }))
     expect(
-      within(rows[1] as HTMLElement).getByText(
-        'Headline uses #FF0000, which is not in the palette.',
-      ),
+      within(block).getByText('Headline uses #FF0000, which is not in the palette.'),
     ).toBeInTheDocument()
-    expect(
-      within(rows[2] as HTMLElement).getByText('There are no prohibited words for en.'),
-    ).toBeInTheDocument()
-    expect(within(block).queryByText('Changed since the last check.')).toBeNull()
-    expect(within(region()).queryByRole('article', { name: /German post/ })).toBeNull()
+    expect(within(block).getByText('There are no prohibited words for en.')).toBeInTheDocument()
+    expect(within(block).queryByTitle('Changed since the last check')).toBeNull()
+    expect(within(region()).queryByRole('button', { name: /· de/ })).toBeNull()
     expect(await axeViolations()).toEqual([])
   })
 
-  it('marks a stale block "Changed since the last check."', async () => {
+  it('marks a stale row "Changed since the last check"', async () => {
     const { fake, ui } = setup([checked('V1'), checked('V2', true)])
     await renderWith(ui, fake)
-    const block = await within(region()).findByRole('article', {
-      name: 'German post · 1080×1080 · de',
-    })
-    expect(within(block).getByText('Changed since the last check.')).toBeInTheDocument()
-    expect(
-      within(region()).getByText(
-        '2 posts checked · 1 with brand or legal warnings · 1 not checked since a change',
-      ),
-    ).toBeInTheDocument()
+    const block = await postRow(/^1:1 · de/)
+    expect(within(block).getByTitle('Changed since the last check')).toBeInTheDocument()
+    expect(within(region()).getByRole('button', { name: /^1 warning\b/ })).toBeVisible()
+    expect(within(region()).getByRole('button', { name: /^1 not checked/ })).toBeVisible()
   })
 
   it('reads check.results again on project.changed for this project only', async () => {
@@ -150,9 +139,7 @@ describe('CheckPanel [P6-11]', () => {
     act(() =>
       fake.emit('project.changed', { projectId: P, changed: {}, removed: {}, actor: 'user' }),
     )
-    expect(
-      await within(region()).findByRole('article', { name: 'Master post · 1080×1080 · en' }),
-    ).toBeInTheDocument()
+    expect(await postRow(/^1:1 · en/)).toBeInTheDocument()
     expect(resultReads(fake)).toHaveLength(2)
   })
 
@@ -168,6 +155,7 @@ describe('CheckPanel [P6-11]', () => {
     )
     const { fake, ui } = setup([{ ...checked('V1'), results }])
     await renderWith(ui, fake)
+    await userEvent.click(await within(region()).findByRole('button', { name: /^1:1 · en/ }))
     expect(await within(region()).findByText('<b>Bold</b> contains “!”.')).toBeInTheDocument()
     expect(region().querySelector('b')).toBeNull()
   })

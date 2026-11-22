@@ -1,25 +1,39 @@
-// The "Checks" section of the campaign overview (spec/phases/phase-06.md, design addition 8).
-// "Run checks" sends check.run { campaignId }, "Checking…" while it runs; a refusal shows its own
-// message. The summary and one block per checked variant come from check.results, read again
-// on project.changed (check.run emits it). Blocks follow the campaign's variant order.
+// The Checks tab of the campaign page (CAMP-4; spec/phases/phase-06.md, design addition 8).
+// "Run checks" sends check.run { campaignId } once per click and is disabled while it runs; a
+// refusal shows its own message under the header. The table holds one row group per checked
+// post from check.results (read again on project.changed), in the campaign's variant order.
+// With no post checked, "Not checked yet" shows under the header: the header's "Run checks" is
+// its action, so the view keeps one primary button (AP-7) and the button never moves.
 import { useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import type { CampaignTabProps as CampaignSectionProps } from '@/renderer/screens/campaign/campaign-overview'
-import { BusySpinner } from '@/renderer/ui/dialog-frame'
+import { EmptyState } from '@/renderer/ui/empty-state'
 import layout from '@/renderer/ui/layout.module.css'
 import type { VariantCheckState } from '@/shared/schemas/queries/check'
-import { CheckBlock } from './check-block'
-import { summaryLine } from './check-words'
+import { CheckHead } from './check-head'
+import { CheckTable } from './check-table'
+import { hasBrandWarning, summaryCounts } from './check-words'
+import { rowButtonId, type Post } from './post-rows'
 import { useCheckResults } from './use-check-results'
 import styles from './check-panel.module.css'
+
+function Refused(props: { message: string }) {
+  return (
+    <p role="alert" className={`${layout.notice} ${layout.danger}`}>
+      {props.message}
+    </p>
+  )
+}
 
 export function CheckPanel(props: CampaignSectionProps) {
   const api = useApi()
   const read = useCheckResults(props.projectId, props.campaignId)
   const [running, setRunning] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
+  const [open, setOpen] = useState<Set<string>>(new Set())
 
   const run = async () => {
+    if (running) return
     setRunning(true)
     setRefusal(null)
     const reply = await api.command('check.run', {
@@ -32,42 +46,45 @@ export function CheckPanel(props: CampaignSectionProps) {
 
   const byId = new Map<string, VariantCheckState>()
   if (read.kind === 'done') read.states.forEach((s) => byId.set(s.variantId, s))
-  const blocks = props.data.variants.flatMap((v) => {
+  const posts: Post[] = props.data.variants.flatMap((v) => {
     const state = byId.get(v.id)
     return state ? [{ variant: v, state }] : []
   })
+  const counts = summaryCounts(posts.map((p) => p.state))
+  const firstWarned = posts.find((p) => hasBrandWarning(p.state))
+  const firstFinding = firstWarned?.state.results.find(
+    (r) => r.group === 'brand-legal' && r.status === 'warn',
+  )?.findings[0]?.message
 
+  const toggle = (id: string) =>
+    setOpen((now) => {
+      const next = new Set(now)
+      if (!next.delete(id)) next.add(id)
+      return next
+    })
+
+  const showWarned = () => {
+    if (firstWarned === undefined) return
+    setOpen((now) => new Set(now).add(firstWarned.variant.id))
+    document.getElementById(rowButtonId(firstWarned.variant.id))?.focus()
+  }
+
+  const empty = read.kind === 'done' && posts.length === 0
   return (
-    <section className={layout.card} aria-labelledby="checks-heading">
-      <h2 id="checks-heading">Checks</h2>
-      <div className={layout.row}>
-        <button type="button" disabled={running} onClick={() => void run()}>
-          Run checks
-        </button>
-        {running && (
-          <p role="status" className={styles.busy}>
-            <BusySpinner />
-            Checking…
-          </p>
-        )}
-      </div>
-      {refusal !== null && (
-        <p role="alert" className={`${layout.notice} ${layout.danger}`}>
-          {refusal}
-        </p>
-      )}
-      {read.kind === 'refused' && (
-        <p role="alert" className={`${layout.notice} ${layout.danger}`}>
-          {read.message}
-        </p>
-      )}
-      {read.kind === 'done' && (
-        <>
-          <p className={layout.muted}>{summaryLine(blocks.map((b) => b.state))}</p>
-          {blocks.map((b) => (
-            <CheckBlock key={b.variant.id} variant={b.variant} state={b.state} />
-          ))}
-        </>
+    <section className={styles.panel} aria-label="Checks">
+      <CheckHead
+        running={running}
+        warnings={counts.warnings}
+        firstFinding={firstFinding}
+        stale={counts.stale}
+        onRun={() => void run()}
+        onShowWarned={showWarned}
+      />
+      {refusal !== null && <Refused message={refusal} />}
+      {read.kind === 'refused' && <Refused message={read.message} />}
+      {empty && <EmptyState icon="shield" words="Not checked yet" />}
+      {posts.length > 0 && (
+        <CheckTable projectId={props.projectId} posts={posts} open={open} onToggle={toggle} />
       )}
     </section>
   )

@@ -1,52 +1,103 @@
 /* app-style */
-/* The "Brand and legal rules" section: its three groups, the chips of colours and files, the
-   word fields and the list of the add dialog. */
+/* The Rules section (CAMP-4): three groups with small labels and no boxes; colours as swatch
+   chips with a ✕ each and a "+"; required files as tiles with a ✕ in the corner and a dashed
+   "+" tile; the two word fields side by side; the list of the add dialog. */
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-field);
+}
 .group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding-top: var(--space-3);
-  border-top: var(--border-width) solid var(--color-line);
+  gap: var(--space-1);
 }
-.title {
-  margin: 0;
-  font-size: var(--font-size-body);
-  font-weight: var(--weight-medium);
-}
-.items {
+.row {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--gap-tight);
 }
-.item {
+.chips,
+.tiles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-tight);
+}
+.chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-2);
-  border: var(--border-width) solid var(--color-line);
-  border-radius: var(--radius);
-  font-size: var(--font-size-control);
+  gap: var(--gap-tight);
 }
 .swatch {
-  width: var(--icon-size);
-  height: var(--icon-size);
   flex: none;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-inner);
+  width: var(--control-height-small);
+  height: var(--control-height-small);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: 50%;
 }
 .hex {
   font-family: var(--font-mono);
+  font-size: var(--type-meta-size);
+}
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.remove {
+  width: var(--control-height-small);
+  height: var(--control-height-small);
+  min-height: var(--control-height-small);
+  padding: 0;
+}
+.plus {
+  border: var(--border-width) dashed var(--color-control-border);
+  border-radius: 50%;
 }
 .add {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: flex-end;
+  display: inline-flex;
 }
-.languages {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+.hexField {
+  width: calc(var(--control-height) * 3);
+  font-family: var(--font-mono);
+}
+.tile {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: var(--option-thumb);
+  height: var(--option-thumb);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.picture {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: contain;
+}
+.face {
+  display: inline-flex;
+  font-family: var(--font-title);
+  font-size: var(--type-title-size);
+  color: var(--color-text-secondary);
+}
+.tile .remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--color-bg);
+}
+.addTile {
+  width: var(--option-thumb);
+  height: var(--option-thumb);
+  padding: 0;
 }
 .language {
   display: grid;

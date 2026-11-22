@@ -1,38 +1,95 @@
 /* app-style */
-/* The check panel: a busy line beside "Run checks", then one bordered block per variant. */
-.busy {
+/* The Checks tab (CAMP-4): a header row of "Run checks" and the summary marks, then a compact
+   table, one row group per post. A stale post's marks are drawn muted (their icons and names
+   still say the state); an open row's findings sit under it. No boxes. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-field);
+  min-width: 0;
+}
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-inline);
+}
+.run {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  margin: 0;
-  color: var(--color-text-secondary);
+  gap: var(--gap-tight);
 }
-.block {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: var(--border-width) solid var(--color-line);
-  border-radius: var(--radius-md);
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
-.heading {
-  margin: 0;
-  font-size: var(--font-size-body);
-  font-weight: var(--weight-medium);
+tr > th.post {
+  padding-top: var(--space-1);
+  padding-bottom: var(--space-1);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  color: var(--color-text);
+  vertical-align: middle;
 }
-.checks {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+.colHead {
+  text-align: center;
 }
-.check {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-1);
+.cell {
+  text-align: center;
+  vertical-align: middle;
+}
+.opens {
+  cursor: pointer;
+}
+.opens:hover {
+  background: var(--color-surface);
+}
+.postButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.thumb {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--layer-thumb);
+  height: var(--layer-thumb);
+}
+.stale .cell > span {
+  color: var(--color-text-muted);
+}
+.findingsCell {
+  background: var(--color-surface);
 }
 .findings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.finding ul {
   margin: 0;
   padding-left: var(--space-4);
-  font-size: var(--font-size-small);
+}
+.checkName {
+  margin: 0;
+  font-weight: var(--weight-medium);
+}
+.line {
+  display: block;
+}
+.muted {
+  color: var(--color-text-muted);
 }

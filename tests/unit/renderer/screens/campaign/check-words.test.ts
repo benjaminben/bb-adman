@@ -1,11 +1,12 @@
 // P6-11 (spec/phases/phase-06.md, design addition 8): the check panel's words. Check names,
-// status words, the block heading and the summary line.
+// status words, the row label and the summary counts (CAMP-4: the block heading became the row
+// label "{size} · {language}", the summary line the two marks' counts).
 import { describe, expect, it } from 'vitest'
 import {
-  blockHeading,
   checkName,
+  rowLabel,
   statusWord,
-  summaryLine,
+  summaryCounts,
 } from '@/renderer/screens/campaign/check-panel/check-words'
 import type { CheckId, CheckResult, CheckStatus } from '@/shared/schemas/checks'
 import type { VariantCheckState } from '@/shared/schemas/queries/check'
@@ -34,10 +35,10 @@ describe('statusWord [P6-11]', () => {
   })
 })
 
-describe('blockHeading [P6-11]', () => {
-  it('reads "{title} · {size} · {language}"', () => {
-    const v = variant('V9', { title: 'Wide post', width: 1920, height: 1080, language: 'de' })
-    expect(blockHeading(v)).toBe('Wide post · 1920×1080 · de')
+describe('rowLabel [P6-11, CAMP-4]', () => {
+  it('reads "{size} · {language}"', () => {
+    const v = variant('V9', { title: 'Wide post', sizeLabel: '16:9', language: 'de' })
+    expect(rowLabel(v)).toBe('16:9 · de')
   })
 })
 
@@ -61,22 +62,16 @@ function state(id: string, opts: { stale?: boolean; results?: CheckResult[] } = 
 const BRAND_WARN = [result('prohibited-words', 'warn', 'brand-legal')]
 const READY_WARN = [result('text-overflow', 'warn', 'readiness')]
 
-describe('summaryLine [P6-11]', () => {
-  it.each<[string, VariantCheckState[], string]>([
-    [
-      'nothing checked',
-      [],
-      '0 posts checked · 0 with brand or legal warnings · 0 not checked since a change',
-    ],
-    [
-      'one post, all passed',
-      [state('A')],
-      '1 post checked · 0 with brand or legal warnings · 0 not checked since a change',
-    ],
+type Counts = { warnings: number; stale: number }
+
+describe('summaryCounts [P6-11, CAMP-4]', () => {
+  it.each<[string, VariantCheckState[], Counts]>([
+    ['nothing checked', [], { warnings: 0, stale: 0 }],
+    ['one post, all passed', [state('A')], { warnings: 0, stale: 0 }],
     [
       'a brand warning counts, a readiness warning does not',
       [state('A', { results: BRAND_WARN }), state('B', { results: READY_WARN })],
-      '2 posts checked · 1 with brand or legal warnings · 0 not checked since a change',
+      { warnings: 1, stale: 0 },
     ],
     [
       'a stale post counts as not checked, not as a warning',
@@ -85,9 +80,9 @@ describe('summaryLine [P6-11]', () => {
         state('B'),
         state('C', { results: BRAND_WARN }),
       ],
-      '3 posts checked · 1 with brand or legal warnings · 1 not checked since a change',
+      { warnings: 1, stale: 1 },
     ],
-  ])('%s', (_name, states, line) => {
-    expect(summaryLine(states)).toBe(line)
+  ])('%s', (_name, states, counts) => {
+    expect(summaryCounts(states)).toEqual(counts)
   })
 })

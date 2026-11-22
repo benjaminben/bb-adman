@@ -1,4 +1,4 @@
-// One group of the rule set panel, named by its small heading, and the line under a list that
+// One group of the Rules section, named by its small label, and the line under a list that
 // shows why a change was not made.
 import { useId, type ReactNode } from 'react'
 import layout from '@/renderer/ui/layout.module.css'
@@ -8,9 +8,9 @@ export function RuleGroup(props: { title: string; children: ReactNode }) {
   const id = useId()
   return (
     <div role="group" aria-labelledby={id} className={styles.group}>
-      <h3 id={id} className={styles.title}>
+      <span id={id} className={layout.label}>
         {props.title}
-      </h3>
+      </span>
       {props.children}
     </div>
   )
