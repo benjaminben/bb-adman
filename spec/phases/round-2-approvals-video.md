@@ -8,7 +8,7 @@ A reviewer opens a video variant in the gallery and watches the real MP4, with s
 
 ## Status
 
-R2V-1 to R2V-7 are built (under `next start` the server may drop the clip reply's `Content-Length`; playback works without it). Slice R2V-8 below is not; they are placed among R2A-1 to R2A-9 in the wave table.
+Built: R2V-1 to R2V-8. `npm run test:approvals-local` runs a video from the app to the gallery on this machine and plays it. Under `next start` the server may drop the clip reply's `Content-Length`; playback works without it. Left for the stakeholder: the deploy steps in `approvals-service/README.md` and the hand check in Safari and Chrome.
 
 ## Design additions
 

@@ -3,6 +3,9 @@
 // (approvals-local.spec.ts, the real service). Elements are found by their accessible names.
 // The bucket and S3 keys are made up: the test picture store is used, so nothing reaches S3.
 import { expect, type Locator, type Page } from '@playwright/test'
+import Database from 'better-sqlite3'
+import fs from 'node:fs'
+import path from 'node:path'
 import * as screens from '../e2e/screens'
 
 // Made up; a chosen link password of 12 characters or more, typed once and never shown.
@@ -88,4 +91,51 @@ export async function turnOffLink(page: Page): Promise<void> {
   await expect(box.getByText(/This link was turned off on /)).toBeVisible({ timeout: 30_000 })
   await box.getByRole('button', { name: 'Close' }).click()
   await expect(bar(page).getByText('Link turned off')).toBeVisible()
+}
+
+// The project closed from the campaign view, so its file can be changed on disk.
+export async function closeProject(page: Page, name: string): Promise<void> {
+  await page.getByRole('button', { name: 'Back to project' }).click()
+  const close = page.getByRole('button', { name: `Close ${name}` })
+  await close.click()
+  await expect(close).toHaveCount(0)
+}
+
+export async function reopenProject(page: Page, name: string): Promise<void> {
+  await page.getByRole('button', { name: new RegExp(`^Open ${name}`) }).click()
+  await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible()
+  await screens.openCampaign(page)
+}
+
+// The brief's variant becomes a video post of the given length, in the closed project file.
+export function plantVideo(filePath: string, variantId: string, ms: number): void {
+  const db = new Database(filePath)
+  try {
+    db.prepare("UPDATE variant SET format = 'video', duration_ms = ? WHERE id = ?").run(
+      ms,
+      variantId,
+    )
+  } finally {
+    db.close()
+  }
+}
+
+// The app's data folder as global-setup.ts left it: first-run setup marked done, the test
+// picture folder kept (the picture server serves it), everything an earlier case saved removed.
+export function freshUserData(folder: string): void {
+  const userData = path.join(folder, 'userData')
+  for (const name of fs.readdirSync(userData)) {
+    if (name !== 'approvals-test-pictures') {
+      fs.rmSync(path.join(userData, name), { recursive: true, force: true })
+    }
+  }
+  const defaults = { defaultProjectDir: path.join(folder, 'projects'), setup: { done: true } }
+  fs.writeFileSync(path.join(userData, 'settings.json'), JSON.stringify(defaults))
+}
+
+// The clip files in a campaign's test picture folder.
+export function clipsIn(userData: string, ids: { projectId: string; campaignId: string }) {
+  const at = path.join(userData, 'approvals-test-pictures', 'adman-approvals')
+  const names = fs.readdirSync(path.join(at, ids.projectId, ids.campaignId))
+  return names.filter((name) => name.endsWith('.mp4'))
 }
