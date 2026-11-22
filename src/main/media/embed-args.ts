@@ -3,8 +3,8 @@
 // `-protocol_whitelist file,pipe`, a pinned demuxer, then `file:` and an absolute path inside the
 // run folder (the convention of src/main/export/video/encoder-args.ts). No project text is an
 // argument: the details travel in meta.txt.
-// Never pass `-enable_drefs 1` to the mov demuxer: it would let a crafted file make FFmpeg open
-// another file on this machine.
+// Never switch on the mov demuxer's data references: they would let a crafted file make FFmpeg
+// open another file on this machine (tests/unit/main/media/no-dref-flags.test.ts).
 import path from 'node:path'
 
 export type EmbedPaths = { input: string; meta: string; output: string }
