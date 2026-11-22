@@ -1,8 +1,8 @@
 // AP-12: the tile marks and a tile's sign-off list, against the approvals stand-in on 127.0.0.1
 // and the test picture store (dev tools on). The service, a made-up bucket and made-up keys are
 // saved through Settings; the e2e brief makes the campaign (one variant). Two sign-offs are
-// planted in the stand-in, at example.com: one for the variant's version in the gallery, one for
-// an earlier version. Nothing leaves this machine.
+// planted in the stand-in, at example.com, both for the variant's version in the gallery (since
+// Round 2, R-10, sign-offs of other versions are never shown). Nothing leaves this machine.
 import { test, expect, type Page } from '@playwright/test'
 import * as screens from '../e2e/screens'
 import { startApprovalsStandIn, type ApprovalsStandIn } from '../helpers/approvals-stand-in'
@@ -47,7 +47,7 @@ async function setUpSettings(page: Page, origin: string) {
   await saveKey(page, 'Approvals service', 'Service API key', KEY)
 }
 
-// A current sign-off on the first variant in the gallery and an earlier-version one beside it.
+// Two current sign-offs on the first variant in the gallery, an hour apart.
 function plantSignoffs(on: ApprovalsStandIn) {
   const [pair, link] = [...on.links.entries()][0] ?? []
   const first = link?.gallery[0]
@@ -65,9 +65,7 @@ function plantSignoffs(on: ApprovalsStandIn) {
   on.plantSignoff(projectId, campaignId, {
     id: 'Tm6kPq7mZt2vWx9bLn3cRd8j',
     variantKey: first.variantKey,
-    // A new variant is at rev 0, so no lower version exists. Any version other than the one in
-    // the gallery is drawn the same way, "for an earlier version".
-    version: first.version + 1,
+    version: first.version,
     email: 'second.reviewer@example.com',
     signedAt: new Date(Date.now() - 3_600_000).toISOString(),
   })
@@ -93,16 +91,18 @@ test('Tile marks and the sign-off list', async () => {
   const bar = page.getByRole('group', { name: 'Approval link' })
   await bar.getByRole('button', { name: 'Refresh' }).click()
   const grid = page.getByRole('list', { name: 'Variants' })
-  await expect(grid.getByText('Signed off by 1')).toBeVisible()
+  await expect(grid.getByText('Signed off by 2')).toBeVisible()
   await expect(grid.getByRole('button', { name: 'Sign-offs (2)' })).toBeVisible()
   await shot(page, '96-tile-marks')
 
   const toggle = grid.getByRole('button', { name: 'Sign-offs (2)' })
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-  await expect(grid.getByText(/^reviewer@example\.com · /)).toBeVisible()
-  await expect(
-    grid.getByText(/^second\.reviewer@example\.com · .* · for an earlier version$/),
-  ).toBeVisible()
+  const list = grid.getByRole('list', { name: /^Sign-offs for / })
+  // Newest first, "{email} · {date and time}" only.
+  await expect(list.getByRole('listitem')).toHaveText([
+    /^reviewer@example\.com · /,
+    /^second\.reviewer@example\.com · /,
+  ])
   await shot(page, '97-tile-signoff-list')
 })
