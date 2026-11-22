@@ -5,7 +5,13 @@ import { test, expect } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
 import { makeSandbox, launch, type Sandbox } from './launch'
-import { command, FONT_FILE, inRenderWindow, projectWithFont, renderVariant } from './render-helpers'
+import {
+  command,
+  FONT_FILE,
+  inRenderWindow,
+  projectWithFont,
+  renderVariant,
+} from './render-helpers'
 import { decodePng } from './reference-compare'
 
 const CLIP = path.resolve('tests/fixtures/video/tiny.mp4')
