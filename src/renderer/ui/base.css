@@ -90,6 +90,32 @@ textarea {
   min-height: var(--control-height);
   padding: var(--space-2) var(--space-3);
 }
+/* A dropdown draws its own arrow, two strokes meeting in a point, with the field's own
+   padding to its right. The system arrow sits against the edge and cannot be moved. */
+select {
+  appearance: none;
+  padding-right: calc(var(--space-3) + 2 * var(--select-caret) + var(--space-2));
+  background-image:
+    linear-gradient(
+      to bottom left,
+      transparent calc(50% - var(--select-caret-stroke)),
+      var(--color-text-secondary) calc(50% - var(--select-caret-stroke)),
+      var(--color-text-secondary) calc(50% + var(--select-caret-stroke)),
+      transparent calc(50% + var(--select-caret-stroke))
+    ),
+    linear-gradient(
+      to bottom right,
+      transparent calc(50% - var(--select-caret-stroke)),
+      var(--color-text-secondary) calc(50% - var(--select-caret-stroke)),
+      var(--color-text-secondary) calc(50% + var(--select-caret-stroke)),
+      transparent calc(50% + var(--select-caret-stroke))
+    );
+  background-position:
+    right calc(var(--space-3) + var(--select-caret)) center,
+    right var(--space-3) center;
+  background-size: var(--select-caret) var(--select-caret);
+  background-repeat: no-repeat;
+}
 :where(input, select, textarea):where(:hover:not(:disabled)) {
   border-color: var(--color-text-muted);
 }
