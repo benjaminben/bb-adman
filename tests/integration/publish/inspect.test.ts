@@ -216,18 +216,8 @@ describe('publish.inspect, components [P9-9, A-218, A-223]', () => {
     expect(row(GONE)).toMatchObject({ problem: 'missing', localPath: files[GONE] })
     expect(row(RENAMED)).toMatchObject({ problem: 'wrong_type', localPath: files[RENAMED] })
     for (const c of reply.components) {
-      expect(Object.keys(c).sort()).toEqual(
-        [
-          'assetId',
-          'displayName',
-          'folder',
-          'kind',
-          'localPath',
-          'problem',
-          'share',
-          'sha256',
-        ].sort(),
-      )
+      const keys = 'assetId displayName folder kind localPath problem share sha256'
+      expect(Object.keys(c).sort()).toEqual(keys.split(' ').sort())
     }
   })
 })
