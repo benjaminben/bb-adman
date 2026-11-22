@@ -2,9 +2,11 @@
 // Re-exported from screens.ts, which is at its line limit. Not a test file itself.
 import type { Page } from '@playwright/test'
 
-// Opens Settings on the side list's page `label`.
+// Opens Settings on the side list's page `label`. The Settings button toggles (SH-2), so it is
+// pressed only when Settings is not showing already.
 export async function openSettingsPage(page: Page, label: string): Promise<void> {
-  await page.getByRole('button', { name: 'Settings', exact: true }).click()
+  const button = page.getByRole('button', { name: 'Settings', exact: true })
+  if ((await button.getAttribute('aria-pressed')) !== 'true') await button.click()
   await chooseSettingsPage(page, label)
 }
 
