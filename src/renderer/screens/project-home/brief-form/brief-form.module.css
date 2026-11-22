@@ -20,8 +20,12 @@
   gap: var(--gap-field);
   max-width: var(--width-dialog-wide);
 }
-.message {
+/* The message's label sits by the first line of its text area. */
+.fields > div.message {
   align-items: start;
+}
+.message > label {
+  padding-top: var(--space-2);
 }
 .message textarea {
   resize: vertical;
@@ -31,9 +35,13 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--gap-field) var(--space-4);
 }
-/* A small field's label takes only its own width. */
-.small {
+/* A small field's label takes only its own width; the first lines up with the fields above.
+   The element in the selector outweighs the shared inline field's two classes. */
+.trio > div.small {
   grid-template-columns: auto minmax(0, 1fr);
+}
+.trio > div.small:first-child {
+  grid-template-columns: var(--field-label-width) minmax(0, 1fr);
 }
 /* A field with its InfoTip at the right end. */
 .withTip {

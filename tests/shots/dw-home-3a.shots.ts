@@ -38,7 +38,7 @@ test('the brief form: fields, size chips, languages, rules and the problems', as
 
   const sizes = form.getByRole('group', { name: 'Sizes' })
   await sizes.getByRole('button', { name: '16x9 (1920×1080)', exact: true }).click()
-  await sizes.getByLabel('Other sizes').fill('4:5, 1200x628')
+  await sizes.getByLabel('Other sizes', { exact: true }).fill('4:5, 1200x628')
   await sizes.getByRole('button', { name: 'Master: 16x9', exact: true }).click()
   await form.getByLabel('Audience', { exact: true }).fill('')
   await expect(form.getByRole('button', { name: '1 to fix: go to the list' })).toBeVisible()
