@@ -24,19 +24,16 @@ test('Phase 1: create, reopen from the command line, tabs, keys', async () => {
   // Create two projects: two tabs [FR-003].
   for (const name of ['Alpha', 'Beta']) {
     await page.locator('header button[aria-haspopup="menu"]').click()
-    await page.getByRole('menuitem', { name: 'Start' }).click()
+    await page.getByRole('menuitem', { name: 'Start screen' }).click()
     await page.getByLabel('Project name').fill(name)
     await page.getByRole('button', { name: 'Create project' }).click()
     await expect(page.getByRole('heading', { name })).toBeVisible()
   }
   await page.locator('header button[aria-haspopup="menu"]').click()
-  await expect(page.getByRole('menu').getByRole('menuitem')).toHaveText([
-    'Alpha',
-    'Beta',
-    'Open another project…',
-    'Start',
-    'Close project',
-  ])
+  const items = page.getByRole('menu').getByRole('menuitem')
+  const names = ['Alpha', 'Close Alpha', 'Beta', 'Close Beta', 'Package…', 'Open…', 'Start screen']
+  await expect(items).toHaveCount(names.length)
+  for (const [i, name] of names.entries()) await expect(items.nth(i)).toHaveAccessibleName(name)
   await page.keyboard.press('Escape')
   expect(fs.existsSync(path.join(box.projects, 'Alpha.adman'))).toBe(true)
 
@@ -60,7 +57,7 @@ test('Phase 1: create, reopen from the command line, tabs, keys', async () => {
     'menu',
   )
   await page2.locator('header button[aria-haspopup="menu"]').click()
-  await page2.getByRole('menuitem', { name: 'Start' }).click()
+  await page2.getByRole('menuitem', { name: 'Start screen' }).click()
   await expect(page2.getByRole('button', { name: /^Open Beta/ })).toBeVisible()
   await again.close()
 

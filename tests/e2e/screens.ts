@@ -32,7 +32,7 @@ export async function answerOpenDialog(app: ElectronApplication, paths: string[]
 // The start screen, through the project switcher (spec/editor.md, "The shell").
 export async function showStart(page: Page): Promise<void> {
   await page.locator('header button[aria-haspopup="menu"]').click()
-  await page.getByRole('menuitem', { name: 'Start' }).click()
+  await page.getByRole('menuitem', { name: 'Start screen' }).click()
 }
 
 export async function createProject(page: Page, name: string): Promise<void> {

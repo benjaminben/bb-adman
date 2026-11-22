@@ -71,7 +71,7 @@ function importedPngs(): string[] {
 // The window still shows the user's own project, with the agent's listed beside it [D9].
 async function stillOnMine(p: Page) {
   await expect(p.getByRole('heading', { name: MINE, level: 1 })).toBeVisible()
-  await expect(p.getByRole('button', { name: `${MINE} · 2 open` })).toBeVisible()
+  await expect(p.getByRole('button', { name: `${MINE} 2 projects open` })).toBeVisible()
 }
 
 type Answer = { title: string; allow: string; files: string[]; had: number; yes: boolean }
@@ -173,8 +173,8 @@ test('R2P-12: an agent makes a project, imports by path and makes campaigns from
 
   // 6. The window stayed on the user's project; the switcher lists the agent's project.
   await stillOnMine(page)
-  await page.getByRole('button', { name: `${MINE} · 2 open` }).click()
-  await expect(page.getByRole('menuitem', { name: AGENTS })).toBeVisible()
+  await page.getByRole('button', { name: `${MINE} 2 projects open` }).click()
+  await expect(page.getByRole('menuitem', { name: AGENTS, exact: true })).toBeVisible()
   await page.keyboard.press('Escape')
 
   // 7. No reply held a sandbox path, an imported file's name or a brief's text.

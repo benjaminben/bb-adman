@@ -29,14 +29,23 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* "· {n} open" with two or more open (round-2-platform.md D9): kept whole, the name gives way.
-   The space before it is a text node for the accessible name; a flex row drops it, so the
-   padding draws it. */
+/* The count chip "{n}" with two or more open (SH-3): kept whole, the name gives way. The space
+   before it is a text node for the accessible name; a flex row drops it, so the margin draws
+   it. */
 .count {
   flex: none;
-  padding-left: var(--space-1);
-  color: var(--color-text-secondary);
+  align-self: center;
+  margin-left: var(--space-1);
   font-weight: var(--weight-regular);
+}
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .caret {
   display: inline-flex;
@@ -46,21 +55,17 @@
   border-left: var(--border-width) solid var(--color-border);
   color: var(--color-text-secondary);
 }
-/* The menu is placed by ui/menu-place; this class only scopes "Start" below. */
+/* The menu is placed by ui/menu-place; this class only scopes the parts below. */
 .menu {
   list-style: none;
 }
-.item[aria-current='true'] {
-  font-weight: var(--weight-bold);
+/* The project rows, then the line, then Package…, Open… and Start screen (SH-3). */
+.separator {
+  height: 0;
+  margin: var(--space-1) 0;
+  border-top: var(--border-width) solid var(--color-line);
 }
-/* "Start" opens the group after the project list. */
-.menu .after {
-  margin-top: var(--space-1);
-  border-top-color: var(--color-line);
-  border-radius: 0;
-}
-.item:focus-visible,
-.after:focus-visible {
+.item:focus-visible {
   background: var(--color-surface);
 }
 .actions {
