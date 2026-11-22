@@ -42,7 +42,18 @@ describe('goTarget [P4-14, FR-217]', () => {
       { ...ALL, variantLabel: null, layerName: null },
       { to: 'campaign', campaignId: 'C1' },
     ],
-    ['a video job', { kind: 'video_generation' }, ALL, { to: 'campaign', campaignId: 'C1' }],
+    [
+      'a video job',
+      { kind: 'video_generation' },
+      ALL,
+      { to: 'variant', campaignId: 'C1', variantId: 'V1' },
+    ],
+    [
+      'a video job with a layer',
+      { kind: 'video_generation', layerId: 'L1' },
+      ALL,
+      { to: 'layer', campaignId: 'C1', variantId: 'V1', layerId: 'L1' },
+    ],
     [
       'a campaign job',
       { variantId: null },
