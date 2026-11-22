@@ -75,6 +75,22 @@ const EDGE_PAIRS: [string, string][] = [
   ['--color-accent', '--color-bg'],
 ]
 
+// T1: the status marks (dots and icons) keep 3:1 on every ground they sit on.
+const MARK_PAIRS: [string, string][] = [
+  '--color-ok',
+  '--color-warn',
+  '--color-danger',
+  '--color-info',
+].flatMap((mark) =>
+  [
+    '--color-bg',
+    '--color-page',
+    '--color-surface',
+    '--color-surface-soft',
+    '--color-accent-soft',
+  ].map((g): [string, string] => [mark, g]),
+)
+
 describe('token contrast [ST-1, SPEC 11]', () => {
   it('works out the WCAG ratio', () => {
     expect(ratio('#767676', '#ffffff').toFixed(1)).toBe('4.5')
@@ -86,6 +102,10 @@ describe('token contrast [ST-1, SPEC 11]', () => {
   })
 
   it.each(EDGE_PAIRS)('%s on %s is 3:1 or more', (fg, bg) => {
+    expect(ratio(colour(fg), colour(bg))).toBeGreaterThanOrEqual(3)
+  })
+
+  it.each(MARK_PAIRS)('mark %s on %s is 3:1 or more', (fg, bg) => {
     expect(ratio(colour(fg), colour(bg))).toBeGreaterThanOrEqual(3)
   })
 })

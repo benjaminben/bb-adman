@@ -119,13 +119,9 @@ const SIZES_AND_MOTION = [
   '--width-dialog-large',
   '--width-menu',
   '--width-wide',
-  '--width-start-art',
-  '--drawing-height',
-  '--drawing-stroke',
   '--motion-fast',
   '--motion-spin',
   '--motion-pop',
-  '--motion-calm',
   '--ease-calm',
 ]
 
@@ -144,7 +140,6 @@ describe('the token set [ST-1]', () => {
     ['--weight-bold', '650'],
     ['--space-8', '32px'],
     ['--radius-lg', '14px'],
-    ['--motion-calm', '16s'],
   ])('%s is %s', (name, expected) => {
     expect(value(name)).toBe(expected)
   })
