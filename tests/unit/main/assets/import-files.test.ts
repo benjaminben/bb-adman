@@ -50,6 +50,30 @@ describe('the text rules before the ask [D5]', () => {
       "File 1's path holds hidden characters.",
     ],
     [
+      'a line separator (U+2028)',
+      '/Users/someone/he\u2028ro.png',
+      'hidden_characters',
+      "File 1's path holds hidden characters.",
+    ],
+    [
+      'a paragraph separator (U+2029)',
+      '/Users/someone/hero\u2029.png',
+      'hidden_characters',
+      "File 1's path holds hidden characters.",
+    ],
+    [
+      'a no-break space (Zs)',
+      '/Users/some\u00A0one/hero.png',
+      'hidden_characters',
+      "File 1's path holds hidden characters.",
+    ],
+    [
+      'an ideographic space (Zs)',
+      '/Users/someone/hero\u3000.png',
+      'hidden_characters',
+      "File 1's path holds hidden characters.",
+    ],
+    [
       'a text file',
       '/Users/someone/notes.txt',
       'not_supported',
@@ -131,6 +155,45 @@ describe('the text rules before the ask [D5]', () => {
       refusal: { reason: 'not_supported', index: 1 },
     })
     expect(checkPathTexts([], 'darwin')).toEqual({ ok: true, paths: [] })
+  })
+})
+
+describe('the Windows text rules before the ask [R2P-5b]', () => {
+  it.each([
+    ['a network path', '\\\\server\\share\\x.png'],
+    ['a network path with forward separators', '//server/share/x.png'],
+    ['a network path with mixed separators', '\\/server/share/x.png'],
+    ['a device path', '\\\\?\\C:\\x.png'],
+    ['a dot device path', '\\\\.\\C:\\x.png'],
+    ['a second stream after the drive', 'C:\\a\\file.txt:hidden.png'],
+    ['a colon in a folder name', 'C:\\a:b\\x.png'],
+  ])('refuses %s as not a full path', (_name, text) => {
+    expect(refusalOf(() => importPathTexts([text], 'win32'))).toEqual({
+      code: 'INVALID_INPUT',
+      message: 'File 1 is not a full path.',
+      details: { reason: 'not_full_path', index: 1 },
+    })
+  })
+
+  it('refuses a Zs space on Windows too', () => {
+    expect(checkPathText('C:\\Users\\a\u2007b\\x.png', 1, 'win32')).toEqual({
+      ok: false,
+      refusal: { reason: 'hidden_characters', index: 1 },
+    })
+  })
+
+  it('still takes a plain drive path on Windows and a path with spaces elsewhere', () => {
+    expect(checkPathText('C:\\Users\\a\\x.png', 1, 'win32')).toEqual({
+      ok: true,
+      path: 'C:\\Users\\a\\x.png',
+    })
+    expect(checkPathText('D:/Shoots/x.png', 1, 'win32').ok).toBe(true)
+    expect(checkPathText('/Users/a/my file.png', 1, 'darwin')).toEqual({
+      ok: true,
+      path: '/Users/a/my file.png',
+    })
+    expect(checkPathText('/home/a/b:c.png', 1, 'linux').ok).toBe(true)
+    expect(checkPathText('//Users/a/x.png', 1, 'darwin').ok).toBe(true)
   })
 })
 
