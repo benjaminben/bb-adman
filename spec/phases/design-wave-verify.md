@@ -28,6 +28,12 @@ A running list kept by the orchestrator, like `round-2-verify.md`. The design wa
 20. **Leaving Settings:** the Settings button, Escape, the ✕, a click on a campaign tab and "+" all leave. Escape does not leave while a dialog, a menu or a help popover is open, or while a key you are typing sits unsaved in its field. A typed key that is not saved is dropped when you leave, as before. While Settings shows over a project, the project menu reads "AdManager" and the campaign tab you came from still looks selected.
 21. **Picture panel:** an empty background still shows "Fill the canvas" and "Fit inside". A colour that is not one of the palette's swatches shows as an extra first swatch, so the current colour is always visible.
 22. **Subject cards:** "File not found" stays written on a photo whose file is missing. In the Assets panel the photos are small (four a row); the brief form will use the larger size.
+23. **The run dialog.** The dialog's own button ("Generate", "Retry", "Cut out"…) is now the one click that pays; the separate "Run this generation?" step is gone. The cost reads, for example, "Paid: 4 pictures + 2 references → Google Gemini", directly above the buttons. A separate security review found nothing blocking. Choices made on the way:
+    - A provider that cannot be used shows only its name; the reason ("Not yet available", "No workflow for this yet") is in its tooltip.
+    - A retry still shows "Provider: …" and "Pictures: …" as plain text, not as greyed-out controls.
+    - A retry whose saved request cannot be read says "Paid: pictures → …" with no number, never a guessed one. A run with no saved provider reads "an unknown provider" and counts as paid.
+    - "Translate" in the sync review and Retry of a video in Activity keep two clicks: the first shows the cost, "Confirm" sends.
+24. **Assets panel.** Groups fold and show their count. Pictures are a two-column grid; the words "Made with AI", "Linked" and "Reference only" are now icons with tooltips. The subject of a picture is still a drop-down under it.
 
 ## Hand checks only you can do
 
