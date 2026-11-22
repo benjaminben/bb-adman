@@ -11,8 +11,6 @@ import { publishCommands } from '@/main/commands/publish'
 import { storageCommands } from '@/main/commands/storage'
 import { publishQueries } from '@/main/queries/publish'
 import { jobKindHandlers } from '@/main/jobs/kinds'
-import { LocalFailure } from '@/main/jobs/local-failure'
-import { createPublishDeps } from '@/main/publish/deps'
 import { defaultDropboxFetch } from '@/main/providers/dropbox/fetch'
 import { DROPBOX_APP_KEY } from '@/shared/config/public-ids'
 import { PUBLISH_INSPECT_DENIED } from '@/shared/publish/messages'
@@ -74,18 +72,6 @@ describe('the publish.inspect stub [P9-1]', () => {
 })
 
 describe('the Phase 9 job kind and port stubs [P9-1]', () => {
-  const exportNotBuilt = { reason: 'export_not_built' }
-
-  it('refuses both export ports with export_not_built', async () => {
-    const { fx } = await open()
-    const ports = createPublishDeps()
-    const exported = ports.exportForPublish(fx.core.deps, {} as never)
-    await expect(exported).rejects.toBeInstanceOf(LocalFailure)
-    await expect(exported).rejects.toMatchObject(exportNotBuilt)
-    const warnings = ports.warningsForPublish(fx.core.deps, { projectId: 'P', campaignId: 'C1' })
-    await expect(warnings).rejects.toMatchObject(exportNotBuilt)
-  })
-
   it('puts the publish ports and the Dropbox fetch on CoreDeps', async () => {
     const { fx } = await open()
     expect(Object.keys(fx.core.deps.publish).sort()).toEqual(
