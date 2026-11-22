@@ -1,0 +1,72 @@
+/* app-style */
+/* The export dialog (P8-11): the ad ticks, the folder and format controls, the warnings and
+   the job line, one column with the dialog's spacing. */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.body p {
+  margin: 0;
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.group legend,
+.heading {
+  padding: 0;
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+.ads {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.choice {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: var(--font-size-control);
+  overflow-wrap: anywhere;
+}
+.choice:has(input:disabled) {
+  color: var(--color-text-muted);
+}
+.folder {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+}
+.folder > button {
+  flex-shrink: 0;
+}
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.note,
+.line {
+  font-size: var(--font-size-control);
+}
+.note {
+  color: var(--color-text-secondary);
+}
+.warnings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: var(--font-size-control);
+  overflow-wrap: anywhere;
+}

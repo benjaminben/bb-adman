@@ -19,6 +19,7 @@ import { createJobStore } from '@/renderer/stores/job-store'
 import { OVERVIEW_TAB, campaignNav } from '@/renderer/stores/nav-store'
 import { ApprovalBar } from '@/renderer/screens/campaign/approval-bar'
 import { approvalFooter } from '@/renderer/screens/campaign/approval-mark'
+import { CampaignExport } from '@/renderer/screens/campaign/campaign-export'
 import { CampaignSections } from '@/renderer/screens/campaign/campaign-sections'
 import { CampaignUndo } from '@/renderer/screens/campaign/campaign-undo'
 import { DirectionGrids } from '@/renderer/screens/campaign/direction-grids'
@@ -135,6 +136,7 @@ function CampaignPage(props: Props) {
             titles={Object.fromEntries(data.variants.map((v) => [v.id, v.title]))}
           />
         )}
+        <CampaignExport projectId={projectId} campaignId={campaignId} />
       </div>
       {shown === OVERVIEW_TAB && <PaidCount projectId={projectId} campaignId={campaignId} />}
       {data === null ? (
