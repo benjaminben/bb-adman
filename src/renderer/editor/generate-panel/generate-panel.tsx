@@ -36,7 +36,8 @@ function videoLine(type: LayerRow['type'], format: 'image' | 'video'): string | 
   return type === 'background' ? 'To make a video, set Format to Video in the top bar first.' : null
 }
 
-// The project's images, read once and again after an import.
+// The project's images, read once and again after an import or when the layer's picture is
+// not among them.
 function useImages(projectId: string) {
   const api = useApi()
   const [images, setImages] = useState<AssetList | null>(null)
@@ -68,6 +69,11 @@ export function GeneratePanel(props: GeneratePanelProps) {
   const { images, read } = useImages(projectId)
   const own = layer.source?.assetId ?? null
   const layerPicture = images?.some((a) => a.id === own && !a.missing) ? own : null
+  // A picture put on the layer after the read (a run's first picture, R2E-5): read again.
+  const unknown = images !== null && own !== null && !images.some((a) => a.id === own)
+  useEffect(() => {
+    if (unknown) void read()
+  }, [unknown, read])
   const chosen = draft?.startAssetId ?? null
   const fits = images !== null && shaped(images, { box: layer.geometry, ownId: own })
   const shapePicture = fits && fits.some((a) => a.id === chosen) ? chosen : null

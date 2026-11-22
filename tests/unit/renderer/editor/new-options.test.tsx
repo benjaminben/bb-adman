@@ -4,6 +4,7 @@
 // seen once.
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { describe, expect, it } from 'vitest'
 import { EarlierOptions } from '@/renderer/editor/earlier-options'
 import { GeneratePanel } from '@/renderer/editor/generate-panel'
@@ -14,10 +15,11 @@ import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { axeViolations, renderApp } from '../render'
 import { campaignApi, sent } from '../screens/campaign/campaign-fixture'
 import { jobRow } from '../stores/job-fixture'
-import { LOGO, P } from './editor-fixture'
+import { assetRow, LOGO, P } from './editor-fixture'
 
 const SEEN = '2026-11-21T09:05:00.000Z'
 const LAYER: LayerRow = { ...LOGO, source: { assetId: 'A3' } }
+const LAYER_A5: LayerRow = { ...LOGO, source: { assetId: 'A5' } }
 const asset = (assetId: string) => ({ assetId, width: 800, height: 600, missing: false })
 const run = (id: string, over: Partial<JobRow>, ids: string[]) => ({
   job: jobRow(id, { layerId: LAYER.id, slot: null, status: 'succeeded', ...over }),
@@ -140,5 +142,34 @@ describe('GeneratePanel names its last picture run as new [D6]', () => {
     const earlier = await screen.findByRole('region', { name: 'Earlier options' })
     await within(earlier).findAllByRole('button', { name: /^Use option/ })
     expect(screen.queryAllByRole('region', { name: 'New pictures' })).toHaveLength(shown ? 1 : 0)
+  })
+})
+
+// The panel on the logo layer, and a button that puts picture A5 on it, as a finished run does.
+function Placing() {
+  const [layer, setLayer] = useState<LayerRow>(LOGO)
+  return (
+    <main>
+      <button type="button" onClick={() => setLayer(LAYER_A5)}>
+        Place
+      </button>
+      <GeneratePanel projectId={P} campaignId="C1" layer={layer} format="image" />
+    </main>
+  )
+}
+
+describe('GeneratePanel after a new picture is put on the layer [D6]', () => {
+  it('reads the images again, so "Start from" knows the layer has a picture', async () => {
+    generateDrafts.setState({ drafts: {}, wanted: {} })
+    const fake = campaignApi()
+    let rows: unknown[] = []
+    fake.onQuery('asset.list', () => ({ ok: true, data: rows }))
+    fake.onQuery('job.earlierOptions', () => ({ ok: true, data: [] }))
+    await renderApp(<Placing />, fake)
+    expect(await screen.findByText('This layer has no picture yet.')).toBeVisible()
+    rows = [assetRow('A5')]
+    await userEvent.click(screen.getByRole('button', { name: 'Place' }))
+    await waitFor(() => expect(screen.queryByText('This layer has no picture yet.')).toBeNull())
+    expect(screen.getByRole('radio', { name: "This layer's picture" })).toBeEnabled()
   })
 })
