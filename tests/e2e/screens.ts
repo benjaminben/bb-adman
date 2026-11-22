@@ -7,6 +7,9 @@ import { expect, type ElectronApplication, type Locator, type Page } from '@play
 import path from 'node:path'
 import { firstIds } from './held-run'
 import { query } from './render-helpers'
+import { openSettingsPage } from './settings-pages'
+
+export { chooseSettingsPage, openSettingsPage } from './settings-pages'
 
 export const E2E_BRIEF = path.resolve('tests/fixtures/briefs/e2e-brief.yaml')
 export const E2E_CAMPAIGN = 'Harness Check'
@@ -243,7 +246,7 @@ export const runRows = (page: Page): Locator =>
 export const runRow = (page: Page, nth = 0): Locator => runRows(page).nth(nth)
 
 export async function openSettings(page: Page): Promise<Locator> {
-  await page.getByRole('button', { name: 'Settings', exact: true }).click()
+  await openSettingsPage(page, 'AI services')
   return page.getByRole('region', { name: 'ComfyUI server' })
 }
 

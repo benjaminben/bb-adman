@@ -23,7 +23,7 @@ function valueUnder(page: Page, label: string) {
 // Settings · Agent access: a free port saved, the switch on, the Connect panel read. Gives a
 // session of an MCP client in this test process, connected as Claude Code would be.
 export async function connectThroughSettings(page: Page): Promise<ToolSession> {
-  await screens.openSettings(page)
+  await screens.openSettingsPage(page, 'Agents')
   const section = page.getByRole('region', { name: 'Agent access' })
   const port = await freePort()
   await section.getByLabel('Port', { exact: true }).fill(String(port))
