@@ -55,7 +55,13 @@ const COPY_EXT: Record<ClipFileType, string> = {
   webm: 'webm',
 }
 
-type Copied = { path: string; fileType: ClipFileType; source: Size; durationMs: number | null }
+type Copied = {
+  path: string
+  fileType: ClipFileType
+  source: Size
+  durationMs: number | null
+  hasSound: boolean
+}
 
 const refused = (): never => {
   throw new ExportFailure(CLIP_REFUSED)
@@ -89,7 +95,8 @@ async function copyFrom(handle: FileHandle, name: string, kind: string, to: stri
     if (!facts) return refused()
     const from = handle.createReadStream({ start: 0, autoClose: false })
     await pipeline(from, (await fs.open(file, 'wx', 0o600)).createWriteStream())
-    return { path: file, fileType: type, source: facts, durationMs: facts.durationMs }
+    const { durationMs, hasSound } = facts
+    return { path: file, fileType: type, source: facts, durationMs, hasSound }
   }
   if (stat.size > MAX_PICTURE_BYTES) refused()
   const bytes = new Uint8Array(stat.size)
@@ -104,7 +111,7 @@ async function copyFrom(handle: FileHandle, name: string, kind: string, to: stri
   if (!usableSide(size.width) || !usableSide(size.height)) refused()
   await fs.writeFile(file, bytes, { flag: 'wx', mode: 0o600 })
   const source = { width: size.width, height: size.height }
-  return { path: file, fileType: type, source, durationMs: null }
+  return { path: file, fileType: type, source, durationMs: null, hasSound: false }
 }
 
 // The real file of `given`, copied to `{to}.{ext}`.
@@ -175,5 +182,7 @@ async function checkedClip(
   const { startMs, inMs, outMs } = row
   const placement = row.placement && safePlacement(row.placement)
   const { path: copy, fileType, source } = copied
-  return { path: copy, fileType, source, startMs, inMs, outMs, placement }
+  // P8-17: heard only when the row says so (a boolean, nothing else) and the file holds sound.
+  const sound = row.soundOn === true && copied.hasSound
+  return { path: copy, fileType, source, startMs, inMs, outMs, placement, sound }
 }
