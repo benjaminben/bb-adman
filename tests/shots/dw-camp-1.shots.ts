@@ -7,6 +7,7 @@ import { test, expect, type Page } from '@playwright/test'
 import * as screens from '../e2e/screens'
 import * as v from '../e2e/variants-steps'
 import { holdGemini, startHeldRun, firstIds } from '../e2e/held-run'
+import { answerQuit } from '../e2e/quit-answer'
 import { startApprovalsStandIn, type ApprovalsStandIn } from '../helpers/approvals-stand-in'
 import * as steps from '../approvals-local/app-steps'
 import { closeApp, openApp, shot, type Session } from './shot'
@@ -21,6 +22,8 @@ let stand: ApprovalsStandIn | undefined
 
 test.afterEach(async () => {
   try {
+    // The held run asks before the app quits; answer it so the app closes.
+    if (session) await answerQuit(session.app)
     await closeApp(session)
   } finally {
     session = undefined
