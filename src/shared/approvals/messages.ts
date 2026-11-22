@@ -11,6 +11,7 @@ export const APPROVALS_REASONS = [
   'approval_link_missing',
   'approval_link_gone',
   'too_many_variants',
+  'publish_cancelled',
 ] as const
 export type ApprovalsReason = (typeof APPROVALS_REASONS)[number]
 
@@ -23,6 +24,7 @@ export const APPROVALS_REASON_MESSAGES: Record<ApprovalsReason, string> = {
   approval_link_gone:
     'This link no longer exists on the approvals service, so it is shown as turned off. Make a new link to share again.',
   too_many_variants: 'A gallery can show at most 500 variants.',
+  publish_cancelled: 'The gallery update was stopped. The gallery was not changed.',
 }
 
 // The RULE_VIOLATION for a reason, with its sentence. Every approvals stub throws
@@ -34,6 +36,16 @@ export function approvalsRefusal(reason: ApprovalsReason): AppError {
 // RULE_VIOLATION reason render_failed, with details.variantId (approvals.publish step 5).
 export function renderFailedMessage(title: string): string {
   return `A picture of ${title} could not be drawn, so the gallery was not changed.`
+}
+
+// RULE_VIOLATION reasons clip_failed and variant_changed, with details.variantId
+// (round-2-approvals-video.md "The rest of approvals.publish").
+export function clipFailedMessage(title: string): string {
+  return `The video of ${title} could not be made, so the gallery was not changed.`
+}
+
+export function variantChangedMessage(title: string): string {
+  return `${title} changed while the gallery was updating, so the gallery was not changed. Press Update gallery again.`
 }
 
 // INVALID_INPUT sentences.
