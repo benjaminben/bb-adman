@@ -28,6 +28,11 @@ export type PublishComponent = {
   share: PublishFontShare | null
 }
 
+// The SHA-256 of a usable font's bytes as measured for this answer (64 lower-case hex digits);
+// null for every other kind and for a font with a problem. The dialog sends it back with
+// publish.setFontConsent, which refuses when the font has changed since (P9-12, A-260).
+export type PublishInspectComponent = PublishComponent & { sha256: string | null }
+
 export type PublishInspect = {
   // `fake` only when the fake provider is listed.
   storages: Array<{ id: PublishStorageId; label: string; ready: PublishReady }>
@@ -37,5 +42,5 @@ export type PublishInspect = {
     publishedAt: string | null
     otherProject: boolean
   }
-  components: PublishComponent[]
+  components: PublishInspectComponent[]
 }
