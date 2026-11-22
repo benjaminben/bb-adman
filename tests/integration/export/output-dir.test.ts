@@ -40,6 +40,7 @@ function canMakeLinks(): boolean {
   }
 }
 const links = canMakeLinks()
+const CAMPAIGN = 'C1'
 
 const REFUSED = {
   code: 'RULE_VIOLATION',
@@ -131,7 +132,9 @@ describe('checkOutputDir refuses a folder it must not write in [P8-2]', () => {
     if (row.link && !links) return
     const { fx, project } = await open()
     const typed = row.typed(fx, project)
-    const error = await checkOutputDir(fx.core.deps, project, typed).catch((e: unknown) => e)
+    const error = await checkOutputDir(fx.core.deps, project, typed, CAMPAIGN).catch(
+      (e: unknown) => e,
+    )
     expect(error).toBeInstanceOf(AppError)
     expect((error as AppError).toBody()).toEqual(row.answer)
     // No path in the error, its stack aside, nor in any log line.
@@ -146,7 +149,9 @@ describe('checkOutputDir gives the real path of a good folder [P8-2]', () => {
     const { fx, project } = await open()
     const folder = path.join(fx.documents, 'Exports')
     fs.mkdirSync(folder)
-    expect(await checkOutputDir(fx.core.deps, project, folder)).toBe(fs.realpathSync(folder))
+    expect(await checkOutputDir(fx.core.deps, project, folder, CAMPAIGN)).toBe(
+      fs.realpathSync(folder),
+    )
   })
 
   it.skipIf(!links)('gives the real path behind a link, not the typed one', async () => {
@@ -155,12 +160,59 @@ describe('checkOutputDir gives the real path of a good folder [P8-2]', () => {
     fs.mkdirSync(folder)
     const link = path.join(fx.root, 'exports-link')
     fs.symlinkSync(folder, link, 'dir')
-    expect(await checkOutputDir(fx.core.deps, project, link)).toBe(fs.realpathSync(folder))
+    expect(await checkOutputDir(fx.core.deps, project, link, CAMPAIGN)).toBe(
+      fs.realpathSync(folder),
+    )
   })
 
   it('accepts the project folder itself, which holds the assets folder', async () => {
     const { fx, project } = await open()
     const folder = path.dirname(project.filePath)
-    expect(await checkOutputDir(fx.core.deps, project, folder)).toBe(fs.realpathSync(folder))
+    expect(await checkOutputDir(fx.core.deps, project, folder, CAMPAIGN)).toBe(
+      fs.realpathSync(folder),
+    )
+  })
+})
+
+// P8-5 ruling: every write goes under {real}/{campaignId}, so that folder and the real assets
+// folder must not be the same folder, nor one inside the other.
+describe('checkOutputDir refuses a campaign folder that meets the assets folder [P8-5]', () => {
+  async function refusedWith(fx: Fixture, project: ProjectHandle, typed: string, id: string) {
+    const error = await checkOutputDir(fx.core.deps, project, typed, id).catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(AppError)
+    expect((error as AppError).toBody()).toEqual(REFUSED)
+    expect((error as Error).message).not.toContain(fx.root)
+  }
+
+  it('refuses when {folder}/{campaignId} is the assets folder', async () => {
+    const { fx, project } = await open()
+    const assets = assetsDirOf(project)
+    await refusedWith(fx, project, path.dirname(assets), path.basename(assets))
+  })
+
+  it('refuses when the assets folder is inside {folder}/{campaignId}', async () => {
+    const { fx, project } = await open()
+    const holder = path.dirname(assetsDirOf(project))
+    await refusedWith(fx, project, path.dirname(holder), path.basename(holder))
+  })
+
+  it.skipIf(!links)('compares the real path of a missing assets folder behind a link', async () => {
+    const fx = makeFixture()
+    f = fx
+    const linked = path.join(fx.documents, 'linked-work')
+    fs.symlinkSync(fx.projectsDir, linked, 'dir')
+    const made = await fx.user('project.create', { name: 'A', location: linked })
+    const project = fx.core.projects.get(data<{ projectId: string }>(made).projectId)
+    if (!project) throw new Error('the project did not open')
+    fs.rmSync(assetsDirOf(project), { recursive: true, force: true })
+    await refusedWith(fx, project, path.dirname(fx.projectsDir), path.basename(fx.projectsDir))
+  })
+
+  it('accepts a campaign folder beside the assets folder', async () => {
+    const { fx, project } = await open()
+    const folder = path.dirname(assetsDirOf(project))
+    expect(await checkOutputDir(fx.core.deps, project, folder, CAMPAIGN)).toBe(
+      fs.realpathSync(folder),
+    )
   })
 })
