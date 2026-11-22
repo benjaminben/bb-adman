@@ -84,3 +84,28 @@
   display: inline-flex;
   color: var(--color-accent);
 }
+/* T4: the warning line under the title, with the alert icon, in the warn words colour. */
+.warning {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  margin: var(--space-1) 0 0;
+  font-size: var(--type-body-size);
+  color: var(--color-warn-text);
+}
+.warning > svg {
+  flex: none;
+}
+/* T4: the `pick` kind's grid of pictures; no captions, the chosen one ringed in the spot
+   colour. */
+.pickGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--thumbnail-tile), 1fr));
+  gap: var(--gap-inline);
+}
+.pickGrid > [aria-pressed='true'],
+.pickGrid > [aria-checked='true'],
+.pickGrid > [aria-selected='true'] {
+  outline: var(--focus-ring-width) solid var(--color-accent);
+  outline-offset: var(--focus-ring-offset);
+}
