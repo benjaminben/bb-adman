@@ -143,7 +143,7 @@ describe('SubjectDialog, New [R2C-6]', () => {
     const fake = api()
     fake.onCommand('subject.create', () => ({
       ok: false,
-      error: { code: 'CONFLICT', message: 'That subject ID is taken.' },
+      error: { code: 'RULE_VIOLATION', message: 'That subject ID is taken.' },
     }))
     await open(fake)
     await fillAndPick()
@@ -157,7 +157,7 @@ describe('SubjectDialog, New [R2C-6]', () => {
     const fake = api()
     fake.onCommand('asset.import', () => ({
       ok: false,
-      error: { code: 'VALIDATION', message: 'That file cannot be read.' },
+      error: { code: 'INVALID_INPUT', message: 'That file cannot be read.' },
     }))
     await open(fake)
     await fillAndPick()

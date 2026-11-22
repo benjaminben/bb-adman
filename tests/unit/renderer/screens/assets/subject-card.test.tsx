@@ -151,7 +151,7 @@ describe('SubjectCard [R2C-6]', () => {
     const fake = api()
     fake.onCommand('asset.import', () => ({
       ok: false,
-      error: { code: 'VALIDATION', message: 'That file cannot be read.' },
+      error: { code: 'INVALID_INPUT', message: 'That file cannot be read.' },
     }))
     await renderCard(fake)
     await userEvent.click(screen.getByRole('button', { name: 'Add photos to Harbour Blend' }))
