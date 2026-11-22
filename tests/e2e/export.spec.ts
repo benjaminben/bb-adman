@@ -80,11 +80,12 @@ async function makeCampaign(): Promise<ex.Place & { ads: Ad[] }> {
 // Export… to the folder, every ad ticked; the warnings step, "Export anyway", the end counts.
 async function exportEverything(folder: string): Promise<void> {
   const dialog = await ex.openExport(app, page, folder)
-  await expect(dialog.getByRole('checkbox', { checked: true })).toHaveCount(6)
+  await expect(dialog.getByRole('checkbox', { name: 'All ads' })).toBeChecked()
+  await expect(dialog.getByRole('checkbox', { checked: true })).toHaveCount(7)
   await dialog.getByRole('button', { name: 'Export', exact: true }).click()
   await expect(dialog.getByText('These ads have warnings')).toBeVisible()
   await dialog.getByRole('button', { name: 'Export anyway' }).click()
-  await ex.finishExport(dialog, 'Exported 6 ads. 0 failed.')
+  await ex.finishExport(dialog, '6 exported')
 }
 
 const adFiles = (campaignId: string, ads: Ad[]) =>

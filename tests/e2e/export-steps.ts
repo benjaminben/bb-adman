@@ -51,21 +51,24 @@ export async function waitForJob(page: Page, projectId: string, jobId: string) {
   return row()
 }
 
+// "Export {campaign}" (DLG-6a); not the Reports dialog's "Export report".
 export const exportDialog = (page: Page): Locator =>
-  page.getByRole('dialog', { name: 'Export campaign' })
+  page.getByRole('dialog', { name: /^Export (?!report$)/ })
 
-// "Export…", every ad ticked as the dialog opens, the folder chosen in the system picker.
+// "Export…", every ad ticked as the dialog opens, the folder chosen in the system picker. The
+// folder row shows only the folder's base name (DLG-6a); the full path is the row's title.
 export async function openExport(app: ElectronApplication, page: Page, folder: string) {
   await page.getByRole('button', { name: 'Export…' }).click()
   const dialog = exportDialog(page)
   await expect(dialog.getByText('Loading the ads…')).toHaveCount(0)
   await screens.answerOpenDialog(app, [folder])
   await dialog.getByRole('button', { name: 'Choose folder…' }).click()
-  await expect(dialog.getByText(folder)).toBeVisible()
+  await expect(dialog.getByText(path.basename(folder), { exact: true })).toBeVisible()
+  await expect(dialog.getByText(folder)).toHaveCount(0)
   return dialog
 }
 
-// The end counts shown, then Close.
+// The end mark shown ("{n} exported"), then Close.
 export async function finishExport(dialog: Locator, line: string | RegExp): Promise<void> {
   await expect(dialog.getByText(line)).toBeVisible({ timeout: 180_000 })
   await dialog.getByRole('button', { name: 'Close' }).click()
