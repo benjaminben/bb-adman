@@ -1,133 +1,106 @@
-// Settings "Export" (P8-10, A-201): picture format, JPG quality, frames per second and the
-// name shown in reports. Selects save on change; the two typed fields save when left or on
-// Enter, after the settings schema accepts the value.
-import { useState, type FormEvent } from 'react'
+// Settings "Export" (P8-10, A-201, SET-3): picture format, JPG quality, frame rate and the
+// name written into reports, as inline fields. The Segmented groups save on click; the two
+// typed fields save when left or on Enter, after the same checks as before.
+import { useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
-import { NoticeLine } from '@/renderer/screens/settings/notice-line'
-import { reportsSettings } from '@/shared/schemas/settings'
+import { Section } from '@/renderer/ui/section'
 import layout from '@/renderer/ui/layout.module.css'
+import { ReportNameField } from './report-name-field'
 import styles from './export-section.module.css'
 
-const HINT_ID = 'export-name-hint'
-const ISSUE_ID = 'export-name-issue'
+type Choice<T> = { value: T; label: string }
+
+const FORMATS: Choice<'png' | 'jpg'>[] = [
+  { value: 'png', label: 'PNG' },
+  { value: 'jpg', label: 'JPG' },
+]
+const RATES: Choice<30 | 60>[] = [
+  { value: 30, label: '30 fps' },
+  { value: 60, label: '60 fps' },
+]
 
 export function ExportSection() {
   const settings = useApp((s) => s.app?.settings)
+  const command = useApp((s) => s.command)
   if (!settings) return null
+  const { imageFormat, jpgQuality, fps } = settings.export
   return (
-    <section className={layout.card} aria-labelledby="export-title">
-      <h2 id="export-title">Export</h2>
-      <ExportControls
-        imageFormat={settings.export.imageFormat}
-        jpgQuality={settings.export.jpgQuality}
-        fps={settings.export.fps}
+    <Section id="settings.export" title="Export" level={3} fold="none">
+      <Segmented
+        label="Picture"
+        name="Picture format"
+        choices={FORMATS}
+        value={imageFormat}
+        onChoose={(value) => void command('settings.update', { export: { imageFormat: value } })}
       />
-      <NameField saved={settings.reports.exporterName} />
-    </section>
+      {imageFormat === 'jpg' && <QualityField saved={jpgQuality} />}
+      <Segmented
+        label="Frame rate"
+        name="Frame rate"
+        choices={RATES}
+        value={fps}
+        onChoose={(value) => void command('settings.update', { export: { fps: value } })}
+      />
+      <ReportNameField saved={settings.reports.exporterName} />
+    </Section>
   )
 }
 
-function ExportControls(props: { imageFormat: 'png' | 'jpg'; jpgQuality: number; fps: 30 | 60 }) {
-  const command = useApp((s) => s.command)
-  const [quality, setQuality] = useState(String(props.jpgQuality))
-
-  function saveQuality() {
-    const value = Number(quality)
-    if (!Number.isInteger(value) || value < 1 || value > 100) return
-    if (value === props.jpgQuality) return
-    void command('settings.update', { export: { jpgQuality: value } })
-  }
-
+function Segmented<T extends string | number>(props: {
+  label: string
+  name: string
+  choices: Choice<T>[]
+  value: T
+  onChoose: (value: T) => void
+}) {
   return (
-    <div className={layout.formGrid}>
-      <div className={layout.field}>
-        <label htmlFor="export-format">Picture format</label>
-        <select
-          id="export-format"
-          value={props.imageFormat}
-          onChange={(e) =>
-            void command('settings.update', {
-              export: { imageFormat: e.target.value === 'jpg' ? 'jpg' : 'png' },
-            })
-          }
-        >
-          <option value="png">PNG</option>
-          <option value="jpg">JPG</option>
-        </select>
-      </div>
-      {props.imageFormat === 'jpg' && (
-        <div className={layout.field}>
-          <label htmlFor="export-quality">JPG quality</label>
-          <input
-            id="export-quality"
-            type="number"
-            min={1}
-            max={100}
-            step={1}
-            value={quality}
-            onChange={(e) => setQuality(e.target.value)}
-            onBlur={saveQuality}
-            onKeyDown={(e) => e.key === 'Enter' && saveQuality()}
-          />
-        </div>
-      )}
-      <div className={layout.field}>
-        <label htmlFor="export-fps">Frames per second</label>
-        <select
-          id="export-fps"
-          value={String(props.fps)}
-          onChange={(e) =>
-            void command('settings.update', { export: { fps: e.target.value === '60' ? 60 : 30 } })
-          }
-        >
-          <option value="30">30</option>
-          <option value="60">60</option>
-        </select>
+    <div className={`${layout.field} ${layout.inline} ${styles.row}`}>
+      <span className={layout.label}>{props.label}</span>
+      <div role="group" aria-label={props.name} className={`${layout.seg} ${styles.seg}`}>
+        {props.choices.map((choice) => (
+          <button
+            key={choice.value}
+            type="button"
+            aria-pressed={choice.value === props.value}
+            onClick={() => choice.value !== props.value && props.onChoose(choice.value)}
+          >
+            {choice.label}
+          </button>
+        ))}
       </div>
     </div>
   )
 }
 
-function NameField(props: { saved: string }) {
+function QualityField(props: { saved: number }) {
   const command = useApp((s) => s.command)
-  const [typed, setTyped] = useState(props.saved)
-  const [issue, setIssue] = useState<string | null>(null)
+  const [quality, setQuality] = useState(String(props.saved))
 
   function save() {
-    const parsed = reportsSettings.shape.exporterName.safeParse(typed)
-    if (!parsed.success) return setIssue(parsed.error.issues[0]?.message ?? null)
-    setIssue(null)
-    if (parsed.data === props.saved) return
-    void command('settings.update', { reports: { exporterName: parsed.data } })
-  }
-
-  function submit(event: FormEvent) {
-    event.preventDefault()
-    save()
+    const value = Number(quality)
+    if (!Number.isInteger(value) || value < 1 || value > 100) return
+    if (value === props.saved) return
+    void command('settings.update', { export: { jpgQuality: value } })
   }
 
   return (
-    <form className={`${layout.field} ${styles.name}`} onSubmit={submit}>
-      <label htmlFor="export-name">Name shown in reports</label>
-      <input
-        id="export-name"
-        type="text"
-        autoComplete="off"
-        value={typed}
-        onChange={(e) => setTyped(e.target.value)}
-        onBlur={save}
-        aria-invalid={issue !== null}
-        aria-describedby={issue === null ? HINT_ID : `${HINT_ID} ${ISSUE_ID}`}
-      />
-      <p id={HINT_ID} className={layout.muted}>
-        Written into each report as the person who exported. It is not checked. Leave it empty to
-        show &quot;name not set&quot;.
-      </p>
-      {issue !== null && (
-        <NoticeLine kind="danger" id={ISSUE_ID}>
-          {issue}
-        </NoticeLine>
-      )}
-    </form>
+    <div className={`${layout.field} ${layout.inline} ${styles.row}`}>
+      <label htmlFor="export-quality">Quality</label>
+      <div className={`${layout.unitBox} ${styles.short}`}>
+        <input
+          id="export-quality"
+          type="number"
+          aria-label="JPG quality"
+          min={1}
+          max={100}
+          step={1}
+          value={quality}
+          onChange={(e) => setQuality(e.target.value)}
+          onBlur={save}
+          onKeyDown={(e) => e.key === 'Enter' && save()}
+        />
+        <span className={layout.unit}>%</span>
+      </div>
+    </div>
   )
 }

@@ -13,7 +13,8 @@ export async function settingsTour(app: ElectronApplication, page: Page, box: Sa
   await screens.openSettingsPage(page, 'Files')
   await screens.answerOpenDialog(app, [elsewhere])
   await page.getByRole('button', { name: 'Change default location' }).click()
-  await expect(page.getByText(elsewhere, { exact: true })).toBeVisible()
+  const folder = page.getByRole('region', { name: 'Projects folder' })
+  await expect(folder.locator('[title]')).toHaveAttribute('title', elsewhere)
   await screens.chooseSettingsPage(page, 'AI services')
 
   const row = page.getByRole('group', { name: 'Google Gemini API key' })
