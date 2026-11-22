@@ -201,3 +201,82 @@ describe('agentJobView message [MCP-D] (security class)', () => {
     )
   })
 })
+
+// P10-5 (A-232): what get_job shows of the three AI runs. Each result carries planted keys
+// that must not leave: the request, the prompt sent, the model and the server's words.
+const PLANTED = {
+  prompt: 'made-up prompt sent',
+  model: 'made-up-model',
+  serverText: 'made-up server words',
+  request: { prompt: 'made-up request' },
+}
+const BOX = {
+  slot: 'headline',
+  x: 10,
+  y: 20,
+  width: 300,
+  height: 80,
+  fontSize: 48,
+  align: 'center',
+  color: '#FFFFFF',
+}
+
+describe('agentJobView for the AI runs [P10-5, A-232] (security class)', () => {
+  const run = (kind: JobRow['kind'], result: unknown, status: JobRow['status'] = 'succeeded') =>
+    agentJobView(fullRow({ kind, status, result, errorKind: null, errorReason: null }), PROVIDERS)
+
+  it('gives a cutout job its asset IDs as strings only, and nothing else of result', () => {
+    const view = run('cutout', { assetIds: ['a-cut', 3, null], ...PLANTED })
+    expect(view.assetIds).toEqual(['a-cut'])
+    expect(Object.keys(view).sort()).toEqual(
+      SHOWN.filter((k) => k !== 'failures' && k !== 'stage' && k !== 'queuePosition').sort(),
+    )
+    expect(JSON.stringify(view)).not.toContain('made-up')
+  })
+
+  it('gives a succeeded layout job its boxes, each with the eight named fields only', () => {
+    const extra = { ...BOX, prompt: 'made-up box prompt', path: '/Users/someone/x.png' }
+    const view = run('layout_proposal', { boxes: [extra, BOX], ...PLANTED })
+    expect(view.layout).toEqual({ boxes: [BOX, BOX] })
+    expect(view.assetIds).toEqual([])
+    expect(view).not.toHaveProperty('copyOptions')
+    const text = JSON.stringify(view)
+    for (const word of ['made-up', '/Users/someone', '"prompt"', '"model"', '"request"']) {
+      expect(text, word).not.toContain(word)
+    }
+  })
+
+  it('drops a box with a field of the wrong type, and boxes that are not a list', () => {
+    const bad = [{ ...BOX, x: '10' }, { ...BOX, color: 7 }, { ...BOX, align: null }, 'box', null]
+    expect(run('layout_proposal', { boxes: [...bad, BOX] }).layout).toEqual({ boxes: [BOX] })
+    expect(run('layout_proposal', { boxes: 'all' }).layout).toEqual({ boxes: [] })
+    expect(run('layout_proposal', null).layout).toEqual({ boxes: [] })
+  })
+
+  it.each(['failed', 'running', 'queued', 'cancelled'] as const)(
+    'gives a %s layout job no layout',
+    (status) => {
+      expect(run('layout_proposal', { boxes: [BOX] }, status)).not.toHaveProperty('layout')
+    },
+  )
+
+  it('gives a succeeded copy_options job its option texts as strings only', () => {
+    const view = run('copy_options', { options: ['Shop now', 4, { text: 'x' }, 'Go'], ...PLANTED })
+    expect(view.copyOptions).toEqual(['Shop now', 'Go'])
+    expect(view.assetIds).toEqual([])
+    expect(view).not.toHaveProperty('layout')
+    expect(JSON.stringify(view)).not.toContain('made-up')
+    expect(run('copy_options', { options: 'Shop now' }).copyOptions).toEqual([])
+  })
+
+  it('gives an unfinished or failed copy_options job no options', () => {
+    expect(run('copy_options', { options: ['A'] }, 'failed')).not.toHaveProperty('copyOptions')
+    expect(run('copy_options', { options: ['A'] }, 'running')).not.toHaveProperty('copyOptions')
+  })
+
+  it('gives no layout or copyOptions to any other kind with the same result keys', () => {
+    const view = run('image_generation', { boxes: [BOX], options: ['A'], assetIds: [] })
+    expect(view).not.toHaveProperty('layout')
+    expect(view).not.toHaveProperty('copyOptions')
+  })
+})
