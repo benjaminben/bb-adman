@@ -42,6 +42,7 @@ const SECTION_4_5_TOOLS = [
   'copy_options',
   'cut_out',
   'import_assets',
+  'create_campaign_from_brief',
   'create_project',
 ]
 

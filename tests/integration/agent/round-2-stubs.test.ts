@@ -19,15 +19,6 @@ afterEach(() => {
   for (const c of cleanups.splice(0)) c()
 })
 
-const NOT_BUILT = {
-  ok: false,
-  error: {
-    code: 'RULE_VIOLATION',
-    message: 'This is not built yet.',
-    details: { reason: 'not_built' },
-  },
-}
-
 const BRIEF = '# Spring Glow launch'
 const PNG_PATH = '/Users/me/Pictures/citrus-glow.png'
 
@@ -54,38 +45,12 @@ async function open(): Promise<{ fx: Fixture; projectId: string }> {
   return { fx, projectId: data<{ projectId: string }>(made).projectId }
 }
 
-const projectFiles = (fx: Fixture) => [
-  ...fs.readdirSync(fx.projectsDir),
-  ...fs.readdirSync(fx.core.settings.get().defaultProjectDir),
-]
-
 describe('the Round 2 command stubs [R2P-1]', () => {
   it('registers the four commands, each with its policy row', async () => {
     const { fx } = await open()
     expect(fx.core.commandNames).toEqual(expect.arrayContaining(NAMES))
     for (const name of NAMES) expect(AGENT_POLICY[name]?.policy, name).toBe(POLICY[name])
   })
-
-  it.each(NAMES.filter((n) => n !== 'asset.importFiles' && n !== 'project.createInDefaultFolder'))(
-    '%s as the user refuses not_built and writes nothing',
-    async (name) => {
-      const { fx, projectId } = await open()
-      fs.mkdirSync(fx.core.settings.get().defaultProjectDir, { recursive: true })
-      const files = projectFiles(fx).length
-      const before = fx.events.length
-      expect(await fx.user(name, INPUTS[name]?.(projectId))).toEqual(NOT_BUILT)
-      expect(fx.events.slice(before)).toEqual([])
-      expect(projectFiles(fx)).toHaveLength(files)
-    },
-  )
-
-  it.each(NAMES.filter((n) => POLICY[n] === 'allow' && n !== 'project.createInDefaultFolder'))(
-    '%s as the agent reaches its stub',
-    async (name) => {
-      const { fx, projectId } = await open()
-      expect(await fx.agent(name, INPUTS[name]?.(projectId))).toEqual(NOT_BUILT)
-    },
-  )
 })
 
 describe('agent.askFiles, stub [R2P-1, D7]', () => {

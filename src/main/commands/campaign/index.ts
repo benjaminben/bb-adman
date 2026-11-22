@@ -11,7 +11,7 @@ export function campaignCommands(deps: CoreDeps): CommandHandler[] {
     campaignCreate(deps),
     campaignUpdate(),
     campaignDelete(),
-    campaignFromBrief('campaign.createFromBrief'),
-    campaignFromBrief('campaign.createFromBriefWithFiles'),
+    campaignFromBrief('campaign.createFromBrief', deps),
+    campaignFromBrief('campaign.createFromBriefWithFiles', deps),
   ]
 }

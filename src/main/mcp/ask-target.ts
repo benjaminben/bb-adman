@@ -6,7 +6,9 @@
 import type Database from 'better-sqlite3'
 import { z } from 'zod'
 import type { PermissionRequest } from '@/main/commands/bus'
+import { briefPlan, type BriefPlan } from '@/main/commands/campaign/from-brief-plan'
 import type { ProjectRegistry } from '@/main/db/project-registry'
+import { campaignFromBriefInput } from '@/shared/schemas/commands/campaign-brief'
 import { cleanName } from './clean-name'
 
 export const NO_TARGET = 'Something that no longer exists'
@@ -50,9 +52,27 @@ function variantLine(db: Database.Database, variantId: string): string | null {
   return `Variant "${name}" in campaign "${cleanName(row.campaign)}" in "${projectName(db)}"`
 }
 
+const fileCount = (count: number) => (count === 1 ? '1 file' : `${count} files`)
+
 // D7: the count only; the paths reach the dialog through agent.askFiles.
 function filesLine(db: Database.Database, count: number): string {
-  return `${count === 1 ? '1 file' : `${count} files`} into "${projectName(db)}"`
+  return `${fileCount(count)} into "${projectName(db)}"`
+}
+
+// R2P-7: the campaign's name as the brief gives it, and the count of its full paths. The
+// broker checked the brief before this runs; one it cannot read gives NO_TARGET.
+function briefLine(db: Database.Database, input: unknown): string | null {
+  const parsed = campaignFromBriefInput.safeParse(input)
+  if (!parsed.success) return null
+  let plan: BriefPlan
+  try {
+    plan = briefPlan(db, parsed.data, true)
+  } catch {
+    return null
+  }
+  const name = cleanName(plan.create.brief.campaignName)
+  const files = fileCount(plan.paths.length)
+  return `Campaign "${name}" with ${files} for its subjects, in "${projectName(db)}"`
 }
 
 function lineFor(db: Database.Database, command: string, input: unknown): string | null {
@@ -68,6 +88,7 @@ function lineFor(db: Database.Database, command: string, input: unknown): string
     const parsed = filesTarget.safeParse(input)
     return parsed.success ? filesLine(db, parsed.data.paths.length) : null
   }
+  if (command === 'campaign.createFromBriefWithFiles') return briefLine(db, input)
   return null
 }
 

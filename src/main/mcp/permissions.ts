@@ -9,7 +9,10 @@ import { z } from 'zod'
 import { importPathTexts } from '@/main/assets/import-files'
 import { AGENT_POLICY } from '@/main/commands/agent-policy'
 import type { AskAnswer, BusEvent, PermissionRequest } from '@/main/commands/bus'
+import { briefPlan } from '@/main/commands/campaign/from-brief-plan'
+import type { ProjectHandle } from '@/main/db/project-file'
 import type { ProjectRegistry } from '@/main/db/project-registry'
+import { campaignFromBriefInput } from '@/shared/schemas/commands/campaign-brief'
 import type { ActivityLog } from '@/main/log/activity-log'
 import type { SettingsStore } from '@/main/settings/settings-store'
 import { ASK_WAIT_MS } from '@/shared/config/agent-ask'
@@ -42,12 +45,21 @@ type Outcome = AskAnswer | 'auto_approved' | 'project_closed'
 
 const importInput = z.object({ paths: z.array(z.string()) })
 
+type FileReader = (input: unknown, project: ProjectHandle | undefined) => string[] | null
+
 // The paths each import command asks about, checked by the text rules before anything is sent
-// (a refusal here is the command's INVALID_INPUT). An import ask with no reader is refused.
-const FILE_READERS: Readonly<Record<string, (input: unknown) => string[] | null>> = {
+// (a refusal here is the command's own). An import ask with no reader is refused. R2P-7: a
+// brief is checked whole against its project (from-brief-plan.ts), so a brief the command would
+// refuse never reaches the screen; nothing on disk is read before the answer.
+const FILE_READERS: Readonly<Record<string, FileReader>> = {
   'asset.importFiles': (input) => {
     const parsed = importInput.safeParse(input)
     return parsed.success ? importPathTexts(parsed.data.paths) : null
+  },
+  'campaign.createFromBriefWithFiles': (input, project) => {
+    const parsed = campaignFromBriefInput.safeParse(input)
+    if (!parsed.success || !project) return null
+    return briefPlan(project.db, parsed.data, true).paths
   },
 }
 
@@ -135,7 +147,8 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
     async ask(request) {
       const kind = ASK_KINDS[request.command]
       const reader = FILE_READERS[request.command]
-      const files = kind === 'import' ? (reader?.(request.input) ?? null) : []
+      const project = request.projectId ? deps.projects.get(request.projectId) : undefined
+      const files = kind === 'import' ? (reader?.(request.input, project) ?? null) : []
       if (!kind || !files) {
         logOutcome(request, 'refused')
         return 'refused'

@@ -186,6 +186,17 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
     // R2P-5: this core refuses every ask, so its success reply is word-tested in
     // import-assets-checks.test.ts; a relative path is refused before the ask.
     ['import_assets', null, [{ project_id: p, paths: ['Pictures/hero.png'] }]],
+    // R2P-7: a Markdown brief with no picture; a relative picture is refused with no ask.
+    [
+      'create_campaign_from_brief',
+      { project_id: p, text: '# Tea\nRegion: US\nAudience: All\nMessage: Hi\n## Subjects\n- Tin' },
+      [
+        {
+          project_id: p,
+          text: '# Tea\nRegion: US\nAudience: All\nMessage: Hi\n## Subjects\n### Tin\nPicture: a.png',
+        },
+      ],
+    ],
     // R2P-8: a new project in the default folder; a reserved Windows name is refused.
     ['create_project', { name: 'Autumn Work' }, [{ name: 'CON' }]],
   ]
