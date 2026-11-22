@@ -74,6 +74,8 @@ export function translationJobStates(
     if (job.kind !== 'translation' || job.campaignId !== campaignId) continue
     const request = translationJobRequest.safeParse(job.request)
     if (!request.success || !order.has(request.data.directionId)) continue
+    // P6-16: a sync job writes no row the panel shows, so it is never a language's newest job.
+    if (request.data.mode === 'sync') continue
     const { directionId, to } = request.data
     const key = JSON.stringify([directionId, to])
     const held = newest.get(key)

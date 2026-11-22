@@ -1,0 +1,25 @@
+/* app-style */
+/* One row per layer: the name under the layer list's width, the lane beside it. */
+.tracks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.row {
+  display: grid;
+  grid-template-columns: var(--editor-layers-width) minmax(0, 1fr);
+  min-height: var(--control-height-small);
+  border-top: var(--border-width) solid var(--color-line);
+}
+.name {
+  overflow: hidden;
+  padding: 0 var(--space-3);
+  align-self: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lane {
+  background: var(--color-surface-soft);
+}

@@ -1,6 +1,7 @@
 // spec/editor.md, "The editor screen" [FR-090 to FR-098]: one variant, laid out as the top bar,
 // the banner, then the layer list, the canvas and the properties panel. One variant store per
 // editor. One layer is selected at a time (A-28); a selected layer that goes away is dropped.
+// A video variant also has the timeline along the foot, with one playback store per tab (P7-18).
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from 'zustand'
 import { useApi, useApp } from '@/renderer/app/app-context'
@@ -10,11 +11,13 @@ import { LayerList } from '@/renderer/editor/layer-list'
 import { LayoutButton } from '@/renderer/editor/layout-button'
 import { useLayoutRun } from '@/renderer/editor/layout-run'
 import { PropertiesPanel } from '@/renderer/editor/properties-panel'
+import { Timeline } from '@/renderer/editor/timeline'
 import { TopBar } from '@/renderer/editor/top-bar'
 import { EditorKeyRoot } from '@/renderer/editor/use-editor-key'
 import { RunDialog } from '@/renderer/dialogs/run-dialog'
 import type { Zoom } from '@/renderer/editor/zoom'
 import type { TabView } from '@/renderer/stores/nav-store'
+import { createPlaybackStore } from '@/renderer/stores/playback-store'
 import { createVariantStore, type VariantStoreState } from '@/renderer/stores/variant-store'
 import { assetUrl } from '@/renderer/ui/asset-url'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
@@ -58,6 +61,7 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
   const command = useApp((s) => s.command)
   const [store] = useState(() => createVariantStore(api, projectId, variantId))
   const state = useStore(store)
+  const [playback] = useState(() => createPlaybackStore(0))
   const history = useHistory(projectId, variantId)
   const onSettled = useOverflowReport(projectId, store)
   const root = useRef<HTMLDivElement>(null)
@@ -73,6 +77,9 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
   }, [store])
 
   const { layers, assets, versions, draft, variant } = state
+  const durationMs = variant?.durationMs ?? 0
+  useEffect(() => playback.getState().setDuration(durationMs), [playback, durationMs])
+  useEffect(() => () => playback.getState().pause(), [playback])
   const scene = useMemo(() => drawn(layers, draft), [layers, draft])
   const forScene = useMemo(
     () => sceneAssets(projectId, { assets, versions }),
@@ -148,6 +155,7 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
                 onSettled={onSettled}
                 cropId={cropId}
                 onCrop={setCropId}
+                playback={playback}
               />
               <PropertiesPanel
                 projectId={projectId}
@@ -159,6 +167,15 @@ export function Editor({ projectId, variantId, view, onView }: Props) {
                 onCrop={setCropId}
               />
             </div>
+            {variant.format === 'video' && (
+              <Timeline
+                projectId={projectId}
+                variant={variant}
+                layers={scene}
+                store={store}
+                playback={playback}
+              />
+            )}
             <RunDialog
               {...layoutRun.dialog}
               projectId={projectId}

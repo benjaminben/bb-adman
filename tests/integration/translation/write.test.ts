@@ -138,4 +138,29 @@ describe('translation.write [P6-6]', () => {
     expect(f.layer(f.id('D1', key)).copy).toBe(text)
     await stop(jobId)
   })
+
+  // P6-16, Phase 5 review: a layer of the direction's master, or of a post in the campaign's
+  // main language, is never a translation the AI may replace.
+  it.each([
+    [
+      "the direction's master",
+      () =>
+        f.db
+          .prepare("UPDATE direction SET master_variant_id = 'D1' WHERE id = ?")
+          .run(f.directionId),
+    ],
+    [
+      "a post in the campaign's main language",
+      () =>
+        f.db.prepare("UPDATE campaign SET primary_language = 'de' WHERE id = ?").run(f.campaignId),
+    ],
+  ])('leaves a layer of %s alone', async (_name, plant) => {
+    const jobId = await runningJob()
+    const [key = ''] = f.textKeys
+    plant()
+    const before = f.layer(f.id('D1', key))
+    expect(await write(jobId, [{ key, text: 'Hallo' }])).toEqual({ ok: true, data: { written: 0 } })
+    expect(f.layer(f.id('D1', key))).toEqual(before)
+    await stop(jobId)
+  })
 })

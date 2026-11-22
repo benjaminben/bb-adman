@@ -31,7 +31,7 @@
 - **Phase 5: one slice.** P7-23 (video in fan-out) waits for Phase 5's `variant.fanOut` slice. Nothing else needs Phase 5.
 - **OI-09:** only P7-3 (the fetch script) and exit criterion 5. Everything else runs against a stand-in media tool.
 - **OI-30:** answered by A-170 (no client package); P7-14 can start now.
-- **The migration number.** P7-2 needs no other phase's code, only that no other migration slice is in flight; it takes the next number (0007 expected).
+- **The migration number.** P7-2 needs no other phase's code, only that no other migration slice is in flight; it took migration number 0005 (`src/main/db/migrations/0005_video_and_sound.sql`).
 
 ## Rules for these slices
 
@@ -49,9 +49,9 @@
 
 | Slice | Needs | May run beside | Must not run beside |
 |-------|-------|----------------|---------------------|
-| P7-1 Contracts | Phases 1 to 4 | P7-2, P7-3, P7-5, P7-6, P7-7, P7-13, P7-14 | Any other phase's contracts slice (`agent-policy.ts`, `core.ts`, `core-deps.ts`, `queries.ts`) |
-| P7-2 Migration and row schemas | No migration in flight elsewhere | P7-1, P7-3, P7-4, P7-6, P7-7, P7-13, P7-14 | Any slice that adds a migration or edits `rows/index.ts` (Phase 6's contracts) |
-| P7-3 FFmpeg fetch script | Nothing | Everything | Any slice editing `package.json` scripts (none planned here) |
+| P7-1 Contracts (built) | Phases 1 to 4 | P7-2, P7-3, P7-5, P7-6, P7-7, P7-13, P7-14 | Any other phase's contracts slice (`agent-policy.ts`, `core.ts`, `core-deps.ts`, `queries.ts`) |
+| P7-2 Migration and row schemas (built) | No migration in flight elsewhere | P7-1, P7-3, P7-4, P7-6, P7-7, P7-13, P7-14 | Any slice that adds a migration or edits `rows/index.ts` (Phase 6's contracts) |
+| P7-3 FFmpeg fetch script (script built; not yet run) | Nothing | Everything | Any slice editing `package.json` scripts (none planned here) |
 | P7-4 Media runner | P7-1; P7-3 for its exit check (the real binary and test clips) | Everything but P7-1 | Any slice editing `src/main/index.ts` |
 | P7-5 Video facts, audio types | P7-2 | P7-4, P7-6, P7-7, P7-13, P7-14 | Any slice editing `inspect.ts`, `sniff.ts`, `file-types.ts` |
 | P7-6 Asset protocol ranges (built) | Nothing | Everything | Any slice editing `asset-url.ts`, `asset-protocol.ts` |
@@ -61,9 +61,9 @@
 | P7-10 Format and duration | P7-9 | P7-11 to P7-15 | Phase 5 slices editing `commands/variant/index.ts` |
 | P7-11 Video start checks and offers | P7-1 | P7-8, P7-9, P7-10, P7-13, P7-14 | P7-15, P7-16 (`run-tools.ts`, `generation.ts` schemas) |
 | P7-12 Sound data | P7-1, P7-2, P7-5 | P7-10, P7-11, P7-13, P7-14 | Any slice editing `assets/in-use.ts` |
-| P7-13 Runs that would still charge | Nothing | Everything | Any slice editing `src/main/jobs/` or `close-words.ts` |
+| P7-13 Runs that would still charge (built) | Nothing | Everything | Any slice editing `src/main/jobs/` or `close-words.ts` |
 | P7-14 fal adapter (built) | Nothing | Everything | Any slice editing `src/main/providers/gemini/pinned-origin.ts` |
-| P7-15 fal switched on | P7-11, P7-13, P7-14 | P7-10, P7-12, UI slices | P7-16 (`run-tools.ts`) |
+| P7-15 fal switched on | P7-11, P7-13, P7-14 | P7-10, P7-12, UI slices | P7-16 (`run-tools.ts`); P7-4 (`src/main/index.ts`) |
 | P7-16 Video job into the ad | P7-4, P7-8, P7-9, P7-11 | P7-12, P7-17 to P7-22 | P7-15 |
 | P7-17 Format and duration controls | P7-10 | Other UI slices | Phase 5/6 slices editing `editor/top-bar/` |
 | P7-18 Timeline frame and playback | P7-1 | P7-17, logic slices | Phase 5/6 slices editing `editor/editor/`, `canvas-view/` or `shortcuts.ts` |
@@ -124,7 +124,10 @@ These fill gaps in the topic files. The orchestrator folds them in later; develo
 - Width, height and duration of a clip come from the app's own box reader, not FFmpeg (A-177). Generated clips: from `checkMp4`, written to the asset row by `asset.addGenerated`. Imported MP4 and MOV: `videoFileFacts(handle)` (P7-5) reads box headers and the `moov` box only (at most 32 MiB), with `checkMp4`'s limits on side and depth; it fills `width`, `height`, `duration_ms` at import, relink and the change check. An MP4 or MOV with no video track is refused at import (this also stops HEIC, AVIF and M4A files named `.mp4`). A row made before Phase 7 with no facts is read when `clip.add` needs them.
 - WebM stays importable but is refused on the track: reason `clip_asset_not_usable` (A-178).
 - **FFmpeg in Phase 7 only writes the details** into a generated clip: stream copy of video and sound, global `comment` from an ffmetadata file (not a command-line value, because of the Windows line limit). The details JSON is the one of `spec/export-and-checks.md`, "Embedded generation details", with `kind: "video_generation"`. The output must pass `checkMp4` with the same width, height, duration and `hasSound` as the input, else the original is kept. The job result says `details: 'embedded'`, or `'pending'` when no FFmpeg is present or the run failed (A-179); a `warn` line names the reason only.
-- **Where FFmpeg comes from** (OI-09, A-189): Windows x64, a dated LGPL release of a public builder on GitHub, pinned by address and SHA-256. macOS arm64 and x64, built on this machine by the fetch script from the pinned FFmpeg release source archive (address and SHA-256 pinned), with fixed configure flags: `--disable-gpl --disable-nonfree --disable-network --disable-autodetect --disable-doc --disable-ffplay --disable-ffprobe --enable-videotoolbox`, plus the parts list of `spec/infra-and-settings.md`, "FFmpeg", and `ffmetadata` and `mov` demuxers, `mp4` and `mov` muxers, `file` and `pipe` protocols, and the few parts P7-3 adds to make test clips. Every binary must pass the licence check: `ffmpeg -hide_banner -L` names the GNU Lesser General Public License and `-buildconf` holds neither `--enable-gpl` nor `--enable-nonfree`; a binary that fails is deleted. Phase 11 moves the macOS build into the release pipeline.
+- **Where FFmpeg comes from** (OI-09, A-189): the pins are in `scripts/ffmpeg-sources.json`, FFmpeg 9.0.2. Windows x64: a dated LGPL win64 release of the public builder repository `FFmpeg-Builds/FFmpeg-Builds` on GitHub (release `autobuild-2026-11-21-12-37`), pinned by address, SHA-256 and the one member taken from the zip (`bin/ffmpeg.exe`). macOS arm64 and x64: built on this machine by the fetch script from the FFmpeg release source archive `ffmpeg-9.0.2.tar.xz`, pinned by address and SHA-256. The script accepts only addresses under the builder's release download path and the FFmpeg project's `/releases/` path.
+- **Pin checks.** The macOS source archive's SHA-256 pin was checked against the archive's PGP signature from the FFmpeg release signing key on 2026-11-21: the signature is good. The Windows zip's pin has not been checked that way: before the first Windows run, check it by hand against the release's own checksum file.
+- **Configure flags,** exactly the `configure` list in `scripts/ffmpeg-sources.json`: `--disable-everything --disable-gpl --disable-nonfree --disable-network --disable-autodetect --disable-doc --disable-ffplay --disable-ffprobe --disable-x86asm --enable-pthreads --enable-videotoolbox --enable-audiotoolbox --enable-decoder=h264,hevc,vp8,vp9,prores,png,rawvideo,pcm_u8,pcm_s16le,pcm_s32le,pcm_f32le,pcm_f64le --enable-demuxer=mov,matroska,image2pipe,png_pipe,ffmetadata --enable-muxer=mp4,mov --enable-parser=h264,hevc,vp8,vp9,png,aac --enable-protocol=file,pipe --enable-filter=scale,crop,overlay,trim,setpts,loop,color,format,fps,anullsrc,aresample --enable-encoder=h264_videotoolbox,aac_at --enable-indev=lavfi`. The last two flags and the `anullsrc` filter are there to make the test clips (and Phase 8 needs the encoders). The script accepts only `--enable-x` or `--disable-x` flags with an optional list of plain names, and refuses the list unless it holds `--disable-gpl` and `--disable-nonfree` and holds neither `--enable-gpl` nor `--enable-nonfree`.
+- **Licence check.** Every binary must pass the licence check: `ffmpeg -hide_banner -L` names the GNU Lesser General Public License and `-buildconf` holds neither `--enable-gpl` nor `--enable-nonfree`; a binary that fails is deleted. Phase 11 moves the macOS build into the release pipeline.
 - **How FFmpeg is run** (P7-4): `spawn(binary, args, { shell: false, windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'], env: {}, cwd: runFolder })`. The binary path is fixed: `process.resourcesPath/ffmpeg/{platform}-{arch}/ffmpeg[.exe]` when packaged, `{appPath}/resources/ffmpeg/...` in development; it must be a regular file by `lstat`, not a link. Arguments come only from builder functions with fixed flags; every path is prefixed `file:`, each input gets `-protocol_whitelist file`, output uses `-n`. Every path is inside `{userData}/media-temp/run-{ULID}/`, made by the app, with fixed file names (`in.mp4`, `meta.txt`, `out.mp4`) written with `wx`; the folder is removed after the run, and left-over `run-*` folders (real folders, not links) are removed at app start. One run at a time, 60 s limit then kill, standard error read up to 64 KiB and never logged or shown.
 
 ### Clips and the track [A-180 to A-183]

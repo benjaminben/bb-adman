@@ -24,6 +24,7 @@ const SECTION_4_5_TOOLS = [
   'set_variant_format',
   'create_layer',
   'update_layer',
+  'update_layers',
   'delete_layer',
   'reorder_layers',
   'set_translation',

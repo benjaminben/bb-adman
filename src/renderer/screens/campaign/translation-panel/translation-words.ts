@@ -59,3 +59,9 @@ export function approvalOf(rows: TranslationRow[]): ApproveLayer[] {
     .filter((row) => row.status === 'proposed')
     .map((row) => ({ layerId: row.layerId, copyRev: row.copyRev }))
 }
+
+// P6-18: a translation job is one per direction and language, so each pair the rows span is one
+// paid request. Variants of the same pair share their job.
+export function requestCount(rows: Pick<TranslationRow, 'directionId' | 'language'>[]): number {
+  return new Set(rows.map((row) => `${row.directionId}\u0000${row.language}`)).size
+}

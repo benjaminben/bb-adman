@@ -93,7 +93,7 @@ The render service draws the full Scene at the variant's pixel size and captures
 1. Frame count = `ceil(durationMs / 1000 × fps)`. Frame `i` is drawn at time `i × 1000 / fps`. Time comes from the frame number, never from a clock, so every machine makes the same frames [REQ: FR-131].
 2. The render service draws the Scene with the background left out on a transparent page, and captures each frame as PNG. If no layer changes between two frames (no animation running, no layer starting or ending), the previous frame is sent again without redrawing.
 3. Frames are piped to FFmpeg as `-f image2pipe -framerate {fps} -c:v png -i -`.
-4. FFmpeg builds the background: a black base of the variant's size and duration, then each clip trimmed (`trim`, `setpts`), scaled and cropped by `background-placement.ts`, and overlaid in its time range. Stills are looped for their length.
+4. FFmpeg builds the background: a black base of the variant's size and duration, then each clip cut to its time range (`trim`), scaled and cropped by `background-placement.ts`, and overlaid. Each clip is placed in time by options on its own input, not by `setpts`: `-t` (length), `-itsoffset` (start), and `-ss` (in point) for a video; a still is looped for its length (`-loop 1`).
 5. FFmpeg overlays the frame stream on the background and encodes.
 
 ```

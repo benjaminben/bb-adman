@@ -26,6 +26,8 @@ export type RunDialogProps = {
   confirmLabel: string
   count?: RunCount
   referenceCount?: number
+  // P6-18: a text run's paid requests, when it sends more than one.
+  requests?: number
   campaignId?: string
   // A retry: the provider (and the count) are the failed run's, shown, not chosen.
   retry?: { provider: string }
@@ -100,7 +102,14 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
       )}
       {settled && ready && (
         <p className={provider.id === 'comfyui' ? styles.comfy : styles.summary}>
-          {runSummary({ job, provider, count: n ?? count?.value, referenceCount, comfy })}
+          {runSummary({
+            job,
+            provider,
+            count: n ?? count?.value,
+            referenceCount,
+            comfy,
+            requests: props.requests,
+          })}
         </p>
       )}
       {settled && !ready && <p>No provider can do this yet.</p>}

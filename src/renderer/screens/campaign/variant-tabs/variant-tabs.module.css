@@ -22,3 +22,9 @@
 .variant {
   display: flex;
 }
+/* An inactive panel stays in the page with the hidden attribute. The flex display above would
+   show it again and take the active panel's room, so hidden wins here. */
+.overview[hidden],
+.variant[hidden] {
+  display: none;
+}

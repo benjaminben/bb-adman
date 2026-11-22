@@ -98,3 +98,33 @@ describe('clip command inputs refuse each bad field [P7-1]', () => {
     expect(schema.safeParse(input).success).toBe(false)
   })
 })
+
+const restore = (over: object) => ({ ...P, rows: [{ ...row, ...over }] })
+
+const RESTORE_REFUSED: [string, object][] = [
+  ['an empty id', restore({ id: '' })],
+  ['an empty variantId', restore({ variantId: '' })],
+  ['an empty assetId', restore({ assetId: '' })],
+  ['startMs below 0', restore({ startMs: -1 })],
+  ['startMs past a day', restore({ startMs: 86_400_001 })],
+  ['inMs below 0', restore({ inMs: -1, outMs: 3000 })],
+  ['inMs not whole', restore({ inMs: 0.5 })],
+  ['outMs past a day', restore({ inMs: 86_000_000, outMs: 86_400_001 })],
+  ['a trim under 100 ms', restore({ inMs: 1000, outMs: 1099 })],
+  ['outMs before inMs', restore({ inMs: 3000, outMs: 1000 })],
+  ['a placement of width 0', restore({ placement: { ...geometry, width: 0 } })],
+  ['a placement with an extra key', restore({ placement: { ...geometry, z: 1 } })],
+  ['soundOn as a number', restore({ soundOn: 1 })],
+]
+
+describe('clip.restore rows are bounded as clip.add and clip.update are [P7-9]', () => {
+  it.each(RESTORE_REFUSED)('refuses %s', (_name, input) => {
+    expect(clipRestoreInput.safeParse(input).success).toBe(false)
+  })
+
+  it('takes a row with a placement, and one at the bounds', () => {
+    const at = { startMs: 86_400_000, inMs: 86_399_900, outMs: 86_400_000 }
+    expect(clipRestoreInput.safeParse(restore({ placement: geometry })).success).toBe(true)
+    expect(clipRestoreInput.safeParse(restore(at)).success).toBe(true)
+  })
+})

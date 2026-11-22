@@ -84,8 +84,8 @@ describe('agent.answerPermission, stub [P10-1]', () => {
   })
 })
 
-describe('the stub broker in core [P10-1]', () => {
-  it('refuses an agent campaign.delete, sends no event and deletes nothing', async () => {
+describe('the broker in core [P10-1; P10-6]', () => {
+  it('asks the user for an agent campaign.delete, and on refuse deletes nothing [P10-6]', async () => {
     const { core, events } = coreWithBroker()
     const location = path.join(path.dirname(core.deps.userDataDir), 'Documents')
     const made = await core.bus.execute(
@@ -101,12 +101,19 @@ describe('the stub broker in core [P10-1]', () => {
     )
     const { campaignId } = data<{ campaignId: string }>(camp)
     const before = events.length
-    const result = await core.bus.execute(
+    const pending = core.bus.execute(
       'campaign.delete',
       { projectId, campaignId },
       { actor: 'agent' },
     )
-    expect(result).toEqual({
+    while (!events.some((e) => e.name === 'agent.permissionRequested')) {
+      await new Promise((r) => setImmediate(r))
+    }
+    const asked = events.find((e) => e.name === 'agent.permissionRequested')
+    const requestId = asked?.name === 'agent.permissionRequested' ? asked.payload.requestId : ''
+    const answer = { requestId, allow: false, rememberAuto: false }
+    data(await core.bus.execute('agent.answerPermission', answer, { actor: 'user' }))
+    expect(await pending).toEqual({
       ok: false,
       error: {
         code: 'AGENT_REFUSED',
@@ -114,12 +121,12 @@ describe('the stub broker in core [P10-1]', () => {
         details: { reason: 'refused' },
       },
     })
-    expect(events.slice(before)).toEqual([])
+    expect(events.slice(before).filter((e) => e.name === 'project.changed')).toEqual([])
     const read = await core.query('campaign.get', { projectId, campaignId }, { actor: 'user' })
     expect(read.ok).toBe(true)
   })
 
-  it('answers ask with refused and answer with NOT_FOUND', async () => {
+  it('answers NOT_FOUND to an answer when no request waits [P10-6]', async () => {
     const f = fixture()
     const broker = createPermissionBroker({
       emit: () => undefined,
@@ -128,8 +135,6 @@ describe('the stub broker in core [P10-1]', () => {
       now: () => new Date(),
       projects: f.core.projects,
     })
-    const request = { command: 'campaign.delete', agentClient: null, projectId: 'P1', input: {} }
-    expect(await broker.ask(request)).toBe('refused')
     expect(() => broker.answer(ANSWER)).toThrow('That request has ended.')
   })
 })

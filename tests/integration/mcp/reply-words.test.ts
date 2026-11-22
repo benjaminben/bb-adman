@@ -83,9 +83,42 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
         { project_id: p, job_id: 'x' },
       ],
     ],
+    // P10-2: the two read tools.
+    ['list_subjects', { project_id: p }, [other]],
+    ['get_variant', { project_id: p, variant_id: 'v1' }, [{ project_id: p, variant_id: 'x' }]],
+    // P10-3: the drawn picture.
+    ['render_variant', { project_id: p, variant_id: 'v1' }, [{ project_id: p, variant_id: 'x' }]],
+    // P10-4: the layer tools, over the seeded variants v1 and v2.
+    [
+      'create_layer',
+      { project_id: p, variant_id: 'v2', type: 'text' },
+      [{ project_id: p, variant_id: 'x', type: 'text' }],
+    ],
+    [
+      'update_layer',
+      { project_id: p, layer_id: 'l-text', patch: { copy: 'Stay cool' } },
+      [{ project_id: p, layer_id: 'x', patch: { copy: 'Stay cool' } }],
+    ],
+    [
+      'update_layers',
+      {
+        project_id: p,
+        variant_id: 'v1',
+        updates: [{ layerId: 'l-text', patch: { visible: false } }],
+      },
+      [{ project_id: p, variant_id: 'v1', updates: [{ layerId: 'x', patch: { visible: false } }] }],
+    ],
+    ['delete_layer', { project_id: p, layer_id: 'l-other' }, [{ project_id: p, layer_id: 'l-bg' }]],
+    [
+      'reorder_layers',
+      { project_id: p, variant_id: 'v1', layer_ids: ['l-text'] },
+      [{ project_id: p, variant_id: 'v1', layer_ids: [] }],
+    ],
+    // P10-6: this core refuses every ask, so its success reply is word-tested in ask-flow.test.ts.
+    ['delete_campaign', null, [{ project_id: p, campaign_id: ids.campaign }]],
   ]
   return table.flatMap(([tool, good, bad]) => [
-    { tool, args: good, ok: true },
+    ...(good === null ? [] : [{ tool, args: good, ok: true }]),
     ...bad.map((args) => ({ tool, args, ok: false })),
   ])
 }
@@ -110,7 +143,9 @@ describe('no tool reply or output schema holds a provider ID, a settings key or 
       seen.push(JSON.stringify(reply))
     }
     expect([...outcomes.keys()]).toEqual(BUILT_TOOLS)
-    for (const [tool, both] of outcomes) expect(both.size, tool).toBe(2)
+    for (const [tool, both] of outcomes) {
+      expect(both.size, tool).toBe(tool === 'delete_campaign' ? 1 : 2)
+    }
     const text = seen.join('\n')
     expect(text).toContain(agentJob)
     expect(text).toContain('AGENT_DENIED')

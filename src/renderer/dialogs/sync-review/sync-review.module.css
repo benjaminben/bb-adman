@@ -85,3 +85,20 @@
   margin-bottom: var(--space-1);
   color: var(--color-text-secondary);
 }
+.byHand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+.failure {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+.failure p {
+  flex: 1;
+}
+.failure button {
+  flex: none;
+}

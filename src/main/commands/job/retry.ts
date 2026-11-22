@@ -17,6 +17,12 @@ import { keptPictureCount, picturesLeft } from '@/shared/generation/pictures-lef
 import { promptToSend } from '@/shared/generation/prompt'
 import { exportRefusal } from '@/shared/export/messages'
 import type { JobRow } from '@/shared/schemas/rows/job'
+import { AppError } from '@/shared/schemas/result'
+import type Database from 'better-sqlite3'
+import { withSyncTargets } from '@/main/translation/sync-result'
+import { groupsFor, planGroup } from '@/main/translation/targets'
+import { translationJobRequest } from '@/shared/schemas/jobs/translation'
+import { publishRefusal } from '@/shared/publish/messages'
 
 type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets'>
 
@@ -52,6 +58,30 @@ function retryRequest(old: JobRow): unknown {
   return { ...(request as object), count: picturesLeft(count, old.result) }
 }
 
+const nothingToTranslate = () =>
+  new AppError('RULE_VIOLATION', 'There is no text to translate.', {
+    reason: 'nothing_to_translate',
+  })
+
+// [P6-16, Phase 5 review] A translation row's request is built again from the file now, as
+// translation.propose builds it (planGroup): the master's text and the copy counters now. A
+// 'write' row keeps to the posts its targets were on; a 'sync' row takes the whole language.
+function translationRequest(db: Database.Database, old: JobRow): unknown {
+  const stored = translationJobRequest.safeParse(old.request)
+  if (!stored.success) throw nothingToTranslate()
+  const { mode, directionId, to: language } = stored.data
+  const [all] = groupsFor(db, { directionId, language })
+  const layerVariant = db.prepare('SELECT variant_id AS id FROM layer WHERE id = ?')
+  const posts = new Set(
+    stored.data.targets.map((t) => (layerVariant.get(t.layerId) as { id: string } | undefined)?.id),
+  )
+  const variantIds = (all?.variantIds ?? []).filter((id) => mode === 'sync' || posts.has(id))
+  const group = { directionId, language, variantIds }
+  const plan = planGroup(db, group, mode)
+  if (!plan) throw nothingToTranslate()
+  return (mode === 'sync' ? withSyncTargets(db, plan, group) : plan).request
+}
+
 export function jobRetry(deps: Deps) {
   return defineCommand({
     name: 'job.retry',
@@ -64,6 +94,8 @@ export function jobRetry(deps: Deps) {
       const old = requireJob(ctx.project, input.jobId)
       // A-195: an export row holds no path, so it cannot be run again from here.
       if (old.kind === 'export') throw exportRefusal('export_not_retried')
+      // P9-1 (A-226): a publish is started again from the campaign, with every check afresh.
+      if (old.kind === 'publish') throw publishRefusal('retry_not_offered')
       const retryable = old.status === 'failed' || old.status === 'cancelled'
       if (!retryable || !old.provider) {
         throw wrongState('Only a job that failed or was cancelled can be tried again.')
@@ -92,7 +124,8 @@ export function jobRetry(deps: Deps) {
         slot: old.slot,
         provider: old.provider,
         model: old.model ?? '',
-        request: retryRequest(old),
+        request:
+          old.kind === 'translation' ? translationRequest(ctx.project.db, old) : retryRequest(old),
         startedBy: 'user',
       })
       const data: JobStarted = { jobId }

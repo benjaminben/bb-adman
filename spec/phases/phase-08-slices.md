@@ -15,7 +15,7 @@ Every slice also reads `spec/phases/DEV-RULES.md` and the "Design additions" sec
 - **Exit check:** lint, typecheck, `npm test`, build, `test:build`.
 - **Class:** B + A. **Security:** short (policy row, settings writer and load rule, an internal command). **Size:** medium.
 
-### P8-2 — Output folder, paths and safe writes
+### P8-2 — Output folder, paths and safe writes (built)
 
 - **Exists when done:** the output folder check; the output path builder; `exportTarget`; every local storage write is a partial write and a rename; the overwrite rule.
 - **New files:** `src/shared/export/safe-title.ts` (`postTitle(title)`); `src/shared/export/output-paths.ts` (`adPath`, `reportNames(stamp, n)`, `reportStamp(date)`); `src/main/commands/export/output-dir.ts` (`checkOutputDir(deps, project, typed): Promise<string>`, the real path); `src/main/export/target.ts` (`exportTarget(root)`).
@@ -26,7 +26,7 @@ Every slice also reads `spec/phases/DEV-RULES.md` and the "Design additions" sec
 - **Exit check:** class B checks; the existing local storage and approvals picture store tests pass unchanged.
 - **Class:** B + A. **Security:** full (a file path from outside; writes on the user's disk). **Size:** medium.
 
-### P8-3 — Render window tiles
+### P8-3 — Render window tiles (built)
 
 - **Exists when done:** the render window draws one tile of a big variant at scale 1 when the request has `view`.
 - **New files:** none needed; a helper `src/renderer/render-worker/render-root/frame-style.ts` (pure: the transform for a request) if `render-root.tsx` would pass 200 lines.
@@ -37,14 +37,15 @@ Every slice also reads `spec/phases/DEV-RULES.md` and the "Design additions" sec
 - **Exit check:** class C and G checks: lint, typecheck, unit tests, `npm run test:e2e -- tests/e2e/scene-reference.spec.ts tests/e2e/render-tiles.spec.ts tests/e2e/render-window.spec.ts`.
 - **Class:** C + G. **Security:** short (the render window's message schema). **Size:** small.
 
-### P8-4 — Full-size draw and the picture encoder
+### P8-4 — Full-size draw and the picture encoder (built)
 
 - **Exists when done:** `deps.render.drawFull(input)` gives a PNG of the exact pixel size up to 8,192 a side; `deps.exportPictures` makes JPG, stitches and shrinks.
 - **New files:** `src/main/thumbnails/tiles.ts` (`tilePlan(width, height, max)`, pure); `src/main/thumbnails/full-draw.ts` (`drawFullWith(queue, draw, pictures)`); `src/main/export/stitch.ts` (pure byte copy of BGRA tiles into one bitmap); the body of `src/main/export/picture-encoder.ts`.
 - **May touch:** `src/main/thumbnails/service.ts` (replace the stub `drawFull` with the call into `full-draw.ts`; keep the file under 210 lines).
-- **Needs:** P8-1. Works with a fake draw without P8-3; its e2e case needs P8-3 merged (run that case last, or leave it to P8-19 if P8-3 is not merged yet, and say so).
+- **Needs:** P8-1. Works with a fake draw without P8-3.
+- **End-to-end case moved:** `tests/e2e/export-picture.spec.ts` belongs to P8-19, which reaches `drawFull` through a real export (no test hook into the main process, "Rules for these slices").
 - **Read:** `spec/scene.md` "The render service"; `spec/phases/phase-08.md` "Drawing at full size"; `src/main/png-converter.ts` and `src/main/image-turner.ts` (the injected-Electron model).
-- **Tests first:** `tests/unit/main/thumbnails/tiles.test.ts` (table: 1080 × 1080 → one; 2048 × 2048 → one; 2049 × 100 → two; 8192 × 8192 → sixteen; the tiles cover every pixel once); `tests/unit/main/export/stitch.test.ts` (2 × 2 tiles of 3 × 2 pixels with known values give the joined bitmap); `tests/unit/main/export/picture-encoder.test.ts` (with fake `decode` and `fromBitmap`: `toJpeg` passes the quality; `shrink` keeps the ratio, longest side 240, at least 1); `tests/integration/render/draw-full.test.ts` (fake `drawScene`: a 4,000 × 1,000 variant asks for two tiles with the right `view` and sizes; one queue item; no `layer.reportOverflow` sent; no thumbnail file written); `tests/e2e/export-picture.spec.ts` (`transparent-hole` drawn through `drawFull` matches the scene reference [REQ: FR-245]; the PNG has no `generation` chunk [REQ: FR-068], named).
+- **Tests first:** `tests/unit/main/thumbnails/tiles.test.ts` (table: 1080 × 1080 → one; 2048 × 2048 → one; 2049 × 100 → two; 8192 × 8192 → sixteen; the tiles cover every pixel once); `tests/unit/main/export/stitch.test.ts` (2 × 2 tiles of 3 × 2 pixels with known values give the joined bitmap); `tests/unit/main/export/picture-encoder.test.ts` (with fake `decode` and `fromBitmap`: `toJpeg` passes the quality; `shrink` keeps the ratio, longest side 240, at least 1); `tests/integration/render/draw-full.test.ts` (fake `drawScene`: a 4,000 × 1,000 variant asks for two tiles with the right `view` and sizes; one queue item; no `layer.reportOverflow` sent; no thumbnail file written).
 - **Exit check:** class C checks.
 - **Class:** C. **Security:** none (no new input; pictures only). **Size:** medium.
 
@@ -66,10 +67,10 @@ Every slice also reads `spec/phases/DEV-RULES.md` and the "Design additions" sec
 - **Needs:** P8-2, P8-4.
 - **Read:** `spec/phases/phase-08.md` "Export run", "Drawing at full size"; `spec/jobs.md` (handlers, cancel); `spec/scene.md` "The render service" (`sceneInput`).
 - **Tests first:** `tests/integration/export/image-export.test.ts` (fake `drawScene`, a temp folder): two sizes and two languages give the four files at the layout's names, in order; JPG uses `toJpeg` with the plan's quality; an ad with a missing file is a failure with its display name and no file; a deleted ad fails; a draw that throws fails that ad only; a video ad fails with "Video export is not built yet."; progress rises to 1; a job with no plan fails with `export_not_retried`; cancel after the first ad leaves one file, no `.partial`, no report call, status `cancelled`; the job result holds counts only; the report port gets one outcome per ad with the drawn `rev` and a shrunk picture.
-- **Exit check:** class B and C checks (the e2e part is P8-4's).
+- **Exit check:** class B and C checks (the end-to-end part is P8-19's).
 - **Class:** C + B. **Security:** short (writes through P8-2's target only). **Size:** medium.
 
-### P8-7 — Report facts and the builder
+### P8-7 — Report facts and the builder (built)
 
 - **Exists when done:** `buildReport(facts, outcomes)` gives the full `Report` of "Design additions", "Report"; `reportFacts(deps, project, campaignId)` reads everything it needs.
 - **New files:** `src/main/export/report/facts.ts` (campaign, subjects, variants, text layers, assets used by layers and clips with their generation fields, previous report body, report count, `paidCount`, the exporter's name); `src/main/export/report/build.ts` (pure); `src/main/export/report/delivered.ts` (pure: FR-232 pairs); `src/main/export/report/changed.ts` (pure: FR-238).
@@ -79,7 +80,7 @@ Every slice also reads `spec/phases/DEV-RULES.md` and the "Design additions" sec
 - **Exit check:** class A and B checks.
 - **Class:** A + B. **Security:** none. **Size:** medium.
 
-### P8-8 — The report as HTML
+### P8-8 — The report as HTML (built)
 
 - **Exists when done:** `reportHtml(report, pictures)` gives the one self-contained HTML file.
 - **New files:** `src/main/export/report/html.ts` (the page and its order); `src/main/export/report/html-parts.ts` (header, summary, warnings, delivered, one ad); `src/main/export/report/html-words.ts` (the fixed words); `src/main/export/report/escape.ts`; `src/main/export/report/report.css.ts` (the inline style text, a constant, the one place it lives).
@@ -99,7 +100,7 @@ Every slice also reads `spec/phases/DEV-RULES.md` and the "Design additions" sec
 - **Exit check:** class B checks.
 - **Class:** B. **Security:** short (writes in the output folder; a project-file value read back). **Size:** medium.
 
-### P8-10 — Settings: the Export section
+### P8-10 — Settings: the Export section (built)
 
 - **Exists when done:** Settings has an "Export" section with "Picture format" (PNG, JPG), "JPG quality" (1 to 100, shown for JPG), "Frames per second" (30, 60) and "Name shown in reports" with the hint "Written into each report as the person who exported. It is not checked. Leave it empty to show "name not set"." Each change is saved through `settings.update`.
 - **New files:** `src/renderer/screens/settings/export-section/` (`index.ts`, `export-section.tsx`, `export-section.module.css`); `tests/unit/renderer/screens/settings/export-section.test.tsx`; `tests/shots/p8-10.shots.ts` (shot `250-settings-export`).

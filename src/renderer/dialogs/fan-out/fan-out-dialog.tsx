@@ -2,11 +2,14 @@
 // size's background fit, and for a fill the provider select and the paid line. Nothing is sent
 // before "Make variants"; no fill is started before variant.fanOut succeeds, and each goes to
 // the provider the select shows. From the click until the reply the dialog is locked and
-// cannot close; a refusal shows inside it (A-50). It sends images only (A-133).
+// cannot close; a refusal shows inside it (A-50). It sends images only (A-133). P6-15: the
+// line under it states the text calls with the Settings text provider, and the translation
+// jobs in the reply are registered under the campaign for the tab's close warning.
 import { useEffect, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { ProviderSelect } from '@/renderer/screens/campaign/provider-select'
 import { useComfyInfoState } from '@/renderer/screens/campaign/use-comfy-info'
+import { attachedStoreFor } from '@/renderer/stores/attached-store'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
 import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
@@ -59,6 +62,7 @@ function useHasPicture(projectId: string, variantId: string): boolean | null {
 
 export function FanOutDialog(props: FanOutDialogProps) {
   const { projectId, basis } = props
+  const api = useApi()
   const app = useApp((s) => s.app)
   const command = useApp((s) => s.command)
   const comfy = useComfyInfoState()
@@ -78,6 +82,9 @@ export function FanOutDialog(props: FanOutDialogProps) {
     providers.list.find((p) => p.id === picked) ??
     providers.list.find((p) => p.id === preferred) ??
     providers.list[0]
+  const textId = app?.settings.defaultProviders.text
+  const text = app?.providers.find((p) => p.id === textId && p.available && p.jobs.includes('text'))
+  const textLine = model.translationLine(model.translationCount(basis, ticks), text ?? null)
   const ready = picture !== null && count > 0 && (fills === 0 || provider !== undefined)
 
   async function send() {
@@ -90,7 +97,9 @@ export function FanOutDialog(props: FanOutDialogProps) {
     setBusy(false)
     if (!reply.ok) return setRefusal(reply.error.message)
     props.onClose()
-    const { fill } = reply.data as VariantFanOutReply
+    const { fill, translationJobIds = [] } = reply.data as VariantFanOutReply
+    const owner = { projectId, campaignId: props.direction.campaignId }
+    for (const jobId of translationJobIds) attachedStoreFor(api).getState().register(jobId, owner)
     if (fill.length > 0 && fillProvider !== undefined) props.onMade(fill, fillProvider)
   }
 
@@ -161,6 +170,7 @@ export function FanOutDialog(props: FanOutDialogProps) {
           </>
         )}
         {fills > 0 && provider === undefined && <p>No provider can do this yet.</p>}
+        {textLine !== null && <p className={styles.line}>{textLine}</p>}
         <p className={styles.line}>{`This makes ${count} variant(s).`}</p>
         {count === 0 && <p className={layout.muted}>Nothing new to make.</p>}
         {refusal !== null && (

@@ -137,14 +137,15 @@ export function createRenderService(opts: RenderServiceOptions): RenderService {
     return variant
   }
 
-  // A variant.render draw, or the layout job's picture: no text, so no overflow to report.
+  // A variant.render draw, the agent's (no overflow report) or the layout job's picture (no
+  // text, so no overflow to report).
   async function drawVariant(
     project: ProjectHandle,
     variantId: string,
     maxDimension: number,
-    withoutText: boolean,
-    timeMs = 0,
+    how: { withoutText?: boolean; report: boolean; timeMs?: number },
   ): Promise<VariantRender> {
+    const { withoutText, timeMs } = how
     const open = opts.deps().projects.requireOpen(project.projectId)
     const scene = await sceneInput(opts.deps(), open, variantId, { withoutText, timeMs })
     if (!scene) throw new AppError('NOT_FOUND', NOT_FOUND)
@@ -152,7 +153,7 @@ export function createRenderService(opts: RenderServiceOptions): RenderService {
     const size = fitSize(v, Math.min(maxDimension, Math.max(v.width, v.height)))
     const result = await drawOnce(scene, variantId, size)
     if (!result) throw new AppError('RULE_VIOLATION', RENDER_FAILED, { reason: 'render_failed' })
-    if (!withoutText) await reportOverflow(scene, result.overflow)
+    if (how.report) await reportOverflow(scene, result.overflow)
     return { png: result.png, width: size.width, height: size.height, rev: scene.rev }
   }
 
@@ -171,11 +172,20 @@ export function createRenderService(opts: RenderServiceOptions): RenderService {
     },
 
     render(project, variantId, maxDimension, timeMs) {
-      return queue.render(() => drawVariant(project, variantId, maxDimension, false, timeMs))
+      return queue.render(() =>
+        drawVariant(project, variantId, maxDimension, { report: true, timeMs }),
+      )
+    },
+
+    renderForAgent(project, variantId, maxDimension, timeMs) {
+      return queue.render(() =>
+        drawVariant(project, variantId, maxDimension, { report: false, timeMs }),
+      )
     },
 
     renderPictures(project, variantId, maxDimension) {
-      return queue.render(() => drawVariant(project, variantId, maxDimension, true))
+      const how = { withoutText: true, report: false }
+      return queue.render(() => drawVariant(project, variantId, maxDimension, how))
     },
 
     drawFull: drawFullWith(queue, opts.draw, () => opts.deps().exportPictures),

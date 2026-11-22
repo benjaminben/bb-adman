@@ -69,17 +69,6 @@ describe('the Phase 8 internal command [P8-1]', () => {
 })
 
 describe('the Phase 8 job kind and port stubs [P8-1]', () => {
-  it('answers no checks for every variant and says the checks were not run', async () => {
-    const { fx } = await open()
-    const ports = createExportDeps(() => fx.core.deps)
-    expect(ports.checks.checksRun).toBe(false)
-    const results = await ports.checks.run({} as never, ['V1', 'V2'])
-    expect([...results.entries()]).toEqual([
-      ['V1', []],
-      ['V2', []],
-    ])
-  })
-
   it('refuses a video ad and draws nothing', async () => {
     const { fx } = await open()
     const ports = createExportDeps(() => fx.core.deps)

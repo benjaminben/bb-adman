@@ -1,7 +1,9 @@
 // variant.fanOut (spec/links-and-sync.md, "Fan-out"): makes the missing variants of a direction
 // from its master with planVariant. Agent policy deny. Combinations that exist are skipped. A
-// fill size is placed as scale and named in the reply; no job starts here (A-129). The inverse
-// is variant.remove with the new variants, on the campaign's list.
+// fill size is placed as scale and named in the reply; no fill job starts here (A-129). Step 6
+// (P6-15): new texts in another language, the brief's copy, and one translation job per
+// language, named in the reply. The inverse is variant.remove with the new variants, on the
+// campaign's list.
 import { defineCommand, type HandlerResult } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import {
@@ -14,6 +16,11 @@ import {
   writeVariant,
   type FanOutSource,
 } from '@/main/links/fan-out-write'
+import {
+  startFanOutTranslations,
+  translatedLayers,
+  type NewVariant,
+} from '@/main/translation/fan-out'
 import { planVariant, type PlannedLayer } from '@/shared/links/fan-out-plan'
 import type { CampaignSize } from '@/shared/schemas/commands/campaign'
 import {
@@ -79,9 +86,10 @@ export function variantFanOut(deps: CoreDeps) {
       const plans = new Map<string, PlannedLayer[]>()
       const variantIds: string[] = []
       const fill: VariantFanOutReply['fill'] = []
+      const made: NewVariant[] = []
       for (const { size, language } of todo) {
         const fit = input.fits[size.label]
-        const layers = planVariant({
+        const planned = planVariant({
           master: factsOf(master, master.language),
           masterLayers: source.masterLayers,
           target: factsOf(size, language),
@@ -89,14 +97,18 @@ export function variantFanOut(deps: CoreDeps) {
           pictureSize: source.pictureSize,
           sameSizePlan: plans.get(size.label) ?? null,
         })
+        const layers = translatedLayers(source.campaign, language, planned)
         const variantId = writeVariant(ctx, source, { size, language, layers }, now)
         variantIds.push(variantId)
+        made.push({ variantId, language })
         if (language !== master.language) continue
         plans.set(size.label, layers)
         if (fit === 'fill') fill.push({ sizeLabel: size.label, variantId })
       }
       const campaignId = source.campaign.id
-      const data = { variantIds, fill }
+      const translationJobIds = startFanOutTranslations(deps, ctx, source, made)
+      const data: VariantFanOutReply = { variantIds, fill }
+      if (translationJobIds.length > 0) data.translationJobIds = translationJobIds
       if (variantIds.length === 0) return { data, log: { campaignId } }
       const call = { name: 'variant.remove', input: { projectId: input.projectId, variantIds } }
       return { data, log: { campaignId }, inverse: { scope: `campaign:${campaignId}`, call } }

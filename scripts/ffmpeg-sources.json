@@ -19,15 +19,17 @@
       "--disable-ffprobe",
       "--disable-x86asm",
       "--enable-pthreads",
+      "--enable-zlib",
       "--enable-videotoolbox",
       "--enable-audiotoolbox",
-      "--enable-decoder=h264,hevc,vp8,vp9,prores,png,rawvideo,pcm_u8,pcm_s16le,pcm_s32le,pcm_f32le,pcm_f64le",
-      "--enable-demuxer=mov,matroska,image2pipe,png_pipe,ffmetadata",
-      "--enable-muxer=mp4,mov",
-      "--enable-parser=h264,hevc,vp8,vp9,png,aac",
+      "--enable-decoder=h264,hevc,vp8,vp9,prores,png,mjpeg,webp,rawvideo,wrapped_avframe,aac,mp3float,mp3,alac,opus,vorbis,pcm_u8,pcm_s16le,pcm_s24le,pcm_s32le,pcm_f32le,pcm_f64le",
+      "--enable-demuxer=mov,matroska,image2,image2pipe,ffmetadata,mp3,wav,aac",
+      "--enable-muxer=mp4,mov,image2pipe",
+      "--enable-parser=h264,hevc,vp8,vp9,png,mjpeg,webp,aac,mpegaudio,opus,vorbis",
+      "--enable-bsf=aac_adtstoasc",
       "--enable-protocol=file,pipe",
-      "--enable-filter=scale,crop,overlay,trim,setpts,loop,color,format,fps,anullsrc,aresample",
-      "--enable-encoder=h264_videotoolbox,aac_at",
+      "--enable-filter=color,trim,scale,crop,overlay,format,setpts,fps,loop,anullsrc,aresample,atrim,asetpts,adelay,apad,amix,concat",
+      "--enable-encoder=h264_videotoolbox,aac_at,aac,png",
       "--enable-indev=lavfi"
     ]
   }

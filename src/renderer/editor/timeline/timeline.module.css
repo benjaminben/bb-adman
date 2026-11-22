@@ -1,0 +1,31 @@
+/* app-style */
+/* The timeline row along the editor's foot. Past about six tracks it scrolls, so the canvas
+   keeps its room. The lanes box covers the ruler and every track right of the names, so the
+   playhead stands on the same time in each row. */
+.timeline {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  background: var(--color-bg);
+  border-top: var(--border-width) solid var(--color-border);
+}
+.scroll {
+  max-height: calc(var(--control-height-small) * 7);
+  overflow-y: auto;
+  border-top: var(--border-width) solid var(--color-line);
+}
+.tracks {
+  position: relative;
+}
+.rulerRow {
+  display: grid;
+  grid-template-columns: var(--editor-layers-width) minmax(0, 1fr);
+}
+.lanes {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: var(--editor-layers-width);
+  pointer-events: none;
+}

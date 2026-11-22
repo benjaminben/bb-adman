@@ -4,11 +4,12 @@
 // a click on the backdrop, or Escape, clears the selection. The overlay over the Scene draws the
 // selection and handles the drags; Escape during a drag cancels it instead. In crop mode the
 // crop overlay takes the layer's place, the normal overlay leaves it alone, and Escape leaves
-// crop mode.
+// crop mode. For a video variant it draws the Scene at the playback time (P7-18).
 import { useRef, type MouseEvent } from 'react'
+import { useStore } from 'zustand'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
-import type { SceneAsset, SceneSettled } from '@/shared/scene/types'
+import type { SceneAsset, SceneClip, SceneSettled } from '@/shared/scene/types'
 import { Scene } from '@/shared/scene/scene'
 import { useApp } from '@/renderer/app/app-context'
 import { CanvasOverlay, useCanvasDrag, useLayerKeys } from '@/renderer/editor/canvas-overlay'
@@ -16,6 +17,7 @@ import { CropBar, CropOverlay, useCropMode } from '@/renderer/editor/crop-overla
 import { useEditorKey } from '@/renderer/editor/use-editor-key'
 import { fitScale, scaleOf, zoomIn, zoomLabel, zoomOut, type Zoom } from '@/renderer/editor/zoom'
 import { pickLayer } from '@/renderer/editor/geometry-math'
+import { sceneTime, type PlaybackStore } from '@/renderer/stores/playback-store'
 import type { VariantStore } from '@/renderer/stores/variant-store'
 import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
@@ -36,6 +38,8 @@ export type CanvasViewProps = {
   // The layer in crop mode, or null; the editor keeps it, so the properties panel can start it.
   cropId: string | null
   onCrop: (layerId: string | null) => void
+  playback: PlaybackStore
+  clips?: SceneClip[]
 }
 
 const QUIET = `${layout.quiet} ${layout.small}`
@@ -43,6 +47,8 @@ const QUIET = `${layout.quiet} ${layout.small}`
 export function CanvasView(props: CanvasViewProps) {
   const { variant, layers, zoom, onZoom, onSelect } = props
   const command = useApp((s) => s.command)
+  const timeMs = useStore(props.playback, sceneTime)
+  const playing = useStore(props.playback, (s) => s.playing)
   const area = useRef<HTMLDivElement>(null)
   const stage = useRef<HTMLDivElement>(null)
   const fit = fitScale(variant, useAreaSize(area))
@@ -80,7 +86,12 @@ export function CanvasView(props: CanvasViewProps) {
   }
 
   return (
-    <section className={styles.canvas} aria-label={`Canvas, ${variant.title}`} tabIndex={0}>
+    <section
+      className={styles.canvas}
+      aria-label={`Canvas, ${variant.title}`}
+      tabIndex={0}
+      data-canvas
+    >
       {crop.layer && (
         <CropBar
           layerName={crop.layer.name}
@@ -114,7 +125,10 @@ export function CanvasView(props: CanvasViewProps) {
               variant={variant}
               layers={layers}
               assets={props.assets}
-              timeMs={0}
+              timeMs={timeMs}
+              playing={playing}
+              clips={props.clips}
+              sound={variant.sound === 'clips'}
               mode="full"
               onSettled={props.onSettled}
             />

@@ -45,6 +45,7 @@ export const SHORTCUTS = {
   previousVariantTab: always(key(['Tab'], { ctrl: true, shift: true })),
   nextCampaignTab: always(key(['BracketRight'], { mod: true, shift: true })),
   previousCampaignTab: always(key(['BracketLeft'], { mod: true, shift: true })),
+  playPause: editor(key(['Space'])),
 } satisfies Record<string, Shortcut>
 
 export type ShortcutName = keyof typeof SHORTCUTS

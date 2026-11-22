@@ -95,7 +95,7 @@ Not built (Phase 8 for the source, Phase 11 for the release step).
 - `scripts/fetch-ffmpeg` downloads one archive per platform from a URL pinned in `scripts/ffmpeg-sources.json` with its SHA-256. The binaries are not committed.
 - Packaged at `resources/ffmpeg/{platform}-{arch}/ffmpeg[.exe]`.
 - `THIRD-PARTY-NOTICES.md` carries the LGPL text, the exact build flags and a link to the matching source.
-- **Decision required in Phase 8:** the source of the LGPL builds. Ready-made LGPL builds exist for Windows. For macOS the developer may need to build FFmpeg in a CI job and attach the result to a release in this repository. Either way, record the URL and checksum in `ffmpeg-sources.json`.
+- **Source of the LGPL builds** (OI-09, settled): Windows from the public builder repository `FFmpeg-Builds/FFmpeg-Builds`; macOS built on this machine from the FFmpeg release source archive. Both are pinned in `scripts/ffmpeg-sources.json`. The exact pins, the configure flags and the pin checks are in `spec/phases/phase-07.md`, "Where FFmpeg comes from"; where this section differs, that one is current.
 
 ## Packages: licences and install scripts
 

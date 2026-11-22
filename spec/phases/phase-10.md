@@ -68,7 +68,7 @@ Twelve can be built as soon as P10-1 merges. Six wait, each for exactly the comm
 
 | Slice | Needs | May run beside | Must not run beside |
 |-------|-------|----------------|---------------------|
-| P10-1 Contracts | Phases 1 to 4 | Any slice of another phase that edits none of its shared files | Any other phase's contracts slice or slice editing `core.ts`, `events.ts`, `queries.ts`, `bus.ts`, `generation.ts` (schemas) or `app-shell.tsx` |
+| P10-1 Contracts (built) | Phases 1 to 4 | Any slice of another phase that edits none of its shared files | Any other phase's contracts slice or slice editing `core.ts`, `events.ts`, `queries.ts`, `bus.ts`, `generation.ts` (schemas) or `app-shell.tsx` |
 | P10-2 Read tools | P10-1 | P10-3 to P10-10 | Nothing |
 | P10-3 `render_variant` | P10-1 | P10-2, P10-4 to P10-10 | Phase 7 or 8 slices editing `src/main/thumbnails/` or `src/main/queries/render.ts`; any slice editing `src/main/assets/path-resolver.ts` |
 | P10-4 Layer tools | P10-1 | P10-2, P10-3, P10-5 to P10-10 | Nothing |

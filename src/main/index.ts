@@ -31,8 +31,14 @@ import { createDraw } from './render/draw'
 import { endRenderWindow } from './render/render-window'
 import { endWebpDecoder, webpToPng } from './windows/webp-window'
 import { afterQuitAnswer, quitQuestion } from './quit-question'
+import { quietWindows } from './windows/quiet'
+import { createMediaTool } from './media/embed-details'
+import { ffmpegPath } from './media/ffmpeg-path'
 
 if (process.env.ADMAN_USER_DATA_DIR) app.setPath('userData', process.env.ADMAN_USER_DATA_DIR)
+// Test runs: no window on screen, and on macOS the app never becomes the front app.
+const quiet = quietWindows(process.env, app.isPackaged)
+if (quiet && process.platform === 'darwin') app.setActivationPolicy('accessory')
 registerAssetScheme(protocol)
 
 let core: Core | null = null
@@ -46,7 +52,7 @@ let appWindow: BrowserWindow | null = null
 const liveAppWindow = () => (appWindow && !appWindow.isDestroyed() ? appWindow : null)
 
 function openAppWindow(): BrowserWindow {
-  const win = createAppWindow()
+  const win = createAppWindow(quiet)
   appWindow = win
   // Closing the window quits the app (window-all-closed), so it asks first too; otherwise a
   // "Cancel" would leave the app running with no window.
@@ -111,6 +117,7 @@ async function askToQuit(): Promise<void> {
 
 function mainWindow(): BrowserWindow {
   const win = liveAppWindow() ?? openAppWindow()
+  if (quiet) return win
   if (win.isMinimized()) win.restore()
   win.focus()
   return win
@@ -141,6 +148,20 @@ function start(): void {
   // Both windows use the default session, so this covers the render window too.
   denyPermissions(session.defaultSession)
   const turnImage = bitmapTurner((data, size) => nativeImage.createFromBitmap(data, size))
+  // P7-4: the fixed FFmpeg path; making the tool sweeps left-over run folders once.
+  const { resourcesPath, platform, arch } = process
+  const binary = ffmpegPath({
+    packaged: app.isPackaged,
+    resourcesPath,
+    appPath: app.getAppPath(),
+    platform,
+    arch,
+  })
+  const media = createMediaTool({
+    binary,
+    userData: app.getPath('userData'),
+    log: { write: (e) => core?.log.write(e) },
+  })
   core = createCore({
     userDataDir: app.getPath('userData'),
     documentsDir: app.getPath('documents'),
@@ -158,6 +179,7 @@ function start(): void {
       (b) => nativeImage.createFromBuffer(b),
       (d, s) => nativeImage.createFromBitmap(d, s),
     ),
+    media,
   })
   const ready = core
   ready.log.write({

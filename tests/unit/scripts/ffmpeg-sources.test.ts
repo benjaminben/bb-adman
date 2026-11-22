@@ -54,11 +54,69 @@ describe('scripts/ffmpeg-sources.json [P7-3, OI-09]', () => {
         '--disable-ffplay',
         '--disable-ffprobe',
         '--enable-videotoolbox',
-        '--enable-encoder=h264_videotoolbox,aac_at',
         '--enable-indev=lavfi',
       ]),
     )
     expect(flags.join(' ')).not.toMatch(/--enable-(gpl|nonfree)\b/)
+  })
+
+  // What the app's own FFmpeg arguments ask for: export (encoder-args.ts, still-args.ts,
+  // filter-graph.ts), the details embed (P7-4), sound in export (P8-17) and the test clips.
+  const needed: [string, string[]][] = [
+    ['demuxer', ['mov', 'matroska', 'image2', 'image2pipe', 'ffmetadata', 'mp3', 'wav', 'aac']],
+    ['muxer', ['mp4', 'mov', 'image2pipe']],
+    [
+      'decoder',
+      [
+        'h264',
+        'hevc',
+        'vp8',
+        'vp9',
+        'prores',
+        'png',
+        'mjpeg',
+        'webp',
+        'rawvideo',
+        'wrapped_avframe',
+      ].concat([
+        'aac',
+        'mp3float',
+        'alac',
+        'opus',
+        'vorbis',
+        'pcm_s16le',
+        'pcm_s24le',
+        'pcm_f32le',
+      ]),
+    ],
+    ['encoder', ['h264_videotoolbox', 'aac_at', 'aac', 'png']],
+    ['parser', ['h264', 'hevc', 'aac', 'mjpeg', 'png', 'mpegaudio', 'opus', 'vorbis']],
+    ['bsf', ['aac_adtstoasc']],
+    ['protocol', ['file', 'pipe']],
+    [
+      'filter',
+      ['color', 'trim', 'scale', 'crop', 'overlay', 'format', 'setpts', 'fps', 'loop'].concat([
+        'anullsrc',
+        'aresample',
+        'atrim',
+        'asetpts',
+        'adelay',
+        'apad',
+        'concat',
+      ]),
+    ],
+    ['indev', ['lavfi']],
+  ]
+
+  it.each(needed)('enables every %s the app asks for', (kind, names) => {
+    const prefix = `--enable-${kind}=`
+    const flag = committed.source.configure.find((f) => f.startsWith(prefix))
+    const enabled = flag?.slice(prefix.length).split(',') ?? []
+    expect(enabled).toEqual(expect.arrayContaining(names))
+  })
+
+  it('enables the system zlib, which the PNG decoder and encoder need', () => {
+    expect(committed.source.configure).toContain('--enable-zlib')
   })
 
   it.each([

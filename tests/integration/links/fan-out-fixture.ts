@@ -3,6 +3,7 @@
 // background naming a 1000x1000 picture A1. Not a test file itself.
 import { expectChanges } from '../expect-changes'
 import { testDeps } from '../campaigns/campaign-deps'
+import { noKeyDeps } from '../translation/no-key-deps'
 import { createInput, SQUARE, TALL } from '../campaigns/campaign-fixture'
 import { makeBusFixture } from '../commands/test-bus'
 import { layersOf } from './linked-fixture'
@@ -18,7 +19,7 @@ export const WIDE = { label: '16x9', width: 1920, height: 1080 }
 export type FanOutBus = Awaited<ReturnType<typeof makeFanOutBus>>
 
 export async function makeFanOutBus() {
-  const deps = testDeps()
+  const deps = testDeps(noKeyDeps())
   const f = makeBusFixture([
     ...campaignCommands(deps),
     ...subjectCommands(deps),

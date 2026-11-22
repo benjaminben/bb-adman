@@ -88,6 +88,16 @@ export function badgesOf(
       readWireRow(db, 'variant_check', { variantId: variant.id }) as VariantCheckRow | null,
       variant.rev,
     ),
-    missingFile: layers.some((l) => namedAssetIds(l).some((id) => missing.has(id))),
+    missingFile:
+      layers.some((l) => namedAssetIds(l).some((id) => missing.has(id))) ||
+      clipAssetIds(db, variant.id).some((id) => missing.has(id)),
   }
+}
+
+// P7-9: the assets the variant's clips name, for missingFile.
+function clipAssetIds(db: Database.Database, variantId: string): string[] {
+  const rows = db
+    .prepare('SELECT DISTINCT asset_id AS id FROM background_clip WHERE variant_id = ?')
+    .all(variantId) as Array<{ id: string }>
+  return rows.map((r) => r.id)
 }

@@ -2,7 +2,7 @@
 
 The index, the wave table, the shared files and the assumptions are in `spec/phases/phase-05.md`. The design of every screen here is `spec/screens-variants.md`; the commands are in `spec/links-and-sync.md`. Each screen slice reads `spec/screens.md` "Rules for every screen" and `spec/screens-campaign.md` "Rules for these screens" and "The campaign grid and the variant tile". Component tests live under `tests/unit/renderer/`; each has an axe check.
 
-### P5-14 — Campaign page: Undo, Redo, one grid per direction
+### P5-14 — Campaign page: Undo, Redo, one grid per direction (built)
 
 - **Size:** medium. **Needs:** P5-1 (the command names exist); AP-11 and AP-12 merged.
 - **Exists when done:** the overview shows `CampaignUndo` and then `DirectionGrids`, one section per direction with its heading, count, header row and grid in `direction-order.ts` order. The header row mounts `FanOutButton`, `SyncButton` and `DirectionMenu` from stub folders that render nothing. The campaign's Undo and Redo work by button and by key on the overview only. `campaign-view.tsx` is split so it stays under 200 lines.
@@ -15,7 +15,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** D + A. No security review.
 - **After:** P5-1; AP-11 and AP-12 merged.
 
-### P5-15 — Tile actions: delete and quick look
+### P5-15 — Tile actions: delete and quick look (built)
 
 - **Size:** medium. **Needs:** P5-4, P5-14.
 - **Exists when done:** each tile shows "Quick look at {title}" and, except on the master, "Delete {title}"; delete opens the warning dialog, "Delete variant" sends `variant.delete` and focus moves as designed [D-099]; quick look opens its dialog with Next, Previous and the arrow keys.
@@ -28,7 +28,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** D. No security review (`variant.render` is user-only as built).
 - **After:** P5-4, P5-14.
 
-### P5-16 — Fan-out dialog
+### P5-16 — Fan-out dialog (built; shot 160 not made)
 
 - **Size:** medium. **Needs:** P5-9, P5-10, P5-14.
 - **Exists when done:** `FanOutButton` opens the dialog of `spec/screens-variants.md`, "Fan-out"; "Make variants" sends `variant.fanOut`; then one `generation.runFill` per `fill` entry, each registered as attached with a finish that sends `generation.applyFill`.
@@ -36,12 +36,12 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **May touch:** `src/renderer/stores/run-asks.ts` (adds `generation.runFill`).
 - **Tests first:** `fan-out-model.test.ts` (one table: the master's size and language always in; existing pairs not counted; a fit only for sizes of other pixels; no background picture sends `scale` for each). `fan-out-dialog.test.tsx`: wording and labels; the fit groups appear and go with the ticks; the provider select and paid line only with a fill; 0 new disables the button with its line; the sent input; a refusal in the dialog; after success, one `generation.runFill` per `fill` entry with the chosen provider and an attached registration whose finish sends `generation.applyFill`; a refused fill leaves the variants and shows in the banner. `run-asks.test.ts` (approved addition): `generation.runFill` gets the address and licence asks.
 - **Approved edits to existing tests:** `run-asks.test.ts` (addition).
-- **Shots:** `tests/shots/p5-16.shots.ts`: `156-fan-out-dialog`, `157-fan-out-fits`, `158-fan-out-fill-paid-line`, `159-grid-after-fan-out`, `160-fill-running`, `161-fill-placed` (fake provider).
+- **Shots:** `tests/shots/p5-16.shots.ts`: `156-fan-out-dialog`, `157-fan-out-fits`, `158-fan-out-fill-paid-line`, `159-grid-after-fan-out`, `160-fill-running`, `161-fill-placed` (fake provider). Shot 160 was not made: the fake provider finishes the fill too fast to catch it running.
 - **Exit check:** lint, typecheck, the component tests named.
 - **Class:** D + A. **Security check, short review:** a paid call starts only after "Make variants" with the paid line shown; the provider comes from the user's choice; no path in the window.
 - **After:** P5-9, P5-10, P5-14.
 
-### P5-17 — Sync review dialog
+### P5-17 — Sync review dialog (built)
 
 - **Size:** medium. **Needs:** P5-13, P5-14.
 - **Exists when done:** `SyncButton` with its count opens the review of `spec/screens-variants.md`, "Sync review"; "Accept all" and "Accept selected" send `sync.apply`; `master_changed` reads again.
@@ -53,7 +53,7 @@ The index, the wave table, the shared files and the assumptions are in `spec/pha
 - **Class:** D + A. No security review.
 - **After:** P5-13, P5-14.
 
-### P5-18 — Direction menu and dialogs
+### P5-18 — Direction menu and dialogs (built)
 
 - **Size:** small. **Needs:** P5-11, P5-14.
 - **Exists when done:** `DirectionMenu` with "New direction from this master…", "Rename…" and "Delete direction…", each dialog as designed.

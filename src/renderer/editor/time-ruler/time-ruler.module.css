@@ -1,0 +1,26 @@
+/* app-style */
+/* The ruler lane: each mark is a tick at its time with its label just right of it. */
+.ruler {
+  position: relative;
+  height: var(--control-height-small);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--color-bg);
+  touch-action: none;
+  user-select: none;
+}
+.ruler:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: calc(var(--focus-ring-width) * -1);
+}
+.mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  padding: var(--space-1) 0 0 var(--space-1);
+  border-left: var(--border-width) solid var(--color-control-border);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

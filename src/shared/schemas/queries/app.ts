@@ -60,6 +60,11 @@ export const PROVIDER_ERROR_REASONS = [
   'assets_not_writable',
   'results_not_added',
   'target_gone',
+  // P9-1 (spec/phases/phase-09.md "Publishing"): the publish job's reasons.
+  'dropbox_signed_out',
+  'export_not_built',
+  'export_failed',
+  'work_folder_unsafe',
 ] as const
 export type ProviderErrorReason = (typeof PROVIDER_ERROR_REASONS)[number]
 

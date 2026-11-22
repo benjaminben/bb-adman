@@ -13,6 +13,7 @@ import {
 } from '@playwright/test'
 import path from 'node:path'
 import * as screens from '../e2e/screens'
+import { quietEnv } from '../e2e/launch'
 import * as steps from './app-steps'
 
 const EMAIL = 'ann.reviewer@example.com'
@@ -51,6 +52,7 @@ async function launchApp(): Promise<ElectronApplication> {
       ADMAN_FAKE_PROVIDERS: '1',
       ADMAN_DEV_TOOLS: '1',
       ADMAN_APPROVALS_TEST_PICTURES: PICTURES,
+      ...quietEnv(process.env),
     },
   })
 }
