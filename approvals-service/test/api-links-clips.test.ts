@@ -158,7 +158,8 @@ describe('PUT .../pictures with clips [R2V-1, SV-5, SV-9]', () => {
 
   it('reads a renewal without clipUrl as clipUrl null', async () => {
     const id = await setUp()
-    const { clipUrl: _left, ...picture } = renewal('bbb234', 1, null)
+    const picture: Record<string, unknown> = renewal('bbb234', 1, null)
+    delete picture.clipUrl
     expect(await (await renew([picture])).json()).toEqual({ renewed: 1 })
     expect((await storedRows(id))[1]).toMatchObject({ picture_url: h.picture('bbb234-new') })
   })
