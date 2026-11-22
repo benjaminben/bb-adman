@@ -1,7 +1,6 @@
 // R3-2: the run dialog names the model beside each provider, on a second line under it, and
 // the cost line names it too.
 import { act, screen, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { RunDialog, type RunDialogProps } from '@/renderer/dialogs/run-dialog'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
