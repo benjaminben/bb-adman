@@ -6,7 +6,6 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { CampaignView } from '@/renderer/screens/campaign/campaign-view'
 import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
-import { axeViolations } from '../../render'
 import { baseState } from '../../fake-api'
 import { info, workflow } from '../settings/comfy-fixture'
 import { P, renderWith } from './campaign-fixture'
@@ -68,14 +67,6 @@ describe('The trial mark in the panels [S2-7]', () => {
     expect(select).toHaveAccessibleDescription('(trial)')
   })
 
-  it('keeps the option\'s own name "ComfyUI" and the label "Provider", so the helpers find both', async () => {
-    await render()
-    const video = await card('Make a video')
-    await waitFor(() => expect(chosen(video.getByLabelText('Provider'))).toBe('ComfyUI (trial)'))
-    expect(video.getByRole('combobox', { name: 'Provider' })).toHaveValue('comfyui')
-    expect(video.getByRole('option', { name: 'ComfyUI' })).toBeInTheDocument()
-  })
-
   it('follows the image_refs workflow once a reference is ticked: a proven one has no mark', async () => {
     await render()
     const select = (await card('Make pictures')).getByLabelText('Provider')
@@ -90,27 +81,10 @@ describe('The trial mark in the panels [S2-7]', () => {
   it('never marks Gemini, nor ComfyUI while Gemini is chosen', async () => {
     await render()
     const select = (await card('Make pictures')).getByLabelText('Provider')
-    await screen.findByRole('region', { name: 'Make a video' })
     expect(select).toHaveValue('gemini')
     const names = within(select)
       .getAllByRole('option')
       .map((o) => o.textContent)
     expect(names).toEqual(['Google Gemini', 'ComfyUI'])
-  })
-
-  it('follows the chosen start on the video card', async () => {
-    await render()
-    const video = await card('Make a video')
-    const select = video.getByLabelText('Provider')
-    await waitFor(() => expect(chosen(select)).toBe('ComfyUI (trial)'))
-    await userEvent.selectOptions(video.getByLabelText('Start from'), 'A first-frame picture')
-    expect(chosen(select)).toBe('ComfyUI')
-  })
-
-  it('has no axe violations with the mark showing', async () => {
-    await render()
-    const video = await card('Make a video')
-    await waitFor(() => expect(chosen(video.getByLabelText('Provider'))).toBe('ComfyUI (trial)'))
-    expect(await axeViolations()).toEqual([])
   })
 })

@@ -5,6 +5,8 @@
 // Not a test file itself. No helper here prints a value it is given.
 import { expect, type ElectronApplication, type Locator, type Page } from '@playwright/test'
 import path from 'node:path'
+import { firstIds } from './held-run'
+import { query } from './render-helpers'
 
 export const E2E_BRIEF = path.resolve('tests/fixtures/briefs/e2e-brief.yaml')
 export const E2E_CAMPAIGN = 'Harness Check'
@@ -123,44 +125,107 @@ export async function generate(page: Page): Promise<void> {
   await picturePanel(page).getByRole('button', { name: 'Generate' }).click()
 }
 
-// SPEC 14 1.57 TP-6: the "Make a video" card, prompt only.
+// R2E-9 (spec/phases/round-2-editor.md D4): a video is made in the editor's Generate panel, on
+// the background layer of a video post with "Video" chosen; the run dialog's Generate sends.
 export const E2E_VIDEO_PROMPT = 'A slim citrus can turning slowly on a table, harness check'
+export const VIDEO_SHAPE_START = 'Another picture of the same shape…'
+export const VIDEO_REFERENCE_START = 'Reference pictures'
 
-export const videoPanel = (page: Page): Locator =>
-  page.getByRole('region', { name: 'Make a video' })
+const canvas = (page: Page): Locator => page.getByRole('region', { name: /^Canvas, / })
+// includeHidden: the licence dialog hides the page behind it, the run dialog too, from roles.
+export const videoDialog = (page: Page): Locator =>
+  page.getByRole('dialog', { name: 'Make a video', includeHidden: true })
 
-// SP-5: the start for a video from `file`. The card lists the subject's photo too and chooses it
-// first (SP-7), so the added picture is chosen by its name (video-screens.ts chooses the first).
+// The master's tab (opened from the overview unless an editor shows), its background layer
+// selected, and its "Generate" group with "Video" chosen.
+export async function videoPanel(page: Page): Promise<Locator> {
+  if (!(await canvas(page).isVisible())) {
+    await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
+    await expect(canvas(page)).toBeVisible()
+  }
+  const { projectId, variantId } = await firstIds(page)
+  const got = (await query(page, 'variant.get', { projectId, variantId })) as {
+    layers: { type: string; name: string }[]
+  }
+  const background = got.layers.find((l) => l.type === 'background')!.name
+  await page
+    .getByRole('list', { name: 'Layers' })
+    .getByRole('button', { name: new RegExp(`^${background}`) })
+    .click()
+  const panel = page.getByRole('group', { name: 'Generate' })
+  const video = panel.getByRole('group', { name: 'Make' }).getByRole('button', { name: 'Video' })
+  await video.click()
+  await expect(video).toHaveAttribute('aria-pressed', 'true')
+  return panel
+}
+
+// SP-5: "Start from" `start`, then `files` added through the picture list's own button; the
+// first added is the one picture chosen. The reference list chooses the subject's photo first
+// (SP-7, checked when `photoFirst`); it is let go, so only the added picture is sent.
+export async function chooseAddedPicture(
+  app: ElectronApplication,
+  page: Page,
+  start: string,
+  files: string[],
+  photoFirst = false,
+): Promise<void> {
+  const panel = await videoPanel(page)
+  await panel.getByRole('radio', { name: start, exact: true }).check()
+  const shape = start === VIDEO_SHAPE_START
+  const list = panel.getByRole('region', {
+    name: shape ? 'Pictures of the same shape' : 'Picture to start from',
+  })
+  const photo = list.getByLabel(path.basename(E2E_PHOTO), { exact: true })
+  if (photoFirst) await expect(photo).toBeChecked()
+  await answerOpenDialog(app, files)
+  await list.getByRole('button', { name: shape ? 'Add pictures…' : 'Add pictures' }).click()
+  const added = list.getByLabel(path.basename(files[0]!), { exact: true })
+  await expect(added).toBeChecked()
+  if ((await photo.count()) > 0 && (await photo.isChecked())) await photo.uncheck()
+  await expect(list.locator('input:checked')).toHaveCount(1)
+}
+
 export async function startFromAddedPicture(
   app: ElectronApplication,
   page: Page,
   start: string,
   file: string,
 ): Promise<void> {
-  const panel = videoPanel(page)
-  await panel.getByLabel('Provider').selectOption({ label: 'ComfyUI' })
-  await panel.getByLabel('Start from').selectOption({ label: start })
-  const pictures = panel.getByRole('region', { name: 'Picture to start from' })
-  const radio = (name: string) => pictures.getByRole('radio', { name, exact: true })
-  await expect(radio(path.basename(E2E_PHOTO))).toBeChecked()
-  await answerOpenDialog(app, [file])
-  await pictures.getByRole('button', { name: 'Add pictures' }).click()
-  await radio(path.basename(file)).check()
-  await expect(radio(path.basename(file))).toBeChecked()
+  await chooseAddedPicture(app, page, start, [file], start === VIDEO_REFERENCE_START)
 }
 
+// The run dialog's `provider` and its Generate. Once the dialog closes (the run started) the
+// overview shows, with the runs; while the licence dialog asks, the caller answers it.
+export async function generateVideo(page: Page, provider: string): Promise<void> {
+  const dialog = videoDialog(page)
+  await dialog.getByRole('radio', { name: provider, exact: true }).check()
+  await dialog.getByRole('button', { name: 'Generate', exact: true }).click()
+  const asked = licenceDialog(page)
+  await expect.poll(async () => (await asked.isVisible()) || !(await dialog.isVisible())).toBe(true)
+  if (!(await dialog.isVisible())) await showOverview(page)
+}
+
+export async function showOverview(page: Page): Promise<void> {
+  const tab = page.getByRole('tab', { name: 'Overview' })
+  await tab.click()
+  await expect(tab).toHaveAttribute('aria-selected', 'true')
+}
+
+// A run dialog left open (its licence question cancelled) is cancelled first.
 export async function startVideo(page: Page, seconds: number): Promise<void> {
-  const panel = videoPanel(page)
-  await panel.getByLabel('Provider').selectOption({ label: 'ComfyUI' })
-  await panel.getByLabel('Prompt').fill(E2E_VIDEO_PROMPT)
-  await panel.getByLabel('Length (seconds)').fill(String(seconds))
-  await panel.getByRole('button', { name: 'Start' }).click()
+  const left = videoDialog(page)
+  if (await left.isVisible()) await left.getByRole('button', { name: 'Cancel' }).click()
+  const panel = await videoPanel(page)
+  await panel.getByRole('textbox', { name: 'Prompt' }).fill(E2E_VIDEO_PROMPT)
+  await panel.getByLabel('Clip length (seconds)').fill(String(seconds))
+  await panel.getByRole('button', { name: 'Generate…' }).click()
+  await generateVideo(page, 'ComfyUI')
 }
 
-// The newest row's clip has its metadata (HAVE_METADATA or more): the built app's CSP and
+// The panel's clip has its metadata (HAVE_METADATA or more): the built app's CSP and
 // adman-asset:// protocol let the clip through.
 export async function clipHasMetadata(page: Page, timeout: number): Promise<void> {
-  const clip = runRow(page).getByLabel('Video result')
+  const clip = (await videoPanel(page)).getByLabel('Video result')
   await expect(clip).toBeVisible({ timeout })
   await expect
     .poll(() => clip.evaluate((v: HTMLVideoElement) => v.readyState), { timeout })
@@ -216,8 +281,13 @@ export const FLUX_LABEL = 'FLUX 3 klein: picture from a prompt and one reference
 export const licenceDialog = (page: Page): Locator =>
   page.getByRole('dialog', { name: /requires a commercial license/ })
 
+// A video's run dialog then closes and the overview shows, as after generateVideo.
 export async function confirmLicence(page: Page): Promise<void> {
   const dialog = licenceDialog(page)
+  const video = await videoDialog(page).isVisible()
   await dialog.getByRole('button', { name: 'Confirm' }).click()
   await expect(dialog).toBeHidden()
+  if (!video) return
+  await expect(videoDialog(page)).toBeHidden()
+  await showOverview(page)
 }

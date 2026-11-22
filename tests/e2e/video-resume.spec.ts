@@ -79,6 +79,8 @@ test('a video run started before the app process ended lands after the next laun
     .toBe('succeeded')
   await screens.openCampaign(again)
   await s.backToEditor(again)
-  await expect(s.clipBlocks(again)).toHaveCount(2)
-  expect(await s.valueOf(s.clipStart(again, 2))).toBe(await s.valueOf(s.clipEnd(again, 1)))
+  // R2E-9: the run's clip takes the still's place, so it is the one clip, starting at 0.
+  await expect(s.clipBlocks(again)).toHaveCount(1)
+  await expect(s.clipBlock(again, 1)).not.toHaveAccessibleName(`Clip 1: ${s.BACKDROP}`)
+  expect(await s.valueOf(s.clipStart(again, 1))).toBe(0)
 })

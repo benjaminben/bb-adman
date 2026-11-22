@@ -1,7 +1,7 @@
 // P7-24, Phase 7 exit criterion 1: workflow 5.5 (a video variant) end to end in the built app
 // with ADMAN_FAKE_PROVIDERS=1. An image post with a background picture is changed to video and
 // set to 8 s; the picture is the first clip; tiny.mp4 is imported; a fake run from the post's
-// background lands at the first free position while the editor is in use [FR-124]; clips are
+// background takes the still's place (R2E-9) while the editor is in use [FR-124]; clips are
 // moved and trimmed and a gap draws black; a text layer gets a start, an end, an entrance and
 // an exit; play, pause and scrub. No paid call; made-up names and a drawn picture only.
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
@@ -85,21 +85,26 @@ test('Workflow 5.5: a video variant from an image post, its clips, a run and its
   await expect(trackSlider(`Start of Entrance of ${name}`)).toHaveAttribute('aria-valuenow', '1000')
   await expect(trackSlider(`End of Exit of ${name}`)).toHaveAttribute('aria-valuenow', '7000')
 
-  // The run's clip lands at the first free position, after tiny.mp4.
-  await expect(s.clipBlocks(page)).toHaveCount(3, { timeout: 30_000 })
-  expect(await s.valueOf(s.clipStart(page, 3))).toBe(tinyEnd)
-  // The run's clip is moved 1 s right, leaving a gap after tiny.mp4, and its end trimmed.
-  await s.clipBlock(page, 3).focus()
+  // R2E-9: the run's clip takes the still's place: clip 1, from 0, ending by tiny.mp4's start.
+  await expect(s.clipBlock(page, 1)).not.toHaveAccessibleName(`Clip 1: ${s.BACKDROP}`, {
+    timeout: 30_000,
+  })
+  await expect(s.clipBlocks(page)).toHaveCount(2)
+  expect(await s.valueOf(s.clipStart(page, 1))).toBe(0)
+  const runEnd = await s.valueOf(s.clipEnd(page, 1))
+  expect(runEnd).toBeLessThanOrEqual(1000)
+  expect(await s.valueOf(s.clipStart(page, 2))).toBe(2000)
+  // The run's clip is moved 1 s right, leaving a gap before it, and its end trimmed.
+  await s.clipBlock(page, 1).focus()
   await page.keyboard.press('Shift+ArrowRight')
-  await expect.poll(() => s.valueOf(s.clipStart(page, 3))).toBe(tinyEnd + 1000)
-  const runEnd = await s.valueOf(s.clipEnd(page, 3))
-  await s.clipEnd(page, 3).focus()
+  await expect.poll(() => s.valueOf(s.clipStart(page, 1))).toBe(1000)
+  await s.clipEnd(page, 1).focus()
   await page.keyboard.press('ArrowLeft')
-  await expect.poll(() => s.valueOf(s.clipEnd(page, 3))).toBe(runEnd - 100)
-  // Inside the gap the background is black (the text is drawn over it lower down); on the
-  // still it is not.
-  expect(await litTopHalfAt(tinyEnd + 500)).toBe(0)
-  expect(await litTopHalfAt(1000)).toBeGreaterThan(0)
+  await expect.poll(() => s.valueOf(s.clipEnd(page, 1))).toBe(runEnd + 1000 - 100)
+  // Inside the gap the background is black (the text is drawn over it lower down); on
+  // tiny.mp4 it is not.
+  expect(await litTopHalfAt(500)).toBe(0)
+  expect(await litTopHalfAt((2000 + tinyEnd) / 2)).toBeGreaterThan(0)
 
   // Play moves the playhead, Pause stops it, a drag on the ruler sets the time.
   await timeline(page).getByRole('button', { name: 'Play' }).click()

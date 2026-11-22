@@ -222,6 +222,18 @@ describe('run dialog [P4-12]', () => {
     expect(confirm()).toBeEnabled()
   })
 
+  it('shows no refusal for a licence question that was cancelled: its own dialog asked', async () => {
+    const error = {
+      code: 'INVALID_INPUT' as const,
+      message: 'Confirm that you have a licence first.',
+      details: { reason: 'licence_not_confirmed', workflow: 'h3' },
+    }
+    await open({ onConfirm: vi.fn(async () => ({ ok: false as const, error })) })
+    await userEvent.click(confirm())
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(confirm()).toBeEnabled()
+  })
+
   it('says no provider can do this when none is enabled, with Confirm disabled', async () => {
     const state = baseState()
     await open({ job: 'cutout' }, setup({ providers: [...state.providers, COMFY] }))

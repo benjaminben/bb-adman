@@ -1,6 +1,6 @@
 // The campaign page (SPEC 14 1.41 TP-2): the variants from campaign.get as a grid of tiles
 // (S2-16), the picture panel for the chosen one, and its runs. The master is chosen at the start. One job store per
-// open page. SPEC 14 1.57 TP-6: the video card sits under the picture panel.
+// open page.
 // P3-10 (spec/editor.md, "Variant tabs"): the page is the overview tab and one tab per open
 // variant, holding the editor. Opening a tile shows the variant's tab; the tile's "+" and
 // Cmd-click (Ctrl-click on Windows) open it behind. The variant shown last is the one the

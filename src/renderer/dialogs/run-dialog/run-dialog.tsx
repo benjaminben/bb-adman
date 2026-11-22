@@ -97,7 +97,9 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
     setRefusal(null)
     const reply = await (video ? props.onConfirm(chosenId, n, video) : props.onConfirm(chosenId, n))
     props.setBusy(false)
-    if (!reply.ok) setRefusal(reply.error.message)
+    // A licence question has its own dialog; cancelling it is not a failure to show here.
+    const asked = !reply.ok && reply.error.details?.reason === 'licence_not_confirmed'
+    if (!reply.ok && !asked) setRefusal(reply.error.message)
   }
 
   return (

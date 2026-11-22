@@ -89,6 +89,8 @@ test('Licence dialog: Cancel starts nothing; Confirm with the box ticked starts 
   await box.check()
   await dialog.getByRole('button', { name: 'Confirm' }).click()
   await expect(dialog).toBeHidden()
+  await expect(screens.videoDialog(page)).toBeHidden()
+  await screens.showOverview(page)
   await nthSentId(stand, 1)
   await expect(screens.runRows(page)).toHaveCount(1)
 

@@ -1,9 +1,11 @@
-// P7-24: a video variant made as workflow 5.5 makes it, on the fake provider. 240 to 242: the
-// editor at three times: on the drawn still (1 s), on tiny.mp4 (2.5 s), on the fake run's clip
-// (3.5 s; the fake's MP4 holds box headers only, no picture, so the canvas draws black). 243: the whole editor with the timeline, a text layer selected with its entrance and
-// exit, the playhead in the empty part of the track. The fal run row and the close warning for
-// a started fal run are not made: neither exists without a real, paid fal run. Made-up names,
-// a drawn picture and the made-up test clip only.
+// P7-24: a video variant made as workflow 5.5 makes it, on the fake provider. R2E-9: the fake
+// run's clip takes the still's place. 240 to 242: the editor at three times: on the fake run's
+// clip (0.5 s; the fake's MP4 holds box headers only, no picture, so the canvas draws black), on
+// tiny.mp4 (2.5 s), and in the gap between them (1.5 s). 243: the whole editor
+// with the timeline, a text layer selected with its entrance and exit, the playhead in the empty
+// part of the track. The fal run row and the close warning for a started fal run are not made:
+// neither exists without a real, paid fal run. Made-up names, a drawn picture and the made-up
+// test clip only.
 import { test, expect, type Page } from '@playwright/test'
 import { dragRuler, rulerTime } from '../e2e/timeline-seed'
 import * as s from '../e2e/video-variant-steps'
@@ -38,14 +40,17 @@ test('a video variant at three times, and the whole editor with the timeline', a
   await expect(s.clipBlocks(page)).toHaveCount(2)
   await s.startFromBackground(page)
   await s.backToEditor(page)
-  await expect(s.clipBlocks(page)).toHaveCount(3, { timeout: 30_000 })
+  await expect(s.clipBlock(page, 1)).not.toHaveAccessibleName(`Clip 1: ${s.BACKDROP}`, {
+    timeout: 30_000,
+  })
+  await expect(s.clipBlocks(page)).toHaveCount(2)
 
-  await scrubTo(page, 1000)
-  await shot(page, '240-video-variant-on-still')
+  await scrubTo(page, 500)
+  await shot(page, '240-video-variant-on-run-clip')
   await scrubTo(page, 2500)
   await shot(page, '241-video-variant-on-clip')
-  await scrubTo(page, 3500)
-  await shot(page, '242-video-variant-on-run-clip')
+  await scrubTo(page, 1500)
+  await shot(page, '242-video-variant-in-gap')
 
   await s.selectTextLayer(page)
   await page.getByRole('combobox', { name: 'Entrance' }).selectOption({ label: 'Fade up' })

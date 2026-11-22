@@ -100,14 +100,14 @@ export async function importAndAdd(app: ElectronApplication, page: Page, file: s
   await list.getByRole('button', { name: path.basename(file) }).click()
 }
 
-// A fake run from the post's background, started on the "Make a video" card in the overview.
+// A fake run from "This layer's picture" in the background layer's Generate panel (R2E-9). It
+// ends on the overview, with the runs.
 export async function startFromBackground(page: Page): Promise<void> {
-  await page.getByRole('tab', { name: 'Overview' }).click()
-  const card = screens.videoPanel(page)
-  await card.getByLabel('Provider').selectOption({ label: 'Fake provider' })
-  await card.getByLabel('Prompt').fill(VIDEO_PROMPT)
-  await card.getByLabel('Start from').selectOption({ label: "The post's background" })
-  await card.getByRole('button', { name: 'Start' }).click()
+  const panel = await screens.videoPanel(page)
+  await panel.getByRole('radio', { name: "This layer's picture" }).check()
+  await panel.getByRole('textbox', { name: 'Prompt' }).fill(VIDEO_PROMPT)
+  await panel.getByRole('button', { name: 'Generate…' }).click()
+  await screens.generateVideo(page, 'Fake provider')
 }
 
 // Back to the master's editor from the overview.
