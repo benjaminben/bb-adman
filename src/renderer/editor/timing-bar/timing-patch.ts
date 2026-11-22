@@ -32,15 +32,20 @@ export const toBlock = (preset: AnimationBlock['preset'], span: Span): Animation
 const sameBlock = (a: AnimationBlock, b: AnimationBlock) =>
   a.preset === b.preset && a.startMs === b.startMs && a.durationMs === b.durationMs
 
+// Where a block goes when its layer's timing becomes `next`: shifted by `shiftMs`, then inside.
+export function blockAfter(block: AnimationBlock, shiftMs: number, next: Span): AnimationBlock {
+  const { startMs, endMs } = blockSpan(block)
+  const moved = { startMs: startMs + shiftMs, endMs: endMs + shiftMs }
+  return toBlock(block.preset, fitInside(moved, boundsOf(next)))
+}
+
 function blocksAfter(layer: LayerRow, shiftMs: number, next: Span): LayerPatch['animation'] {
   if (layer.type !== 'text') return undefined
   const changed: NonNullable<LayerPatch['animation']> = {}
   for (const kind of BLOCK_KINDS) {
     const block = layer.animation[kind]
     if (block.preset === 'none') continue
-    const { startMs, endMs } = blockSpan(block)
-    const moved = { startMs: startMs + shiftMs, endMs: endMs + shiftMs }
-    const fitted = toBlock(block.preset, fitInside(moved, boundsOf(next)))
+    const fitted = blockAfter(block, shiftMs, next)
     if (!sameBlock(fitted, block)) changed[kind] = fitted
   }
   return Object.keys(changed).length > 0 ? changed : undefined

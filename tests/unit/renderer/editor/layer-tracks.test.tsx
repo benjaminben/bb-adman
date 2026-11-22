@@ -138,6 +138,19 @@ describe('LayerTracks: bars and blocks [P7-19]', () => {
     ])
   })
 
+  it('the blocks follow the bar while it is dragged', async () => {
+    await setup()
+    fireEvent.pointerDown(body('Timing of Headline'), { clientX: 200, button: 0 })
+    fireEvent.pointerMove(window, { clientX: 400 })
+    expect(box('Entrance of Headline').style.left).toBe('37.5%')
+    fireEvent.pointerUp(window, { clientX: 200 })
+    fireEvent.pointerDown(end('Timing of Headline'), { clientX: 500, button: 0 })
+    fireEvent.pointerMove(window, { clientX: 350 })
+    expect(box('Exit of Headline').style.left).toBe('37.5%')
+    fireEvent.pointerUp(window, { clientX: 500 })
+    expect(box('Exit of Headline').style.left).toBe('56.25%')
+  })
+
   it('shows a refusal sentence under the rows', async () => {
     const { fake } = await setup()
     const message = 'That layer was not found.'

@@ -12,20 +12,23 @@ export type TimingBarProps = {
   durationMs: number
   playback: PlaybackStore
   onCommit: (next: Span, part: SpanPart) => void
+  onDraft?: (draft: Span | null, part: SpanPart) => void
 }
 
-export function TimingBar({ layerName, span, durationMs, playback, onCommit }: TimingBarProps) {
+export function TimingBar(props: TimingBarProps) {
+  const { layerName, span, durationMs } = props
   return (
     <SpanBlock
       label={`Timing of ${layerName}`}
       span={span}
       bounds={{ lowMs: 0, highMs: durationMs }}
       durationMs={durationMs}
-      playback={playback}
+      playback={props.playback}
       className={styles.bar}
       handleClassName={styles.handle}
       bodyClassName={styles.body}
-      onCommit={onCommit}
+      onCommit={props.onCommit}
+      onDraft={props.onDraft}
     />
   )
 }

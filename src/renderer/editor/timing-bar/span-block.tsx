@@ -30,6 +30,8 @@ export type SpanBlockProps = {
   bodyClassName?: string
   title?: string
   onCommit: (next: Span, part: SpanPart) => void
+  // The drag in hand, while it moves; null when it ends.
+  onDraft?: (draft: Span | null, part: SpanPart) => void
 }
 
 const STEP_MS = 100
@@ -57,10 +59,14 @@ export function SpanBlock(props: SpanBlockProps) {
       nearMs: pxToMs(SNAP_PX, width, durationMs),
     }
     const at = (dx: number) => EDIT[part](span, pxToMs(dx, width, durationMs), bounds, snap)
+    const show = (next: Span | null) => {
+      setDraft(next)
+      props.onDraft?.(next, part)
+    }
     startDrag(event, {
-      move: (dx) => setDraft(at(dx)),
+      move: (dx) => show(at(dx)),
       done: (dx) => {
-        setDraft(null)
+        show(null)
         if (dx !== 0) props.onCommit(at(dx), part)
       },
     })
