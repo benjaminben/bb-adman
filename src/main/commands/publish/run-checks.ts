@@ -11,6 +11,7 @@ import { isDropboxRootPath } from '@/main/providers/dropbox/root-path'
 import { plainMessage } from '@/main/providers/messages'
 import { requireProviderKeys } from '@/main/providers/require-keys'
 import { ProviderFailure } from '@/main/providers/types'
+import { insidePrefix } from '@/main/publish/clean-up'
 import { campaignPrefix } from '@/main/publish/manifest'
 import type { PublishWarning } from '@/main/publish/ports'
 import { PUBLISHED_FOLDER_UNREADABLE, publishRefusal } from '@/shared/publish/messages'
@@ -60,7 +61,7 @@ export async function publishedFileCount(
   try {
     const prefix = campaignPrefix(campaignId)
     const listed = await deps.publish.storageFor(deps, storage).list(prefix)
-    return listed.filter((p) => p.startsWith(prefix)).length
+    return insidePrefix(listed, prefix).length
   } catch (error) {
     throw folderUnreadable(deps, storage, error)
   }
