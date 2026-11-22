@@ -40,6 +40,7 @@ const groups = () =>
 describe('PropertiesPanel, Picture [spec/editor.md "Properties panel"; FR-094]', () => {
   it('shows the Picture section after Layer and before Position and size', async () => {
     await open(BACKGROUND)
+    await userEvent.click(screen.getByRole('button', { name: 'Position' }))
     expect(groups().filter((g) => g === 'Picture' || g === 'Position and size')).toEqual([
       'Picture',
       'Position and size',

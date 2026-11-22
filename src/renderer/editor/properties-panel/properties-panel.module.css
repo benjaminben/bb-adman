@@ -1,6 +1,7 @@
 /* app-style */
 /* spec/app-style.md "Editor": the panel head is sticky over the body; the body holds one group
-   per section, each after the first with a top edge (the prototype's prop-body, prop-group). */
+   per section, each after the first with a top edge (the prototype's prop-body, prop-group).
+   ED-1b: the head is a PanelHead; a Section (Position) draws its own hairline under it. */
 .panel {
   display: flex;
   flex-direction: column;
@@ -9,42 +10,35 @@
   background: var(--color-bg);
   border-left: var(--border-width) solid var(--color-line);
 }
-.header {
+.head {
   position: sticky;
   top: 0;
   z-index: 1;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-2);
-  align-items: baseline;
-  min-height: var(--bar-height);
-  padding: var(--space-2) var(--space-3);
-  border-bottom: var(--border-width) solid var(--color-line);
   background: var(--color-bg);
 }
-.name {
+.head > :first-child {
   flex: 1;
   min-width: 0;
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: var(--font-size-control);
-  font-weight: var(--weight-bold);
-  letter-spacing: normal;
-  overflow-wrap: anywhere;
 }
-.kind {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+/* The Locked mark at the head's right end, on the head's own hairline. */
+.lock {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding-right: var(--pad-panel);
+  border-bottom: var(--border-width) solid var(--color-line);
 }
 .body {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding: var(--space-3);
+  padding: var(--space-3) var(--pad-panel);
 }
-/* Two classes, so it wins over each group's own `.section` reset. */
-.body > :not(:first-child) {
+/* A group after another part, and a Section right after a group, get a top edge. Two classes,
+   so it wins over each group's own `.section` reset. */
+.body > fieldset:not(:first-child),
+.body > fieldset + section {
   padding-top: var(--space-3);
   border-top: var(--border-width) solid var(--color-line);
 }
@@ -58,7 +52,9 @@
   clear: both;
 }
 .empty {
-  margin: 0;
-  padding: var(--space-3);
-  color: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-inline);
+  padding: var(--pad-panel);
 }

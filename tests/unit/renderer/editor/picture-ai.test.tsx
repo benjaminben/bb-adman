@@ -22,7 +22,9 @@ async function open(layer: LayerRow) {
 }
 
 const sections = () =>
-  screen.getAllByRole('group').map((g) => g.querySelector('legend')?.textContent)
+  [...document.querySelectorAll('fieldset > legend, :is(h2, h3, h4) > button[aria-expanded]')].map(
+    (e) => e.textContent,
+  )
 
 describe('PictureAi in the properties panel [spec/screens-ai.md]', () => {
   it.each([BACKGROUND, LOGO])(
@@ -30,7 +32,7 @@ describe('PictureAi in the properties panel [spec/screens-ai.md]', () => {
     async (layer) => {
       await open(layer)
       await screen.findByRole('textbox', { name: 'Prompt' })
-      const wanted = ['Picture', 'Generate', 'Position and size']
+      const wanted = ['Picture', 'Generate', 'Position']
       expect(sections().filter((s) => wanted.includes(s ?? ''))).toEqual(wanted)
     },
   )

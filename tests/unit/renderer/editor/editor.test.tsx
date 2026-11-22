@@ -27,7 +27,7 @@ const asked = (fake: ReturnType<typeof makeFakeApi>, name: string) =>
   fake.queries.filter((q) => q.name === name).map((q) => q.input)
 
 const panelHeading = () =>
-  within(screen.getByRole('region', { name: 'Properties' })).queryByRole('heading')
+  within(screen.getByRole('region', { name: 'Properties' })).queryByRole('heading', { level: 3 })
 
 // The canvas draws at the smallest zoom in jsdom (no layout), so a variant point is a quarter.
 function clickCanvasAt(canvas: HTMLElement, x: number, y: number) {
@@ -47,7 +47,7 @@ describe('Editor [spec/editor.md "The editor screen"]', () => {
     expect(rows[0]).toHaveAccessibleName(/^Logo\s*Empty$/)
     expect(rows[1]).toHaveAccessibleName('Headline')
     expect(rows[2]).toHaveAccessibleName(/^Background\s*Stays at the bottom$/)
-    expect(screen.getByText('Select a layer to change it.')).toBeInTheDocument()
+    expect(screen.getByText('Select a layer')).toBeInTheDocument()
     expect(screen.getByText('1080 × 1350 px')).toBeInTheDocument()
   })
 
@@ -55,7 +55,6 @@ describe('Editor [spec/editor.md "The editor screen"]', () => {
     const { canvas } = await open()
     clickCanvasAt(canvas, 500, 200)
     expect(panelHeading()).toHaveTextContent('Headline')
-    expect(screen.getByText('Text')).toBeInTheDocument()
     clickCanvasAt(canvas, 900, 1200)
     expect(panelHeading()).toHaveTextContent('Logo')
     clickCanvasAt(canvas, 40, 600)

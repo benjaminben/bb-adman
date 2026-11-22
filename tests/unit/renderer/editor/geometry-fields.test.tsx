@@ -18,6 +18,13 @@ function setup(disabled = false) {
   return { onUpdate }
 }
 
+// ED-1b: the fields are in the Section "Position", folded at first; its fold lasts for the
+// window's life, so it is opened only when closed.
+async function openPosition() {
+  const position = screen.getByRole('button', { name: 'Position' })
+  if (position.getAttribute('aria-expanded') === 'false') await userEvent.click(position)
+}
+
 describe('GeometryFields [spec/editor.md "Position and size"]', () => {
   it.each([
     ['X', '-40', { x: -40 }],
@@ -27,26 +34,30 @@ describe('GeometryFields [spec/editor.md "Position and size"]', () => {
     ['Rotation', '12.4', { rotation: 12 }],
   ])('%s sends one layer.update with its geometry field', async (name, typed, geometry) => {
     const { onUpdate } = setup()
+    await openPosition()
     const field = screen.getByRole('spinbutton', { name })
     await userEvent.clear(field)
     await userEvent.type(field, `${typed}{Enter}`)
     expect(onUpdate.mock.calls).toEqual([[{ geometry }]])
   })
 
-  it('shows the stored values with W and H as short labels', () => {
+  it('shows the stored values with W and H as short labels', async () => {
     setup()
+    await openPosition()
     expect(screen.getByRole('spinbutton', { name: 'Width' })).toHaveValue('900')
     expect(screen.getByText('W')).toBeInTheDocument()
     expect(screen.getByText('°')).toBeInTheDocument()
   })
 
-  it('disables every field for a locked layer', () => {
+  it('disables every field for a locked layer', async () => {
     setup(true)
+    await openPosition()
     for (const field of screen.getAllByRole('spinbutton')) expect(field).toBeDisabled()
   })
 
   it('has no accessibility violations', async () => {
     setup()
+    await openPosition()
     expect(await axeViolations()).toEqual([])
   })
 })

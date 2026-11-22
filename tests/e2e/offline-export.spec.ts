@@ -142,6 +142,7 @@ test('with no key and the network off, import, a hand layout and an image export
   const chooser = page.getByRole('dialog', { name: /^Choose a picture for / })
   await chooser.getByRole('button', { name: /glass-bottle/ }).click()
   await expect(chooser).toHaveCount(0)
+  await properties.getByRole('button', { name: 'Position' }).click()
   const fields = properties.getByRole('group', { name: 'Position and size' })
   for (const [label, value] of [
     ['Width', BOX.width],
