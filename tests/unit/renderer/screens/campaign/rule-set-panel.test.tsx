@@ -1,6 +1,8 @@
 // P6-10 (spec/phases/phase-06.md, design addition 8): the "Brand and legal rules" section.
 // Palette, required files and per-language word lists; every change sends one ruleSet.update
-// with the one list changed, and a refusal's own message shows under that list.
+// with the one list changed, and a refusal's own message shows under that list. CAMP-4: the
+// section is the folding "Rules"; colours are swatch chips with a "+" that opens "Hex colour";
+// files are tiles named by their display name; word lists show one language at a time.
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
@@ -38,9 +40,17 @@ function data(over: Partial<CampaignGet['ruleSet']> = {}): CampaignGet {
 async function panel(d = data(), fake = makeFakeApi()) {
   fake.onQuery('asset.list', () => ({ ok: true, data: ASSETS }))
   await renderApp(<RuleSetPanel projectId={P} campaignId="C1" data={d} />, fake)
-  const region = within(screen.getByRole('region', { name: 'Brand and legal rules' }))
-  await region.findByText('logo-mark.png')
+  const region = within(screen.getByRole('region', { name: 'Rules' }))
+  const fold = region.getByRole('button', { name: 'Rules' })
+  if (fold.getAttribute('aria-expanded') === 'false') await userEvent.click(fold)
+  await region.findByTitle('logo-mark.png')
   return { fake, region }
+}
+
+// The "+" chip opens the hex field; Enter adds.
+async function typeHex(palette: ReturnType<typeof within>, text: string) {
+  await userEvent.click(palette.getByRole('button', { name: 'Add colour' }))
+  await userEvent.type(palette.getByLabelText('Hex colour'), `${text}{Enter}`)
 }
 
 // The one update sent: its input holds the two IDs and exactly one list.
@@ -57,8 +67,7 @@ describe('RuleSetPanel palette [P6-10]', () => {
   it('adds a colour like #RRGGBB and shows its swatch', async () => {
     const { fake, region } = await panel()
     const palette = within(region.getByRole('group', { name: 'Palette' }))
-    await userEvent.type(palette.getByLabelText('Hex colour'), '#F0A500')
-    await userEvent.click(palette.getByRole('button', { name: 'Add colour' }))
+    await typeHex(palette, '#F0A500')
     expect(onlyUpdate(fake)).toMatchObject({ palette: ['#1A2B3C', '#F0A500'] })
     expect(await palette.findByText('#F0A500')).toBeInTheDocument()
   })
@@ -66,8 +75,7 @@ describe('RuleSetPanel palette [P6-10]', () => {
   it.each(['F0A500', '#F0A5', '#GGGGGG', 'orange'])('refuses %s without sending', async (bad) => {
     const { fake, region } = await panel()
     const palette = within(region.getByRole('group', { name: 'Palette' }))
-    await userEvent.type(palette.getByLabelText('Hex colour'), bad)
-    await userEvent.click(palette.getByRole('button', { name: 'Add colour' }))
+    await typeHex(palette, bad)
     expect(palette.getByText('Use a colour like #1A2B3C.')).toBeInTheDocument()
     expect(sent(fake, 'ruleSet.update')).toHaveLength(0)
   })
@@ -99,7 +107,7 @@ describe('RuleSetPanel required files [P6-10]', () => {
     await userEvent.click(dialog.getByLabelText(/hero-picnic\.png/))
     await userEvent.click(dialog.getByRole('button', { name: 'Add' }))
     expect(onlyUpdate(fake)).toMatchObject({ requiredAssetIds: ['A1', 'A2', 'A4'] })
-    expect(await region.findByText('Sunline Sans')).toBeInTheDocument()
+    expect(await region.findByTitle('Sunline Sans')).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
@@ -107,7 +115,9 @@ describe('RuleSetPanel required files [P6-10]', () => {
     const { fake, region } = await panel()
     await userEvent.click(region.getByRole('button', { name: 'Remove logo-mark.png' }))
     expect(onlyUpdate(fake)).toMatchObject({ requiredAssetIds: [] })
-    expect(await region.findByText('No required files.')).toBeInTheDocument()
+    const files = within(region.getByRole('list', { name: 'Files' }))
+    await waitFor(() => expect(files.getAllByRole('listitem')).toHaveLength(1))
+    expect(files.getByRole('button', { name: 'Add a required file…' })).toBeInTheDocument()
   })
 })
 
@@ -127,7 +137,9 @@ describe('RuleSetPanel words [P6-10]', () => {
   it('shows a field for each campaign language and sends nothing when unchanged', async () => {
     const { fake, region } = await panel()
     expect(region.getByLabelText('Required words (en)')).toHaveValue('Summer Splash')
+    await userEvent.click(region.getByRole('button', { name: 'de' }))
     expect(region.getByLabelText('Required words (de)')).toHaveValue('')
+    await userEvent.click(region.getByRole('button', { name: 'en' }))
     await userEvent.click(region.getByLabelText('Required words (en)'))
     await userEvent.tab()
     expect(sent(fake, 'ruleSet.update')).toHaveLength(0)
@@ -147,7 +159,7 @@ describe('RuleSetPanel refusals [P6-10]', () => {
     expect(await files.findByRole('alert')).toHaveTextContent(
       'A file in the rule set is not in this project.',
     )
-    expect(files.getByText('logo-mark.png')).toBeInTheDocument()
+    expect(files.getByTitle('logo-mark.png')).toBeInTheDocument()
     expect(within(region.getByRole('group', { name: 'Palette' })).queryByRole('alert')).toBeNull()
   })
 })
@@ -161,8 +173,12 @@ describe('RuleSetPanel accessibility [P6-10]', () => {
   it('says so when the lists are empty, with no axe violations', async () => {
     const empty = data({ palette: [], requiredAssetIds: [], requiredWords: {} })
     await renderApp(<RuleSetPanel projectId={P} campaignId="C1" data={empty} />)
-    expect(screen.getByText('No colours.')).toBeInTheDocument()
-    expect(screen.getByText('No required files.')).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('list', { name: 'Colours' })).queryAllByRole('listitem'),
+    ).toEqual([])
+    const files = within(screen.getByRole('list', { name: 'Files' }))
+    expect(files.getAllByRole('listitem')).toHaveLength(1)
+    expect(files.getByRole('button', { name: 'Add a required file…' })).toBeInTheDocument()
     expect(await axeViolations()).toEqual([])
   })
 
