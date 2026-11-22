@@ -611,6 +611,40 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     "name": "get_variant",
   },
   {
+    "description": "Draw one variant of an open project as it looks now, with every layer, and get it back as one PNG picture. max_dimension sets the longer side (64 to 2048, default 1024, never larger than the variant); time_ms is the moment of a video variant to draw (default 0). Changes nothing in the project.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "max_dimension": {
+          "default": 1024,
+          "maximum": 2048,
+          "minimum": 64,
+          "type": "integer",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "time_ms": {
+          "default": 0,
+          "maximum": 9007199254740991,
+          "minimum": 0,
+          "type": "integer",
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "variant_id",
+      ],
+      "type": "object",
+    },
+    "name": "render_variant",
+  },
+  {
     "description": "Add a picture or text layer on top of one variant of an open project. type is "image" or "text"; values may set name, copy, style, geometry, source, visible and locked. Gives the new layer ID. The user can undo the change. A picture is set as source: { assetId } with an asset ID from list_assets (asset library, kind image); source null clears it. A font is set as style.fontAssetId with a font asset ID, or null for the default font. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",

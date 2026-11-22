@@ -63,13 +63,14 @@ describe('variant.render [spec/editor-commands.md, variant.render]', () => {
     })
   })
 
-  it('refuses an agent with the error thumbnail.get gives, and draws nothing', async () => {
+  it('draws for an agent too (P10-3, A-234), while thumbnail.get still refuses one', async () => {
     r = await makeRenderFixture()
     const input = { variantId: V1 }
-    const thumbnailError = await r.query('thumbnail.get', input, 'agent').catch((e: unknown) => e)
-    const renderError = await r.query('variant.render', input, 'agent').catch((e: unknown) => e)
-    expect(renderError).toMatchObject({ code: 'AGENT_DENIED', message: THUMBNAIL_DENIED })
-    expect(renderError).toEqual(thumbnailError)
-    expect(r.draw).not.toHaveBeenCalled()
+    await expect(r.query('variant.render', input, 'agent')).resolves.toMatchObject({ png: PNG })
+    await expect(r.query('thumbnail.get', input, 'agent')).rejects.toMatchObject({
+      code: 'AGENT_DENIED',
+      message: THUMBNAIL_DENIED,
+    })
+    expect(r.execute).not.toHaveBeenCalled()
   })
 })

@@ -23,16 +23,17 @@ function thumbnailGet(deps: Pick<CoreDeps, 'projects' | 'render'>): QueryFn {
   }
 }
 
-// User only for now: a project file can link any picture the user can read, and a drawn PNG
-// would carry its pixels to the agent. The agent rule comes with Phase 10.
+// Both actors. The user's draw reports overflow as it always has. The agent's draw is the
+// complete ad, linked pictures outside the project's folder included (P10-3, A-234,
+// stakeholder ruling), and changes nothing; the MCP tool sends back its PNG bytes only.
 function variantRender(deps: Pick<CoreDeps, 'projects' | 'render'>): QueryFn {
   return async (raw, opts) => {
-    if (opts.actor !== 'user') throw new AppError('AGENT_DENIED', THUMBNAIL_DENIED)
     const parsed = variantRenderInput.safeParse(raw)
     if (!parsed.success) throw invalid()
     const { projectId, variantId, maxDimension, timeMs } = parsed.data
     const project = deps.projects.requireOpen(projectId)
-    return deps.render.render(project, variantId, maxDimension, timeMs)
+    if (opts.actor === 'user') return deps.render.render(project, variantId, maxDimension, timeMs)
+    return deps.render.renderForAgent(project, variantId, maxDimension, timeMs)
   }
 }
 

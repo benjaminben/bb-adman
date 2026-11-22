@@ -86,6 +86,8 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
     // P10-2: the two read tools.
     ['list_subjects', { project_id: p }, [other]],
     ['get_variant', { project_id: p, variant_id: 'v1' }, [{ project_id: p, variant_id: 'x' }]],
+    // P10-3: the drawn picture.
+    ['render_variant', { project_id: p, variant_id: 'v1' }, [{ project_id: p, variant_id: 'x' }]],
     // P10-4: the layer tools, over the seeded variants v1 and v2.
     [
       'create_layer',

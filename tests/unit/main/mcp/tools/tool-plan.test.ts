@@ -39,7 +39,6 @@ const PLAN = [
 
 // The tools not built yet. A tool slice removes exactly its own names.
 const STILL_NOT_BUILT = [
-  'render_variant',
   'propose_layout',
   'copy_options',
   'cut_out',
