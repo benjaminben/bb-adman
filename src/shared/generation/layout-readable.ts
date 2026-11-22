@@ -11,14 +11,11 @@ import {
   type Pixels,
 } from '@/shared/generation/contrast'
 import type { LayoutJobBox } from '@/shared/schemas/jobs/layout-proposal'
-import { HEX_COLOUR, LOOK_LIMITS } from '@/shared/schemas/layer'
+import { HEX_COLOUR, LOOK_LIMITS, type ImageStyle } from '@/shared/schemas/layer'
 
 // What the check needs of a text layer: its key and the colours it draws with.
-export type ReadableLayer = {
-  key: string
-  type: string
-  style: { color?: string; boxColor?: string | null; boxPadding?: number }
-}
+export type ReadableStyle = { color?: string; boxColor?: string | null; boxPadding?: number }
+export type ReadableLayer = { key: string; type: string; style: ReadableStyle | ImageStyle }
 
 export type ReadableInput = {
   pixels: Pixels
@@ -63,9 +60,10 @@ function withTextBox(box: LayoutJobBox, text: string, brand: string[], own?: num
 
 function oneBox(box: LayoutJobBox, input: ReadableInput, brand: string[]): LayoutJobBox {
   const layer = input.layers.find((l) => l.type === 'text' && l.key === box.slot)
-  const own = layer?.style.color
-  if (!layer || own === undefined) return box
-  const textBox = layer.style.boxColor ?? null
+  const style: ReadableStyle = !layer || 'opacity' in layer.style ? {} : layer.style
+  const own = style.color
+  if (own === undefined) return box
+  const textBox = style.boxColor ?? null
   const ground: Ground | null =
     textBox !== null
       ? { dark: luminance(textBox), light: luminance(textBox) }
@@ -75,7 +73,7 @@ function oneBox(box: LayoutJobBox, input: ReadableInput, brand: string[]): Layou
   const score = (c: string) => readable(c, ground)
   const colour = best(brand, score) ?? best([WHITE, BLACK], score)
   if (colour !== null) return { ...box, color: colour, readable: 'colour' }
-  return withTextBox(box, text, brand, layer.style.boxPadding)
+  return withTextBox(box, text, brand, style.boxPadding)
 }
 
 export function keepReadable(boxes: LayoutJobBox[], input: ReadableInput): LayoutJobBox[] {

@@ -2,7 +2,11 @@
 // colour, gets a readable colour, or gets a solid text box behind it.
 import { describe, it, expect } from 'vitest'
 import type { Pixels } from '@/shared/generation/contrast'
-import { keepReadable, type ReadableLayer } from '@/shared/generation/layout-readable'
+import {
+  keepReadable,
+  type ReadableLayer,
+  type ReadableStyle,
+} from '@/shared/generation/layout-readable'
 import type { LayoutJobBox } from '@/shared/schemas/jobs/layout-proposal'
 
 const SIDE = 100
@@ -32,7 +36,7 @@ const box = (over: Partial<LayoutJobBox> = {}): LayoutJobBox => ({
   ...over,
 })
 
-const layer = (style: Partial<ReadableLayer['style']> = {}): ReadableLayer => ({
+const layer = (style: ReadableStyle = {}): ReadableLayer => ({
   key: 'headline',
   type: 'text',
   style: { color: '#FFFFFF', ...style },
@@ -43,7 +47,7 @@ type Case = {
   pixels: Pixels
   palette?: string[]
   box?: Partial<LayoutJobBox>
-  style?: Partial<ReadableLayer['style']>
+  style?: ReadableStyle
   out: Partial<LayoutJobBox>
 }
 
