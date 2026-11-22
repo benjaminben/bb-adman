@@ -80,7 +80,7 @@
   justify-content: flex-end;
   padding: var(--space-3) 0;
   border-top: var(--border-width) solid var(--color-line);
-  background: var(--color-bg);
+  background: var(--color-page);
 }
 /* Words for a screen reader only: a box one hairline wide, clipped away. */
 .hidden {
