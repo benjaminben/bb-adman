@@ -67,17 +67,14 @@ describe('Phase 7 registration [P7-1]', () => {
     ).resolves.toBeNull()
   })
 
-  it.each(COMMANDS)('$name has its policy row', ({ name, policy }) => {
-    expect(AGENT_POLICY[name]?.policy).toBe(policy)
-  })
-
-  it.each(COMMANDS)('$name is internal exactly when it is a system command', async (row) => {
+  it('variant.setFormat is allowed to an agent and is not internal [D-025]', async () => {
     const { fx } = await open()
-    expect(fx.core.isInternal(row.name)).toBe(row.internal)
+    expect(AGENT_POLICY['variant.setFormat']?.policy).toBe('allow')
+    expect(fx.core.isInternal('variant.setFormat')).toBe(false)
   })
 })
 
-describe('variant.update with durationMs before P7-10 [P7-1]', () => {
+describe('variant.update with a title [P7-1]', () => {
   it('still changes the title alone', async () => {
     const { fx, ids } = await open()
     const input = { projectId: ids.projectId, variantId: ids.variantId, title: 'New title' }

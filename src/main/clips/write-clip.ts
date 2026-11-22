@@ -144,8 +144,17 @@ export function deleteClip(ctx: ProjectContext, row: BackgroundClipRow, now: str
 // OI-20, A-180: the first clip from the background's own picture, made only once per variant:
 // when first_clip_made is 0, there are no clips and the background has a usable source. The
 // clip ID, or null when none is made. No file is read here; a missing file shows its badge.
-export function addFirstClip(ctx: ProjectContext, variantId: string, now: string): string | null {
+// clipId (P7-10b, a redo): the ID the clip had before its undo; refused when a clip holds it.
+export function addFirstClip(
+  ctx: ProjectContext,
+  variantId: string,
+  now: string,
+  clipId?: string,
+): string | null {
   const db = ctx.project.db
+  if (clipId !== undefined && readClip(db, clipId)) {
+    throw new AppError('INVALID_INPUT', 'That clip is already on a post.')
+  }
   const variant = readVariant(db, variantId)
   if (!variant || variant.firstClipMade || clipsOf(db, variantId).length > 0) return null
   const background = db
@@ -159,7 +168,8 @@ export function addFirstClip(ctx: ProjectContext, variantId: string, now: string
   } catch {
     return null
   }
-  const row = placedClip(variant, [], asset)
+  const placed = placedClip(variant, [], asset)
+  const row = clipId === undefined ? placed : { ...placed, id: clipId }
   checkClip(row, asset, [])
   writeClips(ctx, [row], now)
   return row.id

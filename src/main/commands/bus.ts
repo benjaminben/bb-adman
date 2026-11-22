@@ -120,7 +120,7 @@ export function createCommandBus(deps: BusDeps): CommandBus {
     commandId: string,
     projectId: string | null,
   ): Promise<ProjectRun> {
-    const base = { actor: opts.actor, commandId }
+    const base = { actor: opts.actor, commandId, replay: opts.replay?.direction }
     if (projectId) {
       const logCleanup = (e: unknown) => {
         deps.log.write({
