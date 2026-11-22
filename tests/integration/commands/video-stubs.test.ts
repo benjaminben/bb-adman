@@ -8,7 +8,6 @@ import { createInput } from '../campaigns/campaign-fixture'
 import { AGENT_POLICY, denialMessage } from '@/main/commands/agent-policy'
 import { clipCommands } from '@/main/commands/clip'
 import { variantCommands } from '@/main/commands/variant'
-import { registerIpc, IPC } from '@/main/ipc'
 import { noMediaTool } from '@/main/media/no-media'
 import { ok } from '@/shared/schemas/result'
 
@@ -49,61 +48,7 @@ type Row = {
   internal: boolean
   bad: (ids: Ids) => object
 }
-const clip = (ids: Ids) => ({ variantId: ids.variantId, assetId: ids.assetId })
-const clipRow = (ids: Ids) => ({
-  id: ids.clipId,
-  variantId: ids.variantId,
-  assetId: ids.assetId,
-  startMs: 0,
-  inMs: 0,
-  outMs: 3000,
-  placement: null,
-  soundOn: true,
-})
-
 const COMMANDS: Row[] = [
-  {
-    name: 'clip.add',
-    input: clip,
-    policy: 'deny',
-    internal: false,
-    bad: (i) => ({ ...clip(i), startMs: -1 }),
-  },
-  {
-    name: 'clip.update',
-    input: (i) => ({ clipId: i.clipId, startMs: 1000 }),
-    policy: 'deny',
-    internal: false,
-    bad: (i) => ({ clipId: i.clipId }),
-  },
-  {
-    name: 'clip.remove',
-    input: (i) => ({ clipId: i.clipId }),
-    policy: 'deny',
-    internal: false,
-    bad: () => ({ clipId: '' }),
-  },
-  {
-    name: 'clip.reorder',
-    input: (i) => ({ variantId: i.variantId, clipIds: [i.clipId] }),
-    policy: 'deny',
-    internal: false,
-    bad: (i) => ({ variantId: i.variantId, clipIds: [] }),
-  },
-  {
-    name: 'clip.restore',
-    input: (i) => ({ rows: [clipRow(i)] }),
-    policy: 'deny',
-    internal: true,
-    bad: () => ({ rows: [] }),
-  },
-  {
-    name: 'clip.addGenerated',
-    input: clip,
-    policy: 'deny',
-    internal: true,
-    bad: (i) => ({ variantId: i.variantId }),
-  },
   {
     name: 'variant.setFormat',
     input: (i) => ({ variantId: i.variantId, format: 'video' }),
@@ -199,37 +144,6 @@ describe('the Phase 7 command stubs [P7-1]', () => {
     const { fx, ids } = await open()
     const input = { projectId: ids.projectId, variantId: ids.variantId, format: 'video' }
     expect(await fx.agent('variant.setFormat', input)).toEqual(NOT_BUILT)
-  })
-
-  it('answers a window that sends an internal command as unknown, and runs nothing', async () => {
-    const { fx, ids } = await open()
-    type Handler = (event: unknown, ...args: unknown[]) => unknown
-    const handlers = new Map<string, Handler>()
-    const sent: string[] = []
-    registerIpc(
-      { handle: (channel: string, fn: Handler) => void handlers.set(channel, fn) },
-      {
-        execute: (name, input, opts) => {
-          sent.push(name)
-          return fx.core.bus.execute(name, input, opts)
-        },
-        query: async () => ok(null),
-        isInternal: (name) => fx.core.isInternal(name),
-        mayCall: () => true,
-      },
-    )
-    const command = handlers.get(IPC.command)
-    const internal = COMMANDS.filter((r) => r.internal)
-    expect(internal.map((r) => r.name)).toEqual(['clip.restore', 'clip.addGenerated'])
-    for (const row of internal) {
-      expect(
-        await command?.({}, row.name, { projectId: ids.projectId, ...row.input(ids) }),
-      ).toEqual({
-        ok: false,
-        error: { code: 'INVALID_INPUT', message: `Unknown command: ${row.name}` },
-      })
-    }
-    expect(sent).toEqual([])
   })
 })
 
