@@ -1,7 +1,8 @@
 /* app-style */
 /* The marks on a tab (spec/app-style.md, "App shell and tabs"): "Running" with a turning
    spinner, a dot in the spot colour with a soft ring that pulses three times, and the
-   attention dot. Motion stops with reduce motion. */
+   attention dot. The spinner icon turns by itself (icon.module.css); the pulse stops with
+   reduce motion. */
 .marks {
   display: inline-flex;
   align-items: center;
@@ -19,7 +20,6 @@
 .spin {
   display: inline-flex;
   color: var(--color-accent);
-  animation: spin var(--motion-spin) linear infinite;
 }
 .dot,
 .attention {
@@ -35,18 +35,12 @@
 .attention {
   background: var(--color-danger-text);
 }
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
 @keyframes pop {
   50% {
     transform: scale(1.45);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .spin,
   .dot {
     animation: none;
   }

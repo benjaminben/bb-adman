@@ -14,3 +14,23 @@
   width: var(--icon-size-small);
   height: var(--icon-size-small);
 }
+/* The spinner icon turns wherever it is drawn (R2-Q): a run's "Running" badge, a tab mark, a
+   busy line. With reduce motion it fades gently in place instead, so it never looks frozen. */
+.spin {
+  animation: turn var(--motion-spin) linear infinite;
+}
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes fade {
+  50% {
+    opacity: var(--opacity-disabled);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: fade var(--motion-pop) ease-in-out infinite;
+  }
+}

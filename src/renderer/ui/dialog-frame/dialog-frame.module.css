@@ -79,19 +79,8 @@
 .body > .inBody:first-child {
   margin-top: calc(-1 * var(--space-6));
 }
-/* The turning spinner of a busy or waiting block, in the spot colour. */
+/* The spinner of a busy or waiting block, in the spot colour. The icon turns by itself. */
 .spin {
   display: inline-flex;
   color: var(--color-accent);
-  animation: turn var(--motion-spin) linear infinite;
-}
-@keyframes turn {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .spin {
-    animation: none;
-  }
 }
