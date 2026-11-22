@@ -54,6 +54,8 @@ const CASES: Array<[string, string, string?]> = [
     'prompt',
   ],
   ['workflow_mark_missing', text(marked({ output: `${M} out` })), 'output'],
+  ['workflow_mark_missing', text(marked({ prompt: `${M} prompt` })), 'prompt'],
+  ['workflow_mark_missing', text(marked({ seed: `${M} seed` })), 'seed'],
   ['workflow_size_marks', text({ ...marked(), [`w_${M}`]: node(M, { width: 9 }, 'adman: width') })],
   ['workflow_ref_gap', text({ ...marked(), [`r_${M}`]: node(M, { image: M }, 'adman: ref2') })],
   [

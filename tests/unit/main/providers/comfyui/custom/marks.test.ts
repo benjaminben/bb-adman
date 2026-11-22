@@ -118,3 +118,48 @@ describe('readMarks: the title rule [D-104]', () => {
     expect(reasonOf(g)).toBe(reason)
   })
 })
+
+describe('readMarks: more mark words and input lists', () => {
+  it('takes ref1 to ref8, first-frame and frames in any letter case', () => {
+    const g = basePicture()
+    const titles = ['ref1', 'REF2', 'Ref3', 'rEf4', 'REF5', 'reF6', 'Ref7', 'REF8']
+    titles.forEach(
+      (t, i) => (g[`r${i}`] = node('MadeUpLoad', { image: `${i}.png` }, `adman: ${t}`)),
+    )
+    g['f'] = node('MadeUpLoad', { image: 'f.png' }, 'ADMAN: First-FRAME')
+    g['n'] = node('MadeUpFrames', { length: 9 }, 'Adman: FrAmEs')
+    const marks = marksOf(g)
+    expect(marks.references).toEqual(titles.map((_, i) => ({ node: `r${i}`, input: 'image' })))
+    expect(marks.firstFrame).toEqual({ node: 'f', input: 'image' })
+    expect(marks.frames).toEqual({ node: 'n', input: 'length' })
+  })
+
+  it('falls back to value for width and height', () => {
+    const g = basePicture()
+    g['w'] = node('MadeUpInt', { value: 640 }, 'adman: width')
+    g['h'] = node('MadeUpInt', { value: 480, height: 'x' }, 'adman: height')
+    const marks = marksOf(g)
+    expect(marks.width).toEqual({ node: 'w', input: 'value' })
+    expect(marks.height).toEqual({ node: 'h', input: 'value' })
+  })
+
+  it('tries length first for frames, then each name in order, then value', () => {
+    const inputs = ['length', 'frames', 'num_frames', 'frame_count', 'video_frames', 'value']
+    for (let i = 0; i < inputs.length; i++) {
+      const g = basePicture()
+      const present = Object.fromEntries(inputs.slice(i).map((name) => [name, 9]))
+      g['n'] = node('MadeUpFrames', present, 'adman: frames')
+      expect(marksOf(g).frames).toEqual({ node: 'n', input: inputs[i] })
+    }
+  })
+
+  it.each([
+    ['prompt', '1'],
+    ['seed', '2'],
+    ['output', '3'],
+  ])('refuses a workflow with no %s mark, naming that mark', (mark, id) => {
+    const g = basePicture()
+    g[id] = { ...g[id], _meta: { title: 'Plain title' } } as Graph[string]
+    expect(readMarks(g)).toEqual({ ok: false, reason: 'workflow_mark_missing', mark })
+  })
+})
