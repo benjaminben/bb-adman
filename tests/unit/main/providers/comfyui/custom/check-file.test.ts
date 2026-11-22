@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { checkWorkflowText } from '@/main/providers/comfyui/custom/check-file'
-import { customWorkflowRefusal } from '@/shared/providers/custom-workflow-messages'
+import {
+  customWorkflowRefusal,
+  type CustomWorkflowRefusal,
+} from '@/shared/providers/custom-workflow-messages'
 import { fixtureText } from '../../../../../fixtures/comfy-custom/load'
 import { node } from './graph'
 
@@ -73,7 +76,9 @@ describe('checkWorkflowText: one refusal per reason, with no text from the file 
     const result = checkWorkflowText(file)
     expect(result.ok).toBe(false)
     if (result.ok) return
-    expect(result.error).toEqual(customWorkflowRefusal(reason as never, mark as never))
+    expect(result.error).toEqual(
+      customWorkflowRefusal((mark ? { reason, mark } : { reason }) as CustomWorkflowRefusal),
+    )
     expect(JSON.stringify(result)).not.toContain(M)
     expect(JSON.stringify(result).toLowerCase()).not.toContain(M.toLowerCase())
   })

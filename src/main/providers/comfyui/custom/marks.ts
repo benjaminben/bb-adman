@@ -3,7 +3,7 @@
 // input names and whether a value is a plain value of the right kind; it never uses a value.
 // A refusal names only a reason and, at most, a word of the marks table.
 import { MARK_WORDS, type MarkWord } from '@/shared/comfy/custom-workflow'
-import type { CustomWorkflowReason } from '@/shared/providers/custom-workflow-messages'
+import type { CustomWorkflowRefusal } from '@/shared/providers/custom-workflow-messages'
 import type { Graph, Pointer } from '@/main/providers/comfyui/workflows/types'
 
 export type Marks = {
@@ -18,7 +18,7 @@ export type Marks = {
   output: string
 }
 
-export type MarksRefusal = { ok: false; reason: CustomWorkflowReason; mark?: MarkWord }
+export type MarksRefusal = { ok: false } & CustomWorkflowRefusal
 export type MarksRead = { ok: true; marks: Marks } | MarksRefusal
 
 type Kind = 'text' | 'whole'
@@ -54,8 +54,7 @@ const isKind = (value: unknown, kind: Kind) =>
 type Found = { word: MarkWord; node: string; input?: string }
 type Step = { ok: true; found: Found[] } | MarksRefusal
 
-const refuse = (reason: CustomWorkflowReason, mark?: MarkWord): MarksRefusal =>
-  mark ? { ok: false, reason, mark } : { ok: false, reason }
+const refuse = (refusal: CustomWorkflowRefusal): MarksRefusal => ({ ok: false, ...refusal })
 
 // The marks of one title, or null when it is not a mark title.
 function titleMarks(title: unknown): Array<{ word: string; input?: string }> | null {
@@ -78,19 +77,19 @@ function findAll(graph: Graph): Step {
   for (const [id, node] of Object.entries(graph)) {
     const marks = titleMarks(node._meta?.title)
     if (marks === null) continue
-    if (marks.length === 0) return refuse('workflow_unknown_mark')
+    if (marks.length === 0) return refuse({ reason: 'workflow_unknown_mark' })
     for (const { word, input } of marks) {
-      if (!WORDS.has(word) || input === '') return refuse('workflow_unknown_mark')
+      if (!WORDS.has(word) || input === '') return refuse({ reason: 'workflow_unknown_mark' })
       const mark = word as MarkWord
       if (mark === 'output') {
-        if (input !== undefined) return refuse('workflow_unknown_mark')
+        if (input !== undefined) return refuse({ reason: 'workflow_unknown_mark' })
         found.push({ word: mark, node: id })
         continue
       }
       const [kind, tries] = TRIES[mark]
       const names = input === undefined ? tries : [input]
       const name = names.find((n) => Object.hasOwn(node.inputs, n) && isKind(node.inputs[n], kind))
-      if (name === undefined) return refuse('workflow_mark_no_input')
+      if (name === undefined) return refuse({ reason: 'workflow_mark_no_input' })
       found.push({ word: mark, node: id, input: name })
     }
   }
@@ -99,15 +98,16 @@ function findAll(graph: Graph): Step {
 
 function countRefusal(found: Found[]): MarksRefusal | null {
   const inputs = found.filter((f) => f.input !== undefined).map((f) => `${f.node}\n${f.input}`)
-  if (new Set(inputs).size !== inputs.length) return refuse('workflow_mark_shared')
+  if (new Set(inputs).size !== inputs.length) return refuse({ reason: 'workflow_mark_shared' })
   const count = (word: MarkWord) => found.filter((f) => f.word === word).length
   const repeated = ONCE.find((w) => count(w) > 1)
-  if (repeated) return refuse('workflow_mark_repeated', repeated)
+  if (repeated) return refuse({ reason: 'workflow_mark_repeated', mark: repeated })
   const missing = REQUIRED.find((w) => count(w) === 0)
-  if (missing) return refuse('workflow_mark_missing', missing)
-  if (count('width') !== count('height')) return refuse('workflow_size_marks')
+  if (missing) return refuse({ reason: 'workflow_mark_missing', mark: missing })
+  if (count('width') !== count('height')) return refuse({ reason: 'workflow_size_marks' })
   const refs = ONCE.filter((w) => w.startsWith('ref')).map(count)
-  if (refs.some((n, i) => n === 1 && refs[i - 1] === 0)) return refuse('workflow_ref_gap')
+  if (refs.some((n, i) => n === 1 && refs[i - 1] === 0))
+    return refuse({ reason: 'workflow_ref_gap' })
   return null
 }
 

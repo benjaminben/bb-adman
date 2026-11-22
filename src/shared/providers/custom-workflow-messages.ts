@@ -35,7 +35,14 @@ export type CustomWorkflowReason = keyof typeof SENTENCES
 
 export const CUSTOM_WORKFLOW_REASONS = Object.keys(SENTENCES) as CustomWorkflowReason[]
 
-export function customWorkflowRefusal(reason: CustomWorkflowReason, mark?: MarkWord): ErrorBody {
-  const message = SENTENCES[reason].replace('{mark}', mark ?? 'needed')
+// The two sentences that name a mark take one; no other sentence does.
+type MarkReason = 'workflow_mark_repeated' | 'workflow_mark_missing'
+export type CustomWorkflowRefusal =
+  { reason: Exclude<CustomWorkflowReason, MarkReason> } | { reason: MarkReason; mark: MarkWord }
+
+export function customWorkflowRefusal(refusal: CustomWorkflowRefusal): ErrorBody {
+  const { reason } = refusal
+  const sentence = SENTENCES[reason]
+  const message = 'mark' in refusal ? sentence.replace('{mark}', refusal.mark) : sentence
   return { code: 'RULE_VIOLATION', message, details: { reason } }
 }

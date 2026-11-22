@@ -9,9 +9,8 @@ import {
 } from '@/shared/comfy/custom-workflow'
 import {
   customWorkflowRefusal,
-  type CustomWorkflowReason,
+  type CustomWorkflowRefusal,
 } from '@/shared/providers/custom-workflow-messages'
-import type { MarkWord } from '@/shared/comfy/custom-workflow'
 import type { Result } from '@/shared/schemas/result'
 import type { Graph, GraphNode, WorkflowSlots } from '@/main/providers/comfyui/workflows/types'
 import { readMarks, type Marks } from './marks'
@@ -39,9 +38,9 @@ const NODE_ID = /^[A-Za-z0-9_:.-]{1,64}$/
 const CONTROL = /[\p{Cc}\p{Cf}]/u
 const BREAK = /[\p{Zl}\p{Zp}]/u
 
-const refuse = (reason: CustomWorkflowReason, mark?: MarkWord): WorkflowCheck => ({
+const refuse = (refusal: CustomWorkflowRefusal): WorkflowCheck => ({
   ok: false,
-  error: customWorkflowRefusal(reason, mark),
+  error: customWorkflowRefusal(refusal),
 })
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
@@ -106,35 +105,35 @@ function slotsFrom(marks: Marks): WorkflowSlots {
 
 // Steps 3 to 8, on a parsed value. The start-up read of a stored graph uses it too.
 export function checkWorkflowValue(value: unknown): WorkflowCheck {
-  if (!isRecord(value)) return refuse('workflow_bad_shape')
+  if (!isRecord(value)) return refuse({ reason: 'workflow_bad_shape' })
   if (Array.isArray(value.nodes) && Array.isArray(value.links)) {
-    return refuse('workflow_canvas_format')
+    return refuse({ reason: 'workflow_canvas_format' })
   }
   const entries = Object.entries(value)
-  if (entries.length === 0) return refuse('workflow_bad_shape')
-  if (entries.length > MAX_WORKFLOW_NODES) return refuse('workflow_too_many_nodes')
+  if (entries.length === 0) return refuse({ reason: 'workflow_bad_shape' })
+  if (entries.length > MAX_WORKFLOW_NODES) return refuse({ reason: 'workflow_too_many_nodes' })
 
   const kept: Array<[string, GraphNode]> = []
   for (const [id, raw] of entries) {
     const node = NODE_ID.test(id) && id !== PROTO ? keptNode(raw) : null
-    if (!node) return refuse('workflow_bad_shape')
+    if (!node) return refuse({ reason: 'workflow_bad_shape' })
     kept.push([id, node])
   }
   // Own keys only: a node named constructor or toString stays an ordinary node.
   const graph: Graph = Object.fromEntries(kept)
   for (const [, node] of kept) {
     for (const input of Object.values(node.inputs)) {
-      if (isLink(input) && !isGoodLink(graph, input)) return refuse('workflow_bad_link')
+      if (isLink(input) && !isGoodLink(graph, input)) return refuse({ reason: 'workflow_bad_link' })
     }
   }
 
   const read = readMarks(graph)
-  if (!read.ok) return refuse(read.reason, read.mark)
+  if (!read.ok) return refuse(read)
   const { marks } = read
   const firstFrame = marks.firstFrame !== undefined
   const references = marks.references.length > 0
-  if (firstFrame && !marks.frames) return refuse('workflow_first_frame_needs_frames')
-  if (firstFrame && references) return refuse('workflow_job_not_offered')
+  if (firstFrame && !marks.frames) return refuse({ reason: 'workflow_first_frame_needs_frames' })
+  if (firstFrame && references) return refuse({ reason: 'workflow_job_not_offered' })
 
   const job: CustomJob = marks.frames ? 'video' : references ? 'image_refs' : 'image'
   const workflow: CheckedWorkflow = {
@@ -151,14 +150,14 @@ export function checkWorkflowValue(value: unknown): WorkflowCheck {
 export function checkWorkflowText(text: string): WorkflowCheck {
   // Each UTF-16 unit is at least one byte, so a long text is refused before it is measured.
   if (text.length > MAX_WORKFLOW_BYTES || Buffer.byteLength(text, 'utf8') > MAX_WORKFLOW_BYTES) {
-    return refuse('workflow_too_large')
+    return refuse({ reason: 'workflow_too_large' })
   }
   let value: unknown
   try {
     value = JSON.parse(text)
   } catch {
     // The parser's error is dropped: it can quote the file.
-    return refuse('workflow_not_json')
+    return refuse({ reason: 'workflow_not_json' })
   }
   return checkWorkflowValue(value)
 }
