@@ -44,9 +44,9 @@ export function pagePolicy(nonce: string, dev = false): string {
   const script = `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ''}`
   const style = `style-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-inline'" : ''}`
   return (
-    `default-src 'none'; ${script}; ${style}; img-src 'self'; font-src 'self'; ` +
-    "connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; " +
-    "object-src 'none'"
+    `default-src 'none'; ${script}; ${style}; img-src 'self'; media-src 'self'; ` +
+    "font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; " +
+    "base-uri 'none'; object-src 'none'"
   )
 }
 
@@ -78,7 +78,29 @@ export function pictureHeaders(type: 'image/png' | 'image/jpeg'): Headers {
   })
 }
 
-// Every failure of the picture route: nothing in the body to tell one cause from another.
+// A clip piece (round-2-approvals-video.md "The clip route (service)"): bytes start..end of total.
+export function clipHeaders(start: number, end: number, total: number): Headers {
+  return new Headers({
+    'Content-Type': 'video/mp4',
+    'Content-Range': `bytes ${start}-${end}/${total}`,
+    'Content-Length': String(end - start + 1),
+    'Accept-Ranges': 'bytes',
+    'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': 'no-store',
+    'Content-Security-Policy': "default-src 'none'; sandbox",
+    'Cross-Origin-Resource-Policy': 'same-origin',
+    'Referrer-Policy': 'no-referrer',
+  })
+}
+
+// The 416 of the clip route: the plain text headers and the clip's size.
+export function unsatisfiable(request: Request, total: number): Response {
+  const headers = textHeaders(request)
+  headers.set('Content-Range', `bytes */${total}`)
+  return new Response(null, { status: 416, headers })
+}
+
+// Every failure of the picture and clip routes: nothing in the body to tell one cause from another.
 export const emptyNotFound = (request: Request) =>
   new Response(null, { status: 404, headers: textHeaders(request) })
 

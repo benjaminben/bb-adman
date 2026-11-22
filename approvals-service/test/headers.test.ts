@@ -2,6 +2,7 @@ import { afterEach, describe, it, expect, vi } from 'vitest'
 import { createApp } from '../src/app'
 import { cryptoBytes } from '../src/crypto/random'
 import {
+  clipHeaders,
   emptyNotFound,
   notFound,
   pageHeaders,
@@ -43,9 +44,9 @@ const HSTS = { 'strict-transport-security': 'max-age=31536000' }
 const NONCE = 'AAECAwQFBgcICQoLDA0ODw=='
 const STRICT =
   "default-src 'none'; script-src 'self' 'nonce-AAECAwQFBgcICQoLDA0ODw=='; " +
-  "style-src 'self' 'nonce-AAECAwQFBgcICQoLDA0ODw=='; img-src 'self'; font-src 'self'; " +
-  "connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; " +
-  "object-src 'none'"
+  "style-src 'self' 'nonce-AAECAwQFBgcICQoLDA0ODw=='; img-src 'self'; media-src 'self'; " +
+  "font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; " +
+  "base-uri 'none'; object-src 'none'"
 
 const PAGE = {
   'content-security-policy': STRICT,
@@ -264,5 +265,25 @@ describe('the picture set and its 404 [approvals-service-visitor.md "Pictures"]'
     expect(reply.status).toBe(404)
     expect(whole(reply.headers)).toEqual({ ...TEXT, ...HSTS })
     expect(await reply.text()).toBe('')
+  })
+})
+
+describe('the clip set [round-2-approvals-video.md "The clip route (service)", SV-6]', () => {
+  it.each([
+    [0, 1, 2048, '2'],
+    [4194304, 8388607, 10485760, '4194304'],
+    [10, 10, 11, '1'],
+  ])('is exactly the spec set for bytes %i-%i of %i', (start, end, total, length) => {
+    expect(whole(clipHeaders(start, end, total))).toEqual({
+      'content-type': 'video/mp4',
+      'content-range': `bytes ${start}-${end}/${total}`,
+      'content-length': length,
+      'accept-ranges': 'bytes',
+      'x-content-type-options': 'nosniff',
+      'cache-control': 'no-store',
+      'content-security-policy': "default-src 'none'; sandbox",
+      'cross-origin-resource-policy': 'same-origin',
+      'referrer-policy': 'no-referrer',
+    })
   })
 })
