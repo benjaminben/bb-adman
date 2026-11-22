@@ -44,3 +44,24 @@ export type TranslationForCampaign = {
   rows: TranslationRow[]
   jobs: TranslationJobState[]
 }
+
+// R3-3: translation.sources, the Translations tab's source block. Both actors may read it, as
+// they may read the same layers through variant.get.
+export const translationSourcesInput = translationForCampaignInput
+export type TranslationSourcesInput = TranslationForCampaignInput
+
+// One text layer of a variant in the primary language.
+export type SourceRow = Pick<
+  TranslationRow,
+  'directionId' | 'variantId' | 'title' | 'sizeLabel' | 'language' | 'layerId' | 'layerName'
+> & {
+  text: string // the layer's copy ('' when null)
+  copyRev: number
+}
+
+export type TranslationSources = {
+  rows: SourceRow[]
+  // The text layers not in the primary language whose master copy changed since they last
+  // synced (spec/links-and-sync.md, "Out of date", the copy group only).
+  outOfDate: string[]
+}

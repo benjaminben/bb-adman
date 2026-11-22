@@ -27,7 +27,7 @@ import { reportQueries } from './report'
 import { subjectListQueries } from './subject-list'
 import { syncQueries } from './sync'
 import { templateQueries } from './template'
-import { translationQueries } from './translation'
+import { translationQueries, translationSourceQueries } from './translation'
 import { variantQueries } from './variant'
 import type { QueryFn, QueryOptions } from './types'
 import { AppError, fail, internalError, ok, type Result } from '@/shared/schemas/result'
@@ -67,6 +67,7 @@ export function queryTable(
     ...syncQueries(deps),
     ...templateQueries(deps),
     ...translationQueries(deps),
+    ...translationSourceQueries(deps),
     ...variantQueries(deps),
   }
 }

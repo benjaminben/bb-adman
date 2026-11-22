@@ -86,8 +86,15 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.sourceText {
+.sourceCell {
+  display: flex;
+  flex-direction: column;
   align-self: stretch;
+  gap: var(--gap-tight);
+  min-width: 0;
+}
+.sourceText {
+  flex: 1;
   margin: 0;
   padding: var(--space-2);
   border-radius: var(--radius);
@@ -147,4 +154,27 @@
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+/* R3-3: each language block starts a new part of the tab, with clear space above its title. */
+.block {
+  padding-top: var(--gap-section);
+}
+/* A direction's name inside a language block, smaller than the language's title. */
+.direction {
+  margin: var(--gap-field) 0 0;
+  font-size: var(--type-section-size);
+  font-weight: var(--type-section-weight);
+  color: var(--color-text-secondary);
+}
+/* The source block's field spans the source and translation columns. */
+.spans {
+  grid-column: 2 / 4;
+}
+.sourceMark {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius);
+  background: var(--color-surface-soft);
+  font-size: var(--type-meta-size);
+  font-weight: var(--type-meta-weight);
+  color: var(--color-text-secondary);
 }

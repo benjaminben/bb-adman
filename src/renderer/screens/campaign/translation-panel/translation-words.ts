@@ -27,12 +27,14 @@ export function sourceLine(sourceText: string | null): string {
   return sourceText ?? 'No source text'
 }
 
-export function rowLine(row: TranslationRow): string {
+type Named = Pick<TranslationRow, 'title' | 'sizeLabel' | 'layerName'>
+
+export function rowLine(row: Named): string {
   return `${row.title} · ${row.sizeLabel} · ${row.layerName}`
 }
 
 // The words beside a row's thumbnail: "{size} · {layer}" (CAMP-5).
-export function postLine(row: TranslationRow): string {
+export function postLine(row: Named): string {
   return `${row.sizeLabel} · ${row.layerName}`
 }
 

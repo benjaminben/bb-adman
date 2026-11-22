@@ -4,9 +4,11 @@
 // by the source text; the link toggle "Use for every {language} post with this text box"; the
 // status mark ("Proposed" approves the row) and the source icon. Leaving an edited field sends
 // the text with the toggle's choice. The mark is the stored status as read, never a local guess.
+// R3-3: "Out of date" under the source text when the source text changed since the row was last synced.
 // A refusal shows as one line under the row. Every text from the row is drawn as React text only.
 import { useId, useState } from 'react'
 import { Icon } from '@/renderer/ui/icon'
+import { StatusMark } from '@/renderer/ui/status-mark'
 import layout from '@/renderer/ui/layout.module.css'
 import { VariantThumbnail } from '@/renderer/ui/variant-thumbnail'
 import type { TranslationRow as Row } from '@/shared/schemas/queries/translation'
@@ -14,11 +16,14 @@ import { RowMark, SourceIcon } from './row-mark'
 import { postLine, rowLine, sourceLine } from './translation-words'
 import styles from './translation-panel.module.css'
 
+const OUT_OF_DATE = 'Out of date: the source text changed after this was synced'
+
 export type TranslationRowProps = {
   projectId: string
   row: Row
   rev: number | undefined // the variant's revision for its thumbnail; none when not listed
   language: string // the language's name in words
+  outOfDate: boolean
   message: string | null
   busy: boolean
   onSave: (text: string, applyToSameLanguage: boolean) => void
@@ -49,9 +54,14 @@ export function TranslationRow(props: TranslationRowProps) {
         </span>
         <span className={styles.postLine}>{postLine(row)}</span>
       </span>
-      <p id={`${id}-source`} className={styles.sourceText}>
-        {sourceLine(row.sourceText)}
-      </p>
+      <div className={styles.sourceCell}>
+        <p id={`${id}-source`} className={styles.sourceText}>
+          {sourceLine(row.sourceText)}
+        </p>
+        {props.outOfDate && (
+          <StatusMark tone="warn" icon="clock" label="Out of date" tip={OUT_OF_DATE} />
+        )}
+      </div>
       <textarea
         className={styles.text}
         aria-label={`${props.language} ${rowLine(row)}`}

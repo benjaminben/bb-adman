@@ -143,4 +143,22 @@ describe('Section look [T3a]', () => {
       /border-bottom:\s*var\(--border-width\) solid var\(--color-line\)/,
     )
   })
+
+  // R3-3: a Section that starts a new part of a page, such as a language of the Translations tab.
+  it('sets a title-sized heading in the title type role', () => {
+    expect(rule('title')).toMatch(/font-size:\s*var\(--type-title-size\)/)
+    expect(rule('title')).toMatch(/font-weight:\s*var\(--type-title-weight\)/)
+  })
+})
+
+describe('Section size [R3-3]', () => {
+  it('gives the heading the title class only when size is title', () => {
+    draw({ id: 'test.size', fold: 'none', size: 'title', level: 2 })
+    const big = screen.getByRole('heading', { level: 2, name: 'Cloud storage' }).className
+    document.body.innerHTML = ''
+    draw({ id: 'test.size2', fold: 'none', level: 2 })
+    const plain = screen.getByRole('heading', { level: 2, name: 'Cloud storage' }).className
+    expect(big).not.toBe(plain)
+    expect(big).toContain(plain)
+  })
 })
