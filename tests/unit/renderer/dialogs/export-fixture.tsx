@@ -64,7 +64,7 @@ export async function openExport(
     fake,
   )
   await screen.findByRole('checkbox', { name: ROWS[0] })
-  return { ...view, fake, dialog: screen.getByRole('dialog', { name: 'Export campaign' }) }
+  return { ...view, fake, dialog: screen.getByRole('dialog', { name: 'Export Summer Splash' }) }
 }
 
 export function exportsSent(fake: ReturnType<typeof makeFakeApi>) {

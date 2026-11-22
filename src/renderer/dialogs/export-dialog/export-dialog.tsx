@@ -1,52 +1,49 @@
-// "Export campaign" [P8-11] (spec/phases/phase-08.md "The output folder", "Export run"). The
-// user ticks ads, picks a folder with the system picker and a format; nothing is sent before
-// "Export". The warnings gate shows its step, where "Export anyway" sends the same input again
-// with proceedDespiteWarnings and the trimmed reason. Then the job's percent and end counts.
-// From a send until its reply every button is disabled and the dialog cannot close.
+// "Export {campaign}" [P8-11; DLG-6a] (spec/phases/phase-08.md "The output folder", "Export
+// run"). The user ticks ads, picks a folder with the system picker and a format; nothing is
+// sent before "Export". The warnings gate shows its step, where "Export anyway" sends the same
+// input again with proceedDespiteWarnings and the trimmed reason. Then the job's bar and end
+// marks. From a send until its reply every button is disabled and the dialog cannot close.
 import { useEffect, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
-import { exportDoneLine } from '@/shared/export/messages'
 import type { ExportRunInput } from '@/shared/schemas/commands/export'
 import type { CampaignGet, VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { PickedPath } from '@/shared/schemas/queries/dialog'
 import { AdTicks } from './ad-ticks'
+import { ExportEnd } from './export-end'
 import { ExportOptions, qualityOf, type ExportChoices } from './export-options'
 import { ExportWarnings } from './export-warnings'
-import { useExportJob, type ExportStep } from './use-export-job'
+import { FolderRow } from './folder-row'
+import { useExportJob } from './use-export-job'
 import styles from './export-dialog.module.css'
 
 export type ExportDialogProps = { projectId: string; campaignId: string; onClose: () => void }
 
-const ENDED = { failed: 'The export failed.', cancelled: 'The export was cancelled.' }
+type Loaded = { name: string | null; ads: VariantSummary[] }
 
-function useAds(projectId: string, campaignId: string) {
+function useAds(projectId: string, campaignId: string): Loaded | null {
   const api = useApi()
-  const [ads, setAds] = useState<VariantSummary[] | null>(null)
+  const [loaded, setLoaded] = useState<Loaded | null>(null)
   useEffect(() => {
     let live = true
     void api.query('campaign.get', { projectId, campaignId }).then((reply) => {
-      if (live) setAds(reply.ok ? ((reply.data as CampaignGet | null)?.variants ?? []) : [])
+      const got = reply.ok ? (reply.data as CampaignGet | null) : null
+      if (live) setLoaded({ name: got?.campaign.name ?? null, ads: got?.variants ?? [] })
     })
     return () => {
       live = false
     }
   }, [api, projectId, campaignId])
-  return ads
-}
-
-function endLine(step: ExportStep): string | null {
-  if (step.kind === 'running') return `Exporting… ${step.percent}%`
-  if (step.kind === 'done') return exportDoneLine(step.exported, step.failed)
-  return step.kind === 'ended' ? ENDED[step.status] : null
+  return loaded
 }
 
 export function ExportDialog(props: ExportDialogProps) {
   const { projectId, campaignId } = props
   const api = useApi()
   const settings = useApp((s) => s.app?.settings.export)
-  const ads = useAds(projectId, campaignId)
+  const loaded = useAds(projectId, campaignId)
+  const ads = loaded?.ads ?? null
   const { step, sending, send, back } = useExportJob()
   const [ticked, setTicked] = useState<ReadonlySet<string> | null>(null)
   const [folder, setFolder] = useState<string | null>(null)
@@ -99,7 +96,7 @@ export function ExportDialog(props: ExportDialogProps) {
     </button>
   )
   const plain = (label: string, onClick: () => void) => (
-    <button type="button" disabled={sending} onClick={onClick}>
+    <button type="button" className={layout.quiet} disabled={sending} onClick={onClick}>
       {label}
     </button>
   )
@@ -119,33 +116,42 @@ export function ExportDialog(props: ExportDialogProps) {
       primary('Close', props.onClose)
     )
 
-  const line = endLine(step)
   return (
     <DialogFrame
       open
       onClose={props.onClose}
-      title="Export campaign"
+      title={`Export ${loaded?.name ?? 'campaign'}`}
       closable={!sending}
       footer={footer}
-      size="wide"
+      kind="publish"
     >
       <div className={styles.body}>
         {ads === null && <p className={layout.muted}>Loading the ads…</p>}
         {ads !== null && step.kind === 'choose' && (
           <>
-            <AdTicks ads={ads} ticked={shown} disabled={sending} onChange={setTicked} />
-            <ExportOptions
+            <AdTicks
+              projectId={projectId}
+              ads={ads}
+              ticked={shown}
+              disabled={sending}
+              onChange={setTicked}
+            />
+            <FolderRow
               folder={folder}
+              disabled={sending}
+              onChooseFolder={() => void chooseFolder()}
+            />
+            <ExportOptions
               choices={choices}
               showFps={showFps}
               disabled={sending}
-              onChooseFolder={() => void chooseFolder()}
               onChange={setChoices}
             />
           </>
         )}
         {ads !== null && step.kind === 'warnings' && (
           <ExportWarnings
+            projectId={projectId}
             warnings={step.warnings}
             ads={ads}
             reason={reason}
@@ -153,11 +159,7 @@ export function ExportDialog(props: ExportDialogProps) {
             onReason={setReason}
           />
         )}
-        {line !== null && (
-          <p role="status" className={styles.line}>
-            {line}
-          </p>
-        )}
+        <ExportEnd step={step} />
       </div>
     </DialogFrame>
   )

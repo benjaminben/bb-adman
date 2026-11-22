@@ -1,6 +1,6 @@
 /* app-style */
-/* The export dialog (P8-11): the ad ticks, the folder and format controls, the warnings and
-   the job line, one column with the dialog's spacing. */
+/* The export dialog (P8-11, DLG-6a): the ad rows, the folder row and its warn line, the format
+   controls, the warnings and the job state, one column with the dialog's spacing. */
 .body {
   display: flex;
   flex-direction: column;
@@ -12,13 +12,22 @@
 .group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
   min-width: 0;
   margin: 0;
   padding: 0;
   border: none;
 }
-.group legend,
+/* "Ads {k}/{n}" and the "All ads" tick, the tick in line with the rows' ticks. */
+.adsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
 .heading {
   padding: 0;
   font-size: var(--font-size-small);
@@ -30,43 +39,32 @@
   flex-direction: column;
   gap: var(--space-1);
 }
-.choice {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-  font-size: var(--font-size-control);
-  overflow-wrap: anywhere;
-}
-.choice:has(input:disabled) {
-  color: var(--color-text-muted);
-}
-.folder {
-  display: flex;
-  gap: var(--space-3);
-  align-items: center;
-  justify-content: space-between;
-}
-.folder > button {
-  flex-shrink: 0;
-}
 .options {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-4);
 }
-.note,
 .line {
   font-size: var(--font-size-control);
 }
+/* The replace sentence under the folder row: visible words in the warn colour. */
 .note {
-  color: var(--color-text-secondary);
-}
-.warnings {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  margin: 0;
-  padding-left: var(--space-4);
+  align-items: flex-start;
+  gap: var(--gap-tight);
+  padding: 0 var(--space-2);
   font-size: var(--font-size-control);
-  overflow-wrap: anywhere;
+  color: var(--color-warn-text);
+}
+.note > svg {
+  flex: none;
+}
+.done {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.reason {
+  width: 100%;
 }

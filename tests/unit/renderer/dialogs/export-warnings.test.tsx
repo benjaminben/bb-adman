@@ -27,10 +27,10 @@ describe('the export warnings step [P8-11]', () => {
     expect(
       within(list)
         .getAllByRole('listitem')
-        .map((li) => li.textContent),
+        .map((li) => li.querySelector('[title]')?.getAttribute('title') + ': ' + li.textContent),
     ).toEqual([
-      'Picnic table · 9x16 · de: The headline runs past its box.',
-      'Beach walk · 9x16 · en: <b>Low</b> contrast on the button.',
+      'Picnic table · 9x16 · de: 9x16 · deThe headline runs past its box.Warning',
+      'Beach walk · 9x16 · en: 9x16 · en<b>Low</b> contrast on the button.Warning',
     ])
     expect(list.querySelector('b')).toBeNull()
     expect(fx.exportsSent(fake)).toEqual([fx.input({ variantIds: ['V2', 'V3'] })])
@@ -49,7 +49,8 @@ describe('the export warnings step [P8-11]', () => {
       reason: 'Client signed off the long headline.',
     })
     expect(fx.exportsSent(fake)).toEqual([fx.input({ variantIds: ['V2', 'V3'] }), again])
-    expect(await screen.findByText('Exporting… 0%')).toBeInTheDocument()
+    const bar = await screen.findByRole('progressbar', { name: 'Exporting' })
+    expect(bar).toHaveAttribute('aria-valuenow', '0')
   })
 
   it('Export anyway with no reason sends no reason', async () => {
