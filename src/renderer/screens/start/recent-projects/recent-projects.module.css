@@ -39,3 +39,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* A project open now (round-2-platform.md D9): a small accent dot after its name. */
+.dot {
+  flex: none;
+  width: var(--mark-dot);
+  height: var(--mark-dot);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+}
