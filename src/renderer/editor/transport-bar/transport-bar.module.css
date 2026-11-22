@@ -1,0 +1,16 @@
+/* app-style */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+}
+/* The button keeps one width whether it reads Play or Pause, so the time does not jump. */
+.bar > button {
+  min-width: calc(var(--space-6) * 3);
+}
+.time {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  font-variant-numeric: tabular-nums;
+}

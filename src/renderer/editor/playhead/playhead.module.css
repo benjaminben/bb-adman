@@ -1,0 +1,11 @@
+/* app-style */
+/* A thin accent line from the ruler's top to the last track's foot; presses pass through it. */
+.playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--indicator-width-thin);
+  background: var(--color-accent);
+  pointer-events: none;
+  transform: translateX(-50%);
+}
