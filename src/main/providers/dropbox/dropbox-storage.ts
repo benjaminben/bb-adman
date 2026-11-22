@@ -5,7 +5,8 @@
 // removed. Endpoints are fixed strings; no value from a project or a setting picks an endpoint
 // or a header. The content host takes its argument in the Dropbox-API-Arg header, as ASCII JSON.
 // The access token comes from access-token.ts; after a 401 it is forgotten, renewed once and
-// the request sent once more (every body here is bytes in memory, so it can be sent again).
+// the request sent once more (every body here is bytes in memory, so it can be sent again),
+// unless the saved refresh token is gone or changed by then: that is dropbox_signed_out.
 // Every failure is one ProviderFailure through thrownFailure, with both tokens redacted.
 import { z } from 'zod'
 import { refusePath, storageFilePath, storageListPrefix } from '@/main/providers/storage-paths'
@@ -50,6 +51,9 @@ const CONTENT_TIMEOUT_MS = 300_000
 const MAX_ROOT = 200
 const NOT_THERE = ['path/not_found', 'path/not_folder']
 const NOT_A_FILE = 'Dropbox has a folder where a file was named'
+
+const signedOut = () =>
+  new ProviderFailure({ kind: 'bad_key', reason: 'dropbox_signed_out', detail: 'signed out' })
 
 const Metadata = z.object({ '.tag': z.string(), rev: z.string().min(1).max(64).optional() })
 const Result = z.object({ size: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER) })
@@ -112,7 +116,17 @@ export function dropboxStorage(
     if (first.status !== 401) return first
     await first.body?.cancel().catch(() => undefined)
     forgetDropboxAccess(refreshToken)
+    if (savedRefreshToken() !== refreshToken) throw signedOut()
     return authorised(refreshToken, url, out)
+  }
+
+  // The refresh token as saved now, or undefined when it is gone (the user signed out).
+  function savedRefreshToken(): string | undefined {
+    try {
+      return ctx.secret(REFRESH_TOKEN)
+    } catch {
+      return undefined
+    }
   }
 
   const calls: DropboxCalls = {
