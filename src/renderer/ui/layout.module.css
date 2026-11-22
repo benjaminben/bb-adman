@@ -238,6 +238,7 @@ button.card:hover {
   border-radius: var(--radius-md);
   background: var(--color-bg);
   box-shadow: var(--shadow-3);
+  overflow-wrap: anywhere;
 }
 .menuItem {
   justify-content: flex-start;
