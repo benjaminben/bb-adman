@@ -80,7 +80,8 @@ describe('the steps [R2E-10, D8]', () => {
       const heading = screen.getByRole('heading', { name: step.heading })
       expect(heading).toHaveFocus()
       expect(dialog()).toHaveAccessibleDescription(step.line)
-      expect(screen.getByRole('heading', { name: step.part, level: 2 })).toBeInTheDocument()
+      // The part's own heading, at whatever level its Section gives it (SET-2, SET-4).
+      expect(screen.getAllByRole('heading', { name: step.part }).length).toBeGreaterThan(0)
       expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Skip for now' })).toBeInTheDocument()
       if (i < steps.length - 1) await press('Next')

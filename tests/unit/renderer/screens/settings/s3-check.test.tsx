@@ -69,8 +69,8 @@ describe('settings: Test connection for Amazon S3 [spec "Test connection (S3)"]'
   it('is enabled once a bucket and region are saved, even with no keys', async () => {
     const { button, box } = await section(s3State(SAVED, []))
     expect(button()).toBeEnabled()
-    expect(button()).toHaveAccessibleDescription('Tests the saved bucket, region and keys.')
-    expect(within(box).getByText('Tests the saved bucket, region and keys.')).toBeInTheDocument()
+    expect(button()).toHaveTextContent(/^Test$/)
+    expect(within(box).queryByText('Tests the saved bucket, region and keys.')).toBeNull()
   })
 
   it('sends storage.checkS3 and shows "Testing…" while it works, then the Connected line', async () => {
@@ -83,7 +83,8 @@ describe('settings: Test connection for Amazon S3 [spec "Test connection (S3)"]'
     expect(button()).toBeDisabled()
     await act(async () => answer({ ok: true, data: { ok: true } }))
     expect(within(box).getByRole('status')).toHaveTextContent(CONNECTED)
-    expect(button()).toHaveTextContent('Test connection')
+    expect(within(box).getByRole('status')).toHaveTextContent(/^Connected/)
+    expect(button()).toHaveTextContent(/^Test$/)
     expect(button()).toBeEnabled()
   })
 
@@ -92,6 +93,11 @@ describe('settings: Test connection for Amazon S3 [spec "Test connection (S3)"]'
     fake.onCommand('storage.checkS3', () => refused)
     await userEvent.click(button())
     expect(within(box).getByRole('status')).toHaveTextContent(WRONG_KEYS)
+    expect(within(box).getByRole('status')).toHaveTextContent(/^Failed/)
+    const notice = within(box)
+      .getAllByText(WRONG_KEYS)
+      .find((n) => n.tagName === 'P')
+    expect(notice).toBeVisible()
   })
 
   it.each([

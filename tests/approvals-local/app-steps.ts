@@ -24,22 +24,31 @@ async function saveKey(page: Page, box: string, label: string, value: string) {
   await expect(row.getByText(/Saved, ends in/)).toBeVisible()
 }
 
+// A Publish page service row's form shows only while the row is open (SET-4).
+async function openRow(box: Locator, name: string) {
+  const row = box.getByRole('button', { name, exact: true, expanded: false })
+  if ((await row.count()) > 0) await row.click()
+}
+
 // Settings: a made-up bucket and keys, then the service's address and key and "Test connection".
 export async function setUpSettings(page: Page, origin: string, key: string): Promise<void> {
   await screens.openSettingsPage(page, 'Publish')
   const s3 = page.getByRole('region', { name: 'Cloud storage' })
+  await openRow(s3, 'Amazon S3')
   await s3.getByLabel('Bucket', { exact: true }).fill('made-up-adman-pictures')
   await s3.getByLabel('Region', { exact: true }).fill('eu-west-1')
   await s3.getByRole('button', { name: 'Save', exact: true }).click()
   await saveKey(page, 'Cloud storage', 'Amazon S3 Access key ID', 'MADEUPKEYIDQ7RT')
   await saveKey(page, 'Cloud storage', 'Amazon S3 Secret access key', 'made-up-secret-key-0001')
   const box = page.getByRole('region', { name: 'Approvals service' })
+  await openRow(box, 'Approvals')
   await box.getByLabel('Service address').fill(origin)
   await box.getByRole('button', { name: 'Save', exact: true }).click()
   await expect(box.getByRole('button', { name: 'Remove' })).toBeVisible()
   await saveKey(page, 'Approvals service', 'Service API key', key)
   await box.getByRole('button', { name: 'Test connection' }).click()
-  await expect(box.getByRole('status')).toHaveText('Connected.', { timeout: 30_000 })
+  // The row's mark reads "Connected"; its tip, "Connected.", is in the same status region.
+  await expect(box.getByRole('status')).toContainText('Connected.', { timeout: 30_000 })
 }
 
 // A link with a chosen password, then the first gallery. Gives the link's address.

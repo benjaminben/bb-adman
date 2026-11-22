@@ -1,26 +1,16 @@
 /* app-style */
-.part {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding-top: var(--space-3);
-  border-top: var(--border-width) solid var(--color-line);
-}
-.subheading {
-  margin: 0;
-  font-size: var(--font-size-body);
-}
-.line {
-  margin: 0;
-  word-break: break-word;
-}
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--gap-field);
 }
-.hint {
+/* The waiting line: heard by a screen reader, not drawn (the row's mark shows "Waiting"). */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
   margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
