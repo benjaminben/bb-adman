@@ -1,5 +1,5 @@
-// P4-9 (spec/ai-jobs.md "Cut-out"): birefnet-cutout is a trial, so comfy.getInfo marks it
-// offered only with the hand-test tools on.
+// P4-9 (spec/ai-jobs.md "Cut-out"): birefnet-cutout is proven [D-103], so comfy.getInfo marks
+// it offered with the hand-test tools on or off.
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeComfyFixture, type ComfyFixture } from '../generation/comfy-fixture'
 import { data } from '../core-fixture'
@@ -17,11 +17,11 @@ async function cutout(devTools: boolean) {
 describe('comfy.getInfo and the cut-out workflow [P4-9]', () => {
   it.each([
     [true, true],
-    [false, false],
+    [false, true],
   ])('with the hand-test tools %s, marks birefnet-cutout offered: %s', async (tools, offered) => {
     expect(await cutout(tools)).toMatchObject({
       job: 'cutout',
-      status: 'trial',
+      status: 'proven',
       offered,
       licence: { name: 'MIT', commercialNote: null },
     })

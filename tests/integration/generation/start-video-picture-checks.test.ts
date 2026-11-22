@@ -2,13 +2,19 @@
 // generation.startVideo comes before any job row and before any request to the stand-in.
 import fs from 'node:fs'
 import path from 'node:path'
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { makeComfyFixture, type ComfyFixture } from './comfy-fixture'
 import { startComfyStandIn, type StandIn } from '../../helpers/comfy-stand-in'
 import { serveNeeds, serveVideo } from '../../helpers/comfy-run'
 import { insertTestAsset } from '../assets/asset-rows'
 import { greyPng } from '@/main/providers/fake/png'
 import { vp8x, webp } from '../../fixtures/webp-bytes'
+
+// [D-103] The shipped workflows are proven. This file proves the trial rule, so it runs on
+// a copy of the list where each of them is a trial (tests/helpers/trial-workflows.ts).
+vi.mock('@/main/providers/comfyui/workflows', async (load) =>
+  (await import('../../helpers/trial-workflows')).asTrial(await load()),
+)
 
 let f: ComfyFixture
 let stand: StandIn | null = null
