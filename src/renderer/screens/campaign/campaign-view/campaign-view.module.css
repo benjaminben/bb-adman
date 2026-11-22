@@ -7,24 +7,3 @@
   height: 100%;
   min-height: 0;
 }
-/* The page head: back, the campaign's name in the title face, its actions at the right end. */
-.head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-}
-/* The name takes the room left and ends in an ellipsis, so the actions keep the name's row. */
-.name {
-  flex: 1 1 0;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  margin: 0;
-  font-family: var(--font-title);
-  font-size: var(--font-size-page);
-  font-weight: var(--weight-title);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-title);
-}

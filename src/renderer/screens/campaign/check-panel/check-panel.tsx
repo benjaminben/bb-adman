@@ -4,7 +4,7 @@
 // on project.changed (check.run emits it). Blocks follow the campaign's variant order.
 import { useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
-import type { CampaignSectionProps } from '@/renderer/screens/campaign/campaign-sections'
+import type { CampaignTabProps as CampaignSectionProps } from '@/renderer/screens/campaign/campaign-overview'
 import { BusySpinner } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
 import type { VariantCheckState } from '@/shared/schemas/queries/check'

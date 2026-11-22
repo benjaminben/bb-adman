@@ -11,6 +11,9 @@
 // P5-14 (spec/screens-variants.md, "The overview"): the overview shows the campaign's Undo and
 // Redo, then one grid per direction in place of the one grid.
 // P9-13: "Publish…" sits in the header beside "Export…" and "Reports".
+// R2C-1 (spec/phases/round-2-campaign.md, design addition 1): the head is its own component;
+// the overview is the view bar (Variants, Checks, Translations, with Undo and Redo) and the
+// shown view. The page keeps the stores and which view shows.
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useStore } from 'zustand'
 import { useApi, useApp } from '@/renderer/app/app-context'
@@ -18,21 +21,15 @@ import { NavScope, useNav } from '@/renderer/app/nav-context'
 import { createApprovalsStore } from '@/renderer/stores/approvals-store'
 import { createJobStore } from '@/renderer/stores/job-store'
 import { OVERVIEW_TAB, campaignNav } from '@/renderer/stores/nav-store'
-import { ApprovalBar } from '@/renderer/screens/campaign/approval-bar'
 import { approvalFooter } from '@/renderer/screens/campaign/approval-mark'
-import { CampaignExport } from '@/renderer/screens/campaign/campaign-export'
-import { CampaignSections } from '@/renderer/screens/campaign/campaign-sections'
-import { CampaignUndo } from '@/renderer/screens/campaign/campaign-undo'
-import { DirectionGrids } from '@/renderer/screens/campaign/direction-grids'
-import { GeneratePanel } from '@/renderer/screens/campaign/generate-panel'
-import { PublishButton } from '@/renderer/screens/campaign/publish-button'
-import { RunList } from '@/renderer/screens/campaign/run-list'
-import { SlotView } from '@/renderer/screens/campaign/slot-view'
+import { CampaignHead } from '@/renderer/screens/campaign/campaign-head'
+import {
+  CampaignOverview,
+  type CampaignViewName,
+} from '@/renderer/screens/campaign/campaign-overview'
 import { VariantTabs } from '@/renderer/screens/campaign/variant-tabs'
-import { VideoPanel } from '@/renderer/screens/campaign/video-panel'
-import { Icon } from '@/renderer/ui/icon'
+import { VariantsTab } from '@/renderer/screens/campaign/variants-tab'
 import { PaidCount } from '@/renderer/ui/paid-count'
-import { ReferenceRowsContext } from '@/renderer/ui/reference-picker/use-picture-list'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './campaign-view.module.css'
 import { useCampaign } from './use-campaign'
@@ -57,6 +54,8 @@ function CampaignPage(props: Props) {
   if (shown !== OVERVIEW_TAB && shown !== chosenId) setChosenId(shown)
   // SPEC 14 1.46 TP-5: reference ticks last while the page is open, across variants.
   const [ticks, setTicks] = useState<string[]>([])
+  // R2C-1 (A-303): the overview's view is the page's, kept while a variant tab is shown.
+  const [view, setView] = useState<CampaignViewName>('variants')
   const variants = data?.variants
   const variant = variants?.find((v) => v.id === chosenId) ?? variants?.[0]
   const variantId = variant?.id ?? null
@@ -80,75 +79,39 @@ function CampaignPage(props: Props) {
   }, [keepVariants, projectId, campaignId, variants])
 
   const overview = data && (
-    <>
-      <CampaignUndo projectId={projectId} campaignId={campaignId} />
-      <DirectionGrids
-        projectId={projectId}
-        campaign={data}
-        chosenId={variantId}
-        onChoose={(id) => openVariant(projectId, campaignId, id)}
-        onOpenBehind={(id) => openVariant(projectId, campaignId, id, true)}
-        tileFooter={approvalFooter(approvalsData)}
-      />
-      {variant && (
-        <p>
-          Runs and panels below are for: {variant.title} · {variant.sizeLabel} · {variant.language}
-        </p>
-      )}
-      <SlotView projectId={projectId} campaignId={campaignId} />
-      {variant && (
-        <ReferenceRowsContext.Provider value={preTick}>
-          <GeneratePanel
-            key={variant.id}
-            projectId={projectId}
-            campaignId={campaignId}
-            variantId={variant.id}
-            data={data}
-            ticks={ticks}
-            setTicks={setTicks}
-            onStarted={(reply) => store.getState().track(reply)}
-          />
-        </ReferenceRowsContext.Provider>
-      )}
-      {variant && (
-        <VideoPanel
-          key={`video-${variant.id}`}
+    <CampaignOverview
+      projectId={projectId}
+      campaignId={campaignId}
+      data={data}
+      view={view}
+      onView={setView}
+      variants={
+        <VariantsTab
           projectId={projectId}
-          variantId={variant.id}
-          subjectId={variant.subjectIds[0]}
-          onStarted={(reply) => store.getState().track(reply)}
+          campaignId={campaignId}
+          data={data}
+          variant={variant}
+          store={store}
+          ticks={ticks}
+          setTicks={setTicks}
+          preTick={preTick}
+          onChoose={(id) => openVariant(projectId, campaignId, id)}
+          onOpenBehind={(id) => openVariant(projectId, campaignId, id, true)}
+          tileFooter={approvalFooter(approvalsData)}
         />
-      )}
-      <RunList projectId={projectId} store={store} />
-      <CampaignSections projectId={projectId} campaignId={campaignId} data={data} />
-    </>
+      }
+    />
   )
 
   return (
     <section className={styles.page} aria-label="Campaign">
-      <div className={styles.head}>
-        <button type="button" className={layout.quiet} onClick={props.onBack}>
-          <Icon name="left" />
-          Back to project
-        </button>
-        {data && <h2 className={styles.name}>{data.campaign.name}</h2>}
-        {data && (
-          <ApprovalBar
-            projectId={projectId}
-            campaignId={campaignId}
-            store={approvals}
-            titles={Object.fromEntries(data.variants.map((v) => [v.id, v.title]))}
-          />
-        )}
-        <CampaignExport projectId={projectId} campaignId={campaignId} />
-        {data && (
-          <PublishButton
-            projectId={projectId}
-            campaignId={campaignId}
-            campaignName={data.campaign.name}
-          />
-        )}
-      </div>
+      <CampaignHead
+        projectId={projectId}
+        campaignId={campaignId}
+        data={data}
+        approvals={approvals}
+        onBack={props.onBack}
+      />
       {shown === OVERVIEW_TAB && <PaidCount projectId={projectId} campaignId={campaignId} />}
       {data === null ? (
         <p className={layout.muted}>Loading the campaign…</p>

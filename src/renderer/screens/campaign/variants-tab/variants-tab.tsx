@@ -1,0 +1,76 @@
+// R2C-1 (spec/phases/round-2-campaign.md, design addition 1): the overview's Variants view,
+// moved out of campaign-view.tsx. One grid per direction (P5-14), the line naming the chosen
+// variant (S2-16), the slot view, the picture panel for the chosen variant with the reference
+// ticks the page keeps (SP-7, A-120), the "Make a video" card under it (SPEC 14 1.57 TP-6;
+// another round-2 slice removes it, R-13), and the chosen variant's runs.
+import type { Dispatch, ReactNode, SetStateAction } from 'react'
+import { DirectionGrids } from '@/renderer/screens/campaign/direction-grids'
+import { GeneratePanel } from '@/renderer/screens/campaign/generate-panel'
+import { RunList } from '@/renderer/screens/campaign/run-list'
+import { SlotView } from '@/renderer/screens/campaign/slot-view'
+import { VideoPanel } from '@/renderer/screens/campaign/video-panel'
+import type { JobStore } from '@/renderer/stores/job-store'
+import { ReferenceRowsContext } from '@/renderer/ui/reference-picker/use-picture-list'
+import type { AssetList } from '@/shared/schemas/queries/asset'
+import type { CampaignGet, VariantSummary } from '@/shared/schemas/queries/campaign'
+import styles from './variants-tab.module.css'
+
+export type VariantsTabProps = {
+  projectId: string
+  campaignId: string
+  data: CampaignGet
+  variant: VariantSummary | undefined
+  store: JobStore
+  ticks: string[]
+  setTicks: Dispatch<SetStateAction<string[]>>
+  preTick: (rows: AssetList) => void
+  onChoose: (variantId: string) => void
+  onOpenBehind: (variantId: string) => void
+  tileFooter?: (variant: VariantSummary) => ReactNode
+}
+
+export function VariantsTab(props: VariantsTabProps) {
+  const { projectId, campaignId, data, variant, store } = props
+  return (
+    <div className={styles.tab}>
+      <DirectionGrids
+        projectId={projectId}
+        campaign={data}
+        chosenId={variant?.id ?? null}
+        onChoose={props.onChoose}
+        onOpenBehind={props.onOpenBehind}
+        tileFooter={props.tileFooter}
+      />
+      {variant && (
+        <p>
+          Runs and panels below are for: {variant.title} · {variant.sizeLabel} · {variant.language}
+        </p>
+      )}
+      <SlotView projectId={projectId} campaignId={campaignId} />
+      {variant && (
+        <ReferenceRowsContext.Provider value={props.preTick}>
+          <GeneratePanel
+            key={variant.id}
+            projectId={projectId}
+            campaignId={campaignId}
+            variantId={variant.id}
+            data={data}
+            ticks={props.ticks}
+            setTicks={props.setTicks}
+            onStarted={(reply) => store.getState().track(reply)}
+          />
+        </ReferenceRowsContext.Provider>
+      )}
+      {variant && (
+        <VideoPanel
+          key={`video-${variant.id}`}
+          projectId={projectId}
+          variantId={variant.id}
+          subjectId={variant.subjectIds[0]}
+          onStarted={(reply) => store.getState().track(reply)}
+        />
+      )}
+      <RunList projectId={projectId} store={store} />
+    </div>
+  )
+}

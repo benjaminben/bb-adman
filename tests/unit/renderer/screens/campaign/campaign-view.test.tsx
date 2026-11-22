@@ -110,4 +110,17 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
     ).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Back to overview' })).toBeNull()
   })
+
+  it('keeps the chosen view while a variant tab is shown and back again [R2C-1, A-303]', async () => {
+    await renderWith(view())
+    await userEvent.click(await screen.findByRole('button', { name: /^German post/ }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Checks' }))
+    expect(screen.getByRole('region', { name: 'Checks' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('tab', { name: 'German post · 1:1 · de' }))
+    expect(screen.queryByRole('tab', { name: 'Checks' })).toBeNull()
+    await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
+    expect(screen.getByRole('tab', { name: 'Checks' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('region', { name: 'Checks' })).toBeInTheDocument()
+  })
 })
