@@ -8,6 +8,7 @@ import { finishRun, serveNeeds } from '../../helpers/comfy-run'
 import { data } from '../core-fixture'
 import { greyPng } from '@/main/providers/fake/png'
 import { freePort } from './http-client'
+import { seedAiTargets } from './ai-tools-fixture'
 import { replyJson, toolSession, type ToolReply, type ToolSession } from './tool-client'
 import type { Size } from '@/shared/comfy/fit-size'
 
@@ -38,11 +39,15 @@ export async function runSetUp(
     origin: stand.origin,
     // P10-3: render_variant draws through this stand-in, a grey PNG.
     drawScene: async () => ({ png: greyPng(4, 4), overflow: {} }),
+    // P10-5: the AI tools run on the fake provider, which makes no network call.
+    env: { ADMAN_FAKE_PROVIDERS: '1' },
     ...(opts.fitPicture && { fitPicture: opts.fitPicture }),
   })
   if (opts.ticked !== false) {
     data(await user(f, 'agentRuns.setAllowed', { provider: 'comfyui', allowed: true }))
+    data(await user(f, 'agentRuns.setAllowed', { provider: 'fake', allowed: true }))
   }
+  await seedAiTargets(f)
   data(await user(f, 'settings.update', { mcp: { port: await freePort() } }))
   data(await user(f, 'mcp.setEnabled', { enabled: true }))
   const token = f.core.secrets.get('mcp.token')

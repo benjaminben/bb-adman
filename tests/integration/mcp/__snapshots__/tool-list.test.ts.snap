@@ -1709,6 +1709,103 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     "name": "reorder_layers",
   },
   {
+    "description": "Start a run that proposes where the text of one variant of an open project goes. The variant needs a visible text layer with text. When the run has succeeded, get_job gives layout.boxes: for each text layer, by its key in slot, x, y, width, height, fontSize, align and color. Nothing is changed by the run; apply the boxes with update_layers. provider is "gemini" (paid, charged to the user's Google account with no click). Runs are refused unless the user allowed agents for that provider in Adman's Settings. Gives the job ID at once; follow the run with get_job. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "provider": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "variant_id",
+        "provider",
+      ],
+      "type": "object",
+    },
+    "name": "propose_layout",
+  },
+  {
+    "description": "Start a run that writes count other texts for one text layer of a variant of an open project (not the headline, which is the campaign message). When the run has succeeded, get_job gives copyOptions, a list of texts. Nothing is changed by the run; put a text on the layer with update_layer. provider is "gemini" (paid, charged to the user's Google account with no click). Runs are refused unless the user allowed agents for that provider in Adman's Settings. Gives the job ID at once; follow the run with get_job. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "count": {
+          "maximum": 8,
+          "minimum": 1,
+          "type": "integer",
+        },
+        "layer_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "provider": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "variant_id",
+        "layer_id",
+        "count",
+        "provider",
+      ],
+      "type": "object",
+    },
+    "name": "copy_options",
+  },
+  {
+    "description": "Start a run that cuts the picture of one picture layer of a variant of an open project out from its background. When the run has succeeded, get_job gives the new picture's asset ID in assetIds. provider is "comfyui" (the user's own ComfyUI server, no charge). Runs are refused unless the user allowed agents for that provider in Adman's Settings. Gives the job ID at once; follow the run with get_job. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "layer_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "provider": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "variant_id",
+        "layer_id",
+        "provider",
+      ],
+      "type": "object",
+    },
+    "name": "cut_out",
+  },
+  {
     "description": "Delete a campaign of an open project, with its directions, variants, layers and reports. This cannot be undone. The user is asked in the app every time, and this call waits up to two minutes for the answer. A refusal is final: do not ask again for the same campaign unless the user tells you to.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
