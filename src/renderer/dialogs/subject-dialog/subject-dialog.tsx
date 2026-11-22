@@ -56,6 +56,9 @@ export function SubjectDialog(props: SubjectDialogProps) {
     setForm(start(subject))
   }
   const change = (part: Partial<Form>) => setForm((f) => ({ ...f, ...part }))
+  // A field the user changes clears the lines of the last try.
+  const edit = (part: (f: Form) => Partial<Form>) =>
+    setForm((f) => ({ ...f, ...part(f), problems: [], refusal: null }))
 
   function problemsFound(): boolean {
     const problems = subjectProblems({ name: form.name, photos: subject ? null : form.paths })
@@ -67,7 +70,7 @@ export function SubjectDialog(props: SubjectDialogProps) {
 
   async function addPhotos() {
     const picked = await pickPhotos(api)
-    if (picked.length > 0) setForm((f) => ({ ...f, paths: [...f.paths, ...picked] }))
+    if (picked.length > 0) edit((f) => ({ paths: [...f.paths, ...picked] }))
   }
 
   async function create() {
@@ -153,7 +156,7 @@ export function SubjectDialog(props: SubjectDialogProps) {
               disabled={busy}
               aria-required="true"
               aria-invalid={form.problems.some((p) => p.field === 'name')}
-              onChange={(e) => change({ name: e.target.value })}
+              onChange={(e) => edit(() => ({ name: e.target.value }))}
             />
           </div>
           <div className={layout.field}>
@@ -163,7 +166,7 @@ export function SubjectDialog(props: SubjectDialogProps) {
               rows={3}
               value={form.description}
               disabled={busy}
-              onChange={(e) => change({ description: e.target.value })}
+              onChange={(e) => edit(() => ({ description: e.target.value }))}
             />
           </div>
           {!subject && (
@@ -172,7 +175,7 @@ export function SubjectDialog(props: SubjectDialogProps) {
               disabled={busy}
               ref={addRef}
               onAdd={() => void addPhotos()}
-              onRemove={(index) => change({ paths: form.paths.filter((_, i) => i !== index) })}
+              onRemove={(index) => edit((f) => ({ paths: f.paths.filter((_, i) => i !== index) }))}
             />
           )}
           {alerts.length > 0 && (

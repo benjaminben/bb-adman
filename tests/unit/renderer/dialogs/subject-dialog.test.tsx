@@ -75,6 +75,14 @@ describe('SubjectDialog, New [R2C-6]', () => {
     expect(fake.commands).toEqual([])
   })
 
+  it('clears the problem lines once a field changes', async () => {
+    await open()
+    await userEvent.click(screen.getByRole('button', { name: 'Create subject' }))
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    await userEvent.type(field('Name'), 'H')
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
   it('lists the picked files by base name only, and removes one', async () => {
     const { fake, dialog } = await open()
     await fillAndPick()

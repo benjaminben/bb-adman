@@ -22,6 +22,29 @@ test.afterEach(async () => {
 
 const panel = (page: Page) => page.getByRole('region', { name: 'Assets' })
 
+// A drawn stand-in for a portrait (a head and shoulders in flat shapes), as a PNG file.
+async function drawPortrait(page: Page, to: string): Promise<string> {
+  const url = await page.evaluate(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 240
+    canvas.height = 240
+    const g = canvas.getContext('2d')!
+    g.fillStyle = '#d9e4ec'
+    g.fillRect(0, 0, 240, 240)
+    g.fillStyle = '#3d5a73'
+    g.beginPath()
+    g.ellipse(120, 240, 90, 70, 0, Math.PI, 0)
+    g.fill()
+    g.fillStyle = '#c99a7a'
+    g.beginPath()
+    g.arc(120, 105, 48, 0, Math.PI * 2)
+    g.fill()
+    return canvas.toDataURL('image/png')
+  })
+  fs.writeFileSync(to, Buffer.from(url.split(',')[1]!, 'base64'))
+  return to
+}
+
 // Two subjects, one with a photo; the photo file stays in the sandbox (linked), so picking it
 // again later is a reused file.
 async function fillProject(page: Page, folder: string, projectId: string): Promise<string[]> {
@@ -30,7 +53,7 @@ async function fillProject(page: Page, folder: string, projectId: string): Promi
     fs.copyFileSync(path.join(PHOTOS, from), to)
     return to
   }
-  const portrait = copy('berry-bottle.png', 'linnea-portrait.png')
+  const portrait = await drawPortrait(page, path.join(folder, 'linnea-portrait.png'))
   const tins = [copy('citrus-can.png', 'tin-front.png'), copy('berry-bottle.png', 'tin-side.png')]
   await command(page, 'subject.create', {
     projectId,
