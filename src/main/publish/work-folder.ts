@@ -14,8 +14,12 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { errnoCode, LocalFailure } from '@/main/jobs/local-failure'
 import { isUlid } from '@/shared/publish/paths'
+import type { EXPORT_WORK } from '@/main/export/video/work-dir'
 
 export const WORK_FOLDER = 'publish-work'
+
+// The two bases there are (P8-17): never a free string.
+export type WorkBase = typeof WORK_FOLDER | typeof EXPORT_WORK
 
 export type WorkFolder = { path: string; remove(): Promise<void> }
 
@@ -24,7 +28,7 @@ const inUse = new Set<string>()
 const unsafe = () => new LocalFailure('work_folder_unsafe')
 const MODE = 0o700
 
-async function baseFolder(userDataDir: string, name: string): Promise<string> {
+async function baseFolder(userDataDir: string, name: WorkBase): Promise<string> {
   const base = path.join(userDataDir, name)
   let stats = await fs.lstat(base).catch((e: unknown) => {
     if (errnoCode(e) !== 'ENOENT') throw unsafe()
@@ -63,7 +67,7 @@ async function removeLeftovers(base: string): Promise<void> {
 export async function makeWorkFolder(
   userDataDir: string,
   jobId: string,
-  name: string = WORK_FOLDER,
+  name: WorkBase = WORK_FOLDER,
 ): Promise<WorkFolder> {
   if (!isUlid(jobId)) throw unsafe()
   const base = await baseFolder(userDataDir, name)
@@ -84,7 +88,7 @@ export async function makeWorkFolder(
 
 // At app start: the leftovers of the base `name`, when it is a real folder at its real path.
 // Nothing is made, and nothing fails.
-export async function sweepWorkFolders(userDataDir: string, name: string): Promise<void> {
+export async function sweepWorkFolders(userDataDir: string, name: WorkBase): Promise<void> {
   const stats = await fs.lstat(path.join(userDataDir, name)).catch(() => null)
   if (!stats?.isDirectory()) return
   const base = await baseFolder(userDataDir, name).catch(() => null)

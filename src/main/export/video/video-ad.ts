@@ -27,9 +27,15 @@ import { makeWorkDir } from './work-dir'
 
 const SYSTEMS: ReadonlySet<NodeJS.Platform> = new Set(['darwin', 'win32'])
 
-// The encode's time limit: a minute, and a second for each frame drawn.
+// The encode's time limit: a minute, and a second for each frame drawn, at most the largest
+// timer Node accepts (a larger one fires at once).
 const ENCODE_BASE_MS = 60_000
 const PER_FRAME_MS = 1_000
+const LARGEST_TIMER_MS = 2 ** 31 - 1
+
+export function encodeTimeLimitMs(frames: number): number {
+  return Math.min(LARGEST_TIMER_MS, ENCODE_BASE_MS + frames * PER_FRAME_MS)
+}
 
 const notMade = () => new ExportFailure(AD_FAILURES.videoNotMade)
 const NO_FOLLOW = constants.O_NOFOLLOW ?? 0
@@ -78,7 +84,7 @@ async function encode(
   const frames: SceneInput = { ...scene, mode: 'overlay-only' }
   const draw = (i: number) => jc.deps.render.drawFull({ ...frames, timeMs: frameTimeMs(i, fps) })
   const result = await jc.deps.media.ffmpeg.run(args, workDir, {
-    timeoutMs: ENCODE_BASE_MS + count * PER_FRAME_MS,
+    timeoutMs: encodeTimeLimitMs(count),
     signal: jc.signal,
     feed: (sink) => pipeFrames({ count, draw, sink, signal: jc.signal }),
   })
