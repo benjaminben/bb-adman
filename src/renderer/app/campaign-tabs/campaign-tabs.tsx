@@ -1,8 +1,9 @@
 // spec/editor.md, "The shell" [FR-211, FR-218]: the shown project's tabs, labelled "Open
-// campaigns": a fixed "Project" tab (the project home), one tab per open campaign named after
-// it with its job marks and a close button ("Close {name}"), then a "+" button ("New campaign",
-// with the same tooltip) that shows the Project tab and asks its project home to open the
-// typed brief form (R2-Q). Names and marks come from project.get; a campaign
+// campaigns": a fixed "Project" tab (the project home: a home icon, its name "Project" hidden,
+// tooltip "Project home"), one tab per open campaign named after it with its job marks (the
+// tab keeps room for one) and a close button ("Close {name}"), then a "+" icon button ("New
+// campaign", with the same tooltip) that shows the Project tab and asks its project home to
+// open the typed brief form (R2-Q). Names and marks come from project.get; a campaign
 // that is gone loses its tab. It goes inside a Tabs.Root driven by useCampaignTab. Closing a
 // campaign tab while an attached job of its variant tabs, or of the campaign itself (its
 // translation jobs, P6-13), runs asks first (spec/screens-ai.md).
@@ -14,7 +15,16 @@ import { campaignJobs, variantJobs } from '@/renderer/stores/attached-store'
 import { useCloseWarning } from '@/renderer/ui/close-warning'
 import { TabMarks, anyMark } from '@/renderer/ui/tab-marks'
 import { TabRow, type TabItem } from '@/renderer/ui/tab-row'
+import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './campaign-tabs.module.css'
+
+const PROJECT_LABEL = (
+  <span className={styles.home} title="Project home">
+    <Icon name="home" />
+    <span className={styles.hidden}>Project</span>
+  </span>
+)
 
 export function useCampaignTab(projectId: string) {
   const value = useNav((s) => projectNav(s, projectId).shown)
@@ -49,7 +59,7 @@ export function CampaignTabs(props: { projectId: string }) {
       )
   }, [keepCampaigns, projectId, campaigns])
 
-  const items: TabItem[] = [{ value: PROJECT_TAB, label: 'Project' }]
+  const items: TabItem[] = [{ value: PROJECT_TAB, label: PROJECT_LABEL }]
   for (const id of nav.campaignTabs) {
     const c = campaigns?.find((one) => one.id === id)
     if (!c) continue
@@ -68,7 +78,7 @@ export function CampaignTabs(props: { projectId: string }) {
       <TabRow label="Open campaigns" items={items} value={shown} look="bar" />
       <button
         type="button"
-        className={styles.add}
+        className={`${layout.iconButton} ${styles.add}`}
         aria-label="New campaign"
         title="New campaign"
         onClick={() => {
@@ -76,7 +86,7 @@ export function CampaignTabs(props: { projectId: string }) {
           askNewCampaign(projectId)
         }}
       >
-        +
+        <Icon name="plus" />
       </button>
       {warning}
     </div>

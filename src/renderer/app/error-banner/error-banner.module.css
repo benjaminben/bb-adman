@@ -5,8 +5,3 @@
   border-radius: 0;
   border-bottom: var(--border-width) solid var(--color-line);
 }
-.alert > button {
-  min-height: var(--control-height-small);
-  padding: 0 var(--space-2);
-  font-size: var(--font-size-small);
-}

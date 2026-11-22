@@ -1,6 +1,6 @@
 /* app-style */
-/* The marks on a tab (spec/app-style.md, "App shell and tabs"): "Running" with a turning
-   spinner, a dot in the spot colour with a soft ring that pulses three times, and the
+/* The marks on a tab (spec/app-style.md, "App shell and tabs"; SH-1): a turning spinner in a
+   slot of a fixed size, so the tab does not widen when a run starts, a dot in the spot colour with a soft ring that pulses three times, and the
    attention dot. The spinner icon turns by itself (icon.module.css); the pulse stops with
    reduce motion. */
 .marks {
@@ -9,17 +9,27 @@
   gap: var(--space-1);
   margin-left: var(--space-1);
 }
-.running {
+.slot {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
-  font-weight: var(--weight-regular);
+  justify-content: center;
+  flex: none;
+  width: var(--icon-size-small);
+  height: var(--icon-size-small);
 }
-.spin {
+.running {
+  position: relative;
   display: inline-flex;
   color: var(--color-accent);
+}
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .dot,
 .attention {

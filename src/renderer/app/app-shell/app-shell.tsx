@@ -1,5 +1,5 @@
 // The window frame (spec/editor.md, "The shell"): the top row holds the project switcher, the
-// campaign tabs of the shown project, then "Settings". Below: the error alert and the shown
+// campaign tabs of the shown project, then the Activity and Settings icon buttons (SH-1). Below: the error alert and the shown
 // screen. One nav store for the window; a
 // project that closes loses its tabs. The tab keys act on the shown project. Also the dialogs
 // the app store opens: the key dialog, the address dialog and the licence dialog.
@@ -23,6 +23,7 @@ import { KeyDialog } from '@/renderer/dialogs/key-dialog'
 import { AddressDialog } from '@/renderer/dialogs/address-dialog'
 import { LicenceDialog } from '@/renderer/dialogs/licence-dialog'
 import { Icon } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import { PROJECT_TAB } from '@/renderer/stores/nav-store'
 import { generateDrafts } from '@/renderer/stores/generate-drafts'
 import type { OpenProjectSummary } from '@/shared/schemas/project'
@@ -38,12 +39,13 @@ function TopRow(props: { tabs?: ReactNode }) {
       <ActivityButton />
       <button
         type="button"
-        className={styles.settings}
+        className={`${layout.iconButton} ${styles.settings}`}
+        aria-label="Settings"
+        title="Settings"
         aria-pressed={view.kind === 'settings'}
         onClick={() => show({ kind: 'settings' })}
       >
         <Icon name="gear" />
-        Settings
       </button>
     </header>
   )

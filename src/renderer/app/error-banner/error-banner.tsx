@@ -1,5 +1,6 @@
 // The failed command message under the top bar: a danger notice with the alert icon across the
-// full width (spec/app-style.md, "App shell and tabs").
+// full width (spec/app-style.md, "App shell and tabs"). Its close control is an "x" icon
+// button named "Dismiss" (SH-1).
 import { useApp } from '@/renderer/app/app-context'
 import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
@@ -13,8 +14,14 @@ export function ErrorBanner() {
     <div role="alert" className={`${layout.notice} ${layout.danger} ${styles.alert}`}>
       <Icon name="alert" />
       <span>{error}</span>
-      <button type="button" onClick={clear}>
-        Dismiss
+      <button
+        type="button"
+        className={layout.iconButton}
+        aria-label="Dismiss"
+        title="Dismiss"
+        onClick={clear}
+      >
+        <Icon name="x" />
       </button>
     </div>
   )
