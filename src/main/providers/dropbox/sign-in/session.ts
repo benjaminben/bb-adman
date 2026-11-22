@@ -1,7 +1,8 @@
 // One Dropbox sign-in at a time (spec/phases/phase-09.md "The sign-in redirect"; security class
 // full). Order: in progress, canStore(), listen, openExternal, wait, exchange, account, save the
 // token, save the settings, revoke an old token (a failure after the exchange revokes the new
-// one instead, P9-5b). The code and verifier go only to exchangeCode;
+// one instead, P9-5b; a failed settings save puts the old token back, P9-6). A sign-out that
+// is running makes it refuse sign_in_in_progress (P9-6). The code and verifier go only to exchangeCode;
 // the authorize address (it holds state and the challenge) goes only to openExternal. No log
 // line, error or reply holds any of them, or a token: failures are logged by kind only.
 import type { CoreDeps } from '@/main/core-deps'
@@ -30,6 +31,12 @@ const REFRESH = 'dropbox.refreshToken'
 
 let waiting: RedirectWait | null = null
 let busy = false
+let signingOut = false
+
+// P9-6: set by sign-out for its whole run, so a sign-in cannot start in the middle of it.
+export function setDropboxSigningOut(value: boolean): void {
+  signingOut = value
+}
 
 // App quit (index.ts, before-quit): the listener closes, and the sign-in ends sign_in_failed.
 export function cancelDropboxSignIn(): void {
@@ -117,8 +124,15 @@ async function save(deps: SignInDeps, refreshToken: string, accessToken: string,
   )
   const old = deps.secrets.get(REFRESH)
   deps.secrets.set(REFRESH, refreshToken)
-  const kept = deps.settings.get().storage.dropbox?.rootPath ?? ''
-  deps.settings.setDropbox({ accountName, rootPath: isDropboxRootPath(kept) ? kept : '' })
+  try {
+    const kept = deps.settings.get().storage.dropbox?.rootPath ?? ''
+    deps.settings.setDropbox({ accountName, rootPath: isDropboxRootPath(kept) ? kept : '' })
+  } catch (error) {
+    // P9-6: the saved state goes back to what it was before the sign-in.
+    if (old === undefined) deps.secrets.delete(REFRESH)
+    else deps.secrets.set(REFRESH, old)
+    throw error
+  }
   return { accountName, old }
 }
 
@@ -152,7 +166,7 @@ export async function signInToDropbox(
   step: Step,
   { timeoutMs = SIGN_IN_TIMEOUT_MS }: SignInOptions = {},
 ): Promise<{ accountName: string }> {
-  if (busy) throw publishRefusal('sign_in_in_progress')
+  if (busy || signingOut) throw publishRefusal('sign_in_in_progress')
   busy = true
   try {
     return await signIn(deps, timeoutMs, step)
