@@ -63,6 +63,11 @@
   min-width: 0;
   pointer-events: none;
 }
+/* An open InfoTip's popover is drawn over the next Section's header. */
+.over:hover,
+.over:focus-within {
+  z-index: 2;
+}
 .over :is(button, a, input, select, [tabindex]) {
   pointer-events: auto;
 }
