@@ -2,7 +2,8 @@
 // class: the path comes from the window. It must be absolute, at most 4,096 characters, with
 // no NUL; its real path must be a folder, not the app data folder or inside it, nor the
 // project's assets folder or inside it. Every write goes under {real}/{campaignId}, so that
-// folder and the assets folder must not be the same, nor one inside the other (P8-5). The real
+// folder's real path and the assets folder must not be the same, nor one inside the other, and
+// the app data folder must not be at or inside it (P8-5). The real
 // path is the root from then on; the typed path is not used again. No path goes into an error
 // or a log line: every failure is one sentence.
 import fs from 'node:fs/promises'
@@ -63,12 +64,14 @@ export async function checkOutputDir(
     realOrNearest(deps.userDataDir),
     realOrNearest(assetsDirOf(project)),
   ])
-  const campaignFolder = path.join(real, campaignId)
+  // Real too: {real}/{campaignId} may already be a link.
+  const campaignFolder = await realOrNearest(path.join(real, campaignId))
   if (
     pathAtOrInside(userData, real) ||
     pathAtOrInside(assets, real) ||
     pathAtOrInside(assets, campaignFolder) ||
-    pathAtOrInside(campaignFolder, assets)
+    pathAtOrInside(campaignFolder, assets) ||
+    pathAtOrInside(campaignFolder, userData)
   ) {
     throw exportRefusal('output_dir_refused')
   }

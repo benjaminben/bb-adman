@@ -215,4 +215,34 @@ describe('checkOutputDir refuses a campaign folder that meets the assets folder 
       fs.realpathSync(folder),
     )
   })
+
+  it('refuses when the app data folder is {folder}/{campaignId}', async () => {
+    const { fx, project } = await open()
+    await refusedWith(fx, project, path.dirname(fx.userData), path.basename(fx.userData))
+  })
+
+  it.skipIf(!links)(
+    'refuses when {folder}/{campaignId} is a link to the assets folder',
+    async () => {
+      const { fx, project } = await open()
+      const folder = path.dirname(assetsDirOf(project))
+      fs.symlinkSync(assetsDirOf(project), path.join(folder, CAMPAIGN), 'dir')
+      await refusedWith(fx, project, folder, CAMPAIGN)
+    },
+  )
+
+  // A link to a folder that is neither the app data nor the assets folder passes this check, as
+  // the same folder would if picked directly; exportTarget then refuses every write through it,
+  // since its real path is outside the real root (target-confinement.test.ts).
+  it.skipIf(!links)('accepts {folder}/{campaignId} as a link to an unrelated folder', async () => {
+    const { fx, project } = await open()
+    const folder = path.join(fx.documents, 'Exports')
+    const elsewhere = path.join(fx.root, 'elsewhere')
+    fs.mkdirSync(folder)
+    fs.mkdirSync(elsewhere)
+    fs.symlinkSync(elsewhere, path.join(folder, CAMPAIGN), 'dir')
+    expect(await checkOutputDir(fx.core.deps, project, folder, CAMPAIGN)).toBe(
+      fs.realpathSync(folder),
+    )
+  })
 })
