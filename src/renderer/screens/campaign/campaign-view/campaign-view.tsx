@@ -10,6 +10,7 @@
 // SP-7 (A-120): the reference ticks start as the chosen variant's subject photos.
 // P5-14 (spec/screens-variants.md, "The overview"): the overview shows the campaign's Undo and
 // Redo, then one grid per direction in place of the one grid.
+// P9-13: "Publish…" sits in the header beside "Export…" and "Reports".
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useStore } from 'zustand'
 import { useApi, useApp } from '@/renderer/app/app-context'
@@ -24,6 +25,7 @@ import { CampaignSections } from '@/renderer/screens/campaign/campaign-sections'
 import { CampaignUndo } from '@/renderer/screens/campaign/campaign-undo'
 import { DirectionGrids } from '@/renderer/screens/campaign/direction-grids'
 import { GeneratePanel } from '@/renderer/screens/campaign/generate-panel'
+import { PublishButton } from '@/renderer/screens/campaign/publish-button'
 import { RunList } from '@/renderer/screens/campaign/run-list'
 import { SlotView } from '@/renderer/screens/campaign/slot-view'
 import { VariantTabs } from '@/renderer/screens/campaign/variant-tabs'
@@ -139,6 +141,13 @@ function CampaignPage(props: Props) {
           />
         )}
         <CampaignExport projectId={projectId} campaignId={campaignId} />
+        {data && (
+          <PublishButton
+            projectId={projectId}
+            campaignId={campaignId}
+            campaignName={data.campaign.name}
+          />
+        )}
       </div>
       {shown === OVERVIEW_TAB && <PaidCount projectId={projectId} campaignId={campaignId} />}
       {data === null ? (
