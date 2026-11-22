@@ -13,10 +13,13 @@ afterEach(async () => {
   f = undefined
 })
 
-const PACKAGED = { execPath: '/Applications/Adman.app/Contents/MacOS/Adman', packaged: true }
+const PACKAGED = {
+  execPath: '/Applications/Adman.app/Contents/MacOS/Adman',
+  packaged: true as const,
+}
 const DEV_EXE = '/made-up/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron'
-const UNPACKAGED = { execPath: DEV_EXE, packaged: false, appPath: '/made-up/adman' }
-const WINDOWS = { execPath: 'C:\\Program Files\\Adman\\Adman.exe', packaged: true }
+const UNPACKAGED = { execPath: DEV_EXE, packaged: false as const, appPath: '/made-up/adman' }
+const WINDOWS = { execPath: 'C:\\Program Files\\Adman\\Adman.exe', packaged: true as const }
 
 async function info(): Promise<ConnectInfo> {
   return data<ConnectInfo>(await f!.core.query('mcp.getConnectInfo', {}, { actor: 'user' }))

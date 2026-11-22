@@ -262,5 +262,5 @@ function startApp(): void {
   }
 }
 
-if (bridgeMode) runBridge()
+if (bridgeMode) runBridge(app, safeStorageCrypto)
 else startApp()

@@ -60,7 +60,7 @@ export function runRelay(opts: Opts): Promise<void> {
 
   async function toServer(m: JSONRPCMessage): Promise<void> {
     if (!http) return answerClosed(m)
-    const first = isInitializeRequest(m)
+    const first = isJSONRPCRequest(m) && isInitializeRequest(m)
     if (first) initializeId = m.id
     else await initializing
     const sent = http.send(m).catch(() => answerClosed(m))
