@@ -19,6 +19,12 @@ const PROVIDERS: ProviderInfo[] = [
       layout: 'gemini-3.5-flash-lite',
       text: 'gemini-3.5-flash-lite',
     },
+    // R3-2: the names a person reads for the models above.
+    modelLabels: {
+      image: 'Nano Banana 2.1',
+      layout: 'Gemini 3.5 Flash-Lite',
+      text: 'Gemini 3.5 Flash-Lite',
+    },
     ...REMOTE,
   },
   {
@@ -30,6 +36,7 @@ const PROVIDERS: ProviderInfo[] = [
     available: true,
     secrets: ['fal.apiKey'],
     defaultModels: { video: 'bytedance/seedance-2.0/image-to-video' },
+    modelLabels: { video: 'Seedance 2.0' },
     ...REMOTE,
     cancel: 'may_finish',
   },
@@ -44,6 +51,8 @@ const PROVIDERS: ProviderInfo[] = [
     available: true,
     secrets: [],
     defaultModels: {},
+    // R3-2: no fixed model; the workflow a run gets names it (WorkflowFacts.model.label).
+    modelLabels: {},
     local: true,
     cancel: 'stops',
     serverText: true,
