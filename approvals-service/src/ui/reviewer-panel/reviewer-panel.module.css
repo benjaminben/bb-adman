@@ -1,0 +1,36 @@
+/* spec/phases/round-2-approvals.md "The page: layout": a block at the top of a narrow page, a
+   sticky column on a wide one. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+  padding: var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-line);
+  background: var(--color-surface-soft);
+}
+
+@media (min-width: 48rem) {
+  .panel {
+    position: sticky;
+    top: 0;
+    flex: none;
+    width: var(--gallery-sidebar);
+    height: 100dvh;
+    overflow-y: auto;
+    padding: var(--space-6);
+    border-right: var(--border-width) solid var(--color-line);
+    border-bottom: 0;
+  }
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-title);
+  overflow-wrap: anywhere;
+}
+
+.instructions {
+  margin: 0;
+  color: var(--color-text-secondary);
+}

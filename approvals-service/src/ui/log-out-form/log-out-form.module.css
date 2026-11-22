@@ -1,0 +1,17 @@
+/* A quiet button: the full tap height, its words lined up with the sidebar's left edge. */
+.quiet {
+  min-height: var(--gallery-tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.quiet:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
