@@ -94,7 +94,8 @@ describe('collectComponents, folders [P9-7, A-222]', () => {
     })
     expect(row(SUBJ)?.remotePath).toBe(`components/subjects/${SUBJECT}/Hero-00000005.png`)
     expect(row(FONT_OK)).toMatchObject({ folder: 'fonts', kind: 'font', share: 'needs_confirming' })
-    expect(row(FONT_OK)?.remotePath).toBe('components/fonts/Open Sans-00000006.ttf')
+    // P9-10 ruling: the project flag alone gives no upload path, only local consent does.
+    expect(row(FONT_OK)?.remotePath).toBeNull()
     expect(row(FONT_NO)).toMatchObject({ folder: 'fonts', share: 'not_shared', problem: null })
     expect(row(FONT_NO)?.remotePath).toBeNull()
     for (const c of list) {
@@ -111,7 +112,31 @@ describe('collectComponents, folders [P9-7, A-222]', () => {
       share: 'not_shared',
       remotePath: null,
     })
-    expect(byId(list, FONT_OK)?.remotePath).toBe('components/logos/Open Sans-00000006.ttf')
+    expect(byId(list, FONT_OK)?.remotePath).toBeNull()
+  })
+
+  it('gives a font an upload path only when local consent is exactly true [P9-10, A-260]', async () => {
+    const asked: Array<[string, string]> = []
+    const list = await collectComponents(
+      p.handle,
+      { campaignId: CAMPAIGN, variantIds: EXPORTED },
+      {
+        consented: async (assetId, file) => {
+          asked.push([assetId, file])
+          return assetId === FONT_NO
+        },
+      },
+    )
+    // Consent without the flag is consent; the flag without consent is not.
+    expect(byId(list, FONT_NO)).toMatchObject({ share: 'confirmed', problem: null })
+    expect(byId(list, FONT_NO)?.remotePath).toBe(`components/fonts/Name ${FONT_NO}-00000007.ttf`)
+    expect(byId(list, FONT_OK)).toMatchObject({ share: 'needs_confirming', remotePath: null })
+    expect(asked.sort()).toEqual(
+      [
+        [FONT_OK, files[FONT_OK]],
+        [FONT_NO, files[FONT_NO]],
+      ].sort(),
+    )
   })
 
   it('leaves out every asset of a variant that is not exported or not in the campaign', async () => {
