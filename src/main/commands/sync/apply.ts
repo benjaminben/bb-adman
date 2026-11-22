@@ -13,6 +13,7 @@ import type { CoreDeps } from '@/main/core-deps'
 import { readWireRow, storedJson } from '@/main/db/rows'
 import { readLayers } from '@/main/links/snapshot'
 import { pictureSizesOf } from '@/main/queries/sync'
+import { withSyncTexts } from '@/main/translation/sync-result'
 import { GROUPS } from '@/shared/links/follow-rules'
 import { syncWritesOf, type SyncPlanInput, type VariantWrites } from '@/shared/links/sync-plan'
 import { syncApplyInput, type SyncApplyReply } from '@/shared/schemas/commands/sync'
@@ -120,7 +121,8 @@ export function syncApply(deps: CoreDeps) {
         throw new AppError('RULE_VIOLATION', MASTER_CHANGED, { reason: 'master_changed' })
       }
       // Throws INVALID_INPUT for a choice with no planned change, before any write.
-      const writes = syncWritesOf(plan, input.decisions)
+      // P6-16: an accepted translated copy takes the newest sync job's text when it may be used.
+      const writes = withSyncTexts(db, direction.id, plan, syncWritesOf(plan, input.decisions))
       const variantIds = writes.map((w) => w.variantId)
       if (writes.length === 0) return { data: { variantIds } }
       const now = deps.now().toISOString()
