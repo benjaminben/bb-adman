@@ -27,7 +27,9 @@ export async function connectThroughSettings(page: Page): Promise<ToolSession> {
   const section = page.getByRole('region', { name: 'Agent access' })
   const port = await freePort()
   await section.getByLabel('Port', { exact: true }).fill(String(port))
-  await section.getByRole('button', { name: 'Save port' }).click()
+  // SET-6: Enter saves the port; "Saved" says it was accepted before the switch is turned on.
+  await section.getByLabel('Port', { exact: true }).press('Enter')
+  await expect(section.getByText('Saved', { exact: true })).toBeVisible()
   await expect(section.getByLabel('Port', { exact: true })).toHaveValue(String(port))
   await section.getByRole('switch', { name: 'Turn on agent access' }).click()
   await expect(section.getByRole('switch', { name: 'Turn on agent access' })).toBeChecked()
