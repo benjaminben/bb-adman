@@ -39,7 +39,9 @@ const query = (values: Record<string, string>) => `/oauth/dropbox?${new URLSearc
 
 function expectFixedPage(reply: Reply): void {
   expect(reply.headers['content-type']).toBe('text/html; charset=utf-8')
-  expect(reply.headers['content-security-policy']).toBe("default-src 'none'")
+  expect(reply.headers['content-security-policy']).toBe(
+    "default-src 'none'; frame-ancestors 'none'",
+  )
   expect(reply.headers['cache-control']).toBe('no-store')
   expect(reply.headers['referrer-policy']).toBe('no-referrer')
   expect(reply.body).not.toContain(MARK)
@@ -239,5 +241,33 @@ describe('waitForRedirect: ending without an answer', () => {
     w.close()
     expect(await reasonOf(w.result)).toEqual({ reason: 'sign_in_failed' })
     expect(await connectError('127.0.0.1', w.port)).toBe('ECONNREFUSED')
+  })
+})
+
+describe('waitForRedirect: review additions [P9-5, approved edits]', () => {
+  it.each(['/\\[', '/\\\\[', '/\\x'])(
+    'answers a target that is not an address (%s) with the 404 page and keeps waiting',
+    async (target) => {
+      const w = await start()
+      const reply = await send(w.port, { path: target })
+      expect(reply.status).toBe(404)
+      expectFixedPage(reply)
+      const done = await send(w.port, { path: query({ state: STATE, code: 'after-bad' }) })
+      expect(done.status).toBe(200)
+      expect(await w.result).toEqual({ code: 'after-bad' })
+    },
+  )
+
+  it('forbids framing and type sniffing on every page', async () => {
+    const w = await start()
+    for (const sent of [{ path: '/nope' }, { path: query({ state: 'x' }) }]) {
+      const reply = await send(w.port, sent)
+      expect(reply.headers['content-security-policy']).toContain("frame-ancestors 'none'")
+      expect(reply.headers['x-content-type-options']).toBe('nosniff')
+    }
+    const done = await send(w.port, { path: query({ state: STATE, code: 'c' }) })
+    expect(done.headers['content-security-policy']).toContain("frame-ancestors 'none'")
+    expect(done.headers['x-content-type-options']).toBe('nosniff')
+    await w.result
   })
 })

@@ -17,9 +17,10 @@ const PAGES: Record<SignInPageKind, { status: number; text: string }> = {
 
 export const PAGE_HEADERS: Record<string, string> = {
   'content-type': 'text/html; charset=utf-8',
-  'content-security-policy': "default-src 'none'",
+  'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
   'cache-control': 'no-store',
   'referrer-policy': 'no-referrer',
+  'x-content-type-options': 'nosniff',
   connection: 'close',
 }
 

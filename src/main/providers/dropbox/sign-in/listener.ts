@@ -39,12 +39,21 @@ function single(query: URLSearchParams, name: string): string | null {
   return all.length === 1 ? (all[0] ?? null) : null
 }
 
+// A request target that is not an address (`/\[`) gives null, so it gets the 404 page.
+function parsed(raw: string, host: string): URL | null {
+  try {
+    return new URL(raw, `http://${host}`)
+  } catch {
+    return null
+  }
+}
+
 function judge(req: http.IncomingMessage, host: string, state: string): Outcome {
   const raw = req.url ?? ''
   if (req.method !== 'GET' || req.headers.host !== host) return { page: 'notFound' }
   if (!raw.startsWith('/') || raw.startsWith('//')) return { page: 'notFound' }
-  const url = new URL(raw, `http://${host}`)
-  if (url.pathname !== DROPBOX_REDIRECT_PATH) return { page: 'notFound' }
+  const url = parsed(raw, host)
+  if (url === null || url.pathname !== DROPBOX_REDIRECT_PATH) return { page: 'notFound' }
   const query = url.searchParams
   const sent = single(query, 'state')
   if (sent === null || !sameState(sent, state)) return { page: 'wrongState' }

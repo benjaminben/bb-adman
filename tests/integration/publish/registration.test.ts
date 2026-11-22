@@ -53,27 +53,6 @@ const COMMANDS: CommandRow[] = [
     action: 'publish',
     bad: { ...run, proceedDespiteWarnings: false, storage: 'azure-blob' },
   },
-  {
-    name: 'storage.dropboxSignIn',
-    project: false,
-    input: {},
-    action: 'sign in to Dropbox',
-    bad: { token: 'x' },
-  },
-  {
-    name: 'storage.dropboxSignOut',
-    project: false,
-    input: {},
-    action: 'sign out of Dropbox',
-    bad: { extra: 1 },
-  },
-  {
-    name: 'storage.setDropboxFolder',
-    project: false,
-    input: { rootPath: 'Adman' },
-    action: 'change the Dropbox folder',
-    bad: {},
-  },
 ]
 
 const inputOf = (row: CommandRow, projectId: string, input: object) =>
