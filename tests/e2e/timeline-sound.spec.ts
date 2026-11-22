@@ -25,7 +25,8 @@ const sound = (page: Page) => timeline(page).getByRole('combobox', { name: 'Soun
 // The one unmuted element's tag while it plays, or 'none'.
 async function heard(page: Page): Promise<string> {
   const loud = (await mediaStates(page)).filter((m) => !m.muted && !m.paused)
-  return loud.length === 1 ? loud[0].tag : loud.length === 0 ? 'none' : 'several'
+  if (loud.length > 1) return 'several'
+  return loud[0]?.tag ?? 'none'
 }
 
 async function quiet(page: Page) {
