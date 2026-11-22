@@ -1828,5 +1828,35 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     },
     "name": "delete_campaign",
   },
+  {
+    "description": "Change one variant of an open project to "image" or "video". A change to video makes the first clip from the background's picture, once; a change back to image keeps the clips. It is refused when the direction already has a variant at the same size and language in that format. Gives the variant ID. The user can undo the change.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "format": {
+          "enum": [
+            "image",
+            "video",
+          ],
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "variant_id",
+        "format",
+      ],
+      "type": "object",
+    },
+    "name": "set_variant_format",
+  },
 ]
 `;

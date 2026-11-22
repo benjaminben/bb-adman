@@ -8,6 +8,7 @@ import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { AnimationBlock, Geometry, Revs, Shade } from '@/shared/schemas/layer'
 import type { ImageStyle, TextStyle } from '@/shared/schemas/layer'
 import type { AssetRow } from '@/shared/schemas/rows/asset'
+import type { BackgroundClipRow } from '@/shared/schemas/rows/background-clip'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { ReplyPicker } from './read-replies'
 
@@ -142,6 +143,18 @@ const layer = (l: LayerRow) => ({
   overflow: l.overflow,
 })
 
+// P10-13: a clip by its IDs, times and placement; its asset goes through the asset picker.
+const clip = (c: BackgroundClipRow) => ({
+  id: c.id,
+  variantId: c.variantId,
+  assetId: c.assetId,
+  startMs: c.startMs,
+  inMs: c.inMs,
+  outMs: c.outMs,
+  placement: c.placement ? geometry(c.placement) : null,
+  soundOn: c.soundOn,
+})
+
 const asset = (a: AssetRow & { missing: boolean }) => ({
   id: a.id,
   displayName: a.displayName,
@@ -161,6 +174,7 @@ export const variantFields: ReplyPicker = (data) => {
     variant: variant(v.variant),
     campaignId: v.campaignId,
     layers: v.layers.map(layer),
+    ...(v.clips ? { clips: v.clips.map(clip) } : {}),
     assets: v.assets.map(asset),
   }
 }

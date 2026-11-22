@@ -138,6 +138,12 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
     ],
     // P10-6: this core refuses every ask, so its success reply is word-tested in ask-flow.test.ts.
     ['delete_campaign', null, [{ project_id: p, campaign_id: ids.campaign }]],
+    // P10-13: the format change, on the seeded variant v2.
+    [
+      'set_variant_format',
+      { project_id: p, variant_id: 'v2', format: 'video' },
+      [{ project_id: p, variant_id: 'x', format: 'video' }],
+    ],
   ]
   return table.flatMap(([tool, good, bad]) => [
     ...(good === null ? [] : [{ tool, args: good, ok: true }]),
