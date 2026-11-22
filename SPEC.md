@@ -96,4 +96,6 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/phases/round-2-platform.md`, `round-2-campaign.md`, `round-2-editor.md`, `round-2-approvals.md`, `round-2-approvals-video.md` | Round 2, built: the design and slices for agent tools and briefs, several projects and the name; the campaign page and the Assets panel; the editor's Generate panel; the new gallery; video in the gallery |
 | `spec/phases/round-2-verify.md` | Round 2: the choices made without the stakeholder, for him to confirm, and the hand checks only he can do |
 | `spec/phases/design-wave.md` | The design wave (not built): the choices taken, the sixteen anti-patterns, the rules for every slice, Wave 1 (tokens and shared parts) in full, Wave 2 (screens) |
+| `spec/phases/design-wave-screens-a.md` | The design wave, Wave 2: the slices for Settings, the editor, the shell and the start screen |
+| `spec/phases/design-wave-screens-b.md` | The design wave, Wave 2: the slices for project home, Assets, the campaign page, the dialogs and the clean-up |
 | `spec/phases/design-wave-verify.md` | The design wave: choices made without the stakeholder, for him to confirm |

@@ -20,6 +20,11 @@ A running list kept by the orchestrator, like `round-2-verify.md`. The design wa
 13. **Things the audit proposed that were not built, because they would change how a feature works** (they can be planned separately): a subject name field that both picks and makes a subject; a subject menu drawn as avatars; a size-by-language grid inside the fan-out dialog; run results shown inside the run dialog.
 14. **Where the audit wanted a security or failure line folded away, it stays on the page:** the permission, licence and delete dialogs keep every word; the local image server's privacy paragraph; a failed approvals refresh; a failed translation; brief photo notes; what Publish sends and writes into its report; the export overwrite line; what turning off an approval link deletes.
 
+15. **Two address fields keep their Save button** (the local image server and the approvals service), because they decide where your prompts and pictures are sent. Other single values (port, export folder, numbers) save when you press Enter or leave the field.
+16. **A workflow that needs a commercial licence** shows a short "Commercial licence needed" mark in Settings, with the detail behind an info button. The question you asked for at run time is unchanged.
+17. **Layer order:** "Bring forward" and "Send backward" move into the layer row's "⋯" menu, with Duplicate and Delete.
+18. **One short line per storage service stays visible** saying where data goes (your own bucket, your Dropbox, the approvals service).
+
 ## Hand checks only you can do
 
 - Read the new Settings pages once with your real keys saved: nothing should need setting up again.
