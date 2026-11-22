@@ -1,0 +1,26 @@
+/* app-style */
+.part {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--color-line);
+}
+.subheading {
+  margin: 0;
+  font-size: var(--font-size-body);
+}
+.line {
+  margin: 0;
+  word-break: break-word;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}

@@ -7,7 +7,11 @@
 import { defineCommand, type HandlerResult } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import { forgetDropboxAccess } from '@/main/providers/dropbox/access-token'
-import { dropboxSignInBusy, revokeQuietly } from '@/main/providers/dropbox/sign-in/session'
+import {
+  dropboxSignInBusy,
+  revokeQuietly,
+  setDropboxSigningOut,
+} from '@/main/providers/dropbox/sign-in/session'
 import { INSECURE_MESSAGE } from '@/main/secrets/secret-store'
 import { publishRefusal } from '@/shared/publish/messages'
 import { AppError } from '@/shared/schemas/result'
@@ -39,12 +43,18 @@ export function storageDropboxSignOut(deps: Deps) {
     changesAppState: true,
     async run(ctx): Promise<HandlerResult<null>> {
       refuseUnlessKnown(deps)
-      const refreshToken = deps.secrets.get('dropbox.refreshToken')
-      const step = { name: 'storage.dropboxSignOut', actor: ctx.actor, commandId: ctx.commandId }
-      if (refreshToken !== undefined) await revokeQuietly(deps, refreshToken, step)
-      forgetDropboxAccess()
-      if (refreshToken !== undefined) deps.secrets.delete('dropbox.refreshToken')
-      deps.settings.setDropbox(null)
+      // P9-6: a sign-in refuses sign_in_in_progress until this has finished.
+      setDropboxSigningOut(true)
+      try {
+        const refreshToken = deps.secrets.get('dropbox.refreshToken')
+        const step = { name: 'storage.dropboxSignOut', actor: ctx.actor, commandId: ctx.commandId }
+        if (refreshToken !== undefined) await revokeQuietly(deps, refreshToken, step)
+        forgetDropboxAccess()
+        if (refreshToken !== undefined) deps.secrets.delete('dropbox.refreshToken')
+        deps.settings.setDropbox(null)
+      } finally {
+        setDropboxSigningOut(false)
+      }
       return { data: null }
     },
   })

@@ -1,9 +1,10 @@
 // Settings: Cloud storage, the Amazon S3 part (D-096, A-95; spec/approvals.md "Cloud storage:
 // the S3 part"). The keys use the Settings key rows: a saved key is shown by its last four only.
-// Dropbox joins this section in Phase 9.
+// The Dropbox part (P9-6) follows the S3 part in the same section.
 import { useApp, EMPTY } from '@/renderer/app/app-context'
 import { KeyRow } from '@/renderer/screens/settings/key-row'
 import { S3Check } from '@/renderer/screens/settings/s3-check'
+import { DropboxSection } from '@/renderer/screens/settings/dropbox-section'
 import layout from '@/renderer/ui/layout.module.css'
 import { S3Form } from './s3-form'
 import styles from './s3-section.module.css'
@@ -41,6 +42,7 @@ export function S3Section() {
         <KeyRow key={name} provider={provider} name={name} />
       ))}
       <S3Check />
+      <DropboxSection />
     </section>
   )
 }
