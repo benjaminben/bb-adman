@@ -16,13 +16,18 @@ export const WORKFLOW_IDS = [
   'flux3-klein-edit-references',
   'birefnet-cutout',
 ] as const
-export type WorkflowId = (typeof WORKFLOW_IDS)[number]
+export type ShippedWorkflowId = (typeof WORKFLOW_IDS)[number]
+// D-104: a workflow a person or an agent added; the form is CUSTOM_WORKFLOW_ID in
+// src/shared/comfy/custom-workflow.ts.
+export type CustomWorkflowId = `custom-${string}`
+export type WorkflowId = ShippedWorkflowId | CustomWorkflowId
 
 export type WorkflowJob = 'image' | 'image_refs' | 'extend' | 'video' | 'cutout'
 
 // 'draft': the graph is a stand-in for the tests and is never sent to any server.
 // 'trial': a real graph, not yet proven; offered only with the hand-test tools on (6.10.11).
-export type WorkflowStatus = 'draft' | 'trial' | 'proven'
+// 'custom': added by a person or an agent (D-104); offered as soon as it is added.
+export type WorkflowStatus = 'draft' | 'trial' | 'proven' | 'custom'
 
 export type WorkflowNeeds = {
   minComfyVersion: string

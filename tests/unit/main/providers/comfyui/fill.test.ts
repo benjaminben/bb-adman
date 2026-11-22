@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { fillWorkflow } from '@/main/providers/comfyui/fill'
 import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
 import { mossTextToImage } from '@/main/providers/comfyui/workflows/moss'
@@ -189,5 +189,31 @@ describe('fillWorkflow: unused reference slots [SPEC 14 1.39]', () => {
     expect(g['16']).toBeUndefined()
     expect(g['5']?.inputs).not.toHaveProperty('ref_images.ref_image_1')
     expect(g['5']?.inputs['ref_images.ref_image_0']).toEqual(['15', 0])
+  })
+})
+
+describe('fillWorkflow: seedBelow [D-104]', () => {
+  const highest = 1 - 2 ** -53
+  const seedOf = (spec: WorkflowSpec) =>
+    fillWorkflow(spec, { prompt: 'p', ...SIZE })['7']?.inputs.seed as number
+
+  it('with seedBelow 2^32 every seed is a whole number below it', () => {
+    const small = { ...mossTextToImage, slots: { ...mossTextToImage.slots, seedBelow: 2 ** 32 } }
+    const random = vi.spyOn(Math, 'random').mockReturnValue(highest)
+    try {
+      expect(seedOf(small)).toBe(2 ** 32 - 1)
+    } finally {
+      random.mockRestore()
+    }
+    for (let i = 0; i < 20; i++) expect(seedOf(small)).toBeLessThan(2 ** 32)
+  })
+
+  it('without seedBelow the old range below 2^53 holds', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(highest)
+    try {
+      expect(seedOf(mossTextToImage)).toBe(2 ** 53 - 1)
+    } finally {
+      random.mockRestore()
+    }
   })
 })

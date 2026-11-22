@@ -1,0 +1,33 @@
+{
+  "1": {
+    "class_type": "MadeUpVideoText",
+    "inputs": { "text": "the bottle turns slowly" },
+    "_meta": { "title": "adman: prompt" }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "start.png" },
+    "_meta": { "title": "adman: first-frame" }
+  },
+  "3": {
+    "class_type": "MadeUpImageToVideo",
+    "inputs": {
+      "width": 640,
+      "height": 640,
+      "num_frames": 49,
+      "start": ["2", 0],
+      "positive": ["1", 0]
+    },
+    "_meta": { "title": "adman: width, height, frames" }
+  },
+  "4": {
+    "class_type": "MadeUpVideoSampler",
+    "inputs": { "seed": 7, "latent": ["3", 0] },
+    "_meta": { "title": "adman: seed" }
+  },
+  "5": {
+    "class_type": "SaveVideo",
+    "inputs": { "video": ["4", 0], "filename_prefix": "video/ComfyUI" },
+    "_meta": { "title": "adman: output" }
+  }
+}

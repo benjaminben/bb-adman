@@ -21,7 +21,7 @@ export type FillValues = {
   promptId?: string
 }
 
-type SlotName = Exclude<keyof WorkflowSlots, 'seed' | 'outputNode' | 'minReferences'>
+type SlotName = Exclude<keyof WorkflowSlots, 'seed' | 'outputNode' | 'minReferences' | 'seedBelow'>
 type ValueName = keyof FillValues
 
 // Which value feeds which slot.
@@ -47,8 +47,8 @@ const whole = (n: number, min: number) =>
 const fileName = (name: string) =>
   name !== '' && isSubfolder(name) ? name : fail('Not a file name the app can use')
 
-// A whole number below 2^53.
-const freshSeed = () => Math.floor(Math.random() * 2 ** 53)
+// A whole number below `below`: 2^53 unless the spec sets seedBelow (D-104).
+const freshSeed = (below = 2 ** 53) => Math.floor(Math.random() * below)
 
 function set(graph: Graph, p: Pointer, value: unknown): void {
   const node = graph[p.node] ?? fail(`The graph has no node ${p.node}`)
@@ -93,7 +93,7 @@ export function fillWorkflow(spec: WorkflowSpec, values: FillValues): Graph {
   if (slots.prompt) {
     set(graph, slots.prompt, typeof values.prompt === 'string' ? values.prompt : fail('No prompt'))
   }
-  for (const p of slots.seed) set(graph, p, freshSeed())
+  for (const p of slots.seed) set(graph, p, freshSeed(slots.seedBelow))
   if (slots.width && slots.height) {
     set(graph, slots.width, whole(values.width ?? 0, 1))
     set(graph, slots.height, whole(values.height ?? 0, 1))
