@@ -62,8 +62,24 @@ async function signOne(
   return { kind: 'done', m: 'changed', variant }
 }
 
-// The form: `email`, then exactly one of `one` and `all=1` (spec/phases/round-2-approvals.md
-// "Routes and data changes"). Neither or both, or the old `variant` and `version` fields: changed.
+// Exactly one of `one` and `all=1`. Neither or both, or the old `variant` and `version` fields:
+// changed.
+async function signWith(
+  db: Db,
+  fields: URLSearchParams,
+  linkId: string,
+  email: string,
+  parts: Parts,
+): Promise<SignoffResult> {
+  const one = fields.get('one')
+  const all = fields.get('all')
+  if (one !== null && all === null) return signOne(db, linkId, one, email, parts)
+  if (all !== '1' || one !== null) return { kind: 'done', m: 'changed' }
+  return { kind: 'done', m: await signOffAll(db, linkId, fields.get('seen'), email, parts) }
+}
+
+// The form (spec/phases/round-2-approvals.md "Routes and data changes"): `email` first; once it
+// passes, the reply sets the reviewer cookie whatever the result.
 export async function signOff(
   db: Db,
   request: Request,
@@ -75,13 +91,9 @@ export async function signOff(
   const { fields, session } = checked
   const email = Email.safeParse(fields.get('email') ?? '')
   if (!email.success) return { kind: 'done', m: 'bad-email' }
-  const one = fields.get('one')
-  const all = fields.get('all')
-  const linkId = session.link.id
-  if (one !== null && all === null) return signOne(db, linkId, one, email.data, parts)
-  if (all !== '1' || one !== null) return { kind: 'done', m: 'changed' }
-  const m = await signOffAll(db, linkId, fields.get('seen'), email.data, parts)
-  return { kind: 'done', m, cookies: [reviewerCookie(slug, email.data)] }
+  const result = await signWith(db, fields, session.link.id, email.data, parts)
+  if (result.kind === 'refused') return result
+  return { ...result, cookies: [reviewerCookie(slug, email.data)] }
 }
 
 // Anyone with the link may remove any of its sign-offs [D-095]; an ID of another link removes

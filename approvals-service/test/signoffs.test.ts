@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { addSignoff } from '../src/db/signoffs'
 import { putVariant, type VariantRow } from '../src/db/variants'
+import { reviewerCookie } from '../src/visitor/reviewer'
 import { addLink, clearTables, clock, db, enter, form, makeApp } from './visitor-setup'
 
 // spec/approvals-service-visitor.md "Forms that write": Sign off and Remove (AP-4).
@@ -55,7 +56,7 @@ describe('POST /l/{slug}/signoffs [approvals-service-visitor.md "Forms that writ
     const reply = await signOff(fields({ email: '  Ann@Example.COM ' }))
     expect(reply.status).toBe(303)
     expect(reply.headers.get('Location')).toBe(`/l/${link.slug}?m=signed#v-${KEY}`)
-    expect(reply.headers.has('Set-Cookie')).toBe(false)
+    expect(reply.headers.getSetCookie()).toEqual([reviewerCookie(link.slug, EMAIL)])
     expect(await rows()).toEqual([
       { linkId: link.id, variantKey: KEY, version: 1, email: EMAIL, createdAt: time.now() },
     ])

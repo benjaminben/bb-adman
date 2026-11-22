@@ -196,6 +196,57 @@ describe('Sign off all [R2A-3, S-7]', () => {
   })
 })
 
+// "Routes and data changes": POST /signoffs sets the reviewer cookie whenever the email passes,
+// whatever the result; never for a bad email or a refused form.
+describe('the reviewer cookie on a sign-off post [R2A-3, S-1, S-2]', () => {
+  const GOOD: [string, (seen: string) => Record<string, string>][] = [
+    ['one, signed', () => ({ one: 'aaa234.1' })],
+    ['one, changed', () => ({ one: 'aaa234.9' })],
+    ['one, malformed', () => ({ one: 'nonsense' })],
+    ['all, signed', (seen) => ({ all: '1', seen })],
+    ['all, gallery changed', () => ({ all: '1', seen: '' })],
+    ['neither', () => ({})],
+    ['both', (seen) => ({ one: 'aaa234.1', all: '1', seen })],
+  ]
+
+  it.each(GOOD)('sets it for a good email: %s', async (_, make) => {
+    const { link, seen, post } = await setUp()
+    const reply = await post({ email: ' Ann@Example.com', ...make(seen) })
+    expect(reply.status).toBe(303)
+    expect(reply.headers.getSetCookie()).toEqual([reviewerCookie(link.slug, EMAIL)])
+  })
+
+  it.each(GOOD)('never sets it for a bad email: %s', async (_, make) => {
+    const { seen, post } = await setUp()
+    for (const email of [null, '', 'ann@', '<script>@example.com']) {
+      const fields = { ...make(seen), ...(email === null ? {} : { email }) }
+      const reply = await post(fields)
+      expect(reply.headers.get('Location')).toMatch(/\?m=bad-email$/)
+      expect(reply.headers.has('Set-Cookie')).toBe(false)
+    }
+    expect(await rows()).toEqual([])
+  })
+
+  it.each(GOOD)('never sets it on a refused form: %s', async (_, make) => {
+    const { app, link, seen, cookie } = await setUp()
+    const fields = { email: EMAIL, ...make(seen) }
+    const path = `/l/${link.slug}/signoffs`
+    const refusals = [
+      form(path, fields, { cookie, headers: { Origin: 'https://evil.example' } }),
+      form(path, fields, { cookie, headers: { 'Sec-Fetch-Site': 'cross-site' } }),
+      form(path, fields, { cookie, headers: { 'Content-Type': 'application/json' } }),
+      form(path, fields, { cookie, body: `email=${EMAIL}&pad=${'x'.repeat(9 * 1024)}` }),
+      form(path, fields, { cookie: '' }),
+    ]
+    for (const request of refusals) {
+      const reply = await app.fetch(request)
+      expect(reply.status).toBe(403)
+      expect(reply.headers.has('Set-Cookie')).toBe(false)
+    }
+    expect(await rows()).toEqual([])
+  })
+})
+
 describe('no email in an address or a log line [S-5, S-6]', () => {
   afterEach(() => {
     vi.restoreAllMocks()

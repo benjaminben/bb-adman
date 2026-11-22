@@ -51,7 +51,7 @@ async function putGallery(api: APIRequestContext, body: ReturnType<typeof galler
 async function signOff(api: APIRequestContext, slug: string, variant: string, email: string) {
   const reply = await api.post(`/l/${slug}/signoffs`, {
     headers: { Origin: ORIGIN },
-    form: { variant, version: '1', email },
+    form: { one: `${variant}.1`, email },
     maxRedirects: 0,
   })
   expect(reply.headers().location).toBe(`/l/${slug}?m=signed#v-${variant}`)

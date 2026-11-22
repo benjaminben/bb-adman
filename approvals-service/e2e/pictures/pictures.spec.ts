@@ -87,7 +87,7 @@ test('pictures pass only for a session, typed by the sniff; a sign-off goes back
   // A sign-off goes back to its variant.
   const signed = await request.post(`/l/${slug}/signoffs`, {
     headers: { Origin: ORIGIN, Cookie: cookie },
-    form: { variant: 'bbbb33', version: '1', email: 'Ann@Example.com' },
+    form: { one: 'bbbb33.1', email: 'Ann@Example.com' },
     maxRedirects: 0,
   })
   expect(signed.status()).toBe(303)
