@@ -129,3 +129,25 @@ export async function aiTour(app: ElectronApplication, page: Page) {
   await panel.getByRole('button', { name: 'Close activity' }).click()
   await expect(panel).toBeHidden()
 }
+
+// P5-19: the campaign overview with two directions (spec/screens-variants.md, "The overview"):
+// "New direction from this master…" named Studio, then one grid per direction. Clicks only.
+export async function directionsTour(app: ElectronApplication, page: Page) {
+  await screens.createProject(page, 'Epsilon')
+  await screens.loadBriefAndCreate(app, page)
+  await screens.openCampaign(page)
+  const first = page.getByRole('region', { name: 'Direction 1', exact: true })
+  await first.getByRole('button', { name: 'Direction', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'New direction from this master…' }).click()
+  const make = page.getByRole('dialog', { name: 'New direction' })
+  await make.getByRole('textbox', { name: 'Name' }).fill('Studio')
+  await make.getByRole('button', { name: 'Make direction' }).click()
+  await expect(make).toBeHidden()
+  const grids = page.getByRole('list', { name: /^Variants in / })
+  await expect(grids).toHaveCount(2)
+  for (const img of await grids.locator('img').all()) {
+    await expect
+      .poll(() => img.evaluate((i: HTMLImageElement) => i.naturalWidth))
+      .toBeGreaterThan(0)
+  }
+}
