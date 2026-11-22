@@ -151,11 +151,11 @@ test('Workflow 5.8 step 3: the running campaign\'s tab shows "Running"', async (
   await expect(tab.getByRole('img', { name: 'New result' })).toBeVisible({ timeout: 15_000 })
   await expect(tab).not.toContainText('Running')
 
-  // With the Activity panel open, the campaign page's fields end where the panel begins.
+  // With the Activity panel open, the campaign page's header ends where the panel begins.
   await activityButton(page).click()
   const panel = await page.getByRole('region', { name: 'Activity' }).boundingBox()
-  const prompt = page.getByRole('textbox', { name: 'Prompt' }).first()
-  const field = await prompt.boundingBox()
+  const publish = page.getByRole('button', { name: 'Publish…' })
+  const field = await publish.boundingBox()
   expect(field!.x + field!.width).toBeLessThanOrEqual(panel!.x)
 })
 

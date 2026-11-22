@@ -7,7 +7,7 @@
 import { useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import { RunDialog, type RunCount, type RunJob } from '@/renderer/dialogs/run-dialog'
-import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'
+import { PaidConfirm } from '@/renderer/ui/paid-confirm'
 import { requestCount } from '@/renderer/stores/job-store'
 import layout from '@/renderer/ui/layout.module.css'
 import { JOB_KIND_CLASSES } from '@/shared/config/job-kinds'

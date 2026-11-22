@@ -6,7 +6,10 @@
 import { expect, type ElectronApplication, type Locator, type Page } from '@playwright/test'
 import path from 'node:path'
 import { firstIds } from './held-run'
+import { openActivity } from './picture-run'
 import { query } from './render-helpers'
+
+export * from './picture-run'
 
 export const E2E_BRIEF = path.resolve('tests/fixtures/briefs/e2e-brief.yaml')
 export const E2E_CAMPAIGN = 'Harness Check'
@@ -79,51 +82,8 @@ export async function openCampaign(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: E2E_CAMPAIGN, level: 2 })).toBeVisible()
 }
 
-export const picturePanel = (page: Page): Locator =>
-  page.getByRole('region', { name: 'Make pictures' })
-
-export async function chooseProvider(page: Page, label: string): Promise<void> {
-  await picturePanel(page).getByLabel('Provider').selectOption({ label })
-}
-
-// SP-5: the subject's photos are pre-ticked as references when the campaign page opens. A run
-// whose check is not about references unticks them first, so it sends what it sent before.
-export async function untickReferences(page: Page): Promise<void> {
-  const ticked = picturePanel(page)
-    .getByRole('region', { name: 'Reference pictures' })
-    .getByRole('checkbox', { checked: true })
-  await expect(ticked.first()).toBeVisible()
-  while ((await ticked.count()) > 0) await ticked.first().uncheck()
-  await expect(ticked).toHaveCount(0)
-}
-
 // A fixed made-up prompt, typed in place of the one the brief fills in.
 export const E2E_PROMPT = 'A slim citrus can on a sunny picnic table, harness check'
-
-export async function setPrompt(page: Page, prompt: string): Promise<void> {
-  await picturePanel(page).getByLabel('Prompt').fill(prompt)
-}
-
-// Chooses the last picture slot the template offers and gives its ID.
-export async function chooseSlot(page: Page): Promise<string> {
-  const select = picturePanel(page).getByLabel('Slot')
-  const last = await select.locator('option').last().getAttribute('value')
-  if (last === null) throw new Error('the template offers no picture slot')
-  await select.selectOption(last)
-  await expect(select).toHaveValue(last)
-  return last
-}
-
-// How many pictures one Generate asks for; each is its own request to the provider.
-export async function setCount(page: Page, count: number): Promise<void> {
-  await picturePanel(page)
-    .getByRole('spinbutton', { name: 'Pictures', exact: true })
-    .fill(String(count))
-}
-
-export async function generate(page: Page): Promise<void> {
-  await picturePanel(page).getByRole('button', { name: 'Generate' }).click()
-}
 
 // R2E-9 (spec/phases/round-2-editor.md D4): a video is made in the editor's Generate panel, on
 // the background layer of a video post with "Video" chosen; the run dialog's Generate sends.
@@ -137,7 +97,8 @@ export const videoDialog = (page: Page): Locator =>
   page.getByRole('dialog', { name: 'Make a video', includeHidden: true })
 
 // The master's tab (opened from the overview unless an editor shows), its background layer
-// selected, and its "Generate" group with "Video" chosen.
+// selected, and its "Generate" group with "Video" chosen. The Activity panel opens too, where
+// the runs are followed (CAMP-7).
 export async function videoPanel(page: Page): Promise<Locator> {
   if (!(await canvas(page).isVisible())) {
     await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
@@ -156,6 +117,7 @@ export async function videoPanel(page: Page): Promise<Locator> {
   const video = panel.getByRole('group', { name: 'Make' }).getByRole('button', { name: 'Video' })
   await video.click()
   await expect(video).toHaveAttribute('aria-pressed', 'true')
+  await openActivity(page)
   return panel
 }
 
@@ -195,7 +157,8 @@ export async function startFromAddedPicture(
 }
 
 // The run dialog's `provider` and its Generate. Once the dialog closes (the run started) the
-// overview shows, with the runs; while the licence dialog asks, the caller answers it.
+// overview shows; the runs are in the Activity panel. While the licence dialog asks, the
+// caller answers it.
 export async function generateVideo(page: Page, provider: string): Promise<void> {
   const dialog = videoDialog(page)
   await dialog.getByRole('radio', { name: provider, exact: true }).check()
@@ -231,16 +194,6 @@ export async function clipHasMetadata(page: Page, timeout: number): Promise<void
     .poll(() => clip.evaluate((v: HTMLVideoElement) => v.readyState), { timeout })
     .toBeGreaterThanOrEqual(1)
 }
-
-// A run row's stage while it works, as the adapter reports it (poll.ts).
-export const WAITING_ON_SERVER = /Working.*waiting/
-export const WORKING_ON_SERVER = /Working.*working/
-
-export const runRows = (page: Page): Locator =>
-  page.getByRole('list', { name: 'Runs' }).getByRole('listitem')
-
-// The run rows are newest first; `nth` counts from the newest.
-export const runRow = (page: Page, nth = 0): Locator => runRows(page).nth(nth)
 
 export async function openSettings(page: Page): Promise<Locator> {
   await page.getByRole('button', { name: 'Settings', exact: true }).click()

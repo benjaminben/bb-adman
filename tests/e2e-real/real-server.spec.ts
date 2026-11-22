@@ -67,11 +67,12 @@ test('Gemini: the paid confirm is cancelled and nothing is sent', async () => {
   await real.openTestCampaign(app, page)
   await guardedStep('Open the paid confirm and press Cancel', async () => {
     await screens.chooseProvider(page, 'Google Gemini')
-    await screens.generate(page)
-    const panel = screens.picturePanel(page)
-    await expect(panel.getByText(/^This sends 1 paid request\(s\)/)).toBeVisible()
-    await panel.getByRole('button', { name: 'Cancel' }).click()
-    await expect(panel.getByRole('button', { name: 'Generate' })).toBeVisible()
+    const run = await screens.openRunDialog(page)
+    await expect(
+      run.getByText(/^This will use 1 generation\(s\) with Google Gemini\./),
+    ).toBeVisible()
+    await run.getByRole('button', { name: 'Cancel' }).click()
+    await expect(run).toBeHidden()
     await expect(screens.runRows(page)).toHaveCount(0)
   })
 })
@@ -161,7 +162,7 @@ test('Gemini: a paid picture from a product reference [ADMAN_E2E_GEMINI=1]', asy
   await real.openTestCampaign(app, page)
   await guardedStep('Choose Google Gemini', () => screens.chooseProvider(page, 'Google Gemini'))
   await real.addAndTickReference(app, box, page)
-  await guardedStep('Generate', () => screens.generate(page))
+  await guardedStep('Open the run dialog', () => screens.openRunDialog(page))
   await real.confirmWithKey(page)
   await real.newestRunDone(page, 5 * 60_000)
 })

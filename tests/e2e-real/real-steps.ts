@@ -69,17 +69,26 @@ export async function openTestCampaign(app: ElectronApplication, page: Page): Pr
   })
 }
 
-// "Add pictures" through the dialog stub, then tick the first one.
+// "Add pictures" through the dialog stub in the Generate panel's reference dialog (CAMP-7),
+// then tick the first one.
 export async function addAndTickReference(app: ElectronApplication, box: Sandbox, page: Page) {
   // Outside the guard, so a P-1 refusal shows its own fixed line; it names no path.
   const files = referencePictures(box)
   await guardedStep('Add the reference pictures and tick the first', async () => {
+    await screens.chooseSlot(page)
+    await screens
+      .picturePanel(page)
+      .getByRole('button', { name: 'Choose reference pictures…' })
+      .click()
+    const chooser = page.getByRole('dialog', { name: /^Reference pictures for / })
     await screens.answerOpenDialog(app, files)
-    const references = page.getByRole('region', { name: 'Reference pictures' })
+    const references = chooser.getByRole('region', { name: 'Reference pictures' })
     await references.getByRole('button', { name: 'Add pictures' }).click()
     const ticks = references.getByRole('checkbox')
     await expect(ticks).toHaveCount(files.length)
     await ticks.first().check()
+    await chooser.getByRole('button', { name: 'Done' }).click()
+    await expect(chooser).toBeHidden()
   })
 }
 
@@ -98,13 +107,14 @@ export async function chooseVideoPicture(
   )
 }
 
-// Waits for the newest run to be done and its picture to load.
+// Waits for the newest run (its Activity row) to be done and its picture to load in the
+// Generate panel's "New pictures".
 export async function newestRunDone(page: Page, timeout: number): Promise<void> {
   await guardedStep('Wait for the run to be done with its picture', async () => {
     const row = screens.runRow(page)
     await expect(row).toContainText(/Done|Failed|Cancelled/, { timeout })
     await expect(row).toContainText('Done')
-    const picture = row.getByRole('img', { name: 'Result 1' })
+    const picture = screens.newPicture(page)
     await expect(picture).toBeVisible()
     await expect
       .poll(() => picture.evaluate((img: HTMLImageElement) => img.naturalWidth))
@@ -122,16 +132,19 @@ export async function newestClipDone(page: Page, timeout: number): Promise<void>
   })
 }
 
-// The paid confirm's Confirm, then the key typed into the key dialog.
+// The run dialog's paid line read, its Generate (the paid click, C-15), then the key typed
+// into the key dialog. The caller has opened the run dialog (screens.openRunDialog).
 export async function confirmWithKey(page: Page): Promise<void> {
   const key = process.env.GEMINI_API_KEY
   if (!key) throw new Error(NO_GEMINI_KEY)
   await guardedStep('Confirm the paid run and give the key', async () => {
-    const panel = screens.picturePanel(page)
+    const run = screens.runDialog(page)
     // Review S-1: only a run of one paid request is ever confirmed.
-    await expect(panel.getByText(/^This sends 1 paid request\(s\)/)).toBeVisible()
-    await panel.getByRole('button', { name: 'Confirm' }).click()
-    const dialog = page.getByRole('dialog')
+    await expect(
+      run.getByText(/^This will use 1 generation\(s\) with Google Gemini\./),
+    ).toBeVisible()
+    await run.getByRole('button', { name: 'Generate', exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: 'Add your Google Gemini key' })
     await dialog.getByLabel('API key').fill(key)
     await dialog.getByRole('button', { name: 'Save and continue' }).click()
     await expect(dialog).toBeHidden()

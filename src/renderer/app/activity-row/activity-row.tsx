@@ -4,8 +4,7 @@
 // R2E-6), Cancel (ui/cancel-shown.ts) and Retry (background jobs only). A failed row shows its
 // sentence through ui/run-failure/.
 import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
-import { workingDetail } from '@/renderer/screens/campaign/run-row/run-row'
-import { useNow, videoRunningText } from '@/renderer/screens/campaign/run-row/video-status'
+import { useNow, videoRunningText, workingDetail } from '@/renderer/ui/run-status'
 import type { ActivityEntry } from '@/renderer/stores/activity-store'
 import { cancelShown } from '@/renderer/ui/cancel-shown'
 import { BusySpinner } from '@/renderer/ui/dialog-frame'

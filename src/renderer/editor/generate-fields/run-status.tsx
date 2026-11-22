@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react'
 import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { ClipPreview } from '@/renderer/editor/clip-preview'
-import { useNow, videoRunningText } from '@/renderer/screens/campaign/run-row/video-status'
+import { useNow, videoRunningText } from '@/renderer/ui/run-status'
 import { RunFailure } from '@/renderer/ui/run-failure'
 import type { GenerateRun } from '@/renderer/stores/generate-drafts'
 import { firstKept, usePlacedOutcome, type PlacedOutcome } from '@/renderer/stores/placed-runs'
