@@ -80,6 +80,7 @@ export function createMediaTool(opts: {
 
   return {
     available: () => binaryUsableNow(opts.binary),
+    ffmpeg: runner,
     async embedDetails({ bytes, details }) {
       if (!binaryUsableNow(opts.binary)) return skip('ffmpeg_missing')
       const before = factsOf(bytes)
