@@ -1,8 +1,10 @@
 // Places an open menu with placeMenu (R2-Q). It gives the props to spread on the menu element:
 // data-inline and data-block, which the `placed` rule in menu-place.module.css reads, and a
-// width held to the room on its side. It measures before the first paint, and again, from the
+// width held to the room on its side. The room is measured inside clipBox: the window, or the
+// dialog body the button sits in. It measures before the first paint, and again, from the
 // menu's own width, when the window resizes.
 import { useLayoutEffect, useState, type RefObject } from 'react'
+import { clipBox } from './clip-box'
 import { placeMenu, type MenuPlace } from './menu-place'
 
 type Measured = { round: number; place: MenuPlace }
@@ -38,10 +40,19 @@ export function useMenuPlace(
     if (!open || !button || !list) return
     const margins = getComputedStyle(list)
     const gap = parseFloat(margins.marginTop) || parseFloat(margins.marginBottom) || 0
-    const view = { width: window.innerWidth, height: window.innerHeight }
+    const box = clipBox(button, { width: window.innerWidth, height: window.innerHeight })
+    const at = button.getBoundingClientRect()
+    // The button's edges and the room, both counted from the box's top left corner.
+    const within = {
+      left: at.left - box.left,
+      top: at.top - box.top,
+      right: at.right - box.left,
+      bottom: at.bottom - box.top,
+    }
+    const room = { width: box.right - box.left, height: box.bottom - box.top }
     const size = list.getBoundingClientRect()
     // eslint-disable-next-line react-hooks/set-state-in-effect -- measure, then place before paint (react.dev useLayoutEffect)
-    setMeasured({ round, place: placeMenu(button.getBoundingClientRect(), size, view, gap) })
+    setMeasured({ round, place: placeMenu(within, size, room, gap) })
   }, [open, trigger, menu, round])
 
   const place = measured?.round === round ? measured.place : null
