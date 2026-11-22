@@ -9,7 +9,7 @@ export function shuffleOrder(count: number, random: RandomSource, justShown?: nu
     const j = Math.floor(random() * (i + 1))
     ;[order[i], order[j]] = [order[j] as number, order[i] as number]
   }
-  if (count > 1 && order[0] === justShown) {
+  if (count > 1 && justShown !== undefined && order[0] === justShown) {
     ;[order[0], order[1]] = [order[1] as number, justShown]
   }
   return order
