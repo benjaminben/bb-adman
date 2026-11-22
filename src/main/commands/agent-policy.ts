@@ -100,7 +100,6 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'storage.checkS3': deny('test the cloud storage connection'),
   // P9-1 (A-213): the one writer of the Dropbox folder.
   'storage.setDropboxFolder': deny('change the Dropbox folder'),
-  'dev.storage': deny('use the hand-test tools'),
   'mcp.setEnabled': deny('change agent access'),
   'mcp.regenerateToken': deny('change agent access'),
   'agent.answerPermission': deny('answer permission requests'),

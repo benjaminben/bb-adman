@@ -1,5 +1,5 @@
 // The S3 settings check (spec/storage-and-publish.md "Hand-test storage command", "Test
-// connection (S3)"), its one owner. Used by dev.storage and storage.checkS3.
+// connection (S3)"), its one owner. Used by storage.checkS3, publish.run and publish.inspect.
 import type { CoreDeps } from '@/main/core-deps'
 import { AppError } from '@/shared/schemas/result'
 

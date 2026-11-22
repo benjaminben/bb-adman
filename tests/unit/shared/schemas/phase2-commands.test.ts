@@ -5,7 +5,6 @@ import {
   storageDropboxSignInInput,
   storageDropboxSignOutInput,
 } from '@/shared/schemas/commands/storage'
-import { devStorageInput } from '@/shared/schemas/commands/dev'
 import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'
 import { assetAddGeneratedInput } from '@/shared/schemas/commands/asset'
 import { projectCloseInput } from '@/shared/schemas/commands/project'
@@ -55,20 +54,10 @@ describe('generation.runImages input [SPEC 4.2]', () => {
   })
 })
 
-describe('storage and dev inputs [SPEC 4.2]', () => {
+describe('storage inputs [SPEC 4.2]', () => {
   it('Dropbox sign-in and sign-out take nothing', () => {
     expect(storageDropboxSignInInput.safeParse({}).success).toBe(true)
     expect(storageDropboxSignOutInput.safeParse({ token: 'x' }).success).toBe(false)
-  })
-
-  it('dev.storage needs filePath for write only', () => {
-    expect(devStorageInput.safeParse({ storage: 's3', action: 'list' }).success).toBe(true)
-    expect(devStorageInput.safeParse({ storage: 'local', action: 'write' }).success).toBe(false)
-    expect(
-      devStorageInput.safeParse({ storage: 'dropbox', action: 'write', filePath: '/w/a.png' })
-        .success,
-    ).toBe(true)
-    expect(devStorageInput.safeParse({ storage: 'azure-blob', action: 'list' }).success).toBe(false)
   })
 })
 

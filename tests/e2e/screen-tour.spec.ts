@@ -1,17 +1,10 @@
-// SPEC 14 1.56 E2E-R reach table, the rows that need no stand-in ComfyUI (1.59 L-12): the
-// hand-test storage on this computer, Settings, the Start screen and the project home. The
-// hand-test tools are on, so the Hand-test button shows. Everything stays in the sandbox.
-import { test, type ElectronApplication, type Page } from '@playwright/test'
+// SPEC 14 1.56 E2E-R reach table, the rows that need no stand-in ComfyUI (1.59 L-12): Settings,
+// the Start screen and the project home. The hand-test tools are on, and still no "Hand test"
+// button shows: its screen was removed in P9-14. Everything stays in the sandbox.
+import { expect, test, type ElectronApplication, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import { makeSandbox, launch, type Sandbox } from './launch'
-import {
-  agentRunsTour,
-  aiTour,
-  handTestStorage,
-  projectHomeTour,
-  settingsTour,
-  startTour,
-} from './screen-tour'
+import { agentRunsTour, aiTour, projectHomeTour, settingsTour, startTour } from './screen-tour'
 
 let box: Sandbox
 let app: ElectronApplication
@@ -30,8 +23,9 @@ test.afterEach(async () => {
   }
 })
 
-test('The other screens of the reach table: hand-test storage, Settings, Start, project home', async () => {
-  await handTestStorage(page, box)
+test('The other screens of the reach table: Settings, Start, project home', async () => {
+  await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Hand test' })).toHaveCount(0)
   await settingsTour(app, page, box)
   await startTour(app, page, box)
   await projectHomeTour(app, page)

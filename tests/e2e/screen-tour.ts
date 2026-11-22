@@ -1,34 +1,11 @@
-// The rows of the 1.56 reach table that are not ComfyUI's: the hand-test storage on this
-// computer, Settings, the Start screen and the project home, through their screens, for the
-// offline spec. Everything stays in the sandbox folders. Not a test file itself.
+// The rows of the 1.56 reach table that are not ComfyUI's: Settings, the Start screen and the
+// project home, through their screens, for the offline spec. Everything stays in the sandbox
+// folders. Not a test file itself.
 import { expect, type ElectronApplication, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
 import type { Sandbox } from './launch'
 import * as screens from './screens'
-
-// The local hand-test folder (commands/dev/storage.ts): {userData}/hand-test-local.
-function handTestFiles(box: Sandbox): string[] {
-  const folder = path.join(box.userData, 'hand-test-local', 'adman-hand-test')
-  return fs.existsSync(folder) ? fs.readdirSync(folder) : []
-}
-
-export async function handTestStorage(page: Page, box: Sandbox): Promise<void> {
-  const file = path.join(box.root, 'hand-test.txt')
-  fs.writeFileSync(file, 'hand test')
-  await page.getByRole('button', { name: 'Hand test' }).click()
-  await expect(page.getByRole('heading', { name: 'Hand test', level: 1 })).toBeVisible()
-  await page.getByLabel('File to upload (full path)').fill(file)
-  const done = () => expect(page.getByText('Working...')).toBeHidden()
-  await page.getByRole('button', { name: 'Upload' }).click()
-  await done()
-  await expect.poll(() => handTestFiles(box).length).toBe(1)
-  await page.getByRole('button', { name: 'List' }).click()
-  await done()
-  await page.getByRole('button', { name: 'Remove all' }).click()
-  await done()
-  await expect.poll(() => handTestFiles(box).length).toBe(0)
-}
 
 export async function settingsTour(app: ElectronApplication, page: Page, box: Sandbox) {
   const elsewhere = path.join(box.root, 'elsewhere')

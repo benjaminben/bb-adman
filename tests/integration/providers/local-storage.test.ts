@@ -62,6 +62,19 @@ describe('local storage on disk [SPEC 6, 6.5]', () => {
     expect(fs.existsSync(path.join(outer, 'elsewhere', 'keep.txt'))).toBe(true)
   })
 
+  it('leaves a file link and a folder link inside a folder out of the list', async () => {
+    const { outer, root } = tempRoot()
+    fs.mkdirSync(path.join(outer, 'elsewhere'))
+    fs.writeFileSync(path.join(outer, 'elsewhere', 'inner.txt'), 'inner')
+    fs.writeFileSync(path.join(outer, 'target.txt'), 'outside')
+    fs.mkdirSync(path.join(root, 'f'))
+    fs.symlinkSync(path.join(outer, 'target.txt'), path.join(root, 'f', 'link.txt'))
+    fs.symlinkSync(path.join(outer, 'elsewhere'), path.join(root, 'f', 'dir'), 'dir')
+    expect(await localStorageAt(root).list('f')).toEqual([])
+    expect(fs.readFileSync(path.join(outer, 'target.txt'), 'utf8')).toBe('outside')
+    expect(fs.readFileSync(path.join(outer, 'elsewhere', 'inner.txt'), 'utf8')).toBe('inner')
+  })
+
   it('cannot write or read through a file link that points outside its root', async () => {
     const { outer, root } = tempRoot()
     fs.writeFileSync(path.join(outer, 'target.txt'), 'outside')
