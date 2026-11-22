@@ -52,7 +52,7 @@ function checkBus(overrides: Overrides = {}) {
 }
 
 describe('storage.checkS3 registration and guards [spec "Test connection (S3)"]', () => {
-  it('is the one storage command, registered in the core', async () => {
+  it('is listed among the storage commands, registered in the core', async () => {
     await setUp()
     expect(storageCommands(f.core.deps).map((h) => h.name)).toEqual([
       'storage.checkS3',

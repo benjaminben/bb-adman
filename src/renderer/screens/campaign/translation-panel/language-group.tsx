@@ -3,20 +3,28 @@
 // translation.set; "Approve" and "Approve all" send translation.approve with each row's copy
 // counter as read (P6-4b). After every reply the rows are read again, so a refusal such as
 // "A text changed after you read it." is followed by the newest text. A refusal's own message
-// shows on its row, or under the heading for "Approve all".
+// shows on its row, or under the heading for "Approve all". Beside it "Translate {language}
+// again…" with the group's posts, and under the heading the language's newest jobs (P6-13).
 import { useId, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
-import type { TranslationRow as Row } from '@/shared/schemas/queries/translation'
+import type {
+  TranslationJobState,
+  TranslationRow as Row,
+} from '@/shared/schemas/queries/translation'
 import type { Result } from '@/shared/schemas/result'
 import layout from '@/renderer/ui/layout.module.css'
+import { JobLine } from './job-line'
+import { TranslateAgain } from './translate-again'
 import { TranslationRow } from './translation-row'
 import { type ApproveLayer, approvalOf, groupHeading, languageName } from './translation-words'
 import styles from './translation-panel.module.css'
 
 export type LanguageGroupProps = {
   projectId: string
+  campaignId: string
   language: string
   rows: Row[]
+  jobs: TranslationJobState[]
   reload: () => void
 }
 
@@ -29,6 +37,7 @@ export function LanguageGroup(props: LanguageGroupProps) {
   const [messages, setMessages] = useState<Messages>({ group: null, rows: {} })
   const name = languageName(props.language)
   const proposed = approvalOf(props.rows)
+  const variantIds = [...new Set(props.rows.map((row) => row.variantId))]
 
   // `layerId` names the row a refusal belongs on; null puts it under the heading.
   const send = async (layerId: string | null, call: () => Promise<Result<unknown>>) => {
@@ -74,7 +83,21 @@ export function LanguageGroup(props: LanguageGroupProps) {
         >
           {`Approve all ${name}`}
         </button>
+        <TranslateAgain
+          projectId={props.projectId}
+          campaignId={props.campaignId}
+          language={props.language}
+          variantIds={variantIds}
+        />
       </div>
+      {props.jobs.map((job) => (
+        <JobLine
+          key={job.jobId}
+          projectId={props.projectId}
+          campaignId={props.campaignId}
+          job={job}
+        />
+      ))}
       {messages.group !== null && (
         <p role="alert" className={`${layout.notice} ${layout.warn}`}>
           {messages.group}

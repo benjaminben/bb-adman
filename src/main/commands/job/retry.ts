@@ -15,6 +15,7 @@ import {
 import { checkLicence } from '@/main/commands/generation/licence-check'
 import { keptPictureCount, picturesLeft } from '@/shared/generation/pictures-left'
 import { promptToSend } from '@/shared/generation/prompt'
+import { exportRefusal } from '@/shared/export/messages'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import { publishRefusal } from '@/shared/publish/messages'
 
@@ -62,6 +63,8 @@ export function jobRetry(deps: Deps) {
     },
     run(ctx, input) {
       const old = requireJob(ctx.project, input.jobId)
+      // A-195: an export row holds no path, so it cannot be run again from here.
+      if (old.kind === 'export') throw exportRefusal('export_not_retried')
       // P9-1 (A-226): a publish is started again from the campaign, with every check afresh.
       if (old.kind === 'publish') throw publishRefusal('retry_not_offered')
       const retryable = old.status === 'failed' || old.status === 'cancelled'

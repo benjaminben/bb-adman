@@ -19,6 +19,7 @@ import { createJobStore } from '@/renderer/stores/job-store'
 import { OVERVIEW_TAB, campaignNav } from '@/renderer/stores/nav-store'
 import { ApprovalBar } from '@/renderer/screens/campaign/approval-bar'
 import { approvalFooter } from '@/renderer/screens/campaign/approval-mark'
+import { CampaignExport } from '@/renderer/screens/campaign/campaign-export'
 import { CampaignSections } from '@/renderer/screens/campaign/campaign-sections'
 import { CampaignUndo } from '@/renderer/screens/campaign/campaign-undo'
 import { DirectionGrids } from '@/renderer/screens/campaign/direction-grids'
@@ -27,6 +28,7 @@ import { RunList } from '@/renderer/screens/campaign/run-list'
 import { SlotView } from '@/renderer/screens/campaign/slot-view'
 import { VariantTabs } from '@/renderer/screens/campaign/variant-tabs'
 import { VideoPanel } from '@/renderer/screens/campaign/video-panel'
+import { Icon } from '@/renderer/ui/icon'
 import { PaidCount } from '@/renderer/ui/paid-count'
 import { ReferenceRowsContext } from '@/renderer/ui/reference-picker/use-picture-list'
 import layout from '@/renderer/ui/layout.module.css'
@@ -122,8 +124,9 @@ function CampaignPage(props: Props) {
 
   return (
     <section className={styles.page} aria-label="Campaign">
-      <div className={layout.row}>
-        <button type="button" onClick={props.onBack}>
+      <div className={styles.head}>
+        <button type="button" className={layout.quiet} onClick={props.onBack}>
+          <Icon name="left" />
           Back to project
         </button>
         {data && <h2 className={styles.name}>{data.campaign.name}</h2>}
@@ -135,6 +138,7 @@ function CampaignPage(props: Props) {
             titles={Object.fromEntries(data.variants.map((v) => [v.id, v.title]))}
           />
         )}
+        <CampaignExport projectId={projectId} campaignId={campaignId} />
       </div>
       {shown === OVERVIEW_TAB && <PaidCount projectId={projectId} campaignId={campaignId} />}
       {data === null ? (

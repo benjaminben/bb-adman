@@ -71,7 +71,6 @@ function TileActions(props: VariantGridProps & { variant: VariantSummary; asked:
       {onOpenBehind && (
         <button
           type="button"
-          className={styles.plus}
           aria-label={`Open ${v.title} in a tab`}
           onClick={() => onOpenBehind(v.id)}
         >
