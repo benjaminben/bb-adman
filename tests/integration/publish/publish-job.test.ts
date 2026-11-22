@@ -30,7 +30,12 @@ const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex')
 const manifestOf = (x: JobSetUp) =>
   JSON.parse(fs.readFileSync(path.join(x.storageRoot, CAMPAIGN, 'manifest.json'), 'utf8'))
 const consent = (x: JobSetUp, assetId: string) =>
-  x.fx.user('publish.setFontConsent', { projectId: x.projectId, assetId, allowed: true })
+  x.fx.user('publish.setFontConsent', {
+    projectId: x.projectId,
+    assetId,
+    allowed: true,
+    sha256: sha(fs.readFileSync(x.assetFiles[assetId] as string)),
+  })
 
 // Local storage whose write fails for each path `fails` picks, with a detail no row may hold.
 function failingWrites(

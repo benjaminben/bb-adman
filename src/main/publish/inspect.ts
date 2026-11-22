@@ -13,8 +13,8 @@ import { requireCampaign } from '@/main/queries/campaign-reads'
 import { PUBLISHED_FOLDER_UNREADABLE, publishRefusal } from '@/shared/publish/messages'
 import { isCampaignIdForm } from '@/shared/publish/paths'
 import type {
-  PublishComponent,
   PublishInspect,
+  PublishInspectComponent,
   PublishInspectInput,
 } from '@/shared/schemas/queries/publish'
 import { AppError } from '@/shared/schemas/result'
@@ -85,20 +85,28 @@ function campaignVariantIds(project: ProjectHandle, campaignId: string): string[
 
 // A font is `confirmed` only when the local list holds the key for the hash of its bytes now;
 // the project file's flag gives at most `needs_confirming` (A-260). The publish job follows the
-// same rule (collectComponents).
-export function consentCheck(deps: Pick<CoreDeps, 'userDataDir' | 'log'>, projectId: string) {
+// same rule (collectComponents). `measured` keeps each hash, for the reply (P9-12).
+export function consentCheck(
+  deps: Pick<CoreDeps, 'userDataDir' | 'log'>,
+  projectId: string,
+  measured?: Map<string, string>,
+) {
   const list = fontConsent(deps)
-  return async (assetId: string, file: string): Promise<boolean> =>
-    list.hasConsent(projectId, assetId, await hashFile(file))
+  return async (assetId: string, file: string): Promise<boolean> => {
+    const sha256 = await hashFile(file)
+    measured?.set(assetId, sha256)
+    return list.hasConsent(projectId, assetId, sha256)
+  }
 }
 
 async function componentsOf(
   deps: CoreDeps,
   project: ProjectHandle,
   campaignId: string,
-): Promise<PublishComponent[]> {
+): Promise<PublishInspectComponent[]> {
   const variantIds = campaignVariantIds(project, campaignId)
-  const consented = consentCheck(deps, project.projectId)
+  const measured = new Map<string, string>()
+  const consented = consentCheck(deps, project.projectId, measured)
   const collected = await collectComponents(project, { campaignId, variantIds }, { consented })
   return collected.map((c) => ({
     assetId: c.assetId,
@@ -108,6 +116,7 @@ async function componentsOf(
     localPath: c.localPath,
     problem: c.problem,
     share: c.share,
+    sha256: c.kind === 'font' && c.problem === null ? (measured.get(c.assetId) ?? null) : null,
   }))
 }
 

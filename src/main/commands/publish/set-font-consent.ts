@@ -3,7 +3,8 @@
 // never the project. The row must be a font of the project's asset library; to give consent its
 // file must pass the component check, and the key takes the hash of the bytes measured now,
 // never the hash the project file stores. A changed file therefore needs a new consent.
-// Taking consent back removes every key of the font and needs no file.
+// Taking consent back removes every key of the font and needs no file. When the window sends the
+// hash publish.inspect showed (`sha256`), a font whose bytes differ now is refused (P9-12).
 import { defineCommand, type HandlerResult, type PrepareContext } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import { hashFile } from '@/main/assets/inspect'
@@ -22,6 +23,10 @@ import type { AssetRow } from '@/shared/schemas/rows/asset'
 type Deps = Pick<CoreDeps, 'userDataDir' | 'log'>
 
 const notAFont = () => new AppError('NOT_FOUND', 'That font is not in this project.')
+const fontUnusable = () =>
+  new AppError('RULE_VIOLATION', 'The font file cannot be found or is not a usable font.', {
+    reason: 'font_file_unusable',
+  })
 
 function fontRow(ctx: PrepareContext, assetId: string): AssetRow {
   if (!isUlid(assetId)) throw notAFont()
@@ -40,12 +45,10 @@ async function measure(ctx: PrepareContext, input: PublishSetFontConsentInput) {
   const row = fontRow(ctx, input.assetId)
   if (!input.allowed) return null
   const checked = await checkComponentFile(ctx.project, row)
-  if ('problem' in checked) {
-    throw new AppError('RULE_VIOLATION', 'The font file cannot be found or is not a usable font.', {
-      reason: 'font_file_unusable',
-    })
-  }
-  return hashFile(checked.absPath)
+  if ('problem' in checked) throw fontUnusable()
+  const sha256 = await hashFile(checked.absPath)
+  if (input.sha256 !== undefined && input.sha256 !== sha256) throw fontUnusable()
+  return sha256
 }
 
 export function publishSetFontConsent(deps: Deps) {

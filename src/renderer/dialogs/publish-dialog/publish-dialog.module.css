@@ -1,0 +1,62 @@
+/* app-style */
+/* The publish dialog (P9-12): one column with the dialog's spacing. Every value from outside
+   (a storage label, a name, a path) wraps, so the foot band with its buttons stays in view. */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.body p {
+  margin: 0;
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.heading {
+  padding: 0;
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+.storage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.choice {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: var(--font-size-control);
+}
+.choice:has(input:disabled) {
+  color: var(--color-text-muted);
+}
+.hint {
+  padding-left: var(--space-6);
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+.replace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--color-warn-bg);
+  color: var(--color-warn-text);
+}
+.strong {
+  font-weight: var(--weight-medium);
+}
+.line {
+  font-size: var(--font-size-control);
+}

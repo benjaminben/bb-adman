@@ -1,0 +1,46 @@
+/* app-style */
+/* The publish dialog's font ticks (P9-12): each font's name, its tick and its lines. A long
+   name wraps; it never widens the dialog. */
+.fonts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.heading {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+.font {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.name {
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-medium);
+}
+.path {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+.choice {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: var(--font-size-control);
+}
+.choice:has(input:disabled) {
+  color: var(--color-text-muted);
+}
+.line {
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
