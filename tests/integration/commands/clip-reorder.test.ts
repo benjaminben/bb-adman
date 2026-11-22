@@ -80,3 +80,22 @@ describe('clip.reorder refusals', () => {
     )
   })
 })
+
+// Security review of P7-9: a row read back from a project file made by someone else can hold
+// values the schema never lets in; clip.reorder refuses to write such a row back.
+describe('clip.reorder refuses a stored row out of bounds', () => {
+  it.each([
+    ['a trim in before 0', 'in_ms', -100],
+    ['a trim out past a day', 'out_ms', 86_400_001],
+  ])('refuses %s with INVALID_INPUT', async (_, column, value) => {
+    bus.db.prepare(`UPDATE background_clip SET ${column} = ? WHERE id = ?`).run(value, a)
+    await expectRefused(bus, () => reorder([c, a, b]), 'INVALID_INPUT')
+    expect(bus.undoState()).toEqual({ canUndo: false, canRedo: false })
+  })
+
+  // The row reader already refuses a number that is not a safe whole one, before checkClip.
+  it('refuses a trim out that is not a safe integer and writes nothing', async () => {
+    bus.db.prepare('UPDATE background_clip SET out_ms = ? WHERE id = ?').run(2 ** 53 + 2, a)
+    await expectRefused(bus, () => reorder([c, a, b]), 'INTERNAL')
+  })
+})

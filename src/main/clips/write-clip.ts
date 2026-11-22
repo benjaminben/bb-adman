@@ -113,6 +113,14 @@ export function writeClips(ctx: ProjectContext, rows: BackgroundClipRow[], now: 
 // The rules every written row meets, whichever command writes it: the shortest length, a
 // start within the longest ad, a video trim inside its file, and no overlap with the track.
 export function checkClip(row: BackgroundClipRow, asset: ClipAsset, track: TrackClip[]): void {
+  // A row read back from a file made by someone else can hold any number (P7-9 review).
+  const whole = [row.startMs, row.inMs, row.outMs].every(Number.isSafeInteger)
+  if (!whole || row.startMs < 0) {
+    throw new AppError('INVALID_INPUT', 'A clip starts within the first 24 hours of the track.')
+  }
+  if (row.inMs < 0 || row.outMs > MAX_TRACK_MS) {
+    throw new AppError('INVALID_INPUT', "A clip's trim lies within the first 24 hours of its file.")
+  }
   // A file shorter than the shortest clip cannot hold one: its trim reaches past the end.
   const file = asset.durationMs
   if (file !== null && (row.outMs > file || file < MIN_CLIP_MS)) {
