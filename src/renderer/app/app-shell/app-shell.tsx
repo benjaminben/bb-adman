@@ -1,5 +1,6 @@
 // The window frame (spec/editor.md, "The shell"): the top row holds the project switcher, the
-// campaign tabs of the shown project, then the Activity and Settings icon buttons (SH-1). Below:
+// campaign tabs of the shown project, then the Activity and Settings icon buttons (SH-1); the
+// start screen has no top row and takes those two buttons in its corner (START-2). Below:
 // the error alert and the shown screen. One nav store for the window; a project that closes
 // loses its tabs. The tab keys act on the shown project. Also the dialogs the app store opens:
 // the key dialog, the address dialog and the licence dialog.
@@ -32,26 +33,33 @@ import { generateDrafts } from '@/renderer/stores/generate-drafts'
 import type { OpenProjectSummary } from '@/shared/schemas/project'
 import styles from './app-shell.module.css'
 
-function TopRow(props: { tabs?: ReactNode }) {
+// The Settings icon button (SH-1). It toggles (SH-2): pressed while Settings shows.
+function SettingsButton() {
   const view = useApp((s) => s.view)
   const show = useApp((s) => s.show)
   const leaveSettings = useApp((s) => s.leaveSettings)
   const inSettings = view.kind === 'settings'
   return (
+    <button
+      type="button"
+      className={`${layout.iconButton} ${styles.settings}`}
+      aria-label="Settings"
+      title="Settings"
+      aria-pressed={inSettings}
+      onClick={() => (inSettings ? leaveSettings() : show({ kind: 'settings' }))}
+    >
+      <Icon name="gear" />
+    </button>
+  )
+}
+
+function TopRow(props: { tabs?: ReactNode }) {
+  return (
     <header className={styles.bar}>
       <ProjectSwitcher />
       <div className={styles.tabs}>{props.tabs}</div>
       <ActivityButton />
-      <button
-        type="button"
-        className={`${layout.iconButton} ${styles.settings}`}
-        aria-label="Settings"
-        title="Settings"
-        aria-pressed={inSettings}
-        onClick={() => (inSettings ? leaveSettings() : show({ kind: 'settings' }))}
-      >
-        <Icon name="gear" />
-      </button>
+      <SettingsButton />
     </header>
   )
 }
@@ -103,6 +111,16 @@ function ProjectFrame(props: { project: OpenProjectSummary; settings: boolean })
   )
 }
 
+// The start screen has no top bar (START-2, C-6): Activity and Settings sit in its corner.
+function StartCorner() {
+  return (
+    <>
+      <ActivityButton />
+      <SettingsButton />
+    </>
+  )
+}
+
 function Shell() {
   const projects = useApp((s) => s.app?.openProjects ?? EMPTY)
   const view = useApp((s) => s.view)
@@ -122,12 +140,12 @@ function Shell() {
   if (project) return <ProjectFrame key={project.projectId} project={project} settings={settings} />
   return (
     <div className={styles.frame}>
-      <TopRow />
+      {settings && <TopRow />}
       <main className={styles.main}>
         <ErrorBanner />
         <div className={styles.panel}>
           {settings && <SettingsScreen onClose={leaveSettings} />}
-          {!settings && <StartScreen />}
+          {!settings && <StartScreen corner={<StartCorner />} />}
         </div>
       </main>
       <ActivityPanel />

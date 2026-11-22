@@ -14,9 +14,13 @@ describe('start screen [FR-002, FR-004]', () => {
   it('creates a project in the default location from settings', async () => {
     const fake = makeFakeApi()
     await renderApp(<StartScreen />, fake)
-    expect(screen.getByText('/Users/me/Documents/Adman Projects')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'New project' }))
+    expect(screen.getByRole('button', { name: /^Location: / })).toHaveAttribute(
+      'title',
+      'Location: /Users/me/Documents/Adman Projects. Change',
+    )
     await userEvent.type(screen.getByLabelText('Project name'), 'Summer Splash')
-    await userEvent.click(screen.getByRole('button', { name: 'Create project' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }))
     expect(fake.commands).toContainEqual({
       name: 'project.create',
       input: { name: 'Summer Splash', location: '/Users/me/Documents/Adman Projects' },
@@ -27,9 +31,10 @@ describe('start screen [FR-002, FR-004]', () => {
     const fake = makeFakeApi()
     fake.onQuery('dialog.pickFolder', () => ({ ok: true, data: { path: '/Volumes/Work' } }))
     await renderApp(<StartScreen />, fake)
-    await userEvent.click(screen.getByRole('button', { name: 'Change location' }))
+    await userEvent.click(screen.getByRole('button', { name: 'New project' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Location: / }))
     await userEvent.type(screen.getByLabelText('Project name'), 'A')
-    await userEvent.click(screen.getByRole('button', { name: 'Create project' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }))
     expect(fake.commands).toContainEqual({
       name: 'project.create',
       input: { name: 'A', location: '/Volumes/Work' },
@@ -40,7 +45,7 @@ describe('start screen [FR-002, FR-004]', () => {
     const fake = makeFakeApi()
     fake.onQuery('dialog.pickProjectFile', () => ({ ok: true, data: { path: '/w/X.adman' } }))
     await renderApp(<StartScreen />, fake)
-    await userEvent.click(screen.getByRole('button', { name: 'Open project…' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Open…' }))
     expect(fake.commands).toContainEqual({
       name: 'project.open',
       input: { filePath: '/w/X.adman' },
@@ -51,7 +56,7 @@ describe('start screen [FR-002, FR-004]', () => {
     const fake = makeFakeApi()
     fake.onQuery('dialog.pickProjectFile', () => ({ ok: true, data: { path: null } }))
     await renderApp(<StartScreen />, fake)
-    await userEvent.click(screen.getByRole('button', { name: 'Open project…' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Open…' }))
     expect(fake.commands).toEqual([])
   })
 

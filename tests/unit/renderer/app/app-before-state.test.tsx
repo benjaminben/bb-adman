@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { AppProvider } from '@/renderer/app/app-context'
 import { AppShell } from '@/renderer/app/app-shell'
 import { createAppStore } from '@/renderer/stores/app-store'
@@ -14,8 +15,14 @@ describe('app window before app.getState has answered', () => {
         <AppShell />
       </AppProvider>,
     )
-    expect(screen.getByRole('button', { name: 'AdManager' })).toBeInTheDocument()
+    // START-2: the start screen has no top bar; its own buttons show at once.
+    expect(screen.getByRole('button', { name: 'New project' })).toBeInTheDocument()
     await store.getState().refresh()
-    expect(await screen.findByText('/Users/me/Documents/Adman Projects')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'New project' }))
+    expect(
+      await screen.findByRole('button', {
+        name: 'Location: /Users/me/Documents/Adman Projects. Change',
+      }),
+    ).toBeInTheDocument()
   })
 })

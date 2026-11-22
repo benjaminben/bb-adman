@@ -1,6 +1,9 @@
 // Start screen (FR-002, FR-004): new project, open a project file, recent projects. Two halves
-// (design/audit/spec-start.md): a changing picture on the left; the name, the new project form
-// with Open project… beside its button, and the recent projects on the right.
+// (design/audit/spec-start.md): a changing picture on the left; the name, New project with
+// Open… beside it, and the recent projects on the right. The start screen has no top bar
+// (START-2, C-6): the shell passes Activity and Settings in as `corner`, drawn in the right
+// half's top right corner.
+import type { ReactNode } from 'react'
 import { EMPTY, useApi, useApp, pickPath } from '@/renderer/app/app-context'
 import { NewProjectForm } from '@/renderer/screens/start/new-project-form'
 import { RecentProjects } from '@/renderer/screens/start/recent-projects'
@@ -11,7 +14,7 @@ import { APP_DISPLAY_NAME } from '@/shared/config/app-name'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './start-screen.module.css'
 
-export function StartScreen() {
+export function StartScreen(props: { corner?: ReactNode }) {
   const api = useApi()
   const command = useApp((s) => s.command)
   const open = useApp((s) => s.app?.openProjects ?? EMPTY)
@@ -25,6 +28,7 @@ export function StartScreen() {
     <section className={styles.start} aria-labelledby="start-title">
       <StartImages />
       <div className={styles.side}>
+        {props.corner && <div className={styles.corner}>{props.corner}</div>}
         <div className={styles.column}>
           <h1 id="start-title" className={styles.wordmark}>
             <AppMark />
@@ -33,7 +37,7 @@ export function StartScreen() {
           <NewProjectForm>
             <button type="button" className={layout.large} onClick={() => void openProject()}>
               <Icon name="folder" />
-              Open project…
+              Open…
             </button>
           </NewProjectForm>
           <RecentProjects open={open} />

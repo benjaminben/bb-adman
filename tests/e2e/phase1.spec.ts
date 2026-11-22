@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
 import { makeSandbox, launch, type Sandbox } from './launch'
+import { createProject } from './start-steps'
 
 let box: Sandbox
 test.beforeEach(() => {
@@ -22,13 +23,8 @@ test('Phase 1: create, reopen from the command line, tabs, keys', async () => {
   )
 
   // Create two projects: two tabs [FR-003].
-  for (const name of ['Alpha', 'Beta']) {
-    await page.locator('header button[aria-haspopup="menu"]').click()
-    await page.getByRole('menuitem', { name: 'Start screen' }).click()
-    await page.getByLabel('Project name').fill(name)
-    await page.getByRole('button', { name: 'Create project' }).click()
-    await expect(page.getByRole('heading', { name })).toBeVisible()
-  }
+  // START-2: the start screen has no top bar; createProject reaches it and opens New project.
+  for (const name of ['Alpha', 'Beta']) await createProject(page, name)
   await page.locator('header button[aria-haspopup="menu"]').click()
   const items = page.getByRole('menu').getByRole('menuitem')
   const names = ['Alpha', 'Close Alpha', 'Beta', 'Close Beta', 'Package…', 'Open…', 'Start screen']

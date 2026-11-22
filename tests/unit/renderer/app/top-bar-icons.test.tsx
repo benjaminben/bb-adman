@@ -93,7 +93,8 @@ describe('top bar icon buttons [SH-1]', () => {
     await renderApp(<AppShell />)
     expect(iconButton('Settings')).toHaveAttribute('aria-pressed', 'false')
     expect(iconButton('Activity')).toHaveAttribute('aria-expanded', 'false')
-    const header = screen.getByRole('banner')
+    // START-2: on the start screen the two buttons sit in the screen's own corner.
+    const header = screen.getByRole('region', { name: 'AdManager' })
     expect(within(header).queryByText('Settings')).toBeNull()
     expect(within(header).queryByText('Activity')).toBeNull()
   })
