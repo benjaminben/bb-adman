@@ -56,7 +56,7 @@ describe('SubjectCard delete [SUBJ-1, D-101]', () => {
     const remove = within(card).getByRole('button', { name: 'Delete Harbour Blend' })
     expect(buttons[edit + 1]).toBe(remove)
     expect(remove).toHaveAttribute('title', 'Delete Harbour Blend')
-    expect(remove).toHaveClass(layout.iconButton)
+    expect(remove).toHaveClass(layout.iconButton!)
   })
 
   it('opens the delete dialog for that subject, and sends nothing', async () => {
