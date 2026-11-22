@@ -34,6 +34,16 @@ A running list kept by the orchestrator, like `round-2-verify.md`. The design wa
     - A retry whose saved request cannot be read says "Paid: pictures → …" with no number, never a guessed one. A run with no saved provider reads "an unknown provider" and counts as paid.
     - "Translate" in the sync review and Retry of a video in Activity keep two clicks: the first shows the cost, "Confirm" sends.
 24. **Assets panel.** Groups fold and show their count. Pictures are a two-column grid; the words "Made with AI", "Linked" and "Reference only" are now icons with tooltips. The subject of a picture is still a drop-down under it.
+25. **Fan-out and copy options.** "Make n variants" is the one click; the cost lines sit directly above it ("Paid: 2 fills → …", "Paid: up to 3 translations → …"). A separate security review found nothing blocking. Choices made on the way:
+    - The fill count is now exact: a size is counted only when this run makes its first variant in the master's language. The old line could show more fills than were sent.
+    - After the click, at most as many fills are started as the line showed. If the direction changed in that moment and the app asked for more, the extra ones are not started; you can fill those variants afterwards.
+    - The last format left on cannot be turned off.
+    - Copy options no longer opens a second dialog: provider, count, cost and "Generate" are in the same dialog. To use an option, choose its tile, then "Use".
+26. **Project home.** The page's own "Close project" button and Package card are gone; both are in the project menu at the top left. The project's file path shows only as the title's tooltip. Missing files show as a small "3 missing" mark you can click.
+27. **Start screen.** There is no top bar on it. "New project" turns into one row: name, a folder button whose tooltip names the folder, and "Create". Escape closes the row even with a name typed.
+28. **Variant tiles.** A tile is its picture plus a strip of small icons; the words ("Out of date", "Translation not approved"…) are tooltips. A tile's title shows only when titles differ within the direction. Clicking a mark goes where it points: "Check warning" to Checks, "Running" to Activity, "File missing" to the relink dialog. Reviewer emails show only in the sign-off popover.
+29. **Close questions.** Closing a tab or project with tasks running asks with "Keep open" (focused) and "Stop and close". The close questions inside the copy options and brief reading dialogs keep their one sentence.
+30. **Generate panel.** "Make" (Picture or Video) shows on every picture layer; where a video cannot be made, "Video" is greyed and its tooltip says why. The start choices are tiles; long tile names break across lines with a hyphen in the narrow panel.
 
 ## Hand checks only you can do
 
