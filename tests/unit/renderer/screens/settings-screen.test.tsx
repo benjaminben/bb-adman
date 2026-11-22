@@ -11,7 +11,8 @@ describe('settings: keys [FR-170, R-10, ADR-011]', () => {
   it('shows a saved key only by its last four characters', async () => {
     await renderApp(<SettingsScreen />, makeFakeApi(withKey()))
     const row = screen.getByRole('group', { name: 'Google Gemini API key' })
-    expect(within(row).getByText('Saved, ends in 9xQ7')).toBeInTheDocument()
+    expect(within(row).getByText('•••9xQ7')).toBeInTheDocument()
+    expect(within(row).getByTitle('Key saved, ends in 9xQ7. Replace')).toBeInTheDocument()
     expect(within(row).queryByRole('textbox')).toBeNull()
   })
 
@@ -19,7 +20,9 @@ describe('settings: keys [FR-170, R-10, ADR-011]', () => {
     const fake = makeFakeApi(withKey())
     await renderApp(<SettingsScreen />, fake)
     const row = screen.getByRole('group', { name: 'Google Gemini API key' })
-    await userEvent.click(within(row).getByRole('button', { name: 'Replace' }))
+    await userEvent.click(
+      within(row).getByRole('button', { name: 'Key saved, ends in 9xQ7. Replace' }),
+    )
     const field = within(row).getByLabelText('New Google Gemini API key')
     expect(field).toHaveAttribute('type', 'password')
     await userEvent.type(field, 'new-key-value')
@@ -35,7 +38,7 @@ describe('settings: keys [FR-170, R-10, ADR-011]', () => {
     const fake = makeFakeApi(withKey())
     await renderApp(<SettingsScreen />, fake)
     const row = screen.getByRole('group', { name: 'Google Gemini API key' })
-    await userEvent.click(within(row).getByRole('button', { name: 'Delete' }))
+    await userEvent.click(within(row).getByRole('button', { name: 'Delete key' }))
     expect(fake.commands).toContainEqual({
       name: 'secret.delete',
       input: { name: 'gemini.apiKey' },
@@ -45,6 +48,7 @@ describe('settings: keys [FR-170, R-10, ADR-011]', () => {
   it('lists a provider that is not available yet as such, with no key fields', async () => {
     await renderApp(<SettingsScreen />)
     const firefly = screen.getByRole('group', { name: 'Adobe Firefly' })
+    expect(within(firefly).getByText('Soon')).toBeInTheDocument()
     expect(within(firefly).getByText('Not yet available')).toBeInTheDocument()
     expect(within(firefly).queryByRole('button')).toBeNull()
   })
@@ -67,21 +71,24 @@ describe('settings: default providers [FR-067]', () => {
   it('offers each job its providers and disables those not yet available', async () => {
     const fake = makeFakeApi()
     await renderApp(<SettingsScreen />, fake)
-    const image = screen.getByLabelText('Image generation')
-    const options = within(image).getAllByRole('option') as HTMLOptionElement[]
-    expect(options.map((o) => [o.textContent, o.disabled])).toEqual([
-      ['Google Gemini', false],
-      ['Adobe Firefly (not yet available)', true],
-    ])
-    const video = within(screen.getByLabelText('Video generation'))
-    expect(
-      video.getByRole('option', { name: 'fal.ai Seedance (not yet available)' }),
-    ).toBeDisabled()
-    await userEvent.selectOptions(screen.getByLabelText('Layout'), 'gemini')
-    expect(fake.commands).toContainEqual({
-      name: 'settings.update',
-      input: { defaultProviders: { layout: 'gemini' } },
-    })
+    const image = screen.getByRole('group', { name: 'Image generation' })
+    const buttons = within(image).getAllByRole('button') as HTMLButtonElement[]
+    expect(buttons.map((b) => [b.textContent, b.getAttribute('aria-pressed'), b.disabled])).toEqual(
+      [
+        ['Google Gemini', 'true', false],
+        ['Adobe Firefly', 'false', true],
+      ],
+    )
+    expect(within(image).getByRole('button', { name: 'Adobe Firefly' })).toHaveAttribute(
+      'title',
+      'Not yet available',
+    )
+    // One provider for the job: its name as text, nothing to click.
+    expect(screen.getByRole('group', { name: 'Video generation' })).toHaveTextContent(
+      'fal.ai Seedance',
+    )
+    expect(screen.getByRole('group', { name: 'Layout' })).toHaveTextContent('Google Gemini')
+    expect(within(screen.getByRole('group', { name: 'Layout' })).queryByRole('button')).toBeNull()
   })
 })
 

@@ -19,11 +19,11 @@ function withRealFal() {
 describe('Settings with fal.ai Seedance switched on [P7-15]', () => {
   it('shows the fal key row, not "Not yet available"', async () => {
     await renderApp(<SettingsScreen />, withRealFal())
-    const keys = within(await screen.findByRole('heading', { name: 'Keys' }).then(card))
+    const keys = within(await screen.findByRole('region', { name: 'Keys' }))
     const fal = keys.getByRole('group', { name: /^fal\.ai Seedance/ })
     expect(within(fal).queryByText('Not yet available')).toBeNull()
     expect(within(fal).getByText('Not set')).toBeInTheDocument()
-    expect(within(fal).getByRole('button', { name: 'Add' })).toBeInTheDocument()
+    expect(within(fal).getByRole('button', { name: 'Add key' })).toBeInTheDocument()
   })
 
   it('offers the agent tick for fal with the paid line', async () => {
@@ -33,9 +33,3 @@ describe('Settings with fal.ai Seedance switched on [P7-15]', () => {
     expect(tick).toHaveAccessibleDescription(PAID)
   })
 })
-
-function card(heading: HTMLElement): HTMLElement {
-  const parent = heading.parentElement
-  if (!parent) throw new Error('no card')
-  return parent
-}
