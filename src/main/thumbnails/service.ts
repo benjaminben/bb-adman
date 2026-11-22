@@ -8,6 +8,7 @@ import type { VariantRow } from '@/shared/schemas/rows/variant'
 import type { ThumbnailGet, VariantRender } from '@/shared/schemas/queries/render'
 import { cleanThumbnails, readThumbnail, writeThumbnail } from './cache'
 import { createEagerThumbnails } from './eager'
+import { drawFullWith } from './full-draw'
 import { fitSize, thumbnailName, thumbnailSize } from './paths'
 import { createDrawQueue } from './queue'
 import { sceneInput, type VariantScene } from './scene-input'
@@ -177,8 +178,7 @@ export function createRenderService(opts: RenderServiceOptions): RenderService {
       return queue.render(() => drawVariant(project, variantId, maxDimension, true))
     },
 
-    // Stub (P8-1) until P8-4 draws in tiles.
-    drawFull: () => Promise.reject(new Error('drawFull is not built yet.')),
+    drawFull: drawFullWith(queue, opts.draw, () => opts.deps().exportPictures),
 
     onEvent(event) {
       eager.onEvent(event)
