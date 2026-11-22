@@ -15,7 +15,7 @@ import { axeViolations, renderApp } from '../render'
 import { campaignApi, sent } from '../screens/campaign/campaign-fixture'
 import { ref } from '../screens/campaign/reference-fixture'
 import { jobRow } from '../stores/job-fixture'
-import { BACKGROUND, LOGO, P } from './editor-fixture'
+import { BACKGROUND, LOGO, P, variantGet } from './editor-fixture'
 
 const PROMPT = prefilledPrompt({
   subjects: [{ name: 'Citrus can', description: 'A slim can' }],
@@ -45,6 +45,7 @@ async function open(opts: { refs?: AssetList; layer?: LayerRow } = {}) {
   const fake = campaignApi()
   fake.onQuery('asset.list', () => ({ ok: true, data: opts.refs ?? [can('R1'), ref('R2')] }))
   fake.onCommand('generation.runImages', () => ({ ok: true, data: { jobId: 'J1' } }))
+  fake.onQuery('variant.get', () => ({ ok: true, data: variantGet() }))
   await renderApp(<Harness layer={opts.layer ?? LOGO} />, fake)
   // The line shows once the layer's first draft is made.
   await screen.findByText(/^(None|\d+) chosen$/)
@@ -117,7 +118,11 @@ describe('GenerateFields [spec/screens-ai.md "Generate fields"; FR-062, FR-063]'
   })
 
   it.each([
-    ['succeeded', {}, 'Done. Choose one under Earlier options.'],
+    [
+      'succeeded',
+      { result: { assetIds: ['A5'], failures: {} } },
+      'Done. The first new picture is on the layer. Click another below to use it instead.',
+    ],
     ['failed', { errorKind: 'quota' as const }, plainMessage('quota', 'Google Gemini')],
     ['cancelled', {}, 'Cancelled.'],
   ] as const)('the line follows the started job until it has %s', async (status, over, line) => {

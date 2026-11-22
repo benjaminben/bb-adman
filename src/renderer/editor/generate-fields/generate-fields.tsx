@@ -6,11 +6,14 @@
 // R2E-4 (spec/phases/round-2-editor.md D4): the Generate panel may give a start picture, which
 // is sent first with the chosen pictures after it, no picture twice, at most
 // MAX_REFERENCES_PER_RUN. A start that needs a picture with none chosen disables "Generate…".
+// R2E-5 (D6): a started run is registered with the window's placed runs, with whether the
+// layer was empty, so an empty layer gets the run's first picture.
 import { useId, useState } from 'react'
-import { useApp } from '@/renderer/app/app-context'
+import { useApi, useApp } from '@/renderer/app/app-context'
 import { RunDialog } from '@/renderer/dialogs/run-dialog'
 import { ReferenceDialog } from '@/renderer/dialogs/reference-dialog'
 import { generateDrafts } from '@/renderer/stores/generate-drafts'
+import { placedRunsFor } from '@/renderer/stores/placed-runs'
 import { MAX_IMAGES_PER_RUN, MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
 import type { JobStarted } from '@/shared/schemas/commands/job'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
@@ -40,6 +43,7 @@ const sentPictures = (start: string | null | undefined, chosen: string[]) =>
 
 export function GenerateFields(props: GenerateFieldsProps) {
   const { projectId, layer } = props
+  const api = useApi()
   const command = useApp((s) => s.command)
   const perRun = useApp((s) => s.app?.settings.generation.optionsPerRun ?? 1)
   const { key, draft, subjectId } = useFirstDraft(projectId, props.campaignId, layer, props.layers)
@@ -64,6 +68,8 @@ export function GenerateFields(props: GenerateFieldsProps) {
     })
     const jobId = reply.ok ? (reply.data as Partial<JobStarted> | null)?.jobId : undefined
     if (typeof jobId === 'string') {
+      const place = { projectId, variantId: layer.variantId, layerId: layer.id }
+      placedRunsFor(api).register(jobId, { ...place, wasEmpty: layer.source === null })
       change(key, { run: { jobId, count: sent } })
       setDialog(null)
     }

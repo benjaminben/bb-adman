@@ -2,7 +2,8 @@
 // and background layers, between "Shade" and "Position and size". It holds the line about
 // videos for this layer, "Start from", the generate fields with the start picture they send
 // first, then the earlier options (P4-18). Pictures only: the run goes through the run dialog
-// and its confirm as before. Disabled parts follow the layer's lock.
+// and its confirm as before. Disabled parts follow the layer's lock. The draft's last picture
+// run is drawn first in the earlier options, under "New pictures" (R2E-5, D6).
 import { useCallback, useEffect, useState } from 'react'
 import { useStore } from 'zustand'
 import { useApi } from '@/renderer/app/app-context'
@@ -35,7 +36,8 @@ function videoLine(type: LayerRow['type'], format: 'image' | 'video'): string | 
   return type === 'background' ? 'To make a video, set Format to Video in the top bar first.' : null
 }
 
-// The project's images, read once and again after an import.
+// The project's images, read once and again after an import or when the layer's picture is
+// not among them.
 function useImages(projectId: string) {
   const api = useApi()
   const [images, setImages] = useState<AssetList | null>(null)
@@ -67,12 +69,19 @@ export function GeneratePanel(props: GeneratePanelProps) {
   const { images, read } = useImages(projectId)
   const own = layer.source?.assetId ?? null
   const layerPicture = images?.some((a) => a.id === own && !a.missing) ? own : null
+  // A picture put on the layer after the read (a run's first picture, R2E-5): read again.
+  const unknown = images !== null && own !== null && !images.some((a) => a.id === own)
+  useEffect(() => {
+    if (unknown) void read()
+  }, [unknown, read])
   const chosen = draft?.startAssetId ?? null
   const fits = images !== null && shaped(images, { box: layer.geometry, ownId: own })
   const shapePicture = fits && fits.some((a) => a.id === chosen) ? chosen : null
   const start =
     draft?.start === 'layer' ? layerPicture : draft?.start === 'shape' ? shapePicture : undefined
   const line = videoLine(layer.type, props.format ?? 'image')
+  const run = draft?.run
+  const newJobId = run && run.kind !== 'video' ? run.jobId : undefined
 
   return (
     <fieldset className={styles.section}>
@@ -94,7 +103,11 @@ export function GeneratePanel(props: GeneratePanelProps) {
         {...(props.layers ? { layers: props.layers } : {})}
         {...(start === undefined ? {} : { start })}
       />
-      <EarlierOptions projectId={projectId} layer={layer} />
+      <EarlierOptions
+        projectId={projectId}
+        layer={layer}
+        {...(newJobId === undefined ? {} : { newJobId })}
+      />
     </fieldset>
   )
 }

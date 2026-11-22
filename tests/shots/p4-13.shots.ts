@@ -117,7 +117,11 @@ test('Make pictures with AI on a picture layer', async () => {
   await run.getByRole('spinbutton', { name: 'Pictures' }).fill('2')
   await run.getByRole('button', { name: 'Generate' }).click()
   await expect(run).toBeHidden()
-  await expect(section.getByText('Done. Choose one under Earlier options.')).toBeVisible({
+  await expect(
+    section.getByText(
+      'Done. The first new picture is on the layer. Click another below to use it instead.',
+    ),
+  ).toBeVisible({
     timeout: 20_000,
   })
   await page.waitForTimeout(300)
