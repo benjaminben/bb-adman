@@ -1,3 +1,4 @@
+import { statSync } from 'node:fs'
 import { expect, test, type Browser, type Page } from '@playwright/test'
 
 // spec/phases/round-2-approvals.md R2A-8: the lightbox with the gallery script on and off,
@@ -21,7 +22,18 @@ const TITLES = VARIANTS.map((v) => v.title)
 
 let made = 0
 
-async function seed(browser: Browser): Promise<string> {
+const EXPIRES = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+const stills = () =>
+  VARIANTS.map(({ variantKey, title, size, file }) => ({
+    variantKey,
+    title,
+    sizeLine: size,
+    version: 1,
+    pictureUrl: `${PICTURES}/${file}`,
+    pictureExpiresAt: EXPIRES,
+  }))
+
+async function seed(browser: Browser, variants: object[] = stills()): Promise<string> {
   const api = await browser.newContext({ baseURL: ORIGIN })
   made += 1
   const campaignId = `lightbox-${made}-${Date.now()}-r2a8tk`
@@ -31,15 +43,6 @@ async function seed(browser: Browser): Promise<string> {
   })
   expect(created.status()).toBe(201)
   const { slug } = (await created.json()) as { slug: string }
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-  const variants = VARIANTS.map(({ variantKey, title, size, file }) => ({
-    variantKey,
-    title,
-    sizeLine: size,
-    version: 1,
-    pictureUrl: `${PICTURES}/${file}`,
-    pictureExpiresAt: expires,
-  }))
   const put = await api.request.put(`/api/v1/links/${PROJECT}/${campaignId}/gallery`, {
     headers: auth,
     data: { campaignName: 'Shapes', variants },
@@ -65,8 +68,8 @@ function watch(page: Page) {
   return { refusals, pictures }
 }
 
-async function open(browser: Browser, javaScript = true) {
-  const slug = await seed(browser)
+async function open(browser: Browser, javaScript = true, seeded = seed) {
+  const slug = await seeded(browser)
   const context = await browser.newContext({
     baseURL: ORIGIN,
     viewport: DESKTOP,
@@ -215,6 +218,83 @@ test('with script off the lightbox opens and closes, and Remove works', async ({
   await box.getByRole('button', { name: 'Remove sign-off by ann@example.com' }).click()
   await expect(page.locator('main [role=status]')).toHaveText('The sign-off was removed.')
   await expect(page.getByRole('button', { name: 'Sign off: Green story' })).toBeVisible()
+  expect(refusals).toEqual([])
+  await page.context().close()
+})
+
+// round-2-approvals-video.md R2V-6: a video card with the test clip, then a picture card.
+const CLIP_SIZE = statSync(new URL('pictures/d.mp4', import.meta.url)).size
+const clip = { clipUrl: `${PICTURES}/d.mp4`, type: 'video/mp4', durationMs: 2000, bytes: CLIP_SIZE }
+const [red] = stills()
+const blue = { ...red, variantKey: 'ffff77', title: 'Blue clip', kind: 'video', clip }
+const withVideo = (browser: Browser) =>
+  seed(browser, [{ ...blue, sizeLine: '320 × 180 · 0:02' }, red ?? {}])
+const FAILED =
+  'The video could not be loaded. Reload the page to try again. If it still fails, ask the person who sent the link to update the gallery.'
+
+// Run in the browser, as text: plays the open lightbox's video muted (only to keep the autoplay
+// rule out of the test) and gives `paused`, after play starts if `wait` (a failed play hangs).
+const play = (wait: boolean) => `(async () => {
+  const video = document.querySelector('dialog[open] video')
+  video.muted = true
+  const started = video.play().catch(() => {})
+  if (${String(wait)}) await started
+  return video.paused
+})()`
+const isPaused = (video: unknown) => (video as { paused: boolean }).paused
+
+test('a focused video keeps its arrows; a playing one pauses on close [R2V-6]', async ({
+  browser,
+}) => {
+  const { page, refusals } = await open(browser, true, withVideo)
+  const opener = page.getByRole('button', { name: 'Open video: Blue clip, 0:02' })
+  const box = dialog(page, 'Blue clip')
+  // By id: a closed dialog is out of the page's roles.
+  const video = page.locator('#view-ffff77 video')
+
+  await opener.click()
+  await expect(box).toBeVisible()
+  await video.focus()
+  await expect(video).toBeFocused()
+  for (const key of ['ArrowRight', 'ArrowLeft', 'ArrowRight']) {
+    await page.keyboard.press(key)
+    await expect(box).toBeVisible()
+    await expect(page.locator('dialog[open]')).toHaveCount(1)
+  }
+
+  expect(await page.evaluate<boolean>(play(true))).toBe(false)
+  await page.keyboard.press('Escape')
+  await expect(box).toBeHidden()
+  await expect.poll(() => video.evaluate(isPaused)).toBe(true)
+
+  await opener.click()
+  await expect(box).toBeVisible()
+  expect(await page.evaluate<boolean>(play(true))).toBe(false)
+  await page.keyboard.press('ArrowRight')
+  await expect(dialog(page, 'Red tile')).toBeVisible()
+  await expect.poll(() => video.evaluate(isPaused)).toBe(true)
+  expect(refusals).toEqual([])
+  await page.context().close()
+})
+
+test('a clip that fails to load shows the failure notice [R2V-6]', async ({ browser }) => {
+  const { page, refusals } = await open(browser, true, withVideo)
+  const clips: number[] = []
+  page.on('response', (reply) => {
+    if (new URL(reply.url()).pathname.includes('/c/')) clips.push(reply.status())
+  })
+  await page.getByRole('button', { name: 'Open video: Blue clip, 0:02' }).click()
+  const box = dialog(page, 'Blue clip')
+  await expect(box).toBeVisible()
+  const notice = box.locator('[data-clip-error]')
+  await expect(notice).toBeHidden()
+
+  // Without the session cookie the clip route answers its empty 404.
+  await page.context().clearCookies()
+  await page.evaluate(play(false))
+  await expect(notice).toBeVisible()
+  await expect(box.getByRole('alert')).toHaveText(FAILED)
+  expect(clips).toEqual([404])
   expect(refusals).toEqual([])
   await page.context().close()
 })

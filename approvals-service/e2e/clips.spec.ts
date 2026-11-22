@@ -15,7 +15,7 @@ const SIZE = CLIP.byteLength
 
 let made = 0
 
-async function seed(request: APIRequestContext): Promise<string> {
+async function seed(request: APIRequestContext, clipFile = 'd.mp4'): Promise<string> {
   made += 1
   const campaignId = `clips-${made}-${Date.now()}-k7m2pq`
   const created = await request.post('/api/v1/links', {
@@ -33,7 +33,7 @@ async function seed(request: APIRequestContext): Promise<string> {
     pictureUrl: `${PICTURES}/a.png`,
     pictureExpiresAt: expires,
     kind: 'video',
-    clip: { clipUrl: `${PICTURES}/d.mp4`, type: 'video/mp4', durationMs: 2000, bytes: SIZE },
+    clip: { clipUrl: `${PICTURES}/${clipFile}`, type: 'video/mp4', durationMs: 2000, bytes: SIZE },
   }
   const put = await request.put(`/api/v1/links/${PROJECT}/${campaignId}/gallery`, {
     headers: auth,
@@ -227,4 +227,18 @@ test('a video card opens a player that loads nothing before play [R2V-4, SV-7]',
     expect(clips[0]?.status).toBe(206)
   }
   expect(refusals).toEqual([])
+})
+
+// A clip whose file is gone from the bucket (or whose signed address has run out): the bucket's
+// refusal is not waited on, so the visitor gets the empty 404 at once and the page can say so.
+test('a clip whose file is missing answers the empty 404 at once [R2V-6]', async ({ request }) => {
+  const slug = await seed(request, 'missing.mp4')
+  const cookie = await enter(request, slug)
+  const reply = await request.get(`/l/${slug}/c/${KEY}/1`, {
+    headers: { Cookie: cookie, Range: 'bytes=0-1' },
+    timeout: 5000,
+  })
+  expect(reply.status()).toBe(404)
+  await expectClipReply(reply)
+  expect(await reply.text()).toBe('')
 })

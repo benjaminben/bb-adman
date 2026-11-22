@@ -8,7 +8,7 @@ A reviewer opens a video variant in the gallery and watches the real MP4, with s
 
 ## Status
 
-R2V-1 to R2V-5 are built (under `next start` the server may drop the clip reply's `Content-Length`; playback works without it). Slices R2V-6 to R2V-8 below are not; they are placed among R2A-1 to R2A-9 in the wave table.
+R2V-1 to R2V-6 are built (under `next start` the server may drop the clip reply's `Content-Length`; playback works without it). Slices R2V-7 and R2V-8 below are not; they are placed among R2A-1 to R2A-9 in the wave table.
 
 ## Design additions
 
@@ -367,7 +367,7 @@ Service slices run the service checks of `round-2-approvals.md` "Slices" (`cd ap
 - **New files:** `src/ui/gallery-script/pause-videos.ts`.
 - **May touch:** `src/ui/gallery-script/gallery-script.tsx`, `src/ui/gallery-script/arrow-keys.ts`, `test/gallery-script.test.ts`, `e2e/lightbox.spec.ts` (both made by R2A-8).
 - **Tests first:** `e2e/lightbox.spec.ts`: a playing video (or, when Chromium cannot play H.264, a video whose `play()` is called) is paused after Escape and after Right arrow moves to the next card; Left and Right with focus on the video do not move to another card; a clip route that fails (a seeded clip whose test file is missing) shows "The video could not be loaded…"; no policy refusal. `test/gallery-script.test.ts`: the pure part that finds a dialog's videos.
-- **Approved edits to existing tests:** `test/config.test.ts`: none (the banned-words row already covers the folder; `pause-videos.ts` must pass it).
+- **Approved edits to existing tests:** `test/config.test.ts`: the count of files in the script folder becomes 5 (the banned-words row already covers the folder; `pause-videos.ts` must pass it).
 - **Exit check:** the service checks.
 - **Security class:** short. **Depends on:** R2V-4, R2A-8; runs beside R2V-7.
 

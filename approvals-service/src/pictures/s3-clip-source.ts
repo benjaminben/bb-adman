@@ -60,8 +60,9 @@ async function fetchPiece(text: string, env: Env, range: ClipRange) {
     reply.headers.get('Content-Range') === `bytes ${start}-${end}/${total}` &&
     (length === null || length === String(size))
   if (!exact || reply.body === null) {
-    // A 200 holds the whole file: it is cancelled unread.
-    await reply.body?.cancel()
+    // A 200 holds the whole file: it is cancelled unread. The cancel is not waited for: under
+    // the running server it may never settle, and the visitor must get the 404 at once.
+    void reply.body?.cancel().catch(() => {})
     return null
   }
   const bytes = await readExactly(reply.body, size)

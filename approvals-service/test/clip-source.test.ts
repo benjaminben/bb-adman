@@ -184,3 +184,34 @@ describe('s3ClipSource: the bytes must be exactly what was asked [SV-4]', () => 
     expect(body.pulls()).toBeLessThan(3)
   })
 })
+
+// Under `next start` a cancel of an unread body may never settle; the answer must not wait on it.
+describe('a refused reply whose cancel never settles [R2V-6 finding]', () => {
+  it('still answers null at once for a 403 and for a whole-file 200', async () => {
+    for (const status of [403, 200]) {
+      let cancelled = 0
+      vi.stubGlobal('fetch', async () => ({
+        status,
+        headers: new Headers(),
+        body: {
+          cancel: () => {
+            cancelled += 1
+            return new Promise<void>(() => {})
+          },
+        },
+      }))
+      const late = new Promise<string>((done) => setTimeout(() => done('late'), 500))
+      expect(await Promise.race([piece(0, 99), late])).toBeNull()
+      expect(cancelled).toBe(1)
+    }
+  })
+
+  it('answers null when the cancel rejects', async () => {
+    vi.stubGlobal('fetch', async () => ({
+      status: 403,
+      headers: new Headers(),
+      body: { cancel: () => Promise.reject(new Error(STORED)) },
+    }))
+    expect(await piece(0, 99)).toBeNull()
+  })
+})
