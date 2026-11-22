@@ -99,9 +99,10 @@ test('Workflow 5.4: a second direction, a fill on fan-out, tab behind, quick loo
 
   // Cmd-click (Ctrl-click on Windows) opens the tile's tab behind the overview.
   await v.tileButton(tall).click({ modifiers: ['ControlOrMeta'] })
-  const tabs = page.getByRole('tablist', { name: 'Open variants' })
-  await expect(tabs.getByRole('tab', { name: / · 9x16 · en/ })).toHaveCount(1)
-  await expect(page.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
+  const tabs = page.getByRole('tablist', { name: 'Campaign' })
+  await expect(tabs.getByRole('tab', { name: /9x16 · en/ })).toHaveCount(1)
+  const variantsTab = tabs.getByRole('tab', { name: 'Variants', exact: true })
+  await expect(variantsTab).toHaveAttribute('aria-selected', 'true')
 
   // Quick look, Next once, then Previous.
   await v

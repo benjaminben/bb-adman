@@ -53,7 +53,9 @@ export async function setUpSettings(page: Page, origin: string, key: string): Pr
 
 // A link with a chosen password, then the first gallery. Gives the link's address.
 export async function makeLink(page: Page): Promise<string> {
-  await bar(page).getByRole('button', { name: 'Approval link…' }).click()
+  await bar(page)
+    .getByRole('button', { name: /^Approval link…/ })
+    .click()
   const box = dialog(page)
   await box.getByRole('radio', { name: 'Choose a password' }).check()
   await box.getByLabel('Password', { exact: true }).fill(LINK_PASSWORD)
@@ -64,12 +66,13 @@ export async function makeLink(page: Page): Promise<string> {
   return address
 }
 
+// CAMP-3: "Checked {time}" is in the approvals button's tip.
 export async function refresh(page: Page): Promise<void> {
-  const checked = bar(page).getByText(/^Checked /)
-  const before = (await checked.count()) > 0 ? await checked.textContent() : null
+  const button = bar(page).getByRole('button', { name: /^Approval link…/ })
+  const before = (await button.getAttribute('title')) ?? ''
   await bar(page).getByRole('button', { name: 'Refresh' }).click()
   await expect(bar(page).getByRole('button', { name: 'Refresh' })).toBeEnabled()
-  if (before === null) await expect(checked).toBeVisible()
+  if (!before.includes('. Checked ')) await expect(button).toHaveAttribute('title', /\. Checked /)
 }
 
 // A saved edit of the variant: its title, in the editor; then back to the overview.
@@ -79,12 +82,14 @@ export async function editVariant(page: Page): Promise<void> {
   await page.getByRole('textbox', { name: 'Variant title' }).fill(EDITED_TITLE)
   await page.keyboard.press('Enter')
   await expect(page.getByRole('heading', { name: EDITED_TITLE })).toBeVisible()
-  await page.getByRole('tab', { name: 'Overview' }).click()
+  await page.getByRole('tab', { name: 'Variants', exact: true }).click()
 }
 
 // "Update gallery" in the dialog; the dialog stays open for the caller.
 export async function updateGallery(page: Page): Promise<Locator> {
-  await bar(page).getByRole('button', { name: 'Approval link…' }).click()
+  await bar(page)
+    .getByRole('button', { name: /^Approval link…/ })
+    .click()
   const box = dialog(page)
   await expect(box.getByText('1 variant changed since.')).toBeVisible()
   await box.getByRole('button', { name: 'Update gallery' }).click()
@@ -93,7 +98,9 @@ export async function updateGallery(page: Page): Promise<Locator> {
 }
 
 export async function turnOffLink(page: Page): Promise<void> {
-  await bar(page).getByRole('button', { name: 'Approval link…' }).click()
+  await bar(page)
+    .getByRole('button', { name: /^Approval link…/ })
+    .click()
   const box = dialog(page)
   await box.getByRole('button', { name: 'Turn off link…' }).click()
   await box.getByRole('button', { name: 'Turn off link', exact: true }).click()

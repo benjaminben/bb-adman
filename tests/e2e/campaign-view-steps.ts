@@ -7,7 +7,7 @@ import { expect, type Page } from '@playwright/test'
 export type CampaignViewTab = 'Variants' | 'Checks' | 'Translations'
 
 export async function showCampaignView(page: Page, name: CampaignViewTab): Promise<void> {
-  const views = page.getByRole('tablist', { name: 'Campaign views' })
+  const views = page.getByRole('tablist', { name: 'Campaign' })
   const tab = views.getByRole('tab', { name: new RegExp(`^${name}( |$)`) })
   await tab.click()
   await expect(tab).toHaveAttribute('aria-selected', 'true')
