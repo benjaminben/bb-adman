@@ -100,5 +100,7 @@ export type VariantRestoreLayersInput = z.infer<typeof variantRestoreLayersInput
 export type VariantFanOutReply = {
   variantIds: string[]
   fill: Array<{ sizeLabel: string; variantId: string }>
+  // P6-15: the translation jobs started, one per language; absent when none started.
+  translationJobIds?: string[]
 }
 export type VariantsReply = { variantIds: string[] }
