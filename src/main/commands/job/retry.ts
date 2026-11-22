@@ -15,6 +15,7 @@ import {
 import { checkLicence } from '@/main/commands/generation/licence-check'
 import { keptPictureCount, picturesLeft } from '@/shared/generation/pictures-left'
 import { promptToSend } from '@/shared/generation/prompt'
+import { exportRefusal } from '@/shared/export/messages'
 import type { JobRow } from '@/shared/schemas/rows/job'
 
 type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets'>
@@ -61,6 +62,8 @@ export function jobRetry(deps: Deps) {
     },
     run(ctx, input) {
       const old = requireJob(ctx.project, input.jobId)
+      // A-195: an export row holds no path, so it cannot be run again from here.
+      if (old.kind === 'export') throw exportRefusal('export_not_retried')
       const retryable = old.status === 'failed' || old.status === 'cancelled'
       if (!retryable || !old.provider) {
         throw wrongState('Only a job that failed or was cancelled can be tried again.')

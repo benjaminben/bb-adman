@@ -3,12 +3,13 @@
 // it with its job marks and a close button ("Close {name}"), then a "+" button ("Open or start
 // a campaign") that shows the Project tab. Names and marks come from project.get; a campaign
 // that is gone loses its tab. It goes inside a Tabs.Root driven by useCampaignTab. Closing a
-// campaign tab while an attached job of its variant tabs runs asks first (spec/screens-ai.md).
+// campaign tab while an attached job of its variant tabs, or of the campaign itself (its
+// translation jobs, P6-13), runs asks first (spec/screens-ai.md).
 import { useEffect } from 'react'
 import { useNav, useNavStore } from '@/renderer/app/nav-context'
 import { useProject } from '@/renderer/screens/project-home/project-home/use-project'
 import { PROJECT_TAB, campaignNav, projectNav } from '@/renderer/stores/nav-store'
-import { variantJobs } from '@/renderer/stores/attached-store'
+import { campaignJobs, variantJobs } from '@/renderer/stores/attached-store'
 import { useCloseWarning } from '@/renderer/ui/close-warning'
 import { TabMarks, anyMark } from '@/renderer/ui/tab-marks'
 import { TabRow, type TabItem } from '@/renderer/ui/tab-row'
@@ -33,7 +34,7 @@ export function CampaignTabs(props: { projectId: string }) {
   const close = (campaignId: string) => {
     const variantTabs = campaignNav(navStore.getState(), projectId, campaignId).variantTabs
     ask(
-      (s) => variantJobs(s, projectId, variantTabs),
+      (s) => [...variantJobs(s, projectId, variantTabs), ...campaignJobs(s, projectId, campaignId)],
       () => closeCampaign(projectId, campaignId),
     )
   }

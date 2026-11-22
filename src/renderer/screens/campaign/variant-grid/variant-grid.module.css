@@ -1,3 +1,4 @@
+/* app-style */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--thumbnail-tile), 1fr));
@@ -6,15 +7,17 @@
   padding: 0;
   list-style: none;
 }
-/* The tile's actions ("+", quick look, delete) sit on its top right corner, beside the tile
-   button, never inside it. */
+/* The tile's actions ("+", quick look, delete): a row of small square buttons inside the
+   tile, after its main button and outside it, so they never cover the picture on any shape. */
 .actions {
-  position: absolute;
-  top: var(--space-1);
-  right: var(--space-1);
   display: flex;
+  justify-content: flex-end;
   gap: var(--space-1);
+  padding: 0 var(--space-2) var(--space-2);
 }
-.plus {
-  padding: 0 var(--space-2);
+.actions > button {
+  width: var(--control-height-small);
+  min-height: var(--control-height-small);
+  padding: 0;
+  font-size: var(--font-size-body);
 }

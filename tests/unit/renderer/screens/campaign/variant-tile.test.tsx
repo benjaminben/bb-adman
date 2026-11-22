@@ -18,6 +18,17 @@ const draw = (v: VariantSummary, extra: Extra = {}) => {
   return { onChoose, button: screen.getAllByRole('button')[0]! }
 }
 
+const WORDS = [
+  'Running',
+  'New result',
+  'Text does not fit',
+  'File missing',
+  'Translation not approved',
+  'Out of date',
+  'Check warning',
+  'Not checked',
+]
+
 const POST = variant('V1', { title: 'Summer post', width: 1080, height: 1920, sizeLabel: '9:16' })
 
 describe('VariantTile [S2-16]', () => {
@@ -97,5 +108,17 @@ describe('VariantTile [S2-16]', () => {
     expect(button.contains(footer)).toBe(false)
     expect(button.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(button.parentElement!.contains(footer)).toBe(true)
+  })
+
+  it('gives each mark an aria-hidden icon and keeps its words [ST-11]', () => {
+    const all = Object.fromEntries(Object.keys(POST.badges).map((key) => [key, true]))
+    const { button } = draw({ ...POST, badges: { ...POST.badges, ...all } })
+    for (const word of WORDS) {
+      const mark = within(button).getByText(word)
+      expect(mark.textContent).toBe(word)
+      const icon = mark.querySelector('svg')
+      expect(icon).not.toBeNull()
+      expect(icon).toHaveAttribute('aria-hidden', 'true')
+    }
   })
 })
