@@ -1,6 +1,9 @@
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, it, expect } from 'vitest'
 import { addSignoff } from '../src/db/signoffs'
 import { putVariant } from '../src/db/variants'
+import { GalleryScreen } from '../src/ui/gallery-screen/gallery-screen'
 import { openGallery } from '../src/visitor/actions'
 import { NOTICES, noticeOn, type NoticePage } from '../src/visitor/notices'
 import { addLink, clearTables, db, enter, makeApp } from './visitor-setup'
@@ -105,7 +108,7 @@ describe(WIRING, () => {
     expect(JSON.stringify(result)).not.toContain('zzqq')
   })
 
-  it('keeps exactly the four view fields and the six variant fields', async () => {
+  it('keeps exactly the four view fields and the seven variant fields', async () => {
     const { link, cookie } = await setup()
     await putVariant(db, link.id, {
       variantKey: 'aaa234',
@@ -135,6 +138,7 @@ describe(WIRING, () => {
       'title',
       'variantKey',
       'version',
+      'video',
     ])
   })
 
@@ -224,5 +228,51 @@ describe('the view in Round 2 [round-2-approvals.md "Routes and data changes"]',
       results.add(JSON.stringify(await openGallery(db, { slug, cookie, m: null }, NOW)))
     }
     expect([...results]).toEqual([JSON.stringify({ kind: 'password', notice: null })])
+  })
+})
+
+// round-2-approvals-video.md "The gallery view" and SV-8 (R2V-4): a video's view holds its
+// length only, never its clip address or byte count, and the drawn page holds neither.
+describe('the view of a video variant [SV-8]', () => {
+  beforeEach(clearTables)
+
+  const CLIP = 'https://bucket.example/clips/zz-planted-clip-qq7.mp4?X-Amz-Signature=zzsig'
+  const row = (variantKey: string, position: number, clip: boolean) => ({
+    variantKey,
+    position,
+    title: 'Morning run, 9:16',
+    sizeLine: '1080 × 1920 · 0:30',
+    version: 2,
+    pictureUrl: 'https://h.example/p.png',
+    pictureExpiresAt: NOW + 1,
+    kind: 'video' as const,
+    clipUrl: clip ? CLIP : null,
+    clipMs: clip ? 29_500 : null,
+    clipBytes: clip ? 7_654_321 : null,
+  })
+
+  it('gives a clip its length only, a still-only video a null clip and an image null', async () => {
+    const app = makeApp(() => NOW)
+    const link = await addLink(1)
+    await putVariant(db, link.id, row('aaa234', 0, true)).run()
+    await putVariant(db, link.id, row('bbb234', 1, false)).run()
+    await putVariant(db, link.id, { ...row('ccc234', 2, false), kind: 'image' }).run()
+    const cookie = await enter(app, link.slug)
+    const result = await openGallery(db, { slug: link.slug, cookie, m: null }, NOW)
+    if (result.kind !== 'gallery') throw new Error('no gallery')
+    expect(result.view.variants.map((v) => v.video)).toEqual([
+      { clip: { durationMs: 29_500 } },
+      { clip: null },
+      null,
+    ])
+    expect(Object.keys(result.view.variants[0]?.video?.clip ?? {})).toEqual(['durationMs'])
+    const page = renderToStaticMarkup(createElement(GalleryScreen, { view: result.view }))
+    for (const shown of [JSON.stringify(result), page]) {
+      expect(shown).not.toContain('planted-clip')
+      expect(shown).not.toContain('zzsig')
+      expect(shown).not.toContain('bucket.example')
+      expect(shown).not.toContain('7654321')
+    }
+    expect(page).toContain(`/l/${link.slug}/c/aaa234/2`)
   })
 })

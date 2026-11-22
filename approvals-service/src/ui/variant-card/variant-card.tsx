@@ -31,6 +31,7 @@ export function VariantCard({ slug, variant, signoffs, reviewer, mine }: Props) 
           title={title}
           sizeLine={variant.sizeLine}
           expired={variant.expired}
+          video={variant.video}
         />
         <div className={styles.words}>
           <h2 id={`t-${variantKey}`} className={styles.title}>

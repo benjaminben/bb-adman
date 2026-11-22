@@ -1,7 +1,8 @@
 import styles from './signoff-all.module.css'
 
 // `left`: live variants this reviewer has not signed. `live`: live variants in the gallery.
-type Props = { slug: string; reviewer: string | null; left: number; live: number }
+// `videos`: live video variants with a clip.
+type Props = { slug: string; reviewer: string | null; left: number; live: number; videos: number }
 
 // HTML's command buttons; React passes these lowercase names through as written. A spread,
 // since React's types do not list them yet.
@@ -12,6 +13,12 @@ const lineFor = ({ reviewer, left, live }: Props) => {
   if (reviewer === null) return 'Signs every variant shown, as the email above.'
   return left > 0 ? `${left} left to sign off.` : 'You have signed off on every variant.'
 }
+
+// round-2-approvals-video.md "Sign off all": a reviewer is asked to watch the videos first.
+const videosLine = (videos: number) =>
+  videos === 0
+    ? ''
+    : ` It includes ${videos} ${videos === 1 ? 'video' : 'videos'}. Watch each one before you sign off.`
 
 // spec/phases/round-2-approvals.md "Sign off all": one click writes many rows, so it asks
 // first. The confirmation's submit sends the reviewer form with `all=1` and the page's stamp.
@@ -38,6 +45,7 @@ export function SignoffAll(props: Props) {
         <p className={styles.text}>
           This signs off on every variant shown that you have not signed yet, as the email under
           “Signing off as:”. You can remove a sign-off later, one at a time.
+          {videosLine(props.videos)}
         </p>
         <div className={styles.actions}>
           <button type="button" className={styles.quiet} autoFocus {...command('close')}>

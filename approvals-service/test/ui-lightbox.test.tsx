@@ -24,6 +24,7 @@ const variant = (extra: Partial<Variant> = {}): Variant => ({
   sizeLine: '1080 × 1350 · Portrait',
   version: 3,
   expired: false,
+  video: null,
   ...extra,
 })
 

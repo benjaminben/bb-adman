@@ -4,7 +4,7 @@ import type { Parts } from '../app'
 import { Email, Slug } from '../contract'
 import { checkPassword } from '../crypto/password'
 import { listSignoffs } from '../db/signoffs'
-import { listVariants } from '../db/variants'
+import { listVariants, type VariantRow } from '../db/variants'
 import { readForm } from './forms'
 import { noticeOn, type NoticeKey } from './notices'
 import { clearedReviewerCookie, reviewerCookie, reviewerOf } from './reviewer'
@@ -23,6 +23,9 @@ export type GalleryView = {
     sizeLine: string
     version: number
     expired: boolean
+    // null: an image. { clip: null }: a video sent as its still only. Never a clip address or
+    // a byte count.
+    video: null | { clip: null | { durationMs: number } }
   }[]
   // Only sign-offs whose version equals their variant's current version (R-10); none for a
   // variant no longer in the gallery.
@@ -57,6 +60,12 @@ export type ReviewerResult =
 // A slug of the wrong shape is treated exactly like an unknown one.
 const goodSlug = (slug: string) => Slug.safeParse(slug).success
 
+// A row has all three clip columns or none; only the length reaches the view.
+const videoOf = ({ kind, clipUrl, clipMs }: VariantRow): Variant['video'] => {
+  if (kind !== 'video') return null
+  return { clip: clipUrl === null || clipMs === null ? null : { durationMs: clipMs } }
+}
+
 export async function openGallery(
   db: Db,
   { slug, cookie, m }: GalleryInput,
@@ -82,6 +91,7 @@ export async function openGallery(
       sizeLine: row.sizeLine,
       version: row.version,
       expired: row.pictureExpiresAt <= now,
+      video: videoOf(row),
     })),
     signoffs: signoffs
       .filter((row) => current.get(row.variantKey) === row.version)
