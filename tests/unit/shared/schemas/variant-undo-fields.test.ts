@@ -42,7 +42,7 @@ describe('the base inputs without the undo-only fields [P7-10b]', () => {
   })
 
   it('redoClipId goes only with a change to video', () => {
-    const redo = (format: string) => ({ ...base, format, redoClipId: 'K1' })
+    const redo = (format: string) => ({ ...base, format, redoClipId: '01J00000000000000000000000' })
     expect(variantSetFormatInput.safeParse(redo('video')).success).toBe(true)
     expect(variantSetFormatInput.safeParse(redo('image')).success).toBe(false)
   })
