@@ -20,7 +20,7 @@
   font-size: var(--font-size-small);
   pointer-events: none;
 }
-.line > span {
+.words {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -34,6 +34,7 @@
   background: var(--color-accent);
 }
 .project {
+  unicode-bidi: isolate;
   color: var(--color-text-secondary);
 }
 /* Kept in the page while empty, out of the flow, so a screen reader hears the next line. */

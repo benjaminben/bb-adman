@@ -32,8 +32,10 @@ export function AgentActivity() {
       {last && (
         <>
           <span className={styles.dot} aria-hidden="true" />
-          <span>Agent working: {last.tool}</span>
-          {project && <span className={styles.project}>{` · ${project.name}`}</span>}
+          <span className={styles.words}>
+            Agent working: {last.tool}
+            {project && <span className={styles.project}>{` · ${project.name}`}</span>}
+          </span>
         </>
       )}
     </div>
