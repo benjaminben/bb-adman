@@ -1,17 +1,21 @@
-// The brief form's subject rows (spec/screens-campaign.md, "The brief form", Subjects): a list
-// "Subjects" of groups "Subject {i}", each with a name, a description, and either a new
-// subject's ID or one of the project's subjects. "Add subject" puts focus on the new row's
-// Name; "Remove" puts it on "Add subject". Each row holds its "Photos" part
-// (spec/subject-photos.md); "Remove" also removes the photos the form added to that row. Rows
-// keep their React key when another row goes, so a running "Add photos" stays with its row.
+// The brief form's subjects (spec/screens-campaign.md, "The brief form", Subjects; HOME-3b): a
+// Section "Subjects" whose header holds the count, the photos hint in an InfoTip and "Add"
+// (named "Add subject"); then a list "Subjects" of blocks "Subject {i}" (subject-block.tsx).
+// "Add subject" puts focus on the new block's Name; removing a subject puts it on "Add subject".
+// Removing a subject also removes the photos the form added to it, and only those. Blocks keep
+// their React key when another goes, so a running "Add photos" stays with its block.
 import { useEffect, useId, useRef, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import type { ProjectImages } from '@/renderer/screens/project-home/brief-form-photos'
-import { removeAddedPhotos, SubjectPhotos } from '@/renderer/screens/project-home/subject-photos'
+import { removeAddedPhotos } from '@/renderer/screens/project-home/subject-photos'
 import { emptySubject, type SubjectChoice } from '@/renderer/screens/project-home/brief-form-model'
 import { subjectIds } from '@/renderer/screens/project-home/brief-form-problems'
 import { Icon } from '@/renderer/ui/icon'
+import { InfoTip } from '@/renderer/ui/info-tip'
+import { Section } from '@/renderer/ui/section'
+import layout from '@/renderer/ui/layout.module.css'
+import { SubjectBlock } from './subject-block'
 import styles from './subject-rows.module.css'
 
 type Props = {
@@ -53,120 +57,68 @@ export function SubjectRows(props: Props) {
       mode: 'existing',
       existingId: s.existingId ?? (props.held.some((h) => h.id === s.newId) ? s.newId : null),
     })
+  function remove(s: SubjectChoice, i: number) {
+    removeAddedPhotos(api, props.projectId, s.photos)
+    keys.drop(i)
+    props.onChange(subjects.filter((_, k) => k !== i))
+    focusNext.current = 'add'
+  }
 
-  return (
-    <div className={styles.subjects}>
-      <ul aria-label="Subjects" className={styles.list}>
-        {subjects.map((s, i) => {
-          const n = i + 1
-          const key = `${ids}-${n}`
-          return (
-            <li key={keys.keys[i]}>
-              <fieldset className={styles.row}>
-                <legend>Subject {n}</legend>
-                <label className={styles.field}>
-                  Name
-                  <input
-                    ref={(el) => {
-                      names.current[i] = el
-                    }}
-                    value={s.name}
-                    onChange={(e) => change(i, { name: e.target.value })}
-                  />
-                </label>
-                <label className={styles.field}>
-                  Description (optional)
-                  <input
-                    className={styles.reading}
-                    value={s.description}
-                    onChange={(e) => change(i, { description: e.target.value })}
-                  />
-                </label>
-                <SubjectPhotos
-                  projectId={props.projectId}
-                  n={n}
-                  row={s}
-                  images={props.images}
-                  update={update(i)}
-                />
-                <div className={styles.modes}>
-                  <label>
-                    <input
-                      type="radio"
-                      name={`${key}-mode`}
-                      checked={s.mode === 'new'}
-                      onChange={() => change(i, { mode: 'new' })}
-                    />
-                    New subject
-                  </label>
-                  <label>
-                    <input
-                      type="radio"
-                      name={`${key}-mode`}
-                      checked={s.mode === 'existing'}
-                      disabled={props.held.length === 0}
-                      onChange={() => chooseExisting(s, i)}
-                    />
-                    Use a subject this project has
-                  </label>
-                </div>
-                {s.mode === 'new' ? (
-                  <label className={styles.field}>
-                    Subject ID
-                    <input
-                      value={s.newId}
-                      placeholder={s.newId === '' ? sentIds[i] || undefined : undefined}
-                      onChange={(e) => change(i, { newId: e.target.value })}
-                    />
-                  </label>
-                ) : (
-                  <label className={styles.field}>
-                    Project subject
-                    <select
-                      value={s.existingId ?? ''}
-                      onChange={(e) => change(i, { existingId: e.target.value || null })}
-                    >
-                      <option value="">Choose a subject</option>
-                      {props.held.map((h) => (
-                        <option key={h.id} value={h.id}>
-                          {h.name} ({h.id})
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-                <button
-                  type="button"
-                  className={styles.remove}
-                  aria-label={`Remove subject ${n}`}
-                  disabled={subjects.length === 1}
-                  onClick={() => {
-                    removeAddedPhotos(api, props.projectId, s.photos)
-                    keys.drop(i)
-                    props.onChange(subjects.filter((_, k) => k !== i))
-                    focusNext.current = 'add'
-                  }}
-                >
-                  Remove
-                </button>
-              </fieldset>
-            </li>
-          )
-        })}
-      </ul>
+  const header = (
+    <span className={styles.headEnd}>
+      {subjects.length}
       <button
         ref={add}
         type="button"
-        className={styles.add}
+        className={`${layout.quiet} ${layout.small}`}
+        aria-label="Add subject"
         onClick={() => {
           props.onChange([...subjects, emptySubject()])
           focusNext.current = subjects.length
         }}
       >
         <Icon name="plus" />
-        Add subject
+        Add
       </button>
-    </div>
+    </span>
+  )
+  return (
+    <Section
+      id="brief.subjects"
+      title="Subjects"
+      fold="none"
+      summary={header}
+      info={
+        <InfoTip about="Photos">
+          Photos of the product, service or person. PNG, JPEG or WebP. At least one is needed. AI
+          pictures are drawn from them.
+        </InfoTip>
+      }
+    >
+      <ul aria-label="Subjects" className={styles.list}>
+        {subjects.map((s, i) => (
+          <li key={keys.keys[i]}>
+            <SubjectBlock
+              projectId={props.projectId}
+              n={i + 1}
+              uid={`${ids}-${keys.keys[i]}`}
+              row={s}
+              held={props.held}
+              images={props.images}
+              sentId={sentIds[i] ?? ''}
+              only={subjects.length === 1}
+              bindName={(el) => {
+                names.current[i] = el
+              }}
+              change={(patch) => change(i, patch)}
+              chooseExisting={() => chooseExisting(s, i)}
+              update={update(i)}
+              onRemove={() => remove(s, i)}
+            />
+          </li>
+        ))}
+      </ul>
+    </Section>
   )
 }
 

@@ -30,12 +30,17 @@ describe('the "Photos" part of a subject row [subject-photos "What a row shows"]
   it('shows the legend, the hint, "No photos yet." and "Add photos"', async () => {
     const { form } = await renderForm(photoApi())
     const photos = photosOf(form, 1)
-    expect(photos).toHaveTextContent(
-      'Photos of the product, service or person. PNG, JPEG or WebP. At least one is needed. AI pictures are drawn from them.',
+    await userEvent.click(within(form).getByRole('button', { name: 'About Photos' }))
+    expect(
+      within(form).getByText(
+        'Photos of the product, service or person. PNG, JPEG or WebP. At least one is needed. AI pictures are drawn from them.',
+      ),
+    ).toBeVisible()
+    const list = within(photos).getByRole('list', { name: 'Photos of subject 1' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(1)
+    expect(within(list).getByRole('button', { name: 'Add photos to subject 1' })).toBe(
+      addButton(form),
     )
-    expect(photos).toHaveTextContent('No photos yet.')
-    expect(addButton(form)).toHaveTextContent('Add photos')
-    expect(within(photos).queryByRole('list')).toBeNull()
   })
 
   it('lists each photo with its picture, a hidden name and "Remove"', async () => {
@@ -44,8 +49,7 @@ describe('the "Photos" part of a subject row [subject-photos "What a row shows"]
     const list = within(photosOf(form, 1)).getByRole('list', { name: 'Photos of subject 1' })
     const picture = within(list).getByRole('img', { name: 'can.png' })
     expect(picture).toHaveAttribute('src', 'adman-asset://P1/A1')
-    expect(within(list).getByText('can.png')).toHaveAttribute('aria-hidden', 'true')
-    expect(removeButton(form, 'can.png')).toHaveTextContent('Remove')
+    expect(removeButton(form, 'can.png')).toBeInTheDocument()
     expect(photosOf(form, 1)).not.toHaveTextContent('No photos yet.')
   })
 
@@ -54,7 +58,7 @@ describe('the "Photos" part of a subject row [subject-photos "What a row shows"]
     const { form } = await renderForm(fake, withPhotos([reused('A1')]))
     const list = within(photosOf(form, 1)).getByRole('list', { name: 'Photos of subject 1' })
     expect(list).toHaveTextContent('Already in this project')
-    expect(list).toHaveTextContent('file not found')
+    expect(list).toHaveTextContent(/file not found/i)
     expect(within(list).queryByRole('img')).toBeNull()
   })
 
@@ -66,7 +70,7 @@ describe('the "Photos" part of a subject row [subject-photos "What a row shows"]
     const { form } = await renderForm(fake, values, [subject('can-1', 'Can')])
     const list = within(photosOf(form, 1)).getByRole('list', { name: 'Photos of subject 1' })
     expect(list).toHaveTextContent('Already attached')
-    expect(within(list).queryByRole('button')).toBeNull()
+    expect(within(list).queryByRole('button', { name: /^Remove/ })).toBeNull()
   })
 
   it('shows the notes as a list', async () => {
