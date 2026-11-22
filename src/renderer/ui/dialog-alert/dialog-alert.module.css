@@ -1,0 +1,39 @@
+/* app-style */
+/* DialogAlert (spec/app-style-parts.md, "Dialog"): the notice look, one line, the action at
+   the right end; danger and warn in their notice colours, busy with the spinner in the spot
+   colour. */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  margin: 0 0 var(--gap-field);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  font-size: var(--type-body-size);
+}
+.danger {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+.warn {
+  background: var(--color-warn-bg);
+  color: var(--color-warn-text);
+}
+.busy {
+  background: var(--color-surface-soft);
+  color: var(--color-text-secondary);
+}
+.icon {
+  display: flex;
+  flex: none;
+}
+.busy .icon {
+  color: var(--color-accent);
+}
+.words {
+  flex: 1;
+  min-width: 0;
+}
+.action {
+  flex: none;
+}

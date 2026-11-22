@@ -1,0 +1,32 @@
+/* app-style */
+/* MoneyLine (spec/app-style-parts.md, "Dialog"): one amber line with the coin icon. */
+.line {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--color-warn-bg);
+  color: var(--color-warn-text);
+  font-size: var(--type-body-size);
+}
+.line > svg {
+  flex: none;
+}
+.words {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--gap-tight);
+  min-width: 0;
+}
+/* Read by a screen reader, not drawn: the "to" after the arrow. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
