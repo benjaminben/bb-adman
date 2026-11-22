@@ -5,10 +5,14 @@ import { z } from 'zod'
 import { AnimationBlock, Geometry, ImageStyle, TextStyle, Timing } from '@/shared/schemas/layer'
 import { LayerRow } from '@/shared/schemas/rows/layer'
 import { projectScoped } from './project-scoped'
+import { MAX_DURATION_MS } from './variant'
 
 // z.number() refuses Infinity and NaN, so every number here is finite.
 const size = z.number().min(1)
 const crop = z.object({ x: z.number(), y: z.number(), width: size, height: size }).strict()
+// A time on the variant: from 0 to the longest variant (variant.update's durationMs bound).
+const ms = z.number().min(0).max(MAX_DURATION_MS)
+const timed = AnimationBlock.extend({ startMs: ms, durationMs: ms }).strict()
 
 const fields = {
   name: z.string().trim().min(1).max(100),
@@ -25,12 +29,9 @@ const fields = {
     .object({ assetId: z.string().min(1) })
     .strict()
     .nullable(),
-  timing: Timing.strict(),
+  timing: Timing.extend({ startMs: ms, endMs: ms.nullable() }).strict(),
   // Each block is replaced whole.
-  animation: z
-    .object({ entrance: AnimationBlock.strict(), exit: AnimationBlock.strict() })
-    .partial()
-    .strict(),
+  animation: z.object({ entrance: timed, exit: timed }).partial().strict(),
 }
 
 export const layerPatch = z

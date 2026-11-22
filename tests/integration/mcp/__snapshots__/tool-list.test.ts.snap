@@ -949,6 +949,8 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
                   "additionalProperties": false,
                   "properties": {
                     "durationMs": {
+                      "maximum": 86400000,
+                      "minimum": 0,
                       "type": "number",
                     },
                     "preset": {
@@ -962,6 +964,8 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
                       "type": "string",
                     },
                     "startMs": {
+                      "maximum": 86400000,
+                      "minimum": 0,
                       "type": "number",
                     },
                   },
@@ -976,6 +980,8 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
                   "additionalProperties": false,
                   "properties": {
                     "durationMs": {
+                      "maximum": 86400000,
+                      "minimum": 0,
                       "type": "number",
                     },
                     "preset": {
@@ -989,6 +995,8 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
                       "type": "string",
                     },
                     "startMs": {
+                      "maximum": 86400000,
+                      "minimum": 0,
                       "type": "number",
                     },
                   },
@@ -1250,12 +1258,20 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
               "additionalProperties": false,
               "properties": {
                 "endMs": {
-                  "type": [
-                    "number",
-                    "null",
+                  "anyOf": [
+                    {
+                      "maximum": 86400000,
+                      "minimum": 0,
+                      "type": "number",
+                    },
+                    {
+                      "type": "null",
+                    },
                   ],
                 },
                 "startMs": {
+                  "maximum": 86400000,
+                  "minimum": 0,
                   "type": "number",
                 },
               },
@@ -1312,6 +1328,8 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
                         "additionalProperties": false,
                         "properties": {
                           "durationMs": {
+                            "maximum": 86400000,
+                            "minimum": 0,
                             "type": "number",
                           },
                           "preset": {
@@ -1325,6 +1343,8 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
                             "type": "string",
                           },
                           "startMs": {
+                            "maximum": 86400000,
+                            "minimum": 0,
                             "type": "number",
                           },
                         },
@@ -1339,6 +1359,8 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
                         "additionalProperties": false,
                         "properties": {
                           "durationMs": {
+                            "maximum": 86400000,
+                            "minimum": 0,
                             "type": "number",
                           },
                           "preset": {
@@ -1352,6 +1374,8 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
                             "type": "string",
                           },
                           "startMs": {
+                            "maximum": 86400000,
+                            "minimum": 0,
                             "type": "number",
                           },
                         },
@@ -1613,12 +1637,20 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
                     "additionalProperties": false,
                     "properties": {
                       "endMs": {
-                        "type": [
-                          "number",
-                          "null",
+                        "anyOf": [
+                          {
+                            "maximum": 86400000,
+                            "minimum": 0,
+                            "type": "number",
+                          },
+                          {
+                            "type": "null",
+                          },
                         ],
                       },
                       "startMs": {
+                        "maximum": 86400000,
+                        "minimum": 0,
                         "type": "number",
                       },
                     },
