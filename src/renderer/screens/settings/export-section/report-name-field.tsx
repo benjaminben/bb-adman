@@ -30,7 +30,10 @@ export function ReportNameField(props: { saved: string }) {
   }
 
   return (
-    <form className={`${layout.field} ${layout.inline} ${styles.row}`} onSubmit={submit}>
+    <form
+      className={`${layout.field} ${layout.inline} ${styles.row} ${styles.name}`}
+      onSubmit={submit}
+    >
       <span className={styles.labelWithTip}>
         <label htmlFor="export-name">Report name</label>
         <InfoTip about="report name">
