@@ -1,0 +1,44 @@
+/* app-style */
+/* The overview: the view bar, then the shown view's panels, spaced as the overview was. */
+.overview,
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+/* An inactive panel keeps the hidden attribute; the flex display above must not show it. */
+.panel[hidden] {
+  display: none;
+}
+/* One row: the tab list takes the room and scrolls sideways inside its own box; Undo and Redo
+   keep the right end and never wrap under it. The tab row draws its own line; the Undo box
+   draws the same line, so one line runs the full width. */
+.bar {
+  display: flex;
+  align-items: stretch;
+  min-height: var(--tab-row-height);
+  background: var(--color-bg);
+}
+.views {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.undo {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-line);
+}
+/* A tab's icon and word. */
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+/* The warning number after the word. */
+.badge {
+  margin-left: var(--space-2);
+  padding: 0 var(--space-2);
+}

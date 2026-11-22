@@ -3,6 +3,7 @@
 // to the campaign and two German posts with campaign.update and variant.add, and proposes
 // made-up German words with translation.set, through the window's api as a screen would.
 import { test, expect, type Page } from '@playwright/test'
+import { showCampaignView } from '../e2e/campaign-view-steps'
 import * as screens from '../e2e/screens'
 import { closeApp, openApp, shot, type Session } from './shot'
 
@@ -75,6 +76,7 @@ test('The translation panel, proposed and approved', async () => {
   await addGermanPosts(page)
   await screens.openCampaign(page)
 
+  await showCampaignView(page, 'Translations')
   const panel = page.getByRole('region', { name: 'Translations' })
   const german = panel.getByRole('region', { name: /^German · 0 of \d+ approved$/ })
   await expect(german).toBeVisible()

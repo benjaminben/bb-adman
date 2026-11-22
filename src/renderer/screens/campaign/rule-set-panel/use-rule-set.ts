@@ -4,7 +4,7 @@
 // key of the list (or word field) that sent it, until that list is saved.
 import { useEffect, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
-import type { CampaignSectionProps } from '@/renderer/screens/campaign/campaign-sections'
+import type { CampaignTabProps as CampaignSectionProps } from '@/renderer/screens/campaign/campaign-overview'
 import type { RuleSetValues } from '@/shared/schemas/commands/campaign'
 import type { AssetList } from '@/shared/schemas/queries/asset'
 import type { RuleSetRow } from '@/shared/schemas/rows/rule-set'

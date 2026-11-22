@@ -1,0 +1,7 @@
+/* app-style */
+/* The Variants view: its parts one under another, spaced as the overview was. */
+.tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}

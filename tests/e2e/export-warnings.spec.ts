@@ -6,6 +6,7 @@
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
+import { showCampaignView } from './campaign-view-steps'
 import { makeSandbox, launch, type Sandbox } from './launch'
 import { answerQuit } from './quit-answer'
 import * as screens from './screens'
@@ -69,11 +70,13 @@ test('a prohibited word: the warnings step, a reason, Export anyway, and the rea
   const place = await campaign()
 
   // The rule, typed in the campaign's rules panel; the word, typed into the headline.
+  await showCampaignView(page, 'Checks')
   const rules = page.getByRole('region', { name: 'Brand and legal rules' })
   const words = rules.getByLabel('Prohibited words (en)')
   await words.fill('cheap')
   await words.blur()
   await expect(words).toHaveValue('cheap')
+  await showCampaignView(page, 'Variants')
   await v.editLayer(page, v.tile(page, DIRECTION, '1080×1080 · en'), 'Headline')
   await v.setCopy(page, HEADLINE)
   await v.showOverview(page)

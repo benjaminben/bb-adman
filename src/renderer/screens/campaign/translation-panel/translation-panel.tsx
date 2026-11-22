@@ -2,7 +2,7 @@
 // addition 8): one group per language other than the primary one, from translation.forCampaign
 // read again on every change. "Export translation sheet…" at the top; each group gets its
 // language's newest jobs (P6-13).
-import type { CampaignSectionProps } from '@/renderer/screens/campaign/campaign-sections'
+import type { CampaignTabProps as CampaignSectionProps } from '@/renderer/screens/campaign/campaign-overview'
 import layout from '@/renderer/ui/layout.module.css'
 import { ExportSheet } from './export-sheet'
 import { LanguageGroup } from './language-group'

@@ -1,7 +1,7 @@
 // The "Brand and legal rules" section of the campaign overview (spec/phases/phase-06.md, design
 // addition 8; P6-10): "Palette", "Required files" and "Words". Every change sends
 // ruleSet.update with the one list changed; a refusal's own message shows under that list.
-import type { CampaignSectionProps } from '@/renderer/screens/campaign/campaign-sections'
+import type { CampaignTabProps as CampaignSectionProps } from '@/renderer/screens/campaign/campaign-overview'
 import layout from '@/renderer/ui/layout.module.css'
 import { PaletteList } from './palette-list'
 import { RequiredFiles } from './required-files'
