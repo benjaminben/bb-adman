@@ -2,7 +2,8 @@
 // the default layout's box and text style for its slot (src/shared/config/default-layout.ts,
 // placed by src/shared/templates/layout-rules.ts), at the style's largest size; an item of any
 // other slot gets the "any other copy slot" box, one box-height lower for each earlier such
-// item, kept inside the canvas.
+// item, kept inside the canvas. R2E-3 (round-2-editor.md D3): when type styles are offered, the
+// headline gets `bold` and every other item `regular`; otherwise no box names a style.
 import { fakeRun } from './run'
 import type { LayoutBox, LayoutProvider } from '@/main/providers/types'
 import { OTHER_COPY_BOX, OTHER_COPY_TEXT, SLOT_LAYOUTS } from '@/shared/config/default-layout'
@@ -26,7 +27,10 @@ export function fakeLayout(): LayoutProvider {
             others += 1
           }
           const fontSize = Math.round(text.fontSizeOfSmaller * f.S)
-          return { slot, ...box, fontSize, color, align: text.align }
+          const look = input.typeStyles
+            ? { typeStyle: slot === 'headline' ? 'bold' : 'regular' }
+            : {}
+          return { slot, ...box, fontSize, color, align: text.align, ...look }
         })
       }),
   }

@@ -137,7 +137,7 @@ describe('get_job over a finished AI run [P10-5, A-232]', () => {
     expect(layout.boxes.map((b) => b.slot)).toEqual(['cta'])
     for (const box of layout.boxes) {
       expect(Object.keys(box).sort()).toEqual(
-        ['align', 'color', 'fontSize', 'height', 'slot', 'width', 'x', 'y'].sort(),
+        ['align', 'color', 'fontSize', 'height', 'slot', 'typeStyle', 'width', 'x', 'y'].sort(),
       )
     }
     for (const word of HIDDEN) expect(text, word).not.toContain(word)

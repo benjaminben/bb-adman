@@ -1,5 +1,6 @@
 // clampLayout (spec/ai-jobs.md "Layout proposal", step 5): turns the boxes a layout provider
 // answered into boxes that fit the variant. Pure, so the job and its tests share it.
+import { isTypeStyleId } from '@/shared/config/type-styles'
 import type { LayoutJobBox } from '@/shared/schemas/jobs/layout-proposal'
 
 // A box as the model answered it: any number, any colour text, any align text.
@@ -12,9 +13,18 @@ export type RawLayoutBox = {
   fontSize: number
   color: string
   align: string
+  // R2E-3: any value; kept only when it is one of the offered style ids.
+  typeStyle?: unknown
 }
 
-export type LayoutLimits = { width: number; height: number; palette: string[]; keys: string[] }
+// `typeStyles`: the style ids the job offered (R2E-3, D3), absent when it offered none.
+export type LayoutLimits = {
+  width: number
+  height: number
+  palette: string[]
+  keys: string[]
+  typeStyles?: readonly string[]
+}
 
 const HEX = /^#[0-9A-Fa-f]{6}$/
 const ALIGNS = new Set(['left', 'center', 'right'])
@@ -40,6 +50,13 @@ function colorOf(color: string, palette: string[]): string | null {
   return (valid.length > 0 ? nearest(color, valid) : color).toUpperCase()
 }
 
+// The answer's style when the job offered it, else null; no field at all when none was offered.
+function typeStyleOf(raw: RawLayoutBox, offered: readonly string[] | undefined) {
+  if (!offered) return {}
+  const id = raw.typeStyle
+  return { typeStyle: isTypeStyleId(id) && offered.includes(id) ? id : null }
+}
+
 function fit(raw: RawLayoutBox, limits: LayoutLimits): LayoutJobBox {
   const x = clamp(Math.round(raw.x), 0, limits.width - 1)
   const y = clamp(Math.round(raw.y), 0, limits.height - 1)
@@ -52,6 +69,7 @@ function fit(raw: RawLayoutBox, limits: LayoutLimits): LayoutJobBox {
     fontSize: clamp(Math.round(raw.fontSize), 1, limits.height),
     color: colorOf(raw.color, limits.palette),
     align: ALIGNS.has(raw.align) ? (raw.align as LayoutJobBox['align']) : 'center',
+    ...typeStyleOf(raw, limits.typeStyles),
   }
 }
 

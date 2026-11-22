@@ -5,6 +5,7 @@
 import { Type, type Schema } from '@google/genai'
 import { z } from 'zod'
 import type { AdapterContext, LayoutBox, LayoutProvider } from '@/main/providers/types'
+import { TYPE_STYLE_IDS } from '@/shared/config/type-styles'
 import type { Transport } from './image'
 import { jsonCall } from './json-call'
 import { layoutInstruction } from './prompts'
@@ -21,6 +22,8 @@ const LayoutAnswer = z.object({
       // Any text: the job turns a colour that is not #RRGGBB into null (layout-clamp).
       color: z.string(),
       align: z.enum(['left', 'center', 'right']),
+      // R2E-3: any text, for the job to clamp; a value that is not text is dropped, not failed.
+      typeStyle: z.string().optional().catch(undefined),
     }),
   ),
 })
@@ -43,18 +46,23 @@ const LAYOUT_SCHEMA: Schema = {
           fontSize: { type: Type.NUMBER },
           color: { type: Type.STRING },
           align: { type: Type.STRING, enum: ['left', 'center', 'right'] },
+          typeStyle: { type: Type.STRING, enum: TYPE_STYLE_IDS },
         },
         required: BOX_FIELDS,
-        propertyOrdering: BOX_FIELDS,
+        propertyOrdering: [...BOX_FIELDS, 'typeStyle'],
       },
     },
   },
   required: ['boxes'],
 }
 
+// A box without a typeStyle has no such key, so an answer from before reads as it did.
 function readBoxes(value: unknown): LayoutBox[] | null {
   const answer = LayoutAnswer.safeParse(value)
-  return answer.success ? answer.data.boxes : null
+  if (!answer.success) return null
+  return answer.data.boxes.map(({ typeStyle, ...rest }) =>
+    typeStyle === undefined ? rest : { ...rest, typeStyle },
+  )
 }
 
 export function geminiLayout(ctx: AdapterContext, transport: Transport = {}): LayoutProvider {

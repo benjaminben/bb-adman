@@ -21,6 +21,12 @@ function useCtx(): Ctx {
   return ctx
 }
 
+// True inside an AppProvider. A part that is also drawn alone (its own tests) asks first and
+// leaves out what needs the app.
+export function useHasApp(): boolean {
+  return useContext(AppContext) !== null
+}
+
 // Selectors must return stable values; a fresh [] on each call makes React loop.
 export const EMPTY: readonly never[] = Object.freeze([])
 

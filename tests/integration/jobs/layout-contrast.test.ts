@@ -105,7 +105,7 @@ describe('layout_proposal keeps the text readable [D2]', () => {
     const boxes = (job.result as { boxes: Array<Record<string, unknown>> }).boxes
     expect(boxes).toHaveLength(1)
     expect(Object.keys(boxes[0] ?? {}).sort()).toEqual(
-      ['align', 'color', 'fontSize', 'height', 'slot', 'width', 'x', 'y'].sort(),
+      ['align', 'color', 'fontSize', 'height', 'slot', 'typeStyle', 'width', 'x', 'y'].sort(),
     )
     expect(boxes[0]).toMatchObject({ color: '#FFFFFF' })
     const lines = contrastLines()

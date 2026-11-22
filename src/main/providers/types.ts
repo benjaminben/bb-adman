@@ -3,6 +3,7 @@ import type { Brief, BriefDraft } from '@/shared/schemas/brief'
 import type { Geometry } from '@/shared/schemas/layer'
 import type { Settings } from '@/shared/schemas/settings'
 import type { ProviderError } from '@/shared/schemas/queries/app'
+import type { TypeStyleOffer } from '@/shared/config/type-styles'
 
 export type { ProviderError }
 
@@ -18,6 +19,8 @@ export type LayoutBox = {
   fontSize: number
   color: string
   align: 'left' | 'center' | 'right'
+  // R2E-3: the model's text, untrusted; the job keeps it only when it is an offered id.
+  typeStyle?: string
 }
 
 // PNG or JPEG, as the provider sent it; the app turns a JPEG into a PNG (SPEC 6.2 [1.18]).
@@ -81,6 +84,8 @@ export interface LayoutProvider {
       items: Array<{ slot: string; text: string }>
       palette: string[]
       fonts: string[]
+      // R2E-3 (round-2-editor.md D3): given only when the project has no font of its own.
+      typeStyles?: TypeStyleOffer[]
     },
     opts?: RunOptions,
   ): Promise<LayoutBox[]>
