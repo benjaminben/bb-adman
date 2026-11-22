@@ -88,7 +88,7 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     "name": "get_campaign",
   },
   {
-    "description": "Create a campaign in an open project from a confirmed brief, with one subject_map entry per brief subject. Gives the new campaign ID and its master variant ID.",
+    "description": "Create a campaign in an open project from a confirmed brief, with one subject_map entry per brief subject. sizes and languages may be left out: the brief’s own are used, else the sizes 1x1, 9x16 and 16x9 and the main language of the brief’s region. Gives the new campaign ID, its first direction ID and its master variant ID.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
@@ -344,8 +344,6 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
         "project_id",
         "brief",
         "subject_map",
-        "languages",
-        "sizes",
         "template_id",
       ],
       "type": "object",

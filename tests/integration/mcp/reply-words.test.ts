@@ -52,7 +52,16 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
         sizes: input.sizes,
         template_id: input.templateId,
       },
-      [{ ...other, brief: input.brief }],
+      [
+        { ...other, brief: input.brief },
+        // P10-10: no sizes and no languages, and a region not in the table.
+        {
+          project_id: p,
+          brief: { ...input.brief, region: 'Atlantis' },
+          subject_map: input.subjectMap.map((m) => ({ ...m, create: false })),
+          template_id: input.templateId,
+        },
+      ],
     ],
     ['get_slots', { project_id: p, campaign_id: 'c1' }, [{ project_id: p, campaign_id: 'x' }]],
     ['get_job', { project_id: p, job_id: ids.agentJob }, [{ project_id: p, job_id: 'x' }]],
