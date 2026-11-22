@@ -22,5 +22,6 @@ export function defaultSettings(documentsDir: string): Settings {
     licenceConfirmed: [],
     approvals: { baseUrl: null },
     reports: { exporterName: '' },
+    setup: { done: false },
   }
 }

@@ -15,7 +15,7 @@ export function makeSandbox(): Sandbox {
   fs.mkdirSync(userData, { recursive: true })
   fs.writeFileSync(
     path.join(userData, 'settings.json'),
-    JSON.stringify({ defaultProjectDir: projects }),
+    JSON.stringify({ defaultProjectDir: projects, setup: { done: true } }),
   )
   return { root, userData, projects }
 }

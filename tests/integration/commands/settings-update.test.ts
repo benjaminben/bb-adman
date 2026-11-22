@@ -31,6 +31,7 @@ describe('settings defaults [SPEC 13.1]', () => {
       licenceConfirmed: [],
       approvals: { baseUrl: null },
       reports: { exporterName: '' },
+      setup: { done: false },
     })
   })
 

@@ -40,6 +40,8 @@ export const licenceConfirmed = z.array(z.string().min(1).max(100)).max(50)
 export const reportsSettings = z.object({
   exporterName: z.string().trim().max(100).refine(noControlCharacters),
 })
+// R2E-10 (D8): the first-run mark. Written only by settings.update (agent policy deny).
+const setup = z.object({ done: z.boolean() })
 
 export const settingsSchema = z.object({
   defaultProjectDir: z.string().min(1),
@@ -55,6 +57,7 @@ export const settingsSchema = z.object({
   licenceConfirmed,
   approvals,
   reports: reportsSettings,
+  setup,
 })
 export type Settings = z.infer<typeof settingsSchema>
 export type RecentProject = z.infer<typeof recentProject>
@@ -72,6 +75,7 @@ export const settingsPatchSchema = z
     storage: storage.pick({ s3: true }).partial().strict(),
     licenceConfirmed,
     reports: reportsSettings.partial().strict(),
+    setup: setup.partial().strict(),
   })
   .partial()
   .strict()

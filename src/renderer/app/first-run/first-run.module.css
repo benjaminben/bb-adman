@@ -1,0 +1,12 @@
+/* R2E-10: the first-run setup. The step heading sits above the Settings part it holds; Back
+   stands apart at the left of the foot. */
+.heading {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-heading);
+}
+.heading:focus-visible {
+  outline: none;
+}
+.back {
+  margin-right: auto;
+}
