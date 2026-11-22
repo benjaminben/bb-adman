@@ -2,7 +2,8 @@
 // A-260). The row is read again and its file checked as collectComponents checked it; the file
 // must still be the one collected. It is then opened once, inside the real path of its own
 // folder (open-inside.ts: a regular file with one name, the folder not a link). An MP4 or MOV
-// must give videoFileFacts. A picture or video is uploaded from a fresh open for each attempt,
+// must give videoFileFacts. A picture's or video's first bytes are read from that handle and must
+// still be its checked type, so the file checked is the file uploaded (P9-13). A picture or video is uploaded from a fresh open for each attempt,
 // refused unless it is the checked handle's file: same inode, device, size and modified time
 // (open-inside.ts). A font is read whole from that one handle, its type checked and its
 // SHA-256 counted from those bytes, and those same bytes are what is uploaded, only when
@@ -30,6 +31,13 @@ const FONT_MAX_BYTES = 32 * 1024 * 1024
 const VIDEO_CHECKED = new Set(['mp4', 'mov'])
 
 export type FontConsentFor = (assetId: string, sha256: string) => boolean
+
+// Whether the handle's first bytes are a file of the checked type, the extension it was given.
+async function headFits(handle: FileHandle, name: string, ext: string): Promise<boolean> {
+  const head = new Uint8Array(SNIFF_BYTES)
+  const { bytesRead } = await handle.read(head, 0, SNIFF_BYTES, 0)
+  return sniffType(name, head.subarray(0, bytesRead))?.extensions[0] === ext
+}
 
 function rowOf(project: ProjectHandle, assetId: string): AssetRow | null {
   try {
@@ -89,6 +97,7 @@ export async function componentUpload(
   let facts: CheckedFacts
   try {
     if (c.kind === 'font') return await fontUpload(handle, remote, name, consented)
+    if (!(await headFits(handle, name, checked.ext))) return { problem: 'wrong_type' }
     if (VIDEO_CHECKED.has(checked.ext) && (await videoFileFacts(handle)) === null) {
       return { problem: 'wrong_type' }
     }
