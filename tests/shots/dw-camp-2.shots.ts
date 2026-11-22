@@ -25,12 +25,6 @@ async function still(page: Page) {
   await page.reload()
 }
 
-// The words a person sees on the Variants view (marks and icons have none).
-const words = (page: Page) =>
-  page
-    .getByRole('region', { name: DIRECTION, exact: true })
-    .evaluate((el) => (el as HTMLElement).innerText.split(/\s+/).filter(Boolean).length)
-
 test('461 a direction header with Sync and the tile More menu open', async () => {
   test.setTimeout(240_000)
   session = await openApp()
@@ -48,7 +42,6 @@ test('461 a direction header with Sync and the tile More menu open', async () =>
   await v.showOverview(page)
   await expect(v.outOfDate(page, DIRECTION)).toHaveCount(3)
   await expect(page.getByRole('button', { name: 'Sync 3 out of date…' })).toBeVisible()
-  console.log(`CAMP-2 words in the direction: ${await words(page)}`)
 
   const tall = v.tile(page, DIRECTION, '1080×1920 · en')
   await tall.getByRole('button', { name: /^More actions for / }).click()
