@@ -34,8 +34,8 @@ const items = () =>
 
 describe('project switcher [FR-003]', () => {
   it.each([
-    ['"Adman" on the start screen', null, 'Adman'],
-    ['the shown project name', 'P2', 'Winter'],
+    ['"Adman" on the start screen', null, 'Adman · 2 open'],
+    ['the shown project name', 'P2', 'Winter · 2 open'],
   ])('shows %s', async (_, shown, label) => {
     await draw(shown)
     expect(await screen.findByRole('button', { name: label })).toHaveAttribute(
@@ -46,15 +46,15 @@ describe('project switcher [FR-003]', () => {
 
   it('lists the open projects, then Start, then Close project for the shown one', async () => {
     await draw('P1')
-    await userEvent.click(screen.getByRole('button', { name: 'Summer' }))
-    expect(items()).toEqual(['Summer', 'Winter', 'Start', 'Close project'])
+    await userEvent.click(screen.getByRole('button', { name: 'Summer · 2 open' }))
+    expect(items()).toEqual(['Summer', 'Winter', 'Open another project…', 'Start', 'Close project'])
     expect(screen.getByRole('menuitem', { name: 'Summer' })).toHaveFocus()
   })
 
   it('has no Close project item on the start screen', async () => {
     await draw()
-    await userEvent.click(screen.getByRole('button', { name: 'Adman' }))
-    expect(items()).toEqual(['Summer', 'Winter', 'Start'])
+    await userEvent.click(screen.getByRole('button', { name: 'Adman · 2 open' }))
+    expect(items()).toEqual(['Summer', 'Winter', 'Open another project…', 'Start'])
   })
 
   it.each([
@@ -62,7 +62,7 @@ describe('project switcher [FR-003]', () => {
     ['Start shows the start screen', 'Start', { kind: 'start' }],
   ])('choosing %s and closes the menu', async (_, item, view) => {
     const { store } = await draw('P1')
-    await userEvent.click(screen.getByRole('button', { name: 'Summer' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Summer · 2 open' }))
     await userEvent.click(screen.getByRole('menuitem', { name: item }))
     expect(store.getState().view).toEqual(view)
     expect(screen.queryByRole('menu')).toBeNull()
@@ -70,14 +70,14 @@ describe('project switcher [FR-003]', () => {
 
   it('closes the shown project with project.close', async () => {
     const { fake } = await draw('P2')
-    await userEvent.click(screen.getByRole('button', { name: 'Winter' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Winter · 2 open' }))
     await userEvent.click(screen.getByRole('menuitem', { name: 'Close project' }))
     expect(fake.commands).toContainEqual({ name: 'project.close', input: { projectId: 'P2' } })
   })
 
   it('moves with the arrow keys, wraps, and Escape closes it and gives focus back', async () => {
     await draw('P1')
-    const button = screen.getByRole('button', { name: 'Summer' })
+    const button = screen.getByRole('button', { name: 'Summer · 2 open' })
     await userEvent.click(button)
     await userEvent.keyboard('{ArrowDown}')
     expect(screen.getByRole('menuitem', { name: 'Winter' })).toHaveFocus()
@@ -90,7 +90,7 @@ describe('project switcher [FR-003]', () => {
 
   it('has no accessibility violations with the menu open', async () => {
     await draw('P1')
-    await userEvent.click(screen.getByRole('button', { name: 'Summer' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Summer · 2 open' }))
     expect(await axeViolations()).toEqual([])
   })
 })
@@ -98,10 +98,10 @@ describe('project switcher [FR-003]', () => {
 describe('project switcher look [ST-3]', () => {
   it('shows a hidden caret beside the name and keeps the name', async () => {
     await draw('P2')
-    const button = screen.getByRole('button', { name: 'Winter' })
+    const button = screen.getByRole('button', { name: 'Winter · 2 open' })
     const caret = button.querySelectorAll('svg')
     expect(caret).toHaveLength(1)
     expect(caret[0]).toHaveAttribute('aria-hidden', 'true')
-    expect(button).toHaveTextContent(/^Winter$/)
+    expect(button).toHaveTextContent(/^Winter · 2 open$/)
   })
 })

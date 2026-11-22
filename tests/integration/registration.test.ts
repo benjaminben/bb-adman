@@ -55,6 +55,7 @@ describe('registering commands and queries [SPEC 12]', () => {
         'projects',
         'providers',
         'publish',
+        'readPixels',
         'render',
         'secrets',
         'settings',

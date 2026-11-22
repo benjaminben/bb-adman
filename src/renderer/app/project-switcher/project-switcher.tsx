@@ -10,6 +10,7 @@ import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import { menuPlaceStyles, useMenuPlace } from '@/renderer/ui/menu-place'
 import { useCloseProject } from './close-project'
+import { useOpenAnother } from './open-another'
 import styles from './project-switcher.module.css'
 
 type Item = { key: string; label: string; act: () => void }
@@ -19,6 +20,7 @@ export function ProjectSwitcher() {
   const view = useApp((s) => s.view)
   const show = useApp((s) => s.show)
   const { closeProject, dialog } = useCloseProject()
+  const openAnother = useOpenAnother()
   const [open, setOpen] = useState(false)
   const button = useRef<HTMLButtonElement>(null)
   const menu = useRef<HTMLUListElement>(null)
@@ -34,6 +36,7 @@ export function ProjectSwitcher() {
       label: p.name,
       act: go({ kind: 'project', projectId: p.projectId }),
     })),
+    { key: 'open', label: 'Open another project…', act: () => void openAnother() },
     { key: 'start', label: 'Start', act: go({ kind: 'start' }) },
   ]
   if (shownId !== null) {
@@ -88,7 +91,15 @@ export function ProjectSwitcher() {
         aria-controls={open ? menuId : undefined}
         onClick={() => setOpen(!open)}
       >
-        <span className={styles.name}>{shown?.name ?? 'Adman'}</span>
+        <span className={styles.name}>
+          <span className={styles.title}>{shown?.name ?? 'Adman'}</span>
+          {projects.length > 1 && (
+            <>
+              {' '}
+              <span className={styles.count}>· {projects.length} open</span>
+            </>
+          )}
+        </span>
         <span className={styles.caret}>
           <Icon name="down" size="small" />
         </span>
@@ -108,7 +119,7 @@ export function ProjectSwitcher() {
                 type="button"
                 role="menuitem"
                 tabIndex={-1}
-                className={`${layout.menuItem} ${item.key === 'start' ? styles.after : styles.item}`}
+                className={`${layout.menuItem} ${item.key === 'open' ? styles.after : styles.item}`}
                 aria-current={item.key === shownId || undefined}
                 onClick={() => {
                   close()

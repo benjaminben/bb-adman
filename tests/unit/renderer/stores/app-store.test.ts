@@ -26,7 +26,7 @@ describe('app store [ADR-003]', () => {
     expect(store.getState().view).toEqual({ kind: 'project', projectId: 'P1' })
   })
 
-  it('shows a project opened by the system (double-click) when app.stateChanged arrives', async () => {
+  it('shows a project opened by the system (double-click) when app.showProject arrives', async () => {
     const fake = makeFakeApi()
     const store = createAppStore(fake.api)
     store.getState().subscribe()
@@ -34,7 +34,7 @@ describe('app store [ADR-003]', () => {
     fake.setState(
       baseState({ openProjects: [{ projectId: 'P9', name: 'Z', filePath: '/w/Z.adman' }] }),
     )
-    fake.emit('app.stateChanged', {})
+    fake.emit('app.showProject', { projectId: 'P9' })
     await flush()
     expect(store.getState().view).toEqual({ kind: 'project', projectId: 'P9' })
   })

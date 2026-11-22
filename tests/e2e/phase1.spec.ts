@@ -33,6 +33,7 @@ test('Phase 1: create, reopen from the command line, tabs, keys', async () => {
   await expect(page.getByRole('menu').getByRole('menuitem')).toHaveText([
     'Alpha',
     'Beta',
+    'Open another project…',
     'Start',
     'Close project',
   ])

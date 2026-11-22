@@ -22,7 +22,8 @@ function twoProjects() {
 }
 
 async function choose(menuButton: string, item: string) {
-  await userEvent.click(screen.getByRole('button', { name: menuButton }))
+  // Two projects are open in these tests, so the switcher's name carries the count.
+  await userEvent.click(screen.getByRole('button', { name: `${menuButton} · 2 open` }))
   await userEvent.click(screen.getByRole('menuitem', { name: item }))
 }
 
@@ -41,13 +42,13 @@ describe('the shell [FR-003]', () => {
     expect(screen.getByRole('heading', { name: 'Winter' })).toBeInTheDocument()
     await choose('Winter', 'Start')
     expect(store.getState().view).toEqual({ kind: 'start' })
-    expect(screen.getByRole('button', { name: 'Adman' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Adman · 2 open' })).toBeInTheDocument()
     expect(screen.queryByRole('tablist', { name: 'Open campaigns' })).toBeNull()
   })
 
   it('switches project by keyboard', async () => {
     const { store } = await renderApp(<AppShell />, twoProjects())
-    screen.getByRole('button', { name: 'Winter' }).focus()
+    screen.getByRole('button', { name: 'Winter · 2 open' }).focus()
     await userEvent.keyboard('{Enter}')
     await userEvent.keyboard('{Enter}')
     expect(store.getState().view).toEqual({ kind: 'project', projectId: 'P1' })
