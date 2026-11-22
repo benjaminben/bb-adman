@@ -28,6 +28,7 @@
     "test:approvals-local": "npm run build && playwright test --config playwright.approvals.config.ts",
     "shots": "npm run build && playwright test --config playwright.shots.config.ts",
     "db:generate": "drizzle-kit generate",
+    "fetch:ffmpeg": "node scripts/ffmpeg/fetch.mjs",
     "package": "npm run build && electron-builder",
     "package:dir": "npm run build && electron-builder --dir"
   },
