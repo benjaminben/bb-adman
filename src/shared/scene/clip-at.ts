@@ -20,7 +20,7 @@ function clamp(value: number, min: number, max: number, fallback: number): numbe
 const trackMs = (value: number) => clamp(value, 0, MAX_TRACK_MS, 0)
 
 // Null for a clip whose stored times are not all finite, or whose trim has no length.
-function safeClip(clip: SceneClip): SceneClip | null {
+export function safeClip(clip: SceneClip): SceneClip | null {
   const { startMs, inMs, outMs } = clip
   if (![startMs, inMs, outMs].every(Number.isFinite)) return null
   const safe = { ...clip, startMs: trackMs(startMs), inMs: trackMs(inMs), outMs: trackMs(outMs) }
