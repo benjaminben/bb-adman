@@ -36,6 +36,7 @@ export function assetRelink(deps: Pick<CoreDeps, 'log'>) {
           contentHash: file.contentHash,
           width: file.width,
           height: file.height,
+          durationMs: file.durationMs,
           fontFamily: file.fontFamily,
         })
         .where(eq(asset.id, input.assetId))

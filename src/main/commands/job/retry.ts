@@ -22,6 +22,7 @@ import type Database from 'better-sqlite3'
 import { withSyncTargets } from '@/main/translation/sync-result'
 import { groupsFor, planGroup } from '@/main/translation/targets'
 import { translationJobRequest } from '@/shared/schemas/jobs/translation'
+import { publishRefusal } from '@/shared/publish/messages'
 
 type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets'>
 
@@ -93,6 +94,8 @@ export function jobRetry(deps: Deps) {
       const old = requireJob(ctx.project, input.jobId)
       // A-195: an export row holds no path, so it cannot be run again from here.
       if (old.kind === 'export') throw exportRefusal('export_not_retried')
+      // P9-1 (A-226): a publish is started again from the campaign, with every check afresh.
+      if (old.kind === 'publish') throw publishRefusal('retry_not_offered')
       const retryable = old.status === 'failed' || old.status === 'cancelled'
       if (!retryable || !old.provider) {
         throw wrongState('Only a job that failed or was cancelled can be tried again.')

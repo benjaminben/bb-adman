@@ -52,6 +52,10 @@ describe('ProviderError reason and missing [SPEC 6.10.9, 6.11.1]', () => {
       'assets_not_writable',
       'results_not_added',
       'target_gone',
+      'dropbox_signed_out',
+      'export_not_built',
+      'export_failed',
+      'work_folder_unsafe',
     ])
   })
 
