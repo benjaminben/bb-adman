@@ -32,7 +32,7 @@ The stakeholder's words: "In general we don't care about nuisance attacks like t
 | The MCP access token leaking | Shown only to the user, in the Connect panel, through one user-only query. No tool, event, log line or file holds it. "Make a new token" replaces it [REQ: FR-191, D-014] |
 | Another program or person on the network reaching the MCP server | Off by default, bound to `127.0.0.1`, bearer token [REQ: FR-191, R-04] |
 | A web page in the user's browser calling the MCP server | Any `Origin` header refused; `Host` checked (stops DNS rebinding) |
-| The agent spending money, exporting, publishing or destroying work | The agent policy table: deny for export and publish; ask for deletes and for file imports [REQ: FR-197, FR-199]. Generation by an agent only for a provider the user ticked (`tick`) |
+| The agent spending money, exporting, publishing or destroying work | The agent policy table: deny for export and publish; ask for deletes (a campaign, a variant, a subject) and for file imports [REQ: FR-197, FR-199]. Generation by an agent only for a provider the user ticked (`tick`) |
 | Text from an agent, a brief, a file or a server carrying HTML or script | Set as text content only; strict content security policy |
 | A project file from someone else naming private files | A linked file reaches a provider or a package only when its first bytes fit its kind; every path check in "Project-file values", below [REQ: R-06] |
 | A corrupt or hostile project file | Every value read from it is untrusted (below). Every JSON column is parsed with Zod on read; a row that fails is reported and skipped |

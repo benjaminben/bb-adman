@@ -2122,5 +2122,27 @@ A subject's pictures are asset IDs from list_assets or full file paths. If any f
     },
     "name": "create_project",
   },
+  {
+    "description": "Delete a subject of an open project. Its photos stay in the project without a subject. A subject that a campaign uses cannot be deleted. This cannot be undone. The user is asked in the app, and this call waits up to two minutes for the answer. A refusal is final: do not ask again for the same subject unless the user tells you to.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "subject_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "subject_id",
+      ],
+      "type": "object",
+    },
+    "name": "delete_subject",
+  },
 ]
 `;

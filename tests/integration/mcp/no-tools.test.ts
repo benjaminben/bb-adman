@@ -44,6 +44,7 @@ const SECTION_4_5_TOOLS = [
   'import_assets',
   'create_campaign_from_brief',
   'create_project',
+  'delete_subject',
 ]
 
 async function listTools(fx: McpFixture): Promise<string[]> {

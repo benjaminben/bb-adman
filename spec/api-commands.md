@@ -21,7 +21,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `project.package` | projectId, targetDir, skipMissing (default false) (`spec/data-rules.md`, "Package project") | — | deny | Built | FR-008, R-09 |
 | `subject.create` | projectId, id, name, description (default '') | — | deny | Built | FR-011 |
 | `subject.update` | projectId, subjectId, name?, description? | — | deny | Built | FR-011 |
-| `subject.delete` | projectId, subjectId (refused while a campaign uses it) | — | deny | Built | FR-197 |
+| `subject.delete` | projectId, subjectId (refused while a campaign uses it) | — | ask (SUBJ-1, D-101) | Built | FR-197 |
 | `asset.import` | projectId, paths[], library (`reference` or `asset`), subjectId?, copy: boolean | — | deny | Built | FR-050–FR-054, R-08 |
 | `asset.update` | projectId, assetId, library?, subjectId? (null detaches), displayName? (1 to 200), fontPublishAllowed? | — | deny | Built | FR-054, R-12 |
 | `asset.relink` | projectId, assetId, newPath, relinkSiblings: boolean | — | deny | Built | FR-009, R-06 |

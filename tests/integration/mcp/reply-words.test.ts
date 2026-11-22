@@ -199,6 +199,9 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
     ],
     // R2P-8: a new project in the default folder; a reserved Windows name is refused.
     ['create_project', { name: 'Autumn Work' }, [{ name: 'CON' }]],
+    // SUBJ-1: delete_subject asks, so it is refused here and word-tested in
+    // delete-subject-tool.test.ts.
+    ['delete_subject', null, [{ project_id: p, subject_id: 'can' }]],
   ]
   return table.flatMap(([tool, good, bad]) => [
     ...(good === null ? [] : [{ tool, args: good, ok: true }]),
@@ -228,7 +231,9 @@ describe('no tool reply or output schema holds a provider ID, a settings key or 
     expect([...outcomes.keys()]).toEqual(BUILT_TOOLS)
     for (const [tool, both] of outcomes) {
       expect(both.size, tool).toBe(
-        ['delete_campaign', 'delete_variant', 'import_assets'].includes(tool) ? 1 : 2,
+        ['delete_campaign', 'delete_variant', 'import_assets', 'delete_subject'].includes(tool)
+          ? 1
+          : 2,
       )
     }
     const text = seen.join('\n')

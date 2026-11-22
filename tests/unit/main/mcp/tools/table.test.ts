@@ -26,6 +26,7 @@ const ASK_TARGETS = [
   'variant.delete',
   'asset.importFiles',
   'campaign.createFromBriefWithFiles',
+  'subject.delete',
 ]
 
 describe('the fixed MCP tool table [SPEC 4.5; 14 1.56 MCP-B]', () => {
