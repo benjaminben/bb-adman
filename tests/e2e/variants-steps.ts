@@ -101,12 +101,22 @@ export async function editLayer(page: Page, t: Locator, layer: string): Promise<
   await expect(properties(page).getByRole('heading', { name: layer })).toBeVisible()
 }
 
-// The text's Colour field, typed and saved with Enter.
+// The text's Colour (ED-2: a swatch field): typed in its "+" popover and saved with Enter. The
+// popover is opened again until it shows the saved colour, then closed.
 export async function setColour(page: Page, hex: string): Promise<void> {
-  const field = properties(page).getByLabel('Colour', { exact: true })
+  const colour = properties(page).getByRole('group', { name: 'Colour', exact: true })
+  const plus = colour.getByRole('button', { name: 'Other colour' })
+  const field = properties(page).getByRole('textbox', { name: 'Hex colour' })
+  await plus.click()
   await field.fill(hex)
   await field.press('Enter')
-  await expect(field).toHaveValue(hex)
+  await expect(field).toBeHidden()
+  await expect(async () => {
+    if ((await plus.getAttribute('aria-expanded')) === 'true') await plus.click()
+    await plus.click()
+    await expect(field).toHaveValue(hex.toLowerCase(), { timeout: 1000 })
+  }).toPass()
+  await field.press('Escape')
 }
 
 // The text's Copy field, saved on leaving it.
