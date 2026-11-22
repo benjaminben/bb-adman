@@ -6,7 +6,11 @@ import { z } from 'zod'
 export const layoutJobRequest = z.object({}).strict()
 
 // One box per text layer, in the variant's own pixels, after clampLayout. `slot` is the text
-// layer's key. A null colour leaves the layer's own.
+// layer's key. A null colour leaves the layer's own. R2E-2 (spec/phases/round-2-editor.md D2):
+// `readable` says what the contrast check did; `boxColor` and `boxPadding` are set only when it
+// added a text box. All three are optional, so a result stored before them still parses.
+export const LAYOUT_READABLE = ['kept', 'colour', 'box'] as const
+
 export const layoutBox = z.object({
   slot: z.string(),
   x: z.number().int(),
@@ -19,6 +23,12 @@ export const layoutBox = z.object({
     .regex(/^#[0-9A-Fa-f]{6}$/)
     .nullable(),
   align: z.enum(['left', 'center', 'right']),
+  boxColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
+  boxPadding: z.number().int().min(0).optional(),
+  readable: z.enum(LAYOUT_READABLE).optional(),
 })
 
 export const layoutJobResult = z.object({ boxes: z.array(layoutBox) })

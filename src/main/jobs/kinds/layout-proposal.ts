@@ -2,7 +2,8 @@
 // variant when it runs, draws it without its text, makes one layout call and keeps the boxes
 // clampLayout leaves. It writes nothing to the variant: the window applies the boxes with one
 // layer.updateMany. It is an attached kind, so the runner ends a cancelled one at once and
-// keeps no result, whatever the call answers after.
+// keeps no result, whatever the call answers after. R2E-2 (spec/phases/round-2-editor.md D2):
+// after the clamp, each box is checked against the same picture so its text can be read.
 import type { CoreDeps } from '@/main/core-deps'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { readWireRow } from '@/main/db/rows'
@@ -13,7 +14,9 @@ import { adapterFor } from '@/main/providers/adapters'
 import { requireProviderKeys } from '@/main/providers/require-keys'
 import { ProviderCancelled, ProviderFailure, type LayoutProvider } from '@/main/providers/types'
 import { variantLayers } from '@/main/thumbnails/scene-input'
+import type { Pixels } from '@/shared/generation/contrast'
 import { clampLayout } from '@/shared/generation/layout-clamp'
+import { keepReadable } from '@/shared/generation/layout-readable'
 import type { LayoutJobResult } from '@/shared/schemas/jobs/layout-proposal'
 import type { AssetRow } from '@/shared/schemas/rows/asset'
 import type { JobRow } from '@/shared/schemas/rows/job'
@@ -51,6 +54,30 @@ function fonts(project: ProjectHandle, layers: LayerRow[]): string[] {
   return [...names]
 }
 
+// The drawn picture's pixels, or null when they cannot be read: then the check is skipped
+// with one warn line that holds no picture data, no path and no text from the ad.
+function pixelsOf(jc: JobRunContext, job: JobRow, png: Uint8Array): Pixels | null {
+  try {
+    const pixels = jc.deps.readPixels(png)
+    if (pixels.width > 0 && pixels.height > 0) return pixels
+  } catch {
+    // Falls through to the warn line below.
+  }
+  jc.deps.log.write({
+    level: 'warn',
+    event: 'job',
+    name: 'layout.contrast',
+    actor: 'system',
+    ok: false,
+    errorKind: 'pixels_unreadable',
+    message: 'The picture could not be read, so the text colours were not checked.',
+    projectId: jc.projectId,
+    variantId: job.variantId,
+    jobId: job.id,
+  })
+  return null
+}
+
 async function runLayoutJob(
   jc: JobRunContext,
   job: JobRow,
@@ -81,7 +108,10 @@ async function runLayoutJob(
   if (boxes.length === 0) {
     throw new ProviderFailure({ kind: 'other', detail: 'No usable layout in the answer' })
   }
-  return { boxes }
+  const pixels = pixelsOf(jc, job, picture.png)
+  if (!pixels) return { boxes }
+  const scale = pixels.width / variant.width
+  return { boxes: keepReadable(boxes, { pixels, scale, palette: input.palette, layers }) }
 }
 
 const defaultLayoutFor: LayoutAdapterFor = (deps, providerId) =>

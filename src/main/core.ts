@@ -57,6 +57,7 @@ import { MCP_TOOLS, toolSetup } from './mcp/tools'
 import { createPermissionBroker } from './mcp/permissions'
 import { createAgentActivity } from './mcp/activity'
 import type { CoreDeps } from './core-deps'
+import { noPixels } from './pixel-reader'
 
 export type { SecretCrypto }
 
@@ -75,6 +76,7 @@ export type CoreOptions = {
   toPng?: (bytes: Uint8Array) => Uint8Array
   fitPicture?: CoreDeps['fitPicture']
   webpToPng?: CoreDeps['webpToPng']
+  readPixels?: CoreDeps['readPixels']
   // The Electron side of one draw (spec/scene.md, "One draw"); index.ts fills it.
   drawScene?: DrawScene
   // P8-4's picture encoder over nativeImage; index.ts fills it.
@@ -159,6 +161,7 @@ export function createCore(opts: CoreOptions) {
     toPng: opts.toPng ?? noConverter,
     fitPicture: opts.fitPicture ?? noFitter,
     webpToPng: opts.webpToPng ?? noWebp,
+    readPixels: opts.readPixels ?? noPixels,
     approvals: createApprovalsDeps({ ...opts, deps: () => deps }),
     export: createExportDeps(() => deps),
     exportPictures: opts.exportPictures ?? noPictures,

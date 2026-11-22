@@ -38,6 +38,7 @@ export type CoreDeps = {
   // Slice WP: decodes a WebP in the hidden decoder window, PNG out; rejects when it cannot.
   // index.ts fills it.
   webpToPng: (bytes: Uint8Array) => Promise<Uint8Array>
+  readPixels: (png: Uint8Array) => { width: number; height: number; rgba: Uint8Array }
   // The kept passwords and the picture store of approval links (spec/approvals.md).
   approvals: ApprovalsDeps
   // The export plans in memory and the export ports (spec/phases/phase-08.md).
