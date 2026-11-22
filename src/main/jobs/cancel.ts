@@ -5,6 +5,7 @@
 //   running, background, cancel 'none'     refused: cancel_not_supported, except a picture job:
 //                                          its unsent pictures are skipped, the calls in flight
 //                                          finish, and it ends with no cancel wait (FIX-E)
+//   running video, paid, may_finish, working refused: cancel_would_still_charge (P7-13)
 //   running, background, stops/may_finish  result.cancelAsked, signal fired, then the outcome:
 //     the handler ends ProviderCancelled   cancelled                ("stopped")
 //     the handler returns its result       succeeded, finishedAfterCancel
@@ -15,6 +16,7 @@ import { readJob } from './job-store'
 import { writeJob, type LiveJob, type RunnerState } from './live'
 import { cancelWaitFor } from './cancel-wait'
 import { runningResult } from './job-end'
+import { leftRunningOnClose } from './leave-running'
 import { JOB_KIND_CLASSES } from '@/shared/config/job-kinds'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { JobRow } from '@/shared/schemas/rows/job'
@@ -36,6 +38,10 @@ export function cancelRefusal(row: JobRow, provider: ProviderInfo | undefined): 
     return new AppError('RULE_VIOLATION', `${label} cannot stop a request once it is sent.`, {
       reason: 'cancel_not_supported',
     })
+  }
+  if (leftRunningOnClose(row, provider)) {
+    const message = `${provider?.label ?? 'The provider'} has started this and will charge for it. The app lets it finish and keeps the result.`
+    return new AppError('RULE_VIOLATION', message, { reason: 'cancel_would_still_charge' })
   }
   return null
 }
