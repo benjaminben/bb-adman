@@ -120,7 +120,11 @@ test('the Assets panel: the section, empty, with files, over the editor', async 
   await open.click()
   await expect(panel(page).getByRole('heading', { name: 'Pictures · 3' })).toBeVisible()
   await expect(panel(page).getByRole('heading', { name: 'Fonts · 1' })).toBeVisible()
-  await expect(panel(page).locator('img')).toHaveCount(3)
+  // R2C-6: a "Subjects" group comes first and its cards draw each subject's photos too, so
+  // count the pictures in the "Pictures" group only.
+  await expect(
+    panel(page).getByRole('region', { name: 'Pictures · 3' }).locator('img'),
+  ).toHaveCount(3)
   await page.waitForTimeout(500)
   await shot(page, '353-assets-panel-files')
   await panel(page).getByRole('button', { name: 'Close assets' }).click()
