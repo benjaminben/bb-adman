@@ -6,7 +6,7 @@
 // R2E-4 (spec/phases/round-2-editor.md D4, "Draft"): a draft also holds its kind, where the
 // run starts from and the video fields. A draft made without them reads through draftOf.
 import { createStore } from 'zustand/vanilla'
-import { START_SECONDS } from '@/renderer/screens/campaign/video-panel/video-length'
+import { START_SECONDS } from '@/renderer/editor/generate-panel/video-length'
 
 export type GenerateKind = 'image' | 'video'
 // The "Start from" choices: a prompt only, this layer's picture, another picture of the same
