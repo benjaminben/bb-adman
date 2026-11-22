@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, type CSSProperties, type RefObject } from 'react'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { TextStyle } from '@/shared/schemas/layer'
-import type { SceneAsset, SceneMode, SceneProps } from '@/shared/scene/types'
+import type { SceneAsset, SceneProps } from '@/shared/scene/types'
 import { registerDefaultFont, useSceneFonts, type SceneFont } from '@/shared/scene/font-faces'
 import { measureOverflow } from '@/shared/scene/measure-overflow'
 import { measuredText } from '@/shared/scene/measure-text'
@@ -10,7 +10,8 @@ import { ClipTrack } from '@/shared/scene/clip-track'
 import { clipAt } from '@/shared/scene/clip-at'
 import { TextLayer } from '@/shared/scene/text-layer'
 import { drawnTime, visibleAt } from '@/shared/scene/timing'
-import { textLookOf } from '@/shared/config/look'
+import { pictureLookOf, textLookOf } from '@/shared/config/look'
+import { shadeCss } from '@/shared/scene/shade-css'
 
 // spec/scene.md "The Scene component": draws one variant in variant pixels. The editor, the
 // render window and export all draw with it [FR-130]. Inline styles only: every value comes
@@ -23,10 +24,23 @@ type TextBoxes = Map<string, TextParts>
 
 const isTextStyle = (style: LayerRow['style']): style is TextStyle => 'fontSize' in style
 
-// Lowest z first; equal z (a damaged file) by ID. Overlay-only leaves out the background.
-function drawOrder(layers: LayerRow[], mode: SceneMode): LayerRow[] {
-  const kept = mode === 'full' ? layers : layers.filter((layer) => layer.type !== 'background')
-  return [...kept].sort((a, b) => a.z - b.z || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+// Lowest z first; equal z (a damaged file) by ID.
+function drawOrder(layers: LayerRow[]): LayerRow[] {
+  return [...layers].sort((a, b) => a.z - b.z || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+}
+
+// A-202 (P8-17): overlay-only leaves out the background's picture, clip and colour, but draws
+// its shade, as PictureLayer and ClipTrack draw it over their picture, so text over a video
+// keeps it. A background with no usable shade draws nothing.
+function ShadeOnly({ layer, box }: { layer: LayerRow; box: CSSProperties }) {
+  const look = 'opacity' in layer.style ? pictureLookOf(layer.style) : null
+  const shade = shadeCss(look?.shade)
+  if (!look || !shade) return null
+  return (
+    <div data-shade-of={layer.id} style={{ ...box, overflow: 'hidden', opacity: look.opacity }}>
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', ...shade }} />
+    </div>
+  )
 }
 
 function usableAsset(
@@ -144,8 +158,11 @@ export function Scene(props: SceneProps) {
   const size = { width: variant.width, height: variant.height }
   return (
     <div ref={root} lang={variant.language} style={style}>
-      {drawOrder(layers, mode).map((layer) => {
+      {drawOrder(layers).map((layer) => {
         const box = boxCss(layer, t !== null && !visibleAt(layer, t, variant.durationMs))
+        if (layer.type === 'background' && mode === 'overlay-only') {
+          return <ShadeOnly key={layer.id} layer={layer} box={box} />
+        }
         if (layer.type === 'background' && t !== null) {
           const clip = { found, asset: found && clipAsset(assets, found.clip.assetId) }
           const how = { playing, sound: props.sound ?? false, readyRef: trackReady }
