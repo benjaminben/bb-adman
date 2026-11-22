@@ -45,10 +45,10 @@ test('Workflow 5.3: a master edit, the sync review, Accept selected, then Accept
   await expect(v.grid(page, DIRECTION).getByRole('listitem')).toHaveCount(3)
   await v.fanOut(page, DIRECTION, { languages: ['de'] })
   await expect(v.grid(page, DIRECTION).getByRole('listitem')).toHaveCount(4)
-  await expect(v.section(page, DIRECTION).getByText('4 variant(s)')).toBeVisible()
+  await expect(v.section(page, DIRECTION).getByText('4 variants')).toBeVisible()
   await expect(
-    v.section(page, DIRECTION).getByRole('button', { name: 'Nothing to sync' }),
-  ).toBeDisabled()
+    v.section(page, DIRECTION).getByRole('button', { name: /^Sync \d+ out of date…$/ }),
+  ).toHaveCount(0)
 
   // The tall variant's headline colour changed by hand first: an override.
   await v.editLayer(page, v.tile(page, DIRECTION, '1080×1920 · en'), 'Headline')
@@ -87,8 +87,8 @@ test('Workflow 5.3: a master edit, the sync review, Accept selected, then Accept
   await expect(rest).toBeHidden()
   await expect(v.outOfDate(page, DIRECTION)).toHaveCount(0)
   await expect(
-    v.section(page, DIRECTION).getByRole('button', { name: 'Nothing to sync' }),
-  ).toBeDisabled()
+    v.section(page, DIRECTION).getByRole('button', { name: /^Sync \d+ out of date…$/ }),
+  ).toHaveCount(0)
 
   // The flagged variant kept its colour and took the copy; the other took both.
   const { variants } = await v.campaignRead(page, place)

@@ -45,6 +45,25 @@ export const tileButton = (t: Locator): Locator => t.getByRole('button', { name:
 export const outOfDate = (page: Page, direction: string): Locator =>
   section(page, direction).getByTitle('Out of date', { exact: true })
 
+// CAMP-2: a tile's other actions ("Open", "Open in a tab", "Quick look", "Delete…") are items
+// of its More menu "More actions for {title}". Chooses one and gives back the tile's title.
+export async function tileMore(page: Page, t: Locator, item: string): Promise<string> {
+  const more = t.getByRole('button', { name: /^More actions for / })
+  const title = ((await more.getAttribute('aria-label')) ?? '').replace(/^More actions for /, '')
+  await more.click()
+  await page.getByRole('menuitem', { name: item, exact: true }).click()
+  return title
+}
+
+// CAMP-2: a direction's "New direction…", "Rename…" and "Delete direction…" are items of its
+// More menu "More actions for {name}".
+export async function directionMore(page: Page, direction: string, item: string): Promise<void> {
+  await section(page, direction)
+    .getByRole('button', { name: `More actions for ${direction}`, exact: true })
+    .click()
+  await page.getByRole('menuitem', { name: item, exact: true }).click()
+}
+
 export type FanOut = { sizes?: string[]; languages?: string[]; fill?: string }
 
 // "Fan out…", the chips pressed, a "Generate fill" size with the fake provider, "Make {n}

@@ -77,7 +77,7 @@ export async function projectHomeTour(app: ElectronApplication, page: Page) {
   // and stays chosen back on the overview.
   const variants = page
     .getByRole('list', { name: 'Variants' })
-    .getByRole('button', { name: /^(?!Open |Quick look at |Delete )/ })
+    .getByRole('button', { name: /^(?!Open |Quick look at |Delete |More actions for )/ })
   await expect(variants).toHaveCount(1)
   await expect(variants.first()).toHaveAttribute('aria-pressed', 'true')
   await variants.first().dblclick()
@@ -141,14 +141,14 @@ export async function aiTour(app: ElectronApplication, page: Page) {
 }
 
 // P5-19: the campaign overview with two directions (spec/screens-variants.md, "The overview"):
-// "New direction from this master…" named Studio, then one grid per direction. Clicks only.
+// "New direction…" named Studio, then one grid per direction. Clicks only.
 export async function directionsTour(app: ElectronApplication, page: Page) {
   await screens.createProject(page, 'Epsilon')
   await screens.loadBriefAndCreate(app, page)
   await screens.openCampaign(page)
   const first = page.getByRole('region', { name: 'Direction 1', exact: true })
-  await first.getByRole('button', { name: 'Direction', exact: true }).click()
-  await page.getByRole('menuitem', { name: 'New direction from this master…' }).click()
+  await first.getByRole('button', { name: 'More actions for Direction 1', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'New direction…' }).click()
   const make = page.getByRole('dialog', { name: 'New direction' })
   await make.getByRole('textbox', { name: 'Name' }).fill('Studio')
   await make.getByRole('button', { name: 'Make direction' }).click()
