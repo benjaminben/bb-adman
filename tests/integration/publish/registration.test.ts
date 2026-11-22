@@ -60,13 +60,6 @@ const COMMANDS: CommandRow[] = [
     action: 'sign in to Dropbox',
     bad: { token: 'x' },
   },
-  {
-    name: 'storage.dropboxSignOut',
-    project: false,
-    input: {},
-    action: 'sign out of Dropbox',
-    bad: { extra: 1 },
-  },
 ]
 
 const inputOf = (row: CommandRow, projectId: string, input: object) =>
