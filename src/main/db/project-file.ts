@@ -39,18 +39,28 @@ function mapOpenError(e: unknown): unknown {
   return e
 }
 
+// An existing file's layout and version are checked read only (LP-11). A file newer than
+// the app is refused here, before the journal_mode pragma, which would rewrite a WAL file.
+function checkExisting(db: Database.Database, migrations: Migration[]): void {
+  checkLayout(db, migrations)
+  if (readSchemaVersion(db) > migrations.length) {
+    throw new AppError('RULE_VIOLATION', NEWER_VERSION_MESSAGE, { reason: 'newer_version' })
+  }
+}
+
 // Applies the SPEC 3.1 settings and takes the exclusive lock at once by starting
 // an exclusive transaction. In EXCLUSIVE locking mode the lock is kept until close.
 // trusted_schema is off so the file's schema cannot call app-defined SQL functions. An
-// existing file's layout is checked inside that first transaction, before any pragma or
-// statement that writes (LP-11); BEGIN EXCLUSIVE alone makes no journal file.
+// existing file is checked inside that first transaction, before any pragma or statement
+// that writes; BEGIN EXCLUSIVE alone makes no journal file. A refusal closes the
+// connection, which ends the transaction and releases the lock.
 function connect(filePath: string, migrations: Migration[] | null): Database.Database {
   const db = new Database(filePath, { fileMustExist: migrations !== null, timeout: 0 })
   try {
     db.pragma('trusted_schema = OFF')
     db.pragma('locking_mode = EXCLUSIVE')
     db.exec('BEGIN EXCLUSIVE')
-    if (migrations !== null) checkLayout(db, migrations)
+    if (migrations !== null) checkExisting(db, migrations)
     db.exec('COMMIT')
     db.pragma('journal_mode = DELETE')
     db.pragma('synchronous = FULL')
@@ -133,9 +143,6 @@ export function openProjectFile(opts: {
   const db = connect(opts.filePath, migrations)
   try {
     const version = readSchemaVersion(db)
-    if (version > migrations.length) {
-      throw new AppError('RULE_VIOLATION', NEWER_VERSION_MESSAGE, { reason: 'newer_version' })
-    }
     if (version < migrations.length) {
       readStoredName(db)
       fs.copyFileSync(opts.filePath, `${opts.filePath}.bak`)

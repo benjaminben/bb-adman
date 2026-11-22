@@ -87,7 +87,8 @@ function layoutAfter(migrations: Migration[]): Map<string, string> {
 
 // Rule for an older file: every object in it must be one the first `version` migrations
 // make, with the same shape. A missing object is not refused here. A file newer than the
-// app is left to the newer-version refusal that follows, before any write.
+// app is left to the newer-version refusal that connect() gives right after this check, in
+// the same read-only transaction, before any write.
 export function checkLayout(db: Database.Database, migrations: Migration[]): void {
   try {
     if (!schemaRows(db).every(plainObject)) throw notAProject()
