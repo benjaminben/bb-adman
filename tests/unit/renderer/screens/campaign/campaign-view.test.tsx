@@ -26,14 +26,18 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
     const master = await screen.findByRole('button', { name: /^Master post/ })
     expect(master).toHaveAttribute('aria-pressed', 'true')
     expect(within(master).getByText('1080×1080 · en · image · master')).toBeInTheDocument()
-    // Four buttons: each tile's own button, then its "+" ("Open {title} in a tab", P3-10).
+    // Seven buttons: each tile's own button, then its "+" ("Open {title} in a tab", P3-10),
+    // "Quick look at {title}" and, except on the master, "Delete {title}" (P5-15).
     const tiles = within(screen.getByRole('list', { name: 'Variants in Main' })).getAllByRole(
       'button',
     )
     expect(tiles.map((t) => within(t).queryByText(/(Master|German) post/)?.textContent)).toEqual([
       'Master post',
       undefined,
+      undefined,
       'German post',
+      undefined,
+      undefined,
       undefined,
     ])
   })

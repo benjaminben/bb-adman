@@ -50,7 +50,9 @@ const tabs = () =>
     .map((t) => t.textContent)
 // The tile's own button, not its "+" ("Open {title} in a tab").
 const tile = (title: string) =>
-  screen.getByRole('button', { name: (name) => name.includes(title) && !name.startsWith('Open') })
+  screen.getByRole('button', {
+    name: (name) => name.includes(title) && !/^(Open|Quick look at|Delete) /.test(name),
+  })
 
 describe('variant tabs [FR-212, FR-214, Q-041]', () => {
   it('starts on Overview, which holds the grid', async () => {

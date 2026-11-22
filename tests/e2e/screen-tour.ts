@@ -90,7 +90,7 @@ export async function projectHomeTour(app: ElectronApplication, page: Page) {
   // and stays chosen back on the overview.
   const variants = page
     .getByRole('list', { name: 'Variants' })
-    .getByRole('button', { name: /^(?!Open )/ })
+    .getByRole('button', { name: /^(?!Open |Quick look at |Delete )/ })
   await expect(variants).toHaveCount(1)
   await expect(variants.first()).toHaveAttribute('aria-pressed', 'true')
   await variants.first().click()
