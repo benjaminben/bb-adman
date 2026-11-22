@@ -44,7 +44,6 @@ const STILL_NOT_BUILT = [
   'set_translation',
   'run_checks',
   'get_check_results',
-  'set_variant_format',
 ]
 
 // What each tool runs (spec/phases/phase-10.md, "The tools left").
