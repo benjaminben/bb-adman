@@ -3,12 +3,13 @@
 // shown and Import or Allow is ready, then refused, so nothing is read or imported. 373 three
 // files, 374 twenty long paths, 375 the brief command's dialog. Reduce motion and a fixed
 // Math.random keep every picture still. Nothing is paid and nothing leaves the machine.
+import fs from 'node:fs'
+import path from 'node:path'
 import { test, expect, type Page } from '@playwright/test'
 import * as screens from '../e2e/screens'
 import { command, query } from '../e2e/render-helpers'
 import { toolSession, type ToolSession } from '../integration/mcp/tool-client'
 import { freePort } from '../integration/mcp/http-client'
-import { markdownBrief } from '../integration/mcp/brief-tool-fixture'
 import { closeApp, openApp, shot, type Session } from './shot'
 
 const PROJECT = 'Lakeside Beauty'
@@ -24,6 +25,29 @@ const TWENTY = Array.from(
     `${SHOOTS}/Autumn and Winter Campaign Selects/Day ${(i % 4) + 1} Harbour Walk/` +
     `retouched-final-v${i + 1}-for-social-and-print-${String(i + 1).padStart(2, '0')}.jpg`,
 )
+
+// A made-up brief in the D2 Markdown form, naming one picture by its full path.
+const BRIEF = [
+  '# Spring Glow',
+  '',
+  'Region: Canada',
+  'Audience: Adults 25 to 40 who buy skin care online',
+  '',
+  '## Message',
+  'Glow that lasts from morning to night.',
+  '',
+  '## Languages',
+  '- en',
+  '',
+  '## Sizes',
+  '- 1:1',
+  '',
+  '## Subjects',
+  '',
+  '### Citrus Glow serum',
+  'Pictures:',
+  `- ${SHOOTS}/Serum/serum-front.jpg`,
+].join('\n')
 
 let session: Session | undefined
 
@@ -57,10 +81,18 @@ async function shootAndRefuse(page: Page, pending: Promise<unknown>, at: Shot) {
   )
   await expect(dialog.getByRole('button', { name: 'Refuse' })).toBeFocused()
   await expect(dialog.getByRole('button', { name: at.allow })).not.toHaveAttribute('aria-disabled')
-  await shot(page, at.name)
+  if (at.count > 8) await windowShot(page, at.name)
+  else await shot(page, at.name)
   await dialog.getByRole('button', { name: 'Refuse' }).click()
   await expect(dialog).toBeHidden()
   await pending
+}
+
+// The shared shot() grows the window to fit every scrolling box; a long list scrolls inside
+// the dialog by design, so that picture is taken at the normal window size instead.
+async function windowShot(page: Page, name: string) {
+  fs.mkdirSync(path.resolve('shots'), { recursive: true })
+  await page.screenshot({ path: path.resolve('shots', `${name}.png`) })
 }
 
 type Shot = { title: string; allow: string; count: number; name: string }
@@ -94,7 +126,7 @@ test('R2P-6 shots', async () => {
   })
   const brief = s.call('create_campaign_from_brief', {
     project_id: id,
-    text: markdownBrief([`${SHOOTS}/Serum/serum-front.jpg`]),
+    text: BRIEF,
   })
   await shootAndRefuse(page, brief, {
     title: 'An agent asks to make a campaign with files',
