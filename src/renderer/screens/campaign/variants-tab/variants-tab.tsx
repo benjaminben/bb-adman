@@ -5,6 +5,7 @@
 // Pictures and videos are made in the editor's Generate panel; runs are followed in Activity.
 import type { ReactNode } from 'react'
 import { DirectionGrids } from '@/renderer/screens/campaign/direction-grids'
+import type { TileView } from '@/renderer/screens/campaign/variant-tile'
 import type { CampaignGet, VariantSummary } from '@/shared/schemas/queries/campaign'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './variants-tab.module.css'
@@ -17,6 +18,8 @@ export type VariantsTabProps = {
   onOpen: (variantId: string) => void
   onOpenBehind: (variantId: string) => void
   tileFooter?: (variant: VariantSummary) => ReactNode
+  // Design wave CAMP-1: where the tiles' Checks and Translations marks lead.
+  onView?: (view: TileView) => void
 }
 
 export function VariantsTab(props: VariantsTabProps) {
@@ -33,6 +36,7 @@ export function VariantsTab(props: VariantsTabProps) {
         onOpen={props.onOpen}
         onOpenBehind={props.onOpenBehind}
         tileFooter={props.tileFooter}
+        onView={props.onView}
       />
     </div>
   )

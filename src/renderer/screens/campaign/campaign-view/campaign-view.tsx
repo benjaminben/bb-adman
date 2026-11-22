@@ -83,6 +83,7 @@ function CampaignPage(props: Props) {
           onOpen={(id) => openVariant(projectId, campaignId, id)}
           onOpenBehind={(id) => openVariant(projectId, campaignId, id, true)}
           tileFooter={approvalFooter(approvalsData)}
+          onView={setView}
         />
       }
     />

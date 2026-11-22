@@ -1,15 +1,8 @@
 /* app-style */
-/* Inside the tile, after its main button and its actions (AP-12). */
-.footer {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-1);
-  padding: 0 var(--space-2) var(--space-2);
-  font-size: var(--font-size-small);
-}
+/* Design wave CAMP-1: the approval marks sit in the tile's strip, after its marks. */
 .marks {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: var(--space-1);
+  align-items: center;
+  gap: var(--gap-tight);
 }

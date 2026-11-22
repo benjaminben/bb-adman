@@ -33,7 +33,7 @@ describe('ApprovalMark [AP-12]', () => {
   ])('draws the marks of a variant %s', (_name, entry, marks) => {
     draw(entry)
     const group = screen.getByRole('group', { name: 'Approval marks for Square post' })
-    for (const mark of marks) expect(within(group).getByText(mark)).toBeInTheDocument()
+    for (const mark of marks) expect(within(group).getByTitle(mark)).toBeInTheDocument()
   })
 
   it('draws nothing with no link', () => {
@@ -48,7 +48,7 @@ describe('ApprovalMark [AP-12]', () => {
 
   it('opens and closes the sign-off list with the toggle', async () => {
     draw(SIGNED)
-    const toggle = screen.getByRole('button', { name: 'Sign-offs (1)' })
+    const toggle = screen.getByRole('button', { name: 'Signed off by 1' })
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
     expect(screen.queryByRole('list', { name: 'Sign-offs for Square post' })).toBeNull()
     await userEvent.click(toggle)
@@ -68,7 +68,7 @@ describe('ApprovalMark [AP-12]', () => {
     const email = '<b>bold</b>@example.com'
     const signoffs = SIGNED.signoffs.map((s) => ({ ...s, email }))
     const { container } = draw({ ...SIGNED, signoffs })
-    await userEvent.click(screen.getByRole('button', { name: 'Sign-offs (1)' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Signed off by 1' }))
     expect(container.querySelector('b')).toBeNull()
     expect(screen.getAllByRole('listitem')[0]).toHaveTextContent(email)
   })
@@ -76,7 +76,7 @@ describe('ApprovalMark [AP-12]', () => {
   it('has no accessibility violations, closed and open', async () => {
     draw(SIGNED)
     expect(await axeViolations()).toEqual([])
-    await userEvent.click(screen.getByRole('button', { name: 'Sign-offs (1)' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Signed off by 1' }))
     expect(await axeViolations()).toEqual([])
   })
 })
@@ -98,15 +98,15 @@ describe('approvalFooter [AP-12]', () => {
       />,
     )
     const items = [...document.querySelectorAll<HTMLElement>('[data-variant]')]
-    const marked = items.filter((li) => within(li).queryByText('Signed off by 1') !== null)
+    const marked = items.filter((li) => within(li).queryByTitle('Signed off by 1') !== null)
     expect(marked).toHaveLength(30)
-    expect(screen.getAllByRole('button', { name: 'Sign-offs (1)' })).toHaveLength(30)
+    expect(screen.getAllByRole('button', { name: 'Signed off by 1' })).toHaveLength(30)
     expect(screen.getByRole('group', { name: 'Approval marks for Post 29' })).toBeInTheDocument()
   })
 
   it('keeps the sign-off marks after the link ends', () => {
     const footer = approvalFooter(forCampaign({ link: endedLink() }))!
     render(<>{footer(variant('v1', { title: 'Square post' }))}</>)
-    expect(screen.getByText('Signed off by 1')).toBeInTheDocument()
+    expect(screen.getByTitle('Signed off by 1')).toBeInTheDocument()
   })
 })
