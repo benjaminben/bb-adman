@@ -28,12 +28,12 @@ describe('the shared layout classes nothing used are gone [Z-1]', () => {
 })
 
 describe('the dead code found at merge is gone [Z-1]', () => {
-  it.each([
-    ['editor/colour-choice'],
-    ['ui/close-warning/close-warning.module.css'],
-  ])('%s does not exist', (rel) => {
-    expect(fs.existsSync(path.join(ROOT, rel))).toBe(false)
-  })
+  it.each([['editor/colour-choice'], ['ui/close-warning/close-warning.module.css']])(
+    '%s does not exist',
+    (rel) => {
+      expect(fs.existsSync(path.join(ROOT, rel))).toBe(false)
+    },
+  )
 
   it.each([
     ['ColourChoice'],
