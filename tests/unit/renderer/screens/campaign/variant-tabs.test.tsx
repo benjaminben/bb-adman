@@ -22,6 +22,7 @@ import {
 
 const MASTER_TAB = 'Master post · 1:1 · en'
 const SECOND_TAB = 'German post · 1:1 · de'
+const VIEWS = ['Variants', 'Checks', 'Translations']
 
 function setUp(variants = [MASTER, SECOND]) {
   const fake = campaignApi()
@@ -40,12 +41,12 @@ async function draw(fake = setUp()) {
     <CampaignView projectId={P} campaignId="C1" onBack={() => {}} />,
     fake,
   )
-  await screen.findByRole('tab', { name: 'Overview' })
+  await screen.findByRole('tab', { name: 'Variants' })
   return view
 }
 
 const tabs = () =>
-  within(screen.getByRole('tablist', { name: 'Open variants' }))
+  within(screen.getByRole('tablist', { name: 'Campaign' }))
     .getAllByRole('tab')
     .map((t) => t.textContent)
 // The tile's own button, not its "+" ("Open {title} in a tab").
@@ -58,8 +59,8 @@ const tile = (title: string) =>
 describe('variant tabs [FR-212, FR-214, Q-041]', () => {
   it('starts on Overview, which holds the grid', async () => {
     await draw()
-    expect(tabs()).toEqual(['Overview'])
-    expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
+    expect(tabs()).toEqual(VIEWS)
+    expect(screen.getByRole('tab', { name: 'Variants' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('list', { name: 'Variants in Main' })).toBeInTheDocument()
   })
 
@@ -69,17 +70,17 @@ describe('variant tabs [FR-212, FR-214, Q-041]', () => {
     expect(screen.getByRole('tab', { name: SECOND_TAB })).toHaveAttribute('aria-selected', 'true')
     expect(await screen.findByRole('region', { name: 'Canvas, German post' })).toBeInTheDocument()
     expect(screen.queryByRole('list', { name: 'Variants in Main' })).toBeNull()
-    await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Variants' }))
     await userEvent.dblClick(tile('German post'))
-    expect(tabs()).toEqual(['Overview', SECOND_TAB])
+    expect(tabs()).toEqual([...VIEWS, SECOND_TAB])
   })
 
   it('opens the tab behind on Cmd-click (Ctrl-click on Windows) and keeps the overview', async () => {
     await draw()
     fireEvent.click(tile('German post'), { ctrlKey: true })
     fireEvent.click(tile('Master post'), { ctrlKey: true })
-    expect(tabs()).toEqual(['Overview', SECOND_TAB, MASTER_TAB])
-    expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
+    expect(tabs()).toEqual([...VIEWS, SECOND_TAB, MASTER_TAB])
+    expect(screen.getByRole('tab', { name: 'Variants' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('list', { name: 'Variants in Main' })).toBeInTheDocument()
   })
 
@@ -91,7 +92,7 @@ describe('variant tabs [FR-212, FR-214, Q-041]', () => {
     const close = screen.getByRole('button', { name: 'Close tab' })
     expect(close).toHaveAccessibleDescription(SECOND_TAB)
     await userEvent.click(close)
-    expect(tabs()).toEqual(['Overview'])
+    expect(tabs()).toEqual(VIEWS)
     expect(screen.getByRole('list', { name: 'Variants in Main' })).toBeInTheDocument()
     expect(fake.commands).toHaveLength(before)
   })
@@ -104,13 +105,13 @@ describe('variant tabs [FR-212, FR-214, Q-041]', () => {
     act(() =>
       fake.emit('project.changed', { projectId: P, actor: 'user', changed: {}, removed: {} }),
     )
-    await waitFor(() => expect(tabs()).toEqual(['Overview']))
+    await waitFor(() => expect(tabs()).toEqual(VIEWS))
   })
 
   it('makes the variant shown last the one the overview panels work on [A-47]', async () => {
     await draw()
     await userEvent.dblClick(tile('German post'))
-    await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Variants' }))
     expect(tile('German post')).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(tile('Master post'), { ctrlKey: true })
     expect(tile('German post')).toHaveAttribute('aria-pressed', 'true')
@@ -147,7 +148,7 @@ describe('what each variant tab keeps [FR-213]', () => {
     await userEvent.click(screen.getByRole('button', { name: /^Logo/ }))
     await userEvent.click(screen.getByRole('button', { name: 'Zoom in' }))
     const zoomed = screen.getByTitle('Zoom to fit').textContent
-    await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Variants' }))
     await userEvent.dblClick(tile('German post'))
     await screen.findByRole('region', { name: 'Canvas, German post' })
     expect(screen.getByRole('button', { name: /^Logo/ })).toHaveAttribute('aria-pressed', 'false')

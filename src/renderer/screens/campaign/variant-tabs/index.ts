@@ -1,1 +1,1 @@
-export { VariantTabs, tabName, type VariantTabsProps, type ViewChange } from './variant-tabs'
+export { VariantTabs, type VariantTabsProps, type ViewChange, type ViewTabs } from './variant-tabs'

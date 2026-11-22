@@ -92,7 +92,8 @@ test('a prohibited word: the warnings step, a reason, Export anyway, and the rea
   await ex.finishExport(dialog, 'Exported 1 ad. 0 failed.')
 
   // The Reports view of that export shows the warning and the reason, trimmed.
-  await page.getByRole('button', { name: 'Reports' }).click()
+  await page.getByRole('button', { name: `More actions for ${CAMPAIGN}` }).click()
+  await page.getByRole('menuitem', { name: 'Reports…' }).click()
   const reports = page.getByRole('dialog', { name: 'Reports' })
   await expect(reports.getByRole('listitem')).toHaveCount(1)
   await reports

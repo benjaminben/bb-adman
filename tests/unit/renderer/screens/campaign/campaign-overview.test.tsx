@@ -82,8 +82,7 @@ function draw(opts: { languages?: string[]; checks?: Answer } = {}) {
   return renderWith(<Harness languages={opts.languages ?? ['en', 'de']} />, fake)
 }
 
-const tabs = () =>
-  within(screen.getByRole('tablist', { name: 'Campaign views' })).getAllByRole('tab')
+const tabs = () => within(screen.getByRole('tablist', { name: 'Campaign' })).getAllByRole('tab')
 const panels = () =>
   screen.queryAllByText(/^(rules|checks|translations) P C1$|^the grids$/).map((p) => p.textContent)
 
@@ -114,11 +113,7 @@ describe('CampaignOverview [R2C-1]', () => {
     await draw({ languages: ['en'] })
     await userEvent.click(screen.getByRole('tab', { name: 'Translations' }))
     expect(panels()).toEqual([])
-    expect(
-      screen.getByText(
-        'This campaign has one language, English, so there is nothing to translate.',
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByText('One language: English')).toBeInTheDocument()
   })
 
   it('moves between tabs with the arrow keys', async () => {
@@ -134,8 +129,8 @@ describe('CampaignOverview [R2C-1]', () => {
 
   it('marks Checks with the number of current warnings [R-8]', async () => {
     await draw({ checks: () => ({ ok: true, data: { variants: THREE } }) })
-    const tab = await screen.findByRole('tab', { name: 'Checks 3 warning(s)' })
-    expect(within(tab).getByRole('img', { name: '3 warning(s)' })).toHaveTextContent('3')
+    const tab = await screen.findByRole('tab', { name: 'Checks 3 warnings' })
+    expect(within(tab).getByRole('img', { name: '3 warnings' })).toHaveTextContent('3')
   })
 
   it('has no badge at 0, nor while check.results is being read', async () => {
@@ -150,7 +145,7 @@ describe('CampaignOverview [R2C-1]', () => {
     await draw({ checks: held.answer })
     expect(screen.getByRole('tab', { name: 'Checks' })).toHaveTextContent(/^Checks$/)
     await act(async () => held.release({ ok: true, data: { variants: THREE } }))
-    expect(await screen.findByRole('tab', { name: 'Checks 3 warning(s)' })).toBeInTheDocument()
+    expect(await screen.findByRole('tab', { name: 'Checks 3 warnings' })).toBeInTheDocument()
   })
 
   it('has no badge when check.results is refused', async () => {
@@ -163,12 +158,12 @@ describe('CampaignOverview [R2C-1]', () => {
   it('follows project.changed', async () => {
     let variants = [state('V1', 1)]
     const { fake } = await draw({ checks: () => ({ ok: true, data: { variants } }) })
-    expect(await screen.findByRole('tab', { name: 'Checks 1 warning(s)' })).toBeInTheDocument()
+    expect(await screen.findByRole('tab', { name: 'Checks 1 warning' })).toBeInTheDocument()
     variants = THREE
     act(() =>
       fake.emit('project.changed', { projectId: P, changed: {}, removed: {}, actor: 'user' }),
     )
-    expect(await screen.findByRole('tab', { name: 'Checks 3 warning(s)' })).toBeInTheDocument()
+    expect(await screen.findByRole('tab', { name: 'Checks 3 warnings' })).toBeInTheDocument()
   })
 
   it("puts the campaign's Undo and Redo in the same bar as the tabs", async () => {
@@ -176,14 +171,14 @@ describe('CampaignOverview [R2C-1]', () => {
     // The bar holds the tab row's box and the Undo box side by side.
     const bar = screen.getByRole('group', { name: 'Campaign changes' }).parentElement!
       .parentElement!
-    expect(within(bar).getByRole('tablist', { name: 'Campaign views' })).toBeInTheDocument()
+    expect(within(bar).getByRole('tablist', { name: 'Campaign' })).toBeInTheDocument()
     expect(within(bar).getByRole('button', { name: 'Undo' })).toBeInTheDocument()
     expect(within(bar).getByRole('button', { name: 'Redo' })).toBeInTheDocument()
   })
 
   it('has no accessibility violations', async () => {
     await draw({ checks: () => ({ ok: true, data: { variants: THREE } }) })
-    await screen.findByRole('tab', { name: 'Checks 3 warning(s)' })
+    await screen.findByRole('tab', { name: 'Checks 3 warnings' })
     expect(await axeViolations()).toEqual([])
   })
 })

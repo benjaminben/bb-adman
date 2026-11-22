@@ -158,7 +158,7 @@ export async function setCopy(page: Page, copy: string): Promise<void> {
 }
 
 export async function showOverview(page: Page): Promise<void> {
-  await page.getByRole('tab', { name: 'Overview' }).click()
+  await page.getByRole('tab', { name: 'Variants', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Fan out…' }).first()).toBeVisible()
 }
 

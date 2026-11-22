@@ -166,7 +166,7 @@ test('with no key and the network off, import, a hand layout and an image export
     .toEqual({ x: BOX.x, y: BOX.y, width: BOX.width })
 
   // An image export through the Export dialog.
-  await page.getByRole('tab', { name: 'Overview' }).click()
+  await page.getByRole('tab', { name: 'Variants', exact: true }).click()
   const folder = ex.outputFolder(box.root, 'Quiet Harbour export')
   const dialog = await ex.openExport(app, page, folder)
   await dialog.getByRole('button', { name: 'Export', exact: true }).click()

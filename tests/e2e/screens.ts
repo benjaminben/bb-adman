@@ -160,7 +160,7 @@ export async function generateVideo(page: Page, provider: string): Promise<void>
 }
 
 export async function showOverview(page: Page): Promise<void> {
-  const tab = page.getByRole('tab', { name: 'Overview' })
+  const tab = page.getByRole('tab', { name: 'Variants', exact: true })
   await tab.click()
   await expect(tab).toHaveAttribute('aria-selected', 'true')
 }

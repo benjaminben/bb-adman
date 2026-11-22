@@ -85,7 +85,7 @@ export async function projectHomeTour(app: ElectronApplication, page: Page) {
   await expect(variants.first()).toHaveAttribute('aria-pressed', 'true')
   await variants.first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
-  await page.getByRole('tab', { name: 'Overview' }).click()
+  await page.getByRole('tab', { name: 'Variants', exact: true }).click()
   await expect(variants.first()).toHaveAttribute('aria-pressed', 'true')
   await page.getByRole('button', { name: 'Back to project' }).click()
   await expect(page.getByRole('list', { name: 'Campaigns' })).toBeVisible()

@@ -3,7 +3,8 @@
 // project.changed for the project. Sent through the app store, so a refusal shows in the banner.
 // Keys: the undo and redo entries of SHORTCUTS, only while the overview tab is shown and the
 // focus is not in a text field; a variant tab's editor keeps its own keys. Deleting a variant or
-// a direction is not on this list (D-099).
+// a direction is not on this list (D-099). CAMP-3: two icon buttons at the right of the
+// campaign's tab strip, named "Undo" and "Redo", their tips naming the shortcut.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { useNav } from '@/renderer/app/nav-context'
@@ -16,6 +17,11 @@ import layout from '@/renderer/ui/layout.module.css'
 
 type Props = { projectId: string; campaignId: string }
 type Act = 'history.undo' | 'history.redo'
+
+const KEYS = {
+  mac: { undo: '⌘Z', redo: '⇧⌘Z' },
+  windows: { undo: 'Ctrl+Z', redo: 'Ctrl+Y' },
+}[platform]
 
 const FIELDS = 'input, textarea, select, [contenteditable="true"]'
 const inField = (target: EventTarget | null) =>
@@ -76,13 +82,25 @@ export function CampaignUndo(props: Props) {
 
   return (
     <div role="group" aria-label="Campaign changes" className={layout.row}>
-      <button type="button" disabled={!state.canUndo} onClick={() => send('history.undo')}>
+      <button
+        type="button"
+        className={layout.iconButton}
+        aria-label="Undo"
+        title={`Undo (${KEYS.undo})`}
+        disabled={!state.canUndo}
+        onClick={() => send('history.undo')}
+      >
         <Icon name="undo" />
-        Undo
       </button>
-      <button type="button" disabled={!state.canRedo} onClick={() => send('history.redo')}>
+      <button
+        type="button"
+        className={layout.iconButton}
+        aria-label="Redo"
+        title={`Redo (${KEYS.redo})`}
+        disabled={!state.canRedo}
+        onClick={() => send('history.redo')}
+      >
         <Icon name="redo" />
-        Redo
       </button>
     </div>
   )

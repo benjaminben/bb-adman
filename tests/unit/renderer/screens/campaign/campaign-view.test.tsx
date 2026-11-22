@@ -67,7 +67,7 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
     expect(screen.getByText('Loading the variant…')).toBeInTheDocument()
     expect(screen.queryByRole('list', { name: 'Variants in Main' })).toBeNull()
     expect(screen.queryByRole('region', { name: 'Make pictures' })).toBeNull()
-    await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Variants' }))
     expect(screen.getByRole('button', { name: /^German post/ })).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -78,12 +78,12 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
   it('keeps the chosen view while a variant tab is shown and back again [R2C-1, A-303]', async () => {
     await renderWith(view())
     await userEvent.dblClick(await screen.findByRole('button', { name: /^German post/ }))
-    await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Variants' }))
     await userEvent.click(screen.getByRole('tab', { name: 'Checks' }))
     expect(screen.getByRole('region', { name: 'Checks' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('tab', { name: 'German post · 1:1 · de' }))
-    expect(screen.queryByRole('tab', { name: 'Checks' })).toBeNull()
-    await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
+    expect(screen.queryByRole('region', { name: 'Checks' })).toBeNull()
+    await userEvent.click(screen.getByRole('tab', { name: 'Checks' }))
     expect(screen.getByRole('tab', { name: 'Checks' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('region', { name: 'Checks' })).toBeInTheDocument()
   })
@@ -107,7 +107,7 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
       'true',
     )
     expect(screen.queryByRole('list', { name: 'Variants in Main' })).toBeNull()
-    await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Variants' }))
     expect(screen.getByRole('button', { name: /^German post/ })).toHaveAttribute(
       'aria-pressed',
       'true',
