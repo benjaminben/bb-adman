@@ -1,0 +1,26 @@
+.part {
+  display: flex;
+}
+
+/* Full width, its corners following the card's bottom corners. */
+.button {
+  flex: 1;
+  min-height: var(--gallery-tap);
+  padding: 0 var(--space-4);
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  font: inherit;
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast);
+}
+
+.button:hover {
+  border-color: var(--color-accent-hover);
+  background: var(--color-accent-hover);
+}

@@ -1,0 +1,33 @@
+/* On a phone the picture takes the whole width. */
+.picture {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius);
+  background: var(--gallery-placeholder);
+}
+
+/* Wide: as large as fits, leaving room for the top row and the sign-off part (14rem). */
+@media (min-width: 48rem) {
+  .picture {
+    width: auto;
+    max-width: 100%;
+    max-height: calc(100dvh - var(--space-8) * 7);
+    margin: 0 auto;
+  }
+}
+
+.expired {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  margin: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius);
+  background: var(--gallery-placeholder);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  text-align: center;
+}

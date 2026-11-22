@@ -1,0 +1,180 @@
+/* spec/phases/round-2-approvals.md "The lightbox": the whole screen on a phone, scrolling
+   inside; on a wide window at most --width-wide and the window less --space-8. The dialog's
+   own display is left alone, so a closed one stays hidden; the frame inside lays it out. */
+.lightbox {
+  width: 100%;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: var(--space-4);
+  overflow-y: auto;
+  border: 0;
+  border-radius: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: var(--shadow-3);
+}
+
+@media (min-width: 48rem) {
+  .lightbox {
+    width: auto;
+    height: auto;
+    max-width: min(var(--width-wide), calc(100% - var(--space-8)));
+    max-height: calc(100% - var(--space-8));
+    margin: auto;
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+  }
+}
+
+.lightbox::backdrop {
+  background: var(--color-overlay);
+}
+
+.frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.words {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-heading);
+  overflow-wrap: anywhere;
+}
+
+.size,
+.muted {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  overflow-wrap: anywhere;
+}
+
+.primary,
+.quiet {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--gallery-tap);
+  padding: 0 var(--space-4);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.quiet:hover {
+  background: var(--color-surface);
+}
+
+/* The class's display would otherwise beat the hidden attribute. */
+.quiet[hidden] {
+  display: none;
+}
+
+.primary {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+.primary:hover {
+  border-color: var(--color-accent-hover);
+  background: var(--color-accent-hover);
+}
+
+.sign {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.mine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-ok-text);
+  font-weight: var(--weight-medium);
+}
+
+.signoffs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--font-size-body);
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-top: var(--border-width) solid var(--color-line);
+}
+
+.who {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* A quiet button: the full tap height, its words lined up with the row's right edge. */
+.remove {
+  min-height: var(--gallery-tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.remove:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+/* Previous and Next: shown by the gallery script; the row takes no room until then. */
+.steps {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.steps:not(:has(> :not([hidden]))) {
+  display: none;
+}
