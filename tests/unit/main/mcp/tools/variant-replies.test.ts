@@ -154,8 +154,9 @@ const variantIn = {
 }
 
 const strip = <T extends Record<string, unknown>>(o: T) => {
-  const { plantedKey: _, ...rest } = o
-  return rest
+  const rest: Record<string, unknown> = { ...o }
+  delete rest.plantedKey
+  return rest as Omit<T, 'plantedKey'>
 }
 const layerOut = (n: number) => ({
   ...strip(layerBase(n)),
