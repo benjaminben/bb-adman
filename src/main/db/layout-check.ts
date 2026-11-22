@@ -31,13 +31,22 @@ function all(db: Database.Database, pragma: string, arg: string): unknown[] {
   return db.prepare(`SELECT * FROM pragma_${pragma}(?)`).all(arg)
 }
 
+// SQLite's descriptions do not show an ON CONFLICT clause (REPLACE silently deletes the row
+// that holds a reused key). A keyword cannot be split by a comment, so a clause added to the
+// SQL always raises this count; the SQL text itself is not compared, since SQLite may store
+// rewritten SQL differently after an upgrade.
+function conflictWords(row: SchemaRow): number {
+  return (row.sql ?? '').match(/conflict/gi)?.length ?? 0
+}
+
 // What SQLite itself makes of one object: a table's columns (generated ones too), primary
 // key and foreign keys; an index's table, uniqueness, partial flag and key parts (an
-// expression part has no column name).
+// expression part has no column name). Both also carry the count above.
 function shape(db: Database.Database, row: SchemaRow): string {
   if (row.type === 'table') {
     return JSON.stringify([
       'table',
+      conflictWords(row),
       all(db, 'table_xinfo', row.name),
       all(db, 'foreign_key_list', row.name),
     ])
@@ -47,6 +56,7 @@ function shape(db: Database.Database, row: SchemaRow): string {
   ).find((i) => i.name === row.name)
   return JSON.stringify([
     'index',
+    conflictWords(row),
     row.tbl_name,
     entry ? [entry.unique, entry.partial] : null,
     all(db, 'index_xinfo', row.name),
