@@ -31,7 +31,8 @@ export function AutoApproveSetting() {
         Let agents delete campaigns and variants without asking
       </label>
       <p id={LINE_ID} className={layout.muted}>
-        An agent can then delete work with no click from you. Deleting a campaign cannot be undone.
+        An agent can then delete work with no click from you. Deletes cannot be undone, and deleting
+        a variant clears its campaign&apos;s undo list.
       </p>
       {refusal !== null && (
         <NoticeLine kind="danger" id={REFUSAL_ID}>
