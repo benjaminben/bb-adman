@@ -88,11 +88,16 @@ function useKind(key: string, videoPost: boolean) {
     .filter((p) => p.available && p.jobs.includes('video') && keyed(p.secrets))
     .map((p) => p.id)
   const canVideo = videoPost && ids.length > 0
+  // A kind not yet chosen (no draft, or one made on an image post) is "Video" here.
   const held = useStore(generateDrafts, (s) => s.drafts[key]?.kind ?? s.wanted[key])
+  const made = useStore(generateDrafts, (s) => s.drafts[key] !== undefined)
   useEffect(() => {
-    if (canVideo) generateDrafts.getState().wantKind(key, 'video')
-  }, [canVideo, key])
-  const kind: GenerateKind = canVideo && held === 'video' ? 'video' : 'image'
+    if (!canVideo) return
+    const drafts = generateDrafts.getState()
+    if (!made) drafts.wantKind(key, 'video')
+    else if (drafts.drafts[key]?.kind === undefined) drafts.change(key, { kind: 'video' })
+  }, [canVideo, key, made])
+  const kind: GenerateKind = canVideo && (held ?? 'video') === 'video' ? 'video' : 'image'
   return { ids, kind }
 }
 

@@ -58,6 +58,17 @@ describe('the "Make" switch [R2E-8, D4]', () => {
     expect(panel.queryByRole('button', { name: 'Choose reference pictures…' })).toBeNull()
   })
 
+  it('chooses "Video" for a draft made before the post was a video, its prompt following', async () => {
+    const draft = { prompt: 'A picture of a can', referenceAssetIds: [], run: null }
+    generateDrafts.setState({ drafts: { [`${P}/L0`]: draft } })
+    await openVideo()
+    expect(makeGroup().getByRole('button', { name: 'Video' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByLabelText('Prompt')).toHaveValue('A video of a can')
+  })
+
   it('disables "Video" with its line when no video service is set up', async () => {
     const { panel } = await openVideo({ providers: baseState().providers })
     expect(makeGroup().getByRole('button', { name: 'Video' })).toBeDisabled()
