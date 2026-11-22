@@ -23,7 +23,7 @@
 @media (min-width: 48rem) {
   .picture,
   .video {
-    width: calc(min(var(--width-wide), 100vw - var(--space-8)) - var(--space-6) * 2);
+    width: calc(min(var(--width-wide), 100dvw - var(--space-8)) - var(--space-6) * 2);
     max-width: 100%;
     height: calc(100dvh - var(--space-8) * 7);
   }
