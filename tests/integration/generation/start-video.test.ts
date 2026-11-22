@@ -104,11 +104,11 @@ describe('generation.startVideo [SPEC 4.2, 14 CU-6a]', () => {
     expect(f.jobs()).toEqual([])
   })
 
-  it('refuses fal-seedance, which has no adapter yet, before a job row [SPEC 14 1.58 J-2]', async () => {
+  it('refuses a provider that is not available, before a job row [SPEC 14 1.58 J-2]', async () => {
     f = await makeGenerationFixture()
-    expect(await start({ provider: 'fal-seedance' })).toMatchObject({
+    expect(await start({ provider: 'firefly' })).toMatchObject({
       ok: false,
-      error: { code: 'INVALID_INPUT', details: { provider: 'fal-seedance' } },
+      error: { code: 'INVALID_INPUT', details: { provider: 'firefly' } },
     })
     expect(f.jobs()).toEqual([])
   })

@@ -109,8 +109,9 @@ export async function agentRunsTour(page: Page, box: Sandbox) {
   const block = page.getByRole('region', { name: 'Agent runs' })
   const tick = (label: string) =>
     block.getByRole('checkbox', { name: `Let agents start runs with ${label}` })
-  for (const label of ['ComfyUI', 'Fake provider']) await expect(tick(label)).toHaveCount(1)
-  for (const label of ['Adobe Firefly', 'fal.ai Seedance']) await expect(tick(label)).toHaveCount(0)
+  for (const label of ['ComfyUI', 'Fake provider', 'fal.ai Seedance'])
+    await expect(tick(label)).toHaveCount(1)
+  await expect(tick('Adobe Firefly')).toHaveCount(0)
 
   await tick('ComfyUI').check()
   await expect(tick('ComfyUI')).toBeChecked()
