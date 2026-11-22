@@ -71,8 +71,14 @@ describe('Load a brief [SPEC 14 1.41 TP-1, FR-023]', () => {
         .getAllByLabelText('Name')
         .map((f) => (f as HTMLInputElement).value),
     ).toEqual(['Citrus can', 'Berry bottle'])
-    expect(within(summary).getByLabelText('1x1 (1080×1080)')).toBeChecked()
-    expect(within(summary).getByLabelText('9x16 (1080×1920)')).toBeChecked()
+    expect(within(summary).getByLabelText('1x1 (1080×1080)')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(within(summary).getByLabelText('9x16 (1080×1920)')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
     expect(within(summary).getByLabelText('Languages')).toHaveValue('en, de')
   })
 

@@ -76,7 +76,7 @@ export async function loadForm(
 }
 
 export function problemLines(form: HTMLElement): (string | null)[] {
-  const list = within(form).queryByRole('list', { name: 'Before the campaign can be made' })
+  const list = within(form).queryByRole('list', { name: 'To fix' })
   if (list === null) return []
   return within(list)
     .getAllByRole('listitem')

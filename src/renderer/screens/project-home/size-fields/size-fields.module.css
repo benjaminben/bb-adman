@@ -1,52 +1,94 @@
 /* app-style */
-/* The brief form's sizes: a row of checkboxes as today, then two short fields side by side. */
+/* The brief form's sizes (HOME-3a): a row of size chips, then the "Other" field. */
 .sizes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3) var(--space-4);
-  align-items: start;
-  min-width: 0;
-  margin: 0;
-  padding: var(--space-3) var(--space-4) var(--space-4);
-  border: var(--border-width) solid var(--color-line);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-soft);
-}
-.sizes legend {
-  padding: 0 var(--space-1);
-  font-size: var(--font-size-control);
-  font-weight: var(--weight-bold);
-}
-.ticks {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-}
-.ticks label {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-}
-.field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--gap-field);
 }
-.field > label,
-label.field {
-  font-size: var(--font-size-small);
-  font-weight: var(--weight-medium);
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+}
+/* A chip: a pill holding the face and, while chosen, the ★. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-small);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
   color: var(--color-text-secondary);
-}
-.field input,
-.field select {
-  font-size: var(--font-size-control);
-  font-weight: var(--weight-regular);
-  color: var(--color-text);
-}
-.hint {
-  margin: 0;
   font-size: var(--font-size-small);
+  font-variant-numeric: tabular-nums;
+}
+.chip[data-chosen='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-selected-bg);
+  color: var(--color-accent-ink);
+}
+.face {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+}
+button.face:hover:not(:disabled) {
+  background: var(--color-row-hover);
+}
+.chip[data-chosen='true'] .face {
+  padding-right: var(--space-1);
+}
+/* The size's shape, scaled to the chip, filled. */
+.shape {
+  display: inline-block;
+  height: var(--icon-size-small);
+  border-radius: var(--radius-inner);
+  background: currentColor;
+}
+.star {
+  width: var(--control-height-small);
+  height: var(--control-height-small);
+  min-height: var(--control-height-small);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
   color: var(--color-text-muted);
+}
+.star:hover:not(:disabled) {
+  background: var(--color-row-hover);
+}
+.star[aria-pressed='true'] {
+  color: var(--color-accent);
+}
+.star[aria-pressed='true'] path {
+  fill: currentColor;
+}
+.other {
+  max-width: var(--width-dialog);
+}
+.otherBox {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}
+.otherBox input {
+  flex: 1;
+  min-width: 0;
+}
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

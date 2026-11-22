@@ -26,8 +26,8 @@ describe('"Paste a brief", then "Start from an empty form" [screens-campaign "Th
     expect(field(form, 'Campaign name')).toHaveFocus()
     expect(within(form).getAllByRole('group', { name: /^Subject \d$/ })).toHaveLength(1)
     for (const label of ['1x1 (1080×1080)', '9x16 (1080×1920)', '16x9 (1920×1080)'])
-      expect(field(form, label)).toBeChecked()
-    const list = within(form).getByRole('list', { name: 'Before the campaign can be made' })
+      expect(field(form, label)).toHaveAttribute('aria-pressed', 'true')
+    const list = within(form).getByRole('list', { name: 'To fix' })
     expect(list).toHaveTextContent('Enter the campaign name.')
     expect(list).toHaveTextContent('Give at least one language.')
     expect(screen.getByRole('button', { name: 'Create campaign' })).toBeDisabled()
@@ -47,9 +47,9 @@ describe('"Paste a brief", then "Start from an empty form" [screens-campaign "Th
     const form = await typeBrief()
     await userEvent.type(field(form, 'Region'), 'Atlantis')
     await userEvent.tab()
-    expect(
-      within(form).getByRole('list', { name: 'Before the campaign can be made' }),
-    ).toHaveTextContent('Give at least one language.')
+    expect(within(form).getByRole('list', { name: 'To fix' })).toHaveTextContent(
+      'Give at least one language.',
+    )
   })
 
   it('sends subject.create and then campaign.create for a filled form', async () => {

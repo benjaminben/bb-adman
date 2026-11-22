@@ -15,7 +15,7 @@ async function open(button: 'Load a brief' | 'Type a brief', fake: Fake = projec
 }
 
 function problemLines(form: HTMLElement) {
-  const list = within(form).queryByRole('list', { name: 'Before the campaign can be made' })
+  const list = within(form).queryByRole('list', { name: 'To fix' })
   if (list === null) return []
   return within(list)
     .getAllByRole('listitem')
