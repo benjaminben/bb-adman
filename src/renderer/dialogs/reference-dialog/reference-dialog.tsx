@@ -2,7 +2,10 @@
 // the project's reference pictures and the pictures made in it, over one ordered list of
 // ticks, at most MAX_REFERENCES_PER_RUN. "Done" gives the ticks to the caller; "Cancel" and
 // Escape drop this visit's changes. Each opening starts from the caller's chosen pictures.
-import { useId, useState } from 'react'
+// DLG-5 (C-16): the `pick` kind; "{k} / {limit}" above the grids counts the ticks, and each
+// tile that cannot be ticked at the limit says why (the picker). What "Done" hands back is
+// exactly the ticks, in their order: these pictures are what a paid run sends.
+import { useState } from 'react'
 import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
 import { ReferencePicker } from '@/renderer/ui/reference-picker'
@@ -21,14 +24,16 @@ export type ReferenceDialogProps = {
   onCancel: () => void
 }
 
-const LIMIT_LINE = `At most ${MAX_REFERENCES_PER_RUN} pictures.`
-
 function ReferenceBody(props: ReferenceDialogProps) {
   const [ticks, setTicks] = useState(props.chosen)
-  const fullNoteId = useId()
-  const full = ticks.length >= MAX_REFERENCES_PER_RUN
   return (
     <div className={styles.body}>
+      <p
+        className={styles.count}
+        title={`${ticks.length} of ${MAX_REFERENCES_PER_RUN} pictures chosen`}
+      >
+        <span>{`${ticks.length} / ${MAX_REFERENCES_PER_RUN}`}</span>
+      </p>
       {(['reference', 'asset'] as const).map((library) => (
         <ReferencePicker
           key={library}
@@ -38,14 +43,9 @@ function ReferenceBody(props: ReferenceDialogProps) {
           ticks={ticks}
           setTicks={setTicks}
           library={library}
-          shared={{ fullNoteId }}
+          shared
         />
       ))}
-      {full && (
-        <p id={fullNoteId} className={styles.muted}>
-          {LIMIT_LINE}
-        </p>
-      )}
       <DialogFoot>
         <button type="button" onClick={props.onCancel}>
           Cancel
@@ -64,7 +64,7 @@ export function ReferenceDialog(props: ReferenceDialogProps) {
       open={props.open}
       onClose={props.onCancel}
       title={`Reference pictures for ${props.layerName}`}
-      size="wide"
+      kind="pick"
     >
       {props.open && <ReferenceBody {...props} />}
     </DialogFrame>

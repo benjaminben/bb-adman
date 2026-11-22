@@ -1,7 +1,8 @@
 /* app-style */
-/* A reference picker (spec/app-style.md "AI panels and the run dialog"): the pictures as a grid
-   of --option-thumb squares on the canvas ground, each with its tick box over its corner and
-   its name below; a ticked picture has a spot colour edge and its place as a small mark. */
+/* A reference picker (spec/app-style.md "AI panels and the run dialog"; DLG-5): the pictures as
+   a grid of --option-thumb squares on the canvas ground, each with its tick box over its
+   corner and no caption (the name is in its tooltip); a ticked picture has a spot colour edge
+   and its place as a small mark. A dashed "+" square ends the reference pictures. */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, var(--option-thumb));
@@ -47,9 +48,30 @@
 .tile:has(input:disabled:not(:checked)) .thumb {
   opacity: var(--opacity-disabled);
 }
-.name {
-  overflow-wrap: anywhere;
-  color: var(--color-text);
+.add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--option-thumb);
+  height: var(--option-thumb);
+  padding: 0;
+  border: var(--border-width) dashed var(--color-control-border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+.add:hover:not(:disabled) {
+  background: var(--color-row-hover);
+}
+/* Words for screen readers only; the tile's tooltip shows them too. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .place {
   position: absolute;
