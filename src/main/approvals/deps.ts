@@ -6,6 +6,7 @@ import type { CoreDeps } from '@/main/core-deps'
 import type { SecretCrypto } from '@/main/secrets/secret-store'
 import { createPasswordStore } from './password-store'
 import { choosePictureStore } from './picture-store'
+import { createGalleryRuns } from './runs'
 import type { ApprovalsDeps } from './types'
 
 export type ApprovalsDepsOptions = {
@@ -25,8 +26,14 @@ export function createApprovalsDeps(opts: ApprovalsDepsOptions): ApprovalsDeps {
       file: path.join(opts.userDataDir, 'approval-passwords.bin'),
       crypto: opts.crypto,
     }),
+    runs: createGalleryRuns(),
     pictures: () => choosePictureStore({ deps: opts.deps(), env: opts.env }),
     changed: (projectId, campaignId) =>
       opts.emit({ name: 'approvals.changed', payload: { projectId, campaignId } }),
+    progress: (projectId, campaignId, step, done, total) =>
+      opts.emit({
+        name: 'approvals.progress',
+        payload: { projectId, campaignId, step, done, total },
+      }),
   }
 }

@@ -52,16 +52,23 @@ export function approvalsPublish(deps: CoreDeps) {
         allowLocalHttp: deps.devTools,
         log: deps.log,
       })
-      return publishGallery(deps, {
-        project: ctx.project,
-        pair,
-        client,
-        campaignName: campaign.name,
-        variants,
-        published,
-        signal: new AbortController().signal,
-        onStep: () => undefined,
-      })
+      const run = deps.approvals.runs.start(pair)
+      try {
+        return await publishGallery(deps, {
+          project: ctx.project,
+          pair,
+          client,
+          campaignName: campaign.name,
+          variants,
+          published,
+          signal: run.controller.signal,
+          onStep: (step, done, total) =>
+            deps.approvals.progress(pair.projectId, pair.campaignId, step, done, total),
+          onSending: () => (run.sent = true),
+        })
+      } finally {
+        deps.approvals.runs.end(pair, run)
+      }
     },
     run(ctx, input, prepared): HandlerResult<ApprovalsPublishReply> {
       const { projectId, campaignId } = input

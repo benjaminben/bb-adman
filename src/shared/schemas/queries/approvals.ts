@@ -32,8 +32,14 @@ export type ApprovalsVariant = {
   currentRev: number
   // null: not in the gallery.
   publishedRev: number | null
+  // Why the gallery shows a video variant as a still only; null when it does not, or the
+  // variant is not in the gallery. approvals.forCampaign always sets it; it is optional in the
+  // type only so older hand-made replies (tests/unit/shared/approvals/marks.test.ts) still fit.
+  stillOnly?: ApprovalsStillOnly | null
   signoffs: ApprovalsSignoff[]
 }
+
+export type ApprovalsStillOnly = 'no_tool' | 'too_long' | 'too_large'
 
 export type ApprovalsForCampaign = {
   ready: ApprovalsReady

@@ -30,6 +30,15 @@ export type EventMap = {
   'thumbnail.changed': { projectId: string; variantId: string }
   // spec/approvals.md: the approvals tables changed. App window only; no email, slug or address.
   'approvals.changed': { projectId: string; campaignId: string }
+  // round-2-approvals-video.md "Progress and Stop": before each clip is made and each clip
+  // upload of an "Update gallery". App window only; IDs and counts, no path, name or title.
+  'approvals.progress': {
+    projectId: string
+    campaignId: string
+    step: 'making' | 'sending'
+    done: number
+    total: number
+  }
   // spec/phases/phase-10.md, ask flow (A-238): an agent waits for the user's answer. The action
   // and target are lines for the dialog; no ID of the target, no input, no path. agentClient is
   // untrusted text from the MCP client, drawn as text only. expiresAt is an ISO time. Round 2
@@ -58,6 +67,7 @@ export const EVENT_NAMES: EventName[] = [
   'asset.changedOnDisk',
   'thumbnail.changed',
   'approvals.changed',
+  'approvals.progress',
   'agent.permissionRequested',
   'agent.activity',
   'app.showProject',

@@ -1,3 +1,5 @@
+import type { GalleryRuns } from './runs'
+
 // The approvals services on CoreDeps (spec/approvals.md "Kept passwords", "Pictures"). AP-5
 // fixes these shapes; AP-6 fills the password store and AP-7 the picture stores.
 
@@ -25,6 +27,8 @@ export type PictureStore = {
 }
 
 export type ApprovalsDeps = {
+  // The running gallery updates (runs.ts), for update_running and approvals.cancelUpdate.
+  runs: GalleryRuns
   passwords: PasswordStore
   // The test store under its condition (dev tools and ADMAN_APPROVALS_TEST_PICTURES), else the
   // S3 store. Nothing else chooses.
@@ -32,4 +36,12 @@ export type ApprovalsDeps = {
   // Sends approvals.changed { projectId, campaignId } (AP-8): IDs only, after a command
   // changed the local tables.
   changed(projectId: string, campaignId: string): void
+  // Sends approvals.progress to the app window only: IDs and counts, nothing else.
+  progress(
+    projectId: string,
+    campaignId: string,
+    step: 'making' | 'sending',
+    done: number,
+    total: number,
+  ): void
 }

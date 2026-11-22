@@ -107,3 +107,16 @@ describe('the approvals event and secret name [spec/approvals.md "Settings", "Qu
     expect(USER_SECRET_NAMES).toContain('approvals.apiKey')
   })
 })
+
+describe('approvals.progress [R2V-7, SV-12]', () => {
+  it('lists approvals.progress, carrying the two IDs, the step and two counts only', () => {
+    expect(EVENT_NAMES).toContain('approvals.progress')
+    expectTypeOf<EventMap['approvals.progress']>().toEqualTypeOf<{
+      projectId: string
+      campaignId: string
+      step: 'making' | 'sending'
+      done: number
+      total: number
+    }>()
+  })
+})

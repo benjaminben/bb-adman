@@ -125,6 +125,7 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'approvals.publish': deny('update approval galleries'),
   'approvals.refresh': deny('refresh approvals'),
   'approvals.endLink': deny('turn off approval links'),
+  'approvals.cancelUpdate': deny('stop approval gallery updates'),
 }
 
 // The policy the bus applies. A tick row goes to the agent run gate (agent-run-gate.ts).

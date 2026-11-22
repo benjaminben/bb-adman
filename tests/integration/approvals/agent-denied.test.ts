@@ -23,6 +23,7 @@ const COMMANDS = [
   'approvals.publish',
   'approvals.refresh',
   'approvals.endLink',
+  'approvals.cancelUpdate',
 ]
 const QUERIES = ['approvals.forCampaign', 'approvals.getPassword']
 
@@ -41,7 +42,7 @@ function inputFor(name: string, projectId: string): unknown {
 }
 
 describe('approvals as the agent [spec/approvals.md "Named tests"]', () => {
-  it('registers exactly the seven approvals commands and the two queries', () => {
+  it('registers exactly the eight approvals commands and the two queries', () => {
     f = makeFixture()
     expect(f.core.commandNames.filter((n) => n.startsWith('approvals.')).sort()).toEqual(
       [...COMMANDS].sort(),

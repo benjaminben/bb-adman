@@ -1,7 +1,8 @@
 // The approvals commands (spec/approvals.md "Commands"). Every one is deny for agents. Each
-// file's slice replaces its body; this list does not change.
+// file's slice replaces its body.
 import type { CoreDeps } from '@/main/core-deps'
 import type { CommandHandler } from '@/main/commands/types'
+import { approvalsCancelUpdate } from './cancel-update'
 import { approvalsCheck } from './check'
 import { approvalsCreateLink } from './create-link'
 import { approvalsEndLink } from './end-link'
@@ -19,5 +20,6 @@ export function approvalsCommands(deps: CoreDeps): CommandHandler[] {
     approvalsPublish(deps),
     approvalsRefresh(deps),
     approvalsEndLink(deps),
+    approvalsCancelUpdate(deps),
   ]
 }

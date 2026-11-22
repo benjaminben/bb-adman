@@ -104,6 +104,7 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny' | 'tick'> = {
   'approvals.publish': 'deny',
   'approvals.refresh': 'deny',
   'approvals.endLink': 'deny',
+  'approvals.cancelUpdate': 'deny',
 }
 
 describe('agent policy table, SPEC 1.9 [SPEC 4.2, ADR-009, D-025]', () => {

@@ -1,6 +1,7 @@
 // The live link (spec/approvals.md "The approval link dialog"): the address and "Copy link",
-// the password part, the gallery and "Update gallery", every variant's sign-offs, and "Turn
-// off link…" with its confirmation. Copy uses navigator.clipboard.writeText on the click.
+// the password part, the gallery with its still-only lines and "Update gallery", every
+// variant's sign-offs, and "Turn off link…" with its confirmation. Copy uses
+// navigator.clipboard.writeText on the click.
 import { useId, useState } from 'react'
 import type { ApprovalsForCampaign } from '@/shared/schemas/queries/approvals'
 import { timeText } from '@/renderer/ui/signoff-list'
@@ -8,6 +9,7 @@ import layout from '@/renderer/ui/layout.module.css'
 import { EndLinkConfirm } from './end-link-confirm'
 import { PasswordSection } from './password-section'
 import { SignoffsByVariant } from './signoffs-by-variant'
+import { StillOnlyNotes } from './still-only-notes'
 import type { Sender } from './use-send'
 import styles from './approval-dialog.module.css'
 
@@ -97,6 +99,7 @@ export function LiveLink(props: Props) {
           <p className={styles.line}>Updated {timeText(link.publishedAt)}.</p>
         )}
         {changed > 0 && <p className={styles.line}>{changedText(changed)}</p>}
+        <StillOnlyNotes variants={props.data.variants} titles={props.titles} />
         <div className={layout.row}>
           <button
             type="button"
