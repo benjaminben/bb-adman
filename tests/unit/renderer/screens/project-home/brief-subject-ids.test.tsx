@@ -15,7 +15,7 @@ const names = (fake: Fake) => fake.commands.map((c) => c.name)
 async function summaryOf(fake: Fake) {
   await renderApp(<ProjectHome project={PROJECT} />, photoStubs(fake))
   await userEvent.click(await screen.findByRole('button', { name: 'Load a brief' }))
-  return screen.findByRole('region', { name: 'Brief' })
+  return screen.findByRole('region', { name: 'New campaign' })
 }
 
 function subjectItem(summary: HTMLElement, name: string): HTMLElement {

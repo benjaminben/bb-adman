@@ -23,7 +23,7 @@ async function openPage(fake = projectApi()) {
 
 async function loadBrief() {
   await userEvent.click(screen.getByRole('button', { name: 'Load a brief' }))
-  return screen.findByRole('region', { name: 'Brief' })
+  return screen.findByRole('region', { name: 'New campaign' })
 }
 
 describe('Load a brief [SPEC 14 1.41 TP-1, FR-023]', () => {
@@ -44,7 +44,7 @@ describe('Load a brief [SPEC 14 1.41 TP-1, FR-023]', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Load a brief' }))
     await waitFor(() => expect(fake.queries.map((q) => q.name)).toContain('dialog.pickFiles'))
     expect(fake.commands).toEqual([])
-    expect(screen.queryByRole('region', { name: 'Brief' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'New campaign' })).toBeNull()
   })
 
   it("shows the brief's message word for word, as text", async () => {
@@ -107,7 +107,7 @@ describe('Load a brief [SPEC 14 1.41 TP-1, FR-023]', () => {
         { subjectId: 'berry-bottle', create: false },
       ],
     })
-    await waitFor(() => expect(screen.queryByRole('region', { name: 'Brief' })).toBeNull())
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'New campaign' })).toBeNull())
   })
 
   it('does not create a subject the project already holds', async () => {
@@ -132,7 +132,7 @@ describe('Load a brief [SPEC 14 1.41 TP-1, FR-023]', () => {
     await openPage(fake)
     await loadBrief()
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-    expect(screen.queryByRole('region', { name: 'Brief' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'New campaign' })).toBeNull()
     expect(names(fake)).toEqual(['brief.parse'])
   })
 
@@ -147,7 +147,7 @@ describe('Load a brief [SPEC 14 1.41 TP-1, FR-023]', () => {
     await openPage(fake)
     await userEvent.click(screen.getByRole('button', { name: 'Load a brief' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(message)
-    expect(screen.queryByRole('region', { name: 'Brief' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'New campaign' })).toBeNull()
     expect(names(fake)).toEqual(['brief.parse'])
   })
 
@@ -162,7 +162,7 @@ describe('Load a brief [SPEC 14 1.41 TP-1, FR-023]', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create campaign' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('That subject ID is taken.')
     expect(names(fake)).toEqual(['brief.parse', 'asset.import', 'asset.import', 'subject.create'])
-    expect(screen.getByRole('region', { name: 'Brief' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'New campaign' })).toBeInTheDocument()
   })
 
   it('shows the ID made from the name for a subject with no ID', async () => {

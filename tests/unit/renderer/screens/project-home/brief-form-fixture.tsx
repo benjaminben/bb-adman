@@ -70,7 +70,7 @@ export async function loadForm(
   const fake = photoStubs(projectApi(reply, draft))
   await renderApp(<ProjectHome project={PROJECT} />, fake)
   await userEvent.click(await screen.findByRole('button', { name: 'Load a brief' }))
-  const form = await screen.findByRole('region', { name: 'Brief' })
+  const form = await screen.findByRole('region', { name: 'New campaign' })
   if (photos) await addPhotos(form)
   return { fake, form }
 }

@@ -34,7 +34,7 @@ export async function answerOpenDialog(app: ElectronApplication, paths: string[]
 export async function loadBriefAndCreate(app: ElectronApplication, page: Page): Promise<void> {
   await answerOpenDialog(app, [E2E_BRIEF])
   await page.getByRole('button', { name: 'Load a brief' }).click()
-  const brief = page.getByRole('region', { name: 'Brief' })
+  const brief = page.getByRole('region', { name: 'New campaign' })
   await expect(brief.getByRole('list', { name: 'Subjects' })).toBeVisible()
   // SP-5: the brief names its photo; Create waits until it is in the row.
   await expectPhoto(brief, 1, E2E_PHOTO)

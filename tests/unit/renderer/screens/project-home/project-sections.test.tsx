@@ -22,7 +22,7 @@ describe('project home sections [spec/screens-campaign.md, Project home]', () =>
     await renderApp(<ProjectHome project={PROJECT} />, fake)
     await screen.findByText('No campaigns yet')
     await userEvent.click(screen.getByRole('button', { name: 'Load a brief' }))
-    await addPhotos(await screen.findByRole('region', { name: 'Brief' }))
+    await addPhotos(await screen.findByRole('region', { name: 'New campaign' }))
     await userEvent.click(screen.getByRole('button', { name: 'Create campaign' }))
     expect(await screen.findByRole('button', { name: 'Back to project' })).toBeInTheDocument()
     await waitFor(() =>

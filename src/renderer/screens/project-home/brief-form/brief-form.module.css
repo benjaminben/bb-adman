@@ -1,23 +1,17 @@
 /* app-style */
-/* The brief form (spec/app-style.md "Project home and brief form"). It sits in the "Start a
-   campaign" card, so it draws no frame of its own. */
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  align-self: stretch;
-}
-.form h3 {
+/* The brief form (spec/app-style.md "Project home and brief form"). HOME-2: it is the body of
+   the "New campaign" SubPage, which draws the head. The fieldset round the page draws
+   nothing. */
+.frame {
+  min-width: 0;
   margin: 0;
+  padding: 0;
+  border: none;
 }
 .body {
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: none;
 }
 /* Two short fields side by side: the prototype's form grid. */
 .grid {
@@ -67,26 +61,41 @@
 .notice {
   margin: 0;
 }
+/* The problems and the foot: one box in the page, drawing nothing itself, so the foot sticks
+   to the bottom of the whole page, not of this box. */
 .end {
-  display: flex;
-  flex-direction: column;
-  padding-top: var(--space-4);
-  border-top: var(--border-width) solid var(--color-line);
+  display: contents;
 }
-.end > p {
-  margin: 0 0 var(--space-2);
+/* An empty problems region takes back the gap the body puts after it. */
+.live:empty {
+  margin-bottom: calc(-1 * var(--space-6));
 }
-.busy {
+/* The foot: held at the bottom of the scrolling page, on the page ground, Cancel then the
+   primary at the right end. */
+.foot {
+  position: sticky;
+  bottom: 0;
   display: flex;
   gap: var(--space-2);
-  align-items: center;
-  color: var(--color-text-muted);
+  justify-content: flex-end;
+  padding: var(--space-3) 0;
+  border-top: var(--border-width) solid var(--color-line);
+  background: var(--color-bg);
+}
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 /* The problems are a warn notice: the icon, then the heading and its lines. */
 .problems {
-  margin-bottom: var(--space-3);
+  margin: 0;
 }
-.problems h4 {
+.problems h3 {
   margin: 0 0 var(--space-1);
   font-size: var(--font-size-control);
   font-weight: var(--weight-bold);

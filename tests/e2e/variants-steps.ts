@@ -16,7 +16,7 @@ export async function createFromForm(
 ): Promise<void> {
   await screens.answerOpenDialog(app, [screens.E2E_BRIEF])
   await page.getByRole('button', { name: 'Load a brief' }).click()
-  const form = page.getByRole('region', { name: 'Brief' })
+  const form = page.getByRole('region', { name: 'New campaign' })
   await screens.expectPhoto(form, 1, screens.E2E_PHOTO)
   if (change.languages) await form.getByLabel('Languages', { exact: true }).fill(change.languages)
   for (const size of change.sizes ?? []) await form.getByRole('checkbox', { name: size }).check()

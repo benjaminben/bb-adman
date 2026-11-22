@@ -58,7 +58,7 @@ export async function readBriefAndCreate(app: ElectronApplication, page: Page): 
   const run = page.getByRole('dialog', { name: 'Read the brief with AI' })
   await run.getByRole('radio', { name: 'Fake provider' }).check()
   await run.getByRole('button', { name: 'Read brief' }).click()
-  const form = page.getByRole('region', { name: 'Brief' })
+  const form = page.getByRole('region', { name: 'New campaign' })
   const name = form.getByLabel('Campaign name')
   await expect(name).toHaveValue(READ_NAME, { timeout: 15_000 })
   await expect(form.getByLabel('Message')).toHaveValue(MESSAGE)

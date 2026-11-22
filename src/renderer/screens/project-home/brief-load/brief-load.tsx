@@ -12,6 +12,9 @@
 // opening the typed form, or, with a form open, by putting the focus back in its first field.
 // HOME-1: with no form open it returns `home(actions)`; the project home draws its Sections
 // around the two buttons. It stays mounted while the home shows, so the clean-up above holds.
+// HOME-2: the form is the "New campaign" page. Its Back and Escape leave as Cancel does, asking
+// first when the form holds typed work (use-leave-brief.tsx); after Cancel or a leave the focus
+// goes to "Load a brief".
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { useNewCampaignAsk } from '@/renderer/app/nav-context'
@@ -23,7 +26,6 @@ import type { PickedPaths } from '@/shared/schemas/queries/dialog'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import { BriefForm } from '@/renderer/screens/project-home/brief-form'
 import { focusFirstField, usePasteBrief } from '@/renderer/screens/project-home/brief-paste'
-import { subjectIds } from '@/renderer/screens/project-home/brief-form-problems'
 import { removeAddedPhotos } from '@/renderer/screens/project-home/subject-photos'
 import {
   formFromDraft,
@@ -34,7 +36,9 @@ import { BusySpinner } from '@/renderer/ui/dialog-frame'
 import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './brief-load.module.css'
+import { afterRefusal, type Change } from './after-refusal'
 import { useBriefPhotos } from './use-brief-photos'
+import { useLeaveBrief } from './use-leave-brief'
 import { useTextBrief } from './use-text-brief'
 
 export type BriefLoadProps = {
@@ -44,23 +48,6 @@ export type BriefLoadProps = {
   onCreated: (campaignId: string) => void
   // HOME-1: draws the home around the two buttons and their dialogs while no form is open.
   home: (actions: ReactNode) => ReactNode
-}
-
-type Change = (values: BriefFormValues) => BriefFormValues
-
-// The form after a refused step: each row whose subject was made uses that subject, so it is
-// not made twice, and each photo now attached leaves the form's photos, so it is not removed.
-function afterRefusal(made: string[], attached: string[]): Change {
-  return (values) => {
-    const ids = subjectIds(values.subjects)
-    const subjects = values.subjects.map((s, i) => {
-      const id = ids[i] ?? ''
-      const row =
-        s.mode === 'new' && made.includes(id) ? { mode: 'existing' as const, existingId: id } : {}
-      return { ...s, ...row, photos: s.photos.filter((p) => !attached.includes(p.assetId)) }
-    })
-    return { ...values, subjects }
-  }
 }
 
 export function BriefLoad(props: BriefLoadProps) {
@@ -74,6 +61,8 @@ export function BriefLoad(props: BriefLoadProps) {
   // The open form's newest values, kept without a re-render; null once no form is open.
   const formValues = useRef<BriefFormValues | null>(null)
   const formBox = useRef<HTMLDivElement>(null)
+  const loadButton = useRef<HTMLButtonElement>(null)
+  const focusLoad = useRef(false)
   const { askedFor, ask } = useNewCampaignAsk()
   const paste = usePasteBrief(projectId, opened !== null, formBox, {
     onEmpty: () => setOpened(formFromDraft(null, heldSubjectIds)),
@@ -98,6 +87,20 @@ export function BriefLoad(props: BriefLoadProps) {
     setOpened(formFromDraft(null, heldSubjectIds))
   }, [askedFor, ask, projectId, heldSubjectIds, keepFocus])
 
+  // A dialog closed with the form hands the focus back a moment later; this comes after it.
+  useEffect(() => {
+    if (opened !== null || !focusLoad.current) return
+    focusLoad.current = false
+    const timer = setTimeout(() => loadButton.current?.focus(), 0)
+    return () => clearTimeout(timer)
+  }, [opened])
+
+  function cancel() {
+    dropPhotos(formValues.current)
+    closeForm()
+    focusLoad.current = true
+  }
+
   function closeForm() {
     formValues.current = null
     paste.shut()
@@ -113,6 +116,14 @@ export function BriefLoad(props: BriefLoadProps) {
         values.subjects.flatMap((s) => s.photos),
       )
   }
+
+  const leaving = useLeaveBrief({
+    open: opened !== null,
+    busy: creating,
+    typed: () =>
+      formValues.current !== null && JSON.stringify(formValues.current) !== JSON.stringify(opened),
+    onLeave: cancel,
+  })
 
   async function load() {
     const picked = await api.query('dialog.pickFiles', { purpose: 'brief' })
@@ -156,7 +167,12 @@ export function BriefLoad(props: BriefLoadProps) {
   if (opened === null) {
     return props.home(
       <div className={styles.actions}>
-        <button type="button" className={layout.primary} onClick={() => void load()}>
+        <button
+          ref={loadButton}
+          type="button"
+          className={layout.primary}
+          onClick={() => void load()}
+        >
           {briefPhotos.adding ? <BusySpinner /> : <Icon name="file" />}
           Load a brief
         </button>
@@ -177,7 +193,6 @@ export function BriefLoad(props: BriefLoadProps) {
 
   return (
     <div ref={formBox}>
-      <h2 className={styles.title}>New campaign</h2>
       <BriefForm
         projectId={projectId}
         initial={opened}
@@ -185,14 +200,13 @@ export function BriefLoad(props: BriefLoadProps) {
         campaigns={props.campaigns}
         creating={creating}
         onCreate={create}
-        onCancel={() => {
-          dropPhotos(formValues.current)
-          closeForm()
-        }}
+        onCancel={cancel}
+        onBack={leaving.leave}
         onValues={(values) => {
           formValues.current = values
         }}
       />
+      {leaving.dialog}
     </div>
   )
 }

@@ -117,7 +117,7 @@ export async function openPage(fake: BriefFake) {
 export async function openForm(fake: BriefFake) {
   await openPage(fake)
   await userEvent.click(screen.getByRole('button', { name: 'Load a brief' }))
-  const form = await screen.findByRole('region', { name: 'Brief' })
+  const form = await screen.findByRole('region', { name: 'New campaign' })
   await waitFor(() => expect(within(form).queryByText(/pictures are still being read/)).toBeNull())
   return form
 }

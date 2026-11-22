@@ -56,6 +56,6 @@ describe('Create campaign: the order of the steps [SP-4]', () => {
       'subject.create',
       'asset.update',
     ])
-    expect(screen.getByRole('region', { name: 'Brief' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'New campaign' })).toBeInTheDocument()
   })
 })

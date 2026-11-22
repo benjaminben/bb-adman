@@ -1,6 +1,8 @@
 // Long or rare content opened from a Section (T3e, spec/app-style-parts.md "SubPage"): a back
 // button and the title, then the content. Focus goes to the title on open; Back and Escape call
-// onBack. The caller returns focus to the Section header that opened it.
+// onBack. The caller returns focus to the Section header that opened it. With `escapeBack`
+// false the page leaves Escape to its caller (HOME-2 leaves through ui/escape-leave, which lets
+// an open popover or menu inside the page take the key first).
 import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from 'react'
 import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
@@ -10,6 +12,7 @@ export type SubPageProps = {
   title: string
   onBack: () => void
   backLabel?: string
+  escapeBack?: boolean
   children?: ReactNode
 }
 
@@ -25,6 +28,7 @@ export function SubPage(props: SubPageProps) {
 
   // Only keys pressed inside the page itself, not in a dialog drawn from it into a portal.
   function onKeyDown(event: KeyboardEvent) {
+    if (props.escapeBack === false) return
     if (event.key !== 'Escape' || !root.current?.contains(event.target as Node)) return
     event.stopPropagation()
     props.onBack()
