@@ -3,12 +3,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   approvalOf,
-  groupHeading,
+  approvedCount,
   groupRows,
   languageName,
   markWords,
+  postLine,
   rowLine,
-  sourceLabel,
   sourceLine,
 } from '@/renderer/screens/campaign/translation-panel/translation-words'
 import { translationRow as row } from './translation-fixture'
@@ -43,14 +43,14 @@ describe('translation words [P6-12]', () => {
     expect(languageName('not a code!')).toBe('not a code!')
   })
 
-  it('counts the approved rows in the heading', () => {
+  it('counts the approved rows for the bar [CAMP-5]', () => {
     const rows = [
       row('L1', { status: 'approved' }),
       row('L2', { status: 'proposed' }),
       row('L3', { status: 'missing', source: null }),
     ]
-    expect(groupHeading('de', rows)).toBe('German · 1 of 3 approved')
-    expect(groupHeading('de', [])).toBe('German · 0 of 0 approved')
+    expect(approvedCount(rows)).toEqual({ done: 1, text: '1/3', tip: '1 of 3 approved' })
+    expect(approvedCount([])).toEqual({ done: 0, text: '0/0', tip: '0 of 0 approved' })
   })
 
   it('groups rows by language in the order they come, leaving out the primary language', () => {
@@ -80,7 +80,9 @@ describe('translation words [P6-12]', () => {
     ])
   })
 
-  it('labels the source text with its language [R2C-4]', () => {
-    expect(sourceLabel('English')).toBe('English (source)')
+  it('names a row beside its thumbnail by size and layer [CAMP-5]', () => {
+    expect(postLine(row('L1', { sizeLabel: 'Story', layerName: 'Headline' }))).toBe(
+      'Story · Headline',
+    )
   })
 })

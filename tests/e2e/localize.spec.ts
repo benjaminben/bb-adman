@@ -39,10 +39,10 @@ test.afterEach(async () => {
   }
 })
 
-// "{language} · 0 of {n} approved": gives n.
+// The approved bar's "0 of {n} approved": gives n.
 async function rowCount(language: string): Promise<number> {
-  const heading = await l.group(page, language).getByRole('heading').first().textContent()
-  const n = Number(/ of (\d+) approved$/.exec(heading ?? '')?.[1])
+  await expect(l.approvedBar(page, language)).toBeVisible()
+  const [, n] = await l.approvedCount(page, language)
   expect(n).toBeGreaterThan(0)
   return n
 }
@@ -59,7 +59,7 @@ test('Workflow 5.2: fan-out to sizes and languages, translations approved, sheet
   await expect(l.rows(page, 'Japanese')).toHaveCount(japanese)
   await expect(l.rows(page, 'Japanese').first().getByText('from AI')).toBeVisible()
   await expect(l.rows(page, 'Japanese').first().getByRole('textbox')).toHaveValue(/^\[ja\] /)
-  await expect(l.translations(page).getByText(/^The translation did not finish: /)).toHaveCount(0)
+  await expect(l.translations(page).getByText(/^Failed: /)).toHaveCount(0)
 
   // One German text typed over, then "Approve all" for each language.
   await l.typeFirst(page, 'German', LOUD)
@@ -98,8 +98,9 @@ test('Workflow 5.2: fan-out to sizes and languages, translations approved, sheet
 
   // The "!" taken out; the edit sets it back to proposed, so it is approved again.
   await l.typeFirst(page, 'German', CALM)
-  await expect(l.group(page, 'German').getByRole('heading').first()).toHaveText(
-    `German · ${german - 1} of ${german} approved`,
+  await expect(l.approvedBar(page, 'German')).toHaveAttribute(
+    'title',
+    `${german - 1} of ${german} approved`,
   )
   await l.approveAll(page, 'German', german)
   await l.runChecks(page, 0)

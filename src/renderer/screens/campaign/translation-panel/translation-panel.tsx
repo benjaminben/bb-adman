@@ -1,12 +1,14 @@
-// The "Translations" section of the campaign overview (spec/phases/phase-06.md, design
-// addition 8): one group per language other than the primary one, from translation.forCampaign
-// read again on every change. "Export translation sheet…" at the top, then a line saying these
-// are the posts' own texts (R2C-4); each group gets its language's newest jobs (P6-13).
+// The Translations tab of the campaign page (spec/phases/phase-06.md, design addition 8; CAMP-5):
+// no card and no heading. At the top right the InfoTip "About Translations" (R2C-4's line) and
+// "Export translation sheet…"; then one Section per language other than the primary one, from
+// translation.forCampaign read again on every change. Each language gets its newest jobs (P6-13)
+// and the variants' revisions for the thumbnails.
 import type { CampaignTabProps as CampaignSectionProps } from '@/renderer/screens/campaign/campaign-overview'
+import { InfoTip } from '@/renderer/ui/info-tip'
 import layout from '@/renderer/ui/layout.module.css'
 import { ExportSheet } from './export-sheet'
 import { LanguageGroup } from './language-group'
-import { groupRows } from './translation-words'
+import { ABOUT, groupRows } from './translation-words'
 import styles from './translation-panel.module.css'
 import { type TranslationsRead, useTranslations } from './use-translations'
 
@@ -14,6 +16,7 @@ type BodyProps = {
   projectId: string
   campaignId: string
   read: TranslationsRead
+  revs: ReadonlyMap<string, number>
   reload: () => void
 }
 
@@ -41,6 +44,7 @@ function Body(props: BodyProps) {
       primaryLanguage={read.data.primaryLanguage}
       rows={group.rows}
       jobs={read.data.jobs.filter((job) => job.language === group.language)}
+      revs={props.revs}
       reload={props.reload}
     />
   ))
@@ -48,14 +52,20 @@ function Body(props: BodyProps) {
 
 export function TranslationPanel(props: CampaignSectionProps) {
   const { read, reload } = useTranslations(props.projectId, props.campaignId)
+  const revs = new Map(props.data.variants.map((v) => [v.id, v.rev]))
   return (
-    <section className={layout.card} aria-labelledby="translations-heading">
-      <h2 id="translations-heading">Translations</h2>
-      <ExportSheet projectId={props.projectId} campaignId={props.campaignId} />
-      <p className={`${layout.muted} ${styles.note}`}>
-        These are the texts on the posts themselves. A change here changes that post at once.
-      </p>
-      <Body projectId={props.projectId} campaignId={props.campaignId} read={read} reload={reload} />
+    <section className={styles.panel} aria-label="Translations">
+      <div className={styles.top}>
+        <InfoTip about="Translations">{ABOUT}</InfoTip>
+        <ExportSheet projectId={props.projectId} campaignId={props.campaignId} />
+      </div>
+      <Body
+        projectId={props.projectId}
+        campaignId={props.campaignId}
+        read={read}
+        revs={revs}
+        reload={reload}
+      />
     </section>
   )
 }

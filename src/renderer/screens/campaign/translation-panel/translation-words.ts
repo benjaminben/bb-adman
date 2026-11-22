@@ -1,5 +1,5 @@
-// The translation panel's words and lists (spec/phases/phase-06.md, design addition 8), worked
-// out from translation.forCampaign's rows alone. Pure. Every text here is drawn as React text.
+// The translation panel's words and lists (spec/phases/phase-06.md, design addition 8; CAMP-5),
+// worked out from translation.forCampaign's rows alone. Pure. Every text here is drawn as React text.
 import { languageName } from '@/renderer/ui/language-name'
 import type { TranslationForCampaign, TranslationRow } from '@/shared/schemas/queries/translation'
 
@@ -31,15 +31,20 @@ export function rowLine(row: TranslationRow): string {
   return `${row.title} · ${row.sizeLabel} · ${row.layerName}`
 }
 
-// The label over a row's source text: "English (source)" (R2C-4).
-export function sourceLabel(name: string): string {
-  return `${name} (source)`
+// The words beside a row's thumbnail: "{size} · {layer}" (CAMP-5).
+export function postLine(row: TranslationRow): string {
+  return `${row.sizeLabel} · ${row.layerName}`
 }
 
-export function groupHeading(language: string, rows: TranslationRow[]): string {
-  const approved = rows.filter((row) => row.status === 'approved').length
-  return `${languageName(language)} · ${approved} of ${rows.length} approved`
+// A language's approved rows: "{a}/{b}" on the bar, "{a} of {b} approved" in its title (CAMP-5).
+export function approvedCount(rows: TranslationRow[]): { done: number; text: string; tip: string } {
+  const done = rows.filter((row) => row.status === 'approved').length
+  return { done, text: `${done}/${rows.length}`, tip: `${done} of ${rows.length} approved` }
 }
+
+// R2C-4's line, now the tab's InfoTip.
+export const ABOUT =
+  'These are the texts on the posts themselves. A change here changes that post at once.'
 
 // One group per language other than the primary one, in the order the rows come.
 export function groupRows(data: TranslationForCampaign): LanguageGroup[] {

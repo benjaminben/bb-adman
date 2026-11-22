@@ -1,29 +1,24 @@
-// One language of the translation panel (spec/phases/phase-06.md, design addition 8): heading
-// "{language} · {a} of {n} approved", "Approve all {language}" and the rows. Edits send
-// translation.set; "Approve" and "Approve all" send translation.approve with each row's copy
-// counter as read (P6-4b). After every reply the rows are read again, so a refusal such as
-// "A text changed after you read it." is followed by the newest text. A refusal's own message
-// shows on its row, or under the heading for "Approve all". Beside it "Translate {language}
-// again…" with the group's posts, and under the heading the language's newest jobs (P6-13).
-// Each row is told the primary language's name, the language of its source text (R2C-4).
-import { useId, useState } from 'react'
+// One language of the Translations tab (spec/phases/phase-06.md, design addition 8; CAMP-5): a
+// Section titled with the language's name, its header holding the approved bar, the running
+// jobs' spinners and Stop, "Approve all" and "Translate again…". Under the header the failed
+// jobs stay as notices, then the column heads once (the source language and this one) and the
+// rows. Edits send translation.set; "Proposed" and "Approve all" send translation.approve with
+// each row's copy counter as read (P6-4b). After every reply the rows are read again, so a
+// refusal such as "A text changed after you read it." is followed by the newest text. A
+// refusal's own message shows on its row, or under the header for "Approve all".
+import { useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
+import layout from '@/renderer/ui/layout.module.css'
+import { Section } from '@/renderer/ui/section'
 import type {
   TranslationJobState,
   TranslationRow as Row,
 } from '@/shared/schemas/queries/translation'
 import type { Result } from '@/shared/schemas/result'
-import layout from '@/renderer/ui/layout.module.css'
-import { JobLine } from './job-line'
-import { TranslateAgain } from './translate-again'
+import { GroupHead } from './group-head'
+import { FailedNotice } from './job-line'
 import { TranslationRow } from './translation-row'
-import {
-  type ApproveLayer,
-  approvalOf,
-  groupHeading,
-  languageName,
-  requestCount,
-} from './translation-words'
+import { type ApproveLayer, approvalOf, languageName } from './translation-words'
 import styles from './translation-panel.module.css'
 
 export type LanguageGroupProps = {
@@ -33,6 +28,7 @@ export type LanguageGroupProps = {
   primaryLanguage: string // the source texts' language code
   rows: Row[]
   jobs: TranslationJobState[]
+  revs: ReadonlyMap<string, number> // each variant's revision, for its thumbnail
   reload: () => void
 }
 
@@ -40,15 +36,12 @@ type Messages = { group: string | null; rows: Record<string, string> }
 
 export function LanguageGroup(props: LanguageGroupProps) {
   const api = useApi()
-  const id = useId()
   const [busy, setBusy] = useState(false)
   const [messages, setMessages] = useState<Messages>({ group: null, rows: {} })
   const name = languageName(props.language)
-  const sourceName = languageName(props.primaryLanguage)
   const proposed = approvalOf(props.rows)
-  const variantIds = [...new Set(props.rows.map((row) => row.variantId))]
 
-  // `layerId` names the row a refusal belongs on; null puts it under the heading.
+  // `layerId` names the row a refusal belongs on; null puts it under the header.
   const send = async (layerId: string | null, call: () => Promise<Result<unknown>>) => {
     setBusy(true)
     setMessages({ group: null, rows: {} })
@@ -78,48 +71,48 @@ export function LanguageGroup(props: LanguageGroupProps) {
       }),
     )
 
+  const head = (
+    <GroupHead
+      projectId={props.projectId}
+      campaignId={props.campaignId}
+      language={props.language}
+      rows={props.rows}
+      jobs={props.jobs}
+      busy={busy}
+      proposed={proposed.length}
+      onApproveAll={() => approve(null, proposed)}
+    />
+  )
   return (
-    <section className={styles.group} aria-labelledby={`${id}-heading`}>
-      <div className={layout.row}>
-        <h3 id={`${id}-heading`} className={styles.heading}>
-          {groupHeading(props.language, props.rows)}
-        </h3>
-        <button
-          type="button"
-          className={`${layout.quiet} ${layout.small}`}
-          disabled={busy || proposed.length === 0}
-          onClick={() => approve(null, proposed)}
-        >
-          {`Approve all ${name}`}
-        </button>
-        <TranslateAgain
-          projectId={props.projectId}
-          campaignId={props.campaignId}
-          language={props.language}
-          variantIds={variantIds}
-          requests={requestCount(props.rows)}
-        />
-      </div>
-      {props.jobs.map((job) => (
-        <JobLine
-          key={job.jobId}
-          projectId={props.projectId}
-          campaignId={props.campaignId}
-          job={job}
-        />
-      ))}
+    <Section id={`translations.${props.language}`} title={name} fold="none" summary={head}>
+      {props.jobs
+        .filter((job) => job.status === 'failed')
+        .map((job) => (
+          <FailedNotice
+            key={job.jobId}
+            projectId={props.projectId}
+            campaignId={props.campaignId}
+            job={job}
+          />
+        ))}
       {messages.group !== null && (
         <p role="alert" className={`${layout.notice} ${layout.warn}`}>
           {messages.group}
         </p>
       )}
-      <ul className={layout.list} aria-label={`${name} translations`}>
+      <div className={styles.heads}>
+        <span />
+        <span>{languageName(props.primaryLanguage)}</span>
+        <span>{name}</span>
+      </div>
+      <ul className={styles.rows} aria-label={`${name} translations`}>
         {props.rows.map((row) => (
           <TranslationRow
             key={`${row.layerId}:${row.copyRev}`}
+            projectId={props.projectId}
             row={row}
+            rev={props.revs.get(row.variantId)}
             language={name}
-            sourceLanguage={sourceName}
             message={messages.rows[row.layerId] ?? null}
             busy={busy}
             onSave={(text, apply) => save(row.layerId, text, apply)}
@@ -127,6 +120,6 @@ export function LanguageGroup(props: LanguageGroupProps) {
           />
         ))}
       </ul>
-    </section>
+    </Section>
   )
 }

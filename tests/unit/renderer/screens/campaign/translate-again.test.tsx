@@ -36,7 +36,7 @@ async function show(rows: TranslationRow[], jobs: TranslationJobState[] = []) {
     <TranslationPanel projectId={P} campaignId="C1" data={campaignGet([MASTER])} />,
     fake,
   )
-  await screen.findByRole('region', { name: /^German · / })
+  await screen.findByRole('region', { name: 'German' })
   return view
 }
 
@@ -142,7 +142,7 @@ describe('the translation job line [P6-13]', () => {
       fake,
     )
     const sentence = plainMessage('quota', 'Google Gemini')
-    expect(await screen.findByText(`The translation did not finish: ${sentence}`)).toBeVisible()
+    expect(await screen.findByText(`Failed: ${sentence}`)).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
     const dialog = within(await screen.findByRole('dialog', { name: 'Translate' }))
@@ -159,9 +159,9 @@ describe('the translation job line [P6-13]', () => {
     expect(fake.commands.some((c) => c.name === 'job.retry')).toBe(false)
   })
 
-  it('a running job shows "Running…" with Stop, which sends job.cancel', async () => {
+  it('a running job shows the spinner with Stop, which sends job.cancel', async () => {
     const { fake } = await show(ROWS, [{ ...failedJob, status: 'running', errorKind: null }])
-    expect(screen.getByText('Running…')).toBeVisible()
+    expect(screen.getByTitle('Translating')).toBeVisible()
     await userEvent.click(screen.getByRole('button', { name: 'Stop' }))
     expect(fake.commands).toContainEqual({
       name: 'job.cancel',
@@ -174,8 +174,8 @@ describe('the translation job line [P6-13]', () => {
       { ...failedJob, status: 'succeeded', errorKind: null },
       { ...failedJob, jobId: 'J2', language: 'fr' },
     ])
-    expect(screen.queryByText('Running…')).toBeNull()
-    expect(screen.queryByText(/^The translation did not finish/)).toBeNull()
+    expect(screen.queryByTitle('Translating')).toBeNull()
+    expect(screen.queryByText(/^Failed: /)).toBeNull()
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
   })
 })
