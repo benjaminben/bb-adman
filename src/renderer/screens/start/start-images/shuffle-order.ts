@@ -10,7 +10,7 @@ export function shuffleOrder(count: number, random: RandomSource, justShown?: nu
     ;[order[i], order[j]] = [order[j] as number, order[i] as number]
   }
   if (count > 1 && order[0] === justShown) {
-    ;[order[0], order[1]] = [order[1] as number, order[0]]
+    ;[order[0], order[1]] = [order[1] as number, justShown]
   }
   return order
 }
