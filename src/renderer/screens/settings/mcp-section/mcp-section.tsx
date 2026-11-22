@@ -10,6 +10,7 @@ import type { AdmanApi } from '@/shared/schemas/api'
 import type { ConnectInfo } from '@/shared/schemas/queries/mcp'
 import { ConnectPanel } from '@/renderer/screens/settings/connect-panel'
 import { NoticeLine } from '@/renderer/screens/settings/notice-line'
+import { AutoApproveSetting } from '@/renderer/screens/settings/auto-approve-setting'
 import layout from '@/renderer/ui/layout.module.css'
 
 // A refused query gives its own fixed message (SPEC 4.3; 14 1.59 L-21), never reply data.
@@ -145,6 +146,7 @@ export function McpSection() {
           Make a new token
         </button>
       </div>
+      <AutoApproveSetting />
       {info.enabled && info.token !== null && info.claudeCode !== null && (
         <ConnectPanel address={info.address} token={info.token} claudeCode={info.claudeCode} />
       )}

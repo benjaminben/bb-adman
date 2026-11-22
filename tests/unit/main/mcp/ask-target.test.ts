@@ -40,6 +40,9 @@ function variantCount(m: Made): number {
   return row.n
 }
 
+// The count as the line writes it (P10-7 review: "1 variant", else "N variants").
+const counted = (n: number) => (n === 1 ? '1 variant' : `${n} variants`)
+
 function variantLine(m: Made): string {
   const db = f!.core.projects.requireOpen(m.projectId).db
   const v = db
@@ -60,7 +63,7 @@ describe('askTarget [P10-6; A-238]', () => {
     const m = await project()
     const n = variantCount(m)
     const line = askTarget(f!.core.projects, ask('campaign.delete', m.projectId, m))
-    expect(line).toBe(`Campaign "Summer Splash!" (${n} variants) in "Spring Work"`)
+    expect(line).toBe(`Campaign "Summer Splash!" (${counted(n)}) in "Spring Work"`)
   })
 
   it('names a variant by title, size and language, and its campaign', async () => {
@@ -80,7 +83,7 @@ describe('askTarget [P10-6; A-238]', () => {
       m.campaignId,
     )
     const line = askTarget(f!.core.projects, ask('campaign.delete', m.projectId, m))
-    expect(line).toBe(`Campaign "Summer Splash!" (${variantCount(m)} variants) in "Spring Work"`)
+    expect(line).toBe(`Campaign "Summer Splash!" (${counted(variantCount(m))}) in "Spring Work"`)
   })
 
   it.each([
@@ -101,5 +104,94 @@ describe('askTarget [P10-6; A-238]', () => {
       NO_TARGET,
     )
     expect(askTarget(f!.core.projects, ask('campaign.delete', null, m))).toBe(NO_TARGET)
+  })
+})
+
+// P10-7 (security review of P10-6): the dialog shows this line, so a name cannot pass for the
+// line's own wording, break it across lines or push the count and the project out of view.
+describe('askTarget names in the dialog line [P10-7]', () => {
+  const LONG = 'Autumn Market '.repeat(6)
+  const CUT = `${[...LONG].slice(0, 60).join('')}…`
+
+  async function lineWith(campaignName: string, projectName = 'Spring Work') {
+    const m = await project()
+    const db = f!.core.projects.requireOpen(m.projectId).db
+    db.prepare("UPDATE project_meta SET value = ? WHERE key = 'name'").run(projectName)
+    db.prepare('UPDATE campaign SET name = ? WHERE id = ?').run(campaignName, m.campaignId)
+    return { line: askTarget(f!.core.projects, ask('campaign.delete', m.projectId, m)), m }
+  }
+
+  it.each([
+    ['turns a double quote into a single one', 'Say "Hi" now', "Say 'Hi' now"],
+    ['collapses runs of white space to one space', 'Big      Sale', 'Big Sale'],
+    ['keeps a name of exactly 60 code points whole', 'A'.repeat(60), 'A'.repeat(60)],
+    ['cuts a longer name to 60 code points and ends it with "…"', LONG, CUT],
+    ['counts code points, not UTF-16 units', '😀'.repeat(61), `${'😀'.repeat(60)}…`],
+  ])('%s', async (_what, name, shown) => {
+    const { line, m } = await lineWith(name)
+    expect(line).toBe(`Campaign "${shown}" (${counted(variantCount(m))}) in "Spring Work"`)
+  })
+
+  it('cuts a long project name the same way', async () => {
+    const { line, m } = await lineWith('Summer Splash!', LONG)
+    expect(line).toBe(`Campaign "Summer Splash!" (${counted(variantCount(m))}) in "${CUT}"`)
+  })
+
+  it('keeps the true count and project readable when a name imitates the line', async () => {
+    const { line, m } = await lineWith('Old test" (0 variants) in "Sandbox')
+    const n = variantCount(m)
+    expect(line).toBe(
+      `Campaign "Old test' (0 variants) in 'Sandbox" (${counted(n)}) in "Spring Work"`,
+    )
+    expect(line.split('"')).toHaveLength(5)
+    expect(line.endsWith(`(${counted(n)}) in "Spring Work"`)).toBe(true)
+  })
+
+  // P10-7 review: every quote-like mark, not only `"`, so no look-alike closes a name's quotes.
+  it.each([
+    ['curly double quotes', '“Hi”', "'Hi'"],
+    ['curly single quotes and guillemets', '‘a’ «b» ‹c›', "'a' 'b' 'c'"],
+    ['the look-alikes', '＂″‶〃〝〞〟״˝„‟', "'''''''''''"],
+  ])('turns %s into single quotes', async (_what, name, shown) => {
+    const { line, m } = await lineWith(name)
+    expect(line).toBe(`Campaign "${shown}" (${counted(variantCount(m))}) in "Spring Work"`)
+  })
+
+  it('holds only the four straight quotes the app writes when a name uses curly ones', async () => {
+    const { line, m } = await lineWith('Old test” (0 variants) in “Scratch')
+    const n = variantCount(m)
+    expect(line).toBe(
+      `Campaign "Old test' (0 variants) in 'Scratch" (${counted(n)}) in "Spring Work"`,
+    )
+    expect(line.split('"')).toHaveLength(5)
+    expect(line).not.toMatch(/[\p{Pi}\p{Pf}＂″‶〃〝〞〟״˝„‟]/u)
+  })
+
+  it('keeps at most two combining marks in a row', async () => {
+    const { line, m } = await lineWith(`Ze${'́'.repeat(20)}st`)
+    expect(line).toBe(`Campaign "Zé́st" (${counted(variantCount(m))}) in "Spring Work"`)
+  })
+
+  it('says "1 variant" for one and "N variants" for more', async () => {
+    const { line, m } = await lineWith('Summer Splash!')
+    expect(variantCount(m)).toBe(1)
+    expect(line).toBe('Campaign "Summer Splash!" (1 variant) in "Spring Work"')
+    const db = f!.core.projects.requireOpen(m.projectId).db
+    db.exec('CREATE TEMP TABLE extra AS SELECT * FROM variant')
+    db.prepare("UPDATE extra SET id = 'made-up-variant-2', language = 'fr'").run()
+    db.exec('INSERT INTO variant SELECT * FROM extra')
+    const again = askTarget(f!.core.projects, ask('campaign.delete', m.projectId, m))
+    expect(again).toBe('Campaign "Summer Splash!" (2 variants) in "Spring Work"')
+  })
+
+  it('cleans each part of a variant line', async () => {
+    const m = await project()
+    const db = f!.core.projects.requireOpen(m.projectId).db
+    db.prepare('UPDATE variant SET title = ? WHERE id = ?').run('Hero  "A"', m.variantId)
+    db.prepare('UPDATE campaign SET name = ? WHERE id = ?').run(LONG, m.campaignId)
+    const input = { projectId: m.projectId, variantId: m.variantId }
+    const line = askTarget(f!.core.projects, ask('variant.delete', m.projectId, input))
+    expect(line).toMatch(/^Variant "Hero 'A' · [^"]+" in campaign "/)
+    expect(line.endsWith(`in campaign "${CUT}"`)).toBe(true)
   })
 })
