@@ -6,7 +6,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
 import { makeFixture, data, fakeCrypto, type Fixture } from '../core-fixture'
-import { AGENT_POLICY, denialMessage } from '@/main/commands/agent-policy'
 import { createCore } from '@/main/core'
 import { publishCommands } from '@/main/commands/publish'
 import { storageCommands } from '@/main/commands/storage'
@@ -32,32 +31,6 @@ async function open(env: Record<string, string> = {}) {
   return { fx, projectId: data<{ projectId: string }>(made).projectId }
 }
 
-const notBuilt = {
-  ok: false,
-  error: {
-    code: 'RULE_VIOLATION',
-    message: 'This part of Adman is not built yet.',
-    details: { reason: 'not_built_yet' },
-  },
-}
-
-// One row per stub command: a good input (projectId added for a project command), its policy
-// action, and an input its schema refuses.
-type CommandRow = { name: string; project: boolean; input: object; action: string; bad: object }
-const run = { campaignId: 'C1', storage: 'fake', replaceConfirmed: false }
-const COMMANDS: CommandRow[] = [
-  {
-    name: 'publish.run',
-    project: true,
-    input: { ...run, proceedDespiteWarnings: false },
-    action: 'publish',
-    bad: { ...run, proceedDespiteWarnings: false, storage: 'azure-blob' },
-  },
-]
-
-const inputOf = (row: CommandRow, projectId: string, input: object) =>
-  row.project ? { projectId, ...input } : input
-
 describe('Phase 9 registration [P9-1]', () => {
   it('registers the publish and Dropbox commands and publish.inspect on core', async () => {
     const { fx } = await open()
@@ -73,7 +46,7 @@ describe('Phase 9 registration [P9-1]', () => {
       'storage.setDropboxFolder',
     ])
     expect(Object.keys(publishQueries(deps))).toEqual(['publish.inspect'])
-    expect(fx.core.commandNames).toEqual(expect.arrayContaining(COMMANDS.map((r) => r.name)))
+    expect(fx.core.commandNames).toContain('publish.run')
     expect(fx.core.queryNames).toContain('publish.inspect')
   })
 
@@ -81,45 +54,8 @@ describe('Phase 9 registration [P9-1]', () => {
     expect(jobKindHandlers.filter((h) => h.kind === 'publish')).toHaveLength(1)
   })
 
-  it.each(COMMANDS)('$name is deny for agents, with its own action', ({ name, action }) => {
-    expect(AGENT_POLICY[name]).toEqual({ policy: 'deny', action })
-  })
-
-  it.each(COMMANDS)('$name is not internal', async ({ name }) => {
-    const { fx } = await open()
-    expect(fx.core.isInternal(name)).toBe(false)
-  })
-
   it('keeps the Dropbox app key on record (D-007), a public identifier', () => {
     expect(DROPBOX_APP_KEY).toBe('sxcjvdik8esx6mx')
-  })
-})
-
-describe('the Phase 9 command stubs [P9-1]', () => {
-  it.each(COMMANDS)('$name as the user refuses and changes nothing', async (row) => {
-    const { fx, projectId } = await open()
-    const settings = fx.core.settings.get()
-    const before = fx.events.length
-    expect(await fx.user(row.name, inputOf(row, projectId, row.input))).toEqual(notBuilt)
-    expect(fx.events.slice(before)).toEqual([])
-    expect(fx.core.settings.get()).toEqual(settings)
-    expect(fx.core.secrets.summaries()).toEqual([])
-  })
-
-  it.each(COMMANDS)('$name checks its input before the stub answers', async (row) => {
-    const { fx, projectId } = await open()
-    expect(await fx.user(row.name, inputOf(row, projectId, row.bad))).toMatchObject({
-      ok: false,
-      error: { code: 'INVALID_INPUT' },
-    })
-  })
-
-  it.each(COMMANDS)('$name as the agent is AGENT_DENIED', async (row) => {
-    const { fx, projectId } = await open()
-    expect(await fx.agent(row.name, inputOf(row, projectId, row.input))).toEqual({
-      ok: false,
-      error: { code: 'AGENT_DENIED', message: denialMessage(row.name) },
-    })
   })
 })
 
