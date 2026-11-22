@@ -53,7 +53,7 @@ describe('delete_campaign over MCP [P10-6; A-237, A-238]', () => {
       ['action', 'agentClient', 'expiresAt', 'requestId', 'target'].sort(),
     )
     expect(asked).toMatchObject({
-      agentClient: null,
+      agentClient: 'adman-test-client',
       action: 'delete campaigns',
       target: expect.stringMatching(
         /^Campaign "Summer Splash!" \(\d+ variants?\) in "Spring Work"$/,

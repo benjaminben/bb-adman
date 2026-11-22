@@ -81,21 +81,21 @@ describe('collectComponents, folders [P9-7, A-222]', () => {
     )
     const row = (assetId: string) => byId(list, assetId)
     expect(row(BG)).toMatchObject({ folder: 'backgrounds', kind: 'image', problem: null })
-    expect(row(BG)?.remotePath).toBe('components/backgrounds/Beach-01JD0000.png')
-    expect(row(CLIP)).toMatchObject({ folder: 'backgrounds', kind: 'video', shareAllowed: null })
-    expect(row(CLIP)?.remotePath).toMatch(/^components\/backgrounds\/.+-01JD0000\.mp4$/)
+    expect(row(BG)?.remotePath).toBe('components/backgrounds/Beach-00000001.png')
+    expect(row(CLIP)).toMatchObject({ folder: 'backgrounds', kind: 'video', share: null })
+    expect(row(CLIP)?.remotePath).toMatch(/^components\/backgrounds\/.+-00000002\.mp4$/)
     expect(row(IMG)).toMatchObject({
       folder: 'images',
-      remotePath: 'components/images/Bottle-01JD0000.png',
+      remotePath: 'components/images/Bottle-00000003.png',
     })
     expect(row(LOGO)).toMatchObject({
       folder: 'logos',
-      remotePath: 'components/logos/Logo-01JD0000.png',
+      remotePath: 'components/logos/Logo-00000004.png',
     })
-    expect(row(SUBJ)?.remotePath).toBe(`components/subjects/${SUBJECT}/Hero-01JD0000.png`)
-    expect(row(FONT_OK)).toMatchObject({ folder: 'fonts', kind: 'font', shareAllowed: true })
-    expect(row(FONT_OK)?.remotePath).toBe('components/fonts/Open Sans-01JD0000.ttf')
-    expect(row(FONT_NO)).toMatchObject({ folder: 'fonts', shareAllowed: false, problem: null })
+    expect(row(SUBJ)?.remotePath).toBe(`components/subjects/${SUBJECT}/Hero-00000005.png`)
+    expect(row(FONT_OK)).toMatchObject({ folder: 'fonts', kind: 'font', share: 'needs_confirming' })
+    expect(row(FONT_OK)?.remotePath).toBe('components/fonts/Open Sans-00000006.ttf')
+    expect(row(FONT_NO)).toMatchObject({ folder: 'fonts', share: 'not_shared', problem: null })
     expect(row(FONT_NO)?.remotePath).toBeNull()
     for (const c of list) {
       expect(c.localPath).toBe(files[c.assetId])
@@ -108,10 +108,10 @@ describe('collectComponents, folders [P9-7, A-222]', () => {
     const list = await collect()
     expect(byId(list, FONT_NO)).toMatchObject({
       folder: 'logos',
-      shareAllowed: false,
+      share: 'not_shared',
       remotePath: null,
     })
-    expect(byId(list, FONT_OK)?.remotePath).toBe('components/logos/Open Sans-01JD0000.ttf')
+    expect(byId(list, FONT_OK)?.remotePath).toBe('components/logos/Open Sans-00000006.ttf')
   })
 
   it('leaves out every asset of a variant that is not exported or not in the campaign', async () => {
@@ -156,7 +156,7 @@ describe('collectComponents, hostile rows [P9-7, security]', () => {
     const list = await collect()
     const row = (assetId: string) => byId(list, assetId)
     expect(row(BAD_SUBJECT)).toMatchObject({ folder: 'images', problem: null })
-    expect(row(BAD_SUBJECT)?.remotePath).toBe(`components/images/Name ${BAD_SUBJECT}-01JD0000.png`)
+    expect(row(BAD_SUBJECT)?.remotePath).toBe(`components/images/Name ${BAD_SUBJECT}-00000020.png`)
     expect(row(TEXT)).toMatchObject({ problem: 'wrong_type', remotePath: null, absPath: null })
     expect(row(RENAMED)).toMatchObject({ problem: 'wrong_type', remotePath: null, absPath: null })
     expect(row(LINKED_ELSEWHERE)).toMatchObject({ problem: 'wrong_type', remotePath: null })

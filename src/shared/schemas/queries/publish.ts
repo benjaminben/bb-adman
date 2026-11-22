@@ -12,6 +12,8 @@ export type PublishInspectInput = z.infer<typeof publishInspectInput>
 
 export type PublishReady = 'ready' | 'not_set_up' | 'needs_key' | 'not_signed_in'
 
+export type PublishFontShare = 'confirmed' | 'needs_confirming' | 'not_shared'
+
 export type PublishComponentFolder = 'backgrounds' | 'logos' | 'subjects' | 'images' | 'fonts'
 
 export type PublishComponent = {
@@ -21,8 +23,9 @@ export type PublishComponent = {
   folder: PublishComponentFolder
   localPath: string
   problem: 'missing' | 'wrong_type' | null
-  // Fonts only; null for every other kind.
-  shareAllowed: boolean | null
+  // Fonts only; null for every other kind (A-260). `confirmed` only when this machine's consent
+  // list holds the font's key; the project file's flag alone gives at most `needs_confirming`.
+  share: PublishFontShare | null
 }
 
 export type PublishInspect = {

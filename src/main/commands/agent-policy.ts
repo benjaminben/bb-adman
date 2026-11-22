@@ -88,6 +88,8 @@ export const AGENT_POLICY: Record<string, Entry> = {
   // P8-1: system command, the export job's report row; deny and internal.
   'report.add': deny('save reports'),
   'publish.run': deny('publish'),
+  // P9-9 (A-260): this machine's consent to share a font.
+  'publish.setFontConsent': deny('share a font'),
   'history.undo': deny('undo'),
   'history.redo': deny('redo'),
   'settings.update': deny('change settings'),

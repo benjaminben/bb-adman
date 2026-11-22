@@ -74,6 +74,7 @@ const SPEC_4_2: Record<string, 'allow' | 'ask' | 'deny' | 'tick'> = {
   'export.run': 'deny',
   'report.add': 'deny',
   'publish.run': 'deny',
+  'publish.setFontConsent': 'deny',
   'history.undo': 'deny',
   'history.redo': 'deny',
   'settings.update': 'deny',

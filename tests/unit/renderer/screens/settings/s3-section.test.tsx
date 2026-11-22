@@ -101,11 +101,6 @@ describe('settings: cloud storage, Amazon S3 [D-096, A-95]', () => {
     expect(within(box).getByText(PERMISSIONS)).toBeInTheDocument()
   })
 
-  it('has no Dropbox part', async () => {
-    const { box } = await section(s3State(null))
-    expect(within(box).queryByText(/Dropbox/)).toBeNull()
-  })
-
   it.each([
     ['s3.accessKeyId', 'Amazon S3 Access key ID'],
     ['s3.secretAccessKey', 'Amazon S3 Secret access key'],

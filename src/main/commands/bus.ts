@@ -8,6 +8,7 @@ import { runHistory } from './history/run-history'
 import { runInProject, type ProjectRun } from './run-in-project'
 import type { CommandHandler, HandlerResult } from './types'
 import type { ProjectRegistry } from '@/main/db/project-registry'
+import { guardAgentUndo } from '@/main/history/agent-undo-guard'
 import type { UndoLists, UndoScope } from '@/main/history/undo-lists'
 import type { ActivityLog } from '@/main/log/activity-log'
 import { errorContext } from '@/main/log/error-context'
@@ -119,7 +120,7 @@ export function createCommandBus(deps: BusDeps): CommandBus {
     commandId: string,
     projectId: string | null,
   ): Promise<ProjectRun> {
-    const base = { actor: opts.actor, commandId }
+    const base = { actor: opts.actor, commandId, replay: opts.replay?.direction }
     if (projectId) {
       const logCleanup = (e: unknown) => {
         deps.log.write({
@@ -147,8 +148,9 @@ export function createCommandBus(deps: BusDeps): CommandBus {
   ) {
     if (!projectId || !result.inverse) return
     const { scope, call } = result.inverse
-    if (opts.replay?.direction === 'undo') deps.undo.recordRedo(projectId, scope, call)
-    else deps.undo.record(projectId, scope, call, { fromRedo: opts.replay?.direction === 'redo' })
+    const { actor, replay } = opts
+    if (replay?.direction === 'undo') deps.undo.recordRedo(projectId, scope, call, actor)
+    else deps.undo.record(projectId, scope, call, { fromRedo: replay?.direction === 'redo', actor })
   }
 
   async function dispatch(
@@ -181,7 +183,9 @@ export function createCommandBus(deps: BusDeps): CommandBus {
     let run: ProjectRun
     try {
       await askCheck(name, opts, projectId, parsed.input)
-      run = await runHandler(handler, parsed.input, opts, commandId, projectId)
+      // A-261: the agent undo guard checks the list inside the handler's transaction.
+      const guarded = guardAgentUndo(handler, deps.undo, projectId, opts)
+      run = await runHandler(guarded, parsed.input, opts, commandId, projectId)
     } finally {
       release?.()
     }
