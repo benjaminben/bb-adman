@@ -140,9 +140,7 @@ export async function confirmWithKey(page: Page): Promise<void> {
   await guardedStep('Confirm the paid run and give the key', async () => {
     const run = screens.runDialog(page)
     // Review S-1: only a run of one paid request is ever confirmed.
-    await expect(
-      run.getByText(/^This will use 1 generation\(s\) with Google Gemini\./),
-    ).toBeVisible()
+    await expect(run.getByText(/^Paid: 1 picture.* to Google Gemini$/)).toBeVisible()
     await run.getByRole('button', { name: 'Generate', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: 'Add your Google Gemini key' })
     await dialog.getByLabel('API key').fill(key)

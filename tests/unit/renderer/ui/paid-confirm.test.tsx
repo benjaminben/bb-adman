@@ -10,7 +10,8 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { PaidConfirm } from '@/renderer/ui/paid-confirm'
 import { paidLine } from '@/renderer/ui/paid-confirm/paid-confirm'
-import layout from '@/renderer/ui/layout.module.css'
+import moneyLook from '@/renderer/ui/money-line/money-line.module.css'
+import { costLine, spoken } from '../cost-line'
 
 const FOLDER = path.resolve('src/renderer/ui/paid-confirm')
 
@@ -24,7 +25,7 @@ describe('PaidConfirm [ST-12, C-15]', () => {
     }
   })
 
-  it('draws the paid confirm line as an info notice, words and buttons unchanged', () => {
+  it('draws the paid confirm line as a MoneyLine, words and buttons unchanged', () => {
     render(
       <PaidConfirm
         count={2}
@@ -34,9 +35,10 @@ describe('PaidConfirm [ST-12, C-15]', () => {
       />,
     )
     const text = paidLine(2, 'Made-up Cloud')
-    const line = screen.getByText(text).parentElement!
-    expect(line).toHaveClass(layout.notice as string, layout.info as string)
-    expect(line.textContent).toBe(`${text}ConfirmCancel`)
+    const money = screen.getByText(costLine(text))
+    expect(money).toHaveClass(moneyLook.line as string)
+    const line = money.parentElement!
+    expect(line.textContent).toBe(`${spoken(text)}ConfirmCancel`)
     expect(line.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
     expect(
       within(line)
@@ -46,9 +48,9 @@ describe('PaidConfirm [ST-12, C-15]', () => {
   })
 
   it.each([
-    [2, 0, 'This sends 2 paid request(s) to Made-up Cloud.'],
-    [null, 0, 'This sends paid request(s) to Made-up Cloud.'],
-    [1, 3, 'This sends 1 paid request(s) and 3 reference picture(s) to Made-up Cloud.'],
+    [2, 0, 'Paid: 2 requests → Made-up Cloud'],
+    [null, 0, 'Paid: requests → Made-up Cloud'],
+    [1, 3, 'Paid: 1 request + 3 references → Made-up Cloud'],
   ])('words the line for count %s and %i reference pictures', (count, references, text) => {
     expect(paidLine(count, 'Made-up Cloud', references)).toBe(text)
   })

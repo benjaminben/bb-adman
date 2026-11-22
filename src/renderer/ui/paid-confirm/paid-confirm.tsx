@@ -1,15 +1,20 @@
-// The confirm step for a paid provider (SPEC 14 1.41, "A paid run starts only on the user's
-// own confirm"): one line with Confirm and Cancel. Nothing is sent before Confirm.
-import { Icon } from '@/renderer/ui/icon'
+// The two-step line for a paid provider (choice C-15, spec/screens.md "Rules for every
+// screen"), used from places not opened to pay: the sync review's Translate and the activity
+// row's video Retry. The first click (the caller's) shows this line; only its Confirm sends.
+// DLG-4a: the cost is a MoneyLine directly left of Confirm and Cancel, and Confirm is
+// described by it, so the words are read at the click.
+import { useId } from 'react'
 import layout from '@/renderer/ui/layout.module.css'
+import { MoneyLine } from '@/renderer/ui/money-line'
+import { plural } from '@/renderer/ui/plural'
 import styles from './paid-confirm.module.css'
 
 export function paidLine(count: number | null, providerLabel: string, references = 0): string {
   // A run whose stored request cannot be read gives no number rather than a guessed one.
-  const what = count === null ? 'paid request(s)' : `${count} paid request(s)`
+  const what = count === null ? 'requests' : plural(count, 'request')
   // SPEC 14 1.46 TP-5: with at least one reference picture the line names how many.
-  const pictures = references > 0 ? ` and ${references} reference picture(s)` : ''
-  return `This sends ${what}${pictures} to ${providerLabel}.`
+  const pictures = references > 0 ? ` + ${plural(references, 'reference')}` : ''
+  return `Paid: ${what}${pictures} → ${providerLabel}`
 }
 
 export function PaidConfirm(props: {
@@ -19,13 +24,18 @@ export function PaidConfirm(props: {
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const costId = useId()
   return (
-    <div className={`${layout.notice} ${layout.info} ${styles.line}`}>
-      <Icon name="info" />
-      <span className={styles.text}>
+    <div className={styles.line}>
+      <MoneyLine id={costId}>
         {paidLine(props.count, props.providerLabel, props.references)}
-      </span>
-      <button type="button" className={layout.primary} onClick={props.onConfirm}>
+      </MoneyLine>
+      <button
+        type="button"
+        className={layout.primary}
+        aria-describedby={costId}
+        onClick={props.onConfirm}
+      >
         Confirm
       </button>
       <button type="button" onClick={props.onCancel}>

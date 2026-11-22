@@ -28,32 +28,32 @@ describe('runSummary [P4-12]', () => {
     [
       'paid pictures',
       { job: 'image', provider: GEMINI, count: 4 },
-      'This will use 4 generation(s) with Google Gemini.',
+      'Paid: 4 pictures → Google Gemini',
     ],
     [
       'paid pictures with references',
       { job: 'image', provider: GEMINI, count: 2, referenceCount: 3 },
-      'This will use 2 generation(s) with Google Gemini. It sends 3 reference picture(s).',
+      'Paid: 2 pictures + 3 references → Google Gemini',
     ],
     [
       'paid pictures with no references',
       { job: 'image', provider: GEMINI, count: 1, referenceCount: 0 },
-      'This will use 1 generation(s) with Google Gemini.',
+      'Paid: 1 picture → Google Gemini',
     ],
     [
       'a paid cut-out, one picture',
       { job: 'cutout', provider: GEMINI },
-      'This will use 1 generation(s) with Google Gemini.',
+      'Paid: 1 cut-out → Google Gemini',
     ],
     [
       'a paid layout request',
       { job: 'layout', provider: GEMINI },
-      'This sends 1 paid request to Google Gemini.',
+      'Paid: 1 request → Google Gemini',
     ],
     [
       'a paid text request, whatever the options count',
       { job: 'text', provider: GEMINI, count: 3 },
-      'This sends 1 paid request to Google Gemini.',
+      'Paid: 1 request → Google Gemini',
     ],
     [
       'ComfyUI with the address and workflow',

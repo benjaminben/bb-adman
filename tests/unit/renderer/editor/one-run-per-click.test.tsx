@@ -11,6 +11,7 @@ import { generateDrafts } from '@/renderer/stores/generate-drafts'
 import type { Result } from '@/shared/schemas/result'
 import { renderApp } from '../render'
 import { campaignApi, sent } from '../screens/campaign/campaign-fixture'
+import { costLine } from '../cost-line'
 import { REFUSED, heldReply } from '../screens/campaign/held-reply'
 import { ref } from '../screens/campaign/reference-fixture'
 import { LOGO, P, variantGet } from './editor-fixture'
@@ -45,7 +46,7 @@ async function openPictures() {
 describe('a picture run from the Generate panel, one run per click [TL-2, C-15]', () => {
   it('shows the cost at the click, and sends nothing before it', async () => {
     const { fake, dialog } = await openPictures()
-    expect(dialog.getByText('This will use 4 generation(s) with Google Gemini.')).toBeVisible()
+    expect(dialog.getByText(costLine('Paid: 4 pictures → Google Gemini'))).toBeVisible()
     expect(sent(fake, 'generation.runImages')).toEqual([])
   })
 
@@ -70,7 +71,7 @@ describe('a picture run from the Generate panel, one run per click [TL-2, C-15]'
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     await userEvent.click(screen.getByRole('button', { name: 'Generate…' }))
     const again = within(await screen.findByRole('dialog', { name: 'Make pictures' }))
-    expect(again.getByText('This will use 4 generation(s) with Google Gemini.')).toBeVisible()
+    expect(again.getByText(costLine('Paid: 4 pictures → Google Gemini'))).toBeVisible()
     expect(sent(fake, 'generation.runImages')).toHaveLength(1)
   })
 })
@@ -82,9 +83,7 @@ describe('a video run from the Generate panel, one run per click [TL-2, C-15]', 
       const held = heldReply()
       fake.onCommand('generation.startVideo', held.answer)
       const dialog = await openDialog()
-      expect(
-        dialog.getByText('This will use 1 video generation of 4 seconds with fal.ai Seedance.'),
-      ).toBeVisible()
+      expect(dialog.getByText(costLine('Paid: 1 video, 4 seconds → fal.ai Seedance'))).toBeVisible()
       const generate = dialog.getByRole('button', { name: 'Generate' })
       await waitFor(() => expect(generate).toBeEnabled())
       expect(sent(fake, 'generation.startVideo')).toEqual([])

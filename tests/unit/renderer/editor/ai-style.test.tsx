@@ -131,8 +131,9 @@ describe('AI in the editor and the run dialog take the look [ST-9]', () => {
     const generate = screen.getByRole('button', { name: 'Generate' })
     expect(generate.closest(`.${frame.foot}`)).not.toBeNull()
     has(generate, layout.primary)
-    const paid = await screen.findByText(/^Paid generations for this campaign so far/)
-    has(paid, layout.badge, layout.info)
+    // DLG-4a: the paid count is a mark; today's full sentence is its tooltip.
+    const paid = await screen.findByTitle(/^Paid generations for this campaign so far/)
+    expect(paid).toHaveTextContent(/^Paid so far: /)
     expect(await axeViolations()).toEqual([])
   })
 

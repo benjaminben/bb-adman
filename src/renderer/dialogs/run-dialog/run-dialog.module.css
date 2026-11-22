@@ -1,15 +1,15 @@
 /* app-style */
-/* The run dialog (spec/app-style.md "AI panels and the run dialog"): the frame's three bands,
-   the provider choice as a list of selectable rows, the ComfyUI line muted. The frame is
-   --width-dialog wide; the run dialog widens the frame that holds its body to its own token,
-   without a change to the shared frame. */
+/* The run dialog (DLG-4a; spec/app-style-parts.md "Dialog", the `run` kind): the provider as
+   one row of segments, the count as an inline field, the cost line last above the foot. The
+   frame is --width-dialog wide; the run dialog widens the frame that holds its body to its own
+   token, without a change to the shared frame. */
 :global([role='dialog']):has(.body) {
   width: min(var(--run-dialog-width), calc(100vw - var(--space-8)));
 }
 .body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--gap-field);
 }
 .body p {
   margin: 0;
@@ -26,55 +26,90 @@
 .choices legend {
   padding: 0;
   margin-bottom: var(--space-1);
-  font-size: var(--font-size-small);
+  font-size: var(--type-meta-size);
   font-weight: var(--weight-medium);
   color: var(--color-text-secondary);
 }
-.choice {
+/* The segments: a surface strip; the chosen segment on the soft spot ground. The radio covers
+   its segment, unseen, so the whole segment is the click target and the radio keeps its role. */
+.seg {
   display: flex;
-  gap: var(--space-2);
-  align-items: center;
-  min-height: var(--control-height);
-  padding: 0 var(--space-3);
-  border: var(--border-width) solid var(--color-line);
+  flex-wrap: wrap;
+  gap: calc(var(--border-width) * 2);
+  padding: calc(var(--border-width) * 2);
   border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.choice {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  gap: var(--gap-tight);
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-3);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-inner);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-control);
+  white-space: nowrap;
+}
+.choice input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 .choice:hover:not(:has(input:disabled)) {
-  background: var(--color-surface-soft);
+  color: var(--color-text);
 }
 .choice:has(input:checked) {
   background: var(--color-accent-soft);
   border-color: var(--color-accent);
+  color: var(--color-text);
+}
+.choice:has(input:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
 }
 .choice:has(input:disabled) {
   color: var(--color-text-muted);
 }
-.choice label {
-  flex: 1;
-  align-self: stretch;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-.choice input:disabled + label {
+.choice input:disabled {
+  opacity: 0;
   cursor: default;
 }
-.muted {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+.trial {
+  color: var(--color-warn-text);
+  font-size: var(--type-meta-size);
+}
+/* Read by a screen reader, not drawn. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.selectRow {
+  display: flex;
+  gap: var(--gap-inline);
+  align-items: center;
 }
 .count {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  font-size: var(--font-size-small);
+  font-size: var(--type-meta-size);
   font-weight: var(--weight-medium);
   color: var(--color-text-secondary);
 }
 .count input {
   width: calc(var(--space-12) * 2);
   font-weight: var(--weight-regular);
+  font-variant-numeric: tabular-nums;
 }
 .summary {
   font-size: var(--font-size-control);
@@ -85,5 +120,5 @@
 }
 /* The button row is drawn as the foot band (DialogFoot); the body's gap already spaces it. */
 .body > .foot {
-  margin-top: calc(var(--space-6) - var(--space-4));
+  margin-top: calc(var(--space-6) - var(--gap-field));
 }

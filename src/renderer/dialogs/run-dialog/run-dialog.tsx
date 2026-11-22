@@ -1,12 +1,13 @@
 // The run confirmation dialog (spec/screens-ai.md, "The run confirmation dialog"; FR-064,
-// FR-067, FR-230, FR-256): every AI run the user starts in Phase 4 goes through it. It chooses
-// the provider and the count; the caller sends the command from `onConfirm` and returns the
-// reply. From the click until that reply, Confirm and Cancel are disabled and the dialog
-// cannot close; a refusal shows inside it (A-50). Nothing is sent before the click. The
-// starting choice depends on comfy.getInfo, so until it answers nothing can be chosen or sent.
-// R2E-8 (round-2-editor.md D4): a video names the length and pictures the chosen provider will
-// be sent (video-lengths.ts) and hands those same numbers to `onConfirm`.
-import { useState } from 'react'
+// FR-067, FR-230, FR-256): every AI run the user starts goes through it. It chooses the
+// provider and the count; the caller sends the command from `onConfirm` and returns the reply.
+// DLG-4a (choice C-15): the action button is the one click that pays. The cost line is the
+// body's last thing, directly above the foot, and in the dialog's accessible description;
+// nothing is sent before the click. From the click until the reply both buttons are disabled
+// and the dialog cannot close; a refusal shows inside it (A-50). The starting choice depends
+// on comfy.getInfo, so until it answers nothing can be chosen or sent. R2E-8: a video names
+// the length and pictures the chosen provider will be sent and hands those numbers on.
+import { useId, useLayoutEffect, useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import {
   clipBounds,
@@ -14,15 +15,16 @@ import {
   videoSeconds,
 } from '@/renderer/editor/generate-panel/video-lengths'
 import { useComfyInfoState } from '@/renderer/screens/campaign/use-comfy-info'
+import { DialogAlert } from '@/renderer/ui/dialog-alert'
 import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
-import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import { PaidCount } from '@/renderer/ui/paid-count'
 import type { VideoStartKind } from '@/shared/config/video-offers'
 import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
 import type { Result } from '@/shared/schemas/result'
+import { CostLines, describedIds } from './cost-lines'
 import { ProviderChoice, runChoices, startChoice } from './provider-choice'
-import { lengthLine, runSummary, type RunJob, type VideoSent } from './run-summary'
+import { lengthLine, runCost, type RunJob, type VideoSent } from './run-summary'
 import styles from './run-dialog.module.css'
 
 export type RunCount = { label: string; value: number; min: number; max: number }
@@ -46,6 +48,12 @@ export type RunDialogProps = {
   onCancel: () => void
 }
 
+type BodyProps = RunDialogProps & {
+  busy: boolean
+  setBusy: (busy: boolean) => void
+  setDescribed: (ids: string | undefined) => void
+}
+
 const NONE: never[] = []
 
 function countIn(text: string, count: RunCount): number | null {
@@ -67,9 +75,10 @@ function videoSent(
   }
 }
 
-function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolean) => void }) {
-  const { job, count, retry, busy } = props
+function RunBody(props: BodyProps) {
+  const { job, count, retry, busy, setDescribed } = props
   const app = useApp((s) => s.app)
+  const show = useApp((s) => s.show)
   const { info, loaded } = useComfyInfoState()
   const settled = retry !== undefined || loaded
   const referenceCount = props.referenceCount ?? 0
@@ -78,6 +87,8 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
   const [picked, setPicked] = useState<string | null>(null)
   const [typed, setTyped] = useState(String(count?.value ?? ''))
   const [refusal, setRefusal] = useState<string | null>(null)
+  const lengthId = useId()
+  const costId = useId()
 
   const chosenId = retry?.provider ?? picked ?? startChoice(choices, preferred)
   const chosen = choices.find((c) => c.provider.id === chosenId)
@@ -89,7 +100,19 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
   const workflow = chosen?.workflow
   const comfy = workflow && { address: info?.address ?? null, label: workflow.label }
   const video = videoSent(props.video, info, chosenId, referenceCount)
-  const changed = props.video && video && video.seconds !== props.video.seconds
+  const shown = settled && ready
+  const { requests } = props
+  const cost = shown
+    ? runCost({ job, provider, count: n ?? count?.value, referenceCount, comfy, requests, video })
+    : null
+  const changed = shown && props.video && video && video.seconds !== props.video.seconds
+  const bounds = props.video && clipBounds(info, provider.id, props.video.start)
+  const length = changed && bounds ? lengthLine(provider.label, bounds, video.seconds) : null
+  const described = describedIds([
+    [lengthId, length !== null],
+    [costId, cost !== null],
+  ])
+  useLayoutEffect(() => setDescribed(described), [described, setDescribed])
 
   async function send() {
     if (chosenId === null) return
@@ -102,8 +125,19 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
     if (!reply.ok && !asked) setRefusal(reply.error.message)
   }
 
+  function openSettings() {
+    props.onCancel()
+    show({ kind: 'settings' })
+  }
+
   return (
     <div className={styles.body}>
+      {refusal !== null && <DialogAlert tone="danger">{refusal}</DialogAlert>}
+      {settled && !ready && !busy && (
+        <DialogAlert tone="warn" action={{ label: 'Settings', onClick: openSettings }}>
+          No provider can do this yet.
+        </DialogAlert>
+      )}
       {retry ? (
         <p>Provider: {provider.label}</p>
       ) : (
@@ -116,7 +150,7 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
       )}
       {count && retry && <p>{`${count.label}: ${count.value}`}</p>}
       {count && !retry && (
-        <label className={styles.count}>
+        <label className={`${layout.field} ${layout.inline} ${styles.count}`}>
           {count.label}
           <input
             type="number"
@@ -129,40 +163,18 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
           />
         </label>
       )}
-      {settled && ready && (
-        <p className={provider.id === 'comfyui' ? styles.comfy : styles.summary}>
-          {runSummary({
-            job,
-            provider,
-            count: n ?? count?.value,
-            referenceCount,
-            comfy,
-            requests: props.requests,
-            video,
-          })}
-        </p>
-      )}
-      {settled && ready && changed && props.video && (
-        <p className={styles.summary}>
-          {lengthLine(
-            provider.label,
-            clipBounds(info, provider.id, props.video.start),
-            video.seconds,
-          )}
-        </p>
-      )}
-      {settled && !ready && <p>No provider can do this yet.</p>}
       {props.campaignId !== undefined && (
         <PaidCount projectId={props.projectId} campaignId={props.campaignId} />
       )}
-      {refusal !== null && (
-        <p role="alert" className={`${layout.notice} ${layout.danger}`}>
-          <Icon name="alert" size="small" />
-          {refusal}
-        </p>
-      )}
+      <CostLines
+        length={length}
+        lengthId={lengthId}
+        cost={cost}
+        costId={costId}
+        comfy={provider.id === 'comfyui'}
+      />
       <DialogFoot className={styles.foot}>
-        <button type="button" disabled={busy} onClick={props.onCancel}>
+        <button type="button" className={layout.quiet} disabled={busy} onClick={props.onCancel}>
           Cancel
         </button>
         <button
@@ -180,9 +192,17 @@ function RunBody(props: RunDialogProps & { busy: boolean; setBusy: (busy: boolea
 
 export function RunDialog(props: RunDialogProps) {
   const [busy, setBusy] = useState(false)
+  const [described, setDescribed] = useState<string | undefined>(undefined)
   return (
-    <DialogFrame open={props.open} onClose={props.onCancel} title={props.title} closable={!busy}>
-      <RunBody {...props} busy={busy} setBusy={setBusy} />
+    <DialogFrame
+      open={props.open}
+      onClose={props.onCancel}
+      title={props.title}
+      kind="run"
+      describedBy={described}
+      closable={!busy}
+    >
+      <RunBody {...props} busy={busy} setBusy={setBusy} setDescribed={setDescribed} />
     </DialogFrame>
   )
 }

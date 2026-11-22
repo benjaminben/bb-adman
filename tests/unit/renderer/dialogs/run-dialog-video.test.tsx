@@ -12,6 +12,7 @@ import type { ComfyInfo, WorkflowInfo } from '@/shared/schemas/queries/comfy'
 import type { Result } from '@/shared/schemas/result'
 import { renderApp } from '../render'
 import { baseState, makeFakeApi } from '../fake-api'
+import { costLine } from '../cost-line'
 
 const LOCAL = { local: true, cancel: 'stops', serverText: false } as const
 const COMFY: ProviderInfo = {
@@ -124,24 +125,8 @@ describe('run dialog for a video [R2E-8, D4]', () => {
   })
 
   it.each([
-    [
-      'background',
-      [
-        'Fake provider',
-        'fal.ai Seedance',
-        'ComfyUI (cannot start this way) [off]',
-        'Other video (cannot start this way) [off]',
-      ],
-    ],
-    [
-      'first_frame',
-      [
-        'Fake provider',
-        'fal.ai Seedance',
-        'ComfyUI (no workflow for this yet) [off]',
-        'Other video (cannot start this way) [off]',
-      ],
-    ],
+    ['background', ['Fake provider', 'fal.ai Seedance', 'ComfyUI [off]', 'Other video [off]']],
+    ['first_frame', ['Fake provider', 'fal.ai Seedance', 'ComfyUI [off]', 'Other video [off]']],
     ['prompt', ['Fake provider', 'fal.ai Seedance', 'ComfyUI', 'Other video']],
   ] as const)('disables the providers that cannot start from %s', async (start, list) => {
     await open({ video: { start, seconds: 2 } }, setup([FAKE, FAL, COMFY, OTHER]))
@@ -155,9 +140,7 @@ describe('run dialog for a video [R2E-8, D4]', () => {
 
   it('says fal at 2 s makes 4 s, and hands Confirm the 4 s it named', async () => {
     const { dialog, onConfirm } = await open()
-    expect(
-      dialog.getByText('This will use 1 video generation of 4 seconds with fal.ai Seedance.'),
-    ).toBeVisible()
+    expect(dialog.getByText(costLine('Paid: 1 video, 4 seconds → fal.ai Seedance'))).toBeVisible()
     expect(
       dialog.getByText(
         'fal.ai Seedance makes clips of 4 to 15 seconds, so this one will be 4 seconds.',
@@ -174,9 +157,7 @@ describe('run dialog for a video [R2E-8, D4]', () => {
       referenceCount: 12,
     })
     expect(
-      dialog.getByText(
-        'This will use 1 video generation of 5 seconds with fal.ai Seedance. It sends 9 picture(s).',
-      ),
+      dialog.getByText(costLine('Paid: 1 video, 5 seconds + 9 pictures → fal.ai Seedance')),
     ).toBeVisible()
     expect(dialog.queryByText(/makes clips of/)).toBeNull()
     await userEvent.click(dialog.getByRole('button', { name: 'Generate' }))
@@ -186,9 +167,7 @@ describe('run dialog for a video [R2E-8, D4]', () => {
   it('counts the background picture a background start sends', async () => {
     const { dialog } = await open({ video: { start: 'background', seconds: 4 } })
     expect(
-      dialog.getByText(
-        'This will use 1 video generation of 4 seconds with fal.ai Seedance. It sends 1 picture(s).',
-      ),
+      dialog.getByText(costLine('Paid: 1 video, 4 seconds + 1 picture → fal.ai Seedance')),
     ).toBeVisible()
   })
 

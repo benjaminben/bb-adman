@@ -60,7 +60,7 @@ const sent = (fake: ReturnType<typeof makeFakeApi>, name: string) =>
 async function start(fake: ReturnType<typeof makeFakeApi>) {
   await userEvent.click(screen.getByRole('button', { name: BUTTON }))
   const dialog = await screen.findByRole('dialog', { name: 'Place text with AI' })
-  expect(dialog).toHaveTextContent('This sends 1 paid request to Google Gemini.')
+  expect(dialog).toHaveTextContent('Paid: 1 request to Google Gemini')
   await userEvent.click(screen.getByRole('button', { name: 'Place text' }))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   expect(sent(fake, 'generation.proposeLayout')).toEqual([{ ...TARGET, provider: 'gemini' }])

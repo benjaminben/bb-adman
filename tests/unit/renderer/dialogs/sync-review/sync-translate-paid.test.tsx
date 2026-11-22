@@ -22,11 +22,12 @@ import {
   variant,
 } from '../../screens/campaign/campaign-fixture'
 import { jobRow } from '../../stores/job-fixture'
+import { costLine } from '../../cost-line'
 
 const STALE = { ...MASTER.badges, outOfDate: true }
 const V3 = variant('V3', { title: 'German post', language: 'de', sizeLabel: '9:16', badges: STALE })
 const V4 = variant('V4', { title: 'French post', language: 'fr', sizeLabel: '1:1', badges: STALE })
-const PAID_LINE = 'This sends 1 paid request(s) to Google Gemini.'
+const PAID_LINE = costLine('Paid: 1 request → Google Gemini')
 
 const waiting = (variantId: string): SyncPreview => ({
   variantId,

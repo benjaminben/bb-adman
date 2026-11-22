@@ -12,6 +12,7 @@ import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { baseState } from '../fake-api'
 import { renderApp } from '../render'
 import { LOCAL, campaignApi, sent } from '../screens/campaign/campaign-fixture'
+import { costLine } from '../cost-line'
 import { REFUSED, heldReply } from '../screens/campaign/held-reply'
 import { jobRow } from '../stores/job-fixture'
 import { LOGO, P } from './editor-fixture'
@@ -61,7 +62,7 @@ describe('Earlier options Retry, one retry per click [TL-2]', () => {
       const { fake, held, retry } = await open('gemini')
       await userEvent.click(retry)
       const dialog = within(await screen.findByRole('dialog', { name: 'Retry the run' }))
-      expect(dialog.getByText('This will use 3 generation(s) with Google Gemini.')).toBeVisible()
+      expect(dialog.getByText(costLine('Paid: 3 pictures → Google Gemini'))).toBeVisible()
       expect(sent(fake, 'job.retry')).toEqual([])
       const confirm = dialog.getByRole('button', { name: 'Retry' })
       await userEvent.dblClick(confirm)
