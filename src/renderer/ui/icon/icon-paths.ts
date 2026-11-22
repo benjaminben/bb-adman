@@ -1,5 +1,8 @@
 // The prototype's icon set (design/prototype/js/ui.js, `P`), copied as is: the designer's own
-// 24 by 24 stroke drawings, no third-party set. Each icon is a list of SVG shapes.
+// 24 by 24 stroke drawings, no third-party set. Each icon is a list of SVG shapes. The design
+// wave's icons are in icon-paths-more.ts and join the set here.
+import { ICON_PATHS_MORE } from './icon-paths-more'
+
 export type IconShape = readonly ['path' | 'circle' | 'rect', Readonly<Record<string, string>>]
 
 export const ICON_PATHS = {
@@ -185,4 +188,5 @@ export const ICON_PATHS = {
       },
     ],
   ],
+  ...ICON_PATHS_MORE,
 } as const satisfies Record<string, readonly IconShape[]>
