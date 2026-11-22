@@ -22,7 +22,7 @@
       "--enable-zlib",
       "--enable-videotoolbox",
       "--enable-audiotoolbox",
-      "--enable-decoder=h264,hevc,vp8,vp9,prores,png,mjpeg,webp,rawvideo,aac,mp3float,mp3,alac,opus,vorbis,pcm_u8,pcm_s16le,pcm_s24le,pcm_s32le,pcm_f32le,pcm_f64le",
+      "--enable-decoder=h264,hevc,vp8,vp9,prores,png,mjpeg,webp,rawvideo,wrapped_avframe,aac,mp3float,mp3,alac,opus,vorbis,pcm_u8,pcm_s16le,pcm_s24le,pcm_s32le,pcm_f32le,pcm_f64le",
       "--enable-demuxer=mov,matroska,image2,image2pipe,ffmetadata,mp3,wav,aac",
       "--enable-muxer=mp4,mov,image2pipe",
       "--enable-parser=h264,hevc,vp8,vp9,png,mjpeg,webp,aac,mpegaudio,opus,vorbis",

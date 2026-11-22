@@ -67,7 +67,18 @@ describe('scripts/ffmpeg-sources.json [P7-3, OI-09]', () => {
     ['muxer', ['mp4', 'mov', 'image2pipe']],
     [
       'decoder',
-      ['h264', 'hevc', 'vp8', 'vp9', 'prores', 'png', 'mjpeg', 'webp', 'rawvideo'].concat([
+      [
+        'h264',
+        'hevc',
+        'vp8',
+        'vp9',
+        'prores',
+        'png',
+        'mjpeg',
+        'webp',
+        'rawvideo',
+        'wrapped_avframe',
+      ].concat([
         'aac',
         'mp3float',
         'alac',
