@@ -6,6 +6,8 @@ import { registerDefaultFont, useSceneFonts, type SceneFont } from '@/shared/sce
 import { measureOverflow } from '@/shared/scene/measure-overflow'
 import { measuredText } from '@/shared/scene/measure-text'
 import { PictureLayer } from '@/shared/scene/picture-layer'
+import { ClipTrack } from '@/shared/scene/clip-track'
+import { clipAt } from '@/shared/scene/clip-at'
 import { TextLayer } from '@/shared/scene/text-layer'
 import { drawnTime, visibleAt } from '@/shared/scene/timing'
 import { textLookOf } from '@/shared/config/look'
@@ -70,12 +72,14 @@ function overflows(layer: LayerRow, textBoxes: TextBoxes): boolean {
 const twoFrames = () =>
   new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())))
 
-// After each change of layers or assets: wait for fonts and pictures, two frames, then
-// measure every text layer. A settle that a newer change overtook is dropped.
+// After each change of layers, assets or the clip drawn (P7-8): wait for fonts, pictures and
+// the clip track, two frames, then measure every text layer. A settle that a newer change
+// overtook is dropped.
 function useSettle(
   root: RefObject<HTMLDivElement | null>,
   textBoxes: RefObject<TextBoxes>,
   props: Pick<SceneProps, 'layers' | 'assets' | 'onSettled'>,
+  track: { ready: RefObject<Promise<void>>; key: string },
   fontsReady: Promise<void>,
 ) {
   const { layers, assets, onSettled } = props
@@ -87,7 +91,7 @@ function useSettle(
     let current = true
     const images = [...(root.current?.querySelectorAll('img') ?? [])]
     const decoded = images.map((img) => img.decode().catch(() => undefined))
-    Promise.all([registerDefaultFont(), fontsReady, ...decoded])
+    Promise.all([registerDefaultFont(), fontsReady, track.ready.current, ...decoded])
       .then(twoFrames)
       .then(() => {
         if (!current) return
@@ -101,15 +105,29 @@ function useSettle(
     return () => {
       current = false
     }
-  }, [root, textBoxes, layers, assets, fontsReady])
+  }, [root, textBoxes, layers, assets, fontsReady, track.ready, track.key])
 }
 
-export function Scene({ variant, layers, assets, timeMs, mode, onSettled }: SceneProps) {
+// A clip is drawn from a picture or a video that is not missing; anything else draws black.
+function clipAsset(assets: SceneProps['assets'], id: string | undefined): SceneAsset | null {
+  return usableAsset(assets, id, 'image') ?? usableAsset(assets, id, 'video')
+}
+
+export function Scene(props: SceneProps) {
+  const { variant, layers, assets, timeMs, mode, onSettled } = props
   const root = useRef<HTMLDivElement>(null)
   const textBoxes = useRef<TextBoxes>(new Map())
+  const trackReady = useRef<Promise<void>>(Promise.resolve())
   const fonts = useMemo(() => fontsOf(layers, assets), [layers, assets])
   const fontsReady = useSceneFonts(fonts)
-  useSettle(root, textBoxes, { layers, assets, onSettled }, fontsReady)
+  // Timing, presets and the clip track apply to a video variant only [A-188].
+  const t = drawnTime(variant, timeMs)
+  const found = t === null ? null : clipAt(props.clips ?? [], t, variant.durationMs)
+  const playing = props.playing ?? false
+  // While playing, the moving clip does not settle the Scene again.
+  const trackKey = playing || !found ? String(playing) : `${found.clip.id}@${found.sourceMs}`
+  const track = { ready: trackReady, key: trackKey }
+  useSettle(root, textBoxes, { layers, assets, onSettled }, track, fontsReady)
 
   const keep = (id: string, part: keyof TextParts) => (element: HTMLDivElement | null) => {
     const parts = { ...textBoxes.current.get(id), [part]: element ?? undefined }
@@ -123,13 +141,16 @@ export function Scene({ variant, layers, assets, timeMs, mode, onSettled }: Scen
     height: variant.height,
     backgroundColor: mode === 'full' ? '#000000' : 'transparent',
   }
-  // Timing and presets apply to a video variant only [A-188].
-  const t = drawnTime(variant, timeMs)
   const size = { width: variant.width, height: variant.height }
   return (
     <div ref={root} lang={variant.language} style={style}>
       {drawOrder(layers, mode).map((layer) => {
         const box = boxCss(layer, t !== null && !visibleAt(layer, t, variant.durationMs))
+        if (layer.type === 'background' && t !== null) {
+          const clip = { found, asset: found && clipAsset(assets, found.clip.assetId) }
+          const how = { playing, sound: props.sound ?? false, readyRef: trackReady }
+          return <ClipTrack key={layer.id} layer={layer} box={box} {...clip} {...how} />
+        }
         if (layer.type !== 'text') {
           const asset = usableAsset(assets, layer.source?.assetId, 'image')
           return <PictureLayer key={layer.id} layer={layer} box={box} asset={asset} />
