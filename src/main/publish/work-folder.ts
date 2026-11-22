@@ -1,7 +1,10 @@
 // The work folder of a publish (spec/phases/phase-09.md "Publishing", A-227):
 // {userData}/publish-work/{jobId}/, where the export writes before the upload. publish-work is
-// checked with lstat (a link or a non-folder refuses work_folder_unsafe) and used at its real
-// path, so open-inside.ts can check the root it is given. The job folder is made new. At a
+// checked with lstat (a link or a non-folder refuses work_folder_unsafe), and its real path must
+// then be {real userData}/publish-work, so a swap after the lstat refuses too; it is used at that
+// real path, so open-inside.ts can check the root it is given. Both folders are made with mode
+// 0o700 (this user only). The job folder is made new. Its removal never fails the publish: an
+// error there is dropped, so it cannot change the job's end or carry the path anywhere. At a
 // publish start, leftover direct children whose names are ULIDs and that are real folders (not
 // links) are removed, except the folders of publishes still under way in this process.
 import fs from 'node:fs/promises'
@@ -16,6 +19,7 @@ export type WorkFolder = { path: string; remove(): Promise<void> }
 const inUse = new Set<string>()
 
 const unsafe = () => new LocalFailure('work_folder_unsafe')
+const MODE = 0o700
 
 async function baseFolder(userDataDir: string): Promise<string> {
   const base = path.join(userDataDir, WORK_FOLDER)
@@ -24,15 +28,20 @@ async function baseFolder(userDataDir: string): Promise<string> {
     return null
   })
   if (!stats) {
-    await fs.mkdir(base, { recursive: true }).catch(() => {
+    await fs.mkdir(base, { recursive: true, mode: MODE }).catch(() => {
       throw unsafe()
     })
     stats = await fs.lstat(base).catch(() => null)
   }
   if (!stats?.isDirectory()) throw unsafe()
-  return fs.realpath(base).catch(() => {
+  const [real, expected] = await Promise.all([
+    fs.realpath(base),
+    fs.realpath(userDataDir).then((dir) => path.join(dir, WORK_FOLDER)),
+  ]).catch(() => {
     throw unsafe()
   })
+  if (real !== expected) throw unsafe()
+  return real
 }
 
 async function removeLeftovers(base: string): Promise<void> {
@@ -50,7 +59,7 @@ export async function makeWorkFolder(userDataDir: string, jobId: string): Promis
   const base = await baseFolder(userDataDir)
   await removeLeftovers(base)
   const folder = path.join(base, jobId)
-  await fs.mkdir(folder).catch(() => {
+  await fs.mkdir(folder, { mode: MODE }).catch(() => {
     throw unsafe()
   })
   inUse.add(folder)
@@ -58,7 +67,7 @@ export async function makeWorkFolder(userDataDir: string, jobId: string): Promis
     path: folder,
     async remove() {
       inUse.delete(folder)
-      await fs.rm(folder, { recursive: true, force: true })
+      await fs.rm(folder, { recursive: true, force: true }).catch(() => undefined)
     },
   }
 }
