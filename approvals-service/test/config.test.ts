@@ -162,12 +162,43 @@ describe('the service code', () => {
     for (const file of shipped) expect(read(file), file).not.toContain(banned)
   })
 
-  it("has no 'use server', and 'use client' only in the two error boundaries", () => {
-    const boundaries = ['app/l/[slug]/error.tsx', 'app/global-error.tsx']
+  // S-12 (spec/phases/round-2-approvals.md): the two error boundaries and the gallery script.
+  it("has no 'use server', and 'use client' only in the three files of S-12", () => {
+    const clients = [
+      'app/l/[slug]/error.tsx',
+      'app/global-error.tsx',
+      'src/ui/gallery-script/gallery-script.tsx',
+    ]
     for (const file of shipped) {
       const text = read(file)
       expect(text, file).not.toMatch(/['"]use server['"]/)
-      if (!boundaries.includes(file)) expect(text, file).not.toMatch(/['"]use client['"]/)
+      if (!clients.includes(file)) expect(text, file).not.toMatch(/['"]use client['"]/)
     }
+    const marked = shipped.filter((file) => /^['"]use client['"]/.test(read(file)))
+    expect(marked.sort()).toEqual([...clients].sort())
+  })
+
+  // S-12: the gallery script cannot reach data, storage or the page's HTML.
+  it.each([
+    'fetch',
+    'XMLHttpRequest',
+    'WebSocket',
+    'EventSource',
+    'sendBeacon',
+    'localStorage',
+    'sessionStorage',
+    'indexedDB',
+    'document.cookie',
+    'innerHTML',
+    'outerHTML',
+    'insertAdjacentHTML',
+    'eval',
+    'new Function',
+    'setAttribute',
+    'import(',
+  ])('has no %s under src/ui/gallery-script/', (banned) => {
+    const files = sourceFiles('src/ui/gallery-script')
+    expect(files.length).toBe(4)
+    for (const file of files) expect(read(file), file).not.toContain(banned)
   })
 })

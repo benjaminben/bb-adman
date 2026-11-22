@@ -8,6 +8,13 @@
   align-items: start;
 }
 
+/* Once the gallery script has given the cards their spans (R2A-8): rows of
+   --gallery-masonry-row with no gap of their own; each span keeps the lane gap under its card. */
+.grid:has(> [style*='grid-row-end']) {
+  grid-auto-rows: var(--gallery-masonry-row);
+  row-gap: 0;
+}
+
 @supports (display: grid-lanes) {
   .grid {
     display: grid-lanes;
