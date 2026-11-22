@@ -2,8 +2,11 @@
 // and length for the chosen variant, then generation.startVideo. The run shows in the run
 // list. J-2: the saved default is chosen only when it is available. A paid provider gets the
 // confirm line first, as pictures do. SPEC 14 1.60 CU-6b-R N-9: "Start from" a prompt, a
-// first-frame picture or a reference picture; a picture start needs one chosen picture, and
-// the length's most follows the start's workflow.
+// first-frame picture or a reference picture; a picture start needs a chosen picture, and
+// the length's most follows the start's workflow. P7-22: a provider with an offer
+// (video-offers.ts) gives its starts, with "The post's background" new and the default when the
+// background has a picture, its length bounds and its reference count (card-starts.ts). An
+// image post shows "Change this post to video first." and Start is disabled.
 import { useId, useState } from 'react'
 import { EMPTY, useApp } from '@/renderer/app/app-context'
 import {
@@ -11,18 +14,23 @@ import {
   type GenerationStartVideoInput,
 } from '@/shared/schemas/commands/generation'
 import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'
-import { LENGTH_PROBLEM, START_SECONDS, typedSeconds, useComfyInfo } from './video-length'
+import { LENGTH_PROBLEM, typedSeconds, useComfyInfo } from './video-length'
 import { VideoPictureChoice } from '@/renderer/screens/campaign/video-picture-choice'
-import {
-  STARTS,
-  maxMsFor,
-  offeredStarts,
-  startFields,
-  type StartId,
-} from '@/renderer/screens/campaign/video-start'
+import { STARTS } from '@/renderer/screens/campaign/video-start'
 import { ProviderSelect } from '@/renderer/screens/campaign/provider-select'
 import { offeredFor } from '@/renderer/screens/campaign/offered-workflow'
+import {
+  cardStartFields,
+  cardStarts,
+  lengthsFor,
+  picturesFor,
+  shownStart,
+  type CardStartId,
+} from './card-starts'
+import { usePost } from './use-post'
 import layout from '@/renderer/ui/layout.module.css'
+
+const IMAGE_POST_LINE = 'Change this post to video first.'
 
 export function VideoPanel(props: {
   projectId: string
@@ -37,28 +45,33 @@ export function VideoPanel(props: {
   const [providerId, setProviderId] = useState(
     providers.some((p) => p.id === startProvider) ? startProvider : providers[0]?.id,
   )
-  const [chosenStart, setChosenStart] = useState<StartId>('prompt')
-  const [picture, setPicture] = useState<string | null>(null)
+  const [chosenStart, setChosenStart] = useState<CardStartId | null>(null)
+  const [pictures, setPictures] = useState<string[]>([])
   const [prompt, setPrompt] = useState('')
-  const [length, setLength] = useState(String(START_SECONDS))
+  // null until the user types: the length then follows the provider's default.
+  const [typed, setTyped] = useState<string | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
   const [pending, setPending] = useState<GenerationStartVideoInput | null>(null)
   // SPEC 14 1.48 TL-2: true from the send until any reply, so a second click starts nothing.
   const [sending, setSending] = useState(false)
   const info = useComfyInfo()
+  const post = usePost(props.projectId, props.variantId)
   const startSelectId = useId()
   const provider = providers.find((p) => p.id === providerId)
-  const starts = offeredStarts(info, providerId)
-  // A start no longer offered (another provider, another list) falls back to the prompt.
-  const startId = starts.some((s) => s.id === chosenStart) ? chosenStart : 'prompt'
-  const fromPicture = startId !== 'prompt'
+  const starts = cardStarts(info, providerId)
+  // A start no longer offered (another provider, another list) falls back to the default.
+  const startId = shownStart(starts, chosenStart, post.backgroundPicture)
+  const most = picturesFor(providerId, startId)
   const pair = STARTS.find((s) => s.id === startId)?.pair
   const trial = providerId === 'comfyui' && offeredFor(info, 'video', pair)?.status === 'trial'
-  const maxMs = providerId === 'comfyui' ? maxMsFor(info, startId) : null
-  const maxSeconds = maxMs === null ? null : Math.floor(maxMs / 1000)
+  const lengths = lengthsFor(info, providerId, startId)
+  const maxSeconds = lengths.max
+  const length = typed ?? String(lengths.start)
   const seconds = typedSeconds(length)
   const shorter = seconds !== null && maxSeconds !== null && seconds > maxSeconds
-  const ready = provider !== undefined && prompt.trim() !== '' && (!fromPicture || picture !== null)
+  const imagePost = post.format === 'image'
+  const pictured = most === 0 || pictures.length > 0
+  const ready = provider !== undefined && prompt.trim() !== '' && pictured && !imagePost
 
   async function send(input: GenerationStartVideoInput) {
     setPending(null)
@@ -79,7 +92,7 @@ export function VideoPanel(props: {
       prompt,
       durationMs: Math.min(seconds, maxSeconds ?? seconds) * 1000,
       provider: providerId,
-      ...startFields(startId, picture),
+      ...cardStartFields(startId, pictures, most),
     })
     if (!parsed.success) return setProblem(parsed.error.issues[0]?.message ?? 'Check the values.')
     setProblem(null)
@@ -107,7 +120,7 @@ export function VideoPanel(props: {
         <select
           id={startSelectId}
           value={startId}
-          onChange={(e) => setChosenStart(e.target.value as StartId)}
+          onChange={(e) => setChosenStart(e.target.value as CardStartId)}
         >
           {starts.map((s) => (
             <option key={s.id} value={s.id}>
@@ -116,12 +129,13 @@ export function VideoPanel(props: {
           ))}
         </select>
       </div>
-      {fromPicture && (
+      {most > 0 && (
         <VideoPictureChoice
           projectId={props.projectId}
           subjectId={props.subjectId}
-          chosen={picture}
-          onChoose={setPicture}
+          chosen={pictures.slice(0, most)}
+          most={most}
+          onChoose={setPictures}
         />
       )}
       <label className={layout.field}>
@@ -132,16 +146,17 @@ export function VideoPanel(props: {
         Length (seconds)
         <input
           type="number"
-          min={1}
+          min={lengths.min}
           max={maxSeconds ?? undefined}
-          step={1}
+          step={lengths.step}
           value={length}
-          onChange={(e) => setLength(e.target.value)}
+          onChange={(e) => setTyped(e.target.value)}
         />
       </label>
       {shorter && (
         <p className={layout.muted}>{`The clip will be shorter: at most ${maxSeconds} s`}</p>
       )}
+      {imagePost && <p className={layout.muted}>{IMAGE_POST_LINE}</p>}
       {problem !== null && <p role="alert">{problem}</p>}
       {pending === null ? (
         <div className={layout.row}>

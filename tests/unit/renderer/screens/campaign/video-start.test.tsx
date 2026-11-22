@@ -39,11 +39,17 @@ describe('VideoPanel "Start from" [SPEC 14 1.60 CU-6b-R N-9]', () => {
     expect(optionLabels(p)).toEqual(['A prompt', 'A reference picture'])
   })
 
-  it('offers only "A prompt" for a provider other than ComfyUI', async () => {
+  // P7-22: a provider other than ComfyUI offers the starts of its offer (video-offers.ts).
+  it("offers the fal offer's four starts for fal.ai Seedance", async () => {
     const { fake } = pictureApi([ref('A1')], { providers: PAID_VIDEO })
     await renderWith(view, fake)
     const p = within(await screen.findByRole('region', { name: 'Make a video' }))
-    expect(optionLabels(p)).toEqual(['A prompt'])
+    expect(optionLabels(p)).toEqual([
+      'A prompt',
+      "The post's background",
+      'A first-frame picture',
+      'A reference picture',
+    ])
   })
 
   it('sends a prompt start as start none, no references, no IDs', async () => {
