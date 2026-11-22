@@ -10,7 +10,9 @@
 // open, remove every photo the form added (A-111); after a refused step the form is made safe
 // to press again (A-118). R2-Q: the top bar's "+" asks for a new campaign; this answers by
 // opening the typed form, or, with a form open, by putting the focus back in its first field.
-import { useEffect, useRef, useState } from 'react'
+// HOME-1: with no form open it returns `home(actions)`; the project home draws its Sections
+// around the two buttons. It stays mounted while the home shows, so the clean-up above holds.
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { useNewCampaignAsk } from '@/renderer/app/nav-context'
 import { briefFileKind } from '@/shared/brief/brief-file-kind'
@@ -40,6 +42,8 @@ export type BriefLoadProps = {
   subjects: SubjectRow[]
   campaigns: CampaignSummary[]
   onCreated: (campaignId: string) => void
+  // HOME-1: draws the home around the two buttons and their dialogs while no form is open.
+  home: (actions: ReactNode) => ReactNode
 }
 
 type Change = (values: BriefFormValues) => BriefFormValues
@@ -150,30 +154,30 @@ export function BriefLoad(props: BriefLoadProps) {
   }
 
   if (opened === null) {
-    return (
-      <div className={layout.row}>
+    return props.home(
+      <div className={styles.actions}>
         <button type="button" className={layout.primary} onClick={() => void load()}>
-          <Icon name="file" />
+          {briefPhotos.adding ? <BusySpinner /> : <Icon name="file" />}
           Load a brief
         </button>
-        <button type="button" onClick={paste.start}>
+        {briefPhotos.adding && (
+          <span role="status" className={styles.hidden}>
+            Adding the brief's photos…
+          </span>
+        )}
+        <button type="button" className={layout.secondary} onClick={paste.start}>
           <Icon name="text" />
           Paste a brief
         </button>
         {paste.dialog}
-        {briefPhotos.adding && (
-          <p role="status" className={styles.busy}>
-            <BusySpinner />
-            Adding the brief's photos…
-          </p>
-        )}
         {textBrief.dialogs}
-      </div>
+      </div>,
     )
   }
 
   return (
     <div ref={formBox}>
+      <h2 className={styles.title}>New campaign</h2>
       <BriefForm
         projectId={projectId}
         initial={opened}

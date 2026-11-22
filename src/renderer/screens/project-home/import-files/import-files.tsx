@@ -1,6 +1,7 @@
 // "Import files…" and "Import a folder…" (spec/screens-campaign.md, "Import buttons"). Each
 // asks the system picker for paths, then opens the import dialog with them. A cancelled
-// picker sends nothing and opens nothing.
+// picker sends nothing and opens nothing. HOME-1: the first shows the word "Import" and keeps
+// its full name; the folder one is an icon button (the project home and the Assets panel).
 import { useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import { ImportDialog } from '@/renderer/dialogs/import-dialog'
@@ -31,13 +32,23 @@ export function ImportFiles(props: ImportFilesProps) {
 
   return (
     <div className={layout.row}>
-      <button type="button" onClick={() => void pickFiles()}>
+      <button
+        type="button"
+        aria-label="Import files…"
+        title="Import files…"
+        onClick={() => void pickFiles()}
+      >
         <Icon name="upload" />
-        Import files…
+        Import
       </button>
-      <button type="button" onClick={() => void pickFolder()}>
+      <button
+        type="button"
+        className={layout.iconButton}
+        aria-label="Import a folder…"
+        title="Import a folder…"
+        onClick={() => void pickFolder()}
+      >
         <Icon name="folder" />
-        Import a folder…
       </button>
       <ImportDialog
         projectId={props.projectId}

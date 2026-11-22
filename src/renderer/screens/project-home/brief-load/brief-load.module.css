@@ -1,9 +1,28 @@
 /* app-style */
-/* "Load a brief" and "Paste a brief", and the waiting line while a brief's photos are added. */
-.busy {
+/* "Load a brief" and "Paste a brief" in the Campaigns header (HOME-1). While a brief's photos
+   are added, the spinner turns inside "Load a brief" and the words are for a screen reader. */
+.actions {
   display: inline-flex;
   gap: var(--space-2);
   align-items: center;
+}
+/* The open form's title, in place of the home's Sections (HOME-2 makes it a SubPage). */
+.title {
+  display: flex;
+  align-items: center;
+  min-height: var(--section-header-height);
   margin: 0;
-  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--type-section-size);
+  font-weight: var(--type-section-weight);
+  color: var(--color-text-secondary);
+}
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

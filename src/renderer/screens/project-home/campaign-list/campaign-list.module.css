@@ -1,17 +1,31 @@
 /* app-style */
-/* The campaign cards (spec/app-style.md "Project home and brief form"): a grid of cards, each
-   with its cover on the soft ground above the name, as the prototype's campaign cards. */
+/* The campaign tiles (HOME-1): a grid of tiles, each one button with the `.card` look and no
+   shadow, its cover on the soft ground above the name; a dashed "+" tile ends the grid. */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--thumbnail-tile), 1fr));
   gap: var(--space-4);
   align-self: stretch;
 }
-.card {
+.item {
+  display: flex;
+}
+.tile {
+  flex: 1;
+  align-items: stretch;
+  justify-content: flex-start;
   gap: 0;
+  min-width: 0;
   margin: 0;
   padding: 0;
   overflow: hidden;
+  font-weight: inherit;
+  text-align: left;
+}
+.tile:hover:not(:disabled) {
+  background: var(--color-bg);
+  border-color: var(--color-border);
+  box-shadow: none;
 }
 .cover {
   display: flex;
@@ -28,14 +42,34 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-1);
-  padding: var(--space-3) var(--space-4) var(--space-4);
+  padding: var(--space-2) var(--space-3) var(--space-3);
 }
 .name {
   font-weight: var(--weight-bold);
   overflow-wrap: anywhere;
 }
+.meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-inline);
+}
 .count {
-  margin-bottom: var(--space-2);
-  font-size: var(--font-size-small);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  font-size: var(--type-meta-size);
+  font-variant-numeric: tabular-nums;
   color: var(--color-text-muted);
+}
+.add {
+  flex: 1;
+  min-height: var(--thumbnail-tile);
+  border: var(--border-width) dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+}
+.add:hover:not(:disabled) {
+  background: var(--color-row-hover);
+  color: var(--color-text);
 }
