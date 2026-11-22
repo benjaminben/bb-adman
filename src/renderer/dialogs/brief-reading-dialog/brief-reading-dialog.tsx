@@ -15,6 +15,7 @@ import { briefJobResult, type BriefJobResult } from '@/shared/schemas/jobs/brief
 import type { JobRow } from '@/shared/schemas/rows/job'
 import { jobEnded, useJobRow } from './use-job-row'
 import styles from './brief-reading-dialog.module.css'
+import { serviceWords } from '@/shared/providers/model-words'
 
 export type BriefReadingDialogProps = {
   projectId: string
@@ -38,7 +39,8 @@ export function BriefReadingDialog(props: BriefReadingDialogProps) {
   const api = useApi()
   const providers = useApp((s) => s.app?.providers ?? EMPTY)
   const provider = providers.find((p) => p.id === props.provider)
-  const label = provider?.label ?? props.provider
+  // R3-2: the provider and the text model that reads the brief.
+  const label = provider ? serviceWords(provider, 'text') : props.provider
   const row = useJobRow(projectId, jobId)
   const owner = `brief-reading-${jobId}`
   const { ask, warning } = useCloseWarning('dialog')

@@ -1,6 +1,7 @@
 // One ad of the report view, in the HTML file's order (spec/phases/phase-08.md "Report", HTML):
 // title, ID, size, language, format, file, subjects, changed, last agent change, translations,
 // checks, assets, failure. The picture stays in the report file. Every value is React text.
+import { useModelName } from '@/renderer/ui/run-name'
 import type { Report, ReportVariant } from '@/shared/schemas/report'
 import { Field, Note, Section } from './report-summary'
 import * as W from './report-words'
@@ -46,6 +47,8 @@ function Checks(props: AdProps) {
 }
 
 function Assets(props: { ad: ReportVariant }) {
+  // R3-2: a stored model is shown by its name, or by its ID when the name is unknown.
+  const modelName = useModelName(props.ad.assets.flatMap((a) => (a.model ? [a.model] : [])))
   if (props.ad.assets.length === 0) return <Note>{W.NOTES.none}</Note>
   return (
     <ul className={styles.list}>
@@ -57,7 +60,9 @@ function Assets(props: { ad: ReportVariant }) {
               {asset.provider !== undefined && (
                 <Field label={W.LABELS.provider}>{asset.provider}</Field>
               )}
-              {asset.model !== undefined && <Field label={W.LABELS.model}>{asset.model}</Field>}
+              {asset.model !== undefined && (
+                <Field label={W.LABELS.model}>{modelName(asset.model)}</Field>
+              )}
               {asset.prompt !== undefined && (
                 <Field label={W.LABELS.prompt}>{W.shownPrompt(asset.prompt)}</Field>
               )}

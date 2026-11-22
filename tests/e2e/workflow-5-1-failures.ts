@@ -14,7 +14,7 @@ import type { Place } from './workflow-5-1-steps'
 export const GEMINI_KINDS = ['bad_key', 'quota', 'refused', 'offline', 'other'] as const
 
 export const geminiSentence = (kind: (typeof GEMINI_KINDS)[number]) =>
-  plainMessage(kind, 'Google Gemini')
+  plainMessage(kind, 'Google Gemini · Nano Banana 2.1')
 export const COMFY_SENTENCE = reasonMessage('run_failed')
 
 function runImages(page: Page, place: Place, layerId: string, provider: string) {

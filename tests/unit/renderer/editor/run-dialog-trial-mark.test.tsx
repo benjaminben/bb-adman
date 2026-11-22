@@ -45,12 +45,14 @@ async function open(referenceCount: number) {
 describe('The trial mark in the run dialog [S2-7]', () => {
   it('marks ComfyUI "(trial)" when the offered picture workflow is a trial', async () => {
     await open(0)
-    expect(screen.getByRole('radio', { name: 'ComfyUI' })).toHaveAccessibleDescription('(trial)')
+    expect(screen.getByRole('radio', { name: 'ComfyUI · MOSS-Image' })).toHaveAccessibleDescription(
+      '(trial)',
+    )
   })
 
   it('follows the image_refs workflow when the run sends a reference: a proven one has no mark', async () => {
     await open(1)
-    const comfy = screen.getByRole('radio', { name: 'ComfyUI' })
+    const comfy = screen.getByRole('radio', { name: 'ComfyUI · MOSS-Image' })
     expect(comfy).toBeEnabled()
     expect(comfy).not.toHaveAccessibleDescription('(trial)')
   })

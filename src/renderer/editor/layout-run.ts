@@ -20,6 +20,7 @@ import type { VariantGet } from '@/shared/schemas/queries/variant'
 import type { Result } from '@/shared/schemas/result'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
+import { serviceWords } from '@/shared/providers/model-words'
 
 export const NO_TEXT_HINT = 'Add text to a text layer first.'
 
@@ -166,7 +167,9 @@ export function useLayoutRun(projectId: string, variantId: string, layers: Layer
     const reply = await command('generation.proposeLayout', { ...target, provider })
     if (!reply.ok) return reply
     const id = (reply.data as { jobId: string }).jobId
-    const label = providers?.find((p) => p.id === provider)?.label ?? provider
+    // R3-2: the provider and its layout model.
+    const found = providers?.find((p) => p.id === provider)
+    const label = found ? serviceWords(found, 'layout') : provider
     runs.start(id, { ...target, label })
     attached.getState().register(id, target, () => void applyLayout(api, target, id))
     setOpen(false)

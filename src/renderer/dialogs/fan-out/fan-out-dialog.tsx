@@ -69,7 +69,7 @@ export function FanOutDialog(props: FanOutDialogProps) {
   const text = app?.providers.find(
     (p) => p.id === textChoice && p.available && p.jobs.includes('text'),
   )
-  const fillLine = provider ? fillCost(fills, provider) : null
+  const fillLine = provider ? fillCost(fills, provider, providers.models[provider.id]) : null
   const textLine = translationCost(model.translationCount(basis, ticks, formats), text ?? null)
   const noProvider = fills > 0 && provider === undefined
   const ready = picture !== null && count > 0 && !noProvider
@@ -152,6 +152,7 @@ export function FanOutDialog(props: FanOutDialogProps) {
           <ProviderSelect
             label="Provider"
             providers={providers.list}
+            models={providers.models}
             value={provider.id}
             onChange={setPicked}
             trial={provider.id === 'comfyui' && providers.trial}

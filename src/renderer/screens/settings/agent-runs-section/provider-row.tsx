@@ -1,8 +1,9 @@
 // One provider in Agent runs (SET-5): an ObjectRow with the provider's name, a "Paid" mark when
-// it is not local, and the Switch that lets agents start runs with it. The Switch is described
-// by the page's one paid line (for a paid provider) and its own refusal line. The row's main
+// it is not local, the models it runs as the second line (R3-2), and the Switch that lets agents
+// start runs with it. The Switch is described by the page's one paid line (for a paid provider) and its own refusal line. The row's main
 // button does nothing here, so it is kept out of the tab order and from assistive tech; the
 // Switch is the one control, and turning it on is only ever its own click.
+import { modelList } from '@/shared/providers/model-words'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import { NoticeLine } from '@/renderer/screens/settings/notice-line'
 import { ObjectRow } from '@/renderer/ui/object-row'
@@ -28,6 +29,7 @@ export function ProviderRow({ provider: p, allowed, refusal, onChange }: Props) 
       <ObjectRow
         name={p.label}
         label={p.label}
+        meta={modelList(p) ?? undefined}
         mainProps={{ tabIndex: -1, 'aria-hidden': true }}
         marks={mark}
         stateActions={

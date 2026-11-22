@@ -15,6 +15,7 @@ import layout from '@/renderer/ui/layout.module.css'
 import { ACTIVITY_LIMIT_MAX, type JobActivity } from '@/shared/schemas/queries/activity'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { AdmanApi } from '@/shared/schemas/api'
+import { storedWords } from '@/shared/providers/model-words'
 
 type Asking = { projectId: string; name: string; count: number; lines: string[] }
 type LeftRunning = { left: number; lines: string[] }
@@ -38,7 +39,9 @@ async function leftRunningLines(
       provider?.local === false &&
       provider.cancel === 'may_finish' &&
       !cancelShown(job, provider)
-    if (left) counts.set(provider.label, (counts.get(provider.label) ?? 0) + 1)
+    // R3-2: counted by the provider and the model the run uses.
+    const label = left ? storedWords(provider, job.model) : ''
+    if (left) counts.set(label, (counts.get(label) ?? 0) + 1)
   }
   const lines = [...counts].map(([label, n]) => leftRunningLine(label, n))
   return { left: [...counts.values()].reduce((sum, n) => sum + n, 0), lines }

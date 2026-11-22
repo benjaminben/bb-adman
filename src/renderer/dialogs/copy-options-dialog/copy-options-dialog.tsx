@@ -7,7 +7,8 @@
 // in this dialog's description. Opening, "New options" and choosing an option send nothing. The
 // job is attached to this dialog, so closing it while the job runs shows the close warning.
 import { useState } from 'react'
-import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
+import { useApi, useApp } from '@/renderer/app/app-context'
+import { useRunName } from '@/renderer/ui/run-name'
 import { attachedStoreFor, dialogJobs } from '@/renderer/stores/attached-store'
 import { useCloseWarning } from '@/renderer/ui/close-warning'
 import { DialogAlert } from '@/renderer/ui/dialog-alert'
@@ -32,7 +33,6 @@ export function CopyOptionsDialog(props: CopyOptionsDialogProps) {
   const { projectId, layer } = props
   const api = useApi()
   const command = useApp((s) => s.command)
-  const providers = useApp((s) => s.app?.providers ?? EMPTY)
   const { current, follow, loaded } = useCopyRun(projectId, layer.id)
   const [asked, setAsked] = useState<SetupKind | null>(null)
   const [busy, setBusy] = useState(false)
@@ -60,7 +60,7 @@ export function CopyOptionsDialog(props: CopyOptionsDialogProps) {
   }
 
   const close = () => ask((s) => dialogJobs(s, dialog), props.onClose)
-  const provider = failed && providers.find((p) => p.id === failed.provider)
+  const { provider, words: failedName } = useRunName(failed ?? null, '')
 
   const foot = (
     <>
@@ -119,8 +119,8 @@ export function CopyOptionsDialog(props: CopyOptionsDialogProps) {
             <RunFailure
               row={failed}
               projectId={projectId}
-              provider={provider ?? undefined}
-              providerLabel={provider?.label ?? failed.provider ?? ''}
+              provider={provider}
+              providerLabel={failedName}
             />
             {setup !== 'retry' && (
               <button type="button" onClick={() => setAsked('retry')}>

@@ -2,8 +2,15 @@
 // number of providers for the job: one is plain text, two to four a Segmented group, five or
 // more a select. Providers not yet available are listed, disabled, with the reason in the tip.
 // Each control keeps the job's old name; a choice sends the same settings.update as before.
+// R3-2: each provider names the model it runs for the job on a second, muted line (ComfyUI's
+// from the workflow comfy.getInfo offers for the job); a select's option names both on one.
 import { useApp, EMPTY } from '@/renderer/app/app-context'
+import { offeredFor } from '@/renderer/screens/campaign/offered-workflow'
+import { useComfyInfo } from '@/renderer/screens/campaign/use-comfy-info'
+import { ProviderName } from '@/renderer/ui/provider-name'
+import { jobModel, providerModelWords, workflowModel } from '@/shared/providers/model-words'
 import type { ProviderInfo, ProviderJob } from '@/shared/schemas/queries/app'
+import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
 import { Section } from '@/renderer/ui/section'
 import { InfoTip } from '@/renderer/ui/info-tip'
 import layout from '@/renderer/ui/layout.module.css'
@@ -20,17 +27,26 @@ const JOBS: Array<{ job: Job; label: string; name: string }> = [
 
 const SOON = 'Not yet available'
 
+// The model each provider runs for the job; ComfyUI's from its offered workflow.
+function modelsFor(job: Job, providers: ProviderInfo[], info: ComfyInfo | null) {
+  const comfy = workflowModel(job === 'image' || job === 'video' ? offeredFor(info, job) : null)
+  return new Map(providers.map((p) => [p.id, jobModel(p, job, comfy)]))
+}
+
 function Choice(props: {
   name: string
   providers: ProviderInfo[]
+  models: Map<string, string | null>
   value: string
   onChoose: (id: string) => void
 }) {
   const { name, providers, value, onChoose } = props
+  const model = (p: ProviderInfo) => props.models.get(p.id) ?? null
   if (providers.length === 1) {
+    const only = providers[0]!
     return (
       <div role="group" aria-label={name} className={styles.one}>
-        {providers[0]!.label}
+        <ProviderName label={only.label} model={model(only)} />
       </div>
     )
   }
@@ -44,7 +60,7 @@ function Choice(props: {
             disabled={!p.available}
             title={p.available ? undefined : SOON}
           >
-            {p.label}
+            {providerModelWords(p.label, model(p))}
           </option>
         ))}
       </select>
@@ -59,9 +75,10 @@ function Choice(props: {
           aria-pressed={p.id === value}
           disabled={!p.available}
           title={p.available ? undefined : SOON}
+          aria-label={providerModelWords(p.label, model(p))}
           onClick={() => p.id !== value && onChoose(p.id)}
         >
-          {p.label}
+          <ProviderName label={p.label} model={model(p)} />
         </button>
       ))}
     </div>
@@ -72,6 +89,7 @@ export function ProviderDefaults() {
   const providers = useApp((s) => s.app?.providers ?? EMPTY)
   const defaults = useApp((s) => s.app?.settings.defaultProviders)
   const command = useApp((s) => s.command)
+  const info = useComfyInfo()
 
   return (
     <Section id="settings.defaults" title="Defaults" level={3} fold="none">
@@ -87,6 +105,7 @@ export function ProviderDefaults() {
             <Choice
               name={name}
               providers={offered}
+              models={modelsFor(job, offered, info)}
               value={defaults?.[job] ?? ''}
               onChoose={(id) =>
                 void command('settings.update', { defaultProviders: { [job]: id } })

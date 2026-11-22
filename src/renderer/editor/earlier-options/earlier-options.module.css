@@ -5,6 +5,12 @@
 .fresh {
   min-width: 0;
 }
+/* R3-2: the service and model of the new pictures; it wraps, so the model is never cut. */
+.service {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--type-meta-size);
+}
 .runs,
 .tiles {
   display: flex;

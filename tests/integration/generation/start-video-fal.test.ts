@@ -124,7 +124,7 @@ describe('cancelling a fal run [P7-13, P7-15]', () => {
       error: {
         code: 'RULE_VIOLATION',
         message:
-          'fal.ai Seedance has started this and will charge for it. The app lets it finish and keeps the result.',
+          'fal.ai · Seedance 2.0 has started this and will charge for it. The app lets it finish and keeps the result.',
         details: { reason: 'cancel_would_still_charge' },
       },
     })

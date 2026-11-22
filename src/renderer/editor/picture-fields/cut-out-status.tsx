@@ -5,8 +5,9 @@
 // reads job.list for the layer once, so a change it missed is shown; a listed row that is not
 // newer than the one it holds is dropped, as the job store does (F-10).
 import { useEffect, useState } from 'react'
-import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
+import { useApi } from '@/renderer/app/app-context'
 import { RunFailure } from '@/renderer/ui/run-failure'
+import { useRunName } from '@/renderer/ui/run-name'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import styles from './picture-fields.module.css'
 
@@ -41,9 +42,8 @@ export type CutOutLinesProps = { projectId: string; jobId: string | null; row: J
 
 export function CutOutLines(props: CutOutLinesProps) {
   const { row } = props
-  const providers = useApp((s) => s.app?.providers ?? EMPTY)
   const status = props.jobId === null ? null : (row?.status ?? 'queued')
-  const provider = providers.find((p) => p.id === row?.provider)
+  const { provider, words: name } = useRunName(row, 'The provider')
   return (
     <>
       <p role="status" className={styles.hidden}>
@@ -56,7 +56,7 @@ export function CutOutLines(props: CutOutLinesProps) {
           row={row}
           projectId={props.projectId}
           provider={provider}
-          providerLabel={provider?.label ?? row.provider ?? 'The provider'}
+          providerLabel={name}
         />
       )}
     </>

@@ -8,11 +8,12 @@
 // once done. A visit after the start reads job.list for the layer once, so a change it missed
 // is shown.
 import { useEffect, useState } from 'react'
-import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
+import { useApi } from '@/renderer/app/app-context'
 import { ClipPreview } from '@/renderer/editor/clip-preview'
 import { JobProgress } from '@/renderer/ui/job-progress'
 import { useNow, videoRunningText } from '@/renderer/ui/run-status'
 import { RunFailure } from '@/renderer/ui/run-failure'
+import { useRunName } from '@/renderer/ui/run-name'
 import type { GenerateRun } from '@/renderer/stores/generate-drafts'
 import { firstKept, usePlacedOutcome, type PlacedOutcome } from '@/renderer/stores/placed-runs'
 import { videoJobResult } from '@/shared/schemas/jobs/video-generation'
@@ -80,11 +81,10 @@ const SHOWN = new Set(['Cancelled.', NO_PICTURES, NOT_PLACED])
 export function RunStatus(props: { projectId: string; layerId: string; run: GenerateRun }) {
   const { run } = props
   const row = useRunRow(props.projectId, props.layerId, run.jobId)
-  const providers = useApp((s) => s.app?.providers ?? EMPTY)
   const outcome = usePlacedOutcome(run.jobId)
   const ran = row?.status ?? 'queued'
   const status = ran === 'succeeded' && outcome === 'placing' ? 'running' : ran
-  const provider = providers.find((p) => p.id === row?.provider)
+  const { provider, words: name } = useRunName(row, 'The provider')
   const words = useWords(run, row, status, outcome)
   const shown = words !== null && SHOWN.has(words)
   const going = status === 'queued' || status === 'running'
@@ -103,7 +103,7 @@ export function RunStatus(props: { projectId: string; layerId: string; run: Gene
             row={row}
             projectId={props.projectId}
             provider={provider}
-            providerLabel={provider?.label ?? row.provider ?? 'The provider'}
+            providerLabel={name}
           />
         )}
         {run.kind === 'video' && status === 'succeeded' && row && (

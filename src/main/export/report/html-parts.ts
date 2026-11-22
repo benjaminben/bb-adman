@@ -1,6 +1,9 @@
 // The report page's parts (spec/phases/phase-08.md "Report", HTML): header, summary, warnings
 // exported past, asked for against delivered, one ad. Every value reaches the markup through
 // escape.ts (`value`, `element`); the markup around it is fixed text.
+import { WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import { listProviders } from '@/main/providers/registry'
+import { modelNameOf } from '@/shared/providers/model-words'
 import type { Report, ReportVariant } from '@/shared/schemas/report'
 import { element, escapeHtml } from './escape'
 import * as W from './html-words'
@@ -136,6 +139,10 @@ function checksHtml(report: Report, ad: ReportVariant): string {
   )
 }
 
+// R3-2: the stored model ID's name (a registry model, or a shipped workflow's main file); the
+// ID itself when the app does not know it. The report data keeps the ID.
+const modelName = (id: string) => modelNameOf(id, listProviders({}), WORKFLOWS)
+
 function assetsHtml(ad: ReportVariant): string {
   if (ad.assets.length === 0) return note(W.NOTES.none)
   return list(
@@ -145,7 +152,7 @@ function assetsHtml(ad: ReportVariant): string {
       )
       const rows = [
         asset.provider === undefined ? '' : field(W.LABELS.provider, value(asset.provider)),
-        asset.model === undefined ? '' : field(W.LABELS.model, value(asset.model)),
+        asset.model === undefined ? '' : field(W.LABELS.model, value(modelName(asset.model))),
         asset.prompt === undefined ? '' : field(W.LABELS.prompt, value(shownPrompt(asset.prompt))),
       ].filter(Boolean)
       return rows.length > 0 ? head + fields(rows) : head

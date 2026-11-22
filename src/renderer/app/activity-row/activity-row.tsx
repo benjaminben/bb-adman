@@ -6,7 +6,7 @@
 // {where}" (to the place ui/show-result.ts finds, R2E-6). A failed row keeps its sentence
 // (ui/run-failure/) under it, visible; the paid two-step line of a Retry draws there too.
 import { useState } from 'react'
-import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
+import { useApi, useApp } from '@/renderer/app/app-context'
 import type { ActivityEntry } from '@/renderer/stores/activity-store'
 import { cancelShown } from '@/renderer/ui/cancel-shown'
 import { goTarget, type GoTarget } from '@/renderer/ui/go-there'
@@ -15,6 +15,7 @@ import layout from '@/renderer/ui/layout.module.css'
 import { ObjectRow } from '@/renderer/ui/object-row'
 import { resultTarget } from '@/renderer/ui/show-result'
 import { RunFailure } from '@/renderer/ui/run-failure'
+import { useRunName } from '@/renderer/ui/run-name'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import { RowMarks } from './row-marks'
 import { RowRetry, retryShown } from './row-retry'
@@ -47,10 +48,10 @@ export function ActivityRow(props: {
   const { projectId } = props
   const api = useApi()
   const command = useApp((s) => s.command)
-  const providers = useApp((s) => s.app?.providers ?? EMPTY)
   const [lineSlot, setLineSlot] = useState<HTMLDivElement | null>(null)
-  const provider = providers.find((p) => p.id === job.provider)
-  const label = provider?.label ?? job.provider
+  // R3-2: the provider and the model, "Google Gemini · Nano Banana 2.1".
+  const { provider, words } = useRunName(job, 'The provider')
+  const label = job.provider === null ? null : words
   const where = whereText(job, place)
   const target = goTarget(job, place)
   const go = () => void resultTarget(api, projectId, job, place).then((t) => t && props.onGo(t))

@@ -8,6 +8,7 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { firstIds } from './held-run'
 import { query } from './render-helpers'
+import { providerName } from './provider-name'
 
 type Choice = { provider?: string; count?: number }
 const choices = new WeakMap<Page, Choice>()
@@ -115,7 +116,7 @@ export async function openRunDialog(page: Page): Promise<Locator> {
   const dialog = runDialog(page)
   await expect(dialog).toBeVisible()
   const { provider, count } = choiceOf(page)
-  if (provider) await dialog.getByRole('radio', { name: provider, exact: true }).check()
+  if (provider) await dialog.getByRole('radio', { name: providerName(provider) }).check()
   if (count !== undefined) {
     await dialog.getByRole('spinbutton', { name: 'Pictures', exact: true }).fill(String(count))
   }

@@ -12,6 +12,9 @@ export type ProviderInfo = {
   available: boolean
   secrets: SecretName[]
   defaultModels: Record<string, string>
+  // R3-2: the name a person reads for each job's model, beside defaultModels. Absent or empty
+  // where the provider has no fixed model (ComfyUI's comes from its workflow).
+  modelLabels?: Partial<Record<ProviderJob, string>>
   // [1.24] SPEC 6.11.1: local runs are never counted in paid_calls; how a started run can be
   // stopped; whether the server's own words may be shown on request (ComfyUI only).
   local: boolean

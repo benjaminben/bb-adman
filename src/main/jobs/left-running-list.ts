@@ -6,6 +6,7 @@ import { leftRunningOnClose } from './leave-running'
 import type { ProjectHandle } from '@/main/db/project-file'
 import type { ActivityLog } from '@/main/log/activity-log'
 import type { LeftRunning } from '@/main/quit-question'
+import { storedWords } from '@/shared/providers/model-words'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 
 export function leftRunningList(
@@ -19,7 +20,9 @@ export function leftRunningList(
       const row = readJob(handle, active.id, log)
       const provider = providers.find((p) => p.id === row?.provider)
       if (!row || !provider || !leftRunningOnClose(row, provider)) continue
-      counts.set(provider.label, (counts.get(provider.label) ?? 0) + 1)
+      // R3-2: counted by the provider and the model the run uses.
+      const label = storedWords(provider, row.model)
+      counts.set(label, (counts.get(label) ?? 0) + 1)
     }
   }
   return [...counts].map(([label, count]) => ({ label, count }))

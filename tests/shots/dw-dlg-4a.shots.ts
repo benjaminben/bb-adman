@@ -58,7 +58,9 @@ test('477 the run dialog, paid, with references', async () => {
   await screens.chooseProvider(page, 'Google Gemini')
   await screens.setCount(page, 4)
   const run = await screens.openRunDialog(page)
-  await expect(run.getByText(/^Paid: 4 pictures \+ 2 references to Google Gemini$/)).toBeVisible()
+  await expect(
+    run.getByText(/^Paid: 4 pictures \+ 2 references to Google Gemini · Nano Banana 2\.1$/),
+  ).toBeVisible()
   await expect(run.getByText(/^Paid so far: /)).toBeVisible()
   await page.waitForTimeout(500)
   await shot(page, '477-run-dialog-paid')
@@ -119,7 +121,9 @@ test('478 the two-step line in the sync review', async () => {
   const dialog = page.getByRole('dialog', { name: `Sync ${direction}` })
   await dialog.getByRole('button', { name: 'Translate', exact: true }).click()
   const german = dialog.getByRole('group', { name: 'German translation' })
-  await expect(german.getByText(/^Paid: 1 request to Google Gemini$/)).toBeVisible()
+  await expect(
+    german.getByText(/^Paid: 1 request to Google · Gemini 3\.5 Flash-Lite$/),
+  ).toBeVisible()
   await expect(german.getByRole('button', { name: 'Confirm' })).toBeVisible()
   await page.waitForTimeout(500)
   await shot(page, '478-sync-two-step-line')
