@@ -1,12 +1,16 @@
-// The relink dialog's content: the box, the status line, the list of missing assets and
+// The relink dialog's content: the switch, the status line, the list of missing assets and
 // "Close". "Find…" asks the system picker for a file of the asset's kind, then sends
-// asset.relink. After each send the list is read again and focus moves on.
+// asset.relink. After each send the list is read again and focus moves on. DLG-7: the box is a
+// Switch "Search folder" (its old sentence kept as its name, and in an InfoTip); the files
+// found in this opening are listed under "Found".
 import { useEffect, useRef, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import type { PickedPaths } from '@/shared/schemas/queries/dialog'
 import { BusySpinner, DialogFoot } from '@/renderer/ui/dialog-frame'
+import { InfoTip } from '@/renderer/ui/info-tip'
 import layout from '@/renderer/ui/layout.module.css'
-import { MissingRow } from './missing-row'
+import { plural } from '@/renderer/ui/plural'
+import { FoundRow, MissingRow } from './missing-row'
 import { useMissingAssets, type MissingAsset } from './use-missing-assets'
 import styles from './relink-dialog.module.css'
 
@@ -21,8 +25,12 @@ export type RelinkBodyProps = {
 type Status = { refused: boolean; text: string } | null
 type Relinked = { assetId: string; siblingIds: string[] }
 
+const SIBLINGS = 'Also look for other missing files in the same folder'
+
 function foundText(name: string, siblings: number) {
-  const more = siblings > 0 ? ` ${siblings} other file(s) in the same folder were found too.` : ''
+  const were = siblings === 1 ? 'was' : 'were'
+  const files = plural(siblings, 'other file')
+  const more = siblings > 0 ? ` ${files} in the same folder ${were} found too.` : ''
   return `Found ${name}.${more}`
 }
 
@@ -38,7 +46,7 @@ export function RelinkBody(props: RelinkBodyProps) {
   const { projectId, busy, onBusy } = props
   const api = useApi()
   const command = useApp((s) => s.command)
-  const { assets, readError, read } = useMissingAssets(projectId, props.onlyAssetIds)
+  const { assets, found, readError, read } = useMissingAssets(projectId, props.onlyAssetIds)
   const [siblings, setSiblings] = useState(true)
   const [findingId, setFindingId] = useState<string | null>(null)
   const [status, setStatus] = useState<Status>(null)
@@ -87,10 +95,20 @@ export function RelinkBody(props: RelinkBodyProps) {
 
   return (
     <>
-      <label className={styles.box}>
-        <input type="checkbox" checked={siblings} onChange={(e) => setSiblings(e.target.checked)} />
-        Also look for other missing files in the same folder
-      </label>
+      <fieldset className={styles.box} disabled={busy}>
+        <label className={styles.switchLabel}>
+          <input
+            type="checkbox"
+            role="switch"
+            className={layout.switch}
+            aria-label={SIBLINGS}
+            checked={siblings}
+            onChange={(e) => setSiblings(e.target.checked)}
+          />
+          Search folder
+        </label>
+        <InfoTip about="Search folder">{`${SIBLINGS}.`}</InfoTip>
+      </fieldset>
       {message !== null && (
         <p role="alert" className={`${layout.notice} ${layout.danger} ${styles.line}`}>
           {message}
@@ -120,6 +138,16 @@ export function RelinkBody(props: RelinkBodyProps) {
             />
           ))}
         </ul>
+      )}
+      {found.length > 0 && (
+        <>
+          <h3 className={styles.heading}>Found</h3>
+          <ul aria-label="Found" className={styles.list}>
+            {found.map((asset) => (
+              <FoundRow key={asset.id} asset={asset} />
+            ))}
+          </ul>
+        </>
       )}
       <DialogFoot>
         <button type="button" ref={closeButton} disabled={busy} onClick={props.onClose}>

@@ -68,7 +68,7 @@ describe('the relink dialog [spec/screens-campaign.md, relink dialog; FR-009]', 
 
   it('has the box ticked and focused on open', async () => {
     await openDialog()
-    const box = screen.getByRole('checkbox', {
+    const box = screen.getByRole('switch', {
       name: 'Also look for other missing files in the same folder',
     })
     expect(box).toBeChecked()
@@ -80,14 +80,14 @@ describe('the relink dialog [spec/screens-campaign.md, relink dialog; FR-009]', 
     [
       false,
       ['a1', 'a5'],
-      'Found summer-banner.mp4. 2 other file(s) in the same folder were found too.',
+      'Found summer-banner.mp4. 2 other files in the same folder were found too.',
     ],
   ])(
     'with the box %s sends the picker for the kind, then asset.relink, and says what was found',
     async (keepTicked, siblingIds, sentence) => {
       const { fake, served } = await openDialog()
       relinkReply(fake, served)(siblingIds)
-      if (!keepTicked) await userEvent.click(screen.getByRole('checkbox'))
+      if (!keepTicked) await userEvent.click(screen.getByRole('switch'))
       await userEvent.click(screen.getByRole('button', { name: 'Find summer-banner.mp4' }))
 
       expect(await screen.findByRole('status')).toHaveTextContent(sentence)

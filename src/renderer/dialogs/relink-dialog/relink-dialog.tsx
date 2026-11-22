@@ -1,6 +1,6 @@
 // "Find missing files" (spec/screens-campaign.md, "Finding missing files: the relink dialog";
 // FR-009). The frame closes only while no relink is waiting. Its body mounts afresh at each
-// open, so the list is read again and the box is ticked again every time.
+// open, so the list is read again and the box is ticked again every time. DLG-7: kind="review".
 import { useState } from 'react'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
 import { RelinkBody } from './relink-body'
@@ -21,6 +21,7 @@ export function RelinkDialog(props: RelinkDialogProps) {
       onClose={props.onClose}
       title="Find missing files"
       closable={!busy}
+      kind="review"
     >
       <RelinkBody
         projectId={props.projectId}
