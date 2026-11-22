@@ -33,6 +33,7 @@ import { endWebpDecoder, webpToPng } from './windows/webp-window'
 import { afterQuitAnswer, quitQuestion } from './quit-question'
 import { quietWindows } from './windows/quiet'
 import { createMediaTool } from './media/embed-details'
+import { cleanLeftovers } from './export/video/work-dir'
 import { ffmpegPath } from './media/ffmpeg-path'
 import { cancelDropboxSignIn } from './providers/dropbox/sign-in/session'
 
@@ -163,6 +164,7 @@ function start(): void {
     userData: app.getPath('userData'),
     log: { write: (e) => core?.log.write(e) },
   })
+  void cleanLeftovers(app.getPath('userData'))
   core = createCore({
     userDataDir: app.getPath('userData'),
     documentsDir: app.getPath('documents'),
