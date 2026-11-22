@@ -3,10 +3,15 @@
 // again here; prepare then checks each file on disk and copies it (never links it); run inserts
 // one row per new file as asset.import does. Not undoable, as asset.import is not.
 import { z } from 'zod'
-import { defineCommand } from '@/main/commands/types'
+import { defineCommand, type ProjectContext } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import { asset } from '@/main/db/schema'
-import { assetIdsByHash, removeCopies, type NewAsset } from '@/main/assets/import'
+import {
+  assetIdsByHash,
+  removeCopies,
+  type NewAsset,
+  type PreparedImport,
+} from '@/main/assets/import'
 import { prepareFileImport } from '@/main/assets/import-files'
 import { logUnreadable } from '@/main/assets/unreadable'
 import { assetImportFilesInput } from '@/shared/schemas/commands/asset-files'
@@ -67,19 +72,32 @@ export function assetImportFiles(deps: Pick<CoreDeps, 'now' | 'log'>) {
       ),
     undoPrepare: (prepared) => removeCopies(prepared.copies),
     run(ctx, input, prepared) {
-      const known = assetIdsByHash(ctx.project)
       const createdAt = deps.now().toISOString()
-      for (const a of prepared.newAssets) {
-        if (known.has(a.contentHash)) continue
-        ctx.project.orm
-          .insert(asset)
-          .values(rowOf(a, input.library, createdAt))
-          .run()
-        ctx.changes.touch('asset', { id: a.id })
-        known.set(a.contentHash, a.id)
+      const data: ImportFilesReply = {
+        assetIds: insertImportedRows(ctx, prepared, input.library, createdAt),
       }
-      const data: ImportFilesReply = { assetIds: prepared.hashes.map((h) => idFor(known, h)) }
       return { data }
     },
   })
+}
+
+// One row per new file, as asset.import does; the asset ID of each given path, in order.
+// Also run by campaign.createFromBriefWithFiles (Round 2 plan D6).
+export function insertImportedRows(
+  ctx: ProjectContext,
+  prepared: PreparedImport,
+  library: ImportFilesInput['library'],
+  createdAt: string,
+): string[] {
+  const known = assetIdsByHash(ctx.project)
+  for (const a of prepared.newAssets) {
+    if (known.has(a.contentHash)) continue
+    ctx.project.orm
+      .insert(asset)
+      .values(rowOf(a, library, createdAt))
+      .run()
+    ctx.changes.touch('asset', { id: a.id })
+    known.set(a.contentHash, a.id)
+  }
+  return prepared.hashes.map((h) => idFor(known, h))
 }

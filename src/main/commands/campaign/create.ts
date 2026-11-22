@@ -149,31 +149,36 @@ function insertMaster(ctx: ProjectContext, m: Master, now: string, values: RuleS
   return { directionId, variantId }
 }
 
+// The whole of campaign.create's work, also run by campaign.createFromBrief (Round 2 plan D6).
+export function createCampaignRows(
+  ctx: ProjectContext,
+  input: CampaignCreateInput,
+  now: string,
+): CampaignCreated {
+  if (input.templateId !== starterTemplate.id) {
+    throw new AppError('NOT_FOUND', 'That template is not in this build.')
+  }
+  refuseRightToLeft(input.languages)
+  const values = startingRuleSet(ctx, input)
+  const subjectIds = mapSubjects(ctx, input, now)
+  const campaignId = insertCampaign(ctx, input, now)
+  for (const subjectId of subjectIds) {
+    ctx.project.orm.insert(schema.campaignSubject).values({ campaignId, subjectId }).run()
+    ctx.changes.touch('campaign_subject', { campaignId, subjectId })
+  }
+  insertRuleSet(ctx, campaignId, values)
+  const master = insertMaster(ctx, { campaignId, subjectIds, input }, now, values)
+  return { campaignId, ...master }
+}
+
 export function campaignCreate(deps: Pick<CoreDeps, 'now'>) {
   return defineCommand({
     name: 'campaign.create',
     input: campaignCreateInput,
     projectId: (input) => input.projectId,
     run(ctx, input) {
-      if (input.templateId !== starterTemplate.id) {
-        throw new AppError('NOT_FOUND', 'That template is not in this build.')
-      }
-      refuseRightToLeft(input.languages)
-      const now = deps.now().toISOString()
-      const values = startingRuleSet(ctx, input)
-      const subjectIds = mapSubjects(ctx, input, now)
-      const campaignId = insertCampaign(ctx, input, now)
-      for (const subjectId of subjectIds) {
-        ctx.project.orm.insert(schema.campaignSubject).values({ campaignId, subjectId }).run()
-        ctx.changes.touch('campaign_subject', { campaignId, subjectId })
-      }
-      insertRuleSet(ctx, campaignId, values)
-      const master = insertMaster(ctx, { campaignId, subjectIds, input }, now, values)
-      const data: CampaignCreated = { campaignId, ...master }
-      return {
-        data,
-        log: { campaignId, variantId: master.variantId },
-      }
+      const data = createCampaignRows(ctx, input, deps.now().toISOString())
+      return { data, log: { campaignId: data.campaignId, variantId: data.variantId } }
     },
   })
 }

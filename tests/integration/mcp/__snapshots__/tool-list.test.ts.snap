@@ -2076,6 +2076,35 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     "name": "import_assets",
   },
   {
+    "description": "Create a campaign in an open project from brief text in JSON, YAML or Markdown, with the same fields as create_campaign’s brief. In Markdown, the first "# " heading is the campaign name, and "Label: value" lines or "## Label" sections give the rest: Region, Audience, Message, Offer, Call to action, Tone, Languages, Sizes, Required words, Prohibited words, Subjects (one "### Name" per subject, with ID, Description and Pictures), and "Copy (fr)", one per language, with Headline and Call to action. For example:
+# Spring launch
+Region: Canada
+Audience: Adults who buy tea online
+Message: Warm up slowly
+## Subjects
+### Tea tin
+A subject's pictures are asset IDs from list_assets or full file paths. If any full path is given, the user is asked first and sees each path; you wait up to two minutes, and a refusal is final. Sizes and languages left out are filled as for create_campaign. Gives the campaign ID, its first direction ID, its master variant ID and the subject IDs, and the asset IDs of imported files. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "text": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "text",
+      ],
+      "type": "object",
+    },
+    "name": "create_campaign_from_brief",
+  },
+  {
     "description": "Create a new, empty project in the user's default projects folder and open it in the app. name is the project's name and its file name: no folder, at most 100 characters. An existing file is never replaced. Gives the project's ID to use as project_id.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
