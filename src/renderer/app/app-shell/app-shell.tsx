@@ -13,6 +13,7 @@ import { CampaignTabs, useCampaignTab, useTabKeys } from '@/renderer/app/campaig
 import { ErrorBanner } from '@/renderer/app/error-banner'
 import { NavScope, useNav } from '@/renderer/app/nav-context'
 import { PermissionDialog } from '@/renderer/app/permission-dialog'
+import { FirstRun } from '@/renderer/app/first-run'
 import { ProjectSwitcher } from '@/renderer/app/project-switcher'
 import { StartScreen } from '@/renderer/screens/start/start-screen'
 import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
@@ -106,6 +107,7 @@ export function AppShell() {
       <AddressDialog />
       <LicenceDialog />
       <PermissionDialog />
+      <FirstRun />
       <AgentActivity />
     </div>
   )
