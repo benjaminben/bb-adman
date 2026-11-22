@@ -44,7 +44,9 @@ test('The start screen in two halves, with recent projects', async () => {
   await screens.createProject(page, 'Alpine Spring')
   await screens.createProject(page, 'Harbour Lights')
   await screens.showStart(page)
-  await expect(page.getByRole('button', { name: /^Open Alpine Spring/ })).toBeVisible()
+  // Both projects stay open, so Recent names them "Show {name}, open now" (R2P-10).
+  await expect(page.getByRole('button', { name: 'Show Alpine Spring, open now' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Show Harbour Lights, open now' })).toBeVisible()
   await pictureDrawn(page)
   await snap(page, '360-start-two-halves', 1280, 820)
   await snap(page, '361-start-smallest-window', 900, 600)
