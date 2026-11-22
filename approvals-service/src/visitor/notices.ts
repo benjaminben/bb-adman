@@ -21,6 +21,13 @@ export const NOTICES = {
     page: 'gallery',
     text: 'Your email is saved until you log out or close the browser.',
   },
+  'signed-all': { page: 'gallery', text: 'Your sign-offs were saved.' },
+  'gallery-changed': {
+    page: 'gallery',
+    text:
+      'The gallery changed while you were looking. Nothing was signed. Look at it again, and ' +
+      'sign off if you still approve.',
+  },
 } as const satisfies Record<string, { page: NoticePage; text: string }>
 
 export type NoticeKey = keyof typeof NOTICES

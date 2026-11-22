@@ -33,6 +33,11 @@ export function addSignoffIfVariant(db: Db, linkId: string, row: SignoffRow): St
     .bind(row.id, row.email, row.createdAt, linkId, row.variantKey, row.version)
 }
 
+// "Sign off all": the same statement once per row, for one db.batch (one transaction).
+export function addSignoffsIfVariant(db: Db, linkId: string, rows: SignoffRow[]): Statement[] {
+  return rows.map((row) => addSignoffIfVariant(db, linkId, row))
+}
+
 export async function hasSignoff(
   db: Db,
   linkId: string,
