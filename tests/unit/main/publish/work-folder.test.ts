@@ -120,3 +120,13 @@ describe('makeWorkFolder, review fixes 3 and 4 [P9-11]', () => {
     await expect(work.remove()).resolves.toBeUndefined()
   })
 })
+
+describe('makeWorkFolder, review fix 3 [P9-13]', () => {
+  it('sets an existing publish-work folder to this user only', async () => {
+    await fs.mkdir(base, { recursive: true })
+    await fs.chmod(base, 0o755)
+    const work = await makeWorkFolder(userData, JOB)
+    expect((await fs.stat(base)).mode & 0o777).toBe(0o700)
+    await work.remove()
+  })
+})
