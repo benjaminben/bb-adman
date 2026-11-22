@@ -1,0 +1,14 @@
+/* app-style */
+/* "Paste a brief": the brief's text area, in the monospace face and as wide as the dialog. */
+.text {
+  width: 100%;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-control);
+  line-height: var(--leading-body);
+}
+.hint {
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}

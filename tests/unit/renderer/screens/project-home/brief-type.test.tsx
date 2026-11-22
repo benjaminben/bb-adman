@@ -11,13 +11,14 @@ const names = (fake: Fake) => fake.commands.map((c) => c.name)
 
 async function typeBrief(fake: Fake = projectApi()) {
   await renderApp(<ProjectHome project={PROJECT} />, photoStubs(fake))
-  await userEvent.click(await screen.findByRole('button', { name: 'Type a brief' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Paste a brief' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Start from an empty form' }))
   return screen.findByRole('region', { name: 'Brief' })
 }
 
 const field = (form: HTMLElement, label: string) => within(form).getByLabelText(label)
 
-describe('"Type a brief" [screens-campaign "The brief form", S2-13]', () => {
+describe('"Paste a brief", then "Start from an empty form" [screens-campaign "The brief form", S2-13]', () => {
   it('opens an empty form with one subject row and the problems listed, sending nothing', async () => {
     const fake = projectApi()
     const form = await typeBrief(fake)
