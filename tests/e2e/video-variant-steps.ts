@@ -115,3 +115,16 @@ export async function backToEditor(page: Page): Promise<void> {
   await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
   await expect(timeline(page)).toBeVisible()
 }
+
+// The first layer whose panel has the Animation fields: a text layer. Gives its name.
+export async function selectTextLayer(page: Page): Promise<string> {
+  const tracks = timeline(page).getByRole('list', { name: 'Layer tracks' })
+  const bars = tracks.getByRole('button', { name: /^Timing of / })
+  await expect(bars.first()).toBeVisible()
+  for (const label of await bars.evaluateAll((els) => els.map((e) => e.ariaLabel ?? ''))) {
+    const name = label.replace(/^Timing of /, '')
+    await selectLayer(page, name)
+    if ((await page.getByRole('combobox', { name: 'Entrance' }).count()) > 0) return name
+  }
+  throw new Error('The ad has no text layer.')
+}

@@ -34,18 +34,6 @@ test.afterEach(async () => {
 const tracks = (page: Page) => timeline(page).getByRole('list', { name: 'Layer tracks' })
 const trackSlider = (name: string) => tracks(page).getByRole('slider', { name })
 
-// The first layer whose panel has the Animation fields: a text layer.
-async function selectTextLayer(): Promise<string> {
-  const bars = tracks(page).getByRole('button', { name: /^Timing of / })
-  await expect(bars.first()).toBeVisible()
-  for (const label of await bars.evaluateAll((els) => els.map((e) => e.ariaLabel ?? ''))) {
-    const name = label.replace(/^Timing of /, '')
-    await s.selectLayer(page, name)
-    if ((await page.getByRole('combobox', { name: 'Entrance' }).count()) > 0) return name
-  }
-  throw new Error('The ad has no text layer.')
-}
-
 // variant.render at `timeMs`: the colour channels in the top half brighter than near-black.
 async function litTopHalfAt(timeMs: number): Promise<number> {
   const { projectId, variantId } = await firstIds(page)
@@ -83,7 +71,7 @@ test('Workflow 5.5: a video variant from an image post, its clips, a run and its
   await s.startFromBackground(page)
   await expect(screens.runRow(page)).toContainText('Working')
   await s.backToEditor(page)
-  const name = await selectTextLayer()
+  const name = await s.selectTextLayer(page)
   const start = trackSlider(`Start of Timing of ${name}`)
   const end = trackSlider(`End of Timing of ${name}`)
   await start.focus()
