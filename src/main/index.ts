@@ -34,6 +34,7 @@ import { afterQuitAnswer, quitQuestion } from './quit-question'
 import { quietWindows } from './windows/quiet'
 import { createMediaTool } from './media/embed-details'
 import { ffmpegPath } from './media/ffmpeg-path'
+import { cancelDropboxSignIn } from './providers/dropbox/sign-in/session'
 
 if (process.env.ADMAN_USER_DATA_DIR) app.setPath('userData', process.env.ADMAN_USER_DATA_DIR)
 // Test runs: no window on screen, and on macOS the app never becomes the front app.
@@ -240,6 +241,7 @@ if (!app.requestSingleInstanceLock()) {
     }
     // Quitting closes the MCP listener and drops its sessions (SPEC 5.3).
     void core?.mcp.stop()
+    cancelDropboxSignIn()
     endRenderWindow()
     endWebpDecoder()
     core?.closeAll()

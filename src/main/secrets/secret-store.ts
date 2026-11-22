@@ -69,6 +69,12 @@ export function createSecretStore(opts: { file: string; crypto: SecretCrypto }) 
     canStore(): boolean {
       return opts.crypto.isAvailable()
     },
+    // P9-5b: false when the file exists but cannot be read, so a missing key means "not saved"
+    // only when this is true. Gives no value. With secure storage unavailable it says true:
+    // check canStore() first.
+    readable(): boolean {
+      return load() !== null
+    },
     get(name: SecretName): string | undefined {
       return read()[name]
     },
