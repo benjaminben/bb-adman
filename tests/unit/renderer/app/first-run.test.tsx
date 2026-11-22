@@ -145,7 +145,7 @@ describe('a key typed in the setup [R2E-10, D8, R-10]', () => {
     const fake = fresh()
     await renderApp(<FirstRun />, fake)
     await press('Start')
-    await press('Add')
+    await press('Add key')
     await userEvent.type(screen.getByLabelText('New Google Gemini API key'), MADE_UP_KEY)
     fake.setState(
       baseState({
@@ -154,7 +154,7 @@ describe('a key typed in the setup [R2E-10, D8, R-10]', () => {
       }),
     )
     await press('Save')
-    await waitFor(() => expect(screen.getByText('Saved, ends in 9c')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('•••9c')).toBeInTheDocument())
     expect(dialog()).toBeInTheDocument()
     expect(document.body.innerHTML).not.toContain(MADE_UP_KEY)
     await press('Next')

@@ -87,7 +87,7 @@ test('Settings: a refused address, then the stand-in saved, checked per workflow
   await comfy.getByLabel('Server address').fill('ftp://127.0.0.1:21')
   await comfy.getByRole('button', { name: 'Save' }).click()
   await expect(comfy.locator('#comfy-address-refusal')).toBeVisible()
-  await expect(comfy.getByText('No address saved.')).toBeVisible()
+  await expect(comfy.getByText('Not set', { exact: true })).toBeVisible()
   const banner = page.getByRole('alert')
   await expect(banner).toBeVisible()
   await banner.getByRole('button', { name: 'Dismiss' }).click()
@@ -107,7 +107,7 @@ test('Settings: a refused address, then the stand-in saved, checked per workflow
   expect(stand.seen.filter((r) => r.method !== 'GET')).toEqual([])
 
   await comfy.getByRole('button', { name: 'Remove' }).click()
-  await expect(comfy.getByText('No address saved.')).toBeVisible()
+  await expect(comfy.getByText('Not set', { exact: true })).toBeVisible()
 })
 
 test('Campaign: a run waits, works and is done; a failed run is retried; a waiting run is cancelled', async () => {

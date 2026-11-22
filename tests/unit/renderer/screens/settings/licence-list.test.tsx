@@ -10,7 +10,7 @@ import { axeViolations, renderApp } from '../../render'
 import { baseState, makeFakeApi } from '../../fake-api'
 import { heldReply } from '../campaign/held-reply'
 
-const EMPTY = 'You have not confirmed a commercial license for any model.'
+const EMPTY = 'None confirmed'
 const H3 = 'MiniMax H3'
 const FLUX = 'FLUX 3 klein'
 // A name from the settings file that looks like markup is drawn as text.
@@ -30,9 +30,12 @@ function licenceFake(saved: string[], answer?: () => Promise<Result<unknown>>) {
   return fake
 }
 
+// The Section starts folded, and remembers being opened for the window's life.
 async function list() {
-  const heading = await screen.findByRole('heading', { name: 'Licences you confirmed', level: 3 })
-  return within(heading.parentElement!)
+  const region = await screen.findByRole('region', { name: 'Licences' })
+  const fold = within(region).getByRole('button', { name: 'Licences' })
+  if (fold.getAttribute('aria-expanded') === 'false') await userEvent.click(fold)
+  return within(region)
 }
 
 const updates = (fake: ReturnType<typeof makeFakeApi>) =>

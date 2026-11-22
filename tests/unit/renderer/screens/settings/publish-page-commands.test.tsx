@@ -49,7 +49,7 @@ const group = (name: string) => screen.getByRole('group', { name })
 
 async function addKey(label: string) {
   const box = group(label)
-  await click(box, 'Add')
+  await click(box, 'Add key')
   await userEvent.type(within(box).getByLabelText(`New ${label}`), 'made-up-key')
   await click(box, 'Save')
 }
@@ -81,7 +81,7 @@ const CASES: Case[] = [
     false,
     async () => {
       await openRow(group('Approvals'), 'Approvals')
-      await click(group('Service API key'), 'Delete')
+      await click(group('Service API key'), 'Delete key')
     },
     { name: 'approvals.apiKey' },
   ],

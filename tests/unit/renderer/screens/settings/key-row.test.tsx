@@ -18,13 +18,13 @@ async function typeKey(fake: ReturnType<typeof makeFakeApi>) {
   const { store } = await renderApp(<SettingsScreen />, fake)
   store.getState().subscribe()
   const row = screen.getByRole('group', { name: 'Google Gemini API key' })
-  await userEvent.click(within(row).getByRole('button', { name: 'Add' }))
+  await userEvent.click(within(row).getByRole('button', { name: 'Add key' }))
   await userEvent.type(within(row).getByLabelText('New Google Gemini API key'), TYPED)
   return row
 }
 
 describe('settings key row: the typed key leaves the page before the row says saved [R-10]', () => {
-  it('no input holds the typed key while the row says "Saved, ends in"', async () => {
+  it('no input holds the typed key while the row says "•••WXYZ"', async () => {
     const fake = makeFakeApi()
     let reply: (r: Result<unknown>) => void = () => undefined
     fake.onCommand('secret.set', () => new Promise((resolve) => (reply = resolve)))
@@ -34,7 +34,7 @@ describe('settings key row: the typed key leaves the page before the row says sa
     // The main process saves and announces the new state before the command reply arrives.
     fake.setState(baseState({ secrets: [{ name: 'gemini.apiKey', lastFour: 'WXYZ' }] }))
     act(() => fake.emit('app.stateChanged', {}))
-    expect(await within(row).findByText('Saved, ends in WXYZ')).toBeInTheDocument()
+    expect(await within(row).findByText('•••WXYZ')).toBeInTheDocument()
     expect(holdsTyped(row)).toBe(false)
     expect(document.body.innerHTML).not.toContain(TYPED)
 

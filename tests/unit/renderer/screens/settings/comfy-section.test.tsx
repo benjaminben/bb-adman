@@ -14,14 +14,15 @@ describe('settings: the ComfyUI address [SPEC 14 1.41 TP-3]', () => {
     const { fake } = comfyFake()
     await renderApp(<SettingsScreen />, fake)
     const box = await section()
-    expect(await within(box).findByText(ADDRESS)).toBeInTheDocument()
+    expect(await within(box).findByDisplayValue(ADDRESS)).toBeInTheDocument()
     expect(fake.queries.some((q) => q.name === 'comfy.getInfo')).toBe(true)
   })
 
   it('says no address is saved when there is none, and Check is disabled', async () => {
     await renderApp(<SettingsScreen />, comfyFake(info({ address: null })).fake)
     const box = await section()
-    expect(await within(box).findByText('No address saved.')).toBeInTheDocument()
+    expect(await within(box).findByText('Not set')).toBeInTheDocument()
+    expect(within(box).getByLabelText('Server address')).toHaveValue('')
     expect(within(box).getByRole('button', { name: 'Check' })).toBeDisabled()
     expect(within(box).queryByRole('button', { name: 'Remove' })).toBeNull()
   })
@@ -35,7 +36,7 @@ describe('settings: the ComfyUI address [SPEC 14 1.41 TP-3]', () => {
     await userEvent.click(within(box).getByRole('button', { name: 'Save' }))
     const sent = fake.commands.filter((c) => c.name.startsWith('comfy.'))
     expect(sent).toEqual([{ name: 'comfy.setAddress', input: { address: 'http://10.0.0.7:8188' } }])
-    expect(await within(box).findByText('http://10.0.0.7:8188')).toBeInTheDocument()
+    expect(await within(box).findByDisplayValue('http://10.0.0.7:8188')).toBeInTheDocument()
     expect(within(box).getByRole('button', { name: 'Check' })).toBeEnabled()
   })
 
@@ -48,24 +49,26 @@ describe('settings: the ComfyUI address [SPEC 14 1.41 TP-3]', () => {
     }))
     await renderApp(<SettingsScreen />, fake)
     const box = await section()
-    await within(box).findByText(ADDRESS)
+    await within(box).findByDisplayValue(ADDRESS)
     await userEvent.type(within(box).getByLabelText('Server address'), 'ftp://x')
     await userEvent.click(within(box).getByRole('button', { name: 'Save' }))
     const field = within(box).getByLabelText('Server address')
     expect(await within(box).findByText(sentence)).toBeInTheDocument()
     expect(field).toHaveAccessibleDescription(sentence)
-    expect(within(box).getByText(ADDRESS)).toBeInTheDocument()
+    expect(field).toHaveValue(`${ADDRESS}ftp://x`)
+    expect(within(box).getByRole('button', { name: 'Remove' })).toBeInTheDocument()
   })
 
   it('Remove sends null', async () => {
     const { fake, setInfo } = comfyFake()
     await renderApp(<SettingsScreen />, fake)
     const box = await section()
-    await within(box).findByText(ADDRESS)
+    await within(box).findByDisplayValue(ADDRESS)
     setInfo(info({ address: null }))
     await userEvent.click(within(box).getByRole('button', { name: 'Remove' }))
     expect(fake.commands).toContainEqual({ name: 'comfy.setAddress', input: { address: null } })
-    expect(await within(box).findByText('No address saved.')).toBeInTheDocument()
+    expect(await within(box).findByText('Not set')).toBeInTheDocument()
+    expect(within(box).getByLabelText('Server address')).toHaveValue('')
   })
 
   it('Save contacts nothing: it sends no check', async () => {
@@ -79,7 +82,7 @@ describe('settings: the ComfyUI address [SPEC 14 1.41 TP-3]', () => {
 
   it('has no axe violations', async () => {
     await renderApp(<SettingsScreen />, comfyFake().fake)
-    await within(await section()).findByText(ADDRESS)
+    await within(await section()).findByDisplayValue(ADDRESS)
     expect(await axeViolations()).toEqual([])
   })
 })
@@ -91,14 +94,14 @@ describe('settings: the ComfyUI privacy note [SPEC 14 1.48 TL-1; 6.10.10]', () =
   it('shows the note word for word when no address is saved', async () => {
     await renderApp(<SettingsScreen />, comfyFake(info({ address: null })).fake)
     const box = await section()
-    await within(box).findByText('No address saved.')
+    await within(box).findByText('Not set')
     expect(within(box).getByText(NOTE)).toBeInTheDocument()
   })
 
   it('shows the same note, without the address, when one is saved', async () => {
     await renderApp(<SettingsScreen />, comfyFake().fake)
     const box = await section()
-    await within(box).findByText(ADDRESS)
+    await within(box).findByDisplayValue(ADDRESS)
     const note = within(box).getByText(NOTE)
     expect(note.textContent).toBe(NOTE)
     expect(note.textContent).not.toContain(ADDRESS)

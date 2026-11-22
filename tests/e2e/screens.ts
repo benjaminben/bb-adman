@@ -207,14 +207,14 @@ export async function openSettings(page: Page): Promise<Locator> {
 export async function saveAddress(comfy: Locator, address: string): Promise<void> {
   await comfy.getByLabel('Server address').fill(address)
   await comfy.getByRole('button', { name: 'Save' }).click()
-  await expect(comfy.getByText('No address saved.')).toBeHidden()
+  await expect(comfy.getByLabel('Server address')).toHaveValue(address)
   await expect(comfy.getByRole('button', { name: 'Remove' })).toBeVisible()
 }
 
-// Check, and wait for the server's version line.
+// Check, and wait for the header's "Connected" mark (the version is in its tip).
 export async function checkServer(comfy: Locator, timeout = 60_000): Promise<void> {
   await comfy.getByRole('button', { name: 'Check' }).click()
-  await expect(comfy.getByText(/^The server answered: ComfyUI /)).toBeVisible({ timeout })
+  await expect(comfy.getByText('Connected', { exact: true })).toBeVisible({ timeout })
 }
 
 // Exact, because one workflow's label can begin another's (the two MOSS labels).

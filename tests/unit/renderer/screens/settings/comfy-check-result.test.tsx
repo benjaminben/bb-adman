@@ -35,7 +35,7 @@ async function pressCheck(check: ComfyCheck, start = info()) {
   const { fake, setInfo } = comfyFake(start, check)
   await renderApp(<SettingsScreen />, fake)
   const box = await screen.findByRole('region', { name: 'ComfyUI server' })
-  await within(box).findByText(ADDRESS)
+  await within(box).findByDisplayValue(ADDRESS)
   await userEvent.click(within(box).getByRole('button', { name: 'Check' }))
   return { fake, box, setInfo }
 }
@@ -52,7 +52,7 @@ describe('settings: the ComfyUI check [SPEC 14 1.41 TP-3, 6.10.9]', () => {
     fake.onCommand('comfy.check', () => new Promise((resolve) => (answer = resolve)))
     await renderApp(<SettingsScreen />, fake)
     const box = await screen.findByRole('region', { name: 'ComfyUI server' })
-    await within(box).findByText(ADDRESS)
+    await within(box).findByDisplayValue(ADDRESS)
     await userEvent.click(within(box).getByRole('button', { name: 'Check' }))
     expect(within(box).getByText('Checking…')).toBeInTheDocument()
     expect(within(box).getByRole('button', { name: 'Check' })).toBeDisabled()
@@ -100,13 +100,15 @@ describe('settings: the ComfyUI check [SPEC 14 1.41 TP-3, 6.10.9]', () => {
   it('shows the note of an ok reply', async () => {
     const note = 'The server is newer than the one these workflows were checked with.'
     const { box } = await pressCheck({ outcome: 'ok', version: '9.0.0', note, workflows: [] })
-    expect(await within(box).findByText(note)).toBeInTheDocument()
+    expect(
+      await within(box).findByTitle(`The server answered: ComfyUI 9.0.0 ${note}`),
+    ).toBeInTheDocument()
   })
 
   it('no_answer shows its sentence with the address filled in', async () => {
     const { box } = await pressCheck({ outcome: 'no_answer', workflows: [] })
     const sentence = `Nothing answered at ${ADDRESS}. Check that ComfyUI is running and the address is right.`
-    expect(await within(box).findByText(sentence)).toBeInTheDocument()
+    expect(await within(box).findByText(sentence, { selector: 'p' })).toBeInTheDocument()
   })
 
   const others: Array<[ComfyCheckOutcome, string]> = [
@@ -124,7 +126,7 @@ describe('settings: the ComfyUI check [SPEC 14 1.41 TP-3, 6.10.9]', () => {
   ]
   it.each(others)('%s shows its sentence', async (outcome, sentence) => {
     const { box } = await pressCheck({ outcome, workflows: [] })
-    expect(await within(box).findByText(sentence)).toBeInTheDocument()
+    expect(await within(box).findByText(sentence, { selector: 'p' })).toBeInTheDocument()
   })
 
   it('draws a licence note as text', async () => {

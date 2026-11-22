@@ -1,0 +1,15 @@
+/* app-style */
+/* The ComfyUI server's address line (SET-2): the field takes the room left by its buttons. */
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-inline);
+}
+.line > input {
+  flex: 1;
+  min-width: 0;
+}
+.privacy {
+  margin: 0;
+}

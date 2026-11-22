@@ -1,28 +1,24 @@
 /* app-style */
-/* A key is one list row (spec/app-style.md "Settings"): the name on the left, its state as a
-   badge, the buttons at the right end; rows are parted by a line, as table rows are. The
-   legend floats so it lays out in the row instead of on the border. */
+/* A key is one ObjectRow (SET-2): the key icon, the name, its mark, and at the right end the
+   one action, or the password field with Save and Cancel while it is being typed. */
 .row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-3);
-  align-items: center;
-  min-height: var(--row-height);
   min-width: 0;
-  margin: 0;
-  padding: var(--space-2) 0;
-  border: 0;
-  border-top: var(--border-width) solid var(--color-line);
 }
-.row > legend {
-  float: left;
-  flex: 1;
-  padding: 0;
-  font-weight: var(--weight-bold);
+/* A provider not yet available: the whole row is faded and has no buttons. */
+.soon {
+  opacity: var(--opacity-disabled);
 }
-.row > form,
-.row > div {
-  margin-left: auto;
+/* Keeps "Add key" in its own colours (the row draws bare state buttons muted). */
+.add {
+  display: flex;
+}
+.form {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}
+.form > input {
+  min-height: var(--control-height-small);
 }
 .visuallyHidden {
   position: absolute;

@@ -102,7 +102,7 @@ describe('settings: approvals service [AP-10]', () => {
   it('the key is saved with secret.set and shown by its last four', async () => {
     const { fake, box } = await section(approvalsState(null))
     const row = within(box).getByRole('group', { name: KEY_ROW })
-    await userEvent.click(within(row).getByRole('button', { name: 'Add' }))
+    await userEvent.click(within(row).getByRole('button', { name: 'Add key' }))
     const field = within(row).getByLabelText(`New ${KEY_ROW}`)
     expect(field).toHaveAttribute('type', 'password')
     await userEvent.type(field, 'made-up-approvals-key-K9QZ')
@@ -113,7 +113,7 @@ describe('settings: approvals service [AP-10]', () => {
     })
     fake.setState(approvalsState(null, [{ name: 'approvals.apiKey', lastFour: 'K9QZ' }]))
     act(() => fake.emit('app.stateChanged', {}))
-    expect(await within(row).findByText('Saved, ends in K9QZ')).toBeInTheDocument()
+    expect(await within(row).findByText('•••K9QZ')).toBeInTheDocument()
     expect(document.body.innerHTML).not.toContain('made-up-approvals-key-K9QZ')
   })
 
@@ -122,7 +122,7 @@ describe('settings: approvals service [AP-10]', () => {
       approvalsState(null, [{ name: 'approvals.apiKey', lastFour: 'K9QZ' }]),
     )
     const row = within(box).getByRole('group', { name: KEY_ROW })
-    await userEvent.click(within(row).getByRole('button', { name: 'Delete' }))
+    await userEvent.click(within(row).getByRole('button', { name: 'Delete key' }))
     expect(fake.commands).toContainEqual({
       name: 'secret.delete',
       input: { name: 'approvals.apiKey' },

@@ -1,0 +1,17 @@
+/* app-style */
+/* One inline row per job (SET-2): the short label on the left, the choice at its own width. */
+.label {
+  display: flex;
+  align-items: center;
+  font-size: var(--type-meta-size);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+.seg {
+  justify-self: start;
+}
+.one {
+  min-height: var(--control-height-small);
+  display: flex;
+  align-items: center;
+}

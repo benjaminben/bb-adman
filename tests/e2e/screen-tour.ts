@@ -17,19 +17,22 @@ export async function settingsTour(app: ElectronApplication, page: Page, box: Sa
   await screens.chooseSettingsPage(page, 'AI services')
 
   const row = page.getByRole('group', { name: 'Google Gemini API key' })
-  await row.getByRole('button', { name: 'Add' }).click()
+  await row.getByRole('button', { name: 'Add key' }).click()
   await row.getByLabel('New Google Gemini API key').fill('e2e-made-up-value-ABCD')
   await row.getByRole('button', { name: 'Save' }).click()
-  await expect(row.getByText('Saved, ends in ABCD')).toBeVisible()
-  await row.getByRole('button', { name: 'Replace' }).click()
+  await expect(row.getByText('•••ABCD')).toBeVisible()
+  await row.getByRole('button', { name: /Replace$/ }).click()
   await row.getByRole('button', { name: 'Cancel' }).click()
-  await expect(row.getByText('Saved, ends in ABCD')).toBeVisible()
-  await row.getByRole('button', { name: 'Delete' }).click()
+  await expect(row.getByText('•••ABCD')).toBeVisible()
+  await row.getByRole('button', { name: 'Delete key' }).click()
   await expect(row.getByText('Not set')).toBeVisible()
 
-  const image = page.getByLabel('Image generation')
-  await image.selectOption({ label: 'ComfyUI' })
-  await expect(image).toHaveValue('comfyui')
+  const image = page.getByRole('group', { name: 'Image generation' })
+  await image.getByRole('button', { name: 'ComfyUI' }).click()
+  await expect(image.getByRole('button', { name: 'ComfyUI' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
 }
 
 // Change location, Create, Close, Open project…, Recent projects, then the project home.

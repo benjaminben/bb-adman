@@ -20,9 +20,11 @@ export const TRANSLATED_POSTS = 6
 // Settings · Default AI providers: the fake provider for text, before any project is open.
 export async function chooseFakeText(page: Page): Promise<void> {
   await screens.openSettings(page)
-  const select = page.getByLabel('Text: briefs, copy and translation', { exact: true })
-  await select.selectOption({ label: 'Fake provider' })
-  await expect(select).toHaveValue('fake')
+  const fake = page
+    .getByRole('group', { name: 'Text: briefs, copy and translation' })
+    .getByRole('button', { name: 'Fake provider' })
+  await fake.click()
+  await expect(fake).toHaveAttribute('aria-pressed', 'true')
 }
 
 // The project, the brief form in en, de and ja with one more size, and the fan-out to the two

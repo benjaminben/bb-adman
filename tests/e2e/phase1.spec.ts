@@ -43,10 +43,10 @@ test('Phase 1: create, reopen from the command line, tabs, keys', async () => {
   // A saved key shows only its last four characters [R-10].
   await page.getByRole('button', { name: 'Settings' }).click()
   const row = page.getByRole('group', { name: 'Google Gemini API key' })
-  await row.getByRole('button', { name: 'Add' }).click()
+  await row.getByRole('button', { name: 'Add key' }).click()
   await row.getByLabel('New Google Gemini API key').fill('e2e-secret-key-WXYZ')
   await row.getByRole('button', { name: 'Save' }).click()
-  await expect(row.getByText('Saved, ends in WXYZ')).toBeVisible()
+  await expect(row.getByText('•••WXYZ')).toBeVisible()
   expect(await page.content()).not.toContain('e2e-secret-key-WXYZ')
   await app.close()
 

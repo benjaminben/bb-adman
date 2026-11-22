@@ -1,1 +1,1 @@
-export { KeyRow } from './key-row'
+export { KeyRow, SoonRow } from './key-row'

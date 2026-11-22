@@ -56,7 +56,7 @@ export async function removeAddress(page: Page): Promise<void> {
   await guardedStep('Remove the server address', async () => {
     const comfy = await screens.openSettings(page)
     await comfy.getByRole('button', { name: 'Remove' }).click()
-    await expect(comfy.getByText('No address saved.')).toBeVisible()
+    await expect(comfy.getByText('Not set', { exact: true })).toBeVisible()
   })
 }
 

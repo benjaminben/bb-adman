@@ -119,7 +119,7 @@ describe('settings: cloud storage, Amazon S3 [D-096, A-95]', () => {
   ] as const)('%s is added with secret.set and shown by its last four', async (name, label) => {
     const { fake, box } = await section(s3State(null))
     const row = within(box).getByRole('group', { name: label })
-    await userEvent.click(within(row).getByRole('button', { name: 'Add' }))
+    await userEvent.click(within(row).getByRole('button', { name: 'Add key' }))
     const field = within(row).getByLabelText(`New ${label}`)
     expect(field).toHaveAttribute('type', 'password')
     await userEvent.type(field, 'made-up-value-WXYZ')
@@ -130,7 +130,7 @@ describe('settings: cloud storage, Amazon S3 [D-096, A-95]', () => {
     })
     fake.setState(s3State(null, [{ name, lastFour: 'WXYZ' }]))
     act(() => fake.emit('app.stateChanged', {}))
-    expect(await within(row).findByText('Saved, ends in WXYZ')).toBeInTheDocument()
+    expect(await within(row).findByText('•••WXYZ')).toBeInTheDocument()
     expect(document.body.innerHTML).not.toContain('made-up-value-WXYZ')
   })
 
@@ -139,7 +139,7 @@ describe('settings: cloud storage, Amazon S3 [D-096, A-95]', () => {
       s3State(null, [{ name: 's3.secretAccessKey', lastFour: 'AB12' }]),
     )
     const row = within(box).getByRole('group', { name: 'Amazon S3 Secret access key' })
-    await userEvent.click(within(row).getByRole('button', { name: 'Delete' }))
+    await userEvent.click(within(row).getByRole('button', { name: 'Delete key' }))
     expect(fake.commands).toContainEqual({
       name: 'secret.delete',
       input: { name: 's3.secretAccessKey' },
