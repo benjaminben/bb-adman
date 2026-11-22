@@ -80,14 +80,14 @@ export type VariantReply = { variantId: string }
 // removing variants"). Every input is strict.
 const id = z.string().min(1)
 
-// formats is images only until Phase 7 (A-133). fits names each new size's background fit;
+// formats: image and, from Phase 7 (P7-23), video. fits names each new size's background fit;
 // the handler checks that it covers exactly the sizes of another pixel size.
 export const variantFanOutInput = projectScoped
   .extend({
     directionId: id,
     sizes: z.array(id).min(1),
     languages: z.array(id).min(1),
-    formats: z.array(z.literal('image')).min(1),
+    formats: z.array(z.enum(['image', 'video'])).min(1),
     fits: z.record(z.string(), FanOutFit),
   })
   .strict()
