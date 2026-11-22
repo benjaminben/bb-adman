@@ -1,9 +1,10 @@
 // Settings "Export" (P8-10, A-201, SET-3): picture format, JPG quality, frame rate and the
 // name written into reports, as inline fields. The Segmented groups save on click; the two
-// typed fields save when left or on Enter, after the same checks as before.
-import { useState } from 'react'
+// typed fields save when left or on Enter, after the same checks as before, then show "Saved"
+// (SET-6).
 import { useApp } from '@/renderer/app/app-context'
 import { Section } from '@/renderer/ui/section'
+import { SavedMark, onEnter, useSingleSave } from '@/renderer/screens/settings/saved-mark'
 import layout from '@/renderer/ui/layout.module.css'
 import { ReportNameField } from './report-name-field'
 import styles from './export-section.module.css'
@@ -74,33 +75,37 @@ function Segmented<T extends string | number>(props: {
 
 function QualityField(props: { saved: number }) {
   const command = useApp((s) => s.command)
-  const [quality, setQuality] = useState(String(props.saved))
+  const field = useSingleSave(String(props.saved), async (value) => {
+    const result = await command('settings.update', { export: { jpgQuality: Number(value) } })
+    return result.ok
+  })
 
   function save() {
-    const value = Number(quality)
+    const value = Number(field.text)
     if (!Number.isInteger(value) || value < 1 || value > 100) return
-    if (value === props.saved) return
-    void command('settings.update', { export: { jpgQuality: value } })
+    void field.save(String(value))
   }
 
   return (
     <div className={`${layout.field} ${layout.inline} ${styles.row}`}>
       <label htmlFor="export-quality">Quality</label>
-      <div className={`${layout.unitBox} ${styles.short}`}>
-        <input
-          id="export-quality"
-          type="number"
-          aria-label="JPG quality"
-          min={1}
-          max={100}
-          step={1}
-          value={quality}
-          onChange={(e) => setQuality(e.target.value)}
-          onBlur={save}
-          onKeyDown={(e) => e.key === 'Enter' && save()}
-        />
-        <span className={layout.unit}>%</span>
-      </div>
+      <SavedMark shown={field.saved}>
+        <div className={`${layout.unitBox} ${styles.short}`}>
+          <input
+            id="export-quality"
+            type="number"
+            aria-label="JPG quality"
+            min={1}
+            max={100}
+            step={1}
+            value={field.text}
+            onChange={(e) => field.type(e.target.value)}
+            onBlur={save}
+            onKeyDown={onEnter(save)}
+          />
+          <span className={layout.unit}>%</span>
+        </div>
+      </SavedMark>
     </div>
   )
 }

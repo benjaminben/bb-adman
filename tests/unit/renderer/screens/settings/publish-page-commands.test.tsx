@@ -92,9 +92,10 @@ const CASES: Case[] = [
     true,
     async () => {
       await openRow(group('Dropbox'), 'Dropbox')
-      await click(group('Dropbox'), 'Save folder')
+      const folder = within(group('Dropbox')).getByLabelText('Folder in the app folder')
+      await userEvent.type(folder, 'Spring ads{Enter}')
     },
-    { rootPath: '' },
+    { rootPath: 'Spring ads' },
   ],
   [
     'approvals.setService',

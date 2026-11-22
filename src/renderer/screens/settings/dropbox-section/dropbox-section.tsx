@@ -77,7 +77,7 @@ export function DropboxSection() {
       line={ABOUT}
       open={open}
       onToggle={signedIn ? () => setOpen(!open) : undefined}
-      form={signedIn && <DropboxFolder key={saved.rootPath} saved={saved.rootPath} />}
+      form={signedIn && <DropboxFolder saved={saved.rootPath} />}
     />
   )
 }

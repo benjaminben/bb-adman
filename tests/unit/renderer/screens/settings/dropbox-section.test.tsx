@@ -128,7 +128,7 @@ describe('settings: Dropbox, signed in [P9-6]', () => {
     expect(field).toHaveAttribute('placeholder', 'App folder')
     await userEvent.clear(field)
     await userEvent.type(field, ' Spring ads ')
-    await userEvent.click(within(box).getByRole('button', { name: 'Save folder' }))
+    await userEvent.type(field, '{Enter}')
     expect(sent(fake, 'storage.setDropboxFolder')).toEqual([
       { name: 'storage.setDropboxFolder', input: { rootPath: 'Spring ads' } },
     ])
@@ -143,7 +143,7 @@ describe('settings: Dropbox, signed in [P9-6]', () => {
     await openRow(box)
     const field = within(box).getByLabelText('Folder in the app folder')
     await userEvent.type(field, 'bad:name')
-    await userEvent.click(within(box).getByRole('button', { name: 'Save folder' }))
+    await userEvent.type(field, '{Enter}')
     expect(await within(box).findByRole('alert')).toHaveTextContent(text)
     expect(field).toHaveValue('bad:name')
   })

@@ -1,0 +1,9 @@
+/* app-style */
+/* A single-value field with its "Saved" mark after it (SET-6): the field keeps its own width and
+   the mark sits beside it on the same line. */
+.withMark {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  min-width: 0;
+}

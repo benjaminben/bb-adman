@@ -17,7 +17,7 @@
   width: calc(var(--control-height) * 3);
 }
 /* A name is short: the field stops at about thirty characters. */
-.name > input {
+.name input {
   width: 100%;
   max-width: calc(var(--control-height) * 10);
 }

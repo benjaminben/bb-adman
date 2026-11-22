@@ -64,7 +64,8 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
     await userEvent.click(sw)
     expect(sw).toBeDisabled()
     expect(within(box).getByRole('button', { name: 'Make a new token' })).toBeDisabled()
-    expect(within(box).getByRole('button', { name: 'Save port' })).toBeDisabled()
+    await userEvent.type(within(box).getByLabelText('Port'), '1{Enter}')
+    expect(fake.commands.filter((c) => c.name === 'settings.update')).toEqual([])
     await userEvent.click(sw)
     held.release({ ok: true, data: { enabled: true } })
     await waitFor(() => expect(sw).toBeEnabled())
@@ -80,7 +81,7 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
     await userEvent.type(field, '48000')
     const before = reads()
     setInfo(connect({ port: 48000, claudeCode: line(48000) }))
-    await userEvent.click(within(box).getByRole('button', { name: 'Save port' }))
+    await userEvent.type(field, '{Enter}')
     expect(fake.commands).toContainEqual({
       name: 'settings.update',
       input: { mcp: { port: 48000 } },
@@ -100,7 +101,7 @@ describe('settings: agent access commands [SPEC 4.2, 5.3, 6.8; 14 1.56 MCP-C]', 
     await userEvent.clear(field)
     await userEvent.type(field, '80')
     const before = reads()
-    await userEvent.click(within(box).getByRole('button', { name: 'Save port' }))
+    await userEvent.type(field, '{Enter}')
     expect(await within(box).findByText(sentence)).toBeInTheDocument()
     expect(field).toHaveAccessibleDescription(sentence)
     expect(reads()).toBe(before + 1)
