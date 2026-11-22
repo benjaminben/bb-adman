@@ -46,9 +46,7 @@ function plantStillOnly(filePath: string, variantId: string): void {
 
 async function closeProject(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Back to project' }).click()
-  const close = page.getByRole('button', { name: `Close ${NAME}` })
-  await close.click()
-  await expect(close).toHaveCount(0)
+  await screens.closeProject(page, NAME)
 }
 
 async function sendProgress(app: ElectronApplication, payload: object): Promise<void> {

@@ -63,7 +63,7 @@ async function editorWithPicture(s: Session) {
   await screens.answerOpenDialog(app, [BRIEF])
   await page.getByRole('button', { name: 'Load a brief' }).click()
   await page
-    .getByRole('region', { name: 'Brief' })
+    .getByRole('region', { name: 'New campaign' })
     .getByRole('button', { name: 'Create campaign' })
     .click()
   await expect(page.getByRole('list', { name: 'Variants' }).getByRole('listitem')).toHaveCount(1)

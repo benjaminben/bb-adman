@@ -61,7 +61,9 @@ test('P10-14 shots', async () => {
     layer_id: headline.id,
     patch: { style: { color: '#1F6FEB' } },
   })
-  await expect(v.tile(page, DIRECTION, GERMAN).getByText('Out of date')).toBeVisible()
+  await expect(
+    v.tile(page, DIRECTION, GERMAN).getByRole('button', { name: 'Out of date' }),
+  ).toBeVisible()
   await expect(line).toBeHidden({ timeout: 15_000 })
   await shot(page, '297-campaign-after-agent-edits')
 })
