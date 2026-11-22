@@ -18,12 +18,15 @@ import { assetCommands } from './commands/asset'
 import { briefCommands } from './commands/brief'
 import { campaignCommands } from './commands/campaign'
 import { checkCommands } from './commands/check'
+import { clipCommands } from './commands/clip'
 import { comfyCommands } from './commands/comfy'
 import { devCommands } from './commands/dev'
 import { directionCommands } from './commands/direction'
 import { exportCommands } from './commands/export'
 import { createExportDeps } from './export/deps'
 import type { ExportPictures } from './export/types'
+import { noMediaTool } from './media/no-media'
+import type { MediaTool } from './media/types'
 import { generationCommands } from './commands/generation'
 import { jobCommands } from './commands/job'
 import { languageFontCommands } from './commands/language-font'
@@ -73,6 +76,8 @@ export type CoreOptions = {
   drawScene?: DrawScene
   // P8-4's picture encoder over nativeImage; index.ts fills it.
   exportPictures?: ExportPictures
+  // P7-4's media tool over the fetched FFmpeg; index.ts fills it.
+  media?: MediaTool
 }
 
 const noBrowser = async (): Promise<void> => {
@@ -152,6 +157,7 @@ export function createCore(opts: CoreOptions) {
     approvals: createApprovalsDeps({ ...opts, deps: () => deps }),
     export: createExportDeps(() => deps),
     exportPictures: opts.exportPictures ?? noPictures,
+    media: opts.media ?? noMediaTool,
     appVersion: opts.appVersion,
     now,
     userDataDir: opts.userDataDir,
@@ -187,6 +193,7 @@ export function createCore(opts: CoreOptions) {
     ...briefCommands(deps),
     ...campaignCommands(deps),
     ...checkCommands(deps),
+    ...clipCommands(deps),
     ...comfyCommands(deps),
     ...devCommands(deps),
     ...directionCommands(deps),

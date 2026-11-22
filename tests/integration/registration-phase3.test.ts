@@ -26,7 +26,7 @@ describe('Phase 3 domains are registered [spec/structure.md]', () => {
     ]) {
       expect(layers).toContain(name)
     }
-    // P5-1 adds the six Phase 5 variant commands.
+    // P5-1 adds the six Phase 5 variant commands; P7-1 the two Phase 7 ones.
     expect(variantCommands(deps).map((h) => h.name)).toEqual([
       'variant.update',
       'variant.fanOut',
@@ -35,6 +35,8 @@ describe('Phase 3 domains are registered [spec/structure.md]', () => {
       'variant.remove',
       'variant.restore',
       'variant.restoreLayers',
+      'variant.setFormat',
+      'variant.setSound',
     ])
     expect(Object.keys(variantQueries(deps))).toEqual(['variant.get'])
     expect(Object.keys(renderQueries(deps))).toEqual(['thumbnail.get', 'variant.render'])

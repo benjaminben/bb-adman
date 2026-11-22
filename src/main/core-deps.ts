@@ -10,6 +10,7 @@ import type { JobService } from './jobs/types'
 import type { RenderService } from './thumbnails/types'
 import type { ApprovalsDeps } from './approvals/types'
 import type { ExportDeps, ExportPictures } from './export/types'
+import type { MediaTool } from './media/types'
 
 export type CoreDeps = {
   projects: ProjectRegistry
@@ -41,6 +42,8 @@ export type CoreDeps = {
   export: ExportDeps
   // JPG, stitching and shrinking over nativeImage (P8-4); index.ts fills it.
   exportPictures: ExportPictures
+  // FFmpeg behind one door (P7-4); noMediaTool until index.ts fills it.
+  media: MediaTool
   appVersion: string
   now: () => Date
   userDataDir: string

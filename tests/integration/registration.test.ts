@@ -47,6 +47,7 @@ describe('registering commands and queries [SPEC 12]', () => {
         'fitPicture',
         'jobs',
         'log',
+        'media',
         'now',
         'openExternal',
         'projects',

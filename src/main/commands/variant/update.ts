@@ -5,6 +5,7 @@ import { defineCommand } from '@/main/commands/types'
 import { bumpVariantRev } from '@/main/commands/variant-rev'
 import { AppError } from '@/shared/schemas/result'
 import { variantUpdateInput } from '@/shared/schemas/commands/variant'
+import { videoRefusal } from '@/shared/video/messages'
 
 export function variantUpdate(deps: CoreDeps) {
   return defineCommand({
@@ -12,6 +13,9 @@ export function variantUpdate(deps: CoreDeps) {
     input: variantUpdateInput,
     projectId: (input) => input.projectId,
     run(ctx, input) {
+      // P7-1: durationMs is P7-10's. The schema needs a title when there is no durationMs.
+      if (input.durationMs !== undefined || input.title === undefined)
+        throw videoRefusal('video_not_built')
       const db = ctx.project.db
       const row = db.prepare('SELECT title FROM variant WHERE id = ?').get(input.variantId) as
         { title: string } | undefined

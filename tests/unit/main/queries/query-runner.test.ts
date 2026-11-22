@@ -13,6 +13,7 @@ import type { SettingsStore } from '@/main/settings/settings-store'
 import type { SecretStore } from '@/main/secrets/secret-store'
 import type { ApprovalsDeps } from '@/main/approvals/types'
 import type { ExportDeps, ExportPictures } from '@/main/export/types'
+import { noMediaTool } from '@/main/media/no-media'
 
 let dir: string | undefined
 afterEach(() => {
@@ -61,6 +62,7 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
       approvals: {} as unknown as ApprovalsDeps,
       export: {} as unknown as ExportDeps,
       exportPictures: {} as unknown as ExportPictures,
+      media: noMediaTool,
       appVersion: '0.1.0',
       now: () => new Date(),
       userDataDir: dir,
