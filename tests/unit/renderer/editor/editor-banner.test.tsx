@@ -32,9 +32,15 @@ describe('EditorBanner layout line [P4-16]', () => {
     expect(onDismiss).toHaveBeenCalledOnce()
   })
 
-  it('with no layout line the other lines show as before', () => {
+  it('with no layout line the other lines show as before', async () => {
     render(<EditorBanner missingFile={false} overflowCount={1} layout={null} />)
-    expect(screen.getByRole('status')).toHaveTextContent(/^1 text layer does not fit its box\./)
-    expect(screen.queryByRole('button')).toBeNull()
+    expect(screen.getByRole('status')).toHaveTextContent(/^1 text does not fit$/)
+    expect(screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual([
+      'About fixing it',
+    ])
+    await userEvent.click(screen.getByRole('button', { name: 'About fixing it' }))
+    expect(
+      screen.getByText('Make the box larger, the text smaller, or shorten the text.'),
+    ).toBeVisible()
   })
 })

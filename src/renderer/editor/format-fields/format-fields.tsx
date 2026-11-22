@@ -1,10 +1,14 @@
-// P7-17 (spec/phases/phase-07-slices-2.md): in the editor's top bar, the radio group "Format"
-// ("Image", "Video") sends variant.setFormat, and a video's "Length (seconds)" sends
-// variant.update { durationMs }. The controls always show the stored values: a change shows once
-// project.changed brings it. A refusal shows its own sentence under the controls.
-import { useId, useState } from 'react'
+// P7-17 (spec/phases/phase-07-slices-2.md), drawn as ED-5 says: in the editor's top bar, the
+// group "Format" holds two icon segments, "Image" and "Video" (aria-pressed), that send
+// variant.setFormat; a click on the chosen one sends nothing, as the radios did. A video's
+// "Length (seconds)" sends variant.update { durationMs }. The controls always show the stored
+// values: a change shows once project.changed brings it. A refusal shows its own sentence under
+// the controls, in words.
+import { useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import type { VariantRow } from '@/shared/schemas/rows/variant'
+import { Icon, type IconName } from '@/renderer/ui/icon'
+import layout from '@/renderer/ui/layout.module.css'
 import { LengthField } from './length-field'
 import styles from './format-fields.module.css'
 
@@ -15,14 +19,13 @@ export type FormatFieldsProps = {
   variant: Pick<VariantRow, 'id' | 'format' | 'durationMs'>
 }
 
-const CHOICES: Array<{ value: Format; label: string }> = [
-  { value: 'image', label: 'Image' },
-  { value: 'video', label: 'Video' },
+const CHOICES: Array<{ value: Format; label: string; icon: IconName }> = [
+  { value: 'image', label: 'Image', icon: 'image' },
+  { value: 'video', label: 'Video', icon: 'film' },
 ]
 
 export function FormatFields({ projectId, variant }: FormatFieldsProps) {
   const api = useApi()
-  const id = useId()
   const [error, setError] = useState<string | null>(null)
 
   async function send(name: string, input: Record<string, unknown>): Promise<boolean> {
@@ -31,24 +34,26 @@ export function FormatFields({ projectId, variant }: FormatFieldsProps) {
     return result.ok
   }
 
+  function choose(format: Format) {
+    if (format !== variant.format) void send('variant.setFormat', { format })
+  }
+
   return (
     <div className={styles.fields}>
       <div className={styles.controls}>
-        <div role="radiogroup" aria-labelledby={`${id}-format`} className={styles.group}>
-          <span id={`${id}-format`} className={styles.label}>
-            Format
-          </span>
+        <div role="group" aria-label="Format" className={layout.seg}>
           {CHOICES.map((choice) => (
-            <label key={choice.value} className={styles.choice}>
-              <input
-                type="radio"
-                name={`${id}-format`}
-                value={choice.value}
-                checked={variant.format === choice.value}
-                onChange={() => void send('variant.setFormat', { format: choice.value })}
-              />
-              {choice.label}
-            </label>
+            <button
+              key={choice.value}
+              type="button"
+              className={layout.iconButton}
+              aria-label={choice.label}
+              title={choice.label}
+              aria-pressed={variant.format === choice.value}
+              onClick={() => choose(choice.value)}
+            >
+              <Icon name={choice.icon} />
+            </button>
           ))}
         </div>
         {variant.format === 'video' && (

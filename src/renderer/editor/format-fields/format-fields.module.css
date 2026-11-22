@@ -1,18 +1,18 @@
 /* app-style */
-/* P7-17: the format choice and a video's length, in the editor's top bar; a refusal below. */
+/* P7-17, ED-5: the format segments and a video's length, in the editor's top bar; a refusal
+   below in words. */
 .fields {
   display: flex;
+  flex: 0 1 auto;
   flex-direction: column;
   gap: var(--space-1);
   min-width: 0;
 }
 .controls {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-4);
 }
-.group,
 .length {
   display: flex;
   align-items: center;
@@ -23,17 +23,12 @@
   font-weight: var(--weight-medium);
   color: var(--color-text-secondary);
 }
-.choice {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
+.box {
+  height: var(--control-height-small);
   font-size: var(--font-size-control);
 }
-.input {
+.box > input {
   width: auto;
-  padding: 0 var(--space-2);
-  font-size: var(--font-size-control);
-  font-variant-numeric: tabular-nums;
 }
 .error {
   margin: 0;

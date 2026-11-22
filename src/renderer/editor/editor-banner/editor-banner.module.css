@@ -13,6 +13,9 @@
   flex: 1;
   margin: 0;
 }
+.short {
+  margin: 0;
+}
 .spin {
   display: flex;
   animation: spin var(--motion-spin) linear infinite;
@@ -23,6 +26,9 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .short {
+    margin: 0;
+  }
   .spin {
     animation: none;
   }

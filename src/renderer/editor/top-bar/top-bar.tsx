@@ -1,16 +1,18 @@
-// spec/editor.md, "Top bar": the title with Rename, the Master mark, the size line, and Undo
-// and Redo for the variant's own list [FR-095]. Mod+Z and Mod+Shift+Z press the same buttons.
-// P4-16 (spec/screens-ai.md, "Place text with AI"): "Place text with AI…", disabled with its
-// hint when no visible text layer has copy, and disabled while its run for the variant is going.
-// LK-6 ("Layout…"): a slot after it for the layout button.
-// P7-17: the format choice and, for a video, its length, after the size line.
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+// spec/editor.md, "Top bar", as ED-5 (spec/phases/design-wave-screens-a.md) draws it on one
+// line: the title as a button named "Rename {title}" (a click or F2 opens the title field), the
+// Master mark, a size chip, the Format choice, then icon buttons that keep their names: "Place
+// text with AI…" (P4-16; disabled with its hint as title and description when no visible text
+// layer has copy, and while its run for the variant is going), the "Layout…" slot (LK-6), Undo
+// and Redo for the variant's own list [FR-095]. Mod+Z and Mod+Shift+Z press Undo and Redo.
+import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import { FormatFields } from '@/renderer/editor/format-fields'
 import { NO_TEXT_HINT } from '@/renderer/editor/layout-run'
 import { useEditorKey } from '@/renderer/editor/use-editor-key'
-import { Icon } from '@/renderer/ui/icon'
+import { Icon, type IconName } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
+import { StatusMark } from '@/renderer/ui/status-mark'
+import { TitleField } from './title-field'
 import styles from './top-bar.module.css'
 
 export type TopBarProps = {
@@ -28,42 +30,34 @@ export type TopBarProps = {
   layout?: ReactNode
 }
 
-const QUIET = `${layout.quiet} ${layout.small}`
-
-export function sizeLine(v: VariantSummary): string {
-  return `${v.sizeLabel} · ${v.width} × ${v.height} px · ${v.language} · ${v.format}`
+type ToolProps = {
+  name: string
+  icon: IconName
+  disabled: boolean
+  onClick: () => void
+  hint?: { id: string; words: string }
 }
 
-function TitleField(props: { title: string; onDone: (title: string | null) => void }) {
-  const field = useRef<HTMLInputElement>(null)
-  const [value, setValue] = useState(props.title)
-  useEffect(() => field.current?.focus(), [])
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Escape') {
-      event.preventDefault()
-      props.onDone(null)
-    }
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      props.onDone(value.trim())
-    }
-  }
+function Tool({ name, icon, disabled, onClick, hint }: ToolProps) {
   return (
-    <input
-      ref={field}
-      className={styles.field}
-      aria-label="Variant title"
-      value={value}
-      onChange={(event) => setValue(event.target.value)}
-      onKeyDown={onKeyDown}
-    />
+    <button
+      type="button"
+      className={layout.iconButton}
+      aria-label={name}
+      title={hint?.words ?? name}
+      aria-describedby={hint?.id}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <Icon name={icon} />
+    </button>
   )
 }
 
 export function TopBar(props: TopBarProps) {
   const { variant } = props
   const [renaming, setRenaming] = useState(false)
-  const renameButton = useRef<HTMLButtonElement>(null)
+  const titleButton = useRef<HTMLButtonElement>(null)
   const hintId = useId()
   useEditorKey('undo', props.onUndo, props.canUndo)
   useEditorKey('redo', props.onRedo, props.canRedo)
@@ -71,60 +65,60 @@ export function TopBar(props: TopBarProps) {
   async function done(title: string | null) {
     if (title && title !== variant.title && !(await props.onRename(title))) return
     setRenaming(false)
-    requestAnimationFrame(() => renameButton.current?.focus())
+    requestAnimationFrame(() => titleButton.current?.focus())
   }
 
+  function onTitleKey(event: KeyboardEvent<HTMLButtonElement>) {
+    if (event.key !== 'F2') return
+    event.preventDefault()
+    setRenaming(true)
+  }
+
+  const hint = props.canPlaceText ? undefined : { id: hintId, words: NO_TEXT_HINT }
   return (
     <header className={styles.bar}>
       <div className={styles.name}>
         {renaming ? (
           <TitleField title={variant.title} onDone={(title) => void done(title)} />
         ) : (
-          <>
-            <h3 className={styles.title}>{variant.title}</h3>
+          <h3 className={styles.title}>
             <button
-              ref={renameButton}
+              ref={titleButton}
               type="button"
-              className={QUIET}
+              className={`${layout.quiet} ${styles.titleButton}`}
+              aria-label={`Rename ${variant.title}`}
               onClick={() => setRenaming(true)}
+              onKeyDown={onTitleKey}
             >
-              Rename
+              <span className={styles.titleWords}>{variant.title}</span>
+              <span className={styles.pencil}>
+                <Icon name="pencil" size="small" />
+              </span>
             </button>
-          </>
+          </h3>
         )}
-        {variant.isMaster && (
-          <span className={`${layout.badge} ${layout.accent}`}>
-            <Icon name="star" size="small" />
-            Master
-          </span>
-        )}
+        {variant.isMaster && <StatusMark tone="accent" icon="star" label="Master" tip="Master" />}
+        <span className={layout.chip} title={`${variant.sizeLabel} · ${variant.language}`}>
+          {variant.width} × {variant.height}
+        </span>
       </div>
-      <p className={styles.line}>{sizeLine(variant)}</p>
       <FormatFields projectId={props.projectId} variant={variant} />
       <div className={styles.actions}>
-        <button
-          type="button"
-          disabled={!props.canPlaceText || props.placing}
-          aria-describedby={props.canPlaceText ? undefined : hintId}
+        <Tool
+          name="Place text with AI…"
+          icon="sparkle"
+          disabled={!props.canPlaceText || props.placing === true}
           onClick={props.onPlaceText}
-        >
-          <Icon name="sparkle" size="small" />
-          Place text with AI…
-        </button>
-        {!props.canPlaceText && (
-          <span id={hintId} className={styles.hint}>
-            {NO_TEXT_HINT}
+          hint={hint}
+        />
+        {hint && (
+          <span id={hint.id} className={styles.hidden}>
+            {hint.words}
           </span>
         )}
         {props.layout}
-        <button type="button" className={QUIET} disabled={!props.canUndo} onClick={props.onUndo}>
-          <Icon name="undo" size="small" />
-          Undo
-        </button>
-        <button type="button" className={QUIET} disabled={!props.canRedo} onClick={props.onRedo}>
-          <Icon name="redo" size="small" />
-          Redo
-        </button>
+        <Tool name="Undo" icon="undo" disabled={!props.canUndo} onClick={props.onUndo} />
+        <Tool name="Redo" icon="redo" disabled={!props.canRedo} onClick={props.onRedo} />
       </div>
     </header>
   )

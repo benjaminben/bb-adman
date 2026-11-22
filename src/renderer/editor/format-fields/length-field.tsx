@@ -1,8 +1,9 @@
-// P7-17: "Length (seconds)", a number with one decimal from 0.5 to 86,400. Enter or leaving the
-// field sends it once; Escape puts the stored value back. Text that is not a number goes back
+// P7-17: "Length (seconds)", shown as "Length" with the unit "s" inside the box (ED-5), a number
+// with one decimal from 0.5 to 86,400. Enter or leaving the field sends it once; Escape puts the stored value back. Text that is not a number goes back
 // to the stored value and sends nothing; a number out of range is brought inside it.
 import { useId, useState, type KeyboardEvent } from 'react'
 import { MAX_DURATION_MS, MIN_DURATION_MS } from '@/shared/schemas/commands/variant'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './format-fields.module.css'
 
 export type LengthFieldProps = {
@@ -65,19 +66,22 @@ export function LengthField(props: LengthFieldProps) {
   return (
     <div className={styles.length}>
       <label className={styles.label} htmlFor={id}>
-        Length (seconds)
+        Length
       </label>
-      <input
-        id={id}
-        className={styles.input}
-        type="text"
-        inputMode="decimal"
-        size={7}
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-        onKeyDown={onKeyDown}
-        onBlur={() => void save()}
-      />
+      <span className={`${layout.unitBox} ${styles.box}`}>
+        <input
+          id={id}
+          aria-label="Length (seconds)"
+          type="text"
+          inputMode="decimal"
+          size={5}
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          onKeyDown={onKeyDown}
+          onBlur={() => void save()}
+        />
+        <span className={layout.unit}>s</span>
+      </span>
     </div>
   )
 }

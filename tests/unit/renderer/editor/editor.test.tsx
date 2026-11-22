@@ -41,14 +41,13 @@ describe('Editor [spec/editor.md "The editor screen"]', () => {
     expect(asked(fake, 'variant.get')).toEqual([{ projectId: P, variantId: V }])
     expect(screen.getByRole('heading', { name: 'Master post' })).toBeInTheDocument()
     expect(screen.getByText('Master')).toBeInTheDocument()
-    expect(screen.getByText('4:5 · 1080 × 1350 px · en · image')).toBeInTheDocument()
+    expect(screen.getByText('1080 × 1350')).toHaveAttribute('title', '4:5 · en')
     const rows = [...document.querySelectorAll('[data-layer-row]')]
     expect(rows).toHaveLength(3)
     expect(rows[0]).toHaveAccessibleName(/^Logo\s*Empty$/)
     expect(rows[1]).toHaveAccessibleName('Headline')
     expect(rows[2]).toHaveAccessibleName(/^Background\s*Stays at the bottom$/)
     expect(screen.getByText('Select a layer')).toBeInTheDocument()
-    expect(screen.getByText('1080 × 1350 px')).toBeInTheDocument()
   })
 
   it('selects by click on the canvas: topmost layer, else the background; the backdrop clears', async () => {
@@ -122,10 +121,10 @@ describe('Editor [spec/editor.md "The editor screen"]', () => {
 
   it('renames the variant: Enter saves with variant.update, Escape cancels', async () => {
     const { fake } = await open()
-    await userEvent.click(screen.getByRole('button', { name: 'Rename' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Rename / }))
     await userEvent.keyboard('{Escape}')
     expect(sent(fake, 'variant.update')).toEqual([])
-    await userEvent.click(screen.getByRole('button', { name: 'Rename' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Rename / }))
     const field = screen.getByRole('textbox', { name: 'Variant title' })
     await userEvent.clear(field)
     await userEvent.type(field, 'Summer post{Enter}')
@@ -144,7 +143,7 @@ describe('Editor [spec/editor.md "The editor screen"]', () => {
     [
       'one text layer that does not fit',
       { assets: [assetRow('A1')], overflow: true },
-      '1 text layer does not fit its box. Make the box larger, the text smaller, or shorten the text.',
+      '1 text does not fit',
     ],
   ])('banner: %s', async (_case, given, words) => {
     const layers = [variantGet().layers[0]!, { ...HEADLINE, overflow: given.overflow }, LOGO]
@@ -155,7 +154,7 @@ describe('Editor [spec/editor.md "The editor screen"]', () => {
   it('says how many text layers do not fit when there are several', async () => {
     const second = { ...HEADLINE, id: 'L3', name: 'Offer', z: 3, overflow: true }
     await open(variantGet({ layers: [{ ...HEADLINE, overflow: true }, second] }))
-    expect(screen.getByRole('status')).toHaveTextContent(/^2 text layers do not fit their box\./)
+    expect(screen.getByRole('status')).toHaveTextContent(/^2 texts do not fit$/)
   })
 
   it('shows no banner when nothing is wrong', async () => {

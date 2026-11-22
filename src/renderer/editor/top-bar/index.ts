@@ -1,1 +1,1 @@
-export { TopBar, sizeLine, type TopBarProps } from './top-bar'
+export { TopBar, type TopBarProps } from './top-bar'
