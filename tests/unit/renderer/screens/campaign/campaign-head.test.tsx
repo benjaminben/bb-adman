@@ -145,3 +145,21 @@ describe('the campaign head row [CAMP-3]', () => {
     expect(await axeViolations()).toEqual([])
   })
 })
+
+// Z-1b fix 2: a long refresh failure must not squeeze the campaign's name. Its words stay in
+// full on the page, on their own line under the head row, outside the row itself.
+describe('a long refresh failure [Z-1b]', () => {
+  const LONG = `${OFFLINE} The service answered with an error, so the counts shown may be old.`
+
+  it('sits in full under the head row, not inside it beside the name', async () => {
+    await drawRow({ failure: LONG })
+    const words = screen.getByText(LONG)
+    expect(words).toBeVisible()
+    expect(words).toHaveTextContent(LONG)
+    const row = screen.getByRole('heading', { name: 'Summer Splash', level: 2 }).parentElement
+    expect(row).not.toBeNull()
+    expect(row).not.toContainElement(words)
+    expect(row?.parentElement).toContainElement(words)
+    expect(screen.getByRole('group', { name: 'Approval link' })).not.toContainElement(words)
+  })
+})

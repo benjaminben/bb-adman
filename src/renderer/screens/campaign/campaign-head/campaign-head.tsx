@@ -4,9 +4,9 @@
 // the approvals button and Refresh (AP-11); "Export…" (P8-11); a More menu with "Reports…",
 // which opens the reports dialog (CAMP-6's useReports); "Publish…" (P9-13), the one primary;
 // "Assets" as an icon button (R2C-5, drawn only inside its scope). Each opens its dialog and
-// sends nothing itself.
+// sends nothing itself. Z-1b: a refresh failure is drawn in full on its own line under the row.
 import { AssetsButton } from '@/renderer/screens/assets/assets-button'
-import { ApprovalBar } from '@/renderer/screens/campaign/approval-bar'
+import { ApprovalBar, ApprovalFailure } from '@/renderer/screens/campaign/approval-bar'
 import { CampaignExport } from '@/renderer/screens/campaign/campaign-export'
 import { PublishButton } from '@/renderer/screens/campaign/publish-button'
 import { useReports } from '@/renderer/screens/campaign/report-list'
@@ -32,39 +32,46 @@ export function CampaignHead(props: CampaignHeadProps) {
   const reports = useReports(projectId, campaignId)
   const reportsItem = { id: 'reports', label: 'Reports…', icon: 'book' as const }
   return (
-    <div className={styles.head}>
-      <button
-        type="button"
-        className={layout.iconButton}
-        aria-label="Back to project"
-        title="Back to project"
-        onClick={props.onBack}
-      >
-        <Icon name="left" />
-      </button>
-      {data && <h2 className={styles.name}>{data.campaign.name}</h2>}
-      {props.paid && <PaidCount projectId={projectId} campaignId={campaignId} />}
-      {data && (
-        <ApprovalBar
-          projectId={projectId}
-          campaignId={campaignId}
-          store={props.approvals}
-          titles={Object.fromEntries(data.variants.map((v) => [v.id, v.title]))}
-        />
-      )}
-      <CampaignExport projectId={projectId} campaignId={campaignId} reports={false} />
-      {data && (
-        <MoreMenu label={data.campaign.name} items={[{ ...reportsItem, onChoose: reports.open }]} />
-      )}
-      {data && (
-        <PublishButton
-          projectId={projectId}
-          campaignId={campaignId}
-          campaignName={data.campaign.name}
-        />
-      )}
-      <AssetsButton projectId={projectId} icon glyph="box" />
-      {reports.dialog}
+    <div className={styles.top}>
+      <div className={styles.head}>
+        <button
+          type="button"
+          className={layout.iconButton}
+          aria-label="Back to project"
+          title="Back to project"
+          onClick={props.onBack}
+        >
+          <Icon name="left" />
+        </button>
+        {data && <h2 className={styles.name}>{data.campaign.name}</h2>}
+        {props.paid && <PaidCount projectId={projectId} campaignId={campaignId} />}
+        {data && (
+          <ApprovalBar
+            projectId={projectId}
+            campaignId={campaignId}
+            store={props.approvals}
+            titles={Object.fromEntries(data.variants.map((v) => [v.id, v.title]))}
+            failureApart
+          />
+        )}
+        <CampaignExport projectId={projectId} campaignId={campaignId} reports={false} />
+        {data && (
+          <MoreMenu
+            label={data.campaign.name}
+            items={[{ ...reportsItem, onChoose: reports.open }]}
+          />
+        )}
+        {data && (
+          <PublishButton
+            projectId={projectId}
+            campaignId={campaignId}
+            campaignName={data.campaign.name}
+          />
+        )}
+        <AssetsButton projectId={projectId} icon glyph="box" />
+        {reports.dialog}
+      </div>
+      {data && <ApprovalFailure store={props.approvals} className={styles.failure} />}
     </div>
   )
 }
