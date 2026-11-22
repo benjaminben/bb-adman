@@ -16,6 +16,11 @@ import { checkLicence } from '@/main/commands/generation/licence-check'
 import { keptPictureCount, picturesLeft } from '@/shared/generation/pictures-left'
 import { promptToSend } from '@/shared/generation/prompt'
 import type { JobRow } from '@/shared/schemas/rows/job'
+import { AppError } from '@/shared/schemas/result'
+import type Database from 'better-sqlite3'
+import { withSyncTargets } from '@/main/translation/sync-result'
+import { groupsFor, planGroup } from '@/main/translation/targets'
+import { translationJobRequest } from '@/shared/schemas/jobs/translation'
 
 type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets'>
 
@@ -49,6 +54,30 @@ function retryRequest(old: JobRow): unknown {
   if (old.kind !== 'image_generation' || keptPictureCount(old.result) === 0) return request
   const { count } = imageJobRequest.parse(old.request)
   return { ...(request as object), count: picturesLeft(count, old.result) }
+}
+
+const nothingToTranslate = () =>
+  new AppError('RULE_VIOLATION', 'There is no text to translate.', {
+    reason: 'nothing_to_translate',
+  })
+
+// [P6-16, Phase 5 review] A translation row's request is built again from the file now, as
+// translation.propose builds it (planGroup): the master's text and the copy counters now. A
+// 'write' row keeps to the posts its targets were on; a 'sync' row takes the whole language.
+function translationRequest(db: Database.Database, old: JobRow): unknown {
+  const stored = translationJobRequest.safeParse(old.request)
+  if (!stored.success) throw nothingToTranslate()
+  const { mode, directionId, to: language } = stored.data
+  const [all] = groupsFor(db, { directionId, language })
+  const layerVariant = db.prepare('SELECT variant_id AS id FROM layer WHERE id = ?')
+  const posts = new Set(
+    stored.data.targets.map((t) => (layerVariant.get(t.layerId) as { id: string } | undefined)?.id),
+  )
+  const variantIds = (all?.variantIds ?? []).filter((id) => mode === 'sync' || posts.has(id))
+  const group = { directionId, language, variantIds }
+  const plan = planGroup(db, group, mode)
+  if (!plan) throw nothingToTranslate()
+  return (mode === 'sync' ? withSyncTargets(db, plan, group) : plan).request
 }
 
 export function jobRetry(deps: Deps) {
@@ -89,7 +118,8 @@ export function jobRetry(deps: Deps) {
         slot: old.slot,
         provider: old.provider,
         model: old.model ?? '',
-        request: retryRequest(old),
+        request:
+          old.kind === 'translation' ? translationRequest(ctx.project.db, old) : retryRequest(old),
         startedBy: 'user',
       })
       const data: JobStarted = { jobId }
