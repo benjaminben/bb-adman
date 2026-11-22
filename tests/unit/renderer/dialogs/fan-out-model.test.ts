@@ -5,8 +5,11 @@ import {
   fillCount,
   fitSizes,
   fitsToSend,
+  formatsToSend,
+  newCells,
   newPairs,
   startTicks,
+  translationCount,
   type FanOutBasis,
   type FanOutTicks,
 } from '@/renderer/dialogs/fan-out/fan-out-model'
@@ -110,5 +113,38 @@ describe("fan-out model: pairs, count and fits [P5-16, spec/screens-variants.md 
   it('counts the sizes with fill', () => {
     expect(fillCount({ '9x16': 'fill', '16x9': 'scale', '4x5': 'fill' })).toBe(2)
     expect(fillCount({})).toBe(0)
+  })
+})
+
+describe('fan-out model: formats [lows C, spec/data-rules.md fan-out step 7]', () => {
+  it.each([
+    ['image only, as newPairs', ['image'] as const, 4],
+    ['video only: every video is new but the one 16x9 de', ['video'] as const, 5],
+    ['image and video, each pair counted once per format', ['image', 'video'] as const, 9],
+    ['no format makes nothing', [] as const, 0],
+  ])('%s', (_name, formats, n) => {
+    const t = ticks(['9x16', '16x9'], ['de'])
+    expect(newCells(BASIS, t, formats)).toHaveLength(n)
+  })
+
+  it('lists the cells size by size, language by language, image before video', () => {
+    expect(newCells(BASIS, ticks([], ['de']), ['video', 'image'])).toEqual([
+      { sizeLabel: '1x1', language: 'en', format: 'video' },
+      { sizeLabel: '1x1', language: 'de', format: 'image' },
+      { sizeLabel: '1x1', language: 'de', format: 'video' },
+    ])
+  })
+
+  it('counts a translation for a language whose only new variants are videos', () => {
+    const deImage = { sizeLabel: '1x1', language: 'de', format: 'image' as const }
+    const basis = { ...BASIS, existing: [...BASIS.existing, deImage] }
+    expect(translationCount(basis, ticks([], ['de']))).toBe(0)
+    expect(translationCount(basis, ticks([], ['de']), ['image', 'video'])).toBe(1)
+  })
+
+  it('sends the ticked formats in the order image, video', () => {
+    expect(formatsToSend(['video', 'image'])).toEqual(['image', 'video'])
+    expect(formatsToSend(['video'])).toEqual(['video'])
+    expect(formatsToSend([])).toEqual([])
   })
 })

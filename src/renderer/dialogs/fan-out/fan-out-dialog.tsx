@@ -2,10 +2,11 @@
 // size's background fit, and for a fill the provider select and the paid line. Nothing is sent
 // before "Make variants"; no fill is started before variant.fanOut succeeds, and each goes to
 // the provider the select shows. From the click until the reply the dialog is locked and
-// cannot close; a refusal shows inside it (A-50). It sends images only (A-133). P6-15: the
+// cannot close; a refusal shows inside it (A-50). The ticked formats go in the order image,
+// video; at least one must be ticked (data-rules fan-out step 7). P6-15: the
 // line under it states the text calls with the Settings text provider, and the translation
 // jobs in the reply are registered under the campaign for the tab's close warning.
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { ProviderSelect } from '@/renderer/screens/campaign/provider-select'
 import { useComfyInfoState } from '@/renderer/screens/campaign/use-comfy-info'
@@ -17,10 +18,10 @@ import type { VariantFanOutReply } from '@/shared/schemas/commands/variant'
 import type { FanOutFit } from '@/shared/schemas/links'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
-import type { VariantGet } from '@/shared/schemas/queries/variant'
 import type { DirectionRow } from '@/shared/schemas/rows/direction'
 import { FitChoices, TickGroup, sizeName } from './fit-choices'
 import * as model from './fan-out-model'
+import { useHasPicture } from './use-has-picture'
 import styles from './fan-out.module.css'
 
 export type FanOutDialogProps = {
@@ -32,6 +33,10 @@ export type FanOutDialogProps = {
 }
 
 const NONE: ProviderInfo[] = []
+const FORMAT_ITEMS = [
+  { id: 'image', label: 'Image', fixed: false },
+  { id: 'video', label: 'Video', fixed: false },
+]
 
 // Image providers that can run now; ComfyUI only with an offered `extend` workflow.
 function fillProviders(providers: ProviderInfo[], info: ComfyInfo | null) {
@@ -43,23 +48,6 @@ function fillProviders(providers: ProviderInfo[], info: ComfyInfo | null) {
   }
 }
 
-// Whether the master's background shows a picture; null until variant.get answers.
-function useHasPicture(projectId: string, variantId: string): boolean | null {
-  const api = useApi()
-  const [picture, setPicture] = useState<boolean | null>(null)
-  useEffect(() => {
-    let live = true
-    void api.query('variant.get', { projectId, variantId }).then((r) => {
-      const layers = r.ok ? (r.data as VariantGet).layers : []
-      if (live) setPicture(layers.some((l) => l.type === 'background' && l.source !== null))
-    })
-    return () => {
-      live = false
-    }
-  }, [api, projectId, variantId])
-  return picture
-}
-
 export function FanOutDialog(props: FanOutDialogProps) {
   const { projectId, basis } = props
   const api = useApi()
@@ -68,6 +56,7 @@ export function FanOutDialog(props: FanOutDialogProps) {
   const comfy = useComfyInfoState()
   const picture = useHasPicture(projectId, props.direction.masterVariantId)
   const [ticks, setTicks] = useState(() => model.startTicks(basis))
+  const [ticked, setTicked] = useState<string[]>(['image'])
   const [chosen, setChosen] = useState<Record<string, FanOutFit>>({})
   const [picked, setPicked] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -75,7 +64,8 @@ export function FanOutDialog(props: FanOutDialogProps) {
 
   const fits = model.fitsToSend(basis, ticks, chosen, picture === true)
   const fills = model.fillCount(fits)
-  const count = model.newPairs(basis, ticks).length
+  const formats = model.formatsToSend(ticked)
+  const count = model.newCells(basis, ticks, formats).length
   const providers = fillProviders(app?.providers ?? NONE, comfy.info)
   const preferred = app?.settings.defaultProviders.image
   const provider =
@@ -84,7 +74,10 @@ export function FanOutDialog(props: FanOutDialogProps) {
     providers.list[0]
   const textId = app?.settings.defaultProviders.text
   const text = app?.providers.find((p) => p.id === textId && p.available && p.jobs.includes('text'))
-  const textLine = model.translationLine(model.translationCount(basis, ticks), text ?? null)
+  const textLine = model.translationLine(
+    model.translationCount(basis, ticks, formats),
+    text ?? null,
+  )
   const ready = picture !== null && count > 0 && (fills === 0 || provider !== undefined)
 
   async function send() {
@@ -92,7 +85,7 @@ export function FanOutDialog(props: FanOutDialogProps) {
     setBusy(true)
     setRefusal(null)
     const lists = model.fanOutLists(basis, ticks)
-    const input = { projectId, directionId: props.direction.id, ...lists, formats: ['image'], fits }
+    const input = { projectId, directionId: props.direction.id, ...lists, formats, fits }
     const reply = await command('variant.fanOut', input)
     setBusy(false)
     if (!reply.ok) return setRefusal(reply.error.message)
@@ -147,6 +140,13 @@ export function FanOutDialog(props: FanOutDialogProps) {
           disabled={busy}
           onChange={(languages) => setTicks({ ...ticks, languages })}
         />
+        <TickGroup
+          legend="Formats"
+          items={FORMAT_ITEMS}
+          ticked={ticked}
+          disabled={busy}
+          onChange={setTicked}
+        />
         {picture === true && (
           <FitChoices
             sizes={model.fitSizes(basis, ticks)}
@@ -172,7 +172,8 @@ export function FanOutDialog(props: FanOutDialogProps) {
         {fills > 0 && provider === undefined && <p>No provider can do this yet.</p>}
         {textLine !== null && <p className={styles.line}>{textLine}</p>}
         <p className={styles.line}>{`This makes ${count} variant(s).`}</p>
-        {count === 0 && <p className={layout.muted}>Nothing new to make.</p>}
+        {formats.length === 0 && <p className={layout.muted}>Choose at least one format.</p>}
+        {formats.length > 0 && count === 0 && <p className={layout.muted}>Nothing new to make.</p>}
         {refusal !== null && (
           <p role="alert" className={`${layout.notice} ${layout.danger}`}>
             <Icon name="alert" size="small" />

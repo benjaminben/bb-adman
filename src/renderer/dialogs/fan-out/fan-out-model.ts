@@ -1,6 +1,6 @@
 // spec/screens-variants.md, "Fan-out"; spec/links-and-sync.md, "Fan-out": what the dialog
-// sends and counts. The master's size and language are always in. A pair the direction already
-// has as an image is not made again (Phase 5 sends images only, A-133). A fit is sent for each
+// sends and counts. The master's size and language are always in. A size, language and format
+// the direction already has is not made again (step 7: image and video). A fit is sent for each
 // listed size whose pixel size differs from the master's, and for no other; with no background
 // picture on the master each is `scale`. And the text-call line (P6-15). Pure.
 import type { CampaignSize } from '@/shared/schemas/commands/campaign'
@@ -19,6 +19,12 @@ export type FanOutTicks = { sizes: string[]; languages: string[] }
 
 export type FanOutPair = { sizeLabel: string; language: string }
 
+export type FanOutFormat = 'image' | 'video'
+
+export type FanOutCell = FanOutPair & { format: FanOutFormat }
+
+const FORMATS: FanOutFormat[] = ['image', 'video']
+
 export function startTicks(basis: FanOutBasis): FanOutTicks {
   return { sizes: [basis.master.sizeLabel], languages: [basis.master.language] }
 }
@@ -34,18 +40,39 @@ export function fanOutLists(basis: FanOutBasis, ticks: FanOutTicks): FanOutTicks
   }
 }
 
-// The pairs the call would make: an empty list when there is no size or no language to send.
-export function newPairs(basis: FanOutBasis, ticks: FanOutTicks): FanOutPair[] {
+export function formatsToSend(ticked: readonly string[]): FanOutFormat[] {
+  return FORMATS.filter((f) => ticked.includes(f))
+}
+
+// The variants the call would make, as variant.fanOut counts them: each size, language and
+// ticked format the direction does not have yet. Empty with no size, language or format.
+export function newCells(
+  basis: FanOutBasis,
+  ticks: FanOutTicks,
+  formats: readonly FanOutFormat[],
+): FanOutCell[] {
   const lists = fanOutLists(basis, ticks)
   if (lists.sizes.length === 0 || lists.languages.length === 0) return []
   const sizes = [...new Set([basis.master.sizeLabel, ...lists.sizes])]
   const languages = [...new Set([basis.master.language, ...lists.languages])]
-  const has = (p: FanOutPair) =>
+  const has = (c: FanOutCell) =>
     basis.existing.some(
-      (v) => v.format === 'image' && v.sizeLabel === p.sizeLabel && v.language === p.language,
+      (v) => v.format === c.format && v.sizeLabel === c.sizeLabel && v.language === c.language,
     )
-  const pairs = sizes.flatMap((sizeLabel) => languages.map((language) => ({ sizeLabel, language })))
-  return pairs.filter((p) => !has(p))
+  const cells = sizes.flatMap((sizeLabel) =>
+    languages.flatMap((language) =>
+      formatsToSend(formats).map((format) => ({ sizeLabel, language, format })),
+    ),
+  )
+  return cells.filter((c) => !has(c))
+}
+
+// The image pairs the call would make.
+export function newPairs(basis: FanOutBasis, ticks: FanOutTicks): FanOutPair[] {
+  return newCells(basis, ticks, ['image']).map(({ sizeLabel, language }) => ({
+    sizeLabel,
+    language,
+  }))
 }
 
 export function fitSizes(basis: FanOutBasis, ticks: FanOutTicks): CampaignSize[] {
@@ -74,10 +101,14 @@ export function fillCount(fits: Readonly<Record<string, FanOutFit>>): number {
 }
 
 // P6-15: the fan-out starts at most one translation job per new language other than the
-// master's, which is the campaign's main language. So the count may overstate the paid
-// requests (brief copy or no key starts none) but never understates them.
-export function translationCount(basis: FanOutBasis, ticks: FanOutTicks): number {
-  const languages = newPairs(basis, ticks).map((p) => p.language)
+// master's, which is the campaign's main language, whatever the formats. So the count may
+// overstate the paid requests (brief copy or no key starts none) but never understates them.
+export function translationCount(
+  basis: FanOutBasis,
+  ticks: FanOutTicks,
+  formats: readonly FanOutFormat[] = ['image'],
+): number {
+  const languages = newCells(basis, ticks, formats).map((c) => c.language)
   return new Set(languages.filter((l) => l !== basis.master.language)).size
 }
 
