@@ -1,6 +1,26 @@
 /* app-style */
-/* The new project card (spec/app-style.md "Start screen"): its buttons sit under the fields,
-   with room above them. */
+/* The new project form on the start screen (design/audit/spec-start.md "Right half"): the
+   name field, the location line, then the two large buttons on one row. */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.location {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-2);
+  align-items: center;
+}
+.location > :first-child {
+  grid-column: 1 / -1;
+}
+.where {
+  font-size: var(--font-size-small);
+}
+.change {
+  align-self: start;
+}
 .actions {
   flex-wrap: wrap;
   margin-top: var(--space-2);

@@ -1,10 +1,13 @@
-// New project: a name, and a location that starts as the default from Settings (FR-004).
-import { useState, type FormEvent } from 'react'
+// New project: a name, and a location that starts as the default from Settings (FR-004). On
+// the start screen's right half (design/audit/spec-start.md) it has no card; the screen's
+// other button (Open project…) comes in as children and sits beside Create project.
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { useApi, useApp, pickPath } from '@/renderer/app/app-context'
+import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './new-project-form.module.css'
 
-export function NewProjectForm() {
+export function NewProjectForm(props: { children?: ReactNode }) {
   const api = useApi()
   const command = useApp((s) => s.command)
   const defaultDir = useApp((s) => s.app?.settings.defaultProjectDir ?? '')
@@ -24,8 +27,7 @@ export function NewProjectForm() {
   }
 
   return (
-    <form className={layout.card} onSubmit={(e) => void submit(e)}>
-      <h2>New project</h2>
+    <form className={styles.form} onSubmit={(e) => void submit(e)}>
       <div className={layout.field}>
         <label htmlFor="new-project-name">Project name</label>
         <input
@@ -36,21 +38,30 @@ export function NewProjectForm() {
           required
         />
       </div>
-      <div className={layout.field}>
+      <div className={styles.location}>
         <p id="new-project-location-label" className={layout.label}>
           Location
         </p>
-        <p className={layout.path} aria-labelledby="new-project-location-label">
+        <p
+          className={`${layout.path} ${layout.muted} ${styles.where}`}
+          aria-labelledby="new-project-location-label"
+        >
           {where}
         </p>
-      </div>
-      <div className={`${layout.row} ${styles.actions}`}>
-        <button type="button" onClick={() => void changeLocation()}>
+        <button
+          type="button"
+          className={`${layout.small} ${styles.change}`}
+          onClick={() => void changeLocation()}
+        >
           Change location
         </button>
-        <button type="submit" className={layout.primary}>
+      </div>
+      <div className={`${layout.row} ${styles.actions}`}>
+        <button type="submit" className={`${layout.primary} ${layout.large}`}>
+          <Icon name="plus" />
           Create project
         </button>
+        {props.children}
       </div>
     </form>
   )

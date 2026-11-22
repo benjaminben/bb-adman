@@ -67,9 +67,34 @@ describe('start screen [FR-002, FR-004]', () => {
     })
   })
 
-  it('says so when there are no recent projects', async () => {
+  it('leaves the Recent part out when there are no recent projects', async () => {
     await renderApp(<StartScreen />)
-    expect(screen.getByText('No recent projects yet.')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Recent' })).toBeNull()
+    expect(screen.queryByText(/No recent projects/)).toBeNull()
+  })
+
+  it('names recent projects without printing their paths [START-1]', async () => {
+    const { container } = await renderApp(
+      <StartScreen />,
+      makeFakeApi(baseState({ recentProjects: recent })),
+    )
+    expect(screen.getByRole('heading', { name: 'Recent' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Open Summer, /w/Summer.adman' })).toHaveAttribute(
+      'title',
+      '/w/Summer.adman',
+    )
+    expect(container.textContent).toContain('Summer')
+    expect(container.textContent).not.toContain('/w/')
+  })
+
+  it('shows the start picture as decoration only [START-1]', async () => {
+    const { container } = await renderApp(<StartScreen />)
+    const pictures = container.querySelectorAll('img')
+    expect(pictures.length).toBeGreaterThan(0)
+    for (const img of pictures) {
+      expect(img).toHaveAttribute('alt', '')
+      expect(img).toHaveAttribute('aria-hidden', 'true')
+    }
   })
 
   it('has no axe violations', async () => {

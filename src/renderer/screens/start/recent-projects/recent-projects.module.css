@@ -1,47 +1,41 @@
 /* app-style */
-/* Recent projects (spec/app-style.md "Start screen"): rows with a file icon, the name above
-   the path. */
-.listButton {
-  justify-content: flex-start;
-  gap: var(--space-3);
-  width: 100%;
-  height: auto;
-  margin-bottom: var(--space-1);
-  padding: var(--space-2) var(--space-3);
-  border-color: var(--color-line);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-soft);
-  font-weight: var(--weight-regular);
-  text-align: left;
-  transition:
-    border-color var(--motion-fast),
-    box-shadow var(--motion-fast);
-}
-.listButton:hover:not(:disabled) {
-  border-color: var(--color-border);
-  background: var(--color-surface-soft);
-  box-shadow: var(--shadow-1);
-}
-.fileIcon {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: var(--control-height);
-  height: var(--control-height);
-  border-radius: var(--radius);
-  background: var(--color-accent-soft);
-  color: var(--color-accent-ink);
-}
-.text {
+/* Recent projects (design/audit/spec-start.md "Right half"): a title, then plain rows of a
+   file icon and a name. Past six rows the list scrolls inside a box six rows tall. */
+.recent {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  gap: var(--space-2);
+}
+.title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+.rows {
+  max-height: calc(var(--row-height) * 6);
+  overflow-y: auto;
+}
+.row {
+  justify-content: flex-start;
+  width: 100%;
+  min-height: var(--row-height);
+  padding: 0 var(--space-2);
+  border-color: transparent;
+  background: transparent;
+  font-weight: var(--weight-regular);
+  text-align: left;
+  color: var(--color-text-secondary);
+}
+.row:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--color-surface);
 }
 .name {
-  font-weight: var(--weight-bold);
+  overflow: hidden;
+  min-width: 0;
   color: var(--color-text);
-}
-.path {
-  font-size: var(--font-size-small);
-  word-break: break-all;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
