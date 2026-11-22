@@ -106,6 +106,9 @@ describe('campaign.create [SPEC 4.2, 6.1, FR-023 to FR-026]', () => {
         createdBy: 'user',
         createdAt: TEST_NOW,
         agentChangedAt: null,
+        firstClipMade: false,
+        sound: 'clips',
+        soundAssetId: null,
       },
     ])
     expect(bus.rows('variant_subject')).toEqual([

@@ -2,7 +2,7 @@
 // when its extension is here and its first bytes match the type (src/main/assets/sniff.ts).
 // Every picker takes its list from here (SPEC 4.3).
 
-export type AssetKind = 'image' | 'video' | 'font' | 'text'
+export type AssetKind = 'image' | 'video' | 'font' | 'text' | 'audio'
 
 export type FileType = {
   // The signature sniff.ts checks the first bytes against.

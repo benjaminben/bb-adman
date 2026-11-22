@@ -79,6 +79,7 @@ export function writeSnapshot(ctx: ProjectContext, snapshot: VariantSnapshot): v
     .values({
       ...v,
       durationOverridden: v.durationOverridden ? 1 : 0,
+      firstClipMade: v.firstClipMade ? 1 : 0,
     })
     .run()
   ctx.changes.touch('variant', { id: v.id })
@@ -91,7 +92,11 @@ export function writeSnapshot(ctx: ProjectContext, snapshot: VariantSnapshot): v
   for (const clip of snapshot.clips) {
     orm
       .insert(schema.backgroundClip)
-      .values({ ...clip, placement: storedJson('background_clip', 'placement', clip.placement) })
+      .values({
+        ...clip,
+        placement: storedJson('background_clip', 'placement', clip.placement),
+        soundOn: clip.soundOn ? 1 : 0,
+      })
       .run()
     ctx.changes.touch('background_clip', { id: clip.id })
   }

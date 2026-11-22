@@ -44,7 +44,7 @@ export const asset = sqliteTable(
   },
   (t) => [
     check('asset_library', sql`${t.library} IN ('reference','asset')`),
-    check('asset_kind', sql`${t.kind} IN ('image','video','font','text')`),
+    check('asset_kind', sql`${t.kind} IN ('image','video','font','text','audio')`),
     check('asset_origin', sql`${t.origin} IN ('imported','generated')`),
     check('asset_storage', sql`${t.storage} IN ('linked','managed')`),
     index('asset_subject').on(t.subjectId),
