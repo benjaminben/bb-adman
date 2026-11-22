@@ -35,12 +35,17 @@ import { quietWindows } from './windows/quiet'
 import { createMediaTool } from './media/embed-details'
 import { ffmpegPath } from './media/ffmpeg-path'
 import { cancelDropboxSignIn } from './providers/dropbox/sign-in/session'
+import { runBridge } from './bridge/run-bridge'
+import { BRIDGE_FLAG, setBridgeLaunch } from './bridge/launch-command'
 
 if (process.env.ADMAN_USER_DATA_DIR) app.setPath('userData', process.env.ADMAN_USER_DATA_DIR)
+// P10-9: started with --mcp-bridge, the process is the bridge and nothing else: no window, no
+// lock, no listener (src/main/bridge/run-bridge.ts).
+const bridgeMode = process.argv.includes(BRIDGE_FLAG)
 // Test runs: no window on screen, and on macOS the app never becomes the front app.
 const quiet = quietWindows(process.env, app.isPackaged)
 if (quiet && process.platform === 'darwin') app.setActivationPolicy('accessory')
-registerAssetScheme(protocol)
+if (!bridgeMode) registerAssetScheme(protocol)
 
 let core: Core | null = null
 const pendingOpens: string[] = []
@@ -209,42 +214,53 @@ function start(): void {
   registerAssetProtocol(protocol, ready.projects)
   // Listens only while settings.mcp.enabled is on (SPEC 6.8); off on first run.
   void ready.mcp.startIfEnabled()
+  const execPath = process.execPath
+  setBridgeLaunch(
+    app.isPackaged
+      ? { execPath, packaged: true }
+      : { execPath, packaged: false, appPath: app.getAppPath() },
+  )
   const devTools = devToolsEnabled(app.isPackaged, process.env)
   setAppMenu(Menu, { platform: process.platform, appName: app.name, devTools })
   openAppWindow()
   for (const filePath of pendingOpens.splice(0)) void openFromSystem(filePath)
 }
 
-app.on('browser-window-focus', () =>
-  core?.projects.all().forEach((h) => void checkFiles(h.projectId)),
-)
+function startApp(): void {
+  app.on('browser-window-focus', () =>
+    core?.projects.all().forEach((h) => void checkFiles(h.projectId)),
+  )
 
-app.on('open-file', (event, filePath) => {
-  event.preventDefault()
-  void openFromSystem(filePath)
-})
+  app.on('open-file', (event, filePath) => {
+    event.preventDefault()
+    void openFromSystem(filePath)
+  })
 
-if (!app.requestSingleInstanceLock()) {
-  app.quit()
-} else {
-  app.on('second-instance', (_event, argv) => {
-    const filePath = projectPathFromArgv(argv)
-    if (filePath) void openFromSystem(filePath)
-    else mainWindow()
-  })
-  app.on('window-all-closed', () => app.quit())
-  app.on('before-quit', (event) => {
-    if (mustAsk()) {
-      event.preventDefault()
-      void askToQuit()
-      return
-    }
-    // Quitting closes the MCP listener and drops its sessions (SPEC 5.3).
-    void core?.mcp.stop()
-    cancelDropboxSignIn()
-    endRenderWindow()
-    endWebpDecoder()
-    core?.closeAll()
-  })
-  void app.whenReady().then(start)
+  if (!app.requestSingleInstanceLock()) {
+    app.quit()
+  } else {
+    app.on('second-instance', (_event, argv) => {
+      const filePath = projectPathFromArgv(argv)
+      if (filePath) void openFromSystem(filePath)
+      else mainWindow()
+    })
+    app.on('window-all-closed', () => app.quit())
+    app.on('before-quit', (event) => {
+      if (mustAsk()) {
+        event.preventDefault()
+        void askToQuit()
+        return
+      }
+      // Quitting closes the MCP listener and drops its sessions (SPEC 5.3).
+      void core?.mcp.stop()
+      cancelDropboxSignIn()
+      endRenderWindow()
+      endWebpDecoder()
+      core?.closeAll()
+    })
+    void app.whenReady().then(start)
+  }
 }
+
+if (bridgeMode) runBridge()
+else startApp()
