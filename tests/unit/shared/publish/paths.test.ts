@@ -101,17 +101,24 @@ describe('componentPath, each folder [P9-7, A-222]', () => {
   it.each([
     [
       name({ folder: 'backgrounds', ext: 'mp4' }),
-      'components/backgrounds/Bottle shot-01JD0000.mp4',
+      'components/backgrounds/Bottle shot-00000007.mp4',
     ],
-    [name({ folder: 'logos' }), 'components/logos/Bottle shot-01JD0000.png'],
-    [name({ folder: 'images', ext: 'jpg' }), 'components/images/Bottle shot-01JD0000.jpg'],
-    [name({ folder: 'fonts', ext: 'woff2' }), 'components/fonts/Bottle shot-01JD0000.woff2'],
+    [name({ folder: 'logos' }), 'components/logos/Bottle shot-00000007.png'],
+    [name({ folder: 'images', ext: 'jpg' }), 'components/images/Bottle shot-00000007.jpg'],
+    [name({ folder: 'fonts', ext: 'woff2' }), 'components/fonts/Bottle shot-00000007.woff2'],
     [
       name({ folder: 'subjects', subjectId: SUBJECT }),
-      `components/subjects/${SUBJECT}/Bottle shot-01JD0000.png`,
+      `components/subjects/${SUBJECT}/Bottle shot-00000007.png`,
     ],
   ])('builds %j', (c, path) => {
     expect(componentPath(c)).toBe(path)
+  })
+
+  it('takes the last 8 characters of the asset ID, so IDs of one moment differ [P9-9]', () => {
+    const first = componentPath(name({ assetId: '01JD000000AAAAAAAAAAAAAAAA' }))
+    const second = componentPath(name({ assetId: '01JD000000BBBBBBBBBBBBBBBB' }))
+    expect(first).toBe('components/images/Bottle shot-AAAAAAAA.png')
+    expect(second).toBe('components/images/Bottle shot-BBBBBBBB.png')
   })
 
   it.each([
@@ -171,7 +178,7 @@ describe('a hostile display name stays inside the campaign folder [P9-7, securit
     expect(parts).toHaveLength(f.subjectId ? 5 : 4)
     expect(parts.every(isSafePart)).toBe(true)
     expect(storageFilePath(full)).toBe(full)
-    expect(parts.at(-1)).toMatch(/^[A-Za-z0-9+\-_ ]{1,86}-01JD0000\.png$/)
+    expect(parts.at(-1)).toMatch(/^[A-Za-z0-9+\-_ ]{1,86}-00000007\.png$/)
   })
 })
 

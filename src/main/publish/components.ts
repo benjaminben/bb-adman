@@ -9,12 +9,18 @@ import type Database from 'better-sqlite3'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { readWireRows } from '@/main/db/rows'
 import { componentPath, isUlid } from '@/shared/publish/paths'
-import type { PublishComponent, PublishComponentFolder } from '@/shared/schemas/queries/publish'
+import type {
+  PublishComponent,
+  PublishComponentFolder,
+  PublishFontShare,
+} from '@/shared/schemas/queries/publish'
 import type { AssetRow } from '@/shared/schemas/rows/asset'
 import { checkComponentFile, isComponentKind, type ComponentKind } from './component-file'
 
 // remotePath is relative to the campaign folder; null when the file is not uploaded (a problem,
-// or a font not allowed to be shared). absPath is the checked file, null with a problem.
+// or a font the project file does not mark as shared). absPath is the checked file, null with a
+// problem. A font's `share` here is the project file's flag as a hint only (A-260): never
+// `confirmed`, which only the local consent list gives (font-consent.ts).
 export type CollectedComponent = PublishComponent & {
   remotePath: string | null
   absPath: string | null
@@ -101,9 +107,10 @@ async function componentOf(
   // A row of another kind (text, sound) is listed as the kind its use asks for, unfit.
   const kind = isComponentKind(row.kind) ? row.kind : use.font ? 'font' : 'image'
   const folder = folderOf(row, kind, use, required)
-  const shareAllowed = kind === 'font' ? row.fontPublishAllowed : null
+  const share: PublishFontShare | null =
+    kind !== 'font' ? null : row.fontPublishAllowed ? 'needs_confirming' : 'not_shared'
   const checked = await checkComponentFile(handle, row)
-  const base = { assetId: row.id, displayName: row.displayName, kind, folder, shareAllowed }
+  const base = { assetId: row.id, displayName: row.displayName, kind, folder, share }
   if ('problem' in checked) {
     return {
       ...base,
@@ -115,7 +122,7 @@ async function componentOf(
   }
   // The share rule holds for every font, whichever folder it is in.
   const remotePath =
-    shareAllowed === false
+    share === 'not_shared'
       ? null
       : componentPath({
           folder,
