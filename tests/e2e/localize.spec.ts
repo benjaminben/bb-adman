@@ -11,6 +11,7 @@
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
+import { showCampaignView } from './campaign-view-steps'
 import { makeSandbox, launch, type Sandbox } from './launch'
 import { appWindow } from './publish-steps'
 import * as l from './localize-steps'
@@ -51,6 +52,7 @@ test('Workflow 5.2: fan-out to sizes and languages, translations approved, sheet
   await l.localise(app, page, 'Lantern Bay')
 
   // Every new translation is proposed by the fake ("[{to}] {text}"); none is approved yet.
+  await showCampaignView(page, 'Translations')
   const german = await rowCount('German')
   const japanese = await rowCount('Japanese')
   await expect(l.rows(page, 'German')).toHaveCount(german)
@@ -63,6 +65,7 @@ test('Workflow 5.2: fan-out to sizes and languages, translations approved, sheet
   await l.typeFirst(page, 'German', LOUD)
   await l.approveAll(page, 'German', german)
   await l.approveAll(page, 'Japanese', japanese)
+  await showCampaignView(page, 'Variants')
   await expect(v.grid(page, l.DIRECTION).getByText('Translation not approved')).toHaveCount(0)
 
   // The sheet, saved where the dialog said, read back.
@@ -103,11 +106,13 @@ test('Workflow 5.2: fan-out to sizes and languages, translations approved, sheet
   await expect(l.warnedBlocks(page, 'Translations approved')).toHaveCount(0)
 
   // Every translation approved at the end.
+  await showCampaignView(page, 'Translations')
   for (const [language, n] of [
     ['German', german],
     ['Japanese', japanese],
   ] as const) {
     await expect(l.rows(page, language).getByText('Approved', { exact: true })).toHaveCount(n)
   }
+  await showCampaignView(page, 'Variants')
   await expect(v.grid(page, l.DIRECTION).getByText('Translation not approved')).toHaveCount(0)
 })

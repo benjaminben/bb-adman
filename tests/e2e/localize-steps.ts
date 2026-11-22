@@ -6,6 +6,7 @@
 // Made-up names only; only the fake provider runs, nothing is paid and nothing leaves the
 // computer.
 import { expect, type ElectronApplication, type Locator, type Page } from '@playwright/test'
+import { showCampaignView } from './campaign-view-steps'
 import * as screens from './screens'
 import * as v from './variants-steps'
 
@@ -54,6 +55,7 @@ export const rows = (page: Page, language: string): Locator =>
 
 // Types over the first row's text and leaves the field, as the user does.
 export async function typeFirst(page: Page, language: string, text: string): Promise<void> {
+  await showCampaignView(page, 'Translations')
   const field = rows(page, language).first().getByRole('textbox')
   await field.fill(text)
   await field.blur()
@@ -62,6 +64,7 @@ export async function typeFirst(page: Page, language: string, text: string): Pro
 }
 
 export async function approveAll(page: Page, language: string, count: number): Promise<void> {
+  await showCampaignView(page, 'Translations')
   await group(page, language)
     .getByRole('button', { name: `Approve all ${language}` })
     .click()
@@ -80,6 +83,7 @@ export async function answerSaveDialog(app: ElectronApplication, filePath: strin
 }
 
 export async function exportSheet(page: Page, fileName: string): Promise<void> {
+  await showCampaignView(page, 'Translations')
   await translations(page).getByRole('button', { name: 'Export translation sheet…' }).click()
   await expect(translations(page).getByText(`Saved ${fileName}.`)).toBeVisible()
 }
@@ -88,6 +92,7 @@ export async function exportSheet(page: Page, fileName: string): Promise<void> {
 // language, saved on leaving the field. Not exact: the label holds the field, so its words count
 // in the name.
 export async function setWords(page: Page, list: string, tag: string, words: string) {
+  await showCampaignView(page, 'Checks')
   const rules = page.getByRole('region', { name: 'Brand and legal rules' })
   const field = rules.getByLabel(`${list} (${tag})`)
   await field.fill(words)
@@ -99,6 +104,7 @@ export const checks = (page: Page): Locator => page.getByRole('region', { name: 
 
 // "Run checks", and the summary once every post is checked and current.
 export async function runChecks(page: Page, warnings: number): Promise<void> {
+  await showCampaignView(page, 'Checks')
   await checks(page).getByRole('button', { name: 'Run checks' }).click()
   const summary = `${POSTS} posts checked · ${warnings} with brand or legal warnings · 0 not checked since a change`
   await expect(checks(page).getByText(summary, { exact: true })).toBeVisible({ timeout: 30_000 })

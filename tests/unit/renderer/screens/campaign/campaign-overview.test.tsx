@@ -37,7 +37,12 @@ vi.mock('@/renderer/screens/campaign/translation-panel', () => ({
   TranslationPanel: panel('translations'),
 }))
 
-const warn: CheckResult = { checkId: 'text-colours', group: 'brand-legal', status: 'warn', findings: [] }
+const warn: CheckResult = {
+  checkId: 'text-colours',
+  group: 'brand-legal',
+  status: 'warn',
+  findings: [],
+}
 const state = (variantId: string, warnings: number, stale = false): VariantCheckState => ({
   variantId,
   rev: stale ? 3 : 2,

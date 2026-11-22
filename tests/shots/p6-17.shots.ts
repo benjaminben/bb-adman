@@ -6,6 +6,7 @@
 // The save dialog is answered in the main process, as p6-13.shots.ts does. Made-up names only.
 import { test, expect } from '@playwright/test'
 import path from 'node:path'
+import { showCampaignView } from '../e2e/campaign-view-steps'
 import * as l from '../e2e/localize-steps'
 import * as v from '../e2e/variants-steps'
 import { closeApp, openApp, shot, type Session } from './shot'
@@ -37,7 +38,9 @@ test('Workflow 5.2: the grid, a ja post, checks, the sheet, all approved', async
   await l.typeFirst(page, 'German', 'Kühl bleiben, Schluck für Schluck!')
   await l.setWords(page, 'Prohibited words', 'de', '!')
   await l.runChecks(page, 4)
+  await showCampaignView(page, 'Variants')
   await expect(v.grid(page, l.DIRECTION).getByText('Check warning')).toHaveCount(4)
+  await showCampaignView(page, 'Checks')
   await l.checks(page).scrollIntoViewIfNeeded()
   await page.waitForTimeout(500)
   await shot(page, '217-localise-checks-with-warnings')
@@ -51,7 +54,9 @@ test('Workflow 5.2: the grid, a ja post, checks, the sheet, all approved', async
   const japanese = await l.rows(page, 'Japanese').count()
   await l.approveAll(page, 'German', german)
   await l.approveAll(page, 'Japanese', japanese)
+  await showCampaignView(page, 'Variants')
   await expect(v.grid(page, l.DIRECTION).getByText('Translation not approved')).toHaveCount(0)
+  await showCampaignView(page, 'Translations')
   await l.translations(page).scrollIntoViewIfNeeded()
   await page.waitForTimeout(500)
   await shot(page, '219-localise-all-approved')

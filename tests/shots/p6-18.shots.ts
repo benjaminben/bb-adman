@@ -4,6 +4,7 @@
 // whose run dialog counts 2 paid requests. German, its posts and the second direction are added
 // through the window's api as a screen would. Made-up words only.
 import { test, expect, type Page } from '@playwright/test'
+import { showCampaignView } from '../e2e/campaign-view-steps'
 import * as screens from '../e2e/screens'
 import { closeApp, openApp, shot, type Session } from './shot'
 
@@ -95,6 +96,7 @@ test('Translate again counts one paid request per direction', async () => {
   await screens.loadBriefAndCreate(app, page)
   await setUp(page, { second: true, edit: null })
   await screens.openCampaign(page)
+  await showCampaignView(page, 'Translations')
   const panel = page.getByRole('region', { name: 'Translations' })
   const german = panel.getByRole('region', { name: /^German · / })
   await german.getByRole('button', { name: 'Translate German again…' }).click()

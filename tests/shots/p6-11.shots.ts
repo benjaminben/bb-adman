@@ -3,6 +3,7 @@
 // warnings. 204: an edit after the check marks the block "Changed since the last check.".
 // The rule set and the edit go through window.api, since the rule set panel is its own slice.
 import { test, expect, type Page } from '@playwright/test'
+import { showCampaignView } from '../e2e/campaign-view-steps'
 import * as screens from '../e2e/screens'
 import { command, query } from '../e2e/render-helpers'
 import { closeApp, openApp, shot, type Session } from './shot'
@@ -41,6 +42,7 @@ async function ids(page: Page) {
 const checks = (page: Page) => page.getByRole('region', { name: 'Checks' })
 
 async function runChecks(page: Page) {
+  await showCampaignView(page, 'Checks')
   await checks(page).getByRole('button', { name: 'Run checks' }).click()
   await expect(checks(page).getByText('Checking…')).toHaveCount(0)
 }

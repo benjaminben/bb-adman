@@ -3,6 +3,7 @@
 // colours, a required file and word lists are added for the filled one, each saved as it goes.
 import { test, expect, type Locator } from '@playwright/test'
 import path from 'node:path'
+import { showCampaignView } from '../e2e/campaign-view-steps'
 import * as screens from '../e2e/screens'
 import { closeApp, openApp, shot, type Session } from './shot'
 
@@ -38,6 +39,7 @@ test('The rule set panel, empty and filled', async () => {
     .getByRole('region', { name: 'Brief' })
     .getByRole('button', { name: 'Create campaign' })
     .click()
+  await showCampaignView(page, 'Checks')
   const rules = page.getByRole('region', { name: 'Brand and legal rules' })
   await expect(rules.getByLabel('Required words (en)')).toHaveValue('Alpine Spring')
 
