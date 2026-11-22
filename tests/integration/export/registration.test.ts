@@ -47,22 +47,6 @@ type CommandRow = {
 }
 const COMMANDS: CommandRow[] = [
   {
-    name: 'export.run',
-    input: {
-      campaignId: 'C1',
-      variantIds: ['V1'],
-      outputDir: '/nowhere/Exports',
-      imageFormat: 'png',
-      jpgQuality: 90,
-      fps: 30,
-      proceedDespiteWarnings: false,
-    },
-    answer: refusal('Export is not built yet.', 'export_not_built'),
-    policy: 'deny',
-    internal: false,
-    bad: { campaignId: 'C1', variantIds: [] },
-  },
-  {
     name: 'report.add',
     input: { campaignId: 'C1', outputDir: '/nowhere/Exports', report: sampleReport() },
     answer: refusal('report.add is not built yet.', 'not_built'),
