@@ -8,7 +8,8 @@ import * as screens from './screens'
 import { query } from './render-helpers'
 
 // The SP-5 brief through its form, with the Languages field typed over and more ready-made sizes
-// ticked ("16x9 (1920×1080)"), then "Create campaign": the campaign page opens.
+// turned on (HOME-3a: the size chip "16x9 (1920×1080)"), then "Create campaign": the campaign
+// page opens.
 export async function createFromForm(
   app: ElectronApplication,
   page: Page,
@@ -19,7 +20,11 @@ export async function createFromForm(
   const form = page.getByRole('region', { name: 'New campaign' })
   await screens.expectPhoto(form, 1, screens.E2E_PHOTO)
   if (change.languages) await form.getByLabel('Languages', { exact: true }).fill(change.languages)
-  for (const size of change.sizes ?? []) await form.getByRole('checkbox', { name: size }).check()
+  for (const size of change.sizes ?? []) {
+    const chip = form.getByRole('button', { name: size, exact: true })
+    if ((await chip.getAttribute('aria-pressed')) !== 'true') await chip.click()
+    await expect(chip).toHaveAttribute('aria-pressed', 'true')
+  }
   await form.getByRole('button', { name: 'Create campaign' }).click()
   await expect(page.getByRole('heading', { name: screens.E2E_CAMPAIGN, level: 2 })).toBeVisible()
 }
