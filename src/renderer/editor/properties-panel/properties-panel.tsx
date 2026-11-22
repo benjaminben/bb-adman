@@ -2,6 +2,7 @@
 // per component: Layer, Text and Box (text layers), Picture, Shade and Make pictures with AI
 // (image and background layers), Position and size. Sections are keyed by the layer, so an unsaved edit
 // or a refusal message does not carry over to another layer.
+import { AnimationFields } from '@/renderer/editor/animation-fields'
 import { FontField } from '@/renderer/editor/font-field'
 import { GeometryFields } from '@/renderer/editor/geometry-fields'
 import { LanguageFont } from '@/renderer/editor/language-font'
@@ -27,9 +28,11 @@ export type PropertiesPanelProps = {
   campaignId: string | null
   layer: LayerRow | null
   layers: LayerRow[]
-  // The variant's assets by ID and its size, for the Picture section. The editor passes both.
+  // The variant's assets by ID and its size, for the Picture section. The editor passes both,
+  // the variant itself as the canvas; a video ad's format and length give a text layer its
+  // Animation section (P7-19).
   assets?: Readonly<Record<string, PictureAsset>>
-  canvas?: { width: number; height: number }
+  canvas?: { width: number; height: number; format?: 'image' | 'video'; durationMs?: number }
   // Starts crop mode on the canvas for the layer; the editor passes it.
   onCrop?: (layerId: string) => void
 }
@@ -68,6 +71,13 @@ function Sections(props: SectionsProps) {
         <TextFields layer={layer} palette={props.palette} font={font} onUpdate={actions.update} />
       )}
       {font && <TextBoxFields layer={layer} palette={props.palette} onUpdate={actions.update} />}
+      {font && props.canvas?.format === 'video' && (
+        <AnimationFields
+          layer={layer}
+          durationMs={props.canvas.durationMs ?? 0}
+          onUpdate={actions.update}
+        />
+      )}
       {layer.type !== 'text' && (
         <PictureFields
           projectId={props.projectId}

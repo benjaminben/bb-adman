@@ -12,6 +12,8 @@ import { refusalOf, riskyKeys } from './layer-tools-fixture'
 import { replyJson, type ToolReply } from './tool-client'
 import { resetFakeBehaviour, setFakeBehaviour } from '@/main/providers/fake/behaviour'
 import { agentRunLimitMessage } from '@/main/commands/agent-run-gate'
+import { birefnetCutout } from '@/main/providers/comfyui/workflows/birefnet'
+import { licenceNotConfirmedMessage } from '@/shared/providers/messages'
 
 let r: RunSetUp | undefined
 afterEach(async () => {
@@ -168,5 +170,39 @@ describe('the published inputs of the AI tools [P10-5, S2-4]', () => {
       expect(row?.description).toContain('get_job')
     }
     expect(listed.find((t) => t.name === 'propose_layout')?.description).toContain('update_layers')
+  })
+
+  // P10-12 (security review of P10-5): BiRefNet ships with no licence note, so this case gives
+  // it one for its own length and puts the real one back after.
+  it('sending licence_confirmed: true to cut_out changes nothing: the licence refusal still comes back', async () => {
+    r = await runSetUp()
+    const x = r
+    const real = birefnetCutout.licence
+    const noted = { ...real, commercialNote: 'Needs a commercial licence' }
+    Object.defineProperty(birefnetCutout, 'licence', { value: noted, configurable: true })
+    try {
+      const args = {
+        project_id: x.projectId,
+        variant_id: AI_VARIANT,
+        layer_id: AI_PICTURE,
+        provider: 'comfyui',
+      }
+      const refusals = []
+      for (const extra of [{}, { licence_confirmed: true }, { licenceConfirmed: true }]) {
+        const reply = await x.s.call('cut_out', { ...args, ...extra })
+        expect(reply.isError).toBe(true)
+        refusals.push(refusalOf(reply))
+      }
+      expect(refusals[0]).toEqual({
+        code: 'INVALID_INPUT',
+        message: licenceNotConfirmedMessage('BiRefNet'),
+        details: { reason: 'licence_not_confirmed', workflow: 'birefnet-cutout' },
+      })
+      expect(refusals.slice(1)).toEqual([refusals[0], refusals[0]])
+      expect(x.f.jobs()).toEqual([])
+      expect(x.stand.seen.filter((q) => q.path === '/prompt')).toEqual([])
+    } finally {
+      Object.defineProperty(birefnetCutout, 'licence', { value: real, configurable: true })
+    }
   })
 })

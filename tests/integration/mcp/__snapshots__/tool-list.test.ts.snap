@@ -1888,6 +1888,97 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     "name": "delete_variant",
   },
   {
+    "description": "Write the text of one translated text layer (a variant not in the main language) of an open project. The text is saved as proposed, never approved: only the user approves. With apply_to_same_language, also the same layer in the other variants of the direction in that language, unless their copy is overridden. Gives the IDs of the layers written. The user can undo it.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "apply_to_same_language": {
+          "type": "boolean",
+        },
+        "layer_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "text": {
+          "maxLength": 5000,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "layer_id",
+        "text",
+        "apply_to_same_language",
+      ],
+      "type": "object",
+    },
+    "name": "set_translation",
+  },
+  {
+    "description": "Run the brand, legal and readiness checks on variants of an open project and store the results. Name either campaign_id or variant_ids (up to 1000), not both. Changes no layer and starts no run. Gives each variant's results: each check by name with pass, warn or skipped and its findings.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "campaign_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "variant_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+          },
+          "maxItems": 1000,
+          "minItems": 1,
+          "type": "array",
+        },
+      },
+      "required": [
+        "project_id",
+      ],
+      "type": "object",
+    },
+    "name": "run_checks",
+  },
+  {
+    "description": "Read the stored check results of variants of an open project. Name either campaign_id or variant_ids (up to 1000), not both. For each variant that has been checked: its results, when and by whom they were run, and stale when the variant changed since.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "campaign_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "variant_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+          },
+          "maxItems": 1000,
+          "minItems": 1,
+          "type": "array",
+        },
+      },
+      "required": [
+        "project_id",
+      ],
+      "type": "object",
+    },
+    "name": "get_check_results",
+  },
+  {
     "description": "Change one variant of an open project to "image" or "video". A change to video makes the first clip from the background's picture, once; a change back to image keeps the clips. It is refused when the direction already has a variant at the same size and language in that format. Gives the variant ID. The user can undo the change.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",

@@ -28,6 +28,9 @@ export const BUILT_TOOLS = [
   'delete_campaign',
   'add_variant',
   'delete_variant',
+  'set_translation',
+  'run_checks',
+  'get_check_results',
   'set_variant_format',
 ]
 

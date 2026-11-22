@@ -17,6 +17,11 @@
 .target {
   font-weight: var(--weight-medium);
 }
+/* What allowing costs: fixed app words, last in the body, just above the buttons. */
+.cost {
+  margin: var(--space-3) 0 0;
+  font-weight: var(--weight-medium);
+}
 .allow[aria-disabled='true'] {
   opacity: var(--opacity-disabled);
   cursor: default;

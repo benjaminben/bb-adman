@@ -1,0 +1,37 @@
+/* app-style */
+/* A layer's timing bar: a soft block across the time the layer is shown, its two ends as
+   resize handles. The animation blocks stand on it. */
+.bar {
+  position: absolute;
+  top: var(--space-1);
+  bottom: var(--space-1);
+  display: flex;
+  min-width: var(--space-3);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.bar[data-dragging] {
+  box-shadow: var(--shadow-2);
+}
+.handle {
+  flex: none;
+  width: var(--space-2);
+  background: var(--color-control-border);
+  cursor: ew-resize;
+  touch-action: none;
+}
+.body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+.bar[data-dragging] .body {
+  cursor: grabbing;
+}

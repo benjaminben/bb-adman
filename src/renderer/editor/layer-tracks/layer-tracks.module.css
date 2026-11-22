@@ -1,5 +1,6 @@
 /* app-style */
-/* One row per layer: the name under the layer list's width, the lane beside it. */
+/* One row per layer: the name under the layer list's width, the lane beside it. The lane is
+   the variant's length; the timing bar and the animation blocks stand on it by time. */
 .tracks {
   margin: 0;
   padding: 0;
@@ -21,5 +22,16 @@
   white-space: nowrap;
 }
 .lane {
+  position: relative;
+  overflow: hidden;
   background: var(--color-surface-soft);
+}
+.error {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-bg);
+  color: var(--color-danger-text);
+  font-size: var(--font-size-small);
 }

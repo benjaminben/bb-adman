@@ -11,7 +11,8 @@ import { connect, mcpFake } from './mcp-fixture'
 
 const LABEL = 'Let agents delete campaigns and variants without asking'
 const LINE =
-  'An agent can then delete work with no click from you. Deleting a campaign cannot be undone.'
+  'An agent can then delete work with no click from you. Deletes cannot be undone, and ' +
+  "deleting a variant clears its campaign's undo list."
 
 function withAuto(on: boolean) {
   const state = baseState()
