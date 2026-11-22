@@ -1,7 +1,7 @@
 // "Approval link" (spec/approvals.md "The approval link dialog"), on the dialog frame. Its
 // state comes from the campaign's approvals store: not ready, no link, a live link, or an
-// ended link. Every button that sends is disabled while a command runs, with "Working…" (or
-// "Updating the gallery…") beside them, and the frame cannot be closed meanwhile.
+// ended link. Every button that sends is disabled while a command runs, with "Working…" (or the
+// update's progress line and "Stop") beside them, and the frame cannot be closed meanwhile.
 import { useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import { APPROVALS_REASON_MESSAGES } from '@/shared/approvals/messages'
@@ -11,6 +11,7 @@ import { SignoffsByVariant } from './signoffs-by-variant'
 import { dateText } from '@/renderer/ui/signoff-list'
 import { LiveLink } from './live-link'
 import { NewLink } from './new-link'
+import { UpdateProgress } from './update-progress'
 import { useSend, type Sender } from './use-send'
 import styles from './approval-dialog.module.css'
 
@@ -27,11 +28,6 @@ export type ApprovalDialogProps = {
 const NOT_READY = {
   no_service: 'Set up the approvals service in Settings to make links.',
   no_bucket: APPROVALS_REASON_MESSAGES.approvals_needs_bucket,
-}
-
-function waitingLine(running: string | null): string | null {
-  if (running === null) return null
-  return running === 'approvals.publish' ? 'Updating the gallery…' : 'Working…'
 }
 
 function NotReady(props: { line: string; onClose: () => void }) {
@@ -89,7 +85,6 @@ function Body(props: ApprovalDialogProps & { sender: Sender }) {
 
 export function ApprovalDialog(props: ApprovalDialogProps) {
   const sender = useSend(props.projectId, props.campaignId)
-  const waiting = waitingLine(sender.running)
   return (
     <DialogFrame
       open={props.open}
@@ -100,7 +95,11 @@ export function ApprovalDialog(props: ApprovalDialogProps) {
       <div className={styles.body}>
         <Body {...props} sender={sender} />
       </div>
-      {waiting !== null && <p className={styles.waiting}>{waiting}</p>}
+      {sender.running === 'approvals.publish' ? (
+        <UpdateProgress projectId={props.projectId} campaignId={props.campaignId} />
+      ) : (
+        sender.running !== null && <p className={styles.waiting}>Working…</p>
+      )}
       {sender.refusal !== null && (
         <p role="alert" className={styles.alert}>
           {sender.refusal}
