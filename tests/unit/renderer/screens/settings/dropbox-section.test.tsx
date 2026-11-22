@@ -30,7 +30,7 @@ function refusal(reason: string, message: string): Result<unknown> {
 
 async function open(state: AppState) {
   const fake = makeFakeApi(state)
-  const { store } = await renderApp(<SettingsScreen />, fake)
+  const { store } = await renderApp(<SettingsScreen page="publish" />, fake)
   store.getState().subscribe()
   const box = await screen.findByRole('group', { name: 'Dropbox' })
   return { fake, box }

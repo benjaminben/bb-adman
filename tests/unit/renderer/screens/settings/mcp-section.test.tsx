@@ -16,7 +16,7 @@ const START_LINE = 'The MCP server could not start. Turn it off and on to try ag
 describe('settings: agent access states [SPEC 6.8; 14 1.56 MCP-C, 1.58 J-8, J-9, J-11]', () => {
   it('off: the switch is off, the port is shown, and no token or connect line is drawn', async () => {
     const { fake } = mcpFake(OFF)
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     const toggle = await within(box).findByRole('switch', { name: 'Turn on agent access' })
     expect(toggle).not.toBeChecked()
@@ -28,7 +28,7 @@ describe('settings: agent access states [SPEC 6.8; 14 1.56 MCP-C, 1.58 J-8, J-9,
 
   it('on and running: one Connect block with the Claude Code line, and no state line', async () => {
     const { fake } = mcpFake(connect())
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     expect(await within(box).findByRole('switch', { name: 'Turn on agent access' })).toBeChecked()
     const panel = within(box).getByRole('region', { name: 'Connect to Claude' })
@@ -41,7 +41,7 @@ describe('settings: agent access states [SPEC 6.8; 14 1.56 MCP-C, 1.58 J-8, J-9,
 
   it('on with the port taken: says so with the port number', async () => {
     const { fake } = mcpFake(connect({ running: false, problem: 'port_in_use' }))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     expect(await within(box).findByText(PORT_LINE)).toBeInTheDocument()
     expect(within(box).getByRole('switch', { name: 'Turn on agent access' })).toBeChecked()
@@ -54,7 +54,7 @@ describe('settings: agent access states [SPEC 6.8; 14 1.56 MCP-C, 1.58 J-8, J-9,
       token: null,
       claudeCode: null,
     })
-    await renderApp(<SettingsScreen />, mcpFake(info).fake)
+    await renderApp(<SettingsScreen page="agents" />, mcpFake(info).fake)
     const box = await section()
     expect(await within(box).findByText(TOKEN_LINE)).toBeInTheDocument()
     expect(within(box).getByRole('button', { name: 'Make a new token' })).toBeInTheDocument()
@@ -67,7 +67,7 @@ describe('settings: agent access states [SPEC 6.8; 14 1.56 MCP-C, 1.58 J-8, J-9,
       ok: false,
       error: { code: 'INTERNAL', message: 'Something went wrong.' },
     }))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     expect(within(box).queryByRole('switch')).toBeNull()
   })
@@ -77,7 +77,7 @@ describe('settings: agent access states [SPEC 6.8; 14 1.56 MCP-C, 1.58 J-8, J-9,
     const warn = vi.spyOn(console, 'warn')
     const error = vi.spyOn(console, 'error')
     const { fake } = mcpFake(connect())
-    const { store } = await renderApp(<SettingsScreen />, fake)
+    const { store } = await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     const panel = await within(box).findByRole('region', { name: 'Connect to Claude' })
     for (const el of Array.from(document.body.querySelectorAll('*'))) {
@@ -95,14 +95,14 @@ describe('settings: agent access states [SPEC 6.8; 14 1.56 MCP-C, 1.58 J-8, J-9,
   })
 
   it('has no axe violations when on and running', async () => {
-    await renderApp(<SettingsScreen />, mcpFake(connect()).fake)
+    await renderApp(<SettingsScreen page="agents" />, mcpFake(connect()).fake)
     await within(await section()).findByRole('region', { name: 'Connect to Claude' })
     expect(await axeViolations()).toEqual([])
   })
 
   it('on but the start failed: says to turn it off and on [SPEC 14 1.59 L-10]', async () => {
     const { fake } = mcpFake(connect({ running: false, problem: 'start_failed' }))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     expect(await within(box).findByText(START_LINE)).toBeInTheDocument()
     expect(within(box).getByRole('switch', { name: 'Turn on agent access' })).toBeChecked()
@@ -110,13 +110,16 @@ describe('settings: agent access states [SPEC 6.8; 14 1.56 MCP-C, 1.58 J-8, J-9,
   })
 
   it('has no axe violations with a state line', async () => {
-    await renderApp(<SettingsScreen />, mcpFake(connect({ problem: 'port_in_use' })).fake)
+    await renderApp(
+      <SettingsScreen page="agents" />,
+      mcpFake(connect({ problem: 'port_in_use' })).fake,
+    )
     await within(await section()).findByText(PORT_LINE)
     expect(await axeViolations()).toEqual([])
   })
 
   it('draws the toggle as a switch and keeps its role, name and checked state [ST-5]', async () => {
-    await renderApp(<SettingsScreen />, mcpFake(connect()).fake)
+    await renderApp(<SettingsScreen page="agents" />, mcpFake(connect()).fake)
     const box = await section()
     const toggle = await within(box).findByRole('switch', { name: 'Turn on agent access' })
     expect(toggle).toBeChecked()

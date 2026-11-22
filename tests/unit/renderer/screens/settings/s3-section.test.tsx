@@ -36,7 +36,7 @@ function s3State(
 
 async function section(state: AppState) {
   const fake = makeFakeApi(state)
-  const { store } = await renderApp(<SettingsScreen />, fake)
+  const { store } = await renderApp(<SettingsScreen page="publish" />, fake)
   store.getState().subscribe()
   const box = await screen.findByRole('region', { name: 'Cloud storage' })
   return { fake, box }
@@ -86,7 +86,7 @@ describe('settings: cloud storage, Amazon S3 [D-096, A-95]', () => {
         details: { reason: 'storage_not_supported' },
       },
     }))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="publish" />, fake)
     const box = await screen.findByRole('region', { name: 'Cloud storage' })
     await userEvent.type(within(box).getByLabelText('Bucket'), 'made-up-bucket')
     await userEvent.type(within(box).getByLabelText('Region'), 'cn-north-1')

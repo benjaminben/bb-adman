@@ -24,13 +24,13 @@ describe('settings: agent runs [spec/agent-runs.md, Settings block]', () => {
     ['a provider that makes no picture or video', false, provider({ id: 'words', jobs: ['text'] })],
     ['a paid provider', true, provider({ id: 'paid', local: false })],
   ])('offers a tick for %s: %s', async (_, shown, row) => {
-    await renderApp(<SettingsScreen />, agentRunsFake([row]))
+    await renderApp(<SettingsScreen page="agents" />, agentRunsFake([row]))
     const box = await section()
     expect(box.queryByRole('checkbox', { name: tickName(row.label) }) !== null).toBe(shown)
   })
 
   it('shows one tick for the base state, Google Gemini, with the paid line', async () => {
-    await renderApp(<SettingsScreen />)
+    await renderApp(<SettingsScreen page="agents" />)
     const box = await section()
     expect(box.getAllByRole('checkbox')).toHaveLength(1)
     expect(box.getByRole('checkbox', { name: tickName('Google Gemini') })).toBeInTheDocument()
@@ -39,7 +39,7 @@ describe('settings: agent runs [spec/agent-runs.md, Settings block]', () => {
 
   it('ticks and unticks with agentRuns.setAllowed, showing the saved state', async () => {
     const fake = agentRunsFake([COMFY])
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const tick = (await section()).getByRole('checkbox', { name: tickName('ComfyUI') })
     expect(tick).not.toBeChecked()
     await userEvent.click(tick)
@@ -54,7 +54,7 @@ describe('settings: agent runs [spec/agent-runs.md, Settings block]', () => {
 
   it('shows a saved tick as ticked', async () => {
     await renderApp(
-      <SettingsScreen />,
+      <SettingsScreen page="agents" />,
       agentRunsFake([COMFY], { agentRuns: { comfyui: { allowed: true } } }),
     )
     expect((await section()).getByRole('checkbox', { name: tickName('ComfyUI') })).toBeChecked()
@@ -65,7 +65,7 @@ describe('settings: agent runs [spec/agent-runs.md, Settings block]', () => {
     fake.onCommand('agentRuns.setAllowed', () =>
       refused('Agents cannot start runs with ComfyUI.', 'agent_runs_not_offered'),
     )
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     const tick = box.getByRole('checkbox', { name: tickName('ComfyUI') })
     await userEvent.click(tick)
@@ -76,7 +76,7 @@ describe('settings: agent runs [spec/agent-runs.md, Settings block]', () => {
 
   it('shows the limit, 1 to 16, and saves a change with agentRuns.setLimit', async () => {
     const fake = agentRunsFake([COMFY], { agentRunLimit: 6 })
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const field = (await section()).getByLabelText(LIMIT)
     expect(field).toHaveValue(6)
     expect(field).toHaveAttribute('min', '1')
@@ -89,7 +89,7 @@ describe('settings: agent runs [spec/agent-runs.md, Settings block]', () => {
   it("sends nothing for an empty limit field, and shows a refused limit's message", async () => {
     const fake = agentRunsFake([COMFY])
     fake.onCommand('agentRuns.setLimit', () => refused('Choose a limit from 1 to 16.'))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     const box = await section()
     const field = box.getByLabelText(LIMIT)
     fireEvent.change(field, { target: { value: '' } })
@@ -104,7 +104,7 @@ describe('settings: agent runs [spec/agent-runs.md, Settings block]', () => {
     async (on) => {
       const base = baseState().settings
       const fake = agentRunsFake([COMFY], { mcp: { ...base.mcp, enabled: on } })
-      await renderApp(<SettingsScreen />, fake)
+      await renderApp(<SettingsScreen page="agents" />, fake)
       const runs = await screen.findByRole('region', { name: 'Agent runs' })
       const access = screen.getByRole('region', { name: 'Agent access' })
       expect(access.compareDocumentPosition(runs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
@@ -112,7 +112,7 @@ describe('settings: agent runs [spec/agent-runs.md, Settings block]', () => {
   )
 
   it('has no axe problems', async () => {
-    await renderApp(<SettingsScreen />, agentRunsFake([COMFY]))
+    await renderApp(<SettingsScreen page="agents" />, agentRunsFake([COMFY]))
     await section()
     expect(await axeViolations()).toEqual([])
   })

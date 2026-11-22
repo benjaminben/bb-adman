@@ -11,7 +11,7 @@ const CLOUD = provider({ id: 'cloud', label: 'Cloud Pictures', local: false })
 describe('settings: agent runs, the paid line [spec/agent-runs.md, Settings block 2]', () => {
   // The base state adds Google Gemini, also not local.
   it('shows the paid line under each provider whose local is false, and only there', async () => {
-    await renderApp(<SettingsScreen />, agentRunsFake([COMFY, CLOUD]))
+    await renderApp(<SettingsScreen page="agents" />, agentRunsFake([COMFY, CLOUD]))
     const box = within(await screen.findByRole('region', { name: 'Agent runs' }))
     expect(box.getAllByText(PAID)).toHaveLength(2)
     for (const label of ['Cloud Pictures', 'Google Gemini']) {

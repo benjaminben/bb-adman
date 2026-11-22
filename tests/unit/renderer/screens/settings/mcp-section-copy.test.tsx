@@ -22,7 +22,7 @@ function mockClipboard(writeText: (text: string) => Promise<void>) {
 async function openPanel() {
   const user = userEvent.setup()
   const { fake } = mcpFake(connect())
-  await renderApp(<SettingsScreen />, fake)
+  await renderApp(<SettingsScreen page="agents" />, fake)
   const box = await screen.findByRole('region', { name: 'Agent access' })
   const panel = await within(box).findByRole('region', { name: 'Connect to Claude' })
   return { user, box, panel }
@@ -97,7 +97,7 @@ describe('settings: a refused mcp.getConnectInfo [SPEC 14 1.59 L-21]', () => {
       ok: false,
       error: { code: 'AGENT_DENIED', message: MESSAGE },
     }))
-    await renderApp(<SettingsScreen />, fake)
+    await renderApp(<SettingsScreen page="agents" />, fake)
     return screen.findByRole('region', { name: 'Agent access' })
   }
 
