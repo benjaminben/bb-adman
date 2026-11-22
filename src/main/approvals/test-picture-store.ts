@@ -51,9 +51,15 @@ export function testPictureStore({ root, origin, now }: Options): PictureStore {
 
   return {
     async put(path, png) {
-      pictureFolderOf(path)
+      pictureFolderOf(path, 'png')
       await checkRoot(root)
       await local.write(path, png, 'image/png')
+    },
+
+    async putClip(path, data) {
+      pictureFolderOf(path, 'mp4')
+      await checkRoot(root)
+      await local.write(path, data, 'video/mp4')
     },
 
     async signedUrl(path, seconds) {

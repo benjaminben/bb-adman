@@ -5,7 +5,16 @@
 // skipped and logged with the table and the campaign ID only, never its values.
 import type Database from 'better-sqlite3'
 import { z } from 'zod'
-import { Email, SignoffId, Slug, Time, VariantKey, Version } from '@/shared/approvals/contract'
+import {
+  CLIP_MAX_BYTES,
+  CLIP_MAX_MS,
+  Email,
+  SignoffId,
+  Slug,
+  Time,
+  VariantKey,
+  Version,
+} from '@/shared/approvals/contract'
 import type { ActivityLog } from '@/main/log/activity-log'
 
 const LinkRecord = z.object({
@@ -18,7 +27,18 @@ const LinkRecord = z.object({
 })
 export type LinkRecord = z.infer<typeof LinkRecord>
 
-const VariantRecord = z.object({ variantId: VariantKey, publishedRev: Version, expiresAt: Time })
+// The clip numbers are both in the contract's ranges or both null; a reason only without them.
+const VariantRecord = z
+  .object({
+    variantId: VariantKey,
+    publishedRev: Version,
+    expiresAt: Time,
+    clipMs: z.number().int().min(1).max(CLIP_MAX_MS).nullable(),
+    clipBytes: z.number().int().min(1).max(CLIP_MAX_BYTES).nullable(),
+    clipMissing: z.enum(['no_tool', 'too_long', 'too_large']).nullable(),
+  })
+  .refine((r) => (r.clipMs === null) === (r.clipBytes === null))
+  .refine((r) => r.clipMissing === null || r.clipMs === null)
 export type VariantRecord = z.infer<typeof VariantRecord>
 
 const SignoffRecord = z.object({
@@ -90,7 +110,8 @@ export function readVariants(
 ): VariantRecord[] {
   const rows = db
     .prepare(
-      `SELECT variant_id AS variantId, published_rev AS publishedRev, expires_at AS expiresAt
+      `SELECT variant_id AS variantId, published_rev AS publishedRev, expires_at AS expiresAt,
+        clip_ms AS clipMs, clip_bytes AS clipBytes, clip_missing AS clipMissing
        FROM approval_variant WHERE campaign_id = ? ORDER BY variant_id`,
     )
     .all(campaignId)
@@ -175,12 +196,14 @@ export function publishLocalGallery(
 ): void {
   clearGallery(db, campaignId)
   const insert = db.prepare(
-    `INSERT INTO approval_variant (campaign_id, variant_id, published_rev, expires_at)
-     VALUES (?, ?, ?, ?)`,
+    `INSERT INTO approval_variant (campaign_id, variant_id, published_rev, expires_at, clip_ms,
+       clip_bytes, clip_missing)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
   )
   for (const r of rows) {
     const row = VariantRecord.parse(r)
-    insert.run(campaignId, row.variantId, row.publishedRev, row.expiresAt)
+    const clip = [row.clipMs, row.clipBytes, row.clipMissing]
+    insert.run(campaignId, row.variantId, row.publishedRev, row.expiresAt, ...clip)
   }
   db.prepare('UPDATE approval_link SET published_at = ? WHERE campaign_id = ?').run(now, campaignId)
 }

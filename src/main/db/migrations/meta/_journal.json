@@ -43,6 +43,13 @@
       "when": 1795305550779,
       "tag": "0005_video_and_sound",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1795337542449,
+      "tag": "0006_approval_clips",
+      "breakpoints": true
     }
   ]
 }

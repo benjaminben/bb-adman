@@ -139,7 +139,16 @@ describe('the approvals local store [spec/approvals.md "Local tables"]', () => {
   it('reads the gallery rows of the campaign', () => {
     startLocalLink(db, c1, SLUG, T0)
     plantVariant(c1)
-    expect(readVariants(db, c1, log())).toEqual([{ variantId: v1, publishedRev: 2, expiresAt: T1 }])
+    expect(readVariants(db, c1, log())).toEqual([
+      {
+        variantId: v1,
+        publishedRev: 2,
+        expiresAt: T1,
+        clipMs: null,
+        clipBytes: null,
+        clipMissing: null,
+      },
+    ])
   })
 
   it.each([
@@ -190,11 +199,29 @@ describe('the approvals local store [spec/approvals.md "Local tables"]', () => {
     startLocalLink(db, c2, SLUG, T0)
     plantVariant(c1)
     plantVariant(c2)
-    const rows = [{ variantId: v1, publishedRev: 5, expiresAt: T1 }]
+    const rows = [
+      {
+        variantId: v1,
+        publishedRev: 5,
+        expiresAt: T1,
+        clipMs: null,
+        clipBytes: null,
+        clipMissing: null,
+      },
+    ]
     publishLocalGallery(db, c1, rows, T1)
     expect(readVariants(db, c1, log())).toEqual(rows)
     expect(readLink(db, c1, log())).toMatchObject({ publishedAt: T1, state: 'live' })
-    expect(readVariants(db, c2, log())).toEqual([{ variantId: v1, publishedRev: 2, expiresAt: T1 }])
+    expect(readVariants(db, c2, log())).toEqual([
+      {
+        variantId: v1,
+        publishedRev: 2,
+        expiresAt: T1,
+        clipMs: null,
+        clipBytes: null,
+        clipMissing: null,
+      },
+    ])
     expect(readLink(db, c2, log())?.publishedAt).toBeNull()
   })
 
@@ -230,7 +257,14 @@ describe('the approvals local store [spec/approvals.md "Local tables"]', () => {
       expect(readLink(db, c1, log())).toMatchObject({ checkedAt: T1 })
       const expiry = fixed.some((r) => r.version === 2) ? T0 : T1
       expect(readVariants(db, c1, log())).toEqual([
-        { variantId: v1, publishedRev: 2, expiresAt: expiry },
+        {
+          variantId: v1,
+          publishedRev: 2,
+          expiresAt: expiry,
+          clipMs: null,
+          clipBytes: null,
+          clipMissing: null,
+        },
       ])
     },
   )

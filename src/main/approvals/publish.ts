@@ -168,7 +168,14 @@ export async function publishGallery(deps: CoreDeps, input: PublishInput): Promi
     const variants = []
     for (const { v, rev, file } of entries) {
       const signed = await storage(() => store.signedUrl(file, PICTURE_URL_MAX_SECONDS))
-      rows.push({ variantId: v.id, publishedRev: rev, expiresAt: signed.expiresAt })
+      rows.push({
+        variantId: v.id,
+        publishedRev: rev,
+        expiresAt: signed.expiresAt,
+        clipMs: null,
+        clipBytes: null,
+        clipMissing: null,
+      })
       variants.push({
         variantKey: v.id,
         title: v.title,

@@ -33,8 +33,14 @@ export function s3PictureStore(deps: S3PictureStoreDeps, options: Options = {}):
 
   return {
     async put(path, png) {
-      pictureFolderOf(path)
+      pictureFolderOf(path, 'png')
       await storage().write(path, png, 'image/png')
+    },
+
+    // lib-storage sends a large stream in parts.
+    async putClip(path, data) {
+      pictureFolderOf(path, 'mp4')
+      await storage().write(path, data, 'video/mp4')
     },
 
     async signedUrl(path, seconds) {

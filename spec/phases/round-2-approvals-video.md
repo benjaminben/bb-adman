@@ -8,7 +8,7 @@ A reviewer opens a video variant in the gallery and watches the real MP4, with s
 
 ## Status
 
-R2V-1 and R2V-2 are built (under `next start` the server may drop the clip reply's `Content-Length`; playback works without it). Slices R2V-3 to R2V-8 below are not; they are placed among R2A-1 to R2A-9 in the wave table.
+R2V-1, R2V-2 and R2V-3 are built (under `next start` the server may drop the clip reply's `Content-Length`; playback works without it). Slices R2V-4 to R2V-8 below are not; they are placed among R2A-1 to R2A-9 in the wave table.
 
 ## Design additions
 
@@ -351,6 +351,7 @@ Service slices run the service checks of `round-2-approvals.md` "Slices" (`cd ap
 - **Exists when done:** "Making one clip" and "The rest of `approvals.publish`" as designed: health first, the reuse table, clips exported with the Phase 8 code and uploaded, both files signed, `kind` and `clip` sent, clip columns written, `clips` in the reply, the new sentences; `publishGallery` takes a `signal` and an `onStep(step, done, total)` callback (the command passes a fresh controller and a no-op until R2V-7).
 - **New files:** `src/main/approvals/clip-step.ts`, `src/main/approvals/gallery-files.ts` (the per-variant table and uploads, so `publish.ts` stays under 200 lines); `tests/integration/approvals/clip-step.test.ts`, `tests/integration/approvals/publish-video.test.ts`.
 - **May touch:** `src/main/approvals/publish.ts`, `src/main/commands/approvals/publish.ts`, `src/shared/schemas/commands/approvals.ts` (`ApprovalsPublishReply` gains `clips`), `src/shared/approvals/messages.ts` (`clip_failed`, `variant_changed`), `tests/integration/approvals/publish-refresh-secrets.test.ts` (SV-11 additions).
+- **Keep set (from R2V-3's review):** the end-of-publish clean-up keeps this run's clip paths as well as its still paths; a test proves a clip sent in a run is still in the folder after that run and after the next run with no edit.
 - **Tests first:** `publish-video.test.ts`, with a stand-in `deps.export.video.exportVariant` that writes a fixed small file through the target: each row of the reuse table; a video over 3 minutes and one over the byte limit (a stand-in file of `CLIP_MAX_BYTES + 1` made sparse with `truncate`) go still only with their reason and nothing uploaded; no tool: still only, `no_tool`, nothing run; a failing export fails the update with `clip_failed`, removes this run's uploads and leaves the gallery as it was; a rev change between draw and export gives `variant_changed`; an aborted signal before the second clip stops with this run's uploads removed; the health check comes before any draw. `clip-step.test.ts`: SV-13; with the fetched FFmpeg (`ffmpegFetched()`, else skipped with "FFmpeg is not fetched."), a 2 s drawn variant gives an MP4 starting with `ftyp` and the right size. `publish-refresh-secrets.test.ts`: SV-11.
 - **Approved edits to existing tests:**
   - `tests/integration/approvals/publish.test.ts`: the stand-in's recorded calls start with the health `GET`; the expected reply gains `clips: 0` (the expected gallery bodies already hold `kind: 'image', clip: null` since R2V-1).

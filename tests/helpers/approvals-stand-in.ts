@@ -163,9 +163,12 @@ function play(
   let renewed = 0
   for (const r of input.data.pictures) {
     const row = link.gallery.find((v) => v.variantKey === r.variantKey && v.version === r.version)
-    if (!row) continue
+    // As the service: a row with a clip is renewed only with its clip, and one without only
+    // without.
+    if (!row || (row.clip === null) !== (r.clipUrl === null)) continue
     row.pictureUrl = r.pictureUrl
     row.pictureExpiresAt = r.pictureExpiresAt
+    if (row.clip !== null && r.clipUrl !== null) row.clip.clipUrl = r.clipUrl
     renewed += 1
   }
   return { status: 200, json: { renewed } }
