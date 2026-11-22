@@ -1,44 +1,25 @@
 // The target line of an agent's ask (spec/phases/phase-10.md, ask flow, A-238): one line the
 // permission dialog shows, read from the open project. It holds names only: no ID, no input
 // value other than what the names say, no path. A target that cannot be found gives NO_TARGET,
-// and the command then refuses as usual.
+// and the command then refuses as usual. Names come from a project file anyone may have made,
+// so each is cleaned by the shared name cleaner.
 import type Database from 'better-sqlite3'
 import { z } from 'zod'
 import type { PermissionRequest } from '@/main/commands/bus'
 import type { ProjectRegistry } from '@/main/db/project-registry'
+import { cleanName } from './clean-name'
 
 export const NO_TARGET = 'Something that no longer exists'
 
 const campaignTarget = z.object({ campaignId: z.string() })
 const variantTarget = z.object({ variantId: z.string() })
 
-const NAME_MAX = 60
-
-// Names are text from a project file anyone may have made, and the dialog shows this line.
-// Control, line-break and reordering characters are taken out, white space runs become one
-// space and every quote-like mark becomes `'`, so a name cannot close its own quotes, imitate
-// the line's wording or change how the rest reads. At most two combining marks stay in a row,
-// so stacked marks cannot draw over the next line; a cut at 60 code points keeps the count and
-// project in view.
-const QUOTES = /["\p{Pi}\p{Pf}＂″‶〃〝〞〟״˝„‟]/gu
-
-function clean(name: string): string {
-  const flat = name
-    .replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, '')
-    .replace(/(\p{M}{2})\p{M}+/gu, '$1')
-    .replace(/\s+/gu, ' ')
-    .replace(QUOTES, "'")
-    .trim()
-  const points = [...flat]
-  return points.length > NAME_MAX ? `${points.slice(0, NAME_MAX).join('')}…` : flat
-}
-
 // Read as stored: readMeta refuses a name an edited file may hold, and the ask must not fail.
 function projectName(db: Database.Database): string {
   const row = db
     .prepare<[], { value: string }>("SELECT value FROM project_meta WHERE key = 'name'")
     .get()
-  return clean(row?.value ?? '')
+  return cleanName(row?.value ?? '')
 }
 
 function campaignLine(db: Database.Database, campaignId: string): string | null {
@@ -51,7 +32,7 @@ function campaignLine(db: Database.Database, campaignId: string): string | null 
     .get(campaignId, campaignId)
   if (!row) return null
   const count = row.n === 1 ? '1 variant' : `${row.n} variants`
-  return `Campaign "${clean(row.name)}" (${count}) in "${projectName(db)}"`
+  return `Campaign "${cleanName(row.name)}" (${count}) in "${projectName(db)}"`
 }
 
 function variantLine(db: Database.Database, variantId: string): string | null {
@@ -64,8 +45,8 @@ function variantLine(db: Database.Database, variantId: string): string | null {
     )
     .get(variantId)
   if (!row) return null
-  const name = [row.title, row.sizeLabel, row.language].map(clean).join(' · ')
-  return `Variant "${name}" in campaign "${clean(row.campaign)}"`
+  const name = [row.title, row.sizeLabel, row.language].map(cleanName).join(' · ')
+  return `Variant "${name}" in campaign "${cleanName(row.campaign)}"`
 }
 
 function lineFor(db: Database.Database, command: string, input: unknown): string | null {
