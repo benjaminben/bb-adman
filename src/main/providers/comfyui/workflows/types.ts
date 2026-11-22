@@ -39,6 +39,9 @@ export type WorkflowSlots = {
   pad?: { left: Pointer; top: Pointer; right: Pointer; bottom: Pointer }
   // The one node whose result the app fetches.
   outputNode: string
+  // D-104: every seed is a whole number below this; default 2^53. Some community nodes
+  // refuse seeds above 2^32.
+  seedBelow?: number
 }
 
 export type WorkflowSpec = WorkflowFacts & {
