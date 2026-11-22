@@ -126,3 +126,48 @@ describe('exportTarget never writes outside the root through a link [P8-2]', () 
     expect(fs.readFileSync(path.join(outside, 'keep.txt'), 'utf8')).toBe('keep')
   })
 })
+
+// P8-9 (P8-2 review L1): before each write the root is checked again: not a link, and its real
+// path is the root itself, so a root swapped for a link after checkOutputDir is refused.
+describe('exportTarget checks the root again before each write [P8-9]', () => {
+  it.skipIf(!links)('refuses a root that has become a link, and writes nothing', async () => {
+    const { root, outside } = tempRoot()
+    const before = listing(outside)
+    fs.rmSync(root, { recursive: true })
+    fs.symlinkSync(outside, root, 'dir')
+    const target = exportTarget(root)
+    await expect(target.write(AD, bytes)).rejects.toThrow(new Error(REFUSED_PATH))
+    await expect(target.writeNew(`${C}/r.html`, bytes)).rejects.toThrow(new Error(REFUSED_PATH))
+    expect(listing(outside)).toEqual(before)
+  })
+
+  it.skipIf(!links)('refuses a root reached through a linked parent folder', async () => {
+    const { root } = tempRoot()
+    const alias = path.join(path.dirname(root), 'alias')
+    fs.symlinkSync(path.dirname(root), alias, 'dir')
+    const target = exportTarget(path.join(alias, 'root'))
+    await expect(target.write(AD, bytes)).rejects.toThrow(new Error(REFUSED_PATH))
+    expect(listing(root)).toEqual([])
+  })
+
+  it('refuses a root that is gone with a failure that names no path', async () => {
+    const { root } = tempRoot()
+    fs.rmSync(root, { recursive: true })
+    const error = await exportTarget(root)
+      .write(AD, bytes)
+      .catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(Error)
+    expect(JSON.stringify(error) + String(error)).not.toContain(root)
+    expect(fs.existsSync(root)).toBe(false)
+  })
+
+  it('replaces a hard link at the name and leaves the file outside unchanged', async () => {
+    const { root, outside } = tempRoot()
+    const file = path.join(root, ...AD.split('/'))
+    fs.mkdirSync(path.dirname(file), { recursive: true })
+    fs.linkSync(path.join(outside, 'keep.txt'), file)
+    await exportTarget(root).write(AD, bytes)
+    expect([...fs.readFileSync(file)]).toEqual([1, 2, 3])
+    expect(fs.readFileSync(path.join(outside, 'keep.txt'), 'utf8')).toBe('keep')
+  })
+})

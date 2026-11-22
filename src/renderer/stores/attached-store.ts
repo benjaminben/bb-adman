@@ -1,7 +1,7 @@
 // spec/screens-ai.md, "Attached jobs and the close warning" [D-036, OI-31, OI-51]: the attached
-// jobs this window started, each under its owner, a variant tab or a dialog. It follows
-// job.updated; when a job ends it runs `finish` (the layout apply) if it succeeded, and forgets
-// it. One store lives for the window, so a finish runs when its tab is not the one shown.
+// jobs this window started, each under its owner, a variant tab, a dialog or a campaign (P6-13).
+// It follows job.updated; when a job ends it runs `finish` (the layout apply) if it succeeded,
+// and forgets it. One store lives for the window, so a finish runs when its tab is not the one shown.
 // A job's first rows can come before the command's reply registers it, so the latest row of
 // each attached job not yet registered is kept for a while.
 import { createStore, type StoreApi } from 'zustand/vanilla'
@@ -9,9 +9,12 @@ import type { AdmanApi } from '@/shared/schemas/api'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import { JOB_KIND_CLASSES, type JobKind } from '@/shared/config/job-kinds'
 
-// Every owner names its project: job.cancel needs it.
+// Every owner names its project: job.cancel needs it. A campaign owns its translation jobs,
+// so closing its tab warns (P6-13).
 export type AttachedOwner =
-  { projectId: string; variantId: string } | { projectId: string; dialog: string }
+  | { projectId: string; variantId: string }
+  | { projectId: string; dialog: string }
+  | { projectId: string; campaignId: string }
 
 // kind and provider are null until the job's first row arrives.
 export type AttachedJob = {
@@ -48,6 +51,17 @@ export function variantJobs(
 
 export function dialogJobs(s: AttachedStoreState, dialog: string): AttachedJob[] {
   return s.jobs.filter(({ owner }) => 'dialog' in owner && owner.dialog === dialog)
+}
+
+export function campaignJobs(
+  s: AttachedStoreState,
+  projectId: string,
+  campaignId: string,
+): AttachedJob[] {
+  return s.jobs.filter(
+    ({ owner }) =>
+      owner.projectId === projectId && 'campaignId' in owner && owner.campaignId === campaignId,
+  )
 }
 
 export function createAttachedStore(api: AdmanApi): AttachedStore {

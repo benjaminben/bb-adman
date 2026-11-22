@@ -4,8 +4,11 @@
 import { useState } from 'react'
 import { approvalMarks, type ApprovalLinkState } from '@/shared/approvals/marks'
 import type { ApprovalsVariant } from '@/shared/schemas/queries/approvals'
+import { Icon } from '@/renderer/ui/icon'
 import { SignoffList } from '@/renderer/ui/signoff-list'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './approval-mark.module.css'
+import { markLook } from './mark-look'
 
 export type ApprovalMarkProps = {
   title: string
@@ -22,18 +25,22 @@ export function ApprovalMark(props: ApprovalMarkProps) {
     <div className={styles.footer}>
       {marks.length > 0 && (
         <div role="group" aria-label={`Approval marks for ${props.title}`} className={styles.marks}>
-          {marks.map((mark) => (
-            <span key={mark} className={styles.mark}>
-              {mark}
-            </span>
-          ))}
+          {marks.map((mark) => {
+            const look = markLook(mark)
+            return (
+              <span key={mark} className={`${layout.badge} ${layout[look.kind]}`}>
+                <Icon name={look.icon} size="small" />
+                {mark}
+              </span>
+            )
+          })}
         </div>
       )}
       {signoffs.length > 0 && (
         <>
           <button
             type="button"
-            className={styles.toggle}
+            className={`${layout.small} ${layout.quiet}`}
             aria-expanded={open}
             onClick={() => setOpen(!open)}
           >
