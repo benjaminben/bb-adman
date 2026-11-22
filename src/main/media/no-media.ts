@@ -4,4 +4,5 @@ import type { MediaTool } from './types'
 export const noMediaTool: MediaTool = {
   available: () => false,
   embedDetails: async () => null,
+  ffmpeg: { run: async () => null },
 }

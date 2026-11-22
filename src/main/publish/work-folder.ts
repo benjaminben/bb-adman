@@ -8,6 +8,8 @@
 // error there is dropped, so it cannot change the job's end or carry the path anywhere. At a
 // publish start, leftover direct children whose names are ULIDs and that are real folders (not
 // links) are removed, except the folders of publishes still under way in this process.
+// P8-16: the video export uses the same rules under its own base, export-work (export/video/
+// work-dir.ts), and sweepWorkFolders removes its leftovers at app start.
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { errnoCode, LocalFailure } from '@/main/jobs/local-failure'
@@ -22,8 +24,8 @@ const inUse = new Set<string>()
 const unsafe = () => new LocalFailure('work_folder_unsafe')
 const MODE = 0o700
 
-async function baseFolder(userDataDir: string): Promise<string> {
-  const base = path.join(userDataDir, WORK_FOLDER)
+async function baseFolder(userDataDir: string, name: string): Promise<string> {
+  const base = path.join(userDataDir, name)
   let stats = await fs.lstat(base).catch((e: unknown) => {
     if (errnoCode(e) !== 'ENOENT') throw unsafe()
     return null
@@ -37,7 +39,7 @@ async function baseFolder(userDataDir: string): Promise<string> {
   if (!stats?.isDirectory()) throw unsafe()
   const [real, expected] = await Promise.all([
     fs.realpath(base),
-    fs.realpath(userDataDir).then((dir) => path.join(dir, WORK_FOLDER)),
+    fs.realpath(userDataDir).then((dir) => path.join(dir, name)),
   ]).catch(() => {
     throw unsafe()
   })
@@ -58,9 +60,13 @@ async function removeLeftovers(base: string): Promise<void> {
   }
 }
 
-export async function makeWorkFolder(userDataDir: string, jobId: string): Promise<WorkFolder> {
+export async function makeWorkFolder(
+  userDataDir: string,
+  jobId: string,
+  name: string = WORK_FOLDER,
+): Promise<WorkFolder> {
   if (!isUlid(jobId)) throw unsafe()
-  const base = await baseFolder(userDataDir)
+  const base = await baseFolder(userDataDir, name)
   await removeLeftovers(base)
   const folder = path.join(base, jobId)
   await fs.mkdir(folder, { mode: MODE }).catch(() => {
@@ -74,4 +80,13 @@ export async function makeWorkFolder(userDataDir: string, jobId: string): Promis
       await fs.rm(folder, { recursive: true, force: true }).catch(() => undefined)
     },
   }
+}
+
+// At app start: the leftovers of the base `name`, when it is a real folder at its real path.
+// Nothing is made, and nothing fails.
+export async function sweepWorkFolders(userDataDir: string, name: string): Promise<void> {
+  const stats = await fs.lstat(path.join(userDataDir, name)).catch(() => null)
+  if (!stats?.isDirectory()) return
+  const base = await baseFolder(userDataDir, name).catch(() => null)
+  if (base) await removeLeftovers(base)
 }

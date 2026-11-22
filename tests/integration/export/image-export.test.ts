@@ -92,14 +92,14 @@ describe('the export job writes each image ad [P8-6]', () => {
     expect(end.result).toEqual({ exported: 2, failed: 2, reportId: 'R1' })
   })
 
-  it('fails a video ad with "Video export is not built yet." and goes on', async () => {
+  it('fails a video ad with "The video could not be made." when FFmpeg is missing, and goes on', async () => {
     const t = await setup()
     const [video] = t.ordered()
     t.makeVideo(video?.id as string)
     const end = await t.run()
     expect(end.status).toBe('succeeded')
     const outcome = t.reportOutcomes().find((o) => o.variantId === video?.id)
-    expect(outcome).toMatchObject({ file: null, failure: AD_FAILURES.videoNotBuilt })
+    expect(outcome).toMatchObject({ file: null, failure: AD_FAILURES.videoNotMade })
     expect(t.files()).toHaveLength(3)
   })
 

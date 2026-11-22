@@ -84,6 +84,7 @@ function standIn(out: (bytes: Uint8Array) => Uint8Array | null) {
   const tool: MediaTool = {
     available: () => true,
     embedDetails: async ({ bytes, details }) => (seen.push(details), out(bytes)),
+    ffmpeg: noMediaTool.ffmpeg,
   }
   return { tool, seen }
 }
@@ -193,6 +194,7 @@ describe('the video job writes its details into the clip [P7-16, A-179]', () => 
     f.core.deps.media = {
       available: () => true,
       embedDetails: () => Promise.reject(new Error('/private/somewhere failed')),
+      ffmpeg: noMediaTool.ffmpeg,
     }
     const result = await finished(enqueue())
     expect(result.details).toBe('pending')
