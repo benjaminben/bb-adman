@@ -6,8 +6,8 @@
 // disabled and the dialog cannot close. A refusal shows its sentence and the first view stays
 // (`refusal` keeps the whole error). A publish_has_warnings refusal opens the warnings step
 // [P9-13]: "Publish anyway" sends the same input again with proceedDespiteWarnings and the
-// user's own reason, the replace tick as the user gave it; "Back" sends nothing. After the
-// start, the started view.
+// user's own reason, the replace tick as the user gave it. It is armed 500 ms after the step
+// opens (lows C). "Back" reads publish.inspect again. After the start, the started view.
 import { useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
@@ -19,6 +19,7 @@ import type { ErrorBody } from '@/shared/schemas/result'
 import { PublishWarnings, warningsOf, type PublishWarningLine } from './publish-warnings'
 import { ReplaceWarning } from './replace-warning'
 import { StorageChoice } from './storage-choice'
+import { useArmed } from './use-armed'
 import { usePublishInspect } from './use-publish-inspect'
 import styles from './publish-dialog.module.css'
 
@@ -50,6 +51,7 @@ export function PublishDialog(props: PublishDialogProps) {
   const [reason, setReason] = useState('')
   // The input the last "Publish" sent; "Publish anyway" sends it again.
   const [held, setHeld] = useState<PublishRunInput | null>(null)
+  const armed = useArmed(warnings)
 
   const ready = reply?.storages.some((s) => s.id === storage && s.ready === 'ready') === true
   const hasFiles = existing !== null && existing.files > 0
@@ -90,7 +92,7 @@ export function PublishDialog(props: PublishDialogProps) {
   }
 
   function publishAnyway() {
-    if (held === null) return
+    if (held === null || !armed) return
     const trimmed = reason.trim()
     const extra = trimmed === '' ? {} : { proceedReason: trimmed }
     void send({ ...held, proceedDespiteWarnings: true, ...extra })
@@ -99,6 +101,7 @@ export function PublishDialog(props: PublishDialogProps) {
   function back() {
     setWarnings(null)
     setRefusal(null)
+    readAgain()
   }
 
   const footer = started ? (
@@ -110,7 +113,12 @@ export function PublishDialog(props: PublishDialogProps) {
       <button type="button" disabled={sending} onClick={back}>
         Back
       </button>
-      <button type="button" className={layout.primary} disabled={sending} onClick={publishAnyway}>
+      <button
+        type="button"
+        className={layout.primary}
+        disabled={sending || !armed}
+        onClick={publishAnyway}
+      >
         Publish anyway
       </button>
     </>

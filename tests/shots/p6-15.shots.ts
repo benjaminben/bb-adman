@@ -58,7 +58,7 @@ test('Translation at fan-out: the text-call line and the marks on the grid', asy
   await page.getByRole('button', { name: 'Fan out…' }).click()
   const dialog = page.getByRole('dialog', { name: /^Fan out / })
   await dialog.getByRole('checkbox', { name: TALL }).check()
-  await dialog.getByRole('checkbox', { name: 'de' }).check()
+  await dialog.getByRole('checkbox', { name: 'de', exact: true }).check()
   await dialog.getByRole('checkbox', { name: 'ja' }).check()
   const line = 'Translating 2 language(s) uses the fake provider. Nothing is charged.'
   await expect(dialog.getByText(line)).toBeVisible()

@@ -4,7 +4,7 @@
 // sends publish.run again with proceedDespiteWarnings and the reason, and the replace tick of
 // the first step as given. "Back" sends nothing.
 import { describe, it, expect } from 'vitest'
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PublishDialog } from '@/renderer/dialogs/publish-dialog'
 import type { Result } from '@/shared/schemas/result'
@@ -65,6 +65,8 @@ async function openWarned(replies: Array<Result<unknown>> = []) {
   )
   await userEvent.click(screen.getByRole('button', { name: 'Publish' }))
   await screen.findByRole('list', { name: 'These ads have warnings' })
+  // The button waits 500 ms after the step opens, so a double click cannot land on it.
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Publish anyway' })).toBeEnabled())
   return fake
 }
 
@@ -135,7 +137,7 @@ describe('the publish warnings step [P9-13]', () => {
     expect(runs(fake)[1]).not.toHaveProperty('proceedReason')
   })
 
-  it('"Back" sends nothing and shows the first view again', async () => {
+  it('"Back" sends no publish.run and shows the first view again', async () => {
     const fake = await openWarned()
     await userEvent.click(screen.getByRole('button', { name: 'Back' }))
     expect(screen.getByRole('button', { name: 'Publish' })).toBeInTheDocument()
