@@ -91,6 +91,7 @@ export function variantGet(over: Partial<VariantGet> = {}): VariantGet {
     }),
     campaignId: 'C1',
     layers: [BACKGROUND, HEADLINE, LOGO],
+    clips: [],
     assets: [assetRow('A1')],
     ...over,
   }
