@@ -53,3 +53,10 @@
   height: 100%;
   padding: var(--space-4) var(--space-6);
 }
+/* Holds the campaign tabs inside the bar's tab room, so a click on them can leave Settings. */
+.tabsHold {
+  display: flex;
+  flex: 1;
+  align-self: stretch;
+  min-width: 0;
+}

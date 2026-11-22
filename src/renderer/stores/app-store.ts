@@ -1,7 +1,8 @@
 // App-wide window state (ADR-003): a copy of app.getState, the visible tab, the last
 // error, and the dialog requests of the ask-then-send-again flows: the key dialog for
 // NEEDS_KEY (FR-171), and for the three run commands the address dialog (FR-255) and the
-// licence dialog (D-088, S2-6). Each kind is asked at most once per call.
+// licence dialog (D-088, S2-6). Each kind is asked at most once per call. Settings remembers
+// the view it was opened from, and leaving it shows that view again (SH-2, choice C-14).
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { AdmanApi } from '@/shared/schemas/api'
 import type { AppState, ProviderInfo } from '@/shared/schemas/queries/app'
@@ -23,6 +24,8 @@ export type LicenceRequest = {
 export type AppStoreState = {
   app: AppState | null
   view: View
+  // The view shown when Settings opened; leaveSettings shows it again.
+  settingsFrom: View
   error: string | null
   keyRequest: KeyRequest | null
   addressRequest: AddressRequest | null
@@ -30,6 +33,7 @@ export type AppStoreState = {
   refresh(): Promise<void>
   subscribe(): () => void
   show(view: View): void
+  leaveSettings(): void
   clearError(): void
   command(name: string, input: unknown): Promise<Result<unknown>>
 }
@@ -105,6 +109,7 @@ export function createAppStore(api: AdmanApi): AppStore {
     return {
       app: null,
       view: { kind: 'start' },
+      settingsFrom: { kind: 'start' },
       error: null,
       keyRequest: null,
       addressRequest: null,
@@ -125,7 +130,21 @@ export function createAppStore(api: AdmanApi): AppStore {
         return () => stops.forEach((stop) => stop())
       },
 
-      show: (view) => set({ view, error: null }),
+      show(view) {
+        const was = get().view
+        if (view.kind === 'settings' && was.kind !== 'settings') set({ settingsFrom: was })
+        set({ view, error: null })
+      },
+
+      // A project that closed while Settings showed leaves the start screen, as a shown
+      // project that closes does (nextView).
+      leaveSettings() {
+        if (get().view.kind !== 'settings') return
+        const from = get().settingsFrom
+        const open = get().app?.openProjects ?? []
+        const gone = from.kind === 'project' && !open.some((p) => p.projectId === from.projectId)
+        set({ view: gone ? { kind: 'start' } : from, error: null })
+      },
       clearError: () => set({ error: null }),
 
       async command(name, input) {

@@ -2,10 +2,14 @@
 /* Settings (SET-1, choice C-1): the side list on the left, the chosen page on the right. The
    shell's panel already gives --space-6 on every side, so the page adds what reaches the spec's
    padding (spec/app-style.md "Settings"). The shell's main cell scrolls; the side column sticks
-   to its top, so only the page column moves. */
+   to its top, so only the page column moves. The "Close settings" button (SH-2) takes a third
+   column and keeps to the screen's top right while the page scrolls. */
 .screen {
   display: grid;
-  grid-template-columns: calc(4 * var(--space-12)) minmax(0, var(--width-page));
+  grid-template-columns: calc(4 * var(--space-12)) minmax(0, var(--width-page)) minmax(
+      var(--control-height-small),
+      1fr
+    );
   gap: var(--space-8);
   align-items: start;
   padding: calc(var(--space-8) - var(--space-6)) calc(var(--space-8) - var(--space-6))
@@ -40,4 +44,9 @@
 .page h3 {
   margin: var(--space-2) 0 0;
   font-size: var(--font-size-body);
+}
+.close {
+  position: sticky;
+  top: calc(var(--space-8) - var(--space-6));
+  justify-self: end;
 }
