@@ -2,6 +2,7 @@
 // The approvals service follows Cloud storage (spec/approvals.md "Screens").
 import { LocationSetting } from '@/renderer/screens/settings/location-setting'
 import { ProviderDefaults } from '@/renderer/screens/settings/provider-defaults'
+import { ExportSection } from '@/renderer/screens/settings/export-section'
 import { KeysSection } from '@/renderer/screens/settings/keys-section'
 import { S3Section } from '@/renderer/screens/settings/s3-section'
 import { ApprovalsSection } from '@/renderer/screens/settings/approvals-section'
@@ -16,6 +17,7 @@ export function SettingsScreen() {
       <h1 id="settings-title">Settings</h1>
       <LocationSetting />
       <ProviderDefaults />
+      <ExportSection />
       <KeysSection />
       <S3Section />
       <ApprovalsSection />

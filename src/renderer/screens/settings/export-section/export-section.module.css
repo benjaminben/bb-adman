@@ -1,0 +1,8 @@
+/* app-style */
+/* The name field sits under the grid of the three export controls. */
+.name {
+  margin-top: var(--space-4);
+}
+.name p {
+  margin: 0;
+}
