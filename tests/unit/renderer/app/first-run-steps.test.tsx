@@ -113,7 +113,13 @@ describe('each later step [SET-7]', () => {
 
 describe('the endings [SET-7]', () => {
   const endings: Array<[string, () => Promise<void>]> = [
-    ['Escape on a step', () => goTo(1).then(() => userEvent.keyboard('{Escape}'))],
+    [
+      'Escape on a step',
+      async () => {
+        await goTo(1)
+        await userEvent.keyboard('{Escape}')
+      },
+    ],
     ['Skip for now on the storage step', () => goTo(2).then(() => press('Skip for now'))],
     ['Finish', () => goTo(2).then(() => press('Finish'))],
   ]
