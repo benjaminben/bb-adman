@@ -54,7 +54,7 @@ export function CampaignHead(props: CampaignHeadProps) {
             failureApart
           />
         )}
-        <CampaignExport projectId={projectId} campaignId={campaignId} reports={false} />
+        <CampaignExport projectId={projectId} campaignId={campaignId} />
         {data && (
           <MoreMenu
             label={data.campaign.name}

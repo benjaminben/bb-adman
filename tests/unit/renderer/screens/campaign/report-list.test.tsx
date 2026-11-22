@@ -4,13 +4,13 @@
 import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { CampaignExport } from '@/renderer/screens/campaign/campaign-export'
 import type { ReportListItem } from '@/shared/schemas/queries/report'
 import { sampleReport } from '../../../../fixtures/report-sample'
 import { makeFakeApi } from '../../fake-api'
 import { axeViolations, renderApp } from '../../render'
 import { jobRow } from '../../stores/job-fixture'
 import { P } from './campaign-fixture'
+import { ReportsOpener } from './reports-opener'
 
 const FOLDER = '/Users/me/Desktop/Spring <i>handover</i>'
 
@@ -38,7 +38,7 @@ async function openList(answers: ReportListItem[][] = [[item(2), item(1)]]) {
     ok: true,
     data: { report: sampleReport, outputDir: FOLDER },
   }))
-  const view = await renderApp(<CampaignExport projectId={P} campaignId="C1" />, fake)
+  const view = await renderApp(<ReportsOpener projectId={P} campaignId="C1" />, fake)
   await userEvent.click(screen.getByRole('button', { name: 'Reports' }))
   const dialog = screen.getByRole('dialog', { name: 'Reports' })
   return { ...view, fake, dialog }
