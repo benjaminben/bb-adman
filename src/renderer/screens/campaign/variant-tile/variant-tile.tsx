@@ -1,8 +1,8 @@
 // One variant in the campaign grid (spec/screens-campaign.md, "The campaign grid and the
 // variant tile"): a pressed-or-not button holding the picture area, the title, the size line
 // and the marks. Pressed marks the selected variant, the one the overview's panels work on
-// (P3-9, A-47). `preview` replaces the shape box
-// (P3-16); `actions` sit beside the button, never inside it (P3-10). Text is drawn as text.
+// (P3-9, A-47). `preview` replaces the shape box (P3-16); `actions` sit beside the button,
+// never inside it (P3-10). Text is drawn as text.
 // R2C-2 (A-311): the master has a "Master" badge before its title and a tinted ground. The
 // badge is hidden from the button's name, which keeps starting with the title; the size
 // line's " · master" already says it.

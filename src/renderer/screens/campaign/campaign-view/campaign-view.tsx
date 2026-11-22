@@ -2,9 +2,9 @@
 // (S2-16), the picture panel for the chosen one, and its runs. The master is chosen at the start. One job store per
 // open page. SPEC 14 1.57 TP-6: the video card sits under the picture panel.
 // P3-10 (spec/editor.md, "Variant tabs"): the page is the overview tab and one tab per open
-// variant, holding the editor. A plain click on a tile shows the variant's tab; the tile's
-// "+" and Cmd-click (Ctrl-click on Windows) open it behind. The variant shown last is the one
-// the overview's panels work on (A-47). campaign.get is read again on project.changed and on
+// variant, holding the editor. Opening a tile shows the variant's tab; the tile's "+" and
+// Cmd-click (Ctrl-click on Windows) open it behind. The variant shown last is the one the
+// overview's panels work on (A-47). campaign.get is read again on project.changed and on
 // job.updated, so a deleted variant loses its tab and the marks follow the jobs.
 // P4-12 (spec/screens-ai.md, "The paid count"): the overview shows the paid count under the name.
 // SP-7 (A-120): the reference ticks start as the chosen variant's subject photos.
@@ -14,6 +14,8 @@
 // R2C-1 (spec/phases/round-2-campaign.md, design addition 1): the head is its own component;
 // the overview is the view bar (Variants, Checks, Translations, with Undo and Redo) and the
 // shown view. The page keeps the stores and which view shows.
+// R2C-3 (design addition 3): a click on a tile selects it (setChosenId); a double-click or Enter
+// opens its tab, and the shown tab is then the selected one.
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useStore } from 'zustand'
 import { useApi, useApp } from '@/renderer/app/app-context'
@@ -95,7 +97,8 @@ function CampaignPage(props: Props) {
           ticks={ticks}
           setTicks={setTicks}
           preTick={preTick}
-          onChoose={(id) => openVariant(projectId, campaignId, id)}
+          onChoose={setChosenId}
+          onOpen={(id) => openVariant(projectId, campaignId, id)}
           onOpenBehind={(id) => openVariant(projectId, campaignId, id, true)}
           tileFooter={approvalFooter(approvalsData)}
         />

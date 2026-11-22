@@ -3,6 +3,7 @@
 // variant (S2-16), the slot view, the picture panel for the chosen variant with the reference
 // ticks the page keeps (SP-7, A-120), the "Make a video" card under it (SPEC 14 1.57 TP-6;
 // another round-2 slice removes it, R-13), and the chosen variant's runs.
+// R2C-3 (design addition 3): first the muted hint line; onChoose selects a tile, onOpen opens it.
 import type { Dispatch, ReactNode, SetStateAction } from 'react'
 import { DirectionGrids } from '@/renderer/screens/campaign/direction-grids'
 import { GeneratePanel } from '@/renderer/screens/campaign/generate-panel'
@@ -13,6 +14,7 @@ import type { JobStore } from '@/renderer/stores/job-store'
 import { ReferenceRowsContext } from '@/renderer/ui/reference-picker/use-picture-list'
 import type { AssetList } from '@/shared/schemas/queries/asset'
 import type { CampaignGet, VariantSummary } from '@/shared/schemas/queries/campaign'
+import layout from '@/renderer/ui/layout.module.css'
 import styles from './variants-tab.module.css'
 
 export type VariantsTabProps = {
@@ -25,6 +27,7 @@ export type VariantsTabProps = {
   setTicks: Dispatch<SetStateAction<string[]>>
   preTick: (rows: AssetList) => void
   onChoose: (variantId: string) => void
+  onOpen: (variantId: string) => void
   onOpenBehind: (variantId: string) => void
   tileFooter?: (variant: VariantSummary) => ReactNode
 }
@@ -33,11 +36,15 @@ export function VariantsTab(props: VariantsTabProps) {
   const { projectId, campaignId, data, variant, store } = props
   return (
     <div className={styles.tab}>
+      <p className={layout.muted}>
+        Click a post to select it. Double-click it, or press Enter, to open it.
+      </p>
       <DirectionGrids
         projectId={projectId}
         campaign={data}
         chosenId={variant?.id ?? null}
         onChoose={props.onChoose}
+        onOpen={props.onOpen}
         onOpenBehind={props.onOpenBehind}
         tileFooter={props.tileFooter}
       />

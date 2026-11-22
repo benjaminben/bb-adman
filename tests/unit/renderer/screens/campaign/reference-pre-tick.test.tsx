@@ -30,7 +30,7 @@ function pageApi() {
 const box = (name: string) => screen.getByRole('checkbox', { name })
 
 async function toGerman() {
-  await userEvent.click(screen.getByRole('button', { name: /^German post/ }))
+  await userEvent.dblClick(screen.getByRole('button', { name: /^German post/ }))
   await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
   await screen.findByText('Runs and panels below are for: German post · 1:1 · de')
 }
