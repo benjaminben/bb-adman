@@ -28,7 +28,8 @@ export type PublishRunReply = { jobId: string }
 // publish.setFontConsent (A-260): this machine's consent to share one font of the project. The
 // asset ID is checked against the project's rows by the command, so a bad one is NOT_FOUND.
 // `sha256` is the hash publish.inspect showed; consent is refused when the bytes measured now
-// differ, so it binds to the font the user was shown (P9-12). Taking consent back ignores it.
+// differ, so it binds to the font the user was shown (P9-12). Giving consent requires it;
+// taking consent back needs none and ignores it.
 export const publishSetFontConsentInput = projectScoped
   .extend({
     assetId: z.string().min(1).max(200),
@@ -39,5 +40,9 @@ export const publishSetFontConsentInput = projectScoped
       .optional(),
   })
   .strict()
+  .refine((input) => !input.allowed || input.sha256 !== undefined, {
+    message: 'Give the hash of the font that was shown.',
+    path: ['sha256'],
+  })
 export type PublishSetFontConsentInput = z.infer<typeof publishSetFontConsentInput>
 export type PublishSetFontConsentReply = Record<string, never>

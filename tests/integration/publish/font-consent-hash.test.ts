@@ -95,9 +95,24 @@ describe('publish.setFontConsent with the hash shown [P9-12, A-260, security]', 
     expect(fs.existsSync(consentFile(s))).toBe(false)
   })
 
+  it('refuses consent without the hash shown as INVALID_INPUT, writing nothing', async () => {
+    s = await setUp()
+    const reply = await consent(s, { allowed: true })
+    expect(reply).toMatchObject({ ok: false, error: { code: 'INVALID_INPUT' } })
+    expect(fs.existsSync(consentFile(s))).toBe(false)
+  })
+
+  it('takes consent back with no hash', async () => {
+    s = await setUp()
+    await consent(s, { allowed: true, sha256: sha(BYTES.ttf) })
+    expect((await consent(s, { allowed: false })).ok).toBe(true)
+    const reply = data<PublishInspect>(await s.inspect({ storage: null }))
+    expect(reply.components.find((c) => c.assetId === FONT)?.share).toBe('not_shared')
+  })
+
   it('takes consent back whatever hash is sent', async () => {
     s = await setUp()
-    await consent(s, { allowed: true })
+    await consent(s, { allowed: true, sha256: sha(BYTES.ttf) })
     expect((await consent(s, { allowed: false, sha256: 'b'.repeat(64) })).ok).toBe(true)
     const reply = data<PublishInspect>(await s.inspect({ storage: null }))
     expect(reply.components.find((c) => c.assetId === FONT)?.share).toBe('not_shared')

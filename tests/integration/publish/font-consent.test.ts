@@ -2,6 +2,7 @@
 // project file can come from someone else, so its "may share this font" flag alone never makes a
 // font `confirmed`. Only this machine's consent list does, keyed by project ID, asset ID and the
 // hash of the font file's bytes as measured now.
+import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, afterEach } from 'vitest'
@@ -57,8 +58,21 @@ async function shares(x: InspectSetUp): Promise<Record<string, string | null>> {
   return Object.fromEntries(reply.components.map((c) => [c.assetId, c.share]))
 }
 
+// The hash of the font's bytes as they are now, as publish.inspect shows it (P9-12); an asset
+// with no file here (a picture, an unknown ID, the unflagged font) has the font's bytes' hash.
+const shown = (assetId: string) => {
+  const file = files[assetId]
+  const bytes = file !== undefined && fs.existsSync(file) ? fs.readFileSync(file) : BYTES.ttf
+  return crypto.createHash('sha256').update(bytes).digest('hex')
+}
+
 const consent = (x: InspectSetUp, assetId: string, allowed = true) =>
-  x.fx.user('publish.setFontConsent', { projectId: x.projectId, assetId, allowed })
+  x.fx.user('publish.setFontConsent', {
+    projectId: x.projectId,
+    assetId,
+    allowed,
+    ...(allowed && { sha256: shown(assetId) }),
+  })
 
 const consentFile = (x: InspectSetUp) => path.join(x.fx.userData, FONT_CONSENT_FILE)
 
@@ -200,7 +214,7 @@ describe('the consent file [P9-9, A-260, security]', () => {
 describe('publish.setFontConsent [P9-9, A-260]', () => {
   it('is AGENT_DENIED and writes nothing', async () => {
     s = await setUp()
-    const input = { projectId: s.projectId, assetId: FONT, allowed: true }
+    const input = { projectId: s.projectId, assetId: FONT, allowed: true, sha256: shown(FONT) }
     expect(await s.fx.agent('publish.setFontConsent', input)).toEqual({
       ok: false,
       error: { code: 'AGENT_DENIED', message: denialMessage('publish.setFontConsent') },
