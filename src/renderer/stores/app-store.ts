@@ -43,12 +43,12 @@ function openedProjectId(data: unknown): string | null {
 
 export function createAppStore(api: AdmanApi): AppStore {
   return createStore<AppStoreState>((set, get) => {
+    // spec/phases/round-2-platform.md D9: a project that appears later (an agent made it) is
+    // listed, not shown. Only the first read shows one: the newest, from a system open made
+    // before the window loaded. The shown project closing returns to the start screen.
     function nextView(app: AppState, before: AppState | null): View {
-      // A project the window has not seen yet was opened by the system (double-click),
-      // including before the window's first load; show the newest one.
-      const known = new Set(before?.openProjects.map((p) => p.projectId) ?? [])
-      const added = app.openProjects.filter((p) => !known.has(p.projectId)).at(-1)
-      if (added) return { kind: 'project', projectId: added.projectId }
+      const newest = app.openProjects.at(-1)
+      if (before === null && newest) return { kind: 'project', projectId: newest.projectId }
       const view = get().view
       if (
         view.kind === 'project' &&
@@ -57,6 +57,15 @@ export function createAppStore(api: AdmanApi): AppStore {
         return { kind: 'start' }
       }
       return view
+    }
+
+    // app.showProject (a system open) and the window's own open or create: read the state
+    // first, so the project is listed before it is shown.
+    async function showOpened(projectId: string): Promise<void> {
+      await get().refresh()
+      if (get().app?.openProjects.some((p) => p.projectId === projectId)) {
+        set({ view: { kind: 'project', projectId } })
+      }
     }
 
     async function askForKey(providerId: unknown): Promise<boolean> {
@@ -109,7 +118,11 @@ export function createAppStore(api: AdmanApi): AppStore {
       },
 
       subscribe() {
-        return api.on('app.stateChanged', () => void get().refresh())
+        const stops = [
+          api.on('app.stateChanged', () => void get().refresh()),
+          api.on('app.showProject', ({ projectId }) => void showOpened(projectId)),
+        ]
+        return () => stops.forEach((stop) => stop())
       },
 
       show: (view) => set({ view, error: null }),
