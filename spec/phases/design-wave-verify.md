@@ -16,6 +16,10 @@ A running list kept by the orchestrator, like `round-2-verify.md`. The design wa
 10. **The local image server's privacy paragraph** stays on the page in full. The audit wanted one short line with the rest behind an info button; say if you want that.
 11. **Security words stay on the page everywhere:** money, lost work, data leaving the machine, what an agent asks to do, and failures are never folded away or moved into a tooltip.
 
+12. **Leaving the New campaign page** with Back or Escape asks first when you have typed something ("Leave this brief?"); the Cancel button leaves at once, as today.
+13. **Things the audit proposed that were not built, because they would change how a feature works** (they can be planned separately): a subject name field that both picks and makes a subject; a subject menu drawn as avatars; a size-by-language grid inside the fan-out dialog; run results shown inside the run dialog.
+14. **Where the audit wanted a security or failure line folded away, it stays on the page:** the permission, licence and delete dialogs keep every word; the local image server's privacy paragraph; a failed approvals refresh; a failed translation; brief photo notes; what Publish sends and writes into its report; the export overwrite line; what turning off an approval link deletes.
+
 ## Hand checks only you can do
 
 - Read the new Settings pages once with your real keys saved: nothing should need setting up again.
