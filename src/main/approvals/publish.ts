@@ -88,6 +88,9 @@ async function removeOld(deps: CoreDeps, store: PictureStore, pair: Pair, keep: 
 
 export type { PublishInput }
 
+// onSending: right before the gallery request goes; from then on a stop has no effect.
+export type PublishRun = PublishInput & { onSending?: () => void }
+
 // What the folder held before this run's first upload. A failing run removes only the paths it
 // added, never a file the live gallery may already show (a path written again). When the folder
 // cannot be listed, a failing run removes nothing; the next good run's clean-up does it.
@@ -141,7 +144,7 @@ async function signed(store: PictureStore, e: GalleryEntry) {
 }
 
 // Steps 0 and 2 to 6. Gives the rows run writes.
-export async function publishGallery(deps: CoreDeps, input: PublishInput): Promise<Published> {
+export async function publishGallery(deps: CoreDeps, input: PublishRun): Promise<Published> {
   const { pair } = input
   await input.client.health()
   const store = deps.approvals.pictures()
@@ -161,6 +164,7 @@ export async function publishGallery(deps: CoreDeps, input: PublishInput): Promi
       if (e.clip) keep.add(e.clip.file)
     }
     stopIfAsked(input.signal)
+    input.onSending?.()
     const shown = await input.client.replaceGallery(pair, {
       campaignName: input.campaignName,
       variants,

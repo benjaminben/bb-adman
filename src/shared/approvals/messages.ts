@@ -12,6 +12,7 @@ export const APPROVALS_REASONS = [
   'approval_link_gone',
   'too_many_variants',
   'publish_cancelled',
+  'update_running',
 ] as const
 export type ApprovalsReason = (typeof APPROVALS_REASONS)[number]
 
@@ -25,6 +26,7 @@ export const APPROVALS_REASON_MESSAGES: Record<ApprovalsReason, string> = {
     'This link no longer exists on the approvals service, so it is shown as turned off. Make a new link to share again.',
   too_many_variants: 'A gallery can show at most 500 variants.',
   publish_cancelled: 'The gallery update was stopped. The gallery was not changed.',
+  update_running: 'This gallery is already being updated.',
 }
 
 // The RULE_VIOLATION for a reason, with its sentence. Every approvals stub throws

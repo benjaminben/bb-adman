@@ -35,4 +35,9 @@ export type ApprovalsPasswordInput = z.infer<typeof approvalsCreateLinkInput>
 export type ApprovalsCreateLinkReply = { slug: string }
 export type ApprovalsSetPasswordReply = Record<string, never>
 export type ApprovalsPublishReply = { variants: number; drawn: number; clips: number }
+// approvals.cancelUpdate: app scope, the campaign's IDs only.
+export const approvalsCancelUpdateInput = z
+  .object({ projectId: ProjectId, campaignId: CampaignId })
+  .strict()
+export type ApprovalsCancelUpdateReply = { stopped: boolean }
 export type ApprovalsRefreshReply = { changed: boolean; gone: boolean }

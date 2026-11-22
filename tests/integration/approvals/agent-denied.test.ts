@@ -23,6 +23,7 @@ const COMMANDS = [
   'approvals.publish',
   'approvals.refresh',
   'approvals.endLink',
+  'approvals.cancelUpdate',
 ]
 const QUERIES = ['approvals.forCampaign', 'approvals.getPassword']
 
