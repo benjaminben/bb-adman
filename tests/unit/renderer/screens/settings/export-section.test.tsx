@@ -9,8 +9,7 @@ import type { AppState } from '@/shared/schemas/queries/app'
 import { renderApp, axeViolations } from '../../render'
 import { makeFakeApi, baseState } from '../../fake-api'
 
-const HINT =
-  'Written into each report as the person who exported. It is not checked. Leave it empty to show "name not set".'
+const HINT = 'Written into each report as the person who exported. It is not checked.'
 
 function withExport(
   exportSettings: Partial<AppState['settings']['export']>,
@@ -37,22 +36,23 @@ async function section(state: AppState = withExport({})) {
 
 describe('settings: the Export section [P8-10, A-201]', () => {
   it.each([
-    ['Picture format', 'jpg', { export: { imageFormat: 'jpg' } }],
-    ['Frames per second', '60', { export: { fps: 60 } }],
+    ['Picture format', 'JPG', { export: { imageFormat: 'jpg' } }],
+    ['Frame rate', '60 fps', { export: { fps: 60 } }],
   ])('sends the patch when %s changes', async (label, value, patch) => {
     const { box, updates } = await section()
-    await userEvent.selectOptions(within(box).getByLabelText(label), value)
+    const group = within(box).getByRole('group', { name: label })
+    await userEvent.click(within(group).getByRole('button', { name: value }))
     expect(updates()).toEqual([{ name: 'settings.update', input: patch }])
   })
 
   it('offers PNG and JPG, and 30 and 60 frames per second', async () => {
     const { box } = await section()
     const names = (label: string) =>
-      within(within(box).getByLabelText(label))
-        .getAllByRole('option')
+      within(within(box).getByRole('group', { name: label }))
+        .getAllByRole('button')
         .map((o) => o.textContent)
     expect(names('Picture format')).toEqual(['PNG', 'JPG'])
-    expect(names('Frames per second')).toEqual(['30', '60'])
+    expect(names('Frame rate')).toEqual(['30 fps', '60 fps'])
   })
 
   it('hides JPG quality for PNG', async () => {
@@ -80,8 +80,9 @@ describe('settings: the Export section [P8-10, A-201]', () => {
 
   it('saves the trimmed name when the field is left, and shows the hint', async () => {
     const { box, updates } = await section()
-    const field = within(box).getByLabelText('Name shown in reports')
-    expect(field).toHaveAccessibleDescription(HINT)
+    const field = within(box).getByLabelText('Report name')
+    await userEvent.click(within(box).getByRole('button', { name: 'About report name' }))
+    expect(screen.getByText(HINT)).toBeInTheDocument()
     await userEvent.type(field, '  Rowan Vale ')
     await userEvent.tab()
     expect(updates()).toEqual([
@@ -91,7 +92,7 @@ describe('settings: the Export section [P8-10, A-201]', () => {
 
   it('saves the name on Enter, and an emptied name as an empty string', async () => {
     const { box, updates } = await section(withExport({}, 'Rowan Vale'))
-    const field = within(box).getByLabelText('Name shown in reports')
+    const field = within(box).getByLabelText('Report name')
     expect(field).toHaveValue('Rowan Vale')
     await userEvent.clear(field)
     await userEvent.type(field, '{Enter}')
@@ -105,7 +106,7 @@ describe('settings: the Export section [P8-10, A-201]', () => {
     const issue = reportsSettings.shape.exporterName.safeParse(long).error?.issues[0]?.message
     expect(issue).toBeTruthy()
     const { box, updates } = await section()
-    const field = within(box).getByLabelText('Name shown in reports')
+    const field = within(box).getByLabelText('Report name')
     await userEvent.click(field)
     await userEvent.paste(long)
     await userEvent.tab()
@@ -116,7 +117,7 @@ describe('settings: the Export section [P8-10, A-201]', () => {
 
   it('draws the name as a plain text field, not a key field', async () => {
     const { box } = await section()
-    const field = within(box).getByLabelText('Name shown in reports')
+    const field = within(box).getByLabelText('Report name')
     expect(field).toHaveAttribute('type', 'text')
     expect(field.className).toBe('')
     expect(field.closest('fieldset')).toBeNull()

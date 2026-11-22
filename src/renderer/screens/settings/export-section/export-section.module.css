@@ -1,8 +1,40 @@
 /* app-style */
-/* The name field sits under the grid of the three export controls. */
-.name {
-  margin-top: var(--space-4);
+/* Export (SET-3): inline rows; the controls are sized to their values, not the row. The label
+   column is wider than the shared one so "Report name" and its InfoTip stay on one line (the
+   doubled class outranks the shared .field.inline). */
+.row.row {
+  grid-template-columns: calc(var(--field-label-width) * 1.5) 1fr;
 }
-.name p {
+.row > label,
+.row > span:first-child {
+  white-space: nowrap;
+}
+.seg {
+  justify-self: start;
+}
+.short {
+  justify-self: start;
+  width: calc(var(--control-height) * 3);
+}
+/* A name is short: the field stops at about thirty characters. */
+.name > input {
+  width: 100%;
+  max-width: calc(var(--control-height) * 10);
+}
+.labelWithTip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}
+.labelWithTip > label {
+  margin: 0;
+  font-size: var(--type-meta-size);
+  color: var(--color-text-secondary);
+}
+/* A refusal sits under the field, across both columns of the row. */
+.issue {
+  grid-column: 1 / -1;
+}
+.issue > p {
   margin: 0;
 }
