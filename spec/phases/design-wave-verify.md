@@ -70,7 +70,25 @@ A running list kept by the orchestrator, like `round-2-verify.md`. The design wa
 54. **Five small fixes after the wave.** With a help tip open inside a dialog, the first Escape closes only the tip. A long refresh failure wraps on its own line under the campaign head. On the first-run ComfyUI and Storage steps the step name shows once, not twice. The chosen clip's speaker and trash bar sits above the clip, so it never covers the name; it overlaps the bottom edge of the layer row above by a few pixels (say if that bothers you). The key dialog's title has its key icon.
 55. **Clean-up.** Code that no screen used any more was removed; nothing you see or do changed. Four shared style classes that nothing uses yet (two badge tones, a menu label, a two-column form grid) were kept as part of the style framework.
 
+## Small things left as they are
+
+None of these blocks testing. Say which you want changed.
+
+- **Words that differ for sight and for a screen reader.** "Skip them" in the package dialog is read out as "Package without them"; "Type it" on the brief page as "Fill the form by hand"; the subject choice "From project" as "Use a subject this project has". One problem line in the brief form still names the long form.
+- **Package dialog.** When a file is missing, the refusal shows in the dialog and in the app's top banner.
+- **Layout dialog.** The keyboard focus ring and the chosen ring are the same colour.
+- **Sync review.** "Translate" shows on each row of the same language, not once per language.
+- **Translations tab.** The "Proposed" mark is its own small button, not the shared status mark (the shared one cannot be switched off while a save runs).
+- **Copy options.** After a failed run, "Retry" can be clicked while a Generate request is being sent.
+- **Start-from tiles** in the Generate panel have hyphenated names for a screen reader.
+- **Not measured:** the contrast of the progress bar's track.
+- **Tests not written:** keyboard keys on the last format chip in fan-out.
+- **Code size:** `layout.module.css` is long and could be split by part.
+
 ## Hand checks only you can do
 
 - Read the new Settings pages once with your real keys saved: nothing should need setting up again.
 - Start one paid run from the editor and one from fan-out: the cost must be on screen at the click.
+- Delete a subject from the Assets panel, then ask an agent to delete one: the app must ask you first, and the photos must stay.
+- Open Publish for a campaign with a few files: each file's place on your computer shows under its row. Decide if you want that kept (item 52).
+- Play with a short video clip on the timeline: check the speaker and trash bar above the chosen clip (item 54).
