@@ -18,7 +18,7 @@ describe('Create campaign: the order of the steps [SP-4]', () => {
       await openForm(fake)
       if (tick) {
         await userEvent.click(
-          screen.getByRole('checkbox', { name: 'Start the ad with a subject photo placed' }),
+          screen.getByRole('switch', { name: 'Start the ad with a subject photo placed' }),
         )
       }
       await userEvent.click(screen.getByRole('button', { name: 'Create campaign' }))

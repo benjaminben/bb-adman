@@ -1,72 +1,116 @@
 /* app-style */
-/* The subject rows (spec/app-style.md "Project home and brief form"): each row is a card with
-   its fields two to a line; "Photos" and the choice of subject take the full width. */
-.subjects {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+/* The brief form's subjects (HOME-3b): blocks without a box, one hairline between them. Each
+   has a header line (Name, Description, ✕), a line with the Segmented and the ID or project
+   subject, then the photo strip. */
+.headEnd {
+  display: inline-flex;
+  align-items: center;
   gap: var(--space-3);
 }
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  align-self: stretch;
+  max-width: var(--width-dialog-wide);
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3) var(--space-4);
-  align-items: end;
-  min-width: 0;
-  margin: 0;
-  padding: var(--space-3) var(--space-4) var(--space-4);
-  border: var(--border-width) solid var(--color-line);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  box-shadow: var(--shadow-1);
+.list > li + li {
+  border-top: var(--border-width) solid var(--color-line);
 }
-.row legend {
-  padding: 0 var(--space-1);
-  font-size: var(--font-size-control);
-  font-weight: var(--weight-bold);
-}
-.field {
+.block {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  font-size: var(--font-size-small);
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+}
+.name {
+  flex: 0 1 var(--field-label-width);
+  min-width: 0;
+  font-weight: var(--weight-medium);
+}
+/* The description is long text: the reading face. */
+.description {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-reading);
+  font-size: var(--font-size-reading);
+}
+.remove {
+  flex: none;
+}
+.which {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-inline) var(--space-4);
+}
+/* The Segmented: a surface strip of radios; each radio covers its segment, unseen, so the whole
+   segment is the click target and the radio keeps its role. */
+.seg {
+  display: inline-flex;
+  gap: calc(var(--border-width) * 2);
+  padding: calc(var(--border-width) * 2);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.choice {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-inner);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-control);
+  white-space: nowrap;
+}
+.choice input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.choice:hover:not(:has(input:disabled)) {
+  color: var(--color-text);
+}
+.choice:has(input:checked) {
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+}
+.choice:has(input:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+.choice:has(input:disabled) {
+  color: var(--color-text-muted);
+}
+.choice input:disabled {
+  cursor: default;
+}
+/* "ID" or "Project subject": a short label before its control. */
+.field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  min-width: 0;
+  font-size: var(--type-meta-size);
   font-weight: var(--weight-medium);
   color: var(--color-text-secondary);
 }
 .field input,
 .field select {
+  min-width: 0;
   font-size: var(--font-size-control);
   font-weight: var(--weight-regular);
   color: var(--color-text);
-}
-/* The description is long text: the reading face. */
-.field .reading {
-  font-family: var(--font-reading);
-  font-size: var(--font-size-reading);
-}
-.modes {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-}
-.modes label {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-}
-.remove {
-  justify-self: end;
-}
-.add {
-  align-self: flex-start;
 }

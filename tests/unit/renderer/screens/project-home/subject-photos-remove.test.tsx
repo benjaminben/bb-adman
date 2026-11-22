@@ -136,20 +136,23 @@ describe('the photo rule on the form [subject-photos "Problem lines", "Reading t
 describe('the place box and the brief line [subject-photos "Start the ad…", A-119, A-125]', () => {
   it('starts unticked with its hint and follows placeSubjectPhoto', async () => {
     const { form } = await renderForm(photoApi())
-    const box = within(form).getByRole('checkbox', {
+    const box = within(form).getByRole('switch', {
       name: 'Start the ad with a subject photo placed',
     })
     expect(box).not.toBeChecked()
-    expect(box).toHaveAccessibleDescription(
-      'Every photo guides the AI pictures either way. Ticked: the newest photo of the first subject that has one goes in the subject picture slot as it is. Not ticked: the slot starts empty. Any photo can be placed later.',
-    )
+    await userEvent.click(within(form).getByRole('button', { name: 'About Place first photo' }))
+    expect(
+      within(form).getByText(
+        'Every photo guides the AI pictures either way. Ticked: the newest photo of the first subject that has one goes in the subject picture slot as it is. Not ticked: the slot starts empty. Any photo can be placed later.',
+      ),
+    ).toBeVisible()
     await userEvent.click(box)
     expect(box).toBeChecked()
   })
 
   it('shows a ticked box when the values say so', async () => {
     const { form } = await renderForm(photoApi(), oneRowForm({ placeSubjectPhoto: true }))
-    expect(within(form).getByRole('checkbox', { name: /subject photo placed/ })).toBeChecked()
+    expect(within(form).getByRole('switch', { name: /subject photo placed/ })).toBeChecked()
   })
 
   it('counts the photos the form opened with and keeps the count', async () => {
@@ -161,7 +164,7 @@ describe('the place box and the brief line [subject-photos "Start the ad…", A-
       ],
     })
     const { form } = await renderForm(fake, values)
-    const line = 'This brief added 3 photo(s). Check them before you create the campaign.'
+    const line = 'This brief added 3 photos. Check them before you create the campaign.'
     expect(form).toHaveTextContent(line)
     await userEvent.click(removeOf('A1.png'))
     await userEvent.click(screen.getByRole('button', { name: 'Add photos to subject 1' }))

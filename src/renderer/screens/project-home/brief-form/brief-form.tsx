@@ -100,7 +100,7 @@ export function BriefForm(props: BriefFormProps) {
           )}
           {briefPhotoCount > 0 && (
             <p className={styles.copy}>
-              This brief added {briefPhotoCount} photo(s). Check them before you create the
+              This brief added {plural(briefPhotoCount, 'photo')}. Check them before you create the
               campaign.
             </p>
           )}

@@ -1,15 +1,17 @@
-// The "Photos" part of a subject row (spec/subject-photos.md, "What a row shows", "Add photos",
-// "Removing a form photo"; D-098): the hint, the photo list, "Add photos", "Adding photos…"
-// and the notes. All text is drawn as text. Focus after "Remove" goes to the next photo's
-// "Remove", else the previous one's, else "Add photos"; after "Add photos" it stays there.
-import { useEffect, useId, useRef } from 'react'
+// The photos of a subject row (spec/subject-photos.md, "What a row shows", "Add photos",
+// "Removing a form photo"; D-098; HOME-3b): the shared PhotoStrip, then the notes. The strip's
+// "+" tile adds photos, with a spinner and the hidden status "Adding photos…" while it runs;
+// with no photo it alone shows, with the warn edge (the problems list says why in words). The
+// notes are failures and stay on the page as words. Focus after a ✕ goes to the next photo's ✕,
+// else the previous one's, else the "+" tile; after adding it returns to the "+" tile.
+import { useEffect, useRef } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import type { SubjectChoice } from '@/renderer/screens/project-home/brief-form-model'
 import { rowPhotos, type ProjectImages } from '@/renderer/screens/project-home/brief-form-photos'
-import { BusySpinner } from '@/renderer/ui/dialog-frame'
 import { Icon } from '@/renderer/ui/icon'
+import { PhotoStrip } from '@/renderer/ui/photo-strip'
 import layout from '@/renderer/ui/layout.module.css'
-import { PhotoTile } from './photo-tile'
+import { stripPhoto } from './photo-tile'
 import { useAddPhotos, type RowUpdate } from './use-add-photos'
 import styles from './subject-photos.module.css'
 
@@ -24,21 +26,21 @@ type Props = {
 
 export function SubjectPhotos({ projectId, n, row, images, update }: Props) {
   const api = useApi()
-  const ids = useId()
   const addPhotos = useAddPhotos(projectId, update)
-  const add = useRef<HTMLButtonElement>(null)
+  const box = useRef<HTMLDivElement>(null)
   const removes = useRef(new Map<string, HTMLButtonElement>())
   const focusNext = useRef<string | 'add' | null>(null)
   const photos = rowPhotos(row, images ?? [])
+  const addLabel = `Add photos to subject ${n}`
 
   useEffect(() => {
     const target = focusNext.current
     if (target === null || (target === 'add' && row.adding)) return
     focusNext.current = null
-    if (target === 'add') {
-      const away = document.activeElement !== null && document.activeElement !== document.body
-      if (!away || document.activeElement === add.current) add.current?.focus()
-    } else removes.current.get(target)?.focus()
+    if (target !== 'add') return removes.current.get(target)?.focus()
+    const add = box.current?.querySelector<HTMLButtonElement>(`[aria-label="${addLabel}"]`)
+    const away = document.activeElement !== null && document.activeElement !== document.body
+    if (!away || document.activeElement === add) add?.focus()
   })
 
   function remove(assetId: string) {
@@ -58,48 +60,22 @@ export function SubjectPhotos({ projectId, n, row, images, update }: Props) {
   }
 
   return (
-    <fieldset className={styles.photos} aria-describedby={`${ids}-hint`}>
-      <legend>Photos</legend>
-      <p id={`${ids}-hint`} className={styles.muted}>
-        Photos of the product, service or person. PNG, JPEG or WebP. At least one is needed. AI
-        pictures are drawn from them.
-      </p>
-      {photos.length === 0 ? (
-        <p className={styles.line}>No photos yet.</p>
-      ) : (
-        <ul className={styles.list} aria-label={`Photos of subject ${n}`}>
-          {photos.map((photo) => (
-            <PhotoTile
-              key={photo.asset.id}
-              projectId={projectId}
-              n={n}
-              photo={photo}
-              removeRef={(el) => {
-                if (el) removes.current.set(photo.asset.id, el)
-                else removes.current.delete(photo.asset.id)
-              }}
-              onRemove={() => remove(photo.asset.id)}
-            />
-          ))}
-        </ul>
-      )}
-      <div className={styles.actions}>
-        <button
-          ref={add}
-          type="button"
-          aria-label={`Add photos to subject ${n}`}
-          disabled={row.adding}
-          onClick={startAdd}
-        >
-          Add photos
-        </button>
-        {row.adding && (
-          <p role="status" className={`${styles.line} ${styles.busy}`}>
-            <BusySpinner />
-            Adding photos…
-          </p>
-        )}
-      </div>
+    <div ref={box} role="group" aria-label="Photos" className={styles.photos}>
+      <PhotoStrip
+        label={`Photos of subject ${n}`}
+        photos={photos.map((photo) => stripPhoto(projectId, n, photo))}
+        onRemove={remove}
+        onAdd={startAdd}
+        addLabel={addLabel}
+        adding={row.adding}
+        addingLabel="Adding photos…"
+        needsOne
+        removeRef={(id, el) => {
+          if (el) removes.current.set(id, el)
+          else removes.current.delete(id)
+        }}
+      />
+      {photos.length === 0 && <span className={styles.hidden}>No photos yet.</span>}
       {row.notes.length > 0 && (
         <div className={`${layout.notice} ${layout.warn} ${styles.notes}`}>
           <Icon name="alert" />
@@ -110,6 +86,6 @@ export function SubjectPhotos({ projectId, n, row, images, update }: Props) {
           </ul>
         </div>
       )}
-    </fieldset>
+    </div>
   )
 }

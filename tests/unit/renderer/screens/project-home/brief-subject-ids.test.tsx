@@ -22,6 +22,7 @@ function subjectItem(summary: HTMLElement, name: string): HTMLElement {
   const list = within(summary).getByRole('list', { name: 'Subjects' })
   const item = within(list)
     .getAllByRole('listitem')
+    .filter((li) => li.parentElement === list)
     .find((li) => (within(li).getByLabelText('Name') as HTMLInputElement).value === name)
   if (!item) throw new Error(`no subject ${name}`)
   return item
