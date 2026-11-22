@@ -1,6 +1,6 @@
+import type { Signoff } from '../../visitor/actions'
 import { Button } from '../button/button'
 import { formatDate } from '../format-date'
-import type { Signoff } from '../group-signoffs'
 import styles from './signoff-list.module.css'
 
 type Props = {

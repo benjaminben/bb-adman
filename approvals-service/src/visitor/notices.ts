@@ -17,6 +17,10 @@ export const NOTICES = {
       'approve.',
   },
   'bad-email': { page: 'gallery', text: 'Enter a full email address, like name@company.com.' },
+  'email-saved': {
+    page: 'gallery',
+    text: 'Your email is saved until you log out or close the browser.',
+  },
 } as const satisfies Record<string, { page: NoticePage; text: string }>
 
 export type NoticeKey = keyof typeof NOTICES

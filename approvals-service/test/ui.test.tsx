@@ -6,7 +6,6 @@ import GlobalError from '../app/global-error'
 import NotFound from '../app/not-found'
 import { formatDate } from '../src/ui/format-date'
 import { GalleryScreen } from '../src/ui/gallery-screen/gallery-screen'
-import { groupSignoffs } from '../src/ui/group-signoffs'
 import { PasswordScreen } from '../src/ui/password-screen/password-screen'
 import { VariantPicture } from '../src/ui/variant-picture/variant-picture'
 import type { GalleryView } from '../src/visitor/actions'
@@ -42,6 +41,7 @@ const view = (extra: Partial<GalleryView> = {}): GalleryView => ({
   link: { slug: SLUG, campaignName: 'Spring shapes' },
   variants: [variant('aaaa22')],
   signoffs: [],
+  reviewer: null,
   notice: null,
   ...extra,
 })
@@ -69,7 +69,6 @@ describe('visitor text is drawn only as escaped text [approvals-gallery.md "Look
     ['title', view({ variants: [variant('aaaa22', 1, { title: HOSTILE })] })],
     ['size line', view({ variants: [variant('aaaa22', 1, { sizeLine: HOSTILE })] })],
     ['email', view({ signoffs: [{ ...signoff(1, 'aaaa22', 1), email: HOSTILE }] })],
-    ['earlier email', view({ signoffs: [{ ...signoff(1, 'aaaa22', 0), email: HOSTILE }] })],
   ]
 
   it.each(ROWS)('escapes a %s', (_name, given) => {
@@ -77,6 +76,14 @@ describe('visitor text is drawn only as escaped text [approvals-gallery.md "Look
     expect(markup).not.toContain('<script')
     expect(markup).not.toContain('</style>')
     expect(markup).toContain(ESCAPED)
+  })
+
+  it("does not draw an older version's sign-off email at all", () => {
+    const given = view({ signoffs: [{ ...signoff(1, 'aaaa22', 0), email: HOSTILE }] })
+    const markup = html(<GalleryScreen view={given} />)
+    expect(markup).not.toContain('<script')
+    expect(markup).not.toContain(ESCAPED)
+    expect(markup).not.toContain('alert(1)')
   })
 })
 
@@ -157,17 +164,14 @@ describe('the gallery page [approvals-gallery.md "Words"]', () => {
     const one = view({ variants: [variant('aaaa22', 2)] })
     const none = text(html(<GalleryScreen view={one} />))
     expect(none).toContain('Signed off by No sign-offs yet.')
-    expect(none).not.toContain('For an earlier version')
 
     const signoffs = [signoff(1, 'aaaa22', 2), signoff(2, 'aaaa22', 1)]
     const markup = html(<GalleryScreen view={{ ...one, signoffs }} />)
     const shown = text(markup)
     expect(shown).toContain('Signed off by person1@example.com · 2026-11-21 12:05 UTC')
-    expect(shown).toContain('For an earlier version person2@example.com · 2026-11-21 12:05 UTC')
     expect(hasTag(markup, 'form', posts(`/l/${SLUG}/signoffs/${signoffs[0]?.id}/remove`))).toBe(
       true,
     )
-    expect(markup).toContain('aria-label="Remove sign-off by person2@example.com"')
   })
 
   it('gives every field a label', () => {
@@ -216,19 +220,6 @@ describe('formatDate and groupSignoffs [approvals-gallery.md "Components"]', () 
     [Date.UTC(2026, 11, 31, 23, 59), '2026-12-31 23:59 UTC'],
   ])('formats %d as %s', (ms, expected) => {
     expect(formatDate(ms)).toBe(expected)
-  })
-
-  it('splits one variant into current and earlier, each oldest first', () => {
-    const list = [
-      signoff(1, 'aaaa22', 2, 30),
-      signoff(2, 'aaaa22', 1, 20),
-      signoff(3, 'bbbb33', 2, 10),
-      signoff(4, 'aaaa22', 2, 10),
-      signoff(5, 'aaaa22', 0, 5),
-    ]
-    const { current, earlier } = groupSignoffs(list, variant('aaaa22', 2))
-    expect(current.map((s) => s.email)).toEqual(['person4@example.com', 'person1@example.com'])
-    expect(earlier.map((s) => s.email)).toEqual(['person5@example.com', 'person2@example.com'])
   })
 })
 

@@ -85,11 +85,12 @@ async function written() {
 }
 
 // AP-4: the two sign-off routes need a session, so they take every row that /leave takes.
-type Route = 'enter' | 'leave' | 'signoffs' | 'remove'
+// Round 2 (R2A-2): /reviewer needs a session too, so it takes every row /leave takes.
+type Route = 'enter' | 'leave' | 'signoffs' | 'remove' | 'reviewer'
 const SIGNOFF_ID = 'A'.repeat(24)
 const pathOf = (route: Route) => (route === 'remove' ? `signoffs/${SIGNOFF_ID}/remove` : route)
 const routesOf = (routes: Row[2]): Route[] =>
-  routes.includes('leave') ? [...routes, 'signoffs', 'remove'] : routes
+  routes.includes('leave') ? [...routes, 'signoffs', 'remove', 'reviewer'] : routes
 
 async function addGallery(linkId: string) {
   const variant = { variantKey: FIELDS.variant, position: 0, title: 'T', sizeLine: 'S' }
