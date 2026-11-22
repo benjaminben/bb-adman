@@ -128,6 +128,7 @@ Where the topic files are silent or need a rule for this phase. The orchestrator
 | Query | Input | Reply | Agent |
 |-------|-------|-------|-------|
 | `translation.forCampaign` | projectId, campaignId | `{ primaryLanguage, rows: TranslationRow[], jobs: TranslationJobState[] }` | allow |
+| `translation.sources` (R3-3) | projectId, campaignId | `{ rows: SourceRow[], outOfDate: string[] }`: one row per text layer of each primary-language post (`directionId`, `variantId`, `title`, `sizeLabel`, `language`, `layerId`, `layerName`, `text`, `copyRev`), and the IDs of the translated text layers whose master words are ahead of their last sync. A read only; no path. The window orders the rows (`spec/screens-campaign.md`, "The Translations tab"). | allow (the same layers are readable through `variant.get`) |
 | `check.results` | projectId, and either campaignId or `variantIds[]` | `{ variants: Array<{ variantId, rev, checkedRev, stale, ranAt, ranBy, results }> }`, only variants with a check row | allow |
 | `dialog.pickSaveFile` | purpose `translation-sheet`, defaultPath? | `{ path: string \| null }` | window only (as every picker) |
 

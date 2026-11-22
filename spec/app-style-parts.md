@@ -66,6 +66,7 @@ Props:
 | `id` | `string` | Key for the fold memory, unique in the app: `'{screen}.{section}'`, for example `'settings.keys'` |
 | `title` | `string` | One to three words |
 | `level` | `2 \| 3 \| 4`, default `3` | Heading level |
+| `size` | `'section' \| 'title'`, default `'section'` | `'title'` draws the heading at the title type role, for a block that starts a new part of a page (the Translations tab's languages) |
 | `summary` | `ReactNode`, optional | A short text or a StatusMark, on the right of the header |
 | `info` | `ReactNode`, optional | An `<InfoTip>`, right after the title |
 | `fold` | `'open' \| 'closed' \| 'none'`, default `'open'` | How it starts the first time this session; `'none'` never folds |
