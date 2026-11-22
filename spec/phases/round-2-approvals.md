@@ -109,7 +109,7 @@ No database change and no migration. No change to the keyed API or the shared co
 
 - `email`: required, passes `Email`, else `bad-email` (no anchor, nothing written).
 - Exactly one of:
-  - `one` = `{variantKey}.{version}` (from the card's or the lightbox's button, `name="one"`), matching `^([23456789abcdefghjkmnpqrstuvwxyz]{6})\.([0-9]{1,16})$` with the version passing `Version`. Then the existing single statement `addSignoffIfVariant` and the existing replies: `signed` or `changed`, with `#v-{variantKey}`. A malformed `one` is `changed` with no anchor.
+  - `one` = `{variantKey}.{version}` (from the card's or the lightbox's button, `name="one"`), matching `^([23456789abcdefghjkmnpqrstuvwxyz]{6})\.([0-9]{1,16})$` with the version passing `Version`. Then the existing single statement `addSignoffIfVariant` and the existing replies: `signed` or `changed`, with `#v-{variantKey}`. A malformed `one` is `changed`; it keeps the anchor only when the text before the first `.` is a valid variant key, and has no anchor otherwise. The two end-to-end scripts that seed a sign-off by posting the form (`e2e/shots.spec.ts`, `e2e/pictures/pictures.spec.ts`) post `one` too.
   - `all` = `1` (from the "Sign off all" confirmation). Then "Sign off all", below.
 - Neither or both: `changed`, nothing written.
 - `seen`: sent with every post from the reviewer form; read only for `all`.
