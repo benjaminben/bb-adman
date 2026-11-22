@@ -90,6 +90,25 @@ function rowInFile(file: string, id: string): JobRow | null {
   }
 }
 
+// A row as a file from elsewhere could hold it, claiming the close left it running.
+function crafted(id: string, status: string, remoteJobId: string | null, provider = 'fake') {
+  f.db
+    .prepare(
+      `INSERT INTO job (id, kind, status, provider, model, request, remote_job_id, result,
+         campaign_id, variant_id, created_at, updated_at)
+       VALUES (?, 'video_generation', ?, ?, '', ?, ?, ?, 'c1', 'v1',
+         '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z')`,
+    )
+    .run(
+      id,
+      status,
+      provider,
+      JSON.stringify(request),
+      remoteJobId,
+      JSON.stringify({ stage: 'working', leftRunning: true }),
+    )
+}
+
 const close = () => f.user('project.close', { runningJobs: 'stop' })
 const open = (filePath: string) =>
   f.core.bus.execute('project.open', { filePath }, { actor: 'user' })
@@ -203,18 +222,7 @@ describe('a close leaves a started paid run running [P7-13, A-174]', () => {
 
   it('project.package writes a left-running row cancelled in the copy', async () => {
     f = await makeGenerationFixture()
-    f.db
-      .prepare(
-        `INSERT INTO job (id, kind, status, provider, model, request, remote_job_id, result,
-           campaign_id, variant_id, created_at, updated_at)
-         VALUES ('j-left', 'video_generation', 'running', 'fake', '', ?, ?, ?, 'c1', 'v1',
-           '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z')`,
-      )
-      .run(
-        JSON.stringify(request),
-        'fake-video-v1-1700000000000-0-64x64-1000',
-        JSON.stringify({ stage: 'working', leftRunning: true }),
-      )
+    crafted('j-left', 'running', 'fake-video-v1-1700000000000-0-64x64-1000')
     const targetDir = path.join(f.root, 'packed')
     fs.mkdirSync(targetDir)
     expect(await f.user('project.package', { targetDir })).toMatchObject({ ok: true })
@@ -225,5 +233,26 @@ describe('a close leaves a started paid run running [P7-13, A-174]', () => {
     if (!copy) throw new Error('no copy made')
     expect(rowInFile(path.join(targetDir, copy), 'j-left')).toMatchObject({ status: 'cancelled' })
     expect(f.job('j-left')).toMatchObject({ status: 'running' })
+  }, 30_000)
+
+  it('a crafted row that claims it was left running gets only the open rule every row gets', async () => {
+    f = await makeGenerationFixture()
+    paidStandIn()
+    const calls = watched()
+    crafted('j-queued', 'queued', null)
+    crafted('j-no-id', 'running', null)
+    crafted('j-bad-id', 'running', 'fake-video-v1-1700000000000-0-64x64-1000/../x')
+    crafted('j-other', 'running', 'fake-video-v1-1700000000000-0-64x64-1000', 'gemini')
+    await f.core.deps.jobs.projectOpened(f.projectId)
+    await waitFor(ended(f, 'j-bad-id'), RUN_MS)
+    await waitFor(ended(f, 'j-other'), RUN_MS)
+    expect(f.job('j-queued')).toMatchObject({ status: 'cancelled' })
+    expect(f.job('j-no-id')).toMatchObject({ status: 'failed', errorKind: 'other' })
+    expect(f.job('j-bad-id')).toMatchObject({ status: 'failed', errorKind: 'other' })
+    expect(f.job('j-other')).toMatchObject({ status: 'failed' })
+    expect(f.jobs().map((j) => j.paidCalls)).toEqual([0, 0, 0, 0])
+    expect(calls.start).toBe(0)
+    expect(readWireRows(f.db, 'asset')).toHaveLength(0)
+    expect(appFilesText()).not.toContain('/../x')
   }, 30_000)
 })
