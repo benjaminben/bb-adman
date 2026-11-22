@@ -1,5 +1,6 @@
 // The licence dialog's box and buttons. The box is left out when the model is unknown, since
 // "This model" is not a name the main process could match. Mounted afresh at each open.
+// Design wave DLG-2: "Cancel" is quiet and "Confirm" the primary, last; no word changed.
 import { useState } from 'react'
 import { DialogFoot } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
@@ -30,7 +31,12 @@ export function LicenceChoices(props: LicenceChoicesProps) {
         </label>
       )}
       <DialogFoot>
-        <button type="button" disabled={props.saving} onClick={props.onCancel}>
+        <button
+          type="button"
+          className={layout.quiet}
+          disabled={props.saving}
+          onClick={props.onCancel}
+        >
           Cancel
         </button>
         <button

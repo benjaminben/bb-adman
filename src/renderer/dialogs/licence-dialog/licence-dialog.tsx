@@ -2,6 +2,7 @@
 // D-088): a run command refused with licence_not_confirmed opens it. The model's name comes
 // from comfy.getInfo by the refused workflow; it opens once that answer is in, so the box
 // exists when focus is placed. The app store saves a ticked model and sends the run again.
+// Design wave DLG-2: the `confirm` kind; every word as before.
 import { useEffect, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { DialogFrame } from '@/renderer/ui/dialog-frame'
@@ -40,6 +41,7 @@ export function LicenceDialog() {
     <DialogFrame
       open={ready}
       onClose={() => request?.resolve({ confirmed: false, remember: null })}
+      kind="confirm"
       title={`${model ?? UNKNOWN_MODEL} requires a commercial license, please confirm that you have one before production use`}
       closable={!saving}
     >
