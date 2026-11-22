@@ -10,7 +10,11 @@ const TOTAL = 1000
 const clip = new Uint8Array(TOTAL).map((_, i) => i % 251)
 clip.set(new TextEncoder().encode('ftyp'), 4)
 
-type Answer = { status?: number; headers?: Record<string, string>; body?: BodyInit | null }
+type Answer = {
+  status?: number
+  headers?: Record<string, string>
+  body?: ConstructorParameters<typeof Response>[0]
+}
 const calls: { url: unknown; init: unknown }[] = []
 let answer: (start: number, end: number) => Answer
 

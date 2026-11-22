@@ -15,12 +15,19 @@ import {
 } from './api/gallery'
 import { readLink } from './api/read'
 import { bodyRoute, plainRoute, type ApiRoute } from './api/route'
+import type { ClipSource } from './pictures/clip-source'
 import { s3Source } from './pictures/s3-source'
 import type { PictureSource } from './pictures/source'
 import { VISITOR_ROUTES, visitorRoute, type VisitorRoute } from './visitor/routes'
 
 // `pictures` is left out by most tests; createApp then puts in the default, s3-source.
-export type Parts = { now: () => number; random: RandomBytes; pictures?: PictureSource }
+// `clips` has no default: without it the clip route answers the empty 404 (serve.ts sets it).
+export type Parts = {
+  now: () => number
+  random: RandomBytes
+  pictures?: PictureSource
+  clips?: ClipSource
+}
 
 const LINK = '^/api/v1/links/([^/]+)/([^/]+)'
 
