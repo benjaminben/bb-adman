@@ -1,0 +1,66 @@
+/* app-style */
+/* A StatusMark (spec/app-style-parts.md "StatusMark"): the tone colours the dot or the icon;
+   the label stays in the secondary text colour. The running spinner turns by itself (the icon
+   part), so this file adds no motion of its own. */
+.mark {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  vertical-align: middle;
+}
+.button {
+  gap: var(--gap-tight);
+}
+.none {
+  color: var(--color-text-muted);
+}
+.ok {
+  color: var(--color-ok);
+}
+.warn {
+  color: var(--color-warn);
+}
+.danger {
+  color: var(--color-danger);
+}
+.info {
+  color: var(--color-info);
+}
+.accent {
+  color: var(--color-accent);
+}
+.running {
+  color: var(--color-accent);
+}
+.dot {
+  flex: none;
+  width: var(--mark-dot);
+  height: var(--mark-dot);
+  border-radius: 50%;
+  background: currentColor;
+}
+.icon {
+  display: inline-flex;
+  flex: none;
+}
+.icon svg {
+  width: var(--mark-icon);
+  height: var(--mark-icon);
+}
+.label {
+  font-size: var(--type-meta-size);
+  font-weight: var(--type-meta-weight);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+/* Words for a screen reader only: a box one hairline wide, clipped away. */
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
