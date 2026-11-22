@@ -86,7 +86,7 @@ test('Earlier options of a picture layer', async () => {
   await run(page, place, 'fake', 3)
   await expect.poll(() => finishedRuns(page, place), { timeout: 20_000 }).toBe(2)
 
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page.getByRole('button', { name: new RegExp(`^${place.name}`) }).click()
   const section = page.getByRole('region', { name: 'Earlier options' })

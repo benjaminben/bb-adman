@@ -99,3 +99,97 @@ describe('DirectionGrids', () => {
     expect(await axeViolations()).toEqual([])
   })
 })
+
+// R2C-3 (spec/phases/round-2-campaign.md, design addition 3): a click selects, a double-click
+// or Enter opens, Mod+Enter opens behind, the arrows move the selection, Delete asks to delete.
+function twoRows() {
+  const base = campaignGet([
+    variant('V1', { title: 'Master post', isMaster: true }),
+    variant('V2', { title: 'German post', language: 'de' }),
+    variant('V4', { title: 'Story post', sizeLabel: '9:16', width: 1080, height: 1920 }),
+  ])
+  return { ...base, directions: [direction('D1', 'Beach day', 'V1', 0)] }
+}
+
+async function drawSelect() {
+  const onChoose = vi.fn()
+  const onOpen = vi.fn()
+  const onOpenBehind = vi.fn()
+  const view = await renderWith(
+    <main>
+      <DirectionGrids
+        projectId={P}
+        campaign={twoRows()}
+        chosenId="V1"
+        onChoose={onChoose}
+        onOpen={onOpen}
+        onOpenBehind={onOpenBehind}
+      />
+    </main>,
+  )
+  return { ...view, onChoose, onOpen, onOpenBehind, user: userEvent.setup() }
+}
+
+const tile = (name: string) => screen.getByRole('button', { name: new RegExp(`^${name}`) })
+const modKey = platform === 'mac' ? 'Meta' : 'Control'
+
+describe('DirectionGrids select, then open [R2C-3]', () => {
+  it('a click calls onChoose and not onOpen', async () => {
+    const { onChoose, onOpen, user } = await drawSelect()
+    await user.click(tile('German post'))
+    expect(onChoose.mock.calls).toEqual([['V2']])
+    expect(onOpen).not.toHaveBeenCalled()
+  })
+
+  it('a double-click calls onOpen', async () => {
+    const { onOpen, user } = await drawSelect()
+    await user.dblClick(tile('German post'))
+    expect(onOpen.mock.calls).toEqual([['V2']])
+  })
+
+  it('Enter on a focused tile calls onOpen once and onChoose not at all', async () => {
+    const { onChoose, onOpen, user } = await drawSelect()
+    tile('German post').focus()
+    await user.keyboard('{Enter}')
+    expect(onOpen.mock.calls).toEqual([['V2']])
+    expect(onChoose).not.toHaveBeenCalled()
+  })
+
+  it('Mod+Enter calls onOpenBehind', async () => {
+    const { onOpen, onOpenBehind, user } = await drawSelect()
+    tile('German post').focus()
+    await user.keyboard(`{${modKey}>}{Enter}{/${modKey}}`)
+    expect(onOpenBehind.mock.calls).toEqual([['V2']])
+    expect(onOpen).not.toHaveBeenCalled()
+  })
+
+  it('Right then Down move the focus and select each tile met', async () => {
+    const { onChoose, user } = await drawSelect()
+    tile('Master post').focus()
+    await user.keyboard('{ArrowRight}')
+    expect(tile('German post')).toHaveFocus()
+    await user.keyboard('{ArrowDown}')
+    expect(tile('Story post')).toHaveFocus()
+    expect(onChoose.mock.calls).toEqual([['V2'], ['V4']])
+  })
+
+  it('an arrow after a Cmd-click only selects', async () => {
+    const { onChoose, onOpenBehind, user } = await drawSelect()
+    await user.keyboard(`{${modKey}>}`)
+    await user.click(tile('German post'))
+    await user.keyboard(`{/${modKey}}`)
+    await user.keyboard('{ArrowDown}')
+    expect(onOpenBehind.mock.calls).toEqual([['V2']])
+    expect(onChoose.mock.calls).toEqual([['V4']])
+  })
+
+  it('Delete on a non-master opens the warning; on the master nothing happens', async () => {
+    const { user } = await drawSelect()
+    tile('Master post').focus()
+    await user.keyboard('{Delete}')
+    expect(screen.queryByRole('dialog')).toBeNull()
+    tile('German post').focus()
+    await user.keyboard('{Backspace}')
+    expect(await screen.findByRole('dialog', { name: 'Delete German post?' })).toBeInTheDocument()
+  })
+})

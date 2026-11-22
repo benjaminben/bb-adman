@@ -36,7 +36,7 @@ describe('CampaignView paid count [P4-12, FR-230]', () => {
   it("is not drawn on a variant's tab", async () => {
     await renderWith(<CampaignView projectId={P} campaignId="C1" onBack={() => {}} />, withCount())
     await screen.findByText(LINE)
-    await userEvent.click(await screen.findByRole('button', { name: /^Master post/ }))
+    await userEvent.dblClick(await screen.findByRole('button', { name: /^Master post/ }))
     await waitFor(() => expect(screen.queryByText(LINE)).toBeNull())
   })
 })

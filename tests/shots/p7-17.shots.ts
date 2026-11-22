@@ -21,7 +21,7 @@ test('the format choice on an image variant, then a video with its length', asyn
   await screens.createProject(page, 'Lemon Fizz')
   await screens.loadBriefAndCreate(app, page)
   await screens.openCampaign(page)
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   const format = page.getByRole('radiogroup', { name: 'Format' })
   await expect(format.getByRole('radio', { name: 'Image' })).toBeChecked()
   await shot(page, '220-format-image')

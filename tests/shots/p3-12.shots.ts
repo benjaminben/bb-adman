@@ -91,7 +91,7 @@ test('The layer list actions', async () => {
     .click()
   await expect(page.getByRole('list', { name: 'Variants' }).getByRole('listitem')).toHaveCount(1)
   await backgroundPicture(session)
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
 
   const list = page.getByRole('list', { name: 'Layers' })

@@ -29,7 +29,7 @@ test('P10-14 shots', async () => {
   await campaignInTwoLanguages(app, page)
   const a = await agentReads(s)
 
-  await v.tileButton(v.tile(page, DIRECTION, GERMAN)).click()
+  await v.tileButton(v.tile(page, DIRECTION, GERMAN)).dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   const made = await s.call('create_layer', {
     project_id: a.projectId,

@@ -82,14 +82,14 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
     await renderWith(view())
     const line = 'Runs and panels below are for: '
     expect(await screen.findByText(`${line}Master post · 1:1 · en`)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /^German post/ }))
+    await userEvent.dblClick(screen.getByRole('button', { name: /^German post/ }))
     await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
     expect(await screen.findByText(`${line}German post · 1:1 · de`)).toBeInTheDocument()
   })
 
-  it('opens a variant in the editor on a plain click, in place of the overview [P3-9, A-47]', async () => {
+  it('opens a variant in the editor on a double-click, in place of the overview [P3-9, A-47]', async () => {
     const { fake } = await renderWith(view())
-    await userEvent.click(await screen.findByRole('button', { name: /^German post/ }))
+    await userEvent.dblClick(await screen.findByRole('button', { name: /^German post/ }))
     // The "Make a video" card reads its own post too (P7-22), so only V2's reads are counted.
     const readsOfV2 = () =>
       fake.queries
@@ -113,7 +113,7 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
 
   it('keeps the chosen view while a variant tab is shown and back again [R2C-1, A-303]', async () => {
     await renderWith(view())
-    await userEvent.click(await screen.findByRole('button', { name: /^German post/ }))
+    await userEvent.dblClick(await screen.findByRole('button', { name: /^German post/ }))
     await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
     await userEvent.click(screen.getByRole('tab', { name: 'Checks' }))
     expect(screen.getByRole('region', { name: 'Checks' })).toBeInTheDocument()
@@ -122,5 +122,50 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
     await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
     expect(screen.getByRole('tab', { name: 'Checks' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('region', { name: 'Checks' })).toBeInTheDocument()
+  })
+
+  it('a click selects: the line names it, job.list is read for it, no tab opens [R2C-3]', async () => {
+    const { fake } = await renderWith(view())
+    await userEvent.click(await screen.findByRole('button', { name: /^German post/ }))
+    expect(
+      await screen.findByText('Runs and panels below are for: German post · 1:1 · de'),
+    ).toBeInTheDocument()
+    await waitFor(() =>
+      expect(fake.queries.filter((q) => q.name === 'job.list').at(-1)?.input).toEqual({
+        projectId: P,
+        variantId: 'V2',
+      }),
+    )
+    expect(screen.queryByRole('tab', { name: 'German post · 1:1 · de' })).toBeNull()
+    expect(screen.getByRole('list', { name: 'Variants in Main' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^German post/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
+  it('a double-click opens the editor in place of the overview and keeps it selected [R2C-3]', async () => {
+    await renderWith(view())
+    await userEvent.dblClick(await screen.findByRole('button', { name: /^German post/ }))
+    expect(screen.getByRole('tab', { name: 'German post · 1:1 · de' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(screen.queryByRole('list', { name: 'Variants in Main' })).toBeNull()
+    await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
+    expect(screen.getByRole('button', { name: /^German post/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
+  it('says once, above the grids, how to select and open a post [R2C-3]', async () => {
+    await renderWith(view())
+    const hint = await screen.findByText(
+      'Click a post to select it. Double-click it, or press Enter, to open it.',
+    )
+    expect(hint.compareDocumentPosition(screen.getByRole('region', { name: 'Main' }))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
   })
 })

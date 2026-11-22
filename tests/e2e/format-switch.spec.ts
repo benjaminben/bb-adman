@@ -56,7 +56,7 @@ function addVideoCopy(filePath: string, variantId: string): void {
 
 async function openEditor(page: Page): Promise<void> {
   await screens.openCampaign(page)
-  await tiles(page).filter({ hasNotText: COPY_TITLE }).first().click()
+  await tiles(page).filter({ hasNotText: COPY_TITLE }).first().dblclick()
   await expect(format(page)).toBeVisible()
 }
 

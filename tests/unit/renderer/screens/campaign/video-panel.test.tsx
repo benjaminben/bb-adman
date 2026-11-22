@@ -39,7 +39,7 @@ describe('VideoPanel [SPEC 14 1.57 TP-6]', () => {
 
   it('sends generation.startVideo with the prompt, the chosen variant and the length', async () => {
     const { fake } = await panel()
-    await userEvent.click(await screen.findByRole('button', { name: /^German post/ }))
+    await userEvent.dblClick(await screen.findByRole('button', { name: /^German post/ }))
     await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
     const q = within(await screen.findByRole('region', { name: 'Make a video' }))
     await userEvent.type(q.getByLabelText('Prompt'), 'A can rolls across a table')

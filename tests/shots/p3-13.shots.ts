@@ -61,7 +61,7 @@ test('The properties panel', async () => {
   const headline = layers.find((l) => l.type === 'text' && l.name === 'Headline')!
   const background = layers.find((l) => l.type === 'background')!
 
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page.getByRole('button', { name: new RegExp(`^${headline.name}`) }).click()
   await expect(

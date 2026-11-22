@@ -134,7 +134,7 @@ test('with no key and the network off, import, a hand layout and an image export
 
   // A hand layout: a picture layer, the imported picture chosen, its box typed in.
   await page.getByRole('button', { name: `Open ${CAMPAIGN}` }).click()
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page.getByRole('button', { name: 'Add picture layer' }).click()
   const properties = page.getByRole('region', { name: 'Properties' })

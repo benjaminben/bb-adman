@@ -80,7 +80,7 @@ export async function videoWithBackdrop(
   await screens.createProject(page, name)
   await screens.loadBriefAndCreate(app, page)
   await screens.openCampaign(page)
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(format(page)).toBeVisible()
   await choosePicture(app, page, await drawnBackdrop(app, folder))
   await format(page).getByRole('radio', { name: 'Video' }).click()
@@ -112,7 +112,7 @@ export async function startFromBackground(page: Page): Promise<void> {
 
 // Back to the master's editor from the overview.
 export async function backToEditor(page: Page): Promise<void> {
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(timeline(page)).toBeVisible()
 }
 

@@ -62,14 +62,14 @@ describe('variant tabs [FR-212, FR-214, Q-041]', () => {
     expect(screen.getByRole('list', { name: 'Variants in Main' })).toBeInTheDocument()
   })
 
-  it('shows the variant tab on a plain click, with the editor; a second click adds no tab', async () => {
+  it('shows the variant tab on a double-click, with the editor; a second double-click adds no tab', async () => {
     await draw()
-    await userEvent.click(tile('German post'))
+    await userEvent.dblClick(tile('German post'))
     expect(screen.getByRole('tab', { name: SECOND_TAB })).toHaveAttribute('aria-selected', 'true')
     expect(await screen.findByRole('region', { name: 'Canvas, German post' })).toBeInTheDocument()
     expect(screen.queryByRole('list', { name: 'Variants in Main' })).toBeNull()
     await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
-    await userEvent.click(tile('German post'))
+    await userEvent.dblClick(tile('German post'))
     expect(tabs()).toEqual(['Overview', SECOND_TAB])
   })
 
@@ -85,7 +85,7 @@ describe('variant tabs [FR-212, FR-214, Q-041]', () => {
   it('closes a variant tab without a command, and shows the overview again', async () => {
     const fake = setUp()
     await draw(fake)
-    await userEvent.click(tile('German post'))
+    await userEvent.dblClick(tile('German post'))
     const before = fake.commands.length
     const close = screen.getByRole('button', { name: 'Close tab' })
     expect(close).toHaveAccessibleDescription(SECOND_TAB)
@@ -108,7 +108,7 @@ describe('variant tabs [FR-212, FR-214, Q-041]', () => {
 
   it('makes the variant shown last the one the overview panels work on [A-47]', async () => {
     await draw()
-    await userEvent.click(tile('German post'))
+    await userEvent.dblClick(tile('German post'))
     await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
     expect(tile('German post')).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(tile('Master post'), { ctrlKey: true })
@@ -141,13 +141,13 @@ describe('variant tabs [FR-212, FR-214, Q-041]', () => {
 describe('what each variant tab keeps [FR-213]', () => {
   it('keeps the selected layer and the zoom per tab', async () => {
     await draw()
-    await userEvent.click(tile('Master post'))
+    await userEvent.dblClick(tile('Master post'))
     await screen.findByRole('region', { name: 'Canvas, Master post' })
     await userEvent.click(screen.getByRole('button', { name: /^Logo/ }))
     await userEvent.click(screen.getByRole('button', { name: 'Zoom in' }))
     const zoomed = screen.getByTitle('Zoom to fit').textContent
     await userEvent.click(screen.getByRole('tab', { name: 'Overview' }))
-    await userEvent.click(tile('German post'))
+    await userEvent.dblClick(tile('German post'))
     await screen.findByRole('region', { name: 'Canvas, German post' })
     expect(screen.getByRole('button', { name: /^Logo/ })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByTitle('Zoom to fit').textContent).not.toBe(zoomed)
@@ -186,7 +186,7 @@ describe('the tile\'s "+" button [FR-214, Q-041]', () => {
 describe('variant tab row look [ST-3]', () => {
   it('draws a hidden "x" in the close button and keeps its name', async () => {
     await draw()
-    await userEvent.click(tile('German post'))
+    await userEvent.dblClick(tile('German post'))
     const close = screen.getByRole('button', { name: 'Close tab' })
     expect(close.querySelectorAll('svg')).toHaveLength(1)
     expect(close.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')

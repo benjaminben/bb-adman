@@ -113,7 +113,7 @@ test('The Box, Shade and Background colour fields', async () => {
     },
   })
 
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await select(page, headline)
   const boxFields = panel(page).getByRole('group', { name: 'Box' })

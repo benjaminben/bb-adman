@@ -74,7 +74,7 @@ async function setUp(app: ElectronApplication, page: Page, root: string) {
 
 async function openVariant(page: Page, campaign: string) {
   await page.getByRole('button', { name: `Open ${campaign}` }).click()
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
 }
 

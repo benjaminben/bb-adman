@@ -32,7 +32,7 @@ export async function campaignAndOpen(page: Page, brief: Brief): Promise<void> {
     templateId: 'starter',
   })
   await page.getByRole('button', { name: `Open ${brief.name}` }).click()
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
 }
 

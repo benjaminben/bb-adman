@@ -109,7 +109,7 @@ test('Cut out the subject of a picture layer with the fake provider', async () =
   const picture = await addPictureLayer(page, ids, assetIds[0]!)
   await setLayer(page, ids.projectId, ids.background.id, { source: { assetId: assetIds[1] } })
 
-  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().click()
+  await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(page.getByRole('region', { name: /^Canvas, / })).toBeVisible()
   await page.getByRole('button', { name: new RegExp(`^${picture.name}`) }).click()
   const fields = page.getByRole('group', { name: 'Picture' })
