@@ -1,0 +1,27 @@
+{
+  "1": {
+    "class_type": "MadeUpVideoText",
+    "inputs": { "text": "the person waves" },
+    "_meta": { "title": "adman: prompt" }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "face.png" },
+    "_meta": { "title": "adman: ref1" }
+  },
+  "3": {
+    "class_type": "MadeUpReferenceToVideo",
+    "inputs": { "frames": 33, "reference": ["2", 0], "positive": ["1", 0] },
+    "_meta": { "title": "adman: frames" }
+  },
+  "4": {
+    "class_type": "MadeUpVideoSampler",
+    "inputs": { "seed": 7, "latent": ["3", 0] },
+    "_meta": { "title": "adman: seed" }
+  },
+  "5": {
+    "class_type": "SaveVideo",
+    "inputs": { "video": ["4", 0], "filename_prefix": "video/ComfyUI" },
+    "_meta": { "title": "adman: output" }
+  }
+}
