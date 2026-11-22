@@ -54,8 +54,10 @@ describe('PictureFields [spec/editor.md "Properties panel", Picture; FR-094]', (
   it('shows the picture whole and small with its display name as text', async () => {
     await setup({ asset: picture({ displayName: '<b>summer-hero.jpg</b>' }) })
     const group = screen.getByRole('group', { name: 'Picture' })
-    expect(within(group).getByText('<b>summer-hero.jpg</b>')).toBeInTheDocument()
-    const img = group.querySelector('img')
+    const frame = [...group.querySelectorAll('[title]')].find(
+      (e) => e.getAttribute('title') === '<b>summer-hero.jpg</b>',
+    )
+    const img = frame?.querySelector('img')
     expect(img?.getAttribute('src')).toBe(`adman-asset://${P}/A1`)
     expect(img?.getAttribute('alt')).toBe('')
   })
@@ -63,14 +65,14 @@ describe('PictureFields [spec/editor.md "Properties panel", Picture; FR-094]', (
   it('an empty picture layer says "Empty picture" and cannot remove its picture', async () => {
     await setup({ layer: LOGO, asset: null })
     expect(screen.getByText('Empty picture')).toBeInTheDocument()
-    expect(button('Remove picture')).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Remove picture' })).toBeNull()
     expect(button('Choose picture…')).toBeEnabled()
   })
 
   it('a missing picture shows its name and "file not found", and no image', async () => {
     await setup({ asset: picture({ missing: true }) })
     const group = screen.getByRole('group', { name: 'Picture' })
-    expect(within(group).getByText('summer-hero.jpg')).toBeInTheDocument()
+    expect(group.querySelector('[title="summer-hero.jpg"]')).not.toBeNull()
     expect(within(group).getByText('file not found')).toBeInTheDocument()
     expect(group.querySelector('img')).toBeNull()
   })
@@ -93,7 +95,7 @@ describe('PictureFields [spec/editor.md "Properties panel", Picture; FR-094]', (
 
   it('the opacity number shows 0 to 100 and saves 0 to 1 on Enter', async () => {
     const { onUpdate } = await setup({ layer: { ...LOGO, style: { opacity: 0.8 } } })
-    const field = screen.getByRole('spinbutton', { name: 'Opacity' })
+    const field = screen.getByRole('spinbutton', { name: 'Opacity value' })
     expect(field).toHaveValue('80')
     await userEvent.clear(field)
     await userEvent.type(field, '45{Enter}')
@@ -102,7 +104,7 @@ describe('PictureFields [spec/editor.md "Properties panel", Picture; FR-094]', (
 
   it('the opacity number keeps within 0 to 100', async () => {
     const { onUpdate } = await setup()
-    const field = screen.getByRole('spinbutton', { name: 'Opacity' })
+    const field = screen.getByRole('spinbutton', { name: 'Opacity value' })
     await userEvent.clear(field)
     await userEvent.type(field, '140{Enter}')
     expect(onUpdate.mock.calls).toEqual([])
@@ -113,14 +115,19 @@ describe('PictureFields [spec/editor.md "Properties panel", Picture; FR-094]', (
 
   it.each([
     ['pointerUp', () => fireEvent.pointerUp(screen.getByRole('slider', { name: 'Opacity' }))],
-    ['keyUp', () => fireEvent.keyUp(screen.getByRole('slider', { name: 'Opacity' }))],
-    ['blur', () => fireEvent.blur(screen.getByRole('slider', { name: 'Opacity' }))],
+    [
+      'change',
+      () =>
+        fireEvent.change(screen.getByRole('slider', { name: 'Opacity' }), {
+          target: { value: '30' },
+        }),
+    ],
   ])('the opacity slider saves once on %s, not while it moves', async (_name, release) => {
     const { onUpdate } = await setup()
     const slider = screen.getByRole('slider', { name: 'Opacity' })
     expect(slider).toHaveValue('100')
-    fireEvent.change(slider, { target: { value: '40' } })
-    fireEvent.change(slider, { target: { value: '30' } })
+    fireEvent.input(slider, { target: { value: '40' } })
+    fireEvent.input(slider, { target: { value: '30' } })
     expect(onUpdate).not.toHaveBeenCalled()
     release()
     release()
@@ -176,7 +183,7 @@ describe('PictureFields [spec/editor.md "Properties panel", Picture; FR-094]', (
       expect(button(name)).toBeDisabled()
     }
     expect(screen.getByRole('slider', { name: 'Opacity' })).toBeDisabled()
-    expect(screen.getByRole('spinbutton', { name: 'Opacity' })).toBeDisabled()
+    expect(screen.getByRole('spinbutton', { name: 'Opacity value' })).toBeDisabled()
   })
 
   it('a refused update shows its message', async () => {
@@ -211,18 +218,17 @@ describe('PictureFields, Background colour [spec/editor.md "Properties panel", P
     return { onUpdate }
   }
 
-  it('the background shows it inside Picture, with the palette, sending fillColor', async () => {
+  it('the background shows it after the picture, with the palette, sending fillColor', async () => {
     const { onUpdate } = await withPalette(BACKGROUND)
     const group = screen.getByRole('group', { name: 'Picture' })
-    expect(within(group).getByRole('textbox', { name: 'Background colour' })).toHaveValue('#000000')
-    await userEvent.click(
-      within(group).getByRole('button', { name: 'Palette #E85D2A for background colour' }),
-    )
+    const colour = screen.getByRole('group', { name: 'Background colour' })
+    expect(group.compareDocumentPosition(colour) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    await userEvent.click(within(colour).getByRole('button', { name: '#E85D2A' }))
     expect(onUpdate.mock.calls).toEqual([[{ style: { fillColor: '#E85D2A' } }]])
   })
 
   it('a picture layer has no background colour', async () => {
     await withPalette({ ...LOGO, source: { assetId: 'A1' } })
-    expect(screen.queryByRole('textbox', { name: 'Background colour' })).toBeNull()
+    expect(screen.queryByRole('group', { name: 'Background colour' })).toBeNull()
   })
 })

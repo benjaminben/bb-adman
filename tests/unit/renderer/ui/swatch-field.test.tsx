@@ -44,6 +44,20 @@ describe('SwatchField [T3d]', () => {
     expect(screen.getByRole('button', { name: '#1a2b3c' })).toHaveAttribute('aria-pressed', 'false')
   })
 
+  it('shows a current colour that is not in the palette as the first swatch, pressed', () => {
+    const { group } = setup({ value: '#0A0B0C' })
+    const names = within(group)
+      .getAllByRole('button')
+      .map((b) => b.getAttribute('aria-label') ?? b.textContent)
+    expect(names).toEqual(['#0A0B0C', ...PALETTE, 'Other colour'])
+    expect(screen.getByRole('button', { name: '#0A0B0C' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('adds no extra swatch for a current colour the palette holds in another letter case', () => {
+    const { group } = setup({ value: '#E85D3F' })
+    expect(within(group).getAllByRole('button')).toHaveLength(PALETTE.length + 1)
+  })
+
   it('puts "No colour" first only with allowNone, pressed when there is no colour', () => {
     const { group, unmount } = setup({ allowNone: true, value: null })
     const first = within(group).getAllByRole('button')[0]

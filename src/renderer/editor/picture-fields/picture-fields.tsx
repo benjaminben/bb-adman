@@ -1,17 +1,21 @@
-// spec/editor.md, "Properties panel", Picture [REQ: FR-094], for image and background layers:
-// the picture, "Choose picture…" (the picture chooser), "Remove picture" (source null),
-// "Crop…" (crop mode on the canvas), "Reset crop" (crop null, shown when a crop is set),
-// "Opacity", and for the background only "Fill the canvas" and "Fit inside". Each change is one
-// layer.update, so one undo step. A locked layer's fields are shown but disabled.
-// P4-19: "Cut out the subject…" under the buttons, for a layer with a picture (./cut-out.tsx).
+// spec/editor.md, "Properties panel", Picture [REQ: FR-094], for image and background layers, as
+// ED-3 draws it: the picture first with no title, its icon bar on the lower edge (./picture-bar),
+// or "Empty picture" with "Choose picture…"; then "Opacity" (a SliderField, 0 to 100 %, stored
+// 0 to 1) and, for the background, "Background colour". Each change is one layer.update, so one
+// undo step, the same patches as before. A locked layer's controls are shown but disabled.
+// P4-19: "Cut out the subject…" opens the run dialog (./cut-out); its words follow the job.
 import { useState } from 'react'
 import { BackgroundColourField } from '@/renderer/editor/background-colour-field'
 import { PictureChooser } from '@/renderer/dialogs/picture-chooser'
+import { EmptyState } from '@/renderer/ui/empty-state'
+import { SliderField } from '@/renderer/ui/slider-field'
 import type { LayerPatch } from '@/shared/schemas/commands/layer'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
-import { fillCanvas, fitInside, type Size } from './background-fit'
-import { CutOut } from './cut-out'
-import { OpacityField } from './opacity-field'
+import type { Size } from './background-fit'
+import { barButtons } from './bar-buttons'
+import { useCutOut } from './cut-out'
+import { CutOutLines, cutOutRunning, useJobRow } from './cut-out-status'
+import { PictureBar } from './picture-bar'
 import { PicturePreview, type PictureAsset } from './picture-preview'
 import styles from './picture-fields.module.css'
 
@@ -34,88 +38,73 @@ const known = (w: number | null | undefined, h: number | null | undefined): Size
   w && h ? { width: w, height: h } : null
 
 export function PictureFields(props: PictureFieldsProps) {
-  const { layer, asset } = props
-  const disabled = layer.locked
+  const { layer, asset, canvas } = props
+  const locked = layer.locked
   const assetId = layer.source?.assetId ?? null
   const [loaded, setLoaded] = useState<{ assetId: string; size: Size } | null>(null)
   const [choosing, setChoosing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const cutOut = useCutOut(props.projectId, layer)
+  const row = useJobRow(props.projectId, layer.id, cutOut.jobId)
   const opacity = 'opacity' in layer.style ? layer.style.opacity : 1
   const shape =
     assetId === null
       ? null
       : (known(asset?.width, asset?.height) ?? (loaded?.assetId === assetId ? loaded.size : null))
-  const { canvas } = props
 
   const send = async (patch: LayerPatch) => setError(await props.onUpdate(patch))
+  const { main, fit } = barButtons({
+    layer,
+    missing: asset?.missing === true,
+    canvas,
+    shape,
+    canCutOut: cutOut.canRun,
+    onChoose: () => setChoosing(true),
+    onCrop: props.onCrop,
+    onCutOut: cutOut.start,
+    send: (patch) => void send(patch),
+  })
 
   return (
-    <fieldset className={styles.section}>
-      <legend className={styles.legend}>Picture</legend>
-      <PicturePreview
-        projectId={props.projectId}
-        assetId={assetId}
-        asset={asset}
-        onSize={(size) => assetId && setLoaded({ assetId, size })}
-      />
-      <div className={styles.buttons}>
-        <button type="button" disabled={disabled} onClick={() => setChoosing(true)}>
-          Choose picture…
-        </button>
-        <button
-          type="button"
-          disabled={disabled || assetId === null}
-          onClick={() => void send({ source: null })}
-        >
-          Remove picture
-        </button>
-        <button
-          type="button"
-          disabled={disabled || assetId === null || !props.onCrop || asset?.missing === true}
-          onClick={props.onCrop}
-        >
-          Crop…
-        </button>
-        {layer.geometry.crop && (
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => void send({ geometry: { crop: null } })}
+    <div className={styles.section}>
+      <fieldset className={styles.block}>
+        <legend className={styles.hidden}>Picture</legend>
+        {assetId === null ? (
+          <EmptyState
+            icon="image"
+            words="Empty picture"
+            action={{ label: 'Choose picture…', onClick: () => setChoosing(true) }}
+          />
+        ) : (
+          <PicturePreview
+            projectId={props.projectId}
+            assetId={assetId}
+            asset={asset}
+            running={cutOutRunning(cutOut.jobId, row)}
+            onSize={(size) => setLoaded({ assetId, size })}
           >
-            Reset crop
-          </button>
+            <PictureBar main={main} fit={fit} />
+          </PicturePreview>
         )}
-      </div>
-      {assetId !== null && <CutOut key={layer.id} projectId={props.projectId} layer={layer} />}
-      <OpacityField
-        opacity={opacity}
-        disabled={disabled}
-        onCommit={(value) => props.onUpdate({ style: { opacity: value } })}
+        {assetId === null && fit.length > 0 && <PictureBar main={[]} fit={fit} />}
+        <CutOutLines projectId={props.projectId} jobId={cutOut.jobId} row={row} />
+        {error && <p className={styles.error}>{error}</p>}
+      </fieldset>
+      <SliderField
+        label="Opacity"
+        unit="%"
+        min={0}
+        max={100}
+        step={1}
+        value={Math.round(opacity * 100)}
+        disabled={locked}
+        onCommit={(value) => void send({ style: { opacity: value / 100 } })}
       />
-      {layer.type === 'background' && (
-        <div className={styles.buttons}>
-          <button
-            type="button"
-            disabled={disabled || canvas === null}
-            onClick={() => canvas && void send({ geometry: fillCanvas(canvas) })}
-          >
-            Fill the canvas
-          </button>
-          <button
-            type="button"
-            disabled={disabled || canvas === null || shape === null}
-            onClick={() => canvas && shape && void send({ geometry: fitInside(canvas, shape) })}
-          >
-            Fit inside
-          </button>
-        </div>
-      )}
       <BackgroundColourField
         layer={layer}
         palette={props.palette ?? []}
         onUpdate={props.onUpdate}
       />
-      {error && <p className={styles.error}>{error}</p>}
       <PictureChooser
         projectId={props.projectId}
         layerName={layer.name}
@@ -123,6 +112,7 @@ export function PictureFields(props: PictureFieldsProps) {
         onChoose={(id) => props.onUpdate({ source: { assetId: id } })}
         onClose={() => setChoosing(false)}
       />
-    </fieldset>
+      {cutOut.dialog}
+    </div>
   )
 }

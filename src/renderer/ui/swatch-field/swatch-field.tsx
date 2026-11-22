@@ -30,6 +30,12 @@ export function SwatchField(props: SwatchFieldProps) {
     if (!same(value, props.value)) props.onCommit(value)
   }
 
+  // The current colour is always on show: one the palette lacks leads the row.
+  const { value } = props
+  const extra =
+    value !== null && HEX_COLOUR.test(value) && !props.palette.some((p) => same(p, value))
+  const swatches = extra ? [value, ...props.palette] : props.palette
+
   function close(focusBack: boolean) {
     setOpen(false)
     if (focusBack) plus.current?.focus()
@@ -54,7 +60,7 @@ export function SwatchField(props: SwatchFieldProps) {
             ⊘
           </button>
         )}
-        {props.palette.map((hex) => (
+        {swatches.map((hex) => (
           <button
             key={hex}
             type="button"

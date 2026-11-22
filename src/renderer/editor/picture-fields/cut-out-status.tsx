@@ -1,18 +1,20 @@
-// The line under "Cut out the subject…" (spec/screens-ai.md, "Cut-out"): it follows the
-// started job by job.updated, as the generate fields' line does. "Cutting out…" until it ends,
-// then "Done. The cut-out is under Earlier options.", the failure sentence (ui/run-failure/),
-// or "Cancelled.". It reads job.list for the layer once, so a change it missed is shown; a
-// listed row that is not newer than the one it holds is dropped, as the job store does (F-10).
+// The cut-out's words (spec/screens-ai.md, "Cut-out"; ED-3): it follows the started job by
+// job.updated, as the generate fields' line does. "Cutting out…" until it ends, then "Done. The
+// cut-out is under Earlier options." Those two are a hidden role="status" (the ring over the
+// picture shows the run); a failure (ui/run-failure/) and "Cancelled." stay on the page. It
+// reads job.list for the layer once, so a change it missed is shown; a listed row that is not
+// newer than the one it holds is dropped, as the job store does (F-10).
 import { useEffect, useState } from 'react'
 import { EMPTY, useApi, useApp } from '@/renderer/app/app-context'
 import { RunFailure } from '@/renderer/ui/run-failure'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import styles from './picture-fields.module.css'
 
-function useJobRow(projectId: string, layerId: string, jobId: string): JobRow | null {
+export function useJobRow(projectId: string, layerId: string, jobId: string | null) {
   const api = useApi()
   const [row, setRow] = useState<JobRow | null>(null)
   useEffect(() => {
+    if (jobId === null) return
     let live = true
     const stop = api.on('job.updated', (next) => {
       if (next.id === jobId) setRow(next)
@@ -31,16 +33,24 @@ function useJobRow(projectId: string, layerId: string, jobId: string): JobRow | 
   return row
 }
 
-export function CutOutStatus(props: { projectId: string; layerId: string; jobId: string }) {
-  const row = useJobRow(props.projectId, props.layerId, props.jobId)
+// Whether a started cut-out is still going: queued or running, or not yet heard of.
+export const cutOutRunning = (jobId: string | null, row: JobRow | null) =>
+  jobId !== null && (row === null || row.status === 'queued' || row.status === 'running')
+
+export type CutOutLinesProps = { projectId: string; jobId: string | null; row: JobRow | null }
+
+export function CutOutLines(props: CutOutLinesProps) {
+  const { row } = props
   const providers = useApp((s) => s.app?.providers ?? EMPTY)
-  const status = row?.status ?? 'queued'
+  const status = props.jobId === null ? null : (row?.status ?? 'queued')
   const provider = providers.find((p) => p.id === row?.provider)
   return (
-    <div className={styles.status} aria-live="polite">
-      {(status === 'queued' || status === 'running') && <p>Cutting out…</p>}
-      {status === 'succeeded' && <p>Done. The cut-out is under Earlier options.</p>}
-      {status === 'cancelled' && <p>Cancelled.</p>}
+    <>
+      <p role="status" className={styles.hidden}>
+        {(status === 'queued' || status === 'running') && 'Cutting out…'}
+        {status === 'succeeded' && 'Done. The cut-out is under Earlier options.'}
+      </p>
+      {status === 'cancelled' && <p className={styles.status}>Cancelled.</p>}
       {status === 'failed' && row && (
         <RunFailure
           row={row}
@@ -49,6 +59,11 @@ export function CutOutStatus(props: { projectId: string; layerId: string; jobId:
           providerLabel={provider?.label ?? row.provider ?? 'The provider'}
         />
       )}
-    </div>
+    </>
   )
+}
+
+export function CutOutStatus(props: { projectId: string; layerId: string; jobId: string }) {
+  const row = useJobRow(props.projectId, props.layerId, props.jobId)
+  return <CutOutLines projectId={props.projectId} jobId={props.jobId} row={row} />
 }

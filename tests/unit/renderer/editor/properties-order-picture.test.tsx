@@ -1,7 +1,7 @@
 // Moved word for word from properties-panel.test.tsx by ED-1b, so ED-3 owns the picture
 // layer's order without touching ED-2's file; legends() now reads Section heading buttons too.
 import '../../shared/scene/fake-fonts'
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { PropertiesPanel } from '@/renderer/editor/properties-panel'
@@ -42,6 +42,12 @@ describe('PropertiesPanel, Box and Shade [spec/editor.md "Properties panel"; LK-
     return fake
   }
 
+  // ED-3: Shade is a folded Section; open it when it is closed (the fold lasts the session).
+  async function openShade() {
+    const head = screen.getByRole('button', { name: 'Shade' })
+    if (head.getAttribute('aria-expanded') === 'false') await userEvent.click(head)
+  }
+
   it.each([LOGO, BACKGROUND])(
     '$name shows Shade after Picture, with the palette, and no Box',
     async (layer) => {
@@ -49,16 +55,24 @@ describe('PropertiesPanel, Box and Shade [spec/editor.md "Properties panel"; LK-
         ...layer,
         style: { opacity: 1, shade: { color: '#000000', from: 'top', strength: 0.5, reach: 0.5 } },
       })
-      await screen.findByRole('button', { name: 'Palette #F4E9D8 for colour' })
+      await openShade()
+      await within(screen.getByRole('group', { name: 'Colour' })).findByRole('button', {
+        name: '#F4E9D8',
+      })
       const shown = legends()
-      expect(shown.indexOf('Shade')).toBe(shown.indexOf('Picture') + 1)
+      expect(shown.slice(shown.indexOf('Picture') + 1)).toEqual(['Shade', 'Generate', 'Position'])
       expect(shown).not.toContain('Box')
     },
   )
 
   it('the Shade select sends one layer.update for the selected layer', async () => {
     const fake = await withPalette(LOGO)
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Shade' }), 'Whole picture')
+    await openShade()
+    await userEvent.click(
+      within(screen.getByRole('group', { name: 'Shade' })).getByRole('button', {
+        name: 'Whole picture',
+      }),
+    )
     expect(sent(fake)).toEqual([
       [
         'layer.update',
@@ -70,7 +84,9 @@ describe('PropertiesPanel, Box and Shade [spec/editor.md "Properties panel"; LK-
   it('the background gets the palette in its Background colour field', async () => {
     await withPalette(BACKGROUND)
     expect(
-      await screen.findByRole('button', { name: 'Palette #F4E9D8 for background colour' }),
+      await within(screen.getByRole('group', { name: 'Background colour' })).findByRole('button', {
+        name: '#F4E9D8',
+      }),
     ).toBeInTheDocument()
   })
 })

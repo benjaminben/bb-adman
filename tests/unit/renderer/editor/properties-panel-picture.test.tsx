@@ -46,8 +46,8 @@ describe('PropertiesPanel, Picture [spec/editor.md "Properties panel"; FR-094]',
       'Position and size',
     ])
     expect(
-      within(screen.getByRole('group', { name: 'Picture' })).getByText('beach-sunset.jpg'),
-    ).toBeInTheDocument()
+      screen.getByRole('group', { name: 'Picture' }).querySelector('[title="beach-sunset.jpg"]'),
+    ).not.toBeNull()
   })
 
   it('a text layer has no Picture section', async () => {

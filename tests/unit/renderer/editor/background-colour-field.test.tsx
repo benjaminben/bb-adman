@@ -22,36 +22,39 @@ function setup(layer: LayerRow = BACKGROUND) {
   return { onUpdate }
 }
 
-const field = () => screen.getByRole('textbox', { name: 'Background colour' })
+// ED-3: a SwatchField; the stored colour shows in the "+" popover's hex field.
+const field = () => screen.getByRole('group', { name: 'Background colour' })
+async function hexField() {
+  await userEvent.click(screen.getByRole('button', { name: 'Other colour' }))
+  return screen.getByRole('textbox', { name: 'Hex colour' })
+}
 
 describe('BackgroundColourField [spec/editor.md "Properties panel", Picture]', () => {
   it.each([
     ['absent', { opacity: 1 }],
     ['null', { opacity: 1, fillColor: null }],
-  ])('shows #000000 when the colour is %s, with its hint and no None', (_name, style) => {
+  ])('shows #000000 when the colour is %s, with its hint and no None', async (_name, style) => {
     setup({ ...BACKGROUND, style })
-    expect(field()).toHaveValue('#000000')
-    expect(field()).toHaveAccessibleDescription('Shows under the picture.')
-    expect(screen.queryByRole('button', { name: 'None' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'No colour' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'About background colour' }))
+    expect(screen.getByText('Shows under the picture.')).toBeInTheDocument()
+    expect(await hexField()).toHaveValue('#000000')
   })
 
-  it('shows the stored colour', () => {
+  it('shows the stored colour', async () => {
     setup({ ...BACKGROUND, style: { opacity: 1, fillColor: '#F4E9D8' } })
-    expect(field()).toHaveValue('#F4E9D8')
+    expect((await hexField()).getAttribute('value')?.toUpperCase()).toBe('#F4E9D8')
   })
 
   it.each([
     [
       'a typed hex',
-      async () => userEvent.type(field(), '{Control>}a{/Control}#2A7DE8{Enter}'),
+      async () => userEvent.type(await hexField(), '{Control>}a{/Control}#2A7DE8{Enter}'),
       '#2A7DE8',
     ],
     [
       'a swatch',
-      async () =>
-        userEvent.click(
-          screen.getByRole('button', { name: 'Palette #E85D2A for background colour' }),
-        ),
+      async () => userEvent.click(screen.getByRole('button', { name: '#E85D2A' })),
       '#E85D2A',
     ],
   ])('%s sends one layer.update of fillColor', async (_name, act, fillColor) => {
@@ -62,12 +65,12 @@ describe('BackgroundColourField [spec/editor.md "Properties panel", Picture]', (
 
   it('is shown for the background only', () => {
     setup(LOGO)
-    expect(screen.queryByRole('textbox', { name: 'Background colour' })).toBeNull()
+    expect(screen.queryByRole('group', { name: 'Background colour' })).toBeNull()
   })
 
   it('a locked background has the field disabled', () => {
     setup({ ...BACKGROUND, locked: true })
-    expect(field()).toBeDisabled()
+    for (const swatch of field().querySelectorAll('button')) expect(swatch).toBeDisabled()
   })
 
   it('has no axe violations', async () => {

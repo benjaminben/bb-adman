@@ -15,5 +15,6 @@
 }
 .number {
   flex: none;
-  width: calc(var(--control-height) * 2);
+  /* Wide enough for three digits and the unit at the compact height. */
+  width: calc(var(--control-height) * 2.5);
 }

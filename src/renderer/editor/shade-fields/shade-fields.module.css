@@ -1,50 +1,5 @@
 /* app-style */
-/* The same look as the "Picture" section and its "Opacity" (picture-fields.module.css). */
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: none;
-}
-.legend {
-  padding: 0;
-  margin-bottom: var(--space-2);
-  font-family: var(--font-body);
-  font-size: var(--font-size-control);
-  font-weight: var(--weight-bold);
-  color: var(--color-text);
-}
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-.label {
-  font-size: var(--font-size-small);
-  font-weight: var(--weight-medium);
-  color: var(--color-text-secondary);
-}
-.percent {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-3);
-  align-items: flex-end;
-  min-width: 0;
-}
-/* The number is short (0 to 100), so the slider gets the rest of the row. */
-.amount {
-  flex: 0 0 calc(var(--thumbnail-tile) / 2);
-  min-width: 0;
-}
-.slider {
-  flex: 1 1 0;
-  min-width: 0;
-  margin: 0 0 var(--space-2);
-}
+/* ED-3: the Shade Section's own rules; the segments, swatches and sliders are shared parts. */
 .error {
   margin: 0;
   color: var(--color-danger-text);
