@@ -56,6 +56,8 @@ async function askAndShoot(page: Page, s: ToolSession, ids: object, name: string
   const dialog = page.getByRole('dialog', { name: 'An agent asks to delete' })
   await expect(dialog).toBeVisible({ timeout: 30_000 })
   await expect(dialog.getByRole('button', { name: 'Refuse' })).toBeFocused()
+  // Allow waits 750 ms after the ask is shown; the picture shows it ready.
+  await expect(dialog.getByRole('button', { name: 'Allow' })).not.toHaveAttribute('aria-disabled')
   await shot(page, name)
   await dialog.getByRole('button', { name: 'Refuse' }).click()
   await expect(dialog).toBeHidden()
