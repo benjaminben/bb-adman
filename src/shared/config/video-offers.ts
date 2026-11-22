@@ -12,6 +12,7 @@ export type VideoOffer = {
   maxReferences: number
 }
 
+// The input cap MAX_REFERENCES_PER_RUN (8) applies first, before an offer's maxReferences.
 const OFFERS = new Map<string, VideoOffer>([
   [
     'fal-seedance',
