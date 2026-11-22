@@ -14,16 +14,20 @@ export const LIVE_ENV_NAMES = [
   'ADMAN_LIVE_KEEP',
   'AWS_ACCESS_KEY_ID',
   'AWS_SECRET_ACCESS_KEY',
+  'DROPBOX_ACCESS_TOKEN',
 ] as const
 
 // SPEC 6.5 [1.18], 14 K5: the one owner of the live values a live test removes from what it
-// prints: the four keys only. Bucket, region, prefix and ADMAN_LIVE_KEEP are not secrets, and
-// removing them spoils other words and numbers in the output.
+// prints: the keys and tokens only. Bucket, region, prefix and ADMAN_LIVE_KEEP are not secrets,
+// and removing them spoils other words and numbers in the output. DROPBOX_APP_SECRET is never
+// read from .env.local (it is not in LIVE_ENV_NAMES); it is removed in case a terminal sets it.
 export const LIVE_REDACTED_NAMES = [
   'GEMINI_API_KEY',
   'FAL_KEY',
   'AWS_ACCESS_KEY_ID',
   'AWS_SECRET_ACCESS_KEY',
+  'DROPBOX_ACCESS_TOKEN',
+  'DROPBOX_APP_SECRET',
 ] as const
 
 // The listed names found in the file text, except those already set (the terminal wins).

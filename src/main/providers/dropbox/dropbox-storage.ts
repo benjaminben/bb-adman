@@ -7,6 +7,8 @@
 // The access token comes from access-token.ts; after a 401 it is forgotten, renewed once and
 // the request sent once more (every body here is bytes in memory, so it can be sent again),
 // unless the saved refresh token is gone or changed by then: that is dropbox_signed_out.
+// `accessToken` is for tests/live/dropbox.live.test.ts only: that token is sent as it is, no
+// refresh token is read and a 401 is not renewed. The app's adapters (index.ts) never pass it.
 // Every failure is one ProviderFailure through thrownFailure, with both tokens redacted.
 import { z } from 'zod'
 import { refusePath, storageFilePath, storageListPrefix } from '@/main/providers/storage-paths'
@@ -43,7 +45,11 @@ export type DropboxCalls = {
 
 type Outgoing = { headers: Record<string, string>; body?: string | Uint8Array; timeoutMs: number }
 
-export type DropboxStorageOptions = { fetch: typeof fetch; timeoutMs?: number }
+export type DropboxStorageOptions = {
+  fetch: typeof fetch
+  timeoutMs?: number
+  accessToken?: string
+}
 
 const REFRESH_TOKEN = 'dropbox.refreshToken'
 const RPC_TIMEOUT_MS = 60_000
@@ -106,7 +112,10 @@ export function dropboxStorage(
   const secrets = new Set<string>() // the refresh token and each access token used
 
   async function authorised(refreshToken: string, url: string, out: Outgoing) {
-    const accessToken = await accessTokenFor(refreshToken, dropboxFetch)
+    return post(await accessTokenFor(refreshToken, dropboxFetch), url, out)
+  }
+
+  function post(accessToken: string, url: string, out: Outgoing) {
     secrets.add(accessToken)
     return dropboxFetch(url, {
       method: 'POST',
@@ -117,6 +126,7 @@ export function dropboxStorage(
   }
 
   async function send(url: string, out: Outgoing) {
+    if (options.accessToken !== undefined) return post(options.accessToken, url, out)
     const refreshToken = ctx.secret(REFRESH_TOKEN)
     secrets.add(refreshToken)
     const first = await authorised(refreshToken, url, out)
