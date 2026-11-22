@@ -9,9 +9,7 @@ import { AGENT_POLICY, denialMessage } from '@/main/commands/agent-policy'
 import { exportCommands } from '@/main/commands/export'
 import { reportQueries } from '@/main/queries/report'
 import { jobKindHandlers } from '@/main/jobs/kinds'
-import { exportKind } from '@/main/jobs/kinds/export'
 import { createExportDeps } from '@/main/export/deps'
-import { ProviderFailure } from '@/main/providers/types'
 import { registerIpc, IPC } from '@/main/ipc'
 import { REPORT_QUERY_DENIED } from '@/shared/export/messages'
 import { ok } from '@/shared/schemas/result'
@@ -192,14 +190,6 @@ describe('the Phase 8 query stubs [P8-1]', () => {
 })
 
 describe('the Phase 8 job kind and port stubs [P8-1]', () => {
-  it('fails an export job as other, with its sentence', async () => {
-    const run = exportKind().run({} as never, {} as never)
-    await expect(run).rejects.toBeInstanceOf(ProviderFailure)
-    await expect(run).rejects.toMatchObject({
-      error: { kind: 'other', detail: 'Export is not built yet.' },
-    })
-  })
-
   it('answers no checks for every variant and says the checks were not run', async () => {
     const { fx } = await open()
     const ports = createExportDeps(() => fx.core.deps)
