@@ -51,6 +51,8 @@ A running list kept by the orchestrator, like `round-2-verify.md`. The design wa
 35. **Editor header.** One line: click the title to rename it (or press F2 on it); the size is a chip; Image and Video are two icon buttons; "Place text with AI…", "Layout…", Undo and Redo are icons with tooltips. The size under the canvas is gone (the chip says it).
 36. **Reports.** Each export is one row you click to open. The export folder's full path is no longer shown; its name is the row's tooltip.
 37. **Brief form fields.** Sizes are chips; the star on a chosen chip picks the master (the "Master size" list is gone). A typed size such as "4:5" shows as its own chip beside the ready-made 4x5. Rules are folded with a summary such as "1 required · 0 prohibited". The list of problems is headed "To fix", with a "1 to fix" shortcut beside the buttons.
+38. **Confirm dialogs** (delete a variant, the licence question, an agent's ask). Looks only: no word changed. In the delete dialog a refusal now shows above "This cannot be undone." rather than below it.
+39. **Deleting a subject** (planned in `spec/phases/subject-delete.md`, D-101). Choices made for you: a trash button on the subject card in the Assets panel, with a warning dialog and no undo; an agent's delete asks you on screen like its other deletes, and your "Don't ask again for deletes" tick covers it; a subject that a campaign uses still cannot be deleted until that campaign is gone; the subject's photos stay in the project; agents still cannot make or rename a subject on its own. Say if any of these should differ.
 
 ## Hand checks only you can do
 
