@@ -37,6 +37,12 @@ A running list kept by the orchestrator. Each item is a choice made without the 
 17. **Agent file import, hardening after review.** On Windows an agent may not name a network path (`\\server\share\…`) or a device path; on every system a path with unusual space or line-break characters is refused. Each file is read through one open handle that follows no link, and the finished copy is compared with what was checked. Still not covered: a file whose bytes are swapped before you click Allow (you see only the path), and on Windows the no-link open is weaker because the system has no such switch.
 18. **A brief that names a Windows network path** (`\\server\share\photo.png`) does not open it; the photo gets the note "could not be read". Reason: opening such a path sends your Windows sign-in to that server the moment the brief loads. This narrows your "any file path" ruling for that one case. A mapped drive letter (`Z:\photo.png`) still works. Say if you want network paths allowed; it is a one-line change.
 
+## Where Round 2 stands
+
+Every Round 2 slice is merged. The full check on `main` after the last merge: lint and types clean; 14,467 unit and integration tests pass; the build and built-app tests pass; 128 end-to-end tests pass; the approvals service's 861 unit and 43 end-to-end tests pass; the run of the app and the service together passes for pictures and for video; the shots suite passes after four stale scripts were updated.
+
+One thing to know when you test agent access: the app's agent access port is 47821 by default. A copy of the app left running on this Mac holds that port, so a second copy says "Port 47821 is in use. Choose another." Quit the other copy, or set another port in Settings.
+
 ## Hand checks only you can do
 
 - The Keychain entry and saved keys after the rename to AdManager. Steps: quit every copy of the app; run `npm run package:dir` and open `dist/mac-arm64/AdManager.app`; if macOS asks to use "Adman Safe Storage", choose Always Allow; Settings should show your saved keys' last four characters; there should be no new `AdManager` folder in `~/Library/Application Support` and no "AdManager Safe Storage" entry in Keychain Access. If either appears, tell me: there is a planned fallback.
