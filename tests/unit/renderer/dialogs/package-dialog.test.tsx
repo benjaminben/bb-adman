@@ -78,8 +78,8 @@ describe('the package dialog [spec/screens-campaign.md, Package project; FR-008,
   })
 
   it.each([
-    [[], 'The package is ready: 12 file(s), 48.3 MB.'],
-    [['a1', 'a3'], 'The package is ready: 12 file(s), 48.3 MB. 2 missing file(s) were left out.'],
+    [[], /^12 files · 48\.3 MB/],
+    [['a1', 'a3'], /^12 files · 48\.3 MB.*2 missing files were left out\.$/],
   ])('with %j skipped shows the done line and Close', async (skipped, line) => {
     const { fake, onClose } = await openDialog([done(skipped)])
     await choose()
@@ -92,13 +92,13 @@ describe('the package dialog [spec/screens-campaign.md, Package project; FR-008,
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('shows Packaging… with every button disabled and stays open on Escape', async () => {
+  it('shows the Packaging bar with every button disabled and stays open on Escape', async () => {
     let finish: (r: Result<unknown>) => void = () => {}
     const waiting = new Promise<Result<unknown>>((resolve) => (finish = resolve))
     const { fake, onClose } = await openDialog([])
     fake.onCommand('project.package', () => waiting)
     await choose()
-    expect(screen.getByRole('status')).toHaveTextContent('Packaging… Large projects take a while.')
+    expect(screen.getByRole('progressbar', { name: 'Packaging' })).toBeInTheDocument()
     for (const button of screen.getAllByRole('button')) expect(button).toBeDisabled()
     await userEvent.keyboard('{Escape}')
     expect(onClose).not.toHaveBeenCalled()
@@ -116,7 +116,7 @@ describe('the package dialog [spec/screens-campaign.md, Package project; FR-008,
         .map((li) => li.textContent),
     ).toEqual(['hero-can-sunset.png', 'picnic-table-wide.png'])
     expect(dialog).toHaveTextContent(
-      '2 file(s) cannot be found, so the package would not open with nothing missing.',
+      '2 files cannot be found, so the package would not open with nothing missing.',
     )
     expect(screen.getByRole('button', { name: 'Find missing files…' })).toHaveFocus()
     expect(screen.getByRole('button', { name: 'Package without them' })).toBeInTheDocument()
@@ -127,7 +127,7 @@ describe('the package dialog [spec/screens-campaign.md, Package project; FR-008,
     const { fake } = await openDialog([MISSING, done(['a1', 'a3'])])
     await choose()
     await userEvent.click(await screen.findByRole('button', { name: 'Package without them' }))
-    expect(await screen.findByRole('status')).toHaveTextContent('2 missing file(s) were left out.')
+    expect(await screen.findByRole('status')).toHaveTextContent('2 missing files were left out.')
     expect(packages(fake)).toEqual([send(false), send(true)])
     expect(fake.queries.filter((q) => q.name === 'dialog.pickFolder')).toHaveLength(1)
   })

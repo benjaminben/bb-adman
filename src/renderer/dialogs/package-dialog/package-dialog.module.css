@@ -1,29 +1,21 @@
 /* app-style */
-/* The package dialog's body (spec/app-style.md, "Dialogs"); its buttons are the foot band. */
-/* The waiting line: centred, with the turning spinner. */
-.busy {
+/* The package dialog's body (spec/app-style.md, "Dialogs"; DLG-6a); its buttons are the foot
+   band. */
+/* The "About packaging" tip at the left end of the foot. */
+.about {
+  margin-right: auto;
+}
+.missing,
+.done {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-3);
-  color: var(--color-text-secondary);
-}
-/* The line above the missing files list: the form label look (layout.module.css .label). */
-.listLabel {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-control);
-  font-weight: var(--weight-medium);
-}
-.list {
-  margin: 0;
-  padding-left: var(--space-4);
-  overflow-wrap: anywhere;
-}
-/* The three choices when files are missing: too wide for one row, so one column. */
-.choices {
   flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
 }
-.choices > * {
+.missing > ul {
   align-self: stretch;
+}
+.left {
+  margin: 0;
+  font-size: var(--font-size-control);
 }

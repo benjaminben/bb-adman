@@ -1,10 +1,8 @@
-// The export dialog's folder and format controls (spec/phases/phase-08.md "The output
-// folder"): the folder comes only from the system picker and is drawn as text, never typed or
-// edited; the picture format, the JPG quality for JPG, the frames per second while a video ad
-// is ticked, and the replace sentence (A-193).
+// The export dialog's format controls (spec/phases/phase-08.md "The output folder"; DLG-6a):
+// the picture format as two segments, PNG and JPG, the JPG quality for JPG, and the frames per
+// second while a video ad is ticked. The folder row is FolderRow.
 import { useId } from 'react'
 import layout from '@/renderer/ui/layout.module.css'
-import { OVERWRITE_NOTE } from '@/shared/export/messages'
 import type { ExportRunInput } from '@/shared/schemas/commands/export'
 import styles from './export-dialog.module.css'
 
@@ -16,13 +14,16 @@ export type ExportChoices = {
 }
 
 export type ExportOptionsProps = {
-  folder: string | null
   choices: ExportChoices
   showFps: boolean
   disabled: boolean
-  onChooseFolder: () => void
   onChange: (choices: ExportChoices) => void
 }
+
+const FORMATS = [
+  { value: 'png', label: 'PNG' },
+  { value: 'jpg', label: 'JPG' },
+] as const
 
 export function ExportOptions(props: ExportOptionsProps) {
   const { choices, disabled } = props
@@ -30,65 +31,54 @@ export function ExportOptions(props: ExportOptionsProps) {
   const set = (over: Partial<ExportChoices>) => props.onChange({ ...choices, ...over })
 
   return (
-    <>
-      <div className={layout.field}>
-        <p className={layout.label}>Folder</p>
-        <div className={styles.folder}>
-          {props.folder === null ? (
-            <p className={layout.muted}>No folder chosen</p>
-          ) : (
-            <p className={layout.path}>{props.folder}</p>
-          )}
-          <button type="button" disabled={disabled} onClick={props.onChooseFolder}>
-            Choose folder…
-          </button>
+    <div className={styles.options}>
+      <div className={`${layout.field} ${layout.inline}`}>
+        <span className={layout.label}>Format</span>
+        <div role="group" aria-label="Picture format" className={layout.seg}>
+          {FORMATS.map((format) => (
+            <button
+              key={format.value}
+              type="button"
+              aria-pressed={choices.imageFormat === format.value}
+              disabled={disabled}
+              onClick={() => set({ imageFormat: format.value })}
+            >
+              {format.label}
+            </button>
+          ))}
         </div>
       </div>
-      <div className={styles.options}>
-        <div className={layout.field}>
-          <label htmlFor={`${id}-format`}>Picture format</label>
-          <select
-            id={`${id}-format`}
-            value={choices.imageFormat}
+      {choices.imageFormat === 'jpg' && (
+        <div className={`${layout.field} ${layout.inline}`}>
+          <label htmlFor={`${id}-quality`}>Quality</label>
+          <input
+            id={`${id}-quality`}
+            aria-label="JPG quality"
+            type="number"
+            min={1}
+            max={100}
+            step={1}
+            value={choices.jpgQuality}
             disabled={disabled}
-            onChange={(e) => set({ imageFormat: e.target.value === 'jpg' ? 'jpg' : 'png' })}
+            onChange={(e) => set({ jpgQuality: e.target.value })}
+          />
+        </div>
+      )}
+      {props.showFps && (
+        <div className={`${layout.field} ${layout.inline}`}>
+          <label htmlFor={`${id}-fps`}>Frames per second</label>
+          <select
+            id={`${id}-fps`}
+            value={String(choices.fps)}
+            disabled={disabled}
+            onChange={(e) => set({ fps: e.target.value === '60' ? 60 : 30 })}
           >
-            <option value="png">PNG</option>
-            <option value="jpg">JPG</option>
+            <option value="30">30</option>
+            <option value="60">60</option>
           </select>
         </div>
-        {choices.imageFormat === 'jpg' && (
-          <div className={layout.field}>
-            <label htmlFor={`${id}-quality`}>JPG quality</label>
-            <input
-              id={`${id}-quality`}
-              type="number"
-              min={1}
-              max={100}
-              step={1}
-              value={choices.jpgQuality}
-              disabled={disabled}
-              onChange={(e) => set({ jpgQuality: e.target.value })}
-            />
-          </div>
-        )}
-        {props.showFps && (
-          <div className={layout.field}>
-            <label htmlFor={`${id}-fps`}>Frames per second</label>
-            <select
-              id={`${id}-fps`}
-              value={String(choices.fps)}
-              disabled={disabled}
-              onChange={(e) => set({ fps: e.target.value === '60' ? 60 : 30 })}
-            >
-              <option value="30">30</option>
-              <option value="60">60</option>
-            </select>
-          </div>
-        )}
-      </div>
-      <p className={styles.note}>{OVERWRITE_NOTE}</p>
-    </>
+      )}
+    </div>
   )
 }
 

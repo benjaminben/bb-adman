@@ -17,7 +17,8 @@ const ticked = () =>
   screen
     .getAllByRole('checkbox')
     .filter((box) => (box as HTMLInputElement).checked)
-    .map((box) => box.closest('label')?.textContent)
+    .map((box) => box.getAttribute('aria-label'))
+    .filter((name) => name !== 'All ads')
 
 describe('the export dialog [P8-11]', () => {
   it('opens with every ad ticked, no folder and Export disabled', async () => {
@@ -26,7 +27,8 @@ describe('the export dialog [P8-11]', () => {
     for (const row of fx.ROWS) expect(ads.getByRole('checkbox', { name: row })).toBeChecked()
     expect(dialog).toHaveTextContent('No folder chosen')
     expect(dialog).toHaveTextContent(OVERWRITE_NOTE)
-    expect(screen.getByRole('combobox', { name: 'Picture format' })).toHaveValue('png')
+    const format = within(screen.getByRole('group', { name: 'Picture format' }))
+    expect(format.getByRole('button', { name: 'PNG' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.queryByRole('spinbutton', { name: 'JPG quality' })).toBeNull()
     expect(fx.button('Export')).toBeDisabled()
     expect(await axeViolations()).toEqual([])
@@ -47,20 +49,20 @@ describe('the export dialog [P8-11]', () => {
   it('shows the picked folder, sends nothing before the click, then the whole input', async () => {
     const { fake, dialog } = await fx.openExport()
     await fx.chooseFolder()
-    expect(dialog).toHaveTextContent(fx.FOLDER)
+    expect(dialog).toHaveTextContent('Summer handover')
     expect(screen.queryByRole('textbox')).toBeNull()
     expect(fx.exportsSent(fake)).toEqual([])
     await fx.click('Export')
     expect(fx.exportsSent(fake)).toEqual([fx.input()])
   })
 
-  it('sends only the ticked ads; Untick all disables Export and Tick all ticks every ad', async () => {
+  it('sends only the ticked ads; All ads unticks (Export disabled) and ticks every ad', async () => {
     const { fake } = await fx.openExport()
     await fx.chooseFolder()
-    await fx.click('Untick all')
+    await userEvent.click(screen.getByRole('checkbox', { name: 'All ads' }))
     expect(ticked()).toEqual([])
     expect(fx.button('Export')).toBeDisabled()
-    await fx.click('Tick all')
+    await userEvent.click(screen.getByRole('checkbox', { name: 'All ads' }))
     expect(ticked()).toEqual(fx.ROWS)
     await userEvent.click(screen.getByRole('checkbox', { name: fx.ROWS[1] }))
     await fx.click('Export')
@@ -70,7 +72,7 @@ describe('the export dialog [P8-11]', () => {
   it('shows JPG quality for JPG and sends the format and quality chosen', async () => {
     const { fake } = await fx.openExport()
     await fx.chooseFolder()
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Picture format' }), 'jpg')
+    await fx.click('JPG')
     const quality = screen.getByRole('spinbutton', { name: 'JPG quality' })
     expect(quality).toHaveValue(90)
     await userEvent.clear(quality)
@@ -102,7 +104,8 @@ describe('the export dialog [P8-11]', () => {
     await userEvent.click(fx.button('Export'))
     expect(fx.exportsSent(fake)).toHaveLength(1)
     finish(fx.STARTED)
-    expect(await screen.findByText('Exporting… 0%')).toBeInTheDocument()
+    const bar = await screen.findByRole('progressbar', { name: 'Exporting' })
+    expect(bar).toHaveAttribute('aria-valuenow', '0')
   })
 
   it('shows a refusal other than the warnings in the error banner and stays ready', async () => {
@@ -119,15 +122,18 @@ describe('the export dialog [P8-11]', () => {
     const { fake, dialog } = await fx.openExport()
     await fx.chooseFolder()
     await fx.click('Export')
-    await screen.findByText('Exporting… 0%')
+    await screen.findByRole('progressbar', { name: 'Exporting' })
     const row = { kind: 'export' as const, variantId: null, provider: 'adman' }
     fake.emit('job.updated', jobRow('J8', { ...row, status: 'running', progress: 0.9 }))
     fake.emit('job.updated', jobRow('J9', { ...row, status: 'running', progress: 0.416 }))
-    expect(await screen.findByText('Exporting… 42%')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '42'),
+    )
     const result = { exported: 2, failed: 1, reportId: 'R1' }
     fake.emit('job.updated', jobRow('J9', { ...row, status: 'succeeded', progress: 1, result }))
-    expect(await screen.findByText('Exported 2 ads. 1 failed.')).toBeInTheDocument()
-    expect(dialog).not.toHaveTextContent('Exporting…')
+    expect(await screen.findByText('2 exported')).toBeInTheDocument()
+    expect(within(dialog).getByText('1 failed')).toBeInTheDocument()
+    expect(screen.queryByRole('progressbar')).toBeNull()
     expect(fx.button('Close')).toBeEnabled()
   })
 
@@ -135,7 +141,7 @@ describe('the export dialog [P8-11]', () => {
     const { fake } = await fx.openExport()
     screen.getByRole('button', { name: 'Choose folder…' }).focus()
     await userEvent.keyboard('{Enter}')
-    await screen.findByText(fx.FOLDER)
+    await screen.findByText('Summer handover')
     fx.button('Export').focus()
     await userEvent.keyboard('{Enter}')
     expect(fx.exportsSent(fake)).toEqual([fx.input()])

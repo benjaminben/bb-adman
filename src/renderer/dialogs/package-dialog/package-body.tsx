@@ -1,12 +1,18 @@
-// The package dialog's content for each view: ready, done, files missing and refused, with
-// "Packaging…" over the last view while a send waits. The primary button takes focus in each
-// new view ("Close" when done). "Find missing files…" opens the relink dialog for those files;
-// when it closes, the package is sent again to the same folder.
+// The package dialog's content for each view: ready, done, files missing and refused, with a
+// "Packaging" bar over the last view while a send waits (DLG-6a). The primary button takes
+// focus in each new view ("Close" when done). "Find…" ("Find missing files…") opens the relink
+// dialog for those files; when it closes, the package is sent again to the same folder. Short
+// button words keep their old accessible names. No path is drawn.
 import { useEffect, useRef, useState } from 'react'
 import { RelinkDialog } from '@/renderer/dialogs/relink-dialog'
-import { BusySpinner, DialogFoot } from '@/renderer/ui/dialog-frame'
+import { DialogFoot } from '@/renderer/ui/dialog-frame'
+import { InfoTip } from '@/renderer/ui/info-tip'
+import { JobProgress } from '@/renderer/ui/job-progress'
 import layout from '@/renderer/ui/layout.module.css'
+import { plural } from '@/renderer/ui/plural'
+import { StatusMark } from '@/renderer/ui/status-mark'
 import { fileSize } from './file-size'
+import { MissingList } from './missing-list'
 import { usePackage, type PackageView } from './use-package'
 import styles from './package-dialog.module.css'
 
@@ -16,11 +22,24 @@ export type PackageBodyProps = {
   onClose: () => void
 }
 
-function doneLine(view: Extract<PackageView, { kind: 'done' }>) {
-  const { fileCount, totalBytes, skippedAssetIds } = view.result
+const ABOUT =
+  'Adman copies the project file and every file it uses into one new folder that can be ' +
+  'opened on another computer. The project you have open does not change.'
+
+function Done(props: { view: Extract<PackageView, { kind: 'done' }> }) {
+  const { fileCount, totalBytes, skippedAssetIds } = props.view.result
+  const files = `${plural(fileCount, 'file')} · ${fileSize(totalBytes)}`
   const skipped = skippedAssetIds.length
-  const left = skipped > 0 ? ` ${skipped} missing file(s) were left out.` : ''
-  return `The package is ready: ${fileCount} file(s), ${fileSize(totalBytes)}.${left}`
+  return (
+    <div role="status" className={styles.done}>
+      <StatusMark tone="ok" icon="check" label={files} tip={`The package is ready: ${files}.`} />
+      {skipped > 0 && (
+        <p className={styles.left}>
+          {`${plural(skipped, 'missing file')} ${skipped === 1 ? 'was' : 'were'} left out.`}
+        </p>
+      )}
+    </div>
+  )
 }
 
 export function PackageBody(props: PackageBodyProps) {
@@ -39,15 +58,17 @@ export function PackageBody(props: PackageBodyProps) {
   }
 
   const cancel = (
-    <button type="button" disabled={packaging} onClick={props.onClose}>
+    <button type="button" className={layout.quiet} disabled={packaging} onClick={props.onClose}>
       Cancel
     </button>
   )
-  const button = (label: string, onClick: () => void) => (
+  const button = (label: string, onClick: () => void, name?: string) => (
     <button
       type="button"
       ref={primary}
       className={layout.primary}
+      aria-label={name}
+      title={name}
       disabled={packaging}
       onClick={onClick}
     >
@@ -57,37 +78,29 @@ export function PackageBody(props: PackageBodyProps) {
 
   return (
     <>
-      {packaging && (
-        <p role="status" className={styles.busy}>
-          <BusySpinner />
-          Packaging… Large projects take a while.
-        </p>
-      )}
+      {packaging && <JobProgress label="Packaging" value={null} />}
       {view.kind === 'done' && (
         <>
-          <p role="status" className={`${layout.notice} ${layout.ok}`}>
-            {doneLine(view)}
-          </p>
+          <Done view={view} />
           <DialogFoot>{button('Close', props.onClose)}</DialogFoot>
         </>
       )}
       {view.kind === 'missing' && (
         <>
-          <p className={styles.listLabel}>
-            {view.assetIds.length} file(s) cannot be found, so the package would not open with
-            nothing missing.
-          </p>
-          <ul aria-label="Missing files" className={styles.list}>
-            {view.names.map((name, i) => (
-              <li key={i}>{name}</li>
-            ))}
-          </ul>
-          <DialogFoot className={styles.choices}>
-            {button('Find missing files…', () => setRelinkOpen(true))}
-            <button type="button" disabled={packaging} onClick={() => void send(true)}>
-              Package without them
-            </button>
+          <MissingList count={view.assetIds.length} names={view.names} />
+          <DialogFoot>
             {cancel}
+            <button
+              type="button"
+              className={layout.secondary}
+              aria-label="Package without them"
+              title="Package without them"
+              disabled={packaging}
+              onClick={() => void send(true)}
+            >
+              Skip them
+            </button>
+            {button('Find…', () => setRelinkOpen(true), 'Find missing files…')}
           </DialogFoot>
           <RelinkDialog
             projectId={props.projectId}
@@ -105,11 +118,15 @@ export function PackageBody(props: PackageBodyProps) {
             </p>
           )}
           <DialogFoot>
-            {cancel}
-            {button(
-              view.kind === 'ready' ? 'Choose a folder and package…' : 'Choose another folder…',
-              () => void choose(),
+            {view.kind === 'ready' && !packaging && (
+              <span className={styles.about}>
+                <InfoTip about="packaging">{ABOUT}</InfoTip>
+              </span>
             )}
+            {cancel}
+            {view.kind === 'ready'
+              ? button('Choose folder…', () => void choose(), 'Choose a folder and package…')
+              : button('Choose another folder…', () => void choose())}
           </DialogFoot>
         </>
       )}
