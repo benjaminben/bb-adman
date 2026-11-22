@@ -8,6 +8,7 @@ import { EMPTY, useApp } from '@/renderer/app/app-context'
 import type { View } from '@/renderer/stores/app-store'
 import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
+import { menuPlaceStyles, useMenuPlace } from '@/renderer/ui/menu-place'
 import { useCloseProject } from './close-project'
 import styles from './project-switcher.module.css'
 
@@ -22,6 +23,7 @@ export function ProjectSwitcher() {
   const button = useRef<HTMLButtonElement>(null)
   const menu = useRef<HTMLUListElement>(null)
   const menuId = useId()
+  const place = useMenuPlace(open, button, menu)
   const shownId = view.kind === 'project' ? view.projectId : null
   const shown = projects.find((p) => p.projectId === shownId)
 
@@ -96,8 +98,9 @@ export function ProjectSwitcher() {
           ref={menu}
           id={menuId}
           role="menu"
-          className={`${layout.menu} ${styles.menu}`}
+          className={`${layout.menu} ${menuPlaceStyles.placed} ${styles.menu}`}
           onKeyDown={onKeyDown}
+          {...place}
         >
           {items.map((item) => (
             <li key={item.key} role="none">
