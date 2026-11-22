@@ -5,6 +5,7 @@ import { useId, type ReactNode } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { NumberField } from '@/renderer/editor/number-field'
 import { TranslationStatus } from '@/renderer/editor/translation-status'
+import { TypeStyles } from '@/renderer/editor/type-styles'
 import type { LayerPatch } from '@/shared/schemas/commands/layer'
 import layout from '@/renderer/ui/layout.module.css'
 import type { TextStyle } from '@/shared/schemas/layer'
@@ -85,6 +86,7 @@ export function TextFields(props: TextFieldsProps) {
         <TranslatedCopy layer={layer} />
       )}
       {props.font}
+      <TypeStyles layer={layer} onUpdate={props.onUpdate} />
       <div className={styles.pair}>
         <NumberField
           label="Size"

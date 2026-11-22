@@ -1,0 +1,35 @@
+/* app-style */
+/* "Built-in styles" under the font field: a short label, five small buttons that wrap, and the
+   hint line. The pressed button looks like the pressed one of a segmented group. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.label {
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+.styles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.style[aria-pressed='true'] {
+  border-color: var(--color-text);
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+}
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+.error {
+  margin: 0;
+  color: var(--color-danger-text);
+  font-size: var(--font-size-small);
+}
