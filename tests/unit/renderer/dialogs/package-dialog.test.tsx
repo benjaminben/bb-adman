@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PackageDialog } from '@/renderer/dialogs/package-dialog'
 import type { Result } from '@/shared/schemas/result'
@@ -98,12 +98,14 @@ describe('the package dialog [spec/screens-campaign.md, Package project; FR-008,
     const { fake, onClose } = await openDialog([])
     fake.onCommand('project.package', () => waiting)
     await choose()
-    expect(screen.getByRole('progressbar', { name: 'Packaging' })).toBeInTheDocument()
+    // Waited for: under load the bar and the focus arrive a tick after the click.
+    expect(await screen.findByRole('progressbar', { name: 'Packaging' })).toBeInTheDocument()
     for (const button of screen.getAllByRole('button')) expect(button).toBeDisabled()
     await userEvent.keyboard('{Escape}')
     expect(onClose).not.toHaveBeenCalled()
     finish({ ok: true, data: { ...DONE, skippedAssetIds: [] } })
-    expect(await screen.findByRole('button', { name: 'Close' })).toHaveFocus()
+    const close = await screen.findByRole('button', { name: 'Close' })
+    await waitFor(() => expect(close).toHaveFocus())
   })
 
   it('lists the missing files by name when refused with MISSING_FILE', async () => {
