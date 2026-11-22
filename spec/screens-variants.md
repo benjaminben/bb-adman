@@ -1,88 +1,82 @@
 # Screens: variants, directions, fan-out and sync
 
-Built (Phase 5; slices P5-14 to P5-19 in `spec/phases/phase-05-screens.md`). The campaign overview's grids per direction, the campaign's Undo and Redo, the tile's actions, quick look, the fan-out dialog, the sync review and the direction dialogs. The commands are in `spec/links-and-sync.md`. Every rule of `spec/screens.md` ("Rules for every screen") and `spec/screens-campaign.md` ("Rules for these screens") holds: one folder per component, CSS from `src/renderer/ui/tokens.css` only, dialogs on `ui/dialog-frame/`, a refusal shown in the dialog as well as the banner, counts with "(s)". No new token is expected.
+Built (Phase 5, Round 2, then the design wave's CAMP-1, CAMP-2, DLG-4b and DLG-7). The campaign's Variants tab with its grids per direction, the campaign's Undo and Redo, the tile's marks and actions, quick look, the fan-out dialog, the sync review and the direction dialogs. The campaign head and the "Campaign" tab strip are in `spec/screens-campaign.md`. The commands are in `spec/links-and-sync.md`. Every rule of `spec/screens.md` ("Rules for every screen") and `spec/screens-campaign.md` ("Rules for these screens") holds: one folder per component, CSS from `src/renderer/ui/tokens.css` only, dialogs on `ui/dialog-frame/`, a refusal shown in the dialog as well as the banner, real plurals.
 
-These are choices made without a design sign-off; the UI pass may change any of them.
+These are choices made without a design sign-off; a later UI pass may change any of them.
 
-## The campaign page (Round 2)
+## The Variants tab
 
-Built (R2C-1 to R2C-4). Full design: `spec/phases/round-2-campaign.md`, design additions 1 to 4.
+Built (R2C-1 to R2C-3, CAMP-1, CAMP-2, CAMP-7). `src/renderer/screens/campaign/variants-tab/`, `direction-grids/`, `direction-header/`, `variant-grid/` (`grid-axes.ts`, `grid-heads.tsx`, `grid-moves.ts`, `tile-actions.tsx`), `variant-tile/` (`tile-strip.tsx`, `tile-targets.ts`, `badge-words.ts`). Full design: `spec/phases/round-2-campaign.md`, design additions 1 to 3.
 
-- **The head** (`campaign-head/`): "Back to project", the campaign name, the approval bar, "Export…", "Reports", "Publish…", "Assets" (opens the Assets panel, `spec/screens-campaign.md`). Under it the paid count and the variant tab row ("Overview" and the open variants).
-- **The view bar** (`campaign-overview/`), inside Overview: tabs "Variants", "Checks" and "Translations" on the left, the campaign's Undo and Redo on the right. "Checks" carries a warning count badge ("{n} warning(s)"; no badge at 0). The chosen tab is kept while the campaign page is open.
-- **Variants tab** (`variants-tab/`): the hint "Click a post to select it. Double-click it, or press Enter, to open it."; the direction grids; then the line "Runs and panels below are for: …", the slot view, the picture panel and the run list, which act on the selected variant. The "Make a video" card is being removed (R2E-9, in progress): videos are made in the editor's Generate panel.
-- **Checks tab**: the check panel, then the rule set panel. **Translations tab**: the translation panel; with one language, a line says there is nothing to translate.
-- **A direction is a grid** (`variant-grid/`, `grid-axes.ts`): rows are sizes, columns are languages, the master top left. A row head shows the size label and "{width}×{height}" (the size once when it has no name of its own); a column head the language name and code. An image and a video of the same size and language share a cell. A row never wraps: the direction's box scrolls sideways, with the row heads kept in view. The master tile has a "Master" badge and a tinted ground.
-- **Select, then open** (R2C-3): a click selects a tile; a double-click or Enter opens its tab; Mod+Enter, Cmd-click and "+" open it behind. Arrow keys, Home and End move the selection between tiles (`grid-moves.ts`); Delete or Backspace opens the delete warning for that tile (never for the master).
-- **Translations show their source** (R2C-4): each row shows "{primary language} (source)" with the source text beside the labelled translation field, and the tab says "These are the texts on the posts themselves. A change here changes that post at once."
+- The tab holds the direction grids only. Pictures and videos are made in the editor's Generate panel; runs are followed in Activity (CAMP-7).
+- **One section per direction**, in `directions` order, labelled by its heading. **The direction header** (`direction-header/`) is one line: the name (`h3`), a count chip "{n}" (hidden text "{n} variants"), on the first direction an InfoTip "About Variants" holding "Click a post to select it. Double-click it, or press Enter, to open it.", then "Fan out…", "Sync {n}" (named "Sync {n} out of date…", shown only while something in the direction is out of date) and the direction's More menu "More actions for {name}" with "New direction…", "Rename…" and "Delete direction…". Each control comes from its own dialog folder; none sends anything on its own click.
+- **A direction is a grid** (`variant-grid/`, labelled "Variants in {direction name}"): rows are sizes, columns are languages, the master top left. A column head shows the language name, then the code muted; a row head the size label, then "{width}×{height}" muted (the size once when the label is only the size written another way). An image and a video of the same size and language share a cell. A row never wraps: the direction's box scrolls sideways, with the row heads kept in view. Order within a direction follows `direction-order.ts` (pure, A-144): the master first, then the campaign's `sizes` order, then its `languages` order, then image before video, then `createdAt`.
+- **Select, then open** (R2C-3): a click selects a tile; a double-click or Enter opens its tab; Mod+Enter and Cmd-click (Ctrl-click on Windows) open it behind. Arrow keys, Home and End move the selection between tiles (`grid-moves.ts`); Delete or Backspace opens the delete warning for that tile (never for the master). The master is selected at the start; the variant shown last is the selected one.
 
-## The overview
+## The variant tile
 
-`src/renderer/screens/campaign/campaign-view/` mounts, in its overview, the view bar above (with `campaign-undo/`) and then `direction-grids/` in the Variants tab. The rest (the "Runs and panels below are for" line, slot view, panels, run list) stays as built.
+`variant-tile/`, component `VariantTile`. Props: `variant`, `chosen`, `onChoose`, `onOpen?`, `onOpenBehind?`, `preview?`, `actions?`, `footer?`.
 
-**`campaign-undo/`**, component `CampaignUndo`. Props `projectId`, `campaignId`.
+- **The main button** is the tile's picture (`preview`, the drawn thumbnail; else a box in the variant's shape with its size label). It is named and titled "{title} · {width}×{height} · {language} · {format}", with " · master" on the master; `aria-pressed` marks the selected tile, drawn with an accent edge. The title shows under the picture only when titles differ within the direction. The master has a ★ corner titled "Master", a video a film corner titled "Video"; both are hidden from the name, which already says so.
+- **The strip** under the picture (`tile-strip.tsx`, outside the main button): a group "Marks for {title}" holding the marks, then the approval marks (`footer`), then the actions at its right end.
+- **Marks**, in this order, only when true: "Running", "New result", "Text does not fit", "File missing", "Translation not approved", "Out of date", "Check warning", "Not checked" (`badge-words.ts`). Each is a `StatusMark` with an icon and no label; its word is its tooltip and accessible name, so a test finds it by `title` or by role and name, not by visible text. A mark is a button where its fix exists (`tile-targets.ts`): "Running" opens Activity; "New result" and "Text does not fit" open the variant; "File missing" opens the relink dialog; "Out of date" opens the direction's sync review; "Translation not approved" shows the Translations tab; "Check warning" and "Not checked" show the Checks tab. No mark starts a run or sends a command.
+- **Approval marks** join the strip (`spec/approvals.md`): "Signed off by {n}" is a button showing "{n}" that opens the sign-off list in a popover.
+- **Actions** (`tile-actions.tsx`): an eye icon button "Quick look at {title}", then a More menu "More actions for {title}" with "Open", "Open in a tab", "Quick look" and, except on the master, "Delete…".
+- Delete opens the warning dialog (`src/renderer/dialogs/delete-variant/`, `kind="confirm"`) [D-099]: "Delete {title}?", the description "This cannot be undone.", "Keep" (quiet, focused) and "Delete variant" (danger primary, a spinner inside while it sends). "Delete variant" sends `variant.delete`; the campaign's Undo does not bring the variant back (A-140). Focus then goes to the next tile's main button, else the previous one, else the direction's heading. A refusal (`jobs_running`, `master_variant`) shows as a danger DialogAlert at the top of the body. An agent's `variant.delete` still asks the user first (policy ask; Phase 10).
 
-- Two buttons, "Undo" and "Redo", in a group labelled "Campaign changes". Each sends `history.undo` / `history.redo` with `scope: 'campaign:{campaignId}'`; a refusal shows in the error banner.
+## Campaign Undo and Redo
+
+`campaign-undo/`, component `CampaignUndo`. Props `projectId`, `campaignId`. Drawn at the end of the "Campaign" tab strip.
+
+- Two icon buttons, "Undo" and "Redo", in a group labelled "Campaign changes". Each sends `history.undo` / `history.redo` with `scope: 'campaign:{campaignId}'`; a refusal shows in the error banner.
 - Enabled from `history.state` for that scope, read on mount and again on each `project.changed` for the project.
-- Keys: Mod+Z, Mod+Shift+Z (and Ctrl+Y on Windows), through the `undo` and `redo` entries of `SHORTCUTS`, only while the overview tab is shown and the focus is not in a text field. The editor's keys keep acting on the variant's list in a variant tab.
-
-**`direction-grids/`**, component `DirectionGrids`. Props `projectId`, `campaign: CampaignGet`, `chosenId`, `onChoose`, `onOpenBehind`, `onQuickLook`.
-
-- One section per direction, in `directions` order, labelled by its heading: a level-3 heading "{direction name}", then "{n} variant(s)".
-- A row of direction controls under the heading (`direction-header/`): `FanOutButton`, `SyncButton` and `DirectionMenu`, each from its own dialog folder, each given `projectId`, the campaign and the direction.
-- Then a `VariantGrid` with that direction's variants, labelled "Variants in {direction name}", in the order of `direction-order.ts` (pure, A-144): the master first, then by the campaign's `sizes` order, then its `languages` order, then image before video, then `createdAt`.
-
-## The tile's actions
-
-`VariantGrid` gains `onQuickLook?(variantId)` and `onDelete?(variantId)`. With them, the tile's `actions` hold, after the built "+": "Quick look at {title}" and, for a variant that is not the master, "Delete {title}".
-
-- Delete opens a warning dialog (`src/renderer/dialogs/delete-variant/`) [D-099]: "Delete {title}?" with "This cannot be undone." and "Keep" (focused) / "Delete variant". "Delete variant" sends `variant.delete`; the campaign's Undo does not bring the variant back (A-140). Focus then goes to the next tile's main button, else the previous one, else the direction's heading. A refusal (`jobs_running`, `master_variant`) shows in the banner.
-- An agent's `variant.delete` still asks the user first (policy ask; Phase 10).
+- Keys: Mod+Z, Mod+Shift+Z (and Ctrl+Y on Windows), through the `undo` and `redo` entries of `SHORTCUTS`, only while a campaign view is shown and the focus is not in a text field. The editor's keys keep acting on the variant's list in a variant tab.
 
 ## Quick look
 
-`src/renderer/dialogs/quick-look/` [REQ: FR-244, P2]. View only; no tab opens (A-142).
+`src/renderer/dialogs/quick-look/`, `kind="review"` [REQ: FR-244, P2]. View only; no tab opens (A-142).
 
-- Title "{title} · {sizeLabel} · {language}". The picture from `variant.render { projectId, variantId, maxDimension: 1024 }`, shown through an object URL, `alt` "{title}", fitted inside the dialog with its shape kept. While it draws: "Drawing the variant…". Refused: "The picture could not be drawn." A reply for a variant no longer shown is dropped. Drawn again when that variant's `rev` changes.
-- "Previous" and "Next" buttons, and the Left and Right arrow keys, move through every variant of the campaign in the grids' order, wrapping at the ends. A line "{i} of {n}".
-- Escape or "Close" closes; focus goes back to the tile's "Quick look" button.
+- Title "{title} · {sizeLabel} · {language}". The picture from `variant.render { projectId, variantId, maxDimension: 1024 }`, shown through an object URL, `alt` "{title}", fitted inside the dialog with its shape kept. While it draws, a hidden status "Drawing the variant…". Refused: "The picture could not be drawn." A reply for a variant no longer shown is dropped. Drawn again when that variant's `rev` changes.
+- Icon buttons "Previous" and "Next" at the picture's sides, and the Left and Right arrow keys, move through every variant of the campaign in the grids' order, wrapping at the ends. A counter "{i} / {n}".
+- Escape or "Close" closes; focus goes back to the control that opened it.
 
 ## Fan-out
 
-`src/renderer/dialogs/fan-out/`: `FanOutButton` ("Fan out…") and the dialog.
+`src/renderer/dialogs/fan-out/`: `FanOutButton` ("Fan out…") and the dialog, `kind="run"` (`fan-out-chips.tsx`, `chip-group.tsx`, `fit-choices.tsx`, `cost-line.tsx`, `fan-out-costs.ts`, `fan-out-model.ts`).
 
 - Title "Fan out {direction name}".
-- **Sizes**: one checkbox per campaign size, "{label} ({width}×{height})". The master's size is ticked and disabled.
-- **Languages**: one checkbox per campaign language. The master's language is ticked and disabled.
-- A size and language pair the direction already has in every chosen format is not made again; the count line says how many are new.
-- **Backgrounds**: for each ticked size whose pixel size differs from the master's, a group "Background for {label} ({width}×{height})" with three choices (A-145): "Scale: show the whole picture, black at the edges" (the default), "Crop: fill the size and hide the edges", "Generate fill: extend the picture with AI". With no background picture on the master, the groups are not drawn and every fit is sent as `scale`.
-- **Fill**: with one or more "Generate fill", the provider select (`screens/campaign/provider-select/`, image providers) and the paid line "This will use {n} generation(s) with {provider}." (`n` the sizes with fill), as the run dialog words it. The dialog was opened to make something, so "Make variants" is the one click that pays (C-15, `spec/screens.md`, "Rules for every screen"): the paid lines sit directly above the buttons and are in the dialog's accessible description (DLG-4 of the design wave links them).
-- **The text-call line** (P6-15, built in `fan-out-model.ts`): `n` is the number of new languages other than the master's (it may overstate the paid requests, since brief copy or a missing key starts none, but never understates them). None at 0. Otherwise one of four forms: no translating provider, "No provider can translate yet. The new texts stay marked as missing a translation."; the fake provider, "Translating {n} language(s) uses the fake provider. Nothing is charged."; a local provider, "Translating {n} language(s) runs on {provider}. Nothing is charged."; a paid one, "Translating {n} language(s) sends up to {n} paid request(s) to {provider}."
-- The line "This makes {n} variant(s)." and the button "Make variants", disabled at 0 with "Nothing new to make."; "Cancel".
-- **Formats**: a fieldset "Formats" with the checkboxes "Image" (ticked at first) and "Video". The dialog sends the ticked formats in the order image, video. With none ticked, "Make variants" is disabled and the line "Choose at least one format." shows.
-- Counts: one variant per size × language × format the direction lacks. One translation per new language other than the master's, whatever the formats. The fill line is unchanged: Video adds no paid request.
-- On success the dialog closes. For each entry of the reply's `fill`, the window sends `generation.runFill { variantId, provider }` through the app store's `command`, so the key, address and licence dialogs work as for a picture run (`run-asks.ts` gains `generation.runFill`). Each started job is registered in the attached store with owner `{ projectId, variantId }` and a finish that sends `generation.applyFill { jobId }`. A refused fill shows in the banner; the variants stay with their scaled background. The dialog also registers the translation jobs it started (the reply's `translationJobIds`, optional: absent means none) with the campaign owner `{ projectId, campaignId }`, so closing the campaign tab warns while they run.
-- While fills run, the tiles show "Running". A failed fill shows on the variant's run as any failed run, with its Retry (`job.retry`).
+- **Sizes**, **Languages** and **Formats** are toggle chips (buttons with `aria-pressed`), named as "{label} ({width}×{height})", the language, "Image" / "Video". The master's size and language chips are pressed and disabled. Formats start with "Image" on; the last format left on is `aria-disabled`.
+- A size, language and format the direction already has is not made again.
+- **Backgrounds**: for each chosen size whose pixel size differs from the master's, a group "Background for {label} ({width}×{height})" showing the size's label and three icon radios, each named and titled by its words (A-145): "Scale: show the whole picture, black at the edges" (the default), "Crop: fill the size and hide the edges", "Generate fill: extend the picture with AI". With no background picture on the master, the groups are not drawn and every fit is sent as `scale`.
+- **Fill provider**: with one or more "Generate fill", the provider select (`screens/campaign/provider-select/`, image providers, with the trial mark). With fills and no provider, a warn DialogAlert "No provider can do this yet." with "Settings".
+- **Cost lines**, last in the body and in `aria-describedby` (DLG-4b, C-15), computed from the same state the click sends:
+  - fills: "Paid: {n} fills → {Provider}" (a MoneyLine), or "{n} fills on {Provider}. Nothing is charged.";
+  - translations (P6-15; `n` is the number of new languages other than the master's, which may overstate the paid requests but never understates them): "Paid: up to {n} translations → {Provider}" (a MoneyLine, the Settings text provider); "Translating {n} languages uses the fake provider. Nothing is charged."; "Translating {n} languages runs on {Provider}. Nothing is charged."; with no translating provider "No provider can translate yet. The new texts stay marked as missing a translation." None at 0.
+- Foot: "Cancel" (quiet) and "Make {n} variants", the one click that pays. With nothing new it reads "Make variants", disabled, titled "Nothing new to make".
+- Counts: one variant per size × language × format the direction lacks. One translation per new language other than the master's, whatever the formats. Video adds no paid fill.
+- On success the dialog closes. For each fill to start (`fillsToStart()`), the window sends `generation.runFill { variantId, provider }` through the app store's `command`, so the key, address and licence dialogs work as for a picture run (`run-asks.ts` has `generation.runFill`). Each started job is registered in the attached store with owner `{ projectId, variantId }` and a finish that sends `generation.applyFill { jobId }`. A refused fill shows in the banner; the variants stay with their scaled background. The dialog also registers the translation jobs it started (the reply's `translationJobIds`, optional) with the campaign owner `{ projectId, campaignId }`, so closing the campaign tab warns while they run.
+- While fills run, the tiles show "Running". A failed fill shows in Activity with its Retry (`job.retry`).
 
 ## Sync review
 
-`src/renderer/dialogs/sync-review/`: `SyncButton` and the dialog.
+`src/renderer/dialogs/sync-review/`: `SyncButton` and the dialog, `kind="review"` (`sync-list.tsx`, `variant-changes.tsx`, `override-choice.tsx`, `translate-ask.tsx`, `translation-line.tsx`).
 
-- **The button**: "Sync {n} out of date…" with `n` the direction's variants whose `badges.outOfDate` is true; at 0, "Nothing to sync", disabled.
-- Title "Sync {direction name}". Reads `sync.preview` on open. "Reading the changes…"; "Every variant is up to date." when the reply has none.
-- One group per variant, headed "{title} · {sizeLabel} · {language}" with its thumbnail (`VariantThumbnail`, alt empty). One checkbox per change, starting unticked (A-138):
+- **The button**: "Sync {n}" (named "Sync {n} out of date…"), with `n` the direction's variants whose `badges.outOfDate` is true; not drawn at 0. A tile's "Out of date" mark opens the same dialog.
+- Title "Sync {direction name}". Reads `sync.preview` on open: "Reading the changes…" with a spinner; "Every variant is up to date." when the reply has none.
+- **Two panes.** Left, a list with one row per out-of-date variant (a button and a listitem named "{title} · {sizeLabel} · {language}", with its thumbnail). Right, the picked variant's changes. Ticks and choices are kept by the dialog, so picking another row changes nothing that is sent.
+- One checkbox per change, starting unticked (A-138):
   - update: "{layer name}: {group words}", the words from `sync-words.ts` (pure): copy "text", style "style", geometry "position and size", source "picture", timing "timing", animation "animation". With a copy change, under it: "New text: {text}".
-  - Phase 5 translation stand-in: "No translation yet. The text stays as it is and is marked as missing a translation."
   - add-layer: "{layer name}: new layer from the master". remove-layer: "{layer name}: removed from the master".
-  - Each blocked path, under its change: "Changed on this variant: {path words}" and two radios, "Keep mine" (the default) and "Take the master's". Path words: the group word, and for `style.*` and `animation.*` the field after a colon, for example "style: colour".
-- "Accept all" sends every change with `accept: true`; "Accept selected" only the ticked ones (disabled with none ticked); "Cancel". Both send `sync.apply` with the reply's `masterRev`.
+  - Each blocked path, under its change: "Changed on this variant: {path words}" and radios "Keep mine" (the default) and "Take the master's", drawn as segments "Mine" | "Master". Path words: the group word, and for `style.*` and `animation.*` the field after a colon, for example "style: colour".
+- **Translations** (P6-16, P6-18): a translated copy change starts its sync translation; the dialog reads the changes again when one ends. A variant still waiting for its language has the mark "No {language}" and "Translate": with a paid text provider the first click shows the two-step paid line (`ui/paid-confirm/`, a MoneyLine with "Confirm" and "Cancel"), and only Confirm sends. A typed translation can be given in place.
+- Foot: "Cancel", "Accept selected" (disabled with none ticked) and "Accept all" (primary). Both send `sync.apply` with the reply's `masterRev`.
 - On `master_changed` the dialog shows the message and reads `sync.preview` again. On success it closes. Changes left unticked stay out of date.
 
 ## Direction dialogs
 
-`src/renderer/dialogs/direction-menu/`: `DirectionMenu`, a menu button "Direction" with three items.
+`src/renderer/dialogs/direction-menu/`: `DirectionMenu`, the direction's More menu.
 
-- "New direction from this master…": a dialog "New direction" with the field "Name" (default "Direction {n}", the next free number) and "Make direction". Sends `direction.createFromMaster`. The new section appears below.
-- "Rename…": a dialog "Rename {name}" with "Name", "Rename". Sends `direction.rename`.
-- "Delete direction…": a dialog "Delete {name}?" with "Its {n} variant(s) go with it. This cannot be undone." [D-099] and "Keep" (focused) / "Delete direction". Disabled with the hint "A campaign keeps at least one direction." when it is the only one. Sends `direction.delete`.
+- "New direction…": a `form` dialog "New direction" with the field "Name" (default "Direction {n}", the next free number) and "Make direction". Sends `direction.createFromMaster`. The new section appears below.
+- "Rename…": a `form` dialog "Rename {name}" with "Name", "Rename". Sends `direction.rename`.
+- "Delete direction…": a `confirm` dialog "Delete {name}?" with "Its {n} variants go with it. This cannot be undone." [D-099] and "Keep" (quiet, focused) / "Delete direction". The menu item is disabled, with the reason "A campaign keeps at least one direction." in its title, when it is the only one. Sends `direction.delete`.
 - The name rules and refusals are the command's; a refusal shows in the dialog.

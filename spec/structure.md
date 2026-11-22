@@ -53,20 +53,14 @@ project-root/
 │   │   └── publish/               # publish flow (Phase 9)
 │   ├── preload/                   # index.ts: the window.api and window.drop bridges; render.ts: the render window's renderApi
 │   ├── renderer/                  # app window (React). Files: "Renderer files on main" below
-│   │   ├── main.tsx, index.html, env.d.ts; render.html
+│   │   ├── main.tsx, index.html, env.d.ts; render.html, webp.html
 │   │   ├── render-worker/         # the render window's page: main.tsx, render-root/
-│   │   ├── app/                   # app.tsx, app-context.tsx, app-shell/, error-banner/
-│   │   ├── stores/                # app-store.ts, project-store.ts (one per open project), job-store.ts (one per campaign page);
-│   │   │                          #   nav-store.ts, variant-store.ts (one per open variant tab) (Phase 3)
-│   │   ├── dev/                   # the hand-test screen. Not product UI; removed in Phase 9
-│   │   ├── screens/               # start, project-home, campaign, settings; editor screens (Phase 3);
-│   │   │                          #   settings/ holds s3-section/, s3-check/ (AP-10b), approvals-section/ (AP-10)
-│   │   ├── dialogs/               # key-dialog/; brief-confirm, slots, generation, run-confirm, fan-out, sync-review,
-│   │   │                          #   export, publish, report, agent-permission, relink (later phases)
-│   │   ├── ui/                    # tokens.css, base.css, layout.module.css, asset-url.ts, secret-labels.ts; shared controls;
-│   │   │                          #   shortcuts.ts, variant-thumbnail/ (Phase 3); reference-picker/ (with reference-rows.ts, SP-7)
-│   │   ├── editor/                # the editor's components and helpers (Phase 3; tree in spec/editor.md); timeline (Phase 7)
-│   │   └── panels/                # activity (Phase 4)
+│   │   ├── app/                   # the shell: app-shell/, top bar parts, Activity, result notice, first-run setup
+│   │   ├── stores/                # app, project, nav, variant, job, activity, attached, approvals, playback stores
+│   │   ├── screens/               # start/, project-home/, assets/, campaign/, settings/
+│   │   ├── dialogs/               # one folder per dialog
+│   │   ├── ui/                    # tokens.css, base.css, layout.module.css; the shared parts and helpers
+│   │   └── editor/                # the editor's components and helpers (tree in spec/editor.md)
 │   └── shared/                    # no Electron or Node imports
 │       ├── schemas/               # Zod: api.ts (window.api type, IPC channel names), result.ts, events.ts, settings.ts,
 │       │                          #   secrets.ts, brief.ts, layer.ts (JSON columns), project.ts, project-name.ts,
@@ -194,7 +188,7 @@ Built, as decided by the stakeholder [D-069, D-072, D-073, D-084]: the `@/` alia
 
 Built.
 
-- One alias, `@/`, means `src/`, for all of `src/` (`main`, `preload`, `renderer`, `shared`, `render-worker`). Examples: `import { PaidConfirm } from '@/renderer/screens/campaign/paid-confirm'`, `import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'`.
+- One alias, `@/`, means `src/`, for all of `src/` (`main`, `preload`, `renderer`, `shared`, `render-worker`). Examples: `import { PaidConfirm } from '@/renderer/ui/paid-confirm'`, `import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'`.
 - `./` only for a file in the same folder (an `index.ts` re-export, a component's own CSS module, its private helpers). `../` is not used in `src/`.
 - Tests import code under `src/` through `@/`. Helpers inside `tests/` (`render.tsx`, `fake-api.ts`, fixtures) are imported by relative path.
 - The area rules hold: the renderer may not import `@/main/**` or `@/preload/**`; `src/shared/` imports nothing from main, renderer or preload; the Electron edge holds.
@@ -212,15 +206,15 @@ Built. Every renderer component sits in its own folder.
 
 - Each component has a kebab-case folder named after it, holding the component (`generate-panel.tsx`), its own CSS module (`generate-panel.module.css`), and `index.ts`. A component with no styles of its own leaves out the module.
 - **`index.ts` only re-exports:** `export { GeneratePanel } from './generate-panel'`, plus any props type another file imports. No logic. Exports stay named and PascalCase.
-- **Import from the folder.** Other files import the folder (`@/renderer/screens/campaign/generate-panel`), never the inner file (`.../generate-panel/generate-panel`). Only files inside the folder import its inner files.
-- **Where folders live.** Under their screen's folder: `screens/campaign/generate-panel/`. Names carry no screen prefix.
+- **Import from the folder.** Other files import the folder (`@/renderer/editor/generate-panel`), never the inner file (`.../generate-panel/generate-panel`). Only files inside the folder import its inner files.
+- **Where folders live.** Under their screen's folder: `screens/campaign/check-panel/`. Names carry no screen prefix.
   - A dialog lives in `dialogs/`, one folder each (`dialogs/key-dialog/`).
-  - The app shell and error banner stay in `app/`. Hand-test parts stay in `dev/`. The Phase 3 editor gets `src/renderer/editor/` (its tree is in `spec/editor.md`, "Where the code lives").
+  - The app shell and its parts stay in `app/`. The editor is `src/renderer/editor/` (its tree is in `spec/editor.md`, "Where the code lives").
   - A component used by two or more screens lives in `src/renderer/ui/{name}/`. A screen's part that a second screen starts to use moves there in the same change.
 - **What needs a folder.** Every `.tsx` file that exports a component another file imports. A small helper component used by one component only, and not imported by any other file, is a second `.tsx` inside that folder, not re-exported, using the parent's module; once a second component imports it, it gets its own folder.
 - **What does not get a folder.** Hooks, pure helpers, stores, context providers (`app-context.tsx`). The entry files stay: `src/renderer/main.tsx`, `src/renderer/app/app.tsx`. A hook or helper used by one component goes inside that component's folder, not re-exported. One used by several components of one screen stays a plain file in the screen folder. One used by several screens lives in `ui/`.
-- **Shared CSS files: three, all in `src/renderer/ui/`.** `tokens.css`: design tokens (custom properties) only. `base.css`: element defaults and resets, no class names. `layout.module.css`: classes two or more components use (screen, card, field, row, label, path, muted, primary, list, key row). A class used by one component lives in that component's module. No other shared CSS file without a line in this file.
-- **Where tests go.** A test goes under `tests/unit/renderer/` at the path of the folder holding the component folder, named after the component (`tests/unit/renderer/screens/campaign/generate-panel.test.tsx`). A component may have several test files (`reference-ticks.test.tsx`).
+- **Shared CSS files: three, all in `src/renderer/ui/`.** `tokens.css`: design tokens (custom properties) only, with the role tokens, status colours and `[data-density='compact']`. `base.css`: element defaults and resets, no class names. `layout.module.css`: classes two or more components use (screen, card, field, row, label, path, muted, primary, secondary, quiet, `primary.danger`, iconButton, seg, chip, badge, notice, menu, switch, list, `field.inline`, unitBox, unit). A class used by one component lives in that component's module. No other shared CSS file without a line in this file.
+- **Where tests go.** A test goes under `tests/unit/renderer/` at the path of the folder holding the component folder, named after the component (`tests/unit/renderer/screens/campaign/check-panel.test.tsx`). A component may have several test files (`reference-ticks.test.tsx`).
 
 ### One styling source
 
@@ -233,69 +227,84 @@ Built [D-084]. `src/renderer/ui/tokens.css` is the one source of every colour, s
 
 ### Renderer files on main
 
-Each name ending in `/` inside a screen, `app/`, `dialogs/`, `ui/` or `dev/` is a component folder: the component, its CSS module when it has styles of its own, and `index.ts`. Files in brackets sit inside that folder, not re-exported.
+Each name ending in `/` inside a screen, `app/`, `dialogs/` or `ui/` is a component folder: the component, its CSS module when it has styles of its own, and `index.ts`. Files in brackets sit inside that folder, not re-exported. Folders only, with the plain helper files that sit beside them; the files inside a folder are not all listed.
 
 ```
 src/renderer/
-├── main.tsx, index.html, env.d.ts, render.html
+├── main.tsx, index.html, env.d.ts, render.html, webp.html
 ├── render-worker/  main.tsx, render-root/
 ├── app/            app.tsx, app-context.tsx, nav-context.tsx, app-shell/, error-banner/,
-│                   project-switcher/, campaign-tabs/ [use-tab-keys.ts]
+│                   project-switcher/ [close-project.tsx, project-rows.tsx], campaign-tabs/
+│                   [use-tab-keys.ts], activity-button/, activity-panel/ [activity-scope.tsx],
+│                   activity-row/ [row-text.ts, row-marks.tsx, row-retry.tsx], result-notice/,
+│                   agent-activity/, permission-dialog/ [file-list/], first-run/ [steps.tsx,
+│                   step-strip.tsx]
 ├── screens/
-│   ├── start/          start-screen/, start-images/ (the crossfading pictures), new-project-form/, recent-projects/
-│   ├── settings/       settings-screen/, location-setting/, provider-defaults/, keys-section/, key-row/,
-│   │                   comfy-section/, comfy-check-result/, mcp-section/, connect-panel/,
-│   │                   agent-runs-section/, licence-list/
-│   ├── project-home/   project-home/ [use-project.ts], brief-load/, campaign-list/,
-│   │                   brief-form/ [campaign-fields.tsx, language-field.tsx], subject-rows/,
-│   │                   size-fields/, rule-fields/ [word-lists.tsx], import-files/, missing-files/,
-│   │                   package-project/, drop-import/ [use-file-drop.ts], campaign-input.ts,
-│   │                   brief-form-model.ts, brief-form-problems.ts, brief-form-sizes.ts
-│   └── campaign/       campaign-view/, variant-tabs/, variant-grid/, variant-tile/ [badge-words.ts],
-│                       slot-view/ [use-slots.ts],
-│                       generate-panel/, provider-select/, reference-picker/, paid-confirm/,
-│                       video-panel/ [video-length.ts], video-picture-choice/, video-result/, run-list/,
-│                       run-row/ [video-status.ts], run-result/, reference-list.ts,
-│                       video-start.ts, use-comfy-info.ts, offered-workflow.ts
-├── dialogs/        key-dialog/, address-dialog/, licence-dialog/ [licence-choices.tsx],
-│                   import-dialog/ [import-choices.tsx, import-text.ts], relink-dialog/ [relink-body.tsx,
-│                   missing-row.tsx, use-missing-assets.ts], package-dialog/ [package-body.tsx,
-│                   use-package.ts, file-size.ts], picture-chooser/ [picture-grid.tsx, use-pictures.ts],
-│                   run-dialog/ [provider-choice.tsx, run-summary.ts]
-├── editor/         the Phase 3 editor: one folder per component plus shared helpers
+│   ├── start/          start-screen/, start-images/ (the crossfading pictures), new-project-form/,
+│   │                   recent-projects/
+│   ├── settings/       settings-screen/ [settings-pages.ts], setup-section/, keys-section/, key-row/,
+│   │                   comfy-section/ [on-server.tsx], comfy-check-result/, licence-list/,
+│   │                   provider-defaults/, location-setting/, export-section/, s3-section/,
+│   │                   s3-check/, dropbox-section/, approvals-section/, mcp-section/
+│   │                   [port-field.tsx], connect-panel/, auto-approve-setting/,
+│   │                   agent-runs-section/, notice-line/, saved-mark/
+│   ├── project-home/   project-home/ [home-sections.tsx, use-project.ts], brief-load/, brief-paste/,
+│   │                   brief-form/ [campaign-fields.tsx, language-field.tsx], subject-rows/
+│   │                   [subject-block.tsx], subject-photos/, size-fields/ [size-chip.tsx],
+│   │                   rule-fields/ [word-lists.tsx], campaign-list/, import-files/,
+│   │                   missing-files/, package-project/, drop-import/ [use-file-drop.ts],
+│   │                   campaign-input.ts, brief-form-model.ts, brief-form-problems.ts,
+│   │                   brief-form-sizes.ts, brief-form-photos.ts
+│   ├── assets/         assets-scope/, assets-button/, assets-panel/, asset-row/ [picture-tile.tsx],
+│   │                   subject-card/, attach-photos.ts
+│   └── campaign/       campaign-view/, campaign-head/, campaign-overview/ [check-count.ts],
+│                       variants-tab/, direction-grids/, direction-header/, variant-grid/,
+│                       variant-tile/ [badge-words.ts, tile-strip.tsx, tile-targets.ts],
+│                       variant-tabs/, campaign-undo/, check-panel/, rule-set-panel/,
+│                       translation-panel/, campaign-export/, report-list/, publish-button/,
+│                       approval-bar/, approval-mark/, provider-select/, use-comfy-info.ts,
+│                       offered-workflow.ts
+├── dialogs/        key-dialog/, address-dialog/, licence-dialog/, run-dialog/ [provider-choice.tsx,
+│                   cost-lines.tsx, run-summary.ts], reference-dialog/, copy-options-dialog/,
+│                   brief-reading-dialog/, layout-dialog/, picture-chooser/, import-dialog/
+│                   [file-strip.tsx, import-choices.tsx, import-text.ts], relink-dialog/,
+│                   package-dialog/, subject-dialog/, delete-subject/, delete-variant/,
+│                   direction-menu/, fan-out/ [fan-out-costs.ts, fan-out-model.ts], sync-review/,
+│                   quick-look/, export-dialog/, report-view/, publish-dialog/, approval-dialog/
+├── editor/         the editor: one folder per component plus shared helpers
 │                   (tree in `spec/editor.md`, "Where the code lives")
-├── dev/            hand-test-screen/, s3-settings-form/, storage-actions/, dropbox-sign-in/, result-text.ts
-├── stores/         app-store.ts, project-store.ts, job-store.ts, run-asks.ts, nav-store.ts, variant-store.ts
-└── ui/             tokens.css, base.css, layout.module.css, asset-url.ts, secret-labels.ts, shortcuts.ts,
-                    comfy-privacy.ts, missing-item-text.ts, dropped-paths.ts, dialog-frame/, tab-row/,
-                    tab-marks/, variant-thumbnail/ [use-thumbnail.ts], run-failure/ [missing-items.ts,
-                    server-message.tsx], paid-count/ [use-paid-count.ts], cancel-shown.ts
+├── stores/         app-store.ts, project-store.ts, nav-store.ts, variant-store.ts, job-store.ts,
+│                   activity-store.ts, attached-store.ts, approvals-store.ts, playback-store.ts,
+│                   generate-drafts.ts, placed-runs.ts, run-asks.ts
+└── ui/             tokens.css, base.css, layout.module.css; helpers asset-url.ts, secret-labels.ts,
+                    shortcuts.ts, comfy-privacy.ts, missing-item-text.ts, dropped-paths.ts,
+                    cancel-shown.ts, go-there.ts, show-result.ts, language-name.ts, middle-cut.ts,
+                    plural.ts; shared parts (spec/app-style-parts.md) icon/, app-mark/,
+                    dialog-frame/, dialog-alert/, section/, panel-head/, sub-page/, side-list/,
+                    object-row/, status-mark/, info-tip/, more-menu/, menu-place/, empty-state/,
+                    money-line/, slider-field/, swatch-field/, photo-strip/, job-progress/,
+                    escape-leave/; and tab-row/, tab-marks/, variant-thumbnail/, run-failure/,
+                    run-status/, paid-count/, paid-confirm/, close-warning/, reference-picker/,
+                    publish-file-list/, font-share-choice/, signoff-list/
 ```
 
-The Phase 2 campaign screens and dialogs are described in `spec/screens-campaign.md`.
+The project and campaign screens and dialogs are described in `spec/screens-campaign.md` and `spec/screens-variants.md`; the AI screens in `spec/screens-ai.md`.
 
-Components with their own CSS module (outside `editor/`): `app-shell`, `error-banner`, `key-dialog`, `address-dialog`, `licence-dialog`, `import-dialog`, `relink-dialog`, `package-dialog`, `start-screen`, `recent-projects`, `project-home`, `brief-form`, `subject-rows`, `size-fields`, `rule-fields`, `missing-files`, `drop-import`, `campaign-view`, `variant-grid`, `variant-tile`, `slot-view`, `provider-select`, `run-failure`, `video-result`, `connect-panel`, `key-row`, `licence-list`, `dialog-frame`, `render-root`, `run-dialog`, `paid-count`.
-
-Why each helper sits where it does (who imports it):
+Why some helpers sit where they do (who imports them):
 
 | Helper | Imported by | Place |
 |--------|-------------|-------|
 | `use-project.ts` | `project-home.tsx` | inside `project-home/` |
 | `campaign-input.ts` | `brief-form-model.ts`, `brief-form-problems.ts` (`briefSubjectIds`) | plain file in `screens/project-home/` |
-| `brief-form-model.ts`, `brief-form-problems.ts`, `brief-form-sizes.ts` | `brief-load/`, `brief-form/`, `subject-rows/`, `size-fields/`, `rule-fields/` | plain files in `screens/project-home/` |
-| `offered-workflow.ts` | the two panels' trial mark | plain file in `screens/campaign/` |
-| `cancel-shown.ts` | `run-row.tsx`, `activity-row.tsx` | `ui/` |
+| `brief-form-model.ts`, `brief-form-problems.ts`, `brief-form-sizes.ts`, `brief-form-photos.ts` | `brief-load/`, `brief-form/`, `subject-rows/`, `subject-photos/`, `size-fields/`, `rule-fields/` | plain files in `screens/project-home/` |
+| `offered-workflow.ts` | the run dialog's and fan-out's trial mark | plain file in `screens/campaign/` |
+| `use-comfy-info.ts` | the run dialog, the Generate panel, fan-out, the run failure | plain file in `screens/campaign/` |
+| `cancel-shown.ts` | `activity-row.tsx` and the other places that offer Cancel | `ui/` |
 | `run-asks.ts` | `app-store.ts` | `stores/` |
-| `reference-list.ts` | `reference-picker.tsx`, `video-picture-choice.tsx` | plain file in `screens/campaign/` |
-| `video-start.ts` | `video-panel.tsx`, `video-picture-choice.tsx` | plain file in `screens/campaign/` |
-| `video-length.ts` | `video-panel.tsx` | inside `video-panel/` |
-| `video-status.ts` | `run-row.tsx` | inside `run-row/` |
-| `result-text.ts` | three `dev/` components | plain file in `dev/` |
-| `asset-url.ts` | four campaign components | `ui/` (shared by several components) |
+| `asset-url.ts` | every component that draws an asset | `ui/` |
 | `secret-labels.ts` | `key-row.tsx` (settings), `key-dialog.tsx` (dialogs) | `ui/` |
-| `use-comfy-info.ts` | `video-length.ts`, the panels' trial mark, the run failure | plain file in `screens/campaign/` |
 | `comfy-privacy.ts` | `comfy-section.tsx`, the address dialog | `ui/` |
 | `missing-item-text.ts` | `comfy-check-result.tsx`, the run failure | `ui/` |
 | `dropped-paths.ts` | the drop target | `ui/` (the one reader of `window.drop`) |
-
-`key-row`, `comfy-check-result`, `connect-panel`, `video-picture-choice`, `video-result` and `run-result` are each imported by one other component, but since another file imports them they get their own folders, as the stakeholder's tree does for `key-row` and `comfy-check-result`.
+| `plural.ts` | every component that draws a count in words | `ui/` |
+| `middle-cut.ts` | the Settings projects folder row | `ui/` |

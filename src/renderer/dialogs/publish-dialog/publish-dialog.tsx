@@ -1,6 +1,6 @@
 // "Publish {campaign name}" [P9-12] (spec/phases/phase-09.md "Screens", "Publishing"; DLG-6b).
 // The first view (publish-choose.tsx): where to publish, what is published there, the prompt
-// line, every file that will leave this computer (by name and kind, no path), the font ticks
+// line, every file that will leave this computer (a row by name and kind, its full local path as text under it, A-218), the font ticks
 // (A-260) and Publish. The full prompt sentence is the dialog's description. Nothing is sent
 // but publish.inspect until the user presses Publish, which sends publish.run once, with
 // replaceConfirmed only from the user's own "Replace" switch; a storage that is not set up

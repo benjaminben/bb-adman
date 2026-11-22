@@ -122,7 +122,7 @@ Rules:
 
 **MoreMenu** (new, T3c, `ui/more-menu/`): a `.iconButton` with the `more` icon and an `aria-label` and `title` "More actions for {name}", `aria-haspopup="menu"`, `aria-expanded`. The menu is the shared `.menu`, placed by `ui/menu-place` so it stays in the window; `role="menu"`, items `role="menuitem"`, arrow keys move, Escape closes and returns focus to the button. Props: `label: string`, `items: { id, label, icon?, danger?, disabled?, reason?, onChoose }[]`. A separator comes before the first `danger` item; danger items are last, in `--color-danger-text`. A disabled item shows its `reason` in `title`.
 
-**EmptyState** (new, T3c, `ui/empty-state/`): the `.empty` look (dashed edge, `--radius-md`), an icon, at most five words, one button. Props: `icon: IconName`, `words: string`, `action?: { label, onClick, primary? }`. Example: "No campaigns yet" with "New campaign". An empty list always shows the one action that fills it (no dead ends).
+**EmptyState** (new, T3c, `ui/empty-state/`): the `.empty` look (dashed edge, `--radius-md`), an icon, at most five words, one button. Props: `icon: IconName`, `words: string`, `action?: { label, onClick, primary? }`. Example: "No campaigns yet" with "New campaign". An empty list shows the one action that fills it (no dead ends), unless that action already sits beside it (the Checks tab's "Run checks", the project home's brief buttons) or nothing can fill it (a one-language campaign's Translations).
 
 ## Tabs (built, `ui/tab-row/`)
 
@@ -176,7 +176,7 @@ Props: `tone: 'none' | 'ok' | 'warn' | 'danger' | 'info' | 'accent' | 'running'`
 Where almost all of today's grey help paragraphs go. Folder `ui/info-tip/`.
 
 - A `.iconButton` with the `info` icon, `aria-label` and `title` "About {about}", `aria-expanded`, `aria-controls`. Props: `about: string`, `children` (one to three sentences).
-- Opens on click, Enter or Space, and while the pointer rests on the button or the popover. Escape, a click outside, or a second click closes it; focus stays on or returns to the button. One InfoTip is open at a time.
+- Opens on click, Enter or Space, and while the pointer rests on the button or the popover. Escape, a click outside, or a second click closes it; while a tip is open inside a dialog, the first Escape closes only the tip and the dialog stays (Z-1b); focus stays on or returns to the button. One InfoTip is open at a time.
 - The popover: ground `--color-bg`, edge `--color-line`, `--radius-md`, `--shadow-2`, padding `var(--space-2) var(--space-3)`, at most `--infotip-width` wide, text `--type-body-size`. Placed by `ui/menu-place` so it stays in the window. It is not modal and holds no control.
 - **Never for security text.** Money, lost work, data leaving the machine, what an agent asks to do and failures stay on the page. An InfoTip may hold a longer form of such a line only when the short line stays visible beside the action.
 
@@ -187,7 +187,7 @@ Where almost all of today's grey help paragraphs go. Folder `ui/info-tip/`.
 
 ## Dialog
 
-Built: `ui/dialog-frame/` (Radix dialog; head, body, foot; `size`, `footer`, `describedBy`, `closable`). T4 adds the kinds, the warning line and two parts.
+Built: `ui/dialog-frame/` (Radix dialog; head, body, foot; `size`, `footer`, `describedBy`, `closable`, and `icon?: IconName`, an icon drawn before the title words and hidden from a screen reader; the key dialog passes `key`, Z-1b). T4 adds the kinds, the warning line and two parts.
 
 **Kinds** (new prop `kind`, T4). The kind sets the width; `size`, when also given, wins (a wide `form`).
 
@@ -219,8 +219,13 @@ Rules:
 
 For long or rare content opened from a Section: the agent connect snippets, a licence list, the server folder list. Folder `ui/sub-page/`.
 
-- Props: `title: string`, `onBack: () => void`, `backLabel?: string` (default "Back"), `children`.
-- A head row at `--row-height`: a `.iconButton` with the `left` icon (`aria-label` and `title` `backLabel`), then the title as an `h2` in `--font-title`, `--type-title-size`. On open, focus goes to the title (`tabIndex={-1}`). Escape and Back call `onBack`. The caller returns focus to the Section header that opened it and keeps that view's scroll position.
+- Props: `title: string`, `onBack: () => void`, `backLabel?: string` (default "Back"), `escapeBack?: boolean` (default true), `children`.
+- A head row at `--row-height`: a `.iconButton` with the `left` icon (`aria-label` and `title` `backLabel`), then the title as an `h2` in `--font-title`, `--type-title-size`. On open, focus goes to the title (`tabIndex={-1}`). Back calls `onBack`; so does Escape unless `escapeBack` is false (the New campaign page passes false and handles Escape itself through `ui/escape-leave/`). The caller returns focus to the Section header that opened it and keeps that view's scroll position.
+
+## PhotoStrip and JobProgress (built, Wave 2)
+
+- **PhotoStrip** (`ui/photo-strip/`, AST-2): a list named by `label`; photo tiles at `--thumbnail-tile`, each with a ✕ named by its `removeLabel`; a missing file shows "File not found"; a dashed "+" tile named `addLabel`; `needsOne` gives the amber edge when empty; `addingLabel` is the hidden status while adding; `size?: 'regular' | 'small'`; `disabled?`. It calls `onAdd` / `onRemove` and sends nothing itself. Used by the subject cards, the brief form's subjects and the Generate panel's reference pictures.
+- **JobProgress** (`ui/job-progress/`, DLG-1): a bar with `role="progressbar"` named by `label`, `value` 0 to 1 or `null` (no value known), an optional `count: { done, total }` for the text "3 of 10", and at most one button (`action: { label, onClick }`, any words). It starts and sends nothing itself.
 
 ## SideList (new, T3e)
 
