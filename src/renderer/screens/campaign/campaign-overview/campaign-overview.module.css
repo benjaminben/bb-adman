@@ -17,6 +17,7 @@
   display: flex;
   align-items: stretch;
   min-height: var(--tab-row-height);
+  background: var(--color-bg);
 }
 .views {
   flex: 1 1 auto;
@@ -27,7 +28,7 @@
   flex: none;
   align-items: center;
   gap: var(--space-2);
-  padding-left: var(--space-3);
+  padding: 0 var(--space-3);
   border-bottom: var(--border-width) solid var(--color-line);
 }
 /* A tab's icon and word. */
