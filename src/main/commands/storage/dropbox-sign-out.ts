@@ -3,12 +3,14 @@
 // forget every access token held in memory, delete the refresh token, clear the settings. Being
 // offline still signs out on this computer. P9-5b: it refuses while a sign-in runs, and while the
 // saved token cannot be known to be gone (secure storage unavailable, or the keys file cannot be
-// read), so it never replies done with the token still on disk.
+// read), so it never replies done with the token still on disk. A second sign-out refuses while
+// one runs (P9-6 review, L2).
 import { defineCommand, type HandlerResult } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import { forgetDropboxAccess } from '@/main/providers/dropbox/access-token'
 import {
   dropboxSignInBusy,
+  dropboxSigningOut,
   revokeQuietly,
   setDropboxSigningOut,
 } from '@/main/providers/dropbox/sign-in/session'
@@ -24,6 +26,7 @@ export const SIGN_OUT_UNREADABLE_MESSAGE =
 
 function refuseUnlessKnown(deps: Deps): void {
   if (dropboxSignInBusy()) throw publishRefusal('sign_in_in_progress')
+  if (dropboxSigningOut()) throw publishRefusal('sign_out_in_progress')
   if (!deps.secrets.canStore()) {
     throw new AppError('RULE_VIOLATION', INSECURE_MESSAGE, {
       reason: 'secure_storage_unavailable',
