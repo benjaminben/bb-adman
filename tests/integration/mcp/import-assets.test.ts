@@ -176,6 +176,7 @@ describe('the text rules refuse before the ask [R2P-5; D5]', () => {
     ['a relative path', () => ['Pictures/hero.png'], 'not_full_path'],
     ['a path holding U+202E', (d: string) => [`${d}/gnp.‮cod.png`], 'hidden_characters'],
     ['a text file', (d: string) => [`${d}/notes.txt`], 'not_supported'],
+    ['a path holding U+2028', (d: string) => [`${d}/he\u2028ro.png`], 'hidden_characters'],
   ])('refuses %s with INVALID_INPUT and sends no event', async (_name, paths, reason) => {
     x = await importSetUp()
     const given = paths(x.dir)

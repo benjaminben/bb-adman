@@ -1,16 +1,19 @@
 // asset.importFiles, the file side (spec/phases/round-2-platform.md, D5; A-348 to A-352).
 // Before the ask only the text rules run (file-path-text.ts), so nothing on disk is touched.
 // After the user allowed, each shown path is checked again on disk: its real path must be the
-// shown path (no link anywhere on the way), it must be a regular file, and it must pass the
-// type, size and decode checks of a person's import as a picture, video or font. Then every
-// file is copied (never linked) by prepareImport. Every refusal names the file by its place in
-// the list; the asset code's own errors, which hold file names and paths, never get out.
+// shown path (no link anywhere on the way), it must be a regular file, and it is then opened
+// once and read through that handle (checked-file.ts, R2P-5b) for its type and hash. Then every
+// file is copied (never linked) by prepareImport, which checks type, size and decode as for a
+// person's import, and each finished copy must hold the bytes the handle read. Every refusal
+// names the file by its place in the list; the asset code's own errors, which hold file names
+// and paths, never get out.
 import fs from 'node:fs'
 import { AppError } from '@/shared/schemas/result'
 import { checkPathTexts, MEDIA_KINDS, pathTextMessage } from '@/shared/assets/file-path-text'
+import type { FileType } from '@/shared/config/file-types'
 import type { ProjectHandle } from '@/main/db/project-file'
-import { inspectFile, type InspectedFile } from './inspect'
 import { prepareImport, removeCopies, type PreparedImport } from './import'
+import { hashOfCopy, readCheckedFile, SwappedFileError, type CheckedFile } from './checked-file'
 import { UnreadableFileError } from './unreadable'
 
 // The normalised paths the user is shown, or INVALID_INPUT with { reason, index }.
@@ -42,17 +45,13 @@ const notSupported = (n: number) =>
 const unreadable = (n: number, code: string | undefined) =>
   new UnreadableFileError(`File ${n}`, code)
 
+// ELOOP: the open without following found a link at the last part of the path.
 function diskError(e: unknown, n: number): AppError {
+  if (e instanceof SwappedFileError) return isLink(n)
   const code = (e as NodeJS.ErrnoException | null)?.code
   if (code === 'ENOENT' || code === 'ENOTDIR') return notFound(n)
+  if (code === 'ELOOP') return isLink(n)
   return unreadable(n, code)
-}
-
-// The asset code's refusal of one file, said again without its name.
-function inspectError(e: unknown, n: number): AppError {
-  if (e instanceof UnreadableFileError) return unreadable(n, e.osCode)
-  if (e instanceof AppError) return e.code === 'NOT_FOUND' ? notFound(n) : notSupported(n)
-  return diskError(e, n)
 }
 
 // The after-allow checks of the file at place n, in the order D5 gives them.
@@ -60,25 +59,20 @@ export async function checkFile(
   shown: string,
   n: number,
   platform = process.platform,
-): Promise<InspectedFile> {
-  let real: string
-  let stat: fs.Stats
+): Promise<CheckedFile & { type: FileType }> {
+  const stillShown = async () => samePath(await fs.promises.realpath(shown), shown, platform)
+  let file: CheckedFile
   try {
-    real = await fs.promises.realpath(shown)
-    stat = await fs.promises.lstat(shown)
+    if (!(await stillShown())) throw isLink(n)
+    const stat = await fs.promises.lstat(shown)
+    if (!stat.isFile()) throw notAFile(n)
+    file = await readCheckedFile(shown, stat, stillShown)
   } catch (e) {
-    throw diskError(e, n)
+    throw e instanceof AppError ? e : diskError(e, n)
   }
-  if (!samePath(real, shown, platform)) throw isLink(n)
-  if (!stat.isFile()) throw notAFile(n)
-  let file: InspectedFile
-  try {
-    file = await inspectFile(shown)
-  } catch (e) {
-    throw inspectError(e, n)
-  }
-  if (!MEDIA_KINDS.includes(file.type.kind)) throw notSupported(n)
-  return file
+  const { type } = file
+  if (!type || !MEDIA_KINDS.includes(type.kind)) throw notSupported(n)
+  return { ...file, type }
 }
 
 const changed = () =>
@@ -87,7 +81,8 @@ const changed = () =>
   })
 
 // The copy step. A file swapped between the checks and the copy (a folder or other bytes in
-// its place) is caught by its content hash, and every copy made is removed.
+// its place) is caught by its content hash, read by prepareImport and again from each finished
+// copy, and every copy made is removed.
 async function copyAll(project: ProjectHandle, paths: string[], hashes: string[]) {
   let prepared: PreparedImport
   try {
@@ -100,7 +95,24 @@ async function copyAll(project: ProjectHandle, paths: string[], hashes: string[]
     await removeCopies(prepared.copies)
     throw changed()
   }
+  if (!(await copiesHoldTheirBytes(prepared))) {
+    await removeCopies(prepared.copies)
+    throw changed()
+  }
   return prepared
+}
+
+// R2P-5b: each copy is hashed again once placed, so bytes the handle did not read (the path
+// swapped for a link after the checks) never stay in the project.
+async function copiesHoldTheirBytes(prepared: PreparedImport): Promise<boolean> {
+  try {
+    for (const a of prepared.newAssets) {
+      if ((await hashOfCopy(a.absPath)) !== a.contentHash) return false
+    }
+    return true
+  } catch {
+    return false
+  }
 }
 
 export async function prepareFileImport(

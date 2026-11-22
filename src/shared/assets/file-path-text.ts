@@ -17,8 +17,18 @@ export type PathTextRefusal = { reason: PathTextReason; index: number }
 
 export type PathText = { ok: true; path: string } | { ok: false; refusal: PathTextRefusal }
 
-// Unicode Cc (control) and Cf (format) characters, which can hide or reorder text on screen.
-const HIDDEN = /[\p{Cc}\p{Cf}]/u
+// Unicode Cc (control) and Cf (format) characters, which can hide or reorder text on screen,
+// and (R2P-5b) the line and paragraph separators and every space but the plain one, which can
+// break a line or pass for a plain space.
+const HIDDEN = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]|(?! )\p{Zs}/u
+
+// R2P-5b, Windows only: two separators first is a network or device path (opening a network
+// path sends the user's Windows sign-in to that server), and a colon after the drive names a
+// second stream of a file rather than the file.
+function notWindowsFile(text: string): boolean {
+  if (/^[\\/]{2}/.test(text)) return true
+  return text.replace(/^[A-Za-z]:/, '').includes(':')
+}
 
 // The last segment of a normalised path, on either separator.
 const lastSegment = (path: string): string => path.split(/[\\/]/).pop() ?? ''
@@ -33,6 +43,8 @@ export function checkPathText(
   const refuse = (reason: PathTextReason): PathText => ({ ok: false, refusal: { reason, index } })
   const ref = text.length > MAX_PATH_CHARS ? null : pictureRef(text, platform)
   if (ref?.kind !== 'file') return refuse('not_full_path')
+  const winOdd = platform === 'win32' && (notWindowsFile(text) || notWindowsFile(ref.path))
+  if (winOdd) return refuse('not_full_path')
   if (HIDDEN.test(text)) return refuse('hidden_characters')
   const kind = fileTypeFor(lastSegment(ref.path))?.kind
   if (kind === undefined || !kinds.includes(kind)) return refuse('not_supported')
