@@ -46,6 +46,10 @@ export type ToolDef = {
   content?: 'json' | 'png'
   // Runs on the camelCase input, after the snake_case mapping, before the call (A-246).
   prepareInput?: (input: Record<string, unknown>) => Record<string, unknown>
+  // R2P-1 (D6): the commands this tool may run, and the one each call runs, picked from the
+  // camelCase input. A pick outside targets is the fixed INTERNAL reply and runs nothing.
+  targets?: readonly string[]
+  pickTarget?: (input: Record<string, unknown>) => string
 }
 
 export const ALL_TOOLS: readonly ToolDef[] = [
