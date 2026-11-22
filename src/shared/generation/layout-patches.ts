@@ -35,3 +35,10 @@ export function layoutPatches(boxes: LayoutJobBox[], layers: LayerRef[]): Layout
     return [{ layerId, patch: { geometry: { x, y, width, height, rotation: 0 }, style } }]
   })
 }
+
+// R2E-2: how many boxes put on a text layer had their colour changed or got a text box.
+export function changedCount(boxes: LayoutJobBox[], layers: LayerRef[]): number {
+  const keys = new Set(layers.filter((l) => l.type === 'text').map((l) => l.key))
+  return boxes.filter((b) => keys.has(b.slot) && (b.readable === 'colour' || b.readable === 'box'))
+    .length
+}

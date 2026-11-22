@@ -4,12 +4,14 @@
 // The banner shows "Placing text with AI…" with Stop while the job runs, and a failure's
 // sentence with Dismiss after. The window keeps the failures, so a tab shown again still has
 // its line. A result whose variant was deleted while the call was out is dropped quietly.
+// R2E-2 (spec/phases/round-2-editor.md D2, "Banner"): once the boxes are on the layers, a line
+// says how many texts had their colours changed, kept the same way, until Dismiss or the next run.
 import { useState } from 'react'
 import { useStore } from 'zustand'
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { attachedStoreFor, variantJobs } from '@/renderer/stores/attached-store'
-import { layoutPatches } from '@/shared/generation/layout-patches'
+import { changedCount, layoutPatches } from '@/shared/generation/layout-patches'
 import { hasWordsOnLayers } from '@/shared/generation/prompt'
 import { fillMarks, plainMessage, reasonMessage } from '@/shared/providers/messages'
 import type { AdmanApi } from '@/shared/schemas/api'
@@ -25,7 +27,9 @@ type Target = { projectId: string; variantId: string }
 type Started = Target & { label: string }
 
 export type LayoutBannerLine =
-  { kind: 'running'; onStop: () => void } | { kind: 'failed'; words: string; onDismiss: () => void }
+  | { kind: 'running'; onStop: () => void }
+  | { kind: 'failed'; words: string; onDismiss: () => void }
+  | { kind: 'changed'; count: number; onDismiss: () => void }
 
 // As generation.proposeLayout's own check: a visible text layer whose copy is not blank.
 export function canPlaceText(layers: LayerRow[]): boolean {
@@ -43,17 +47,18 @@ const keyOf = (t: Target) => `${t.projectId}:${t.variantId}`
 const ended = (row: JobRow) => row.status !== 'queued' && row.status !== 'running'
 const EARLY_ROWS_KEPT = 20
 
-type Failures = { failures: Record<string, string> }
+type Lines = { failures: Record<string, string>; changed: Record<string, number> }
 
-// The window's layout runs: the failure line per variant, and the jobs it started.
+// The window's layout runs: the failure and changed lines per variant, and the jobs it started.
 type LayoutRuns = {
-  store: StoreApi<Failures>
+  store: StoreApi<Lines>
   start(jobId: string, started: Started): void
   fail(target: Target, words: string | null): void
+  change(target: Target, count: number | null): void
 }
 
 function createLayoutRuns(api: AdmanApi): LayoutRuns {
-  const store = createStore<Failures>(() => ({ failures: {} }))
+  const store = createStore<Lines>(() => ({ failures: {}, changed: {} }))
   const started = new Map<string, Started>()
   // A job's first rows can come before the command's reply.
   const early = new Map<string, JobRow>()
@@ -63,6 +68,13 @@ function createLayoutRuns(api: AdmanApi): LayoutRuns {
     if (words === null) delete failures[keyOf(target)]
     else failures[keyOf(target)] = words
     store.setState({ failures })
+  }
+
+  function change(target: Target, count: number | null) {
+    const changed = { ...store.getState().changed }
+    if (count === null) delete changed[keyOf(target)]
+    else changed[keyOf(target)] = count
+    store.setState({ changed })
   }
 
   function settle(row: JobRow, run: Started) {
@@ -84,8 +96,10 @@ function createLayoutRuns(api: AdmanApi): LayoutRuns {
   return {
     store,
     fail,
+    change,
     start(jobId, run) {
       fail(run, null)
+      change(run, null)
       started.set(jobId, run)
       const row = early.get(jobId)
       early.delete(jobId)
@@ -117,12 +131,15 @@ export async function applyLayout(api: AdmanApi, target: Target, jobId: string):
   if (!result?.success) return
   const read = await api.query('variant.get', target)
   if (read.ok) {
-    const updates = layoutPatches(result.data.boxes, (read.data as VariantGet).layers)
+    const { layers } = read.data as VariantGet
+    const updates = layoutPatches(result.data.boxes, layers)
     const reply =
       updates.length === 0 ? null : await api.command('layer.updateMany', { ...target, updates })
     if (reply !== null && !reply.ok && reply.error.code !== 'NOT_FOUND') {
       runs.fail(target, `Text could not be placed. ${reply.error.message}`)
     }
+    const count = reply?.ok ? changedCount(result.data.boxes, layers) : 0
+    if (count > 0) runs.change(target, count)
   }
   await api.command('job.markSeen', { projectId: target.projectId, jobIds: [jobId] })
 }
@@ -143,6 +160,7 @@ export function useLayoutRun(projectId: string, variantId: string, layers: Layer
       )?.jobId ?? null,
   )
   const failure = useStore(runs.store, (s) => s.failures[keyOf(target)] ?? null)
+  const changed = useStore(runs.store, (s) => s.changed[keyOf(target)] ?? null)
 
   async function confirm(provider: string): Promise<Result<unknown>> {
     const reply = await command('generation.proposeLayout', { ...target, provider })
@@ -164,6 +182,8 @@ export function useLayoutRun(projectId: string, variantId: string, layers: Layer
   if (jobId !== null) line = { kind: 'running', onStop: () => stop(jobId) }
   else if (failure !== null) {
     line = { kind: 'failed', words: failure, onDismiss: () => runs.fail(target, null) }
+  } else if (changed !== null) {
+    line = { kind: 'changed', count: changed, onDismiss: () => runs.change(target, null) }
   }
 
   return {
