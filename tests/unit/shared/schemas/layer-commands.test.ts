@@ -132,7 +132,7 @@ const BOUNDS: [string, z.ZodType, unknown, boolean][] = [
   ['title of 200 characters', variantUpdateInput, title(long(200)), true],
   ['title of 201 characters', variantUpdateInput, title(long(201)), false],
   ['title of only spaces', variantUpdateInput, title('  '), false],
-  ['a durationMs before Phase 7', variantUpdateInput, { ...title('a'), durationMs: 5000 }, false],
+  ['a durationMs of 5000', variantUpdateInput, { ...title('a'), durationMs: 5000 }, true],
   ['variantRev 0', layerReportOverflowInput, overflowAt(0), true],
   ['variantRev -1', layerReportOverflowInput, overflowAt(-1), false],
   ['variantRev 1.5', layerReportOverflowInput, overflowAt(1.5), false],

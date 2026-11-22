@@ -1,14 +1,45 @@
-// spec/editor-commands.md, "variant.update": the title only in Phase 3. Phase 7 adds
-// durationMs; until then the strict schema refuses it.
+// spec/editor-commands.md, "variant.update": the title, and from Phase 7 durationMs (P7-1),
+// at least one of the two.
 import { z } from 'zod'
 import { LayerRow } from '@/shared/schemas/rows/layer'
 import { AddFit, FanOutFit, MAX_SYSTEM_VARIANTS, VariantSnapshot } from '@/shared/schemas/links'
 import { projectScoped } from './project-scoped'
 
+// Whole milliseconds, half a second to a day.
+export const MIN_DURATION_MS = 500
+export const MAX_DURATION_MS = 86_400_000
+
 export const variantUpdateInput = projectScoped
-  .extend({ variantId: z.string().min(1), title: z.string().trim().min(1).max(200) })
+  .extend({
+    variantId: z.string().min(1),
+    title: z.string().trim().min(1).max(200).optional(),
+    durationMs: z.number().int().min(MIN_DURATION_MS).max(MAX_DURATION_MS).optional(),
+  })
   .strict()
+  .refine((i) => i.title !== undefined || i.durationMs !== undefined, {
+    message: 'Name a title or a duration.',
+  })
 export type VariantUpdateInput = z.infer<typeof variantUpdateInput>
+
+// P7-1 (spec/data-rules.md, "Changing a variant's format"; phase-07.md "Clips and the track",
+// Sound). setSound names an asset only with 'file'; 'file' without one keeps the stored asset.
+export const variantSetFormatInput = projectScoped
+  .extend({ variantId: z.string().min(1), format: z.enum(['image', 'video']) })
+  .strict()
+export type VariantSetFormatInput = z.infer<typeof variantSetFormatInput>
+
+export const variantSetSoundInput = projectScoped
+  .extend({
+    variantId: z.string().min(1),
+    sound: z.enum(['clips', 'file', 'none']),
+    assetId: z.string().min(1).optional(),
+  })
+  .strict()
+  .refine((i) => i.assetId === undefined || i.sound === 'file', {
+    message: 'Only the file sound names an audio file.',
+    path: ['assetId'],
+  })
+export type VariantSetSoundInput = z.infer<typeof variantSetSoundInput>
 
 export type VariantReply = { variantId: string }
 

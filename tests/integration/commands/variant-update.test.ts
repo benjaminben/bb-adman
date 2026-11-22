@@ -54,12 +54,10 @@ describe('variant.update [FR-070]', () => {
     expect(bus.undoState()).toEqual({ canUndo: false, canRedo: false })
   })
 
-  it.each<Record<string, unknown>>([
-    { title: '  ' },
-    { title: 'x'.repeat(201) },
-    { title: 'A', durationMs: 5000 },
-    {},
-  ])('refuses %j with INVALID_INPUT', async (input) => {
-    await expectRefused(bus, () => update(input), 'INVALID_INPUT')
-  })
+  it.each<Record<string, unknown>>([{ title: '  ' }, { title: 'x'.repeat(201) }, {}])(
+    'refuses %j with INVALID_INPUT',
+    async (input) => {
+      await expectRefused(bus, () => update(input), 'INVALID_INPUT')
+    },
+  )
 })

@@ -45,6 +45,8 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'variant.restore': deny('restore variants'),
   'variant.restoreLayers': deny('restore variant layers'),
   'variant.setFormat': allow('change a variant format'),
+  // P7-1 (A-184).
+  'variant.setSound': deny('change a variant sound'),
   'layer.create': allow('create layers'),
   'layer.update': allow('change layers'),
   'layer.updateMany': allow('change layers'),
@@ -59,6 +61,10 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'clip.add': deny('add background clips'),
   'clip.update': deny('change background clips'),
   'clip.remove': deny('remove background clips'),
+  // P7-1: the track order, and the two system commands (deny and internal).
+  'clip.reorder': deny('reorder background clips'),
+  'clip.restore': deny('restore background clips'),
+  'clip.addGenerated': deny('add generated clips'),
   'translation.propose': deny('start AI translation'),
   'translation.set': allow('set translations'),
   'translation.approve': deny('approve translations'),

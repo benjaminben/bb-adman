@@ -9,6 +9,8 @@ import { variantDelete } from './delete'
 import { variantRemove } from './remove'
 import { variantRestore } from './restore'
 import { variantRestoreLayers } from './restore-layers'
+import { variantSetFormat } from './set-format'
+import { variantSetSound } from './set-sound'
 
 export function variantCommands(deps: CoreDeps): CommandHandler[] {
   return [
@@ -19,5 +21,7 @@ export function variantCommands(deps: CoreDeps): CommandHandler[] {
     variantRemove(deps),
     variantRestore(deps),
     variantRestoreLayers(deps),
+    variantSetFormat(deps),
+    variantSetSound(deps),
   ]
 }
