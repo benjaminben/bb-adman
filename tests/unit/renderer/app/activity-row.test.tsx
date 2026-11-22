@@ -184,6 +184,12 @@ describe('ActivityRow Cancel and Retry [P4-14, D-036, A-63]', () => {
     expect(within(row).queryByRole('button', { name: 'Retry' })).toBeNull()
   })
 
+  // P9-13: a publish is started again from the campaign, so job.retry refuses it.
+  it('offers no Retry for a failed publish [P9-13]', async () => {
+    const { row } = await draw({ status: 'failed', kind: 'publish', provider: null })
+    expect(within(row).queryByRole('button', { name: 'Retry' })).toBeNull()
+  })
+
   it('retries a local background job at once', async () => {
     const { row, fake } = await draw({ status: 'cancelled', kind: 'cutout', provider: 'fake' })
     await userEvent.click(within(row).getByRole('button', { name: 'Retry' }))

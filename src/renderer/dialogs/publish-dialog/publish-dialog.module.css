@@ -60,3 +60,16 @@
 .line {
   font-size: var(--font-size-control);
 }
+/* The warnings step (P9-13), as the export dialog's. */
+.warnings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-4);
+  font-size: var(--font-size-control);
+}
+.note {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}

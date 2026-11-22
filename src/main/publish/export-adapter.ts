@@ -117,7 +117,8 @@ function withHeader(name: string, text: string, header: PublishHeader): string {
     return `${JSON.stringify({ publish: header, ...JSON.parse(text) }, null, 2)}\n`
   const body = '<body>\n'
   if (text.split(body).length !== 2) throw failed()
-  return text.replace(body, `${body}${element('p', headerLine(header))}\n`)
+  // A function, so no `$` sequence in the inserted text is read as a pattern.
+  return text.replace(body, () => `${body}${element('p', headerLine(header))}\n`)
 }
 
 // The one report pair Phase 8 wrote in the new work folder, with the header at the top.

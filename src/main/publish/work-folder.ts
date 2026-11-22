@@ -3,7 +3,8 @@
 // checked with lstat (a link or a non-folder refuses work_folder_unsafe), and its real path must
 // then be {real userData}/publish-work, so a swap after the lstat refuses too; it is used at that
 // real path, so open-inside.ts can check the root it is given. Both folders are made with mode
-// 0o700 (this user only). The job folder is made new. Its removal never fails the publish: an
+// 0o700 (this user only); a publish-work that already exists is set to 0o700 after the real-path
+// check (P9-13). The job folder is made new. Its removal never fails the publish: an
 // error there is dropped, so it cannot change the job's end or carry the path anywhere. At a
 // publish start, leftover direct children whose names are ULIDs and that are real folders (not
 // links) are removed, except the folders of publishes still under way in this process.
@@ -41,6 +42,9 @@ async function baseFolder(userDataDir: string): Promise<string> {
     throw unsafe()
   })
   if (real !== expected) throw unsafe()
+  await fs.chmod(real, MODE).catch(() => {
+    throw unsafe()
+  })
   return real
 }
 
