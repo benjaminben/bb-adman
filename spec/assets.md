@@ -76,7 +76,7 @@ Built. `asset.remove` deletes the row and leaves every file on disk, managed fil
 
 ## Import [REQ: FR-050 to FR-054, R-08]
 
-Built. `asset.import { projectId, paths, library, subjectId?, copy }`. Files: `src/main/assets/import.ts`, `folder-walk.ts`, `inspect.ts`, `sniff.ts`, `unreadable.ts`; handler `src/main/commands/asset/import.ts`. Agents are denied `asset.import`.
+Built. `asset.import { projectId, paths, library, subjectId?, copy }`. Files: `src/main/assets/import.ts`, `folder-walk.ts`, `inspect.ts`, `sniff.ts`, `unreadable.ts`; handler `src/main/commands/asset/import.ts`. Agents are denied `asset.import`. An agent imports files only through `asset.importFiles` (the tool `import_assets`): asked every time, at most 20 full paths, always copied, never linked (`spec/security.md`, "Rules: agents and cost").
 
 - Each path comes from the system picker (`dialog.pickFiles`, `purpose: 'import'`). The window sends a path in no other call. `copy: true` saves a copy in the assets folder as `{assetId}.{ext}` (`managed`); `copy: false` links the file where it is (`linked`).
 - All file work is in `prepare`: inspect every file first (type, hash, size, time, picture size), then copy the new ones when asked. `run` checks again that no asset with each hash exists yet and inserts the rows. If `run` fails, `undoPrepare` removes the copies.
@@ -249,7 +249,7 @@ Do not "fix" these without a ruling. Every value read from a project file is unt
 - An existing folder outside the project named by `assets_dir_*` still receives new managed files `{ULID}.{ext}`, never over an existing file.
 - The change check stores size, time and SHA-256 of any readable file a linked row names, and, when the first bytes fit the row's kind, its `mime`, width and height. Any real text file with a listed extension can be named by a `text` row and carried by Package.
 - Projects from elsewhere get no confirm step (OI-47 and OI-49 closed). What holds instead: the app never creates a folder outside the project's own folder; a file is never written over an existing one; bytes the window is handed never leave it and page script cannot read them; a linked file goes to a provider or into a package only when its first bytes fit the row's kind; the path checks of `spec/security.md`.
-- The renderer draws no file path, reads no file, and sends an asset file path in no call except `asset.import`, and only a path the system picker or a drop returned, or (Not built, SP-4) one a `brief.parse` reply listed in `subjectPictures` after its checks (`spec/subject-photos.md`). (The brief picker's path goes to `brief.parse`, `spec/brief-and-templates.md`.) Display names are drawn as text.
+- The renderer draws no file path, reads no file, and sends an asset file path in no call except `asset.import`, and only a path the system picker or a drop returned, or one a `brief.parse` reply listed in `subjectPictures` after its checks (`spec/subject-photos.md`; a brief may name any file, D-100). (The brief picker's path goes to `brief.parse`, `spec/brief-and-templates.md`.) Display names are drawn as text. The one other path the window draws is in the permission dialog for an agent's file import (`spec/security.md`, "Paths in the renderer").
 
 ## Not built
 

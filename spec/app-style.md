@@ -144,8 +144,8 @@ Off-scale prototype values have no token. Where the prototype typed `6px` or `10
 | `--width-menu` (new) | `300px` | raw (`.menu`) |
 | `--width-wide` (new) | `1360px` | raw (`.page > *` max width: project home and campaign page) |
 | `--width-start-art` (new) | `640px` | raw (start page left column, at most) |
-| `--drawing-height` | `176px` | `--il-h` |
-| `--drawing-stroke` | `1.25px` | `--il-stroke` |
+| `--drawing-height` | `176px` | `--il-h` (left from the start page drawings, which are gone) |
+| `--drawing-stroke` | `1.25px` | `--il-stroke` (as above) |
 | Every other existing size token | kept (C-11) | editor panels already equal the prototype (260, 312) |
 
 ### Motion
@@ -155,7 +155,9 @@ Off-scale prototype values have no token. Where the prototype typed `6px` or `10
 | `--motion-fast` | `150ms` (`0ms` with reduce motion) | raw `0.15s` (switch, hover) |
 | `--motion-spin` | `1s` | raw (`.spin`) |
 | `--motion-pop` | `1.6s` | raw (the "finished, not seen" dot) |
-| `--motion-calm` | `16s` | `--motion-calm` (one cycle of a start page drawing) |
+| `--motion-calm` | `16s` | `--motion-calm` (was one cycle of a start page drawing; the drawings are gone) |
+| `--start-image-hold` | `10s` | none (how long a start picture shows) |
+| `--start-image-fade` | `1200ms` | none (the crossfade between start pictures) |
 | `--ease-calm` | `cubic-bezier(0.45, 0, 0.55, 1)` | `--ease-calm` |
 
 ### Not carried from the prototype
@@ -174,7 +176,7 @@ Off-scale prototype values have no token. Where the prototype typed `6px` or `10
 | Serif | `--font-title` | Every `h1`, `h2`, `h3` (page, section, dialog and card titles), at `--weight-title`, `--tracking-title` |
 | Serif | `--font-reading` | Text people read or write at length: the brief text fields (brief, subject descriptions), prompt fields, ad copy fields (headline, body, call to action in the properties panel), copy and layout options in their dialogs, the brief reading dialog's text. Size `--font-size-reading`, `--leading-body` |
 | Sans | `--font-body` | Everything you operate: buttons, tabs, labels, field values that are not long text (numbers, names, IDs, sizes), badges, tables, hints, and every warning, error, progress and status message |
-| Condensed sans | `--font-condensed` | The "Adman" wordmark on the start screen only (the app has no eyebrow labels; see "Out of scope") |
+| Condensed sans | `--font-condensed` | The "AdManager" wordmark on the start screen only (the app has no eyebrow labels; see "Out of scope") |
 | Mono | `--font-mono` | The Claude Code line and any `code` (kept) |
 
 Only a `textarea` or a field named above takes the reading face; one-line `input` fields stay sans.
@@ -232,7 +234,7 @@ A disabled control is drawn at `--opacity-disabled` and is exempt, as today.
 
 - **Icons.** A new component `src/renderer/ui/icon/` draws one 24×24 stroke icon by name, from the path set in `design/prototype/js/ui.js` (`P`; the designer's own drawings, no third-party set), copied as is. Size `--icon-size` or `--icon-size-small`, `stroke: currentColor`, `--icon-stroke`, round caps and joins. Icons sit beside words (rule 3): before a button's word, at the start of a notice or badge, beside a layer's name.
 - **Spinner and dot.** A running job's mark keeps its word ("Running") and gains the spinner icon turning at `--motion-spin`; the "finished, not seen" dot pulses three times at `--motion-pop`. Both are still with reduce motion.
-- **Start page drawings.** The three isometric drawings of `design/prototype/js/illustrations.js` and `css/illustrations.css` (branch, generate, linked), as one component `src/renderer/screens/start/start-drawings/`, inline SVG, colours from tokens (`--color-text`, `--color-bg`, `--color-surface`, `--color-border`, `--color-accent`, `--color-accent-soft`, `--color-accent-hover`, `--color-text-muted`), line `--drawing-stroke`, height `--drawing-height`, one cycle `--motion-calm` `--ease-calm`. With reduce motion the finished drawing shows still. No caption (the prototype has none; NOTES R3-2 is open).
+- **Start page pictures.** The start page has no drawings. Its left half is one large picture that crossfades to the next (`src/renderer/screens/start/start-images/`): ten bundled WebP pictures, each showing one magenta thing among many alike. Each holds for `--start-image-hold` (10s) and fades in over `--start-image-fade` (1200ms); the order is random and starts again, shuffled, when all have shown. The timer stops while the window is hidden. With reduce motion one picture shows and never changes. The pictures are decoration: `aria-hidden="true"`, `alt=""`. They are built files served from the app's own origin, so the window's content security rule is unchanged. A picture is swapped by replacing the file of the same name. The design is in `design/audit/spec-start.md`.
 
 ## Shared pieces
 
@@ -275,7 +277,8 @@ Beyond the tokens, what changes in layout and structure. "Folder" names are unde
 - One column, max width `--width-page`, page padding `var(--space-8) var(--space-8) var(--space-12)`. Title `h1` at `--font-size-title` (C-3). Each section is a card; its `h2` at `--font-size-heading`. Key rows, licence list and the check results use the shared table or list rows. Problem lines are notices of their kind. The agent access toggle is drawn as a switch.
 
 **Start screen** (`screens/start/*`)
-- Two columns centred in the window, gap `--space-12`, padding `--space-12`: left the wordmark "Adman" (the existing `h1`, in `--font-condensed`, italic, `--weight-wordmark`, `--font-size-wordmark`, upper case, with a small rotated square in the spot colour drawn by CSS before it) and the three drawings; right the existing "New project" and "Open" cards. Recent projects are rows of `--radius-md` with a file icon, name above path, hover `--shadow-1`.
+- Two halves. Left: the full-height picture, 50% of the window wide (see "Start page pictures"). Right: the app mark (the icon, `alt=""`) and the wordmark "AdManager" (the `h1`, in `--font-condensed`, italic, `--weight-wordmark`, `--font-size-wordmark`, upper case, so it reads "ADMANAGER"), then the new-project form with "Create project", then "Open project…", then the "Recent" list.
+- "Recent" lists project names only; a project's path shows only in its tooltip. Projects open now come first, each with a small dot. There is no separate "Open now" card.
 
 **Project home and brief form** (`screens/project-home/*`)
 - Page max width `--width-wide`, padding `var(--space-6) var(--space-8)`. Project title `h1` 32px serif. Each section (campaigns, subjects, import, missing files, package) is a card with an `h2`.
@@ -332,7 +335,7 @@ Each is the prototype's current default, or the closest token to it, taken so th
 - **C-4. Spot colour.** Magenta `#cf1470` with its hover, soft and ink shades. Vermilion, cobalt, teal and ink are not carried.
 - **C-5. Serif pairing.** Iowan Old Style, then Palatino Linotype, Palatino, Book Antiqua, Georgia. The serif is used for titles and for reading text (briefs, prompts, copy), not titles only. Warnings, errors and status messages are sans.
 - **C-6. Corners.** Rounded: 6px controls, 10px cards, tiles and menus, 14px dialogs, 4px inner segments. The "sharp" set is not carried.
-- **C-7. Motion.** 150ms for hovers and the switch; 1s spinner; 1.6s pulse, three times; 16s per start drawing cycle with an even ease. Everything still with "reduce motion".
+- **C-7. Motion.** 150ms for hovers and the switch; 1s spinner; 1.6s pulse, three times; a start picture holds 10s and crossfades over 1.2s. Everything still with "reduce motion".
 - **C-8. Fonts.** System fonts only, nothing bundled; Windows shows Palatino Linotype or Georgia and Arial Narrow. Bundling open-licence faces is a later choice (NOTES round 2, question 7).
 - **C-9. Canvas backdrop.** The prototype's warm light grey `#e9e7e1` with `--shadow-2` on the ad, in place of the Phase 3 mid grey (`spec/screens.md` lists "a mid grey"). An empty ad is still black, so its edge shows.
 - **C-10. Dialog spacing.** Head, body and foot paddings on the scale (12, 16, 24) in place of the prototype's 14, 18 and 20.

@@ -8,7 +8,7 @@ A reviewer opens a video variant in the gallery and watches the real MP4, with s
 
 ## Status
 
-Built: R2V-1 to R2V-8. `npm run test:approvals-local` runs a video from the app to the gallery on this machine and plays it. Under `next start` the server may drop the clip reply's `Content-Length`; playback works without it. Left for the stakeholder: the deploy steps in `approvals-service/README.md` and the hand check in Safari and Chrome.
+Built and merged on `main`: R2V-1 to R2V-8. The rules now live in the approvals topic files; this file keeps the design for reference. `npm run test:approvals-local` runs a video from the app to the gallery on this machine and plays it. Under `next start` the server may drop the clip reply's `Content-Length`; playback works without it. Left for the stakeholder: the deploy steps in `approvals-service/README.md` and the hand check in Safari and Chrome.
 
 ## Design additions
 

@@ -2,7 +2,7 @@
 
 The stakeholder's hand-testing feedback of 2026-11-21, items 8, 9, 10, 11 and 14, with the orchestrator's rulings R-8 and R-9. Other round-2 files cover the editor (R-13: picture and video generation move into the editor, the "Make a video" card leaves the campaign page), agent tools, the first-run flow, windows and approvals.
 
-**Status:** not built. Slices R2C-1 to R2C-7.
+**Status:** built and merged on `main`: R2C-1 to R2C-7. The start screen's two-half redo (START-1, planned outside this file) is merged too. The Assets panel opens from the project page and the campaign head (which shows over a variant's editor too). The rules now live in `spec/screens-variants.md`, `spec/screens-campaign.md` and `spec/app-style.md`; this file keeps the design for reference.
 
 Every slice reads `spec/phases/DEV-RULES.md` first, then this file ("Rules for these slices", "Design additions" and its own slice), then the topic sections its slice names.
 

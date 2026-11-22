@@ -9,7 +9,7 @@ The data side of the approvals service [D-095, D-097]: the contract shared with 
 - The file imports only `zod` and exports only constants and schemas. It has no logic beyond schema refinements.
 - `tests/unit/config/approvals-contract.test.ts` (root `npm test`) fails when the two files differ by one byte, or when the two `package.json` files name different `zod` versions.
 - A change is made in the app's file and copied in the same commit.
-- `CONTRACT_VERSION = 1`. The health reply carries it; the app refuses a service that answers another number ("The approvals service is a different version from this app."). The move to Next.js does not change it.
+- `CONTRACT_VERSION = 2` (R2V-1: the gallery rows carry a video's clip address, size and expiry, with defaults, beside the picture's; `CLIP_MAX_BYTES` 384 MiB). The health reply carries it; the app refuses a service that answers another number ("The approvals service is a different version from this app."), and `approvals.publish` checks it first. Clip addresses get the same checks as picture addresses. Design: `spec/phases/round-2-approvals-video.md`, "Contract and data changes".
 
 **ID and value rules in the contract** (the ID rules repeat the app's formats, `spec/data-model.md` "ID formats"; a root unit test makes 200 IDs with the app's own generators and checks each passes):
 
@@ -143,7 +143,7 @@ export function openDb(url: string, authToken?: string): Db  // createClient({ u
 1. A request with an `Origin` header is refused: `403 bad_request`. A browser page has no business here.
 2. `API_KEY` missing or shorter than 32 characters: `503 not_set_up`.
 3. `Authorization` must be exactly `Bearer {key}` and the key must match (timing-safe): else `401 bad_key`.
-4. A body (POST, PUT) must have `Content-Type: application/json` and at most 2 MiB, read with a cap (a missing or false `Content-Length` does not get past it): else `415 bad_request` or `413 too_large`.
+4. A body (POST, PUT) must have `Content-Type: application/json` and at most 4 MiB (`BODY_LIMIT`; 2 MiB before R2V-1), read with a cap (a missing or false `Content-Length` does not get past it): else `415 bad_request` or `413 too_large`.
 5. The path's IDs and the body pass the contract: else `400 invalid_input`, with no part of the input in the reply. Then the route's own `check`, if it has one (a rule the schema cannot make, such as `checkPictureUrl`), with its own refusal.
 6. The handler. Unknown path: `404 not_found`, but only with the right key: steps 1 to 3 come first, so an unknown path under `/api/v1` without a key gets `401`.
 

@@ -1,7 +1,7 @@
 # SPEC.md — Technical Specification (index)
 
 **Project:** Adman, a desktop app (Electron) for making ad campaigns: one brief becomes a grid of image and video ads in many sizes and languages, with AI generation, checks, export and cloud publishing.
-**Status:** Phases 1 to 10, the app style pass (ST-1 to ST-14), the look pack, approvals and subject photos are built on `main`, except the leftovers listed in `spec/phases/`. Phase 11 is held. The stakeholder's hand checks are listed in each phase file and in `spec/open-items.md`, section 5; questions for him are in section 6.
+**Status:** Phases 1 to 10, the app style pass (ST-1 to ST-14), the look pack, approvals and subject photos are built on `main`, except the leftovers listed in `spec/phases/`. Round 2 (the stakeholder's first hand-testing feedback) is built too; the choices made for him along the way are listed in `spec/phases/round-2-verify.md`. Phase 11 is held. The stakeholder's hand checks are listed in each phase file and in `spec/open-items.md`, section 5; questions for him are in section 6.
 
 The spec is split into small files so that a reader loads only what a task needs. This file is the map.
 
@@ -92,3 +92,5 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/phases/approvals-service-slices.md` | Approvals by link: the service slices AP-1, AP-2, AP-3, AP-14, AP-15, AP-4, AP-16 |
 | `spec/phases/approvals-desktop-slices.md` | Approvals by link: the desktop slices AP-5 to AP-13 and AP-10b, with the follow-ups ruled after AP-8 |
 | `spec/phases/subject-photos.md` | Subject photos (D-098): slices SP-1 to SP-5 and their order |
+| `spec/phases/round-2-platform.md`, `round-2-campaign.md`, `round-2-editor.md`, `round-2-approvals.md`, `round-2-approvals-video.md` | Round 2, built: the design and slices for agent tools and briefs, several projects and the name; the campaign page and the Assets panel; the editor's Generate panel; the new gallery; video in the gallery |
+| `spec/phases/round-2-verify.md` | Round 2: the choices made without the stakeholder, for him to confirm, and the hand checks only he can do |

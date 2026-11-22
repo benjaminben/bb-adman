@@ -8,7 +8,7 @@ A reviewer opens the link and sees a gallery in the app's own look: a sidebar wi
 
 ## Status
 
-Not built. Slices R2A-1 to R2A-9 below.
+Built and merged on `main`: R2A-1 to R2A-9. Video variants now play in the gallery too (`round-2-approvals-video.md`), so A-374 no longer holds. The rules now live in the approvals topic files; this file keeps the design for reference.
 
 ## The stakeholder's items and rulings
 

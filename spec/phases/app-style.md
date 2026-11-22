@@ -112,7 +112,9 @@ If Phase 5 starts its campaign page slices before ST-11 and ST-12, those slices 
 - **Exit check:** lint, typecheck, `tests/unit/renderer/screens/settings/`, `settings-screen.test.tsx`, `styling-rules.test.ts`, `npm run test:e2e -- tests/e2e/phase1.spec.ts` on a desktop.
 - **Class:** D, with one end-to-end run. **After:** ST-2.
 
-### ST-6 — Start screen and its drawings (built)
+### ST-6 — Start screen and its drawings (built, then replaced)
+
+**Replaced by START-1 (Round 2).** The drawings and `start-drawings/` are gone. The start screen is now two halves, a crossfading picture on the left and the actions on the right; see `spec/app-style.md`, "Start page pictures" and "Start screen". What follows is the record of ST-6 as first built.
 
 - **Exists when done:** the start screen in two columns: the "Adman" wordmark (the existing `h1`, its text unchanged) and the three drawings on the left, the existing "New project" and "Open" cards and recent projects on the right. The drawings are the prototype's branch, generate and linked scenes as inline SVG, colours, line and timing from tokens, still with reduce motion.
 - **New files:** `src/renderer/screens/start/start-drawings/` (`index.ts`, `start-drawings.tsx`, `iso.ts` (the grid-to-page maths and box, top, line and stairs helpers, pure), one file per scene if the drawing file would pass 200 lines, `start-drawings.module.css`).

@@ -4,6 +4,16 @@ The pages a visitor sees when they open an approval link: the password page and 
 
 What a page may and may not do is set by the service: the session, the try limit, the form checks, the gallery view and every write live in `src/visitor/` and are reached through the catch-all route. A page only reads a `GalleryView` and draws it. Every form posts to the catch-all, never to a page.
 
+**Round 2** (R2A-2 to R2A-9, R2V-2, R2V-4, R2V-6; built) changed the gallery page. The rules below are the current ones; the full design is in `spec/phases/round-2-approvals.md` and `round-2-approvals-video.md`.
+
+- **Layout.** A sidebar (the campaign title, a fixed instruction sentence, "Signing off as:" with one email field and "Use this email", "Sign off all…" with a confirmation dialog, "Log out") beside a masonry of variant cards. Each card opens a lightbox (HTML's own `<dialog>` and command buttons) with the large picture, or for a video variant the clip in the browser's own player, and the sign-off button; other reviewers' sign-offs show in full there, each with "Remove". A card that needs this reviewer's sign-off has an accent edge and a raised shadow; a signed one a quiet edge with a green tick; each state also has words. Only sign-offs of the current version show.
+- **Script.** Everything works with script off. One small plain script of the service's own adds arrow keys and Previous and Next between lightboxes, a fallback for browsers without command buttons, masonry spans where CSS grid lanes are missing, and pausing a video when its lightbox closes (a failed clip shows a notice).
+- **Look.** The tokens are a byte-for-byte copy of the app's own `tokens.css`, kept in step by a root test; buttons and fields are 44 px tall with 16 px text for phones.
+- **Reviewer email.** Kept in a browser-session `HttpOnly` cookie to fill the field and mark the cards; cleared by "Log out" (route `/leave`) and by every right password entry. Every sign-off uses the posted field text. "Sign off all" is one request carrying a stamp of the shown set; a stale stamp writes nothing; expired pictures are left out.
+- **Clips.** `GET /l/{slug}/c/{variantKey}/{version}`, signed-in visitors only, one plain byte range per request, at most 4 MiB per reply; anything else gets the empty `404`. The page policy below gained `media-src 'self'`.
+
+The sections "Components" and "Words" below describe the first gallery (AP-16) and are kept for its parts that stayed (the password page, the routes, the policy, the headers).
+
 ## What changes for the visitor, and what is lost
 
 The pages look and behave as before: plain forms, a redirect after each one, nothing that needs script. What is lost compared with the earlier no-script design: each page now loads the framework's own scripts (React and Next.js, served from our own address, roughly 100 KB or more), so the page policy must allow our own scripts by a one-time nonce instead of allowing none, and a phone has more to download. The gain is a page built from small components and one set of tokens, and room to add script that improves a page later without being needed.
@@ -51,7 +61,7 @@ export const config = { matcher: ['/l/:slug'] }  // one path part only; the API 
 Page policy, from `pagePolicy(nonce, dev = false)` in `src/visitor/headers.ts` (AP-15, built; it throws on a nonce that is not 22 base64 characters plus `==`), one line:
 
 ```
-default-src 'none'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'nonce-{nonce}'; img-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'
+default-src 'none'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'nonce-{nonce}'; img-src 'self'; media-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'
 ```
 
 - No other origin anywhere. Scripts only from our own address or carrying the nonce; no `'unsafe-inline'`, no `'unsafe-eval'`, no `'strict-dynamic'` (the framework loads its later pieces from our own address, which `'self'` covers).
@@ -69,6 +79,7 @@ Page header set (with the policy above): `X-Content-Type-Options: nosniff`, `X-F
 | `GET /l/{slug}` | `app/l/[slug]/page.tsx` | Server component | `openGallery(db, { slug, cookie, m }, Date.now())` | `PasswordScreen` (with the `wrong-password` notice when `m` says so) or `GalleryScreen` with the view. Status 200 in both cases, for a real slug and an unknown one alike |
 | `POST /l/{slug}/enter`, `/leave`, `/signoffs`, `/signoffs/{id}/remove` | `app/[[...path]]/route.ts` | Route handler (catch-all) | `createApp` → `visitor/routes.ts` | `303`, or the `403` plain text reply (`spec/approvals-service-visitor.md`, "Visitor routes and logic") |
 | `GET /l/{slug}/p/{variantKey}/{version}` | the same | Route handler | `picture-route.ts` | The picture as a stream, or `404` with an empty body |
+| `GET /l/{slug}/c/{variantKey}/{version}` | the same | Route handler | the clip route (R2V-2) | One byte range of the video clip (`206`, at most 4 MiB), or `404` with an empty body (`spec/phases/round-2-approvals-video.md`, "The clip route") |
 | `GET /robots.txt` | the same | Route handler | `visitor/routes.ts` | `User-agent: *` and `Disallow: /` |
 | A wrong-shape slug at `/l/{x}` | `proxy.ts`; `page.tsx` as a second guard | Proxy; `notFound()` | — | Plain 404. If the proxy were skipped, the page calls `notFound()` and `app/not-found.tsx` draws "Not found." |
 | Any other path | `app/[[...path]]/route.ts` | Route handler | `createApp` | Plain 404 |
@@ -86,6 +97,8 @@ Rules the page keeps:
 The user's rule for all UI: modular components styled from one set of tokens that can be changed in one place. Plain, clean, readable on a phone. No UI library. Styling with **CSS Modules** (one `.module.css` per component; Next.js builds them into files served from our own address, which the policy allows). Only `src/ui/tokens.css` is a global stylesheet, imported once by `app/layout.tsx`. No component holds a colour, size or font of its own: every value is a `var(--…)` from the tokens.
 
 ### Tokens (`src/ui/tokens.css`)
+
+Since R2A-4 this file is a copy of the app's `src/renderer/ui/tokens.css`, not the list below; the list is the first gallery's.
 
 ```css
 :root {

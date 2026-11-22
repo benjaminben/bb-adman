@@ -11,10 +11,11 @@ The logic is **Built** (AP-3, with its review's fixes); the replies for the page
 | Route | What it does |
 |-------|--------------|
 | `POST /l/{slug}/enter` | Form `password`. Right: session made, cookie set, `303` to `/l/{slug}`. Wrong, unknown slug or too many tries: `303` to `/l/{slug}?m=wrong-password`, the same bytes in all three cases (A-103) |
-| `POST /l/{slug}/signoffs` | Form `variant`, `version`, `email`. Adds a sign-off (AP-4). `303` to `/l/{slug}?m={code}#v-{variant}` |
+| `POST /l/{slug}/signoffs` | Adds a sign-off for one variant, or for every variant of the shown set ("Sign off all", with a stamp of that set; a stale stamp writes nothing). The form fields changed in R2A-3: a page drawn before it that posts the old `variant` and `version` fields gets "changed" and writes nothing. `303` to `/l/{slug}?m={code}#v-{variant}` |
 | `POST /l/{slug}/signoffs/{id}/remove` | Removes that sign-off if it belongs to this link (AP-4). `303` as above |
-| `POST /l/{slug}/leave` | Deletes this session's row, clears the cookie, `303` to `/l/{slug}`. No valid session: the plain-text `403` |
+| `POST /l/{slug}/leave` | "Log out": deletes this session's row, clears the session cookie and the reviewer-email cookie, `303` to `/l/{slug}`. No valid session: the plain-text `403` |
 | `GET /l/{slug}/p/{variantKey}/{version}` | The picture, for a valid session only ("Pictures", below, AP-4) |
+| `GET /l/{slug}/c/{variantKey}/{version}` | A video clip, for a valid session only, one plain byte range at a time (R2V-2; `spec/phases/round-2-approvals-video.md`, "The clip route") |
 | `GET /robots.txt` | `User-agent: *` and `Disallow: /` |
 | Anything else (not the page) | `404`, "Not found.", with the plain text headers below |
 
@@ -38,7 +39,8 @@ SELECT ?1, id, ?2 FROM link WHERE id = ?3 AND password_salt = ?4 AND password_ha
 
   When it inserts no row (the password was changed between the check and the insert), the reply is the same as a wrong password.
 - **Check** (`visitor/session.ts`, every gallery, picture and form route): the slug has the `SLUG` shape (checked first, since Next.js hands page `params` over percent-decoded; a wrong shape counts as an unknown slug); the cookie of exactly that name; the value matches `^[A-Za-z0-9_-]{43}$`; its hash is a row with `expires_at` after now **and** `link_id` equal to the slug's link. Anything else is no session.
-- **Ends** after 12 hours; on "Leave"; when the app sets a new password; when the link is deleted. On each successful password the link's expired session rows are deleted.
+- **Ends** after 12 hours; on "Log out"; when the app sets a new password; when the link is deleted. On each successful password the link's expired session rows are deleted.
+- **The reviewer email** (R2A-2, A-360 to A-362). A second cookie, set by a sign-off post whenever its email is valid: a browser-session cookie (no `Max-Age`), `HttpOnly`, holding the email so the server can fill the field and mark the cards with script off. Cleared by "Log out" and by every right password entry (the entry reply sets the session cookie, then the cleared reviewer cookie). A wrong password sets no cookie. Every sign-off uses the posted field text; the cookie only fills the field.
 
 ### The gallery view
 
@@ -53,6 +55,7 @@ type GalleryView = {
 }
 ```
 
+- Since R2A-2 and R2V-4 the view also carries the reviewer email, the shown set's stamp, only the current version's sign-offs, each picture's shape and whether a variant has a clip (`spec/phases/round-2-approvals.md`, "Routes and data changes"; `round-2-approvals-video.md`, "The gallery").
 - Raw rows (`LinkRow`, `VariantRow`, `SignoffRow`) never leave `src/visitor/` and `src/db/`. The view holds no hash, salt, internal link ID, picture address or expiry time. Only this type may be passed to a component; nothing under `app/` or `src/ui/` imports a row type or a module from `src/db/` or `src/crypto/` (`test/config.test.ts` checks the imports).
 - **AP-15 changed the input** from a `Request` to what a page has: `openGallery(db, { slug, cookie, m }, now)`, where `cookie` is the `Cookie` header text or null and `m` the `m` query value or null. `readSession` takes the cookie text the same way.
 

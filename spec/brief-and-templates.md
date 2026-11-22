@@ -39,7 +39,7 @@ The file exports two Zod schemas with these field names:
 
 **Subjects.** `subjects` needs at least one entry and has no upper limit [REQ: FR-021]. A brief with one subject is valid, and briefs with two or more work the same way. FR-021's "at least two must be supported" is what the app must be able to handle, not the smallest brief allowed [D-024].
 
-**Subject photos** (Built: SP-1, SP-2, SP-6; SP-3 built, not yet merged. Not built: SP-4, SP-5) [D-098]: a draft subject gains `pictures` (paths inside the brief's folder), `brief.parse` checks them, and the form needs a photo per subject before "Create campaign", which then also sends `asset.update`; `campaign.create` gains `placeSubjectPhoto` (SP-6). `Brief` gains nothing. Design: `spec/subject-photos.md`.
+**Subject photos** (Built) [D-098, D-100]: a draft subject gains `pictures` (each an asset ID of an image in the project, an absolute file path anywhere, or, in a brief file, a path relative to the brief's folder that may lead out of it; imported with no confirm, the normal import checks apply; on Windows a network or device path is never opened), `brief.parse` checks them, and the form needs a photo per subject before "Create campaign", which then also sends `asset.update`; `campaign.create` gains `placeSubjectPhoto` (SP-6). `Brief` gains nothing. Design: `spec/subject-photos.md`.
 
 **Word lists.** A plain word list for `requiredWords` or `prohibitedWords` is stored under the primary language [REQ: R-03]. `wordsByLanguage(words, primaryLanguage)` (`src/shared/brief/words.ts`) turns either form into `{ [language]: string[] }`: a plain list goes under the primary language, a per-language list is kept as given. The result shares no list with its input. `wordsByLanguage([], 'en')` gives `{ en: [] }`.
 
@@ -223,15 +223,15 @@ Built. `src/main/commands/brief/parse.ts`; input schema and reply type in `src/s
 **Reply.**
 
 ```ts
-type BriefParsed = { draft: BriefDraft; primaryLanguage: string | null }
+type BriefParsed = { draft: BriefDraft; primaryLanguage: string | null; subjectPictures?: SubjectPictures[] }
 ```
 
-`primaryLanguage` is the first entry of `draft.languages` if there is one, otherwise `primaryLanguageFor(draft.region)`, otherwise null.
+`primaryLanguage` is the first entry of `draft.languages` if there is one, otherwise `primaryLanguageFor(draft.region)`, otherwise null. `subjectPictures` is the checked picture list of each subject, for a file and for text alike (`spec/subject-photos.md`, "How `brief.parse` checks the paths"; D-100).
 
 **How it reads.**
 
 - **A file.** The ending, in any letter case, picks the syntax: `.json` is JSON, `.yaml` and `.yml` are YAML, with no second try. The whole file is read as UTF-8 (no size check). The command writes nothing: the file is read in `prepare` and the draft returned from `run`.
-- **`text` with no file.** It tries `parseBriefFile(text, 'json')`; if that is not `ok`, it returns the answer of `parseBriefFile(text, 'yaml')`, bad line included.
+- **`text` with no file.** It reads with `parseBriefText` (see "Brief text: JSON, YAML or Markdown, by fixed rules" below). No AI is called.
 
 **Errors.**
 
@@ -244,7 +244,7 @@ type BriefParsed = { draft: BriefDraft; primaryLanguage: string | null }
 
 **`BriefError`** (security class), private to `parse.ts`. The reply gets the full error, which may hold the bad line's text. The bus logs an error's message, so `BriefError` gives the bus a message with the line number only ("The brief is malformed. The first line that could not be read is line {n}."): the log gets the reason and the line number and no word of the file.
 
-**Who may call it.** The window, through the file picker (`dialog.pickFiles` with purpose `brief`). Agents may not: the agent policy table denies `brief.parse` ("read brief files"); see `spec/mcp-and-agents.md`.
+**Who may call it.** The window, with a path from the file picker (`dialog.pickFiles` with purpose `brief`) or with text from "Paste a brief". Agents may not (they use `create_campaign_from_brief`, which reads the same way): the agent policy table denies `brief.parse` ("read brief files"); see `spec/mcp-and-agents.md`.
 
 ## From a brief to a campaign
 
@@ -268,7 +268,7 @@ Built. `src/shared/schemas/commands/campaign.ts` owns them (frozen with `brief.t
 
 Built. `src/renderer/screens/project-home/brief-load/`, `brief-form/`, `subject-rows/`, `size-fields/`, `rule-fields/`, `brief-form-model.ts` (with `brief-form-problems.ts`, `brief-form-sizes.ts`), `campaign-input.ts` (`briefSubjectIds`). Tests: `tests/unit/renderer/screens/project-home/brief-load.test.tsx`, `brief-type.test.tsx`, `brief-subject-ids.test.tsx`, `brief-form*.test.ts(x)`, `size-fields.test.tsx`, `rule-fields.test.tsx`. The form, its wording and its problem lines are in `spec/screens-campaign.md`, "The brief form".
 
-"Load a brief" opens the picker, calls `brief.parse`, and opens the brief form filled from the draft (every value the brief's own text, shown as field values). "Type a brief" opens the same form empty. The user edits it [REQ: FR-023]. "Create campaign" sends `subject.create` for each new subject, then `campaign.create`, and stops at the first refusal. Cancel sends nothing. Nothing is sent while the form has a problem line or the input fails the shared `campaign.create` schema.
+"Load a brief" opens the picker, calls `brief.parse`, and opens the brief form filled from the draft (every value the brief's own text, shown as field values). "Paste a brief" opens a dialog: "Read brief" sends the pasted text to `brief.parse` and opens the same filled form; "Start from an empty form" opens it empty. The user edits it [REQ: FR-023]. "Create campaign" sends `subject.create` for each new subject, then `campaign.create`, and stops at the first refusal. Cancel sends nothing. Nothing is sent while the form has a problem line or the input fails the shared `campaign.create` schema.
 
 - **Languages:** the form's "Languages" field. It starts as the brief's own, else the reply's `primaryLanguage`, else empty (a problem line).
 - **Sizes:** the ticked ready-made sizes and the typed "Other sizes", each read with `parseSize` (a problem line for one that cannot be read), the chosen master first. They start as the brief's own, else the ready-made sizes with `selectedByDefault`.
@@ -281,13 +281,17 @@ Built. `src/renderer/screens/project-home/brief-load/`, `brief-form/`, `subject-
 
 Built (slices S2-13, S2-14, S2-15). In `spec/screens-campaign.md`, "The brief form" and "The slot view":
 
-- **Blank brief form.** "Type a brief" opens the same form empty.
+- **Paste a brief.** A dialog (`brief-paste/`) with one text area, "Brief text" ("Paste a brief as JSON, YAML or Markdown."), and the buttons "Cancel", "Start from an empty form" and "Read brief". A refusal shows in the dialog and the text stays. Design: `spec/phases/round-2-platform.md`, D4.
 - **Editable confirm form** [REQ: FR-023, FR-024, FR-026, FR-034]. Every field; one row per subject with "New subject" (a "Subject ID" field) or "Use a subject this project has"; sizes, master size and languages; the brief's word lists per language, or "Copy the rules from another campaign" (`copyRuleSetFrom`). Colours and required files are not on the form (A-44). The pure model `brief-form-model.ts` replaced `campaignPlan`; `briefSubjectIds` stays.
 - **Slot view.** Filled and empty slots of the master with candidates from `template.slots` [REQ: FR-042], view only (A-46), on the campaign page below the grid.
 
-### Markdown and plain-text briefs
+### Brief text: JSON, YAML or Markdown, by fixed rules
 
-Built (Phase 4, P4-15). `.md`, `.markdown` and `.txt` briefs go to the command `brief.extract`, an attached `brief_extraction` job that calls `TextProvider.extractBrief` and gives a `BriefDraft` for the same brief form [REQ: FR-022]. With no key, the app shows the key dialog; the user can cancel and fill the form by hand [REQ: FR-171]. `brief.parse` keeps refusing these files with `brief_type_not_supported`. Design: `spec/ai-jobs.md`, "Brief reading"; screens: `spec/screens-ai.md`.
+Built (R2P-2). `parseBriefText(text)` (`src/shared/brief/text.ts`) reads brief text that has no file: pasted text (`brief.parse { text }`) and an agent's `create_campaign_from_brief`. It tries JSON, then YAML (taken only when the draft has at least one field), then the Markdown form (`# Title`, `Label: value` lines, `## Message`, `## Languages`, `## Sizes`, `## Subjects` with `### Name` per subject, `## Copy (lang)`). Otherwise `INVALID_INPUT`, `brief_unreadable`, "The brief could not be read as JSON, YAML or Markdown." It never throws, calls no AI and has no size limit. Edge cases: a label inside a subject or a Copy section is ignored; an empty `Region:` sets nothing; the first value of a repeated field wins. The full form: `spec/phases/round-2-platform.md`, D1 and D2.
+
+### Markdown and plain-text brief files
+
+Built (Phase 4, P4-15). `.md`, `.markdown` and `.txt` brief files loaded with "Load a brief" go to the command `brief.extract`, an attached `brief_extraction` job that calls `TextProvider.extractBrief` and gives a `BriefDraft` for the same brief form [REQ: FR-022]. With no key, the app shows the key dialog; the user can cancel and fill the form by hand [REQ: FR-171]. `brief.parse` keeps refusing these files with `brief_type_not_supported`. Design: `spec/ai-jobs.md`, "Brief reading"; screens: `spec/screens-ai.md`.
 
 ## Templates
 

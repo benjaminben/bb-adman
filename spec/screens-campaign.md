@@ -116,8 +116,8 @@ Built. Component `src/renderer/screens/settings/licence-list/`, mounted inside `
 Built. The layout, top to bottom, inside the page (heading, "Close project", file path):
 
 1. "Campaigns": the campaign list (`campaign-list/`). Each row: a box holding the campaign's cover thumbnail (the master of its first direction; alt "Cover of {name}"; the box stays empty when there is no cover), the name as text, "Variants: {n}", and "Open". How thumbnails are drawn: `spec/editor.md`, "Thumbnails on the screens".
-2. "Start a campaign": `brief-load/` ("Load a brief" and "Type a brief"), and the brief form when one is open.
-3. "Files": `import-files/` ("Import files…", "Import a folder…") and `missing-files/` (the missing-file line).
+2. "Start a campaign": `brief-load/` ("Load a brief" and "Paste a brief"), and the brief form when one is open.
+3. "Assets": the muted line "The pictures, clips, fonts and subjects of this project.", "Open assets" (opens the Assets panel, below), `import-files/` ("Import files…", "Import a folder…") and `missing-files/` (the missing-file line).
 4. "Package": `package-project/` ("Package project…").
 5. `drop-import/`: draws nothing until files are dragged over the window.
 
@@ -126,6 +126,19 @@ Props: `ImportFiles { projectId, subjects: SubjectRow[] }`, `MissingFiles { proj
 While a campaign is open, the campaign page takes the place of sections 1 to 4. `drop-import/` stays mounted.
 
 **After "Create campaign"** the new campaign opens (A-45): `BriefLoad` gets `onCreated(campaignId)` from the page.
+
+## The Assets panel (R2C-5 to R2C-7)
+
+Built. `src/renderer/screens/assets/` (`assets-scope/`, `assets-button/`, `assets-panel/`, `asset-row/`, `subject-card/`, `attach-photos.ts`) and `src/renderer/dialogs/subject-dialog/`.
+
+- A panel along the left edge under the top bar, mounted once per project, so it stays open across the project page, a campaign and the editor. The Activity panel keeps the right edge. It opens from "Open assets" on the project page and "Assets" in the campaign head (which shows over a variant's editor too).
+- Groups, each "{group} · {n}": Subjects (a card per subject with its photos, "Add photos…", "Edit…"), Pictures (with a "Subject" choice), Clips, Fonts, Other files (only when not empty). Marks: "Reference only", "Made with AI", "Linked", "File not found".
+- Actions: "Import files…", "Import a folder…", "New subject…" (the subject dialog: name, optional description, at least one photo).
+- **No path is drawn.** A pure picker (`assetView`) keeps only the fields the screen needs; the rows' paths never reach a component.
+- The import dialog's "Attach to a subject" gains "New subject…", and its result offers "Show in assets" when the panel is closed.
+- No new command, query or policy row: it uses `asset.list`, `asset.import`, `asset.update`, `subject.create`, `subject.update`.
+
+Full design: `spec/phases/round-2-campaign.md`, design addition 5.
 
 ## The import dialog (S2-9) [REQ: FR-050, FR-052, FR-053, FR-054, FR-246]
 
@@ -233,7 +246,7 @@ Built. Component `src/renderer/screens/project-home/brief-form/` (with `campaign
 **How it opens** (`brief-load/`):
 
 - "Load a brief": `dialog.pickFiles { purpose: 'brief' }`, then `brief.parse`. The form opens filled from the reply. A refused `brief.parse` shows in the banner and opens nothing.
-- "Type a brief": the form opens empty, with one empty subject row, the default sizes, and no language.
+- "Paste a brief": a dialog with a "Brief text" area. "Read brief" sends `brief.parse { projectId, text }` (JSON, YAML or Markdown, read by fixed rules, no AI); the form opens filled, as for a loaded brief, and a refusal shows in the dialog. "Start from an empty form": the form opens empty, with one empty subject row, the default sizes, and no language.
 - While the form is open both buttons are hidden.
 
 **The model** (pure, no React):
@@ -323,11 +336,11 @@ type VariantTileProps = {
   3. A line "{width}×{height} · {language} · {format}", and " · master" when `isMaster`.
   4. **Marks**, each a short word in a small box, only when true: `jobRunning` "Running", `resultUnseen` "New result", `overflow` "Text does not fit", `missingFile` "File missing", `translationUnapproved` "Translation not approved", `outOfDate` "Out of date", `checkWarning` "Check warning", `checkStale` "Not checked". The words come from one table, `variant-tile/badge-words.ts` (pure).
 - **Chosen look:** the tile's edge in `--color-accent`, `--focus-ring-width` wide. The focus ring is drawn from the focus tokens, as everywhere.
-- **Keyboard:** each tile is one stop in the tab order. Arrow keys are not used (A-47).
+- **Keyboard:** each tile is one stop in the tab order. Arrow keys move the selection (R2C-3; `spec/screens-variants.md`, "The campaign page (Round 2)"). A click, Enter and Space now act as that section says.
 
-**The campaign page** (`campaign-view/`): "Back to project"; the campaign name; `VariantGrid` (given `projectId` and `onOpenBehind`); the line "Runs and panels below are for: {title} · {sizeLabel} · {language}" for the chosen variant; the slot view; Make pictures; Make a video; the run list. The master is chosen at the start.
+**The campaign page** today (Round 2) is in `spec/screens-variants.md`, "The campaign page (Round 2)": tabs Variants, Checks and Translations; each direction a grid of size rows and language columns; click selects, double-click or Enter opens.
 
-**Phase 3 additions** (built, P3-9, P3-10, P3-16): a plain click on a tile opens the variant's tab; the "+" opens it behind; the tiles show thumbnails. The rules for tabs and thumbnails are in `spec/editor.md`, "Variant tabs" and "Thumbnails on the screens".
+**Phase 3 additions** (built, P3-9, P3-10, P3-16; the plain click was changed to "select" by R2C-3): the "+" opens a variant behind; the tiles show thumbnails. The rules for tabs and thumbnails are in `spec/editor.md`, "Variant tabs" and "Thumbnails on the screens".
 
 ## Choices made without a design sign-off
 

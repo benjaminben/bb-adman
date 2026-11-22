@@ -16,7 +16,7 @@ Read with: `spec/brief-and-templates.md` (the brief's shape, `brief.parse`, "Wha
 - **R-12 keeps its meaning for every file not attached to a subject:** a reference-library file is only input to generation and is never offered for placing, and an asset-library file that is not a subject photo (and was not made in the project, A-68) is never offered as a reference.
 - **The form adds photos to the asset library.** Its one choice is whether the new ad starts with a subject photo placed in the subject picture slot. Default: not placed (A-119).
 - **On the brief form every subject needs at least one photo** before "Create campaign" works. The description stays optional.
-- **`campaign.create` and the MCP tool `create_campaign` do not check photos.** Agents cannot import files (`asset.import` is denied to them), so an agent can still make a campaign whose subjects have no files. A subject can also lose its files later (`asset.remove`, or `asset.update { subjectId: null }`). So FR-055's third case ("the subject has no files") stays reachable and stays built.
+- **`campaign.create` and the MCP tool `create_campaign` do not check photos.** An agent can still make a campaign whose subjects have no files (it may also give photos through `create_campaign_from_brief`, but need not). A subject can also lose its files later (`asset.remove`, or `asset.update { subjectId: null }`). So FR-055's third case ("the subject has no files") stays reachable and stays built.
 
 ## The brief file (Built, SP-1)
 
@@ -33,8 +33,12 @@ subjects:
     pictures: berry-bottle.webp      # one text is read as a list of one
 ```
 
-- `pictures` is a text or a list of texts. Each text is a path **relative to the folder the brief file is in**. `/` and `\` both separate folders, so a brief written on Windows works on a Mac and the other way round.
-- A path must stay inside the brief's folder or below it. Why: a brief may come from someone else. If it could name any file on the disk, loading it could pull a private picture into the project, and from there it could be sent to an AI provider or published. That is a sensitive-data attack, the kind `.claude/rules/security-priorities.md` says matters.
+- `pictures` is a text or a list of texts. Each text is one of three things [D-100]:
+  - **an asset ID** (26 characters, a ULID) of an image in the open project;
+  - **an absolute file path** anywhere on the disk;
+  - **a relative path**, in a brief file only: it is joined onto the brief file's folder and may lead out of it. `/` and `\` both separate folders, so a brief written on Windows works on a Mac and the other way round. A pasted brief has no folder, so a relative path there is not used.
+- The picture is imported with no confirm step. It is on the user not to load a brief from a source they do not trust (the stakeholder's ruling, D-100). The normal import checks still apply.
+- **On Windows a brief never opens a network or device path** (one starting with two slashes, such as `\\server\share\photo.png`): opening one sends the user's Windows sign-in to that server. The photo gets the "could not be read" note. A mapped drive letter works. This is a choice made for the stakeholder, listed for him to confirm.
 - A photo must be a PNG, JPEG or WebP picture, judged by its first bytes and its extension, the same check `asset.import` makes (`spec/assets.md`, "File types").
 - A photo the brief names but that cannot be used is left out, and the form says why in a plain line in that subject's row (see "Notes from the brief"). It never refuses the whole brief.
 - There is no limit on how many photos a subject may name. A brief naming thousands may be slow; that is a nuisance and is not worked on.
@@ -59,9 +63,9 @@ const draftSubject = z.object({
 
 ```ts
 type PictureNoteReason =
-  'outside_folder' | 'not_found' | 'not_a_picture' | 'not_readable' | 'no_folder' | 'wide_folder'
+  'not_found' | 'not_a_picture' | 'not_readable' | 'not_full_path' | 'unknown_asset'
 type PictureNote = { name: string; reason: PictureNoteReason }   // name: see "Shown names"
-type SubjectPictures = { paths: string[]; notes: PictureNote[] }
+type SubjectPictures = { paths: string[]; assetIds: string[]; notes: PictureNote[] }
 type BriefParsed = {
   draft: BriefDraft
   primaryLanguage: string | null
@@ -69,28 +73,25 @@ type BriefParsed = {
 }
 ```
 
-`subjectPictures` has one entry per entry of `draft.subjects`, in the same order. A subject with no `pictures` gets `{ paths: [], notes: [] }`. `paths` are full paths that passed every check, in the brief's order, each once.
+`subjectPictures` has one entry per entry of `draft.subjects`, in the same order. A subject with no `pictures` gets `{ paths: [], assetIds: [], notes: [] }`. `paths` are full paths that passed every check, in the brief's order, each once. `assetIds` are the accepted asset IDs, each once.
 
 ## How `brief.parse` checks the paths (Built, SP-1, security class)
 
 New file `src/main/assets/brief-pictures.ts` (asset code, because `src/main/assets/` is the only place that builds a file path for an import; `spec/assets.md`, "Single owners"):
 
 ```ts
-checkBriefPictures(briefPath: string, subjects: BriefDraft['subjects']): Promise<SubjectPictures[]>
+checkBriefPictures(briefPath: string | null, subjects: BriefDraft['subjects'], options): Promise<SubjectPictures[]>
 ```
 
-`brief.parse` calls it in `prepare` after the draft is read, for a `filePath` input only. For a `text` input there is no folder: every given picture gets a note with reason `no_folder` and no path is checked.
+`brief.parse` calls it in `prepare` after the draft is read, for a `filePath` input (with the brief's path) and for a `text` input (with `null`: pasted text has no folder). Each picture text is sorted by `pictureRef` (`src/shared/brief/picture-refs.ts`): an asset ID, an absolute path (`path.win32.isAbsolute` on Windows, `path.posix.isAbsolute` elsewhere; `~` is not expanded, so it is relative) or a relative path. Then, in this order, the first rule that fails gives the note and the text goes no further [D-100]:
 
-**A folder that is too wide** (A-123). First, `realpath` of the brief's folder is compared with a short list. When it is the filesystem root (`/`), a drive or volume root (`C:\`, a `\\host\share\` root), on macOS `/Volumes` itself or a direct child of it, or the user's home folder itself (`os.homedir()`, by its real path), no picture is checked: every given picture gets a note with reason `wide_folder`. A folder below the home folder, such as Downloads or Desktop, is not refused, because a brief is often saved there. The comparison is on real paths; names are compared without regard to letter case on macOS and Windows, and with it on Linux. The test is a pure function in the same file, `isWideFolder(realDir: string, realHome: string, platform: NodeJS.Platform): boolean`, so every case can be tested on any machine.
+1. **An asset ID.** The open project must hold an asset of that ID with kind `image`. Otherwise `unknown_asset`. An accepted one goes to `assetIds`.
+2. **A relative path.** From pasted text: `not_full_path`, nothing is read. From a file: joined onto the real path of the brief file's folder with `path.join` (both `/` and `\` split it; nothing is decoded); it may lead out of the folder. Then checked as a file (rule 4).
+3. **A network or device path on Windows** (the text or the path starts with two slashes): `not_readable`, nothing is opened.
+4. **A file.** Text with U+0000 gives `not_found`. `realpath`; a failure with `ENOENT` or `ENOTDIR` gives `not_found`, any other error `not_readable`. `stat` of the real path must be a regular file; a folder gives `not_found`. The extension (lower case, after the last dot) must be listed for kind `image` in `src/shared/config/file-types.ts`, and the first `SNIFF_BYTES` must match that type (`src/main/assets/sniff.ts`). Otherwise `not_a_picture`.
+5. **Once.** A real path or asset ID already accepted for the same subject is skipped with no note.
 
-Otherwise, for each picture text, in this order. The first rule that fails gives the note and the text goes no further:
-
-1. **The text.** Reason `outside_folder` when: it is empty; it holds U+0000; `path.posix.isAbsolute` or `path.win32.isAbsolute` is true for it; it starts with a letter and `:` (`C:x.png`); it starts with `~`; or any part, after splitting on `/` and `\`, is `..`. Empty parts and `.` parts are skipped.
-2. **Join.** The parts are joined onto the brief file's folder with `path.join`. Nothing is decoded: `%2e%2e` is a file name.
-3. **Real place.** `realpath` of the joined path must be at or inside `realpath` of the brief's folder, judged with `pathAtOrInside` (`src/main/assets/path-resolver.ts`). Otherwise `outside_folder`. This stops a link inside the folder that leads out of it. A `realpath` failure with `ENOENT` or `ENOTDIR` gives `not_found`; any other error gives `not_readable`.
-4. **A file.** `stat` of the real path must be a regular file; a folder gives `not_found`.
-5. **A picture.** The extension (lower case, after the last dot) must be listed for kind `image` in `src/shared/config/file-types.ts`, and the first `SNIFF_BYTES` must match that type (`src/main/assets/sniff.ts`). Otherwise `not_a_picture`. An error while reading gives `not_readable`; `ENOENT` gives `not_found`.
-6. **Once.** A real path already accepted for the same subject is skipped with no note.
+The window imports `paths` as before; accepted asset IDs become form photos already in the project (the FR-053 rules: no subject, attached at Create; this subject, shown attached; another subject, problem line 4). Design: `spec/phases/round-2-platform.md`, D3.
 
 The accepted value is the real path. The same file may be accepted for two subjects; the form then refuses it (one photo belongs to one subject, FR-011).
 
@@ -145,7 +146,7 @@ type CampaignPlan =
   | { ok: false; problems: string[] }
 ```
 
-- `emptySubject()` has `photos: []`, `adding: false`, `notes: []`. `formFromDraft` sets `placeSubjectPhoto: false` for a loaded brief and for "Type a brief".
+- `emptySubject()` has `photos: []`, `adding: false`, `notes: []`. `formFromDraft` sets `placeSubjectPhoto: false` for a loaded or pasted brief and for "Start from an empty form".
 - `formFromDraft` copies `briefPhotos[i]` into subject `i`; with none, the row has no photos and no notes.
 - `planFromForm` puts `placeSubjectPhoto: values.placeSubjectPhoto` into the `campaign.create` input (from SP-4, once SP-6 has added the input).
 - **A row's photos**, for the rules below: its `photos` whose `assetId` is in `images` with `kind = 'image'`, plus, for an `existing` row with a chosen subject, every image in `images` whose `subjectId` is that subject ("attached"). A photo no longer in `images` is ignored (it was removed elsewhere). An attached picture whose file is missing still counts (A-113).
@@ -211,16 +212,15 @@ After `brief.parse` succeeds and before the form opens, `brief-load/` imports ea
 
 | Reason | Line |
 |--------|------|
-| `outside_folder` | "The photo "{name}" was not used: a brief may only name photos in its own folder or below it." |
 | `not_found` | "The photo "{name}" was not found." |
 | `not_a_picture` | "The file "{name}" is not a picture Adman can use." |
 | `not_readable` | "The photo "{name}" could not be read." |
-| `no_folder` | "The photo "{name}" was not used: a typed brief has no folder to find it in." |
-| `wide_folder` | "The photo "{name}" was not used: put the brief and its photos in a folder of their own." |
+| `not_full_path` | "The photo "{name}" was not used: a pasted brief has no folder, so give the photo's full path or its asset ID." |
+| `unknown_asset` | "No picture with the asset ID "{name}" is in this project." |
 
 These are notes, not problem lines: they do not block. The block comes from "add at least one photo" when nothing usable is left.
 
-**The line above the subject rows** (A-125). When the brief brought photos in, one line shows above the subject list, as plain text: "This brief added {n} photo(s) from its folder. Check them before you create the campaign." `{n}` counts the form photos that came from the brief's import, added or reused, over all rows, at the time the form opens. With `n` 0 the line is not drawn. `brief-form/` counts it once from its `initial` values (the photos in every row when the form opens): only a loaded brief's import can put photos there, so "Type a brief" and the AI reader give 0. It does not change while the form is open, and the model needs no new field.
+**The line above the subject rows** (A-125). When the brief brought photos in, one line shows above the subject list, as plain text: "This brief added {n} photo(s). Check them before you create the campaign." `{n}` counts the form photos that came from the brief's import, added or reused, over all rows, at the time the form opens. With `n` 0 the line is not drawn. `brief-form/` counts it once from its `initial` values (the photos in every row when the form opens): only a loaded or pasted brief's pictures can put photos there, so "Start from an empty form" and the AI reader give 0. It does not change while the form is open, and the model needs no new field.
 
 Importing on open, before the user confirms, is chosen because it lets the window show each photo with the existing asset protocol and gives the asset IDs the one-subject rule needs (see "Showing a photo before Create"). Nothing leaves the machine. Cancel removes the new rows (A-111); the copies a brief's photos made stay in the assets folder with no row naming them, so they are not assets and Package leaves them out (`spec/assets.md`, "Removing an asset"; A-126). A refused copy (for example `assets_folder_missing`) gives the "could not be added" note above.
 
@@ -308,17 +308,18 @@ The cost of (b): the project holds the new rows while the form is open, and an a
 
 - A path reaches `asset.import` from the window only when the system picker returned it, a drop gave it, or a `brief.parse` reply listed it in `subjectPictures`. `spec/assets.md`, "Accepted risks", says so.
 - `asset.import` checks a brief photo exactly as a picked file. A brief photo is copied into the assets folder (`copy: true`); a picked or dropped photo is linked (`copy: false`).
-- A hard link inside the brief's folder is accepted as an ordinary file: it passes the real-path check because it has no link to follow. Making one needs write access the user already has, and the photo is copied at import, so it cannot change later.
-- Picture notes are shown on the user's own screen only. They are never logged, never put in an event and never returned to an agent, because a note's reason can tell whether a file outside the folder exists.
+- A brief a person loads or pastes may name any file on the disk, with no confirm step [D-100]. The photo is copied at import, so it cannot change later. On Windows a network or device path is never opened.
+- Picture notes are shown on the user's own screen only. They are never logged, never put in an event and never returned to an agent, because a note's reason can tell whether a file exists.
 - The window never draws a path; notes show `pictureName` only.
 - No path in `campaign.brief`, a job row, an MCP reply, an error message or a log line.
-- The brief's folder is judged on real paths, so a brief opened through a linked folder, and a link inside the folder, are both handled.
+- A brief sent by an agent (`create_campaign_from_brief`) that names a file path asks the user on screen every time, showing each full path (`spec/mcp-and-agents.md`).
 - **Pre-chosen references send pictures to a provider.** A subject photo is now pre-chosen in more places, and in either library. A picture is still sent only when the user presses Generate or Start, it is listed and ticked on screen first, and it goes through `AssetService.read` (kind, size and type checks; a clean PNG). A hostile project's linked row attached to a subject could be pre-chosen; this is the accepted risk of `spec/assets.md` ("A linked path may name any file…"), now reached through a pre-tick as well as a hand tick. SP-7's review checks this stays true.
-- Threats in scope (`.claude/rules/security-priorities.md`): a hostile brief naming a private picture elsewhere on the disk (sensitive data) is stopped by rules 1 and 3. A brief naming a non-picture file is stopped by rule 5. A slow brief with many photos is a nuisance and is not worked on.
+- Threats in scope (`.claude/rules/security-priorities.md`): a hostile brief naming a private picture elsewhere on the disk is accepted by the stakeholder's ruling (D-100): the user is trusted not to load a brief from a source they do not trust, and the photo shows in the form before anything is made or sent. A brief naming a non-picture file is stopped by rule 4. A slow brief with many photos is a nuisance and is not worked on.
 
 ## What agents see
 
 - Agents are still denied `asset.import`, `subject.create` and `brief.parse`. `create_campaign` accepts subjects with no photos; a `pictures` field in its brief is dropped; it fills the subject slot as today.
+- `create_campaign_from_brief` takes brief text whose subjects may name pictures by asset ID (no ask) or by full file path (the user is asked every time); a relative path is refused with no disk read. `import_assets` imports files by full path, asked every time. Both are in `spec/mcp-and-agents.md`.
 - An agent sees photos as assets (`list_assets`, `list_subjects` from Phase 10) and may send any of them as a reference picture.
 
 ## Wording
@@ -350,7 +351,7 @@ The UI says "Photos" and "photo". It never says "product shot" or "product photo
 - **A-120. Pre-choice on the campaign page and the video card** happens when the page opens, and on a variant change only while nothing is ticked; a user's own ticks are kept. *SP-7. Easy.*
 - **A-121. The picture chooser moves a reference-library subject photo to the asset library when it is placed**, and nothing moves it back. *SP-8. Easy.*
 - **A-122. `create_campaign` does not offer `placeSubjectPhoto`**; an agent's campaign fills the slot as today. *SP-6. Easy.*
-- **A-123. A brief in a folder that is too wide brings no photos**: the filesystem root, a drive or volume root, `/Volumes` or a direct child of it on macOS, or the home folder itself. Downloads and Desktop are allowed. *SP-1. Easy.*
+- **A-123.** Withdrawn by D-100: a brief may name pictures anywhere, so no folder is too wide.
 - **A-124. Photos a brief names are copied into the assets folder**; photos the user picks or drops stay linked. *SP-4. Easy.*
 - **A-125. A line above the subject rows says how many photos the brief added**, counted once when the form opens. *SP-3. Easy.*
 - **A-126. Cancel leaves a brief photo's copy in the assets folder** with no row naming it; it is not an asset and Package leaves it out. Removing such files waits for OI-44 (managed files and the system bin). *SP-4. Easy.*

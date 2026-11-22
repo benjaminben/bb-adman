@@ -48,7 +48,7 @@ export const OPTIONS = serve
 
 | Point | What happens | What keeps the rule |
 |---|---|---|
-| Request body limit | Vercel refuses a body over 4.5 MB with its own `413` before the code runs | The service's own caps (2 MiB API, 8 KiB forms) are below it and unchanged. A body over 4.5 MB gets Vercel's 413 even without a key: a refusal either way, accepted |
+| Request body limit | Vercel refuses a body over 4.5 MB with its own `413` before the code runs | The service's own caps (4 MiB API since R2V-1, 8 KiB forms; a clip reply at most 4 MiB) are below it. A body over 4.5 MB gets Vercel's 413 even without a key: a refusal either way, accepted |
 | Reply size limit | 4.5 MB for a reply that is not streamed | API replies stay far below. Pictures (up to 16 MiB) are sent as a stream (`spec/approvals-service-visitor.md`, "Pictures") |
 | `request.url` | Next.js builds it from the `Host` the browser used (Vercel: "the domain name as it was accessed by the client") and the protocol. On local `next start` it is `http://localhost:{port}/…`, not `http://127.0.0.1:{port}/…`, though the server listens on `127.0.0.1` | See `spec/approvals-service-visitor.md`, "Forms that write": the Origin check stays sound whatever the value, and fails closed if it is wrong. So every e2e base address uses `localhost` |
 | The protocol | On Vercel the protocol is fixed. On local `next start` only, a client-sent `X-Forwarded-Proto: https` is honoured, so `request.url` starts with `https:` | Nuisance only (a local visitor can make their own forms fail or get an extra header); noted, not fixed |

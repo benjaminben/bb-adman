@@ -2,7 +2,15 @@
 
 A way to get sign-off on variants from people outside the app [D-095]. The user makes a password-protected link per campaign; a visitor opens it, enters the password, sees the campaign's variants and signs off on one with an email address; the sign-offs show in the app. Opt-in: nothing happens until the user sets up a service and makes a link.
 
-**State.** Built, slices AP-1 to AP-16: the service and its gallery pages, the desktop contracts, the service client, service settings and kept passwords, the picture store, the Settings section, the link commands and queries, "Update gallery" and refresh, the campaign page parts and the local proof. Two accepted gaps are noted where they apply.
+**State.** Built, slices AP-1 to AP-16: the service and its gallery pages, the desktop contracts, the service client, service settings and kept passwords, the picture store, the Settings section, the link commands and queries, "Update gallery" and refresh, the campaign page parts and the local proof. Round 2 is built too: the app hides older sign-offs, the gallery is a sidebar beside a masonry of cards with a lightbox each (R2A-1 to R2A-9), and video variants play in the gallery (R2V-1 to R2V-8). Its design is in `spec/phases/round-2-approvals.md` and `round-2-approvals-video.md`. Two accepted gaps are noted where they apply.
+
+**Round 2, in short.**
+
+- The app shows a sign-off only for the variant's current version; an edit not yet sent to the gallery already reads as not signed off.
+- The gallery page is a sidebar (campaign title, a fixed instruction sentence, "Signing off as:" with the reviewer's email, "Sign off all…", "Log out") beside a masonry of variant cards. A card that needs this reviewer's sign-off stands out; a signed one shows a green tick. Each card opens a lightbox with the large picture or video and its sign-off button. It works with script off; one small script of the service's own adds arrow keys between lightboxes, masonry spans where the browser lacks them, and pausing a video when its lightbox closes.
+- The reviewer's email is kept in a browser-session cookie (`HttpOnly`) to fill the field and mark the cards. "Log out" clears it, and so does every right password entry, so a later person on a shared browser never signs off as an earlier one. "Sign off all" signs only the set the page showed.
+- **Video.** "Update gallery" exports each changed video variant to MP4 with the video export code and uploads it to the user's bucket beside its still (the still is the poster). The clip reaches a reviewer only through the service, after the password, one byte range at a time, at `/l/{slug}/c/{variantKey}/{version}`, and plays in the lightbox with the browser's own player (no autoplay, no download). The page policy gained `media-src 'self'`. A clip over 3 minutes or 384 MiB, or a machine without FFmpeg, sends the still with a note. The contract is version 2; the keyed API's body cap is 4 MiB.
+- **"Update gallery"** shows its progress (`approvals.progress`) and can be stopped (`approvals.cancelUpdate`, denied to agents). One run per campaign at a time. A failed or stopped run removes only the files it added.
 
 **Where things are.**
 
@@ -62,13 +70,13 @@ A variant's version is its `rev` (A-91). It changes with every saved edit of the
 | Situation | Mark |
 |-----------|------|
 | No link, or the variant has no row and no sign-off | none |
-| In the gallery, `currentRev` equals `publishedRev`, with n current sign-offs (n ≥ 1) | "Signed off by {n}" |
-| `currentRev` differs from `publishedRev`, with at least one current sign-off | "Signed off by {n}" and "Changed since sign-off" |
-| `currentRev` differs from `publishedRev`, no current sign-off | "Changed since published" |
-| Live link, the variant has no row | "Not in the gallery" |
-| Only earlier-version sign-offs | "Earlier version signed off" |
+| Live link, the variant was never published | "Not in the gallery" |
+| n sign-offs for the variant's current `rev` (n ≥ 1) | "Signed off by {n}" |
+| Published, and `currentRev` differs from `publishedRev` | "Changed since published" |
 
-A sign-off belongs to the version it was given for. After a change and a new "Update gallery", the older sign-offs stay, listed as "for an earlier version" in the gallery and in the app.
+The first row that applies gives the mark.
+
+A sign-off belongs to the version it was given for. **The app shows a sign-off only for the variant's current `rev`** (R2A-1, A-372): an edit not yet sent to the gallery already reads as not signed off, and sign-offs of older versions are hidden in the app and in the gallery. "Changed since sign-off" and "Earlier version signed off" are gone.
 
 ## Screens
 
@@ -92,7 +100,7 @@ D-084: one folder per component, CSS from the existing tokens only (no slice of 
 - **Approval bar** (`src/renderer/screens/campaign/approval-bar/`), in the page's header row: the button "Approval link…". With a live link: "Signed off: {a} of {b} variants" (variants with at least one current sign-off, of those in the gallery), "Checked {time}" and a "Refresh" button. After a failed refresh: the failure's sentence in place of "Checked". With an ended link: "Link turned off".
 - **Store** (`src/renderer/stores/approvals-store.ts`, one per campaign page): holds the `approvals.forCampaign` reply; reads it again on `approvals.changed` for its campaign and on `project.changed` for its project (revs change the marks). While the link is live and `ready` is `ready`, it sends `approvals.refresh`: once when the page opens, every 60 seconds while the window has focus, when the window gains focus, and on "Refresh" (A-92). One refresh at a time; a refresh asked for while one runs is dropped. The background refresh goes through `api.command` directly and shows its failure only in the bar, never in the error banner. A reply with `gone: true` shows the `approval_link_gone` sentence in the bar; the `approvals.changed` event that came with it reads the query again. The timer stops when the page closes.
 - **Tile marks** (`src/renderer/screens/campaign/approval-mark/`): under each tile, beside it and not inside the tile's button, the marks of `approvalMarks` and, when the variant has sign-offs, a "Sign-offs ({n})" toggle (`aria-expanded`) showing the list. `VariantTile` gains an optional `footer` prop drawn after the button; `VariantGrid` gains an optional `tileFooter(variant)` prop; both a few lines.
-- **Sign-off list** (`src/renderer/ui/signoff-list/`): one line per sign-off, newest first: "{email} · {date and time}" and, for an older version, "· for an earlier version". Used by the tile and the dialog.
+- **Sign-off list** (`src/renderer/ui/signoff-list/`): one line per sign-off for the current version, newest first: "{email} · {date and time}". Used by the tile and the dialog.
 
 ### The approval link dialog
 
@@ -103,7 +111,7 @@ D-084: one folder per component, CSS from the existing tokens only (no slice of 
 - **Live link.**
   - "Link": the address in a read-only field, "Copy link".
   - "Password": "Copy password" (reads `approvals.getPassword` on click, copies, shows "Copied."; the password is never drawn), or, when not kept, "The password is kept on the computer that made the link." Then "Set a new password…": the two choices again and "People who already opened the link must enter the new password." Button "Set password".
-  - "Gallery": "Updated {time}." and "{n} variants changed since." when n > 0. Button "Update gallery" (`approvals.publish`; "Updating the gallery…" while it runs).
+  - "Gallery": "Updated {time}." and "{n} variants changed since." when n > 0. Button "Update gallery" (`approvals.publish`). While it runs it shows its progress (making and sending each clip, from `approvals.progress`) and a "Stop" button (`approvals.cancelUpdate`). A video variant sent as its still (too long, too large, or no FFmpeg) gets a note.
   - The sign-off list of every variant, by variant title.
   - "Turn off link…" opens a confirmation: "Turn off this link? Reviewers can no longer open it. The gallery and its pictures are deleted from the service and your bucket. Sign-offs so far stay in this project." Buttons "Keep link" (focused) and "Turn off link".
   - "If you delete this campaign, turn its link off first." (A-100)
@@ -128,8 +136,9 @@ Project rule: in scope are attacks that destroy, that reach sensitive data, or t
 | The app made to send the key to a machine on the user's own network | The resolved address is checked before connecting (loopback and private ranges refused, IPv6 forms judged by their IPv4 inside); the socket is pinned to the checked address (`spec/approvals-client.md`, "The service client") |
 | Another campaign's data read through a link | The session names its link; every query filters by that link; the picture route checks link, variant and version; API routes are keyed by project and campaign |
 | The slug leaking through `Referer` | `Referrer-Policy: same-origin` (no referrer to any other site); the pages load nothing from elsewhere |
-| A visitor's session stolen | `__Host-` cookie, `HttpOnly`, `Secure`, 12 hours; ended by "Leave", a new password, or turning the link off |
-| The bucket address or keys reaching a visitor | The service fetches the picture and passes on only its bytes; the signed address stays in its database |
+| A visitor's session stolen | `__Host-` cookie, `HttpOnly`, `Secure`, 12 hours; ended by "Log out" (route `/leave`), a new password, or turning the link off |
+| A later person on a shared browser signing off as an earlier one | The reviewer-email cookie is a browser-session cookie, `HttpOnly`; "Log out" and every right password entry clear it; every sign-off uses the posted field text |
+| The bucket address or keys reaching a visitor | The service fetches the picture or clip and passes on only its bytes (a clip one byte range at a time, at most 4 MiB a reply); the signed address stays in its database |
 | A shared project file carrying a link | It carries the slug, the publish state and sign-off emails; never the password, the key or the service address. Another person needs the service key to act on the link |
 | A hostile project file steering requests | Every project-file value below is checked before it reaches a request or a storage path |
 | The key sent to the wrong place | `https` only, no redirects, the address set only by the user through one command agents cannot send |
@@ -154,7 +163,7 @@ To be added to the table in `spec/security.md`, "Project-file values that reach 
 - `approvals.baseUrl` has one writer; the address rule refuses plain `http` except the dev-tools test case.
 - No redirect is followed by the client or by the service's picture fetch.
 - Picture storage touches only `adman-approvals/{projectId}/{campaignId}/`.
-- Visitor pages run only our own scripts under the nonce policy, need no script to sign off, and load nothing from another company; their policy and headers are checked whole in tests (`spec/approvals-gallery.md`).
+- Visitor pages run only our own scripts under the nonce policy (the framework's and one small gallery script of the service's own), need no script to sign off, and load nothing from another company; the page policy is the built one plus `media-src 'self'`; their policy and headers are checked whole in tests (`spec/approvals-gallery.md`).
 - Data at rest: emails and slugs sit in the project file unencrypted, like all project data. Passwords sit in `approval-passwords.bin`, encrypted.
 
 ### Accepted, noted
@@ -219,14 +228,13 @@ Made to keep the build moving under D-082. Each says how hard it is to undo.
 - **A-106. The test picture origin is ignored on every Vercel deployment** (`VERCEL` set), on top of the exact `127.0.0.1` rule. *AP-14. Easy.*
 - **A-107. Migrations run from the stakeholder's machine** with `npm run db:migrate -- --hosted`; agents never pass `--hosted`. *AP-14, AP-13. Easy.*
 - **A-108. Only the production domain is public.** Standard Deployment Protection keeps previews and deployment addresses private, and the database is connected for Production only, so a preview has no data. *AP-13. Easy.*
-- **A-109. No client components** except the two error boundaries Next.js requires; script that improves a page is left for later. *AP-16. Easy.*
+- **A-109. No client components** except the two error boundaries Next.js requires. Since R2A-8 one small plain script of the service's own improves the gallery (arrow keys, masonry spans, a fallback for browsers without command buttons, pausing videos); nothing needs it to sign off. *AP-16, R2A-8. Easy.*
 
 ## Left for later
 
-- **Video variants** are shown by their still picture (the draw at time 0). A moving preview waits for Phase 7 and export.
 - **A picture store of the service's own instead of S3** (no 7-day limit, no bucket setup): a new `PictureSource` in the service and a new picture store in the app (OI-96).
 - **Script that improves the pages** (for example signing off without a page reload), never needed to sign off (A-109).
-- **A job with progress** for galleries of hundreds of variants, once Phase 5 brings them.
+- **A job** for galleries of hundreds of variants ("Update gallery" stays a command; since R2V-7 it shows progress and can be stopped).
 - **Links of deleted campaigns:** a list in Settings to turn them off.
 - **MCP tools** for approvals, if ever (Phase 10 decides; deny until then).
-- Comments with a sign-off, an email kept for the visitor's next sign-off, links that end on a date, international email addresses.
+- Comments with a sign-off, links that end on a date, international email addresses. (The reviewer's email is now kept for the browser session, R2A-2.)

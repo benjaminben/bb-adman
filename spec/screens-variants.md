@@ -4,9 +4,21 @@ Built (Phase 5; slices P5-14 to P5-19 in `spec/phases/phase-05-screens.md`). The
 
 These are choices made without a design sign-off; the UI pass may change any of them.
 
+## The campaign page (Round 2)
+
+Built (R2C-1 to R2C-4). Full design: `spec/phases/round-2-campaign.md`, design additions 1 to 4.
+
+- **The head** (`campaign-head/`): "Back to project", the campaign name, the approval bar, "Export…", "Reports", "Publish…", "Assets" (opens the Assets panel, `spec/screens-campaign.md`). Under it the paid count and the variant tab row ("Overview" and the open variants).
+- **The view bar** (`campaign-overview/`), inside Overview: tabs "Variants", "Checks" and "Translations" on the left, the campaign's Undo and Redo on the right. "Checks" carries a warning count badge ("{n} warning(s)"; no badge at 0). The chosen tab is kept while the campaign page is open.
+- **Variants tab** (`variants-tab/`): the hint "Click a post to select it. Double-click it, or press Enter, to open it."; the direction grids; then the line "Runs and panels below are for: …", the slot view, the picture panel and the run list, which act on the selected variant. The "Make a video" card is being removed (R2E-9, in progress): videos are made in the editor's Generate panel.
+- **Checks tab**: the check panel, then the rule set panel. **Translations tab**: the translation panel; with one language, a line says there is nothing to translate.
+- **A direction is a grid** (`variant-grid/`, `grid-axes.ts`): rows are sizes, columns are languages, the master top left. A row head shows the size label and "{width}×{height}" (the size once when it has no name of its own); a column head the language name and code. An image and a video of the same size and language share a cell. A row never wraps: the direction's box scrolls sideways, with the row heads kept in view. The master tile has a "Master" badge and a tinted ground.
+- **Select, then open** (R2C-3): a click selects a tile; a double-click or Enter opens its tab; Mod+Enter, Cmd-click and "+" open it behind. Arrow keys, Home and End move the selection between tiles (`grid-moves.ts`); Delete or Backspace opens the delete warning for that tile (never for the master).
+- **Translations show their source** (R2C-4): each row shows "{primary language} (source)" with the source text beside the labelled translation field, and the tab says "These are the texts on the posts themselves. A change here changes that post at once."
+
 ## The overview
 
-`src/renderer/screens/campaign/campaign-view/` mounts, in its overview, `campaign-undo/` and then `direction-grids/` in place of the one `VariantGrid`. The rest of the overview (the "Runs and panels below are for" line, slot view, panels, run list) stays as built.
+`src/renderer/screens/campaign/campaign-view/` mounts, in its overview, the view bar above (with `campaign-undo/`) and then `direction-grids/` in the Variants tab. The rest (the "Runs and panels below are for" line, slot view, panels, run list) stays as built.
 
 **`campaign-undo/`**, component `CampaignUndo`. Props `projectId`, `campaignId`.
 

@@ -26,7 +26,7 @@ Built. The reviewer checks these on every screen.
 - A provider that is not `available` is not offered for a run.
 - The ComfyUI address is drawn only in the Settings ComfyUI section, inside a failure sentence, and in the run confirmation dialog's ComfyUI line (`spec/screens-ai.md`). It is sent in no input but `comfy.setAddress`. The window writes nothing to the console.
 - Text from a server or a file (server message, brief values, a file name, a display name) is drawn as text content, never as HTML, never as a link.
-- For pictures and other assets, the renderer draws no file path and reads no file. It sends a path only to `asset.import` (a path from the system picker, or from a file dropped on the window through the drop bridge), `asset.relink` (from the relink picker) `project.package` and `export.run` (each from the folder picker); and a brief's path only to `brief.parse` or, for a Markdown or text brief, `brief.extract` (Phase 4) (from the brief picker). Display names and a file's base name are drawn as text. (The project's own file path, the recent-project paths and the default location are shown on the start, project and Settings screens, and sent only to `project.open`, `project.create` and `settings.update`.)
+- For pictures and other assets, the renderer draws no file path and reads no file. It sends a path only to `asset.import` (a path from the system picker, or from a file dropped on the window through the drop bridge), `asset.relink` (from the relink picker) `project.package` and `export.run` (each from the folder picker); and a brief's path only to `brief.parse` or, for a Markdown or text brief, `brief.extract` (Phase 4) (from the brief picker). Display names and a file's base name are drawn as text. (The project's own file path, the recent-project paths and the default location are shown on the start, project and Settings screens, and sent only to `project.open`, `project.create` and `settings.update`. On the start screen a recent project's path is in its tooltip only. The one other place a path is drawn is the permission dialog for an agent's file import: `spec/security.md`, "Paths in the renderer".)
 - No screen has a field for a key. Keys go through the key dialog or the Settings key rows only.
 - Every control has a label and can be reached and used by keyboard (`spec/testing.md`, accessibility rules). Each screen file stays under 200 lines.
 - `assetUrl` (`src/renderer/ui/asset-url.ts`) builds every `adman-asset://` address and escapes both parts with `encodeURIComponent`.
@@ -43,18 +43,20 @@ Built. `src/renderer/app/app-shell/`, `app/error-banner/`, `app/app-context.tsx`
 
 ## Start
 
-Built. `src/renderer/screens/start/start-screen/`, `new-project-form/`, `recent-projects/`.
+Built. `src/renderer/screens/start/start-screen/`, `start-images/`, `new-project-form/`, `recent-projects/`. The look is in `spec/app-style.md`, "Start screen".
 
-- Heading "Adman".
-- "New project": "Project name" field, "Location" (the default from Settings, shown as text), "Change location" (folder picker), "Create project" (`project.create`) [REQ: FR-002, FR-004].
-- "Open": "Open project…" (project file picker, then `project.open`), "Recent projects" with an Open button each (`aria-label` "Open {name}, {path}"), or "No recent projects yet."
+- Two halves. Left: a full-height picture, 50% wide, that crossfades to another every 10 seconds in random order (one still picture with reduced motion). Right: the app mark and the heading "AdManager", then the form, then "Open project…", then "Recent".
+- New project: "Project name" field, "Location" (the default from Settings, shown as text), "Change location" (folder picker), "Create project" (`project.create`) [REQ: FR-002, FR-004].
+- "Open project…" (project file picker, then `project.open`).
+- "Recent": one button per project, showing its name; the path shows only in the tooltip. Projects open now come first, each with a small dot. Empty: "No recent projects yet."
 
 ## Project home
 
 Built. `src/renderer/screens/project-home/project-home/` (with `use-project.ts`), `brief-load/`, `brief-form/`, `campaign-list/`, `import-files/`, `missing-files/`, `package-project/`, `drop-import/`, `campaign-input.ts`. The sections, the brief form, import, drop, relink and package are in `spec/screens-campaign.md`.
 
 - Heading (project name), "Close project" button (`project.close`), file path line. "Loading the project…" while loading. Event `project.changed` for this project reads `project.get` again; one for another project does not.
-- **Load a brief** and **Type a brief** open the brief form, the confirm step of FR-023. A cancelled picker sends nothing. A refused `brief.parse` shows in the error banner and creates nothing.
+- **Load a brief** and **Paste a brief** open the brief form, the confirm step of FR-023. "Paste a brief" first opens a dialog that reads pasted JSON, YAML or Markdown, or starts from an empty form (`spec/brief-and-templates.md`, "The intake screens"). A cancelled picker sends nothing. A refused `brief.parse` from a file shows in the error banner, one from pasted text in the dialog; either creates nothing.
+- **Assets**: a button that opens the Assets panel (`spec/screens-campaign.md`, "The Assets panel").
 - **Campaign list:** name, "Variants: n", "Open" (`aria-label` "Open {name}"), or "No campaign yet."
 - The open campaign is state of this page, not of the app store. `CampaignPlace` renders `<CampaignView projectId campaignId onBack />` in the page's place; `CampaignView` owns its "Back to project" button and its `Campaign` region.
 
@@ -63,7 +65,7 @@ Built. `src/renderer/screens/project-home/project-home/` (with `use-project.ts`)
 Built. `src/renderer/screens/campaign/campaign-view/`, `variant-grid/`, `variant-tile/`, `slot-view/`, `src/renderer/stores/job-store.ts`.
 
 - "Back to project". "Loading the campaign…" while `campaign.get` is read. Then the campaign name.
-- **Variants:** the campaign grid of tiles (`spec/screens-campaign.md`, "The campaign grid and the variant tile"). The first variant (the master) is chosen at the start. The line "Runs and panels below are for: {title} · {sizeLabel} · {language}" names the chosen one. The slot view, the picture panel, the video card and the run list follow, in that order; the panels and the run list work on the chosen variant.
+- The page's layout today (tabs Variants, Checks and Translations; a grid per direction; select, then open) is in `spec/screens-variants.md`, "The campaign page (Round 2)". The master is selected at the start. The line "Runs and panels below are for: {title} · {sizeLabel} · {language}" names the selected one. The slot view, the picture panel and the run list follow; they work on the selected variant. The video card ("Make a video", below) is being removed (R2E-9, in progress).
 - **Job store,** one per open campaign page. Reads `job.list { projectId, variantId }` and keeps rows by ID. A `job.updated` row whose ID the store holds, or whose ID a command just returned, replaces the row; for any other row the store reads `job.list` again. It never guesses the project from a row. A `job.list` reply that arrives after a later one is dropped. When a `job.list` reply holds a row the store already holds with an equal or later `updatedAt`, the store keeps its own row, so a late reply cannot turn a finished run back to "Working".
 - Known gaps, noted and not built: a refused `campaign.get` leaves the page on "Loading the campaign…" with no message ("Back to project" still works); the page does not read `campaign.get` again on `project.changed`.
 
@@ -84,6 +86,8 @@ Built. In `src/renderer/screens/campaign/`: `generate-panel/`, `reference-picker
 - **Paid confirm line:** "This sends {n} paid request(s) to {Provider}."; with ticks, "This sends {n} paid request(s) and {m} reference picture(s) to {Provider}."; on Retry when the stored request cannot be read, "This sends paid request(s) to {Provider}." with no number. Then "Confirm" and "Cancel".
 
 ### Make a video
+
+**Leaving.** Videos are now made in the editor's Generate panel (`spec/screens-ai.md`, "The Generate panel"). R2E-9 (in progress) removes this card and `video-panel/`; `video-picture-choice/`, `video-start.ts`, `provider-select/` and the run list stay. Until it merges, the card works as below.
 
 Built (P7-22 as the latest change). In `src/renderer/screens/campaign/`: `video-panel/` (with `video-length.ts`, `card-starts.ts`, `use-post.ts`), `video-picture-choice/`, `video-start.ts`. A card under "Make pictures", for the chosen variant. Its runs appear in the same run list.
 
@@ -113,6 +117,12 @@ Built. In `src/renderer/screens/campaign/`: `run-list/`, `run-row/` (with `video
 ## Settings
 
 Built. `src/renderer/screens/settings/settings-screen/` and one component folder per section, in this order.
+
+### Setup
+
+`setup-section/` (R2E-10), the first card: heading "Setup", line "Walk through adding keys again.", button "Open the setup…", which opens the first-run setup at its welcome step.
+
+**The first-run setup** (`app/first-run/`, mounted once in the shell). A dialog, "Set up AdManager", that opens by itself once per window when the window shows the start screen, `settings.setup.done` is false and no secret of any kind is saved. Steps: a welcome; "Step 1 of 3: AI keys" (the Settings keys section); "Step 2 of 3: ComfyUI server"; "Step 3 of 3: Cloud storage". Every step can be skipped; "Next" never needs anything filled in. Any ending (Finish, "Skip for now", Escape, the close button) sends `settings.update { setup: { done: true } }` once. A key is typed only into the existing key row, as in Settings; the flow adds no command, event or log line. Design: `spec/phases/round-2-editor.md`, D8.
 
 ### New projects
 
@@ -169,6 +179,7 @@ Built. `src/renderer/dialogs/key-dialog/`. Opens when a command returns `NEEDS_K
 
 Built (P10-7, P10-7b, P10-8). `src/renderer/app/permission-dialog/`, `src/renderer/app/agent-activity/`.
 
+- **Ask dialog for a file import** (R2P-6), when the event's `kind` is `'import'`: title "An agent asks to import files" ("An agent asks to make a campaign with files" for a brief); the body names the agent, the project and the file count; then every full path, read with the user-only query `agent.askFiles`, as plain text in a monospace list that wraps and scrolls ("Loading the list of files…" meanwhile; "The list of files could not be shown." on failure, and then only "Refuse" works); the line "Once imported, agents can place these files in ads and send pictures to AI providers you allowed."; "Answer within 2 minutes."; "Refuse" (focused first) and "Import" ("Allow" for a brief), which works only once the list is shown and 750 ms have passed. No "Don't ask again" box. The rules: `spec/security.md`, "Paths in the renderer".
 - **Ask dialog**, on `agent.permissionRequested`: title "An agent asks to delete"; body "{agent} wants to {action}: {target}.", where `{agent}` is "Agent named {client name}" or "An agent" (the name is the agent's own text, drawn as text only); a cost line ("This cannot be undone." for a campaign; for a variant also "It also clears the undo list of this campaign."); "Answer within 2 minutes."; checkbox "Don't ask again for deletes"; buttons "Refuse" (focused first) and "Allow" (pressable 750 ms after opening). Escape refuses. At `expiresAt` it closes with no answer.
 - **Activity line:** "Agent working: {tool}", then " · {project name}" when the project is open; `role="status"`; hidden 10 seconds after the last `agent.activity` event.
 

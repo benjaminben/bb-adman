@@ -242,7 +242,7 @@ src/renderer/
 ├── app/            app.tsx, app-context.tsx, nav-context.tsx, app-shell/, error-banner/,
 │                   project-switcher/, campaign-tabs/ [use-tab-keys.ts]
 ├── screens/
-│   ├── start/          start-screen/, new-project-form/, recent-projects/
+│   ├── start/          start-screen/, start-images/ (the crossfading pictures), new-project-form/, recent-projects/
 │   ├── settings/       settings-screen/, location-setting/, provider-defaults/, keys-section/, key-row/,
 │   │                   comfy-section/, comfy-check-result/, mcp-section/, connect-panel/,
 │   │                   agent-runs-section/, licence-list/

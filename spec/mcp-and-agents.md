@@ -4,7 +4,7 @@ How an outside agent (an MCP client such as Claude Code) reaches the app: the MC
 
 ## Status on `main`
 
-- **Built:** the server (`src/main/mcp/`), the token, the request checks, the on and off switch, the port, the Connect panel with both blocks, bridge mode (P10-9), the Settings section "Agent access (MCP)", all 29 tools of the tool table, the ask flow and its dialog (P10-6, P10-7), `agent.activity` and the client name (P10-8), the agent undo guard (P10-15, A-261), the agent policy table with the `tick` value, the fail-closed bus, and agent runs: the gate, the tick, the limit, the untick check and the Settings block "Agent runs" (`spec/agent-runs.md`). The design as built is in `spec/phases/phase-10.md` and `phase-10-slices.md`. The Phase 10 exit slice P10-14 is built (workflow 5.7, `tests/e2e/mcp-workflow.spec.ts`).
+- **Built:** the server (`src/main/mcp/`), the token, the request checks, the on and off switch, the port, the Connect panel with both blocks, bridge mode (P10-9), the Settings section "Agent access (MCP)", all 32 tools of the tool table (Round 2 added `import_assets`, `create_project` and `create_campaign_from_brief`: R2P-5, R2P-7, R2P-8), the ask flow and its dialog (P10-6, P10-7), `agent.activity` and the client name (P10-8), the agent undo guard (P10-15, A-261), the agent policy table with the `tick` value, the fail-closed bus, and agent runs: the gate, the tick, the limit, the untick check and the Settings block "Agent runs" (`spec/agent-runs.md`). The design as built is in `spec/phases/phase-10.md` and `phase-10-slices.md`. The Phase 10 exit slice P10-14 is built (workflow 5.7, `tests/e2e/mcp-workflow.spec.ts`).
 
 ## The MCP server
 
@@ -71,7 +71,7 @@ Built. `src/main/mcp/token.ts`, `service.ts`, `sessions.ts`.
 
 ### Rules for every tool
 
-Built for all 29 tools; every future tool follows them.
+Built for all 32 tools; every future tool follows them.
 
 - Every tool that takes a `project_id` works only on projects open in the app [REQ: FR-201].
 - **Inputs.** A tool's input is its command's or query's own Zod schema, with top-level keys in snake_case and nested keys as the command has them (camelCase). That schema is the one owner. `project_id` reaches the command as `projectId`. Arguments that do not match the published input schema get the MCP SDK's own validation error before any command runs.
@@ -82,7 +82,7 @@ Built for all 29 tools; every future tool follows them.
 
 ### The tool table
 
-29 tools, all built (Phase 10 added the rows marked with a slice; `ALL_TOOLS` in `src/main/mcp/tools/table.ts` holds the order, and the not-built list is empty). Policy is the agent policy of the command the tool runs (see 'Agent policy table'). Inputs and replies as built are in `spec/phases/phase-10.md`, "Design additions", where they differ from this table.
+32 tools, all built (Phase 10 and Round 2 added the rows marked with a slice; `ALL_TOOLS` in `src/main/mcp/tools/table.ts` holds the order, and the not-built list is empty). Policy is the agent policy of the command the tool runs (see 'Agent policy table'). Inputs and replies as built are in `spec/phases/phase-10.md`, "Design additions", where they differ from this table.
 
 | Tool | Runs | Input | Output | Policy | Status | Requirements |
 |------|------|-------|--------|--------|--------|--------------|
@@ -94,6 +94,9 @@ Built for all 29 tools; every future tool follows them.
 | `get_variant` | query `variant.get` | project_id, variant_id | Variant with its badges (`outOfDate`, `checkWarning`, `checkStale` among them; no out-of-date detail and no check results, A-165), layers (all values), its video clips (P10-13; the tool's description names them), assets used, by an allow-list (`variantFields`) | allow | Built (P10-2) | FR-192 |
 | `render_variant` | query `variant.render` | project_id, variant_id, max_dimension, time_ms | One PNG image, nothing else | allow | Built (P10-3): the complete ad, every layer drawn wherever its source lives (A-234) | FR-193 |
 | `create_campaign` | command `campaign.create` | The command's input as built: project_id, brief (`spec/brief-and-templates.md`), subject_map, sizes, languages, template_id, rule_set?, copy_rule_set_from? | campaign_id, master variant_id, direction_id, through `createdFields`; sizes and languages left out are filled in (P10-10, A-246) | allow | Built | FR-195, R-01 |
+| `create_campaign_from_brief` | command `campaign.createFromBrief`, or `campaign.createFromBriefWithFiles` when the brief names a file path (the tool picks by reading the text) | project_id, text (a brief in JSON, YAML or Markdown) | campaign_id, direction_id, master variant_id, subject_ids; plus asset_ids for the files imported | allow; ask when the brief names a file path | Built (R2P-7) | Round 2 item 12, R-4 |
+| `create_project` | command `project.createInDefaultFolder` | name (one file name, at most 100 characters) | project_id, name | allow | Built (R2P-8) | Round 2 item 12, R-5 |
+| `import_assets` | command `asset.importFiles` | project_id, paths (1 to 20 absolute paths), library? (`asset` or `reference`) | asset_ids, one per path, in order | ask (never auto-approved) | Built (R2P-5) | Round 2 item 16, R-3 |
 | `add_variant` | command `variant.add` | project_id, direction_id, size_label, language, format (`image` only) | variant_id | allow | Built (P10-11) | FR-195 |
 | `set_variant_format` | command `variant.setFormat` | project_id, variant_id, format (`image` or `video`); no undo-only field | variant_id, format | allow | Built (P10-13) | R-20, D-025 |
 | `create_layer` | command `layer.create` | project_id, variant_id, type (`text` or `image`), copy?, asset_id?, geometry, style?, timing?, animation? | layer_id | allow | Built (P10-4) | FR-194 |
@@ -122,6 +125,9 @@ Each new tool maps one to one to its command or query, with an allow-list reply 
 - **`get_project`, `get_campaign`.** Allow-list pickers over today's fields (`projectFields`, `campaignFields` in `tools/project-replies.ts`), so a field added later to a campaign, variant, subject, rule set or direction row (a path, say) cannot leave. `get_project`'s description names every field the picker gives: `meta` (project ID, name, schema version, the app version that made it, created time), `subjects`, `campaigns` and `missingAssetCount`.
 - **`list_assets`.** Cut to the nine fields above by an allow-list (`assetFields` in `tools/read-replies.ts`), so no file path is returned.
 - **`create_campaign`** (P10-10; OI-25 settled). Sizes and languages an agent leaves out are filled in by `fillCreateDefaults` (`src/shared/campaign/create-defaults.ts`): the brief's own values, then the three default sizes and the region table's language. The reply is exactly three IDs.
+- **`import_assets`** (R2P-5, R2P-5b; `src/main/mcp/tools/import-tools.ts`). The user is asked every time and sees each full path (the "Ask flow" below); `mcp.autoApproveDestructive` never covers it. Before the ask only the text of each path is checked, so nothing on disk is touched until the user allows; the rules and refusals are in `spec/security.md`, "Rules: agents and cost", and the design in `spec/phases/round-2-platform.md`, D5. Each file is copied, never linked; text files, SVG and folders are refused. Every message names a file by its place ("File 3 …"), never by path or name. Reply `{ assetIds }` in input order. The agent then sees each asset's display name, kind and size through `list_assets`, never a path. It carries the "leave the choice" sentence.
+- **`create_campaign_from_brief`** (R2P-7; `brief-tools.ts`). Reads the text with the same fixed rules as a pasted brief (`spec/brief-and-templates.md`, "Brief text"). A subject's pictures are asset IDs from `list_assets` (no ask) or full file paths (the call asks, as `import_assets` does; image files only; at most 20). A relative path is refused with no disk read. Missing required fields are refused with their names. Sizes and languages left out are filled as for `create_campaign`. The campaign is made with the starter template; the brief text itself is not stored and the stored brief holds no picture. Reply: campaign, direction, master variant and subject IDs, plus the imported asset IDs. Any refusal writes nothing and removes every copy.
+- **`create_project`** (R2P-8; `project-tools.ts`). Makes an empty project in the user's default projects folder and opens it. The input is a name only; nothing names a place. An existing file at that name, or any entry there (a dangling link too), is never replaced or followed: `RULE_VIOLATION`, `file_exists`. Reply `{ projectId, name }`; never the folder or path. The window lists the new project in the switcher and does not show it. With no project open, every other project tool still gives `NOT_FOUND`: an agent works only on projects the user opened and projects it created.
 - **`get_slots`** reads `template.slots` (`src/main/queries/template.ts`) for the campaign's master variant, from `slot.id`, `slot.type`, the slot's state and its candidate asset IDs.
 - **`get_job` and `list_jobs`.** `get_job` runs query `job.get` (a job ID unknown in the project gives `NOT_FOUND` "That job was not found."); `list_jobs` runs over `job.list` (`src/main/queries/job.ts`). `list_jobs` leaves out the `layer_id` filter of `job.list` on purpose. The `get_job` description tells the agent to poll no more than once every 5 seconds. Both replies are built by `agentJobView(row, providers)` in `src/main/mcp/tools/agent-job-view.ts`, which names every field an agent sees of a job:
   - `id`, `kind`, `status`, `startedBy`, `campaignId`, `variantId`, `layerId`, `slot`, `progress`, `paidCalls`, `seenAt`, `errorKind`, `errorReason`, `createdAt`, `updatedAt`;
@@ -151,10 +157,12 @@ Each new tool maps one to one to its command or query, with an allow-list reply 
 
 Built (P10-6, the dialog P10-7 and P10-7b; words in `spec/phases/phase-10-slices.md`, P10-7). [REQ: FR-197]
 
-1. The server emits `agent.permissionRequested`. The window shows a dialog naming the agent, the action and the target. Its cost line says the delete cannot be undone, and for a variant that it clears the campaign's undo list. "Allow" can be pressed only 750 ms after the dialog opens.
+Every `ask` command has a kind in `ASK_KINDS` (`src/main/mcp/ask-kinds.ts`, its one owner): `campaign.delete` and `variant.delete` are `'delete'`; `asset.importFiles` and `campaign.createFromBriefWithFiles` are `'import'`. An `ask` command with no kind is refused at once, so a new `ask` row cannot slip past.
+
+1. The server emits `agent.permissionRequested` with `kind` (`'delete'` or `'import'`) and `fileCount` (0 for a delete); no ID, input or path. The window shows a dialog naming the agent, the action and the target. For a delete its cost line says the delete cannot be undone, and for a variant that it clears the campaign's undo list. For an import the dialog reads the full paths with the user-only query `agent.askFiles { requestId }` (`{ files }` while the request is open, else `NOT_FOUND` "That request has ended."; the list is held in memory for the request's life only) and shows each one (`spec/security.md`, "Paths in the renderer"). "Allow" ("Import") can be pressed only 750 ms after the dialog opens, and for an import only once the list is shown.
 2. The tool call waits up to 120 seconds.
 3. Allow runs the command (the window answers with `agent.answerPermission`, `deny` for an agent). Refuse or timeout returns `AGENT_REFUSED`.
-4. If `settings.mcp.autoApproveDestructive` is true, step 1 is skipped and the action is logged as auto-approved.
+4. If `settings.mcp.autoApproveDestructive` is true, step 1 is skipped for a `'delete'` ask and the action is logged as auto-approved. An `'import'` ask always shows the dialog.
 
 `agent.activity` (the event that tells the window what agents did) is built (P10-8).
 
@@ -180,7 +188,8 @@ Policy-based, with two actors.
 | Create, edit, delete, reorder layers | ✓ | ✓ |
 | Set translations | ✓ | ✓ (always unapproved) |
 | Approve translations | ✓ | ✗ |
-| Create a campaign, add a variant | ✓ | ✓ |
+| Create a campaign, add a variant | ✓ | ✓ (a campaign from brief text too; asked first when the brief names a file path) |
+| Create a project | ✓ | ✓ an empty one, by name, in the default folder only; listed, not shown |
 | Change a variant's format, either direction | ✓ | ✓ |
 | Run checks | ✓ | ✓ |
 | Delete a variant or campaign | ✓ | With the user's permission, for every campaign and variant |
@@ -191,7 +200,8 @@ Policy-based, with two actors.
 | Retry a run; mark a result seen; read the server's own words | ✓ | ✗ |
 | Export, publish | ✓ | ✗ |
 | Approval links: make, update, read sign-offs, turn off | ✓ | ✗ |
-| Import files, add pictures from disk | ✓ | ✗ (OI-93) |
+| Import files by path | ✓ | With the user's permission, every time, seeing each full path; at most 20 per call; copied, never linked (`import_assets`) |
+| Import folders, relink, package, the user's own picks and drops | ✓ | ✗ |
 | Subjects, assets, rule sets, settings | ✓ | ✗ |
 | The ComfyUI address; the agent ticks; the agent run limit | Set, change, remove, view | ✗ never: not read, not set |
 | Provider and storage keys | Set, replace, delete. Never view. | ✗ never |
@@ -207,16 +217,16 @@ Built. `src/main/commands/agent-policy.ts` is the single owner [ADR-009]. Allowi
 
 | Policy | Commands |
 |--------|----------|
-| `allow` | `campaign.create`, `variant.add`, `variant.update`, `variant.setFormat` [D-025], `layer.create`, `layer.update`, `layer.updateMany`, `layer.delete`, `layer.reorder`, `translation.set`, `check.run` |
-| `ask` | `campaign.delete`, `variant.delete` |
+| `allow` | `project.createInDefaultFolder` ("create projects"), `campaign.create`, `campaign.createFromBrief` ("make campaigns from a brief"), `variant.add`, `variant.update`, `variant.setFormat` [D-025], `layer.create`, `layer.update`, `layer.updateMany`, `layer.delete`, `layer.reorder`, `layer.setFonts` (A-166), `translation.set`, `check.run` |
+| `ask` | `campaign.delete`, `variant.delete`, `asset.importFiles` ("import files"), `campaign.createFromBriefWithFiles` ("make campaigns that import files") |
 | `tick` | `generation.runImages`, `generation.runFill`, `generation.proposeLayout`, `generation.copyOptions`, `generation.cutOut`, `generation.startVideo`, `job.cancel` |
-| `deny` | `project.create`, `project.open`, `project.close`, `project.setAssetsDir`, `project.package`, `subject.create`, `subject.update`, `subject.delete`, `asset.import`, `asset.update`, `asset.relink`, `asset.remove`, `asset.addGenerated`, `asset.checkChanged`, `brief.parse`, `brief.extract`, `campaign.update`, `ruleSet.update`, `ruleSet.copyFrom`, `direction.createFromMaster`, `direction.rename`, `direction.delete`, `variant.fanOut`, `variant.setSound`, `layer.clearOverride`, `layer.reportOverflow`, `layer.setFonts`, `clip.add`, `clip.update`, `clip.remove`, `clip.reorder`, `translation.propose`, `translation.approve`, `translation.exportSheet`, `sync.apply`, `job.retry`, `job.markSeen`, `export.run`, `publish.run`, `publish.setFontConsent`, `history.undo`, `history.redo`, `settings.update`, `secret.set`, `secret.delete`, `storage.dropboxSignIn`, `storage.dropboxSignOut`, `storage.checkS3`, `storage.setDropboxFolder`, `mcp.setEnabled`, `mcp.regenerateToken`, `agent.answerPermission`, `comfy.setAddress`, `comfy.check`, `agentRuns.setAllowed`, `agentRuns.setLimit`, `dev.comfyExtend` (never built; the row stays), `generation.applyFill`; the system commands `report.add`, `variant.remove`, `variant.restore`, `variant.restoreLayers`, `layer.restore`, `layer.revert`, `clip.restore`, `clip.addGenerated`, `translation.write`, `translation.restore`; approvals: `approvals.setService`, `approvals.check`, `approvals.createLink`, `approvals.setPassword`, `approvals.publish`, `approvals.refresh`, `approvals.endLink` |
+| `deny` | `project.create`, `project.open`, `project.close`, `project.setAssetsDir`, `project.package`, `subject.create`, `subject.update`, `subject.delete`, `asset.import`, `asset.update`, `asset.relink`, `asset.remove`, `asset.addGenerated`, `asset.checkChanged`, `brief.parse`, `brief.extract`, `campaign.update`, `ruleSet.update`, `ruleSet.copyFrom`, `direction.createFromMaster`, `direction.rename`, `direction.delete`, `variant.fanOut`, `variant.setSound`, `layer.clearOverride`, `layer.reportOverflow`, `clip.add`, `clip.update`, `clip.remove`, `clip.reorder`, `translation.propose`, `translation.approve`, `translation.exportSheet`, `sync.apply`, `job.retry`, `job.markSeen`, `export.run`, `publish.run`, `publish.setFontConsent`, `history.undo`, `history.redo`, `settings.update`, `secret.set`, `secret.delete`, `storage.dropboxSignIn`, `storage.dropboxSignOut`, `storage.checkS3`, `storage.setDropboxFolder`, `mcp.setEnabled`, `mcp.regenerateToken`, `agent.answerPermission`, `comfy.setAddress`, `comfy.check`, `agentRuns.setAllowed`, `agentRuns.setLimit`, `dev.comfyExtend` (never built; the row stays), `generation.applyFill`; the system commands `report.add`, `variant.remove`, `variant.restore`, `variant.restoreLayers`, `layer.restore`, `layer.revert`, `clip.restore`, `clip.addGenerated`, `clip.swap` ("swap background clips", R2E-7), `translation.write`, `translation.restore`; approvals: `approvals.setService`, `approvals.check`, `approvals.createLink`, `approvals.setPassword`, `approvals.publish`, `approvals.refresh`, `approvals.endLink`, `approvals.cancelUpdate` ("stop approval gallery updates", R2V-7) |
 
 - A command not in the table is `deny`.
 - `generation.runFill` is one of the gate's run commands (P5-8), with the same per-provider tick and limit; no MCP tool wraps it.
 - The gate knows the three Phase 4 `tick` commands (`generation.proposeLayout`, `generation.copyOptions`, `generation.cutOut`; `spec/ai-jobs.md`). The tick is per provider, so a provider ticked for pictures is ticked for these too [D-093]. Their MCP tools are built (P10-5).
 - `job.retry` stays `deny` (it re-sends a stored request). `job.markSeen` stays `deny`: picking a result does not mark it looked at.
-- User-only queries refuse an agent: `mcp.getConnectInfo` (named test), `comfy.getInfo`, `job.getServerMessage`, and the built `thumbnail.get` ("Agents cannot read thumbnails in this version. Ask the user to do it in the app.", `src/main/queries/render.ts`). `variant.render` is open to an agent through `render_variant` since P10-3: the complete ad, every layer drawn wherever its source lives (A-234). With video clips drawn this includes frames of a linked video; whether A-234 covers that is open with the stakeholder. Whether `job.getServerMessage` should ever be open to an agent is what is left of OI-84; it stays user only.
+- User-only queries refuse an agent: `mcp.getConnectInfo` (named test), `agent.askFiles` (the paths of an open import ask), `comfy.getInfo`, `job.getServerMessage`, and the built `thumbnail.get` ("Agents cannot read thumbnails in this version. Ask the user to do it in the app.", `src/main/queries/render.ts`). `variant.render` is open to an agent through `render_variant` since P10-3: the complete ad, every layer drawn wherever its source lives (A-234). With video clips drawn this includes frames of a linked video; whether A-234 covers that is open with the stakeholder. Whether `job.getServerMessage` should ever be open to an agent is what is left of OI-84; it stays user only.
 - **The bus fails closed** (`denyCheck` in `src/main/commands/bus.ts`). For the agent actor, any policy that is not `allow`, `ask` or `tick` is refused with `AGENT_DENIED` and `denialMessage(name)`. `agentPolicyFor` returns `tick` for a `tick` row, and the bus sends it to the agent-run gate (`spec/agent-runs.md`), which refuses any `tick` command it does not know. Test: `tests/integration/commands/bus-fail-closed.test.ts` (raw `tick`, a made-up fifth value, `allow`).
 - No agent sets a ComfyUI workflow's status to `proven`.
 - **Approvals by link** (`spec/approvals.md`): every approvals command is `deny`, because it publishes work outside the machine and holds other people's email addresses. The queries `approvals.forCampaign` and `approvals.getPassword` are user only ("Agents cannot read approvals in this version. Ask the user to do it in the app."). No tool returns approvals data, a link address or a slug.
@@ -229,7 +239,7 @@ In `tests/integration/mcp/`, unless named otherwise. The tests the agent-run sli
 - `server.test.ts`: binds `127.0.0.1` only; port taken; missing or wrong token gets 401 and reaches no session or command; any `Origin` and a wrong `Host` get 403 even with the right token; both allowed `Host` values open a session; actor is `agent` whatever the headers and arguments say; turning off closes the listener and forgets every session; another path gets 404.
 - `secret-leak.test.ts`: calls every listed tool, with good and bad arguments, with the ComfyUI address and an asset path planted; no secret (`mcp.token` included, old and new) appears.
 - `reply-keys.test.ts` (`riskyKeys`): no reply key named like a path, address or secret.
-- `tool-list.test.ts`: a snapshot of the tool list (all 29).
+- `tool-list.test.ts`: a snapshot of the tool list (all 32).
 - `read-tools.test.ts`: `list_projects` gives only `id` and `name`; `get_slots` gives its four fields per slot; `get_job` and `list_jobs` give the job view and nothing outside it, over a job row with every column filled; an unknown job ID or campaign gives `NOT_FOUND` as a tool error; a failed job's `message` holds "the saved ComfyUI address" and not the stand-in's origin; the `get_job` description says to poll no more than once every 5 seconds. Unit tests: `tests/unit/main/mcp/tools/agent-job-view.test.ts`; query: `tests/integration/queries/job-get.test.ts`.
 - `mcp.getConnectInfo` refuses an agent (`tests/integration/queries/mcp-connect-info.test.ts`).
 
@@ -237,6 +247,6 @@ In `tests/integration/mcp/`, unless named otherwise. The tests the agent-run sli
 
 - OI-84: whether `job.getServerMessage` is ever open to an agent (stays user only).
 - OI-92: whether a tool may return picture bytes to an agent.
-- OI-93: whether an agent may add pictures from disk.
+- OI-93 (an agent adding pictures from disk) is answered by Round 2 (R-3): yes, through `import_assets`, asked every time.
 - Bridge mode: the two hand checks under "Bridge mode" (macOS Dock, Windows stdio).
 - The open items of agent runs (OI-62, OI-90) are in `spec/agent-runs.md`.

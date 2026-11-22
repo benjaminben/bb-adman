@@ -4,7 +4,7 @@ The stakeholder's hand-testing feedback, items 12, 15, 16 and 17 (the list and t
 
 **Goal.** A person can paste a brief as JSON, YAML or Markdown; a brief may name its subjects' pictures by asset ID or by file path. An agent can start a project, make a campaign from brief text, and import files by path with the user's confirm. Several projects stay open in the one window and the user switches between them. The app is called AdManager and has its own "AM" icon, while its saved settings and keys stay where they are.
 
-**Status:** not built.
+**Status:** built and merged on `main`: R2P-1 to R2P-12, with R2P-5b (the hardening of the agent's file read after review: one no-link read handle, a second hash of each copy, Windows network, device and second-stream paths and unusual space characters refused before the ask). The rules now live in the topic files; this file keeps the design for reference. Built differently from the design below: the icon has no letters (three stacked rounded squares), not the "AM" of D10; the start screen has no "Open now" card (D9), open projects come first in its "Recent" list with a small dot; shots used 370 to 382, not 340 to 359.
 
 **Class:** E and B for the tools and commands, A for the brief reader, D for the screens, G for start-up and the window edge, F (packaging check) for the name and icon.
 

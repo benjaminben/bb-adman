@@ -15,6 +15,7 @@ All are deny for agents (A-96) and not undoable. Undo, agent and built columns a
 | `approvals.publish` | projectId, campaignId | — | deny | Built (AP-9) |
 | `approvals.refresh` | projectId, campaignId | — | deny | Built (AP-9) |
 | `approvals.endLink` | projectId, campaignId | — | deny | Built (AP-8) |
+| `approvals.cancelUpdate` | projectId, campaignId | — | deny ("stop approval gallery updates") | Built (R2V-7) |
 
 `approvals.setService` and `approvals.check` are app-scope (no project transaction). The others are project-scope; their network work is in `prepare` (outside the transaction) and their table writes in `run`. A throw inside `run` rolls the whole transaction back, so a command that must keep its writes and still report a problem returns a value instead of throwing (`approvals.refresh`, below).
 
@@ -80,7 +81,11 @@ All or nothing for the gallery (A-90).
 7. `run`: replace the campaign's `approval_variant` rows; set `published_at`. Then `approvals.changed` through the after-commit step.
 8. Reply `{ variants: n, drawn: m }`.
 
-Publishing is a command, not a job: the dialog waits with "Updating the gallery…" (A-90). Video variants are drawn as their still picture (left for later).
+Publishing is a command, not a job (A-90, A-390).
+
+**Video variants** (R2V-3, R2V-5, R2V-7; design: `spec/phases/round-2-approvals-video.md`, "The app: making and sending clips"). In step 2 a changed video variant is also exported to MP4 with the Phase 8 video export (the file that ships) and uploaded beside its still with `putClip`; the still is the poster. A clip is made again only when the `rev` changed, or when the last one was sent as a still because the video tool was missing. A clip over 3 minutes or 384 MiB, or a machine without FFmpeg (or a system the export does not support), sends the still only, with a note in the app and the gallery; the update does not fail. A clip that fails to export fails the whole update, as a failed draw does. Step 4 also sends the clip's address, size and expiry (contract version 2; `publish` checks the service's version first). Renewal in `refresh` signs clips again too.
+
+**Progress and Stop** (R2V-7). Before each clip is made and each clip is uploaded, the event `approvals.progress { projectId, campaignId, step: 'making' | 'sending', done, total }` is sent. `approvals.cancelUpdate` stops a running update: it waits for an upload in progress and has no effect once the gallery request is sent. One update runs per campaign at a time. A failed or stopped run removes only the files it added.
 
 ### `approvals.refresh`
 
@@ -127,8 +132,10 @@ type ApprovalsForCampaign = {
     variantId: string
     currentRev: number
     publishedRev: number | null   // null: not in the gallery
-    signoffs: Array<{ id: string; email: string; signedAt: string; version: number; current: boolean }>
-  }>                              // current: version equals publishedRev
+    signoffs: Array<{ id: string; email: string; signedAt: string; version: number }>
+                                  // only sign-offs for currentRev (R2A-1): no older sign-off is given
+    stillOnly?: 'no_tool' | 'too_long' | 'too_large' | null   // why a video variant is shown as a still only; null when not
+  }>
 }
 ```
 

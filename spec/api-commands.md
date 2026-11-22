@@ -9,13 +9,14 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 **Scope.** A command is project-scope or app-scope (`spec/api-principles.md`, "Channels, actor and scope").
 
 - **Project-scope:** every row whose input starts with `projectId`. The bus finds the open project and runs the handler in one transaction on its file (`spec/data-rules.md`, "Data flow"). Every other ID in the input is looked up inside that project only.
-- **App-scope:** `project.create`, `project.open`, `project.close`, `settings.update`, `secret.set`, `secret.delete`, `mcp.setEnabled`, `mcp.regenerateToken`, `agent.answerPermission`, `storage.dropboxSignIn`, `storage.dropboxSignOut`, `storage.checkS3`, `dev.storage`, `comfy.setAddress`, `comfy.check`, `agentRuns.setAllowed`, `agentRuns.setLimit`. They run with no project transaction and have no `ctx.changes`. `project.close` takes a `projectId` but is app-scope, because it closes the file.
+- **App-scope:** `project.create`, `project.createInDefaultFolder`, `project.open`, `project.close`, `settings.update`, `secret.set`, `secret.delete`, `mcp.setEnabled`, `mcp.regenerateToken`, `agent.answerPermission`, `storage.dropboxSignIn`, `storage.dropboxSignOut`, `storage.checkS3`, `dev.storage`, `comfy.setAddress`, `comfy.check`, `agentRuns.setAllowed`, `agentRuns.setLimit`. They run with no project transaction and have no `ctx.changes`. `project.close` takes a `projectId` but is app-scope, because it closes the file.
 
 | Command | Input | Undo | Agent | Built | Requirements |
 |---------|-------|------|-------|-------|--------------|
 | `project.create` | name, location | — | deny | Built | FR-002, FR-004 |
 | `project.open` | filePath (must end `.adman`) | — | deny | Built | FR-002, FR-003 |
 | `project.close` | projectId, runningJobs? (`'refuse'`, the default, or `'stop'`) | — | deny | Built | FR-006, FR-215 |
+| `project.createInDefaultFolder` | name (the `project.create` name rule); the folder is always `settings.defaultProjectDir` | — | allow | Built (R2P-8) | Round 2 R-5 |
 | `project.setAssetsDir` | projectId, dir | — | deny | Built | FR-007, R-07 |
 | `project.package` | projectId, targetDir, skipMissing (default false) (`spec/data-rules.md`, "Package project") | — | deny | Built | FR-008, R-09 |
 | `subject.create` | projectId, id, name, description (default '') | — | deny | Built | FR-011 |
@@ -25,10 +26,13 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `asset.update` | projectId, assetId, library?, subjectId? (null detaches), displayName? (1 to 200), fontPublishAllowed? | — | deny | Built | FR-054, R-12 |
 | `asset.relink` | projectId, assetId, newPath, relinkSiblings: boolean | — | deny | Built | FR-009, R-06 |
 | `asset.remove` | projectId, assetId (refused while a layer, font, clip or rule set uses it) | — | deny | Built | FR-197 |
+| `asset.importFiles` | projectId, paths[] (1 to 20 absolute), library (`asset`, the default, or `reference`) | — | ask (kind `import`) | Built (R2P-5, R2P-5b) | Round 2 R-3 |
 | `asset.checkChanged` | projectId (system) | — | deny (system) | Built | — |
 | `asset.addGenerated` | projectId, jobId, files[] of { assetId, ext }, model? (1 to 200 characters) (system) | — | deny (system) | Built | FR-063, FR-068, FR-216 |
 | `brief.parse` | projectId, filePath or text (exactly one) | — | deny | Built | FR-020, FR-022 |
 | `campaign.create` | projectId, brief, subjectMap, sizes, languages, ruleSet or copyRuleSetFrom, templateId | — | allow | Built | FR-023–FR-026, FR-195, R-01 |
+| `campaign.createFromBrief` | projectId, text (a brief naming no file path) | — | allow | Built (R2P-7) | Round 2 R-4 |
+| `campaign.createFromBriefWithFiles` | projectId, text (a brief naming at least one file path) | — | ask (kind `import`) | Built (R2P-7) | Round 2 R-4 |
 | `campaign.update` | projectId, campaignId, name?, audience?, tone?, offer?, callToAction?, languages?, sizes? | C | deny | Built | FR-031, FR-032 |
 | `campaign.delete` | projectId, campaignId | — | ask | Built | FR-197 |
 | `ruleSet.update` | projectId, campaignId, any of the four lists | C | deny | Built | FR-033 |
@@ -55,6 +59,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `clip.add` | projectId, variantId, assetId, startMs | V | deny | Built (P7-9) | FR-121 |
 | `clip.update` | projectId, clipId, startMs?, inMs?, outMs?, placement? | V | deny | Built (P7-9) | FR-122 |
 | `clip.remove` | projectId, clipId | V | deny | Built (P7-9) | FR-122 |
+| `clip.swap` | projectId, variantId, remove[] (clip IDs), put[] (clip rows) (system; the inverse of a generated clip that replaced the still, and its own inverse) | V | deny (system) | Built (R2E-7) | — |
 | `translation.propose` | projectId, variantIds[] or directionId + language | — | deny | Not built (Phase 6) | FR-101 |
 | `translation.set` | projectId, layerId, text, applyToSameLanguage: boolean | V | allow | Built | FR-102, FR-194 |
 | `translation.approve` | projectId, layerIds[] (becomes layers[] of { layerId, copyRev } in P6-4b) | C | deny | Built | FR-101 |
@@ -69,7 +74,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `generation.cutOut` | projectId, variantId, layerId, provider, licenceConfirmed? | — | tick | Built | FR-307 |
 | `brief.extract` | projectId, filePath (`.md`, `.markdown`, `.txt`), provider | — | deny | Built | FR-022 |
 | `layer.updateMany` | projectId, variantId, updates[] of { layerId, patch } (1 to 100) | V | allow | Built | FR-061, FR-092 |
-| `generation.startVideo` | projectId, variantId, prompt, durationMs, provider, start (`none` or `first_frame`), useReferences: boolean, referenceAssetIds[], licenceConfirmed? (S2-4) | — | tick | Built (ComfyUI; fal.ai Seedance since P7-15) | FR-123, FR-199, FR-286 |
+| `generation.startVideo` | projectId, variantId, prompt, durationMs, provider, start (`none`, `background` or `first_frame`), useReferences: boolean, referenceAssetIds[], licenceConfirmed? (S2-4); user only: layerId? (the background layer; the clip then takes the still's place, R2E-7) | — | tick | Built (ComfyUI; fal.ai Seedance since P7-15) | FR-123, FR-199, FR-286 |
 | `job.retry` | projectId, jobId, licenceConfirmed? (S2-4) | — | deny | Built | FR-069, FR-152 |
 | `job.cancel` | projectId, jobId | — | tick | Built | FR-152, FR-215 |
 | `job.markSeen` | projectId, jobIds[] (at least one) | — | deny | Built | FR-218 |
@@ -125,7 +130,10 @@ Built. `src/main/commands/asset/`, logic in `src/main/assets/`. Full rules for f
 
 Built. `src/main/commands/brief/`, `src/main/commands/campaign/`, `src/main/commands/rule-set/`. Brief rules are in `spec/brief-and-templates.md`.
 
-- **`brief.parse`** takes `filePath` or `text`, not both ("Give a file path or text, not both."). It reads any path the window sends, with no tie to the file picker; the policy denies it to an agent. A file name ending in anything but `.json`, `.yaml` or `.yml` is `brief_type_not_supported`. A missing file is `NOT_FOUND` "That file was not found." Reply `BriefParsed = { draft, primaryLanguage }` (`src/shared/schemas/commands/brief.ts`). A relative path must be refused with `INVALID_INPUT` "The file path must be absolute." before any read: Not built (pending F-2).
+- **`brief.parse`** takes `filePath` or `text`, not both ("Give a file path or text, not both."). It reads any path the window sends, with no tie to the file picker; the policy denies it to an agent. A file name ending in anything but `.json`, `.yaml` or `.yml` is `brief_type_not_supported`. A missing file is `NOT_FOUND` "That file was not found." `text` is read as JSON, YAML or Markdown by fixed rules (`parseBriefText`). Reply `BriefParsed = { draft, primaryLanguage, subjectPictures }` (`src/shared/schemas/commands/brief.ts`; pictures checked as `spec/subject-photos.md` says, D-100).
+- **`campaign.createFromBrief`, `campaign.createFromBriefWithFiles`** (R2P-7): one handler, two names, so the policy table stays fixed; the MCP tool `create_campaign_from_brief` picks the name by reading the text. Each refuses a brief of the other kind (`brief_names_files`; `no_files`). Order, refusals and reply: `spec/mcp-and-agents.md`, "Notes on single tools", and `spec/phases/round-2-platform.md`, D6.
+- **`asset.importFiles`** (R2P-5, R2P-5b): an agent's import of files by full path, always asked. Rules: `spec/security.md`, "Rules: agents and cost"; design: `spec/phases/round-2-platform.md`, D5. Reply `{ assetIds }`.
+- **`project.createInDefaultFolder`** (R2P-8): `project.create`'s work with the default folder. A file name is never replaced or followed: `project.create` and this command both refuse any entry at the name, a dangling link included (`RULE_VIOLATION`, `file_exists`). Reply `{ projectId, name }`. A relative path must be refused with `INVALID_INPUT` "The file path must be absolute." before any read: Not built (pending F-2).
 - **`campaign.create`** with actor `user` is called only after the confirm form [REQ: FR-023]. With actor `agent` it takes the same structured input and no form is shown [REQ: R-01]. It creates the campaign, its rule set, one direction named "Direction 1", and one master variant at the first size in the primary language, with a background layer and one layer per filled slot. The headline layer's copy is the campaign message, word for word [REQ: FR-043]. `subjectMap` has one entry per brief subject; `ruleSet` and `copyRuleSetFrom` are not both given; size labels differ. Reply `CampaignCreated = { campaignId, directionId, variantId }`.
 - `campaign.create` is not undoable for either actor [D-010]. A campaign that is not wanted is removed with `campaign.delete`; for an agent that is a delete, not an undo.
 - **`campaign.update`** [REQ: FR-031, FR-032]. `languages` and `sizes` use the schemas of `campaign.create`. The input is strict: an unknown key is `INVALID_INPUT`.

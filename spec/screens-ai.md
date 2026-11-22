@@ -12,7 +12,7 @@ src/renderer/
 │               activity-row/ [row-text.ts, row-retry.tsx], project-switcher/close-project.tsx
 ├── dialogs/    run-dialog/, reference-dialog/, copy-options-dialog/ [option-list.tsx,
 │               use-copy-run.ts], brief-reading-dialog/ [use-job-row.ts]
-├── editor/     picture-ai/, generate-fields/ [run-status.tsx, use-first-draft.ts],
+├── editor/     generate-panel/ (was picture-ai/), clip-preview/, type-styles/, generate-fields/ [run-status.tsx, use-first-draft.ts],
 │               earlier-options/ [run-block.tsx, run-words.ts, retry-button.tsx,
 │               use-earlier-options.ts], picture-fields/ [cut-out.tsx, cut-out-status.tsx],
 │               layout-run.ts (Place text with AI: start, finish)
@@ -28,7 +28,7 @@ Changed: `editor/properties-panel/` (mounts `picture-ai`), `editor/picture-field
 
 ## The run confirmation dialog
 
-`dialogs/run-dialog/` (`run-dialog.tsx`, `provider-choice.tsx`, `run-summary.ts`), on the dialog frame (`ui/dialog-frame/`). Every AI run the user starts in Phase 4 goes through it [REQ: FR-064, FR-067, FR-230, FR-256]. The overview's "Make pictures" panel and video card keep their one-line paid confirm (placeholders, `spec/screens.md`).
+`dialogs/run-dialog/` (`run-dialog.tsx`, `provider-choice.tsx`, `run-summary.ts`), on the dialog frame (`ui/dialog-frame/`). Every AI run the user starts in Phase 4 goes through it [REQ: FR-064, FR-067, FR-230, FR-256]. The overview's "Make pictures" panel keeps its one-line paid confirm (a placeholder, `spec/screens.md`); the video card that also had one is being removed (R2E-9, in progress), since videos are now made in the editor's Generate panel through this dialog.
 
 Props: `open`, `projectId`, `job` (`image`, `cutout`, `layout`, `text`), `title`, `confirmLabel`, `count?` (`{ label, value, min, max }`, editable), `referenceCount?`, `campaignId?`, `retry?` (provider and count fixed), `onConfirm(provider, count)`, `onCancel`. The dialog reads the providers from the app store. The caller sends the command inside `onConfirm` and returns its reply as a promise; `count` is null when the caller gave none. "Confirm" and "Cancel" stay disabled from the click until that promise settles. A refusal is shown inside the dialog and "Confirm" turns back on; on success the caller closes the dialog. With no ComfyUI address saved, the ComfyUI line leaves the address out.
 
@@ -48,19 +48,30 @@ Props: `open`, `projectId`, `job` (`image`, `cutout`, `layout`, `text`), `title`
 
 `ui/paid-count/` (`paid-count.tsx`, `use-paid-count.ts`). Reads `campaign.paidCount`, again after each `job.updated` whose row has that `campaignId`. Draws "Paid generations for this campaign so far: {p} pictures, {v} videos." and, when `text` is above 0, " Text requests: {t}." Shown in the run dialog and on the campaign overview under the campaign name [REQ: FR-230]. A refused query draws nothing.
 
-## The picture section of the properties panel
+## The Generate panel
 
-`editor/picture-ai/`, heading "Make pictures with AI", mounted by `properties-panel` for image and background layers, between "Picture" and "Position and size". It holds the generate fields, then the earlier options. Disabled parts follow the layer's lock.
+Built (R2E-4, R2E-5, R2E-8). `editor/generate-panel/` replaces `editor/picture-ai/` ("Make pictures with AI" is gone): a fieldset with the legend "Generate", mounted by `properties-panel` for image and background layers, between "Shade" and "Position and size". It holds the generate fields, then the earlier options. Disabled parts follow the layer's lock. Pictures and videos are both made here. The full design is in `spec/phases/round-2-editor.md`, D4 to D7.
+
+- **Make: Picture / Video.** A two-way switch shown only on the background layer of a video post, with "Video" chosen first. Elsewhere a line says where videos are made ("To make a video, set Format to Video in the top bar first." on an image post's background; "Videos are made on the background layer." on another layer of a video post). With no video provider set up, "Video" is disabled with "No video service is set up. Add a key in Settings."
+- **Start from**: "A prompt only"; "This layer's picture"; "Another picture of the same shape…" (pictures of the project within 1% of the layer box's shape, with "Add pictures…"); for video, also "Reference pictures" when a provider can use them.
+- **Video fields**: "Clip length (seconds)" (whole number, default 2). The run dialog's title is "Make a video"; it names the length that will be sent (rounded to what the provider makes, with a line when it differs from what was typed) and how many pictures it sends. Nothing is sent before Confirm. A provider that cannot start this way is shown disabled.
+- **A generated clip takes the still's place.** A video run from the panel sends `layerId` (the background layer). When the clip comes back, it replaces the still on the timeline that shows the background's picture, in one write and one undo step (the internal command `clip.swap`, denied to agents). If it would be shorter than the shortest clip, it is added at the first free place instead. An agent's video run has no layer and is added as before.
+- **A finished run.** The line under "Generate…" says where the result went (for example "Done. The first new picture is on the layer. Click another below to use it instead." or "Done. The new clip is on the timeline below, in place of the still."). The new run's pictures show first under "New pictures", the older ones under "Earlier options". When the layer was empty, the first new picture is put on it (one undo step). A done video shows a small player ("Video result").
+- **The default prompt** leaves out the brief's message when the variant's text layers already hold words, and asks for clear space for the words instead (R2E-1).
+
+### Result notice
+
+Built (R2E-6). `app/result-notice/`, one line under the error banner, info tone, when a picture, video, cut-out or generative fill run of the shown project succeeds and its layer (or variant) is not on screen: "New pictures are ready: {where}." (and the like for the other kinds), with "Show" (goes there through `ui/show-result.ts`) and "Dismiss". Only the newest shows. Activity's "Go there" and the campaign page's run rows ("Choose in the editor", "See it in the editor") use the same `showResult`; a video job now leads to its layer or variant, not to the campaign overview.
 
 ### Generate fields
 
 `editor/generate-fields/` [REQ: FR-062, FR-063, workflow 5.1 step 5].
 
-- "Prompt": a text area, first filled by `prefilledPrompt` from the variant's subjects and the campaign's audience, region and message.
+- "Prompt": a text area, first filled by `prefilledPrompt` from the variant's subjects and the campaign's audience, region and message (without the message when the ad's text layers hold words).
 - "Reference pictures": "{n} chosen" or "None chosen", and "Choose reference pictures…" (the reference dialog). The first time a layer is shown, the reference-library pictures of the variant's subjects are chosen, up to `MAX_REFERENCES_PER_RUN`, skipping ones that cannot be sent. (Built, SP-7: every picture attached to the subjects, in either library; `spec/subject-photos.md`.)
 - The prompt and the chosen pictures are kept per layer while the project is open (`stores/generate-drafts.ts`), not saved.
 - "Generate…" opens the run dialog (`job: 'image'`, count "Pictures" from `settings.generation.optionsPerRun`, `referenceCount`, `campaignId`). Confirm sends `generation.runImages { projectId, variantId, layerId, prompt, referenceAssetIds, count, provider }`.
-- After the reply, one line follows the started job by `job.updated`: "Making {n} pictures…", "Done. Choose one under Earlier options.", "Cancelled.", or the failure sentence. A visit after the start reads `job.list` for the layer once, so a change it missed shows (`run-status.tsx`).
+- After the reply, one line follows the started job by `job.updated`: "Making {n} pictures…", the "Done…" words of "The Generate panel" above, "Cancelled.", or the failure sentence. A visit after the start reads `job.list` for the layer once, so a change it missed shows (`run-status.tsx`).
 - The provider is asked for the shape of the layer's box (OI-70; the rule is in `spec/api-commands.md`, `generation.runImages`).
 
 ### Reference dialog
@@ -101,6 +112,8 @@ In `editor/picture-fields/` (`cut-out.tsx`, `cut-out-status.tsx`) [REQ: FR-307].
 - The command's refusals, shown in the run dialog: "That provider cannot place text." (`INVALID_INPUT`), "That variant was not found." (`NOT_FOUND`), "Add text to a text layer first." (`INVALID_INPUT`), and `NEEDS_KEY`, which opens the key dialog.
 - The banner (`editor/editor-banner/`) shows, first of its lines: "Placing text with AI…" with "Stop" (`job.cancel`, no warning). As built (LK-6), the top-bar button is disabled while a layout run this editor started for the variant is going.
 - **When the job succeeds** while the window is open, the finish step reads `job.get` and `variant.get` again and sends one `layer.updateMany` built by `layoutPatches` from the result, whether or not the tab is the one shown. It sends through `window.api`, so a refusal does not reach the app banner. A variant deleted while the call was out: the job still succeeds, `layer.updateMany` refuses with `NOT_FOUND`, and nothing is shown. Undo puts the text back. As built (P4-T3), `layout-run.ts` marks the handled result seen, also when it was refused or the variant is gone.
+- **Readable text** (R2E-2). Before the result is stored, the job checks each text box against the picture under it (the picture it already drew, no extra call). Text is kept readable to a contrast of 4.5:1: the colour is kept if it reaches it; else it becomes the brand colour (or white or black) that does; else a solid text box is added behind it. The banner then says "Text placed. The colour of 1 text was changed so it stands out from the picture." ("The colours of {n} texts were changed…"), with "Dismiss". If the picture cannot be read, the boxes go as before and one warn log line is written.
+- **Type styles** (R2E-3). When the project has no font of its own, the run offers the five built-in type styles (`spec/editor.md`, "Text settings") and each box may come back with one.
 - A failed job, or another refusal of `layer.updateMany`, shows "Text could not be placed. {sentence}" with "Dismiss". There is no "Retry"; the button starts a new run. The window keeps the line per variant, so a tab shown again still has it.
 
 ## Reading a brief with AI
@@ -125,7 +138,7 @@ In `editor/picture-fields/` (`cut-out.tsx`, `cut-out-status.tsx`) [REQ: FR-307].
   3. Status, as the run row words it, and "Started {HH:MM}". "Started by an agent" when so. A not-yet-looked-at result shows the mark "New".
   4. Buttons: "Go there" (`aria-label` "Go to {where}"); "Cancel" by `ui/cancel-shown.ts` (moved from `run-row/`); "Retry" for a failed or cancelled background job (`row-retry.tsx`): a local provider at once; a paid or unknown one, for pictures and cut-outs, through the run dialog with `retry` (title "Retry the run", the picture count fixed), and for a video, the run row's one-line paid confirm. An attached job is started again from its own dialog or tab, not from here (A-63).
   5. A failed row shows its sentence through `ui/run-failure/`.
-- **Go there** (`ui/go-there.ts`, through the nav store), in one action, then the panel closes: a job with a layer opens the campaign tab and the variant tab, shows it and selects the layer, so its earlier options show; a gone layer leads to the variant; a gone variant, or a video job, leads to the campaign overview; a brief reading leads to the Project tab; a gone campaign has no "Go there". It sends no `job.markSeen`; the view that shows the result does.
+- **Go there** (`ui/go-there.ts`, through the nav store), in one action, then the panel closes: a job with a layer opens the campaign tab and the variant tab, shows it and selects the layer, so its earlier options show; a gone layer leads to the variant; a gone variant leads to the campaign overview; a video job leads to its layer, else its variant (R2E-6); a brief reading leads to the Project tab; a gone campaign has no "Go there". It sends no `job.markSeen`; the view that shows the result does.
 
 ## Attached jobs and the close warning
 
@@ -138,7 +151,7 @@ In `editor/picture-fields/` (`cut-out.tsx`, `cut-out-status.tsx`) [REQ: FR-307].
   - Buttons "Stop and close" (sends `job.cancel` for each, then closes) and "Keep open" (has the focus; closes nothing).
 - **Where it shows:** closing a variant tab (its jobs); closing a campaign tab (the jobs of its variant tabs); closing the copy options or the reading dialog, by its button, Escape or the frame's close.
 - **Closing a project** (the project switcher's "Close project") with any job queued or running: a dialog "Close {project}?", "{n} runs are still going in this project. Closing stops them. Requests already sent to a paid provider may still be charged, and their results are lost.", buttons "Stop runs and close" (`project.close { runningJobs: 'stop' }`) and "Keep open".
-- **Quitting** with jobs queued or running in any open project: the main process (`src/main/index.ts`) shows a system message box before quitting, "Quit Adman?", detail "{n} runs are still going. Quitting stops them. Requests already sent to a paid provider may still be charged, and their results are lost.", buttons "Quit" and "Cancel". "Quit" closes every project through `project.close` with `'stop'` (`closeAllStopping` in `core.ts`), then quits. With nothing running, no box. The text is built by a pure function with its own unit test.
+- **Quitting** with jobs queued or running in any open project: the main process (`src/main/index.ts`) shows a system message box before quitting, "Quit AdManager?", detail "{n} runs are still going. Quitting stops them. Requests already sent to a paid provider may still be charged, and their results are lost.", buttons "Quit" and "Cancel". "Quit" closes every project through `project.close` with `'stop'` (`closeAllStopping` in `core.ts`), then quits. With nothing running, no box. The text is built by a pure function with its own unit test.
 
 ## Choices made without a design sign-off
 

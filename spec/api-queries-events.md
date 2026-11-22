@@ -24,6 +24,7 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 | `job.getServerMessage` | `{ text: string \| null }`: the cleaned server text for a failed ComfyUI job, or null (`spec/comfyui.md`) [REQ: FR-267]. User only. | Built |
 | `comfy.getInfo` | Shipped ComfyUI workflow data (below). User only. | Built |
 | `project.listOpen` | `{ id, name }[]` for open projects only, never `filePath` | Built |
+| `agent.askFiles` | Input `{ requestId }`. `{ files: string[] }`: the normalised full paths of an open import ask, in order; after the request ends `NOT_FOUND` "That request has ended." Held in memory for the request's life only. User only: an agent gets `AGENT_DENIED`. The one reply that carries paths an agent named (`spec/security.md`, "Paths in the renderer") | Built (R2P-5) |
 | `report.list` / `report.get` | Saved reports [REQ: FR-151]. User only | Built (P8-9) |
 | `history.state` | `UndoStateResult = { canUndo, canRedo }` for a scope | Built |
 | `publish.inspect` | Whether the campaign's cloud folder already has files [REQ: FR-164], and the component files a publish would upload, each with its full local path [REQ: R-06, 8.4], and each font's `share` and `sha256` (`spec/phases/phase-09.md`). User only | Built (P9-9, P9-12) |
@@ -199,7 +200,10 @@ Built: `project.changed`, `app.stateChanged`, `job.updated`, `asset.changedOnDis
 | `asset.changedOnDisk` | `{ projectId, assetIds }`: the linked assets whose content changed outside the app. Sent after `asset.checkChanged` succeeds with a non-empty list. The signal to draw those pictures again; the render service redraws the thumbnails of variants that use them (`spec/scene.md`). | Built |
 | `thumbnail.changed` | `{ projectId, variantId }`: sent after a thumbnail write, a delete, a failed draw or a failed save; a window showing it sends `thumbnail.get` again (`spec/editor-commands.md`) | Built |
 | `app.stateChanged` | Empty (`Record<string, never>`). Something `app.getState` returns has changed: a project was opened or closed, settings changed, a key was saved or deleted, or agent access changed. Each window reads `app.getState` again. | Built |
-| `agent.permissionRequested` | `{ requestId, agentClient, action, target, expiresAt }` (`agentClient` the cleaned client name or null) | Built (P10-6) |
+| `agent.permissionRequested` | `{ requestId, agentClient, action, target, expiresAt, kind, fileCount }` (`agentClient` the cleaned client name or null; `kind` `'delete'` or `'import'`; `fileCount` 0 for a delete). No ID of the target, no input, no path: an import's paths reach the window only through `agent.askFiles` | Built (P10-6; kind and fileCount R2P-1) |
+| `app.showProject` | `{ projectId }`: show this open project. Sent by the main process after a system open (a file double-click or a second launch handed over by the single-instance lock), for a new and an already open project alike (`spec/editor.md`, "Which project shows") | Built (R2P-9) |
+| `approvals.changed` | `{ projectId, campaignId }`: the approvals tables changed (`spec/approvals-commands.md`) | Built |
+| `approvals.progress` | `{ projectId, campaignId, step: 'making' \| 'sending', done, total }`: before each clip is made and each clip upload of an "Update gallery". IDs and counts only | Built (R2V-7) |
 | `agent.activity` | `{ tool, projectId, ok, at }`, one per tool call, never arguments or replies; for the "Agent working" line | Built (P10-8) |
 | `mcp.status` | enabled, port, connected client names | Not built (A-243: `app.stateChanged` with `mcp.getConnectInfo` gives on, off and port) |
 

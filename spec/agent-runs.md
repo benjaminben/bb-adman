@@ -24,7 +24,7 @@ An agent connected through the MCP server can start, follow and cancel its own p
 - No agent reads or changes Settings, keys, storage, the ComfyUI address, a tick or the limit. `agentRuns.setAllowed` and `agentRuns.setLimit` are `deny`. An agent learns a tick is off only from the refusal sentence.
 - Nothing on the ComfyUI server is cleared. No new client call; cancel uses the own-ID rule (`spec/cancel.md`, 'ComfyUI').
 - Still `deny` for an agent: `job.retry`, `job.markSeen`, `job.getServerMessage`, `comfy.getInfo`, `comfy.check`, `asset.import`, `export.run`, `publish.run`.
-- No picture or clip bytes are returned to an agent (OI-92). No picture is added from disk by an agent (OI-93).
+- No picture or clip bytes are returned to an agent (OI-92). An agent adds a picture from disk only with `import_assets` (or a brief with file paths), which asks the user every time and shows each full path (Round 2, R-3; `spec/mcp-and-agents.md`).
 
 ## `trial` workflows, same rule for both actors
 
