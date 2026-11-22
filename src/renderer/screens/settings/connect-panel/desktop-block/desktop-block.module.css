@@ -1,0 +1,14 @@
+/* app-style */
+/* P10-9: the Claude Desktop entry, on the same code ground as the Claude Code line, kept in
+   its lines and wrapped so it stays inside the card. */
+.entry {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius);
+  background: var(--color-surface-soft);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  white-space: pre-wrap;
+  word-break: break-all;
+}

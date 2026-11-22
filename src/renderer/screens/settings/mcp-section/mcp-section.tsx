@@ -148,7 +148,12 @@ export function McpSection() {
       </div>
       <AutoApproveSetting />
       {info.enabled && info.token !== null && info.claudeCode !== null && (
-        <ConnectPanel address={info.address} token={info.token} claudeCode={info.claudeCode} />
+        <ConnectPanel
+          address={info.address}
+          token={info.token}
+          claudeCode={info.claudeCode}
+          claudeDesktop={info.claudeDesktop}
+        />
       )}
     </section>
   )

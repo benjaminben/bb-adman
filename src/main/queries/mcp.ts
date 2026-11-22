@@ -4,6 +4,7 @@ import type { CoreDeps } from '@/main/core-deps'
 import type { QueryFn } from './types'
 import type { ConnectInfo, McpProblem } from '@/shared/schemas/queries/mcp'
 import { AppError } from '@/shared/schemas/result'
+import { claudeDesktopText } from '@/main/bridge/launch-command'
 
 export const CONNECT_INFO_DENIED =
   'Agents cannot read the agent access settings in this version. Ask the user to do it in the app.'
@@ -24,7 +25,9 @@ export function mcpGetConnectInfo(deps: Deps, mcp: McpState): QueryFn {
       : null
     const running = mcp.running()
     const problem = mcp.problem()
-    return { enabled, running, problem, address, port, token, claudeCode, claudeDesktop: null }
+    // P10-9 (A-245): how Claude Desktop starts the bridge; no token in it. Null while off.
+    const claudeDesktop = enabled ? claudeDesktopText() : null
+    return { enabled, running, problem, address, port, token, claudeCode, claudeDesktop }
   }
 }
 
