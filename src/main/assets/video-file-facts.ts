@@ -2,9 +2,11 @@
 // own box reader. The file is untrusted: the top-level boxes are found by reading each
 // header in place, at most MAX_BOXES of them, and only the moov box is read whole, when it
 // holds at most MAX_MOOV_BYTES. The walk keeps checkMp4's depth and side limits. Any fault
-// gives null, and nothing read from the file reaches a message.
+// gives null, and nothing read from the file reaches a message. A first video track with a
+// side below 1, or a length past a day (the longest ad), gives null too.
 import type fs from 'node:fs'
 import { MAX_VIDEO_SIDE } from '@/main/providers/picture-limits'
+import { MAX_TRACK_MS } from '@/shared/schemas/commands/clip'
 import {
   durationOf,
   handlerOf,
@@ -76,8 +78,9 @@ function factsOfMoov(view: DataView, boxesBefore: number): VideoFileFacts {
   if (sizes.some((s) => s.width > MAX_VIDEO_SIDE || s.height > MAX_VIDEO_SIDE)) {
     refuse(MP4_REFUSED.tooBig)
   }
+  if (first.width < 1 || first.height < 1) refuse(MP4_REFUSED.badBox)
   const durationMs = durationOf(view, moov)
-  if (!Number.isSafeInteger(durationMs)) refuse(MP4_REFUSED.tooLong)
+  if (!Number.isSafeInteger(durationMs) || durationMs > MAX_TRACK_MS) refuse(MP4_REFUSED.tooLong)
   return { ...first, durationMs, hasSound: handlers.includes('soun') }
 }
 

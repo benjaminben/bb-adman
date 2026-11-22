@@ -71,9 +71,25 @@ export const clipReorderInput = projectScoped
 export type ClipReorderInput = z.infer<typeof clipReorderInput>
 
 // System commands: no window may send them.
-// clip.restore: the inverse of clip.remove, the removed rows as they were.
+// clip.restore: the inverse of clip.remove and clip.reorder, the rows as they were. Each row is
+// bounded as clip.add and clip.update bound what they write.
+const restoreRow = BackgroundClipRow.extend({
+  id,
+  variantId: id,
+  assetId: id,
+  startMs: ms,
+  inMs: ms,
+  outMs: ms,
+  placement,
+})
+  .strict()
+  .refine((r) => r.outMs - r.inMs >= MIN_CLIP_MS, {
+    message: 'A clip runs at least 100 ms.',
+    path: ['outMs'],
+  })
+
 export const clipRestoreInput = projectScoped
-  .extend({ rows: z.array(BackgroundClipRow.strict()).min(1).max(MAX_CLIPS) })
+  .extend({ rows: z.array(restoreRow).min(1).max(MAX_CLIPS) })
   .strict()
 export type ClipRestoreInput = z.infer<typeof clipRestoreInput>
 

@@ -161,4 +161,18 @@ describe('videoFileFacts: the facts of an imported MP4 or MOV from its boxes [A-
       height: 240,
     })
   })
+
+  it.each([
+    ['a width of 0', join(ftyp(), moov(4000, trak('vide', 0, 360)))],
+    ['a height of 0', join(ftyp(), moov(4000, trak('vide', 640, 0)))],
+    ['a length over 24 hours', join(ftyp(), moov(86_400_001))],
+  ])('gives null for %s', async (_, bytes) => {
+    expect(await factsOf(bytes)).toBeNull()
+  })
+
+  it('reads a length of exactly 24 hours', async () => {
+    expect(await factsOf(join(ftyp(), moov(86_400_000)))).toMatchObject({
+      durationMs: 86_400_000,
+    })
+  })
 })
