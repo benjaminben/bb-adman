@@ -1,0 +1,25 @@
+/* app-style */
+/* The file list of an import ask (D7): full paths in the mono face, each wrapping at any
+   character, in a box that scrolls past about 8 lines. */
+.list {
+  max-height: calc(var(--space-6) * 8);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  overflow-y: auto;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-soft);
+  list-style: none;
+}
+.item {
+  padding: var(--space-1) 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-control);
+  overflow-wrap: anywhere;
+}
+.item + .item {
+  border-top: var(--border-width) solid var(--color-border);
+}
+.line {
+  margin: 0 0 var(--space-3);
+}
