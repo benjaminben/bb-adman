@@ -56,7 +56,7 @@ describe('delete_campaign over MCP [P10-6; A-237, A-238]', () => {
       agentClient: null,
       action: 'delete campaigns',
       target: expect.stringMatching(
-        /^Campaign "Summer Splash!" \(\d+ variants\) in "Spring Work"$/,
+        /^Campaign "Summer Splash!" \(\d+ variants?\) in "Spring Work"$/,
       ),
       expiresAt: new Date(CLOCK.getTime() + ASK_WAIT_MS).toISOString(),
     })
