@@ -149,8 +149,8 @@ describe('permission dialog for files [R2P-6, D7]', () => {
       fileCount: 1,
       agentClient: 'Planner',
     })
-    const { dialog, fake } = await open(ask, () => ok([FILES[0]]))
-    await waitFor(() => expect(items(dialog)).toEqual([FILES[0]]))
+    const { dialog, fake } = await open(ask, () => ok(FILES.slice(0, 1)))
+    await waitFor(() => expect(items(dialog)).toEqual(FILES.slice(0, 1)))
     expect(dialog).toHaveAccessibleName('An agent asks to make a campaign with files')
     expect(dialog).toHaveTextContent(
       `Agent named Planner wants to make campaigns that import files: ${BRIEF_TARGET}.`,
