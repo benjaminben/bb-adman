@@ -42,10 +42,11 @@ export function stepFrom<T>(order: readonly T[], current: T, step: number): T | 
   return order[at + step] ?? null
 }
 
-// A field keeps its own arrow keys.
+// A field keeps its own arrow keys, and so does a video's player, which seeks with them
+// (round-2-approvals-video.md "The gallery").
 const inField = (target: Target) =>
   target?.isContentEditable === true ||
-  (target?.closest?.('input, textarea, select') ?? null) !== null
+  (target?.closest?.('input, textarea, select, video') ?? null) !== null
 
 // The button on the card that opens this lightbox: the picture, the first in the card.
 function openerOf(lightbox: Lightbox): Opener | null {

@@ -198,7 +198,7 @@ describe('the service code', () => {
     'import(',
   ])('has no %s under src/ui/gallery-script/', (banned) => {
     const files = sourceFiles('src/ui/gallery-script')
-    expect(files.length).toBe(4)
+    expect(files.length).toBe(5)
     for (const file of files) expect(read(file), file).not.toContain(banned)
   })
 })
