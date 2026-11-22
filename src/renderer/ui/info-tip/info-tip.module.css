@@ -1,0 +1,51 @@
+/* app-style */
+/* An InfoTip (spec/app-style-parts.md "InfoTip"): a quiet info button and its popover, placed
+   by menu-place so it stays inside the window. */
+.holder {
+  display: inline-flex;
+  vertical-align: middle;
+}
+.button {
+  color: var(--color-text-muted);
+}
+.button[aria-expanded='true'] {
+  color: var(--color-accent-ink);
+}
+.pop {
+  z-index: 2;
+  display: block;
+  width: max-content;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-2);
+  font-family: var(--font-body);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  line-height: var(--leading-body);
+  letter-spacing: normal;
+  color: var(--color-text);
+  text-align: left;
+  white-space: normal;
+}
+.pop[hidden] {
+  display: none;
+}
+/* The gap between the button and the popover still counts as resting on them. */
+.pop::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  height: var(--space-1);
+}
+.pop[data-block='above']::before {
+  top: 100%;
+  bottom: auto;
+}
+.words {
+  display: block;
+  max-width: var(--infotip-width);
+}

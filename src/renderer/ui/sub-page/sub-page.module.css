@@ -1,0 +1,27 @@
+/* app-style */
+/* A SubPage (spec/app-style-parts.md "SubPage"): a head row with Back and the title in the
+   title face, then the content. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-field);
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-inline);
+  min-height: var(--row-height);
+}
+.title {
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  line-height: var(--leading-tight);
+}
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-field);
+}
