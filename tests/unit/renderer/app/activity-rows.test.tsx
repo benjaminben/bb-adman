@@ -62,8 +62,9 @@ async function drawRow(job: JobRow, place: JobPlace = PLACE) {
     </main>,
     fake,
   )
-  const retries = () => fake.commands.filter((c) => c.name === 'job.retry')
-  return { onGo, retries, row: within(screen.getByRole('listitem')) }
+  const sent = (name: string) => fake.commands.filter((c) => c.name === name)
+  const retries = () => sent('job.retry')
+  return { onGo, sent, retries, row: within(screen.getByRole('listitem')) }
 }
 
 describe('Activity panel head and lists [SH-4]', () => {
@@ -166,5 +167,23 @@ describe('Activity row [SH-4]', () => {
     const { row } = await drawRow(jobRow('J1', { status: 'failed', errorKind: 'quota' }))
     expect(row.getByText(plainMessage('quota', 'Google Gemini'))).toBeVisible()
     expect(row.getByText('Failed')).toBeVisible()
+  })
+
+  it('keeps "Cancelled" as visible words', async () => {
+    const { row } = await drawRow(jobRow('J1', { status: 'cancelled' }))
+    expect(row.getByText('Cancelled')).toBeVisible()
+  })
+
+  it('sends one job.cancel per click on Cancel, as before', async () => {
+    const { row, sent } = await drawRow(jobRow('J1', { status: 'queued' }))
+    await userEvent.click(row.getByRole('button', { name: 'Cancel' }))
+    expect(sent('job.cancel').map((c) => c.input)).toEqual([{ projectId: 'P1', jobId: 'J1' }])
+  })
+
+  it('puts no path from the job into its text, names or attributes', async () => {
+    const request = { prompt: 'A can', sourcePath: '/Users/someone/private/can.png', count: 2 }
+    const result = { filePath: '/Users/someone/private/out.png' }
+    await drawRow(jobRow('J1', { status: 'failed', errorKind: 'other', request, result }))
+    expect(screen.getByRole('listitem').outerHTML).not.toContain('/Users/')
   })
 })
