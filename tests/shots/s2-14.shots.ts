@@ -27,7 +27,8 @@ test('the brief form: sizes, languages and rules', async () => {
   await brief.getByRole('button', { name: 'Create campaign' }).click()
   await page.getByRole('button', { name: 'Back to project' }).click()
 
-  await page.getByRole('button', { name: 'Type a brief' }).click()
+  await page.getByRole('button', { name: 'Paste a brief' }).click()
+  await page.getByRole('button', { name: 'Start from an empty form' }).click()
   await brief.getByLabel('Campaign name').fill('Back to Class')
   await brief.getByLabel('Region').fill('Canada')
   await brief.getByLabel('Region').blur()
