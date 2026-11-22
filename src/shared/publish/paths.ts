@@ -1,6 +1,7 @@
 // The one owner of every published path (spec/storage-and-publish.md "Published layout"):
 //   {campaignId}/exports/{postTitle}/{sizeLabel}/{language}-{variantId}.{ext}
-//   {campaignId}/components/{folder}[/{subjectId}]/{displayName}-{assetId8}.{ext}
+//   {campaignId}/components/{folder}[/{subjectId}]/{displayName}-{assetId8}.{ext}, assetId8 the
+//   last 8 characters of the asset ID (the random part of the ULID)
 //   {campaignId}/translations.csv, report.html, report.json, manifest.json
 // The paths below the campaign folder are relative to it, as the manifest lists them. A project
 // file may come from anyone, so every part is checked here (spec/phases/phase-09.md
@@ -82,6 +83,6 @@ export function componentPath(c: ComponentName): string {
   if (!COMPONENT_EXTENSIONS.includes(c.ext)) refuse()
   if ((c.folder === 'subjects') !== isUlid(c.subjectId)) refuse()
   const folder = c.folder === 'subjects' ? `subjects/${c.subjectId}` : c.folder
-  const file = `${safePathPart(c.displayName, 'asset')}-${c.assetId.slice(0, 8)}.${c.ext}`
+  const file = `${safePathPart(c.displayName, 'asset')}-${c.assetId.slice(-8)}.${c.ext}`
   return checkedRelative(`components/${folder}/${file}`)
 }
