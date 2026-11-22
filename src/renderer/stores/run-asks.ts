@@ -1,6 +1,7 @@
 // S2-6 (spec/screens-campaign.md, "The address dialog" and "The commercial-licence dialog"):
 // which refusal of which command opens which dialog. Only the four run commands ask; every
 // other refusal, `comfy.check` included, goes to the error banner as before. Pure.
+// P5-16 adds the fan-out's fill run (spec/screens-variants.md, "Fan-out").
 import type { ErrorBody } from '@/shared/schemas/result'
 
 const RUN_COMMANDS: readonly string[] = [
@@ -8,6 +9,7 @@ const RUN_COMMANDS: readonly string[] = [
   'generation.startVideo',
   'job.retry',
   'generation.cutOut',
+  'generation.runFill',
 ]
 
 export type RunAsk = { kind: 'address' } | { kind: 'licence'; workflow: string }

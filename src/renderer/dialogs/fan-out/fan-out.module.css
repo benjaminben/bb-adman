@@ -1,0 +1,39 @@
+/* app-style */
+/* The fan-out dialog (spec/screens-variants.md, "Fan-out"): the sizes, languages and each
+   background fit as a group of rows; the count line and the paid line in control type. */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.body p {
+  margin: 0;
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.group legend {
+  padding: 0;
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+.choice {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  font-size: var(--font-size-control);
+}
+.choice:has(input:disabled) {
+  color: var(--color-text-muted);
+}
+.line {
+  font-size: var(--font-size-control);
+}

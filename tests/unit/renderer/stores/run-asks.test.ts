@@ -177,3 +177,33 @@ describe('the app store asks and sends again [S2-6, FR-255, D-088]', () => {
     expect(store.getState().error).toBe(error.message)
   })
 })
+
+describe('generation.runFill asks as a picture run does [P5-16]', () => {
+  const FILL = { projectId: 'P1', variantId: 'V2', provider: 'comfyui' }
+
+  it.each([
+    [ADDRESS, { kind: 'address' }],
+    [LICENCE, { kind: 'licence', workflow: 'h3-text-to-video' }],
+  ])('a runFill refused with %j asks %j', (error, ask) => {
+    expect(runAsk('generation.runFill', error)).toEqual(ask)
+  })
+
+  it('asks for the address, then the licence, and sends the fill again with the flag', async () => {
+    const { fake, store } = await storeWith(
+      [
+        { ok: false, error: ADDRESS },
+        { ok: false, error: LICENCE },
+      ],
+      'generation.runFill',
+    )
+    const done = store.getState().command('generation.runFill', FILL)
+    ;(await whenAsked(store, 'addressRequest')).resolve(true)
+    ;(await whenAsked(store, 'licenceRequest')).resolve({ confirmed: true, remember: null })
+    expect((await done).ok).toBe(true)
+    expect(fake.commands).toEqual([
+      { name: 'generation.runFill', input: FILL },
+      { name: 'generation.runFill', input: FILL },
+      { name: 'generation.runFill', input: { ...FILL, licenceConfirmed: true } },
+    ])
+  })
+})
