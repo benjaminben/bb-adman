@@ -1,0 +1,44 @@
+/* app-style */
+/* The publish file list (P9-12): a section label, then each folder with its files. A long name
+   or path wraps; it never widens the dialog. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.heading,
+.folder {
+  margin: 0;
+  font-size: var(--font-size-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-secondary);
+}
+.folder {
+  margin-bottom: var(--space-1);
+  font-weight: var(--weight-regular);
+}
+.group {
+  min-width: 0;
+}
+.item {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-1) 0;
+  border-top: var(--border-width) solid var(--color-line);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.name {
+  font-size: var(--font-size-control);
+  font-weight: var(--weight-medium);
+}
+.path {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+.mark {
+  font-size: var(--font-size-small);
+  color: var(--color-warn-text);
+}
