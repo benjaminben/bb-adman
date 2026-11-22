@@ -1,7 +1,7 @@
 // spec/screens-variants.md, "Direction dialogs": the dialog for "New direction" and for
 // "Rename {name}". One field, "Name", and the button that sends the command. The name rules are
 // the command's; a refusal shows here (role alert) as well as in the banner, and the dialog
-// stays open. Success closes it.
+// stays open. Success closes it. Design wave CAMP-2: the `form` kind; Cancel is quiet.
 import { useId, useState, type FormEvent } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import { DialogFoot, DialogFrame } from '@/renderer/ui/dialog-frame'
@@ -56,7 +56,12 @@ function NameBody(props: BodyProps) {
         </p>
       )}
       <DialogFoot>
-        <button type="button" disabled={props.sending} onClick={props.onClose}>
+        <button
+          type="button"
+          className={layout.quiet}
+          disabled={props.sending}
+          onClick={props.onClose}
+        >
           Cancel
         </button>
         <button type="submit" className={layout.primary} disabled={props.sending}>
@@ -70,7 +75,13 @@ function NameBody(props: BodyProps) {
 export function NameDialog(props: NameDialogProps) {
   const [sending, setSending] = useState(false)
   return (
-    <DialogFrame open={props.open} onClose={props.onClose} title={props.title} closable={!sending}>
+    <DialogFrame
+      open={props.open}
+      onClose={props.onClose}
+      title={props.title}
+      kind="form"
+      closable={!sending}
+    >
       {props.open && <NameBody {...props} sending={sending} setSending={setSending} />}
     </DialogFrame>
   )

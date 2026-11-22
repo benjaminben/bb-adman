@@ -1,6 +1,7 @@
 // spec/screens-variants.md, "The overview": one section per direction, in directions order,
-// labelled by its level-3 heading, then "{n} variant(s)", the direction's controls and a grid
-// "Variants in {name}" in direction-order.ts order (A-144). A plain click on a tile selects it;
+// labelled by its level-3 heading, then its header (direction-header/) and a grid "Variants in
+// {name}" in direction-order.ts order (A-144). CAMP-2: each direction is a Section look with no
+// fold and no card; an empty one shows "No variants". A plain click on a tile selects it;
 // a Cmd-click (Ctrl-click on Windows) opens it behind, like the tile's "+" (P3-10).
 // R2C-3 (design addition 3): a double-click or Enter opens it (onOpen). A Cmd-double-click has
 // already opened it behind by its clicks, so it opens nothing more. A key press forgets the last
@@ -10,18 +11,20 @@
 // Design wave CAMP-1 (C-11): each direction gives its tiles their marks' targets
 // (TileTargetsContext): onView shows Checks or Translations, the Activity panel opens through
 // its store, and one relink dialog serves the campaign. A tile's title shows only when titles
-// differ within its direction (OI-DW-3).
+// differ within its direction (OI-DW-3). CAMP-2: the direction holds its sync review's
+// opening, so the tiles' "Out of date" marks open the same review as "Sync {n}".
 import { useCallback, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { DeleteVariant } from '@/renderer/dialogs/delete-variant'
 import { QuickLook } from '@/renderer/dialogs/quick-look'
 import { RelinkDialog } from '@/renderer/dialogs/relink-dialog'
+import { outOfDateCount, useSyncOpen } from '@/renderer/dialogs/sync-review'
 import { platform } from '@/renderer/editor/use-editor-key'
 import { DirectionHeader } from '@/renderer/screens/campaign/direction-header'
 import { VariantGrid } from '@/renderer/screens/campaign/variant-grid'
 import { TileTargetsContext, type TileView } from '@/renderer/screens/campaign/variant-tile'
 import type { CampaignGet, VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { DirectionRow } from '@/shared/schemas/rows/direction'
-import layout from '@/renderer/ui/layout.module.css'
+import { EmptyState } from '@/renderer/ui/empty-state'
 import { directionOrder } from './direction-order'
 import styles from './direction-grids.module.css'
 import { useOpenActivity } from './use-open-activity'
@@ -41,6 +44,7 @@ export type DirectionGridsProps = {
 
 type SectionProps = DirectionGridsProps & {
   direction: DirectionRow
+  first: boolean
   onQuickLook: (variantId: string) => void
   onDelete: (variantId: string) => void
   onActivity?: () => void
@@ -61,44 +65,53 @@ function DirectionSection(props: SectionProps) {
   const headingId = useId()
   const behind = useRef(false)
   const variants = ordered(campaign, direction)
+  const sync = useSyncOpen()
+  const controls = { projectId: props.projectId, campaign, direction }
   const targets = {
     showTitle: new Set(variants.map((v) => v.title)).size > 1,
     onView: props.onView,
     onActivity: props.onActivity,
     onRelink: props.onRelink,
+    onSync: outOfDateCount(controls) > 0 ? sync.show : undefined,
   }
   return (
     <section aria-labelledby={headingId} className={styles.direction}>
-      <h3 id={headingId} className={styles.heading}>
-        {direction.name}
-      </h3>
-      <p className={`${layout.muted} ${styles.count}`}>{variants.length} variant(s)</p>
-      <DirectionHeader projectId={props.projectId} campaign={campaign} direction={direction} />
-      <div
-        onClickCapture={(event) => {
-          behind.current = opensBehind(event)
-        }}
-        onKeyDownCapture={() => {
-          behind.current = false
-        }}
-      >
-        <TileTargetsContext.Provider value={targets}>
-          <VariantGrid
-            projectId={props.projectId}
-            label={`Variants in ${direction.name}`}
-            variants={variants}
-            chosenId={props.chosenId}
-            onChoose={(id) => (behind.current ? props.onOpenBehind(id) : props.onChoose(id))}
-            onOpen={(id) => {
-              if (!behind.current) props.onOpen?.(id)
-            }}
-            onOpenBehind={props.onOpenBehind}
-            onQuickLook={props.onQuickLook}
-            onDelete={props.onDelete}
-            tileFooter={props.tileFooter}
-          />
-        </TileTargetsContext.Provider>
-      </div>
+      <DirectionHeader
+        {...controls}
+        headingId={headingId}
+        count={variants.length}
+        first={props.first}
+        sync={sync}
+      />
+      {variants.length === 0 ? (
+        <EmptyState icon="grid" words="No variants" />
+      ) : (
+        <div
+          onClickCapture={(event) => {
+            behind.current = opensBehind(event)
+          }}
+          onKeyDownCapture={() => {
+            behind.current = false
+          }}
+        >
+          <TileTargetsContext.Provider value={targets}>
+            <VariantGrid
+              projectId={props.projectId}
+              label={`Variants in ${direction.name}`}
+              variants={variants}
+              chosenId={props.chosenId}
+              onChoose={(id) => (behind.current ? props.onOpenBehind(id) : props.onChoose(id))}
+              onOpen={(id) => {
+                if (!behind.current) props.onOpen?.(id)
+              }}
+              onOpenBehind={props.onOpenBehind}
+              onQuickLook={props.onQuickLook}
+              onDelete={props.onDelete}
+              tileFooter={props.tileFooter}
+            />
+          </TileTargetsContext.Provider>
+        </div>
+      )}
     </section>
   )
 }
@@ -113,11 +126,12 @@ export function DirectionGrids(props: DirectionGridsProps) {
   const all = campaign.directions.flatMap((direction) => ordered(campaign, direction))
   return (
     <>
-      {campaign.directions.map((direction) => (
+      {campaign.directions.map((direction, i) => (
         <DirectionSection
           key={direction.id}
           {...props}
           direction={direction}
+          first={i === 0}
           onQuickLook={setLookId}
           onDelete={setDeleteId}
           onActivity={onActivity}

@@ -12,14 +12,15 @@ export type TileTargets = {
   onView?: (view: TileView) => void
   onActivity?: () => void
   onRelink?: () => void
+  onSync?: () => void
 }
 
 export const TileTargetsContext = createContext<TileTargets>({})
 
 export const useTileTargets = () => useContext(TileTargetsContext)
 
-// The fix each mark leads to, where one exists today. "Out of date" is plain (CAMP-2 makes it
-// open the sync).
+// The fix each mark leads to, where one exists today. CAMP-2: "Out of date" opens the
+// direction's sync review.
 export function markTarget(
   key: BadgeKey,
   targets: TileTargets,
@@ -34,6 +35,8 @@ export function markTarget(
       return open
     case 'missingFile':
       return targets.onRelink
+    case 'outOfDate':
+      return targets.onSync
     case 'translationUnapproved':
       return view && (() => view('translations'))
     case 'checkWarning':

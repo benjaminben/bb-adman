@@ -1,6 +1,6 @@
 // The campaign's variants as a grid of tiles (spec/screens-campaign.md, "The campaign grid
-// and the variant tile"). With onOpenBehind, each tile gets the "+" button that opens the
-// variant's tab behind the overview (spec/editor.md, "Variant tabs"). With projectId, each tile
+// and the variant tile"). With onOpenBehind, each tile's More menu gets "Open in a tab", which
+// opens the variant's tab behind the overview (spec/editor.md, "Variant tabs"; CAMP-2). With projectId, each tile
 // shows its thumbnail (spec/editor.md, "Thumbnails on the screens"); its alt is empty, since the
 // tile's own text names the variant. P5-14: label names the list ("Variants in {direction
 // name}"); without it the list is "Variants". P5-15: the tile's actions (tile-actions.tsx) and
@@ -55,6 +55,7 @@ function Tile(props: VariantGridProps & { variant: VariantSummary; asked: () => 
         actions={
           <TileActions
             variant={v}
+            onOpen={props.onOpen}
             onOpenBehind={props.onOpenBehind}
             onQuickLook={props.onQuickLook}
             onDelete={props.onDelete}

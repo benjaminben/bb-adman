@@ -101,7 +101,7 @@ describe('SyncButton and the sync review', () => {
     expect(screen.getByRole('button', { name: 'Sync 2 out of date…' })).toBeEnabled()
     unmount()
     await draw(PREVIEW, [MASTER, V4])
-    expect(screen.getByRole('button', { name: 'Nothing to sync' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: /^Sync/ })).toBeNull()
   })
 
   it('reads sync.preview on open and shows "Reading the changes…" meanwhile', async () => {

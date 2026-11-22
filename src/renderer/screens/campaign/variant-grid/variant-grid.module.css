@@ -52,17 +52,12 @@
   flex-direction: column;
   gap: var(--space-2);
 }
-/* The tile's actions ("+", quick look, delete): a row of small square buttons inside the
-   tile, after its main button and outside it, so they never cover the picture on any shape. */
+/* The tile's actions (CAMP-2): the eye and the More menu at the strip's right end, outside the
+   tile's main button, so they never cover the picture on any shape. */
 .actions {
   display: flex;
-  justify-content: flex-end;
-  gap: var(--space-1);
-  padding: 0 var(--space-2) var(--space-2);
-}
-.actions > button {
-  width: var(--control-height-small);
-  min-height: var(--control-height-small);
-  padding: 0;
-  font-size: var(--font-size-body);
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--gap-tight);
+  margin-left: auto;
 }

@@ -51,7 +51,8 @@ const tabs = () =>
 // The tile's own button, not its "+" ("Open {title} in a tab").
 const tile = (title: string) =>
   screen.getByRole('button', {
-    name: (name) => name.includes(title) && !/^(Open|Quick look at|Delete) /.test(name),
+    name: (name) =>
+      name.includes(title) && !/^(Open|Quick look at|Delete|More actions for) /.test(name),
   })
 
 describe('variant tabs [FR-212, FR-214, Q-041]', () => {
@@ -172,7 +173,8 @@ describe('the tile\'s "+" button [FR-214, Q-041]', () => {
         />
       </main>,
     )
-    await userEvent.click(screen.getByRole('button', { name: 'Open German post in a tab' }))
+    await userEvent.click(screen.getByRole('button', { name: 'More actions for German post' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Open in a tab' }))
     expect(onOpenBehind.mock.calls).toEqual([['V2']])
     expect(onChoose).not.toHaveBeenCalled()
     await userEvent.click(tile('Master post'))

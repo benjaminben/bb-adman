@@ -26,8 +26,8 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
     const master = await screen.findByRole('button', { name: /^Master post/ })
     expect(master).toHaveAttribute('aria-pressed', 'true')
     expect(master).toHaveAccessibleName('Master post · 1080×1080 · en · image · master')
-    // Seven buttons: each tile's own button, then its "+" ("Open {title} in a tab", P3-10),
-    // "Quick look at {title}" and, except on the master, "Delete {title}" (P5-15).
+    // Six buttons: each tile's own button, then "Quick look at {title}" and its More menu, which
+    // holds "Open in a tab" and, except on the master, "Delete…" (P3-10, P5-15, CAMP-2).
     const tiles = within(screen.getByRole('list', { name: 'Variants in Main' })).getAllByRole(
       'button',
     )
@@ -36,7 +36,6 @@ describe('CampaignView [SPEC 14 1.41 TP-2]', () => {
       undefined,
       undefined,
       'German post',
-      undefined,
       undefined,
       undefined,
     ])

@@ -40,7 +40,7 @@ async function draw(campaign = twoDirections()) {
   return view
 }
 
-const menuButton = () => screen.getByRole('button', { name: 'Direction' })
+const menuButton = () => screen.getByRole('button', { name: /^More actions for / })
 
 async function choose(item: string) {
   await userEvent.click(menuButton())
@@ -53,7 +53,7 @@ describe('DirectionMenu', () => {
     expect(menuButton()).toHaveAttribute('aria-haspopup', 'menu')
     await userEvent.click(menuButton())
     const items = screen.getAllByRole('menuitem').map((el) => el.textContent)
-    expect(items).toEqual(['New direction from this master…', 'Rename…', 'Delete direction…'])
+    expect(items).toEqual(['New direction…', 'Rename…', 'Delete direction…'])
     expect(screen.getAllByRole('menuitem')[0]).toHaveFocus()
     await userEvent.keyboard('{ArrowUp}')
     expect(screen.getByRole('menuitem', { name: 'Delete direction…' })).toHaveFocus()
@@ -66,7 +66,7 @@ describe('DirectionMenu', () => {
 
   it('makes a new direction from this master with the next free name', async () => {
     const { fake } = await draw()
-    await choose('New direction from this master…')
+    await choose('New direction…')
     const dialog = screen.getByRole('dialog', { name: 'New direction' })
     const name = screen.getByRole('textbox', { name: 'Name' })
     expect(dialog).toContainElement(name)
@@ -116,7 +116,7 @@ describe('DirectionMenu', () => {
     const { fake } = await draw()
     await choose('Delete direction…')
     const dialog = screen.getByRole('dialog', { name: 'Delete Direction 1?' })
-    expect(dialog).toHaveTextContent('Its 2 variant(s) go with it. This cannot be undone.')
+    expect(dialog).toHaveTextContent('Its 2 variants go with it. This cannot be undone.')
     expect(screen.getByRole('button', { name: 'Keep' })).toHaveFocus()
     await userEvent.click(screen.getByRole('button', { name: 'Keep' }))
     expect(screen.queryByRole('dialog')).toBeNull()

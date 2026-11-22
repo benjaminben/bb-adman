@@ -94,6 +94,12 @@ describe('VariantGrid tile actions [P5-15]', () => {
   const mainButton = (title: string) =>
     screen.getByRole('button', { name: new RegExp(`^${title} · `) })
 
+  // CAMP-2: the eye stays on the strip; "Open in a tab" and "Delete…" are More menu items.
+  const deleteVia = async (title: string) => {
+    await userEvent.click(screen.getByRole('button', { name: `More actions for ${title}` }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Delete…' }))
+  }
+
   it('puts "Quick look" and, except on the master, "Delete" after the "+", with titles', async () => {
     const { onQuickLook, onDelete } = actions()
     const items = within(screen.getByRole('list', { name: 'Variants' })).getAllByRole('listitem')
@@ -104,18 +110,24 @@ describe('VariantGrid tile actions [P5-15]', () => {
         .map((b) => b.getAttribute('aria-label')),
     )
     expect(names).toEqual([
-      ['Open Master post in a tab', 'Quick look at Master post'],
-      ['Open German post in a tab', 'Quick look at German post', 'Delete German post'],
-      ['Open Story in a tab', 'Quick look at Story', 'Delete Story'],
+      ['Quick look at Master post', 'More actions for Master post'],
+      ['Quick look at German post', 'More actions for German post'],
+      ['Quick look at Story', 'More actions for Story'],
     ])
     const look = screen.getByRole('button', { name: 'Quick look at Story' })
     expect(look).toHaveAttribute('title', 'Quick look at Story')
-    expect(screen.getByRole('button', { name: 'Delete Story' })).toHaveAttribute(
-      'title',
-      'Delete Story',
-    )
+    await userEvent.click(screen.getByRole('button', { name: 'More actions for Story' }))
+    expect(screen.getAllByRole('menuitem').map((m) => m.textContent)).toEqual([
+      'Open in a tab',
+      'Quick look',
+      'Delete…',
+    ])
+    await userEvent.keyboard('{Escape}')
+    await userEvent.click(screen.getByRole('button', { name: 'More actions for Master post' }))
+    expect(screen.queryByRole('menuitem', { name: 'Delete…' })).toBeNull()
+    await userEvent.keyboard('{Escape}')
     await userEvent.click(look)
-    await userEvent.click(screen.getByRole('button', { name: 'Delete German post' }))
+    await deleteVia('German post')
     expect(onQuickLook.mock.calls).toEqual([['V3']])
     expect(onDelete.mock.calls).toEqual([['V2']])
   })
@@ -124,30 +136,31 @@ describe('VariantGrid tile actions [P5-15]', () => {
     draw(VARIANTS)
     expect(screen.queryByRole('button', { name: /^Quick look at/ })).toBeNull()
     expect(screen.queryByRole('button', { name: /^Delete/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^More actions for/ })).toBeNull()
   })
 
   it('after a delete, gives focus to the next tile, else the previous one', async () => {
     const { redraw } = actions()
-    await userEvent.click(screen.getByRole('button', { name: 'Delete German post' }))
+    await deleteVia('German post')
     redraw([VARIANTS[0]!, VARIANTS[2]!])
     expect(mainButton('Story')).toHaveFocus()
-    await userEvent.click(screen.getByRole('button', { name: 'Delete Story' }))
+    await deleteVia('Story')
     redraw([VARIANTS[0]!])
     expect(mainButton('Master post')).toHaveFocus()
   })
 
   it("after a delete with no tile left, gives focus to the direction's heading", async () => {
     const { redraw } = actions([variant('V5', { title: 'Lone post' })])
-    await userEvent.click(screen.getByRole('button', { name: 'Delete Lone post' }))
+    await deleteVia('Lone post')
     redraw([])
     expect(screen.getByRole('heading', { name: 'Beach day' })).toHaveFocus()
   })
 
   it('moves no focus while the deleted tile stays', async () => {
     const { redraw } = actions()
-    await userEvent.click(screen.getByRole('button', { name: 'Delete German post' }))
+    await deleteVia('German post')
     redraw([...VARIANTS])
-    expect(screen.getByRole('button', { name: 'Delete German post' })).toHaveFocus()
+    expect(screen.getByRole('button', { name: 'More actions for German post' })).toHaveFocus()
   })
 })
 
