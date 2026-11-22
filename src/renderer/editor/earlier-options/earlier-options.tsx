@@ -30,7 +30,10 @@ export function EarlierOptions(props: EarlierOptionsProps) {
   const reply = useEarlierOptions(projectId, layer)
   const [limit, setLimit] = useState(PAGE)
   const marked = useRef(new Set<string>())
-  const fresh = reply?.find(({ job }) => job.id === props.newJobId) ?? null
+  // The named run is new while it is the layer's newest; a later run (a cut-out, an agent's)
+  // is above it in the plain newest-first order.
+  const newest = reply?.[0] ?? null
+  const fresh = newest !== null && newest.job.id === props.newJobId ? newest : null
   const rest = (reply ?? []).filter((option) => option !== fresh)
   const shown = rest.slice(0, limit)
   const inUse = layer.source?.assetId ?? null

@@ -98,6 +98,7 @@ describe('EarlierOptions: new pictures first [spec/phases/round-2-editor.md D6]'
   it.each([
     ['no new run is named', undefined],
     ['the new run is not in the reply yet', 'J9'],
+    ['a newer run, such as a cut-out, came after it', 'J2'],
   ])('has no "New pictures" when %s', async (_name, newJobId) => {
     await open(newJobId)
     const earlier = await screen.findByRole('region', { name: 'Earlier options' })
