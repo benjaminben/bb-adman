@@ -1829,6 +1829,65 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     "name": "delete_campaign",
   },
   {
+    "description": "Add one variant to a direction of an open project, at a size and a language from the campaign's lists, made from the direction's master with its background scaled to fit. Text layers in a language other than the master's start as "missing" until text is set. No translation is started. The user can undo it. Gives the new variant ID.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "direction_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "format": {
+          "const": "image",
+          "type": "string",
+        },
+        "language": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "size_label": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "direction_id",
+        "size_label",
+        "language",
+        "format",
+      ],
+      "type": "object",
+    },
+    "name": "add_variant",
+  },
+  {
+    "description": "Delete one variant of an open project, with its layers. A master cannot be deleted. This cannot be undone. It also empties the undo list of its whole campaign, so the campaign's earlier changes can no longer be undone either. The user is asked in the app every time, and this call waits up to two minutes for the answer. A refusal is final: do not ask again for the same variant unless the user tells you to.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "variant_id",
+      ],
+      "type": "object",
+    },
+    "name": "delete_variant",
+  },
+  {
     "description": "Change one variant of an open project to "image" or "video". A change to video makes the first clip from the background's picture, once; a change back to image keeps the clips. It is refused when the direction already has a variant at the same size and language in that format. Gives the variant ID. The user can undo the change.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
