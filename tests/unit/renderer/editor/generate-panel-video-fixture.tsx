@@ -10,6 +10,7 @@ import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { AssetList } from '@/shared/schemas/queries/asset'
 import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
+import type { SecretName } from '@/shared/schemas/secrets'
 import { baseState } from '../fake-api'
 import { renderApp } from '../render'
 import { campaignApi, sent } from '../screens/campaign/campaign-fixture'
@@ -32,6 +33,8 @@ export type PanelOpts = {
   layer?: LayerRow
   format?: 'image' | 'video'
   licence?: boolean
+  // The names of the saved keys.
+  keys?: SecretName[]
 }
 
 export async function openVideo(opts: PanelOpts = {}) {
@@ -39,6 +42,7 @@ export async function openVideo(opts: PanelOpts = {}) {
   const fake = campaignApi({
     state: {
       providers: opts.providers ?? [FAKE_VIDEO],
+      secrets: (opts.keys ?? []).map((name) => ({ name, lastFour: '1234' })),
       settings: {
         ...settings,
         defaultProviders: { ...settings.defaultProviders, video: opts.video ?? 'fake' },

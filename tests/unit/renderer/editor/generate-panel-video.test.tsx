@@ -15,6 +15,7 @@ import {
   A1,
   ALL_VIDEO_STARTS,
   COMFY,
+  FAL,
   WITH_FAL,
   chooseStart,
   clipLength,
@@ -66,6 +67,14 @@ describe('the "Make" switch [R2E-8, D4]', () => {
     )
     expect(panel.getByText('No video service is set up. Add a key in Settings.')).toBeVisible()
     expect(panel.getByText(ON_TIMELINE)).toBeVisible()
+  })
+
+  it.each([
+    ['without its key', [], true],
+    ['with its key saved', ['fal.apiKey' as const], false],
+  ])('counts fal.ai as a video service only with its key: %s', async (_name, keys, off) => {
+    await openVideo({ providers: [FAL], video: 'fal-seedance', keys })
+    expect(makeGroup().getByRole('button', { name: 'Video' }).hasAttribute('disabled')).toBe(off)
   })
 
   it.each([

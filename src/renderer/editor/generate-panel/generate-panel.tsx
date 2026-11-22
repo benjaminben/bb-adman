@@ -78,10 +78,15 @@ function useImages(projectId: string) {
   return { images, read }
 }
 
-// The available providers that make videos, and the kind the layer shows.
+// The providers that can make a video now (available, with their keys saved), and the kind
+// the layer shows.
 function useKind(key: string, videoPost: boolean) {
   const providers = useApp((s) => s.app?.providers ?? EMPTY)
-  const ids = providers.filter((p) => p.available && p.jobs.includes('video')).map((p) => p.id)
+  const saved = useApp((s) => s.app?.secrets ?? EMPTY)
+  const keyed = (names: readonly string[]) => names.every((n) => saved.some((s) => s.name === n))
+  const ids = providers
+    .filter((p) => p.available && p.jobs.includes('video') && keyed(p.secrets))
+    .map((p) => p.id)
   const canVideo = videoPost && ids.length > 0
   const held = useStore(generateDrafts, (s) => s.drafts[key]?.kind ?? s.wanted[key])
   useEffect(() => {
