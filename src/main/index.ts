@@ -31,6 +31,7 @@ import { createDraw } from './render/draw'
 import { endRenderWindow } from './render/render-window'
 import { endWebpDecoder, webpToPng } from './windows/webp-window'
 import { afterQuitAnswer, quitQuestion } from './quit-question'
+import { leftRunningList } from './jobs/left-running-list'
 import { quietWindows } from './windows/quiet'
 import { createMediaTool } from './media/embed-details'
 import { ffmpegPath } from './media/ffmpeg-path'
@@ -95,8 +96,15 @@ function mustAsk(): boolean {
   return !quitConfirmed && quitQuestion(runningCount()) !== null
 }
 
+// P7-15 (A-174): the started paid video runs quitting leaves running, named in the question.
+function leftRunning() {
+  const ready = core
+  if (!ready) return []
+  return leftRunningList(ready.projects.all(), ready.deps.providers, ready.log)
+}
+
 async function askToQuit(): Promise<void> {
-  const question = quitQuestion(runningCount())
+  const question = quitQuestion(runningCount(), leftRunning())
   if (asking || !question) return
   asking = true
   try {

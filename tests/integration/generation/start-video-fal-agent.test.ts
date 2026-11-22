@@ -8,15 +8,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest'
 import { waitFor, ended, VARIANT } from './generation-fixture'
 import { data } from '../core-fixture'
 import { agentRunLimitMessage } from '@/main/commands/agent-run-gate'
-import {
-  COMPLETED,
-  FAL_KEY,
-  ask,
-  calls,
-  falWorld,
-  startFal,
-  type FalWorld,
-} from './fal-fixture'
+import { COMPLETED, FAL_KEY, ask, calls, falWorld, startFal, type FalWorld } from './fal-fixture'
 import { json } from '../../unit/main/providers/fal-seedance/stand-in'
 
 let w: FalWorld
