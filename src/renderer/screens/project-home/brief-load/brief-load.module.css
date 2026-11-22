@@ -1,5 +1,5 @@
 /* app-style */
-/* "Load a brief" and "Type a brief", and the waiting line while a brief's photos are added. */
+/* "Load a brief" and "Paste a brief", and the waiting line while a brief's photos are added. */
 .busy {
   display: inline-flex;
   gap: var(--space-2);

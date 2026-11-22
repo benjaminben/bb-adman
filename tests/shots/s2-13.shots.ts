@@ -32,7 +32,8 @@ test('the brief form', async () => {
   await brief.getByRole('button', { name: 'Create campaign' }).click()
   await page.getByRole('button', { name: 'Back to project' }).click()
 
-  await page.getByRole('button', { name: 'Type a brief' }).click()
+  await page.getByRole('button', { name: 'Paste a brief' }).click()
+  await page.getByRole('button', { name: 'Start from an empty form' }).click()
   await expect(brief.getByText('Before the campaign can be made')).toBeVisible()
   await shot(page, '02-brief-form-typed-empty')
 

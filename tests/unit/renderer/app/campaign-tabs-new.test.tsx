@@ -1,5 +1,5 @@
 // R2-Q fault C: the "+" in the top bar, named "New campaign" with a matching tooltip, shows the
-// Project tab from any tab and opens the project home's typed brief form ("Type a brief") with
+// Project tab from any tab and opens the project home's empty brief form (as "Start from an empty form" does) with
 // the keyboard focus in its first field. A form already open keeps what was typed.
 import * as Tabs from '@radix-ui/react-tabs'
 import { useEffect } from 'react'
@@ -42,7 +42,7 @@ async function draw(open: string[]) {
     fake,
   )
   if (open.length > 0) await screen.findByRole('tab', { name: 'Summer Splash' })
-  else await screen.findByRole('button', { name: 'Type a brief' })
+  else await screen.findByRole('button', { name: 'Paste a brief' })
   return fake
 }
 
@@ -73,7 +73,8 @@ describe('"+" starts a new campaign [R2-Q C]', () => {
 
   it('keeps an open form as typed and puts the focus back in its first field', async () => {
     await draw([])
-    await userEvent.click(await screen.findByRole('button', { name: 'Type a brief' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Paste a brief' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Start from an empty form' }))
     const opened = await form()
     const name = within(opened).getByLabelText('Campaign name')
     await userEvent.type(name, 'Autumn')

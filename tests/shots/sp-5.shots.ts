@@ -38,7 +38,7 @@ test('A loaded brief with its photos, then the notes on photos it could not use'
   const brief = await loadBrief(page, TWO_SUBJECTS)
   await screens.expectPhoto(brief, 1, CITRUS)
   await screens.expectPhoto(brief, 2, BERRY)
-  await expect(brief.getByText(/^This brief added 2 photo\(s\) from its folder\./)).toBeVisible()
+  await expect(brief.getByText(/^This brief added 2 photo\(s\)\./)).toBeVisible()
   await shot(page, '140-brief-photos')
   await brief.getByRole('button', { name: 'Cancel' }).click()
 
@@ -54,12 +54,13 @@ test('A loaded brief with its photos, then the notes on photos it could not use'
   fs.writeFileSync(file, text.replace('    pictures: photos/citrus-can.png\n', named))
   const noted = await loadBrief(page, file)
   const notes = noted.getByRole('list', { name: 'Notes on the photos of subject 1' })
-  await expect(notes.getByRole('listitem')).toHaveCount(3)
+  await expect(notes.getByRole('listitem')).toHaveCount(2)
   await shot(page, '141-photo-notes')
 })
 
 async function typeBrief(page: Page): Promise<Locator> {
-  await page.getByRole('button', { name: 'Type a brief' }).click()
+  await page.getByRole('button', { name: 'Paste a brief' }).click()
+  await page.getByRole('button', { name: 'Start from an empty form' }).click()
   const brief = briefForm(page)
   await brief.getByLabel('Campaign name').fill('Back to Class')
   await brief.getByLabel('Region').fill('Canada')

@@ -1,5 +1,6 @@
-// "Load a brief" and "Type a brief" (spec/screens-campaign.md, "The brief form"): the picker
-// and brief.parse, or an empty form; then the brief form. P4-15: a Markdown or text brief is
+// "Load a brief" and "Paste a brief" (spec/screens-campaign.md, "The brief form"; R2P-4, D4):
+// the picker and brief.parse, or the paste dialog (brief.parse of the text, or an empty form);
+// then the brief form. P4-15: a Markdown or text brief is
 // read with AI instead (use-text-brief.tsx, spec/screens-ai.md "Reading a brief with AI"). Create campaign sends
 // subject.create for each new subject, asset.update for each photo to attach, then
 // campaign.create (spec/subject-photos.md, "Create campaign"); it stops at the first refusal,
@@ -19,6 +20,7 @@ import type { CampaignSummary } from '@/shared/schemas/queries/campaign'
 import type { PickedPaths } from '@/shared/schemas/queries/dialog'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import { BriefForm } from '@/renderer/screens/project-home/brief-form'
+import { focusFirstField, usePasteBrief } from '@/renderer/screens/project-home/brief-paste'
 import { subjectIds } from '@/renderer/screens/project-home/brief-form-problems'
 import { removeAddedPhotos } from '@/renderer/screens/project-home/subject-photos'
 import {
@@ -69,6 +71,11 @@ export function BriefLoad(props: BriefLoadProps) {
   const formValues = useRef<BriefFormValues | null>(null)
   const formBox = useRef<HTMLDivElement>(null)
   const { askedFor, ask } = useNewCampaignAsk()
+  const paste = usePasteBrief(projectId, opened !== null, formBox, {
+    onEmpty: () => setOpened(formFromDraft(null, heldSubjectIds)),
+    onRead: (parsed) => void openParsed(parsed),
+  })
+  const { keepFocus } = paste
   const textBrief = useTextBrief(projectId, (parsed) =>
     setOpened(formFromDraft(parsed, heldSubjectIds)),
   )
@@ -82,9 +89,16 @@ export function BriefLoad(props: BriefLoadProps) {
   useEffect(() => {
     if (askedFor !== projectId) return
     ask(null)
-    if (formValues.current === null) setOpened(formFromDraft(null, heldSubjectIds))
-    else formBox.current?.querySelector<HTMLElement>('input, select, textarea')?.focus()
-  }, [askedFor, ask, projectId, heldSubjectIds])
+    if (formValues.current !== null) return focusFirstField(formBox.current)
+    keepFocus()
+    setOpened(formFromDraft(null, heldSubjectIds))
+  }, [askedFor, ask, projectId, heldSubjectIds, keepFocus])
+
+  function closeForm() {
+    formValues.current = null
+    paste.shut()
+    setOpened(null)
+  }
 
   function dropPhotos(values: BriefFormValues | null) {
     formValues.current = null
@@ -102,8 +116,11 @@ export function BriefLoad(props: BriefLoadProps) {
     if (filePath === undefined) return
     if (briefFileKind(filePath) === 'text') return textBrief.start(filePath)
     const result = await command('brief.parse', { projectId, filePath })
-    if (!result.ok) return
-    const parsed = result.data as BriefParsed
+    if (result.ok) await openParsed(result.data as BriefParsed)
+  }
+
+  // A read brief, from a file or pasted: its photos are added, then the form opens (SP-4).
+  async function openParsed(parsed: BriefParsed) {
     const photos = await briefPhotos.importPhotos(parsed)
     if (photos !== null) setOpened(formFromDraft(parsed, heldSubjectIds, photos))
   }
@@ -127,8 +144,7 @@ export function BriefLoad(props: BriefLoadProps) {
     const result = await command('campaign.create', plan.campaign)
     if (!result.ok) return refused()
     setCreating(false)
-    formValues.current = null
-    setOpened(null)
+    closeForm()
     const created = result.data as CampaignCreated | null
     if (created) props.onCreated(created.campaignId)
   }
@@ -140,10 +156,11 @@ export function BriefLoad(props: BriefLoadProps) {
           <Icon name="file" />
           Load a brief
         </button>
-        <button type="button" onClick={() => setOpened(formFromDraft(null, heldSubjectIds))}>
+        <button type="button" onClick={paste.start}>
           <Icon name="text" />
-          Type a brief
+          Paste a brief
         </button>
+        {paste.dialog}
         {briefPhotos.adding && (
           <p role="status" className={styles.busy}>
             <BusySpinner />
@@ -166,7 +183,7 @@ export function BriefLoad(props: BriefLoadProps) {
         onCreate={create}
         onCancel={() => {
           dropPhotos(formValues.current)
-          setOpened(null)
+          closeForm()
         }}
         onValues={(values) => {
           formValues.current = values
