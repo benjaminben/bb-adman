@@ -1,0 +1,45 @@
+/* spec/phases/round-2-approvals.md "Where the look comes from (item 18)": the document itself,
+   imported once by app/layout.tsx after the two token sheets. Everything else is drawn by each
+   component's own module. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  line-height: var(--leading-body);
+  background: var(--color-page);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-title);
+  font-weight: var(--weight-title);
+  letter-spacing: var(--tracking-title);
+  line-height: var(--leading-tight);
+}
+
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Read out by a screen reader, not drawn. */
+.hidden-text {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  padding: 0;
+  margin: calc(var(--border-width) * -1);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

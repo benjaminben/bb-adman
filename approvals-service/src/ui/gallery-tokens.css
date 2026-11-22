@@ -1,0 +1,15 @@
+/* spec/phases/round-2-approvals.md "Where the look comes from (item 18)": only what the app's
+   tokens (app-tokens.css, a byte-equal copy) have no name for, built from app tokens where
+   possible. Imported once by app/layout.tsx, after app-tokens.css. */
+:root {
+  --gallery-sidebar: var(--width-menu);
+  --gallery-card-min: 260px;
+  /* Buttons and fields a finger can hit. */
+  --gallery-tap: 44px;
+  /* A phone does not zoom into a field whose text is 16px or more. */
+  --gallery-field-text: 16px;
+  --gallery-tick: var(--chip-height);
+  /* The row unit of the gallery script's masonry fallback. */
+  --gallery-masonry-row: var(--space-1);
+  --gallery-placeholder: var(--color-surface);
+}
