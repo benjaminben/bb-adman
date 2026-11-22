@@ -14,7 +14,7 @@ type Input = Record<string, unknown>
 const strings = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []
 
-const DEFAULT_SIZES = (): CampaignSize[] =>
+const defaultSizes = (): CampaignSize[] =>
   READY_MADE_SIZES.filter((s) => s.selectedByDefault).map(({ label, width, height }) => ({
     label,
     width,
@@ -27,7 +27,7 @@ function sizesOf(brief: Input): CampaignSize[] {
     const size = parseSize(text)
     if (size && !sizes.some((s) => s.label === size.label)) sizes.push(size)
   }
-  return sizes.length > 0 ? sizes : DEFAULT_SIZES()
+  return sizes.length > 0 ? sizes : defaultSizes()
 }
 
 function languagesOf(brief: Input): string[] | null {
