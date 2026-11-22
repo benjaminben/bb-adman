@@ -40,6 +40,9 @@ async function open(layer: LayerRow, canvas: typeof VIDEO | typeof IMAGE = VIDEO
     </main>,
     fake,
   )
+  // ED-6: Animation is a folded Section; open it when it is closed (the fold lasts the session).
+  const fold = screen.queryByRole('button', { name: 'Animation' })
+  if (fold?.getAttribute('aria-expanded') === 'false') await userEvent.click(fold)
   const patches = () =>
     fake.commands
       .filter((c) => c.name === 'layer.update')
@@ -62,6 +65,8 @@ describe('AnimationFields [P7-19]', () => {
     ).toEqual(['None', 'Fade', 'Fade up', 'Slide', 'Words one by one'])
     expect(length('Entrance length')).toBeDisabled()
     expect(length('Exit length')).toHaveValue('1')
+    expect(screen.getByText('In')).toBeVisible()
+    expect(screen.getByText('Out')).toBeVisible()
     expect(await axeViolations()).toEqual([])
   })
 

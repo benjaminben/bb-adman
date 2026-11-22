@@ -1,7 +1,7 @@
 // spec/phases/phase-07-slices-2.md, P7-20: the background row shows the clips as blocks named
-// "Clip {n}: {display name}" at their place on the track, gaps left as empty track. A block
+// by their file's display name (ED-6) at their place on the track, gaps left as empty track. A block
 // moves with the arrows (100 ms, Shift 1 s) and by a drag, its ends trim, Delete or "Remove"
-// takes it off, and a video clip has "Sound". A drag that would overlap snaps back without a
+// takes it off, and a video clip has "Sound for {name}". A drag that would overlap snaps back without a
 // command; one past another clip reorders. A refusal shows its sentence under the row.
 import { act, fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -65,11 +65,11 @@ const block = (name: string) => screen.getByRole('button', { name })
 const blockBox = (name: string) => block(name).closest<HTMLElement>('[data-clip]')!
 
 describe('ClipTrack: the clips as blocks [P7-20]', () => {
-  it('names each block "Clip {n}: {display name}" in track order and places it by time', async () => {
+  it('names each block by its display name in track order and places it by time', async () => {
     await setup()
-    expect(blockBox('Clip 1: wave.mp4').style.left).toBe('0%')
-    expect(blockBox('Clip 1: wave.mp4').style.width).toBe('25%')
-    expect(blockBox('Clip 2: beach.png').style.left).toBe('50%')
+    expect(blockBox('wave.mp4').style.left).toBe('0%')
+    expect(blockBox('wave.mp4').style.width).toBe('25%')
+    expect(blockBox('beach.png').style.left).toBe('50%')
     expect(screen.getByText('Background')).toBeInTheDocument()
     expect(await axeViolations()).toEqual([])
   })
@@ -77,7 +77,7 @@ describe('ClipTrack: the clips as blocks [P7-20]', () => {
   it('moves a block 100 ms with an arrow and 1 s with Shift', async () => {
     const { sent } = await setup()
     const user = userEvent.setup()
-    block('Clip 2: beach.png').focus()
+    block('beach.png').focus()
     await user.keyboard('{ArrowRight}')
     await user.keyboard('{Shift>}{ArrowLeft}{/Shift}')
     expect(sent('clip.update')).toEqual([
@@ -89,7 +89,7 @@ describe('ClipTrack: the clips as blocks [P7-20]', () => {
   it('sends nothing for an arrow that would overlap the next clip', async () => {
     const { fake } = await setup([CLIPS[0]!, { ...CLIPS[1]!, startMs: 2000 }])
     const user = userEvent.setup()
-    block('Clip 2: beach.png').focus()
+    block('beach.png').focus()
     await user.keyboard('{ArrowLeft}')
     expect(fake.commands).toEqual([])
   })
@@ -97,9 +97,9 @@ describe('ClipTrack: the clips as blocks [P7-20]', () => {
   it('trims either end with the arrows', async () => {
     const { sent } = await setup()
     const user = userEvent.setup()
-    screen.getByRole('slider', { name: 'End of Clip 1: wave.mp4' }).focus()
+    screen.getByRole('slider', { name: 'End of wave.mp4' }).focus()
     await user.keyboard('{ArrowLeft}')
-    screen.getByRole('slider', { name: 'Start of Clip 1: wave.mp4' }).focus()
+    screen.getByRole('slider', { name: 'Start of wave.mp4' }).focus()
     await user.keyboard('{ArrowRight}')
     expect(sent('clip.update')).toEqual([
       { projectId: P, clipId: 'K1', outMs: 1900 },
@@ -110,43 +110,43 @@ describe('ClipTrack: the clips as blocks [P7-20]', () => {
   it('stops an end trim at the end of the video file', async () => {
     const { sent } = await setup([{ ...CLIPS[0]!, outMs: 2500 }, CLIPS[1]!])
     const user = userEvent.setup()
-    screen.getByRole('slider', { name: 'End of Clip 1: wave.mp4' }).focus()
+    screen.getByRole('slider', { name: 'End of wave.mp4' }).focus()
     await user.keyboard('{Shift>}{ArrowRight}{/Shift}')
     expect(sent('clip.update')).toEqual([{ projectId: P, clipId: 'K1', outMs: 3000 }])
   })
 
   it('moves a block by a drag in 100 ms steps, and snaps an overlapping drag back', async () => {
     const { sent } = await setup()
-    const body = block('Clip 2: beach.png')
+    const body = block('beach.png')
     fireEvent.pointerDown(body, { clientX: 500, button: 0 })
     fireEvent.pointerMove(window, { clientX: 552 })
-    expect(blockBox('Clip 2: beach.png').style.left).toBe('56.25%')
+    expect(blockBox('beach.png').style.left).toBe('56.25%')
     fireEvent.pointerUp(window, { clientX: 552 })
     expect(sent('clip.update')).toEqual([{ projectId: P, clipId: 'K2', startMs: 4500 }])
 
     fireEvent.pointerDown(body, { clientX: 500, button: 0 })
     fireEvent.pointerUp(window, { clientX: 290 })
     expect(sent('clip.update')).toHaveLength(1)
-    expect(blockBox('Clip 2: beach.png').style.left).toBe('50%')
+    expect(blockBox('beach.png').style.left).toBe('50%')
   })
 
   it('reorders the track when a block is dragged past the middle of another', async () => {
     const { sent } = await setup()
-    fireEvent.pointerDown(block('Clip 1: wave.mp4'), { clientX: 100, button: 0 })
+    fireEvent.pointerDown(block('wave.mp4'), { clientX: 100, button: 0 })
     fireEvent.pointerUp(window, { clientX: 520 })
     expect(sent('clip.reorder')).toEqual([{ projectId: P, variantId: V, clipIds: ['K2', 'K1'] }])
   })
 
-  it('removes a clip with Delete and with "Remove", and switches a video clip\'s sound', async () => {
+  it('removes a clip with Delete and with "Remove {name}", and switches a video clip\'s sound', async () => {
     const { sent } = await setup()
     const user = userEvent.setup()
-    block('Clip 2: beach.png').focus()
-    expect(screen.queryByRole('checkbox', { name: 'Sound' })).toBeNull()
+    block('beach.png').focus()
+    expect(screen.queryByRole('button', { name: 'Sound for beach.png' })).toBeNull()
     await user.keyboard('{Delete}')
-    await user.click(block('Clip 1: wave.mp4'))
-    const actions = screen.getByRole('group', { name: 'Clip 1: wave.mp4' })
-    await user.click(within(actions).getByRole('checkbox', { name: 'Sound' }))
-    await user.click(within(actions).getByRole('button', { name: 'Remove' }))
+    await user.click(block('wave.mp4'))
+    const actions = screen.getByRole('group', { name: 'wave.mp4' })
+    await user.click(within(actions).getByRole('button', { name: 'Sound for wave.mp4' }))
+    await user.click(within(actions).getByRole('button', { name: 'Remove wave.mp4' }))
     expect(sent('clip.remove')).toEqual([
       { projectId: P, clipId: 'K2' },
       { projectId: P, clipId: 'K1' },
@@ -162,7 +162,7 @@ describe('ClipTrack: the clips as blocks [P7-20]', () => {
       ok: false,
       error: { code: 'RULE_VIOLATION', message, details: { reason: 'clip_trim_out_of_range' } },
     }))
-    block('Clip 2: beach.png').focus()
+    block('beach.png').focus()
     await user.keyboard('{ArrowRight}')
     expect(await screen.findByRole('alert')).toHaveTextContent(message)
     fake.onCommand('clip.update', () => ({ ok: true, data: { clipId: 'K2' } }))

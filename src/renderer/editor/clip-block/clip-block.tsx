@@ -2,7 +2,8 @@
 // time. The block moves by a drag or the arrows (100 ms, 1 s with Shift); its two ends trim
 // the same way; Delete removes it. Every change is judged by the track rules before it is
 // sent (clip-drag.ts), and a drag that would overlap snaps back. The block shows the stored
-// place, apart from the drag in hand.
+// place, apart from the drag in hand. ED-6: the chosen block's actions bar (clip-actions.tsx)
+// is drawn beside it, over its top edge.
 import { useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { formatTime } from '@/renderer/stores/playback-store'
 import { clipEnd, type TrackClip } from '@/shared/clips/track'
@@ -17,6 +18,7 @@ import {
   trimStartBy,
   type ClipKind,
 } from './clip-drag'
+import { ClipActions } from './clip-actions'
 import { useClipSend } from './use-clip-send'
 import { useDrag } from './use-drag'
 import styles from './clip-block.module.css'
@@ -24,7 +26,7 @@ import styles from './clip-block.module.css'
 export type ClipBlockProps = {
   projectId: string
   clip: BackgroundClipRow
-  label: string // "Clip {n}: {display name}"
+  label: string // the file's display name, or "File not found"
   kind: ClipKind
   fileMs: number | null // a video file's length; null for a still
   durationMs: number // the variant's length: the lane's width
@@ -123,29 +125,40 @@ export function ClipBlock(props: ClipBlockProps) {
     )
   }
 
+  const left = share(shown.startMs, durationMs)
+  const width = share(shown.outMs - shown.inMs, durationMs)
   return (
-    <div
-      data-clip
-      className={`${styles.block} ${kind === 'video' ? styles.video : ''}`}
-      data-selected={props.selected || undefined}
-      data-dragging={draft ? true : undefined}
-      style={{
-        left: `${share(shown.startMs, durationMs)}%`,
-        width: `${share(shown.outMs - shown.inMs, durationMs)}%`,
-      }}
-    >
-      {handle('start', 'Start', shown.startMs)}
-      <button
-        type="button"
-        className={styles.body}
-        aria-pressed={props.selected}
-        onPointerDown={press('move')}
-        onKeyDown={key('move')}
-        onFocus={props.onSelect}
+    <>
+      <div
+        data-clip
+        className={`${styles.block} ${kind === 'video' ? styles.video : ''}`}
+        data-selected={props.selected || undefined}
+        data-dragging={draft ? true : undefined}
+        style={{ left: `${left}%`, width: `${width}%` }}
       >
-        {label}
-      </button>
-      {handle('end', 'End', clipEnd(shown))}
-    </div>
+        {handle('start', 'Start', shown.startMs)}
+        <button
+          type="button"
+          className={styles.body}
+          aria-pressed={props.selected}
+          onPointerDown={press('move')}
+          onKeyDown={key('move')}
+          onFocus={props.onSelect}
+        >
+          {label}
+        </button>
+        {handle('end', 'End', clipEnd(shown))}
+      </div>
+      {props.selected && (
+        <ClipActions
+          projectId={props.projectId}
+          clip={clip}
+          label={label}
+          kind={kind}
+          right={`${Math.max(0, 100 - left - width)}%`}
+          onResult={props.onResult}
+        />
+      )}
+    </>
   )
 }

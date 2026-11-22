@@ -1,13 +1,14 @@
 // P7-20 (spec/phases/phase-07-slices-2.md): the background row of the timeline. Its lane shows
-// the variant's clips from the variant store as blocks, in track order, named "Clip {n}:
-// {display name}"; a gap is left as empty track, and the part of a clip past the variant's
-// end is not drawn. "Add clip…" opens the add list under the row; the chosen clip's actions
-// follow it, and a refused command's own sentence stands last, as an alert. R2E-11 (D7):
-// "Make a video…" beside "Add clip…" calls onMakeVideo, which the editor passes.
+// the variant's clips from the variant store as blocks, in track order, each named by its file's
+// display name ("File not found" when missing, ED-6); a gap is left as empty track, and the
+// part of a clip past the variant's end is not drawn. "Add clip…" opens the add list under the
+// row; the chosen clip's actions sit over its block, and a refused command's own sentence stands
+// last, as an alert. R2E-11 (D7): "Make a video…" beside "Add clip…" calls onMakeVideo, which
+// the editor passes.
 import { useId, useMemo, useState } from 'react'
 import { useStore } from 'zustand'
 import { AddClipButton, AddClipList } from '@/renderer/editor/add-clip'
-import { ClipActions, ClipBlock, type ClipKind } from '@/renderer/editor/clip-block'
+import { ClipBlock, type ClipKind } from '@/renderer/editor/clip-block'
 import type { HeldAsset, VariantStore } from '@/renderer/stores/variant-store'
 import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { BackgroundClipRow } from '@/shared/schemas/rows/background-clip'
@@ -30,10 +31,10 @@ function shownClips(
   const ordered = Object.values(clips).sort(
     (a, b) => a.startMs - b.startMs || a.id.localeCompare(b.id),
   )
-  return ordered.map((clip, i) => {
+  return ordered.map((clip) => {
     const asset = assets[clip.assetId]
     const kind: ClipKind = asset?.kind === 'video' ? 'video' : 'image'
-    const label = `Clip ${i + 1}: ${asset?.displayName ?? 'File not found'}`
+    const label = asset?.displayName ?? 'File not found'
     return { clip, label, kind, fileMs: kind === 'video' ? (asset?.durationMs ?? null) : null }
   })
 }
@@ -51,7 +52,6 @@ export function ClipTrack({ projectId, variant, store, onMakeVideo }: ClipTrackP
     () => shown.map(({ clip: { id, startMs, inMs, outMs } }) => ({ id, startMs, inMs, outMs })),
     [shown],
   )
-  const selected = shown.find((s) => s.clip.id === selectedId)
 
   return (
     <div className={styles.track}>
@@ -92,7 +92,6 @@ export function ClipTrack({ projectId, variant, store, onMakeVideo }: ClipTrackP
           onClose={() => setAdding(false)}
         />
       )}
-      {selected && <ClipActions {...selected} projectId={projectId} onResult={setError} />}
       {error && (
         <p role="alert" className={styles.error}>
           {error}

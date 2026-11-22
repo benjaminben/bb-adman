@@ -1,7 +1,7 @@
 // P7-21 (spec/phases/phase-07-slices-2.md; phase-07.md "Clips and the track", Sound): the
-// transport bar's "Sound" choice. Each choice sends variant.setSound. "An audio file" with a
-// stored file sends 'file' and the stored file stays; with none stored it shows the audio list
-// first and sends on a pick. "Add audio…" imports audio files and uses the first. A refusal
+// transport bar's "Sound" choice ("Clip sound", "Audio file", "None", ED-6). Each choice sends
+// variant.setSound. "Audio file" with a stored file sends 'file' and the stored file stays; with
+// none stored it shows the audio list first and sends on a pick. "Add audio…" imports audio files and uses the first. A refusal
 // shows its own sentence. Drawn only inside the editor's sound scope.
 import { useContext, useState } from 'react'
 import type { AdmanApi } from '@/shared/schemas/api'
@@ -16,8 +16,8 @@ export type SoundFieldsProps = { projectId: string; variant: VariantSummary }
 type Sound = VariantSummary['sound']
 
 const CHOICES: Array<{ value: Sound; label: string }> = [
-  { value: 'clips', label: "The clips' own sound" },
-  { value: 'file', label: 'An audio file' },
+  { value: 'clips', label: 'Clip sound' },
+  { value: 'file', label: 'Audio file' },
   { value: 'none', label: 'None' },
 ]
 
