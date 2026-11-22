@@ -67,13 +67,6 @@ const COMMANDS: CommandRow[] = [
     action: 'sign out of Dropbox',
     bad: { extra: 1 },
   },
-  {
-    name: 'storage.setDropboxFolder',
-    project: false,
-    input: { rootPath: 'Adman' },
-    action: 'change the Dropbox folder',
-    bad: {},
-  },
 ]
 
 const inputOf = (row: CommandRow, projectId: string, input: object) =>

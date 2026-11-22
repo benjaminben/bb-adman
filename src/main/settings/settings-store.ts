@@ -130,6 +130,10 @@ export function createSettingsStore(opts: { file: string; defaults: Settings }) 
     setAgentRunLimit(limit: number): void {
       save({ ...current, agentRunLimit: limit })
     },
+    // P9-5 (A-213): called only by the three Dropbox commands, with a checked rootPath.
+    setDropbox(dropbox: Settings['storage']['dropbox']): void {
+      save({ ...current, storage: { ...current.storage, dropbox } })
+    },
     // Called only by the MCP service, for mcp.setEnabled (SPEC 4.2 notes).
     setMcpEnabled(enabled: boolean): void {
       save({ ...current, mcp: { ...current.mcp, enabled } })
