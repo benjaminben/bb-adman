@@ -85,3 +85,9 @@
   margin-bottom: var(--space-1);
   color: var(--color-text-secondary);
 }
+.byHand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}

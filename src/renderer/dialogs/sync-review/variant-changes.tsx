@@ -1,6 +1,6 @@
 // spec/screens-variants.md, "Sync review": one variant's group, headed "{title} · {sizeLabel} ·
 // {language}" with its thumbnail, and one checkbox per change, starting unticked (A-138). Under
-// a change: its new text or the Phase 5 translation line, then each blocked path's choice.
+// a change: its new text or its translation line (P6-16), then each blocked path's choice.
 // Every name here comes from the project file and is drawn as text.
 import { useId } from 'react'
 import { VariantThumbnail } from '@/renderer/ui/variant-thumbnail'
@@ -8,6 +8,8 @@ import type { VariantSummary } from '@/shared/schemas/queries/campaign'
 import type { SyncChange, SyncPreview } from '@/shared/schemas/queries/sync'
 import { changeKey, choiceKey, type Choice, type Choices } from './decisions'
 import { OverrideChoice } from './override-choice'
+import { TranslationLine } from './translation-line'
+import type { LanguageRun } from './use-sync-translations'
 import { groupWords } from './sync-words'
 import styles from './sync-review.module.css'
 
@@ -20,10 +22,11 @@ export type VariantChangesProps = {
   disabled: boolean
   onTick: (key: string, on: boolean) => void
   onChoose: (key: string, choice: Choice) => void
+  // P6-16: this variant's language's sync translation, and its two actions.
+  run: LanguageRun | undefined
+  onRetry: () => void
+  onType: (layerKey: string, text: string) => Promise<string | null>
 }
-
-const NO_TRANSLATION =
-  'No translation yet. The text stays as it is and is marked as missing a translation.'
 
 function changeWords(change: SyncChange): string {
   if (change.kind === 'add-layer') return 'new layer from the master'
@@ -51,7 +54,15 @@ function ChangeItem(props: VariantChangesProps & { change: SyncChange }) {
         {change.layerName}: {changeWords(change)}
       </label>
       {typeof copy === 'string' && <p className={styles.detail}>New text: {copy}</p>}
-      {change.proposedTranslation && <p className={styles.detail}>{NO_TRANSLATION}</p>}
+      {change.proposedTranslation && (
+        <TranslationLine
+          proposed={change.proposedTranslation}
+          run={props.run}
+          disabled={props.disabled}
+          onRetry={props.onRetry}
+          onType={(text) => props.onType(change.layerKey, text)}
+        />
+      )}
       {change.blockedByOverride.map((path) => {
         const at = choiceKey(preview.variantId, change.layerKey, path)
         return (
