@@ -136,9 +136,11 @@ describe.skipIf(process.platform !== 'darwin' && process.platform !== 'win32')(
       expect(scale?.[1]).toBe(scale?.[2])
     })
 
-    it('exports a clip that has sound as a silent MP4 (sound is not built yet)', async (ctx) => {
+    it('exports a clip that has sound as a silent MP4 when the sound source is none', async (ctx) => {
       needFfmpeg(ctx)
       const t = await setup()
+      const db = t.fx.core.deps.projects.requireOpen(t.projectId).db
+      db.prepare("UPDATE variant SET sound = 'none' WHERE id = ?").run(t.videoId)
       const clip = fs.readFileSync('tests/fixtures/video/tiny-sound.mp4')
       t.addAsset('V1', clip, { kind: 'video', mime: 'video/mp4', name: 'V1.mp4', durationMs: 1000 })
       t.addClip('V1', { startMs: 0, outMs: 1000 })

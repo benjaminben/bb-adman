@@ -3,11 +3,13 @@
 // is `-protocol_whitelist file,pipe`, a pinned demuxer, then `file:` and an absolute path the
 // caller checked (AssetService.resolve, realpath, a regular file); the frame stream is pipe:0.
 // The output is the work file in the work folder; FFmpeg is never given the output folder.
+// P8-17: the sound inputs, graph and mapping come from sound-args.ts; with none, -an.
 import path from 'node:path'
 import { AD_FAILURES } from '@/shared/export/messages'
 import type { Size } from '@/shared/scene/background-placement'
 import type { Geometry } from '@/shared/schemas/layer'
 import {
+  assertSafeGraph,
   filterGraph,
   planClips,
   seconds,
@@ -15,6 +17,7 @@ import {
   type GraphClip,
   type PlannedClip,
 } from './filter-graph'
+import { soundArgs, type AdSound } from './sound-args'
 
 export type ClipFileType = 'png' | 'jpeg' | 'webp' | 'mp4' | 'mov' | 'webm'
 
@@ -22,6 +25,8 @@ export type VideoClip = Omit<GraphClip, 'still'> & {
   path: string
   // The asset's sniffed type (src/shared/config/file-types.ts); it picks the demuxer.
   fileType: ClipFileType
+  // P8-17: its own sound is heard (its soundOn, and the file holds sound). Absent: silent.
+  sound?: boolean
 }
 
 export type VideoAdSpec = {
@@ -33,6 +38,8 @@ export type VideoAdSpec = {
   background: Geometry
   clips: VideoClip[]
   workDir: string
+  // P8-17: the ad's one sound source; absent = none.
+  sound?: AdSound
 }
 
 const WORK_VIDEO = 'ad.mp4'
@@ -89,6 +96,9 @@ export function videoArgs(spec: VideoAdSpec): string[] {
   const clips = spec.clips.map((clip) => ({ ...clip, still: STILLS.has(clip.fileType) }))
   const planned = planClips(clips, spec.background, spec.durationMs)
   const fps = whole(spec.fps)
+  const sound = soundArgs(spec.sound ?? { source: 'none' }, planned, spec.durationMs)
+  const graph = [filterGraph(planned, spec.size, spec.durationMs, spec.fps), ...sound.graph]
+  assertSafeGraph(graph.join(';'))
   return [
     '-hide_banner',
     '-loglevel',
@@ -104,10 +114,12 @@ export function videoArgs(spec: VideoAdSpec): string[] {
     '-i',
     'pipe:0',
     ...planned.flatMap((c) => clipInput(c, spec.fps)),
+    ...sound.inputs,
     '-filter_complex',
-    filterGraph(planned, spec.size, spec.durationMs, spec.fps),
+    graph.join(';'),
     '-map',
     '[out]',
+    ...sound.output,
     '-c:v',
     encoder,
     '-b:v',
@@ -118,7 +130,6 @@ export function videoArgs(spec: VideoAdSpec): string[] {
     fps,
     '-movflags',
     '+faststart',
-    '-an',
     '-f',
     'mp4',
     `file:${out}`,

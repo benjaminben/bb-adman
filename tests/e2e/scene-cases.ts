@@ -251,4 +251,22 @@ export const CASES: SceneCase[] = [
       }),
     ],
   },
+  // P8-17, A-202: overlay-only keeps the background's shade (not its picture), so text over a
+  // clip keeps it. The top stays see-through: the shade from the bottom reaches 60 %.
+  {
+    name: 'overlay-only-shade',
+    title: 'overlay-only mode draws the background shade alone under the text',
+    mode: 'overlay-only',
+    background: (a) => ({
+      source: { assetId: a.bands },
+      style: { shade: { color: '#000000', from: 'bottom', strength: 0.8, reach: 0.6 } },
+    }),
+    layers: () => [
+      text('Over video', box(20, 160, 360, 80), {
+        fontSize: 48,
+        align: 'center',
+        color: '#F0C828',
+      }),
+    ],
+  },
 ]

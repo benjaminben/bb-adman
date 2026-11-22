@@ -8,7 +8,8 @@
 // P8-16: a run may also be fed on standard input (the export's frames, read as pipe:0), hand its
 // standard output to the caller (the report still, pipe:1), be stopped by a signal, and have its
 // own time limit. Without those options a run is exactly as before.
-import { spawn } from 'node:child_process'
+// P8-17: a start that throws at once gives null, and the queue goes on to the next run.
+import { spawn, type ChildProcess } from 'node:child_process'
 import type { Writable } from 'node:stream'
 import { binaryUsable } from './ffmpeg-path'
 
@@ -42,13 +43,20 @@ function runOnce(
   const { feed, output, signal } = options
   if (signal?.aborted) return Promise.resolve(null)
   return new Promise((resolve) => {
-    const child = spawn(binary, args, {
-      shell: false,
-      windowsHide: true,
-      stdio: [feed ? 'pipe' : 'ignore', output ? 'pipe' : 'ignore', 'pipe'],
-      env: {},
-      cwd: runFolder,
-    })
+    let child: ChildProcess
+    try {
+      child = spawn(binary, args, {
+        shell: false,
+        windowsHide: true,
+        stdio: [feed ? 'pipe' : 'ignore', output ? 'pipe' : 'ignore', 'pipe'],
+        env: {},
+        cwd: runFolder,
+      })
+    } catch {
+      // A start refused at once (a bad argument): nothing ran.
+      resolve(null)
+      return
+    }
     let settled = false
     let killed = false
     const kill = () => {
@@ -87,7 +95,8 @@ export function createFfmpegRunner(opts: { binary: string; timeoutMs?: number })
           ? runOnce(opts.binary, args, runFolder, limit, options)
           : null,
       )
-      queue = next
+      // Whatever happens to this run, the next one still starts.
+      queue = next.catch(() => null)
       return next
     },
   }
