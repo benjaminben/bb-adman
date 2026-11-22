@@ -2,7 +2,7 @@
 // plain text, a 303 or a picture; the gallery page itself comes in AP-16.
 import type { Parts } from '../app'
 import type { Env } from '../env'
-import { enterLink, leaveLink } from './actions'
+import { enterLink, leaveLink, saveReviewer } from './actions'
 import { notFound, redirect, refused, textReply } from './headers'
 import { pictureRoute } from './picture-route'
 import { removeSignoff, signOff } from './signoffs'
@@ -36,14 +36,22 @@ const enter: VisitorHandler = async ({ request, env, parts, params }) => {
   const result = await enterLink(env.DB, request, slug, parts)
   if (result.kind === 'refused') return refused(request)
   if (result.kind === 'failed') return redirect(request, slug, { m: 'wrong-password' })
-  return redirect(request, slug, { cookie: result.cookie })
+  return redirect(request, slug, { cookies: [result.cookie] })
 }
 
 const leave: VisitorHandler = async ({ request, env, parts, params }) => {
   const slug = params[0] ?? ''
   const result = await leaveLink(env.DB, request, slug, parts.now())
   if (result.kind === 'refused') return refused(request)
-  return redirect(request, slug, { cookie: result.cookie })
+  return redirect(request, slug, { cookies: result.cookies })
+}
+
+const reviewer: VisitorHandler = async ({ request, env, parts, params }) => {
+  const slug = params[0] ?? ''
+  const result = await saveReviewer(env.DB, request, slug, parts.now())
+  if (result.kind === 'refused') return refused(request)
+  if (result.kind === 'bad-email') return redirect(request, slug, { m: 'bad-email' })
+  return redirect(request, slug, { m: 'email-saved', cookies: [result.cookie] })
 }
 
 const signOffRoute: VisitorHandler = async ({ request, env, parts, params }) => {
@@ -79,6 +87,12 @@ export const VISITOR_ROUTES: VisitorRoute[] = [
     method: 'POST',
     path: new RegExp(`^/l/${SLUG}/signoffs/([0-9A-Za-z]{24})/remove$`),
     handler: removeRoute,
+  },
+  {
+    name: 'reviewer',
+    method: 'POST',
+    path: new RegExp(`^/l/${SLUG}/reviewer$`),
+    handler: reviewer,
   },
   { name: 'leave', method: 'POST', path: new RegExp(`^/l/${SLUG}/leave$`), handler: leave },
   {

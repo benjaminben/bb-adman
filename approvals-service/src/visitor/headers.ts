@@ -82,7 +82,8 @@ export function pictureHeaders(type: 'image/png' | 'image/jpeg'): Headers {
 export const emptyNotFound = (request: Request) =>
   new Response(null, { status: 404, headers: textHeaders(request) })
 
-export type RedirectOptions = { m?: NoticeKey; cookie?: string; variant?: string }
+// `cookies`: one Set-Cookie header per entry, in order.
+export type RedirectOptions = { m?: NoticeKey; cookies?: string[]; variant?: string }
 
 // Every redirect is a 303 back to the page of the same link. The address is built here from the
 // slug, which must have the checked shape, a notice key and a variant key of the checked shape;
@@ -98,6 +99,6 @@ export function redirect(request: Request, slug: string, options: RedirectOption
   const anchor = variant === undefined ? '' : `#v-${variant}`
   const headers = textHeaders(request)
   headers.set('Location', `/l/${slug}${query}${anchor}`)
-  if (options.cookie !== undefined) headers.set('Set-Cookie', options.cookie)
+  for (const cookie of options.cookies ?? []) headers.append('Set-Cookie', cookie)
   return new Response(null, { status: 303, headers })
 }

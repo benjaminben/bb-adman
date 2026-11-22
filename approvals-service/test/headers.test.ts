@@ -89,7 +89,7 @@ describe('the plain text set', () => {
 
   it.each([
     ['nothing else', {}, '/l/aZ09aZ09aZ09', {}],
-    ['a cookie', { cookie: 'a=b; Path=/' }, '/l/aZ09aZ09aZ09', { 'set-cookie': 'a=b; Path=/' }],
+    ['a cookie', { cookies: ['a=b; Path=/'] }, '/l/aZ09aZ09aZ09', { 'set-cookie': 'a=b; Path=/' }],
     ['a notice', { m: 'wrong-password' as const }, '/l/aZ09aZ09aZ09?m=wrong-password', {}],
   ])('is on every 303, with %s, Location and an empty body', async (_, options, at, extra) => {
     const reply = redirect(https, 'aZ09aZ09aZ09', options)
@@ -147,12 +147,14 @@ describe('the plain text set through the router', () => {
     const cookie = await enter(app, link.slug)
     const reply = await app.fetch(form(`/l/${link.slug}/leave`, {}, { cookie }))
     expect(reply.status).toBe(303)
-    expect(whole(reply.headers)).toEqual({
-      ...TEXT,
-      ...HSTS,
-      location: `/l/${link.slug}`,
-      'set-cookie': `__Host-adman-${link.slug}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
-    })
+    // Two Set-Cookie headers, the session one then the reviewer one; every other header whole.
+    const others = whole(reply.headers)
+    delete others['set-cookie']
+    expect(others).toEqual({ ...TEXT, ...HSTS, location: `/l/${link.slug}` })
+    expect(reply.headers.getSetCookie()).toEqual([
+      `__Host-adman-${link.slug}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+      `__Host-adman-${link.slug}-as=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
+    ])
     expect(await reply.text()).toBe('')
   })
 

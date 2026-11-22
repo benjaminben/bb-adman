@@ -118,7 +118,8 @@ test('the gallery screenshots', async ({ browser, playwright }) => {
   await wide.goto(`/l/${slug}`)
   await enter(wide, PASSWORD)
   await expect(wide.getByText('This picture has expired.')).toBeVisible()
-  await expect(wide.getByText('For an earlier version')).toBeVisible()
+  // The Blue tile's sign-off is for version 1, now version 2: it stays stored and is not shown.
+  await expect(wide.getByText('sam.ortiz@example.com')).toHaveCount(0)
   await shoot(wide, '99-gallery')
   await desktop.close()
 })

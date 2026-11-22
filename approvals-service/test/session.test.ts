@@ -90,7 +90,8 @@ describe('the session [approvals-service.md "Session"]', () => {
     const reply = await app.fetch(form(`/l/${a.slug}/leave`, {}, { cookie }))
     expect(reply.status).toBe(303)
     expect(reply.headers.get('Location')).toBe(`/l/${a.slug}`)
-    expect(reply.headers.get('Set-Cookie')).toBe(
+    // The session one first; a second, reviewer Set-Cookie follows (round-2 R2A-2).
+    expect(reply.headers.getSetCookie()[0]).toBe(
       `__Host-adman-${a.slug}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`,
     )
     const left = await db.prepare('SELECT link_id FROM session').all()

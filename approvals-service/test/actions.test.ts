@@ -55,6 +55,7 @@ describe('openGallery gives a narrowed view [review AP-3 Low]', () => {
           },
         ],
         signoffs: [{ ...signoff, createdAt: 5 }],
+        reviewer: null,
         notice: 'signed',
       },
     })

@@ -1,4 +1,5 @@
 import { beforeEach, describe, it, expect } from 'vitest'
+import { addSignoff } from '../src/db/signoffs'
 import { putVariant } from '../src/db/variants'
 import { openGallery } from '../src/visitor/actions'
 import { NOTICES, noticeOn, type NoticePage } from '../src/visitor/notices'
@@ -6,7 +7,7 @@ import { addLink, clearTables, db, enter, makeApp } from './visitor-setup'
 
 // spec/approvals-service.md "Notices": `m` becomes a key only through the fixed table.
 describe('the notices table [approvals-service.md "Notices"]', () => {
-  it('holds exactly the five notices, each on its one page, with the spec text', () => {
+  it('holds exactly the six notices, each on its one page, with the spec text', () => {
     expect(NOTICES).toEqual({
       'wrong-password': {
         page: 'password',
@@ -19,6 +20,10 @@ describe('the notices table [approvals-service.md "Notices"]', () => {
         text: 'This variant changed while you were looking. Look at it again, and sign off if you still approve.',
       },
       'bad-email': { page: 'gallery', text: 'Enter a full email address, like name@company.com.' },
+      'email-saved': {
+        page: 'gallery',
+        text: 'Your email is saved until you log out or close the browser.',
+      },
     })
   })
 
@@ -109,7 +114,13 @@ describe(WIRING, () => {
     const result = await openGallery(db, { slug: link.slug, cookie, m: null }, NOW)
     expect(Object.keys(result).sort()).toEqual(['kind', 'view'])
     if (result.kind !== 'gallery') throw new Error('no gallery')
-    expect(Object.keys(result.view).sort()).toEqual(['link', 'notice', 'signoffs', 'variants'])
+    expect(Object.keys(result.view).sort()).toEqual([
+      'link',
+      'notice',
+      'reviewer',
+      'signoffs',
+      'variants',
+    ])
     expect(Object.keys(result.view.link).sort()).toEqual(['campaignName', 'slug'])
     expect(Object.keys(result.view.variants[0] ?? {}).sort()).toEqual([
       'expired',
@@ -129,5 +140,83 @@ describe(WIRING, () => {
     expect(real).toEqual({ kind: 'password', notice: null })
     expect(unknown).toEqual(real)
     expect(JSON.stringify(real)).not.toContain('Secret Campaign')
+  })
+})
+
+// spec/phases/round-2-approvals.md "Security rules and the test that proves each": S-4, S-8.
+describe('the view in Round 2 [round-2-approvals.md "Routes and data changes"]', () => {
+  beforeEach(clearTables)
+
+  const picture = { pictureUrl: 'https://h.example/p.png', pictureExpiresAt: NOW + 1 }
+  const variantRow = (variantKey: string, position: number, version: number) => ({
+    variantKey,
+    position,
+    title: 'T',
+    sizeLine: 'S',
+    version,
+    ...picture,
+  })
+  const signoffRow = (n: number, variantKey: string, version: number) => ({
+    id: `sign${n}`.padEnd(24, 'x'),
+    variantKey,
+    version,
+    email: `person${n}@example.com`,
+    createdAt: n,
+  })
+
+  it("holds only sign-offs of each variant's current version, of this link [S-8]", async () => {
+    const app = makeApp(() => NOW)
+    const link = await addLink(1)
+    const other = await addLink(2)
+    await putVariant(db, link.id, variantRow('aaa234', 0, 3)).run()
+    await putVariant(db, link.id, variantRow('bbb234', 1, 4)).run()
+    await putVariant(db, other.id, variantRow('aaa234', 0, 3)).run()
+    const rows: [string, ReturnType<typeof signoffRow>][] = [
+      [link.id, signoffRow(1, 'aaa234', 2)],
+      [link.id, signoffRow(2, 'aaa234', 3)],
+      [link.id, signoffRow(3, 'bbb234', 3)],
+      [link.id, signoffRow(4, 'ccc234', 1)],
+      [other.id, signoffRow(5, 'aaa234', 3)],
+    ]
+    for (const [linkId, row] of rows) await addSignoff(db, linkId, row).run()
+    const cookie = await enter(app, link.slug)
+    const result = await openGallery(db, { slug: link.slug, cookie, m: null }, NOW)
+    if (result.kind !== 'gallery') throw new Error('no gallery')
+    expect(result.view.signoffs).toEqual([signoffRow(2, 'aaa234', 3)])
+    for (const n of [1, 3, 4, 5]) {
+      expect(JSON.stringify(result)).not.toContain(`person${n}@example.com`)
+    }
+  })
+
+  it('gives a variant edited after its sign-off none [S-8]', async () => {
+    const app = makeApp(() => NOW)
+    const link = await addLink(1)
+    await putVariant(db, link.id, variantRow('aaa234', 0, 3)).run()
+    await addSignoff(db, link.id, signoffRow(1, 'aaa234', 3)).run()
+    await putVariant(db, link.id, variantRow('aaa234', 0, 4)).run()
+    const cookie = await enter(app, link.slug)
+    const result = await openGallery(db, { slug: link.slug, cookie, m: null }, NOW)
+    if (result.kind !== 'gallery') throw new Error('no gallery')
+    expect(result.view.signoffs).toEqual([])
+  })
+
+  it('ignores the reviewer cookie on the password page, real slug or unknown [S-4]', async () => {
+    const link = await addLink(1, 'Secret Campaign')
+    const reviewer = (slug: string) => `__Host-adman-${slug}-as=ann@example.com`
+    const unknown = 'zzzzzzzzzzzz'
+    const badSession = `__Host-adman-${link.slug}=${'A'.repeat(43)}`
+    const asked: [string, string | null][] = [
+      [link.slug, null],
+      [link.slug, reviewer(link.slug)],
+      [link.slug, `${badSession}; ${reviewer(link.slug)}`],
+      [unknown, null],
+      [unknown, reviewer(unknown)],
+      [unknown, `${reviewer(link.slug)}; ${reviewer(unknown)}`],
+    ]
+    const results = new Set<string>()
+    for (const [slug, cookie] of asked) {
+      results.add(JSON.stringify(await openGallery(db, { slug, cookie, m: null }, NOW)))
+    }
+    expect([...results]).toEqual([JSON.stringify({ kind: 'password', notice: null })])
   })
 })
