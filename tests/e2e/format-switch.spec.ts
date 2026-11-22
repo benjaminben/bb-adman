@@ -9,6 +9,7 @@ import { makeSandbox, launch, type Sandbox } from './launch'
 import { firstIds } from './held-run'
 import * as screens from './screens'
 import { timeline } from './timeline-seed'
+import { chooseFormat, expectFormat, format } from './format-steps'
 
 const GRID = 'This direction already has a video post at this size and language.'
 const COPY_TITLE = 'Short clip copy'
@@ -24,7 +25,6 @@ test.afterEach(async () => {
   fs.rmSync(box.root, { recursive: true, force: true })
 })
 
-const format = (page: Page) => page.getByRole('radiogroup', { name: 'Format' })
 const length = (page: Page) => page.getByRole('textbox', { name: 'Length (seconds)' })
 const tiles = (page: Page) => page.getByRole('list', { name: 'Variants' }).getByRole('button')
 
@@ -67,12 +67,12 @@ test('switches an ad to video, sets its length, and switches it back', async () 
   await screens.loadBriefAndCreate(app, page)
   await openEditor(page)
 
-  await expect(format(page).getByRole('radio', { name: 'Image' })).toBeChecked()
+  await expectFormat(page, 'Image')
   await expect(length(page)).toHaveCount(0)
   await expect(timeline(page)).toHaveCount(0)
 
-  await format(page).getByRole('radio', { name: 'Video' }).click()
-  await expect(format(page).getByRole('radio', { name: 'Video' })).toBeChecked()
+  await chooseFormat(page, 'Video')
+  await expectFormat(page, 'Video')
   await expect(timeline(page)).toBeVisible()
 
   await length(page).fill('12')
@@ -84,8 +84,8 @@ test('switches an ad to video, sets its length, and switches it back', async () 
   await length(page).press('Escape')
   await expect(length(page)).toHaveValue('12.0')
 
-  await format(page).getByRole('radio', { name: 'Image' }).click()
-  await expect(format(page).getByRole('radio', { name: 'Image' })).toBeChecked()
+  await chooseFormat(page, 'Image')
+  await expectFormat(page, 'Image')
   await expect(timeline(page)).toHaveCount(0)
   await expect(length(page)).toHaveCount(0)
 })
@@ -103,8 +103,8 @@ test('shows the grid refusal and keeps the stored format', async () => {
   await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible()
   await openEditor(page)
 
-  await format(page).getByRole('radio', { name: 'Video' }).click()
+  await chooseFormat(page, 'Video')
   await expect(page.getByRole('alert').filter({ hasText: GRID })).toBeVisible()
-  await expect(format(page).getByRole('radio', { name: 'Image' })).toBeChecked()
+  await expectFormat(page, 'Image')
   await expect(timeline(page)).toHaveCount(0)
 })

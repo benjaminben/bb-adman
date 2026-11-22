@@ -9,12 +9,13 @@ import * as screens from './screens'
 import { firstIds } from './held-run'
 import { makePng, query } from './render-helpers'
 import { timeline } from './timeline-seed'
+import { chooseFormat, expectFormat, format } from './format-steps'
 
 export const TINY = path.resolve('tests/fixtures/video/tiny.mp4')
 export const BACKDROP = 'dune-backdrop.png'
 export const VIDEO_PROMPT = 'Warm light drifts slowly across the sand dunes at dusk'
 
-export const format = (page: Page) => page.getByRole('radiogroup', { name: 'Format' })
+export { format }
 export const length = (page: Page) => page.getByRole('textbox', { name: 'Length (seconds)' })
 export const clips = (page: Page) => timeline(page).getByRole('list', { name: 'Clips' })
 export const clipBlocks = (page: Page) => clips(page).getByRole('button', { name: /^Clip \d+: / })
@@ -83,8 +84,8 @@ export async function videoWithBackdrop(
   await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
   await expect(format(page)).toBeVisible()
   await choosePicture(app, page, await drawnBackdrop(app, folder))
-  await format(page).getByRole('radio', { name: 'Video' }).click()
-  await expect(format(page).getByRole('radio', { name: 'Video' })).toBeChecked()
+  await chooseFormat(page, 'Video')
+  await expectFormat(page, 'Video')
   await expect(timeline(page)).toBeVisible()
   await length(page).fill('8')
   await length(page).press('Enter')

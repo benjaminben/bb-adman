@@ -7,6 +7,7 @@ import fs from 'node:fs'
 import { makeSandbox, launch, type Sandbox } from './launch'
 import * as screens from './screens'
 import { ruler, timeline } from './timeline-seed'
+import { chooseFormat } from './format-steps'
 
 let box: Sandbox
 let app: ElectronApplication | undefined
@@ -29,10 +30,7 @@ async function openAsVideo(page: Page): Promise<void> {
   await screens.loadBriefAndCreate(app!, page)
   await screens.openCampaign(page)
   await page.getByRole('list', { name: 'Variants' }).getByRole('button').first().dblclick()
-  await page
-    .getByRole('radiogroup', { name: 'Format' })
-    .getByRole('radio', { name: 'Video' })
-    .click()
+  await chooseFormat(page, 'Video')
   await expect(timeline(page)).toBeVisible()
 }
 
