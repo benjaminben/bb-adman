@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { LIVE_ENV_NAMES, liveEnvFrom } from '../../live/env-file'
+import { LIVE_ENV_NAMES, LIVE_REDACTED_NAMES, liveEnvFrom } from '../../live/env-file'
+import { liveValues, safeText } from '../../live/live-output'
 
 // SPEC 13 [1.9]: made-up text only. No real file is read.
 describe('liveEnvFrom picks the test:live variables from .env.local text [SPEC 13]', () => {
@@ -14,6 +15,7 @@ describe('liveEnvFrom picks the test:live variables from .env.local text [SPEC 1
         'ADMAN_LIVE_KEEP',
         'AWS_ACCESS_KEY_ID',
         'AWS_SECRET_ACCESS_KEY',
+        'DROPBOX_ACCESS_TOKEN',
       ].sort(),
     )
   })
@@ -39,5 +41,25 @@ describe('liveEnvFrom picks the test:live variables from .env.local text [SPEC 1
 
   it('gives nothing for empty text', () => {
     expect(liveEnvFrom('', {})).toEqual({})
+  })
+})
+
+// P9-15: the Dropbox live test's token is read from .env.local and removed from what is
+// printed; the app secret is removed too but never read from the file. Made-up values only.
+describe('the Dropbox live values [P9-15, spec/storage-and-publish.md "Dropbox"]', () => {
+  it('removes DROPBOX_ACCESS_TOKEN and DROPBOX_APP_SECRET from live output', () => {
+    expect(LIVE_REDACTED_NAMES).toContain('DROPBOX_ACCESS_TOKEN')
+    expect(LIVE_REDACTED_NAMES).toContain('DROPBOX_APP_SECRET')
+    const values = liveValues({
+      DROPBOX_ACCESS_TOKEN: 'made-up-dropbox-token',
+      DROPBOX_APP_SECRET: 'made-up-app-secret',
+    })
+    const text = 'Bearer made-up-dropbox-token, secret made-up-app-secret'
+    expect(safeText(text, values)).toBe('Bearer [key removed], secret [key removed]')
+  })
+
+  it('takes DROPBOX_ACCESS_TOKEN from the file and drops DROPBOX_APP_SECRET', () => {
+    const text = 'DROPBOX_ACCESS_TOKEN=made-up-dropbox-token\nDROPBOX_APP_SECRET=made-up-secret\n'
+    expect(liveEnvFrom(text, {})).toEqual({ DROPBOX_ACCESS_TOKEN: 'made-up-dropbox-token' })
   })
 })
