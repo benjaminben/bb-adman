@@ -40,8 +40,9 @@ export function variantUpdate(deps: CoreDeps) {
     input: variantUpdateInput,
     projectId: (input) => input.projectId,
     run(ctx, input) {
-      if (input.durationOverridden !== undefined && ctx.actor === 'agent') {
-        throw new AppError('INVALID_INPUT', 'Only an undo sets the duration flag.')
+      // P7-10b: the undo-only flag comes only from a replayed inverse, never from an agent.
+      if (input.durationOverridden !== undefined && (ctx.actor === 'agent' || !ctx.replay)) {
+        throw new AppError('INVALID_INPUT', 'Only an undo or redo sets the duration flag.')
       }
       const db = ctx.project.db
       const stored = readStored(db, input.variantId)

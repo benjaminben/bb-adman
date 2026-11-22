@@ -16,6 +16,9 @@ export type ChangeRecorder = {
 export type BaseContext = {
   actor: Actor
   commandId: string
+  // P7-10b: set while the bus replays an inverse for history.undo or history.redo. Only then
+  // may a handler take its undo-only input fields.
+  replay?: 'undo' | 'redo'
 }
 
 export type ProjectContext = BaseContext & { project: ProjectHandle; changes: ChangeRecorder }
