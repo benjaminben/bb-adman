@@ -230,9 +230,12 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
         },
         "languages": {
           "items": {
+            "maxLength": 35,
             "minLength": 1,
+            "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$",
             "type": "string",
           },
+          "maxItems": 50,
           "minItems": 1,
           "type": "array",
         },
@@ -313,6 +316,7 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
             ],
             "type": "object",
           },
+          "maxItems": 20,
           "minItems": 1,
           "type": "array",
         },

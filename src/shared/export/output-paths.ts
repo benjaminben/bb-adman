@@ -16,9 +16,10 @@ function refuse(): never {
 }
 
 // The campaign size rule (src/shared/schemas/commands/campaign.ts) and a BCP-47 tag of
-// letters, digits and '-': nothing that could name a folder or leave one.
+// letters, digits and '-': nothing that could name a folder or leave one. campaign.create
+// takes languages of the same form.
 const SIZE_LABEL = /^[1-9][0-9]*x[1-9][0-9]*$/
-const LANGUAGE = /^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$/
+export const LANGUAGE_TAG = /^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$/
 const EXTENSIONS = new Set(['png', 'jpg', 'mp4'])
 const STAMP = /^[0-9]{8}-[0-9]{6}$/
 const MAX_REPORT_TRY = 99
@@ -35,7 +36,7 @@ export type AdFile = {
 export function adPath(ad: AdFile): string {
   if (!CampaignId.safeParse(ad.campaignId).success) refuse()
   if (!VariantKey.safeParse(ad.variantId).success) refuse()
-  if (!SIZE_LABEL.test(ad.sizeLabel) || !LANGUAGE.test(ad.language)) refuse()
+  if (!SIZE_LABEL.test(ad.sizeLabel) || !LANGUAGE_TAG.test(ad.language)) refuse()
   if (!EXTENSIONS.has(ad.ext)) refuse()
   const file = `${ad.language}-${ad.variantId}.${ad.ext}`
   return `${ad.campaignId}/${postTitle(ad.title)}/${ad.sizeLabel}/${file}`
