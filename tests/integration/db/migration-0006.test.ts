@@ -14,7 +14,7 @@ import {
 } from '@/main/db/project-file'
 import { readMeta } from '@/main/db/meta'
 import { bundledMigrations } from '@/main/db/bundled-migrations'
-import { readVariants } from '@/main/approvals/local-store'
+import { publishLocalGallery, readVariants } from '@/main/approvals/local-store'
 import type { ActivityLog } from '@/main/log/activity-log'
 
 let dir: string | undefined
@@ -107,6 +107,19 @@ describe('migration 0006 [R2V-3, spec/data-rules.md "Data migration"]', () => {
       before[1]!.map((r) => ({ ...r, clip_ms: null, clip_bytes: null, clip_missing: null })),
     )
     expect(all(h.db, 'PRAGMA foreign_key_check')).toEqual([])
+  })
+
+  it('writes and reads back clip numbers and a still-only reason, and refuses a broken pair', () => {
+    const { h } = upgradedFile()
+    const base = { publishedRev: 3, expiresAt: EXPIRES }
+    const rows = [
+      { ...base, variantId: 'aaaaaa', clipMs: null, clipBytes: null, clipMissing: 'too_long' },
+      { ...base, variantId: 'k3f9q2', clipMs: 8000, clipBytes: 4096, clipMissing: null },
+    ] as const
+    publishLocalGallery(h.db, 'spring-sale-abc234', [...rows], 'z')
+    expect(readVariants(h.db, 'spring-sale-abc234', quietLog)).toEqual(rows)
+    const broken = { ...rows[1], clipBytes: null }
+    expect(() => publishLocalGallery(h.db, 'spring-sale-abc234', [broken], 'z')).toThrow()
   })
 
   it('reads an old gallery row with no clip numbers and no reason', () => {
