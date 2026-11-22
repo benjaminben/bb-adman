@@ -131,9 +131,22 @@ describe('checkWorkflowText: the shape of each node', () => {
     ],
     [
       'a list that is not a link',
-      { n: node('X', { v: ['gone', 1.5], w: ['gone', -1], x: ['a', 0, 1] }) },
+      { n: node('X', { v: ['gone', 'x'], w: [1, 0], x: ['a', 0, 1], y: [['gone', 0], 1] }) },
     ],
+    ['a link to an own node, output 0 or more', { n: node('X', { a: ['n', 0], b: ['n', 3] }) }],
   ])('accepts %s', (_, extra) => {
     expect(reasonOf(extra)).toBe('accepted')
+  })
+
+  // Ruling C: text and any number is a link; it must name an own node by a whole number from 0.
+  it.each([
+    ['a link to a missing node', ['gone', 0]],
+    ['a link to a missing node with a fraction', ['gone', 1.5]],
+    ['a link to an own node with a fraction', ['n', 1.5]],
+    ['a link to an own node with a negative number', ['n', -1]],
+  ])('refuses %s as a bad link', (_, link) => {
+    expect(reasonOf({ n: node('X', { a: 1 }), m: node('X', { v: link }) })).toBe(
+      'workflow_bad_link',
+    )
   })
 })

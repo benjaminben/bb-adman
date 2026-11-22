@@ -75,13 +75,13 @@ function keptNode(value: unknown): GraphNode | null {
   return node
 }
 
-// A two-item list of text and a whole number from 0.
+// A two-item list of text and any number is a link. It must name an own node, by an output
+// that is a whole number from 0.
 const isLink = (v: unknown): v is [string, number] =>
-  Array.isArray(v) &&
-  v.length === 2 &&
-  typeof v[0] === 'string' &&
-  Number.isInteger(v[1]) &&
-  (v[1] as number) >= 0
+  Array.isArray(v) && v.length === 2 && typeof v[0] === 'string' && typeof v[1] === 'number'
+
+const isGoodLink = (graph: Graph, [node, output]: [string, number]) =>
+  Object.hasOwn(graph, node) && Number.isInteger(output) && output >= 0
 
 function slotsFrom(marks: Marks): WorkflowSlots {
   const slots: WorkflowSlots = {
@@ -124,7 +124,7 @@ export function checkWorkflowValue(value: unknown): WorkflowCheck {
   const graph: Graph = Object.fromEntries(kept)
   for (const [, node] of kept) {
     for (const input of Object.values(node.inputs)) {
-      if (isLink(input) && !Object.hasOwn(graph, input[0])) return refuse('workflow_bad_link')
+      if (isLink(input) && !isGoodLink(graph, input)) return refuse('workflow_bad_link')
     }
   }
 
