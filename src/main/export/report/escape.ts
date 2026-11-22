@@ -10,7 +10,7 @@ const ENTITIES: Record<string, string> = {
 }
 
 export function escapeHtml(text: string): string {
-  return text.replace(/[&<>"']/g, (char) => ENTITIES[char])
+  return text.replace(/[&<>"']/g, (char) => ENTITIES[char] ?? char)
 }
 
 // An element with escaped text inside. `tag` and `className` are fixed words of the page,

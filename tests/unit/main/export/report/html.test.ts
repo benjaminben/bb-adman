@@ -130,7 +130,7 @@ describe('reportHtml: order and words [FR-231, FR-233]', () => {
 
   it('marks a warning that appeared after the export was started', () => {
     const late = withChanges({
-      warningsExportedPast: [{ ...sampleReport.warningsExportedPast[0], seenBeforeExport: false }],
+      warningsExportedPast: [{ ...sampleReport.warningsExportedPast[0]!, seenBeforeExport: false }],
     })
     expect(late).toContain('This warning appeared after the export was started.')
     expect(page).not.toContain('This warning appeared after the export was started.')
