@@ -1,12 +1,23 @@
-// spec/editor.md, "Layer list": one row. A small whole picture of an image or background layer
-// (or a text mark), the name, and the marks: "Empty", "Does not fit", "File not found", and
-// "Stays at the bottom" for the background. Clicking the row selects its layer; double-clicking
-// the name or F2 renames it; the row's buttons hide, lock and delete. The list owns the drag.
-import { Fragment, useEffect, useRef, useState, type DragEvent, type KeyboardEvent } from 'react'
+// spec/editor.md, "Layer list": one row, drawn as the shared ObjectRow (ED-1a, choice C-3). A
+// small whole picture of an image or background layer (or a text mark) and the type icon, the
+// name, the marks (icons; their words end the row's name), the eye and the lock, and the More
+// menu (not on the background). Clicking the row selects its layer; double-clicking it or F2
+// renames it. The draggable box around the ObjectRow is the list's; the list owns the drag.
+import {
+  useEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+} from 'react'
 import type { LayerRow as Layer } from '@/shared/schemas/rows/layer'
 import { Icon, type IconName } from '@/renderer/ui/icon'
+import { ObjectRow } from '@/renderer/ui/object-row'
 import { NameField } from './name-field'
 import { RowActions, type RowActionsProps } from './row-actions'
+import { RowMarks, rowMarks } from './row-marks'
+import { RowMenu, type RowMenuProps } from './row-menu'
 import { Thumb } from './thumb'
 import styles from './layer-row.module.css'
 
@@ -34,61 +45,41 @@ export type LayerRowProps = {
   onSelect: (layerId: string) => void
   onToggle: RowActionsProps['onToggle']
   onRename: (name: string) => void
-  onDelete: () => void
+  // The More menu's state and actions; left out for the background, which has no menu.
+  menu?: Omit<RowMenuProps, 'layer'>
   drag: RowDrag
 }
 
-function named(layer: Layer): string[] {
-  const font = 'fontAssetId' in layer.style ? layer.style.fontAssetId : null
-  return [layer.source?.assetId, font].filter((id): id is string => typeof id === 'string')
-}
-
-export function rowMarks(layer: Layer, assets: LayerRowProps['assets']): string[] {
-  const marks: string[] = []
-  if (layer.type === 'image' && layer.source === null) marks.push('Empty')
-  if (layer.type === 'text' && layer.overflow) marks.push('Does not fit')
-  if (named(layer).some((id) => assets[id]?.missing)) marks.push('File not found')
-  if (layer.type === 'background') marks.push('Stays at the bottom')
-  return marks
-}
-
-// The type icon beside the name (spec/app-style.md "Editor", "Layer rows"); decorative.
+// The type icon beside the thumbnail (spec/app-style.md "Editor", "Layer rows"); decorative.
 const TYPE_ICON: Record<Layer['type'], IconName> = {
   background: 'layers',
   image: 'image',
   text: 'text',
 }
 
-function Marks(props: { marks: string[] }) {
-  if (props.marks.length === 0) return null
-  return (
-    <span className={styles.marks}>
-      {props.marks.map((mark) => (
-        <Fragment key={mark}>
-          {' '}
-          <span className={styles.mark}>{mark}</span>
-        </Fragment>
-      ))}
-    </span>
-  )
-}
+const MAIN = '[data-layer-row]'
 
 export function LayerRow(props: LayerRowProps) {
   const { layer, drag } = props
   const [renaming, setRenaming] = useState(false)
-  const [pointed, setPointed] = useState(false)
-  const [focused, setFocused] = useState(false)
-  const rowButton = useRef<HTMLButtonElement>(null)
+  const box = useRef<HTMLDivElement>(null)
   const wasRenaming = useRef(false)
   useEffect(() => {
-    if (wasRenaming.current && !renaming) rowButton.current?.focus()
+    if (wasRenaming.current && !renaming) box.current?.querySelector<HTMLElement>(MAIN)?.focus()
     wasRenaming.current = renaming
   }, [renaming])
 
-  function onKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    if (event.key !== 'F2') return
+  // F2 on the row's main button renames; the ObjectRow's own Enter stays a select.
+  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'F2' || !(event.target as Element).matches(MAIN)) return
     event.preventDefault()
     setRenaming(true)
+  }
+
+  // A double-click on the row renames; one on the eye, the lock or the menu does not.
+  function onDoubleClick(event: MouseEvent<HTMLDivElement>) {
+    const control = (event.target as Element).closest('button, input, [role="menu"]')
+    if (control === null || control.matches(MAIN)) setRenaming(true)
   }
 
   function renamed(name: string | null) {
@@ -96,55 +87,41 @@ export function LayerRow(props: LayerRowProps) {
     if (name) props.onRename(name)
   }
 
-  const thumb = <Thumb projectId={props.projectId} layer={layer} assets={props.assets} />
+  const marks = rowMarks(layer, props.assets)
+  // The list finds a row's main button by data-layer-row (arrow keys, focus after renaming).
+  const mainProps = { 'aria-pressed': props.selected, 'data-layer-row': layer.id }
+  const thumb = (
+    <span className={styles.thumb}>
+      <Thumb projectId={props.projectId} layer={layer} assets={props.assets} />
+      <Icon name={TYPE_ICON[layer.type]} size="small" />
+    </span>
+  )
   return (
     <div
+      ref={box}
       data-layer-id={layer.id}
       data-drop={drag.dropAt ?? undefined}
-      className={layer.visible ? styles.box : `${styles.box} ${styles.hiddenLayer}`}
+      className={styles.box}
       draggable={drag.draggable && !renaming}
       onDragStart={drag.onDragStart}
       onDragOver={drag.onDragOver}
       onDragLeave={drag.onDragLeave}
       onDrop={drag.onDrop}
       onDragEnd={drag.onDragEnd}
-      onMouseEnter={() => setPointed(true)}
-      onMouseLeave={() => setPointed(false)}
-      onFocus={() => setFocused(true)}
-      onBlur={(event) => setFocused(event.currentTarget.contains(event.relatedTarget))}
+      onKeyDown={onKeyDown}
+      onDoubleClick={onDoubleClick}
     >
-      {renaming ? (
-        <span className={styles.row}>
-          {thumb}
-          <NameField name={layer.name} onDone={renamed} />
-        </span>
-      ) : (
-        <button
-          ref={rowButton}
-          type="button"
-          data-layer-row={layer.id}
-          className={props.selected ? `${styles.row} ${styles.selected}` : styles.row}
-          aria-pressed={props.selected}
-          onClick={() => props.onSelect(layer.id)}
-          onKeyDown={onKeyDown}
-        >
-          {thumb}
-          <span className={styles.type}>
-            <Icon name={TYPE_ICON[layer.type]} size="small" />
-          </span>
-          <span className={styles.text}>
-            <span className={styles.name} onDoubleClick={() => setRenaming(true)}>
-              {layer.name}
-            </span>
-            <Marks marks={rowMarks(layer, props.assets)} />
-          </span>
-        </button>
-      )}
-      <RowActions
-        layer={layer}
-        active={props.selected || pointed || focused}
-        onToggle={props.onToggle}
-        onDelete={props.onDelete}
+      <ObjectRow
+        label={[layer.name, ...marks].join(' ')}
+        thumb={thumb}
+        name={renaming ? <NameField name={layer.name} onDone={renamed} /> : layer.name}
+        marks={marks.length > 0 ? <RowMarks marks={marks} /> : undefined}
+        stateActions={<RowActions layer={layer} onToggle={props.onToggle} />}
+        more={props.menu && <RowMenu layer={layer} {...props.menu} />}
+        selected={props.selected}
+        muted={!layer.visible}
+        onSelect={() => props.onSelect(layer.id)}
+        mainProps={mainProps}
       />
     </div>
   )

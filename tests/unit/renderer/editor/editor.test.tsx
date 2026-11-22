@@ -42,7 +42,7 @@ describe('Editor [spec/editor.md "The editor screen"]', () => {
     expect(screen.getByRole('heading', { name: 'Master post' })).toBeInTheDocument()
     expect(screen.getByText('Master')).toBeInTheDocument()
     expect(screen.getByText('4:5 · 1080 × 1350 px · en · image')).toBeInTheDocument()
-    const rows = within(screen.getByRole('list', { name: 'Layers' })).getAllByRole('button')
+    const rows = [...document.querySelectorAll('[data-layer-row]')]
     expect(rows).toHaveLength(3)
     expect(rows[0]).toHaveAccessibleName(/^Logo\s*Empty$/)
     expect(rows[1]).toHaveAccessibleName('Headline')

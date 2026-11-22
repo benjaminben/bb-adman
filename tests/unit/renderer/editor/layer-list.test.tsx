@@ -15,6 +15,11 @@ const selected = () => screen.getByRole('status', { name: 'Selected' })
 const rowButton = (name: string) => screen.getByRole('button', { name: new RegExp(`^${name}`) })
 // The row's draggable box, around its select button.
 const rowBox = (name: string) => rowButton(name).parentElement as HTMLElement
+const dragBox = (name: string) => rowButton(name).closest('[data-layer-id]') as HTMLElement
+const typeIcons = (name: string) =>
+  [...(rowButton(name).parentElement as HTMLElement).querySelectorAll('svg')].filter(
+    (svg) => !svg.closest('button, [title]'),
+  )
 const NAMES: Record<string, string> = { L0: 'Background', L1: 'Headline', L2: 'Logo', L3: 'Offer' }
 
 // jsdom has no DragEvent, so the pointer's height is set on the event by hand.
@@ -72,15 +77,30 @@ describe('Layer list: hide, show, lock, unlock', () => {
     expect(sent('layer.update')).toEqual([{ projectId: P, layerId: 'L1', patch }])
   })
 
-  it('shows a row actions while it is selected; otherwise only a hidden or locked state', async () => {
+  it('always shows the eye, the lock and the More menu on every row, selected or not', async () => {
     await openList([BACKGROUND, { ...HEADLINE, visible: false }, { ...LOGO, locked: true }, OFFER])
     const list = within(screen.getByRole('list', { name: 'Layers' }))
     const names = () => list.getAllByRole('button').map((b) => b.getAttribute('aria-label'))
-    expect(names()).toEqual([null, null, 'Unlock Logo', null, 'Show Headline', null])
+    expect(names()).toEqual([
+      'Offer',
+      'Hide Offer',
+      'Lock Offer',
+      'More actions for Offer',
+      'Logo Empty',
+      'Hide Logo',
+      'Unlock Logo',
+      'More actions for Logo',
+      'Headline',
+      'Show Headline',
+      'Lock Headline',
+      'More actions for Headline',
+      'Background Stays at the bottom',
+      'Hide Background',
+      'Lock Background',
+    ])
     await userEvent.click(button('Offer'))
     expect(names()).toContain('Hide Offer')
     expect(names()).toContain('Lock Offer')
-    expect(names()).toContain('Delete Offer')
   })
 })
 
@@ -143,9 +163,9 @@ describe('Layer list: reorder', () => {
     await openList()
     fireEvent.dragStart(rowBox('Headline'))
     dragAt('dragOver', 'Offer', -1)
-    expect(rowBox('Offer')).toHaveAttribute('data-drop', 'above')
+    expect(dragBox('Offer')).toHaveAttribute('data-drop', 'above')
     fireEvent.dragEnd(rowBox('Headline'))
-    expect(rowBox('Offer')).not.toHaveAttribute('data-drop')
+    expect(dragBox('Offer')).not.toHaveAttribute('data-drop')
   })
 
   it.each([
@@ -165,15 +185,16 @@ describe('Layer list: reorder', () => {
 
   it('does not let the background be dragged', async () => {
     await openList()
-    expect(rowBox('Background')).toHaveAttribute('draggable', 'false')
-    expect(rowBox('Headline')).toHaveAttribute('draggable', 'true')
+    expect(dragBox('Background')).toHaveAttribute('draggable', 'false')
+    expect(dragBox('Headline')).toHaveAttribute('draggable', 'true')
   })
 })
 
 describe('Layer list: delete', () => {
   it('Delete Offer, and the Delete and Backspace keys, send layer.delete', async () => {
     const { sent } = await openList(LAYERS, 'L3')
-    await userEvent.click(button('Delete Offer'))
+    await userEvent.click(button('More actions for Offer'))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Delete' }))
     rowButton('Offer').focus()
     await userEvent.keyboard('{Delete}{Backspace}')
     expect(sent('layer.delete')).toEqual(Array(3).fill({ projectId: P, layerId: 'L3' }))
@@ -220,7 +241,7 @@ describe('Layer list: the type icon [ST-7, spec/app-style.md "Editor"]', () => {
   ] as const)('%s shows one hidden type icon beside an unchanged name', async (name, full) => {
     await openList()
     const row = rowButton(name)
-    const icons = row.querySelectorAll('svg')
+    const icons = typeIcons(name)
     expect(icons).toHaveLength(1)
     expect(icons[0]).toHaveAttribute('aria-hidden', 'true')
     expect(row).toHaveAccessibleName(full)
@@ -228,7 +249,9 @@ describe('Layer list: the type icon [ST-7, spec/app-style.md "Editor"]', () => {
 
   it('shows one hidden type icon on a picture layer row', async () => {
     await openList()
-    expect(rowButton('Logo').querySelectorAll('svg[aria-hidden="true"]')).toHaveLength(1)
+    expect(typeIcons('Logo').filter((s) => s.getAttribute('aria-hidden') === 'true')).toHaveLength(
+      1,
+    )
   })
 })
 
@@ -236,7 +259,7 @@ describe('Layer list: the type icon [ST-7, spec/app-style.md "Editor"]', () => {
 // show; the actions lie over the row's right end instead of adding a strip below it.
 describe('Layer list: rows keep one height [ST-7]', () => {
   const css = fs
-    .readFileSync(path.resolve('src/renderer/editor/layer-row/layer-row.module.css'), 'utf8')
+    .readFileSync(path.resolve('src/renderer/ui/object-row/object-row.module.css'), 'utf8')
     .replace(/\/\*[\s\S]*?\*\//g, '')
   const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
     selector: (m[1] ?? '').trim(),
