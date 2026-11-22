@@ -80,13 +80,16 @@
   flex-direction: column;
   gap: var(--space-1);
   margin: 0;
-  padding: var(--space-3) var(--space-4) 0 0;
-  border-top: var(--border-width) solid var(--color-line);
+  padding: 0 var(--space-4) 0 0;
   border-right: var(--border-width) solid var(--color-line);
   list-style: none;
 }
 .failure {
   color: var(--color-danger-text);
+}
+.panes .ad {
+  padding-top: 0;
+  border-top: none;
 }
 .ad .fields {
   padding-left: var(--space-2);
