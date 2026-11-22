@@ -40,6 +40,7 @@ export function GalleryScreen({ view }: { view: GalleryView }) {
       notice={notice}
       left={live.filter((card) => !card.mine).length}
       live={live.length}
+      videos={live.filter((card) => card.variant.video?.clip).length}
     />
   )
   return (

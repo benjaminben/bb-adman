@@ -1,0 +1,24 @@
+/* round-2-approvals-video.md "The card": a chip on the picture's top-left corner. The picture
+   button is its positioned parent. */
+.mark {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: var(--chip-height);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+  font-size: var(--font-size-small);
+  line-height: 1;
+}
+
+.play {
+  flex: none;
+  width: var(--space-2);
+  height: var(--space-2);
+}

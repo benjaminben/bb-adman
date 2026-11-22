@@ -26,6 +26,7 @@ const variant = (variantKey: string, version = 1, extra: Partial<Variant> = {}):
   sizeLine: '1080 × 1080',
   version,
   expired: false,
+  video: null,
   ...extra,
 })
 

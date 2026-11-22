@@ -8,7 +8,7 @@ A reviewer opens a video variant in the gallery and watches the real MP4, with s
 
 ## Status
 
-R2V-1, R2V-2 and R2V-3 are built (under `next start` the server may drop the clip reply's `Content-Length`; playback works without it). Slices R2V-4 to R2V-8 below are not; they are placed among R2A-1 to R2A-9 in the wave table.
+R2V-1 to R2V-4 are built (under `next start` the server may drop the clip reply's `Content-Length`; playback works without it). Slices R2V-5 to R2V-8 below are not; they are placed among R2A-1 to R2A-9 in the wave table.
 
 ## Design additions
 

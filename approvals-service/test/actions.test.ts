@@ -44,6 +44,7 @@ describe('openGallery gives a narrowed view [review AP-3 Low]', () => {
             sizeLine: 'S',
             version: 3,
             expired: false,
+            video: null,
           },
           {
             variantKey: 'bbb234',
@@ -52,6 +53,7 @@ describe('openGallery gives a narrowed view [review AP-3 Low]', () => {
             sizeLine: 'S',
             version: 3,
             expired: true,
+            video: null,
           },
         ],
         signoffs: [{ ...signoff, createdAt: 5 }],
