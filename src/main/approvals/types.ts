@@ -15,7 +15,10 @@ export type PasswordStore = {
 // Paths come only from src/shared/approvals/picture-paths.ts, inside
 // adman-approvals/{projectId}/{campaignId}/.
 export type PictureStore = {
+  // A still: a path as picturePath builds it, nothing else.
   put(path: string, png: Uint8Array): Promise<void>
+  // A video variant's clip: a path as clipPath builds it, nothing else.
+  putClip(path: string, data: ReadableStream<Uint8Array>): Promise<void>
   signedUrl(path: string, seconds: number): Promise<{ url: string; expiresAt: string }>
   list(folder: string): Promise<string[]>
   remove(paths: string[]): Promise<void>

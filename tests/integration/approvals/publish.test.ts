@@ -58,6 +58,7 @@ function failingStore(method: 'put' | 'signedUrl' | 'list', after = 0): void {
   }
   const store: PictureStore = {
     put: async (p, png) => (method === 'put' && fail(), real.put(p, png)),
+    putClip: (p, clip) => real.putClip(p, clip),
     signedUrl: async (p, s) => (method === 'signedUrl' && fail(), real.signedUrl(p, s)),
     list: async (folder) => (method === 'list' && fail(), real.list(folder)),
     remove: (paths) => real.remove(paths),

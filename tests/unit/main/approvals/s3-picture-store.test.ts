@@ -162,3 +162,53 @@ describe('S3 picture store: the key guard [spec/approvals.md "Pictures"]', () =>
     expect(calls).toEqual([])
   })
 })
+
+const CLIP = `${FOLDER}k3f9q2-3.mp4`
+const clip = () => new ReadableStream<Uint8Array>()
+
+describe('S3 picture store: clips [spec/phases/round-2-approvals-video.md "R2V-3"]', () => {
+  it('writes a clip through the same storage with video/mp4', async () => {
+    const { calls, storage } = standIn()
+    const data = clip()
+    await storeWith(KEYS, storage).putClip(CLIP, data)
+    expect(calls).toEqual([['write', CLIP, data, 'video/mp4']])
+  })
+
+  it('lists a clip of the folder with its pictures, and signs it', async () => {
+    const { calls, storage } = standIn([FILE, CLIP, `${FOLDER}k3f9q2-3.mov`])
+    const store = storeWith(KEYS, storage)
+    expect(await store.list(FOLDER)).toEqual([FILE, CLIP])
+    await store.signedUrl(CLIP, 60)
+    expect(calls).toEqual([
+      ['list', FOLDER],
+      ['sign', CLIP, 60],
+    ])
+  })
+
+  it.each([...BAD_FILES, FILE, `${FOLDER}k3f9q2-3.mov`, `${FOLDER}k3f9q2-3.mp4.png`])(
+    'putClip refuses %j and calls nothing',
+    async (path) => {
+      const { calls, storage } = standIn()
+      await expect(storeWith(KEYS, storage).putClip(path, clip())).rejects.toThrow(
+        new Error(REFUSED_PATH),
+      )
+      expect(calls).toEqual([])
+    },
+  )
+
+  it('put refuses a clip name and calls nothing', async () => {
+    const { calls, storage } = standIn()
+    await expect(storeWith(KEYS, storage).put(CLIP, new Uint8Array([1]))).rejects.toThrow(
+      new Error(REFUSED_PATH),
+    )
+    expect(calls).toEqual([])
+  })
+
+  it('putClip without both S3 keys is NEEDS_KEY and calls nothing', async () => {
+    const { calls, storage } = standIn()
+    await expect(storeWith({}, storage).putClip(CLIP, clip())).rejects.toMatchObject({
+      code: 'NEEDS_KEY',
+    })
+    expect(calls).toEqual([])
+  })
+})

@@ -1,5 +1,6 @@
 // spec/approvals.md "Pictures": the one owner of picture paths. The folder is
-// adman-approvals/{projectId}/{campaignId}/ and a file is {folder}{variantId}-{rev}.png. Every
+// adman-approvals/{projectId}/{campaignId}/ and a file is {folder}{variantId}-{rev}.png, or
+// {folder}{variantId}-{rev}.mp4 for a video variant's clip (round-2-approvals-video.md). Every
 // part is checked before use (ULID, the campaign ID rule, the variant ID rule, a whole number);
 // a failure throws "Storage path refused", which holds no path. The picture stores check every
 // path they are given here, so nothing outside one campaign's folder is listed, written,
@@ -28,28 +29,52 @@ export function pictureFolder(projectId: string, campaignId: string): string {
   return `${PICTURE_ROOT}/${projectId}/${campaignId}/`
 }
 
+// The two kinds of file in a campaign folder: a still picture and a video variant's clip.
+export type PictureExt = 'png' | 'mp4'
+
+function filePath(
+  projectId: string,
+  campaignId: string,
+  variantId: string,
+  rev: number,
+  ext: PictureExt,
+): string {
+  const folder = pictureFolder(projectId, campaignId)
+  if (!VariantKey.safeParse(variantId).success) refuse()
+  if (!Number.isSafeInteger(rev) || rev < 0) refuse()
+  return `${folder}${variantId}-${rev}.${ext}`
+}
+
 export function picturePath(
   projectId: string,
   campaignId: string,
   variantId: string,
   rev: number,
 ): string {
-  const folder = pictureFolder(projectId, campaignId)
-  if (!VariantKey.safeParse(variantId).success) refuse()
-  if (!Number.isSafeInteger(rev) || rev < 0) refuse()
-  return `${folder}${variantId}-${rev}.png`
+  return filePath(projectId, campaignId, variantId, rev, 'png')
 }
 
-// The campaign folder a picture file sits in; refused unless the path is exactly one that
-// picturePath builds.
-export function pictureFolderOf(path: string): string {
+// {folder}{variantId}-{rev}.mp4, with the same part checks as picturePath.
+export function clipPath(
+  projectId: string,
+  campaignId: string,
+  variantId: string,
+  rev: number,
+): string {
+  return filePath(projectId, campaignId, variantId, rev, 'mp4')
+}
+
+// The campaign folder a picture or clip file sits in; refused unless the path is exactly one
+// that picturePath or clipPath builds, and, when `ext` is given, one of that kind.
+export function pictureFolderOf(path: string, ext?: PictureExt): string {
   const parts = path.split('/')
   if (parts.length !== 4 || parts[0] !== PICTURE_ROOT) refuse()
   const [, projectId = '', campaignId = '', file = ''] = parts
-  const match = /^([^-]*)-([^.]*)\.png$/.exec(file)
+  const match = /^([^-]*)-([^.]*)\.(png|mp4)$/.exec(file)
   const rev = match?.[2] ?? ''
-  if (!match || !WHOLE.test(rev)) refuse()
-  if (picturePath(projectId, campaignId, match[1] ?? '', Number(rev)) !== path) refuse()
+  const found = match?.[3] === 'mp4' ? 'mp4' : 'png'
+  if (!match || !WHOLE.test(rev) || (ext !== undefined && ext !== found)) refuse()
+  if (filePath(projectId, campaignId, match[1] ?? '', Number(rev), found) !== path) refuse()
   return `${PICTURE_ROOT}/${projectId}/${campaignId}/`
 }
 
@@ -90,7 +115,7 @@ export function checkPictureLifetime(seconds: number): number {
 // The one campaign folder a removal stays in; refused when the paths span two folders or one
 // is not a picture file. An empty list gives null.
 export function removalFolder(paths: string[]): string | null {
-  const folders = new Set(paths.map(pictureFolderOf))
+  const folders = new Set(paths.map((path) => pictureFolderOf(path)))
   if (folders.size > 1) refuse()
   return [...folders][0] ?? null
 }

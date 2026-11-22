@@ -148,3 +148,59 @@ describe('the test store [spec/approvals.md "Pictures"]', () => {
     expect(fs.existsSync(`${outside}-x`)).toBe(false)
   })
 })
+
+const CLIP = `${FOLDER}k3f9q2-3.mp4`
+const clipOf = (...parts: number[][]) =>
+  new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const part of parts) controller.enqueue(new Uint8Array(part))
+      controller.close()
+    },
+  })
+
+describe('the test store: clips [spec/phases/round-2-approvals-video.md "R2V-3"]', () => {
+  it('writes the bytes of a clip under its folder, lists it and removes it', async () => {
+    const fx = fixture()
+    const pictures = store(fx, true, ORIGIN)
+    await pictures.putClip(CLIP, clipOf([0, 0, 0, 24], [102, 116, 121, 112]))
+    expect(filesUnder(folderOf(fx))).toEqual([CLIP])
+    const written = fs.readFileSync(path.join(folderOf(fx), CLIP))
+    expect([...written]).toEqual([0, 0, 0, 24, 102, 116, 121, 112])
+    expect(await pictures.list(FOLDER)).toEqual([CLIP])
+    expect((await pictures.signedUrl(CLIP, 60)).url).toBe(`${ORIGIN}/${CLIP}`)
+    await pictures.remove([CLIP])
+    expect(filesUnder(folderOf(fx))).toEqual([])
+  })
+
+  it.each([
+    ['a .png name', FILE],
+    ['a path outside the folder', `${FOLDER}../../../../beside.mp4`],
+    ['a path below the folder', `${FOLDER}sub/k3f9q2-1.mp4`],
+    ['a path with no campaign', `adman-approvals/${P}/k3f9q2-1.mp4`],
+    ['a bare name', 'k3f9q2-1.mp4'],
+    ['an absolute path', `/${CLIP}`],
+  ])('putClip refuses %s and writes nothing anywhere', async (_case, bad) => {
+    const fx = fixture()
+    await expect(store(fx, true, ORIGIN).putClip(bad, clipOf([1]))).rejects.toThrow(
+      new Error(REFUSED_PATH),
+    )
+    expect(filesUnder(fx.root).filter((p) => !p.startsWith('userData/logs/'))).toEqual([])
+  })
+
+  it('put refuses a clip name, so a still is never written as .mp4', async () => {
+    const fx = fixture()
+    await expect(store(fx, true, ORIGIN).put(CLIP, PNG)).rejects.toThrow(new Error(REFUSED_PATH))
+    expect(filesUnder(fx.root).filter((p) => !p.startsWith('userData/logs/'))).toEqual([])
+  })
+
+  it('refuses a link in place of the folder for a clip too', async () => {
+    const fx = fixture()
+    outside = fs.mkdtempSync(path.join(os.tmpdir(), 'adman-outside-'))
+    fs.mkdirSync(fx.userData, { recursive: true })
+    fs.symlinkSync(outside, folderOf(fx), 'dir')
+    await expect(store(fx, true, ORIGIN).putClip(CLIP, clipOf([1]))).rejects.toThrow(
+      new Error(REFUSED_PATH),
+    )
+    expect(filesUnder(outside)).toEqual([])
+  })
+})
