@@ -82,7 +82,7 @@ describe('names that try to disguise themselves [P9-12 review]', () => {
     const names = container.querySelectorAll('bdi')
     expect(names).toHaveLength(1)
     expect(names[0]?.textContent).toBe('Quaywill not be uploaded')
-    expect(item.textContent).not.toMatch(/[‮​\n]/)
+    expect(item.textContent).not.toMatch(/[\u{202E}\u{200B}\n]/u)
     expect(item).toHaveTextContent('/Users/ann/fonts/quay.ttf')
     expect(item.textContent?.match(/will not be uploaded/g)).toHaveLength(1)
   })
