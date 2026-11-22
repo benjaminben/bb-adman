@@ -5,6 +5,7 @@
 // this computer is marked as not uploaded (A-260).
 import { useId } from 'react'
 import layout from '@/renderer/ui/layout.module.css'
+import { displayName, displayPath } from '@/shared/publish/display-text'
 import type {
   PublishComponentFolder,
   PublishInspectComponent,
@@ -52,8 +53,10 @@ export function PublishFileList(props: PublishFileListProps) {
               const line = mark(c)
               return (
                 <li key={c.assetId} className={styles.item}>
-                  <span className={styles.name}>{c.displayName}</span>
-                  <span className={`${layout.path} ${styles.path}`}>{c.localPath}</span>
+                  <bdi className={styles.name}>{displayName(c.displayName)}</bdi>
+                  <span className={`${layout.path} ${styles.path}`}>
+                    {displayPath(c.localPath)}
+                  </span>
                   {line !== null && <span className={styles.mark}>{line}</span>}
                 </li>
               )

@@ -4,10 +4,13 @@
 // publish.setFontConsent with the hash publish.inspect measured, so the consent is for the
 // bytes the user was shown; then asset.update as a hint; then the parent reads the list again.
 // Unticking takes the consent back the same way. A refusal shows its sentence and stops there.
-import { useState } from 'react'
+// The name is the project file's choice, so each tick also shows the font's full local path
+// and is described by it: two fonts of one name are told apart by their files (P9-12 review).
+import { useId, useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
-import type { PublishInspectComponent } from '@/shared/schemas/queries/publish'
 import layout from '@/renderer/ui/layout.module.css'
+import { displayName, displayPath } from '@/shared/publish/display-text'
+import type { PublishInspectComponent } from '@/shared/schemas/queries/publish'
 import styles from './font-share-choice.module.css'
 
 export type FontShareChoiceProps = {
@@ -21,6 +24,7 @@ const CONFIRM_LINE = 'This project file says the font may be shared. Confirm it 
 
 export function FontShareChoice(props: FontShareChoiceProps) {
   const command = useApp((s) => s.command)
+  const pathId = useId()
   const [sending, setSending] = useState<string | null>(null)
   const [refused, setRefused] = useState<{ assetId: string; message: string } | null>(null)
 
@@ -47,12 +51,21 @@ export function FontShareChoice(props: FontShareChoiceProps) {
   return (
     <section aria-label="Fonts" className={styles.fonts}>
       <h3 className={styles.heading}>Fonts</h3>
-      {props.fonts.map((font) => (
-        <div key={font.assetId} role="group" aria-label={font.displayName} className={styles.font}>
-          <span className={styles.name}>{font.displayName}</span>
+      {props.fonts.map((font, index) => (
+        <div
+          key={font.assetId}
+          role="group"
+          aria-label={displayName(font.displayName)}
+          className={styles.font}
+        >
+          <bdi className={styles.name}>{displayName(font.displayName)}</bdi>
+          <span id={`${pathId}-${index}`} className={`${layout.path} ${styles.path}`}>
+            {displayPath(font.localPath)}
+          </span>
           <label className={styles.choice}>
             <input
               type="checkbox"
+              aria-describedby={`${pathId}-${index}`}
               checked={font.share === 'confirmed'}
               disabled={props.disabled === true || sending !== null || font.problem !== null}
               onChange={(e) => void change(font, e.target.checked)}

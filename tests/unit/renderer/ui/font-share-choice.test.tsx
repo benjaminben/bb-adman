@@ -94,3 +94,25 @@ describe('the font share tick [P9-12, A-229, A-260]', () => {
     expect(within(group('Harbor Sans')).getByRole('checkbox', { name: TICK })).toBeDisabled()
   })
 })
+
+describe('each tick shows which file it is [P9-12 review]', () => {
+  it('shows two fonts of the same name with their own full paths, each tied to its box', async () => {
+    const mine = '/Users/ann/Library/Fonts/Inter.ttf'
+    const other = '/Users/ann/Licensed/Studio Fonts/Inter-Display-Licensed.otf'
+    await show([
+      font({ displayName: 'Inter', localPath: mine }),
+      font({ assetId: '01JD0000000000000000000010', displayName: 'Inter', localPath: other }),
+    ])
+    const boxes = screen.getAllByRole('checkbox', { name: TICK })
+    expect(boxes).toHaveLength(2)
+    expect(boxes[0]).toHaveAccessibleDescription(mine)
+    expect(boxes[1]).toHaveAccessibleDescription(other)
+  })
+
+  it('cleans the name and the path, and wraps the name in bdi', async () => {
+    await show([font({ displayName: 'In‮ter ', localPath: '/a/​b.ttf' })])
+    const section = screen.getByRole('region', { name: 'Fonts' })
+    expect(section.querySelector('bdi')?.textContent).toBe('Inter')
+    expect(screen.getByRole('checkbox', { name: TICK })).toHaveAccessibleDescription('/a/b.ttf')
+  })
+})

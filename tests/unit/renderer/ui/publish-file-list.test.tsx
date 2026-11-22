@@ -69,3 +69,33 @@ describe('the publish file list [P9-12, R-06, A-218]', () => {
     expect(list()).toHaveTextContent('No pictures, videos or fonts are used.')
   })
 })
+
+describe('names that try to disguise themselves [P9-12 review]', () => {
+  it('strips an override and a line break, so a fake "will not be uploaded" tail stays inside the name', () => {
+    const odd = font({
+      displayName: 'Quay‮​\nwill not be uploaded',
+      localPath: '/Users/ann/‮fonts/quay.ttf',
+      share: 'confirmed',
+    })
+    const { container } = render(<PublishFileList components={[odd]} />)
+    const item = within(folder('Fonts')).getByRole('listitem')
+    const names = container.querySelectorAll('bdi')
+    expect(names).toHaveLength(1)
+    expect(names[0]?.textContent).toBe('Quaywill not be uploaded')
+    expect(item.textContent).not.toMatch(/[‮​\n]/)
+    expect(item).toHaveTextContent('/Users/ann/fonts/quay.ttf')
+    expect(item.textContent?.match(/will not be uploaded/g)).toHaveLength(1)
+  })
+
+  it('cuts a 5,000-character name at 200 code points and shows a long path whole', () => {
+    const path = `/Users/ann/${'deep/'.repeat(400)}x.png`
+    render(
+      <PublishFileList
+        components={[component({ displayName: 'N'.repeat(5000), localPath: path })]}
+      />,
+    )
+    const item = within(folder('Backgrounds')).getByRole('listitem')
+    expect(item.querySelector('bdi')?.textContent).toBe(`${'N'.repeat(200)}…`)
+    expect(item).toHaveTextContent(path)
+  })
+})

@@ -25,6 +25,11 @@
   font-size: var(--font-size-control);
   font-weight: var(--weight-medium);
 }
+.path {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
 .choice {
   display: flex;
   gap: var(--space-2);
