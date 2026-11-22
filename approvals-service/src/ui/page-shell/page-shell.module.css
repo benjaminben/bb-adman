@@ -30,8 +30,16 @@
     padding: var(--space-8);
   }
 
+  /* The sidebar is sticky and one window tall; the frame draws its ground and edge down the
+     whole page, so a long gallery has no bare strip under it. */
   .frame {
     flex-direction: row;
     align-items: flex-start;
+    background: linear-gradient(
+      to right,
+      var(--color-surface-soft) calc(var(--gallery-sidebar) - var(--border-width)),
+      var(--color-line) 0 var(--gallery-sidebar),
+      transparent 0
+    );
   }
 }

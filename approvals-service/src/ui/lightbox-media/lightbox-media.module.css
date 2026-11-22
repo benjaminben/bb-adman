@@ -12,6 +12,11 @@
   background: var(--gallery-placeholder);
 }
 
+/* A player's dark ground around a frame of another shape, under the browser's own controls. */
+.video {
+  background: var(--color-on-picture);
+}
+
 /* Wide: the media area is as wide as the dialog can be and as tall as the window less room for
    the top row and the sign-off part (14rem). The picture or video is drawn as large as fits
    it in both directions, keeping its shape and never cropped, however small its own size. */

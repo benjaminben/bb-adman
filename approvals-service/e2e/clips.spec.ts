@@ -173,3 +173,58 @@ test('the page lets its own clips load and no other media [R2V-2, SV-7]', async 
   expect(await page.evaluate(addVideo(`${PICTURES}/d.mp4`))).toBe('error')
   expect(refusals.join('\n')).toContain('media-src')
 })
+
+// Run in the page as text: plays the lightbox's video without sound (the page's own markup has
+// no `muted`; muting here only keeps the browser's autoplay rule out of the test) and gives its
+// readyState once it has a frame, or after 15 seconds.
+const playShown = `new Promise((resolve) => {
+  const video = document.querySelector('dialog[open] video')
+  video.muted = true
+  const done = () => resolve(video.readyState)
+  video.addEventListener('loadeddata', done)
+  video.addEventListener('error', done)
+  setTimeout(done, 15000)
+  video.play().catch(() => {})
+})`
+
+test('a video card opens a player that loads nothing before play [R2V-4, SV-7]', async ({
+  page,
+  request,
+}) => {
+  const slug = await seed(request)
+  const { refusals, clips } = watch(page)
+  await page.goto(`/l/${slug}`)
+  await page.getByLabel('Password').fill(PASSWORD)
+  await page.getByRole('button', { name: 'Open' }).click()
+  await expect(page).toHaveURL(`/l/${slug}`)
+
+  await page.getByRole('button', { name: 'Open video: Blue clip, 0:02' }).click()
+  const box = page.getByRole('dialog', { name: 'Blue clip' })
+  await expect(box).toBeVisible()
+  const video = box.locator('video')
+  const attributes = [
+    ['controls', ''],
+    ['preload', 'none'],
+    ['playsinline', ''],
+    ['controlslist', 'nodownload'],
+    ['poster', `/l/${slug}/p/${KEY}/1`],
+  ]
+  for (const [name = '', value = ''] of attributes) {
+    await expect(video).toHaveAttribute(name, value)
+  }
+  for (const name of ['autoplay', 'muted', 'src']) {
+    expect(await video.getAttribute(name)).toBeNull()
+  }
+  await expect(box.locator('source')).toHaveAttribute('src', `/l/${slug}/c/${KEY}/1`)
+  await expect(box.locator('[data-clip-error]')).toBeHidden()
+  expect(clips).toEqual([])
+
+  const playable = await page.evaluate(
+    `document.createElement('video').canPlayType('video/mp4; codecs="avc1.42E01E"')`,
+  )
+  if (playable !== '') {
+    expect(await page.evaluate(playShown)).toBeGreaterThanOrEqual(2)
+    expect(clips[0]?.status).toBe(206)
+  }
+  expect(refusals).toEqual([])
+})
