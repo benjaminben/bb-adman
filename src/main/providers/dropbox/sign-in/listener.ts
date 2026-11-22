@@ -36,7 +36,7 @@ function sameState(sent: string, expected: string): boolean {
 // A value given exactly once; a missing or repeated name gives null.
 function single(query: URLSearchParams, name: string): string | null {
   const all = query.getAll(name)
-  return all.length === 1 ? all[0] : null
+  return all.length === 1 ? (all[0] ?? null) : null
 }
 
 function judge(req: http.IncomingMessage, host: string, state: string): Outcome {
