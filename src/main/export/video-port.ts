@@ -1,13 +1,12 @@
-// One video ad's export (spec/phases/phase-08.md "Video"). Stub (P8-1): every video ad fails
-// with its sentence, until P8-16 replaces the body. It starts no process and writes nothing.
+// One video ad's export (spec/phases/phase-08.md "Video"): FFmpeg in the ad's own work folder,
+// the result written through the export target (P8-16, src/main/export/video/video-ad.ts).
 import type { CoreDeps } from '@/main/core-deps'
-import { AD_FAILURES } from '@/shared/export/messages'
 import type { ExportVideo } from './types'
+import { exportVideoAd } from './video/video-ad'
 
+// The job context carries the same CoreDeps, so `_deps` is not read here.
 export function createExportVideo(_deps: () => CoreDeps): ExportVideo {
   return {
-    async exportVariant() {
-      throw new Error(AD_FAILURES.videoNotBuilt)
-    },
+    exportVariant: (jc, scene, plan, target, path) => exportVideoAd(jc, scene, plan, target, path),
   }
 }

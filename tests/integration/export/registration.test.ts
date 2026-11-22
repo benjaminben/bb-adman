@@ -8,7 +8,6 @@ import { makeFixture, data, type Fixture } from '../core-fixture'
 import { exportCommands } from '@/main/commands/export'
 import { reportQueries } from '@/main/queries/report'
 import { jobKindHandlers } from '@/main/jobs/kinds'
-import { createExportDeps } from '@/main/export/deps'
 import { registerIpc, IPC } from '@/main/ipc'
 import { ok } from '@/shared/schemas/result'
 
@@ -69,13 +68,6 @@ describe('the Phase 8 internal command [P8-1]', () => {
 })
 
 describe('the Phase 8 job kind and port stubs [P8-1]', () => {
-  it('refuses a video ad and draws nothing', async () => {
-    const { fx } = await open()
-    const ports = createExportDeps(() => fx.core.deps)
-    const video = ports.video.exportVariant({} as never, {} as never, {} as never, {} as never, 'a')
-    await expect(video).rejects.toThrow('Video export is not built yet.')
-  })
-
   it('keeps a plan once: take gives it and removes it, drop removes it', async () => {
     const { fx } = await open()
     const { plans } = fx.core.deps.export
