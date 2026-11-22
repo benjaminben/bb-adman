@@ -1,21 +1,19 @@
 // The import dialog (spec/screens-campaign.md, "The import dialog"; FR-050, FR-052 to FR-054,
 // FR-246). It shows the files' base names and the choices; "Import" sends asset.import with
 // the paths it was given, and nothing is sent before it. Opened by the import buttons and by a
-// drop, each with its own instance. Every close resets it for the next open.
+// drop, each with its own instance. Every close resets it for the next open. R2C-7
+// (spec/phases/round-2-campaign.md, design addition 5): "New subject…" makes the subject first
+// (send-import.ts), and inside the project's Assets scope, with the panel closed, the result
+// offers "Show in assets".
 import { useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
+import { useAssetsPanel } from '@/renderer/screens/assets/assets-scope'
 import { BusySpinner, DialogFrame } from '@/renderer/ui/dialog-frame'
 import layout from '@/renderer/ui/layout.module.css'
 import type { SubjectRow } from '@/shared/schemas/rows/subject'
 import { ImportChoices, START_CHOICES, type Choices } from './import-choices'
-import {
-  animationLines,
-  importTitle,
-  resultLines,
-  shownNames,
-  type ImportReply,
-} from './import-text'
-import { animatedNames } from './animated-names'
+import { importTitle, shownNames } from './import-text'
+import { importProblem, sendImport } from './send-import'
 import styles from './import-dialog.module.css'
 
 export type ImportDialogProps = {
@@ -33,45 +31,58 @@ export function ImportDialog(props: ImportDialogProps) {
   const [choices, setChoices] = useState<Choices>(START_CHOICES)
   const [importing, setImporting] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
+  const [problem, setProblem] = useState<string | null>(null)
   const [result, setResult] = useState<string[] | null>(null)
+  const panel = useAssetsPanel()
   const { names, more } = shownNames(props.paths)
+  const offerPanel = panel !== null && panel.projectId === props.projectId && !panel.open
 
   function close() {
     setChoices(START_CHOICES)
     setRefusal(null)
+    setProblem(null)
     setResult(null)
     props.onClose()
   }
 
+  // The dialog gives the focus back to its opener once it has closed, on a later turn; the
+  // panel opens after that, so it keeps the focus and later hands it back to that opener.
+  function showInAssets() {
+    close()
+    setTimeout(() => {
+      setTimeout(() => {
+        const active = document.activeElement
+        panel?.show(active instanceof HTMLElement && active !== document.body ? active : null)
+      }, 0)
+    }, 0)
+  }
+
   async function send() {
-    const { library, copy, subjectId } = choices
-    setImporting(true)
+    const found = importProblem(choices)
+    setProblem(found)
     setRefusal(null)
-    const reply = await command('asset.import', {
-      projectId: props.projectId,
-      paths: props.paths,
-      library,
-      copy,
-      ...(subjectId !== '' && { subjectId }),
-    })
-    if (!reply.ok) {
-      setImporting(false)
-      setRefusal(reply.error.message)
-      return
-    }
-    const data = reply.data as ImportReply
-    const animated = data.animatedAssetIds ?? []
-    const names = await animatedNames(api, props.projectId, animated)
+    if (found !== null) return
+    setImporting(true)
+    const to = { projectId: props.projectId, paths: props.paths, choices, subjects: props.subjects }
+    const outcome = await sendImport(api, command, to)
     setImporting(false)
-    setResult([...resultLines(data), ...animationLines(animated, names)])
+    if (outcome.kind === 'refused') setRefusal(outcome.message)
+    else setResult(outcome.lines)
   }
 
   // The key keeps React from reusing Cancel as Done, so Done is new and takes focus.
   const footer =
     result !== null ? (
-      <button key="done" type="button" className={layout.primary} autoFocus onClick={close}>
-        Done
-      </button>
+      <>
+        {offerPanel && (
+          <button key="assets" type="button" onClick={showInAssets}>
+            Show in assets
+          </button>
+        )}
+        <button key="done" type="button" className={layout.primary} autoFocus onClick={close}>
+          Done
+        </button>
+      </>
     ) : (
       <>
         <button type="button" disabled={importing} onClick={close}>
@@ -114,11 +125,15 @@ export function ImportDialog(props: ImportDialogProps) {
             choices={choices}
             subjects={props.subjects}
             disabled={importing}
-            onChange={setChoices}
+            problem={problem !== null}
+            onChange={(next) => {
+              setChoices(next)
+              setProblem(null)
+            }}
           />
-          {refusal !== null && (
+          {(problem ?? refusal) !== null && (
             <p role="alert" className={`${layout.notice} ${layout.danger}`}>
-              {refusal}
+              {problem ?? refusal}
             </p>
           )}
           {importing && (
