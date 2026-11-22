@@ -571,5 +571,1069 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     },
     "name": "cancel_job",
   },
+  {
+    "description": "Add a picture or text layer on top of one variant of an open project. type is "image" or "text"; values may set name, copy, style, geometry, source, visible and locked. Gives the new layer ID. The user can undo the change. A picture is set as source: { assetId } with an asset ID from list_assets (asset library, kind image); source null clears it. A font is set as style.fontAssetId with a font asset ID, or null for the default font. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "type": {
+          "enum": [
+            "image",
+            "text",
+          ],
+          "type": "string",
+        },
+        "values": {
+          "additionalProperties": false,
+          "properties": {
+            "copy": {
+              "maxLength": 5000,
+              "type": "string",
+            },
+            "geometry": {
+              "additionalProperties": false,
+              "properties": {
+                "crop": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "height": {
+                          "minimum": 1,
+                          "type": "number",
+                        },
+                        "width": {
+                          "minimum": 1,
+                          "type": "number",
+                        },
+                        "x": {
+                          "type": "number",
+                        },
+                        "y": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "width",
+                        "height",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "height": {
+                  "minimum": 1,
+                  "type": "number",
+                },
+                "rotation": {
+                  "type": "number",
+                },
+                "width": {
+                  "minimum": 1,
+                  "type": "number",
+                },
+                "x": {
+                  "type": "number",
+                },
+                "y": {
+                  "type": "number",
+                },
+              },
+              "type": "object",
+            },
+            "locked": {
+              "type": "boolean",
+            },
+            "name": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string",
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "assetId": {
+                      "minLength": 1,
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "assetId",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "align": {
+                      "enum": [
+                        "left",
+                        "center",
+                        "right",
+                      ],
+                      "type": "string",
+                    },
+                    "allCaps": {
+                      "type": "boolean",
+                    },
+                    "boxColor": {
+                      "anyOf": [
+                        {
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "boxOutlineColor": {
+                      "anyOf": [
+                        {
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "boxOutlineWidth": {
+                      "maximum": 100,
+                      "minimum": 0,
+                      "type": "number",
+                    },
+                    "boxPadding": {
+                      "maximum": 2000,
+                      "minimum": 0,
+                      "type": "number",
+                    },
+                    "boxRadius": {
+                      "maximum": 2000,
+                      "minimum": 0,
+                      "type": "number",
+                    },
+                    "color": {
+                      "pattern": "^#[0-9A-Fa-f]{6}$",
+                      "type": "string",
+                    },
+                    "fontAssetId": {
+                      "type": [
+                        "string",
+                        "null",
+                      ],
+                    },
+                    "fontSize": {
+                      "exclusiveMinimum": 0,
+                      "type": "number",
+                    },
+                    "fontWeight": {
+                      "type": "number",
+                    },
+                    "letterSpacing": {
+                      "maximum": 1,
+                      "minimum": -0.2,
+                      "type": "number",
+                    },
+                    "lineHeight": {
+                      "type": "number",
+                    },
+                    "verticalAlign": {
+                      "enum": [
+                        "top",
+                        "middle",
+                        "bottom",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "fillColor": {
+                      "anyOf": [
+                        {
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "opacity": {
+                      "maximum": 1,
+                      "minimum": 0,
+                      "type": "number",
+                    },
+                    "shade": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "color": {
+                              "pattern": "^#[0-9A-Fa-f]{6}$",
+                              "type": "string",
+                            },
+                            "from": {
+                              "enum": [
+                                "bottom",
+                                "top",
+                                "left",
+                                "right",
+                                "all",
+                              ],
+                              "type": "string",
+                            },
+                            "reach": {
+                              "maximum": 1,
+                              "minimum": 0.05,
+                              "type": "number",
+                            },
+                            "strength": {
+                              "maximum": 1,
+                              "minimum": 0,
+                              "type": "number",
+                            },
+                          },
+                          "required": [
+                            "color",
+                            "from",
+                            "strength",
+                            "reach",
+                          ],
+                          "type": "object",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                  },
+                  "type": "object",
+                },
+              ],
+            },
+            "visible": {
+              "type": "boolean",
+            },
+          },
+          "type": "object",
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "variant_id",
+        "type",
+      ],
+      "type": "object",
+    },
+    "name": "create_layer",
+  },
+  {
+    "description": "Change one layer of an open project. patch holds only the fields to change. Fields: name, visible, locked, copy (text layers), style (merged into the stored style), geometry (x, y, width, height, rotation, crop; merged), source, timing, animation. Gives the layer ID. The user can undo the change. A picture is set as source: { assetId } with an asset ID from list_assets (asset library, kind image); source null clears it. A font is set as style.fontAssetId with a font asset ID, or null for the default font. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "layer_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "patch": {
+          "additionalProperties": false,
+          "properties": {
+            "animation": {
+              "additionalProperties": false,
+              "properties": {
+                "entrance": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "durationMs": {
+                      "type": "number",
+                    },
+                    "preset": {
+                      "enum": [
+                        "none",
+                        "fade",
+                        "fade-up",
+                        "slide",
+                        "stagger-words",
+                      ],
+                      "type": "string",
+                    },
+                    "startMs": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "preset",
+                    "startMs",
+                    "durationMs",
+                  ],
+                  "type": "object",
+                },
+                "exit": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "durationMs": {
+                      "type": "number",
+                    },
+                    "preset": {
+                      "enum": [
+                        "none",
+                        "fade",
+                        "fade-up",
+                        "slide",
+                        "stagger-words",
+                      ],
+                      "type": "string",
+                    },
+                    "startMs": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "preset",
+                    "startMs",
+                    "durationMs",
+                  ],
+                  "type": "object",
+                },
+              },
+              "type": "object",
+            },
+            "copy": {
+              "maxLength": 5000,
+              "type": "string",
+            },
+            "geometry": {
+              "additionalProperties": false,
+              "properties": {
+                "crop": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "height": {
+                          "minimum": 1,
+                          "type": "number",
+                        },
+                        "width": {
+                          "minimum": 1,
+                          "type": "number",
+                        },
+                        "x": {
+                          "type": "number",
+                        },
+                        "y": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "width",
+                        "height",
+                      ],
+                      "type": "object",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "height": {
+                  "minimum": 1,
+                  "type": "number",
+                },
+                "rotation": {
+                  "type": "number",
+                },
+                "width": {
+                  "minimum": 1,
+                  "type": "number",
+                },
+                "x": {
+                  "type": "number",
+                },
+                "y": {
+                  "type": "number",
+                },
+              },
+              "type": "object",
+            },
+            "locked": {
+              "type": "boolean",
+            },
+            "name": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string",
+            },
+            "source": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "assetId": {
+                      "minLength": 1,
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "assetId",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "align": {
+                      "enum": [
+                        "left",
+                        "center",
+                        "right",
+                      ],
+                      "type": "string",
+                    },
+                    "allCaps": {
+                      "type": "boolean",
+                    },
+                    "boxColor": {
+                      "anyOf": [
+                        {
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "boxOutlineColor": {
+                      "anyOf": [
+                        {
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "boxOutlineWidth": {
+                      "maximum": 100,
+                      "minimum": 0,
+                      "type": "number",
+                    },
+                    "boxPadding": {
+                      "maximum": 2000,
+                      "minimum": 0,
+                      "type": "number",
+                    },
+                    "boxRadius": {
+                      "maximum": 2000,
+                      "minimum": 0,
+                      "type": "number",
+                    },
+                    "color": {
+                      "pattern": "^#[0-9A-Fa-f]{6}$",
+                      "type": "string",
+                    },
+                    "fontAssetId": {
+                      "type": [
+                        "string",
+                        "null",
+                      ],
+                    },
+                    "fontSize": {
+                      "exclusiveMinimum": 0,
+                      "type": "number",
+                    },
+                    "fontWeight": {
+                      "type": "number",
+                    },
+                    "letterSpacing": {
+                      "maximum": 1,
+                      "minimum": -0.2,
+                      "type": "number",
+                    },
+                    "lineHeight": {
+                      "type": "number",
+                    },
+                    "verticalAlign": {
+                      "enum": [
+                        "top",
+                        "middle",
+                        "bottom",
+                      ],
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "fillColor": {
+                      "anyOf": [
+                        {
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "opacity": {
+                      "maximum": 1,
+                      "minimum": 0,
+                      "type": "number",
+                    },
+                    "shade": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "color": {
+                              "pattern": "^#[0-9A-Fa-f]{6}$",
+                              "type": "string",
+                            },
+                            "from": {
+                              "enum": [
+                                "bottom",
+                                "top",
+                                "left",
+                                "right",
+                                "all",
+                              ],
+                              "type": "string",
+                            },
+                            "reach": {
+                              "maximum": 1,
+                              "minimum": 0.05,
+                              "type": "number",
+                            },
+                            "strength": {
+                              "maximum": 1,
+                              "minimum": 0,
+                              "type": "number",
+                            },
+                          },
+                          "required": [
+                            "color",
+                            "from",
+                            "strength",
+                            "reach",
+                          ],
+                          "type": "object",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                  },
+                  "type": "object",
+                },
+              ],
+            },
+            "timing": {
+              "additionalProperties": false,
+              "properties": {
+                "endMs": {
+                  "type": [
+                    "number",
+                    "null",
+                  ],
+                },
+                "startMs": {
+                  "type": "number",
+                },
+              },
+              "required": [
+                "startMs",
+                "endMs",
+              ],
+              "type": "object",
+            },
+            "visible": {
+              "type": "boolean",
+            },
+          },
+          "type": "object",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "layer_id",
+        "patch",
+      ],
+      "type": "object",
+    },
+    "name": "update_layer",
+  },
+  {
+    "description": "Change several layers of one variant of an open project as one step. updates is a list of { layerId, patch } (up to 100), each patch as in update_layer. Fields: name, visible, locked, copy (text layers), style (merged into the stored style), geometry (x, y, width, height, rotation, crop; merged), source, timing, animation. Gives the IDs of the layers that changed. The user can undo the change. A picture is set as source: { assetId } with an asset ID from list_assets (asset library, kind image); source null clears it. A font is set as style.fontAssetId with a font asset ID, or null for the default font. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "updates": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "layerId": {
+                "minLength": 1,
+                "type": "string",
+              },
+              "patch": {
+                "additionalProperties": false,
+                "properties": {
+                  "animation": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "entrance": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "durationMs": {
+                            "type": "number",
+                          },
+                          "preset": {
+                            "enum": [
+                              "none",
+                              "fade",
+                              "fade-up",
+                              "slide",
+                              "stagger-words",
+                            ],
+                            "type": "string",
+                          },
+                          "startMs": {
+                            "type": "number",
+                          },
+                        },
+                        "required": [
+                          "preset",
+                          "startMs",
+                          "durationMs",
+                        ],
+                        "type": "object",
+                      },
+                      "exit": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "durationMs": {
+                            "type": "number",
+                          },
+                          "preset": {
+                            "enum": [
+                              "none",
+                              "fade",
+                              "fade-up",
+                              "slide",
+                              "stagger-words",
+                            ],
+                            "type": "string",
+                          },
+                          "startMs": {
+                            "type": "number",
+                          },
+                        },
+                        "required": [
+                          "preset",
+                          "startMs",
+                          "durationMs",
+                        ],
+                        "type": "object",
+                      },
+                    },
+                    "type": "object",
+                  },
+                  "copy": {
+                    "maxLength": 5000,
+                    "type": "string",
+                  },
+                  "geometry": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "crop": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "height": {
+                                "minimum": 1,
+                                "type": "number",
+                              },
+                              "width": {
+                                "minimum": 1,
+                                "type": "number",
+                              },
+                              "x": {
+                                "type": "number",
+                              },
+                              "y": {
+                                "type": "number",
+                              },
+                            },
+                            "required": [
+                              "x",
+                              "y",
+                              "width",
+                              "height",
+                            ],
+                            "type": "object",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "height": {
+                        "minimum": 1,
+                        "type": "number",
+                      },
+                      "rotation": {
+                        "type": "number",
+                      },
+                      "width": {
+                        "minimum": 1,
+                        "type": "number",
+                      },
+                      "x": {
+                        "type": "number",
+                      },
+                      "y": {
+                        "type": "number",
+                      },
+                    },
+                    "type": "object",
+                  },
+                  "locked": {
+                    "type": "boolean",
+                  },
+                  "name": {
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "type": "string",
+                  },
+                  "source": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "assetId": {
+                            "minLength": 1,
+                            "type": "string",
+                          },
+                        },
+                        "required": [
+                          "assetId",
+                        ],
+                        "type": "object",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
+                  "style": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "align": {
+                            "enum": [
+                              "left",
+                              "center",
+                              "right",
+                            ],
+                            "type": "string",
+                          },
+                          "allCaps": {
+                            "type": "boolean",
+                          },
+                          "boxColor": {
+                            "anyOf": [
+                              {
+                                "pattern": "^#[0-9A-Fa-f]{6}$",
+                                "type": "string",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                          "boxOutlineColor": {
+                            "anyOf": [
+                              {
+                                "pattern": "^#[0-9A-Fa-f]{6}$",
+                                "type": "string",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                          "boxOutlineWidth": {
+                            "maximum": 100,
+                            "minimum": 0,
+                            "type": "number",
+                          },
+                          "boxPadding": {
+                            "maximum": 2000,
+                            "minimum": 0,
+                            "type": "number",
+                          },
+                          "boxRadius": {
+                            "maximum": 2000,
+                            "minimum": 0,
+                            "type": "number",
+                          },
+                          "color": {
+                            "pattern": "^#[0-9A-Fa-f]{6}$",
+                            "type": "string",
+                          },
+                          "fontAssetId": {
+                            "type": [
+                              "string",
+                              "null",
+                            ],
+                          },
+                          "fontSize": {
+                            "exclusiveMinimum": 0,
+                            "type": "number",
+                          },
+                          "fontWeight": {
+                            "type": "number",
+                          },
+                          "letterSpacing": {
+                            "maximum": 1,
+                            "minimum": -0.2,
+                            "type": "number",
+                          },
+                          "lineHeight": {
+                            "type": "number",
+                          },
+                          "verticalAlign": {
+                            "enum": [
+                              "top",
+                              "middle",
+                              "bottom",
+                            ],
+                            "type": "string",
+                          },
+                        },
+                        "type": "object",
+                      },
+                      {
+                        "additionalProperties": false,
+                        "properties": {
+                          "fillColor": {
+                            "anyOf": [
+                              {
+                                "pattern": "^#[0-9A-Fa-f]{6}$",
+                                "type": "string",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                          "opacity": {
+                            "maximum": 1,
+                            "minimum": 0,
+                            "type": "number",
+                          },
+                          "shade": {
+                            "anyOf": [
+                              {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "color": {
+                                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                                    "type": "string",
+                                  },
+                                  "from": {
+                                    "enum": [
+                                      "bottom",
+                                      "top",
+                                      "left",
+                                      "right",
+                                      "all",
+                                    ],
+                                    "type": "string",
+                                  },
+                                  "reach": {
+                                    "maximum": 1,
+                                    "minimum": 0.05,
+                                    "type": "number",
+                                  },
+                                  "strength": {
+                                    "maximum": 1,
+                                    "minimum": 0,
+                                    "type": "number",
+                                  },
+                                },
+                                "required": [
+                                  "color",
+                                  "from",
+                                  "strength",
+                                  "reach",
+                                ],
+                                "type": "object",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                        },
+                        "type": "object",
+                      },
+                    ],
+                  },
+                  "timing": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "endMs": {
+                        "type": [
+                          "number",
+                          "null",
+                        ],
+                      },
+                      "startMs": {
+                        "type": "number",
+                      },
+                    },
+                    "required": [
+                      "startMs",
+                      "endMs",
+                    ],
+                    "type": "object",
+                  },
+                  "visible": {
+                    "type": "boolean",
+                  },
+                },
+                "type": "object",
+              },
+            },
+            "required": [
+              "layerId",
+              "patch",
+            ],
+            "type": "object",
+          },
+          "maxItems": 100,
+          "minItems": 1,
+          "type": "array",
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "variant_id",
+        "updates",
+      ],
+      "type": "object",
+    },
+    "name": "update_layers",
+  },
+  {
+    "description": "Delete one layer of an open project. The background layer cannot be deleted. Gives the layer ID. The user can undo the change.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "layer_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "layer_id",
+      ],
+      "type": "object",
+    },
+    "name": "delete_layer",
+  },
+  {
+    "description": "Set the stacking order of one variant of an open project. layer_ids lists every layer of the variant except the background, each once, lowest first. Gives the variant ID. The user can undo the change.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "layer_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string",
+          },
+          "type": "array",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "variant_id",
+        "layer_ids",
+      ],
+      "type": "object",
+    },
+    "name": "reorder_layers",
+  },
 ]
 `;
