@@ -54,8 +54,8 @@
   font-size: var(--type-section-size);
 }
 .ring > svg {
-  width: var(--control-height);
-  height: var(--control-height);
+  width: calc(var(--control-height) * 1.5);
+  height: calc(var(--control-height) * 1.5);
   padding: var(--space-2);
   border-radius: var(--radius-pill);
   background: var(--color-bg);
