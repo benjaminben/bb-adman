@@ -111,20 +111,33 @@ async function main() {
   say(`Size: ${fs.statSync(dest).size} bytes.`)
 }
 
-// Runs only as `node scripts/ffmpeg/fetch.mjs`, never when a test imports this file.
-function isEntryPoint() {
-  const started = process.argv[1]
-  if (!started) return false
+function samePath(a, b) {
   try {
-    return fs.realpathSync(started) === fs.realpathSync(fileURLToPath(import.meta.url))
+    return fs.realpathSync(a) === fs.realpathSync(b)
   } catch {
     return false
   }
 }
 
-if (isEntryPoint()) {
+/**
+ * Runs only as `node scripts/ffmpeg/fetch.mjs`, never when a test imports this file. A start
+ * of some other file named fetch... is told it did not start, so it does not look like success.
+ * @param {string | undefined} started the file node was started with
+ * @param {string} self this file
+ */
+export function startKind(started, self) {
+  if (!started) return 'quiet'
+  if (samePath(started, self)) return 'run'
+  return path.basename(started).startsWith('fetch') ? 'not-started' : 'quiet'
+}
+
+const kind = startKind(process.argv[1], fileURLToPath(import.meta.url))
+if (kind === 'run') {
   main().catch((error) => {
     console.error(`fetch:ffmpeg stopped: ${error.message}`)
     process.exitCode = 1
   })
+} else if (kind === 'not-started') {
+  console.error('fetch:ffmpeg did not start: run it as node scripts/ffmpeg/fetch.mjs.')
+  process.exitCode = 1
 }
