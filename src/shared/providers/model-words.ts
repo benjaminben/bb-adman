@@ -44,6 +44,12 @@ export function serviceWords(provider: Named, job: string, comfyModel?: string |
   return providerModelWords(provider.label, jobModel(provider, job, comfyModel))
 }
 
+// A run's words from the model ID it stored: the model's name, or the ID itself; the plain
+// label when it stored none.
+export function storedWords(provider: Named, modelId: string | null): string {
+  return providerModelWords(provider.label, modelId ? modelNameOf(modelId, [provider]) : null)
+}
+
 // The models a provider runs, once each in job order, for a line that lists them ("Nano Banana
 // 2.1, Gemini 3.5 Flash-Lite"); null when it has no fixed model.
 export function modelList(provider: Named): string | null {

@@ -139,7 +139,7 @@ describe('the runner side of the rule [FIX-E]', () => {
       ok: false,
       error: {
         code: 'RULE_VIOLATION',
-        message: 'No Cancel cannot stop a request once it is sent.',
+        message: 'No Cancel · m1 cannot stop a request once it is sent.',
         details: { reason: 'cancel_not_supported' },
       },
     })

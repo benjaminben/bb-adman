@@ -18,6 +18,7 @@ import { cancelWaitFor } from './cancel-wait'
 import { runningResult } from './job-end'
 import { leftRunningOnClose } from './leave-running'
 import { JOB_KIND_CLASSES } from '@/shared/config/job-kinds'
+import { storedWords } from '@/shared/providers/model-words'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import { AppError } from '@/shared/schemas/result'
@@ -34,13 +35,15 @@ export function cancelRefusal(row: JobRow, provider: ProviderInfo | undefined): 
   const background = JOB_KIND_CLASSES[row.kind] === 'background'
   const skipsUnsent = row.kind === 'image_generation'
   if (row.status === 'running' && background && !skipsUnsent && provider?.cancel === 'none') {
-    const label = provider.label
+    // R3-2: the provider and the model the run uses.
+    const label = storedWords(provider, row.model)
     return new AppError('RULE_VIOLATION', `${label} cannot stop a request once it is sent.`, {
       reason: 'cancel_not_supported',
     })
   }
   if (leftRunningOnClose(row, provider)) {
-    const message = `${provider?.label ?? 'The provider'} has started this and will charge for it. The app lets it finish and keeps the result.`
+    const name = provider ? storedWords(provider, row.model) : 'The provider'
+    const message = `${name} has started this and will charge for it. The app lets it finish and keeps the result.`
     return new AppError('RULE_VIOLATION', message, { reason: 'cancel_would_still_charge' })
   }
   return null

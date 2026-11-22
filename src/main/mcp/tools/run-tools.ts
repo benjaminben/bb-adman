@@ -13,6 +13,7 @@ import { MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
 import { videoOffer } from '@/shared/config/video-offers'
 import type { ReplyPicker } from './read-replies'
 import type { ToolDef } from './table'
+import { registryModel } from './model-words'
 import { LEAVE_THE_CHOICE, PROVIDER_WORDS } from './tool-words'
 
 // The one field a start or cancel reply gives, whatever else the command returns (FR-198).
@@ -27,7 +28,8 @@ function falWords(): string {
   if (!offer) return ''
   const references = Math.min(offer.maxReferences, MAX_REFERENCES_PER_RUN)
   return (
-    'For a video, provider can also be "fal-seedance" (fal.ai Seedance; paid, charged to ' +
+    'For a video, provider can also be "fal-seedance" (fal.ai Seedance with ' +
+    `${registryModel('fal-seedance', 'video')}; paid, charged to ` +
     `the user's fal.ai account with no click; duration_ms from ${offer.minMs} to ` +
     `${offer.maxMs}, in whole seconds; at most ${references} reference pictures).`
   )

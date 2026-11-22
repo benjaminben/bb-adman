@@ -9,6 +9,7 @@ import {
   generationCutOutAgentInput,
   generationProposeLayoutInput,
 } from '@/shared/schemas/commands/generation'
+import { comfyModels, registryModel } from './model-words'
 import { jobIdOnly } from './run-tools'
 import type { ToolDef } from './table'
 import { LEAVE_THE_CHOICE } from './tool-words'
@@ -18,8 +19,13 @@ const FOLLOW = 'Gives the job ID at once; follow the run with get_job.'
 // PROVIDER_WORDS names the picture providers; these runs have their own (spec/ai-jobs.md).
 const ALLOWED =
   "Runs are refused unless the user allowed agents for that provider in Adman's Settings."
-const GEMINI = `provider is "gemini" (paid, charged to the user's Google account with no click). ${ALLOWED}`
-const COMFY = `provider is "comfyui" (the user's own ComfyUI server, no charge). ${ALLOWED}`
+// R3-2: each names the model the run uses (model-words.ts).
+const GEMINI =
+  `provider is "gemini" (${registryModel('gemini', 'text')}; paid, charged to the user's ` +
+  `Google account with no click). ${ALLOWED}`
+const COMFY =
+  `provider is "comfyui" (the user's own ComfyUI server, no charge; the model is ` +
+  `${comfyModels(['cutout'])}). ${ALLOWED}`
 
 export const AI_TOOLS: readonly ToolDef[] = [
   {

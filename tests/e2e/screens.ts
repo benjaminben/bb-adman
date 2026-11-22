@@ -9,6 +9,7 @@ import { firstIds } from './held-run'
 import { chooseStart, openActivity, picturePanel } from './picture-run'
 import { query } from './render-helpers'
 import { openSettingsPage } from './settings-pages'
+import { providerName } from './provider-name'
 
 export { chooseSettingsPage, openSettingsPage } from './settings-pages'
 
@@ -152,7 +153,7 @@ export async function startFromAddedPicture(
 // caller answers it.
 export async function generateVideo(page: Page, provider: string): Promise<void> {
   const dialog = videoDialog(page)
-  await dialog.getByRole('radio', { name: provider, exact: true }).check()
+  await dialog.getByRole('radio', { name: providerName(provider) }).check()
   await dialog.getByRole('button', { name: 'Generate', exact: true }).click()
   const asked = licenceDialog(page)
   await expect.poll(async () => (await asked.isVisible()) || !(await dialog.isVisible())).toBe(true)

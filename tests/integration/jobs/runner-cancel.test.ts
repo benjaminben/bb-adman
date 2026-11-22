@@ -101,7 +101,7 @@ describe('job.cancel in the runner [SPEC 6.11.2, FR-281]', () => {
     expect(error).toBeInstanceOf(AppError)
     expect((error as AppError).toBody()).toMatchObject({
       code: 'RULE_VIOLATION',
-      message: 'No Cancel cannot stop a request once it is sent.',
+      message: 'No Cancel · m1 cannot stop a request once it is sent.',
       details: { reason: 'cancel_not_supported' },
     })
     expect(x.row(id)?.status).toBe('running')

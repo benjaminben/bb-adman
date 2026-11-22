@@ -6,6 +6,7 @@ import {
   providerModelParts,
   providerModelWords,
   serviceWords,
+  storedWords,
 } from '@/shared/providers/model-words'
 
 const gemini = {
@@ -81,6 +82,18 @@ describe('jobModel and serviceWords [R3-2]', () => {
   it('gives the plain label for a job with no model', () => {
     expect(serviceWords(s3, 'storage')).toBe('Amazon S3')
     expect(serviceWords({ id: 'x', label: 'Fake provider' }, 'image')).toBe('Fake provider')
+  })
+})
+
+describe('storedWords [R3-2]', () => {
+  it('names a provider with the stored model of a run', () => {
+    expect(storedWords(fal, 'bytedance/seedance-2.0/text-to-video')).toBe('fal.ai · Seedance 2.0')
+    expect(storedWords(gemini, 'gemini-9')).toBe('Google Gemini · gemini-9')
+  })
+
+  it('gives the plain label when the run stored no model', () => {
+    expect(storedWords(fal, null)).toBe('fal.ai Seedance')
+    expect(storedWords(fal, '')).toBe('fal.ai Seedance')
   })
 })
 

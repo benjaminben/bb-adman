@@ -1,6 +1,7 @@
 // R3-2: an earlier run names the service and model that made its pictures, on the page.
 import { act, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import { NewOptions } from '@/renderer/editor/earlier-options/new-options'
 import { RunBlock } from '@/renderer/editor/earlier-options/run-block'
 import { runTitle } from '@/renderer/editor/earlier-options/run-words'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
@@ -28,6 +29,22 @@ describe('earlier runs name the model [R3-2]', () => {
           onUse={() => {}}
         />
       </ul>,
+      fake,
+    )
+    await act(async () => {})
+    expect(screen.getByText('Google Gemini · Nano Banana 2.1')).toBeVisible()
+  })
+
+  it('shows the service and model above the new pictures', async () => {
+    const fake = makeFakeApi(baseState({ providers: [GEMINI] }))
+    await renderApp(
+      <NewOptions
+        projectId="P1"
+        option={{ job: ROW, assets: [] }}
+        inUse={null}
+        locked={false}
+        onUse={() => {}}
+      />,
       fake,
     )
     await act(async () => {})
