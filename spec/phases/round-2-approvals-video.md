@@ -8,7 +8,7 @@ A reviewer opens a video variant in the gallery and watches the real MP4, with s
 
 ## Status
 
-Not built. Slices R2V-1 to R2V-8 below, placed among R2A-1 to R2A-9 in the wave table.
+R2V-1 is built. Slices R2V-2 to R2V-8 below are not; they are placed among R2A-1 to R2A-9 in the wave table.
 
 ## Design additions
 
@@ -297,9 +297,9 @@ Service slices run the service checks of `round-2-approvals.md` "Slices" (`cd ap
 - **Tests first:** `test/api-links.test.ts`: a gallery with one video variant and a clip stores the four columns; `kind: 'image'` with a clip is `400`; a bad `clipUrl` refuses the whole body; SV-9's renewal cases; a body of 3 MiB passes and one of 4 MiB plus one byte gets `413`. `test/migrate.test.ts`: both files apply in order on an empty database and on one holding `0001` with rows (old rows read `kind = 'image'`, clip columns null).
 - **Approved edits to existing tests:**
   - `approvals-service/test/contract.test.ts`, `test/entry.test.ts`, `test/api-auth.test.ts`, `e2e/api.spec.ts`: an expected `contract: 1` becomes 2.
-  - `test/migrate.test.ts`: the list of applied names gains `0002_clips.sql`.
+  - `test/migrate.test.ts` and `test/db-client.test.ts`: the list of applied names gains `0002_clips.sql`.
   - `test/db.test.ts` and any test reading `VariantRow` whole: the row gains `kind: 'image', clipUrl: null, clipMs: null, clipBytes: null`.
-  - `test/api-links.test.ts`: a case that expects a 2 MiB-plus-one body to get `413` moves to the 4 MiB limit.
+  - `test/api-auth.test.ts`: the case that expects a 2 MiB-plus-one body to get `413` moves to the 4 MiB limit.
   - `tests/integration/approvals/client.test.ts`: a stand-in health reply of `contract: 1` becomes `CONTRACT_VERSION`; the "different version" case uses 1.
 - **Exit check:** the service checks; root `npm test -- tests/unit/config tests/integration/approvals` and `npm run typecheck`.
 - **Security class:** full. **Depends on:** R2A-3 done (no shared file, but the waves are full until then); runs beside R2A-7.
@@ -352,7 +352,8 @@ Service slices run the service checks of `round-2-approvals.md` "Slices" (`cd ap
 - **May touch:** `src/main/approvals/publish.ts`, `src/main/commands/approvals/publish.ts`, `src/shared/schemas/commands/approvals.ts` (`ApprovalsPublishReply` gains `clips`), `src/shared/approvals/messages.ts` (`clip_failed`, `variant_changed`), `tests/integration/approvals/publish-refresh-secrets.test.ts` (SV-11 additions).
 - **Tests first:** `publish-video.test.ts`, with a stand-in `deps.export.video.exportVariant` that writes a fixed small file through the target: each row of the reuse table; a video over 3 minutes and one over the byte limit (a stand-in file of `CLIP_MAX_BYTES + 1` made sparse with `truncate`) go still only with their reason and nothing uploaded; no tool: still only, `no_tool`, nothing run; a failing export fails the update with `clip_failed`, removes this run's uploads and leaves the gallery as it was; a rev change between draw and export gives `variant_changed`; an aborted signal before the second clip stops with this run's uploads removed; the health check comes before any draw. `clip-step.test.ts`: SV-13; with the fetched FFmpeg (`ffmpegFetched()`, else skipped with "FFmpeg is not fetched."), a 2 s drawn variant gives an MP4 starting with `ftyp` and the right size. `publish-refresh-secrets.test.ts`: SV-11.
 - **Approved edits to existing tests:**
-  - `tests/integration/approvals/publish.test.ts`: the stand-in's recorded calls start with the health `GET`; expected gallery bodies gain `kind: 'image', clip: null` per variant; the expected reply gains `clips: 0`.
+  - `tests/integration/approvals/publish.test.ts`: the stand-in's recorded calls start with the health `GET`; the expected reply gains `clips: 0` (the expected gallery bodies already hold `kind: 'image', clip: null` since R2V-1).
+  - `tests/helpers/approvals-stand-in.ts`: its renewal copies the service's clip rule (a renewal counts only when it has a clip exactly when the row has one).
   - `tests/integration/approvals/publish-refresh-secrets.test.ts`: gains the clip cases; existing cases stay.
   - `tests/e2e/approvals.spec.ts`: none expected; if its stand-in service is not `tests/helpers/approvals-stand-in.ts` and lacks health, the stand-in answers health (no assertion changes).
 - **Exit check:** the `DEV-RULES.md` list.
