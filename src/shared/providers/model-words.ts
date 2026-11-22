@@ -44,6 +44,13 @@ export function serviceWords(provider: Named, job: string, comfyModel?: string |
   return providerModelWords(provider.label, jobModel(provider, job, comfyModel))
 }
 
+// The models a provider runs, once each in job order, for a line that lists them ("Nano Banana
+// 2.1, Gemini 3.5 Flash-Lite"); null when it has no fixed model.
+export function modelList(provider: Named): string | null {
+  const names = [...new Set(Object.values(provider.modelLabels ?? {}))]
+  return names.length === 0 ? null : names.join(', ')
+}
+
 // fal's endpoints are one app with a path per start ("bytedance/seedance-2.0/text-to-video"):
 // an ID with a slash names the same model as a default that shares everything before the last
 // slash.

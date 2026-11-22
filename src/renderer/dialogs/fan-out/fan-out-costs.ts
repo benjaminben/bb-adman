@@ -16,7 +16,11 @@ const FREE = 'Nothing is charged.'
 const paidFor = (provider: Provider) => runCost({ job: 'image', provider }).paid
 
 // R3-2: `comfyModel` is the model of the ComfyUI workflow a fill would get.
-export function fillCost(n: number, provider: Provider, comfyModel?: string | null): RunCost | null {
+export function fillCost(
+  n: number,
+  provider: Provider,
+  comfyModel?: string | null,
+): RunCost | null {
   if (n === 0) return null
   const fills = plural(n, 'fill')
   const name = serviceWords(provider, 'image', comfyModel)

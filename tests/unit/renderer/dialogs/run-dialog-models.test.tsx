@@ -76,7 +76,9 @@ describe('run dialog names the model [R3-2]', () => {
   it('names each provider with its model', async () => {
     await open()
     const group = screen.getByRole('group', { name: 'Provider' })
-    expect(within(group).getByRole('radio', { name: 'Google Gemini · Nano Banana 2.1' })).toBeChecked()
+    expect(
+      within(group).getByRole('radio', { name: 'Google Gemini · Nano Banana 2.1' }),
+    ).toBeChecked()
     expect(within(group).getByRole('radio', { name: 'ComfyUI · MOSS-Image' })).toBeEnabled()
   })
 
@@ -96,7 +98,9 @@ describe('run dialog names the model [R3-2]', () => {
   it('says a shared word once for a layout model', async () => {
     await open({ job: 'layout', count: undefined })
     expect(screen.getByRole('radio', { name: 'Google · Gemini 3.5 Flash-Lite' })).toBeChecked()
-    expect(screen.getByText(costLine('Paid: 1 request → Google · Gemini 3.5 Flash-Lite'))).toBeInTheDocument()
+    expect(
+      screen.getByText(costLine('Paid: 1 request → Google · Gemini 3.5 Flash-Lite')),
+    ).toBeInTheDocument()
   })
 
   it('names the model on a retry, where the provider is shown, not chosen', async () => {

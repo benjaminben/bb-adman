@@ -32,7 +32,12 @@ const INFO = {
   address: null,
   leavesOnServer: [],
   workflows: [
-    { job: 'extend', offered: true, status: 'proven', model: { label: 'MOSS-Image', mainFile: 'm' } },
+    {
+      job: 'extend',
+      offered: true,
+      status: 'proven',
+      model: { label: 'MOSS-Image', mainFile: 'm' },
+    },
   ],
 } as unknown as ComfyInfo
 

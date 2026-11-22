@@ -1,9 +1,11 @@
 // One key as an ObjectRow (SET-2): shown by its last four characters only, replaced or deleted
 // (R-10). The group keeps the old name "{provider} {secret label}". The typed value is cleared
-// before secret.set is sent, so it never stays in the page.
+// before secret.set is sent, so it never stays in the page. R3-2: the models the key unlocks are
+// the row's second line.
 import { useState, type FormEvent } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import { secretLabel } from '@/renderer/ui/secret-labels'
+import { modelList } from '@/shared/providers/model-words'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { SecretName } from '@/shared/schemas/secrets'
 import { Icon } from '@/renderer/ui/icon'
@@ -96,6 +98,7 @@ export function KeyRow(props: { provider: ProviderInfo; name: SecretName }) {
         label={label}
         name={rowName(provider, name)}
         thumb={<Icon name="key" />}
+        meta={modelList(provider) ?? undefined}
         marks={
           saved ? (
             <StatusMark

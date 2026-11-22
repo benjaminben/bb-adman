@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   jobModel,
+  modelList,
   modelNameOf,
   providerModelParts,
   providerModelWords,
@@ -83,6 +84,18 @@ describe('jobModel and serviceWords [R3-2]', () => {
   })
 })
 
+describe('modelList [R3-2]', () => {
+  it('lists a provider’s models once each, in job order', () => {
+    expect(modelList(gemini)).toBe('Nano Banana 2.1, Gemini 3.5 Flash-Lite')
+    expect(modelList(fal)).toBe('Seedance 2.0')
+  })
+
+  it('gives null for a provider with no fixed model', () => {
+    expect(modelList(comfy)).toBeNull()
+    expect(modelList(s3)).toBeNull()
+  })
+})
+
 describe('modelNameOf [R3-2]', () => {
   it('names a stored registry model ID', () => {
     expect(modelNameOf('gemini-nano-banana-2.1', providers)).toBe('Nano Banana 2.1')
@@ -91,9 +104,7 @@ describe('modelNameOf [R3-2]', () => {
 
   it('names every start path of one fal app as its model', () => {
     expect(modelNameOf('bytedance/seedance-2.0/text-to-video', providers)).toBe('Seedance 2.0')
-    expect(modelNameOf('bytedance/seedance-2.0/reference-to-video', providers)).toBe(
-      'Seedance 2.0',
-    )
+    expect(modelNameOf('bytedance/seedance-2.0/reference-to-video', providers)).toBe('Seedance 2.0')
   })
 
   it('names a ComfyUI workflow’s main file by its model', () => {
