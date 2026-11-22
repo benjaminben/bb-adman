@@ -48,7 +48,7 @@ export function BriefForm(props: BriefFormProps) {
   const held = props.subjects.map((s) => s.id)
   const { images, refusal } = useProjectImages(props.projectId)
   const plan = planFromForm(props.projectId, values, held, images, refusal !== null)
-  // The photos the form opened with: only a loaded brief's import puts any there (A-125).
+  // The photos the form opened with: only a loaded brief puts any there (A-125, D3).
   const [briefPhotoCount] = useState(() =>
     props.initial.subjects.reduce((sum, s) => sum + s.photos.length, 0),
   )
@@ -85,8 +85,7 @@ export function BriefForm(props: BriefFormProps) {
         )}
         {briefPhotoCount > 0 && (
           <p className={styles.copy}>
-            This brief added {briefPhotoCount} photo(s) from its folder. Check them before you
-            create the campaign.
+            This brief added {briefPhotoCount} photo(s). Check them before you create the campaign.
           </p>
         )}
         <SubjectRows

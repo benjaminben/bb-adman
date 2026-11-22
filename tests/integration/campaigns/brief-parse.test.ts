@@ -38,7 +38,7 @@ const DRAFT = {
   subjects: [{ id: 'can', name: 'Can' }],
 }
 // One entry per draft subject; DRAFT's one subject names no pictures [D-098].
-const NO_PICTURES = [{ paths: [], notes: [] }]
+const NO_PICTURES = [{ paths: [], assetIds: [], notes: [] }]
 
 function write(name: string, text: string): string {
   const file = path.join(dir, name)
@@ -172,14 +172,15 @@ describe('brief.parse from text [SPEC 6.1 item 6]', () => {
     })
   })
 
-  it("returns the YAML try's error, line included", async () => {
+  // R2P-3 [D1]: text is read by parseBriefText, whose one error gives no bad line.
+  it('returns the brief_unreadable error with no line', async () => {
     const error = await expectRefused(
       bus,
       () => parse({ text: 'a: 1\nb: [x\n' }),
       'INVALID_INPUT',
       'brief_unreadable',
     )
-    expect(typeof error.details?.line).toBe('number')
+    expect(error.details?.line).toBeUndefined()
   })
 
   it('refuses a list at the top with brief_unreadable', async () => {
@@ -238,7 +239,7 @@ describe('brief.parse subject pictures [D-098, SP-1]', () => {
           {
             paths: [path.join(fs.realpathSync(dir), 'photos', 'can.png')],
             notes: [
-              { name: 'x.png', reason: 'outside_folder' },
+              { name: 'x.png', reason: 'not_found' },
               { name: 'notes.png', reason: 'not_a_picture' },
             ],
           },
@@ -258,7 +259,7 @@ describe('brief.parse subject pictures [D-098, SP-1]', () => {
     })
   })
 
-  it('gives every picture of a typed brief no_folder', async () => {
+  it('gives a relative picture of a typed brief not_full_path and checks a full path', async () => {
     expect(await parse({ text: withPictures(['photos/can.png', '/etc/passwd']) })).toMatchObject({
       ok: true,
       data: {
@@ -266,8 +267,8 @@ describe('brief.parse subject pictures [D-098, SP-1]', () => {
           {
             paths: [],
             notes: [
-              { name: 'can.png', reason: 'no_folder' },
-              { name: 'passwd', reason: 'no_folder' },
+              { name: 'can.png', reason: 'not_full_path' },
+              { name: 'passwd', reason: 'not_a_picture' },
             ],
           },
           { paths: [], notes: [] },
@@ -281,7 +282,8 @@ describe('brief.parse subject pictures [D-098, SP-1]', () => {
     fs.writeFileSync(outside, PNG)
     const named = ['../private-photo.png', outside, 'missing-photo.png']
     const ok = await parse({ filePath: write('b.json', withPictures(named)) })
-    expect(ok).toMatchObject({ ok: true, data: { subjectPictures: [{ paths: [] }, {}] } })
+    const accepted = [fs.realpathSync(outside)]
+    expect(ok).toMatchObject({ ok: true, data: { subjectPictures: [{ paths: accepted }, {}] } })
     const bad = write('c.yaml', `subjects:\n  - pictures: [${outside}\n`)
     const error = await expectRefused(bus, () => parse({ filePath: bad }), 'INVALID_INPUT')
     expect(error.details).toMatchObject({ reason: 'brief_unreadable' })

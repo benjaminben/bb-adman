@@ -31,6 +31,7 @@ A running list kept by the orchestrator. Each item is a choice made without the 
 15. **An agent importing files:** more than 20 files in one call is refused.
 16. **Markdown briefs** are read by fixed rules (no AI). Edge cases chosen by the builder: a label inside a subject or a Copy section is ignored; an empty `Region:` sets nothing; the first value of a repeated field wins.
 17. **Agent file import, hardening after review.** On Windows an agent may not name a network path (`\\server\share\…`) or a device path; on every system a path with unusual space or line-break characters is refused. Each file is read through one open handle that follows no link, and the finished copy is compared with what was checked. Still not covered: a file whose bytes are swapped before you click Allow (you see only the path), and on Windows the no-link open is weaker because the system has no such switch.
+18. **A brief that names a Windows network path** (`\\server\share\photo.png`) does not open it; the photo gets the note "could not be read". Reason: opening such a path sends your Windows sign-in to that server the moment the brief loads. This narrows your "any file path" ruling for that one case. A mapped drive letter (`Z:\photo.png`) still works. Say if you want network paths allowed; it is a one-line change.
 
 ## Hand checks only you can do
 

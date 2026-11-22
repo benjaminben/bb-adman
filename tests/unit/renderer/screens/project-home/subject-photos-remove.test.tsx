@@ -161,8 +161,7 @@ describe('the place box and the brief line [subject-photos "Start the ad…", A-
       ],
     })
     const { form } = await renderForm(fake, values)
-    const line =
-      'This brief added 3 photo(s) from its folder. Check them before you create the campaign.'
+    const line = 'This brief added 3 photo(s). Check them before you create the campaign.'
     expect(form).toHaveTextContent(line)
     await userEvent.click(removeOf('A1.png'))
     await userEvent.click(screen.getByRole('button', { name: 'Add photos to subject 1' }))

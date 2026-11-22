@@ -1,39 +1,33 @@
-// spec/subject-photos.md "How brief.parse checks the paths" [D-098] (security class). A brief
-// may come from someone else, so a picture it names is used only when its real place, links
-// followed, is inside the brief's folder, and its first bytes are a PNG, JPEG or WebP. A bad
-// picture gives a note, never an error. Nothing here logs, and no note holds a folder.
+// Round 2 plan D3 [A-343 to A-346] (security class): the pictures a brief a person loads or
+// pastes names. The stakeholder lifted the rule that a brief may only name pictures in its
+// own folder, so a path may name any file on the disk; the normal import checks still apply.
+// An asset ID must be an image of the open project. A bad picture gives a note, never an
+// error. Nothing here logs, and no note holds a folder: a note's name is pictureName's.
 import fs from 'node:fs/promises'
-import os from 'node:os'
 import path from 'node:path'
 import { sniffType, SNIFF_BYTES } from './sniff'
-import { pathAtOrInside } from './path-resolver'
 import { pictureName } from '@/shared/brief/picture-name'
+import { pictureRef } from '@/shared/brief/picture-refs'
 import type { BriefDraft } from '@/shared/schemas/brief'
 import type { PictureNoteReason, SubjectPictures } from '@/shared/schemas/commands/brief'
 
 type Subjects = BriefDraft['subjects']
-type Checked = { real: string } | { reason: PictureNoteReason }
-type Folder = { realDir: string } | { reason: PictureNoteReason }
+type Checked = { real: string } | { assetId: string } | { reason: PictureNoteReason }
+// The brief file's real folder; a reason when it has none; null for pasted text.
+type Folder = { realDir: string } | { reason: PictureNoteReason } | null
 
-// Where the app runs, given so a test need not use the real home folder.
-export type BriefPlace = { home: string; platform: NodeJS.Platform }
-const hostPlace = (): BriefPlace => ({ home: os.homedir(), platform: process.platform })
-
-const DRIVE = /^[A-Za-z]:/
+export type BriefPictureOptions = {
+  // True when the open project holds an asset of this ID with kind image. Without it, every
+  // asset ID is unknown_asset.
+  isImage?: (assetId: string) => boolean
+  // Given so a test can judge paths by another system's rules.
+  platform?: NodeJS.Platform
+}
 
 function picturesOf(subject: NonNullable<Subjects>[number]): string[] {
   const { pictures } = subject
   if (pictures === undefined) return []
   return typeof pictures === 'string' ? [pictures] : pictures
-}
-
-// Rule 1: the parts of a text that may stay inside the folder, or null when it may not.
-// Both `/` and `\` separate folders; empty and `.` parts are skipped; nothing is decoded.
-function safeParts(text: string): string[] | null {
-  if (text === '' || text.includes('\u0000') || text.startsWith('~')) return null
-  if (path.posix.isAbsolute(text) || path.win32.isAbsolute(text) || DRIVE.test(text)) return null
-  const parts = text.split(/[/\\]/).filter((part) => part !== '' && part !== '.')
-  return parts.includes('..') ? null : parts
 }
 
 const missing = (e: unknown) => {
@@ -42,7 +36,7 @@ const missing = (e: unknown) => {
 }
 const failure = (e: unknown): Checked => ({ reason: missing(e) ? 'not_found' : 'not_readable' })
 
-// Rule 5: only the first SNIFF_BYTES are read, and nothing of them leaves this function.
+// Only the first SNIFF_BYTES are read, and nothing of them leaves this function.
 async function isPicture(file: string): Promise<boolean> {
   const handle = await fs.open(file, 'r')
   try {
@@ -54,16 +48,15 @@ async function isPicture(file: string): Promise<boolean> {
   }
 }
 
-async function checkOne(realDir: string, text: string): Promise<Checked> {
-  const parts = safeParts(text)
-  if (parts === null) return { reason: 'outside_folder' }
+// D3 rule 3: a regular file whose ending and first bytes say picture, by its real path.
+async function checkFile(file: string): Promise<Checked> {
+  if (file.includes('\u0000')) return { reason: 'not_found' }
   let real: string
   try {
-    real = await fs.realpath(path.join(realDir, ...parts))
+    real = await fs.realpath(file)
   } catch (e) {
     return failure(e)
   }
-  if (!pathAtOrInside(realDir, real)) return { reason: 'outside_folder' }
   try {
     if (!(await fs.stat(real)).isFile()) return { reason: 'not_found' }
     return (await isPicture(real)) ? { real } : { reason: 'not_a_picture' }
@@ -72,65 +65,72 @@ async function checkOne(realDir: string, text: string): Promise<Checked> {
   }
 }
 
-async function checkSubject(folder: Folder, texts: string[]): Promise<SubjectPictures> {
-  const result: SubjectPictures = { paths: [], notes: [] }
+// D3 rule 2: a relative text is joined onto the brief file's folder (it may lead out of it).
+// Both `/` and `\` separate its parts, as a brief written on either system would use them.
+function joined(realDir: string, text: string): string {
+  return path.join(realDir, ...text.split(/[/\\]/))
+}
+
+// On Windows a path that starts with two separators is a network or device path. Opening one
+// sends the user's Windows sign-in to the server it names, so a brief never opens it.
+function isNetworkPath(text: string, file: string, platform: NodeJS.Platform): boolean {
+  return platform === 'win32' && (/^[\\/]{2}/.test(text) || /^[\\/]{2}/.test(file))
+}
+
+async function checkOne(folder: Folder, text: string, options: BriefPictureOptions) {
+  const platform = options.platform ?? process.platform
+  const ref = pictureRef(text, platform)
+  if (ref.kind === 'asset') {
+    return options.isImage?.(ref.assetId) === true
+      ? { assetId: ref.assetId }
+      : { reason: 'unknown_asset' as const }
+  }
+  if (ref.kind === 'file') {
+    if (isNetworkPath(text, ref.path, platform)) return { reason: 'not_readable' as const }
+    return checkFile(ref.path)
+  }
+  if (folder === null) return { reason: 'not_full_path' as const }
+  if ('reason' in folder) return folder
+  if (text.includes('\u0000')) return { reason: 'not_found' as const }
+  return checkFile(joined(folder.realDir, text))
+}
+
+async function checkSubject(
+  folder: Folder,
+  texts: string[],
+  options: BriefPictureOptions,
+): Promise<SubjectPictures> {
+  const result: SubjectPictures = { paths: [], assetIds: [], notes: [] }
   for (const text of texts) {
-    const checked: Checked = 'reason' in folder ? folder : await checkOne(folder.realDir, text)
+    const checked: Checked = await checkOne(folder, text, options)
     if ('reason' in checked) result.notes.push({ name: pictureName(text), reason: checked.reason })
-    else if (!result.paths.includes(checked.real)) result.paths.push(checked.real)
+    else if ('assetId' in checked) {
+      if (!result.assetIds.includes(checked.assetId)) result.assetIds.push(checked.assetId)
+    } else if (!result.paths.includes(checked.real)) result.paths.push(checked.real)
   }
   return result
 }
 
-// spec/subject-photos.md "A folder that is too wide" (A-123): a brief in the filesystem root,
-// a drive or share root, a Mac volume's top, or the home folder itself could name almost any
-// picture on the disk, so none is taken. Both folders are real paths. Pure, and judged with the
-// given platform's path rules, so every case runs on any machine.
-export function isWideFolder(
-  realDir: string,
-  realHome: string,
-  platform: NodeJS.Platform,
-): boolean {
-  const rules = platform === 'win32' ? path.win32 : path.posix
-  const folded = platform === 'win32' || platform === 'darwin'
-  const same = (p: string) => (folded ? p.toLowerCase() : p)
-  const dir = same(rules.resolve(realDir))
-  if (same(rules.parse(dir).root) === dir || dir === same(rules.resolve(realHome))) return true
-  if (platform !== 'darwin') return false
-  return dir === '/volumes' || rules.dirname(dir) === '/volumes'
-}
-
-async function realOr(dir: string): Promise<string | null> {
+async function folderOf(briefPath: string | null): Promise<Folder> {
+  if (briefPath === null) return null
   try {
-    return await fs.realpath(dir)
+    return { realDir: await fs.realpath(path.dirname(briefPath)) }
   } catch {
-    return null
+    return { reason: 'not_readable' }
   }
 }
 
-async function folderOf(briefPath: string, place: BriefPlace): Promise<Folder> {
-  const realDir = await realOr(path.dirname(briefPath))
-  if (realDir === null) return { reason: 'not_readable' }
-  const home = (await realOr(place.home)) ?? place.home
-  return isWideFolder(realDir, home, place.platform) ? { reason: 'wide_folder' } : { realDir }
-}
-
-// One entry per subject, in order. briefPath is the absolute path of the brief file.
+// One entry per subject, in order. briefPath is the absolute path of the brief file, or null
+// for pasted text, which has no folder.
 export async function checkBriefPictures(
-  briefPath: string,
+  briefPath: string | null,
   subjects: Subjects,
-  place: BriefPlace = hostPlace(),
+  options: BriefPictureOptions = {},
 ): Promise<SubjectPictures[]> {
-  const folder = await folderOf(briefPath, place)
+  const folder = await folderOf(briefPath)
   const result: SubjectPictures[] = []
-  for (const subject of subjects ?? []) result.push(await checkSubject(folder, picturesOf(subject)))
+  for (const subject of subjects ?? []) {
+    result.push(await checkSubject(folder, picturesOf(subject), options))
+  }
   return result
-}
-
-// A typed brief has no folder: every picture it names gets no_folder and no path is checked.
-export function picturesWithoutFolder(subjects: Subjects): SubjectPictures[] {
-  return (subjects ?? []).map((subject) => ({
-    paths: [],
-    notes: picturesOf(subject).map((text) => ({ name: pictureName(text), reason: 'no_folder' })),
-  }))
 }

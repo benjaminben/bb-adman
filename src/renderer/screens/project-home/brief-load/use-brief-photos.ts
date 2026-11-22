@@ -1,7 +1,9 @@
 // A loaded brief's photos (spec/subject-photos.md, "Photos from a loaded brief"; A-111, A-124):
 // before the form opens, each subject's checked paths from the brief.parse reply are copied into
 // the asset library with one asset.import per subject that has any, so one bad file spoils only
-// that subject's batch. Each note becomes its line. Security: the only paths sent are the
+// that subject's batch. Each note becomes its line. A picture the brief named by asset ID is
+// already in the project, so it becomes a form photo with no import (Round 2 plan D3; FR-053
+// rules: attached at Create, shown attached, or problem line 4). Security: the only paths sent are the
 // reply's subjectPictures, always with copy: true; no path or note is drawn, logged or kept.
 // If the page goes away meanwhile, the new assets are removed again at once.
 import { useEffect, useRef, useState } from 'react'
@@ -34,10 +36,11 @@ export function useBriefPhotos(projectId: string) {
     const result: BriefPhotos = []
     const made: FormPhoto[] = []
     setAdding(pictures.some((p) => p.paths.length > 0))
-    for (const { paths, notes } of pictures) {
-      const row = { ...emptySubject(), notes: notes.map(noteLine) }
+    for (const { paths, assetIds, notes } of pictures) {
+      const held = assetIds.map((assetId) => ({ assetId, added: false }))
+      const row = { ...emptySubject(), photos: held, notes: notes.map(noteLine) }
       if (paths.length === 0) {
-        result.push(row)
+        result.push({ photos: row.photos, notes: row.notes })
         continue
       }
       const reply = await api.command('asset.import', {
@@ -48,7 +51,7 @@ export function useBriefPhotos(projectId: string) {
       })
       if (!reply.ok) {
         const line = `The brief's photos could not be added: ${reply.error.message}`
-        result.push({ photos: [], notes: [...row.notes, line] })
+        result.push({ photos: row.photos, notes: [...row.notes, line] })
         continue
       }
       const done = withImported(row, reply.data as AssetImportReply, paths)
