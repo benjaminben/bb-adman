@@ -20,6 +20,8 @@ function request(overrides: Partial<Ask> = {}): Ask {
     action: 'delete campaigns',
     target: TARGET,
     expiresAt: new Date(Date.now() + 120_000).toISOString(),
+    kind: 'delete',
+    fileCount: 0,
     ...overrides,
   }
 }
