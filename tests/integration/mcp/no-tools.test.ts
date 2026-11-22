@@ -41,6 +41,7 @@ const SECTION_4_5_TOOLS = [
   'propose_layout',
   'copy_options',
   'cut_out',
+  'import_assets',
 ]
 
 async function listTools(fx: McpFixture): Promise<string[]> {

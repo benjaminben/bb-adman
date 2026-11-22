@@ -183,6 +183,9 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
       { project_id: p, variant_id: 'v2', format: 'video' },
       [{ project_id: p, variant_id: 'x', format: 'video' }],
     ],
+    // R2P-5: this core refuses every ask, so its success reply is word-tested in
+    // import-assets-checks.test.ts; a relative path is refused before the ask.
+    ['import_assets', null, [{ project_id: p, paths: ['Pictures/hero.png'] }]],
   ]
   return table.flatMap(([tool, good, bad]) => [
     ...(good === null ? [] : [{ tool, args: good, ok: true }]),
@@ -211,7 +214,9 @@ describe('no tool reply or output schema holds a provider ID, a settings key or 
     }
     expect([...outcomes.keys()]).toEqual(BUILT_TOOLS)
     for (const [tool, both] of outcomes) {
-      expect(both.size, tool).toBe(['delete_campaign', 'delete_variant'].includes(tool) ? 1 : 2)
+      expect(both.size, tool).toBe(
+        ['delete_campaign', 'delete_variant', 'import_assets'].includes(tool) ? 1 : 2,
+      )
     }
     const text = seen.join('\n')
     expect(text).toContain(agentJob)

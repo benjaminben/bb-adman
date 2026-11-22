@@ -7,7 +7,7 @@ import { data } from '../core-fixture'
 import { makeMcpFixture, stopAndClean, type McpFixture } from './mcp-fixture'
 import { USER_SECRET_NAMES } from '@/shared/schemas/secrets'
 import * as c from './http-client'
-import { callEveryTool } from './every-tool'
+import { callEveryTool, PLANTED_IMPORT_PATH } from './every-tool'
 import { BUILT_TOOLS } from './tool-client'
 import { createInput } from '../campaigns/campaign-fixture'
 
@@ -198,9 +198,16 @@ describe('No MCP tool reply holds a secret, the token, the ComfyUI address or a 
       ['the asset file name', 'made-up-leak-picture.png'],
       ['the temporary folder', f.root],
       ['the projects folder', f.projectsDir],
+      // R2P-5: the path given to import_assets, and its folder and file name.
+      ['the import path', PLANTED_IMPORT_PATH],
+      ['the import folder', 'made-up-agent-folder'],
+      ['the import file name', 'made-up-agent-import'],
     ]
     for (const [name, p] of paths) {
       expect(text.includes(p), `${name} found in a tool reply`).toBe(false)
+    }
+    for (const where of [f.readLogs(), JSON.stringify(f.events)]) {
+      expect(where.includes('made-up-agent-import'), 'the import file name').toBe(false)
     }
   })
 })
