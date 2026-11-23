@@ -58,6 +58,7 @@ import { createPermissionBroker } from './mcp/permissions'
 import { createAgentActivity } from './mcp/activity'
 import type { CoreDeps } from './core-deps'
 import { noPixels } from './pixel-reader'
+import { createCustomWorkflowStore } from './providers/comfyui/custom/store'
 
 export type { SecretCrypto }
 
@@ -85,6 +86,8 @@ export type CoreOptions = {
   media?: MediaTool
   // Phase 9: tests send Dropbox calls to the stand-in through it.
   dropboxFetch?: DropboxFetch
+  // D-104: {userData}/comfy-workflows/, from index.ts; tests use the folder in userDataDir.
+  comfyWorkflowsDir?: string
 }
 
 const noBrowser = async (): Promise<void> => {
@@ -171,6 +174,11 @@ export function createCore(opts: CoreOptions) {
     appVersion: opts.appVersion,
     now,
     userDataDir: opts.userDataDir,
+    comfyWorkflows: createCustomWorkflowStore({
+      dir: opts.comfyWorkflowsDir ?? path.join(opts.userDataDir, 'comfy-workflows'),
+      log,
+      now,
+    }),
   }
 
   // Phase 10: the ask flow and agent activity (spec/phases/phase-10.md, A-237 to A-241).

@@ -42,6 +42,7 @@ describe('registering commands and queries [SPEC 12]', () => {
         'appVersion',
         'approvals',
         'assets',
+        'comfyWorkflows',
         'devTools',
         'dropboxFetch',
         'export',

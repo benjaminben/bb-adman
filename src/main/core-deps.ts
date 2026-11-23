@@ -13,6 +13,7 @@ import type { ExportDeps, ExportPictures } from './export/types'
 import type { MediaTool } from './media/types'
 import type { PublishPorts } from './publish/ports'
 import type { DropboxFetch } from './providers/dropbox/fetch'
+import type { CustomWorkflowStore } from './providers/comfyui/custom/store'
 
 export type CoreDeps = {
   projects: ProjectRegistry
@@ -54,4 +55,6 @@ export type CoreDeps = {
   appVersion: string
   now: () => Date
   userDataDir: string
+  // D-104: the ComfyUI workflows a person or an agent added, {userData}/comfy-workflows/.
+  comfyWorkflows: CustomWorkflowStore
 }

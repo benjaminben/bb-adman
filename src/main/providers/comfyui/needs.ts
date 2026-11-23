@@ -129,10 +129,16 @@ export function createServerChecks(opts: { now?: () => number } = {}) {
       kept.set(origin, { at: now(), result })
       return result
     },
+    // D-104: a workflow added, changed or removed empties every kept result, so a run never
+    // meets a kept check without its workflow.
+    forget(): void {
+      kept.clear()
+    },
   }
 }
 
-export type ServerChecks = ReturnType<typeof createServerChecks>
+// What a run or comfy.check uses; only the workflow commands forget (D-104).
+export type ServerChecks = Pick<ReturnType<typeof createServerChecks>, 'run'>
 
 // The app's one memory of checks, shared by comfy.check and the runs (CU-4, CU-6a).
-export const serverChecks: ServerChecks = createServerChecks()
+export const serverChecks = createServerChecks()
