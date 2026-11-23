@@ -8,18 +8,23 @@ import { AppError } from '@/shared/schemas/result'
 import { createComfyClient } from '@/main/providers/comfyui/client'
 import { comfyOwnPorts } from '@/main/providers/comfyui/own-ports'
 import { serverChecks, type ServerChecks } from '@/main/providers/comfyui/needs'
-import { NON_DRAFT_WORKFLOWS } from '@/main/providers/comfyui/workflows'
+import {
+  checkedWorkflows,
+  NO_CUSTOM,
+  type CustomWorkflows,
+} from '@/main/providers/comfyui/workflows/all'
 import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
 import { reasonMessage } from '@/shared/providers/messages'
 
 // The sentence of SPEC 6.10.9 for "no address saved"; the one copy is in messages.ts.
 export const COMFY_ADDRESS_NEEDED_MESSAGE = reasonMessage('address_needed')
 
-// [1.45] B-3: the check compares no draft workflow.
+// [1.45] B-3: the check compares no draft workflow. D-104: it compares the custom workflows
+// too (checkedWorkflows), read at each press; a test may hand in its own list.
 export function comfyCheck(
-  deps: Pick<CoreDeps, 'settings'>,
+  deps: Pick<CoreDeps, 'settings'> & { comfyWorkflows?: CustomWorkflows },
   checks: ServerChecks = serverChecks,
-  workflows: readonly WorkflowSpec[] = NON_DRAFT_WORKFLOWS,
+  workflows?: readonly WorkflowSpec[],
 ) {
   return defineCommand({
     name: 'comfy.check',
@@ -34,7 +39,8 @@ export function comfyCheck(
       // The app's own ports as they are at each connection (SPEC 6.10.1).
       const ownPorts = () => comfyOwnPorts(deps.settings.get().mcp.port)
       const client = createComfyClient({ origin, ownPorts })
-      return { data: await checks.run(origin, client, workflows, { fresh: true }) }
+      const compared = workflows ?? checkedWorkflows(deps.comfyWorkflows ?? NO_CUSTOM)
+      return { data: await checks.run(origin, client, compared, { fresh: true }) }
     },
   })
 }
