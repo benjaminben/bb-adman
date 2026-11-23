@@ -11,6 +11,7 @@ import { comfyWorkflowAddInput } from '@/shared/schemas/commands/comfy-workflow'
 import { AppError } from '@/shared/schemas/result'
 import { checkWorkflowText, type CheckedWorkflow } from '@/main/providers/comfyui/custom/check-file'
 import { cleanWorkflowName, requireVideoGraph } from '@/main/commands/comfy/workflow-update'
+import type { CustomWorkflowStore } from '@/main/providers/comfyui/custom/store'
 
 // The reply of agent.askWorkflow while the ask is open.
 export type AskWorkflow = {
@@ -29,10 +30,15 @@ function startOf(checked: CheckedWorkflow): WorkflowStart | null {
 }
 
 // Throws the command's own refusal; the bus returns it as the reply.
-export function readAskedWorkflow(input: unknown): HeldWorkflow {
+// The store's own limit and name check runs on the cleaned name when the store is given.
+export function readAskedWorkflow(
+  input: unknown,
+  workflows?: Pick<CustomWorkflowStore, 'checkAdd'>,
+): HeldWorkflow {
   const parsed = comfyWorkflowAddInput.safeParse(input)
   if (!parsed.success) throw new AppError('INVALID_INPUT', 'Some values are not valid.')
   const name = cleanWorkflowName(parsed.data.name)
+  workflows?.checkAdd(name)
   const check = checkWorkflowText(parsed.data.workflowJson)
   if (!check.ok) throw new AppError(check.error.code, check.error.message, check.error.details)
   if (parsed.data.video) requireVideoGraph(check.data)

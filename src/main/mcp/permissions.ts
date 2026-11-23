@@ -35,7 +35,7 @@ export type PermissionBrokerDeps = {
   log: ActivityLog
   now: () => Date
   projects: ProjectRegistry
-  // CW-6a: the names of the custom workflows, for the remove ask's target line.
+  // CW-6a: the custom workflows, for the remove ask's target line and the add's early check.
   workflows?: WorkflowNames
 }
 
@@ -181,7 +181,7 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
       const project = request.projectId ? deps.projects.get(request.projectId) : undefined
       const files = kind === 'import' ? (reader?.(request.input, project) ?? null) : []
       // Throws the command's own refusal, so a refused text never reaches the screen.
-      const held = kind === 'workflow' ? readAskedWorkflow(request.input) : null
+      const held = kind === 'workflow' ? readAskedWorkflow(request.input, deps.workflows) : null
       if (!kind || !files) {
         logOutcome(request, 'refused')
         return 'refused'

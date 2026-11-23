@@ -204,7 +204,8 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
     // delete-subject-tool.test.ts.
     ['delete_subject', null, [{ project_id: p, subject_id: 'can' }]],
     // CW-6a: the workflow tools. add and remove ask, so this core refuses them; their success
-    // replies are word-tested in workflow-tools.test.ts.
+    // replies are not word-tested: workflow-tools.test.ts checks their keys are exactly
+    // ['workflowId'] (add) and their value is the workflow ID only (remove).
     ['list_comfy_workflows', {}, [7]],
     [
       'add_comfy_workflow',

@@ -21,7 +21,7 @@ const filesTarget = z.object({ paths: z.array(z.string()) })
 const workflowTarget = z.object({ workflowId: z.string() })
 
 // CW-6a: where an app-scope ask finds a workflow's name.
-export type WorkflowNames = Pick<CustomWorkflowStore, 'get'>
+export type WorkflowNames = Pick<CustomWorkflowStore, 'get' | 'checkAdd'>
 
 // Read as stored: readMeta refuses a name an edited file may hold, and the ask must not fail.
 function projectName(db: Database.Database): string {
