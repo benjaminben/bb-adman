@@ -98,6 +98,8 @@ project-root/
 ├── examples/                      # brief.yaml; source images and six exported PNGs (Phase 11)
 ├── resources/                     # app icon; ffmpeg/ is fetched, not committed (Phase 7, Phase 8). The default font is in src/shared/scene/fonts/
 ├── scripts/                       # fetch-ffmpeg, ffmpeg-sources.json (Phase 7)
+├── quickstart/                    # the command-line demo (D-106): cli.ts and its parts, page/ (the drawing page), brief.yaml,
+│                                  #   two subject photos; output/ is not in git; see spec/quickstart.md
 ├── approvals-service/             # the approvals service, its own Next.js app (app/, src/, test/, e2e/); layout in
 │                                  #   spec/approvals-service.md, "Folder and tooling"
 ├── comfy-workflows/               # the stakeholder's hand-test copies of the ComfyUI graphs; no code reads them; not in git

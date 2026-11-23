@@ -18,5 +18,5 @@
     "paths": { "@/*": ["./src/*"] },
     "types": ["node", "vite/client", "@testing-library/jest-dom/vitest"]
   },
-  "include": ["src", "tests", "*.config.ts"]
+  "include": ["src", "tests", "quickstart", "*.config.ts"]
 }

@@ -9,6 +9,7 @@ out/
 dist/
 test-results/
 /shots/
+quickstart/output/
 design/prototype/photos/
 
 # tooling
@@ -21,6 +22,7 @@ playwright-report/
 # D-009, D-019: working documents stay out of the repository
 ANALYST-PROMPT.md
 Campaign Creative Generator Plan So Far.md
+DECISIONS-JOURNEY.md
 
 # approvals service: Next.js output and types, local secrets, local databases, Playwright output
 approvals-service/.next/

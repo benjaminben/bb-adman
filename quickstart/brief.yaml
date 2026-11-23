@@ -1,0 +1,36 @@
+# The quickstart brief. Change anything here, then run `npm run quickstart` again.
+# It is the same brief format the app loads with "Load a brief".
+campaignName: Simple Routine
+region: US and Canada
+audience: Adults 20 to 35 who want a skincare routine with few steps
+# The headline in the first language.
+message: Skincare made simple
+callToAction: Start your routine
+tone: Clean, calm and friendly
+
+# Each subject has a photo beside this file. Swap the files, or point "pictures" at others.
+subjects:
+  - id: treatment-bottle
+    name: Treatment bottle
+    description: A frosted pump bottle with a sky-blue cap and the logo in white down its side
+    pictures: subject-a.png
+  - id: gentle-cleanser
+    name: Gentle cleanser
+    description: A lilac squeeze tube that stands on its cap, with a dark logo
+    pictures: subject-b.png
+
+# The first language is the main one. One ad is made per language and size.
+languages:
+  - en
+  - fr
+  - es
+sizes:
+  - '1:1'
+  - '4:5'
+  - '9:16'
+
+# The words for each other language. A language with no words here (es) is translated by AI.
+copy:
+  fr:
+    headline: Le soin de la peau, en toute simplicité
+    callToAction: Commencer ma routine

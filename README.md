@@ -4,6 +4,38 @@ AdManager is a desktop app for making ad campaigns. You give it a brief and pict
 
 In code, file names and folders the app is called "Adman".
 
+## Quickstart
+
+Make a set of ads from one brief on the command line. No app window, no project file. You need Node 24 and a Google Gemini API key.
+
+```
+npm install
+npx playwright install chromium
+npm run quickstart -- --provider=gemini --gemini_api_key=<key>
+```
+
+The run reads `quickstart/brief.yaml` and the two product photos beside it, prints the ads it will make (3 languages × 3 sizes), then:
+
+1. makes one picture of the products with Gemini;
+2. asks Gemini where the words go on it;
+3. translates the words the brief has none for;
+4. extends the picture to each other size;
+5. draws every ad with the app's own layer renderer.
+
+Each ad lands in `quickstart/output/<campaign>/<language>/<size>/`:
+
+- `final.png`, the finished ad;
+- `layers/`, each layer alone at the ad's size (text layers are see-through);
+- `layout.json`, each layer's text, box and style.
+
+To get a different result, edit `quickstart/brief.yaml`: the words, the languages, the sizes, or the photos it points at.
+
+- `--provider=fake` runs every step with grey placeholder pictures. It is free and needs no key.
+- `--model=<gemini model>` picks the picture model. `npm run quickstart -- --help` lists every option.
+- `GEMINI_API_KEY` in the environment works in place of `--gemini_api_key`.
+- The `playwright` line can be skipped when Google Chrome or Microsoft Edge is installed.
+- In Windows PowerShell, if the options seem ignored, run `npx tsx quickstart/cli.ts --provider=gemini --gemini_api_key=<key>`.
+
 ## What it does
 
 - **Campaigns from a brief.** A brief names the message, the languages, the sizes and the subjects. The app makes a first ad and you fan it out to every size and language.

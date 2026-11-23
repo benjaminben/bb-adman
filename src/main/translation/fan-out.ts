@@ -8,35 +8,18 @@
 import type { ProjectContext } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import { requireProviderKeys } from '@/main/providers/require-keys'
-import type { PlannedLayer } from '@/shared/links/fan-out-plan'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { CampaignRow } from '@/shared/schemas/rows/campaign'
 import { AppError } from '@/shared/schemas/result'
-import { briefCopyFor } from '@/shared/translation/brief-copy'
-import { initialTranslation } from '@/shared/translation/initial'
+import { translatedLayers } from '@/shared/translation/translated-layers'
 import { enqueueTranslation } from './start'
 import { planGroup, type TranslationPlan } from './targets'
 
 type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings'>
 export type NewVariant = { variantId: string; language: string }
 
-// A new variant's planned layers with their first translation state and the brief's copy.
-export function translatedLayers(
-  campaign: CampaignRow,
-  language: string,
-  layers: PlannedLayer[],
-): PlannedLayer[] {
-  return layers.map((layer) => {
-    const first = {
-      ...layer,
-      ...initialTranslation(language, campaign.primaryLanguage, layer.type),
-    }
-    if (first.translationStatus !== 'missing') return first
-    const copy = briefCopyFor(campaign.brief, language, layer.slot)
-    if (copy === null) return first
-    return { ...first, copy, translationStatus: 'proposed', translationSource: 'brief' }
-  })
-}
+// Lives in shared code, so the quickstart CLI fills copy the same way.
+export { translatedLayers }
 
 // The Settings text provider when it can translate now and has its key; otherwise null.
 function textProvider(deps: Deps): ProviderInfo | null {

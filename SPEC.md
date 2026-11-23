@@ -56,6 +56,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/security.md` | Scope, threat model, standing rules by subject, accepted risks, named security tests |
 | `spec/testing.md` | Logging, verification classes, test commands, coverage, named tests, non-functional targets |
 | `spec/test-harnesses.md` | The end-to-end harnesses, real-service runs, the rule on paid calls, what the harness reaches |
+| `spec/quickstart.md` | The command-line quickstart (D-106): what it reuses from the app, its steps, options, output folder, and its rules |
 | `spec/scene.md` | The Scene component, fonts, overflow measurement, font names at import, the render window, the render service, thumbnails |
 | `spec/editor.md` | Campaign and variant tabs, the editor (canvas, layer list, properties), keyboard shortcuts, undo per variant, several picture layers |
 | `spec/editor-commands.md` | The layer and variant commands, `variant.get`, `thumbnail.get`, `variant.render`, `thumbnail.changed` in full |

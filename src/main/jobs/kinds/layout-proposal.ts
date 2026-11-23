@@ -17,6 +17,7 @@ import { ProviderCancelled, ProviderFailure, type LayoutProvider } from '@/main/
 import { variantLayers } from '@/main/thumbnails/scene-input'
 import type { Pixels } from '@/shared/generation/contrast'
 import { clampLayout } from '@/shared/generation/layout-clamp'
+import { LAYOUT_PICTURE_SIDE, layoutItems } from '@/shared/generation/layout-items'
 import { keepReadable } from '@/shared/generation/layout-readable'
 import { TYPE_STYLE_IDS, typeStylePrompt } from '@/shared/config/type-styles'
 import type { LayoutJobResult } from '@/shared/schemas/jobs/layout-proposal'
@@ -26,17 +27,10 @@ import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { RuleSetRow } from '@/shared/schemas/rows/rule-set'
 import type { VariantRow } from '@/shared/schemas/rows/variant'
 
-// The longest side of the picture sent with a layout call.
-export const LAYOUT_PICTURE_SIDE = 1024
+// Both live in shared code, so the quickstart CLI uses the same ones.
+export { LAYOUT_PICTURE_SIDE, layoutItems }
 
 export type LayoutAdapterFor = (deps: CoreDeps, providerId: string) => LayoutProvider
-
-// What the provider places: each visible text layer with copy, in the order given (z order).
-export function layoutItems(layers: LayerRow[]): Array<{ slot: string; text: string }> {
-  return layers
-    .filter((l) => l.type === 'text' && l.visible && (l.copy ?? '').trim() !== '')
-    .map((l) => ({ slot: l.key, text: l.copy ?? '' }))
-}
 
 function palette(project: ProjectHandle, campaignId: string | null): string[] {
   if (!campaignId) return []
