@@ -17,3 +17,15 @@ Assumptions made while building the stakeholder's round 3 notes (2026-11-22), fo
     - (a) Gemini's layout and text jobs read "Google · Gemini 3.5 Flash-Lite", because a word is never said twice. The other choice is "Google Gemini · Gemini 3.5 Flash-Lite".
     - (b) The tool descriptions an agent reads name each model and its model ID. The job status an agent reads still names neither the service nor the model. A security test holds that; changing it needs your word.
     - (c) In the run dialog the service buttons now have two lines, so they are taller.
+13. **Custom workflows, as built.** Please try:
+    - (a) Settings, "ComfyUI workflows": add an API-format export with `adman:` titles, change its name and sizes, remove it.
+    - (b) The run dialog: with ComfyUI chosen and two or more workflows that fit, a "Workflow" select appears; the pick is remembered per job kind. It never appears on a retry (a ComfyUI retry starts at once with the workflow the first run used).
+    - (c) An agent's `add_comfy_workflow`: the dialog shows the name, what it makes and every node type; "Add" works only once the list is on screen; there is no "don't ask again". A taken name or a full list (50) is refused before you are asked.
+    - (d) The server check in Settings lists an added workflow as "Added" with the node types the server lacks. A run that fails for that reason shows only a count ("The server is missing 1 thing this workflow needs. Press Check in Settings to see them."), because job rows travel with the project.
+14. **Small rulings made at the build (change any you dislike).**
+    - (a) Size choices for an added workflow: 0.25, 0.4, 0.5, 1, 2 and 4 megapixels.
+    - (b) A node or an input named `__proto__`, and a link whose number is not a whole number, are refused at add.
+    - (c) A second file with a taken name is saved as "{name} 2" for a person; an agent's add with a taken name is refused.
+    - (d) With no shipped workflow for a job, the oldest added one that fits is the default.
+    - (e) The picker lists every added workflow that fits the job, also one whose reference-picture count differs from the pictures ticked; that run is then refused with "This workflow needs {n} reference pictures."
+    - (f) An added workflow can be saved with video numbers that never give a clip (for example 1 frame a second, 1 second, frame offset 5); each run then stops before anything is sent. Not refused at add yet (`review-leftovers.md`).
