@@ -2,7 +2,9 @@
 // workflow: its label, its status as now, and a mark: "Complete" or "{n} missing", with the
 // missing items listed under it (they are the fix). A commercial licence keeps a short mark on
 // the row; the longer note is in an InfoTip. Model and licence text are drawn as text only. No
-// row is drawn for a draft workflow ([1.45] B-3). The version and a failure are drawn by
+// row is drawn for a draft workflow ([1.45] B-3). A custom workflow is listed under its name
+// with the status word "Added"; its missing node types come from its own graph and reach
+// only this window, drawn as text (CW-7, rule 11). The version and a failure are drawn by
 // CheckMark and the ComfyUI section.
 import type { ComfyCheck } from '@/shared/schemas/commands/comfy-check'
 import type { WorkflowInfo } from '@/shared/schemas/queries/comfy'
@@ -20,6 +22,9 @@ function MissingMark(props: { missing: MissingItem[] }) {
   return <StatusMark tone="warn" icon="alert" label={`${n} missing`} tip={tip} />
 }
 
+// D-104 (CW-7): a custom workflow reads "Added"; a shipped one keeps its status as now.
+const statusWord = (w: WorkflowInfo) => (w.status === 'custom' ? 'Added' : w.status)
+
 function WorkflowRow(props: { workflow: WorkflowInfo; missing: MissingItem[] }) {
   const { workflow, missing } = props
   const labelId = `comfy-workflow-${workflow.id}`
@@ -30,7 +35,7 @@ function WorkflowRow(props: { workflow: WorkflowInfo; missing: MissingItem[] }) 
         <span id={labelId} className={styles.name}>
           {workflow.label}
         </span>
-        <span className={layout.muted}>{workflow.status}</span>
+        <span className={layout.muted}>{statusWord(workflow)}</span>
         {note !== null && (
           <span className={styles.licence}>
             <StatusMark

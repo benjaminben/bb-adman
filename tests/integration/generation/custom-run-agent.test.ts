@@ -117,4 +117,23 @@ describe('an agent names a custom workflow [D-104, CW-3]', () => {
     expect(seen).not.toContain(r.stand.origin)
     expect(seen).not.toContain(`127.0.0.1:${r.stand.port}`)
   }, 25_000)
+
+  it('a missing_items failure leaves no node type in a reply, a job row, a log line or an event [CW-7]', async () => {
+    r = await customRunSetUp()
+    await tick(true)
+    const id = addMarked()
+    r.stand.reply(`GET /object_info/${MARKER}Class`, { status: 404, json: { error: 'none' } })
+    const reply = (await r.f.run({ workflowId: id }, 'agent')) as Reply
+    const job = await jobEnds(r.f, reply.data?.jobId ?? '')
+    expect(job).toMatchObject({
+      status: 'failed',
+      errorReason: 'missing_items',
+      result: { missing: [], missingCount: 1 },
+    })
+    expect(prompts(r.stand)).toEqual([])
+    const read = await r.f.core.query('job.list', { projectId: r.f.projectId }, { actor: 'agent' })
+    const rows = readWireRows(r.f.db, 'job')
+    const seen = JSON.stringify([reply, read, rows, r.f.events]) + logText()
+    expect(seen).not.toContain(MARKER)
+  }, 25_000)
 })

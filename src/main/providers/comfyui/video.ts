@@ -127,6 +127,8 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
       const videoStart = { firstFrame: input.image !== null, references }
       const spec = workflowForRun('video', videoStart, runWorkflows(ctx), input.workflowId)
       if (!spec.video) throw new Error(`${spec.id} has no video values`)
+      // CW-7: worked out before anything is sent, since it may find no count that fits.
+      const frames = frameCount(input.durationMs, spec.video)
       const size = runSizeOf(spec, { width: input.width, height: input.height })
       // [1.60] N-7: before anything is sent, the first frame must state the run size.
       if (input.image) checkFrameSize(input.image, size)
@@ -140,7 +142,7 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
       const ask = { prompt, width, height, references: pictures.references }
       const values = {
         ...fillValuesFor(spec, ask, sentId),
-        frames: frameCount(input.durationMs, spec.video),
+        frames,
         ...(pictures.firstFrame !== undefined && { firstFrame: pictures.firstFrame }),
       }
       const promptId = await submitted({ client }, fillWorkflow(spec, values), sentId)

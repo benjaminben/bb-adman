@@ -2,17 +2,23 @@
 // failed run shows in place of one sentence. [REQ: FR-265, FR-266, FR-267, FR-069]
 // P4-5: moved to ui/ so the activity panel and the earlier options show it too.
 // The sentence comes from the reason when the row has one, else from the kind. The address
-// fills the sentence only; the missing items come from the app's own workflow files.
+// fills the sentence only; the missing items come from the app's own workflow files. A custom
+// workflow's row holds only their count (CW-7).
 import { useId } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import { missingItemText } from '@/renderer/ui/missing-item-text'
-import { fillMarks, plainMessage, reasonMessage } from '@/shared/providers/messages'
+import {
+  CUSTOM_MISSING_MESSAGE,
+  fillMarks,
+  plainMessage,
+  reasonMessage,
+} from '@/shared/providers/messages'
 import type { ProviderErrorReason, ProviderInfo } from '@/shared/schemas/queries/app'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import { useComfyInfo } from '@/renderer/screens/campaign/use-comfy-info'
-import { missingItems } from './missing-items'
+import { missingCount, missingItems } from './missing-items'
 import { ServerMessageBlock, ServerMessageButton, useServerMessage } from './server-message'
 import styles from './run-failure.module.css'
 
@@ -33,12 +39,14 @@ function ReasonSentence(props: {
   reason: ProviderErrorReason
   n: number | undefined
   provider: string
+  custom: boolean
 }) {
   const info = useComfyInfo()
   const address = info?.address ?? undefined
+  const text = props.custom ? CUSTOM_MISSING_MESSAGE : reasonMessage(props.reason)
   return (
     <p className={styles.sentence}>
-      {fillMarks(reasonMessage(props.reason), { address, n: props.n, provider: props.provider })}
+      {fillMarks(text, { address, n: props.n, provider: props.provider })}
     </p>
   )
 }
@@ -55,6 +63,9 @@ export function RunFailure(props: {
   const blockId = useId()
   const reason = row.errorReason
   const missing = reason === 'missing_items' ? missingItems(row.result) : []
+  // CW-7: a custom workflow's row holds the count only, never the names.
+  const counted = reason === 'missing_items' && missing.length === 0
+  const count = counted ? missingCount(row.result) : undefined
   const settings = reason !== null && SETTINGS_REASONS.has(reason)
   const serverText = provider?.serverText === true
 
@@ -71,8 +82,9 @@ export function RunFailure(props: {
         ) : (
           <ReasonSentence
             reason={reason}
-            n={missing.length > 0 ? missing.length : undefined}
+            n={count ?? (missing.length > 0 ? missing.length : undefined)}
             provider={props.providerLabel}
+            custom={count !== undefined}
           />
         )}
         {missing.length > 0 && (

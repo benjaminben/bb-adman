@@ -20,13 +20,14 @@ function failed(state: RunnerState, live: LiveJob, e: unknown): JobEnd {
     return { status: 'failed', errorKind: 'other', errorReason: reason, errorDetail: reason }
   }
   if (e instanceof ProviderFailure) {
-    const { kind, reason, detail, missing } = e.error
+    const { kind, reason, detail, missing, missingCount } = e.error
     return {
       status: 'failed',
       errorKind: kind,
       errorReason: reason ?? null,
       errorDetail: detail,
       ...(missing ? { missing } : {}),
+      ...(missingCount !== undefined ? { missingCount } : {}),
     }
   }
   if (e instanceof AppError) {

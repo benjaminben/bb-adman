@@ -5,6 +5,7 @@
 // compares the custom workflows too.
 import { randomUUID } from 'node:crypto'
 import type { AdapterContext } from '@/main/providers/types'
+import type { ComfyCheck } from '@/shared/schemas/commands/comfy-check'
 import { createComfyClient, type ComfyClient } from './client'
 import { checkFailure, comfyFailure, missingFailure } from './failures'
 import { LiveLink } from './live'
@@ -72,7 +73,9 @@ const customOf = (ctx: AdapterContext) => ctx.comfyWorkflows ?? NO_CUSTOM
 export const runWorkflows = (ctx: AdapterContext) => allWorkflows(customOf(ctx))
 export const checkList = (ctx: AdapterContext) => checkedWorkflows(customOf(ctx))
 
-// The check of 6.10.3 for the run's workflow, over checkList. Gives the server's version.
+// The check of 6.10.3 for the run's workflow, over checkList. Gives the server's version. A
+// kept result that does not hold the workflow (one added since) is asked again (CW-7). A
+// custom workflow's missing items leave only their count (rule 2).
 export async function checked(
   checks: ServerChecks,
   origin: string,
@@ -80,10 +83,14 @@ export async function checked(
   spec: WorkflowSpec,
   workflows: readonly WorkflowSpec[],
 ): Promise<string | undefined> {
-  const result = await checks.run(origin, client, workflows)
+  const compared = (r: ComfyCheck) => r.workflows.find((w) => w.id === spec.id)?.missing
+  let result = await checks.run(origin, client, workflows)
+  if (result.outcome === 'ok' && !compared(result)) {
+    result = await checks.run(origin, client, workflows, { fresh: true })
+  }
   if (result.outcome !== 'ok') throw checkFailure(result.outcome)
-  const missing = result.workflows.find((w) => w.id === spec.id)?.missing
+  const missing = compared(result)
   if (!missing) throw new Error(`The check did not compare ${spec.id}`)
-  if (missing.length > 0) throw missingFailure(missing)
+  if (missing.length > 0) throw missingFailure(missing, spec.status === 'custom')
   return result.version
 }
