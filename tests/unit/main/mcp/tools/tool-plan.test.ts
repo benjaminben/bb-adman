@@ -39,6 +39,9 @@ const PLAN = [
   'create_campaign_from_brief',
   'create_project',
   'delete_subject',
+  'list_comfy_workflows',
+  'add_comfy_workflow',
+  'remove_comfy_workflow',
 ]
 
 // The tools not built yet. A tool slice removes exactly its own names.
@@ -68,6 +71,9 @@ const TARGETS: Record<string, [kind: 'command' | 'query', target: string]> = {
   create_campaign_from_brief: ['command', 'campaign.createFromBrief'],
   create_project: ['command', 'project.createInDefaultFolder'],
   delete_subject: ['command', 'subject.delete'],
+  list_comfy_workflows: ['query', 'comfyWorkflow.list'],
+  add_comfy_workflow: ['command', 'comfyWorkflow.add'],
+  remove_comfy_workflow: ['command', 'comfyWorkflow.remove'],
 }
 
 describe('the Phase 10 tool plan [P10-1, A-230, A-231]', () => {

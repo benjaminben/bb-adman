@@ -8,6 +8,7 @@ import { createInput } from '../campaigns/campaign-fixture'
 import { BUILT_TOOLS } from './tool-client'
 import { imageArgs, runSetUp, startedId, type RunSetUp } from './run-tools-fixture'
 import { seedTranslation } from './translation-check-fixture'
+import { fixtureText } from '../../fixtures/comfy-custom/load'
 
 let r: RunSetUp | undefined
 afterEach(async () => {
@@ -202,6 +203,16 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
     // SUBJ-1: delete_subject asks, so it is refused here and word-tested in
     // delete-subject-tool.test.ts.
     ['delete_subject', null, [{ project_id: p, subject_id: 'can' }]],
+    // CW-6a: the workflow tools. add and remove ask, so this core refuses them; their success
+    // replies are not word-tested: workflow-tools.test.ts checks their keys are exactly
+    // ['workflowId'] (add) and their value is the workflow ID only (remove).
+    ['list_comfy_workflows', {}, [7]],
+    [
+      'add_comfy_workflow',
+      null,
+      [{ name: 'Board', workflow_json: fixtureText('canvas') }, { name: 'Board' }],
+    ],
+    ['remove_comfy_workflow', null, [{ workflow_id: 'custom-0123456789ab' }, { workflow_id: 'x' }]],
   ]
   return table.flatMap(([tool, good, bad]) => [
     ...(good === null ? [] : [{ tool, args: good, ok: true }]),
@@ -231,7 +242,14 @@ describe('no tool reply or output schema holds a provider ID, a settings key or 
     expect([...outcomes.keys()]).toEqual(BUILT_TOOLS)
     for (const [tool, both] of outcomes) {
       expect(both.size, tool).toBe(
-        ['delete_campaign', 'delete_variant', 'import_assets', 'delete_subject'].includes(tool)
+        [
+          'delete_campaign',
+          'delete_variant',
+          'import_assets',
+          'delete_subject',
+          'add_comfy_workflow',
+          'remove_comfy_workflow',
+        ].includes(tool)
           ? 1
           : 2,
       )

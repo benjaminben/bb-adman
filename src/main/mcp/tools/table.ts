@@ -4,7 +4,7 @@
 // own Zod schema, with its top-level keys in snake_case (SPEC 4.5: project_id -> projectId).
 // Every reply goes through an allow-list picker (spec/mcp-and-agents.md, rules for every tool).
 // ALL_TOOLS is the Phase 10 plan (A-230): the built tools, then one group file per slice, then
-// Round 2's three, then SUBJ-1's delete_subject. A notBuilt row is left out of MCP_TOOLS, so
+// Round 2's three, then SUBJ-1's delete_subject, then CW-6a's three workflow tools. A notBuilt row is left out of MCP_TOOLS, so
 // it is never listed to an agent.
 import type { z } from 'zod'
 import { assetListInput } from '@/shared/schemas/queries/asset'
@@ -33,6 +33,7 @@ import { FORMAT_TOOLS } from './format-tool'
 import { IMPORT_TOOLS } from './import-tools'
 import { BRIEF_TOOLS } from './brief-tools'
 import { PROJECT_TOOLS } from './project-tools'
+import { WORKFLOW_TOOLS } from './workflow-tools'
 
 export type ToolDef = {
   name: string
@@ -144,6 +145,7 @@ export const ALL_TOOLS: readonly ToolDef[] = [
   ...BRIEF_TOOLS,
   ...PROJECT_TOOLS,
   ...SUBJECT_DELETE_TOOLS,
+  ...WORKFLOW_TOOLS,
 ]
 
 // What core registers: every built row, in the same order.

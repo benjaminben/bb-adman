@@ -45,7 +45,7 @@ describe('the Phase 10 events [P10-1, A-238, A-241]', () => {
       action: string
       target: string
       expiresAt: string
-      kind: 'delete' | 'import'
+      kind: 'delete' | 'import' | 'workflow'
       fileCount: number
     }>()
   })

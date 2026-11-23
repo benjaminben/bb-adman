@@ -21,6 +21,10 @@ export const jobIdOnly: ReplyPicker = (data) => ({ jobId: (data as JobStarted).j
 
 const FOLLOW = 'Gives the job ID at once; follow the run with get_job.'
 
+// CW-6a (spec/comfyui-custom.md "MCP tools").
+const WORKFLOW_ID =
+  'workflow_id names a workflow from list_comfy_workflows; leave it out for the default.'
+
 // P7-15: fal.ai Seedance, for videos only. Its lengths come from the offer table; its reference
 // count is the smaller of the offer's and the app's input cap.
 function falWords(): string {
@@ -41,7 +45,8 @@ export const RUN_TOOLS: readonly ToolDef[] = [
     description:
       'Start a run that makes pictures for one variant of an open project. Name a slot ' +
       '(from get_slots) or a layer_id, not both. count is 1 to 8. reference_asset_ids are ' +
-      `asset IDs from list_assets, or an empty list. ${PROVIDER_WORDS} ${FOLLOW} ${LEAVE_THE_CHOICE}`,
+      `asset IDs from list_assets, or an empty list. ${PROVIDER_WORDS} ${WORKFLOW_ID} ${FOLLOW} ` +
+      LEAVE_THE_CHOICE,
     kind: 'command',
     target: 'generation.runImages',
     input: generationRunImagesAgentInput,
@@ -59,7 +64,7 @@ export const RUN_TOOLS: readonly ToolDef[] = [
       'reference_asset_ids). A picture is named by an asset ID from list_assets. A fourth ' +
       'start, "background" (use_references false, reference_asset_ids empty), uses the ' +
       "variant's background picture as the first frame. " +
-      `${PROVIDER_WORDS} ${falWords()} ${FOLLOW} ${LEAVE_THE_CHOICE}`,
+      `${PROVIDER_WORDS} ${falWords()} ${WORKFLOW_ID} ${FOLLOW} ${LEAVE_THE_CHOICE}`,
     kind: 'command',
     target: 'generation.startVideo',
     input: generationStartVideoAgentInput,

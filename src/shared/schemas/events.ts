@@ -50,7 +50,7 @@ export type EventMap = {
     action: string
     target: string
     expiresAt: string
-    kind: 'delete' | 'import'
+    kind: 'delete' | 'import' | 'workflow'
     fileCount: number
   }
   // spec/phases/phase-10.md, activity (A-241): one per tool call. No input, no reply.

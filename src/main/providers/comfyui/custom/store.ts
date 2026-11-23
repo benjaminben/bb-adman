@@ -91,6 +91,13 @@ export function createCustomWorkflowStore(opts: {
     )
   }
 
+  // The limit and the name rule of an add, the one owner. The permission broker runs it
+  // before an agent's ask too (CW-6a), so a refused add never reaches the screen.
+  function checkAdd(name: string): void {
+    if (entries.size >= MAX_CUSTOM_WORKFLOWS) throw refuse('workflow_limit')
+    if (nameTaken(name)) throw refuse('workflow_name_taken')
+  }
+
   function get(id: string): CustomEntry | undefined {
     return isCustomWorkflowId(id) ? entries.get(id) : undefined
   }
@@ -112,9 +119,10 @@ export function createCustomWorkflowStore(opts: {
       }
     },
 
+    checkAdd,
+
     add(input: NewWorkflow): CustomEntry {
-      if (entries.size >= MAX_CUSTOM_WORKFLOWS) throw refuse('workflow_limit')
-      if (nameTaken(input.name)) throw refuse('workflow_name_taken')
+      checkAdd(input.name)
       const { checked } = input
       let id = newId()
       while (entries.has(id)) id = newId()

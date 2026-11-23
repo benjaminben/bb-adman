@@ -81,6 +81,8 @@ describe('the kinds of an ask [R2P-1, D7]', () => {
       'subject.delete': 'delete',
       'asset.importFiles': 'import',
       'campaign.createFromBriefWithFiles': 'import',
+      'comfyWorkflow.add': 'workflow',
+      'comfyWorkflow.remove': 'delete',
     })
   })
 

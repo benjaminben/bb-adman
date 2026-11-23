@@ -36,6 +36,9 @@ export const BUILT_TOOLS = [
   'create_campaign_from_brief',
   'create_project',
   'delete_subject',
+  'list_comfy_workflows',
+  'add_comfy_workflow',
+  'remove_comfy_workflow',
 ]
 
 export type ToolReply = {

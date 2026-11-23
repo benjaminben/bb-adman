@@ -12,6 +12,7 @@ import { comfyQueries } from './comfy'
 import { comfyWorkflowQueries } from './comfy-workflow'
 import { activityQueries } from './activity'
 import { askFilesQueries } from './ask-files'
+import { askWorkflowQueries } from './ask-workflow'
 import type { PermissionBroker } from '@/main/mcp/permissions'
 import { earlierOptionsQueries } from './earlier-options'
 import { historyQueries } from './history'
@@ -35,9 +36,9 @@ import { AppError, fail, internalError, ok, type Result } from '@/shared/schemas
 
 export type { QueryFn, QueryOptions }
 
-// Every registered query by name. mcp.getConnectInfo needs the MCP service and agent.askFiles
-// the permission broker, so each is registered only when core passes it (a unit test builds the
-// table without them).
+// Every registered query by name. mcp.getConnectInfo needs the MCP service, and agent.askFiles
+// and agent.askWorkflow the permission broker, so each is registered only when core passes it
+// (a unit test builds the table without them).
 export function queryTable(
   deps: CoreDeps,
   mcp?: McpState,
@@ -58,6 +59,7 @@ export function queryTable(
     ...earlierOptionsQueries(deps),
     ...activityQueries(deps),
     ...(broker ? askFilesQueries(broker) : {}),
+    ...(broker ? askWorkflowQueries(broker) : {}),
     ...paidCountQueries(deps),
     ...(mcp ? mcpQueries(deps, mcp) : {}),
     ...projectQueries(deps),

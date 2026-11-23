@@ -4,6 +4,8 @@
 // project closes. An answer that comes after the end changes nothing. Round 2 (D7, R2P-5): each
 // ask has a kind; mcp.autoApproveDestructive answers deletes only; an import ask holds its list
 // of normalised paths for agent.askFiles while it waits, and never sends one in an event.
+// CW-6a (D-104): a workflow ask's text is checked before it is sent; it holds the name, job,
+// start and node types for agent.askWorkflow; nothing but the person's "Add" answers it.
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { importPathTexts } from '@/main/assets/import-files'
@@ -18,7 +20,13 @@ import type { SettingsStore } from '@/main/settings/settings-store'
 import { ASK_WAIT_MS } from '@/shared/config/agent-ask'
 import type { AgentAnswerPermissionInput } from '@/shared/schemas/commands/agent'
 import { AppError } from '@/shared/schemas/result'
-import { askTarget } from './ask-target'
+import { askTarget, type WorkflowNames } from './ask-target'
+import {
+  readAskedWorkflow,
+  workflowAddLine,
+  type AskWorkflow,
+  type HeldWorkflow,
+} from './ask-workflow-reader'
 import { ASK_KINDS, type AskKind } from './ask-kinds'
 
 export type PermissionBrokerDeps = {
@@ -27,6 +35,8 @@ export type PermissionBrokerDeps = {
   log: ActivityLog
   now: () => Date
   projects: ProjectRegistry
+  // CW-6a: the custom workflows, for the remove ask's target line and the add's early check.
+  workflows?: WorkflowNames
 }
 
 export type PermissionBroker = {
@@ -34,6 +44,8 @@ export type PermissionBroker = {
   answer(input: AgentAnswerPermissionInput): void
   // The paths of the open request with this ID, for agent.askFiles; NOT_FOUND once it ended.
   files(requestId: string): string[]
+  // The open workflow ask with this ID, for agent.askWorkflow; NOT_FOUND for any other.
+  workflow(requestId: string): AskWorkflow
 }
 
 export const REQUEST_ENDED = 'That request has ended.'
@@ -67,6 +79,7 @@ type Waiting = {
   requestId: string
   kind: AskKind
   files: string[]
+  held: HeldWorkflow | null
   projectId: string | null
   stillOpen: () => boolean
   end: (answer: AskAnswer | AppError) => void
@@ -109,7 +122,25 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
     }
   }
 
-  function wait(request: PermissionRequest, kind: AskKind, files: string[]): Promise<AskAnswer> {
+  function targetOf(request: PermissionRequest, held: HeldWorkflow | null): string {
+    return held ? workflowAddLine(held) : askTarget(deps.projects, request, deps.workflows)
+  }
+
+  // The open request with this ID, still in its project; else NOT_FOUND.
+  function openRequest(requestId: string): Waiting {
+    const current = waiting
+    if (!current || current.requestId !== requestId || !current.stillOpen()) {
+      throw new AppError('NOT_FOUND', REQUEST_ENDED)
+    }
+    return current
+  }
+
+  function wait(
+    request: PermissionRequest,
+    kind: AskKind,
+    files: string[],
+    held: HeldWorkflow | null,
+  ): Promise<AskAnswer> {
     const requestId = randomUUID()
     const stillOpen = projectWatch(request.projectId)
     return new Promise<AskAnswer>((resolve, reject) => {
@@ -126,7 +157,7 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
       const watch = setInterval(() => {
         if (!stillOpen()) end(projectGone(request.projectId))
       }, PROJECT_CHECK_MS)
-      waiting = { requestId, kind, files, projectId: request.projectId, stillOpen, end }
+      waiting = { requestId, kind, files, held, projectId: request.projectId, stillOpen, end }
       const expiresAt = new Date(deps.now().getTime() + ASK_WAIT_MS).toISOString()
       deps.emit({
         name: 'agent.permissionRequested',
@@ -134,7 +165,7 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
           requestId,
           agentClient: request.agentClient,
           action: AGENT_POLICY[request.command]?.action ?? request.command,
-          target: askTarget(deps.projects, request),
+          target: targetOf(request, held),
           expiresAt,
           kind,
           fileCount: files.length,
@@ -149,6 +180,8 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
       const reader = FILE_READERS[request.command]
       const project = request.projectId ? deps.projects.get(request.projectId) : undefined
       const files = kind === 'import' ? (reader?.(request.input, project) ?? null) : []
+      // Throws the command's own refusal, so a refused text never reaches the screen.
+      const held = kind === 'workflow' ? readAskedWorkflow(request.input, deps.workflows) : null
       if (!kind || !files) {
         logOutcome(request, 'refused')
         return 'refused'
@@ -161,7 +194,7 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
         logOutcome(request, 'busy')
         return 'busy'
       }
-      return wait(request, kind, files)
+      return wait(request, kind, files, held)
     },
     answer(input) {
       const current = waiting
@@ -178,11 +211,12 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
       current.end(input.allow ? 'allowed' : 'refused')
     },
     files(requestId) {
-      const current = waiting
-      if (!current || current.requestId !== requestId || !current.stillOpen()) {
-        throw new AppError('NOT_FOUND', REQUEST_ENDED)
-      }
-      return [...current.files]
+      return [...openRequest(requestId).files]
+    },
+    workflow(requestId) {
+      const view = openRequest(requestId).held?.view
+      if (!view) throw new AppError('NOT_FOUND', REQUEST_ENDED)
+      return { ...view, nodeTypes: [...view.nodeTypes] }
     },
   }
 }
