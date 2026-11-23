@@ -1,7 +1,8 @@
 /* app-style */
 /* The node types of a workflow ask (CW-6b): in the mono face, each wrapping at any character,
-   in a box that scrolls past about 8 lines, so a long list or name never pushes the buttons
-   out of view. */
+   in a box that scrolls past about 8 lines and shrinks with the window, so a long list or name
+   never pushes the risk line or the buttons out of view. Each item clips what it draws, so
+   stacked combining marks cannot cover the next type. */
 .facts {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -26,7 +27,7 @@
   font-weight: var(--weight-medium);
 }
 .list {
-  max-height: calc(var(--space-6) * 8);
+  max-height: min(calc(var(--space-6) * 8), 25vh);
   margin: 0 0 var(--space-3);
   padding: var(--space-1) var(--space-2);
   overflow-y: auto;
@@ -40,6 +41,7 @@
   font-family: var(--font-mono);
   font-size: var(--font-size-control);
   overflow-wrap: anywhere;
+  overflow: hidden;
 }
 .item + .item {
   border-top: var(--border-width) solid var(--color-border);

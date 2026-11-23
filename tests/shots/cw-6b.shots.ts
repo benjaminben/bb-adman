@@ -2,7 +2,7 @@
 // calls add_comfy_workflow with a made-up graph of many node types; the dialog is pictured once
 // its list is shown and Add is ready (530), then Add is pressed, so the app holds the workflow
 // in its sandbox profile. The client then calls remove_comfy_workflow; that delete dialog is
-// pictured (531) and refused. No ComfyUI server is called: adding and asking only check the
+// pictured (531) and refused. A second add is pictured in the smallest window (532) and refused. No ComfyUI server is called: adding and asking only check the
 // text. Reduce motion and a fixed Math.random keep every picture still. Nothing leaves the
 // machine.
 import fs from 'node:fs'
@@ -16,6 +16,8 @@ import { closeApp, openApp, shot, type Session } from './shot'
 
 // At most 60 characters, the workflow name rule.
 const NAME = 'Soft studio light, film grain and warm grade for skin care'
+const LONGEST_NAME = 'Harbour dusk portrait with soft rim light, warm film grades.'
+const RISK = /^This workflow will run on your ComfyUI server/
 
 // Made-up custom node names, the kind found on a ComfyUI server, some of them very long.
 const EXTRA = [
@@ -102,4 +104,19 @@ test('CW-6b shots', async () => {
   await remove.getByRole('button', { name: 'Refuse' }).click()
   await expect(remove).toBeHidden()
   await removing
+
+  // 532: the smallest window (900 by 600) with 20 types and a 60-character name. Only the list
+  // scrolls: the risk line and both buttons stay whole on screen.
+  await page.setViewportSize({ width: 900, height: 600 })
+  const again = s.call('add_comfy_workflow', { name: LONGEST_NAME, workflow_json: longGraph() })
+  await expect(add).toBeVisible({ timeout: 30_000 })
+  await expect(types).toHaveCount(EXTRA.length + 6)
+  await expect(allow).not.toHaveAttribute('aria-disabled')
+  await expect(add.getByText(RISK)).toBeInViewport({ ratio: 1 })
+  await expect(add.getByRole('button', { name: 'Refuse' })).toBeInViewport({ ratio: 1 })
+  await expect(allow).toBeInViewport({ ratio: 1 })
+  await windowShot(page, '532-permission-workflow-add-small-window')
+  await add.getByRole('button', { name: 'Refuse' }).click()
+  await expect(add).toBeHidden()
+  await again
 })

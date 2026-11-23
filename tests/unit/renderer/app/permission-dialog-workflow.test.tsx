@@ -39,12 +39,18 @@ function request(overrides: Partial<Ask> = {}): Ask {
 function ok(nodeTypes: unknown): Result<unknown> {
   return {
     ok: true,
-    data: { name: 'Soft studio light', job: 'image', start: null, nodeTypes },
+    data: { name: 'Soft studio light', job: 'image', start: null, nodeTypes, references: 0 },
   }
 }
 
-function named(name: string, job: string, start: string | null, nodeTypes: string[]) {
-  return { ok: true, data: { name, job, start, nodeTypes } } as Result<unknown>
+function named(
+  name: string,
+  job: string,
+  start: string | null,
+  nodeTypes: string[],
+  references: unknown = 0,
+) {
+  return { ok: true, data: { name, job, start, nodeTypes, references } } as Result<unknown>
 }
 
 // The value drawn beside a label of the name, job and count list.
@@ -122,13 +128,19 @@ describe('permission dialog for a workflow add [CW-6b]', () => {
     expect(dialog.querySelector('b')).toBeNull()
   })
 
-  it('takes the reference count the target line names', async () => {
-    const target = 'Workflow "Pair": Picture from a prompt and 2 reference pictures, 5 node types'
-    const reply = () => named('Pair', 'image_refs', null, TYPES)
-    const { dialog } = await open(request({ target }), reply)
-    await waitFor(() => expect(items(dialog)).toEqual(TYPES))
-    expect(fact(dialog, 'What it makes')).toBe('Picture from a prompt and 2 reference pictures')
-  })
+  it.each([
+    ['image_refs', null, 2, 'Picture from a prompt and 2 reference pictures'],
+    ['video', 'references', 1, 'Video from 1 reference picture'],
+  ])(
+    'builds the job words of %s from the reply, never from the target line',
+    async (job, start, references, words) => {
+      const target = 'Workflow "Pair": Picture from a prompt, 5 node types'
+      const reply = () => named('Pair', job, start, TYPES, references)
+      const { dialog } = await open(request({ target }), reply)
+      await waitFor(() => expect(items(dialog)).toEqual(TYPES))
+      expect(fact(dialog, 'What it makes')).toBe(words)
+    },
+  )
 
   it('keeps Add off until the list shows and 750 ms pass', async () => {
     let send: (r: Result<unknown>) => void = () => undefined
@@ -167,7 +179,18 @@ describe('permission dialog for a workflow add [CW-6b]', () => {
     ['an empty list', () => ok([])],
     ['a reply with no list', () => ({ ok: true, data: { name: 'Soft studio light' } })],
     ['a query that throws', () => Promise.reject(new Error('gone'))],
-    ['a reply that differs from the target', () => named('Other name', 'image', null, TYPES)],
+    [
+      'no reference count',
+      () => ({
+        ok: true,
+        data: { name: 'Soft studio light', job: 'image', start: null, nodeTypes: TYPES },
+      }),
+    ],
+    ['a reference count of 9', () => named('Soft studio light', 'image_refs', null, TYPES, 9)],
+    ['a negative reference count', () => named('Soft studio light', 'image', null, TYPES, -1)],
+    ['a broken reference count', () => named('Soft studio light', 'image_refs', null, TYPES, 1.5)],
+    ['a reference count as text', () => named('Soft studio light', 'image_refs', null, TYPES, '2')],
+    ['an unknown start', () => named('Soft studio light', 'video', 'last_frame', TYPES)],
     ['an unknown job', () => named('Soft studio light', 'audio', null, TYPES)],
   ] as Array<[string, () => Reply]>)('never offers Add after %s', async (_case, reply) => {
     const { dialog, answers } = await open(request(), reply)

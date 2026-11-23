@@ -24,7 +24,8 @@ import { askTarget, type WorkflowNames } from './ask-target'
 import {
   readAskedWorkflow,
   workflowAddLine,
-  type AskWorkflow,
+  askWorkflowReply,
+  type AskWorkflowReply,
   type HeldWorkflow,
 } from './ask-workflow-reader'
 import { ASK_KINDS, type AskKind } from './ask-kinds'
@@ -45,7 +46,7 @@ export type PermissionBroker = {
   // The paths of the open request with this ID, for agent.askFiles; NOT_FOUND once it ended.
   files(requestId: string): string[]
   // The open workflow ask with this ID, for agent.askWorkflow; NOT_FOUND for any other.
-  workflow(requestId: string): AskWorkflow
+  workflow(requestId: string): AskWorkflowReply
 }
 
 export const REQUEST_ENDED = 'That request has ended.'
@@ -214,9 +215,9 @@ export function createPermissionBroker(deps: PermissionBrokerDeps): PermissionBr
       return [...openRequest(requestId).files]
     },
     workflow(requestId) {
-      const view = openRequest(requestId).held?.view
-      if (!view) throw new AppError('NOT_FOUND', REQUEST_ENDED)
-      return { ...view, nodeTypes: [...view.nodeTypes] }
+      const held = openRequest(requestId).held
+      if (!held) throw new AppError('NOT_FOUND', REQUEST_ENDED)
+      return askWorkflowReply(held)
     },
   }
 }

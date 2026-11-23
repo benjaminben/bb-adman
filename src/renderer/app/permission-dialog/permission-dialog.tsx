@@ -84,7 +84,7 @@ function AskDialog(props: { ask: Ask; onEnd: () => void }) {
   const isDelete = ask.kind === 'delete'
   const words = askWords(ask)
   const files = useAskFiles(ask.requestId, ask.fileCount, isImport)
-  const nodes = useAskWorkflow(ask.requestId, ask.target, isWorkflow)
+  const nodes = useAskWorkflow(ask.requestId, isWorkflow)
   const [remember, setRemember] = useState(false)
   const [sending, setSending] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
