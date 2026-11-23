@@ -214,3 +214,14 @@ The code is right; the spec rewrite should describe it.
 
 - Three hand-test items (a hard link in the hand-test folder, Fixes-LM U-2; no keyboard-path test for the hand-test screen, SliceI-1 unverified 4; hand-test `details.provider` is `local`, SliceI-1 unverified 5): the hand-test tools were removed in P9-14.
 - `reply-keys.test.ts` sends `campaign_id` to `get_project` and relies on the SDK dropping unknown keys: the test passes on `main` (2 of 2). (MCP-Followup unverified)
+
+## Custom workflows (CW-5 to CW-7 reviews)
+
+- The shipped `missing_items` sentence still says "thing(s)"; the custom one says "1 thing" / "{n} things". Make the shipped one match (three tests pin it, one in the agent job view).
+- `isAllowedVideo` accepts mixes that leave no frame count that fits (for example fps 1, 1 s, offset 5). Every run of such a workflow then stops before anything is sent, with no reason. Refuse the mix at add and change.
+- A node type named "." or ".." is accepted; the check then asks `GET /object_info/..`. Harmless (a GET, only present or absent is kept); refuse both at add.
+- `missingFailure(missing, custom = false)`: make the second argument required, so a future caller cannot forget it (one caller today).
+- The run dialog's picker lists a custom workflow whose reference count differs from the pictures ticked; the run is then refused with "This workflow needs {n} reference pictures." The video pictures line uses the provider's limit, not the picked workflow's count.
+- An agent's remove with an unknown workflow ID still asks, then gives `NOT_FOUND` (as every delete does).
+- An agent's add with a name over 60 characters gets only "Some values are not valid."; the tool description could state the limit.
+- Job rows written by test builds between CW-3 and CW-7 may hold a custom workflow's missing node type names (never shown to an agent).

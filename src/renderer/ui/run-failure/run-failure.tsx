@@ -10,7 +10,7 @@ import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import { missingItemText } from '@/renderer/ui/missing-item-text'
 import {
-  CUSTOM_MISSING_MESSAGE,
+  customMissingMessage,
   fillMarks,
   plainMessage,
   reasonMessage,
@@ -43,7 +43,10 @@ function ReasonSentence(props: {
 }) {
   const info = useComfyInfo()
   const address = info?.address ?? undefined
-  const text = props.custom ? CUSTOM_MISSING_MESSAGE : reasonMessage(props.reason)
+  const text =
+    props.custom && props.n !== undefined
+      ? customMissingMessage(props.n)
+      : reasonMessage(props.reason)
   return (
     <p className={styles.sentence}>
       {fillMarks(text, { address, n: props.n, provider: props.provider })}

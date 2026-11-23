@@ -79,8 +79,10 @@ export function reasonMessage(reason: ProviderErrorReason): string {
 
 // D-104 (CW-7): missing_items of a custom workflow. The row holds only the count; the names
 // are shown by the Settings check alone.
-export const CUSTOM_MISSING_MESSAGE =
-  'The server is missing {n} thing(s) this workflow needs. Press Check in Settings to see them.'
+export function customMissingMessage(n: number): string {
+  const things = n === 1 ? '1 thing' : `${n} things`
+  return `The server is missing ${things} this workflow needs. Press Check in Settings to see them.`
+}
 
 // S2-1 [F-12]: the six Settings check sentences. No run is going during a check, so the
 // Settings form of redirect_refused stops after "did not follow".

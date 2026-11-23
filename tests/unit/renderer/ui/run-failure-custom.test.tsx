@@ -4,7 +4,7 @@
 import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { RunFailure } from '@/renderer/ui/run-failure'
-import { CUSTOM_MISSING_MESSAGE, fillMarks, reasonMessage } from '@/shared/providers/messages'
+import { customMissingMessage, fillMarks, reasonMessage } from '@/shared/providers/messages'
 import type { JobRow } from '@/shared/schemas/rows/job'
 import { makeFakeApi } from '../fake-api'
 import { renderApp } from '../render'
@@ -29,15 +29,18 @@ function draw(result: unknown) {
 }
 
 describe('RunFailure: missing_items of a custom workflow [CW-7]', () => {
-  it('has the exact sentence of the spec', () => {
-    expect(CUSTOM_MISSING_MESSAGE).toBe(
-      'The server is missing {n} thing(s) this workflow needs. Press Check in Settings to see them.',
+  it('has the exact sentence of the spec, with "1 thing" for one', () => {
+    expect(customMissingMessage(3)).toBe(
+      'The server is missing 3 things this workflow needs. Press Check in Settings to see them.',
+    )
+    expect(customMissingMessage(1)).toBe(
+      'The server is missing 1 thing this workflow needs. Press Check in Settings to see them.',
     )
   })
 
   it('shows the count sentence and no list', async () => {
     await draw({ missing: [], missingCount: 3 })
-    expect(screen.getByText(fillMarks(CUSTOM_MISSING_MESSAGE, { n: 3 }))).toBeVisible()
+    expect(screen.getByText(customMissingMessage(3))).toBeVisible()
     expect(screen.queryByRole('list', { name: 'What the server is missing' })).toBeNull()
   })
 
