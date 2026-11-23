@@ -270,7 +270,7 @@ Not built (Phase 5; the hand-test path earlier, `spec/comfyui-trials.md`). `Imag
 
 ## What the app leaves on the server [REQ: FR-271, FR-282]
 
-Built. `comfy.getInfo` returns these sentences (each workflow's `leavesOnServer`, in the fixed order of `LEAVES` in `workflows/common.ts`), and Settings shows them where the address is entered, with the privacy note of `REQUIREMENTS-ComfyUI.md` 3.3:
+Built. `comfy.getInfo` returns these sentences (each workflow's `leavesOnServer`, in the fixed order of `LEAVES` in `workflows/common.ts`), and Settings shows them where the address is entered, with the privacy note of `requirements/draft-comfyui.md` 3.3:
 
 - "Reference pictures and first frames that Adman uploads stay in the server's input folder, under adman/."
 - "Each picture leaves a file in the server's temporary folder until the server restarts."

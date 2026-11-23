@@ -1,10 +1,10 @@
-# REQUIREMENTS-ComfyUI.md
+# requirements/draft-comfyui.md
 
 **Project:** Adman
 **Date:** 2026-11-20
 **Prepared by:** Requirements Analyst
-**Status:** Draft 4. The stakeholder's answers in D-053 (`DECISIONS-PENDING-4.md`) are applied. CQ-15, CQ-20, CQ-27, CQ-28 and CQ-29 are closed or replaced. Three questions are open (CQ-34 to CQ-36, Section 6.2). CQ-30 to CQ-33 are in `REQUIREMENTS-D053.md`. Nothing here is in `REQUIREMENTS.md` yet.
-**Read against:** `REQUIREMENTS.md` 1.4 (Sections 1.4, 4.7, 4.12, 4.16, 4.18, 4.19, 6.3, 7, 8.4), `REQUIREMENTS-Client-Input.md` (FR-230 to FR-249, not yet applied), `REQUIREMENTS-D053.md` (FR-294 to FR-308), `DECISIONS-PENDING.md` to `DECISIONS-PENDING-4.md` (D-044 to D-053).
+**Status:** Draft 4. The stakeholder's answers in D-053 (`DECISIONS-PENDING-4.md`) are applied. CQ-15, CQ-20, CQ-27, CQ-28 and CQ-29 are closed or replaced. Three questions are open (CQ-34 to CQ-36, Section 6.2). CQ-30 to CQ-33 are in `requirements/draft-d053.md`. Nothing here is in `REQUIREMENTS.md` yet.
+**Read against:** `REQUIREMENTS.md` 1.4 (Sections 1.4, 4.7, 4.12, 4.16, 4.18, 4.19, 6.3, 7, 8.4), `requirements/draft-client-input.md` (FR-230 to FR-249, not yet applied), `requirements/draft-d053.md` (FR-294 to FR-308), `DECISIONS-PENDING.md` to `DECISIONS-PENDING-4.md` (D-044 to D-053).
 
 ## What this file is
 
@@ -16,7 +16,7 @@ The stakeholder's first words on it:
 
 The stakeholder then answered three rounds of questions. The answers are in Section 6.1, word for word. Section 0 says what they changed.
 
-Requirement numbers FR-250 to FR-291 are kept from draft 3. FR-292 and FR-293 are new in draft 4. They would form a new Section 4.21 of `REQUIREMENTS.md`. Some reach beyond ComfyUI and belong elsewhere when applied: FR-279 to FR-281 and FR-292 (Sections 4.7 and 4.18). FR-287 is replaced by FR-303 to FR-305 in `REQUIREMENTS-D053.md`.
+Requirement numbers FR-250 to FR-291 are kept from draft 3. FR-292 and FR-293 are new in draft 4. They would form a new Section 4.21 of `REQUIREMENTS.md`. Some reach beyond ComfyUI and belong elsewhere when applied: FR-279 to FR-281 and FR-292 (Sections 4.7 and 4.18). FR-287 is replaced by FR-303 to FR-305 in `requirements/draft-d053.md`.
 
 ---
 
@@ -38,19 +38,19 @@ Requirement numbers FR-250 to FR-291 are kept from draft 3. FR-292 and FR-293 ar
 | FR-281 | A paid run that is charged whether or not it is stopped is left to finish. | 8 |
 | FR-283 | Reversed. A stored ComfyUI video keeps the sound the model made. | 12 |
 | FR-286 | Now the rule for every video provider, not only ComfyUI. Each offers the kinds of start its service has. | 11 |
-| FR-287 | Replaced by FR-303 to FR-305 in `REQUIREMENTS-D053.md`. | 10 |
+| FR-287 | Replaced by FR-303 to FR-305 in `requirements/draft-d053.md`. | 10 |
 | FR-292 (new) | At most 4 agent-started runs active at once by default. The user can change the number. | 8 |
 | FR-293 (new) | An optional step that enlarges a finished video. | 15 |
 | Section 3.3, Tests | `COMFY_BASE_URL` is in `.env.local`. | 13 |
 | Section 4 | "Sound" removed from out of scope. | 12 |
 | Section 5.6 (new) | Add-ons: what each planned job needs outside ComfyUI's own parts. Answers "What community add-ons are you thinking of?" | 9 |
-| Section 5.7 (new) | Cut-out in ComfyUI (for FR-307 in `REQUIREMENTS-D053.md`). | 25 |
+| Section 5.7 (new) | Cut-out in ComfyUI (for FR-307 in `requirements/draft-d053.md`). | 25 |
 | Section 9 | ComfyUI video is built before fal video. An agent drafts workflow files for the stakeholder to test. | 17, 14 |
 | Priorities | FR-250 to FR-267, FR-269 to FR-286, FR-289, FR-290 and FR-292 are P0. FR-268, FR-288, FR-291 and FR-293 are P1. FR-287 is replaced. | |
 
 ### 0.2 Conflicts with `REQUIREMENTS.md` to correct later
 
-`REQUIREMENTS.md` was not edited. Each row is a place where it now disagrees with the stakeholder's answers. Rows marked "D-053" are new or changed in draft 4. More conflicts from D-053 that are not about ComfyUI are in `REQUIREMENTS-D053.md`, Section 3.
+`REQUIREMENTS.md` was not edited. Each row is a place where it now disagrees with the stakeholder's answers. Rows marked "D-053" are new or changed in draft 4. More conflicts from D-053 that are not about ComfyUI are in `requirements/draft-d053.md`, Section 3.
 
 | Where | What it says today | What the answers need | Answer |
 |-------|--------------------|-----------------------|--------|
@@ -58,7 +58,7 @@ Requirement numbers FR-250 to FR-291 are kept from draft 3. FR-292 and FR-293 ar
 | Section 1.4, out of scope: "An external agent starting paid image or video generation ..." | Out of scope, deferred. | No longer true. A paid provider that supports cancelling can have the tick (FR-279). The limit is FR-292. There is no spending cap. | 5, 20, D-053 item 8 |
 | OI-06 (D-053) | Open: decide whether an agent may later start generation, export or publish. | Decided for generation: yes, by the tick, for providers that support cancelling, paid ones included, at most 4 active runs by default (FR-292). Export and publish still open. | 5, 20, D-053 item 8 |
 | FR-065 | "All image and video generation is started by the user in the app". | Add the exception: or by an agent, for a provider the user has ticked. "One variant at a time" stays. | 5 |
-| FR-123 (D-053) | The app can generate a video "from a variant's finished background image", and it "is started by the user". | Rewritten in `REQUIREMENTS-D053.md`: start choices for every video provider that has them (FR-286), and the agent exception. | 5, 19, D-053 item 11 |
+| FR-123 (D-053) | The app can generate a video "from a variant's finished background image", and it "is started by the user". | Rewritten in `requirements/draft-d053.md`: start choices for every video provider that has them (FR-286), and the agent exception. | 5, 19, D-053 item 11 |
 | Workflow 5.5, "Make a video variant" | Written for a video made from the variant's background. | Must allow a video with no start frame, and reference pictures on a video run (FR-286), for every video provider. | 19, D-053 item 11 |
 | FR-062 | The generation panel attaches the subject's reference files. Written for pictures. | For a video the user also chooses the start frame or none, and whether reference pictures are used (FR-286). | 19 |
 | FR-064, FR-067 | A confirmation dialog comes before each run. | An agent-started run has no dialog (FR-280). The dialog stays for every run the user starts. For a video it also shows the start choice (FR-286). | 5, 19 |
@@ -70,9 +70,9 @@ Requirement numbers FR-250 to FR-291 are kept from draft 3. FR-292 and FR-293 ar
 | FR-124, FR-215, FR-216, FR-218 | No cancel and no "cancelled" state for a generation. | A cancelled run is neither running nor a finished result waiting to be looked at (FR-281). | 10 |
 | Section 8.9, Activity panel and Panels and dialogs | No cancel action. | Add it. | 10 |
 | Section 6.3 and 8.4 | Prompts and pictures go only to fixed, built-in provider addresses. Nothing is said about an unencrypted connection. | One exception: the ComfyUI address the user typed, which may be unencrypted to another computer with no warning (FR-276). | 6 |
-| FR-230 (`REQUIREMENTS-Client-Input.md`, not yet applied) (D-053) | Counts "paid generations" that the app sent, per campaign. | Must say that a run on a local provider or model is never counted (FR-257). Rewritten in `REQUIREMENTS-D053.md` with an estimate of money. | 14, D-053 item 10 |
-| FR-170 to FR-172, the key rules (D-053) | A key is entered in the app and used for generation. | A second, wider key may be saved to read a provider's own usage figures (FR-304 in `REQUIREMENTS-D053.md`). | 21, D-053 item 10 |
-| FR-132 and Section 1.4 "All video is silent" (D-053) | Video has no sound. | Generated video keeps its sound (FR-283 here; FR-300 to FR-302 in `REQUIREMENTS-D053.md`). | D-053 item 12 |
+| FR-230 (`requirements/draft-client-input.md`, not yet applied) (D-053) | Counts "paid generations" that the app sent, per campaign. | Must say that a run on a local provider or model is never counted (FR-257). Rewritten in `requirements/draft-d053.md` with an estimate of money. | 14, D-053 item 10 |
+| FR-170 to FR-172, the key rules (D-053) | A key is entered in the app and used for generation. | A second, wider key may be saved to read a provider's own usage figures (FR-304 in `requirements/draft-d053.md`). | 21, D-053 item 10 |
+| FR-132 and Section 1.4 "All video is silent" (D-053) | Video has no sound. | Generated video keeps its sound (FR-283 here; FR-300 to FR-302 in `requirements/draft-d053.md`). | D-053 item 12 |
 | IR-002 (D-053) | Seedance through fal is the named video route. | ComfyUI video is a second route. The two are "equally important". ComfyUI video is built first (Section 9, L-1). | 3, 25, D-053 item 17 |
 | IR-002 and Section 9.3 | Names the models and their terms for the paid providers. | Add the three ComfyUI models, and the rule that the licence is the user's responsibility and the app says so (FR-285). | 16, 18 |
 | Section 7, integration table | No ComfyUI row. | Add one: user-typed address, outbound, no key. | D-050 |
@@ -264,7 +264,7 @@ One RTX 3090 graphics card (24 GB). It is the stakeholder's own machine. It is t
 - What the public documents say: the model on its own "has no image input, so it cannot copy a reference". A separate "Image Edit" workflow for the same model takes a photo, an instruction and up to four reference pictures (V-23). Which "Moss Image" workflow is used is for the architect.
 - Without this the ComfyUI provider cannot show the user's own product, which is the main use of reference files.
 - When the user has attached more reference pictures than the workflow can use, the app says so before the run and does not drop any silently.
-- A reference picture in a form the workflow cannot take, for example WebP, is turned into one it can take before it is sent (FR-298 in `REQUIREMENTS-D053.md`).
+- A reference picture in a form the workflow cannot take, for example WebP, is turned into one it can take before it is sent (FR-298 in `requirements/draft-d053.md`).
 
 **FR-261:** Extend a background. A shipped workflow extends a background picture to a new ratio, for the "generate fill" choice in fan-out (FR-076). It uses "Moss Image". "Krea2" is the alternate (FR-288).
 **Priority:** P0
@@ -292,7 +292,7 @@ One RTX 3090 graphics card (24 GB). It is the stakeholder's own machine. It is t
 - What the public documents say for ComfyUI: the named model has three example workflows: prompt to video, picture to video, and reference pictures to video, with up to nine pictures (V-18). Not verified: that one run can take a first frame and reference pictures together (U-20).
 - What the public documents say for fal: its video model is offered as prompt to video, picture to video (with an optional last picture) and reference to video (V-40, read in a search summary). Not verified: a first frame and reference pictures in one run.
 - A first frame of a different ratio is stretched to fit by the ComfyUI model's own workflow (V-18). The app must not send a first frame that would be distorted without telling the user.
-- This is wider than FR-123 in `REQUIREMENTS.md`. FR-123 is rewritten in `REQUIREMENTS-D053.md`. It also touches workflow 5.5, FR-062, FR-064 and FR-067 (Section 0.2).
+- This is wider than FR-123 in `REQUIREMENTS.md`. FR-123 is rewritten in `requirements/draft-d053.md`. It also touches workflow 5.5, FR-062, FR-064 and FR-067 (Section 0.2).
 - Which start is selected when the dialog opens was not said. Proposed, for the design: the variant's finished background as first frame when the variant has one, since that is what the app does today (A-C19).
 - An agent that starts a video run (FR-280) makes the same choice the user would.
 
@@ -317,7 +317,7 @@ One RTX 3090 graphics card (24 GB). It is the stakeholder's own machine. It is t
 **FR-264:** A picture or video made through ComfyUI is stored and treated like any other generated asset. It carries provider, model and prompt in its own metadata (FR-068), with "ComfyUI" as the provider, the model file names the workflow used, and the name and version of the workflow. It does not carry the server's address (FR-253).
 **Priority:** P0
 **Notes:**
-- Generated pictures are stored as PNG whatever the server returns, as for other providers. Confirmed (D-053 item 21: "Correct"; FR-299 in `REQUIREMENTS-D053.md`).
+- Generated pictures are stored as PNG whatever the server returns, as for other providers. Confirmed (D-053 item 21: "Correct"; FR-299 in `requirements/draft-d053.md`).
 - A ComfyUI server writes its own generation details into the files it makes. What the app stores must follow FR-068 and FR-253 whatever the server wrote.
 
 **FR-283:** A video the app stores from a ComfyUI run keeps the sound the model made with it. When the model made no sound, the clip is silent and that is not a fault.
@@ -326,7 +326,7 @@ One RTX 3090 graphics card (24 GB). It is the stakeholder's own machine. It is t
 - The stakeholder's words (D-053 item 12): "Why not keep sound? For fal as well."
 - Reversed in draft 4. Before: "has no sound, whatever the model produced".
 - The named video model makes sound together with the picture, in one file (V-20).
-- The rule for every video provider, and what the user can do with the sound on a video variant, is in `REQUIREMENTS-D053.md` (FR-300 to FR-302).
+- The rule for every video provider, and what the user can do with the sound on a video variant, is in `requirements/draft-d053.md` (FR-300 to FR-302).
 - Sound is the model's own output. It can hold speech or music the user did not ask for. The user can switch a clip's sound off (FR-301).
 
 **FR-284:** The build of this feature does not wait for any model to be installed. Everything in this file can be built, and its normal tests pass, on a machine with no ComfyUI server and no model files. When a model a workflow needs is missing on the server, the app behaves as FR-263 and FR-266 say. Each workflow's check on a real server (Section 3.3, Maintainability) is done once its model is installed, and the feature is not called finished for that job until it is.
@@ -395,10 +395,10 @@ One RTX 3090 graphics card (24 GB). It is the stakeholder's own machine. It is t
   - ComfyUI: a run can be stopped by its ID (V-5).
   - fal: documented. A waiting request "is removed immediately and is never processed". For a running request a stop signal is sent, and "The request may still complete if the app does not handle cancellation" (V-34).
   - Gemini: no documented way to cancel a started picture request was found. Google documents cancelling only for requests started in its "background" mode, and the page does not list picture models for that mode (V-35, U-24).
-  - OpenAI pictures (FR-306 in `REQUIREMENTS-D053.md`): not checked.
+  - OpenAI pictures (FR-306 in `requirements/draft-d053.md`): not checked.
 - So a provider can answer "stop was asked for" and still finish the run. The app must then show what really happened. It must not show "cancelled" for a run whose result arrived and was charged.
 - Closing a project while a paid request that cannot be stopped is still out is OI-51. It is still open with the stakeholder. This answer points one way: let it finish.
-- What a cancelled paid run costs, and how it is counted, follows FR-303 in `REQUIREMENTS-D053.md`.
+- What a cancelled paid run costs, and how it is counted, follows FR-303 in `requirements/draft-d053.md`.
 - Options that finished before the cancel: proposed the same as for a failure (FR-267), kept and offered.
 - Whether an agent may cancel a run is part of CQ-34.
 
@@ -448,7 +448,7 @@ One RTX 3090 graphics card (24 GB). It is the stakeholder's own machine. It is t
 - The stakeholder's words: "Outside agent should be able to start any runs which have a setting ticked in settings, is my new thinking", and (answer 20) "The tick should exist for any providers which support cancelling, I'm not sure if gemini is included in that but if so we should support cancellation there too", and (D-053 item 8) "Unticking shouldn't affect active jobs."
 - "Active jobs" is read as runs that are waiting and runs that are running (A-C20). The user can still cancel any of them by hand (FR-281).
 - Which providers that means, by the public documents read today: ComfyUI yes (V-5). fal yes: its limited cancel is taken as enough, since the stakeholder's answer on fal assumes fal runs are started by agents (A-C14). Gemini picture generation: no documented way to cancel was found (U-24), so no tick unless a way is found (CQ-34).
-- A paid provider with the tick on can spend the user's money with nobody watching. The stakeholder's words: "No spending cap necessary." The limit on active runs (FR-292) is the only brake. Each paid run an agent starts is recorded as started by an agent (FR-280; FR-303 in `REQUIREMENTS-D053.md`).
+- A paid provider with the tick on can spend the user's money with nobody watching. The stakeholder's words: "No spending cap necessary." The limit on active runs (FR-292) is the only brake. Each paid run an agent starts is recorded as started by an agent (FR-280; FR-303 in `requirements/draft-d053.md`).
 - Nothing but the user in Settings can set it: not a project file, a packaged project, a brief, an imported file, an agent, or an answer from a server. Same rule as for the address (FR-273).
 - Whether an agent may be told that the tick is off, so it can say so to its user, is for the spec. It must never be able to turn it on.
 
@@ -467,7 +467,7 @@ One RTX 3090 graphics card (24 GB). It is the stakeholder's own machine. It is t
 **Notes:**
 - "Without the user being present" follows from "overnight". The app must be running, the project open and the MCP server on (FR-191, FR-201).
 - For ComfyUI the agent uses the shipped workflows and the ones added on this computer (FR-278), by ID, and the saved address. It cannot name an address, a workflow file or a model file. It may add or remove a workflow only through an ask the user answers (D-104). It can choose an alternate workflow (FR-288) and the enlarging step (FR-293) as the user can.
-- For a paid provider the agent uses the user's saved key without seeing it (FR-198). The run is a paid run like any other: it is counted and reported as one (FR-230; FR-303 in `REQUIREMENTS-D053.md`).
+- For a paid provider the agent uses the user's saved key without seeing it (FR-198). The run is a paid run like any other: it is counted and reported as one (FR-230; FR-303 in `requirements/draft-d053.md`).
 - The agent supplies what the user would in the generation panel: the variant, the job, the prompt, the number of options, and for a video the start choice (FR-286).
 - Still open (CQ-34): whether an agent may pick one of the options; whether an agent may cancel. Until answered, "its result waits for the user" stands as written.
 - Reference pictures go to the provider as part of an agent-started run, as they would for a user's run (FR-260). The user agreed to that by ticking.
@@ -481,10 +481,10 @@ One RTX 3090 graphics card (24 GB). It is the stakeholder's own machine. It is t
 
 ### 2.7 Usage for paid providers
 
-**FR-287:** Replaced. See FR-303 to FR-305 in `REQUIREMENTS-D053.md`.
+**FR-287:** Replaced. See FR-303 to FR-305 in `requirements/draft-d053.md`.
 **Notes:**
 - Draft 3 said: "For each paid provider, the app reads the user's usage from the provider itself, using the API key the user saved for that provider, and shows it to the user. The figures shown are the provider's own, not the app's estimate."
-- Why replaced: by the public documents this cannot be done for Gemini at all, and for fal and OpenAI it needs a second key of a wider kind (`REQUIREMENTS-D053.md`, Section 4.1). The stakeholder's words on hearing this (D-053 item 10): "That's surprising to me. I wonder if there is a better fit then as usage seems like it would be an important figure for a business like our client's."
+- Why replaced: by the public documents this cannot be done for Gemini at all, and for fal and OpenAI it needs a second key of a wider kind (`requirements/draft-d053.md`, Section 4.1). The stakeholder's words on hearing this (D-053 item 10): "That's surprising to me. I wonder if there is a better fit then as usage seems like it would be an important figure for a business like our client's."
 - The proposed better fit: the app's own record of every paid call with an estimated price, and the provider's own figures beside it where they can be read. The stakeholder has not yet chosen (CQ-30).
 - Local runs are never counted (FR-257).
 
@@ -673,7 +673,7 @@ V-11 and V-12 of draft 1 (lists of other models) are dropped. The models are now
 | V-37 | Google, usage. Google's billing page says "You can monitor your usage of the Gemini API in Google AI Studio", and that costs also show in the Cloud Billing pages. It describes no request that reads usage or spend with a Gemini API key. It says "Billing data processing times can be delayed in AI Studio, up to around 10 minutes", and that cost graphs "can take up to 24 hours to update". It says requests that fail with a 400 or 500 error are not charged for tokens. It says nothing about cancelled requests. It says a user with the right role can set a monthly spend cap per project in AI Studio. Read again for draft 4: keys "have no independent billing settings". | aistudio.google.com/docs, "Billing" (reached from ai.google.dev) |
 | V-40 | fal, video. Search summary: fal lists its video model "Seedance 2.0" as three kinds of request: text to video, picture to video (a first picture and an optional last picture), and reference to video (pictures, videos and audio clips as references, up to 9 pictures). fal's page advertises sound made with the picture. The name of the setting for sound was not confirmed. | fal.ai model pages for `bytedance/seedance-2.0` (search summary) |
 
-More on usage, on OpenAI, and on cut-out through fal is in `REQUIREMENTS-D053.md`, Sections 4 and 5.
+More on usage, on OpenAI, and on cut-out through fal is in `requirements/draft-d053.md`, Sections 4 and 5.
 
 ### 5.4 What the brief asked about each model, in one place
 
@@ -712,13 +712,13 @@ More on usage, on OpenAI, and on cut-out through fal is in `REQUIREMENTS-D053.md
 | U-23 | Whether "Krea 2" can keep a product recognisable from reference pictures. Only style reference is documented (V-30). | FR-288, CQ-36. |
 | U-24 | Whether a started Gemini picture request can be cancelled on Google's side. No documented way was found for an ordinary request (V-35). Whether Google's picture models work in "background" mode, where cancel exists, is not stated. | FR-279, FR-281, CQ-34. |
 | U-25 | Whether the video model the app uses on fal really stops when a running request is cancelled, and whether fal or Google charge for a cancelled request. | FR-281. |
-| U-26 | Whether an ordinary fal key, the kind used to generate, can read usage. The usage page names only keys with billing rights (V-36). | FR-304 in `REQUIREMENTS-D053.md`. |
-| U-27 | Any way to read Gemini usage or spend with a Gemini API key. None is described on Google's billing page (V-37). | FR-304 in `REQUIREMENTS-D053.md`. |
+| U-26 | Whether an ordinary fal key, the kind used to generate, can read usage. The usage page names only keys with billing rights (V-36). | FR-304 in `requirements/draft-d053.md`. |
+| U-27 | Any way to read Gemini usage or spend with a Gemini API key. None is described on Google's billing page (V-37). | FR-304 in `requirements/draft-d053.md`. |
 | U-28 | A way to write a video to ComfyUI's temporary folder with built-in parts. Only community add-ons were seen, on third-party pages. Also not verified: exactly what the start-up clearing step removes (V-39). | FR-291. |
 | U-29 | For the built-in video enlarger (V-41): whether it fits one 24 GB card in the same run as the video model; how long it takes; whether it passes the clip's sound through; which ComfyUI version first has it. | FR-293. Needs a trial. |
 | U-30 | Which built-in steps join picture and sound into one video file and save it. The model's page says the result is one file with sound (V-20) but does not name the steps (V-42). The analyst believes ComfyUI's own "create video" and "save video" steps take sound, from earlier reading; this was not read on a page for this draft. | FR-283, Section 5.6. |
 | U-31 | The licences of the community add-on packs named in Section 5.6, where the table says "not read". | CQ-35. |
-| U-32 | Whether a started OpenAI picture request can be cancelled. Not checked. | FR-279, FR-281; FR-306 in `REQUIREMENTS-D053.md`. |
+| U-32 | Whether a started OpenAI picture request can be cancelled. Not checked. | FR-279, FR-281; FR-306 in `requirements/draft-d053.md`. |
 
 U-5, U-6, U-9 and U-10 of draft 1 are closed or no longer apply: the models are named, plain servers only, shipped workflows only.
 
@@ -739,7 +739,7 @@ Short answer: for the first build, none, as far as the public pages say. One pla
 | "Krea 2": picture from a prompt, style reference | Yes. Files "load through the standard diffusion model nodes" (V-29). | None known. | Not stated in so many words (U-12). |
 | "Krea 2": extend a background | No (V-30). | **Yes: "ComfyUI-Krea2-Ostris-Edit"**, from a community author (V-33). | Third-party page only. Licence not stated (U-31). |
 | Optional video enlarging | Yes. SeedVR2, "natively supported", Apache 2.0 (V-41). | None known. | Fit on 24 GB and sound not verified (U-29). |
-| Cut-out (FR-307 in `REQUIREMENTS-D053.md`) | Yes. BiRefNet, "natively supported", MIT (V-43). | None. | Read on ComfyUI's own page. |
+| Cut-out (FR-307 in `requirements/draft-d053.md`) | Yes. BiRefNet, "natively supported", MIT (V-43). | None. | Read on ComfyUI's own page. |
 | A video file kept only for a short time (FR-291) | No built-in way found (V-38). | Only add-ons were seen (U-28). | Third-party pages only. |
 
 **Community add-ons that could come up, and what each is for**
@@ -757,7 +757,7 @@ Why this matters: an add-on is code from a community author that runs on the use
 
 ### 5.7 Cut-out in ComfyUI
 
-For FR-307 in `REQUIREMENTS-D053.md`. ComfyUI has cut-out built in (V-43): a picture goes in, and a picture with a transparent background and a mask come out. The model is under the MIT licence. So a shipped cut-out workflow would need one more model file on the server and no add-on. It would follow every rule in this file: shipped workflow only (FR-278), the needs list (FR-263), the result stored as PNG (FR-264).
+For FR-307 in `requirements/draft-d053.md`. ComfyUI has cut-out built in (V-43): a picture goes in, and a picture with a transparent background and a mask come out. The model is under the MIT licence. So a shipped cut-out workflow would need one more model file on the server and no add-on. It would follow every rule in this file: shipped workflow only (FR-278), the needs list (FR-263), the result stored as PNG (FR-264).
 
 ---
 
@@ -801,7 +801,7 @@ Also told to the project on 2026-11-20: the test server's address is in the proj
 
 **Round 3 (D-053), answered on 2026-11-20**
 
-"Item" is the number in D-053. Only the items that touch this file are listed. All 30 are in `REQUIREMENTS-D053.md`, Section 1.
+"Item" is the number in D-053. Only the items that touch this file are listed. All 30 are in `requirements/draft-d053.md`, Section 1.
 
 | Item | Question it answers | Answer | Applied in |
 |------|---------------------|--------|------------|
@@ -809,9 +809,9 @@ Also told to the project on 2026-11-20: the test server's address is in the proj
 | 7 | CQ-15, OI-34: which models | "I believe it's the local H3 model. MOSS is not yet installed" | Section 1, FR-258, FR-284 |
 | 8 | CQ-20, OI-35: agent run limits | "4 is a fine default, this can be configurable. No spending cap necessary. Unticking shouldn't affect active jobs. If fal charges you either way then just let it finish." | FR-292, FR-279, FR-280, FR-281 |
 | 9 | CQ-27, OI-39: Krea 2 | "Krea 2 can provide alternate workflows. What community add-ons are you thinking of?" | FR-288, FR-261, Section 5.6 |
-| 10 | CQ-28, OI-40: usage | "That's surprising to me. I wonder if there is a better fit then as usage seems like it would be an important figure for a business like our client's. Does GPT offer this insight? I am interested in offering GPT 2.5 as a provider for image gen by the way." | FR-287 replaced; `REQUIREMENTS-D053.md` |
+| 10 | CQ-28, OI-40: usage | "That's surprising to me. I wonder if there is a better fit then as usage seems like it would be an important figure for a business like our client's. Does GPT offer this insight? I am interested in offering GPT 2.5 as a provider for image gen by the way." | FR-287 replaced; `requirements/draft-d053.md` |
 | 11 | CQ-29, OI-41: fal video start options | "Yes fal should offer the same options whatever available." | FR-286 |
-| 12 | OI-36: video sound | "Why not keep sound? For fal as well. Although the user should be able to drop audio in as well for video variants, or use the audio that came with the video (gen or premade)." | FR-283; `REQUIREMENTS-D053.md` |
+| 12 | OI-36: video sound | "Why not keep sound? For fal as well. Although the user should be able to drop audio in as well for video variants, or use the audio that came with the video (gen or premade)." | FR-283; `requirements/draft-d053.md` |
 | 13 | OI-37: is `COMFY_BASE_URL` in `.env.local` | "Yes" | Section 3.3, Tests |
 | 14 | OI-38: workflow files | "Dispatch an agent to construct workflows for me to test" | Section 9, L-7 |
 | 15 | The video model's result size of 768×1344 | "It will have to be acceptable, maybe we should add an optional video upscaler to the workflow as well." | FR-262, FR-293 |
@@ -843,7 +843,7 @@ How the answers were read:
 
 ### 6.2 Open
 
-Each has options and the analyst's recommendation. The requirements are written so that the build can go on while they are open. CQ-30 to CQ-33 are in `REQUIREMENTS-D053.md`, Section 6.
+Each has options and the analyst's recommendation. The requirements are written so that the build can go on while they are open. CQ-30 to CQ-33 are in `requirements/draft-d053.md`, Section 6.
 
 **CQ-34. Agent runs: the parts of CQ-20 not yet answered.**
 - Is the limit of 4 one number for all providers together, or 4 for each provider? Recommendation: one number for all together. It is simpler to understand, and it bounds what an agent can have going at once.
@@ -864,7 +864,7 @@ Section 5.6 has the list.
 - Which build? (a) The first ComfyUI build. (b) After the "Moss Image" and video workflows pass on the test machine.
 - Recommendation: jobs (a). Build (b). Extend a background with "Krea 2" only if the "Moss Image" trial fails. The first build already has two models not yet proven on the test machine, and "Moss Image" is not installed yet.
 
-Closed in draft 4: CQ-15 (D-053 item 7; the rest left to the architect, L-8). CQ-20 (D-053 item 8; the rest is CQ-34). CQ-27 (D-053 item 9; the rest is CQ-35 and CQ-36). CQ-28 (replaced by CQ-30 in `REQUIREMENTS-D053.md`). CQ-29 (D-053 item 11; the start selected when the dialog opens is left to the design, A-C19).
+Closed in draft 4: CQ-15 (D-053 item 7; the rest left to the architect, L-8). CQ-20 (D-053 item 8; the rest is CQ-34). CQ-27 (D-053 item 9; the rest is CQ-35 and CQ-36). CQ-28 (replaced by CQ-30 in `requirements/draft-d053.md`). CQ-29 (D-053 item 11; the start selected when the dialog opens is left to the design, A-C19).
 
 ---
 
@@ -949,4 +949,4 @@ These are not questions for the stakeholder. The stakeholder has said they are f
 | Draft 1 | 2026-11-20 | First draft. Fourteen questions (CQ-1 to CQ-14). |
 | Draft 2 | 2026-11-20 | Answers to CQ-1 to CQ-14 applied. FR-279 to FR-284 added. Twelve new questions (CQ-15 to CQ-26). |
 | Draft 3 | 2026-11-20 | Answers to CQ-16 to CQ-26 applied. FR-285 to FR-291 added. "Krea2" recorded and looked up. Public documents checked for cancelling and usage (Gemini, fal) and for temporary video files (ComfyUI). CQ-15 still open; CQ-20 open in part; CQ-27 to CQ-29 new. |
-| Draft 4 | 2026-11-20 | D-053 applied. FR-292 (limit on agent runs) and FR-293 (optional video enlarging) added. FR-283 reversed: sound is kept. FR-286 widened to every video provider. FR-287 replaced by FR-303 to FR-305 in `REQUIREMENTS-D053.md`. FR-251, FR-276, FR-279, FR-281, FR-288 changed. Add-ons listed (Section 5.6). Built-in video enlarging and cut-out looked up (V-41, V-43). CQ-15, CQ-20, CQ-27, CQ-28, CQ-29 closed or replaced. CQ-34 to CQ-36 new. |
+| Draft 4 | 2026-11-20 | D-053 applied. FR-292 (limit on agent runs) and FR-293 (optional video enlarging) added. FR-283 reversed: sound is kept. FR-286 widened to every video provider. FR-287 replaced by FR-303 to FR-305 in `requirements/draft-d053.md`. FR-251, FR-276, FR-279, FR-281, FR-288 changed. Add-ons listed (Section 5.6). Built-in video enlarging and cut-out looked up (V-41, V-43). CQ-15, CQ-20, CQ-27, CQ-28, CQ-29 closed or replaced. CQ-34 to CQ-36 new. |

@@ -1,11 +1,11 @@
-# REQUIREMENTS-ComfyUI-Draft5.md
+# requirements/draft-comfyui-custom.md
 
 **Project:** Adman
 **Date:** 2026-11-20
 **Prepared by:** Requirements Analyst
-**Status:** Draft 5, revision 2, of `REQUIREMENTS-ComfyUI.md`, written as a separate part. It holds the new section "Custom workflows" and the changes to make to the Draft 4 text (Section C). CQ-37 to CQ-41 are answered (Section F.1). One question is open (CQ-42). Nothing here is in `REQUIREMENTS.md` yet.
+**Status:** Draft 5, revision 2, of `requirements/draft-comfyui.md`, written as a separate part. It holds the new section "Custom workflows" and the changes to make to the Draft 4 text (Section C). CQ-37 to CQ-41 are answered (Section F.1). One question is open (CQ-42). Nothing here is in `REQUIREMENTS.md` yet.
 **Source:** D-054 item 9, and the stakeholder's later answers (all word for word in Section F.1).
-**Read against:** `REQUIREMENTS-ComfyUI.md` Draft 4, `REQUIREMENTS.md` 1.4 (FR-007 to FR-009, FR-050 to FR-054: how assets behave), `REQUIREMENTS-D053.md`, `REQUIREMENTS-D054.md`, `comfy-workflows/README.md`, the stakeholder's example (Section A).
+**Read against:** `requirements/draft-comfyui.md` Draft 4, `REQUIREMENTS.md` 1.4 (FR-007 to FR-009, FR-050 to FR-054: how assets behave), `requirements/draft-d053.md`, `requirements/draft-d054.md`, `comfy-workflows/README.md`, the stakeholder's example (Section A).
 
 ## What this file is
 
@@ -19,7 +19,7 @@ The stakeholder's words (D-054 item 9):
 
 The stakeholder also pointed to an example in another of his projects, "for a very rudimentary example for how that app targets fields in comfy workflows". Section A describes it.
 
-Requirement numbers: FR-309 to FR-331. FR-332 and FR-333 are in `REQUIREMENTS-D054.md`. The highest number in use across all requirement files is FR-333.
+Requirement numbers: FR-309 to FR-331. FR-332 and FR-333 are in `requirements/draft-d054.md`. The highest number in use across all requirement files is FR-333.
 
 ---
 
@@ -241,7 +241,7 @@ Decided by the stakeholder (CQ-40): "Assume that all loaded comfy workflows are 
 **FR-328:** A workflow that runs on the user's server comes only from the set shipped with the app, or from the custom workflows in the open project (FR-309). A custom workflow enters a project only by the user adding it in the app, or by already being in a project file the user opens. A workflow is never taken from a brief, from an imported asset of another kind, from an external agent or from the server.
 **Priority:** P0
 **Notes:**
-- **D-104:** differs. A workflow comes from the shipped set, or was added on this computer by the user from the system file picker or by an agent's ask the user allowed. Never from a project file, a package, a brief, an asset or the server. FR-278 in `REQUIREMENTS-ComfyUI.md` states this.
+- **D-104:** differs. A workflow comes from the shipped set, or was added on this computer by the user from the system file picker or by an agent's ask the user allowed. Never from a project file, a package, a brief, an asset or the server. FR-278 in `requirements/draft-comfyui.md` states this.
 - This replaces FR-278.
 - Changed from revision 1, which said "never from a project file". With workflows treated like assets, a project file holds links to workflow files, and a packaged project brings the files (FR-326). So opening a project made by someone else loads their workflows into that project. Whether opening counts as "loaded" in the sense of the trust decision is assumed yes (A-C29). What the app shows the first time is CQ-42.
 - A project file from someone else can also name any path on this computer as a workflow. The app would read that file and, on a run, send its content to the user's own ComfyUI server. The stakeholder has accepted the like case for assets (D-054 item 3: "Not concerned about these cases"). It is noted here and not guarded against.
@@ -275,7 +275,7 @@ Decided by the stakeholder (CQ-40): "Assume that all loaded comfy workflows are 
 
 ## C. Conflicts with existing text, and the change for each
 
-`REQUIREMENTS-ComfyUI.md` Draft 4 and `REQUIREMENTS.md` were not edited. Each row needs a change when this file is merged.
+`requirements/draft-comfyui.md` Draft 4 and `REQUIREMENTS.md` were not edited. Each row needs a change when this file is merged.
 
 | # | Where | What it says today | What the decisions need |
 |---|-------|--------------------|-------------------------|
@@ -295,7 +295,7 @@ Decided by the stakeholder (CQ-40): "Assume that all loaded comfy workflows are 
 | W-14 | FR-290, notes | Hand-test screen: "workflows are only the shipped ones (FR-278)". | Point to FR-328. Whether it can add a custom workflow is for the architect. |
 | W-15 | Section 3.3 "Add-ons"; CQ-35 | A shipped workflow may need an add-on only where no built-in way works. | D-054 item 9 read as a partial answer: add-on needs go through custom workflows (A-C23). CQ-35 stays open only for the Krea 2 extend case. |
 | W-16 | Glossary, "Shipped workflow" | "The only kind the app runs in this build." | Remove the sentence. Add Section G. |
-| W-17 | `REQUIREMENTS-D053.md` FR-307, notes | Cut-out on ComfyUI: "shipped workflow only, FR-278". | Point to FR-328. Cut-out stays shipped. |
+| W-17 | `requirements/draft-d053.md` FR-307, notes | Cut-out on ComfyUI: "shipped workflow only, FR-278". | Point to FR-328. Cut-out stays shipped. |
 | W-18 | `REQUIREMENTS.md` FR-067 | Default provider per job, changeable on the dialog. | For ComfyUI the user also chooses the workflow (FR-321). |
 | W-19 | `REQUIREMENTS.md` FR-064; FR-256 | The dialog shows count, address, workflow. | Also the asked variables of a custom workflow (FR-318). |
 | W-20 | `REQUIREMENTS.md` 8.4, threat notes | No user-supplied recipe runs anywhere. | Add FR-328 to FR-330 in short. |

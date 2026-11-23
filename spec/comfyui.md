@@ -2,7 +2,7 @@
 
 How Adman talks to a ComfyUI server the user runs: the address, the client, the check, a picture run, failures and the offline tests. Workflows, sizes, video runs, extend and what is left on the server are in `spec/comfyui-workflows.md`; the real-server trials and tests are in `spec/comfyui-trials.md`. Readers usually also need `spec/providers.md` (registry, error kinds), `spec/cancel.md` (cancel) and `spec/security.md`.
 
-**Direction:** outbound. **Protocol:** HTTP or HTTPS to one address the user typed, through Node's built-in `node:http` and `node:https`. **Authentication:** none. **Requirements:** [REQ: FR-250–FR-278, FR-282–FR-286, FR-288–FR-291, D-050, D-051, D-052] (`REQUIREMENTS-ComfyUI.md`).
+**Direction:** outbound. **Protocol:** HTTP or HTTPS to one address the user typed, through Node's built-in `node:http` and `node:https`. **Authentication:** none. **Requirements:** [REQ: FR-250–FR-278, FR-282–FR-286, FR-288–FR-291, D-050, D-051, D-052] (`requirements/draft-comfyui.md`).
 
 **End state in one sentence.** The ComfyUI address has one owner, `settings.comfyui.baseUrl` in `settings.json`, written by one command; every other piece of code reads it from there at call time, and no project file, job row, asset, log of a project, package or report ever holds it.
 

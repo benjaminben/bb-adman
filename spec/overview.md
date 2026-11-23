@@ -5,10 +5,10 @@ What Adman is built from: where the spec departs from the requirements, how the 
 ## How the spec relates to the requirements
 
 - Where the spec and REQUIREMENTS.md differ, the spec wins.
-- `[REQ: FR-xxx]` points at a requirement. Most are in `REQUIREMENTS.md` (version 1.4). Some live in other files:
-  - FR-230 to FR-249: `REQUIREMENTS-Client-Input.md`, Section 2.
-  - FR-250 to FR-291: `REQUIREMENTS-ComfyUI.md`.
-  - FR-294 to FR-308: `REQUIREMENTS-D053.md`.
+- `[REQ: FR-xxx]` points at a requirement. `REQUIREMENTS.md` is the index and names the file under `requirements/` that holds each section (version 1.4). Some live in drafts not yet merged:
+  - FR-230 to FR-249: `requirements/draft-client-input.md`, Section 2.
+  - FR-250 to FR-291: `requirements/draft-comfyui.md`.
+  - FR-294 to FR-308: `requirements/draft-d053.md`.
 - `[REQ: R-xx]` points at a row of the table below.
 - `[D-0xx]` points at a stakeholder decision in `DECISIONS.md`, which holds the stakeholder's own words.
 - `OI-xx` is an open item, listed in `spec/open-items.md`, or in `spec/assumptions.md` with the assumption the build makes meanwhile.
@@ -63,7 +63,7 @@ Each is in `DECISIONS.md` and REQUIREMENTS.md. The last column says where the sp
 
 - Real image generation and real cloud storage were moved forward and built in Phase 2, ahead of the editor. No phase was renumbered. `spec/phases/` holds the plan for each phase from 3 on.
 - The client items FR-230 to FR-249 each sit in the phase that builds them. Some are designed in depth there, the rest only as scope. Already in the data model: `variant.agent_changed_at` (FR-239), the ready-made size 4:5 with the label `4x5` (FR-247, one pixel size has one label), and `TextStyle.letterSpacing` (FR-249).
-- The items S-1 to S-17 of `REQUIREMENTS-Client-Input.md` are not decided and are not in the spec.
+- The items S-1 to S-17 of `requirements/draft-client-input.md` are not decided and are not in the spec.
 - Navigation follows REQUIREMENTS.md 1.4 (FR-211 to FR-213): open campaigns are the main tabs, with variant tabs inside a campaign. There are no project tabs. How projects are shown and switched, and whether tabs are remembered, wait for the UI pass (Q-038, Q-039, Q-040; OI-31).
 
 ## Architecture

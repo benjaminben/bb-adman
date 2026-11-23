@@ -1,19 +1,19 @@
-# REQUIREMENTS-D053.md
+# requirements/draft-d053.md
 
 **Project:** Adman
 **Date:** 2026-11-20
 **Prepared by:** Requirements Analyst
 **Status:** Draft 1. Ready to merge into `REQUIREMENTS.md`, except where a row says "open".
 **Source:** D-053 in `DECISIONS-PENDING-4.md` (the stakeholder's 30 answers, word for word).
-**Read against:** `REQUIREMENTS.md` 1.4, `REQUIREMENTS-Client-Input.md` (FR-230 to FR-249), `REQUIREMENTS-ComfyUI.md` Draft 4.
+**Read against:** `REQUIREMENTS.md` 1.4, `requirements/draft-client-input.md` (FR-230 to FR-249), `requirements/draft-comfyui.md` Draft 4.
 
 ## What this file is
 
 Every change D-053 makes to `REQUIREMENTS.md`, as requirement text that can be merged. `REQUIREMENTS.md` itself was not edited. It says what is needed. It does not say how to build it.
 
-The ComfyUI and agent-tick answers (items 4, 7, 8, 9, 11, 13, 14, 15, 16, 17) are applied in `REQUIREMENTS-ComfyUI.md` Draft 4. This file points to them.
+The ComfyUI and agent-tick answers (items 4, 7, 8, 9, 11, 13, 14, 15, 16, 17) are applied in `requirements/draft-comfyui.md` Draft 4. This file points to them.
 
-New numbers: FR-292 and FR-293 are in `REQUIREMENTS-ComfyUI.md` Draft 4. This file uses FR-294 to FR-308. The highest number in use across all requirement files is now FR-308.
+New numbers: FR-292 and FR-293 are in `requirements/draft-comfyui.md` Draft 4. This file uses FR-294 to FR-308. The highest number in use across all requirement files is now FR-308.
 
 ---
 
@@ -142,7 +142,7 @@ New: "The app can generate a video for a variant. A video can start from a first
 **Priority:** P0
 **Notes:**
 - The stakeholder's words: "Why not keep sound? For fal as well."
-- This reverses FR-283 in `REQUIREMENTS-ComfyUI.md` (changed in Draft 4) and the "all video is silent" rule.
+- This reverses FR-283 in `requirements/draft-comfyui.md` (changed in Draft 4) and the "all video is silent" rule.
 - The ComfyUI video model makes picture and sound in one file (V-20). fal's page for its video model advertises sound made with the picture (S-12). Not verified: the exact setting that turns it on.
 
 **FR-301 (new):** A video variant can have sound. The user chooses where it comes from:
@@ -166,7 +166,7 @@ The user can also choose no sound. A video variant with no sound is valid.
 
 ### 2.4 Usage and spend (new section, with FR-230)
 
-The stakeholder's words: "usage seems like it would be an important figure for a business like our client's". Section 4 sets out the options and the facts behind them. The requirements below are the recommended option (C: both). They replace FR-287 of `REQUIREMENTS-ComfyUI.md`. They are **proposed**: the stakeholder has asked for a better fit, and has not yet chosen (CQ-30).
+The stakeholder's words: "usage seems like it would be an important figure for a business like our client's". Section 4 sets out the options and the facts behind them. The requirements below are the recommended option (C: both). They replace FR-287 of `requirements/draft-comfyui.md`. They are **proposed**: the stakeholder has asked for a better fit, and has not yet chosen (CQ-30).
 
 **FR-230 (changed).**
 Old: "For each campaign the app shows the total number of paid generations used so far, split into pictures and videos. The total counts every generation sent to a paid provider for that campaign, including runs whose options were never picked. ..."
@@ -221,7 +221,7 @@ New note: "It is a count and an estimate of money. The estimate uses the price l
 - A cut-out made on a paid provider is a paid call: it has the confirmation dialog and is counted (FR-064, FR-303). A cut-out made on ComfyUI follows the ComfyUI rules (shipped workflow only, FR-278).
 - The cut-out keeps its transparency in the editor and in exports (FR-245).
 - A cut-out is most useful placed over a background. Whether a variant can hold more than one picture layer is still Q-032 and is not answered by item 25 (CQ-33). Without that, a cut-out can be made and stored, and used as a hero image or a reference, but not laid over a generated background.
-- This answers S-12 of `REQUIREMENTS-Client-Input.md`.
+- This answers S-12 of `requirements/draft-client-input.md`.
 
 ### 2.7 Cloud storage (Section 4.15)
 
@@ -258,7 +258,7 @@ Add: "The app is in a public repository, but it has one customer that matters: t
 | X-1 | `REQUIREMENTS.md` 1.4, out of scope | "Audio. All video is silent." | Removed. Video can have sound (FR-300 to FR-302). | 12 |
 | X-2 | `REQUIREMENTS.md` 1.4, out of scope, timeline features | Lists "audio tracks" as out of scope. | A video variant has sound from a clip or from an added audio file (FR-301). Mixing and volume curves stay out. | 12 |
 | X-3 | FR-132 | "All video is silent." | Exported video carries the variant's sound (FR-302). | 12 |
-| X-4 | `REQUIREMENTS-ComfyUI.md` FR-283 and Section 4 ("Sound. All video stays silent") | A stored ComfyUI video has no sound. | Reversed (changed in Draft 4). | 12 |
+| X-4 | `requirements/draft-comfyui.md` FR-283 and Section 4 ("Sound. All video stays silent") | A stored ComfyUI video has no sound. | Reversed (changed in Draft 4). | 12 |
 | X-5 | FR-051 | No audio files. | Audio files are accepted (FR-301). | 12 |
 | X-6 | FR-121 | A clip is "a still image, a generated video or a video file the user provides". Nothing on the clip's sound. | A clip may carry sound, and the variant may use it (FR-301). | 12 |
 | X-7 | FR-130, FR-131 | Preview matches export, for pictures and animation. | Also for sound (FR-302). | 12 |
@@ -268,17 +268,17 @@ Add: "The app is in a public repository, but it has one customer that matters: t
 | X-11 | Section 7 table, "AI image-to-video provider ... Generate video from a background image" | Image to video only. | "AI video provider ... Generate video, with or without a start picture and reference pictures". | 11 |
 | X-12 | Spec, folder import limit (provisional, OI-44) | 8 levels. | 12 levels (FR-294). | 19 |
 | X-13 | Spec 1.29 and OI-45 | A WebP asset is refused as a reference picture. | Never refused for being WebP (FR-298). | 20 |
-| X-14 | FR-230 (`REQUIREMENTS-Client-Input.md`) | "It is a count of generations, not an amount of money. The app does not know the client's prices." P1. | A count and an estimate of money, with a price list the user can correct (FR-303, FR-305). Proposed P0. | 10 |
-| X-15 | FR-287 (`REQUIREMENTS-ComfyUI.md`) | Usage is read from the provider with the user's key; "not the app's estimate". | Replaced by FR-303 to FR-305: the app's own record always, the provider's figures beside it where they can be read. | 10 |
+| X-14 | FR-230 (`requirements/draft-client-input.md`) | "It is a count of generations, not an amount of money. The app does not know the client's prices." P1. | A count and an estimate of money, with a price list the user can correct (FR-303, FR-305). Proposed P0. | 10 |
+| X-15 | FR-287 (`requirements/draft-comfyui.md`) | Usage is read from the provider with the user's key; "not the app's estimate". | Replaced by FR-303 to FR-305: the app's own record always, the provider's figures beside it where they can be read. | 10 |
 | X-16 | FR-172 | "A key is not tested when entered." | Unchanged for ordinary keys. A wider key saved to read usage (FR-304) is first used when the user opens the usage figures; say so. | 10 |
 | X-17 | IR-002 and Section 7 table | Picture providers: Gemini, Firefly stub. | Add OpenAI picture generation (FR-306). | 10 |
 | X-18 | FR-150 | The report lists provider, model and prompt per generated asset. | Also the campaign's count and estimated spend (FR-230 changed). | 10 |
 | X-19 | IR-002 and OI-01 | Jev "as the optional verification provider"; OI-01 "assess Jev ... and decide whether FR-112 is built". | In reserve; waiting for the stakeholder's workflow (Section 2.8). | 22 |
 | X-20 | FR-160 | "Amazon S3 ... must work in this build", with no limit on which S3. | Standard Amazon regions only (FR-308). | 23 |
-| X-21 | `REQUIREMENTS.md` Section 9.8 note on G-17 to G-20, and S-12 in `REQUIREMENTS-Client-Input.md` | Cut-outs not applied, not decided. | AI cut-out is wanted (FR-307). Several picture layers still undecided (CQ-33). | 25 |
+| X-21 | `REQUIREMENTS.md` Section 9.8 note on G-17 to G-20, and S-12 in `requirements/draft-client-input.md` | Cut-outs not applied, not decided. | AI cut-out is wanted (FR-307). Several picture layers still undecided (CQ-33). | 25 |
 | X-22 | Spec 6.11, job runner: "three per provider" | Three runs at once for each provider. | Agent-started runs are limited to 4 by default, set by the user (FR-292). The two limits must be made to agree; for the architect. | 8 |
 | X-23 | Spec, ComfyUI address read from stored settings (OI-50) | Refused silently, then cleared. | Confirmed: refused. No extra message is needed (ComfyUI Draft 4, FR-251). No conflict; closes OI-50. | 4 |
-| X-24 | `REQUIREMENTS-ComfyUI.md` CQ-20 recommendations | A spending limit before a paid tick; unticking cancels waiting paid runs. | No spending cap. Unticking does not touch runs already waiting or running (Draft 4). | 8 |
+| X-24 | `requirements/draft-comfyui.md` CQ-20 recommendations | A spending limit before a paid tick; unticking cancels waiting paid runs. | No spending cap. Unticking does not touch runs already waiting or running (Draft 4). | 8 |
 | X-25 | `REQUIREMENTS.md` 8.4 threat notes | Written for an app with no spending by agents. | With no spending cap, the limit on active runs (FR-292) and the record of who started each paid call (FR-303) are the only checks on an agent's spending. State this plainly. | 8 |
 
 ---
@@ -337,7 +337,7 @@ So: the feature is easy to reach through two providers already planned. ComfyUI 
 
 ## 6. Open questions for the stakeholder
 
-Only questions that still need the stakeholder. CQ-30 to CQ-33 are here. CQ-34 to CQ-36 are in `REQUIREMENTS-ComfyUI.md` Draft 4, Section 6.2, and are repeated in short.
+Only questions that still need the stakeholder. CQ-30 to CQ-33 are here. CQ-34 to CQ-36 are in `requirements/draft-comfyui.md` Draft 4, Section 6.2, and are repeated in short.
 
 **CQ-30. Usage and spend: which option?**
 Options A, B and C are in Section 4.3.

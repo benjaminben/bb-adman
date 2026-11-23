@@ -147,7 +147,7 @@ A report never holds a secret, the ComfyUI address [REQ: FR-253], or the path or
 
 ### Report additions, not yet designed
 
-Phase 8. Each is one addition to `Report`, to be specified when Phase 8 is prepared. Requirement text: `REQUIREMENTS-Client-Input.md` (and `REQUIREMENTS-D053.md` for FR-230 as changed).
+Phase 8. Each is one addition to `Report`, to be specified when Phase 8 is prepared. Requirement text: `requirements/draft-client-input.md` (and `requirements/draft-d053.md` for FR-230 as changed).
 
 | Requirement | Addition |
 |-------------|----------|

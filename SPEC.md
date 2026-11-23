@@ -8,7 +8,7 @@ The spec is split into small files so that a reader loads only what a task needs
 ## How to read
 
 - Start with `spec/overview.md`. Then read the two or three topic files your task touches. `spec/phases/README.md` names them for each phase.
-- `[REQ: FR-001]` points at the requirements files (`REQUIREMENTS.md`, `REQUIREMENTS-Client-Input.md`, `REQUIREMENTS-ComfyUI.md`, `REQUIREMENTS-D053.md`, `REQUIREMENTS-D054.md`; `spec/overview.md` says which numbers are where).
+- `[REQ: FR-001]` points at the requirements: `REQUIREMENTS.md` is the index, the text is in `requirements/` (`spec/overview.md` says which numbers are where).
 - `[D-012]` points at a stakeholder decision in `DECISIONS.md`.
 - `OI-18`, `Q-030` and `A-01` point at an open question in `spec/open-items.md` or an assumption in `spec/assumptions.md`.
 - Where the spec and the requirements differ, the spec wins. `spec/overview.md` lists every difference.

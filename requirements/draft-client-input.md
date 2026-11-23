@@ -1,4 +1,4 @@
-# REQUIREMENTS-Client-Input.md
+# requirements/draft-client-input.md
 
 **Project:** Adman
 **Date:** 2026-11-20
