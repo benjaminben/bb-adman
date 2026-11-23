@@ -170,7 +170,7 @@ A `ref9` or higher is `workflow_unknown_mark` (8 is `MAX_REFERENCES_PER_RUN`).
   - not found, or a draft: `RULE_VIOLATION`, `comfy_workflow_not_found`, "That ComfyUI workflow is not on this computer."
   - a `trial` one with dev tools off: `comfy_job_not_offered`, as today.
   - the wrong job or start: `comfy_workflow_wrong_job`, "That workflow cannot make this kind of picture or video."
-- **No workflow named.** As today: the `proven` shipped one, else the `trial` one with dev tools on. When no shipped one is offered to the caller for that job and start, the oldest custom one that fits. That is the default (`isDefault`).
+- **No workflow named.** As today: the `proven` shipped one, else the `trial` one with dev tools on. When no shipped one is offered to the caller for that job and start, the oldest custom one that fits. That is the default (`isDefault`). The commands always store the chosen ID on the job. The adapter's own lookup, when it is handed no ID (cut-out, extend, or a job row made before IDs were stored), picks only a shipped workflow, never a custom one.
 - **Reference count.** After the choice, more pictures than slots is `too_many_references` (as today). Fewer than `minReferences` is new: `RULE_VIOLATION`, `too_few_references`, `details.min`, "This workflow needs {min} reference pictures." ("needs 1 reference picture" for one). Owner: `src/shared/providers/messages.ts`.
 - **Stored on the job.** `generation.runImages` and `generation.startVideo` take an optional `workflowId` (`workflowIdSchema`), for the person and for an agent. The command writes the chosen workflow's ID into the job's `request.workflowId`. The picture and video job kinds pass it to the adapter (`ImageProvider.generate`, `VideoProvider.start` and `runSize` gain an optional `workflowId`; other adapters ignore it). `workflowForRun` takes it and looks it up in `allWorkflows()`.
 - **Retry** (`job.retry`, the person only) uses `request.workflowId` when present, with the same checks. A row without it (made before this change) gets the default.
@@ -239,7 +239,8 @@ Built on the ask flow of `spec/mcp-and-agents.md`. `ASK_KINDS` gains `'comfyWork
 **Words** (`ask-words.ts`, `permission-dialog`):
 
 - Title: "An agent asks to add a ComfyUI workflow". Action button: "Add".
-- Target line: `Workflow "{name}": {job words}, {n} node types`. The name passes the shared name cleaner.
+- Target line: `Workflow "{name}": {job words}, {n} node types` ("1 node type" for one). The name passes the shared name cleaner. The dialog draws the name in its own element, apart from the job words and the count, so a name cannot imitate them.
+- Before the ask, with no event and nothing held, the broker refuses an add whose name is taken (`workflow_name_taken`) or that would pass the limit (`workflow_limit`), with the store's own rule. The command keeps its own check. So the person is never asked about an add that cannot be saved.
 - A list headed "Node types it uses", each type as plain text, one per line, in a box that scrolls.
 - The last line of the body, also in the accessible description: "This workflow will run on your ComfyUI server and can use any node installed there, including nodes that read files on that computer, reach the internet or use paid services."
 - "Add" can be pressed only 750 ms after the dialog opens and only once the list is shown.
@@ -275,7 +276,7 @@ Built on the ask flow of `spec/mcp-and-agents.md`. `ASK_KINDS` gains `'comfyWork
 - **Can check:** every node type of a custom workflow, one `GET /object_info/{class}` each, the class name passed through `encodeURIComponent` as today. A missing type usually means an add-on is not installed.
 - **Cannot check:** model files (the file does not say which server folder an input reads from), the ComfyUI version, and whether a node does what its name says. A missing model is found by the server when the run is sent: a 400 (`server_refused`), with the server's words on request as today.
 - The Settings check result lists a custom workflow under its name with the status word "Added" and its missing node types. These names reach only the person's own window, in the reply to the user-only `comfy.check`.
-- **A run that fails `missing_items` on a custom workflow** stores no names on the job row: `result.missing` is `[]` and `result.missingCount` is the count. The row's sentence is "The server is missing {n} thing(s) this workflow needs. Press Check in Settings to see them." Reason: a project file may be shared, and job rows reach the window through events.
+- **A run that fails `missing_items` on a custom workflow** stores no names on the job row: `result.missing` is `[]` and `result.missingCount` is the count. The row's sentence is "The server is missing {n} things this workflow needs. Press Check in Settings to see them." ("1 thing" for one.) Reason: a project file may be shared, and job rows reach the window through events.
 - The check makes many calls when many node types are listed. That is a nuisance (time), noted, not designed for.
 
 ## What the app leaves on the server
