@@ -163,6 +163,10 @@ describe('only the person answers a workflow ask [CW-6a; rule 6]', () => {
     expect(await pending).toMatchObject({ ok: false, error: { code: 'AGENT_REFUSED' } })
     expect(saved(x)).toEqual([])
     expect(askLines(x.readLogs()).map((l) => l.message)).toEqual(['refused'])
+    expect(await askWorkflow(x, asked.requestId)).toEqual({
+      ok: false,
+      error: { code: 'NOT_FOUND', message: 'That request has ended.' },
+    })
   })
 
   it('ignores "remember": the setting stays off and the next add asks again', async () => {
