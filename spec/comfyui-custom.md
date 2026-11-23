@@ -201,7 +201,7 @@ All four commands are app scope, not undoable, and set `changesAppState`, so the
 **Queries.**
 
 - `comfyWorkflow.list {}`, both actors. `{ workflows: Array<{ id, name, job, start, isDefault }> }`: every workflow the caller may name for `image`, `image_refs` or `video` (shipped ones as `offeredWorkflow` allows that caller, and every custom one). `start` is `'prompt' | 'first_frame' | 'references'` for video, else null. `isDefault` is true for the one a run of that job and start gets with no ID named. Never a graph, a node, a file path or the address.
-- `agent.askWorkflow { requestId }`, user only. `{ name, job, start, nodeTypes }` for the open `workflow` ask, else `NOT_FOUND` "That request has ended." Held in memory for the ask's life only, like `agent.askFiles`.
+- `agent.askWorkflow { requestId }`, user only. `{ name, job, start, references, nodeTypes }` (`references` is how many reference pictures the workflow takes, 0 to 8) for the open `workflow` ask, else `NOT_FOUND` "That request has ended." Held in memory for the ask's life only, like `agent.askFiles`.
 - `comfy.getInfo` (user only) lists the custom workflows after the shipped ones, as `WorkflowInfo` with `status: 'custom'` and a new optional `custom: { addedBy, addedAt, nodeCount }`. `WorkflowInfo` gains `isDefault`. `offered` now means "the person may pick it now": true for every custom one.
 
 **Events.** No new event. `agent.permissionRequested.kind` gains `'workflow'` (`fileCount` 0). Its `target` is the line in "The agent's ask" below. `agent.activity` is unchanged (tool name, project, ok; no input).
@@ -233,7 +233,7 @@ Built on the ask flow of `spec/mcp-and-agents.md`. `ASK_KINDS` gains `'comfyWork
 
 - Before the ask, the broker runs `checkWorkflowText` on the input. A refused file never reaches the screen; the agent gets the refusal. Nothing on disk is read.
 - `mcp.autoApproveDestructive` never answers a `workflow` ask, and the dialog has no "Don't ask again" tick. "Remember" in `agent.answerPermission` is ignored for it.
-- The broker holds `{ name, job, start, nodeTypes }` for the open request; the dialog reads it with `agent.askWorkflow`. No event holds a node type.
+- The broker holds `{ name, job, start, references, nodeTypes }` for the open request; the dialog reads it with `agent.askWorkflow` and builds its job words from that reply alone, never by reading the target line. The list of node types scrolls inside the dialog; the risk sentence and the buttons stay on screen at the smallest window size. No event holds a node type.
 - After "Add", the command checks the text again and saves it. Refuse or two minutes without an answer: `AGENT_REFUSED`, nothing saved.
 
 **Words** (`ask-words.ts`, `permission-dialog`):
