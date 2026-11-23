@@ -192,6 +192,9 @@ All four commands are app scope, not undoable, and set `changesAppState`, so the
 | `comfyWorkflow.remove` | `{ workflowId }` | `{ workflowId }` | `ask` ("remove ComfyUI workflows"), ask kind `delete` | Deletes `{userData}/comfy-workflows/{id}.json`. The path is built from an ID that passed `CUSTOM_WORKFLOW_ID`, never from other text. Unknown ID: `NOT_FOUND`, "That workflow is not on this computer." Nothing on the server is touched. |
 
 - `workflowId` in `update` and `remove` must match `CUSTOM_WORKFLOW_ID`; a shipped ID is `INVALID_INPUT`.
+- A taken name (compared without letter case) is `workflow_name_taken` in `add` and `update`. Only `addFromFile` adds " 2".
+- Two refusals are `INVALID_INPUT` with a fixed sentence: video values for a graph that makes no video ("This workflow makes no video, so it takes no video values."), and a size for a graph with no size marks ("This workflow has no width and height marks, so it takes no size.").
+- The store is on the deps as `comfyWorkflows`. `allWorkflows(store)`, `checkedWorkflows(store)` and `defaultWorkflow(choice, who, store)` take it as an argument; where this file writes `allWorkflows()`, read it so. No module keeps the list.
 - Every refusal is the fixed table above. No refusal holds `issues` from parsing the graph: the input schema checks only that `workflowJson` is text within the size; the graph is read by `checkWorkflowText`.
 
 **Queries.**
