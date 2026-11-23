@@ -10,3 +10,9 @@
   align-items: center;
   gap: var(--gap-tight);
 }
+/* The line of words wraps (the shared row cuts it with an ellipsis), so "Added by an agent"
+   is never lost in a narrow window. */
+.wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

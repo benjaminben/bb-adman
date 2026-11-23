@@ -33,6 +33,13 @@ describe('ComfyUI workflow row [CW-4, D-104]', () => {
     expect(screen.getByText(words)).toBeVisible()
   })
 
+  it('lets its line of words wrap, so "Added by an agent" is never cut off', () => {
+    draw(TIDE_CLIP)
+    const line = screen.getByText('Video from a prompt · 31 nodes · Added by an agent')
+    expect(line.tagName).toBe('SPAN')
+    expect(line.className).toMatch(/wrap/)
+  })
+
   it('says "Added by an agent" only when an agent added it', () => {
     draw(PORTRAIT)
     expect(screen.queryByText(/Added by an agent/)).toBeNull()
