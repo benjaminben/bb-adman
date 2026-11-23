@@ -12,17 +12,19 @@ export function rememberSheetPath(filePath: string, now = Date.now()): void {
   chosen = { path: path.resolve(filePath), at: now }
 }
 
-// True, and forgotten, when filePath is the chosen path and still fresh. Another path leaves
-// the choice as it is.
-export function takeSheetPath(filePath: string, now = Date.now()): boolean {
-  if (!chosen) return false
+// The chosen path, and forgotten, when filePath names it and it is still fresh; else null, and
+// another path leaves the choice as it is. The caller writes only the path given back: the
+// system follows a link before it applies "..", so the text it was sent may lead elsewhere.
+export function takeSheetPath(filePath: string, now = Date.now()): string | null {
+  if (!chosen) return null
   if (now - chosen.at > CHOSEN_PATH_TTL_MS) {
     chosen = null
-    return false
+    return null
   }
-  if (chosen.path !== path.resolve(filePath)) return false
+  if (chosen.path !== path.resolve(filePath)) return null
+  const picked = chosen.path
   chosen = null
-  return true
+  return picked
 }
 
 export function forgetSheetPath(): void {
