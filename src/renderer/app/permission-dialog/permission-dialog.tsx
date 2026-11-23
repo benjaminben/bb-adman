@@ -16,6 +16,11 @@
 // whole list is shown, and is not offered at all when the list cannot be read.
 // Design wave DLG-2: the `confirm` kind and a refusal drawn as a danger DialogAlert, in the
 // same place and words; nothing else changed.
+// CW-6b (spec/comfyui-custom.md, "The agent's ask"): a workflow ask shows the node types from
+// agent.askWorkflow, as the import ask shows its files: no tick, and its allow button waits
+// ALLOW_WAIT_MS from the moment the whole list is shown, or is not offered when it cannot be
+// read. The target line, which mixes the name an agent chose with the job words, is not drawn:
+// the list shows them apart. Its risk line is the last body line and part of the description.
 import { useEffect, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import { DialogAlert } from '@/renderer/ui/dialog-alert'
@@ -24,22 +29,13 @@ import layout from '@/renderer/ui/layout.module.css'
 import { askWords } from './ask-words'
 import { FileList, useAskFiles } from './file-list'
 import { useAsk, type Ask } from './use-ask'
+import { WorkflowList, useAskWorkflow } from './workflow-list'
 import styles from './permission-dialog.module.css'
 
 const ALLOW_WAIT_MS = 750
 const WAIT_ID = 'permission-allow-wait'
 const COST_ID = 'permission-cost'
 const LINE_ID = 'permission-line'
-
-const CAMPAIGN_COST = 'This cannot be undone.'
-// D7: what allowing an import leads to. Fixed words, like the delete lines.
-const IMPORT_COST =
-  'Once imported, agents can place these files in ads and send pictures to AI providers you allowed.'
-const COST: Record<string, string> = {
-  'delete variants': 'This cannot be undone. It also clears the undo list of this campaign.',
-  'delete campaigns': CAMPAIGN_COST,
-  'delete subjects': 'This cannot be undone. Its photos stay in the project without a subject.',
-}
 
 // False until `ms` after `start` first turns true.
 function useReady(ms: number, start: boolean): boolean {
@@ -68,7 +64,14 @@ function AskLine(props: { ask: Ask }) {
           Agent named <span className={styles.client}>{ask.agentClient}</span>
         </>
       )}{' '}
-      wants to {ask.action}: <span className={styles.target}>{ask.target}</span>.
+      wants to {ask.action}
+      {ask.kind === 'workflow' ? (
+        '.'
+      ) : (
+        <>
+          : <span className={styles.target}>{ask.target}</span>.
+        </>
+      )}
     </p>
   )
 }
@@ -77,17 +80,21 @@ function AskDialog(props: { ask: Ask; onEnd: () => void }) {
   const api = useApi()
   const { ask } = props
   const isImport = ask.kind === 'import'
+  const isWorkflow = ask.kind === 'workflow'
+  const isDelete = ask.kind === 'delete'
   const words = askWords(ask)
   const files = useAskFiles(ask.requestId, ask.fileCount, isImport)
+  const nodes = useAskWorkflow(ask.requestId, isWorkflow)
   const [remember, setRemember] = useState(false)
   const [sending, setSending] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
-  const ready = useReady(ALLOW_WAIT_MS, !isImport || files.status === 'shown')
-  const canAllow = !isImport || files.status !== 'failed'
+  const list = isImport ? files.status : isWorkflow ? nodes.status : 'shown'
+  const ready = useReady(ALLOW_WAIT_MS, list === 'shown')
+  const canAllow = list !== 'failed'
 
   async function answer(allow: boolean) {
     setSending(true)
-    const rememberAuto = allow && remember && !isImport
+    const rememberAuto = allow && remember && isDelete
     const result = await api.command('agent.answerPermission', {
       requestId: ask.requestId,
       allow,
@@ -141,42 +148,32 @@ function AskDialog(props: { ask: Ask; onEnd: () => void }) {
       onClose={close}
       title={words.title}
       kind="confirm"
-      describedBy={isImport ? `${LINE_ID} ${COST_ID}` : COST_ID}
+      describedBy={isDelete ? COST_ID : `${LINE_ID} ${COST_ID}`}
       closable={!sending}
       footer={footer}
     >
       <AskLine ask={ask} />
-      {isImport ? (
+      {isImport && <FileList files={files} />}
+      {isWorkflow && <WorkflowList nodes={nodes} />}
+      {isDelete && refusal === null ? (
         <>
-          <FileList files={files} />
-          {notice}
-          <p id={COST_ID} className={styles.cost}>
-            {IMPORT_COST}
-          </p>
+          <p className={styles.line}>Answer within 2 minutes.</p>
+          <label className={layout.row}>
+            <input
+              type="checkbox"
+              checked={remember}
+              disabled={sending}
+              onChange={() => setRemember(!remember)}
+            />
+            Don&apos;t ask again for deletes
+          </label>
         </>
       ) : (
-        <>
-          {refusal === null ? (
-            <>
-              <p className={styles.line}>Answer within 2 minutes.</p>
-              <label className={layout.row}>
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  disabled={sending}
-                  onChange={() => setRemember(!remember)}
-                />
-                Don&apos;t ask again for deletes
-              </label>
-            </>
-          ) : (
-            notice
-          )}
-          <p id={COST_ID} className={styles.cost}>
-            {COST[ask.action] ?? CAMPAIGN_COST}
-          </p>
-        </>
+        notice
       )}
+      <p id={COST_ID} className={styles.cost}>
+        {words.cost}
+      </p>
     </DialogFrame>
   )
 }

@@ -6,7 +6,7 @@
 // What passes is held in memory for the ask's life only: the cleaned name, the job, the start
 // and the node types, read by the user-only query agent.askWorkflow. No event holds a node type.
 import type { CustomJob, WorkflowStart } from '@/shared/comfy/custom-workflow'
-import { jobWords } from '@/shared/comfy/workflow-words'
+import { jobWords, nodeTypeCount } from '@/shared/comfy/workflow-words'
 import { comfyWorkflowAddInput } from '@/shared/schemas/commands/comfy-workflow'
 import { AppError } from '@/shared/schemas/result'
 import { checkWorkflowText, type CheckedWorkflow } from '@/main/providers/comfyui/custom/check-file'
@@ -22,6 +22,14 @@ export type AskWorkflow = {
 }
 
 export type HeldWorkflow = { view: AskWorkflow; references: number }
+
+// The agent.askWorkflow reply: the view and the reference count, so the dialog builds the job
+// words itself (CW-6b). A copy: the caller cannot change what the broker holds.
+export type AskWorkflowReply = AskWorkflow & { references: number }
+
+export function askWorkflowReply(held: HeldWorkflow): AskWorkflowReply {
+  return { ...held.view, nodeTypes: [...held.view.nodeTypes], references: held.references }
+}
 
 function startOf(checked: CheckedWorkflow): WorkflowStart | null {
   if (checked.job !== 'video') return null
@@ -53,10 +61,8 @@ export function readAskedWorkflow(
   }
 }
 
-const typeCount = (n: number) => (n === 1 ? '1 node type' : `${n} node types`)
-
 // `Workflow "{name}": {job words}, {n} node types`. The name was cleaned by the reader.
 export function workflowAddLine(held: HeldWorkflow): string {
   const { name, job, start, nodeTypes } = held.view
-  return `Workflow "${name}": ${jobWords(job, start, held.references)}, ${typeCount(nodeTypes.length)}`
+  return `Workflow "${name}": ${jobWords(job, start, held.references)}, ${nodeTypeCount(nodeTypes.length)}`
 }

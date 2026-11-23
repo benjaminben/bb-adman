@@ -4,6 +4,9 @@ import type { CustomJob, WorkflowStart } from '@/shared/comfy/custom-workflow'
 
 const pictures = (n: number) => (n === 1 ? '1 reference picture' : `${n} reference pictures`)
 
+// How many node types a workflow uses: "1 node type", "{n} node types".
+export const nodeTypeCount = (n: number) => (n === 1 ? '1 node type' : `${n} node types`)
+
 export function jobWords(job: CustomJob, start: WorkflowStart | null, references: number): string {
   if (job === 'image') return 'Picture from a prompt'
   if (job === 'image_refs') return `Picture from a prompt and ${pictures(references)}`

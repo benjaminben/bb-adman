@@ -99,6 +99,7 @@ describe('the workflow ask [CW-6a; rules 6 and 7]', () => {
       job: 'image',
       start: null,
       nodeTypes: PICTURE_TYPES,
+      references: 0,
     })
     expect(await askWorkflow(x, asked.requestId, 'agent')).toMatchObject({
       ok: false,
