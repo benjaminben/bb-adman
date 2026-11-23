@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest'
 import { ComfyWorkflowsSection } from '@/renderer/screens/settings/comfy-workflows-section'
 import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
 import type { WorkflowInfo } from '@/shared/schemas/queries/comfy'
+import type { Result } from '@/shared/schemas/result'
 import { axeViolations, renderApp } from '../../render'
 import { makeFakeApi } from '../../fake-api'
 import { comfyFake, info, workflow } from './comfy-fixture'
@@ -92,7 +93,7 @@ describe('Settings: ComfyUI workflows [CW-4, D-104]', () => {
     expect(sent()).toEqual([])
   })
 
-  it.each([
+  it.each<[string, Result<unknown>]>([
     ['no paths', { ok: true, data: { paths: [] } }],
     ['no data', { ok: true, data: null }],
     ['a refused pick', { ok: false, error: { code: 'INTERNAL', message: 'No.' } }],
