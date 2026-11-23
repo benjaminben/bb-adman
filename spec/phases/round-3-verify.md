@@ -29,3 +29,5 @@ Assumptions made while building the stakeholder's round 3 notes (2026-11-22), fo
     - (d) With no shipped workflow for a job, the oldest added one that fits is the default.
     - (e) The picker lists every added workflow that fits the job, also one whose reference-picture count differs from the pictures ticked; that run is then refused with "This workflow needs {n} reference pictures."
     - (f) An added workflow can be saved with video numbers that never give a clip (for example 1 frame a second, 1 second, frame offset 5); each run then stops before anything is sent. Not refused at add yet (`review-leftovers.md`).
+15. **Proof on the real server.** One custom workflow run was made on the ComfyUI test server (the shipped Flux graph, marked with `adman:` titles by the test, one reference picture): it passed in 31 seconds. Everything else was tested against a stand-in server. Your own exported workflows have not been tried; that is the thing to test first.
+16. **A run made with an added workflow** reads "ComfyUI · {workflow name}" in Activity and in failure lines; one whose workflow was removed since reads "ComfyUI · Custom workflow".
