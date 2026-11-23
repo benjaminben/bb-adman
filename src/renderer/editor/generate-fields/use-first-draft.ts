@@ -4,7 +4,8 @@
 // SP-7): up to MAX_REFERENCES_PER_RUN, oldest first, skipping a picture that cannot be sent.
 // A later visit keeps the draft as the user left it (A-70). R2E-1 (D1): the prompt leaves out
 // the message when the variant's text layers hold words, read when the draft is made; text
-// added later does not rewrite a draft.
+// added later does not rewrite a draft. spec/brief-brand.md [A-403]: the stored brief's art
+// direction goes into the prompt.
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from 'zustand'
 import { useApi } from '@/renderer/app/app-context'
@@ -28,6 +29,7 @@ function factsFrom(data: CampaignGet | null, variantId: string, words: boolean):
     region: campaign.region,
     message: campaign.message,
     wordsOnLayers: words,
+    artDirection: campaign.brief.artDirection,
   })
   return { prompt, subjectIds }
 }

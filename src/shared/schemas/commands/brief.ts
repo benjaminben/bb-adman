@@ -25,12 +25,26 @@ export type PictureNote = { name: string; reason: PictureNoteReason }
 // image assets of the project the brief named by ID, each once.
 export type SubjectPictures = { paths: string[]; assetIds: string[]; notes: PictureNote[] }
 
+// spec/brief-brand.md "Schemas": the three brand files a brief may name, and why one was not
+// used. not_a_font: a font role named a file that is not a TTF, OTF or WOFF2 font.
+export type BrandRole = 'logo' | 'headingFont' | 'bodyFont'
+export type BrandNoteReason = PictureNoteReason | 'not_a_font'
+// Exactly one of path and assetId is set. path: a real path that passed every check.
+export type BrandFile = { role: BrandRole; path: string | null; assetId: string | null }
+// name: pictureName of the text, never a folder.
+export type BrandFileNote = { role: BrandRole; name: string; reason: BrandNoteReason }
+// files: in role order (logo, heading, body); a role the brief does not name, or one with a
+// note, has no entry.
+export type BrandFiles = { files: BrandFile[]; notes: BrandFileNote[] }
+
 // The brief.parse reply (SPEC 14 1.42 C4-2), here so the window can import it. subjectPictures
-// has one entry per draft subject; brief.parse always sets it, the AI reader never does.
+// has one entry per draft subject; brief.parse always sets it and brandFiles, the AI reader
+// sets neither.
 export type BriefParsed = {
   draft: BriefDraft
   primaryLanguage: string | null
   subjectPictures?: SubjectPictures[]
+  brandFiles?: BrandFiles
 }
 
 // spec/ai-jobs.md "Brief reading": brief.extract reads a Markdown or text brief with AI. The

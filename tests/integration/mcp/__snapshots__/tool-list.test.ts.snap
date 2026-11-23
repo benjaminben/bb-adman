@@ -94,9 +94,31 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
       "properties": {
         "brief": {
           "properties": {
+            "adsPer": {
+              "enum": [
+                "campaign",
+                "subject",
+              ],
+              "type": "string",
+            },
+            "artDirection": {
+              "type": "string",
+            },
             "audience": {
               "minLength": 1,
               "type": "string",
+            },
+            "brand": {
+              "properties": {
+                "colours": {
+                  "items": {
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "type": "string",
+                  },
+                  "type": "array",
+                },
+              },
+              "type": "object",
             },
             "callToAction": {
               "type": "string",
@@ -127,6 +149,9 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
                 "type": "string",
               },
               "type": "array",
+            },
+            "layout": {
+              "type": "string",
             },
             "message": {
               "minLength": 1,

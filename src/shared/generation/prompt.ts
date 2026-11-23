@@ -28,6 +28,9 @@ export type PromptFacts = {
   // R2E-1 (D1): the ad's text layers already hold words, so the message is left out.
   wordsOnLayers?: boolean
   kind?: 'picture' | 'video'
+  // spec/brief-brand.md [A-403]: the brief's art direction, put between the first sentence
+  // and the last. Null, missing or blank leaves the prompt as it was.
+  artDirection?: string | null
 }
 
 // The fields of a layer hasWordsOnLayers reads, so the shared code takes any layer shape.
@@ -43,6 +46,14 @@ function subjectText(subject: PromptFacts['subjects'][number]): string {
   return description ? `${subject.name.trim()} (${description})` : subject.name.trim()
 }
 
+// "Art direction: {text}" and one space, with white space folded and a full stop added
+// unless the text already ends a sentence; empty when there is no text.
+function artDirectionSentence(artDirection: string | null | undefined): string {
+  const text = (artDirection ?? '').replace(/\s+/g, ' ').trim()
+  if (text === '') return ''
+  return `Art direction: ${text}${/[.!?]$/.test(text) ? '' : '.'} `
+}
+
 // The text the user starts from and can edit. It holds no ending: promptToSend adds it.
 export function prefilledPrompt(facts: PromptFacts): string {
   const subjects = facts.subjects.map(subjectText).filter((s) => s.length > 0)
@@ -53,6 +64,7 @@ export function prefilledPrompt(facts: PromptFacts): string {
     : `The advertisement's message: ${facts.message.trim()}`
   return (
     `${what} for an advertisement aimed at ${facts.audience.trim()} in ${facts.region.trim()}. ` +
+    artDirectionSentence(facts.artDirection) +
     last
   )
 }

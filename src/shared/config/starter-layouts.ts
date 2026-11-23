@@ -173,3 +173,9 @@ export const STARTER_LAYOUTS: readonly StarterLayout[] = [
   FLAT_CENTRE_TOP,
   PHOTO_LABEL_BOX,
 ]
+
+// spec/brief-brand.md "Shared helpers": the layout with exactly this ID, or null. A list
+// search, so a name such as "constructor" finds nothing.
+export function starterLayoutOf(id: string): StarterLayout | null {
+  return STARTER_LAYOUTS.find((l) => l.id === id) ?? null
+}
