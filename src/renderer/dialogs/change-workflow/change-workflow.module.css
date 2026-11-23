@@ -19,7 +19,7 @@
   color: var(--color-text-secondary);
 }
 .counts > input {
-  width: var(--control-height-large);
+  width: var(--field-label-width);
   min-width: 0;
 }
 .hidden {

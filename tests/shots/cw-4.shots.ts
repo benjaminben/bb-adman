@@ -97,6 +97,8 @@ test('CW-4: the ComfyUI workflows Section with three rows, Change, Remove, the h
     'adman: output',
   )
   await showSection(page)
+  // The fold's chevron turns in --motion-fast; the picture waits for it to stop.
+  await page.waitForTimeout(400)
   await shot(page, '525-how-to-mark-steps')
 })
 
