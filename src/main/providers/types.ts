@@ -4,6 +4,7 @@ import type { Geometry } from '@/shared/schemas/layer'
 import type { Settings } from '@/shared/schemas/settings'
 import type { ProviderError } from '@/shared/schemas/queries/app'
 import type { TypeStyleOffer } from '@/shared/config/type-styles'
+import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
 
 export type { ProviderError }
 
@@ -59,6 +60,8 @@ export interface ImageProvider {
       width: number
       height: number
       count: number
+      // D-104: the ComfyUI workflow the command chose (job.request.workflowId). Others ignore it.
+      workflowId?: string
     },
     opts?: RunOptions,
   ): Promise<ImageResult[]>
@@ -128,7 +131,13 @@ export type VideoStart = { firstFrame: boolean; references: boolean }
 export interface VideoProvider {
   // [1.60] N-6: the size the run is made at, which a first frame is fitted to before start.
   // A provider without it makes the run at the variant's own size.
-  runSize?(width: number, height: number, videoStart: VideoStart): { width: number; height: number }
+  // D-104: workflowId as for start.
+  runSize?(
+    width: number,
+    height: number,
+    videoStart: VideoStart,
+    workflowId?: string,
+  ): { width: number; height: number }
   // [1.60] N-7: a signal that fires before submission stops start with ProviderCancelled,
   // with no more pictures uploaded.
   start(
@@ -139,6 +148,8 @@ export interface VideoProvider {
       durationMs: number
       width: number
       height: number
+      // D-104: the ComfyUI workflow the command chose (job.request.workflowId). Others ignore it.
+      workflowId?: string
     },
     opts?: Pick<RunOptions, 'signal'>,
   ): Promise<{ remoteJobId: string }>
@@ -183,6 +194,9 @@ export type AdapterContext = {
   // P9-3b: the core's Dropbox fetch (CoreDeps.dropboxFetch). adapterFor always sets it; it is
   // optional only so a context built by hand for another provider need not name it.
   dropboxFetch?: typeof fetch
+  // D-104: the custom ComfyUI workflows (CoreDeps.comfyWorkflows). adapterFor sets it from the
+  // core's deps; without it a ComfyUI run sees the shipped workflows only.
+  comfyWorkflows?: { specs(): WorkflowSpec[] }
 }
 
 // What one provider folder exports from its index.ts.

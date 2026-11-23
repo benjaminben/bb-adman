@@ -36,7 +36,13 @@ type Run = {
   job: JobRow
   project: ProjectHandle
   provider: ImageProvider
-  input: { prompt: string; references: ImageFile[]; width: number; height: number }
+  input: {
+    prompt: string
+    references: ImageFile[]
+    width: number
+    height: number
+    workflowId?: string
+  }
   assetIds: string[]
   failures: Record<string, number>
   firstFailure: ProviderFailure | null
@@ -158,6 +164,8 @@ async function runImageJob(
       references,
       width: request.width,
       height: request.height,
+      // D-104: the workflow the command chose, given only when the row names one.
+      ...(request.workflowId !== undefined && { workflowId: request.workflowId }),
     },
     assetIds: [],
     failures: {},

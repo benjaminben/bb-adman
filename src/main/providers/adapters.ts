@@ -30,6 +30,8 @@ type AdapterDeps = {
   settings: { get(): ReturnType<CoreDeps['settings']['get']> }
   // P9-3b: optional so deps for other providers need not name it; Dropbox refuses without it.
   dropboxFetch?: CoreDeps['dropboxFetch']
+  // D-104: the custom ComfyUI workflows, for the ComfyUI adapters.
+  comfyWorkflows?: CoreDeps['comfyWorkflows']
 }
 
 type Built<J extends AdapterJob> = ReturnType<NonNullable<ProviderAdapters[J]>>
@@ -49,6 +51,7 @@ function context(deps: AdapterDeps, providerId: string): AdapterContext {
       return model
     },
     dropboxFetch: deps.dropboxFetch,
+    ...(deps.comfyWorkflows && { comfyWorkflows: deps.comfyWorkflows }),
   }
 }
 

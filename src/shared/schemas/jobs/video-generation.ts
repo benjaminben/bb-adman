@@ -3,6 +3,7 @@
 // read them; this file imports nothing from the main process.
 import { z } from 'zod'
 import { referenceIds } from '@/shared/schemas/reference-ids'
+import { workflowIdSchema } from '@/shared/comfy/custom-workflow'
 
 export const videoJobRequest = z.object({
   prompt: z.string().min(1),
@@ -11,6 +12,9 @@ export const videoJobRequest = z.object({
   height: z.number().int().positive(),
   start: z.enum(['none', 'first_frame', 'background']),
   referenceAssetIds: referenceIds,
+  // D-104: the ComfyUI workflow the command chose. Absent on rows made before it, and for
+  // other providers.
+  workflowId: workflowIdSchema.optional(),
 })
 
 // The stored clip's asset and what checkMp4 read from it. [1.39] hasSound. OI-36 default:

@@ -23,7 +23,15 @@ import { LOST_CONTACT_MS, QUEUE_WAIT_MS, VIDEO_WORK_MS } from './limits'
 import { serverChecks, type ServerChecks } from './needs'
 import { isFailedPoll, look, throughBreaks } from './poll'
 import { endedEntry, fillValuesFor, resultRef, submitted, type RunTiming } from './run'
-import { checked, pinnedClient, realTiming, runLive, runOrigin } from './session'
+import {
+  checked,
+  checkList,
+  pinnedClient,
+  realTiming,
+  runLive,
+  runOrigin,
+  runWorkflows,
+} from './session'
 import { checkFrameSize, runSizeOf, uploadPictures } from './video-pictures'
 import type { WorkflowSpec } from './workflows/types'
 
@@ -117,7 +125,7 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
       const origin = runOrigin(ctx)
       const references = input.references.length > 0
       const videoStart = { firstFrame: input.image !== null, references }
-      const spec = workflowForRun('video', videoStart)
+      const spec = workflowForRun('video', videoStart, runWorkflows(ctx), input.workflowId)
       if (!spec.video) throw new Error(`${spec.id} has no video values`)
       const size = runSizeOf(spec, { width: input.width, height: input.height })
       // [1.60] N-7: before anything is sent, the first frame must state the run size.
@@ -125,7 +133,7 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
       if (opts.signal?.aborted) throw new ProviderCancelled()
       const live = runLive(ctx, origin)
       const client = pinnedClient(ctx, origin, live)
-      const serverVersion = await checked(checks, origin, client, spec)
+      const serverVersion = await checked(checks, origin, client, spec, checkList(ctx))
       const pictures = await uploadPictures(client, input, opts.signal)
       const sentId = timing.newId()
       const { prompt, width, height } = input
@@ -200,8 +208,9 @@ export function comfyVideo(ctx: AdapterContext, deps: ComfyVideoDeps = {}): Vide
     },
 
     // [1.60] N-6: the size fillValuesFor will send for this start pair.
-    runSize(width, height, videoStart) {
-      return runSizeOf(workflowForRun('video', videoStart), { width, height })
+    runSize(width, height, videoStart, workflowId) {
+      const spec = workflowForRun('video', videoStart, runWorkflows(ctx), workflowId)
+      return runSizeOf(spec, { width, height })
     },
   }
 }

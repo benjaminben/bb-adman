@@ -6,12 +6,14 @@
 // ComfyUI the address, the workflow offered for that pair and its length, and how many
 // references that workflow takes; each picture, which must be a picture the app can read;
 // last, for ComfyUI, the licence check (S2-4), so the user confirms only a run that can start.
+// D-104: for ComfyUI it gives back the chosen workflow, named or the default.
 import type { CoreDeps } from '@/main/core-deps'
 import type { PrepareContext } from '@/main/commands/types'
 import { readWireRow } from '@/main/db/rows'
+import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
 import type { ProjectHandle } from '@/main/db/project-file'
 import { checkComfyVideo, videoNotOffered } from './comfy-video-checks'
-import { tooManyReferences } from './comfy-checks'
+import { checkReferenceCount, type ComfyCheckDeps } from './comfy-checks'
 import { checkLicence } from './licence-check'
 import { startPair, type StartFields } from './start-pair'
 import { checkVideoOffer, checkVideoTarget } from './video-offer-checks'
@@ -22,11 +24,14 @@ import type { JobRow } from '@/shared/schemas/rows/job'
 import { AppError } from '@/shared/schemas/result'
 import { videoStartRefusal } from '@/shared/video/messages'
 
-type Deps = Pick<CoreDeps, 'devTools' | 'assets' | 'providers'> & {
-  settings: Pick<CoreDeps['settings'], 'get'>
-}
+type Deps = Pick<CoreDeps, 'assets' | 'providers'> & ComfyCheckDeps
 type Ctx = Pick<PrepareContext, 'actor' | 'project'>
-type Ask = StartFields & { variantId: string; durationMs: number; licenceConfirmed?: boolean }
+type Ask = StartFields & {
+  variantId: string
+  durationMs: number
+  licenceConfirmed?: boolean
+  workflowId?: string
+}
 
 // Slice WP: a WebP is accepted too; assets.read turns every picture into a clean PNG.
 const SENDABLE = ['image/png', 'image/jpeg', 'image/webp']
@@ -62,7 +67,7 @@ export async function checkVideoStart(
   ctx: Ctx,
   providerId: string,
   ask: Ask,
-): Promise<void> {
+): Promise<WorkflowSpec | null> {
   const label = videoLabel(deps, providerId)
   const comfy = providerId === 'comfyui'
   const offer = videoOffer(providerId)
@@ -70,13 +75,11 @@ export async function checkVideoStart(
   else if (!comfy) throw videoStartRefusal(label)
   const videoStart = startPair(ask)
   checkVideoTarget(ctx.project, ask.variantId, ask.start)
-  const spec = comfy ? checkComfyVideo(deps, ctx, ask.durationMs, videoStart) : null
-  const max = spec?.slots.references?.length ?? 0
-  if (spec && videoStart.references && ask.referenceAssetIds.length > max) {
-    throw tooManyReferences(max)
-  }
+  const spec = comfy ? checkComfyVideo(deps, ctx, ask.durationMs, videoStart, ask.workflowId) : null
+  if (spec && videoStart.references) checkReferenceCount(spec, ask.referenceAssetIds.length)
   for (const id of ask.referenceAssetIds) await usablePicture(deps, ctx.project, id)
   if (spec) checkLicence(deps, ctx, spec, ask.licenceConfirmed)
+  return spec
 }
 
 // N-5, P7-11: a video row of any provider. The stored request keeps no useReferences; IDs
@@ -86,19 +89,20 @@ export async function checkVideoRetryRequest(
   ctx: Ctx,
   old: Pick<JobRow, 'provider' | 'variantId' | 'request'>,
   licenceConfirmed?: boolean,
-) {
+): Promise<WorkflowSpec | null> {
   const providerId = old.provider ?? ''
   const label = videoLabel(deps, providerId)
   const parsed = videoJobRequest.safeParse(old.request)
   if (!parsed.success) throw providerId === 'comfyui' ? videoNotOffered() : videoStartRefusal(label)
-  const { start, referenceAssetIds, durationMs } = parsed.data
+  const { start, referenceAssetIds, durationMs, workflowId } = parsed.data
   const useReferences = start === 'none' && referenceAssetIds.length > 0
-  await checkVideoStart(deps, ctx, providerId, {
+  return checkVideoStart(deps, ctx, providerId, {
     variantId: old.variantId ?? '',
     start,
     useReferences,
     referenceAssetIds,
     durationMs,
     licenceConfirmed,
+    workflowId,
   })
 }

@@ -75,8 +75,8 @@ function keptNode(value: unknown): GraphNode | null {
 }
 
 // A two-item list of text and any number is a link. It must name an own node, by an output
-// that is a whole number from 0.
-const isLink = (v: unknown): v is [string, number] =>
+// that is a whole number from 0. fill.ts uses the same test for links left dangling.
+export const isLink = (v: unknown): v is [string, number] =>
   Array.isArray(v) && v.length === 2 && typeof v[0] === 'string' && typeof v[1] === 'number'
 
 const isGoodLink = (graph: Graph, [node, output]: [string, number]) =>

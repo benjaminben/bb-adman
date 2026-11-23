@@ -14,7 +14,7 @@ import {
 import { uploaded, workflowForRun, type ComfyImageDeps } from './image'
 import { serverChecks } from './needs'
 import { runPicture, type RunEnv } from './run'
-import { checked, pinnedClient, realTiming, runLive, runOrigin } from './session'
+import { checked, checkList, pinnedClient, realTiming, runLive, runOrigin } from './session'
 import type { WorkflowSpec } from './workflows/types'
 
 // After the check answered ok: the upload, then the run. The graph has no size slot, so the
@@ -40,7 +40,7 @@ export function comfyCutout(ctx: AdapterContext, deps: ComfyImageDeps = {}): Cut
       const spec = workflowForRun('cutout')
       const live = runLive(ctx, origin)
       const client = pinnedClient(ctx, origin, live)
-      const serverVersion = await checked(checks, origin, client, spec)
+      const serverVersion = await checked(checks, origin, client, spec, checkList(ctx))
       return cutOutChecked({ client, timing, serverVersion, live }, spec, input.image, opts)
     },
   }

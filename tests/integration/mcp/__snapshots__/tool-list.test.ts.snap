@@ -479,6 +479,9 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
           "minLength": 1,
           "type": "string",
         },
+        "workflow_id": {
+          "type": "string",
+        },
       },
       "required": [
         "project_id",
@@ -535,6 +538,9 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
         },
         "variant_id": {
           "minLength": 1,
+          "type": "string",
+        },
+        "workflow_id": {
           "type": "string",
         },
       },
