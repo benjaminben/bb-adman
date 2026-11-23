@@ -37,6 +37,7 @@
 }
 .title {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 /* Z-1b: a title with its icon before the words. */
 .withIcon {

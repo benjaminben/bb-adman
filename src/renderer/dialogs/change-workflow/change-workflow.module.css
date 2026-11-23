@@ -1,0 +1,32 @@
+/* app-style */
+/* "Change workflow" (CW-4): the fields stacked, a refusal at the top. The frame counts read as
+   one sentence with two small number fields in it. */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-field);
+  margin: 0;
+}
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-tight);
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: var(--type-meta-size);
+  color: var(--color-text-secondary);
+}
+.counts > input {
+  width: var(--field-label-width);
+  min-width: 0;
+}
+.hidden {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

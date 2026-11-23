@@ -1,0 +1,18 @@
+/* app-style */
+/* An added ComfyUI workflow (CW-4): one ObjectRow with "Change" and the trash icon at its end. */
+.item {
+  list-style: none;
+  min-width: 0;
+}
+/* Keeps "Change" in its own colours (the row draws bare state buttons muted). */
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}
+/* The line of words wraps (the shared row cuts it with an ellipsis), so "Added by an agent"
+   is never lost in a narrow window. */
+.wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

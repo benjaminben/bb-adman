@@ -12,6 +12,7 @@ import { KeysSection } from '@/renderer/screens/settings/keys-section'
 import { S3Section } from '@/renderer/screens/settings/s3-section'
 import { ApprovalsSection } from '@/renderer/screens/settings/approvals-section'
 import { ComfySection } from '@/renderer/screens/settings/comfy-section'
+import { ComfyWorkflowsSection } from '@/renderer/screens/settings/comfy-workflows-section'
 import { McpSection } from '@/renderer/screens/settings/mcp-section'
 import { AgentRunsSection } from '@/renderer/screens/settings/agent-runs-section'
 import { SideList } from '@/renderer/ui/side-list'
@@ -26,6 +27,7 @@ const PARTS: Record<SettingsPage, () => ReactNode> = {
     <>
       <KeysSection />
       <ComfySection />
+      <ComfyWorkflowsSection />
       <ProviderDefaults />
     </>
   ),
