@@ -7,8 +7,8 @@ import type { ComfyInfo, WorkflowInfo } from '@/shared/schemas/queries/comfy'
 
 async function customWorkflows(api: AdmanApi): Promise<WorkflowInfo[] | null> {
   const reply = await api.query('comfy.getInfo', {})
-  if (!reply.ok) return null
-  return (reply.data as ComfyInfo).workflows.filter((w) => w.status === 'custom')
+  const info = reply.ok ? (reply.data as ComfyInfo | null) : null
+  return info === null ? null : info.workflows.filter((w) => w.status === 'custom')
 }
 
 export function useCustomWorkflows(): { workflows: WorkflowInfo[]; read: () => Promise<void> } {

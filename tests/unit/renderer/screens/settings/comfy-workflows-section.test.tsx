@@ -8,6 +8,7 @@ import { ComfyWorkflowsSection } from '@/renderer/screens/settings/comfy-workflo
 import { SettingsScreen } from '@/renderer/screens/settings/settings-screen'
 import type { WorkflowInfo } from '@/shared/schemas/queries/comfy'
 import { axeViolations, renderApp } from '../../render'
+import { makeFakeApi } from '../../fake-api'
 import { comfyFake, info, workflow } from './comfy-fixture'
 import { PORTRAIT, TIDE_CLIP, manyWorkflows } from './custom-workflow-fixture'
 
@@ -46,6 +47,15 @@ describe('Settings: ComfyUI workflows [CW-4, D-104]', () => {
     expect(within(box).getByText('No workflows added yet.')).toBeVisible()
     expect(within(box).getByText('0 added')).toBeInTheDocument()
     expect(within(box).queryByText('MOSS picture from a prompt')).toBeNull()
+  })
+
+  it('shows the empty line when comfy.getInfo gives no data', async () => {
+    const fake = makeFakeApi()
+    fake.onQuery('comfy.getInfo', () => ({ ok: true, data: null }))
+    await renderApp(<ComfyWorkflowsSection />, fake)
+    const box = await screen.findByRole('region', { name: 'ComfyUI workflows' })
+    await waitFor(() => expect(fake.queries.some((q) => q.name === 'comfy.getInfo')).toBe(true))
+    expect(within(box).getByText('No workflows added yet.')).toBeVisible()
   })
 
   it('lists only the added workflows, with "{n} added" and nothing sent', async () => {
