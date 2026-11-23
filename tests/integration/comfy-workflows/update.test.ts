@@ -86,4 +86,30 @@ describe('comfyWorkflow.update [D-104, CW-2]', () => {
       error: { code: 'NOT_FOUND', message: 'That workflow is not on this computer.' },
     })
   })
+
+describe('comfyWorkflow.update: the name [D-104, CW-2]', () => {
+  it('cleans the name with the shared name cleaner', async () => {
+    f = makeFixture()
+    const id = add('picture')
+    const name = `"Harbour"${String.fromCharCode(0x202e)}  at night\u0007`
+    data(await update({ workflowId: id, name }))
+    expect(stored(id)?.name).toBe("'Harbour' at night")
+  })
+
+  it('refuses a name that cleans to nothing with INVALID_INPUT', async () => {
+    f = makeFixture()
+    const id = add('picture')
+    const result = await update({ workflowId: id, name: `\u0000${String.fromCharCode(0x202e)}` })
+    expect(result).toMatchObject({ ok: false, error: { code: 'INVALID_INPUT' } })
+    expect(stored(id)?.name).toBe('Beach')
+  })
+
+  it('takes "Harbour " as the name another workflow has as "harbour"', async () => {
+    f = makeFixture()
+    const id = add('picture')
+    add('two-refs', 'harbour')
+    const result = await update({ workflowId: id, name: 'Harbour ' })
+    expect(result).toMatchObject({ ok: false, error: { details: { reason: 'workflow_name_taken' } } })
+  })
+})
 })

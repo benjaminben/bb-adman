@@ -9,7 +9,6 @@ import {
   MAX_WORKFLOW_BYTES,
   SIZE_MULTIPLES,
   isAllowedVideo,
-  workflowNameSchema,
 } from '@/shared/comfy/custom-workflow'
 import type { CustomWorkflowId } from '@/shared/schemas/queries/comfy'
 
@@ -28,6 +27,10 @@ const videoSchema = z
   .strict()
   .refine(isAllowedVideo)
 
+// The name as sent. The command cleans it with the shared name cleaner, then checks it with
+// workflowNameSchema, so a name that cleans to nothing is INVALID_INPUT.
+const sentName = z.string().max(1_000)
+
 const oneOf = (options: readonly number[]) => z.number().refine((n) => options.includes(n))
 
 export const comfyWorkflowAddFromFileInput = z
@@ -38,7 +41,7 @@ export const comfyWorkflowAddFromFileInput = z
 // file checks' first step.
 export const comfyWorkflowAddInput = z
   .object({
-    name: workflowNameSchema,
+    name: sentName,
     workflowJson: z.string().max(MAX_WORKFLOW_BYTES),
     video: videoSchema.optional(),
   })
@@ -47,7 +50,7 @@ export const comfyWorkflowAddInput = z
 export const comfyWorkflowUpdateInput = z
   .object({
     workflowId: customIdSchema,
-    name: workflowNameSchema.optional(),
+    name: sentName.optional(),
     size: z
       .object({ multiple: oneOf(SIZE_MULTIPLES), maxMegapixels: oneOf(MAX_MEGAPIXEL_OPTIONS) })
       .strict()

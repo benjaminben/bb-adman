@@ -116,4 +116,15 @@ describe('the custom workflow store: adds, changes and removes [D-104, CW-2]', (
       expect(store.remove(key)).toBe(false)
     }
   })
+
+describe('the custom workflow store: names compared trimmed [D-104, CW-2]', () => {
+  it('takes "Beach " and "beach" as the same name', () => {
+    f = makeStoreFixture()
+    const store = f.open()
+    store.add({ checked: checked('two-refs'), name: 'beach', addedBy: 'user' })
+    const twin = () => store.add({ checked: checked('two-refs'), name: 'Beach ', addedBy: 'user' })
+    expect(reasonOf(twin)).toBe('workflow_name_taken')
+    expect(store.freeName(' BEACH')).toBe(' BEACH 2')
+  })
+})
 })

@@ -26,7 +26,7 @@ import {
   type ComfyWorkflowReply,
 } from '@/shared/schemas/commands/comfy-workflow'
 import { AppError } from '@/shared/schemas/result'
-import { requireVideoGraph } from './workflow-update'
+import { cleanWorkflowName, requireVideoGraph } from './workflow-update'
 
 type Deps = Pick<CoreDeps, 'comfyWorkflows'>
 
@@ -116,11 +116,12 @@ export function comfyWorkflowAdd(deps: Deps) {
     changesAppState: true,
     run(ctx, input) {
       if (ctx.actor !== 'agent') throw refusal({ reason: 'workflow_add_in_settings' })
+      const name = cleanWorkflowName(input.name)
       const graph = checked(input.workflowJson)
       if (input.video) requireVideoGraph(graph)
       const entry = deps.comfyWorkflows.add({
         checked: graph,
-        name: input.name,
+        name,
         addedBy: 'agent',
         ...(input.video && { video: input.video }),
       })

@@ -103,4 +103,30 @@ describe("comfyWorkflow.add: the agent's add [D-104, CW-2]", () => {
     expect(result).toMatchObject({ ok: false, error: { code: 'AGENT_DENIED' } })
     expect(f.core.deps.comfyWorkflows.list()).toEqual([])
   })
+
+describe('comfyWorkflow.add: the name [D-104, CW-2]', () => {
+  it('cleans the name with the shared name cleaner before it is saved', async () => {
+    f = makeFixture()
+    const name = `  "Beach"${String.fromCharCode(0x202e)}\u0000  at   dusk `
+    const reply = await run('agent', { name, workflowJson: fixtureText('picture') })
+    const id = (reply as { workflowId: string }).workflowId
+    expect(f.core.deps.comfyWorkflows.get(id)?.stored.name).toBe("'Beach' at dusk")
+  })
+
+  it('refuses a name that cleans to nothing with INVALID_INPUT', async () => {
+    f = makeFixture()
+    const name = `\u0000${String.fromCharCode(0x202e)}  `
+    expect(await run('agent', { name, workflowJson: fixtureText('picture') })).toMatchObject({
+      code: 'INVALID_INPUT',
+    })
+    expect(f.core.deps.comfyWorkflows.list()).toEqual([])
+  })
+
+  it('takes "Beach " as the same name as "beach"', async () => {
+    f = makeFixture()
+    await run('agent', { name: 'beach', workflowJson: fixtureText('picture') })
+    const twin = await run('agent', { name: 'Beach ', workflowJson: fixtureText('two-refs') })
+    expect(twin).toMatchObject({ reason: 'workflow_name_taken' })
+  })
+})
 })

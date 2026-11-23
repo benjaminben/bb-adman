@@ -20,7 +20,7 @@ import type { ActivityLog } from '@/main/log/activity-log'
 import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
 import type { CheckedWorkflow } from './check-file'
 import type { StoredCustomWorkflow } from './stored'
-import { readStoredFolder } from './store-read'
+import { nameKey, readStoredFolder } from './store-read'
 import { toCustomSpec } from './to-spec'
 
 export type CustomEntry = {
@@ -45,8 +45,6 @@ const REMOVE_FAILED = 'Adman could not remove the workflow.'
 
 const refuse = (reason: 'workflow_limit' | 'workflow_name_taken') =>
   new AppError('RULE_VIOLATION', customWorkflowRefusal({ reason }).message, { reason })
-
-const nameKey = (name: string) => name.toLowerCase()
 
 const entryOf = (stored: StoredCustomWorkflow, checked: CheckedWorkflow): CustomEntry => ({
   stored,

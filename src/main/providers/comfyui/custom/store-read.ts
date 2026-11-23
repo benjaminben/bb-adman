@@ -56,7 +56,8 @@ function readOne(dir: string, id: CustomWorkflowId): StoredRead | null {
   return read && read.stored.id === id ? read : null
 }
 
-const nameKey = (name: string) => name.toLowerCase()
+// Names are compared trimmed and without letter case: "Beach " and "beach" are one name.
+export const nameKey = (name: string) => name.trim().toLowerCase()
 
 // The kept files in order of addedAt. A file whose name another kept file already has (in
 // any letter case) is skipped too, so names stay unique.
