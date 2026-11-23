@@ -15,6 +15,7 @@ import {
 } from '@/shared/schemas/queries/dialog'
 import { pickerExtensions } from '@/shared/config/file-types'
 import { rememberSheetPath } from '@/main/translation/chosen-sheet-path'
+import { rememberWorkflowPath } from '@/main/providers/comfyui/custom/chosen-workflow-path'
 
 export const DIALOG_QUERIES = [
   'dialog.pickFolder',
@@ -30,7 +31,7 @@ function pickFilesOptions(input: unknown): Electron.OpenDialogOptions | null {
   const parsed = pickFilesInput.safeParse(input)
   if (!parsed.success) return null
   const { purpose, kind, multiple, defaultPath } = parsed.data
-  const many = multiple ?? purpose === 'import'
+  const many = purpose !== 'comfy-workflow' && (multiple ?? purpose === 'import')
   return {
     properties: many ? ['openFile', 'multiSelections'] : ['openFile'],
     ...(defaultPath !== undefined ? { defaultPath } : {}),
@@ -83,11 +84,20 @@ export async function runDialogQuery(
     const result = opts.window
       ? await dialog.showOpenDialog(opts.window, options)
       : await dialog.showOpenDialog(options)
-    if (name === 'dialog.pickFiles') return ok({ paths: result.canceled ? [] : result.filePaths })
+    if (name === 'dialog.pickFiles') return ok({ paths: pickedFiles(input, result) })
     return ok({ path: result.canceled ? null : (result.filePaths[0] ?? null) })
   } catch (e) {
     return failInternal(name, e, opts)
   }
+}
+
+// D-104: comfyWorkflow.addFromFile reads only the workflow file chosen here.
+function pickedFiles(input: unknown, result: Electron.OpenDialogReturnValue): string[] {
+  const paths = result.canceled ? [] : result.filePaths
+  const chosen = paths[0]
+  const purpose = pickFilesInput.safeParse(input).data?.purpose
+  if (purpose === 'comfy-workflow' && chosen !== undefined) rememberWorkflowPath(chosen)
+  return paths
 }
 
 // The reply is the chosen path or null; nothing else from the dialog's answer is passed on.

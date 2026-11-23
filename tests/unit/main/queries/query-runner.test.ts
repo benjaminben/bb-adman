@@ -16,6 +16,7 @@ import type { ExportDeps, ExportPictures } from '@/main/export/types'
 import { noMediaTool } from '@/main/media/no-media'
 import { createPublishDeps } from '@/main/publish/deps'
 import { defaultDropboxFetch } from '@/main/providers/dropbox/fetch'
+import type { CustomWorkflowStore } from '@/main/providers/comfyui/custom/store'
 
 let dir: string | undefined
 afterEach(() => {
@@ -73,6 +74,7 @@ describe('query runner: INTERNAL [SPEC 4.1, 4.3]', () => {
       appVersion: '0.1.0',
       now: () => new Date(),
       userDataDir: dir,
+      comfyWorkflows: {} as unknown as CustomWorkflowStore,
     })
 
     const result = await query('app.getState', {}, { actor: 'user' })

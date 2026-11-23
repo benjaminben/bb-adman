@@ -1,5 +1,6 @@
 // Start-up (SPEC 12). A double-clicked project file arrives as 'open-file' on macOS and as a
 // command-line argument on Windows; single-instance.ts and open-from-system.ts handle both.
+import path from 'node:path'
 import {
   app,
   BrowserWindow,
@@ -191,6 +192,7 @@ function start(): void {
   void cleanLeftovers(app.getPath('userData'))
   core = createCore({
     userDataDir: app.getPath('userData'),
+    comfyWorkflowsDir: path.join(app.getPath('userData'), 'comfy-workflows'),
     documentsDir: app.getPath('documents'),
     appVersion: app.getVersion(),
     crypto: safeStorageCrypto,

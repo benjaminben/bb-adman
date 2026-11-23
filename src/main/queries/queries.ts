@@ -9,6 +9,7 @@ import { assetQueries } from './asset'
 import { campaignQueries } from './campaign'
 import { checkQueries } from './check'
 import { comfyQueries } from './comfy'
+import { comfyWorkflowQueries } from './comfy-workflow'
 import { activityQueries } from './activity'
 import { askFilesQueries } from './ask-files'
 import type { PermissionBroker } from '@/main/mcp/permissions'
@@ -49,6 +50,7 @@ export function queryTable(
     ...campaignQueries(deps),
     ...checkQueries(deps),
     ...comfyQueries(deps),
+    ...comfyWorkflowQueries(deps),
     ...historyQueries(deps),
     ...jobQueries(deps),
     ...jobGetQueries(deps),

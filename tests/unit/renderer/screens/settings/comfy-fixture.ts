@@ -17,6 +17,7 @@ export function workflow(overrides: Partial<WorkflowInfo> = {}): WorkflowInfo {
     licence: { name: 'Apache-2.0', url: 'https://example.com/licence', commercialNote: null },
     leavesOnServer: [],
     offered: true,
+    isDefault: true,
     ...overrides,
   }
 }

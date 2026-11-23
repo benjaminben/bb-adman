@@ -103,8 +103,8 @@ describe('dialog.pickSaveFile remembers the chosen path [P6-7b]', () => {
   it('remembers the path it gave, for one use', async () => {
     forgetSheetPath()
     await runDialogQuery('dialog.pickSaveFile', PICK)
-    expect(takeSheetPath('/w/sheet.csv')).toBe(true)
-    expect(takeSheetPath('/w/sheet.csv')).toBe(false)
+    expect(takeSheetPath('/w/sheet.csv')).toBe('/w/sheet.csv')
+    expect(takeSheetPath('/w/sheet.csv')).toBeNull()
   })
 
   it('remembers nothing when cancelled, and keeps the earlier choice', async () => {
@@ -112,6 +112,6 @@ describe('dialog.pickSaveFile remembers the chosen path [P6-7b]', () => {
     await runDialogQuery('dialog.pickSaveFile', PICK)
     showSaveDialog.mockResolvedValue({ canceled: true, filePath: '' })
     await runDialogQuery('dialog.pickSaveFile', PICK)
-    expect(takeSheetPath('/w/sheet.csv')).toBe(true)
+    expect(takeSheetPath('/w/sheet.csv')).toBe('/w/sheet.csv')
   })
 })

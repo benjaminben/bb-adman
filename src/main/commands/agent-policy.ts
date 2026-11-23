@@ -113,6 +113,11 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'agent.answerPermission': deny('answer permission requests'),
   'comfy.setAddress': deny('change the ComfyUI address'),
   'comfy.check': deny('check the ComfyUI server'),
+  // D-104, CW-2: all four deny for now; CW-6a turns add and remove to ask.
+  'comfyWorkflow.addFromFile': deny('add ComfyUI workflows from a file'),
+  'comfyWorkflow.add': deny('add ComfyUI workflows'),
+  'comfyWorkflow.update': deny('change ComfyUI workflows'),
+  'comfyWorkflow.remove': deny('remove ComfyUI workflows'),
   'agentRuns.setAllowed': deny('change which runs agents may start'),
   'agentRuns.setLimit': deny('change agent run limits'),
   'dev.comfyExtend': deny('use the hand-test tools'),

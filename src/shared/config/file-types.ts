@@ -59,10 +59,12 @@ export function fileTypeFor(fileName: string): FileType | undefined {
   return FILE_TYPES.find((t) => t.extensions.includes(ext))
 }
 
-export type PickPurpose = 'import' | 'relink' | 'brief'
+export type PickPurpose = 'import' | 'relink' | 'brief' | 'comfy-workflow'
 
-// SPEC 4.3: the extensions a dialog.pickFiles call offers, by purpose and kind.
+// SPEC 4.3: the extensions a dialog.pickFiles call offers, by purpose and kind. D-104: a
+// ComfyUI workflow is a .json file, for that purpose only.
 export function pickerExtensions(purpose: PickPurpose, kind?: AssetKind): string[] {
+  if (purpose === 'comfy-workflow') return ['json']
   const only = purpose === 'brief' ? 'text' : kind
   return FILE_TYPES.filter((t) => !only || t.kind === only).flatMap((t) => t.extensions)
 }

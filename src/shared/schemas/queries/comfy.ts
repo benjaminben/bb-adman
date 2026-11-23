@@ -59,8 +59,13 @@ export type WorkflowFacts = {
 }
 
 export type WorkflowInfo = WorkflowFacts & {
-  // S2-4: the workflow the user's run of this job (and, for video, start pair) gets now.
+  // D-104: the person may pick it now. For a shipped one, as S2-4: the one the person's run
+  // of this job (and, for video, start pair) gets. True for every custom one.
   offered: boolean
+  // D-104: the one a run of this job and start gets with no workflow named.
+  isDefault: boolean
+  // D-104: set only for a custom workflow.
+  custom?: { addedBy: 'user' | 'agent'; addedAt: string; nodeCount: number }
 }
 
 export type ComfyInfo = {
