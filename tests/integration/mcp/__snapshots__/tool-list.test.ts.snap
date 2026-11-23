@@ -438,7 +438,7 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     "name": "list_jobs",
   },
   {
-    "description": "Start a run that makes pictures for one variant of an open project. Name a slot (from get_slots) or a layer_id, not both. count is 1 to 8. reference_asset_ids are asset IDs from list_assets, or an empty list. provider is "comfyui" (the user's own ComfyUI server, no charge; the model is the one its workflow uses: MOSS-Image or FLUX 3 klein for pictures, MiniMax H3 for videos) or "gemini" (pictures with Nano Banana 2.1, model ID "gemini-nano-banana-2.1", not videos; paid, charged to the user's Google account with no click). Runs are refused unless the user allowed agents for that provider in Adman's Settings. Gives the job ID at once; follow the run with get_job. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
+    "description": "Start a run that makes pictures for one variant of an open project. Name a slot (from get_slots) or a layer_id, not both. count is 1 to 8. reference_asset_ids are asset IDs from list_assets, or an empty list. provider is "comfyui" (the user's own ComfyUI server, no charge; the model is the one its workflow uses: MOSS-Image or FLUX 3 klein for pictures, MiniMax H3 for videos) or "gemini" (pictures with Nano Banana 2.1, model ID "gemini-nano-banana-2.1", not videos; paid, charged to the user's Google account with no click). Runs are refused unless the user allowed agents for that provider in Adman's Settings. workflow_id names a workflow from list_comfy_workflows; leave it out for the default. Gives the job ID at once; follow the run with get_job. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
@@ -496,7 +496,7 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     "name": "generate_images",
   },
   {
-    "description": "Start a run that makes a video clip for one variant of an open project. duration_ms is the clip length in milliseconds. Three starts: from the prompt alone (start "none", use_references false, reference_asset_ids empty); from a first-frame picture (start "first_frame", use_references false, one ID in reference_asset_ids); with reference pictures (start "none", use_references true, their IDs in reference_asset_ids). A picture is named by an asset ID from list_assets. A fourth start, "background" (use_references false, reference_asset_ids empty), uses the variant's background picture as the first frame. provider is "comfyui" (the user's own ComfyUI server, no charge; the model is the one its workflow uses: MOSS-Image or FLUX 3 klein for pictures, MiniMax H3 for videos) or "gemini" (pictures with Nano Banana 2.1, model ID "gemini-nano-banana-2.1", not videos; paid, charged to the user's Google account with no click). Runs are refused unless the user allowed agents for that provider in Adman's Settings. For a video, provider can also be "fal-seedance" (fal.ai, Seedance 2.0, model ID "bytedance/seedance-2.0/image-to-video"; paid, charged to the user's fal.ai account with no click; duration_ms from 4000 to 15000, in whole seconds; at most 8 reference pictures). Gives the job ID at once; follow the run with get_job. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
+    "description": "Start a run that makes a video clip for one variant of an open project. duration_ms is the clip length in milliseconds. Three starts: from the prompt alone (start "none", use_references false, reference_asset_ids empty); from a first-frame picture (start "first_frame", use_references false, one ID in reference_asset_ids); with reference pictures (start "none", use_references true, their IDs in reference_asset_ids). A picture is named by an asset ID from list_assets. A fourth start, "background" (use_references false, reference_asset_ids empty), uses the variant's background picture as the first frame. provider is "comfyui" (the user's own ComfyUI server, no charge; the model is the one its workflow uses: MOSS-Image or FLUX 3 klein for pictures, MiniMax H3 for videos) or "gemini" (pictures with Nano Banana 2.1, model ID "gemini-nano-banana-2.1", not videos; paid, charged to the user's Google account with no click). Runs are refused unless the user allowed agents for that provider in Adman's Settings. For a video, provider can also be "fal-seedance" (fal.ai, Seedance 2.0, model ID "bytedance/seedance-2.0/image-to-video"; paid, charged to the user's fal.ai account with no click; duration_ms from 4000 to 15000, in whole seconds; at most 8 reference pictures). workflow_id names a workflow from list_comfy_workflows; leave it out for the default. Gives the job ID at once; follow the run with get_job. A run you start makes options for the user to choose from. Leave the choice to the user unless they asked you to choose.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
@@ -2149,6 +2149,78 @@ A subject's pictures are asset IDs from list_assets or full file paths. If any f
       "type": "object",
     },
     "name": "delete_subject",
+  },
+  {
+    "description": "List the ComfyUI workflows you may name in generate_images and generate_video: id, name, job (image, image_refs or video), start for a video (prompt, first_frame or references) and whether it is the default. For a video, start prompt means start none with use_references false; first_frame means start first_frame; references means start none with use_references true.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {},
+      "type": "object",
+    },
+    "name": "list_comfy_workflows",
+  },
+  {
+    "description": "Add a ComfyUI workflow in API format (Export (API) in ComfyUI). Send the file's text in workflow_json, at most 2 MB. Mark each step Adman fills by starting its title with adman: and a mark: prompt, seed, width, height, ref1 to ref8, first-frame, frames, output; name an input with =, as in adman: seed=noise_seed. The user is asked every time and sees the name, the job and every node type; you wait up to two minutes, and a refusal is final. Gives the new workflow's id. You cannot read a workflow back.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "name": {
+          "maxLength": 1000,
+          "type": "string",
+        },
+        "video": {
+          "additionalProperties": false,
+          "properties": {
+            "fps": {
+              "type": "number",
+            },
+            "frameOffset": {
+              "type": "number",
+            },
+            "frameStep": {
+              "type": "number",
+            },
+            "maxMs": {
+              "type": "number",
+            },
+          },
+          "required": [
+            "fps",
+            "maxMs",
+            "frameStep",
+            "frameOffset",
+          ],
+          "type": "object",
+        },
+        "workflow_json": {
+          "maxLength": 2097152,
+          "type": "string",
+        },
+      },
+      "required": [
+        "name",
+        "workflow_json",
+      ],
+      "type": "object",
+    },
+    "name": "add_comfy_workflow",
+  },
+  {
+    "description": "Remove a workflow you or the user added. This cannot be undone. The user is asked in the app, and this call waits up to two minutes. A refusal is final.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "workflow_id": {
+          "pattern": "^custom-[0-9a-f]{12}$",
+          "type": "string",
+        },
+      },
+      "required": [
+        "workflow_id",
+      ],
+      "type": "object",
+    },
+    "name": "remove_comfy_workflow",
   },
 ]
 `;

@@ -7,7 +7,13 @@ import { data } from '../core-fixture'
 import { makeMcpFixture, stopAndClean, type McpFixture } from './mcp-fixture'
 import { USER_SECRET_NAMES } from '@/shared/schemas/secrets'
 import * as c from './http-client'
-import { callEveryTool, PLANTED_IMPORT_PATH } from './every-tool'
+import {
+  callEveryTool,
+  markedGraphText,
+  PLANTED_GRAPH_MARKER,
+  PLANTED_IMPORT_PATH,
+} from './every-tool'
+import { checkWorkflowText } from '@/main/providers/comfyui/custom/check-file'
 import { BUILT_TOOLS } from './tool-client'
 import { createInput } from '../campaigns/campaign-fixture'
 
@@ -144,7 +150,15 @@ async function plantedProject(fx: McpFixture) {
     )
     .run(abs)
   plantApprovals(fx, projectId, campaignId)
-  return { projectId, campaignId }
+  return { projectId, campaignId, workflowId: plantWorkflow(fx) }
+}
+
+// CW-6a: a stored custom workflow whose graph holds the marker in every kind of text.
+function plantWorkflow(fx: McpFixture): string {
+  const checked = checkWorkflowText(markedGraphText())
+  if (!checked.ok) throw new Error('the marked graph failed the checks')
+  const store = fx.core.deps.comfyWorkflows
+  return store.add({ checked: checked.data, name: 'Made-up harbour', addedBy: 'user' }).stored.id
 }
 
 function plantApprovals(fx: McpFixture, projectId: string, campaignId: string) {
@@ -209,5 +223,13 @@ describe('No MCP tool reply holds a secret, the token, the ComfyUI address or a 
     for (const where of [f.readLogs(), JSON.stringify(f.events)]) {
       expect(where.includes('made-up-agent-import'), 'the import file name').toBe(false)
     }
+    // CW-6a (rule 2): the listed workflow is named, its graph text never is.
+    expect(text.includes(ids.workflowId)).toBe(true)
+    for (const [where, value] of [...places, ['tool reply', text] as [string, string]]) {
+      expect(value.includes(PLANTED_GRAPH_MARKER), `graph text found in ${where}`).toBe(false)
+    }
+    expect(text.includes(path.join(f.userData, 'comfy-workflows')), 'the workflows folder').toBe(
+      false,
+    )
   })
 })

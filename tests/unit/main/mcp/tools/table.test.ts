@@ -20,13 +20,16 @@ const TICK_TARGETS = [
 ]
 
 // P10-6, P10-11: the delete tools, ask under the permission broker (D-023, D-099). R2P-1: the
-// Round 2 commands that import files (D5, D6), ask with kind import.
+// Round 2 commands that import files (D5, D6), ask with kind import. CW-6a: an agent's workflow
+// add (kind workflow) and remove (kind delete).
 const ASK_TARGETS = [
   'campaign.delete',
   'variant.delete',
   'asset.importFiles',
   'campaign.createFromBriefWithFiles',
   'subject.delete',
+  'comfyWorkflow.add',
+  'comfyWorkflow.remove',
 ]
 
 describe('the fixed MCP tool table [SPEC 4.5; 14 1.56 MCP-B]', () => {
@@ -71,6 +74,8 @@ describe('the fixed MCP tool table [SPEC 4.5; 14 1.56 MCP-B]', () => {
       'variant.get',
       'variant.render',
       'check.results',
+      // CW-6a: five fields per workflow, never a graph, a path or the address.
+      'comfyWorkflow.list',
     ]
     for (const t of MCP_TOOLS.filter((x) => x.kind === 'query')) {
       expect(allowed, t.name).toContain(t.target)

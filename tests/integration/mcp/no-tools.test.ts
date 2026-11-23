@@ -45,6 +45,9 @@ const SECTION_4_5_TOOLS = [
   'create_campaign_from_brief',
   'create_project',
   'delete_subject',
+  'list_comfy_workflows',
+  'add_comfy_workflow',
+  'remove_comfy_workflow',
 ]
 
 async function listTools(fx: McpFixture): Promise<string[]> {
