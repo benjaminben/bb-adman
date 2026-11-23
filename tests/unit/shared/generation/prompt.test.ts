@@ -197,3 +197,57 @@ describe('FILL_PROMPT [A-146]', () => {
     expect(promptToSend(sent, { pictures: 1 })).toBe(sent)
   })
 })
+
+// spec/brief-brand.md "The art direction sentence" [A-403].
+describe('the art direction sentence [spec/brief-brand.md; A-403]', () => {
+  const base = {
+    subjects: [{ name: 'Citrus can', description: null }],
+    audience: 'young adults',
+    region: 'Canada',
+    message: 'Fresh all day',
+    wordsOnLayers: true,
+  }
+
+  it('goes between the first sentence and the last, as the spec example', () => {
+    const text = prefilledPrompt({
+      ...base,
+      artDirection: 'Products on the right, soft morning light',
+    })
+    expect(text).toBe(
+      'A picture of Citrus can for an advertisement aimed at young adults in Canada. ' +
+        'Art direction: Products on the right, soft morning light. ' +
+        "Leave clear space for the advertisement's words, which are added separately.",
+    )
+  })
+
+  it('folds each run of white space into one space and trims', () => {
+    const text = prefilledPrompt({ ...base, artDirection: '  Soft\n\n light \t here ' })
+    expect(text).toContain(' Art direction: Soft light here. Leave')
+  })
+
+  it.each(['Soft light.', 'Soft light!', 'Soft light?'])('adds no second stop to %j', (art) => {
+    expect(prefilledPrompt({ ...base, artDirection: art })).toContain(`Art direction: ${art} Leave`)
+  })
+
+  it.each([null, undefined, '', ' \n '])('with %j gives the prompt as before', (art) => {
+    for (const facts of [base, { ...base, wordsOnLayers: false }]) {
+      const plain = prefilledPrompt(facts)
+      expect(prefilledPrompt({ ...facts, artDirection: art })).toBe(plain)
+      expect(plain).not.toContain('Art direction')
+    }
+  })
+
+  it('goes before the message sentence when the layers hold no words', () => {
+    const text = prefilledPrompt({ ...base, wordsOnLayers: false, artDirection: 'Soft light' })
+    expect(text).toContain("Art direction: Soft light. The advertisement's message: Fresh all day")
+  })
+
+  it('goes into a video prompt too', () => {
+    const text = prefilledPrompt({ ...base, kind: 'video', artDirection: 'Slow pan' })
+    expect(text).toBe(
+      'A video of Citrus can for an advertisement aimed at young adults in Canada. ' +
+        'Art direction: Slow pan. ' +
+        "Leave clear space for the advertisement's words, which are added separately.",
+    )
+  })
+})

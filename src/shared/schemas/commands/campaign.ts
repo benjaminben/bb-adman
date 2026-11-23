@@ -68,13 +68,25 @@ function withCreateRules<T extends z.ZodType<CreateFields>>(schema: T): T {
     })
 }
 
+// spec/brief-brand.md "Schemas": the brand files as asset IDs of the open project. Each is
+// optional; campaign.create checks each one's kind and library.
+const campaignBrand = z.object({
+  logoAssetId: z.string().min(1).optional(),
+  headingFontAssetId: z.string().min(1).optional(),
+  bodyFontAssetId: z.string().min(1).optional(),
+})
+
 // spec/subject-photos.md, SP-6: false leaves the subject-image slot empty; left out or true
 // fills it with the hero image as before.
 export const campaignCreateInput = withCreateRules(
-  campaignCreateFields.extend({ placeSubjectPhoto: z.boolean().optional() }),
+  campaignCreateFields.extend({
+    placeSubjectPhoto: z.boolean().optional(),
+    brand: campaignBrand.optional(),
+  }),
 )
 export type CampaignCreateInput = z.infer<typeof campaignCreateInput>
 
 // The create_campaign MCP tool's input: the same, without placeSubjectPhoto, so an agent's
-// campaign always fills the subject-image slot (A-122).
+// campaign always fills the subject-image slot (A-122), and without brand: an agent sets fonts
+// after with layer.setFonts (spec/brief-brand.md "Agents").
 export const campaignCreateToolInput = withCreateRules(campaignCreateFields)

@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { DEFAULT_STARTER_LAYOUT_ID, STARTER_LAYOUTS } from '@/shared/config/starter-layouts'
+import {
+  DEFAULT_STARTER_LAYOUT_ID,
+  STARTER_LAYOUTS,
+  starterLayoutOf,
+} from '@/shared/config/starter-layouts'
 import { DEFAULT_STARTER_LAYOUT, SLOT_LAYOUTS } from '@/shared/config/default-layout'
 import { HEX_COLOUR, Shade } from '@/shared/schemas/layer'
 import { frameOf, geometryOf } from '@/shared/templates/layout-rules'
@@ -76,4 +80,18 @@ describe('STARTER_LAYOUTS [spec/starter-layouts.md]', () => {
       }
     }
   })
+})
+
+// spec/brief-brand.md "Shared helpers": the layout with exactly this ID.
+describe('starterLayoutOf [spec/brief-brand.md]', () => {
+  it.each(STARTER_LAYOUTS.map((l) => [l.id, l] as const))('finds %s', (id, layout) => {
+    expect(starterLayoutOf(id)).toBe(layout)
+  })
+
+  it.each(['nope', 'Photo-Top-Centre', ' photo-top-centre', '', 'constructor', '__proto__'])(
+    'gives null for %j',
+    (id) => {
+      expect(starterLayoutOf(id)).toBeNull()
+    },
+  )
 })
