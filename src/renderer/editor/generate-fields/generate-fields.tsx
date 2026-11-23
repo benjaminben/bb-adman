@@ -23,6 +23,7 @@ import type { WorkflowId } from '@/shared/schemas/queries/comfy'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { ReferenceStrip } from './reference-strip'
 import { RunStatus } from './run-status'
+import { startCountsReply } from './start-counts'
 import layout from '@/renderer/ui/layout.module.css'
 import { useFirstDraft } from './use-first-draft'
 import styles from './generate-fields.module.css'
@@ -84,7 +85,7 @@ export function GenerateFields(props: GenerateFieldsProps) {
       change(key, { run: { jobId, count: sent } })
       setDialog(null)
     }
-    return reply
+    return startCountsReply(reply, typeof props.start === 'string', pictures.length - 1)
   }
 
   return (
