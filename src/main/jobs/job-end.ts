@@ -2,8 +2,8 @@
 // while it runs and when it ends. Every end of a job goes through endChange.
 //   running     what was kept, plus stage, queuePosition, cancelAsked
 //   succeeded   what the handler returned, plus finishedAfterCancel when a stop was asked
-//   otherwise   what was kept, plus cancelAsked, outcomeUnknown, stoppedWaiting, missing;
-//               null when that is empty
+//   otherwise   what was kept, plus cancelAsked, outcomeUnknown, stoppedWaiting, missing,
+//               missingCount; null when that is empty
 // The runner's field names win over a kept value that uses one of them.
 import type { JobChange } from './job-store'
 import type { LiveJob } from './live'
@@ -16,6 +16,7 @@ const RUNNER_FIELDS = new Set([
   'outcomeUnknown',
   'stoppedWaiting',
   'missing',
+  'missingCount',
   'finishedAfterCancel',
 ])
 
@@ -28,6 +29,7 @@ export type JobEnd =
       errorReason: ProviderErrorReason | null
       errorDetail: string
       missing?: unknown[]
+      missingCount?: number
     }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -57,7 +59,10 @@ export function endChange(live: LiveJob, end: JobEnd): JobChange {
   if (end.status === 'cancelled') {
     if (end.outcomeUnknown) fields.outcomeUnknown = true
     if (end.stoppedWaiting) fields.stoppedWaiting = true
-  } else if (end.missing) fields.missing = end.missing
+  } else {
+    if (end.missing) fields.missing = end.missing
+    if (end.missingCount !== undefined) fields.missingCount = end.missingCount
+  }
   const kept = { ...keptOf(live), ...fields }
   const result = Object.keys(kept).length > 0 ? kept : null
   if (end.status === 'cancelled') return { status: 'cancelled', result }

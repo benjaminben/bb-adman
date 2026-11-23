@@ -55,12 +55,14 @@ export function checkFailure(outcome: Exclude<ComfyCheckOutcome, 'ok'>): Provide
   return comfyFailure(outcome, `The check ended ${outcome}`, kind)
 }
 
-// The names come from the app's own workflow file (SPEC 6.10.3), so the list is safe to show.
-export function missingFailure(missing: MissingItem[]): ProviderFailure {
-  return new ProviderFailure({
-    kind: 'other',
-    reason: 'missing_items',
-    detail: `The server is missing ${missing.length} item(s)`,
-    missing,
-  })
+// For a shipped workflow the names come from the app's own workflow file (SPEC 6.10.3), so
+// the list is safe to show. A custom workflow's names come from its graph (D-104, rule 2):
+// the failure holds only their count, since job rows reach events and project files.
+export function missingFailure(missing: MissingItem[], custom = false): ProviderFailure {
+  const detail = `The server is missing ${missing.length} item(s)`
+  if (custom) {
+    const count = { missing: [], missingCount: missing.length }
+    return new ProviderFailure({ kind: 'other', reason: 'missing_items', detail, ...count })
+  }
+  return new ProviderFailure({ kind: 'other', reason: 'missing_items', detail, missing })
 }

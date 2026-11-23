@@ -87,6 +87,8 @@ export type ProviderError = {
   reason?: ProviderErrorReason
   detail: string
   missing?: MissingItem[]
+  // D-104 (CW-7): for a custom workflow `missing` is empty and this is how many items it lacks.
+  missingCount?: number
 }
 
 // SPEC 4.3 app.getState.
