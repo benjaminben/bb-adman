@@ -64,8 +64,15 @@ export type WorkflowInfo = WorkflowFacts & {
   offered: boolean
   // D-104: the one a run of this job and start gets with no workflow named.
   isDefault: boolean
-  // D-104: set only for a custom workflow.
-  custom?: { addedBy: 'user' | 'agent'; addedAt: string; nodeCount: number }
+  // D-104: set only for a custom workflow. sizeMarks: its graph has width and height marks,
+  // so its size can be changed. references: how many reference pictures it takes.
+  custom?: {
+    addedBy: 'user' | 'agent'
+    addedAt: string
+    nodeCount: number
+    sizeMarks: boolean
+    references: number
+  }
 }
 
 export type ComfyInfo = {

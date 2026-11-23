@@ -53,7 +53,13 @@ function customInfo({ spec, stored, checked }: CustomEntry, who: Who, deps: Deps
     ...factsOf(spec),
     offered: true,
     isDefault: isDefaultWorkflow(spec, who, deps.comfyWorkflows),
-    custom: { addedBy: stored.addedBy, addedAt: stored.addedAt, nodeCount: checked.nodeCount },
+    custom: {
+      addedBy: stored.addedBy,
+      addedAt: stored.addedAt,
+      nodeCount: checked.nodeCount,
+      sizeMarks: checked.slots.width !== undefined,
+      references: checked.slots.references?.length ?? 0,
+    },
   }
 }
 

@@ -19,7 +19,14 @@ export function customWorkflow(
     licence: { name: 'Not known', url: '', commercialNote: null },
     offered: true,
     isDefault: false,
-    custom: { addedBy: 'user', addedAt: '2026-11-20T09:30:00.000Z', nodeCount: 12, ...custom },
+    custom: {
+      addedBy: 'user',
+      addedAt: '2026-11-20T09:30:00.000Z',
+      nodeCount: 12,
+      sizeMarks: false,
+      references: 0,
+      ...custom,
+    },
     ...overrides,
   })
 }
@@ -48,6 +55,24 @@ export const HARBOUR_FIRST = customWorkflow(
     video: CUSTOM_VIDEO_DEFAULT,
   },
   { nodeCount: 1, addedAt: '2026-11-22T08:00:00.000Z' },
+)
+
+// A picture workflow with size marks that takes two reference pictures.
+export const TWO_PICTURES = customWorkflow(
+  { id: 'custom-3a4b5c6d7e8f', label: 'Poster from two pictures', job: 'image_refs' },
+  { nodeCount: 4, sizeMarks: true, references: 2 },
+)
+
+export const CLIP_FROM_ONE = customWorkflow(
+  {
+    id: 'custom-4a5b6c7d8e9f',
+    label: 'Clip from one picture',
+    job: 'video',
+    videoStart: { firstFrame: false, references: true },
+    size: CUSTOM_SIZE_DEFAULTS.video,
+    video: CUSTOM_VIDEO_DEFAULT,
+  },
+  { nodeCount: 9, references: 1 },
 )
 
 // n custom workflows with made-up names, for the limit.

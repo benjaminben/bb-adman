@@ -25,9 +25,23 @@ describe('comfy.getInfo with custom workflows [D-104, CW-2]', () => {
       offered: true,
       isDefault: false,
       licence: { name: 'Not known', url: '', commercialNote: null },
-      custom: { addedBy: 'agent', addedAt: beach.stored.addedAt, nodeCount: 7 },
+      custom: {
+        addedBy: 'agent',
+        addedAt: beach.stored.addedAt,
+        nodeCount: 7,
+        sizeMarks: true,
+        references: 0,
+      },
     })
     expect(JSON.stringify(result)).not.toContain('class_type')
+  })
+
+  it('says how many reference pictures a custom workflow takes [CW-4]', async () => {
+    f = makeFixture()
+    const store = f.core.deps.comfyWorkflows
+    store.add({ checked: checked('two-refs'), name: 'Two', addedBy: 'user' })
+    const custom = (await info()).workflows.at(-1)
+    expect(custom?.custom?.references).toBe(2)
   })
 
   it('keeps offered for shipped entries, and marks the default ones', async () => {

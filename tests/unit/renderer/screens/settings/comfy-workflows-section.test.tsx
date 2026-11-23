@@ -11,7 +11,7 @@ import type { Result } from '@/shared/schemas/result'
 import { axeViolations, renderApp } from '../../render'
 import { makeFakeApi } from '../../fake-api'
 import { comfyFake, info, workflow } from './comfy-fixture'
-import { PORTRAIT, TIDE_CLIP, manyWorkflows } from './custom-workflow-fixture'
+import { PORTRAIT, TIDE_CLIP, TWO_PICTURES, manyWorkflows } from './custom-workflow-fixture'
 
 const PICKED = '/Users/made-up/Exports/Studio portrait.json'
 const INTRO =
@@ -157,6 +157,18 @@ describe('Settings: ComfyUI workflows [CW-4, D-104]', () => {
     await userEvent.click(within(box).getByRole('button', { name: 'Remove Tide clip' }))
     expect(await screen.findByRole('dialog', { name: 'Remove Tide clip?' })).toBeInTheDocument()
     expect(sent()).toEqual([])
+  })
+
+  it('shows the size fields in Change only for a workflow with size marks', async () => {
+    const { box } = await draw([PORTRAIT, TWO_PICTURES])
+    const change = within(box).getAllByRole('button', { name: 'Change' })
+    await userEvent.click(change[0]!)
+    const plain = await screen.findByRole('dialog', { name: 'Change workflow' })
+    expect(within(plain).queryByLabelText('Largest size')).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    await userEvent.click(change[1]!)
+    const marked = await screen.findByRole('dialog', { name: 'Change workflow' })
+    expect(within(marked).getByLabelText('Largest size')).toBeInTheDocument()
   })
 
   it('reads comfy.getInfo again when the app state changes', async () => {

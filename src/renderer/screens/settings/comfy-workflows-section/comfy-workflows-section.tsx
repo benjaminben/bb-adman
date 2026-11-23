@@ -76,7 +76,11 @@ export function ComfyWorkflowsSection() {
           {line.words}
         </NoticeLine>
       )}
-      <ChangeWorkflow workflow={changing} sizeMarks={false} onClose={() => close(setChanging)} />
+      <ChangeWorkflow
+        workflow={changing}
+        sizeMarks={changing?.custom?.sizeMarks ?? false}
+        onClose={() => close(setChanging)}
+      />
       <RemoveWorkflow workflow={removing} onClose={() => close(setRemoving)} />
     </Section>
   )

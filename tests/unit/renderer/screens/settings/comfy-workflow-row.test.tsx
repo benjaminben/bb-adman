@@ -7,7 +7,13 @@ import { describe, expect, it, vi } from 'vitest'
 import { ComfyWorkflowRow } from '@/renderer/screens/settings/comfy-workflow-row'
 import type { WorkflowInfo } from '@/shared/schemas/queries/comfy'
 import { axeViolations } from '../../render'
-import { HARBOUR_FIRST, PORTRAIT, TIDE_CLIP } from './custom-workflow-fixture'
+import {
+  CLIP_FROM_ONE,
+  HARBOUR_FIRST,
+  PORTRAIT,
+  TIDE_CLIP,
+  TWO_PICTURES,
+} from './custom-workflow-fixture'
 
 function draw(workflow: WorkflowInfo) {
   const onChange = vi.fn()
@@ -27,6 +33,8 @@ describe('ComfyUI workflow row [CW-4, D-104]', () => {
     [PORTRAIT, 'Picture from a prompt · 12 nodes'],
     [TIDE_CLIP, 'Video from a prompt · 31 nodes · Added by an agent'],
     [HARBOUR_FIRST, 'Video from a first frame · 1 node'],
+    [TWO_PICTURES, 'Picture from a prompt and 2 reference pictures · 4 nodes'],
+    [CLIP_FROM_ONE, 'Video from 1 reference picture · 9 nodes'],
   ])('shows the name and its line of words', (workflow, words) => {
     const { item } = draw(workflow)
     expect(item).toHaveTextContent(workflow.label)
