@@ -2,7 +2,8 @@
 // say what a custom workflow makes. Settings, the ask and the picker use them.
 import type { CustomJob, WorkflowStart } from '@/shared/comfy/custom-workflow'
 
-const pictures = (n: number) => (n === 1 ? '1 reference picture' : `${n} reference pictures`)
+// A workflow runs with 1 picture up to its number of ref marks (spec/comfyui-custom.md "Marks").
+const pictures = (n: number) => (n === 1 ? '1 reference picture' : `up to ${n} reference pictures`)
 
 // How many node types a workflow uses: "1 node type", "{n} node types".
 export const nodeTypeCount = (n: number) => (n === 1 ? '1 node type' : `${n} node types`)

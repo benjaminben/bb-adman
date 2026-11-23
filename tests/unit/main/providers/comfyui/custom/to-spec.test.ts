@@ -54,11 +54,11 @@ describe('toCustomSpec: the in-memory table [D-104]', () => {
     expect(spec.leavesOnServer).toEqual([LEAVES.uploads, LEAVES.custom, LEAVES.record])
   })
 
-  it('takes exactly as many pictures as it has ref marks', () => {
+  it('takes 1 picture up to as many as it has ref marks', () => {
     const spec = toCustomSpec(storedFrom('two-refs'))
     expect(spec.job).toBe('image_refs')
     expect(spec.slots.references).toHaveLength(2)
-    expect(spec.slots.minReferences).toBe(2)
+    expect(spec.slots.minReferences).toBe(1)
     expect(spec.size).toEqual(CUSTOM_SIZE_DEFAULTS.image_refs)
     expect(spec.leavesOnServer[0]).toBe(LEAVES.uploads)
     expect(spec).not.toHaveProperty('video')

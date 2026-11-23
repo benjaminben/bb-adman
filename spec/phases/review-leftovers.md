@@ -221,7 +221,7 @@ The code is right; the spec rewrite should describe it.
 - `isAllowedVideo` accepts mixes that leave no frame count that fits (for example fps 1, 1 s, offset 5). Every run of such a workflow then stops before anything is sent, with no reason. Refuse the mix at add and change.
 - A node type named "." or ".." is accepted; the check then asks `GET /object_info/..`. Harmless (a GET, only present or absent is kept); refuse both at add.
 - `missingFailure(missing, custom = false)`: make the second argument required, so a future caller cannot forget it (one caller today).
-- The run dialog's picker lists a custom workflow whose reference count differs from the pictures ticked; the run is then refused with "This workflow needs {n} reference pictures." The video pictures line uses the provider's limit, not the picked workflow's count.
+- The run dialog's picker lists a custom workflow that takes fewer pictures than were ticked; the run is then refused ("ComfyUI takes at most {max} reference pictures for this run."). Fewer pictures than its `ref` marks now run (2026-11-22). The video pictures line uses the provider's limit, not the picked workflow's count.
 - An agent's remove with an unknown workflow ID still asks, then gives `NOT_FOUND` (as every delete does).
 - An agent's add with a name over 60 characters gets only "Some values are not valid."; the tool description could state the limit.
 - Job rows written by test builds between CW-3 and CW-7 may hold a custom workflow's missing node type names (never shown to an agent).

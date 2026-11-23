@@ -41,16 +41,19 @@ describe('checkWorkflowText: the job and video start from the marks [D-104]', ()
     expect(reasonOf(JSON.stringify(g))).toBe('workflow_unknown_mark')
   })
 
-  it('builds the slots: one empty-drop slot per ref mark, the exact count, seeds below 2^32', () => {
+  it('builds the slots: one slot per ref mark, 1 picture up to that many, seeds below 2^32', () => {
     const w = checked(fixtureText('two-refs'))
     expect(w.slots).toEqual({
       prompt: { node: '3', input: 'prompt' },
       seed: [{ node: '3', input: 'noise_seed' }],
       references: [
         { image: { node: '1', input: 'image' }, dropWhenUnused: { nodes: [], inputs: [] } },
-        { image: { node: '2', input: 'image' }, dropWhenUnused: { nodes: [], inputs: [] } },
+        {
+          image: { node: '2', input: 'image' },
+          dropWhenUnused: { nodes: ['2'], inputs: [{ node: '3', input: 'second' }] },
+        },
       ],
-      minReferences: 2,
+      minReferences: 1,
       outputNode: '4',
       seedBelow: 2 ** 32,
     })

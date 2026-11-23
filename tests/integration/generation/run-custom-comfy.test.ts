@@ -29,9 +29,29 @@ async function twoPictures(): Promise<[string, string]> {
 }
 
 describe('generation.runImages with a custom workflow [D-104, CW-3]', () => {
-  it('refuses one picture for a two-reference workflow: too_few_references, min 2, no job', async () => {
+  it('with one picture of two sends the graph without the second loader and its input', async () => {
     r = await customRunSetUp()
+    servePicture(r.stand)
     const id = addCustom(r, 'two-refs', 'Two bottles')
+    const [a] = await twoPictures()
+    const reply = (await r.f.run({ workflowId: id, referenceAssetIds: [a] })) as Reply
+    expect(reply.ok).toBe(true)
+    await finishSubmitted(r.stand, () => historyEntry('4'))
+    expect((await jobEnds(r.f, reply.data?.jobId ?? ''))?.status).toBe('succeeded')
+    expect(uploads(r.stand)).toHaveLength(1)
+    const [sent] = prompts(r.stand)
+    expect(Object.keys(sent?.prompt ?? {}).sort()).toEqual(['1', '3', '4'])
+    expect(Object.keys(sent?.prompt['3']?.inputs ?? {}).sort()).toEqual([
+      'first',
+      'noise_seed',
+      'prompt',
+    ])
+    expect(sent?.prompt['1']?.inputs.image).toBe(`adman/${uploadName(A)}`)
+  })
+
+  it('refuses one picture for a workflow that needs both: too_few_references, min 2, no job', async () => {
+    r = await customRunSetUp()
+    const id = addCustom(r, 'two-refs-both', 'Two bottles')
     const [a] = await twoPictures()
     const reply = (await r.f.run({ workflowId: id, referenceAssetIds: [a] })) as Reply
     expect(reply).toMatchObject({

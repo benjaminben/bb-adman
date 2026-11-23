@@ -1,0 +1,31 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "example.png" },
+    "_meta": { "title": "adman: ref1" }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "example.png" },
+    "_meta": { "title": "adman: ref2" }
+  },
+  "3": {
+    "class_type": "MadeUpNoiseFromPicture",
+    "inputs": { "image": ["2", 0], "noise_seed": 42 },
+    "_meta": { "title": "adman: seed=noise_seed" }
+  },
+  "4": {
+    "class_type": "MadeUpReferenceEdit",
+    "inputs": {
+      "prompt": "put the bottle on the table",
+      "first": ["1", 0],
+      "noise": ["3", 0]
+    },
+    "_meta": { "title": "adman: prompt" }
+  },
+  "5": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["4", 0], "filename_prefix": "ComfyUI" },
+    "_meta": { "title": "adman: output" }
+  }
+}

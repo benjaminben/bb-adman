@@ -55,7 +55,7 @@ A person marks a step in ComfyUI's own screen by giving it a title. ComfyUI save
 
 - `first-frame` with any `ref` mark is refused: no workflow kind for that yet (as U-20 for shipped ones).
 - `first-frame` without `frames` is refused.
-- Assumption: a custom workflow takes exactly as many reference pictures as it has `ref` marks (`minReferences` = the slot count). Fewer or more is refused before any job row. Dropping unused picture nodes is not done for custom workflows.
+- **Fewer pictures than `ref` marks** (the stakeholder's ruling, 2026-11-22: "it shouldn't require 2 references, it should take 1 to as many as references as the model is capable of"). A custom workflow runs with 1 picture up to its number of `ref` marks; more is refused before any job row (`too_many_references`). For a run with fewer, the unused picture steps are taken out of the graph that is sent, worked out from the graph alone when the file is checked (`custom/reference-slots.ts`): the unused `ref` steps go; a step whose every link came from a step that goes, goes too (a resize after a loader); on a step that stays, each input linked to a step that goes is deleted. Slot k's `dropWhenUnused` holds what goes when slots k and up are unused. A count is offered only when this leaves every other marked step in place; `minReferences` is the lowest such count, and fewer is refused (`too_few_references`). The words say "1 reference picture" or "up to {n} reference pictures". Assumption: the app does not know whether a step that stays can run without the deleted input; if it cannot, the server refuses the run and the run fails as any refused graph does.
 - Assumption: at least one `seed` mark is required, so that the options of one run differ (FR-257).
 
 ## The stored shape

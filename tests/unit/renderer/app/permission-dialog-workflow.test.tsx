@@ -129,7 +129,7 @@ describe('permission dialog for a workflow add [CW-6b]', () => {
   })
 
   it.each([
-    ['image_refs', null, 2, 'Picture from a prompt and 2 reference pictures'],
+    ['image_refs', null, 2, 'Picture from a prompt and up to 2 reference pictures'],
     ['video', 'references', 1, 'Video from 1 reference picture'],
   ])(
     'builds the job words of %s from the reply, never from the target line',

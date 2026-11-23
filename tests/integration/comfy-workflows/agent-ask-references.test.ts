@@ -34,7 +34,7 @@ describe('agent.askWorkflow gives the reference count [CW-6b]', () => {
       expect(reply).toMatchObject({ job, start })
       const n = reply.references as number
       expect(n).toBeGreaterThanOrEqual(1)
-      const pictures = n === 1 ? '1 reference picture' : `${n} reference pictures`
+      const pictures = n === 1 ? '1 reference picture' : `up to ${n} reference pictures`
       expect(asked.target).toContain(`: ${words.replace('{n}', pictures)}, `)
       expect(await askWorkflow(x, asked.requestId, 'agent')).toMatchObject({
         ok: false,

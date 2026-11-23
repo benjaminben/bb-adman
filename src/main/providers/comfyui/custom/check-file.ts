@@ -13,7 +13,11 @@ import {
 } from '@/shared/providers/custom-workflow-messages'
 import type { Result } from '@/shared/schemas/result'
 import type { Graph, GraphNode, WorkflowSlots } from '@/main/providers/comfyui/workflows/types'
+import { isLink } from './links'
 import { readMarks, type Marks } from './marks'
+import { referenceSlots } from './reference-slots'
+
+export { isLink }
 
 export type CheckedWorkflow = {
   // Per node only class_type, inputs and _meta.title.
@@ -74,15 +78,11 @@ function keptNode(value: unknown): GraphNode | null {
   return node
 }
 
-// A two-item list of text and any number is a link. It must name an own node, by an output
-// that is a whole number from 0. fill.ts uses the same test for links left dangling.
-export const isLink = (v: unknown): v is [string, number] =>
-  Array.isArray(v) && v.length === 2 && typeof v[0] === 'string' && typeof v[1] === 'number'
-
+// A link (links.ts) must name an own node, by an output that is a whole number from 0.
 const isGoodLink = (graph: Graph, [node, output]: [string, number]) =>
   Object.hasOwn(graph, node) && Number.isInteger(output) && output >= 0
 
-function slotsFrom(marks: Marks): WorkflowSlots {
+function slotsFrom(graph: Graph, marks: Marks): WorkflowSlots {
   const slots: WorkflowSlots = {
     prompt: marks.prompt,
     seed: marks.seed,
@@ -93,14 +93,7 @@ function slotsFrom(marks: Marks): WorkflowSlots {
     const pointer = marks[key]
     if (pointer) slots[key] = pointer
   }
-  if (marks.references.length > 0) {
-    slots.references = marks.references.map((image) => ({
-      image,
-      dropWhenUnused: { nodes: [], inputs: [] },
-    }))
-    slots.minReferences = marks.references.length
-  }
-  return slots
+  return { ...slots, ...referenceSlots(graph, marks) }
 }
 
 // Steps 3 to 8, on a parsed value. The start-up read of a stored graph uses it too.
@@ -139,7 +132,7 @@ export function checkWorkflowValue(value: unknown): WorkflowCheck {
   const workflow: CheckedWorkflow = {
     graph,
     job,
-    slots: slotsFrom(marks),
+    slots: slotsFrom(graph, marks),
     nodeTypes: [...new Set(kept.map(([, n]) => n.class_type))].sort(),
     nodeCount: kept.length,
   }

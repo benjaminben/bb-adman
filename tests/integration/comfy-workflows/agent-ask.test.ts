@@ -125,7 +125,7 @@ describe('the workflow ask [CW-6a; rules 6 and 7]', () => {
   it('names the job, the start and the reference count in the target line', async () => {
     x = await askSetUp()
     const cases: Array<[CustomFixture, string, unknown]> = [
-      ['two-refs', 'Picture from a prompt and 2 reference pictures', null],
+      ['two-refs', 'Picture from a prompt and up to 2 reference pictures', null],
       ['video-first-frame', 'Video from a first frame', 'first_frame'],
       ['video-prompt', 'Video from a prompt', 'prompt'],
     ]
