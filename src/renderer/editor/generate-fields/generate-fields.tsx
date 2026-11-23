@@ -10,6 +10,7 @@
 // layer was empty, so an empty layer gets the run's first picture.
 // ED-4a: the chosen pictures are a strip of thumbnails (reference-strip.tsx) above the prompt,
 // and "Generate…" is the Section's one primary. It only opens the run dialog (C-15).
+// CW-5: the workflow picked in the run dialog, when it gives one, is sent with the run.
 import { useId, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { RunDialog } from '@/renderer/dialogs/run-dialog'
@@ -18,6 +19,7 @@ import { generateDrafts } from '@/renderer/stores/generate-drafts'
 import { placedRunsFor } from '@/renderer/stores/placed-runs'
 import { MAX_IMAGES_PER_RUN, MAX_REFERENCES_PER_RUN } from '@/shared/config/defaults'
 import type { JobStarted } from '@/shared/schemas/commands/job'
+import type { WorkflowId } from '@/shared/schemas/queries/comfy'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import { ReferenceStrip } from './reference-strip'
 import { RunStatus } from './run-status'
@@ -58,7 +60,12 @@ export function GenerateFields(props: GenerateFieldsProps) {
   const change = generateDrafts.getState().change
   const count = Math.min(Math.max(perRun, 1), MAX_IMAGES_PER_RUN)
 
-  async function confirm(provider: string, n: number | null) {
+  async function confirm(
+    provider: string,
+    n: number | null,
+    _video?: unknown,
+    workflowId?: WorkflowId,
+  ) {
     const sent = n ?? count
     const reply = await command('generation.runImages', {
       projectId,
@@ -68,6 +75,7 @@ export function GenerateFields(props: GenerateFieldsProps) {
       referenceAssetIds: pictures,
       count: sent,
       provider,
+      ...(workflowId === undefined ? {} : { workflowId }),
     })
     const jobId = reply.ok ? (reply.data as Partial<JobStarted> | null)?.jobId : undefined
     if (typeof jobId === 'string') {

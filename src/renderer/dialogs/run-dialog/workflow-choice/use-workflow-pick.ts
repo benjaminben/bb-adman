@@ -8,8 +8,8 @@ import type { VideoStartKind } from '@/shared/config/video-offers'
 import { workflowModel } from '@/shared/providers/model-words'
 import type { ComfyInfo, WorkflowInfo } from '@/shared/schemas/queries/comfy'
 import type { Settings } from '@/shared/schemas/settings'
-import type { Choice } from '../run-choices'
-import type { RunJob } from '../run-summary'
+import type { Choice } from '@/renderer/dialogs/run-dialog/run-choices'
+import type { RunJob } from '@/renderer/dialogs/run-dialog/run-summary'
 import { choiceKey, fittingWorkflows, startWorkflow } from './fitting'
 
 type PickFor = {

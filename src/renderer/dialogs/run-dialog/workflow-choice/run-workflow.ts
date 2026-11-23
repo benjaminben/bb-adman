@@ -3,7 +3,7 @@
 // workflow as before"; the caller gets the workflow's ID only when the person could pick one.
 import type { WorkflowId, WorkflowInfo } from '@/shared/schemas/queries/comfy'
 import type { Result } from '@/shared/schemas/result'
-import type { SummaryInput, VideoSent } from '../run-summary'
+import type { SummaryInput, VideoSent } from '@/renderer/dialogs/run-dialog/run-summary'
 
 export type OnConfirm = (
   provider: string,

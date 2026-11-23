@@ -6,7 +6,7 @@ import { offeredList } from '@/renderer/screens/campaign/offered-workflow'
 import type { VideoStartKind } from '@/shared/config/video-offers'
 import type { ComfyInfo, WorkflowInfo, WorkflowJob } from '@/shared/schemas/queries/comfy'
 import type { ChoiceKey } from '@/shared/schemas/settings'
-import type { RunJob } from '../run-summary'
+import type { RunJob } from '@/renderer/dialogs/run-dialog/run-summary'
 
 type VideoPair = NonNullable<WorkflowInfo['videoStart']>
 
