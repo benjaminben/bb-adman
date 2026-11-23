@@ -16,7 +16,8 @@ type Ask = EventMap['agent.permissionRequested']
 type Reply = Result<unknown> | Promise<Result<unknown>>
 
 const TYPES = ['CLIPTextEncode', 'KSampler', 'LoadImage', 'SaveImage', 'VAEDecode']
-const TARGET = 'Workflow "Soft studio light": Picture from a prompt, 5 node types'
+const targetOf = (count: string) => `Workflow "Soft studio light": Picture from a prompt, ${count}`
+const TARGET = targetOf('5 node types')
 const RISK =
   'This workflow will run on your ComfyUI server and can use any node installed there, ' +
   'including nodes that read files on that computer, reach the internet or use paid services.'
@@ -38,8 +39,18 @@ function request(overrides: Partial<Ask> = {}): Ask {
 function ok(nodeTypes: unknown): Result<unknown> {
   return {
     ok: true,
-    data: { name: 'Soft studio light', job: 'image', start: 'prompt', nodeTypes },
+    data: { name: 'Soft studio light', job: 'image', start: null, nodeTypes },
   }
+}
+
+function named(name: string, job: string, start: string | null, nodeTypes: string[]) {
+  return { ok: true, data: { name, job, start, nodeTypes } } as Result<unknown>
+}
+
+// The value drawn beside a label of the name, job and count list.
+function fact(dialog: HTMLElement, label: string): string | null {
+  const term = within(dialog).getByText(label, { selector: 'dt' })
+  return term.nextElementSibling?.textContent ?? null
 }
 
 async function open(ask: Ask = request(), reply: () => Reply = () => ok(TYPES)) {
@@ -69,7 +80,10 @@ describe('permission dialog for a workflow add [CW-6b]', () => {
     expect(asks().map((q) => q.input)).toEqual([{ requestId: 'made-up-request-9' }])
     expect(dialog).toHaveAccessibleName('An agent asks to add a ComfyUI workflow')
     expect(within(dialog).getByRole('heading', { name: 'Node types it uses' })).toBeVisible()
-    expect(dialog).toHaveTextContent(`An agent wants to add ComfyUI workflows: ${TARGET}.`)
+    expect(dialog).toHaveTextContent('An agent wants to add ComfyUI workflows.')
+    expect(fact(dialog, 'Name')).toBe('Soft studio light')
+    expect(fact(dialog, 'What it makes')).toBe('Picture from a prompt')
+    expect(fact(dialog, 'Node types')).toBe('5 node types')
     expect(within(dialog).getByRole('button', { name: 'Refuse' })).toHaveFocus()
     expect(within(dialog).getByRole('button', { name: 'Add' })).toBeInTheDocument()
     expect(await axeViolations()).toEqual([])
@@ -77,22 +91,43 @@ describe('permission dialog for a workflow add [CW-6b]', () => {
 
   it('shows a node type holding markup as its literal characters', async () => {
     const odd = ['<a href="https://example.test/x">Open</a>', '<img src=x onerror="alert(1)">']
-    const { dialog } = await open(request(), () => ok(odd))
+    const { dialog } = await open(request({ target: targetOf('2 node types') }), () => ok(odd))
     await waitFor(() => expect(items(dialog)).toEqual(odd))
     expect(dialog.querySelector('a, img, script')).toBeNull()
   })
 
   it('makes a hidden character in a node type visible', async () => {
     const hidden = `Load${String.fromCharCode(0x202e)}Image`
-    const { dialog } = await open(request(), () => ok([hidden]))
+    const { dialog } = await open(request({ target: targetOf('1 node type') }), () => ok([hidden]))
     await waitFor(() => expect(items(dialog)).toEqual(['Load[U+202E]Image']))
   })
 
-  it('draws a name in the target line as text', async () => {
-    const target = 'Workflow "<b>Bold</b> look": Video from a prompt, 2 node types'
-    const { dialog } = await open(request({ target }))
-    expect(dialog).toHaveTextContent(target)
+  it('draws the name apart from the job words, so it cannot pass for them', async () => {
+    const name = "Beach': Picture from a prompt, 1 node type. Ok"
+    const target = `Workflow "${name}": Video from a first frame, 5 node types`
+    const reply = () => named(name, 'video', 'first_frame', TYPES)
+    const { dialog } = await open(request({ target }), reply)
+    await waitFor(() => expect(items(dialog)).toEqual(TYPES))
+    expect(fact(dialog, 'Name')).toBe(name)
+    expect(fact(dialog, 'What it makes')).toBe('Video from a first frame')
+    expect(fact(dialog, 'Node types')).toBe('5 node types')
+    expect(dialog).not.toHaveTextContent(target)
+  })
+
+  it('draws markup in the name as text', async () => {
+    const name = '<b>Bold</b> look'
+    const target = `Workflow "${name}": Picture from a prompt, 1 node type`
+    const { dialog } = await open(request({ target }), () => named(name, 'image', null, ['A']))
+    await waitFor(() => expect(fact(dialog, 'Name')).toBe(name))
     expect(dialog.querySelector('b')).toBeNull()
+  })
+
+  it('takes the reference count the target line names', async () => {
+    const target = 'Workflow "Pair": Picture from a prompt and 2 reference pictures, 5 node types'
+    const reply = () => named('Pair', 'image_refs', null, TYPES)
+    const { dialog } = await open(request({ target }), reply)
+    await waitFor(() => expect(items(dialog)).toEqual(TYPES))
+    expect(fact(dialog, 'What it makes')).toBe('Picture from a prompt and 2 reference pictures')
   })
 
   it('keeps Add off until the list shows and 750 ms pass', async () => {
@@ -132,6 +167,8 @@ describe('permission dialog for a workflow add [CW-6b]', () => {
     ['an empty list', () => ok([])],
     ['a reply with no list', () => ({ ok: true, data: { name: 'Soft studio light' } })],
     ['a query that throws', () => Promise.reject(new Error('gone'))],
+    ['a reply that differs from the target', () => named('Other name', 'image', null, TYPES)],
+    ['an unknown job', () => named('Soft studio light', 'audio', null, TYPES)],
   ] as Array<[string, () => Reply]>)('never offers Add after %s', async (_case, reply) => {
     const { dialog, answers } = await open(request(), reply)
     const line = 'The list of node types could not be shown, so this workflow cannot be added.'
@@ -150,7 +187,9 @@ describe('permission dialog for a workflow add [CW-6b]', () => {
     expect(line.closest('[title]')).toBeNull()
     expect(line.nextElementSibling).toBeNull()
     expect(dialog).toHaveAccessibleDescription(expect.stringContaining(RISK))
-    expect(dialog).toHaveAccessibleDescription(expect.stringContaining(TARGET))
+    expect(dialog).toHaveAccessibleDescription(
+      expect.stringContaining('An agent wants to add ComfyUI workflows.'),
+    )
   })
 
   it('has no tick, answers nothing on opening, and Escape refuses', async () => {

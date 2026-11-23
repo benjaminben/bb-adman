@@ -2,6 +2,24 @@
 /* The node types of a workflow ask (CW-6b): in the mono face, each wrapping at any character,
    in a box that scrolls past about 8 lines, so a long list or name never pushes the buttons
    out of view. */
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  margin: 0 0 var(--space-3);
+}
+.facts dt {
+  color: var(--color-text-muted);
+}
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+/* The name an agent chose: a tagged value, not the app's own words. */
+.name {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-control);
+}
 .heading {
   margin: 0 0 var(--space-1);
   font-size: var(--font-size-body);

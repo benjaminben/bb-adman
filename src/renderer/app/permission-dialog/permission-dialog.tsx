@@ -19,7 +19,8 @@
 // CW-6b (spec/comfyui-custom.md, "The agent's ask"): a workflow ask shows the node types from
 // agent.askWorkflow, as the import ask shows its files: no tick, and its allow button waits
 // ALLOW_WAIT_MS from the moment the whole list is shown, or is not offered when it cannot be
-// read. Its risk line is the last line of the body and, with the target, the description.
+// read. The target line, which mixes the name an agent chose with the job words, is not drawn:
+// the list shows them apart. Its risk line is the last body line and part of the description.
 import { useEffect, useState } from 'react'
 import { useApi } from '@/renderer/app/app-context'
 import { DialogAlert } from '@/renderer/ui/dialog-alert'
@@ -63,7 +64,14 @@ function AskLine(props: { ask: Ask }) {
           Agent named <span className={styles.client}>{ask.agentClient}</span>
         </>
       )}{' '}
-      wants to {ask.action}: <span className={styles.target}>{ask.target}</span>.
+      wants to {ask.action}
+      {ask.kind === 'workflow' ? (
+        '.'
+      ) : (
+        <>
+          : <span className={styles.target}>{ask.target}</span>.
+        </>
+      )}
     </p>
   )
 }
@@ -76,7 +84,7 @@ function AskDialog(props: { ask: Ask; onEnd: () => void }) {
   const isDelete = ask.kind === 'delete'
   const words = askWords(ask)
   const files = useAskFiles(ask.requestId, ask.fileCount, isImport)
-  const nodes = useAskWorkflow(ask.requestId, isWorkflow)
+  const nodes = useAskWorkflow(ask.requestId, ask.target, isWorkflow)
   const [remember, setRemember] = useState(false)
   const [sending, setSending] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
