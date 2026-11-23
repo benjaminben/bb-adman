@@ -1,18 +1,15 @@
 // CW-7 (spec/phases/custom-workflows-slices.md, "CW-7"): 534 the Settings check result with a
-// custom workflow whose one node type the stand-in lacks, against the stand-in on 127.0.0.1;
-// 535 the run row of that failure, drawn from cw-7-scenes.tsx (see there why). The workflow is
+// custom workflow whose one node type the stand-in lacks, against the stand-in on 127.0.0.1.
+// 535, the run row of that failure, is taken from a real run in cw-8.shots.ts. The workflow is
 // a stored file written into the sandbox's userData before the app starts. Made-up names.
 import fs from 'node:fs'
 import path from 'node:path'
-import { test, expect, type Page } from '@playwright/test'
-import react from '@vitejs/plugin-react'
-import { build, type Rollup } from 'vite'
-import { srcAlias } from '../../path-alias.config'
+import { test, expect } from '@playwright/test'
 import { startComfyStandIn, type StandIn } from '../helpers/comfy-stand-in'
 import { makeSandbox, launch } from '../e2e/launch'
 import * as screens from '../e2e/screens'
 import { serveNeedsFromApp } from '../e2e/stand-in-runs'
-import { closeApp, openApp, shot, type Session } from './shot'
+import { closeApp, shot, type Session } from './shot'
 
 const LACKING = 'LensFlarePro'
 
@@ -46,46 +43,6 @@ function storedWorkflow() {
   }
 }
 
-async function bundleScene(): Promise<{ code: string; css: string }> {
-  const built = (await build({
-    configFile: false,
-    logLevel: 'warn',
-    resolve: { alias: srcAlias },
-    plugins: [react()],
-    define: { 'process.env.NODE_ENV': JSON.stringify('production') },
-    build: {
-      write: false,
-      minify: false,
-      cssCodeSplit: false,
-      lib: {
-        entry: path.resolve('tests/shots/cw-7-scenes.tsx'),
-        formats: ['iife'],
-        name: 'Cw7Scene',
-      },
-    },
-  })) as Rollup.RollupOutput[]
-  const output = built.flatMap((b) => b.output)
-  const code = output.flatMap((o) => (o.type === 'chunk' ? [o.code] : [])).join('\n')
-  const css = output
-    .flatMap((o) => (o.type === 'asset' && o.fileName.endsWith('.css') ? [String(o.source)] : []))
-    .join('\n')
-  return { code, css }
-}
-
-async function drawScene(page: Page): Promise<void> {
-  const { code, css } = await bundleScene()
-  // A string given to evaluate runs over the debugging channel, outside the page's script policy.
-  await page.evaluate(`${code}\nwindow.Cw7Scene = Cw7Scene`)
-  await page.evaluate((text) => {
-    const style = document.createElement('style')
-    style.textContent = text
-    document.head.append(style)
-  }, css)
-  await page.evaluate(() => {
-    ;(window as unknown as { Cw7Scene: { show: () => void } }).Cw7Scene.show()
-  })
-}
-
 test('CW-7: the check result with a custom workflow missing one node type', async () => {
   test.setTimeout(180_000)
   const box = makeSandbox()
@@ -108,15 +65,4 @@ test('CW-7: the check result with a custom workflow missing one node type', asyn
   await expect(row.getByText(`Node ${LACKING}`)).toBeVisible()
   await row.scrollIntoViewIfNeeded()
   await shot(page, '534-check-result-custom-missing')
-})
-
-test('CW-7: the run row of a custom workflow the server lacks a node type for', async () => {
-  session = await openApp()
-  const { page } = session
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await drawScene(page)
-  await expect(page.getByText(/Press Check in Settings to see them\./)).toBeVisible()
-  await page.setViewportSize({ width: 520, height: 300 })
-  fs.mkdirSync(path.resolve('shots'), { recursive: true })
-  await page.screenshot({ path: path.resolve('shots', '535-run-row-custom-missing.png') })
 })
