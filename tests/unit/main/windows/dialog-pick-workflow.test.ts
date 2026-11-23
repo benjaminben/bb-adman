@@ -34,7 +34,7 @@ describe('dialog.pickFiles with purpose comfy-workflow [D-104, CW-2]', () => {
       properties: ['openFile'],
       filters: [{ name: 'Accepted files', extensions: ['json'] }],
     })
-    expect(takeWorkflowPath('/w/flow.json')).toBe(true)
+    expect(takeWorkflowPath('/w/flow.json')).toBe('/w/flow.json')
   })
 
   it('picks one file even when several are asked for', async () => {
@@ -46,6 +46,6 @@ describe('dialog.pickFiles with purpose comfy-workflow [D-104, CW-2]', () => {
     showOpenDialog.mockResolvedValueOnce({ canceled: true, filePaths: [] })
     await runDialogQuery('dialog.pickFiles', { purpose: 'comfy-workflow' })
     await runDialogQuery('dialog.pickFiles', { purpose: 'brief' })
-    expect(takeWorkflowPath('/w/flow.json')).toBe(false)
+    expect(takeWorkflowPath('/w/flow.json')).toBeNull()
   })
 })

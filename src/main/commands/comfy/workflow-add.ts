@@ -71,11 +71,12 @@ export function comfyWorkflowAddFromFile(deps: Deps) {
     changesAppState: true,
     run(_ctx, input) {
       // Rule 9: before any file-system call.
-      if (!takeWorkflowPath(input.filePath)) throw refusal({ reason: 'workflow_not_picked' })
+      const picked = takeWorkflowPath(input.filePath)
+      if (picked === null) throw refusal({ reason: 'workflow_not_picked' })
       const store = deps.comfyWorkflows
       if (store.list().length >= MAX_CUSTOM_WORKFLOWS) throw refusal({ reason: 'workflow_limit' })
-      const graph = checked(readPicked(input.filePath))
-      const name = store.freeName(nameOf(input.filePath))
+      const graph = checked(readPicked(picked))
+      const name = store.freeName(nameOf(picked))
       const entry = store.add({ checked: graph, name, addedBy: 'user' })
       serverChecks.forget()
       const data: ComfyWorkflowAddFromFileReply = { workflowId: entry.stored.id, name }

@@ -29,6 +29,18 @@ function fileWith(text: string, name = `${NAME}.json`): string {
   return file
 }
 
+// Every file-system call that could name a file, so a test can tell whether a path was touched.
+function watchDisk() {
+  const spies = [
+    vi.spyOn(fs, 'lstatSync'),
+    vi.spyOn(fs, 'statSync'),
+    vi.spyOn(fs, 'openSync'),
+    vi.spyOn(fs, 'readFileSync'),
+  ]
+  return (file: string) =>
+    spies.some((spy) => spy.mock.calls.some(([p]) => String(p) === file || p === file))
+}
+
 const addFrom = (filePath: string) => f.user('comfyWorkflow.addFromFile', { filePath })
 const reasonOf = (result: { ok: boolean; error?: { details?: Record<string, unknown> } }) =>
   result.error?.details?.reason
@@ -37,15 +49,34 @@ describe('comfyWorkflow.addFromFile: only the picked path [D-104, security rule 
   it('refuses a path the picker did not give, and reads nothing', async () => {
     f = makeFixture()
     const file = fileWith(fixtureText('picture'))
-    const lstat = vi.spyOn(fs, 'lstatSync')
-    const read = vi.spyOn(fs, 'readFileSync')
+    const touched = watchDisk()
     const result = await addFrom(file)
     expect(reasonOf(result)).toBe('workflow_not_picked')
     expect(result).toMatchObject({
       error: { code: 'RULE_VIOLATION', message: 'Choose the file again.' },
     })
-    expect(lstat.mock.calls.some(([p]) => p === file)).toBe(false)
-    expect(read.mock.calls.some(([p]) => p === file)).toBe(false)
+    expect(touched(file)).toBe(false)
+  })
+
+  it('reads the remembered path, never the path text it was sent', async () => {
+    f = makeFixture()
+    const picked = fileWith(fixtureText('picture'), 'flow.json')
+    // A folder elsewhere holding another workflow of the same name, and a link to a folder
+    // below it, so "link/.." leads there on the disk but not in the text.
+    const elsewhere = path.join(f.root, 'elsewhere')
+    fs.mkdirSync(path.join(elsewhere, 'sub'), { recursive: true })
+    const other = path.join(elsewhere, 'flow.json')
+    fs.writeFileSync(other, fixtureText('two-refs'))
+    fs.symlinkSync(path.join(elsewhere, 'sub'), path.join(path.dirname(picked), 'link'))
+    const sent = `${path.dirname(picked)}/link/../flow.json`
+    expect(fs.readFileSync(sent, 'utf8')).toBe(fixtureText('two-refs'))
+    rememberWorkflowPath(picked)
+    const touched = watchDisk()
+    const reply = data<ComfyWorkflowAddFromFileReply>(await addFrom(sent))
+    expect(f.core.deps.comfyWorkflows.get(reply.workflowId)?.checked.job).toBe('image')
+    expect(touched(sent)).toBe(false)
+    expect(touched(other)).toBe(false)
+    expect(touched(picked)).toBe(true)
   })
 
   it('refuses a path picked more than 10 minutes ago', async () => {
