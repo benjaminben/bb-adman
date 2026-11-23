@@ -27,6 +27,9 @@ test('The other screens of the reach table: Settings, Start, project home', asyn
   await expect(page.getByRole('button', { name: 'Settings' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Hand test' })).toHaveCount(0)
   await settingsTour(app, page, box)
+  await expect(page.getByRole('region', { name: 'ComfyUI workflows' })).toContainText(
+    'No workflows added yet.',
+  )
   await startTour(app, page, box)
   await projectHomeTour(app, page)
 })
