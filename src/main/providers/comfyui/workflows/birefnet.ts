@@ -7,7 +7,7 @@ import type { WorkflowLicence } from '@/shared/schemas/queries/comfy'
 import { MAX_PICTURE_PIXELS } from '@/main/providers/picture-limits'
 import type { Graph, WorkflowSpec } from './types'
 import { AGENT_DRAFT, LEAVES } from './common'
-import graph from './birefnet-cutout.json'
+import graph from './birefnet-cutout.json' with { type: 'json' }
 
 const MAIN_FILE = 'birefnet.safetensors'
 

@@ -16,9 +16,9 @@ import {
   firstRunLine,
   h3Needs,
 } from './common'
-import textGraph from './h3-text-to-video.json'
-import imageGraph from './h3-image-to-video.json'
-import referenceGraph from './h3-reference-to-video.json'
+import textGraph from './h3-text-to-video.json' with { type: 'json' }
+import imageGraph from './h3-image-to-video.json' with { type: 'json' }
+import referenceGraph from './h3-reference-to-video.json' with { type: 'json' }
 
 const model = (mainFile: string) => ({ label: 'MiniMax H3', mainFile })
 

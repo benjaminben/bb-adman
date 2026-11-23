@@ -5,7 +5,7 @@
 import type { WorkflowLicence } from '@/shared/schemas/queries/comfy'
 import type { Graph, WorkflowSpec } from './types'
 import { AGENT_DRAFT, LEAVES } from './common'
-import graph from './flux3-klein-edit-references.json'
+import graph from './flux3-klein-edit-references.json' with { type: 'json' }
 
 const MAIN_FILE = 'flux3-image-klein-base-int8-convrot.safetensors'
 

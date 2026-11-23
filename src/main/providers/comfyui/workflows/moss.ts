@@ -14,9 +14,9 @@ import {
   firstRunLine,
   mossNeeds,
 } from './common'
-import textGraph from './moss-text-to-image.json'
-import editGraph from './moss-edit-references.json'
-import extendGraph from './moss-extend.json'
+import textGraph from './moss-text-to-image.json' with { type: 'json' }
+import editGraph from './moss-edit-references.json' with { type: 'json' }
+import extendGraph from './moss-extend.json' with { type: 'json' }
 
 const LOADERS = ['UNETLoader', 'CLIPLoader', 'VAELoader']
 const SAMPLING = ['CLIPTextEncode', 'KSampler', 'VAEDecode', 'PreviewImage']
