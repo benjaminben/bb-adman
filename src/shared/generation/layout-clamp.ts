@@ -2,6 +2,7 @@
 // answered into boxes that fit the variant. Pure, so the job and its tests share it.
 import { isTypeStyleId } from '@/shared/config/type-styles'
 import type { LayoutJobBox } from '@/shared/schemas/jobs/layout-proposal'
+import { nearestColour } from './nearest-colour'
 
 // A box as the model answered it: any number, any colour text, any align text.
 export type RawLayoutBox = {
@@ -32,22 +33,10 @@ const NUMBERS = ['x', 'y', 'width', 'height', 'fontSize'] as const
 
 const clamp = (value: number, low: number, high: number) => Math.min(Math.max(value, low), high)
 
-function channels(hex: string): number[] {
-  return [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16))
-}
-
-// The palette colour with the smallest sum of squared red, green and blue differences.
-function nearest(color: string, palette: string[]): string {
-  const want = channels(color)
-  const distance = (hex: string) =>
-    channels(hex).reduce((sum, value, i) => sum + (value - (want[i] ?? 0)) ** 2, 0)
-  return palette.reduce((best, hex) => (distance(hex) < distance(best) ? hex : best))
-}
-
 function colorOf(color: string, palette: string[]): string | null {
   if (!HEX.test(color)) return null
   const valid = palette.filter((hex) => HEX.test(hex))
-  return (valid.length > 0 ? nearest(color, valid) : color).toUpperCase()
+  return (valid.length > 0 ? nearestColour(color, valid) : color).toUpperCase()
 }
 
 // The answer's style when the job offered it, else null; no field at all when none was offered.
