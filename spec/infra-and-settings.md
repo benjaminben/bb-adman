@@ -181,6 +181,7 @@ Built. Users never set any of these. They exist for development, tests and CI. U
 | `ADMAN_COMFY_FRAME` | `1` lets case 6 (H3 video from a first frame) run. Terminal only. Leaves one file on the server. | Not set |
 | `ADMAN_COMFY_REFVIDEO` | `1` lets case 7 (H3 video from one reference) run. Terminal only. Leaves one file on the server. | Not set |
 | `ADMAN_COMFY_CUTOUT` | `1` lets case 8 (cut-out on `birefnet-cutout`) run. Terminal only. | Not set |
+| `ADMAN_COMFY_CUSTOM` | `1` lets case 9 (a custom workflow made from the shipped Flux graph) run. Terminal only. | Not set |
 | `ADMAN_COMFY_PICTURE` | Absolute path to a PNG or JPEG used in place of the test-made picture by cases 5, 6 and 7. Terminal only. Picture-by-path rules apply. | Not set |
 
 A plain `npm run test:comfy` runs only case 1, the check. Each switch is checked before any call.
