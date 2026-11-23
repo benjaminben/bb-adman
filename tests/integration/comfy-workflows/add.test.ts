@@ -94,13 +94,13 @@ describe("comfyWorkflow.add: the agent's add [D-104, CW-2]", () => {
     expect(twin).toMatchObject({ reason: 'workflow_name_taken' })
   })
 
-  it('is refused for an agent by the bus while its policy is deny', async () => {
+  it('is refused for an agent by the bus when the ask is refused', async () => {
     f = makeFixture()
     const result = await f.agent('comfyWorkflow.add', {
       name: 'Beach',
       workflowJson: fixtureText('picture'),
     })
-    expect(result).toMatchObject({ ok: false, error: { code: 'AGENT_DENIED' } })
+    expect(result).toMatchObject({ ok: false, error: { code: 'AGENT_REFUSED' } })
     expect(f.core.deps.comfyWorkflows.list()).toEqual([])
   })
 
