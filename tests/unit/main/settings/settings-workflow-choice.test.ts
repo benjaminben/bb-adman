@@ -54,7 +54,9 @@ describe('settings.comfyWorkflowChoice [CW-5]', () => {
   })
 
   it('loads an older file with no key as {}, keeping the other keys', () => {
-    writeWith({})
+    const older: Record<string, unknown> = { ...defaults(), generation: { optionsPerRun: 2 } }
+    delete older.comfyWorkflowChoice
+    fs.writeFileSync(file, JSON.stringify(older))
     const loaded = open().get()
     expect(loaded.comfyWorkflowChoice).toEqual({})
     expect(loaded.generation).toEqual({ optionsPerRun: 2 })

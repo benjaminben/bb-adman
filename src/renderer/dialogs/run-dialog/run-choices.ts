@@ -10,7 +10,7 @@ import { STARTS } from '@/renderer/editor/generate-panel/video-start'
 import { videoOffer, type VideoStartKind } from '@/shared/config/video-offers'
 import { jobModel, workflowModel } from '@/shared/providers/model-words'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
-import type { ComfyInfo, WorkflowInfo } from '@/shared/schemas/queries/comfy'
+import type { ComfyInfo, WorkflowInfo, WorkflowJob } from '@/shared/schemas/queries/comfy'
 import type { RunJob } from './run-summary'
 
 export type Choice = {
@@ -36,7 +36,7 @@ const off = (base: Choice, reason: string): Choice => ({ ...base, enabled: false
 
 // The workflow job a ComfyUI run of this kind needs: pictures with a reference are
 // `image_refs`. Layout and text have none.
-function comfyJob(job: RunJob, referenceCount: number): string | null {
+function comfyJob(job: RunJob, referenceCount: number): WorkflowJob | null {
   if (job === 'image') return referenceCount > 0 ? 'image_refs' : 'image'
   return job === 'cutout' ? 'cutout' : null
 }
@@ -57,7 +57,7 @@ function videoChoice(base: Choice, start: VideoStartKind, info: ComfyInfo | null
 function choiceFor(
   provider: ProviderInfo,
   job: RunJob,
-  wanted: string | null,
+  wanted: WorkflowJob | null,
   info: ComfyInfo | null,
   start: VideoStartKind | undefined,
 ): Choice {
@@ -66,8 +66,8 @@ function choiceFor(
   if (!provider.available) return off(base, REASONS.unavailable)
   if (start !== undefined) return videoChoice(base, start, info)
   if (provider.id !== COMFY) return base
-  // Before comfy.getInfo answers, no workflow is known.
-  const workflow = info?.workflows.find((w) => w.offered && w.job === wanted)
+  // Before comfy.getInfo answers, no workflow is known. CW-5: the default one (isDefault).
+  const workflow = wanted === null ? undefined : offeredFor(info, wanted)
   if (!workflow) return off(base, REASONS.noWorkflow)
   return { ...base, trial: workflow.status === 'trial', workflow, model: workflowModel(workflow) }
 }
