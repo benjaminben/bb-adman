@@ -1,7 +1,8 @@
 // SPEC 6.10.6 steps 1 and 3, 14 1.43 N-03 (security class): what every ComfyUI run does
 // before it sends work, shared by the picture and video adapters. The saved address; a client
 // pinned to it, so a change stops the run with nothing more sent (address_changed); then the
-// check, and nothing else is sent unless it answered ok with nothing missing.
+// check, and nothing else is sent unless it answered ok with nothing missing. D-104: the check
+// compares the custom workflows too.
 import { randomUUID } from 'node:crypto'
 import type { AdapterContext } from '@/main/providers/types'
 import { createComfyClient, type ComfyClient } from './client'
@@ -10,7 +11,7 @@ import { LiveLink } from './live'
 import type { ServerChecks } from './needs'
 import { comfyOwnPorts } from './own-ports'
 import type { RunTiming } from './run'
-import { NON_DRAFT_WORKFLOWS } from './workflows'
+import { allWorkflows, checkedWorkflows, NO_CUSTOM } from './workflows/all'
 import type { WorkflowSpec } from './workflows/types'
 
 export const realTiming: RunTiming = {
@@ -65,14 +66,21 @@ export function runLive(ctx: AdapterContext, origin: string): LiveLink {
   return new LiveLink(() => savedOrigin(ctx) === origin)
 }
 
-// The check of 6.10.3 for the run's workflow. Gives the server's version.
+// D-104: the workflows a run may get, and the list the check compares (the shipped ones that
+// are not drafts, then the custom ones), from the context's store.
+const customOf = (ctx: AdapterContext) => ctx.comfyWorkflows ?? NO_CUSTOM
+export const runWorkflows = (ctx: AdapterContext) => allWorkflows(customOf(ctx))
+export const checkList = (ctx: AdapterContext) => checkedWorkflows(customOf(ctx))
+
+// The check of 6.10.3 for the run's workflow, over checkList. Gives the server's version.
 export async function checked(
   checks: ServerChecks,
   origin: string,
   client: ComfyClient,
   spec: WorkflowSpec,
+  workflows: readonly WorkflowSpec[],
 ): Promise<string | undefined> {
-  const result = await checks.run(origin, client, NON_DRAFT_WORKFLOWS)
+  const result = await checks.run(origin, client, workflows)
   if (result.outcome !== 'ok') throw checkFailure(result.outcome)
   const missing = result.workflows.find((w) => w.id === spec.id)?.missing
   if (!missing) throw new Error(`The check did not compare ${spec.id}`)

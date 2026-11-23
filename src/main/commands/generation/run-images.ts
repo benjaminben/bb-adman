@@ -18,9 +18,13 @@ import {
 } from '@/shared/schemas/commands/generation'
 import type { ImageJobRequest } from '@/shared/schemas/jobs/image-generation'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
+import type { WorkflowId } from '@/shared/schemas/queries/comfy'
 import { AppError } from '@/shared/schemas/result'
 
-type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'assets' | 'settings' | 'devTools'>
+type Deps = Pick<
+  CoreDeps,
+  'jobs' | 'providers' | 'secrets' | 'assets' | 'settings' | 'devTools' | 'comfyWorkflows'
+>
 type Target = { campaignId: string; width: number; height: number }
 
 const TEMPLATES = [starterTemplate]
@@ -77,7 +81,15 @@ function target(project: ProjectHandle, input: GenerationRunImagesInput): Target
   return { campaignId: direction.campaignId, width: variant.width, height: variant.height }
 }
 
-function enqueue(deps: Deps, ctx: ProjectContext, input: GenerationRunImagesInput) {
+// D-104: the ComfyUI workflow prepare chose, written into the job's request.
+type Prepared = { workflowId?: WorkflowId }
+
+function enqueue(
+  deps: Deps,
+  ctx: ProjectContext,
+  input: GenerationRunImagesInput,
+  prepared: Prepared,
+) {
   const provider = pictureProvider(deps, input.provider)
   const place = target(ctx.project, input)
   const request: ImageJobRequest = {
@@ -86,6 +98,7 @@ function enqueue(deps: Deps, ctx: ProjectContext, input: GenerationRunImagesInpu
     count: input.count,
     width: place.width,
     height: place.height,
+    ...(prepared.workflowId !== undefined && { workflowId: prepared.workflowId }),
   }
   const jobId = deps.jobs.enqueue(ctx, {
     kind: 'image_generation',
@@ -106,19 +119,22 @@ export function generationRunImages(deps: Deps) {
     name: 'generation.runImages',
     input: generationRunImagesInput,
     projectId: (input) => input.projectId,
-    async prepare(ctx, input) {
+    async prepare(ctx, input): Promise<Prepared> {
       const provider = pictureProvider(deps, input.provider)
       target(ctx.project, input)
       requireProviderKeys(deps, provider.id, 'generate pictures')
       // CU-4: the ComfyUI checks, before any picture is read or any job row is made. S2-4:
       // the licence check comes last, so the user confirms only a run that can start.
+      // D-104: the named workflow, or the default, and its reference count.
+      const refs = input.referenceAssetIds.length
       const spec =
-        provider.id === 'comfyui' ? checkComfyRun(deps, ctx, input.referenceAssetIds.length) : null
+        provider.id === 'comfyui' ? checkComfyRun(deps, ctx, refs, input.workflowId) : null
       for (const id of input.referenceAssetIds) await deps.assets.read(ctx.project, id)
       if (spec) checkLicence(deps, ctx, spec, input.licenceConfirmed)
+      return spec ? { workflowId: spec.id } : {}
     },
-    run(ctx, input) {
-      const { jobId, campaignId } = enqueue(deps, ctx, input)
+    run(ctx, input, prepared) {
+      const { jobId, campaignId } = enqueue(deps, ctx, input, prepared)
       return { data: { jobId }, log: { campaignId, variantId: input.variantId } }
     },
   })

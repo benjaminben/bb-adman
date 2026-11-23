@@ -70,6 +70,7 @@ const REASONS: Record<ProviderErrorReason, string> = {
     "Adman's work folder for publishing is not safe to use. Nothing was published.",
   publish_paths_clash:
     'Two files would have the same name in the published folder. Nothing was published.',
+  workflow_gone: 'The workflow for this run was removed before it started.',
 }
 
 export function reasonMessage(reason: ProviderErrorReason): string {
@@ -114,6 +115,16 @@ export function licenceNotConfirmedMessage(model: string): string {
 
 // SPEC 4.2 "Not offered" and 1.46 part B: the refusals of a ComfyUI run made before a job row.
 export const COMFY_JOB_NOT_OFFERED_MESSAGE = 'ComfyUI cannot make this kind of picture yet.'
+
+// D-104 (spec/comfyui-custom.md "Which workflow a run gets"): a named workflow refused.
+export const COMFY_WORKFLOW_NOT_FOUND_MESSAGE = 'That ComfyUI workflow is not on this computer.'
+export const COMFY_WORKFLOW_WRONG_JOB_MESSAGE =
+  'That workflow cannot make this kind of picture or video.'
+
+export function tooFewReferencesMessage(min: number): string {
+  if (min === 1) return 'This workflow needs 1 reference picture.'
+  return `This workflow needs ${min} reference pictures.`
+}
 
 export function tooManyReferencesMessage(max: number): string {
   if (max === 1) return 'ComfyUI takes one reference picture for this run.'

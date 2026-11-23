@@ -3,6 +3,7 @@ import { projectScoped } from './project-scoped'
 import { MAX_COPY_OPTIONS } from '@/shared/config/copy-options'
 import { MAX_IMAGES_PER_RUN } from '@/shared/config/defaults'
 import { referenceIds } from '@/shared/schemas/reference-ids'
+import { workflowIdSchema } from '@/shared/comfy/custom-workflow'
 
 // S2-4 [D-088]: the user confirmed the commercial licence of the run's model. The command
 // ignores it for an agent, and the agent tools below do not offer it.
@@ -16,6 +17,8 @@ const runImagesFields = projectScoped.extend({
   referenceAssetIds: referenceIds,
   count: z.number().int().min(1).max(MAX_IMAGES_PER_RUN),
   provider: z.string().min(1),
+  // D-104: the ComfyUI workflow to run, for the person and an agent. Other providers ignore it.
+  workflowId: workflowIdSchema.optional(),
 })
 
 const oneTarget = (i: { slot?: string; layerId?: string }) =>
@@ -42,6 +45,8 @@ const startVideoFields = projectScoped.extend({
   start: z.enum(['none', 'first_frame', 'background']),
   useReferences: z.boolean(),
   referenceAssetIds: referenceIds,
+  // D-104: as for generation.runImages.
+  workflowId: workflowIdSchema.optional(),
 })
 
 // R2E-7 (round-2-editor.md D5): layerId, the user's only, names the background layer whose

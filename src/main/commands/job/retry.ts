@@ -17,6 +17,7 @@ import { keptPictureCount, picturesLeft } from '@/shared/generation/pictures-lef
 import { promptToSend } from '@/shared/generation/prompt'
 import { exportRefusal } from '@/shared/export/messages'
 import type { JobRow } from '@/shared/schemas/rows/job'
+import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
 import { AppError } from '@/shared/schemas/result'
 import type Database from 'better-sqlite3'
 import { withSyncTargets } from '@/main/translation/sync-result'
@@ -24,17 +25,25 @@ import { groupsFor, planGroup } from '@/main/translation/targets'
 import { translationJobRequest } from '@/shared/schemas/jobs/translation'
 import { publishRefusal } from '@/shared/publish/messages'
 
-type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets'>
+type Deps = Pick<
+  CoreDeps,
+  'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets' | 'comfyWorkflows'
+>
 
 // [CU-6a, 14 1.53; 1.60 N-5; P7-11] A video job of any provider is checked as
 // generation.startVideo checks it, pictures, offer and format included, in prepare, since
 // reading a picture is not done in the transaction. The licence check (S2-4) is among them.
 // The checks run whatever the old row's status, so a row that ends between prepare and run is
 // never retried unchecked; run still refuses a row that did not fail and was not cancelled.
-async function checkVideoRetry(deps: Deps, ctx: PrepareContext, input: JobRetryInput) {
+// D-104: gives the ComfyUI workflow the checks chose.
+async function checkVideoRetry(
+  deps: Deps,
+  ctx: PrepareContext,
+  input: JobRetryInput,
+): Promise<WorkflowSpec | null> {
   const old = requireJob(ctx.project, input.jobId)
-  if (old.kind !== 'video_generation' || !old.provider) return
-  await checkVideoRetryRequest(deps, ctx, old, input.licenceConfirmed)
+  if (old.kind !== 'video_generation' || !old.provider) return null
+  return checkVideoRetryRequest(deps, ctx, old, input.licenceConfirmed)
 }
 
 // The two fields the prompt's ending depends on, shared by picture and video requests.
@@ -50,9 +59,12 @@ function withEnding(old: JobRow): unknown {
   return { ...(old.request as object), prompt: promptToSend(part.data.prompt, { pictures }) }
 }
 
-// [FN-4] A picture job that kept pictures asks only for the ones not yet made.
-function retryRequest(old: JobRow): unknown {
-  const request = withEnding(old)
+// [FN-4] A picture job that kept pictures asks only for the ones not yet made. D-104: a
+// ComfyUI row keeps the workflow the checks chose, so a row made before workflowId was
+// stored runs the default those checks gave.
+function retryRequest(old: JobRow, chosen: WorkflowSpec | null): unknown {
+  const ended = withEnding(old)
+  const request = chosen ? { ...(ended as object), workflowId: chosen.id } : ended
   if (old.kind !== 'image_generation' || keptPictureCount(old.result) === 0) return request
   const { count } = imageJobRequest.parse(old.request)
   return { ...(request as object), count: picturesLeft(count, old.result) }
@@ -88,9 +100,9 @@ export function jobRetry(deps: Deps) {
     input: jobRetryInput,
     projectId: (input) => input.projectId,
     async prepare(ctx, input) {
-      await checkVideoRetry(deps, ctx, input)
+      return { video: await checkVideoRetry(deps, ctx, input) }
     },
-    run(ctx, input) {
+    run(ctx, input, prepared) {
       const old = requireJob(ctx.project, input.jobId)
       // A-195: an export row holds no path, so it cannot be run again from here.
       if (old.kind === 'export') throw exportRefusal('export_not_retried')
@@ -103,10 +115,11 @@ export function jobRetry(deps: Deps) {
       requireProviderKeys(deps, old.provider, 'try this again')
       // [1.53] G-2, S2-4: a ComfyUI picture row passes the same checks as
       // generation.runImages, the licence check included.
+      let chosen: WorkflowSpec | null = old.provider === 'comfyui' ? prepared.video : null
       if (old.provider === 'comfyui' && old.kind === 'image_generation') {
-        const { referenceAssetIds } = imageJobRequest.parse(old.request)
-        const spec = checkComfyRun(deps, ctx, referenceAssetIds.length)
-        checkLicence(deps, ctx, spec, input.licenceConfirmed)
+        const { referenceAssetIds, workflowId } = imageJobRequest.parse(old.request)
+        chosen = checkComfyRun(deps, ctx, referenceAssetIds.length, workflowId)
+        checkLicence(deps, ctx, chosen, input.licenceConfirmed)
       }
       // P4-11 (spec/ai-jobs.md "Cut-out" step 4): a ComfyUI cut-out passes its checks again.
       if (old.provider === 'comfyui' && old.kind === 'cutout') {
@@ -125,7 +138,9 @@ export function jobRetry(deps: Deps) {
         provider: old.provider,
         model: old.model ?? '',
         request:
-          old.kind === 'translation' ? translationRequest(ctx.project.db, old) : retryRequest(old),
+          old.kind === 'translation'
+            ? translationRequest(ctx.project.db, old)
+            : retryRequest(old, chosen),
         startedBy: 'user',
       })
       const data: JobStarted = { jobId }

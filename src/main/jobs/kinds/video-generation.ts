@@ -52,7 +52,9 @@ async function pictures(run: Run, request: VideoJobRequest) {
   const { jc, provider, project } = run
   const { width, height } = request
   const videoStart = { firstFrame: true, references: false }
-  const size = () => provider.runSize?.(width, height, videoStart) ?? { width, height }
+  // D-104: the workflow the command chose, given only when the row names one.
+  const named = request.workflowId === undefined ? [] : [request.workflowId]
+  const size = () => provider.runSize?.(width, height, videoStart, ...named) ?? { width, height }
   if (request.start === 'background') {
     const bytes = await backgroundFrame(jc, project, run.job.variantId, size())
     return { image: { bytes, mime: 'image/png' as const }, references: [] }
@@ -72,6 +74,7 @@ async function started(run: Run, request: VideoJobRequest) {
     durationMs: request.durationMs,
     width: request.width,
     height: request.height,
+    ...(request.workflowId !== undefined && { workflowId: request.workflowId }),
   }
   const { remoteJobId } = await jc.call(() => provider.start(input, { signal: jc.signal }))
   jc.setRemoteJobId(remoteJobId)

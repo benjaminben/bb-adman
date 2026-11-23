@@ -13,20 +13,16 @@ import {
   type ComfyWorkflowList,
   type ListedWorkflow,
 } from '@/shared/schemas/queries/comfy-workflow'
-import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
 import {
   allWorkflows,
   isDefaultWorkflow,
+  mayName,
   startOf,
   type Who,
 } from '@/main/providers/comfyui/workflows/all'
 
 const isListedJob = (job: WorkflowJob): job is CustomJob =>
   job === 'image' || job === 'image_refs' || job === 'video'
-
-function mayName(w: WorkflowSpec, devTools: boolean): boolean {
-  return w.status !== 'draft' && (w.status !== 'trial' || devTools)
-}
 
 export function comfyWorkflowList(deps: Pick<CoreDeps, 'comfyWorkflows' | 'devTools'>): QueryFn {
   return (input, opts): ComfyWorkflowList => {
@@ -35,7 +31,7 @@ export function comfyWorkflowList(deps: Pick<CoreDeps, 'comfyWorkflows' | 'devTo
     }
     const who: Who = { devTools: deps.devTools, actor: opts.actor }
     const workflows = allWorkflows(deps.comfyWorkflows).flatMap((w): ListedWorkflow[] =>
-      isListedJob(w.job) && mayName(w, deps.devTools)
+      isListedJob(w.job) && mayName(w, who, deps.comfyWorkflows)
         ? [
             {
               id: w.id,

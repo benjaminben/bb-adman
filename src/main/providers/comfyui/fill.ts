@@ -6,6 +6,7 @@
 // slot the workflow has, or a value for one it has not, is a plain Error.
 import type { Graph, Pointer, WorkflowSlots, WorkflowSpec } from './workflows/types'
 import { isPromptId, isSubfolder } from './values'
+import { isLink } from './custom/check-file'
 
 export type FillValues = {
   // Only for a workflow with a prompt slot (P4-9: a cut-out has none).
@@ -51,8 +52,10 @@ const fileName = (name: string) =>
 const freshSeed = (below = 2 ** 53) => Math.floor(Math.random() * below)
 
 function set(graph: Graph, p: Pointer, value: unknown): void {
-  const node = graph[p.node] ?? fail(`The graph has no node ${p.node}`)
-  if (!Object.hasOwn(node.inputs, p.input)) fail(`Node ${p.node} has no input ${p.input}`)
+  // D-104: fixed sentences, so no node ID or input name of a custom graph reaches an error.
+  const node = Object.hasOwn(graph, p.node) ? graph[p.node] : undefined
+  if (!node) fail('The graph has no step the workflow names.')
+  if (!Object.hasOwn(node.inputs, p.input)) fail('A step has no input the workflow names.')
   node.inputs[p.input] = value
 }
 
@@ -71,10 +74,11 @@ function fillReferences(graph: Graph, slots: WorkflowSlots, names: string[]): vo
     drop(graph, slot.dropWhenUnused)
   })
   if (slots.alwaysDrop) drop(graph, slots.alwaysDrop)
-  // No input left may link to a node that is not there.
+  // No input left may link to a node that is not there. D-104: a link is what the file checks
+  // call one, and the node must be the graph's own, so a plain value is never taken for one.
   for (const node of Object.values(graph)) {
     for (const value of Object.values(node.inputs)) {
-      if (Array.isArray(value) && typeof value[0] === 'string' && !graph[value[0]]) {
+      if (isLink(value) && !Object.hasOwn(graph, value[0])) {
         fail('A link points at a node that was dropped')
       }
     }

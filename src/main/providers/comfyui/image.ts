@@ -16,7 +16,16 @@ import type { Geometry } from '@/shared/schemas/layer'
 import type { ComfyClient } from './client'
 import { serverChecks, type ServerChecks } from './needs'
 import { runPicture, type RunEnv, type RunTiming } from './run'
-import { checked, pinnedClient, realTiming, runLive, runOrigin } from './session'
+import { comfyFailure } from './failures'
+import {
+  checked,
+  checkList,
+  pinnedClient,
+  realTiming,
+  runLive,
+  runOrigin,
+  runWorkflows,
+} from './session'
 import { uploadName } from './values'
 import { NON_DRAFT_WORKFLOWS, withoutDrafts } from './workflows'
 import type { WorkflowChoice } from './workflows/offered'
@@ -30,12 +39,15 @@ export type ComfyImageDeps = {
   workflows?: readonly WorkflowSpec[]
 }
 
-// The command has already refused a job with no workflow it may use (SPEC 14 1.41): a proven
-// one, else the trial one the user with the hand-test tools was allowed. Never a draft.
+// The command has already refused a job with no workflow it may use (SPEC 14 1.41) and
+// stored the one it chose in the job's request (D-104). With that ID the run gets exactly that
+// workflow; one no longer on this computer is workflow_gone, before anything is sent. A row
+// made before the ID was stored gets the proven one, else the first that fits. Never a draft.
 export function workflowForRun(
   job: WorkflowChoice['job'],
   start?: WorkflowChoice['videoStart'],
   workflows: readonly WorkflowSpec[] = NON_DRAFT_WORKFLOWS,
+  workflowId?: string,
 ) {
   const fitting = withoutDrafts(workflows).filter(
     (w) =>
@@ -44,6 +56,11 @@ export function workflowForRun(
         (w.videoStart?.firstFrame === start.firstFrame &&
           w.videoStart.references === start.references)),
   )
+  if (workflowId !== undefined) {
+    const named = fitting.find((w) => w.id === workflowId)
+    if (!named) throw comfyFailure('workflow_gone', 'The workflow is not on this computer')
+    return named
+  }
   const chosen: WorkflowSpec | undefined = fitting.find((w) => w.status === 'proven') ?? fitting[0]
   if (!chosen) throw new Error(`No shipped workflow for ${job}`)
   return chosen
@@ -94,10 +111,12 @@ export function comfyImage(ctx: AdapterContext, deps: ComfyImageDeps = {}): Imag
     async generate(input, opts = {}) {
       if (opts.signal?.aborted) throw new ProviderCancelled()
       const origin = runOrigin(ctx)
-      const spec = workflowForRun(input.references.length > 0 ? 'image_refs' : 'image')
+      const job = input.references.length > 0 ? 'image_refs' : 'image'
+      const all = runWorkflows(ctx)
+      const spec = workflowForRun(job, undefined, all, input.workflowId)
       const live = runLive(ctx, origin)
       const client = pinnedClient(ctx, origin, live)
-      const serverVersion = await checked(checks, origin, client, spec)
+      const serverVersion = await checked(checks, origin, client, spec, checkList(ctx))
       const references: string[] = []
       for (const file of input.references) {
         if (opts.signal?.aborted) throw new ProviderCancelled()
@@ -118,7 +137,7 @@ export function comfyImage(ctx: AdapterContext, deps: ComfyImageDeps = {}): Imag
       const origin = runOrigin(ctx)
       const live = runLive(ctx, origin)
       const client = pinnedClient(ctx, origin, live)
-      const serverVersion = await checked(checks, origin, client, spec)
+      const serverVersion = await checked(checks, origin, client, spec, checkList(ctx))
       if (opts.signal?.aborted) throw new ProviderCancelled()
       const reference = await uploaded(client, input.image)
       const ask = { prompt: input.prompt, ...picture, references: [reference], pad }

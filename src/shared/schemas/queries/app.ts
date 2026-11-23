@@ -71,6 +71,8 @@ export const PROVIDER_ERROR_REASONS = [
   'work_folder_unsafe',
   // P9-10: two files of one publish would share a published name.
   'publish_paths_clash',
+  // D-104: a queued run's custom workflow was removed before its turn.
+  'workflow_gone',
 ] as const
 export type ProviderErrorReason = (typeof PROVIDER_ERROR_REASONS)[number]
 

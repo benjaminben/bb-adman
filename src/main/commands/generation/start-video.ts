@@ -18,9 +18,15 @@ import {
 } from '@/shared/schemas/commands/generation'
 import type { VideoJobRequest } from '@/shared/schemas/jobs/video-generation'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
+import type { WorkflowId } from '@/shared/schemas/queries/comfy'
 import { AppError } from '@/shared/schemas/result'
 
-type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets'>
+type Deps = Pick<
+  CoreDeps,
+  'jobs' | 'providers' | 'secrets' | 'settings' | 'devTools' | 'assets' | 'comfyWorkflows'
+>
+// D-104: the ComfyUI workflow prepare chose, written into the job's request.
+type Prepared = { workflowId?: WorkflowId }
 type Target = { campaignId: string; width: number; height: number }
 
 // The layer the clip replaces: the user's, never an agent's.
@@ -57,7 +63,12 @@ function target(project: ProjectHandle, variantId: string): Target {
   return { campaignId: direction.campaignId, width: variant.width, height: variant.height }
 }
 
-function enqueue(deps: Deps, ctx: ProjectContext, input: GenerationStartVideoInput) {
+function enqueue(
+  deps: Deps,
+  ctx: ProjectContext,
+  input: GenerationStartVideoInput,
+  prepared: Prepared,
+) {
   const provider = videoProvider(deps, input.provider)
   const place = target(ctx.project, input.variantId)
   const layerId = layerOf(ctx, input)
@@ -70,6 +81,7 @@ function enqueue(deps: Deps, ctx: ProjectContext, input: GenerationStartVideoInp
     height: place.height,
     start: input.start,
     referenceAssetIds: input.referenceAssetIds,
+    ...(prepared.workflowId !== undefined && { workflowId: prepared.workflowId }),
   }
   const jobId = deps.jobs.enqueue(ctx, {
     kind: 'video_generation',
@@ -90,15 +102,16 @@ export function generationStartVideo(deps: Deps) {
     name: 'generation.startVideo',
     input: generationStartVideoInput,
     projectId: (input) => input.projectId,
-    async prepare(ctx, input) {
+    async prepare(ctx, input): Promise<Prepared> {
       const provider = videoProvider(deps, input.provider)
       target(ctx.project, input.variantId)
       checkLayer(ctx.project, input.variantId, layerOf(ctx, input))
       requireProviderKeys(deps, provider.id, 'make videos')
-      await checkVideoStart(deps, ctx, provider.id, input)
+      const spec = await checkVideoStart(deps, ctx, provider.id, input)
+      return spec ? { workflowId: spec.id } : {}
     },
-    run(ctx, input) {
-      const { jobId, campaignId } = enqueue(deps, ctx, input)
+    run(ctx, input, prepared) {
+      const { jobId, campaignId } = enqueue(deps, ctx, input, prepared)
       return { data: { jobId }, log: { campaignId, variantId: input.variantId } }
     },
   })
