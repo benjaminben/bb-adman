@@ -4,6 +4,7 @@ import type { Result } from '@/shared/schemas/result'
 import type { BriefDraft } from '@/shared/schemas/brief'
 import type { CampaignSize } from '@/shared/schemas/commands/campaign'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
+import type { StarterLayout } from '@/shared/config/default-layout'
 
 export type SlotType = 'image' | 'copy'
 
@@ -36,10 +37,12 @@ export type WordsByLanguageFn = (
   primaryLanguage: string,
 ) => Record<string, string[]>
 export type ParseSize = (text: string) => CampaignSize | null
+// spec/brief-brand.md "Shared helpers": the starter layout to build from; absent = the default.
 export type BuildMasterLayers = (
   template: Template,
   size: CampaignSize,
   fills: SlotFills,
+  layout?: StarterLayout,
 ) => NewLayer[]
 export type SlotStates = (
   template: Template,

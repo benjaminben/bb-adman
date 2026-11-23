@@ -1,22 +1,24 @@
 // SPEC 6.1 "Default layout" [1.23], SPEC 14 [1.9], spec/starter-layouts.md: the layers of a
-// new master variant, built from the default starter layout. The background layer always,
-// then one layer per other filled slot in the template's order, z counting up from 0 with no
-// gaps. Every box, style, name and fixed value comes from config/default-layout.ts through
-// layout-rules.ts. New layers store every look field. Pure; throws a plain Error only for a
-// programming error.
+// new master variant, built from a starter layout (spec/brief-brand.md "Shared helpers"; the
+// default when none is given). The background layer always, then one layer per other filled
+// slot in the template's order, z counting up from 0 with no gaps. Boxes, styles and the
+// background come from the layout through layout-rules.ts; slot names and fixed values from
+// config/default-layout.ts. New layers store every look field. Pure; throws a plain Error only
+// for a programming error.
 import type { BuildMasterLayers, NewLayer, Slot, SlotFill, SlotFills, Template } from './types'
 import type { ImageStyle, Shade } from '@/shared/schemas/layer'
 import { frameOf, geometryOf, textStyleOf, type Frame } from './layout-rules'
 import {
   BACKGROUND_LAYOUT,
-  BACKGROUND_LOOK,
   BACKGROUND_SLOT_ID,
+  DEFAULT_STARTER_LAYOUT,
   IMAGE_STYLE,
   LAYER_DEFAULTS,
   OTHER_COPY_BOX,
   OTHER_COPY_TEXT,
   OTHER_IMAGE_BOX,
   SLOT_LAYOUTS,
+  type StarterLayout,
 } from '@/shared/config/default-layout'
 
 // A fresh copy each time, so a caller that changes a layer changes nothing shared.
@@ -25,6 +27,10 @@ function fixedValues(): typeof LAYER_DEFAULTS {
 }
 
 const shadeCopy = (shade: Shade | null | undefined): Shade | null => (shade ? { ...shade } : null)
+
+// A table's own entry for a slot ID, never one inherited from Object.
+const ownOf = <T>(table: Readonly<Record<string, T>>, id: string): T | undefined =>
+  Object.hasOwn(table, id) ? table[id] : undefined
 
 function checkFills(template: Template, fills: SlotFills): void {
   const slots = new Map(template.slots.map((s) => [s.id, s]))
@@ -41,13 +47,18 @@ function checkFills(template: Template, fills: SlotFills): void {
   }
 }
 
-function backgroundLayer(template: Template, fills: SlotFills, f: Frame): NewLayer {
+function backgroundLayer(
+  template: Template,
+  fills: SlotFills,
+  layout: StarterLayout,
+  f: Frame,
+): NewLayer {
   const hasSlot = template.slots.some((s) => s.id === BACKGROUND_SLOT_ID)
   const fill = fills[BACKGROUND_SLOT_ID]
   const style: ImageStyle = {
     ...IMAGE_STYLE,
-    fillColor: BACKGROUND_LOOK.fillColor,
-    shade: shadeCopy(BACKGROUND_LOOK.shade),
+    fillColor: layout.background.fillColor,
+    shade: shadeCopy(layout.background.shade),
   }
   return {
     ...fixedValues(),
@@ -63,8 +74,14 @@ function backgroundLayer(template: Template, fills: SlotFills, f: Frame): NewLay
   }
 }
 
-function slotLayer(slot: Slot, fill: SlotFill, z: number, f: Frame): NewLayer {
-  const named = SLOT_LAYOUTS[slot.id]
+function slotLayer(
+  slot: Slot,
+  fill: SlotFill,
+  z: number,
+  layout: StarterLayout,
+  f: Frame,
+): NewLayer {
+  const named = ownOf(layout.slots, slot.id)
   const isCopy = slot.type === 'copy'
   const geometry = geometryOf(named?.box ?? (isCopy ? OTHER_COPY_BOX : OTHER_IMAGE_BOX), f)
   const copy = 'text' in fill ? fill.text : null
@@ -74,7 +91,7 @@ function slotLayer(slot: Slot, fill: SlotFill, z: number, f: Frame): NewLayer {
     key: slot.id,
     type: isCopy ? 'text' : 'image',
     slot: slot.id,
-    name: named?.name ?? slot.id,
+    name: ownOf(SLOT_LAYOUTS, slot.id)?.name ?? slot.id,
     z,
     copy,
     style: isCopy
@@ -85,14 +102,19 @@ function slotLayer(slot: Slot, fill: SlotFill, z: number, f: Frame): NewLayer {
   }
 }
 
-export const buildMasterLayers: BuildMasterLayers = (template, size, fills) => {
+export const buildMasterLayers: BuildMasterLayers = (
+  template,
+  size,
+  fills,
+  layout = DEFAULT_STARTER_LAYOUT,
+) => {
   checkFills(template, fills)
   const f = frameOf(size)
-  const layers = [backgroundLayer(template, fills, f)]
+  const layers = [backgroundLayer(template, fills, layout, f)]
   for (const slot of template.slots) {
     const fill = fills[slot.id]
     if (slot.id === BACKGROUND_SLOT_ID || !fill) continue
-    layers.push(slotLayer(slot, fill, layers.length, f))
+    layers.push(slotLayer(slot, fill, layers.length, layout, f))
   }
   return layers
 }
