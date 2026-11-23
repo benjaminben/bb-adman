@@ -6,7 +6,7 @@ The workflows Adman can send to a ComfyUI server, how a run fills one, sizes, vi
 
 Built. `src/main/providers/comfyui/workflows/` (`types.ts`, `common.ts`, `moss.ts`, `h3.ts`, `flux3.ts`, `birefnet.ts`, `index.ts`, `offered.ts`, one `.json` graph per workflow); the window-visible part in `src/shared/schemas/queries/comfy.ts`.
 
-A workflow is a JSON graph file in the repository plus a typed description. Both are bundled by the build and are the only workflows the app can send. No function in the adapter takes a workflow, a node or a model file name from its caller.
+A shipped workflow is a JSON graph file in the repository plus a typed description, both bundled by the build. The only other workflows the app can send are the ones a person or an agent added on this computer (D-104, `spec/comfyui-custom.md`). No function in the adapter takes a graph, a node or a model file name from its caller; a run names a workflow only by its ID.
 
 ```ts
 // src/shared/schemas/queries/comfy.ts: what comfy.getInfo may show a window
@@ -16,7 +16,9 @@ export const WORKFLOW_IDS = [
   'flux3-klein-edit-references', 'birefnet-cutout',
 ] as const
 type WorkflowJob = 'image' | 'image_refs' | 'extend' | 'video' | 'cutout'
-type WorkflowStatus = 'draft' | 'trial' | 'proven'
+type ShippedWorkflowId = (typeof WORKFLOW_IDS)[number]
+type WorkflowId = ShippedWorkflowId | `custom-${string}`   // custom IDs: spec/comfyui-custom.md, "The ID type"
+type WorkflowStatus = 'draft' | 'trial' | 'proven' | 'custom'
 type WorkflowNeeds = {
   minComfyVersion: string           // '0.0.0' means no minimum known
   checkedWith: string               // server version the owner check passed on; '' until then
@@ -63,8 +65,8 @@ type WorkflowSpec = WorkflowInfo & {
 }
 ```
 
-- **Status.** `draft`: a stand-in graph for the tests, never sent to any server and never compared by the check. `trial`: a real graph, not yet proven; offered only with dev tools on, to the user or an agent (`spec/agent-runs.md`). `proven`: passed the owner check (`spec/comfyui-trials.md`, "Trials and `proven`"). Since D-103 every shipped real workflow is `proven`; `trial` stays as the status a new shipped workflow enters with.
-- `WORKFLOWS` (`workflows/index.ts`) lists all eight; `NON_DRAFT_WORKFLOWS` is the one list the check and every run use.
+- **Status.** `draft`: a stand-in graph for the tests, never sent to any server and never compared by the check. `trial`: a real graph, not yet proven; offered only with dev tools on, to the user or an agent (`spec/agent-runs.md`). `proven`: passed the owner check (`spec/comfyui-trials.md`, "Trials and `proven`"). Since D-103 every shipped real workflow is `proven`; `trial` stays as the status a new shipped workflow enters with. `custom`: added by a person or an agent on this computer, offered always (`spec/comfyui-custom.md`).
+- `WORKFLOWS` (`workflows/index.ts`) lists all eight shipped ones and `NON_DRAFT_WORKFLOWS` the shipped ones that are not `draft`; both stay shipped only. Runs and `comfy.getInfo` read `allWorkflows()` (shipped, then custom), and the check and every run use `checkedWorkflows()` (`NON_DRAFT_WORKFLOWS`, then custom), both in `workflows/all.ts`.
 - **Owners.** A graph's owner is its file in `src/main/providers/comfyui/workflows/`. `comfy-workflows/` holds hand-test copies (canvas copies in `ui/`) that no code reads. Where `comfy-workflows/REFERENCE-NOTES.md` and `comfy-workflows/README.md` differ, the notes win. How many pictures a workflow takes has one owner: the length of `slots.references`; the window holds no copy.
 - Stock workflows use ComfyUI core nodes only. `needs.addOns` is empty for every shipped workflow, and one test holds that.
 
@@ -81,8 +83,8 @@ type WorkflowSpec = WorkflowInfo & {
 | `flux3-klein-edit-references` | Picture from a prompt and one reference picture; the result takes the reference's shape | `image_refs` | `proven` | none known (`'0.0.0'`) | FLUX 3 klein | node 15 `PreviewImage` | not set by the app: about 1 MP in the graph | exactly 1 reference |
 
 - The eighth, `birefnet-cutout` (job `cutout`, core nodes only, `birefnet.ts`), is built and `proven` by D-103; its one real-server run is still owed, because the server lacks the model file. Design: `spec/ai-jobs.md`, "Cut-out".
-- No workflow is `proven` on `main`; every `checkedWith` is `''`.
-- For `image_refs` the only non-draft workflow is Flux, so every ComfyUI reference-picture run uses it. Whether Flux or `moss-edit-references` serves references for good is OI-75 (open).
+- Six shipped workflows are `proven` (D-103); the two MOSS stand-ins stay `draft`. Every `checkedWith` is still `''`.
+- For `image_refs` the only shipped non-draft workflow is Flux, so it is the default for a ComfyUI reference-picture run; a run that names a custom one uses that. Whether Flux or `moss-edit-references` serves references for good is OI-75 (open).
 - **Four kinds of video start** [REQ: FR-286]: three have a workflow. "First frame and references together" has none, because nothing public shows one run taking both (**U-20**). It is not offered and the app says so ("ComfyUI cannot make this kind of video yet."). It becomes its own workflow file if a trial finds a way.
 
 ### Model files (`needs.models`, from `workflows/common.ts`)
@@ -143,10 +145,13 @@ All three are `proven` (D-103), version 2, graphs from agent drafts in `comfy-wo
 
 Built. `offeredWorkflow` (`workflows/offered.ts`) for the commands; `workflowForRun` (`comfyui/image.ts`) in the adapter. Security class.
 
-- A `proven` workflow for the job (and, for video, the matching `videoStart` pair) first.
+- **No workflow named.** A `proven` workflow for the job (and, for video, the matching `videoStart` pair) first.
 - With `deps.devTools` true, a `trial` one where no `proven` one exists, so the plain screens can run it. Test it with `ADMAN_DEV_TOOLS=1 npm run dev`. Never in a packaged app.
+- When no shipped one is offered to the caller for that job and start, the oldest custom one that fits. That one is the default (`isDefault`).
 - The same holds for an agent under the ComfyUI tick [D-080]. A `draft` is never sent to any server.
 - Otherwise `generation.runImages`, `generation.startVideo` and `job.retry` refuse with `comfy_job_not_offered` before any job row, and the app says why [REQ: FR-254].
+- **A named workflow.** `generation.runImages` and `generation.startVideo` take an optional `workflowId`, for the person and for an agent. It must be in `allWorkflows()`, not a `draft`, a `trial` one only with dev tools on, a custom one always, and it must fit the job and start. Refusals before any job row: `comfy_workflow_not_found`, `comfy_job_not_offered` (a `trial` one with dev tools off), `comfy_workflow_wrong_job`, and `too_few_references` for fewer pictures than `minReferences`. Rules and sentences: `spec/comfyui-custom.md`, "Which workflow a run gets".
+- **Stored on the job.** The command writes the chosen ID into `request.workflowId`; the job kind hands it to the adapter, and `workflowForRun` looks it up in `allWorkflows()`. `job.retry` uses it. With an ID that is a draft, unknown, or of the wrong job or start, the run fails `workflow_gone` before anything is sent. Handed no ID (cut-out, extend, or a row made before IDs were stored), `workflowForRun` picks only a shipped workflow, never a custom one.
 - Tests: dev tools off refuses a `trial`; dev tools on runs it against the stand-in. The rule tests use a made-up trial copy of the shipped list (`tests/helpers/trial-workflows.ts`), since no shipped workflow is `trial` today.
 
 ## Where a graph comes from, and how one is fixed
@@ -154,7 +159,7 @@ Built. `offeredWorkflow` (`workflows/offered.ts`) for the commands; `workflowFor
 - **Source.** ComfyUI's own template for the model, in "Export (API)" form (V-3), changed by hand only as `source.changes` records: `PreviewImage` for pictures, the video prefix under `adman/`, app-filled values left at template defaults, a first-run size. Who exports is OI-38. Today's shipped graphs are agent drafts flattened from the official templates.
 - **Entering.** A drafted or exported graph enters `src/main/providers/comfyui/workflows/` as `trial` under its ID with `source` filled in, each in its own small commit. The tests on shipped files run on every one.
 - **Fixing one that fails on the real server.** Fix the shipped file, bump `version`, add one line to `source.changes`; in the same commit copy the graph over `comfy-workflows/{file}.json` and add one line under "Not verified" in `comfy-workflows/README.md` (canvas copies in `ui/` are not remade). A fix may change only an input name or value the server's answer names, a missing input, or a `class_type` spelling, each checked against ComfyUI's public source. A fix that needs an add-on, a model file outside the README's table, or a different graph shape goes to the architect. The tests on shipped files must pass: the graph is fixed, not the test.
-- **Licence text** [REQ: FR-285]. `licence.commercialNote` is shown wherever a workflow is described: the list of what a workflow needs, Settings, and the confirmation dialog. The app checks no licence.
+- **Licence text** [REQ: FR-285]. `licence.commercialNote` is shown wherever a workflow is described: the list of what a workflow needs, Settings, and the confirmation dialog. The app checks no licence. A custom workflow's licence is not known (`commercialNote` null, so no licence dialog); Settings shows one fixed sentence for it instead: "Adman cannot know the licence of a workflow you add. Check the licence of every model it uses before you use what it makes."
 - **Commercial-licence dialog** [D-088]. Built (S2-4, S2-6, S2-8). When the model is not known the dialog reads "This model" and has no checkbox. A workflow whose `licence.commercialNote` is not null runs a model that needs a commercial licence. When the user starts a run with such a workflow, the app first shows a dialog: "{model} requires a commercial license, please confirm that you have one before production use", with the workflow's `model` name in place of `{model}`, the buttons "Cancel" and "Confirm", and a checkbox "don't show again for {model}". Cancel starts nothing. Confirm starts the run. With the box ticked, Confirm also saves the model's name in the settings value `licenceConfirmed` (a list of model names, default empty), and the dialog is not shown again for that model. Settings lists the confirmed models with a "Forget" button for each. The main process makes the check, because only it knows which workflow a run gets (A-40): `generation.runImages`, `generation.startVideo` and `job.retry` take `licenceConfirmed: true` for such a workflow or refuse with `INVALID_INPUT`, `details = { reason: 'licence_not_confirmed', workflow }`, message "{model} requires a commercial license. Confirm that you have one first." (`licenceNotConfirmedMessage`), unless the model is in the saved list. The refusal comes after the workflow is chosen and before any job row or request. The window shows the dialog on that refusal and, on Confirm, sends the same command again with the flag, as the key dialog does for `NEEDS_KEY`. `{model}` is the workflow's `model.label`, and the saved list holds model labels. An agent cannot press Confirm: for an agent the flag is ignored, so its run of such a workflow is refused with that reason until the user has ticked the box for that model. Today this covers MiniMax H3 and FLUX 3 klein; MOSS-Image has no note and no dialog. Slices: S2-4 (main process), S2-6 (dialog), S2-8 (Settings list).
 
 ## Filling a run
@@ -173,10 +178,10 @@ type FillValues = {
 }
 ```
 
-- It copies the graph and sets exactly the inputs the slots name: the prompt (a JSON text value, never joined into anything), width and height, a fresh random seed in every `seed` slot (a whole number below 2^53), the uploaded file names, the frame count, the pad numbers, the output prefix `adman/{promptId}`.
+- It copies the graph and sets exactly the inputs the slots name: the prompt (a JSON text value, never joined into anything), width and height, a fresh random seed in every `seed` slot (a whole number below `slots.seedBelow`, default 2^53; a custom workflow sets 2^32), the uploaded file names, the frame count, the pad numbers, the output prefix `adman/{promptId}`.
 - It adds no node and changes no `class_type`. The only removals are what a shipped spec declares: for each reference slot past the last picture, its `dropWhenUnused` nodes and inputs; and the `alwaysDrop` parts. After removing, it checks that no input left links to a deleted node. What is removed is shipped data, never a value from the caller, a project file or the server.
 - **Strict fill.** A missing value for a slot the workflow has, or a value for a slot it lacks (`references: []` included), throws a plain `Error`. The caller sets a key only when the slot is there (for `moss-text-to-image`: prompt, width, height). Such an `Error` is an app fault, not a refusal to show the user.
-- Pictures fill reference slots in order. Fewer pictures than `minReferences`, or more than there are slots, is refused by the command before any call (`too_many_references` for too many). The slot count is the most that workflow takes; "up to four" (MOSS) and "up to nine" (H3) are model limits, not a promise.
+- Pictures fill reference slots in order. Fewer pictures than `minReferences`, or more than there are slots, is refused by the command before any call (`too_many_references` for too many). Fewer is `too_few_references`. The slot count is the most that workflow takes; "up to four" (MOSS) and "up to nine" (H3) are model limits, not a promise. A custom workflow takes exactly as many pictures as it has reference slots (`minReferences` = the slot count), and drops nothing.
 - Each option is its own submission with its own seed, kept or cancelled on its own [REQ: FR-257].
 - If a model fails a slot-dropped graph, that workflow alone falls back to one file per reference count, by a ruling.
 
@@ -225,7 +230,7 @@ Built for all three start pairs. `src/main/providers/comfyui/video.ts`, `video-p
 - Until Phase 7 the first frame is the picture asset the user chose. Phase 7 swaps in the rendered background layer (`spec/providers-adapters.md`, "What stays in Phase 7").
 - **Not built (conditional):** if a real photo comes out turned, `fitPicture` turns it upright from its orientation tag before the crop.
 
-**Length.** Frames are the allowed count (`frameStep × k + frameOffset`, k a whole number from 0) nearest to `round(durationMs / 1000 × fps)`, never above the largest allowed count that fits `maxMs` (`frameCount` in `frames.ts`). For H3: 5, 22, 39, 56 …; two seconds gives 56. `maxMs` stays 15 s (V-19) until a trial shows what the server can make (U-19).
+**Length.** Frames are the allowed count (`frameStep × k + frameOffset`, k a whole number from 0) nearest to `round(durationMs / 1000 × fps)`, never above the largest allowed count that fits `maxMs` (`frameCount` in `frames.ts`). It never gives 0 frames: with `frameOffset` 0 the fewest is one `frameStep`, otherwise the offset alone. When no allowed count fits `maxMs`, the run stops before anything is sent. For H3: 5, 22, 39, 56 …; two seconds gives 56. `maxMs` stays 15 s (V-19) until a trial shows what the server can make (U-19).
 
 **The result is a file in the server's output folder** (V-38) [D-052 answer 26], under the prefix `adman/{promptId}`, so the user can find and remove the app's clips. The app removes none [REQ: FR-271]; a temporary way is a later pass [REQ: FR-291].
 
@@ -271,10 +276,12 @@ Built. `comfy.getInfo` returns these sentences (each workflow's `leavesOnServer`
 - "Each video run leaves a file in the server's output folder, under adman/."
 - "The server keeps its own record of each run, the prompt included." (**U-16**)
 
+A custom workflow adds one sentence, `LEAVES.custom`: "A workflow you add can leave files on the server wherever its own steps save them." Its full list: `spec/comfyui-custom.md`, "What the app leaves on the server".
+
 The app removes none of them and has no call that could.
 
 ## Trials, `test:comfy` and the hand-test screen
 
-How a workflow becomes `proven`, the real-server tests `test:comfy`, the hand-test screen's ComfyUI part, Krea 2 and custom workflows, and what a server needs: `spec/comfyui-trials.md`.
+How a workflow becomes `proven`, the real-server tests `test:comfy`, the hand-test screen's ComfyUI part, Krea 2, and what a server needs: `spec/comfyui-trials.md`. Workflows a person or an agent adds: `spec/comfyui-custom.md`.
 
 

@@ -260,13 +260,15 @@ type Settings = {
   agentRuns: Record<string, { allowed: boolean }>  // provider ID to its tick; default {}. Written only by agentRuns.setAllowed  [REQ: FR-279]
   agentRunLimit: number                          // Whole number 1 to 16, default 4 (AGENT_MAX_ACTIVE_RUNS). Written only by agentRuns.setLimit
   licenceConfirmed: string[]                     // Model labels the user confirmed a commercial licence for; each 1 to 100 characters, at most 50; default []. Written by settings.update  [D-088]
+  comfyWorkflowChoice: Partial<Record<'image' | 'image_refs' | 'video_prompt' | 'video_first_frame' | 'video_references', WorkflowId>>
+                                                 // The workflow last picked in the run dialog, per job and start, on this computer; default {}. Written only by settings.update, after the person's run is accepted  [D-104]
   reports: { exporterName: string }              // trimmed, at most 100 characters, no control characters; default { exporterName: '' }. Written only by settings.update
   setup: { done: boolean }                       // default { done: false }; an older file loads with the default. Set true when the first-run setup closes in any way (R2E-10). Written only by settings.update
 }
 ```
 
 - `DEFAULT_PROVIDERS` lives in `src/main/providers/registry.ts`; `DEFAULT_MCP_PORT = 47821` in `defaults.ts`. `defaultProviders.image` and `.video` may be `comfyui` [REQ: FR-254]. A saved file naming `fal-seedance` for video is not rewritten (`fal-seedance` is available since P7-15, `spec/providers.md`).
-- **Who writes what.** `settings.update` (schema `settingsPatchSchema`, strict) can change `defaultProjectDir`, `defaultProviders`, `generation`, `export`, `mcp` except `enabled`, `storage`, (from S2-4) `licenceConfirmed`, `reports` and `setup` (agents are denied `settings.update`). It refuses every other key. The app keeps `recentProjects`. `mcp.enabled` has one writer, `mcp.setEnabled`, which also starts or stops the server. `comfyui` has one writer, `comfy.setAddress`. `agentRuns` has one writer, `agentRuns.setAllowed`. `agentRunLimit` has one writer, `agentRuns.setLimit`. These three keys are security class (`spec/security.md`).
+- **Who writes what.** `settings.update` (schema `settingsPatchSchema`, strict) can change `defaultProjectDir`, `defaultProviders`, `generation`, `export`, `mcp` except `enabled`, `storage`, (from S2-4) `licenceConfirmed`, (D-104) `comfyWorkflowChoice`, `reports` and `setup` (agents are denied `settings.update`). An agent's run never changes `comfyWorkflowChoice`, and no agent reads it. It refuses every other key. The app keeps `recentProjects`. `mcp.enabled` has one writer, `mcp.setEnabled`, which also starts or stops the server. `comfyui` has one writer, `comfy.setAddress`. `agentRuns` has one writer, `agentRuns.setAllowed`. `agentRunLimit` has one writer, `agentRuns.setLimit`. These three keys are security class (`spec/security.md`).
 - `settings.update` for `storage.s3` checks the region with `regionRefusal` (`spec/storage-and-publish.md`).
 
 ### Loading the file
@@ -284,4 +286,9 @@ Built (`settings-store.ts`). Security class.
   3. The next save, for any reason (a settings change, opening a project), writes null over it. The store keeps no second copy of the file's text. The user sees that no address is set and types it again. Whether to tell the user an address was refused is OI-50.
 - **`agentRunLimit` from the file.** Any value that is not a whole number from 1 to 16 is read as 4.
 - **`licenceConfirmed` from the file.** A value that fails its schema is read as `[]`; the other keys load as usual, so a bad list never resets the whole file.
+- **`comfyWorkflowChoice` from the file.** A value that fails its schema is read as `{}`; the other keys load as usual. An ID in it that is no longer offered is ignored where it is read.
+
+### Custom ComfyUI workflows folder
+
+`{userData}/comfy-workflows/` holds one file per added workflow, `custom-{12 hex}.json`, written only by the app (a temporary file, then a rename, as `settings.json`). The folder is the list; files with other names are ignored, and a stored file that fails its checks is skipped with one warn line naming its ID only. Per computer, never in a project. Rules: `spec/comfyui-custom.md`, "The stored shape".
 - **Tests** (`tests/unit/main/settings/settings-store-comfy.test.ts`): a file with a failing address loads with `baseUrl` null, and after one `touchRecent` the file on disk holds `baseUrl: null` with its other keys kept; a file with `http://127.0.0.1:8188` loads with that origin and still holds it after a save; a file with `"comfyui": { "__proto__": { "baseUrl": "http://169.254.169.254" } }` loads with `baseUrl` null; a file with `"agentRuns": { "__proto__": { "comfyui": { "allowed": true } } }` loads with `agentRuns` having no `comfyui` entry, own or inherited, and `Object.prototype` has no new key after either load.

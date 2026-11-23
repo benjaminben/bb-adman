@@ -56,6 +56,7 @@ The stakeholder's words (CQ-38): "We can treat workflows like assets which are e
 **FR-309:** The user can add a ComfyUI workflow file of their own to a project. They do it in the app, by choosing a file on their computer. The app links the file where it is. It does not copy, move or change it. An added workflow is called a custom workflow.
 **Priority:** P0
 **Notes:**
+- **D-104:** differs. The file is copied into the app's own data folder on this computer, not linked and not part of a project. The user adds it in Settings from the system file picker; an agent may add one only by ask (FR-327). Design: `spec/comfyui-custom.md`.
 - As for any import, the dialog offers "copy into the assets folder" as a choice (FR-052). Assumed (A-C32).
 - The app never writes to the user's workflow file. Everything the user sets for a workflow in the app (name, jobs, marks made in the app, size setting, last values) is kept in the project, beside the link.
 - A workflow is its own kind of project file record. It is not in the reference library or the asset library (FR-054) and cannot be placed on a post.
@@ -72,12 +73,14 @@ The stakeholder's words (CQ-38): "We can treat workflows like assets which are e
 **FR-311:** The app shows the project's custom workflows in one list, beside the shipped ones. The user gives each a name when adding it, and can add a short description. The user can rename one and can remove one. Two workflows in a project cannot have the same name. Removing a workflow removes it from the project only. The file stays on disk (as FR-295), and nothing on the server is touched.
 **Priority:** P0
 **Notes:**
+- **D-104:** differs. One list per computer, not per project; each workflow has a name and no description. Removing deletes the app's own copy; nothing on the server is touched.
 - "A selectable list" in the stakeholder's words. The list is per project, because assets are per project. Assumed (A-C31).
 - The name starts as the file's name, so adding takes one step when the user does not care.
 - A generated picture or video keeps its record of the workflow's name after the workflow is removed (FR-264).
 - Where the list is shown (with the project's assets, or elsewhere) is for the design. The ComfyUI address stays in the app's Settings, outside any project (FR-253).
 
 **FR-312:** A linked workflow file follows the linked-file rules.
+- **D-104:** does not apply. The app keeps its own copy and does not watch the file the user picked; to change a workflow, the user removes it and adds the new export.
 - **Changed outside the app.** When the file's content changes, for example the user exports again from ComfyUI to the same place, the project uses the new content. The app reads the variables again. When they are the same as before, nothing is asked. When they differ, the app shows the review again (FR-314) before the next run that uses the workflow. The warning of FR-330 applies.
 - **Missing.** When the file cannot be found, the app marks the workflow as missing wherever it is shown, and lets the user point to the file's new place (FR-009). A run with a missing workflow does not start. The app never picks a different workflow silently. A missing workflow does not stop any export.
 - **Pointed to another file.** The user can point a workflow at a different file. The name, the jobs and the settings are kept where they still fit, and the review is shown again.
@@ -89,6 +92,7 @@ The stakeholder's words (CQ-38): "We can treat workflows like assets which are e
 **FR-326:** Package and other computers. "Package project" (FR-008) gathers each linked workflow file with the project, as it does every linked file, so the packaged project opens on another computer with its workflows present. A workflow file is not published to cloud storage (FR-162) and is not part of any export. The ComfyUI address is never packaged (FR-253).
 **Priority:** P0
 **Notes:**
+- **D-104:** differs. Nothing is packaged: a workflow belongs to the computer, never to a project, a package or a brief.
 - This follows from "like assets". It reverses revision 1, which kept workflows per computer and out of packages.
 - A workflow that works on one server may lack models or add-ons on another. The app says what is missing (FR-325).
 - A project received from someone else now brings workflow files with it. What the app does the first time such a workflow is used is CQ-42.
@@ -109,12 +113,14 @@ A variable is a value in the workflow that the app fills for each run. Everythin
 **FR-314:** When a workflow is added, the app shows what it found: each variable, its kind, the step it is in, and the value the file holds now. It shows the result step (FR-322), and the jobs it thinks the workflow can serve (FR-321). The user confirms before the workflow joins the list. A mark the app does not understand is shown as such and is not filled.
 **Priority:** P0
 **Notes:**
+- **D-104:** not this round. There is no review screen: marks come only from step titles, and a file whose marks fail the checks is refused with a fixed sentence (an unknown mark included).
 - This is where "simple and often automated" is met: for a well-marked file the user reads one screen and confirms.
 - A workflow with no variables at all can still be added. It runs exactly as written. The app says that the prompt and the variant will not affect it.
 
 **FR-315:** On the same screen the user can mark a variable themselves, without going back to ComfyUI: they pick a value in the workflow and give it a kind. They can also take a mark away. For a file with no marks, the app proposes the likely prompt, seed, size and result, and the user confirms or corrects them.
 **Priority:** P1
 **Notes:**
+- **D-104:** not this round. There is no marking in the app; a mark is set only in ComfyUI.
 - For workflows that came from someone else, or were exported before the user knew the names.
 - Marks made in the app are kept in the project. The user's file is not changed (FR-309).
 - Nothing is filled that the user has not confirmed.
@@ -138,6 +144,7 @@ A variable is a value in the workflow that the app fills for each run. Everythin
 | Extra picture | A place where a picture the user chooses per run is loaded. | P2 |
 
 **Notes:**
+- **D-104:** this round has no negative prompt, frames-per-second or extra value marks, and no extra picture; those values stay as the file has them. The marks are `prompt`, `seed`, `width`, `height`, `ref1` to `ref8`, `first-frame`, `frames` and `output`.
 - Prompt, negative prompt, seed and result are the ones in the example. Its files also hold size, frame count, frame rate and LoRA strength as values a user might want to set; the first three have kinds of their own here, and the rest are covered by "extra value".
 - Model files and LoRA files are not variables. A user who wants another model adds another workflow.
 - **Acceptance:** for each P0 kind, a marked test workflow receives the right value at run time, and the value can be seen in what the app sent.
@@ -166,6 +173,7 @@ A variable is a value in the workflow that the app fills for each run. Everythin
 **FR-318:** These variables are asked from the user, on the confirmation dialog, before the run: the negative prompt, and every extra value and extra picture. Each starts with the value that is in the file. The user can run without touching any of them. The app remembers the last values used with that workflow.
 **Priority:** P0 for the negative prompt; P1 for extra values
 **Notes:**
+- **D-104:** not this round. Nothing is asked for a custom workflow on the run dialog beyond the "Workflow" choice.
 - "Fill per generation" in the stakeholder's words.
 - The automatic variables are not shown as fields. The asked ones are grouped under one heading, closed unless the user opens it.
 
@@ -175,13 +183,14 @@ A variable is a value in the workflow that the app fills for each run. Everythin
 
 **FR-320:** A run never fails partway because a picture place was not filled. Before the run starts, the app compares the pictures it has with the picture places the workflow has. When there are more reference pictures than places, the app says so and none is dropped silently (as FR-260). When there are fewer pictures than places, or a first frame is needed and there is none, either the run is made to work without them or it is refused before it starts with a plain reason. Which of the two is for the architect, per kind.
 **Priority:** P0
-**Notes:** This is open question 2 in `comfy-workflows/README.md`, and it applies to shipped workflows too.
+**Notes:** This is open question 2 in `comfy-workflows/README.md`, and it applies to shipped workflows too. **D-104:** a custom workflow takes exactly as many reference pictures as it has `ref` marks; fewer or more is refused before any job row.
 
 ### B.3 Jobs and results
 
 **FR-321:** Each custom workflow serves one or more of the app's ComfyUI jobs: a picture from a prompt, a picture from a prompt and reference pictures, a video (with the kinds of start it has places for, FR-286), and extend a background. The app proposes the jobs from the variables and the result it found. The user confirms them when adding. For each job, the project's custom workflows that serve it are offered beside the shipped ones wherever a workflow is chosen (FR-256, FR-288). The user can set one as the project's default for a job.
 **Priority:** P0 for pictures and video; P1 for extend a background
 **Notes:**
+- **D-104:** differs. Each workflow serves exactly one job, worked out from its marks; no one picks it, and there is no extend. There is no project default: with two or more fitting workflows the run dialog shows a "Workflow" choice and remembers the last pick per job and start on this computer.
 - Decided (CQ-41: "Good rec"): pictures and video first, extend later.
 - A workflow with no "reference picture" place is not offered when reference pictures are attached, unless the user chooses to run without them. A workflow with no "first frame" place is not offered for a video that starts from a first frame.
 - Cut-out (FR-307) as a job for a custom workflow is not asked for and is not included.
@@ -190,6 +199,7 @@ A variable is a value in the workflow that the app fills for each run. Everythin
 **FR-322:** The app finds a run's result at the step marked as the result. The result is one or more pictures, or one video. When the workflow has exactly one step that puts out a picture or a video, that step is the result without a mark. When it has several and none is marked, the user chooses one when adding. A workflow with no such step is refused when adding. The kind of result must fit the job: a picture for the picture jobs and for extend, a video for the video job.
 **Priority:** P0
 **Notes:**
+- **D-104:** differs. The `output` mark is required; the app guesses no result step and the user chooses none when adding.
 - The example does this with a step named `PREVIEW`.
 - The result is stored like any other ComfyUI result: pictures as PNG (FR-299), video with its sound (FR-283), with "ComfyUI" as provider, the model file names found in the workflow, and the workflow's name marked as custom (FR-264). It does not carry the server's address (FR-253).
 - What the server sends back is handled as for a shipped workflow (FR-277). That rule is about the server's answers, not about the workflow.
@@ -198,6 +208,7 @@ A variable is a value in the workflow that the app fills for each run. Everythin
 
 **FR-323:** A run with a custom workflow follows every rule of a ComfyUI run: the confirmation dialog with the address and the workflow's name (FR-256); one variant at a time, the number of options asked for, never counted as paid (FR-257); progress (FR-269); cancelling (FR-270, FR-281); failures and lost contact (FR-265 to FR-268); only the saved address is contacted (FR-274, FR-275). Each option is a separate filling of the workflow with a new seed. When a workflow has no seed variable, the app says before the run that the options may all be the same.
 **Priority:** P0
+**Notes:** **D-104:** differs. At least one `seed` mark is required, so a workflow with no seed is refused when added.
 
 **FR-324:** For a workflow with width and height variables, the app fills a size that has the variant's ratio. For each custom workflow the user can set the size its model wants: about how many pixels in total, and the step that width and height must be a multiple of. The app starts with a sensible setting, so the user need not touch it. When a workflow has no width and height variables, it makes the size written in the file; the app says before the run when that size does not have the variant's ratio. A result of a different pixel size from the variant is treated as for any other provider (A-C3).
 **Priority:** P0
@@ -206,6 +217,7 @@ A variable is a value in the workflow that the app fills for each run. Everythin
 **FR-325:** Missing models and add-ons. The app works out what a custom workflow needs from the file itself: the kinds of step it uses and the model files it names. When a ComfyUI server answers (FR-252), and when a workflow is added while the server can be reached, the app compares that with what the server reports and names each missing item. A run does not start when something is known to be missing (FR-266). When the server refuses or fails a run for a reason the app did not foresee, the plain message comes first and the server's own text is available on request (FR-267). The app installs nothing.
 **Priority:** P0
 **Notes:**
+- **D-104:** differs. No model check: for a custom workflow the app checks only its node types, and a missing model file or version is found by the server when the run is sent. The missing node types are shown only in the user's Settings check; a failed run stores how many things are missing, never their names.
 - For a custom workflow the needs can only be read from the file. So the list may lack the folder a model file belongs in, and it has no ComfyUI version.
 - A missing kind of step usually means an add-on is not installed. The app shows the step's name as the file has it.
 - This is a help for getting a run to work. It is not a safety check, and nothing in a workflow is judged or blocked by it (FR-329).
@@ -216,6 +228,7 @@ A variable is a value in the workflow that the app fills for each run. Everythin
 **FR-327:** When the ComfyUI tick is on (FR-279), an external agent can start a run with a custom workflow that is in the open project's list, by its name, within the limit of FR-292. The agent can see the names and jobs of the workflows in the list. It cannot add, point elsewhere, rename or remove a workflow, cannot read a workflow's contents, and cannot send a workflow of its own. It supplies what it would for a shipped workflow: the variant, the job, the prompt, the number of options, the start choice for a video. Asked variables (FR-318) take their saved values in an agent's run.
 **Priority:** P0
 **Notes:**
+- **D-104:** differs. An agent names a workflow by its ID (from `list_comfy_workflows`), and may add one (sending the file's text, never a path) or remove one, each only through an ask the user answers in the app. An add is never auto-approved and shows every node type. An agent still cannot read, rename or change a workflow.
 - Decided. The stakeholder's word (CQ-39): "Yes". The question put was option (a): any workflow in the list, by name; the agent cannot add or change one.
 - An agent can add assets to a project in general (FR-200). A workflow is the exception: only the user adds one (FR-328).
 - A missing workflow, or one waiting for the user's review after its file changed (FR-312), is refused to the agent with a plain reason.
@@ -228,6 +241,7 @@ Decided by the stakeholder (CQ-40): "Assume that all loaded comfy workflows are 
 **FR-328:** A workflow that runs on the user's server comes only from the set shipped with the app, or from the custom workflows in the open project (FR-309). A custom workflow enters a project only by the user adding it in the app, or by already being in a project file the user opens. A workflow is never taken from a brief, from an imported asset of another kind, from an external agent or from the server.
 **Priority:** P0
 **Notes:**
+- **D-104:** differs. A workflow comes from the shipped set, or was added on this computer by the user from the system file picker or by an agent's ask the user allowed. Never from a project file, a package, a brief, an asset or the server. FR-278 in `REQUIREMENTS-ComfyUI.md` states this.
 - This replaces FR-278.
 - Changed from revision 1, which said "never from a project file". With workflows treated like assets, a project file holds links to workflow files, and a packaged project brings the files (FR-326). So opening a project made by someone else loads their workflows into that project. Whether opening counts as "loaded" in the sense of the trust decision is assumed yes (A-C29). What the app shows the first time is CQ-42.
 - A project file from someone else can also name any path on this computer as a workflow. The app would read that file and, on a run, send its content to the user's own ComfyUI server. The stakeholder has accepted the like case for assets (D-054 item 3: "Not concerned about these cases"). It is noted here and not guarded against.
@@ -246,6 +260,7 @@ Decided by the stakeholder (CQ-40): "Assume that all loaded comfy workflows are 
 - once, when the app finds that a linked workflow file was changed outside the app, the next time the user uses that workflow.
 **Priority:** P0
 **Notes:**
+- **D-104:** differs. No warning dialog for the user's own add; the user's choice of file is the control. An agent's add shows the ask dialog instead, which says what a workflow can do on the server.
 - The stakeholder's words: "We can show a warning when saving/editing new workflows".
 - The third case is assumed (A-C30). The file lives outside the app, so an edit made in ComfyUI or a text editor is the usual kind of edit, and the app only learns of it afterwards.
 - The wording is the same for every workflow. It does not depend on what the workflow holds.
@@ -254,6 +269,7 @@ Decided by the stakeholder (CQ-40): "Assume that all loaded comfy workflows are 
 
 **FR-331:** Where custom workflows are added, the app says once that the licence of any model or add-on a custom workflow uses is the user's responsibility (as FR-285). It does not check and does not block.
 **Priority:** P1
+**Notes:** **D-104:** met by the fixed licence line in Settings' "ComfyUI workflows" section.
 
 ---
 

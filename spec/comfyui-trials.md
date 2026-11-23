@@ -1,6 +1,6 @@
 # ComfyUI: trials and the real-server tests
 
-How a shipped workflow becomes `proven`, the real-server test harness `test:comfy`, the dropped hand-test screen part, what is not built (Krea 2, custom workflows) and what a server needs. The workflows themselves, sizes, video runs and extend are in `spec/comfyui-workflows.md`; the address, the client, the check and failures are in `spec/comfyui.md`.
+How a shipped workflow becomes `proven`, the real-server test harness `test:comfy`, the dropped hand-test screen part, what is not built (Krea 2) and what a server needs. Custom workflows are in `spec/comfyui-custom.md`. The workflows themselves, sizes, video runs and extend are in `spec/comfyui-workflows.md`; the address, the client, the check and failures are in `spec/comfyui.md`.
 
 ## Trials and `proven` [REQ: FR-284]
 
@@ -55,14 +55,14 @@ Built, except where marked. Shared harness rules: `spec/testing.md`; variables: 
 Not built. The hand-test screen it was planned for was removed in P9-14 (`src/renderer/dev/` is gone). The product screens with dev tools on stand in for it. Whether any of it is still wanted, and where, is OI-64. The plan, kept for the record:
 
 - The address field (`comfy.setAddress`), "Check" (`comfy.check`), the missing items and licence notes per workflow, the "left on the server" sentences.
-- A workflow picker that includes `trial` ones: `generation.runImages` and `generation.startVideo` take an optional `workflowId` from `WORKFLOW_IDS`, accepted only when `deps.devTools` is true and the actor is the user; otherwise `INVALID_INPUT`.
+- A workflow picker that includes `trial` ones. Overtaken by D-104: `generation.runImages` and `generation.startVideo` now take an optional `workflowId` for the person and for an agent, with the rules of `spec/comfyui-custom.md`, "Which workflow a run gets" (a `trial` one only with dev tools on); the run dialog's "Workflow" select is the picker.
 - Prompt, size, count, reference pictures from the project's library; for video the start choice and length. Generate. Waiting or working, with the place in the queue. Cancel. The result through `adman-asset://`, a video played muted. "Show the server's message" on a failure.
 - Extend: the dev command `dev.comfyExtend { projectId, assetId, width, height, prompt }`, registered only with `devTools`, agent policy deny (the row exists). It enqueues an `image_generation` job whose request has `mode: 'extend'`, with the picture centred on the new canvas. Not to be built: Phase 5's `generation.runFill` replaces it, and the extend trial runs through it with dev tools on.
 
 ## Not built: Krea 2 and custom workflows
 
 - **Krea 2** (OI-58, CQ-27). Nothing is built until MOSS-Image and MiniMax H3 pass their trials. It may provide alternate workflows, including the extend fallback; which jobs it gets is not decided. `job` plus `model` already allow a second model for one job; the run input then gains a model choice. `comfy-workflows/krea2-*.json` are for hand tests only. Its licence limits commercial use.
-- **Custom (user-added) workflows** (OI-57, D-058). Not designed. Answered so far: a value the app fills is marked by the step's title set in ComfyUI; an agent may run a listed custom workflow under the ComfyUI tick; pictures and video first, after the stock workflows pass on the test machine; workflows are treated like assets, as external files (CQ-38, differing from FR-309 and FR-326). It needs its own ruling on "the only workflows the app can send" (`spec/comfyui-workflows.md`, "The workflow description") and FR-278, and waits for the analyst's revision 2 of `REQUIREMENTS-ComfyUI-Draft5.md`.
+- **Custom (user-added) workflows** (OI-57, D-058). Built by D-104; the design is `spec/comfyui-custom.md`.
 
 ## What a server needs (operator facts)
 

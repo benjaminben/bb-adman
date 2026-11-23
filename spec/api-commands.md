@@ -66,7 +66,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `translation.exportSheet` | projectId, campaignId, filePath | — | deny | Built | FR-103 |
 | `sync.apply` | projectId, directionId, masterRev, decisions[] | C | deny | Built | FR-082, FR-083 |
 | `check.run` | projectId, campaignId or variantIds[] | — | allow | Built | FR-114, FR-116, FR-196 |
-| `generation.runImages` | projectId, variantId, slot or layerId (exactly one), prompt, referenceAssetIds[], count (1 to 8), provider, licenceConfirmed? (S2-4) | — | tick | Built | FR-062–FR-065, FR-199 |
+| `generation.runImages` | projectId, variantId, slot or layerId (exactly one), prompt, referenceAssetIds[], count (1 to 8), provider, licenceConfirmed? (S2-4), workflowId? (D-104) | — | tick | Built | FR-062–FR-065, FR-199 |
 | `generation.runFill` | projectId, variantId, provider, licenceConfirmed? (agents may start it: a gate run command) | — | tick | Built | FR-076, D-080 |
 | `generation.applyFill` | projectId, jobId (the window sends it when its fill succeeds) | C | deny | Built | FR-076 |
 | `generation.proposeLayout` | projectId, variantId, provider (`spec/ai-jobs.md`) | — (applied by `layer.updateMany`, V) | tick | Built | FR-061 |
@@ -74,7 +74,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `generation.cutOut` | projectId, variantId, layerId, provider, licenceConfirmed? | — | tick | Built | FR-307 |
 | `brief.extract` | projectId, filePath (`.md`, `.markdown`, `.txt`), provider | — | deny | Built | FR-022 |
 | `layer.updateMany` | projectId, variantId, updates[] of { layerId, patch } (1 to 100) | V | allow | Built | FR-061, FR-092 |
-| `generation.startVideo` | projectId, variantId, prompt, durationMs, provider, start (`none`, `background` or `first_frame`), useReferences: boolean, referenceAssetIds[], licenceConfirmed? (S2-4); user only: layerId? (the background layer; the clip then takes the still's place, R2E-7) | — | tick | Built (ComfyUI; fal.ai Seedance since P7-15) | FR-123, FR-199, FR-286 |
+| `generation.startVideo` | projectId, variantId, prompt, durationMs, provider, start (`none`, `background` or `first_frame`), useReferences: boolean, referenceAssetIds[], licenceConfirmed? (S2-4), workflowId? (D-104); user only: layerId? (the background layer; the clip then takes the still's place, R2E-7) | — | tick | Built (ComfyUI; fal.ai Seedance since P7-15) | FR-123, FR-199, FR-286 |
 | `job.retry` | projectId, jobId, licenceConfirmed? (S2-4) | — | deny | Built | FR-069, FR-152 |
 | `job.cancel` | projectId, jobId | — | tick | Built | FR-152, FR-215 |
 | `job.markSeen` | projectId, jobIds[] (at least one) | — | deny | Built | FR-218 |
@@ -93,6 +93,10 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `agent.answerPermission` | requestId, allow, rememberAuto | — | deny | Built (P10-6) | FR-197 |
 | `comfy.setAddress` | address (text or null) | — | deny | Built | FR-251 |
 | `comfy.check` | — | — | deny | Built | — |
+| `comfyWorkflow.addFromFile` | filePath (from `dialog.pickFiles`, purpose `comfy-workflow`) | — | deny | Built | D-104 |
+| `comfyWorkflow.add` | name, workflowJson, video? | — | ask (kind `workflow`) | Built | D-104, FR-327 |
+| `comfyWorkflow.update` | workflowId, name?, size?, video? | — | deny | Built | D-104 |
+| `comfyWorkflow.remove` | workflowId | — | ask (kind `delete`) | Built | D-104, FR-327 |
 | `agentRuns.setAllowed` | provider, allowed | — | deny | Built | FR-279, FR-280 |
 | `agentRuns.setLimit` | limit | — | deny | Built | — |
 | `dev.comfyExtend` | projectId, assetId, width, height, prompt | — | deny | Not built, and not to be built: `generation.runFill` replaces it (CU-8 is dropped under OI-64's assumption) | — |
@@ -175,7 +179,7 @@ Built: `generation.runImages`, `generation.startVideo`, `generation.proposeLayou
 - Refusals: an unknown provider, one that cannot make pictures, or one not in this build: `INVALID_INPUT`. A text layer, a copy slot or an unknown slot: `INVALID_INPUT`. A missing variant, or a layer not in the variant: `NOT_FOUND`.
 - `prepare` reads every ID in `referenceAssetIds`: a picture that is gone, too large or not a picture (WebP included, until slice WP) is refused before a job row is made. The job kind reads the bytes again with `AssetService.read`.
 - At most `MAX_REFERENCES_PER_RUN` (8) references per run, one constant in `src/shared/config/defaults.ts`, used by this schema, the job request schema and the pickers, with duplicate IDs refused (A-56).
-- For `comfyui`, before any job row: `comfy_address_needed`, then `comfy_job_not_offered`, then `too_many_references` (`checkComfyRun`, `src/main/commands/generation/comfy-checks.ts`). The command picks the workflow itself through `offeredWorkflow` (`spec/comfyui.md`): a `proven` one, else a `trial` one only when `deps.devTools` is true. The same rule holds for both actors. No agent sets a workflow's status to `proven`.
+- For `comfyui`, before any job row: `comfy_address_needed`, then `comfy_job_not_offered`, then `too_many_references` (`checkComfyRun`, `src/main/commands/generation/comfy-checks.ts`). The command picks the workflow itself through `offeredWorkflow` (`spec/comfyui.md`): a `proven` one, else a `trial` one only when `deps.devTools` is true, else the oldest custom one that fits. The same rule holds for both actors. No agent sets a workflow's status to `proven`.
 
 ### `generation.startVideo`
 
@@ -195,12 +199,12 @@ Checks in `prepare`, before any job row:
 - Every provider other than ComfyUI accepts only the prompt start.
 - Until the Scene exists, the first frame is the chosen picture asset. Phase 7 uses the rendered background.
 - A video on a picture-format variant is accepted until Phase 7; Phase 7's format switch adds that refusal.
-- `workflowId?` on `generation.runImages` and `generation.startVideo`: Not built (CU-8). A workflow from the fixed list, accepted only when `deps.devTools` is true and the actor is the user; otherwise `INVALID_INPUT`. The parse drops it today as an unknown key.
+- **`workflowId?` on `generation.runImages` and `generation.startVideo`** (D-104). Built, for the person and for an agent. Checked by `workflowIdSchema` (a shipped ID or `custom-` plus 12 lowercase hex characters), then by `offeredWorkflow`: refusals before any job row are `comfy_workflow_not_found` (not on this computer, or a draft), `comfy_job_not_offered` (a `trial` one with dev tools off), `comfy_workflow_wrong_job`, and, after the choice, `too_few_references` (`details.min`). The command writes the chosen workflow's ID into the job's `request.workflowId`, named or default. Rules and sentences: `spec/comfyui-custom.md`, "Which workflow a run gets".
 
 ### `job.retry`
 
 - Makes a new job row from the old row's `request` (a picture job that kept pictures asks only for the rest, `spec/jobs.md`), references included, with the same campaign, variant, layer and slot, and leaves the old row as it is. It applies to a `failed` or `cancelled` job; a row with no provider is refused with `job_wrong_state`. It calls the key guard again (purpose "try this again"). A retried job is always `startedBy: 'user'`. Agents are denied it, because it re-sends a stored request.
-- **ComfyUI checks** (`src/main/commands/job/retry.ts`). For a ComfyUI picture job it calls `checkComfyRun` with the reference count from `old.request`, after the key guard and before `enqueue`. For a ComfyUI video job, `checkComfyVideoRetry` reads the stored start pair and makes checks 2 to 4 of `generation.startVideo` against the old row's IDs, for every status of the old row. The chosen workflow is not stored on the job row. Tests: `tests/integration/commands/job-retry-comfy.test.ts` (on a made-up trial copy of the shipped list; dev tools off with only `trial` workflows: refused `comfy_job_not_offered`, job count unchanged; dev tools on: a new queued job; the same for a video row).
+- **ComfyUI checks** (`src/main/commands/job/retry.ts`). For a ComfyUI picture job it calls `checkComfyRun` with the reference count from `old.request`, after the key guard and before `enqueue`. For a ComfyUI video job, `checkComfyVideoRetry` reads the stored start pair and makes checks 2 to 4 of `generation.startVideo` against the old row's IDs, for every status of the old row. Both use the old row's `request.workflowId` when present, with the same checks as a named workflow; a row without it gets the default. The retry takes no workflow ID of its own. Tests: `tests/integration/commands/job-retry-comfy.test.ts` (on a made-up trial copy of the shipped list; dev tools off with only `trial` workflows: refused `comfy_job_not_offered`, job count unchanged; dev tools on: a new queued job; the same for a video row).
 - Pending: checks 2 and 4 (start pair, picture) for every video provider, not only ComfyUI, with one test.
 
 ### `job.cancel`
@@ -220,12 +224,14 @@ Built unless marked. `src/main/commands/settings/`, `secret/`, `mcp/`, `comfy/`.
 
 - **`settings.update`** takes a partial `Settings` (`spec/infra-and-settings.md`, "settings.json") and refuses unknown keys with `INVALID_INPUT`. Keys not in its schema, each with its own writer: `recentProjects` (`project.create`, `project.open`), `mcp.enabled` (`mcp.setEnabled`, which also starts or stops the server), `comfyui` (`comfy.setAddress`), `agentRuns` (`agentRuns.setAllowed`), and `agentRunLimit` (`agentRuns.setLimit`).
   - `defaultProviders.image` set to a provider whose registry row is not available is `INVALID_INPUT`.
+  - `comfyWorkflowChoice` (D-104) is written only here: the window sends it after the person's run is accepted with a workflow picked in the run dialog. Denied to an agent, as all of `settings.update`.
   - An S3 region is checked when saved (`storage_not_supported`).
   - A change of `mcp.port` while the server runs closes the listener, drops open sessions and listens on the new port. The port is saved either way; the command is not refused and never throws for it.
 - **`secret.set`** saves a key without testing it [REQ: FR-172]. `name` is a user secret name (`USER_SECRET_NAMES`, every name but `mcp.token`); `value` is trimmed and not empty ("Enter a key."). A saved key's summary holds its last four characters; a key of four characters or fewer shows none [REQ: R-10]. `secret.delete` takes `name` only.
 - **`mcp.setEnabled`** and **`mcp.regenerateToken`** set `changesAppState`. Neither reply holds the token. `mcp.setEnabled(true)` on a taken port leaves the setting as it was and refuses with `port_in_use`. `mcp.regenerateToken` makes a token and, if the setting is on, starts the server; with the port taken it saves the token and refuses with `port_in_use`. Full server rules: `spec/mcp-and-agents.md`.
 - **`comfy.setAddress`** is the one writer of `settings.comfyui.baseUrl`. Refuses with `INVALID_INPUT` and one of the `address_*` reasons [REQ: FR-251]. Contacts nothing. Sets `changesAppState`. Reply `{ baseUrl }`, the clean origin; `http://@host:8188` (empty user part) is accepted and stored as the clean origin.
-- **`comfy.check`** (`spec/comfyui.md`, "The check"). Returns `ComfyCheck = { outcome, version?, note?, workflows: [{ id, missing }] }`. No address saved is `comfy_address_needed`. Writes nothing.
+- **`comfy.check`** (`spec/comfyui.md`, "The check"). Returns `ComfyCheck = { outcome, version?, note?, workflows: [{ id, missing }] }`, a custom workflow included with its missing node types (the reply reaches only the person's window). No address saved is `comfy_address_needed`. Writes nothing.
+- **`comfyWorkflow.addFromFile`, `comfyWorkflow.add`, `comfyWorkflow.update`, `comfyWorkflow.remove`** (D-104). App scope, not undoable, set `changesAppState`, and each change empties the check's kept results. Replies: `{ workflowId, name }` for `addFromFile`, `{ workflowId }` for the others. `addFromFile` reads only the path the system picker gave in the last 10 minutes, once; `add` is the agent's add (actor `user` is refused with `workflow_add_in_settings`); `update` and `remove` take only an ID that matches `CUSTOM_WORKFLOW_ID`. Inputs, refusals and file rules: `spec/comfyui-custom.md`, "Commands, queries and events".
 - **`agentRuns.setAllowed { provider, allowed }`**. The one writer of `settings.agentRuns`. App scope, not undoable, sets `changesAppState`, returns `{ provider, allowed }`. Unknown provider: `INVALID_INPUT`. A provider `agentRunsOffered` refuses: `RULE_VIOLATION`, `details.reason` the value it gave, message "Agents cannot start runs with {Provider}." `allowed: false` is always accepted.
 - **`agentRuns.setLimit { limit }`**. The one writer of `settings.agentRunLimit`: a whole number 1 to 16, default 4 (`AGENT_MAX_ACTIVE_RUNS`, bounds in `src/shared/config/agent-runs.ts`). App scope, not undoable, sets `changesAppState`, returns `{ limit }`. Out of range is `INVALID_INPUT`. Policy row `'agentRuns.setLimit': deny('change agent run limits')`.
 - **`agent.answerPermission`** (built, P10-6): answers an `agent.permissionRequested` event (`spec/mcp-and-agents.md`).

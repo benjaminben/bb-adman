@@ -11,7 +11,7 @@ Built (Phase 1 and 2). Main files: `src/main/db/project-file.ts`, `src/main/db/p
 | Project file `Name.adman` | One SQLite database with all project data | FR-001, R-06 |
 | Assets folder, default `Name Assets/` beside the project file | Generated files, and imported files the user chose to copy | FR-007, R-07, R-08 |
 | Anywhere on disk | Linked imported files | FR-001, FR-009, R-06 |
-| App data folder (`app.getPath('userData')`) | `settings.json`, `secrets.bin`, `logs/`, `thumbnails/` | FR-173, FR-153 |
+| App data folder (`app.getPath('userData')`) | `settings.json`, `secrets.bin`, `logs/`, `thumbnails/`, `comfy-workflows/` (custom ComfyUI workflows, D-104) | FR-173, FR-153 |
 
 The product name is **Adman**. The project file extension is `.adman` (`PROJECT_EXTENSION` in `src/shared/schemas/project.ts`). The app ID is `com.adman.app`. The stakeholder chose the name knowing that other advertising products use it.
 
@@ -279,6 +279,8 @@ Drizzle: `src/main/db/schema/jobs.ts`. In migration `0002` the `job_started_by` 
 | With a reference picture | `none` | true | `[assetId]` | `{ firstFrame: false, references: true }` | `start: 'none'`, `referenceAssetIds: [assetId]` |
 
 Until the Scene exists, the first frame is the chosen picture asset. Phase 7 swaps in the rendered background (`spec/comfyui.md`).
+
+- **`request.workflowId`** (picture and video jobs, ComfyUI only; D-104). The ID of the workflow the command chose, named or default: a shipped ID or `custom-` plus 12 hex characters, never a graph, a node or a name. `job.retry` uses it. A row made before IDs were stored has none and gets the default. A failed `missing_items` run of a custom workflow stores `result.missing: []` and `result.missingCount`, never the names of what is missing (`spec/comfyui-custom.md`, "The check and what is missing").
 
 ### report and variant_check
 

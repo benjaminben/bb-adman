@@ -15,6 +15,7 @@ An agent connected through the MCP server can start, follow and cancel its own p
 - `generation.runImages` and `generation.startVideo` (all three video starts; the picture is named by asset ID).
 - Every provider the app offers for those jobs (today ComfyUI and Gemini). Gemini is paid, and an agent's run has no per-run click.
 - ComfyUI `trial` workflows on the same terms as the user: only while dev tools are on. A `draft` is never sent.
+- Naming a ComfyUI workflow by ID (`workflow_id` on `generate_images` and `generate_video`), listing the workflows it may name (`list_comfy_workflows`), and running a custom workflow under the ComfyUI tick. Adding one (`add_comfy_workflow`) and removing one (`remove_comfy_workflow`) only through an ask the person answers (D-104, `spec/comfyui-custom.md`, "MCP tools" and "The agent's ask").
 - `job.cancel` of a run an agent started (all agent clients are one actor; see 'Gate steps for a run').
 
 **Stays shut:**
@@ -28,7 +29,7 @@ An agent connected through the MCP server can start, follow and cancel its own p
 
 ## `trial` workflows, same rule for both actors
 
-`offeredWorkflow` (`src/main/providers/comfyui/workflows/offered.ts`): a `proven` workflow first, for anyone; else a `trial` one when `who.devTools` is true, whoever asks; else null (`comfy_job_not_offered`). A `draft` is never returned. The parameter keeps its shape. A packaged app never has dev tools, so an agent there gets nothing on ComfyUI until a workflow is `proven`.
+`offeredWorkflow` (`src/main/providers/comfyui/workflows/offered.ts`): a `proven` workflow first, for anyone; else a `trial` one when `who.devTools` is true, whoever asks; else null (`comfy_job_not_offered`). A `draft` is never returned. The parameter keeps its shape. A packaged app never has dev tools, so an agent there gets only `proven` and custom workflows on ComfyUI. A custom workflow is offered to both actors always; with no workflow named it is used only when no shipped one fits (`spec/comfyui-custom.md`, "Which workflow a run gets").
 
 ## The tick
 
@@ -65,7 +66,7 @@ An agent connected through the MCP server can start, follow and cancel its own p
 2. The tick is on, read at that moment through the one reader. Else "The user has not allowed agents to start runs with {Provider}. They can allow it in Adman's Settings."
 3. Agent runs for that provider are fewer than `settings.agentRunLimit`. The count is jobs with `started_by = 'agent'`, status `queued` or `running`, and that provider, over every open project (one SQL count per project from the registry's `all()`), plus agent runs for that provider that have passed the gate and have no job row yet. Else "Agents already have the most runs allowed with {Provider}. Wait for one to finish." (`agentRunLimitMessage(label)`, exported from `agent-run-gate.ts`). The sentence holds no number, so an agent learns neither the limit nor how many runs other projects hold. Two agent calls sent together with limit 1 give one job and one refusal.
 
-- No `workflowId` step: neither input schema has the field, and the parse drops unknown keys. An agent never names a server, a workflow, a node or a model file.
+- No `workflowId` step in the gate. Both input schemas take an optional `workflowId` (`workflowIdSchema`: a shipped ID or `custom-` plus 12 hex characters); the command checks it with `offeredWorkflow` after the gate, as for the user. An agent names a workflow only by that ID, and never names a server, a node or a model file, or sends a graph with a run.
 - A user's runs are never counted or held back by the agent limit. The runner's own limit (`JOBS_AT_ONCE_PER_PROVIDER`, 4 per provider, anyone; `spec/jobs.md`) is separate.
 
 **`job.cancel` for an agent:** the job is found in the project (else `NOT_FOUND`); its `started_by` must be `agent`, else "Agents can cancel only runs they started." No tick needed. All agent clients are one actor: the job row records only `started_by = 'agent'`, not which MCP client started it, and every client shares one token. So "its own run" means any run an agent started, in any open project, and never a run the user started. Then `cancelRefusal` applies as for the user (`spec/cancel.md`): on a provider whose `cancel` is `none` (Gemini), a running picture job is accepted (no further call is sent, the pictures already made are kept), and any other running background job is refused with `cancel_not_supported`.
@@ -86,14 +87,14 @@ An agent connected through the MCP server can start, follow and cancel its own p
   | Gate or command | `NOT_FOUND` | none (variant, layer or asset not found), or `jobId` ("That job is not in this project.") |
   | Command | `NEEDS_KEY` | `provider` |
   | Command | `MISSING_FILE` | `assetIds` |
-  | Command | `RULE_VIOLATION` | reason `comfy_address_needed`, `comfy_job_not_offered`, `too_many_references` (`max`), `video_too_long` (`maxMs`), `picture_not_usable`, `asset_not_a_picture`, `asset_too_large`, `job_wrong_state`, `cancel_not_supported`, `licence_not_confirmed` (`workflow`) |
+  | Command | `RULE_VIOLATION` | reason `comfy_address_needed`, `comfy_job_not_offered`, `comfy_workflow_not_found`, `comfy_workflow_wrong_job`, `too_many_references` (`max`), `too_few_references` (`min`), `video_too_long` (`maxMs`), `picture_not_usable`, `asset_not_a_picture`, `asset_too_large`, `job_wrong_state`, `cancel_not_supported`, `licence_not_confirmed` (`workflow`) |
 
   - None holds a file path, a folder name, a key, the saved server address or raw server text. The messages of `asset_not_a_picture` and `asset_too_large` hold the asset's display name, for both actors.
   - Accepted: `NEEDS_KEY` tells an agent that the user has no key saved for a ticked paid provider.
   - A ComfyUI run of a workflow whose model needs a commercial licence is refused with `licence_not_confirmed` (`details.workflow`) until the user has saved that model in Settings; an agent's `licenceConfirmed` flag is ignored (`spec/comfyui-workflows.md`).
 - **Marked and waiting.** `JobRow.startedBy` is on the wire, so the activity panel and the run row can say "Started by an agent". The activity log line carries the actor. The result has `seen_at` null and waits for the user. An agent cannot mark it seen.
 - **An agent may pick a result** [D-059 item 5]. `layer.update` and `layer.create` by an agent make no check of `started_by` or `seen_at`. The tool descriptions ask it not to; no command refuses the pick. The test "a run started as the agent has `started_by = 'agent'` and `seen_at` null" stays.
-- **`jc.system` sends as the user.** A job's `jc.system` commands are sent as actor `user`, whoever started the job. The only command a job sends this way is `asset.addGenerated` (from the picture and the video job kinds, and the cut-out kind from Phase 4; the Phase 4 layout, copy and brief kinds send none). It is `internal` and `deny` for agents. Its input is built by app code: the job's own project, an asset ID the app makes, a fixed `png` or `mp4` extension, and the model name from the provider's result (for ComfyUI, the shipped workflow). The agent controls only what it already chose within its allowed run: the prompt text and the provider recorded on the asset. A new `jc.system` command is ruled on by itself before it is added.
+- **`jc.system` sends as the user.** A job's `jc.system` commands are sent as actor `user`, whoever started the job. The only command a job sends this way is `asset.addGenerated` (from the picture and the video job kinds, and the cut-out kind from Phase 4; the Phase 4 layout, copy and brief kinds send none). It is `internal` and `deny` for agents. Its input is built by app code: the job's own project, an asset ID the app makes, a fixed `png` or `mp4` extension, and the model name from the provider's result (for ComfyUI, the shipped workflow's model file, or the fixed text "custom ComfyUI workflow" for a custom one, never text from its graph). The agent controls only what it already chose within its allowed run: the prompt text and the provider recorded on the asset. A new `jc.system` command is ruled on by itself before it is added.
 
 ## Unticking
 
@@ -126,7 +127,10 @@ The UI pass decides whether the job list should say more about a queued agent ru
 |-------|----------------|
 | Read, set or change the ComfyUI address | No tool returns settings; `comfy.setAddress`, `comfy.check` are deny and `comfy.getInfo` is user only; no error, job row, job view or event holds it |
 | Read, set or change a tick or the limit | `agentRuns.setAllowed` and `agentRuns.setLimit` are deny; no tool returns settings. An agent learns a tick is off only from the refusal sentence. |
-| Name a server, a workflow, a node or a model file | The command inputs have no such field; unknown keys are dropped |
+| Name a server, a node or a model file, or send a graph with a run | The command inputs have no such field; unknown keys are dropped. A workflow is named only by an ID that passes `workflowIdSchema` and is on this computer |
+| Read a graph, a node, an input, a title or a file path of a workflow | `list_comfy_workflows` replies with `id`, `name`, `job`, `start`, `isDefault` only; `comfy.getInfo` and `agent.askWorkflow` are user only |
+| Add or remove a workflow without the person | `add_comfy_workflow` is an ask of kind `workflow`, never auto-approved; `remove_comfy_workflow` is a `delete` ask; `comfyWorkflow.addFromFile` and `comfyWorkflow.update` are deny |
+| Read or change the remembered workflow choice | `comfyWorkflowChoice` is written only by `settings.update` (deny); no tool returns settings |
 | Read the server's own words | `job.getServerMessage` is user only; `error_detail` is not on the wire; the job view gives the app's own sentence |
 | Mark a result seen; retry | `job.markSeen` and `job.retry` are deny |
 | Get a file path, a key or the token | Allow-list pickers on every reply |

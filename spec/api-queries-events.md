@@ -22,9 +22,11 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 | `job.list` | `JobRow[]` for the activity panel, as wire rows, newest first [REQ: FR-152, FR-217] | Built |
 | `job.get` | One `JobRow`, or `NOT_FOUND` "That job was not found." | Built |
 | `job.getServerMessage` | `{ text: string \| null }`: the cleaned server text for a failed ComfyUI job, or null (`spec/comfyui.md`) [REQ: FR-267]. User only. | Built |
-| `comfy.getInfo` | Shipped ComfyUI workflow data (below). User only. | Built |
+| `comfy.getInfo` | ComfyUI workflow data, shipped and custom (below). User only. | Built |
+| `comfyWorkflow.list` | `{ workflows: Array<{ id, name, job, start, isDefault }> }`: every workflow the caller may name for `image`, `image_refs` or `video`; `start` is `'prompt' \| 'first_frame' \| 'references'` for video, else null. Never a graph, a node, a file path or the address. Both actors (`list_comfy_workflows`) (`spec/comfyui-custom.md`, "Commands, queries and events") | Built (D-104) |
 | `project.listOpen` | `{ id, name }[]` for open projects only, never `filePath` | Built |
 | `agent.askFiles` | Input `{ requestId }`. `{ files: string[] }`: the normalised full paths of an open import ask, in order; after the request ends `NOT_FOUND` "That request has ended." Held in memory for the request's life only. User only: an agent gets `AGENT_DENIED`. The one reply that carries paths an agent named (`spec/security.md`, "Paths in the renderer") | Built (R2P-5) |
+| `agent.askWorkflow` | Input `{ requestId }`. `{ name, job, start, references, nodeTypes }` for an open `workflow` ask; after the request ends `NOT_FOUND` "That request has ended." Held in memory for the request's life only. User only: an agent gets `AGENT_DENIED`. The only way the ask dialog gets the node types of a graph an agent sent (`spec/comfyui-custom.md`, "The agent's ask") | Built (D-104) |
 | `report.list` / `report.get` | Saved reports [REQ: FR-151]. User only | Built (P8-9) |
 | `history.state` | `UndoStateResult = { canUndo, canRedo }` for a scope | Built |
 | `publish.inspect` | Whether the campaign's cloud folder already has files [REQ: FR-164], and the component files a publish would upload, each with its full local path [REQ: R-06, 8.4], and each font's `share` and `sha256` (`spec/phases/phase-09.md`). User only | Built (P9-9, P9-12) |
@@ -61,8 +63,8 @@ Built (Phase 4, P4-2), designed in `spec/ai-jobs.md`, "The three queries": `job.
 
 ### Who may call which query
 
-- **User only:** `mcp.getConnectInfo`, `comfy.getInfo`, `job.getServerMessage`. Each refuses actor `agent` with `AGENT_DENIED`, and no MCP tool calls them. `mcp.getConnectInfo` refuses with "Agents cannot read the agent access settings in this version. Ask the user to do it in the app." (`CONNECT_INFO_DENIED`).
-- **Both actors:** `job.get` (the MCP tool cuts the reply down to its allow-list) and `project.listOpen` (policy `allow` for the agent). Which tool wraps which query is in `spec/mcp-and-agents.md`.
+- **User only:** `mcp.getConnectInfo`, `comfy.getInfo`, `job.getServerMessage`, `agent.askFiles`, `agent.askWorkflow`. Each refuses actor `agent` with `AGENT_DENIED`, and no MCP tool calls them. `mcp.getConnectInfo` refuses with "Agents cannot read the agent access settings in this version. Ask the user to do it in the app." (`CONNECT_INFO_DENIED`).
+- **Both actors:** `job.get` (the MCP tool cuts the reply down to its allow-list), `project.listOpen` (policy `allow` for the agent) and `comfyWorkflow.list`. Which tool wraps which query is in `spec/mcp-and-agents.md`.
 
 ### `mcp.getConnectInfo`
 
@@ -90,9 +92,11 @@ type ConnectInfo = {
 
 Built. `src/main/queries/comfy.ts`, types in `src/shared/schemas/queries/comfy.ts`. [REQ: FR-253, FR-263, FR-285]
 
-Returns `{ address: string | null, workflows: [{ id, label, job, videoStart?, status, model, needs, size, video?, licence, leavesOnServer, offered }], leavesOnServer: string[] }`. The list is the app's own shipped data, readable before any run. It contacts nothing. The graph, slots and source of a workflow stay in the main process. Field meanings are in `spec/comfyui.md`.
+Returns `{ address: string | null, workflows: [{ id, label, job, videoStart?, status, model, needs, size, video?, licence, leavesOnServer, offered, isDefault, custom? }], leavesOnServer: string[] }`. The list is the shipped workflows, then the custom ones (`allWorkflows()`), readable before any run. It contacts nothing. The graph, slots and source of a workflow stay in the main process. Field meanings are in `spec/comfyui.md` and `spec/comfyui-custom.md`.
 
-- **`offered: boolean`**: true for the workflow `offeredWorkflow` gives the user's run of that job (and, for video, that start pair), with the app's dev-tools setting. At most one per job and pair. The window reads it for the "trial" mark (A-41) and holds no choice rule of its own.
+- **`offered: boolean`**: true when the person may pick the workflow now: a shipped one `offeredWorkflow` offers the user (with the app's dev-tools setting), and every custom one. The window reads it for the "trial" mark (A-41) and the run dialog's "Workflow" select, and holds no choice rule of its own.
+- **`isDefault: boolean`**: true for the one a run of that job (and, for video, that start pair) gets with no workflow named. At most one per job and pair.
+- **`custom`**, only for a custom workflow (`status: 'custom'`): `{ addedBy, addedAt, nodeCount, sizeMarks, references }`. Its `needs.nodeClasses` holds the graph's node types; this reply reaches only the person's window.
 
 ### `job.get`
 
@@ -112,7 +116,7 @@ The window is sandboxed and cannot open a file or folder picker, so it asks the 
 |-------|-------|---------|----------|-------|
 | `dialog.pickFolder` | title?, defaultPath? | `{ path: string \| null }` | New project location, default project folder, assets folder (`project.setAssetsDir`), package target (`project.package`), export folder | Built |
 | `dialog.pickProjectFile` | defaultPath? | `{ path: string \| null }` | Open project | Built |
-| `dialog.pickFiles` | purpose (`import`, `relink` or `brief`), kind? (offers only that kind's extensions, `pickerExtensions(purpose, kind)` in `src/shared/config/file-types.ts`; for `relink`: the asset's kind; for `import`: used by the picture chooser and the reference picker with `image`, and the font field with `font`; left out, every extension), multiple? (default true for `import`, false otherwise), defaultPath? | `{ paths: string[] }` | Asset import, relink, brief file | Built |
+| `dialog.pickFiles` | purpose (`import`, `relink`, `brief` or `comfy-workflow`; the last offers `.json` only, one file, and the main process remembers the path for `comfyWorkflow.addFromFile`), kind? (offers only that kind's extensions, `pickerExtensions(purpose, kind)` in `src/shared/config/file-types.ts`; for `relink`: the asset's kind; for `import`: used by the picture chooser and the reference picker with `image`, and the font field with `font`; left out, every extension), multiple? (default true for `import`, false otherwise), defaultPath? | `{ paths: string[] }` | Asset import, relink, brief file | Built |
 | `dialog.pickSaveFile` | purpose (`translation-sheet`), defaultPath? | `{ path: string \| null }` | Translation sheet | Built |
 
 - A picker only returns paths. It never reads, creates or changes a file. The window passes the path to a command, and the command checks the path as if the user had typed it.
@@ -200,7 +204,7 @@ Built: `project.changed`, `app.stateChanged`, `job.updated`, `asset.changedOnDis
 | `asset.changedOnDisk` | `{ projectId, assetIds }`: the linked assets whose content changed outside the app. Sent after `asset.checkChanged` succeeds with a non-empty list. The signal to draw those pictures again; the render service redraws the thumbnails of variants that use them (`spec/scene.md`). | Built |
 | `thumbnail.changed` | `{ projectId, variantId }`: sent after a thumbnail write, a delete, a failed draw or a failed save; a window showing it sends `thumbnail.get` again (`spec/editor-commands.md`) | Built |
 | `app.stateChanged` | Empty (`Record<string, never>`). Something `app.getState` returns has changed: a project was opened or closed, settings changed, a key was saved or deleted, or agent access changed. Each window reads `app.getState` again. | Built |
-| `agent.permissionRequested` | `{ requestId, agentClient, action, target, expiresAt, kind, fileCount }` (`agentClient` the cleaned client name or null; `kind` `'delete'` or `'import'`; `fileCount` 0 for a delete). No ID of the target, no input, no path: an import's paths reach the window only through `agent.askFiles` | Built (P10-6; kind and fileCount R2P-1) |
+| `agent.permissionRequested` | `{ requestId, agentClient, action, target, expiresAt, kind, fileCount }` (`agentClient` the cleaned client name or null; `kind` `'delete'`, `'import'` or `'workflow'`; `fileCount` 0 for a delete or a workflow). No ID of the target, no input, no path, no node type: an import's paths reach the window only through `agent.askFiles`, and a workflow ask's name, job and node types only through `agent.askWorkflow`; a workflow ask's event carries only its target line | Built (P10-6; kind and fileCount R2P-1) |
 | `app.showProject` | `{ projectId }`: show this open project. Sent by the main process after a system open (a file double-click or a second launch handed over by the single-instance lock), for a new and an already open project alike (`spec/editor.md`, "Which project shows") | Built (R2P-9) |
 | `approvals.changed` | `{ projectId, campaignId }`: the approvals tables changed (`spec/approvals-commands.md`) | Built |
 | `approvals.progress` | `{ projectId, campaignId, step: 'making' \| 'sending', done, total }`: before each clip is made and each clip upload of an "Update gallery". IDs and counts only | Built (R2V-7) |

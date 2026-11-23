@@ -466,7 +466,7 @@ One RTX 3090 graphics card (24 GB). It is the stakeholder's own machine. It is t
 **Priority:** P0
 **Notes:**
 - "Without the user being present" follows from "overnight". The app must be running, the project open and the MCP server on (FR-191, FR-201).
-- For ComfyUI the agent uses only the shipped workflows (FR-278) and the saved address. It cannot name an address, a workflow file or a model file. It can choose an alternate workflow (FR-288) and the enlarging step (FR-293) as the user can.
+- For ComfyUI the agent uses the shipped workflows and the ones added on this computer (FR-278), by ID, and the saved address. It cannot name an address, a workflow file or a model file. It may add or remove a workflow only through an ask the user answers (D-104). It can choose an alternate workflow (FR-288) and the enlarging step (FR-293) as the user can.
 - For a paid provider the agent uses the user's saved key without seeing it (FR-198). The run is a paid run like any other: it is counted and reported as one (FR-230; FR-303 in `REQUIREMENTS-D053.md`).
 - The agent supplies what the user would in the generation panel: the variant, the job, the prompt, the number of options, and for a video the start choice (FR-286).
 - Still open (CQ-34): whether an agent may pick one of the options; whether an agent may cancel. Until answered, "its result waits for the user" stands as written.
@@ -524,9 +524,9 @@ Today the app sends prompts and pictures only to fixed, built-in addresses. With
 - This covers the server's own error text shown on request (FR-267), and anything from the server that is passed on to an agent (FR-280).
 - It covers the sound in a video file too (FR-283).
 
-**FR-278:** A workflow that runs on the user's server comes only from the set shipped with the app. A workflow is never taken from a project file, a packaged project, a brief, an imported asset, an external agent or the server.
+**FR-278:** (Replaced by D-104.) A workflow that runs on the user's server is either one shipped with the app or one added on this computer: by the user choosing a file in the system file picker, or by an external agent only after the user allows it in the app, every time, seeing every node type it uses. A workflow is never taken from a project file, a packaged project, a brief, an imported asset or the server, and a run names a workflow only by an ID that is on this computer.
 **Priority:** P0
-**Notes:** A workflow tells the server what to run. ComfyUI servers with add-ons installed can be made to do much more than make pictures. A project received from someone else, or an agent, must not be able to run a recipe of its own choosing on the user's server.
+**Notes:** Design: `spec/comfyui-custom.md`. A workflow tells the server what to run. ComfyUI servers with add-ons installed can be made to do much more than make pictures. A project received from someone else, or an agent, must not be able to run a recipe of its own choosing on the user's server.
 
 ### 3.2 Testing on the project's ComfyUI server
 
@@ -543,7 +543,8 @@ Today the app sends prompts and pictures only to fixed, built-in addresses. With
 **Notes:**
 - The stakeholder's words: "Sure, Comfy is a priority so we can repetitively test the system without incurring costs".
 - The hand-test screen is a throwaway (D-048). The ComfyUI part is too. It replaces nothing in the real Settings and generation screens.
-- It obeys every rule in this file. In particular the address is set only by the user (FR-273), workflows are only the shipped ones (FR-278), and nothing on the server is cleared (FR-289).
+- It obeys every rule in this file. In particular the address is set only by the user (FR-273), workflows are only the shipped ones and the ones added on this computer (FR-278), and nothing on the server is cleared (FR-289).
+- The hand-test screen was removed (P9-14); the real screens with dev tools on stand in for it. A workflow picker is the run dialog's "Workflow" select (D-104).
 
 ### 3.3 Other quality requirements
 
