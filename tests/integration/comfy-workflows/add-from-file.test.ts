@@ -83,7 +83,9 @@ describe('comfyWorkflow.addFromFile: only the picked path [D-104, security rule 
     f = makeFixture()
     const file = fileWith(fixtureText('picture'))
     rememberWorkflowPath(file, Date.now() - CHOSEN_WORKFLOW_TTL_MS - 1)
+    const touched = watchDisk()
     expect(reasonOf(await addFrom(file))).toBe('workflow_not_picked')
+    expect(touched(file)).toBe(false)
   })
 
   it('takes a picked path once', async () => {
@@ -91,7 +93,27 @@ describe('comfyWorkflow.addFromFile: only the picked path [D-104, security rule 
     const file = fileWith(fixtureText('picture'))
     rememberWorkflowPath(file)
     data(await addFrom(file))
+    const touched = watchDisk()
     expect(reasonOf(await addFrom(file))).toBe('workflow_not_picked')
+    expect(touched(file)).toBe(false)
+  })
+
+  it('refuses a link in place of the picked file as unreadable, and never reads its target', async () => {
+    f = makeFixture()
+    const target = fileWith(fixtureText('picture'), 'target.json')
+    const link = path.join(path.dirname(target), 'flow.json')
+    fs.symlinkSync(target, link)
+    rememberWorkflowPath(link)
+    const touched = watchDisk()
+    const open = vi.spyOn(fs, 'openSync')
+    const readWhole = vi.spyOn(fs, 'readFileSync')
+    expect(reasonOf(await addFrom(link))).toBe('workflow_file_unreadable')
+    expect(touched(target)).toBe(false)
+    // Nothing was opened or read by the link's own name, which would reach the target.
+    for (const spy of [open, readWhole]) {
+      expect(spy.mock.calls.some(([p]) => p === link)).toBe(false)
+    }
+    expect(f.core.deps.comfyWorkflows.list()).toEqual([])
   })
 
   it('refuses another path than the one picked', async () => {
