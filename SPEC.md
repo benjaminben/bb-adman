@@ -73,6 +73,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/approvals-service-visitor.md` | Approvals service: visitor routes, sessions, the gallery view, the try limit, forms that write, notices, header sets, pictures |
 | `spec/approvals-service-tests.md` | Approvals service: the test files, the AP-14 port of the tests, the Playwright set-up |
 | `spec/subject-photos.md` | Subject photos (D-098, R-21): the brief's `pictures` field and its path checks, the "Photos" part of the brief form, the Create order, assumptions A-110 to A-126 |
+| `spec/brief-brand.md` | Brand, layout, art direction and ad sets in a brief: the file shape, what the stored brief keeps, `brief.parse`'s `brandFiles`, the form's "Brand and layout" section, `campaign.create`, agents, the shared helpers, assumptions A-395 to A-406 |
 | `spec/open-items.md` | Open questions, the improvised choices listed for review, what waits on the stakeholder |
 | `spec/assumptions.md` | The assumptions made meanwhile (OI, Q and A numbers), with how hard each is to undo |
 | `spec/assumptions-settled.md` | Assumption groups whose work is built and settled, moved out of `assumptions.md` (A-40 to A-52) |
@@ -94,6 +95,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/phases/approvals-service-slices.md` | Approvals by link: the service slices AP-1, AP-2, AP-3, AP-14, AP-15, AP-4, AP-16 |
 | `spec/phases/approvals-desktop-slices.md` | Approvals by link: the desktop slices AP-5 to AP-13 and AP-10b, with the follow-ups ruled after AP-8 |
 | `spec/phases/subject-photos.md` | Subject photos (D-098): slices SP-1 to SP-5 and their order |
+| `spec/phases/brief-brand.md` | Brand in a brief: slices BB-1 to BB-8 and their order |
 | `spec/phases/round-2-platform.md`, `round-2-campaign.md`, `round-2-editor.md`, `round-2-approvals.md`, `round-2-approvals-video.md` | Round 2, built: the design and slices for agent tools and briefs, several projects and the name; the campaign page and the Assets panel; the editor's Generate panel; the new gallery; video in the gallery |
 | `spec/phases/round-2-verify.md` | Round 2: the choices made without the stakeholder, for him to confirm, and the hand checks only he can do |
 | `spec/phases/design-wave.md` | The design wave (not built): the choices taken, the sixteen anti-patterns, the rules for every slice, Wave 1 (tokens and shared parts) in full, Wave 2 (screens) |

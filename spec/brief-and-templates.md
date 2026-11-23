@@ -41,6 +41,8 @@ The file exports two Zod schemas with these field names:
 
 **Subject photos** (Built) [D-098, D-100]: a draft subject gains `pictures` (each an asset ID of an image in the project, an absolute file path anywhere, or, in a brief file, a path relative to the brief's folder that may lead out of it; imported with no confirm, the normal import checks apply; on Windows a network or device path is never opened), `brief.parse` checks them, and the form needs a photo per subject before "Create campaign", which then also sends `asset.update`; `campaign.create` gains `placeSubjectPhoto` (SP-6). `Brief` gains nothing. Design: `spec/subject-photos.md`.
 
+**Brand, layout and art direction** (Not built): a brief gains `brand` (`logo`, `colours`, `fonts.heading`, `fonts.body`), `layout`, `artDirection` and `adsPer`; `Brief` keeps `layout`, `artDirection`, `adsPer` and `brand.colours`, never a logo or font path. Design: `spec/brief-brand.md`.
+
 **Word lists.** A plain word list for `requiredWords` or `prohibitedWords` is stored under the primary language [REQ: R-03]. `wordsByLanguage(words, primaryLanguage)` (`src/shared/brief/words.ts`) turns either form into `{ [language]: string[] }`: a plain list goes under the primary language, a per-language list is kept as given. The result shares no list with its input. `wordsByLanguage([], 'en')` gives `{ en: [] }`.
 
 **Sizes in a brief.** `parseSize(text)` (`src/shared/brief/size.ts`; the `CampaignSize` shape is in `spec/data-model.md`) turns a ratio or a pixel size into a `CampaignSize`, or null when it cannot be read. Ratios may be decimal. Two numbers both below 100 joined by `x` are read as a ratio. Cases pinned by `tests/unit/shared/brief/size.test.ts`:

@@ -1,8 +1,10 @@
 import { z } from 'zod'
+import { HEX_COLOUR } from '@/shared/schemas/layer'
 
 // SPEC 6.1 brief schema, the single owner. Frozen contract (SPEC 14, Phase 2 step 0).
 // BriefDraft: what a file gives; every field optional, a field of the wrong type dropped.
 // Brief: a confirmed brief; four required texts and at least one subject.
+// spec/brief-brand.md: brand, layout, artDirection and adsPer.
 
 const words = z.union([z.array(z.string()), z.record(z.string(), z.array(z.string()))])
 const copyEntry = z.object({
@@ -22,6 +24,14 @@ const draftSubject = z.object({
   pictures: loose(z.union([z.string(), z.array(z.string())])),
 })
 
+// spec/brief-brand.md: raw texts from the file. logo and the two fonts are each an asset ID, an
+// absolute path or a path relative to the brief, checked by brief.parse only, as pictures are.
+const draftBrand = z.object({
+  logo: loose(z.string()),
+  colours: loose(z.union([z.string(), z.array(z.string())])),
+  fonts: loose(z.object({ heading: loose(z.string()), body: loose(z.string()) })),
+})
+
 export const BriefDraft = z.object({
   campaignName: loose(z.string()),
   region: loose(z.string()),
@@ -36,6 +46,10 @@ export const BriefDraft = z.object({
   languages: loose(z.array(z.string())),
   sizes: loose(z.array(z.string())),
   copy: loose(copy),
+  brand: loose(draftBrand),
+  layout: loose(z.string()),
+  artDirection: loose(z.string()),
+  adsPer: loose(z.string()),
 })
 export type BriefDraft = z.infer<typeof BriefDraft>
 
@@ -47,6 +61,14 @@ export const BriefSubject = z.object({
   name: filled,
   description: z.string().optional(),
 })
+
+// spec/brief-brand.md: "campaign" (the default) makes one set of ads for all subjects together;
+// "subject" makes one direction per subject.
+export const ADS_PER = ['campaign', 'subject'] as const
+
+// Only the colours are kept. The logo and the fonts become assets of the project, so no path
+// reaches a stored brief.
+const BriefBrand = z.object({ colours: z.array(z.string().regex(HEX_COLOUR)).optional() })
 
 export const Brief = z.object({
   campaignName: filled,
@@ -62,5 +84,11 @@ export const Brief = z.object({
   languages: z.array(z.string()).optional(),
   sizes: z.array(z.string()).optional(),
   copy: copy.optional(),
+  // A starter layout ID. Any text is read back, so a stored brief stays readable if a layout
+  // leaves the build; campaign.create refuses an ID the build does not have.
+  layout: z.string().optional(),
+  artDirection: z.string().optional(),
+  adsPer: z.enum(ADS_PER).optional(),
+  brand: BriefBrand.optional(),
 })
 export type Brief = z.infer<typeof Brief>
