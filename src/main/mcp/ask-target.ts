@@ -8,6 +8,7 @@ import { z } from 'zod'
 import type { PermissionRequest } from '@/main/commands/bus'
 import { briefPlan, type BriefPlan } from '@/main/commands/campaign/from-brief-plan'
 import type { ProjectRegistry } from '@/main/db/project-registry'
+import type { CustomWorkflowStore } from '@/main/providers/comfyui/custom/store'
 import { campaignFromBriefInput } from '@/shared/schemas/commands/campaign-brief'
 import { cleanName } from './clean-name'
 
@@ -17,6 +18,10 @@ const campaignTarget = z.object({ campaignId: z.string() })
 const variantTarget = z.object({ variantId: z.string() })
 const subjectTarget = z.object({ subjectId: z.string() })
 const filesTarget = z.object({ paths: z.array(z.string()) })
+const workflowTarget = z.object({ workflowId: z.string() })
+
+// CW-6a: where an app-scope ask finds a workflow's name.
+export type WorkflowNames = Pick<CustomWorkflowStore, 'get'>
 
 // Read as stored: readMeta refuses a name an edited file may hold, and the ask must not fail.
 function projectName(db: Database.Database): string {
@@ -112,7 +117,21 @@ function lineFor(db: Database.Database, command: string, input: unknown): string
   return null
 }
 
-export function askTarget(projects: ProjectRegistry, request: PermissionRequest): string {
+// CW-6a: the removed workflow's stored name, cleaned; no project is named.
+function workflowRemoveLine(workflows: WorkflowNames | undefined, input: unknown): string | null {
+  const parsed = workflowTarget.safeParse(input)
+  const entry = parsed.success ? workflows?.get(parsed.data.workflowId) : undefined
+  return entry ? `Workflow "${cleanName(entry.stored.name)}"` : null
+}
+
+export function askTarget(
+  projects: ProjectRegistry,
+  request: PermissionRequest,
+  workflows?: WorkflowNames,
+): string {
+  if (request.command === 'comfyWorkflow.remove') {
+    return workflowRemoveLine(workflows, request.input) ?? NO_TARGET
+  }
   const handle = request.projectId ? projects.get(request.projectId) : undefined
   if (!handle) return NO_TARGET
   return lineFor(handle.db, request.command, request.input) ?? NO_TARGET

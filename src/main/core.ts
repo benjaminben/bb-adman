@@ -182,7 +182,14 @@ export function createCore(opts: CoreOptions) {
   }
 
   // Phase 10: the ask flow and agent activity (spec/phases/phase-10.md, A-237 to A-241).
-  const broker = createPermissionBroker({ emit: opts.emit, settings, log, now, projects })
+  const broker = createPermissionBroker({
+    emit: opts.emit,
+    settings,
+    log,
+    now,
+    projects,
+    workflows: deps.comfyWorkflows,
+  })
   const activity = createAgentActivity({ emit: opts.emit, log, now })
 
   // The MCP server reaches core only through the agent caller, as actor agent (SPEC 4.1).
