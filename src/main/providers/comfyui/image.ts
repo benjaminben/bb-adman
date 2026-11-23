@@ -28,7 +28,7 @@ import {
 } from './session'
 import { uploadName } from './values'
 import { NON_DRAFT_WORKFLOWS, withoutDrafts } from './workflows'
-import type { WorkflowChoice } from './workflows/offered'
+import { fits, type WorkflowChoice } from './workflows/offered'
 import type { WorkflowSpec } from './workflows/types'
 
 // `workflows` lets a test hand in a trial copy of a draft (P5-7); a draft in it is still
@@ -41,27 +41,24 @@ export type ComfyImageDeps = {
 
 // The command has already refused a job with no workflow it may use (SPEC 14 1.41) and
 // stored the one it chose in the job's request (D-104). With that ID the run gets exactly that
-// workflow; one no longer on this computer is workflow_gone, before anything is sent. A row
-// made before the ID was stored gets the proven one, else the first that fits. Never a draft.
+// workflow; one no longer on this computer, or a draft, is workflow_gone, before anything is
+// sent. With no ID (cut-out, extend, or a row made before the ID was stored) the run gets the
+// proven shipped one, else the first shipped one that fits; never a custom one (CW-7).
 export function workflowForRun(
   job: WorkflowChoice['job'],
   start?: WorkflowChoice['videoStart'],
   workflows: readonly WorkflowSpec[] = NON_DRAFT_WORKFLOWS,
   workflowId?: string,
 ) {
-  const fitting = withoutDrafts(workflows).filter(
-    (w) =>
-      w.job === job &&
-      (start === undefined ||
-        (w.videoStart?.firstFrame === start.firstFrame &&
-          w.videoStart.references === start.references)),
-  )
+  const choice: WorkflowChoice = { job, ...(start && { videoStart: start }) }
+  const fitting = withoutDrafts(workflows).filter((w) => fits(w, choice))
   if (workflowId !== undefined) {
     const named = fitting.find((w) => w.id === workflowId)
     if (!named) throw comfyFailure('workflow_gone', 'The workflow is not on this computer')
     return named
   }
-  const chosen: WorkflowSpec | undefined = fitting.find((w) => w.status === 'proven') ?? fitting[0]
+  const shipped = fitting.filter((w) => w.status !== 'custom')
+  const chosen = shipped.find((w) => w.status === 'proven') ?? shipped[0]
   if (!chosen) throw new Error(`No shipped workflow for ${job}`)
   return chosen
 }
