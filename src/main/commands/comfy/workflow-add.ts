@@ -41,20 +41,44 @@ function checked(text: string): CheckedWorkflow {
   return check.data
 }
 
-// A regular file of at most MAX_WORKFLOW_BYTES; the size is read before any byte.
+// Not on Windows, which has no such flag; there the device and inode compare stands.
+const NO_FOLLOW = fs.constants.O_NOFOLLOW ?? 0
+
+// Opened once without following a link; the open file must be the regular file lstat saw
+// (same device and inode), as src/main/assets/checked-file.ts reads. The size is checked
+// before any byte, and at most one byte over the limit is read from that one handle.
+function readOpened(fd: number, seen: fs.Stats): string {
+  const stat = fs.fstatSync(fd)
+  if (!stat.isFile() || stat.dev !== seen.dev || stat.ino !== seen.ino) {
+    throw refusal({ reason: 'workflow_file_unreadable' })
+  }
+  if (stat.size > MAX_WORKFLOW_BYTES) throw refusal({ reason: 'workflow_too_large' })
+  const buffer = Buffer.alloc(MAX_WORKFLOW_BYTES + 1)
+  let length = 0
+  for (;;) {
+    const read = fs.readSync(fd, buffer, length, buffer.length - length, length)
+    length += read
+    if (read === 0 || length === buffer.length) break
+  }
+  // Grown since the size check: checkWorkflowText refuses it as too large.
+  return buffer.subarray(0, length).toString('utf8')
+}
+
 function readPicked(filePath: string): string {
-  let text: string
+  let fd: number | null = null
   try {
-    const stat = fs.lstatSync(filePath)
-    if (!stat.isFile()) throw refusal({ reason: 'workflow_file_unreadable' })
-    if (stat.size > MAX_WORKFLOW_BYTES) throw refusal({ reason: 'workflow_too_large' })
-    text = fs.readFileSync(filePath, 'utf8')
+    const seen = fs.lstatSync(filePath)
+    if (!seen.isFile()) throw refusal({ reason: 'workflow_file_unreadable' })
+    if (seen.size > MAX_WORKFLOW_BYTES) throw refusal({ reason: 'workflow_too_large' })
+    fd = fs.openSync(filePath, fs.constants.O_RDONLY | NO_FOLLOW)
+    return readOpened(fd, seen)
   } catch (e) {
     if (e instanceof AppError) throw e
     // The system's error names the path, so it is dropped.
     throw refusal({ reason: 'workflow_file_unreadable' })
+  } finally {
+    if (fd !== null) fs.closeSync(fd)
   }
-  return text
 }
 
 // The file name without .json, cleaned by the shared name cleaner and cut to 60.

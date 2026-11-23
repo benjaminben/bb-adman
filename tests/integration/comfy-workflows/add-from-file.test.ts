@@ -102,6 +102,34 @@ describe('comfyWorkflow.addFromFile: only the picked path [D-104, security rule 
   })
 })
 
+describe('comfyWorkflow.addFromFile: one handle for the read [D-104, CW-2]', () => {
+  it('opens the picked file once without following a link, and reads through that handle', async () => {
+    f = makeFixture()
+    const file = fileWith(fixtureText('picture'))
+    rememberWorkflowPath(file)
+    const open = vi.spyOn(fs, 'openSync')
+    const readWhole = vi.spyOn(fs, 'readFileSync')
+    data(await addFrom(file))
+    const opens = open.mock.calls.filter(([p]) => p === file)
+    expect(opens).toHaveLength(1)
+    expect(Number(opens[0]?.[1]) & fs.constants.O_NOFOLLOW).toBe(fs.constants.O_NOFOLLOW)
+    expect(readWhole.mock.calls.some(([p]) => p === file)).toBe(false)
+  })
+
+  it('refuses a file that is not the one lstat saw', async () => {
+    f = makeFixture()
+    const file = fileWith(fixtureText('picture'))
+    const decoy = fileWith(fixtureText('two-refs'), 'decoy.json')
+    rememberWorkflowPath(file)
+    const decoyStat = fs.lstatSync(decoy)
+    const real = fs.lstatSync
+    vi.spyOn(fs, 'lstatSync').mockImplementation(((p: fs.PathLike, o?: fs.StatSyncOptions) =>
+      p === file ? decoyStat : real(p, o)) as typeof fs.lstatSync)
+    expect(reasonOf(await addFrom(file))).toBe('workflow_file_unreadable')
+    expect(f.core.deps.comfyWorkflows.list()).toEqual([])
+  })
+})
+
 describe('comfyWorkflow.addFromFile: the add [D-104, CW-2]', () => {
   it('adds a good file as the person, with the file name as its name', async () => {
     f = makeFixture()
