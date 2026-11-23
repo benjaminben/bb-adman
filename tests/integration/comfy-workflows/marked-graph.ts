@@ -48,6 +48,8 @@ export function markedGraphValue(opts: MarkOptions = {}): Record<string, Node> {
     const inputs: Record<string, unknown> = {}
     for (const [name, value] of Object.entries(node.inputs)) inputs[input(name)] = markValue(value)
     let title = markTitle(node._meta?.title ?? '', node.inputs)
+    // A nested value: an object holding a list of text, under a marked input name.
+    if (key === '4') inputs[input('nested')] = { [MARKER]: [`${MARKER} a`, `${MARKER} b`] }
     if (title.startsWith('adman: output')) {
       inputs[input('seed2')] = 7
       if (opts.noOutput) title = `${MARKER} output`

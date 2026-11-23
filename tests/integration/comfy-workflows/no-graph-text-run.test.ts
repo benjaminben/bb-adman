@@ -26,7 +26,19 @@ const failedEntry = {
   status: {
     status_str: 'error',
     completed: false,
-    messages: [['execution_error', { exception_type: 'RuntimeError', exception_message: 'x' }]],
+    // As a real server sends it: the failing node's ID and class. The server's own words stay
+    // free of the marker, since error_detail may lawfully hold them.
+    messages: [
+      [
+        'execution_error',
+        {
+          node_id: MARKED_OUTPUT,
+          node_type: `${MARKER}PreviewImage`,
+          exception_type: 'RuntimeError',
+          exception_message: 'x',
+        },
+      ],
+    ],
   },
   outputs: {},
 }
@@ -116,6 +128,7 @@ describe('no graph text leaves the app [D-104, rule 2, CW-8]', () => {
     userOnly.push(await x.user('comfy.check', {}))
     userOnly.push(await x.core.query('comfy.getInfo', {}, { actor: 'user' }))
     replies.push(await x.core.query('comfy.getInfo', {}, { actor: 'agent' }))
+    replies.push(await x.agent('comfy.check', {}))
     for (const actor of ['user', 'agent'] as const) {
       replies.push(await x.core.query('job.list', { projectId: x.projectId }, { actor }))
     }
@@ -136,8 +149,9 @@ describe('no graph text leaves the app [D-104, rule 2, CW-8]', () => {
     expect(JSON.stringify(userOnly)).toContain(MARKER)
     expect(JSON.stringify(posted(x))).toContain(MARKER)
 
+    expect(x.logs()).not.toBe('')
     const seen = JSON.stringify([replies, x.events, x.jobRows()]) + x.logs()
-    expect(seen).not.toContain(MARKER)
+    expect(seen.toLowerCase()).not.toContain(MARKER.toLowerCase())
     expect(filesHolding(x.root, MARKER)).toEqual([])
   }, 60_000)
 })

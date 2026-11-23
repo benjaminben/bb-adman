@@ -31,7 +31,8 @@ export async function markerSetUp() {
     documentsDir: root,
     appVersion: '0.1.0',
     crypto: fakeCrypto(),
-    env: {},
+    // Debug lines are written too, so the log search covers them.
+    env: { ADMAN_LOG_LEVEL: 'debug' },
     emit: (e) => events.push(e),
     toPng: (bytes) => bytes,
   })
@@ -114,8 +115,10 @@ function readAll(dir: string): string {
     .join('')
 }
 
-// Every file under the folder whose bytes hold the text.
+// Every file under the folder whose bytes hold the text, in any letter case.
 export function filesHolding(dir: string, text: string): string[] {
-  const needle = Buffer.from(text, 'utf8')
-  return filesUnder(dir).filter((f) => fs.readFileSync(f).includes(needle))
+  const needle = text.toLowerCase()
+  return filesUnder(dir).filter((f) =>
+    fs.readFileSync(f).toString('latin1').toLowerCase().includes(needle),
+  )
 }

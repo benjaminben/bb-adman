@@ -100,6 +100,6 @@ describe('test:comfy case 9, a custom workflow [CW-8, D-104]', () => {
     expect(printed).toContain('Custom workflow: image_refs, 9 node types')
     expect(printed).toContain('Pixel size: 4 x 4')
     const text = printed.join('\n')
-    expect(text.includes('127.0.0.1') || text.includes(String(s.port))).toBe(false)
+    expect(text.includes('127.0.0.1') || text.includes(s.origin)).toBe(false)
   })
 })

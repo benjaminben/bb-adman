@@ -41,7 +41,7 @@ describe('a marked graph that fails a later file check [CW-8, item 4]', () => {
     expect(x.asked()).toEqual([])
     expect(saved(x)).toEqual([])
     const seen = JSON.stringify([replies, x.events]) + x.readLogs()
-    expect(seen).not.toContain(MARKER)
+    expect(seen.toLowerCase()).not.toContain(MARKER.toLowerCase())
   })
 })
 
@@ -73,8 +73,8 @@ describe('nothing is read from disk for an agent [CW-8, item 5]', () => {
     expect(x.asked()).toEqual([])
     expect(saved(x)).toEqual([])
     const seen = JSON.stringify([byBus, reply, x.events]) + x.readLogs()
-    expect(seen).not.toContain(MARKER)
-    expect(seen).not.toContain(dir)
+    expect(seen.toLowerCase()).not.toContain(MARKER.toLowerCase())
+    expect(seen.toLowerCase()).not.toContain(path.basename(dir).toLowerCase())
   })
 
   it('refuses a workflow_json that is a file path as not JSON, with no ask and no file read', async () => {
@@ -99,7 +99,7 @@ describe('nothing is read from disk for an agent [CW-8, item 5]', () => {
     expect(x.asked()).toEqual([])
     expect(saved(x)).toEqual([])
     const seen = JSON.stringify([replies, x.events]) + x.readLogs()
-    expect(seen).not.toContain(MARKER)
-    expect(seen).not.toContain(dir)
+    expect(seen.toLowerCase()).not.toContain(MARKER.toLowerCase())
+    expect(seen.toLowerCase()).not.toContain(path.basename(dir).toLowerCase())
   })
 })
