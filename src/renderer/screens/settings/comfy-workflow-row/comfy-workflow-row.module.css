@@ -1,0 +1,12 @@
+/* app-style */
+/* An added ComfyUI workflow (CW-4): one ObjectRow with "Change" and the trash icon at its end. */
+.item {
+  list-style: none;
+  min-width: 0;
+}
+/* Keeps "Change" in its own colours (the row draws bare state buttons muted). */
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+}

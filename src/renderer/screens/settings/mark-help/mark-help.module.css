@@ -1,0 +1,9 @@
+/* app-style */
+/* "How to mark steps" (CW-4): the marks as step titles, in the code face. */
+.mark {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.example {
+  margin: 0;
+}

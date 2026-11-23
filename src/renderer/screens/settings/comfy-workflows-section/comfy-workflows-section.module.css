@@ -1,0 +1,15 @@
+/* app-style */
+/* Settings "ComfyUI workflows" (CW-4): the intro and licence lines, the list, the add button. */
+.line {
+  margin: 0;
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.add {
+  display: flex;
+}
