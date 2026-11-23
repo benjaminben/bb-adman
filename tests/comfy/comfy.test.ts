@@ -7,6 +7,7 @@ import os from 'node:os'
 import { describe, it, expect, type TestContext } from 'vitest'
 import { createComfyClient } from '@/main/providers/comfyui/client'
 import {
+  customCase,
   cutoutCase,
   firstFrameCase,
   pictureCase,
@@ -127,6 +128,13 @@ describe.skipIf(origin === '')('test:comfy on the test server', () => {
   it(
     '8. BiRefNet: a cut-out of the test-made picture (only with ADMAN_COMFY_CUTOUT=1)',
     runCase(cutoutCase, PICTURE_LIMIT_MS, ['uploadImage']),
+    PICTURE_LIMIT_MS + SPARE_MS,
+  )
+
+  // CW-8: run once (D-092); a failure is reported, not retried.
+  it(
+    '9. A custom workflow: the shipped Flux graph marked in the test (only with ADMAN_COMFY_CUSTOM=1)',
+    runCase(customCase, PICTURE_LIMIT_MS, ['uploadImage']),
     PICTURE_LIMIT_MS + SPARE_MS,
   )
 })
