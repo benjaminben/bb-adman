@@ -32,6 +32,7 @@ describe('settings defaults [SPEC 13.1]', () => {
       approvals: { baseUrl: null },
       reports: { exporterName: '' },
       setup: { done: false },
+      comfyWorkflowChoice: {},
     })
   })
 

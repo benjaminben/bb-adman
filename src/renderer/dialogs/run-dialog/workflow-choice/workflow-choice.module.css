@@ -1,0 +1,9 @@
+/* app-style */
+/* The Workflow select (CW-5): it may shrink inside the dialog, so a long name ends in an
+   ellipsis instead of widening the body. No `background` shorthand, which would remove the
+   arrow (spec/app-style-parts.md, "Dropdown"). */
+.select {
+  min-width: 0;
+  max-width: 100%;
+  text-overflow: ellipsis;
+}

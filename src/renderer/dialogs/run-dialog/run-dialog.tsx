@@ -6,7 +6,9 @@
 // nothing is sent before the click. From the click until the reply both buttons are disabled
 // and the dialog cannot close; a refusal shows inside it (A-50). The starting choice depends
 // on comfy.getInfo, so until it answers nothing can be chosen or sent. R2E-8: a video names
-// the length and pictures the chosen provider will be sent and hands those numbers on.
+// the length and pictures the chosen provider will be sent and hands those numbers on. CW-5: with
+// ComfyUI chosen and two or more fitting workflows, a "Workflow" select; the click hands on the
+// picked one's ID and, once the reply is accepted, remembers it for the kind of run.
 import { useId, useLayoutEffect, useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import {
@@ -22,11 +24,19 @@ import { PaidCount } from '@/renderer/ui/paid-count'
 import type { VideoStartKind } from '@/shared/config/video-offers'
 import { providerModelWords } from '@/shared/providers/model-words'
 import type { ComfyInfo } from '@/shared/schemas/queries/comfy'
-import type { Result } from '@/shared/schemas/result'
 import { CostLines, describedIds } from './cost-lines'
 import { ProviderChoice, runChoices, startChoice } from './provider-choice'
 import { lengthLine, runCost, type RunJob, type VideoSent } from './run-summary'
 import styles from './run-dialog.module.css'
+import {
+  comfyWords,
+  confirmWith,
+  infoFor,
+  useWorkflowPick,
+  WorkflowChoice,
+  withWorkflow,
+  type OnConfirm,
+} from './workflow-choice'
 
 export type RunCount = { label: string; value: number; min: number; max: number }
 
@@ -45,7 +55,8 @@ export type RunDialogProps = {
   retry?: { provider: string }
   // A video run: its start and the seconds typed. `referenceCount` is the pictures chosen.
   video?: { start: VideoStartKind; seconds: number }
-  onConfirm: (provider: string, count: number | null, video?: VideoSent) => Promise<Result<unknown>>
+  // CW-5: `workflowId` is given only when the person could pick one.
+  onConfirm: OnConfirm
   onCancel: () => void
 }
 
@@ -85,10 +96,15 @@ export function RunSetup(props: RunSetupProps) {
   const { job, count, retry, busy, setDescribed } = props
   const app = useApp((s) => s.app)
   const show = useApp((s) => s.show)
+  const command = useApp((s) => s.command)
   const { info, loaded } = useComfyInfoState()
   const settled = retry !== undefined || loaded
   const referenceCount = props.referenceCount ?? 0
-  const choices = runChoices(job, app?.providers ?? NONE, info, referenceCount, props.video?.start)
+  const start = props.video?.start
+  const remembered = app?.settings.comfyWorkflowChoice
+  const pick = useWorkflowPick({ job, info, referenceCount, start, retry, remembered })
+  const listed = runChoices(job, app?.providers ?? NONE, info, referenceCount, start)
+  const choices = withWorkflow(listed, pick.workflow)
   const preferred = job === 'cutout' ? undefined : app?.settings.defaultProviders[job]
   const [picked, setPicked] = useState<string | null>(null)
   const [typed, setTyped] = useState(String(count?.value ?? ''))
@@ -108,8 +124,11 @@ export function RunSetup(props: RunSetupProps) {
   const ready = chosenId !== null && (retry !== undefined || chosen?.enabled === true)
   const locked = busy || !settled
   const workflow = chosen?.workflow
-  const comfy = workflow && { address: info?.address ?? null, label: workflow.label }
-  const video = videoSent(props.video, info, chosenId, referenceCount)
+  const isComfy = provider.id === 'comfyui'
+  const picker = isComfy && pick.many && pick.workflow !== undefined
+  const comfy = comfyWords(info?.address ?? null, workflow, retry !== undefined && isComfy)
+  const runInfo = isComfy ? infoFor(info, pick.workflow) : info
+  const video = videoSent(props.video, runInfo, chosenId, referenceCount)
   const shown = settled && ready
   const { requests } = props
   const model = chosen?.model ?? null
@@ -117,7 +136,7 @@ export function RunSetup(props: RunSetupProps) {
   const sent = { job, provider, count: n ?? count?.value, referenceCount, comfy, requests, video }
   const cost = shown ? runCost({ ...sent, model }) : null
   const changed = shown && props.video && video && video.seconds !== props.video.seconds
-  const bounds = props.video && clipBounds(info, provider.id, props.video.start)
+  const bounds = props.video && clipBounds(runInfo, provider.id, props.video.start)
   const length = changed && bounds ? lengthLine(name, bounds, video.seconds) : null
   const described = describedIds([
     [lengthId, length !== null],
@@ -129,8 +148,12 @@ export function RunSetup(props: RunSetupProps) {
     if (chosenId === null) return
     props.setBusy(true)
     setRefusal(null)
-    const reply = await (video ? props.onConfirm(chosenId, n, video) : props.onConfirm(chosenId, n))
+    const workflowId = picker ? pick.workflow?.id : undefined
+    const reply = await confirmWith(props.onConfirm, chosenId, n, video, workflowId)
     props.setBusy(false)
+    if (reply.ok && workflowId !== undefined && pick.key !== null) {
+      void command('settings.update', { comfyWorkflowChoice: { [pick.key]: workflowId } })
+    }
     // A licence question has its own dialog; cancelling it is not a failure to show here.
     const asked = !reply.ok && reply.error.details?.reason === 'licence_not_confirmed'
     if (!reply.ok && !asked) setRefusal(reply.error.message)
@@ -156,6 +179,14 @@ export function RunSetup(props: RunSetupProps) {
           choices={choices}
           value={settled ? chosenId : null}
           onChange={setPicked}
+          disabled={locked}
+        />
+      )}
+      {picker && pick.workflow && (
+        <WorkflowChoice
+          workflows={pick.fitting}
+          value={pick.workflow.id}
+          onChange={pick.setPicked}
           disabled={locked}
         />
       )}

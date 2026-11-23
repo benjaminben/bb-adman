@@ -30,6 +30,7 @@ export function baseState(overrides: Partial<AppState> = {}): AppState {
       approvals: { baseUrl: null },
       reports: { exporterName: '' },
       setup: { done: true },
+      comfyWorkflowChoice: {},
     },
     recentProjects: [],
     openProjects: [],

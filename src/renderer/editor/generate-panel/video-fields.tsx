@@ -3,7 +3,8 @@
 // field "Length" in seconds, named "Clip length (seconds)", ED-4a) and "Generate…", the
 // Section's one primary, which opens the run dialog for a video. Only that dialog's own Generate
 // sends generation.startVideo, with the provider, the length and the pictures the dialog named
-// (video-lengths.ts) and this layer, so the clip takes the still's place (D5).
+// (video-lengths.ts) and this layer, so the clip takes the still's place (D5). CW-5: and the
+// workflow picked in the run dialog, when it gives one.
 import { useId, useState } from 'react'
 import { useApp } from '@/renderer/app/app-context'
 import { RunDialog } from '@/renderer/dialogs/run-dialog'
@@ -13,6 +14,7 @@ import { useFirstDraft } from '@/renderer/editor/generate-fields/use-first-draft
 import { VideoPictureChoice } from '@/renderer/editor/generate-panel/video-picture-choice'
 import { draftOf, generateDrafts, type GenerateStart } from '@/renderer/stores/generate-drafts'
 import type { JobStarted } from '@/shared/schemas/commands/job'
+import type { WorkflowId } from '@/shared/schemas/queries/comfy'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { Result } from '@/shared/schemas/result'
 import layout from '@/renderer/ui/layout.module.css'
@@ -57,7 +59,12 @@ export function VideoFields(props: VideoFieldsProps) {
   const needsPicture = start !== 'prompt' && pictures.length === 0
   const ready = seconds !== null && !needsPicture && (draft?.prompt ?? '').trim() !== ''
 
-  async function confirm(provider: string, _count: number | null, sent?: VideoSent) {
+  async function confirm(
+    provider: string,
+    _count: number | null,
+    sent?: VideoSent,
+    workflowId?: WorkflowId,
+  ) {
     if (sent === undefined || draft === undefined) return NOT_SENT
     const reply = await command('generation.startVideo', {
       projectId,
@@ -67,6 +74,7 @@ export function VideoFields(props: VideoFieldsProps) {
       provider,
       ...cardStartFields(kind, pictures, kind === 'background' ? 0 : sent.pictures),
       layerId: layer.id,
+      ...(workflowId === undefined ? {} : { workflowId }),
     })
     const jobId = reply.ok ? (reply.data as Partial<JobStarted> | null)?.jobId : undefined
     if (typeof jobId === 'string') {

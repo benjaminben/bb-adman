@@ -21,8 +21,9 @@ export type SummaryInput = {
   referenceCount?: number
   // P6-18: the paid requests a text run sends (one per translation job); 1 when not given.
   requests?: number
-  // The saved address and the offered workflow's label, from comfy.getInfo.
-  comfy?: { address: string | null; label: string }
+  // The saved address and the picked workflow's label, from comfy.getInfo. CW-5: a retry
+  // runs the workflow stored on the job, so it names none.
+  comfy?: { address: string | null; label: string; retry?: boolean }
   video?: VideoSent
   // R3-2: the model the run uses; a paid line names it after the provider.
   model?: string | null
@@ -37,7 +38,9 @@ function localLine(input: SummaryInput): string {
   if (provider.id === 'fake') return `This uses the fake provider. ${FREE}`
   if (provider.id !== 'comfyui') return `This runs on ${provider.label}. ${FREE}`
   const at = input.comfy?.address ? ` at ${input.comfy.address}` : ''
-  const workflow = input.comfy ? ` with the workflow ${input.comfy.label}` : ''
+  const { comfy } = input
+  const named = comfy?.retry ? 'the same workflow as before' : `the workflow ${comfy?.label}`
+  const workflow = comfy ? ` with ${named}` : ''
   return `This runs on your ComfyUI server${at}${workflow}. ${FREE}`
 }
 
