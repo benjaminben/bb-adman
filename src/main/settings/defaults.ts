@@ -23,5 +23,6 @@ export function defaultSettings(documentsDir: string): Settings {
     approvals: { baseUrl: null },
     reports: { exporterName: '' },
     setup: { done: false },
+    comfyWorkflowChoice: {},
   }
 }

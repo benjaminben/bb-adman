@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import {
   agentRunLimit,
+  comfyWorkflowChoice,
   licenceConfirmed,
   reportsSettings,
   settingsSchema,
@@ -80,19 +81,29 @@ function readReportsName(merged: unknown): unknown {
   return { ...merged, reports: { exporterName: '' } }
 }
 
+// CW-5: a remembered workflow choice that fails its schema loads as {}, so the rest of the
+// file is still read.
+function readWorkflowChoice(merged: unknown): unknown {
+  if (!isObject(merged) || comfyWorkflowChoice.safeParse(merged.comfyWorkflowChoice).success) {
+    return merged
+  }
+  return { ...merged, comfyWorkflowChoice: {} }
+}
+
+const readKeys = (merged: unknown): unknown =>
+  readWorkflowChoice(
+    readReportsName(
+      readApprovalsAddress(readLicenceConfirmed(readAgentRunLimit(readComfyAddress(merged)))),
+    ),
+  )
+
 export function createSettingsStore(opts: { file: string; defaults: Settings }) {
   let current = load()
 
   function load(): Settings {
     try {
       const raw: unknown = JSON.parse(fs.readFileSync(opts.file, 'utf8'))
-      const parsed = settingsSchema.safeParse(
-        readReportsName(
-          readApprovalsAddress(
-            readLicenceConfirmed(readAgentRunLimit(readComfyAddress(merge(opts.defaults, raw)))),
-          ),
-        ),
-      )
+      const parsed = settingsSchema.safeParse(readKeys(merge(opts.defaults, raw)))
       return parsed.success ? parsed.data : opts.defaults
     } catch {
       return opts.defaults

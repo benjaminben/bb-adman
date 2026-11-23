@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { AGENT_RUN_LIMIT_MAX, AGENT_RUN_LIMIT_MIN } from '@/shared/config/agent-runs'
+import { workflowIdSchema } from '@/shared/comfy/custom-workflow'
 import { noControlCharacters } from '@/shared/schemas/commands/export'
 
 // SPEC 13.1 settings.json. Defaults live in src/main/settings/defaults.ts.
@@ -42,6 +43,18 @@ export const reportsSettings = z.object({
 })
 // R2E-10 (D8): the first-run mark. Written only by settings.update (agent policy deny).
 const setup = z.object({ done: z.boolean() })
+// CW-5 (spec/comfyui-custom.md, the remembered choice): the workflow the person last picked
+// for each kind of ComfyUI run, per computer. Written only by settings.update (agent policy
+// deny); a bad value in the file loads as {} (settings-store.ts).
+export const CHOICE_KEYS = [
+  'image',
+  'image_refs',
+  'video_prompt',
+  'video_first_frame',
+  'video_references',
+] as const
+export type ChoiceKey = (typeof CHOICE_KEYS)[number]
+export const comfyWorkflowChoice = z.partialRecord(z.enum(CHOICE_KEYS), workflowIdSchema)
 
 export const settingsSchema = z.object({
   defaultProjectDir: z.string().min(1),
@@ -58,6 +71,7 @@ export const settingsSchema = z.object({
   approvals,
   reports: reportsSettings,
   setup,
+  comfyWorkflowChoice,
 })
 export type Settings = z.infer<typeof settingsSchema>
 export type RecentProject = z.infer<typeof recentProject>
@@ -76,6 +90,7 @@ export const settingsPatchSchema = z
     licenceConfirmed,
     reports: reportsSettings.partial().strict(),
     setup: setup.partial().strict(),
+    comfyWorkflowChoice,
   })
   .partial()
   .strict()
