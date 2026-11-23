@@ -128,6 +128,27 @@ describe('the Workflow picker shows [CW-5]', () => {
     expect(picker()).toBeNull()
   })
 
+  it('a retry hands on no workflow and remembers nothing', async () => {
+    const { dialog, onConfirm, fake } = await open({
+      title: 'Retry the run',
+      confirmLabel: 'Retry',
+      retry: { provider: 'comfyui' },
+    })
+    await userEvent.click(dialog.getByRole('button', { name: 'Retry' }))
+    expect(onConfirm).toHaveBeenCalledWith('comfyui', 2)
+    expect(updates(fake)).toEqual([])
+  })
+
+  it('a workflow picked before switching to another provider is not sent or remembered', async () => {
+    const { dialog, onConfirm, fake } = await open()
+    await userEvent.selectOptions(picker() as HTMLElement, PORTRAIT.id)
+    await userEvent.click(screen.getByRole('radio', { name: 'Fake provider' }))
+    expect(picker()).toBeNull()
+    await generate(dialog)
+    expect(onConfirm).toHaveBeenCalledWith('fake', 2)
+    expect(updates(fake)).toEqual([])
+  })
+
   it('does not show with one fitting workflow, and the dialog sends no ID', async () => {
     const { dialog, onConfirm, fake } = await open({}, { flows: [MOSS, TIDE_CLIP] })
     expect(picker()).toBeNull()
