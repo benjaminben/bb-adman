@@ -37,9 +37,9 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `campaign.delete` | projectId, campaignId | — | ask | Built | FR-197 |
 | `ruleSet.update` | projectId, campaignId, any of the four lists | C | deny | Built | FR-033 |
 | `ruleSet.copyFrom` | projectId, campaignId, sourceCampaignId (both in this project) | C | deny | Built | FR-034 |
-| `direction.createFromMaster` | projectId, masterVariantId, name | — | deny | Built | FR-074 |
-| `direction.rename` | projectId, directionId, name | C | deny | Built | FR-072 |
-| `direction.delete` | projectId, directionId (refused if it is the campaign's last) | — | deny | Built | A-06 |
+| `direction.createFromMaster` | projectId, masterVariantId, name | — | allow | Built | FR-074, D-105 |
+| `direction.rename` | projectId, directionId, name | C | allow | Built | FR-072, D-105 |
+| `direction.delete` | projectId, directionId (refused if it is the campaign's last) | — | ask | Built | A-06, D-105 |
 | `variant.fanOut` | projectId, directionId, sizes[], languages[], formats[] (video cells since P7-23; the fan-out dialog still sends `image` only), fits{} | C | deny | Built | FR-075, FR-076 |
 | `variant.add` | projectId, directionId, sizeLabel, language, format, fit? (`scale` or `crop`) | C | allow | Built | FR-195 |
 | `variant.remove` | projectId, variantIds[] (system; the inverse of fan-out, `variant.add`, `variant.restore`) | C | deny (system) | Built | R-17 |

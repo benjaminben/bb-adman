@@ -40,9 +40,10 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'campaign.createFromBriefWithFiles': ask('make campaigns that import files'),
   'ruleSet.update': deny('change rule sets'),
   'ruleSet.copyFrom': deny('copy rule sets'),
-  'direction.createFromMaster': deny('create directions'),
-  'direction.rename': deny('rename directions'),
-  'direction.delete': deny('delete directions'),
+  // D-105: an agent adds and renames directions; a delete asks, as every delete does.
+  'direction.createFromMaster': allow('create directions'),
+  'direction.rename': allow('rename directions'),
+  'direction.delete': ask('delete directions'),
   // P5-1: system commands, only inverses; deny and internal.
   'variant.fanOut': deny('run fan-out'),
   'variant.add': allow('add variants'),

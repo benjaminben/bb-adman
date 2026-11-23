@@ -1,5 +1,5 @@
 // direction.createFromMaster (spec/links-and-sync.md, "Directions"; FR-074, A-139): a new
-// direction from a master, its copy as the new master. Agent policy deny. Stakeholder change:
+// direction from a master, its copy as the new master. Agent policy allow (D-105). Stakeholder change:
 // no undo, like campaign.create; an unwanted direction is deleted.
 import { ulid } from 'ulid'
 import { defineCommand, type HandlerResult } from '@/main/commands/types'

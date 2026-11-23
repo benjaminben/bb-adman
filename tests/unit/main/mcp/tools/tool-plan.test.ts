@@ -42,6 +42,9 @@ const PLAN = [
   'list_comfy_workflows',
   'add_comfy_workflow',
   'remove_comfy_workflow',
+  'create_direction',
+  'rename_direction',
+  'delete_direction',
 ]
 
 // The tools not built yet. A tool slice removes exactly its own names.
@@ -74,6 +77,9 @@ const TARGETS: Record<string, [kind: 'command' | 'query', target: string]> = {
   list_comfy_workflows: ['query', 'comfyWorkflow.list'],
   add_comfy_workflow: ['command', 'comfyWorkflow.add'],
   remove_comfy_workflow: ['command', 'comfyWorkflow.remove'],
+  create_direction: ['command', 'direction.createFromMaster'],
+  rename_direction: ['command', 'direction.rename'],
+  delete_direction: ['command', 'direction.delete'],
 }
 
 describe('the Phase 10 tool plan [P10-1, A-230, A-231]', () => {

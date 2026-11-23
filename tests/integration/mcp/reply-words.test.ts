@@ -213,6 +213,19 @@ function calls(x: RunSetUp, ids: { agentJob: string; userJob: string; campaign: 
       [{ name: 'Board', workflow_json: fixtureText('canvas') }, { name: 'Board' }],
     ],
     ['remove_comfy_workflow', null, [{ workflow_id: 'custom-0123456789ab' }, { workflow_id: 'x' }]],
+    // D-105: the direction tools, over the seeded direction d1 and its master v1.
+    // delete_direction asks, so it is refused here and word-tested in direction-tools.test.ts.
+    [
+      'create_direction',
+      { project_id: p, master_variant_id: 'v1', name: 'Bold' },
+      [{ project_id: p, master_variant_id: 'x', name: 'Bold' }],
+    ],
+    [
+      'rename_direction',
+      { project_id: p, direction_id: 'd1', name: 'Studio' },
+      [{ project_id: p, direction_id: 'x', name: 'Studio' }],
+    ],
+    ['delete_direction', null, [{ project_id: p, direction_id: 'd1' }]],
   ]
   return table.flatMap(([tool, good, bad]) => [
     ...(good === null ? [] : [{ tool, args: good, ok: true }]),
@@ -249,6 +262,7 @@ describe('no tool reply or output schema holds a provider ID, a settings key or 
           'delete_subject',
           'add_comfy_workflow',
           'remove_comfy_workflow',
+          'delete_direction',
         ].includes(tool)
           ? 1
           : 2,

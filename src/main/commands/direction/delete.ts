@@ -1,5 +1,5 @@
 // direction.delete (spec/links-and-sync.md, "Directions"; A-140): deletes a direction and its
-// variants. Agent policy deny. Stakeholder change: no undo (the screen warns first). It clears
+// variants. Agent policy ask (D-105). Stakeholder change: no undo (the screen warns first). It clears
 // the campaign's list, whose older entries may name the removed variants, and each removed
 // variant's own list; every ID comes from the file, not the input.
 import { defineCommand, type HandlerResult } from '@/main/commands/types'

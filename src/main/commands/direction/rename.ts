@@ -1,5 +1,5 @@
 // direction.rename (spec/links-and-sync.md, "Directions"; A-139): a new name, unique in the
-// campaign ignoring case; the direction's own name counts as free. Agent policy deny. Inverse
+// campaign ignoring case; the direction's own name counts as free. Agent policy allow (D-105). Inverse
 // direction.rename with the old name, on the campaign's list.
 import type Database from 'better-sqlite3'
 import { defineCommand, type HandlerResult } from '@/main/commands/types'

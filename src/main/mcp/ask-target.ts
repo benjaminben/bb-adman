@@ -17,6 +17,7 @@ export const NO_TARGET = 'Something that no longer exists'
 const campaignTarget = z.object({ campaignId: z.string() })
 const variantTarget = z.object({ variantId: z.string() })
 const subjectTarget = z.object({ subjectId: z.string() })
+const directionTarget = z.object({ directionId: z.string() })
 const filesTarget = z.object({ paths: z.array(z.string()) })
 const workflowTarget = z.object({ workflowId: z.string() })
 
@@ -56,6 +57,21 @@ function variantLine(db: Database.Database, variantId: string): string | null {
   if (!row) return null
   const name = [row.title, row.sizeLabel, row.language].map(cleanName).join(' · ')
   return `Variant "${name}" in campaign "${cleanName(row.campaign)}" in "${projectName(db)}"`
+}
+
+// D-105: the direction's name, how many variants go with it, and its campaign.
+function directionLine(db: Database.Database, directionId: string): string | null {
+  const row = db
+    .prepare<[string, string], { name: string; campaign: string; n: number }>(
+      `SELECT d.name AS name, c.name AS campaign,
+         (SELECT COUNT(*) FROM variant v WHERE v.direction_id = ?) AS n
+       FROM direction d JOIN campaign c ON c.id = d.campaign_id WHERE d.id = ?`,
+    )
+    .get(directionId, directionId)
+  if (!row) return null
+  const count = row.n === 1 ? '1 variant' : `${row.n} variants`
+  const campaign = `campaign "${cleanName(row.campaign)}" in "${projectName(db)}"`
+  return `Direction "${cleanName(row.name)}" (${count}) in ${campaign}`
 }
 
 // SUBJ-1: the subject's name and how many photos (pictures, as its card counts them) it holds;
@@ -104,6 +120,10 @@ function lineFor(db: Database.Database, command: string, input: unknown): string
   if (command === 'variant.delete') {
     const parsed = variantTarget.safeParse(input)
     return parsed.success ? variantLine(db, parsed.data.variantId) : null
+  }
+  if (command === 'direction.delete') {
+    const parsed = directionTarget.safeParse(input)
+    return parsed.success ? directionLine(db, parsed.data.directionId) : null
   }
   if (command === 'subject.delete') {
     const parsed = subjectTarget.safeParse(input)

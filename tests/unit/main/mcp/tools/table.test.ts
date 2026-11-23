@@ -30,6 +30,7 @@ const ASK_TARGETS = [
   'subject.delete',
   'comfyWorkflow.add',
   'comfyWorkflow.remove',
+  'direction.delete',
 ]
 
 describe('the fixed MCP tool table [SPEC 4.5; 14 1.56 MCP-B]', () => {

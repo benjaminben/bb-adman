@@ -66,7 +66,7 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     "name": "list_assets",
   },
   {
-    "description": "Read one campaign of an open project: its fields, rule set, directions and a summary of each variant with its badges.",
+    "description": "Read one campaign of an open project: its fields, rule set, directions (each with its ID, name and the ID of its master variant) and a summary of each variant with its badges.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
@@ -2221,6 +2221,84 @@ A subject's pictures are asset IDs from list_assets or full file paths. If any f
       "type": "object",
     },
     "name": "remove_comfy_workflow",
+  },
+  {
+    "description": "Add a creative direction to a campaign of an open project, as a copy of a master variant: give the masterVariantId of an existing direction, from get_campaign. The copy becomes the new direction's master. The name must differ from the campaign's other directions. This cannot be undone; delete a direction that is not wanted. Gives the new direction ID and the ID of its master variant.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "master_variant_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "name": {
+          "maxLength": 100,
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "master_variant_id",
+        "name",
+      ],
+      "type": "object",
+    },
+    "name": "create_direction",
+  },
+  {
+    "description": "Rename a direction of an open project. The name must differ from the campaign's other directions. The user can undo it. Gives the direction ID.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "direction_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "name": {
+          "maxLength": 100,
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "direction_id",
+        "name",
+      ],
+      "type": "object",
+    },
+    "name": "rename_direction",
+  },
+  {
+    "description": "Delete a direction of an open project, with all its variants and their layers. A campaign keeps at least one direction. This cannot be undone. It also empties the undo list of its whole campaign, so the campaign's earlier changes can no longer be undone either. The user is asked in the app, and this call waits up to two minutes for the answer. A refusal is final: do not ask again for the same direction unless the user tells you to.",
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "direction_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "project_id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "project_id",
+        "direction_id",
+      ],
+      "type": "object",
+    },
+    "name": "delete_direction",
   },
 ]
 `;

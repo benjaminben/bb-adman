@@ -62,6 +62,7 @@ export async function callEveryTool(
     type: 'text',
     max_dimension: 256,
     direction_id: 'made-up-direction',
+    master_variant_id: 'made-up-variant',
     size_label: '1x1',
     language: 'en',
     format: 'image',

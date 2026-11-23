@@ -6,7 +6,6 @@ import { expectRefused } from '../assets/asset-bus'
 import { layersOf } from './linked-fixture'
 import { addVariant, V2 } from './variant-fixture'
 import { makeDirectionBus, type DirectionBus } from './direction-fixture'
-import { denialMessage } from '@/main/commands/agent-policy'
 import { readSnapshot } from '@/main/links/snapshot'
 
 type Reply = { ok: boolean; data?: Record<string, string> }
@@ -190,16 +189,32 @@ describe('direction.delete [A-140]', () => {
   })
 })
 
-describe('the direction commands as the agent', () => {
-  it.each([
-    ['direction.createFromMaster', () => ({ masterVariantId: bus.masterId, name: 'Bold' })],
-    ['direction.rename', () => ({ directionId: bus.directionId, name: 'Bold' })],
-    ['direction.delete', () => ({ directionId: bus.directionId })],
-  ])('%s is AGENT_DENIED and writes nothing', async (name, input) => {
+describe('the direction commands as the agent [D-105]', () => {
+  it("direction.createFromMaster is allowed, and the new master is marked as the agent's", async () => {
+    const made = (await bus.agent('direction.createFromMaster', {
+      masterVariantId: bus.masterId,
+      name: 'Bold',
+    })) as Reply
+    expect(made.ok).toBe(true)
+    const ids = made.data as { directionId: string; variantId: string }
+    expect(bus.direction(ids.directionId)).toMatchObject({ name: 'Bold' })
+    expect(
+      bus.db.prepare('SELECT created_by AS by FROM variant WHERE id = ?').get(ids.variantId),
+    ).toEqual({ by: 'agent' })
+  })
+
+  it('direction.rename is allowed', async () => {
+    expect(
+      await bus.agent('direction.rename', { directionId: bus.directionId, name: 'Bold' }),
+    ).toMatchObject({ ok: true })
+    expect(bus.direction(bus.directionId)).toMatchObject({ name: 'Bold' })
+  })
+
+  it('direction.delete asks; with no one to answer it is refused and writes nothing', async () => {
     const before = bus.direction(bus.directionId)
-    expect(await bus.agent(name, input())).toEqual({
+    expect(await bus.agent('direction.delete', { directionId: bus.directionId })).toMatchObject({
       ok: false,
-      error: { code: 'AGENT_DENIED', message: denialMessage(name) },
+      error: { code: 'AGENT_REFUSED' },
     })
     expect(bus.direction(bus.directionId)).toEqual(before)
     expect(bus.db.prepare('SELECT COUNT(*) AS n FROM direction').get()).toEqual({ n: 1 })

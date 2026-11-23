@@ -48,6 +48,9 @@ const SECTION_4_5_TOOLS = [
   'list_comfy_workflows',
   'add_comfy_workflow',
   'remove_comfy_workflow',
+  'create_direction',
+  'rename_direction',
+  'delete_direction',
 ]
 
 async function listTools(fx: McpFixture): Promise<string[]> {

@@ -39,6 +39,9 @@ export const BUILT_TOOLS = [
   'list_comfy_workflows',
   'add_comfy_workflow',
   'remove_comfy_workflow',
+  'create_direction',
+  'rename_direction',
+  'delete_direction',
 ]
 
 export type ToolReply = {

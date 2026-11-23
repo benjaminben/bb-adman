@@ -9,6 +9,7 @@ export const ASK_KINDS: Readonly<Record<string, AskKind>> = {
   'campaign.delete': 'delete',
   'variant.delete': 'delete',
   'subject.delete': 'delete',
+  'direction.delete': 'delete',
   'asset.importFiles': 'import',
   'campaign.createFromBriefWithFiles': 'import',
   // D-104, CW-6a: never answered by mcp.autoApproveDestructive or by "remember".

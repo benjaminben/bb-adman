@@ -4,7 +4,8 @@
 // own Zod schema, with its top-level keys in snake_case (SPEC 4.5: project_id -> projectId).
 // Every reply goes through an allow-list picker (spec/mcp-and-agents.md, rules for every tool).
 // ALL_TOOLS is the Phase 10 plan (A-230): the built tools, then one group file per slice, then
-// Round 2's three, then SUBJ-1's delete_subject, then CW-6a's three workflow tools. A notBuilt row is left out of MCP_TOOLS, so
+// Round 2's three, then SUBJ-1's delete_subject, then CW-6a's three workflow tools, then the three
+// direction tools (D-105). A notBuilt row is left out of MCP_TOOLS, so
 // it is never listed to an agent.
 import type { z } from 'zod'
 import { assetListInput } from '@/shared/schemas/queries/asset'
@@ -34,6 +35,7 @@ import { IMPORT_TOOLS } from './import-tools'
 import { BRIEF_TOOLS } from './brief-tools'
 import { PROJECT_TOOLS } from './project-tools'
 import { WORKFLOW_TOOLS } from './workflow-tools'
+import { DIRECTION_TOOLS } from './direction-tools'
 
 export type ToolDef = {
   name: string
@@ -93,8 +95,9 @@ export const ALL_TOOLS: readonly ToolDef[] = [
   {
     name: 'get_campaign',
     description:
-      'Read one campaign of an open project: its fields, rule set, directions and a ' +
-      'summary of each variant with its badges.',
+      'Read one campaign of an open project: its fields, rule set, directions (each with ' +
+      'its ID, name and the ID of its master variant) and a summary of each variant with ' +
+      'its badges.',
     kind: 'query',
     target: 'campaign.get',
     input: campaignScopedInput,
@@ -146,6 +149,7 @@ export const ALL_TOOLS: readonly ToolDef[] = [
   ...PROJECT_TOOLS,
   ...SUBJECT_DELETE_TOOLS,
   ...WORKFLOW_TOOLS,
+  ...DIRECTION_TOOLS,
 ]
 
 // What core registers: every built row, in the same order.

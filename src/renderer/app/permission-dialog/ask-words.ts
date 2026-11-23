@@ -20,6 +20,9 @@ const DELETE_COST: Record<string, string> = {
   'delete variants': 'This cannot be undone. It also clears the undo list of this campaign.',
   'delete campaigns': UNDONE,
   'delete subjects': 'This cannot be undone. Its photos stay in the project without a subject.',
+  'delete directions':
+    'This cannot be undone. Every variant of this direction is deleted too, and the undo list ' +
+    'of this campaign is cleared.',
   'remove ComfyUI workflows': 'This cannot be undone. Runs that have not started yet will fail.',
 }
 
