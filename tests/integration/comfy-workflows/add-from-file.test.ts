@@ -176,7 +176,7 @@ describe('comfyWorkflow.addFromFile: the add [D-104, CW-2]', () => {
 
   it('cleans the file name and cuts it to 60 characters', async () => {
     f = makeFixture()
-    const file = fileWith(fixtureText('picture'), `"Sea"‮  view ${'x'.repeat(80)}.json`)
+    const file = fileWith(fixtureText('picture'), `"Sea"${String.fromCharCode(0x202e)}  view ${'x'.repeat(80)}.json`)
     rememberWorkflowPath(file)
     const { name } = data<ComfyWorkflowAddFromFileReply>(await addFrom(file))
     expect(name).toBe(`'Sea' view ${'x'.repeat(49)}`)
