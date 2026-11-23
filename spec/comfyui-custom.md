@@ -170,11 +170,11 @@ A `ref9` or higher is `workflow_unknown_mark` (8 is `MAX_REFERENCES_PER_RUN`).
   - not found, or a draft: `RULE_VIOLATION`, `comfy_workflow_not_found`, "That ComfyUI workflow is not on this computer."
   - a `trial` one with dev tools off: `comfy_job_not_offered`, as today.
   - the wrong job or start: `comfy_workflow_wrong_job`, "That workflow cannot make this kind of picture or video."
-- **No workflow named.** As today: the `proven` shipped one, else the `trial` one with dev tools on. When no shipped one fits, the oldest custom one that fits. That is the default (`isDefault`).
+- **No workflow named.** As today: the `proven` shipped one, else the `trial` one with dev tools on. When no shipped one is offered to the caller for that job and start, the oldest custom one that fits. That is the default (`isDefault`).
 - **Reference count.** After the choice, more pictures than slots is `too_many_references` (as today). Fewer than `minReferences` is new: `RULE_VIOLATION`, `too_few_references`, `details.min`, "This workflow needs {min} reference pictures." ("needs 1 reference picture" for one). Owner: `src/shared/providers/messages.ts`.
 - **Stored on the job.** `generation.runImages` and `generation.startVideo` take an optional `workflowId` (`workflowIdSchema`), for the person and for an agent. The command writes the chosen workflow's ID into the job's `request.workflowId`. The picture and video job kinds pass it to the adapter (`ImageProvider.generate`, `VideoProvider.start` and `runSize` gain an optional `workflowId`; other adapters ignore it). `workflowForRun` takes it and looks it up in `allWorkflows()`.
 - **Retry** (`job.retry`, the person only) uses `request.workflowId` when present, with the same checks. A row without it (made before this change) gets the default.
-- **Removed before its turn.** A queued job whose custom workflow was removed fails at its turn: kind `other`, reason `workflow_gone`, "The workflow for this run was removed before it started." Nothing is sent. A run already started keeps its copy in memory and goes on.
+- **Removed before its turn.** A queued job whose custom workflow was removed fails at its turn: kind `other`, reason `workflow_gone`, "The workflow for this run was removed before it started." Nothing is sent. The workflow is looked up once for each request sent to the server: a request already sent goes on with its copy, and in a job of several pictures the ones not yet sent fail `workflow_gone` while the pictures already made are kept.
 - **No licence dialog** for a custom workflow: its `commercialNote` is null, so the D-088 check passes.
 - Cut-out and extend stay shipped only. `checkComfyCutout` and `checkComfyExtend` never take a workflow ID.
 
