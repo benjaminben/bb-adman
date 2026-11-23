@@ -92,6 +92,37 @@ describe('Settings: ComfyUI workflows [CW-4, D-104]', () => {
     expect(sent()).toEqual([])
   })
 
+  it.each([
+    ['no paths', { ok: true, data: { paths: [] } }],
+    ['no data', { ok: true, data: null }],
+    ['a refused pick', { ok: false, error: { code: 'INTERNAL', message: 'No.' } }],
+  ])('a cancelled picker (%s) sends nothing', async (_shape, reply) => {
+    const { fake, box, sent } = await draw()
+    fake.onQuery('dialog.pickFiles', () => reply)
+    await userEvent.click(within(box).getByRole('button', { name: 'Add workflow…' }))
+    await waitFor(() => expect(fake.queries.some((q) => q.name === 'dialog.pickFiles')).toBe(true))
+    expect(sent()).toEqual([])
+    expect(within(box).queryByRole('status')).toBeNull()
+  })
+
+  it('a double click on "Add workflow…" asks the picker once and adds once', async () => {
+    const { fake, box, sent } = await draw()
+    let pick: (paths: string[]) => void = () => {}
+    fake.onQuery(
+      'dialog.pickFiles',
+      () => new Promise((resolve) => (pick = (paths) => resolve({ ok: true, data: { paths } }))),
+    )
+    fake.onCommand('comfyWorkflow.addFromFile', () => ({
+      ok: true,
+      data: { workflowId: 'custom-9a9b9c9d9e9f', name: 'Studio portrait 2' },
+    }))
+    await userEvent.dblClick(within(box).getByRole('button', { name: 'Add workflow…' }))
+    act(() => pick([PICKED]))
+    expect(await within(box).findByText('Added Studio portrait 2.')).toBeVisible()
+    expect(fake.queries.filter((q) => q.name === 'dialog.pickFiles')).toHaveLength(1)
+    expect(sent()).toEqual([{ name: 'comfyWorkflow.addFromFile', input: { filePath: PICKED } }])
+  })
+
   it('shows a refusal as the command’s own sentence, on the page', async () => {
     const { fake, box } = await draw()
     answerPicker(fake, [PICKED])

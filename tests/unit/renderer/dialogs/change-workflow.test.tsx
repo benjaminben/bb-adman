@@ -97,6 +97,14 @@ describe('Change workflow [CW-4, D-104]', () => {
     expect(sent()).toEqual([])
   })
 
+  it('sends nothing on Escape', async () => {
+    const { box, sent, closed } = await draw(TIDE_CLIP, true)
+    await userEvent.type(box.getByLabelText('Name'), ' at dusk')
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(closed()).toBe(1))
+    expect(sent()).toEqual([])
+  })
+
   it('"Save" sends comfyWorkflow.update once with the shown values, then closes', async () => {
     const fake = makeFakeApi()
     let finish: (r: Result<unknown>) => void = () => {}
