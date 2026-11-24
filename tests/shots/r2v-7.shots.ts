@@ -90,7 +90,15 @@ test('Approval link: the still-only line, then an update with Stop', async () =>
   await box.getByRole('button', { name: 'Update gallery' }).click()
   await expect(box.getByText('Updating the gallery…')).toBeVisible()
   const { projectId, campaignId } = ids
-  await sendProgress(app, { projectId, campaignId, step: 'making', done: 0, total: 1 })
+  await sendProgress(app, {
+    projectId,
+    campaignId,
+    step: 'making',
+    done: 0,
+    total: 1,
+    unitsDone: 1,
+    unitsTotal: 3,
+  })
   await expect(box.getByText('Making video 1 of 1…')).toBeVisible()
   await shot(page, '92-r2v-making-video')
 

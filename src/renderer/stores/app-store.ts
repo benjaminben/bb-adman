@@ -7,6 +7,7 @@ import { createStore, type StoreApi } from 'zustand/vanilla'
 import type { AdmanApi } from '@/shared/schemas/api'
 import type { AppState, ProviderInfo } from '@/shared/schemas/queries/app'
 import type { Result } from '@/shared/schemas/result'
+import { galleryUpdates, type GalleryUpdatesState } from './gallery-updates'
 import { addModel, runAsk, withLicenceFlag } from './run-asks'
 
 export type View = { kind: 'start' } | { kind: 'settings' } | { kind: 'project'; projectId: string }
@@ -21,7 +22,8 @@ export type LicenceRequest = {
   resolve: (answer: LicenceAnswer) => void
 }
 
-export type AppStoreState = {
+// D-110: each campaign's "Update gallery" is held here too (gallery-updates.ts).
+export type AppStoreState = GalleryUpdatesState & {
   app: AppState | null
   view: View
   // The view shown when Settings opened; leaveSettings shows it again.
@@ -107,6 +109,7 @@ export function createAppStore(api: AdmanApi): AppStore {
     }
 
     return {
+      ...galleryUpdates(api, set, get),
       app: null,
       view: { kind: 'start' },
       settingsFrom: { kind: 'start' },

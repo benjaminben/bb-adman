@@ -1,7 +1,8 @@
 // "Approval link" (spec/approvals.md "The approval link dialog"), on the dialog frame. Its
 // state comes from the campaign's approvals store: not ready, no link, a live link, or an
-// ended link. Every button that sends is disabled while a command runs, with "Working…" (or the
-// update's progress line and "Stop") beside them, and the frame cannot be closed meanwhile.
+// ended link. Every button that sends is disabled while a command runs, with "Working…" beside
+// them, and the frame cannot be closed meanwhile. "Update gallery" is the exception (D-110):
+// its progress and "Stop" show instead, and the frame can be closed while the update goes on.
 // DLG-6b: the foot holds "Turn off…" (named "Turn off link…", a live link only) and "Close";
 // "Turn off…" opens the confirm dialog over this one (end-link-confirm.tsx).
 import { useState } from 'react'
@@ -91,6 +92,7 @@ export function ApprovalDialog(props: ApprovalDialogProps) {
   const sender = useSend(props.projectId, props.campaignId)
   const [asking, setAsking] = useState(false)
   const busy = sender.running !== null
+  const updating = sender.running === 'approvals.publish'
   const { data } = props
   const live = data.ready === 'ready' && data.link?.state === 'live'
   const making = data.ready === 'ready' && data.link === null
@@ -107,7 +109,7 @@ export function ApprovalDialog(props: ApprovalDialogProps) {
           Turn off…
         </button>
       )}
-      <button type="button" disabled={busy} onClick={props.onClose}>
+      <button type="button" disabled={busy && !updating} onClick={props.onClose}>
         Close
       </button>
     </>
@@ -117,13 +119,13 @@ export function ApprovalDialog(props: ApprovalDialogProps) {
       open={props.open}
       onClose={props.onClose}
       title="Approval link"
-      closable={!busy}
+      closable={!busy || updating}
       footer={footer}
     >
       <div className={styles.body}>
         <Body {...props} sender={sender} />
       </div>
-      {sender.running === 'approvals.publish' ? (
+      {updating ? (
         <UpdateProgress projectId={props.projectId} campaignId={props.campaignId} />
       ) : (
         busy && <p className={styles.waiting}>Working…</p>

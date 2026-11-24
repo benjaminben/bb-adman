@@ -4,11 +4,13 @@
 // `sync` icon button "Refresh" (a spinner while refreshing). A refresh failure is its caller's
 // to draw: the campaign head draws ApprovalFailure on a line of its own (Z-1b). An ended link
 // shows the mark "Off" and keeps "Link turned off" (or the gone sentence) as words beside the
-// button.
+// button. While the campaign's "Update gallery" runs, the button shows the spinner (D-110).
 import { useState } from 'react'
 import { useStore } from 'zustand'
+import { useApp } from '@/renderer/app/app-context'
 import { ApprovalDialog } from '@/renderer/dialogs/approval-dialog'
 import type { ApprovalsStore } from '@/renderer/stores/approvals-store'
+import { updateKey } from '@/renderer/stores/gallery-updates'
 import { Icon } from '@/renderer/ui/icon'
 import { StatusMark } from '@/renderer/ui/status-mark'
 import layout from '@/renderer/ui/layout.module.css'
@@ -27,9 +29,11 @@ export function ApprovalBar(props: Props) {
   const refreshing = useStore(props.store, (s) => s.refreshing)
   const failure = useStore(props.store, (s) => s.failure)
   const notice = useStore(props.store, (s) => s.notice)
+  const key = updateKey(props.projectId, props.campaignId)
+  const updating = useApp((s) => s.updates[key]?.running === true)
   const [open, setOpen] = useState(false)
   const state = data?.link?.state
-  const look = approvalLook({ data, failure, notice })
+  const look = approvalLook({ data, failure, notice, updating })
 
   return (
     <div role="group" aria-label="Approval link" className={styles.bar}>
@@ -41,7 +45,7 @@ export function ApprovalBar(props: Props) {
         disabled={data === null}
         onClick={() => setOpen(true)}
       >
-        <Icon name="link" />
+        <Icon name={updating ? 'spinner' : 'link'} />
         Approvals
         {look.mark && <StatusMark {...look.mark} />}
       </button>

@@ -1,7 +1,8 @@
 // CAMP-3 (spec/phases/design-wave-screens-b.md, "CAMP-3"): the words of the approvals button.
 // Counts and times only: the link's address, its password, the service and reviewers' emails
 // never reach a name, a tip or a mark. {a}: variants in the gallery with at least one sign-off
-// (all are of the current rev, R-10); {b}: those in the gallery. Pure.
+// (all are of the current rev, R-10); {b}: those in the gallery. While the campaign's "Update
+// gallery" runs, the name and tip say so (D-110); the mark stays. Pure.
 import type { ApprovalsForCampaign } from '@/shared/schemas/queries/approvals'
 import type { StatusTone } from '@/renderer/ui/status-mark'
 import { timeText } from '@/renderer/ui/signoff-list'
@@ -12,9 +13,21 @@ export type ApprovalLook = {
   mark?: { tone: StatusTone; label: string; tip: string }
 }
 
-type State = { data: ApprovalsForCampaign | null; failure: string | null; notice: string | null }
+type State = {
+  data: ApprovalsForCampaign | null
+  failure: string | null
+  notice: string | null
+  updating?: boolean
+}
+
+export const UPDATING_NAME = 'Approvals: updating the gallery'
 
 export function approvalLook(state: State): ApprovalLook {
+  const look = usualLook(state)
+  return state.updating ? { ...look, name: UPDATING_NAME, title: UPDATING_NAME } : look
+}
+
+function usualLook(state: State): ApprovalLook {
   const link = state.data?.link ?? null
   if (state.data === null || link === null) return { name: 'Approval link…' }
   if (link.state === 'ended') {

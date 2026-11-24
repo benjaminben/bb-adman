@@ -1,44 +1,37 @@
-// The latest approvals.progress of this campaign while "Update gallery" runs, and "Stop"
-// (round-2-approvals-video.md "The dialog"). Events of another campaign are ignored. Stop goes
-// through the app store's command, not the dialog's sender, so the update keeps waiting.
-import { useEffect, useState } from 'react'
-import { useApi, useApp } from '@/renderer/app/app-context'
-import type { EventMap } from '@/shared/schemas/events'
-
-export type UpdateStep = Pick<EventMap['approvals.progress'], 'step' | 'done' | 'total'>
+// The latest approvals.progress of this campaign's "Update gallery" and "Stop", read from the
+// app store's owner of the update (D-110, gallery-updates.ts), so a dialog drawn again shows
+// where the update is. The line of words and the bar's value (spec/approvals.md "An update in
+// the background").
+import { useApp } from '@/renderer/app/app-context'
+import { updateKey, type UpdateCounts } from '@/renderer/stores/gallery-updates'
 
 export type UpdateProgress = {
-  step: UpdateStep | null
+  step: UpdateCounts | null
   stopping: boolean
   stop: () => void
 }
 
 export function useUpdateProgress(projectId: string, campaignId: string): UpdateProgress {
-  const api = useApi()
-  const command = useApp((s) => s.command)
-  const [step, setStep] = useState<UpdateStep | null>(null)
-  const [stopping, setStopping] = useState(false)
-
-  useEffect(
-    () =>
-      api.on('approvals.progress', (event) => {
-        if (event.projectId !== projectId || event.campaignId !== campaignId) return
-        setStep({ step: event.step, done: event.done, total: event.total })
-      }),
-    [api, projectId, campaignId],
-  )
-
-  function stop() {
-    setStopping(true)
-    void command('approvals.cancelUpdate', { projectId, campaignId })
+  const update = useApp((s) => s.updates[updateKey(projectId, campaignId)])
+  const stopUpdate = useApp((s) => s.stopUpdate)
+  return {
+    step: update?.progress ?? null,
+    stopping: update?.stopping ?? false,
+    stop: () => stopUpdate(projectId, campaignId),
   }
-
-  return { step, stopping, stop }
 }
+
+const NOUNS = { drawing: 'Sending picture', making: 'Making video', sending: 'Sending video' }
 
 export function progressLine(p: UpdateProgress): string {
   if (p.stopping) return 'Stopping…'
   if (p.step === null) return 'Updating the gallery…'
-  const verb = p.step.step === 'making' ? 'Making' : 'Sending'
-  return `${verb} video ${p.step.done + 1} of ${p.step.total}…`
+  if (p.step.step === 'finishing') return 'Finishing…'
+  return `${NOUNS[p.step.step]} ${p.step.done + 1} of ${p.step.total}…`
+}
+
+// unitsDone / unitsTotal, or null before the first event and when the run has no units.
+export function progressValue(p: UpdateProgress): number | null {
+  if (p.step === null || p.step.unitsTotal === 0) return null
+  return p.step.unitsDone / p.step.unitsTotal
 }
