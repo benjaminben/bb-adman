@@ -1,6 +1,6 @@
 // campaign.create (SPEC 4.2 notes, 6.1; FR-023 to FR-026, FR-043, R-01). Not undoable
 // [D-010]. Makes the campaign, its subjects as the map asks, its rule set and its master
-// (master-rows.ts). The brief's layout and brand shape the rule set and the master
+// (master-rows.ts), or one direction and master per subject with adsPer 'subject'. The brief's layout and brand shape the rule set and the master
 // (spec/brief-brand.md "campaign.create"); every refusal comes before the first write.
 import type { CoreDeps } from '@/main/core-deps'
 import { defineCommand, type ProjectContext } from '@/main/commands/types'
@@ -10,7 +10,7 @@ import { insertSubject } from '@/main/commands/subject/subject'
 import { newCampaignId } from './ids'
 import { startingRuleSet } from './rule-set-values'
 import { checkBrandAssets } from './brand-assets'
-import { insertMaster } from './master-rows'
+import { directionPlans, insertMaster } from './master-rows'
 import { isRightToLeft } from '@/shared/brief/languages'
 import { brandRuleSet } from '@/shared/brief/brand-rule-set'
 import { starterLayoutOf } from '@/shared/config/starter-layouts'
@@ -132,8 +132,12 @@ export function createCampaignRows(
     ctx.changes.touch('campaign_subject', { campaignId, subjectId })
   }
   insertRuleSet(ctx, campaignId, values)
-  const master = insertMaster(ctx, { campaignId, subjectIds, input, values, layout }, now)
-  return { campaignId, ...master }
+  const masters = directionPlans(ctx, input, subjectIds).map((plan) =>
+    insertMaster(ctx, { ...plan, campaignId, input, values, layout }, now),
+  )
+  const first = masters[0]
+  if (!first) throw new Error('campaign.create made no direction')
+  return { campaignId, ...first }
 }
 
 export function campaignCreate(deps: Pick<CoreDeps, 'now'>) {

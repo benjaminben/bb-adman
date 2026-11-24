@@ -1,10 +1,13 @@
 // campaign.create's master rows (SPEC 6.1; spec/brief-brand.md "campaign.create", step 4): one
 // direction "Direction 1" and one master variant at the first size in the primary language,
 // with a background layer and one layer per filled slot. The layers are built from the
-// chosen starter layout, then take the brand fonts and the brand colours.
+// chosen starter layout, then take the brand fonts and the brand colours. With adsPer
+// 'subject' and two or more subjects, one such direction per subject ("One direction per
+// subject").
 import { ulid } from 'ulid'
 import type { ProjectContext } from '@/main/commands/types'
 import * as schema from '@/main/db/schema'
+import { readWireRow } from '@/main/db/rows'
 import { newVariantId } from './ids'
 import { slotFills } from './fills'
 import { insertLayerRow } from './layer-row'
@@ -20,13 +23,39 @@ import type {
 } from '@/shared/schemas/commands/campaign'
 
 const DEFAULT_DURATION_MS = 6000
+const MAX_DIRECTION_NAME = 100
 
-export type Master = {
+// One direction to make: its name, its place and the subjects its master shows.
+export type DirectionPlan = { name: string; sort: number; subjectIds: string[] }
+
+export type Master = DirectionPlan & {
   campaignId: string
-  subjectIds: string[]
   input: CampaignCreateInput
   values: RuleSetValues
   layout: StarterLayout
+}
+
+// The subject's stored name, trimmed and cut to 100 characters; "Direction {n}" when empty.
+function directionName(ctx: ProjectContext, subjectId: string, sort: number): string {
+  const stored = readWireRow(ctx.project.db, 'subject', { id: subjectId })?.name
+  const name = (typeof stored === 'string' ? stored : '').trim().slice(0, MAX_DIRECTION_NAME)
+  return name === '' ? `Direction ${sort + 1}` : name
+}
+
+// One direction for all subjects, or one per subject in subject order (adsPer 'subject').
+export function directionPlans(
+  ctx: ProjectContext,
+  input: CampaignCreateInput,
+  subjectIds: string[],
+): DirectionPlan[] {
+  if (input.brief.adsPer !== 'subject' || subjectIds.length < 2) {
+    return [{ name: 'Direction 1', sort: 0, subjectIds }]
+  }
+  return subjectIds.map((subjectId, sort) => ({
+    name: directionName(ctx, subjectId, sort),
+    sort,
+    subjectIds: [subjectId],
+  }))
 }
 
 function insertLayers(ctx: ProjectContext, m: Master, size: CampaignSize, variantId: string) {
@@ -52,9 +81,9 @@ export function insertMaster(ctx: ProjectContext, m: Master, now: string) {
     .values({
       id: directionId,
       campaignId: m.campaignId,
-      name: 'Direction 1',
+      name: m.name,
       masterVariantId: variantId,
-      sort: 0,
+      sort: m.sort,
     })
     .run()
   orm
