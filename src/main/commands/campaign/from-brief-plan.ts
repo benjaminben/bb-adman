@@ -8,6 +8,7 @@ import type Database from 'better-sqlite3'
 import { readWireRow } from '@/main/db/rows'
 import { refuseRightToLeft } from './create'
 import { briefPathTexts, checkPictures, type PicturePlan } from './from-brief-pictures'
+import { checkBriefBrand, cleanBrandFields, type BrandPlan } from './from-brief-brand'
 import { parseBriefText } from '@/shared/brief/text'
 import { briefSubjectIds } from '@/shared/brief/subject-ids'
 import { fillCreateDefaults } from '@/shared/campaign/create-defaults'
@@ -75,14 +76,26 @@ function planSubjects(db: Database.Database, subjects: DraftSubject[]): PlannedS
   })
 }
 
-// The campaign.create input, every subject already in place by run (create false).
+// The draft's raw brand fields, cleared before the cleaned ones go in.
+const RAW_BRAND_FIELDS = {
+  brand: undefined,
+  layout: undefined,
+  artDirection: undefined,
+  adsPer: undefined,
+}
+
+// The campaign.create input, every subject already in place by run (create false). The brand
+// fields of the brief are briefLook's cleaned values, never the draft's (spec/brief-brand.md).
 function createInputOf(
   projectId: string,
   draft: BriefDraft,
   subjects: PlannedSubject[],
+  { look, brand }: BrandPlan,
 ): CampaignCreateInput {
   const brief = Brief.parse({
     ...draft,
+    ...RAW_BRAND_FIELDS,
+    ...cleanBrandFields(look),
     subjects: subjects.map((s, i) => ({ ...draft.subjects?.[i], id: s.id })),
   })
   const filledIn = fillCreateDefaults({ brief })
@@ -93,6 +106,7 @@ function createInputOf(
     languages: filledIn.languages,
     sizes: filledIn.sizes,
     templateId: 'starter',
+    ...(brand ? { brand } : {}),
   })
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join('.') || 'input'}: ${i.message}`)
@@ -123,6 +137,7 @@ export function briefPlan(
 ): BriefPlan {
   const draft = readDraft(input.text)
   refuseIncomplete(draft)
+  const brand = checkBriefBrand(db, draft, platform)
   const draftSubjects = draft.subjects ?? []
   const subjects = planSubjects(db, draftSubjects)
   const pictures = checkPictures(
@@ -132,5 +147,6 @@ export function briefPlan(
     platform,
   )
   const paths = pathsOf(pictures, withFiles, platform)
-  return { create: createInputOf(input.projectId, draft, subjects), subjects, pictures, paths }
+  const create = createInputOf(input.projectId, draft, subjects, brand)
+  return { create, subjects, pictures, paths }
 }
