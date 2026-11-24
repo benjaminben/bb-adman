@@ -71,11 +71,11 @@ export async function directionMore(page: Page, direction: string, item: string)
 
 export type FanOut = { sizes?: string[]; languages?: string[]; fill?: string }
 
-// "Fan out…", the chips pressed, a "Generate fill" size with the fake provider, "Make {n}
+// "Make variants…", the chips pressed, a "Generate fill" size with the fake provider, "Make {n}
 // variants". The fill's cost line is read before the click that sends.
 export async function fanOut(page: Page, direction: string, ask: FanOut): Promise<void> {
-  await section(page, direction).getByRole('button', { name: 'Fan out…' }).click()
-  const dialog = page.getByRole('dialog', { name: `Fan out ${direction}` })
+  await section(page, direction).getByRole('button', { name: 'Make variants…' }).click()
+  const dialog = page.getByRole('dialog', { name: `Make variants of ${direction}` })
   const press = async (name: string) => {
     const chip = dialog.getByRole('button', { name, exact: true })
     if ((await chip.getAttribute('aria-pressed')) !== 'true') await chip.click()
@@ -161,7 +161,7 @@ export async function setCopy(page: Page, copy: string): Promise<void> {
 
 export async function showOverview(page: Page): Promise<void> {
   await page.getByRole('tab', { name: 'Variants', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Fan out…' }).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Make variants…' }).first()).toBeVisible()
 }
 
 type Row = { id: string; sizeLabel: string; language: string; directionId: string }

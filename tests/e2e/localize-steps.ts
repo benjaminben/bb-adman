@@ -1,6 +1,6 @@
 // P6-17: the steps workflow 5.2 (localise a master into more sizes and languages) and the p6-17
 // shots share. Every step uses the screens as the user does: Settings for the fake text
-// provider, the brief form, "Fan out…", the translation panel, the rule set panel and the check
+// provider, the brief form, "Make variants…", the translation panel, the rule set panel and the check
 // panel. The native save dialog cannot be clicked, so it is answered in the main process as
 // save-picker.spec.ts and p6-13.shots.ts do; no app code changes. Not a test file itself.
 // Made-up names only; only the fake provider runs, nothing is paid and nothing leaves the

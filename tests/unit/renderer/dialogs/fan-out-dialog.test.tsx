@@ -57,8 +57,8 @@ async function open(fake = api()) {
     </main>,
     fake,
   )
-  await userEvent.click(screen.getByRole('button', { name: 'Fan out…' }))
-  const dialog = await screen.findByRole('dialog', { name: 'Fan out Beach day' })
+  await userEvent.click(screen.getByRole('button', { name: 'Make variants…' }))
+  const dialog = await screen.findByRole('dialog', { name: 'Make variants of Beach day' })
   return { ...view, dialog }
 }
 

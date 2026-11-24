@@ -45,7 +45,7 @@ export const AGENT_POLICY: Record<string, Entry> = {
   'direction.rename': allow('rename directions'),
   'direction.delete': ask('delete directions'),
   // P5-1: system commands, only inverses; deny and internal.
-  'variant.fanOut': deny('run fan-out'),
+  'variant.fanOut': deny('make many variants at once'),
   'variant.add': allow('add variants'),
   'variant.update': allow('change variants'),
   'variant.delete': ask('delete variants'),

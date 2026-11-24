@@ -24,7 +24,7 @@ export function FanOutButton(props: DirectionControlProps) {
     <>
       <button type="button" onClick={() => setOpen(true)}>
         <Icon name="plus" size="small" />
-        Fan out…
+        Make variants…
       </button>
       {open && (
         <FanOutDialog

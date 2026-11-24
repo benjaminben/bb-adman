@@ -1,6 +1,6 @@
 // Design wave CAMP-2 (AP-3, AP-7, AP-8, AP-13): a tile's actions are the eye "Quick look at
 // {title}" and a More menu "{title}" (Open, Open in a tab, Quick look, Delete… but not on the
-// master); a direction's header is one line: the name, the count chip, "Fan out…", "Sync {n}"
+// master); a direction's header is one line: the name, the count chip, "Make variants…", "Sync {n}"
 // only when something is out of date, and a More menu "{name}" (New direction…, Rename…,
 // Delete direction…). Each delete keeps its warning with "Keep" focused [D-099]; nothing is
 // sent before the warning's own button, and one click sends one delete.
@@ -145,11 +145,13 @@ describe('direction header [CAMP-2]', () => {
     expect(fake.commands).toEqual([])
   })
 
-  it('"Fan out…" opens the fan-out dialog and sends nothing', async () => {
+  it('"Make variants…" opens the Make variants dialog and sends nothing', async () => {
     const { fake } = await drawGrids()
     const beach = screen.getByRole('region', { name: 'Beach day' })
-    await userEvent.click(within(beach).getByRole('button', { name: 'Fan out…' }))
-    expect(await screen.findByRole('dialog', { name: 'Fan out Beach day' })).toBeInTheDocument()
+    await userEvent.click(within(beach).getByRole('button', { name: 'Make variants…' }))
+    expect(
+      await screen.findByRole('dialog', { name: 'Make variants of Beach day' }),
+    ).toBeInTheDocument()
     expect(fake.commands).toEqual([])
   })
 
@@ -186,13 +188,13 @@ describe('direction header [CAMP-2]', () => {
     expect(beach).toContainElement(tips[0]!)
   })
 
-  // With no master there is nothing to fan out from, so no dead "Fan out…" is drawn.
+  // With no master there is nothing to make variants from, so no dead "Make variants…" is drawn.
   it('an empty direction shows "No variants" and no grid', async () => {
     await drawGrids(twoDirections([BEACH_MASTER, GERMAN]))
     const night = screen.getByRole('region', { name: 'City night' })
     expect(within(night).getByText('No variants')).toBeInTheDocument()
     expect(within(night).queryByRole('list')).toBeNull()
-    expect(within(night).queryByRole('button', { name: 'Fan out…' })).toBeNull()
+    expect(within(night).queryByRole('button', { name: 'Make variants…' })).toBeNull()
   })
 
   it('has no accessibility violations', async () => {
