@@ -1,8 +1,9 @@
 // T3d (spec/phases/design-wave.md, "T3d — Fields"; spec/app-style-parts.md "Field", "Swatch
-// field"): one round swatch per palette colour, "No colour" first when allowed, and "+" last,
-// which opens a popover with "Hex colour" and the colour picker. The part writes nothing to
-// the project itself: it only calls onCommit, and only with a valid hex (or null).
-import { fireEvent, render, screen, within } from '@testing-library/react'
+// field", D-109): one round swatch per palette colour, "No colour" first when allowed, and "+"
+// last. "+" and the chosen swatch open the app's own colour picker (picker tests are in
+// swatch-picker.test.tsx). The part writes nothing to the project itself: it only calls
+// onCommit, and only with a valid hex (or null).
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { SwatchField } from '@/renderer/ui/swatch-field'
@@ -77,7 +78,7 @@ describe('SwatchField [T3d]', () => {
     expect(onCommit.mock.calls).toEqual([[sent]])
   })
 
-  it('opens the popover from "+" with the hex field and the colour picker', async () => {
+  it('opens the popover from "+" with the square, the hue slider and the hex field', async () => {
     setup()
     const plus = screen.getByRole('button', { name: 'Other colour' })
     expect(plus).toHaveAttribute('aria-expanded', 'false')
@@ -85,7 +86,8 @@ describe('SwatchField [T3d]', () => {
     expect(plus).toHaveAttribute('aria-expanded', 'true')
     expect(hex).toHaveValue('#e85d3f')
     expect(hex).toHaveFocus()
-    expect(screen.getByLabelText('Colour picker')).toHaveAttribute('type', 'color')
+    expect(screen.getByRole('slider', { name: 'Saturation and brightness' })).toBeInTheDocument()
+    expect(screen.getByRole('slider', { name: 'Hue' })).toBeInTheDocument()
   })
 
   it('commits a valid hex once, in #rrggbb, and closes the popover', async () => {
@@ -109,11 +111,46 @@ describe('SwatchField [T3d]', () => {
     expect(line.tagName).toBe('P')
   })
 
-  it('commits the colour picker choice once, on its change', async () => {
+  it('opens the popover from the chosen swatch and saves nothing [D-109]', async () => {
     const { onCommit } = setup()
+    const chosen = screen.getByRole('button', { name: '#e85d3f' })
+    await userEvent.click(chosen)
+    expect(screen.getByRole('textbox', { name: 'Hex colour' })).toHaveValue('#e85d3f')
+    expect(onCommit).not.toHaveBeenCalled()
+  })
+
+  it('saves another swatch once, without opening the popover [D-109]', async () => {
+    const { onCommit } = setup()
+    await userEvent.click(screen.getByRole('button', { name: '#1a2b3c' }))
+    expect(onCommit.mock.calls).toEqual([['#1a2b3c']])
+    expect(screen.queryByRole('textbox', { name: 'Hex colour' })).toBeNull()
+  })
+
+  it('on Escape gives the focus back to the chosen swatch that opened it, saving nothing', async () => {
+    const { onCommit } = setup()
+    await userEvent.click(screen.getByRole('button', { name: '#e85d3f' }))
+    expect(screen.getByRole('textbox', { name: 'Hex colour' })).toHaveFocus()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('textbox', { name: 'Hex colour' })).toBeNull()
+    expect(screen.getByRole('button', { name: '#e85d3f' })).toHaveFocus()
+    expect(onCommit).not.toHaveBeenCalled()
+  })
+
+  it('closes on a press outside and saves nothing', async () => {
+    const { onCommit } = setup()
+    const hex = await openPopover()
+    await userEvent.clear(hex)
+    await userEvent.type(hex, '#00AA55')
+    await userEvent.click(document.body)
+    expect(screen.queryByRole('textbox', { name: 'Hex colour' })).toBeNull()
+    expect(onCommit).not.toHaveBeenCalled()
+  })
+
+  it('has no element of type color, closed or open [D-109]', async () => {
+    const { container } = setup()
+    expect(container.querySelector('input[type="color"]')).toBeNull()
     await openPopover()
-    fireEvent.change(screen.getByLabelText('Colour picker'), { target: { value: '#336699' } })
-    expect(onCommit.mock.calls).toEqual([['#336699']])
+    expect(document.querySelector('input[type="color"]')).toBeNull()
   })
 
   it('closes the popover on Escape and gives the focus back to "+"', async () => {

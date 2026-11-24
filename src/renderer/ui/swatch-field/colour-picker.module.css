@@ -1,0 +1,49 @@
+/* app-style */
+/* The swatch field's own colour picker (spec/app-style-parts.md "Swatch field", D-109). The
+   square's colour is set inline from an exact computed hex; white across and black up are
+   laid over it. The hue track is a fixed rainbow. The thumbs are light with a dark edge, like
+   the editor's selection line, so they show on any colour. */
+.square {
+  position: relative;
+  width: calc(var(--control-height) * 6);
+  height: calc(var(--control-height) * 4);
+  border-radius: var(--radius-inner);
+  background-image:
+    linear-gradient(to top, black, transparent), linear-gradient(to right, white, transparent);
+  cursor: crosshair;
+  touch-action: none;
+}
+.hue {
+  position: relative;
+  width: calc(var(--control-height) * 6);
+  height: var(--space-3);
+  border-radius: var(--radius-pill);
+  background: linear-gradient(to right, red, yellow, lime, cyan, blue, magenta, red);
+  cursor: pointer;
+  touch-action: none;
+}
+.square:focus-visible,
+.hue:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+.thumb {
+  position: absolute;
+  width: var(--space-3);
+  height: var(--space-3);
+  border: calc(var(--border-width) * 2) solid var(--selection-light);
+  border-radius: 50%;
+  outline: var(--border-width) solid var(--selection-dark);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.hue .thumb {
+  top: 50%;
+}
+.draft {
+  flex: none;
+  width: var(--control-height);
+  height: var(--control-height);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius-inner);
+}

@@ -1,7 +1,8 @@
 /* app-style */
-/* Swatch field (spec/app-style-parts.md "Field"): round swatches at the small control height
-   with the control edge; the chosen one is ringed like a focus outline. The popover sits at
-   elevation 2 and is placed by menu-place. */
+/* Swatch field (spec/app-style-parts.md "Field", D-109): round swatches at the small control
+   height with the control edge; the chosen one is ringed like a focus outline, with
+   --gap-inline between swatches so the ring never touches the next. The popover sits at
+   elevation 2 and is placed by menu-place; the picker inside it is colour-picker.module.css. */
 .field {
   display: flex;
   flex-direction: column;
@@ -12,7 +13,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--gap-tight);
+  gap: var(--gap-inline);
 }
 .swatch {
   width: var(--control-height-small);
@@ -30,12 +31,14 @@
 .more {
   background: var(--color-bg);
   color: var(--color-text-secondary);
+}
+.none {
   font-size: var(--type-meta-size);
 }
 .popover {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
   width: max-content;
   padding: var(--space-2);
   border: var(--border-width) solid var(--color-line);
@@ -51,11 +54,6 @@
 .hex {
   width: calc(var(--control-height) * 3);
   font-variant-numeric: tabular-nums;
-}
-.picker {
-  width: var(--control-height);
-  height: var(--control-height);
-  padding: 0;
 }
 .error {
   margin: 0;
