@@ -83,6 +83,7 @@ function planAdd(input: SyncPlanInput, from: LayerRow, row: RuleFacts): PlannedL
     masterLayers: [from],
     target: row,
     pictureSize: size,
+    layoutLayers: input.master.layers,
   })
   if (!planned) throw new Error('sync-plan: planVariant gave no layer')
   return planned
