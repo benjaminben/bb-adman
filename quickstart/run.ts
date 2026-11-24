@@ -1,15 +1,14 @@
 // One ad set's steps, in the order a person takes them in the app: make the picture on the
 // first size, build the master from the brief's layout and brand (and, with --ai_layout, move
-// its text with one call), make one variant per language and size, translate what the brief
-// gave no words for, extend the picture to each other size, and (without --ai_layout) lay out
-// each variant for its own size and words. Every call goes through the app's own provider
-// adapters and every answer through the app's own checks.
+// its text with one call), make one variant per language and size by the app's rule, translate
+// what the brief gave no words for and fit the new words, and extend the picture to each other
+// size. Every call goes through the app's own provider adapters and every answer through the
+// app's own checks.
 import type { ImageFile } from '@/main/providers/types'
 import { prefilledPrompt, promptToSend } from '@/shared/generation/prompt'
 import type { SceneVariant } from '@/shared/scene/types'
 import type { CampaignSize } from '@/shared/schemas/commands/campaign'
 import type { Brand } from './brief-files'
-import { laidOut } from './lay-out'
 import {
   BODY_FONT_ASSET,
   HEADING_FONT_ASSET,
@@ -134,7 +133,7 @@ export async function runAdSet(input: RunInput): Promise<RunResult> {
   let variants = planVariants(plan, master, picture)
   for (const language of plan.translate) {
     variants = await call(progress, calls, 'translation', `Translating to ${language}`, () =>
-      translate(plan, providers, progress, variants, language),
+      translate(plan, providers, progress, variants, language, master),
     )
   }
   const fills = new Map<string, Picture>()
@@ -145,9 +144,6 @@ export async function runAdSet(input: RunInput): Promise<RunResult> {
     )
     variants = done.variants
     if (done.picture) fills.set(size.label, done.picture)
-  }
-  if (!input.aiLayout) {
-    variants = variants.map((v) => laidOut(v, plan.layout, plan.look.colours))
   }
   return { variants, prompt, picture, fills, calls }
 }

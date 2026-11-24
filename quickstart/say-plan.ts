@@ -63,6 +63,14 @@ export function callsLine(plan: Plan, sets: number, aiLayout: boolean): string {
   return `AI calls: ${calls.join(', ')}`
 }
 
+// Where the text goes: the app's rule places each box at each size and fits the words; with
+// --ai_layout the boxes the AI call moved stay near the same edges at the other sizes.
+export function placementLine(aiLayout: boolean): string {
+  return aiLayout
+    ? 'Text placement: one AI call per set moves the text; other sizes keep it near the same edges.'
+    : "Text placement: the layout's boxes at each size, text fitted (add --ai_layout for an AI call)."
+}
+
 export function planLines(
   plan: Plan,
   sets: AdSet[],
@@ -88,9 +96,7 @@ export function planLines(
     ),
     '',
     callsLine(plan, sets.length, args.aiLayout),
-    args.aiLayout
-      ? 'Text placement: one AI call per set moves the text to suit the picture.'
-      : "Text placement: the layout's own boxes for each size and its words (add --ai_layout for an AI call).",
+    placementLine(args.aiLayout),
     '',
   ]
 }

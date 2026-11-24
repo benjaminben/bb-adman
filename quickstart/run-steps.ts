@@ -1,10 +1,12 @@
 // Two steps of an ad set's run, each one AI call through the app's own adapters: translate the
-// texts the brief gave no words for, and extend the first picture to another size.
+// texts the brief gave no words for (their font sizes fitted to the new words), and extend the
+// first picture to another size.
 import { pictureSize } from '@/main/providers/picture-size'
 import type { ImageResult } from '@/main/providers/types'
 import { cleanAnswer } from '@/main/translation/clean-answer'
 import { FILL_PROMPT, promptToSend } from '@/shared/generation/prompt'
 import type { CampaignSize } from '@/shared/schemas/commands/campaign'
+import type { LayerRow } from '@/shared/schemas/rows/layer'
 import {
   fillAsset,
   fillPlacement,
@@ -48,6 +50,7 @@ export async function translate(
   progress: Progress,
   variants: Variant[],
   to: string,
+  master: LayerRow[],
 ): Promise<Variant[]> {
   const items = missingItems(variants, to)
   const answer = await providers.text.translate({
@@ -64,7 +67,7 @@ export async function translate(
   if (cleaned.length < items.length) {
     progress.note(`Some "${to}" texts were not translated; they keep the first language's words.`)
   }
-  return variants.map((variant) => withTranslations(variant, to, cleaned))
+  return variants.map((variant) => withTranslations(variant, to, cleaned, master))
 }
 
 // The extended picture is handed to the drawing page and returned, so it can be saved as made.

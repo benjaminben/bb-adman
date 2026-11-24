@@ -1,8 +1,11 @@
 // The quickstart's layers, built with the app's own pure code: the master from the starter
 // layout, the boxes of a layout call put on it, then one set of layers per language and size
-// as the app's fan-out plans them. Pure: no file, no call.
+// as the app's "Make variants" plans them, and translated words fitted as the app fits them.
+// Pure: no file, no call.
 import { layoutPatches } from '@/shared/generation/layout-patches'
-import { planVariant, type PlannedLayer } from '@/shared/links/fan-out-plan'
+import type { PlannedLayer } from '@/shared/links/fan-out-plan'
+import { fitTranslatedText } from '@/shared/links/fit-text'
+import { planNewVariant } from '@/shared/links/new-variant-plan'
 import type { Size } from '@/shared/scene/background-placement'
 import type { CampaignSize } from '@/shared/schemas/commands/campaign'
 import type { LayoutJobBox } from '@/shared/schemas/jobs/layout-proposal'
@@ -12,7 +15,6 @@ import { withBrandFonts } from '@/shared/templates/brand-fonts'
 import { buildMasterLayers } from '@/shared/templates/master-layers'
 import { starterTemplate } from '@/shared/templates/starter'
 import type { SlotFills } from '@/shared/templates/types'
-import { translatedLayers } from '@/shared/translation/translated-layers'
 import { isFlatLayout, type Plan } from './plan'
 
 // The file names the layers point at: the first picture, one extended picture per size, the
@@ -73,26 +75,29 @@ export function withLayout(layers: LayerRow[], boxes: LayoutJobBox[]): LayerRow[
   })
 }
 
-// One variant per size and language, in the app's fan-out order: sizes, then the main language
-// first, so another language copies the boxes of its size. A text layer in another language
-// takes the brief's copy, or stays `missing` for the translate call.
+// One variant per size and language, made from the master by the app's rule (planNewVariant),
+// in the app's order: sizes, then the main language first, so another language copies the
+// boxes of its size. A box the layout placed takes the layout's box at the new size; a box
+// moved off it (by --ai_layout) is anchored. A text layer in another language takes the
+// brief's copy, or stays `missing` for the translate call; changed words are fitted.
 export function planVariants(plan: Plan, master: LayerRow[], pictureSize: Size): Variant[] {
   const primary = primaryOf(plan)
   const campaign = { primaryLanguage: primary, brief: plan.brief }
-  const from = { ...firstSize(plan), language: primary }
+  const { width, height } = firstSize(plan)
   const plans = new Map<string, PlannedLayer[]>()
   const variants: Variant[] = []
   for (const size of plan.sizes) {
     for (const language of plan.languages) {
-      const planned = planVariant({
-        master: from,
+      const layers = planNewVariant({
+        master: { width, height, language: primary },
         masterLayers: master,
         target: { width: size.width, height: size.height, language },
         fit: 'fill',
         pictureSize,
         sameSizePlan: plans.get(size.label) ?? null,
+        layoutId: plan.layout.id,
+        campaign,
       })
-      const layers = translatedLayers(campaign, language, planned)
       if (language === primary) plans.set(size.label, layers)
       variants.push({ language, size, layers: rows(layers, `${language}-${size.label}`) })
     }
@@ -139,14 +144,29 @@ export function missingItems(variants: Variant[], language: string): CopyItem[] 
   return [...items].map(([key, text]) => ({ key, text }))
 }
 
-// A language's translated texts, written to its `missing` layers as AI proposals.
-export function withTranslations(variant: Variant, language: string, items: CopyItem[]): Variant {
+// A language's translated texts, written to its `missing` layers as AI proposals, each font
+// size then fitted to the new words as the app's translation.write does (fitTranslatedText:
+// only ever smaller). master: the master's layers, for the fitted size's override paths.
+export function withTranslations(
+  variant: Variant,
+  language: string,
+  items: CopyItem[],
+  master: LayerRow[] = [],
+): Variant {
   if (variant.language !== language) return variant
   const texts = new Map(items.map((item) => [item.key, item.text]))
   const layers = variant.layers.map((layer): LayerRow => {
     const text = isMissing(layer) ? texts.get(layer.key) : undefined
     if (text === undefined) return layer
-    return { ...layer, copy: text, translationStatus: 'proposed', translationSource: 'ai' }
+    const written: LayerRow = {
+      ...layer,
+      copy: text,
+      translationStatus: 'proposed',
+      translationSource: 'ai',
+    }
+    const masterLayer = layer.linked ? (master.find((l) => l.key === layer.key) ?? null) : null
+    const fit = fitTranslatedText(layer, text, variant.size, masterLayer)
+    return fit ? ({ ...written, ...fit } as LayerRow) : written
   })
   return { ...variant, layers }
 }

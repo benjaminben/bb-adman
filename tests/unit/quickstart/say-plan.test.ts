@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { adSetsOf } from '../../../quickstart/ad-sets'
 import { readPlan } from '../../../quickstart/plan'
-import { adSetLines, callsLine } from '../../../quickstart/say-plan'
+import { adSetLines, callsLine, placementLine } from '../../../quickstart/say-plan'
 
 const BRIEF = `
 campaignName: Garden Party
@@ -46,6 +46,15 @@ describe('quickstart plan printout', () => {
     )
     expect(callsLine(planOf(BRIEF), 1, true)).toBe(
       'AI calls: 1 picture, 1 text placement, 1 picture extend, 1 translation (de)',
+    )
+  })
+
+  it('says where the text goes, with and without --ai_layout [MV-8]', () => {
+    expect(placementLine(false)).toBe(
+      "Text placement: the layout's boxes at each size, text fitted (add --ai_layout for an AI call).",
+    )
+    expect(placementLine(true)).toBe(
+      'Text placement: one AI call per set moves the text; other sizes keep it near the same edges.',
     )
   })
 })

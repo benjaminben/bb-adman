@@ -1,4 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { planNewVariant } from '@/shared/links/new-variant-plan'
+import type { PlannedLayer } from '@/shared/links/fan-out-plan'
+import { fitTranslatedText } from '@/shared/links/fit-text'
+import { anchoredBox } from '@/shared/links/place-box'
+import type { LayerRow } from '@/shared/schemas/rows/layer'
+import { frameOf } from '@/shared/templates/layout-rules'
 import {
   BODY_FONT_ASSET,
   HEADING_FONT_ASSET,
@@ -182,5 +189,99 @@ describe('quickstart layers', () => {
     expect(layers.find((l) => l.key === 'subject-image')?.source).toEqual({
       assetId: MASTER_ASSET,
     })
+  })
+})
+
+// MV-8: the quickstart plans and fits with the app's own rule.
+const SPLASH = new URL('../../../quickstart/examples/summer-splash/brief.yaml', import.meta.url)
+const BRAND = { logo: true, headingFont: true, bodyFont: true }
+
+function splash() {
+  const result = readPlan(readFileSync(SPLASH, 'utf8'), 'yaml')
+  if (!result.ok) throw new Error(result.message)
+  return result.plan
+}
+
+const sansIds = (layers: LayerRow[]) => layers.map(({ id: _id, variantId: _v, ...rest }) => rest)
+
+describe("quickstart layers with the app's rule [MV-8]", () => {
+  it.each([
+    ['a brief with copy and a translation', plan],
+    ['summer-splash with its brand', splash],
+  ])('plans each variant as planNewVariant does from the master: %s', (_name, read) => {
+    const p = read()
+    const master = masterLayers(p, BRAND)
+    const from = { ...p.sizes[0]!, language: 'en' }
+    const campaign = { primaryLanguage: 'en', brief: p.brief }
+    const plans = new Map<string, PlannedLayer[]>()
+    for (const variant of planVariants(p, master, PICTURE)) {
+      const { size, language } = variant
+      const expected = planNewVariant({
+        master: { width: from.width, height: from.height, language: 'en' },
+        masterLayers: master,
+        target: { width: size.width, height: size.height, language },
+        fit: 'fill',
+        pictureSize: PICTURE,
+        sameSizePlan: plans.get(size.label) ?? null,
+        layoutId: p.layout.id,
+        campaign,
+      })
+      if (language === 'en') plans.set(size.label, expected)
+      expect(sansIds(variant.layers), `${language} ${size.label}`).toEqual(expected)
+    }
+  })
+
+  it("starts the logo, headline and button at the layout's margin at 16:9", () => {
+    const p = splash()
+    const list = planVariants(p, masterLayers(p, BRAND), { width: 1080, height: 1080 })
+    for (const variant of list.filter((v) => v.size.label === '16x9')) {
+      const margin = frameOf(variant.size).m
+      for (const key of ['logo', 'headline', 'call-to-action']) {
+        const layer = variant.layers.find((l) => l.key === key)
+        expect(layer?.geometry.x, `${variant.language} ${key}`).toBe(margin)
+      }
+    }
+  })
+
+  it('fits a translated text longer than the first words with fitTranslatedText', () => {
+    const p = plan()
+    const master = masterLayers(p)
+    const long = 'Lass in deinem Garten jeden Tag etwas ganz Neues und Wunderbares wachsen'
+    const before = planVariants(p, master, PICTURE).find((v) => v.language === 'de')
+    if (!before) throw new Error('no de variant')
+    const headline = before.layers.find((l) => l.key === 'headline')
+    if (!headline) throw new Error('no headline')
+    const masterHeadline = master.find((l) => l.key === 'headline') ?? null
+    const fit = fitTranslatedText(headline, long, before.size, masterHeadline)
+    expect(fit).not.toBeNull()
+    const after = withTranslations(before, 'de', [{ key: 'headline', text: long }], master)
+    const written = after.layers.find((l) => l.key === 'headline')
+    expect(written?.copy).toBe(long)
+    expect(written?.style).toEqual(fit?.style)
+    expect(written?.overrides).toEqual(fit?.overrides)
+  })
+
+  it('anchors the boxes an AI layout call moved', () => {
+    const p = plan()
+    const box = {
+      slot: 'headline',
+      x: 40,
+      y: 500,
+      width: 600,
+      height: 200,
+      fontSize: 60,
+      color: '#112233',
+      align: 'left' as const,
+    }
+    const master = withLayout(masterLayers(p), [box])
+    const moved = master.find((l) => l.key === 'headline')
+    if (!moved) throw new Error('no headline')
+    const tall = planVariants(p, master, PICTURE).find(
+      (v) => v.language === 'en' && v.size.label === '9x16',
+    )
+    const first = p.sizes[0]!
+    const target = { width: 1080, height: 1920 }
+    const expected = anchoredBox(moved.geometry, first, target, true)
+    expect(tall?.layers.find((l) => l.key === 'headline')?.geometry).toEqual(expected)
   })
 })
