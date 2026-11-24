@@ -4,14 +4,18 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ProviderFailure } from '@/main/providers/types'
+import { pictureName } from '@/shared/brief/picture-name'
+import { adSetsOf, setPhotos } from './ad-sets'
 import { parseArgs, USAGE, type Args } from './args'
 import { readBrand, readSubjectPhotos } from './brief-files'
 import { chooseBrief, listExamples } from './examples'
+import { makeAds, type MadeAds } from './make-ads'
 import { lookNoteLine } from './notes'
-import { campaignFolder, writeAd, type WrittenAd } from './output'
+import { campaignFolder } from './output'
 import { readPlan } from './plan'
 import { providersFor } from './providers'
-import { runQuickstart, stepCount, type Report } from './run'
+import { adLine, reportOf, totalLine, type AdRecord } from './report'
+import { stepCount, type Progress } from './run'
 import { planLines } from './say-plan'
 import { openStudio } from './studio'
 
@@ -21,7 +25,7 @@ const say = (line = '') => void process.stdout.write(`${line}\n`)
 // A failure the person can act on: its sentence is printed as it is, with no stack.
 class Stop extends Error {}
 
-function reporter(total: number): Report {
+function reporter(total: number): Progress {
   let at = 0
   let began = 0
   return {
@@ -45,6 +49,16 @@ async function readBrief(args: Args): Promise<{ text: string; path: string }> {
   return { text, path: chosen.path }
 }
 
+function sayResults(campaign: string, ads: AdRecord[]): void {
+  const shown = relative(process.cwd(), campaign) || campaign
+  say()
+  say(`Wrote ${ads.length} ads to ${shown}, with report.json:`)
+  const width = Math.max(...ads.map((ad) => ad.folder.length))
+  for (const ad of ads) say(adLine(ad, width))
+  say()
+  say(totalLine(ads))
+}
+
 async function main(args: Args): Promise<void> {
   const brief = await readBrief(args)
   const syntax = extname(brief.path).toLowerCase() === '.json' ? 'json' : 'yaml'
@@ -54,46 +68,45 @@ async function main(args: Args): Promise<void> {
   const photos = await readSubjectPhotos(plan, dirname(brief.path))
   const brand = await readBrand(plan, dirname(brief.path))
   const providers = providersFor(args)
+  const sets = adSetsOf(plan)
   say('Adman quickstart')
   say()
   const notes = [...photos.notes, ...brand.notes, ...plan.look.notes.map(lookNoteLine)]
   for (const note of notes) say(`Note: ${note}`)
   if (notes.length > 0) say()
-  for (const line of planLines(plan, args, providers, brand, photos.files.length)) say(line)
-  const total = stepCount(plan, args.aiLayout) + 1
-  const report = reporter(total)
+  const counts = sets.map((set) => setPhotos(set, photos.bySubject).length)
+  for (const line of planLines(plan, sets, args, providers, brand, counts)) say(line)
+  const progress = reporter(sets.length * stepCount(plan, args.aiLayout))
   const campaign = campaignFolder(
     resolve(args.out ?? join(here, 'output')),
     plan.brief.campaignName,
   )
+  const logoText = plan.brandFiles.find((file) => file.role === 'logo')?.text
   const studio = await openStudio()
-  const written: WrittenAd[] = []
+  let made: MadeAds
   try {
-    const { variants, prompt } = await runQuickstart({
+    made = await makeAds({
       plan,
+      sets,
+      photos: photos.bySubject,
       providers,
       studio,
-      references: photos.files,
       brand,
+      logoName: brand.logo && logoText !== undefined ? pictureName(logoText) : null,
       prompt: args.prompt,
       aiLayout: args.aiLayout,
-      report,
+      campaign,
+      progress,
+      onSet: (set) => {
+        if (set.name !== null) say(`${set.name}:`)
+      },
     })
-    report.start(`Drawing ${variants.length} ads and their layers`)
-    for (const variant of variants) written.push(await writeAd(studio, campaign, variant))
-    report.end()
-    const run = { campaign: plan.brief.campaignName, models: providers.models, prompt }
-    await writeFile(join(campaign, 'run.json'), `${JSON.stringify(run, null, 2)}\n`)
   } finally {
     await studio.close()
   }
-  say()
-  say(`Wrote ${written.length} ads to ${relative(process.cwd(), campaign) || campaign}`)
-  for (const ad of written) {
-    const warning =
-      ad.overflowing.length > 0 ? `  (does not fit: ${ad.overflowing.join(', ')})` : ''
-    say(`  ${join(ad.language, ad.size, 'final.png')}${warning}`)
-  }
+  const report = reportOf({ models: providers.models, notes, ...made })
+  await writeFile(join(campaign, 'report.json'), `${JSON.stringify(report, null, 2)}\n`)
+  sayResults(campaign, made.ads)
 }
 
 function sayFailure(error: unknown): void {

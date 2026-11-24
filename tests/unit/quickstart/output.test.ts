@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { masterLayers, planVariants } from '../../../quickstart/layers'
-import { adFolder, campaignFolder, layerFile, layoutOf, safeName } from '../../../quickstart/output'
+import {
+  adFolder,
+  campaignFolder,
+  layerFile,
+  layoutOf,
+  pictureFile,
+  safeName,
+} from '../../../quickstart/output'
 import { readPlan } from '../../../quickstart/plan'
 
 const BRIEF = `
@@ -37,6 +44,12 @@ describe('quickstart output names', () => {
 
   it('names each layer file by its place in the stack', () => {
     expect(variant().layers.map(layerFile)).toEqual(['1-background.png', '2-headline.png'])
+  })
+
+  it('names the picture as made by its type, picture.png for a PNG', () => {
+    expect(pictureFile('image/png')).toBe('picture.png')
+    expect(pictureFile('image/jpeg')).toBe('picture.jpg')
+    expect(pictureFile('image/webp')).toBe('picture.webp')
   })
 
   it('writes the layout as numbers, lowest layer first', () => {

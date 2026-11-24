@@ -96,6 +96,19 @@ describe('quickstart readSubjectPhotos', () => {
     expect(read.files).toHaveLength(2)
     expect(read.notes).toEqual([])
   })
+
+  it("keeps each subject's photos apart, by last part, for one ad set per subject", async () => {
+    const plan = planOf(
+      `${BRIEF}subjects:\n  - name: D\n    pictures: brand/logo.png\n  - name: E\n  - name: F\n    pictures: missing.png\n`,
+    )
+    const read = await readSubjectPhotos(plan, folder)
+    expect(read.bySubject.map((photos) => photos.map((p) => p.name))).toEqual([
+      ['logo.png'],
+      [],
+      [],
+    ])
+    expect(read.bySubject[0]?.[0]?.file.mime).toBe('image/png')
+  })
 })
 
 describe('quickstart readBrand', () => {

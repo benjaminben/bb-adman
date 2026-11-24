@@ -2,7 +2,7 @@
 
 A demo of the pipeline for someone who has not installed the app (D-106, D-107). One brief in; finished ads out, one per subject set, language and size, with a report of the checks. It runs with `npm run quickstart` on macOS and Windows.
 
-**State.** Built: the two examples and `--example`; the brand files and the brief's look read, with a printed note for each that cannot be used; the master built from the brief's layout with the logo, the brand fonts and the brand colours; the art direction in the picture prompt; text placement by AI with `--ai_layout` only; the picture in the subject spot for a flat-colour layout. Not built yet: one set per subject (`adsPer` is read but not acted on), output folders by subject, the checks and `report.json` (the run still writes `run.json`), and the README with sample pictures (slices QS-2 and QS-3 at the end).
+**State.** Built: the two examples and `--example`; the brand files and the brief's look read, with a printed note for each that cannot be used; the master built from the brief's layout with the logo, the brand fonts and the brand colours; the art direction in the picture prompt; text placement by AI with `--ai_layout` only; the picture in the subject spot for a flat-colour layout; one ad set per subject with `adsPer: subject`, and output folders by subject; each variant laid out by the layout for its own size and words; `picture.png`; the checks, `report.json` and the printed result lines (QS-1, QS-2). Not built yet: the README with sample pictures (QS-3).
 
 ## What it is not
 
@@ -68,13 +68,14 @@ quickstart/output/{campaign}/
   {subject}/{language}/{size}/  one set per subject
     final.png
     picture.png                 the picture as the model made it, with no shade or text
+                                (.jpg or .webp if the model returns that type; its bytes are not changed)
     layers/{n}-{layer}.png
     layout.json                 each layer's text, box and style
 ```
 
 `report.json` holds the models, each ad set's prompt and which of its pictures were given or made, the AI calls with their time, the notes from the brief, and for each ad its folder and the result of each check (passed, flagged with its findings, or skipped with the reason). The same results are printed as one line per ad. A flag does not make the run fail. `quickstart/output/` is not in git.
 
-**The checks in a run with no project.** The rule set is the brief's word lists, the brand colours, and the logo as a required file. A translation made by AI counts as not yet approved, as in the app, so that check flags it; copy from the brief counts as the user's own.
+**The checks in a run with no project.** The rule set is the brief's word lists, the brand colours, and the logo as a required file. A translation made by AI counts as not yet approved, as in the app, so that check flags it; copy from the brief counts as the user's own (approved). Whether a text overflows its box is what the drawing page measured for the finished ad.
 
 ## Rules
 
@@ -87,7 +88,7 @@ quickstart/output/{campaign}/
 
 ## Tests
 
-`tests/unit/quickstart/` covers the options, the examples, the plan, the brief's files and notes, the layers, the text placement offer and the output names (and, from QS-2, the report). The run itself is checked by hand: `npm run quickstart -- --provider=fake --example=summer-splash`.
+`tests/unit/quickstart/` covers the options, the examples, the plan and its printout, the brief's files and notes, the ad sets, the layers, the layout for each variant, the text placement offer, the checks' rule set and facts, the output names and the report. The run itself is checked by hand: `npm run quickstart -- --provider=fake --example=summer-splash`.
 
 ## Slices
 
