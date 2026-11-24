@@ -1,6 +1,6 @@
 # Links, overrides, sync, fan-out and directions
 
-Built (Phase 5, P5-1 to P5-19; slices in `spec/phases/phase-05-slices.md` and `phase-05-screens.md`). How one master drives the variants of its direction: the follow rules, out-of-date, overrides, sync, fan-out, generative fill, directions, adding and deleting variants, and the campaign undo list. Read with `spec/data-model-campaign.md` (the tables) and `spec/data-rules.md` (data flow). The screens are in `spec/screens-variants.md`. Phase 5's assumptions (A-128 to A-149) are in `spec/phases/phase-05.md`.
+Built (Phase 5, P5-1 to P5-19; slices in `spec/phases/phase-05-slices.md` and `phase-05-screens.md`), except the changes to fan-out from `spec/make-variants.md` (Not built, MV-1 to MV-9). How one master drives the variants of its direction: the follow rules, out-of-date, overrides, sync, fan-out, generative fill, directions, adding and deleting variants, and the campaign undo list. Read with `spec/data-model-campaign.md` (the tables) and `spec/data-rules.md` (data flow). The screens are in `spec/screens-variants.md`. Phase 5's assumptions (A-128 to A-149) are in `spec/phases/phase-05.md`.
 
 No schema change: every column used here exists, and `generative_fill` is already in the `job_kind` check. Phase 5 adds no migration.
 
@@ -90,24 +90,26 @@ type SyncPreview = {
 
 ## Fan-out
 
-The steps are in `spec/data-rules.md`, "Fan-out". Phase 5 builds them with these rules.
+The steps are in `spec/data-rules.md`, "Fan-out". Phase 5 builds them with these rules. The screen calls this "Make variants". The box placement, the text fit and `sourceVariantId` below are Not built: they are designed in `spec/make-variants.md` (slices MV-2 to MV-7), which wins where this section differs.
 
-**`variant.fanOut { projectId, directionId, sizes, languages, formats, fits }`** (C, deny).
+**`variant.fanOut { projectId, directionId, sourceVariantId?, sizes, languages, formats, fits }`** (C, deny).
 
+- `sourceVariantId` (Not built, MV-7): the variant the new ones start from; left out, the master. It must be a variant of `directionId`, else `NOT_FOUND`, "That variant was not found in this direction." In what follows, "the master's size and language" and "the master's pixel size" mean the source's (`spec/make-variants.md`, "Making variants from a variant").
 - `sizes`: size labels from `campaign.sizes`, at least one. `languages`: tags from `campaign.languages`, at least one. A label or tag not in the campaign: `RULE_VIOLATION`, `not_in_campaign`, "Choose sizes and languages from the campaign's lists." The master's size and language are always part of the grid, whether or not they are listed.
 - `formats`: one or more of `'image'` and `'video'` (P7-23); a video variant gets step 7 of `spec/data-rules.md`.
 - `fits`: `{ [sizeLabel]: 'scale' | 'crop' | 'fill' }`, one entry for each listed size whose pixel size differs from the master's, and no others. A missing or extra entry: `INVALID_INPUT`, "Choose how the background fits for each new size." A size with the master's pixel size but another label takes geometry as it follows (A-147).
 - `fill` makes the variant exactly as `scale` does. The command starts no job (A-129).
 - Combinations that already exist in the direction are skipped. Nothing new to make: success with empty lists.
 - **The background for a new size.** With the picture's size `pw × ph` (from its asset row; null source or no size known: the whole canvas) and the canvas `W × H`: `scale` uses `s = min(W / pw, H / ph)`, `crop` uses `s = max(W / pw, H / ph)`; the box is `pw·s × ph·s`, centred, rounded to whole pixels, rotation 0, `crop` null.
-- **Other layers** keep their centre at the same share of the canvas and scale width and height by `min(W / masterW, H / masterH)`, rounded to whole pixels, at least 1. Rotation is kept.
+- **Other layers** (Not built, MV-3): a box still where the source's starter layout puts it goes where that layout puts it at the new size; any other box is anchored to its nearer edges in shares of the smaller side (`spec/make-variants.md`, "Where a box goes in a new size"). Rotation and crop are kept. This replaces the built rule (centre kept at the same share of the canvas, width and height scaled by `min(W / masterW, H / masterH)`).
+- **Text** (Not built, MV-4 and MV-7): each text layer of a new size or language gets its pixel measures scaled and its font size fitted to its words and box; a size that differs from the master's is an override path (`spec/make-variants.md`, "Text that fits").
 - **A new size in a new language** copies geometry from the plan of the same size in the master's language, made in the same call (R-02). `planVariant` takes that plan as input.
 - **A new language** (Phase 5): text layers keep the master's copy with `translation_status = 'missing'` and `translation_source = null`; no job starts (A-134). Phase 6 adds the translation job and the brief's copy.
-- Each new variant: the master's title and subjects, `created_by` the actor, `rev` 0, every layer with the master's `key`, `linked = 1`, empty `overrides`, `synced_revs` = the master's `revs`, `overflow` 0. The render service measures overflow when it draws the new variant's thumbnail (`spec/scene.md`, "Eager thumbnails").
+- Each new variant: the master's title and subjects, `created_by` the actor, `rev` 0, every layer with the master's `key`, `linked = 1`, empty `overrides`, `synced_revs` = the master's `revs`, `overflow` 0. With a source other than the master, or a fitted text size, the layers, counters and override paths are as in `spec/make-variants.md`, "Links after making" (Not built, MV-4 and MV-7). The render service measures overflow when it draws the new variant's thumbnail (`spec/scene.md`, "Eager thumbnails").
 - Reply `{ variantIds, fill: Array<{ sizeLabel, variantId }> }`: the new variants in creation order, and for each size with `fill`, the new variant of that size in the master's language.
-- Inverse `variant.remove { variantIds }`. At most 200 new variants per call: `RULE_VIOLATION`, `too_many_variants`, "Fan-out can make at most 200 variants at a time."
+- Inverse `variant.remove { variantIds }`. At most 200 new variants per call: `RULE_VIOLATION`, `too_many_variants`, "You can make at most 200 variants at a time." (the words are Not built, MV-1; today "Fan-out can make at most 200 variants at a time.").
 
-**`variant.add { projectId, directionId, sizeLabel, language, format, fit? }`** (C, allow). One variant, made by the same `planVariant`. `fit` is `scale` (default) or `crop`; there is no fill (A-143). A combination that exists: `RULE_VIOLATION`, `variant_exists`, "This direction already has a variant at this size, language and format." Reply `{ variantId }`. Inverse `variant.remove`.
+**`variant.add { projectId, directionId, sizeLabel, language, format, fit? }`** (C, allow). One variant, made by the same `planVariant` (from MV-7, through `planNewVariant`, so the placement and fit of `spec/make-variants.md` apply). Always from the master. `fit` is `scale` (default) or `crop`; there is no fill (A-143). A combination that exists: `RULE_VIOLATION`, `variant_exists`, "This direction already has a variant at this size, language and format." Reply `{ variantId }`. Inverse `variant.remove`.
 
 ## Generative fill
 

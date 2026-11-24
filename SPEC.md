@@ -31,7 +31,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/structure.md` | Folder tree, module and code rules, the renderer layout rule (`@/` alias, one folder per component, one styling source) |
 | `spec/data-model.md` | Where data lives, ID formats, the project-level tables (project, subject, asset, job, report, checks) |
 | `spec/data-model-campaign.md` | Campaign, sizes, rule set, direction, variant, layer and background clip |
-| `spec/data-rules.md` | Links, follow rules and sync, fan-out, data flow, caching, migrations, package project, format change |
+| `spec/data-rules.md` | Links, follow rules and sync, fan-out ("Make variants"), data flow, caching, migrations, package project, format change |
 | `spec/links-and-sync.md` | Phase 5 in full: follow rules and out-of-date in code, overrides and their undo, sync preview and apply, fan-out, generative fill, directions, adding and deleting variants, the campaign undo list |
 | `spec/jobs.md` | The job record in use, job kinds, the runner and its limits, left-over runs, the fake provider |
 | `spec/assets.md` | Import, linking, the assets folder, file types, relink, change detection, the asset protocol, reference pictures |
@@ -62,7 +62,8 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/editor-commands.md` | The layer and variant commands, `variant.get`, `thumbnail.get`, `variant.render`, `thumbnail.changed` in full |
 | `spec/screens.md` | What each built screen offers, wording rules, choices made without a design sign-off |
 | `spec/screens-campaign.md` | The Phase 2 campaign screens and dialogs (built; S2-17 left): ComfyUI failures, the address and licence dialogs, import and drop, relink, package, the brief form, the slot view, the campaign grid and its tile |
-| `spec/screens-variants.md` | Phase 5 screens: the campaign's Undo and Redo, one grid per direction, the tile's delete and quick look, the fan-out dialog, the sync review, the direction dialogs |
+| `spec/screens-variants.md` | Phase 5 screens: the campaign's Undo and Redo, one grid per direction, the tile's menu, delete and quick look, the "Make variants" dialog (code name fan-out), the sync review, the direction dialogs |
+| `spec/make-variants.md` | Making variants (D-108, not built): the "Make variants" name, where each box goes in a new size, text that fits, what a new variant links to, making variants from any variant, agents, the quickstart, assumptions A-407 to A-420 |
 | `spec/app-style.md` | The app's look from the design prototype: tokens, type and fonts, contrast, shared pieces, per-screen changes, choices taken for now (C-1 to C-14) |
 | `spec/app-style-parts.md` | The rules for each shared part of the screens: Button, Field, Section, Panel, ObjectRow, Tabs, StatusMark, Notice, InfoTip, Menu, Dialog and its kinds, SubPage |
 | `spec/screens-ai.md` | Phase 4 screens: the run dialog, the paid count, the picture section (generate, references, earlier options, cut-out), copy options, place text, brief reading, the activity panel, close warnings |
@@ -96,6 +97,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/phases/approvals-desktop-slices.md` | Approvals by link: the desktop slices AP-5 to AP-13 and AP-10b, with the follow-ups ruled after AP-8 |
 | `spec/phases/subject-photos.md` | Subject photos (D-098): slices SP-1 to SP-5 and their order |
 | `spec/phases/brief-brand.md` | Brand in a brief: slices BB-1 to BB-8 and their order |
+| `spec/phases/make-variants.md` | Make variants (D-108): slices MV-1 to MV-9 and their order |
 | `spec/phases/round-2-platform.md`, `round-2-campaign.md`, `round-2-editor.md`, `round-2-approvals.md`, `round-2-approvals-video.md` | Round 2, built: the design and slices for agent tools and briefs, several projects and the name; the campaign page and the Assets panel; the editor's Generate panel; the new gallery; video in the gallery |
 | `spec/phases/round-2-verify.md` | Round 2: the choices made without the stakeholder, for him to confirm, and the hand checks only he can do |
 | `spec/phases/design-wave.md` | The design wave (not built): the choices taken, the sixteen anti-patterns, the rules for every slice, Wave 1 (tokens and shared parts) in full, Wave 2 (screens) |

@@ -45,7 +45,7 @@ Every font in an example is under the SIL Open Font License; its licence text si
    3. Plan one variant per size and language as fan-out does: every language of a size has the same boxes and styles; a box keeps its share of the canvas across sizes.
    4. A language the brief gives copy for takes it. Any other language gets one translate call.
    5. Each size of other pixels than the first gets one extend call (the app's "fill"), and that picture becomes its background.
-   6. Without `--ai_layout`, each variant is then laid out by the brief's layout for its own size and its own words (`starterLayoutPatches`, the app's "Layout…" action), with the brand fonts and colours put back after. So the margins line up in every size, and longer words in another language get a smaller size that fits. With `--ai_layout`, the boxes stay where step 3 put them.
+   6. Without `--ai_layout`, each variant is then laid out by the brief's layout for its own size and its own words (`starterLayoutPatches`, the app's "Layout…" action), with the brand fonts and colours put back after. So the margins line up in every size, and longer words in another language get a smaller size that fits. With `--ai_layout`, the boxes stay where step 3 put them. **This step goes away with slice MV-8** (`spec/make-variants.md`, "Quickstart"): step 3 then plans with `planNewVariant`, which places the boxes and fits the text as the app's "Make variants" does, and step 4 fits each translated text with `fitTranslatedText`, with or without `--ai_layout`.
 3. Draw each variant, and each of its layers alone.
 4. Run the app's checks on each variant and write the report.
 

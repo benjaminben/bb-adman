@@ -40,7 +40,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `direction.createFromMaster` | projectId, masterVariantId, name | — | allow | Built | FR-074, D-105 |
 | `direction.rename` | projectId, directionId, name | C | allow | Built | FR-072, D-105 |
 | `direction.delete` | projectId, directionId (refused if it is the campaign's last) | — | ask | Built | A-06, D-105 |
-| `variant.fanOut` | projectId, directionId, sizes[], languages[], formats[] (video cells since P7-23; the fan-out dialog still sends `image` only), fits{} | C | deny | Built | FR-075, FR-076 |
+| `variant.fanOut` | projectId, directionId, sourceVariantId? (Not built, MV-7; `spec/make-variants.md`), sizes[], languages[], formats[] (video cells since P7-23), fits{}. The screen calls it "Make variants" | C | deny | Built | FR-075, FR-076 |
 | `variant.add` | projectId, directionId, sizeLabel, language, format, fit? (`scale` or `crop`) | C | allow | Built | FR-195 |
 | `variant.remove` | projectId, variantIds[] (system; the inverse of fan-out, `variant.add`, `variant.restore`) | C | deny (system) | Built | R-17 |
 | `variant.restore` | projectId, snapshots[] (system; the inverse of `variant.remove`) | C | deny (system) | Built | R-17 |
