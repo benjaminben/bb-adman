@@ -1,5 +1,5 @@
 // The last step of `npm run package:mac:demo`: makes demo.zip at the repository root from the
-// packaged app, .env.local, and each folder or file listed in demo-extras.txt (one path per
+// packaged app, .env.demo, and each folder or file listed in demo-extras.txt (one path per
 // line; a line starting with # is a comment). demo.zip and demo-extras.txt are not in git.
 // macOS only: it uses the system `zip`, which keeps the links inside the app.
 import console from 'node:console'
@@ -11,7 +11,7 @@ import { URL, fileURLToPath } from 'node:url'
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url))
 const APP = path.join(ROOT, 'dist', 'mac-arm64', 'AdManager.app')
-const ENV_FILE = path.join(ROOT, '.env.local')
+const ENV_FILE = path.join(ROOT, '.env.demo')
 const EXTRAS_LIST = path.join(ROOT, 'demo-extras.txt')
 const ZIP = path.join(ROOT, 'demo.zip')
 
@@ -63,12 +63,12 @@ function main() {
   if (process.platform !== 'darwin') throw new Error('package:mac:demo runs on macOS only.')
   const extras = readExtras(EXTRAS_LIST)
   if (extras.length === 0)
-    say('No demo-extras.txt, or it is empty: the zip holds the app and .env.local only.')
+    say('No demo-extras.txt, or it is empty: the zip holds the app and .env.demo only.')
   say('Making demo.zip')
   makeZip(ZIP, [APP, ENV_FILE, ...extras])
   const megabytes = Math.round(fs.statSync(ZIP).size / 1024 / 1024)
   say(`demo.zip is ready (${megabytes} MB).`)
-  say('It holds .env.local, which has keys in it. Share it only with people who may have them.')
+  say('It holds .env.demo, which has keys in it. Share it only with people who may have them.')
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

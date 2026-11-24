@@ -37,7 +37,7 @@ Built. Owner: `package.json`. The project needs Node 22.12 or newer (`engines`);
 | `package` | `npm run build && electron-builder` | Installers |
 | `package:dir` | `npm run build && electron-builder --dir` | Unpacked app folder |
 | `package:mac` | `npm run build && electron-builder --mac dmg --arm64 --publish never` | The release DMG for Apple silicon, built on a Mac |
-| `package:mac:demo` | `npm run build && electron-builder --mac dir --arm64 --publish never && node scripts/demo/zip-mac.mjs` | A hand-out for a demo, built on a Mac: `demo.zip` at the repository root, holding the unpacked app, `.env.local`, and each path listed in `demo-extras.txt` (one per line). Neither file is in git. The zip holds keys, so it is shared only with people who may have them; it is never a release |
+| `package:mac:demo` | `npm run build && electron-builder --mac dir --arm64 --publish never && node scripts/demo/zip-mac.mjs` | A hand-out for a demo, built on a Mac: `demo.zip` at the repository root, holding the unpacked app, `.env.demo`, and each path listed in `demo-extras.txt` (one per line). Neither file is in git. The zip holds keys, so it is shared only with people who may have them; it is never a release |
 | `package:win` | `npm run build && electron-builder --win nsis --x64 --publish never` | The release installer for Windows x64, built on Windows |
 
 `npm test` never includes `tests/live/`, `tests/comfy/` or `tests/e2e-real/`. How each run is used, who may run it and its print rules are in `spec/testing.md`.
