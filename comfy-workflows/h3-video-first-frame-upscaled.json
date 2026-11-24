@@ -1,0 +1,132 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": { "unet_name": "minimax_h3_fl2va_pruned_int8_convrot.safetensors", "weight_dtype": "default" },
+    "_meta": { "title": "Load H3 model" }
+  },
+  "2": {
+    "class_type": "CLIPLoader",
+    "inputs": { "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors", "type": "minimax", "device": "default" },
+    "_meta": { "title": "Load H3 text encoder" }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": { "vae_name": "minimax_h3_video_vae_int8_convrot.safetensors" },
+    "_meta": { "title": "Load video VAE" }
+  },
+  "4": {
+    "class_type": "VAELoader",
+    "inputs": { "vae_name": "minimax_h3_audio_vae_fp32.safetensors" },
+    "_meta": { "title": "Load audio VAE" }
+  },
+  "15": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "adman-first-frame.png" },
+    "_meta": { "title": "First frame (APP: uploaded file name). Must already be 768x1344" }
+  },
+  "5": {
+    "class_type": "MiniMaxH3ImageToVideo",
+    "inputs": {
+      "clip": ["2", 0],
+      "vae": ["3", 0],
+      "first_frame": ["15", 0],
+      "prompt": "The product in <Picture 1> stays in place while the camera slowly pushes in. Soft morning light moves across the scene, small reflections shimmer on the surface. Calm ambient sound. Premium product advert look.",
+      "width": 768,
+      "height": 1344,
+      "length": 56
+    },
+    "_meta": { "title": "H3 conditioning (APP: prompt, width, height, length)" }
+  },
+  "6": {
+    "class_type": "RandomNoise",
+    "inputs": { "noise_seed": 1 },
+    "_meta": { "title": "Noise (APP: seed)" }
+  },
+  "7": {
+    "class_type": "KSamplerSelect",
+    "inputs": { "sampler_name": "res_multistep" }
+  },
+  "8": {
+    "class_type": "BasicScheduler",
+    "inputs": { "model": ["1", 0], "scheduler": "simple", "steps": 20, "denoise": 1 }
+  },
+  "9": {
+    "class_type": "BasicGuider",
+    "inputs": { "model": ["1", 0], "conditioning": ["5", 0] }
+  },
+  "10": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": { "noise": ["6", 0], "guider": ["9", 0], "sampler": ["7", 0], "sigmas": ["8", 0], "latent_image": ["5", 1] }
+  },
+  "11": {
+    "class_type": "VAEDecode",
+    "inputs": { "samples": ["10", 0], "vae": ["3", 0] },
+    "_meta": { "title": "Decode frames" }
+  },
+  "12": {
+    "class_type": "VAEDecodeAudio",
+    "inputs": { "samples": ["10", 0], "vae": ["4", 0] },
+    "_meta": { "title": "Decode sound (passes around the upscaler unchanged)" }
+  },
+  "20": {
+    "class_type": "UNETLoader",
+    "inputs": { "unet_name": "seedvr2_3b_int8_convrot.safetensors", "weight_dtype": "default" },
+    "_meta": { "title": "Load SeedVR2 3B upscaler" }
+  },
+  "21": {
+    "class_type": "VAELoader",
+    "inputs": { "vae_name": "seedvr2_ema_vae_fp16.safetensors" },
+    "_meta": { "title": "Load SeedVR2 VAE" }
+  },
+  "22": {
+    "class_type": "ResizeImageMaskNode",
+    "inputs": { "input": ["11", 0], "resize_type": "scale by multiplier", "resize_type.multiplier": 1.5, "scale_method": "lanczos" },
+    "_meta": { "title": "Upscale factor (1.5 gives 1152x2016)" }
+  },
+  "23": {
+    "class_type": "SeedVR2Preprocess",
+    "inputs": { "resized_images": ["22", 0] }
+  },
+  "24": {
+    "class_type": "VAEEncodeTiled",
+    "inputs": { "pixels": ["23", 0], "vae": ["21", 0], "tile_size": 512, "overlap": 128, "temporal_size": 64, "temporal_overlap": 8 }
+  },
+  "25": {
+    "class_type": "SeedVR2Conditioning",
+    "inputs": { "model": ["20", 0], "vae_conditioning": ["24", 0] }
+  },
+  "26": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": ["20", 0],
+      "positive": ["25", 0],
+      "negative": ["25", 1],
+      "latent_image": ["24", 0],
+      "seed": 1,
+      "steps": 1,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1
+    },
+    "_meta": { "title": "SeedVR2 one-step restore (APP: seed)" }
+  },
+  "27": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": { "samples": ["26", 0], "vae": ["21", 0], "tile_size": 512, "overlap": 128, "temporal_size": 64, "temporal_overlap": 8 }
+  },
+  "28": {
+    "class_type": "SeedVR2PostProcessing",
+    "inputs": { "images": ["27", 0], "original_resized_images": ["22", 0], "color_correction_method": "none" }
+  },
+  "13": {
+    "class_type": "CreateVideo",
+    "inputs": { "images": ["28", 0], "audio": ["12", 0], "fps": 24, "bit_depth": 8, "color_space": "sRGB", "chroma_subsampling": "auto", "codec": "none" },
+    "_meta": { "title": "Upscaled frames + original sound into one video" }
+  },
+  "14": {
+    "class_type": "SaveVideo",
+    "inputs": { "video": ["13", 0], "filename_prefix": "adman/test-h3-first-frame-upscaled", "format": "auto", "format.codec": "auto", "codec": "auto" },
+    "_meta": { "title": "Save MP4 to output folder (APP: output prefix)" }
+  }
+}

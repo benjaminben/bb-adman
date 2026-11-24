@@ -103,7 +103,7 @@ project-root/
 │                                  #   output/ is not in git; see spec/quickstart.md
 ├── approvals-service/             # the approvals service, its own Next.js app (app/, src/, test/, e2e/); layout in
 │                                  #   spec/approvals-service.md, "Folder and tooling"
-├── comfy-workflows/               # the stakeholder's hand-test copies of the ComfyUI graphs; no code reads them; not in git
+├── comfy-workflows/               # hand-test copies of the ComfyUI graphs and their notes; no code reads them
 ├── .github/workflows/             # ci.yml
 ├── LICENSE, THIRD-PARTY-NOTICES.md, README.md   # (Phase 11)
 ├── REQUIREMENTS.md, DECISIONS.md, SPEC.md, spec/
