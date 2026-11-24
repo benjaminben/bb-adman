@@ -1,9 +1,14 @@
 // From a brief's text to the quickstart's plan: the confirmed brief, the languages and sizes,
-// each subject's photo names, and which AI calls the run will make. Pure: reads no file.
+// each subject's photo names, the brand and layout, and which AI calls the run will make.
+// Pure: reads no file.
+import { brandFileTexts, briefLook, type BriefLook } from '@/shared/brief/brand'
 import { parseBrief } from '@/shared/brief/parse'
 import { primaryLanguageOf } from '@/shared/brief/primary-language'
 import { parseSize } from '@/shared/brief/size'
+import { DEFAULT_STARTER_LAYOUT, type StarterLayout } from '@/shared/config/default-layout'
+import { starterLayoutOf } from '@/shared/config/starter-layouts'
 import { Brief, type BriefDraft } from '@/shared/schemas/brief'
+import type { BrandRole } from '@/shared/schemas/commands/brief'
 import type { CampaignSize } from '@/shared/schemas/commands/campaign'
 import { briefCopyFor } from '@/shared/translation/brief-copy'
 
@@ -15,9 +20,17 @@ export type Plan = {
   languages: string[]
   sizes: CampaignSize[]
   subjects: PlanSubject[]
+  // The brief's colours, layout ID, art direction and ad sets, cleaned, with a note for each
+  // value that cannot be used.
+  look: BriefLook
+  // The layout the master is built from: the brief's, or the default.
+  layout: StarterLayout
+  // The logo and font texts as the brief gives them, in role order.
+  brandFiles: Array<{ role: BrandRole; text: string }>
   // The languages the brief gives no full copy for: one translate call each.
   translate: string[]
-  // The sizes whose pixels differ from the first size: one extend call each.
+  // The sizes whose pixels differ from the first size: one extend call each. None for a
+  // flat-colour layout, whose picture sits in the subject spot.
   fills: CampaignSize[]
 }
 
@@ -78,6 +91,9 @@ function needsTranslation(brief: Brief, language: string): boolean {
   return copySlots(brief).some((slot) => briefCopyFor(brief, language, slot) === null)
 }
 
+// A layout with a fill colour has a flat background; the others take the picture there.
+export const isFlatLayout = (layout: StarterLayout) => layout.background.fillColor !== null
+
 const samePixels = (a: CampaignSize, b: CampaignSize) =>
   a.width === b.width && a.height === b.height
 
@@ -85,7 +101,16 @@ export function readPlan(text: string, syntax: 'yaml' | 'json'): PlanResult {
   const parsed = parseBrief(text, syntax)
   if (!parsed.ok) return fail(parsed.error.message)
   const draft = parsed.data
-  const brief = Brief.safeParse(draft)
+  // The confirmed brief keeps the brand values cleaned, as the app stores them; a value that
+  // cannot be used is left out with a note and never refuses the brief.
+  const look = briefLook(draft)
+  const brief = Brief.safeParse({
+    ...draft,
+    brand: look.colours.length > 0 ? { colours: look.colours } : undefined,
+    layout: look.layoutId ?? undefined,
+    artDirection: look.artDirection ?? undefined,
+    adsPer: look.adsPer,
+  })
   if (!brief.success) {
     return fail(
       'The brief needs campaignName, region, audience, message and at least one subject with a name.',
@@ -97,6 +122,8 @@ export function readPlan(text: string, syntax: 'yaml' | 'json'): PlanResult {
   const [first] = sizes
   const [primary] = languages
   if (!first || !primary) return fail('The brief needs at least one size and one language.')
+  const layout = (look.layoutId && starterLayoutOf(look.layoutId)) || DEFAULT_STARTER_LAYOUT
+  const flat = isFlatLayout(layout)
   return {
     ok: true,
     plan: {
@@ -104,8 +131,11 @@ export function readPlan(text: string, syntax: 'yaml' | 'json'): PlanResult {
       languages,
       sizes,
       subjects: subjectsOf(draft),
+      look,
+      layout,
+      brandFiles: brandFileTexts(draft),
       translate: languages.filter((l) => l !== primary && needsTranslation(brief.data, l)),
-      fills: sizes.filter((size) => !samePixels(size, first)),
+      fills: flat ? [] : sizes.filter((size) => !samePixels(size, first)),
     },
   }
 }

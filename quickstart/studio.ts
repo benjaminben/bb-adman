@@ -1,6 +1,6 @@
 // The quickstart's drawing room: a browser with no window (through Playwright) that shows the
-// drawing page (served by Vite on this machine only) and photographs it. Pictures are handed
-// to the page from memory, so no picture is written to disk to be drawn.
+// drawing page (served by Vite on this machine only) and photographs it. Pictures and fonts are
+// handed to the page from memory, so no file is written to disk to be drawn.
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium, type Browser, type Page } from '@playwright/test'
@@ -13,10 +13,19 @@ import { srcAlias } from '../path-alias.config'
 import type { DrawProps } from './page/main'
 
 export type Picture = { bytes: Uint8Array; mime: string; width: number; height: number }
+// A file the page draws with: a picture (a WebP has no size) or a font.
+type PageFile = {
+  bytes: Uint8Array
+  mime: string
+  kind: 'image' | 'font'
+  width: number | null
+  height: number | null
+}
 export type Drawn = { png: Uint8Array; overflow: Record<string, boolean> }
 
 export type Studio = {
-  addPicture(id: string, picture: Picture): void
+  addPicture(id: string, picture: Pick<PageFile, 'bytes' | 'mime' | 'width' | 'height'>): void
+  addFont(id: string, font: Pick<PageFile, 'bytes' | 'mime'>): void
   draw(variant: SceneVariant, layers: LayerRow[], mode: SceneMode, scale?: number): Promise<Drawn>
   pixels(png: Uint8Array): Promise<Pixels>
   close(): Promise<void>
@@ -62,7 +71,7 @@ async function servePage() {
   return { server, origin: `http://127.0.0.1:${address.port}` }
 }
 
-async function openPage(browser: Browser, origin: string, pictures: Map<string, Picture>) {
+async function openPage(browser: Browser, origin: string, pictures: Map<string, PageFile>) {
   const context = await browser.newContext({ deviceScaleFactor: 1 })
   const page = await context.newPage()
   await page.route(`**${PICTURES}*`, (route) => {
@@ -76,11 +85,11 @@ async function openPage(browser: Browser, origin: string, pictures: Map<string, 
   return page
 }
 
-function assetsOf(origin: string, pictures: Map<string, Picture>): Record<string, SceneAsset> {
+function assetsOf(origin: string, pictures: Map<string, PageFile>): Record<string, SceneAsset> {
   const assets: Record<string, SceneAsset> = {}
-  for (const [id, { width, height }] of pictures) {
+  for (const [id, { kind, width, height }] of pictures) {
     const url = `${origin}${PICTURES}${encodeURIComponent(id)}`
-    assets[id] = { url, kind: 'image', missing: false, width, height, version: 1 }
+    assets[id] = { url, kind, missing: false, width, height, version: 1 }
   }
   return assets
 }
@@ -99,7 +108,7 @@ async function photograph(page: Page, props: DrawProps, scale: number): Promise<
 
 export async function openStudio(): Promise<Studio> {
   const browser = await openBrowser()
-  const pictures = new Map<string, Picture>()
+  const pictures = new Map<string, PageFile>()
   let served: Awaited<ReturnType<typeof servePage>>
   let page: Page
   try {
@@ -111,14 +120,16 @@ export async function openStudio(): Promise<Studio> {
   }
   const { origin, server } = served
   return {
-    addPicture: (id, picture) => void pictures.set(id, picture),
+    addPicture: (id, picture) => void pictures.set(id, { ...picture, kind: 'image' }),
+    addFont: (id, font) =>
+      void pictures.set(id, { ...font, kind: 'font', width: null, height: null }),
     draw(variant, layers, mode, scale = 1) {
       const props = { variant, layers, assets: assetsOf(origin, pictures), timeMs: 0, mode }
       return photograph(page, props, scale)
     },
     async pixels(png) {
       const id = '__pixels'
-      pictures.set(id, { bytes: png, mime: 'image/png', width: 0, height: 0 })
+      pictures.set(id, { bytes: png, mime: 'image/png', kind: 'image', width: 0, height: 0 })
       const url = `${origin}${PICTURES}${id}?at=${Date.now()}`
       const read = await page.evaluate((address) => window.studio!.pixels(address), url)
       pictures.delete(id)

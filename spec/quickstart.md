@@ -2,7 +2,7 @@
 
 A demo of the pipeline for someone who has not installed the app (D-106, D-107). One brief in; finished ads out, one per subject set, language and size, with a report of the checks. It runs with `npm run quickstart` on macOS and Windows.
 
-**State.** Built: one brief, one set of ads, text placed by an AI call. Not built yet: the two examples, the brand block, the layout and art direction, one set per subject, a subject with no photo, the checks report (slices QS-1 to QS-3 at the end).
+**State.** Built: the two examples and `--example`; the brand files and the brief's look read, with a printed note for each that cannot be used; the master built from the brief's layout with the logo, the brand fonts and the brand colours; the art direction in the picture prompt; text placement by AI with `--ai_layout` only; the picture in the subject spot for a flat-colour layout. Not built yet: one set per subject (`adsPer` is read but not acted on), output folders by subject, the checks and `report.json` (the run still writes `run.json`), and the README with sample pictures (slices QS-2 and QS-3 at the end).
 
 ## What it is not
 
@@ -85,7 +85,7 @@ quickstart/output/{campaign}/
 
 ## Tests
 
-`tests/unit/quickstart/` covers the options, the plan, the layers, the output names and the report. The run itself is checked by hand: `npm run quickstart -- --provider=fake --example=summer-splash`.
+`tests/unit/quickstart/` covers the options, the examples, the plan, the brief's files and notes, the layers, the text placement offer and the output names (and, from QS-2, the report). The run itself is checked by hand: `npm run quickstart -- --provider=fake --example=summer-splash`.
 
 ## Slices
 

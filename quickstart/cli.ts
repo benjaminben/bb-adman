@@ -1,15 +1,18 @@
 // The quickstart: one brief in, one finished ad per language and size out, with no app window,
 // no project file and no database. Run it with `npm run quickstart -- --help`.
 import { readFile, writeFile } from 'node:fs/promises'
-import { dirname, extname, isAbsolute, join, relative, resolve } from 'node:path'
+import { basename, dirname, extname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { pictureType } from '@/main/providers/picture-type'
-import { ProviderFailure, type ImageFile } from '@/main/providers/types'
+import { ProviderFailure } from '@/main/providers/types'
 import { parseArgs, USAGE, type Args } from './args'
+import { readBrand, readSubjectPhotos } from './brief-files'
+import { chooseBrief, listExamples } from './examples'
+import { lookNoteLine } from './notes'
 import { campaignFolder, writeAd, type WrittenAd } from './output'
-import { readPlan, type Plan } from './plan'
-import { providersFor, type Providers } from './providers'
+import { readPlan } from './plan'
+import { providersFor } from './providers'
 import { runQuickstart, stepCount, type Report } from './run'
+import { planLines } from './say-plan'
 import { openStudio } from './studio'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -17,51 +20,6 @@ const say = (line = '') => void process.stdout.write(`${line}\n`)
 
 // A failure the person can act on: its sentence is printed as it is, with no stack.
 class Stop extends Error {}
-
-const isWebp = (bytes: Uint8Array) =>
-  bytes.length > 12 &&
-  Buffer.from(bytes.subarray(0, 4)).toString('latin1') === 'RIFF' &&
-  Buffer.from(bytes.subarray(8, 12)).toString('latin1') === 'WEBP'
-
-// Each subject's photos, read from beside the brief (or from a full path).
-async function readReferences(plan: Plan, briefFolder: string): Promise<ImageFile[]> {
-  const files: ImageFile[] = []
-  for (const name of plan.subjects.flatMap((subject) => subject.pictures)) {
-    const path = isAbsolute(name) ? name : resolve(briefFolder, name)
-    const bytes = await readFile(path).catch(() => {
-      throw new Stop(`The photo "${name}" was not found beside the brief.`)
-    })
-    const mime = pictureType(bytes) ?? (isWebp(bytes) ? 'image/webp' : null)
-    if (!mime) throw new Stop(`The photo "${name}" is not a PNG, JPEG or WebP picture.`)
-    files.push({ bytes: new Uint8Array(bytes), mime })
-  }
-  return files
-}
-
-function sayPlan(plan: Plan, args: Args, providers: Providers, photos: number): void {
-  const { brief, languages, sizes } = plan
-  say(`Campaign   ${brief.campaignName} (${brief.region})`)
-  say(`Subjects   ${plan.subjects.map((s) => s.name).join(', ')} (${photos} photos)`)
-  say(
-    `Provider   ${args.provider}: pictures ${providers.models.image}, text ${providers.models.text}`,
-  )
-  say(`Languages  ${languages.join(', ')}`)
-  say(`Sizes      ${sizes.map((s) => `${s.label} (${s.width}x${s.height})`).join(', ')}`)
-  say()
-  say(`${languages.length * sizes.length} ads to make:`)
-  for (const language of languages) {
-    say(`  ${language.padEnd(8)}${sizes.map((s) => s.label).join('  ')}`)
-  }
-  const calls = [
-    '1 picture',
-    '1 text placement',
-    ...(plan.fills.length > 0 ? [`${plan.fills.length} picture extends`] : []),
-    ...(plan.translate.length > 0 ? [`translation to ${plan.translate.join(', ')}`] : []),
-  ]
-  say()
-  say(`AI calls: ${calls.join(', ')}`)
-  say()
-}
 
 function reporter(total: number): Report {
   let at = 0
@@ -77,20 +35,32 @@ function reporter(total: number): Report {
   }
 }
 
-async function main(args: Args): Promise<void> {
-  const briefPath = resolve(args.brief ?? join(here, 'brief.yaml'))
-  const text = await readFile(briefPath, 'utf8').catch(() => {
-    throw new Stop(`The brief "${briefPath}" could not be read.`)
+async function readBrief(args: Args): Promise<{ text: string; path: string }> {
+  const examples = join(here, 'examples')
+  const chosen = chooseBrief(args, examples, await listExamples(examples))
+  if (!chosen.ok) throw new Stop(chosen.message)
+  const text = await readFile(chosen.path, 'utf8').catch(() => {
+    throw new Stop(`The brief "${basename(chosen.path)}" could not be read.`)
   })
-  const planned = readPlan(text, extname(briefPath).toLowerCase() === '.json' ? 'json' : 'yaml')
+  return { text, path: chosen.path }
+}
+
+async function main(args: Args): Promise<void> {
+  const brief = await readBrief(args)
+  const syntax = extname(brief.path).toLowerCase() === '.json' ? 'json' : 'yaml'
+  const planned = readPlan(brief.text, syntax)
   if (!planned.ok) throw new Stop(planned.message)
   const { plan } = planned
-  const references = await readReferences(plan, dirname(briefPath))
+  const photos = await readSubjectPhotos(plan, dirname(brief.path))
+  const brand = await readBrand(plan, dirname(brief.path))
   const providers = providersFor(args)
   say('Adman quickstart')
   say()
-  sayPlan(plan, args, providers, references.length)
-  const total = stepCount(plan) + 1
+  const notes = [...photos.notes, ...brand.notes, ...plan.look.notes.map(lookNoteLine)]
+  for (const note of notes) say(`Note: ${note}`)
+  if (notes.length > 0) say()
+  for (const line of planLines(plan, args, providers, brand, photos.files.length)) say(line)
+  const total = stepCount(plan, args.aiLayout) + 1
   const report = reporter(total)
   const campaign = campaignFolder(
     resolve(args.out ?? join(here, 'output')),
@@ -103,8 +73,10 @@ async function main(args: Args): Promise<void> {
       plan,
       providers,
       studio,
-      references,
+      references: photos.files,
+      brand,
       prompt: args.prompt,
+      aiLayout: args.aiLayout,
       report,
     })
     report.start(`Drawing ${variants.length} ads and their layers`)

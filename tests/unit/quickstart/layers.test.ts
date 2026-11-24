@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  BODY_FONT_ASSET,
+  HEADING_FONT_ASSET,
+  LOGO_ASSET,
   MASTER_ASSET,
   fillPlacement,
   masterLayers,
@@ -132,5 +135,52 @@ describe('quickstart layers', () => {
     const background = withFill(tall).layers.find((l) => l.type === 'background')
     expect(background?.source).toEqual({ assetId: 'fill-9x16' })
     expect(background?.geometry).toMatchObject({ x: 0, y: 0, width: 1080, height: 1920 })
+  })
+
+  it("builds the master from the brief's layout", () => {
+    const top = readPlan(`${BRIEF}layout: photo-top-centre\n`, 'yaml')
+    if (!top.ok) throw new Error(top.message)
+    const headline = masterLayers(top.plan).find((l) => l.key === 'headline')
+    expect(headline?.geometry.y).toBe(Math.round(0.08 * 1080))
+    expect(headline?.style).toMatchObject({ allCaps: true })
+  })
+
+  it('puts the logo in the logo spot when there is one', () => {
+    const layers = masterLayers(plan(), { logo: true, headingFont: false, bodyFont: false })
+    expect(layers.find((l) => l.key === 'logo')?.source).toEqual({ assetId: LOGO_ASSET })
+    expect(masterLayers(plan()).some((l) => l.key === 'logo')).toBe(false)
+  })
+
+  it('puts the heading font on the headline and the body font on the other text', () => {
+    const layers = masterLayers(plan(), { logo: false, headingFont: true, bodyFont: true })
+    const fontOf = (key: string) => {
+      const style = layers.find((l) => l.key === key)?.style
+      return style && 'fontAssetId' in style ? style.fontAssetId : undefined
+    }
+    expect(fontOf('headline')).toBe(HEADING_FONT_ASSET)
+    expect(fontOf('call-to-action')).toBe(BODY_FONT_ASSET)
+    const headingOnly = masterLayers(plan(), { logo: false, headingFont: true, bodyFont: false })
+    const action = headingOnly.find((l) => l.key === 'call-to-action')?.style
+    expect(action && 'fontAssetId' in action && action.fontAssetId).toBeNull()
+  })
+
+  it('colours the text with the nearest brand colour', () => {
+    const coloured = readPlan(`${BRIEF}brand:\n  colours: ['#FFF6E5', '#0B3D2E']\n`, 'yaml')
+    if (!coloured.ok) throw new Error(coloured.message)
+    for (const layer of masterLayers(coloured.plan).filter((l) => l.type === 'text')) {
+      expect('color' in layer.style && layer.style.color).toBe('#FFF6E5')
+    }
+  })
+
+  it('puts the picture in the subject spot of a flat-colour layout', () => {
+    const flat = readPlan(`${BRIEF}layout: flat-bottom-left\n`, 'yaml')
+    if (!flat.ok) throw new Error(flat.message)
+    const layers = masterLayers(flat.plan)
+    const background = layers.find((l) => l.type === 'background')
+    expect(background?.source).toBeNull()
+    expect(background?.style).toMatchObject({ fillColor: '#FFD54A' })
+    expect(layers.find((l) => l.key === 'subject-image')?.source).toEqual({
+      assetId: MASTER_ASSET,
+    })
   })
 })

@@ -7,15 +7,25 @@ import type { Size } from '@/shared/scene/background-placement'
 import type { CampaignSize } from '@/shared/schemas/commands/campaign'
 import type { LayoutJobBox } from '@/shared/schemas/jobs/layout-proposal'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
+import { withBrandColours } from '@/shared/templates/brand-colours'
+import { withBrandFonts } from '@/shared/templates/brand-fonts'
 import { buildMasterLayers } from '@/shared/templates/master-layers'
 import { starterTemplate } from '@/shared/templates/starter'
 import type { SlotFills } from '@/shared/templates/types'
 import { translatedLayers } from '@/shared/translation/translated-layers'
-import type { Plan } from './plan'
+import { isFlatLayout, type Plan } from './plan'
 
-// The picture names the layers point at: the first picture, and one extended picture per size.
+// The file names the layers point at: the first picture, one extended picture per size, the
+// logo and the two brand fonts.
 export const MASTER_ASSET = 'master'
 export const fillAsset = (sizeLabel: string) => `fill-${sizeLabel}`
+export const LOGO_ASSET = 'logo'
+export const HEADING_FONT_ASSET = 'font-heading'
+export const BODY_FONT_ASSET = 'font-body'
+
+// Which brand files the run could read.
+export type BrandParts = { logo: boolean; headingFont: boolean; bodyFont: boolean }
+const NO_BRAND: BrandParts = { logo: false, headingFont: false, bodyFont: false }
 
 export type Variant = { language: string; size: CampaignSize; layers: LayerRow[] }
 export type Box = { x: number; y: number; width: number; height: number }
@@ -27,17 +37,26 @@ const rows = (layers: PlannedLayer[], variantId: string): LayerRow[] =>
 const primaryOf = (plan: Plan) => plan.languages[0] ?? ''
 const firstSize = (plan: Plan) => plan.sizes[0] as CampaignSize
 
-// The master: the starter layout at the first size, in the main language, with the first
-// picture as its background. The headline is the brief's message, as in the app.
-export function masterLayers(plan: Plan): LayerRow[] {
+// The master: the brief's layout at the first size, in the main language. The headline is the
+// brief's message, as in the app. A photo layout takes the first picture as its background; a
+// flat-colour layout takes it in the subject spot. Then the logo in the logo spot, and the
+// brand fonts and colours on the text.
+export function masterLayers(plan: Plan, brand: BrandParts = NO_BRAND): LayerRow[] {
   const { brief } = plan
+  const pictureSlot = isFlatLayout(plan.layout) ? 'subject-image' : 'background'
   const fills: SlotFills = {
-    background: { assetId: MASTER_ASSET },
+    [pictureSlot]: { assetId: MASTER_ASSET },
     headline: { text: brief.message },
   }
   const action = (brief.callToAction ?? '').trim()
   if (action !== '') fills['call-to-action'] = { text: action }
-  return rows(buildMasterLayers(starterTemplate, firstSize(plan), fills), 'master')
+  if (brand.logo) fills.logo = { assetId: LOGO_ASSET }
+  const built = buildMasterLayers(starterTemplate, firstSize(plan), fills, plan.layout)
+  const fonts = {
+    heading: brand.headingFont ? HEADING_FONT_ASSET : null,
+    body: brand.bodyFont ? BODY_FONT_ASSET : null,
+  }
+  return rows(withBrandColours(withBrandFonts(built, fonts), plan.look.colours), 'master')
 }
 
 // The boxes of one layout call, put on the text layers the way the app's window applies them.
