@@ -38,8 +38,8 @@ export type BrandFileNote = { role: BrandRole; name: string; reason: BrandNoteRe
 export type BrandFiles = { files: BrandFile[]; notes: BrandFileNote[] }
 
 // The brief.parse reply (SPEC 14 1.42 C4-2), here so the window can import it. subjectPictures
-// has one entry per draft subject; brief.parse always sets it and brandFiles, the AI reader
-// sets neither.
+// has one entry per draft subject and brief.parse always sets it. brandFiles is set only when
+// the brief names a logo or a font. The AI reader sets neither.
 export type BriefParsed = {
   draft: BriefDraft
   primaryLanguage: string | null

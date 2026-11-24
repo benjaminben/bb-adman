@@ -133,7 +133,7 @@ removedBrandAssets(values: BriefFormValues, roles: BrandRole[]): string[]
 ```
 
 - `BriefFormValues` gains `brand: BrandChoice` and `adsPer: 'campaign' | 'subject'`. `formFromDraft(reply, held, photos, brand?)` fills them with `brandFromDraft`: the files from `brand`, the rest through `briefLook`; `notes` are the import notes first, then one line per `BrandValueNote`. The empty form gets the default layout, no brand and `campaign`.
-- `planFromForm` adds to `brief`: `layout`, `artDirection` (left out when blank), `adsPer`, and `brand: { colours }` when there are colours; and to the `campaign.create` input `brand` with each asset ID the form holds (left out when none).
+- `planFromForm` adds to `brief`: `layout` (left out when it is the default layout), `artDirection` (trimmed; left out when blank), `adsPer` (left out when it is `campaign`), and `brand: { colours }` when there are colours. A missing `layout` or `adsPer` is read as the default everywhere, so a form with no brand sends what it sent before; and to the `campaign.create` input `brand` with each asset ID the form holds (left out when none).
 - `removedBrandAssets` gives the IDs to send `asset.remove` for when roles leave the form: those with `added` true that no other brand role and no subject photo of the form still holds, each once. Remove and Cancel both use it.
 - The brand adds no problem line.
 
