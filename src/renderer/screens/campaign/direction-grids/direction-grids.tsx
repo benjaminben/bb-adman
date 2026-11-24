@@ -7,7 +7,8 @@
 // already opened it behind by its clicks, so it opens nothing more. A key press forgets the last
 // Cmd-click, so an arrow only selects.
 // P5-15: the tiles' quick look (through every variant, in the grids' order) and delete
-// warning are held here, one of each for the whole campaign.
+// warning are held here, one of each for the whole campaign. MV-6: so is the Make variants
+// dialog a tile's "Make variants from this one…" opens.
 // Design wave CAMP-1 (C-11): each direction gives its tiles their marks' targets
 // (TileTargetsContext): onView shows Checks or Translations, the Activity panel opens through
 // its store, and one relink dialog serves the campaign. A tile's title shows only when titles
@@ -15,6 +16,7 @@
 // opening, so the tiles' "Out of date" marks open the same review as "Sync {n}".
 import { useCallback, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { DeleteVariant } from '@/renderer/dialogs/delete-variant'
+import { MakeFromVariant } from '@/renderer/dialogs/fan-out'
 import { QuickLook } from '@/renderer/dialogs/quick-look'
 import { RelinkDialog } from '@/renderer/dialogs/relink-dialog'
 import { outOfDateCount, useSyncOpen } from '@/renderer/dialogs/sync-review'
@@ -47,6 +49,7 @@ type SectionProps = DirectionGridsProps & {
   first: boolean
   onQuickLook: (variantId: string) => void
   onDelete: (variantId: string) => void
+  onMakeFrom: (variantId: string) => void
   onActivity?: () => void
   onRelink: () => void
 }
@@ -106,6 +109,7 @@ function DirectionSection(props: SectionProps) {
               }}
               onOpenBehind={props.onOpenBehind}
               onQuickLook={props.onQuickLook}
+              onMakeFrom={props.onMakeFrom}
               onDelete={props.onDelete}
               tileFooter={props.tileFooter}
             />
@@ -120,6 +124,7 @@ export function DirectionGrids(props: DirectionGridsProps) {
   const { campaign } = props
   const [lookId, setLookId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [makeFromId, setMakeFromId] = useState<string | null>(null)
   const [relink, setRelink] = useState(false)
   const onActivity = useOpenActivity()
   const closeLook = useCallback(() => setLookId(null), [])
@@ -134,6 +139,7 @@ export function DirectionGrids(props: DirectionGridsProps) {
           first={i === 0}
           onQuickLook={setLookId}
           onDelete={setDeleteId}
+          onMakeFrom={setMakeFromId}
           onActivity={onActivity}
           onRelink={() => setRelink(true)}
         />
@@ -143,6 +149,12 @@ export function DirectionGrids(props: DirectionGridsProps) {
         projectId={props.projectId}
         variant={all.find((v) => v.id === deleteId) ?? null}
         onClose={() => setDeleteId(null)}
+      />
+      <MakeFromVariant
+        projectId={props.projectId}
+        campaign={campaign}
+        variantId={makeFromId}
+        onClose={() => setMakeFromId(null)}
       />
       <RelinkDialog projectId={props.projectId} open={relink} onClose={() => setRelink(false)} />
     </>

@@ -67,7 +67,8 @@ async function setUp() {
   const basis = (): model.FanOutBasis => {
     const master = variants().find((v) => v.id === direction.masterId)
     if (!master) throw new Error('no master')
-    return { sizes: [SQUARE, TALL], languages: LANGUAGES, master, existing: variants() }
+    const lists = { sizes: [SQUARE, TALL], languages: LANGUAGES, primaryLanguage: 'en' }
+    return { ...lists, master, existing: variants() }
   }
   const ended = () => jobs().every((j) => ['succeeded', 'failed', 'cancelled'].includes(j.status))
   return { fanOut, basis, jobs, ended }

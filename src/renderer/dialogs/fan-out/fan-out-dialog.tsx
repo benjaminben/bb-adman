@@ -7,6 +7,10 @@
 // started before variant.fanOut succeeds, and each goes to the provider shown at the click. From
 // the click until the reply the dialog is locked and cannot close; a refusal shows inside it
 // (A-50). Translation jobs in the reply are registered under the campaign (P6-15).
+// MV-6: with `source` (a tile's variant, not the master) the dialog makes variants from it: its
+// title and first line name it, `basis.master` holds its facts, its background is the one the
+// fits ask about, and the click sends its ID as `sourceVariantId`. Either way the source's
+// format starts on, and a line counts the chosen variants that exist and stay as they are.
 import { useId, useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { ProviderSelect } from '@/renderer/screens/campaign/provider-select'
@@ -20,6 +24,7 @@ import type { VariantFanOutReply } from '@/shared/schemas/commands/variant'
 import type { FanOutFit } from '@/shared/schemas/links'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { DirectionRow } from '@/shared/schemas/rows/direction'
+import type { VariantRow } from '@/shared/schemas/rows/variant'
 import { CostLine, fillProviders } from './cost-line'
 import { fillCost, translationCost } from './fan-out-costs'
 import { FanOutChips } from './fan-out-chips'
@@ -32,22 +37,31 @@ export type FanOutDialogProps = {
   projectId: string
   direction: DirectionRow
   basis: model.FanOutBasis
+  source?: Pick<VariantRow, 'id' | 'title'>
   onClose: () => void
   onMade: (fill: VariantFanOutReply['fill'], provider: string) => void
 }
 
 const NONE: ProviderInfo[] = []
 
+const FIRST_LINE =
+  'New variants start from this one: its words, boxes, pictures and look. They stay linked to the master.'
+
+const existingLine = (n: number) =>
+  n === 1
+    ? '1 of these already exists and stays as it is.'
+    : `${n} of these already exist and stay as they are.`
+
 export function FanOutDialog(props: FanOutDialogProps) {
-  const { projectId, basis } = props
+  const { projectId, basis, source } = props
   const api = useApi()
   const app = useApp((s) => s.app)
   const command = useApp((s) => s.command)
   const show = useApp((s) => s.show)
   const comfy = useComfyInfoState()
-  const picture = useHasPicture(projectId, props.direction.masterVariantId)
+  const picture = useHasPicture(projectId, source?.id ?? props.direction.masterVariantId)
   const [ticks, setTicks] = useState(() => model.startTicks(basis))
-  const [ticked, setTicked] = useState<string[]>(['image'])
+  const [ticked, setTicked] = useState<string[]>(() => [basis.master.format ?? 'image'])
   const [chosen, setChosen] = useState<Record<string, FanOutFit>>({})
   const [picked, setPicked] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -58,6 +72,7 @@ export function FanOutDialog(props: FanOutDialogProps) {
   const fits = model.fitsToSend(basis, ticks, chosen, picture === true)
   const formats = model.formatsToSend(ticked)
   const count = model.newCells(basis, ticks, formats).length
+  const existing = model.existingCount(basis, ticks, formats)
   const fills = model.fillsSent(basis, ticks, fits, formats)
   const providers = fillProviders(app?.providers ?? NONE, comfy.info)
   const preferred = app?.settings.defaultProviders.image
@@ -81,7 +96,8 @@ export function FanOutDialog(props: FanOutDialogProps) {
     setBusy(true)
     setRefusal(null)
     const lists = model.fanOutLists(basis, ticks)
-    const input = { projectId, directionId: props.direction.id, ...lists, formats, fits }
+    const from = source ? { sourceVariantId: source.id } : {}
+    const input = { projectId, directionId: props.direction.id, ...lists, formats, fits, ...from }
     const reply = await command('variant.fanOut', input)
     setBusy(false)
     if (!reply.ok) return setRefusal(reply.error.message)
@@ -119,7 +135,11 @@ export function FanOutDialog(props: FanOutDialogProps) {
     <DialogFrame
       open
       onClose={props.onClose}
-      title={`Make variants of ${props.direction.name}`}
+      title={
+        source
+          ? `Make variants from ${source.title} · ${basis.master.sizeLabel} · ${basis.master.language}`
+          : `Make variants of ${props.direction.name}`
+      }
       kind="run"
       describedBy={described || undefined}
       closable={!busy}
@@ -127,6 +147,7 @@ export function FanOutDialog(props: FanOutDialogProps) {
     >
       <div className={styles.body}>
         {refusal !== null && <DialogAlert tone="danger">{refusal}</DialogAlert>}
+        {source && <p>{FIRST_LINE}</p>}
         {noProvider && (
           <DialogAlert tone="warn" action={{ label: 'Settings', onClick: openSettings }}>
             No provider can do this yet.
@@ -137,6 +158,12 @@ export function FanOutDialog(props: FanOutDialogProps) {
           ticks={ticks}
           formats={ticked}
           disabled={busy}
+          fixed={
+            source && {
+              size: `The size of ${source.title}`,
+              language: `The language of ${source.title}`,
+            }
+          }
           onTicks={setTicks}
           onFormats={setTicked}
         />
@@ -148,6 +175,7 @@ export function FanOutDialog(props: FanOutDialogProps) {
             onChange={(label, fit) => setChosen({ ...chosen, [label]: fit })}
           />
         )}
+        {existing > 0 && <p>{existingLine(existing)}</p>}
         {fills > 0 && provider !== undefined && (
           <ProviderSelect
             label="Provider"
