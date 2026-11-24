@@ -1,19 +1,20 @@
 // campaign.create (SPEC 4.2 notes, 6.1; FR-023 to FR-026, FR-043, R-01). Not undoable
-// [D-010]. Makes the campaign, its subjects as the map asks, its rule set, one direction
-// "Direction 1" and one master variant at the first size in the primary language, with a
-// background layer and one layer per filled slot.
-import { ulid } from 'ulid'
+// [D-010]. Makes the campaign, its subjects as the map asks, its rule set and its master
+// (master-rows.ts). The brief's layout and brand shape the rule set and the master
+// (spec/brief-brand.md "campaign.create"); every refusal comes before the first write.
 import type { CoreDeps } from '@/main/core-deps'
 import { defineCommand, type ProjectContext } from '@/main/commands/types'
 import * as schema from '@/main/db/schema'
 import { readWireRow, storedJson } from '@/main/db/rows'
 import { insertSubject } from '@/main/commands/subject/subject'
-import { newCampaignId, newVariantId } from './ids'
-import { slotFills } from './fills'
-import { insertLayerRow } from './layer-row'
+import { newCampaignId } from './ids'
 import { startingRuleSet } from './rule-set-values'
+import { checkBrandAssets } from './brand-assets'
+import { insertMaster } from './master-rows'
 import { isRightToLeft } from '@/shared/brief/languages'
-import { buildMasterLayers } from '@/shared/templates/master-layers'
+import { brandRuleSet } from '@/shared/brief/brand-rule-set'
+import { starterLayoutOf } from '@/shared/config/starter-layouts'
+import { DEFAULT_STARTER_LAYOUT, type StarterLayout } from '@/shared/config/default-layout'
 import { starterTemplate } from '@/shared/templates/starter'
 import { SubjectId } from '@/shared/schemas/commands/subject'
 import {
@@ -23,8 +24,6 @@ import {
 } from '@/shared/schemas/commands/campaign'
 import type { CampaignCreated } from '@/shared/schemas/commands/campaign-edit'
 import { AppError } from '@/shared/schemas/result'
-
-const DEFAULT_DURATION_MS = 6000
 
 export function refuseRightToLeft(languages: string[]): void {
   if (languages.some(isRightToLeft)) {
@@ -101,52 +100,12 @@ function insertRuleSet(ctx: ProjectContext, campaignId: string, values: RuleSetV
   ctx.changes.touch('rule_set', { campaignId })
 }
 
-type Master = { campaignId: string; subjectIds: string[]; input: CampaignCreateInput }
-
-function insertMaster(ctx: ProjectContext, m: Master, now: string, values: RuleSetValues) {
-  const { orm, db } = ctx.project
-  const size = m.input.sizes[0]
-  if (!size) throw new Error('campaign.create needs a size')
-  const directionId = ulid()
-  const variantId = newVariantId(db)
-  orm
-    .insert(schema.direction)
-    .values({
-      id: directionId,
-      campaignId: m.campaignId,
-      name: 'Direction 1',
-      masterVariantId: variantId,
-      sort: 0,
-    })
-    .run()
-  orm
-    .insert(schema.variant)
-    .values({
-      id: variantId,
-      directionId,
-      title: m.subjectIds.join('+'),
-      width: size.width,
-      height: size.height,
-      sizeLabel: size.label,
-      language: m.input.languages[0] ?? '',
-      format: 'image',
-      durationMs: DEFAULT_DURATION_MS,
-      createdBy: ctx.actor === 'agent' ? 'agent' : 'user',
-      createdAt: now,
-    })
-    .run()
-  ctx.changes.touch('direction', { id: directionId })
-  ctx.changes.touch('variant', { id: variantId })
-  for (const subjectId of m.subjectIds) {
-    orm.insert(schema.variantSubject).values({ variantId, subjectId }).run()
-    ctx.changes.touch('variant_subject', { variantId, subjectId })
-  }
-  const { brief, placeSubjectPhoto } = m.input
-  const fills = slotFills(db, starterTemplate, brief, m.subjectIds, values, placeSubjectPhoto)
-  for (const layer of buildMasterLayers(starterTemplate, size, fills)) {
-    insertLayerRow(ctx, { ...layer, id: ulid(), variantId })
-  }
-  return { directionId, variantId }
+// No layout in the brief: the default. An ID the build does not have is refused.
+function layoutOf(id: string | undefined): StarterLayout {
+  if (id === undefined) return DEFAULT_STARTER_LAYOUT
+  const layout = starterLayoutOf(id)
+  if (!layout) throw new AppError('NOT_FOUND', 'That layout is not in this build.')
+  return layout
 }
 
 // The whole of campaign.create's work, also run by campaign.createFromBrief (Round 2 plan D6).
@@ -159,7 +118,13 @@ export function createCampaignRows(
     throw new AppError('NOT_FOUND', 'That template is not in this build.')
   }
   refuseRightToLeft(input.languages)
-  const values = startingRuleSet(ctx, input)
+  const layout = layoutOf(input.brief.layout)
+  checkBrandAssets(ctx.project.db, input.brand)
+  const values = brandRuleSet(
+    startingRuleSet(ctx, input),
+    input.brief.brand?.colours,
+    input.brand?.logoAssetId,
+  )
   const subjectIds = mapSubjects(ctx, input, now)
   const campaignId = insertCampaign(ctx, input, now)
   for (const subjectId of subjectIds) {
@@ -167,7 +132,7 @@ export function createCampaignRows(
     ctx.changes.touch('campaign_subject', { campaignId, subjectId })
   }
   insertRuleSet(ctx, campaignId, values)
-  const master = insertMaster(ctx, { campaignId, subjectIds, input }, now, values)
+  const master = insertMaster(ctx, { campaignId, subjectIds, input, values, layout }, now)
   return { campaignId, ...master }
 }
 
