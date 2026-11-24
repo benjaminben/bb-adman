@@ -40,7 +40,13 @@ async function drawGrids(campaign: CampaignGet = twoDirections()) {
 }
 
 async function drawGrid() {
-  const calls = { onOpen: vi.fn(), onOpenBehind: vi.fn(), onQuickLook: vi.fn(), onDelete: vi.fn() }
+  const calls = {
+    onOpen: vi.fn(),
+    onOpenBehind: vi.fn(),
+    onQuickLook: vi.fn(),
+    onMakeFrom: vi.fn(),
+    onDelete: vi.fn(),
+  }
   const onChoose = vi.fn()
   const view = await renderWith(
     <main>
@@ -63,10 +69,39 @@ describe('tile actions [CAMP-2]', () => {
   it('lists Open, Open in a tab, Quick look and Delete… in order; the master has no Delete…', async () => {
     await drawGrid()
     await userEvent.click(more('German post'))
-    expect(itemNames()).toEqual(['Open', 'Open in a tab', 'Quick look', 'Delete…'])
+    expect(itemNames()).toEqual([
+      'Open',
+      'Open in a tab',
+      'Quick look',
+      'Make variants from this one…',
+      'Delete…',
+    ])
     await userEvent.keyboard('{Escape}')
     await userEvent.click(more('Master post'))
-    expect(itemNames()).toEqual(['Open', 'Open in a tab', 'Quick look'])
+    expect(itemNames()).toEqual([
+      'Open',
+      'Open in a tab',
+      'Quick look',
+      'Make variants from this one…',
+    ])
+  })
+
+  it('"Make variants from this one…" on every tile calls onMakeFrom with its ID [MV-6]', async () => {
+    const calls = await drawGrid()
+    await choose('German post', 'Make variants from this one…')
+    await choose('Master post', 'Make variants from this one…')
+    expect(calls.onMakeFrom.mock.calls).toEqual([['V2'], ['V1']])
+    expect(calls.onDelete).not.toHaveBeenCalled()
+    expect(calls.onChoose).not.toHaveBeenCalled()
+  })
+
+  it('"Make variants from this one…" opens the dialog and sends nothing [MV-6]', async () => {
+    const { fake } = await drawGrids()
+    await choose('German post', 'Make variants from this one…')
+    expect(
+      await screen.findByRole('dialog', { name: 'Make variants from German post · 1:1 · de' }),
+    ).toBeInTheDocument()
+    expect(fake.commands).toEqual([])
   })
 
   it('keeps the eye "Quick look at {title}" on the strip, with its title', async () => {

@@ -1,7 +1,8 @@
 // DLG-4b: the fan-out dialog's three chip rows, Sizes, Languages and Formats (spec/screens-
 // variants.md, "Fan-out"; data-rules fan-out step 7). The master's size and language are pressed
 // and fixed; at least one format stays on. A size chip is named "{label} ({width}×{height})" and
-// gives its pixels in `title`.
+// gives its pixels in `title`. MV-6: `basis.master` is the source; `fixed` gives the reasons a
+// fixed chip shows, the master's by default.
 import { Icon } from '@/renderer/ui/icon'
 import type { CampaignSize } from '@/shared/schemas/commands/campaign'
 import { ChipGroup, SizeFace } from './chip-group'
@@ -13,12 +14,16 @@ const FORMATS = [
   { id: 'video', name: 'Video', icon: 'film' },
 ] as const
 
-const sizeChip = (s: CampaignSize, master: string) => ({
+export type FixedWords = { size: string; language: string }
+
+const MASTER_WORDS: FixedWords = { size: "The master's size", language: "The master's language" }
+
+const sizeChip = (s: CampaignSize, master: string, fixed: string) => ({
   id: s.label,
   name: sizeName(s),
   label: <SizeFace label={s.label} width={s.width} height={s.height} />,
   title: `${s.width}×${s.height}`,
-  fixed: s.label === master ? "The master's size" : undefined,
+  fixed: s.label === master ? fixed : undefined,
 })
 
 export function FanOutChips(props: {
@@ -26,16 +31,18 @@ export function FanOutChips(props: {
   ticks: FanOutTicks
   formats: string[]
   disabled: boolean
+  fixed?: FixedWords
   onTicks: (ticks: FanOutTicks) => void
   onFormats: (formats: string[]) => void
 }) {
   const { basis, ticks, disabled } = props
   const { master } = basis
+  const words = props.fixed ?? MASTER_WORDS
   return (
     <>
       <ChipGroup
         legend="Sizes"
-        chips={basis.sizes.map((s) => sizeChip(s, master.sizeLabel))}
+        chips={basis.sizes.map((s) => sizeChip(s, master.sizeLabel, words.size))}
         on={ticks.sizes}
         disabled={disabled}
         onChange={(sizes) => props.onTicks({ ...ticks, sizes })}
@@ -46,7 +53,7 @@ export function FanOutChips(props: {
           id: l,
           name: l,
           label: l,
-          fixed: l === master.language ? "The master's language" : undefined,
+          fixed: l === master.language ? words.language : undefined,
         }))}
         on={ticks.languages}
         disabled={disabled}

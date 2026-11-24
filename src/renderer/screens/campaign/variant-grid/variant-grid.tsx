@@ -32,6 +32,8 @@ export type VariantGridProps = {
   onOpen?: (variantId: string) => void
   onOpenBehind?: (variantId: string) => void
   onQuickLook?: (variantId: string) => void
+  // MV-6: the tile menu's "Make variants from this one…".
+  onMakeFrom?: (variantId: string) => void
   onDelete?: (variantId: string) => void
   // AP-12: drawn under each tile, outside its button (the approval marks).
   tileFooter?: (variant: VariantSummary) => ReactNode
@@ -58,6 +60,7 @@ function Tile(props: VariantGridProps & { variant: VariantSummary; asked: () => 
             onOpen={props.onOpen}
             onOpenBehind={props.onOpenBehind}
             onQuickLook={props.onQuickLook}
+            onMakeFrom={props.onMakeFrom}
             onDelete={props.onDelete}
             asked={props.asked}
           />

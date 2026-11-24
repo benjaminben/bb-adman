@@ -4,8 +4,8 @@
 import { useState } from 'react'
 import type { DirectionControlProps } from '@/renderer/screens/campaign/direction-header'
 import { Icon } from '@/renderer/ui/icon'
-import type { FanOutBasis } from './fan-out-model'
 import { FanOutDialog } from './fan-out-dialog'
+import { basisFrom } from './make-from-variant'
 import { useStartFills } from './use-start-fills'
 
 export function FanOutButton(props: DirectionControlProps) {
@@ -14,13 +14,7 @@ export function FanOutButton(props: DirectionControlProps) {
   const startFills = useStartFills(projectId)
   const master = campaign.variants.find((v) => v.id === direction.masterVariantId)
   if (!master) return null
-  const basis: FanOutBasis = {
-    sizes: campaign.campaign.sizes,
-    languages: campaign.campaign.languages,
-    primaryLanguage: campaign.campaign.primaryLanguage,
-    master,
-    existing: campaign.variants.filter((v) => v.directionId === direction.id),
-  }
+  const basis = basisFrom(campaign, direction, master)
   return (
     <>
       <button type="button" onClick={() => setOpen(true)}>
