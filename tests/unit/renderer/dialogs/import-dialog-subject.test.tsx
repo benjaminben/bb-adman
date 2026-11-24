@@ -20,7 +20,7 @@ const PATHS = ['/Users/me/Shoots/summer/can-front.png', 'C:\\Users\\me\\Pictures
 const imported = (fake: ReturnType<typeof makeFakeApi>) =>
   fake.commands.filter((c) => c.name === 'asset.import')
 
-type ScopeAt = 'none' | 'closed' | 'open' | 'other'
+type ScopeAt = 'none' | 'closed' | 'open' | 'other' | 'home'
 
 // A stand-in for the panel: drawn while the scope says open, and focused on open as the real
 // one is. `startOpen` opens it before the dialog is used.
@@ -55,7 +55,15 @@ function ScopedHost(props: { subjects: SubjectRow[]; scope: ScopeAt; onClose: ()
     </main>
   )
   if (props.scope === 'none') return host
-  return <AssetsScope projectId={props.scope === 'other' ? 'P2' : 'P1'}>{host}</AssetsScope>
+  // 'home': the project home, where the panel cannot be drawn (D-109).
+  return (
+    <AssetsScope
+      projectId={props.scope === 'other' ? 'P2' : 'P1'}
+      available={props.scope !== 'home'}
+    >
+      {host}
+    </AssetsScope>
+  )
 }
 
 async function openInScope(opts: { subjects?: SubjectRow[]; scope?: ScopeAt } = {}) {
@@ -170,6 +178,7 @@ describe('import dialog: "Show in assets" [R2C-7]', () => {
     ['outside a scope', 'none', false],
     ['with the panel open', 'open', false],
     ["in another project's scope", 'other', false],
+    ['on the project home, where the library is on the page', 'home', false],
   ] as const)('is offered %s: %s', async (_label, scope, offered) => {
     const { dialog } = await importDone(scope)
     const button = within(dialog).queryByRole('button', { name: 'Show in assets' })

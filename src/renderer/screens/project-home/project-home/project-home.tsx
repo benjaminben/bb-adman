@@ -82,12 +82,21 @@ function ProjectPage(props: Props) {
   )
 }
 
+// The panel can be drawn, and so offered, only while a campaign is shown.
+function ScopedPage(props: Props) {
+  const { projectId } = props.project
+  const shown = useNav((s) => projectNav(s, projectId).shown)
+  return (
+    <AssetsScope projectId={projectId} available={shown !== PROJECT_TAB}>
+      <ProjectPage {...props} />
+    </AssetsScope>
+  )
+}
+
 export function ProjectHome(props: Props) {
   return (
     <NavScope>
-      <AssetsScope projectId={props.project.projectId}>
-        <ProjectPage {...props} />
-      </AssetsScope>
+      <ScopedPage {...props} />
     </NavScope>
   )
 }

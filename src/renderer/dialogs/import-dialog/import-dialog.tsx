@@ -4,7 +4,7 @@
 // drop, each with its own instance. Every close resets it for the next open. R2C-7
 // (spec/phases/round-2-campaign.md, design addition 5): "New subject…" makes the subject first
 // (send-import.ts), and inside the project's Assets scope, with the panel closed, the result
-// offers "Show in assets". DLG-3b: the `form` kind; the names are a strip of icon tiles
+// offers "Show in assets" (not on the project home, where the library is on the page: D-109). DLG-3b: the `form` kind; the names are a strip of icon tiles
 // (file-strip.tsx); the result lines are a status; a refusal is a DialogAlert.
 import { useState } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
@@ -37,7 +37,8 @@ export function ImportDialog(props: ImportDialogProps) {
   const [problem, setProblem] = useState<string | null>(null)
   const [result, setResult] = useState<string[] | null>(null)
   const panel = useAssetsPanel()
-  const offerPanel = panel !== null && panel.projectId === props.projectId && !panel.open
+  const offerPanel =
+    panel !== null && panel.available && panel.projectId === props.projectId && !panel.open
 
   function close() {
     setChoices(START_CHOICES)
