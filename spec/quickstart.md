@@ -2,7 +2,7 @@
 
 A demo of the pipeline for someone who has not installed the app (D-106, D-107). One brief in; finished ads out, one per subject set, language and size, with a report of the checks. It runs with `npm run quickstart` on macOS and Windows.
 
-**State.** Built: the two examples and `--example`; the brand files and the brief's look read, with a printed note for each that cannot be used; the master built from the brief's layout with the logo, the brand fonts and the brand colours; the art direction in the picture prompt; text placement by AI with `--ai_layout` only; the picture in the subject spot for a flat-colour layout; one ad set per subject with `adsPer: subject`, and output folders by subject; each variant laid out by the layout for its own size and words; `picture.png`; the checks, `report.json` and the printed result lines (QS-1, QS-2). Not built yet: the README with sample pictures (QS-3).
+**State.** Built: the two examples, `--example` and the first question that picks one; the brand files and the brief's look read, with a printed note for each that cannot be used; the master built from the brief's layout with the logo, the brand fonts and the brand colours; the art direction in the picture prompt; text placement by AI with `--ai_layout` only; the picture in the subject spot for a flat-colour layout; one ad set per subject with `adsPer: subject`, and output folders by subject; each variant laid out by the layout for its own size and words; `picture.png`; the checks, `report.json` and the printed result lines (QS-1, QS-2). Not built yet: the README with sample pictures (QS-3).
 
 ## What it is not
 
@@ -27,7 +27,9 @@ The CLI holds no drawing, prompt, layout or check logic of its own. Each step ca
 
 ## The two examples
 
-Each example is a folder under `quickstart/examples/` with a `brief.yaml`, the files it names, and a `brand/` folder. `--example=<name>` picks one; the default is `simple-routine`. `--brief=<file>` runs any other brief.
+Each example is a folder under `quickstart/examples/` with a `brief.yaml`, the files it names, and a `brand/` folder. `--example=<name>` picks one. `--brief=<file>` runs any other brief.
+
+**The first question** (`quickstart/pick-example.ts`). A run that names no example and no brief starts by asking which example to make: a numbered list, `simple-routine` first and the rest by name, each with what it makes, read from its brief ("2 subjects in one picture, 3 languages, 3 sizes: 9 ads"). The answer is a number, an example's name, or Enter alone for the first; any other answer is refused in one line and the question is asked again. Ctrl+C or Ctrl+D ends the run with "No example was chosen." The question is asked only when both the input and the output are a terminal; in a script or a pipe, and when there is only one example, `simple-routine` runs with no question.
 
 | Example | Shows |
 |---|---|
@@ -88,7 +90,7 @@ quickstart/output/{campaign}/
 
 ## Tests
 
-`tests/unit/quickstart/` covers the options, the examples, the plan and its printout, the brief's files and notes, the ad sets, the layers, the layout for each variant, the text placement offer, the checks' rule set and facts, the output names and the report. The run itself is checked by hand: `npm run quickstart -- --provider=fake --example=summer-splash`.
+`tests/unit/quickstart/` covers the options, the examples, the first question (its order, its lines, what each answer means), the plan and its printout, the brief's files and notes, the ad sets, the layers, the layout for each variant, the text placement offer, the checks' rule set and facts, the output names and the report. The run itself is checked by hand: `npm run quickstart -- --provider=fake --example=summer-splash`.
 
 ## Slices
 

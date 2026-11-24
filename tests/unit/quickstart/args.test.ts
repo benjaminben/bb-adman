@@ -67,10 +67,10 @@ describe('quickstart parseArgs', () => {
     })
   })
 
-  it('picks the simple-routine example when none is named, with no AI layout', () => {
+  it('names no example when none is given, so the run can ask, with no AI layout', () => {
     expect(read(['--provider=fake'])).toMatchObject({
       ok: true,
-      args: { example: 'simple-routine', aiLayout: false, brief: null },
+      args: { example: null, aiLayout: false, brief: null },
     })
   })
 

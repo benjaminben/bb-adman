@@ -10,8 +10,9 @@ export type Args = {
   model: string | null
   textModel: string | null
   key: string | null
-  // The example folder to run, unless `brief` names another brief file.
-  example: string
+  // The example folder to run, unless `brief` names another brief file. null: none named, so
+  // the run asks (in a terminal) or takes DEFAULT_EXAMPLE.
+  example: string | null
   brief: string | null
   out: string | null
   prompt: string | null
@@ -45,7 +46,8 @@ export const USAGE = [
   '  --gemini_api_key=<key>   or set GEMINI_API_KEY',
   "  --model=<id>             the picture model (default: the app's own)",
   "  --text_model=<id>        the model that places text and translates (default: the app's own)",
-  `  --example=<name>         an example in quickstart/examples (default: ${DEFAULT_EXAMPLE})`,
+  '  --example=<name>         an example in quickstart/examples (default: the run asks which;',
+  `                           with no terminal to ask in, ${DEFAULT_EXAMPLE})`,
   '  --brief=<file>           any other YAML or JSON brief (wins over --example)',
   '  --out=<folder>           where the ads are written (default: quickstart/output)',
   '  --prompt="<words>"       the picture prompt, in place of the one built from the brief',
@@ -106,8 +108,8 @@ export function parseArgs(argv: readonly string[], env: Env): ArgsResult {
   if (!known) return fail(`"${provider}" is not a provider. Use gemini or fake.`)
   const key = values.get('gemini-api-key') ?? env.GEMINI_API_KEY?.trim() ?? null
   const help = values.has('help')
-  const example = values.get('example') ?? DEFAULT_EXAMPLE
-  if (!EXAMPLE_NAME.test(example)) {
+  const example = values.get('example') ?? null
+  if (example !== null && !EXAMPLE_NAME.test(example)) {
     return fail('An example name holds letters, digits and dashes only.')
   }
   if (!help && known === 'gemini' && !key) {

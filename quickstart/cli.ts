@@ -6,10 +6,11 @@ import { fileURLToPath } from 'node:url'
 import { ProviderFailure } from '@/main/providers/types'
 import { pictureName } from '@/shared/brief/picture-name'
 import { adSetsOf, setPhotos } from './ad-sets'
-import { parseArgs, USAGE, type Args } from './args'
+import { DEFAULT_EXAMPLE, parseArgs, USAGE, type Args } from './args'
 import { readBrand, readSubjectPhotos } from './brief-files'
 import { chooseBrief, listExamples } from './examples'
 import { makeAds, type MadeAds } from './make-ads'
+import { askExample } from './pick-example'
 import { lookNoteLine } from './notes'
 import { campaignFolder } from './output'
 import { readPlan } from './plan'
@@ -41,7 +42,16 @@ function reporter(total: number): Progress {
 
 async function readBrief(args: Args): Promise<{ text: string; path: string }> {
   const examples = join(here, 'examples')
-  const chosen = chooseBrief(args, examples, await listExamples(examples))
+  const found = await listExamples(examples)
+  // With no example and no brief named, the run starts by asking which example.
+  const asked = args.brief === null && args.example === null
+  const example = asked ? await askExample(examples, found, say) : args.example
+  if (example === null && asked) throw new Stop('No example was chosen.')
+  const chosen = chooseBrief(
+    { brief: args.brief, example: example ?? DEFAULT_EXAMPLE },
+    examples,
+    found,
+  )
   if (!chosen.ok) throw new Stop(chosen.message)
   const text = await readFile(chosen.path, 'utf8').catch(() => {
     throw new Stop(`The brief "${basename(chosen.path)}" could not be read.`)
@@ -60,6 +70,8 @@ function sayResults(campaign: string, ads: AdRecord[]): void {
 }
 
 async function main(args: Args): Promise<void> {
+  say('Adman quickstart')
+  say()
   const brief = await readBrief(args)
   const syntax = extname(brief.path).toLowerCase() === '.json' ? 'json' : 'yaml'
   const planned = readPlan(brief.text, syntax)
@@ -69,8 +81,6 @@ async function main(args: Args): Promise<void> {
   const brand = await readBrand(plan, dirname(brief.path))
   const providers = providersFor(args)
   const sets = adSetsOf(plan)
-  say('Adman quickstart')
-  say()
   const notes = [...photos.notes, ...brand.notes, ...plan.look.notes.map(lookNoteLine)]
   for (const note of notes) say(`Note: ${note}`)
   if (notes.length > 0) say()

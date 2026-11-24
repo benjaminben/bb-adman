@@ -2,7 +2,6 @@
 // files it names and a brand folder. --brief runs any other brief in place of an example.
 import { readdir } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
-import type { Args } from './args'
 
 export const BRIEF_FILE = 'brief.yaml'
 
@@ -10,7 +9,7 @@ export type BriefChoice = { ok: true; path: string } | { ok: false; message: str
 
 // The brief to run. Pure: `found` is the list of example folders, read by listExamples.
 export function chooseBrief(
-  args: Pick<Args, 'brief' | 'example'>,
+  args: { brief: string | null; example: string },
   examplesFolder: string,
   found: readonly string[],
 ): BriefChoice {

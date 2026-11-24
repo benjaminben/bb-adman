@@ -14,7 +14,18 @@ npx playwright install chromium
 npm run quickstart -- --provider=gemini --gemini_api_key=<key>
 ```
 
-The run reads the example brief `quickstart/examples/simple-routine/brief.yaml`, the two product photos and the brand fonts beside it, prints the ads it will make (3 languages × 3 sizes), then:
+The run starts by asking which example to make:
+
+```
+Which example do you want to run?
+
+  1. simple-routine   2 subjects in one picture, 3 languages, 3 sizes: 9 ads
+  2. summer-splash    one set of ads for each of 2 subjects, 2 languages, 3 sizes: 12 ads
+
+Type a number and press Enter (Enter alone runs 1):
+```
+
+It then reads that example's brief (`quickstart/examples/<name>/brief.yaml`) with the photos, logo and brand fonts beside it, prints the ads it will make, then:
 
 1. makes one picture of the products with Gemini;
 2. lays the words out with the brief's layout, brand fonts and colours;
@@ -38,7 +49,7 @@ Each ad lands in `quickstart/output/<campaign>/<language>/<size>/`, or `quicksta
 To get a different result, edit the example's `brief.yaml`: the words, the languages, the sizes, the layout, the brand, or the photos it points at.
 
 - `--provider=fake` runs every step with grey placeholder pictures. It is free and needs no key.
-- `--example=summer-splash` runs the second example. `--brief=<file>` runs any other brief.
+- `--example=summer-splash` (or `--example=simple-routine`) picks the example with no question. `--brief=<file>` runs any other brief. Where there is no terminal to ask in (a script, a pipe), `simple-routine` runs.
 - `--ai_layout` adds one Gemini call that moves the words to suit the picture.
 - `--model=<gemini model>` picks the picture model. `npm run quickstart -- --help` lists every option.
 - `GEMINI_API_KEY` in the environment works in place of `--gemini_api_key`.
