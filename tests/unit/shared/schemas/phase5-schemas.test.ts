@@ -271,3 +271,15 @@ describe('Phase 5 input schemas [P5-1, spec/links-and-sync.md]', () => {
     expect(directionRenameInput.parse({ ...rename, name: '  Bold  ' }).name).toBe('Bold')
   })
 })
+
+describe('variant.fanOut sourceVariantId [MV-2, spec/make-variants.md]', () => {
+  it('takes a source variant, and leaves it optional', () => {
+    const parsed = variantFanOutInput.safeParse({ ...fanOut, sourceVariantId: 'V7' })
+    expect(parsed.success && parsed.data.sourceVariantId).toBe('V7')
+    expect(variantFanOutInput.safeParse(fanOut).success).toBe(true)
+  })
+
+  it('refuses an empty source variant ID', () => {
+    expect(variantFanOutInput.safeParse({ ...fanOut, sourceVariantId: '' }).success).toBe(false)
+  })
+})

@@ -90,6 +90,8 @@ export const variantFanOutInput = projectScoped
     languages: z.array(id).min(1),
     formats: z.array(z.enum(['image', 'video'])).min(1),
     fits: z.record(z.string(), FanOutFit),
+    // spec/make-variants.md "Making variants from a variant": left out, the master.
+    sourceVariantId: z.string().min(1).optional(),
   })
   .strict()
 export type VariantFanOutInput = z.infer<typeof variantFanOutInput>
