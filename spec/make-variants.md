@@ -2,7 +2,7 @@
 
 How new variants of a direction are made: where each box goes in a new size, how text gets a size that fits, the screen's name for it, and making new variants from any variant, not only from the master [D-108]. Read with `spec/links-and-sync.md` ("Fan-out"), `spec/data-rules.md` (the follow rules), `spec/starter-layouts.md` and `spec/screens-variants.md` ("Make variants").
 
-**State.** Not built. Slices MV-1 to MV-9 in `spec/phases/make-variants.md`. Assumptions A-407 to A-420 are at the end of this file.
+**State.** Built: the name (MV-1) and the pure helpers `place-box.ts`, `source-layout.ts`, `fit-text.ts` with the `sourceVariantId` schema field (MV-2); nothing calls the helpers yet. Not built: the rest. Slices MV-1 to MV-9 in `spec/phases/make-variants.md`. Assumptions A-407 to A-420 are at the end of this file.
 
 [REQ: FR-075, FR-076, FR-078–FR-083, FR-098, R-02]
 
@@ -169,7 +169,7 @@ Once MV-4 is merged, the quickstart uses the app's own rule (slice MV-8):
 | `src/shared/links/place-box.ts` (new) | `anchoredBox(geometry, from, to, isText)` |
 | `src/shared/links/source-layout.ts` (new) | `layoutOfLayers(layers, size, preferredId)`, `sitsAsLaidOut(layout, layer, size)`, `layoutBoxOf(layout, layer, size)` |
 | `src/shared/links/fan-out-plan.ts` | `planVariant`: `PlanInput` gains `source?: { facts, layers }` (absent: the master) and `layoutId?: string \| null`; `pictureSize` is the source's background picture. Geometry by "Where a box goes"; values by "Links after making". No fit here, so a sync's added layer (`sync-plan.ts`, add-layer) gets the new placement and the master's style |
-| `src/shared/links/fit-text.ts` (new) | `scaleTextMeasures(style, k)`, `fittedFontSize(copy, box, style, size)`, `fitTranslatedText(layer, copy, size, masterLayer)` (null when the size stays), `measureOverrides(layer, masterLayer)` |
+| `src/shared/links/fit-text.ts` (new) | `scaleTextMeasures(style, k)`, `fittedFontSize(copy, box, style, size)` (the largest size that fits, never above the style's own; it does not know the source's box, so the caller, `planNewVariant`, decides whether the words changed or the box got tighter before calling it), `fitTranslatedText(layer, copy, size, masterLayer)` (`{ style, overrides }`, or null when the size stays), `measureOverrides(layer, masterLayer)` |
 | `src/shared/links/new-variant-plan.ts` (new) | `planNewVariant(input)`: `planVariant`, then `translatedLayers`, then the fit and its override paths. Used by `variant.fanOut`, `variant.add` and the quickstart |
 | `src/shared/schemas/commands/variant.ts` | `sourceVariantId` on `variantFanOutInput` |
 | `src/main/links/fan-out-write.ts` | `readFanOutSource(db, directionId, sourceVariantId?)` with the source's row, layers, subjects and picture size; `writeVariant` takes title, duration, subjects and sound from the source |
