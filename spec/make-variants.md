@@ -2,7 +2,7 @@
 
 How new variants of a direction are made: where each box goes in a new size, how text gets a size that fits, the screen's name for it, and making new variants from any variant, not only from the master [D-108]. Read with `spec/links-and-sync.md` ("Fan-out"), `spec/data-rules.md` (the follow rules), `spec/starter-layouts.md` and `spec/screens-variants.md` ("Make variants").
 
-**State.** Built: the name (MV-1) and the pure helpers `place-box.ts`, `source-layout.ts`, `fit-text.ts` with the `sourceVariantId` schema field (MV-2); nothing calls the helpers yet. Not built: the rest. Slices MV-1 to MV-9 in `spec/phases/make-variants.md`. Assumptions A-407 to A-420 are at the end of this file.
+**State.** Built: the name (MV-1) and the pure helpers `place-box.ts`, `source-layout.ts`, `fit-text.ts` with the `sourceVariantId` schema field (MV-2); and the placement in `planVariant` (MV-3) and the fit when a translation run first fills a text (MV-5). Not built: the rest. Slices MV-1 to MV-9 in `spec/phases/make-variants.md`. Assumptions A-407 to A-420 are at the end of this file.
 
 [REQ: FR-075, FR-076, FR-078–FR-083, FR-098, R-02]
 
@@ -45,6 +45,7 @@ So a master still as its layout made it comes out as the layout's rules give for
 - A layer **sits as a layout places it** when its `key` is a slot the layout names, its type matches (`text` for a slot with text rules, `image` for a picture slot), its rotation is 0, and its `x`, `y`, `width` and `height` equal exactly the layout's box for that slot at the source's size. The background layer never counts.
 - The source's layout is the starter layout that the most of the source's layers sit in. A tie goes to `preferredId` when it is among the tied, else to the first in `STARTER_LAYOUTS` order. When no layer sits in any layout, there is none, and every box is anchored.
 - `preferredId` is the campaign's stored `brief.layout`, or the default layout's ID when the brief has none. It only breaks ties.
+- **A layer a sync adds** (`sync-plan.ts`, the master's layer a variant lacks) is planned alone, but its layout is found from all of the master's layers: `planVariant` takes `layoutLayers` (absent: the layers being planned). One layer alone could match several layouts and take the wrong one's box.
 - Nothing is stored. The app looks at where the boxes are, so it works the same for a master made by a brief, by an agent, by "New direction", or changed later with "Layout…".
 
 ### Anchoring
