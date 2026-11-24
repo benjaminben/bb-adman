@@ -2,7 +2,7 @@
 
 How new variants of a direction are made: where each box goes in a new size, how text gets a size that fits, the screen's name for it, and making new variants from any variant, not only from the master [D-108]. Read with `spec/links-and-sync.md` ("Fan-out"), `spec/data-rules.md` (the follow rules), `spec/starter-layouts.md` and `spec/screens-variants.md` ("Make variants").
 
-**State.** Built (MV-1 to MV-8): the name, the placement and the text fit in `planNewVariant`, the fit when a translation run first fills a text, the tile's menu item and dialog, `variant.fanOut` with `sourceVariantId`, a video's clips copied, and the quickstart on the same rule. Left: the end-to-end test (MV-9). Slices in `spec/phases/make-variants.md`. Assumptions A-407 to A-420 are at the end of this file.
+**State.** Built (MV-1 to MV-9): the name, the placement and the text fit in `planNewVariant`, the fit when a translation run first fills a text, the tile's menu item and dialog, `variant.fanOut` with `sourceVariantId`, a video's clips copied, and the quickstart on the same rule. The end-to-end test is `tests/e2e/make-variants.spec.ts` (MV-9). Slices in `spec/phases/make-variants.md`. Assumptions A-407 to A-420 are at the end of this file.
 
 [REQ: FR-075, FR-076, FR-078–FR-083, FR-098, R-02]
 

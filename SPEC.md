@@ -63,7 +63,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/screens.md` | What each built screen offers, wording rules, choices made without a design sign-off |
 | `spec/screens-campaign.md` | The Phase 2 campaign screens and dialogs (built; S2-17 left): ComfyUI failures, the address and licence dialogs, import and drop, relink, package, the brief form, the slot view, the campaign grid and its tile |
 | `spec/screens-variants.md` | Phase 5 screens: the campaign's Undo and Redo, one grid per direction, the tile's menu, delete and quick look, the "Make variants" dialog (code name fan-out), the sync review, the direction dialogs |
-| `spec/make-variants.md` | Making variants (D-108, not built): the "Make variants" name, where each box goes in a new size, text that fits, what a new variant links to, making variants from any variant, agents, the quickstart, assumptions A-407 to A-420 |
+| `spec/make-variants.md` | Making variants (D-108, built): the "Make variants" name, where each box goes in a new size, text that fits, what a new variant links to, making variants from any variant, agents, the quickstart, assumptions A-407 to A-420 |
 | `spec/app-style.md` | The app's look from the design prototype: tokens, type and fonts, contrast, shared pieces, per-screen changes, choices taken for now (C-1 to C-14) |
 | `spec/app-style-parts.md` | The rules for each shared part of the screens: Button, Field, Section, Panel, ObjectRow, Tabs, StatusMark, Notice, InfoTip, Menu, Dialog and its kinds, SubPage |
 | `spec/screens-ai.md` | Phase 4 screens: the run dialog, the paid count, the picture section (generate, references, earlier options, cut-out), copy options, place text, brief reading, the activity panel, close warnings |

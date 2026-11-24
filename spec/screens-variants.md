@@ -21,7 +21,7 @@ Built (R2C-1 to R2C-3, CAMP-1, CAMP-2, CAMP-7). `src/renderer/screens/campaign/v
 - **The strip** under the picture (`tile-strip.tsx`, outside the main button): a group "Marks for {title}" holding the marks, then the approval marks (`footer`), then the actions at its right end.
 - **Marks**, in this order, only when true: "Running", "New result", "Text does not fit", "File missing", "Translation not approved", "Out of date", "Check warning", "Not checked" (`badge-words.ts`). Each is a `StatusMark` with an icon and no label; its word is its tooltip and accessible name, so a test finds it by `title` or by role and name, not by visible text. A mark is a button where its fix exists (`tile-targets.ts`): "Running" opens Activity; "New result" and "Text does not fit" open the variant; "File missing" opens the relink dialog; "Out of date" opens the direction's sync review; "Translation not approved" shows the Translations tab; "Check warning" and "Not checked" show the Checks tab. No mark starts a run or sends a command.
 - **Approval marks** join the strip (`spec/approvals.md`): "Signed off by {n}" is a button showing "{n}" that opens the sign-off list in a popover.
-- **Actions** (`tile-actions.tsx`): an eye icon button "Quick look at {title}", then a More menu "More actions for {title}" with "Open", "Open in a tab", "Quick look", "Make variants from this one…" (Not built, MV-6; on every tile, the master's included) and, except on the master, "Delete…" (last, as today). "Make variants from this one…" opens the "Make variants" dialog with that variant as the source ("Make variants", below); it sends nothing itself.
+- **Actions** (`tile-actions.tsx`): an eye icon button "Quick look at {title}", then a More menu "More actions for {title}" with "Open", "Open in a tab", "Quick look", "Make variants from this one…" (built, MV-6; on every tile, the master's included) and, except on the master, "Delete…" (last, as today). "Make variants from this one…" opens the "Make variants" dialog with that variant as the source ("Make variants", below); it sends nothing itself.
 - Delete opens the warning dialog (`src/renderer/dialogs/delete-variant/`, `kind="confirm"`) [D-099]: "Delete {title}?", the description "This cannot be undone.", "Keep" (quiet, focused) and "Delete variant" (danger primary, a spinner inside while it sends). "Delete variant" sends `variant.delete`; the campaign's Undo does not bring the variant back (A-140). Focus then goes to the next tile's main button, else the previous one, else the direction's heading. A refusal (`jobs_running`, `master_variant`) shows as a danger DialogAlert at the top of the body. An agent's `variant.delete` still asks the user first (policy ask; Phase 10).
 
 ## Campaign Undo and Redo
@@ -42,7 +42,7 @@ Built (R2C-1 to R2C-3, CAMP-1, CAMP-2, CAMP-7). `src/renderer/screens/campaign/v
 
 ## Make variants
 
-The dialog that runs `variant.fanOut` (the command keeps its code name; `spec/make-variants.md`, "Names"). Built as "Fan out"; the new words (MV-1) and the source mode (MV-6) are not built.
+The dialog that runs `variant.fanOut` (the command keeps its code name; `spec/make-variants.md`, "Names"). Built, with the new words (MV-1) and the source mode (MV-6).
 
 `src/renderer/dialogs/fan-out/`: `FanOutButton` ("Make variants…", `plus` icon) and the dialog, `kind="run"` (`fan-out-chips.tsx`, `chip-group.tsx`, `fit-choices.tsx`, `cost-line.tsx`, `fan-out-costs.ts`, `fan-out-model.ts`); MV-6 adds `make-from-variant.tsx`, the dialog opened from a tile's menu.
 

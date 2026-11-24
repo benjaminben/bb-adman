@@ -160,7 +160,7 @@ Background: `fillColor` null; shade null.
 
 `starterLayoutPatches(layout, size, layers)` returns the `updates` of one `layer.updateMany` for the variant [D-094]. Pure. It matches layers by `key`, which is the slot ID in every master and every variant made from it.
 
-**Layouts when making variants** (Not built, MV-2 and MV-3). "Make variants" finds the source's layout from where its boxes sit (`layoutOfLayers`) and puts each box still on that layout where the layout puts it at the new size, through the same `geometryOf` and `frameOf`. It changes only geometry; text sizes are fitted by `spec/make-variants.md`, "Text that fits", from the layer's own style, not from the layout's text rules. "Layout…" itself does not change.
+**Layouts when making variants** (built, MV-2 and MV-3). "Make variants" finds the source's layout from where its boxes sit (`layoutOfLayers`) and puts each box still on that layout where the layout puts it at the new size, through the same `geometryOf` and `frameOf`. It changes only geometry; text sizes are fitted by `spec/make-variants.md`, "Text that fits", from the layer's own style, not from the layout's text rules. "Layout…" itself does not change.
 
 - **Which layers.** Each layer whose `key` is a slot the layout names, of the matching type (`text` for a copy slot, `image` for a picture slot), and the layer with key `background`. A locked layer is left out. A layer the layout does not name (a user-added layer, another slot) is left out. When nothing is left, the list is empty and the dialog says so.
 - **Geometry.** `x`, `y`, `width`, `height` from the layout for this variant's size, and `rotation: 0`. `crop` is not sent: a crop stays, and the Scene draws it covering the new box. The background gets the whole canvas.
