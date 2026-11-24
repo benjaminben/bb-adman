@@ -1,6 +1,6 @@
 // The brief form's values and what "Create campaign" sends (spec/screens-campaign.md, "The
 // brief form"; spec/brief-and-templates.md, "From a brief to a campaign"; spec/subject-photos.md,
-// "The model"). Pure, no React. formFromDraft fills the form from a parsed brief (or opens it
+// "The model"; spec/brief-brand.md, "The brief form"). Pure, no React. formFromDraft fills the form from a parsed brief (or opens it
 // empty); planFromForm turns the form into subject.create inputs, the asset.update list that
 // attaches the photos, and one campaign.create input, or into problem lines.
 import type { BriefDraft } from '@/shared/schemas/brief'
@@ -13,6 +13,8 @@ import { briefSubjectIds } from '@/renderer/screens/project-home/campaign-input'
 import { formProblems, schemaCheck, subjectIds } from './brief-form-problems'
 import { attachPlan, type ProjectImages } from './brief-form-photos'
 import { chosenSizes, sizesFromDraft, type SizeChoice } from './brief-form-sizes'
+import { brandFromDraft, brandPlan, type BrandChoice, type BriefBrand } from './brief-form-brand'
+import { adsPerOf, type AdsPer } from '@/shared/brief/brand'
 
 export type FormPhoto = {
   assetId: string
@@ -52,6 +54,8 @@ export type BriefFormValues = {
   }
   copy: BriefDraft['copy']
   placeSubjectPhoto: boolean // a new ad starts with a subject photo placed
+  brand: BrandChoice
+  adsPer: AdsPer
 }
 
 export type CampaignPlan =
@@ -84,6 +88,7 @@ export function formFromDraft(
   reply: BriefParsed | null,
   heldSubjectIds: string[],
   briefPhotos: BriefPhotos = [],
+  briefBrand?: BriefBrand,
 ): BriefFormValues {
   const draft: BriefDraft = reply?.draft ?? {}
   const own = draft.languages ?? []
@@ -124,6 +129,8 @@ export function formFromDraft(
     },
     copy: draft.copy,
     placeSubjectPhoto: false,
+    brand: brandFromDraft(draft, briefBrand),
+    adsPer: adsPerOf(draft.adsPer).adsPer,
   }
 }
 
@@ -168,6 +175,7 @@ export function planFromForm(
   const problems = formProblems(values, read)
   if (problems.length > 0) return { ok: false, problems }
   const { rules } = values
+  const brand = brandPlan(values.brand)
   const made = subjectIds(values.subjects)
   const ids = values.subjects.map((s, i) => ({ s, id: made[i] ?? '' }))
   const checked = schemaCheck({
@@ -186,12 +194,16 @@ export function planFromForm(
       requiredWords: unlessEmpty(wordLists(rules.requiredWords, languages)),
       prohibitedWords: unlessEmpty(wordLists(rules.prohibitedWords, languages)),
       copy: values.copy,
+      ...brand.brief,
+      // "campaign" is left out: campaign.create reads a missing adsPer as campaign.
+      ...(values.adsPer === 'subject' ? { adsPer: values.adsPer } : {}),
     },
     subjectMap: ids.map(({ id }) => ({ subjectId: id, create: false })),
     languages,
     sizes,
     copyRuleSetFrom: rules.mode === 'copy' ? (rules.copyFrom ?? undefined) : undefined,
     placeSubjectPhoto: values.placeSubjectPhoto,
+    ...(brand.campaign === undefined ? {} : { brand: brand.campaign }),
   })
   if (!checked.ok) return checked
   const subjects = ids
