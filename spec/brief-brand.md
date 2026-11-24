@@ -137,7 +137,7 @@ removedBrandAssets(values: BriefFormValues, roles: BrandRole[]): string[]
 - `removedBrandAssets` gives the IDs to send `asset.remove` for when roles leave the form: those with `added` true that no other brand role and no subject photo of the form still holds, each once. Remove and Cancel both use it.
 - The brand adds no problem line.
 
-**Loading** (`brief-load/use-brief-brand.ts`). After the photos are imported (`spec/subject-photos.md`), each distinct path of `brandFiles.files` is imported with one `asset.import { projectId, paths: [path], library: 'asset', copy: true }`, in role order; roles sharing a path share its result. A role given by asset ID gets `{ assetId, added: false }`. The result is `{ assetId: assetIds[0], added: not in reusedAssetIds }`. Meanwhile the line "Adding the brief's brand files…" shows (role `status`). If the page goes away, every added brand asset is removed again.
+**Loading** (`brief-load/use-brief-brand.ts`). After the photos are imported (`spec/subject-photos.md`), each distinct path of `brandFiles.files` is imported with one `asset.import { projectId, paths: [path], library: 'asset', copy: true }`, in role order; roles sharing a path share its result. A role given by asset ID gets `{ assetId, added: false }`. The result is `{ assetId: assetIds[0], added: not in reusedAssetIds }`; a reply with no asset ID leaves the role unset and adds no note (the command does not give such a reply for one accepted path). Meanwhile the line "Adding the brief's brand files…" shows (role `status`). If the page goes away, every added brand asset is removed again.
 
 **Notes** (`brand-notes.ts`), as plain text, `{name}` from `pictureName`, `{text}` cleaned with `cleanLineText`. `{what}` is "logo", "headline font" or "text font".
 
@@ -164,6 +164,8 @@ removedBrandAssets(values: BriefFormValues, roles: BrandRole[]): string[]
 6. A list "Notes on the brand" when there are notes.
 
 The form adds no brand files of its own (A-399): the user removes, and sets others after Create in Rules or the editor. No path is drawn.
+
+As built (`brand-fields/`: `brand-fields.tsx`, `brand-files.tsx` for the logo and font lines, `ads-per-field.tsx`, `use-project-fonts.ts`): each hint is muted text that is always on screen, not a tooltip. The project's fonts are read only while the form holds a brand font, and again on `project.changed`; a refused read shows the font with no name.
 
 **Ad sets.** Under the "Place first photo" switch, when the form has two or more subject rows: a segment pair, group "Ad sets", "Together" | "Per subject" (named "One set of ads for all subjects" and "One set of ads per subject"). Hint: "Per subject makes one direction for each subject, each with its own first ad." With one row it is hidden and the value is kept.
 
