@@ -95,6 +95,20 @@ export async function fanOut(page: Page, direction: string, ask: FanOut): Promis
   await expect(dialog).toHaveCount(0)
 }
 
+// MV-6: the tile's "Make variants from this one…", the chips pressed, "Make {n} variants". The
+// dialog is named "Make variants from {title} · {size} · {language}".
+export async function makeVariantsFrom(page: Page, t: Locator, ask: FanOut): Promise<void> {
+  await tileMore(page, t, 'Make variants from this one…')
+  const dialog = page.getByRole('dialog', { name: /^Make variants from / })
+  for (const name of [...(ask.sizes ?? []), ...(ask.languages ?? [])]) {
+    const chip = dialog.getByRole('button', { name, exact: true })
+    if ((await chip.getAttribute('aria-pressed')) !== 'true') await chip.click()
+    await expect(chip).toHaveAttribute('aria-pressed', 'true')
+  }
+  await dialog.getByRole('button', { name: /^Make (\d+ )?variants?$/ }).click()
+  await expect(dialog).toHaveCount(0)
+}
+
 // "Sync {n} out of date…" and the review, once it has read the changes.
 export async function openSyncReview(page: Page, direction: string, count: number) {
   await section(page, direction)
