@@ -2,7 +2,7 @@
 
 How new variants of a direction are made: where each box goes in a new size, how text gets a size that fits, the screen's name for it, and making new variants from any variant, not only from the master [D-108]. Read with `spec/links-and-sync.md` ("Fan-out"), `spec/data-rules.md` (the follow rules), `spec/starter-layouts.md` and `spec/screens-variants.md` ("Make variants").
 
-**State.** Built: the name (MV-1) and the pure helpers `place-box.ts`, `source-layout.ts`, `fit-text.ts` with the `sourceVariantId` schema field (MV-2); and the placement in `planVariant` (MV-3) and the fit when a translation run first fills a text (MV-5). Not built: the rest. Slices MV-1 to MV-9 in `spec/phases/make-variants.md`. Assumptions A-407 to A-420 are at the end of this file.
+**State.** Built: the name (MV-1) and the pure helpers `place-box.ts`, `source-layout.ts`, `fit-text.ts` with the `sourceVariantId` schema field (MV-2); the placement in `planVariant` (MV-3), a new variant's values from its source and `planNewVariant` (MV-4), and the fit when a translation run first fills a text (MV-5). Not built: the dialog from a tile, the command, the quickstart (MV-6 to MV-9). Slices MV-1 to MV-9 in `spec/phases/make-variants.md`. Assumptions A-407 to A-420 are at the end of this file.
 
 [REQ: FR-075, FR-076, FR-078–FR-083, FR-098, R-02]
 

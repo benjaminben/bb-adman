@@ -58,7 +58,8 @@ New files only, plus one schema field. Nothing calls them yet.
 - **Tests first:**
   - `tests/unit/shared/links/new-variant-plan.test.ts`: from the master in its language at 1920 × 1080, no override is added and sizes stay; a `de` variant at 1080 × 1080 with brief words of 120 letters gets 47 and `style.fontSize` in `overrides`; at 300 × 250 the measures are scaled and each one that differs is an override path; the rest of the style equals the master's; a new size and language take the same-size plan's boxes and fit their own words.
   - `tests/unit/shared/links/fan-out-plan-source.test.ts`: one case per row of the "Links after making" table; a source's stale group stays stale and `variantOutOfDate` of the planned layers equals the source's for groups that still follow; a `geometry` path dropped at another size and a `copy` path dropped in another language; an unlinked layer copied with `linked = 0` and, in another language, status `missing` with its words kept; a hidden and a locked layer stay so; a master layer the source lacks is not added; with no `source` the result equals the master-only plan.
-- **Must not touch:** `place-box.ts`, `source-layout.ts`, `fit-text.ts`, `translated-layers.ts`, `sync-plan.ts`, anything under `src/main/` and `src/renderer/`.
+- **Must not touch:** `place-box.ts`, `source-layout.ts`, `fit-text.ts`, `translated-layers.ts`, anything under `src/main/` and `src/renderer/`. In `sync-plan.ts`, only `planAdd`'s `layoutLayers` (tested in `sync-plan-layout.test.ts`).
+- **As built:** `NewVariantInput = PlanInput & { campaign: Pick<CampaignRow, 'primaryLanguage' | 'brief'> }`. Only a missing `source` means the master: the master's layers are not linked, so a caller must leave `source` out when the source is the master. The brief's copy is applied only when the target's language differs from the source's, and only to linked layers.
 
 ## MV-5 — The fit when a translation arrives (class B)
 
