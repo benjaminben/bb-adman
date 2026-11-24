@@ -1,12 +1,6 @@
-# AdManager
+# Quickstart (CLI)
 
-AdManager is a desktop app for making ad campaigns. You give it a brief and pictures of your products or people. It makes one ad for each size and language, lets you edit every ad by layers, checks them, and exports the finished pictures and videos. It runs on your own computer, on macOS and Windows.
-
-In code, file names and folders the app is called "Adman".
-
-## Quickstart
-
-Make a set of ads from one brief on the command line. No app window, no project file. You need Node 24 and a Google Gemini API key.
+Run the core pipeline via CLI, requires Node 24 and a Google Gemini API key. First clone this repo, then:
 
 ```
 npm install
@@ -14,47 +8,33 @@ npx playwright install chromium
 npm run quickstart -- --provider=gemini --gemini_api_key=<key>
 ```
 
-The run starts by asking which example to make:
+The CLI asks you to select an option from `quickstart/examples/<name>/brief.yaml`. It creates a set of ads based on the selected brief and its referenced assets. Output includes:
 
-```
-Which example do you want to run?
+1. generated images of the brief's referenced products;
+2. copy laid out with the brief's layout, brand fonts and colours;
+3. variants by language and aspect ratio;
+4. translations (generated if not provided);
+5. assets for all layers + composites;
+6. `layout.json` describing the placement of text and overlay layers;
 
-  1. simple-routine   2 subjects in one picture, 3 languages, 3 sizes: 9 ads
-  2. summer-splash    one set of ads for each of 2 subjects, 2 languages, 3 sizes: 12 ads
+Sanity checks run on every ad (logo shown, brand colours, banned and required words, translations approved, text that fits). A brief with `adsPer: subject` (as in `summer-splash`) makes one set of ads per subject, each with its own picture.
 
-Type a number and press Enter (Enter alone runs 1):
-```
-
-It then reads that example's brief (`quickstart/examples/<name>/brief.yaml`) with the photos, logo and brand fonts beside it, prints the ads it will make, then:
-
-1. makes one picture of the products with Gemini;
-2. lays the words out with the brief's layout, brand fonts and colours;
-3. makes each other size and language the way the app's "Make variants" does: the words go where the layout puts them at that size, and longer words get a smaller size that fits;
-4. translates the words the brief has none for, and fits them the same way;
-5. extends the picture to each other size;
-6. draws every ad with the app's own layer renderer;
-7. runs the app's checks on every ad (logo shown, brand colours, banned and required words, translations approved, text that fits).
-
-A brief with `adsPer: subject` (as in `summer-splash`) makes one set of ads per subject, each with its own picture.
-
-Each ad lands in `quickstart/output/<campaign>/<language>/<size>/`, or `quickstart/output/<campaign>/<subject>/<language>/<size>/` for one set per subject:
-
-- `final.png`, the finished ad;
-- `picture.png`, the picture as the model made it, with no text;
-- `layers/`, each layer alone at the ad's size (text layers are see-through);
-- `layout.json`, each layer's text, box and style.
+Each ad lands in `quickstart/output/<campaign>/<language>/<size>/`, or `quickstart/output/<campaign>/<subject>/<language>/<size>/` for one set per subject.
 
 `quickstart/output/<campaign>/report.json` holds the models, each set's prompt and AI calls with their time, and every check's result for every ad. The run also prints one line per ad: "all checks passed" or what was flagged. A flag does not stop the run.
 
-To get a different result, edit the example's `brief.yaml`: the words, the languages, the sizes, the layout, the brand, or the photos it points at.
+**To get a different result**, edit the example's `brief.yaml`: the words, the languages, the sizes, the layout, the brand, or the photos it points at.
 
-- `--provider=fake` runs every step with grey placeholder pictures. It is free and needs no key.
-- `--example=summer-splash` (or `--example=simple-routine`) picks the example with no question. `--brief=<file>` runs any other brief. Where there is no terminal to ask in (a script, a pipe), `simple-routine` runs.
-- `--ai_layout` adds one Gemini call that moves the words to suit the picture. The other sizes keep them near the same edges.
-- `--model=<gemini model>` picks the picture model. `npm run quickstart -- --help` lists every option.
-- `GEMINI_API_KEY` in the environment works in place of `--gemini_api_key`.
-- The `playwright` line can be skipped when Google Chrome or Microsoft Edge is installed.
-- In Windows PowerShell, if the options seem ignored, run `npx tsx quickstart/cli.ts --provider=gemini --gemini_api_key=<key>`.
+See `quickstart/cli.ts` for more info and options.
+
+<br/>
+
+---
+# AdManager
+
+AdManager is a desktop app for making ad campaigns. You give it a brief and pictures of your products or people. It makes one ad for each size and language, lets you edit every ad by layers, checks them, and exports the finished pictures and videos. It runs on your own computer, on macOS and Windows.
+
+In code, file names and folders the app is called "Adman".
 
 ## What it does
 

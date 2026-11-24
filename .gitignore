@@ -13,6 +13,8 @@ quickstart/output/
 demo.zip
 demo-extras.txt
 design/prototype/photos/
+/client
+/design
 
 # tooling
 node_modules/
