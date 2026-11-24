@@ -3,11 +3,13 @@
 // job's own request, read from this project's file, never from the input; a layer is written
 // only when it is a text layer of the job's campaign, direction and language. A layer changed
 // or approved since the job was queued is left alone. Writes `proposed`, source `ai`, never
-// `approved`. Not undoable, as asset.addGenerated is not.
+// `approved`. Not undoable, as asset.addGenerated is not. A layer that was `missing` gets its
+// font size fitted to the new words (MV-5, fit-written.ts).
 import type Database from 'better-sqlite3'
 import { defineCommand } from '@/main/commands/types'
 import type { CoreDeps } from '@/main/core-deps'
 import { readWireRow } from '@/main/db/rows'
+import { fitWrittenTexts } from '@/main/translation/fit-written'
 import { sameText, textValuesOf, writeTexts, type TextWrite } from '@/main/translation/write-text'
 import {
   translationWriteInput,
@@ -96,7 +98,10 @@ export function translationWrite(deps: CoreDeps) {
       const job = runningJob(db, input.jobId)
       const items = new Map(input.items.map((i) => [i.key, i.text]))
       const writes = writesFor(db, job, items)
-      if (writes.length > 0) writeTexts(ctx, writes, deps.now().toISOString())
+      if (writes.length > 0) {
+        writeTexts(ctx, writes, deps.now().toISOString())
+        fitWrittenTexts(ctx, writes)
+      }
       const data: TranslationWriteReply = { written: writes.length }
       return { data, log: { campaignId: job.row.campaignId ?? undefined } }
     },
