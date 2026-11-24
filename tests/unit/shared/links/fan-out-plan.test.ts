@@ -52,21 +52,21 @@ describe('planVariant, other layers at a new size [FR-075]', () => {
       name: '1080×1080 to 1080×1920',
       target: { width: 1080, height: 1920 },
       centre: box(270, 690, 540, 540, 15),
-      corner: box(0, 39, 200, 100),
+      corner: box(0, 0, 200, 100),
     },
     {
       name: '1080×1080 to 1920×1080',
       target: { width: 1920, height: 1080 },
       centre: box(690, 270, 540, 540, 15),
-      corner: box(78, 0, 200, 100),
+      corner: box(0, 0, 200, 100),
     },
     {
       name: '1080×1080 to 540×960 scales by the smaller ratio',
       target: { width: 540, height: 960 },
       centre: box(135, 345, 270, 270, 15),
-      corner: box(0, 19, 100, 50),
+      corner: box(0, 0, 100, 50),
     },
-  ])('$name keeps the centre share, whole pixels, rotation kept', ({ target, centre, corner }) => {
+  ])('$name anchors each box to its nearer edges, rotation kept', ({ target, centre, corner }) => {
     const planned = planVariant(input({ target: { ...target, language: 'en-GB' } }))
     expect(geometryOf('centre', planned)).toEqual(centre)
     expect(geometryOf('corner', planned)).toEqual(corner)
@@ -74,7 +74,7 @@ describe('planVariant, other layers at a new size [FR-075]', () => {
 
   it('a box never shrinks below 1 pixel', () => {
     const planned = planVariant(input({ target: { width: 108, height: 192, language: 'en-GB' } }))
-    expect(geometryOf('tiny', planned)).toEqual(box(50, 89, 1, 1))
+    expect(geometryOf('tiny', planned)).toEqual(box(50, 50, 1, 1))
   })
 })
 
