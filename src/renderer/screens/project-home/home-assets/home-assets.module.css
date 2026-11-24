@@ -1,0 +1,31 @@
+/* app-style */
+/* The home page's Assets block (D-109; spec/app-style-parts.md "Section"). Its header row is
+   drawn as a Section header, with --space-2 above and below its controls so a button never
+   touches a line. The block is the end of the page: no line under it or its last Section. */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-inline);
+  min-height: var(--section-header-height);
+  padding: var(--space-2) 0;
+}
+.title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--type-section-size);
+  font-weight: var(--type-section-weight);
+  line-height: var(--leading-tight);
+  letter-spacing: normal;
+  color: var(--color-text-secondary);
+}
+.end {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-inline);
+  margin-left: auto;
+}
+.groups > section:last-child {
+  border-bottom: 0;
+}

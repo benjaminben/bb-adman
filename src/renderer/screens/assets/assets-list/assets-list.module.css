@@ -1,0 +1,41 @@
+/* app-style */
+/* The library's groups (AST-1; D-109): rows as a column, pictures as a grid. In the panel, two
+   pictures a row, each at most --thumbnail-tile wide; on the page, pictures and subject cards
+   fill the width with as many columns as fit. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-tight);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, var(--thumbnail-tile)));
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pageGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--thumbnail-tile), 1fr));
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--width-column-min), 1fr));
+  gap: var(--space-3);
+}
+.empty {
+  margin: 0;
+  font-size: var(--type-body-size);
+  color: var(--color-text-muted);
+}
+.refused {
+  margin: var(--space-3) 0 0;
+}

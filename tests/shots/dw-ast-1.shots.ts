@@ -113,7 +113,9 @@ test('the Assets panel: subjects and pictures, then clips and fonts', async () =
   }
   await fillProject(page, box.root, state.openProjects[0]!.projectId)
 
-  await page.getByRole('button', { name: 'Open assets' }).click()
+  // D-109: the panel is drawn only with a campaign open; it opens from the campaign head.
+  await page.getByRole('button', { name: 'Open Harbour Blend' }).click()
+  await page.getByRole('button', { name: 'Assets', exact: true }).click()
   const pictures = panel(page).getByRole('region', { name: 'Pictures' })
   await expect(pictures.locator('img')).toHaveCount(3)
   await expect(pictures.getByText('File not found')).toBeVisible()

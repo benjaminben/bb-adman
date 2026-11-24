@@ -1,11 +1,13 @@
 // The project page (SPEC 14 1.41 TP-1; spec/screens-campaign.md, "Project home"; HOME-1): the
-// title, then the Campaigns Section and the Assets header row, and the drop target. The
+// title, then the Campaigns Section and the Assets block, and the drop target. The
 // project's file path is the title's tooltip and accessible description only, never printed
 // (spec/security.md, "Paths in the renderer"). Close and Package are in the project menu (SH-3).
 // P3-10 (spec/editor.md, "The shell"): the page is what the project's shown tab holds. On the
 // Project tab it shows the sections; on a campaign tab, the campaign page in their place,
 // full width. Opening a campaign opens its tab in the nav store. The drop target stays
-// mounted while a campaign is shown, and so does the Assets panel (R2C-5), in one AssetsScope.
+// mounted while a campaign is shown. The Assets panel (R2C-5) is drawn only with a campaign
+// shown: the home draws the library in its own Assets block (D-109). Its open state lives in
+// the one AssetsScope, so it shows again in the next campaign.
 // BriefLoad draws the Sections around its buttons, or its form in their place.
 import { NavScope, useNav } from '@/renderer/app/nav-context'
 import { PROJECT_TAB, projectNav } from '@/renderer/stores/nav-store'
@@ -32,12 +34,7 @@ function ProjectPage(props: Props) {
   const open = (campaignId: string) => openCampaign(projectId, campaignId)
   const subjects = data?.subjects ?? []
   const titleId = `project-${projectId}`
-  const kept = (
-    <>
-      <DropImport projectId={projectId} projectName={project.name} subjects={subjects} />
-      <AssetsPanel projectId={projectId} subjects={subjects} />
-    </>
-  )
+  const drop = <DropImport projectId={projectId} projectName={project.name} subjects={subjects} />
   if (shown !== PROJECT_TAB) {
     return (
       <>
@@ -49,7 +46,8 @@ function ProjectPage(props: Props) {
             onBack={() => showCampaign(projectId, PROJECT_TAB)}
           />
         </div>
-        {kept}
+        {drop}
+        <AssetsPanel projectId={projectId} subjects={subjects} />
       </>
     )
   }
@@ -79,7 +77,7 @@ function ProjectPage(props: Props) {
           )}
         />
       )}
-      {kept}
+      {drop}
     </section>
   )
 }

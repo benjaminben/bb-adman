@@ -34,29 +34,6 @@
   color: var(--color-text);
   pointer-events: auto;
 }
-/* The Assets header row, drawn as a Section header (spec/app-style-parts.md "Section"). */
-.assets {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-inline);
-  min-height: var(--section-header-height);
-  border-bottom: var(--border-width) solid var(--color-line);
-}
-.assetsTitle {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: var(--type-section-size);
-  font-weight: var(--type-section-weight);
-  line-height: var(--leading-tight);
-  letter-spacing: normal;
-  color: var(--color-text-secondary);
-}
-.assetsEnd {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--gap-inline);
-  margin-left: auto;
-}
 /* R2C-5: the campaign page keeps its raised parts (the editor's sticky heads) to itself, so
    the Assets panel and the dialogs mounted after it are drawn over all of it. */
 .campaign {
