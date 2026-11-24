@@ -2,7 +2,7 @@
 
 How new variants of a direction are made: where each box goes in a new size, how text gets a size that fits, the screen's name for it, and making new variants from any variant, not only from the master [D-108]. Read with `spec/links-and-sync.md` ("Fan-out"), `spec/data-rules.md` (the follow rules), `spec/starter-layouts.md` and `spec/screens-variants.md` ("Make variants").
 
-**State.** Built: the name (MV-1) and the pure helpers `place-box.ts`, `source-layout.ts`, `fit-text.ts` with the `sourceVariantId` schema field (MV-2); the placement in `planVariant` (MV-3), a new variant's values from its source and `planNewVariant` (MV-4), and the fit when a translation run first fills a text (MV-5). Not built: the dialog from a tile, the command, the quickstart (MV-6 to MV-9). Slices MV-1 to MV-9 in `spec/phases/make-variants.md`. Assumptions A-407 to A-420 are at the end of this file.
+**State.** Built (MV-1 to MV-8): the name, the placement and the text fit in `planNewVariant`, the fit when a translation run first fills a text, the tile's menu item and dialog, `variant.fanOut` with `sourceVariantId`, a video's clips copied, and the quickstart on the same rule. Left: the end-to-end test (MV-9). Slices in `spec/phases/make-variants.md`. Assumptions A-407 to A-420 are at the end of this file.
 
 [REQ: FR-075, FR-076, FR-078–FR-083, FR-098, R-02]
 
@@ -149,6 +149,8 @@ What counts as changed on the new variant: its override paths, which are the sou
 - Reply, inverse (`variant.remove`) and the 200 limit are unchanged. The snapshots of an undo carry the copied clips.
 
 `variant.add` (and the agent's `add_variant`) stays master-only. It uses the new placement and fit.
+
+**As built (MV-7).** `planInputOf` in `src/main/links/fan-out-write.ts` builds the plan input for both commands and leaves `source` out when the source is the master. The `sound` setting is copied only to a new video variant made from a video source; a new image variant keeps the default. A clip row of the source that fails the clip checks is left out, and when none is left the new variant gets the first clip, as for a source with no clips. The source's own size label and language are accepted even when the campaign's lists no longer hold them, as the master's are.
 
 ## Agents
 
