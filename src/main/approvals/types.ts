@@ -1,4 +1,8 @@
+import type { EventMap } from '@/shared/schemas/events'
 import type { GalleryRuns } from './runs'
+
+// One approvals.progress event without its IDs: the step and its counts.
+export type PublishProgress = Omit<EventMap['approvals.progress'], 'projectId' | 'campaignId'>
 
 // The approvals services on CoreDeps (spec/approvals.md "Kept passwords", "Pictures"). AP-5
 // fixes these shapes; AP-6 fills the password store and AP-7 the picture stores.
@@ -37,11 +41,5 @@ export type ApprovalsDeps = {
   // changed the local tables.
   changed(projectId: string, campaignId: string): void
   // Sends approvals.progress to the app window only: IDs and counts, nothing else.
-  progress(
-    projectId: string,
-    campaignId: string,
-    step: 'making' | 'sending',
-    done: number,
-    total: number,
-  ): void
+  progress(projectId: string, campaignId: string, counts: PublishProgress): void
 }

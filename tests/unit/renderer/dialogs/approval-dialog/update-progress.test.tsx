@@ -1,16 +1,19 @@
-// R2V-7 (spec/phases/round-2-approvals-video.md "The dialog"): while "Update gallery" runs, the
-// waiting line follows approvals.progress for this campaign only, and "Stop" sends
-// approvals.cancelUpdate once, then reads "Stopping…".
+// R2V-7, D-110 (spec/approvals.md "The approval link dialog", "An update in the background"):
+// while "Update gallery" runs, a line of words over the JobProgress bar follows
+// approvals.progress for this campaign only, "Stop" sends approvals.cancelUpdate once, then
+// reads "Stopping…", and the dialog says it can be closed.
 import { describe, expect, it } from 'vitest'
 import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ApprovalDialog } from '@/renderer/dialogs/approval-dialog'
+import type { EventMap } from '@/shared/schemas/events'
 import type { Result } from '@/shared/schemas/result'
 import { makeFakeApi } from '../../fake-api'
 import { axeViolations, renderApp } from '../../render'
 import { C, P, TITLES, VARIANTS, forCampaign } from '../../stores/approvals-fixture'
 
 const ids = { projectId: P, campaignId: C }
+type Step = EventMap['approvals.progress']['step']
 
 async function updating() {
   const fake = makeFakeApi()
@@ -23,23 +26,55 @@ async function updating() {
     fake,
   )
   await user.click(screen.getByRole('button', { name: 'Update gallery' }))
-  const progress = (step: 'making' | 'sending', done: number, total: number, campaignId = C) =>
-    act(() => fake.emit('approvals.progress', { projectId: P, campaignId, step, done, total }))
+  const progress = (step: Step, done: number, total: number, units = [0, 0], campaignId = C) =>
+    act(() =>
+      fake.emit('approvals.progress', {
+        projectId: P,
+        campaignId,
+        step,
+        done,
+        total,
+        unitsDone: units[0]!,
+        unitsTotal: units[1]!,
+      }),
+    )
   return { fake, user, progress, finish: (r: Result<unknown>) => act(() => finish(r)) }
 }
 
-describe('the waiting line of "Update gallery" [R2V-7]', () => {
+const bar = () => screen.getByRole('progressbar')
+
+describe('the progress of "Update gallery" [R2V-7, D-110]', () => {
+  it('draws the words over a bar that moves with no value before the first event', async () => {
+    await updating()
+    expect(screen.getByText('Updating the gallery…')).toBeInTheDocument()
+    expect(bar()).not.toHaveAttribute('aria-valuenow')
+    expect(screen.getByText('You can close this dialog. The update keeps going.')).toBeVisible()
+    expect(await axeViolations()).toEqual([])
+  })
+
   it('follows the progress of this campaign and ignores another campaign', async () => {
     const { progress } = await updating()
-    expect(screen.getByText('Updating the gallery…')).toBeInTheDocument()
-    progress('making', 0, 2)
+    progress('drawing', 0, 2, [0, 4])
+    expect(screen.getByText('Sending picture 1 of 2…')).toBeInTheDocument()
+    expect(bar()).toHaveAttribute('aria-valuenow', '0')
+    progress('making', 0, 2, [1, 4])
     expect(screen.getByText('Making video 1 of 2…')).toBeInTheDocument()
-    progress('sending', 1, 2)
+    expect(bar()).toHaveAttribute('aria-valuenow', '25')
+    progress('sending', 1, 2, [3, 4])
     expect(screen.getByText('Sending video 2 of 2…')).toBeInTheDocument()
-    progress('making', 0, 5, 'another-campaign')
+    progress('making', 0, 5, [0, 9], 'another-campaign')
     expect(screen.getByText('Sending video 2 of 2…')).toBeInTheDocument()
-    progress('making', 0, 5, C)
-    expect(screen.getByText('Making video 1 of 5…')).toBeInTheDocument()
+    expect(bar()).toHaveAttribute('aria-valuenow', '75')
+    progress('finishing', 0, 0, [4, 4])
+    expect(screen.getByText('Finishing…')).toBeInTheDocument()
+    expect(bar()).toHaveAttribute('aria-valuenow', '100')
+  })
+
+  it('has no bar value when the run has no units', async () => {
+    const { progress } = await updating()
+    progress('finishing', 0, 0, [0, 0])
+    expect(screen.getByText('Finishing…')).toBeInTheDocument()
+    expect(bar()).not.toHaveAttribute('aria-valuenow')
   })
 
   it('sends approvals.cancelUpdate on "Stop", then disables it and reads "Stopping…"', async () => {

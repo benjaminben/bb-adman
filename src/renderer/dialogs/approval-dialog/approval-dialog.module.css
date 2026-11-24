@@ -52,10 +52,10 @@
   margin: var(--space-3) 0 0;
   color: var(--color-text-muted);
 }
-/* The update's waiting line with "Stop" beside it. */
+/* The update's line of words, the bar with "Stop" under it, and the note (D-110). */
 .progress {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--space-2);
   margin-top: var(--space-3);
 }

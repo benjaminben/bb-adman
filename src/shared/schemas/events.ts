@@ -30,14 +30,17 @@ export type EventMap = {
   'thumbnail.changed': { projectId: string; variantId: string }
   // spec/approvals.md: the approvals tables changed. App window only; no email, slug or address.
   'approvals.changed': { projectId: string; campaignId: string }
-  // round-2-approvals-video.md "Progress and Stop": before each clip is made and each clip
-  // upload of an "Update gallery". App window only; IDs and counts, no path, name or title.
+  // approvals-commands.md "Progress and Stop" (D-110): before each still is drawn, each clip is
+  // made and each clip upload of an "Update gallery", and once before the gallery request.
+  // App window only; IDs and counts, no path, name or title.
   'approvals.progress': {
     projectId: string
     campaignId: string
-    step: 'making' | 'sending'
+    step: 'drawing' | 'making' | 'sending' | 'finishing'
     done: number
     total: number
+    unitsDone: number
+    unitsTotal: number
   }
   // spec/phases/phase-10.md, ask flow (A-238): an agent waits for the user's answer. The action
   // and target are lines for the dialog; no ID of the target, no input, no path. agentClient is

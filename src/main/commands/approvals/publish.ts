@@ -62,8 +62,7 @@ export function approvalsPublish(deps: CoreDeps) {
           variants,
           published,
           signal: run.controller.signal,
-          onStep: (step, done, total) =>
-            deps.approvals.progress(pair.projectId, pair.campaignId, step, done, total),
+          onStep: (counts) => deps.approvals.progress(pair.projectId, pair.campaignId, counts),
           onSending: () => (run.sent = true),
         })
       } finally {

@@ -109,14 +109,16 @@ describe('the approvals event and secret name [spec/approvals.md "Settings", "Qu
 })
 
 describe('approvals.progress [R2V-7, SV-12]', () => {
-  it('lists approvals.progress, carrying the two IDs, the step and two counts only', () => {
+  it('lists approvals.progress, carrying the two IDs, the step and four counts only [D-110]', () => {
     expect(EVENT_NAMES).toContain('approvals.progress')
     expectTypeOf<EventMap['approvals.progress']>().toEqualTypeOf<{
       projectId: string
       campaignId: string
-      step: 'making' | 'sending'
+      step: 'drawing' | 'making' | 'sending' | 'finishing'
       done: number
       total: number
+      unitsDone: number
+      unitsTotal: number
     }>()
   })
 })
