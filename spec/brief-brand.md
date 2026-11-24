@@ -78,7 +78,7 @@ type BrandFiles = { files: BrandFile[]; notes: BrandFileNote[] }
 type BriefParsed = { draft; primaryLanguage; subjectPictures?; brandFiles?: BrandFiles }
 ```
 
-`brief.parse` always sets `brandFiles`; the AI reader never does. `files` is in role order (logo, heading, body); a role the brief does not name, or one with a note, has no entry.
+`brief.parse` sets `brandFiles` when the brief names a logo or a font, and leaves it out otherwise; a missing one means no brand files. The AI reader never sets it. `files` is in role order (logo, heading, body); a role the brief does not name, or one with a note, has no entry. A blank logo or font text gets a note, as a blank picture text does.
 
 ## Shared helpers (one owner each; the app and the quickstart call them)
 
