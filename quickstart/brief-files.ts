@@ -8,6 +8,7 @@ import { readFontFamily } from '@/main/assets/font-name'
 import { SNIFF_BYTES, sniffType } from '@/main/assets/sniff'
 import { pictureSize } from '@/main/providers/picture-size'
 import type { ImageFile } from '@/main/providers/types'
+import { pictureName } from '@/shared/brief/picture-name'
 import type { AssetKind, FileType } from '@/shared/config/file-types'
 import type { BrandRole } from '@/shared/schemas/commands/brief'
 import { fileNoteLine, type FileReason, type FileWhat } from './notes'
@@ -70,19 +71,31 @@ export async function readBriefFile(
   return { ok: true, bytes, mime: type.mime }
 }
 
+// A photo as read, named by the last part of its path.
+export type SubjectPhoto = { name: string; file: ImageFile }
+
+export type SubjectPhotos = {
+  // Every photo, in brief order.
+  files: ImageFile[]
+  // The photos of each subject, in the order of plan.subjects.
+  bySubject: SubjectPhoto[][]
+  notes: string[]
+}
+
 // Each subject's photos, in brief order; a photo that cannot be used gets a note.
-export async function readSubjectPhotos(
-  plan: Plan,
-  briefFolder: string,
-): Promise<{ files: ImageFile[]; notes: string[] }> {
-  const files: ImageFile[] = []
+export async function readSubjectPhotos(plan: Plan, briefFolder: string): Promise<SubjectPhotos> {
+  const bySubject: SubjectPhoto[][] = []
   const notes: string[] = []
-  for (const text of plan.subjects.flatMap((subject) => subject.pictures)) {
-    const file = await readBriefFile(briefFolder, text, 'image')
-    if (file.ok) files.push({ bytes: file.bytes, mime: file.mime })
-    else notes.push(fileNoteLine('photo', text, file.reason))
+  for (const subject of plan.subjects) {
+    const photos: SubjectPhoto[] = []
+    for (const text of subject.pictures) {
+      const file = await readBriefFile(briefFolder, text, 'image')
+      if (file.ok) photos.push({ name: pictureName(text), file: { bytes: file.bytes, mime: file.mime } })
+      else notes.push(fileNoteLine('photo', text, file.reason))
+    }
+    bySubject.push(photos)
   }
-  return { files, notes }
+  return { files: bySubject.flat().map((photo) => photo.file), bySubject, notes }
 }
 
 // A PNG or JPEG gives its size; a WebP gives none, as for an app asset.
