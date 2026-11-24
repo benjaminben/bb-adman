@@ -1,8 +1,9 @@
 // spec/editor.md, "Properties panel", "Text", Colour; ED-2 (spec/phases/design-wave-screens-a.md,
 // "Text layer"): the colour is the shared swatch field. A palette swatch, the "+" popover's
-// "Hex colour" (on Enter) or its colour picker (on its change event) each send one layer.update.
+// "Hex colour" (on Enter) or its own colour picker (on release or Enter, D-109) each send one
+// layer.update.
 // Moved from text-fields.test.tsx by ED-2 to keep that file under 300 lines.
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { TextFields } from '@/renderer/editor/text-fields'
@@ -53,15 +54,16 @@ describe('TextFields: Colour [spec/editor.md "Properties panel", Text; ED-2]', (
     expect(onUpdate).not.toHaveBeenCalled()
   })
 
-  it('the colour picker saves once, when its choice is made', async () => {
+  it('the colour picker saves once, when its choice is made [D-109]', async () => {
     const { onUpdate } = setup()
     await otherColour()
-    const picker = screen.getByLabelText('Colour picker')
-    fireEvent.input(picker, { target: { value: '#112233' } })
-    fireEvent.input(picker, { target: { value: '#112244' } })
+    await userEvent.clear(screen.getByRole('textbox', { name: 'Hex colour' }))
+    await userEvent.type(screen.getByRole('textbox', { name: 'Hex colour' }), '#000000')
+    screen.getByRole('slider', { name: 'Saturation and brightness' }).focus()
+    await userEvent.keyboard('{Shift>}{ArrowUp}{ArrowUp}{/Shift}')
     expect(onUpdate).not.toHaveBeenCalled()
-    fireEvent.change(picker, { target: { value: '#112244' } })
-    expect(onUpdate.mock.calls).toEqual([[{ style: { color: '#112244' } }]])
+    await userEvent.keyboard('{Enter}')
+    expect(onUpdate.mock.calls).toEqual([[{ style: { color: '#333333' } }]])
   })
 
   it('one button per palette colour, each sending that colour', async () => {
