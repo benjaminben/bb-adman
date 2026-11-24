@@ -10,6 +10,8 @@ dist/
 test-results/
 /shots/
 quickstart/output/
+demo.zip
+demo-extras.txt
 design/prototype/photos/
 
 # tooling

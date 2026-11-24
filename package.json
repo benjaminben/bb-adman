@@ -34,6 +34,7 @@
     "package": "npm run build && electron-builder",
     "package:dir": "npm run build && electron-builder --dir",
     "package:mac": "npm run build && electron-builder --mac dmg --arm64 --publish never",
+    "package:mac:demo": "npm run build && electron-builder --mac dir --arm64 --publish never && node scripts/demo/zip-mac.mjs",
     "package:win": "npm run build && electron-builder --win nsis --x64 --publish never"
   },
   "dependencies": {
