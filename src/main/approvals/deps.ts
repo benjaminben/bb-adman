@@ -30,10 +30,11 @@ export function createApprovalsDeps(opts: ApprovalsDepsOptions): ApprovalsDeps {
     pictures: () => choosePictureStore({ deps: opts.deps(), env: opts.env }),
     changed: (projectId, campaignId) =>
       opts.emit({ name: 'approvals.changed', payload: { projectId, campaignId } }),
-    progress: (projectId, campaignId, step, done, total) =>
+    // Each field named, so nothing but the IDs and counts can ride along.
+    progress: (projectId, campaignId, { step, done, total, unitsDone, unitsTotal }) =>
       opts.emit({
         name: 'approvals.progress',
-        payload: { projectId, campaignId, step, done, total },
+        payload: { projectId, campaignId, step, done, total, unitsDone, unitsTotal },
       }),
   }
 }

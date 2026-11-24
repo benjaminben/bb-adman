@@ -24,7 +24,17 @@ async function updating() {
   )
   await user.click(screen.getByRole('button', { name: 'Update gallery' }))
   const progress = (step: 'making' | 'sending', done: number, total: number, campaignId = C) =>
-    act(() => fake.emit('approvals.progress', { projectId: P, campaignId, step, done, total }))
+    act(() =>
+      fake.emit('approvals.progress', {
+        projectId: P,
+        campaignId,
+        step,
+        done,
+        total,
+        unitsDone: 0,
+        unitsTotal: 0,
+      }),
+    )
   return { fake, user, progress, finish: (r: Result<unknown>) => act(() => finish(r)) }
 }
 

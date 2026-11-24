@@ -75,11 +75,10 @@ describe('approvals.cancelUpdate [R2V-7]', () => {
     expect(folderFiles()).toEqual([])
     expect(lf.stand.seen.some((s) => s.route === 'replaceGallery')).toBe(false)
     const progress = lf.f.events.filter((e) => e.name === 'approvals.progress')
-    expect(progress).toEqual([
-      {
-        name: 'approvals.progress',
-        payload: { projectId: lf.projectId, campaignId: lf.c1, step: 'making', done: 0, total: 1 },
-      },
+    const ids = { projectId: lf.projectId, campaignId: lf.c1 }
+    expect(progress.map((e) => e.payload)).toEqual([
+      { ...ids, step: 'drawing', done: 0, total: 1, unitsDone: 0, unitsTotal: 3 },
+      { ...ids, step: 'making', done: 0, total: 1, unitsDone: 1, unitsTotal: 3 },
     ])
   })
 

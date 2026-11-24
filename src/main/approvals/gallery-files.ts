@@ -15,13 +15,12 @@ import { AppError } from '@/shared/schemas/result'
 import { clipBlocked, makeClip, stopIfAsked, type ClipMade, type ClipMissing } from './clip-step'
 import type { ApprovalsClient } from './client'
 import type { VariantRecord } from './local-store'
-import type { PictureStore } from './types'
+import { progressCounter } from './progress-counter'
+import type { PictureStore, PublishProgress } from './types'
 
 type Pair = { projectId: string; campaignId: string }
 
 export const PICTURE_SIDE = 1600
-
-export type PublishStep = 'making' | 'sending'
 
 export type PublishInput = {
   project: ProjectHandle
@@ -33,8 +32,9 @@ export type PublishInput = {
   published: Map<string, VariantRecord>
   // A stop: checked between steps; FFmpeg is killed at once.
   signal: AbortSignal
-  // Before each clip is made and before each clip upload; total is the clips this run makes.
-  onStep(step: PublishStep, done: number, total: number): void
+  // approvals.progress without its IDs: before each still is drawn, each clip is made and each
+  // clip upload, and once after the last file (progress-counter.ts).
+  onStep(counts: PublishProgress): void
 }
 
 export type GalleryEntry = {
@@ -129,7 +129,9 @@ export async function galleryFiles(
     const r = input.published.get(v.id)
     return { v, r, plan: planFor(deps, v, r) }
   })
+  const stills = plans.filter((p) => p.plan.draw).length
   const total = plans.filter((p) => p.plan.clip === 'make').length
+  const counter = progressCounter(stills, total, input.onStep)
   const entries: GalleryEntry[] = []
   let drawn = 0
   let tried = 0
@@ -139,8 +141,10 @@ export async function galleryFiles(
     let rev = r?.publishedRev ?? v.rev
     let file = picturePath(pair.projectId, pair.campaignId, v.id, rev)
     if (plan.draw) {
+      counter.send('drawing', drawn, stills)
       ;({ file, rev } = await drawAndUpload(deps, store, input, v, uploaded))
       drawn += 1
+      counter.add(1)
     }
     let clip: ClipMade | null = null
     let missing: ClipMissing | null = null
@@ -148,8 +152,9 @@ export async function galleryFiles(
       const at = clipPath(pair.projectId, pair.campaignId, v.id, rev)
       clip = { file: at, durationMs: r.clipMs, bytes: r.clipBytes }
     } else if (plan.clip === 'make') {
-      input.onStep('making', tried, total)
+      counter.send('making', tried, total)
       stopIfAsked(signal)
+      let sent = false
       const made = await makeClip(deps, {
         project: input.project,
         pair,
@@ -160,10 +165,15 @@ export async function galleryFiles(
           uploaded.push(at)
           return storage(() => store.putClip(at, data))
         },
-        sending: () => input.onStep('sending', tried, total),
+        sending: () => {
+          sent = true
+          counter.add(1)
+          counter.send('sending', tried, total)
+        },
         logStep: (step, error) => logPictureStep(deps, pair, step, error),
       })
       tried += 1
+      counter.add(sent ? 1 : 2)
       if (typeof made === 'string') {
         missing = made
       } else {
@@ -175,5 +185,6 @@ export async function galleryFiles(
     }
     entries.push({ v, rev, file, clip, missing })
   }
+  counter.finish()
   return { entries, drawn, clips }
 }
