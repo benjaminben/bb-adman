@@ -86,7 +86,7 @@ describe('project home sections [HOME-1]', () => {
     expect(screen.getByRole('dialog', { name: 'Find missing files' })).toBeInTheDocument()
   })
 
-  it('reaches Import files…, Import a folder… and Open assets by Tab in that order', async () => {
+  it('reaches Import files…, Import a folder… and New subject… by Tab in that order [D-109]', async () => {
     await draw()
     const files = screen.getByRole('button', { name: 'Import files…' })
     expect(files).toHaveTextContent('Import')
@@ -95,9 +95,10 @@ describe('project home sections [HOME-1]', () => {
     await userEvent.tab()
     expect(screen.getByRole('button', { name: 'Import a folder…' })).toHaveFocus()
     await userEvent.tab()
-    const open = screen.getByRole('button', { name: 'Open assets' })
-    expect(open).toHaveFocus()
-    expect(open).toHaveAttribute('title', 'Open assets')
+    const subject = screen.getByRole('button', { name: 'New subject…' })
+    expect(subject).toHaveFocus()
+    expect(subject).toHaveAttribute('title', 'New subject…')
+    expect(screen.queryByRole('button', { name: 'Open assets' })).toBeNull()
   })
 
   it('keeps the Assets help in an InfoTip', async () => {

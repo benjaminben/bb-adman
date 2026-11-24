@@ -1,6 +1,6 @@
-// AST-2 (spec/phases/design-wave-screens-b.md, "AST-2"): 458, two subject cards in the Assets
-// panel, one with two photos and one without (the "+" tile with the warn edge). Made-up names
-// and drawn pictures only; nothing is paid.
+// AST-2 (spec/phases/design-wave-screens-b.md, "AST-2"): 458, two subject cards in the home
+// Assets block, one with two photos and one without (the "+" tile with the warn edge).
+// Made-up names and drawn pictures only; nothing is paid.
 import { test, expect, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -17,7 +17,8 @@ test.afterEach(async () => {
   session = undefined
 })
 
-const panel = (page: Page) => page.getByRole('region', { name: 'Assets' })
+// D-109: the home page draws the library in its own Assets block, so the cards are there.
+const library = (page: Page) => page.getByRole('region', { name: 'Assets' })
 
 async function fillProject(page: Page, folder: string, projectId: string) {
   const paths = ['citrus-can.png', 'berry-bottle.png'].map((name) => {
@@ -61,12 +62,12 @@ test('subject cards: one with photos, one without', async () => {
   }
   await fillProject(page, box.root, state.openProjects[0]!.projectId)
 
-  await page.getByRole('button', { name: 'Open assets' }).click()
-  const blend = panel(page).getByRole('article', { name: 'Harbour Blend' })
+  const blend = library(page).getByRole('article', { name: 'Harbour Blend' })
+  await blend.scrollIntoViewIfNeeded()
   await expect(blend.getByRole('list', { name: 'Photos of Harbour Blend' })).toBeVisible()
   await expect(blend.locator('img')).toHaveCount(2)
   await expect(
-    panel(page).getByRole('button', { name: 'Add photos to Tidewater Mug' }),
+    library(page).getByRole('button', { name: 'Add photos to Tidewater Mug' }),
   ).toBeVisible()
   await page.mouse.move(800, 900)
   await page.waitForTimeout(500)

@@ -1,4 +1,4 @@
-// SUBJ-1 (spec/phases/subject-delete.md, "Shots"): 500, the Assets panel with a subject card
+// SUBJ-1 (spec/phases/subject-delete.md, "Shots"): 500, the home Assets block with a subject card
 // showing its pencil and trash buttons; 501, the delete dialog for a subject with photos.
 // Made-up names and drawn pictures only; nothing is paid and nothing is deleted.
 import { test, expect, type Page } from '@playwright/test'
@@ -17,7 +17,8 @@ test.afterEach(async () => {
   session = undefined
 })
 
-const panel = (page: Page) => page.getByRole('region', { name: 'Assets' })
+// D-109: the home page draws the library in its own Assets block, so the cards are there.
+const library = (page: Page) => page.getByRole('region', { name: 'Assets' })
 
 async function fillProject(page: Page, folder: string, projectId: string) {
   const paths = ['citrus-can.png', 'berry-bottle.png'].map((name) => {
@@ -61,8 +62,8 @@ test('subject delete: the trash button and the dialog', async () => {
   }
   await fillProject(page, box.root, state.openProjects[0]!.projectId)
 
-  await page.getByRole('button', { name: 'Open assets' }).click()
-  const blend = panel(page).getByRole('article', { name: 'Harbour Blend' })
+  const blend = library(page).getByRole('article', { name: 'Harbour Blend' })
+  await blend.scrollIntoViewIfNeeded()
   await expect(blend.locator('img')).toHaveCount(2)
   const trash = blend.getByRole('button', { name: 'Delete Harbour Blend' })
   await expect(trash).toBeVisible()
