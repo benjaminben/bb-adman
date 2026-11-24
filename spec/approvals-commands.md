@@ -85,7 +85,16 @@ Publishing is a command, not a job (A-90, A-390).
 
 **Video variants** (R2V-3, R2V-5, R2V-7; design: `spec/phases/round-2-approvals-video.md`, "The app: making and sending clips"). In step 2 a changed video variant is also exported to MP4 with the Phase 8 video export (the file that ships) and uploaded beside its still with `putClip`; the still is the poster. A clip is made again only when the `rev` changed, or when the last one was sent as a still because the video tool was missing. A clip over 3 minutes or 384 MiB, or a machine without FFmpeg (or a system the export does not support), sends the still only, with a note in the app and the gallery; the update does not fail. A clip that fails to export fails the whole update, as a failed draw does. Step 4 also sends the clip's address, size and expiry (contract version 2; `publish` checks the service's version first). Renewal in `refresh` signs clips again too.
 
-**Progress and Stop** (R2V-7). Before each clip is made and each clip is uploaded, the event `approvals.progress { projectId, campaignId, step: 'making' | 'sending', done, total }` is sent. `approvals.cancelUpdate` stops a running update: it waits for an upload in progress and has no effect once the gallery request is sent. One update runs per campaign at a time. A failed or stopped run removes only the files it added.
+**Progress and Stop** (R2V-7; the event widened by D-110). The event `approvals.progress { projectId, campaignId, step, done, total, unitsDone, unitsTotal }` is sent to the app window only and holds IDs and counts only:
+
+| `step` | Sent | `done`, `total` |
+|---|---|---|
+| `drawing` | before each still is drawn and uploaded | stills finished so far, stills this run draws |
+| `making` | before each clip is made | clips tried so far, clips this run makes |
+| `sending` | before each clip upload | the same |
+| `finishing` | once, after the last file and before the addresses are signed and the gallery request goes | 0, 0 |
+
+`unitsTotal` is the whole run's work: one unit for each still this run draws and two for each clip it makes (making, sending). `unitsDone` is the units finished when the event is sent; a clip that is left out after it was made (too long, too large) counts both its units. `finishing` carries `unitsDone = unitsTotal`. A run that draws nothing and makes no clip sends only `finishing`, with both at 0. `approvals.cancelUpdate` stops a running update: it waits for an upload in progress and has no effect once the gallery request is sent. One update runs per campaign at a time. A failed or stopped run removes only the files it added.
 
 ### `approvals.refresh`
 

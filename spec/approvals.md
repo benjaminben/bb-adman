@@ -10,7 +10,7 @@ A way to get sign-off on variants from people outside the app [D-095]. The user 
 - The gallery page is a sidebar (campaign title, a fixed instruction sentence, "Signing off as:" with the reviewer's email, "Sign off all…", "Log out") beside a masonry of variant cards. A card that needs this reviewer's sign-off stands out; a signed one shows a green tick. Each card opens a lightbox with the large picture or video and its sign-off button. It works with script off; one small script of the service's own adds arrow keys between lightboxes, masonry spans where the browser lacks them, and pausing a video when its lightbox closes.
 - The reviewer's email is kept in a browser-session cookie (`HttpOnly`) to fill the field and mark the cards. "Log out" clears it, and so does every right password entry, so a later person on a shared browser never signs off as an earlier one. "Sign off all" signs only the set the page showed.
 - **Video.** "Update gallery" exports each changed video variant to MP4 with the video export code and uploads it to the user's bucket beside its still (the still is the poster). The clip reaches a reviewer only through the service, after the password, one byte range at a time, at `/l/{slug}/c/{variantKey}/{version}`, and plays in the lightbox with the browser's own player (no autoplay, no download). The page policy gained `media-src 'self'`. A clip over 3 minutes or 384 MiB, or a machine without FFmpeg, sends the still with a note. The contract is version 2; the keyed API's body cap is 4 MiB.
-- **"Update gallery"** shows its progress (`approvals.progress`) and can be stopped (`approvals.cancelUpdate`, denied to agents). One run per campaign at a time. A failed or stopped run removes only the files it added.
+- **"Update gallery"** shows its progress as a bar (`approvals.progress`) and can be stopped (`approvals.cancelUpdate`, denied to agents). The dialog can be closed while it runs and the update goes on (D-110; "An update in the background" below). One run per campaign at a time. A failed or stopped run removes only the files it added.
 
 **Where things are.**
 
@@ -111,12 +111,24 @@ D-084: one folder per component, CSS from the existing tokens only (no slice of 
 - **Live link.**
   - "Link": the address in a read-only field, "Copy link".
   - "Password": "Copy password" (reads `approvals.getPassword` on click, copies, shows "Copied."; the password is never drawn), or, when not kept, "The password is kept on the computer that made the link." Then "Set a new password…": the two choices again and "People who already opened the link must enter the new password." Button "Set password".
-  - "Gallery": "Updated {time}." and "{n} variants changed since." when n > 0. Button "Update gallery" (`approvals.publish`). While it runs it shows its progress (making and sending each clip, from `approvals.progress`) and a "Stop" button (`approvals.cancelUpdate`). A video variant sent as its still (too long, too large, or no FFmpeg) gets a note.
+  - "Gallery": "Updated {time}." and "{n} variants changed since." when n > 0. Button "Update gallery" (`approvals.publish`). While it runs it shows a progress bar with a line above it (each picture, then making and sending each clip, from `approvals.progress`), a "Stop" button (`approvals.cancelUpdate`) and "You can close this dialog. The update keeps going." (D-110). A video variant sent as its still (too long, too large, or no FFmpeg) gets a note.
   - The sign-off list of every variant, by variant title.
   - "Turn off link…" opens a confirmation: "Turn off this link? Reviewers can no longer open it. The gallery and its pictures are deleted from the service and your bucket. Sign-offs so far stay in this project." Buttons "Keep link" (focused) and "Turn off link".
   - "If you delete this campaign, turn its link off first." (A-100)
 - **Ended link.** "This link was turned off on {date}. Its sign-offs are kept below." Button "Make a new link" with "Sign-offs from the old link will be removed from this project."
 - Copy uses `navigator.clipboard.writeText` on click (the one permission the app allows).
+
+### An update in the background (D-110)
+
+The update itself runs in the main process, and other commands are not held while it runs. Only the dialog used to wait for it. Now:
+
+- **The state has one owner in the window.** Whether a campaign's update is running, its latest `approvals.progress` and whether "Stop" was pressed are held outside the dialog, per `{projectId, campaignId}`, so they survive the dialog closing and the campaign page being left and shown again while the project stays open. The update is started and stopped through that owner, and still sent through the app store's command (so `NEEDS_KEY` asks for the key and a refusal reaches the banner).
+- **The dialog while an update runs.** The frame can be closed and "Close" is enabled. Every button that sends ("Update gallery", "Set password", "Turn off…", "Make a new link", "Make link") stays disabled. In place of the waiting line: a line of words, the `JobProgress` bar under it (`value` = `unitsDone / unitsTotal`, or no value before the first event and when `unitsTotal` is 0; its button is "Stop"), then "You can close this dialog. The update keeps going." Reopened while the update runs, the dialog shows the same bar at its latest value. Any other command still keeps the frame closed with "Working…", as before.
+- **The line of words.** "Sending picture {done + 1} of {total}…" (`drawing`), "Making video {done + 1} of {total}…", "Sending video {done + 1} of {total}…", "Finishing…", "Updating the gallery…" before the first event, and "Stopping…" once "Stop" is pressed (the button is then disabled).
+- **The campaign page while an update runs.** The "Approvals" button shows the `spinner` icon in place of `link`, and its name and tip are "Approvals: updating the gallery". A click opens the dialog as always.
+- **When it ends with the dialog closed.** Success: the button returns to its usual look, and the tip and the dialog show the new "Updated {time}." through `approvals.changed`. A failure or a stop: its sentence goes to the banner, as every refusal sent through the app store does, and is in the dialog's alert when the dialog is opened next (until another command is sent).
+- **Not changed.** One run per campaign (`update_running`); `approvals.cancelUpdate`; the agent policy (both commands stay `deny`); what a stop removes. A project closed or an app quit during an update ends it the way a failed `run` does today: the next "Update gallery" draws what the local rows call changed and sends the whole gallery again.
+- **Known edge.** With the dialog closed the user can edit. A video variant edited while its clip is being made fails the update with the variant-changed sentence; a still edited after it was drawn is simply counted in "{n} variants changed since."
 
 ## Security
 
