@@ -1,7 +1,7 @@
 {
   "name": "adman",
   "productName": "Adman",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "description": "Desktop app for building localized campaign creatives",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
