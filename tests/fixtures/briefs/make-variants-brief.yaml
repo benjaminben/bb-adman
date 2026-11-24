@@ -1,0 +1,32 @@
+# A brief for the "Make variants" end-to-end test (MV-9): the photo-bottom-left layout, a logo,
+# two languages with the brief's own copy for each, and three sizes. campaign.create makes one
+# master at the first size. The German headline is longer than the English one on purpose.
+# Made-up names only.
+campaignName: Shoreline Fizz
+region: DE
+audience: Adults who spend weekends by the sea
+message: Cool down with every sip
+callToAction: Find it near you
+tone: Bright and playful
+subjects:
+  - id: citrus-can
+    name: Citrus can
+    description: A slim aluminium can with a lime and lemon label
+    pictures: photos/citrus-can.png
+languages:
+  - en
+  - de
+sizes:
+  - '1:1'
+  - '16:9'
+  - '9:16'
+layout: photo-bottom-left
+brand:
+  logo: photos/berry-bottle.png
+copy:
+  en:
+    headline: Cool down with every sip
+    callToAction: Find it near you
+  de:
+    headline: Mit jedem einzelnen Schluck angenehm abkühlen, den ganzen langen Sommer lang
+    callToAction: Jetzt in deiner Nähe finden
