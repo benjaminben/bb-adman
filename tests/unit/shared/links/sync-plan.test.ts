@@ -102,7 +102,7 @@ describe('syncPreviewOf [FR-082]', () => {
     ])
   })
 
-  it('a new master key gives add-layer with every group and fan-out geometry', () => {
+  it('a new master key gives add-layer with every group and the anchored geometry', () => {
     const extra = masterTitle({ id: 'm-sub', key: 'sub', name: 'Sub', revs: zero })
     const v = variantTitle({ style: masterTitle().style })
     const [planned] = planVariant({
@@ -129,7 +129,34 @@ describe('syncPreviewOf [FR-082]', () => {
         blockedByOverride: [],
       },
     ])
-    expect(planned?.geometry).not.toEqual(extra.geometry)
+    expect(planned?.geometry).toEqual({
+      x: 100,
+      y: 100,
+      width: 500,
+      height: 100,
+      rotation: 0,
+      crop: null,
+    })
+  })
+
+  it('a layer added at another size is anchored to its nearer edges', () => {
+    const extra = masterTitle({
+      id: 'm-sub',
+      key: 'sub',
+      name: 'Sub',
+      revs: zero,
+      geometry: { x: 100, y: 800, width: 200, height: 100, rotation: 0, crop: null },
+    })
+    const v = variantTitle({ style: masterTitle().style })
+    const [change] = changesOf(plan([masterTitle({ revs: zero }), extra], tall, [v]))
+    expect(change?.proposed.geometry).toEqual({
+      x: 100,
+      y: 1640,
+      width: 200,
+      height: 100,
+      rotation: 0,
+      crop: null,
+    })
   })
 
   it.each([

@@ -2,6 +2,10 @@ import type { Geometry, Revs } from '@/shared/schemas/layer'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 import type { Size } from '@/shared/scene/background-placement'
 import type { FanOutFit } from '@/shared/schemas/links'
+import type { StarterLayout } from '@/shared/config/default-layout'
+import { DEFAULT_STARTER_LAYOUT_ID } from '@/shared/config/starter-layouts'
+import { anchoredBox } from './place-box'
+import { layoutBoxOf, layoutOfLayers, sitsAsLaidOut } from './source-layout'
 
 // spec/links-and-sync.md "Fan-out": the layer values of one new variant. Pure; no IDs are
 // made here, the caller adds `id` and `variantId`.
@@ -16,6 +20,7 @@ export type PlanInput = {
   fit?: FanOutFit // only read when the pixel size differs; `fill` places as `scale`
   pictureSize: Size | null // the background picture's size, from its asset row
   sameSizePlan?: PlannedLayer[] | null // R-02: the plan of this size in the master's language
+  layoutId?: string | null // breaks a tie in "Which layout"; absent or null: the default's ID
 }
 
 const ZERO_REVS: Revs = { copy: 0, style: 0, geometry: 0, source: 0, timing: 0, animation: 0 }
@@ -41,33 +46,23 @@ function placeBackground(canvas: Size, picture: Size | null, fit: FanOutFit): Ge
   }
 }
 
-// Same centre share of the canvas; width and height scaled by the smaller ratio.
-function placeBox(geometry: Geometry, from: Size, to: Size): Geometry {
-  const k = Math.min(to.width / from.width, to.height / from.height)
-  const width = Math.max(1, whole(geometry.width * k))
-  const height = Math.max(1, whole(geometry.height * k))
-  const centreX = ((geometry.x + geometry.width / 2) / from.width) * to.width
-  const centreY = ((geometry.y + geometry.height / 2) / from.height) * to.height
-  return {
-    ...geometry,
-    x: whole(centreX - width / 2),
-    y: whole(centreY - height / 2),
-    width,
-    height,
-  }
-}
-
-function geometryFor(layer: LayerRow, input: PlanInput): Geometry {
+// spec/make-variants.md "Where a box goes in a new size". The source is the master here.
+function geometryFor(layer: LayerRow, input: PlanInput, layout: StarterLayout | null): Geometry {
   const { master, target } = input
   if (master.width === target.width && master.height === target.height) return layer.geometry
   const planned = input.sameSizePlan?.find((l) => l.key === layer.key)
   if (target.language !== master.language && planned) return planned.geometry
-  if (layer.type !== 'background') return placeBox(layer.geometry, master, target)
-  const picture = layer.source ? input.pictureSize : null
-  return placeBackground(target, picture, input.fit ?? 'scale')
+  if (layer.type === 'background') {
+    const picture = layer.source ? input.pictureSize : null
+    return placeBackground(target, picture, input.fit ?? 'scale')
+  }
+  const laidOut = layout !== null && sitsAsLaidOut(layout, layer, master)
+  const box = laidOut ? layoutBoxOf(layout, layer, target) : null
+  if (box) return { ...box, crop: layer.geometry.crop }
+  return anchoredBox(layer.geometry, master, target, layer.type === 'text')
 }
 
-function planLayer(layer: LayerRow, input: PlanInput): PlannedLayer {
+function planLayer(layer: LayerRow, input: PlanInput, layout: StarterLayout | null): PlannedLayer {
   const { key, type, slot, name, z, visible, locked, copy, style, source, timing, animation } =
     layer
   const newLanguage = input.target.language !== input.master.language
@@ -85,7 +80,7 @@ function planLayer(layer: LayerRow, input: PlanInput): PlannedLayer {
     source,
     timing,
     animation,
-    geometry: geometryFor(layer, input),
+    geometry: geometryFor(layer, input, layout),
     linked: true,
     overrides: [],
     revs: ZERO_REVS,
@@ -97,5 +92,7 @@ function planLayer(layer: LayerRow, input: PlanInput): PlannedLayer {
 }
 
 export function planVariant(input: PlanInput): PlannedLayer[] {
-  return input.masterLayers.map((layer) => planLayer(layer, input))
+  const preferredId = input.layoutId ?? DEFAULT_STARTER_LAYOUT_ID
+  const layout = layoutOfLayers(input.masterLayers, input.master, preferredId)
+  return input.masterLayers.map((layer) => planLayer(layer, input, layout))
 }
