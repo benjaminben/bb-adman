@@ -45,6 +45,7 @@ Every font in an example is under the SIL Open Font License; its licence text si
    3. Plan one variant per size and language as fan-out does: every language of a size has the same boxes and styles; a box keeps its share of the canvas across sizes.
    4. A language the brief gives copy for takes it. Any other language gets one translate call.
    5. Each size of other pixels than the first gets one extend call (the app's "fill"), and that picture becomes its background.
+   6. Without `--ai_layout`, each variant is then laid out by the brief's layout for its own size and its own words (`starterLayoutPatches`, the app's "Layout…" action), with the brand fonts and colours put back after. So the margins line up in every size, and longer words in another language get a smaller size that fits. With `--ai_layout`, the boxes stay where step 3 put them.
 3. Draw each variant, and each of its layers alone.
 4. Run the app's checks on each variant and write the report.
 
@@ -66,6 +67,7 @@ quickstart/output/{campaign}/
   {language}/{size}/            one set of ads for the campaign
   {subject}/{language}/{size}/  one set per subject
     final.png
+    picture.png                 the picture as the model made it, with no shade or text
     layers/{n}-{layer}.png
     layout.json                 each layer's text, box and style
 ```
@@ -90,5 +92,5 @@ quickstart/output/{campaign}/
 ## Slices
 
 - **QS-1. Examples, brand and layout.** The `examples/` folders and `--example`; brand files read and handed to the page; the master built from the layout with logo, fonts and colours; art direction in the prompt; `--ai_layout` in place of the layout call that always ran; the picture in the subject spot for a flat layout.
-- **QS-2. Ad sets and the report.** `adsPer: subject`; a set with no photo; output folders by subject; the checks, `report.json` (in place of `run.json`) and the printed lines.
+- **QS-2. Ad sets and the report.** `adsPer: subject`; a set with no photo; output folders by subject; each variant laid out by the layout for its size and words; `picture.png`; the checks, `report.json` (in place of `run.json`) and the printed lines.
 - **QS-3. README.** Both examples with sample pictures, after a real run.
