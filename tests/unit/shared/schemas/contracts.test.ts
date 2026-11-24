@@ -92,10 +92,13 @@ describe('campaign.create input [SPEC 6.1]', () => {
     if (parsed.success) expect(parsed.data.placeSubjectPhoto).toBe(value)
   })
 
-  it('gives the MCP tool schema no placeSubjectPhoto, with the same refinements [SP-6, A-122]', () => {
+  // spec/brief-brand.md "Schemas": the brand asset IDs are on campaign.create only.
+  it('gives the MCP tool schema no placeSubjectPhoto and no brand, with the same refinements [SP-6, A-122]', () => {
+    const windowOnly = ['placeSubjectPhoto', 'brand']
     expect(Object.keys(campaignCreateToolInput.shape)).not.toContain('placeSubjectPhoto')
+    expect(Object.keys(campaignCreateToolInput.shape)).not.toContain('brand')
     expect(Object.keys(campaignCreateToolInput.shape)).toEqual(
-      Object.keys(campaignCreateInput.shape).filter((k) => k !== 'placeSubjectPhoto'),
+      Object.keys(campaignCreateInput.shape).filter((k) => !windowOnly.includes(k)),
     )
     expect(campaignCreateToolInput.safeParse(input).success).toBe(true)
     expect(campaignCreateToolInput.safeParse({ ...input, subjectMap: [] }).success).toBe(false)
