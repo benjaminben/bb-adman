@@ -1,19 +1,19 @@
 // The quickstart's steps, in the order a person takes them in the app: make the picture on the
-// first size, place the text on it, make one variant per language and size, translate what the
-// brief gave no words for, and extend the picture to each other size. Every call goes through
+// first size, build the master from the brief's layout and brand (and, with --ai_layout, move
+// its text with one call), make one variant per language and size, translate what the brief
+// gave no words for, and extend the picture to each other size. Every call goes through
 // the app's own provider adapters and every answer through the app's own checks.
 import { pictureSize } from '@/main/providers/picture-size'
 import type { ImageFile, ImageResult } from '@/main/providers/types'
 import { cleanAnswer } from '@/main/translation/clean-answer'
-import { TYPE_STYLE_IDS, typeStylePrompt } from '@/shared/config/type-styles'
-import { clampLayout } from '@/shared/generation/layout-clamp'
-import { LAYOUT_PICTURE_SIDE, layoutItems } from '@/shared/generation/layout-items'
-import { keepReadable } from '@/shared/generation/layout-readable'
 import { FILL_PROMPT, prefilledPrompt, promptToSend } from '@/shared/generation/prompt'
 import type { SceneVariant } from '@/shared/scene/types'
 import type { CampaignSize } from '@/shared/schemas/commands/campaign'
-import type { LayerRow } from '@/shared/schemas/rows/layer'
+import type { Brand } from './brief-files'
 import {
+  BODY_FONT_ASSET,
+  HEADING_FONT_ASSET,
+  LOGO_ASSET,
   MASTER_ASSET,
   fillAsset,
   fillPlacement,
@@ -21,10 +21,10 @@ import {
   missingItems,
   planVariants,
   withFill,
-  withLayout,
   withTranslations,
   type Variant,
 } from './layers'
+import { layoutOffer, placeText } from './place-text'
 import type { Plan } from './plan'
 import type { Providers } from './providers'
 import type { Picture, Studio } from './studio'
@@ -37,7 +37,9 @@ export type RunInput = {
   providers: Providers
   studio: Studio
   references: ImageFile[]
+  brand: Brand
   prompt: string | null
+  aiLayout: boolean
   report: Report
 }
 
@@ -51,8 +53,8 @@ export const sceneVariant = (size: CampaignSize, language: string): SceneVariant
   durationMs: 0,
 })
 
-export function stepCount(plan: Plan): number {
-  return 2 + plan.translate.length + plan.fills.length
+export function stepCount(plan: Plan, aiLayout: boolean): number {
+  return 1 + (aiLayout ? 1 : 0) + plan.translate.length + plan.fills.length
 }
 
 // The prompt the app pre-fills for a picture whose words are added as layers.
@@ -65,6 +67,7 @@ export function picturePrompt(plan: Plan): string {
     message: brief.message,
     wordsOnLayers: true,
     kind: 'picture',
+    artDirection: plan.look.artDirection,
   })
 }
 
@@ -80,47 +83,16 @@ async function step<T>(report: Report, label: string, work: () => Promise<T>): P
   return result
 }
 
-// One layout call on the first size, checked as the app's layout job checks it: the boxes are
-// clamped to the canvas, then each text colour is tested against the picture under it.
-async function placeText(input: RunInput, master: LayerRow[]): Promise<LayerRow[]> {
-  const { plan, providers, studio, report } = input
-  const size = plan.sizes[0] as CampaignSize
-  const { width, height } = size
-  const scale = Math.min(1, LAYOUT_PICTURE_SIDE / Math.max(width, height))
-  const variant = sceneVariant(size, plan.languages[0] ?? '')
-  const noText = master.filter((layer) => layer.type !== 'text')
-  const picture = await studio.draw(variant, noText, 'full', scale)
-  const items = layoutItems(master)
-  const answer = await providers.layout.propose({
-    background: { bytes: picture.png, mime: 'image/png' },
-    width,
-    height,
-    items,
-    palette: [],
-    fonts: ['Inter'],
-    typeStyles: typeStylePrompt(),
-  })
-  const keys = items.map((item) => item.slot)
-  const boxes = clampLayout(answer, {
-    width,
-    height,
-    palette: [],
-    keys,
-    typeStyles: TYPE_STYLE_IDS,
-  })
-  if (boxes.length === 0) {
-    report.note('The answer held no usable boxes, so the starter layout is kept.')
-    return master
-  }
-  const pixels = await studio.pixels(picture.png)
-  const readable = keepReadable(boxes, {
-    pixels,
-    scale: pixels.width / width,
-    palette: [],
-    layers: master,
-  })
-  return withLayout(master, readable)
+// The logo and the fonts the brief gave, handed to the drawing page from memory.
+function addBrand(studio: Studio, brand: Brand): void {
+  if (brand.logo) studio.addPicture(LOGO_ASSET, brand.logo)
+  if (brand.heading) studio.addFont(HEADING_FONT_ASSET, brand.heading)
+  if (brand.body) studio.addFont(BODY_FONT_ASSET, brand.body)
 }
+
+const hasFont = (brand: Brand) => brand.heading !== null || brand.body !== null
+const familiesOf = (brand: Brand) =>
+  [brand.heading?.family, brand.body?.family].filter((name): name is string => Boolean(name))
 
 async function translate(input: RunInput, variants: Variant[], to: string): Promise<Variant[]> {
   const { plan, providers, report } = input
@@ -180,9 +152,27 @@ export async function runQuickstart(input: RunInput): Promise<RunResult> {
     return pictureOf(result)
   })
   studio.addPicture(MASTER_ASSET, picture)
-  const master = await step(report, 'Placing the text on the picture', () =>
-    placeText(input, masterLayers(plan)),
-  )
+  const { brand } = input
+  addBrand(studio, brand)
+  let master = masterLayers(plan, {
+    logo: brand.logo !== null,
+    headingFont: brand.heading !== null,
+    bodyFont: brand.body !== null,
+  })
+  if (input.aiLayout) {
+    const layers = master
+    master = await step(report, 'Placing the text on the picture', () =>
+      placeText({
+        layout: providers.layout,
+        studio,
+        size: first,
+        variant: sceneVariant(first, plan.languages[0] ?? ''),
+        master: layers,
+        offer: layoutOffer(plan.look.colours, familiesOf(brand), hasFont(brand)),
+        onNoBoxes: () => report.note('The answer held no usable boxes, so the layout is kept.'),
+      }),
+    )
+  }
   let variants = planVariants(plan, master, picture)
   for (const language of plan.translate) {
     variants = await step(report, `Translating to ${language}`, () =>

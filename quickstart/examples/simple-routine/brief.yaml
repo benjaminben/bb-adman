@@ -1,4 +1,5 @@
-# The quickstart brief. Change anything here, then run `npm run quickstart` again.
+# Example 1: two products shown together in one picture, in three languages and three sizes.
+# Change anything here, then run `npm run quickstart` again.
 # It is the same brief format the app loads with "Load a brief".
 campaignName: Simple Routine
 region: US and Canada
@@ -34,3 +35,18 @@ copy:
   fr:
     headline: Le soin de la peau, en toute simplicité
     callToAction: Commencer ma routine
+
+# The brand. "heading" is the headline's font; "body" is the font of all other text.
+# Text takes the nearest of these colours.
+brand:
+  colours: ['#FFFFFF', '#1E2A44']
+  fonts:
+    heading: brand/Fraunces.woff2
+    body: brand/DMSans.woff2
+
+# Where the text sits. One of: photo-bottom-left, photo-top-centre, flat-bottom-left,
+# flat-centre-top, photo-label-box.
+layout: photo-top-centre
+
+# A note for the picture, so it leaves room where the layout puts the words.
+artDirection: Both products stand together in the lower half on a pale stone counter, in soft morning light. The upper third is a plain, calm wall with open space for the words.

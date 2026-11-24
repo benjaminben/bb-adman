@@ -66,4 +66,45 @@ describe('quickstart parseArgs', () => {
       args: { provider: 'gemini' },
     })
   })
+
+  it('picks the simple-routine example when none is named, with no AI layout', () => {
+    expect(read(['--provider=fake'])).toMatchObject({
+      ok: true,
+      args: { example: 'simple-routine', aiLayout: false, brief: null },
+    })
+  })
+
+  it('reads --example and the --ai_layout flag, which takes no value', () => {
+    expect(read(['--provider=fake', '--example=summer-splash', '--ai_layout'])).toMatchObject({
+      ok: true,
+      args: { example: 'summer-splash', aiLayout: true },
+    })
+    expect(read(['--ai-layout', '--provider', 'fake'])).toMatchObject({
+      ok: true,
+      args: { aiLayout: true, provider: 'fake' },
+    })
+    expect(read(['--provider=fake', '--ai_layout=yes']).ok).toBe(false)
+  })
+
+  it('refuses an example name that is not letters, digits and dashes', () => {
+    for (const name of ['../secret', 'a/b', 'a b', 'a.b', 'a\\b']) {
+      const refused = read(['--provider=fake', `--example=${name}`])
+      expect(refused.ok).toBe(false)
+    }
+  })
+
+  it('reads --ai_layout and --example that npm kept for itself', () => {
+    const env = {
+      npm_config_provider: 'fake',
+      npm_config_ai_layout: 'true',
+      npm_config_example: 'x',
+    }
+    expect(read([], env)).toMatchObject({ ok: true, args: { aiLayout: true, example: 'x' } })
+  })
+
+  it('lists the new options in the usage text', () => {
+    const help = read(['--provider=fake', '--nope'])
+    expect(!help.ok && help.message).toContain('--example=<name>')
+    expect(!help.ok && help.message).toContain('--ai_layout')
+  })
 })

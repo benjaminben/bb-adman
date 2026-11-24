@@ -1,0 +1,56 @@
+# Example 2: one set of ads for each product, with brand rules and a report of the checks.
+# Run it with `npm run quickstart -- --example=summer-splash`.
+campaignName: Summer Splash
+region: US and Germany
+audience: Adults 21 to 35 who spend summer weekends outdoors
+message: Cool down with every sip
+callToAction: Find it near you
+tone: Bright and playful
+
+subjects:
+  # This product has a photo, so the photo guides the picture.
+  - id: citrus-can
+    name: Citrus can
+    description: A slim aluminium can, lime green fading to lemon yellow, with a round dark green logo on its front
+    pictures: citrus-can.png
+  # This one has no photo, so its picture is made from the description alone.
+  - id: berry-bottle
+    name: Berry bottle
+    description: A clear glass bottle of deep red berry drink with a dark green cap and a plain cream label
+
+# "subject" makes one set of ads for each product. "campaign" shows them together.
+adsPer: subject
+
+languages:
+  - en
+  - de
+sizes:
+  - '1:1'
+  - '9:16'
+  - '16:9'
+
+copy:
+  de:
+    headline: Abkühlung mit jedem Schluck
+    # "billig" is on the banned list below, on purpose: the report flags it.
+    # Change this line to "Jetzt in deiner Nähe" and the check passes.
+    callToAction: Jetzt billig in deiner Nähe
+
+# Words an ad must not use, per language.
+prohibitedWords:
+  en:
+    - cheap
+  de:
+    - billig
+
+# The brand. The logo is placed on every ad, and the checks ask for it.
+brand:
+  logo: brand/logo.png
+  colours: ['#0B3D2E', '#FFF6E5', '#FFC83D']
+  fonts:
+    heading: brand/ArchivoBlack.woff2
+    body: brand/Archivo.woff2
+
+layout: photo-bottom-left
+
+artDirection: The drink stands right of centre, wet with cold drops, in bright summer light beside a pool. Keep the lower left calm and uncluttered for the words.

@@ -92,11 +92,65 @@ describe('quickstart readPlan', () => {
   })
 
   it('reads the brief the quickstart ships with', () => {
-    const text = readFileSync(new URL('../../../quickstart/brief.yaml', import.meta.url), 'utf8')
+    const text = readFileSync(
+      new URL('../../../quickstart/examples/simple-routine/brief.yaml', import.meta.url),
+      'utf8',
+    )
     const plan = planOf(text)
     expect(plan.languages).toEqual(['en', 'fr', 'es'])
     expect(plan.sizes.map((s) => s.label)).toEqual(['1x1', '4x5', '9x16'])
     expect(plan.subjects.map((s) => s.pictures)).toEqual([['subject-a.png'], ['subject-b.png']])
     expect(plan.translate).toEqual(['es'])
+  })
+
+  it("gives the brief's look: colours, layout, art direction and its notes", () => {
+    const text = `${BRIEF}
+brand:
+  colours: ['#0b3', 'red', '#FFF6E5']
+layout: Flat-Bottom-Left
+artDirection: '  Calm light  '
+`
+    const { look, layout } = planOf(text)
+    expect(look.colours).toEqual(['#00BB33', '#FFF6E5'])
+    expect(look.layoutId).toBe('flat-bottom-left')
+    expect(look.artDirection).toBe('Calm light')
+    expect(look.notes).toEqual([{ field: 'colours', text: 'red', reason: 'not_a_colour' }])
+    expect(layout.id).toBe('flat-bottom-left')
+  })
+
+  it('uses the default layout when the brief names none or an unknown one', () => {
+    expect(planOf(BRIEF).layout.id).toBe('photo-bottom-left')
+    const unknown = planOf(`${BRIEF}\nlayout: zigzag\n`)
+    expect(unknown.layout.id).toBe('photo-bottom-left')
+    expect(unknown.look.notes.map((n) => n.reason)).toEqual(['unknown_layout'])
+  })
+
+  it('lists the brand files the brief names, in role order', () => {
+    const text = `${BRIEF}
+brand:
+  fonts:
+    body: brand/Body.woff2
+  logo: brand/logo.png
+`
+    expect(planOf(text).brandFiles).toEqual([
+      { role: 'logo', text: 'brand/logo.png' },
+      { role: 'bodyFont', text: 'brand/Body.woff2' },
+    ])
+    expect(planOf(BRIEF).brandFiles).toEqual([])
+  })
+
+  it('extends the picture to no size when the layout is a flat colour', () => {
+    expect(planOf(`${BRIEF}\nlayout: flat-centre-top\n`).fills).toEqual([])
+  })
+
+  it('reads the summer-splash example', () => {
+    const url = new URL('../../../quickstart/examples/summer-splash/brief.yaml', import.meta.url)
+    const plan = planOf(readFileSync(url, 'utf8'))
+    expect(plan.languages).toEqual(['en', 'de'])
+    expect(plan.layout.id).toBe('photo-bottom-left')
+    expect(plan.look.colours).toEqual(['#0B3D2E', '#FFF6E5', '#FFC83D'])
+    expect(plan.look.adsPer).toBe('subject')
+    expect(plan.brandFiles.map((f) => f.role)).toEqual(['logo', 'headingFont', 'bodyFont'])
+    expect(plan.translate).toEqual([])
   })
 })
