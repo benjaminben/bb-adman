@@ -77,7 +77,7 @@ test('Workflow 5.4: a second direction, a fill on fan-out, tab behind, quick loo
   await choosePicture(await drawnPicture())
   await v.showOverview(page)
 
-  // Fan out Studio with the tall size on "Generate fill", the fake provider.
+  // Make variants of Studio with the tall size on "Generate fill", the fake provider.
   await v.fanOut(page, STUDIO, { sizes: [TALL], fill: TALL })
   await expect(v.grid(page, STUDIO).getByRole('listitem')).toHaveCount(2)
   const tall = v.tile(page, STUDIO, '1080×1920 · en')

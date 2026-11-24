@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { AGENT_POLICY, agentPolicyFor } from '@/main/commands/agent-policy'
+import { AGENT_POLICY, agentPolicyFor, denialMessage } from '@/main/commands/agent-policy'
 
 // SPEC 1.9 Section 4.2, copied row by row. variant.setFormat is allow [D-025].
 // A change here must follow a change in SPEC.md.
@@ -120,5 +120,18 @@ describe('agent policy table, SPEC 1.9 [SPEC 4.2, ADR-009, D-025]', () => {
 
   it('lets an agent run variant.setFormat without the permission dialog [D-025]', () => {
     expect(agentPolicyFor('variant.setFormat')).toBe('allow')
+  })
+
+  it('names variant.fanOut "make many variants at once" and keeps it deny [D-108, MV-1]', () => {
+    expect(AGENT_POLICY['variant.fanOut']).toEqual({
+      policy: 'deny',
+      action: 'make many variants at once',
+    })
+  })
+
+  it('tells an agent it cannot make many variants at once [D-108, MV-1]', () => {
+    expect(denialMessage('variant.fanOut')).toBe(
+      'Agents cannot make many variants at once in this version. Ask the user to do it in the app.',
+    )
   })
 })

@@ -97,7 +97,7 @@ export function variantFanOut(deps: CoreDeps) {
         (c) => !hasVariantAt(db, input.directionId, c.size.label, c.language, c.format),
       )
       if (todo.length > MAX_NEW_VARIANTS) {
-        throw new AppError('RULE_VIOLATION', 'Fan-out can make at most 200 variants at a time.', {
+        throw new AppError('RULE_VIOLATION', 'You can make at most 200 variants at a time.', {
           reason: 'too_many_variants',
         })
       }

@@ -79,8 +79,8 @@ test('479 fan-out with a paid fill and translations', async () => {
   await campaign(session, 'Lantern Market')
   expect(await prepare(page)).toEqual([])
   await screens.openCampaign(page)
-  await page.getByRole('button', { name: 'Fan out…' }).first().click()
-  const dialog = page.getByRole('dialog', { name: /^Fan out / })
+  await page.getByRole('button', { name: 'Make variants…' }).first().click()
+  const dialog = page.getByRole('dialog', { name: /^Make variants of / })
   const sizes = dialog.getByRole('group', { name: 'Sizes' }).getByRole('button')
   for (const chip of await sizes.all()) {
     if ((await chip.getAttribute('aria-pressed')) !== 'true') await chip.click()

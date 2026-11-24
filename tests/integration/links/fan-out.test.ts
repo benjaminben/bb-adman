@@ -176,7 +176,7 @@ describe('variant.fanOut refusals [P5-10]', () => {
       'RULE_VIOLATION',
       'too_many_variants',
     )
-    expect(error.message).toBe('Fan-out can make at most 200 variants at a time.')
+    expect(error.message).toBe('You can make at most 200 variants at a time.')
   })
 
   it('is denied to the agent', async () => {

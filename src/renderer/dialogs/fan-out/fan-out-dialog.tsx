@@ -119,7 +119,7 @@ export function FanOutDialog(props: FanOutDialogProps) {
     <DialogFrame
       open
       onClose={props.onClose}
-      title={`Fan out ${props.direction.name}`}
+      title={`Make variants of ${props.direction.name}`}
       kind="run"
       describedBy={described || undefined}
       closable={!busy}
