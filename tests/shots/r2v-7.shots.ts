@@ -88,7 +88,8 @@ test('Approval link: the still-only line, then an update with Stop', async () =>
 
   stand.once('replaceGallery', { wait: true })
   await box.getByRole('button', { name: 'Update gallery' }).click()
-  await expect(box.getByText('Updating the gallery…')).toBeVisible()
+  // Nothing is drawn or made here, so the run goes straight to its held gallery request.
+  await expect(box.getByText('Finishing…')).toBeVisible()
   const { projectId, campaignId } = ids
   await sendProgress(app, {
     projectId,

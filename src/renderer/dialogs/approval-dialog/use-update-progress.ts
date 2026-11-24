@@ -30,8 +30,9 @@ export function progressLine(p: UpdateProgress): string {
   return `${NOUNS[p.step.step]} ${p.step.done + 1} of ${p.step.total}…`
 }
 
-// unitsDone / unitsTotal, or null before the first event and when the run has no units.
+// unitsDone / unitsTotal, or null before the first event and when the run has no units (or
+// the event holds no count of them).
 export function progressValue(p: UpdateProgress): number | null {
-  if (p.step === null || p.step.unitsTotal === 0) return null
+  if (p.step === null || !(p.step.unitsTotal > 0)) return null
   return p.step.unitsDone / p.step.unitsTotal
 }
