@@ -29,9 +29,9 @@ It then reads that example's brief (`quickstart/examples/<name>/brief.yaml`) wit
 
 1. makes one picture of the products with Gemini;
 2. lays the words out with the brief's layout, brand fonts and colours;
-3. translates the words the brief has none for;
-4. extends the picture to each other size;
-5. lays out each ad again for its own size and words, so the margins line up and longer words get a smaller size;
+3. makes each other size and language the way the app's "Make variants" does: the words go where the layout puts them at that size, and longer words get a smaller size that fits;
+4. translates the words the brief has none for, and fits them the same way;
+5. extends the picture to each other size;
 6. draws every ad with the app's own layer renderer;
 7. runs the app's checks on every ad (logo shown, brand colours, banned and required words, translations approved, text that fits).
 
@@ -50,7 +50,7 @@ To get a different result, edit the example's `brief.yaml`: the words, the langu
 
 - `--provider=fake` runs every step with grey placeholder pictures. It is free and needs no key.
 - `--example=summer-splash` (or `--example=simple-routine`) picks the example with no question. `--brief=<file>` runs any other brief. Where there is no terminal to ask in (a script, a pipe), `simple-routine` runs.
-- `--ai_layout` adds one Gemini call that moves the words to suit the picture.
+- `--ai_layout` adds one Gemini call that moves the words to suit the picture. The other sizes keep them near the same edges.
 - `--model=<gemini model>` picks the picture model. `npm run quickstart -- --help` lists every option.
 - `GEMINI_API_KEY` in the environment works in place of `--gemini_api_key`.
 - The `playwright` line can be skipped when Google Chrome or Microsoft Edge is installed.

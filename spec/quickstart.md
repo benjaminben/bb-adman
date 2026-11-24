@@ -2,7 +2,7 @@
 
 A demo of the pipeline for someone who has not installed the app (D-106, D-107). One brief in; finished ads out, one per subject set, language and size, with a report of the checks. It runs with `npm run quickstart` on macOS and Windows.
 
-**State.** Built: the two examples, `--example` and the first question that picks one; the brand files and the brief's look read, with a printed note for each that cannot be used; the master built from the brief's layout with the logo, the brand fonts and the brand colours; the art direction in the picture prompt; text placement by AI with `--ai_layout` only; the picture in the subject spot for a flat-colour layout; one ad set per subject with `adsPer: subject`, and output folders by subject; each variant laid out by the layout for its own size and words; `picture.png`; the checks, `report.json` and the printed result lines (QS-1, QS-2). Not built yet: the README with sample pictures (QS-3).
+**State.** Built: the two examples, `--example` and the first question that picks one; the brand files and the brief's look read, with a printed note for each that cannot be used; the master built from the brief's layout with the logo, the brand fonts and the brand colours; the art direction in the picture prompt; text placement by AI with `--ai_layout` only; the picture in the subject spot for a flat-colour layout; one ad set per subject with `adsPer: subject`, and output folders by subject; `picture.png`; the checks, `report.json` and the printed result lines (QS-1, QS-2); each variant planned and its text fitted by the app's own rule, `planNewVariant` and `fitTranslatedText` (MV-8). Not built yet: the README with sample pictures (QS-3).
 
 ## What it is not
 
@@ -20,8 +20,8 @@ The CLI holds no drawing, prompt, layout or check logic of its own. Each step ca
 | Picture prompt | `prefilledPrompt` (with the art direction), `promptToSend`, `FILL_PROMPT` in `src/shared/generation/prompt.ts` |
 | Master layers | `buildMasterLayers` with the starter template and the brief's layout, then `withBrandFonts` and `withBrandColours` |
 | Text placement checks (with `--ai_layout`) | `layoutItems`, `clampLayout`, `keepReadable`, `layoutPatches` |
-| One variant per size and language | `planVariant` (fan-out) and `translatedLayers` (the brief's copy) |
-| Translation answer check | `cleanAnswer` |
+| One variant per size and language | `planNewVariant` (the app's "Make variants": the boxes for the new size, the brief's copy, the text fitted) |
+| Translation answer check, and the fit of the new words | `cleanAnswer`, then `fitTranslatedText` (as `translation.write` does) |
 | Checks | `runAllChecks` of `src/shared/checks/` |
 | Drawing | The `Scene` component of `src/shared/scene/` |
 
@@ -44,10 +44,9 @@ Every font in an example is under the SIL Open Font License; its licence text si
 2. For each ad set (one for the campaign, or one per subject):
    1. One picture call at the first size, with the set's subject photos as reference pictures. A set with no photo sends none.
    2. Build the master from the brief's layout (the default layout when the brief names none), with the logo in the logo spot, the brand fonts and the brand colours. With `--ai_layout`, one layout call then moves the text, clamped and checked for contrast as the app's layout job does; an answer with no usable box keeps the layout.
-   3. Plan one variant per size and language as fan-out does: every language of a size has the same boxes and styles; a box keeps its share of the canvas across sizes.
-   4. A language the brief gives copy for takes it. Any other language gets one translate call.
+   3. Plan one variant per size and language from the master with `planNewVariant`, as the app's "Make variants" does, with the brief's layout ID as `layoutId` and the campaign's main language and brief. A box that sits where the layout put it takes the layout's box at the new size, so the margins line up in every size; a box moved off it (by the `--ai_layout` call) is anchored (`spec/make-variants.md`, "Anchoring"). Every language of a size has the same boxes. A language the brief gives copy for takes it, and a text whose words changed or whose box got tighter gets the largest font size that fits, never larger than before.
+   4. Any language the brief gives no copy for gets one translate call. Each translated text then gets its font size fitted to the new words with `fitTranslatedText`, as the app's `translation.write` does: only ever smaller.
    5. Each size of other pixels than the first gets one extend call (the app's "fill"), and that picture becomes its background.
-   6. Without `--ai_layout`, each variant is then laid out by the brief's layout for its own size and its own words (`starterLayoutPatches`, the app's "Layout…" action), with the brand fonts and colours put back after. So the margins line up in every size, and longer words in another language get a smaller size that fits. With `--ai_layout`, the boxes stay where step 3 put them. **This step goes away with slice MV-8** (`spec/make-variants.md`, "Quickstart"): step 3 then plans with `planNewVariant`, which places the boxes and fits the text as the app's "Make variants" does, and step 4 fits each translated text with `fitTranslatedText`, with or without `--ai_layout`.
 3. Draw each variant, and each of its layers alone.
 4. Run the app's checks on each variant and write the report.
 
@@ -90,10 +89,11 @@ quickstart/output/{campaign}/
 
 ## Tests
 
-`tests/unit/quickstart/` covers the options, the examples, the first question (its order, its lines, what each answer means), the plan and its printout, the brief's files and notes, the ad sets, the layers, the layout for each variant, the text placement offer, the checks' rule set and facts, the output names and the report. The run itself is checked by hand: `npm run quickstart -- --provider=fake --example=summer-splash`.
+`tests/unit/quickstart/` covers the options, the examples, the first question (its order, its lines, what each answer means), the plan and its printout, the brief's files and notes, the ad sets, the layers (planned and fitted as `planNewVariant` and `fitTranslatedText` do, the margins of `summer-splash` at 16:9, the anchored boxes after `--ai_layout`), the text placement offer and its printed line, the checks' rule set and facts, the output names and the report. The run itself is checked by hand: `npm run quickstart -- --provider=fake --example=summer-splash`.
 
 ## Slices
 
 - **QS-1. Examples, brand and layout.** The `examples/` folders and `--example`; brand files read and handed to the page; the master built from the layout with logo, fonts and colours; art direction in the prompt; `--ai_layout` in place of the layout call that always ran; the picture in the subject spot for a flat layout.
-- **QS-2. Ad sets and the report.** `adsPer: subject`; a set with no photo; output folders by subject; each variant laid out by the layout for its size and words; `picture.png`; the checks, `report.json` (in place of `run.json`) and the printed lines.
+- **QS-2. Ad sets and the report.** `adsPer: subject`; a set with no photo; output folders by subject; `picture.png`; the checks, `report.json` (in place of `run.json`) and the printed lines.
+- **MV-8. The app's rule** (`spec/make-variants.md`, "Quickstart"). Step 3 plans with `planNewVariant`, step 4 fits translated words with `fitTranslatedText`, and the pass that laid out each variant again (`starterLayoutPatches`, then the brand fonts and colours put back) is gone.
 - **QS-3. README.** Both examples with sample pictures, after a real run.
