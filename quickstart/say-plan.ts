@@ -18,7 +18,7 @@ function brandLines(plan: Plan, brand: Brand): string[] {
   const { colours, artDirection } = plan.look
   return [
     `Layout     ${plan.layout.id} (${plan.layout.name})`,
-    `Colours    ${colours.length > 0 ? colours.join(', ') : 'the layout’s own'}`,
+    `Colours    ${colours.length > 0 ? colours.join(', ') : "the layout's own"}`,
     `Fonts      ${fonts.length > 0 ? fonts.join(', ') : 'the default font'}`,
     `Logo       ${brand.logo ? pictureName(textOf('logo') ?? '') : 'none'}`,
     `Art        ${artDirection ?? 'none'}`,
@@ -60,7 +60,7 @@ export function planLines(
     callsLine(plan, args.aiLayout),
     args.aiLayout
       ? 'Text placement: one AI call moves the text to suit the picture.'
-      : 'Text placement: the layout’s own boxes, with no AI call (add --ai_layout for one).',
+      : "Text placement: the layout's own boxes, with no AI call (add --ai_layout for one).",
     '',
   ]
 }
