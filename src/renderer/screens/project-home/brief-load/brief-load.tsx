@@ -14,7 +14,8 @@
 // around the two buttons. It stays mounted while the home shows, so the clean-up above holds.
 // HOME-2: the form is the "New campaign" page. Its Back and Escape leave as Cancel does, asking
 // first when the form holds typed work (use-leave-brief.tsx); after Cancel or a leave the focus
-// goes to "Load a brief".
+// goes to "Load a brief". BB-7: after the photos, the brief's brand files are imported
+// (use-brief-brand.ts); Cancel and the page going away remove those the form added too.
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useApi, useApp } from '@/renderer/app/app-context'
 import { useNewCampaignAsk } from '@/renderer/app/nav-context'
@@ -37,6 +38,7 @@ import { Icon } from '@/renderer/ui/icon'
 import layout from '@/renderer/ui/layout.module.css'
 import styles from './brief-load.module.css'
 import { afterRefusal, type Change } from './after-refusal'
+import { dropFormAssets, useBriefBrand } from './use-brief-brand'
 import { useBriefPhotos } from './use-brief-photos'
 import { useLeaveBrief } from './use-leave-brief'
 import { useTextBrief } from './use-text-brief'
@@ -58,6 +60,8 @@ export function BriefLoad(props: BriefLoadProps) {
   const { projectId } = props
   const heldSubjectIds = props.subjects.map((s) => s.id)
   const briefPhotos = useBriefPhotos(projectId)
+  const briefBrand = useBriefBrand(projectId)
+  const adding = briefPhotos.adding || briefBrand.adding
   // The open form's newest values, kept without a re-render; null once no form is open.
   const formValues = useRef<BriefFormValues | null>(null)
   const formBox = useRef<HTMLDivElement>(null)
@@ -109,12 +113,7 @@ export function BriefLoad(props: BriefLoadProps) {
 
   function dropPhotos(values: BriefFormValues | null) {
     formValues.current = null
-    if (values)
-      removeAddedPhotos(
-        api,
-        projectId,
-        values.subjects.flatMap((s) => s.photos),
-      )
+    if (values) dropFormAssets(api, projectId, values)
   }
 
   const leaving = useLeaveBrief({
@@ -134,10 +133,19 @@ export function BriefLoad(props: BriefLoadProps) {
     if (result.ok) await openParsed(result.data as BriefParsed)
   }
 
-  // A read brief, from a file or pasted: its photos are added, then the form opens (SP-4).
+  // A read brief, from a file or pasted: its photos, then its brand files are added, then the
+  // form opens (SP-4, BB-7). If the page went away meanwhile, the added photos go again.
   async function openParsed(parsed: BriefParsed) {
     const photos = await briefPhotos.importPhotos(parsed)
-    if (photos !== null) setOpened(formFromDraft(parsed, heldSubjectIds, photos))
+    if (photos === null) return
+    const brand = await briefBrand.importBrand(parsed)
+    if (brand !== null) setOpened(formFromDraft(parsed, heldSubjectIds, photos, brand))
+    else
+      removeAddedPhotos(
+        api,
+        projectId,
+        photos.flatMap((p) => p.photos),
+      )
   }
 
   async function create(plan: Extract<CampaignPlan, { ok: true }>): Promise<Change | void> {
@@ -173,12 +181,12 @@ export function BriefLoad(props: BriefLoadProps) {
           className={layout.primary}
           onClick={() => void load()}
         >
-          {briefPhotos.adding ? <BusySpinner /> : <Icon name="file" />}
+          {adding ? <BusySpinner /> : <Icon name="file" />}
           Load a brief
         </button>
-        {briefPhotos.adding && (
+        {adding && (
           <span role="status" className={styles.hidden}>
-            Adding the brief's photos…
+            {briefPhotos.adding ? "Adding the brief's photos…" : "Adding the brief's brand files…"}
           </span>
         )}
         <button type="button" className={layout.secondary} onClick={paste.start}>

@@ -1,0 +1,84 @@
+/* app-style */
+/* The brief form's "Brand and layout" Section and the "Ad sets" pair (spec/brief-brand.md,
+   "What it shows"): stacked parts, each a label, its control or lines, and a hint. */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-field);
+  max-width: var(--width-dialog);
+}
+.part {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  max-width: var(--width-dialog);
+}
+.select,
+.text {
+  align-self: stretch;
+}
+.text {
+  resize: vertical;
+}
+/* One line holding a file's name, or the label and the segments, with its ✕ or control. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-tight);
+  min-width: 0;
+  font-size: var(--font-size-control);
+  color: var(--color-text);
+}
+.line {
+  margin: 0;
+  font-size: var(--font-size-control);
+  color: var(--color-text-secondary);
+}
+.hint {
+  margin: 0;
+  font-size: var(--type-meta-size);
+  color: var(--color-text-muted);
+}
+.thumb {
+  flex: none;
+  width: var(--layer-thumb);
+  height: var(--layer-thumb);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-inner);
+  object-fit: contain;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-tight);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* A colour chip: the swatch, the hex, then its ✕. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: var(--chip-height);
+  padding-left: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--type-meta-size);
+  font-variant-numeric: tabular-nums;
+}
+.swatch {
+  width: var(--icon-size-small);
+  height: var(--icon-size-small);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius-pill);
+}
+.notes {
+  margin: 0;
+}
+.notes ul {
+  margin: 0;
+  padding-left: var(--space-4);
+}

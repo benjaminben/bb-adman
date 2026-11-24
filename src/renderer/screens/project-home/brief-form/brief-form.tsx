@@ -1,6 +1,6 @@
 // The brief form (spec/screens-campaign.md, "The brief form"; FR-020 to FR-026, FR-034): the
-// campaign fields, the subject rows, sizes, languages, rules, the problems, and "Create
-// campaign" / "Cancel". It is not an HTML form, so Enter in a field sends nothing. While
+// campaign fields, the subject rows, "Ad sets", sizes, "Brand and layout", languages, rules,
+// the problems, and "Create campaign" / "Cancel". It is not an HTML form, so Enter in a field sends nothing. While
 // creating, the fieldset disables every control in it, Back too. HOME-2 (choice C-13): the
 // form is its own page, a SubPage "New campaign" whose Back calls onBack (Cancel when not
 // given); the caller handles Escape. The problems ("To fix", every line in words, never folded;
@@ -18,6 +18,7 @@ import {
   type BriefFormValues,
   type CampaignPlan,
 } from '@/renderer/screens/project-home/brief-form-model'
+import { AdsPerField, BrandFields } from '@/renderer/screens/project-home/brand-fields'
 import { RuleFields } from '@/renderer/screens/project-home/rule-fields'
 import { SizeFields } from '@/renderer/screens/project-home/size-fields'
 import { SubjectRows } from '@/renderer/screens/project-home/subject-rows'
@@ -116,9 +117,21 @@ export function BriefForm(props: BriefFormProps) {
             checked={values.placeSubjectPhoto}
             onChange={(placeSubjectPhoto) => setValues((v) => ({ ...v, placeSubjectPhoto }))}
           />
+          {values.subjects.length >= 2 && (
+            <AdsPerField
+              value={values.adsPer}
+              onChange={(adsPer) => setValues((v) => ({ ...v, adsPer }))}
+            />
+          )}
           <SizeFields
             sizes={values.sizes}
             onChange={(sizes) => setValues((v) => ({ ...v, sizes }))}
+          />
+          <BrandFields
+            projectId={props.projectId}
+            values={values}
+            images={images}
+            onChange={(brand) => setValues((v) => ({ ...v, brand }))}
           />
           <LanguageField
             value={values.languages}
