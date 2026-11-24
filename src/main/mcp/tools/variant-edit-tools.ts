@@ -1,7 +1,7 @@
 // add_variant and delete_variant (spec/phases/phase-10.md, the Phase 5 tools; spec/mcp-and-
 // agents.md; FR-195, FR-197). add_variant is variant.add without fit, so an agent's variant is
-// always one fan-out cell with background fit scale (A-143), and it lands on the campaign's
-// undo list. delete_variant is variant.delete, policy ask: the bus asks the user and the call
+// always one fan-out cell with background fit scale (A-143), placed and fitted as the app does
+// (spec/make-variants.md, "Agents"), and it lands on the campaign's undo list. delete_variant is variant.delete, policy ask: the bus asks the user and the call
 // waits. It has no undo (D-099) and clears the campaign's undo list (A-141). Each reply is the
 // variant ID only.
 import { variantAddInput, variantDeleteInput } from '@/shared/schemas/commands/variant'
@@ -18,6 +18,7 @@ export const VARIANT_EDIT_TOOLS: readonly ToolDef[] = [
     description:
       'Add one variant to a direction of an open project, at a size and a language from the ' +
       "campaign's lists, made from the direction's master with its background scaled to fit. " +
+      'Boxes are placed for the new size and text is sized to fit, as the app does. ' +
       'Text layers in a language other than the master\'s start as "missing" until text is ' +
       'set. No translation is started. The user can undo it. Gives the new variant ID.',
     kind: 'command',

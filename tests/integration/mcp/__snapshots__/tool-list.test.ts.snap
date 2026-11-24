@@ -1894,7 +1894,7 @@ exports[`the MCP tool list [SPEC 10.3, 4.5] > matches the pinned names, descript
     "name": "delete_campaign",
   },
   {
-    "description": "Add one variant to a direction of an open project, at a size and a language from the campaign's lists, made from the direction's master with its background scaled to fit. Text layers in a language other than the master's start as "missing" until text is set. No translation is started. The user can undo it. Gives the new variant ID.",
+    "description": "Add one variant to a direction of an open project, at a size and a language from the campaign's lists, made from the direction's master with its background scaled to fit. Boxes are placed for the new size and text is sized to fit, as the app does. Text layers in a language other than the master's start as "missing" until text is set. No translation is started. The user can undo it. Gives the new variant ID.",
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
