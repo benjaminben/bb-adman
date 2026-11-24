@@ -210,3 +210,33 @@ describe('the brief_extraction job [FR-022, FR-023]', () => {
     expect(log).not.toContain('Zephyrine')
   })
 })
+
+describe('the brief_extraction job and the brand [BB-3, A-404]', () => {
+  it('keeps the brand colours, layout, art direction and adsPer, and drops the logo and fonts', async () => {
+    f = makeTextFixture()
+    const answer = {
+      campaignName: 'A',
+      brand: {
+        logo: '/Users/someone/brand/logo.png',
+        colours: ['#0B3D2E', '#FFF6E5'],
+        fonts: { heading: 'brand/Headline.woff2', body: 'brand/Body.woff2' },
+      },
+      layout: 'photo-bottom-left',
+      artDirection: 'Soft morning light',
+      adsPer: 'subject',
+    }
+    const job = await finished(answer)
+    expect(job?.result).toEqual({
+      draft: {
+        campaignName: 'A',
+        brand: { colours: ['#0B3D2E', '#FFF6E5'] },
+        layout: 'photo-bottom-left',
+        artDirection: 'Soft morning light',
+        adsPer: 'subject',
+      },
+      primaryLanguage: null,
+    })
+    const stored = JSON.stringify(job)
+    for (const text of ['logo', 'fonts', '.png', '.woff2']) expect(stored).not.toContain(text)
+  })
+})

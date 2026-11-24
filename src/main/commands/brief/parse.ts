@@ -2,12 +2,15 @@
 // prepare and the draft is returned from run (SPEC 3.6). A brief has no size limit
 // (SPEC 14 1.39 Z7), so the whole file is read. Nothing of the brief reaches the log.
 // The pictures a brief names are checked in prepare too (Round 2 plan D3): any path, or the
-// asset ID of an image in this project. Only a person may call it (agent policy deny).
+// asset ID of an image in this project. So are its logo and fonts (spec/brief-brand.md
+// "brief.parse"). Only a person may call it (agent policy deny).
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import type Database from 'better-sqlite3'
+import { checkBriefBrand, type BrandAssetOf } from '@/main/assets/brief-brand'
 import { checkBriefPictures } from '@/main/assets/brief-pictures'
 import { defineCommand } from '@/main/commands/types'
+import { brandFileTexts } from '@/shared/brief/brand'
 import { parseBriefFile } from '@/shared/brief/parse'
 import { parseBriefText } from '@/shared/brief/text'
 import { primaryLanguageOf } from '@/shared/brief/primary-language'
@@ -77,17 +80,28 @@ function imageLookup(db: Database.Database): (assetId: string) => boolean {
   return (assetId) => row.get(assetId) !== undefined
 }
 
+// spec/brief-brand.md "brief.parse" rule 1: the kind and library of an asset of the project.
+function assetLookup(db: Database.Database): BrandAssetOf {
+  const row = db.prepare('SELECT kind, library FROM asset WHERE id = ?')
+  return (assetId) => (row.get(assetId) as { kind: string; library: string } | undefined) ?? null
+}
+
+// brandFiles is left out when the brief names no logo and no font, so a brief without a
+// brand gets the reply it had before.
 async function answer(
   db: Database.Database,
   briefPath: string | null,
   draft: BriefDraft,
 ): Promise<BriefParsed> {
   const isImage = imageLookup(db)
-  return {
+  const parsed: BriefParsed = {
     draft,
     primaryLanguage: primaryLanguageOf(draft),
     subjectPictures: await checkBriefPictures(briefPath, draft.subjects, { isImage }),
   }
+  if (brandFileTexts(draft).length === 0) return parsed
+  const brandFiles = await checkBriefBrand(briefPath, draft, { assetOf: assetLookup(db) })
+  return { ...parsed, brandFiles }
 }
 
 export function briefParse() {
