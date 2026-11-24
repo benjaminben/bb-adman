@@ -38,7 +38,12 @@ export const BRIEF_TOOLS: readonly ToolDef[] = [
       'Message: Warm up slowly\n## Subjects\n### Tea tin\n' +
       "A subject's pictures are asset IDs from list_assets or full file paths. If any full " +
       'path is given, the user is asked first and sees each path; you wait up to two ' +
-      'minutes, and a refusal is final. Sizes and languages left out are filled as for ' +
+      'minutes, and a refusal is final. A JSON or YAML brief may also give brand (logo, ' +
+      'colours as hex such as #0B3D2E, fonts with heading and body), layout (a starter layout ' +
+      'ID), artDirection (a line for the picture prompt) and adsPer ("campaign" or ' +
+      '"subject"). The logo and fonts are asset IDs only: import a file with import_assets ' +
+      'first. A path there, or a bad colour, layout or adsPer, is refused. ' +
+      'Sizes and languages left out are filled as for ' +
       'create_campaign. Gives the campaign ID, its first direction ID, its master variant ID ' +
       'and the subject IDs, and the asset IDs of imported files. ' +
       LEAVE_THE_CHOICE,
