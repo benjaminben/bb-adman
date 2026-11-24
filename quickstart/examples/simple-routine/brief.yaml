@@ -33,7 +33,7 @@ sizes:
 # The words for each other language. A language with no words here (es) is translated by AI.
 copy:
   fr:
-    headline: Le soin de la peau, en toute simplicité
+    headline: La peau, en toute simplicité
     callToAction: Commencer ma routine
 
 # The brand. "heading" is the headline's font; "body" is the font of all other text.

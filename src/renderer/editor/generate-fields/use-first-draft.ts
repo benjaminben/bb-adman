@@ -29,7 +29,7 @@ function factsFrom(data: CampaignGet | null, variantId: string, words: boolean):
     region: campaign.region,
     message: campaign.message,
     wordsOnLayers: words,
-    artDirection: campaign.brief.artDirection,
+    artDirection: campaign.brief?.artDirection,
   })
   return { prompt, subjectIds }
 }
