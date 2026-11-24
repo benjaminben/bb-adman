@@ -43,7 +43,8 @@ describe('quickstart checks', () => {
   })
 
   it('reads a plain word list as the main language', () => {
-    const text = 'campaignName: A\nregion: US\naudience: B\nmessage: C\nsubjects:\n  - name: D\nlanguages: [fr, en]\nrequiredWords: [Paris]\n'
+    const text =
+      'campaignName: A\nregion: US\naudience: B\nmessage: C\nsubjects:\n  - name: D\nlanguages: [fr, en]\nrequiredWords: [Paris]\n'
     const result = readPlan(text, 'yaml')
     if (!result.ok) throw new Error(result.message)
     expect(ruleSetOf(result.plan, false).requiredWords).toEqual({ fr: ['Paris'] })

@@ -90,7 +90,8 @@ export async function readSubjectPhotos(plan: Plan, briefFolder: string): Promis
     const photos: SubjectPhoto[] = []
     for (const text of subject.pictures) {
       const file = await readBriefFile(briefFolder, text, 'image')
-      if (file.ok) photos.push({ name: pictureName(text), file: { bytes: file.bytes, mime: file.mime } })
+      if (file.ok)
+        photos.push({ name: pictureName(text), file: { bytes: file.bytes, mime: file.mime } })
       else notes.push(fileNoteLine('photo', text, file.reason))
     }
     bySubject.push(photos)

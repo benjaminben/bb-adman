@@ -20,13 +20,20 @@ The run reads the example brief `quickstart/examples/simple-routine/brief.yaml`,
 2. lays the words out with the brief's layout, brand fonts and colours;
 3. translates the words the brief has none for;
 4. extends the picture to each other size;
-5. draws every ad with the app's own layer renderer.
+5. lays out each ad again for its own size and words, so the margins line up and longer words get a smaller size;
+6. draws every ad with the app's own layer renderer;
+7. runs the app's checks on every ad (logo shown, brand colours, banned and required words, translations approved, text that fits).
 
-Each ad lands in `quickstart/output/<campaign>/<language>/<size>/`:
+A brief with `adsPer: subject` (as in `summer-splash`) makes one set of ads per subject, each with its own picture.
+
+Each ad lands in `quickstart/output/<campaign>/<language>/<size>/`, or `quickstart/output/<campaign>/<subject>/<language>/<size>/` for one set per subject:
 
 - `final.png`, the finished ad;
+- `picture.png`, the picture as the model made it, with no text;
 - `layers/`, each layer alone at the ad's size (text layers are see-through);
 - `layout.json`, each layer's text, box and style.
+
+`quickstart/output/<campaign>/report.json` holds the models, each set's prompt and AI calls with their time, and every check's result for every ad. The run also prints one line per ad: "all checks passed" or what was flagged. A flag does not stop the run.
 
 To get a different result, edit the example's `brief.yaml`: the words, the languages, the sizes, the layout, the brand, or the photos it points at.
 
