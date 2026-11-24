@@ -1,6 +1,8 @@
 // spec/screens-variants.md, "Fan-out" [P5-16]: the pairs, the new count and the fits to send.
 import { describe, expect, it } from 'vitest'
 import {
+  existingCount,
+  fillsSent,
   fillsToStart,
   fanOutLists,
   fillCount,
@@ -23,6 +25,7 @@ const SAME_PIXELS = { label: '1080x1080', width: 1080, height: 1080 }
 const BASIS: FanOutBasis = {
   sizes: [SQUARE, TALL, WIDE, SAME_PIXELS],
   languages: ['en', 'de', 'fr'],
+  primaryLanguage: 'en',
   master: { sizeLabel: '1x1', language: 'en', width: 1080, height: 1080 },
   existing: [
     { sizeLabel: '1x1', language: 'en', format: 'image' },
@@ -156,5 +159,55 @@ describe('fan-out model: formats [lows C, spec/data-rules.md fan-out step 7]', (
     expect(fillsToStart(fill, 2)).toEqual([{ variantId: 'V2' }, { variantId: 'V3' }])
     expect(fillsToStart(fill, 0)).toEqual([])
     expect(fillsToStart(fill, 5)).toEqual(fill)
+  })
+})
+
+// MV-6 (spec/screens-variants.md, "Make variants"; spec/make-variants.md, "Making variants from
+// a variant"): the source may be any variant, so the counts are judged against it.
+describe('make variants from a variant [MV-6]', () => {
+  const DE_SOURCE: FanOutBasis = {
+    ...BASIS,
+    languages: ['en', 'de', 'ja'],
+    master: { sizeLabel: '9x16', language: 'de', width: 1080, height: 1920, format: 'image' },
+    existing: [
+      { sizeLabel: '1x1', language: 'en', format: 'image' },
+      { sizeLabel: '9x16', language: 'de', format: 'image' },
+    ],
+  }
+
+  it("counts no translation for the campaign's main language or the source's language", () => {
+    expect(translationCount(DE_SOURCE, ticks([], ['en', 'de', 'ja']))).toBe(1)
+    expect(translationCount(DE_SOURCE, ticks(['1x1'], ['en', 'de', 'ja']))).toBe(1)
+    expect(translationCount(DE_SOURCE, ticks([], ['en']))).toBe(0)
+  })
+
+  it("counts the chosen cells that exist, leaving out the source's own", () => {
+    expect(existingCount(DE_SOURCE, ticks([], []), ['image'])).toBe(0)
+    expect(existingCount(DE_SOURCE, ticks(['1x1'], ['en']), ['image'])).toBe(1)
+    expect(existingCount(DE_SOURCE, ticks(['1x1'], ['en']), ['video'])).toBe(0)
+    const more = [
+      ...DE_SOURCE.existing,
+      { sizeLabel: '9x16', language: 'en', format: 'image' as const },
+    ]
+    expect(existingCount({ ...DE_SOURCE, existing: more }, ticks(['1x1'], ['en']), ['image'])).toBe(
+      2,
+    )
+  })
+
+  it("leaves out the master's own cell in the header's dialog", () => {
+    expect(existingCount(BASIS, ticks(['9x16'], []), ['image'])).toBe(1)
+    expect(existingCount(BASIS, ticks([], []), ['image'])).toBe(0)
+  })
+
+  it("judges the fits against the source's pixel size", () => {
+    expect(fitSizes(DE_SOURCE, ticks(['1x1', '16x9'], []))).toEqual([SQUARE, WIDE])
+  })
+
+  it("counts the fills in the source's language", () => {
+    const fits = { '1x1': 'fill' as const, '16x9': 'fill' as const }
+    expect(fillsSent(DE_SOURCE, ticks(['1x1', '16x9'], ['en']), fits, ['image'])).toBe(2)
+    const deSquare = { sizeLabel: '1x1', language: 'de', format: 'image' as const }
+    const basis = { ...DE_SOURCE, existing: [...DE_SOURCE.existing, deSquare] }
+    expect(fillsSent(basis, ticks(['1x1', '16x9'], ['en']), fits, ['image'])).toBe(1)
   })
 })

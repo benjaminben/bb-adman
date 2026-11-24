@@ -65,6 +65,7 @@ const make = () => screen.getByRole('button', { name: /^Make (\d+ )?variants?$/ 
 const basis = {
   sizes: SIZES,
   languages: ['en', 'de', 'fr'],
+  primaryLanguage: 'en',
   master: { sizeLabel: '1x1', language: 'en', width: 1080, height: 1080 },
   existing: [
     { sizeLabel: '1x1', language: 'en', format: 'image' as const },

@@ -1,5 +1,6 @@
-// spec/screens-variants.md, "Fan-out"; spec/links-and-sync.md, "Fan-out": what the dialog
-// sends and counts. The master's size and language are always in. A size, language and format
+// spec/screens-variants.md, "Make variants"; spec/links-and-sync.md, "Fan-out": what the dialog
+// sends and counts. `master` holds the source's facts: the master, or in the source mode (MV-6)
+// the tile's variant; below, "the master" means that source. Its size and language are always in. A size, language and format
 // the direction already has is not made again (step 7: image and video). A fit is sent for each
 // listed size whose pixel size differs from the master's, and for no other; with no background
 // picture on the master each is `scale`. The count of text calls (P6-15). Pure.
@@ -10,7 +11,10 @@ import type { VariantRow } from '@/shared/schemas/rows/variant'
 export type FanOutBasis = {
   sizes: CampaignSize[]
   languages: string[]
-  master: Pick<VariantRow, 'sizeLabel' | 'language' | 'width' | 'height'>
+  // The campaign's main language: no translation is counted for it (MV-6).
+  primaryLanguage: string
+  master: Pick<VariantRow, 'sizeLabel' | 'language' | 'width' | 'height'> &
+    Partial<Pick<VariantRow, 'format'>>
   existing: Array<Pick<VariantRow, 'sizeLabel' | 'language' | 'format'>>
 }
 
@@ -43,9 +47,9 @@ export function formatsToSend(ticked: readonly string[]): FanOutFormat[] {
   return FORMATS.filter((f) => ticked.includes(f))
 }
 
-// The variants the call would make, as variant.fanOut counts them: each size, language and
-// ticked format the direction does not have yet. Empty with no size, language or format.
-export function newCells(
+// Every size, language and ticked format the call covers, as variant.fanOut builds its grid.
+// Empty with no size, language or format.
+function gridCells(
   basis: FanOutBasis,
   ticks: FanOutTicks,
   formats: readonly FanOutFormat[],
@@ -54,16 +58,39 @@ export function newCells(
   if (lists.sizes.length === 0 || lists.languages.length === 0) return []
   const sizes = [...new Set([basis.master.sizeLabel, ...lists.sizes])]
   const languages = [...new Set([basis.master.language, ...lists.languages])]
-  const has = (c: FanOutCell) =>
-    basis.existing.some(
-      (v) => v.format === c.format && v.sizeLabel === c.sizeLabel && v.language === c.language,
-    )
-  const cells = sizes.flatMap((sizeLabel) =>
+  return sizes.flatMap((sizeLabel) =>
     languages.flatMap((language) =>
       formatsToSend(formats).map((format) => ({ sizeLabel, language, format })),
     ),
   )
-  return cells.filter((c) => !has(c))
+}
+
+// The variants the call would make, as variant.fanOut counts them: each cell of the grid the
+// direction does not have yet.
+export function newCells(
+  basis: FanOutBasis,
+  ticks: FanOutTicks,
+  formats: readonly FanOutFormat[],
+): FanOutCell[] {
+  return gridCells(basis, ticks, formats).filter((c) => !exists(basis, c))
+}
+
+const exists = (basis: FanOutBasis, c: FanOutCell) =>
+  basis.existing.some(
+    (v) => v.format === c.format && v.sizeLabel === c.sizeLabel && v.language === c.language,
+  )
+
+// MV-6: the chosen cells the direction already has, which are not made again; the source's own
+// cell (its size, language and format, image when not given) is left out.
+export function existingCount(
+  basis: FanOutBasis,
+  ticks: FanOutTicks,
+  formats: readonly FanOutFormat[],
+): number {
+  const { sizeLabel, language, format = 'image' } = basis.master
+  const own = (c: FanOutCell) =>
+    c.sizeLabel === sizeLabel && c.language === language && c.format === format
+  return gridCells(basis, ticks, formats).filter((c) => !own(c) && exists(basis, c)).length
 }
 
 // The image pairs the call would make.
@@ -112,8 +139,8 @@ export function fillsSent(
   return Object.entries(fits).filter(([label, fit]) => fit === 'fill' && sizes.has(label)).length
 }
 
-// P6-15: the fan-out starts at most one translation job per new language other than the
-// master's, which is the campaign's main language, whatever the formats. So the count may
+// P6-15, MV-6: the fan-out starts at most one translation job per new language other than the
+// campaign's main language and the source's language, whatever the formats. So the count may
 // overstate the paid requests (brief copy or no key starts none) but never understates them.
 export function translationCount(
   basis: FanOutBasis,
@@ -121,7 +148,8 @@ export function translationCount(
   formats: readonly FanOutFormat[] = ['image'],
 ): number {
   const languages = newCells(basis, ticks, formats).map((c) => c.language)
-  return new Set(languages.filter((l) => l !== basis.master.language)).size
+  const skip = [basis.primaryLanguage, basis.master.language]
+  return new Set(languages.filter((l) => !skip.includes(l))).size
 }
 
 // The fills to start after the reply: never more than the cost line showed at the click, so a

@@ -17,6 +17,7 @@ export function FanOutButton(props: DirectionControlProps) {
   const basis: FanOutBasis = {
     sizes: campaign.campaign.sizes,
     languages: campaign.campaign.languages,
+    primaryLanguage: campaign.campaign.primaryLanguage,
     master,
     existing: campaign.variants.filter((v) => v.directionId === direction.id),
   }
