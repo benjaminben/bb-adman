@@ -241,13 +241,7 @@ describe('approvals.publish with a video variant [R2V-5]', () => {
       message: APPROVALS_REASON_MESSAGES.publish_cancelled,
       details: { reason: 'publish_cancelled' },
     })
-    expect(steps).toEqual([
-      'drawing 0/2',
-      'making 0/2',
-      'sending 0/2',
-      'drawing 1/2',
-      'making 1/2',
-    ])
+    expect(steps).toEqual(['drawing 0/2', 'making 0/2', 'sending 0/2', 'drawing 1/2', 'making 1/2'])
     expect(exp).toHaveBeenCalledTimes(1)
     expect(await store.list(`adman-approvals/${lf.projectId}/${lf.c1}/`)).toEqual([])
     expect(lf.stand.seen.some((s) => s.route === 'replaceGallery')).toBe(false)

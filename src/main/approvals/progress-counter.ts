@@ -24,6 +24,7 @@ export function progressCounter(
   return {
     send: (step, done, total) => onStep({ step, done, total, unitsDone, unitsTotal }),
     add: (n) => (unitsDone += n),
-    finish: () => onStep({ step: 'finishing', done: 0, total: 0, unitsDone: unitsTotal, unitsTotal }),
+    finish: () =>
+      onStep({ step: 'finishing', done: 0, total: 0, unitsDone: unitsTotal, unitsTotal }),
   }
 }

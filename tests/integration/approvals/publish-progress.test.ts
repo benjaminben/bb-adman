@@ -5,7 +5,14 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { campaignVariants } from '@/main/approvals/publish'
 import { noMediaTool } from '@/main/media/no-media'
 import { data } from '../core-fixture'
-import { addVariants, makeLinkFixture, pair, setUp, stubDraw, type LinkFixture } from './link-fixture'
+import {
+  addVariants,
+  makeLinkFixture,
+  pair,
+  setUp,
+  stubDraw,
+  type LinkFixture,
+} from './link-fixture'
 
 const CLIP = Buffer.from('\0\0\0\x18ftypisom made-up clip bytes')
 let lf: LinkFixture
@@ -62,8 +69,6 @@ describe('approvals.progress steps and units [D-110]', () => {
     data(await publish())
     const from = progress().length
     expect(await publish()).toMatchObject({ ok: true, data: { drawn: 0, clips: 0 } })
-    expect(progress().slice(from)).toEqual([
-      { ...event('finishing', 0, 0, 0), unitsTotal: 0 },
-    ])
+    expect(progress().slice(from)).toEqual([{ ...event('finishing', 0, 0, 0), unitsTotal: 0 }])
   })
 })
