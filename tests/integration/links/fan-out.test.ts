@@ -4,6 +4,17 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { expectRefused } from '../assets/asset-bus'
 import { SQUARE, TALL } from '../campaigns/campaign-fixture'
 import { makeFanOutBus, WIDE, type FanOutBus } from './fan-out-fixture'
+import {
+  addCampaignSize,
+  fontSizeOf,
+  layerOf,
+  setBrief,
+  SMALL,
+  tiedMaster,
+  TOP,
+  words,
+} from './fan-out-layout-fixture'
+import { layoutBoxOf } from '@/shared/links/source-layout'
 import type { LayerRow } from '@/shared/schemas/rows/layer'
 
 let bus: FanOutBus
@@ -183,5 +194,45 @@ describe('variant.fanOut refusals [P5-10]', () => {
     const result = await bus.agent('variant.fanOut', { directionId: bus.directionId, ...ALL })
     expect(result).toMatchObject({ ok: false, error: { code: 'AGENT_DENIED' } })
     expect(bus.variants()).toEqual([])
+  })
+})
+
+// MV-7 (spec/make-variants.md, "Text that fits", "Which layout"): the command plans through
+// planNewVariant with the campaign's stored layout.
+describe('variant.fanOut, text that fits and the layout [MV-7]', () => {
+  it('fits long brief words in a new language and adds the style.fontSize path', async () => {
+    setBrief(bus, '$.copy', { de: { headline: words(120) } })
+    await fanOut({ sizes: [SQUARE.label], languages: ['de'], fits: {} })
+    const master = layerOf(bus, bus.masterId, 'headline')
+    const de = layerOf(bus, bus.at(SQUARE.label, 'de')?.id ?? '', 'headline')
+    expect(de.copy).toBe(words(120))
+    expect(fontSizeOf(de)).toBeLessThan(fontSizeOf(master))
+    expect(de.overrides).toEqual(['style.fontSize'])
+    expect(layerOf(bus, bus.at(SQUARE.label, 'de')?.id ?? '', 'background').overrides).toEqual([])
+  })
+
+  it('scales the text measures at a smaller size, each one that differs an override path', async () => {
+    addCampaignSize(bus, SMALL)
+    await fanOut({ sizes: [SMALL.label], languages: ['en'], fits: { [SMALL.label]: 'scale' } })
+    const master = layerOf(bus, bus.masterId, 'headline')
+    const small = layerOf(bus, bus.at(SMALL.label, 'en')?.id ?? '', 'headline')
+    expect(fontSizeOf(small)).toBeLessThanOrEqual(Math.round((fontSizeOf(master) * 250) / 1080))
+    expect(small.overrides).toContain('style.fontSize')
+    expect(small.copy).toBe(master.copy)
+  })
+
+  it("lets the campaign's stored layout break a tie between layouts", async () => {
+    tiedMaster(bus)
+    setBrief(bus, '$.layout', TOP.id)
+    await fanOut({ sizes: [TALL.label], languages: ['en'], fits: { [TALL.label]: 'scale' } })
+    const tall = layerOf(bus, bus.at(TALL.label, 'en')?.id ?? '', 'headline')
+    expect(tall.geometry).toEqual(layoutBoxOf(TOP, { key: 'headline' }, TALL))
+  })
+
+  it('gives the tie to the default layout when the brief names none', async () => {
+    tiedMaster(bus)
+    await fanOut({ sizes: [TALL.label], languages: ['en'], fits: { [TALL.label]: 'scale' } })
+    const tall = layerOf(bus, bus.at(TALL.label, 'en')?.id ?? '', 'headline')
+    expect(tall.geometry).not.toEqual(layoutBoxOf(TOP, { key: 'headline' }, TALL))
   })
 })

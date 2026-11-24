@@ -89,7 +89,18 @@ async function setUp(setup: Setup = {}, textProvider: string | null = 'fake') {
   const masterText = () => textOf(direction.masterId)
   const jobs = () => readWireRows(db, 'job') as JobRow[]
   const ended = (id: string) => ['succeeded', 'failed', 'cancelled'].includes(job(id).status)
-  return { fanOut, inLanguage, textOf, masterText, job, jobs, ended }
+  return {
+    fanOut,
+    inLanguage,
+    textOf,
+    masterText,
+    job,
+    jobs,
+    ended,
+    db,
+    user: exec('user'),
+    directionId: direction.id,
+  }
 }
 type Bus = Awaited<ReturnType<typeof setUp>>
 
@@ -201,5 +212,35 @@ describe('translation at fan-out [P6-15]', () => {
     expect(r.ok).toBe(false)
     expect(bus.jobs()).toEqual([])
     expect(bus.inLanguage('de')).toEqual([])
+  })
+})
+
+// MV-7 (spec/make-variants.md, "Making variants from a variant", "Translations").
+describe('translation when making variants from a variant [MV-7]', () => {
+  it('runs one job, for the third language, and copies the source language words', async () => {
+    const bus = await setUp()
+    const add = { directionId: bus.directionId, sizeLabel: SQUARE.label, format: 'image' }
+    data(await bus.user('variant.add', { ...add, language: 'de' }))
+    const source = bus.inLanguage('de')[0]?.id ?? ''
+    const headline = bus.textOf(source).find((l) => l.key === 'headline')
+    bus.db
+      .prepare("UPDATE layer SET copy = 'Sommer', translation_status = 'approved' WHERE id = ?")
+      .run(headline?.id)
+    const reply = replyOf(
+      await bus.user('variant.fanOut', {
+        directionId: bus.directionId,
+        sourceVariantId: source,
+        sizes: [TALL.label],
+        languages: ['de', 'fr'],
+        formats: ['image'],
+        fits: { [TALL.label]: 'scale' },
+      }),
+    )
+    const ids = reply.translationJobIds ?? []
+    expect(ids.map((id) => (bus.job(id).request as TranslationJobRequest).to)).toEqual(['fr'])
+    await finished(bus, ids)
+    const tallDe = bus.inLanguage('de').find((v) => v.id !== source)?.id ?? ''
+    const words = (id: string) => bus.textOf(id).map((l) => [l.key, l.copy, l.translationStatus])
+    expect(words(tallDe)).toEqual(words(source))
   })
 })

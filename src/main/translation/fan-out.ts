@@ -11,15 +11,11 @@ import { requireProviderKeys } from '@/main/providers/require-keys'
 import type { ProviderInfo } from '@/shared/schemas/queries/app'
 import type { CampaignRow } from '@/shared/schemas/rows/campaign'
 import { AppError } from '@/shared/schemas/result'
-import { translatedLayers } from '@/shared/translation/translated-layers'
 import { enqueueTranslation } from './start'
 import { planGroup, type TranslationPlan } from './targets'
 
 type Deps = Pick<CoreDeps, 'jobs' | 'providers' | 'secrets' | 'settings'>
 export type NewVariant = { variantId: string; language: string }
-
-// Lives in shared code, so the quickstart CLI fills copy the same way.
-export { translatedLayers }
 
 // The Settings text provider when it can translate now and has its key; otherwise null.
 function textProvider(deps: Deps): ProviderInfo | null {
@@ -55,18 +51,20 @@ function planFor(
   return { ...plan, request: { ...plan.request, items, targets } }
 }
 
-// One job per language of the new variants; the IDs started.
+// One job per language of the new variants; the IDs started. None for the campaign's main
+// language, nor for the source's (spec/make-variants.md, "Making variants from a variant"):
+// new variants in its language take its words, even where they are still missing.
 export function startFanOutTranslations(
   deps: Deps,
   ctx: ProjectContext,
-  source: { directionId: string; campaign: CampaignRow },
+  source: { directionId: string; campaign: CampaignRow; from: { language: string } },
   made: NewVariant[],
 ): string[] {
   if (ctx.actor === 'agent') return []
   const { campaign, directionId } = source
   const byLanguage = new Map<string, string[]>()
   for (const { variantId, language } of made) {
-    if (language === campaign.primaryLanguage) continue
+    if (language === campaign.primaryLanguage || language === source.from.language) continue
     byLanguage.set(language, [...(byLanguage.get(language) ?? []), variantId])
   }
   const plans = [...byLanguage]
