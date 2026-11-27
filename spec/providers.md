@@ -32,7 +32,16 @@ export const PROVIDER_ERROR_REASONS = [
   'address_needed', 'no_answer', 'not_comfyui', 'sign_in_needed', 'redirect_refused',
   'certificate', 'address_refused', 'missing_items', 'server_refused', 'out_of_memory',
   'run_failed', 'server_stopped', 'lost_contact', 'too_long', 'address_changed',
-  'bad_result', 'clip_has_sound',
+  'bad_result',
+  // a job that failed after it was queued, for a local cause (spec/ai-jobs.md)
+  'key_missing', 'picture_missing', 'picture_too_large', 'picture_changed',
+  'assets_folder_missing', 'assets_not_writable', 'results_not_added', 'target_gone',
+  'background_not_drawn',
+  // the publish job's reasons (spec/storage-and-publish.md)
+  'dropbox_signed_out', 'export_not_built', 'export_failed', 'work_folder_unsafe',
+  'publish_paths_clash',
+  // a queued run's custom workflow was removed before its turn (spec/comfyui-custom.md)
+  'workflow_gone',
 ] as const
 export type ProviderErrorReason = (typeof PROVIDER_ERROR_REASONS)[number]
 
@@ -40,7 +49,7 @@ export type MissingItem = { what: 'model' | 'node' | 'version' | 'add_on'; name:
 
 export type ProviderError = {
   kind: ProviderErrorKind
-  reason?: ProviderErrorReason     // set by ComfyUI (spec/comfyui.md); the window picks the sentence by reason first
+  reason?: ProviderErrorReason     // set by ComfyUI (spec/comfyui.md) and by the app for local causes; the window picks the sentence by reason first
   detail: string                   // raw text for the log, never shown in the window
   missing?: MissingItem[]
 }
@@ -60,11 +69,11 @@ export type ProviderError = {
 | `dropbox` | Dropbox | storage | Yes | `dropbox.refreshToken` | none | none | | `spec/storage-and-publish.md` |
 | `azure-blob` | Azure Blob Storage | storage | No | none | none | none | | `spec/storage-and-publish.md` |
 | `jev` | Jev | verification | No | none | none | none | | `spec/export-and-checks.md` |
-| `fake` | Fake provider | all six | Only when `ADMAN_FAKE_PROVIDERS=1` | none | none | none | `local: true`, `cancel: 'stops'` | `spec/jobs.md` |
+| `fake` | Fake provider | all seven | Only when `ADMAN_FAKE_PROVIDERS=1` | none | none | none | `local: true`, `cancel: 'stops'` | `spec/jobs.md` |
 
 - The code lists them in the table's order; `listProviders(env)` adds `fake` at the end only when `ADMAN_FAKE_PROVIDERS=1`.
 - `available` is a build fact: true only when the build has an adapter for a listed job. ComfyUI is offered for a job only when a shipped workflow for it is offered (`spec/comfyui.md`).
-- `DEFAULT_PROVIDERS = { image: 'gemini', layout: 'gemini', text: 'gemini', video: 'comfyui' }`. ComfyUI is the default video provider because it is the only video provider with an adapter. A saved `settings.json` that names `fal-seedance` as the video default is not rewritten; the window shows it selected and disabled (`spec/screens.md`).
+- `DEFAULT_PROVIDERS = { image: 'gemini', layout: 'gemini', text: 'gemini', video: 'comfyui' }`. ComfyUI is the default video provider because it runs locally, so no video run is paid unless the user picks fal.ai. A saved `settings.json` that names `fal-seedance` as the video default is not rewritten.
 - The model IDs live only in `defaultModels` in `registry.ts`. An adapter gets its model from `ctx.model(job)` and holds no model ID of its own. No other file under `src/` names a model ID; tests use made-up IDs.
 - The model names live only in `modelLabels` in `registry.ts`, beside the IDs. ComfyUI's is `{}`: it has no fixed model, so the workflow a run gets names it (`WorkflowFacts.model.label`, `spec/comfyui.md`).
 
@@ -109,10 +118,12 @@ Built as a contract file: `src/main/providers/types.ts`. Which methods each adap
 
 ```ts
 // src/main/providers/types.ts
-import type { Brief } from '../../shared/schemas/brief'
-import type { Geometry } from '../../shared/schemas/layer'
-import type { Settings } from '../../shared/schemas/settings'
-import type { ProviderError } from '../../shared/schemas/queries/app'
+import type { Brief, BriefDraft } from '@/shared/schemas/brief'
+import type { Geometry } from '@/shared/schemas/layer'
+import type { Settings } from '@/shared/schemas/settings'
+import type { ProviderError } from '@/shared/schemas/queries/app'
+import type { TypeStyleOffer } from '@/shared/config/type-styles'
+import type { WorkflowSpec } from '@/main/providers/comfyui/workflows/types'
 
 // File contents, never a path.
 export type ImageFile = { bytes: Uint8Array; mime: string }
@@ -120,6 +131,7 @@ export type ImageFile = { bytes: Uint8Array; mime: string }
 export type LayoutBox = {
   slot: string; x: number; y: number; width: number; height: number
   fontSize: number; color: string; align: 'left' | 'center' | 'right'
+  typeStyle?: string               // the model's text, untrusted; kept only when it is an offered id
 }
 
 // PNG or JPEG, as the provider sent it; the app turns every picture into a PNG before storing it.
@@ -141,7 +153,10 @@ export class ProviderCancelled extends Error { /* message 'The run was cancelled
 
 export interface ImageProvider {
   generate(
-    input: { prompt: string; references: ImageFile[]; width: number; height: number; count: number },
+    input: {
+      prompt: string; references: ImageFile[]; width: number; height: number; count: number
+      workflowId?: string          // the ComfyUI workflow the command chose; other providers ignore it
+    },
     opts?: RunOptions,
   ): Promise<ImageResult[]>
   extend(
@@ -150,19 +165,38 @@ export interface ImageProvider {
   ): Promise<ImageResult>
 }
 
+// The boxes come back in the variant's pixels.
 export interface LayoutProvider {
-  propose(input: {
-    background: ImageFile; width: number; height: number
-    items: Array<{ slot: string; text: string }>; palette: string[]; fonts: string[]
-  }): Promise<LayoutBox[]>
+  propose(
+    input: {
+      background: ImageFile; width: number; height: number
+      items: Array<{ slot: string; text: string }>; palette: string[]; fonts: string[]
+      typeStyles?: TypeStyleOffer[]  // given only when the project has no font of its own
+    },
+    opts?: RunOptions,
+  ): Promise<LayoutBox[]>
 }
 
+export type CopyRole = 'call_to_action' | 'text'
+
+// extractBrief gives a BriefDraft: the user confirms the form before anything is a brief.
 export interface TextProvider {
-  extractBrief(input: { text: string }): Promise<Brief>
-  copyOptions(input: { slot: string; brief: Brief; language: string; count: number }): Promise<string[]>
-  translate(input: {
-    items: Array<{ key: string; text: string }>; from: string; to: string; region: string; audience: string
-  }): Promise<Array<{ key: string; text: string }>>
+  extractBrief(input: { text: string }, opts?: RunOptions): Promise<BriefDraft>
+  copyOptions(
+    input: { role: CopyRole; brief: Brief; language: string; count: number; maxChars: number },
+    opts?: RunOptions,
+  ): Promise<string[]>
+  translate(
+    input: {
+      items: Array<{ key: string; text: string }>; from: string; to: string; region: string; audience: string
+    },
+    opts?: RunOptions,
+  ): Promise<Array<{ key: string; text: string }>>
+}
+
+// A picture in, the same picture with a see-through background out (PNG with alpha).
+export interface CutoutProvider {
+  cutOut(input: { image: ImageFile }, opts?: RunOptions): Promise<ImageResult>
 }
 
 // The caller never fetches an address a provider returned: fetchResult hands back the bytes.
@@ -174,13 +208,16 @@ export type VideoStart = { firstFrame: boolean; references: boolean }
 export interface VideoProvider {
   // The size the run is made at, which a first frame is fitted to before start.
   // A provider without it makes the run at the variant's own size.
-  runSize?(width: number, height: number, videoStart: VideoStart): { width: number; height: number }
+  runSize?(
+    width: number, height: number, videoStart: VideoStart, workflowId?: string,
+  ): { width: number; height: number }
   // `image` is the first frame or null. A signal that fires before submission stops start
   // with ProviderCancelled, with no more pictures uploaded.
   start(
     input: {
       image: ImageFile | null; references: ImageFile[]; prompt: string
       durationMs: number; width: number; height: number
+      workflowId?: string          // as for ImageProvider.generate
     },
     opts?: Pick<RunOptions, 'signal'>,
   ): Promise<{ remoteJobId: string }>
@@ -194,13 +231,17 @@ export interface VideoProvider {
   cancel(remoteJobId: string): Promise<CancelOutcome>
 }
 
+// The most a storage read takes when the caller names no limit.
+export const STORAGE_READ_MAX_BYTES = 256 * 1024 * 1024
+
 // Paths are relative, use '/', never start with '/' and never hold '..'.
 export interface StorageProvider {
   exists(path: string): Promise<boolean>
-  read(path: string): Promise<Uint8Array>
+  read(path: string, maxBytes?: number): Promise<Uint8Array>  // fails (`other`) once the file passes maxBytes
   write(path: string, data: ReadableStream | Uint8Array, contentType: string): Promise<void>
   list(prefix: string): Promise<string[]>
   remove(paths: string[]): Promise<void>
+  signedReadUrl?(path: string, seconds: number): Promise<string>  // S3 only (spec/approvals.md)
 }
 
 export interface VerificationProvider {
@@ -211,6 +252,8 @@ export type AdapterContext = {
   secret(name: string): string     // a saved secret; the key guard has already passed
   settings(): Settings             // read at call time, e.g. the S3 bucket
   model(job: string): string       // the default model ID from the registry
+  dropboxFetch?: typeof fetch      // the core's Dropbox fetch; adapterFor always sets it
+  comfyWorkflows?: { specs(): WorkflowSpec[] }  // the custom ComfyUI workflows; without it a run sees the shipped ones only
 }
 
 // What one provider folder exports from its index.ts.
@@ -219,6 +262,7 @@ export type ProviderAdapters = {
   layout?: (ctx: AdapterContext) => LayoutProvider
   text?: (ctx: AdapterContext) => TextProvider
   video?: (ctx: AdapterContext) => VideoProvider
+  cutout?: (ctx: AdapterContext) => CutoutProvider
   storage?: (ctx: AdapterContext) => StorageProvider
   verification?: (ctx: AdapterContext) => VerificationProvider
 }
@@ -241,7 +285,7 @@ Built. `src/main/providers/adapters.ts`.
 
 ## Rules for every adapter
 
-Built for Gemini, ComfyUI and S3. Each later adapter follows them, and its review checks them. Security class.
+Built for Gemini, fal.ai Seedance, ComfyUI, S3, Dropbox and the Firefly stub. A new adapter follows them, and its review checks them. Security class.
 
 **Keys.** An adapter gets its keys only through `ctx.secret`. It never logs a key, never puts one in an error, and never returns one. It reads no file and builds no path: the caller hands it bytes and gets bytes back.
 
@@ -263,7 +307,7 @@ Built for Gemini, ComfyUI and S3. Each later adapter follows them, and its revie
 - It refuses at once, reading nothing, when the `content-length` header is over the limit. With no header, or a smaller one, it counts the bytes as it reads and cancels the read once the count passes the limit. The count is of the bytes handed to the app, so a compressed answer cannot get past it. An answer exactly at the limit comes through.
 - The wrapper takes the limit as a default parameter, so a test can hand in a small one.
 - An answer object with no `body` stream (a test stand-in that has only `arrayBuffer()`) is read whole and its size checked after. A real answer always has a stream or no body at all, so the counted read is what runs in the app.
-- Not covered: storage `read`, which returns a whole file on purpose (`spec/storage-and-publish.md`). A video file has its own limits (next section).
+- Not covered: storage `read`, which returns a whole file on purpose under its own limit (`STORAGE_READ_MAX_BYTES`, or the caller's `maxBytes`; `spec/storage-and-publish.md`). A video file has its own limits (next section).
 
 ### Size limits and what a returned picture or clip goes through
 
@@ -295,9 +339,9 @@ Built. `src/main/providers/picture-limits.ts` is the one owner of the values; th
 - **Accepted, not fixed.** The decode and encode block the main process (up to a second or two at the limit), and a fault in Electron's decoder would stop the app. Accepted for pictures from a pinned HTTPS host; a less trusted host sends this back to the architect.
 - **A video file** is read under `MAX_VIDEO_BYTES` and must pass `checkMp4` (`src/main/providers/video-check.ts`) before it is stored. It is stored as the provider returned it, sound included; `checkMp4` reports `hasSound`, and a sound track is not a fault. The full video file rules are in `spec/comfyui.md`.
 
-### Phase 4 additions
+### Cut-out
 
-Built (Phase 4). `CutoutProvider` and the `cutout` key of `ProviderAdapters`, `'cutout'` in `ProviderJob`, `opts?: RunOptions` on the layout and text methods, and `extractBrief` returning a `BriefDraft`: `spec/ai-jobs.md`, "Provider interfaces". `ImageProvider` does not change. A cut-out keeps its see-through pixels through `toPng` (`spec/ai-jobs.md`, "Cut-out").
+Built. `CutoutProvider` and the `cutout` key are in the interfaces above; how a cut-out job uses them is in `spec/ai-jobs.md`, "Provider interfaces". A cut-out keeps its see-through pixels through `toPng` (`spec/ai-jobs.md`, "Cut-out").
 
 ## The adapters
 

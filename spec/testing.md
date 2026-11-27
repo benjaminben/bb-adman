@@ -77,7 +77,7 @@ Every change has a class. The developer runs the checks for that class. The full
 | F | Release | Everything in "Coverage and test types" below, on macOS and Windows |
 | G | The Electron edge: `src/main/index.ts` and `src/main/windows/` (window creation, window state, pickers, navigation rules) | Lint, typecheck, unit tests for any pure function in the touched file, and the end-to-end test that covers the changed behaviour, run by the developer on their own machine with `npm run test:e2e` |
 
-**Why class G exists.** Integration tests never load Electron (`spec/structure.md`, "Electron stays at the edge"), so a change to how the window is made can only be seen in a running app. A class G change is the one case where the developer runs the end-to-end test for a single change. The run needs a desktop session: a real screen on macOS or Windows. On a machine with no window system the window cannot be maximized, so a class G check is not run there and is not replaced by a skip that always passes. CI runs it again at the release gate on both systems.
+**Why class G exists.** Integration tests never load Electron (`spec/structure.md`, "Electron stays at the edge"), so a change to how the window is made can only be seen in a running app. A class G change is the one case where the developer runs the end-to-end test for a single change. The run needs a desktop session: a real screen on macOS or Windows. On a machine with no window system the window cannot be maximized, so a class G check is not run there and is not replaced by a skip that always passes. It runs again at the release gate, which is run by hand, not in CI (D-102).
 
 **Security class.** A change that touches a security rule (`spec/security.md`) is reviewed as security class. It merges only after its review passes.
 
@@ -89,19 +89,21 @@ Built. `package.json`.
 
 | Command | Runs | Who runs it |
 |---------|------|-------------|
-| `npm test` | `vitest run` with `vitest.config.ts`: project `node` (`tests/unit/{main,shared,config,preload,live,e2e-real}/**/*.test.ts`, `tests/integration/**/*.test.ts`) and project `renderer` (jsdom, `tests/unit/renderer/**/*.test.{ts,tsx}`, setup `tests/unit/renderer/setup.ts`) | Everyone, CI on every push |
+| `npm test` | `vitest run` with `vitest.config.ts`: project `node` (`tests/unit/{main,shared,config,preload,live,e2e-real,scripts,quickstart}/**/*.test.ts`, `tests/integration/**/*.test.ts`) and project `renderer` (jsdom, `tests/unit/renderer/**/*.test.{ts,tsx}` and `tests/unit/shared/**/*.test.tsx`, setup `tests/unit/renderer/setup.ts`) | Everyone, CI on every push |
 | `npm run test:watch` | Vitest in watch mode | Developers |
 | `npm run test:coverage` | `vitest run --coverage` | CI on every push (reports, does not fail) |
 | `npm run test:build` | `vitest.build.config.ts`: `tests/build/` against the output of `npm run build` | CI after the build |
+| `npm run test:package` | `vitest.package.config.ts`: `tests/package/` against the unpacked app `npm run package:dir` made. Reads files only, never starts the app | By hand on macOS, after `npm run package:dir` |
 | `npm run test:e2e` | `npm run build && playwright test` (`playwright.config.ts`, `tests/e2e/`, one worker). Offline | Developers; class G; release gate |
 | `npm run test:e2e:real` | `npm run build && playwright test --config playwright.real.config.ts` (`tests/e2e-real/` only). Uses the real ComfyUI server | By hand, on a desktop. The paid Gemini case is the stakeholder's only |
+| `npm run test:approvals-local` | `npm run build && playwright test --config playwright.approvals.config.ts` (`tests/approvals-local/`, one worker). The real approvals service under `next start` on `127.0.0.1` with a local database file, the built app beside it, Chromium as the visitor. No trace, screenshot or video kept | By hand. No CI workflow runs it |
 | `npm run test:comfy` | `vitest.comfy.config.ts`, `tests/comfy/`, one case at a time. Uses the real ComfyUI server | Project agents, within the limits in `spec/test-harnesses.md` |
 | `npm run test:live` | `vitest.live.config.ts`, `tests/live/**/*.test.ts`. Real paid calls | The stakeholder only |
 | `npm run shots` | `npm run build && playwright test --config playwright.shots.config.ts` (`tests/shots/*.shots.ts`, helper `tests/shots/shot.ts`, one worker). Offline. Writes screenshots of the built app's screens to `shots/` (not in git) for review by eye | By hand, when a screen slice wants pictures. Never part of a routine check or a verification class |
 | `npm run lint` | `eslint . && prettier --check .` | Every class |
 | `npm run typecheck` | `tsc --noEmit -p tsconfig.json` | Every class |
 
-No CI workflow names `test:e2e:real`, `test:comfy`, `test:live` or `shots`. No agent runs `test:live` or makes any paid call [D-081] (`spec/test-harnesses.md`). What CI runs and when is in `spec/infra-and-settings.md`.
+No CI workflow names `test:e2e`, `test:e2e:real`, `test:comfy`, `test:live`, `test:approvals-local`, `test:package` or `shots`. The approvals service in `approvals-service/` has its own `npm test` and `npm run test:e2e`, run from that folder; root `npm test` does not include them. No agent runs `test:live` or makes any paid call [D-081] (`spec/test-harnesses.md`). What CI runs and when is in `spec/infra-and-settings.md`.
 
 ### Quiet windows
 
@@ -117,12 +119,12 @@ No CI workflow names `test:e2e:real`, `test:comfy`, `test:live` or `shots`. No a
 | Unit | 90% of lines in `src/shared/`, 80% in `src/main/`, providers included | Vitest | CI |
 | Integration (commands against a temporary project file) | Every command in `spec/api-commands.md` has a success test and its refusal tests (below) | Vitest | CI |
 | Provider adapters | Each adapter tested against recorded responses, including one test per error kind | Vitest | CI |
-| Scene reference pictures | Each layer type, CJK text, overflow, letter spacing, transparency (Phase 3); each preset at 5 points in time (Phase 7) | Playwright (Electron) + the render window, per-system reference files, the rule in "Reference pictures" | Developer on macOS; CI on both systems at the release gate. Phase 3 and Phase 7 cases built (macOS references; Phase 7's in `tests/e2e/scene-cases-time.ts`) |
+| Scene reference pictures | Each layer type, CJK text, overflow, letter spacing, transparency; each preset at 5 points in time (`tests/e2e/scene-cases-time.ts`) | Playwright (Electron) + the render window, per-system reference files, the rule in "Reference pictures" | Developer on macOS; both systems at the release gate. Built, with macOS references only. Not built: a CI step that runs them (`spec/infra-and-settings.md`, "CI pipeline") |
 | Component and accessibility | Every dialog and panel: keyboard path, labels, axe-core with no violations | Testing Library, axe-core | CI |
-| End-to-end | Workflows 5.1 to 5.7 with fake providers | Playwright (Electron) | CI on tags (Phase 11) |
+| End-to-end | Workflows 5.1 to 5.7 with fake providers | Playwright (Electron) | Developer on macOS (`npm run test:e2e`); the release gate. No CI workflow runs it: there is no tag pipeline (D-102) |
 | MCP | Every tool, the ask flow, token and header rejection | MCP SDK client in Vitest | CI |
 | Performance / load | None. No targets set. | — | — |
-| Security | gitleaks, `npm audit` at high severity, licence check, built-page policy check | — | CI. `spec/infra-and-settings.md` says which phase adds each and which ones fail a push |
+| Security | gitleaks, `npm audit` at high severity, licence check, built-page policy check | — | CI. `spec/infra-and-settings.md` says which ones fail a push. The licence check is not built (Phase 11, held) |
 
 **Measuring coverage.** Built. `@vitest/coverage-v8`, run by `npm run test:coverage`. `vitest.config.ts` is the only place the thresholds are set:
 
@@ -138,13 +140,13 @@ coverage: {
 },
 ```
 
-A threshold is never lowered and no exclusion is added to pass it. `json-summary` gives per-folder totals from the tool, not by hand. CI runs coverage on every push and prints the figures. Falling below a threshold fails the release gate (class F), not a single change, so a worktree is not blocked by another worktree's gap. In the push workflow the coverage step has `continue-on-error: true`. Two conditions keep that from hiding a real failure: `npm test` is its own step before it and fails the run when a test fails, and the tag pipeline (Phase 11) runs coverage without the mark. `tests/unit/config/coverage-config.test.ts` checks the config.
+A threshold is never lowered and no exclusion is added to pass it. `json-summary` gives per-folder totals from the tool, not by hand. CI runs coverage on every push and prints the figures. Falling below a threshold fails the release gate (class F), not a single change, so a worktree is not blocked by another worktree's gap. In the push workflow the coverage step has `continue-on-error: true`. Two conditions keep that from hiding a real failure: `npm test` is its own step before it and fails the run when a test fails, and the release gate, run on a person's computer before a release (D-102), runs coverage without the mark. `tests/unit/config/coverage-config.test.ts` checks the config.
 
 **No type-only tests.** A test that only uses `expectTypeOf` asserts nothing when `npm test` runs, because Vitest's type checking is off. A rule about a type is proven by `npm run typecheck`, which every class runs. For example, typecheck is the proof that `isInternal` is required on `IpcTargets` (`src/main/ipc.ts`).
 
 ### Reference pictures
 
-Built (slice P3-8, cases added by LK-2 and LK-3). `tests/e2e/scene-reference.spec.ts`, cases in `tests/e2e/scene-cases.ts`, which also takes `LOOK_CASES` from `tests/e2e/scene-cases-look.ts`; comparison in `tests/e2e/reference-compare.ts`, pictures in `tests/reference-pictures/{darwin,win32}/{case}.png`. The 23 `darwin` pictures are made; `win32` has none yet (D-087).
+Built (slice P3-8, cases added by LK-2 and LK-3). `tests/e2e/scene-reference.spec.ts`, cases in `tests/e2e/scene-cases.ts`, which also takes `LOOK_CASES` from `tests/e2e/scene-cases-look.ts`; comparison in `tests/e2e/reference-compare.ts`, pictures in `tests/reference-pictures/{darwin,win32}/{case}.png`. Every case has its `darwin` picture; `win32` has none yet (D-087).
 
 - LK-2 cases (in `scene-cases.ts`): `text-box-button`, `text-box-label`, `text-all-caps`, `text-box-overflow-bottom` (its overflow flag is checked in `tests/e2e/scene-overflow.spec.ts`).
 - LK-3 cases (in `scene-cases-look.ts`): `background-colour-no-picture`, `background-colour-under-transparent-picture`, `shade-bottom-on-photo`, `shade-all-on-image-layer`, `image-past-the-edge`.
@@ -178,7 +180,7 @@ A refusal test is a test of a command saying no. It does not have to end in `RUL
 
 ## Named tests that must keep passing
 
-Each test below must exist and keep passing. A test marked "Not built" is written by the phase named.
+Each test below exists and must keep passing.
 
 | Test | File |
 |------|------|
@@ -197,18 +199,18 @@ Each test below must exist and keep passing. A test marked "Not built" is writte
 | `details.issues` names fields and never holds an input value | `tests/integration/commands/issues-no-value.test.ts` |
 | An internal command is refused when sent from a window | `tests/integration/commands/internal-command.test.ts` |
 | A generated PNG has a `generation` chunk [REQ: FR-068] | `tests/integration/generation/run-images-core.test.ts` |
-| An exported PNG has no `generation` chunk [REQ: FR-068] | Not built (P8-19, `tests/e2e/export-picture.spec.ts`) |
+| An exported PNG has no `generation` chunk [REQ: FR-068] | `tests/e2e/export-picture.spec.ts` |
 | No MCP tool reply, log line or project file contains a secret value. Saves a value for every secret name, `mcp.token` included; calls every listed tool with the ComfyUI address and an asset path planted [REQ: FR-198] | `tests/integration/mcp/secret-leak.test.ts` (grows with each tool) |
 | `mcp.getConnectInfo` is refused for the agent actor, and it is the only query whose reply contains a secret value [D-014] | `tests/integration/queries/mcp-connect-info.test.ts` |
 | `render_variant` writes no file [REQ: FR-193, D-030]. Lists every file under the project's folder, its assets folder, a temporary app data folder and a temporary folder set as the system's temporary folder; calls the tool; lists again. Equal apart from the activity log. The reply holds one `image/png` item and no path | `tests/integration/mcp/render-variant-no-file.test.ts` (P10-3) |
-| The same variant drawn at frame `i` twice gives identical pictures [REQ: FR-131] | Not built (P8-19, `tests/e2e/export-frames.spec.ts`) |
+| The same variant drawn at frame `i` twice gives identical pictures [REQ: FR-131] | `tests/e2e/export-frames.spec.ts` |
 | A video export of a fixed variant has exactly `ceil(duration × fps)` frames [REQ: FR-131] | `tests/integration/export/frame-count.test.ts` (P8-14) |
 | Publishing campaign A never lists, writes or deletes outside `{campaignIdA}/` [REQ: FR-164] | `tests/integration/publish/campaign-folder-isolation.test.ts` (P9-10) |
 | An agent `set_translation` never yields `approved` [REQ: FR-200] | `tests/integration/mcp/translation-check-tools.test.ts` (P10-12) |
-| Editing a master changes no other variant's layer rows [REQ: FR-081] | Not built (Phase 5) |
+| Editing a master changes no other variant's layer rows [REQ: FR-081] | `tests/integration/links/master-edit.test.ts` |
 | Format round trip keeps every video setting [D-026]. Builds a video variant with a changed duration and `duration_overridden` set, two clips with trims and a placement, and a layer with its own timing, entrance and exit and overrides on them; changes it to image and back. Every value in the table of `spec/data-rules.md`, format change, is equal to before, clip IDs included, and no clip was added. Runs once on a master and once on a linked variant | `tests/integration/commands/variant-format-round-trip.test.ts` (P7-10) |
 | `variant.setFormat` is refused in each direction when the target cell already has a variant, and nothing is written [REQ: R-20]. Also covers an undo refused because the cell was taken after the change | `tests/integration/commands/variant-format-refused.test.ts` (P7-10) |
-| The app starts and completes import, manual layout and image export with no secrets saved and the network disabled [REQ: 8.2] | Not built (P8-19, `tests/e2e/offline-export.spec.ts`) |
+| The app starts and completes import, manual layout and image export with no secrets saved and the network disabled [REQ: 8.2] | `tests/e2e/offline-export.spec.ts` |
 | A layer command sent as the user leaves `variant.agent_changed_at` null; the same sent as the agent sets it to the command's time [REQ: FR-239] | `tests/integration/commands/layer-update-agent.test.ts`. Built |
 | Undo then redo of `layer.delete` brings back the same layer ID, key, counters and order | `tests/integration/commands/layer-delete.test.ts`. Built |
 | A `layer.reportOverflow` naming an older `variantRev` writes nothing | `tests/integration/commands/layer-report-overflow.test.ts`. Built |
@@ -234,7 +236,7 @@ Each test below must exist and keep passing. A test marked "Not built" is writte
 - Generation: `tests/integration/generation/image-kind-errors.test.ts` (a reference gone after enqueue ends `failed`, kind `other`, no path in the row or log), `image-kind-race.test.ts`, `tests/integration/assets/assets-dir-race.test.ts`. `tests/integration/generation/comfy-run.test.ts`: `generation.runImages` with `comfyui` against the stand-in gives stored PNGs with the embedded details of `spec/export-and-checks.md`, `paid_calls` 0, and the address appears nowhere in the project file.
 - ComfyUI references (`tests/integration/generation/run-images-comfy.test.ts` and adapter tests): one reference sends exactly one upload whose body holds the asset's bytes under `adman-{16 hex}.png`; no request holds the asset's display name or any part of its path; the filled graph names the file the stand-in answered with; two references are refused with `too_many_references`, `details.max` 1, no job row; a reference run against a non-ComfyUI stand-in sends one `GET /system_stats` and no upload.
 - `tests/e2e/asset-protocol.spec.ts`: with a project open and one imported picture, an image element pointed at its `adman-asset://` address loads; an unknown asset ID does not; a project not open does not.
-- One-run-per-click: `tests/unit/renderer/screens/campaign/generate-panel-click.test.tsx`, `run-row-click.test.tsx`.
+- One-run-per-click: `tests/unit/renderer/editor/one-run-per-click.test.tsx` (the run dialog's Generate, picture and video), `tests/unit/renderer/editor/earlier-retry-click.test.tsx` (Retry in Earlier options).
 - `tests/unit/config/live-config.test.ts`: no `.ts`/`.tsx` file under `tests/unit/`, `tests/integration/`, `tests/e2e/` or `src/` holds the text `vitest.live.config`, and no file under `src/` holds `.env.local`.
 
 **Fixtures and helpers:**
@@ -245,8 +247,6 @@ Each test below must exist and keep passing. A test marked "Not built" is writte
 - Renderer tests are component tests with `tests/unit/renderer/fake-api.ts`. The helper may gain query and event answers as a make-it-compile edit.
 - Brief timed tests run at a fixed `BRIEF_TEST_BYTES = 16_384` (`tests/unit/shared/brief/test-size.ts`), not an app limit. They gate nothing; a developer may raise a number on a slow machine and report it. One test reads a valid JSON and YAML brief of 100,000 bytes.
 - Platform skips: the letter-case test for `project.open` skips on a case-sensitive file system (it runs on both CI systems). Tests that need a symlink, or that remove read permission, skip where the platform cannot. The S3 environment test restores every variable it sets (`stubEnv` / `unstubAllEnvs`).
-- The hand-test confinement tests compare the whole app data tree and `secrets.bin`, `settings.json`, `logs/app.log` byte for byte, leaving out `logs/activity-*.jsonl`.
-
 ## Rules for changing tests
 
 The base rule: an existing test is not edited without the architect's ruling. These edits are allowed without one.
@@ -282,12 +282,12 @@ The base rule: an existing test is not edited without the architect's ruling. Th
 
 - Tests create project files in a temporary folder and set `ADMAN_USER_DATA_DIR` to another temporary folder.
 - `ADMAN_FAKE_PROVIDERS=1` registers the `fake` provider for every job (`spec/jobs.md`, the fake provider). It returns fixed pictures, a fixed 2-second video, layout boxes from a fixed rule and "translations" made by adding a language tag to the source text. It can be told to fail with each error kind.
-- `examples/` holds `brief.yaml`. Built so far: `brief.yaml` only. Not built (Phase 11): two subjects, four small source images and the six exported PNGs (three sizes, two languages) that the README shows [REQ: FR-180].
+- In git, `examples/` holds `brief.yaml` only. Not built (Phase 11, held): the brief's two subjects, four small source pictures drawn by code and the six exported PNGs (three sizes, two languages) that the README shows [REQ: FR-180].
 - No real provider is called in CI.
 
 ## Contract tests
 
-Built for Gemini and S3. Provider adapters are tested against recorded responses in `tests/fixtures/providers/` (`gemini/`, `s3/`, each with a `README.md`). The MCP tool list is snapshot-tested (`tests/integration/mcp/tool-list.test.ts`), so a change to a tool's name or input is a visible diff. The snapshot holds the tools built so far: 11 on `main` (`list_projects`, `get_project`, `list_assets`, `get_campaign`, `create_campaign`, `get_slots`, `get_job`, `list_jobs`, `generate_images`, `generate_video`, `cancel_job`); each slice that adds a tool updates it (all 25 of `spec/mcp-and-agents.md` by Phase 10).
+Provider adapters are tested against recorded responses; the recorded files for Gemini, S3 and Firefly are in `tests/fixtures/providers/` (`gemini/`, `s3/`, `firefly/`, each with a `README.md`). The MCP tool list is snapshot-tested (`tests/integration/mcp/tool-list.test.ts`), so a change to a tool's name or input is a visible diff. The snapshot (`tests/integration/mcp/__snapshots__/tool-list.test.ts.snap`) holds every tool on `main`, the list in `spec/mcp-and-agents.md`; a change that adds or changes a tool updates it.
 
 ## Non-functional targets
 
@@ -295,15 +295,15 @@ The stakeholder set no numeric targets [REQ: 8.1]. These are the testable target
 
 | Attribute | Target | Measurement |
 |-----------|--------|-------------|
-| UI during a background job | The window stays usable. Jobs run in the main process or the hidden window. | End-to-end test edits a layer while a fake video job runs [REQ: FR-124]. Not built (Phase 7) |
+| UI during a background job | The window stays usable. Jobs run in the main process or the hidden window. | End-to-end test edits the variant while a fake video job runs (`tests/e2e/video-variant.spec.ts`) [REQ: FR-124] |
 | Export determinism | Same frames on any machine | Named tests above [REQ: FR-131] |
 | Data loss on crash | At most the edit in progress | Integration test kills the process after a command and reopens [REQ: 8.2] |
 | Work with no keys and no network | Import, layout, checks, image and video export | Named test above [REQ: 8.2] |
 | Accessibility | WCAG 2.1 AA for controls. Canvas contents are best effort. | axe-core, keyboard tests [REQ: 8.6] |
 | Platforms | macOS 12 or later (arm64, x64), Windows 10 or later (x64) | CI runs both [REQ: 8.8] |
-| Scale | No hard limit on subjects, campaigns, variants or duration. The campaign grid draws only visible tiles. | Integration test with 500 variants [REQ: 8.3]. Not built (Phase 5) |
+| Scale | No hard limit on subjects, campaigns, variants or duration. The campaign grid draws only visible tiles. | Integration test with 500 variants [REQ: 8.3]. Not built: no test makes a campaign of 500 variants and measures it |
 | Availability, RTO, RPO, concurrent users, throughput | Not applicable to a single-user desktop app | — |
 
 **Accessibility rules** [REQ: 8.6]: every control is a Radix primitive or a native element with a visible label or `aria-label`; focus rings are never removed; text and controls use design tokens that meet 4.5:1 contrast; every action on the canvas (select, move, resize, reorder) also has a keyboard path through the layer list and the properties panel.
 
-**Keyboard shortcuts** [REQ: FR-097, FR-242]: the table is in `spec/editor.md`, "Keyboard shortcuts"; the code owner is `src/renderer/ui/shortcuts.ts`. Built. On the timeline, `Space` plays or pauses (`playPause`, Phase 7).
+**Keyboard shortcuts** [REQ: FR-097, FR-242]: the table is in `spec/editor.md`, "Keyboard shortcuts"; the code owner is `src/renderer/ui/shortcuts.ts`. Built. On the timeline, `Space` plays or pauses (`playPause`).

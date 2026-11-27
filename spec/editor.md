@@ -13,7 +13,8 @@ src/renderer/
 ├── screens/campaign/       campaign-view/, campaign-overview/, variant-tabs/, variant-grid/,
 │                           variant-tile/
 ├── screens/project-home/   campaign-list/
-├── editor/         editor/ [use-history.ts, use-overflow-report.ts], top-bar/ [title-field.tsx],
+├── editor/         editor/ [use-history.ts, use-overflow-report.ts, scene-inputs.ts],
+│                   top-bar/ [title-field.tsx],
 │                   format-fields/ [length-field.tsx], editor-banner/,
 │                   canvas-view/ [use-area-size.ts],
 │                   canvas-overlay/ [use-canvas-drag.ts, use-layer-keys.ts, send-geometry.ts],
@@ -26,22 +27,24 @@ src/renderer/
 │                   type-rows.tsx, icon-segments.tsx], font-field/, type-styles/,
 │                   text-box-fields/, translation-status/, language-font/,
 │                   picture-fields/ [picture-preview.tsx, picture-bar.tsx, bar-buttons.ts,
-│                   background-fit.ts, cut-out.tsx], background-colour-field/, shade-fields/,
+│                   background-fit.ts, cut-out.tsx, cut-out-status.tsx],
+│                   background-colour-field/, shade-fields/,
 │                   generate-panel/, generate-fields/, earlier-options/,
 │                   geometry-fields/, number-field/ [use-draft.ts], animation-fields/,
 │                   timeline/, transport-bar/, sound-fields/, time-ruler/, playhead/,
-│                   layer-tracks/, timing-bar/, clip-track/, clip-block/ [clip-actions.tsx],
+│                   layer-tracks/, timing-bar/, animation-block/, timeline-math/,
+│                   clip-track/, clip-block/ [clip-actions.tsx, clip-drag.ts],
 │                   add-clip/, clip-preview/, sound-player/, layout-button/,
-│                   use-editor-key.ts, zoom.ts, geometry-math.ts, snap.ts, nudge.ts
-├── dialogs/        picture-chooser/ [picture-grid.tsx, use-pictures.ts], layout-dialog/
+│                   use-editor-key.ts, layout-run.ts, zoom.ts, geometry-math.ts, snap.ts,
+│                   nudge.ts
+├── dialogs/        picture-chooser/ [picture-grid.tsx, use-pictures.ts,
+│                   subject-reference-list.tsx], layout-dialog/
 ├── stores/         nav-store.ts, variant-store.ts, playback-store.ts
-└── ui/             tokens.css (Phase 3 tokens), shortcuts.ts, tab-row/, tab-marks/,
+└── ui/             tokens.css, shortcuts.ts, tab-row/, tab-marks/,
                     variant-thumbnail/ [use-thumbnail.ts], swatch-field/, slider-field/
 ```
 
-`editor/colour-choice/` is no longer used by any panel (the panels use `ui/swatch-field/`).
-
-Each name ending in `/` is a component folder (OI-80): the component, its CSS module and `index.ts`. Files in brackets sit inside that folder. `number-field/` also hands out `useDraft`, which the name and copy fields use, and takes `inline`, `unit` and `prefix`. The loose `.ts` files in `editor/` are helpers several editor components use. Pure helpers (`zoom.ts`, `geometry-math.ts`, `snap.ts`, `nudge.ts`, `crop-math.ts`, `shortcuts.ts`) hold no React and are unit-tested. Picking a layer under a point is `pickLayer` in `geometry-math.ts`. `nav-context.tsx` gives the window's nav store to the components below it. `ui/tab-row/` is the row of tabs with a close button beside each, used by the campaign tabs and the variant tabs; `ui/tab-marks/` draws the job marks on both.
+Each name ending in `/` is a component folder (OI-80): the component, its CSS module and `index.ts`; `timeline-math/` holds only `timeline-math.ts`, the timeline's pure maths. Files in brackets sit inside that folder. `number-field/` also hands out `useDraft`, which the name and copy fields use, and takes `inline`, `unit` and `prefix`. The loose `.ts` files in `editor/` are helpers several editor components use. Pure helpers (`zoom.ts`, `geometry-math.ts`, `snap.ts`, `nudge.ts`, `crop-math.ts`, `timeline-math.ts`, `shortcuts.ts`) hold no React and are unit-tested. Picking a layer under a point is `pickLayer` in `geometry-math.ts`. `nav-context.tsx` gives the window's nav store to the components below it. `ui/tab-row/` is the row of tabs with a close button beside each, used by the campaign tabs and the variant tabs; `ui/tab-marks/` draws the job marks on both.
 
 ## Navigation: campaign tabs and variant tabs
 
@@ -261,11 +264,11 @@ Built (SP-8) [D-098]: a second list, "Subject photos in the reference library"; 
 
 - A select labelled "Font": "Default font (Inter)", then every font asset of the asset library (`asset.list { projectId, library: 'asset', kind: 'font' }`), labelled with its `fontFamily`, or its display name when that is null; a missing one says "(file not found)". When the layer's font is not in that list, one more choice, "Font not in the asset library", stands for it and is shown chosen. Choosing sends `layer.update { style: { fontAssetId } }` (null for the default).
 - "Upload font…", an icon button beside the select: `dialog.pickFiles { purpose: 'import', kind: 'font', multiple: false }`, then `asset.import { projectId, paths, library: 'asset', copy: false }`, then `layer.update` with the new asset as the font. A refused import shows its message and changes nothing.
-- The "I am allowed to share this font" choice [REQ: FR-162] stays for the publish work of Phase 9.
+- The "I am allowed to share this font" choice [REQ: FR-162] is not in the editor: it is in the publish dialog (`ui/font-share-choice/`; the value is `font_publish_allowed`, `spec/assets.md`).
 
 ## Timeline (video posts)
 
-`editor/timeline/` and the folders it mounts (Phase 7, tidied by ED-6). The full rules are in `spec/phases/phase-07-slices-2.md`.
+`editor/timeline/` and the folders it mounts. The full rules are in `spec/phases/phase-07-slices-2.md`.
 
 - A region "Timeline" along the editor's foot, compact (`data-density="compact"`), shown only on a video post. Top to bottom: the transport bar, the ruler, one row per layer ("Layer tracks"), the background row ("Background", its lane a list "Clips"), and the playhead over the lanes. Each row keeps its name under the layer list's width, so the lanes line up.
 - **Transport bar** (`transport-bar/`): the icon button "Play" / "Pause" (same names as before) and the time; "Sound" (`sound-fields/`) with the choices "Clip sound", "Audio file", "None".
@@ -281,19 +284,19 @@ Built (SP-8) [D-098]: a second list, "Subject photos in the reference library"; 
 - The editor's undo and redo act on the shown variant's list only (`history.undo` and `history.redo` with scope `variant:{id}`). Every layer command and `variant.update` puts its inverse there. A drag, a nudge burst, a crop or a field change is one entry.
 - A refused undo or redo shows its message in the error banner (`spec/api-principles.md`).
 - After an undo that removes the selected layer, nothing is selected.
-- Campaign-scope undo (Phase 5) is not in the editor: the campaign's tab strip has its own Undo and Redo (`spec/screens-variants.md`, "Campaign Undo and Redo").
+- Campaign-scope undo is not in the editor: the campaign's tab strip has its own Undo and Redo (`spec/screens-variants.md`, "Campaign Undo and Redo").
 - An undo of an edit that added an override uses `layer.revert`, so the override goes too (`spec/links-and-sync.md`, "Overrides").
 
 ## Several picture layers per variant
 
-The smallest design Phase 3 needs (Q-032 answered yes; A-26).
+Q-032 answered yes; A-26.
 
 - **Made by** `layer.create` with `type: 'image'`: key `layer-{ulid}`, `slot` null, no picture yet. As many as the user wants; there is no limit. Added text layers work the same way.
-- **An empty picture layer is a normal saved state.** The Scene draws nothing for it; the editor shows a placeholder; it does not stop anything in Phase 3.
-- **Filled** by the picture chooser (`layer.update` with `source`). Generating into it uses `generation.runImages` with its `layerId`, which already works; the panel that offers it per layer is Phase 4's.
-- **A cut-out** is a picture with a transparent background. It is drawn like any picture and keeps its transparency [REQ: FR-245]. Making one inside the app is Phase 4 (`spec/ai-jobs.md`, "Cut-out"; the button in `spec/screens-ai.md`).
+- **An empty picture layer is a normal saved state.** The Scene draws nothing for it; the editor shows a placeholder; it stops nothing.
+- **Filled** by the picture chooser (`layer.update` with `source`), or by a run from the layer's Generate panel (`generation.runImages` with its `layerId`; `editor/generate-panel/`, `spec/screens-ai.md`).
+- **A cut-out** is a picture with a transparent background. It is drawn like any picture and keeps its transparency [REQ: FR-245]. The Picture section's cut-out button makes one (`editor/picture-fields/cut-out.tsx`; `spec/ai-jobs.md`, "Cut-out"; `spec/screens-ai.md`).
 - **What a master's template holds** does not change: a template lists slots only. An added layer belongs to the variant, not to the template.
-- **Left for later:** Phase 5 treats an added layer on a master like any master layer, by its key (fan-out copies it; sync offers it as "add-layer"); only the background gets a fit choice in fan-out. Phase 8 decides whether an empty picture layer gives an export warning.
+- **On a master,** an added layer is treated like any master layer, by its key: fan-out copies it and sync offers it as "add-layer"; only the background gets a fit choice in fan-out. An empty picture layer gives no export warning; it exports as nothing (`spec/export-and-checks.md`).
 
 ## Thumbnails on the screens
 

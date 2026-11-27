@@ -1,8 +1,8 @@
 # Links, overrides, sync, fan-out and directions
 
-Built (Phase 5, P5-1 to P5-19; slices in `spec/phases/phase-05-slices.md` and `phase-05-screens.md`), with the changes to fan-out from `spec/make-variants.md` (MV-1 to MV-9). How one master drives the variants of its direction: the follow rules, out-of-date, overrides, sync, fan-out, generative fill, directions, adding and deleting variants, and the campaign undo list. Read with `spec/data-model-campaign.md` (the tables) and `spec/data-rules.md` (data flow). The screens are in `spec/screens-variants.md`. Phase 5's assumptions (A-128 to A-149) are in `spec/phases/phase-05.md`.
+Built (slices in `spec/phases/phase-05-slices.md` and `phase-05-screens.md`; fan-out placement and text fit in `spec/make-variants.md`). How one master drives the variants of its direction: the follow rules, out-of-date, overrides, sync, fan-out, generative fill, directions, adding and deleting variants, and the campaign undo list. Read with `spec/data-model-campaign.md` (the tables) and `spec/data-rules.md` (data flow). The screens are in `spec/screens-variants.md`. Phase 5's assumptions (A-128 to A-149) are in `spec/phases/phase-05.md`.
 
-No schema change: every column used here exists, and `generative_fill` is already in the `job_kind` check. Phase 5 adds no migration.
+No migration of its own: every column used here is in `0000_initial`, and `generative_fill` is in the `job_kind` check.
 
 ## Where the code lives
 
@@ -31,20 +31,20 @@ The groups and the tables are in `spec/data-rules.md`, "Links, follow rules and 
 **Out of date** (`variantOutOfDate`). A linked layer (`linked = 1`) is stale for a group when the rule is `follows` or `translation` and `master.revs[group] > layer.syncedRevs[group]`. A variant is out of date when any linked layer is stale for any group, or the master has a layer key the variant lacks, or the variant has a linked layer whose key is gone from the master. A layer with `linked = 0` (made on the variant itself) never counts. A master is never out of date. Computed on read, never stored.
 
 - `badgesOf` in `src/main/queries/campaign-reads.ts` takes the direction's master row and layers and sets `outOfDate` from `variantOutOfDate`. `campaign.get` reads each direction's master once per call. `variant.get` uses the same function.
-- `variant.get` gains nothing more in Phase 5: the detail of what is out of date comes from `sync.preview`.
+- `variant.get` carries only the badge: the detail of what is out of date comes from `sync.preview`.
 
 ## Overrides
 
 `layer.overrides` holds property paths: `copy`, `source`, `timing`, `geometry` (the whole group), `style.<field>` (each field of `TextStyle` or `ImageStyle`, look fields included), `animation.entrance`, `animation.exit`.
 
-- **When an edit adds one** (A-135). `layer.update` and `layer.updateMany` on a linked layer of a variant that is not its direction's master add every path the patch changes and that is inherited for that variant: its group's rule is `follows`. A copy edit on a layer in another language adds none (copy is a translation there; Phase 6 marks it). A geometry edit on a variant of another pixel size adds none. A patch to `name`, `visible` or `locked` adds none: they are not in any group and never follow.
+- **When an edit adds one** (A-135). `layer.update` and `layer.updateMany` on a linked layer of a variant that is not its direction's master add every path the patch changes and that is inherited for that variant: its group's rule is `follows`. A copy edit on a layer in another language adds none (copy is a translation there, and its translation status marks it). A geometry edit on a variant of another pixel size adds none. A patch to `name`, `visible` or `locked` adds none: they are not in any group and never follow.
 - A path is added once; the list keeps first-added order.
 - An edit on a master, or on a layer with `linked = 0`, never touches `overrides`.
-- **Undo of an edit that changed the list** (A-136). When the override list changes, the inverse is the system command `layer.revert` instead of `layer.update` / `layer.updateMany`. Otherwise the inverse stays as built, so the existing tests on masters do not change.
+- **Undo of an edit that changed the list** (A-136). When the override list changes, the inverse is the system command `layer.revert` instead of `layer.update` / `layer.updateMany`. Otherwise the inverse is `layer.update` / `layer.updateMany`, as on a master.
   - `layer.revert { projectId, variantId, layers: Array<{ layerId, patch, overrides }> }` (1 to 100), `internal: true`, policy deny (system), undo scope V. It writes each patch with the same counters as `layer.update` and sets `overrides` to the given list exactly. It bumps `variant.rev` once. Its inverse is `layer.revert` with the values and lists before it ran. A layer not in `variantId` is `NOT_FOUND`.
-- **`layer.clearOverride { projectId, layerId, paths[] }`** (V, deny). Removes those paths from the layer's list and writes the master's current value for each removed path (the whole group for `copy`, `source`, `timing`, `geometry`; one field for `style.*`; one block for `animation.*`). A path not in the list is ignored; a call that changes nothing writes nothing and adds no entry. A layer that is not linked, or sits on a master: `RULE_VIOLATION`, `not_linked`, "This layer does not follow the master." Its inverse is `layer.revert`. No screen sends it in Phase 5; the sync review covers "take the master's".
+- **`layer.clearOverride { projectId, layerId, paths[] }`** (V, deny). Removes those paths from the layer's list and writes the master's current value for each removed path (the whole group for `copy`, `source`, `timing`, `geometry`; one field for `style.*`; one block for `animation.*`). A path not in the list is ignored; a call that changes nothing writes nothing and adds no entry. A layer that is not linked, or sits on a master: `RULE_VIOLATION`, `not_linked`, "This layer does not follow the master." Its inverse is `layer.revert`. No screen sends it; the sync review covers "take the master's".
 
-**Named test** (Phase 5 exit): "editing a master changes no other variant's layer rows". In `tests/integration/links/master-edit.test.ts`: a direction with a master and three linked variants; every layer command on the master (`layer.update` of each group, `layer.updateMany`, `layer.create`, `layer.delete`, `layer.reorder`) leaves every other variant's layer rows equal, column by column, to what they were; only `outOfDate` changes.
+**Named test:** "editing a master changes no other variant's layer rows". In `tests/integration/links/master-edit.test.ts`: a direction with a master and three linked variants; every layer command on the master (`layer.update` of each group, `layer.updateMany`, `layer.create`, `layer.delete`, `layer.reorder`) leaves every other variant's layer rows equal, column by column, to what they were; only `outOfDate` changes.
 
 ## Sync
 
@@ -73,7 +73,7 @@ type SyncPreview = {
 ```
 
 - `groups` lists the stale groups of an update; for add-layer, every group; for remove-layer, none.
-- **A translated copy change in Phase 5** (A-134). No translation job exists until Phase 6. A stale `translation` copy gives `proposedTranslation = { text: <the layer's current copy>, status: 'failed' }`. Phase 6 replaces this with the translation job of `spec/data-rules.md`.
+- **A translated copy change.** A stale `translation` copy gives `proposedTranslation = { text, status: 'proposed' }` from the newest `sync` translation job of that direction and language, when it succeeded against the master's copy counter now and the layer's own counter has not moved since (`src/main/translation/sync-result.ts`; `spec/data-rules.md`, "Links, follow rules and sync"). Otherwise it gives `{ text: <the layer's current copy>, status: 'failed' }` (A-134).
 - An unknown direction: `NOT_FOUND`, "That direction was not found."
 
 **`sync.apply { projectId, directionId, masterRev, decisions[] }`** (C, deny). `SyncDecision` is in `spec/data-rules.md`. At most 2,000 decisions.
@@ -82,7 +82,7 @@ type SyncPreview = {
 2. The values to write are worked out from the database now by `syncWritesOf`, never taken from the window. A decision naming a variant outside the direction, the master, or a layer key with no change: `INVALID_INPUT`, "A sync choice does not match the changes."
 3. For each decision with `accept: true`:
    - `update`: write each stale `follows` group with the master's values, except override paths. A blocked path with `take-master` is written and leaves the list; with `keep-mine`, or with no choice given, it stays as it is. Set `synced_revs` to the master layer's `revs`.
-   - A stale `translation` copy (Phase 5): the text stays, `translation_status = 'missing'`, `translation_source = null`, and `synced_revs` is set.
+   - A stale `translation` copy with a usable `sync` translation (as in the preview): that text is written with `translation_status = 'proposed'` and `translation_source = 'ai'` (`spec/data-rules.md`, "Links, follow rules and sync"). With none: the text stays, `translation_status = 'missing'`, `translation_source = null`, and `synced_revs` is set.
    - `add-layer`: insert a copy of the master layer as fan-out makes one (below), with a new ID, `linked = 1`, empty `overrides`, `synced_revs` = the master layer's `revs`, and `z` one above the variant's top layer (A-148).
    - `remove-layer`: delete the layer. Only a layer with `linked = 1` is ever offered.
 4. `accept: false`, or a change with no decision, leaves the layer out of date [REQ: FR-082, FR-083].
@@ -90,26 +90,26 @@ type SyncPreview = {
 
 ## Fan-out
 
-The steps are in `spec/data-rules.md`, "Fan-out". Phase 5 builds them with these rules. The screen calls this "Make variants". The box placement, the text fit and `sourceVariantId` below are built (MV-2 to MV-7); their full rules are in `spec/make-variants.md`, which wins where this section differs.
+The steps are in `spec/data-rules.md`, "Fan-out"; they are built with these rules (`src/main/commands/variant/fan-out.ts`). The screen calls this "Make variants". The full rules of the box placement, the text fit and `sourceVariantId` are in `spec/make-variants.md`, which wins where this section differs.
 
 **`variant.fanOut { projectId, directionId, sourceVariantId?, sizes, languages, formats, fits }`** (C, deny).
 
-- `sourceVariantId` (built, MV-7): the variant the new ones start from; left out, the master. It must be a variant of `directionId`, else `NOT_FOUND`, "That variant was not found in this direction." In what follows, "the master's size and language" and "the master's pixel size" mean the source's (`spec/make-variants.md`, "Making variants from a variant").
+- `sourceVariantId`: the variant the new ones start from; left out, the master. It must be a variant of `directionId`, else `NOT_FOUND`, "That variant was not found in this direction." In what follows, "the master's size and language" and "the master's pixel size" mean the source's (`spec/make-variants.md`, "Making variants from a variant").
 - `sizes`: size labels from `campaign.sizes`, at least one. `languages`: tags from `campaign.languages`, at least one. A label or tag not in the campaign: `RULE_VIOLATION`, `not_in_campaign`, "Choose sizes and languages from the campaign's lists." The master's size and language are always part of the grid, whether or not they are listed.
-- `formats`: one or more of `'image'` and `'video'` (P7-23); a video variant gets step 7 of `spec/data-rules.md`.
+- `formats`: one or more of `'image'` and `'video'`; a video variant gets step 7 of `spec/data-rules.md`.
 - `fits`: `{ [sizeLabel]: 'scale' | 'crop' | 'fill' }`, one entry for each listed size whose pixel size differs from the master's, and no others. A missing or extra entry: `INVALID_INPUT`, "Choose how the background fits for each new size." A size with the master's pixel size but another label takes geometry as it follows (A-147).
 - `fill` makes the variant exactly as `scale` does. The command starts no job (A-129).
 - Combinations that already exist in the direction are skipped. Nothing new to make: success with empty lists.
 - **The background for a new size.** With the picture's size `pw × ph` (from its asset row; null source or no size known: the whole canvas) and the canvas `W × H`: `scale` uses `s = min(W / pw, H / ph)`, `crop` uses `s = max(W / pw, H / ph)`; the box is `pw·s × ph·s`, centred, rounded to whole pixels, rotation 0, `crop` null.
-- **Other layers** (built, MV-3): a box still where the source's starter layout puts it goes where that layout puts it at the new size; any other box is anchored to its nearer edges in shares of the smaller side (`spec/make-variants.md`, "Where a box goes in a new size"). Rotation and crop are kept. This replaces the built rule (centre kept at the same share of the canvas, width and height scaled by `min(W / masterW, H / masterH)`).
-- **Text** (built, MV-4 and MV-7): each text layer of a new size or language gets its pixel measures scaled and its font size fitted to its words and box; a size that differs from the master's is an override path (`spec/make-variants.md`, "Text that fits").
+- **Other layers**: a box still where the source's starter layout puts it goes where that layout puts it at the new size; any other box is anchored to its nearer edges in shares of the smaller side (`spec/make-variants.md`, "Where a box goes in a new size"). Rotation and crop are kept.
+- **Text**: each text layer of a new size or language gets its pixel measures scaled and its font size fitted to its words and box; a size that differs from the master's is an override path (`spec/make-variants.md`, "Text that fits").
 - **A new size in a new language** copies geometry from the plan of the same size in the master's language, made in the same call (R-02). `planVariant` takes that plan as input.
-- **A new language** (Phase 5): text layers keep the master's copy with `translation_status = 'missing'` and `translation_source = null`; no job starts (A-134). Phase 6 adds the translation job and the brief's copy.
-- Each new variant: the master's title and subjects, `created_by` the actor, `rev` 0, every layer with the master's `key`, `linked = 1`, empty `overrides`, `synced_revs` = the master's `revs`, `overflow` 0. With a source other than the master, or a fitted text size, the layers, counters and override paths are as in `spec/make-variants.md`, "Links after making" (built, MV-4 and MV-7). The render service measures overflow when it draws the new variant's thumbnail (`spec/scene.md`, "Eager thumbnails").
-- Reply `{ variantIds, fill: Array<{ sizeLabel, variantId }> }`: the new variants in creation order, and for each size with `fill`, the new variant of that size in the master's language.
+- **A new language**: the brief's copy for that language is used where it has one; other text layers keep the master's copy with `translation_status = 'missing'` and `translation_source = null`, and one translation job per language starts (step 6 of `spec/data-rules.md`, "Fan-out"; `src/main/translation/fan-out.ts`). The reply names those jobs in `translationJobIds`.
+- Each new variant: the master's title and subjects, `created_by` the actor, `rev` 0, every layer with the master's `key`, `linked = 1`, empty `overrides`, `synced_revs` = the master's `revs`, `overflow` 0. With a source other than the master, or a fitted text size, the layers, counters and override paths are as in `spec/make-variants.md`, "Links after making". The render service measures overflow when it draws the new variant's thumbnail (`spec/scene.md`, "Eager thumbnails").
+- Reply `{ variantIds, fill: Array<{ sizeLabel, variantId }>, translationJobIds? }`: the new variants in creation order, for each size with `fill` the new variant of that size in the master's language, and the translation jobs started, when there are any.
 - Inverse `variant.remove { variantIds }`. At most 200 new variants per call: `RULE_VIOLATION`, `too_many_variants`, "You can make at most 200 variants at a time.".
 
-**`variant.add { projectId, directionId, sizeLabel, language, format, fit? }`** (C, allow). One variant, made by the same `planVariant` (from MV-7, through `planNewVariant`, so the placement and fit of `spec/make-variants.md` apply). Always from the master. `fit` is `scale` (default) or `crop`; there is no fill (A-143). A combination that exists: `RULE_VIOLATION`, `variant_exists`, "This direction already has a variant at this size, language and format." Reply `{ variantId }`. Inverse `variant.remove`.
+**`variant.add { projectId, directionId, sizeLabel, language, format, fit? }`** (C, allow). One variant, made by the same `planVariant` (through `planNewVariant`, so the placement and fit of `spec/make-variants.md` apply). Always from the master. `fit` is `scale` (default) or `crop`; there is no fill (A-143). A combination that exists: `RULE_VIOLATION`, `variant_exists`, "This direction already has a variant at this size, language and format." Reply `{ variantId }`. Inverse `variant.remove`.
 
 ## Generative fill
 
@@ -121,7 +121,7 @@ The steps are in `spec/data-rules.md`, "Fan-out". Phase 5 builds them with these
    - `crop` set: `background_cropped`, "Reset the background's crop before generating a fill."
    - the box covers the whole canvas: `background_covers`, "The background already covers the whole variant."
 2. The provider must be available with the `image` job (`INVALID_INPUT`, "That provider cannot make pictures."). The key guard, purpose "generate a fill". For ComfyUI, the address, the offered `extend` workflow (`comfy_job_not_offered`, "ComfyUI cannot make this kind of picture yet.") and the licence check, as for `generation.runImages`.
-3. `prepare` reads the source through `AssetService.read` with the reference-picture rules (`asset_too_large`, `asset_not_a_picture`, `MISSING_FILE`; a WebP goes on as PNG, slice WP).
+3. `prepare` reads the source through `AssetService.read` with the reference-picture rules (`asset_too_large`, `asset_not_a_picture`, `MISSING_FILE`; a WebP goes on as PNG).
 4. Enqueue a `generative_fill` job with `campaign_id`, `variant_id`, `layer_id` (the background), the provider and `started_by`. Request (`src/shared/schemas/jobs/generative-fill.ts`): `{ prompt, sourceAssetId, placement: { x, y, width, height }, width, height }`. `prompt` is `promptToSend(FILL_PROMPT, { pictures: 1 })`, with `FILL_PROMPT` in `src/shared/generation/prompt.ts` (A-146): "Extend this picture outward so it fills the whole frame. Keep everything already in the picture as it is, and continue the scene naturally at the edges." Reply `{ jobId }`.
 
 **The job kind** (`src/main/jobs/kinds/generative-fill.ts`, attached class [D-036]). The key guard again; the source read again through `readPictures`; one `ImageProvider.extend` call with `{ image, placement, width, height, prompt }`; `toPng`; generation details embedded with kind `generative_fill`; stored through `storeResult`. Result `{ assetIds: [id] }`. One paid call for a paid provider. It writes nothing to any layer. `job.earlierOptions` lists its picture with the background layer's other runs. Cancel and retry as for `image_generation`.
@@ -133,7 +133,7 @@ The steps are in `spec/data-rules.md`, "Fan-out". Phase 5 builds them with these
 - Each target's background gets `source = { assetId }`, geometry the whole canvas, rotation 0, `crop` null, and `source` added to `overrides`; counters as `layer.update`; one `variant.rev` bump each. Inverse `variant.restoreLayers`; the targets' own undo lists are cleared. Reply `{ variantIds }`.
 - An agent's fill has no window owner. The picture waits in the asset library and the agent places it with `layer.update` (D-059 item 5).
 
-**Providers.** Gemini: `spec/providers-adapters.md`, "Picture extend". ComfyUI: `spec/comfyui-workflows.md`, "Extend a background"; not offered until `moss-extend` leaves `draft`. Fake: its built `extend`.
+**Providers.** Gemini: `spec/providers-adapters.md`, "Picture extend". ComfyUI: `spec/comfyui-workflows.md`, "Extend a background"; not offered while `moss-extend` has status `draft`. Fake: its own `extend`.
 
 ## Directions
 
@@ -161,11 +161,6 @@ type VariantSnapshot = {
 ## The campaign undo list
 
 - Every command marked C above records its inverse on `campaign:{campaignId}`. `variant.delete`, `direction.delete` and `direction.createFromMaster` record none [D-099]. `variant.remove` and `variant.restore` stay as the undo and redo of fan-out and `variant.add`.
-- **Clearing a variant's own list** (A-141). `HandlerResult` gains `clearScopes?: UndoScope[]`. After a command succeeds, the bus clears each named scope with `undo.clear`. `sync.apply`, `generation.applyFill`, `variant.restoreLayers`, `variant.delete`, `variant.remove` and `direction.delete` name every variant they change or remove; the two deletes also name the campaign's own list. So a variant's own list never holds an entry that a campaign entry has made wrong. The snapshot in the campaign entry is what brings the variant back.
-- Agents are denied `history.undo` and `history.redo`, as before.
-
-## What later phases build on
-
-- Phase 6: the translation job at fan-out step 6 and in `sync.preview` (`proposedTranslation`), replacing the Phase 5 stand-in; `translation.approve` on the campaign list can use `variant.restoreLayers` as its inverse.
-- Phase 7: `formats` gains `'video'`; fan-out step 7 (one clip from the background picture); snapshots already carry clips.
-- Phase 10: MCP tools for `variant.add` (allow) and `variant.delete` (ask), and for `generation.runFill` (tick); `sync.preview` can be read by an agent.
+- **Clearing a variant's own list** (A-141). `HandlerResult` has `clearScopes?: UndoScope[]`. After a command succeeds, the bus clears each named scope with `undo.clear`. `sync.apply`, `generation.applyFill`, `variant.restoreLayers`, `variant.delete`, `variant.remove` and `direction.delete` name every variant they change or remove; the two deletes also name the campaign's own list. So a variant's own list never holds an entry that a campaign entry has made wrong. The snapshot in the campaign entry is what brings the variant back.
+- Agents are denied `history.undo` and `history.redo`.
+- Snapshots carry clips, so removing and restoring a video variant keeps its track.

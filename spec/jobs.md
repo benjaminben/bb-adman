@@ -12,7 +12,7 @@ Built. Row schema: `src/shared/schemas/rows/job.ts`. Store: `src/main/jobs/job-s
 
 | Field (wire name) | Meaning in use |
 |-------------------|----------------|
-| `kind` | One of the job kinds (see "Job kinds"): nine, and `cutout` from Phase 4. |
+| `kind` | One of the job kinds (see "Job kinds"; the list is `src/shared/config/job-kinds.ts`). |
 | `status` | `queued`, `running`, `succeeded`, `failed`, `cancelled`. Five values only. |
 | `campaignId`, `variantId`, `layerId`, `slot` | Where the job belongs [REQ: FR-217]. A job for a campaign has `campaignId`; for a variant also `variantId`; for one layer also `layerId`; for a template slot that has no layer yet, `slot`. Plain text, no foreign key: the job record outlives what it was for. If the layer is gone, "go to that place" leads to the variant; if the variant is gone, to the campaign. |
 | `provider`, `model` | The provider ID and model the job calls. |
@@ -29,9 +29,9 @@ Built. Row schema: `src/shared/schemas/rows/job.ts`. Store: `src/main/jobs/job-s
 
 Rules on the record:
 
-- **A job row is never deleted by the app** [REQ: FR-216, FR-248]. Reopening a result reads the row and its assets and calls no provider. The options of every earlier run for a layer are the `asset` rows whose `gen_run_id` is a job with that `layer_id` or `slot`. Phase 4 adds the query for it; no further stored value is needed.
+- **A job row is never deleted by the app** [REQ: FR-216, FR-248]. Reopening a result reads the row and its assets and calls no provider. The options of every earlier run for a layer are the `asset` rows whose `gen_run_id` is a job with that `layer_id` or `slot`; the query `job.earlierOptions` reads them, with no further stored value.
 - **"Finished, not yet looked at" is not a status** [REQ: FR-218]. A job is finished and not looked at when `status = 'succeeded'` and `seen_at` is null. `job.markSeen` sets `seen_at`. The window sends it when it shows the result itself (the options of a picture run, the clip of a video run), not when it shows the list entry. A failed job is never "not looked at"; it is listed as failed with retry [REQ: FR-069].
-- **Marks.** A variant or campaign "has a job running" when a job row with its ID is `queued` or `running`, and "has a result not yet looked at" when one is `succeeded` with `seen_at` null. Both are computed from the `job` table (`job.list` with `state` `active` or `unseen`). Nothing else stores them. As built (P4-T3): the campaign tab marks are read again on job events in `use-project.ts`. `layout-run.ts` marks a handled layout result seen, also when the result was refused or its variant is gone.
+- **Marks.** A variant or campaign "has a job running" when a job row with its ID is `queued` or `running`, and "has a result not yet looked at" when one is `succeeded` with `seen_at` null. Both are computed from the `job` table (`job.list` with `state` `active` or `unseen`). Nothing else stores them. The campaign tab marks are read again on job events in `use-project.ts`. `layout-run.ts` marks a handled layout result seen, also when the result was refused or its variant is gone.
 - A result nobody looked at is still there after a close and reopen, because `seen_at` is in the project file.
 - **Retry** is `job.retry`: a new job from the old row's `request`, with the same campaign, variant, layer and slot. The old row stays. For an `image_generation` row that kept pictures, the new request asks only for the pictures not yet made: `count` minus kept, at least 1 (`keptPictureCount` and `picturesLeft` in `src/shared/generation/pictures-left.ts`). Every other row's request is sent as stored. Only a `failed` or `cancelled` row can be retried. The key guard runs again; a ComfyUI picture or video retry passes the same checks as the command that first started it (`src/main/commands/job/retry.ts`). Agents are denied `job.retry`.
 
@@ -56,7 +56,7 @@ Built as a table: `src/shared/config/job-kinds.ts` (frozen contract). It owns th
 
 | Class | Kinds | Rule |
 |-------|-------|------|
-| Background | `image_generation`, `video_generation`, `export`, `publish`, `cutout` (Phase 4) | Keeps running when its dialog, panel or tab closes. Nothing in the window can stop it except `job.cancel` from the activity list. |
+| Background | `image_generation`, `video_generation`, `export`, `publish`, `cutout` | Keeps running when its dialog, panel or tab closes. Nothing in the window can stop it except `job.cancel` from the activity list. |
 | Attached | `generative_fill`, `layout_proposal`, `copy_options`, `translation`, `brief_extraction` | Belongs to the dialog or tab that started it. Before that dialog or tab closes while the job is `queued` or `running`, the window warns the user. If the user confirms, the window sends `job.cancel` and then closes. If the user cancels the warning, nothing closes and the job carries on. |
 
 - The stakeholder's words cover the first two background kinds and the first four attached kinds. `export`, `publish` and `brief_extraction` were placed by the architect: the first two were already designed as jobs in the activity list, and brief extraction is a wait inside the intake dialog. To confirm (OI-31: which kinds are attached, and whether partial results of a cancelled attached job are offered, are open).
@@ -65,7 +65,7 @@ Built as a table: `src/shared/config/job-kinds.ts` (frozen contract). It owns th
 
 ## Job kinds on `main`
 
-Built: `image_generation`, `video_generation`, and from Phase 4 `layout_proposal`, `copy_options`, `brief_extraction` and `cutout` (`spec/ai-jobs.md`). Handlers are listed in `src/main/jobs/kinds/index.ts`; request and result shapes in `src/shared/schemas/jobs/`. `export`, `publish`, `generative_fill` and `translation` exist in the table and the `kind` check only; no handler exists for them. `generative_fill` (Phase 5, attached): request, run and the window's last command `generation.applyFill` are in `spec/links-and-sync.md`, "Generative fill"; its owner in the window is the fill's variant.
+Built: every kind has a handler, listed in `src/main/jobs/kinds/index.ts`; request and result shapes in `src/shared/schemas/jobs/`. `layout_proposal`, `copy_options`, `brief_extraction` and `cutout`: `spec/ai-jobs.md`. `generative_fill` (attached): request, run and the window's last command `generation.applyFill` are in `spec/links-and-sync.md`, "Generative fill"; its owner in the window is the fill's variant. `translation`: `spec/phases/phase-06.md`. `export`: `spec/export-and-checks.md`. `publish`: `spec/storage-and-publish.md`.
 
 ### `image_generation`
 
@@ -75,10 +75,11 @@ Built. Handler `src/main/jobs/kinds/image-generation.ts`. Started by `generation
 // src/shared/schemas/jobs/image-generation.ts
 imageJobRequest = z.object({
   prompt: z.string().min(1),
-  referenceAssetIds: z.array(z.string().min(1)),
+  referenceAssetIds: referenceIds,                          // at most MAX_REFERENCES_PER_RUN, no repeats
   count: z.number().int().min(1).max(MAX_IMAGES_PER_RUN),   // MAX_IMAGES_PER_RUN = 8
   width: z.number().int().positive(),
   height: z.number().int().positive(),
+  workflowId: workflowIdSchema.optional(),                  // ComfyUI only (D-104)
 })
 // A key of `failures` is a provider error kind; its value is how many calls failed that way.
 imageJobResult = z.object({
@@ -96,7 +97,7 @@ imageJobResult = z.object({
 
 ### `video_generation`
 
-Built for ComfyUI and the fake provider. Handler `src/main/jobs/kinds/video-generation.ts`. Started by `generation.startVideo` (three starts: from a prompt, from a first-frame picture, with a reference picture; checks in `spec/comfyui.md`).
+Built for ComfyUI, fal.ai Seedance and the fake provider. Handler `src/main/jobs/kinds/video-generation.ts`, storing through `src/main/jobs/video-store.ts`. Started by `generation.startVideo` (four starts: from a prompt, from a first-frame picture, with a reference picture, from the background; checks in `spec/api-commands.md` and `spec/comfyui.md`).
 
 ```ts
 // src/shared/schemas/jobs/video-generation.ts
@@ -105,25 +106,29 @@ videoJobRequest = z.object({
   durationMs: z.number().int().positive(),
   width: z.number().int().positive(),
   height: z.number().int().positive(),
-  start: z.enum(['none', 'first_frame']),
-  referenceAssetIds: z.array(z.string().min(1)),
+  start: z.enum(['none', 'first_frame', 'background']),
+  referenceAssetIds: referenceIds,
+  workflowId: workflowIdSchema.optional(),   // ComfyUI only (D-104)
 })
-// `details: 'pending'` marks a clip whose file holds no details of the app yet (Phase 7).
+// `details`: 'embedded' when the app's details were written into the clip; 'pending' when not.
+// clipId: the clip put on the track. replacedStill: the clip took the background still's place.
 videoJobResult = z.object({
   assetId: z.string(),
   width: z.number().int(),
   height: z.number().int(),
   durationMs: z.number().int(),
   hasSound: z.boolean(),
-  details: z.literal('pending'),
+  details: z.enum(['embedded', 'pending']),
+  clipId: z.string().nullable().optional(),
+  replacedStill: z.boolean().optional(),
 })
 ```
 
-- It reads the picture again with `readPictures` (`AssetService.read`), which gives a clean PNG: a WebP is turned into PNG first, then every picture is re-encoded by `toPng`. First frame: `image = { bytes: deps.fitPicture(bytes, runSize), mime: 'image/png' }`, `references = []`. Reference: `image = null`, `references = [that clean PNG]`, not fitted.
-- It calls the adapter's `start` once, stores the provider's ID with `jc.setRemoteJobId`, asks where the run is every `VIDEO_POLL_MS = 2_000`, fetches the clip, checks it with `checkMp4`, writes it with `writeManaged` and adds it with `asset.addGenerated`. The clip is stored as returned, sound included. No clip is put on a track (Phase 7).
+- It reads the picture again with `readPictures` (`AssetService.read`), which gives a clean PNG: a WebP is turned into PNG first, then every picture is re-encoded by `toPng`. First frame: `image = { bytes: deps.fitPicture(bytes, runSize), mime: 'image/png' }`, `references = []`. Reference: `image = null`, `references = [that clean PNG]`, not fitted. A `background` start draws its first frame from the variant's background when the job runs (`src/main/jobs/background-frame.ts`).
+- It calls the adapter's `start` once, stores the provider's ID with `jc.setRemoteJobId`, asks where the run is every `VIDEO_POLL_MS = 2_000`, fetches the clip, checks it with `checkMp4`, embeds the generation details, writes it with `writeManaged`, adds it with `asset.addGenerated` (with its `video` facts) and puts it on the variant's track with the system command `clip.addGenerated`. The clip is stored as returned, sound included.
 - It calls the adapter's `cancel` when the signal fires (`spec/cancel.md`).
 - **A row that already has a `remote_job_id` is only checked and fetched** (security class, cost). The handler never calls `start` for it: it calls `check`, fetches the result if there is one, and stores it. A remote ID the provider does not know ends the job `failed` with nothing kept. This covers any project file, packaged copies included, so a row the app did not make cannot start paid work.
-- A clip's asset row has `width` and `height` empty until Phase 7's FFmpeg step fills them; the job result holds them.
+- A clip's asset row holds the `width`, `height` and `duration_ms` that `checkMp4` read; the job result holds them too.
 
 ## The runner
 
@@ -196,7 +201,7 @@ type JobKindHandler = {
 
 - **The runner is the only writer of `job` rows.** Every write to a `job` row is made by a function in `src/main/jobs/`, reached through `JobService` or `JobRunContext`. No command writes a job row with its own SQL; `job.markSeen` calls `JobService.markSeen`.
 - After every write the runner emits `job.updated` with the wire row. `markSeen` emits `job.updated` for each row it marked, after the command has ended; a rolled-back mark sends nothing.
-- A job that changes any other table sends a system command through the bus (`jc.system`, as the user), so the change gets a transaction, `touch` and `project.changed` like every other change. For a picture or video run that command is `asset.addGenerated` (internal, denied to agents). `jc.system` sends as actor `user` whoever started the job, an agent included; why this is safe, and that a new `jc.system` command is ruled on by itself first, is in `spec/agent-runs.md`, 'After the gate'.
+- A job that changes any other table sends a system command through the bus (`jc.system`, as the user), so the change gets a transaction, `touch` and `project.changed` like every other change. For a picture or video run that command is `asset.addGenerated`, and for a video run then `clip.addGenerated` (both internal, denied to agents). `jc.system` sends as actor `user` whoever started the job, an agent included; why this is safe, and that a new `jc.system` command is ruled on by itself first, is in `spec/agent-runs.md`, 'After the gate'.
 - `onProgress` writes `progress`, `result.stage` and `result.queuePosition` while running. Each call is one write and one event; an adapter reports only when the stage, the queue position or the whole percent changed.
 - `jc.setRemoteJobId(id)` writes `remote_job_id` and does nothing once the job has ended.
 - `jc.keep(value)` holds the value on the live job and writes it as the running result. Each call replaces the last.
@@ -222,7 +227,7 @@ Built.
 
 ## Paid-call counting [REQ: FR-230]
 
-Built (`src/main/jobs/run-job.ts`). `paid_calls` gains one each time `jc.call` sends a call to a provider whose registry row has `local` false, at the moment of sending, so a run that failed half way still counts what it sent. Local providers (ComfyUI, the fake provider) never count. A call refused before sending (project closed, stop asked, agent tick off) adds nothing. A campaign's total is the sum over its job rows, split by `kind`. It is a count of calls, not money; usage and estimated cost come later (slice US, OI-52).
+Built (`src/main/jobs/run-job.ts`). `paid_calls` gains one each time `jc.call` sends a call to a provider whose registry row has `local` false, at the moment of sending, so a run that failed half way still counts what it sent. Local providers (ComfyUI, the fake provider) never count. A call refused before sending (project closed, stop asked, agent tick off) adds nothing. A campaign's total is the sum over its job rows, split by `kind`. It is a count of calls, not money. Not built: usage and estimated cost (slice US, OI-52).
 
 A paid call is made only when a person presses a button with the cost on screen at that click (`spec/screens.md`, "Rules for every screen", C-15), an agent with its tick on starts a run, or the project owner runs the live tests. Nothing in CI calls a real provider. Spending the user did not ask for is treated as in the threat scope (OI-63: not yet confirmed by the stakeholder); the rules on left-over video runs, own rows only, and closing projects stand either way.
 
@@ -242,13 +247,13 @@ On open, the runner looks at every job left `queued` or `running` that this proc
 | `queued` (never sent a call) | `cancelled` |
 | Any other `running` row | `failed`, kind `other`, detail `interrupted`, offered for retry |
 
-Today the only video provider that reaches the resume row is the fake one; ComfyUI rows are failed and fal.ai has no adapter yet.
+The video providers that reach the resume row are fal.ai Seedance and the fake one; ComfyUI rows are failed.
 
 ## Closing a project and quitting
 
-Built: the refusal, `'stop'`, the close and quit warnings (P4-10, worded in `spec/screens-ai.md`) and quitting through `project.close` with `'stop'`. What a stop does per provider: `spec/cancel.md`.
+Built: the refusal, `'stop'`, the close and quit warnings (worded in `spec/screens-ai.md`) and quitting through `project.close` with `'stop'`. What a stop does per provider: `spec/cancel.md`.
 
-- `project.close` refuses with `RULE_VIOLATION`, `details.reason = 'jobs_running'` and `details.count`, when the project has a `queued` or `running` job, unless its input has `runningJobs: 'stop'`. With `'stop'` the runner (`cancelAll`, `src/main/jobs/close-jobs.ts`) asks the providers that can stop, waits at most `CLOSE_WAIT_MS = 5_000` for their answers, ends what is left, and the project closes. A job row never stays `queued` or `running` in a file the app closed this way, with one exception: a paid video run the provider has started stays `running`, with `result.leftRunning = true`, and the next open of the project collects it (P7-13, A-174; `spec/cancel.md`, "Closing a project").
+- `project.close` refuses with `RULE_VIOLATION`, `details.reason = 'jobs_running'` and `details.count`, when the project has a `queued` or `running` job, unless its input has `runningJobs: 'stop'`. With `'stop'` the runner (`cancelAll`, `src/main/jobs/close-jobs.ts`) asks the providers that can stop, waits at most `CLOSE_WAIT_MS = 5_000` for their answers, ends what is left, and the project closes. A job row never stays `queued` or `running` in a file the app closed this way, with one exception: a paid video run the provider has started stays `running`, with `result.leftRunning = true`, and the next open of the project collects it (A-174; `spec/cancel.md`, "Closing a project").
 - Whether to ask, stop or keep running on close is not decided (Q-039). The one input serves each answer: Ask (the window shows a warning on the refusal and on confirm sends `runningJobs: 'stop'`); Stop (it always sends `'stop'`); Keep running (it does not close the project when the user goes to another one; the main process already holds several open projects by ID).
 - **Quitting** (`src/main/index.ts`): with jobs queued or running in any open project, `before-quit` is stopped and a system message box asks first (wording from `quitQuestion` in `src/main/quit-question.ts`; "Cancel" is the default, so Enter or Escape keeps the app open). Closing the app window asks the same question, since closing it quits the app. "Quit" runs `closeAllStopping` (`src/main/core.ts`): `project.close` with `'stop'` for every open project, then `closeAll` for anything a refused close left open; then the app quits. With nothing running, no box, and `closeAll` closes the files.
 - `project.setAssetsDir` refuses with `RULE_VIOLATION`, `jobs_running` while `jobs.activeCount(projectId) > 0`: a job writes its file and then adds its row, and both must see one folder. `campaign.delete` refuses with `jobs_running` too (OI-69: provisional).
@@ -264,9 +269,9 @@ Built. `src/main/providers/fake/` (`behaviour.ts`, `image.ts`, `video.ts`, `layo
 - The fake video provider keeps its runs in memory (tests and hand tests only). It is how the resume path is tested, since no ComfyUI row is resumed.
 - Runner tests use a test-only job kind handler. `tests/integration/jobs/runner-fixture.ts` takes `cancelWaitMs` (default 2_000), `closeWaitMs` (default 50), `jobsAtOnce` (default 3, so older tests keep running at three) and `secrets`, and returns `project` and `projects`.
 
-## What later phases added
+## Video results and the other kinds
 
 Built.
 
-- **Phase 7: video resume into the ad** (P7-16). When a run ends, also a resumed one, the clip goes on the variant's track at the first free position, its details are embedded in the MP4 through FFmpeg (`details: 'pending'` only when no FFmpeg is there), and the clip's `width`, `height` and `duration_ms` come from the file. fal status, result and download calls are treated as free (A-173), so fal rows are resumed; a resumed status call adds nothing to `paid_calls`; a close leaves a started fal run running and the next open collects it (A-174, `spec/cancel.md`).
+- **Video results go into the ad.** When a run ends, also a resumed one, the clip goes on the variant's track at the first free position, its details are embedded in the MP4 through FFmpeg (`details: 'pending'` only when no FFmpeg is there), and the clip's `width`, `height` and `duration_ms` come from the file. fal status, result and download calls are treated as free (A-173), so fal rows are resumed; a resumed status call adds nothing to `paid_calls`; a close leaves a started fal run running and the next open collects it (A-174, `spec/cancel.md`).
 - **`export` and `publish`** are background job kinds (`spec/export-and-checks.md`, `spec/storage-and-publish.md`). `generative_fill` and `translation` are attached kinds.

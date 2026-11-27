@@ -7,7 +7,7 @@ How a shipped workflow becomes `proven`, the real-server test harness `test:comf
 Everything in the adapter is built and tested against the stand-in. A trial on a real server decides: that the graphs run; the real shape of a history entry and of `/api/jobs/{id}` (fixtures are hand-made until then); whether each model fits the server's card and how long a run takes (U-11), and so the time limits; whether references keep a product recognisable (U-17); whether extend works (U-13); the frame rule.
 
 - **Ready for a test:** the check shows nothing missing, and its `test:comfy` and adapter cases passed. It stays `trial`.
-- **The owner check, to `proven`** [REQ: 3.3 Maintainability], per workflow: (1) `comfy.check` shows nothing missing; (2) `npm run test:comfy` passes its case; (3) the stakeholder runs it from the test-path screens with dev tools on, at the three default sizes, and accepts what he sees: for a reference workflow with a real product's pictures, and with the smallest and largest reference count; for video with the clip played; and four runs at once. Then a one-line change sets `status: 'proven'` and records `needs.checkedWith`. **No agent sets `proven`.** Set for the six real workflows on 2026-11-22 by the stakeholder's ruling D-103 ("The comfy workflows are proven and approved"); `needs.checkedWith` stays empty because the server version was not recorded. The two MOSS-Image stand-ins (reference pictures, extend) stay `draft`.
+- **The owner check, to `proven`** [REQ: 3.3 Maintainability], per workflow: (1) `comfy.check` shows nothing missing; (2) `npm run test:comfy` passes its case; (3) the stakeholder runs it from the test-path screens with dev tools on, at the three default sizes, and accepts what he sees: for a reference workflow with a real product's pictures, and with the smallest and largest reference count; for video with the clip played; and four runs at once. Then a one-line change sets `status: 'proven'` and records `needs.checkedWith`. **No agent sets `proven`.** Every real shipped workflow is `proven` by the stakeholder's ruling D-103 ("The comfy workflows are proven and approved"); `needs.checkedWith` stays empty because the server version was not recorded (`workflows-proven.test.ts`). The two MOSS-Image stand-ins (reference pictures, extend) stay `draft`.
 - **Order of trials.** MiniMax H3 first; MOSS-Image once installed, and nothing waits for it. A failed reference trial sends the choice of model back to the stakeholder [L-2]; a failed extend trial, CQ-27.
 - **Not built: time limits after the trial.** See `spec/comfyui.md`, "Limits on every answer".
 
@@ -45,7 +45,7 @@ Built, except where marked. Shared harness rules: `spec/testing.md`; variables: 
 5. Picture from a reference on `flux3-klein-edit-references` through `image.generate`: passes like case 3; writes the result to the temporary folder. Looking at it is a hint, not a pass rule.
 6. and 7. H3 from a first frame and from one reference, client level: `uploadImage`, `fillWorkflow`, `submit`, poll, `viewFile` under `MAX_VIDEO_BYTES`, `checkMp4`, a temp file, time and size printed.
 8. Cut-out on `birefnet-cutout` (`tests/comfy/cutout-case.ts`), only with the switch `ADMAN_COMFY_CUTOUT=1`. Client level like 6 and 7, with the graph the adapter sends, on the test-made picture. Skips when the server lacks an item. Details: `spec/ai-jobs.md`, "Cut-out". Its first real run is still owed: the test server lacks the model file.
-9. A custom workflow (`tests/comfy/custom-case.ts`, D-104), only with the switch `ADMAN_COMFY_CUSTOM=1`. The test takes the shipped Flux graph, gives four of its steps `adman:` titles (prompt, seed, `ref1`, output), passes it through `checkWorkflowText` and `toCustomSpec`, and makes one picture from the test-made picture as the reference. One attempt; a failure is reported, not retried. Run once on 2026-11-22: it passed (9 node types, 31 seconds, a 1024 x 1024 picture). Not run again as routine (D-092).
+9. A custom workflow (`tests/comfy/custom-case.ts`, D-104), only with the switch `ADMAN_COMFY_CUSTOM=1`. The test takes the shipped Flux graph, gives four of its steps `adman:` titles (prompt, seed, `ref1`, output), passes it through `checkWorkflowText` and `toCustomSpec`, and makes one picture from the test-made picture as the reference. One attempt; a failure is reported, not retried. It has passed one real run (9 node types, 31 seconds, a 1024 × 1024 picture) and is not run again as routine (D-092).
 
 **Not built: the rest of `test:comfy`.** A cancel case (one cancel of the test's own run, asserting `stopped` or `finished`); a four-at-once case; printing through `cleanServerText` in place of `hideAddress`-only printing. And, after the first real run, a tests-only pass that corrects the stand-in's fixtures to the shapes the real server showed; if a real shape breaks a client schema, stop and report (a client change, ruled on its own).
 
@@ -53,17 +53,18 @@ Built, except where marked. Shared harness rules: `spec/testing.md`; variables: 
 
 ## The hand-test screen's ComfyUI part [REQ: FR-290]
 
-Not built. The hand-test screen it was planned for was removed in P9-14 (`src/renderer/dev/` is gone). The product screens with dev tools on stand in for it. Whether any of it is still wanted, and where, is OI-64. The plan, kept for the record:
+Dropped. The hand-test screen it was planned for was removed. The product screens with dev tools on stand in for it:
 
-- The address field (`comfy.setAddress`), "Check" (`comfy.check`), the missing items and licence notes per workflow, the "left on the server" sentences.
-- A workflow picker that includes `trial` ones. Overtaken by D-104: `generation.runImages` and `generation.startVideo` now take an optional `workflowId` for the person and for an agent, with the rules of `spec/comfyui-custom.md`, "Which workflow a run gets" (a `trial` one only with dev tools on); the run dialog's "Workflow" select is the picker.
-- Prompt, size, count, reference pictures from the project's library; for video the start choice and length. Generate. Waiting or working, with the place in the queue. Cancel. The result through `adman-asset://`, a video played muted. "Show the server's message" on a failure.
-- Extend: the dev command `dev.comfyExtend { projectId, assetId, width, height, prompt }`, registered only with `devTools`, agent policy deny (the row exists). It enqueues an `image_generation` job whose request has `mode: 'extend'`, with the picture centred on the new canvas. Not to be built: Phase 5's `generation.runFill` replaces it, and the extend trial runs through it with dev tools on.
+- The address field (`comfy.setAddress`), "Check" (`comfy.check`), the missing items and licence notes per workflow and the "left on the server" sentences are in Settings (`spec/comfyui.md`, `spec/comfyui-workflows.md`).
+- The run dialog's "Workflow" select picks the workflow; `generation.runImages` and `generation.startVideo` take an optional `workflowId`, a `trial` one only with dev tools on (`spec/comfyui-custom.md`, "Which workflow a run gets").
+- Prompt, size, count, references, video start and length, waiting or working with the place in the queue, cancel, the result and "Show the server's message" are in the product's run dialog and activity panel.
+- Extend trials run through `generation.runFill` with dev tools on. The dev command `dev.comfyExtend` is not built and will not be; its agent policy row (deny) is still in `agent-policy.ts`.
 
-## Not built: Krea 2 and custom workflows
+Whether any more of the screen is still wanted, and where, is OI-64.
 
-- **Krea 2** (OI-58, CQ-27). Nothing is built until MOSS-Image and MiniMax H3 pass their trials. It may provide alternate workflows, including the extend fallback; which jobs it gets is not decided. `job` plus `model` already allow a second model for one job; the run input then gains a model choice. `comfy-workflows/krea2-*.json` are for hand tests only. Its licence limits commercial use.
-- **Custom (user-added) workflows** (OI-57, D-058). Built by D-104; the design is `spec/comfyui-custom.md`.
+## Not built: Krea 2
+
+- **Krea 2** (OI-58, CQ-27). Nothing is built for it. It may provide alternate workflows, including the extend fallback; which jobs it gets is not decided. `job` plus `model` already allow a second model for one job; the run input then gains a model choice. `comfy-workflows/krea2-*.json` are for hand tests only. Its licence limits commercial use.
 
 ## What a server needs (operator facts)
 

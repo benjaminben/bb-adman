@@ -2,13 +2,13 @@
 
 How one variant is drawn: the Scene component, fonts, letter spacing, transparent pictures and the text overflow measurement; the hidden render window and the render service that draw a variant without showing it; and the thumbnails made from it. Read with `spec/data-model-campaign.md` (the layer values the Scene draws), `spec/editor.md` (the editor that shows the Scene), `spec/editor-commands.md` (the commands, queries and events named here) and `spec/security.md` (the render window rules). The reference-picture rule is in `spec/testing.md`.
 
-Everything in this file is Built unless marked. Phase 7 adds time and presets; Phase 8 uses the same Scene for export.
+Everything in this file is Built. The Scene also draws time, presets and background clips (design in `spec/phases/phase-07.md`), and export draws with it.
 
 ## The Scene component
 
-Built (`src/shared/scene/`), except where marked. [REQ: FR-090, FR-093, FR-094, FR-098, FR-130, FR-245, FR-249]
+Built (`src/shared/scene/`). [REQ: FR-090, FR-093, FR-094, FR-098, FR-130, FR-245, FR-249]
 
-One React component draws one variant at one time. The editor, the render window (thumbnails, `variant.render`, later export and the MCP `render_variant` tool) all draw with it, so what the user sees is what is exported [REQ: FR-130].
+One React component draws one variant at one time. The editor and the render window (thumbnails, `variant.render`, export and the MCP `render_variant` tool) all draw with it, so what the user sees is what is exported [REQ: FR-130].
 
 ### Files
 
@@ -16,10 +16,13 @@ All in `src/shared/scene/`. Shared code: no import from `main`, `renderer`, `pre
 
 | File | Holds |
 |------|-------|
-| `types.ts` | `SceneProps`, `SceneVariant`, `SceneAsset`, `SceneInput` (below) |
+| `types.ts` | `SceneProps`, `SceneVariant`, `SceneAsset`, `SceneClip`, `SceneMode`, `SceneInput` (below) |
 | `scene.tsx` | `Scene`, the root: draws the layers in `z` order |
 | `picture-layer.tsx`, `text-layer.tsx` | One layer each. Not re-exported; only `scene.tsx` imports them. |
-| `background-placement.ts` | `placePicture`, the one owner of where a picture goes inside its box. The name is kept from the data model: it places the pictures of image layers too. Phase 8's FFmpeg filter builder imports it. |
+| `clip-track.tsx`, `clip-at.ts` | `ClipTrack`, a video variant's background layer drawn from the clip under the time; `clipAt`, `safeClip`, `safePlacement`, which clip and where |
+| `timing.ts` | `drawnTime`, `visibleAt`, `activeBlock`, `blockProgress`, `posterTimeMs`: a layer's timing at `timeMs` |
+| `presets.ts`, `word-spans.tsx` | `presetState`, an entrance or exit preset as a plain function of time; `WordSpans`, the words of a text as spans for the word-by-word preset |
+| `background-placement.ts` | `placePicture`, the one owner of where a picture goes inside its box. The name is kept from the data model: it places the pictures of image layers too. The video export's filter graph (`src/main/export/video/filter-graph.ts`) and fan-out import it. |
 | `text-style.ts` | `textCss(style)`: the exact CSS of a text layer (below); the box is set separately |
 | `font-faces.ts` | `useSceneFonts(fonts)`, `registerDefaultFont()`, `DEFAULT_FONT_FAMILY`, `fontFamilyOf(fontAssetId)` |
 | `measure-overflow.ts` | `measureOverflow(element)`: the one overflow test |
@@ -50,16 +53,19 @@ type SceneProps = {
   variant: SceneVariant
   layers: LayerRow[]                     // any order; drawn by z
   assets: Readonly<Record<string, SceneAsset>>  // every asset a layer names as source or font
-  timeMs: number                         // 0 for an image variant; used from Phase 7
+  timeMs: number                         // 0 for an image variant
   mode: 'full' | 'overlay-only'
+  clips?: SceneClip[]                    // a video variant's background track
+  playing?: boolean                      // the playhead is moving
+  sound?: boolean                        // the clips' own sound is on
   onSettled?: (result: { overflow: Record<string, boolean> }) => void
 }
 ```
 
 - The Scene builds no address. The caller fills `url` with `assetUrl(projectId, assetId)` (`src/renderer/ui/asset-url.ts`, the one owner of the address form). The render page does the same with the IDs main sends it.
 - `version` is used as part of the React `key` of each picture and font face, so a file changed on disk is loaded again (the address stays the same; the protocol answers `no-store`).
-- `clips` join the props in Phase 7. Phase 3 draws an image variant only. A video variant is drawn as its image (its background layer's `source`), as `spec/data-model-campaign.md` says for an image variant; Phase 7 replaces that.
-- `mode: 'overlay-only'` leaves out the background layer and the black root, so the root is transparent. Phase 8 uses it to lay text over a video. Phase 3 builds it and tests it once.
+- On a video variant the background layer is drawn from the clip under the time (`clip-track.tsx`); the rules are in `spec/phases/phase-07.md`, "Clips and the track".
+- `mode: 'overlay-only'` leaves out the background layer and the black root, so the root is transparent. The video export uses it to lay text over a video (`src/main/export/video/video-ad.ts`).
 
 ### The root and drawing order
 
@@ -76,7 +82,7 @@ Every layer is a box from its `geometry`: `left: x px; top: y px; width: width p
 
 - The box (`data-layer-id`) is `overflow: hidden`. It holds one `<img>` with `alt=""`, `draggable={false}` and the style `position: absolute` at the place `placePicture` gives, then, when the layer has a usable shade, the shade element ("Background colour and shade", below). The box's `opacity` is `style.opacity`. With no look fields set, the DOM is as before: the box and the `<img>` only.
 - **No picture is drawn** when `source` is null (an empty picture layer), when the asset is not in `assets`, is `missing`, is not of kind `image`, or fails to load. The editor draws its own placeholder for an empty picture layer (`spec/editor.md`); the Scene never does, so thumbnails and exports show nothing there.
-- **Transparency is kept** [REQ: FR-245]. The box and the `<img>` have no background colour (a background layer's own `fillColor` aside, "Background colour and shade" below), so a PNG or WebP with a transparent background shows the layers beneath it, in the editor, in thumbnails and in `variant.render`. Phase 8 adds the same test for the exported file.
+- **Transparency is kept** [REQ: FR-245]. The box and the `<img>` have no background colour (a background layer's own `fillColor` aside, "Background colour and shade" below), so a PNG or WebP with a transparent background shows the layers beneath it, in the editor, in thumbnails, in `variant.render` and in an exported PNG (`tests/e2e/export-picture.spec.ts`).
 - The picture's own size is the loaded `<img>`'s `naturalWidth` and `naturalHeight`. Until it is known the `<img>` is drawn with `visibility: hidden`. The row's `width` and `height` are not used for drawing (WebP rows have none).
 
 **`placePicture(source, crop, box, fit)`** in `background-placement.ts`, pure. `source` and `box` are `{ width, height }`; `crop` is `Geometry['crop']`; `fit` is `'cover' | 'contain'`. It returns `{ x, y, width, height }`: where the whole source picture goes, in box pixels. No rounding.
@@ -87,7 +93,7 @@ Every layer is a box from its `geometry`: `left: x px; top: y px; width: width p
 4. The region is centred in the box: `x = (box.width − region.width × s) / 2 − region.x × s`, the same for `y`; `width = source.width × s`, `height = source.height × s`.
 5. A picture is never stretched: one scale for both sides.
 
-The editor's crop mode keeps a crop at the box's shape (`spec/editor.md`), so step 2 then shows the crop exactly. Fan-out's `scale` and `crop` choices (Phase 5) are written as a background geometry and crop that these rules draw.
+The editor's crop mode keeps a crop at the box's shape (`spec/editor.md`), so step 2 then shows the crop exactly. Fan-out's `scale` and `crop` choices are written as a background geometry and crop that these rules draw.
 
 ### Text layers
 
@@ -147,7 +153,7 @@ Built (LK-3, `shade-css.ts`, `picture-layer.tsx`) [D-094]. Look values come from
 - **Registering.** `useSceneFonts(fonts)` takes the font assets the layers name that are present (in `assets`, not `missing`, of kind `font`) and registers one `FontFace` per asset and `version`, through the Font Loading API: `new FontFace('adman-font-{id}', 'url("{url}")', { weight: '1 1000', style: 'normal' })`, added to `document.fonts`, then `load()`ed. A newer `version` replaces the older face. The page policy already allows `font-src 'self' adman-asset:`.
 - **The asset scheme and fonts.** Built. The browser loads fonts under cross-origin rules, so a font loads from `adman-asset://` only when the scheme is registered with `corsEnabled: true`, as it is. Pictures are not affected. The rules that keep this safe and the accepted risk are in `spec/security.md`, "Rules: the asset protocol" (assumption A-53).
 - **One file, every weight.** An uploaded font file is registered for every weight, and `font-synthesis: none` stops the browser from making a false bold. So a variable font follows the weight field, and a font file with one weight draws that weight whatever the field says. The properties panel says so (`spec/editor.md`).
-- **The bundled default font** is Inter 4.1, variable (weights 100 to 900), SIL Open Font Licence 1.1: `src/shared/scene/fonts/InterVariable.woff2` (352,240 bytes, SHA-256 `693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3`, from the font's official v4.1 release) with its licence text `OFL.txt` beside it. It is imported with Vite's `?url`, so it is built into the page and loaded from `'self'`. `registerDefaultFont()` registers it once, when the Scene module loads, with weight `100 900`. It is listed in `THIRD-PARTY-NOTICES.md` (Phase 11). It lives in `src/shared/scene/fonts/`, not in `resources/`. The built page holds the font as its own file (`tests/build/built-page.test.ts`).
+- **The bundled default font** is Inter 4.1, variable (weights 100 to 900), SIL Open Font Licence 1.1: `src/shared/scene/fonts/InterVariable.woff2` (352,240 bytes, SHA-256 `693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3`, from the font's official v4.1 release) with its licence text `OFL.txt` beside it. It is imported with Vite's `?url`, so it is built into the page and loaded from `'self'`. `registerDefaultFont()` registers it once, when the Scene module loads, with weight `100 900`. It is listed in `THIRD-PARTY-NOTICES.md`. It lives in `src/shared/scene/fonts/`, not in `resources/`. The built page holds the font as its own file (`tests/build/built-page.test.ts`).
 - **A font that fails** (file missing, not a font) still counts as settled; its text falls back to `adman-default`. The variant's `missingFile` badge counts fonts (`spec/api-queries-events.md`).
 
 ### Settling and the overflow measurement
@@ -166,7 +172,7 @@ Built (LK-3, `shade-css.ts`, `picture-layer.tsx`) [D-094]. Look values come from
 
 - It reads no file, makes no network request other than the `adman-asset://` addresses it is given and the bundled font, and calls no `window.api` or `window.renderApi`.
 - It draws copy, layer names and display names as text, never as HTML. No `dangerouslySetInnerHTML`.
-- It has no timers apart from waiting to settle, and no animation in Phase 3. Phase 7's presets are plain functions of `timeMs` (R-14).
+- It has no timers apart from waiting to settle. Presets are plain functions of `timeMs` (R-14, `presets.ts`); only a playing clip's `<video>` moves on its own.
 
 ## Font names at import
 
@@ -211,7 +217,7 @@ A hidden Electron window that draws one Scene at a time so the main process can 
 - The same navigation rules as the app window (`navigation.ts`): no navigation away, every new window denied.
 - **Ended** when its page process crashes (`render-process-gone`), when it stops answering, after a draw that timed out, when the app window closes, and before quit. The next draw makes a new one.
 - Closing the app window ends the render window first, so `window-all-closed` still quits the app (OI-23).
-- `src/main/index.ts` keeps a reference to the app window. Every use that today takes `BrowserWindow.getAllWindows()[0]` (bringing the window forward, a second instance, a file opened by the system) uses that reference instead.
+- `src/main/index.ts` keeps a reference to the app window. Bringing the window forward, a second instance and a file opened by the system use that reference, never `BrowserWindow.getAllWindows()[0]`.
 
 ### One draw
 
@@ -225,6 +231,7 @@ type SceneInput = {
   assets: Record<string, Omit<SceneAsset, 'url' | 'version'>>   // no addresses, no paths
   timeMs: number
   mode: 'full' | 'overlay-only'
+  clips?: SceneClip[]
 }
 ```
 
@@ -242,7 +249,7 @@ type SceneInput = {
 - The window is transparent. An `overlay-only` draw has alpha 0 where nothing is drawn; a `full` draw stays opaque because of its black root (`tests/e2e/scene-reference.spec.ts`).
 - `out/preload/render.cjs` carries zod, because it imports the channel names from `src/shared/schemas/render.ts`. It works; moving the names out is a tidy-up, not a fault.
 
-`RENDER_LIMITS = { timeMs: 10_000, maxDimension: 2048, thumbnailSide: 512 }` in `src/shared/config/render.ts`, the one owner. Export (Phase 8) draws at full size, up to 8,192 pixels a side; how it gets past 2,048 is Phase 8's to design.
+`RENDER_LIMITS = { timeMs: 10_000, maxDimension: 2048, thumbnailSide: 512 }` in `src/shared/config/render.ts`, the one owner. Export draws at full size: a variant larger than `maxDimension` is drawn in tiles of at most 2,048 a side and stitched (`drawFull`, `src/main/thumbnails/full-draw.ts` and `tiles.ts`).
 
 ## The render service
 
@@ -254,22 +261,28 @@ Built. Files: `src/main/thumbnails/` (no Electron; core may import it). The draw
 | `service.ts` | `createRenderService(opts)` |
 | `scene-input.ts` | `sceneInput(deps, project, variantId, { withoutText? })`: reads the variant, its layers and the assets they name through `rows.ts`, with `missing` from `AssetService.missingAssetIds`. `withoutText` leaves out the text layers and the fonts only they name |
 | `queue.ts` | One draw at a time, with priorities |
+| `full-draw.ts`, `tiles.ts` | `drawFull`: a PNG of the variant's exact pixel size for export, drawn in tiles when it is larger than the render window's limit |
 | `eager.ts` | Eager thumbnails, changed files, and the variant revs of each open project |
 | `paths.ts` | `thumbnailDir`, `thumbnailFile`: the one owner of the thumbnail file names |
 | `cache.ts` | Read, write and clean thumbnail files |
 
-`CoreDeps.render: RenderService` (the sixteenth field) is built once in `core.ts` as `createRenderService({ deps: () => deps, bus: () => bus, emit, draw: opts.drawScene ?? noDraw })`, the same late binding the job runner uses. `tests/integration/registration.test.ts` lists it.
+`CoreDeps.render: RenderService` is built once in `core.ts` as `createRenderService({ deps: () => deps, bus: () => bus, emit, draw: opts.drawScene ?? noDraw })`, the same late binding the job runner uses. `tests/integration/registration.test.ts` lists it.
 
 ```ts
 type RenderService = {
   thumbnail(project: ProjectHandle, variantId: string): Promise<ThumbnailGet>
-  render(project: ProjectHandle, variantId: string, maxDimension: number): Promise<VariantRender>
+  render(project: ProjectHandle, variantId: string, maxDimension: number, timeMs?: number): Promise<VariantRender>
+  renderForAgent(project: ProjectHandle, variantId: string, maxDimension: number, timeMs?: number): Promise<VariantRender>
   renderPictures(project: ProjectHandle, variantId: string, maxDimension: number): Promise<VariantRender>
+  renderBackground(project: ProjectHandle, variantId: string, size: { width: number; height: number }): Promise<Uint8Array>
+  drawFull(input: SceneInput): Promise<Uint8Array>
   onEvent(event: BusEvent): void
   projectClosed(projectId: string): Promise<void>
 }
 ```
 
+- **`renderForAgent`** draws the whole variant when an agent sends `variant.render`. It reports no overflow, sends no event and keeps no file.
+- **`renderBackground`** draws the background layer and its clip track only, at time 0, at the run's size, for a video run that starts from the background.
 - **`renderPictures`** draws the variant without its text layers (`sceneInput` with `withoutText`), for the layout job (`spec/ai-jobs.md`). It goes through the same queue as `render`, reports no overflow and keeps no file. A failed draw answers `render_failed`.
 
 - **Queue.** One draw at a time for the whole app. A `variant.render` query goes first; thumbnails after, oldest request first. Thumbnail requests for the same project and variant are merged: the input is read when the draw starts, so it always draws the latest `rev`.
@@ -295,14 +308,13 @@ Built (`paths.ts`, `cache.ts`). Security class, short review: file names come fr
 - **Asset thumbnails are not made.** The window draws asset pictures straight from `adman-asset://` (the reference picker already does). The "asset thumbnail" row of `spec/data-rules.md`, "Caching", is not built until a library view proves slow (A-30).
 - **Accepted:** two copies of one project file made outside the app share a project ID and variant IDs, so one may show the other's thumbnail for the same `rev`. A wrong preview only; the next change redraws it.
 
-## Left for later phases
+## Related parts
 
-- Time, presets and background clips in the Scene are built (Phase 7); their design is in `spec/phases/phase-07.md`, "Design additions".
-- Drawing at full size past 2,048 pixels, and the exported-file test of FR-245 (Phase 8).
-- `render_variant` for agents (Phase 10) calls `variant.render`; its `hide_text` choice adds a Scene prop then.
-- A WebP decoder window (slice WP) is a separate hidden window with its own rules; it does not share the render window.
-- **The look fields** (`spec/phases/look-pack.md`) in later phases. They are part of `style`:
-  - Fan-out and links (Phase 5) copy them with the rest of `style`; a linked layer follows them and overrides them as style. Fan-out does not scale padding, radius or outline (geometry follows by pixel size only, D-013).
-  - Translation (Phase 6) copies them unchanged; all capitals applies to the translated text as drawn.
-  - MCP layer tools (Phase 10) take them with the same checks as `layer.update`.
-  - The AI layout proposal (Phase 4) is not changed now; a later slice may let it choose a starter layout, a text box or a shade.
+- Time, presets and background clips: design in `spec/phases/phase-07.md`, "Design additions".
+- `render_variant` for agents (`src/main/mcp/tools/render-tool.ts`) sends `variant.render`; for an agent the query draws with `renderForAgent` (`src/main/queries/render.ts`). It has no `hide_text` choice.
+- The WebP decoder window (`src/main/windows/webp-window.ts`) is a separate hidden window with its own rules; it does not share the render window.
+- **The look fields** (`spec/phases/look-pack.md`) are part of `style`:
+  - Fan-out and links copy them with the rest of `style`; a linked layer follows them and overrides them as style. Fan-out does not scale padding, radius or outline (geometry follows by pixel size only, D-013).
+  - Translation copies them unchanged; all capitals applies to the translated text as drawn.
+  - MCP layer tools take them with the same checks as `layer.update`.
+  - The AI layout proposal may set a text box (`boxColor`, `boxPadding`) and a type style (`src/shared/generation/layout-patches.ts`).

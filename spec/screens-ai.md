@@ -2,7 +2,7 @@
 
 The AI screens: the run dialog and the paid count, the Generate panel of the properties panel (generate, reference pictures, new pictures, earlier options, cut-out), copy options, placing text with AI, reading a brief with AI, the activity panel, and the warnings before closing a tab, a dialog, a project or the app. Read with `spec/screens.md` (rules for every screen), `spec/editor.md` (the editor these sit in), `spec/ai-jobs.md` (the commands and jobs behind them) and `spec/jobs.md`.
 
-Everything here is Built (P4-1 to P4-19, Round 2, then the design wave's DLG-4a, DLG-4b, DLG-5, ED-4a, ED-4b, SH-4, SH-5). Each component has its own folder and CSS module, takes every colour, space, radius and type size from `src/renderer/ui/tokens.css`, and gets its data through props or a store. Every rule of `spec/screens.md`, "Rules for every screen", holds: a paid call starts only after the user's own click with the cost on screen at that click (C-15), one run per click, no raw error text, server and file text drawn as text.
+Everything here is Built. Each component has its own folder and CSS module, takes every colour, space, radius and type size from `src/renderer/ui/tokens.css`, and gets its data through props or a store. Every rule of `spec/screens.md`, "Rules for every screen", holds: a paid call starts only after the user's own click with the cost on screen at that click (C-15), one run per click, no raw error text, server and file text drawn as text.
 
 ## Where the code lives
 
@@ -29,7 +29,7 @@ src/renderer/
                 cancel-shown.ts, go-there.ts, show-result.ts
 ```
 
-**Phase 4 tokens** in `tokens.css`: `--activity-width` (360px), `--option-thumb` (72px), `--mark-dot` (8px), `--run-dialog-width` (480px).
+**AI screen tokens** in `tokens.css`: `--activity-width` (360px), `--option-thumb` (72px), `--mark-dot` (8px), `--run-dialog-width` (480px).
 
 ## The run dialog
 
@@ -174,7 +174,7 @@ In `editor/picture-fields/` (`cut-out.tsx`, `cut-out-status.tsx`) [REQ: FR-307].
 
 ## Choices made without a design sign-off
 
-Each was made to get a working, testable screen. A later UI pass may change any of them.
+Each was made to get a working, testable screen.
 
 - One run dialog for every AI job, with the provider as segments, the count inside it, and the campaign's paid count above the cost line.
 - AI for a picture layer sits in the properties panel's Generate Section; earlier options are a folded Section of thin rows and small tiles, ten runs at a time.

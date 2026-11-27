@@ -4,7 +4,7 @@ How stored data behaves: links between a master and its variants, follow rules a
 
 ## Links, follow rules and sync
 
-Not built (Phase 5). The follow rules live in `src/shared/links/follow-rules.ts`. The `revs`, `synced_revs`, `overrides` and `linked` columns already exist on `layer`. The rules below are the base; how Phase 5 builds them (files, the full `sync.preview` reply, override undo, refusals, fan-out inputs, fill, directions, the campaign undo list) is in `spec/links-and-sync.md`.
+Built. The follow rules live in `src/shared/links/follow-rules.ts`; the `revs`, `synced_revs`, `overrides` and `linked` columns are on `layer`. The rules below are the base; how they are built (files, the full `sync.preview` reply, override undo, refusals, fan-out inputs, fill, directions, the campaign undo list) is in `spec/links-and-sync.md`.
 
 Layer properties are grouped. Each group has a counter in `layer.revs` that goes up by one whenever a property in the group changes.
 
@@ -40,7 +40,7 @@ Format never changes a follow rule. Image variants store timing and animation an
 
 **Overrides** [REQ: FR-080, FR-083]. Editing an inherited property on a linked layer adds its property path to `layer.overrides`. Paths are `copy`, `source`, `timing`, `geometry` (whole group), and `style.<field>`, `animation.entrance`, `animation.exit`. A language variant that needs its own font overrides `style.fontAssetId` only, so the rest of the style still follows [REQ: FR-056].
 
-**Sync preview** (`sync.preview` query) returns, for each out-of-date variant, the shape below (the full reply, with `masterRev` and the Phase 5 stand-in for translations, is in `spec/links-and-sync.md`, "Sync"):
+**Sync preview** (`sync.preview` query) returns, for each out-of-date variant, the shape below (the full reply, with `masterRev`, is in `spec/links-and-sync.md`, "Sync"):
 
 ```ts
 type SyncPreview = {
@@ -75,27 +75,27 @@ type SyncDecision = {
 - A layer not in the list stays out of date. This is how the user leaves a layer to edit by hand [REQ: FR-082, FR-083].
 - The whole apply is one command and one entry on the campaign undo list.
 
-Named test (Phase 5 exit): "editing a master changes no other variant's layer rows".
+Named test: "editing a master changes no other variant's layer rows" (`tests/integration/links/master-edit.test.ts`).
 
 ## Fan-out
 
-Not built (Phase 5; the video format part in Phase 7; the translation in step 6 in Phase 6). Phase 5's rules (exact inputs, the fit maths, the reply, and the fill started by the window after fan-out rather than by the command) are in `spec/links-and-sync.md`, "Fan-out" and "Generative fill".
+Built (`src/main/commands/variant/fan-out.ts`, plan in `src/shared/links/fan-out-plan.ts`). The exact inputs, the fit maths, the reply, and the fill started by the window after fan-out rather than by the command are in `spec/links-and-sync.md`, "Fan-out" and "Generative fill".
 
-`variant.fanOut` input: direction ID, the sizes, languages and formats to cover, and one background fit choice per new size [REQ: FR-075, FR-076]. The screen calls it "Make variants". It may name a source variant other than the master (built, MV-7); then "the master" in steps 1 to 5 means that source, and the links still go to the master (`spec/make-variants.md`, "Links after making").
+`variant.fanOut` input: direction ID, the sizes, languages and formats to cover, and one background fit choice per new size [REQ: FR-075, FR-076]. The screen calls it "Make variants". It may name a source variant other than the master; then "the master" in steps 1 to 5 means that source, and the links still go to the master (`spec/make-variants.md`, "Links after making").
 
 For every combination of size, language and format that does not already exist in the direction:
 
 1. Create the variant with the master's title and subjects.
 2. Copy every master layer with the same `key`, `linked = 1`, empty `overrides`, and `synced_revs` equal to the master's `revs`.
-3. **Geometry for a new size, master's language** (built, MV-3). A box still where the master's starter layout puts it takes that layout's box at the new size; any other box is anchored to its nearer edges, gaps and lengths scaled by the ratio of the smaller sides (`spec/make-variants.md`, "Where a box goes in a new size"). Built today: each box keeps its centre at the same share of the canvas, scaled by `min(newWidth / masterWidth, newHeight / masterHeight)`.
-3a. **Text size** (built, MV-4, MV-5 and MV-7). The pixel measures of each text style (font size, box padding, radius, outline) are scaled by the ratio of the smaller sides, and the font size is fitted to the words and box when either got tighter. A measure that then differs from the master's is added to `overrides`, so the rest of the style still follows (`spec/make-variants.md`, "Text that fits"). A translation run that first fills a layer's words fits its size once more, only smaller.
+3. **Geometry for a new size, master's language.** A box still where the master's starter layout puts it takes that layout's box at the new size; any other box is anchored to its nearer edges, gaps and lengths scaled by the ratio of the smaller sides (`spec/make-variants.md`, "Where a box goes in a new size"; `src/shared/links/place-box.ts`).
+3a. **Text size.** The pixel measures of each text style (font size, box padding, radius, outline) are scaled by the ratio of the smaller sides, and the font size is fitted to the words and box when either got tighter. A measure that then differs from the master's is added to `overrides`, so the rest of the style still follows (`spec/make-variants.md`, "Text that fits"). A translation run that first fills a layer's words fits its size once more, only smaller.
 4. **Background for a new size**, by the user's fit choice:
    - `scale`: place the whole image inside the canvas, centred. Empty area shows black.
    - `crop`: fill the canvas with the image, centred. The parts outside are hidden, not removed.
    - `fill`: place as `scale`; then the window starts one `generative_fill` job per such size (`generation.runFill`) that extends the image to the new size. On success (`generation.applyFill`) the new asset becomes the variant's background with `source` added to `overrides`. On failure the background stays as `scale` and retry is offered [REQ: FR-076, workflow 5.2].
 5. **Geometry for a new size and a new language.** Copy geometry from the variant with the same size and format in the master's language, created in step 3 [REQ: R-02].
 6. **Copy for a new language.** Start one translation job per language for the direction, covering every text layer in the master. The result is written to every new variant in that language with `translation_status = 'proposed'`. If the brief supplied copy for the language, that text is used with `translation_source = 'brief'` and no job runs [REQ: FR-027]. If there is no key or the job fails, the layers keep the master's text with `translation_status = 'missing'` and the variant offers retry [REQ: workflow 5.2].
-7. **Video format** (built, P7-23). Create one background clip from the variant's background picture with `addFirstClip`, which sets `first_clip_made`. When the source is a video with clips, the new video variant copies its clips and sound settings instead (built, MV-7) (`spec/make-variants.md`, "Making variants from a variant"). A background with no picture gives no clip. Image variants get none. The "Make variants" dialog offers Image and Video (`spec/screens-variants.md`, "Make variants").
+7. **Video format.** Create one background clip from the variant's background picture with `addFirstClip`, which sets `first_clip_made`. When the source is a video with clips, the new video variant copies its clips and sound settings instead (`spec/make-variants.md`, "Making variants from a variant"). A background with no picture gives no clip. Image variants get none. The "Make variants" dialog offers Image and Video (`spec/screens-variants.md`, "Make variants").
 8. Ask the render service to measure text overflow on each new variant.
 
 Fan-out is one entry on the campaign undo list. Generative fill is the only image generation the fan-out dialog can start, and only when the user chose `fill` [REQ: FR-076].
@@ -140,11 +140,11 @@ Built. A transaction must be short and synchronous, but some commands read or co
 
 ### Dragging
 
-Not built (Phase 3). While the user drags, the window keeps the moving values in zustand only. On release it sends one `layer.update`. A crash loses at most that drag [REQ: 8.2].
+Built (`src/renderer/editor/canvas-overlay/use-canvas-drag.ts`, the draft in `src/renderer/stores/variant-store.ts`). While the user drags, the window keeps the moving values in zustand only. On release it sends one `layer.update`. A crash loses at most that drag [REQ: 8.2].
 
 ### Text overflow
 
-Not built (Phase 3). The Scene compares each text layer's content height and width with its box after fonts load. The editor window and the render service both report changes through `layer.reportOverflow`, a system command that is not undoable and does not bump `rev` [REQ: FR-098].
+Built (`src/shared/scene/measure-overflow.ts`; the editor's report in `src/renderer/editor/editor/use-overflow-report.ts`, the render service's in `src/main/thumbnails/`). The Scene compares each text layer's content height and width with its box after fonts load. The editor window and the render service both report changes through `layer.reportOverflow`, a system command that is not undoable and does not bump `rev` [REQ: FR-098].
 
 ### Asset files
 
@@ -152,11 +152,11 @@ Built. The window never reads files. It loads images, video and fonts from `adma
 
 ### Generation
 
-Built for pictures and video jobs (Phase 2); placing a chosen picture in a layer is not built (Phase 3 and 4). [REQ: FR-060–FR-068]
+Built. [REQ: FR-060–FR-068]
 
 1. The user confirms the run dialog (count and provider).
 2. The job runner calls the provider, saves each result as a PNG or MP4 in the assets folder, embeds the generation details (`spec/export-and-checks.md`) and inserts an `asset` row with `origin = 'generated'` through the system command `asset.addGenerated`.
-3. The user picks one. Picking is one `layer.update` that sets `source` and clears `geometry.crop`, so the picture sits in the layer's box by the Scene's rule (A-25); it calls no provider. All options stay in the asset library [REQ: FR-063]. The earlier options of a layer (Phase 4) offer the same pick (`spec/screens-ai.md`).
+3. The user picks one. Picking is one `layer.update` that sets `source` and clears `geometry.crop`, so the picture sits in the layer's box by the Scene's rule (A-25); it calls no provider. All options stay in the asset library [REQ: FR-063]. The earlier options of a layer offer the same pick (`spec/screens-ai.md`).
 
 ### Jobs, export and publish
 
@@ -164,7 +164,7 @@ Jobs (starting, the runner, the two classes of kind, marks, closing a project wi
 
 ## Caching
 
-Not built (Phase 3, with the render service).
+Built (`src/main/thumbnails/`; file names in `paths.ts`).
 
 | Cache target | Where | TTL | Invalidation trigger |
 |--------------|-------|-----|----------------------|
@@ -174,7 +174,7 @@ No asset thumbnails are made: the window draws asset pictures straight from the 
 
 ## Data migration
 
-Built. Main files: `src/main/db/project-file.ts`, `src/main/db/bundled-migrations.ts`, `src/main/db/migrations/`. The newest migration is `0005_video_and_sound`; a file with every migration has `schema_version` 6. Each migration test opens its file with the migrations up to its own only.
+Built. Main files: `src/main/db/project-file.ts`, `src/main/db/bundled-migrations.ts`, `src/main/db/migrations/`. The newest migration is `0006_approval_clips`; a file with every migration has `schema_version` 7. Each migration test opens its file with the migrations up to its own only.
 
 No legacy data [REQ: 6.4].
 
@@ -200,7 +200,7 @@ On open, the app compares the file's `schema_version` with its own.
 - New and upgraded project files run the same migrations, so there is one shape of each table.
 - Each migration has its own test, which opens a file with the migrations up to its own only (`bundledMigrations.slice(0, n)`). So a later migration never changes an earlier test.
 
-**The migrations so far.**
+**The migrations.**
 
 | Tag | Adds | Test |
 |-----|------|------|
@@ -208,8 +208,9 @@ On open, the app compares the file's `schema_version` with its own.
 | `0001_agent_changed_and_job_target` | `variant.agent_changed_at`; on `job`: `layer_id`, `slot`, `paid_calls` (default 0), `seen_at`, and index `job_target`. All added columns, no rebuild. | `migration-0001.test.ts`: runs `0000` and `0001` only; a file made at version 1 holding a variant and a job keeps both rows unchanged apart from the new fields |
 | `0002_job_started_by_and_error_reason` | On `job`: `started_by` (default `'user'`, CHECK `job_started_by`), `error_reason`. Two hand-written `ALTER TABLE` statements. | `migration-0002.test.ts`: three tags in order; `schema_version` 3; an old row gains `started_by: 'user'` and `error_reason: null`; `'robot'` is refused and `'agent'` accepted, in old and new files |
 | `0003_job_kind_cutout` | `job_kind` CHECK lists `cutout`. A table rebuild, as drizzle-kit writes it. | `migration-0003.test.ts` (`spec/ai-jobs.md`, "Job kinds") |
-| `0004_approvals` (Built, AP-5) | New tables `approval_link`, `approval_variant`, `approval_signoff` and index `approval_signoff_campaign` (`spec/approvals-client.md`, "Local tables"). No rebuild. Gives `schema_version` 5 | `migration-0004.test.ts` (`spec/approvals-client.md`, "Local tables") |
-| `0005_video_and_sound` (Built, P7-2) | A rebuild of `asset` so its `asset_kind` CHECK lists `audio`, as drizzle-kit writes it (indexes and the other checks kept). On `variant`: `first_clip_made` (integer, default 0), `sound` (default `'clips'`, CHECK `variant_sound` in `'clips','file','none'`), `sound_asset_id` (references `asset(id)`, null). On `background_clip`: `sound_on` (integer, default 1). One data step: `first_clip_made = 1` for every variant that has a clip. Gives `schema_version` 6 | `migration-0005.test.ts`: every row and child row of a version 5 file kept apart from the new fields; the defaults; a variant with a clip marked; `'audio'` accepted and `'midi'` refused; `sound: 'loud'` refused; a `sound_asset_id` naming no asset refused |
+| `0004_approvals` | New tables `approval_link`, `approval_variant`, `approval_signoff` and index `approval_signoff_campaign` (`spec/approvals-client.md`, "Local tables"). No rebuild. Gives `schema_version` 5 | `migration-0004.test.ts` (`spec/approvals-client.md`, "Local tables") |
+| `0005_video_and_sound` | A rebuild of `asset` so its `asset_kind` CHECK lists `audio`, as drizzle-kit writes it (indexes and the other checks kept). On `variant`: `first_clip_made` (integer, default 0), `sound` (default `'clips'`, CHECK `variant_sound` in `'clips','file','none'`), `sound_asset_id` (references `asset(id)`, null). On `background_clip`: `sound_on` (integer, default 1). One data step: `first_clip_made = 1` for every variant that has a clip. Gives `schema_version` 6 | `migration-0005.test.ts`: every row and child row of a version 5 file kept apart from the new fields; the defaults; a variant with a clip marked; `'audio'` accepted and `'midi'` refused; `sound: 'loud'` refused; a `sound_asset_id` naming no asset refused |
+| `0006_approval_clips` | On `approval_variant`: `clip_ms`, `clip_bytes`, `clip_missing`, all nullable (`spec/approvals-client.md`). No rebuild. Gives `schema_version` 7 | `migration-0006.test.ts`: every row of a version 6 file kept with the new columns null; clip numbers written and read back |
 
 ## Package project
 
@@ -261,7 +262,7 @@ The command is not undoable and does not change any `rev`. It never opens the co
 
 ## Changing a variant's format
 
-Built: the command (P7-10, `src/main/commands/variant/set-format.ts`, with the undo fix P7-10b) and the MCP tool `set_variant_format` (P10-13). [REQ: FR-070, FR-120, workflow 5.5 step 1, R-20, D-012, D-020, D-025, D-026]
+Built: the command (`src/main/commands/variant/set-format.ts`) and the MCP tool `set_variant_format`. [REQ: FR-070, FR-120, workflow 5.5 step 1, R-20, D-012, D-020, D-025, D-026]
 
 `variant.setFormat` changes one variant from one format to the other. Input: `projectId`, `variantId`, `format`. Setting the format a variant already has changes nothing and returns success.
 
@@ -310,7 +311,7 @@ Built: the command (P7-10, `src/main/commands/variant/set-format.ts`, with the u
 
 **OI-20, settled by `first_clip_made`** (A-180, migration 0005). A video variant whose track the user emptied on purpose keeps `first_clip_made` at 1, so after video to image and back step 3 makes no clip and the track stays empty. Any clip add sets it to 1.
 
-**Undo and redo of the first clip** (P7-10b). The inverse of an image-to-video change that made the first clip carries `undoClipId`: the undo removes that clip and sets `first_clip_made` back to 0 when the track is then empty. The inverse of that undo carries `redoClipId`: the redo makes the clip again under the same ID, so a later redo of a clip edit finds it. Both fields take a ULID only. `variant.update` has the same kind of field, `durationOverridden`, which its inverse carries.
+**Undo and redo of the first clip.** The inverse of an image-to-video change that made the first clip carries `undoClipId`: the undo removes that clip and sets `first_clip_made` back to 0 when the track is then empty. The inverse of that undo carries `redoClipId`: the redo makes the clip again under the same ID, so a later redo of a clip edit finds it. Both fields take a ULID only. `variant.update` has the same kind of field, `durationOverridden`, which its inverse carries.
 
 **Undo-only fields.** `undoClipId`, `redoClipId` and `durationOverridden` are accepted only while the bus replays an inverse for `history.undo` or `history.redo` (`ctx.replay`), and never from an agent. Sent at any other time they are refused with `INVALID_INPUT`, "Only an undo or redo names a clip this way." (for `durationOverridden`: "Only an undo or redo sets the duration flag."). A hand-sent `undoClipId` would otherwise delete a clip with no way back. The MCP tool's published input leaves all three out.
 
@@ -323,4 +324,4 @@ Built: the command (P7-10, `src/main/commands/variant/set-format.ts`, with the u
 
 **Agent policy:** allow [D-025]. The MCP tool is `set_variant_format` (`spec/mcp-and-agents.md`). The change deletes nothing, the user can undo it from the variant's list, and the agent can change it back, so it is an ordinary edit and not a destructive action under FR-197.
 
-**Named tests (Phase 7 exit):** the format round-trip test and the refused-format-change test.
+**Named tests:** the format round-trip test and the refused-format-change test.

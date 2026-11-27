@@ -16,7 +16,7 @@ JSON and YAML brief files use these field names:
   "region": "string, required",
   "audience": "string, required",
   "message": "string, required",
-  "subjects": [{ "id": "string, optional", "name": "string, required", "description": "string, optional" }],
+  "subjects": [{ "id": "string, optional", "name": "string, required", "description": "string, optional", "pictures": "string or string[], optional" }],
   "offer": "string, optional",
   "callToAction": "string, optional",
   "tone": "string, optional",
@@ -24,7 +24,11 @@ JSON and YAML brief files use these field names:
   "prohibitedWords": "string[] or { language: string[] }, optional",
   "languages": "string[] of BCP-47 tags, optional",
   "sizes": "string[] such as '1:1' or '1080x1350', optional",
-  "copy": { "<language>": { "headline": "string", "callToAction": "string" } }
+  "copy": { "<language>": { "headline": "string", "callToAction": "string" } },
+  "brand": { "logo": "string, optional", "colours": "string or string[], optional", "fonts": { "heading": "string, optional", "body": "string, optional" } },
+  "layout": "string, optional",
+  "artDirection": "string, optional",
+  "adsPer": "'campaign' or 'subject', optional"
 }
 ```
 
@@ -39,9 +43,9 @@ The file exports two Zod schemas with these field names:
 
 **Subjects.** `subjects` needs at least one entry and has no upper limit [REQ: FR-021]. A brief with one subject is valid, and briefs with two or more work the same way. FR-021's "at least two must be supported" is what the app must be able to handle, not the smallest brief allowed [D-024].
 
-**Subject photos** (Built) [D-098, D-100]: a draft subject gains `pictures` (each an asset ID of an image in the project, an absolute file path anywhere, or, in a brief file, a path relative to the brief's folder that may lead out of it; imported with no confirm, the normal import checks apply; on Windows a network or device path is never opened), `brief.parse` checks them, and the form needs a photo per subject before "Create campaign", which then also sends `asset.update`; `campaign.create` gains `placeSubjectPhoto` (SP-6). `Brief` gains nothing. Design: `spec/subject-photos.md`.
+**Subject photos** (Built) [D-098, D-100]: a draft subject has `pictures` (each an asset ID of an image in the project, an absolute file path anywhere, or, in a brief file, a path relative to the brief's folder that may lead out of it; imported with no confirm, the normal import checks apply; on Windows a network or device path is never opened), `brief.parse` checks them, and the form needs a photo per subject before "Create campaign", which then also sends `asset.update`; `campaign.create` has `placeSubjectPhoto`. `BriefSubject` has no `pictures`. Design: `spec/subject-photos.md`.
 
-**Brand, layout and art direction** (Not built): a brief gains `brand` (`logo`, `colours`, `fonts.heading`, `fonts.body`), `layout`, `artDirection` and `adsPer`; `Brief` keeps `layout`, `artDirection`, `adsPer` and `brand.colours`, never a logo or font path. Design: `spec/brief-brand.md`.
+**Brand, layout and art direction** (Built): a draft brief has `brand` (`logo`, `colours`, `fonts.heading`, `fonts.body`), `layout`, `artDirection` and `adsPer`; `Brief` keeps `layout`, `artDirection`, `adsPer` and `brand.colours`, never a logo or font path. Design: `spec/brief-brand.md`.
 
 **Word lists.** A plain word list for `requiredWords` or `prohibitedWords` is stored under the primary language [REQ: R-03]. `wordsByLanguage(words, primaryLanguage)` (`src/shared/brief/words.ts`) turns either form into `{ [language]: string[] }`: a plain list goes under the primary language, a per-language list is kept as given. The result shares no list with its input. `wordsByLanguage([], 'en')` gives `{ en: [] }`.
 
@@ -210,7 +214,7 @@ type IsRightToLeft = (tag: string) => boolean
 ```
 
 - `primaryLanguageFor(region)` finds a region by its ISO 3166-1 two-letter code or an English name, in any letter case, after trimming. The common names UK, USA, UAE, Holland and Korea are accepted. Not in the table: null, and the language field is then empty and required [REQ: FR-026].
-- The table gives a plain language tag (`en`, not `en-US`). The campaign keeps the region beside the language. China, Taiwan and Hong Kong give plain `zh`, accepted by the stakeholder [D-053 item 18]; which script to write (simplified or traditional) is decided when translation is designed (Phase 6).
+- The table gives a plain language tag (`en`, not `en-US`). The campaign keeps the region beside the language. China, Taiwan and Hong Kong give plain `zh`, accepted by the stakeholder [D-053 item 18]; translation picks the script from the region (`src/shared/translation/script.ts`: traditional for Taiwan, Hong Kong and Macao, simplified otherwise).
 - A country with several main languages gives the one most people speak there: CA `en`, CH `de`, BE `nl`, LU `fr`, IN `hi`. The user can change it.
 - A region whose main language is right-to-left (for example SA, IL) still gives that language. The refusal comes from `campaign.create`, with its own message, so the user sees why.
 - Right-to-left languages (`ar`, `he`, `fa`, `ur`, `yi`, `ps`, `sd`, `dv`) are refused by `campaign.create` with `RULE_VIOLATION` and "Right-to-left languages are not supported yet." [REQ: FR-104]
@@ -240,7 +244,7 @@ type BriefParsed = { draft: BriefDraft; primaryLanguage: string | null; subjectP
 | Case | Code | Reason | Message |
 |------|------|--------|---------|
 | Cannot be read as a brief | `INVALID_INPUT` | `brief_unreadable` | See "Error messages" above. |
-| Any ending other than `.json`, `.yaml`, `.yml`, or none (`.md` and `.txt` until Phase 4) | `RULE_VIOLATION` | `brief_type_not_supported` | "This kind of brief file cannot be read yet. Use a JSON or YAML file." |
+| Any ending other than `.json`, `.yaml`, `.yml`, or none (`.md`, `.markdown` and `.txt` included: those go to `brief.extract`) | `RULE_VIOLATION` | `brief_type_not_supported` | "This kind of brief file cannot be read yet. Use a JSON or YAML file." |
 | File not there | `NOT_FOUND` | | "That file was not found." |
 | File cannot be read | `RULE_VIOLATION` | `file_not_readable` | "That file could not be read." |
 
@@ -268,7 +272,7 @@ Built. `src/shared/schemas/commands/campaign.ts` owns them (frozen with `brief.t
 
 ### What the project page sends
 
-Built. `src/renderer/screens/project-home/brief-load/`, `brief-form/`, `subject-rows/`, `size-fields/`, `rule-fields/`, `brief-form-model.ts` (with `brief-form-problems.ts`, `brief-form-sizes.ts`), `campaign-input.ts` (`briefSubjectIds`). Tests: `tests/unit/renderer/screens/project-home/brief-load.test.tsx`, `brief-type.test.tsx`, `brief-subject-ids.test.tsx`, `brief-form*.test.ts(x)`, `size-fields.test.tsx`, `rule-fields.test.tsx`. The form, its wording and its problem lines are in `spec/screens-campaign.md`, "The brief form".
+Built. `src/renderer/screens/project-home/brief-load/`, `brief-form/`, `subject-rows/`, `size-fields/`, `rule-fields/`, `brief-form-model.ts` (with `brief-form-problems.ts`, `brief-form-sizes.ts`), `campaign-input.ts` (re-exports `briefSubjectIds` from `src/shared/brief/subject-ids.ts`). Tests: `tests/unit/renderer/screens/project-home/brief-load.test.tsx`, `brief-type.test.tsx`, `brief-subject-ids.test.tsx`, `brief-form*.test.ts(x)`, `size-fields.test.tsx`, `rule-fields.test.tsx`. The form, its wording and its problem lines are in `spec/screens-campaign.md`, "The brief form".
 
 "Load a brief" opens the picker, calls `brief.parse`, and opens the brief form filled from the draft (every value the brief's own text, shown as field values). "Paste a brief" opens a dialog: "Read brief" sends the pasted text to `brief.parse` and opens the same filled form; "Start from an empty form" opens it empty. The user edits it [REQ: FR-023]. "Create campaign" sends `subject.create` for each new subject, then `campaign.create`, and stops at the first refusal. Cancel sends nothing. Nothing is sent while the form has a problem line or the input fails the shared `campaign.create` schema.
 
@@ -281,19 +285,19 @@ Built. `src/renderer/screens/project-home/brief-load/`, `brief-form/`, `subject-
 
 ### The intake screens
 
-Built (slices S2-13, S2-14, S2-15). In `spec/screens-campaign.md`, "The brief form" and "The slot view":
+Built. In `spec/screens-campaign.md`, "The brief form" and "The slot view":
 
 - **Paste a brief.** A dialog (`brief-paste/`) with one text area, "Brief text" ("Paste a brief as JSON, YAML or Markdown."), and the buttons "Cancel", "Start from an empty form" and "Read brief". A refusal shows in the dialog and the text stays. Design: `spec/phases/round-2-platform.md`, D4.
-- **Editable confirm form** [REQ: FR-023, FR-024, FR-026, FR-034]. Every field; one row per subject with "New subject" (a "Subject ID" field) or "Use a subject this project has"; sizes, master size and languages; the brief's word lists per language, or "Copy the rules from another campaign" (`copyRuleSetFrom`). Colours and required files are not on the form (A-44). The pure model `brief-form-model.ts` replaced `campaignPlan`; `briefSubjectIds` stays.
+- **Editable confirm form** [REQ: FR-023, FR-024, FR-026, FR-034]. Every field; one row per subject with "New subject" (a "Subject ID" field) or "Use a subject this project has"; sizes, master size and languages; the brief's word lists per language, or "Copy the rules from another campaign" (`copyRuleSetFrom`). Colours and required files are not on the form (A-44). The pure model is `brief-form-model.ts`.
 - **Slot view.** Filled and empty slots of the master with candidates from `template.slots` [REQ: FR-042], view only (A-46), on the campaign page below the grid.
 
 ### Brief text: JSON, YAML or Markdown, by fixed rules
 
-Built (R2P-2). `parseBriefText(text)` (`src/shared/brief/text.ts`) reads brief text that has no file: pasted text (`brief.parse { text }`) and an agent's `create_campaign_from_brief`. It tries JSON, then YAML (taken only when the draft has at least one field), then the Markdown form (`# Title`, `Label: value` lines, `## Message`, `## Languages`, `## Sizes`, `## Subjects` with `### Name` per subject, `## Copy (lang)`). Otherwise `INVALID_INPUT`, `brief_unreadable`, "The brief could not be read as JSON, YAML or Markdown." It never throws, calls no AI and has no size limit. Edge cases: a label inside a subject or a Copy section is ignored; an empty `Region:` sets nothing; the first value of a repeated field wins. The full form: `spec/phases/round-2-platform.md`, D1 and D2.
+Built. `parseBriefText(text)` (`src/shared/brief/text.ts`) reads brief text that has no file: pasted text (`brief.parse { text }`) and an agent's `create_campaign_from_brief`. It tries JSON, then YAML (taken only when the draft has at least one field), then the Markdown form (`# Title`, `Label: value` lines, `## Message`, `## Languages`, `## Sizes`, `## Subjects` with `### Name` per subject, `## Copy (lang)`). Otherwise `INVALID_INPUT`, `brief_unreadable`, "The brief could not be read as JSON, YAML or Markdown." It never throws, calls no AI and has no size limit. Edge cases: a label inside a subject or a Copy section is ignored; an empty `Region:` sets nothing; the first value of a repeated field wins. The full form: `spec/phases/round-2-platform.md`, D1 and D2.
 
 ### Markdown and plain-text brief files
 
-Built (Phase 4, P4-15). `.md`, `.markdown` and `.txt` brief files loaded with "Load a brief" go to the command `brief.extract`, an attached `brief_extraction` job that calls `TextProvider.extractBrief` and gives a `BriefDraft` for the same brief form [REQ: FR-022]. With no key, the app shows the key dialog; the user can cancel and fill the form by hand [REQ: FR-171]. `brief.parse` keeps refusing these files with `brief_type_not_supported`. Design: `spec/ai-jobs.md`, "Brief reading"; screens: `spec/screens-ai.md`.
+Built. `src/main/commands/brief/extract.ts`. `.md`, `.markdown` and `.txt` brief files loaded with "Load a brief" go to the command `brief.extract`, an attached `brief_extraction` job that calls `TextProvider.extractBrief` and gives a `BriefDraft` for the same brief form [REQ: FR-022]. With no key, the app shows the key dialog; the user can cancel and fill the form by hand [REQ: FR-171]. `brief.parse` keeps refusing these files with `brief_type_not_supported`. Design: `spec/ai-jobs.md`, "Brief reading"; screens: `spec/screens-ai.md`.
 
 ## Templates
 
@@ -310,7 +314,7 @@ type SlotFill = { assetId: string } | { text: string }   // asset for an image s
 type SlotFills = Partial<Record<string, SlotFill>>       // slot ID to fill; a slot left out is empty
 type SlotState = { slot: Slot; state: 'filled' | 'empty'; candidates: string[] }   // asset IDs
 
-buildMasterLayers(template: Template, size: CampaignSize, fills: SlotFills): NewLayer[]
+buildMasterLayers(template: Template, size: CampaignSize, fills: SlotFills, layout?: StarterLayout): NewLayer[]
 slotStates(template: Template, layers: LayerRow[], candidates: Record<string, string[]>): SlotState[]
 ```
 
@@ -351,9 +355,9 @@ The form requires a photo per subject and leaves the slot empty unless its place
 
 Built. `src/shared/config/default-layout.ts` (every number and name, as data), `src/shared/templates/master-layers.ts`. Tests: `tests/unit/shared/templates/master-layers.test.ts`, `master-layers-fields.test.ts`, `starter.test.ts`, `tests/integration/campaigns/campaign-create-fills.test.ts`.
 
-**Look pack** (Built, LK-4) [D-094]. The default layout is layout 1 of the five starter layouts, `photo-bottom-left` (`DEFAULT_STARTER_LAYOUT` in `default-layout.ts`; A-77). Each text layer's starting font size comes from its text's length by an estimate, with no measuring. New layers store every look field. The boxes, styles, look fields, the formula and the worked values are in `spec/starter-layouts.md`; this file keeps only what is not there.
+**Look pack** (Built) [D-094]. The default layout is layout 1 of the five starter layouts, `photo-bottom-left` (`DEFAULT_STARTER_LAYOUT` in `default-layout.ts`; A-77). Each text layer's starting font size comes from its text's length by an estimate, with no measuring. New layers store every look field. The boxes, styles, look fields, the formula and the worked values are in `spec/starter-layouts.md`; this file keeps only what is not there.
 
-**What it is.** The default layout gives each new layer of a master variant a starting box and style for the campaign's first size, so the post is not a pile of layers in one corner [REQ: FR-040, FR-043]. It is a starting point only: the user moves and restyles everything in the editor (Phase 3), and `generation.proposeLayout` can place the text again (Phase 4).
+**What it is.** The default layout gives each new layer of a master variant a starting box and style for the campaign's first size, so the post is not a pile of layers in one corner [REQ: FR-040, FR-043]. It is a starting point only: the user moves and restyles everything in the editor, and `generation.proposeLayout` can place the text again. A brief's `layout` picks another of the five starter layouts (`spec/brief-brand.md`).
 
 **One owner.** `buildMasterLayers` reads `default-layout.ts` and holds no number of its own. Any later code that needs a starting box for a slot reads the same file. The values are provisional (the stakeholder's standing instruction on UI); the design pass may change any of them by editing that one file. The tests state the expected numbers for the four ready-made sizes, so a change to the file is a visible test change, approved with the design pass.
 
@@ -368,7 +372,7 @@ Built. `src/shared/config/default-layout.ts` (every number and name, as data), `
 
 ### The layers
 
-`buildMasterLayers(template, size, fills)` returns, in this order:
+`buildMasterLayers(template, size, fills, layout = DEFAULT_STARTER_LAYOUT)` returns, in this order:
 
 1. **The background layer, always.** `type: 'background'`, `key: 'background'`, `name: 'Background'`, `z: 0`, `copy: null`. `slot` is `'background'` when the template has a slot with that ID, otherwise null. `source` is `{ assetId }` when `fills.background` is given, otherwise null.
 2. **One layer for each other slot that has a fill**, in the template's slot order, with `z` counting up from 1 with no gaps. A slot with no fill gets no layer.

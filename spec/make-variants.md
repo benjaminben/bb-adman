@@ -2,7 +2,7 @@
 
 How new variants of a direction are made: where each box goes in a new size, how text gets a size that fits, the screen's name for it, and making new variants from any variant, not only from the master [D-108]. Read with `spec/links-and-sync.md` ("Fan-out"), `spec/data-rules.md` (the follow rules), `spec/starter-layouts.md` and `spec/screens-variants.md` ("Make variants").
 
-**State.** Built (MV-1 to MV-9): the name, the placement and the text fit in `planNewVariant`, the fit when a translation run first fills a text, the tile's menu item and dialog, `variant.fanOut` with `sourceVariantId`, a video's clips copied, and the quickstart on the same rule. The end-to-end test is `tests/e2e/make-variants.spec.ts` (MV-9). Slices in `spec/phases/make-variants.md`. Assumptions A-407 to A-420 are at the end of this file.
+**State.** Built: the name, the placement and the text fit in `planNewVariant`, the fit when a translation run first fills a text, the tile's menu item and dialog, `variant.fanOut` with `sourceVariantId`, a video's clips copied, and the quickstart on the same rule. The end-to-end test is `tests/e2e/make-variants.spec.ts`. Slices in `spec/phases/make-variants.md`. Assumptions A-407 to A-420 are at the end of this file.
 
 [REQ: FR-075, FR-076, FR-078–FR-083, FR-098, R-02]
 
@@ -12,27 +12,26 @@ How new variants of a direction are made: where each box goes in a new size, how
 - **Code names stay.** The command is still `variant.fanOut`, the folder `src/renderer/dialogs/fan-out/`, the files `fan-out-*.ts`, the types `FanOut*`. A rename would touch the agent policy table and many tests and change nothing a person sees.
 - **In the spec**, "fan-out" names the command and its steps (`spec/links-and-sync.md`, `spec/data-rules.md`); "Make variants" names what the screen shows.
 
-**Every visible word that changes** (slice MV-1 changes them all; it greps `src/renderer`, `src/main`, `src/shared` and `README.md` for "fan out", "fan-out" and "Fan out" first, so a place added since is not missed):
+**Where the words are:**
 
-| Where | Today | New |
-|-------|-------|-----|
-| `src/renderer/dialogs/fan-out/fan-out-button.tsx`, the direction header button | "Fan out…" | "Make variants…" |
-| `src/renderer/dialogs/fan-out/fan-out-dialog.tsx`, the dialog title | "Fan out {direction}" | "Make variants of {direction}" |
-| `src/main/commands/variant/fan-out.ts`, refusal `too_many_variants` | "Fan-out can make at most 200 variants at a time." | "You can make at most 200 variants at a time." |
-| `src/main/commands/agent-policy.ts`, the action text of `variant.fanOut` (an agent reads it in "Agents cannot {action} in this version…") | "run fan-out" | "make many variants at once" |
-| The empty direction's action (`spec/phases/design-wave-screens-b.md`, CAMP-2), when built | "Fan out…" | "Make variants…" |
+| Where | Words |
+|-------|-------|
+| `src/renderer/dialogs/fan-out/fan-out-button.tsx`, the direction header button | "Make variants…" |
+| `src/renderer/dialogs/fan-out/fan-out-dialog.tsx`, the dialog title | "Make variants of {direction}" |
+| `src/main/commands/variant/fan-out.ts`, refusal `too_many_variants` | "You can make at most 200 variants at a time." |
+| `src/main/commands/agent-policy.ts`, the action text of `variant.fanOut` (an agent reads it in "Agents cannot {action} in this version…") | "make many variants at once" |
 
-Nothing else a person or agent reads holds the words today: no MCP tool description, no Activity line, no README line. The primary button "Make {n} variants" and its idle form "Make variants" already fit and stay.
+No MCP tool description, Activity line or README line holds the words. The primary button is "Make {n} variants", or "Make variants" when there is nothing new. An empty direction shows the EmptyState "No variants" with no button (`direction-grids/direction-grids.tsx`).
 
 ## Where a box goes in a new size
 
-This lives in `planVariant` (`src/shared/links/fan-out-plan.ts`). It replaces the old rule that kept each box's centre at the same share of the canvas, which broke a shared left margin into several left edges.
+This lives in `planVariant` (`src/shared/links/fan-out-plan.ts`), called by `planNewVariant` (`src/shared/links/new-variant-plan.ts`). It keeps a shared left margin as one left edge in every size.
 
 "The source" is the variant the new one is made from: the direction's master, or the variant picked with "Make variants from this one…" (below). Sizes are compared in pixels, as the follow rules do [D-013]. For each layer of the source:
 
 1. **Geometry that follows.** When the new variant has the master's pixel size, geometry follows the master, so its linked layers take the source's geometry when the source has that size too, and the master's when it does not ("Links after making", below). Nothing else here applies to them.
 2. **Same pixel size as the source.** The source's geometry, unchanged.
-3. **The background** is placed by the fit choice (scale, crop, fill), from the source's background picture, as today (`spec/links-and-sync.md`, "The background for a new size").
+3. **The background** is placed by the fit choice (scale, crop, fill), from the source's background picture (`spec/links-and-sync.md`, "The background for a new size").
 4. **A box the layout placed.** When the layer still sits exactly where the source's starter layout puts it ("Which layout", below), it goes where that layout puts it at the new size: `geometryOf(slot.box, frameOf(newSize))`, rotation 0, the layer's `crop` kept.
 5. **Any other box** is anchored ("Anchoring", below).
 
@@ -66,7 +65,7 @@ Then:
 
 Boxes that shared a left margin in the source share it in every new size, because the same gap gives the same new gap.
 
-**Worked values** (the MV-2 and MV-3 tests use them). A 1080 × 1080 source with its boxes moved off the layout: logo picture (80, 80, 151, 151); headline text (80, 640, 920, 260); call to action text (80, 900, 454, 97).
+**Worked values** (`tests/unit/shared/links/place-box.test.ts` and `fan-out-plan-layout.test.ts` use them). A 1080 × 1080 source with its boxes moved off the layout: logo picture (80, 80, 151, 151); headline text (80, 640, 920, 260); call to action text (80, 900, 454, 97).
 
 | New size | Logo | Headline | Call to action |
 |----------|------|----------|----------------|
@@ -123,63 +122,63 @@ For each **linked** layer of the source, each group gets, by the follow rule of 
 | geometry, when the new variant has another pixel size | Placed from the source's ("Where a box goes"); no path (geometry does not follow there) |
 | copy, new variant in the source's language | The source's words, `translation_status`, `translation_source`, synced counter and `copy` path |
 | copy, new variant in the master's language, source in another | The master's words and counter; status null; no path |
-| copy, new variant in a third language | The master's words, status `missing`, source null, the master's counter, no path; then the brief's copy for that language, as today (`translatedLayers`) |
+| copy, new variant in a third language | The master's words, status `missing`, source null, the master's counter, no path; then the brief's copy for that language (`translatedLayers`) |
 
-- `revs` starts at zero, `overflow` at 0, as today.
+- `revs` starts at zero, `overflow` at 0.
 - So the new variant is out of date exactly where the source was, for the groups it takes from the source: a stale group stays stale, and an override stays an override. A path whose group does not follow for the new variant (a `geometry` path at another size, a `copy` path in another language) is dropped.
 - **An unlinked layer** of the source (one made on that variant) is copied with `linked = 0`, its own values, empty `overrides`, geometry placed as above. In a language other than the source's its words are kept with status `missing`: no translation run covers it, because the master has no text for its key. The user types its words.
 - A master layer the source lacks is missing from the new variant too; a sync offers it ("new layer from the master"), as it would for the source.
-- From the master (the header's dialog) this gives exactly what fan-out gives today, apart from the new placement, the fit, and a video master's clips (below).
+- From the master (the header's dialog) the same rules apply, with the master as the source.
 
 What counts as changed on the new variant: its override paths, which are the source's own changes (in groups that still follow) and the pixel measures that differ from the master's. Nothing else.
 
 ## Making variants from a variant
 
-**`variant.fanOut`** gains `sourceVariantId?: string` (C, still `deny` for agents). Left out, or naming the master, it is the master's fan-out as before.
+**`variant.fanOut`** takes `sourceVariantId?: string` (C, `deny` for agents). Left out, or naming the master, the master is the source.
 
 - The source must be a variant of `directionId` in this project's file, else `NOT_FOUND`, "That variant was not found in this direction." Checked before any write.
 - The source's size and language are always part of the grid, in place of the master's. `fits` names exactly the listed sizes whose pixel size differs from the source's, else `INVALID_INPUT` with the present words.
-- A size, language and format the direction already has is skipped, as today. The existing variant is not changed. To replace it, the user deletes it first, then makes it again.
+- A size, language and format the direction already has is skipped. The existing variant is not changed. To replace it, the user deletes it first, then makes it again.
 - **R-02 in the source's language.** A new size in a language other than the source's copies its geometry from the new variant of the same size in the source's language made in the same call, when there is one.
 - **What the new variant takes from the source:** its title and subjects, its duration and duration flag, and every layer as in "Links after making". The background's picture is the source's (`source` always follows), placed by the fit choice.
-- **A video source** (the master included). The dialog starts with the source's format ticked. A new video variant copies the source's clips (asset, start, trims, `sound_on`; a clip's own `placement` is kept at the same pixel size and set to null, so it uses the background's, at another), and its `sound` and `sound_asset_id`; `first_clip_made` is 1 when a clip was copied. A source video with no clip, or an image source, gives the first clip from the background picture, as today (step 7). A new image variant takes no clips.
-- **Fill.** For each size on "Generate fill", the new variant of that size in the source's language, as today with the master's. The fill extends the source's background picture.
+- **A video source** (the master included). The dialog starts with the source's format ticked. A new video variant copies the source's clips (asset, start, trims, `sound_on`; a clip's own `placement` is kept at the same pixel size and set to null, so it uses the background's, at another), and its `sound` and `sound_asset_id`; `first_clip_made` is 1 when a clip was copied. A source video with no clip, or an image source, gives the first clip from the background picture (step 7). A new image variant takes no clips.
+- **Fill.** For each size on "Generate fill", the new variant of that size in the source's language. The fill extends the source's background picture.
 - **Translations.** One run per new language other than the campaign's main language and other than the source's language. New variants in the source's language take its words and start no run, even where the source's words are still missing.
 - **Cost.** Only after the user's click on "Make {n} variants", with the cost lines on screen: up to one fill per size on fill, and up to one translation per language counted as above (`spec/screens-variants.md`, "Make variants"). Copying from a variant calls no provider.
-- Reply, inverse (`variant.remove`) and the 200 limit are unchanged. The snapshots of an undo carry the copied clips.
+- The reply, the inverse (`variant.remove`) and the 200 limit are the same with or without a source. The snapshots of an undo carry the copied clips.
 
-`variant.add` (and the agent's `add_variant`) stays master-only. It uses the new placement and fit.
+`variant.add` (and the agent's `add_variant`) is master-only. It uses the same placement and fit.
 
-**As built (MV-7).** `planInputOf` in `src/main/links/fan-out-write.ts` builds the plan input for both commands and leaves `source` out when the source is the master. The `sound` setting is copied only to a new video variant made from a video source; a new image variant keeps the default. A clip row of the source that fails the clip checks is left out, and when none is left the new variant gets the first clip, as for a source with no clips. The source's own size label and language are accepted even when the campaign's lists no longer hold them, as the master's are.
+`planInputOf` in `src/main/links/fan-out-write.ts` builds the plan input for both commands and leaves `source` out when the source is the master. The `sound` setting is copied only to a new video variant made from a video source; a new image variant keeps the default. A clip row of the source that fails the clip checks is left out, and when none is left the new variant gets the first clip, as for a source with no clips. The source's own size label and language are accepted even when the campaign's lists no longer hold them, as the master's are.
 
 ## Agents
 
-- `variant.fanOut` stays `deny`, with the action text "make many variants at once". Nothing in the agent policy table gets looser. An agent cannot make variants from a variant.
-- `add_variant` (`variant.add`, allow) makes its one variant with the new placement and the fit at creation, from the master. Its description gains one sentence: "Boxes are placed for the new size and text is sized to fit, as the app does." An agent's variant in another language starts no translation run, so `translation.write` never fits it; when the agent sets the words with `set_translation` (`translation.set`), the size is not fitted, and the overflow value it reads with `get_variant` tells it to change the size.
+- `variant.fanOut` is `deny`, with the action text "make many variants at once". An agent cannot make variants from a variant.
+- `add_variant` (`variant.add`, allow) makes its one variant with the same placement and the fit at creation, from the master. Its description says: "Boxes are placed for the new size and text is sized to fit, as the app does." (`src/main/mcp/tools/variant-edit-tools.ts`). An agent's variant in another language starts no translation run, so `translation.write` never fits it; when the agent sets the words with `set_translation` (`translation.set`), the size is not fitted, and the overflow value it reads with `get_variant` tells it to change the size.
 
 ## Quickstart
 
-Once MV-4 is merged, the quickstart uses the app's own rule (slice MV-8):
+The quickstart uses the app's own rule (`quickstart/layers.ts`):
 
-- Step 2.3 plans each variant with `planNewVariant`, the same function `variant.fanOut` uses, from the master.
-- Step 2.4, after a translate call, fits each text with `fitTranslatedText`, as `translation.write` does.
-- **Step 2.6 goes**: the pass that laid out each variant again with `starterLayoutPatches` and then put the brand fonts and colours back. With and without `--ai_layout` the boxes are where the app's rule puts them.
+- It plans each variant with `planNewVariant`, the same function `variant.fanOut` uses, from the master.
+- After a translate call, it fits each text with `fitTranslatedText`, as `translation.write` does.
+- It does not lay out each variant again. With and without `--ai_layout` the boxes are where the app's rule puts them.
 
 ## Code
 
 | File | Holds |
 |------|-------|
-| `src/shared/links/place-box.ts` (new) | `anchoredBox(geometry, from, to, isText)` |
-| `src/shared/links/source-layout.ts` (new) | `layoutOfLayers(layers, size, preferredId)`, `sitsAsLaidOut(layout, layer, size)`, `layoutBoxOf(layout, layer, size)` |
-| `src/shared/links/fan-out-plan.ts` | `planVariant`: `PlanInput` gains `source?: { facts, layers }` (absent: the master) and `layoutId?: string \| null`; `pictureSize` is the source's background picture. Geometry by "Where a box goes"; values by "Links after making". No fit here, so a sync's added layer (`sync-plan.ts`, add-layer) gets the new placement and the master's style |
-| `src/shared/links/fit-text.ts` (new) | `scaleTextMeasures(style, k)`, `fittedFontSize(copy, box, style, size)` (the largest size that fits, never above the style's own; it does not know the source's box, so the caller, `planNewVariant`, decides whether the words changed or the box got tighter before calling it), `fitTranslatedText(layer, copy, size, masterLayer)` (`{ style, overrides }`, or null when the size stays), `measureOverrides(layer, masterLayer)` |
-| `src/shared/links/new-variant-plan.ts` (new) | `planNewVariant(input)`: `planVariant`, then `translatedLayers`, then the fit and its override paths. Used by `variant.fanOut`, `variant.add` and the quickstart |
+| `src/shared/links/place-box.ts` | `anchoredBox(geometry, from, to, isText)` |
+| `src/shared/links/source-layout.ts` | `layoutOfLayers(layers, size, preferredId)`, `sitsAsLaidOut(layout, layer, size)`, `layoutBoxOf(layout, layer, size)` |
+| `src/shared/links/fan-out-plan.ts` | `planVariant`: `PlanInput` holds `source?: { facts, layers }` (absent: the master) and `layoutId?: string \| null`; `pictureSize` is the source's background picture. Geometry by "Where a box goes"; values by "Links after making". No fit here, so a sync's added layer (`sync-plan.ts`, add-layer) gets this placement and the master's style |
+| `src/shared/links/fit-text.ts` | `scaleTextMeasures(style, k)`, `fittedFontSize(copy, box, style, size)` (the largest size that fits, never above the style's own; it does not know the source's box, so the caller, `planNewVariant`, decides whether the words changed or the box got tighter before calling it), `fitTranslatedText(layer, copy, size, masterLayer)` (`{ style, overrides }`, or null when the size stays), `measureOverrides(layer, masterLayer)` |
+| `src/shared/links/new-variant-plan.ts` | `planNewVariant(input)`: `planVariant`, then `translatedLayers`, then the fit and its override paths. Used by `variant.fanOut`, `variant.add` and the quickstart |
 | `src/shared/schemas/commands/variant.ts` | `sourceVariantId` on `variantFanOutInput` |
 | `src/main/links/fan-out-write.ts` | `readFanOutSource(db, directionId, sourceVariantId?)` with the source's row, layers, subjects and picture size; `writeVariant` takes title, duration, subjects and sound from the source |
-| `src/main/links/copy-clips.ts` (new) | `copyClips(ctx, sourceVariantId, variantId, samePixelSize)` |
+| `src/main/links/copy-clips.ts` | `copyClips(ctx, sourceVariantId, variantId, samePixelSize)` |
 | `src/main/commands/variant/fan-out.ts`, `add.ts` | Use `planNewVariant`; fan-out takes `sourceVariantId` |
 | `src/main/translation/fan-out.ts` | `startFanOutTranslations` skips the source's language |
-| `src/main/translation/fit-written.ts` (new), `src/main/commands/translation/write.ts` | The fit when a translation run first fills a layer |
+| `src/main/translation/fit-written.ts`, `src/main/commands/translation/write.ts` | The fit when a translation run first fills a layer |
 
 ## Security
 
@@ -187,7 +186,7 @@ Scope: destructive, data-access and privilege risks (`.claude/rules/security-pri
 
 - `sourceVariantId` is looked up in the command's own project file and must belong to `directionId`; a variant of another direction, campaign or project is `NOT_FOUND`. No row is read through an ID the window sends without that check.
 - Copying clips copies asset IDs already in that project; no file is read, no path is taken, nothing is sent anywhere.
-- Paid calls start only as today: fills from the window after the reply, each to the provider shown at the click and never more than the cost line showed (`fillsToStart`); translation runs only for the user's own click, never for an agent.
+- Paid calls start only this way: fills from the window after the reply, each to the provider shown at the click and never more than the cost line showed (`fillsToStart`); translation runs only for the user's own click, never for an agent.
 - No agent ability is added. No new entry into the main process exists for tests.
 - Nuisance only (noted, not handled): a source with many layers and clips makes up to 200 copies in one call; the existing limit holds.
 

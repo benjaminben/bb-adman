@@ -8,7 +8,7 @@ The small web service behind approval links [D-095, D-097]: one Next.js app host
 
 - `spec/approvals-service-data.md`: the shared contract, the database and the migrate script, random values and passwords, the keyed API.
 - `spec/approvals-service-visitor.md`: visitor routes and logic (sessions, the gallery view, the try limit, forms, notices, header sets) and pictures on the service's side.
-- `spec/approvals-service-tests.md`: the tests, the port of the tests in AP-14, the Playwright set-up.
+- `spec/approvals-service-tests.md`: the tests and the Playwright set-up.
 
 Read with `spec/approvals.md` (the desktop side, the security rules and threats, assumptions A-82 on) and `spec/approvals-gallery.md` (the pages: Next.js settings, the security headers, components, words, page tests).
 
@@ -22,10 +22,10 @@ Read with `spec/approvals.md` (the desktop side, the security rules and threats,
 
 ## How Next.js and the service code fit
 
-**Built (AP-14).** Next.js owns two things: the page `GET /l/{slug}` (the password page or the gallery, `spec/approvals-gallery.md`) and the page nonce made in `proxy.ts`. **Every other request** goes through one route handler, `app/[[...path]]/route.ts`, which hands the `Request` unchanged to the existing `createApp(env, parts)`. So the keyed API, the visitor's form posts, the picture route, `robots.txt` and the plain 404 all keep the one reviewed router, with its order of checks, header sets and body caps.
+**Built.** Next.js owns two things: the page `GET /l/{slug}` (the password page or the gallery, `spec/approvals-gallery.md`) and the page nonce made in `proxy.ts`. **Every other request** goes through one route handler, `app/[[...path]]/route.ts`, which hands the `Request` unchanged to `createApp(env, parts)` (`src/app.ts`). So the keyed API, the visitor's form posts, the picture route, `robots.txt` and the plain 404 all keep the one reviewed router, with its order of checks, header sets and body caps.
 
 ```ts
-// app/[[...path]]/route.ts (AP-14); every HTTP method, so Next.js answers no method itself
+// app/[[...path]]/route.ts; every HTTP method, so Next.js answers no method itself
 // (it still answers a few requests before the router: "What Vercel and Next.js add or change in front")
 import { serve } from '../../src/server/serve'
 export const dynamic = 'force-dynamic'
@@ -39,21 +39,21 @@ export const PATCH = serve
 export const OPTIONS = serve
 ```
 
-- `src/server/serve.ts`: `serve(request) => createApp(loadEnv(), liveParts).fetch(request)`, where `liveParts = { now: () => Date.now(), random: cryptoBytes }` (AP-4 adds the picture source).
+- `src/server/serve.ts`: `serve(request)` makes `env = loadEnv()` and calls `createApp(env, liveParts(env)).fetch(request)`, where `liveParts(env) = { now: () => Date.now(), random: cryptoBytes, clips: s3ClipSource(env) }`. The environment is read per request, so the clip source that reads it is made per request too.
 - Next.js picks the more exact route first, so `/l/{slug}` reaches the page and `/l/{slug}/enter` (two more parts) reaches the catch-all.
-- **Why one catch-all and not one route file per path:** the route table stays in one place (`app.ts` and `visitor/routes.ts`), its tests keep calling `createApp` directly, and a path regex, not Next.js's percent-decoded `params`, still decides what a request is. **Check first** (AP-14): `next build` accepts a root optional catch-all beside `app/l/[slug]/page.tsx`. If it does not, the fallback is `app/api/v1/[[...path]]/route.ts` plus one route file per visitor path, each one line calling `serve`; the developer stops and reports before using it.
+- **Why one catch-all and not one route file per path:** the route table stays in one place (`app.ts` and `visitor/routes.ts`), its tests keep calling `createApp` directly, and a path regex, not Next.js's percent-decoded `params`, decides what a request is. `next build` accepts the root optional catch-all beside `app/l/[slug]/page.tsx`.
 - **Runtime:** Node.js (`runtime = 'nodejs'`, the default). The Edge runtime is deprecated in Next.js 16 and gives nothing here.
 
 ### What Vercel and Next.js add or change in front
 
 | Point | What happens | What keeps the rule |
 |---|---|---|
-| Request body limit | Vercel refuses a body over 4.5 MB with its own `413` before the code runs | The service's own caps (4 MiB API since R2V-1, 8 KiB forms; a clip reply at most 4 MiB) are below it. A body over 4.5 MB gets Vercel's 413 even without a key: a refusal either way, accepted |
+| Request body limit | Vercel refuses a body over 4.5 MB with its own `413` before the code runs | The service's own caps (4 MiB API, 8 KiB forms; a clip reply at most 4 MiB) are below it. A body over 4.5 MB gets Vercel's 413 even without a key: a refusal either way, accepted |
 | Reply size limit | 4.5 MB for a reply that is not streamed | API replies stay far below. Pictures (up to 16 MiB) are sent as a stream (`spec/approvals-service-visitor.md`, "Pictures") |
 | `request.url` | Next.js builds it from the `Host` the browser used (Vercel: "the domain name as it was accessed by the client") and the protocol. On local `next start` it is `http://localhost:{port}/…`, not `http://127.0.0.1:{port}/…`, though the server listens on `127.0.0.1` | See `spec/approvals-service-visitor.md`, "Forms that write": the Origin check stays sound whatever the value, and fails closed if it is wrong. So every e2e base address uses `localhost` |
 | The protocol | On Vercel the protocol is fixed. On local `next start` only, a client-sent `X-Forwarded-Proto: https` is honoured, so `request.url` starts with `https:` | Nuisance only (a local visitor can make their own forms fail or get an extra header); noted, not fixed |
 | Requests Next.js answers itself | A few requests are answered before the router: a request with an `rsc` header gets a `307`; a path holding `//` or `\` gets a `308`; `/_not-found`, `/_error`, `/500`, `/_next/image`, `/_next/data/*` and `/_global-error` get Next.js's own pages | None of these replies carries link data, a key or a session; accepted |
-| Trailing slash | Next.js would redirect `/api/v1/health/` with a 308 | `skipTrailingSlashRedirect: true` in `next.config.ts`; the router answers as before |
+| Trailing slash | Next.js would redirect `/api/v1/health/` with a 308 | `skipTrailingSlashRedirect: true` in `next.config.ts`; the router answers it |
 | `OPTIONS`, `HEAD` | Next.js answers them itself when a route does not export them | The catch-all exports every method |
 | Compression | Next.js compresses replies (`Content-Encoding: gzip`) and adds `Vary` | Compression stays on: no reply body holds a secret beside text an attacker chooses, so compression gives nothing away |
 | Headers added | Vercel adds `server`, `date`, `x-vercel-id`, `x-vercel-cache` and, on its domains, `strict-transport-security: max-age=63072000`; Next.js adds `x-powered-by` unless switched off, `vary` and `content-encoding` | `poweredByHeader: false`. Vercel's headers carry no link data. `e2e/api.spec.ts` lists the full header set of `next start` replies; any header outside the expected set and the named allow-list (`date`, `connection`, `keep-alive`, `transfer-encoding`, `content-length`, `vary`, `content-encoding`) fails it. AP-13's hand check lists the deployed headers |
@@ -61,7 +61,7 @@ export const OPTIONS = serve
 
 ## Folder and tooling
 
-**Built (AP-14)**, except the files marked for later slices.
+**Built.**
 
 ```
 approvals-service/
@@ -72,31 +72,34 @@ approvals-service/
   vitest.config.ts        plain Node environment; aliases `server-only` to test/empty.ts
   playwright.config.ts    e2e against `next start` listening on 127.0.0.1, addressed as localhost
   proxy.ts                the page nonce and policy, for GET /l/{slug} only (spec/approvals-gallery.md)
-  migrations/0001_init.sql
+  migrations/             0001_init.sql, 0002_clips.sql
   scripts/migrate.ts      applies migrations/ in order; local file by default
   app/
     [[...path]]/route.ts  every request except the page, to createApp (above)
-    layout.tsx, l/[slug]/page.tsx, not-found.tsx, error.tsx, global-error.tsx   (the pages)
+    layout.tsx, not-found.tsx, global-error.tsx, l/[slug]/page.tsx, l/[slug]/error.tsx   (the pages)
   src/
-    app.ts                createApp(env, parts, tables?): the router (Built)
-    contract.ts           byte-equal copy of the app's src/shared/approvals/contract.ts (Built)
-    env.ts                Env type; the API_KEY check; the TEST_PICTURE_ORIGIN check (Built)
-    server/               env.ts (loadEnv), serve.ts (AP-14)
+    app.ts                createApp(env, parts, tables?): the router
+    contract.ts           byte-equal copy of the app's src/shared/approvals/contract.ts
+    env.ts                Env type; the API_KEY check; the TEST_PICTURE_ORIGIN check
+    server/               env.ts (loadEnv), serve.ts
     api/                  auth.ts, body.ts, route.ts, health.ts, links.ts, gallery.ts, read.ts,
-                          link-of.ts, errors.ts (Built)
+                          link-of.ts, errors.ts
     visitor/              routes.ts, actions.ts, headers.ts, forms.ts, session.ts, throttle.ts,
-                          notices.ts (AP-15), signoffs.ts, picture-route.ts (AP-4)
-    crypto/               random.ts, password.ts, compare.ts (Built)
-    db/                   client.ts (AP-14), links.ts, variants.ts, signoffs.ts, sessions.ts, enter.ts
-    pictures/             check-url.ts (Built); source.ts, s3-source.ts, sniff.ts (AP-4)
-    ui/                   tokens.css and one folder per component (spec/approvals-gallery.md)
+                          notices.ts, reviewer.ts, stamp.ts, signoffs.ts, signoff-all.ts,
+                          picture-route.ts, clip-route.ts, range.ts, stream-of.ts
+    crypto/               random.ts, password.ts, compare.ts
+    db/                   client.ts, links.ts, variants.ts, signoffs.ts, sessions.ts, enter.ts
+    pictures/             check-url.ts, source.ts, s3-source.ts, sniff.ts, clip-source.ts,
+                          s3-clip-source.ts
+    ui/                   app-tokens.css, gallery-tokens.css, base.css, a few small helpers, and
+                          one folder per component (spec/approvals-gallery.md)
   test/                   Vitest; db.ts (a migrated in-memory database per test file); empty.ts;
-                          one test file per area
-  e2e/                    Playwright: api.spec.ts (AP-14); gallery.spec.ts, shots.spec.ts (AP-16)
-  README.md               the deploy steps (AP-13)
+                          api-helpers.ts, visitor-setup.ts; one test file per area
+  e2e/                    Playwright: api, build, gallery, lightbox, clips and the shots
+                          (shots.spec.ts, shots-r2.spec.ts, shots-r2v.spec.ts)
+  README.md               the deploy steps
 ```
 
-- **Removed by AP-14:** `wrangler.jsonc`, `src/index.ts`, `test/setup.ts`, `test/env.d.ts`, `worker-configuration.d.ts` and every Wrangler and Workers package. **Removed by AP-15:** the hand-written HTML (`visitor/html.ts`, `password-page.ts`, `gallery-page.ts`, `styles.ts`) and `test/pages.test.ts`.
 - **Code rules.** TypeScript, no semicolons, files aimed at 200 lines and never past 300, the same Prettier settings as the app. Root `npm run lint` covers this folder too (`.ts` and `.tsx`). The app's `npm run typecheck` and `npm test` do not include it; the folder has its own.
 - **Server-only code.** Every file in `src/db/`, `src/crypto/`, `src/pictures/` and `src/server/` starts with `import 'server-only'`, so Next.js refuses to build if a page component pulls one into browser code. `test/config.test.ts` checks the line is there.
 - **Packages** (every version pinned exactly; licences MIT unless named):
@@ -117,15 +120,15 @@ approvals-service/
 | `lightningcss` | As `next` resolves it | No (build and test only) | None | MPL-2.0 |
 | `@img/sharp-*` and libvips | As `next` resolves them | No (never loaded) | None | LGPL-3.0-or-later. Optional dependency of `next`, unused because images are unoptimized |
 
-- **Install scripts.** The `allowScripts` list is replaced by: `"sharp@{the version npm resolves}": false`, `"fsevents@2.3.3": false`, and a `false` entry for any other package that asks. `sharp` (Apache-2.0; its `@img/sharp-libvips-*` parts are LGPL-3.0-or-later) is an optional dependency of `next` and is never loaded at run time, because image optimisation is off. If `next build` will not run without a script, the developer stops and reports.
+- **Install scripts.** The `allowScripts` list is: `"sharp@{the version npm resolves}": false`, `"fsevents@2.3.3": false`, and a `false` entry for any other package that asks. `sharp` (Apache-2.0; its `@img/sharp-libvips-*` parts are LGPL-3.0-or-later) is an optional dependency of `next` and is never loaded at run time, because image optimisation is off. If `next build` will not run without a script, the developer stops and reports.
 - **Banned:** GPL and AGPL; any analytics, speed-insights or telemetry package; `@vercel/*` runtime packages; the `vercel` and `wrangler` tools. `test/config.test.ts` checks `package.json`.
 - **No telemetry.** Every script that runs `next` sets `NEXT_TELEMETRY_DISABLED=1` inline (fine on macOS and Linux, not in Windows `cmd`).
 - **Scripts.** `dev`: `NEXT_TELEMETRY_DISABLED=1 next dev -H 127.0.0.1 -p 3000`; `build`: `NEXT_TELEMETRY_DISABLED=1 next build`; `start`: `NEXT_TELEMETRY_DISABLED=1 next start -H 127.0.0.1`; `typecheck`: `tsc --noEmit -p tsconfig.json && tsc --noEmit -p test/tsconfig.json`; `test`: `vitest run`; `test:e2e`: `NEXT_TELEMETRY_DISABLED=1 playwright test`; `db:migrate`: `node scripts/migrate.ts`.
-- **Root files** (AP-14): `.gitignore` swaps the Wrangler lines for `approvals-service/.next/`, `approvals-service/next-env.d.ts`, `approvals-service/.env*.local`, `approvals-service/*.db`, `approvals-service/test-results/`, `approvals-service/playwright-report/`; `eslint.config.js` and `.prettierignore` ignore `approvals-service/.next/`, `approvals-service/node_modules/` and `approvals-service/next-env.d.ts`.
+- **Root files:** `.gitignore` lists `approvals-service/.next/`, `approvals-service/next-env.d.ts`, `approvals-service/.env*.local`, `approvals-service/*.db`, `approvals-service/test-results/`, `approvals-service/playwright-report/`; `eslint.config.js` and `.prettierignore` ignore `approvals-service/.next/`, `approvals-service/node_modules/` and `approvals-service/next-env.d.ts`.
 
 ## Environment
 
-**Built (AP-14).** `src/server/env.ts` `loadEnv(): Env` reads the process environment on each request:
+**Built.** `src/server/env.ts` `loadEnv(): Env` reads the process environment on each request:
 
 | Variable | Set by | Use |
 |---|---|---|
@@ -137,7 +140,7 @@ approvals-service/
 
 - One database client per server instance, made on first use and kept (`openDb`), so warm requests reuse it.
 - No variable is read anywhere else; `test/config.test.ts` fails if `process.env` appears outside `src/server/env.ts`, `scripts/migrate.ts`, `next.config.ts` and `playwright.config.ts`. Test files are exempt from this rule.
-- **Web Crypto under Node.** `crypto.getRandomValues` and `crypto.subtle` (PBKDF2, SHA-256) are global in Node 24 and give the same results as before; the password tests prove it. Node sets no cap on PBKDF2 iterations, so the old "the local runtime does not enforce 100,000" gap is gone.
+- **Web Crypto under Node.** `crypto.getRandomValues` and `crypto.subtle` (PBKDF2, SHA-256) are global in Node 24; the password tests (`test/password.test.ts`) prove the results. Node sets no cap on PBKDF2 iterations, so the full 100,000 run locally too.
 
 ## Logs
 
@@ -146,11 +149,11 @@ The service writes no log line of its own except one `console.error` per unexpec
 ## Running it locally
 
 - `npm run dev` in `approvals-service/`: `next dev` on `127.0.0.1:3000`. Next.js reads local values from `approvals-service/.env.local`, which git ignores; the developer makes a random `API_KEY` there and a `TURSO_DATABASE_URL` of `file:local.db`, never prints the key, and runs `npm run db:migrate` once. Development mode loosens the page policy (`spec/approvals-gallery.md`), so tests and shots use `next start`.
-- `next start` serves plain `http`, listening on `127.0.0.1`. A browser opens it as `http://localhost:{port}`, since that is the origin `request.url` gives and the form Origin check compares against it. Browsers count `localhost` as a secure place, so the `Secure` cookie works there; AP-13 confirms this in a real browser.
+- `next start` serves plain `http`, listening on `127.0.0.1`. A browser opens it as `http://localhost:{port}`, since that is the origin `request.url` gives and the form Origin check compares against it. Browsers count `localhost` as a secure place, so the `Secure` cookie works there.
 
 ## Deploying
 
-The stakeholder's steps, written into `approvals-service/README.md` by AP-13. No value is written in the repository; the stakeholder supplies each one.
+The stakeholder's steps, written in `approvals-service/README.md`. No value is written in the repository; the stakeholder supplies each one.
 
 1. **Project.** In Vercel, add a new project from this repository (or run `npx vercel` yourself in `approvals-service/`). Framework: Next.js. **Root Directory: `approvals-service`.** Node.js version: 24.x.
 2. **Database.** Project, Storage: add Turso from the Marketplace, create a database, and connect it to the project for **Production only**. This sets `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`. Choose the database region nearest the function region (step 3).

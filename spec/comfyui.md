@@ -12,7 +12,7 @@ How Adman talks to a ComfyUI server the user runs: the address, the client, the 
 
 ## The registry row
 
-Built. `src/main/providers/registry.ts`, after `fal-seedance`, before `firefly`: `id 'comfyui'`, `label 'ComfyUI'`, `jobs: ['image', 'video']`, `available: true`, `secrets: []`, `defaultModels: {}`, `local: true`, `cancel: 'stops'`, `serverText: true`. In `DEFAULT_PROVIDERS` it is the video provider (the only one with an adapter), not the picture one. A ComfyUI call adds nothing to `paid_calls` and asks for no paid confirmation. ComfyUI gets four jobs at once like every provider (`JOBS_AT_ONCE_PER_PROVIDER`, `spec/jobs.md`); the app shows each job's place in the server's queue.
+Built. `src/main/providers/registry.ts`, after `fal-seedance`, before `firefly`: `id 'comfyui'`, `label 'ComfyUI'`, `jobs: ['image', 'video', 'cutout']`, `available: true`, `secrets: []`, `defaultModels: {}`, `modelLabels: {}`, `local: true`, `cancel: 'stops'`, `serverText: true`. In `DEFAULT_PROVIDERS` it is the video provider (it runs locally, so no video run is paid unless the user picks fal.ai), not the picture one. A ComfyUI call adds nothing to `paid_calls` and asks for no paid confirmation. ComfyUI gets four jobs at once like every provider (`JOBS_AT_ONCE_PER_PROVIDER`, `spec/jobs.md`); the app shows each job's place in the server's queue.
 
 ## The address (security class)
 
@@ -248,7 +248,7 @@ Built. `src/main/providers/comfyui/image.ts`, `session.ts`, `run.ts`, `poll.ts`,
 - An `execution_interrupted` message in the history gives reason `server_stopped` (`run.ts`).
 - **Kept options** [REQ: FR-267]: pictures that arrived are kept when a later option fails. Each option is its own submission with its own seed [REQ: FR-257].
 - **The address during a run.** The run keeps its starting origin in memory, and its client is wrapped (`pinnedClient` in `session.ts`) so that before each call the saved address is compared with it. If they differ, or the address was removed, nothing more is sent, not even a cancel, and the run fails with reason `address_changed`.
-- **After the app was closed.** A ComfyUI job found `queued` or `running` at project open is not picked up; the app does not contact the address on project open [REQ: FR-275]. It is set to `failed`, reason `lost_contact` (`src/main/jobs/start-up.ts`). This covers a project from another computer with a job row from someone else's server. No ComfyUI row is resumed after a restart (`spec/jobs.md`). Picking a run up again by a user action is a later pass (FR-268 is P1).
+- **After the app was closed.** A ComfyUI job found `queued` or `running` at project open is not picked up; the app does not contact the address on project open [REQ: FR-275]. It is set to `failed`, reason `lost_contact` (`src/main/jobs/start-up.ts`). This covers a project from another computer with a job row from someone else's server. No ComfyUI row is resumed after a restart (`spec/jobs.md`). Not built: picking a run up again by a user action (FR-268 is P1).
 - **Retry.** `job.retry` on a ComfyUI picture job calls `checkComfyRun` with the reference count from `old.request`; on a video job, the check `generation.startVideo` calls. The chosen workflow's ID is stored on the job row (`request.workflowId`), and the retry uses it with the same checks; a row without it gets the default.
 - **Cancel** (`spec/cancel.md`): the run ends cancelled only when the server confirms the stop.
 
@@ -258,7 +258,8 @@ Built. `src/main/providers/comfyui/image.ts`, `session.ts`, `run.ts`, `poll.ts`,
 - The name is `uploadName(bytes)`. The asset's display name, path, ID and subject never enter a request.
 - The name put in the graph is the one in the server's upload answer, after the `filename` check.
 - The upload happens only after the check answered `ok` for the origin.
-- References and first frames are the only files the app puts on the server. They are never removed.- Tests (`tests/integration/generation/run-images-comfy.test.ts`, adapter tests): one upload of the asset's bytes under `adman-{16 hex}.png`; no request holds the display name or any part of the path; the graph names the file the stand-in answered with; two references on a one-slot workflow are refused (`too_many_references`, no job row); a non-ComfyUI stand-in sees one `GET /system_stats` and no upload; `paid_calls` stays 0 and the address is nowhere in the project file.
+- References and first frames are the only files the app puts on the server. They are never removed.
+- Tests (`tests/integration/generation/run-images-comfy.test.ts`, adapter tests): one upload of the asset's bytes under `adman-{16 hex}.png`; no request holds the display name or any part of the path; the graph names the file the stand-in answered with; two references on a one-slot workflow are refused (`too_many_references`, no job row); a non-ComfyUI stand-in sees one `GET /system_stats` and no upload; `paid_calls` stays 0 and the address is nowhere in the project file.
 
 ### Live progress
 
@@ -274,7 +275,7 @@ Built (security class). `src/main/providers/comfyui/live.ts`, `live-messages.ts`
 
 ## Failures, and the server's own words
 
-Built in the main process (`failures.ts`, `src/shared/providers/messages.ts`); the window half is partly built (see below). [REQ: FR-265, FR-266, FR-267, FR-069]
+Built, in the main process (`failures.ts`, `src/shared/providers/messages.ts`) and in the window (below). [REQ: FR-265, FR-266, FR-267, FR-069]
 
 `ProviderError` has an optional `reason` (`spec/providers.md`). The six kinds and `job.error_kind` are unchanged. The window picks the sentence by `reason` when set (`reasonMessage(reason)`, with `{address}` and `{n}` left as marks the window fills), else by kind.
 
@@ -297,13 +298,14 @@ Built in the main process (`failures.ts`, `src/shared/providers/messages.ts`); t
 | Over the waiting or working limit | `timeout` | `too_long` | "This run took longer than Adman waits. The server may still be working on it." |
 | The address changed during the run | `other` | `address_changed` | "The ComfyUI address was changed while this run was going. The run was stopped." |
 | A result over a limit, of the wrong type, or failing `checkMp4` | `other` | `bad_result` | "The ComfyUI server sent a result Adman cannot use." |
-| A clip with sound | `other` | `clip_has_sound` | Listed, never raised: sound is kept (`spec/comfyui-workflows.md`, "A video run") |
+
+A clip with sound is not a failure: sound is kept (`spec/comfyui-workflows.md`, "A video run").
 
 - `{address}` is filled in by the window from `comfy.getInfo`. No error object, job row or project log line holds the address.
 - The retry rule of `spec/providers.md` holds: nothing is sent twice on the app's own decision. Polling a run already started is the stated exception.
 - Command refusals before any job row (`spec/api-commands.md`): `comfy_address_needed`, `comfy_job_not_offered` ("ComfyUI cannot make this kind of picture yet."), `too_many_references` with `details.max` ("ComfyUI takes one reference picture for this run." when `max` is 1, else "ComfyUI takes at most {max} reference pictures for this run."). Both sentences live in `src/shared/providers/messages.ts`. A run that names a workflow adds `comfy_workflow_not_found` ("That ComfyUI workflow is not on this computer."), `comfy_workflow_wrong_job` ("That workflow cannot make this kind of picture or video.") and `too_few_references` with `details.min` ("This workflow needs {min} reference pictures."; "needs 1 reference picture" for one), all `RULE_VIOLATION` (`spec/comfyui-custom.md`, "Which workflow a run gets").
-- **Built:** Settings' `comfy-check-result.tsx` takes its six check sentences from `messages.ts` (`checkMessage`), and `redirect_refused` has a Settings form: "The server tried to send Adman to another address. Adman did not follow."
-- **Built (window, S2-5):** a failed row shows the reason's sentence, `missing_items` lists the items (from the failed row's `result.missing`; for a custom workflow the count sentence only), each message has Retry, and the first seven reasons also offer "Open Settings" [REQ: FR-265] (`spec/screens-campaign.md`).
+- Settings' `comfy-check-result.tsx` takes its six check sentences from `messages.ts` (`checkMessage`), and `redirect_refused` has a Settings form: "The server tried to send Adman to another address. Adman did not follow."
+- In the window, a failed row shows the reason's sentence, `missing_items` lists the items (from the failed row's `result.missing`; for a custom workflow the count sentence only), each message has Retry, and the first seven reasons also offer "Open Settings" [REQ: FR-265] (`spec/screens-campaign.md`).
 
 ### The server's own message, on request [REQ: FR-267, FR-277; D-051 answer 9]
 

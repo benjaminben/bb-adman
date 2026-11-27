@@ -1,22 +1,20 @@
 # Approvals gallery (the visitor's pages)
 
-The pages a visitor sees when they open an approval link: the password page and the gallery with its sign-off forms [D-095, D-097]. Built with Next.js `16.4.6` (App Router) and React `19.3.1`, inside the approvals service (`spec/approvals-service.md`), hosted on Vercel. Everything in this file is **Built** (AP-16; `spec/phases/approvals-service-slices.md`).
+The pages a visitor sees when they open an approval link: the password page and the gallery with its sign-off forms [D-095, D-097]. Built with Next.js `16.4.6` (App Router) and React `19.3.1`, inside the approvals service (`spec/approvals-service.md`), hosted on Vercel. Everything in this file is **Built** (slices: `spec/phases/approvals-service-slices.md`, `round-2-approvals.md`, `round-2-approvals-video.md`).
 
 What a page may and may not do is set by the service: the session, the try limit, the form checks, the gallery view and every write live in `src/visitor/` and are reached through the catch-all route. A page only reads a `GalleryView` and draws it. Every form posts to the catch-all, never to a page.
 
-**Round 2** (R2A-2 to R2A-9, R2V-2, R2V-4, R2V-6; built) changed the gallery page. The rules below are the current ones; the full design is in `spec/phases/round-2-approvals.md` and `round-2-approvals-video.md`.
+**The gallery page in short.** The full design, with every word of the sidebar, the cards and the lightbox, is in `spec/phases/round-2-approvals.md` and `round-2-approvals-video.md`.
 
 - **Layout.** A sidebar (the campaign title, a fixed instruction sentence, "Signing off as:" with one email field and "Use this email", "Sign off all…" with a confirmation dialog, "Log out") beside a masonry of variant cards. Each card opens a lightbox (HTML's own `<dialog>` and command buttons) with the large picture, or for a video variant the clip in the browser's own player, and the sign-off button; other reviewers' sign-offs show in full there, each with "Remove". A card that needs this reviewer's sign-off has an accent edge and a raised shadow; a signed one a quiet edge with a green tick; each state also has words. Only sign-offs of the current version show.
 - **Script.** Everything works with script off. One small plain script of the service's own adds arrow keys and Previous and Next between lightboxes, a fallback for browsers without command buttons, masonry spans where CSS grid lanes are missing, and pausing a video when its lightbox closes (a failed clip shows a notice).
-- **Look.** The tokens are a byte-for-byte copy of the app's own `tokens.css`, kept in step by a root test; buttons and fields are 44 px tall with 16 px text for phones.
-- **Reviewer email.** Kept in a browser-session `HttpOnly` cookie to fill the field and mark the cards; cleared by "Log out" (route `/leave`) and by every right password entry. Every sign-off uses the posted field text. "Sign off all" is one request carrying a stamp of the shown set; a stale stamp writes nothing; expired pictures are left out.
-- **Clips.** `GET /l/{slug}/c/{variantKey}/{version}`, signed-in visitors only, one plain byte range per request, at most 4 MiB per reply; anything else gets the empty `404`. The page policy below gained `media-src 'self'`.
+- **Look.** `src/ui/app-tokens.css` is a byte-for-byte copy of the app's own `src/renderer/ui/tokens.css`, kept in step by the root test `tests/unit/config/approvals-tokens.test.ts`; buttons and fields are 44 px tall with 16 px text for phones.
+- **Reviewer email.** Saved by "Use this email" (route `/reviewer`) in a browser-session `HttpOnly` cookie to fill the field and mark the cards; cleared by "Log out" (route `/leave`) and by every right password entry. Every sign-off uses the posted field text. "Sign off all" is one request carrying a stamp of the shown set; a stale stamp writes nothing; expired pictures are left out.
+- **Clips.** `GET /l/{slug}/c/{variantKey}/{version}`, signed-in visitors only, one plain byte range per request, at most 4 MiB per reply; anything else gets the empty `404`. The page policy below has `media-src 'self'`.
 
-The sections "Components" and "Words" below describe the first gallery (AP-16) and are kept for its parts that stayed (the password page, the routes, the policy, the headers).
+## What the framework costs the visitor
 
-## What changes for the visitor, and what is lost
-
-The pages look and behave as before: plain forms, a redirect after each one, nothing that needs script. What is lost compared with the earlier no-script design: each page now loads the framework's own scripts (React and Next.js, served from our own address, roughly 100 KB or more), so the page policy must allow our own scripts by a one-time nonce instead of allowing none, and a phone has more to download. The gain is a page built from small components and one set of tokens, and room to add script that improves a page later without being needed.
+The pages use plain forms, a redirect after each one, and nothing that needs script. The cost: each page loads the framework's own scripts (React and Next.js, served from our own address, roughly 100 KB or more), so the page policy allows our own scripts by a one-time nonce, and a phone has more to download. The gain is a page built from small components and one set of tokens, and room for script that improves a page without being needed.
 
 ## Next.js settings
 
@@ -43,7 +41,7 @@ The pages look and behave as before: plain forms, a redirect after each one, not
 
 **Nothing fetched from another company:** no `next/font` (it fetches font files at build time) and no web font: the font is `system-ui, sans-serif`. No `next/image`, no `next/script`, no analytics or speed-insights package. Telemetry off in every script (`NEXT_TELEMETRY_DISABLED=1`). `test/config.test.ts` fails on an import of `next/font`, `next/image`, `next/script` or any `@vercel/` package.
 
-**No Server Actions** and no client component except the two error boundaries (`error.tsx`, `global-error.tsx`, which Next.js requires to be client components). `test/config.test.ts` fails on `'use server'` anywhere and on `'use client'` in any other file.
+**No Server Actions** and no client component except the two error boundaries (`app/l/[slug]/error.tsx`, `app/global-error.tsx`, which Next.js requires to be client components) and the gallery script (`src/ui/gallery-script/gallery-script.tsx`, ruling S-12 in `spec/phases/round-2-approvals.md`: it draws nothing, reads no address, cookie or storage, and sends no request). `test/config.test.ts` fails on `'use server'` anywhere and on `'use client'` in any other file.
 
 ## The page policy and nonce (`proxy.ts`)
 
@@ -58,7 +56,7 @@ export const config = { matcher: ['/l/:slug'] }  // one path part only; the API 
 3. Request headers: a copy of the visitor's, with any `Content-Security-Policy` and `x-nonce` the visitor sent deleted, then `Content-Security-Policy` set to the page policy below, so Next.js reads our nonce and never one the visitor chose.
 4. `NextResponse.next({ request: { headers } })`, with the page header set (below) put on the response.
 
-Page policy, from `pagePolicy(nonce, dev = false)` in `src/visitor/headers.ts` (AP-15, built; it throws on a nonce that is not 22 base64 characters plus `==`), one line:
+Page policy, from `pagePolicy(nonce, dev = false)` in `src/visitor/headers.ts` (it throws on a nonce that is not 22 base64 characters plus `==`), one line:
 
 ```
 default-src 'none'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'nonce-{nonce}'; img-src 'self'; media-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'
@@ -77,9 +75,9 @@ Page header set (with the policy above): `X-Content-Type-Options: nosniff`, `X-F
 | Path | File | Kind | Calls | Returns |
 |---|---|---|---|---|
 | `GET /l/{slug}` | `app/l/[slug]/page.tsx` | Server component | `openGallery(db, { slug, cookie, m }, Date.now())` | `PasswordScreen` (with the `wrong-password` notice when `m` says so) or `GalleryScreen` with the view. Status 200 in both cases, for a real slug and an unknown one alike |
-| `POST /l/{slug}/enter`, `/leave`, `/signoffs`, `/signoffs/{id}/remove` | `app/[[...path]]/route.ts` | Route handler (catch-all) | `createApp` → `visitor/routes.ts` | `303`, or the `403` plain text reply (`spec/approvals-service-visitor.md`, "Visitor routes and logic") |
+| `POST /l/{slug}/enter`, `/leave`, `/reviewer`, `/signoffs`, `/signoffs/{id}/remove` | `app/[[...path]]/route.ts` | Route handler (catch-all) | `createApp` → `visitor/routes.ts` | `303`, or the `403` plain text reply (`spec/approvals-service-visitor.md`, "Visitor routes and logic") |
 | `GET /l/{slug}/p/{variantKey}/{version}` | the same | Route handler | `picture-route.ts` | The picture as a stream, or `404` with an empty body |
-| `GET /l/{slug}/c/{variantKey}/{version}` | the same | Route handler | the clip route (R2V-2) | One byte range of the video clip (`206`, at most 4 MiB), or `404` with an empty body (`spec/phases/round-2-approvals-video.md`, "The clip route") |
+| `GET /l/{slug}/c/{variantKey}/{version}` | the same | Route handler | `clip-route.ts` | One byte range of the video clip (`206`, at most 4 MiB), or `404` with an empty body (`spec/phases/round-2-approvals-video.md`, "The clip route") |
 | `GET /robots.txt` | the same | Route handler | `visitor/routes.ts` | `User-agent: *` and `Disallow: /` |
 | A wrong-shape slug at `/l/{x}` | `proxy.ts`; `page.tsx` as a second guard | Proxy; `notFound()` | — | Plain 404. If the proxy were skipped, the page calls `notFound()` and `app/not-found.tsx` draws "Not found." |
 | Any other path | `app/[[...path]]/route.ts` | Route handler | `createApp` | Plain 404 |
@@ -94,82 +92,50 @@ Rules the page keeps:
 
 ## Look and structure
 
-The user's rule for all UI: modular components styled from one set of tokens that can be changed in one place. Plain, clean, readable on a phone. No UI library. Styling with **CSS Modules** (one `.module.css` per component; Next.js builds them into files served from our own address, which the policy allows). Only `src/ui/tokens.css` is a global stylesheet, imported once by `app/layout.tsx`. No component holds a colour, size or font of its own: every value is a `var(--…)` from the tokens.
+The user's rule for all UI: modular components styled from one set of tokens that can be changed in one place. Plain, clean, readable on a phone. No UI library. Styling with **CSS Modules** (one `.module.css` per component; Next.js builds them into files served from our own address, which the policy allows). Three global stylesheets, imported once by `app/layout.tsx` in this order: `src/ui/app-tokens.css`, `src/ui/gallery-tokens.css`, `src/ui/base.css`. No component holds a colour, size or font of its own: every value is a `var(--…)` from the tokens. `test/tokens.test.ts` checks the order, that every gallery token is built on an app token or a fixed size, and that every component sheet and `base.css` read only app or gallery tokens.
 
-### Tokens (`src/ui/tokens.css`)
+### Tokens
 
-Since R2A-4 this file is a copy of the app's `src/renderer/ui/tokens.css`, not the list below; the list is the first gallery's.
+- **`src/ui/app-tokens.css`**: a byte-for-byte copy of the app's `src/renderer/ui/tokens.css`. The root test `tests/unit/config/approvals-tokens.test.ts` fails when the two differ. The values live in the app's file only; none is written here.
+- **`src/ui/gallery-tokens.css`**: the few sizes only the gallery needs, each built on an app token or a fixed size.
+- **`src/ui/base.css`**: the page's base rules (font, page colours), from tokens only.
 
-```css
-:root {
-  --color-page: #f5f6f8;
-  --color-surface: #ffffff;
-  --color-text: #1c2127;
-  --color-muted: #59626e;
-  --color-border: #d6dbe1;
-  --color-accent: #1f5fd6;
-  --color-accent-text: #ffffff;
-  --color-focus: #1f5fd6;
-  --color-info-bg: #eaf1fd;
-  --color-error-bg: #fcecec;
-  --color-error-text: #8a1f1f;
-  --color-placeholder: #e7eaee;
-  --font-body: system-ui, sans-serif;
-  --text-small: 0.875rem;
-  --text-base: 1rem;
-  --text-title: 1.5rem;
-  --line-height: 1.5;
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --radius: 0.5rem;
-  --control-height: 2.75rem;
-  --card-min: 16.25rem;
-  --page-max: 70rem;
-}
-```
+Buttons and fields are 44 px tall with 16 px text, easy to tap on a phone.
 
-The text colours meet a contrast of at least 4.5 to 1 on their backgrounds. `--control-height` (44 px) keeps buttons and fields easy to tap.
-
-### Components (`src/ui/{name}/{name}.tsx` and `{name}.module.css`, all server components)
+### Components (`src/ui/{name}/{name}.tsx` and `{name}.module.css`; server components except `gallery-script`)
 
 | Component | Props | What it draws |
 |---|---|---|
-| `page-shell` | `children` | `<main>` centred, at most `--page-max` wide, `--space-4` padding on a phone, `--space-8` from 48rem up |
+| `page-shell` | `children`, `side?` | The page's `<main>`, centred and at most `--width-wide` wide. With `side` (the gallery's sidebar): two columns on a wide window, the side first in the page's order |
 | `notice` | `tone: 'info' \| 'error'`, `children` | A box with `role="status"` (info) or `role="alert"` (error) |
-| `button` | `children`, `look: 'primary' \| 'quiet'`, optional `label` | A submit `<button>`; `label` becomes `aria-label` |
-| `password-screen` | `slug`, `notice` | Heading, sentence, the error notice when set, `password-form` |
+| `button` | `children`, `look`, optional `label` | A submit `<button>`; `label` becomes its accessible name |
+| `password-screen` | `slug`, `notice` | Heading, sentence, the error notice when set, `password-form`. No campaign name |
 | `password-form` | `slug` | `<form method="post" action="/l/{slug}/enter">`, labelled password field, "Open" |
-| `gallery-screen` | `view` | `gallery-header`, the notice, then `gallery-grid` or the empty line |
-| `gallery-header` | `slug`, `campaignName` | Heading, the intro sentence, a "Leave" form posting to `/l/{slug}/leave` |
-| `gallery-grid` | `children` | `display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr)); gap: var(--space-4)`, so it holds one variant or hundreds |
-| `variant-card` | `slug`, `variant`, `current`, `earlier` | `<article id="v-{variantKey}">`: `variant-picture`, title, size line, the two lists, `signoff-form` |
-| `variant-picture` | `slug`, `variantKey`, `version`, `title`, `expired` | `<img src="/l/{slug}/p/{variantKey}/{version}" alt="{title}" loading="lazy">` filling the card width, or, when `expired`, a `--color-placeholder` box with the expiry sentence |
-| `signoff-list` | `slug`, `heading`, `signoffs`, `muted`, `emptyText?` | The heading, then each sign-off as `{email} · {date}` with a "Remove" form posting to `/l/{slug}/signoffs/{id}/remove`; `emptyText` when the list is empty; the earlier list is left out when empty |
-| `signoff-form` | `slug`, `variantKey`, `version` | `<form method="post" action="/l/{slug}/signoffs">`: hidden `variant` and `version`, labelled email field, "Sign off" |
+| `gallery-screen` | `view` | The sidebar (`reviewer-panel`), then the notice and the cards in `gallery-grid`, one per variant in gallery order, drawn from the view alone |
+| `reviewer-panel` | the view's parts | The sidebar, first in the page's order: campaign title, instruction sentence, `reviewer-form`, `signoff-all`, `log-out-form` |
+| `reviewer-form` | `slug`, `reviewer`, `stamp`, `notice` | The email every sign-off on the page uses; "Use this email" is its first submit button, so Enter in the field saves the email and never signs anything |
+| `signoff-all` | the live, unsigned and video counts | "Sign off all…" and its confirmation; the confirmation sends the reviewer form with `all=1` and the page's stamp |
+| `log-out-form` | `slug` | "Log out", posting to `/l/{slug}/leave`: ends the session and clears both cookies |
+| `gallery-grid` | `children` | A masonry of as many columns as fit, so it holds one variant or hundreds |
+| `variant-card` | `slug`, `variant`, `signoffs`, `reviewer`, `mine` | `<article id="v-{variantKey}">`: its state by edge, ground and words; `variant-picture`, title, size line, `card-signoff` or `signoff-tick`; its `lightbox` inside it and outside every form |
+| `variant-picture` | the slug, the variant | A button that opens the card's lightbox; inside it the picture (`/l/{slug}/p/{variantKey}/{version}`, lazy, empty `alt`, with width and height), or the expiry box; `video-mark` for a video |
+| `video-mark` | `durationMs` | On the picture's corner: a play triangle and the clip's length, or "still only" |
+| `card-signoff` | `slug`, `variantKey`, `version`, `title` | A card's sign-off button; it sends the reviewer form to the sign-off route |
+| `signoff-tick` | `variantKey` | The green tick of a card this reviewer signed off; it opens the lightbox |
+| `lightbox` | `slug`, `variant`, `signoffs`, `reviewer` | A `<dialog>` with `lightbox-media`, the sign-off button and the current version's sign-offs, each with "Remove" |
+| `lightbox-media` | `slug`, `variant` | The large picture, the video player (preload none) or the expiry sentence |
+| `gallery-script` | none | The page's one script of our own (see "Script", above); draws nothing |
 
-- `src/ui/format-date.ts`: `YYYY-MM-DD HH:MM UTC` from milliseconds.
-- `src/ui/group-signoffs.ts`: for one variant, `current` (same version) and `earlier` (older versions), each oldest first.
+- `src/ui/format-date.ts`: `YYYY-MM-DD HH:MM UTC` from milliseconds. `picture-size.ts`: a picture's width and height from its size line. `clip-length.ts`: a clip's length as text.
 - Every value from outside our code (campaign name, titles, size lines, emails) is drawn as a React text child, which React escapes. No `dangerouslySetInnerHTML` anywhere (`test/config.test.ts` fails on it). Every `action` and `src` is built only from the checked slug, a variant key from the view and a whole number.
-- `app/layout.tsx`: `<html lang="en">`, `<meta name="referrer" content="same-origin">`, `<meta name="robots" content="noindex, nofollow">`, the tokens, `<body>` with `--font-body`, `--color-page` and `--color-text`.
+- `app/layout.tsx`: `<html lang="en">`, `<meta name="referrer" content="same-origin">`, `<meta name="robots" content="noindex, nofollow">`, the three global stylesheets, a plain `<body>` (`base.css` styles it).
 - Each page sets its `<title>` with a React `<title>` element (React 19 moves it into the head).
 
 ### Words
 
 **Password page.** Title "Review campaign". Heading "Review campaign". Text "Enter the password you were given." Field label "Password" (`type="password"`, `name="password"`, `autocomplete="current-password"`, `required`). Button "Open". After a failed try, above the form (error tone): "That password did not work. If you have tried many times, wait 15 minutes and try again." No campaign name, since the visitor has not proven anything yet.
 
-**Gallery page.** Title: the campaign name. Heading: the campaign name. Under it: "Sign off on a variant by entering your email address. Anyone with this link can see who signed off, and can remove a sign-off." and the button "Leave" (quiet). Then the notice for `m`, if any (info tone; `bad-email` in error tone), with the words in `spec/approvals-service-visitor.md`, "Notices". Then one card per variant in gallery order:
-
-- The picture, or the grey box: "This picture has expired. Ask the person who sent the link to update the gallery."
-- The title (as a level-2 heading) and the size line (muted).
-- "Signed off by" (level-3 heading): each current sign-off as `{email} · {date}` with a "Remove" button (accessible name "Remove sign-off by {email}"). None: "No sign-offs yet."
-- "For an earlier version" (level-3 heading, muted): each older sign-off the same way. Left out when there are none.
-- Field label "Your email" (`type="email"`, `name="email"`, `autocomplete="email"`, `required`), button "Sign off".
-
-**A gallery with no variants:** "Nothing to review yet."
+**Gallery page.** Title: the campaign name. The words of the sidebar, the cards, the lightbox and "Sign off all" are in `spec/phases/round-2-approvals.md` ("The page", "The sidebar", "The cards", "The lightbox", "Sign off all") and, for video, `round-2-approvals-video.md`. The notices for `m` are in `src/visitor/notices.ts` (`spec/approvals-service-visitor.md`, "Notices"): `bad-email` and `email-saved` show in the sidebar by the reviewer form, every other gallery notice heads the main column.
 
 **Not found:** "Not found." **Error:** "Something went wrong. Try again later."
 
@@ -177,9 +143,15 @@ The text colours meet a contrast of at least 4.5 to 1 on their backgrounds. `--c
 
 | File | What it proves |
 |---|---|
-| `test/ui.test.tsx` (Vitest, `react-dom/server` `renderToStaticMarkup`) | One table over the components: a campaign name, title, size line and email holding `<script>`, `"`, `'`, `&` and `</style>` appear only escaped; current and earlier groups; the earlier heading left out when empty; the expired box; the date format; every field has a label; the error components show only the fixed sentence |
+| `test/ui.test.tsx` (Vitest, `react-dom/server` `renderToStaticMarkup`) | One table over the components: a campaign name, title, size line and email holding `<script>`, `"`, `'`, `&` and `</style>` appear only escaped; the password page; the picture and the expired box; the date format; the error components show only the fixed sentence |
+| `test/ui-gallery.test.tsx`, `ui-sidebar.test.tsx`, `ui-lightbox.test.tsx`, `ui-video.test.tsx` | The gallery screen, the sidebar, the lightbox and the video parts |
+| `test/gallery-script.test.ts` | The arrow keys, the command fallback, the masonry spans and the video pause |
+| `test/tokens.test.ts` | The global stylesheets and their order; components read only tokens |
 | `e2e/build.spec.ts` | No prerendered route under `/l` |
 | `e2e/gallery.spec.ts` (Chromium, against `next start`, every address `http://localhost:{port}`, never `127.0.0.1`: the form Origin check is not loosened for it, `spec/approvals-service-visitor.md` "Forms that write") | (1) An unknown slug and a real slug without a session give the same status and the same body once nonces are set aside; the header list equals the page set plus the allow-list in `spec/approvals-service.md` (`vary` and `content-encoding` included); no `Set-Cookie`. (2) A wrong password, then the right one: the notice, then the gallery in order with its pictures loaded from the test picture server; the cookie's attribute text exact. (3) With JavaScript switched off in the browser: sign off, see the notice and the email; remove it; leave and land on the password page. (4) With JavaScript on, the same flow reports no policy refusal. (5) `/l/short` and `/l/%41aaaaaaaaaaa` give the plain 404. (6) Every reply in the flow is `no-store`, none `public` or `s-maxage`; every page reply carries the page policy with a new nonce each time |
-| `e2e/shots.spec.ts` | The screenshots below |
+| `e2e/lightbox.spec.ts` | The lightbox opens, closes, holds focus and moves between cards; masonry spans; script off; a video pauses on close; a failed clip's notice |
+| `e2e/clips.spec.ts` | The clip route answers ranges for a session only; the page loads only its own clips; a player loads nothing before play; a missing clip gets the empty 404 |
+| `e2e/pictures/pictures.spec.ts` | Pictures pass only for a session, typed by the sniff |
+| `e2e/shots.spec.ts`, `shots-r2.spec.ts`, `shots-r2v.spec.ts` | The screenshots below |
 
-**Screenshots for the user** (D-084 range 90 to 99), by `npm run test:e2e -- e2e/shots.spec.ts` against `next start`, written to the root `shots/` folder (not in git) and named in the developer's report: `98-gallery-password` (phone, 390 × 844), `98-gallery-password-wrong` (phone, after a wrong try), `99-gallery` (desktop, 1280 × 900, three variants: one with a current sign-off, one with an earlier-version sign-off, one expired), `99-gallery-phone` (phone, the same gallery).
+**Screenshots for the user** (D-084 range 90 to 99), by `npm run test:e2e -- e2e/shots-r2.spec.ts` (and the other two shot files) against `next start`, written to the root `shots/` folder (not in git). Each shot's name is set in its spec file.

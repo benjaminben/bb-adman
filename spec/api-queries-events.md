@@ -4,7 +4,7 @@ Every query, the native pickers, the computed badges, every event, and the wire 
 
 ## Queries
 
-Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges one map per domain); query functions in `src/main/queries/`; input schemas and reply types in `src/shared/schemas/queries/`.
+Built. Runner `src/main/queries/queries.ts` (`queryTable` merges one map per domain); query functions in `src/main/queries/`; input schemas and reply types in `src/shared/schemas/queries/`.
 
 | Query | Returns | Built |
 |-------|---------|-------|
@@ -13,9 +13,9 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 | `project.get` | `ProjectGet = { meta, subjects, campaigns: CampaignSummary[], missingAssetCount }`. `meta` leaves out `assetsDirRel` and `assetsDirAbs`. | Built |
 | `asset.list` | `AssetList = Array<AssetRow & { missing: boolean }>`, filtered by library, kind, subject; ordered by `id` ascending (ULIDs: oldest first, stable). The window sorts for display. | Built |
 | `campaign.get` | `CampaignGet` (below) | Built |
-| `variant.get` | `VariantGet = { variant, campaignId, layers, assets }` (`spec/editor-commands.md`). It carries the `outOfDate` badge (the detail of what is out of date comes from `sync.preview`), the check badges (the results come from `check.results`, A-165) and the variant's clips (Phase 7). | Built |
+| `variant.get` | `VariantGet = { variant, campaignId, layers, assets }` (`spec/editor-commands.md`). It carries the `outOfDate` badge (the detail of what is out of date comes from `sync.preview`), the check badges (the results come from `check.results`, A-165) and the variant's clips. | Built |
 | `thumbnail.get` | `ThumbnailGet`: `ready` with the PNG, `pending` or `failed`, for the variant's current `rev` (`spec/editor-commands.md`). User only. | Built |
-| `variant.render` | `VariantRender = { png, width, height, rev }`: the variant drawn now. User only until Phase 10 writes a rule for linked private pictures; an agent gets `AGENT_DENIED` (`spec/editor-commands.md`). | Built |
+| `variant.render` | `VariantRender = { png, width, height, rev }`: the variant drawn now. Both actors: an agent's draw is the complete ad, linked pictures outside the project's folder included, and changes nothing (A-234; `spec/editor-commands.md`). | Built |
 | `template.list` | `TemplateList = Template[]` | Built |
 | `template.slots` | `TemplateSlots = SlotState[]`, `SlotState = { slot, state: 'filled' \| 'empty', candidates: string[] }` (asset IDs), for the slots of the campaign's master [REQ: FR-042]. A picture slot is one whose `slot.type` is not `copy`. | Built |
 | `sync.preview` | `SyncPreviewReply = { directionId, masterVariantId, masterRev, variants: SyncPreview[] }` for a direction; both actors (`spec/links-and-sync.md`, "Sync") | Built |
@@ -25,17 +25,22 @@ Built unless marked. Runner `src/main/queries/queries.ts` (`queryTable` merges o
 | `comfy.getInfo` | ComfyUI workflow data, shipped and custom (below). User only. | Built |
 | `comfyWorkflow.list` | `{ workflows: Array<{ id, name, job, start, isDefault }> }`: every workflow the caller may name for `image`, `image_refs` or `video`; `start` is `'prompt' \| 'first_frame' \| 'references'` for video, else null. Never a graph, a node, a file path or the address. Both actors (`list_comfy_workflows`) (`spec/comfyui-custom.md`, "Commands, queries and events") | Built (D-104) |
 | `project.listOpen` | `{ id, name }[]` for open projects only, never `filePath` | Built |
-| `agent.askFiles` | Input `{ requestId }`. `{ files: string[] }`: the normalised full paths of an open import ask, in order; after the request ends `NOT_FOUND` "That request has ended." Held in memory for the request's life only. User only: an agent gets `AGENT_DENIED`. The one reply that carries paths an agent named (`spec/security.md`, "Paths in the renderer") | Built (R2P-5) |
+| `agent.askFiles` | Input `{ requestId }`. `{ files: string[] }`: the normalised full paths of an open import ask, in order; after the request ends `NOT_FOUND` "That request has ended." Held in memory for the request's life only. User only: an agent gets `AGENT_DENIED`. The one reply that carries paths an agent named (`spec/security.md`, "Paths in the renderer") | Built |
 | `agent.askWorkflow` | Input `{ requestId }`. `{ name, job, start, references, nodeTypes }` for an open `workflow` ask; after the request ends `NOT_FOUND` "That request has ended." Held in memory for the request's life only. User only: an agent gets `AGENT_DENIED`. The only way the ask dialog gets the node types of a graph an agent sent (`spec/comfyui-custom.md`, "The agent's ask") | Built (D-104) |
-| `report.list` / `report.get` | Saved reports [REQ: FR-151]. User only | Built (P8-9) |
+| `report.list` / `report.get` | Saved reports [REQ: FR-151]. User only | Built |
 | `history.state` | `UndoStateResult = { canUndo, canRedo }` for a scope | Built |
-| `publish.inspect` | Whether the campaign's cloud folder already has files [REQ: FR-164], and the component files a publish would upload, each with its full local path [REQ: R-06, 8.4], and each font's `share` and `sha256` (`spec/phases/phase-09.md`). User only | Built (P9-9, P9-12) |
+| `publish.inspect` | Whether the campaign's cloud folder already has files [REQ: FR-164], and the component files a publish would upload, each with its full local path [REQ: R-06, 8.4], and each font's `share` and `sha256` (`spec/phases/phase-09.md`). User only | Built |
+| `check.results` | The stored check of each named variant that has one (A-165; `src/main/queries/check.ts`). Both actors. A named variant not in the project: `NOT_FOUND` | Built |
+| `subject.list` | The subjects of the project by ID, each with the IDs of its asset rows (A-235; `src/main/queries/subject-list.ts`). Both actors | Built |
+| `translation.forCampaign` | `{ primaryLanguage, rows, jobs }`: the campaign's translation rows and translation job states (`spec/phases/phase-06.md`; `src/main/queries/translation.ts`). Both actors | Built |
+| `translation.sources` | The primary language's text layers and the out-of-date translations of a campaign (`src/main/queries/translation.ts`). Both actors | Built |
+| `approvals.forCampaign` / `approvals.getPassword` | User only; listed in `spec/approvals-commands.md` | Built |
 
-Built (Phase 4, P4-2), designed in `spec/ai-jobs.md`, "The three queries": `job.earlierOptions { layerId }` (the runs of a layer with their pictures) [REQ: FR-248, FR-216]; `job.activity { limit? }` (job rows with the names of their campaign, variant and layer) [REQ: FR-152, FR-217]; `campaign.paidCount { campaignId }` (`{ pictures, videos, text }` from `job.paid_calls`) [REQ: FR-230]. Open to both actors; no MCP tool wraps them.
+Built, designed in `spec/ai-jobs.md`, "The three queries": `job.earlierOptions { layerId }` (the runs of a layer with their pictures) [REQ: FR-248, FR-216]; `job.activity { limit? }` (job rows with the names of their campaign, variant and layer) [REQ: FR-152, FR-217]; `campaign.paidCount { campaignId }` (`{ pictures, videos, text }` from `job.paid_calls`) [REQ: FR-230]. Open to both actors; no MCP tool wraps them.
 
 ### Query inputs
 
-`app.getState`, `mcp.getConnectInfo`, `comfy.getInfo` and `project.listOpen` are app-scope and take no input. Every other query is project-scope and takes `projectId` (`spec/api-principles.md`) plus:
+`app.getState`, `mcp.getConnectInfo`, `comfy.getInfo` and `project.listOpen` are app-scope and take no input; `comfyWorkflow.list`, `agent.askFiles`, `agent.askWorkflow` and the `dialog.*` queries are app-scope with the inputs given in their rows. Every other query is project-scope and takes `projectId` (`spec/api-principles.md`) plus:
 
 | Query | Input beside `projectId` |
 |-------|--------------------------|
@@ -44,7 +49,7 @@ Built (Phase 4, P4-2), designed in `spec/ai-jobs.md`, "The three queries": `job.
 | `campaign.get` | campaignId |
 | `variant.get` | variantId |
 | `thumbnail.get` | variantId |
-| `variant.render` | variantId, maxDimension? (64 to 2048, default 1024) |
+| `variant.render` | variantId, maxDimension? (64 to 2048, default 1024), timeMs? |
 | `template.list` | — |
 | `template.slots` | campaignId |
 | `sync.preview` | directionId |
@@ -52,7 +57,10 @@ Built (Phase 4, P4-2), designed in `spec/ai-jobs.md`, "The three queries": `job.
 | `job.list` | campaignId?, variantId?, layerId?, state? (`active` = queued or running, `unseen` = succeeded with no `seenAt`, `failed`; left out = all), limit? (positive whole number, default 200) |
 | `job.get` | jobId |
 | `job.getServerMessage` | jobId |
-| `report.list`, `report.get`, `publish.inspect` | Fixed by the phase that builds each (8, 8, 9) |
+| `report.list` | campaignId |
+| `report.get` | reportId |
+| `publish.inspect` | campaignId, storage (a storage ID or null) |
+| `check.results`, `subject.list`, `translation.forCampaign`, `translation.sources`, `job.earlierOptions`, `job.activity`, `campaign.paidCount` | Their schemas in `src/shared/schemas/queries/` |
 
 ### Runner rules
 
@@ -63,8 +71,8 @@ Built (Phase 4, P4-2), designed in `spec/ai-jobs.md`, "The three queries": `job.
 
 ### Who may call which query
 
-- **User only:** `mcp.getConnectInfo`, `comfy.getInfo`, `job.getServerMessage`, `agent.askFiles`, `agent.askWorkflow`. Each refuses actor `agent` with `AGENT_DENIED`, and no MCP tool calls them. `mcp.getConnectInfo` refuses with "Agents cannot read the agent access settings in this version. Ask the user to do it in the app." (`CONNECT_INFO_DENIED`).
-- **Both actors:** `job.get` (the MCP tool cuts the reply down to its allow-list), `project.listOpen` (policy `allow` for the agent) and `comfyWorkflow.list`. Which tool wraps which query is in `spec/mcp-and-agents.md`.
+- **User only:** every query marked "User only" above: `mcp.getConnectInfo`, `thumbnail.get`, `job.getServerMessage`, `comfy.getInfo`, `agent.askFiles`, `agent.askWorkflow`, `report.list`, `report.get`, `publish.inspect`, `approvals.forCampaign`, `approvals.getPassword`. Each refuses actor `agent` with `AGENT_DENIED`, and no MCP tool calls them. `mcp.getConnectInfo` refuses with "Agents cannot read the agent access settings in this version. Ask the user to do it in the app." (`CONNECT_INFO_DENIED`).
+- **Both actors:** every other query except the `dialog.*` queries (no agent can reach those, below), among them `job.get` (the MCP tool cuts the reply down to its allow-list), `project.listOpen` and `comfyWorkflow.list`. Which tool wraps which query is in `spec/mcp-and-agents.md`.
 
 ### `mcp.getConnectInfo`
 
@@ -86,7 +94,7 @@ type ConnectInfo = {
 - `claudeCode` is `claude mcp add --transport http adman {address} --header "Authorization: Bearer {token}"`, or null with no token.
 - This is the only query, command or event whose reply holds a secret value. The named `mcp.getConnectInfo` test checks that an agent is refused.
 - `problem` is null while the setting is off. The meaning of each value is in `spec/mcp-and-agents.md`.
-- `claudeDesktop` (P10-9): pretty-printed JSON `{ "mcpServers": { "adman": { "command", "args" } } }` that starts the app with `--mcp-bridge`. No token and no port in it. Null while agent access is off. The Connect panel shows it as the second block (`spec/mcp-and-agents.md`, "Bridge mode").
+- `claudeDesktop`: pretty-printed JSON `{ "mcpServers": { "adman": { "command", "args" } } }` that starts the app with `--mcp-bridge`. No token and no port in it. Null while agent access is off. The Connect panel shows it as the second block (`spec/mcp-and-agents.md`, "Bridge mode").
 
 ### `comfy.getInfo`
 
@@ -108,7 +116,7 @@ Built. `src/main/queries/project-list-open.ts`, type in `src/shared/schemas/quer
 
 ## Native pickers: the `dialog.*` queries
 
-Built: `dialog.pickFolder`, `dialog.pickProjectFile`, `dialog.pickFiles`. `src/main/windows/dialogs.ts`, schemas in `src/shared/schemas/queries/dialog.ts`, file types in `src/shared/config/file-types.ts`.
+Built: `dialog.pickFolder`, `dialog.pickProjectFile`, `dialog.pickFiles`, `dialog.pickSaveFile`. `src/main/windows/dialogs.ts`, schemas in `src/shared/schemas/queries/dialog.ts`, file types in `src/shared/config/file-types.ts`.
 
 The window is sandboxed and cannot open a file or folder picker, so it asks the main process. This is the one pattern for every picker in the app. Do not add a picker any other way.
 
@@ -126,7 +134,7 @@ The window is sandboxed and cannot open a file or folder picker, so it asks the 
 - A new picker is a new `purpose` value where one of the four shapes fits, and a new `dialog.*` query only when none does.
 - Each picker's input is a strict Zod schema: an unknown key is refused. An input that fails is `INVALID_INPUT`. No picker checks its input by hand.
 - **A picker never rejects.** The `dialog.*` queries do not go through the query runner, so `runDialogQuery` has its own catch: if Electron's dialog call throws, the reply is the fixed `INTERNAL` result with a ULID in `details.commandId`, and one log line with `event: 'query'`.
-- **Modal to the asking window.** The IPC handler (`src/main/ipc.ts`) passes the window that sent the call, and the picker is modal to that window. It does not use the focused window or the first window in the list, because from Phase 3 the hidden render window is in that list.
+- **Modal to the asking window.** The IPC handler (`src/main/ipc.ts`) passes the window that sent the call, and the picker is modal to that window. It does not use the focused window or the first window in the list, because the hidden render window is in that list.
 
 ## Computed badges and job marks
 
@@ -134,12 +142,12 @@ Built. `src/main/queries/campaign.ts`, `src/main/queries/campaign-reads.ts`. [RE
 
 | Badge | True when | Built |
 |-------|-----------|-------|
-| `outOfDate` | The rule of `spec/data-rules.md`, "Links, follow rules and sync": not a plain compare of `syncedRevs` and `revs`; it depends on the follow rule of each group and on layer keys the two variants do not share. A master is never out of date. | Built (P5-2: `variantOutOfDate` in `src/shared/links/out-of-date.ts`; `badgesOf` takes the direction's master) |
+| `outOfDate` | The rule of `spec/data-rules.md`, "Links, follow rules and sync": not a plain compare of `syncedRevs` and `revs`; it depends on the follow rule of each group and on layer keys the two variants do not share. A master is never out of date. | Built (`variantOutOfDate` in `src/shared/links/out-of-date.ts`; `badgesOf` takes the direction's master) |
 | `overflow` | Any layer of the variant has `overflow` true | Built |
 | `translationUnapproved` | Any layer has `translationStatus` `missing` or `proposed` | Built |
-| `checkWarning` | The latest `variant_check` has a `brand-legal` warning and `checked_rev = rev` | Built (P6-3) |
-| `checkStale` | `checked_rev < rev`. A variant with no check row has `checkStale: false`. | Built (P6-3) |
-| `missingFile` | Any layer's `source.assetId` or `style.fontAssetId`, or any background clip's asset, is in `AssetService.missingAssetIds(project)`; a null source or font does not count | Built (`badgesOf` in `src/main/queries/campaign-reads.ts`, shared by `campaign.get` and `variant.get`; clips from P7-9) |
+| `checkWarning` | The latest `variant_check` has a `brand-legal` warning and `checked_rev = rev` | Built |
+| `checkStale` | `checked_rev < rev`. A variant with no check row has `checkStale: false`. | Built |
+| `missingFile` | Any layer's `source.assetId` or `style.fontAssetId`, or any background clip's asset, is in `AssetService.missingAssetIds(project)`; a null source or font does not count | Built (`badgesOf` in `src/main/queries/campaign-reads.ts`, shared by `campaign.get` and `variant.get`) |
 | `jobRunning` | A `job` row with the variant's ID is `queued` or `running` | Built |
 | `resultUnseen` | A `job` row with the variant's ID is `succeeded` with `seen_at` null | Built |
 
@@ -195,7 +203,7 @@ export type CampaignSummary = Pick<
 
 ## Events
 
-Built: `project.changed`, `app.stateChanged`, `job.updated`, `asset.changedOnDisk`. `EventMap` and `EVENT_NAMES` in `src/shared/schemas/events.ts`.
+Built. `EventMap` and `EVENT_NAMES` in `src/shared/schemas/events.ts` hold every event below except `mcp.status`.
 
 | Event | Payload | Built |
 |-------|---------|-------|
@@ -204,16 +212,16 @@ Built: `project.changed`, `app.stateChanged`, `job.updated`, `asset.changedOnDis
 | `asset.changedOnDisk` | `{ projectId, assetIds }`: the linked assets whose content changed outside the app. Sent after `asset.checkChanged` succeeds with a non-empty list. The signal to draw those pictures again; the render service redraws the thumbnails of variants that use them (`spec/scene.md`). | Built |
 | `thumbnail.changed` | `{ projectId, variantId }`: sent after a thumbnail write, a delete, a failed draw or a failed save; a window showing it sends `thumbnail.get` again (`spec/editor-commands.md`) | Built |
 | `app.stateChanged` | Empty (`Record<string, never>`). Something `app.getState` returns has changed: a project was opened or closed, settings changed, a key was saved or deleted, or agent access changed. Each window reads `app.getState` again. | Built |
-| `agent.permissionRequested` | `{ requestId, agentClient, action, target, expiresAt, kind, fileCount }` (`agentClient` the cleaned client name or null; `kind` `'delete'`, `'import'` or `'workflow'`; `fileCount` 0 for a delete or a workflow). No ID of the target, no input, no path, no node type: an import's paths reach the window only through `agent.askFiles`, and a workflow ask's name, job and node types only through `agent.askWorkflow`; a workflow ask's event carries only its target line | Built (P10-6; kind and fileCount R2P-1) |
-| `app.showProject` | `{ projectId }`: show this open project. Sent by the main process after a system open (a file double-click or a second launch handed over by the single-instance lock), for a new and an already open project alike (`spec/editor.md`, "Which project shows") | Built (R2P-9) |
+| `agent.permissionRequested` | `{ requestId, agentClient, action, target, expiresAt, kind, fileCount }` (`agentClient` the cleaned client name or null; `kind` `'delete'`, `'import'` or `'workflow'`; `fileCount` 0 for a delete or a workflow). No ID of the target, no input, no path, no node type: an import's paths reach the window only through `agent.askFiles`, and a workflow ask's name, job and node types only through `agent.askWorkflow`; a workflow ask's event carries only its target line | Built |
+| `app.showProject` | `{ projectId }`: show this open project. Sent by the main process after a system open (a file double-click or a second launch handed over by the single-instance lock), for a new and an already open project alike (`spec/editor.md`, "Which project shows") | Built |
 | `approvals.changed` | `{ projectId, campaignId }`: the approvals tables changed (`spec/approvals-commands.md`) | Built |
-| `approvals.progress` | `{ projectId, campaignId, step: 'drawing' \| 'making' \| 'sending' \| 'finishing', done, total, unitsDone, unitsTotal }`: before each still is drawn, each clip is made and each clip upload of an "Update gallery", and once before the gallery request (D-110; `spec/approvals-commands.md`, "Progress and Stop"). IDs and counts only | Built (R2V-7) |
-| `agent.activity` | `{ tool, projectId, ok, at }`, one per tool call, never arguments or replies; for the "Agent working" line | Built (P10-8) |
-| `mcp.status` | enabled, port, connected client names | Not built (A-243: `app.stateChanged` with `mcp.getConnectInfo` gives on, off and port) |
+| `approvals.progress` | `{ projectId, campaignId, step: 'drawing' \| 'making' \| 'sending' \| 'finishing', done, total, unitsDone, unitsTotal }`: before each still is drawn, each clip is made and each clip upload of an "Update gallery", and once before the gallery request (D-110; `spec/approvals-commands.md`, "Progress and Stop"). IDs and counts only | Built |
+| `agent.activity` | `{ tool, projectId, ok, at }`, one per tool call, never arguments or replies; for the "Agent working" line | Built |
+| `mcp.status` | enabled, port, connected client names | Dropped (A-243: `app.stateChanged` with `mcp.getConnectInfo` gives on, off and port) |
 
 - `app.stateChanged` exists because not every change starts in the window that needs to hear of it. A project opened by double-click starts in the operating system, and an agent access change can start in another window.
 - The event carries no data on purpose. `app.getState` stays the one source of that state, and no secret detail can leak through an event.
-- A command handler says it changes app state with one flag (`changesAppState`), and the bus emits the event after the command succeeds. Handlers do not emit it themselves. Built handlers with the flag: `project.create`, `project.open`, `project.close`, `settings.update`, `secret.set`, `secret.delete`, `mcp.setEnabled`, `mcp.regenerateToken`, `comfy.setAddress`.
+- A command handler says it changes app state with one flag (`changesAppState`), and the bus emits the event after the command succeeds. Handlers do not emit it themselves. Handlers with the flag: `project.create`, `project.createInDefaultFolder`, `project.open`, `project.close`, `settings.update`, `secret.set`, `secret.delete`, `mcp.setEnabled`, `mcp.regenerateToken`, `agent.answerPermission`, `comfy.setAddress`, the four `comfyWorkflow.*` commands, `storage.dropboxSignIn`, `storage.dropboxSignOut`, `storage.setDropboxFolder`, `agentRuns.setAllowed`, `agentRuns.setLimit`, `approvals.setService`.
 - An MCP port taken at start sets `ConnectInfo.problem`; it sends no new event.
 - Every event goes to the app window only, never to the render window. `src/main/index.ts` also hands each event to the render service (`spec/scene.md`). A window ignores a `project.changed` for a project it does not show.
 - Events go to windows only. No event is passed on to an agent. MCP replies are built from queries.
@@ -278,7 +286,7 @@ A row is identified by its table and its key fields. The row key text is the val
 | What | Where | Rule |
 |------|-------|------|
 | Table names, key fields, row key text | `src/shared/schemas/rows/keys.ts` | Exports `ROW_KEYS` (table name to its key fields, all 14 tables), the `TableName` type, and `rowKey(table, row)`. Nothing else joins key fields or guesses which field is the key. |
-| Wire row schemas | `src/shared/schemas/rows/` (`ROW_SCHEMAS`) | One Zod schema per table, named after the table: `SubjectRow`, `AssetRow`, `CampaignSubjectRow`, `JobRow`. They reuse the JSON column schemas (`layer.ts`, `brief.ts`, `commands/campaign.ts`). Built for the ten tables Phase 2 writes and `job`. `variant_check`, `background_clip` and `report` are added by Phases 6, 7 and 8, on `main` before that phase's work splits. |
+| Wire row schemas | `src/shared/schemas/rows/` (`ROW_SCHEMAS`) | One Zod schema per table, named after the table: `SubjectRow`, `AssetRow`, `CampaignSubjectRow`, `JobRow`. They reuse the JSON column schemas (`layer.ts`, `brief.ts`, `commands/campaign.ts`). `ROW_SCHEMAS` (`src/shared/schemas/rows/index.ts`) is the list of tables that have one; `report` has none (its row is written by the system command `report.add` and is not sent in `project.changed`). |
 | Stored row to wire row, and back | `src/main/db/rows.ts` | The only code that converts in either direction, and the only code that parses or builds the JSON text of a column. A handler or query never calls `JSON.parse` or `JSON.stringify` on a column and never renames a field. The building half is one pure function, `storedJson(table, field, value)`: it gives the text to store for a JSON column, or null for null. It writes nothing, so `rows.ts` has no write functions. Code that writes a JSON column with SQL or through `project.orm` gets the text from it. |
 
 - `readWireRows` leaves out a row that fails its schema; `readWireRow` throws.

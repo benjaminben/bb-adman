@@ -35,7 +35,7 @@ Built (`src/renderer/stores/`).
 
 ### ADR-004: Posts are drawn with HTML by one Scene component
 
-Not built (Phase 3).
+Built (`src/shared/scene/scene.tsx`).
 
 - **Context:** Text must stay editable, support uploaded and CJK fonts, and report overflow. Preview must match export [REQ: FR-056, FR-098, FR-130].
 - **Decision:** One pure React component draws a variant at a time. The editor, thumbnails, agent pictures and export all use it.
@@ -44,7 +44,7 @@ Not built (Phase 3).
 
 ### ADR-005: Animation presets are pure functions of time
 
-Not built (Phase 7).
+Built (`src/shared/scene/presets.ts`).
 
 - **Context:** Export must be identical on any machine [REQ: FR-131]. Animation is stored as data [REQ: FR-129]. GSAP's licence restricts visual no-code animation tools [REQ: R-14].
 - **Decision:** `presets.ts` maps preset, progress and word index to opacity and offset. Preview feeds it clock time. Export feeds it frame time.
@@ -53,7 +53,7 @@ Not built (Phase 7).
 
 ### ADR-006: Video export overlays captured frames on an FFmpeg background
 
-Not built (Phase 8).
+Built (`src/main/export/video/`; placement in `src/shared/scene/background-placement.ts`).
 
 - **Context:** Frame-exact seeking of a `<video>` element is unreliable, and text must be burned in exactly as previewed [REQ: FR-126, FR-131].
 - **Decision:** The hidden window draws all non-background layers on a transparent page, one frame at a time. FFmpeg builds the background from the clips and overlays the frames.
@@ -62,7 +62,7 @@ Not built (Phase 8).
 
 ### ADR-007: LGPL FFmpeg with system encoders
 
-Not built (Phases 7 and 8).
+Built (build flags in `scripts/ffmpeg-sources.json`, encoders in `src/main/export/video/encoder-args.ts`).
 
 - **Context:** The licence intent bars commercial reuse by others, which conflicts with GPL parts of FFmpeg [REQ: 9.3].
 - **Decision:** Build with `--disable-gpl --disable-nonfree`. Encode H.264 with VideoToolbox on macOS and Media Foundation on Windows.
@@ -71,7 +71,7 @@ Not built (Phases 7 and 8).
 
 ### ADR-008: Links are stored copies with revision counters
 
-Not built (Phase 5).
+Built (`src/shared/links/`).
 
 - **Context:** Nothing may change in a linked variant until the user syncs, and overrides must be skipped [REQ: FR-081, FR-083].
 - **Decision:** Each variant stores full layer values. Master layers count changes per property group. Linked layers record the count they last synced to. Out of date is computed. Overrides are property paths.
@@ -89,7 +89,7 @@ Built (`src/main/commands/agent-policy.ts`).
 
 ### ADR-010: MCP over HTTP on 127.0.0.1 with a token, plus a bridge mode
 
-Built: the server (`src/main/mcp/server.ts`) and bridge mode (P10-9, `src/main/bridge/`; `spec/mcp-and-agents.md`, "Bridge mode").
+Built: the server (`src/main/mcp/server.ts`) and bridge mode (`src/main/bridge/`; `spec/mcp-and-agents.md`, "Bridge mode").
 
 - **Context:** The server must accept only same-computer connections [REQ: FR-191]. Any local program or web page could otherwise reach it. The first agent app is Claude.
 - **Decision:** Streamable HTTP bound to 127.0.0.1, bearer token, `Origin` and `Host` checks. The app executable has a `--mcp-bridge` mode for clients that only launch command-line servers.
@@ -107,7 +107,7 @@ Built.
 
 ### ADR-012: Publish does a fresh export
 
-Built (P9-7 to P9-13). As built, the export runs inside the publish job into its work folder; it is all or nothing about its ads and inserts no `report` row (`spec/storage-and-publish.md`, "Publishing").
+Built (`src/main/publish/`). The export runs inside the publish job into its work folder; it is all or nothing about its ads and inserts no `report` row (`spec/storage-and-publish.md`, "Publishing").
 
 - **Context:** Publishing must upload final exports, components, the sheet and the report as one consistent set [REQ: FR-162].
 - **Decision:** `publish.run` exports the whole campaign to a temporary folder, then uploads, writes a manifest and removes stale files under the campaign's folder only.
@@ -116,7 +116,7 @@ Built (P9-7 to P9-13). As built, the export runs inside the publish job into its
 
 ### ADR-013: Format change is its own command with one table of allowed changes
 
-Built (P7-10; the tool P10-13).
+Built (`src/main/commands/variant/set-format.ts` and the MCP tool `set_variant_format`).
 
 - **Context:** A variant's format can be changed in both directions: image to video [REQ: R-20, D-012] and video back to image [D-020]. Video settings must survive a change to image and back [D-026]. An agent may make the change [D-025]. The change has side effects that a title or duration edit does not: it must respect the `variant_grid` unique index and may create a background clip.
 - **Decision:** A command of its own, `variant.setFormat`, on the variant's undo list, allowed for agents. One table in `src/shared/config/format-changes.ts` says which changes are allowed, and both are. The change writes `format` and nothing else, except the first clip of a variant that has none. Clips, duration, timing and animation stay stored while a variant is an image, so neither direction loses anything.

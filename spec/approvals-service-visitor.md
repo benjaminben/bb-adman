@@ -4,23 +4,24 @@ The visitor's side of the approvals service [D-095, D-097]: the routes the catch
 
 ## Visitor routes and logic
 
-The logic is **Built** (AP-3, with its review's fixes); the replies for the page app are **built** (AP-15); sign-off and pictures are AP-4. The pages themselves are in `spec/approvals-gallery.md`. **The try limit, the session check and the form checks live only here**, never in `proxy.ts` or a page.
+The logic, the replies for the pages, sign-off and pictures are **Built** (`src/visitor/`, `src/pictures/`). The pages themselves are in `spec/approvals-gallery.md`. **The try limit, the session check and the form checks live only here**, never in `proxy.ts` or a page.
 
 **Routes through the catch-all** (`visitor/routes.ts`; the table `VISITOR_ROUTES` of `{ name, method, path, handler }`, matched on the raw path of `request.url`, so a percent-encoded character never matches a slug):
 
 | Route | What it does |
 |-------|--------------|
 | `POST /l/{slug}/enter` | Form `password`. Right: session made, cookie set, `303` to `/l/{slug}`. Wrong, unknown slug or too many tries: `303` to `/l/{slug}?m=wrong-password`, the same bytes in all three cases (A-103) |
-| `POST /l/{slug}/signoffs` | Adds a sign-off for one variant, or for every variant of the shown set ("Sign off all", with a stamp of that set; a stale stamp writes nothing). The form fields changed in R2A-3: a page drawn before it that posts the old `variant` and `version` fields gets "changed" and writes nothing. `303` to `/l/{slug}?m={code}#v-{variant}` |
-| `POST /l/{slug}/signoffs/{id}/remove` | Removes that sign-off if it belongs to this link (AP-4). `303` as above |
+| `POST /l/{slug}/signoffs` | Adds a sign-off for one variant, or for every variant of the shown set ("Sign off all", with a stamp of that set; a stale stamp writes nothing). A post that carries only the bare `variant` and `version` fields of an older page gets "changed" and writes nothing. `303` to `/l/{slug}?m={code}#v-{variant}` |
+| `POST /l/{slug}/signoffs/{id}/remove` | Removes that sign-off if it belongs to this link. `303` as above |
+| `POST /l/{slug}/reviewer` | "Use this email" (`saveReviewer` in `visitor/actions.ts`): the form checks and a valid session, then the email must pass `EMAIL` (else `m=bad-email`); sets the reviewer-email cookie and writes nothing to the database. No valid session: the plain-text `403` |
 | `POST /l/{slug}/leave` | "Log out": deletes this session's row, clears the session cookie and the reviewer-email cookie, `303` to `/l/{slug}`. No valid session: the plain-text `403` |
-| `GET /l/{slug}/p/{variantKey}/{version}` | The picture, for a valid session only ("Pictures", below, AP-4) |
-| `GET /l/{slug}/c/{variantKey}/{version}` | A video clip, for a valid session only, one plain byte range at a time (R2V-2; `spec/phases/round-2-approvals-video.md`, "The clip route") |
+| `GET /l/{slug}/p/{variantKey}/{version}` | The picture, for a valid session only ("Pictures", below; `visitor/picture-route.ts`) |
+| `GET /l/{slug}/c/{variantKey}/{version}` | A video clip, for a valid session only, one plain byte range at a time (`visitor/clip-route.ts`, `range.ts`; `spec/phases/round-2-approvals-video.md`, "The clip route") |
 | `GET /robots.txt` | `User-agent: *` and `Disallow: /` |
 | Anything else (not the page) | `404`, "Not found.", with the plain text headers below |
 
 - Each handler call is wrapped: a throw logs the route name and the error's name only, and answers the fixed `500` "Something went wrong. Try again later." with the plain text headers.
-- **Every redirect is a `303`** built by `redirect(request, slug, { m?, cookie? })` in `headers.ts` from the checked slug (never Next.js's `redirect()`, which may send a 307 that makes the browser post again). Its headers are the plain text set plus `Location` and, when entering or leaving, `Set-Cookie`. AP-4's sign-off redirect with `#v-{variant}` goes through it too, with a checked variant option. It throws on an unknown notice key.
+- **Every redirect is a `303`** built by `redirect(request, slug, { m?, cookie? })` in `headers.ts` from the checked slug (never Next.js's `redirect()`, which may send a 307 that makes the browser post again). Its headers are the plain text set plus `Location` and, when entering or leaving, `Set-Cookie`. The sign-off redirect with `#v-{variant}` goes through it too, with a checked variant option. It throws on an unknown notice key.
 - **`NODE_ENV` is read only in `src/server/env.ts`**, which exports `isDev()`. Nothing else reads it.
 - **The cookie is set and cleared only here**, never by a page or by `proxy.ts`.
 
@@ -40,24 +41,29 @@ SELECT ?1, id, ?2 FROM link WHERE id = ?3 AND password_salt = ?4 AND password_ha
   When it inserts no row (the password was changed between the check and the insert), the reply is the same as a wrong password.
 - **Check** (`visitor/session.ts`, every gallery, picture and form route): the slug has the `SLUG` shape (checked first, since Next.js hands page `params` over percent-decoded; a wrong shape counts as an unknown slug); the cookie of exactly that name; the value matches `^[A-Za-z0-9_-]{43}$`; its hash is a row with `expires_at` after now **and** `link_id` equal to the slug's link. Anything else is no session.
 - **Ends** after 12 hours; on "Log out"; when the app sets a new password; when the link is deleted. On each successful password the link's expired session rows are deleted.
-- **The reviewer email** (R2A-2, A-360 to A-362). A second cookie, set by a sign-off post whenever its email is valid: a browser-session cookie (no `Max-Age`), `HttpOnly`, holding the email so the server can fill the field and mark the cards with script off. Cleared by "Log out" and by every right password entry (the entry reply sets the session cookie, then the cleared reviewer cookie). A wrong password sets no cookie. Every sign-off uses the posted field text; the cookie only fills the field.
+- **The reviewer email** (A-360 to A-362; `visitor/reviewer.ts`). A second cookie, set by "Use this email" and by a sign-off post whenever its email is valid: a browser-session cookie (no `Max-Age`), `HttpOnly`, holding the email so the server can fill the field and mark the cards with script off. Cleared by "Log out" and by every right password entry (the entry reply sets the session cookie, then the cleared reviewer cookie). A wrong password sets no cookie. Every sign-off uses the posted field text; the cookie only fills the field.
 
 ### The gallery view
 
-**Built** (AP-3 review fix; the new input AP-15, built). `openGallery` gives `{ kind: 'password', notice }` or `{ kind: 'gallery', view }`, and the view is built field by field:
+**Built** (`visitor/actions.ts`). `openGallery(db, { slug, cookie, m }, now)` gives `{ kind: 'password', notice }` or `{ kind: 'gallery', view }`, where `cookie` is the `Cookie` header text or null and `m` the `m` query value or null. `readSession` takes the cookie text the same way. The view is built field by field:
 
 ```ts
 type GalleryView = {
   link: { slug: string; campaignName: string }
-  variants: Array<{ variantKey: string; position: number; title: string; sizeLine: string; version: number; expired: boolean }>
+  variants: Array<{
+    variantKey: string; position: number; title: string; sizeLine: string; version: number; expired: boolean
+    video: null | { clip: null | { durationMs: number } }   // null: an image; { clip: null }: a video sent as its still
+  }>
   signoffs: Array<{ id: string; variantKey: string; version: number; email: string; createdAt: number }>
+                                    // only sign-offs of each variant's current version
+  reviewer: string | null           // the reviewer cookie's checked email
+  stamp: string                     // the stamp of the signable set, sent back by "Sign off all"
   notice: NoticeKey | null
 }
 ```
 
-- Since R2A-2 and R2V-4 the view also carries the reviewer email, the shown set's stamp, only the current version's sign-offs, each picture's shape and whether a variant has a clip (`spec/phases/round-2-approvals.md`, "Routes and data changes"; `round-2-approvals-video.md`, "The gallery").
+- The full design of these fields is in `spec/phases/round-2-approvals.md`, "Routes and data changes", and `round-2-approvals-video.md`, "The gallery". The view holds no clip address and no byte count.
 - Raw rows (`LinkRow`, `VariantRow`, `SignoffRow`) never leave `src/visitor/` and `src/db/`. The view holds no hash, salt, internal link ID, picture address or expiry time. Only this type may be passed to a component; nothing under `app/` or `src/ui/` imports a row type or a module from `src/db/` or `src/crypto/` (`test/config.test.ts` checks the imports).
-- **AP-15 changed the input** from a `Request` to what a page has: `openGallery(db, { slug, cookie, m }, now)`, where `cookie` is the `Cookie` header text or null and `m` the `m` query value or null. `readSession` takes the cookie text the same way.
 
 ### Wrong-password limit
 
@@ -93,7 +99,7 @@ A failure gives `403`, plain text "This form could not be sent. Open the link ag
 - **Why the Origin check holds on Vercel.** `request.url` there is built from the host the browser used. A forged post comes from the visitor's own browser, which sets `Origin` to the other site and `Host` to ours, so the two never match. If `request.url` were ever wrong, every form would be refused: it fails closed, and `e2e/gallery.spec.ts` and AP-13's hand check prove the forms work.
 - **The rule for the Origin check.** It is never loosened. It never reads `X-Forwarded-Host`. It never allows a second origin to make a test pass. On local `next start`, `request.url` is `http://localhost:{port}`, so every e2e test opens the service at `http://localhost:{port}` (`spec/approvals-service-tests.md`), never at `127.0.0.1`.
 
-**Sign off** (`visitor/signoffs.ts`, AP-4). `variant` must match `VARIANT_KEY`, `version` a whole number, `email` must pass `EMAIL` (else `m=bad-email`). Then one statement that writes only if the variant still exists for this link at this version:
+**Sign off** (`visitor/signoffs.ts`; "Sign off all" in `signoff-all.ts`, its stamp in `stamp.ts`). `variant` must match `VARIANT_KEY`, `version` a whole number, `email` must pass `EMAIL` (else `m=bad-email`). Then one statement that writes only if the variant still exists for this link at this version:
 
 ```sql
 INSERT OR IGNORE INTO signoff (id, link_id, variant_key, version, email, created_at)
@@ -103,11 +109,11 @@ FROM gallery_variant WHERE link_id = ?4 AND variant_key = ?5 AND version = ?6
 
 One row written: `m=signed`. None: if a sign-off with that link, variant, version and email exists, it was a repeat (`m=signed`); otherwise the variant changed or went (`m=changed`).
 
-**Remove** (AP-4): `DELETE FROM signoff WHERE id = ? AND link_id = ?`. An ID of another link removes nothing. `m=removed` either way (anyone with the link may remove any sign-off [D-095]).
+**Remove:** `DELETE FROM signoff WHERE id = ? AND link_id = ?`. An ID of another link removes nothing. `m=removed` either way (anyone with the link may remove any sign-off [D-095]).
 
 ### Notices
 
-**Built (AP-15)**, `visitor/notices.ts`. `m` is looked up in this fixed table and becomes a `NoticeKey`; an unknown value is null. A page never shows text from the address.
+**Built**, `visitor/notices.ts`. `m` is looked up in this fixed table and becomes a `NoticeKey`; an unknown value is null. A page never shows text from the address.
 
 | `m` | Shown on | Notice |
 |-----|----------|--------|
@@ -116,6 +122,9 @@ One row written: `m=signed`. None: if a sign-off with that link, variant, versio
 | `removed` | Gallery | "The sign-off was removed." |
 | `changed` | Gallery | "This variant changed while you were looking. Look at it again, and sign off if you still approve." |
 | `bad-email` | Gallery | "Enter a full email address, like name@company.com." |
+| `email-saved` | Gallery | "Your email is saved until you log out or close the browser." |
+| `signed-all` | Gallery | "Your sign-offs were saved." |
+| `gallery-changed` | Gallery | "The gallery changed while you were looking. Nothing was signed. Look at it again, and sign off if you still approve." |
 
 A key shown on the wrong page (for example `signed` on the password page) shows nothing.
 
@@ -135,18 +144,18 @@ X-Robots-Tag: noindex, nofollow
 Strict-Transport-Security: max-age=31536000        (only when the request is https)
 ```
 
-`Referrer-Policy: same-origin` keeps the slug from leaving in a `Referer` header: a request to any other site carries no referrer. It is not `no-referrer`, because under that setting a browser sends `Origin: null` on a form post, and the Origin check of "Forms that write" would refuse every real form. Under `same-origin` the service's own forms carry its origin, and the Origin check itself is unchanged. One test compares each header set whole. Next.js may add `Vary` and `Content-Encoding` to these replies (`spec/approvals-service.md`, "What Vercel and Next.js add or change in front").
+`Referrer-Policy: same-origin` keeps the slug from leaving in a `Referer` header: a request to any other site carries no referrer. It is not `no-referrer`, because under that setting a browser sends `Origin: null` on a form post, and the Origin check of "Forms that write" would refuse every real form. Under `same-origin` the service's own forms carry its origin, and the Origin check holds. `test/headers.test.ts` compares each header set whole. Next.js may add `Vary` and `Content-Encoding` to these replies (`spec/approvals-service.md`, "What Vercel and Next.js add or change in front").
 
 ## Pictures
 
-**Built (AP-4).** `src/pictures/`. The service never stores picture bytes.
+**Built.** `src/pictures/`. The service never stores picture or clip bytes.
 
-- **`PictureSource`** (`source.ts`) is the one interface the picture route uses: `get(ref: { url: string }): Promise<{ bytes: Uint8Array; type: 'image/png' | 'image/jpeg' } | null>`. `s3-source.ts` is today's only implementation.
+- **`PictureSource`** (`source.ts`) is the one interface the picture route uses: `get(ref: { url: string }): Promise<{ bytes: Uint8Array; type: 'image/png' | 'image/jpeg' } | null>`. `s3-source.ts` is its only implementation. Clips have their own source (`clip-source.ts`, `s3-clip-source.ts`; `spec/phases/round-2-approvals-video.md`, "The clip route").
 - **`checkPictureUrl(text, env)`** (`check-url.ts`), used when the API stores an address and again right before every fetch:
   - `https:` only; no user name or password; no port, or port 443;
   - host, lower-cased, matching `^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]\.s3\.[a-z0-9-]+\.amazonaws\.com$` (a bucket's own host) or `^s3\.[a-z0-9-]+\.amazonaws\.com$` (path style), the two forms the app's S3 client makes (`spec/storage-and-publish.md`, "Allowed hosts");
   - **test origin:** only when the environment has `TEST_PICTURE_ORIGIN` (never on a Vercel deployment, `spec/approvals-service.md` "Environment") and that value is exactly `http://127.0.0.1:{port}`, an address with that exact origin is also allowed.
 - **Fetching** (`s3-source.ts`): the stored text is parsed once into a `URL`; `checkPictureUrl` runs on it; the same `URL` object is fetched with `fetch(url, { redirect: 'manual' })` and no added header, no cookie and nothing from the visitor's request. Under Node a redirect comes back as its real 3xx status. Status must be 200: anything else is a failure. `Content-Length` over 16 MiB fails before reading; the body is read with a 16 MiB cap; the first bytes must be a PNG (`89 50 4E 47 0D 0A 1A 0A`) or a JPEG (`FF D8 FF`) (`sniff.ts`). The reply's own `Content-Type` is ignored.
-- **The picture route.** Session check; the row `gallery_variant` for (this link, `variantKey`); `version` must equal the row's; `picture_expires_at` after now; then `PictureSource.get`. Any failure: `404` with an empty body and the plain text headers. Success: the checked bytes sent as a stream (a `ReadableStream` that hands over the buffer in 1 MiB pieces, so Vercel's 4.5 MB limit on whole replies does not apply; every check has passed before the first byte), with `Content-Type` from the sniff, `X-Content-Type-Options: nosniff`, `Cache-Control: no-store` (the browser keeps no copy, so a reload always shows the current picture and nothing stays after "Leave"), `Content-Security-Policy: default-src 'none'; sandbox`, `Cross-Origin-Resource-Policy: same-origin`, `Referrer-Policy: no-referrer`.
+- **The picture route.** Session check; the row `gallery_variant` for (this link, `variantKey`); `version` must equal the row's; `picture_expires_at` after now; then `PictureSource.get`. Any failure: `404` with an empty body and the plain text headers. Success: the checked bytes sent as a stream (a `ReadableStream` that hands over the buffer in 1 MiB pieces, so Vercel's 4.5 MB limit on whole replies does not apply; every check has passed before the first byte), with `Content-Type` from the sniff, `X-Content-Type-Options: nosniff`, `Cache-Control: no-store` (the browser keeps no copy, so a reload always shows the current picture and nothing stays after "Log out"), `Content-Security-Policy: default-src 'none'; sandbox`, `Cross-Origin-Resource-Policy: same-origin`, `Referrer-Policy: no-referrer`.
 - **The stored address never appears** in a reply, a log line or an error.
-- **An expired address.** Signed S3 addresses last at most 7 days. The app renews them when it refreshes (`spec/approvals-commands.md`, "`approvals.refresh`"). The gallery shows the expiry sentence for a row whose time has passed. A picture that fails before its time shows the browser's broken picture with its `alt` text; the next "Update gallery" fixes it.
+- **An expired address.** Signed S3 addresses last at most 7 days. The app renews them when it refreshes (`spec/approvals-commands.md`, "`approvals.refresh`"). The gallery shows the expiry sentence for a row whose time has passed. A picture that fails before its time shows the browser's broken picture; the next "Update gallery" fixes it.

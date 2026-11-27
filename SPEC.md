@@ -1,7 +1,7 @@
 # SPEC.md — Technical Specification (index)
 
-**Project:** Adman, a desktop app (Electron) for making ad campaigns: one brief becomes a grid of image and video ads in many sizes and languages, with AI generation, checks, export and cloud publishing.
-**Status:** Phases 1 to 10, the app style pass (ST-1 to ST-14), the look pack, approvals and subject photos are built on `main`, except the leftovers listed in `spec/phases/`. Round 2 (the stakeholder's first hand-testing feedback) is built too; the choices made for him along the way are listed in `spec/phases/round-2-verify.md`. Phase 11 is held. The stakeholder's hand checks are listed in each phase file and in `spec/open-items.md`, section 5; questions for him are in section 6.
+**Project:** Adman (shown to people as "AdManager"), a desktop app (Electron) for making ad campaigns: one brief becomes a grid of image and video ads in many sizes and languages, with AI generation, checks, export, cloud publishing and sign-off by link.
+**Status:** Phases 1 to 10 are built on `main`, with the work that followed them: the look pack, the app style pass and the design wave, approvals by link (with video in the gallery), subject photos, the changes from the stakeholder's three rounds of hand testing, custom ComfyUI workflows, brand in a brief, "Make variants" and the command-line quickstart. Phase 11 (licence, README extras, release workflow) is held. What is not built is marked "Not built" in its topic file; the larger items are listed in `spec/overview.md`, "Component map". The choices made without the stakeholder, to confirm, are in `spec/phases/round-2-verify.md`, `design-wave-verify.md` and `round-3-verify.md`. The stakeholder's hand checks are in each phase file and in `spec/open-items.md`, section 5; open questions are in section 6.
 
 The spec is split into small files so that a reader loads only what a task needs. This file is the map.
 
@@ -13,13 +13,15 @@ The spec is split into small files so that a reader loads only what a task needs
 - `OI-18`, `Q-030` and `A-01` point at an open question in `spec/open-items.md` or an assumption in `spec/assumptions.md`.
 - Where the spec and the requirements differ, the spec wins. `spec/overview.md` lists every difference.
 - Each main part of a topic file is marked `Built` or `Not built (Phase N)`. For built parts the code and its tests are the record of detail; the spec keeps the contracts, limits, codes, messages and security rules.
+- To review the whole architecture, read in this order: `spec/overview.md` (the parts and how they fit), `spec/structure.md` (where code lives and the rules it follows), `spec/adrs-and-glossary.md` (why it is built this way), `spec/data-model.md` and `spec/data-model-campaign.md` (what is stored), `spec/api-principles.md` (commands, queries, events, undo), `spec/security.md`, then the topic files feature by feature.
 
 ## How the spec is kept
 
 - A ruling or a change is edited into the topic file it changes. One statement of each rule, the current one. No dated log of rulings, no version marks, no history.
 - A stakeholder decision is added to `DECISIONS.md` with the stakeholder's words, then the topic file is edited.
 - An assumption made to keep the build moving is added to `spec/assumptions.md`.
-- When work in `spec/phases/` is built and merged, it is removed from the phase file and the topic file's `Not built` mark is changed to `Built`.
+- When work in `spec/phases/` is built and merged, its phase file is marked built and the topic file's `Not built` mark is changed to `Built`, in the same change.
+- A folder or a fixed-role file added under `src/main/`, `src/shared/`, `src/renderer/` or `tests/` is added to the tree in `spec/structure.md` in the same change.
 - Keep each file under about 40 KB. Split a file that grows past it.
 
 ## Topic files
@@ -28,7 +30,7 @@ The spec is split into small files so that a reader loads only what a task needs
 |------|-------|
 | `spec/overview.md` | Where the spec departs from the requirements, architecture, component map, technology stack |
 | `spec/adrs-and-glossary.md` | Architecture decision records ADR-001 to ADR-013, glossary |
-| `spec/structure.md` | Folder tree, module and code rules, the renderer layout rule (`@/` alias, one folder per component, one styling source) |
+| `spec/structure.md` | Folder tree, module and code rules, how commands and queries are registered, the renderer layout rule (`@/` alias, one folder per component, one styling source) |
 | `spec/data-model.md` | Where data lives, ID formats, the project-level tables (project, subject, asset, job, report, checks) |
 | `spec/data-model-campaign.md` | Campaign, sizes, rule set, direction, variant, layer and background clip |
 | `spec/data-rules.md` | Links, follow rules and sync, fan-out ("Make variants"), data flow, caching, migrations, package project, format change |
@@ -37,7 +39,7 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/assets.md` | Import, linking, the assets folder, file types, relink, change detection, the asset protocol, reference pictures |
 | `spec/api-principles.md` | How commands, queries and events work; error codes, reasons and messages; undo |
 | `spec/api-commands.md` | Every command, built or not, with its agent policy |
-| `spec/api-dev-commands.md` | The `dev` command group (empty since P9-14) and the `devTools` flag |
+| `spec/api-dev-commands.md` | The hand-test commands (`dev.*`): the group is empty and both commands are dropped; the `devTools` flag |
 | `spec/api-queries-events.md` | Every query and event |
 | `spec/mcp-and-agents.md` | The MCP server, token, tools, the ask flow, the permissions matrix, the agent policy table |
 | `spec/agent-runs.md` | Generation started by an agent: the tick, the gate, limits, unticking |
@@ -49,7 +51,8 @@ The spec is split into small files so that a reader loads only what a task needs
 | `spec/providers-adapters.md` | The Gemini adapter, the fal.ai Seedance adapter, the Adobe Firefly stub |
 | `spec/comfyui.md` | The ComfyUI adapter: address, client, checks, a picture run, failures |
 | `spec/comfyui-workflows.md` | The workflows, which one a run gets, filling a run, sizes, video runs, extend, what is left on the server |
-| `spec/comfyui-trials.md` | Trials and `proven`, the real-server tests `test:comfy`, the never-built ComfyUI hand-test plan (OI-64), Krea 2 and custom workflows, what a server needs |
+| `spec/comfyui-trials.md` | Trials and `proven`, the real-server tests `test:comfy`, the dropped hand-test screen (OI-64), Krea 2 (not built), what a server needs |
+| `spec/comfyui-custom.md` | Custom ComfyUI workflows (D-104): the marks in a graph, where a workflow is kept, adding one by hand or through an agent, running it, its security rules |
 | `spec/storage-and-publish.md` | Storage interface, local, S3, Dropbox, the publish flow |
 | `spec/export-and-checks.md` | Embedded generation details, export, reports, the six checks |
 | `spec/infra-and-settings.md` | Environments, scripts, CI, release, secrets, environment variables, `settings.json` |
@@ -81,26 +84,23 @@ The spec is split into small files so that a reader loads only what a task needs
 
 ## Build plan
 
+The files in `spec/phases/` are the plans the work was built from, kept as the record of each slice, with what is left of each. For how a built part behaves, the topic file wins.
+
 | File | Holds |
 |------|-------|
-| `spec/phases/README.md` | The build order, the topic files each phase needs, the rules for every phase |
+| `spec/phases/README.md` | The build order, the state of each phase, the topic files each phase needs, the rules for every phase |
 | `spec/phases/DEV-RULES.md` | What every developer run reads first: where things are, the rules the same for every slice |
-| `spec/phases/phase-02-leftovers.md` | Phase 2 work not built: small fixes, slice WP, ComfyUI follow-ups, the exit check, what waits on a ruling |
-| `spec/phases/phase-02-screens.md` | The Phase 2 screen slices (groups 4 and 5; S2-4 to S2-16 built, S2-17 left): ComfyUI failure screens, dialogs, import, relink, package, brief form, slot view, campaign grid |
-| `spec/phases/phase-02-agent-generation.md` | Agent generation through the MCP server (built, D-080): the one hand run on the real server still owed, and the change if OI-90 is answered "no ticks" |
+| `spec/phases/phase-02-leftovers.md`, `phase-02-screens.md`, `phase-02-agent-generation.md` | Phase 2: the work not built (small fixes, ComfyUI follow-ups, what waits on a ruling), the screen slices, and agent generation through the MCP server with the one hand run still owed |
+| `spec/phases/phase-03.md` to `phase-11.md` | One file per phase: goal, scope, exit criteria, work carried in. Phases 3 to 10 are built; Phase 11 is held |
+| `spec/phases/phase-05-slices.md`, `phase-05-screens.md`, `phase-06-slices.md`, `phase-07-slices.md`, `phase-07-slices-2.md`, `phase-08-slices.md`, `phase-08-slices-2.md`, `phase-09-slices.md`, `phase-09-slices-2.md`, `phase-10-slices.md` | The developer-size slices of Phases 5 to 10 |
 | `spec/phases/review-leftovers.md` | Review findings not yet handled, sorted: fix now, fix with a later phase, test gaps |
-| `spec/phases/phase-05-slices.md`, `phase-05-screens.md` | Phase 5's slices: logic P5-1 to P5-13; screens P5-14 to P5-18 and the exit slice P5-19 |
-| `spec/phases/phase-03.md` to `phase-11.md` | One file per phase: goal, scope, exit criteria, work carried in, what is not designed yet |
-| `spec/phases/look-pack.md` | The look pack (D-094): background colour, text boxes, shades, starter layouts; slices LK-1 to LK-7 and their order beside Phase 4 |
-| `spec/phases/approvals.md` | Approvals by link (D-095): exit criteria, the rules for its slices, and the order of AP-1 to AP-16 beside Phase 4 and the look pack |
-| `spec/phases/approvals-service-slices.md` | Approvals by link: the service slices AP-1, AP-2, AP-3, AP-14, AP-15, AP-4, AP-16 |
-| `spec/phases/approvals-desktop-slices.md` | Approvals by link: the desktop slices AP-5 to AP-13 and AP-10b, with the follow-ups ruled after AP-8 |
-| `spec/phases/subject-photos.md` | Subject photos (D-098): slices SP-1 to SP-5 and their order |
-| `spec/phases/brief-brand.md` | Brand in a brief: slices BB-1 to BB-8 and their order |
-| `spec/phases/make-variants.md` | Make variants (D-108): slices MV-1 to MV-9 and their order |
+| `spec/phases/look-pack.md` | The look pack (D-094), built: background colour, text boxes, shades, starter layouts; slices LK-1 to LK-7 |
+| `spec/phases/app-style.md` | The app style pass (D-084), built: slices ST-1 to ST-14 |
+| `spec/phases/approvals.md`, `approvals-service-slices.md`, `approvals-desktop-slices.md` | Approvals by link (D-095), built: exit criteria and order; the service slices; the desktop slices |
+| `spec/phases/subject-photos.md`, `subject-delete.md` | Subject photos (D-098), built: slices SP-1 to SP-5; deleting a subject (D-101), built: slice SUBJ-1 |
 | `spec/phases/round-2-platform.md`, `round-2-campaign.md`, `round-2-editor.md`, `round-2-approvals.md`, `round-2-approvals-video.md` | Round 2, built: the design and slices for agent tools and briefs, several projects and the name; the campaign page and the Assets panel; the editor's Generate panel; the new gallery; video in the gallery |
-| `spec/phases/round-2-verify.md` | Round 2: the choices made without the stakeholder, for him to confirm, and the hand checks only he can do |
-| `spec/phases/design-wave.md` | The design wave (not built): the choices taken, the sixteen anti-patterns, the rules for every slice, Wave 1 (tokens and shared parts) in full, Wave 2 (screens) |
-| `spec/phases/design-wave-screens-a.md` | The design wave, Wave 2: the slices for Settings, the editor, the shell and the start screen |
-| `spec/phases/design-wave-screens-b.md` | The design wave, Wave 2: the slices for project home, Assets, the campaign page, the dialogs and the clean-up |
-| `spec/phases/design-wave-verify.md` | The design wave: choices made without the stakeholder, for him to confirm |
+| `spec/phases/design-wave.md`, `design-wave-screens-a.md`, `design-wave-screens-b.md` | The design wave, built: the choices taken, the rules for every slice, Wave 1 (tokens and shared parts) and the Wave 2 screen slices |
+| `spec/phases/custom-workflows-slices.md` | Custom ComfyUI workflows (D-104), built: slices CW-1 to CW-8 |
+| `spec/phases/brief-brand.md` | Brand in a brief, built: slices BB-1 to BB-8 |
+| `spec/phases/make-variants.md` | Make variants (D-108), built: slices MV-1 to MV-9 |
+| `spec/phases/round-2-verify.md`, `design-wave-verify.md`, `round-3-verify.md` | The choices made without the stakeholder in Round 2, the design wave and Round 3 onward, to confirm; the hand checks only the stakeholder can do |

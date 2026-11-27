@@ -14,7 +14,7 @@ Built. Main files: `src/main/assets/path-resolver.ts`, `src/main/assets/service.
 |----------|----------|
 | Assets folder, default `{Name} Assets/` beside the project file | Generated files, and imported files the user chose to copy (`storage = 'managed'`) |
 | Anywhere on disk | Linked imported files (`storage = 'linked'`) |
-| App data folder, `thumbnails/` | Thumbnails (Phase 3) |
+| App data folder, `thumbnails/` | Variant thumbnails (`src/main/thumbnails/`) |
 
 - A managed file is named `{assetId}.{ext}` in the assets folder. A linked file keeps its own name and place. Linking in place is the default for imports from the window (ADR-002).
 - **Resolving an asset's file:** `rel_path` against the project file's folder first, then `abs_path`. A path that is not a regular file is skipped. If neither is a file, the asset is missing [REQ: FR-009, R-06]. `project.get` gives the missing count from `AssetService.missingAssetIds`; `asset.list` marks each row `missing`.
@@ -117,7 +117,7 @@ A file is accepted when its extension is listed **and** its first bytes match th
 
 - The extension is the lower-case text after the last dot; a name that is only a dot and an extension (`.png`) has none. An empty file matches no type.
 - `pickerExtensions(purpose, kind?)`: `import` offers every extension, or only those of `kind` when given; `relink` only those of the asset's kind; `brief` only the text ones.
-- **File facts as built.** Width and height come from PNG and JPEG headers only. `font_family` is filled from the font's `name` table at import, relink and the change check (`readFontFamily`, `spec/scene.md`, "Font names at import"); the change check sets it to null when a font file becomes another kind. `duration_ms` is null: Phase 7 reads video. `readFileFacts` hashes before checking type (direct files, relink and the change check; folder import checks type first). MP4 and MOV are recognised by `ftyp` alone, so a HEIC, AVIF or M4A named `.mp4` is taken as video; Phase 7 may tighten this.
+- **File facts** (`src/main/assets/inspect.ts`). Width and height come from PNG and JPEG headers, and for MP4 and MOV from the file's boxes, with `duration_ms`; every other kind leaves them null. `font_family` is filled from the font's `name` table at import, relink and the change check (`readFontFamily`, `spec/scene.md`, "Font names at import"); the change check sets it to null when a font file becomes another kind. `readFileFacts` hashes before checking type (direct files, relink and the change check; folder import checks type first). A file named `.mp4` or `.mov` whose `ftyp` major brand is a still picture or sound-only brand (HEIC, AVIF, M4A and the like, `NOT_VIDEO_BRANDS` in `sniff.ts`) is not taken as video.
 - Size limits for pictures sent to a provider (`src/main/providers/picture-limits.ts`): `MAX_PICTURE_BYTES` 32 MiB, `MAX_PICTURE_SIDE` 8,192, `MAX_PICTURE_PIXELS` 24,000,000. Import itself has no size limit.
 
 ## WebP
@@ -126,7 +126,7 @@ Rule: a picture is never refused only because it is WebP [REQ: FR-298, FR-051]. 
 
 ### WebP to PNG conversion
 
-Built (Phase 2, slice WP).
+Built.
 
 - Import, the library, the asset protocol, showing, placing and export take WebP as it is. A conversion happens only where the main process hands picture bytes on: a reference picture, a first frame, an extend source. The user's file is never changed.
 - `generation.runImages`, `generation.startVideo` (its start check lists `image/webp` beside PNG and JPEG) and the reference picker all accept a WebP picture.
@@ -172,7 +172,7 @@ Built. `asset.checkChanged { projectId }` (handler `src/main/commands/asset/chec
 
 - Missing files are skipped (the resolver finds those). Managed files are not checked. Two assets may end with one hash; nothing is merged. One `info` line per changed asset, with its ID and no path.
 - **Triggers** (`src/main/assets/change-trigger.ts`, no Electron import). `checkFiles` in `src/main/index.ts` feeds both: after every successful `project.open` (through `withChangeChecks`, which starts a check without waiting, for both the `execute` given to `registerIpc` and the one in `openFromSystem`), and on `browser-window-focus` for every open project. `checkChangedFiles({ execute, emit, log }, projectId)` sends the command (actor `user`), then the event for a non-empty list. It never runs twice at once for one project. A failure is logged and goes no further.
-- **Event `asset.changedOnDisk`** `{ projectId, assetIds }`, sent after a check with a non-empty list. It is the signal to redraw pictures. Redrawing thumbnails is Phase 3.
+- **Event `asset.changedOnDisk`** `{ projectId, assetIds }`, sent after a check with a non-empty list. It is the signal to redraw pictures; the render service also redraws the thumbnails of variants that use them (`spec/scene.md`).
 
 ## The asset protocol `adman-asset://` (security class)
 
@@ -189,18 +189,18 @@ Decisions in `src/main/assets/asset-url.ts` (no Electron import, unit tested). E
 - **Headers:** `Content-Type` is the row's `mime`, never from the file name. `X-Content-Type-Options: nosniff` and `Cache-Control: no-store` on every answer, 404 included, so a changed linked file is read again. No path, file name or error text in any answer or header.
 - **Scheme privileges** (Electron 45.4.1): `standard`, `secure`, `stream`, `corsEnabled` true; `bypassCSP`, `allowServiceWorkers`, `supportFetchAPI`, `codeCache`, `allowExtensions` false. Fonts load only with `corsEnabled` true; no `Access-Control-Allow-Origin` header is sent. The ruling and its limits: `spec/security.md`, "Rules: the asset protocol" (A-53).
 - The page policy (`src/main/windows/csp.ts`) has `img-src 'self' adman-asset: data: blob:`, `media-src adman-asset:`, `font-src 'self' adman-asset:`.
-- One byte range is answered (P7-6): `206` with `Content-Range` for a single `bytes=` range inside the file, `416` for a start past the end, and the whole file with `200` for several ranges or a header the handler does not read. Every check above runs before the header is read.
+- One byte range is answered: `206` with `Content-Range` for a single `bytes=` range inside the file, `416` for a start past the end, and the whole file with `200` for several ranges or a header the handler does not read. Every check above runs before the header is read.
 - The protocol does not check first bytes (accepted, OI-49).
 - A change to `asset-url.ts` is security class and ruled on its own.
 - Test: `tests/e2e/asset-protocol.spec.ts`: with a project open and one imported picture, a picture element pointed at its address loads; an unknown asset ID does not; a project not open does not.
 
 ## Libraries and reference pictures
 
-Built for the test path. Main files: `src/main/commands/generation/` (checks), `src/renderer/screens/campaign/reference-picker/`, `reference-list.ts`.
+Built. Main files: `src/main/commands/generation/` (checks), `src/renderer/ui/reference-picker/` (with `reference-list.ts`).
 
 - `asset.library` is `reference` (pictures that guide generation) or `asset` (files used in ads). `asset.list` returns rows by `id` ascending (oldest first); the window sorts for display.
 - A hero image is a row with `library = 'asset'`, `kind = 'image'` and a `subject_id`. If a subject has several, the newest fills the slot and the others are offered [REQ: R-12]. One file belongs to at most one subject [REQ: FR-011].
-- **Subject photos** (Not built) [D-098]: a picture attached to a subject, in either library, is offered and pre-chosen as a reference picture; the picture chooser moves a reference-library subject photo to the asset library when placed. Files with no subject keep the rules above. `spec/subject-photos.md`.
+- **Subject photos** (Built) [D-098]: a picture attached to a subject, in either library, is offered and pre-chosen as a reference picture; the picture chooser moves a reference-library subject photo to the asset library when placed. Files with no subject keep the rules above. `spec/subject-photos.md`.
 - `font_publish_allowed` is set by the user with a checkbox "I am allowed to share this font" [REQ: FR-162].
 
 ### Which pictures a run sends
@@ -217,15 +217,15 @@ Built for the test path. Main files: `src/main/commands/generation/` (checks), `
 - Gemini gets the prompt text first, then each reference picture in order as an `inlineData` part holding the clean PNG `AssetService.read` gave (`spec/providers-adapters.md`). ComfyUI gets each picture uploaded under `uploadName(bytes)`, only after its server check answered `ok`; the display name, path, asset ID and subject never enter a request (`spec/comfyui.md`).
 - A video run's first-frame picture is fitted to the run size and sent as PNG; a reference picture is sent as the clean PNG `AssetService.read` gave, not fitted (`spec/jobs.md`, `video_generation`).
 - **The reference picker** (under the prompt box): heading "Reference pictures", one small picture per asset with a tick box and its display name, button "Add pictures"; empty: "No reference pictures in this project yet." It calls `asset.list { projectId, library: 'reference', kind: 'image' }`, `dialog.pickFiles { purpose: 'import', kind: 'image', multiple: true }`, and `asset.import { projectId, paths, library: 'reference', copy: false, subjectId? }` (`subjectId` is the chosen variant's first subject when it has one). After the reply the list is read again and the returned IDs are ticked. A cancelled picker sends nothing; a refused import shows the command's message and ticks nothing. Ticked IDs are sent in tick order, each showing its place ("1", "2"). An asset with `missing: true` cannot be ticked and says "file not found". With 8 ticked (`MAX_REFERENCES_PER_RUN`), an unticked picture cannot be ticked and the picker says "A run takes at most 8 reference pictures." Ticks are kept while the campaign page is open, across variant changes, and dropped for an asset that left the list. Full screen wording: `spec/screens.md`.
-- Phase 4's reference dialog (`spec/screens-ai.md`) also offers generated pictures as references (A-68). A full reference library screen, and removing a reference from the project, are UI-pass work.
+- The reference dialog (`spec/screens-ai.md`) also offers generated pictures as references (A-68). A full reference library screen, and removing a reference from the project, are UI-pass work.
 
 ## Generated assets [REQ: FR-063, FR-068, FR-216, FR-299]
 
 Built for pictures and clips.
 
-- A job writes each result with `AssetService.writeManaged` as `{assetId}.{ext}` in the assets folder, then sends the system command `asset.addGenerated { projectId, jobId, files: [{ assetId, ext }], model? }`. It is internal, denied to agents, not undoable, and holds asset IDs and extensions only, no path and no file contents. `prepare` checks each name with `isManagedName` and reads each file at its managed path; `run` inserts the rows.
-- A generated row: `library = 'asset'`, `origin = 'generated'`, `storage = 'managed'`, `subject_id` null, `display_name` the file name, type and facts read from the file, `gen_run_id` the job ID, `gen_provider` the job's provider, `gen_model` `input.model ?? job.model` (for ComfyUI, the shipped workflow's main model file name, never the server's), `gen_prompt` the prompt from the job's request, or null when the request has none (a cut-out, Phase 4) (`src/main/commands/asset/add-generated.ts`).
-- **Every generated picture is stored as PNG** [REQ: FR-299]: it goes through `toPng` and gets the generation details embedded first (`spec/export-and-checks.md`, "Embedded generation details"). A clip is stored as the provider returned it after `checkMp4`, sound included; its `width` and `height` stay empty until Phase 7.
+- A job writes each result with `AssetService.writeManaged` as `{assetId}.{ext}` in the assets folder, then sends the system command `asset.addGenerated { projectId, jobId, files: [{ assetId, ext }], model?, video? }`. It is internal, denied to agents, not undoable, and holds asset IDs and extensions only, no path and no file contents. `prepare` checks each name with `isManagedName` and reads each file at its managed path; `run` inserts the rows.
+- A generated row: `library = 'asset'`, `origin = 'generated'`, `storage = 'managed'`, `subject_id` null, `display_name` the file name, type and facts read from the file, `gen_run_id` the job ID, `gen_provider` the job's provider, `gen_model` `input.model ?? job.model` (for ComfyUI, the shipped workflow's main model file name, never the server's), `gen_prompt` the prompt from the job's request, or null when the request has none (a cut-out) (`src/main/commands/asset/add-generated.ts`).
+- **Every generated picture is stored as PNG** [REQ: FR-299]: it goes through `toPng` and gets the generation details embedded first (`spec/export-and-checks.md`, "Embedded generation details"). A clip is stored as the provider returned it after `checkMp4`, sound included; its row takes the `width`, `height` and `duration_ms` that `checkMp4` read (the `video` field).
 - Options no variant uses stay in the library [REQ: FR-063]. Picking one is a `layer.update` that sets `source`.
 - A cancel landing between `writeManaged` and `asset.addGenerated` leaves a file with no row. Accepted nuisance.
 
@@ -250,9 +250,3 @@ Do not "fix" these without a ruling. Every value read from a project file is unt
 - The change check stores size, time and SHA-256 of any readable file a linked row names, and, when the first bytes fit the row's kind, its `mime`, width and height. Any real text file with a listed extension can be named by a `text` row and carried by Package.
 - Projects from elsewhere get no confirm step (OI-47 and OI-49 closed). What holds instead: the app never creates a folder outside the project's own folder; a file is never written over an existing one; bytes the window is handed never leave it and page script cannot read them; a linked file goes to a provider or into a package only when its first bytes fit the row's kind; the path checks of `spec/security.md`.
 - The renderer draws no file path, reads no file, and sends an asset file path in no call except `asset.import`, and only a path the system picker or a drop returned, or one a `brief.parse` reply listed in `subjectPictures` or `brandFiles` after its checks (`spec/subject-photos.md`, `spec/brief-brand.md`; a brief may name any file, D-100). (The brief picker's path goes to `brief.parse`, `spec/brief-and-templates.md`.) Display names are drawn as text. The one other path the window draws is in the permission dialog for an agent's file import (`spec/security.md`, "Paths in the renderer").
-
-## Not built
-
-- Reading `duration_ms`, clip `width` and `height` (Phase 7).
-- WebP to PNG conversion (slice WP, above).
-- The query for earlier options of a layer (Phase 4, `spec/jobs.md`).

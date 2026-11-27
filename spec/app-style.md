@@ -1,6 +1,6 @@
 # App style — the prototype's look in the real app
 
-**Status:** the style pass is built (ST-1 to ST-14; plan `spec/phases/app-style.md`). The design wave is **not built**: "The design system" below, the token rows marked "T1", and the parts in `spec/app-style-parts.md` marked "new" are its target. Plan: `spec/phases/design-wave.md`.
+**Status:** built. The style pass (ST-1 to ST-14, plan `spec/phases/app-style.md`) and the design wave (Waves 1 and 2, plan `spec/phases/design-wave.md`) are merged. Not built: the clean-up slice Z-1, which removes the unused `--font-size-*` aliases and `.iconOnly`.
 
 **Goal:** the style pass gave the built screens the prototype's look without changing what they do. The design wave keeps that look (warm paper ground, white panels, one magenta spot colour, serif titles) and changes how much is on screen: fewer boxes, fewer lines, fewer words. D-084 stays: every value comes from `src/renderer/ui/tokens.css`, so one edit there restyles every component.
 
@@ -8,19 +8,19 @@
 
 ## Rules
 
-1. **One styling source.** No CSS file but `tokens.css` writes a raw colour, a px length other than 0, a font family, weight or size, a raw shadow, or a time. `styling-source.test.ts` (exists) guards colours and px; `styling-rules.test.ts` (ST-1) guards the rest.
+1. **One styling source.** No CSS file but `tokens.css` writes a raw colour, a px length other than 0, a font family, weight or size, a raw shadow, or a time. `styling-source.test.ts` guards colours and px; `styling-rules.test.ts` guards the rest.
 2. **Existing token names stay.** A token that exists keeps its name and gets the prototype's value. Renaming would touch every CSS module and could not merge beside other work. New tokens are added beside them.
 3. **Words change only by a spec ruling.** The style pass changed no word. In the design wave a slice changes a visible word, label, accessible name or heading only where its plan entry or the screen's spec file names the new words. An icon may replace a word only with the word kept as the accessible name and the tooltip.
 4. **No feature is removed.** The design wave changes behaviour only where one of its choices (C-1 to C-18, `spec/phases/design-wave.md`) says so. Every action stays reachable. No command, query, event or agent rule is added or changed by a design-wave slice.
 5. **Decorative pieces are hidden from assistive tech.** Icons and drawings carry `aria-hidden="true"` and `focusable="false"`, and add no tab stop.
 6. **Light theme only** (REQUIREMENTS 8.9). A dark theme is later (choice C-7); the role tokens make it a token-file change.
 7. **Reduce motion.** With the system's "reduce motion" on, nothing moves: `tokens.css` sets the short motion time to 0 under `@media (prefers-reduced-motion: reduce)`, and each component with an `animation` turns it off in its own `@media (prefers-reduced-motion: reduce)` rule.
-8. **Focus stays an outline** (`:focus-visible` in `base.css`, already built), in the spot colour, never removed and never drawn with `box-shadow`.
+8. **Focus stays an outline** (`:focus-visible` in `base.css`), in the spot colour, never removed and never drawn with `box-shadow`.
 9. **No CSS `url()` for icons or fonts.** Icons are inline SVG from the icon component; fonts are system fonts. Nothing new passes through the content security policy (`tests/e2e/csp.spec.ts` unchanged).
 
 ## The design system
 
-The design wave's rules. They hold for every screen a design-wave slice builds or changes. The plan, its choices C-1 to C-18 and its anti-pattern table are in `spec/phases/design-wave.md`.
+The design wave's rules. They hold for every screen. The plan, its choices C-1 to C-18 and its anti-pattern table are in `spec/phases/design-wave.md`.
 
 ### The two models
 
@@ -58,9 +58,9 @@ Two parts of the app already work the way every screen should, and the rest is b
 
 One attribute sets the density of everything inside it: `data-density="compact"` on a panel root. Inside it `--control-height`, `--row-height`, `--gap-field`, `--gap-section` and `--icon-size` take their compact values (table below); parts read the tokens and have no size rules of their own. Compact: the editor's layers panel, properties panel and timeline, the Assets panel, the Activity panel. Regular: the start screen, project home, campaign page, Settings, and every dialog.
 
-### Tokens the design wave adds and changes (T1)
+### Role tokens
 
-Added to the `:root` block of `tokens.css`, under the comment `/* Design wave: roles. */`, with exactly these names and values:
+The `:root` block of `tokens.css` holds, under the comment `/* Design wave: roles. */`, exactly these names and values:
 
 ```css
   --gap-tight: var(--space-1);
@@ -94,9 +94,7 @@ Added to the `:root` block of `tokens.css`, under the comment `/* Design wave: r
   --mark-icon: 14px;
 ```
 
-Changed in place: `--control-height` 34px to `32px`; `--control-height-small` 28px to `24px`; `--control-height-large` 42px to `40px`; `--row-height` 38px to `36px`. The size tokens with a role become aliases: `--font-size-small: var(--type-meta-size)`, `--font-size-control: var(--type-body-size)`, `--font-size-reading: var(--type-reading-size)`, `--font-size-heading: var(--type-title-size)`, `--font-size-page: var(--type-page-size)` (so page titles go from 32px to 24px). `--font-size-body` (14px), `--font-size-title` (21px) and `--font-size-wordmark` (24px) have no role and keep their values.
-
-Removed (used by no CSS since the start screen's drawings went): `--width-start-art`, `--drawing-height`, `--drawing-stroke`, `--motion-calm`, and the "Start page drawings" comment.
+Heights: `--control-height` `32px`, `--control-height-small` `24px`, `--control-height-large` `40px`, `--row-height` `36px`. The size tokens with a role are aliases: `--font-size-small: var(--type-meta-size)`, `--font-size-control: var(--type-body-size)`, `--font-size-reading: var(--type-reading-size)`, `--font-size-heading: var(--type-title-size)`, `--font-size-page: var(--type-page-size)`. `--font-size-body` (14px), `--font-size-title` (21px) and `--font-size-wordmark` (24px) have no role.
 
 The compact rule is the last block of the file, after the reduce-motion `@media` block (so every test that reads `:root` up to the first `@media` still reads the regular values):
 
@@ -110,7 +108,7 @@ The compact rule is the last block of the file, after the reduce-motion `@media`
 }
 ```
 
-Every change to `tokens.css` is copied byte for byte to `approvals-service/src/ui/app-tokens.css` in the same commit (`tests/unit/config/approvals-tokens.test.ts`). The approvals gallery uses `--font-size-small`, `--font-size-control` and `--font-size-heading`; the aliases keep their values, so the gallery does not change.
+Every change to `tokens.css` is copied byte for byte to `approvals-service/src/ui/app-tokens.css` in the same commit (`tests/unit/config/approvals-tokens.test.ts`). The approvals gallery uses `--font-size-small`, `--font-size-control` and `--font-size-heading`.
 
 ### Type roles
 
@@ -230,13 +228,13 @@ The prototype's neutral pair (`--neutral`, `--neutral-soft`) is `--color-text-se
 | `--font-reading` (new) | `var(--font-serif)` | `--font-reading` |
 | `--font-condensed` (new) | `'Avenir Next Condensed', 'Arial Narrow', 'Helvetica Neue', sans-serif` | `--font-cond` (its last fallback, Impact, is dropped: too heavy for a small label) |
 | `--font-mono` | kept | `--font-mono` |
-| `--font-size-small` | `12px` (kept); from T1 `var(--type-meta-size)` | `--text-xs` |
-| `--font-size-control` (new) | `13px`; from T1 `var(--type-body-size)` | `--text-sm` |
+| `--font-size-small` | `var(--type-meta-size)` (12px) | `--text-xs` |
+| `--font-size-control` (new) | `var(--type-body-size)` (13px) | `--text-sm` |
 | `--font-size-body` | `14px` (kept) | `--text-md` |
-| `--font-size-reading` (new) | `15px`; from T1 `var(--type-reading-size)` | `--reading-size` |
-| `--font-size-heading` | `16px` → `17px`; from T1 `var(--type-title-size)` | `--text-lg` |
+| `--font-size-reading` (new) | `var(--type-reading-size)` (15px) | `--reading-size` |
+| `--font-size-heading` | `var(--type-title-size)` (17px) | `--text-lg` |
 | `--font-size-title` (new) | `21px` | `--text-xl` |
-| `--font-size-page` (new) | `32px`; from T1 `var(--type-page-size)`, 24px | `--text-2xl` |
+| `--font-size-page` (new) | `var(--type-page-size)` (24px) | `--text-2xl` |
 | `--font-size-wordmark` (new) | `24px` | raw in `shell.css` (`.brand.big`) |
 | `--weight-regular` (new) | `400` | `--weight-regular` |
 | `--weight-medium` (new) | `500` | `--weight-medium` |
@@ -278,14 +276,14 @@ Off-scale prototype values have no token. Where the prototype typed `6px` or `10
 
 | Token | Value | Prototype name |
 |-------|-------|----------------|
-| `--control-height` | `34px`; from T1 `32px` (compact `28px`) | `--control-h` |
-| `--control-height-small` | `28px`; from T1 `24px` | raw (`.btn.sm`, segments) |
-| `--control-height-large` | `42px`; from T1 `40px` | raw (`.btn.lg`) |
+| `--control-height` | `32px` (compact `28px`) | `--control-h` |
+| `--control-height-small` | `24px` | raw (`.btn.sm`, segments) |
+| `--control-height-large` | `40px` | raw (`.btn.lg`) |
 | `--bar-height` | `44px` | `--tabbar-h` (the top bar; also the minimum height of a panel head) |
 | `--tab-height` | `36px` | raw (campaign tab) |
 | `--tab-row-height` | `42px` | raw (`.vtabs`, the variant tab row) |
-| `--row-height` | `38px`; from T1 `36px` (compact `32px`) | raw (a layer row) |
-| `--icon-size` | `16px` (compact `14px` from T1) | raw (`svg.ic`) |
+| `--row-height` | `36px` (compact `32px`) | raw (a layer row) |
+| `--icon-size` | `16px` (compact `14px`) | raw (`svg.ic`) |
 | `--icon-size-small` | `13px` | raw (icons in badges, tabs, layer rows) |
 | `--icon-stroke` | `1.7` | raw (`stroke-width`, no unit) |
 | `--check-size` | `16px` | raw (one size for every checkbox; the prototype's 17px tile box is not carried) |
@@ -293,13 +291,12 @@ Off-scale prototype values have no token. Where the prototype typed `6px` or `10
 | `--badge-height` | `22px` | raw (`.badge`) |
 | `--chip-height` | `24px` | raw (`.chip`) |
 | `--progress-height` | `6px` | raw (`.progress`) |
-| `--width-dialog` | `440px` → `460px` | `.dialog.sm` |
+| `--width-dialog` | `460px` | `.dialog.sm` |
 | `--width-dialog-wide` (new) | `640px` | `.dialog.md` |
 | `--width-dialog-large` (new) | `880px` | `.dialog.lg` |
 | `--width-menu` (new) | `300px` | raw (`.menu`) |
 | `--width-wide` (new) | `1360px` | raw (`.page > *` max width: project home and campaign page) |
 | `--width-start-column` | `360px` | none (the start screen's right-half column) |
-| `--width-start-art`, `--drawing-height`, `--drawing-stroke` | removed in T1 (no CSS uses them since the drawings went) | |
 | Every other existing size token | kept (C-11) | editor panels already equal the prototype (260, 312) |
 
 ### Motion
@@ -309,7 +306,6 @@ Off-scale prototype values have no token. Where the prototype typed `6px` or `10
 | `--motion-fast` | `150ms` (`0ms` with reduce motion) | raw `0.15s` (switch, hover) |
 | `--motion-spin` | `1s` | raw (`.spin`) |
 | `--motion-pop` | `1.6s` | raw (the "finished, not seen" dot) |
-| `--motion-calm` | removed in T1 (was one cycle of a start page drawing; the drawings are gone) | `--motion-calm` |
 | `--start-image-hold` | `10s` | none (how long a start picture shows) |
 | `--start-image-fade` | `1200ms` | none (the crossfade between start pictures) |
 | `--ease-calm` | `cubic-bezier(0.45, 0, 0.55, 1)` | `--ease-calm` |
@@ -318,7 +314,7 @@ Off-scale prototype values have no token. Where the prototype typed `6px` or `10
 
 - The switchable presets (`data-accent`, `data-type`, `data-serif`, `data-corners`) and the "Prototype options" box: the app has one value per token. Changing the spot colour later is a four-line edit (`--color-accent`, `-hover`, `-soft`, `-ink`).
 - `--font-display` (Avenir Next): used only by the prototype's "sans only" pairing and by its sample ads.
-- Sizes for screens the app has not built: `--report-thumb-h`, `--progress-w`, `--side-control-w`.
+- `--report-thumb-h`, `--progress-w`, `--side-control-w`: the app's screens size these parts with the tokens above.
 - Every colour inside the sample ads and photos (`poster.css`, `pictures.js`, `art.js`): ads are drawn by the Scene, not by the app's CSS.
 
 ## Type
@@ -327,7 +323,7 @@ Off-scale prototype values have no token. Where the prototype typed `6px` or `10
 
 | Voice | Token | Used for in the app |
 |-------|-------|---------------------|
-| Serif | `--font-title` | Page titles, dialog titles and names (project, campaign, variant), at `--weight-title`, `--tracking-title` (choice C-9). As built, every `h1`, `h2`, `h3`; a group title that becomes a Section in Wave 2 turns sans |
+| Serif | `--font-title` | Page titles, dialog titles and names (project, campaign, variant), at `--weight-title`, `--tracking-title` (choice C-9). Every `h1`, `h2`, `h3`; a Section title is sans |
 | Serif | `--font-reading` | Text people read or write at length: the brief text fields (brief, subject descriptions), prompt fields, ad copy fields (headline, body, call to action in the properties panel), copy and layout options in their dialogs, the brief reading dialog's text. Size `--font-size-reading`, `--leading-body` |
 | Sans | `--font-body` | Everything you operate: buttons, tabs, labels, field values that are not long text (numbers, names, IDs, sizes), badges, tables, hints, and every warning, error, progress and status message |
 | Condensed sans | `--font-condensed` | The "AdManager" wordmark on the start screen only (the app has no eyebrow labels; see "Out of scope") |
@@ -335,9 +331,9 @@ Off-scale prototype values have no token. Where the prototype typed `6px` or `10
 
 Only a `textarea` or a field named above takes the reading face; one-line `input` fields stay sans.
 
-**Sizes.** The type roles of "The design system" rule: page titles 24px, titles 17px, Section headers 12px bold sans, body 13px, reading 15px, meta 12px; nothing is smaller than 12px. As built before T1 and T2: buttons, tabs, labels and menu items 13px; body 14px; reading 15px; card titles 17px; dialog, Settings and editor titles 21px; project home and campaign titles 32px. After T2, `h1` takes `--type-page-size` and `h2` and `h3` take `--type-title-size`; a screen that sets its own title size (Settings) keeps it until its Wave 2 slice. Mono text takes a size token, never `0.92em`.
+**Sizes.** The type roles of "The design system" rule: page titles 24px, titles 17px, Section headers 12px bold sans, body 13px, reading 15px, meta 12px; nothing is smaller than 12px. `h1` takes `--type-page-size`; `h2` and `h3` take `--type-title-size` (`ui/base.css`); a screen with a smaller `h1` sets it in its own module. Mono text takes a size token, never `0.92em`.
 
-**Weights.** `b` and `strong` use `--weight-bold` (650; Segoe UI rounds it to Semibold). The raw `600` in `layout.module.css`, `tab-row`, `app-shell` and `variant-tile` modules become tokens in their slices.
+**Weights.** `b` and `strong` use `--weight-bold` (650; Segoe UI rounds it to Semibold). No CSS module writes a raw weight.
 
 ### Where the font files come from
 
@@ -369,7 +365,7 @@ Text keeps 4.5:1 against its ground (SPEC 11). The edge of a control, a focus ou
 | `--color-danger-text` on `--color-danger-bg`; warn, info, ok text on their grounds | | 6.0 or more each |
 | `--selection-light` on `--selection-dark` (the canvas size tag) | | 15 or more |
 
-**Mark pairs (3:1), from T1:** `--color-ok`, `--color-warn`, `--color-danger` and `--color-info` each on `--color-bg`, `--color-page`, `--color-surface`, `--color-surface-soft` and `--color-accent-soft` (worked out: warn on `--color-surface` is the lowest, about 3.4). Mark words are `--color-text-secondary`, never the mark colour.
+**Mark pairs (3:1):** `--color-ok`, `--color-warn`, `--color-danger` and `--color-info` each on `--color-bg`, `--color-page`, `--color-surface`, `--color-surface-soft` and `--color-accent-soft` (worked out: warn on `--color-surface` is the lowest, about 3.4). Mark words are `--color-text-secondary`, never the mark colour.
 
 **Pairs that fail, and what to use instead:**
 
@@ -379,8 +375,8 @@ Text keeps 4.5:1 against its ground (SPEC 11). The edge of a control, a focus ou
 | `--color-accent` as text on `--color-accent-soft` | prototype: badges | 4.5, too close | `--color-accent-ink` (6.2) |
 | Switch track off, `--line-strong` on white | prototype `controls.css` | 1.6 | `--color-control-border` (3.5) |
 | Colour swatch edge, `--line-strong` | prototype `pieces.css`, `dialogs.css` | 1.6 | `--color-control-border` |
-| Fan-out option card edge | prototype `flows.css` (not built in the app) | 1.6 | `--color-control-border` when Phase 5 builds it |
-| Control edges in the app today, `#c9ccd3` on white | every button, field and select (`base.css`) | 1.6 | `--color-control-border` (ST-2) |
+| Fan-out option card edge | prototype `flows.css` | 1.6 | `--color-control-border` (`dialogs/fan-out/fan-out.module.css`) |
+| Control edges in `#c9ccd3` on white | every button, field and select (`base.css`) | 1.6 | `--color-control-border` |
 | `--color-control-border` on `--canvas-backdrop` | a control placed on the canvas ground | 2.8 | No control sits on the backdrop; the canvas bar and zoom controls sit on `--color-bg` |
 | `--color-border` as a control's only edge | any | 1.6 | Only for cards and dividers; controls use `--color-control-border` |
 
@@ -388,7 +384,7 @@ A disabled control is drawn at `--opacity-disabled` and is exempt, as today.
 
 ## Icons and drawings
 
-- **Icons.** A new component `src/renderer/ui/icon/` draws one 24×24 stroke icon by name, from the path set in `design/prototype/js/ui.js` (`P`; the designer's own drawings, no third-party set), copied as is. Size `--icon-size` or `--icon-size-small`, `stroke: currentColor`, `--icon-stroke`, round caps and joins. Icons sit beside words (rule 3): before a button's word, at the start of a notice or badge, beside a layer's name.
+- **Icons.** The component `src/renderer/ui/icon/` draws one 24×24 stroke icon by name, from the path set in `design/prototype/js/ui.js` (`P`; the designer's own drawings, no third-party set), copied as is. Size `--icon-size` or `--icon-size-small`, `stroke: currentColor`, `--icon-stroke`, round caps and joins. Icons sit beside words (rule 3): before a button's word, at the start of a notice or badge, beside a layer's name.
 - **Spinner and dot.** A running job's mark keeps its word ("Running") and gains the spinner icon turning at `--motion-spin`; the "finished, not seen" dot pulses three times at `--motion-pop`. Both are still with reduce motion.
 - **Start page pictures.** The start page has no drawings. Its left half is one large picture that crossfades to the next (`src/renderer/screens/start/start-images/`): ten bundled WebP pictures, each showing one magenta thing among many alike. Each holds for `--start-image-hold` (10s) and fades in over `--start-image-fade` (1200ms); the order is random and starts again, shuffled, when all have shown. The timer stops while the window is hidden. With reduce motion one picture shows and never changes. The pictures are decoration: `aria-hidden="true"`, `alt=""`. They are built files served from the app's own origin, so the window's content security rule is unchanged. A picture is swapped by replacing the file of the same name. The screen's rules are in "Start screen" below and in `spec/screens.md`, "Start".
 
@@ -398,7 +394,7 @@ A disabled control is drawn at `--opacity-disabled` and is exempt, as today.
 - Outline icons at `--icon-stroke`. A pressed toggle or a selected tab may show its icon in `--color-accent-ink`.
 - An icon that takes space does something, or is the mark of a StatusMark, or names a row's kind. A decorative icon beside a button's word is allowed only on the primary action of a view.
 - An icon that replaces a word keeps that word as its accessible name and its `title`.
-- **New icons (T3f).** `ui/icon/icon-paths.ts` gains these 29 names, each drawn for this app on the same 24 by 24 grid in the same stroke style as the built set (no third-party set is copied): `alignLeft`, `alignCentre`, `alignRight`, `alignTop`, `alignMiddle`, `alignBottom`, `crop`, `reset`, `scissors`, `fit`, `fill`, `shadeNone`, `shadeBottom`, `shadeTop`, `shadeLeft`, `shadeRight`, `shadeAll`, `allCaps`, `lineHeight`, `letterSpacing`, `radius`, `padding`, `speaker`, `speakerOff`, `pin`, `pencil`, `xCircle`, `coin`, `stop`. The set then holds 75 icons. Nothing is removed in T3f.
+- **The app's own icons.** `ui/icon/icon-paths-more.ts` (merged into `ICON_PATHS` by `ui/icon/icon-paths.ts`) holds these names, each drawn for this app on the same 24 by 24 grid in the same stroke style as the rest (no third-party set is copied): `alignLeft`, `alignCentre`, `alignRight`, `alignTop`, `alignMiddle`, `alignBottom`, `crop`, `reset`, `scissors`, `fit`, `fill`, `shadeNone`, `shadeBottom`, `shadeTop`, `shadeLeft`, `shadeRight`, `shadeAll`, `allCaps`, `lineHeight`, `letterSpacing`, `radius`, `padding`, `speaker`, `speakerOff`, `pin`, `pencil`, `xCircle`, `coin`, `stop`. `tests/unit/renderer/ui/icon.test.tsx` guards the size of the set.
 
 | Concept | Icon | | Concept | Icon |
 |---------|------|-|---------|------|
@@ -434,9 +430,9 @@ A disabled control is drawn at `--opacity-disabled` and is exempt, as today.
 
 ## Shared pieces
 
-**The rules for every shared part, built and new, are in `spec/app-style-parts.md`.** The list below records the built pieces' measurements (ST-2); where the parts file differs, the parts file rules. T2 changes three things here: the card loses its shadow, the menu takes `--shadow-2`, and `h1` to `h3` take the type roles.
+**The rules for every shared part, built and new, are in `spec/app-style-parts.md`.** The list below records the base pieces' measurements; where the parts file differs, the parts file rules.
 
-Built in `base.css` and `layout.module.css` (ST-2) and used by every later slice. Each is the prototype piece named in brackets.
+Built in `base.css` and `layout.module.css`. Each is the prototype piece named in brackets.
 
 - **Button** (`.btn`): every `button` by default. Height `--control-height`, padding `0 var(--space-3)`, `--font-size-control`, `--weight-medium`, `--radius`, edge `--color-control-border`, ground `--color-bg`; hover ground `--color-surface-soft` and edge `--color-text-muted`; icon gap `--space-2`. Kinds as classes in `layout.module.css`: `primary` (exists; spot colour ground, hover `--color-accent-hover`), `quiet` (no edge, no ground; hover `--color-surface`), `danger` (text `--color-danger-text`), `small` (`--control-height-small`, `--font-size-small`), `large` (`--control-height-large`, `--font-size-body`), `iconOnly` (square; used only where the button already has no visible word). A text-style button (`link`) is `--color-accent-ink`, underlined.
 - **Field** (`.field`, `.input`): label above in `--font-size-small`, `--weight-medium`, `--color-text-secondary`; `input` and `select` at `--control-height`, padding `0 var(--space-3)`; `textarea` padding `var(--space-2) var(--space-3)`; hint below in `--font-size-small`, `--color-text-muted`. Checkboxes and radios are native at `--check-size` with `accent-color: var(--color-accent)`.
@@ -445,18 +441,18 @@ Built in `base.css` and `layout.module.css` (ST-2) and used by every later slice
 - **Badge** (`.badge`): icon plus word, never colour alone. Height `--badge-height`, `--font-size-small`, `--weight-medium`, `--radius`. Kinds: warn, danger, info, ok, neutral, accent, each its text token on its ground token.
 - **Chip** (`.chip`): pill at `--chip-height`, `--color-surface` ground, `--color-text-secondary`.
 - **Notice** (`.notice`): icon plus sentence, padding `var(--space-2) var(--space-3)`, `--radius`, `--font-size-control`, kinds as badges. A button inside goes to the right end.
-- **Card** (`.card`, exists): `--color-bg`, edge `--color-line`, `--radius-md`, padding `--space-4`; no shadow from T2 (it had `--shadow-1`). A card that is a button: hover edge `--color-border` and `--shadow-2`. Only things you can click or pick up are cards; a group of controls is a Section.
-- **Menu**: `--width-menu`, padding `--space-2`, edge `--color-border`, `--radius-md`, `--shadow-2` from T2 (it had `--shadow-3`); items at least `--control-height-small` tall, `--radius`, hover `--color-surface`; a group label in `--font-size-small`, `--color-text-muted`.
+- **Card** (`.card`, exists): `--color-bg`, edge `--color-line`, `--radius-md`, padding `--space-4`, no shadow. A card that is a button: hover edge `--color-border` and `--shadow-2`. Only things you can click or pick up are cards; a group of controls is a Section.
+- **Menu**: `--width-menu`, padding `--space-2`, edge `--color-border`, `--radius-md`, `--shadow-2`; items at least `--control-height-small` tall, `--radius`, hover `--color-surface`; a group label in `--font-size-small`, `--color-text-muted`.
 - **Table**: `--font-size-control`; header `--font-size-small`, `--color-text-muted`, `--weight-medium`; rows separated by `--color-line`; cell padding `var(--space-2) var(--space-3)`.
 - **Progress bar**: `--progress-height`, `--radius-pill`, track `--color-surface`, fill `--color-accent`.
 - **Empty place** (`.empty`): dashed `--color-border` edge, `--radius-md`, `--color-text-muted`; as a button, hover `--color-accent` edge, `--color-accent-soft` ground, `--color-accent-ink` text.
-- **Headings and body**: as in "Type"; built as `h1` `--font-size-page`, `h2` `--font-size-title`, `h3` `--font-size-heading`; from T2 `h1` `--type-page-size` and `h2`, `h3` `--type-title-size`; a screen with a smaller `h1` (Settings) sets it in its own module. Body on `--color-page`, `--leading-body`, antialiased.
+- **Headings and body**: as in "Type": `h1` `--type-page-size`, `h2` and `h3` `--type-title-size`; a screen with a smaller `h1` (Settings) sets it in its own module. Body on `--color-page`, `--leading-body`, antialiased.
 
 ## Component by component
 
 Beyond the tokens, what changes in layout and structure. "Folder" names are under `src/renderer/`.
 
-This is each area's look as built by the style pass and Round 2. The design wave's Wave 2 redoes it area by area (`spec/phases/design-wave.md`); for any screen a design-wave slice builds or changes, "The design system" and `spec/app-style-parts.md` rule over a paragraph here, and the orchestrator's spec pass after each slice rewrites that area's paragraph to what was built.
+These paragraphs give each area's base measurements. Every area's layout follows "The design system", `spec/app-style-parts.md` and its screen file; where a paragraph here differs from those (cards around groups, page titles at 32px, words on row buttons), they rule.
 
 **App shell and tabs** (`app/app-shell/`, `app/campaign-tabs/`, `app/project-switcher/`, `app/error-banner/`, `ui/tab-row/`, `ui/tab-marks/`)
 - Top bar: `--bar-height`, ground `--color-surface`, bottom edge `--color-line`, padding `0 var(--space-3)`, items centred. "Activity" and "Settings" become quiet buttons with their icon beside the word; Settings pressed shows `--color-bg` ground.
@@ -466,11 +462,11 @@ This is each area's look as built by the style pass and Round 2. The design wave
 - Tab marks: "Running" keeps its word and gains the spinner; the dot is `--mark-dot` in the spot colour with a `--color-accent-soft` ring.
 - Error banner: a danger notice with the alert icon, full width under the bar, no radius.
 
-**Buttons and form controls** (`ui/base.css`, `ui/layout.module.css`, new `ui/icon/`): the shared pieces above.
+**Buttons and form controls** (`ui/base.css`, `ui/layout.module.css`, `ui/icon/`): the shared pieces above.
 
 **Dialogs** (`ui/dialog-frame/` and the dialogs of ST-4)
 - Frame: ground `--color-bg`, `--radius-lg`, `--shadow-3`, max height the window less `--space-12`. Three bands: head (the title, padding `var(--space-4) var(--space-6) var(--space-3)`, bottom edge `--color-line`), body (scrolls, padding `--space-6`), foot (right-aligned buttons, padding `var(--space-3) var(--space-6)`, ground `--color-surface-soft`, top edge `--color-line`).
-- `DialogFrame` gains an optional `footer` prop drawn after the body and an optional `size` prop (`'normal' | 'wide' | 'large'`, widths `--width-dialog`, `--width-dialog-wide`, `--width-dialog-large`). A dialog moves its button row into `footer` only when that row is already the last thing in the dialog, so the focus order is unchanged. The picture chooser takes `large`.
+- `DialogFrame` takes an optional `footer` prop drawn after the body and an optional `size` prop (`'normal' | 'wide' | 'large'`, widths `--width-dialog`, `--width-dialog-wide`, `--width-dialog-large`). A dialog moves its button row into `footer` only when that row is already the last thing in the dialog, so the focus order is unchanged. The picture chooser takes `large`.
 - Busy and waiting blocks: centred, spinner icon in the spot colour.
 
 **Settings** (`screens/settings/*`)
@@ -514,7 +510,7 @@ This is each area's look as built by the style pass and Round 2. The design wave
 
 This list was the style pass's. The design wave takes up four of its items: the Settings side list (choice C-1), an icon in place of a word where a slice names it (the word stays as the accessible name and tooltip), a tile's title moved into its tooltip (choice C-11), and progress drawn on the thing being made (rule 11). The rest stays out of scope.
 
-- **Screens the app has not built**: fan-out, sync review, export, its warnings and report, the subjects and library pages, the three-step new-campaign dialog, the video timeline, publish. Each later phase takes its look from this file and the shared pieces when it builds them.
+- **Screens added after the style pass** (fan-out, sync review, export and its report, Assets, the New campaign page, the video timeline, publish) take their look from "The design system" and `spec/app-style-parts.md`, not from "Component by component".
 - **Pieces of the prototype that need a behaviour change** (each would add state, a query, a command or a control):
   - Settings' side list of sections (new links and a scroll target per section).
   - A small picture of the ad in each variant tab (a thumbnail read per tab).

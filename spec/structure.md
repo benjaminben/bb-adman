@@ -4,57 +4,79 @@ Where code and tests live, the module rules, how commands and queries are regist
 
 ## Folder tree
 
-Built through Phase 4, with the look pack and the built approvals and subject-photo slices. One repository; the app is one package and `approvals-service/` is its own. The tree shows what is on `main`; a line marked `(Phase N)` names the phase that adds it, and those marked Phase 3 or 4 are built (`firefly/` is the Phase 4 stub).
+The tree shows what is on `main`. One repository; the app is one package and `approvals-service/` is its own. Folders are named with the files that have a fixed role; the other files in a folder are not all listed.
 
 ```
 project-root/
 ├── src/
 │   ├── main/                      # Electron main process
-│   │   ├── index.ts               # start-up, single-instance lock, joins core to IPC and windows; --mcp-bridge switch (Phase 10)
+│   │   ├── index.ts               # start-up; joins core to IPC and windows; the --mcp-bridge switch
 │   │   ├── core.ts                # builds every service and the handler list with no Electron import; tests use it as the app does
 │   │   ├── core-deps.ts           # the CoreDeps type handed to every domain
 │   │   ├── ipc.ts                 # joins window.api to the bus and the query runner; sets actor 'user'
+│   │   ├── single-instance.ts     # the single-instance lock
 │   │   ├── open-file.ts           # finds a project path in the command line (double-click on Windows)
+│   │   ├── open-from-system.ts    # opens a project file the system hands the app (double-click, Dock drop, second launch)
+│   │   ├── quit-question.ts       # the message box before quitting while runs are out
+│   │   ├── user-data-override.ts  # ADMAN_USER_DATA_DIR, for an unpackaged test run only
 │   │   ├── dev-tools-flag.ts      # devToolsEnabled(isPackaged, env)
 │   │   ├── png-converter.ts       # pngConverter(decode): the toPng of CoreDeps
 │   │   ├── picture-fitter.ts      # the fitPicture of CoreDeps: crop, then scale, PNG out
-│   │   ├── windows/               # app-window.ts, app-window-options.ts, csp.ts, navigation.ts, open-external.ts,
-│   │   │                          #   dialogs.ts (native pickers), asset-protocol.ts (registers adman-asset://)
-│   │   ├── db/                    # schema/ (index, project, variant, jobs, approvals), migrations/ (drizzle-kit SQL, newest
-│   │   │                          #   0005_video_and_sound, schema version 6), bundled-migrations.ts,
-│   │   │                          #   project-file.ts (open, create, close, migration runner), meta.ts (project_meta),
-│   │   │                          #   project-registry.ts (open projects), rows.ts (stored row to wire row and back)
-│   │   ├── commands/              # bus.ts, types.ts, change-recorder.ts, agent-policy.ts, run-in-project.ts,
-│   │   │                          #   one folder per domain with an index.ts: approvals, asset, brief, campaign, comfy, dev,
-│   │   │                          #   generation, history, job, mcp, project, rule-set, secret, settings, storage, subject;
-│   │   │                          #   storage/ holds check-s3.ts and require-s3-settings.ts (AP-10b)
+│   │   ├── pixel-reader.ts        # the readPixels of CoreDeps: a PNG the app drew, as raw pixels
+│   │   ├── jpeg-orientation.ts, turn-pixels.ts, image-turner.ts   # turn a JPEG upright by its orientation tag
+│   │   ├── windows/               # the Electron edge: app window and its options, menu, app identity, reveal, CSP,
+│   │   │                          #   navigation and permission guards, open-external, native pickers (dialogs.ts),
+│   │   │                          #   asset-protocol.ts (adman-asset://), the hidden WebP decoder window, quiet.ts
+│   │   ├── db/                    # schema/ (index, project, variant, jobs, approvals), migrations/ (drizzle-kit SQL,
+│   │   │                          #   newest 0006_approval_clips), bundled-migrations.ts, project-file.ts (open, create,
+│   │   │                          #   close, migration runner), meta.ts (project_meta), project-registry.ts (open
+│   │   │                          #   projects), rows.ts (stored row to wire row and back), layout-check.ts
+│   │   ├── commands/              # bus.ts, types.ts, change-recorder.ts, agent-policy.ts, agent-run-gate.ts,
+│   │   │                          #   run-in-project.ts, variant-rev.ts; one folder per domain with an index.ts:
+│   │   │                          #   agent, agent-runs, approvals, asset, brief, campaign, check, clip, comfy, dev,
+│   │   │                          #   direction, export, generation, history, job, language-font, layer, mcp, project,
+│   │   │                          #   publish, rule-set, secret, settings, storage, subject, sync, translation, variant
+│   │   ├── queries/               # queries.ts (runner), types.ts, one file per domain: activity, app, approvals, asset,
+│   │   │                          #   campaign, check, comfy, comfy-workflow, history, job, mcp, project, publish,
+│   │   │                          #   render, report, sync, template, translation, variant; helper files beside them
+│   │   │                          #   (campaign-reads.ts, variant-reads.ts, job-get.ts, paid-count.ts and the like)
+│   │   ├── history/               # undo-lists.ts, agent-undo-guard.ts
+│   │   ├── assets/                # path-resolver.ts, service.ts, types.ts; import, relink, package, sniff, change check,
+│   │   │                          #   assets-dir.ts, read-picture.ts, asset-url.ts (adman-asset:// address to file),
+│   │   │                          #   brief-pictures.ts and brief-brand.ts (the files a brief names)
+│   │   ├── jobs/                  # runner.ts, run-job.ts, start-up.ts (resume), cancel.ts, job-store.ts, progress.ts,
+│   │   │                          #   store-result.ts, video-store.ts, types.ts; kinds/ (one file per job kind:
+│   │   │                          #   image-generation, video-generation, generative-fill, cutout, layout-proposal,
+│   │   │                          #   copy-options, brief-extraction, translation, export, publish)
+│   │   ├── providers/             # registry.ts, require-keys.ts (the NEEDS_KEY guard), types.ts and adapters.ts,
+│   │   │                          #   messages.ts, redact.ts, read-limited.ts, the picture and video checks
+│   │   │                          #   (picture-type.ts, picture-size.ts, png-size.ts, webp-size.ts, picture-limits.ts,
+│   │   │                          #   video-check.ts, mp4-boxes.ts), storage-paths.ts; one folder per provider:
+│   │   │                          #   gemini/, comfyui/ (with workflows/ and custom/), fal-seedance/, s3/, dropbox/,
+│   │   │                          #   local-storage/, fake/; firefly/ (stub) and azure-blob/ (disabled)
+│   │   ├── links/                 # the writers behind making variants and sync: fan-out-write.ts, copy-clips.ts,
+│   │   │                          #   master-of.ts, snapshot.ts
+│   │   ├── checks/                # run-checks.ts, read-input.ts, badges.ts
+│   │   ├── translation/           # translation runs, the written text, the translation sheet's path
+│   │   ├── clips/                 # the background clips of a video variant: write-clip.ts, clip-asset.ts
+│   │   ├── media/                 # FFmpeg behind one door: run-ffmpeg.ts, ffmpeg-path.ts, embedded details
+│   │   ├── export/                # run-export.ts, plans.ts, image-ad.ts, stitch.ts, picture-encoder.ts, video/, report/
+│   │   ├── publish/               # run-publish.ts, publish-plans.ts, upload.ts, manifest.ts, font-consent.ts, readiness.ts
 │   │   ├── approvals/             # the approvals client, stores and helpers (spec/approvals-client.md)
-│   │   ├── queries/               # queries.ts (runner), types.ts, one file per domain: app, asset, campaign (+ campaign-reads.ts),
-│   │   │                          #   comfy, history, job (+ job-server-message.ts), mcp, project, template
-│   │   ├── history/               # undo-lists.ts
-│   │   ├── assets/                # path-resolver.ts, service.ts, types.ts, import, relink, package, sniff, change check,
-│   │   │                          #   assets-dir.ts, read-picture.ts, asset-url.ts (adman-asset:// address to file, no Electron),
-│   │   │                          #   brief-pictures.ts (a brief's photo paths, SP-1)
-│   │   ├── jobs/                  # runner.ts, run-job.ts, start-up.ts (resume), cancel.ts, job-store.ts, job-error-log.ts,
-│   │   │                          #   progress.ts, png-details.ts, types.ts; kinds/ (image-generation, video-generation)
-│   │   ├── providers/             # registry.ts, require-keys.ts (the NEEDS_KEY guard), types.ts and adapters.ts (frozen),
-│   │   │                          #   messages.ts, redact.ts, picture-type.ts, picture-size.ts, png-size.ts, picture-limits.ts,
-│   │   │                          #   storage-paths.ts, video-check.ts;
-│   │   │                          #   gemini/, comfyui/ (with workflows/), fal-seedance/, s3/, dropbox/, azure-blob/, fake/,
-│   │   │                          #   local-storage/; firefly/ (Phase 4); jev/ (reserve, not planned)
-│   │   ├── mcp/                   # server.ts, service.ts, sessions.ts, token.ts, request-guard.ts, agent-caller.ts, serial.ts,
-│   │   │                          #   tools/ (index.ts, table.ts); bridge (Phase 10)
+│   │   ├── mcp/                   # server.ts, service.ts, sessions.ts, token.ts, request-guard.ts, agent-caller.ts,
+│   │   │                          #   serial.ts, permissions.ts, the ask helpers (ask-kinds.ts, ask-target.ts),
+│   │   │                          #   tools/ (index.ts, table.ts, one file per group of tools and its replies)
+│   │   ├── bridge/                # bridge mode (--mcp-bridge): run-bridge.ts, relay.ts, launch-command.ts
 │   │   ├── secrets/               # secret-store.ts, safe-storage.ts
 │   │   ├── settings/              # settings-store.ts, defaults.ts
 │   │   ├── log/                   # activity-log.ts, error-context.ts
 │   │   ├── render/                # the render window, draw, render-page, done-message (Electron edge)
-│   │   ├── thumbnails/            # render service, queue, scene input, thumbnail paths and cache, eager (no Electron)
-│   │   ├── export/                # image, video (FFmpeg filter builder), report, sheet (Phase 8)
-│   │   └── publish/               # publish flow (Phase 9)
+│   │   └── thumbnails/            # render service, queue, scene input, thumbnail paths and cache, eager (no Electron)
 │   ├── preload/                   # index.ts: the window.api and window.drop bridges; render.ts: the render window's renderApi
 │   ├── renderer/                  # app window (React). Files: "Renderer files on main" below
 │   │   ├── main.tsx, index.html, env.d.ts; render.html, webp.html
 │   │   ├── render-worker/         # the render window's page: main.tsx, render-root/
+│   │   ├── webp-worker/           # the hidden WebP decoder window's page: main.ts
 │   │   ├── app/                   # the shell: app-shell/, top bar parts, Activity, result notice, first-run setup
 │   │   ├── stores/                # app, project, nav, variant, job, activity, attached, approvals, playback stores
 │   │   ├── screens/               # start/, project-home/, assets/, campaign/, settings/
@@ -63,54 +85,69 @@ project-root/
 │   │   └── editor/                # the editor's components and helpers (tree in spec/editor.md)
 │   └── shared/                    # no Electron or Node imports
 │       ├── schemas/               # Zod: api.ts (window.api type, IPC channel names), result.ts, events.ts, settings.ts,
-│       │                          #   secrets.ts, brief.ts, layer.ts (JSON columns), project.ts, project-name.ts,
-│       │                          #   rows/ (wire rows, keys.ts), commands/{domain}.ts (+ project-scoped.ts),
-│       │                          #   queries/{domain}.ts, jobs/ (image-generation.ts, video-generation.ts)
-│       ├── brief/                 # parse.ts (parseBrief), draft.ts, size.ts, words.ts, languages.ts, bad-line.ts,
-│       │                          #   yaml-tokens.ts, yaml-walk.ts: pure functions
-│       ├── comfy/                 # address.ts, fit-size.ts, refused-hosts.ts
-│       ├── config/                # defaults.ts, file-types.ts, region-languages.ts, job-kinds.ts, dev-tools.ts,
-│       │                          #   default-layout.ts, brief-limits.ts, size-limits.ts, reserved-names.ts, agent-runs.ts;
-│       │                          #   public-ids.ts, format-changes.ts (later phases)
-│       ├── generation/            # prompt.ts: the pre-filled picture prompt and its two endings
-│       ├── providers/             # messages.ts: plain error sentences, used by window and main process
-│       ├── templates/             # starter.ts, master-layers.ts (buildMasterLayers), new-layer.ts, types.ts
-│       ├── scene/                 # Scene component and helpers, fonts/ (bundled Inter) (files in spec/scene.md);
-│       │                          #   presets.ts (Phase 7)
-│       ├── links/                 # follow-rules.ts, out-of-date, sync preview (Phase 5)
-│       ├── checks/                # the six checks (Phase 6)
-│       └── paths/                 # output-paths.ts (Phase 8)
+│       │                          #   secrets.ts, brief.ts, layer.ts (JSON columns), project.ts, project-name.ts, links.ts,
+│       │                          #   checks.ts, report.ts, render.ts, rows/ (wire rows), commands/{domain}.ts
+│       │                          #   (+ project-scoped.ts), queries/{domain}.ts, jobs/ (one file per job kind)
+│       ├── brief/                 # parse.ts (parseBrief), markdown.ts, draft.ts, brand.ts, brand-rule-set.ts, size.ts,
+│       │                          #   words.ts, languages.ts, picture-refs.ts, yaml-tokens.ts, yaml-walk.ts: pure functions
+│       ├── campaign/              # create-defaults.ts
+│       ├── templates/             # starter.ts, master-layers.ts (buildMasterLayers), new-layer.ts, layout-rules.ts,
+│       │                          #   starter-layout-patches.ts, starting-font-size.ts, brand-colours.ts, brand-fonts.ts
+│       ├── scene/                 # the Scene component and helpers, presets.ts (animation), fonts/ (bundled Inter)
+│       │                          #   (files in spec/scene.md)
+│       ├── links/                 # follow-rules.ts, out-of-date.ts, sync-plan.ts, fan-out-plan.ts, new-variant-plan.ts,
+│       │                          #   place-box.ts, fit-text.ts, source-layout.ts, override-paths.ts
+│       ├── checks/                # the brand, word and readiness checks, their messages, run-all.ts
+│       ├── translation/           # initial.ts, script.ts, sheet.ts, translated-layers.ts, brief-copy.ts
+│       ├── generation/            # prompt.ts (the pre-filled picture prompt), the layout answer's clean-up
+│       │                          #   (layout-clamp.ts, layout-items.ts, layout-patches.ts), contrast.ts
+│       ├── clips/                 # track.ts
+│       ├── video/                 # messages.ts
+│       ├── export/                # output-paths.ts, frames.ts, safe-title.ts, messages.ts
+│       ├── publish/               # manifest.ts, paths.ts, content-types.ts, messages.ts
+│       ├── approvals/             # contract.ts (shared with the service), address.ts, marks.ts, messages.ts
+│       ├── assets/                # file-path-text.ts
+│       ├── paths/                 # safe-part.ts
+│       ├── comfy/                 # address.ts, fit-size.ts, refused-hosts.ts, custom-workflow.ts, workflow-words.ts
+│       ├── providers/             # messages.ts (plain error sentences, used by window and main process), model-words.ts
+│       └── config/                # the fixed values with one owner each: defaults.ts, file-types.ts, job-kinds.ts,
+│                                  #   size-limits.ts, brief-limits.ts, campaign-limits.ts, default-layout.ts,
+│                                  #   starter-layouts.ts, type-styles.ts, look.ts, region-languages.ts, agent-runs.ts,
+│                                  #   agent-ask.ts, public-ids.ts, format-changes.ts, app-name.ts and the like
 ├── tests/
-│   ├── unit/                      # mirrors src/: main/, preload/, renderer/, shared/; plus config/ (config and lint
-│   │                              #   checks), live/ and e2e-real/ (pure parts of those harnesses)
+│   ├── unit/                      # mirrors src/: main/, preload/, renderer/, shared/; plus quickstart/, scripts/,
+│   │                              #   config/ (config and lint checks), live/ and e2e-real/ (pure parts of those harnesses)
 │   ├── integration/               # real bus, handlers and queries on temporary project files; expect-changes.ts,
-│   │                              #   core-fixture.ts, row-fixtures.ts; folders assets, campaigns, comfy-run, commands, db,
-│   │                              #   generation, jobs, mcp, providers, queries
-│   ├── build/                     # checks on the output of electron-vite build (built-page.test.ts)
-│   ├── e2e/                       # offline Playwright specs and helpers
+│   │                              #   core-fixture.ts, row-fixtures.ts, the registration tests; one folder per area
+│   ├── build/                     # checks on the output of electron-vite build (npm run test:build)
+│   ├── package/                   # checks on a packaged app's names (npm run test:package)
+│   ├── e2e/                       # offline Playwright specs and helpers (npm run test:e2e)
+│   ├── approvals-local/           # the app against the approvals service run on this machine (npm run test:approvals-local)
 │   ├── e2e-real/                  # Playwright against the real ComfyUI server; never run by npm test or CI
 │   ├── comfy/                     # hand-run tests against the real ComfyUI server (npm run test:comfy)
 │   ├── live/                      # hand-run tests against paid providers (npm run test:live); never run by npm test or CI
 │   ├── shots/                     # screenshot files (*.shots.ts, shot.ts) for npm run shots; never a routine check
-│   ├── helpers/                   # shared test helpers (ComfyUI stand-in, call list, failure-of)
-│   ├── fixtures/                  # briefs/, providers/ (recorded responses), video/, png-chunks.ts
-│   └── reference-pictures/{darwin,win32}/   # (Phase 3)
-├── examples/                      # brief.yaml; source images and six exported PNGs (Phase 11)
-├── resources/                     # app icon; ffmpeg/ is fetched, not committed (Phase 7, Phase 8). The default font is in src/shared/scene/fonts/
-├── scripts/                       # fetch-ffmpeg, ffmpeg-sources.json (Phase 7)
+│   ├── helpers/                   # shared test helpers (the ComfyUI, Dropbox and approvals stand-ins, failure-of)
+│   ├── fixtures/                  # briefs/, providers/ (recorded responses), comfy-custom/, video/, webp/
+│   └── reference-pictures/darwin/ # the Scene's reference pictures (spec/testing.md)
 ├── quickstart/                    # the command-line demo (D-106): cli.ts and its parts, page/ (the drawing page),
 │                                  #   examples/ (one folder per example: brief.yaml, its photos, brand/);
 │                                  #   output/ is not in git; see spec/quickstart.md
-├── approvals-service/             # the approvals service, its own Next.js app (app/, src/, test/, e2e/); layout in
-│                                  #   spec/approvals-service.md, "Folder and tooling"
+├── approvals-service/             # the approvals service, its own Next.js app (app/, src/, test/, e2e/, migrations/);
+│                                  #   layout in spec/approvals-service.md, "Folder and tooling"
+├── examples/                      # brief.yaml, a sample brief for the app
+├── resources/                     # the app icon; ffmpeg/ is fetched, not committed. The default font is in src/shared/scene/fonts/
+├── scripts/                       # ffmpeg/ (fetch, build and licence check) with ffmpeg-sources.json; icon/ (makes the
+│                                  #   app icon); demo/ (zips a demo build)
 ├── comfy-workflows/               # hand-test copies of the ComfyUI graphs and their notes; no code reads them
 ├── .github/workflows/             # ci.yml
-├── LICENSE, THIRD-PARTY-NOTICES.md, README.md   # (Phase 11)
-├── REQUIREMENTS.md, DECISIONS.md, SPEC.md, spec/
+├── README.md, THIRD-PARTY-NOTICES.md
+├── REQUIREMENTS.md, requirements/, DECISIONS.md, SPEC.md, spec/
 └── config files                   # package.json, tsconfig.json, eslint.config.js, electron.vite.config.ts,
-                                   #   electron-builder.json, drizzle.config.ts, playwright.config.ts,
-                                   #   playwright.real.config.ts, playwright.shots.config.ts, vitest.config.ts, vitest.build.config.ts,
-                                   #   vitest.comfy.config.ts, vitest.live.config.ts; path-alias.config.ts
+                                   #   electron-builder.json, drizzle.config.ts, path-alias.config.ts;
+                                   #   playwright.config.ts, playwright.real.config.ts, playwright.shots.config.ts,
+                                   #   playwright.approvals.config.ts; vitest.config.ts, vitest.build.config.ts,
+                                   #   vitest.package.config.ts, vitest.comfy.config.ts, vitest.live.config.ts
 ```
 
 ## Module rules
@@ -120,7 +157,7 @@ Built. Enforced by ESLint (`eslint.config.js`) where a rule says so.
 - `src/shared/` imports nothing from `main`, `renderer`, `preload` or Electron.
 - `src/renderer/` reaches the main process only through `window.api`. A screen imports nothing from `src/main/`.
 - Only `src/main/assets/path-resolver.ts` builds asset paths. An ESLint rule bans `path.join` with asset fields elsewhere.
-- The Scene is a pure component: props are the variant, its layers (clips from Phase 7), a map of asset IDs to their `adman-asset://` address and facts, the time in milliseconds, a mode (`full` or `overlay-only`) and an `onSettled` callback. It uses inline styles only and no app token. Full props: `spec/scene.md`. Built.
+- The Scene is a pure component: props are the variant, its layers and clips, a map of asset IDs to their `adman-asset://` address and facts, the time in milliseconds, a mode (`full` or `overlay-only`) and an `onSettled` callback. It uses inline styles only and no app token. Full props: `spec/scene.md`. Built.
 - `src/main/thumbnails/` is not an Electron edge place: it may not import `electron` or anything in `src/main/render/`. The Electron half of a draw is passed into `createCore` as `drawScene`.
 - The render window's page (`src/renderer/render.html`, `src/renderer/render-worker/`) imports only `@/shared/` code and `@/renderer/ui/asset-url`. It has no `window.api`.
 - A domain folder may hold helper files beside its handlers and its `index.ts`. A helper file exports no handler and is used only inside its own domain folder.
@@ -148,7 +185,7 @@ Built. Several developers work in parallel worktrees, so the files everyone woul
 | A command handler | `src/main/commands/{domain}/{action}.ts` | One handler per file, made with `defineCommand`. `{domain}` is the part of the command name before the dot (`asset`, `subject`, `campaign`, `ruleSet` as `rule-set/`). |
 | A domain's handler list | `src/main/commands/{domain}/index.ts` | Exports one function, `{domain}Commands(deps: CoreDeps)`, that returns the domain's handlers as a list. Adding a command to a domain changes this file and no shared file. |
 | The full handler list | `src/main/core.ts` | One import and one spread line per domain, in alphabetical order. It names no single command. |
-| Shared services | `src/main/core-deps.ts` | The `CoreDeps` type, sixteen fields, all required: `appVersion`, `assets`, `devTools`, `fitPicture`, `jobs`, `log`, `now`, `openExternal`, `projects`, `providers`, `render`, `secrets`, `settings`, `toPng`, `undo`, `userDataDir`. `core.ts` builds it once and hands the same object to every domain. A domain takes what it needs and builds nothing shared. `tests/integration/registration.test.ts` compares the whole list; a new field extends it. |
+| Shared services | `src/main/core-deps.ts` | The `CoreDeps` type, every field required (the groups are in `spec/overview.md`, "Shared services"). `core.ts` builds it once and hands the same object to every domain. A domain takes what it needs and builds nothing shared. `tests/integration/registration.test.ts` compares the whole list of fields; a new field extends it. |
 | A domain's queries | `src/main/queries/{domain}.ts` | Exports `{domain}Queries(deps: CoreDeps)`, which returns a map of query name to function. `src/main/queries/queries.ts` is the runner. It merges the maps, one line per domain. |
 | A command's input schema | `src/shared/schemas/commands/{domain}.ts` | One file per domain. Project-scope schemas extend `project-scoped.ts` (`spec/api-principles.md`). |
 | A query's input schema and result type | `src/shared/schemas/queries/{domain}.ts` | One file per domain. There is no shared `queries.ts`. |
@@ -181,11 +218,13 @@ Built. Stakeholder's standing rules.
 
 ## README contents
 
-Not built (Phase 11). [REQ: FR-180]: what the app is; download and first-launch steps for unsigned installers; how to run from source; the example brief with its six output pictures; key design decisions (a short form of the ADRs in `spec/overview.md`); assumptions and limitations (Section 1.4 of REQUIREMENTS.md, plus R-06 linked files and R-16 unsigned installers).
+Built in part [REQ: FR-180]. `README.md` has: the command-line quickstart; what the app is; download and first-launch steps for unsigned installers; keys and what leaves the computer; agent access; how to build from source; the tests; making a release; the licence state (none chosen yet).
+
+Not built (Phase 11, held): the example brief with its six output pictures; key design decisions (a short form of the ADRs in `spec/adrs-and-glossary.md`); assumptions and limitations (Section 1.4 of REQUIREMENTS.md, plus R-06 linked files and R-16 unsigned installers).
 
 ## Renderer component layout
 
-Built, as decided by the stakeholder [D-069, D-072, D-073, D-084]: the `@/` alias, one folder per component, and one styling source. Every new component follows these rules, Phase 3 and the UI pass included.
+Built, as decided by the stakeholder [D-069, D-072, D-073, D-084]: the `@/` alias, one folder per component, and one styling source. Every new component follows these rules.
 
 ### The `@/` alias
 
@@ -223,7 +262,7 @@ Built. Every renderer component sits in its own folder.
 
 Built [D-084]. `src/renderer/ui/tokens.css` is the one source of every colour, space, radius, line width, type size, opacity and layout width in the renderer, so one edit there restyles every component.
 
-- **Tokens.** Colours `--color-bg`, `--color-surface`, `--color-border`, `--color-text`, `--color-text-muted`, `--color-accent`, `--color-accent-text`, `--color-danger-bg`, `--color-danger-text`, `--color-focus`, `--color-overlay`; `--opacity-disabled`; `--radius`; `--border-width`, `--focus-ring-width`, `--focus-ring-offset`; spaces `--space-1` to `--space-4` and `--space-6`; fonts `--font-body`, `--font-mono`; type sizes `--font-size-small`, `--font-size-body`, `--font-size-heading`; widths `--width-page`, `--width-column-min`, `--width-dialog`; and the Phase 3 tokens listed in `spec/screens.md`. Text colours keep 4.5:1 contrast; a disabled control is exempt.
+- **Tokens.** Colours `--color-bg`, `--color-surface`, `--color-border`, `--color-text`, `--color-text-muted`, `--color-accent`, `--color-accent-text`, `--color-danger-bg`, `--color-danger-text`, `--color-focus`, `--color-overlay`; `--opacity-disabled`; `--radius`; `--border-width`, `--focus-ring-width`, `--focus-ring-offset`; spaces `--space-1` to `--space-4` and `--space-6`; fonts `--font-body`, `--font-mono`; type sizes `--font-size-small`, `--font-size-body`, `--font-size-heading`; widths `--width-page`, `--width-column-min`, `--width-dialog`; and the editor's tokens listed in `spec/screens.md`. `spec/app-style.md` gives each token's role. Text colours keep 4.5:1 contrast; a disabled control is exempt.
 - `base.css` gives `pre` and `code` the font `var(--font-mono)`, draws every focus ring from the focus tokens, and draws a disabled button, input or select at `var(--opacity-disabled)`, so a disabled control looks disabled.
 - **Test:** `tests/unit/renderer/ui/styling-source.test.ts` reads every `.css` file under `src/renderer/` other than `tokens.css`. It fails on a hex, `rgb` or `hsl` colour, on a `px` length other than 0, on a `var(--x)` that `tokens.css` does not define, and when a required token above (the type sizes, mono font, overlay colour, line widths, layout widths) is missing. A rule that truly needs a literal names it in the test's allow-list with a reason. The one entry: `1px` in `screens/settings/key-row/key-row.module.css`, for the visually hidden label.
 - The Scene draws the ad, not the app, and takes no token (`spec/scene.md`).
@@ -236,6 +275,7 @@ Each name ending in `/` inside a screen, `app/`, `dialogs/` or `ui/` is a compon
 src/renderer/
 ├── main.tsx, index.html, env.d.ts, render.html, webp.html
 ├── render-worker/  main.tsx, render-root/
+├── webp-worker/    main.ts
 ├── app/            app.tsx, app-context.tsx, nav-context.tsx, app-shell/, error-banner/,
 │                   project-switcher/ [close-project.tsx, project-rows.tsx], campaign-tabs/
 │                   [use-tab-keys.ts], activity-button/, activity-panel/ [activity-scope.tsx],
@@ -246,19 +286,20 @@ src/renderer/
 │   ├── start/          start-screen/, start-images/ (the crossfading pictures), new-project-form/,
 │   │                   recent-projects/
 │   ├── settings/       settings-screen/ [settings-pages.ts], setup-section/, keys-section/, key-row/,
-│   │                   comfy-section/ [on-server.tsx], comfy-check-result/, licence-list/,
+│   │                   comfy-section/ [on-server.tsx], comfy-check-result/, comfy-workflows-section/,
+│   │                   comfy-workflow-row/, mark-help/, licence-list/,
 │   │                   provider-defaults/, location-setting/, export-section/, s3-section/,
 │   │                   s3-check/, dropbox-section/, approvals-section/, mcp-section/
 │   │                   [port-field.tsx], connect-panel/, auto-approve-setting/,
 │   │                   agent-runs-section/, notice-line/, saved-mark/
 │   ├── project-home/   project-home/ [home-sections.tsx, use-project.ts], brief-load/, brief-paste/,
-│   │                   brief-form/ [campaign-fields.tsx, language-field.tsx], subject-rows/
+│   │                   brief-form/ [campaign-fields.tsx, language-field.tsx], brand-fields/, subject-rows/
 │   │                   [subject-block.tsx], subject-photos/, size-fields/ [size-chip.tsx],
 │   │                   rule-fields/ [word-lists.tsx], campaign-list/, import-files/,
-│   │                   missing-files/, package-project/, drop-import/ [use-file-drop.ts],
+│   │                   missing-files/, package-project/, home-assets/, drop-import/ [use-file-drop.ts],
 │   │                   campaign-input.ts, brief-form-model.ts, brief-form-problems.ts,
-│   │                   brief-form-sizes.ts, brief-form-photos.ts
-│   ├── assets/         assets-scope/, assets-button/, assets-panel/, asset-row/ [picture-tile.tsx],
+│   │                   brief-form-sizes.ts, brief-form-photos.ts, brief-form-brand.ts, brand-notes.ts
+│   ├── assets/         assets-scope/, assets-button/, assets-panel/, assets-list/, asset-row/ [picture-tile.tsx],
 │   │                   subject-card/, attach-photos.ts
 │   └── campaign/       campaign-view/, campaign-head/, campaign-overview/ [check-count.ts],
 │                       variants-tab/, direction-grids/, direction-header/, variant-grid/,
@@ -271,14 +312,14 @@ src/renderer/
 │                   cost-lines.tsx, run-summary.ts], reference-dialog/, copy-options-dialog/,
 │                   brief-reading-dialog/, layout-dialog/, picture-chooser/, import-dialog/
 │                   [file-strip.tsx, import-choices.tsx, import-text.ts], relink-dialog/,
-│                   package-dialog/, subject-dialog/, delete-subject/, delete-variant/,
+│                   package-dialog/, subject-dialog/, delete-subject/, delete-variant/, change-workflow/, remove-workflow/,
 │                   direction-menu/, fan-out/ [fan-out-costs.ts, fan-out-model.ts], sync-review/,
 │                   quick-look/, export-dialog/, report-view/, publish-dialog/, approval-dialog/
 ├── editor/         the editor: one folder per component plus shared helpers
 │                   (tree in `spec/editor.md`, "Where the code lives")
 ├── stores/         app-store.ts, project-store.ts, nav-store.ts, variant-store.ts, job-store.ts,
 │                   activity-store.ts, attached-store.ts, approvals-store.ts, playback-store.ts,
-│                   generate-drafts.ts, placed-runs.ts, run-asks.ts
+│                   gallery-updates.ts, generate-drafts.ts, placed-runs.ts, run-asks.ts
 └── ui/             tokens.css, base.css, layout.module.css; helpers asset-url.ts, secret-labels.ts,
                     shortcuts.ts, comfy-privacy.ts, missing-item-text.ts, dropped-paths.ts,
                     cancel-shown.ts, go-there.ts, show-result.ts, language-name.ts, middle-cut.ts,
@@ -288,7 +329,7 @@ src/renderer/
                     money-line/, slider-field/, swatch-field/, photo-strip/, job-progress/,
                     escape-leave/; and tab-row/, tab-marks/, variant-thumbnail/, run-failure/,
                     run-status/, paid-count/, paid-confirm/, close-warning/, reference-picker/,
-                    publish-file-list/, font-share-choice/, signoff-list/
+                    publish-file-list/, font-share-choice/, signoff-list/, provider-name/, run-name/
 ```
 
 The project and campaign screens and dialogs are described in `spec/screens-campaign.md` and `spec/screens-variants.md`; the AI screens in `spec/screens-ai.md`.

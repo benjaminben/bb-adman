@@ -9,7 +9,7 @@ A way to get sign-off on variants from people outside the app [D-095]. The user 
 - The app shows a sign-off only for the variant's current version; an edit not yet sent to the gallery already reads as not signed off.
 - The gallery page is a sidebar (campaign title, a fixed instruction sentence, "Signing off as:" with the reviewer's email, "Sign off all…", "Log out") beside a masonry of variant cards. A card that needs this reviewer's sign-off stands out; a signed one shows a green tick. Each card opens a lightbox with the large picture or video and its sign-off button. It works with script off; one small script of the service's own adds arrow keys between lightboxes, masonry spans where the browser lacks them, and pausing a video when its lightbox closes.
 - The reviewer's email is kept in a browser-session cookie (`HttpOnly`) to fill the field and mark the cards. "Log out" clears it, and so does every right password entry, so a later person on a shared browser never signs off as an earlier one. "Sign off all" signs only the set the page showed.
-- **Video.** "Update gallery" exports each changed video variant to MP4 with the video export code and uploads it to the user's bucket beside its still (the still is the poster). The clip reaches a reviewer only through the service, after the password, one byte range at a time, at `/l/{slug}/c/{variantKey}/{version}`, and plays in the lightbox with the browser's own player (no autoplay, no download). The page policy gained `media-src 'self'`. A clip over 3 minutes or 384 MiB, or a machine without FFmpeg, sends the still with a note. The contract is version 2; the keyed API's body cap is 4 MiB.
+- **Video.** "Update gallery" exports each changed video variant to MP4 with the video export code and uploads it to the user's bucket beside its still (the still is the poster). The clip reaches a reviewer only through the service, after the password, one byte range at a time, at `/l/{slug}/c/{variantKey}/{version}`, and plays in the lightbox with the browser's own player (no autoplay, no download). The page policy has `media-src 'self'`. A clip over 3 minutes or 384 MiB, or a machine without FFmpeg, sends the still with a note. The contract is version 2; the keyed API's body cap is 4 MiB.
 - **"Update gallery"** shows its progress as a bar (`approvals.progress`) and can be stopped (`approvals.cancelUpdate`, denied to agents). The dialog can be closed while it runs and the update goes on (D-110; "An update in the background" below). One run per campaign at a time. A failed or stopped run removes only the files it added.
 
 **Where things are.**
@@ -41,11 +41,11 @@ Desktop app (main process)                       Next.js service (Vercel) + db  
 
 ## Settings
 
-**Built** (AP-5, AP-6).
+**Built.**
 
 ### The service address
 
-- `settings.json` gains `approvals: { baseUrl: string | null }`, default `{ baseUrl: null }` (`src/shared/schemas/settings.ts`, `src/main/settings/defaults.ts`).
+- `settings.json` has `approvals: { baseUrl: string | null }`, default `{ baseUrl: null }` (`src/shared/schemas/settings.ts`, `src/main/settings/defaults.ts`).
 - **One writer:** `approvals.setService`. `settings.update` refuses the key (its strict schema does not list it). Security class.
 - **The rule** (`parseApprovalsAddress(text, { allowLocalHttp })`, `src/shared/approvals/address.ts`, pure): trimmed; parsed as a URL; scheme `https:`; a host name with at least one dot that is not an IP address (v4 or v6) and not `localhost`; no user name or password; nothing after the host and port but at most one `/`. Stored as the origin (`https://host` or `https://host:port`). Anything else is refused with "Enter an address that starts with https:// and has a host name, with nothing after it."
 - **Local test exception.** With `allowLocalHttp: true`, exactly `http://127.0.0.1:{port}` is also accepted. The main process passes `deps.devTools` (true only in an unpackaged app started with `ADMAN_DEV_TOOLS=1`). A packaged app never accepts plain `http`.
@@ -54,12 +54,12 @@ Desktop app (main process)                       Next.js service (Vercel) + db  
 
 ### The key
 
-- Secret name `approvals.apiKey`, added to `SECRET_NAMES` (`src/shared/schemas/secrets.ts`), stored in `secrets.bin` like every key. Saved with the existing `secret.set` (agents denied).
+- Secret name `approvals.apiKey`, listed in `SECRET_NAMES` (`src/shared/schemas/secrets.ts`), stored in `secrets.bin` like every key. Saved with the existing `secret.set` (agents denied).
 - It leaves the main process only inside the `Authorization` header of a request to the saved address. Never in a project file, a log line, an error, an event, an MCP reply, or a query reply. `app.getState` lists it by its last four characters, like every other key (A-98).
 
 ### Cloud storage: the S3 part
 
-The gallery needs a bucket. This feature builds the **S3 part** of Settings' "Cloud storage" ahead of Phase 9 (A-95). Built (AP-10a); "Test connection" is AP-10b (built). Both are written in `spec/storage-and-publish.md`, "Storage settings screen". Phase 9 adds Dropbox to the same section.
+The gallery needs a bucket: the **S3 part** of Settings' "Cloud storage" (A-95), with "Test connection". Built (`src/renderer/screens/settings/s3-section/`). Both are written in `spec/storage-and-publish.md`, "Storage settings screen", which also covers Dropbox in the same section.
 
 ## Versions and marks
 
@@ -76,35 +76,35 @@ A variant's version is its `rev` (A-91). It changes with every saved edit of the
 
 The first row that applies gives the mark.
 
-A sign-off belongs to the version it was given for. **The app shows a sign-off only for the variant's current `rev`** (R2A-1, A-372): an edit not yet sent to the gallery already reads as not signed off, and sign-offs of older versions are hidden in the app and in the gallery. "Changed since sign-off" and "Earlier version signed off" are gone.
+A sign-off belongs to the version it was given for. **The app shows a sign-off only for the variant's current `rev`** (R2A-1, A-372): an edit not yet sent to the gallery already reads as not signed off, and sign-offs of older versions are hidden in the app and in the gallery. No mark speaks of an older version's sign-off.
 
 ## Screens
 
-D-084: one folder per component, CSS from the existing tokens only (no slice of this feature adds a token), data by props or a store. Shots in `tests/shots/ap-*.shots.ts`, pictures numbered 90 to 99. All text from the service (emails) and from the project is drawn as text.
+D-084: one folder per component, CSS from the existing tokens only (this feature adds no token), data by props or a store. All text from the service (emails) and from the project is drawn as text.
 
 ### Settings
 
-- **"Approvals service"** (`src/renderer/screens/settings/approvals-section/`, **Built**, AP-10):
+- **"Approvals service"** (`src/renderer/screens/settings/approvals-section/`, **Built**):
   - The line "Share a campaign's variants with a password-protected link and see who signed off. The service runs on your own Vercel account."
   - A "Service address" field, starting with the saved address, with "Save" and "Remove" (`approvals.setService` with `{ address }`; Remove sends `{ address: null }`; a refusal's sentence under the field).
   - The key row, labelled "Service API key" (the shared key row makes the label): `secret.set` and `secret.delete` with `approvals.apiKey`, last four shown, the field is a password field.
   - "Test connection" (`approvals.check`). It can be pressed with nothing set up, and then shows the `approvals_not_set_up` sentence. A "Testing…" line shows while it waits; then "Connected." or the failure's sentence. Saving or removing the address clears an old result.
   - The line "Pictures for the gallery are kept in your Amazon S3 bucket (Cloud storage, above)."
 - **"Cloud storage"** (`s3-section/`): see "Cloud storage: the S3 part", above.
-- Mounted in `settings-screen.tsx` after the keys section: Cloud storage, then Approvals service.
+- Mounted in `settings-screen/settings-screen.tsx` after the keys section: Cloud storage, then Approvals service.
 
 ### The campaign page
 
-**Built** (AP-11, AP-12).
+**Built.**
 
 - **Approval bar** (`src/renderer/screens/campaign/approval-bar/`), in the page's header row: the button "Approval link…". With a live link: "Signed off: {a} of {b} variants" (variants with at least one current sign-off, of those in the gallery), "Checked {time}" and a "Refresh" button. After a failed refresh: the failure's sentence in place of "Checked". With an ended link: "Link turned off".
 - **Store** (`src/renderer/stores/approvals-store.ts`, one per campaign page): holds the `approvals.forCampaign` reply; reads it again on `approvals.changed` for its campaign and on `project.changed` for its project (revs change the marks). While the link is live and `ready` is `ready`, it sends `approvals.refresh`: once when the page opens, every 60 seconds while the window has focus, when the window gains focus, and on "Refresh" (A-92). One refresh at a time; a refresh asked for while one runs is dropped. The background refresh goes through `api.command` directly and shows its failure only in the bar, never in the error banner. A reply with `gone: true` shows the `approval_link_gone` sentence in the bar; the `approvals.changed` event that came with it reads the query again. The timer stops when the page closes.
-- **Tile marks** (`src/renderer/screens/campaign/approval-mark/`): under each tile, beside it and not inside the tile's button, the marks of `approvalMarks` and, when the variant has sign-offs, a "Sign-offs ({n})" toggle (`aria-expanded`) showing the list. `VariantTile` gains an optional `footer` prop drawn after the button; `VariantGrid` gains an optional `tileFooter(variant)` prop; both a few lines.
+- **Tile marks** (`src/renderer/screens/campaign/approval-mark/`): under each tile, beside it and not inside the tile's button, the marks of `approvalMarks` and, when the variant has sign-offs, a "Sign-offs ({n})" toggle (`aria-expanded`) showing the list. `VariantTile` has an optional `footer` prop drawn after the button; `VariantGrid` has an optional `tileFooter(variant)` prop.
 - **Sign-off list** (`src/renderer/ui/signoff-list/`): one line per sign-off for the current version, newest first: "{email} · {date and time}". Used by the tile and the dialog.
 
 ### The approval link dialog
 
-**Built** (AP-11). `src/renderer/dialogs/approval-dialog/`, on the dialog frame. Title "Approval link". All buttons that send are disabled while a command runs, with "Working…" beside them.
+**Built.** `src/renderer/dialogs/approval-dialog/`, on the dialog frame. Title "Approval link". All buttons that send are disabled while a command runs, with "Working…" beside them.
 
 - **Not ready.** `no_service`: "Set up the approvals service in Settings to make links." `no_bucket`: the `approvals_needs_bucket` sentence. Button "Open Settings".
 - **No link.** "Make a link that shows this campaign's variants to reviewers. They need the link and the password. Anyone who has both can sign off on a variant with their email address, or remove a sign-off." Two choices: "Make a password for me" (default) and "Choose a password" (a password field, "At least 12 characters."). Button "Make link": `approvals.createLink`, then `approvals.publish`.
@@ -120,15 +120,15 @@ D-084: one folder per component, CSS from the existing tokens only (no slice of 
 
 ### An update in the background (D-110)
 
-The update itself runs in the main process, and other commands are not held while it runs. Only the dialog used to wait for it. Now:
+Built. The update itself runs in the main process, and other commands are not held while it runs. The window does not wait for it:
 
 - **The state has one owner in the window.** Whether a campaign's update is running, its latest `approvals.progress` and whether "Stop" was pressed are held outside the dialog, per `{projectId, campaignId}`, so they survive the dialog closing and the campaign page being left and shown again while the project stays open. The update is started and stopped through that owner, and still sent through the app store's command (so `NEEDS_KEY` asks for the key and a refusal reaches the banner).
-- **The dialog while an update runs.** The frame can be closed and "Close" is enabled. Every button that sends ("Update gallery", "Set password", "Turn off…", "Make a new link", "Make link") stays disabled. In place of the waiting line: a line of words, the `JobProgress` bar under it (`value` = `unitsDone / unitsTotal`, or no value before the first event and when `unitsTotal` is 0; its button is "Stop"), then "You can close this dialog. The update keeps going." Reopened while the update runs, the dialog shows the same bar at its latest value. Any other command still keeps the frame closed with "Working…", as before.
+- **The dialog while an update runs.** The frame can be closed and "Close" is enabled. Every button that sends ("Update gallery", "Set password", "Turn off…", "Make a new link", "Make link") stays disabled. In place of the waiting line: a line of words, the `JobProgress` bar under it (`value` = `unitsDone / unitsTotal`, or no value before the first event and when `unitsTotal` is 0; its button is "Stop"), then "You can close this dialog. The update keeps going." Reopened while the update runs, the dialog shows the same bar at its latest value. Any other command keeps the frame from closing, with "Working…".
 - **The line of words.** "Sending picture {done + 1} of {total}…" (`drawing`), "Making video {done + 1} of {total}…", "Sending video {done + 1} of {total}…", "Finishing…", "Updating the gallery…" before the first event, and "Stopping…" once "Stop" is pressed (the button is then disabled).
 - **The campaign page while an update runs.** The "Approvals" button shows the `spinner` icon in place of `link`, and its name and tip are "Approvals: updating the gallery". A click opens the dialog as always.
 - **When it ends with the dialog closed.** Success: the button returns to its usual look, and the tip and the dialog show the new "Updated {time}." through `approvals.changed`. A failure or a stop: its sentence goes to the banner, as every refusal sent through the app store does, and is in the dialog's alert when the dialog is opened next (until another command is sent).
-- **Not changed.** One run per campaign (`update_running`); `approvals.cancelUpdate`; the agent policy (both commands stay `deny`); what a stop removes. A project closed or an app quit during an update ends it the way a failed `run` does today: the next "Update gallery" draws what the local rows call changed and sends the whole gallery again.
-- **As built.** The owner is `src/renderer/stores/gallery-updates.ts`, a part of the app store (`updates`, `updateGallery`, `stopUpdate`, `clearRefusal`); the campaign's approvals store could not hold it, because it is dropped when the campaign page is left. A failed update's sentence stays in the owner's entry until the dialog sends another command or a new update starts. The bar is named "Updating the gallery" for a screen reader. While updating, the "Approvals" button keeps its "{a}/{b}" mark. The bar has no value when an event carries no unit count. The main process counts units in `src/main/approvals/progress-counter.ts`.
+- **The same with the dialog open or closed.** One run per campaign (`update_running`); `approvals.cancelUpdate`; the agent policy (both commands `deny`); what a stop removes. A project closed or an app quit during an update ends it the way a failed `run` does: the next "Update gallery" draws what the local rows call changed and sends the whole gallery again.
+- **Where it lives.** The owner is `src/renderer/stores/gallery-updates.ts`, a part of the app store (`updates`, `updateGallery`, `stopUpdate`, `clearRefusal`); the campaign's approvals store could not hold it, because it is dropped when the campaign page is left. A failed update's sentence stays in the owner's entry until the dialog sends another command or a new update starts. The bar is named "Updating the gallery" for a screen reader. While updating, the "Approvals" button keeps its "{a}/{b}" mark. The bar has no value when an event carries no unit count. The main process counts units in `src/main/approvals/progress-counter.ts`.
 - **Known edge.** With the dialog closed the user can edit. A video variant edited while its clip is being made fails the update with the variant-changed sentence; a still edited after it was drawn is simply counted in "{n} variants changed since."
 
 ## Security
@@ -163,11 +163,11 @@ To be added to the table in `spec/security.md`, "Project-file values that reach 
 
 | Value from the project file | Where it goes | File | Check before use | Left open |
 |---|---|---|---|---|
-| `project_id`, `campaign.id` | API path `/api/v1/links/{p}/{c}`; picture folder | `src/main/approvals/client.ts`, `picture-paths.ts` | `PROJECT_ID`, `CAMPAIGN_ID` rules | A file copying another project's IDs reaches that link only with the same service key (accepted) |
+| `project_id`, `campaign.id` | API path `/api/v1/links/{p}/{c}`; picture folder | `src/main/approvals/client.ts`, `src/shared/approvals/picture-paths.ts` | `PROJECT_ID`, `CAMPAIGN_ID` rules | A file copying another project's IDs reaches that link only with the same service key (accepted) |
 | `approval_variant.variant_id`, `published_rev` | Picture file name; signing; removal | `picture-paths.ts` | Variant ID rule, whole number; only inside the campaign's folder | None |
 | `approval_link.slug` | The link address shown and copied | `src/main/queries/approvals.ts` | `SLUG` rule; a failing row is skipped | None |
-| `approval_signoff.*` | Shown in the window | `local-store.ts` | Zod on read (`EMAIL`, IDs, numbers, time) | None |
-| `campaign.name`, `variant.title` | Sent to the service, shown to visitors | `publish.ts` | `SHOWN_TEXT` (control and direction characters refused, length); escaped by the service | Names are the user's own words, sent on purpose |
+| `approval_signoff.*` | Shown in the window | `src/main/approvals/local-store.ts` | Zod on read (`EMAIL`, IDs, numbers, time) | None |
+| `campaign.name`, `variant.title` | Sent to the service, shown to visitors | `src/main/approvals/publish.ts` | `SHOWN_TEXT` (control and direction characters refused, length); escaped by the service | Names are the user's own words, sent on purpose |
 
 ### Rules a developer must not break
 
@@ -204,8 +204,7 @@ To be added to the table in `spec/security.md`, "Project-file values that reach 
 
 ## Open items
 
-- **`createLink` without secure storage.** If the computer cannot store passwords securely, `createLink` (AP-8 as built) fails only after the service made the link, and each retry repeats that; `setPassword` changes the password on the service and keeps it nowhere. **Ruled:** both commands ask the password store whether encryption is available before anything is sent, and refuse with its sentence "This computer cannot store keys securely." (`spec/approvals-commands.md`, "Refusals"). Built with AP-8's review fixes.
-- **`setPassword`'s gone sentence.** On a `404`, `setPassword` refuses with `approval_link_gone` and changes nothing locally, but that reason's sentence says the link "is shown as turned off". The link is shown as turned off only after the next refresh. To be checked against the built sentence and worded for this case if needed.
+- **`setPassword`'s gone sentence.** On a `404`, `setPassword` refuses with `approval_link_gone` and changes nothing locally, but that reason's sentence (`src/shared/approvals/messages.ts`) says the link "is shown as turned off". The link is shown as turned off only after the next refresh. The sentence has no wording of its own for this case.
 - **No word on a take-over.** On a `409` take-over the user is not told the campaign already had a link. Accepted (A-84).
 - **Sign-offs in a received project file** show as real until the next refresh.
 - **Two `createLink` calls at once** can keep the wrong password.
@@ -220,14 +219,14 @@ Made to keep the build moving under D-082. Each says how hard it is to undo.
 - **A-85. The password is kept** in `{userData}/approval-passwords.bin`, encrypted, never in the project file; the app makes one by default (16 letters in four groups); a chosen one has 12 to 128 characters. *AP-6, AP-8. Easy.*
 - **A-86. Password checks:** PBKDF2-SHA-256 at 100,000 iterations, 10 tries per link per 15 minutes, one reply for unknown slug, wrong password and too many tries. *AP-2, AP-3. Easy.*
 - **A-87. Sessions** are rows in the service's database with a 12-hour `__Host-` cookie per link, `SameSite=Lax`; a new password or turning off ends them. *AP-3. Easy.*
-- **A-88. No script needed on the visitor pages:** plain forms and `303` redirects. Since D-097 the pages load the framework's own scripts under a nonce policy, but signing off works with script switched off. *AP-3, AP-16. Easy.*
+- **A-88. No script needed on the visitor pages:** plain forms and `303` redirects. The pages load the framework's own scripts under a nonce policy (D-097), but signing off works with script switched off. *AP-3, AP-16. Easy.*
 - **A-89. Pictures:** a 1,600 px PNG per variant in the user's S3 bucket, signed for 7 days, renewed by refresh when under 2 days remain; the service fetches only S3 hosts; a picture store of the service's own may replace this behind `PictureSource` (OI-96). *AP-4, AP-7, AP-9. Medium.*
 - **A-90. "Update gallery" is a command, not a job,** all or nothing, and draws only variants that changed. *AP-9. Medium (a job kind needs a migration).*
 - **A-91. A variant's version is its `rev`.** *AP-9. Easy.*
 - **A-92. Reading sign-offs back:** a full replace on each refresh; every 60 s while the campaign page is shown and the window has focus, on focus, and on "Refresh". *AP-9, AP-11. Easy.*
 - **A-93. Approval tables are main-only side tables,** not wire rows, with their own event; emails travel in the project file. *AP-5. Medium.*
 - **A-94. Turning a link off** deletes it, its gallery, sign-offs and sessions on the service and its pictures in the bucket; the app keeps its last read of sign-offs until a new link is made. *AP-8. Easy.*
-- **A-95. The S3 part of Settings' "Cloud storage"** is built ahead of Phase 9 (OI-97). *AP-10a (built); AP-10b.*
+- **A-95. The S3 part of Settings' "Cloud storage"** holds the gallery's bucket (OI-97). *AP-10a, AP-10b. Easy.*
 - **A-96. Agents:** every approvals command deny, both queries user only. *AP-5. Easy.*
 - **A-97. Local test doors:** plain `http` to `127.0.0.1` and a folder picture store only in an unpackaged app with dev tools on; the service's `TEST_PICTURE_ORIGIN` only in tests. *AP-6, AP-7, AP-4. Easy.*
 - **A-98. The service key shows its last four** characters like every other key, not only "set / not set". *AP-5. Easy.*
@@ -241,13 +240,13 @@ Made to keep the build moving under D-082. Each says how hard it is to undo.
 - **A-106. The test picture origin is ignored on every Vercel deployment** (`VERCEL` set), on top of the exact `127.0.0.1` rule. *AP-14. Easy.*
 - **A-107. Migrations run from the stakeholder's machine** with `npm run db:migrate -- --hosted`; agents never pass `--hosted`. *AP-14, AP-13. Easy.*
 - **A-108. Only the production domain is public.** Standard Deployment Protection keeps previews and deployment addresses private, and the database is connected for Production only, so a preview has no data. *AP-13. Easy.*
-- **A-109. No client components** except the two error boundaries Next.js requires. Since R2A-8 one small plain script of the service's own improves the gallery (arrow keys, masonry spans, a fallback for browsers without command buttons, pausing videos); nothing needs it to sign off. *AP-16, R2A-8. Easy.*
+- **A-109. No client components** except the two error boundaries Next.js requires. One small plain script of the service's own improves the gallery (arrow keys, masonry spans, a fallback for browsers without command buttons, pausing videos); nothing needs it to sign off. *AP-16, R2A-8. Easy.*
 
 ## Left for later
 
 - **A picture store of the service's own instead of S3** (no 7-day limit, no bucket setup): a new `PictureSource` in the service and a new picture store in the app (OI-96).
 - **Script that improves the pages** (for example signing off without a page reload), never needed to sign off (A-109).
-- **A job** for galleries of hundreds of variants ("Update gallery" stays a command; since R2V-7 it shows progress and can be stopped).
+- **A job** for galleries of hundreds of variants ("Update gallery" is a command; it shows progress and can be stopped).
 - **Links of deleted campaigns:** a list in Settings to turn them off.
-- **MCP tools** for approvals, if ever (Phase 10 decides; deny until then).
-- Comments with a sign-off, links that end on a date, international email addresses. (The reviewer's email is now kept for the browser session, R2A-2.)
+- **MCP tools** for approvals, if ever (every approvals command and query is denied to agents).
+- Comments with a sign-off, links that end on a date, international email addresses. The reviewer's email is kept for the browser session only.

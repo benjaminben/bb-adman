@@ -9,7 +9,7 @@ The generation details written into generated files, the export of variants to d
 | File type | Where | Content | State |
 |-----------|-------|---------|-------|
 | PNG (every generated picture) | One uncompressed `iTXt` chunk with keyword `generation`, placed just before `IEND` | JSON below | Built |
-| MP4 (generated video) | Container tag `comment`, written by FFmpeg | JSON below | Built (P7-16) |
+| MP4 (generated video) | Container tag `comment`, written by FFmpeg | JSON below | Built |
 
 ```json
 {
@@ -51,14 +51,15 @@ export type GenerationDetails = {
 
 ### MP4
 
-Built (P7-16, `src/main/jobs/video-store.ts`, `src/main/media/ffmetadata.ts`). The video job's result says `details: 'embedded'`, or `'pending'` when no media tool is there. Gap: a ComfyUI video's details do not yet hold `models` and `workflow`, because the video result carries none (with LP-5, `spec/phases/review-leftovers.md`).
+Built. `src/main/jobs/video-store.ts`, `src/main/media/ffmetadata.ts`. The video job's result says `details: 'embedded'`, or `'pending'` when no media tool is there or the written clip fails `checkMp4`.
 
-- FFmpeg writes the same JSON into the `comment` tag with stream copy (`-c:v copy -metadata comment=...`), with `kind: "video_generation"`. For ComfyUI it adds `models` and `workflow` as for PNG (OI-36: what a ComfyUI clip carries before Phase 7).
+- FFmpeg writes the same JSON into the `comment` tag with stream copy (`-c:v copy -metadata comment=...`), with `kind: "video_generation"`.
+- Not built: `models` and `workflow` for a ComfyUI video, as for PNG. The video result carries none (LP-5, `spec/phases/review-leftovers.md`).
 - The sound stream is kept (copied as it is). No `-an` on a generated clip.
 
 ## Export
 
-Built (Phase 8: P8-1 to P8-19; slices in `spec/phases/phase-08-slices.md` and `phase-08-slices-2.md`). [REQ: FR-126, FR-130 to FR-132, FR-140 to FR-143, FR-150, FR-151]
+Built. `src/main/export/`; slices in `spec/phases/phase-08-slices.md` and `phase-08-slices-2.md`. [REQ: FR-126, FR-130 to FR-132, FR-140 to FR-143, FR-150, FR-151]
 
 **Trigger:** `export.run` with `projectId, campaignId, variantIds[], outputDir, imageFormat, jpgQuality, fps, proceedDespiteWarnings`, and an optional reason for proceeding past warnings [REQ: FR-236]. `deny` for an agent. Job kind `export` (class `background`). Defaults come from `settings.export = { imageFormat: 'png' | 'jpg', jpgQuality: 1..100, fps: 30 | 60 }` (built).
 
@@ -114,25 +115,42 @@ Sound:    -c:a aac -b:a 192k (FFmpeg's own AAC encoder); -an when there is no so
 
 ### Sound in export
 
-Built (data and preview P7-12, P7-21; export P8-17, `src/main/export/video/sound-args.ts`). OI-54 [REQ: FR-301, FR-302, FR-051 as changed]. CQ-32 is ruled: the MP4 carries the one sound source the editor plays (the clips' own sound, the chosen audio file, or none).
+Built (export: `src/main/export/video/sound-args.ts`). OI-54 [REQ: FR-301, FR-302, FR-051 as changed]. CQ-32 is ruled: the MP4 carries the one sound source the editor plays (the clips' own sound, the chosen audio file, or none).
 
 - A video variant has one sound source at a time: the clips' own sound, one added audio file, or none. Each clip's sound can be switched off.
 - **The clips' sound:** each clip whose sound is on and whose file holds sound is read a second time for its sound, from its in point for its length (`-ss`, `-t`), and placed at the clip's start with `adelay`. Two or more are mixed with `amix`. No other audio filter is used. No clip with sound: silent.
 - **An added file** starts at the variant's start and is cut at the variant's end (`-t`). No mixing, no volume control.
-- Audio files: MP3, WAV, M4A, AAC (a new audio asset kind), each read with its pinned demuxer.
+- Audio files: MP3, WAV, M4A, AAC (the audio asset kind), each read with its pinned demuxer.
 - Sound is encoded with FFmpeg's own `aac` encoder at 192 kbit/s. With source "none", or no sound found, the export is silent (`-an`).
 
 ## Report
 
-Built (P8-7 to P8-9, P8-12; the full shape is in `spec/phases/phase-08.md`, "Report"; the sketch below is the first outline). [REQ: FR-150, FR-151]
+Built. `src/main/export/report/` (`build.ts`, `facts.ts`, `changed.ts`, `delivered.ts`, `html.ts`, `html-parts.ts`, `html-words.ts`); the schema's one owner is `Report` in `src/shared/schemas/report.ts`; the full rules are in `spec/phases/phase-08.md`, "Report". [REQ: FR-150, FR-151, FR-230 to FR-239]
+
+An outline of the schema (the file has every field and limit):
 
 ```ts
 type Report = {
-  campaignId: string; campaignName: string; createdAt: string; appVersion: string; outputDir: string
-  proceededDespiteWarnings: boolean
+  reportVersion: 1
+  campaignId: string; campaignName: string; createdAt: string; appVersion: string
+  outputFolderName: string; exportNumber: number
+  exporter: { name: string | null }            // settings.reports.exporterName, typed by the user
+  market: string; audience: string; primaryLanguage: string
+  paidGenerations: { pictures: number; videos: number; text: number }
+  checksRun: boolean
+  proceeded: { by: string | null; at: string; reason: string | null } | null
+  summary: { exported: number; passedAll: number; withWarnings: number; failed: number }
+  warningsExportedPast: Array<{ variantId: string; checkId: CheckId; message: string; seenBeforeExport: boolean }>
+  missing: Array<{ sizeLabel: string; language: string; reason: 'no_variant' | 'not_in_export' | 'export_failed' }>
+  previousExport: { exportNumber: number; createdAt: string } | null
   variants: Array<{
     variantId: string; title: string; sizeLabel: string; language: string; format: 'image' | 'video'
-    file: string | null                       // path relative to outputDir, null if it failed
+    rev: number; changedSincePrevious: 'changed' | 'unchanged' | 'not_in_previous' | null
+    subjects: Array<{ subjectId: string; displayName: string }>
+    lastAgentChangeAt: string | null
+    translations: Array<{ layerKey: string; source: 'ai' | 'agent' | 'user' | 'brief' | null
+                          status: 'missing' | 'proposed' | 'approved' | null }>
+    file: string | null                       // path relative to the output folder, null if it failed
     assets: Array<{ assetId: string; displayName: string; role: 'background' | 'image' | 'font' | 'clip'
                     origin: 'generated' | 'imported'; provider?: string; model?: string; prompt?: string }>
     checks: CheckResult[]
@@ -141,38 +159,36 @@ type Report = {
 }
 ```
 
+What each requirement puts in the report (requirement text: `requirements/draft-client-input.md`, and `requirements/draft-d053.md` for FR-230 as changed):
+
+| Requirement | In the report |
+|-------------|---------------|
+| FR-230 | `paidGenerations`: the campaign's paid generation count. A run on a local provider (ComfyUI) is never counted. Not built: usage with an estimated price, as FR-303 and FR-305 change it (OI-52); the report holds counts only. |
+| FR-231 | `summary` at the top (exported, passed every check, with warnings, failed), then `warningsExportedPast`, before any per-ad detail. |
+| FR-232 | `missing`: each size and language pair from the campaign's lists with no exported ad, and why (no variant, not in this export, export failed). |
+| FR-233 | A small picture of each ad inside the one HTML file; one still frame for a video ad. |
+| FR-234 | Header: market (region), audience, campaign ID, export time, exporter's name, export number. Each ad names its subjects by ID and display name, its size, language and format. |
+| FR-235 | `exporter.name` from the Settings value `reports.exporterName` ("Name shown in reports"), optional. Empty shows "name not set". The report says the name is typed by the user and not checked. |
+| FR-236 | `proceeded`: who proceeded past the warnings, when, and the reason given or "no reason given". |
+| FR-237 | `translations` for each ad not in the main language: where its translation came from (AI, an agent, the user, the brief) and whether it is approved. |
+| FR-238 | `changedSincePrevious`: from the second export on, each ad marked changed or not since the previous export, from each variant's `rev` stored in the report. |
+| FR-239 | `lastAgentChangeAt`, from `variant.agent_changed_at`: "last changed by an agent on (date)" or "no agent changes". |
+| FR-240 | Not a report field: an addition to the prohibited-words check ("Checks" below). |
+| FR-241 | Publish only: the published report starts with the publish time and publish number (`spec/storage-and-publish.md`, "Publishing"). |
+
 `report.html` is one self-contained file with no scripts. The report view in the app draws the same JSON [REQ: FR-151]. `model` stores the model ID; both show it by its name, or the ID when the name is unknown (`spec/phases/phase-08.md`, "Report", Model). Saved reports are read with `report.list` and `report.get` (`spec/api-queries-events.md`).
 
 A report never holds a secret, the ComfyUI address [REQ: FR-253], or the path or file name of a picture given to a test by path.
 
-### Report additions, not yet designed
-
-Phase 8. Each is one addition to `Report`, to be specified when Phase 8 is prepared. Requirement text: `requirements/draft-client-input.md` (and `requirements/draft-d053.md` for FR-230 as changed).
-
-| Requirement | Addition |
-|-------------|----------|
-| FR-230 | The campaign's paid generation count, split into pictures and videos. A run on a local provider (ComfyUI) is never counted. Changed by FR-303 and FR-305 to usage with an estimated price (slice US, OI-52, before Phase 8). |
-| FR-231 | A summary at the top (exported, passed every check, with warnings, failed), then the list of warnings exported past, before any per-ad detail. |
-| FR-232 | Asked for against delivered: each size and language pair from the campaign's lists with no exported ad, and why (no variant, not in this export, export failed). |
-| FR-233 | A small picture of each ad inside the one HTML file; one still frame for a video ad. |
-| FR-234 | Header: market (region), audience, campaign ID, export time, exporter's name, export number. Each ad names its subjects by ID and display name, its size, language and format. |
-| FR-235 | Settings value "Name shown in reports", optional. Empty shows "name not set". The report says the name is typed by the user and not checked. Also needs the Settings field (UI). |
-| FR-236 | Who proceeded past each warning, when, and the reason given or "no reason given". `export.run` gains the optional reason; the proceed dialog gains the field. |
-| FR-237 | For each ad not in the main language: where its translation came from (AI, an agent, the user, the brief) and whether it is approved. |
-| FR-238 | From the second export on, each ad marked changed or not since the previous export, from each variant's `rev` stored in the report. |
-| FR-239 | The last agent change per ad from `variant.agent_changed_at` (column built): "last changed by an agent on (date)" or "no agent changes". |
-| FR-240 | Not a report field: an addition to the prohibited-words check ("Checks" below). |
-| FR-241 | Publish only: the published report starts with the publish time and publish number (`spec/storage-and-publish.md`, "Publishing"). |
-
 ## Translation sheet
 
-Built (P6-7, P6-7b, P6-8; the button is `translation-panel/export-sheet.tsx`). The full rules (cell quoting, the formula guard, the one chosen path) are in `spec/phases/phase-06.md`, section 4. [REQ: FR-103]
+Built (the button is `translation-panel/export-sheet.tsx`). The full rules (cell quoting, the formula guard, the one chosen path) are in `spec/phases/phase-06.md`, section 4. [REQ: FR-103]
 
 `translation.exportSheet` writes a CSV in UTF-8 with a byte-order mark, so Excel opens it correctly. Columns: `variant_id, title, size, language, layer, source_text, text, status`. One row per text layer of every variant not in the primary language. Publishing includes it as `translations.csv`.
 
 ## Checks
 
-Built: the engine, `check.run`, `check.results` and the badges (P6-2, P6-3), the check panel (P6-11), and export's call before every export (P8-13, the checks part). The engine's rules are in `spec/phases/phase-06.md`, section 5. [REQ: FR-110 to FR-116, R-03, R-13, R-18]
+Built: the engine, `check.run`, `check.results`, the badges, the check panel, and export's call before every export. The engine's rules are in `spec/phases/phase-06.md`, section 5. [REQ: FR-110 to FR-116, R-03, R-13, R-18]
 
 ```ts
 type CheckResult = {
@@ -199,8 +215,8 @@ The checks read values the app already stores, so they add no second source for 
 
 **Word matching.** Both sides are normalised with Unicode NFKC and lowercased. For languages written with spaces, a match must sit on word boundaries found with `Intl.Segmenter`. For Chinese, Japanese and Korean, a match is a plain substring. A list entry may be a phrase. A prohibited entry made only of punctuation or symbols (for example `!`) is matched wherever it appears in a text layer [REQ: FR-240, addition to FR-113].
 
-**Colours inside pictures.** FR-112 (colours inside background images, P2) is not built. The `VerificationProvider` interface (`checkImageColours`, in `src/main/providers/types.ts`) and the disabled `jev` registry entry are its place [REQ: OI-01]. OI-01, the assessment FR-112 depends on, is due after this build; nothing in this build waits on it.
+**Colours inside pictures.** FR-112 (colours inside background images, P2) is not built. The `VerificationProvider` interface (`checkImageColours`, in `src/main/providers/types.ts`) and the disabled `jev` registry entry are its place [REQ: OI-01]. OI-01, the open item FR-112 depends on, is still open; nothing built waits on it.
 
 ## MP4 file check
 
-Built. `checkMp4` in `src/main/providers/video-check.ts` checks every clip before it is stored; its refusal texts are `MP4_REFUSED`. The full rules are in `spec/comfyui-workflows.md` (`checkMp4(bytes)`), including the rule that a video track must list at least one sample (`noFrames`). It is security class: any change is ruled on its own. Fake `mp4File` clips (`src/main/providers/fake/mp4`) pass `checkMp4` but cannot be decoded by the window: fit for `checkMp4` and adapter tests, never for a test that plays a clip.
+Built. `checkMp4` in `src/main/providers/video-check.ts` checks every clip before it is stored; its refusal texts are `MP4_REFUSED`. The full rules are in `spec/comfyui-workflows.md` (`checkMp4(bytes)`), including the rule that a video track must list at least one sample (`noFrames`). It is security class: any change is ruled on its own. Fake `mp4File` clips (`src/main/providers/fake/mp4.ts`) pass `checkMp4` but cannot be decoded by the window: fit for `checkMp4` and adapter tests, never for a test that plays a clip.

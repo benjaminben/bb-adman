@@ -2,11 +2,11 @@
 
 A demo of the pipeline for someone who has not installed the app (D-106, D-107). One brief in; finished ads out, one per subject set, language and size, with a report of the checks. It runs with `npm run quickstart` on macOS and Windows.
 
-**State.** Built: the two examples, `--example` and the first question that picks one; the brand files and the brief's look read, with a printed note for each that cannot be used; the master built from the brief's layout with the logo, the brand fonts and the brand colours; the art direction in the picture prompt; text placement by AI with `--ai_layout` only; the picture in the subject spot for a flat-colour layout; one ad set per subject with `adsPer: subject`, and output folders by subject; `picture.png`; the checks, `report.json` and the printed result lines (QS-1, QS-2); each variant planned and its text fitted by the app's own rule, `planNewVariant` and `fitTranslatedText` (MV-8). Not built yet: the README with sample pictures (QS-3).
+**State.** Built: the two examples, `--example` and the first question that picks one; the brand files and the brief's look read, with a printed note for each that cannot be used; the master built from the brief's layout with the logo, the brand fonts and the brand colours; the art direction in the picture prompt; text placement by AI with `--ai_layout` only; the picture in the subject spot for a flat-colour layout; one ad set per subject with `adsPer: subject`, and output folders by subject; `picture.png`; the checks, `report.json` and the printed result lines (QS-1, QS-2); each variant planned and its text fitted by the app's own rule, `planNewVariant` and `fitTranslatedText` (MV-8); the quickstart part of `README.md`, in words. Not built: sample pictures of both examples in the README (QS-3); the README shows no picture.
 
 ## What it is not
 
-It opens no app window and starts no Electron process. It reads and writes no project file, no SQLite database, no Settings file and no saved secret. It is not packaged with the app (`electron-builder.json` ships `out/**` only).
+It opens no app window and starts no Electron process. It reads and writes no project file, no SQLite database, no Settings file and no saved secret. It is not packaged with the app (`electron-builder.json` ships `out/**` and `package.json` only).
 
 ## What it reuses
 
@@ -93,7 +93,7 @@ quickstart/output/{campaign}/
 
 ## Slices
 
-- **QS-1. Examples, brand and layout.** The `examples/` folders and `--example`; brand files read and handed to the page; the master built from the layout with logo, fonts and colours; art direction in the prompt; `--ai_layout` in place of the layout call that always ran; the picture in the subject spot for a flat layout.
-- **QS-2. Ad sets and the report.** `adsPer: subject`; a set with no photo; output folders by subject; `picture.png`; the checks, `report.json` (in place of `run.json`) and the printed lines.
-- **MV-8. The app's rule** (`spec/make-variants.md`, "Quickstart"). Step 3 plans with `planNewVariant`, step 4 fits translated words with `fitTranslatedText`, and the pass that laid out each variant again (`starterLayoutPatches`, then the brand fonts and colours put back) is gone.
-- **QS-3. README.** Both examples with sample pictures, after a real run.
+- **QS-1 (built). Examples, brand and layout.** The `quickstart/examples/` folders and `--example`; brand files read and handed to the page; the master built from the layout with logo, fonts and colours; art direction in the prompt; `--ai_layout`; the picture in the subject spot for a flat layout.
+- **QS-2 (built). Ad sets and the report.** `adsPer: subject`; a set with no photo; output folders by subject; `picture.png`; the checks, `report.json` and the printed lines.
+- **MV-8 (built). The app's rule** (`spec/make-variants.md`, "Quickstart"). Step 3 plans with `planNewVariant`; step 4 fits translated words with `fitTranslatedText`. No other pass lays a variant out again.
+- **QS-3 (not built). README pictures.** Both examples with sample pictures, after a real run.

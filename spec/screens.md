@@ -1,10 +1,10 @@
 # Screens as built
 
-What each built screen offers today, its source files, its wording, and the choices made without a design sign-off. The campaign screens and dialogs (ComfyUI failures, the address and licence dialogs, the trial mark, confirmed licences, import, drop, relink, package, the project home's parts, the Assets panel, the brief form, the campaign page and its tabs) are in `spec/screens-campaign.md`. Read with `spec/test-harnesses.md` (which of these functions the end-to-end harness reaches), `spec/structure.md` (renderer layout) and `spec/api-commands.md` / `spec/api-queries-events.md` (the calls each screen sends).
+What each screen offers, its source files, its wording, and the choices made without a design sign-off. The campaign screens and dialogs (ComfyUI failures, the address and licence dialogs, the trial mark, confirmed licences, import, drop, relink, package, the project home's parts, the Assets panel, the brief form, the campaign page and its tabs) are in `spec/screens-campaign.md`. Read with `spec/test-harnesses.md` (which of these functions the end-to-end harness reaches), `spec/structure.md` (renderer layout) and `spec/api-commands.md` / `spec/api-queries-events.md` (the calls each screen sends).
 
 ## Status of these screens
 
-Built (Phases 1 and 2, then restyled by the design wave, `spec/phases/design-wave.md`). Every screen is built from the shared parts in `src/renderer/ui/` (`spec/app-style-parts.md`) and styled only from `ui/tokens.css`, `ui/base.css`, `ui/layout.module.css` and each component's own CSS module (`spec/structure.md`, "One styling source"). The look is in `spec/app-style.md`.
+Built, in the design wave's look (`spec/phases/design-wave.md`). Every screen is built from the shared parts in `src/renderer/ui/` (`spec/app-style-parts.md`) and styled only from `ui/tokens.css`, `ui/base.css`, `ui/layout.module.css` and each component's own CSS module (`spec/structure.md`, "One styling source"). The look is in `spec/app-style.md`.
 
 | Screen | Where it is described |
 |--------|------|
@@ -68,7 +68,7 @@ Built. `src/renderer/screens/start/start-screen/`, `start-images/`, `new-project
 
 ## Project home
 
-Built. `src/renderer/screens/project-home/project-home/` (`project-home.tsx`, `home-sections.tsx`, `use-project.ts`), `brief-load/`, `brief-paste/`, `brief-form/`, `campaign-list/`, `import-files/`, `missing-files/`, `drop-import/`, `campaign-input.ts`. The parts are in `spec/screens-campaign.md`.
+Built. `src/renderer/screens/project-home/project-home/` (`project-home.tsx`, `home-sections.tsx`, `use-project.ts`), `brief-load/`, `brief-paste/`, `brief-form/`, `brand-fields/`, `size-fields/`, `rule-fields/`, `subject-rows/`, `subject-photos/`, `campaign-list/`, `home-assets/`, `import-files/`, `missing-files/`, `drop-import/`, `package-project/`, and the form helpers `campaign-input.ts`, `brief-form-*.ts`, `brand-notes.ts`. The parts are in `spec/screens-campaign.md`.
 
 - The `h1` is the project name. The file path is its `title` and accessible description only. "Loading the project…" while loading. Event `project.changed` for this project reads `project.get` again; one for another project does not. Close and Package are in the project menu (Shell), not on the page.
 - **Campaigns:** a Section (`home.campaigns`, does not fold) whose header holds the count, "Load a brief" and "Paste a brief". Each campaign is one tile button named "Open {name}" with its cover and the variant count as an icon and number (`title` "{n} variants"). A dashed "+" tile named "New campaign" opens the New campaign page. Empty: "No campaigns yet".
@@ -141,33 +141,33 @@ Built. `src/renderer/dialogs/address-dialog/`, `licence-dialog/`, mounted in the
 
 ## Editor, tabs and thumbnails
 
-Built (Phase 3, restyled by the design wave). Described in `spec/editor.md`: the project switcher and campaign tabs; the editor (canvas, layer list, properties panel, picture chooser, font upload) is the content of a variant tab; the campaign grid and project home show thumbnails. Every rule in "Rules for every screen" holds for them.
+Built. Described in `spec/editor.md`: the project switcher and campaign tabs; the editor (canvas, layer list, properties panel, picture chooser, font upload) is the content of a variant tab; the campaign grid and project home show thumbnails. Every rule in "Rules for every screen" holds for them.
 
-**Phase 3 tokens** in `src/renderer/ui/tokens.css`, used by no other file's literal: `--editor-layers-width` (260px), `--editor-props-width` (312px), `--canvas-backdrop` (a mid grey that is neither ad black nor page white), `--selection-dark` and `--selection-light` (the selection line and its two sides), `--guide-color` (a magenta that shows on most pictures), `--handle-size` (8px), `--rotate-handle-offset` (24px), `--thumbnail-tile` (the grid tile's picture width), `--layer-thumb` (32px). Overflow and missing marks use the existing danger tokens.
+**Editor tokens** in `src/renderer/ui/tokens.css`, used by no other file's literal: `--editor-layers-width` (260px), `--editor-props-width` (312px), `--canvas-backdrop` (a warm light grey that is neither ad black nor page white; `spec/app-style.md`, choice C-9), `--selection-dark` and `--selection-light` (the selection line and its two sides), `--guide-color` (a magenta that shows on most pictures), `--handle-size` (8px), `--rotate-handle-offset` (24px), `--thumbnail-tile` (the grid tile's picture width), `--layer-thumb` (32px). Overflow and missing marks use the existing danger tokens.
 
 ## Choices made without a design sign-off
 
-Each was made to get a working, testable screen. A later UI pass may change any of them. The design wave's own choices (C-1 to C-15) are in `spec/phases/design-wave.md`.
+Each was made to get a working, testable screen. The design wave's own choices (C-1 to C-18) are in `spec/phases/design-wave.md`.
 
-Phase 3 (editor and tabs, `spec/editor.md`):
+Editor and tabs (`spec/editor.md`):
 
 - Layers on the left, canvas in the centre, properties on the right, a one-line header and one banner line above.
 - Selection drawn as a dark line with a light line each side, square resize handles and a round rotation handle above the box.
 - Guides in magenta, 1 screen pixel; snapping within 6 screen pixels.
 - An empty picture layer shown in the editor as a dashed box saying "Empty picture"; overflowing text as a dashed box in the danger colour.
-- The canvas backdrop is a mid grey; the ad itself is black where nothing is drawn.
+- The canvas backdrop is a warm light grey (`spec/app-style.md`, choice C-9); the ad itself is black where nothing is drawn.
 - Zoom steps 25 to 400 %, default "Fit", with "Zoom out" and "Zoom in" at the foot of the canvas.
 - Text is typed in the properties panel, not on the canvas; double-clicking a text layer does nothing beyond selecting it, and "Add text layer" puts the focus in the Copy field.
 - Fields save on Enter or on leaving the field, never on each keystroke.
 - The weight list uses the nine standard names (Thin 100 to Black 900).
-- Colour is a row of swatches (the campaign palette) with "Other colour" for a typed hex value.
+- Colour is a row of swatches (the campaign palette) with "Other colour", which opens the app's own colour picker with a hex field (`ui/swatch-field/`, D-109).
 - The picture chooser is a dialog with a grid of the asset library's pictures and "Import pictures…".
 - Duplicate places the copy 20 px right and down, on top of every layer.
 - The project switcher is a menu button at the left of the top bar; "Project" is a fixed first campaign tab; "+" opens the New campaign page.
 - The thumbnail of a campaign on the project home is the master of its first direction; a failed thumbnail says "No preview".
 - The app menu has no View menu.
 
-Phases 1 and 2:
+Shell, Settings and runs:
 
 - Settings is shown in place of the tab content, not as a tab or a window.
 - A running video run counts whole minutes from `createdAt`, refreshed every 15 seconds (`ui/run-status/video-status.ts`), and shows no percentage even when the job has one; a running picture run shows its percent.

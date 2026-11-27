@@ -2,7 +2,7 @@
 
 The full rules of the commands, queries and events the Scene and the editor need: `layer.create`, `layer.update`, `layer.delete`, `layer.restore`, `layer.reorder`, `layer.reportOverflow`, `variant.update`, the queries `variant.get`, `thumbnail.get` and `variant.render`, and the event `thumbnail.changed`. Each has its row in `spec/api-commands.md` or `spec/api-queries-events.md`; this file holds the detail. Read with `spec/api-principles.md` (bus, errors, undo) and `spec/data-model-campaign.md` (the `layer` and `variant` tables).
 
-Everything here is Built. Schemas: `src/shared/schemas/commands/layer.ts`, `commands/variant.ts`, `queries/variant.ts`, `queries/render.ts`. Handlers: `src/main/commands/layer/`, `src/main/commands/variant/`. Queries: `src/main/queries/variant.ts`, `src/main/queries/render.ts`.
+Built. Schemas: `src/shared/schemas/commands/layer.ts`, `commands/variant.ts`, `queries/variant.ts`, `queries/render.ts`. Handlers: `src/main/commands/layer/`, `src/main/commands/variant/`. Queries: `src/main/queries/variant.ts`, `src/main/queries/render.ts`.
 
 ## Rules for every layer and variant command
 
@@ -10,7 +10,7 @@ Everything here is Built. Schemas: `src/shared/schemas/commands/layer.ts`, `comm
 - **`variant.rev`.** Every command here except `layer.reportOverflow` bumps the variant's `rev` by one through the helper in `src/main/commands/variant-rev.ts`, once per command. With actor `agent` the helper also stamps `variant.agent_changed_at` [REQ: FR-239]. `tests/integration/commands/layer-update-agent.test.ts` sends `layer.update` once as the user and once as the agent and checks that only the agent's call stamps the column.
 - **Layer counters.** A command bumps `layer.revs[group]` by one for each group whose value really changed (`spec/data-rules.md`, "Links"): `copy`, `style`, `geometry`, `source`, `timing`, `animation`. `name`, `visible`, `locked` and `z` are in no group and bump no counter (they bump `variant.rev`).
 - **Nothing changed, nothing happens.** A command whose result equals what is stored writes nothing, bumps nothing, adds no undo entry, sends no event, and still answers `ok`.
-- **Overrides** are not written in Phase 3. No layer is linked before fan-out (Phase 5), and Phase 5 adds the override rule to `layer.update`.
+- **Overrides.** An edit on a linked layer adds override paths, and an edit that changes the override list gets `layer.revert` as its inverse (`overridesAfter` in `write-layer.ts`; rules in `spec/links-and-sync.md`).
 - **Lock is not a rule of the commands.** `locked` is an aid in the editor (`spec/editor.md`). A command, from the user or an agent, may change a locked layer (A-27).
 - **Undo.** Each command's inverse goes on the list `variant:{variantId}`. Each inverse is a full command input, `projectId` included.
 - **Events.** The handler names every row it wrote with `ctx.changes.touch`: the layer rows and the variant row. The success test of each command uses `expect-changes`.
@@ -38,7 +38,7 @@ type LayerUpdateInput = {
     style?: Partial<TextStyle> | Partial<ImageStyle>   // fields are merged into the stored style
     geometry?: Partial<Geometry>            // fields merged; `crop` is replaced whole (a box or null)
     source?: { assetId: string } | null     // image and background layers only
-    timing?: Timing                         // stored now, drawn from Phase 7
+    timing?: Timing                         // replaced whole
     animation?: { entrance?: AnimationBlock; exit?: AnimationBlock }  // each block replaced whole
   }
 }
@@ -130,29 +130,30 @@ System command (`internal: true`), agent deny, not on the window's channel. It e
 [REQ: FR-070]. Undo V. Agent allow. Built (`src/main/commands/variant/update.ts`).
 
 - Input `{ projectId, variantId, title?, durationMs? }`, strict, with at least one of the two ("Name a title or a duration."). `title` is trimmed, 1 to 200 characters. `durationMs` is a whole number from 500 to 86,400,000 (`MIN_DURATION_MS`, `MAX_DURATION_MS` in `src/shared/schemas/commands/variant.ts`).
-- `durationMs` (P7-10) writes `duration_ms`; on a variant that is not its direction's master it also sets `duration_overridden`. `durationOverridden` in the input is undo-only: accepted only while the bus replays an undo or redo, never from an agent (`spec/data-rules.md`, "Undo-only fields").
+- `durationMs` writes `duration_ms`; on a variant that is not its direction's master it also sets `duration_overridden`. `durationOverridden` in the input is undo-only: accepted only while the bus replays an undo or redo, never from an agent (`spec/data-rules.md`, "Undo-only fields").
 - **Inverse:** `variant.update` with the old title, or the old duration and flag. **Reply:** `{ variantId }`.
 
 ## Queries
 
 ### `variant.get`
 
-Built (`src/main/queries/variant.ts`, `variant-reads.ts`). Input `{ projectId, variantId }`. Unknown variant: `NOT_FOUND` "That variant was not found." Writes nothing. Both actors (the MCP tool `get_variant`, Phase 10, cuts it down). A layer row that fails its schema is logged and left out. An asset ID a layer names that has no asset row is left out of `assets` and does not set `missingFile`.
+Built (`src/main/queries/variant.ts`, `variant-reads.ts`). Input `{ projectId, variantId }`. Unknown variant: `NOT_FOUND` "That variant was not found." Writes nothing. Both actors (the MCP tool `get_variant` cuts it down). A layer row that fails its schema is logged and left out. An asset ID a layer names that has no asset row is left out of `assets` and does not set `missingFile`.
 
 ```ts
 type VariantGet = {
   variant: VariantSummary            // as in campaign.get: the row, isMaster, subjectIds, badges
   campaignId: string
   layers: LayerRow[]                 // z ascending, then ID
-  assets: Array<AssetRow & { missing: boolean }>   // each asset a layer names as source or font, once, by ID
+  clips: BackgroundClipRow[]         // startMs ascending, then ID
+  assets: Array<AssetRow & { missing: boolean }>   // each asset a layer or clip names, once, by ID
 }
 ```
 
-Phase 5 adds the out-of-date detail, Phase 6 the latest check result, Phase 7 the clips. A layer row that fails its schema is logged and left out, as in every query.
+The out-of-date detail comes from `sync.preview` and the latest check result from `check.results`; `variant.get` carries only their badges. A layer row that fails its schema is logged and left out, as in every query.
 
 ### `thumbnail.get`
 
-Built (`src/main/queries/render.ts`, `src/main/thumbnails/`). Input `{ projectId, variantId }`. User only in Phase 3 (no MCP tool wraps it): an agent gets `AGENT_DENIED` "Agents cannot read thumbnails in this version. Ask the user to do it in the app." Writes no project data; may start a draw.
+Built (`src/main/queries/render.ts`, `src/main/thumbnails/`). Input `{ projectId, variantId }`. User only (no MCP tool wraps it): an agent gets `AGENT_DENIED` "Agents cannot read thumbnails in this version. Ask the user to do it in the app." Writes no project data; may start a draw.
 
 ```ts
 type ThumbnailGet =
@@ -165,7 +166,7 @@ type ThumbnailGet =
 
 ### `variant.render`
 
-Built (`src/main/queries/render.ts`). Input `{ projectId, variantId, maxDimension? }`: a whole number from 64 to `RENDER_LIMITS.maxDimension` (2048), default 1024. Reply `VariantRender = { png: Uint8Array; width: number; height: number; rev: number }`, the variant drawn now with its longer side `maxDimension` (never larger than the variant itself). Writes no file and no project data (it may report overflow, as every draw does). Refused with `render_failed` when the draw fails; that does not mark the thumbnail failed. User only, until Phase 10 writes a rule for linked private pictures (a project file can link any picture the user can read, and the drawn PNG would carry its pixels): an agent gets `AGENT_DENIED` with the same sentence as `thumbnail.get`. The reference-picture tests call it from the window; Phase 10's `render_variant` tool will call it.
+Built (`src/main/queries/render.ts`). Input `{ projectId, variantId, maxDimension?, timeMs? }`: `maxDimension` a whole number from 64 to `RENDER_LIMITS.maxDimension` (2048), default 1024; `timeMs` a whole number from 0, default 0, the moment drawn. Reply `VariantRender = { png: Uint8Array; width: number; height: number; rev: number }`, the variant drawn now with its longer side `maxDimension` (never larger than the variant itself). Writes no file and no project data (it may report overflow, as every draw does). Refused with `render_failed` when the draw fails; that does not mark the thumbnail failed. Both actors. An agent's draw is the complete ad, linked pictures outside the project's folder included, and changes nothing (A-234, a stakeholder ruling: a project file can link any picture the user can read, and the drawn PNG carries its pixels). The MCP tool `render_variant` (`src/main/mcp/tools/render-tool.ts`) calls it and sends back the PNG bytes only.
 
 ## Event `thumbnail.changed`
 

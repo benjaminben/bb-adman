@@ -4,7 +4,7 @@ The tables a campaign is made of: `campaign`, `campaign_subject`, `rule_set`, `d
 
 ## Campaign tables
 
-Built: every table below exists in the project file, from migration `0000` (plus `variant.agent_changed_at` from `0001`). Drizzle schema: `src/main/db/schema/project.ts` (campaign, campaign_subject, rule_set, direction) and `src/main/db/schema/variant.ts` (variant, variant_subject, layer, background_clip). Timestamps, booleans and JSON columns follow the rules in `spec/data-model.md`, "Tables".
+Built: every table below exists in the project file, from migration `0000` (plus `variant.agent_changed_at` from `0001`, and `variant.first_clip_made`, `variant.sound`, `variant.sound_asset_id` and `background_clip.sound_on` from `0005`). Drizzle schema: `src/main/db/schema/project.ts` (campaign, campaign_subject, rule_set, direction) and `src/main/db/schema/variant.ts` (variant, variant_subject, layer, background_clip). Timestamps, booleans and JSON columns follow the rules in `spec/data-model.md`, "Tables".
 
 ### campaign
 
@@ -150,7 +150,7 @@ CREATE UNIQUE INDEX variant_grid ON variant(direction_id, size_label, language, 
 
 - It has one writer. `bumpVariantRev(ctx, variantId, now)` in `src/main/commands/variant-rev.ts` is the one way a command bumps `rev`: it adds one to `rev` inside the command's transaction and, only when the actor is the agent, sets `agent_changed_at` to `now`. A command by the user never changes it, and undoing an agent's edit does not clear it. Unit test: `tests/unit/main/commands/variant-rev.test.ts`, both actors.
 - Creating a variant does not set it; `created_by` records that. A variant made by an agent has `agentChangedAt: null`.
-- Tested through `layer.update`, sent once as the user and once as the agent (`tests/integration/commands/layer-update-agent.test.ts`). The export report reads it (Phase 8).
+- Tested through `layer.update`, sent once as the user and once as the agent (`tests/integration/commands/layer-update-agent.test.ts`). The export report reads it (`src/main/export/report/facts.ts`).
 
 ### layer
 
@@ -241,12 +241,12 @@ type Revs = { copy: number; style: number; geometry: number; source: number; tim
 - `translation_status` is null on layers in the campaign's primary language and on non-text layers.
 - `overflow` is written by the Scene when it measures a text layer (`spec/data-rules.md`, "Text overflow") [REQ: FR-098].
 - Only text layers may have a preset other than `none` [REQ: FR-128].
-- **Look fields** (Built, LK-1) [D-094]. A background colour, a box behind text, vertical alignment, all capitals and a shade over a picture (`spec/phases/look-pack.md`). They live in `style`, a JSON column, so no migration: a row stored without them reads with each absent, and absent means the default above, which draws exactly as before (A-71). The schemas hold no `.default()` (Zod 4 would fill defaults inside a patch); `textLookOf` and `pictureLookOf` in `src/shared/config/look.ts` are the one owner of the defaults, used by the Scene, the panel and the patch checks. The bounds are `LOOK_LIMITS` in `layer.ts`: `{ boxOutlineWidth, boxRadius, boxPadding, shadeStrength, shadeReach }`, each `{ min, max }`, the ranges above. `look.ts` also holds `TEXT_LOOK_DEFAULTS`, `PICTURE_LOOK_DEFAULTS` and `NEW_SHADE = { color: '#000000', from: 'bottom', strength: 0.7, reach: 0.6 }`, the shade the panel sends when a side is chosen and the default layout's background shade. `fillColor` is for the background layer only (A-73): null or absent draws nothing, so the black root shows, as today (A-72). The names differ between the two styles, so the patch union cannot mistake one for the other. They are part of `style`: a change bumps `revs.style` and re-measures overflow. New layers store every look field (`spec/starter-layouts.md`). Drawing: `spec/scene.md`, "Text boxes" and "Background colour and shade".
+- **Look fields** (Built, LK-1) [D-094]. A background colour, a box behind text, vertical alignment, all capitals and a shade over a picture (`spec/phases/look-pack.md`). They live in `style`, a JSON column, so no migration: a row stored without them reads with each absent, and absent means the default above, which adds nothing to the drawing (A-71). The schemas hold no `.default()` (Zod 4 would fill defaults inside a patch); `textLookOf` and `pictureLookOf` in `src/shared/config/look.ts` are the one owner of the defaults, used by the Scene, the panel and the patch checks. The bounds are `LOOK_LIMITS` in `layer.ts`: `{ boxOutlineWidth, boxRadius, boxPadding, shadeStrength, shadeReach }`, each `{ min, max }`, the ranges above. `look.ts` also holds `TEXT_LOOK_DEFAULTS`, `PICTURE_LOOK_DEFAULTS` and `NEW_SHADE = { color: '#000000', from: 'bottom', strength: 0.7, reach: 0.6 }`, the shade the panel sends when a side is chosen and the default layout's background shade. `fillColor` is for the background layer only (A-73): null or absent draws nothing, so the black root shows (A-72). The names differ between the two styles, so the patch union cannot mistake one for the other. They are part of `style`: a change bumps `revs.style` and re-measures overflow. New layers store every look field (`spec/starter-layouts.md`). Drawing: `spec/scene.md`, "Text boxes" and "Background colour and shade".
 - **`letterSpacing`** [REQ: FR-249]. The starter template sets 0. The Scene draws it with the CSS `letter-spacing` property in `em` (built, `src/shared/scene/text-style.ts`). It is part of `style`, so it follows the master with the rest of style, and a change bumps `revs.style`. A change re-measures overflow like any style change [REQ: FR-098].
 
 ### background_clip
 
-[REQ: FR-121, FR-122]. Table built; clip commands built (P7-9); a gap between clips draws black, in the editor and in the export.
+[REQ: FR-121, FR-122]. Built: the table and the clip commands (`src/main/commands/clip/`); a gap between clips draws black, in the editor and in the export.
 
 ```sql
 CREATE TABLE background_clip (

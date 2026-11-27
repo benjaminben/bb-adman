@@ -2,7 +2,7 @@
 
 A JSON or YAML brief can carry the brand (a logo, colours, two fonts), the starter layout the first ad starts from, a line of art direction for the picture prompt, and whether the campaign makes one set of ads for all subjects or one per subject. Fonts and every other value work the same in the app and in the command-line quickstart, because the rules live in shared code. This file covers the file shape, what is kept, `brief.parse`, the brief form, `campaign.create`, agents, the shared helpers and the security rules.
 
-**State.** Not built. Slices: `spec/phases/brief-brand.md` (BB-1 to BB-8). Assumptions A-395 to A-406 are at the end of this file.
+**State.** Built. Slices: `spec/phases/brief-brand.md` (BB-1 to BB-8). Assumptions A-395 to A-406 are at the end of this file.
 
 Read with: `spec/brief-and-templates.md` (the brief's shape, `brief.parse`, `buildMasterLayers`), `spec/subject-photos.md` (the path rules this copies), `spec/starter-layouts.md`, `spec/assets.md` ("File types"), `spec/export-and-checks.md` (the rule set checks), `spec/mcp-and-agents.md`, `.claude/rules/security-priorities.md`.
 
@@ -48,7 +48,7 @@ adsPer: subject                   # "campaign" (the default) or "subject"
 
 ## Schemas
 
-`src/shared/schemas/brief.ts` (frozen; the architect's edit is made):
+`src/shared/schemas/brief.ts` (frozen):
 
 ```ts
 const draftBrand = z.object({
@@ -56,18 +56,18 @@ const draftBrand = z.object({
   colours: loose(z.union([z.string(), z.array(z.string())])),
   fonts: loose(z.object({ heading: loose(z.string()), body: loose(z.string()) })),
 })
-// BriefDraft gains: brand: loose(draftBrand), layout, artDirection, adsPer: loose(z.string())
+// BriefDraft has: brand: loose(draftBrand), layout, artDirection, adsPer: loose(z.string())
 export const ADS_PER = ['campaign', 'subject'] as const
 const BriefBrand = z.object({ colours: z.array(z.string().regex(HEX_COLOUR)).optional() })
-// Brief gains: layout: z.string().optional(), artDirection: z.string().optional(),
-//              adsPer: z.enum(ADS_PER).optional(), brand: BriefBrand.optional()
+// Brief has: layout: z.string().optional(), artDirection: z.string().optional(),
+//            adsPer: z.enum(ADS_PER).optional(), brand: BriefBrand.optional()
 ```
 
 `Brief.layout` takes any text so a stored brief stays readable if a layout leaves the build; `campaign.create` refuses an ID the build does not have. Zod drops unknown keys, so a `logo` or `fonts` sent inside `brief.brand` to `campaign.create` or `create_campaign` is never stored.
 
-`src/shared/schemas/commands/campaign.ts` (frozen; designed here): `campaignCreateInput` gains `brand?: { logoAssetId?: string; headingFontAssetId?: string; bodyFontAssetId?: string }` (each `z.string().min(1)`). `campaignCreateToolInput` (the MCP tool `create_campaign`) does not gain it.
+`src/shared/schemas/commands/campaign.ts` (frozen): `campaignCreateInput` has `brand?: { logoAssetId?: string; headingFontAssetId?: string; bodyFontAssetId?: string }` (each `z.string().min(1)`). `campaignCreateToolInput` (the MCP tool `create_campaign`) does not have it.
 
-`src/shared/schemas/commands/brief.ts` gains:
+`src/shared/schemas/commands/brief.ts` has:
 
 ```ts
 type BrandRole = 'logo' | 'headingFont' | 'bodyFont'
@@ -89,22 +89,22 @@ type BriefParsed = { draft; primaryLanguage; subjectPictures?; brandFiles?: Bran
 | `brandFileTexts(draft): { role, text }[]` | same | The logo and font texts as given, in role order, absent ones left out |
 | `brandRuleSet(values, colours, logoAssetId): RuleSetValues` | `src/shared/brief/brand-rule-set.ts` | A fresh rule set: `palette` replaced by `colours` when not empty; the logo moved or added to the front of `requiredAssetIds` |
 | `starterLayoutOf(id): StarterLayout \| null` | `src/shared/config/starter-layouts.ts` | The layout with exactly this ID |
-| `buildMasterLayers(template, size, fills, layout = DEFAULT_STARTER_LAYOUT)` | `src/shared/templates/master-layers.ts`, type in `types.ts` (frozen; designed here) | Builds from the given layout's boxes, text styles, text boxes, shades and background. Slot names stay from `SLOT_LAYOUTS`. With the default the result is unchanged |
+| `buildMasterLayers(template, size, fills, layout = DEFAULT_STARTER_LAYOUT)` | `src/shared/templates/master-layers.ts`, type in `types.ts` (frozen) | Builds from the given layout's boxes, text styles, text boxes, shades and background. Slot names come from `SLOT_LAYOUTS`. With no layout given it builds the default layout |
 | `brandFontRole(key): 'heading' \| 'body'` | `src/shared/templates/brand-fonts.ts` | `headline` is `heading`; every other key is `body` |
 | `withBrandFonts(layers, { heading?, body? })` | same | Fresh copies; each `text` layer gets the font of its role as `style.fontAssetId` when that font is given; other layers unchanged |
-| `nearestColour(colour, palette): string` | `src/shared/generation/nearest-colour.ts` | The palette colour with the smallest sum of squared red, green and blue differences. Moved out of `layout-clamp.ts`, which now imports it |
+| `nearestColour(colour, palette): string` | `src/shared/generation/nearest-colour.ts` | The palette colour with the smallest sum of squared red, green and blue differences. `layout-clamp.ts` imports it |
 | `withBrandColours(layers, colours)` | `src/shared/templates/brand-colours.ts` | Fresh copies; each `text` layer's `style.color` becomes `nearestColour` of it when `colours` is not empty; other layers and other style fields unchanged |
-| `prefilledPrompt(facts)` | `src/shared/generation/prompt.ts` | `PromptFacts` gains `artDirection?: string \| null` |
+| `prefilledPrompt(facts)` | `src/shared/generation/prompt.ts` | `PromptFacts` has `artDirection?: string \| null` |
 
 `BrandValueNote = { field: 'colours' | 'layout' | 'adsPer'; text: string; reason: 'not_a_colour' | 'unknown_layout' | 'unknown_ads_per' }`. `text` is the raw value; a caller that shows it cleans it first (`cleanLineText`).
 
-**The art direction sentence.** With art direction, `prefilledPrompt` puts `Art direction: {text}` between its first sentence and its last. `{text}` has each run of white space made one space and is trimmed; a `.` is added unless it already ends in `.`, `!` or `?`. Example: "A picture of Citrus can for an advertisement aimed at young adults in Canada. Art direction: Products on the right, soft morning light. Leave clear space for the advertisement's words, which are added separately." Null, missing or blank: the prompt is as today. `use-first-draft.ts` passes `campaign.brief.artDirection`.
+**The art direction sentence.** With art direction, `prefilledPrompt` puts `Art direction: {text}` between its first sentence and its last. `{text}` has each run of white space made one space and is trimmed; a `.` is added unless it already ends in `.`, `!` or `?`. Example: "A picture of Citrus can for an advertisement aimed at young adults in Canada. Art direction: Products on the right, soft morning light. Leave clear space for the advertisement's words, which are added separately." Null, missing or blank: the prompt has no art direction sentence. `use-first-draft.ts` passes `campaign.brief.artDirection`.
 
 ## `brief.parse` (security class)
 
-New file `src/main/assets/brief-brand.ts`: `checkBriefBrand(briefPath, draft, { assetOf, platform? }): Promise<BrandFiles>`. `parse.ts` calls it beside `checkBriefPictures` for a file and for text. `assetOf(id)` gives `{ kind, library }` of an asset of the open project, or null.
+`src/main/assets/brief-brand.ts`: `checkBriefBrand(briefPath, draft, { assetOf, platform? }): Promise<BrandFiles>`. `parse.ts` calls it beside `checkBriefPictures` for a file and for text. `assetOf(id)` gives `{ kind, library }` of an asset of the open project, or null.
 
-The per-text checks of `brief-pictures.ts` move to `src/main/assets/brief-file-check.ts` and take the wanted kind (`image` or `font`); `checkBriefPictures` keeps its signature, its tests and its behaviour. For each text of `brandFileTexts`, the first rule that fails gives the note:
+The per-text checks live in `src/main/assets/brief-file-check.ts` and take the wanted kind (`image` or `font`); `checkBriefPictures` (`brief-pictures.ts`) uses them for photos. For each text of `brandFileTexts`, the first rule that fails gives the note:
 
 1. **An asset ID**: an asset of the wanted kind in the **asset** library, else `unknown_asset` (a layer may not use a reference-library file, R-12).
 2. **A relative path**: from pasted text, `not_full_path`; from a file, joined onto the brief's real folder.
@@ -115,7 +115,7 @@ Two roles may name the same file (the same font for heading and body); both entr
 
 ## The brief form
 
-**The model** (pure). New file `src/renderer/screens/project-home/brief-form-brand.ts`; the note lines in `brand-notes.ts` beside it.
+**The model** (pure). `src/renderer/screens/project-home/brief-form-brand.ts`; the note lines in `brand-notes.ts` beside it.
 
 ```ts
 type FormAsset = FormPhoto   // { assetId, added }
@@ -132,8 +132,8 @@ brandPlan(brand: BrandChoice): { brief: Pick<Brief, 'layout' | 'artDirection' | 
 removedBrandAssets(values: BriefFormValues, roles: BrandRole[]): string[]
 ```
 
-- `BriefFormValues` gains `brand: BrandChoice` and `adsPer: 'campaign' | 'subject'`. `formFromDraft(reply, held, photos, brand?)` fills them with `brandFromDraft`: the files from `brand`, the rest through `briefLook`; `notes` are the import notes first, then one line per `BrandValueNote`. The empty form gets the default layout, no brand and `campaign`.
-- `planFromForm` adds to `brief`: `layout` (left out when it is the default layout), `artDirection` (trimmed; left out when blank), `adsPer` (left out when it is `campaign`), and `brand: { colours }` when there are colours. A missing `layout` or `adsPer` is read as the default everywhere, so a form with no brand sends what it sent before; and to the `campaign.create` input `brand` with each asset ID the form holds (left out when none).
+- `BriefFormValues` has `brand: BrandChoice` and `adsPer: 'campaign' | 'subject'`. `formFromDraft(reply, held, photos, brand?)` fills them with `brandFromDraft`: the files from `brand`, the rest through `briefLook`; `notes` are the import notes first, then one line per `BrandValueNote`. The empty form gets the default layout, no brand and `campaign`.
+- `planFromForm` adds to `brief`: `layout` (left out when it is the default layout), `artDirection` (trimmed; left out when blank), `adsPer` (left out when it is `campaign`), and `brand: { colours }` when there are colours. A missing `layout` or `adsPer` is read as the default everywhere, so a form with no brand sends no brand fields; and to the `campaign.create` input `brand` with each asset ID the form holds (left out when none).
 - `removedBrandAssets` gives the IDs to send `asset.remove` for when roles leave the form: those with `added` true that no other brand role and no subject photo of the form still holds, each once. Remove and Cancel both use it.
 - The brand adds no problem line.
 
@@ -173,7 +173,7 @@ As built (`brand-fields/`: `brand-fields.tsx`, `brand-files.tsx` for the logo an
 
 ## `campaign.create`
 
-In `createCampaignRows` (`src/main/commands/campaign/create.ts`; the master rows move to `master-rows.ts`), before anything is written:
+In `createCampaignRows` (`src/main/commands/campaign/create.ts`; the master rows are built in `master-rows.ts`), before anything is written:
 
 1. **Layout.** No `brief.layout`: the default. Otherwise `starterLayoutOf`; none: `NOT_FOUND`, "That layout is not in this build."
 2. **Brand assets** (`brand-assets.ts`, `checkBrandAssets`). `logoAssetId` must be an asset of kind `image` in the asset library, else `NOT_FOUND`, "The brand logo is not a picture in this project's asset library." Each font ID must be of kind `font` in the asset library, else `NOT_FOUND`, "A brand font is not a font in this project's asset library."
@@ -186,17 +186,17 @@ With `brief.adsPer === 'subject'` and two or more subjects, `createCampaignRows`
 
 ## Agents
 
-- **`create_campaign_from_brief`** (both commands, through `briefPlan`) reads the brand in a new file `from-brief-brand.ts`, before the ask:
+- **`create_campaign_from_brief`** (both commands, through `briefPlan`) reads the brand in `src/main/commands/campaign/from-brief-brand.ts`, before the ask:
   - A brand value with a note is refused, the first one: `INVALID_INPUT`, reason `brief_value`, "brand.colours holds a value that is not a hex colour such as #0B3D2E." / "layout is not a starter layout ID. Use one of: {ids}." / 'adsPer must be "campaign" or "subject".'
   - A brand file given as a path (full or relative) is refused with no disk read: `RULE_VIOLATION`, reason `brand_file_path`, "{field} names a file. Import it with import_assets first, then give its asset ID." `{field}` is `brand.logo`, `brand.fonts.heading` or `brand.fonts.body`. A brand path never makes the tool pick the files command, and the files command refuses it too.
   - An asset ID must pass create's step 2, else `NOT_FOUND`, reason `unknown_asset`, "{field}: no picture (or font) with that asset ID is in this project's asset library."
   - The confirmed `Brief` is built from `briefLook`'s cleaned values, never the raw draft, and the IDs go in `campaign.create`'s `brand`.
-- **`create_campaign`** takes the new `Brief` fields (layout, art direction, `adsPer`, colours) and checks them by schema; it has no `brand` IDs. Fonts can be set after with `layer.setFonts`.
-- Nothing in the agent policy table changes. No message holds a path or the bad value's text.
+- **`create_campaign`** takes the `Brief` brand fields (layout, art direction, `adsPer`, colours) and checks them by schema; it has no `brand` IDs. Fonts can be set after with `layer.setFonts`.
+- The brand adds no entry to the agent policy table. No message holds a path or the bad value's text.
 
 ## The AI brief reader and Markdown briefs
 
-`brief.extract` drops `brand.logo` and `brand.fonts` from its draft, as it drops `pictures`, so a path an AI answer made up is never shown or kept (A-404). It keeps colours, `layout`, `artDirection` and `adsPer`: they are no paths, and the form cleans them. Its reply has no `brandFiles`. The Markdown form of `parseBriefText` reads none of the new fields; no change.
+`brief.extract` drops `brand.logo` and `brand.fonts` from its draft, as it drops `pictures`, so a path an AI answer made up is never shown or kept (A-404). It keeps colours, `layout`, `artDirection` and `adsPer`: they are no paths, and the form cleans them. Its reply has no `brandFiles`. The Markdown form of `parseBriefText` reads none of these fields.
 
 ## Security rules
 

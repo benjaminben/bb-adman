@@ -9,7 +9,7 @@ The data side of the approvals service [D-095, D-097]: the contract shared with 
 - The file imports only `zod` and exports only constants and schemas. It has no logic beyond schema refinements.
 - `tests/unit/config/approvals-contract.test.ts` (root `npm test`) fails when the two files differ by one byte, or when the two `package.json` files name different `zod` versions.
 - A change is made in the app's file and copied in the same commit.
-- `CONTRACT_VERSION = 2` (R2V-1: the gallery rows carry a video's clip address, size and expiry, with defaults, beside the picture's; `CLIP_MAX_BYTES` 384 MiB). The health reply carries it; the app refuses a service that answers another number ("The approvals service is a different version from this app."), and `approvals.publish` checks it first. Clip addresses get the same checks as picture addresses. Design: `spec/phases/round-2-approvals-video.md`, "Contract and data changes".
+- `CONTRACT_VERSION = 2`: a gallery row carries a variant's `kind` and, for a video, its `clip` (`GalleryClip`: `clipUrl`, `type: 'video/mp4'`, `durationMs` up to `CLIP_MAX_MS` 3 minutes, `bytes` up to `CLIP_MAX_BYTES` 384 MiB), with defaults (`kind: 'image'`, `clip: null`) that keep a body without them valid. The health reply carries it; the app refuses a service that answers another number ("The approvals service is a different version from this app."), and `approvals.publish` checks it first. Clip addresses get the same checks as picture addresses. Design: `spec/phases/round-2-approvals-video.md`, "Contract and data changes".
 
 **ID and value rules in the contract** (the ID rules repeat the app's formats, `spec/data-model.md` "ID formats"; a root unit test makes 200 IDs with the app's own generators and checks each passes):
 
@@ -31,7 +31,7 @@ Request bodies are strict objects (an unknown key refuses the body). Reply schem
 
 ## Database
 
-**Schema Built; the libSQL client Built (AP-14).** Turso, a hosted SQLite-compatible database, reached with `@libsql/client` (D-097, A-102). `migrations/0001_init.sql` is unchanged: it was written for SQLite. Times are whole milliseconds since 1970 (UTC). No foreign keys: deletes are written out in one batch, children first (a batch is one transaction; a failure rolls the whole batch back).
+**Built.** Turso, a hosted SQLite-compatible database, reached with `@libsql/client` (D-097, A-102). Two migrations, plain SQLite SQL: `migrations/0001_init.sql` (the four tables) and `migrations/0002_clips.sql` (the clip columns of `gallery_variant`). Times are whole milliseconds since 1970 (UTC). No foreign keys: deletes are written out in one batch, children first (a batch is one transaction; a failure rolls the whole batch back).
 
 ```sql
 CREATE TABLE link (
@@ -58,6 +58,10 @@ CREATE TABLE gallery_variant (
   version             INTEGER NOT NULL,
   picture_url         TEXT NOT NULL,
   picture_expires_at  INTEGER NOT NULL,
+  kind                TEXT NOT NULL DEFAULT 'image',  -- 'image' or 'video' (0002_clips.sql)
+  clip_url            TEXT,                   -- a video's signed clip address; null for none
+  clip_ms             INTEGER,
+  clip_bytes          INTEGER,
   PRIMARY KEY (link_id, variant_key)
 );
 
@@ -81,14 +85,14 @@ CREATE INDEX session_link ON session (link_id);
 ```
 
 - **Every query that reads a gallery, a sign-off, a session or a picture names the `link_id`** it got from the slug (visitor side) or from the project and campaign IDs (API side). No query takes a link, variant or sign-off from a form without that filter.
-- **Why Turso and not Postgres (Neon).** Both are offered in the Vercel Marketplace. Turso speaks SQLite, so the migration and every reviewed query (`?` and `?1` placeholders, `UPDATE … RETURNING`, `INSERT … SELECT`) run unchanged, its `batch()` is one transaction like D1's, and tests run on an in-memory database inside plain Node Vitest with no network and no account. Postgres would mean rewriting each query and the migration, a second review of every query, and a local Postgres or an emulation for tests.
+- **Why Turso and not Postgres (Neon).** Both are offered in the Vercel Marketplace. Turso speaks SQLite, so the migrations and every reviewed query (`?` and `?1` placeholders, `UPDATE … RETURNING`, `INSERT … SELECT`) are plain SQLite, its `batch()` is one transaction, and tests run on an in-memory database inside plain Node Vitest with no network and no account. Postgres would mean rewriting each query and the migration, a second review of every query, and a local Postgres or an emulation for tests.
 - **Migrations.** `scripts/migrate.ts` (plain TypeScript, run by Node 24's built-in type stripping) reads `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` from the process environment, makes `schema_migrations (name TEXT PRIMARY KEY, applied_at INTEGER NOT NULL)` if missing, and applies each `migrations/*.sql` not yet recorded, in name order, each file and its record in one batch. It refuses any URL that is not `file:` or `:memory:` unless it is given `--hosted`. Only the stakeholder passes `--hosted`.
 - **What the migrate script prints.** A fixed line when it is done. On a failure, a fixed line and the error's code or name only, never its message: a database error's message can quote the database address and the token.
-- **Its statement splitter** is safe for the one migration file, `0001_init.sql`. A later migration holding a trigger, or a `;` inside a comment, needs a better splitter first; the slice that adds such a file replaces it.
+- **Its statement splitter** drops `--` comment lines and splits on `;`, which is safe for the two migration files (they hold no `;` or `--` inside a text value). A migration holding a trigger, or a `;` inside a comment, needs a better splitter first. `test/migrate.test.ts` covers the script.
 
-### The `Db` interface (`src/db/client.ts`, AP-14)
+### The `Db` interface (`src/db/client.ts`)
 
-A thin layer with the same shape as the database calls the reviewed code makes, so the query files change only in type names:
+A thin layer with the same shape as the database calls the query files make:
 
 ```ts
 export type Value = string | number | null
@@ -110,18 +114,9 @@ export function openDb(url: string, authToken?: string): Db  // createClient({ u
 - Rows come back from libSQL as array-like objects; `createDb` turns each into a plain object of column name to value, so no libSQL type leaves this file.
 - `intMode: 'number'`: every stored whole number is under 2^53, so `number` is exact.
 - A statement from one `Db` is passed only to that `Db`'s `batch` (checked: a statement made by another `Db` throws).
-- **Node's own `fetch`.** `openDb` gives the libSQL client Node's own `fetch` where the client's options allow that cleanly; where they do not, the developer reports rather than patching the client. Being built (an AP-14 review fix).
+- **Node's own `fetch`: not built.** `openDb` calls `createClient({ url, authToken, intMode: 'number' })` and passes no `fetch`, so the libSQL client uses its own. Giving it Node's own `fetch` is wanted where the client's options allow that cleanly; where they do not, the developer reports rather than patching the client.
 
-**What changes in each file** (AP-14; nothing else in them):
-
-| File | Change |
-|---|---|
-| `src/db/links.ts`, `variants.ts`, `signoffs.ts`, `sessions.ts`, `enter.ts` | `D1Database` becomes `Db`, `D1PreparedStatement` becomes `Statement`, imported from `./client`; `import 'server-only'` at the top |
-| `src/env.ts` | `DB: D1Database` becomes `DB: Db` |
-| `src/visitor/actions.ts`, `session.ts`, `throttle.ts` | `D1Database` becomes `Db` |
-| `src/api/*.ts`, `src/app.ts` | None (they use `env.DB` and the statement calls above) |
-| `src/crypto/compare.ts` | `crypto.subtle.timingSafeEqual` is a Workers addition that Node lacks; it becomes `timingSafeEqual` from `node:crypto` on `Uint8Array` views of the same buffers. Same rule: equal lengths only, never `===` on a secret |
-| `src/crypto/*.ts`, `src/pictures/check-url.ts` | `import 'server-only'` at the top |
+**Who uses it.** `src/db/links.ts`, `variants.ts`, `signoffs.ts`, `sessions.ts` and `enter.ts` take a `Db` and build `Statement`s from `./client`; `src/env.ts` has `DB: Db`; `src/visitor/actions.ts`, `session.ts` and `throttle.ts` take a `Db`; `src/api/*.ts` and `src/app.ts` use `env.DB`. Every file in `src/db/`, `src/crypto/`, `src/pictures/` and `src/server/` starts with `import 'server-only'`. `src/crypto/compare.ts` compares with `timingSafeEqual` from `node:crypto` on `Uint8Array` views of the buffers: equal lengths only, never `===` on a secret.
 
 ## Random values and passwords
 
@@ -132,18 +127,18 @@ export function openDb(url: string, authToken?: string): Db  // createClient({ u
 - **Session token.** 32 random bytes, base64url without padding (43 characters).
 - **Password hash.** PBKDF2 with HMAC-SHA-256, 100,000 iterations, a 16-byte random salt per link, 32 bytes out. The iteration count is stored per link so it can be raised later without breaking old links. A new password gets a new salt. If the hash fails, the code fails closed: an error reply, never a weaker hash or a skipped check.
 - **Comparing.** Hashes and keys are compared timing-safe on equal-length buffers: for the key, the SHA-256 of each side; for the password, the two 32-byte hashes. Never `===` on a secret.
-- **Unknown slug.** A password try for a slug that has no link runs the same PBKDF2 once against a fixed dummy salt, so the time taken does not tell a real slug from an unknown one. Too many tries does not run the hash (as built); it is told apart only by timing from "wrong password", and both get the same reply.
+- **Unknown slug.** A password try for a slug that has no link runs the same PBKDF2 once against a fixed dummy salt, so the time taken does not tell a real slug from an unknown one. Too many tries does not run the hash; it is told apart only by timing from "wrong password", and both get the same reply.
 
 ## The keyed API (the app's side)
 
-**Built** (AP-1, AP-2); reached through the catch-all route from AP-14. Base path `/api/v1`. JSON in and out. Every reply carries `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`, and no CORS header.
+**Built**, `src/api/`; reached through the catch-all route. Base path `/api/v1`. JSON in and out. Every reply carries `Cache-Control: no-store` and `X-Content-Type-Options: nosniff`, and no CORS header.
 
 **Order of checks for every API request** (`api/auth.ts`, `api/body.ts`):
 
 1. A request with an `Origin` header is refused: `403 bad_request`. A browser page has no business here.
 2. `API_KEY` missing or shorter than 32 characters: `503 not_set_up`.
 3. `Authorization` must be exactly `Bearer {key}` and the key must match (timing-safe): else `401 bad_key`.
-4. A body (POST, PUT) must have `Content-Type: application/json` and at most 4 MiB (`BODY_LIMIT`; 2 MiB before R2V-1), read with a cap (a missing or false `Content-Length` does not get past it): else `415 bad_request` or `413 too_large`.
+4. A body (POST, PUT) must have `Content-Type: application/json` and at most 4 MiB (`BODY_LIMIT`), read with a cap (a missing or false `Content-Length` does not get past it): else `415 bad_request` or `413 too_large`.
 5. The path's IDs and the body pass the contract: else `400 invalid_input`, with no part of the input in the reply. Then the route's own `check`, if it has one (a rule the schema cannot make, such as `checkPictureUrl`), with its own refusal.
 6. The handler. Unknown path: `404 not_found`, but only with the right key: steps 1 to 3 come first, so an unknown path under `/api/v1` without a key gets `401`.
 
@@ -153,7 +148,7 @@ export function openDb(url: string, authToken?: string): Db  // createClient({ u
 
 | Route | Body | Reply | Refusals besides the checks above |
 |-------|------|-------|-----------------------------------|
-| `GET /api/v1/health` | — | `200 { service: 'adman-approvals', contract: 1 }` | — |
+| `GET /api/v1/health` | — | `200 { service: 'adman-approvals', contract: CONTRACT_VERSION }` (2) | — |
 | `POST /api/v1/links` | `CreateLink = { projectId, campaignId, campaignName, password }` | `201 { slug }` | `409 link_exists` when the pair already has a link |
 | `GET /api/v1/links/{projectId}/{campaignId}` | — | `200 LinkState` (below) | `404 not_found` |
 | `PUT /api/v1/links/{projectId}/{campaignId}/password` | `{ password }` | `200 {}`. New salt and hash; `tries` reset; **every session of the link deleted** | `404` |
@@ -165,8 +160,14 @@ export function openDb(url: string, authToken?: string): Db  // createClient({ u
 type GalleryVariant = {
   variantKey: string; title: string; sizeLine: string
   version: number; pictureUrl: string; pictureExpiresAt: string
+  kind: 'image' | 'video'            // default 'image'
+  clip: GalleryClip | null           // default null; only a video may have one
 }
-type PictureRenewal = { variantKey: string; version: number; pictureUrl: string; pictureExpiresAt: string }
+type GalleryClip = { clipUrl: string; type: 'video/mp4'; durationMs: number; bytes: number }
+type PictureRenewal = {
+  variantKey: string; version: number; pictureUrl: string; pictureExpiresAt: string
+  clipUrl: string | null             // default null; a row with a clip is renewed only with its clip
+}
 type LinkState = {
   slug: string
   campaignName: string
@@ -177,7 +178,7 @@ type LinkState = {
 ```
 
 - **Links are found by the project ID and campaign ID** in the path, never by a link ID the app holds. One link per pair.
-- **Every `pictureUrl` is checked with `checkPictureUrl`** before anything is written. One bad address refuses the whole request (`400 invalid_input`).
-- **Gallery replace** (one batch): `campaign_name` updated; each listed variant written (insert or replace) with its `position` from list order; every `gallery_variant` row of the link not in the list deleted, with every sign-off of that `variant_key`. Sign-offs of a listed variant are kept, whatever their version: a sign-off for an older version stays and is shown "for an earlier version".
+- **Every `pictureUrl` and `clipUrl` is checked with `checkPictureUrl`** before anything is written. One bad address refuses the whole request (`400 invalid_input`).
+- **Gallery replace** (one batch): `campaign_name` updated; each listed variant written (insert or replace) with its `position` from list order; every `gallery_variant` row of the link not in the list deleted, with every sign-off of that `variant_key`. Sign-offs of a listed variant are kept, whatever their version: a sign-off for an older version stays in the database and in `LinkState`, but the gallery page shows only the current version's (`spec/approvals.md`, "Versions and marks").
 - **Picture renewal** updates `picture_url` and `picture_expires_at` only for rows whose `variant_key` and `version` both match; others are skipped and not counted. It never changes a version.
 - **`LinkState`** lists every sign-off of the link, oldest first, and every gallery row in gallery order. It holds no picture address, no password value or hash, and no session.

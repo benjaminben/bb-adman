@@ -8,18 +8,20 @@ All are deny for agents (A-96) and not undoable. Undo, agent and built columns a
 
 | Command | Input | Undo | Agent | Built |
 |---------|-------|------|-------|-------|
-| `approvals.setService` | `{ address: string \| null }` | — | deny | Built (AP-6) |
-| `approvals.check` | — | — | deny | Built (AP-6) |
-| `approvals.createLink` | projectId, campaignId, password? (12 to 128) | — | deny | Built (AP-8) |
-| `approvals.setPassword` | projectId, campaignId, password? | — | deny | Built (AP-8) |
-| `approvals.publish` | projectId, campaignId | — | deny | Built (AP-9) |
-| `approvals.refresh` | projectId, campaignId | — | deny | Built (AP-9) |
-| `approvals.endLink` | projectId, campaignId | — | deny | Built (AP-8) |
-| `approvals.cancelUpdate` | projectId, campaignId | — | deny ("stop approval gallery updates") | Built (R2V-7) |
+| `approvals.setService` | `{ address: string \| null }` | — | deny | Built |
+| `approvals.check` | — | — | deny | Built |
+| `approvals.createLink` | projectId, campaignId, password? (12 to 128) | — | deny | Built |
+| `approvals.setPassword` | projectId, campaignId, password? | — | deny | Built |
+| `approvals.publish` | projectId, campaignId | — | deny | Built |
+| `approvals.refresh` | projectId, campaignId | — | deny | Built |
+| `approvals.endLink` | projectId, campaignId | — | deny | Built |
+| `approvals.cancelUpdate` | projectId, campaignId | — | deny ("stop approval gallery updates") | Built |
+
+One file per command in `src/main/commands/approvals/` (`set-service.ts`, `check.ts`, `create-link.ts`, `set-password.ts`, `publish.ts`, `refresh.ts`, `end-link.ts`, `cancel-update.ts`), registered in `index.ts`; `tests/integration/approvals/agent-denied.test.ts` sends each as the agent.
 
 `approvals.setService` and `approvals.check` are app-scope (no project transaction). The others are project-scope; their network work is in `prepare` (outside the transaction) and their table writes in `run`. A throw inside `run` rolls the whole transaction back, so a command that must keep its writes and still report a problem returns a value instead of throwing (`approvals.refresh`, below).
 
-**Sending the event.** Commands have no other way to send an event, so `ApprovalsDeps` has `changed(projectId, campaignId)`: it sends `approvals.changed` with only those two IDs. Every command that changes what `approvals.forCampaign` returns calls it once, after its writes. **After the commit** (built, AP-8): `src/main/approvals/after-commit.ts` sends `approvals.changed`, and forgets a kept password, only once the command's transaction is confirmed committed, so a rolled-back command sends no event. Every approvals command sends its event and forgets passwords through this step, never inside `run`.
+**Sending the event.** Commands have no other way to send an event, so `ApprovalsDeps` has `changed(projectId, campaignId)`: it sends `approvals.changed` with only those two IDs. Every command that changes what `approvals.forCampaign` returns calls it once, after its writes. **After the commit:** `src/main/approvals/after-commit.ts` sends `approvals.changed`, and forgets a kept password, only once the command's transaction is confirmed committed, so a rolled-back command sends no event. Every approvals command sends its event and forgets passwords through this step, never inside `run`.
 
 ### Refusals
 
@@ -33,19 +35,19 @@ All are deny for agents (A-96) and not undoable. Undo, agent and built columns a
 4. The S3 keys, for `createLink` and `publish` only: `requireProviderKeys(deps, 's3', ...)`, the one `NEEDS_KEY` guard.
 5. Link state: `createLink` with a live link refuses (`RULE_VIOLATION`, `approval_link_exists`, "This campaign already has a link."); the others without a live link refuse (`RULE_VIOLATION`, `approval_link_missing`, "This campaign has no link yet.").
 
-**Then, for `createLink` and `setPassword`, secure storage** (built): if `PasswordStore.canKeep(): boolean` says encryption is not available, the command refuses with the store's own refusal, "This computer cannot store keys securely.", before its first request. Without this check, `createLink` fails only after the service made the link, and each retry repeats that; `setPassword` would change the password on the service and keep it nowhere (`spec/approvals.md`, "Open items").
+**Then, for `createLink` and `setPassword`, secure storage** (`requireCanKeep` in `password-input.ts`): if `PasswordStore.canKeep(): boolean` says encryption is not available, the command refuses with the store's own refusal, `RULE_VIOLATION`, reason `secure_storage_unavailable`, "This computer cannot store keys securely.", before its first request. Why: otherwise `createLink` would fail only after the service made the link, and each retry would repeat that; `setPassword` would change the password on the service and keep it nowhere.
 
 ### The password input
 
-Ruled as the design. The shared command schema in `src/shared/schemas/commands/approvals.ts` is left as it is. The command builds its own input schema from the campaign input (`projectId`, `campaignId`) plus `password: string, optional`, and checks a chosen password itself: 12 to 128 characters, no control character. A refusal is `INVALID_INPUT` with the fixed sentence "A password needs 12 to 128 characters, with no line breaks." and never holds the text, in its message or its details. With no password given, `makePassword()` makes one: 16 letters from `23456789abcdefghjkmnpqrstuvwxyz` drawn without bias from `crypto.randomBytes`, shown in four groups of four joined by `-` (19 characters, about 79 bits).
+`src/main/commands/approvals/password-input.ts`. The shared command schema in `src/shared/schemas/commands/approvals.ts` (`approvalsCreateLinkInput`) would put the rule's sentence only in `details.issues`, so the command builds its own input schema (`linkPasswordInput`) from the campaign input (`projectId`, `campaignId`) plus `password: string, optional`, and checks a chosen password itself (`choosePassword`): 12 to 128 characters, no control character. A refusal is `INVALID_INPUT` with the fixed sentence "A password needs 12 to 128 characters, with no line breaks." and never holds the text, in its message or its details. With no password given, `makePassword()` (`src/main/approvals/make-password.ts`) makes one: 16 letters from `23456789abcdefghjkmnpqrstuvwxyz` drawn without bias from `crypto.randomBytes`, shown in four groups of four joined by `-` (19 characters, about 79 bits).
 
 ### `approvals.setService`
 
-**Built (AP-6).** Input `{ address: string | null }`; reply `{ baseUrl }`. Checks the address with `parseApprovalsAddress(text, { allowLocalHttp: deps.devTools })`; null removes it. A refused address: `INVALID_INPUT` with the rule's sentence. Saves; sets `changesAppState`. Local links are not touched.
+Input `{ address: string | null }`; reply `{ baseUrl }`. Checks the address with `parseApprovalsAddress(text, { allowLocalHttp: deps.devTools })`; null removes it. A refused address: `INVALID_INPUT` with the rule's sentence. Saves; sets `changesAppState`. Local links are not touched.
 
 ### `approvals.check`
 
-**Built (AP-6).** Address and key present (else `approvals_not_set_up`); `GET /api/v1/health`; reply `{ ok: true }`. Failures as in the client table (`spec/approvals-client.md`, "The service client").
+Address and key present (else `approvals_not_set_up`); `GET /api/v1/health`; reply `{ ok: true }`. Failures as in the client table (`spec/approvals-client.md`, "The service client").
 
 ### `approvals.createLink`
 
@@ -59,7 +61,7 @@ Ruled as the design. The shared command schema in `src/shared/schemas/commands/a
 The given password (same rule) or a made one; `PUT .../password` (the service ends every visitor session); keep it. Reply `{}`. No table changes.
 
 - **The service answers `404`:** `RULE_VIOLATION`, reason `approval_link_gone`; nothing changes locally.
-- **The event** (built): after a successful `PUT`, it sends `approvals.changed` through the after-commit step, because `passwordKept` in `approvals.forCampaign` can change.
+- **The event:** after a successful `PUT`, it sends `approvals.changed` through the after-commit step, because `passwordKept` in `approvals.forCampaign` can change.
 
 ### Half-done states
 
@@ -83,9 +85,9 @@ All or nothing for the gallery (A-90).
 
 Publishing is a command, not a job (A-90, A-390).
 
-**Video variants** (R2V-3, R2V-5, R2V-7; design: `spec/phases/round-2-approvals-video.md`, "The app: making and sending clips"). In step 2 a changed video variant is also exported to MP4 with the Phase 8 video export (the file that ships) and uploaded beside its still with `putClip`; the still is the poster. A clip is made again only when the `rev` changed, or when the last one was sent as a still because the video tool was missing. A clip over 3 minutes or 384 MiB, or a machine without FFmpeg (or a system the export does not support), sends the still only, with a note in the app and the gallery; the update does not fail. A clip that fails to export fails the whole update, as a failed draw does. Step 4 also sends the clip's address, size and expiry (contract version 2; `publish` checks the service's version first). Renewal in `refresh` signs clips again too.
+**Video variants** (`src/main/approvals/clip-step.ts`; design: `spec/phases/round-2-approvals-video.md`, "The app: making and sending clips"). In step 2 a changed video variant is also exported to MP4 with the video export (`src/main/export/`, the file that ships) and uploaded beside its still with `putClip`; the still is the poster. A clip is made again only when the `rev` changed, or when the last one was sent as a still because the video tool was missing. A clip over 3 minutes or 384 MiB, or a machine without FFmpeg (or a system the export does not support), sends the still only, with a note in the app and the gallery; the update does not fail. A clip that fails to export fails the whole update, as a failed draw does. Step 4 also sends the clip's address, size and expiry (contract version 2; `publish` checks the service's version first). Renewal in `refresh` signs clips again too.
 
-**Progress and Stop** (R2V-7; the event widened by D-110). The event `approvals.progress { projectId, campaignId, step, done, total, unitsDone, unitsTotal }` is sent to the app window only and holds IDs and counts only:
+**Progress and Stop** (D-110; units counted in `src/main/approvals/progress-counter.ts`). The event `approvals.progress { projectId, campaignId, step, done, total, unitsDone, unitsTotal }` is sent to the app window only and holds IDs and counts only:
 
 | `step` | Sent | `done`, `total` |
 |---|---|---|
@@ -94,7 +96,7 @@ Publishing is a command, not a job (A-90, A-390).
 | `sending` | before each clip upload | the same |
 | `finishing` | once, after the last file and before the addresses are signed and the gallery request goes | 0, 0 |
 
-`unitsTotal` is the whole run's work: one unit for each still this run draws and two for each clip it makes (making, sending). `unitsDone` is the units finished when the event is sent; a clip that is left out after it was made (too long, too large) counts both its units. `finishing` carries `unitsDone = unitsTotal`. A run that draws nothing and makes no clip sends only `finishing`, with both at 0. `approvals.cancelUpdate` stops a running update: it waits for an upload in progress and has no effect once the gallery request is sent. One update runs per campaign at a time. A failed or stopped run removes only the files it added.
+`unitsTotal` is the whole run's work: one unit for each still this run draws and two for each clip it makes (making, sending). `unitsDone` is the units finished when the event is sent; a clip that is left out after it was made (too long, too large) counts both its units. `finishing` carries `unitsDone = unitsTotal`. A run that draws nothing and makes no clip sends only `finishing`, with both at 0. `approvals.cancelUpdate` (`src/main/approvals/runs.ts` tracks the running updates) stops a running update: it waits for an upload in progress and has no effect once the gallery request is sent. One update runs per campaign at a time. A failed or stopped run removes only the files it added.
 
 ### `approvals.refresh`
 
@@ -116,9 +118,9 @@ Reads sign-offs back and keeps picture addresses fresh. Reply `{ changed: boolea
 
 A later `createLink` for the campaign makes a new link with a new slug and clears the kept sign-offs (A-94).
 
-## Queries and the event
+## Queries and the events
 
-**Built (AP-8).**
+**Built.** `src/main/queries/approvals.ts`.
 
 | Query | Input | Reply | Who |
 |-------|-------|-------|-----|
@@ -142,11 +144,13 @@ type ApprovalsForCampaign = {
     currentRev: number
     publishedRev: number | null   // null: not in the gallery
     signoffs: Array<{ id: string; email: string; signedAt: string; version: number }>
-                                  // only sign-offs for currentRev (R2A-1): no older sign-off is given
+                                  // only sign-offs for currentRev: no older sign-off is given
     stillOnly?: 'no_tool' | 'too_long' | 'too_large' | null   // why a video variant is shown as a still only; null when not
   }>
 }
 ```
 
 - Approvals data is never added to `campaign.get`, `variant.get` or any MCP tool's reply (agents read those).
-- **Event** `approvals.changed`: `{ projectId, campaignId }`, sent to the app window only, through `ApprovalsDeps.changed`, after a command changed what `approvals.forCampaign` returns (the local tables, or the kept password). It carries no email, slug or address. Added to `EventMap` and `EVENT_NAMES` (`src/shared/schemas/events.ts`).
+- **Event** `approvals.changed`: `{ projectId, campaignId }`, sent to the app window only, through `ApprovalsDeps.changed`, after a command changed what `approvals.forCampaign` returns (the local tables, or the kept password). It carries no email, slug or address.
+- **Event** `approvals.progress`: see "Progress and Stop", above.
+- Both events are in `EventMap` and `EVENT_NAMES` (`src/shared/schemas/events.ts`).

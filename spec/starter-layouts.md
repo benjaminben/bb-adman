@@ -1,18 +1,18 @@
 # Starter layouts and the starting font size
 
-Built (LK-4): the five layouts as data, the box and style rules, the starting font size, `buildMasterLayers` from the default layout, and `starterLayoutPatches`. Built (LK-6): "Layout…", the screen that applies a layout (`spec/phases/look-pack.md`) [D-094].
+Built: the five layouts as data, the box and style rules, the starting font size, `buildMasterLayers` from a starter layout, `starterLayoutPatches`, and "Layout…", the screen that applies a layout (`spec/phases/look-pack.md`) [D-094].
 
-A starter layout is a named set of starting boxes and looks for the template's slots. A new master is built from the default one (`spec/brief-and-templates.md`, "The default layout and `buildMasterLayers`"), and "Layout…" in the editor applies any of them to the open variant (`spec/editor.md`). The five are modelled on the reference ads in `design/references/`. Read with `spec/data-model-campaign.md` ("Look fields") and `spec/scene.md` ("Text boxes", "Background colour and shade").
+A starter layout is a named set of starting boxes and looks for the template's slots. A new master is built from the default one, or from the one a brief's `layout` names (`spec/brief-and-templates.md`, "The default layout and `buildMasterLayers`"; `spec/brief-brand.md`), and "Layout…" in the editor applies any of them to the open variant (`spec/editor.md`). The five are modelled on the reference ads in `design/references/`. Read with `spec/data-model-campaign.md` ("Look fields") and `spec/scene.md` ("Text boxes", "Background colour and shade").
 
 ## Files and owners
 
 | File | Holds |
 |------|-------|
-| `src/shared/config/default-layout.ts` | The types below, `MARGIN_OF_SMALLER`, `SIDE_OF_SMALLER`, `FONT_ESTIMATE`, the slot names, the "any other slot" rows, `LAYER_DEFAULTS`, and the default layout's own values (`SLOT_LAYOUTS`, `BACKGROUND_LOOK`, `DEFAULT_STARTER_LAYOUT`). `SLOT_LAYOUTS` keeps its name and shape, so Phase 4 code that reads it keeps working. |
-| `src/shared/config/starter-layouts.ts` | `STARTER_LAYOUTS`: the default layout (imported, not copied) then the other four; `DEFAULT_STARTER_LAYOUT_ID = 'photo-bottom-left'` |
+| `src/shared/config/default-layout.ts` | The types below, `MARGIN_OF_SMALLER`, `SIDE_OF_SMALLER`, `FONT_ESTIMATE`, the slot names, the "any other slot" rows, `LAYER_DEFAULTS`, and the default layout's own values (`SLOT_LAYOUTS`, `BACKGROUND_LOOK`, `DEFAULT_STARTER_LAYOUT`). `SLOT_LAYOUTS` is also read by the fake layout provider (`src/main/providers/fake/layout.ts`). |
+| `src/shared/config/starter-layouts.ts` | `STARTER_LAYOUTS`: the default layout (imported, not copied) then the other four; `DEFAULT_STARTER_LAYOUT_ID = 'photo-bottom-left'`; `starterLayoutOf(id)` |
 | `src/shared/templates/layout-rules.ts` | The box and style rules, shared by the users below and the fake layout provider: `Frame` (`{ W, H, S, m, side }`), `frameOf(size)`, `geometryOf(box, frame)`; `textLayoutStyleOf(slot, copy, box, frame)`, a text style without `fontAssetId` (the rule's values, every look field, the starting font size), which a layout sends so the user's font stays; `textStyleOf(slot, copy, box, frame)`, the same plus the rule's `fontAssetId`, for a new layer |
 | `src/shared/templates/starting-font-size.ts` | `startingFontSize(copy, box, rule, frame)` and its `FontSizeRule` (`fontSizeOfSmaller`, `lineHeight`, `letterSpacing`, `allCaps`, `padding`, `outline`) |
-| `src/shared/templates/master-layers.ts` | `buildMasterLayers`, reading the default layout |
+| `src/shared/templates/master-layers.ts` | `buildMasterLayers`, reading the layout it is given (the default layout when none is) |
 | `src/shared/templates/new-layer.ts` | `newLayerValues(type, size, count)`: a layer the user adds, built by `buildMasterLayers` from a slot no layout names, so it takes the "any other slot" rows |
 | `src/shared/templates/starter-layout-patches.ts` | `starterLayoutPatches(layout, size, layers)` and `StarterLayoutUpdate`, one item of `layer.updateMany` |
 | `src/shared/templates/starter.ts`, `types.ts` | `starterTemplate`, `slotStates`, and the template types (`spec/brief-and-templates.md`, "Templates") |
@@ -22,11 +22,11 @@ Each value has one owner. No number of a layout is written anywhere else.
 ## Shapes
 
 ```ts
-// default-layout.ts. 'end' is new: the box ends one margin before the far edge.
+// default-layout.ts. 'end': the box ends one margin before the far edge.
 type Place = 'zero' | 'margin' | 'centre' | 'end' | { ofHeight: number }
 type Extent = 'full' | 'inset' | 'side' | { ofSmaller: number } | { ofHeight: number }
 type BoxRule = { x: Place; y: Place; width: Extent; height: Extent }
-// TextStyleRule is unchanged; its fontSizeOfSmaller is now the largest starting size.
+// TextStyleRule: its fontSizeOfSmaller is the largest starting size.
 type TextBoxRule = {
   verticalAlign: 'top' | 'middle' | 'bottom'
   allCaps: boolean
@@ -48,7 +48,7 @@ type StarterLayout = {
 }
 ```
 
-Slot names ("Subject image", "Logo", "Headline", "Call to action") are read from `SLOT_LAYOUTS` only. A slot a layout does not name, and any slot of a user-added layer, keeps the "any other slot" rows of `default-layout.ts`, which do not change.
+Slot names ("Subject image", "Logo", "Headline", "Call to action") are read from `SLOT_LAYOUTS` only. A slot a layout does not name, and any slot of a user-added layer, keeps the "any other slot" rows of `default-layout.ts`.
 
 ## Rules shared by every layout
 
@@ -154,13 +154,13 @@ Background: `fillColor` null; shade null.
 
 ### Why the boxes do not overlap
 
-`W ≥ S` and `H ≥ S` for every size, so a box placed with `end` and a height of `k × S` starts at or below `H − (0.06 + k) × S ≥ (0.94 − k) × H`. For example the button of layout 1 starts at or below `0.85 H`, and the headline above it ends at `0.84 H`. A centred box of width `0.32 S` or more starts at or right of `0.34 S`, past a logo that ends at `0.20 S`. The LK-4 test checks every pair at the four ready-made sizes and at 50 × 8192 and 8192 × 50. The one overlap on purpose: layout 4's subject may run past the bottom edge, which the canvas cuts off.
+`W ≥ S` and `H ≥ S` for every size, so a box placed with `end` and a height of `k × S` starts at or below `H − (0.06 + k) × S ≥ (0.94 − k) × H`. For example the button of layout 1 starts at or below `0.85 H`, and the headline above it ends at `0.84 H`. A centred box of width `0.32 S` or more starts at or right of `0.34 S`, past a logo that ends at `0.20 S`. `tests/unit/shared/config/starter-layouts.test.ts` checks every pair at the four ready-made sizes and at 50 × 8192 and 8192 × 50. The one overlap on purpose: layout 4's subject may run past the bottom edge, which the canvas cuts off.
 
 ## Applying a layout
 
 `starterLayoutPatches(layout, size, layers)` returns the `updates` of one `layer.updateMany` for the variant [D-094]. Pure. It matches layers by `key`, which is the slot ID in every master and every variant made from it.
 
-**Layouts when making variants** (built, MV-2 and MV-3). "Make variants" finds the source's layout from where its boxes sit (`layoutOfLayers`) and puts each box still on that layout where the layout puts it at the new size, through the same `geometryOf` and `frameOf`. It changes only geometry; text sizes are fitted by `spec/make-variants.md`, "Text that fits", from the layer's own style, not from the layout's text rules. "Layout…" itself does not change.
+**Layouts when making variants** (Built). "Make variants" finds the source's layout from where its boxes sit (`layoutOfLayers`, `src/shared/links/source-layout.ts`) and puts each box still on that layout where the layout puts it at the new size, through the same `geometryOf` and `frameOf`. It changes only geometry; text sizes are fitted by `spec/make-variants.md`, "Text that fits", from the layer's own style, not from the layout's text rules. "Layout…" works as below.
 
 - **Which layers.** Each layer whose `key` is a slot the layout names, of the matching type (`text` for a copy slot, `image` for a picture slot), and the layer with key `background`. A locked layer is left out. A layer the layout does not name (a user-added layer, another slot) is left out. When nothing is left, the list is empty and the dialog says so.
 - **Geometry.** `x`, `y`, `width`, `height` from the layout for this variant's size, and `rotation: 0`. `crop` is not sent: a crop stays, and the Scene draws it covering the new box. The background gets the whole canvas.

@@ -25,7 +25,7 @@ A real ComfyUI run takes minutes, so it is not routine testing.
 
 Built. `tests/e2e/`, `npm run test:e2e`.
 
-- Specs: `phase1.spec.ts`, `window.spec.ts`, `csp.spec.ts`, `asset-protocol.spec.ts`, `comfy-stand-in.spec.ts` (stand-in ComfyUI on `127.0.0.1`), `screen-tour.spec.ts` (rows that need no stand-in). Helpers: `launch.ts`, `screens.ts`, `screen-tour.ts`, `stand-in-runs.ts`, `stand-in-uploads.ts`, `video-screens.ts`, `gemini-stand-in.ts`; the stand-in server is `tests/helpers/comfy-stand-in.ts`.
+- Specs: every `*.spec.ts` in `tests/e2e/`. Among them `phase1.spec.ts`, `window.spec.ts`, `csp.spec.ts`, `asset-protocol.spec.ts`, `comfy-stand-in.spec.ts` (stand-in ComfyUI on `127.0.0.1`), `screen-tour.spec.ts` (rows that need no stand-in), the workflow runs `workflow-5-1.spec.ts`, `workflow-5-3.spec.ts`, `workflow-5-4.spec.ts`, `video-variant.spec.ts`, `mcp-workflow.spec.ts`, and the reference-picture run `scene-reference.spec.ts` (`spec/testing.md`). Helpers: `launch.ts`, `screens.ts`, `screen-tour.ts`, `stand-in-runs.ts`, `stand-in-uploads.ts`, `video-screens.ts`, `gemini-stand-in.ts`; the stand-in server is `tests/helpers/comfy-stand-in.ts`.
 - `playwright.config.ts` leaves `tests/e2e-real/` out; a config test pins that.
 - `launch.ts` sets `ADMAN_USER_DATA_DIR` to a sandbox folder and `ADMAN_FAKE_PROVIDERS=1`, with a mock keychain.
 - **Native file dialogs** are stubbed by replacing `dialog.showOpenDialog` in the main process via `electronApp.evaluate`; no app code change; a stubbed path is never printed. "Add pictures" links originals read only (`copy: false`) in the sandbox project, deleted after the run.
@@ -33,14 +33,14 @@ Built. `tests/e2e/`, `npm run test:e2e`.
 - **Offline export** (`tests/e2e/offline-export.spec.ts`; shared steps in `tests/e2e/export-steps.ts`) turns the network off from the test process only, with no app code change: every session is set offline and any request it still makes is cancelled and counted; the main process's `fetch` fails and counts; a socket to any host but this computer is refused and counted. The test first proves the guard catches a fetch and a socket.
 - **Offline video fixture:** a small made-up H.264 clip (`tests/fixtures/video/grey-clip.ts`), made by the test author, no real footage or sound.
 - A first-frame start offline: the stand-in sees one upload named `uploadName(...)` of a PNG at the run size, and the result plays (proves `nativeImage` in `fitPicture` is really used). The offline video case ends with the `video` element's `readyState` at 1 or more (proves the CSP and the asset protocol in the built app).
-- `tests/e2e/comfy-stand-in.spec.ts` is at 253 lines. The next slice that adds a case splits it (for example `comfy-stand-in-video.spec.ts`).
+- `tests/e2e/comfy-stand-in.spec.ts` is at 281 lines. The next slice that adds a case puts it in a new file beside it (for example `comfy-stand-in-video.spec.ts`).
 
 ## Real-service end-to-end harness
 
 Built. `tests/e2e-real/` (`global-setup.ts`, `guard.ts`, `pictures.ts`, `real-env.ts`, `real-server.spec.ts`, `real-steps.ts`, `run-checks.ts`, `switches.ts`), `npm run test:e2e:real`.
 
 - **`playwright.real.config.ts`** exports an object; `globalSetup` (`tests/e2e-real/global-setup.ts`) reads only `COMFY_BASE_URL` (terminal or `.env.local`); `workers: 1`, `retries: 0`; `trace`, `screenshot`, `video` all `'off'`; reporter `list` only. The setup accepts only the npm script's command line (refuses UI mode, test server, editor extension), refuses `PW_TEST_REPORTER`, any non-empty `DEBUG`, another reporter or any recording, and refuses watch mode (any non-empty `PWTEST_WATCH`), which would run a paid case again on each file save. Each test checks again in its worker before the app starts. Config test: `tests/unit/config/e2e-real-config.test.ts`.
-- **Launch.** `launchReal(box)` in `launch.ts` leaves out `ADMAN_FAKE_PROVIDERS` and sets `ADMAN_DEV_TOOLS=1`; an unpackaged Playwright launch has `devToolsOn` true, so `trial` workflows are offered. Sandbox folders and mock keychain as offline.
+- **Launch.** `launchReal(box)` in `tests/e2e/launch.ts` (its environment from `tests/e2e-real/real-env.ts`) leaves out `ADMAN_FAKE_PROVIDERS` and sets `ADMAN_DEV_TOOLS=1`; an unpackaged Playwright launch has `devToolsOn` true, so `trial` workflows are offered. Sandbox folders and mock keychain as offline.
 - **The address.** Typed into Settings' "Server address"; never in a test name, locator, `expect` on a value, or printed line. Every step holding it runs in a guard that rethrows one fixed sentence with no cause; a failure prints the step's name only. Reports list cases and times, never the address or a path.
 - **Switches** (terminal only; with none, only Settings, Check runs):
 
@@ -73,6 +73,8 @@ Built. `tests/comfy/`, `vitest.comfy.config.ts`, `npm run test:comfy`. The desig
 | `ADMAN_COMFY_FLUX=1` | 5, Flux picture from a reference (`flux3-klein-edit-references`) |
 | `ADMAN_COMFY_FRAME=1` | 6, H3 video from a first frame |
 | `ADMAN_COMFY_REFVIDEO=1` | 7, H3 video from one reference |
+| `ADMAN_COMFY_CUTOUT=1` | 8, cut-out on `birefnet-cutout` |
+| `ADMAN_COMFY_CUSTOM=1` | 9, a custom workflow made from the shipped Flux graph |
 | `ADMAN_COMFY_PICTURE` | One absolute picture path for the picture cases |
 
   Tests: `tests/unit/config/comfy-env-file.test.ts` (no switch name is taken from the file), `tests/integration/comfy-run/cases.test.ts` (with the switch unset, the stand-in sees nothing for that case).
@@ -106,13 +108,25 @@ Built. `tests/live/`, `vitest.live.config.ts`, `npm run test:live`. Real paid ca
 - Refused with one fixed line each: a path not absolute, a file over `MAX_PICTURE_BYTES`, bytes `pictureType` does not call PNG or JPEG, a picture over 1,600 px on its long side, "could not be read", "pixel size could not be read". A fixed line is constant text per reason, with no path, file name, cause or system error text. The size and long-side lines ask for a smaller copy made outside the repo.
 - Only the bytes are sent (to ComfyUI under `uploadName(bytes)`, to Gemini as the reference part). Path, folder and file name are never sent, printed, put in a result file name or a report. Lines say "the given picture" or "the test-made picture". Bytes go as they are, metadata included (F-9: whether the app should strip EXIF is open).
 
+## Local approvals run
+
+Built. `tests/approvals-local/`, `playwright.approvals.config.ts`, `npm run test:approvals-local`. By hand; no CI workflow runs it.
+
+- The setup (`tests/approvals-local/global-setup.ts`) starts the real approvals service under `next start` on `127.0.0.1` with a local database file. The built app runs beside it, and Playwright's Chromium is the visitor.
+- `workers: 1`; `trace`, `screenshot` and `video` all `'off'`, so no key or password typed in the run lands in a file.
+- Gallery pictures are written to the app's local test picture folder (`ADMAN_APPROVALS_TEST_PICTURES`, `spec/infra-and-settings.md`, "The app"), and `tests/approvals-local/picture-server.ts` serves that folder on `127.0.0.1`, `GET` only, to the service.
+
+## Packaged-app check
+
+Built. `tests/package/`, `vitest.package.config.ts`, `npm run test:package`, after `npm run package:dir`, on macOS. It reads the unpacked app's files and checks its names (`tests/package/app-names.test.ts`); it never starts the app.
+
 ## What the end-to-end harness reaches
 
 Every function the built screens offer, and whether end-to-end tests reach it. "Offline" = `test:e2e` (stand-in or fake providers); "real" = `test:e2e:real`. Screens are described in `spec/screens.md`.
 
 | Screen | Function | Reached | How or why not |
 |---|---|---|---|
-| Shell | Project tabs, Settings button, Hand test button (dev) | Yes, offline | Clicks |
+| Shell | Project tabs, Settings button | Yes, offline | Clicks |
 | Shell | Error banner, Dismiss | Yes, offline | Made by a refused action, for example a bad ComfyUI address |
 | Start | New project: name, Change location, Create project | Yes, offline | Dialog stub for the location |
 | Start | Open project… | Yes, offline | Dialog stub |
@@ -122,8 +136,9 @@ Every function the built screens offer, and whether end-to-end tests reach it. "
 | Settings | Provider defaults (each job's select) | Yes, offline | Select |
 | Settings | ComfyUI address: Save, Remove, refusal shown | Yes, offline and real | Typed inside the guard |
 | Settings | ComfyUI Check and its result per workflow | Yes, offline and real | Real check sends GETs only |
-| Settings | Agent access (MCP): switch, port, Connect panel, Copy, refusal lines | No | Component tests only: `tests/unit/renderer/screens/settings/mcp-section*.test.tsx` |
-| Settings | Agent runs: one tick per provider, the limit | Not built | Planned: offline, by clicks; no agent and no run needed |
+| Settings | Agent access (MCP): switch, port, Connect panel | Yes, offline | `tests/e2e/mcp-workflow.spec.ts` types a free port, turns the switch on and reads the Connect panel |
+| Settings | Agent access (MCP): Copy, refusal lines | No | Component tests only: `tests/unit/renderer/screens/settings/mcp-section*.test.tsx` |
+| Settings | Agent runs: one tick per provider, the limit | Yes, offline | `tests/e2e/screen-tour.spec.ts`, by clicks; no agent and no run needed |
 | Settings | Cloud storage, S3 part (`s3-section/`) and "Test connection" (`s3-check/`) | No | Component tests (`tests/unit/renderer/screens/settings/s3-section.test.tsx`, `s3-check.test.tsx`); `checkS3Access` against a stand-in request handler. A real bucket by hand only |
 | Settings | Approvals service (`approvals-section/`): address, key, Test connection | Yes, offline | `tests/e2e/approvals.spec.ts` offline, plus component tests (`approvals-section.test.tsx`); `npm run test:approvals-local` is the local proof with the real service |
 | Key dialog | Save and continue, Cancel | Yes, offline | Opened by Generate with no key |
@@ -139,13 +154,10 @@ Every function the built screens offer, and whether end-to-end tests reach it. "
 | Run list and row | Waiting, working, done, failed states; the result picture | Yes, offline and real | Failure states offline only, through the stand-in |
 | Run row | Cancel | Yes, offline; real with `ADMAN_E2E_CANCEL=1` | Own run only |
 | Run row | Retry, with the paid confirm for a paid provider | Yes, offline | A failed stand-in run |
-| Hand test (dev) | Storage on this computer: Upload, List, Remove all | Yes, offline | Sandbox app data folder only |
-| Hand test (dev) | Amazon S3 settings and actions | No | Needs real credentials and a real bucket. "Remove all" on a real bucket is destructive, so it is never automated. By hand only |
-| Hand test (dev) | Sign in to Dropbox | No | Hidden on `main` (`HAND_TEST_DROPBOX` is false). Sign-in runs in the web browser. By hand only |
 
-Project files in these runs are made at the newest migration, `0005_video_and_sound` (schema version 6). The approvals service in `approvals-service/` is a separate Next.js app with its own Vitest and Playwright runs (`spec/approvals-service-tests.md`).
+Project files in these runs are made at the newest migration, `0006_approval_clips` (schema version 7). The approvals service in `approvals-service/` is a separate Next.js app with its own Vitest and Playwright runs (`spec/approvals-service-tests.md`).
 
-**Gaps:** S3 and Dropbox (above). The MCP section (component tests only). The paid Gemini run through the screens (the stakeholder's own, D-081). Real-server failure screens (out of memory, server stopped) are tested offline only, since they cannot be caused on purpose without harm. A packaged app is not tested end to end, because `trial` workflows are never offered there.
+**Gaps:** S3 and Dropbox (above). The MCP section's Copy button and refusal lines (component tests only). The paid Gemini run through the screens (the stakeholder's own, D-081). Real-server failure screens (out of memory, server stopped) are tested offline only, since they cannot be caused on purpose without harm. A packaged app is not tested end to end, because `trial` workflows are never offered there.
 
-**Not verified:** EXIF rotation. A turned clip from a phone photograph is out of scope until one is seen. Whoever runs `ADMAN_E2E_VIDEO_FRAME=1`, and the stakeholder's first app run from a phone photograph, check it. If one comes out turned: a security-class fix in `src/main/picture-fitter.ts` turns it upright from its orientation tag before the crop, with one test.
+**EXIF rotation.** A JPEG whose orientation tag says to turn it reaches the stand-in upright, through the built app's real `toPng` and `fitPicture` (`tests/e2e/jpeg-orientation.spec.ts`, A-55; `src/main/picture-fitter.ts`).
 

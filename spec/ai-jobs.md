@@ -1,14 +1,14 @@
 # AI jobs: layout, copy options, brief reading, cut-out
 
-The Phase 4 jobs beside picture and video generation: what each command checks, what each job sends and keeps, the cut-out workflow, the plain sentence for each failure cause, the fake provider's parts, and the agent rows. Read with `spec/jobs.md` (the job record, the runner, the two classes), `spec/providers.md` (interfaces, adapter rules, size limits), `spec/providers-adapters.md` (the Gemini calls), `spec/comfyui-workflows.md` (shipped workflows) and `spec/screens-ai.md` (the screens that start these jobs).
+The AI jobs beside picture and video generation: what each command checks, what each job sends and keeps, the cut-out workflow, the plain sentence for each failure cause, the fake provider's parts, and the agent rows. Read with `spec/jobs.md` (the job record, the runner, the two classes), `spec/providers.md` (interfaces, adapter rules, size limits), `spec/providers-adapters.md` (the Gemini calls), `spec/comfyui-workflows.md` (shipped workflows) and `spec/screens-ai.md` (the screens that start these jobs).
 
-Everything here is Built (Phase 4), slices in `spec/phases/phase-04.md`. [REQ: FR-022, FR-045, FR-061, FR-069, FR-230, FR-248, FR-307; D-036, D-080]
+Built, except where marked. Slices: `spec/phases/phase-04.md`. [REQ: FR-022, FR-045, FR-061, FR-069, FR-230, FR-248, FR-307; D-036, D-080]
 
 ## Contracts
 
 ### Job kinds
 
-- `src/shared/config/job-kinds.ts` gains `cutout: 'background'`. Ten kinds.
+- `src/shared/config/job-kinds.ts` lists `cutout: 'background'` among the job kinds.
 - Migration `0003_job_kind_cutout` rebuilds the `job` table so its `job_kind` CHECK lists `cutout` (drizzle-kit rebuilds a table for a changed CHECK; the runner's foreign-key rule in `spec/data-rules.md` covers it). Test `tests/integration/db/migration-0003.test.ts`: four tags in order; `schema_version` 4; a version-3 file with a job row and an asset naming it keeps both unchanged; `cutout` is accepted and `'robot'` refused in old and new files.
 
 Request and result schemas, one file each in `src/shared/schemas/jobs/`:
@@ -41,13 +41,14 @@ cutoutJobResult = z.object({ assetIds: z.array(z.string()) })   // one ID, a lis
 
 ### Provider interfaces
 
-`src/main/providers/types.ts`. No adapter implements layout or text before Phase 4, so these change freely.
+`src/main/providers/types.ts` (the full file: `spec/providers.md`, "Provider interfaces").
 
 ```ts
 export interface LayoutProvider {
   propose(input: {
     background: ImageFile; width: number; height: number
     items: Array<{ slot: string; text: string }>; palette: string[]; fonts: string[]
+    typeStyles?: TypeStyleOffer[]  // given only when the project has no font of its own
   }, opts?: RunOptions): Promise<LayoutBox[]>
 }
 
@@ -58,7 +59,7 @@ export interface TextProvider {
   copyOptions(input: {
     role: CopyRole; brief: Brief; language: string; count: number; maxChars: number
   }, opts?: RunOptions): Promise<string[]>
-  translate(input: { /* as before */ }, opts?: RunOptions): Promise<Array<{ key: string; text: string }>>
+  translate(input: { /* spec/providers.md */ }, opts?: RunOptions): Promise<Array<{ key: string; text: string }>>
 }
 
 // A picture in, the same picture with a see-through background out (PNG with alpha).
@@ -67,8 +68,8 @@ export interface CutoutProvider {
 }
 ```
 
-- `ProviderAdapters` gains `cutout?: (ctx: AdapterContext) => CutoutProvider`; `AdapterJob` gains `'cutout'`.
-- `ProviderJob` (`src/shared/schemas/queries/app.ts`) gains `'cutout'`. Registry rows: `comfyui` `jobs: ['image', 'video', 'cutout']`; `fake` adds `'cutout'`. No default provider is kept for cut-outs: the run dialog lists ComfyUI first (OI-55).
+- `ProviderAdapters` has `cutout?: (ctx: AdapterContext) => CutoutProvider`, so `AdapterJob` includes `'cutout'`.
+- `ProviderJob` (`src/shared/schemas/queries/app.ts`) includes `'cutout'`. Registry rows: `comfyui` `jobs: ['image', 'video', 'cutout']`; `fake` lists `'cutout'` too. No default provider is kept for cut-outs: the run dialog lists ComfyUI first (OI-55).
 - `extractBrief` returns a `BriefDraft`, not a `Brief`: the user confirms the form before anything is a brief [REQ: FR-023].
 
 ### Commands, queries and agent rows
@@ -89,7 +90,7 @@ export interface CutoutProvider {
 
 - Each `generation.*` here returns `JobStarted = { jobId }`. `brief.extract` too.
 - **The gate** (`src/main/commands/agent-run-gate.ts`) knows `generation.proposeLayout`, `generation.copyOptions` and `generation.cutOut` with the same three steps as `generation.runImages`; each input requires `provider`. Gate tests as for `generation.runImages`: each refused at steps 1, 2 and 3 with no job row; ticked, accepted with `startedBy: 'agent'`.
-- No MCP tool calls these commands or queries in Phase 4. Phase 10 adds the tools with its layer tools (A-66).
+- The MCP tools `propose_layout`, `copy_options`, `cut_out` and `update_layers` run `generation.proposeLayout`, `generation.copyOptions`, `generation.cutOut` and `layer.updateMany` (`spec/mcp-and-agents.md`). `brief.extract` and the three queries below have no tool.
 - `job.retry` is `deny` for an agent (`agent-policy.ts`), so an agent never re-runs one of these jobs; a retried job is always the user's.
 - The three queries are open to both actors, as `job.get` is; no tool wraps them.
 
@@ -160,7 +161,7 @@ The request: `role` is `call_to_action` when the layer's slot is `call-to-action
 
 [REQ: FR-307; OI-55]
 
-**Route.** ComfyUI on the stakeholder's own server, with ComfyUI's built-in background removal: core nodes only, no add-on. fal comes in Phase 7 (slice J) as a second, paid route behind the same `CutoutProvider`. The fake provider does it for tests.
+**Route.** ComfyUI on the stakeholder's own server, with ComfyUI's built-in background removal: core nodes only, no add-on. The fake provider does it for tests. Not built: a second, paid route through fal.ai behind the same `CutoutProvider` (the `fal-seedance` row lists `video` only).
 
 **The workflow** `birefnet-cutout` (`src/main/providers/comfyui/workflows/birefnet-cutout.json`, spec `birefnet.ts`), an agent draft shipped as `trial` and set to `proven` by D-103, so it is offered without dev tools:
 
@@ -174,9 +175,9 @@ The request: `role` is `call_to_action` when the layer's slot is `call-to-action
 | 6 | `PreviewImage` | `images` ← 5 (the output node) |
 
 - Why node 4: `JoinImageWithAlpha` stores `1 − mask` as the alpha, and `RemoveBackground` gives 1 for the subject. Inverting first leaves the subject solid and the background see-through.
-- Spec values: `job: 'cutout'` (a new `WorkflowJob` value), `slots = { seed: [], references: [one slot at node 1, nothing dropped], minReferences: 1, outputNode: '6' }`, no prompt, no size slot. `size` `{ multiple: 1, minPixels: 1, maxPixels: MAX_PICTURE_PIXELS }` (read by no run). `model { label: 'BiRefNet', mainFile: 'birefnet.safetensors' }`. `needs.models` `[{ folder: 'background_removal', file: 'birefnet.safetensors' }]`; `needs.nodeClasses` the six classes above; `minComfyVersion` `'0.0.0'` (no number is published; the check's node list catches an old server). `licence` MIT, `commercialNote` null, so no licence dialog. `leavesOnServer`: uploads, preview, record.
-- `WorkflowSlots.prompt` becomes optional; `fillWorkflow` refuses a prompt value for a workflow without the slot and a missing one for a workflow with it, as for every other slot. `RunAsk.prompt` becomes optional. Nothing else in the fill rule changes.
-- **The first real run decides two points.** Run once on the real server (`test:comfy` case 8, below; D-092). If the subject comes out see-through and the background solid, node 4 is dropped and node 5 takes its alpha from node 3 (one data fix, one re-run). If `JoinImageWithAlpha` refuses the mask's shape (ComfyUI issue 14008 reports an extra dimension on that mask), the workflow stays `draft`, the developer reports it, and cut-out ships through the fake provider only until a ComfyUI release fixes it or fal arrives.
+- Spec values: `job: 'cutout'` (a `WorkflowJob` value), `slots = { seed: [], references: [one slot at node 1, nothing dropped], minReferences: 1, outputNode: '6' }`, no prompt, no size slot. `size` `{ multiple: 1, minPixels: 1, maxPixels: MAX_PICTURE_PIXELS }` (read by no run). `model { label: 'BiRefNet', mainFile: 'birefnet.safetensors' }`. `needs.models` `[{ folder: 'background_removal', file: 'birefnet.safetensors' }]`; `needs.nodeClasses` the six classes above; `minComfyVersion` `'0.0.0'` (no number is published; the check's node list catches an old server). `licence` MIT, `commercialNote` null, so no licence dialog. `leavesOnServer`: uploads, preview, record.
+- `WorkflowSlots.prompt` is optional; `fillWorkflow` refuses a prompt value for a workflow without the slot and a missing one for a workflow with it, as for every other slot. `RunAsk.prompt` is optional too.
+- **The first real run decides two points.** Run once on the real server (`test:comfy` case 8, below; D-092). If the subject comes out see-through and the background solid, node 4 is dropped and node 5 takes its alpha from node 3 (one data fix, one re-run). If `JoinImageWithAlpha` refuses the mask's shape (ComfyUI issue 14008 reports an extra dimension on that mask), the workflow stays `draft`, the developer reports it, and cut-out ships through the fake provider only until a ComfyUI release fixes it or another route is built.
 
 **The adapter** (`src/main/providers/comfyui/cutout.ts`, exported as `cutout` from `comfyui/index.ts`). `cutOut` does what `generate` does for one picture: the saved address, `workflowForRun('cutout')`, the server check, one upload under `uploadName(bytes)`, one submission, polling, the result from node 6, `pictureType`. Details from the shipped workflow file, as for pictures.
 
@@ -218,7 +219,7 @@ The request is `{ sourceAssetId }`, the layer's picture at that moment. Enqueued
 
 - **How it is decided** (security class). `LocalFailure` (`src/main/jobs/local-failure.ts`) carries a reason only. `readPictures` and `storeResult` throw it, comparing the `AppError`'s `code` and `details.reason` with the fixed values above and reading nothing else. The runner (`run-job.ts`) turns a `NEEDS_KEY` `AppError` into `key_missing` the same way. Any other `AppError` stays kind `other` with no reason and the sentence "{Provider} could not finish this request. Try again."
 - **Nothing from the error leaves.** For a local failure the row's `error_detail` is the reason name; for another `AppError` it is `app_error`; never the error's code, message or details. A `ProviderFailure` keeps the provider's own detail there, as before (`run-job.ts`); it never goes into `job.updated`, a log line or a reply. The log line holds the error kind and reason only. A write error's own code (for example `EACCES`) goes to one `warn` line with `event: 'job'` and no path.
-- A failure that arrives after some pictures were kept ends as today: the run keeps them and counts the failure.
+- A failure that arrives after some pictures were kept: the run keeps them and counts the failure.
 - The window shows the sentence wherever a failed run shows (`ui/run-failure/`, the activity panel, the earlier options); the agent job view gives it with `{provider}` filled.
 
 ## The fake provider's parts
@@ -228,8 +229,8 @@ The request is `{ sourceAssetId }`, the layer's picture at that moment. Enqueued
 - **Layout** (`fake/layout.ts`): for each item, the box and text style of the default layout (`SLOT_LAYOUTS` in `src/shared/config/default-layout.ts`) for the slot named like the item's key, placed by the shared box rules (`frameOf`, `geometryOf` in `src/shared/templates/layout-rules.ts`); else `OTHER_COPY_BOX`, placed one box-height lower for each earlier such item and kept inside the canvas. The font size is the style's largest, `fontSizeOfSmaller × S`, rounded. Colour the first palette colour, else `#FFFFFF`; `align` from the style.
 - **Extract brief:** reads lines of the form `Label: value`, labels in any letter case: "Campaign name", "Region", "Audience", "Message", "Offer", "Call to action", "Tone", "Languages" and "Sizes" (comma lists), and "Subject" (repeatable; `Name - description`). Other lines are ignored. So a test's Markdown brief gives a known draft.
 - **Copy options:** the first `count` of a fixed list of eight short English lines per role (for `call_to_action`: "Shop the collection", "Find your fit", …), each within `maxChars`.
-- **Translate** (built, P6-5): each text comes back as `[{to}] {text}`, so a test knows the answer.
-- **Cut-out:** a PNG of the input's pixel size (from `pictureSize`), colour type 6: grey and solid in the middle half, see-through elsewhere. `png.ts` gains the alpha form.
+- **Translate:** each text comes back as `[{to}] {text}`, so a test knows the answer.
+- **Cut-out:** a PNG of the input's pixel size (from `pictureSize`), colour type 6: grey and solid in the middle half, see-through elsewhere. `png.ts` has the alpha form.
 
 ## Security notes
 
@@ -238,4 +239,4 @@ The request is `{ sourceAssetId }`, the layer's picture at that moment. Enqueued
 - `brief.extract` reads a path, so agents are denied it, as `brief.parse`.
 - `layer.updateMany` makes every check `layer.update` makes, for every item.
 - **An agent never confirms a licence.** `generation.cutOut` ignores `licenceConfirmed` when the actor is the agent, as `generation.runImages` and `generation.startVideo` do.
-- **Job rows for agents.** `job.earlierOptions`, `job.activity` and `campaign.paidCount` have no MCP tool. When Phase 10 adds one, each job row passes through `agentJobView` first; the raw row (prompts, result, error detail) is never returned to an agent.
+- **Job rows for agents.** `job.earlierOptions`, `job.activity` and `campaign.paidCount` have no MCP tool. A tool added for one must pass each job row through `agentJobView` first; the raw row (prompts, result, error detail) is never returned to an agent.

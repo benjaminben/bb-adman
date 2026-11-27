@@ -28,19 +28,23 @@ Built. Owner: `package.json`. The project needs Node 22.12 or newer (`engines`);
 | `test:watch` | `vitest` | Same, watching |
 | `test:coverage` | `vitest run --coverage` | Tests with coverage thresholds |
 | `test:build` | `vitest run --config vitest.build.config.ts` | Built-page check (`tests/build/built-page.test.ts`) |
+| `test:package` | `vitest run --config vitest.package.config.ts` | Reads the unpacked app that `npm run package:dir` made and checks its names, `tests/package/`. Never starts the app. macOS |
 | `test:live` | `vitest run --config vitest.live.config.ts` | Paid calls to real services, `tests/live/`. Run by the project owner only. |
 | `test:comfy` | `vitest run --config vitest.comfy.config.ts` | Real ComfyUI server, `tests/comfy/` |
 | `test:e2e` | `npm run build && playwright test` | Offline end-to-end, `tests/e2e/` |
 | `test:e2e:real` | `npm run build && playwright test --config playwright.real.config.ts` | End-to-end against the real ComfyUI server, `tests/e2e-real/` |
+| `test:approvals-local` | `npm run build && playwright test --config playwright.approvals.config.ts` | The built app against the real approvals service run locally (`next start` on `127.0.0.1`, a local database file), with Chromium as the visitor, `tests/approvals-local/`. By hand; no CI workflow runs it |
 | `shots` | `npm run build && playwright test --config playwright.shots.config.ts` | Screenshots of the built app's screens into `shots/` (not in git), `tests/shots/`. Never a routine check |
 | `db:generate` | `drizzle-kit generate` | Make a migration |
+| `quickstart` | `tsx quickstart/cli.ts` | The command-line demo (`spec/quickstart.md`) |
+| `fetch:ffmpeg` | `node scripts/ffmpeg/fetch.mjs` | Get FFmpeg for this computer into `resources/ffmpeg/` ("FFmpeg" below) |
 | `package` | `npm run build && electron-builder` | Installers |
 | `package:dir` | `npm run build && electron-builder --dir` | Unpacked app folder |
 | `package:mac` | `npm run build && electron-builder --mac dmg --arm64 --publish never` | The release DMG for Apple silicon, built on a Mac |
 | `package:mac:demo` | `npm run build && electron-builder --mac dir --arm64 --publish never && node scripts/demo/zip-mac.mjs` | A hand-out for a demo, built on a Mac: `demo.zip` at the repository root, holding the unpacked app, `.env.demo`, and each path listed in `demo-extras.txt` (one per line). Neither file is in git. The zip holds keys, so it is shared only with people who may have them; it is never a release |
 | `package:win` | `npm run build && electron-builder --win nsis --x64 --publish never` | The release installer for Windows x64, built on Windows |
 
-`npm test` never includes `tests/live/`, `tests/comfy/` or `tests/e2e-real/`. How each run is used, who may run it and its print rules are in `spec/testing.md`.
+`npm test` never includes `tests/live/`, `tests/comfy/`, `tests/e2e-real/`, `tests/approvals-local/` or `tests/package/`. How each run is used, who may run it and its print rules are in `spec/testing.md`.
 
 ## CI pipeline
 
@@ -56,17 +60,17 @@ On every push and pull request, with `permissions: contents: read`:
 | Unit and integration tests | `macos-latest`, `windows-latest` | `npm ci`, `npm test`, then `npm run test:coverage` with `continue-on-error: true` | `npm test` yes; coverage no |
 | Build | `macos-latest`, `windows-latest`, after lint and tests | `npm ci`, `npm run build`, `npm run test:build` | Yes |
 
-- **Coverage.** `@vitest/coverage-v8`. Coverage includes `src/shared/**` and `src/main/**` (providers included). Thresholds: `src/shared/**` 90% lines, `src/main/**` 80% lines, set only in `vitest.config.ts`. Reporters include `json-summary`. A threshold is never lowered and no exclusion is added to pass it. The push step has `continue-on-error: true`; this is accepted only because `npm test` fails on its own, and the tag pipeline runs coverage without the mark.
-- **Dependency audit.** Reports and does not fail a push: a new advisory in a package nobody touched must not block parallel work. Phase 11 makes it fail the tag pipeline.
+- **Coverage.** `@vitest/coverage-v8`. Coverage includes `src/shared/**` and `src/main/**` (providers included). Thresholds: `src/shared/**` 90% lines, `src/main/**` 80% lines, set only in `vitest.config.ts`. Reporters include `json-summary`. A threshold is never lowered and no exclusion is added to pass it. The push step has `continue-on-error: true`; this is accepted only because `npm test` fails on its own, and the release gate (class F, `spec/testing.md`), run on a person's computer before a release, runs coverage without the mark.
+- **Dependency audit.** Reports and does not fail a push: a new advisory in a package nobody touched must not block parallel work. There is no tag pipeline (D-102), so no workflow fails a release on the audit.
 - **Lint rules that CI enforces.** No semicolons. `max-lines` 300 per file. No `any`. No `console` except `console.error`. ESLint keeps `electron` out of every file `src/main/core.ts` imports, checked per file. Asset paths are joined only in `src/main/assets/path-resolver.ts` (a `no-restricted-syntax` rule). Code rules in full: `spec/structure.md`.
 - **Merge rule.** Each slice is reviewed and merged to `main` one at a time. After each merge the full checks run on `main`: lint, typecheck, all tests with none left out, build and `test:build`. A security-class slice merges only after its review passes.
-- No CI workflow names `test:live`, `test:comfy` or `test:e2e:real`. Nothing in CI calls a real provider.
+- No CI workflow names `test:live`, `test:comfy`, `test:e2e:real`, `test:e2e`, `test:approvals-local`, `test:package` or `shots`. Nothing in CI calls a real provider.
+- **No tag pipeline.** The stakeholder chose local builds (D-102). No workflow builds an installer or makes a release. `tests/unit/config/installer-config.test.ts` checks that `.github/workflows/` holds no `release.yml`.
 
-Not built yet:
+Not built:
 
-- **Scene reference-picture tests** on macOS and Windows: a push step that runs them in Playwright (Electron and the render window), not in Vitest (`spec/testing.md`, "Reference pictures"). Not built (Phase 3, with the Scene).
-- **Licence check**: Not built (Phase 11). Fails on GPL or AGPL packages, on push and on tags from then on. Comes with `LICENSE` and `THIRD-PARTY-NOTICES.md`.
-- **No tag pipeline.** The stakeholder chose local builds (D-102). No workflow builds an installer or makes a release, and `tests/unit/config/installer-config.test.ts` checks that `.github/workflows/release.yml` does not exist.
+- **Scene reference-picture tests in CI.** No CI step runs them; they run on a developer's Mac (`npm run test:e2e`). The planned step runs them in Playwright (Electron and the render window) on macOS and Windows, not in Vitest (`spec/testing.md`, "Reference pictures").
+- **Licence check** (Phase 11, held). Fails on GPL or AGPL packages, on every push. Comes with `LICENSE`. There is no `LICENSE` file and no licence step in `ci.yml`.
 
 ## Release and packaging
 
@@ -88,12 +92,12 @@ Packaging config: Built (`electron-builder.json`). Release scripts and the READM
 
 ### FFmpeg [REQ: FR-143, 9.3]
 
-Built: the fetch script and the media runner (Phase 7); packaging and the FFmpeg notice (P8-18: `extraResources` carries only `resources/ffmpeg/${platform}-${arch}`; `electronFuses` switch off run-as-node, `NODE_OPTIONS` and the inspect flags and load the app only from the asar). Not built: the release step (Phase 11), which also puts the full LGPL text and `THIRD-PARTY-NOTICES.md` inside the package.
+Built: the fetch script and the media runner; packaging and the FFmpeg notice in `THIRD-PARTY-NOTICES.md` (P8-18: `extraResources` carries only `resources/ffmpeg/${platform}-${arch}`; `electronFuses` switch off run-as-node, `NODE_OPTIONS` and the inspect flags and load the app only from the asar). Not built (Phase 11, held): the package does not yet carry the full LGPL text or `THIRD-PARTY-NOTICES.md`; `electron-builder.json` does not list them.
 
-- **Where it comes from, how it is fetched and checked:** `spec/phases/phase-07.md`, "Where FFmpeg comes from", "Pin checks", "Configure flags" and "Licence check"; the fetch script is slice P7-3 (`npm run fetch:ffmpeg`, `scripts/ffmpeg/fetch.mjs`, pins in `scripts/ffmpeg-sources.json`). It is never run by `npm install` or `npm ci`. The binaries are not committed.
+- **Where it comes from, how it is fetched and checked:** `spec/phases/phase-07.md`, "Where FFmpeg comes from", "Pin checks", "Configure flags" and "Licence check"; the fetch script is `npm run fetch:ffmpeg` (`scripts/ffmpeg/fetch.mjs`, pins in `scripts/ffmpeg-sources.json`). It is never run by `npm install` or `npm ci`. The binaries are not committed.
 - **How it is run:** `spec/phases/phase-07.md`, "How FFmpeg is run" (the one place it is spawned, and the rules for every later FFmpeg slice).
 - Placed at `resources/ffmpeg/{platform}-{arch}/ffmpeg[.exe]`, in development and in the packaged app.
-- `THIRD-PARTY-NOTICES.md` carries the LGPL text, the exact build flags and a link to the matching source (P8-18).
+- `THIRD-PARTY-NOTICES.md` carries the LGPL notice, where the full licence text is found, the exact build flags and a link to the matching source (P8-18).
 
 ## Packages: licences and install scripts
 
@@ -135,14 +139,15 @@ User secrets: Built (`src/main/secrets/secret-store.ts`, `src/main/secrets/safe-
 | `fal.apiKey` | fal.ai | Provider key | Never. Last four characters only. |
 | `firefly.clientId`, `firefly.clientSecret` | Firefly (disabled) | Provider key | Never. Last four characters only. |
 | `s3.accessKeyId`, `s3.secretAccessKey` | S3 | Storage key | Never. Last four characters only. |
-| `dropbox.refreshToken` | Dropbox | Storage key | Never. Last four characters only. |
+| `dropbox.refreshToken` | Dropbox | Storage key | Never. No characters: the window learns only that it is saved. Written only by `storage.dropboxSignIn`, deleted only by `storage.dropboxSignOut`; `secret.set` and `secret.delete` refuse it [A-211] |
+| `approvals.apiKey` | The approvals service (`spec/approvals.md`, "The key") | Service key, held as every key is | Never. Last four characters only. |
 | `mcp.token` | MCP server | Local access token | Yes, in full, in the Connect panel |
 
 The two classes are [REQ: R-10, D-014].
 
 **Repository secrets** [REQ: FR-181]
 
-- `.gitignore` covers `.env*`, `*.adman`, `*.adman.bak`, `* Assets/`, `resources/ffmpeg/`, `out/`, `dist/`, `test-results/`, and `design/prototype/photos/` (the stakeholder's product photos). `examples/**` is the one exception (`!examples/**`).
+- `.gitignore` covers `.env*`, `*.adman`, `*.adman.bak`, `* Assets/`, `resources/ffmpeg/`, `out/`, `dist/`, `test-results/`, `shots/`, `quickstart/output/`, `demo.zip`, `demo-extras.txt`, and `design/` (which holds the stakeholder's product photos). The approvals service's own build output, local `.env*.local` files and local database files are covered too. `examples/**` is the one exception (`!examples/**`).
 - gitleaks runs on every push and pull request.
 - CI needs only the built-in `GITHUB_TOKEN`.
 
@@ -157,7 +162,9 @@ Built. Users never set any of these. They exist for development, tests and CI. U
 | `ADMAN_FAKE_PROVIDERS` | `src/main/providers/registry.ts` (`listProviders`) | `1` adds the fake provider to the registry. It makes no network call. | Not set. `1` in `test:e2e` and in integration fixtures. |
 | `ADMAN_USER_DATA_DIR` | `src/main/index.ts` (`userDataOverride`, `src/main/user-data-override.ts`) | Overrides the app data folder (`app.setPath('userData', …)`). A packaged app ignores it, so nothing in a user's environment can point the installed app at another folder of settings and secrets. | Not set. A temporary folder in end-to-end tests. |
 | `ADMAN_LOG_LEVEL` | `src/main/core.ts` (`parseLogLevel`) | Lowest level written to the log. An unknown value reads as `info`. | `info` |
-| `ADMAN_DEV_TOOLS` | `src/main/index.ts` (`devToolsEnabled`) | `1` switches on the dev-only switches, such as `trial` ComfyUI workflows offered to the user (the hand-test tools were removed in P9-14). Ignored by a packaged app: `devTools` is true only when `app.isPackaged` is false and the variable is `1`. | Not set |
+| `ADMAN_DEV_TOOLS` | `src/main/index.ts` and `src/main/render/render-window.ts`, through `devToolsEnabled` (`src/main/dev-tools-flag.ts`) | `1` switches on the dev-only switches, such as `trial` ComfyUI workflows offered to the user. Ignored by a packaged app: `devTools` is true only when `app.isPackaged` is false and the variable is `1`. | Not set |
+| `ADMAN_QUIET_WINDOWS` | `src/main/index.ts` (`quietWindows`, `src/main/windows/quiet.ts`) | `1` keeps the app window hidden during test runs (`spec/testing.md`, "Quiet windows"). Ignored by a packaged app. | Not set. `1` in end-to-end launches |
+| `ADMAN_APPROVALS_TEST_PICTURES` | `src/main/approvals/picture-store.ts` (`choosePictureStore`) | With `devTools` on and a value of exactly `http://127.0.0.1:{port}`, gallery pictures go to a local test store instead of S3 (`spec/approvals.md`, "Pictures"). In every other case it is ignored. | Not set. Set by `tests/approvals-local/`, `tests/e2e/approvals.spec.ts` and some shots |
 | `ELECTRON_RENDERER_URL` | `src/main/windows/app-window.ts` (`pageAddress`) | Set by electron-vite in `npm run dev`. The window loads it only when the app is not packaged and it is `http://localhost:{port}` with at most one trailing slash (`spec/security.md`, "Renderer and windows"). | Set by the tool |
 
 ### `test:live` (paid calls; project owner only)
@@ -169,6 +176,7 @@ Built. Users never set any of these. They exist for development, tests and CI. U
 | `ADMAN_LIVE_S3_BUCKET`, `ADMAN_LIVE_S3_REGION`, `ADMAN_LIVE_S3_PREFIX` | The bucket the live storage test uses. It writes only under `{prefix}/adman-hand-test/`. |
 | `ADMAN_LIVE_KEEP` | `1` leaves `adman-hand-test/hello.txt` in the bucket so a person can look at it; the next run without it removes it. |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | Keys for that bucket. The test hands them to the adapter through `AdapterContext.secret`; the S3 library is not left to read them itself, so the app can never pick them up by accident. |
+| `DROPBOX_ACCESS_TOKEN` | The owner's own Dropbox token for the live Dropbox test (`tests/live/dropbox.live.test.ts`). |
 | `ADMAN_LIVE_REFERENCE_FILES` | Up to three absolute paths to PNG or JPEG files, used as references by the Gemini live reference case. Terminal only. Picture-by-path rules apply (`spec/security.md`, "Test runs"). |
 
 ### `test:comfy` (real ComfyUI server)
@@ -209,7 +217,7 @@ All switches are terminal only. With none set, only Settings → Check runs. `la
 
 | Variable | What it does |
 |----------|--------------|
-| `GITHUB_TOKEN` | Provided by GitHub Actions. Used by the gitleaks action; later creates the draft release (Phase 11). |
+| `GITHUB_TOKEN` | Provided by GitHub Actions. Used by the gitleaks action only. No workflow makes a release (D-102). |
 
 ### Rules for these variables
 
@@ -229,7 +237,7 @@ A developer may keep some test variables in `.env.local` in the project root ins
 - **No imports of the configs.** No `.ts` or `.tsx` file under `tests/unit/`, `tests/integration/`, `tests/e2e/` or `src/` imports `vitest.live.config` or `vitest.comfy.config`, and no file under `src/` holds the text `.env.local`. Checked by reading file text in `tests/unit/config/live-config.test.ts` and `tests/unit/config/comfy-config.test.ts`.
 - **How.** Node's built-in `parseEnv` from `node:util`. No package is added.
 - **Which names.**
-  - `test:live` takes only `LIVE_ENV_NAMES`: `GEMINI_API_KEY`, `FAL_KEY`, `ADMAN_LIVE_S3_BUCKET`, `ADMAN_LIVE_S3_REGION`, `ADMAN_LIVE_S3_PREFIX`, `ADMAN_LIVE_KEEP`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (pure function `liveEnvFrom(fileText, alreadySet)`).
+  - `test:live` takes only `LIVE_ENV_NAMES`: `GEMINI_API_KEY`, `FAL_KEY`, `ADMAN_LIVE_S3_BUCKET`, `ADMAN_LIVE_S3_REGION`, `ADMAN_LIVE_S3_PREFIX`, `ADMAN_LIVE_KEEP`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DROPBOX_ACCESS_TOKEN` (pure function `liveEnvFrom(fileText, alreadySet)`).
   - `test:comfy` takes only `COMFY_ENV_NAMES`: `COMFY_BASE_URL` (`comfyEnvFrom`). It is not in the live list and the comfy loader takes nothing from the live list, so the ComfyUI run can never load a paid key.
   - `test:e2e:real` takes only `COMFY_BASE_URL`.
   - Any other line in the file is ignored, so the file cannot switch on `ADMAN_DEV_TOOLS`, `ADMAN_FAKE_PROVIDERS`, a case switch or a picture path.
@@ -242,7 +250,7 @@ A developer may keep some test variables in `.env.local` in the project root ins
 
 ## settings.json
 
-Built (`src/shared/schemas/settings.ts`, `src/main/settings/defaults.ts`, `src/main/settings/settings-store.ts`). The `agentRuns` and `agentRunLimit` keys and their writers `agentRuns.setAllowed` and `agentRuns.setLimit` are built (`spec/agent-runs.md`).
+Built (`src/shared/schemas/settings.ts`, `src/main/settings/defaults.ts`, `src/main/settings/settings-store.ts`). The `agentRuns` and `agentRunLimit` keys are described in `spec/agent-runs.md`.
 
 The file is `{userData}/settings.json`, written by the app only [REQ: FR-170].
 
@@ -259,6 +267,7 @@ type Settings = {
     dropbox: { accountName: string; rootPath: string } | null
   }                                              // default { s3: null, dropbox: null }
   comfyui: { baseUrl: string | null }            // default null. Written only by comfy.setAddress. Stored as an origin  [REQ: FR-250, FR-253]
+  approvals: { baseUrl: string | null }          // default null. Written only by approvals.setService. Stored as an origin (spec/approvals.md, "The service address")
   agentRuns: Record<string, { allowed: boolean }>  // provider ID to its tick; default {}. Written only by agentRuns.setAllowed  [REQ: FR-279]
   agentRunLimit: number                          // Whole number 1 to 16, default 4 (AGENT_MAX_ACTIVE_RUNS). Written only by agentRuns.setLimit
   licenceConfirmed: string[]                     // Model labels the user confirmed a commercial licence for; each 1 to 100 characters, at most 50; default []. Written by settings.update  [D-088]
@@ -270,7 +279,7 @@ type Settings = {
 ```
 
 - `DEFAULT_PROVIDERS` lives in `src/main/providers/registry.ts`; `DEFAULT_MCP_PORT = 47821` in `defaults.ts`. `defaultProviders.image` and `.video` may be `comfyui` [REQ: FR-254]. A saved file naming `fal-seedance` for video is not rewritten (`fal-seedance` is available since P7-15, `spec/providers.md`).
-- **Who writes what.** `settings.update` (schema `settingsPatchSchema`, strict) can change `defaultProjectDir`, `defaultProviders`, `generation`, `export`, `mcp` except `enabled`, `storage`, (from S2-4) `licenceConfirmed`, (D-104) `comfyWorkflowChoice`, `reports` and `setup` (agents are denied `settings.update`). An agent's run never changes `comfyWorkflowChoice`, and no agent reads it. It refuses every other key. The app keeps `recentProjects`. `mcp.enabled` has one writer, `mcp.setEnabled`, which also starts or stops the server. `comfyui` has one writer, `comfy.setAddress`. `agentRuns` has one writer, `agentRuns.setAllowed`. `agentRunLimit` has one writer, `agentRuns.setLimit`. These three keys are security class (`spec/security.md`).
+- **Who writes what.** `settings.update` (schema `settingsPatchSchema`, strict) can change `defaultProjectDir`, `defaultProviders`, `generation`, `export`, `mcp` except `enabled`, `storage.s3`, `licenceConfirmed` [D-088], `comfyWorkflowChoice` [D-104], `reports` and `setup` (agents are denied `settings.update`). An agent's run never changes `comfyWorkflowChoice`, and no agent reads it. It refuses every other key. The app keeps `recentProjects`. `mcp.enabled` has one writer, `mcp.setEnabled`, which also starts or stops the server. `storage.dropbox` is written only by the Dropbox sign-in and sign-out commands [A-213]. `comfyui` has one writer, `comfy.setAddress`. `approvals` has one writer, `approvals.setService`. `agentRuns` has one writer, `agentRuns.setAllowed`. `agentRunLimit` has one writer, `agentRuns.setLimit`. These four keys are security class (`spec/security.md`).
 - `settings.update` for `storage.s3` checks the region with `regionRefusal` (`spec/storage-and-publish.md`).
 
 ### Loading the file
@@ -286,6 +295,7 @@ Built (`settings-store.ts`). Security class.
   1. An address that passes `parseComfyAddress` (`src/shared/comfy/address.ts`) is held in memory as its origin, and a later save writes it in that form.
   2. An address that fails is read as null. The refused text is held nowhere: not in memory, not in a log line, an error or anything sent to the window.
   3. The next save, for any reason (a settings change, opening a project), writes null over it. The store keeps no second copy of the file's text. The user sees that no address is set and types it again. Whether to tell the user an address was refused is OI-50.
+- **`approvals.baseUrl` from the file.** The same three steps with `parseApprovalsAddress` (`src/shared/approvals/address.ts`, plain `http` never allowed here): `spec/approvals.md`, "The service address".
 - **`agentRunLimit` from the file.** Any value that is not a whole number from 1 to 16 is read as 4.
 - **`licenceConfirmed` from the file.** A value that fails its schema is read as `[]`; the other keys load as usual, so a bad list never resets the whole file.
 - **`comfyWorkflowChoice` from the file.** A value that fails its schema is read as `{}`; the other keys load as usual. An ID in it that is no longer offered is ignored where it is read.

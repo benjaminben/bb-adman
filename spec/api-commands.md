@@ -9,7 +9,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 **Scope.** A command is project-scope or app-scope (`spec/api-principles.md`, "Channels, actor and scope").
 
 - **Project-scope:** every row whose input starts with `projectId`. The bus finds the open project and runs the handler in one transaction on its file (`spec/data-rules.md`, "Data flow"). Every other ID in the input is looked up inside that project only.
-- **App-scope:** `project.create`, `project.createInDefaultFolder`, `project.open`, `project.close`, `settings.update`, `secret.set`, `secret.delete`, `mcp.setEnabled`, `mcp.regenerateToken`, `agent.answerPermission`, `storage.dropboxSignIn`, `storage.dropboxSignOut`, `storage.checkS3`, `dev.storage`, `comfy.setAddress`, `comfy.check`, `agentRuns.setAllowed`, `agentRuns.setLimit`. They run with no project transaction and have no `ctx.changes`. `project.close` takes a `projectId` but is app-scope, because it closes the file.
+- **App-scope:** `project.create`, `project.createInDefaultFolder`, `project.open`, `project.close`, `settings.update`, `secret.set`, `secret.delete`, `mcp.setEnabled`, `mcp.regenerateToken`, `agent.answerPermission`, `storage.dropboxSignIn`, `storage.dropboxSignOut`, `storage.checkS3`, `storage.setDropboxFolder`, `comfy.setAddress`, `comfy.check`, `comfyWorkflow.addFromFile`, `comfyWorkflow.add`, `comfyWorkflow.update`, `comfyWorkflow.remove`, `agentRuns.setAllowed`, `agentRuns.setLimit`, `approvals.setService`, `approvals.check`, `approvals.cancelUpdate`. They run with no project transaction and have no `ctx.changes`. `project.close` and `approvals.cancelUpdate` take a `projectId` but are app-scope; `project.close` is, because it closes the file (`approvals.cancelUpdate`: `spec/approvals-commands.md`).
 
 | Command | Input | Undo | Agent | Built | Requirements |
 |---------|-------|------|-------|-------|--------------|
@@ -28,7 +28,7 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `asset.remove` | projectId, assetId (refused while a layer, font, clip or rule set uses it) | — | deny | Built | FR-197 |
 | `asset.importFiles` | projectId, paths[] (1 to 20 absolute), library (`asset`, the default, or `reference`) | — | ask (kind `import`) | Built (R2P-5, R2P-5b) | Round 2 R-3 |
 | `asset.checkChanged` | projectId (system) | — | deny (system) | Built | — |
-| `asset.addGenerated` | projectId, jobId, files[] of { assetId, ext }, model? (1 to 200 characters) (system) | — | deny (system) | Built | FR-063, FR-068, FR-216 |
+| `asset.addGenerated` | projectId, jobId, files[] of { assetId, ext }, model? (1 to 200 characters), video? ({ width, height, durationMs } as the job's `checkMp4` read them) (system) | — | deny (system) | Built | FR-063, FR-068, FR-216 |
 | `brief.parse` | projectId, filePath or text (exactly one) | — | deny | Built | FR-020, FR-022 |
 | `campaign.create` | projectId, brief, subjectMap, sizes, languages, ruleSet or copyRuleSetFrom, templateId | — | allow | Built | FR-023–FR-026, FR-195, R-01 |
 | `campaign.createFromBrief` | projectId, text (a brief naming no file path) | — | allow | Built (R2P-7) | Round 2 R-4 |
@@ -40,13 +40,14 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `direction.createFromMaster` | projectId, masterVariantId, name | — | allow | Built | FR-074, D-105 |
 | `direction.rename` | projectId, directionId, name | C | allow | Built | FR-072, D-105 |
 | `direction.delete` | projectId, directionId (refused if it is the campaign's last) | — | ask | Built | A-06, D-105 |
-| `variant.fanOut` | projectId, directionId, sourceVariantId? (built, MV-7; `spec/make-variants.md`), sizes[], languages[], formats[] (video cells since P7-23), fits{}. The screen calls it "Make variants" | C | deny | Built | FR-075, FR-076 |
+| `variant.fanOut` | projectId, directionId, sourceVariantId? (`spec/make-variants.md`), sizes[], languages[], formats[] (image and video), fits{}. The screen calls it "Make variants" | C | deny | Built | FR-075, FR-076 |
 | `variant.add` | projectId, directionId, sizeLabel, language, format, fit? (`scale` or `crop`) | C | allow | Built | FR-195 |
 | `variant.remove` | projectId, variantIds[] (system; the inverse of fan-out, `variant.add`, `variant.restore`) | C | deny (system) | Built | R-17 |
 | `variant.restore` | projectId, snapshots[] (system; the inverse of `variant.remove`) | C | deny (system) | Built | R-17 |
 | `variant.restoreLayers` | projectId, variants[] of { variantId, layers } (system; the inverse of `sync.apply`, `generation.applyFill`) | C | deny (system) | Built | R-17 |
-| `variant.update` | projectId, variantId, title (Phase 3); durationMs (Phase 7) | V | allow | Built (title; durationMs P7-10) | FR-070, FR-120 |
-| `variant.setFormat` | projectId, variantId, format (`spec/data-rules.md`, "Changing a variant's format") | V | allow | Built (P7-10) | FR-070, FR-120, R-20, D-025 |
+| `variant.update` | projectId, variantId, title?, durationMs?, durationOverridden? (only with durationMs) | V | allow | Built | FR-070, FR-120 |
+| `variant.setFormat` | projectId, variantId, format (`spec/data-rules.md`, "Changing a variant's format") | V | allow | Built | FR-070, FR-120, R-20, D-025 |
+| `variant.setSound` | projectId, variantId, sound (`clips`, `file` or `none`), assetId? (only with `file`) | V | deny | Built | A-184 |
 | `variant.delete` | projectId, variantId (refused for a master) | — | ask | Built | FR-073, FR-197 |
 | `layer.create` | projectId, variantId, type (image or text), values? | V | allow | Built | FR-090, FR-194 |
 | `layer.update` | projectId, layerId, patch of copy, style, geometry, source, timing, animation, name, visible, locked | V | allow | Built | FR-092–FR-094, FR-194, FR-249 |
@@ -56,13 +57,19 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `layer.clearOverride` | projectId, layerId, paths[] | V | deny | Built | FR-080 |
 | `layer.revert` | projectId, variantId, layers[] of { layerId, patch, overrides } (system; the inverse of an edit that changed an override list) | V | deny (system) | Built | FR-080, FR-095 |
 | `layer.reportOverflow` | projectId, layerId, overflow, variantRev | — | deny | Built | FR-098 |
-| `clip.add` | projectId, variantId, assetId, startMs | V | deny | Built (P7-9) | FR-121 |
-| `clip.update` | projectId, clipId, startMs?, inMs?, outMs?, placement? | V | deny | Built (P7-9) | FR-122 |
-| `clip.remove` | projectId, clipId | V | deny | Built (P7-9) | FR-122 |
-| `clip.swap` | projectId, variantId, remove[] (clip IDs), put[] (clip rows) (system; the inverse of a generated clip that replaced the still, and its own inverse) | V | deny (system) | Built (R2E-7) | — |
-| `translation.propose` | projectId, variantIds[] or directionId + language | — | deny | Not built (Phase 6) | FR-101 |
+| `layer.setFonts` | projectId, items[] of { layerId, fontAssetId or null } (1 to 500), all in one campaign | C | allow | Built | A-166 |
+| `clip.add` | projectId, variantId, assetId, startMs | V | deny | Built | FR-121 |
+| `clip.update` | projectId, clipId, startMs?, inMs?, outMs?, placement? | V | deny | Built | FR-122 |
+| `clip.remove` | projectId, clipId | V | deny | Built | FR-122 |
+| `clip.reorder` | projectId, variantId, clipIds[] (each once) | V | deny | Built | FR-122 |
+| `clip.restore` | projectId, rows[] (system; the inverse of `clip.remove` and `clip.reorder`) | V | deny (system) | Built | FR-122 |
+| `clip.addGenerated` | projectId, variantId, assetId, replaceStill? (system; the video job's clip) | — (V with `replaceStill`) | deny (system) | Built | FR-123 |
+| `clip.swap` | projectId, variantId, remove[] (clip IDs), put[] (clip rows) (system; the inverse of a generated clip that replaced the still, and its own inverse) | V | deny (system) | Built | — |
+| `translation.propose` | projectId, provider, variantIds[] or directionId + language, mode (`write`, the default, or `sync`) | — | deny | Built | FR-101 |
 | `translation.set` | projectId, layerId, text, applyToSameLanguage: boolean | V | allow | Built | FR-102, FR-194 |
-| `translation.approve` | projectId, layerIds[] (becomes layers[] of { layerId, copyRev } in P6-4b) | C | deny | Built | FR-101 |
+| `translation.approve` | projectId, layers[] of { layerId, copyRev } | C | deny | Built | FR-101 |
+| `translation.write` | projectId, jobId, items[] (system; the translation job's answer) | — | deny (system) | Built | FR-101 |
+| `translation.restore` | projectId, scope (`campaign` or `variant`), items[] (system; the inverse of `translation.set` and `translation.approve`) | V or C, by scope | deny (system) | Built | FR-095 |
 | `translation.exportSheet` | projectId, campaignId, filePath | — | deny | Built | FR-103 |
 | `sync.apply` | projectId, directionId, masterRev, decisions[] | C | deny | Built | FR-082, FR-083 |
 | `check.run` | projectId, campaignId or variantIds[] | — | allow | Built | FR-114, FR-116, FR-196 |
@@ -74,23 +81,25 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `generation.cutOut` | projectId, variantId, layerId, provider, licenceConfirmed? | — | tick | Built | FR-307 |
 | `brief.extract` | projectId, filePath (`.md`, `.markdown`, `.txt`), provider | — | deny | Built | FR-022 |
 | `layer.updateMany` | projectId, variantId, updates[] of { layerId, patch } (1 to 100) | V | allow | Built | FR-061, FR-092 |
-| `generation.startVideo` | projectId, variantId, prompt, durationMs, provider, start (`none`, `background` or `first_frame`), useReferences: boolean, referenceAssetIds[], licenceConfirmed? (S2-4), workflowId? (D-104); user only: layerId? (the background layer; the clip then takes the still's place, R2E-7) | — | tick | Built (ComfyUI; fal.ai Seedance since P7-15) | FR-123, FR-199, FR-286 |
+| `generation.startVideo` | projectId, variantId, prompt, durationMs, provider, start (`none`, `background` or `first_frame`), useReferences: boolean, referenceAssetIds[], licenceConfirmed? (S2-4), workflowId? (D-104); user only: layerId? (the background layer; the clip then takes the still's place, R2E-7) | — | tick | Built (ComfyUI, fal.ai Seedance and the fake provider) | FR-123, FR-199, FR-286 |
 | `job.retry` | projectId, jobId, licenceConfirmed? (S2-4) | — | deny | Built | FR-069, FR-152 |
 | `job.cancel` | projectId, jobId | — | tick | Built | FR-152, FR-215 |
 | `job.markSeen` | projectId, jobIds[] (at least one) | — | deny | Built | FR-218 |
-| `storage.dropboxSignIn` | — | — | deny | Built (P9-5) | FR-160, R-15 |
-| `storage.dropboxSignOut` | — | — | deny | Built (P9-5) | FR-160 |
-| `storage.checkS3` | `{}`. Tests the saved S3 settings and keys: list, put, read and delete one small test file; replies with ok or one fixed failure sentence (`spec/storage-and-publish.md`) | — | deny | Built (AP-10b) | — |
-| `export.run` | projectId, campaignId, variantIds[], outputDir, imageFormat, jpgQuality, fps, proceedDespiteWarnings, reason? (FR-236) | — | deny | Built (P8-5) | FR-140, FR-199, FR-236 |
-| `publish.run` | projectId, campaignId, storage, replaceConfirmed, proceedDespiteWarnings, proceedReason? (`spec/phases/phase-09.md`) | — | deny | Built (P9-10) | FR-161, FR-199 |
-| `publish.setFontConsent` | projectId, assetId, allowed, sha256 (needed when allowed) (A-260) | — | deny | Built (P9-9, P9-12) | — |
+| `storage.dropboxSignIn` | — | — | deny | Built | FR-160, R-15 |
+| `storage.dropboxSignOut` | — | — | deny | Built | FR-160 |
+| `storage.setDropboxFolder` | rootPath | — | deny | Built | A-213 |
+| `storage.checkS3` | `{}`. Tests the saved S3 settings and keys: list, put, read and delete one small test file; replies with ok or one fixed failure sentence (`spec/storage-and-publish.md`) | — | deny | Built | — |
+| `export.run` | projectId, campaignId, variantIds[], outputDir, imageFormat, jpgQuality, fps, proceedDespiteWarnings, reason? (FR-236) | — | deny | Built | FR-140, FR-199, FR-236 |
+| `report.add` | projectId, campaignId, outputDir, report (system; the export job's report row) | — | deny (system) | Built | FR-151 |
+| `publish.run` | projectId, campaignId, storage, replaceConfirmed, proceedDespiteWarnings, proceedReason? (`spec/phases/phase-09.md`) | — | deny | Built | FR-161, FR-199 |
+| `publish.setFontConsent` | projectId, assetId, allowed, sha256 (needed when allowed) (A-260) | — | deny | Built | — |
 | `history.undo` / `history.redo` | projectId, scope (`variant:{id}` or `campaign:{id}`) | — | deny | Built | FR-095 |
 | `settings.update` | patch of settings | — | deny | Built | FR-067 |
 | `secret.set` | name, value | — | deny | Built | FR-170, FR-198 |
 | `secret.delete` | name | — | deny | Built | FR-170, FR-198 |
 | `mcp.setEnabled` | enabled | — | deny | Built | FR-191 |
 | `mcp.regenerateToken` | — | — | deny | Built | R-04 |
-| `agent.answerPermission` | requestId, allow, rememberAuto | — | deny | Built (P10-6) | FR-197 |
+| `agent.answerPermission` | requestId, allow, rememberAuto | — | deny | Built | FR-197 |
 | `comfy.setAddress` | address (text or null) | — | deny | Built | FR-251 |
 | `comfy.check` | — | — | deny | Built | — |
 | `comfyWorkflow.addFromFile` | filePath (from `dialog.pickFiles`, purpose `comfy-workflow`) | — | deny | Built | D-104 |
@@ -99,9 +108,10 @@ Undo scope: **V** = the variant's list, **C** = the campaign's list, **—** = n
 | `comfyWorkflow.remove` | workflowId | — | ask (kind `delete`) | Built | D-104, FR-327 |
 | `agentRuns.setAllowed` | provider, allowed | — | deny | Built | FR-279, FR-280 |
 | `agentRuns.setLimit` | limit | — | deny | Built | — |
-| `dev.comfyExtend` | projectId, assetId, width, height, prompt | — | deny | Not built, and not to be built: `generation.runFill` replaces it (CU-8 is dropped under OI-64's assumption) | — |
+| `approvals.*` | Each listed with its input in `spec/approvals-commands.md` | — | deny | Built | — |
+| `dev.comfyExtend` | projectId, assetId, width, height, prompt | — | deny | Dropped: `generation.runFill` does its work (CU-8 is dropped under OI-64's assumption); only the policy row exists | — |
 
-The registry on `main` is `src/main/core.ts` (one spread line per domain). `src/main/commands/storage/index.ts` is empty; the Dropbox schemas exist in `src/shared/schemas/commands/storage.ts`. `history.undo` and `history.redo` are dispatched by the bus itself (`src/main/commands/history/run-history.ts`).
+The registry is `src/main/core.ts` (one spread line per domain). `src/main/commands/storage/index.ts` lists the four storage commands; their schemas are in `src/shared/schemas/commands/storage.ts`. `history.undo` and `history.redo` are dispatched by the bus itself (`src/main/commands/history/run-history.ts`).
 
 ## Project and subject commands
 
@@ -122,7 +132,7 @@ Built. `src/main/commands/project/`, `src/main/commands/subject/`.
 
 Built. `src/main/commands/asset/`, logic in `src/main/assets/`. Full rules for files, linking and the assets folder are in `spec/assets.md`.
 
-- **`asset.import`** reply: `{ assetIds, reusedAssetIds, skippedCount }`. `assetIds` is one ID per imported or reused file, in input `paths` order (a folder's files sorted by relative path, compared by code point). `reusedAssetIds` holds each ID once, first-met order, naming assets in the project before the command; a reused asset keeps its library and subject. `skippedCount` counts skipped folder entries. A folder with nothing to import succeeds with empty lists. More than 500 files is `too_many_files`. Not built (S2-17, after slice WP): the reply gains `animatedAssetIds`, the imported or reused WebP assets whose `webpInfo(...).animated` is true.
+- **`asset.import`** reply: `{ assetIds, reusedAssetIds, skippedCount, animatedAssetIds }`. `assetIds` is one ID per imported or reused file, in input `paths` order (a folder's files sorted by relative path, compared by code point). `reusedAssetIds` holds each ID once, first-met order, naming assets in the project before the command; a reused asset keeps its library and subject. `skippedCount` counts skipped folder entries. A folder with nothing to import succeeds with empty lists. More than 500 files is `too_many_files`. `animatedAssetIds` names the imported or reused animated WebP assets (`spec/assets.md`, "Import").
 - **`asset.relink`** (two steps). Works on any asset, missing or not. `newPath` must be a full path to a regular file: absent `NOT_FOUND`; a folder `INVALID_INPUT`; unreadable `file_not_readable`. The new bytes must be an accepted type of the asset's own `kind`, else `relink_kind_mismatch`. Different content is accepted. The row takes new `abs_path`, `rel_path`, `mime`, `byte_size`, `mtime_ms`, `content_hash`, `width`, `height`; `display_name`, `library`, `subject_id`, `origin` and the generation fields stay. After relink the asset is `linked`. No file is moved, copied or deleted. Reply `{ assetId, siblingIds }`; `run` checks each row again before writing.
   - **`relinkSiblings`** (security class). With `oldDir` and `newDir` the folders of the old `abs_path` and of `newPath`, every other asset that is `linked`, missing now, and inside `oldDir` at any depth gets the candidate at the same relative path under `newDir`. It is relinked only when the candidate is a regular file whose content hash equals the row's. Other content is left missing; non-matching siblings are skipped without error. A candidate never leaves `newDir`; a candidate outside it, or under a linked subfolder of `newDir`, is never hashed. Tests: `tests/integration/assets/asset-relink-siblings*.test.ts`.
 - **`asset.remove`** leaves every file on disk, managed too. No command ever touches a linked file. Refused with `asset_in_use` when the asset is a layer's picture, a layer's font, a background clip, or in a rule set's required assets (`src/main/assets/in-use.ts`).
@@ -143,16 +153,16 @@ Built. `src/main/commands/brief/`, `src/main/commands/campaign/`, `src/main/comm
 - **`campaign.update`** [REQ: FR-031, FR-032]. `languages` and `sizes` use the schemas of `campaign.create`. The input is strict: an unknown key is `INVALID_INPUT`.
   - `primary_language` never changes. The new `languages` list must hold it, in any place. A right-to-left language is refused as in `campaign.create`; this check runs before the primary-language check.
   - The new `sizes` list must hold, for the master of every direction, an entry with the master's `size_label` and the same width and height.
-  - The command changes the two lists on the campaign row and nothing else. It adds, removes and changes no variant, and does not rewrite the stored `brief`. Making variants from the lists is fan-out (Phase 5). What happens to a non-master variant whose language or size leaves the list is OI-71 (open: whether it is removed, kept or marked); until it is answered the variant stays as it is.
+  - The command changes the two lists on the campaign row and nothing else. It adds, removes and changes no variant, and does not rewrite the stored `brief`. Making variants from the lists is fan-out (`variant.fanOut`). What happens to a non-master variant whose language or size leaves the list is OI-71 (open: whether it is removed, kept or marked); until it is answered the variant stays as it is.
   - Undo goes through the same list checks and puts back both lists with the text fields.
 - **`campaign.delete`** by an agent asks for every campaign, including one the agent created (`campaign.created_by = 'agent'`) [D-023]. It is not undoable for anyone. It refuses with `jobs_running` while a job is `queued` or `running` whose `campaign_id` is the campaign or whose `variant_id` is one of its variants; the refusal runs before any write. It stops no job itself and has no "stop them first" input. Provisional until OI-69 (whether a campaign delete may stop its running work) is answered.
 - **Deletes and undo.** `variant.delete`, `direction.delete` and `campaign.delete` are not undoable for anyone [D-099, which replaces the delete part of R-17]: the screen shows a warning dialog first, and an agent's `variant.delete` or `campaign.delete` asks the user, because FR-197 names them as destructive.
 
 ## Editing commands
 
-Built: `layer.create`, `layer.update`, `layer.updateMany`, `layer.delete`, `layer.restore`, `layer.reorder`, `layer.reportOverflow` and `variant.update` (title) (`src/main/commands/layer/`, `src/main/commands/variant/`). The rest Not built (Phases 5 to 7, per row). Formats in `spec/data-rules.md`.
+Built. `src/main/commands/layer/`, `variant/`, `direction/`, `sync/`, `clip/`, `translation/`, `language-font/`. Formats in `spec/data-rules.md`.
 
-- **Phase 5 commands** (`direction.*`, `variant.fanOut`, `add`, `delete`, `remove`, `restore`, `restoreLayers`, `layer.clearOverride`, `layer.revert`, `sync.apply`, `generation.runFill`, `generation.applyFill`): inputs, rules, refusals, replies and inverses are in `spec/links-and-sync.md`. From Phase 5 an edit on a linked layer also adds override paths there.
+- **Link commands** (`direction.*`, `variant.fanOut`, `add`, `delete`, `remove`, `restore`, `restoreLayers`, `layer.clearOverride`, `layer.revert`, `sync.apply`, `generation.runFill`, `generation.applyFill`): inputs, rules, refusals, replies and inverses are in `spec/links-and-sync.md`. An edit on a linked layer also adds override paths (same file).
 - **Layer commands and `variant.update`**: inputs, counters, the no-op rule, undo inverses, the asset checks, refusals and replies are in `spec/editor-commands.md`. Every one of them except `layer.reportOverflow` bumps `variant.rev` through `src/main/commands/variant-rev.ts`.
 - `variant.setFormat` works in both directions and an agent may run it without the permission dialog [D-020, D-025]. Defined in `spec/data-rules.md`, "Changing a variant's format".
 - `translation.set` on a language variant writes the text with `translation_status = 'proposed'`. `translation_source` is `user` or `agent` by actor. An agent can never approve [REQ: FR-200]. With `applyToSameLanguage` the same text is written to the matching layer of every variant in the direction with that language and no `copy` override.
@@ -160,7 +170,7 @@ Built: `layer.create`, `layer.update`, `layer.updateMany`, `layer.delete`, `laye
 - `layer.update` by an agent on a master bumps `revs` like any edit, so linked variants become out of date and nothing cascades [REQ: FR-200].
 - An agent may pick a generated result: `layer.update` and `layer.create` by an agent make no check of `started_by` or `seen_at`. "Encouraged not to" is wording in the MCP tool descriptions, never a refusal.
 - `layer.reportOverflow` is not internal: the editor window sends it.
-- `export.run` gains an optional reason for proceeding past warnings [REQ: FR-236] (`spec/export-and-checks.md`).
+- `export.run` takes an optional reason for proceeding past warnings [REQ: FR-236] (`spec/export-and-checks.md`).
 
 ## Generation and job commands
 
@@ -168,8 +178,8 @@ Built: `generation.runImages`, `generation.startVideo`, `generation.proposeLayou
 
 - Every `generation.*` command and `job.retry` return `JobStarted = { jobId }` as soon as the job row exists.
 - Every caller of `enqueue` says who started the run: `EnqueueRequest.startedBy` is required, `'user' | 'agent'`, no default.
-- **Deferred agent abilities** [REQ: FR-199]. Opening `export.run` or `publish.run` to agents is a change to `agent-policy.ts` plus the MCP tool definitions. No command changes. The generation commands and `job.cancel` are `tick` [D-051, D-052, D-080], the Phase 4 ones included (`spec/ai-jobs.md`).
-- The Phase 4 commands (`generation.proposeLayout`, `generation.copyOptions`, `generation.cutOut` in `src/main/commands/generation/`, `brief.extract` in `brief/extract.ts`, `layer.updateMany` in `layer/update-many.ts`) are built and described in `spec/ai-jobs.md`.
+- **Deferred agent abilities** [REQ: FR-199]. Opening `export.run` or `publish.run` to agents is a change to `agent-policy.ts` plus the MCP tool definitions. No command changes. The generation commands and `job.cancel` are `tick` [D-051, D-052, D-080], layout, copy and cut-out included (`spec/ai-jobs.md`).
+- `generation.proposeLayout`, `generation.copyOptions`, `generation.cutOut` (in `src/main/commands/generation/`), `brief.extract` (`brief/extract.ts`) and `layer.updateMany` (`layer/update-many.ts`) are described in `spec/ai-jobs.md`.
 
 ### `generation.runImages`
 
@@ -177,7 +187,7 @@ Built: `generation.runImages`, `generation.startVideo`, `generation.proposeLayou
 - **The shape asked for** (OI-70; Built, P4-13). Given a layer, the request's `width` and `height` are the layer's box (`geometry.width` and `geometry.height`, rounded, at least 1), so less of the picture is cropped when it is placed; a background layer's box is usually the whole canvas. Given a slot, the variant's size, as built. A provider takes these as a shape (Gemini's nearest ratio, ComfyUI's `fitSize`).
 - `count` is a whole number from 1 to 8. Each picture is one paid call. The number has one owner: `MAX_IMAGES_PER_RUN` in `src/shared/config/defaults.ts`, read by the schema in `src/shared/schemas/commands/generation.ts`. The default stays `settings.generation.optionsPerRun` (4).
 - Refusals: an unknown provider, one that cannot make pictures, or one not in this build: `INVALID_INPUT`. A text layer, a copy slot or an unknown slot: `INVALID_INPUT`. A missing variant, or a layer not in the variant: `NOT_FOUND`.
-- `prepare` reads every ID in `referenceAssetIds`: a picture that is gone, too large or not a picture (WebP included, until slice WP) is refused before a job row is made. The job kind reads the bytes again with `AssetService.read`.
+- `prepare` reads every ID in `referenceAssetIds`: a picture that is gone, too large or not a picture the app can send (a WebP is accepted and sent as PNG, `spec/assets.md`, "WebP") is refused before a job row is made. The job kind reads the bytes again with `AssetService.read`.
 - At most `MAX_REFERENCES_PER_RUN` (8) references per run, one constant in `src/shared/config/defaults.ts`, used by this schema, the job request schema and the pickers, with duplicate IDs refused (A-56).
 - For `comfyui`, before any job row: `comfy_address_needed`, then `comfy_job_not_offered`, then `too_many_references` (`checkComfyRun`, `src/main/commands/generation/comfy-checks.ts`). The command picks the workflow itself through `offeredWorkflow` (`spec/comfyui.md`): a `proven` one, else a `trial` one only when `deps.devTools` is true, else the oldest custom one that fits. The same rule holds for both actors. No agent sets a workflow's status to `proven`.
 
@@ -195,18 +205,17 @@ Checks in `prepare`, before any job row:
 | From a prompt | `none` | false | `[]` | `{ firstFrame: false, references: false }` |
 | From a first-frame picture | `first_frame` | false | `[assetId]` | `{ firstFrame: true, references: false }` |
 | With a reference picture | `none` | true | `[assetId]` | `{ firstFrame: false, references: true }` |
+| From the background | `background` | false | `[]` ("A start from the background takes no other picture.") | `{ firstFrame: true, references: false }` |
 
-- Every provider other than ComfyUI accepts only the prompt start.
-- Until the Scene exists, the first frame is the chosen picture asset. Phase 7 uses the rendered background.
-- A video on a picture-format variant is accepted until Phase 7; Phase 7's format switch adds that refusal.
+- Every provider other than ComfyUI offers the starts and clip lengths of its row in `src/shared/config/video-offers.ts` (`spec/phases/phase-07.md`, "fal.ai Seedance"): fal.ai Seedance offers all four starts. A provider with no row there is refused.
+- A `first_frame` start sends the chosen picture asset. A `background` start draws the first frame from the variant's background layer, which must have a picture.
+- A video on a variant whose format is not `video` is refused (`video_needs_video_post`, `src/main/commands/generation/video-offer-checks.ts`).
 - **`workflowId?` on `generation.runImages` and `generation.startVideo`** (D-104). Built, for the person and for an agent. Checked by `workflowIdSchema` (a shipped ID or `custom-` plus 12 lowercase hex characters), then by `offeredWorkflow`: refusals before any job row are `comfy_workflow_not_found` (not on this computer, or a draft), `comfy_job_not_offered` (a `trial` one with dev tools off), `comfy_workflow_wrong_job`, and, after the choice, `too_few_references` (`details.min`). The command writes the chosen workflow's ID into the job's `request.workflowId`, named or default. Rules and sentences: `spec/comfyui-custom.md`, "Which workflow a run gets".
 
 ### `job.retry`
 
 - Makes a new job row from the old row's `request` (a picture job that kept pictures asks only for the rest, `spec/jobs.md`), references included, with the same campaign, variant, layer and slot, and leaves the old row as it is. It applies to a `failed` or `cancelled` job; a row with no provider is refused with `job_wrong_state`. It calls the key guard again (purpose "try this again"). A retried job is always `startedBy: 'user'`. Agents are denied it, because it re-sends a stored request.
-- **ComfyUI checks** (`src/main/commands/job/retry.ts`). For a ComfyUI picture job it calls `checkComfyRun` with the reference count from `old.request`, after the key guard and before `enqueue`. For a ComfyUI video job, `checkComfyVideoRetry` reads the stored start pair and makes checks 2 to 4 of `generation.startVideo` against the old row's IDs, for every status of the old row. Both use the old row's `request.workflowId` when present, with the same checks as a named workflow; a row without it gets the default. The retry takes no workflow ID of its own. Tests: `tests/integration/commands/job-retry-comfy.test.ts` (on a made-up trial copy of the shipped list; dev tools off with only `trial` workflows: refused `comfy_job_not_offered`, job count unchanged; dev tools on: a new queued job; the same for a video row).
-- Pending: checks 2 and 4 (start pair, picture) for every video provider, not only ComfyUI, with one test.
-
+- **ComfyUI checks** (`src/main/commands/job/retry.ts`). For a ComfyUI picture job it calls `checkComfyRun` with the reference count from `old.request`, after the key guard and before `enqueue`. For a video job of any provider, `checkVideoRetryRequest` (`src/main/commands/generation/video-start-checks.ts`) reads the stored start pair and makes the checks of `generation.startVideo` against the old row's IDs, for every status of the old row. Both use the old row's `request.workflowId` when present, with the same checks as a named workflow; a row without it gets the default. The retry takes no workflow ID of its own. Tests: `tests/integration/commands/job-retry-comfy.test.ts` (on a made-up trial copy of the shipped list; dev tools off with only `trial` workflows: refused `comfy_job_not_offered`, job count unchanged; dev tools on: a new queued job; the same for a video row).
 ### `job.cancel`
 
 - Applies to a `queued` or `running` job. A call already sent may still be charged; `paid_calls` keeps its count. Refusals are decided in the command and again in the runner, both through `cancelRefusal` (`src/main/jobs/cancel.ts`). The runner cancels after the command's transaction ends; the window follows the job through `job.updated`. Reply `{ jobId }`.
@@ -234,15 +243,15 @@ Built unless marked. `src/main/commands/settings/`, `secret/`, `mcp/`, `comfy/`.
 - **`comfyWorkflow.addFromFile`, `comfyWorkflow.add`, `comfyWorkflow.update`, `comfyWorkflow.remove`** (D-104). App scope, not undoable, set `changesAppState`, and each change empties the check's kept results. Replies: `{ workflowId, name }` for `addFromFile`, `{ workflowId }` for the others. `addFromFile` reads only the path the system picker gave in the last 10 minutes, once; `add` is the agent's add (actor `user` is refused with `workflow_add_in_settings`); `update` and `remove` take only an ID that matches `CUSTOM_WORKFLOW_ID`. Inputs, refusals and file rules: `spec/comfyui-custom.md`, "Commands, queries and events".
 - **`agentRuns.setAllowed { provider, allowed }`**. The one writer of `settings.agentRuns`. App scope, not undoable, sets `changesAppState`, returns `{ provider, allowed }`. Unknown provider: `INVALID_INPUT`. A provider `agentRunsOffered` refuses: `RULE_VIOLATION`, `details.reason` the value it gave, message "Agents cannot start runs with {Provider}." `allowed: false` is always accepted.
 - **`agentRuns.setLimit { limit }`**. The one writer of `settings.agentRunLimit`: a whole number 1 to 16, default 4 (`AGENT_MAX_ACTIVE_RUNS`, bounds in `src/shared/config/agent-runs.ts`). App scope, not undoable, sets `changesAppState`, returns `{ limit }`. Out of range is `INVALID_INPUT`. Policy row `'agentRuns.setLimit': deny('change agent run limits')`.
-- **`agent.answerPermission`** (built, P10-6): answers an `agent.permissionRequested` event (`spec/mcp-and-agents.md`).
+- **`agent.answerPermission`**: answers an `agent.permissionRequested` event (`spec/mcp-and-agents.md`).
 
 ## Storage commands
 
-Built (P9-5, with the hardening P9-5b), with `storage.setDropboxFolder`. Schemas in `src/shared/schemas/commands/storage.ts`. Full rules: `spec/phases/phase-09.md`.
+Built: `storage.dropboxSignIn`, `storage.dropboxSignOut`, `storage.setDropboxFolder`, `storage.checkS3`. Schemas in `src/shared/schemas/commands/storage.ts`. Full rules: `spec/phases/phase-09.md`.
 
 - `storage.dropboxSignIn` runs the browser sign-in of `spec/storage-and-publish.md`: it starts the listener on `127.0.0.1:47822`, opens the system browser, waits up to 5 minutes for the redirect, saves `dropbox.refreshToken` in the secrets store and writes `settings.storage.dropbox.accountName`. It returns `DropboxSignInResult = { accountName }` and never the token. It sets `changesAppState`. Opening the browser uses the `openExternal` option of `createCore` (`spec/structure.md`). A second sign-in while one waits is `sign_in_in_progress`.
 - `storage.dropboxSignOut` deletes the token and sets `settings.storage.dropbox` to null.
 
 ## Hand-test commands (`dev.*`)
 
-`dev.storage` was removed in P9-14; the `dev` group is empty. `dev.comfyExtend` was never built; its policy row stays. See `spec/api-dev-commands.md`.
+The `dev` group (`src/main/commands/dev/index.ts`) holds no command. `dev.comfyExtend` is dropped; only its policy row exists. See `spec/api-dev-commands.md`.

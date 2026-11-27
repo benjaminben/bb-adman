@@ -4,7 +4,7 @@ Where Adman keeps its data, the ID formats, and the project-level tables: `proje
 
 ## Where data lives
 
-Built (Phase 1 and 2). Main files: `src/main/db/project-file.ts`, `src/main/db/project-registry.ts`, `src/main/db/meta.ts`.
+Built. Main files: `src/main/db/project-file.ts`, `src/main/db/project-registry.ts`, `src/main/db/meta.ts`.
 
 | Location | Contents | Requirements |
 |----------|----------|--------------|
@@ -17,15 +17,16 @@ The product name is **Adman**. The project file extension is `.adman` (`PROJECT_
 
 ### Single owners
 
-Each of these values lives in exactly one place. No other file may repeat it. Rows marked "not built" name the file the first phase that needs the value creates.
+Each of these values lives in exactly one place. No other file may repeat it.
 
 | Value | Single owner |
 |-------|--------------|
 | Asset ID to file path; "is this path at or inside that folder" (`pathAtOrInside`) | `src/main/assets/path-resolver.ts` |
-| Export and publish path patterns | `src/shared/paths/output-paths.ts` (not built, Phase 8) |
-| Background placement maths (used by Scene CSS and by the FFmpeg filter builder) | `src/shared/scene/background-placement.ts` (not built, Phase 3) |
-| Animation preset maths | `src/shared/scene/presets.ts` (not built, Phase 7) |
-| Follow rules for links | `src/shared/links/follow-rules.ts` (not built, Phase 5) |
+| Export path pattern (files written to the output folder) | `src/shared/export/output-paths.ts` |
+| Published path patterns (files under a campaign's cloud folder) | `src/shared/publish/paths.ts` |
+| Background placement maths (used by Scene CSS and by the FFmpeg filter builder) | `src/shared/scene/background-placement.ts` |
+| Animation preset maths | `src/shared/scene/presets.ts` |
+| Follow rules for links | `src/shared/links/follow-rules.ts` |
 | Agent policy (allow, ask, deny, tick per command) | `src/main/commands/agent-policy.ts` |
 | Accepted file types | `src/shared/config/file-types.ts` |
 | Ready-made sizes, their pixel sizes and labels, which are selected by default; default frame rate; most pictures per run | `src/shared/config/defaults.ts` |
@@ -37,17 +38,16 @@ Each of these values lives in exactly one place. No other file may repeat it. Ro
 | The project name rule | `src/shared/schemas/project-name.ts` |
 | MCP port | `settings.json` → `mcp.port` |
 | Command, brief and MCP tool schemas | `src/shared/schemas/` |
-| Public identifiers that are not secrets (the Dropbox app key) | `src/shared/config/public-ids.ts` (not built, Phase 9) |
-| Which format changes are allowed | `src/shared/config/format-changes.ts` (not built, Phase 7; `spec/data-rules.md`, "Changing a variant's format") |
+| Public identifiers that are not secrets (the Dropbox app key) | `src/shared/config/public-ids.ts` |
+| Which format changes are allowed | `src/shared/config/format-changes.ts` (`spec/data-rules.md`, "Changing a variant's format") |
 | Layout of a packaged project | `src/main/assets/package.ts` (`spec/data-rules.md`, "Package project") |
 | Project meta values (name, assets folder paths and the rest) | The `project_meta` table. Nothing in memory keeps a copy. |
 | Table names, each table's key fields and the row key text | `src/shared/schemas/rows/keys.ts` (`spec/api-queries-events.md`, "Wire rows") |
 | Turning a stored row into a wire row and back; writing and parsing JSON column text | `src/main/db/rows.ts` |
 | Content security policy text, strict and development | `src/main/windows/csp.ts` (`spec/security.md`) |
 | Which job kinds run in the background and which are attached; how many jobs run at once per provider | `src/shared/config/job-kinds.ts` (`spec/jobs.md`) |
-| The folder the hand-test tools may write to in cloud storage | `src/shared/config/dev-tools.ts` |
 
-Known gap: the default variant duration (6000 ms) is held as `DEFAULT_DURATION_MS` in `src/main/commands/campaign/create.ts`, not in `defaults.ts`. It has one reader today. The next code that needs it moves it to `defaults.ts`.
+Known gap: the default variant duration (6000 ms) is held as `DEFAULT_DURATION_MS` in `src/main/commands/campaign/master-rows.ts`, not in `defaults.ts`. It has one reader today. The next code that needs it moves it to `defaults.ts`.
 
 ### Frozen contract files
 
@@ -68,7 +68,7 @@ These files hold types and schemas only and are the contract between parts of th
 | `src/main/jobs/types.ts` | `JobService`, `JobKindHandler`, `JobRunContext` |
 | `src/shared/config/job-kinds.ts` | Each job kind's class and the per-provider concurrency |
 
-Each provider has its own folder under `src/main/providers/` with an `index.ts` that exports its `adapters` object: `gemini`, `fal-seedance`, `fake`, `local-storage`, `s3`, `dropbox`, `azure-blob`, `comfyui`.
+Each provider has its own folder under `src/main/providers/` with an `index.ts` that exports its `adapters` object: `gemini`, `fal-seedance`, `firefly`, `fake`, `local-storage`, `s3`, `dropbox`, `azure-blob`, `comfyui`.
 
 ### SQLite settings and opening a file
 
@@ -102,7 +102,7 @@ Built. Campaign IDs: `src/main/commands/campaign/ids.ts`.
 
 ## Tables
 
-Built: every table below exists in the project file. The newest migration is `0003_job_kind_cutout` (`schema_version` 4, the count of migrations). Drizzle schema: `src/main/db/schema/project.ts` (project_meta, subject, asset, campaign, campaign_subject, rule_set, direction), `variant.ts` (variant, variant_subject, layer, background_clip), `jobs.ts` (job, report, variant_check). Migrations: `src/main/db/migrations/`. This file defines the project-level tables; `campaign`, `campaign_subject`, `rule_set`, `direction`, `variant`, `variant_subject`, `layer` and `background_clip` are in `spec/data-model-campaign.md`.
+Built: every table below exists in the project file. The newest migration and the `schema_version` it gives are listed in `spec/data-rules.md`, "Data migration" (`schema_version` is the count of migrations). Drizzle schema: `src/main/db/schema/project.ts` (project_meta, subject, asset, campaign, campaign_subject, rule_set, direction), `variant.ts` (variant, variant_subject, layer, background_clip), `jobs.ts` (job, report, variant_check). Migrations: `src/main/db/migrations/`. This file defines the project-level tables; `campaign`, `campaign_subject`, `rule_set`, `direction`, `variant`, `variant_subject`, `layer` and `background_clip` are in `spec/data-model-campaign.md`.
 
 All tables are in the project file. Timestamps are ISO 8601 UTC text. Booleans are `INTEGER` 0 or 1. JSON columns are validated by the Zod schema named beside them. The SQL below is the shape of a file after every migration through 0005 (`0005_video_and_sound`: asset kind `audio`; `variant.first_clip_made`, `variant.sound`, `variant.sound_asset_id`; `background_clip.sound_on`; the last three are in `spec/data-model-campaign.md`). Column order in a real file can differ (columns added by a migration come last); no code reads columns by position.
 
@@ -206,14 +206,14 @@ Wire row: `src/shared/schemas/rows/asset.ts`.
 - Linked files are compared with `byte_size` and `mtime_ms` to find changes on disk (`spec/assets.md`) [REQ: R-06].
 - A hero image is a row with `library = 'asset'`, `kind = 'image'` and a `subject_id`. If a subject has several, the newest fills the slot and the others are offered [REQ: R-12].
 - `font_publish_allowed` is set by the user with a checkbox "I am allowed to share this font" [REQ: FR-162]. It is only a hint: publish uploads a font only with consent given on this computer, kept in app data, not in this file (`spec/phases/phase-09.md`, A-260).
-- `font_family` is null for every font as built. Phase 3 fills it for imported fonts.
+- `font_family` is read from the font file when it is imported or relinked (`src/main/assets/inspect.ts`); it is null for every other kind.
 
 **A generated asset row:**
 
 - `origin = 'generated'`, `storage = 'managed'`, `display_name` is `{assetId}.png` for a picture, `subject_id` is null. It is inserted by the system command `asset.addGenerated`, sent only by the job runner and denied to agents.
 - `gen_run_id` is the job's ID; `gen_provider` and `gen_prompt` come from the job row.
 - `gen_model` is `input.model ?? job.model`. `asset.addGenerated` takes an optional `model` (1 to 200 characters), which both the picture and the video job kinds pass from the provider's result. For ComfyUI it is the workflow's main model file name from the shipped workflow file, never a name the server reports. Gemini rows keep their model. The fake provider stores its own model name. Nothing else writes `job.model`.
-- A video clip's asset row has `width` and `height` empty until Phase 7's FFmpeg step fills them. The video job's result holds them.
+- A video clip's asset row holds the clip's `width`, `height` and `duration_ms` as the job's `checkMp4` read them (`asset.addGenerated`'s `video` field). The video job's result holds them too.
 
 ### job
 
@@ -261,14 +261,14 @@ Drizzle: `src/main/db/schema/jobs.ts`. In migration `0002` the `job_started_by` 
 - **"Finished, not yet looked at" is not a status** [REQ: FR-218]. A job is finished and not looked at when `status = 'succeeded'` and `seen_at` is null. `job.markSeen` sets `seen_at`. A failed job is never "not looked at".
 - **The result stays** [REQ: FR-216, FR-248]. The app never deletes a job row. `result` holds the asset IDs the run produced. The options of every earlier run for a layer are the `asset` rows whose `gen_run_id` is a job with that `layer_id` or `slot`.
 - **`paid_calls`** [REQ: FR-230]. One per call sent to a provider that is not local, counted at the moment of sending. A campaign's total is the sum over its job rows, split by `kind`. It is a count of calls, not money.
-- **`error_detail` never leaves the main process.** The wire `JobRow` has no `errorDetail`. It is the one stored column that is not on the wire. Its one reader outside the runner and the Phase 8 report is the user-only query `job.getServerMessage`, for a ComfyUI job (`spec/comfyui.md`). No job column ever holds the ComfyUI address.
+- **`error_detail` never leaves the main process.** The wire `JobRow` has no `errorDetail`. It is the one stored column that is not on the wire. Its one reader outside the runner and the export report is the user-only query `job.getServerMessage`, for a ComfyUI job (`spec/comfyui.md`). No job column ever holds the ComfyUI address.
 - `remote_job_id` is written only through `jc.setRemoteJobId(id)`.
 - `export` and `publish` are in the kind list; `job-kinds.ts` says for each kind whether it runs in the background or is attached (`spec/jobs.md`).
 
 **Stored request and result shapes:**
 
 - **Picture job** (`src/shared/schemas/jobs/image-generation.ts`, types `ImageJobRequest`, `ImageJobResult`). `result` is `{ assetIds: string[], failures: Record<string, number> }`, the same shape while it runs; a key of `failures` is a provider error kind. Schema: `imageJobResult = z.object({ assetIds: z.array(z.string()), failures: z.record(z.string(), z.number().int()) })`. The job kind and `run-images.ts` import these from there. The window reads the asset IDs in one function in `src/renderer/stores/job-store.ts`, which parses `row.result` with `imageJobResult` and shows no pictures when it does not fit.
-- The picture size asked for is the variant's width and height, for a slot and for any layer, stored in `request`. It states a shape; the fit to a layer's box happens when a picture is placed. OI-70: whether to ask for the box's shape for a non-background layer is open.
+- The picture size asked for, stored in `request`, is the layer's box for a layer run and the variant's width and height for a slot run (`spec/api-commands.md`, "The shape asked for"). It states a shape; the fit to a layer's box happens when a picture is placed.
 - `request.prompt` holds the full prompt as sent, with the one ending `promptToSend` chose ("no text" when `referenceAssetIds` is empty, "keep printing" when it is not). `promptToSend` removes any ending already at the end before adding the chosen one, so a retry never holds two (`spec/providers-adapters.md`, "Prompt and text rules"; SP-9). The same holds for the video request.
 - **Video job** (`src/shared/schemas/jobs/video-generation.ts`, `VideoJobRequest`). `result` holds `hasSound`, and the clip's width and height. The three ways to start store:
 
@@ -278,13 +278,13 @@ Drizzle: `src/main/db/schema/jobs.ts`. In migration `0002` the `job_started_by` 
 | From a first-frame picture | `first_frame` | false | `[assetId]` | `{ firstFrame: true, references: false }` | `start: 'first_frame'`, `referenceAssetIds: [assetId]` |
 | With a reference picture | `none` | true | `[assetId]` | `{ firstFrame: false, references: true }` | `start: 'none'`, `referenceAssetIds: [assetId]` |
 
-Until the Scene exists, the first frame is the chosen picture asset. Phase 7 swaps in the rendered background (`spec/comfyui.md`).
+A fourth start, `start: 'background'`, names no picture: the first frame is drawn from the variant's background layer (`src/main/commands/generation/start-pair.ts`; `spec/comfyui.md`).
 
 - **`request.workflowId`** (picture and video jobs, ComfyUI only; D-104). The ID of the workflow the command chose, named or default: a shipped ID or `custom-` plus 12 hex characters, never a graph, a node or a name. `job.retry` uses it. A row made before IDs were stored has none and gets the default. A failed `missing_items` run of a custom workflow stores `result.missing: []` and `result.missingCount`, never the names of what is missing (`spec/comfyui-custom.md`, "The check and what is missing").
 
 ### report and variant_check
 
-[REQ: FR-114, FR-115, FR-150, FR-151]. Tables built; writers not built (Phase 6 checks, Phase 8 reports).
+[REQ: FR-114, FR-115, FR-150, FR-151]. Built. `variant_check` is written by the checks (`src/main/checks/run-checks.ts`); `report` by the export (`src/main/commands/export/report-add.ts`).
 
 ```sql
 CREATE TABLE report (

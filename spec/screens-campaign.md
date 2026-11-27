@@ -123,7 +123,7 @@ While a campaign is open, the campaign page takes the place of the sections, ful
 
 ## The Assets panel (R2C-5 to R2C-7, AST-1, AST-2, SUBJ-1)
 
-Built. `src/renderer/screens/assets/` (`assets-scope/`, `assets-button/`, `assets-panel/`, `asset-row/` with `picture-tile.tsx`, `subject-card/`, `attach-photos.ts`), `src/renderer/dialogs/subject-dialog/` and `dialogs/delete-subject/`.
+Built. `src/renderer/screens/assets/` (`assets-scope/`, `assets-button/`, `assets-panel/`, `assets-list/`, `asset-row/` with `picture-tile.tsx`, `subject-card/`, `attach-photos.ts`), `src/renderer/dialogs/subject-dialog/` and `dialogs/delete-subject/`.
 
 - A panel along the left edge under the top bar, compact density, mounted once per project, so it stays open across a campaign and the editor. The Activity panel keeps the right edge. It opens from the "Assets" icon button in the campaign head, and is drawn only while a campaign or the editor shows; the project home shows the same library in its own Assets block (D-109, "Project home").
 - A PanelHead "Assets" (`h2`) with the icon button "Close assets". An action row: the import buttons and a `plus` button named "New subject…" (visible word "Subject"; opens the subject dialog).
@@ -341,7 +341,7 @@ Built. `src/renderer/screens/campaign/report-list/` (`campaign-reports.tsx` expo
 
 ## The export dialog (DLG-6a)
 
-Built. `src/renderer/dialogs/export-dialog/` (`ad-ticks.tsx`, `folder-row.tsx`, `export-options.tsx`, `export-warnings.tsx`, `export-end.tsx`), `kind="publish"`, opened by the head's "Export…" (`campaign-export/`; `CampaignExport` takes `reports?: boolean`, and the head passes false). The rules are in `spec/export-and-checks.md`.
+Built. `src/renderer/dialogs/export-dialog/` (`ad-ticks.tsx`, `folder-row.tsx`, `export-options.tsx`, `export-warnings.tsx`, `export-end.tsx`, `use-export-job.ts`), `kind="publish"`, opened by the head's "Export…" (`campaign-export/`; `CampaignExport` takes `reports?: boolean`, and the head passes false). The rules are in `spec/export-and-checks.md`.
 
 - Title "Export {campaign}" ("Export campaign" before the name is read). "Loading the ads…" meanwhile.
 - **Ads:** a fieldset "Ads to export" with the header "Ads {k}/{n}" and a tri-state tick "All ads"; each ad is an ObjectRow whose tick is named "{title} · {size} · {lang} · {format}".
@@ -363,7 +363,7 @@ Built. `src/renderer/screens/campaign/approval-bar/`, `approval-mark/`, `src/ren
 
 ## Choices made without a design sign-off
 
-A later UI pass may change any of them.
+Each was made to get a working, testable screen.
 
 - ComfyUI failures sit under the failed run wherever it shows; the server's message opens in place under a heading.
 - The address dialog replaces "Open Settings" for a run refused for lack of an address. "Open Settings" stays on a failed run whose reason is about the server.

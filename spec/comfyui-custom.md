@@ -2,7 +2,7 @@
 
 How a person, or an agent through the MCP server, adds a ComfyUI workflow of their own, how the app finds the values it fills, how a run picks a workflow, and the security rules. Decided by D-104 (inside D-058 items 1 and 3). The shipped workflows, filling, sizes and video runs are in `spec/comfyui-workflows.md`; the client, the check and failures in `spec/comfyui.md`; agent runs in `spec/agent-runs.md`. Build slices: `spec/phases/custom-workflows-slices.md`.
 
-Not built. Security class.
+Built. Security class. Files: `src/main/providers/comfyui/custom/` (`check-file.ts`, `marks.ts`, `links.ts`, `reference-slots.ts`, `stored.ts`, `store.ts`, `store-read.ts`, `to-spec.ts`, `chosen-workflow-path.ts`), `src/main/providers/comfyui/workflows/all.ts`, `src/shared/comfy/custom-workflow.ts`, `src/shared/comfy/workflow-words.ts`, `src/shared/providers/custom-workflow-messages.ts`; commands in `src/main/commands/comfy/` (`workflow-add.ts`, `workflow-update.ts`, `workflow-remove.ts`); queries `src/main/queries/comfy-workflow.ts` and `src/main/queries/ask-workflow.ts`; MCP tools `src/main/mcp/tools/workflow-tools.ts`; Settings "ComfyUI workflows" `src/renderer/screens/settings/comfy-workflows-section/`; the picker `src/renderer/dialogs/run-dialog/workflow-choice/`.
 
 **End state in one sentence.** Each added workflow has one owner, its file `{userData}/comfy-workflows/{id}.json`; the app reads every such file into one store at start, and every other piece of code gets workflows only through `allWorkflows()` and `checkedWorkflows()`.
 
@@ -10,7 +10,7 @@ Not built. Security class.
 
 - A ComfyUI "API format" JSON file (made with ComfyUI's "Export (API)"), copied into the app's own data folder on this computer. Not into a project, a package or a brief.
 - It is offered as soon as it is added, to the person and to an agent (under the ComfyUI tick). It has no `draft`, `trial` or `proven` status.
-- It serves exactly one job: a picture from a prompt (`image`), a picture from a prompt and reference pictures (`image_refs`), or a video (`video`) from a prompt, from a first frame, or from reference pictures. No extend and no cut-out in this round.
+- It serves exactly one job: a picture from a prompt (`image`), a picture from a prompt and reference pictures (`image_refs`), or a video (`video`) from a prompt, from a first frame, or from reference pictures. No extend and no cut-out.
 - A project never brings a workflow. A job row holds only a workflow ID. An ID that is not on this computer is refused.
 - Assumption: the app does not watch the file the person picked. Changing the workflow means removing it and adding the new export.
 
@@ -41,7 +41,7 @@ A person marks a step in ComfyUI's own screen by giving it a title. ComfyUI save
 
 - Two marks may never point at the same input. One node may carry several marks.
 - The app fills only marked inputs. Everything else is sent as the file has it.
-- Assumption: no negative prompt mark, no frames-per-second mark and no free "extra value" mark in this round (Draft 5 FR-316, FR-318). Their values stay as the file has them.
+- Assumption: no negative prompt mark, no frames-per-second mark and no free "extra value" mark (FR-316, FR-318). Their values stay as the file has them.
 
 **The job comes from the marks.** No one picks it.
 
@@ -55,7 +55,7 @@ A person marks a step in ComfyUI's own screen by giving it a title. ComfyUI save
 
 - `first-frame` with any `ref` mark is refused: no workflow kind for that yet (as U-20 for shipped ones).
 - `first-frame` without `frames` is refused.
-- **Fewer pictures than `ref` marks** (the stakeholder's ruling, 2026-11-22: "it shouldn't require 2 references, it should take 1 to as many as references as the model is capable of"). A custom workflow runs with 1 picture up to its number of `ref` marks; more is refused before any job row (`too_many_references`). For a run with fewer, the unused picture steps are taken out of the graph that is sent, worked out from the graph alone when the file is checked (`custom/reference-slots.ts`): the unused `ref` steps go; a step whose every link came from a step that goes, goes too (a resize after a loader); on a step that stays, each input linked to a step that goes is deleted. Slot k's `dropWhenUnused` holds what goes when slots k and up are unused. A count is offered only when this leaves every other marked step in place; `minReferences` is the lowest such count, and fewer is refused (`too_few_references`). The words say "1 reference picture" or "up to {n} reference pictures". Assumption: the app does not know whether a step that stays can run without the deleted input; if it cannot, the server refuses the run and the run fails as any refused graph does.
+- **Fewer pictures than `ref` marks** (the stakeholder's ruling: "it shouldn't require 2 references, it should take 1 to as many as references as the model is capable of"). A custom workflow runs with 1 picture up to its number of `ref` marks; more is refused before any job row (`too_many_references`). For a run with fewer, the unused picture steps are taken out of the graph that is sent, worked out from the graph alone when the file is checked (`custom/reference-slots.ts`): the unused `ref` steps go; a step whose every link came from a step that goes, goes too (a resize after a loader); on a step that stays, each input linked to a step that goes is deleted. Slot k's `dropWhenUnused` holds what goes when slots k and up are unused. A count is offered only when this leaves every other marked step in place; `minReferences` is the lowest such count, and fewer is refused (`too_few_references`). The words say "1 reference picture" or "up to {n} reference pictures". Assumption: the app does not know whether a step that stays can run without the deleted input; if it cannot, the server refuses the run and the run fails as any refused graph does.
 - Assumption: at least one `seed` mark is required, so that the options of one run differ (FR-257).
 
 ## The stored shape
@@ -108,17 +108,17 @@ type StoredCustomWorkflow = {
 | `licence` | `{ name: 'Not known', url: '', commercialNote: null }` |
 | `leavesOnServer` | "What the app leaves on the server" below |
 | `source` | `{ template: 'added by a person' or 'added by an agent', exportedFrom: '', changes: [] }` |
-| `slots.references` | one slot per `ref` mark, in order, each with an empty `dropWhenUnused`; `minReferences` = their count |
+| `slots.references` | one slot per `ref` mark, in order, each with the `dropWhenUnused` worked out by `custom/reference-slots.ts`; `minReferences` = the lowest count offered ("Fewer pictures than `ref` marks" above) |
 | `slots.seedBelow` | 2^32 |
 
-- `WorkflowSlots` gains `seedBelow?: number`. `fillWorkflow` makes each seed a whole number below it (default 2^53, as today). Reason: some community nodes refuse seeds above 2^32.
+- `WorkflowSlots` has `seedBelow?: number`. `fillWorkflow` makes each seed a whole number below it (default 2^53). Reason: some community nodes refuse seeds above 2^32.
 
-**The ID type, with the least ripple.**
+**The ID type.**
 
-- `WORKFLOW_IDS` stays the fixed list of shipped IDs. `ShippedWorkflowId` is its member type.
-- `CustomWorkflowId` is `` `custom-${string}` ``. `WorkflowId` becomes `ShippedWorkflowId | CustomWorkflowId`.
+- `WORKFLOW_IDS` is the fixed list of shipped IDs. `ShippedWorkflowId` is its member type.
+- `CustomWorkflowId` is `` `custom-${string}` ``. `WorkflowId` is `ShippedWorkflowId | CustomWorkflowId`.
 - `src/shared/comfy/custom-workflow.ts` owns `CUSTOM_WORKFLOW_ID` (`/^custom-[0-9a-f]{12}$/`) and `workflowIdSchema` (a shipped ID or that form). Every input that takes a workflow ID uses `workflowIdSchema`.
-- `WORKFLOWS` and `NON_DRAFT_WORKFLOWS` stay shipped only. New, in `workflows/all.ts`: `allWorkflows()` (the shipped list, then the custom ones by `addedAt`) and `checkedWorkflows()` (`NON_DRAFT_WORKFLOWS`, then the custom ones). Code that today reads `WORKFLOWS` for runs, the check or `comfy.getInfo` reads these instead.
+- `WORKFLOWS` and `NON_DRAFT_WORKFLOWS` are shipped only. `workflows/all.ts` has `allWorkflows()` (the shipped list, then the custom ones by `addedAt`) and `checkedWorkflows()` (`NON_DRAFT_WORKFLOWS`, then the custom ones). Runs, the check and `comfy.getInfo` read these, not `WORKFLOWS`.
 
 ## The file checks
 
@@ -164,21 +164,21 @@ A `ref9` or higher is `workflow_unknown_mark` (8 is `MAX_REFERENCES_PER_RUN`).
 
 ## Which workflow a run gets
 
-`offeredWorkflow(choice, who, workflowId?)` (`workflows/offered.ts`) stays the one rule. It reads `allWorkflows()`.
+`offeredWorkflow(choice, who, workflowId?)` (`workflows/offered.ts`) is the one rule. It reads `allWorkflows()`.
 
-- **A named workflow.** Found in `allWorkflows()`, not a `draft`, and a `trial` one only while dev tools are on (as today, for both actors). A custom one always. It must fit the job and, for video, the start pair. Refusals, before any job row:
+- **A named workflow.** Found in `allWorkflows()`, not a `draft`, and a `trial` one only while dev tools are on (for both actors). A custom one always. It must fit the job and, for video, the start pair. Refusals, before any job row:
   - not found, or a draft: `RULE_VIOLATION`, `comfy_workflow_not_found`, "That ComfyUI workflow is not on this computer."
-  - a `trial` one with dev tools off: `comfy_job_not_offered`, as today.
+  - a `trial` one with dev tools off: `comfy_job_not_offered`.
   - the wrong job or start: `comfy_workflow_wrong_job`, "That workflow cannot make this kind of picture or video."
-- **No workflow named.** As today: the `proven` shipped one, else the `trial` one with dev tools on. When no shipped one is offered to the caller for that job and start, the oldest custom one that fits. That is the default (`isDefault`). The commands always store the chosen ID on the job. The adapter's own lookup, when it is handed no ID (cut-out, extend, or a job row made before IDs were stored), picks only a shipped workflow, never a custom one.
-- **Reference count.** After the choice, more pictures than slots is `too_many_references` (as today). Fewer than `minReferences` is new: `RULE_VIOLATION`, `too_few_references`, `details.min`, "This workflow needs {min} reference pictures." ("needs 1 reference picture" for one). Owner: `src/shared/providers/messages.ts`.
-- **Stored on the job.** `generation.runImages` and `generation.startVideo` take an optional `workflowId` (`workflowIdSchema`), for the person and for an agent. The command writes the chosen workflow's ID into the job's `request.workflowId`. The picture and video job kinds pass it to the adapter (`ImageProvider.generate`, `VideoProvider.start` and `runSize` gain an optional `workflowId`; other adapters ignore it). `workflowForRun` takes it and looks it up in `allWorkflows()`.
-- **Retry** (`job.retry`, the person only) uses `request.workflowId` when present, with the same checks. A row without it (made before this change) gets the default.
+- **No workflow named.** The `proven` shipped one, else the `trial` one with dev tools on. When no shipped one is offered to the caller for that job and start, the oldest custom one that fits. That is the default (`isDefault`). The commands always store the chosen ID on the job. The adapter's own lookup, when it is handed no ID (cut-out, extend, or a job row made before IDs were stored), picks only a shipped workflow, never a custom one.
+- **Reference count.** After the choice, more pictures than slots is `too_many_references`. Fewer than `minReferences` is `RULE_VIOLATION`, `too_few_references`, `details.min`, "This workflow needs {min} reference pictures." ("needs 1 reference picture" for one). Owner: `src/shared/providers/messages.ts`.
+- **Stored on the job.** `generation.runImages` and `generation.startVideo` take an optional `workflowId` (`workflowIdSchema`), for the person and for an agent. The command writes the chosen workflow's ID into the job's `request.workflowId`. The picture and video job kinds pass it to the adapter (`ImageProvider.generate`, `VideoProvider.start` and `runSize` take an optional `workflowId`; other adapters ignore it). `workflowForRun` takes it and looks it up in `allWorkflows()`.
+- **Retry** (`job.retry`, the person only) uses `request.workflowId` when present, with the same checks. A row without it (an older row) gets the default.
 - **Removed before its turn.** A queued job whose custom workflow was removed fails at its turn: kind `other`, reason `workflow_gone`, "The workflow for this run was removed before it started." Nothing is sent. The workflow is looked up once for each request sent to the server: a request already sent goes on with its copy, and in a job of several pictures the ones not yet sent fail `workflow_gone` while the pictures already made are kept.
 - **No licence dialog** for a custom workflow: its `commercialNote` is null, so the D-088 check passes.
 - Cut-out and extend stay shipped only. `checkComfyCutout` and `checkComfyExtend` never take a workflow ID.
 
-**The remembered choice.** New settings key `comfyWorkflowChoice: Partial<Record<ChoiceKey, WorkflowId>>`, `ChoiceKey` = `image`, `image_refs`, `video_prompt`, `video_first_frame`, `video_references`. Default `{}`; a bad value in the file loads as `{}`. Written only by `settings.update` (agent `deny`). The window writes it after the person's run command is accepted with a workflow picked in the run dialog. An agent's choice never changes it, and no agent reads it. An ID in it that is no longer offered is ignored where it is read. Assumption: remembered per computer and per job, not per project.
+**The remembered choice.** Settings key `comfyWorkflowChoice: Partial<Record<ChoiceKey, WorkflowId>>`, `ChoiceKey` = `image`, `image_refs`, `video_prompt`, `video_first_frame`, `video_references`. Default `{}`; a bad value in the file loads as `{}`. Written only by `settings.update` (agent `deny`). The window writes it after the person's run command is accepted with a workflow picked in the run dialog. An agent's choice never changes it, and no agent reads it. An ID in it that is no longer offered is ignored where it is read. Assumption: remembered per computer and per job, not per project.
 
 ## Commands, queries and events
 
@@ -202,9 +202,9 @@ All four commands are app scope, not undoable, and set `changesAppState`, so the
 
 - `comfyWorkflow.list {}`, both actors. `{ workflows: Array<{ id, name, job, start, isDefault }> }`: every workflow the caller may name for `image`, `image_refs` or `video` (shipped ones as `offeredWorkflow` allows that caller, and every custom one). `start` is `'prompt' | 'first_frame' | 'references'` for video, else null. `isDefault` is true for the one a run of that job and start gets with no ID named. Never a graph, a node, a file path or the address.
 - `agent.askWorkflow { requestId }`, user only. `{ name, job, start, references, nodeTypes }` (`references` is how many reference pictures the workflow takes, 0 to 8) for the open `workflow` ask, else `NOT_FOUND` "That request has ended." Held in memory for the ask's life only, like `agent.askFiles`.
-- `comfy.getInfo` (user only) lists the custom workflows after the shipped ones, as `WorkflowInfo` with `status: 'custom'` and a new optional `custom: { addedBy, addedAt, nodeCount }`. `WorkflowInfo` gains `isDefault`. `offered` now means "the person may pick it now": true for every custom one.
+- `comfy.getInfo` (user only) lists the custom workflows after the shipped ones, as `WorkflowInfo` with `status: 'custom'` and an optional `custom: { addedBy, addedAt, nodeCount }`. `WorkflowInfo` has `isDefault`. `offered` means "the person may pick it now": true for every custom one.
 
-**Events.** No new event. `agent.permissionRequested.kind` gains `'workflow'` (`fileCount` 0). Its `target` is the line in "The agent's ask" below. `agent.activity` is unchanged (tool name, project, ok; no input).
+**Events.** No event of its own. `agent.permissionRequested.kind` includes `'workflow'` (`fileCount` 0). Its `target` is the line in "The agent's ask" below. `agent.activity` is unchanged (tool name, project, ok; no input).
 
 **Settings key and folder** (`spec/infra-and-settings.md`): `comfyWorkflowChoice` above; the folder `{userData}/comfy-workflows/`.
 
@@ -217,7 +217,7 @@ Each maps one to one to its command or query, with an allow-list reply picker (`
 | `list_comfy_workflows` | query `comfyWorkflow.list` | none | `workflows`: `id`, `name`, `job`, `start`, `isDefault` | allow |
 | `add_comfy_workflow` | command `comfyWorkflow.add` | `name`, `workflow_json`, `video?` | `workflowId` | ask, every time; never auto-approved |
 | `remove_comfy_workflow` | command `comfyWorkflow.remove` | `workflow_id` | `workflowId` | ask (delete); the delete tick covers it |
-| `generate_images`, `generate_video` | as today | as today, plus `workflow_id?` | as today | tick, as today |
+| `generate_images`, `generate_video` | as in `spec/mcp-and-agents.md` | as there, plus `workflow_id?` | as there | tick |
 
 - Assumption: listing needs no tick. Running a workflow is under the ComfyUI tick, as every ComfyUI run (D-058 item 3).
 - **Descriptions** (final words owned by the slice):
@@ -225,18 +225,18 @@ Each maps one to one to its command or query, with an allow-list reply picker (`
   - `add_comfy_workflow`: "Add a ComfyUI workflow in API format (Export (API) in ComfyUI). Send the file's text in workflow_json, at most 2 MB. Mark each step Adman fills by starting its title with adman: and a mark: prompt, seed, width, height, ref1 to ref8, first-frame, frames, output; name an input with =, as in adman: seed=noise_seed. The user is asked every time and sees the name, the job and every node type; you wait up to two minutes, and a refusal is final. Gives the new workflow's id. You cannot read a workflow back."
   - `remove_comfy_workflow`: "Remove a workflow you or the user added. This cannot be undone. The user is asked in the app, and this call waits up to two minutes. A refusal is final."
   - `generate_images` and `generate_video` add: "workflow_id names a workflow from list_comfy_workflows; leave it out for the default."
-- The tool-list snapshot grows from 32 to 35 tools.
+- The three tools are in the tool list held by `tests/unit/main/mcp/tools/tool-plan.test.ts` and `tests/integration/mcp/tool-list.test.ts`.
 
 ## The agent's ask
 
-Built on the ask flow of `spec/mcp-and-agents.md`. `ASK_KINDS` gains `'comfyWorkflow.add': 'workflow'` and `'comfyWorkflow.remove': 'delete'`.
+Built on the ask flow of `spec/mcp-and-agents.md`. `ASK_KINDS` (`src/main/mcp/ask-kinds.ts`) holds `'comfyWorkflow.add': 'workflow'` and `'comfyWorkflow.remove': 'delete'`; the add's input is read by `src/main/mcp/ask-workflow-reader.ts`.
 
 - Before the ask, the broker runs `checkWorkflowText` on the input. A refused file never reaches the screen; the agent gets the refusal. Nothing on disk is read.
 - `mcp.autoApproveDestructive` never answers a `workflow` ask, and the dialog has no "Don't ask again" tick. "Remember" in `agent.answerPermission` is ignored for it.
 - The broker holds `{ name, job, start, references, nodeTypes }` for the open request; the dialog reads it with `agent.askWorkflow` and builds its job words from that reply alone, never by reading the target line. The list of node types scrolls inside the dialog; the risk sentence and the buttons stay on screen at the smallest window size. No event holds a node type.
 - After "Add", the command checks the text again and saves it. Refuse or two minutes without an answer: `AGENT_REFUSED`, nothing saved.
 
-**Words** (`ask-words.ts`, `permission-dialog`):
+**Words** (`src/renderer/app/permission-dialog/`, `ask-words.ts`):
 
 - Title: "An agent asks to add a ComfyUI workflow". Action button: "Add".
 - Target line: `Workflow "{name}": {job words}, {n} node types` ("1 node type" for one). The name passes the shared name cleaner. The dialog draws the name in its own element, apart from the job words and the count, so a name cannot imitate them.
@@ -250,7 +250,7 @@ Built on the ask flow of `spec/mcp-and-agents.md`. `ASK_KINDS` gains `'comfyWork
 
 ## Screens
 
-**Settings: "ComfyUI workflows".** A new Section, `src/renderer/screens/settings/comfy-workflows-section/`, placed right after "ComfyUI server". It is not part of `ComfySection`, so the first-run setup does not change. Summary: "{n} added".
+**Settings: "ComfyUI workflows".** A Section, `src/renderer/screens/settings/comfy-workflows-section/`, placed right after "ComfyUI server". It is not part of `ComfySection`, so the first-run setup does not change. Summary: "{n} added".
 
 - Intro: "Add a workflow you made in ComfyUI. Start the title of each step Adman fills with adman:, then use Export (API)."
 - A folded part "How to mark steps": the marks table in short form ("adman: prompt", "The prompt", and so on) and one example title.
@@ -260,21 +260,21 @@ Built on the ask flow of `spec/mcp-and-agents.md`. `ASK_KINDS` gains `'comfyWork
 - "Add workflow…" opens the system file picker (`dialog.pickFiles`, purpose `comfy-workflow`, `.json` only, one file), then sends `comfyWorkflow.addFromFile`. On success a line "Added {name}." On refusal the command's sentence as a danger line. No other question. At 50 the button is disabled with the title "You can add at most 50 workflows."
 - **Change** (a form dialog, "Change workflow"): "Name"; when the graph has size marks, "Largest size" (0.25, 0.4, 0.5, 1, 2, 4 megapixels) and "Sides are a multiple of" (8, 16, 32, 64); for video, "Frames per second", "Longest clip, in seconds", and "Frame counts it takes: a multiple of {n}, plus {m}". Buttons "Cancel" and "Save" (`comfyWorkflow.update`). A refusal shows in the dialog.
 - **Remove** (a confirm dialog, built like `dialogs/delete-subject/`): title "Remove {name}?"; body "This removes the workflow from this computer and cannot be undone. Runs that have not started yet will fail."; foot "Keep" (first focus) and "Remove workflow" (danger). No undo.
-- "On the server" gains the custom sentence below when any custom workflow exists.
+- "On the server" shows the custom sentence below when any custom workflow exists.
 
 **The workflow picker** (`src/renderer/dialogs/run-dialog/workflow-choice/`). In `RunSetup`, under the provider choice, only when ComfyUI is chosen, the run is not a retry, and two or more workflows fit the job and start (`offered`, same `job`, same `videoStart`).
 
 - A `select` named "Workflow", one option per fitting workflow by name, a custom one added by an agent followed by " (added by an agent)".
 - It starts at the remembered choice for the `ChoiceKey` when it fits, else the `isDefault` one.
-- `onConfirm` gains the chosen `workflowId`. `generate-fields.tsx` and `video-fields.tsx` send it in `generation.runImages` and `generation.startVideo`. After an accepted reply the window sends `settings.update { comfyWorkflowChoice }` for that key.
-- The cost line names the chosen workflow, as today: "… with the workflow {name}." For a retry it reads "… with the same workflow as before." The retry sends no ID; the main process uses the stored one.
+- `onConfirm` carries the chosen `workflowId`. `generate-fields.tsx` and `video-fields.tsx` send it in `generation.runImages` and `generation.startVideo`. After an accepted reply the window sends `settings.update { comfyWorkflowChoice }` for that key.
+- The cost line names the chosen workflow: "… with the workflow {name}." For a retry it reads "… with the same workflow as before." The retry sends no ID; the main process uses the stored one.
 - Every place a ComfyUI picture or video run starts goes through `RunSetup`, so this is the one picker.
 
 ## The check and what is missing
 
 - `comfy.check` and every run hand the check `checkedWorkflows()`, so the 60-second memory per address stays one list. `serverChecks.forget()` empties it on every add, change and remove.
-- **Can check:** every node type of a custom workflow, one `GET /object_info/{class}` each, the class name passed through `encodeURIComponent` as today. A missing type usually means an add-on is not installed.
-- **Cannot check:** model files (the file does not say which server folder an input reads from), the ComfyUI version, and whether a node does what its name says. A missing model is found by the server when the run is sent: a 400 (`server_refused`), with the server's words on request as today.
+- **Can check:** every node type of a custom workflow, one `GET /object_info/{class}` each, the class name passed through `encodeURIComponent`. A missing type usually means an add-on is not installed.
+- **Cannot check:** model files (the file does not say which server folder an input reads from), the ComfyUI version, and whether a node does what its name says. A missing model is found by the server when the run is sent: a 400 (`server_refused`), with the server's words on request.
 - The Settings check result lists a custom workflow under its name with the status word "Added" and its missing node types. These names reach only the person's own window, in the reply to the user-only `comfy.check`.
 - **A run that fails `missing_items` on a custom workflow** stores no names on the job row: `result.missing` is `[]` and `result.missingCount` is the count. The row's sentence is "The server is missing {n} things this workflow needs. Press Check in Settings to see them." ("1 thing" for one.) Reason: a project file may be shared, and job rows reach the window through events.
 - The check makes many calls when many node types are listed. That is a nuisance (time), noted, not designed for.
@@ -284,7 +284,7 @@ Built on the ask flow of `spec/mcp-and-agents.md`. `ASK_KINDS` gains `'comfyWork
 A custom workflow's `leavesOnServer`, in the order of `LEAVES`:
 
 - "Reference pictures and first frames that Adman uploads stay in the server's input folder, under adman/." (only with `ref` or `first-frame` marks)
-- New, `LEAVES.custom`: "A workflow you add can leave files on the server wherever its own steps save them."
+- `LEAVES.custom`: "A workflow you add can leave files on the server wherever its own steps save them."
 - "The server keeps its own record of each run, the prompt included."
 
 The app removes none of them and has no call that could [FR-271].
@@ -299,7 +299,7 @@ The app removes none of them and has no call that could [FR-271].
 - An agent's add always asks on screen, shows every node type and says what the workflow can do. It is never approved without the person.
 - An agent can never read a graph or change one, and never learns a file path or the server address.
 - A project, package or brief never brings a workflow.
-- The graph goes only to the user's saved ComfyUI address. What comes back passes the same checks as today. Adman reads nothing from the graph as a path, an address or a command on this computer.
+- The graph goes only to the user's saved ComfyUI address. What comes back passes the same checks as for a shipped workflow. Adman reads nothing from the graph as a path, an address or a command on this computer.
 
 **Rules, each a test.**
 
@@ -317,25 +317,11 @@ The app removes none of them and has no call that could [FR-271].
 12. Every refusal sentence of the file checks is fixed; none repeats text from the file.
 13. A custom workflow shows no licence dialog. Settings shows the one fixed licence sentence.
 
-**Accepted** (follows D-104; to be listed in `spec/security.md`, "Accepted risks"): once added, a workflow can do on the server whatever its nodes can do, including spending on paid services from the server; the ask dialog and the person's own choice of file are the only controls. A person who adds a file from an untrusted source carries that risk, as for a brief (D-100).
+**Accepted** (follows D-104; listed in `spec/security.md`, "Accepted risks"): once added, a workflow can do on the server whatever its nodes can do, including spending on paid services from the server; the ask dialog and the person's own choice of file are the only controls. A person who adds a file from an untrusted source carries that risk, as for a brief (D-100).
 
 **Nuisance, noted only:** a slow check with many node types; a run refused by the server for a wrong seed range, a size the model dislikes or a missing model; wrong video defaults until the person changes them.
 
-## Spec text and requirement lines this replaces
+## Where this differs from the requirements
 
-For the orchestrator to edit; not edited here.
-
-- `spec/comfyui-workflows.md`: "The workflow description" ("Both are bundled by the build and are the only workflows the app can send"; the `WORKFLOW_IDS` block and `WorkflowStatus`; "`NON_DRAFT_WORKFLOWS` is the one list the check and every run use"); "Which workflow a run gets" (named workflows, custom default, new refusals); "Filling a run" (`seedBelow`; custom reference slots take an exact count); "Licence text" (the custom sentence); "What the app leaves on the server" (the custom sentence).
-- `spec/comfyui-trials.md`: "Not built: Krea 2 and custom workflows" (the custom bullet becomes a pointer here); "The hand-test screen's ComfyUI part" (the bullet saying `workflowId` is accepted only with dev tools and the user).
-- `spec/comfyui.md`: "The check" step 2 and "Rules" (the list is `checkedWorkflows()`; `forget()`); "A picture run" step 2 (`workflowForRun` with an ID); the "Retry" bullet ("The chosen workflow is not stored on the job row"); "Failures" table (`workflow_gone`; `missing_items` for a custom workflow); the command refusals list (`comfy_workflow_not_found`, `comfy_workflow_wrong_job`, `too_few_references`); "Generation details" (a custom workflow names no model files).
-- `spec/agent-runs.md`: "Gate steps for a run" ("No `workflowId` step … An agent never names a server, a workflow, a node or a model file"); "What an agent can never do or see", row "Name a server, a workflow, a node or a model file"; "After the gate" refusal table; "Open to an agent".
-- `spec/mcp-and-agents.md`: the tool table and its count (32 to 35); "Ask flow" (kind `workflow`); "Permissions" (add, list and remove workflows); "Agent policy table" (four rows); the user-only query list (`agent.askWorkflow`); the notes on `generate_images` and `generate_video`.
-- `spec/security.md`: threat model row "A workflow of someone else's choosing run on the user's server" [FR-278]; "Rules: agents and cost" (an agent's add); "Accepted risks"; "Named security tests".
-- `spec/api-commands.md`: the four new commands; `workflowId` on `generation.runImages` and `generation.startVideo`; `job.retry`.
-- `spec/api-queries-events.md`: `comfy.getInfo` (custom entries, `isDefault`, the new meaning of `offered`); `comfyWorkflow.list`; `agent.askWorkflow`; `agent.permissionRequested.kind`.
-- `spec/infra-and-settings.md`: "settings.json" (`comfyWorkflowChoice` and its writer); the app data folder (`comfy-workflows/`).
-- `spec/data-model.md`: the job `request` notes (`workflowId`).
-- `spec/screens.md`: "AI services" (the new Section). `spec/screens-ai.md`: "The run dialog" (the picker, the retry line, `onConfirm`).
-- `spec/open-items.md`: OI-57 is answered by D-104 and this file.
-- `requirements/draft-comfyui.md`: FR-278 (replaced); FR-280 notes ("the agent uses only the shipped workflows"); FR-290 notes.
-- `requirements/draft-comfyui-custom.md`, where D-104 differs: FR-309 (linked per project becomes copied per computer); FR-311 (per-project list, a description); FR-312 (linked-file rules do not apply); FR-314 and FR-315 (no review screen, no marking in the app this round); FR-316 and FR-318 (no negative prompt, fps or extra values this round); FR-320 (an exact reference count); FR-321 (one job per workflow, from the marks; remembered choice per computer, not a project default); FR-322 (the `output` mark is required); FR-323 (a seed mark is required); FR-325 (no model check); FR-326 (nothing packaged); FR-327 (an agent may add and remove, by ask); FR-328 (sources); FR-330 (no warning dialog for a person's add; the agent's ask instead); FR-331 (met by the licence line).
+- `requirements/draft-comfyui.md`: FR-278 (replaced by this file); FR-280 notes ("the agent uses only the shipped workflows"); FR-290 notes.
+- `requirements/draft-comfyui-custom.md`, where D-104 differs: FR-309 (linked per project becomes copied per computer); FR-311 (per-project list, a description); FR-312 (linked-file rules do not apply); FR-314 and FR-315 (no review screen, no marking in the app); FR-316 and FR-318 (no negative prompt, fps or extra values); FR-320 (from `minReferences` up to the number of `ref` marks, "Fewer pictures than `ref` marks" above); FR-321 (one job per workflow, from the marks; remembered choice per computer, not a project default); FR-322 (the `output` mark is required); FR-323 (a seed mark is required); FR-325 (no model check); FR-326 (nothing packaged); FR-327 (an agent may add and remove, by ask); FR-328 (sources); FR-330 (no warning dialog for a person's add; the agent's ask instead); FR-331 (met by the licence line).

@@ -61,16 +61,16 @@ Each is in `DECISIONS.md` and REQUIREMENTS.md. The last column says where the sp
 
 ### Build order and client items
 
-- Real image generation and real cloud storage were moved forward and built in Phase 2, ahead of the editor. No phase was renumbered. `spec/phases/` holds the plan for each phase from 3 on.
+- Real image generation and real cloud storage were moved forward and built in Phase 2, ahead of the editor. No phase was renumbered. `spec/phases/` holds the plan each phase and each later piece of work was built from.
 - The client items FR-230 to FR-249 each sit in the phase that builds them. Some are designed in depth there, the rest only as scope. Already in the data model: `variant.agent_changed_at` (FR-239), the ready-made size 4:5 with the label `4x5` (FR-247, one pixel size has one label), and `TextStyle.letterSpacing` (FR-249).
 - The items S-1 to S-17 of `requirements/draft-client-input.md` are not decided and are not in the spec.
-- Navigation follows REQUIREMENTS.md 1.4 (FR-211 to FR-213): open campaigns are the main tabs, with variant tabs inside a campaign. There are no project tabs. How projects are shown and switched, and whether tabs are remembered, wait for the UI pass (Q-038, Q-039, Q-040; OI-31).
+- Navigation follows REQUIREMENTS.md 1.4 (FR-211 to FR-213): open campaigns are the main tabs, with variant tabs inside a campaign. There are no project tabs. Several projects can be open at once; one is shown at a time, chosen with the project switcher in the top row (`spec/editor.md`, "The shell"). That is the build's own choice, kept until Q-038, Q-039 and Q-040 are answered (OI-31 in `spec/assumptions.md`).
 
 ## Architecture
 
 ### Pattern
 
-A local modular monolith inside one Electron app. There is no server and no cloud component owned by the app.
+A local modular monolith inside one Electron app. The app owns no server. One optional outside part exists: the approvals service (`approvals-service/`), a small web app the user deploys to their own hosting account so that reviewers can sign off ads in a browser (`spec/approvals.md`). The app works in full without it.
 
 In one sentence: **one installed app where the main process owns all data and rules, and windows only draw.**
 
@@ -108,6 +108,7 @@ Scope rule [D-053 item 23]: the app has one customer that matters. A case the cl
                          |   +- Job runner                              |
                          |   +- Providers ------------------------------┼--> Gemini, ComfyUI, fal.ai,
                          |   |                                          |    S3, Dropbox
+                         |   +- Approvals client -----------------------┼--> Approvals service --> Reviewers
                          |   +- Key store (system key store)            |--> App data folder
                          |   +- MCP server (127.0.0.1 + token) <--------┼--- External agent (Claude)
                          |   +- Render service                          |
@@ -128,30 +129,61 @@ External actors:
 | External agent (Claude Code, Claude Desktop) | Calls MCP tools on 127.0.0.1 |
 | Gemini API | Image, layout and text jobs, on the user's key |
 | ComfyUI server | Image and video jobs on a server the user runs, at the address set in Settings. Needs no key. See `spec/comfyui.md`. |
-| fal.ai | Image-to-video jobs, on the user's key. Not built: the adapter is empty and the provider is listed as not available. |
-| Amazon S3, Dropbox | Publishing, on the user's account |
+| fal.ai | Image-to-video jobs (Seedance), on the user's key. See `spec/providers-adapters.md`. |
+| Amazon S3, Dropbox | Publishing, on the user's account. S3 also holds the pictures and clips of an approvals gallery. |
+| Approvals service | The user's own deployed copy of `approvals-service/`. The app sends it a campaign's gallery; it shows the gallery to reviewers and keeps their sign-offs. See `spec/approvals.md`. |
+| Reviewers | Open an approval link in a browser, with a password. Never use the app. |
 | Teammates | Browse published files in cloud storage. Never use the app. |
+
+Two more entries into the code, beside the app window:
+
+- **Bridge mode.** The same executable started with `--mcp-bridge` opens no window. It passes an agent app's messages to the MCP server of the running app (`src/main/bridge/`; `spec/mcp-and-agents.md`).
+- **The quickstart.** `npm run quickstart` runs `quickstart/cli.ts` from a terminal. It reuses the brief reader, the Scene and the layout code in `src/shared/`, and the Gemini adapter in `src/main/providers/`. It draws in a headless browser. It uses no Electron part, no project file and no database (`spec/quickstart.md`).
 
 ### Component map
 
-| Component | Responsibility | Technology | Status |
-|-----------|----------------|------------|--------|
-| App window | UI, the window's copy of project state per open project, transient drag state | React, zustand, Radix UI | Built in part: shell, start screen, project and campaign pages, picture and video panels, Settings (`src/renderer/`). Editor not built (Phase 3). |
-| Preload bridge | Exposes a typed `window.api` with `command`, `query`, `on` | Electron contextBridge | Built (`src/preload/index.ts`) |
-| Command bus | Validates, applies the agent policy, runs a command in one transaction, records undo, emits events, writes the log | TypeScript, Zod | Built (`src/main/commands/bus.ts`, `agent-policy.ts`) |
-| Project store | Opens project files, runs migrations, typed reads and writes | better-sqlite3, Drizzle | Built (`src/main/db/`) |
-| Asset path resolver | The only code that turns an asset ID into a file path | TypeScript | Built (`src/main/assets/path-resolver.ts`) |
-| Link engine | Follow rules, out-of-date calculation, sync preview and apply | TypeScript (shared, pure) | Not built (Phase 5) |
-| Check engine | Brand and legal checks | TypeScript (shared, pure) | Not built (Phase 6) |
-| Scene | Draws one variant at one time. Used by editor, thumbnails, agent pictures, export. | React, HTML, CSS | Not built (Phase 3; time and presets Phase 7) |
-| Render service | Drives the hidden window, captures frames | Electron offscreen window | Not built (Phase 3) |
-| Export service | Image and video export, report, translation sheet | FFmpeg child process | Not built (Phase 8) |
-| Job runner | Queues, runs, resumes and retries background jobs | TypeScript | Built (`src/main/jobs/`) |
-| Provider registry | Adapters behind six interfaces: image, layout, text, video, storage, verification | Provider SDKs, Node `http` | Built (`src/main/providers/registry.ts`, `types.ts`). Gemini images, ComfyUI pictures and video, S3, Dropbox and the fake provider have adapters. |
-| Key store | Encrypts and holds secrets | Electron safeStorage | Built (`src/main/secrets/`) |
-| MCP server | Tools for the external agent | MCP TypeScript SDK | Built in part (`src/main/mcp/`). See `spec/mcp-and-agents.md`. |
-| MCP bridge mode | Lets agent apps that only launch command-line servers reach the running app | Same executable, `--mcp-bridge` flag | Not built (Phase 10) |
-| Activity log | JSON lines log of commands, jobs and errors | TypeScript | Built (`src/main/log/activity-log.ts`) |
+Every component below is built. What is not built is listed under the table.
+
+| Component | Responsibility | Technology | Where |
+|-----------|----------------|------------|-------|
+| App window | UI, the window's copy of project state per open project, transient drag state | React, zustand, Radix UI | `src/renderer/`: `app/` (shell), `screens/`, `editor/`, `dialogs/`, `ui/` (shared parts), `stores/` |
+| Preload bridge | Exposes a typed `window.api` with `command`, `query`, `on`; `window.drop` for dropped files; the render window's `renderApi` | Electron contextBridge | `src/preload/index.ts`, `render.ts` |
+| Command bus | Validates, applies the agent policy, runs a command in one transaction, records undo, emits events, writes the log | TypeScript, Zod | `src/main/commands/bus.ts`, `agent-policy.ts`, `run-in-project.ts`; one folder per command domain |
+| Query runner | Read-only answers for the window and for agents | TypeScript, Zod | `src/main/queries/` |
+| Project store | Opens project files, runs migrations, typed reads and writes | better-sqlite3, Drizzle | `src/main/db/` |
+| Asset service | Import, linking, relink, change detection, package project. Its path resolver is the only code that turns an asset ID into a file path. | TypeScript | `src/main/assets/` (`path-resolver.ts`) |
+| Link engine | Follow rules, out-of-date calculation, sync preview and apply, the plan for making variants | TypeScript (pure rules in shared, writers in main) | `src/shared/links/`, `src/main/links/` |
+| Check engine | Brand and legal checks, the checks before export | TypeScript (pure rules in shared) | `src/shared/checks/`, `src/main/checks/` |
+| Translation | Translation runs, approval, the translation sheet | TypeScript | `src/main/translation/`, `src/shared/translation/` |
+| Scene | Draws one variant at one time. Used by the editor, thumbnails, agent pictures, export and the quickstart. | React, HTML, CSS | `src/shared/scene/` |
+| Render service | Drives the hidden window, captures frames, keeps thumbnails | Electron hidden window | `src/main/render/`, `src/main/thumbnails/`, `src/renderer/render-worker/` |
+| Media tool | The one door to FFmpeg | FFmpeg child process | `src/main/media/` (`run-ffmpeg.ts`) |
+| Clips | The background clips and the sound of a video variant | TypeScript | `src/main/clips/`, `src/shared/clips/` |
+| Export service | Image and video export, report, translation sheet | Render service, media tool | `src/main/export/`, `src/shared/export/` |
+| Publish flow | Exports a campaign and uploads it, with a manifest, to S3 or Dropbox | Storage adapters | `src/main/publish/`, `src/shared/publish/` |
+| Approvals client | Sends a campaign's gallery to the approvals service, keeps its links and passwords, reads the sign-offs | `fetch`, S3 signed addresses | `src/main/approvals/`, `src/shared/approvals/` |
+| Approvals service | The reviewers' gallery in a browser, and their sign-offs. Its own package, deployed by the user. | Next.js, libSQL (Turso) | `approvals-service/` |
+| Job runner | Queues, runs, resumes, cancels and retries background jobs | TypeScript | `src/main/jobs/`; one file per job kind in `kinds/` |
+| Provider registry | Adapters behind seven interfaces: image, layout, text, cut-out, video, storage, verification | Provider SDKs, Node `http` and `fetch` | `src/main/providers/` (`registry.ts`, `types.ts`, one folder per provider) |
+| Key store | Encrypts and holds secrets | Electron safeStorage | `src/main/secrets/` |
+| Settings store | Reads and writes `settings.json` in the app data folder | TypeScript, Zod | `src/main/settings/` |
+| MCP server | Tools for the external agent, the ask flow, the permissions | MCP TypeScript SDK | `src/main/mcp/`; see `spec/mcp-and-agents.md` |
+| MCP bridge mode | Lets agent apps that only launch command-line servers reach the running app | Same executable, `--mcp-bridge` flag | `src/main/bridge/` |
+| Activity log | JSON lines log of commands, jobs and errors | TypeScript | `src/main/log/activity-log.ts` |
+| Quickstart | A command-line demo: one brief becomes a set of ads, with no app | `tsx`, a headless browser through Playwright | `quickstart/` |
+
+Not built:
+
+- **Adobe Firefly.** A stub adapter, listed as not available (`spec/providers-adapters.md`).
+- **Azure Blob storage.** Listed but disabled [REQ: R-15].
+- **The licence file, the licence check and a release workflow.** Phase 11, held (`spec/phases/phase-11.md`).
+- **ComfyUI:** the Krea 2 workflow, video from two reference pictures, the optional enlarging step, and picking a run back up by a user action. Extending a picture is built in the adapter but not offered, because its workflow is still a draft (`spec/comfyui-workflows.md`, `spec/comfyui-trials.md`).
+- **Cut-out through fal.ai, and cancel for a Gemini run** (`spec/ai-jobs.md`, `spec/cancel.md`).
+- **The usage and the estimated cost of a run** (`spec/jobs.md`, `spec/export-and-checks.md`).
+- **The check of colours inside pictures** [REQ: FR-112] (`spec/export-and-checks.md`).
+- **Tests:** the Scene's reference-picture tests are not run in CI and have no Windows pictures; there is no 500-variant scale test (`spec/testing.md`).
+- **Sample pictures for the quickstart in the README** (`spec/quickstart.md`).
+- Smaller items are marked "Not built" where their topic file describes them.
 
 ### App window at launch
 
@@ -180,7 +212,15 @@ Built.
 
 Built (`src/main/core-deps.ts`, `src/main/core.ts`).
 
-`CoreDeps` is the one object of shared services that `core.ts` builds once and hands to every domain. It has sixteen fields, all required, so every domain always gets them: `projects` (`ProjectRegistry`), `settings` (`SettingsStore`), `secrets` (`SecretStore`), `undo` (`UndoLists`), `providers` (`ProviderInfo[]`), `log` (`ActivityLog`), `assets` (`AssetService`), `jobs` (`JobService`), `render` (`RenderService`, draws variants in the hidden render window and keeps the thumbnails; `spec/scene.md`), `openExternal` (`(url: string) => Promise<void>`), `devTools` (`boolean`), `toPng` (`(bytes: Uint8Array) => Uint8Array`, JPEG or PNG in, PNG out, throws when it cannot), `fitPicture` (`(bytes: Uint8Array, size: { width: number; height: number }) => Uint8Array`, crops to the exact size, centred and filled, then scales; PNG out, behind the same limits as `toPng`), `appVersion` (`string`), `now` (`() => Date`), `userDataDir` (`string`).
+`CoreDeps` is the one object of shared services that `core.ts` builds once and hands to every domain. Every field is required, so every domain always gets them all. The type in `src/main/core-deps.ts` is the list, with a comment on each field. In groups:
+
+- **Stores:** `projects`, `settings`, `secrets`, `undo`, `comfyWorkflows` (the ComfyUI workflows a person or an agent added).
+- **Services:** `assets`, `jobs`, `render`, `log`, `providers`.
+- **Feature ports:** `approvals`, `export`, `exportPictures`, `media` (FFmpeg), `publish`, `dropboxFetch`.
+- **Helpers that need Electron, passed in by `src/main/index.ts`:** `openExternal`, `toPng`, `fitPicture`, `webpToPng`, `readPixels`.
+- **Facts:** `devTools`, `appVersion`, `now`, `userDataDir`.
+
+Rules for them:
 
 - `tests/integration/registration.test.ts` ("hands every domain the CoreDeps fields of Section 12") compares the whole list, so an unlisted field fails it.
 - `createCore` defaults keep a test or a partial build safe: `devTools` defaults to false; the default `openExternal` opens nothing and throws; the defaults of `toPng` and `fitPicture` throw `toPng is not available` and `fitPicture is not available`. Any hand-built `CoreDeps` in a test carries a `fitPicture` that throws the same message.
@@ -221,7 +261,7 @@ No screen holds a copy of any of these.
 | The Flux graph | `src/main/providers/comfyui/workflows/flux3-klein-edit-references.json`. `comfy-workflows/flux3-klein-image-references.json` is the hand-test copy; no code reads it. | `comfy.getInfo` (description only) |
 | Which providers an agent may run | `agentRunsOffered` in `src/shared/config/agent-runs.ts` | See `spec/mcp-and-agents.md` |
 
-The plain screens built so far (project page, campaign page, picture and video panels, Settings ComfyUI section) use the app's existing controls and tokens (`tokens.css`, `layout.module.css`, the Radix parts already used). No new visual language, no new package. The UI pass may replace any of them whole.
+Every screen takes its colours, spaces and sizes from `src/renderer/ui/tokens.css` and is built from the shared parts in `src/renderer/ui/` (`spec/app-style.md`, `spec/app-style-parts.md`).
 
 ## Technology stack
 
@@ -241,18 +281,20 @@ Versions are the exact pins in `package.json`. `npm ci` installs them from the l
 | Cache | None. Thumbnails are files in the app data folder. | — | |
 | Message queue / event bus | In-process job runner and Electron IPC | — | Single-user desktop app |
 | Authentication | None for the user. Bearer token for MCP. | — | [REQ: 8.4, R-04] |
-| File and object storage | Local disk. `@aws-sdk/client-s3`, `@aws-sdk/lib-storage`, `@smithy/node-http-handler` and `dropbox` for publishing. | AWS SDK 3.1174.0, smithy 4.14.2, dropbox 10.66.0 | [REQ: FR-160, R-15] |
+| File and object storage | Local disk. `@aws-sdk/client-s3`, `@aws-sdk/lib-storage`, `@aws-sdk/s3-request-presigner` (signed addresses for approval galleries), `@smithy/node-http-handler` and `dropbox` for publishing. | AWS SDK 3.1174.0, smithy 4.14.2, dropbox 10.66.0 | [REQ: FR-160, R-15] |
 | AI: image, layout, text | Google Gen AI SDK (`@google/genai`) | 3.6.1 | Stakeholder preference [REQ: IR-002] |
-| AI: image and video on a local server | ComfyUI over HTTP, with Node's `http`, `https`, `dns`, `crypto` and Electron's `nativeImage` | — | No package. See `spec/comfyui.md`. |
-| AI: video | fal client (`@fal-ai/client`), Seedance | Not installed | Stakeholder preference [REQ: IR-002, OI-04]. Added with the fal.ai adapter. |
+| AI: image and video on a local server | ComfyUI over HTTP, with Node's `http`, `https`, `dns`, `crypto` and Electron's `nativeImage`; `ws` for the live "how far along" connection | `ws` 8.23.0 | See `spec/comfyui.md`. |
+| AI: video | fal.ai Seedance over HTTPS with Node's `fetch` | — | No package: the adapter calls the fal queue address itself (`src/main/providers/fal-seedance/`). Stakeholder preference [REQ: IR-002, OI-04]. |
 | Agent protocol | `@modelcontextprotocol/sdk`, Streamable HTTP transport | 1.32.2 | Fixed (MCP) [REQ: IR-003] |
-| Video encoding | FFmpeg, LGPL build | 7 or later, not yet added | Fixed (FFmpeg) [REQ: FR-143]; LGPL per licence intent [REQ: 9.3]. Build source open (OI-09). |
+| Video encoding | FFmpeg, LGPL build | 9.0.2 | Fixed (FFmpeg) [REQ: FR-143]; LGPL per licence intent [REQ: 9.3]. Fetched by `npm run fetch:ffmpeg` into `resources/ffmpeg/`, not committed; the sources and checksums are in `scripts/ffmpeg-sources.json`. |
 | YAML parsing | `yaml` | 2.9.1 | [REQ: FR-020]. ISC licence, no dependencies of its own, no install script, so no `allowScripts` entry. See `spec/brief-and-templates.md`. |
 | Monitoring and logging | Local JSON lines log | — | [REQ: FR-153] |
 | Infrastructure as code | None | — | No servers |
 | CI/CD | GitHub Actions | — | Public repo [REQ: 9.2] |
 | Build | `electron-vite`, `vite`, `@vitejs/plugin-react` | 6.0.0, 8.3.8, 6.3.0 | |
 | Packaging | `electron-builder` (DMG for macOS arm64 and x64, NSIS for Windows x64) | 26.18.0 | [REQ: 8.8] |
+| Quickstart runner | `tsx` | 4.23.15 | Runs `quickstart/cli.ts` without a build step. See `spec/quickstart.md`. |
+| Approvals service | `next`, `@libsql/client` | 16.4.6, 0.18.0 | Its own `package.json` in `approvals-service/`. See `spec/approvals-service.md`. |
 | Tests | Vitest (with coverage-v8, jsdom), Testing Library (react, user-event, jest-dom), axe-core, Playwright (Electron) | Vitest 5.1.1, Testing Library react 16.3.3, axe-core 4.14.1, Playwright 1.65.1 | See `spec/testing.md` |
 | Lint and format | ESLint with typescript-eslint and react-hooks rules; Prettier (`semi: false`, `singleQuote: true`, `printWidth: 100`) | ESLint 10.15.0, Prettier 3.10.1 | Stakeholder code rules |
 | Container runtime, orchestration | None | — | Desktop app |

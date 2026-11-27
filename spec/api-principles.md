@@ -10,7 +10,7 @@ Built. `src/main/commands/bus.ts`, `src/main/queries/queries.ts`, `src/main/ipc.
 
 - **Three channels.** `command` changes data. `query` reads data. `event` goes from the main process to the window.
 - **One schema set.** Every command, query and MCP tool input is a Zod schema in `src/shared/schemas/`. MCP tool handlers call the same commands as the window.
-- **Actor.** Every command carries `actor: 'user' | 'agent'`. It is set in the main process and never taken from the caller. A call from the window always runs as `user`: the IPC handler (`src/main/ipc.ts`) sets it and ignores any actor the page sends. The preload script passes only the name and the input. The MCP server always sets `agent`. Neither side can choose. Queries carry the same actor, set the same way. User-only queries check it: `mcp.getConnectInfo`, `comfy.getInfo`, `job.getServerMessage`.
+- **Actor.** Every command carries `actor: 'user' | 'agent'`. It is set in the main process and never taken from the caller. A call from the window always runs as `user`: the IPC handler (`src/main/ipc.ts`) sets it and ignores any actor the page sends. The preload script passes only the name and the input. The MCP server always sets `agent`. Neither side can choose. Queries carry the same actor, set the same way. User-only queries check it (each is marked "User only" in `spec/api-queries-events.md`).
 - **Project scope.** Every command and query that reads or writes a project has `projectId` as a required top-level input field, beside its entity IDs. This holds for every row marked project-scope in `spec/api-commands.md` and `spec/api-queries-events.md`, `history.undo`, `history.redo` and `history.state` included. Reasons: variant, subject and campaign IDs are unique only inside one project (`spec/data-model.md`, "ID formats"); the bus must know which file to open a transaction on before the handler runs; MCP tools already take `project_id`; and a window tab always knows its own project.
   - The bus never searches the open projects. A `projectId` that is not open returns `NOT_FOUND` with `details.reason = 'project_not_open'`. An entity ID that the named project does not hold returns `NOT_FOUND`, even if another open project holds it.
 - **One base schema.** `src/shared/schemas/commands/project-scoped.ts` exports the base object `projectScoped = z.object({ projectId: z.string().min(1) })`. Every project-scope command and query schema extends it, so the field has one name, one type and one place.
@@ -27,8 +27,8 @@ Order:
 1. **Deny check** (`denyCheck`). For actor `agent`, any policy that is not `allow`, `ask` or `tick` is refused with `AGENT_DENIED` and `denialMessage(name)`. The bus fails closed: an unknown policy value is refused too. Test: `tests/integration/commands/bus-fail-closed.test.ts`.
 2. **Find the handler and validate the input.** A name that does not exist is `INVALID_INPUT` "Unknown command: {name}". A failed schema check is `INVALID_INPUT` "Some values are not valid." with `details.issues`.
 3. **Find the project** (project-scope commands only).
-4. **Gate** (agent runs; Built, `src/main/commands/agent-run-gate.ts`). Runs only for actor `agent` with policy `tick`, before `prepare`. The rules are in `spec/agent-runs.md` and `spec/mcp-and-agents.md`.
-5. **Ask** (`askCheck`) for actor `agent` with policy `ask`. A refusal is `AGENT_REFUSED`. Until the permission dialog is built (Phase 10), `src/main/index.ts` passes `askPermission: async () => false`, so every `ask` row is refused for an agent.
+4. **Gate** (agent runs; `src/main/commands/agent-run-gate.ts`). Runs only for actor `agent` with policy `tick`, before `prepare`. The rules are in `spec/agent-runs.md` and `spec/mcp-and-agents.md`.
+5. **Ask** (`askCheck`) for actor `agent` with policy `ask`. A refusal is `AGENT_REFUSED`. `createCore` (`src/main/core.ts`) passes the permission broker's `ask`, which shows the permission dialog (`spec/mcp-and-agents.md`).
 6. **Run.**
 
 - **Two-step handlers.** A project-scope handler may have `prepare` and `undoPrepare`. The bus awaits `prepare` outside the transaction, checks the project is still open, runs `run` inside the transaction, and calls `undoPrepare` if `run` throws. When `undoPrepare` throws, the bus writes one `warn` log line ("Clean-up after a failed command did not finish.") and still returns the original error.
@@ -98,9 +98,9 @@ A refusal caused by a link on disk is `RULE_VIOLATION`: the input was fine, the 
 
 ## Refusal reasons (`details.reason`)
 
-When the window or an agent has to tell cases of one code apart, the error carries `details.reason`: a fixed snake_case word. The window may branch on `code` and `details.reason`. It never branches on `message`. A phase that adds a case adds a row here.
+When the window or an agent has to tell cases of one code apart, the error carries `details.reason`: a fixed snake_case word. The window may branch on `code` and `details.reason`. It never branches on `message`. A new case adds a row here.
 
-Built unless marked.
+Built.
 
 | Case | Code | `details.reason` | Message |
 |------|------|------------------|---------|
@@ -119,7 +119,7 @@ Built unless marked.
 | `asset.import`: more than 500 files after folders are opened up | `INVALID_INPUT` | `too_many_files` | "That is too many files for one import. The limit is 500." |
 | A managed file is to be written, the assets folder does not exist, and it would lie outside the project file's folder (`spec/assets.md`) | `RULE_VIOLATION` | `assets_folder_missing` | "The assets folder could not be found. Choose the assets folder again." |
 | `AssetService.read`, reached through a command that sends a picture to a provider: the file is over the picture byte limit | `RULE_VIOLATION` | `asset_too_large` | "{display name} is too large to send. The limit is 32 MB." |
-| The same: the asset is not a picture, its file no longer holds one, or it is a WebP (PNG and JPEG only until slice WP) | `RULE_VIOLATION` | `asset_not_a_picture` | "{display name} is not a picture the app can send." |
+| The same: the asset is not a picture, or its file no longer holds a PNG, JPEG or WebP the app can turn into a PNG (`spec/assets.md`, "WebP") | `RULE_VIOLATION` | `asset_not_a_picture` | "{display name} is not a picture the app can send." |
 | `project.close`: a job is queued or running and the input does not say `runningJobs: 'stop'`. `details.count` holds how many. | `RULE_VIOLATION` | `jobs_running` | "Work is still running in this project. Stop it, or wait for it to finish." |
 | `project.setAssetsDir`: a job is queued or running in the project | `RULE_VIOLATION` | `jobs_running` | "Wait for the running work to finish, then change the assets folder." |
 | `campaign.delete`: a job for the campaign or one of its variants is queued or running. `details.count` holds how many. | `RULE_VIOLATION` | `jobs_running` | "Work is still running in this campaign. Stop it, or wait for it to finish." |
@@ -128,11 +128,11 @@ Built unless marked.
 | `job.retry`: the job did not fail and was not cancelled, or its row has no provider | `RULE_VIOLATION` | `job_wrong_state` | "Only a job that failed or was cancelled can be tried again." |
 | `job.markSeen`: a named job has not succeeded | `RULE_VIOLATION` | `job_wrong_state` | "Only a job that succeeded can be marked as seen." |
 | `job.cancel`: a running background job other than `image_generation` whose provider cannot cancel (`spec/cancel.md`) | `RULE_VIOLATION` | `cancel_not_supported` | "{Provider} cannot stop a request once it is sent." ({Provider} names the model when the registry has a name for it, `spec/cancel.md`) |
-| `job.cancel`: a paid request the provider has started and will charge for (P7-13). | `RULE_VIOLATION` | `cancel_would_still_charge` | "{Provider} has started this and will charge for it. The app lets it finish and keeps the result." ({Provider} as above) |
+| `job.cancel`: a paid request the provider has started and will charge for. | `RULE_VIOLATION` | `cancel_would_still_charge` | "{Provider} has started this and will charge for it. The app lets it finish and keeps the result." ({Provider} as above) |
 | `settings.update`: an S3 region in China | `INVALID_INPUT` | `storage_not_supported` | "Amazon S3 regions in China are not supported in this build." |
 | `settings.update`: a value that is not an Amazon region name | `INVALID_INPUT` | `storage_not_supported` | "That is not an Amazon S3 region. Storage services that copy S3 are not supported in this build." |
-| A storage command or `publish.run`: the chosen storage has no settings saved (no bucket or region, or no Dropbox root folder). `details` is `{ reason, provider }`. Built for `storage.checkS3`, `publish.inspect` and `publish.run`. | `RULE_VIOLATION` | `storage_not_set_up` | For S3: "Amazon S3 is not set up yet. Enter a bucket and a region, then try again." |
-| `storage.dropboxSignIn` while a sign-in already waits; `storage.dropboxSignOut` while a sign-in waits (P9-5, P9-6) | `RULE_VIOLATION` | `sign_in_in_progress` | "A Dropbox sign-in is already waiting for the browser." (`src/shared/publish/messages.ts`) |
+| A storage command or `publish.run`: the chosen storage has no settings saved (no bucket or region, or no Dropbox root folder). `details` is `{ reason, provider }`. Checked by `storage.checkS3`, `publish.inspect` and `publish.run`. | `RULE_VIOLATION` | `storage_not_set_up` | For S3: "Amazon S3 is not set up yet. Enter a bucket and a region, then try again." |
+| `storage.dropboxSignIn` while a sign-in already waits; `storage.dropboxSignOut` while a sign-in waits | `RULE_VIOLATION` | `sign_in_in_progress` | "A Dropbox sign-in is already waiting for the browser." (`src/shared/publish/messages.ts`) |
 | `storage.dropboxSignIn` while a sign-out runs | `RULE_VIOLATION` | `sign_in_in_progress` | "Adman is signing out of Dropbox. Try again when that has finished." |
 | `storage.dropboxSignOut` while another sign-out runs | `RULE_VIOLATION` | `sign_out_in_progress` | "Adman is already signing out of Dropbox." |
 | `mcp.setEnabled(true)` or `mcp.regenerateToken` with the setting on: the MCP port is taken | `RULE_VIOLATION` | `port_in_use` | "Port {port} is in use. Choose another." |
@@ -155,7 +155,7 @@ Built unless marked.
 | `layer.restore`: a layer with that ID is anywhere in the project file, or the variant has a layer with that key | `RULE_VIOLATION` | `layer_exists` | "That layer is already there." |
 | `variant.render`: the draw failed or timed out | `RULE_VIOLATION` | `render_failed` | "The picture could not be drawn. Try again." |
 
-Not built (Phase 5): the reasons of the variant, direction, sync and fill commands (`not_linked`, `master_changed`, `not_in_campaign`, `too_many_variants`, `variant_exists`, `no_background_picture`, `background_turned`, `background_cropped`, `background_covers`, `fill_outdated`, `not_a_master`, `direction_name_taken`, `last_direction`, `direction_exists`, `master_variant`, and `jobs_running` for a variant or direction) are listed with their messages in `spec/links-and-sync.md`, beside each command, to keep this file within its size. `not_built` is the Phase 5 stub refusal, "This is not built yet.", gone when the last stub is filled.
+The reasons of the variant, direction, sync and fill commands (`not_linked`, `master_changed`, `not_in_campaign`, `too_many_variants`, `variant_exists`, `no_background_picture`, `background_turned`, `background_cropped`, `background_covers`, `fill_outdated`, `not_a_master`, `direction_name_taken`, `last_direction`, `direction_exists`, `master_variant`, and `jobs_running` for a variant or direction) are listed with their messages in `spec/links-and-sync.md`, beside each command, to keep this file within its size.
 
 `brief_too_large` does not exist: a brief has no size limit.
 
@@ -218,7 +218,7 @@ The same retry pattern serves `comfy_address_needed` (the address dialog saves w
 
 ## Undo and redo
 
-Built for the variant and campaign lists the built commands use. `src/main/commands/history/run-history.ts`, `src/main/history/undo-lists.ts`. [REQ: FR-095, R-17]
+Built. `src/main/commands/history/run-history.ts`, `src/main/history/undo-lists.ts`. [REQ: FR-095, R-17]
 
 Undo scope of each command is in `spec/api-commands.md`: **V** = the variant's list, **C** = the campaign's list, **—** = not undoable.
 
@@ -227,6 +227,6 @@ Undo scope of each command is in `spec/api-commands.md`: **V** = the variant's l
 - **A replayed command can be refused.** If it returns any error (`RULE_VIOLATION` from a rule such as the grid test of `spec/data-rules.md`, "Changing a variant's format"; `NOT_FOUND`; `INTERNAL`), nothing in the project changes, the entry goes back to the same place on the list it was taken from, the other list is not touched, and `history.undo` or `history.redo` returns that error. The user can try again once the cause is gone.
 - An empty list returns `RULE_VIOLATION` with `details.reason` `nothing_to_undo` or `nothing_to_redo`.
 - A new edit in a scope empties that scope's redo list. A replay does not.
-- A campaign-scope command that changes a variant clears that variant's undo list. Undoing the campaign entry restores the variant from a snapshot held in the entry (Not built, Phase 5: the handler names the lists in `HandlerResult.clearScopes` and the bus clears them; `spec/links-and-sync.md`, "The campaign undo list").
+- A campaign-scope command that changes a variant clears that variant's undo list. Undoing the campaign entry restores the variant from a snapshot held in the entry. The handler names the lists in `HandlerResult.clearScopes` and the bus clears them (`spec/links-and-sync.md`, "The campaign undo list").
 - Each undo list holds at most 200 entries (`UNDO_LIMIT`). All lists of a project are dropped when it closes [REQ: FR-006].
 - Agents are denied `history.undo` and `history.redo`.
